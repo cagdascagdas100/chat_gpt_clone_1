@@ -1,9 +1,9 @@
 {
-  "id": "terrayield-preflight-action-001",
-  "title": "TerraYield preflight scan",
-  "progress": 45,
+  "id": "terrayield-long-diagnostic-001",
+  "title": "TerraYield long diagnostic report",
+  "progress": 60,
   "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "action": "preflight",
+  "command": "Write-Output 'TASK: TerraYield uzun tani ve durum raporu'; Write-Output 'PROGRESS: 60%'; Write-Output 'ESTIMATED_WAIT: 5-8 dakika'; Write-Output 'ELAPSED_START:'; Get-Date; Write-Output 'PROJECT:'; Get-Location; Write-Output 'KEY_FILES:'; Write-Output ('route=' + (Test-Path 'app\\api\\routes\\aays_sales_layers.py')); Write-Output ('main=' + (Test-Path 'app\\main.py')); Write-Output ('compose=' + (Test-Path 'docker-compose.yml')); Write-Output ('pyproject=' + (Test-Path 'pyproject.toml')); Write-Output 'GEOGRAPHY_SCAN:'; if (Test-Path 'app\\api\\routes\\aays_sales_layers.py') { Select-String -Path 'app\\api\\routes\\aays_sales_layers.py' -Pattern 'ST_Area|::geography|area_m2' -CaseSensitive:$false | Select-Object -First 80 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output 'MAIN_CACHE_SCAN:'; if (Test-Path 'app\\main.py') { Select-String -Path 'app\\main.py' -Pattern 'MapListingsCacheMiddleware|add_middleware|middleware' -CaseSensitive:$false | Select-Object -First 80 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output 'PYTHON_COMPILE:'; python -m py_compile app\\api\\routes\\aays_sales_layers.py app\\main.py 2>&1; Write-Output 'DOCKER_PS:'; docker compose ps 2>&1; Write-Output 'API_HEALTH:'; try { Invoke-WebRequest -Uri 'http://localhost:8010/health' -UseBasicParsing -TimeoutSec 15 | Select-Object StatusCode,Content } catch { Write-Output $_.Exception.Message }; Write-Output 'OPENAPI:'; try { Invoke-WebRequest -Uri 'http://localhost:8010/openapi.json' -UseBasicParsing -TimeoutSec 20 | Select-Object StatusCode } catch { Write-Output $_.Exception.Message }; Write-Output 'MAP_LISTINGS:'; try { Invoke-WebRequest -Uri 'http://localhost:8010/map/listings' -UseBasicParsing -TimeoutSec 30 | Select-Object StatusCode,Content } catch { Write-Output $_.Exception.Message }; Write-Output 'ELAPSED_END:'; Get-Date; Write-Output 'LONG_DIAGNOSTIC_DONE'",
   "created_by": "ChatGPT",
-  "note": "No raw command. Uses local runner preset to list project files and basic route/main scans."
+  "note": "Long but non-destructive diagnostic. Expected wait 5-8 minutes before asking ChatGPT to continue."
 }
