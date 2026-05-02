@@ -1,9 +1,9 @@
 {
-  "id": "terrayield-diagnostic-short-001",
-  "title": "TerraYield short diagnostic after empty report",
-  "progress": 62,
+  "id": "terrayield-route-main-scan-001",
+  "title": "TerraYield route and main detail scan",
+  "progress": 68,
   "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "command": "Write-Output 'TASK: TerraYield kisa tani'; Write-Output 'PROGRESS: 62%'; Write-Output 'ESTIMATED_WAIT: 2-3 dakika'; Write-Output 'START_TIME:'; Get-Date; Write-Output 'PROJECT:'; Get-Location; Write-Output 'KEY_FILES:'; Write-Output ('route=' + (Test-Path 'app\\api\\routes\\aays_sales_layers.py')); Write-Output ('main=' + (Test-Path 'app\\main.py')); Write-Output ('compose=' + (Test-Path 'docker-compose.yml')); Write-Output 'DOCKER_PS:'; docker compose ps 2>&1; Write-Output 'HEALTH:'; try { Invoke-WebRequest -Uri 'http://localhost:8010/health' -UseBasicParsing -TimeoutSec 15 | Select-Object StatusCode } catch { Write-Output $_.Exception.Message }; Write-Output 'END_TIME:'; Get-Date; Write-Output 'SHORT_DIAGNOSTIC_DONE'",
+  "command": "Write-Output 'TASK: TerraYield route/main detay taramasi'; Write-Output 'PROGRESS: 68%'; Write-Output 'ESTIMATED_WAIT: 2-3 dakika'; Write-Output 'START_TIME:'; Get-Date; Write-Output 'ROUTE_FILE_EXISTS:'; Test-Path 'app\\api\\routes\\aays_sales_layers.py'; Write-Output 'MAIN_FILE_EXISTS:'; Test-Path 'app\\main.py'; Write-Output '--- ROUTE GEOGRAPHY LINES ---'; if (Test-Path 'app\\api\\routes\\aays_sales_layers.py') { Select-String -Path 'app\\api\\routes\\aays_sales_layers.py' -Pattern 'ST_Area|::geography|area_m2|ST_SRID|ST_Transform|ST_SetSRID' -CaseSensitive:$false | Select-Object -First 120 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output '--- MAIN MIDDLEWARE LINES ---'; if (Test-Path 'app\\main.py') { Select-String -Path 'app\\main.py' -Pattern 'MapListingsCacheMiddleware|add_middleware|middleware|FastAPI|CORSMiddleware' -CaseSensitive:$false | Select-Object -First 120 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output '--- CACHE FILES ---'; Write-Output ('ttl_cache=' + (Test-Path 'app\\core\\ttl_cache.py')); Write-Output ('map_listings_cache=' + (Test-Path 'app\\middleware\\map_listings_cache.py')); Write-Output 'END_TIME:'; Get-Date; Write-Output 'ROUTE_MAIN_SCAN_DONE'",
   "created_by": "ChatGPT",
-  "note": "Short non-destructive diagnostic to verify runner output after previous empty result. Wait 3 minutes before continue."
+  "note": "Non-destructive route/main scan. Wait 3 minutes before continue."
 }
