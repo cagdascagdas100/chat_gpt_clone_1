@@ -1,9 +1,9 @@
 {
-  "id": "terrayield-route-main-scan-001",
-  "title": "TerraYield route and main detail scan",
-  "progress": 68,
+  "id": "terrayield-compile-endpoints-001",
+  "title": "TerraYield compile and endpoint test",
+  "progress": 76,
   "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "command": "Write-Output 'TASK: TerraYield route/main detay taramasi'; Write-Output 'PROGRESS: 68%'; Write-Output 'ESTIMATED_WAIT: 2-3 dakika'; Write-Output 'START_TIME:'; Get-Date; Write-Output 'ROUTE_FILE_EXISTS:'; Test-Path 'app\\api\\routes\\aays_sales_layers.py'; Write-Output 'MAIN_FILE_EXISTS:'; Test-Path 'app\\main.py'; Write-Output '--- ROUTE GEOGRAPHY LINES ---'; if (Test-Path 'app\\api\\routes\\aays_sales_layers.py') { Select-String -Path 'app\\api\\routes\\aays_sales_layers.py' -Pattern 'ST_Area|::geography|area_m2|ST_SRID|ST_Transform|ST_SetSRID' -CaseSensitive:$false | Select-Object -First 120 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output '--- MAIN MIDDLEWARE LINES ---'; if (Test-Path 'app\\main.py') { Select-String -Path 'app\\main.py' -Pattern 'MapListingsCacheMiddleware|add_middleware|middleware|FastAPI|CORSMiddleware' -CaseSensitive:$false | Select-Object -First 120 | ForEach-Object { $_.LineNumber.ToString() + ': ' + $_.Line } }; Write-Output '--- CACHE FILES ---'; Write-Output ('ttl_cache=' + (Test-Path 'app\\core\\ttl_cache.py')); Write-Output ('map_listings_cache=' + (Test-Path 'app\\middleware\\map_listings_cache.py')); Write-Output 'END_TIME:'; Get-Date; Write-Output 'ROUTE_MAIN_SCAN_DONE'",
+  "command": "Write-Output 'TASK: TerraYield compile ve endpoint testi'; Write-Output 'PROGRESS: 76%'; Write-Output 'ESTIMATED_WAIT: 3-5 dakika'; Write-Output 'START_TIME:'; Get-Date; Write-Output '--- PYTHON VERSION ---'; python --version 2>&1; Write-Output '--- PY_COMPILE KEY FILES ---'; python -m py_compile app\\api\\routes\\aays_sales_layers.py app\\main.py app\\core\\ttl_cache.py app\\middleware\\map_listings_cache.py 2>&1; Write-Output '--- DOCKER COMPOSE PS ---'; docker compose ps 2>&1; Write-Output '--- ENDPOINT TESTS ---'; $eps = @('/health','/openapi.json','/map/listings','/map/sales-layers/verified-history','/map/sales-history/status','/map/sales-history/external-evidence','/map/sales-history/parcels','/map/sales-history/combined'); foreach ($ep in $eps) { $url = 'http://localhost:8010' + $ep; Write-Output ('TEST ' + $ep); try { $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 25; Write-Output ('OK status=' + [string]$r.StatusCode + ' bytes=' + [string]$r.Content.Length) } catch { Write-Output ('FAIL ' + $_.Exception.Message) } }; Write-Output 'END_TIME:'; Get-Date; Write-Output 'COMPILE_ENDPOINTS_DONE'",
   "created_by": "ChatGPT",
-  "note": "Non-destructive route/main scan. Wait 3 minutes before continue."
+  "note": "Non-destructive compile and endpoint test. Wait 5 minutes before continue."
 }
