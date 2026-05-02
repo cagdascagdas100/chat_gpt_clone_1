@@ -1,0 +1,35 @@
+﻿# ChatGPT Runner Result
+
+## Task
+Patch sales-history status endpoint to fast static health response
+
+## Task ID
+terrayield-status-static-patch-001
+
+## Progress
+96%
+
+## Time
+05/03/2026 00:52:57
+
+## Working Directory
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+
+## Exit Code
+2
+
+## Command
+$ErrorActionPreference='Continue'; Write-Output 'TASK: /map/sales-history/status kisa statik patch + test'; Write-Output 'PROGRESS: 96%'; Write-Output 'ESTIMATED_WAIT: 4-6 dakika'; $t0=Get-Date; Write-Output 'START_TIME:'; Write-Output $t0; $run=Get-Date -Format 'yyyyMMdd_HHmmss'; $dir=Join-Path (Get-Location) ('.aays_next_fix\status_static_patch_' + $run); New-Item -ItemType Directory -Force -Path $dir | Out-Null; $file='app\api\routes\aays_sales_history_layers.py'; $backup=Join-Path $dir 'aays_sales_history_layers.py.bak'; Copy-Item -Force $file $backup; Write-Output ('BACKUP=' + $backup); $txt=Get-Content -Raw -Encoding UTF8 $file; $a=$txt.IndexOf('@router.get("/map/sales-history/status")'); $b=$txt.IndexOf('@router.get("/map/sales-history/external-evidence")'); Write-Output ('START=' + $a); Write-Output ('END=' + $b); if($a -lt 0 -or $b -lt 0 -or $b -le $a){ Write-Output 'PATCH_ABORTED_BOUNDARY_NOT_FOUND'; exit 2 }; $lines=@('@router.get("/map/sales-history/status")','def status():','    return {','        "status": "ok",','        "mode": "fast_static_status_v1",','        "map_sale_ready_london_count": None,','        "map_history_signal_london_count": None,','        "map_sale_ready_england_count": None,','        "map_history_signal_england_count": None,','        "note": "Fast temporary status endpoint avoids expensive spatial counts. London 181/172 invariant still requires correct data dump.",','    }','',''); $rep=$lines -join [Environment]::NewLine; $new=$txt.Substring(0,$a)+$rep+$txt.Substring($b); Set-Content -Encoding UTF8 $file $new; Write-Output 'PATCH_APPLIED=fast_static_status_v1'; Write-Output 'PY_COMPILE:'; python -m py_compile $file 2>&1; Write-Output 'RESTART_API:'; docker compose restart api 2>&1; Start-Sleep -Seconds 12; Write-Output 'ENDPOINT_TESTS:'; $eps=@('/health','/map/sales-history/status','/map/listings','/map/sales-history/external-evidence','/map/sales-history/parcels','/map/sales-history/combined'); foreach($ep in $eps){ $url='http://localhost:8010'+$ep; Write-Output ('TEST '+$ep); try{ $sw=[System.Diagnostics.Stopwatch]::StartNew(); $r=Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 25; $sw.Stop(); Write-Output ('OK status='+[string]$r.StatusCode+' ms='+[string]$sw.ElapsedMilliseconds+' bytes='+[string]$r.Content.Length); if($ep -eq '/map/sales-history/status'){ Write-Output ($r.Content.Substring(0,[Math]::Min(800,$r.Content.Length))) } } catch { $sw.Stop(); Write-Output ('FAIL ms='+[string]$sw.ElapsedMilliseconds+' error='+$_.Exception.Message) } }; Write-Output 'SOURCE_SCAN_AFTER:'; Select-String -Path $file -Pattern 'fast_static_status_v1|def status|ST_Intersects|map_parcel_counts' -CaseSensitive:$false | Select-Object -First 80 | ForEach-Object { $_.LineNumber.ToString()+': '+$_.Line }; $t1=Get-Date; Write-Output 'END_TIME:'; Write-Output $t1; Write-Output ('ELAPSED_SECONDS=' + [int](($t1-$t0).TotalSeconds)); Write-Output 'STATUS_STATIC_PATCH_DONE'
+
+## Output
+TASK: /map/sales-history/status kisa statik patch + test
+PROGRESS: 96%
+ESTIMATED_WAIT: 4-6 dakika
+START_TIME:
+
+3 Mayıs 2026 Pazar 00:52:56
+BACKUP=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\status_static_patch_20260503_005256\aays_sales_history_layers.py.bak
+START=-1
+END=-1
+PATCH_ABORTED_BOUNDARY_NOT_FOUND
+
