@@ -1,10 +1,10 @@
 {
-  "id": "terrayield-jsonsafe-backend-validate-008",
-  "title": "JSON-safe TerraYield backend validation",
+  "id": "terrayield-mega-009-frontend-backend",
+  "title": "Mega TerraYield frontend backend optimization task",
   "progress": 96,
-  "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "timeout_seconds": 900,
+  "working_directory": "C:\\Users\\cagda\\Documents\\chat_gpt_clone_1",
+  "timeout_seconds": 3600,
   "created_by": "ChatGPT",
-  "note": "JSON-safe direct validation only. Wait 10-15 minutes before writing devam et.",
-  "command": "Write-Output 'TASK: JSON-safe backend validation'; Write-Output 'PROGRESS: 96%'; Write-Output 'TIME:'; Get-Date; Write-Output '--- files ---'; foreach ($f in @('app/core/ttl_cache.py','app/middleware/map_listings_cache.py','app/main.py','app/api/routes/aays_sales_layers.py')) { if (Test-Path $f) { Write-Output ('EXISTS ' + $f) } else { Write-Output ('MISSING ' + $f) } }; Write-Output '--- compile ---'; foreach ($f in @('app/core/ttl_cache.py','app/middleware/map_listings_cache.py','app/main.py','app/api/routes/aays_sales_layers.py')) { if (Test-Path $f) { python -m py_compile $f 2>&1 | Out-String | ForEach-Object { Write-Output ($f + ': ' + $_) } } }; Write-Output '--- docker ps ---'; docker compose -f docker-compose.yml -f docker-compose.aays-fast-start.yml ps 2>&1; Write-Output '--- endpoints two pass ---'; foreach ($pass in @(1,2)) { Write-Output ('PASS ' + $pass); foreach ($ep in @('/health','/openapi.json','/map/listings','/map/sales-history/status','/map/sales-history/external-evidence','/map/sales-history/parcels','/map/sales-history/combined')) { try { $sw=[System.Diagnostics.Stopwatch]::StartNew(); $r=Invoke-WebRequest -Uri ('http://localhost:8010' + $ep) -UseBasicParsing -TimeoutSec 60; $sw.Stop(); $cache=$r.Headers['X-AAYS-Cache']; Write-Output ('OK ' + $ep + ' status=' + $r.StatusCode + ' ms=' + $sw.ElapsedMilliseconds + ' bytes=' + $r.Content.Length + ' cache=' + $cache) } catch { Write-Output ('FAIL ' + $ep + ' error=' + $_.Exception.Message) } } }; Write-Output '--- recent api errors ---'; docker logs --tail 160 terrayield_land_api 2>&1 | Select-String -Pattern 'Only lon/lat|Traceback|Exception|ERROR|timeout|status' -CaseSensitive:$false | Select-Object -Last 80 | ForEach-Object { $_.Line }; Write-Output 'JSONSAFE_BACKEND_VALIDATE_008_DONE'"
+  "note": "Long script-file based task. Wait 35-45 minutes before writing devam et.",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\ai-task-scripts\\terrayield_mega_009_frontend_backend.ps1"
 }
