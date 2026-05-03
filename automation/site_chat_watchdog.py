@@ -1,11 +1,13 @@
 import asyncio
 import json
 import os
+import re
 from urllib.parse import urlparse
 
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 DEFAULT_MESSAGE = "devam et kapsamlı bir işlem yaptır devam ediyorsa bozma takılma varsa tespit et düzelt"
+GERMAN_MESSAGE = "mach weiter, führe einen umfassenden Vorgang aus; wenn es weiterläuft, störe es nicht; wenn es festhängt, erkenne es und behebe es"
 
 DEFAULT_CONFIG = {
     "site_url": "https://senin-siten.com",
@@ -19,14 +21,23 @@ DEFAULT_CONFIG = {
         "[contenteditable='true']",
         "input[type='text']"
     ],
-    "send_button_texts": ["Gönder", "Gonder", "Send", "Submit"],
-    "approve_button_texts": ["Onayla", "Evet", "Tamam", "Kabul Et", "Approve", "Confirm", "Yes", "OK"],
-    "in_progress_texts": ["devam ediyor", "işleniyor", "loading", "running", "processing", "please wait"]
+    "send_button_texts": [
+        "Gönder", "Gonder", "Send", "Submit", "Senden", "Absenden", "Weiter"
+    ],
+    "approve_button_texts": [
+        "Onayla", "Evet", "Tamam", "Kabul Et",
+        "Approve", "Confirm", "Yes", "OK",
+        "Bestätigen", "Genehmigen", "Ja", "Akzeptieren", "Zustimmen", "Fortfahren", "Einverstanden"
+    ],
+    "in_progress_texts": [
+        "devam ediyor", "işleniyor", "loading", "running", "processing", "please wait",
+        "läuft", "wird verarbeitet", "verarbeitung", "bitte warten", "lädt", "in bearbeitung"
+    ]
 }
 
 
 def load_config():
-    path = os.environ.get("SITE_WATCHDOG_CONFIG", "automation/config.example.json")
+    path = os.environ.get("SITE_WATCHDOG_CONFIG", "automation/config.json")
     if not os.path.exists(path):
         return DEFAULT_CONFIG
     with open(path, "r", encoding="utf-8") as f:
@@ -45,8 +56,8 @@ def assert_allowed_url(url, allowed_hosts):
 
 
 def text_regex(words):
-    escaped = [w.replace("\\", "\\\\").replace("|", "\\|") for w in words]
-    return "^(" + "|".join(escaped) + ")$"
+    escaped = [re.escape(w) for w in words]
+    return re.compile(r"^(" + "|".join(escaped) + r")$", re.IGNORECASE)
 
 
 async def click_approve_if_visible(page, config):
