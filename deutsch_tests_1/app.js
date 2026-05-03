@@ -1,7 +1,16 @@
 const SUPABASE_URL = "https://kkasmniqefjzgmfevjdr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYXNtbmlxZWZqemdtZmV2amRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODAyMjMsImV4cCI6MjA4OTA1NjIyM30.eGWFiUdZFnMFq-naKgIYIaFkyF9ldttaatYz2Ov8x8Q";
-const STORAGE_KEY = "deutsch_tests_1_history_v8";
+const STORAGE_KEY = "deutsch_tests_1_history_v9";
 const DEVICE_KEY = "deutsch_tests_1_device_id";
+const GROUP_ORDER = ["fill", "mc", "tf", "gram", "match"];
+const GROUP_TITLES = {
+  fill: "A. Lückentext · 6 Optionen",
+  mc: "B. Multiple Choice",
+  tf: "C. Richtig/Falsch",
+  gram: "D. Grammatik/Kollokation",
+  match: "E. Zuordnung"
+};
+
 let selected = "t4";
 let current = [];
 let meta = {};
@@ -9,11 +18,13 @@ let results = [];
 let hangWords = [];
 let hangIndex = 0;
 let hangScore = 0;
+
 let deviceId = localStorage.getItem(DEVICE_KEY);
 if (!deviceId) {
   deviceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2);
   localStorage.setItem(DEVICE_KEY, deviceId);
 }
+
 let sb = null;
 try {
   if (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) {
@@ -22,6 +33,7 @@ try {
 } catch (e) {
   sb = null;
 }
+
 const $ = (id) => document.getElementById(id);
 function esc(s) { return String(s).replace(/[&<>']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;'}[ch])); }
 function norm(s) { return String(s || "").trim().replace(/[.,;:!?]+$/," ").replace(/\s+/g," ").trim().toLocaleLowerCase("de-DE"); }
@@ -29,35 +41,104 @@ function shuffle(arr) { const a = arr.slice(); for (let i=a.length-1;i>0;i--) { 
 function makeId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
 function hideAll() { ["quiz","hang","shared"].forEach(id => $(id).classList.add("hide")); $("start").classList.add("hide"); }
 function backToMenu() { ["quiz","hang","shared"].forEach(id => $(id).classList.add("hide")); $("start").classList.remove("hide"); }
+
+function optionPool(test) {
+  const pool = [];
+  (test.words || []).forEach(x => pool.push(x));
+  (test.hang || []).forEach(x => pool.push(x));
+  (test.fill || []).forEach(x => pool.push(x[1]));
+  (test.mc || []).forEach(x => (x[1] || []).forEach(o => pool.push(o)));
+  (test.match || []).forEach(x => pool.push(x[0]));
+  return [...new Map(pool.filter(Boolean).map(x => [norm(x), x])).values()];
+}
+
 function optionList(answer, test) {
-  const pool = test.words.filter(w => norm(w) !== norm(answer));
+  const pool = optionPool(test).filter(w => norm(w) !== norm(answer));
   return shuffle([answer].concat(shuffle(pool).slice(0, 5)));
 }
+
 function makeBank(test) {
   const groups = { fill: [], mc: [], tf: [], gram: [], match: [] };
-  test.fill.forEach(x => groups.fill.push({ type:"radio", section:"Lückentext 6 Optionen", q:x[0], a:x[1], options:optionList(x[1], test), tag:x[2] }));
-  test.mc.forEach(x => groups.mc.push({ type:"radio", section:"Multiple Choice", q:x[0], a:x[1][x[2]], options:x[1], tag:x[3] }));
-  test.tf.forEach(x => groups.tf.push({ type:"tf", section:"Richtig/Falsch", q:x[0], a:x[1] ? "Richtig" : "Falsch", bool:x[1], tag:x[2] }));
-  test.gram.forEach(x => groups.gram.push({ type:"text", section:"Grammatik/Kollokation", q:x[0], a:x[1], tag:x[2] }));
-  test.match.forEach((x, i) => {
-    const distractors = shuffle(test.match.filter((_, j) => j !== i).map(y => y[1])).slice(0, 5);
-    groups.match.push({ type:"radio", section:"Zuordnung", q:"Welche Definition passt zu: " + x[0] + "?", a:x[1], options:shuffle([x[1]].concat(distractors)), tag:"Definition" });
+
+  (test.fill || []).forEach(x => {
+    groups.fill.push({ group:"fill", type:"radio", section:GROUP_TITLES.fill, q:x[0], a:x[1], options:optionList(x[1], test), tag:x[2] });
   });
+
+  (test.mc || []).forEach(x => {
+    groups.mc.push({ group:"mc", type:"radio", section:GROUP_TITLES.mc, q:x[0], a:x[1][x[2]], options:x[1], tag:x[3] });
+  });
+
+  (test.tf || []).forEach(x => {
+    groups.tf.push({ group:"tf", type:"tf", section:GROUP_TITLES.tf, q:x[0], a:x[1] ? "Richtig" : "Falsch", bool:x[1], tag:x[2] });
+  });
+
+  (test.gram || []).forEach(x => {
+    groups.gram.push({ group:"gram", type:"text", section:GROUP_TITLES.gram, q:x[0], a:x[1], tag:x[2] });
+  });
+
+  (test.match || []).forEach((x, i) => {
+    const distractors = shuffle((test.match || []).filter((_, j) => j !== i).map(y => y[1])).slice(0, 5);
+    groups.match.push({ group:"match", type:"radio", section:GROUP_TITLES.match, q:"Welche Definition passt zu: " + x[0] + "?", a:x[1], options:shuffle([x[1]].concat(distractors)), tag:"Definition" });
+  });
+
   Object.keys(groups).forEach(k => groups[k] = shuffle(groups[k]));
+  return supplementGroups(groups, test);
+}
+
+function supplementGroups(groups, test) {
+  const minNeeded = 7;
+  const fills = test.fill || [];
+  const matches = test.match || [];
+
+  let i = 0;
+  while (groups.mc.length < minNeeded && fills.length) {
+    const f = fills[i % fills.length];
+    groups.mc.push({ group:"mc", type:"radio", section:GROUP_TITLES.mc, q:"Welche Ergänzung ist fachsprachlich korrekt? " + f[0], a:f[1], options:optionList(f[1], test), tag:f[2] || "Wortschatz" });
+    i++;
+  }
+
+  i = 0;
+  while (groups.tf.length < minNeeded && matches.length > 1) {
+    const m = matches[i % matches.length];
+    const other = matches[(i + 1) % matches.length];
+    const isTrue = i % 2 === 0;
+    groups.tf.push({ group:"tf", type:"tf", section:GROUP_TITLES.tf, q:"Der Ausdruck „" + m[0] + "“ bedeutet: " + (isTrue ? m[1] : other[1]) + ".", a:isTrue ? "Richtig" : "Falsch", bool:isTrue, tag:"Definition" });
+    i++;
+  }
+
+  i = 0;
+  while (groups.gram.length < minNeeded && fills.length) {
+    const f = fills[i % fills.length];
+    groups.gram.push({ group:"gram", type:"text", section:GROUP_TITLES.gram, q:"Schreiben Sie den passenden Ausdruck exakt: " + f[0], a:f[1], tag:f[2] || "Schreibung" });
+    i++;
+  }
+
+  i = 0;
+  while (groups.match.length < minNeeded && matches.length > 1) {
+    const m = matches[i % matches.length];
+    const distractors = shuffle(matches.filter(x => norm(x[1]) !== norm(m[1])).map(x => x[1])).slice(0, 5);
+    groups.match.push({ group:"match", type:"radio", section:GROUP_TITLES.match, q:"Welche Definition passt zu: " + m[0] + "?", a:m[1], options:shuffle([m[1]].concat(distractors)), tag:"Definition" });
+    i++;
+  }
+
   return groups;
 }
+
 function buildQuestions(test, count) {
   const groups = makeBank(test);
-  const order = ["fill","mc","tf","gram","match"];
+  const perGroup = Math.floor(count / GROUP_ORDER.length);
+  const remainder = count % GROUP_ORDER.length;
   const out = [];
-  let guard = 0;
-  while (out.length < count && Object.values(groups).some(g => g.length) && guard < 1000) {
-    const key = order[guard % order.length];
-    if (groups[key].length) out.push(groups[key].shift());
-    guard++;
-  }
+
+  GROUP_ORDER.forEach((key, index) => {
+    const needed = perGroup + (index < remainder ? 1 : 0);
+    const source = groups[key] || [];
+    out.push(...source.slice(0, needed));
+  });
+
   return out;
 }
+
 function init() {
   $("dbs").innerHTML = sb ? '<b class="dbok">Supabase: aktiv</b>' : '<b class="dberr">Supabase: ayarlı değil</b>';
   const tests = window.DEUTSCH_TESTS || {};
@@ -76,6 +157,7 @@ function init() {
   $("btnClearLocal").addEventListener("click", clearLocal);
   historyRender();
 }
+
 function startQuiz(count) {
   const test = window.DEUTSCH_TESTS[selected];
   current = buildQuestions(test, count);
@@ -84,27 +166,39 @@ function startQuiz(count) {
   $("quiz").classList.remove("hide");
   $("rep").classList.add("hide");
   $("ttl").textContent = test.title;
-  $("meta").textContent = "Thema: " + test.topic + " · Länge: " + meta.len + " · Fragen: " + current.length + " · Verteilung: Lückentext, Multiple Choice, Richtig/Falsch, Grammatik, Zuordnung";
+  const each = Math.floor(count / GROUP_ORDER.length);
+  $("meta").textContent = "Thema: " + test.topic + " · Länge: " + meta.len + " · Fragen: " + current.length + " · Aufbau: je " + each + " Aufgaben pro Fragetyp, gruppiert nach Typ.";
   $("wb").innerHTML = test.words.map(w => '<span class="pill">' + esc(w) + '</span>').join("");
   renderQuestions();
   progress();
 }
+
 function renderQuestions() {
-  $("qs").innerHTML = current.map((q, i) => {
-    q.id = "q_" + i;
-    let html = '<div class="q"><div class="qt">' + (i+1) + '. [' + esc(q.section) + '] ' + esc(q.q) + '</div>';
-    if (q.type === "radio") {
-      html += q.options.map((o, j) => '<label class="opt"><input type="radio" name="' + q.id + '" value="' + j + '"> ' + String.fromCharCode(65+j) + ') ' + esc(o) + '</label>').join("");
-    } else if (q.type === "tf") {
-      html += '<label class="opt"><input type="radio" name="' + q.id + '" value="true"> Richtig</label><label class="opt"><input type="radio" name="' + q.id + '" value="false"> Falsch</label>';
-    } else {
-      html += '<input type="text" id="' + q.id + '" autocomplete="off">';
-    }
-    html += '<p class="muted">Fokus: ' + esc(q.tag) + '</p></div>';
-    return html;
-  }).join("");
+  let html = "";
+  let number = 1;
+  GROUP_ORDER.forEach(groupKey => {
+    const groupQuestions = current.filter(q => q.group === groupKey);
+    if (!groupQuestions.length) return;
+    html += '<section class="qgroup" style="border:1px solid #e5ded4;border-radius:14px;padding:12px;margin:14px 0;background:#fffdf9"><h3 style="margin:0 0 8px;color:#183642">' + esc(GROUP_TITLES[groupKey]) + ' <span class="muted">(' + groupQuestions.length + ')</span></h3>';
+    groupQuestions.forEach(q => {
+      q.id = "q_" + (number - 1);
+      html += '<div class="q"><div class="qt">' + number + '. ' + esc(q.q) + '</div>';
+      if (q.type === "radio") {
+        html += q.options.map((o, j) => '<label class="opt"><input type="radio" name="' + q.id + '" value="' + j + '"> ' + String.fromCharCode(65+j) + ') ' + esc(o) + '</label>').join("");
+      } else if (q.type === "tf") {
+        html += '<label class="opt"><input type="radio" name="' + q.id + '" value="true"> Richtig</label><label class="opt"><input type="radio" name="' + q.id + '" value="false"> Falsch</label>';
+      } else {
+        html += '<input type="text" id="' + q.id + '" autocomplete="off">';
+      }
+      html += '<p class="muted">Fokus: ' + esc(q.tag) + '</p></div>';
+      number++;
+    });
+    html += '</section>';
+  });
+  $("qs").innerHTML = html;
   document.querySelectorAll("#qs input").forEach(el => { el.addEventListener("input", progress); el.addEventListener("change", progress); });
 }
+
 function userValue(q) {
   if (q.type === "text") return $(q.id).value;
   const checked = document.querySelector('input[name="' + q.id + '"]:checked');
@@ -143,6 +237,7 @@ function progress() {
   $("pt").textContent = answered + "/" + total + " bearbeitet";
   $("pb").style.width = total ? (answered / total * 100) + "%" : "0%";
 }
+
 function localHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch (e) { return []; } }
 function saveLocal(result) { const h = localHistory(); h.unshift(result); localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0,50))); }
 async function saveRemote(result) {
@@ -154,6 +249,7 @@ async function saveRemote(result) {
 }
 function encodeResult(obj) { return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(obj))))); }
 function decodeResult(str) { return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(str))))); }
+
 async function grade() {
   results = current.map(checkQuestion);
   const correct = results.filter(r => r.ok).length;
@@ -169,6 +265,7 @@ async function grade() {
   $("rep").scrollIntoView({behavior:"smooth"});
   historyRender();
 }
+
 async function historyRender() {
   let h = localHistory();
   if (sb) {
@@ -196,9 +293,10 @@ async function loadShare(id) {
   showResult(data[0]);
 }
 function clearLocal() { if (confirm("Bu cihazdaki local geçmiş silinsin mi?")) { localStorage.removeItem(STORAGE_KEY); historyRender(); } }
+
 function startHangman() {
   const test = window.DEUTSCH_TESTS[selected];
-  hangWords = shuffle(test.hang);
+  hangWords = shuffle(test.hang || []);
   hangIndex = 0;
   hangScore = 0;
   hideAll();
@@ -243,6 +341,7 @@ function downloadReport() {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
 document.addEventListener("DOMContentLoaded", () => {
   try {
     init();
