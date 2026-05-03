@@ -1,10 +1,10 @@
 {
-  "id": "terrayield-recovery-014-status-probe",
-  "title": "Probe TerraYield recovery status after 013",
-  "progress": 97,
+  "id": "terrayield-recovery-015-compose-stack",
+  "title": "TerraYield compose stack recovery and endpoint validation",
+  "progress": 98,
   "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "timeout_seconds": 600,
+  "timeout_seconds": 1500,
   "created_by": "ChatGPT",
-  "note": "Short status probe. Checks whether 013 created local reports, Docker daemon status, and API health. Wait 8-10 minutes before writing devam et.",
-  "command": "Write-Output 'TASK: Recovery 014 status probe'; Write-Output 'PROGRESS: 97%'; Write-Output 'TIME:'; Get-Date; Write-Output '--- script exists ---'; $script='C:\\Users\\cagda\\Documents\\chat_gpt_clone_1\\ai-task-scripts\\terrayield_recovery_013_docker_daemon.ps1'; if(Test-Path $script){ Write-Output ('SCRIPT_EXISTS ' + $script) } else { Write-Output ('SCRIPT_MISSING ' + $script) }; Write-Output '--- latest recovery reports ---'; Get-ChildItem -Path '.aays_next_fix' -Recurse -File -ErrorAction SilentlyContinue -Filter summary.md | Where-Object { $_.FullName -like '*recovery_013*' -or $_.FullName -like '*recovery_012*' } | Sort-Object LastWriteTime -Descending | Select-Object -First 10 FullName,Length,LastWriteTime | Format-Table -AutoSize | Out-String; Write-Output '--- newest recovery summary preview ---'; $s=Get-ChildItem -Path '.aays_next_fix' -Recurse -File -ErrorAction SilentlyContinue -Filter summary.md | Where-Object { $_.FullName -like '*recovery_013*' -or $_.FullName -like '*recovery_012*' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if($s){ Get-Content -Path $s.FullName -Raw | Select-Object -First 1 } else { Write-Output 'NO_RECOVERY_SUMMARY_FOUND' }; Write-Output '--- docker info ---'; docker info 2>&1 | Out-String; Write-Output '--- docker compose ps ---'; docker compose -f docker-compose.yml -f docker-compose.aays-fast-start.yml ps 2>&1 | Out-String; Write-Output '--- endpoint quick validation ---'; foreach($ep in @('/health','/map/listings','/map/sales-history/status','/map/sales-history/combined')){ try{ $sw=[System.Diagnostics.Stopwatch]::StartNew(); $r=Invoke-WebRequest -Uri ('http://localhost:8010'+$ep) -UseBasicParsing -TimeoutSec 20; $sw.Stop(); Write-Output ('OK '+$ep+' status='+$r.StatusCode+' ms='+$sw.ElapsedMilliseconds+' bytes='+$r.Content.Length) } catch { Write-Output ('FAIL '+$ep+' error='+$_.Exception.Message) } }; Write-Output 'RECOVERY_014_STATUS_PROBE_DONE'"
+  "note": "Docker is ready but compose stack is down. Bring full stack up, wait for API, validate endpoints. Wait 20-25 minutes before writing devam et.",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\cagda\\Documents\\chat_gpt_clone_1\\ai-task-scripts\\terrayield_recovery_015_compose_stack.ps1"
 }
