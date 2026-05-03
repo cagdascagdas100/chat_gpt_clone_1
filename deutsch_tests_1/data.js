@@ -1,0 +1,141 @@
+window.DEUTSCH_TESTS = {
+  t4: {
+    slug: "mindestlohn_einkommen_absicherung",
+    title: "4. Mindestlohn, Einkommen und wirtschaftliche Absicherung",
+    topic: "Mindestlohn · Einkommen · wirtschaftliche Absicherung",
+    words: ["Mindestlohn","Bezahlung","Lohn","Einkommen","Binnennachfrage","Geldumlauf","finanzielle Absicherung","Einkommensverlust","Lohnuntergrenze","Lohndruck","Entlohnung","Armutsrisiko","Binnenmarkt","wirtschaftliche Stabilisierung","wirtschaftliche Festigung","stabilisierende Wirkung","zu niedriger Bezahlung","geringes Einkommen","regionalen Handel","finanziellem Druck"],
+    fill: [
+      ["Eine verbindliche ____ verhindert ruinösen Wettbewerb über niedrige Löhne.","Lohnuntergrenze","Nomen"],
+      ["Dauerhaft ____ schwächt soziale Teilhabe und Kaufkraft.","geringes Einkommen","Kollokation"],
+      ["Der gesetzliche ____ schützt Arbeitnehmer vor existenzgefährdender Entlohnung.","Mindestlohn","Nomen"],
+      ["Zu niedrige ____ kann Motivation und Bindung beeinträchtigen.","Bezahlung","Nomen"],
+      ["Zusätzliches ____ wird oft unmittelbar konsumiert.","Einkommen","Nomen"],
+      ["Verlässliche Einkommen halten den ____ aufrecht.","Geldumlauf","Nomen"],
+      ["Eine kräftige ____ stützt den Binnenmarkt.","Binnennachfrage","Nomen"],
+      ["Der Mindestlohn ist ein Element der ____.","finanziellen Absicherung","Kasus"],
+      ["Ein plötzlicher ____ belastet Haushalte ohne Rücklagen.","Einkommensverlust","Nomen"],
+      ["Bei schwacher Tarifbindung steigt der ____.","Lohndruck","Nomen"],
+      ["Eine angemessene ____ ermöglicht soziale Anerkennung.","Entlohnung","Nomen"],
+      ["Niedrige Löhne erhöhen das ____.","Armutsrisiko","Nomen"],
+      ["Ein stabiler ____ setzt Kaufkraft voraus.","Binnenmarkt","Nomen"],
+      ["Lohnpolitik kann zur ____ beitragen.","wirtschaftlichen Stabilisierung","Nominalstil"],
+      ["Faire Lohnpolitik begünstigt die ____.","wirtschaftliche Festigung","Nominalstil"],
+      ["Regelmäßige Einkommen entfalten eine ____.","stabilisierende Wirkung","Kollokation"]
+    ],
+    mc: [
+      ["Welche Kollokation ist korrekt?",["eine Wirkung machen","eine stabilisierende Wirkung entfalten","eine Wirkung verdienen","Wirkung bezahlen","bei Wirkung stehen","Wirkung konsumieren"],1,"Kollokation"],
+      ["Welche Präposition ist korrekt: Schutz ___ Einkommensverlust?",["an","für","vor","gegenüber","bei","über"],2,"Präposition"],
+      ["Welche Aussage ist C1-gerecht?",["Lohn ist Geld.","Der Mindestlohn kann Arbeitnehmer vor zu niedriger Bezahlung schützen.","Mindestlohn macht alle reich.","Geld ist Wirtschaft.","Arbeitnehmer kaufen Lohn.","Einkommen ist egal."],1,"C1"]
+    ],
+    tf: [
+      ["Der Mindestlohn kann vor zu niedriger Bezahlung schützen.",true,"Grundfunktion"],
+      ["Lohndruck ist ein Synonym für besonders hohe Entlohnung.",false,"Begriff"],
+      ["Ein geringes Einkommen kann das Armutsrisiko erhöhen.",true,"Risiko"],
+      ["Binnennachfrage hängt auch vom verfügbaren Einkommen ab.",true,"Wirtschaft"],
+      ["Finanzielle Absicherung bedeutet völlige Risikolosigkeit.",false,"Präzision"]
+    ],
+    gram: [
+      ["Korrigieren Sie: Der Mindestlohn schützt vor zu niedrige Bezahlung.","Der Mindestlohn schützt vor zu niedriger Bezahlung.","Dativ"],
+      ["Formulieren Sie mit sicherstellen.","den Geldumlauf sicherstellen","Kollokation"],
+      ["Ergänzen Sie: Arbeitnehmer profitieren ___ einer Lohnuntergrenze.","von","Präposition"],
+      ["Formulieren Sie mit Wirkung und entfalten.","eine stabilisierende Wirkung entfalten","Kollokation"]
+    ],
+    match: [
+      ["der Binnenmarkt","wirtschaftlicher Markt innerhalb eines Landes oder Wirtschaftsraums"],
+      ["die Binnennachfrage","Nachfrage nach Gütern und Dienstleistungen innerhalb einer Volkswirtschaft"],
+      ["der Lohndruck","Druck, geringere Löhne hinzunehmen"],
+      ["die Entlohnung","Vergütung für geleistete Arbeit"],
+      ["das Armutsrisiko","Wahrscheinlichkeit, trotz Arbeit in materielle Not zu geraten"]
+    ],
+    hang: ["Mindestlohn","Bezahlung","Einkommen","Binnennachfrage","Geldumlauf","Lohnuntergrenze","Lohndruck","Entlohnung","Armutsrisiko","Binnenmarkt","Einkommensverlust"]
+  },
+  t5: {
+    slug: "wirtschaft_arbeit_karriere_wettbewerb",
+    title: "5. Wirtschaft, Arbeit, Karriere und Wettbewerb",
+    topic: "Karriere · Wettbewerb · Markt · Verbraucher · Arbeitsrechte · Gehalt · Gewinn",
+    words: ["Karrierefortschritt","Arbeiterrechte","Arbeitsrechte","Arbeitnehmerrechte","Wettbewerb","Entwicklungs- und Schwellenländer","Markt","Konkurrenz","Verbraucher","kulturelle Verdrängung","Konsumverhalten","Rollen im Marktkontext","Gehalt","Arbeitnehmer","finanzieller Gewinn","Gewinnbeteiligung","wirtschaftliche Stabilität","wirtschaftliche Entlastung","wirtschaftliche Absicherung","beruflicher Aufstieg","berufliches Vorankommen","berufliche Vernetzung","Leistungsdruck","passende Stelle","Produkte und Dienstleistungen","Gewinn erzielen","nach Gewinn streben","Qualität verbessern","Kosten senken","Arbeitsrechte schützen","Marktanteile verlieren","den Markt dominieren","lokale Gastronomie","Konsumgewohnheiten","globale Unternehmen","lokale Unternehmen","kleine Betriebe","globale Ketten","internationale Ketten","Fast-Food-Ketten","Ausdruckssicherheit","direkter Austausch","Einblick in","an Bedeutung gewinnen"],
+    fill: [
+      ["Durch gezielte Weiterbildung lässt sich die Karriere ____.","vorantreiben","Verb"],
+      ["Ein starkes Netzwerk kann berufliche ____ ermöglichen.","Vernetzung","Nomen"],
+      ["Mentoringprogramme können beruflichen ____ fördern.","Aufstieg","Kollokation"],
+      ["Neue Qualifikationen können berufliches ____ ermöglichen.","Vorankommen","Kollokation"],
+      ["Wer systematisch Kompetenzen erweitert, kann Karrierefortschritt ____.","erreichen","Verb"],
+      ["Das Wirtschaftswachstum ____ schneller zu.","nimmt","Verb"],
+      ["In wirtschaftlichen Aussagen soll man präzise ____ verwenden.","Verben","Wirtschaftssprache"],
+      ["Unternehmen können Produkte und Dienstleistungen erfolgreicher ____.","anbieten","Verb"],
+      ["Produkte und Dienstleistungen werden auf dem Markt angeboten oder ____.","verkauft","Passiv"],
+      ["Ein intensiver Wettbewerb kann einen Vorteil für Verbraucher ____.","bringen","Verb"],
+      ["Unternehmen versuchen häufig, Gewinn zu ____.","erzielen","Kollokation"],
+      ["Viele Unternehmen streben nach ____.","Gewinn","Nomen"],
+      ["Wettbewerb kann Unternehmen dazu zwingen, Kosten zu ____.","senken","Verb"],
+      ["Wettbewerb kann die Qualität eines Produkts ____.","verbessern","Verb"],
+      ["Der Staat muss Maßnahmen zum Schutz der Arbeitsrechte ____.","ergreifen","Verb"],
+      ["Die Durchsetzung der Arbeitsrechte muss rechtlich ____ werden.","sichergestellt","Passiv"],
+      ["Verbraucher können von niedrigeren Preisen ____.","profitieren","Verb"],
+      ["Kleine Betriebe verlieren gegenüber globalen Ketten zunehmend ____.","Marktanteile","Nomen"],
+      ["Globale Unternehmen können den Markt zunehmend ____.","dominieren","Verb"],
+      ["Globale Ketten können lokale gastronomische Betriebe ____.","verdrängen","Verb"],
+      ["Diese Entwicklung kann zur Verdrängung der lokalen ____ führen.","Gastronomie","Nomen"],
+      ["Globale Unternehmen spielen eine zentrale Rolle bei wirtschaftlichen ____.","Veränderungen","Nomen"],
+      ["Internationale Ketten können die Konsumgewohnheiten vieler Menschen im Alltag ____.","verändern","Verb"],
+      ["Verbraucher bevorzugen globale Unternehmen häufiger als ____ Unternehmen.","lokale","Adjektiv"],
+      ["Die Marktstruktur kann sich auf das Gehalt der Arbeitnehmer ____.","auswirken","Verb"],
+      ["Gewinnbeteiligungen lassen Mitarbeiter am finanziellen Gewinn ____.","teilhaben","Verb"],
+      ["Ein Unternehmen kann eine finanzielle Gewinnbeteiligung ____.","gewähren","Verb"],
+      ["Durch direkte Kommunikation kann man an Ausdruckssicherheit ____.","gewinnen","Verb"],
+      ["Man kann Einblick in komplexe wirtschaftliche Zusammenhänge ____.","gewinnen","Verb"],
+      ["Flexible Arbeitsformen können zur wirtschaftlichen Entlastung ____.","beitragen","Verb"],
+      ["Im Laufe der Zeit kann diese Entwicklung an Bedeutung ____.","gewinnen","Kollokation"],
+      ["Wenn eine Position mit Personal gefüllt wird, verwendet man das Verb ____.","besetzen","Personal"],
+      ["In ärmeren Ländern sind solche Maßnahmen oft nicht in dem Maße wirksam wie in ____.","Industrieländern","Vergleich"],
+      ["Lokale Unternehmen verlieren gegenüber globalen Unternehmen zunehmend ____.","Marktanteile","Nomen"],
+      ["Die Gewinnbeteiligung kann klare Auswirkungen auf das ____ der Arbeitnehmer haben.","Gehalt","Nomen"]
+    ],
+    mc: [
+      ["Welche Formulierung ist personalsprachlich korrekt?",["Eine Stelle wird besetzt.","Eine Stelle wird befüllt.","Eine Stelle wird gegessen.","Eine Stelle wird gewonnen.","Eine Stelle wird gedrückt.","Eine Stelle wird konsumiert."],0,"Personalsprachlich"],
+      ["Welche Aussage verwendet ein starkes Verb statt Nominalstil?",["Die Verbesserung der Qualität wird durchgeführt.","Unternehmen verbessern die Qualität.","Es gibt eine Durchführung der Verbesserung.","Qualität wird in Verbesserung gesetzt.","Verbesserung macht Qualität.","Qualität hat Durchführung."],1,"Wirtschaftssprache"],
+      ["Welche Präposition passt: gewinnen an + ?",["Akkusativ","Dativ","Genitiv","Nominativ","Infinitiv","Partizip I"],1,"Rektion"],
+      ["Welche Kollokation ist korrekt?",["Gewinn erzielen","Gewinn essen","Gewinn besetzen","Gewinn verdrängen","Gewinn vernetzen","Gewinn anbieten"],0,"Kollokation"],
+      ["Welche Formulierung ist C1-gerecht?",["Firmen machen Sachen billiger.","Unternehmen können ihre Preise senken, sodass Verbraucher von niedrigeren Preisen profitieren.","Verbraucher sind billiger.","Preise profitieren Unternehmen.","Konkurrenz isst Kosten.","Der Markt macht Leute."],1,"C1"],
+      ["Welche Wendung ist korrekt?",["Einblick in + Akkusativ gewinnen","Einblick auf + Dativ gewinnen","Einblick bei + Genitiv gewinnen","Einblick für + Nominativ gewinnen","Einblick durch + Infinitiv gewinnen","Einblick um + Dativ gewinnen"],0,"Rektion"],
+      ["Welche Aussage ist differenziert?",["Globale Unternehmen sind immer schlecht.","Globale Ketten können Preise senken, gleichzeitig aber lokale Strukturen verdrängen.","Lokale Betriebe verlieren nie Marktanteile.","Verbraucher haben keine Rolle.","Konsum verändert niemals Märkte.","Gewinn ist immer sozial."],1,"Argumentation"],
+      ["Welche Verbindung passt zu Gehalt?",["sich auf das Gehalt der Arbeitnehmer auswirken","Gehalt verdrängen lokale Gastronomie","Gehalt bietet Produkte an","Gehalt dominiert Verbraucher","Gehalt besetzt Personal","Gehalt strebt nach Preisen"],0,"Kollokation"]
+    ],
+    tf: [
+      ["Berufliche Vernetzung kann berufliches Vorankommen ermöglichen.",true,"Karriere"],
+      ["Gewinnen an verlangt in dieser Struktur den Akkusativ.",false,"Dativ"],
+      ["Unternehmen können nach Gewinn streben und zugleich Kosten senken wollen.",true,"Wirtschaft"],
+      ["Lokale Unternehmen können gegenüber globalen Unternehmen Marktanteile verlieren.",true,"Markt"],
+      ["Verbraucher spielen im Marktkontext keine Rolle.",false,"Marktkontext"],
+      ["Globale Unternehmen können Konsumgewohnheiten vieler Menschen verändern.",true,"Konsum"],
+      ["Arbeitsrechte müssen nicht durchgesetzt werden, wenn Wettbewerb besteht.",false,"Arbeitsrechte"],
+      ["Gewinnbeteiligung kann Mitarbeiter am finanziellen Gewinn teilhaben lassen.",true,"Gehalt"],
+      ["Entwicklungs- und Schwellenländer sind immer in demselben Maße wirksam wie Industrieländer.",false,"Vergleich"],
+      ["Präzise Verben sind in wirtschaftlichen Aussagen oft besser als unnötiger Nominalstil.",true,"Stil"]
+    ],
+    gram: [
+      ["Formulieren Sie mit starkem Verb: Die Senkung der Kosten wird angestrebt.","Unternehmen versuchen, Kosten zu senken.","starke Verben"],
+      ["Ergänzen Sie: Im Laufe der Zeit kann diese Entwicklung ___ Bedeutung gewinnen.","an","Präposition"],
+      ["Korrigieren Sie: Unternehmen gewinnen an Ausdruckssicherheit in den direkten Austausch.","Unternehmen gewinnen im direkten Austausch an Ausdruckssicherheit.","Dativ"],
+      ["Formulieren Sie mit profitieren: Verbraucher / niedrigere Preise.","Verbraucher können von niedrigeren Preisen profitieren.","Kollokation"],
+      ["Formulieren Sie mit Marktanteile verlieren.","Lokale Unternehmen verlieren gegenüber globalen Unternehmen Marktanteile.","Kollokation"],
+      ["Korrigieren Sie: Einblick in wirtschaftlichen Zusammenhängen gewinnen.","Einblick in wirtschaftliche Zusammenhänge gewinnen.","Akkusativ"],
+      ["Formulieren Sie mit Gewinnbeteiligung gewähren.","Ein Unternehmen kann eine finanzielle Gewinnbeteiligung gewähren.","Kollokation"],
+      ["Formulieren Sie mit Gehalt: klare Auswirkungen / Arbeitnehmer.","Diese Entwicklung hat klare Auswirkungen auf das Gehalt der Arbeitnehmer.","Genitiv"],
+      ["Formulieren Sie mit wirtschaftliche Entlastung.","Diese Maßnahme kann zur wirtschaftlichen Entlastung beitragen.","Nominalstil"]
+    ],
+    match: [
+      ["Karrierefortschritt","messbare oder wahrnehmbare Verbesserung der beruflichen Entwicklung"],
+      ["berufliche Vernetzung","Aufbau nützlicher beruflicher Kontakte"],
+      ["Arbeitnehmerrechte","rechtliche Ansprüche und Schutzrechte von Beschäftigten"],
+      ["Verbraucher","Personen, die Produkte oder Dienstleistungen nachfragen"],
+      ["Gewinnbeteiligung","finanzielle Beteiligung von Mitarbeitern am Unternehmenserfolg"],
+      ["wirtschaftliche Stabilität","relativ verlässlicher Zustand wirtschaftlicher Ordnung"],
+      ["kulturelle Verdrängung","Zurückdrängung lokaler Strukturen durch dominante globale Anbieter"],
+      ["Konsumverhalten","Art und Weise, wie Menschen kaufen und verbrauchen"],
+      ["Marktanteile","Anteile eines Unternehmens oder einer Gruppe am Gesamtmarkt"],
+      ["Entwicklungs- und Schwellenländer","Länder mit noch nicht vollständig industrialisierten Wirtschaftsstrukturen"]
+    ],
+    hang: ["Karrierefortschritt","Arbeiterrechte","Arbeitsrechte","Arbeitnehmerrechte","Verbraucher","Konkurrenz","Gehalt","Gewinnbeteiligung","Marktanteile","Konsumverhalten","Konsumgewohnheiten","wirtschaftliche Stabilität","wirtschaftliche Entlastung","beruflicher Aufstieg","berufliches Vorankommen","berufliche Vernetzung","globale Unternehmen","lokale Unternehmen","kleine Betriebe","globale Ketten","internationale Ketten","Ausdruckssicherheit","Einblick"]
+  }
+};
