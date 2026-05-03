@@ -1465,4 +1465,10 @@ Add-Content : Akış okunabilir değildi.
 At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-tmp\task-terrayield-long-composite-optimize-003.ps1:1 char:484
 + ... tion L($x){ Add-Content -Encoding UTF8 -Path $detail -Value $x }; L ' ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...5409\detail.t
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...5409\detail.txt:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+
+``
+
