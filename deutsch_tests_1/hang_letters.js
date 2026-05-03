@@ -1,11 +1,17 @@
 let letterTarget = "";
+let letterPrompt = "";
 let letterSlots = [];
 let letterFilled = [];
 let letterTileUse = [];
 let letterTileChars = [];
+let letterQuestions = [];
 
 function isLetterChar(ch) {
   return /[A-Za-zÄÖÜäöüß]/.test(ch);
+}
+
+function randomInt(max) {
+  return Math.floor(Math.random() * max);
 }
 
 function chooseHiddenSlots(text) {
@@ -14,18 +20,54 @@ function chooseHiddenSlots(text) {
     if (isLetterChar(text[i])) slots.push(i);
   }
   const hidden = new Set();
-  slots.forEach((pos, idx) => {
-    const prev = text[pos - 1];
-    const next = text[pos + 1];
-    const keepVisible = idx === 0 || !isLetterChar(prev || "") || !isLetterChar(next || "") || idx % 4 === 0;
-    if (!keepVisible) hidden.add(pos);
-  });
-  if (hidden.size < Math.ceil(slots.length * 0.45)) {
-    slots.forEach((pos, idx) => {
-      if (idx % 2 === 1) hidden.add(pos);
-    });
+  const minHidden = Math.max(1, Math.ceil(slots.length * 0.5));
+  const maxHidden = Math.max(minHidden, Math.ceil(slots.length * 0.72));
+  const wanted = minHidden + randomInt(maxHidden - minHidden + 1);
+  const candidates = sh(slots.slice(1, -1).length ? slots.slice(1, -1) : slots);
+  for (const pos of candidates) {
+    if (hidden.size >= wanted) break;
+    hidden.add(pos);
   }
+  if (hidden.size === 0 && slots.length) hidden.add(slots[Math.floor(slots.length / 2)]);
   return [...hidden].sort((a, b) => a - b);
+}
+
+function makeLetterQuestions(test) {
+  const items = [];
+  (test.phraseMatch || []).forEach(pair => {
+    items.push({
+      prompt: "Ergänzen Sie die Kollokation: „" + pair[0] + " …“",
+      answer: pair[1]
+    });
+  });
+  (test.wordMatch || []).forEach(pair => {
+    items.push({
+      prompt: "Welcher C1/C2-Ausdruck passt zu dieser deutschen Bedeutung? " + pair[1],
+      answer: pair[0]
+    });
+  });
+  (test.fill || []).forEach(row => {
+    items.push({
+      prompt: "Ergänzen Sie den Satz: " + row[0],
+      answer: row[1]
+    });
+  });
+  (test.prep || []).forEach(row => {
+    items.push({
+      prompt: "Welche Präposition / Fügung ergänzt den Satz? " + row[0],
+      answer: row[1]
+    });
+  });
+  const clean = [];
+  const seen = new Set();
+  sh(items).forEach(item => {
+    const key = norm(item.prompt + "|" + item.answer);
+    if (!seen.has(key) && item.answer && item.answer.length > 1) {
+      seen.add(key);
+      clean.push(item);
+    }
+  });
+  return clean.slice(0, 20);
 }
 
 function renderLetterPuzzle() {
@@ -48,10 +90,11 @@ function renderLetterPuzzle() {
     const used = letterTileUse[i];
     return '<button class="letterTile ' + (used ? 'ghost' : '') + '" data-tile="' + i + '" ' + (used ? 'disabled' : '') + ' style="min-width:38px;margin:4px">' + esc(ch) + '</button>';
   }).join("");
-  $("hr").innerHTML = '<div style="margin:12px 0">' + tiles + '</div><p><button id="letterBack" class="ghost">Zurück</button><button id="letterClear" class="ghost">Leeren</button></p><div id="letterMsg"></div>';
+  $("hr").innerHTML = '<div style="margin:12px 0">' + tiles + '</div><p><button id="letterBack" class="ghost">Zurück</button><button id="letterClear" class="ghost">Leeren</button><button id="letterNew" class="ghost">Neue Variante</button></p><div id="letterMsg"></div>';
   document.querySelectorAll("[data-tile]").forEach(btn => btn.onclick = () => useTile(Number(btn.dataset.tile)));
   $("letterBack").onclick = undoLetter;
   $("letterClear").onclick = clearLetters;
+  $("letterNew").onclick = showHang;
 }
 
 function firstEmptySlot() {
@@ -91,7 +134,7 @@ function clearLetters() {
 
 function startHangman() {
   const test = window.DEUTSCH_TESTS[selected];
-  hangWords = sh(test.hang || []);
+  letterQuestions = makeLetterQuestions(test);
   hangIndex = 0;
   hangScore = 0;
   hide();
@@ -101,12 +144,14 @@ function startHangman() {
 }
 
 function showHang() {
-  letterTarget = hangWords[hangIndex] || "";
+  const item = letterQuestions[hangIndex] || { prompt: "Keine Aufgabe vorhanden.", answer: "" };
+  letterTarget = item.answer || "";
+  letterPrompt = item.prompt || "";
   letterSlots = chooseHiddenSlots(letterTarget);
   letterFilled = letterSlots.map(() => "");
   letterTileChars = sh(letterSlots.map(i => letterTarget[i]));
   letterTileUse = letterTileChars.map(() => false);
-  $("hh").textContent = (hangIndex + 1) + "/" + hangWords.length + " · Eksik harfleri alttaki kutucuklardan soldan sağa doğru yerleştir.";
+  $("hh").innerHTML = '<b>' + (hangIndex + 1) + '/' + letterQuestions.length + '</b><br>' + esc(letterPrompt) + '<br><span class="muted">Eksik harfleri alttaki kutucuklardan soldan sağa doğru yerleştir. Her girişte boş harf yerleri yeniden değişir.</span>';
   $("hi").style.display = "none";
   renderLetterPuzzle();
 }
@@ -135,11 +180,12 @@ function checkHang() {
 }
 
 function nextHang() {
-  if (hangIndex < hangWords.length - 1) {
+  if (hangIndex < letterQuestions.length - 1) {
     hangIndex++;
     showHang();
   } else {
-    $("hr").innerHTML = '<p><b>Fertig: ' + hangScore + '/' + hangWords.length + '</b></p><button id="hangRestart">Neu starten</button>';
+    $("hm").innerHTML = "";
+    $("hr").innerHTML = '<p><b>Fertig: ' + hangScore + '/' + letterQuestions.length + '</b></p><button id="hangRestart">Neu starten</button>';
     $("hangRestart").onclick = startHangman;
   }
 }
