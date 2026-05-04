@@ -12,25 +12,25 @@ function startLesson(level) {
   const levelName = level === "short" ? "Kısa" : level === "medium" ? "Orta" : "Uzun";
   const title = test ? test.title : key;
   const topic = test && test.topic ? test.topic : "C1/C2 Wortschatz und Grammatik";
-  const terms = (test && test.words ? test.words.slice(0, level === "short" ? 6 : level === "medium" ? 12 : 18) : [])
-    .map(w => "<span class='pill'>" + esc(w) + "</span>").join(" ");
+  const terms = (test && test.words ? test.words.slice(0, level === "short" ? 5 : level === "medium" ? 10 : 16) : []);
+  const termList = terms.length ? "<ul>" + terms.map(w => "<li>" + esc(w) + "</li>").join("") + "</ul>" : "";
 
   hide();
   document.getElementById("lesson").classList.remove("hide");
   document.getElementById("lessonTitle").textContent = "Konu anlatımı: " + title;
-  document.getElementById("lessonMeta").textContent = "Seviye: " + levelName + " · Amaç: kalıp ezberleme ve doğru gramerle C1/C2 metin yazma";
+  document.getElementById("lessonMeta").textContent = "Seviye: " + levelName + " · Kalıp ezberleme ve doğru gramerle metin yazma";
 
   document.getElementById("lessonContent").innerHTML = `
-    <section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#fffdf9;margin-bottom:18px">
-      <h2>1. Überblick</h2>
+    <section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#ffffff;margin-bottom:18px">
+      <h2>1. Genel bakış</h2>
       <p><b>Thema:</b> ${esc(topic)}</p>
-      <p>Bu bölümde amaç kelimeleri tek tek ezberlemek değil; her kelimeyi <b>fiil bağlantısı, Präposition, Kasus ve örnek metin</b> içinde öğrenmektir. Böylece kalıp doğrudan yazma ve konuşmada kullanılabilir hale gelir.</p>
-      <p><b>Yazma formülü:</b> Begriff/Kollokation → korrektes Verb → Präposition/Kasus → Ursache/Folge → Beispiel/Bewertung.</p>
-      ${terms ? `<p><b>Öncelikli kavramlar:</b><br>${terms}</p>` : ""}
+      <p>Bu bölümde kelimeler tek tek değil, yazıda kullanılabilecek tam yapılar olarak çalışılır: <b>kalıp + doğru fiil + Präposition/Kasus + örnek cümle</b>.</p>
+      <p><b>Yazma sırası:</b> Kalıp → doğru gramer → neden/sonuç → örnek veya kısa değerlendirme.</p>
+      ${termList ? `<h3>Öncelikli kavramlar</h3>${termList}` : ""}
     </section>
 
     <section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#ffffff;margin-bottom:18px">
-      <h2>2. Temel açıklama</h2>
+      <h2>2. Konu açıklaması</h2>
       ${lesson[level]}
     </section>
   `;
