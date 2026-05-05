@@ -8,6 +8,7 @@ $script:LastCpu = @{}
 $script:LastCpuTime = Get-Date
 $script:IsRefreshing = $false
 $script:PanelWarnings = New-Object System.Collections.Generic.List[string]
+$script:PanelPid = $PID
 
 $Jobs = @(
     [pscustomobject]@{ Job='Backend'; TaskId='terrayield-060A-backend'; Descriptor='ai-tasks\parallel\terrayield-060A-backend.json'; Proc='python,docker' },
@@ -49,9 +50,6 @@ function ReadJson {
         $t = ReadText -Path $Path -MaxChars 20000
         if ([string]::IsNullOrWhiteSpace($t)) { return $null }
         return ($t | ConvertFrom-Json -ErrorAction Stop)
-    } catch [System.Management.Automation.PipelineStoppedException] {
-        Add-WarningText 'JSON read skipped because pipeline was stopping.'
-        return $null
     } catch {
         Add-WarningText ('JSON warning: ' + $_.Exception.Message)
         return $null
@@ -62,12 +60,23 @@ function FirstLineStartingWith {
     param([string]$Text, [string]$Prefix)
     try {
         if ([string]::IsNullOrEmpty($Text)) { return '' }
-        $lines = $Text -split "`r?`n"
-        foreach ($line in $lines) {
+        foreach ($line in ($Text -split "`r?`n")) {
             if ($line.StartsWith($Prefix)) { return $line }
         }
         return ''
     } catch { return '' }
+}
+
+function Parse-DateSafe {
+    param([string]$Raw)
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return $null }
+    $formats = @('dd/MM/yyyy HH:mm:ss','M/d/yyyy HH:mm:ss','MM/dd/yyyy HH:mm:ss','yyyy-MM-dd HH:mm:ss','yyyy-MM-ddTHH:mm:ss')
+    foreach ($fmt in $formats) {
+        try {
+            return [datetime]::ParseExact($Raw.Trim(), $fmt, [System.Globalization.CultureInfo]::InvariantCulture)
+        } catch {}
+    }
+    try { return [datetime]::Parse($Raw, [System.Globalization.CultureInfo]::InvariantCulture) } catch { return $null }
 }
 
 function ParseHeartbeat {
@@ -78,9 +87,10 @@ function ParseHeartbeat {
         $timeLine = FirstLineStartingWith -Text $text -Prefix 'Time:'
         $statusLine = FirstLineStartingWith -Text $text -Prefix 'Status:'
         $dt = $null
-        if ($timeLine) {
-            $raw = ($timeLine -replace '^Time:\s*','').Trim()
-            try { $dt = [datetime]::Parse($raw) } catch { $dt = $null }
+        if ($timeLine) { $dt = Parse-DateSafe (($timeLine -replace '^Time:\s*','').Trim()) }
+        if ($dt -and $dt -gt (Get-Date).AddMinutes(5)) {
+            Add-WarningText 'Heartbeat time looked like a future date; ignored for wait calculation.'
+            $dt = $null
         }
         $status = ''
         if ($statusLine) { $status = ($statusLine -replace '^Status:\s*','').Trim() }
@@ -128,9 +138,6 @@ function ResultInfo {
         $sum = ($summaryLines -join ' | ')
         if (!$sum) { $sum = 'Result file exists' }
         return [pscustomobject]@{ Exists=$true; Exit=$exit; Summary=$sum; Path=$path }
-    } catch [System.Management.Automation.PipelineStoppedException] {
-        Add-WarningText 'Result read skipped because pipeline was stopping.'
-        return [pscustomobject]@{ Exists=$false; Exit=''; Summary='Result read interrupted safely'; Path='' }
     } catch {
         Add-WarningText ('Result warning: ' + $_.Exception.Message)
         return [pscustomobject]@{ Exists=$false; Exit=''; Summary='Result read warning'; Path='' }
@@ -140,8 +147,7 @@ function ResultInfo {
 function SystemUsage {
     $cpu = '?'; $ram = '?'
     try {
-        $items = @(Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -ErrorAction Stop)
-        foreach ($item in $items) {
+        foreach ($item in @(Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -ErrorAction Stop)) {
             if ($item.Name -eq '_Total') { $cpu = ([int]$item.PercentProcessorTime).ToString() + '%'; break }
         }
     } catch { Add-WarningText ('CPU warning: ' + $_.Exception.Message) }
@@ -167,6 +173,7 @@ function ProcessCpu {
         $procs = @(Get-Process -ErrorAction Stop)
         $new = @{}
         foreach ($p in $procs) {
+            if ($p.Id -eq $script:PanelPid) { continue }
             $pname = $p.ProcessName.ToLowerInvariant()
             if ($names -notcontains $pname) { continue }
             $cpuNow = 0.0
@@ -181,8 +188,6 @@ function ProcessCpu {
         }
         $script:LastCpu = $new
         $script:LastCpuTime = $now
-    } catch [System.Management.Automation.PipelineStoppedException] {
-        Add-WarningText 'Process CPU read skipped because pipeline was stopping.'
     } catch {
         Add-WarningText ('Process warning: ' + $_.Exception.Message)
     }
@@ -208,14 +213,18 @@ function BuildTable {
             $real = 'No'
             $wait = '-'
             $evidence = ''
-            if ($isCurrent -and $runner.Status -match 'started|running|polling') {
-                if ($runner.Status -match 'started|running') { $status = 'Running'; $real = 'Yes' } else { $status = 'Dispatcher polling'; $real = 'Maybe' }
-                $evidence = 'Runner heartbeat: ' + $runner.Status
+            if ($isCurrent -and $runner.Status -match 'started|running') {
+                $status = 'Running'; $real = 'Yes'; $evidence = 'Runner heartbeat: ' + $runner.Status
                 if ($runner.Time -and $current.timeout_seconds) {
                     $left = [int]$current.timeout_seconds - [int]((Get-Date) - $runner.Time).TotalSeconds
                     if ($left -lt 0) { $left = 0 }
-                    $wait = ([math]::Round($left/60,1)).ToString() + ' min'
+                    if ($left -gt 86400) { $wait = '-' } else { $wait = ([math]::Round($left/60,1)).ToString() + ' min' }
                 }
+            } elseif ($isCurrent -and $runner.Status -match 'polling') {
+                $status = 'Idle / polling only'
+                $real = 'No'
+                $wait = '-'
+                $evidence = 'Runner is alive but only polling; no active work evidence.'
             } elseif ($result.Exists) {
                 if ($result.Exit -eq '0') { $status = 'Finished' } else { $status = 'Blocked/Error' }
                 $real = 'Finished evidence'
@@ -293,7 +302,7 @@ $grid.RowHeadersVisible = $false
 $form.Controls.Add($grid)
 
 $hint = New-Object System.Windows.Forms.Label
-$hint.Text = 'Auto refresh: 30 seconds. Safe refresh mode: UI exceptions are captured instead of showing .NET crash dialogs.'
+$hint.Text = 'Auto refresh: 30 seconds. Polling is not counted as real work.'
 $hint.AutoSize = $true
 $hint.Location = New-Object System.Drawing.Point(18,560)
 $form.Controls.Add($hint)
@@ -321,7 +330,7 @@ function RefreshGrid {
                     if ($s -eq 'Running') { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::Honeydew }
                     elseif ($s -eq 'Blocked/Error') { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::MistyRose }
                     elseif ($s -eq 'Finished') { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::AliceBlue }
-                    elseif ($s -eq 'Active descriptor' -or $s -eq 'Dispatcher polling') { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::LemonChiffon }
+                    elseif ($s -eq 'Active descriptor' -or $s -eq 'Idle / polling only') { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::LemonChiffon }
                     else { $row.DefaultCellStyle.BackColor = [System.Drawing.Color]::White }
                 } catch {}
             }
@@ -329,9 +338,6 @@ function RefreshGrid {
             $grid.ResumeLayout()
         }
         $statusLabel.Text = 'Last update: ' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + ' | Jobs: ' + $rows.Count
-        $warningLabel.Text = ($script:PanelWarnings -join '   |   ')
-    } catch [System.Management.Automation.PipelineStoppedException] {
-        Add-WarningText 'Refresh interrupted safely while PowerShell pipeline was stopping.'
         $warningLabel.Text = ($script:PanelWarnings -join '   |   ')
     } catch {
         Add-WarningText ('Panel warning: ' + $_.Exception.Message)
