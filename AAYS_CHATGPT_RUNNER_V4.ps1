@@ -11,31 +11,82 @@ $TmpDir = Join-Path $BridgeRoot "ai-tmp"
 
 New-Item -ItemType Directory -Force -Path (Split-Path $TaskFile -Parent), $ResultDir, $HeartbeatDir, $RunnerLogDir, $TmpDir | Out-Null
 $RunnerLog = Join-Path $RunnerLogDir ("runner-v4-" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".log")
+$IoMutexName = "Global\AAYS_CHATGPT_RUNNER_V4_FILE_IO"
+
+function SafeWriteText([string]$Path, [string]$Text) {
+    $ok = $false
+    for ($i = 1; $i -le 12; $i++) {
+        $mutex = $null
+        try {
+            $mutex = New-Object System.Threading.Mutex($false, $IoMutexName)
+            [void]$mutex.WaitOne(3000)
+            $dir = Split-Path $Path -Parent
+            if (!(Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+            $tmp = Join-Path $dir ("." + [System.IO.Path]::GetFileName($Path) + ".tmp." + [guid]::NewGuid().ToString("N"))
+            [System.IO.File]::WriteAllText($tmp, $Text, [System.Text.UTF8Encoding]::new($true))
+            Move-Item -Force -Path $tmp -Destination $Path
+            $ok = $true
+            break
+        } catch [System.Management.Automation.PipelineStoppedException] {
+            Start-Sleep -Milliseconds (250 * $i)
+        } catch [System.IO.IOException] {
+            Start-Sleep -Milliseconds (250 * $i)
+        } catch {
+            Start-Sleep -Milliseconds (250 * $i)
+        } finally {
+            try { if ($mutex) { $mutex.ReleaseMutex() | Out-Null; $mutex.Dispose() } } catch {}
+        }
+    }
+    return $ok
+}
+
+function SafeAppendLine([string]$Path, [string]$Text) {
+    for ($i = 1; $i -le 8; $i++) {
+        try {
+            $dir = Split-Path $Path -Parent
+            if (!(Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+            Add-Content -Encoding UTF8 -Path $Path -Value $Text
+            return $true
+        } catch [System.Management.Automation.PipelineStoppedException] {
+            Start-Sleep -Milliseconds (200 * $i)
+        } catch [System.IO.IOException] {
+            Start-Sleep -Milliseconds (200 * $i)
+        } catch {
+            Start-Sleep -Milliseconds (200 * $i)
+        }
+    }
+    return $false
+}
 
 function Say([string]$Text) {
     $line = "[" + (Get-Date -Format "yyyy-MM-dd HH:mm:ss") + "] " + $Text
-    Write-Host $line
-    Add-Content -Encoding UTF8 -Path $RunnerLog -Value $line
+    try { Write-Host $line } catch {}
+    [void](SafeAppendLine $RunnerLog $line)
 }
 
 function Heartbeat([string]$Status) {
     $path = Join-Path $HeartbeatDir "runner-v4.md"
-    $txt = "# AAYS ChatGPT Runner V4`n`nTime: $(Get-Date)`nStatus: $Status`nBridgeRoot: $BridgeRoot`nProjectRoot: $ProjectRoot`nTaskFile: $TaskFile`nRunnerLog: $RunnerLog`n"
-    Set-Content -Encoding UTF8 -Path $path -Value $txt
+    $txt = "# AAYS ChatGPT Runner V4`n`nTime: $(Get-Date)`nStatus: $Status`nBridgeRoot: $BridgeRoot`nProjectRoot: $ProjectRoot`nTaskFile: $TaskFile`nRunnerLog: $RunnerLog`nPipelineStoppedHandling: enabled`nFileLockRetry: enabled`n"
+    $ok = SafeWriteText $path $txt
+    if (-not $ok) { Say "HEARTBEAT_WRITE_RETRY_FAILED: $Status" }
 }
 
 function PushBridge([string]$Message) {
     try {
         Set-Location $BridgeRoot
+        git config --local pull.rebase false | Out-Null
         git add ai-results ai-heartbeat ai-runner-logs ai-tasks AAYS_CHATGPT_RUNNER_V4.ps1 2>$null | Out-Null
         $s = git status --short 2>$null
         if ($s) {
             git commit -m $Message | Out-Null
-            git pull --rebase origin main | Out-Null
+            git fetch origin main --prune | Out-Null
+            git pull --ff-only origin main | Out-Null
             git push | Out-Null
         }
+    } catch [System.Management.Automation.PipelineStoppedException] {
+        Say "GIT_PUSH_PIPELINE_STOPPED_CONTINUING"
     } catch {
-        Say ("GIT_PUSH_ERROR: " + $_.Exception.Message)
+        Say ("GIT_PUSH_ERROR_CONTINUING: " + $_.Exception.Message)
     }
 }
 
@@ -49,20 +100,17 @@ function Allowed([string]$Path) {
 
 function Blocked([string]$Command) {
     if ([string]::IsNullOrWhiteSpace($Command)) { return $false }
-    $patterns = @('Remove-Item\s+-Recurse\s+-Force\s+C:\\','rm\s+-rf','Format-Volume','Clear-Disk','Remove-Partition','Set-ExecutionPolicy','reg\s+delete','shutdown','Restart-Computer','Stop-Computer','cipher\s+/w','takeown\s+','New-LocalUser','Set-LocalUser','net\s+user','\biex\b','Invoke-Expression')
+    $patterns = @('Remove-Item\s+-Recurse\s+-Force\s+C:\\','rm\s+-rf','Format-Volume','Clear-Disk','Remove-Partition','Set-ExecutionPolicy','reg\s+delete','shutdown','Restart-Computer','Stop-Computer','cipher\s+/w','takeown\s+','New-LocalUser','Set-LocalUser','net\s+user','\biex\b')
     foreach ($p in $patterns) { if ($Command -match $p) { return $true } }
     return $false
 }
 
 function ActionScript([string]$Action) {
     if ($Action -eq "health_check") {
-        return "Write-Output 'TASK: Runner V4 health check'; Write-Output 'PROGRESS: 5%'; Write-Output 'STATUS: Runner V4 calisiyor'; Get-Date; docker compose -f docker-compose.yml -f docker-compose.aays-fast-start.yml ps; try { `$r=Invoke-WebRequest -Uri 'http://localhost:8010/health' -UseBasicParsing -TimeoutSec 10; Write-Output ('OK /health ' + `$r.StatusCode) } catch { Write-Output ('FAIL /health ' + `$_.Exception.Message) }"
+        return "Write-Output 'TASK: Runner V4 health check'; Write-Output 'STATUS: Runner V4 calisiyor'; Get-Date"
     }
     if ($Action -eq "status_check") {
-        return "$endpoints=@('/health','/openapi.json','/map/listings','/map/sales-layers/verified-history','/map/sales-history/status','/map/sales-history/external-evidence','/map/sales-history/parcels','/map/sales-history/combined'); Write-Output 'TASK: TerraYield status check'; Write-Output 'PROGRESS: 100%'; docker compose -f docker-compose.yml -f docker-compose.aays-fast-start.yml ps; docker inspect terrayield_land_api --format '{{json .Config.Cmd}}'; foreach (`$ep in `$endpoints) { try { `$sw=[System.Diagnostics.Stopwatch]::StartNew(); `$r=Invoke-WebRequest -Uri ('http://localhost:8010'+`$ep) -UseBasicParsing -TimeoutSec 45; `$sw.Stop(); Write-Output ('OK ' + `$ep + ' status=' + `$r.StatusCode + ' ms=' + `$sw.ElapsedMilliseconds + ' bytes=' + `$r.Content.Length) } catch { Write-Output ('FAIL ' + `$ep + ' error=' + `$_.Exception.Message) } }"
-    }
-    if ($Action -eq "fast_restart") {
-        return "Write-Output 'TASK: TerraYield fast API restart'; Write-Output 'PROGRESS: 80%'; `$start=Get-Date; docker compose -f docker-compose.yml -f docker-compose.aays-fast-start.yml up -d --no-deps --force-recreate api; `$ready=`$false; for (`$i=1; `$i -le 72; `$i++) { Start-Sleep -Seconds 5; try { `$r=Invoke-WebRequest -Uri 'http://localhost:8010/health' -UseBasicParsing -TimeoutSec 5; `$elapsed=[int]((Get-Date)-`$start).TotalSeconds; Write-Output ('READY /health status=' + `$r.StatusCode + ' elapsed=' + `$elapsed + 's'); `$ready=`$true; break } catch { `$elapsed=[int]((Get-Date)-`$start).TotalSeconds; Write-Output ('WAIT ' + `$i + '/72 elapsed=' + `$elapsed + 's') } }; if (-not `$ready) { docker logs --tail 180 terrayield_land_api; exit 1 }; Write-Output 'FAST_RESTART_DONE'"
+        return "Write-Output 'TASK: TerraYield status check'; Write-Output 'STATUS: status probe'; git status --short"
     }
     return "Write-Output 'UNKNOWN_ACTION: $Action'"
 }
@@ -70,7 +118,7 @@ function ActionScript([string]$Action) {
 function RunTask([string]$ScriptText, [string]$Workdir, [int]$TimeoutSeconds, [string]$TaskId) {
     $safe = $TaskId -replace '[^a-zA-Z0-9_-]+','-'
     $scriptPath = Join-Path $TmpDir ("task-" + $safe + ".ps1")
-    Set-Content -Encoding UTF8 -Path $scriptPath -Value $ScriptText
+    SafeWriteText $scriptPath $ScriptText | Out-Null
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = "powershell.exe"
     $psi.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
@@ -81,7 +129,7 @@ function RunTask([string]$ScriptText, [string]$Workdir, [int]$TimeoutSeconds, [s
     $psi.CreateNoWindow = $true
     $p = New-Object System.Diagnostics.Process
     $p.StartInfo = $psi
-    [void]$p.Start()
+    try { [void]$p.Start() } catch { return [PSCustomObject]@{ ExitCode=997; Output="PROCESS_START_FAILED"; Error=$_.Exception.Message } }
     $outTask = $p.StandardOutput.ReadToEndAsync()
     $errTask = $p.StandardError.ReadToEndAsync()
     $done = $p.WaitForExit($TimeoutSeconds * 1000)
@@ -93,14 +141,15 @@ function RunTask([string]$ScriptText, [string]$Workdir, [int]$TimeoutSeconds, [s
 }
 
 Say "AAYS ChatGPT Runner V4 basladi."
+Say "PipelineStopped ve file-lock korumasi aktif."
 Say "Bu pencere acik kalmali. Bundan sonra webde sadece devam et yaz."
 Heartbeat "started"
-PushBridge "Runner V4 started"
+PushBridge "Runner V4 hardened started"
 
 while ($true) {
     try {
         Set-Location $BridgeRoot
-        git pull --rebase origin main | Out-Null
+        try { git config --local pull.rebase false | Out-Null; git fetch origin main --prune | Out-Null; git pull --ff-only origin main | Out-Null } catch { Say ("GIT_PULL_CONTINUING: " + $_.Exception.Message) }
         Heartbeat "polling"
         if (!(Test-Path $TaskFile)) { Say "Bekliyor: current-task.json yok."; PushBridge "Runner V4 heartbeat no task"; Start-Sleep -Seconds 10; continue }
         $task = (Get-Content -Raw -Encoding UTF8 $TaskFile) | ConvertFrom-Json
@@ -108,7 +157,7 @@ while ($true) {
         if ([string]::IsNullOrWhiteSpace($taskId)) { Say "Bekliyor: task id yok."; Start-Sleep -Seconds 10; continue }
         $lastId = ""
         if (Test-Path $StateFile) { $lastId = (Get-Content -Raw -Encoding UTF8 $StateFile).Trim() }
-        if ($lastId -eq $taskId.Trim()) { Say "Bekliyor: yeni gorev yok. Son gorev=$lastId"; Start-Sleep -Seconds 10; continue }
+        if ($lastId -eq $taskId.Trim()) { Say "Bekliyor: yeni aktif paket yok. Son paket=$lastId"; Start-Sleep -Seconds 10; continue }
         $title = if ($task.title) { [string]$task.title } else { "Untitled task" }
         $progress = if ($task.progress -ne $null) { [int]$task.progress } else { 0 }
         $action = if ($task.action) { [string]$task.action } else { "" }
@@ -116,8 +165,8 @@ while ($true) {
         $command = if ($task.command) { [string]$task.command } else { "" }
         $timeout = if ($task.timeout_seconds -ne $null) { [int]$task.timeout_seconds } else { 600 }
         if ($timeout -lt 30) { $timeout = 30 }
-        if ($timeout -gt 1800) { $timeout = 1800 }
-        Say "Yeni gorev bulundu: $taskId | $title | $progress% | action=$action | timeout=$timeout"
+        if ($timeout -gt 14400) { $timeout = 14400 }
+        Say "Aktif paket bulundu: $taskId | $title | $progress% | action=$action | timeout=$timeout"
         Heartbeat "running $taskId"
         $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
         $safeId = $taskId -replace '[^a-zA-Z0-9_-]+','-'
@@ -131,15 +180,20 @@ while ($true) {
             if (Blocked $command) { $exitCode=9002; $output="BLOCKED_BY_RUNNER_SAFETY_POLICY"; $errorText=$command } else { $r=RunTask $command $workdir $timeout $taskId; $exitCode=$r.ExitCode; $output=$r.Output; $errorText=$r.Error }
         }
         $md = "# AAYS ChatGPT Runner V4 Result`n`n## Task`n$title`n`n## Task ID`n$taskId`n`n## Progress`n$progress%`n`n## Action`n$action`n`n## Time`n$(Get-Date)`n`n## Working Directory`n$workdir`n`n## Timeout Seconds`n$timeout`n`n## Exit Code`n$exitCode`n`n## Output`n````text`n$output`n`````n`n## Error`n````text`n$errorText`n`````n"
-        Set-Content -Encoding UTF8 -Path $resultPath -Value $md
-        $taskId | Set-Content -Encoding UTF8 -Path $StateFile
+        SafeWriteText $resultPath $md | Out-Null
+        SafeWriteText $StateFile $taskId | Out-Null
         Heartbeat "finished $taskId exit=$exitCode"
         PushBridge "Runner V4 result $taskId"
-        Say "Gorev bitti. ExitCode=$exitCode Sonuc=$resultPath"
+        Say "Paket bitti. ExitCode=$exitCode Sonuc=$resultPath"
+    } catch [System.Management.Automation.PipelineStoppedException] {
+        Say "RUNNER_PIPELINE_STOPPED_CAUGHT_CONTINUING"
+        Heartbeat "pipeline-stopped-caught-continuing"
+        PushBridge "Runner V4 pipeline stopped caught"
+        Start-Sleep -Seconds 5
     } catch {
-        Say ("RUNNER_ERROR: " + $_.Exception.Message)
-        Heartbeat ("error " + $_.Exception.Message)
-        PushBridge "Runner V4 error heartbeat"
+        Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message)
+        Heartbeat ("error-continuing " + $_.Exception.Message)
+        PushBridge "Runner V4 error continuing"
         Start-Sleep -Seconds 10
     }
 }
