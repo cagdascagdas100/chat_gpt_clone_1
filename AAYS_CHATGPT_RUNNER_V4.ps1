@@ -66,7 +66,7 @@ function Say([string]$Text) {
 
 function Heartbeat([string]$Status) {
     $path = Join-Path $HeartbeatDir "runner-v4.md"
-    $txt = "# AAYS ChatGPT Runner V4`n`nTime: $(Get-Date)`nStatus: $Status`nBridgeRoot: $BridgeRoot`nProjectRoot: $ProjectRoot`nTaskFile: $TaskFile`nRunnerLog: $RunnerLog`nPipelineStoppedHandling: enabled`nFileLockRetry: enabled`n"
+    $txt = "# AAYS ChatGPT Runner V4`n`nTime: $(Get-Date)`nStatus: $Status`nBridgeRoot: $BridgeRoot`nProjectRoot: $ProjectRoot`nTaskFile: $TaskFile`nRunnerLog: $RunnerLog`nPipelineStoppedHandling: enabled`nFileLockRetry: enabled`nPageJobTracking: enabled`n"
     $ok = SafeWriteText $path $txt
     if (-not $ok) { Say "HEARTBEAT_WRITE_RETRY_FAILED: $Status" }
 }
@@ -75,7 +75,7 @@ function PushBridge([string]$Message) {
     try {
         Set-Location $BridgeRoot
         git config --local pull.rebase false | Out-Null
-        git add ai-results ai-heartbeat ai-runner-logs ai-tasks AAYS_CHATGPT_RUNNER_V4.ps1 2>$null | Out-Null
+        git add ai-results ai-heartbeat ai-runner-logs ai-tasks ai-page-jobs AAYS_CHATGPT_RUNNER_V4.ps1 2>$null | Out-Null
         $s = git status --short 2>$null
         if ($s) {
             git commit -m $Message | Out-Null
@@ -106,12 +106,8 @@ function Blocked([string]$Command) {
 }
 
 function ActionScript([string]$Action) {
-    if ($Action -eq "health_check") {
-        return "Write-Output 'TASK: Runner V4 health check'; Write-Output 'STATUS: Runner V4 calisiyor'; Get-Date"
-    }
-    if ($Action -eq "status_check") {
-        return "Write-Output 'TASK: TerraYield status check'; Write-Output 'STATUS: status probe'; git status --short"
-    }
+    if ($Action -eq "health_check") { return "Write-Output 'TASK: Runner V4 health check'; Write-Output 'STATUS: Runner V4 calisiyor'; Get-Date" }
+    if ($Action -eq "status_check") { return "Write-Output 'TASK: TerraYield status check'; Write-Output 'STATUS: status probe'; git status --short" }
     return "Write-Output 'UNKNOWN_ACTION: $Action'"
 }
 
@@ -142,9 +138,10 @@ function RunTask([string]$ScriptText, [string]$Workdir, [int]$TimeoutSeconds, [s
 
 Say "AAYS ChatGPT Runner V4 basladi."
 Say "PipelineStopped ve file-lock korumasi aktif."
+Say "ai-page-jobs izleme aktif."
 Say "Bu pencere acik kalmali. Bundan sonra webde sadece devam et yaz."
 Heartbeat "started"
-PushBridge "Runner V4 hardened started"
+PushBridge "Runner V4 hardened page jobs started"
 
 while ($true) {
     try {
@@ -171,14 +168,9 @@ while ($true) {
         $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
         $safeId = $taskId -replace '[^a-zA-Z0-9_-]+','-'
         $resultPath = Join-Path $ResultDir ("$timestamp-$safeId.md")
-        if (!(Allowed $workdir)) {
-            $exitCode=9001; $output="WORKDIR_NOT_ALLOWED: $workdir"; $errorText=""
-        } elseif ([string]::IsNullOrWhiteSpace($command)) {
-            $command = ActionScript $action
-            if (Blocked $command) { $exitCode=9002; $output="BLOCKED_BY_RUNNER_SAFETY_POLICY"; $errorText=$command } else { $r=RunTask $command $workdir $timeout $taskId; $exitCode=$r.ExitCode; $output=$r.Output; $errorText=$r.Error }
-        } else {
-            if (Blocked $command) { $exitCode=9002; $output="BLOCKED_BY_RUNNER_SAFETY_POLICY"; $errorText=$command } else { $r=RunTask $command $workdir $timeout $taskId; $exitCode=$r.ExitCode; $output=$r.Output; $errorText=$r.Error }
-        }
+        if (!(Allowed $workdir)) { $exitCode=9001; $output="WORKDIR_NOT_ALLOWED: $workdir"; $errorText="" }
+        elseif ([string]::IsNullOrWhiteSpace($command)) { $command = ActionScript $action; if (Blocked $command) { $exitCode=9002; $output="BLOCKED_BY_RUNNER_SAFETY_POLICY"; $errorText=$command } else { $r=RunTask $command $workdir $timeout $taskId; $exitCode=$r.ExitCode; $output=$r.Output; $errorText=$r.Error } }
+        else { if (Blocked $command) { $exitCode=9002; $output="BLOCKED_BY_RUNNER_SAFETY_POLICY"; $errorText=$command } else { $r=RunTask $command $workdir $timeout $taskId; $exitCode=$r.ExitCode; $output=$r.Output; $errorText=$r.Error } }
         $md = "# AAYS ChatGPT Runner V4 Result`n`n## Task`n$title`n`n## Task ID`n$taskId`n`n## Progress`n$progress%`n`n## Action`n$action`n`n## Time`n$(Get-Date)`n`n## Working Directory`n$workdir`n`n## Timeout Seconds`n$timeout`n`n## Exit Code`n$exitCode`n`n## Output`n````text`n$output`n`````n`n## Error`n````text`n$errorText`n`````n"
         SafeWriteText $resultPath $md | Out-Null
         SafeWriteText $StateFile $taskId | Out-Null
@@ -186,14 +178,8 @@ while ($true) {
         PushBridge "Runner V4 result $taskId"
         Say "Paket bitti. ExitCode=$exitCode Sonuc=$resultPath"
     } catch [System.Management.Automation.PipelineStoppedException] {
-        Say "RUNNER_PIPELINE_STOPPED_CAUGHT_CONTINUING"
-        Heartbeat "pipeline-stopped-caught-continuing"
-        PushBridge "Runner V4 pipeline stopped caught"
-        Start-Sleep -Seconds 5
+        Say "RUNNER_PIPELINE_STOPPED_CAUGHT_CONTINUING"; Heartbeat "pipeline-stopped-caught-continuing"; PushBridge "Runner V4 pipeline stopped caught"; Start-Sleep -Seconds 5
     } catch {
-        Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message)
-        Heartbeat ("error-continuing " + $_.Exception.Message)
-        PushBridge "Runner V4 error continuing"
-        Start-Sleep -Seconds 10
+        Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message); Heartbeat ("error-continuing " + $_.Exception.Message); PushBridge "Runner V4 error continuing"; Start-Sleep -Seconds 10
     }
 }
