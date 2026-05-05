@@ -1,10 +1,10 @@
 {
-  "id": "terrayield-062-mega-parallel-pickup-project-root",
-  "title": "Retry mega parallel pickup from allowed project root",
-  "progress": 13,
+  "id": "terrayield-063-real-execution-backend-ops",
+  "title": "Real execution task for TerraYield backend ops and validation",
+  "progress": 18,
   "working_directory": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
-  "timeout_seconds": 1800,
+  "timeout_seconds": 7200,
   "created_by": "ChatGPT",
-  "note": "Retry after 061 failed with WORKDIR_NOT_ALLOWED because bridge root was not accepted as working_directory. Use allowed project root. Keep one-job-one-result isolation and max active jobs 5. Wait 20-30 minutes before writing devam et.",
-  "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Write-Host 'RESULT: mega parallel pickup retry from project root'; Get-Content 'C:\\Users\\cagda\\Documents\\chat_gpt_clone_1\\ai-tasks\\parallel\\terrayield-061-mega-batch.txt'\""
+  "note": "This is a real execution task, not a list-print pickup. It runs project-root commands: Python compile, git status, Docker DB startup if available, Alembic status/upgrade, sync dry-run if module exists, API health probes, and writes a timestamped report. Wait 30-45 minutes before writing devam et.",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Continue'; $stamp=Get-Date -Format yyyyMMdd_HHmmss; $out='.aays_real_runs\\063_real_execution_'+$stamp; New-Item -ItemType Directory -Force -Path $out | Out-Null; function R($n,$c){ Add-Content $out\\report.md ('## '+$n); Add-Content $out\\report.md ('CMD: '+$c); $r=Invoke-Expression ($c+' 2>&1') | Out-String; Add-Content $out\\report.md '```text'; Add-Content $out\\report.md $r; Add-Content $out\\report.md '```'; }; Add-Content $out\\report.md '# TerraYield 063 Real Execution'; Add-Content $out\\report.md ('Started: '+(Get-Date)); R 'git status' 'git status --short'; R 'python version' 'python --version'; R 'compile app' 'python -m compileall app'; R 'docker version' 'docker version'; R 'docker compose db' 'docker compose up -d db'; R 'docker compose ps' 'docker compose ps'; R 'alembic current' 'python -m alembic current'; R 'alembic upgrade head' 'python -m alembic upgrade head'; R 'sync dry run' 'python -m app.etl.sync_managed_land_listings --dry-run'; R 'api health' 'powershell -NoProfile -Command \"try{Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 http://localhost:8010/health | Select-Object StatusCode,Content}catch{Write-Output $_.Exception.Message}\"'; R 'openapi' 'powershell -NoProfile -Command \"try{Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 http://localhost:8010/openapi.json | Select-Object StatusCode}catch{Write-Output $_.Exception.Message}\"'; Write-Host 'RESULT: real execution completed'; Write-Host ('REPORT: '+$out+'\\report.md')\""
 }
