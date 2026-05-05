@@ -14,7 +14,7 @@ $Jobs = @(
     [pscustomobject]@{ Job='Backend'; TaskId='terrayield-060A-backend'; Descriptor='ai-tasks\parallel\terrayield-060A-backend.json'; Proc='python,docker' },
     [pscustomobject]@{ Job='Frontend'; TaskId='terrayield-060B-frontend'; Descriptor='ai-tasks\parallel\terrayield-060B-frontend.json'; Proc='node' },
     [pscustomobject]@{ Job='Ops'; TaskId='terrayield-060C-ops'; Descriptor='ai-tasks\parallel\terrayield-060C-ops.json'; Proc='powershell,pwsh' },
-    [pscustomobject]@{ Job='Active Pool'; TaskId='terrayield-064-five-slot-parallel-dispatcher'; Descriptor='ai-tasks\current-task.json'; Proc='powershell,pwsh,python,node,docker' },
+    [pscustomobject]@{ Job='Active Pool'; TaskId='terrayield-065-five-slot-parallel-dispatcher-rerun'; Descriptor='ai-tasks\current-task.json'; Proc='powershell,pwsh,python,node,docker' },
     [pscustomobject]@{ Job='Mega Batch'; TaskId='terrayield-062-mega-parallel-pickup-project-root'; Descriptor='ai-tasks\current-task.json'; Proc='powershell,pwsh' }
 )
 
