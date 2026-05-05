@@ -1,4 +1,4 @@
-﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-06T00:47:23 
+﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-06T01:45:47 
 ```text
 ops real work: git and process evidence
 git : warning: could not open directory 'Application Data/': Permission denied
@@ -144,23 +144,25 @@ At line:24 char:7
 
 ProcessName    Id      CPU StartTime         
 -----------    --      --- ---------         
-powershell   4152   0,5625 6.05.2026 00:47:23
-powershell   4796 0,265625 6.05.2026 00:47:22
-powershell   6540     0,75 6.05.2026 00:47:24
-powershell   8284 2,828125 6.05.2026 00:31:25
-powershell   8328 0,890625 6.05.2026 00:47:24
-powershell  10280   0,6875 6.05.2026 00:47:24
-powershell  10576 0,578125 6.05.2026 00:47:24
-powershell  13148 1,484375 6.05.2026 00:41:40
-powershell  16076 4,078125 5.05.2026 22:02:01
-powershell  17948 3,578125 5.05.2026 23:50:06
-powershell  18992  3,46875 6.05.2026 00:34:18
-powershell  20808 0,515625 6.05.2026 00:47:23
-python       8952 0,265625 6.05.2026 00:47:24
-python      13428   0,0625 6.05.2026 00:47:24
+docker      20228  0,03125 6.05.2026 01:45:48
+powershell   1524     0,75 6.05.2026 01:45:48
+powershell   1832  0,84375 6.05.2026 01:45:47
+powershell   8284   5,1875 6.05.2026 00:31:25
+powershell  10728  1,46875 6.05.2026 01:02:20
+powershell  11184      7,5 6.05.2026 01:26:39
+powershell  13148 3,609375 6.05.2026 00:41:40
+powershell  13832 1,828125 6.05.2026 01:25:22
+powershell  16076 5,984375 5.05.2026 22:02:01
+powershell  17652 0,703125 6.05.2026 01:45:48
+powershell  17948      6,5 5.05.2026 23:50:06
+powershell  18992  5,09375 6.05.2026 00:34:18
+powershell  19768  1,03125 6.05.2026 01:45:48
+powershell  21256  0,28125 6.05.2026 01:45:47
+powershell  21500  0,84375 6.05.2026 01:45:48
+python       9964   0,0625 6.05.2026 01:45:49
 
 
 
 RESULT=slot_completed
 ```
-Finished: 2026-05-06T00:47:25
+Finished: 2026-05-06T01:45:49
