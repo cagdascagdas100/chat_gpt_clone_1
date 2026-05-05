@@ -1,0 +1,87 @@
+window.DEUTSCH_TESTS=window.DEUTSCH_TESTS||{};
+window.DEUTSCH_TESTS.t19={
+  category:"Bevor Schreiben",
+  slug:"selbstfahrende_autos",
+  title:"Selbstfahrende Autos",
+  topic:"Argumentationsvorbereitung · autonome Mobilität · Verkehrssicherheit · Haftung · Datenschutz · Ethik · Infrastruktur",
+  words:["selbstfahrende Autos","autonome Fahrzeuge","automatisiertes Fahren","Verkehrssicherheit","Unfallrisiko","Haftungsfrage","Datenschutz","ethische Verantwortung","technische Zuverlässigkeit","öffentliche Akzeptanz","digitale Infrastruktur","Mobilitätswende","Assistenzsysteme","menschliches Fehlverhalten","algorithmische Entscheidung","rechtlicher Rahmen","Testphase","Notfallsituation","gesellschaftliche Folgen","Vertrauen in Technologie","Verkehrsfluss","Barrierefreiheit","individuelle Mobilität","regulatorische Kontrolle"],
+  fill:[
+    ["Selbstfahrende Autos könnten langfristig dazu beitragen, die Verkehrssicherheit zu ____.","erhöhen","Verkehrssicherheit erhöhen"],
+    ["Ein zentrales Problem besteht darin, wer im Falle eines Unfalls die Verantwortung ____.","trägt","Verantwortung tragen"],
+    ["Autonome Fahrzeuge müssen enorme Datenmengen ____ und verarbeiten.","erheben","Daten erheben"],
+    ["Der rechtliche Rahmen muss klar festlegen, unter welchen Bedingungen autonome Systeme eingesetzt ____ dürfen.","werden","Passiv"],
+    ["Technische Zuverlässigkeit ist entscheidend, damit Vertrauen in die neue Technologie ____ kann.","entstehen","Vertrauen entstehen"],
+    ["In Notfallsituationen müssen algorithmische Entscheidungen nachvollziehbar ____.","bleiben","nachvollziehbar bleiben"],
+    ["Die Einführung selbstfahrender Autos kann den Verkehrsfluss in Städten langfristig ____.","verbessern","Verkehrsfluss verbessern"],
+    ["Gleichzeitig bergen autonome Fahrzeuge erhebliche Risiken, wenn die digitale Infrastruktur nicht ausreichend ____ ist.","ausgebaut","Infrastruktur ausbauen"],
+    ["Für ältere Menschen oder Menschen mit Behinderung könnten selbstfahrende Autos neue Mobilitätschancen ____.","eröffnen","Chancen eröffnen"],
+    ["Die öffentliche Akzeptanz hängt davon ab, ob Sicherheitsrisiken transparent kommuniziert ____.","werden","Passiv"],
+    ["Der Staat muss verbindliche Standards ____ , bevor autonome Fahrzeuge flächendeckend zugelassen werden.","festlegen","Standards festlegen"],
+    ["Ein überzeugender Schreibtext sollte Vorteile und Risiken selbstfahrender Autos differenziert ____.","abwägen","abwägen"],
+    ["Autonome Systeme können menschliches Fehlverhalten reduzieren, aber technische Fehler nicht vollständig ____.","ausschließen","Risiken ausschließen"],
+    ["Beim automatisierten Fahren stellt sich die Frage, wie Verantwortung rechtlich ____ werden kann.","zugeordnet","Verantwortung zuordnen"],
+    ["Datenschutzrechtliche Bedenken entstehen, weil Bewegungsdaten dauerhaft gespeichert und ____ werden könnten.","ausgewertet","Daten auswerten"]
+  ],
+  mc:[
+    ["Welche Formulierung ist für eine C1/C2-Einleitung am stärksten?",["Die Debatte über selbstfahrende Autos berührt nicht nur technische Fragen, sondern auch rechtliche, ethische und gesellschaftliche Grundprobleme.","Selbstfahrende Autos sind gut und schlecht.","Autos ohne Fahrer sind ein modernes Thema.","Viele Menschen reden über neue Autos.","Technik ist heute überall wichtig."],0,"Einleitung"],
+    ["Welche Aussage formuliert ein Risiko differenziert?",["Autonome Fahrzeuge können das Unfallrisiko senken, sofern technische Systeme zuverlässig funktionieren und rechtliche Verantwortlichkeiten geklärt sind.","Selbstfahrende Autos verhindern alle Unfälle.","Computer fahren immer besser als Menschen.","Autonome Autos sind grundsätzlich gefährlich.","Das Risiko ist egal, wenn Technik modern ist."],0,"Abwägung"],
+    ["Welche Nomen-Verb-Verbindung passt zum Thema Haftung?",["Verantwortung rechtlich zuordnen","Verantwortung essen","Haftung fahren","Schuld technisch verbessern","Unfallrisiko speichern"],0,"Haftung"],
+    ["Welche Formulierung ist grammatisch und stilistisch korrekt?",["Die Einführung autonomer Fahrzeuge setzt eine leistungsfähige digitale Infrastruktur voraus.","Die Einführung autonome Fahrzeuge braucht Infrastruktur gut.","Autonome Fahrzeuge voraussetzen Infrastruktur leistungsfähig.","Die digitale Infrastruktur ist, weil Autos autonom.","Einführung von Autos macht Infrastruktur."],0,"C1/C2 Stil"],
+    ["Welche Struktur eignet sich für einen Hauptteil?",["Ein häufig angeführtes Argument lautet, dass selbstfahrende Autos menschliches Fehlverhalten reduzieren könnten.","Ein Argument sagt, Autos fahren allein.","Man sagt oft Autos gut.","Das Thema hat Argumente.","Hauptteil ist über Autos."],0,"Argumenteinführung"],
+    ["Welche Schlussformulierung ist angemessen?",["Zusammenfassend lässt sich sagen, dass selbstfahrende Autos große Chancen bieten, deren Umsetzung jedoch klare rechtliche und technische Voraussetzungen verlangt.","Am Ende sind selbstfahrende Autos gut.","Ich finde Autos ohne Fahrer interessant.","Das war alles zum Thema.","Man muss schauen, was passiert."],0,"Schluss"],
+    ["Welche Option beschreibt Datenschutz präzise?",["Bewegungsdaten können Rückschlüsse auf persönliche Gewohnheiten und Aufenthaltsorte ermöglichen.","Daten sind einfach im Auto.","Datenschutz ist nicht so wichtig.","Autos wissen alles und das ist gut.","Daten machen Autofahren modern."],0,"Datenschutz"],
+    ["Welche Aussage ist logisch am überzeugendsten?",["Je stärker autonome Fahrzeuge in den Verkehr integriert werden, desto wichtiger werden transparente Regeln für Haftung, Sicherheit und Datenverarbeitung.","Je mehr Autos fahren, desto weniger Regeln braucht man.","Wenn Autos selbst fahren, gibt es keine Verantwortung mehr.","Technik ersetzt jedes Gesetz.","Autonomie bedeutet immer Sicherheit."],0,"Logik"]
+  ],
+  tf:[
+    ["Selbstfahrende Autos können als Teil einer breiteren Mobilitätswende diskutiert werden.",true,"Mobilitätswende"],
+    ["Beim automatisierten Fahren spielen Haftungsfragen keine Rolle.",false,"Haftung"],
+    ["Die Verarbeitung von Bewegungsdaten kann datenschutzrechtliche Probleme aufwerfen.",true,"Datenschutz"],
+    ["Technische Zuverlässigkeit ist für die öffentliche Akzeptanz autonomer Fahrzeuge zentral.",true,"Akzeptanz"],
+    ["Autonome Fahrzeuge schließen technische Fehler grundsätzlich vollständig aus.",false,"Risiko"],
+    ["Ein C1/C2-Text sollte Chancen und Risiken selbstfahrender Autos abwägen.",true,"Schreiben"],
+    ["Algorithmische Entscheidungen können ethische Fragen aufwerfen, besonders in Notfallsituationen.",true,"Ethik"],
+    ["Eine klare gesetzliche Regelung kann Vertrauen in autonome Mobilität stärken.",true,"Regulierung"]
+  ],
+  wordMatch:[
+    ["autonome Fahrzeuge","Fahrzeuge, die bestimmte oder alle Fahraufgaben ohne unmittelbare menschliche Steuerung übernehmen können"],
+    ["Haftungsfrage","rechtliche Frage danach, wer bei einem Schaden Verantwortung trägt"],
+    ["Verkehrssicherheit","Zustand, in dem Risiken im Straßenverkehr möglichst gering gehalten werden"],
+    ["digitale Infrastruktur","technische Grundlage aus Datenverbindungen, Sensorik und Kommunikationssystemen"],
+    ["öffentliche Akzeptanz","Bereitschaft der Gesellschaft, eine neue Technologie anzunehmen"],
+    ["algorithmische Entscheidung","Entscheidung, die auf automatisierter Datenverarbeitung beruht"],
+    ["Mobilitätswende","grundlegender Wandel der Verkehrssysteme hin zu effizienteren und nachhaltigeren Formen"],
+    ["Barrierefreiheit","Zugangsmöglichkeit für Menschen mit körperlichen, sozialen oder technischen Einschränkungen"]
+  ],
+  phraseMatch:[
+    ["Verkehrssicherheit","erhöhen"],
+    ["das Unfallrisiko","senken"],
+    ["Verantwortung","rechtlich zuordnen"],
+    ["Daten","erheben und auswerten"],
+    ["technische Zuverlässigkeit","gewährleisten"],
+    ["Vertrauen in Technologie","stärken"],
+    ["ethische Fragen","aufwerfen"],
+    ["digitale Infrastruktur","ausbauen"],
+    ["Mobilitätschancen","eröffnen"],
+    ["öffentliche Akzeptanz","fördern"],
+    ["Standards","festlegen"],
+    ["Vorteile und Risiken","abwägen"],
+    ["menschliches Fehlverhalten","reduzieren"],
+    ["technische Fehler","nicht vollständig ausschließen"],
+    ["einen rechtlichen Rahmen","schaffen"]
+  ],
+  prep:[
+    ["Die Debatte ___ selbstfahrende Autos betrifft technische und ethische Fragen.","über","Debatte über"],
+    ["Autonome Fahrzeuge können einen Beitrag ___ Verkehrssicherheit leisten.","zur","Beitrag zu + Dativ"],
+    ["Die Verantwortung muss im Falle eines Unfalls klar ___ den Beteiligten zugeordnet werden.","den","Dativ Plural"],
+    ["Vertrauen ___ autonome Systeme entsteht nicht ohne transparente Regeln.","in","Vertrauen in"],
+    ["Datenschutzrechtliche Bedenken ergeben sich ___ der Verarbeitung sensibler Bewegungsdaten.","aus","sich ergeben aus"],
+    ["Die öffentliche Akzeptanz hängt ___ der technischen Zuverlässigkeit ab.","von","abhängen von"],
+    ["Algorithmische Entscheidungen werfen Fragen ___ Verantwortung und Kontrolle auf.","nach","Fragen nach"],
+    ["Selbstfahrende Autos könnten sich positiv ___ die Mobilität älterer Menschen auswirken.","auf","sich auswirken auf"],
+    ["Vor einer breiten Einführung müssen Standards ___ Sicherheit und Datenschutz festgelegt werden.","für","Standards für"],
+    ["Die Integration autonomer Fahrzeuge ___ den Stadtverkehr erfordert neue Regeln.","in","Integration in"],
+    ["Ein überzeugender Text sollte zwischen Chancen und Risiken klar ____.","abwägen","Verb"],
+    ["Die Entscheidung ___ autonome Systeme darf nicht allein wirtschaftlich begründet werden.","für","Entscheidung für"]
+  ],
+  hang:["selbstfahrende Autos","autonome Fahrzeuge","automatisiertes Fahren","Verkehrssicherheit erhöhen","das Unfallrisiko senken","Verantwortung rechtlich zuordnen","Daten erheben und auswerten","technische Zuverlässigkeit gewährleisten","Vertrauen in Technologie stärken","ethische Fragen aufwerfen","digitale Infrastruktur ausbauen","Mobilitätschancen eröffnen","öffentliche Akzeptanz fördern","Standards für Sicherheit festlegen","Vorteile und Risiken abwägen","menschliches Fehlverhalten reduzieren","technische Fehler nicht vollständig ausschließen","einen rechtlichen Rahmen schaffen","sich positiv auf Mobilität auswirken","eine begründete Schlussfolgerung ziehen"]
+};
