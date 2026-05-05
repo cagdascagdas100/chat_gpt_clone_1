@@ -1,0 +1,51 @@
+﻿# AAYS ChatGPT Runner V4 Result
+
+## Task
+Wide manifest continue safe sprint
+
+## Task ID
+terrayield-057-wide-manifest-continue-safe
+
+## Progress
+99%
+
+## Action
+
+
+## Time
+05/05/2026 11:50:18
+
+## Working Directory
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+
+## Timeout Seconds
+1800
+
+## Exit Code
+0
+
+## Output
+``text
+[0 s] TASK=terrayield-057-wide-manifest-continue-safe
+[0 s] MODE=wide manifest continue sprint; report-only; keeps program open
+[1582 s] TOPICS_COMPLETED=82
+[1582 s] DATA_INVENTORY_COUNT=152
+[1583 s] SOURCE_ACCURACY_SCORE=78/100
+[1583 s] PARCEL_MATCH_ACCURACY_SCORE=64/100
+[1583 s] GENERAL_CONFIDENCE_SCORE=69/100
+SUMMARY_FILE=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\057_wide_manifest_continue_safe_20260505_112352\summary.md
+STATUS_FILE=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\057_wide_manifest_continue_safe_20260505_112352\status.json
+SCORE_FILE=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\057_wide_manifest_continue_safe_20260505_112352\scorecard.csv
+SOURCE_ACCURACY_SCORE=78/100
+PARCEL_MATCH_ACCURACY_SCORE=64/100
+GENERAL_CONFIDENCE_SCORE=69/100
+TERRAYIELD_057_WIDE_MANIFEST_CONTINUE_SAFE_DONE
+
+``
+
+## Error
+``text
+ConvertTo-Json : 
+
+``
+
