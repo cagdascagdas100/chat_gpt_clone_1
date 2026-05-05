@@ -1,6 +1,7 @@
 function catOf(t){
   if(t && t.category==="Genel Grammer") return "Genel Grammer";
   if(t && t.category==="NVV") return "NVV";
+  if(t && t.category==="Bevor Schreiben") return "Bevor Schreiben";
   return "Schreiben Fehlern";
 }
 function renderCategoryChoice(){
@@ -12,10 +13,12 @@ function renderCategoryChoice(){
       <button class="opt" style="text-align:left" id="catGrammar"><b>Genel Grammer</b><br><span class="muted">Satzbau, Kasus, Artikel, Pronomen, Negation ve doğru gramerle yazma.</span></button>
       <button class="opt" style="text-align:left" id="catWrite"><b>Schreiben Fehlern</b><br><span class="muted">4–13 arası kelime, kalıp, Präposition ve C1/C2 yazma hatası testleri.</span></button>
       <button class="opt" style="text-align:left" id="catNVV"><b>NVV</b><br><span class="muted">Nomen-Verb-Verbindungen: Wirtschaft, Gesellschaft/Medien/Bildung, Umwelt/Innovation/Argumentation.</span></button>
+      <button class="opt" style="text-align:left" id="catBefore"><b>Bevor Schreiben</b><br><span class="muted">Yazma öncesi konu hazırlığı: selbstfahrende Autos, argümantasyon, Redemittel ve C1/C2 metin yapısı.</span></button>
     </div>`;
   $("catGrammar").onclick=()=>renderTests("Genel Grammer");
   $("catWrite").onclick=()=>renderTests("Schreiben Fehlern");
   $("catNVV").onclick=()=>renderTests("NVV");
+  $("catBefore").onclick=()=>renderTests("Bevor Schreiben");
 }
 document.addEventListener("DOMContentLoaded",function(){
   try{ renderCategoryChoice(); }catch(e){ console.error(e); }
