@@ -1,4 +1,4 @@
-﻿# Runner V4 result terrayield-080-patch-admin-supabase-5worker-local  PROJECT=terrayield DISPLAY_PROJECT=TerraYield CHATGPT_PAGE_PROJECT=aays1 TASK=terrayield-080-patch-admin-supabase-5worker-local TIME=2026-05-06T18:37:46 RUN_LOG=C:\Users\cagda\Documents\chat_gpt_clone_1\ai-runner-logs\terrayield-080-collect-20260506_183746.log 
+﻿# Runner V4 result terrayield-080-patch-admin-supabase-5worker-local  PROJECT=terrayield DISPLAY_PROJECT=TerraYield CHATGPT_PAGE_PROJECT=aays1 TASK=terrayield-080-patch-admin-supabase-5worker-local TIME=2026-05-06T18:38:04 RUN_LOG=C:\Users\cagda\Documents\chat_gpt_clone_1\ai-runner-logs\terrayield-080-collect-20260506_183804.log 
 LATEST_RUN_DIR=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_real_runs\terrayield__080_patch_admin_supabase_5worker__20260506_182918
 
 ## C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_real_runs\terrayield__080_patch_admin_supabase_5worker__20260506_182918\terrayield__080_scorecard.csv
