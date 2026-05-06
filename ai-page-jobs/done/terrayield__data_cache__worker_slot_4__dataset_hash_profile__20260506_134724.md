@@ -1,0 +1,16 @@
+﻿CHATGPT_PAGE_PROJECT=aays1
+PROJECT=terrayield
+DISPLAY_PROJECT=TerraYield
+AREA=
+data_cache
+WORKER=
+worker_slot_4
+TASK=
+dataset_hash_profile
+STARTED=
+2026-05-06T13:47:28
+DATASET_EXISTS=True
+ROWS=3110
+COLUMNS=24
+RESULT=finished
+FINISHED=2026-05-06T13:47:29
