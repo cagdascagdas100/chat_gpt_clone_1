@@ -385,3 +385,11 @@ Generated: 2026-05-07T14:47:07.111236Z
 
 ## Class counts
 - : 34864
+
+## Confidence counts
+
+## Warnings
+- missing expected columns: use6_class,use6_color,use6_confidence,use6_sources
+
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
