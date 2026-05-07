@@ -13,7 +13,7 @@ terrayield-137-expansion-direct-apply-fixed-workdir
 
 
 ## Time
-05/07/2026 21:20:59
+05/07/2026 21:21:00
 
 ## Working Directory
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
@@ -183,7 +183,7 @@ security_summary_json PASS   C:\Users\cagda\Documents\GitHub\AAYS\england_map_we
 
 
 
-Report: C:\Users\cagda\Documents\GitHub\AAYS\security_accuracy_expansion\audit\verify_live_modules_20260507_212057.csv
+Report: C:\Users\cagda\Documents\GitHub\AAYS\security_accuracy_expansion\audit\verify_live_modules_20260507_212058.csv
 
 OVERALL=FAIL
 
@@ -376,5 +376,15 @@ TERRAYIELD_135_DONE
 
 ## Error
 ``text
+Exception calling "WriteAllText" with "3" argument(s): "İşlem, başka bir işlem tarafından kullanıldığından 'C:\Users\ca
+gda\Documents\GitHub\AAYS\security_accuracy_expansion\examples\source_evidence_manifest\src_ev_data_police_bulk_downloa
+ds_20260507_example.json' dosyasına erişemiyor."
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_135_security_accuracy_expansion_direct_apply.ps
+1:22 char:3
++   [System.IO.File]::WriteAllText($full, $Content, $enc)
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationException
+    + FullyQualifiedErrorId : IOException
+ 
 
 ``
