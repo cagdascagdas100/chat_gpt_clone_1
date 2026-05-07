@@ -13,7 +13,7 @@ terrayield-140-final-pack-rerun-after-use6-patch
 
 
 ## Time
-05/07/2026 22:02:08
+05/07/2026 22:02:23
 
 ## Working Directory
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
@@ -30,10 +30,14 @@ C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
 MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
 PLAN_BASE=D:\6 color parcells\plan_l_run01
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_215755
+RESULT=ok
+QA_DIR=D:\6 color parcells\plan_l_run01\output\qa
+REPORT_JSON=D:\6 color parcells\plan_l_run01\output\qa\plan_l_deep_qa_report.json
+REPORT_MD=D:\6 color parcells\plan_l_run01\output\qa\PLAN_L_DEEP_QA_REPORT.md
 ## Consolidated final status
 RESULT=needs_attention_recovery_final_pack
 CLASSIFIER_EXIT=0
-DEEP_QA_EXIT=998
+DEEP_QA_EXIT=0
 CSV_ROWS=34864
 GEOJSON_FEATURES=34864
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_215755
@@ -80,20 +84,39 @@ NEXT_COMMAND=devam et
 ## Error
 ``text
 Set-Content : Akış okunabilir değildi.
-At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:22 char:144
-+ ... PlanBase) | Set-Content -Encoding UTF8 (Join-Path $BeatDir ($TaskId + ...
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:23 char:153
++ ...  + $lines | Set-Content -Encoding UTF8 (Join-Path $SlotsDir ($n + '.m ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...y-final-pack.md:String) [Set-Content], ArgumentExcep 
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...sync_sources.md:String) [Set-Content], ArgumentExcep 
    tion
     + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.SetContentCommand
  
-Add-Content : İşlem, başka bir işlem tarafından kullanıldığından 'C:\Users\cagda\Documents\chat_gpt_clone_1\.aays_runs\
-terrayield-112-plan-l-recovery-final-pack_20260507_215755\deep_qa_run.log' dosyasına erişemiyor.
-At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:65 char:267
-+ ... PTION=' + $_.Exception.Message) | Add-Content -Encoding UTF8 $qaLog }
-+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : WriteError: (C:\Users\cagda\...deep_qa_run.log:String) [Add-Content], IOException
-    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+Set-Content : Akış okunabilir değildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:57 char:60
++ ... skipped_or_not_runnable') | Set-Content -Encoding UTF8 $classifierLog
++                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...ssifier_run.log:String) [Set-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.SetContentCommand
  
+Set-Content : İşlem, başka bir işlem tarafından kullanıldığından 'C:\Users\cagda\Documents\chat_gpt_clone_1\.aays_runs\
+terrayield-112-plan-l-recovery-final-pack_20260507_215755\slots\slot_03_classifier_recovery.md' dosyasına erişemiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:23 char:153
++ ...  + $lines | Set-Content -Encoding UTF8 (Join-Path $SlotsDir ($n + '.m ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Set-Content], IOException
+    + FullyQualifiedErrorId : System.IO.IOException,Microsoft.PowerShell.Commands.SetContentCommand
+ 
+python.exe : D:\6 color parcells\plan_l_run01\scripts\plan_l_deep_qa.py:77: DeprecationWarning: datetime.datetime.utcno
+w() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in U
+TC: datetime.datetime.now(datetime.UTC).
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:65 char:123
++ ... -Object -FilePath $qaLog } else { & $PythonExe $targetQA 2>&1 | Tee-O ...
++                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\6 color parc...(datetime.UTC).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  report = {'generated_at': datetime.utcnow().isoformat() + 'Z', 'base_dir': BASE_DIR, 'files': {}, 'counts': {}, 'warn
+ings': []}
 
 ``
