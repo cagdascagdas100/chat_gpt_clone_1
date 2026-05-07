@@ -927,3 +927,46 @@ Generated: 2026-05-07T23:40:03.310377Z
 
 NEXT_COMMAND=devam et
 NEXT_COMMAND=devam et
+## Consolidated final status
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_023931
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_023931.zip
+## Class summary
+## QA report head
+Perakende,#7FD3FF,747,2.14,2272177.0,3.0
+Apartman,#2E7D32,6425,18.43,60071255.55,3.0
+Müstakil,#A8E6A1,26300,75.44,4955306.59,3.0
+## Confidence summary
+confidence_score,parcel_count,percent
+- Ofis: 634
+# Plan L Deep QA Report
+
+Generated: 2026-05-07T23:40:03.310377Z
+
+## Counts
+- classified_rows: 34864
+- market_rows: 3110
+- voa_rows: 334617
+- geojson_features: 34864
+
+## Class counts
+- Apartman: 6425
+- Müstakil: 26300
+- Ofis: 634
+- Perakende: 747
+- Sanayi: 758
+
+## Confidence counts
+- 3: 34864
+
+## Warnings
+- none
+
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
