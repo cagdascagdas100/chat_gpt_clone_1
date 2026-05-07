@@ -300,3 +300,38 @@ FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-
 MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
 PLAN_BASE=D:\6 color parcells\plan_l_run01
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_173731
+## Consolidated final status
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_173731
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_173731.zip
+## Class summary
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_173731
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_173731.zip
+## Confidence summary
+confidence_score,parcel_count,percent
+3,34864,100.0
+## QA report head
+# Plan L Deep QA Report
+
+Generated: 2026-05-07T14:38:05.438279Z
+
+## Counts
+- classified_rows: 34864
+- market_rows: 3110
+- voa_rows: 334617
+- geojson_features: 34864
+
+## Class counts
+- : 34864
+
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
+
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
