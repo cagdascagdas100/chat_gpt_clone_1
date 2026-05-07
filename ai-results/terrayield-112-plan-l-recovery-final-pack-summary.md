@@ -789,3 +789,14 @@ CSV_ROWS=34864
 GEOJSON_FEATURES=34864
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_010115
 FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_010115.zip
+# TerraYield 112 Plan L Recovery Final Pack
+# TerraYield 112 Plan L Recovery Final Pack
+MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
+PLAN_BASE=D:\6 color parcells\plan_l_run01
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_022647
+PLAN_BASE=D:\6 color parcells\plan_l_run01
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_022651
+# TerraYield 112 Plan L Recovery Final Pack
+MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
+PLAN_BASE=D:\6 color parcells\plan_l_run01
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_022656
