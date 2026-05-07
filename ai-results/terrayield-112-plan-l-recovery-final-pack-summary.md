@@ -684,3 +684,5 @@ Müstakil,#A8E6A1,26300,75.44,4955306.59,3.0
 ## Warnings
 - none
 
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
