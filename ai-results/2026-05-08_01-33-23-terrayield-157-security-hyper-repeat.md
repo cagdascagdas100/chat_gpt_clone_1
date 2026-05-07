@@ -1,4 +1,4 @@
-﻿# AAYS Portable Task Runner Result
+﻿# AAYS ChatGPT Runner V4 Result
 
 ## Task
 Repeat security hyper verifier
@@ -6,14 +6,14 @@ Repeat security hyper verifier
 ## Task ID
 terrayield-157-security-hyper-repeat
 
-## Project
-TerraYield
+## Progress
+0%
 
-## ChatGPT Page Project
-aays1
+## Action
+
 
 ## Time
-05.08.2026 01:33:29
+05/08/2026 01:33:30
 
 ## Working Directory
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
@@ -21,11 +21,8 @@ C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
 ## Timeout Seconds
 7200
 
-## Timed Out
-False
-
 ## Exit Code
-
+0
 
 ## Output
 ``text
@@ -36,7 +33,7 @@ LIVE_WRITE_POLICY=FORBIDDEN
 NO_DOWNLOAD=TRUE
 NO_SERVICE_RESTART=TRUE
 NO_DOCKER=TRUE
-REPO_ROOT=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+REPO_ROOT=C:\Users\cagda\Documents\GitHub\AAYS
 STEP_001_INITIAL_LIVE_DIFF_GUARD
 LIVE_DIFF_INITIAL=
 LIVE_DIFF_INITIAL_STATUS=PASS
@@ -63,10 +60,10 @@ STEP_005_600_GUARD_CHECKS_LOW_NOISE
 HYPER_GUARD_CHECKS_RUN=600
 HYPER_GUARD_FAILURES=0
 STEP_006_VERIFIERS_AND_MANIFEST
-SCOPE_VERIFIER=MISSING
-LIVE_VERIFIER=MISSING
-SCOPE_STATUS=NOT_RUN
-LIVE_STATUS=NOT_RUN
+
+
+SCOPE_STATUS=UNKNOWN
+LIVE_STATUS=UNKNOWN
 LIVE_DIFF_FINAL=
 LIVE_DIFF_FINAL_STATUS=PASS
 WROTE=security_accuracy_expansion/hyper_scope_20260507/HYPER_SCOPE_ARTIFACT_MANIFEST.csv
@@ -328,6 +325,24 @@ At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_146_secu
 Invoke-History : Cannot evaluate parameter 'Id' because its argument is specified as a script block and there is no inp
 ut. A script block cannot be evaluated without input.
 At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_146_security_accuracy_expansion_hyper_pack.ps1:
+100 char:39
++ ... $sv){ $so=R { powershell -NoProfile -ExecutionPolicy Bypass -File $sv ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [Invoke-History], ParameterBindingException
+    + FullyQualifiedErrorId : ScriptBlockArgumentNoInput,Microsoft.PowerShell.Commands.InvokeHistoryCommand
+ 
+Invoke-History : Cannot evaluate parameter 'Id' because its argument is specified as a script block and there is no inp
+ut. A script block cannot be evaluated without input.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_146_security_accuracy_expansion_hyper_pack.ps1:
+102 char:39
++ ... $lv){ $lo=R { powershell -NoProfile -ExecutionPolicy Bypass -File $lv ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : MetadataError: (:) [Invoke-History], ParameterBindingException
+    + FullyQualifiedErrorId : ScriptBlockArgumentNoInput,Microsoft.PowerShell.Commands.InvokeHistoryCommand
+ 
+Invoke-History : Cannot evaluate parameter 'Id' because its argument is specified as a script block and there is no inp
+ut. A script block cannot be evaluated without input.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_146_security_accuracy_expansion_hyper_pack.ps1:
 105 char:15
 + $diffFinal=(R { git diff --name-only -- england_map_web }).Trim()
 +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,4 +360,3 @@ At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_146_secu
  
 
 ``
-
