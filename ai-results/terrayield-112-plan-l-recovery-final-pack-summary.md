@@ -181,3 +181,26 @@ FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-
 MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
 PLAN_BASE=D:\6 color parcells\plan_l_run01
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_164822
+## Consolidated final status
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_164822
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_164822.zip
+## Class summary
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260507_164820.zip
+## Class summary
+class6,color,parcel_count,percent,area_m2_sum,avg_confidence
+Sanayi,#F4C542,758,2.17,60822582.0,3.0
+confidence_score,parcel_count,percent
+3,34864,100.0
+confidence_score,parcel_count,percent
+3,34864,100.0
+## Counts
+- classified_rows: 34864
+- market_rows: 3110
+- market_rows: 3110
+- voa_rows: 334617
+- geojson_features: 34864
