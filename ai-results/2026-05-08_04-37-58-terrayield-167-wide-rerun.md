@@ -1,0 +1,342 @@
+﻿# AAYS Portable Task Runner Result
+
+## Task
+Wide rerun
+
+## Task ID
+terrayield-167-wide-rerun
+
+## Project
+TerraYield
+
+## ChatGPT Page Project
+aays1
+
+## Time
+05.08.2026 04:44:47
+
+## Working Directory
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+
+## Timeout Seconds
+7200
+
+## Timed Out
+False
+
+## Exit Code
+
+
+## Output
+``text
+# TerraYield 112 Plan L Recovery Final Pack
+MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
+PLAN_BASE=D:\6 color parcells\plan_l_run01
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_043759
+RESULT=ok
+QA_DIR=D:\6 color parcells\plan_l_run01\output\qa
+REPORT_JSON=D:\6 color parcells\plan_l_run01\output\qa\plan_l_deep_qa_report.json
+REPORT_MD=D:\6 color parcells\plan_l_run01\output\qa\PLAN_L_DEEP_QA_REPORT.md
+## Consolidated final status
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_043759
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_043759.zip
+## Class summary
+class6,color,parcel_count,percent,area_m2_sum,avg_confidence
+Sanayi,#F4C542,758,2.17,60822582.0,3.0
+Ofis,#1F4E9E,634,1.82,3064594.11,3.0
+Perakende,#7FD3FF,747,2.14,2272177.0,3.0
+Apartman,#2E7D32,6425,18.43,60071255.55,3.0
+M�stakil,#A8E6A1,26300,75.44,4955306.59,3.0
+## Confidence summary
+confidence_score,parcel_count,percent
+3,34864,100.0
+## QA report head
+# Plan L Deep QA Report
+
+Generated: 2026-05-08T01:38:40.882974Z
+
+## Counts
+- classified_rows: 34864
+- market_rows: 3110
+- voa_rows: 334617
+- geojson_features: 34864
+
+## Class counts
+- Apartman: 6425
+- M�stakil: 26300
+- Ofis: 634
+- Perakende: 747
+- Sanayi: 758
+
+## Confidence counts
+- 3: 34864
+
+## Warnings
+- none
+
+NEXT_COMMAND=devam et
+NEXT_COMMAND=devam et
+
+``
+
+## Error
+``text
+Set-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-heartbea
+t\terrayield-112-plan-l-recovery-final-pack.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:22 char:144
++ ... PlanBase) | Set-Content -Encoding UTF8 (Join-Path $BeatDir ($TaskId + ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...y-final-pack.md:String) [Set-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.SetContentCommand
+ 
+python.exe : D:\6 color parcells\plan_l_run01\scripts\plan_l_deep_qa.py:77: DeprecationWarning: datetime.datetime.utcno
+w() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in U
+TC: datetime.datetime.now(datetime.UTC).
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:65 char:123
++ ... -Object -FilePath $qaLog } else { & $PythonExe $targetQA 2>&1 | Tee-O ...
++                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\6 color parc...(datetime.UTC).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  report = {'generated_at': datetime.utcnow().isoformat() + 'Z', 'base_dir': BASE_DIR, 'files': {}, 'counts': {}, 'warn
+ings': []}
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : ��lem, ba�ka bir i�lem taraf�ndan kullan�ld���ndan 'C:\Users\cagda\Documents\chat_gpt_clone_1\ai-results\
+terrayield-112-plan-l-recovery-final-pack-summary.md' dosyas�na eri�emiyor.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], IOException
+    + FullyQualifiedErrorId : GetContentWriterIOError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+Add-Content : Ak�� okunabilir de�ildi.
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1:21 char:42
++ ... rite-Output $x; Add-Content -Encoding UTF8 -Path $Summary -Value $x }
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (C:\Users\cagda\...pack-summary.md:String) [Add-Content], ArgumentExcep 
+   tion
+    + FullyQualifiedErrorId : GetContentWriterArgumentError,Microsoft.PowerShell.Commands.AddContentCommand
+ 
+
+``
+
