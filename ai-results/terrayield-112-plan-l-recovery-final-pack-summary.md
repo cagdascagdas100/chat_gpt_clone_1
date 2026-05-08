@@ -1938,3 +1938,32 @@ FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-
 MODE=single_devam_maximal_safe_batch; recover_previous; rerun_if_needed; build_final_package; no_secrets; no_deploy
 PLAN_BASE=D:\6 color parcells\plan_l_run01
 FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_073826
+## Consolidated final status
+RESULT=needs_attention_recovery_final_pack
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_073815
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260508_073815.zip
+## Class summary
+DEEP_QA_EXIT=0
+CSV_ROWS=34864
+Sanayi,#F4C542,758,2.17,60822582.0,3.0
+Ofis,#1F4E9E,634,1.82,3064594.11,3.0
+Perakende,#7FD3FF,747,2.14,2272177.0,3.0
+Apartman,#2E7D32,6425,18.43,60071255.55,3.0
+Müstakil,#A8E6A1,26300,75.44,4955306.59,3.0
+## Confidence summary
+## QA report head
+# Plan L Deep QA Report
+
+confidence_score,parcel_count,percent
+3,34864,100.0
+CLASSIFIER_EXIT=0
+DEEP_QA_EXIT=0
+Generated: 2026-05-08T04:38:34.867504Z
+
+Sanayi,#F4C542,758,2.17,60822582.0,3.0
+Ofis,#1F4E9E,634,1.82,3064594.11,3.0
+- Apartman: 6425
