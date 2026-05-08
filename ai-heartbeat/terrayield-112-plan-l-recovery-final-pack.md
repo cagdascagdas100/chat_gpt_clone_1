@@ -2,8 +2,8 @@
 TASK_ID=
 terrayield-112-plan-l-recovery-final-pack
 STATUS=
-launching_wide_parallel_slots
+building_final_package
 UPDATED=
-2026-05-08T08:24:08
+2026-05-08T08:25:18
 PLAN_BASE=
 D:\6 color parcells\plan_l_run01
