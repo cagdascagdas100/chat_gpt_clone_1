@@ -61,3 +61,15 @@ ROWS_FEATURES_MATCH=True
 SUMMARY_EXISTS=True
 CONFIDENCE_SUMMARY_EXISTS=True
 FINAL_ACCEPTANCE=needs_attention
+# TerraYield 116 Plan L ZIP Repair - patched
+TASK=terrayield-116-plan-l-zip-repair
+FIX=Compress-Archive now uses -Path wildcard with -ErrorAction Stop; previous -LiteralPath wildcard caused final_zip_exists=False.
+# TerraYield 116 Plan L ZIP Repair - patched
+TASK=terrayield-116-plan-l-zip-repair
+FIX=Compress-Archive now uses -Path wildcard with -ErrorAction Stop; previous -LiteralPath wildcard caused final_zip_exists=False.
+# TerraYield 116 Plan L ZIP Repair - patched
+TASK=terrayield-116-plan-l-zip-repair
+FIX=Compress-Archive now uses -Path wildcard with -ErrorAction Stop; previous -LiteralPath wildcard caused final_zip_exists=False.
+ZIP_ERROR=İşlem, başka bir işlem tarafından kullanıldığından 'D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260510_221707.zip' dosyasına erişemiyor.
+ZIP_ERROR=İşlem, başka bir işlem tarafından kullanıldığından 'D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260510_221707.zip' dosyasına erişemiyor.
+ZIP_ERROR=İşlem, başka bir işlem tarafından kullanıldığından 'D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260510_221707.zip' dosyasına erişemiyor.
