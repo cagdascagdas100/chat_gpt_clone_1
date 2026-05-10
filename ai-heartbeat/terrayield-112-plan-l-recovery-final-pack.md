@@ -2,8 +2,8 @@
 TASK_ID=
 terrayield-112-plan-l-recovery-final-pack
 STATUS=
-finished
+running_deep_qa
 UPDATED=
-2026-05-10T22:26:23
+2026-05-10T23:37:44
 PLAN_BASE=
 D:\6 color parcells\plan_l_run01
