@@ -20,3 +20,17 @@ Listing 'app\\middleware'...
 Listing 'app\\schemas'...
 Listing 'app\\services'...
 
+
+FullName                                                                                                               
+--------                                                                                                               
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\recovery_016_api_exit127_20260503_2...
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_next_fix\recovery_017_api_deps_20260504_0002...
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\alembic.ini                                          
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\docker-compose.yml                                   
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\pyproject.toml                                       
+
+
+
+RESULT=slot_completed
+```
+Finished: 2026-05-10T17:49:32
