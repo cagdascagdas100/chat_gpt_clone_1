@@ -48,3 +48,6 @@ ROWS_FEATURES_MATCH=True
 SUMMARY_EXISTS=True
 CONFIDENCE_SUMMARY_EXISTS=True
 FINAL_ACCEPTANCE=100/100
+# TerraYield 116 Plan L ZIP Repair - patched
+TASK=terrayield-116-plan-l-zip-repair
+FIX=Compress-Archive now uses -Path wildcard with -ErrorAction Stop; previous -LiteralPath wildcard caused final_zip_exists=False.
