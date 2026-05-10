@@ -1,4 +1,4 @@
-﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-10T17:48:23 
+﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-10T21:49:13 
 ```text
 ops real work: git and process evidence
 git : warning: could not open directory 'Application Data/': Permission denied
@@ -140,18 +140,24 @@ At line:24 char:7
  
 
 
-ProcessName    Id      CPU StartTime          
------------    --      --- ---------          
-powershell   8188  0,96875 10.05.2026 17:48:23
-powershell   8224  0,65625 10.05.2026 17:48:24
-powershell  13412 0,796875 10.05.2026 17:48:24
-powershell  14128  0,65625 10.05.2026 17:48:24
-powershell  14616 0,546875 10.05.2026 17:48:24
-python      11572 0,140625 10.05.2026 17:48:25
-python      13972    1,375 10.05.2026 17:48:18
+ProcessName    Id        CPU StartTime          
+-----------    --        --- ---------          
+powershell   5288  10,890625 10.05.2026 17:48:45
+powershell   6668   0,671875 10.05.2026 21:49:14
+powershell   6928   0,359375 10.05.2026 21:49:14
+powershell   7952      1,875 10.05.2026 17:49:18
+powershell  11312   0,484375 10.05.2026 17:49:15
+powershell  13796   0,703125 10.05.2026 21:49:14
+powershell  15076  31,453125 10.05.2026 17:48:59
+powershell  15988   0,703125 10.05.2026 21:49:14
+powershell  16916   0,515625 10.05.2026 21:49:14
+powershell  18992     0,8125 10.05.2026 21:49:13
+python      13972 470,421875 10.05.2026 17:48:18
+python      14340    0,09375 10.05.2026 21:49:15
+python      18760    0,78125 10.05.2026 21:46:39
 
 
 
 RESULT=slot_completed
 ```
-Finished: 2026-05-10T17:48:25
+Finished: 2026-05-10T21:49:15
