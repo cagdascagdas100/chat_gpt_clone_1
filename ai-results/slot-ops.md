@@ -1,4 +1,4 @@
-﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-06T00:47:23 
+﻿# ops TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-10T17:48:23 
 ```text
 ops real work: git and process evidence
 git : warning: could not open directory 'Application Data/': Permission denied
@@ -50,6 +50,7 @@ warning: could not open directory 'Templates/': Permission denied
 ?? ../../../../.swt/
 ?? ../../../../.templateengine/
 ?? ../../../../.venv/
+?? ../../../../.viminfo
 ?? ../../../../.vscode-shared/
 ?? ../../../../.vscode/
 ?? ../../../../.wdm/
@@ -65,10 +66,6 @@ warning: could not open directory 'Templates/': Permission denied
 ?? ../../../../Links/
 ?? ../../../../Music/
 ?? ../../../../NTUSER.DAT
-?? ../../../../NTUSER.DAT{2ad838bb-efea-11ee-a54d-000d3a94eaa1}.TxR.0.regtrans-ms
-?? ../../../../NTUSER.DAT{2ad838bb-efea-11ee-a54d-000d3a94eaa1}.TxR.1.regtrans-ms
-?? ../../../../NTUSER.DAT{2ad838bb-efea-11ee-a54d-000d3a94eaa1}.TxR.2.regtrans-ms
-?? ../../../../NTUSER.DAT{2ad838bb-efea-11ee-a54d-000d3a94eaa1}.TxR.blf
 ?? ../../../../NTUSER.DAT{2ad838bc-efea-11ee-a54d-000d3a94eaa1}.TM.blf
 ?? ../../../../NTUSER.DAT{2ad838bc-efea-11ee-a54d-000d3a94eaa1}.TMContainer00000000000000000001.regtrans-ms
 ?? ../../../../NTUSER.DAT{2ad838bc-efea-11ee-a54d-000d3a94eaa1}.TMContainer00000000000000000002.regtrans-ms
@@ -94,6 +91,7 @@ warning: could not open directory 'Templates/': Permission denied
 ?? "../../../../bite\305\237lem.rar"
 ?? "../../../../bite\305\237lem.svg"
 ?? ../../../../chat_gpt_clone_1/
+?? ../../../../data/
 ?? ../../../../domination-gradle-cache/
 ?? ../../../../errors.log
 ?? ../../../../evaluation_summary.txt
@@ -142,25 +140,18 @@ At line:24 char:7
  
 
 
-ProcessName    Id      CPU StartTime         
------------    --      --- ---------         
-powershell   4152   0,5625 6.05.2026 00:47:23
-powershell   4796 0,265625 6.05.2026 00:47:22
-powershell   6540     0,75 6.05.2026 00:47:24
-powershell   8284 2,828125 6.05.2026 00:31:25
-powershell   8328 0,890625 6.05.2026 00:47:24
-powershell  10280   0,6875 6.05.2026 00:47:24
-powershell  10576 0,578125 6.05.2026 00:47:24
-powershell  13148 1,484375 6.05.2026 00:41:40
-powershell  16076 4,078125 5.05.2026 22:02:01
-powershell  17948 3,578125 5.05.2026 23:50:06
-powershell  18992  3,46875 6.05.2026 00:34:18
-powershell  20808 0,515625 6.05.2026 00:47:23
-python       8952 0,265625 6.05.2026 00:47:24
-python      13428   0,0625 6.05.2026 00:47:24
+ProcessName    Id      CPU StartTime          
+-----------    --      --- ---------          
+powershell   8188  0,96875 10.05.2026 17:48:23
+powershell   8224  0,65625 10.05.2026 17:48:24
+powershell  13412 0,796875 10.05.2026 17:48:24
+powershell  14128  0,65625 10.05.2026 17:48:24
+powershell  14616 0,546875 10.05.2026 17:48:24
+python      11572 0,140625 10.05.2026 17:48:25
+python      13972    1,375 10.05.2026 17:48:18
 
 
 
 RESULT=slot_completed
 ```
-Finished: 2026-05-06T00:47:25
+Finished: 2026-05-10T17:48:25

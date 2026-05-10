@@ -1,4 +1,4 @@
-﻿# backend TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-06T00:47:23 
+﻿# backend TaskId: terrayield-064-five-slot-parallel-dispatcher Status: starting RealWork: Yes JobCPU: measuring Evidence: slot result file created Started: 2026-05-10T17:48:23 
 ```text
 backend real work: python compile and app inventory
 Python 3.12.6
@@ -142,12 +142,12 @@ C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\estima
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\export_final_after_d_upgrade.py              
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\export_market_listing_parcel_package.py      
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\fill_market_listing_export_gaps.py           
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\final_3110_fail_closed_l4_pipeline.py        
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\find_deep_apply_db_matches.py                
 C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\full_autonomous_polygon_classifier.py        
-C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\import_final_sale_geometry_confidence_tabl...
 
 
 
 RESULT=slot_completed
 ```
-Finished: 2026-05-06T00:47:25
+Finished: 2026-05-10T17:48:25
