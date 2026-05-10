@@ -83,3 +83,6 @@ ROWS_FEATURES_MATCH=True
 SUMMARY_EXISTS=True
 CONFIDENCE_SUMMARY_EXISTS=True
 FINAL_ACCEPTANCE=100/100
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260510_221707
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260510_221707.zip
+CONFIDENCE_SUMMARY_EXISTS=True
