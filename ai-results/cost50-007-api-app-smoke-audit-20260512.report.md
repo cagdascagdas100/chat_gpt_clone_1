@@ -1,6 +1,6 @@
 ﻿# Cost50 Step 007 API App Smoke Audit
 
-Generated: 2026-05-12T02:28:04
+Generated: 2026-05-12T02:37:08
 Task: cost50-007-api-app-smoke-audit-20260512
 
 ## Scope
@@ -36,7 +36,7 @@ Task: cost50-007-api-app-smoke-audit-20260512
 ## Git Status
 ```text
 git : fatal: not a git repository (or any of the parent directories): .git
-At C:\AAYS_GITHUB_BRIDGE_CLEAN\ai-task-scripts\terrayield_cost50_007_api_app_smoke_audit.ps1:99 char:20
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_cost50_007_api_app_smoke_audit.ps1:99 char:20
 + try { $gitStatus = git -C $ProjectRoot status --short 2>&1 | Out-Stri ...
 +                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (fatal: not a gi...ectories): .git:String) [], RemoteException
