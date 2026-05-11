@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-075-generic-future-growth-loader-smoke-repeat
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-12T00:31:12
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-12T00:32:02
