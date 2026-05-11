@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Continue"
+﻿$ErrorActionPreference = "Continue"
 
 $BridgeRoot = "C:\Users\cagda\Documents\chat_gpt_clone_1"
 $ProjectRoot = "C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence"
@@ -183,3 +183,4 @@ while ($true) {
         Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message); Heartbeat ("error-continuing " + $_.Exception.Message); PushBridge "Runner V4 error continuing"; Start-Sleep -Seconds 10
     }
 }
+
