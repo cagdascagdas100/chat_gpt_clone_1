@@ -1,7 +1,7 @@
 ﻿# TerraYield Always-On Bridge Heartbeat
 
-status: started
-task_id: 
-checked_at: 2026-05-11T16:49:14
+status: running
+task_id: terrayield-047-bridge-contractor-bootstrap-probe
+checked_at: 2026-05-11T16:49:18
 bridge_root: C:\AAYS_GITHUB_BRIDGE_CLEAN
-message: Always-on runner started.
+message: Running terrayield_047_bridge_contractor_bootstrap_probe.ps1
