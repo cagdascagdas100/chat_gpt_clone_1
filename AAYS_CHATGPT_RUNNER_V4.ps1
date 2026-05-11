@@ -74,14 +74,27 @@ function Heartbeat([string]$Status) {
 function PushBridge([string]$Message) {
     try {
         Set-Location $BridgeRoot
-        git config --local pull.rebase false | Out-Null
+        git config --local pull.rebase true | Out-Null
+        git fetch origin main --prune | Out-Null
+        git rebase --autostash origin/main | Out-Null
+
         git add ai-results ai-heartbeat ai-runner-logs ai-tasks ai-page-jobs AAYS_CHATGPT_RUNNER_V4.ps1 2>$null | Out-Null
         $s = git status --short 2>$null
+
         if ($s) {
             git commit -m $Message | Out-Null
-            git fetch origin main --prune | Out-Null
-            git pull --ff-only origin main | Out-Null
-            git push | Out-Null
+
+            for ($i = 1; $i -le 6; $i++) {
+                git fetch origin main --prune | Out-Null
+                git rebase --autostash origin/main | Out-Null
+                git push origin main 2>$null | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                    return
+                }
+                Start-Sleep -Seconds (2 * $i)
+            }
+
+            Say "GIT_PUSH_RETRY_EXHAUSTED_CONTINUING"
         }
     } catch [System.Management.Automation.PipelineStoppedException] {
         Say "GIT_PUSH_PIPELINE_STOPPED_CONTINUING"
@@ -89,7 +102,6 @@ function PushBridge([string]$Message) {
         Say ("GIT_PUSH_ERROR_CONTINUING: " + $_.Exception.Message)
     }
 }
-
 function Allowed([string]$Path) {
     try {
         $full = [System.IO.Path]::GetFullPath($Path)
@@ -190,6 +202,7 @@ while ($true) {
         Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message); Heartbeat ("error-continuing " + $_.Exception.Message); PushBridge "Runner V4 error continuing"; Start-Sleep -Seconds 10
     }
 }
+
 
 
 
