@@ -1,6 +1,6 @@
 ﻿# Cost50 Step 006 Schema Migration Draft Audit
 
-Generated: 2026-05-12T02:08:45
+Generated: 2026-05-12T02:14:47
 Task: cost50-006-schema-migration-draft-audit-20260512
 
 ## Scope
@@ -35,7 +35,7 @@ Task: cost50-006-schema-migration-draft-audit-20260512
 ## Git Status
 ```text
 git : fatal: not a git repository (or any of the parent directories): .git
-At C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\terrayield_cost50_006_schema_migration_draft_audit.ps1:98 char:20
+At C:\AAYS_GITHUB_BRIDGE_CLEAN\ai-task-scripts\terrayield_cost50_006_schema_migration_draft_audit.ps1:98 char:20
 + try { $gitStatus = git -C $ProjectRoot status --short 2>&1 | Out-Stri ...
 +                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (fatal: not a gi...ectories): .git:String) [], RemoteException
