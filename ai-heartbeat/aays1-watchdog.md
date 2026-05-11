@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: polling
-- Task ID: terrayield-075-generic-future-growth-loader-smoke-repeat
-- Message: No new AAYS1 task.
-- Checked at: 2026-05-12T00:49:03
+- Status: running
+- Task ID: terrayield-076-generic-future-growth-full-suite-repeat
+- Message: New AAYS1 task detected. Running one-shot.
+- Checked at: 2026-05-12T00:50:03
