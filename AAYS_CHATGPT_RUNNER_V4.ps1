@@ -160,6 +160,13 @@ while ($true) {
         $action = if ($task.action) { [string]$task.action } else { "" }
         $workdir = if ($task.working_directory) { [string]$task.working_directory } else { $ProjectRoot }
         $command = if ($task.command) { [string]$task.command } else { "" }
+        $scriptPathFromTask = if ($task.script_path) { [string]$task.script_path } else { "" }
+
+        if ([string]::IsNullOrWhiteSpace($command) -and -not [string]::IsNullOrWhiteSpace($scriptPathFromTask)) {
+            $scriptName = [System.IO.Path]::GetFileName($scriptPathFromTask)
+            $resolvedScript = Join-Path $BridgeRoot ("ai-task-scripts\" + $scriptName)
+            $command = "& `"$resolvedScript`""
+        }
         $timeout = if ($task.timeout_seconds -ne $null) { [int]$task.timeout_seconds } else { 600 }
         if ($timeout -lt 30) { $timeout = 30 }
         if ($timeout -gt 14400) { $timeout = 14400 }
@@ -183,5 +190,6 @@ while ($true) {
         Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message); Heartbeat ("error-continuing " + $_.Exception.Message); PushBridge "Runner V4 error continuing"; Start-Sleep -Seconds 10
     }
 }
+
 
 
