@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-061-contractor-procurement-normalize-smoke
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-11T21:21:11
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-11T21:22:13
