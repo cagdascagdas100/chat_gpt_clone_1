@@ -1,6 +1,6 @@
 ﻿# AAYS Devam Loop
 
-- Status: polling
-- Task ID: job-208-verifier
-- Message: No new task.
-- Checked at: 2026-05-11T05:14:44
+- Status: running
+- Task ID: job-209-audit
+- Message: New task detected. Running one-shot.
+- Checked at: 2026-05-11T05:15:30
