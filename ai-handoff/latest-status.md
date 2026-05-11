@@ -1,9 +1,9 @@
 ﻿# AAYS GitHub Handoff Status
 
-- Status: idle
+- Status: ready
 - Project: terrayield
-- Task ID: j228
-- Message: No script_path or command -File ps1 provided.
-- Result path: C:\AAYS_GITHUB_BRIDGE\chat_gpt_clone_1\ai-results\j228.result.json
-- Heartbeat status: oneshot-v2
-- Updated at: 2026-05-11T13:09:21
+- Task ID: 
+- Message: Clean GitHub handoff runner started.
+- Result path: 
+- Heartbeat status: started
+- Updated at: 2026-05-11T13:11:27
