@@ -123,3 +123,13 @@ FINAL_ACCEPTANCE=100/100
 # TerraYield 116 Plan L ZIP Repair - patched
 TASK=terrayield-116-plan-l-zip-repair
 FIX=Compress-Archive now uses -Path wildcard with -ErrorAction Stop; previous -LiteralPath wildcard caused final_zip_exists=False.
+FINAL_DIR=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260511_032701
+FINAL_ZIP=D:\6 color parcells\plan_l_run01\final_packages\terrayield-112-plan-l-recovery-final-pack_20260511_032701.zip
+FINAL_ZIP_EXISTS=True
+FINAL_ZIP_BYTES=20012039
+CSV_ROWS=34864
+GEOJSON_FEATURES=34864
+ROWS_FEATURES_MATCH=True
+SUMMARY_EXISTS=True
+CONFIDENCE_SUMMARY_EXISTS=True
+FINAL_ACCEPTANCE=100/100
