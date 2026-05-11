@@ -32,3 +32,4 @@ try {
   if ($code -eq 0) { Write-Status 'completed' $taskId 'Task completed successfully.'; Write-Result $taskId 'completed' 'Task completed successfully.' $out $err } else { Write-Status 'failed' $taskId "Task failed with exit code $code."; Write-Result $taskId 'failed' "Task failed with exit code $code." $out $err }
 } catch { Write-Status 'error' $taskId $_.Exception.Message; Write-Result $taskId 'error' $_.Exception.Message }
 
+
