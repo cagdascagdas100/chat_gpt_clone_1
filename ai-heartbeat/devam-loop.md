@@ -1,6 +1,6 @@
 ﻿# AAYS Devam Loop
 
-- Status: polling
-- Task ID: j227
-- Message: No new task.
-- Checked at: 2026-05-11T13:08:53
+- Status: running
+- Task ID: j228
+- Message: New task detected. Running one-shot.
+- Checked at: 2026-05-11T13:09:20
