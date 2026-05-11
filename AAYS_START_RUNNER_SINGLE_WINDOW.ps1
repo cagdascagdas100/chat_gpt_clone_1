@@ -18,6 +18,27 @@ function Write-StartupLog([string]$Text) {
   } catch {}
 }
 
+function Invoke-GitSafe([string[]]$ArgsList) {
+  $oldPreference = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $output = & git @ArgsList 2>&1 | Out-String
+    $exit = $LASTEXITCODE
+    if (-not [string]::IsNullOrWhiteSpace($output)) {
+      foreach ($line in ($output -split "`r?`n")) {
+        if (-not [string]::IsNullOrWhiteSpace($line)) { Write-StartupLog ("git " + ($ArgsList -join " ") + " :: " + $line) }
+      }
+    }
+    Write-StartupLog ("git " + ($ArgsList -join " ") + " exit=" + $exit)
+    return $exit
+  } catch {
+    Write-StartupLog ("git " + ($ArgsList -join " ") + " exception=" + $_.Exception.Message)
+    return 999
+  } finally {
+    $ErrorActionPreference = $oldPreference
+  }
+}
+
 if (-not (Test-Path $BridgeRoot)) {
   throw "BridgeRoot bulunamadi: $BridgeRoot"
 }
@@ -30,9 +51,9 @@ Write-StartupLog "SINGLE_WINDOW_START_BEGIN"
 Write-StartupLog "BridgeRoot=$BridgeRoot"
 
 Write-StartupLog "Git sync begin"
-git fetch origin main 2>&1 | Out-String | Write-StartupLog
-git reset --hard origin/main 2>&1 | Out-String | Write-StartupLog
-Write-StartupLog "Git sync done"
+$fetchExit = Invoke-GitSafe @("fetch", "origin", "main")
+$resetExit = Invoke-GitSafe @("reset", "--hard", "origin/main")
+Write-StartupLog ("Git sync done fetchExit=$fetchExit resetExit=$resetExit")
 
 if (-not (Test-Path $RunnerScript)) {
   throw "Runner script bulunamadi: $RunnerScript"
@@ -48,12 +69,6 @@ New-Item -ItemType Directory -Force -Path `
 Write-StartupLog "Cleaning duplicate AAYS runner/status PowerShell processes"
 
 $currentPid = $PID
-$patterns = @(
-  "AAYS_PORTABLE_TASK_RUNNER_FIXED.ps1",
-  "AAYS_TASK_STATUS_PANEL_FIXED.ps1",
-  "AAYS_START_RUNNER_SINGLE_WINDOW.ps1"
-)
-
 $killed = 0
 try {
   $procs = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" | Where-Object {
