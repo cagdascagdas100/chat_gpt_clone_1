@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-057-future-growth-source-catalog-loader
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-11T19:11:41
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-11T19:12:03
