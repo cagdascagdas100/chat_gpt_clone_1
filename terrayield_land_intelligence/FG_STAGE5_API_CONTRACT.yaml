@@ -1,0 +1,107 @@
+metadata:
+  layer_name: Future Urban Growth & Value Shift Layer
+  calculation_version: future_growth_v1
+  disclaimer_required: "Kesin fiyat tahmini değildir"
+  api_contract_version: future_growth_api_v1
+  output_positioning: decision_support_not_price_prediction
+
+global_guards:
+  high_confidence_requires_source_url: true
+  high_confidence_requires_parcel_specific_evidence: true
+  no_price_prediction: true
+  evidence_must_match_requested_parcel_id: true
+  exclude_other_parcel_evidence: true
+  empty_evidence_message: No parcel-specific evidence available
+
+endpoints:
+  - name: future_growth_layer
+    path: /api/future-growth/layer
+    method: GET
+    required_params: [bbox, zoom]
+    required_response_fields: [parcel_id, score_total, future_growth_percent, confidence_score, confidence_label, color_class, hex_color, geometry, calculation_version, disclaimer_text]
+    response_guards:
+      score_total_range: 0-100
+      future_growth_percent_range: 0-100
+      confidence_score_range: 0-100
+      price_forecast_fields_allowed: false
+  - name: future_growth_parcel_detail
+    path: /api/future-growth/parcels/{parcelId}
+    method: GET
+    required_params: [parcelId]
+    required_response_fields: [parcel_id, score_total, future_growth_percent, score_breakdown, confidence_score, confidence_label, color_class, hex_color, city_growth_direction_label, top_reasons, evidence, warnings, calculation_version, disclaimer_text]
+    evidence_filter:
+      requested_parcel_only: true
+      evidence_parcel_id_must_equal_path_parcel_id: true
+      exclude_other_parcel_evidence: true
+      allowed_relation_types: [INTERSECTS_PARCEL, WITHIN_250M, WITHIN_500M, WITHIN_1000M, WITHIN_2000M]
+      blocked_relation_types: [SAME_LSOA, SAME_MSOA, SAME_LOCAL_AUTHORITY, CITY_LEVEL_ONLY]
+      empty_state_text: No parcel-specific evidence available
+    warning_filter:
+      include_only_warnings_for_requested_parcel: true
+      include_source_url_missing_warning: true
+      include_area_level_not_parcel_specific_warning: true
+      include_fixture_stub_confidence_warning: true
+    confidence_guards:
+      source_url_missing_max_confidence: medium
+      no_parcel_specific_evidence_max_confidence: low
+      fixture_mode_max_confidence: medium
+      stub_mode_max_confidence: low_medium
+      high_confidence_requires_source_url: true
+      high_confidence_requires_parcel_specific_evidence: true
+  - name: future_growth_parcel_evidence
+    path: /api/future-growth/parcels/{parcelId}/evidence
+    method: GET
+    required_params: [parcelId]
+    required_response_fields: [parcel_id, source_title, source_publisher, source_key, source_url, data_date, publication_date, relation_type, distance_m, impact_weight, confidence, geography_level, display_warning]
+    filtering_rules:
+      parcel_id_must_equal_path_parcel_id: true
+      exclude_records_without_parcel_relation: true
+      exclude_other_parcel_evidence: true
+      empty_response_message: No parcel-specific evidence available
+    confidence_guards:
+      source_url_missing_allows_high_confidence: false
+      source_url_missing_max_confidence: medium
+  - name: future_growth_local_authority_vector
+    path: /api/future-growth/local-authorities/{code}/vector
+    method: GET
+    required_params: [code]
+    required_response_fields: [local_authority_code, base_centroid, weighted_future_centroid, vector_geometry, direction_label, strength_score, confidence_score, calculation_version, disclaimer_text]
+    response_guards:
+      parcel_popup_evidence_allowed: false
+      max_confidence_without_parcel_specific_evidence: low
+
+error_contract:
+  invalid_bbox: 400
+  invalid_score_range: 400
+  unsupported_calculation_version: 400
+  parcel_not_found: 404
+  local_authority_not_found: 404
+  upstream_source_unavailable: 206
+  response_shape_validation_failed: 500
+
+demo_layer_feature_properties:
+  parcel_id: 12345
+  score_total: 52.4
+  future_growth_percent: 52.4
+  confidence_score: 63
+  confidence_label: medium
+  color_class: limited_growth
+  hex_color: "#9fd356"
+  calculation_version: future_growth_v1
+  disclaimer_text: Kesin fiyat tahmini değildir
+
+demo_parcel_detail_response:
+  parcel_id: 12345
+  score_total: 52.4
+  future_growth_percent: 52.4
+  confidence_score: 63
+  confidence_label: medium
+  color_class: limited_growth
+  hex_color: "#9fd356"
+  calculation_version: future_growth_v1
+  disclaimer_text: Kesin fiyat tahmini değildir
+  evidence_filter_applied: requested_parcel_only
+  warning_filter_applied: requested_parcel_only
+  evidence: []
+  warnings:
+    - No parcel-specific evidence available
