@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: polling
-- Task ID: terrayield-064-generic-future-growth-init-exports
-- Message: No new AAYS1 task.
-- Checked at: 2026-05-11T21:55:03
+- Status: running
+- Task ID: terrayield-065-contractor-db-export-preflight
+- Message: New AAYS1 task detected. Running one-shot.
+- Checked at: 2026-05-11T21:56:03
