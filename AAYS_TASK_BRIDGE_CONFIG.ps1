@@ -1,6 +1,6 @@
-# AAYS / TerraYield Clean GitHub Bridge Config
+﻿# AAYS / TerraYield Clean GitHub Bridge Config
 
-$env:AAYS_BRIDGE_ROOT = "C:\AAYS_GITHUB_BRIDGE_CLEAN"
+$env:AAYS_BRIDGE_ROOT = "C:\AAYS_GITHUB_BRIDGE_CLEAN2"
 $env:AAYS_PROJECT_ROOT = "E:\AAYS_DATA\cost\handoff_zips\cost_uk_postgres_50step_handoff_20260511_213229\terrayield_land_intelligence"
 
 $env:AAYS_PROJECT_CODE = "terrayield"
