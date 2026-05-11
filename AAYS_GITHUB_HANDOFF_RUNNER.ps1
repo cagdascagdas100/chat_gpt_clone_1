@@ -4,7 +4,7 @@
 
 $ErrorActionPreference = "Continue"
 
-$BridgeRoot = "C:\AAYS_GITHUB_BRIDGE\chat_gpt_clone_1"
+$BridgeRoot = "C:\AAYS_GITHUB_BRIDGE_CLEAN"
 $RunnerPath = Join-Path $BridgeRoot "AAYS_PORTABLE_TASK_RUNNER_FIXED.ps1"
 $TaskFile = Join-Path $BridgeRoot "ai-tasks\current-task.json"
 $HandoffDir = Join-Path $BridgeRoot "ai-handoff"
@@ -146,3 +146,4 @@ while ($true) {
 
   Start-Sleep -Seconds $PollSeconds
 }
+
