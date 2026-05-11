@@ -1,6 +1,6 @@
 ﻿# AAYS Devam Loop
 
-- Status: completed
+- Status: polling
 - Task ID: job-207-audit
-- Message: One-shot finished for task.
-- Checked at: 2026-05-11T04:47:46
+- Message: No new task.
+- Checked at: 2026-05-11T04:48:09
