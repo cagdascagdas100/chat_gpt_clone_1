@@ -105,8 +105,19 @@ function PushBridge([string]$Message) {
 function Allowed([string]$Path) {
     try {
         $full = [System.IO.Path]::GetFullPath($Path)
-        $allowed = [System.IO.Path]::GetFullPath($ProjectRoot)
-        return $full.StartsWith($allowed, [System.StringComparison]::OrdinalIgnoreCase)
+
+        $allowedRoots = @(
+            [System.IO.Path]::GetFullPath($ProjectRoot),
+            [System.IO.Path]::GetFullPath("E:\AAYS_DATA\cost\handoff_zips")
+        )
+
+        foreach ($root in $allowedRoots) {
+            if ($full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+            }
+        }
+
+        return $false
     } catch { return $false }
 }
 
@@ -158,7 +169,7 @@ PushBridge "Runner V4 hardened page jobs started"
 while ($true) {
     try {
         Set-Location $BridgeRoot
-        try { git config --local pull.rebase false | Out-Null; git fetch origin main --prune | Out-Null; git pull --ff-only origin main | Out-Null } catch { Say ("GIT_PULL_CONTINUING: " + $_.Exception.Message) }
+        try { git config --local pull.rebase true | Out-Null; git fetch origin main --prune | Out-Null; git rebase --autostash origin/main | Out-Null } catch { Say ("GIT_PULL_CONTINUING: " + $_.Exception.Message) }
         Heartbeat "polling"
         if (!(Test-Path $TaskFile)) { Say "Bekliyor: current-task.json yok."; PushBridge "Runner V4 heartbeat no task"; Start-Sleep -Seconds 10; continue }
         $task = (Get-Content -Raw -Encoding UTF8 $TaskFile) | ConvertFrom-Json
@@ -202,6 +213,7 @@ while ($true) {
         Say ("RUNNER_ERROR_CONTINUING: " + $_.Exception.Message); Heartbeat ("error-continuing " + $_.Exception.Message); PushBridge "Runner V4 error continuing"; Start-Sleep -Seconds 10
     }
 }
+
 
 
 
