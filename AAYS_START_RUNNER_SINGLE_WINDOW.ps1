@@ -69,13 +69,20 @@ New-Item -ItemType Directory -Force -Path `
 Write-StartupLog "Cleaning duplicate AAYS runner/status PowerShell processes"
 
 $currentPid = $PID
+$parentPid = $null
+try {
+  $thisProc = Get-CimInstance Win32_Process -Filter ("ProcessId = " + $currentPid)
+  if ($thisProc) { $parentPid = [int]$thisProc.ParentProcessId }
+} catch {}
+
 $killed = 0
 try {
   $procs = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" | Where-Object {
-    $_.ProcessId -ne $currentPid -and (
+    $_.ProcessId -ne $currentPid -and
+    ($null -eq $parentPid -or $_.ProcessId -ne $parentPid) -and
+    (
       ($_.CommandLine -like "*AAYS_PORTABLE_TASK_RUNNER_FIXED.ps1*") -or
-      ($_.CommandLine -like "*AAYS_TASK_STATUS_PANEL_FIXED.ps1*") -or
-      ($_.CommandLine -like "*AAYS_START_RUNNER_SINGLE_WINDOW.ps1*")
+      ($_.CommandLine -like "*AAYS_TASK_STATUS_PANEL_FIXED.ps1*")
     )
   }
 
@@ -101,16 +108,16 @@ BridgeRoot: $BridgeRoot
 ProjectRoot: $env:AAYS_PROJECT_ROOT
 TaskFile: $(Join-Path $BridgeRoot "ai-tasks\current-task.json")
 RunnerLog: $StopLog
-Message: Single-window runner start requested. No extra PowerShell windows will be opened.
+Message: Single-window runner start requested. Runner is dot-sourced in this same PowerShell process. No extra PowerShell windows will be opened.
 GitRecovery: enabled
 SafeScriptOnly: enabled
 "@
 Set-Content -Encoding UTF8 -Path $HeartbeatFile -Value $body
 
-Write-StartupLog "Starting runner in THIS window. Do not close this PowerShell window."
+Write-StartupLog "Starting runner by dot-sourcing in THIS process. Do not close this PowerShell window."
 Write-Host ""
 Write-Host "AAYS runner artik bu pencerede calisacak. Yeni PowerShell penceresi acilmayacak." -ForegroundColor Green
 Write-Host "Bu pencereyi kapatma. ChatGPT tarafinda 'devam et' yazmaya devam edebilirsin." -ForegroundColor Green
 Write-Host ""
 
-powershell -NoProfile -ExecutionPolicy Bypass -File $RunnerScript
+. $RunnerScript
