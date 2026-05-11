@@ -16,7 +16,7 @@ $HeartbeatFile = Join-Path $BridgeRoot 'ai-heartbeat\portable-runner.md'
 $ResultDir = Join-Path $BridgeRoot 'ai-results'
 $LogDir = Join-Path $BridgeRoot 'ai-runner-logs'
 $ScriptDir = Join-Path $BridgeRoot $AllowedScriptDir
-$RunnerLog = Join-Path $LogDir ('portable-runner-fixed-' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.log')
+$RunnerLog = Join-Path $LogDir ('portable-runner-no-spawn-' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.log')
 
 New-Item -ItemType Directory -Force -Path (Join-Path $BridgeRoot 'ai-tasks'),(Join-Path $BridgeRoot 'ai-heartbeat'),$ResultDir,$LogDir,$ScriptDir | Out-Null
 
@@ -40,7 +40,7 @@ function Write-Heartbeat {
     ('TaskFile: ' + $TaskFile),
     ('RunnerLog: ' + $RunnerLog),
     ('Message: ' + $Message),
-    'GitRecovery: enabled',
+    'Mode: no-spawn-foreground-loop',
     'SafeScriptOnly: enabled'
   )
   Set-Content -Encoding UTF8 -Path $HeartbeatFile -Value $lines
@@ -63,28 +63,19 @@ function Invoke-GitSafe {
 }
 
 function Sync-GitBeforeRead {
-  Invoke-GitSafe @('add','ai-heartbeat','ai-runner-logs','ai-results','ai-tasks/.last-task-id') | Out-Null
-  Invoke-GitSafe @('stash','push','-m','portable-runner-auto-stash-before-pull','--','ai-heartbeat','ai-runner-logs','ai-results','ai-tasks/.last-task-id') | Out-Null
   Invoke-GitSafe @('fetch','origin','main') | Out-Null
-  $rb = Invoke-GitSafe @('rebase','origin/main')
-  if ($rb -match 'CONFLICT|error:|fatal:') {
-    Invoke-GitSafe @('rebase','--abort') | Out-Null
-    Invoke-GitSafe @('reset','--hard','origin/main') | Out-Null
+  $pull = Invoke-GitSafe @('pull','--ff-only','origin','main')
+  if ($pull -match 'fatal:|error:|CONFLICT') {
+    Write-RunnerLog 'Git fast-forward pull failed; keeping local state and continuing poll.'
   }
 }
 
 function Push-ResultToGit {
   param([string]$TaskId)
   Invoke-GitSafe @('add','ai-results','ai-heartbeat','ai-tasks/.last-task-id','ai-runner-logs') | Out-Null
-  Invoke-GitSafe @('commit','-m',('Portable runner result ' + $TaskId)) | Out-Null
-  Invoke-GitSafe @('fetch','origin','main') | Out-Null
-  $rb = Invoke-GitSafe @('rebase','origin/main')
-  if ($rb -match 'CONFLICT|error:|fatal:') {
-    Invoke-GitSafe @('rebase','--abort') | Out-Null
-    Invoke-GitSafe @('reset','--hard','origin/main') | Out-Null
-    Invoke-GitSafe @('add','ai-results','ai-heartbeat','ai-tasks/.last-task-id','ai-runner-logs') | Out-Null
-    Invoke-GitSafe @('commit','-m',('Portable runner result ' + $TaskId + ' recovery')) | Out-Null
-  }
+  $commit = Invoke-GitSafe @('commit','-m',('Portable runner result ' + $TaskId))
+  if ($commit -match 'nothing to commit') { return }
+  Invoke-GitSafe @('pull','--rebase','origin','main') | Out-Null
   Invoke-GitSafe @('push','origin','main') | Out-Null
 }
 
@@ -120,7 +111,6 @@ function Run-CurrentTask {
   $TaskId = [string]$Task.id
   $Title = if ($Task.PSObject.Properties.Name -contains 'title') { [string]$Task.title } else { $TaskId }
   $WorkingDirectory = if ($Task.PSObject.Properties.Name -contains 'working_directory') { [string]$Task.working_directory } else { $ProjectRoot }
-  $TimeoutSeconds = if ($Task.PSObject.Properties.Name -contains 'timeout_seconds') { [int]$Task.timeout_seconds } else { $DefaultTimeout }
   $candidate = if ($Task.PSObject.Properties.Name -contains 'script_path') { [string]$Task.script_path } else { '' }
 
   if ([string]::IsNullOrWhiteSpace($candidate)) { Write-RejectedResult $TaskId 'Missing script_path.'; return }
@@ -136,25 +126,22 @@ function Run-CurrentTask {
   $stamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
   $resultFile = Join-Path $ResultDir ($stamp + '-' + $TaskId + '.md')
   $exitCode = 999
-  $timedOut = $false
 
   Write-Heartbeat 'running' $TaskId $Title
   Write-RunnerLog ('START ' + $TaskId + ' SCRIPT=' + $scriptPath)
 
   try {
     if (-not (Test-Path $WorkingDirectory)) { New-Item -ItemType Directory -Force -Path $WorkingDirectory | Out-Null }
-    $argList = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scriptPath)
-    $proc = Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -WorkingDirectory $WorkingDirectory -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile -PassThru
-    $finished = $proc.WaitForExit($TimeoutSeconds * 1000)
-    if (-not $finished) {
-      $timedOut = $true
-      try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
-      $exitCode = 124
-    } else {
-      $exitCode = $proc.ExitCode
-    }
+    Push-Location $WorkingDirectory
+    $output = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1 | Out-String)
+    $exitCode = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+    Pop-Location
+    Set-Content -Encoding UTF8 -Path $stdoutFile -Value $output
+    Set-Content -Encoding UTF8 -Path $stderrFile -Value ''
   } catch {
-    Add-Content -Encoding UTF8 -Path $stderrFile -Value $_.Exception.Message
+    try { Pop-Location } catch {}
+    Set-Content -Encoding UTF8 -Path $stdoutFile -Value ''
+    Set-Content -Encoding UTF8 -Path $stderrFile -Value $_.Exception.Message
     $exitCode = 998
   }
 
@@ -176,14 +163,11 @@ function Run-CurrentTask {
     '## Working Directory',
     $WorkingDirectory,
     '',
-    '## Timeout Seconds',
-    ([string]$TimeoutSeconds),
-    '',
-    '## Timed Out',
-    ([string]$timedOut),
-    '',
     '## Exit Code',
     ([string]$exitCode),
+    '',
+    '## Runner Mode',
+    'no-spawn-foreground-loop',
     '',
     '## Output',
     '```text'
@@ -201,7 +185,7 @@ function Run-CurrentTask {
   Push-ResultToGit $TaskId
 }
 
-Write-RunnerLog 'Portable fixed runner started.'
+Write-RunnerLog 'Portable fixed runner started in no-spawn foreground loop.'
 Write-Heartbeat 'polling' '' 'started'
 
 while ($true) {
@@ -210,6 +194,7 @@ while ($true) {
     $task = Read-TaskSafely
     if ($null -eq $task) {
       Write-Heartbeat 'polling' '' 'no-valid-task'
+      Write-RunnerLog 'POLL no-valid-task'
       if ($Once) { break }
       Start-Sleep -Seconds $PollSeconds
       continue
@@ -220,6 +205,7 @@ while ($true) {
       Run-CurrentTask $task
     } else {
       Write-Heartbeat 'polling' $taskId 'already-processed-or-waiting'
+      Write-RunnerLog ('POLL already-processed-or-waiting ' + $taskId)
     }
   } catch {
     Write-RunnerLog ('LOOP_ERROR ' + $_.Exception.Message)
