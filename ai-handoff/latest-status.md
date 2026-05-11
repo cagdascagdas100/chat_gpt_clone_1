@@ -1,9 +1,9 @@
 ﻿# AAYS GitHub Handoff Status
 
-- Status: idle
+- Status: completed
 - Project: terrayield
-- Task ID: terrayield-047-future-growth-stage1-source-registry
-- Message: No script_path provided.
-- Result path: C:\AAYS_GITHUB_BRIDGE\chat_gpt_clone_1\ai-results\terrayield-047-future-growth-stage1-source-registry.result.json
-- Heartbeat status: oneshot
-- Updated at: 2026-05-11T04:32:31
+- Task ID: ty-pdi-020-oneshot-v2-selftest
+- Message: Task completed successfully.
+- Result path: C:\AAYS_GITHUB_BRIDGE\chat_gpt_clone_1\ai-results\ty-pdi-020-oneshot-v2-selftest.result.json
+- Heartbeat status: oneshot-v2
+- Updated at: 2026-05-11T04:34:28
