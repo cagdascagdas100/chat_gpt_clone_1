@@ -1,13 +1,7 @@
-﻿# AAYS Portable Task Runner Fixed
+﻿# TerraYield Portable Runner Heartbeat
 
-Time: 05.11.2026 00:22:05
-Status: finished ty-199-audit exit=
-BridgeRoot: C:\Users\cagda\Documents\chat_gpt_clone_1
-ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
-TaskFile: C:\Users\cagda\Documents\chat_gpt_clone_1\ai-tasks\current-task.json
-RunnerLog: C:\Users\cagda\Documents\chat_gpt_clone_1\ai-runner-logs\portable-runner-fixed-20260510_232352.log
-Project: TerraYield
-ChatGPTPageProject: aays1
-SafeScriptOnly: enabled
-GitRecovery: enabled
-NullJsonGuard: enabled
+status: running
+task_id: job-203-final-pack
+checked_at: 2026-05-11T03:26:04
+bridge_root: C:\Users\cagda\Documents\chat_gpt_clone_1
+message: Running C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_112_plan_l_recovery_final_pack.ps1
