@@ -1,0 +1,374 @@
+﻿# AAYS Autopilot Runner V5 Result
+
+## Task
+Install contractor pipeline from local zip rerun
+
+## Task ID
+terrayield-050-install-contractor-from-local-zip-rerun
+
+## Time
+2026-05-11 18:43:11
+
+## Working Directory
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+
+## Timeout Seconds
+900
+
+## Exit Code
+0
+
+## Output
+``text
+[2026-05-11T18:43:05] PROJECT=terrayield
+[2026-05-11T18:43:05] DISPLAY_PROJECT=TerraYield
+[2026-05-11T18:43:05] CHATGPT_PAGE_PROJECT=aays1
+[2026-05-11T18:43:05] TASK=terrayield-050-install-contractor-from-local-zip
+[2026-05-11T18:43:05] MODE=install_contractor_pipeline_from_local_zip
+[2026-05-11T18:43:05] PROJECT_ROOT_FOUND=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+[2026-05-11T18:43:05] ZIP_FOUND=C:\Users\cagda\Downloads\contractor_scripts_clean.zip
+[2026-05-11T18:43:05] ZIP_SHA256=CC40A2316FFB9D1EF04112604A40A94A12CB92B324D95DE0A8DD28E3CCEDE398
+[2026-05-11T18:43:05] DIRECTORIES_READY
+[2026-05-11T18:43:05] ZIP_EXPANDED
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_collect_companies_house.py SHA256=16070F13A6482A350D68716EF59FA5EB425376CC355DA2EE7781306B00667CD3
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_collect_procurement_ocds.py SHA256=C054402C84943B4718D7FC59C9F6F1DF4B41266F034A2E5B979813E16C3A90FA
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_normalize_and_score.py SHA256=2AFB402FCA0C4B17D946E89CD1B8329314062973591059AFAC0B080427FD1116
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_load_to_postgres.py SHA256=DA0B651BE2D15B879B590B779DDDD94AC9E0B3A8C183E2380E0C32C8C5F2DC0F
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_match_to_parcels.py SHA256=3E4DBC213D37A48444595063F1D0B8462C056AF169557733E56F039037659514
+[2026-05-11T18:43:05] INSTALLED=scripts\contractor_export_for_app.py SHA256=0334CEA4C9244B2E4283CCF8396F09CCF2422B6B50C500E52AA9B2D37A2A1045
+[2026-05-11T18:43:05] INSTALLED=scripts\requirements_contractor.txt SHA256=10F9826293A4F34749386C3A13756C5DD35056221AF2ED637DFF6D1C897284BC
+[2026-05-11T18:43:05] INSTALLED=scripts\README_CONTRACTOR_PIPELINE.md SHA256=17335602CED0D4E339985136DA01CC440326454A6C5C139AFE333826A618B15D
+[2026-05-11T18:43:05] PY_COMPILE_BEGIN
+[2026-05-11T18:43:05] PY_COMPILE_EXIT=0
+[2026-05-11T18:43:05] PIP_INSTALL_BEGIN
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: requests>=2.31.0 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from -r .\scripts\requirements_contractor.txt (line 1)) (2.32.3)
+Requirement already satisfied: pandas>=2.2.0 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from -r .\scripts\requirements_contractor.txt (line 2)) (3.0.2)
+Requirement already satisfied: psycopg>=3.1.18 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from psycopg[binary]>=3.1.18->-r .\scripts\requirements_contractor.txt (line 3)) (3.2.10)
+Requirement already satisfied: python-dateutil>=2.9.0 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from -r .\scripts\requirements_contractor.txt (line 4)) (2.9.0.post0)
+Requirement already satisfied: charset-normalizer<4,>=2 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from requests>=2.31.0->-r .\scripts\requirements_contractor.txt (line 1)) (3.4.0)
+Requirement already satisfied: idna<4,>=2.5 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from requests>=2.31.0->-r .\scripts\requirements_contractor.txt (line 1)) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from requests>=2.31.0->-r .\scripts\requirements_contractor.txt (line 1)) (2.2.3)
+Requirement already satisfied: certifi>=2017.4.17 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from requests>=2.31.0->-r .\scripts\requirements_contractor.txt (line 1)) (2024.8.30)
+Requirement already satisfied: numpy>=1.26.0 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from pandas>=2.2.0->-r .\scripts\requirements_contractor.txt (line 2)) (1.26.4)
+Requirement already satisfied: tzdata in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from pandas>=2.2.0->-r .\scripts\requirements_contractor.txt (line 2)) (2025.1)
+Requirement already satisfied: typing-extensions>=4.6 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from psycopg>=3.1.18->psycopg[binary]>=3.1.18->-r .\scripts\requirements_contractor.txt (line 3)) (4.15.0)
+Requirement already satisfied: six>=1.5 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from python-dateutil>=2.9.0->-r .\scripts\requirements_contractor.txt (line 4)) (1.17.0)
+Requirement already satisfied: psycopg-binary==3.2.10 in C:\Users\cagda\AppData\Roaming\Python\Python312\site-packages (from psycopg[binary]>=3.1.18->-r .\scripts\requirements_contractor.txt (line 3)) (3.2.10)
+[2026-05-11T18:43:07] PIP_INSTALL_EXIT=0
+[2026-05-11T18:43:07] FAIL_CLOSED_SMOKE_BEGIN
+[2026-05-11T18:43:11] FAIL_CLOSED_SMOKE_EXIT=2
+[2026-05-11T18:43:11] GIT_STATUS_BEGIN
+?? ../.github/
+?? ../.tmp/
+?? ../.wrangler/
+?? ../=2.0.0
+?? ../AAYS_Academic_Article_EN_US_2026-04-27.docx
+?? ../AAYS_Academic_Article_EN_US_2026-04-27_v2_Expanded_Lit_Discussion.docx
+?? ../AAYS_Integrated_Program_Report_EN_US_2026-04-27.docx
+?? ../AAYS_MVP_Streamlit_Studio_v3_MERGED_ConfigWizard_ratio06/
+?? ../AAYS_MVP_Streamlit_Studio_v3_ScenarioEngine_ConfigWizard.zip
+?? ../AAYS_MVP_Streamlit_Studio_v3_ScenarioEngine_ConfigWizard/
+?? ../AAYS_MVP_Streamlit_Studio_v3_ScenarioEngine_ConfigWizard_v2_fixed.zip
+?? ../AAYS_TERRAYIELD_INSTALL_STARTUP.ps1
+?? ../AAYS_TERRAYIELD_JOB_MONITOR.cmd
+?? ../AAYS_TERRAYIELD_JOB_MONITOR.ps1
+?? ../AAYS_TERRAYIELD_RECOVER_ALL.cmd
+?? ../AAYS_TERRAYIELD_RECOVER_ALL.ps1
+?? ../AAYS_TERRAYIELD_UNINSTALL_STARTUP.ps1
+?? ../DIGER_PC_ICIN_TEK_TXT_PROMPT.txt
+?? ../TOPOGRAPHY_HANDOFF_WORKFLOW.md
+?? ../__pycache__/
+?? ../_deploy_stage/
+?? ../_deploy_stage_web_20260315.zip
+?? ../_deploy_stage_web_20260315_checksums.txt
+?? ../_tmp_patch_pmtiles.py
+?? ../_tmp_patch_sig.py
+?? ../apply_topography_handoff.ps1
+?? ../auto_match_sold_buildings_seed.ps1
+?? ../bedfordshire_21_prepared.parquet
+?? ../bedfordshire_21_prepared_simplified.parquet
+?? ../bedfordshire_birim.geojson
+?? ../collect_sold_buildings_local.ps1
+?? ../collect_topography_handoff.ps1
+?? ../data/
+?? ../deploy_copy_web.ps1
+?? ../deploy_manifest_web.txt
+?? ../england_map_web/
+?? ../ensure_homes_england_backfill.ps1
+?? ../import_sold_buildings_results.ps1
+?? ../london_topography_local/
+?? ../old/
+?? ../others/
+?? ../pmtiles_regions.json
+?? ../pmtiles_regions_britain_generated_v1.json
+?? ../pmtiles_regions_britain_generated_v2.json
+?? ../pmtiles_regions_england_generated.json
+?? ../pmtiles_regions_england_generated_v2.json
+?? ../pmtiles_regions_full_england.json
+?? ../pmtiles_regions_full_scotland.json
+?? ../pmtiles_regions_full_wales.json
+?? ../pmtiles_regions_scotland_generated_v1.json
+?? ../pmtiles_regions_wales_generated_v1.json
+?? ../poi_names_bedfordshire.csv
+?? ../prepare_contractor_50step_handoff.ps1
+?? ../prepare_contractor_db_smoke_minizip.ps1
+?? ../prepare_contractor_intelligence_handoff.ps1
+?? ../prepare_cost_uk_handoff.ps1
+?? ../prepare_external_codex_workspace.ps1
+?? ../prepare_external_codex_workspace.py
+?? ../prepare_homes_england_handoff.ps1
+?? ../prepare_planned_intelligence_handoff.ps1
+?? ../prepare_sold_buildings_handoff.ps1
+?? ../prepare_topography_handoff.ps1
+?? ../regions/
+?? ../register_homes_england_backfill_tasks.ps1
+?? ../run_contractor_db_migration_smoke.ps1
+?? ../run_planned_intelligence_pilot.ps1
+?? ../run_sold_buildings_handoff.ps1
+?? ../setup_contractor_e_drive.ps1
+?? ../setup_cost_e_drive.ps1
+?? ../setup_terrayield_e_drive.ps1
+?? ../start_homes_england_backfill.ps1
+?? ../start_storage_state_sync.ps1
+?? ../start_terrayield_local.ps1
+?? ../start_terrayield_uvicorn.cmd
+?? .aays_50step_plan/
+?? .aays_final_stabilize/
+?? .aays_next_fix/
+?? .aays_perf_patch/
+?? .aays_perf_rescue/
+?? .aays_real_runs/
+?? .aays_safe_sales/
+?? .aays_super_wide/
+?? .aays_ultra_one_window/
+?? .aays_verification/
+?? .aays_wide_recovery/
+?? .env
+?? .env.example
+?? .test_tmp/
+?? .venv/
+?? AAYS_FAST_API_RESTART.ps1
+?? AAYS_TerraYield_DB_Recover_Validate.ps1
+?? AAYS_TerraYield_DB_Recover_Validate_FIXED.ps1
+?? AAYS_TerraYield_Data_State_Rescue.ps1
+?? AAYS_TerraYield_Data_State_Rescue_FIXED2.ps1
+?? AAYS_TerraYield_Deep_Diagnose_Validate.ps1
+?? AAYS_TerraYield_FINAL_STABILIZE_PERF_VALIDATE.ps1
+?? AAYS_TerraYield_Performance_AutoPatch.ps1
+?? AAYS_TerraYield_Rescue_PerfPatch.ps1
+?? AAYS_TerraYield_Rescue_PerfPatch_FIXED.ps1
+?? AAYS_TerraYield_Rescue_PerfPatch_SAFE2.ps1
+?? AAYS_TerraYield_SUPER_WIDE_DB_CONTAINER_MIGRATE.ps1
+?? AAYS_TerraYield_ULTRA_ONE_WINDOW_DIAGNOSE.ps1
+?? AAYS_TerraYield_WIDE_RECOVERY_ONE_WINDOW.ps1
+?? BACKEND_STATUS_AND_HISTORY_FIX_REPORT.md
+?? "E\357\200\272\357\201\234AAYS_DATA\357\201\234terrayield_land_intelligence\357\201\234raw/"
+?? FINAL_BACKEND_CHECKPOINT_2026-05-02.md
+?? FUTURE_GROWTH_METHODOLOGY.md
+?? HMLR_HISTORY_DIAGNOSTIC_REPORT.md
+?? IMPLEMENTATION_PLAN.md
+?? LONDON_BACKEND_RECOVERY.ps1
+?? LONDON_ENDPOINT_RECOVERY.ps1
+?? README.md
+?? alembic.ini
+?? alembic/
+?? app/
+?? apply_sales_truth_upgrade.cmd
+?? apply_sales_truth_upgrade.ps1
+?? config/
+?? data/
+?? docker-compose.aays-api-command.yml
+?? docker-compose.aays-fast-start.yml
+?? docker-compose.override.yml
+?? docker-compose.override.yml.bak_before_db_d_drive_20260430_115419
+?? docker-compose.override.yml.bak_move_to_e_20260430_201203
+?? docker-compose.yml
+?? docs/
+?? england_map_web/
+?? future_growth/
+?? handoffs/
+?? ops/
+?? pyproject.toml
+?? ready_to_buy_yields/
+?? run_logs/
+?? run_uvicorn_8010.cmd
+?? run_uvicorn_8010.ps1
+?? sample_data/
+?? scripts/
+?? security_accuracy_expansion/
+?? sql/
+?? terrayield_land_intelligence.egg-info/
+?? tests/
+?? tests_tmp_raw_dorset/
+?? tmp/
+?? tools/
+?? ../tiles/
+?? ../tmp/
+?? ../tmp_gpkg_noindex.gpkg
+?? ../tmp_info/
+?? ../tmp_video_frames/
+?? ../tmp_video_frames_000031/
+?? ../tmp_video_frames_113009/
+?? ../tmp_video_frames_151629/
+?? ../tmp_video_frames_153246/
+?? ../tmp_video_frames_161024/
+?? ../tmp_video_frames_170734/
+?? ../tmp_video_frames_173311/
+?? ../tmp_video_frames_174244/
+?? ../tmp_video_frames_181559/
+?? ../tmp_video_frames_183923/
+?? ../tmp_video_frames_191302/
+?? ../tmp_video_frames_200153/
+?? ../tmp_video_frames_210224/
+?? ../tmp_video_frames_211739/
+?? ../tmp_video_frames_213350/
+?? ../tmp_video_frames_222309/
+?? ../tmp_video_frames_231731/
+?? ../topography_accuracy_upgrade_plan/
+?? ../topography_handoff.py
+?? ../uk_planning_restrictions_handoff/
+?? ../video_debug_034317/
+?? ../video_debug_035208/
+?? ../video_debug_040126/
+?? ../video_debug_041754/
+?? ../watch_homes_england_backfill.ps1
+[2026-05-11T18:43:11] GIT_STATUS_END
+[2026-05-11T18:43:11] CONTRACTOR_PIPELINE_FILES_READY
+[2026-05-11T18:43:11] PLAN_PROGRESS_PERCENT=22
+[2026-05-11T18:43:11] NEXT_EXPECTED_ACTION=run_procurement_snapshot_and_normalize_smoke
+[2026-05-11T18:43:11] TASK_COMPLETION=100/100
+[2026-05-11T18:43:11] TERRAYIELD_TASK_DONE
+
+``
+
+## Error
+``text
+
+[notice] A new release of pip is available: 26.0.1 -> 26.1.1
+[notice] To update, run: python.exe -m pip install --upgrade pip
+FAIL-CLOSED: missing Companies House credential. Status written: E:\AAYS_DATA\contractor\raw\status\blocked_by_missing_credential_companies_house_public_data_api.json
+warning: could not open directory '.tmp10/tmpfp1olnt9/': Permission denied
+warning: could not open directory '.tmp11/tmp0w1ag4ex/': Permission denied
+warning: could not open directory '.tmp12/tmpah9mkbyg/': Permission denied
+warning: could not open directory '.tmp2/tmpjxn4osvo/': Permission denied
+warning: could not open directory '.tmp3/tmpxwbmysun/': Permission denied
+warning: could not open directory '.tmp4/tmp_ftn877b/': Permission denied
+warning: could not open directory '.tmp5/tmpe7vai0fd/': Permission denied
+warning: could not open directory '.tmp6/tmppvjfyh6t/': Permission denied
+warning: could not open directory '.tmp7/tmpzwm9jtvw/': Permission denied
+warning: could not open directory '.tmp8/tmpfigky_xm/': Permission denied
+warning: could not open directory '.tmp9/tmpolbcaa1w/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/.pytest_tmp/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/.test_tmp/market-export-test-90fkjjv3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/.test_tmp/tmp4jlt2luk/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/.test_tmp/tmpb9o6_2l9/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/.test_tmp/tmpznjnoei8/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-0f3liyfq/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-1fzonjs9/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-2bj3073t/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-2umpfj3a/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-36h560_h/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-3bd_alqy/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-4f97mt_f/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-4k4nkcbj/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-4q9yylwb/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-4woksda_/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-509ikpoh/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-5ftvdef3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-6a9xgf8b/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-6tv23232/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-6zcqsc0j/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-7fidlb2w/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-7h3bfko8/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-7pvfppwx/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-7x501u4a/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-8uwitk0d/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-92zffn56/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-955lgyyn/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9cc70jtp/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9jwvo8gp/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9t6kv1bc/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9thmtk3k/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9v2gykck/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9v6zau9i/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9vehoxrl/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-9vh1dh4c/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-anv9ophi/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-b2n4_1rq/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-c6ti1p0u/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-cnje3n4h/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-dcq22jek/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-dd1jtfjj/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-de5cv8if/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-e7x4ug3r/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ea3kfuqa/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-evjhh0m_/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-f0e3yxpa/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-fiunk8fl/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-g13r26x8/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-g14z999x/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-g3xlq8p9/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-gwradam0/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ixnzojtq/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-jt0pjeu3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-kkl7xnmi/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-kwt31_2b/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-lda377nj/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-m09ghnfo/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-mqseti66/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-n960k3uj/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-nbu99yea/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-nfktdkoq/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-o1vs41vf/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ob0i3gzk/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-opb795p1/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-otxsh3uj/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ou8a3owf/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ouf_lyd3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-p9ac4xwy/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-pg04l_3t/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-pg5vsiz3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-pkrab4w7/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-pvjapwqk/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-p_3x7hzn/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-rtb4q71r/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-s7i2fnwg/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-salr2cmi/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-sfqfzjbw/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-sfxkut8e/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ss0m7gx5/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-t6y2snuv/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-tfyfd82s/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-th85pkah/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-tls6do6i/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-u0scifuw/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-ulqrfct1/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-uyh1y5qm/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-u_zt7f1_/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-v418i7ys/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-v6r4lp4g/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-vgxdynu3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-vnyxhw_n/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-vpzm8knt/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-wcewlwg3/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-wj946rnv/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-wn3ptcxb/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-x5ql4ugs/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-x63uq03j/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-x7d3eme9/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-xa2tqzew/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-xfanrgfo/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-xfarv4oz/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-yf_gqnx0/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-yssekgoe/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-z5b11y8n/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-zsuueb_u/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-_4i2phhw/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-_6jb3ctd/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-_ba63tuu/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-_dao2o8n/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/pytest-cache-files-_tx28nk0/': Permission denied
+warning: could not open directory 'terrayield_land_intelligence/tmp/market-export-test-i_h6apz4/': Permission denied
+
+``
