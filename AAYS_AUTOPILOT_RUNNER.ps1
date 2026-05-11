@@ -58,17 +58,17 @@ function RunTask($task) {
 
   if ([string]::IsNullOrWhiteSpace($taskId)) { return }
   if ([string]::IsNullOrWhiteSpace($scriptPath)) {
-    Log "skip $taskId: no script_path; command ignored"
+    Log "skip ${taskId}: no script_path; command ignored"
     return
   }
   if ($scriptPath -match "[:\\\/]") {
-    Log "skip $taskId: script_path must be filename only"
+    Log "skip ${taskId}: script_path must be filename only"
     return
   }
 
   $scriptFull = Join-Path $Repo ("ai-task-scripts\" + $scriptPath)
   if (!(Test-Path $scriptFull)) {
-    Log "skip $taskId: script not found $scriptFull"
+    Log "skip ${taskId}: script not found $scriptFull"
     return
   }
 
@@ -133,3 +133,4 @@ while ($true) {
 
   Start-Sleep -Seconds 15
 }
+
