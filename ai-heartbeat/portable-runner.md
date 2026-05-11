@@ -1,7 +1,7 @@
-﻿# TerraYield Portable Runner Heartbeat
+﻿# TerraYield Always-On Bridge Heartbeat
 
-status: idle
-task_id: j235
-checked_at: 2026-05-11T15:42:30
+status: started
+task_id: 
+checked_at: 2026-05-11T16:49:14
 bridge_root: C:\AAYS_GITHUB_BRIDGE_CLEAN
-message: No script_path provided.
+message: Always-on runner started.
