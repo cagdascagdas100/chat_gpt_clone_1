@@ -1,0 +1,557 @@
+﻿# Connector Spec - Future Growth Layer
+
+## Scope Guard
+- layer_name: Future Urban Growth & Value Shift Layer
+- calculation_version: future_growth_v1
+- disclaimer_required: "Kesin fiyat tahmini değildir"
+- confidence_guard: source_url olmayan kayıt high confidence olamaz
+- evidence_guard: popup evidence sadece ilgili parsel ile spatial olarak eşleşmiş kayıtları gösterebilir
+
+## Normalized Target Shape
+- target_table: future_growth_features
+- required_fields:
+  - source_key
+  - source_url
+  - feature_type
+  - external_id
+  - idempotency_key
+  - geometry
+  - centroid
+  - geography_level
+  - effective_date
+  - observed_date
+  - raw_payload_ref
+  - mode
+  - confidence_cap_reason
+- allowed_modes: live, fixture, stub
+- confidence_rule: live kaynak + source_url + parsel-specific spatial match olmadan high confidence üretilemez
+- confidence_rule: fixture ve stub kayıtlar production-compatible typed shape taşır ancak high confidence üretmez
+
+---
+
+## Connector Spec - hmlr_price_paid
+- source_key: hmlr_price_paid
+- source_name: HM Land Registry Price Paid Data
+- source_url: https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads
+- mode: fixture
+- purpose: market_momentum
+- geography: address/postcode/transaction
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: market_momentum
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: address/postcode/transaction
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: hmlr_price_paid:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - planning_data_api
+- source_key: planning_data_api
+- source_name: Planning Data API
+- source_url: https://www.planning.data.gov.uk/docs
+- mode: live
+- purpose: planning+policy+constraints
+- geography: parcel/area
+- input_schema:
+  - format: typed live payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: planning+policy+constraints
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: parcel/area
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: live
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: planning_data_api:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - planning_brownfield
+- source_key: planning_brownfield
+- source_name: Brownfield land
+- source_url: https://www.planning.data.gov.uk/dataset/brownfield-land
+- mode: live
+- purpose: planning_growth
+- geography: site/polygon
+- input_schema:
+  - format: typed live payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: planning_growth
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: site/polygon
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: live
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: planning_brownfield:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - planning_conservation
+- source_key: planning_conservation
+- source_name: Conservation area
+- source_url: https://www.planning.data.gov.uk/dataset/conservation-area
+- mode: live
+- purpose: planning_constraints
+- geography: polygon
+- input_schema:
+  - format: typed live payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: planning_constraints
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: polygon
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: live
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: planning_conservation:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - planning_listed_building
+- source_key: planning_listed_building
+- source_name: Listed building
+- source_url: https://www.planning.data.gov.uk/dataset/listed-building
+- mode: live
+- purpose: planning_constraints
+- geography: point
+- input_schema:
+  - format: typed live payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: planning_constraints
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: point
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: live
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: planning_listed_building:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - planning_green_belt
+- source_key: planning_green_belt
+- source_name: Green belt
+- source_url: https://www.planning.data.gov.uk/dataset/green-belt
+- mode: live
+- purpose: planning_policy
+- geography: polygon
+- input_schema:
+  - format: typed live payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: planning_policy
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: polygon
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: live
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: planning_green_belt:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - ons_snpp
+- source_key: ons_snpp
+- source_name: ONS Subnational Population Projections
+- source_url: https://www.ons.gov.uk/releases/subnationalpopulationprojections2022based
+- mode: fixture
+- purpose: demographic_demand
+- geography: local_authority
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: demographic_demand
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: local_authority
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: ons_snpp:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - ons_internal_migration
+- source_key: ons_internal_migration
+- source_name: ONS Internal Migration Projections
+- source_url: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/internalmigrationz5
+- mode: fixture
+- purpose: demographic_demand
+- geography: local_authority
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: demographic_demand
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: local_authority
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: ons_internal_migration:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - naptan
+- source_key: naptan
+- source_name: NaPTAN
+- source_url: https://www.data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/naptan
+- mode: fixture
+- purpose: transport_infra
+- geography: point
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: transport_infra
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: point
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: naptan:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - bods
+- source_key: bods
+- source_name: Bus Open Data Service
+- source_url: https://www.gov.uk/guidance/find-and-use-bus-open-data
+- mode: stub
+- purpose: transport_infra
+- geography: route/stop
+- input_schema:
+  - format: typed stub payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: transport_infra
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: route/stop
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: stub
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: bods:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - national_rail_darwin
+- source_key: national_rail_darwin
+- source_name: Darwin Data Feeds
+- source_url: https://www.nationalrail.co.uk/developers/darwin-data-feeds/
+- mode: stub
+- purpose: transport_infra
+- geography: station/service
+- input_schema:
+  - format: typed stub payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: transport_infra
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: station/service
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: stub
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: national_rail_darwin:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - tfl_ptal
+- source_key: tfl_ptal
+- source_name: TfL WebCAT PTAL
+- source_url: https://tfl.gov.uk/info-for/urban-planning-and-construction/planning-applications/planning-with-webcat?intcmp=25861
+- mode: stub
+- purpose: transport_infra
+- geography: london grid
+- input_schema:
+  - format: typed stub payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: transport_infra
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: london grid
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: stub
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: tfl_ptal:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - gias_schools
+- source_key: gias_schools
+- source_name: Get Information about Schools
+- source_url: https://get-information-schools.service.gov.uk/
+- mode: fixture
+- purpose: social_amenity
+- geography: establishment
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: social_amenity
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: establishment
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: gias_schools:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - nhs_ods_ord
+- source_key: nhs_ods_ord
+- source_name: NHS ODS ORD API
+- source_url: https://digital.nhs.uk/developer/api-catalogue/organisation-data-service-ord
+- mode: fixture
+- purpose: social_amenity
+- geography: organisation/address
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: social_amenity
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: organisation/address
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: nhs_ods_ord:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - os_open_greenspace
+- source_key: os_open_greenspace
+- source_name: OS Open Greenspace
+- source_url: https://www.ordnancesurvey.co.uk/products/os-open-greenspace
+- mode: fixture
+- purpose: social_amenity
+- geography: polygon
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: social_amenity
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: polygon
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: os_open_greenspace:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
+---
+
+## Connector Spec - ea_flood_zones_cc
+- source_key: ea_flood_zones_cc
+- source_name: EA Flood Zones plus Climate Change
+- source_url: https://www.data.gov.uk/dataset/77931470-ee6b-4f8e-8868-82842aed2e5d/flood-map-for-planning-flood-zones-plus-climate-change
+- mode: fixture
+- purpose: risk_penalty
+- geography: polygon
+- input_schema:
+  - format: typed fixture payload compatible with future_growth_features
+  - required_fields: source_key, source_url, external_id, observed_date, mode
+  - geometry_fields: geometry and centroid when source geography supports spatial matching
+- normalized_output_map:
+  - feature_type: risk_penalty
+  - external_id: source-native stable identifier or deterministic fixture/stub identifier
+  - geometry: source geometry when available; otherwise null typed placeholder
+  - centroid: derived from geometry when available; otherwise null typed placeholder
+  - geography_level: polygon
+  - effective_date: source effective date when available
+  - observed_date: ingestion run date or fixture generation date
+  - raw_payload_ref: stable pointer to raw source row, fixture row, or stub payload
+  - mode: fixture
+  - confidence_cap_reason: high confidence disabled unless source_url and parcel-specific spatial match both exist
+- idempotency_key:
+  - rule: ea_flood_zones_cc:external_id:observed_date
+- failure_handling:
+  - missing_source_url: reject record
+  - malformed_payload: reject affected record and keep previous successful snapshot when available
+  - missing_geometry: disable parcel popup evidence unless a typed matcher resolves parcel-specific geometry
+  - source_unavailable: use fixture/stub mode with the same typed output shape
+  - confidence_fallback: cap below high unless source_url and parcel-specific spatial match both exist
+
