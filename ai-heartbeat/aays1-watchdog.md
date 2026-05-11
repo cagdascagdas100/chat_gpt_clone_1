@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-065-contractor-db-export-preflight
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-11T21:56:20
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-11T21:57:03
