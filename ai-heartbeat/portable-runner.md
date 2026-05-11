@@ -1,7 +1,12 @@
-﻿# TerraYield Always-On Bridge Heartbeat
+﻿# AAYS Portable Task Runner Fixed
 
-status: completed
-task_id: terrayield-047-bridge-contractor-bootstrap-probe
-checked_at: 2026-05-11T16:49:22
-bridge_root: C:\AAYS_GITHUB_BRIDGE_CLEAN
-message: Task completed or runner returned.
+Time: 2026-05-12 02:08:45
+Status: finished
+TaskId: cost50-006-schema-migration-draft-audit-20260512
+BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
+ProjectRoot: E:\AAYS_DATA\cost\handoff_zips\cost_uk_postgres_50step_handoff_20260511_213229\terrayield_land_intelligence
+TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260512_020835.log
+Message: exit=0
+Mode: no-spawn-foreground-loop
+SafeScriptOnly: enabled
