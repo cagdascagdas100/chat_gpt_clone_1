@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-060-contractor-package-check
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-11T20:26:22
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-11T20:27:03
