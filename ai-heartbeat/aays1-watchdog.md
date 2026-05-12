@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: completed
+- Status: polling
 - Task ID: terrayield-079-future-growth-tests-only-smoke
-- Message: One-shot completed successfully.
-- Checked at: 2026-05-12T04:27:00
+- Message: No new AAYS1 task.
+- Checked at: 2026-05-12T04:30:27
