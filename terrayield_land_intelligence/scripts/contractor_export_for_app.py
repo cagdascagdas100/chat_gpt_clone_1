@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 from contractor_env import load_contractor_env
 
@@ -23,6 +24,13 @@ def utc_now() -> str:
 def write_json(path: Path, obj: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def read_csv_or_empty(path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(path, dtype=object)
+    except EmptyDataError:
+        return pd.DataFrame()
 
 
 def clean_value(v: Any) -> Any:
@@ -65,7 +73,7 @@ def main() -> int:
     matches_file = curated / "contractor_parcel_match.csv"
     if not contractors_file.exists():
         raise FileNotFoundError(f"Missing curated contractors: {contractors_file}")
-    contractors = pd.read_csv(contractors_file, dtype=object).to_dict(orient="records")
+    contractors = read_csv_or_empty(contractors_file).to_dict(orient="records")
     safe_contractors = [sanitize_for_app(row) for row in contractors]
 
     pd.DataFrame(safe_contractors).to_csv(export_root / "contractors_for_app.csv", index=False, encoding="utf-8")
@@ -74,12 +82,12 @@ def main() -> int:
             fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
     if projects_file.exists():
-        projects = pd.read_csv(projects_file, dtype=object)
+        projects = read_csv_or_empty(projects_file)
         projects.to_csv(export_root / "contractor_projects_for_app.csv", index=False, encoding="utf-8")
     else:
         projects = pd.DataFrame()
     if matches_file.exists():
-        matches = pd.read_csv(matches_file, dtype=object)
+        matches = read_csv_or_empty(matches_file)
         matches.to_csv(export_root / "contractor_parcel_matches_for_app.csv", index=False, encoding="utf-8")
     else:
         matches = pd.DataFrame()

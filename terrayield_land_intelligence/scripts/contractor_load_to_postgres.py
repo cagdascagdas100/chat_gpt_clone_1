@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import pandas as pd
 import psycopg
+from pandas.errors import EmptyDataError
 from psycopg.rows import dict_row
 
 from contractor_env import load_contractor_env, redact_secrets
@@ -42,6 +43,13 @@ def clean_nan(value: Any) -> Any:
     if isinstance(value, float) and value.is_integer():
         return int(value)
     return value
+
+
+def read_csv_or_empty(path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(path, dtype=object)
+    except EmptyDataError:
+        return pd.DataFrame()
 
 
 def create_schema(conn: psycopg.Connection) -> None:
@@ -208,9 +216,9 @@ def main() -> int:
         print(f"FAIL-CLOSED: missing curated input. Status written: {path}", file=sys.stderr)
         return 3
 
-    companies = pd.read_csv(company_csv, dtype=object)
-    projects = pd.read_csv(project_csv, dtype=object) if project_csv.exists() else pd.DataFrame()
-    evidence = pd.read_csv(evidence_csv, dtype=object) if evidence_csv.exists() else pd.DataFrame()
+    companies = read_csv_or_empty(company_csv)
+    projects = read_csv_or_empty(project_csv) if project_csv.exists() else pd.DataFrame()
+    evidence = read_csv_or_empty(evidence_csv) if evidence_csv.exists() else pd.DataFrame()
     try:
         with psycopg.connect(database_url, row_factory=dict_row) as conn:
             create_schema(conn)

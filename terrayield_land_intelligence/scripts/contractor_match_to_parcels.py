@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import psycopg
+from pandas.errors import EmptyDataError
 from psycopg.rows import dict_row
 
 from contractor_env import load_contractor_env, redact_secrets
@@ -35,6 +36,13 @@ def utc_now() -> str:
 def write_json(path: Path, obj: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def read_csv_or_empty(path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(path, dtype=object)
+    except EmptyDataError:
+        return pd.DataFrame()
 
 
 def status(storage_root: Path, status_type: str, reason: str, details: Optional[Dict[str, Any]] = None) -> Path:
@@ -258,7 +266,7 @@ def main() -> int:
         return 3
 
     postcode_lookup = load_postcode_lookup(storage_root, args.ons_postcode_csv)
-    contractors = pd.read_csv(contractors_file, dtype=object).to_dict(orient="records")
+    contractors = read_csv_or_empty(contractors_file).to_dict(orient="records")
     matches: List[Dict[str, Any]] = []
     try:
         conn_ctx = psycopg.connect(database_url, row_factory=dict_row)
@@ -317,7 +325,10 @@ def main() -> int:
             upsert_matches(conn, matches)
 
     out_csv = curated / "contractor_parcel_match.csv"
-    pd.DataFrame(matches).drop_duplicates(subset=["parcel_id", "contractor_id", "match_method"]).to_csv(out_csv, index=False, encoding="utf-8")
+    match_frame = pd.DataFrame(matches)
+    if matches:
+        match_frame = match_frame.drop_duplicates(subset=["parcel_id", "contractor_id", "match_method"])
+    match_frame.to_csv(out_csv, index=False, encoding="utf-8")
     manifest = {"match_count": len(matches), "output": str(out_csv), "matched_at": utc_now(), "hierarchy": ["geometry_intersection", "authority_postcode_proxy", "region_fallback_review"]}
     write_json(storage_root / "manifests" / "parcel_match_manifest.json", manifest)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
