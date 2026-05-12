@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: polling
-- Task ID: terrayield-088-continuous-accuracy-expansion-watchdog
-- Message: No new AAYS1 task.
-- Checked at: 2026-05-12T12:24:03
+- Status: running
+- Task ID: ty91
+- Message: New AAYS1 task detected. Running one-shot.
+- Checked at: 2026-05-12T13:59:23
