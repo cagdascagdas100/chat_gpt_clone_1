@@ -155,7 +155,7 @@ def proxy_match(conn: psycopg.Connection, parcel_table: str, parcel_id_col: str,
         clauses.append(f"regexp_replace(upper({postcode_col}::text), '\\s+', '', 'g') = %s")
         params.append(postcode)
     if authority_col and authority:
-        clauses.append(f"upper({authority_col}::text) = upper(%s)")
+        clauses.append(f"upper({authority_col}::text) = upper(%s::text)")
         params.append(authority)
     if not clauses:
         return []
@@ -170,7 +170,7 @@ def region_fallback(conn: psycopg.Connection, parcel_table: str, parcel_id_col: 
     if not region_col or not region:
         return []
     schema, table = split_table(parcel_table)
-    sql = f"select {parcel_id_col}::text as parcel_id from {schema}.{table} where upper({region_col}::text) = upper(%s) limit %s"
+    sql = f"select {parcel_id_col}::text as parcel_id from {schema}.{table} where upper({region_col}::text) = upper(%s::text) limit %s"
     with conn.cursor() as cur:
         cur.execute(sql, (region, limit))
         return [r["parcel_id"] for r in cur.fetchall()]
