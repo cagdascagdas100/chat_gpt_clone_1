@@ -28,10 +28,10 @@ Plan remaining: 52%
 ## Output Files
 - E:\AAYS_DATA\legal\raw\procurement\contracts_finder_ocds.jsonl exists=False bytes=0
 - E:\AAYS_DATA\legal\raw\procurement\find_tender_ocds.jsonl exists=False bytes=0
-- E:\AAYS_DATA\legal\processed\contractors_normalized.csv exists=False bytes=0
-- E:\AAYS_DATA\legal\processed\procurement_events_normalized.csv exists=False bytes=0
-- E:\AAYS_DATA\legal\processed\contractor_scores.csv exists=False bytes=0
-- E:\AAYS_DATA\legal\exports\contractor_app_export.csv exists=False bytes=0
-- E:\AAYS_DATA\legal\exports\contractor_app_export.jsonl exists=False bytes=0
+- E:\AAYS_DATA\legal\processed\contractors_normalized.csv exists=True bytes=33856
+- E:\AAYS_DATA\legal\processed\procurement_events_normalized.csv exists=True bytes=160217
+- E:\AAYS_DATA\legal\processed\contractor_scores.csv exists=True bytes=21859
+- E:\AAYS_DATA\legal\exports\contractor_app_export.csv exists=True bytes=63729
+- E:\AAYS_DATA\legal\exports\contractor_app_export.jsonl exists=True bytes=280330
 
 ## Recommended Next Step
