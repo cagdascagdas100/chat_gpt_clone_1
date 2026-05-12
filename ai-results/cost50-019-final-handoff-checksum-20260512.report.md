@@ -1,6 +1,6 @@
 ﻿# Cost50 Step 019 Final Handoff Checksum
 
-Generated: 2026-05-12T15:19:01
+Generated: 2026-05-12T15:19:29
 Task: cost50-019-final-handoff-checksum-20260512
 
 ## Checks
@@ -13,12 +13,12 @@ Task: cost50-019-final-handoff-checksum-20260512
 - requirements: False
 
 ## Counts
-- report files: 9
-- handoff files: 2
+- report files: 10
+- handoff files: 4
 - project python: 9
 - project sql: 0
 - project markdown: 4
-- checksum rows: 11
+- checksum rows: 14
 
 ## Outputs
 - checksum_json: E:\AAYS_DATA\cost\handoff_ready\COST50_HANDOFF_SHA256_20260512.json
@@ -26,7 +26,8 @@ Task: cost50-019-final-handoff-checksum-20260512
 ## Git Status
 ```text
 git : fatal: not a git repository (or any of the parent directories): .git
-At C:\AAYS_GITHUB_BRIDGE_CLEAN\ai-task-scripts\terrayield_cost50_019_final_handoff_checksum.ps1:55 char:20
+At C:\Users\cagda\Documents\chat_gpt_clone_1\ai-task-scripts\terrayield_cost50_019_final_handoff_checksum.ps1:55 char:2
+0
 + try { $gitStatus = git -C $ProjectRoot status --short 2>&1 | Out-Stri ...
 +                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (fatal: not a gi...ectories): .git:String) [], RemoteException
