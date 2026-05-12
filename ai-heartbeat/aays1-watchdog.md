@@ -1,6 +1,6 @@
 ﻿# AAYS1 Watchdog
 
-- Status: polling
-- Task ID: ty94
-- Message: No new AAYS1 task.
-- Checked at: 2026-05-12T15:05:03
+- Status: running
+- Task ID: ty95
+- Message: New AAYS1 task detected. Running one-shot.
+- Checked at: 2026-05-12T15:06:06
