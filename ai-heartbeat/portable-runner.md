@@ -1,12 +1,12 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-12 14:14:53
+Time: 2026-05-12 14:42:54
 Status: finished
-TaskId: cost50-015-handoff-closure-audit-20260512
+TaskId: cost50-017-dependency-smoke-audit-20260512
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
 ProjectRoot: E:\AAYS_DATA\cost\handoff_zips\cost_uk_postgres_50step_handoff_20260511_213229\terrayield_land_intelligence
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
-RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260512_130501.log
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260512_144251.log
 Message: exit=0
 Mode: no-spawn-foreground-loop
 SafeScriptOnly: enabled
