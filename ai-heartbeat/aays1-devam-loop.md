@@ -1,7 +1,7 @@
 ﻿# AAYS1 Devam Loop
 
-- Status: completed
+- Status: polling
 - Task ID: ty101
-- Message: One-shot finished for AAYS1 task.
+- Message: No new AAYS1 task.
 - Task file: ai-tasks/aays1-current-task.json
-- Checked at: 2026-05-12T17:52:05
+- Checked at: 2026-05-12T17:52:29
