@@ -11,7 +11,7 @@ Plan remaining: 52%
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_collect_procurement_ocds.py exists=True bytes=18162
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_normalize_and_score.py exists=True bytes=22555
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_load_to_postgres.py exists=True bytes=10181
-- C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_match_to_parcels.py exists=True bytes=15623
+- C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_match_to_parcels.py exists=True bytes=15635
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\contractor_export_for_app.py exists=True bytes=4757
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\requirements_contractor.txt exists=True bytes=78
 - C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\scripts\README_CONTRACTOR_PIPELINE.md exists=True bytes=3791
