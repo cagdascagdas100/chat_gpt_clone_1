@@ -1,10 +1,10 @@
 ﻿# AAYS Safe Continue Bridge
 
-Time: 2026-05-13T22:03:57Z
-Status: finished
+Time: 2026-05-13T22:04:49Z
+Status: polling
 TaskId: aays-safe-continue-psql-path-probe-20260513-220000
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: action=psql_path_probe
+Message: no new task
 Mode: allowlist-only
 AllowedActions: status_check, git_sync_check, heartbeat_push, readonly_snapshot, psql_path_probe, postgis_readonly_probe, artifact_collect
 
