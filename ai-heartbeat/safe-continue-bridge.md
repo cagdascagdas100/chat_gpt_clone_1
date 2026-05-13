@@ -1,10 +1,10 @@
 ﻿# AAYS Safe Continue Bridge
 
-Time: 2026-05-13T22:12:09Z
-Status: finished
+Time: 2026-05-13T22:13:00Z
+Status: polling
 TaskId: aays-safe-continue-postgis-readonly-probe-20260513-221000
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: action=postgis_readonly_probe
+Message: no new task
 Mode: allowlist-only
 AllowedActions: status_check, git_sync_check, heartbeat_push, readonly_snapshot, psql_path_probe, postgis_readonly_probe, artifact_collect
 
