@@ -25,6 +25,7 @@ def run_smoke(
     *,
     base_url: str,
     index_path: Path,
+    app_js_path: Path,
     config_path: Path,
     zoom: int,
     limit: int,
@@ -40,6 +41,13 @@ def run_smoke(
         errors.append(f"index_read_error: {exc}")
         index_text = ""
 
+    try:
+        app_js_text = app_js_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        status = "failed"
+        errors.append(f"app_js_read_error: {exc}")
+        app_js_text = ""
+
     config_raw = ""
     try:
         config_raw = config_path.read_text(encoding="utf-8")
@@ -50,7 +58,7 @@ def run_smoke(
         config = {}
 
     checks["ui_toggle_present"] = 'id="showFutureGrowth"' in index_text
-    checks["ui_popup_hook_present"] = "future-growth-popup" in index_text or "future-growth-popup" in config_raw
+    checks["ui_popup_hook_present"] = "future-growth-popup" in app_js_text
     checks["ui_label_present"] = _contains_any(index_text, ["Gelecek Gelisim", "Future Growth"])
     checks["legend_present"] = 'id="futureGrowthLegend"' in index_text
     checks["config_enabled"] = bool(config.get("enabled"))
@@ -166,11 +174,13 @@ def run_smoke(
 def parse_args() -> argparse.Namespace:
     repo_root = Path(__file__).resolve().parents[1]
     default_index = repo_root.parent / "england_map_web" / "index.html"
+    default_app_js = repo_root.parent / "england_map_web" / "app.js"
     default_config = repo_root.parent / "england_map_web" / "config" / "future-growth-layer.json"
 
     parser = argparse.ArgumentParser(description="Future Growth frontend layer + popup smoke test")
     parser.add_argument("--base-url", default="http://127.0.0.1:8010")
     parser.add_argument("--index-path", type=Path, default=default_index)
+    parser.add_argument("--app-js-path", type=Path, default=default_app_js)
     parser.add_argument("--config-path", type=Path, default=default_config)
     parser.add_argument("--zoom", type=int, default=10)
     parser.add_argument("--limit", type=int, default=5)
@@ -183,6 +193,7 @@ def main() -> int:
     result = run_smoke(
         base_url=args.base_url,
         index_path=args.index_path,
+        app_js_path=args.app_js_path,
         config_path=args.config_path,
         zoom=args.zoom,
         limit=args.limit,
