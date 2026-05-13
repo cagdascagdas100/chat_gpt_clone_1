@@ -1,10 +1,10 @@
 ﻿# AAYS Safe Continue Bridge
 
-Time: 2026-05-13T23:03:18Z
-Status: polling
-TaskId: aays-safe-continue-artifact-collect-20260513-222100
+Time: 2026-05-13T23:04:08Z
+Status: finished
+TaskId: terrayield-046-runner-sync-recovery-then-accuracy-expansion
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: no new task
+Message: action=artifact_collect
 Mode: allowlist-only
 AllowedActions: status_check, git_sync_check, heartbeat_push, readonly_snapshot, psql_path_probe, postgis_readonly_probe, artifact_collect
 
