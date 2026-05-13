@@ -1,12 +1,12 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-13 14:50:33
-Status: finished
-TaskId: aays-041-psql-admin-install-retry-20260513
+Time: 2026-05-14 00:37:44
+Status: running
+TaskId: terrayield-046-runner-sync-recovery-then-accuracy-expansion
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-ProjectRoot: E:\AAYS_DATA\cost\handoff_zips\cost_uk_postgres_50step_handoff_20260511_213229\terrayield_land_intelligence
+ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
-RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260513_010926.log
-Message: exit=0
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260514_003742.log
+Message: TerraYield 046 runner sync recovery then accuracy expansion
 Mode: no-spawn-foreground-loop
 SafeScriptOnly: enabled
