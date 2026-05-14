@@ -1,0 +1,105 @@
+{
+  "task_id": "ty137-contractor-exports-api-smoke",
+  "results": [
+    {
+      "check": "service_import",
+      "ok": true
+    },
+    {
+      "check": "export_files_present",
+      "ok": true,
+      "files": {
+        "companies": {
+          "filename": "contractors_for_app.csv",
+          "path": "E:\\AAYS_DATA\\contractor\\exports\\contractors_for_app.csv",
+          "exists": true,
+          "bytes": 63729,
+          "modified_at": 1778754098.979146
+        },
+        "companies_jsonl": {
+          "filename": "contractors_for_app.jsonl",
+          "path": "E:\\AAYS_DATA\\contractor\\exports\\contractors_for_app.jsonl",
+          "exists": true,
+          "bytes": 280330,
+          "modified_at": 1778754102.369159
+        },
+        "projects": {
+          "filename": "contractor_projects_for_app.csv",
+          "path": "E:\\AAYS_DATA\\contractor\\exports\\contractor_projects_for_app.csv",
+          "exists": true,
+          "bytes": 405940,
+          "modified_at": 1778754102.6041677
+        },
+        "parcel_matches": {
+          "filename": "contractor_parcel_matches_for_app.csv",
+          "path": "E:\\AAYS_DATA\\contractor\\exports\\contractor_parcel_matches_for_app.csv",
+          "exists": true,
+          "bytes": 5688,
+          "modified_at": 1778754102.7469602
+        },
+        "manifest": {
+          "filename": "export_manifest.json",
+          "path": "E:\\AAYS_DATA\\contractor\\exports\\export_manifest.json",
+          "exists": true,
+          "bytes": 867,
+          "modified_at": 1778754102.802961
+        }
+      }
+    },
+    {
+      "check": "companies_rows",
+      "ok": true,
+      "count": 317
+    },
+    {
+      "check": "projects_rows",
+      "ok": true,
+      "count": 421
+    },
+    {
+      "check": "parcel_match_rows",
+      "ok": true,
+      "count": 29
+    },
+    {
+      "check": "manifest_read",
+      "ok": true,
+      "manifest_exists": true
+    },
+    {
+      "check": "endpoint",
+      "endpoint": "/api/contractors/status",
+      "ok": true,
+      "status_code": 200
+    },
+    {
+      "check": "endpoint",
+      "endpoint": "/api/contractors/companies?limit=2",
+      "ok": true,
+      "status_code": 200
+    },
+    {
+      "check": "endpoint",
+      "endpoint": "/api/contractors/projects?limit=2",
+      "ok": true,
+      "status_code": 200
+    },
+    {
+      "check": "endpoint",
+      "endpoint": "/api/contractors/parcel-matches?limit=2",
+      "ok": true,
+      "status_code": 200
+    },
+    {
+      "check": "endpoint",
+      "endpoint": "/api/contractors/manifest",
+      "ok": true,
+      "status_code": 200
+    }
+  ],
+  "errors": [],
+  "ok": true,
+  "plan_progress_percent": 90,
+  "plan_percent_remaining": 10,
+  "next_action": "Commit app API patch and run dashboard/UI wiring."
+}
