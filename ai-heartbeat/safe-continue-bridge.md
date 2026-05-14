@@ -1,11 +1,11 @@
 ﻿# AAYS Safe Continue Bridge V2
 
-Time: 2026-05-14T10:14:23Z
-Status: finished
+Time: 2026-05-14T10:14:57Z
+Status: polling
 TaskId: aays-safe-v2-status-20260514-1015
 QueueFile: ai-tasks/safe-current-task.json
 IgnoredQueue: ai-tasks/current-task.json
-Message: action=status_check
+Message: no new safe task
 Mode: isolated-safe-queue-v2
 AllowedActions: status_check, git_sync_check, heartbeat_push, artifact_collect
 
