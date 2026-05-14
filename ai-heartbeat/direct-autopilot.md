@@ -1,11 +1,11 @@
 ﻿# AAYS Direct Autopilot NoAdmin
 
-Time: 2026-05-14 22:44:07
+Time: 2026-05-14 22:46:32
 Status: finished
-TaskId: aays-071-collect-longruns-status-20260514-2240
+TaskId: aays-072-launch-detached-db-worker-20260514-2246
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
-MainLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\direct-autopilot-20260514_222242.log
+MainLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\direct-autopilot-20260514_222214.log
 Message: exit=
 Mode: direct-local-read-after-git-reset
 PollSeconds: 20
