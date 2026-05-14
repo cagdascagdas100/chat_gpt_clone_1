@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParcelSecurityEvidence",
+  "type": "object",
+  "required": [
+    "parcel_id",
+    "safety_score",
+    "safety_level",
+    "confidence_score",
+    "confidence_label",
+    "confidence_flags",
+    "source_count",
+    "parcel_match_score"
+  ],
+  "properties": {
+    "parcel_id": {
+      "type": "string"
+    },
+    "safety_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "safety_level": {
+      "enum": [
+        "Cok Dusuk",
+        "Dusuk",
+        "Orta",
+        "Iyi",
+        "Cok Iyi"
+      ]
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "confidence_label": {
+      "enum": [
+        "Cok Yuksek",
+        "Yuksek",
+        "Orta",
+        "Dusuk"
+      ]
+    },
+    "confidence_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parcel_match_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "review_required": {
+      "type": "boolean"
+    }
+  }
+}
