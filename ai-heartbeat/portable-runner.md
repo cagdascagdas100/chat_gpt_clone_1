@@ -1,8 +1,8 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-15 02:41:30
+Time: 2026-05-15 02:43:42
 Status: finished
-TaskId: aays-095-risk-preview-20260515-0250
+TaskId: aays-096-risk-policy-calibration-20260515-0245
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
 ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
