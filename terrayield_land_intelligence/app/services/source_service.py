@@ -4,7 +4,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.db.models import SourceSnapshot
-from app.quality.source_confidence_integration import build_source_confidence_fields
+from app.quality.source_confidence_integration import build_source_confidence_metadata
 from app.schemas.common import SourceDescriptor, SourceStatus
 from app.services.source_catalog import SOURCE_CATALOG, STALE_THRESHOLDS
 from app.services.source_manifest_status import inspect_configured_manifest_status
@@ -33,7 +33,10 @@ def _build_source_status_notes(source_name: str, metadata_json: dict[str, Any] |
         ),
         "ambiguous_match": bool(notes.get("ambiguous_match") or notes.get("needs_review")),
     }
-    notes["source_confidence"] = build_source_confidence_fields(source_confidence_record)
+    notes["source_confidence"] = build_source_confidence_metadata(
+        source_confidence_record,
+        origin="source_status",
+    )
     return notes
 
 

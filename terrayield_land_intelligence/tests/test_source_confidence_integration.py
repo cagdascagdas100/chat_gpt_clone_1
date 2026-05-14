@@ -2,6 +2,7 @@
     SOURCE_CONFIDENCE_REVIEW_ROUTE,
     build_review_route_payload,
     build_source_confidence_fields,
+    build_source_confidence_metadata,
     with_source_confidence_fields,
 )
 
@@ -47,7 +48,7 @@ def test_missing_parcel_specific_spatial_match_routes_to_review():
     assert payload is not None
     assert payload["origin"] == "parcel_matching_pipeline"
     assert payload["review_route"] == SOURCE_CONFIDENCE_REVIEW_ROUTE
-    assert "missing_parcel_specific_spatial_match" in payload["source_confidence_reasons"]
+    assert "missing_parcel_specific_spatial_match" in payload["source_confidence"]["reasons"]
 
 
 def test_ambiguous_match_is_low_confidence_and_review_route():
@@ -82,3 +83,44 @@ def test_verified_source_and_parcel_match_has_no_review_payload():
     assert fields["source_confidence_review_route"] is None
     assert fields["source_confidence_normalized_parcel_key"] == "ABC 123 DEF"
     assert payload is None
+
+
+def test_public_metadata_uses_stable_unprefixed_keys():
+    metadata = build_source_confidence_metadata(
+        {
+            "source_url": "",
+            "parcel_id": "abc-123",
+            "geometry": {"type": "Point", "coordinates": [0, 0]},
+        },
+        origin="api_response",
+    )
+
+    assert metadata == {
+        "level": "medium",
+        "score": 0.55,
+        "reasons": ["missing_source_url"],
+        "needs_review": True,
+        "review_route": SOURCE_CONFIDENCE_REVIEW_ROUTE,
+        "source_url": None,
+        "normalized_parcel_key": "ABC 123",
+        "publishable_without_review": False,
+        "origin": "api_response",
+    }
+
+
+def test_review_route_payload_wraps_standard_source_confidence_metadata():
+    payload = build_review_route_payload(
+        {
+            "source_url": "",
+            "parcel_id": "abc-123",
+            "geometry": {"type": "Point", "coordinates": [0, 0]},
+        },
+        origin="review_route",
+    )
+
+    assert payload is not None
+    assert payload["origin"] == "review_route"
+    assert payload["review_route"] == SOURCE_CONFIDENCE_REVIEW_ROUTE
+    assert payload["source_confidence"]["needs_review"] is True
+    assert payload["source_confidence"]["level"] == "medium"
+

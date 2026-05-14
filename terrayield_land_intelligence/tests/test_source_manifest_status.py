@@ -87,8 +87,10 @@ def test_build_source_status_notes_attaches_manifest_status(monkeypatch) -> None
     assert notes["snapshot_key"] == "market-1"
     assert notes["manifest_status"]["availability"] == "demo_only"
     assert notes["manifest_status"]["active_provider_names"] == ["sample_csv"]
-    assert notes["source_confidence"]["source_confidence_needs_review"] is True
-    assert "missing_source_url" in notes["source_confidence"]["source_confidence_reasons"]
+    assert notes["source_confidence"]["needs_review"] is True
+    assert notes["source_confidence"]["review_route"] == "source_confidence_review"
+    assert notes["source_confidence"]["origin"] == "source_status"
+    assert "missing_source_url" in notes["source_confidence"]["reasons"]
 
 
 def test_summarize_facilities_manifest_entries_counts_download_mode_as_live_ready() -> None:

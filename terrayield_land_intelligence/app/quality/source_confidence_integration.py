@@ -19,6 +19,8 @@ from app.quality.source_confidence_rules import (
 
 
 SOURCE_CONFIDENCE_REVIEW_ROUTE = "source_confidence_review"
+SOURCE_CONFIDENCE_METADATA_KEY = "source_confidence"
+SOURCE_CONFIDENCE_REVIEW_PAYLOAD_KEY = "source_confidence_review_payload"
 
 
 _PARCEL_KEYS = (
@@ -96,6 +98,31 @@ def with_source_confidence_fields(record: Mapping[str, Any]) -> dict[str, Any]:
     return enriched
 
 
+
+def build_source_confidence_metadata(
+    record: Mapping[str, Any],
+    *,
+    origin: str | None = None,
+) -> dict[str, Any]:
+    """Return stable API/status metadata with unprefixed public keys."""
+
+    fields = build_source_confidence_fields(record)
+    metadata: dict[str, Any] = {
+        "level": fields["source_confidence_level"],
+        "score": fields["source_confidence_score"],
+        "reasons": fields["source_confidence_reasons"],
+        "needs_review": fields["source_confidence_needs_review"],
+        "review_route": fields["source_confidence_review_route"],
+        "source_url": fields["source_confidence_source_url"],
+        "normalized_parcel_key": fields["source_confidence_normalized_parcel_key"],
+        "publishable_without_review": fields[
+            "source_confidence_publishable_without_review"
+        ],
+    }
+    if origin is not None:
+        metadata["origin"] = origin
+    return metadata
+
 def build_review_route_payload(
     record: Mapping[str, Any],
     *,
@@ -108,16 +135,12 @@ def build_review_route_payload(
     mutation.
     """
 
-    fields = build_source_confidence_fields(record)
-    if not fields["source_confidence_needs_review"]:
+    metadata = build_source_confidence_metadata(record, origin=origin)
+    if not metadata["needs_review"]:
         return None
 
     return {
         "origin": origin,
-        "review_route": fields["source_confidence_review_route"],
-        "source_confidence_level": fields["source_confidence_level"],
-        "source_confidence_score": fields["source_confidence_score"],
-        "source_confidence_reasons": fields["source_confidence_reasons"],
-        "source_url": fields["source_confidence_source_url"],
-        "normalized_parcel_key": fields["source_confidence_normalized_parcel_key"],
+        "review_route": metadata["review_route"],
+        SOURCE_CONFIDENCE_METADATA_KEY: metadata,
     }

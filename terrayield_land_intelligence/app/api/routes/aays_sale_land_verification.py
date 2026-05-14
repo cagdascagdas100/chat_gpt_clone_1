@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from app.quality.source_confidence_integration import (
     build_review_route_payload,
-    build_source_confidence_fields,
+    build_source_confidence_metadata,
 )
 from app.services.sale_land_verification import decide_sale_land_verification
 
@@ -14,7 +14,10 @@ router = APIRouter(prefix="/verification/sale-land", tags=["sale-land-verificati
 @router.post("/classify")
 def classify_sale_land_record(record: dict):
     decision = decide_sale_land_verification(record)
-    source_confidence = build_source_confidence_fields(record)
+    source_confidence = build_source_confidence_metadata(
+        record,
+        origin="sale_land_verification_route",
+    )
     review_payload = build_review_route_payload(record, origin="sale_land_verification_route")
     return {
         "verification_level": decision.level.value,
