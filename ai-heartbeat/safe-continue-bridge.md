@@ -1,16 +1,16 @@
-﻿# AAYS Safe Continue Bridge
+﻿# AAYS Safe Continue Bridge Lite
 
-Time: 2026-05-13T23:28:43Z
-Status: running
-TaskId: aays-safe-continue-status-check-20260513-233000
+Time: 2026-05-14T01:19:48Z
+Status: started
+TaskId: none
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: action=status_check
-Mode: allowlist-only
-AllowedActions: status_check, git_sync_check, heartbeat_push, readonly_snapshot, psql_path_probe, postgis_readonly_probe, artifact_collect
+Message: lite bridge started
+Mode: allowlist-only-lite
+AllowedActions: status_check, git_sync_check, heartbeat_push, artifact_collect
 
 Safety:
 - migration_apply=blocked
 - prod_deploy=blocked
-- runner_queue_arbitrary_script=blocked
+- arbitrary_script_execution=blocked
 - secret_write_update=blocked
 - production_db_write_ddl_index=blocked

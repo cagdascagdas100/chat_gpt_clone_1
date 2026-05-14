@@ -1,6 +1,10 @@
 # AAYS 052 Final Acceptance Lock Check
 
+<<<<<<< Updated upstream
 Generated: 2026-05-14T04:02:05
+=======
+Generated: 2026-05-14T04:14:52
+>>>>>>> Stashed changes
 Task: aays-052-final-acceptance-lock-check-20260514
 
 ## Acceptance
@@ -21,7 +25,11 @@ Task: aays-052-final-acceptance-lock-check-20260514
 - user_startup_launcher: True
 
 ## Counts
+<<<<<<< Updated upstream
 - result_md: 611
+=======
+- result_md: 612
+>>>>>>> Stashed changes
 - runner_logs: 85
 - scripts: 313
 - manifests: 5
