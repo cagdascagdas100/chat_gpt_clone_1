@@ -43,15 +43,15 @@ $CsvPg = $Csv -replace '\\','/'
 foreach($f in @($Schema,$Csv)){ if(!(Test-Path $f)){ throw "Missing file: $f" } }
 "# AAYS 053 Auto Clean Cluster DB Dry-run" | Set-Content -Encoding UTF8 $ReportPath
 AddR "Generated: $(Get-Date -Format s)"
-AddR 'mode: auto_clean_isolated_cluster_trust_local_only'
+AddR 'mode: auto_clean_isolated_cluster_trust_local_only_pgctl_timeout_guard'
 AddR "pg_host: 127.0.0.1"
 AddR "pg_port: $Port"
 AddR "cluster_dir: $ClusterDir"
 AddR "log_file: $LogFile"
 AddR 'no_secret_required: true'
 RunNative '01 initdb trust locale C' $Initdb @('-D',$ClusterDir,'-U','postgres','--encoding=UTF8','--locale=C','--auth=trust')
-RunNative '02 start cluster local only' $PgCtl @('-D',$ClusterDir,'-l',$LogFile,'-o',"-p $Port -h 127.0.0.1",'start')
-Start-Sleep -Seconds 5
+RunNative '02 start cluster local only wait max 20s' $PgCtl @('start','-D',$ClusterDir,'-l',$LogFile,'-o',"-p $Port -h 127.0.0.1",'-w','-t','20')
+Start-Sleep -Seconds 3
 RunNative '03 psql version' $Psql @('--version')
 RunNative '04 connection test' $Psql @('-h','127.0.0.1','-p',"$Port",'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-c','SELECT current_database(), current_user, version();')
 RunNative '05 create database aays' $Createdb @('-h','127.0.0.1','-p',"$Port",'-U','postgres','aays')
