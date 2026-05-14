@@ -1,11 +1,12 @@
-﻿# AAYS Safe Continue Bridge Lite
+﻿# AAYS Safe Continue Bridge V2
 
-Time: 2026-05-14T10:05:28Z
-Status: polling
-TaskId: aays-053-auto-clean-cluster-db-dryrun-20260514-fixed-args-1235
-BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: no new task
-Mode: allowlist-only-lite
+Time: 2026-05-14T10:05:47Z
+Status: started
+TaskId: none
+QueueFile: ai-tasks/safe-current-task.json
+IgnoredQueue: ai-tasks/current-task.json
+Message: safe bridge v2 started
+Mode: isolated-safe-queue-v2
 AllowedActions: status_check, git_sync_check, heartbeat_push, artifact_collect
 
 Safety:
