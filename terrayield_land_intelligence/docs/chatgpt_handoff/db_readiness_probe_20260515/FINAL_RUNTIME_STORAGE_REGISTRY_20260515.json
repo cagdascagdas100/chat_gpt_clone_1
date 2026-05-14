@@ -1,0 +1,139 @@
+﻿{
+    "registry_version":  "2026-05-15.db-readiness.readonly.v1",
+    "generated_at":  "2026-05-15T02:40:05",
+    "repo":  {
+                 "app_repo":  "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\terrayield_land_intelligence",
+                 "workspace_root":  "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
+                 "remote":  "https://github.com/cagdascagdas100/chat_gpt_clone_1",
+                 "branch":  "security-accuracy-expansion-20260508",
+                 "head":  "2cf89896 Standardize source confidence metadata payloads",
+                 "recent_commits":  [
+                                        "2cf89896 Standardize source confidence metadata payloads",
+                                        "37b33ff5 Wire source confidence into core pipelines",
+                                        "a957f5d5 Add source confidence integration adapter"
+                                    ]
+             },
+    "source_confidence":  {
+                              "status":  "validated",
+                              "latest_targeted_test_result":  "27 passed",
+                              "commits":  [
+                                              "a957f5d5 Add source confidence integration adapter",
+                                              "37b33ff5 Wire source confidence into core pipelines",
+                                              "2cf89896 Standardize source confidence metadata payloads"
+                                          ]
+                          },
+    "database":  {
+                     "decision":  "local_docker_postgis_readiness_verified_primary_runtime_still_requires_external_auth_fix_or_managed_postgis_approval",
+                     "canonical_runtime_target":  {
+                                                      "container_name":  "terrayield_land_postgis",
+                                                      "image":  "postgis/postgis:16-3.4",
+                                                      "host":  "localhost",
+                                                      "host_port":  55460,
+                                                      "container_port":  5432,
+                                                      "database":  "terrayield_land",
+                                                      "db_user_observed":  "postgres",
+                                                      "postgres_version_observed":  "16.4",
+                                                      "postgis_version_observed":  "3.4.3",
+                                                      "read_only_guard_observed":  "on"
+                                                  },
+                     "external_host_env_status":  {
+                                                      "TYLI_DATABASE_URL_loaded_from_dotenv":  true,
+                                                      "host_connection_status":  "blocked",
+                                                      "observed_issue":  "localhost:5432 postgres password authentication failed",
+                                                      "recommended_next":  "align TYLI_DATABASE_URL or PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD to the verified Docker target; keep secret values masked"
+                                                  },
+                     "geometry":  {
+                                      "postgis_present":  true,
+                                      "primary_srid_observed":  27700,
+                                      "secondary_srid_observed":  4326,
+                                      "parcel_geometry_tables_observed":  [
+                                                                              "public.parcels",
+                                                                              "public.parcels_inspire"
+                                                                          ],
+                                      "listing_geometry_tables_observed":  [
+                                                                               "public.listings_government_property_finder",
+                                                                               "public.listings_landhub",
+                                                                               "public.listings_market_adapter"
+                                                                           ]
+                                  },
+                     "domain_tables_observed":  {
+                                                    "parcel_like":  [
+                                                                        "contractor_parcel_match",
+                                                                        "listing_parcel_link",
+                                                                        "parcel_context_metric_details",
+                                                                        "parcel_context_summary",
+                                                                        "parcel_cost_estimates",
+                                                                        "parcel_cost_material_lines",
+                                                                        "parcel_future_growth_evidence",
+                                                                        "parcel_future_growth_scores",
+                                                                        "parcel_sales_history",
+                                                                        "parcel_signal_summary",
+                                                                        "parcel_verified_sales_history",
+                                                                        "parcels_inspire"
+                                                                    ],
+                                                    "cost_like":  [
+                                                                      "cost_material_intensity",
+                                                                      "cost_material_prices",
+                                                                      "cost_rate_cards",
+                                                                      "cost_run_logs",
+                                                                      "cost_source_registry",
+                                                                      "parcel_cost_estimates",
+                                                                      "parcel_cost_material_lines",
+                                                                      "transactions_price_paid"
+                                                                  ],
+                                                    "contractor_like":  [
+                                                                            "contractor_company",
+                                                                            "contractor_parcel_match",
+                                                                            "contractor_project",
+                                                                            "contractor_provenance_evidence"
+                                                                        ]
+                                                },
+                     "largest_rows_observed":  [
+                                                   {
+                                                       "table":  "contractor_provenance_evidence",
+                                                       "estimated_rows":  4697
+                                                   },
+                                                   {
+                                                       "table":  "parcel_future_growth_evidence",
+                                                       "estimated_rows":  3300
+                                                   },
+                                                   {
+                                                       "table":  "future_growth_features",
+                                                       "estimated_rows":  2527
+                                                   },
+                                                   {
+                                                       "table":  "parcel_signal_summary",
+                                                       "estimated_rows":  1631
+                                                   },
+                                                   {
+                                                       "table":  "contractor_project",
+                                                       "estimated_rows":  421
+                                                   },
+                                                   {
+                                                       "table":  "contractor_company",
+                                                       "estimated_rows":  317
+                                                   },
+                                                   {
+                                                       "table":  "parcel_future_growth_scores",
+                                                       "estimated_rows":  300
+                                                   }
+                                               ]
+                 },
+    "safety":  {
+                   "db_write":  "none",
+                   "ddl":  "none",
+                   "migration_apply":  "none",
+                   "prod_deploy":  "none",
+                   "runner_queue_mutation":  "none",
+                   "secret_values_printed":  false,
+                   "secret_write_update":  "none",
+                   "git_prune_or_gc":  "not_run"
+               },
+    "blockers":  [
+                     "BLOCKED_BY_EXTERNAL_DB_AUTH_TARGET_ALIGNMENT",
+                     "BLOCKED_BY_DB_TARGET_APPROVAL_FOR_MANAGED_OR_SELF_HOSTED_PRODUCTION",
+                     "BLOCKED_BY_PRODUCTION_MIGRATION_APPROVAL",
+                     "BLOCKED_BY_PROD_DEPLOY_APPROVAL"
+                 ],
+    "next_single_action":  "Fix session/local resolver alignment so TYLI_DATABASE_URL or PG* env points to verified Docker PostGIS target on localhost:55460 without printing secret values."
+}
