@@ -8,10 +8,11 @@ $Stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $ReportPath = Join-Path $ResultDir "aays-053-auto-clean-cluster-db-dryrun-$Stamp.md"
 $HeartbeatPath = Join-Path $HeartbeatDir 'portable-runner.md'
 function AddR([string]$m){ $m | Add-Content -Encoding UTF8 $ReportPath }
-function RunNative([string]$label,[string]$exe,[string[]]$args){
+function RunNative([string]$label,[string]$exe,[string[]]$ArgList){
   Write-Host $label -ForegroundColor Cyan
   AddR ''; AddR "## $label"
-  $out = & $exe @args 2>&1
+  AddR ('COMMAND: ' + $exe + ' ' + ($ArgList -join ' '))
+  $out = & $exe @ArgList 2>&1
   $code = $LASTEXITCODE
   if($out){ $out | Tee-Object -FilePath $ReportPath -Append }
   AddR "EXIT_CODE: $code"
