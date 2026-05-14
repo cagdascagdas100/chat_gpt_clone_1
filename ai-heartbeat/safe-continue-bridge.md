@@ -1,10 +1,10 @@
 ﻿# AAYS Safe Continue Bridge Lite
 
-Time: 2026-05-14T09:08:19Z
-Status: finished
+Time: 2026-05-14T09:08:52Z
+Status: polling
 TaskId: aays-053-auto-clean-cluster-db-dryrun-20260514-rerun
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Message: action=
+Message: no new task
 Mode: allowlist-only-lite
 AllowedActions: status_check, git_sync_check, heartbeat_push, artifact_collect
 
