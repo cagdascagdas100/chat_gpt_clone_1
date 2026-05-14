@@ -12,20 +12,6 @@ C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-14_23-18-12-aays-079-status-snap
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-077-final-artifact-index-20260514_231807_4243.md                          
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-14_23-11-21-aays-077-final-artifact-index-20260514-2310-direct-resul...
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-077-final-artifact-index-20260514_231120_6615.md                          
-C:\A# AAYS 077 Final Artifact Index
-Generated: 2026-05-14T23:29:18
-TaskId: aays-077-final-artifact-index-20260514
-BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
-Purpose: index detached worker manifests, recent results, and runner logs without launching new long work.
-
-## Recent result files
-
-FullName                                                                                                               
---------                                                                                                               
-C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-14_23-18-12-aays-079-status-snapshot-20260514-2318b-direct-result.md   
-C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-077-final-artifact-index-20260514_231807_4243.md                          
-C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-14_23-11-21-aays-077-final-artifact-index-20260514-2310-direct-resul...
-C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-077-final-artifact-index-20260514_231120_6615.md                          
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-056-db-dryrun-no-pgctl-20260514_225834.md                                 
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-056-db-dryrun-no-pgctl-20260514_225848.md                                 
 C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-056-db-dryrun-no-pgctl-20260514_225845.md                                 
