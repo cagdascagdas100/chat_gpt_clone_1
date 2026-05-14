@@ -15,6 +15,23 @@ missing_area: 0
 verification_id | listing_id | verdict | price | area | ppm | postcode | authority | reason
 L4-00019-OTM-11488586 | OTM-11488586 | derived_signal | 695000.0 | 509224.42 | 1.364821 | PL5 | Plymouth | Non-rectangular candidate from listing signals; fail-closed keeps it unverified.
 L4-01217-OTM-17888180 | OTM-17888180 | derived_ai_visual | 8500000.0 | 310343.09 | 27.389042 | SW1P | Westminster | Visual/photo hints exist, but not georeferenced. Candidate remains derived only.
+L4-01534-OTM-18379773 | OTM-18379773 | derived_ai_visual | 500000.0 | 175528.12 | 2.848546 | DA1 4GP | Bexley | Visual/photo hints ex# AAYS 089 Anomaly Threshold Audit
+Generated: 2026-05-15T01:57:38
+TaskId: aays-089-anomaly-threshold-audit-20260515
+Csv: E:\AAYS_DATA\land_sales\final_outputs\stg_land_sales_50step_db_ready.csv
+Mode: read-only anomaly audit; no DB writes; no UI patch.
+total_rows: 120
+
+## Completeness counts
+missing_postcode: 0
+missing_authority: 0
+missing_price: 0
+missing_area: 0
+
+## Largest area candidates
+verification_id | listing_id | verdict | price | area | ppm | postcode | authority | reason
+L4-00019-OTM-11488586 | OTM-11488586 | derived_signal | 695000.0 | 509224.42 | 1.364821 | PL5 | Plymouth | Non-rectangular candidate from listing signals; fail-closed keeps it unverified.
+L4-01217-OTM-17888180 | OTM-17888180 | derived_ai_visual | 8500000.0 | 310343.09 | 27.389042 | SW1P | Westminster | Visual/photo hints exist, but not georeferenced. Candidate remains derived only.
 L4-01534-OTM-18379773 | OTM-18379773 | derived_ai_visual | 500000.0 | 175528.12 | 2.848546 | DA1 4GP | Bexley | Visual/photo hints exist, but not georeferenced. Candidate remains derived only.
 L4-01568-OTM-18447115 | OTM-18447115 | derived_ai_visual | 4000000.0 | 146043.81 | 27.389042 | N16 0UH | Hackney | Visual/photo hints exist, but not georeferenced. Candidate remains derived only.
 L4-00091-OTM-13125000 | OTM-13125000 | derived_ai_visual | 29950000.0 | 1093503.0 | 27.389042 | W1J | Westminster | Visual/photo hints exist, but not georeferenced. Candidate remains derived only.
