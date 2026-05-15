@@ -1,7 +1,7 @@
 ﻿# AAYS1 Devam Loop
 
-- Status: polling
-- Task ID: ty142-final-integration-readiness
-- Message: No new AAYS1 task.
+- Status: completed
+- Task ID: ty143-start-services-and-live-smoke
+- Message: One-shot finished for AAYS1 task.
 - Task file: ai-tasks/aays1-current-task.json
-- Checked at: 2026-05-15T22:16:16
+- Checked at: 2026-05-15T22:17:14
