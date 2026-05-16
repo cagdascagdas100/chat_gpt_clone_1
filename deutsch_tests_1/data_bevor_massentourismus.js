@@ -1,0 +1,107 @@
+window.DEUTSCH_TESTS=window.DEUTSCH_TESTS||{};
+window.DEUTSCH_TESTS.t21={
+  category:'Bevor Schreiben',
+  slug:'massentourismus_vorteile_c1_c2',
+  title:'Massentourismus · C1/C2 Vorteilsabsatz',
+  topic:'Erörterung · Vorteile des Massentourismus · wirtschaftliche Entwicklung · Arbeitsplätze · Zugang zu Reisen · kultureller Austausch',
+  words:[
+    'der Massentourismus','die wirtschaftliche Entwicklung','die Einnahmequelle','die Beschäftigungsmöglichkeit','die regionale Wirtschaft','die lokale Wirtschaft','die Infrastruktur','die Investition','die Kaufkraft','der Tourismussektor','das Hotelwesen','die Gastronomie','der Einzelhandel','das Transportwesen','die Kulturvermittlung','strukturschwächere Regionen','touristische Einnahmen','die Besucherströme','die Pauschalreise','die Zugänglichkeit des Reisens','der kulturelle Austausch','die interkulturelle Begegnung','die Horizonterweiterung','die persönliche Entwicklung','die Weltoffenheit','die Lebensqualität','die internationale Verständigung','Vorurteile abbauen','Toleranz fördern','zur wirtschaftlichen Entwicklung beitragen','eine wichtige Einnahmequelle darstellen','Arbeitsplätze schaffen','die lokale Wirtschaft stärken','die Infrastruktur ausbauen','Investitionen anziehen','die Kaufkraft erhöhen','vom Tourismussektor profitieren','kulturellen Austausch ermöglichen','interkulturelle Begegnungen fördern','den eigenen Horizont erweitern','den Zugang zum Reisen erleichtern','zur persönlichen Entwicklung beitragen','Weltoffenheit fördern','zur internationalen Verständigung beitragen'
+  ],
+  fill:[
+    ['Unter Massentourismus versteht man eine Form des Reisens, bei der sehr viele Menschen dieselben Urlaubsorte ____.','besuchen','Grundverständnis'],
+    ['Massentourismus kann für viele Regionen von großer Bedeutung sein, weil er Arbeitsplätze schafft, Einnahmen generiert und kulturelle Erfahrungen ____.','erleichtert','Grundthese'],
+    ['Ein wesentlicher Vorteil des Massentourismus liegt in seiner wirtschaftlichen ____.','Bedeutung','Wirtschaft'],
+    ['Viele Urlaubsregionen sind auf touristische Einnahmen ____.','angewiesen','Wirtschaft'],
+    ['Hotels, Restaurants, Geschäfte und Freizeitangebote profitieren von den ____ der Besucher.','Ausgaben','Einnahmen'],
+    ['Besonders für strukturschwächere Regionen kann Massentourismus eine wichtige Einnahmequelle ____.','darstellen','NVV'],
+    ['Durch touristische Angebote entstehen zahlreiche ____.','Beschäftigungsmöglichkeiten','Arbeitsplätze'],
+    ['Im Hotelwesen, in der Gastronomie, im Einzelhandel und im Transportwesen können neue Arbeitsplätze ____.','entstehen','Arbeitsmarkt'],
+    ['Langfristig betrachtet kann der Tourismus zur Verbesserung der Infrastruktur ____.','beitragen','Infrastruktur'],
+    ['Wenn ein Ort viele Besucher anzieht, können Investitionen in Straßen, öffentliche Verkehrsmittel oder kulturelle Einrichtungen ____.','gefördert','Investitionen'],
+    ['Ein weiterer Vorteil besteht darin, dass Massentourismus das Reisen für breite Bevölkerungsschichten ____ macht.','zugänglich','Zugang'],
+    ['Durch günstigere Angebote können auch Familien oder junge Menschen andere Länder ____.','kennenlernen','Reisen'],
+    ['Reisen ermöglicht kulturelle Begegnungen und kann den eigenen Horizont ____.','erweitern','Kultur'],
+    ['Solche Erfahrungen können dazu beitragen, Vorurteile ____ und Toleranz zu fördern.','abzubauen','Kultur'],
+    ['Massentourismus hat somit nicht nur eine wirtschaftliche, sondern auch eine gesellschaftliche ____.','Bedeutung','Bewertung'],
+    ['Touristische Einnahmen können die regionale Wirtschaft langfristig ____.','stärken','NVV'],
+    ['Große Reiseangebote können den Zugang zum Reisen ____.','erleichtern','NVV'],
+    ['Interkulturelle Begegnungen können zur persönlichen Entwicklung ____.','beitragen','NVV'],
+    ['Massentourismus kann die internationale Bekanntheit einer Region ____.','steigern','Region'],
+    ['Ein C1/C2-Vorteilsabsatz verbindet Beobachtung, Erklärung, Beispiel und ____.','Wirkung','Argumentation'],
+    ['Nicht nur große Hotelketten, sondern auch kleinere Betriebe können vom Tourismussektor ____.','profitieren','Tourismussektor'],
+    ['Die Kaufkraft in der Region kann durch touristische Ausgaben ____ werden.','erhöht','Kaufkraft'],
+    ['Tourismus kann Investitionen in Infrastruktur und öffentliche Angebote ____.','fördern','Investitionen'],
+    ['Reisen kann Weltoffenheit fördern und zur internationalen Verständigung ____.','beitragen','Gesellschaft']
+  ],
+  mc:[
+    ['Welche Grundthese passt zum Vorteilsabsatz über Massentourismus?',['Massentourismus kann für viele Regionen von großer Bedeutung sein, weil er Arbeitsplätze schafft, Einnahmen generiert und Menschen den Zugang zu Reisen sowie kulturellen Erfahrungen erleichtert.','Massentourismus ist gut, weil viele Menschen Urlaub machen.','Tourismus bringt Geld und deshalb ist er immer positiv.','Viele Touristen besuchen Städte, weshalb Reisen interessant ist.','Massentourismus bedeutet, dass sehr viele Menschen an einem Ort sind.'],0,'Grundthese'],
+    ['Welche Aussage erklärt den wirtschaftlichen Vorteil am präzisesten?',['Durch die Ausgaben der Touristen profitieren zahlreiche lokale Betriebe, wodurch Arbeitsplätze entstehen und die regionale Wirtschaft gestärkt werden kann.','Touristen geben Geld aus und das ist gut für alle.','Hotels verdienen viel, deshalb ist Tourismus positiv.','Urlaubsorte brauchen Touristen, weil sonst nichts passiert.','Restaurants und Geschäfte freuen sich über Besucher.'],0,'Wirtschaft'],
+    ['Welche Formulierung ist C1/C2-gerecht?',['Massentourismus kann besonders für strukturschwächere Regionen eine wichtige Einnahmequelle darstellen.','Massentourismus macht arme Regionen besser.','Tourismus gibt Regionen viel Geld und hilft sehr.','Strukturschwache Regionen bekommen durch Touristen viele Sachen.','Tourismus ist die Einnahme von Regionen.'],0,'Stil'],
+    ['Welche Aussage beschreibt den Arbeitsmarktvorteil differenziert?',['Im Hotelwesen, in der Gastronomie, im Einzelhandel und im Transportbereich können durch Besucherströme zahlreiche Beschäftigungsmöglichkeiten entstehen.','Viele Leute finden Arbeit, weil Touristen da sind.','Durch Tourismus arbeiten Menschen in Hotels und Restaurants.','Tourismus macht Jobs, weil viele Gäste kommen.','Gastronomie ist gut, weil Touristen essen müssen.'],0,'Arbeitsplätze'],
+    ['Welche Aussage beschreibt den Vorteil kultureller Begegnungen am stärksten?',['Reisen ermöglicht interkulturelle Begegnungen, erweitert den persönlichen Horizont und kann dazu beitragen, Vorurteile abzubauen.','Touristen sehen andere Länder und finden das gut.','Menschen essen anderes Essen und lernen Kultur.','Reisen macht Menschen netter.','Andere Länder sind interessant und deshalb gut.'],0,'Kultur'],
+    ['Welche Nomen-Verb-Verbindung ist korrekt?',['zur wirtschaftlichen Entwicklung beitragen','wirtschaftliche Entwicklung machen','Entwicklung in Wirtschaft benutzen','eine Wirtschaft entwickeln tun','zu Wirtschaft Entwicklung arbeiten'],0,'NVV'],
+    ['Welche Formulierung ist als Ausblick geeignet?',['Langfristig betrachtet kann Massentourismus zur Entwicklung strukturschwächerer Regionen beitragen.','Am Ende ist Tourismus gut für Regionen.','Tourismus hilft später vielleicht sehr.','Lange Zeit ist Massentourismus besser.','In Zukunft sind viele Touristen praktisch.'],0,'Ausblick'],
+    ['Welche Aussage ist NICHT differenziert genug?',['Massentourismus ist immer gut für die Wirtschaft.','Massentourismus kann eine wichtige Einnahmequelle darstellen.','Unter bestimmten Voraussetzungen können lokale Betriebe profitieren.','Touristische Einnahmen können Investitionen fördern.','Besonders strukturschwächere Regionen können wirtschaftlich profitieren.'],0,'Fehlerdiagnose'],
+    ['Welche Konnektorformel leitet eine Begründung ein?',['Dies lässt sich damit begründen, dass ...','Langfristig betrachtet ...','Ein konkretes Beispiel dafür ist ...','Dadurch ...','Besonders hervorzuheben ist ...'],0,'Konnektoren'],
+    ['Welche Folgeformulierung passt?',['Infolgedessen entstehen neue Arbeitsplätze und lokale Betriebe profitieren.','Dies lässt sich damit erklären, dass Arbeitsplätze.','Ein Beispiel ist, weil Restaurants.','Langfristig touristische Einnahmen.','Besuchergruppen deshalb Einnahmequelle.'],0,'Folge']
+  ],
+  tf:[
+    ['In einem Vorteilsabsatz reicht es auf C1/C2-Niveau nicht, nur zu schreiben, dass Massentourismus gut für die Wirtschaft ist.',true,'Schreibziel'],
+    ['Massentourismus kann lokale Betriebe wie Restaurants, Souvenirläden und Transportunternehmen wirtschaftlich unterstützen.',true,'Wirtschaft'],
+    ['Touristische Einnahmen betreffen ausschließlich große Hotelketten.',false,'Differenzierung'],
+    ['Beschäftigungsmöglichkeiten können im Hotelwesen, in der Gastronomie, im Einzelhandel und im Transportwesen entstehen.',true,'Arbeitsmarkt'],
+    ['Infrastrukturverbesserungen können unter Umständen auch der lokalen Bevölkerung zugutekommen.',true,'Infrastruktur'],
+    ['Massentourismus macht Reisen grundsätzlich nur für wohlhabende Menschen möglich.',false,'Zugang'],
+    ['Kulturelle Begegnungen können den eigenen Horizont erweitern.',true,'Kultur'],
+    ['Vorurteile abbauen und Toleranz fördern sind passende Formulierungen für Vorteil 2.',true,'NVV'],
+    ['Ein guter Vorteilsabsatz sollte Beobachtung, Erklärung, Beispiel und Wirkung verbinden.',true,'Argumentation'],
+    ['Massentourismus hat ausschließlich wirtschaftliche Bedeutung und keine gesellschaftliche Dimension.',false,'Gesellschaft']
+  ],
+  wordMatch:[
+    ['der Massentourismus','Form des Reisens, bei der sehr viele Menschen dieselben Urlaubsorte besuchen'],
+    ['die Einnahmequelle','Bereich oder Tätigkeit, aus dem regelmäßige finanzielle Mittel entstehen'],
+    ['die Beschäftigungsmöglichkeit','Chance, eine Arbeit oder Einkommensquelle zu finden'],
+    ['die regionale Wirtschaft','wirtschaftliches Leben und Betriebe innerhalb einer bestimmten Region'],
+    ['die Infrastruktur','Straßen, Verkehrsmittel, Einrichtungen und öffentliche Angebote einer Region'],
+    ['die Kaufkraft','finanzielle Möglichkeit, Waren und Dienstleistungen zu kaufen'],
+    ['der kulturelle Austausch','Kontakt zwischen Menschen unterschiedlicher Kulturen, bei dem Erfahrungen und Perspektiven vermittelt werden'],
+    ['die Horizonterweiterung','Erweiterung der eigenen Sichtweise durch neue Erfahrungen'],
+    ['die Weltoffenheit','offene Haltung gegenüber anderen Ländern, Lebensweisen und Kulturen'],
+    ['die internationale Verständigung','besseres gegenseitiges Verstehen zwischen Menschen verschiedener Länder']
+  ],
+  phraseMatch:[
+    ['zur wirtschaftlichen Entwicklung','beitragen'],
+    ['eine wichtige Einnahmequelle','darstellen'],
+    ['Arbeitsplätze','schaffen'],
+    ['die lokale Wirtschaft','stärken'],
+    ['die Infrastruktur','ausbauen'],
+    ['Investitionen','anziehen und fördern'],
+    ['die Kaufkraft in der Region','erhöhen'],
+    ['vom Tourismussektor','profitieren'],
+    ['kulturellen Austausch','ermöglichen'],
+    ['interkulturelle Begegnungen','fördern'],
+    ['den eigenen Horizont','erweitern'],
+    ['den Zugang zum Reisen','erleichtern'],
+    ['zur persönlichen Entwicklung','beitragen'],
+    ['Weltoffenheit','fördern'],
+    ['zur internationalen Verständigung','beitragen'],
+    ['Vorurteile','abbauen'],
+    ['Toleranz','fördern'],
+    ['die Lebensqualität','erhöhen']
+  ],
+  prep:[
+    ['Massentourismus kann ___ wirtschaftlichen Entwicklung einer Region beitragen.','zur','beitragen zu + Dativ'],
+    ['Viele Betriebe profitieren ___ den Ausgaben der Touristen.','von','profitieren von'],
+    ['Tourismus kann ___ strukturschwächere Regionen eine wichtige Einnahmequelle darstellen.','für','für + Akkusativ'],
+    ['Touristische Einnahmen können Investitionen ___ Infrastruktur fördern.','in','Investitionen in'],
+    ['Der Tourismussektor spielt ___ vielen Urlaubsregionen eine zentrale Rolle.','in','Ort'],
+    ['Reisen ermöglicht Begegnungen ___ anderen Kulturen.','mit','Begegnung mit'],
+    ['Solche Erfahrungen können ___ Abbau von Vorurteilen beitragen.','zum','beitragen zu + Dativ'],
+    ['Massentourismus erleichtert vielen Menschen den Zugang ___ Reisen.','zu','Zugang zu + Dativ'],
+    ['Langfristig kann Tourismus ___ Verbesserung öffentlicher Angebote beitragen.','zur','beitragen zu'],
+    ['Die regionale Wirtschaft ist häufig ___ touristische Einnahmen angewiesen.','auf','angewiesen auf']
+  ],
+  hang:[
+    'Massentourismus kann eine wichtige Einnahmequelle darstellen','zur wirtschaftlichen Entwicklung beitragen','Arbeitsplätze schaffen','die lokale Wirtschaft stärken','die Infrastruktur ausbauen','Investitionen anziehen und fördern','die Kaufkraft in der Region erhöhen','vom Tourismussektor profitieren','touristische Einnahmen generieren','Beschäftigungsmöglichkeiten schaffen','strukturschwächere Regionen unterstützen','kulturellen Austausch ermöglichen','interkulturelle Begegnungen fördern','den eigenen Horizont erweitern','den Zugang zum Reisen erleichtern','zur persönlichen Entwicklung beitragen','Weltoffenheit fördern','zur internationalen Verständigung beitragen','Vorurteile abbauen','Toleranz fördern','breite Bevölkerungsschichten erreichen','eine gesellschaftliche Bedeutung haben','Beobachtung Erklärung Beispiel und Wirkung verbinden'
+  ]
+};
