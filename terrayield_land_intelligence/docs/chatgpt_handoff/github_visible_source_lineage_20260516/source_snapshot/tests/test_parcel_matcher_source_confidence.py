@@ -25,6 +25,7 @@ def test_parcel_matcher_source_confidence_publishable_when_spatial_and_source_ur
     assert fields["source_confidence_needs_review"] is False
     assert fields["source_confidence_publishable_without_review"] is True
 
+
 def test_parcel_matcher_reports_partial_lineage_without_source_url() -> None:
     record = SimpleNamespace(
         parcel_ref="17103798",
@@ -50,4 +51,3 @@ def test_parcel_matcher_reports_partial_lineage_without_source_url() -> None:
     assert "source_record_id" in fields["source_lineage_fields_present"]
     assert "parcel_ref" in fields["source_lineage_fields_present"]
     assert fields["source_confidence_needs_review"] is True
-
