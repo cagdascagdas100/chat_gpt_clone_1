@@ -1,0 +1,34 @@
+﻿pytest_exit_code=1
+cmd=python -m pytest tests/test_parcel_matcher_source_confidence.py tests/test_source_confidence_integration.py tests/test_source_confidence_rules.py -q
+
+..F............                                                          [100%]
+================================== FAILURES ===================================
+_______ test_parcel_matcher_reports_partial_lineage_without_source_url ________
+
+    def test_parcel_matcher_reports_partial_lineage_without_source_url() -> None:
+        record = SimpleNamespace(
+            parcel_ref="17103798",
+            source_name="hmlr_inspire",
+            source_record_id="england:east-devon-district-council:17103798",
+            source_updated_at="2026-04-30",
+            site_geometry=None,
+            point_geometry=None,
+        )
+        config = {"polygon_attr": "site_geometry", "point_attr": "point_geometry"}
+        candidate = MatchCandidate(
+            parcel_id=477,
+            match_method="metadata_inspire_exact",
+            match_score=99.8,
+            requires_review=False,
+        )
+    
+        fields = _build_match_source_confidence_fields(record, config, candidate)
+    
+>       assert fields["source_lineage_status"] == "partial_lineage_no_source_url"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'source_lineage_status'
+
+tests\test_parcel_matcher_source_confidence.py:48: KeyError
+=========================== short test summary info ===========================
+FAILED tests/test_parcel_matcher_source_confidence.py::test_parcel_matcher_reports_partial_lineage_without_source_url
+1 failed, 14 passed in 5.94s

@@ -1,0 +1,31 @@
+EXIT_CODE=0
+STDOUT
+C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\app\etl\match\parcel_matcher.py
+False
+def _build_match_source_confidence_fields(record: Any, config: dict[str, Any], candidate: "MatchCandidate") -> dict[str, Any]:
+    source_url = _first_populated_attr(record, _SOURCE_URL_HINT_ATTRS)
+    record_parcel_hint = _first_populated_attr(record, ("parcel_ref", "inspire_id", "matched_parcel_id"))
+    has_geometry = False
+    polygon_attr = config.get("polygon_attr")
+    point_attr = config.get("point_attr")
+    if polygon_attr and getattr(record, polygon_attr, None) is not None:
+        has_geometry = True
+    if point_attr and getattr(record, point_attr, None) is not None:
+        has_geometry = True
+
+    payload = {
+        "source_url": source_url,
+        "matched_parcel_id": candidate.parcel_id,
+        "parcel_ref": record_parcel_hint,
+        "parcel_specific_spatial_match": (
+            candidate.match_method in _SPATIAL_MATCH_METHODS
+            or candidate.overlap_ratio is not None
+            or candidate.distance_m is not None
+            or has_geometry
+        ),
+        "ambiguous_match": bool(candidate.requires_review),
+    }
+    return build_source_confidence_fields(payload)
+
+
+STDERR
