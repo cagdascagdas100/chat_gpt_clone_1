@@ -1,0 +1,92 @@
+--- a/app/etl/match/parcel_matcher.py
++++ b/app/etl/match/parcel_matcher.py
+@@ -120,6 +120,29 @@
+ def _build_match_source_confidence_fields(record: Any, config: dict[str, Any], candidate: "MatchCandidate") -> dict[str, Any]:
+     source_url = _first_populated_attr(record, _SOURCE_URL_HINT_ATTRS)
+     record_parcel_hint = _first_populated_attr(record, ("parcel_ref", "inspire_id", "matched_parcel_id"))
++    source_name_hint = _first_populated_attr(record, ("source_name", "provider_name", "dataset_name"))
++    source_record_id_hint = _first_populated_attr(record, ("source_record_id", "record_id", "site_id", "transaction_id", "id"))
++    source_updated_at_hint = _first_populated_attr(record, ("source_updated_at", "updated_at", "last_updated_at", "fetched_at"))
++
++    lineage_fields_present = [
++        name
++        for name, value in (
++            ("source_name", source_name_hint),
++            ("source_record_id", source_record_id_hint),
++            ("parcel_ref", record_parcel_hint),
++            ("source_updated_at", source_updated_at_hint),
++        )
++        if value is not None
++    ]
++    if source_url:
++        source_lineage_status = "verified_source_url"
++        source_lineage_missing_reason = None
++    elif lineage_fields_present:
++        source_lineage_status = "partial_lineage_no_source_url"
++        source_lineage_missing_reason = "missing_source_url_high_confidence_withheld"
++    else:
++        source_lineage_status = "missing_source_lineage"
++        source_lineage_missing_reason = "missing_source_url_high_confidence_withheld"
+     has_geometry = False
+     polygon_attr = config.get("polygon_attr")
+     point_attr = config.get("point_attr")
+@@ -130,6 +153,9 @@
+ 
+     payload = {
+         "source_url": source_url,
++        "source_name": source_name_hint,
++        "source_record_id": source_record_id_hint,
++        "source_updated_at": source_updated_at_hint,
+         "matched_parcel_id": candidate.parcel_id,
+         "parcel_ref": record_parcel_hint,
+         "parcel_specific_spatial_match": (
+@@ -140,7 +166,15 @@
+         ),
+         "ambiguous_match": bool(candidate.requires_review),
+     }
+-    return build_source_confidence_fields(payload)
++    source_confidence_fields = build_source_confidence_fields(payload)
++    source_confidence_fields.update(
++        {
++            "source_lineage_status": source_lineage_status,
++            "source_lineage_fields_present": tuple(lineage_fields_present),
++            "source_lineage_missing_reason": source_lineage_missing_reason,
++        }
++    )
++    return source_confidence_fields
+ 
+ 
+ @dataclass
+--- a/tests/test_parcel_matcher_source_confidence.py
++++ b/tests/test_parcel_matcher_source_confidence.py
+@@ -24,3 +24,30 @@
+     assert fields["source_confidence_level"] == "high"
+     assert fields["source_confidence_needs_review"] is False
+     assert fields["source_confidence_publishable_without_review"] is True
++
++def test_parcel_matcher_reports_partial_lineage_without_source_url() -> None:
++    record = SimpleNamespace(
++        parcel_ref="17103798",
++        source_name="hmlr_inspire",
++        source_record_id="england:east-devon-district-council:17103798",
++        source_updated_at="2026-04-30",
++        site_geometry=None,
++        point_geometry=None,
++    )
++    config = {"polygon_attr": "site_geometry", "point_attr": "point_geometry"}
++    candidate = MatchCandidate(
++        parcel_id=477,
++        match_method="metadata_inspire_exact",
++        match_score=99.8,
++        requires_review=False,
++    )
++
++    fields = _build_match_source_confidence_fields(record, config, candidate)
++
++    assert fields["source_lineage_status"] == "partial_lineage_no_source_url"
++    assert fields["source_lineage_missing_reason"] == "missing_source_url_high_confidence_withheld"
++    assert "source_name" in fields["source_lineage_fields_present"]
++    assert "source_record_id" in fields["source_lineage_fields_present"]
++    assert "parcel_ref" in fields["source_lineage_fields_present"]
++    assert fields["source_confidence_needs_review"] is True
++
