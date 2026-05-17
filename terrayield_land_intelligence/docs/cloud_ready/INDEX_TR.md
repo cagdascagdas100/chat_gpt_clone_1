@@ -37,6 +37,9 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/cloud_ready/FINAL_CLOUD_READY_CLOSURE_TR.md`
 - `docs/cloud_ready/STATIC_CLOUD_READINESS_VALIDATION_20260517.md`
 - `docs/cloud_ready/FINAL_MANIFEST_20260517.json`
+- `docs/cloud_ready/CURRENT_STATUS_20260517.md`
+- `docs/cloud_ready/CURRENT_STATUS_MACHINE_20260518.json`
+- `docs/cloud_ready/GITHUB_ONLY_AUTONOMOUS_CLOSURE_CHECKLIST_20260518.md`
 - `docs/cloud_ready/PARALLEL_EXECUTION_BOARD_20260517.md`
 - `docs/cloud_ready/012AB_NOT_PUBLISHED_STATUS_20260517.md`
 - `docs/cloud_ready/GITHUB_ONLY_COMPLETION_REPORT_20260518.md`
@@ -46,12 +49,22 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 ### Watchdog / persistent runner katmani
 
 - `docs/chatgpt_handoff/local_runner_queue/AAYS_LOCAL_RUNNER_WATCHDOG_SAFE.ps1`
+- `docs/chatgpt_handoff/local_runner_queue/START_WATCHDOG_SAFE_ONCE.ps1`
 - `docs/cloud_ready/PERSISTENT_RUNNER_UPGRADE_PACKAGE_20260518.md`
 - `docs/cloud_ready/SAFE_RUNNER_TASK_PROTOCOL_20260518.md`
 - `docs/cloud_ready/PERSISTENT_RUNNER_WATCHDOG_DESIGN_20260518.md`
 - `docs/cloud_ready/WATCHDOG_RUNNER_USAGE_TR_20260518.md`
 - `docs/cloud_ready/WATCHDOG_EVIDENCE_TEMPLATE_20260518.txt`
 - `docs/cloud_ready/WATCHDOG_READINESS_CLOSURE_20260518.md`
+- `docs/cloud_ready/RUNNER_REVIVAL_READY_20260518.md`
+
+### Provider / hosted cloud katmani
+
+- `docs/cloud_ready/PROVIDER_DECISION_PACKAGE_20260518.md`
+- `docs/cloud_ready/FAST_PATH_DEPLOY_PLAYBOOK_TR_20260518.md`
+- `docs/cloud_ready/PROVIDER_ENV_CHECKLIST_TR_20260518.md`
+- `docs/cloud_ready/RUNTIME_PROOF_GAP_REGISTER_20260518.md`
+- `docs/cloud_ready/HOSTED_SMOKE_RESULT_TEMPLATE_20260518.txt`
 
 ### ChatGPT/Codex handoff raporlari
 
@@ -103,6 +116,10 @@ Hosted smoke 6/6 gecer ve cloud DB ayari dogrulanirsa siniflandirma `CLOUD_RUNTI
 - Frontend public hosting secimi
 - Public backend HTTPS URL
 - Hosted cloud smoke onayi
+
+## GitHub-only kapanis sonucu
+
+GitHub-only otonom hazirlik tamamlandi. Bu mod, runtime veya hosted cloud kaniti uretmez; sadece repo, belge, script, manifest, takip ve watchdog hazirligini tamamlar.
 
 ## Guvenlik
 
