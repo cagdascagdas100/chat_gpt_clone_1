@@ -16,6 +16,7 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - Cloud database provider ayari dogrulanmadi.
 - En son basarili runtime smoke local `127.0.0.1` uzerinden geldi.
 - 012A ve 012B runner raporlari henuz GitHub'a publish edilmedi.
+- Watchdog runner hazirlandi ama local PC'de etkinlestirilmedi.
 
 ## Ana dosyalar
 
@@ -26,6 +27,7 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `.env.cloud.example`
 - `scripts/cloud_smoke_check.py`
 - `scripts/validate_cloud_readiness_static.py`
+- `scripts/validate_watchdog_readiness.py`
 
 ### Cloud dokumantasyon
 
@@ -37,6 +39,19 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/cloud_ready/FINAL_MANIFEST_20260517.json`
 - `docs/cloud_ready/PARALLEL_EXECUTION_BOARD_20260517.md`
 - `docs/cloud_ready/012AB_NOT_PUBLISHED_STATUS_20260517.md`
+- `docs/cloud_ready/GITHUB_ONLY_COMPLETION_REPORT_20260518.md`
+- `docs/cloud_ready/GITHUB_ONLY_AUTONOMOUS_SCOPE_MATRIX_20260518.md`
+- `docs/cloud_ready/AUTONOMY_ESCALATION_PLAN_20260518.md`
+
+### Watchdog / persistent runner katmani
+
+- `docs/chatgpt_handoff/local_runner_queue/AAYS_LOCAL_RUNNER_WATCHDOG_SAFE.ps1`
+- `docs/cloud_ready/PERSISTENT_RUNNER_UPGRADE_PACKAGE_20260518.md`
+- `docs/cloud_ready/SAFE_RUNNER_TASK_PROTOCOL_20260518.md`
+- `docs/cloud_ready/PERSISTENT_RUNNER_WATCHDOG_DESIGN_20260518.md`
+- `docs/cloud_ready/WATCHDOG_RUNNER_USAGE_TR_20260518.md`
+- `docs/cloud_ready/WATCHDOG_EVIDENCE_TEMPLATE_20260518.txt`
+- `docs/cloud_ready/WATCHDOG_READINESS_CLOSURE_20260518.md`
 
 ### ChatGPT/Codex handoff raporlari
 
@@ -62,11 +77,13 @@ Workflow dosyasi vardir; ancak connector uzerinden workflow run gorunmemistir. B
 
 ```powershell
 python terrayield_land_intelligence/scripts/validate_cloud_readiness_static.py
+python terrayield_land_intelligence/scripts/validate_watchdog_readiness.py
 ```
 
-Beklenen basarili cikti:
+Beklenen basarili ciktilar:
 
-`STATIC_CLOUD_READINESS_VALID`
+- `STATIC_CLOUD_READINESS_VALID`
+- `WATCHDOG_READY_FOR_MANUAL_ENABLEMENT`
 
 ## Hosted smoke kontrolu
 
