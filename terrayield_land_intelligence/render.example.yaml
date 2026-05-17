@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: terrayield-api
+    runtime: docker
+    dockerfilePath: ./terrayield_land_intelligence/Dockerfile.cloud
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: APP_PORT
+        value: 8010
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        sync: false
+      - key: AAYS_DEPLOYMENT_MODE
+        value: cloud
