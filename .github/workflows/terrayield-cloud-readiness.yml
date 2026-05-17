@@ -1,0 +1,73 @@
+name: TerraYield Cloud Readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - security-accuracy-expansion-20260508
+    paths:
+      - 'terrayield_land_intelligence/Dockerfile.cloud'
+      - 'terrayield_land_intelligence/render.example.yaml'
+      - 'terrayield_land_intelligence/.env.cloud.example'
+      - 'terrayield_land_intelligence/scripts/cloud_smoke_check.py'
+      - 'terrayield_land_intelligence/docs/cloud_ready/**'
+      - 'terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/**'
+      - '.github/workflows/terrayield-cloud-readiness.yml'
+
+jobs:
+  cloud-readiness-static:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required cloud scaffold files
+        run: |
+          set -euo pipefail
+          test -f terrayield_land_intelligence/Dockerfile.cloud
+          test -f terrayield_land_intelligence/render.example.yaml
+          test -f terrayield_land_intelligence/.env.cloud.example
+          test -f terrayield_land_intelligence/scripts/cloud_smoke_check.py
+          test -f terrayield_land_intelligence/docs/cloud_ready/STATUS.md
+          test -f terrayield_land_intelligence/docs/cloud_ready/PROVIDER_CHECKLIST_TR.md
+          test -f terrayield_land_intelligence/docs/cloud_ready/HOSTED_SMOKE_USAGE_TR.md
+          test -f terrayield_land_intelligence/docs/cloud_ready/FINAL_CLOUD_READY_CLOSURE_TR.md
+
+      - name: Verify handoff control files
+        run: |
+          set -euo pipefail
+          test -f terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/EXECUTION_REPORT.txt
+          test -f terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/BLOCKERS.md
+          test -f terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/LOCATION_EVIDENCE_SAMPLE.jsonl
+          test -f terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/PERF_SUMMARY.txt
+          test -f terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+
+      - name: Verify expected pending-provider classification
+        run: |
+          set -euo pipefail
+          grep -q 'final_classification=CLOUD_READY_PENDING_PROVIDER' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/EXECUTION_REPORT.txt
+          grep -q 'next_single_action=ADD_PROVIDER_PUBLIC_URL_AND_CLOUD_DB_SETTINGS_OUTSIDE_REPO' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/EXECUTION_REPORT.txt
+          grep -q 'public_hosted_url_verified=false' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/EXECUTION_REPORT.txt
+          grep -q 'cloud_db_provider_verified=false' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/EXECUTION_REPORT.txt
+
+      - name: Verify safety summary
+        run: |
+          set -euo pipefail
+          grep -q 'db_write=none' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+          grep -q 'ddl=none' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+          grep -q 'migration_apply=none' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+          grep -q 'prod_deploy=none' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+          grep -q 'secret_values_printed=false' terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt
+
+      - name: Verify hosted smoke script blocked without public URL
+        run: |
+          set +e
+          unset TERRAYIELD_PUBLIC_API_URL
+          python terrayield_land_intelligence/scripts/cloud_smoke_check.py > /tmp/cloud_smoke_no_url.json
+          code=$?
+          cat /tmp/cloud_smoke_no_url.json
+          test "$code" -eq 2
+          grep -q 'TERRAYIELD_PUBLIC_API_URL missing' /tmp/cloud_smoke_no_url.json
