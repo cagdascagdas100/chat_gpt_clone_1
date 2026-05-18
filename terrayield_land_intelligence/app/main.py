@@ -1,6 +1,7 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import datetime as dt
+import importlib
 from pathlib import Path
 
 import uvicorn
@@ -8,8 +9,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources
-from app.api.routes import aays_sales_layers
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -28,23 +27,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router)
-app.include_router(sources.router)
-app.include_router(admin.router)
-app.include_router(etl.router)
-app.include_router(facilities.router)
-app.include_router(cost.router)
-app.include_router(cost.admin_router)
-app.include_router(parcels.router)
-app.include_router(planned_assets.router)
-app.include_router(planned_assets.admin_router)
-app.include_router(listings.router)
-app.include_router(brownfield.router)
-app.include_router(map_layers.router)
-app.include_router(future_growth.router)
-app.include_router(contractor.router)
-app.include_router(proxy.router)
-app.include_router(ops.router)
+
+def _include_optional_router(module_name: str, attr_name: str = "router") -> None:
+    try:
+        module = importlib.import_module(module_name)
+        router = getattr(module, attr_name, None)
+        if router is not None:
+            app.include_router(router)
+    except Exception as exc:
+        print(f"[AAYS] Optional router not enabled: {module_name}.{attr_name}: {exc}")
+
+
+for _module_name in (
+    "app.api.routes.health",
+    "app.api.routes.sources",
+    "app.api.routes.admin",
+    "app.api.routes.etl",
+    "app.api.routes.facilities",
+    "app.api.routes.cost",
+    "app.api.routes.parcels",
+    "app.api.routes.planned_assets",
+    "app.api.routes.listings",
+    "app.api.routes.brownfield",
+    "app.api.routes.map_layers",
+    "app.api.routes.future_growth",
+    "app.api.routes.contractor",
+    "app.api.routes.proxy",
+    "app.api.routes.ops",
+    "app.api.routes.aays_sales_layers",
+    "app.api.routes.aays_sales_history_layers",
+):
+    _include_optional_router(_module_name)
+
+for _module_name, _attr_name in (
+    ("app.api.routes.cost", "admin_router"),
+    ("app.api.routes.planned_assets", "admin_router"),
+):
+    _include_optional_router(_module_name, _attr_name)
 
 frontend_candidates = [
     Path(__file__).resolve().parents[2] / "england_map_web",
@@ -75,17 +94,11 @@ def run() -> None:
 if __name__ == "__main__":
     run()
 
-app.include_router(aays_sales_layers.router)
-# AAYS sales-history parcel/evidence layer routes
-from app.api.routes import aays_sales_history_layers
-from app.middleware.map_listings_cache import MapListingsCacheMiddleware
-from app.api.routes.contractor_exports import router as contractor_exports_router
-app.include_router(aays_sales_history_layers.router)
-
-# AAYS performance patch: lightweight TTL cache for /map/listings
 try:
+    from app.middleware.map_listings_cache import MapListingsCacheMiddleware
+
     app.add_middleware(MapListingsCacheMiddleware)
 except Exception as _aays_map_listings_cache_error:
     print(f"[AAYS] MapListingsCacheMiddleware not enabled: {_aays_map_listings_cache_error}")
 
-app.include_router(contractor_exports_router)
+_include_optional_router("app.api.routes.contractor_exports")
