@@ -14,23 +14,27 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 |---|---|---|---|
 | 012A static validation evidence | passed from direct PowerShell output | none for static validation | closed for current checkpoint |
 | 012B targeted pytest evidence | passed from direct PowerShell output | none for targeted pytest | closed for targeted pytest only |
-| 012B local API smoke evidence | not run | local API smoke output | API smoke endpoints pass |
-| 012B local performance evidence | not run | local p95 metrics | local p95 gates recorded |
+| 014 local API smoke evidence | passed 6/6 from local API | none for local smoke | closed for local checkpoint |
+| 014 local performance evidence | passed from local p95 measurement | none for local perf | closed for local checkpoint |
 | Public backend runtime | not verified | public HTTPS API URL | root and smoke endpoints respond |
 | Cloud DB/PostGIS runtime | not verified | provider DB config outside repo | backend confirms DB-backed endpoints work |
 | Hosted smoke 6/6 | not verified | cloud smoke output | hosted smoke passes all required endpoints |
 | Public frontend runtime | not verified | public frontend URL | browser loads UI and calls hosted API |
 | Hosted performance | not verified | p95 metrics from public API | hosted p95 gates recorded |
 
-## 012A / 012B note
+## Local evidence note
 
-012A static validation has passed from direct PowerShell output.
+012A static validation passed.
 
-012B targeted pytest has passed from direct PowerShell output. API smoke and performance checks were not run in that same report, so those remain open.
+012B targeted pytest passed.
+
+014 local API smoke passed 6/6 and local performance passed.
+
+These local results do not prove public cloud runtime readiness.
 
 ## GitHub-only status
 
-GitHub-only work can keep this register updated, but it cannot close public runtime proof gaps without a local or hosted execution surface.
+GitHub-only work can keep this register updated, but it cannot close public runtime proof gaps without a hosted execution surface.
 
 ## Allowed closure evidence
 
