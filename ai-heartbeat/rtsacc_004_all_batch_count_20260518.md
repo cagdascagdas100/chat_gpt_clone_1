@@ -1,3 +1,3 @@
 ﻿# RTSACC 004 HEARTBEAT
-stage=COMPLETE
-progress=100
+stage=BATCH_60
+progress=86
