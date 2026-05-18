@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Continue"
 
-$Repo = "C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence"
+$Repo = "C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence"
 $Branch = "security-accuracy-expansion-20260508"
 $QueueRoot = Join-Path $Repo "docs\chatgpt_handoff\local_runner_queue"
 $Inbox = Join-Path $QueueRoot "inbox"
@@ -11,7 +11,8 @@ $Heartbeat = Join-Path $Outputs "WATCHDOG_HEARTBEAT.txt"
 
 $AllowedTasks = @(
   "012A_STATIC_CLOUD_READY_VALIDATE_AND_PUBLISH.ps1",
-  "012B_LOCAL_TEST_SMOKE_PERF_AND_PUBLISH.ps1"
+  "012B_LOCAL_TEST_SMOKE_PERF_AND_PUBLISH.ps1",
+  "016_CLEAN_FULL_PYTEST_RUNNER.ps1"
 )
 
 New-Item -ItemType Directory -Force -Path $Inbox,$Done,$Failed,$Outputs | Out-Null
