@@ -14,6 +14,8 @@
 - 012B targeted pytest report: passed from direct PowerShell evidence.
 - 014 local API smoke: passed 6/6.
 - 014 local performance: passed.
+- 015 deep audit/perf: partial passed; earlier clean pytest blocker now addressed by 016.
+- 016 clean full pytest: passed from GitHub Actions evidence.
 - 012C GitHub-native fallback report: visible.
 - Hosted smoke classification gate: hardened.
 - Frontend public API base URL gate: documented.
@@ -46,6 +48,8 @@
 - `docs/chatgpt_handoff/cloud_ready_20260517/012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/014_LOCAL_API_SMOKE_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/015_DEEP_LOCAL_AUDIT_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/016_CLEAN_FULL_PYTEST_REPORT.txt`
 - `docs/cloud_ready/FINAL_MANIFEST_20260517.json`
 - `docs/cloud_ready/RUNTIME_PROOF_GAP_REGISTER_20260518.md`
 - `docs/cloud_ready/CURRENT_STATUS_MACHINE_20260518.json`
