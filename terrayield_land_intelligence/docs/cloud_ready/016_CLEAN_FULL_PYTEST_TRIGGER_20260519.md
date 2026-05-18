@@ -22,6 +22,8 @@ Import compatibility fixes have been added for:
 - `app.services.source_catalog`
 - `app.schemas.common`
 
+The previous 016 report was produced from an older head and still showed `ModuleNotFoundError: app.schemas.common`. This retrigger forces a new run after the schema package fix is present on branch.
+
 ## Expected report
 
 `docs/chatgpt_handoff/cloud_ready_20260517/016_CLEAN_FULL_PYTEST_REPORT.txt`
@@ -32,4 +34,4 @@ Keep `CLOUD_READY_PENDING_PROVIDER` after this task. Public runtime blockers rem
 
 ## Retrigger
 
-run_id_hint=20260519_016_common_schema_fix_rerun_002
+run_id_hint=20260519_016_schema_common_present_rerun_003
