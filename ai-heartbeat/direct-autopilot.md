@@ -1,11 +1,11 @@
 ﻿# AAYS Direct Autopilot NoAdmin
 
-Time: 2026-05-18 22:18:13
-Status: finished
+Time: 2026-05-18 22:18:41
+Status: polling
 TaskId: rtsacc-010-all-batch-columns-20260518
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
 MainLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\direct-autopilot-20260517_190103.log
-Message: exit=
+Message: already-processed-or-waiting
 Mode: direct-local-read-after-git-reset
 PollSeconds: 20
