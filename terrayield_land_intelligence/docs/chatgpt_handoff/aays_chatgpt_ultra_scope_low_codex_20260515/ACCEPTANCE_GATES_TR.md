@@ -1,0 +1,12 @@
+﻿Acceptance Gates:
+- Branch: security-accuracy-expansion-20260508
+- HEAD >= b7cdaf34
+- STEP10: CONTROLLED_GO_LIVE_READY
+- STEP11: WIDE_SCOPE_READY_FOR_CHATGPT_EXECUTION
+- API smoke: 7/7
+- Pytest: 27 passed
+- secret_values_printed=false
+- db_write=none
+- ddl=none
+- migration_apply=none
+- prod_deploy=none

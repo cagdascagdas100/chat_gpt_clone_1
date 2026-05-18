@@ -1,0 +1,74 @@
+﻿ROL:
+Sen Principal Platform Integration Director + Principal Backend Performance Engineer + Release Safety Reviewer olarak calisiyorsun.
+
+ANA HEDEF:
+AAYS/TerraYield icin, yalnizca uygulamanin calismasi icin gerekli minimum bilgileri tutan, performans ve dogrulugu koruyan, cross-platform (Windows/Linux/Docker) hizli calisan tek canonical sistem tasarla.
+
+STRATEJI:
+- ChatGPT-first execution (Codex kredi kullanimi minimum)
+- Lean Runtime Core: DB sadece sorgu icin zorunlu alanlari tutsun
+- Ham/buyuk dosyalar DB disinda obje/dosya katmaninda kalsin
+- Resolver/path/API kontratlari tek standarda indirgensin
+
+KESIN KISITLAR:
+1) Migration apply yok
+2) Production deploy yok
+3) Runner queue mutation yok
+4) Secret write/update yok
+5) Production DB write/DDL/index create/drop yok
+6) Secret degerleri asla yazma (yalniz present/masked)
+7) Cikti read-only verification + dry-run hazirlik odakli olacak
+
+GIRDI DOSYALARI:
+- inputs/page-*.json (14 dosya)
+- inputs/merged_manifest.json
+- inputs/merge_summary.json
+- inputs/runtime-storage-registry.json
+- inputs/FINAL_RUNTIME_STORAGE_REGISTRY_20260515.json
+- inputs/FINAL_DB_READINESS_AND_CANONICAL_REGISTRY_REPORT_20260515.md
+- inputs/STEP8_LOCAL_RESOLVER_ALIGNMENT_REPORT.txt
+- inputs/STEP9_HOST_SIDE_AUTH_ALIGNMENT_REPORT.txt
+- inputs/STEP10_CONTROLLED_GO_LIVE_GATE_REPORT.txt
+- inputs/STEP11_WIDE_SCOPE_PLATFORM_REPORT.txt
+- inputs/INPUT_MANIFEST.json
+- templates/WORKSTREAM_MATRIX_TR.md
+- templates/PERFORMANCE_BUDGET_TEMPLATE_TR.md
+- templates/BLOCKER_REGISTER_TR.md
+- scripts/POWERSHELL_ULTRA_SCOPE_ORCHESTRATOR_TR.ps1
+
+TEK CEVAPTA URETILMESI ZORUNLU CIKTILAR:
+1) Net durum: UYGULANDI / KISMEN_UYGULANDI / UYGULANMADI
+2) Lean Runtime Core blueprint:
+   - DB min-set (tablo/alan)
+   - DB disi set (ham dosya siniflari)
+   - neden (performans + maliyet)
+3) Canonical source-of-truth matrisi (source, claim, evidence, confidence)
+4) Cross-platform runtime modeli (Windows/Linux/Docker) + dependency matrix
+5) Resolver + Registry standardi (TYLI_DATABASE_URL -> DATABASE_URL + registry path policy)
+6) API contract minimization matrix (legacy + alias + required payload)
+7) Performance budget:
+   - endpoint bazli p95 hedefleri
+   - cold/warm budget
+   - cache key/TTL plani
+8) 24 saatlik execution runbook (adim adim)
+9) 72 saatlik stabilization runbook (dry-run dahil, apply yok)
+10) 7 gunluk hardening plani (mutation-free)
+11) BLOCKED_BY_* listesi (sahip + cözüm adimi)
+12) Acik onay kapilari
+13) Sonuc: ULTRA_SCOPE_READY_FOR_CHATGPT_IMPLEMENTATION veya CANLIYA_HAZIR_DEGIL
+
+KARAR BAGLAMA KURALI:
+Her karar su sinyallere baglanacak:
+- STEP10 final_classification
+- STEP11 final_classification
+- api_smoke_ok_count
+- pytest_status / 27 passed
+- secret_values_printed
+- db_write / ddl / migration_apply / prod_deploy
+- postgis zorunluluk sinyalleri
+
+KAPANIS KURALI:
+En sonda zorunlu olarak yaz:
+- read-only tamamlananlar
+- onay gerektiren mutation adimlari
+- bir sonraki tek aksiyon
