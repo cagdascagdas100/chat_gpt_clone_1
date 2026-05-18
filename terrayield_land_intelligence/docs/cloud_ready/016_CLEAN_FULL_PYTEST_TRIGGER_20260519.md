@@ -20,6 +20,7 @@ Import compatibility fixes have been added for:
 - `app.db.models`
 - `app.core.config`
 - `app.services.source_catalog`
+- `app.schemas.common`
 
 ## Expected report
 
@@ -31,4 +32,4 @@ Keep `CLOUD_READY_PENDING_PROVIDER` after this task. Public runtime blockers rem
 
 ## Retrigger
 
-run_id_hint=20260519_016_import_fixes_rerun_001
+run_id_hint=20260519_016_common_schema_fix_rerun_002
