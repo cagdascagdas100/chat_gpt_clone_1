@@ -16,6 +16,8 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 | 012B targeted pytest evidence | passed from direct PowerShell output | none for targeted pytest | closed for targeted pytest only |
 | 014 local API smoke evidence | passed 6/6 from local API | none for local smoke | closed for local checkpoint |
 | 014 local performance evidence | passed from local p95 measurement | none for local perf | closed for local checkpoint |
+| 015 deep audit/perf evidence | partial passed | 016 clean pytest rerun for pytest blocker | superseded by 016 for clean full pytest blocker |
+| 016 clean full pytest evidence | passed from GitHub Actions output | none for clean full pytest | closed for current checkpoint |
 | Hosted smoke classification hardening | completed in `scripts/cloud_smoke_check.py` | script must not classify endpoint-only success as runtime ready | closed for current checkpoint |
 | Public backend runtime | not verified | public HTTPS API URL | root and smoke endpoints respond |
 | Cloud DB/PostGIS runtime | not verified | provider DB config outside repo | backend confirms DB-backed endpoints work |
@@ -31,7 +33,9 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 
 014 local API smoke passed 6/6 and local performance passed.
 
-These local results do not prove public cloud runtime readiness.
+016 clean full pytest passed with `pytest_collection_guard_status=passed`, `full_pytest_status=passed`, and `pytest_exit_code=0`.
+
+These local and GitHub Actions results do not prove public cloud runtime readiness.
 
 ## Hardening note
 
