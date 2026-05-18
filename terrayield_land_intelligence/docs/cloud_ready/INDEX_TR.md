@@ -45,6 +45,8 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/cloud_ready/GITHUB_ONLY_COMPLETION_REPORT_20260518.md`
 - `docs/cloud_ready/GITHUB_ONLY_AUTONOMOUS_SCOPE_MATRIX_20260518.md`
 - `docs/cloud_ready/AUTONOMY_ESCALATION_PLAN_20260518.md`
+- `docs/cloud_ready/EVIDENCE_INGESTION_PLAN_20260518.md`
+- `docs/cloud_ready/CLASSIFICATION_UPDATE_PLAYBOOK_20260518.md`
 
 ### Watchdog / persistent runner katmani
 
@@ -119,7 +121,7 @@ Hosted smoke 6/6 gecer ve cloud DB ayari dogrulanirsa siniflandirma `CLOUD_RUNTI
 
 ## GitHub-only kapanis sonucu
 
-GitHub-only otonom hazirlik tamamlandi. Bu mod, runtime veya hosted cloud kaniti uretmez; sadece repo, belge, script, manifest, takip ve watchdog hazirligini tamamlar.
+GitHub-only otonom hazirlik tamamlandi. Bu mod, runtime veya hosted cloud kaniti uretmez; sadece repo, belge, script, manifest, takip, evidence ingestion playbook, classification update playbook ve watchdog hazirligini tamamlar.
 
 ## Guvenlik
 
