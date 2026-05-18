@@ -12,13 +12,17 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 
 | Gap | Current state | Required proof | Closure condition |
 |---|---|---|---|
-| 012A static runner evidence | not published | 012A report in GitHub | `012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt` exists |
-| 012B local test/smoke/perf evidence | not published | 012B report in GitHub | `012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt` exists |
+| 012A static runner evidence | status-placeholder visible, success not verified | actual 012A runner output | `actual_task_output_found=true` and validation passes |
+| 012B local test/smoke/perf evidence | status-placeholder visible, success not verified | actual 012B runner output | pytest, smoke, and perf evidence pass |
 | Public backend runtime | not verified | public HTTPS API URL | root and smoke endpoints respond |
 | Cloud DB/PostGIS runtime | not verified | provider DB config outside repo | backend confirms DB-backed endpoints work |
-| Hosted smoke 6/6 | not verified | cloud smoke output | `CLOUD_RUNTIME_READY` from smoke script |
+| Hosted smoke 6/6 | not verified | cloud smoke output | hosted smoke passes all required endpoints |
 | Public frontend runtime | not verified | public frontend URL | browser loads UI and calls hosted API |
 | Hosted performance | not verified | p95 metrics from public API | hosted p95 gates recorded |
+
+## 012A / 012B note
+
+The current 012A and 012B files are status placeholders created during the Codex-control pass. They keep blockers visible but do not prove successful local runner execution.
 
 ## GitHub-only status
 
