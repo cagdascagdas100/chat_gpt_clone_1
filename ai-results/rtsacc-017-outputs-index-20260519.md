@@ -1,5 +1,5 @@
 ﻿# RTSACC 017 outputs index
-generated: 2026-05-19T01:26:50
+generated: 2026-05-19T01:27:41
 
 ## ai-runner-outputs
 file_count_seen: 43
@@ -49,6 +49,8 @@ file_count_seen: 43
 
 ## ai-results
 file_count_seen: 80
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\rtsacc-017-outputs-index-20260519.md size=26719 updated=2026-05-19T01:27:17
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-19_01-26-50-rtsacc-017-outputs-index-20260519-direct-result.md size=244 updated=2026-05-19T01:26:50
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-19_01-03-10-rtsacc-016-visible-final-smoke-20260519.md size=369 updated=2026-05-19T01:03:11
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\rtsacc-016-visible-final-smoke-20260519.md size=171 updated=2026-05-19T01:03:11
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-19_01-02-58-rtsacc-016-visible-final-smoke-20260519-direct-result.md size=256 updated=2026-05-19T01:02:58
@@ -127,14 +129,12 @@ file_count_seen: 80
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-18_14-47-06-parcelsales-003-contract-20260518-direct-result.md size=333 updated=2026-05-18T14:47:06
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-18_12-59-32-parcelsales-002-source-inventory-20260518.md size=471 updated=2026-05-18T12:59:33
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-18_12-59-32-parcelsales-002-source-inventory-20260518-direct-result.md size=357 updated=2026-05-18T12:59:32
-- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-18_12-59-06-parcelsales-002-source-inventory-20260518.md size=1317 updated=2026-05-18T12:59:09
-- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-18_12-59-08-parcelsales-002-source-inventory-20260518-direct-result.md size=357 updated=2026-05-18T12:59:08
 
 ## ai-heartbeat
 file_count_seen: 74
-- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_017_outputs_index_20260519.md size=52 updated=2026-05-19T01:26:50
-- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\portable-runner.md size=498 updated=2026-05-19T01:26:50
-- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\direct-autopilot.md size=406 updated=2026-05-19T01:26:50
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_017_outputs_index_20260519.md size=52 updated=2026-05-19T01:27:41
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\portable-runner.md size=509 updated=2026-05-19T01:27:40
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\direct-autopilot.md size=422 updated=2026-05-19T01:27:40
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md size=57 updated=2026-05-19T01:03:11
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_004_all_batch_count_20260518.md size=57 updated=2026-05-18T23:52:22
 - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_003_batch_inventory_20260518.md size=57 updated=2026-05-18T18:56:49
