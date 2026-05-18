@@ -1,0 +1,156 @@
+name: 016 clean full pytest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - security-accuracy-expansion-20260508
+    paths:
+      - 'terrayield_land_intelligence/**'
+      - '.github/workflows/016-clean-full-pytest.yml'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  PYTHONUNBUFFERED: '1'
+  AAYS_DEPLOYMENT_MODE: test
+  SECRET_VALUES_PRINTED: 'false'
+  DB_WRITE: none
+  DDL: none
+  MIGRATION_APPLY: none
+  PROD_DEPLOY: none
+
+jobs:
+  clean-full-pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: security-accuracy-expansion-20260508
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gdal-bin libgdal-dev libgeos-dev libpq-dev
+
+      - name: Install Python dependencies
+        working-directory: terrayield_land_intelligence
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install pytest fastapi uvicorn[standard] sqlalchemy psycopg2-binary pydantic pydantic-settings python-dotenv requests httpx pandas shapely geoalchemy2
+          fi
+
+      - name: Run 016 clean full pytest and write report
+        id: pytest016
+        working-directory: terrayield_land_intelligence
+        shell: bash
+        run: |
+          set +e
+          REPORT_DIR="docs/chatgpt_handoff/cloud_ready_20260517"
+          REPORT="$REPORT_DIR/016_CLEAN_FULL_PYTEST_REPORT.txt"
+          RAW="$REPORT_DIR/016_CLEAN_FULL_PYTEST_RAW.txt"
+          mkdir -p "$REPORT_DIR"
+          START_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          START_SEC="$(date +%s)"
+          BRANCH="$(git branch --show-current)"
+          HEAD_SHA="$(git rev-parse --short HEAD)"
+
+          {
+            echo "# 016 clean full pytest raw output"
+            echo "timestamp_utc=$START_TS"
+            echo "branch=$BRANCH"
+            echo "head=$HEAD_SHA"
+            echo "command=python -m pytest -q"
+            echo
+            echo "## pytest.ini"
+            cat pytest.ini || true
+            echo
+            echo "## pytest output"
+          } > "$RAW"
+
+          if grep -Eq '^testpaths[[:space:]]*=[[:space:]]*tests' pytest.ini && grep -q 'docs/chatgpt_handoff' pytest.ini; then
+            COLLECTION_GUARD_STATUS="passed"
+          else
+            COLLECTION_GUARD_STATUS="failed"
+          fi
+
+          python -m pytest -q >> "$RAW" 2>&1
+          PYTEST_EXIT=$?
+          END_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          END_SEC="$(date +%s)"
+          DURATION="$((END_SEC - START_SEC))"
+
+          if [ "$PYTEST_EXIT" -eq 0 ]; then
+            FULL_STATUS="passed"
+            BLOCKERS="none"
+          else
+            FULL_STATUS="failed"
+            BLOCKERS="clean_full_pytest_failed"
+          fi
+
+          if [ "$COLLECTION_GUARD_STATUS" != "passed" ]; then
+            if [ "$BLOCKERS" = "none" ]; then
+              BLOCKERS="pytest_collection_guard_failed"
+            else
+              BLOCKERS="$BLOCKERS;pytest_collection_guard_failed"
+            fi
+          fi
+
+          cat > "$REPORT" <<EOF
+          timestamp_utc=$END_TS
+          task=016_CLEAN_FULL_PYTEST_RERUN
+          report_type=github_actions_clean_full_pytest_output
+          checked_branch=security-accuracy-expansion-20260508
+          actual_branch=$BRANCH
+          head=$HEAD_SHA
+          pytest_ini_present=$([ -f pytest.ini ] && echo true || echo false)
+          pytest_collection_guard_status=$COLLECTION_GUARD_STATUS
+          full_pytest_status=$FULL_STATUS
+          pytest_exit_code=$PYTEST_EXIT
+          raw_output=$RAW
+          duration_seconds=$DURATION
+          public_url_verified=false
+          cloud_db_verified=false
+          classification_recommendation=CLOUD_READY_PENDING_PROVIDER
+          next_single_action=WAIT_FOR_USER_PROVIDER_DECISION
+          blockers=$BLOCKERS
+          secret_values_printed=false
+          db_write=none
+          ddl=none
+          migration_apply=none
+          prod_deploy=none
+          EOF
+
+          sed -i 's/^          //' "$REPORT"
+          echo "pytest_exit=$PYTEST_EXIT" >> "$GITHUB_OUTPUT"
+          echo "full_status=$FULL_STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Commit 016 report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/016_CLEAN_FULL_PYTEST_REPORT.txt terrayield_land_intelligence/docs/chatgpt_handoff/cloud_ready_20260517/016_CLEAN_FULL_PYTEST_RAW.txt
+          if git diff --cached --quiet; then
+            echo "No 016 report changes to commit."
+          else
+            git commit -m "Publish 016 clean full pytest evidence"
+            git push origin HEAD:security-accuracy-expansion-20260508
+          fi
+
+      - name: Fail if clean full pytest failed
+        if: steps.pytest016.outputs.pytest_exit != '0'
+        run: exit 1
