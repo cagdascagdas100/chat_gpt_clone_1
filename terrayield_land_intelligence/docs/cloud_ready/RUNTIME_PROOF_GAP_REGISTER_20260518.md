@@ -16,6 +16,7 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 | 012B targeted pytest evidence | passed from direct PowerShell output | none for targeted pytest | closed for targeted pytest only |
 | 014 local API smoke evidence | passed 6/6 from local API | none for local smoke | closed for local checkpoint |
 | 014 local performance evidence | passed from local p95 measurement | none for local perf | closed for local checkpoint |
+| Hosted smoke classification hardening | completed in `scripts/cloud_smoke_check.py` | script must not classify endpoint-only success as runtime ready | closed for current checkpoint |
 | Public backend runtime | not verified | public HTTPS API URL | root and smoke endpoints respond |
 | Cloud DB/PostGIS runtime | not verified | provider DB config outside repo | backend confirms DB-backed endpoints work |
 | Hosted smoke 6/6 | not verified | cloud smoke output | hosted smoke passes all required endpoints |
@@ -31,6 +32,10 @@ Track every proof gap that cannot be closed by GitHub-only automation.
 014 local API smoke passed 6/6 and local performance passed.
 
 These local results do not prove public cloud runtime readiness.
+
+## Hardening note
+
+`cloud_smoke_check.py` now keeps `CLOUD_READY_PENDING_PROVIDER` unless public backend HTTPS, cloud DB/PostGIS confirmation, hosted smoke 6/6, and public frontend URL are all verified. Endpoint-only success is no longer enough to claim `CLOUD_RUNTIME_READY`.
 
 ## GitHub-only status
 
