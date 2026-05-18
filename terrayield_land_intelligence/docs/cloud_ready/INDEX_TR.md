@@ -15,7 +15,7 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - Public hosted HTTPS API URL dogrulanmadi.
 - Cloud database provider ayari dogrulanmadi.
 - En son basarili runtime smoke local `127.0.0.1` uzerinden geldi.
-- 012A ve 012B runner raporlari henuz GitHub'a publish edilmedi.
+- 012A ve 012B icin status-placeholder raporlari olustu; ancak bunlar basarili runner cikti kaniti degildir.
 - Watchdog runner hazirlandi ama local PC'de etkinlestirilmedi.
 
 ## Ana dosyalar
@@ -47,6 +47,7 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/cloud_ready/AUTONOMY_ESCALATION_PLAN_20260518.md`
 - `docs/cloud_ready/EVIDENCE_INGESTION_PLAN_20260518.md`
 - `docs/cloud_ready/CLASSIFICATION_UPDATE_PLAYBOOK_20260518.md`
+- `docs/cloud_ready/CODEX_FIRST_NO_MANUAL_FILE_POLICY_20260518.md`
 
 ### Watchdog / persistent runner katmani
 
@@ -76,11 +77,16 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/chatgpt_handoff/cloud_ready_20260517/PERF_SUMMARY.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012C_GITHUB_NATIVE_STATUS_REPORT.txt`
-
-### Beklenen ama henuz publish edilmeyen runner raporlari
-
 - `docs/chatgpt_handoff/cloud_ready_20260517/012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/CODEX_CONTROL_NEXT_TASK_EXECUTION_REPORT_20260518.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/CODEX_CONTROL_NEXT_TASK_BLOCKERS_20260518.md`
+
+### 012A / 012B kanit durumu
+
+- 012A dosyasi vardir; `actual_task_output_found=false` / `validation_status=not_available` durumunu kaydeder.
+- 012B dosyasi vardir; `actual_task_output_found=false` / pytest-smoke-perf kanitlari `not_available` durumunu kaydeder.
+- Bu iki dosya basarili local runner kaniti degildir; blocker gorunurlugu icin yazilmis status kayitlaridir.
 
 ### GitHub Actions
 
