@@ -10,12 +10,15 @@
 
 ## Latest checks
 
-- 012A static validation report: not visible on GitHub.
-- 012B local test/smoke/perf report: not visible on GitHub.
+- 012A static validation report: passed from direct PowerShell evidence.
+- 012B targeted pytest report: passed from direct PowerShell evidence.
+- 014 local API smoke: passed 6/6.
+- 014 local performance: passed.
 - 012C GitHub-native fallback report: visible.
-- GitHub Actions workflow run: not visible through connector checks.
-- Runner revival package: prepared.
-- Watchdog safe runner: prepared but not enabled.
+- Public hosted backend URL: not verified.
+- Cloud DB/PostGIS provider: not verified.
+- Hosted smoke 6/6 against public URL: not verified.
+- Public frontend runtime: not verified.
 
 ## Prepared repo-side assets
 
@@ -31,6 +34,15 @@
 - Fast path deploy playbook is present.
 - Provider environment checklist is present.
 - Runner revival package is present.
+
+## Evidence files
+
+- `docs/chatgpt_handoff/cloud_ready_20260517/012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/014_LOCAL_API_SMOKE_PERF_REPORT.txt`
+- `docs/cloud_ready/FINAL_MANIFEST_20260517.json`
+- `docs/cloud_ready/RUNTIME_PROOF_GAP_REGISTER_20260518.md`
+- `docs/cloud_ready/CURRENT_STATUS_MACHINE_20260518.json`
 
 ## Runner revival files
 
@@ -51,13 +63,11 @@
 
 ## Runtime proof gaps still open
 
-- Fresh local pytest evidence.
-- Fresh local API smoke evidence.
-- Fresh local p95 performance evidence.
 - Public backend runtime proof.
 - Cloud DB/PostGIS runtime proof.
 - Public frontend runtime proof.
 - Hosted smoke 6/6 proof.
+- Hosted performance proof.
 
 ## Safety
 
