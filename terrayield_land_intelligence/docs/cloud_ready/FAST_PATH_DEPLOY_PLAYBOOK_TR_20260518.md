@@ -22,7 +22,8 @@ This is a free-tier best-effort route, not unlimited free production hosting.
 2. Use `terrayield_land_intelligence/Dockerfile.cloud` as the Dockerfile.
 3. Set provider runtime port to `8010` or map provider `$PORT` to app port if required.
 4. Define config values in provider dashboard, not in repo.
-5. Wait for a public HTTPS backend URL.
+5. Set `TERRAYIELD_PUBLIC_API_URL` outside the repo after the provider gives a public backend HTTPS URL.
+6. Wait for a public HTTPS backend URL.
 
 Expected output:
 
@@ -34,6 +35,7 @@ Expected output:
 2. Store the connection string only in the provider secret/config panel.
 3. Do not commit the real connection value.
 4. Confirm backend can connect without printing credentials.
+5. Set `TERRAYIELD_CLOUD_DB_VERIFIED=true` only after runtime connectivity is verified.
 
 Expected output:
 
@@ -43,8 +45,10 @@ Expected output:
 
 1. Deploy static frontend to a public host.
 2. Configure frontend API base URL to the public backend URL.
-3. Confirm UI does not call `127.0.0.1` or local filesystem paths.
-4. Run desktop and mobile browser smoke.
+3. In the loaded frontend config, `landIntelligenceApiBaseUrl` must equal the public backend HTTPS origin.
+4. Set `TERRAYIELD_FRONTEND_PUBLIC_URL` outside the repo after the public frontend URL exists.
+5. Confirm UI does not call `127.0.0.1`, `localhost`, `0.0.0.0`, Windows paths, or local filesystem paths.
+6. Run desktop and mobile browser smoke.
 
 Expected output:
 
@@ -52,10 +56,12 @@ Expected output:
 
 ## Phase 4 - Hosted smoke
 
-Set public API URL outside repo and run:
+Set public-safe runtime values outside repo and run:
 
 ```powershell
 $env:TERRAYIELD_PUBLIC_API_URL="https://YOUR_PUBLIC_API_HOST"
+$env:TERRAYIELD_FRONTEND_PUBLIC_URL="https://YOUR_PUBLIC_FRONTEND_HOST"
+$env:TERRAYIELD_CLOUD_DB_VERIFIED="true"
 python terrayield_land_intelligence/scripts/cloud_smoke_check.py
 ```
 
@@ -68,19 +74,27 @@ Hosted smoke must pass:
 - `/map/listings?limit=1`
 - `/map/sales-history/combined?limit=1`
 
+The smoke script must keep `CLOUD_READY_PENDING_PROVIDER` if cloud DB verification or public frontend verification is missing, even if all endpoints return success.
+
 ## Phase 5 - Classification update
 
 Use:
 
 `CLOUD_RUNTIME_READY`
 
-only if hosted smoke passes and the cloud DB is verified.
+only if all of these are true:
+
+- public backend HTTPS URL is verified,
+- cloud DB/PostGIS runtime is verified,
+- hosted smoke passes 6/6,
+- public frontend URL is verified,
+- no secret values were printed or committed.
 
 Use:
 
 `FREE_TIER_BEST_EFFORT_READY`
 
-only if hosted smoke passes and free-tier limits are explicitly accepted.
+only if the runtime-ready gates pass and free-tier limits are explicitly accepted.
 
 ## Stop rule
 
