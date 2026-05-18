@@ -38,7 +38,8 @@ for($i=0;$i -lt $batchCount;$i++){
 Heartbeat 'BATCHES_CREATED' 70
 $state = [ordered]@{ task_id=$TaskId; generated_at=(Get-Date -Format s); queue_path=$queue; excel_path=$excel; total_rows=$total; batch_size=$batchSize; batch_count=$batchCount; output_root=$out; production_acceptance_gate='NOT_READY_FOR_AUTO_ACCEPT'; safe_output_gate='READY_FOR_HUMAN_EVIDENCE_REVIEW'; next_task='rtsacc-002-verify-batch-0001' }
 $statePath = Join-Path $out 'RTSACC_001_RUN_STATE.json'
-$state | ConvertTo-Json -Depth 5 | SaveText $statePath
+$stateJson = $state | ConvertTo-Json -Depth 5
+SaveText $statePath $stateJson
 $report = @('# RTSACC 001 kickoff report',('Generated: '+(Get-Date -Format s)),('task_id: '+$TaskId),('queue_path: '+$(if($queue){$queue}else{'MISSING'})),('excel_path: '+$(if($excel){$excel}else{'MISSING'})),('total_rows: '+$total),('batch_size: '+$batchSize),('batch_count: '+$batchCount),('output_root: '+$out),('run_state: '+$statePath),'production_acceptance_gate: NOT_READY_FOR_AUTO_ACCEPT','safe_output_gate: READY_FOR_HUMAN_EVIDENCE_REVIEW','no_db_write: yes','old_task_continuation: no','task_gate: COMPLETE','RTSACC_001_DONE=true')
 SaveText $ReportPath $report
 Heartbeat 'COMPLETE' 100
