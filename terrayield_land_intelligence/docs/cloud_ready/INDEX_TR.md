@@ -14,9 +14,16 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 
 - Public hosted HTTPS API URL dogrulanmadi.
 - Cloud database provider ayari dogrulanmadi.
-- En son basarili runtime smoke local `127.0.0.1` uzerinden geldi.
-- 012A ve 012B icin status-placeholder raporlari olustu; ancak bunlar basarili runner cikti kaniti degildir.
-- Watchdog runner hazirlandi ama local PC'de etkinlestirilmedi.
+- Hosted smoke public URL uzerinden calistirilmadi.
+- Public frontend runtime dogrulanmadi.
+- Local kanitlar guncel ve basarili olsa da public cloud runtime kaniti sayilmaz.
+
+## Tamamlanan local kanitlar
+
+- 012A static validation: passed.
+- 012B targeted pytest: passed.
+- 014 local API smoke: passed 6/6.
+- 014 local performance: passed.
 
 ## Ana dosyalar
 
@@ -41,13 +48,13 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/cloud_ready/CURRENT_STATUS_MACHINE_20260518.json`
 - `docs/cloud_ready/GITHUB_ONLY_AUTONOMOUS_CLOSURE_CHECKLIST_20260518.md`
 - `docs/cloud_ready/PARALLEL_EXECUTION_BOARD_20260517.md`
-- `docs/cloud_ready/012AB_NOT_PUBLISHED_STATUS_20260517.md`
 - `docs/cloud_ready/GITHUB_ONLY_COMPLETION_REPORT_20260518.md`
 - `docs/cloud_ready/GITHUB_ONLY_AUTONOMOUS_SCOPE_MATRIX_20260518.md`
 - `docs/cloud_ready/AUTONOMY_ESCALATION_PLAN_20260518.md`
 - `docs/cloud_ready/EVIDENCE_INGESTION_PLAN_20260518.md`
 - `docs/cloud_ready/CLASSIFICATION_UPDATE_PLAYBOOK_20260518.md`
 - `docs/cloud_ready/CODEX_FIRST_NO_MANUAL_FILE_POLICY_20260518.md`
+- `docs/cloud_ready/LONG_BATCH_PUBLIC_RUNTIME_PRECHECK_20260518.md`
 
 ### Watchdog / persistent runner katmani
 
@@ -78,21 +85,19 @@ Bu indeks cloud-ready calismasinda olusan dosyalari ve mevcut durumu gosterir.
 - `docs/chatgpt_handoff/cloud_ready_20260517/SAFETY_SUMMARY.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012C_GITHUB_NATIVE_STATUS_REPORT.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/012B_PYTEST_RAW.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/014_LOCAL_API_SMOKE_PERF_REPORT.txt`
+- `docs/chatgpt_handoff/cloud_ready_20260517/014_LOCAL_API_SMOKE_PERF_RAW.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/CODEX_CONTROL_NEXT_TASK_EXECUTION_REPORT_20260518.txt`
 - `docs/chatgpt_handoff/cloud_ready_20260517/CODEX_CONTROL_NEXT_TASK_BLOCKERS_20260518.md`
-
-### 012A / 012B kanit durumu
-
-- 012A dosyasi vardir; `actual_task_output_found=false` / `validation_status=not_available` durumunu kaydeder.
-- 012B dosyasi vardir; `actual_task_output_found=false` / pytest-smoke-perf kanitlari `not_available` durumunu kaydeder.
-- Bu iki dosya basarili local runner kaniti degildir; blocker gorunurlugu icin yazilmis status kayitlaridir.
 
 ### GitHub Actions
 
 - `.github/workflows/terrayield-cloud-readiness.yml`
 
-Workflow dosyasi vardir; ancak connector uzerinden workflow run gorunmemistir. Bu nedenle statik dogrulama raporu ve 012C GitHub-native fallback raporu eklenmistir.
+Workflow dosyasi vardir; connector uzerinden workflow run gorunmese de local ve direct PowerShell kanitlari publish edilmistir.
 
 ## Lokal statik kontrol
 
@@ -125,9 +130,9 @@ Hosted smoke 6/6 gecer ve cloud DB ayari dogrulanirsa siniflandirma `CLOUD_RUNTI
 - Public backend HTTPS URL
 - Hosted cloud smoke onayi
 
-## GitHub-only kapanis sonucu
+## GitHub-only / local evidence kapanis sonucu
 
-GitHub-only otonom hazirlik tamamlandi. Bu mod, runtime veya hosted cloud kaniti uretmez; sadece repo, belge, script, manifest, takip, evidence ingestion playbook, classification update playbook ve watchdog hazirligini tamamlar.
+Repo hazirligi, static validation, targeted pytest, local API smoke ve local performance kanitlari tamamlandi. Bu kanitlar public hosted runtime yerine gecmez.
 
 ## Guvenlik
 
