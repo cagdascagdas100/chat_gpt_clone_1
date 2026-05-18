@@ -1,7 +1,7 @@
 # 016 clean full pytest raw output
-timestamp_utc=2026-05-18T21:39:09Z
+timestamp_utc=2026-05-18T21:55:41Z
 branch=security-accuracy-expansion-20260508
-head=a2b1caba8
+head=523547fa4
 command=python -m pytest -q
 
 ## pytest.ini
@@ -21,11 +21,11 @@ Traceback:
 /opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/importlib/__init__.py:126: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_contractor_api.py:9: in <module>
-    from app.api.routes import contractor as contractor_routes
-app/api/routes/contractor.py:10: in <module>
-    from app.core.config import get_settings
-E   ModuleNotFoundError: No module named 'app.core'
+tests/test_contractor_api.py:10: in <module>
+    from app.main import app
+app/main.py:11: in <module>
+    from app.api.routes import admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources
+E   ImportError: cannot import name 'admin' from 'app.api.routes' (unknown location)
 _______ ERROR collecting tests/test_parcel_matcher_source_confidence.py ________
 ImportError while importing test module '/home/runner/work/chat_gpt_clone_1/chat_gpt_clone_1/terrayield_land_intelligence/tests/test_parcel_matcher_source_confidence.py'.
 Hint: make sure your test modules/packages have valid Python names.
@@ -35,9 +35,9 @@ Traceback:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/test_parcel_matcher_source_confidence.py:3: in <module>
     from app.etl.match.parcel_matcher import MatchCandidate, _build_match_source_confidence_fields
-app/etl/match/parcel_matcher.py:12: in <module>
-    from app.core.config import get_settings
-E   ModuleNotFoundError: No module named 'app.core'
+app/etl/match/parcel_matcher.py:13: in <module>
+    from app.db.models import (
+E   ModuleNotFoundError: No module named 'app.db'
 _________ ERROR collecting tests/test_sale_land_verification_route.py __________
 ImportError while importing test module '/home/runner/work/chat_gpt_clone_1/chat_gpt_clone_1/terrayield_land_intelligence/tests/test_sale_land_verification_route.py'.
 Hint: make sure your test modules/packages have valid Python names.
@@ -59,9 +59,9 @@ Traceback:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 tests/test_scoring.py:5: in <module>
     from app.services.scoring import compute_confidence_score, freshness_score, should_require_review, source_reliability_score
-app/services/scoring.py:5: in <module>
-    from app.core.config import get_settings
-E   ModuleNotFoundError: No module named 'app.core'
+app/services/scoring.py:6: in <module>
+    from app.services.source_catalog import get_stale_threshold_days
+E   ModuleNotFoundError: No module named 'app.services.source_catalog'
 ____________ ERROR collecting tests/test_source_manifest_status.py _____________
 ImportError while importing test module '/home/runner/work/chat_gpt_clone_1/chat_gpt_clone_1/terrayield_land_intelligence/tests/test_source_manifest_status.py'.
 Hint: make sure your test modules/packages have valid Python names.
@@ -79,4 +79,4 @@ ERROR tests/test_sale_land_verification_route.py
 ERROR tests/test_scoring.py
 ERROR tests/test_source_manifest_status.py
 !!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
-5 errors in 0.77s
+5 errors in 0.80s
