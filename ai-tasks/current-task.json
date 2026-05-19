@@ -1,6 +1,6 @@
 {
-  "id": "aays-114-dem-candidate-classifier-20260519-2156",
-  "title": "AAYS 114 DEM candidate classifier",
+  "id": "aays-114-dem-candidate-classifier-20260519-2205-retry",
+  "title": "AAYS 114 DEM candidate classifier retry",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
   "timeout_seconds": 2700,
@@ -8,12 +8,25 @@
   "project_label": "aays-terrayield-topography-elevation-evidence",
   "task_namespace": "AAYS-114",
   "script_path": "aays_114_dem_candidate_classifier_20260519.ps1",
-  "scope": "Classify AAYS 113 raster inventory rows as possible DEM/DTM versus projection/geoid grid files. Read-only. No DB writes. No production deploy. No fake elevation values.",
+  "scope": "Classify AAYS 113 raster inventory rows as possible DEM/DTM versus projection/geoid grid files. Read-only. No DB writes. No production deploy. No fake elevation values. Fresh retry because heartbeat has not advanced from aays-113b-light-dem-check and AAYS-114 result is missing.",
   "expected_outputs": [
     "ai-results/aays-114-dem-candidate-classifier-20260519.result.json",
     "ai-results/aays-114-dem-candidate-classifier-20260519.report.md",
     "ai-results/aays-114-dem-candidate-classifier-20260519.csv"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "30-35"
+  "wait_minutes_after_start": "30-40",
+  "self_correction_rules": [
+    "If AAYS-113 CSV is missing, produce blocker report rather than fabricating DEM candidates.",
+    "If candidates are projection/geoid grids, classify them as not DEM/DTM and do not use for elevation sampling.",
+    "If possible terrain DEM candidates are found, recommend rerunning AAYS-112 with selected candidate.",
+    "If no likely DEM is found, recommend official UK terrain DEM/DTM acquisition workflow.",
+    "Never create fake elevation values."
+  ],
+  "result_json_fields_to_check": [
+    "status",
+    "possible_dem_count",
+    "output_csv",
+    "next_step"
+  ]
 }
