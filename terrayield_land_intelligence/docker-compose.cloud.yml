@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: terrayield
+      POSTGRES_USER: terrayield_app
+      POSTGRES_PASSWORD: ${TY_POSTGRES_PASSWORD:?set_on_vm_only}
+    volumes:
+      - terrayield_postgis_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - terrayield_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terrayield_app -d terrayield"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.cloud
+    restart: unless-stopped
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8010
+      AAYS_DEPLOYMENT_MODE: cloud
+      ALLOWED_ORIGINS: https://terrayield.edalmo.com,https://www.edalmo.com
+      TERRAYIELD_PUBLIC_API_URL: https://api-terrayield.edalmo.com
+      TERRAYIELD_FRONTEND_PUBLIC_URL: https://terrayield.edalmo.com
+      TERRAYIELD_CLOUD_DB_VERIFIED: "false"
+      DATABASE_URL: ${TY_DATABASE_URL:?set_on_vm_only}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - terrayield_internal
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../england_map_web:/srv/terrayield/frontend:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - terrayield_internal
+
+networks:
+  terrayield_internal:
+    driver: bridge
+
+volumes:
+  terrayield_postgis_data:
+  caddy_data:
+  caddy_config:
