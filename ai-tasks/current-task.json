@@ -1,6 +1,6 @@
 {
-  "id": "aays-deep-watchdog-recovery-retry-20260519-1315",
-  "title": "AAYS deep watchdog recovery retry",
+  "id": "aays-deep-watchdog-recovery-v2-20260519-1410",
+  "title": "AAYS deep watchdog recovery V2",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
   "timeout_seconds": 3300,
@@ -8,12 +8,17 @@
   "project_label": "multi-project-watchdog-recovery",
   "task_namespace": "AAYS_WATCHDOG",
   "script_path": "aays_deep_watchdog_orchestrator.ps1",
-  "scope": "Long read-only watchdog retry. No database writes. No destructive file operations.",
+  "scope": "Long read-only stdout-only watchdog retry. No database writes. No destructive file operations. Fixes prior job-scope helper failure.",
   "expected_outputs": [
-    "aays_deep_watchdog_20260519.md",
-    "parcelsales_011_recovery_20260519.md",
-    "terrayield_fgc_deep_discovery_20260519.md"
+    "runner stdout report containing WATCHDOG_PASS",
+    "candidate scan lines for parcelsales, fgc, cloud, oracle, watchdog, smoke, provider, ready"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "35-45"
+  "wait_minutes_after_start": "35-45",
+  "self_correction_rules": [
+    "Do not use helper functions inside Start-Job scope.",
+    "Use stdout-only reporting to avoid shared file locks.",
+    "Continue cycles even when one root path is missing.",
+    "Do not print secrets, DATABASE_URL values, tokens, or passwords."
+  ]
 }
