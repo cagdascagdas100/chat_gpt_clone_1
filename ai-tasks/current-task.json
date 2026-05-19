@@ -1,21 +1,33 @@
 {
-  "id": "contractor-002-long-watchdog-foundation-20260519-retry-compact",
-  "title": "Contractor 002 long watchdog foundation retry compact",
+  "id": "aays-114-dem-candidate-classifier-20260520-fresh-0015",
+  "title": "AAYS 114 DEM candidate classifier fresh 0015",
   "progress": 0,
-  "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN",
-  "timeout_seconds": 3000,
+  "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
+  "timeout_seconds": 2700,
   "created_by": "ChatGPT",
-  "project_label": "terrayield-contractor-foundation",
-  "task_namespace": "CONTRACTOR_PIPELINE",
-  "script_path": "terrayield_contractor_002_long_watchdog_foundation.ps1",
-  "scope": "Run contractor foundation long watchdog batch for 30-40 minutes. Create parcel groups, templates, source registry, schema draft, app query contract, progress, result and report. Read-only and no fake contractor rows.",
+  "project_label": "aays-terrayield-topography-elevation-evidence",
+  "task_namespace": "AAYS-114",
+  "script_path": "aays_114_dem_candidate_classifier_20260519.ps1",
+  "scope": "Classify AAYS 113 raster inventory rows as possible DEM/DTM versus projection/geoid grid files after 112 blocker. Read-only. No DB writes. No production deploy. No fake elevation values. This is required before rerunning 112 or declaring DEM acquisition required.",
   "expected_outputs": [
-    "ai-progress/contractor-002-long-watchdog-foundation-20260519.progress.md",
-    "ai-results/contractor-002-long-watchdog-foundation-20260519.result.json",
-    "ai-results/contractor-002-long-watchdog-foundation-20260519.report.md"
+    "ai-results/aays-114-dem-candidate-classifier-20260519.result.json",
+    "ai-results/aays-114-dem-candidate-classifier-20260519.report.md",
+    "ai-results/aays-114-dem-candidate-classifier-20260519.csv"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "30-40",
-  "safety_rules": ["no_fake_contractor_rows", "no_db_write", "no_production_deploy", "no_secret_output"],
-  "result_json_fields_to_check": ["status", "elapsed_minutes", "job_results", "safety", "next_task"]
+  "wait_minutes_after_start": "30-35",
+  "self_correction_rules": [
+    "If AAYS 113 CSV is missing, report missing input and stop safely.",
+    "If raster names look like PostGIS/PROJ/geoid transformation grids, classify them as not terrain DEM.",
+    "If possible DEM candidates exist, recommend rerun of AAYS 112.",
+    "If no possible DEM candidates exist, write final blocker requiring official DEM/DTM acquisition."
+  ],
+  "result_json_fields_to_check": [
+    "status",
+    "rows",
+    "possible_dem_count",
+    "output_csv",
+    "next_step",
+    "safety"
+  ]
 }
