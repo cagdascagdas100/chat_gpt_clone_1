@@ -1,15 +1,32 @@
 {
-  "id": "parcelsales-011-long-check-20260519",
-  "title": "PARCELSALES 011 long check",
+  "id": "aays-deep-watchdog-recovery-20260519-1254",
+  "title": "AAYS deep watchdog recovery and TerraYield FGC discovery",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "timeout_seconds": 3000,
+  "timeout_seconds": 3300,
   "created_by": "ChatGPT",
-  "project_label": "uk-historical-sales-parcel-match",
-  "task_namespace": "PARCELSALES",
-  "script_path": "parcelsales_011_long_alt_source_scoring_orchestrator_20260519.ps1",
-  "scope": "Long read-only check. No DB write.",
-  "expected_outputs": ["parcelsales_011_long_orchestrator.md"],
+  "project_label": "multi-project-watchdog-recovery",
+  "task_namespace": "AAYS_WATCHDOG",
+  "script_path": "aays_deep_watchdog_orchestrator.ps1",
+  "scope": "Long read-only diagnostic run. First verify why PARCELSALES 011 did not emit ai-results/parcelsales_011_long_orchestrator.md. Then run parallel discovery for TerraYield FGC blockers. No database writes. No destructive file operations.",
+  "expected_outputs": [
+    "aays_deep_watchdog_20260519.md",
+    "parcelsales_011_recovery_20260519.md",
+    "terrayield_fgc_deep_discovery_20260519.md"
+  ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "30-40"
+  "wait_minutes_after_start": "35-45",
+  "self_correction_rules": [
+    "If the expected PARCELSALES result is missing, classify the previous run as stuck or not-started and include likely reason.",
+    "If a named script is missing, search for closest matching scripts and report alternate candidates rather than stopping.",
+    "If one discovery branch blocks, continue the other branches and write partial outputs.",
+    "Use read-only checks only: directory listing, log reading, source scanning, metadata summaries, and result-file summaries.",
+    "Write heartbeat/progress notes every few minutes so the next continuation can distinguish slow work from a hang."
+  ],
+  "parallel_branches": [
+    "PARCELSALES 011 stuck-run recovery",
+    "TerraYield FGC source and log discovery",
+    "Repository health and recent-result audit",
+    "Candidate data/database inventory without opening sensitive values"
+  ]
 }
