@@ -1,32 +1,21 @@
 {
-  "id": "aays-114-dem-candidate-classifier-20260519-2205-retry",
-  "title": "AAYS 114 DEM candidate classifier retry",
+  "id": "contractor-002-long-watchdog-foundation-20260519-retry-compact",
+  "title": "Contractor 002 long watchdog foundation retry compact",
   "progress": 0,
-  "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "timeout_seconds": 2700,
+  "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN",
+  "timeout_seconds": 3000,
   "created_by": "ChatGPT",
-  "project_label": "aays-terrayield-topography-elevation-evidence",
-  "task_namespace": "AAYS-114",
-  "script_path": "aays_114_dem_candidate_classifier_20260519.ps1",
-  "scope": "Classify AAYS 113 raster inventory rows as possible DEM/DTM versus projection/geoid grid files. Read-only. No DB writes. No production deploy. No fake elevation values. Fresh retry because heartbeat has not advanced from aays-113b-light-dem-check and AAYS-114 result is missing.",
+  "project_label": "terrayield-contractor-foundation",
+  "task_namespace": "CONTRACTOR_PIPELINE",
+  "script_path": "terrayield_contractor_002_long_watchdog_foundation.ps1",
+  "scope": "Run contractor foundation long watchdog batch for 30-40 minutes. Create parcel groups, templates, source registry, schema draft, app query contract, progress, result and report. Read-only and no fake contractor rows.",
   "expected_outputs": [
-    "ai-results/aays-114-dem-candidate-classifier-20260519.result.json",
-    "ai-results/aays-114-dem-candidate-classifier-20260519.report.md",
-    "ai-results/aays-114-dem-candidate-classifier-20260519.csv"
+    "ai-progress/contractor-002-long-watchdog-foundation-20260519.progress.md",
+    "ai-results/contractor-002-long-watchdog-foundation-20260519.result.json",
+    "ai-results/contractor-002-long-watchdog-foundation-20260519.report.md"
   ],
   "continuation_protocol": true,
   "wait_minutes_after_start": "30-40",
-  "self_correction_rules": [
-    "If AAYS-113 CSV is missing, produce blocker report rather than fabricating DEM candidates.",
-    "If candidates are projection/geoid grids, classify them as not DEM/DTM and do not use for elevation sampling.",
-    "If possible terrain DEM candidates are found, recommend rerunning AAYS-112 with selected candidate.",
-    "If no likely DEM is found, recommend official UK terrain DEM/DTM acquisition workflow.",
-    "Never create fake elevation values."
-  ],
-  "result_json_fields_to_check": [
-    "status",
-    "possible_dem_count",
-    "output_csv",
-    "next_step"
-  ]
+  "safety_rules": ["no_fake_contractor_rows", "no_db_write", "no_production_deploy", "no_secret_output"],
+  "result_json_fields_to_check": ["status", "elapsed_minutes", "job_results", "safety", "next_task"]
 }
