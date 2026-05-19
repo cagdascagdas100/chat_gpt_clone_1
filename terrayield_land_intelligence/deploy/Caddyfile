@@ -1,0 +1,22 @@
+api-terrayield.edalmo.com {
+  encode zstd gzip
+  reverse_proxy api:8010
+
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}
+
+terrayield.edalmo.com {
+  encode zstd gzip
+  root * /srv/terrayield/frontend
+  file_server
+
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+
+  try_files {path} /index.html
+}
