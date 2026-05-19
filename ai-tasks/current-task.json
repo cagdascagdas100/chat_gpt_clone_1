@@ -1,6 +1,6 @@
-﻿{
-  "id": "rtsacc-fanout-rerun-20260519",
-  "title": "RTSACC fanout rerun",
+{
+  "id": "rtsacc-fanout-rerun-20260519-retry-1505",
+  "title": "RTSACC fanout rerun retry 1505",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
   "timeout_seconds": 3300,
@@ -8,11 +8,25 @@
   "project_label": "ready-to-sell-accuracy-expansion",
   "task_namespace": "RTSACC",
   "script_path": "rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.ps1",
-  "scope": "Read-only long parallel scan for Ready-to-Sell accuracy expansion. DB write disabled. Production acceptance disabled.",
+  "scope": "Read-only long parallel scan for Ready-to-Sell accuracy expansion. DB write disabled. Production acceptance disabled. Requeued with a fresh id because .last-task-id and heartbeat indicate the previous current task was not picked up.",
   "expected_outputs": [
     "ai-results/rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.md",
     "ai-progress/rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.progress.md"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "40-50"
+  "wait_minutes_after_start": "40-50",
+  "self_correction_rules": [
+    "If one scan lane stalls, continue remaining lanes and write partial results.",
+    "If a root path is missing, classify it as missing and continue other roots.",
+    "If file scanning is slow, keep writing progress cycles so next continuation can distinguish slow scan from hang.",
+    "Never write to DB, never deploy, never print secrets."
+  ],
+  "parallel_lanes": [
+    "runner heartbeat liveness",
+    "ready-to-sell evidence inventory",
+    "parcel sales provider/cloud discovery",
+    "smoke test and verdict scan",
+    "bridge artifact inventory",
+    "AAYS cross-project inventory"
+  ]
 }
