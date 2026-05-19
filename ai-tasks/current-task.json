@@ -1,19 +1,32 @@
 {
-  "id": "contractor-002-long-watchdog-foundation-20260519-clean2-1905",
-  "title": "Contractor 002 long watchdog foundation CLEAN2",
+  "id": "aays-113-dem-broad-inventory-20260519-fresh-1910",
+  "title": "AAYS 113 DEM broad inventory fresh 1910",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "timeout_seconds": 3000,
+  "timeout_seconds": 2400,
   "created_by": "ChatGPT",
-  "project_label": "terrayield-contractor-foundation",
-  "task_namespace": "CONTRACTOR_PIPELINE",
-  "script_path": "terrayield_contractor_002_long_watchdog_foundation.ps1",
-  "scope": "Long 30-40 minute contractor foundation task. Generate or verify England 200 parcel groups, contractor templates, official source registry, read-only schema draft and app query contract. No fake contractors, no DB writes, no production deploy, no secrets.",
+  "project_label": "aays-terrayield-topography-elevation-evidence",
+  "task_namespace": "AAYS-113",
+  "script_path": "aays_113_dem_broad_inventory_20260519.ps1",
+  "scope": "Broad read-only inventory for DEM/DTM/elevation raster files after AAYS 112 completed with blocker No DEM/DTM raster found under E:\\AAYS_DATA. Search E:\\AAYS_DATA, E:\\, and AAYS repo for .tif/.tiff/.asc/.vrt/.img. No DB writes. No production deploy. No fake elevation values.",
   "expected_outputs": [
-    "ai-progress/contractor-002-long-watchdog-foundation-20260519.progress.md",
-    "ai-results/contractor-002-long-watchdog-foundation-20260519.result.json",
-    "ai-results/contractor-002-long-watchdog-foundation-20260519.report.md"
+    "ai-results/aays-113-dem-broad-inventory-20260519.result.json",
+    "ai-results/aays-113-dem-broad-inventory-20260519.report.md",
+    "ai-results/aays-113-dem-broad-inventory-20260519.csv"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "30-40"
+  "wait_minutes_after_start": "10-30; allow 30-40 if E drive scan is large",
+  "self_correction_rules": [
+    "If one root is inaccessible, continue with remaining roots.",
+    "If scan is slow, rely on timeout and partial CSV if produced.",
+    "Classify raster candidates by filename keyword score.",
+    "Do not alter data files."
+  ],
+  "result_json_fields_to_check": [
+    "status",
+    "rows",
+    "top_candidates",
+    "output_csv",
+    "next_step"
+  ]
 }
