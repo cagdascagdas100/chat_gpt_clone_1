@@ -1,18 +1,41 @@
 {
-  "id": "rtsacc-ready-to-sell-accuracy-fanout-20260519-1445",
-  "title": "RTSACC Ready-to-Sell accuracy fanout",
+  "id": "aays-112-parcel-elevation-evidence-export-20260519",
+  "title": "AAYS 112 parcel elevation evidence export",
   "progress": 0,
   "working_directory": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "timeout_seconds": 3300,
+  "timeout_seconds": 1500,
   "created_by": "ChatGPT",
-  "project_label": "ready-to-sell-accuracy-expansion",
-  "task_namespace": "RTSACC",
-  "script_path": "rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.ps1",
-  "scope": "Long read-only parallel fanout scan for Ready-to-Sell accuracy expansion. No DB write. No production acceptance.",
+  "project_label": "aays-terrayield-topography-elevation-evidence",
+  "task_namespace": "AAYS-112",
+  "script_path": "aays_112_parcel_elevation_evidence_export_20260519.ps1",
+  "scope": "Parcel elevation evidence export; generate Excel/CSV/JSON/report from real parcel geometry and DEM/DTM inputs; read-only; no DB writes; no production deploy; no fake elevation values.",
   "expected_outputs": [
-    "rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.md",
-    "rtsacc_ready_to_sell_accuracy_fanout_20260519_1445.progress.md"
+    "ai-results/aays-112-parcel-elevation-evidence-export-20260519.xlsx",
+    "ai-results/aays-112-parcel-elevation-evidence-export-20260519.csv",
+    "ai-results/aays-112-parcel-elevation-evidence-export-20260519.result.json",
+    "ai-results/aays-112-parcel-elevation-evidence-export-20260519.report.md"
   ],
   "continuation_protocol": true,
-  "wait_minutes_after_start": "40-50"
+  "wait_minutes_after_start": "5-10; 10-20 if large DEM/scan is involved",
+  "safety_rules": [
+    "do_not_repeat_035_036_109_109B_110_111",
+    "no_new_accuracy_audit_cycle",
+    "no_db_write",
+    "no_production_deploy",
+    "no_secret_token_password_output",
+    "no_fake_elevation_values"
+  ],
+  "result_json_fields_to_check": [
+    "status",
+    "rows_written",
+    "xlsx_written",
+    "csv_written",
+    "elevation_sampled",
+    "blockers",
+    "warnings",
+    "candidate_parcel_files",
+    "candidate_dem_files",
+    "output_xlsx",
+    "output_csv"
+  ]
 }
