@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from urllib.error import URLError, HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -14,7 +14,7 @@ PRIVATE_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
 def fetch(url: str, timeout: int = 15) -> dict[str, object]:
     start = time.perf_counter()
     try:
-        req = Request(url, headers={"User-Agent": "TerraYieldCloudSmoke/1.1"})
+        req = Request(url, headers={"User-Agent": "TerraYieldCloudSmoke/1.2"})
         with urlopen(req, timeout=timeout) as resp:
             elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
             return {
@@ -51,6 +51,11 @@ def public_https_ok(url: str) -> bool:
     return parsed.scheme == "https" and bool(host) and host not in PRIVATE_HOSTS
 
 
+def response_success(result: dict[str, object]) -> bool:
+    code = int(result.get("status_code") or 0)
+    return result.get("status") == "ok" and 200 <= code < 400
+
+
 def main() -> int:
     base_url = os.environ.get("TERRAYIELD_PUBLIC_API_URL", "").strip().rstrip("/")
     if not base_url:
@@ -70,7 +75,7 @@ def main() -> int:
     for endpoint in endpoints:
         result = fetch(base_url + endpoint)
         results.append(result)
-        if result["status"] == "ok" and int(result["status_code"] or 0) < 500:
+        if response_success(result):
             ok += 1
 
     public_url_verified = public_https_ok(base_url)
@@ -108,6 +113,7 @@ def main() -> int:
         "ddl": "none",
         "migration_apply": "none",
         "prod_deploy": "none",
+        "success_rule": "only_http_2xx_3xx_count_as_success",
         "results": results,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
