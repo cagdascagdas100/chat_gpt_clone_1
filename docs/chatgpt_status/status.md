@@ -1,6 +1,6 @@
 # ChatGPT Multi Page Status
 
-Updated: 2026-05-21 00:27:00
+Updated: 2026-05-21 00:31:00
 
 ## 1.3 Ready to Sell
 Active task: terrayield-cost-engine-055-integration-fix-plan-20260520
@@ -84,12 +84,12 @@ Last message: sitede gözükmüyor dediğim işlem
 Blocker: estate pending queued; result not confirmed
 
 ## 6.1 Security
-Active task: auto-6-security-dashboard-visibility-sync
+Active task: auto-6-security-runner-poll-20260520
 Status: polling
 Overall progress: 94
 Wait minutes: 35-45
-Last message at: 2026-05-21 00:20:00
-Last message: devam et
+Last message at: 2026-05-21 00:31:00
+Last message: Devam et - PowerShell runner kontrolü ve web status güncellemesi
 Blocker: 
 
 ## 2.1 Sold Buildings
@@ -109,4 +109,3 @@ Wait minutes: 1-2
 Last message at: 2026-05-20 23:39:12
 Last message: sitede gÃ¶zÃ¼kmÃ¼yor dediÄŸim iÅŸlem
 Blocker: Cost Engine 055 completed. Next task is Cost Engine 056.
-
