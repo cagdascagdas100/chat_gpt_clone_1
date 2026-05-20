@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AAYS ChatGPT Multi Page Status</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:24px;background:#f7f7f8;color:#111827}
+    h1{margin:0 0 8px;font-size:24px}.sub{color:#4b5563;margin-bottom:18px}
+    .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    button,input{padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;background:white}
+    button{cursor:pointer}.card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+    table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden}th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}th{background:#111827;color:white}tr:hover{background:#f9fafb}
+    .ok{color:#047857;font-weight:700}.warn{color:#b45309;font-weight:700}.bad{color:#b91c1c;font-weight:700}.muted{color:#6b7280}.pct{font-weight:700}.small{font-size:12px;color:#6b7280}
+    pre{white-space:pre-wrap;background:#111827;color:#f9fafb;padding:12px;border-radius:10px;overflow:auto}
+  </style>
+</head>
+<body>
+  <h1>AAYS / TerraYield ChatGPT Multi Page Status</h1>
+  <div class="sub">Ortak durum panosu. Aynı klasördeki <code>multi_page_status.json</code> dosyasını okur.</div>
+  <div class="bar">
+    <button onclick="loadStatus()">Yenile</button>
+    <input type="file" id="fileInput" accept=".json" />
+    <span id="loadedAt" class="small"></span>
+  </div>
+  <div class="card">
+    <div id="meta" class="small">Yükleniyor...</div>
+  </div>
+  <table id="statusTable">
+    <thead><tr><th>Sayfa</th><th>Aktif görev</th><th>Durum</th><th>Teknik %</th><th>Genel %</th><th>Bekleme</th><th>Komut</th><th>Blokaj / Not</th><th>Güncelleme</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="card"><b>Ham JSON</b><pre id="raw"></pre></div>
+<script>
+function cls(status){status=(status||'').toLowerCase();if(status.includes('fail')||status.includes('block'))return 'bad';if(status.includes('running')||status.includes('poll')||status.includes('wait'))return 'warn';return 'ok'}
+function render(data){
+  document.getElementById('raw').textContent=JSON.stringify(data,null,2);
+  const meta=data._meta||{};document.getElementById('meta').textContent='schema='+ (meta.schema_version||'') + ' | updated_at=' + (meta.updated_at||'');
+  const tbody=document.querySelector('#statusTable tbody');tbody.innerHTML='';
+  const pages=data.pages||{};
+  Object.keys(pages).sort().forEach(name=>{const p=pages[name]||{};const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+name+'</b></td><td>'+safe(p.active_task)+'</td><td class="'+cls(p.status)+'">'+safe(p.status)+'</td><td class="pct">'+safe(p.technical_progress)+'</td><td class="pct">'+safe(p.overall_progress)+'</td><td>'+safe(p.wait_minutes)+'</td><td>'+safe(p.next_command)+'</td><td>'+safe(p.blocker||p.note||'')+'</td><td class="small">'+safe(p.updated_at)+'</td>';tbody.appendChild(tr);});
+  document.getElementById('loadedAt').textContent='Yüklendi: '+new Date().toLocaleString();
+}
+function safe(v){return String(v===undefined||v===null?'':v).replace(/[&<>]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]));}
+async function loadStatus(){try{const r=await fetch('multi_page_status.json?ts='+Date.now());render(await r.json());}catch(e){document.getElementById('meta').textContent='JSON otomatik yüklenemedi. Dosya seçerek yükleyebilirsin: '+e.message;}}
+document.getElementById('fileInput').addEventListener('change',ev=>{const f=ev.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>render(JSON.parse(reader.result));reader.readAsText(f);});
+loadStatus();setInterval(loadStatus,60000);
+</script>
+</body>
+</html>
