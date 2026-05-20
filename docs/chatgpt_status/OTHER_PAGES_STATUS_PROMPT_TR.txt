@@ -1,34 +1,37 @@
 Bu sayfanın adı: [SAYFA_ADI]
 
-Bu sayfada bundan sonra her önemli işlem sonunda ortak durum dosyasını güncelle:
+Bu sayfada bundan sonra her önemli işlem sonunda ortak durum dosyasını güncelle.
 
-Repo/bridge kökü:
+Repo / bridge kökü:
 C:\AAYS_GITHUB_BRIDGE_CLEAN2
 
-Ortak dosyalar:
+Ortak durum dosyaları:
 docs/chatgpt_status/multi_page_status.json
 docs/chatgpt_status/status.md
 docs/chatgpt_status/index.html
 docs/chatgpt_status/status_dashboard_standalone.html
 
-Kural:
+Ana kural:
 - Sadece kendi sayfa anahtarını güncelle.
 - Başka sayfaların satırlarını silme veya ezme.
 - DB write kapalı kalsın.
 - Production deploy kapalı kalsın.
-- Kullanıcı yalnızca “devam et” yazabilsin.
+- Fake veri üretme.
+- Kullanıcı sadece “devam et” yazabilsin.
 - PowerShell penceresi sadece kesinlikle gerekirse istenecek.
+- Mümkünse GitHub / repo dosyaları üzerinden otonom devam et.
 
 Güncellenecek JSON alanları:
 active_task: şu anki current-task id veya aktif iş adı
 status: running / polling / finished / finished_with_failures / blocked / waiting
-technical_progress: bu sayfadaki teknik işin yüzdesi
-overall_progress: ana plana göre tahmini genel yüzde
+overall_progress: ana plana göre tahmini genel proje yüzdesi
 wait_minutes: kullanıcının beklemesi gereken süre
 next_command: devam et
 runner_status: heartbeat içindeki runner durumu
 runner_message: heartbeat mesajı veya exit kodu
 blocker: varsa kısa blokaj açıklaması
+last_message_text: kullanıcının son mesajı, genelde “devam et”
+last_message_at: son kullanıcı mesajının tarih saati, format yyyy-MM-dd HH:mm:ss
 db_write: false
 production_deploy: false
 updated_at: güncel tarih saat
@@ -36,26 +39,50 @@ updated_at: güncel tarih saat
 Mümkünse şu helper script’i kullan:
 ai-task-scripts/update_chatgpt_status.ps1
 
-Örnek PowerShell çağrısı:
+Örnek PowerShell helper çağrısı:
 .\ai-task-scripts\update_chatgpt_status.ps1 `
   -PageKey "[SAYFA_ADI]" `
   -ActiveTask "aktif-task-id" `
   -Status "running" `
-  -TechnicalProgress 50 `
   -OverallProgress 40 `
   -WaitMinutes "30-40" `
   -NextCommand "devam et" `
   -RunnerStatus "running" `
   -RunnerMessage "cycle active" `
   -Blocker "" `
+  -LastMessageText "devam et" `
   -DbWrite:$false `
   -ProductionDeploy:$false
 
-Eğer helper çalışmazsa GitHub üzerinden docs/chatgpt_status/multi_page_status.json dosyasını oku, pages altına sadece [SAYFA_ADI] anahtarını ekle veya güncelle, sonra status.md özetini yenile.
+Eğer helper technical_progress istiyorsa geçici olarak overall_progress ile aynı değeri ver; cevapta teknik yüzdeyi gösterme.
 
-Her cevap sonunda kısa olarak şunu bildir:
-- aktif iş
-- durum
-- yüzde
-- bekleme süresi
-- ortak status güncellendi mi
+Eğer helper çalışmazsa:
+1. GitHub üzerinden docs/chatgpt_status/multi_page_status.json dosyasını oku.
+2. pages altına sadece [SAYFA_ADI] anahtarını ekle veya güncelle.
+3. Diğer sayfa anahtarlarını aynen koru.
+4. last_message_text ve last_message_at alanlarını mutlaka yaz.
+5. docs/chatgpt_status/status.md özetini de yenile.
+6. Ana kaynak multi_page_status.json olsun.
+
+HTML pano:
+- docs/chatgpt_status/index.html normal repo içi kullanım içindir.
+- docs/chatgpt_status/status_dashboard_standalone.html her platformda açılacak tek dosyalık panodur.
+- Pano “kaç dk önce” bilgisini sayfa refresh atmadan canlı sayar.
+- Pano JSON’u otomatik yenilemeyi dener; olmazsa JSON dosyası seçilebilir veya yapıştırılabilir.
+
+Her “devam et” cevabının sonunda sadece şunu yaz:
+- Genel proje ilerlemesi: %X
+- Bekleme süresi: X-Y dakika
+
+Başka yüzde verme.
+Teknik yüzde verme.
+Alt görev yüzdesi verme.
+Runner yüzdesi verme.
+
+Bu sayfada işlem devam ederken şunu uygula:
+- Önce current-task, heartbeat, result/progress dosyalarını kontrol et.
+- İş bittiyse sıradaki güvenli uzun görevi kuyruğa al.
+- İş takıldıysa repo üzerinden düzeltmeye çalış.
+- PowerShell komutu isteme; sadece gerçekten zorunluysa tek blok halinde ver.
+- DB write ve production acceptance kapalı kalsın.
+- Cevabın sonunda sadece genel proje ilerlemesi ve kaç dakika beklemem gerektiğini yaz.
