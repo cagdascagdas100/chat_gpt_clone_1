@@ -1,13 +1,8 @@
-# Contractor 004 Parcel Group Coverage Scoring
+﻿# Contractor 004 Parcel Group Coverage Scoring
 
-Status: completed_empty_scoring
-
-- Parcel groups: 200
-- Accepted links: 0
-- No fake contractors
-- No DB write
-- No production deploy
-
-Next task: contractor-005-official-ingestion-connector-plan
+Groups detected: 200
+Coverage rows written: 0
+Reason: no verified contractor rows yet; fail closed.
 
 TASK_COMPLETION=100/100
+TERRAYIELD_TASK_DONE
