@@ -1,6 +1,6 @@
 # ChatGPT Multi Page Status
 
-Updated: 2026-05-21 00:31:00
+Updated: 2026-05-21 00:40:00
 
 ## 1.3 Ready to Sell
 Active task: terrayield-cost-engine-055-integration-fix-plan-20260520
@@ -25,7 +25,7 @@ Active task: AAYS 112-114 DEM blocker summary
 Status: blocked
 Overall progress: 99
 Wait minutes: 0
-Last message at: 2026-05-21 00:10:00
+Last message at: 2026-05-21 00:40:00
 Last message: devam et
 Blocker: Usable local terrain raster is missing. Add DEM or DTM before rerunning elevation sampling.
 
@@ -98,7 +98,7 @@ Status: waiting
 Overall progress: 90
 Wait minutes: 2-3
 Last message at: 2026-05-20 23:35:30
-Last message: sitede gÃ¶zÃ¼kmÃ¼yor dediÄŸim iÅŸlem
+Last message: sitede gözükmüyor dediğim işlem
 Blocker: 
 
 ## 5.1 Update
@@ -107,5 +107,5 @@ Status: finished
 Overall progress: 55
 Wait minutes: 1-2
 Last message at: 2026-05-20 23:39:12
-Last message: sitede gÃ¶zÃ¼kmÃ¼yor dediÄŸim iÅŸlem
+Last message: sitede gözükmüyor dediğim işlem
 Blocker: Cost Engine 055 completed. Next task is Cost Engine 056.
