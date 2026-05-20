@@ -1,15 +1,11 @@
 # ChatGPT Multi Page Status
 
-Updated: 2026-05-20 21:40:45
+Updated: 2026-05-20 23:07:12
 
-Page: aays1-current
-Active task: terrayield-cost-engine-054-test-matrix-20260520
-Status: finished_with_failures
-Technical progress: 100
-Overall progress: 75
-Wait minutes: 5-10
-Next command: devam et
-Blocker: Cost Engine 054 completed with 14 failed matrix cases. Next task is cost-engine-055 integration fix plan.
+| Page | Active task | Status | Overall progress | Wait minutes | Next command | Runner status | Blocker | DB write | Production deploy | Updated at |
+|---|---|---:|---:|---:|---|---|---|---:|---:|---|
+| 1.3 Ready to Sell | terrayield-cost-engine-055-integration-fix-plan-20260520 | running | 76 | 30-35 | devam et | queued | Cost Engine 054 completed with 14 failed matrix cases; 055 integration/fix plan queued. | false | false | 2026-05-20 22:10:00 |
+| 3.2 Parcel Label | parcel-use6-runner-status-poll-20260520 | polling | 45 | 30-45 | devam et | polling |  | false | false | 2026-05-20 23:07:12 |
 
 Rules:
 - Keep DB write disabled.
