@@ -1,0 +1,61 @@
+Bu sayfanın adı: [SAYFA_ADI]
+
+Bu sayfada bundan sonra her önemli işlem sonunda ortak durum dosyasını güncelle:
+
+Repo/bridge kökü:
+C:\AAYS_GITHUB_BRIDGE_CLEAN2
+
+Ortak dosyalar:
+docs/chatgpt_status/multi_page_status.json
+docs/chatgpt_status/status.md
+docs/chatgpt_status/index.html
+docs/chatgpt_status/status_dashboard_standalone.html
+
+Kural:
+- Sadece kendi sayfa anahtarını güncelle.
+- Başka sayfaların satırlarını silme veya ezme.
+- DB write kapalı kalsın.
+- Production deploy kapalı kalsın.
+- Kullanıcı yalnızca “devam et” yazabilsin.
+- PowerShell penceresi sadece kesinlikle gerekirse istenecek.
+
+Güncellenecek JSON alanları:
+active_task: şu anki current-task id veya aktif iş adı
+status: running / polling / finished / finished_with_failures / blocked / waiting
+technical_progress: bu sayfadaki teknik işin yüzdesi
+overall_progress: ana plana göre tahmini genel yüzde
+wait_minutes: kullanıcının beklemesi gereken süre
+next_command: devam et
+runner_status: heartbeat içindeki runner durumu
+runner_message: heartbeat mesajı veya exit kodu
+blocker: varsa kısa blokaj açıklaması
+db_write: false
+production_deploy: false
+updated_at: güncel tarih saat
+
+Mümkünse şu helper script’i kullan:
+ai-task-scripts/update_chatgpt_status.ps1
+
+Örnek PowerShell çağrısı:
+.\ai-task-scripts\update_chatgpt_status.ps1 `
+  -PageKey "[SAYFA_ADI]" `
+  -ActiveTask "aktif-task-id" `
+  -Status "running" `
+  -TechnicalProgress 50 `
+  -OverallProgress 40 `
+  -WaitMinutes "30-40" `
+  -NextCommand "devam et" `
+  -RunnerStatus "running" `
+  -RunnerMessage "cycle active" `
+  -Blocker "" `
+  -DbWrite:$false `
+  -ProductionDeploy:$false
+
+Eğer helper çalışmazsa GitHub üzerinden docs/chatgpt_status/multi_page_status.json dosyasını oku, pages altına sadece [SAYFA_ADI] anahtarını ekle veya güncelle, sonra status.md özetini yenile.
+
+Her cevap sonunda kısa olarak şunu bildir:
+- aktif iş
+- durum
+- yüzde
+- bekleme süresi
+- ortak status güncellendi mi
