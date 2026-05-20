@@ -1,11 +1,11 @@
 ﻿# AAYS Direct Autopilot NoAdmin
 
-Time: 2026-05-20 00:10:00
-Status: finished
-TaskId: contractor-002-long-watchdog-foundation-20260519-retry-compact
+Time: 2026-05-20 02:41:41
+Status: running
+TaskId: terrayield-queue-guard-run-pending-20260520-clean2-0115
 BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
 MainLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\direct-autopilot-20260517_190103.log
-Message: exit=
+Message: script=terrayield_queue_guard_run_pending.ps1 timeout=3600
 Mode: direct-local-read-after-git-reset
 PollSeconds: 20
