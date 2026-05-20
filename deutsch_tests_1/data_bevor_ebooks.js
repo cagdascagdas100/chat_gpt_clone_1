@@ -103,3 +103,8 @@ window.DEUTSCH_TESTS.t20={
     'E-Books bieten zahlreiche Vorteile','den Zugang zu Literatur erleichtern','eine flexible Nutzung ermöglichen','den Lesekomfort erhöhen','die Nutzung individuell anpassen','einen schnellen Zugriff ermöglichen','eine praktische Alternative darstellen','eine digitale Bibliothek anlegen','Informationen schneller finden','Textstellen markieren und Notizen speichern','den Lernprozess effizient unterstützen','Platz sparen','die Übersicht behalten','Papier einsparen','Ressourcen schonen','die Umweltbelastung verringern','einen Beitrag zur Nachhaltigkeit leisten','Transportwege reduzieren','Materialverbrauch senken','unter bestimmten Voraussetzungen','langfristig betrachtet','je nach Nutzungsverhalten','Komfort Zugänglichkeit und Nachhaltigkeit verbinden'
   ]
 };
+
+if(typeof document!=='undefined'){
+  document.write('<script src="data_bevor_ebooks_nachteile.js"><\/script>');
+  document.write('<script src="lesson_bevor_ebooks_nachteile.js"><\/script>');
+}
