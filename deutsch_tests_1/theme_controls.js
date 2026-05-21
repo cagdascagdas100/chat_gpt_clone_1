@@ -54,11 +54,19 @@
     div.querySelectorAll('[data-theme-mode]').forEach(btn=>btn.onclick=function(){apply(this.dataset.themeMode,Number(document.getElementById('themeBrightnessRange').value)/100)});
     document.getElementById('themeBrightnessRange').oninput=function(){apply(localStorage.getItem(KEY_MODE)||'normal',Number(this.value)/100)};
   }
+  function loadAudioReader(){
+    if(document.getElementById('ebookNachteileAudioScript'))return;
+    const s=document.createElement('script');
+    s.id='ebookNachteileAudioScript';
+    s.src='ebook_nachteile_audio.js?v=1';
+    document.body.appendChild(s);
+  }
   document.addEventListener('DOMContentLoaded',function(){
     css();
     panel();
     const mode=localStorage.getItem(KEY_MODE)||'normal';
     const brightness=Number(localStorage.getItem(KEY_BRIGHT)||'1');
     apply(mode,brightness);
+    loadAudioReader();
   });
 })();
