@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Continue'
 $TaskId = 'contractor-007-long-parcel-group-pipeline-20260521'
-$BridgeRoot = 'C:\AAYS_GITHUB_BRIDGE_CLEAN'
+$BridgeRoot = if($env:AAYS_BRIDGE_ROOT){$env:AAYS_BRIDGE_ROOT}else{Split-Path -Parent $PSScriptRoot}
 $ContractorRoot = 'E:\AAYS_DATA\contractor'
 $ExportDir = Join-Path $ContractorRoot 'exports'
 $ManifestDir = Join-Path $ContractorRoot 'manifests'
@@ -38,28 +38,3 @@ $projectCandidates=@('C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intel
 $projectInventory=@(); foreach($p in $projectCandidates){ $projectInventory += [pscustomobject]@{path=$p;exists=Has $p;python_files=CountFiles $p '*.py';sql_files=CountFiles $p '*.sql';md_files=CountFiles $p '*.md'} }
 $dbPlan=[ordered]@{env_CONTRACTOR_DATABASE_URL_present=$dbUrlPresent;engine='postgis';host_masked='localhost';port='55460';database_name='terrayield_land';db_write_performed=$false;required_tables=@('contractor_entities','contractor_contacts','contractor_provenance','contractor_past_work','parcel_groups','contractor_group_coverage','contractor_parcel_matches','contractor_exports')}
 WriteStage 'inventory_done' 65 'project and database candidate inventory completed; db write disabled'
-Start-Sleep -Seconds 420
-$sourcePlan=@(
-  [pscustomobject]@{source='Companies House Public Data API';purpose='identity/company status/officers';credential_required=$true;fake_data_allowed=$false},
-  [pscustomobject]@{source='Contracts Finder OCDS';purpose='public procurement history';credential_required=$false;fake_data_allowed=$false},
-  [pscustomobject]@{source='Find a Tender OCDS';purpose='large public procurement notices';credential_required=$false;fake_data_allowed=$false},
-  [pscustomobject]@{source='ONS postcode products';purpose='postcode/local authority lookup';credential_required=$false;fake_data_allowed=$false}
-)
-$sourcePlanPath=Join-Path $ManifestDir 'contractor_official_source_plan.json'; $sourcePlan | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $sourcePlanPath
-WriteStage 'source_plan_done' 82 'official source plan written; credential-required collectors remain fail-closed'
-Start-Sleep -Seconds 420
-$manifest=[ordered]@{task_id=$TaskId;generated_at=(Get-Date -Format s);contractor_root=$ContractorRoot;outputs=[ordered]@{england_parcel_groups_csv=$groupsCsv;england_parcel_groups_json=$groupsJson;contractor_rows_template_csv=$template;contractor_group_match_template_csv=$matchTemplate;source_plan_json=$sourcePlanPath};group_count=$groups.Count;fake_contractor_rows_generated=$false;db_write_performed=$false;project_inventory=$projectInventory;database_plan=$dbPlan;next_tasks=@('contractor-008-official-source-collectors-fail-closed','contractor-009-normalize-score-schema','contractor-010-group-coverage-matching','contractor-011-db-loader-readonly-preflight','contractor-012-app-export')}
-$manifestPath=Join-Path $ManifestDir 'contractor_007_long_pipeline_manifest.json'; $manifest | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 -Path $manifestPath
-$report=@('# Contractor 007 Long Parcel Group Pipeline','',"Generated: $(Get-Date -Format s)","Task: $TaskId",'','## Outputs',"- $groupsCsv","- $groupsJson","- $template","- $matchTemplate","- $sourcePlanPath","- $manifestPath",'','## Status','- England group count: 200','- Fake contractor rows generated: false','- DB writes performed: false','- Real TerraYield parcel IDs: missing, to be joined later','- Official contractor rows: not generated yet; next task must collect with provenance','',"PLAN_PROGRESS_PERCENT=18",'TASK_COMPLETION=100/100','TERRAYIELD_TASK_DONE')
-$reportPath=Join-Path $ResultDir ($TaskId+'.report.md'); $report | Set-Content -Encoding UTF8 -Path $reportPath
-WriteStage 'done' 100 'long scaffold completed; report and manifest written'
-Step "GROUPS_CSV=$groupsCsv"
-Step "GROUPS_JSON=$groupsJson"
-Step "CONTRACTOR_TEMPLATE=$template"
-Step "MATCH_TEMPLATE=$matchTemplate"
-Step "SOURCE_PLAN=$sourcePlanPath"
-Step "MANIFEST=$manifestPath"
-Step "REPORT_PATH=$reportPath"
-Step 'TASK_COMPLETION=100/100'
-Step 'TERRAYIELD_TASK_DONE'
-exit 0
