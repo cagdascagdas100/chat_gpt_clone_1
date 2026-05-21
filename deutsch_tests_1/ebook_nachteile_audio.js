@@ -1,6 +1,7 @@
 (function(){
   let chunks=[], index=0, speaking=false, paused=false, currentChar=0, resumeOffset=0;
   let realAudio=null, realAudioReady=false, realAudioChecked=false;
+  let initialized=false;
   const MP3_SRC='ebook_nachteile_audio.mp3';
 
   function isTarget(level){try{return window.selected==='t23' && level==='long'}catch(e){return false}}
@@ -19,7 +20,7 @@
   function initRealAudio(){
     if(realAudioChecked)return realAudio;
     realAudioChecked=true;
-    realAudio=new Audio(MP3_SRC+'?v=1');
+    realAudio=new Audio(MP3_SRC+'?v=2');
     realAudio.preload='metadata';
     realAudio.oncanplay=function(){realAudioReady=true; setStatus('Gerçek MP3 hazır')};
     realAudio.onerror=function(){realAudioReady=false; setStatus('MP3 bulunamadı; Almanca tarayıcı sesi kullanılacak.')};
@@ -28,7 +29,7 @@
     return realAudio;
   }
   function getGermanVoice(){
-    const voices=speechSynthesis.getVoices()||[];
+    const voices=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
     const score=v=>{
       const n=(v.name+' '+v.lang).toLowerCase(); let s=0;
       if(/^de-de/i.test(v.lang))s+=100; else if(/^de/i.test(v.lang))s+=70;
@@ -97,8 +98,8 @@
   }
   function playTTS(){chunks=collectChunks(); if(!chunks.length)return setStatus('Okunacak metin bulunamadı.'); if(index>=chunks.length)index=0; speakCurrent(0)}
   function play(){playRealAudio()}
-  function pause(){if(realAudio&&!realAudio.paused){realAudio.pause(); paused=true; setStatus('Duraklatıldı');return} if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause(); paused=true; setStatus('Duraklatıldı')}}
-  function resume(){if(realAudio&&paused&&realAudioReady){realAudio.play(); paused=false; setStatus('Devam ediyor');return} if(speechSynthesis.paused){speechSynthesis.resume(); paused=false; setStatus('Devam ediyor')}}
+  function pause(){if(realAudio&&!realAudio.paused){realAudio.pause(); paused=true; setStatus('Duraklatıldı');return} if(window.speechSynthesis&&speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause(); paused=true; setStatus('Duraklatıldı')}}
+  function resume(){if(realAudio&&paused&&realAudioReady){realAudio.play(); paused=false; setStatus('Devam ediyor');return} if(window.speechSynthesis&&speechSynthesis.paused){speechSynthesis.resume(); paused=false; setStatus('Devam ediyor')}}
   function prev(){if(realAudioReady&&realAudio){realAudio.currentTime=0; setMp3Time(); return} chunks=collectChunks(); index=Math.max(0,index-1); currentChar=0; speakCurrent(0)}
   function next(){if(realAudioReady&&realAudio){realAudio.currentTime=Math.min(realAudio.duration||0,(realAudio.currentTime||0)+30); setMp3Time(); return} chunks=collectChunks(); index=Math.min((chunks.length||1)-1,index+1); currentChar=0; speakCurrent(0)}
   function backFiveSeconds(){
@@ -107,7 +108,14 @@
     if(currentChar>charsBack)speakCurrent(currentChar-charsBack); else if(index>0){index--; const prevText=chunks[index]||''; speakCurrent(Math.max(0,prevText.length-charsBack))} else speakCurrent(0);
   }
   function inject(){
-    const content=document.getElementById('lessonContent'); if(!content)return; ensureFloatingControls(); initRealAudio();
+    const lesson=document.getElementById('lesson');
+    const content=document.getElementById('lessonContent');
+    if(!lesson||lesson.classList.contains('hide')||!content)return;
+    if(window.selected!=='t23')return;
+    const title=(document.getElementById('lessonTitle')||{}).textContent||'';
+    const text=(content.textContent||'').slice(0,300);
+    if(!/E-Books|Nachteile/i.test(title+text))return;
+    ensureFloatingControls(); initRealAudio();
     if(document.getElementById('ebookAudioPanel')){chunks=collectChunks(); setCounter(); return}
     chunks=collectChunks(); index=0;
     const div=document.createElement('div'); div.id='ebookAudioPanel'; div.style.cssText='border:2px solid #8a5a44;border-radius:14px;padding:14px;margin:0 0 18px;background:#fff8ed;font-family:Arial,sans-serif';
@@ -117,12 +125,23 @@
     document.getElementById('ebookAudioRate').oninput=function(){if(realAudioReady&&realAudio)realAudio.playbackRate=Number(this.value); else if(speaking&&!paused)speakCurrent(currentChar)};
     setCounter();
   }
-  window.ebookAudioPlay=play; window.ebookAudioPause=pause; window.ebookAudioResume=resume; window.ebookAudioStop=stop; window.ebookAudioPrev=prev; window.ebookAudioNext=next; window.ebookAudioBack5=backFiveSeconds;
-  document.addEventListener('DOMContentLoaded',function(){
-    if('speechSynthesis' in window){speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=function(){speechSynthesis.getVoices()}}
+  function patchStartLesson(){
+    if(window.__ebookAudioPatched)return true;
+    if(typeof window.startLesson!=='function')return false;
     const old=window.startLesson;
-    if(typeof old==='function')window.startLesson=function(level){stop(); old(level); setTimeout(function(){if(isTarget(level))inject()},120)};
-    document.addEventListener('click',function(){const lesson=document.getElementById('lesson'); const visible=lesson&&!lesson.classList.contains('hide'); if(visible&&window.selected==='t23'){const title=(document.getElementById('lessonTitle')||{}).textContent||''; if(/E-Books.*Nachteile/i.test(title))setTimeout(inject,160)}});
+    window.startLesson=function(level){stop(); const r=old.apply(this,arguments); setTimeout(inject,120); setTimeout(inject,500); return r};
+    window.__ebookAudioPatched=true;
+    return true;
+  }
+  function init(){
+    if(initialized)return; initialized=true;
+    window.ebookAudioPlay=play; window.ebookAudioPause=pause; window.ebookAudioResume=resume; window.ebookAudioStop=stop; window.ebookAudioPrev=prev; window.ebookAudioNext=next; window.ebookAudioBack5=backFiveSeconds;
+    if('speechSynthesis' in window){speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=function(){speechSynthesis.getVoices()}}
+    patchStartLesson();
+    let tries=0;
+    const timer=setInterval(function(){tries++; patchStartLesson(); inject(); if(tries>30)clearInterval(timer)},300);
+    document.addEventListener('click',function(){setTimeout(inject,150); setTimeout(inject,650)});
     window.addEventListener('beforeunload',stop);
-  });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
 })();
