@@ -1,1 +1,32 @@
-{"id":"aays-116-dem-source-acquisition-20260521-wake","script_path":"aays_116_dem_source_acquisition_20260521.ps1","working_directory":"C:/AAYS_GITHUB_BRIDGE_CLEAN2","timeout_seconds":2400,"wait_minutes_after_start":"30-35"}
+{
+  "id": "contractor-007-long-parcel-group-pipeline-20260521",
+  "title": "Contractor 007 long England parcel-group and source scaffold pipeline",
+  "progress": 18,
+  "working_directory": "C:/AAYS_GITHUB_BRIDGE_CLEAN",
+  "timeout_seconds": 3300,
+  "created_by": "ChatGPT",
+  "project_label": "terrayield-contractor-parcel-groups",
+  "task_namespace": "CONTRACTOR_PIPELINE",
+  "script_path": "terrayield_contractor_007_long_parcel_group_pipeline.ps1",
+  "scope": "Long read-only contractor pipeline scaffold. Generate 200 England parcel groups, contractor row templates, group match templates, official source plan, DB/table preflight manifest. No fake contractor rows. No database writes. No production deploy.",
+  "expected_outputs": [
+    "E:/AAYS_DATA/contractor/exports/england_parcel_groups_200.csv",
+    "E:/AAYS_DATA/contractor/exports/england_parcel_groups_200.json",
+    "E:/AAYS_DATA/contractor/exports/contractor_rows_template.csv",
+    "E:/AAYS_DATA/contractor/exports/contractor_group_match_template.csv",
+    "E:/AAYS_DATA/contractor/manifests/contractor_official_source_plan.json",
+    "E:/AAYS_DATA/contractor/manifests/contractor_007_long_pipeline_manifest.json",
+    "C:/AAYS_GITHUB_BRIDGE_CLEAN/ai-results/contractor-007-long-parcel-group-pipeline-20260521.report.md"
+  ],
+  "continuation_protocol": true,
+  "wait_minutes_after_start": "35-40",
+  "db_write": false,
+  "production_deploy": false,
+  "self_correction_rules": [
+    "If git pull or push blocks, keep local heartbeat and continue partial outputs.",
+    "If contractor root is missing, create folder structure and continue.",
+    "If DB env is missing, mark env_CONTRACTOR_DATABASE_URL_present=false and do not connect.",
+    "If real contractor sources are missing, do not create fake contractor rows; write templates only.",
+    "Write heartbeat/progress notes so next continuation can distinguish slow work from a hang."
+  ]
+}
