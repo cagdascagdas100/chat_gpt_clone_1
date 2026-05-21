@@ -58,7 +58,7 @@
     if(document.getElementById('ebookNachteileAudioScript'))return;
     const s=document.createElement('script');
     s.id='ebookNachteileAudioScript';
-    s.src='ebook_nachteile_audio.js?v=1';
+    s.src='ebook_nachteile_audio.js?v=4';
     document.body.appendChild(s);
   }
   document.addEventListener('DOMContentLoaded',function(){
