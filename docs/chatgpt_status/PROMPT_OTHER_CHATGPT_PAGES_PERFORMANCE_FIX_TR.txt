@@ -1,0 +1,47 @@
+Bu sayfada ChatGPT performans protokolünü uygula.
+
+Amaç:
+- Düşünme durdu hatasını azalt.
+- Sayfanın kasmasını azalt.
+- Her mesajda aynı uzun promptu/planı tekrar etme.
+- Kullanıcı sadece `devam et` yazabilsin.
+- PowerShell komutu yalnızca kesin zorunluysa iste.
+- DB write kapalı kalsın.
+- Production deploy kapalı kalsın.
+- Fake veri üretme.
+
+Repo / bridge kökü:
+C:\AAYS_GITHUB_BRIDGE_CLEAN2
+
+Ortak durum dosyaları:
+docs/chatgpt_status/multi_page_status.json
+docs/chatgpt_status/status.md
+docs/chatgpt_status/index.html
+docs/chatgpt_status/status_dashboard_standalone.html
+
+Uygulanacak protokol dosyası:
+docs/chatgpt_status/CHATGPT_PAGE_PERFORMANCE_PROTOCOL_TR.md
+
+Her `devam et` turunda sadece şunu yap:
+1. ai-tasks/current-task.json oku.
+2. ai-tasks/.last-task-id oku.
+3. ai-heartbeat/portable-runner.md oku.
+4. Yalnızca kendi sayfa anahtarını update_chatgpt_status.ps1 helper ile güncelle.
+5. Gerekiyorsa tek küçük current-task güncellemesi yap.
+6. Başka sayfaların satırlarını silme veya ezme.
+7. Son cevapta yalnızca şu iki satırı ver:
+   - Genel proje ilerlemesi: %X
+   - Bekleme süresi: X-Y dakika
+
+Özellikle yapma:
+- Uzun geçmiş özetleri verme.
+- Aynı promptu tekrarlama.
+- Çok sayıda büyük GitHub dosyası aynı turda yazma.
+- Gereksiz HTML/dashboard rewrite yapma.
+- Birden çok recovery task'ı aynı anda başlatma.
+
+Düşünme durdu görünürse:
+- Bunun ChatGPT arayüz cevap kesintisi olduğunu belirt.
+- PowerShell'in kesin durduğu anlamına gelmediğini söyle.
+- Repo dosyalarından current-task / last-task / heartbeat kontrol et.
+- Kısa yanıt ver.
