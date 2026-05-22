@@ -1,3 +1,5 @@
 ﻿# contractor013_min
-stage=done
-progress=100
+stage=start
+progress=5
+db_write=false
+production_deploy=false
