@@ -5,8 +5,8 @@ $Hb=Join-Path $Bridge 'ai-heartbeat\t117.md'
 $Res=Join-Path $Bridge 'ai-results\t117.result.json'
 $Rep=Join-Path $Bridge 'ai-results\t117.report.md'
 New-Item -ItemType Directory -Force -Path $Out,(Split-Path $Hb -Parent),(Split-Path $Res -Parent) | Out-Null
-function H($s,$m){ @('# t117 real dem download','status='+$s,'message='+$m,'time='+(Get-Date -Format s),'db_write=false','production_deploy=false','fake_data=false') | Set-Content -Encoding UTF8 $Hb }
-H 'running' 'start real DEM download'
+function Write-T117Heartbeat($s,$m){ @('# t117 real dem download','status='+$s,'message='+$m,'time='+(Get-Date -Format s),'db_write=false','production_deploy=false','fake_data=false') | Set-Content -Encoding UTF8 $Hb }
+Write-T117Heartbeat 'running' 'start real DEM download'
 $tiles=@(@(51,-1),@(52,-1),@(53,-2),@(54,-2),@(50,-1),@(52,0))
 $downloaded=@()
 foreach($t in $tiles){
@@ -16,8 +16,8 @@ foreach($t in $tiles){
   $name='Copernicus_DSM_COG_10_'+$ns+'_00_'+$ew+'_00_DEM'
   $url='https://copernicus-dem-30m.s3.amazonaws.com/'+$name+'/'+$name+'.tif'
   $dst=Join-Path $Out ($name+'.tif')
-  if(Test-Path $dst){$downloaded += $dst; continue}
-  H 'running' ('download '+$name)
+  if(Test-Path $dst){$downloaded += $dst; if($downloaded.Count -ge 2){ break } else { continue }}
+  Write-T117Heartbeat 'running' ('download '+$name)
   try{
     Invoke-WebRequest -Uri $url -OutFile $dst -TimeoutSec 900 -UseBasicParsing
     if((Test-Path $dst) -and ((Get-Item $dst).Length -gt 1000000)){ $downloaded += $dst }
@@ -28,5 +28,5 @@ foreach($t in $tiles){
 $status=if($downloaded.Count -gt 0){'finished_dem_downloaded'}else{'failed_no_dem_downloaded'}
 @{task_id='t117';status=$status;downloaded_count=$downloaded.Count;files=$downloaded;folder=$Out;db_write=$false;production_deploy=$false;fake_data=$false;next='rerun AAYS112 with downloaded DEM'} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 $Res
 @('# t117 DEM download','status='+$status,'downloaded_count='+$downloaded.Count,'folder='+$Out,'fake_data=false') | Set-Content -Encoding UTF8 $Rep
-H $status ('downloaded='+$downloaded.Count)
+Write-T117Heartbeat $status ('downloaded='+$downloaded.Count)
 if($downloaded.Count -gt 0){exit 0}else{exit 2}
