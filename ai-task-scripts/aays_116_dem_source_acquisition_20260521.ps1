@@ -11,10 +11,30 @@ $Progress=Join-Path $ProgressDir ($TaskId+'.progress.md')
 $Result=Join-Path $ResultDir ($TaskId+'.result.json')
 $Report=Join-Path $ResultDir ($TaskId+'.report.md')
 $Manifest=Join-Path $DocDir 'AAYS_116_DEM_SOURCE_MANIFEST_20260521.json'
-function P($pct,$phase){@('# '+$TaskId,'percent: '+$pct,'phase: '+$phase,'elapsed_minutes: '+[math]::Round(((Get-Date)-$Start).TotalMinutes,2))|Set-Content -Encoding UTF8 $Progress; @('# AAYS Portable Task Runner Fixed','Status: running','TaskId: '+$TaskId,'Message: '+$phase)|Set-Content -Encoding UTF8 (Join-Path $HbDir 'portable-runner.md')}
-function W($m){Add-Content -LiteralPath $Report -Encoding UTF8 -Value $m}
-Set-Content -LiteralPath $Report -Encoding UTF8 -Value '# AAYS 116 DEM Source Acquisition'
-W 'mode=read_only_source_manifest_no_fake_elevation_no_db_no_deploy'
+function SafeWrite($Path,[string[]]$Lines){
+  try{
+    $dir=Split-Path -Parent $Path
+    if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
+    $tmp=$Path+'.tmp'
+    [System.IO.File]::WriteAllLines($tmp,$Lines,[System.Text.UTF8Encoding]::new($false))
+    Move-Item -LiteralPath $tmp -Destination $Path -Force
+  }catch{
+    try{$Lines|Out-File -LiteralPath $Path -Encoding utf8 -Force}catch{Write-Host ('safe_write_failed='+$Path+' msg='+$_.Exception.Message)}
+  }
+}
+function SafeAppend($Path,[string]$Line){
+  try{
+    $dir=Split-Path -Parent $Path
+    if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
+    [System.IO.File]::AppendAllText($Path,$Line+[Environment]::NewLine,[System.Text.UTF8Encoding]::new($false))
+  }catch{Write-Host ('safe_append_failed='+$Path+' msg='+$_.Exception.Message)}
+}
+function P($pct,$phase){
+  SafeWrite $Progress @('# '+$TaskId,'percent: '+$pct,'phase: '+$phase,'elapsed_minutes: '+[math]::Round(((Get-Date)-$Start).TotalMinutes,2),'db_write=false','production_deploy=false','fake_elevation=false')
+  SafeWrite (Join-Path $HbDir 'portable-runner.md') @('# AAYS Portable Task Runner Fixed','Time: '+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss'),'Status: running','TaskId: '+$TaskId,'TaskFile: '+(Join-Path $Root 'ai-tasks/current-task.json'),'Message: '+$phase,'Mode: direct-safe-script','SafeScriptOnly: enabled')
+}
+function W($m){SafeAppend $Report $m}
+SafeWrite $Report @('# AAYS 116 DEM Source Acquisition','mode=read_only_source_manifest_no_fake_elevation_no_db_no_deploy')
 $searchRoots=@('E:\AAYS_DATA\elevation','E:\AAYS_DATA\terrain','E:\AAYS_DATA\dem','C:\AAYS_GITHUB_BRIDGE_CLEAN2\data','C:\AAYS_GITHUB_BRIDGE_CLEAN2\external')
 $sources=@(
  @{name='EA LIDAR Composite DTM 10m';url='https://www.data.gov.uk/dataset/7f31af0f-bc98-4761-b4b4-147bfb986648/lidar-composite-digital-terrain-model-dtm-10m';kind='official_open_dtm'},
@@ -39,11 +59,13 @@ foreach($s in $sources){
 }
 P 45 'write_manifest'
 $manifestObj=[ordered]@{task_id=$TaskId;created_at=(Get-Date).ToUniversalTime().ToString('o');status='source_manifest_created';search_roots=$searchRoots;existing_raster_candidates=$existing;official_sources=$sources;source_probe=$probe;safety=[ordered]@{db_write=$false;production_deploy=$false;fake_elevation=$false};next_step=if($existing.Count -gt 0){'rerun_aays_112_with_discovered_raster'}else{'download_official_dem_to_E_AAYS_DATA_elevation_then_rerun_aays_112'}}
-$manifestObj|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $Manifest -Encoding UTF8
+SafeWrite $Manifest @($manifestObj|ConvertTo-Json -Depth 8)
 for($i=1;$i -le 8;$i++){P (45+$i*5) ('watch_cycle_'+$i); Start-Sleep -Seconds 180}
 P 90 'write_result'
 $resultObj=[ordered]@{task_id=$TaskId;status=if($existing.Count -gt 0){'completed_existing_raster_found'}else{'completed_sources_identified_no_local_dem_yet'};elapsed_minutes=[math]::Round(((Get-Date)-$Start).TotalMinutes,2);existing_raster_count=$existing.Count;manifest=$Manifest;official_source_count=$sources.Count;reachable_source_count=(@($probe|Where-Object {$_.reachable})).Count;db_write=$false;production_deploy=$false;fake_elevation=$false;next_command='if raster found rerun AAYS112 else place official DEM in E:\AAYS_DATA\elevation'}
-$resultObj|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $Result -Encoding UTF8
+SafeWrite $Result @($resultObj|ConvertTo-Json -Depth 8)
 W 'result_written'
 P 100 'completed'
+SafeWrite (Join-Path $HbDir 'portable-runner.md') @('# AAYS Portable Task Runner Fixed','Time: '+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss'),'Status: finished','TaskId: '+$TaskId,'TaskFile: '+(Join-Path $Root 'ai-tasks/current-task.json'),'Message: exit=0','Mode: direct-safe-script','SafeScriptOnly: enabled')
 Write-Host 'AAYS_116_DONE'
+exit 0
