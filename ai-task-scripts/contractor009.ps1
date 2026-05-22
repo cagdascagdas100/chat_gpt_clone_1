@@ -9,19 +9,14 @@ $ExportDir=Join-Path $ContractorRoot 'exports'
 $ManifestDir=Join-Path $ContractorRoot 'manifests'
 New-Item -ItemType Directory -Force -Path $HbDir,$ResultDir,$ExportDir,$ManifestDir | Out-Null
 $Hb=Join-Path $HbDir 'contractor-009-scaffold.md'
-function W($stage,$pct,$msg){Set-Content -Encoding UTF8 -Path $Hb -Value @('# Contractor 009 Scoring Coverage Scaffold',('task_id='+$TaskId),('stage='+$stage),('progress_percent='+$pct),('checked_at='+(Get-Date -Format s)),('message='+$msg),'contractor_root='+$ContractorRoot,'db_write=false','production_deploy=false','fake_data=false')}
+function W($stage,$pct,$msg){
+  $lines=@('# Contractor 009 Scoring Coverage Scaffold',('task_id='+$TaskId),('stage='+$stage),('progress_percent='+$pct),('checked_at='+(Get-Date -Format s)),('message='+$msg),'contractor_root='+$ContractorRoot,'db_write=false','production_deploy=false','fake_data=false')
+  try { if (Test-Path $Hb) { Remove-Item -Force $Hb -ErrorAction SilentlyContinue }; $lines | Out-File -FilePath $Hb -Encoding utf8 -Force } catch { Write-Host ('heartbeat write failed: '+$_.Exception.Message) }
+}
 W 'start' 5 'starting scoring and coverage scaffold'
 Start-Sleep -Seconds 60
 $scoring=Join-Path $ManifestDir 'contractor_009_scoring_model.json'
-@{
- reliability_score_10='0-10 score from official identity, procurement history, contact completeness, recency, and red flags';
- accuracy_score_4='0-4 field-level evidence score';
- sort_score='coverage match first, then reliability_score_10, then overall_accuracy_4, then legal_contact_score';
- contractor_root=$ContractorRoot;
- fake_rows_generated=$false;
- db_write=$false;
- production_deploy=$false
-} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $scoring
+@{reliability_score_10='0-10 official-evidence score'; accuracy_score_4='0-4 field evidence score'; sort_score='coverage then reliability then accuracy'; contractor_root=$ContractorRoot; fake_rows_generated=$false; db_write=$false; production_deploy=$false} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $scoring
 W 'middle' 50 'scoring model written'
 Start-Sleep -Seconds 60
 $coverage=Join-Path $ExportDir 'contractor_coverage_scaffold.csv'
