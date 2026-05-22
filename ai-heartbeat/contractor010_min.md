@@ -1,3 +1,3 @@
 ﻿# contractor010_min
-stage=done
-progress=100
+stage=start
+progress=5

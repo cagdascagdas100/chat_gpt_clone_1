@@ -1,8 +1,12 @@
 ﻿# AAYS Portable Task Runner Fixed
-Time: 2026-05-22 21:59:21
-Status: finished
-TaskId: contractor010-min-20260522-r2
+
+Time: 2026-05-22 22:01:21
+Status: running
+TaskId: contractor010-min-20260522-r3
+BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
+ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
 TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
-Message: exit=0
-Mode: direct-safe-script
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260522_174322.log
+Message: contractor010-min-20260522-r3
+Mode: no-spawn-foreground-loop
 SafeScriptOnly: enabled
