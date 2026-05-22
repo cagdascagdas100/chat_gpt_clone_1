@@ -12,22 +12,33 @@ $Result=Join-Path $ResultDir ($TaskId+'.result.json')
 $Report=Join-Path $ResultDir ($TaskId+'.report.md')
 $Manifest=Join-Path $DocDir 'AAYS_116_DEM_SOURCE_MANIFEST_20260521.json'
 function SafeWrite($Path,[string[]]$Lines){
-  try{
-    $dir=Split-Path -Parent $Path
-    if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
-    $tmp=$Path+'.tmp'
-    [System.IO.File]::WriteAllLines($tmp,$Lines,[System.Text.UTF8Encoding]::new($false))
-    Move-Item -LiteralPath $tmp -Destination $Path -Force
-  }catch{
-    try{$Lines|Out-File -LiteralPath $Path -Encoding utf8 -Force}catch{Write-Host ('safe_write_failed='+$Path+' msg='+$_.Exception.Message)}
+  $ok=$false
+  for($try=1;$try -le 5 -and -not $ok;$try++){
+    try{
+      $dir=Split-Path -Parent $Path
+      if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
+      $text=($Lines -join [Environment]::NewLine)+[Environment]::NewLine
+      [System.IO.File]::WriteAllText($Path,$text,[System.Text.UTF8Encoding]::new($false))
+      $ok=$true
+    }catch{
+      Start-Sleep -Milliseconds (250*$try)
+      if($try -eq 5){Write-Host ('safe_write_failed='+$Path+' msg='+$_.Exception.Message)}
+    }
   }
 }
 function SafeAppend($Path,[string]$Line){
-  try{
-    $dir=Split-Path -Parent $Path
-    if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
-    [System.IO.File]::AppendAllText($Path,$Line+[Environment]::NewLine,[System.Text.UTF8Encoding]::new($false))
-  }catch{Write-Host ('safe_append_failed='+$Path+' msg='+$_.Exception.Message)}
+  $ok=$false
+  for($try=1;$try -le 5 -and -not $ok;$try++){
+    try{
+      $dir=Split-Path -Parent $Path
+      if($dir -and !(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null}
+      [System.IO.File]::AppendAllText($Path,$Line+[Environment]::NewLine,[System.Text.UTF8Encoding]::new($false))
+      $ok=$true
+    }catch{
+      Start-Sleep -Milliseconds (250*$try)
+      if($try -eq 5){Write-Host ('safe_append_failed='+$Path+' msg='+$_.Exception.Message)}
+    }
+  }
 }
 function P($pct,$phase){
   SafeWrite $Progress @('# '+$TaskId,'percent: '+$pct,'phase: '+$phase,'elapsed_minutes: '+[math]::Round(((Get-Date)-$Start).TotalMinutes,2),'db_write=false','production_deploy=false','fake_elevation=false')
