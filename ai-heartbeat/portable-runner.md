@@ -1,8 +1,12 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-24T03:28:05
+Time: 2026-05-24 05:48:11
 Status: finished
-TaskId: estate025-promote-geometry-parse-final-20260524-r1
+TaskId: real100v7source1
+BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
+ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260523_231419.log
 Message: exit=0
-Mode: manual-single-runner-strict-promote
+Mode: no-spawn-foreground-loop
 SafeScriptOnly: enabled
