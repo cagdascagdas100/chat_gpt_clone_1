@@ -1,8 +1,8 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-24T03:18:33
+Time: 2026-05-24T03:22:11
 Status: finished
-TaskId: estate022-real-parcel-bbox-final-build-20260524-r1
+TaskId: estate023-final-schema-and-real-join-audit-20260524-r1
 Message: exit=0
-Mode: manual-single-runner-real-bbox-final-build
+Mode: manual-single-runner-final-schema-real-join-audit
 SafeScriptOnly: enabled
