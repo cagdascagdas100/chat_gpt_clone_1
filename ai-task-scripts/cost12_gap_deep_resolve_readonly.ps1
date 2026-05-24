@@ -10,8 +10,8 @@ $Json=Join-Path $Out 'cost12_gap_deep_resolve_readonly.result.json'
 $CandidateCsv=Join-Path $Out 'cost12_ratecard_deep_candidates.csv'
 $LowExportCsv=Join-Path $Out 'cost12_low_items_deep_candidates.csv'
 $EndpointLog=Join-Path $Out 'cost12_endpoint_deep_smoke.log'
-function H($s,$m){ @('# cost12_gap_deep_resolve_readonly','status='+$s,'message='+$m,'time='+(Get-Date -Format s),'db_write=false','production_deploy=false','fake_data=false') | Set-Content -Encoding UTF8 $Hb }
-H 'running' 'start deep dependency-aware read-only resolve'
+function Write-Cost12Hb($s,$m){ @('# cost12_gap_deep_resolve_readonly','status='+$s,'message='+$m,'time='+(Get-Date -Format s),'db_write=false','production_deploy=false','fake_data=false') | Set-Content -Encoding UTF8 $Hb }
+Write-Cost12Hb 'running' 'start deep dependency-aware read-only resolve'
 $jobs=@()
 $jobs += Start-Job -Name 'ratecard_deep_scan' -ArgumentList $Project,$CandidateCsv -ScriptBlock { param($Project,$CandidateCsv)
   $rows=@()
@@ -58,7 +58,7 @@ $jobs += Start-Job -Name 'endpoint_deep_smoke' -ArgumentList $EndpointLog -Scrip
 $jobs += Start-Job -Name 'source_policy' -ScriptBlock {
   [pscustomobject]@{name='source_policy';ok=$true;message='No fake price inserted; verified source required: BCIS/RICS/official_fee_table/supplier_quote'}
 }
-H 'running' 'parallel jobs launched'
+Write-Cost12Hb 'running' 'parallel jobs launched'
 Wait-Job -Job $jobs -Timeout 1500 | Out-Null
 $results=@()
 foreach($j in $jobs){ if($j.State -eq 'Running'){ Stop-Job $j -Force|Out-Null; $results += [pscustomobject]@{name=$j.Name;ok=$false;message='timeout'} } else { $results += Receive-Job $j } }
@@ -69,6 +69,6 @@ $progress=if($decision -eq 'COST12_GAP_FIX_READY'){100}else{98}
 @('# COST12 GAP Deep Resolve Read-only Report','','decision='+$decision,'overall_progress='+$progress,'db_write=false','production_deploy=false','fake_data=false','','## Parallel results') | Set-Content -Encoding UTF8 $Rep
 foreach($r in $results){ ($r | ConvertTo-Json -Compress -Depth 6) | Add-Content -Encoding UTF8 $Rep }
 @{task_id='cost12-gap-deep-resolve-readonly';decision=$decision;overall_progress=$progress;results=$results;candidate_csv=$CandidateCsv;low_items_csv=$LowExportCsv;endpoint_log=$EndpointLog;report=$Rep;db_write=$false;production_deploy=$false;fake_data=$false;next_required_action=if($decision -eq 'COST12_GAP_FIX_READY'){'done'}else{'provide verified rate row source for retail/mid/UK/cost_uk_v1 or mount endpoint if smoke failed'}} | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $Json
-H 'finished' $decision
+Write-Cost12Hb 'finished' $decision
 Start-Sleep -Seconds 600
 exit 0
