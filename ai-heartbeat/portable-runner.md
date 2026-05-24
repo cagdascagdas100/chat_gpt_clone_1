@@ -1,8 +1,12 @@
 ﻿# AAYS Portable Task Runner Fixed
 
-Time: 2026-05-24T02:51:01
-Status: finished
-TaskId: estate020-real-final-input-discovery-20260524-r1
-Message: exit=0
-Mode: manual-single-runner-parallel-final-input-discovery
+Time: 2026-05-24 03:13:31
+Status: polling
+TaskId: real100v2evidence1
+BridgeRoot: C:\AAYS_GITHUB_BRIDGE_CLEAN2
+ProjectRoot: C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+TaskFile: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
+RunnerLog: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs\portable-runner-no-spawn-20260523_231419.log
+Message: already-processed-or-waiting
+Mode: no-spawn-foreground-loop
 SafeScriptOnly: enabled
