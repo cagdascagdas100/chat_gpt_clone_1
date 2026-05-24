@@ -3,14 +3,17 @@
   const summaryEl = document.getElementById("contractorStatusSummary");
   const warningsEl = document.getElementById("contractorStatusWarnings");
   const previewEl = document.getElementById("contractorParcelMatchesPreview");
+  const contactsHintEl = document.getElementById("contractorParcelContactsHint");
+  const contactsPreviewEl = document.getElementById("contractorParcelContactsPreview");
   const refreshBtnEl = document.getElementById("refreshContractorStatus");
 
-  if (!badgeEl || !summaryEl || !warningsEl || !previewEl) {
+  if (!badgeEl || !summaryEl || !warningsEl || !previewEl || !contactsHintEl || !contactsPreviewEl) {
     return;
   }
 
   const API_TIMEOUT_MS = 6000;
   const REFRESH_INTERVAL_MS = 120000;
+  let selectedParcelId = null;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -24,6 +27,11 @@
   function setText(el, text) {
     if (!el) return;
     el.textContent = text;
+  }
+
+  function safeNumber(value, fallback = 0) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
   }
 
   async function focusParcelFromMatch(parcelId) {
@@ -45,6 +53,67 @@
         detail: { parcelId: numericParcelId },
       })
     );
+  }
+
+  function renderContactSuggestions(payload, parcelId) {
+    const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+    const totalRows = safeNumber(payload?.total_rows, 0);
+    const readyRows = safeNumber(payload?.ready_rows, 0);
+    const blockedRows = safeNumber(payload?.blocked_rows, 0);
+    const parcelGroupIds = Array.isArray(payload?.parcel_group_ids) ? payload.parcel_group_ids : [];
+    const reviewRequiredAgents = safeNumber(payload?.review_required_agents, 0);
+    const reviewTokens = Array.isArray(payload?.review_required_tokens) ? payload.review_required_tokens : [];
+    const groupLabel = parcelGroupIds.length ? parcelGroupIds.join(", ") : "-";
+    const reviewLabel = reviewTokens.length ? `tokens=${reviewTokens.join(", ")}` : "tokens=-";
+
+    if (!rows.length) {
+      contactsHintEl.textContent = `parcel ${parcelId}: temas edilebilir estate-agent bulunamadi.`;
+      contactsPreviewEl.innerHTML = `<div class="hint">group=${escapeHtml(groupLabel)} | total=${escapeHtml(totalRows)} | blocked=${escapeHtml(blockedRows)} | review_required_agents=${escapeHtml(reviewRequiredAgents)} | ${escapeHtml(reviewLabel)}</div>`;
+      return;
+    }
+
+    contactsHintEl.textContent = `parcel ${parcelId}: group ${groupLabel} icin temas edilebilir ${readyRows}/${totalRows} estate-agent`;
+    contactsPreviewEl.innerHTML = rows
+      .slice(0, 5)
+      .map((row, idx) => {
+        const companyName = escapeHtml(row.company_name || row.contractor_id || "-");
+        const matchMethod = escapeHtml(row.match_method || "-");
+        const matchScore = escapeHtml(row.match_score || "-");
+        const parcelGroupId = escapeHtml(row.parcel_group_id || "-");
+        const reliability = escapeHtml(row.reliability_score || "-");
+        const confidence = escapeHtml(row.data_confidence_score || "-");
+        const legalScore = escapeHtml(row.legal_contact_score || "-");
+        const density = escapeHtml(row.activity_density_label || row.region_activity_label || "-");
+        const office = escapeHtml(row.registered_office_address || "-");
+        const reviewRequired = Boolean(row.review_required);
+        const reviewFlags = Array.isArray(row.review_flags) ? row.review_flags.map((v) => escapeHtml(v)).join(", ") : "-";
+        const sourceUrl = row.company_source_url ? `<a href="${escapeHtml(row.company_source_url)}" target="_blank" rel="noopener noreferrer">source</a>` : "-";
+        return `
+          <div>
+            <strong>#${idx + 1} ${companyName}</strong>
+            <div>group=${parcelGroupId} | match=${matchMethod} (score ${matchScore}) | reliability=${reliability} | confidence=${confidence} | legal=${legalScore}</div>
+            <div>density=${density} | office=${office} | review_required=${reviewRequired} (${reviewFlags}) | ${sourceUrl}</div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  async function loadContactsForParcel(parcelId) {
+    const numericParcelId = Number(parcelId);
+    if (!Number.isFinite(numericParcelId) || numericParcelId <= 0) {
+      return;
+    }
+    selectedParcelId = numericParcelId;
+    contactsHintEl.textContent = `parcel ${numericParcelId}: temas-onerileri yukleniyor...`;
+    contactsPreviewEl.innerHTML = "";
+    const result = await fetchJson(`/api/contractor/parcel/${numericParcelId}/contacts?limit=8`, "parcel contractor contacts");
+    if (!result.ok) {
+      contactsHintEl.textContent = `parcel ${numericParcelId}: contractor onerisi alinamadi`;
+      contactsPreviewEl.innerHTML = `<div class="hint">${escapeHtml(result.error || "unknown error")}</div>`;
+      return;
+    }
+    renderContactSuggestions(result.data || {}, numericParcelId);
   }
 
   async function fetchJson(url, label) {
@@ -96,9 +165,10 @@
       .join("");
     previewEl.innerHTML = `<div class="hint">Toplam match: ${escapeHtml(totalRows)} (parcel dugmesine tiklayip haritada odaklanin)</div>${items}`;
     previewEl.querySelectorAll("[data-contractor-parcel-id]").forEach((buttonEl) => {
-      buttonEl.addEventListener("click", () => {
+      buttonEl.addEventListener("click", async () => {
         const parcelId = buttonEl.getAttribute("data-contractor-parcel-id");
-        void focusParcelFromMatch(parcelId);
+        await focusParcelFromMatch(parcelId);
+        await loadContactsForParcel(parcelId);
       });
     });
   }
@@ -106,7 +176,10 @@
   async function refreshContractorPanel() {
     setText(badgeEl, "Contractor durumu yenileniyor...");
     const statusResult = await fetchJson("/api/contractor/status", "contractor status");
-    const matchesResult = await fetchJson("/api/contractor/exports/parcel-matches?offset=0&limit=20", "parcel matches");
+    let matchesResult = await fetchJson("/api/contractor/exports/parcel-matches/preview?limit=20", "parcel match preview");
+    if (!matchesResult.ok && String(matchesResult.error || "").includes("HTTP 404")) {
+      matchesResult = await fetchJson("/api/contractor/exports/parcel-matches?offset=0&limit=20", "parcel matches");
+    }
 
     if (!statusResult.ok) {
       setText(badgeEl, `Contractor status: unavailable (${statusResult.error})`);
@@ -117,10 +190,11 @@
     }
 
     const statusPayload = statusResult.data || {};
-    const preflight = statusPayload.preflight_audit || {};
-    const loadManifest = statusPayload.postgres_load_manifest || {};
-    const matchManifest = statusPayload.parcel_match_manifest || {};
-    const exportManifest = statusPayload.export_manifest || {};
+    const manifests = statusPayload.manifests || {};
+    const preflight = manifests.preflight || statusPayload.preflight_audit || {};
+    const loadManifest = manifests.postgres_load || statusPayload.postgres_load_manifest || {};
+    const matchManifest = manifests.parcel_match || statusPayload.parcel_match_manifest || {};
+    const exportManifest = manifests.export || statusPayload.export_manifest || {};
 
     const statusValue = String(statusPayload.status || "unknown");
     const statusLabel = statusValue === "completed" ? "completed" : statusValue;
@@ -156,10 +230,24 @@
 
     if (!matchesResult.ok) {
       previewEl.innerHTML = `<div class="hint">Match preview hatasi: ${escapeHtml(matchesResult.error)}</div>`;
+      contactsHintEl.textContent = "Parcel temas-onerisi icin once match preview gerekli.";
+      contactsPreviewEl.innerHTML = "";
       return;
     }
     const matchesPayload = matchesResult.data || {};
-    renderMatches(matchesPayload.rows || [], matchesPayload.total_rows || 0);
+    const matchRows = matchesPayload.rows || [];
+    renderMatches(matchRows, matchesPayload.total_rows || 0);
+    if (selectedParcelId) {
+      await loadContactsForParcel(selectedParcelId);
+    } else {
+      const firstParcelId = Number((matchRows[0] || {}).parcel_id);
+      if (Number.isFinite(firstParcelId) && firstParcelId > 0) {
+        await loadContactsForParcel(firstParcelId);
+      } else {
+        contactsHintEl.textContent = "Parcel secildiginde temas-onerileri burada gosterilir.";
+        contactsPreviewEl.innerHTML = "";
+      }
+    }
   }
 
   if (refreshBtnEl) {
