@@ -19,6 +19,18 @@ function Test-FileSafe($p) {
   try { return (Test-Path $p) } catch { return $false }
 }
 
+function Run-GitOptional([string]$ArgsLine) {
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = "cmd.exe"
+  $psi.Arguments = "/c git $ArgsLine"
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.UseShellExecute = $false
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $p.WaitForExit()
+  return $p.ExitCode
+}
+
 function Read-RegionConfig($path) {
   $rows = @()
   if (!(Test-Path $path)) {
@@ -107,13 +119,15 @@ New-Item -ItemType Directory -Force -Path $LocalOut | Out-Null
 $ProbeJson | Set-Content (Join-Path $Repo $LatestRel) -Encoding UTF8
 $ProbeJson | Set-Content (Join-Path $Repo $SnapshotRel) -Encoding UTF8
 
-git -C $Repo fetch origin $SyncBranch 2>$null
+# Branch ilk kez oluşuyorsa fetch hatası normaldir; bu hata akışı durdurmaz.
+Run-GitOptional "-C `"$Repo`" fetch origin $SyncBranch" | Out-Null
 $base = "HEAD"
-try {
-  git -C $Repo rev-parse --verify "origin/$SyncBranch" | Out-Null
-  $base = "origin/$SyncBranch"
-} catch {
-  $base = "HEAD"
+$branchExists = Run-GitOptional "-C `"$Repo`" rev-parse --verify origin/$SyncBranch"
+if ($branchExists -eq 0) { $base = "origin/$SyncBranch" }
+
+if (Test-Path $Worktree) {
+  git -C $Repo worktree remove $Worktree --force 2>$null
+  Remove-Item $Worktree -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 git -C $Repo worktree add -B $SyncBranch $Worktree $base
