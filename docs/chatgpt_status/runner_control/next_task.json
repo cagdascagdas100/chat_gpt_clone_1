@@ -1,0 +1,36 @@
+{
+  "task_id": "aays-pmtiles-source-probe-20260531-001",
+  "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
+  "project": "AAYS_TerraYield",
+  "mode": "github_controlled_existing_runner",
+  "status": "queued",
+  "created_by": "chatgpt",
+  "objective": "Read local AAYS PMTiles/toolchain/source status and push a text/json output back to GitHub runner_outputs.",
+  "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
+  "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
+  "output_branch": "chatgpt-local-sync",
+  "output_dir": "docs/chatgpt_status/runner_outputs",
+  "safety": {
+    "db_write": false,
+    "ddl": false,
+    "migration_apply": false,
+    "production_deploy": false,
+    "fake_demo_data": false,
+    "destructive_git": false
+  },
+  "steps": [
+    "Check existing runner heartbeat and queue lock.",
+    "Do not overwrite active current-task.json if another task is running.",
+    "Probe installed tools: tippecanoe, pmtiles, ogr2ogr, docker, python, git, wsl.",
+    "Probe region config source paths and PMTiles paths for London, South East, South West, East, Midlands, North, Wales, Scotland.",
+    "Probe local *.pmtiles files under the repo excluding docs/chatgpt_handoff.",
+    "Write PMTILES_SOURCE_PROBE_OUTPUT.txt and PMTILES_SOURCE_PROBE_OUTPUT.json.",
+    "Commit/push outputs to docs/chatgpt_status/runner_outputs on branch chatgpt-local-sync."
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/runner_outputs/latest_output.json",
+    "docs/chatgpt_status/runner_outputs/latest_output.txt",
+    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-probe-20260531-001.json",
+    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-probe-20260531-001.txt"
+  ]
+}
