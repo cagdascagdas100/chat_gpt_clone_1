@@ -1,0 +1,40 @@
+AAYS PMTILES BOOTSTRAP PLAN OUTPUT
+Timestamp=20260531_035200
+TaskId=aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004
+Status=BOOTSTRAP_PLAN_OUTPUT_CREATED
+Progress=94
+
+Decision summary:
+blocker_class=BOTH_TOOLCHAIN_AND_SOURCE_ASSET_BLOCKER
+can_generate_missing_regions_now=false
+can_run_one_region_dry_run_now=false
+
+Missing regions:
+london, south_east, south_west, midlands, north, wales, scotland
+
+Required real inputs:
+Each missing region needs an authorized real parcel source file, either a source GPKG or prepared/simplified parquet source. Fake or demo parcel data is not allowed.
+
+Required toolchain:
+GDAL/ogr2ogr, tippecanoe, PMTiles CLI, and Python parquet/geospatial stack if parquet sources are used.
+
+Safe sequence:
+1. Confirm authorized real source assets.
+2. Confirm cached or approved Docker/toolchain path.
+3. Run one missing-region dry-run only after source and toolchain both exist.
+4. Validate produced PMTiles before copying to the web-served path.
+5. Run browser visual smoke for that one region.
+6. Repeat per region.
+
+Safety:
+db_write=false
+ddl=false
+migration_apply=false
+production_deploy=false
+fake_demo_data=false
+destructive_git=false
+
+Current classification:
+LOCAL_PARTIAL_PARCEL_COVERAGE_READY_WITH_BLOCKER
+remaining_blocker=missing_region_pmtiles_files_or_missing_source_assets
+next_task=authorized_source_asset_probe_or_toolchain_cache_probe
