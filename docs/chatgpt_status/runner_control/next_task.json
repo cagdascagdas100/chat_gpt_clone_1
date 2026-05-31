@@ -1,14 +1,14 @@
 {
-  "task_id": "aays-authorized-source-asset-toolchain-cache-probe-20260531-005",
+  "task_id": "aays-region-source-manifest-access-plan-20260531-006",
   "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
   "project": "AAYS_TerraYield",
   "mode": "github_controlled_existing_runner",
   "status": "queued",
   "created_by": "chatgpt",
-  "objective": "Run a local read-only probe for PMTiles source assets and cached toolchain options. Use the existing local runner and GitHub output loop. No database writes, no deployment, no synthetic parcel data.",
+  "objective": "Create a concise region manifest and access plan for the missing PMTiles regions using existing GitHub runner-output loop. No DB write, no deploy, no generated parcel substitute.",
   "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
   "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "input_bootstrap": "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004.txt",
+  "input_status": "docs/chatgpt_status/runner_outputs/probe_005_status.txt",
   "output_branch": "chatgpt-local-sync",
   "output_dir": "docs/chatgpt_status/runner_outputs",
   "safety": {
@@ -16,22 +16,20 @@
     "ddl": false,
     "migration_apply": false,
     "production_deploy": false,
-    "synthetic_parcel_data": false,
+    "generated_parcel_substitute": false,
     "destructive_git": false,
-    "start_second_global_runner": false,
-    "overwrite_active_current_task": false
+    "start_second_global_runner": false
   },
   "checks": [
-    "Search local repo for source GPKG/parquet assets for london, south_east, south_west, midlands, north, wales, scotland.",
-    "Search local repo for existing MBTiles or PMTiles files for the missing regions.",
-    "Check Docker image list for cached geospatial images only; do not pull images automatically.",
-    "Check whether host commands tippecanoe, pmtiles, and ogr2ogr are available.",
-    "Classify result as SOURCE_READY, TOOLCHAIN_READY, BOTH_READY, or BOTH_MISSING.",
-    "Write TXT and JSON outputs to docs/chatgpt_status/runner_outputs on branch chatgpt-local-sync."
+    "Produce region manifest for london, south_east, south_west, midlands, north, wales, scotland.",
+    "For each region, identify whether an approved local input exists or is still needed.",
+    "Identify whether cached Docker/toolchain can be used or must be installed separately.",
+    "State whether a one-region dry run is allowed now.",
+    "Write a short status TXT and JSON under docs/chatgpt_status/runner_outputs."
   ],
   "expected_outputs": [
-    "docs/chatgpt_status/runner_outputs/aays-authorized-source-asset-toolchain-cache-probe-20260531-005.txt",
-    "docs/chatgpt_status/runner_outputs/aays-authorized-source-asset-toolchain-cache-probe-20260531-005.json"
+    "docs/chatgpt_status/runner_outputs/aays-region-source-manifest-access-plan-20260531-006.txt",
+    "docs/chatgpt_status/runner_outputs/aays-region-source-manifest-access-plan-20260531-006.json"
   ],
-  "chatgpt_next_step": "On next devam, read probe output. If BOTH_READY for any missing region, queue a one-region dry-run. Otherwise report exact missing asset/toolchain blocker."
+  "chatgpt_next_step": "On next devam, read the manifest output. If no region is ready, keep blocker open and request source/toolchain evidence before dry-run."
 }
