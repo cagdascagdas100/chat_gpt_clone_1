@@ -1,13 +1,14 @@
 {
-  "task_id": "aays-pmtiles-source-probe-20260531-001",
+  "task_id": "aays-pmtiles-docker-toolchain-decision-20260531-003",
   "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
   "project": "AAYS_TerraYield",
   "mode": "github_controlled_existing_runner",
   "status": "queued",
   "created_by": "chatgpt",
-  "objective": "Read local AAYS PMTiles/toolchain/source status and push a text/json output back to GitHub runner_outputs.",
+  "objective": "Use the existing local runner and GitHub-sync loop to decide the safe next PMTiles path after latest_local_probe: verify whether Docker can run a containerized geospatial toolchain and whether missing region source assets are available anywhere locally. Do not write DB, do not deploy, do not generate fake data.",
   "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
   "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
+  "input_probe": "docs/chatgpt_status/local_sync/latest_local_probe.json",
   "output_branch": "chatgpt-local-sync",
   "output_dir": "docs/chatgpt_status/runner_outputs",
   "safety": {
@@ -16,21 +17,29 @@
     "migration_apply": false,
     "production_deploy": false,
     "fake_demo_data": false,
-    "destructive_git": false
+    "destructive_git": false,
+    "start_second_global_runner": false,
+    "overwrite_active_current_task": false
   },
-  "steps": [
-    "Check existing runner heartbeat and queue lock.",
-    "Do not overwrite active current-task.json if another task is running.",
-    "Probe installed tools: tippecanoe, pmtiles, ogr2ogr, docker, python, git, wsl.",
-    "Probe region config source paths and PMTiles paths for London, South East, South West, East, Midlands, North, Wales, Scotland.",
-    "Probe local *.pmtiles files under the repo excluding docs/chatgpt_handoff.",
-    "Write PMTILES_SOURCE_PROBE_OUTPUT.txt and PMTILES_SOURCE_PROBE_OUTPUT.json.",
-    "Commit/push outputs to docs/chatgpt_status/runner_outputs on branch chatgpt-local-sync."
+  "checks": [
+    "Read current bridge heartbeat/current-task/.last-task-id and queue state.",
+    "Verify Docker availability with docker version and docker image list, without pulling large images unless already cached.",
+    "Search local repo for existing Dockerfile, docker compose service, or scripts that include tippecanoe, pmtiles, ogr2ogr, gdal, or build_pmtiles_from_hf_parquet.py.",
+    "Search local filesystem under repo for existing source assets: parcels_source.gpkg, parcels_prepared.parquet, parcels_prepared_simplified.parquet, .mbtiles, .pmtiles for london, south_east, south_west, midlands, north, wales, scotland.",
+    "Do not download protected remote data. If a remote URL needs auth/token, report BLOCKED_TOKEN_REQUIRED.",
+    "Write a concise TXT and JSON result to docs/chatgpt_status/runner_outputs on branch chatgpt-local-sync."
+  ],
+  "decision_rules": [
+    "If cached Docker/toolchain image exists and source parquet/gpkg exists, next task may be PMTiles generation dry-run for one missing region only.",
+    "If tools exist but source assets missing, next task must be source acquisition/token/access plan, not generation.",
+    "If neither tools nor source assets exist, next task must be toolchain bootstrap plan plus source acquisition plan.",
+    "If East PMTiles exists only, keep final classification as partial coverage until all configured regions pass."
   ],
   "expected_outputs": [
     "docs/chatgpt_status/runner_outputs/latest_output.json",
     "docs/chatgpt_status/runner_outputs/latest_output.txt",
-    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-probe-20260531-001.json",
-    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-probe-20260531-001.txt"
-  ]
+    "docs/chatgpt_status/runner_outputs/aays-pmtiles-docker-toolchain-decision-20260531-003.json",
+    "docs/chatgpt_status/runner_outputs/aays-pmtiles-docker-toolchain-decision-20260531-003.txt"
+  ],
+  "chatgpt_next_step": "On next devam, read the new runner output from GitHub, classify whether the blocker is toolchain-only, source-only, token/access, or both, then queue the next single safe task."
 }
