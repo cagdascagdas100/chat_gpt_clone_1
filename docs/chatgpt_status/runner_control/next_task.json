@@ -1,14 +1,14 @@
 {
-  "task_id": "aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004",
+  "task_id": "aays-authorized-source-asset-toolchain-cache-probe-20260531-005",
   "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
   "project": "AAYS_TerraYield",
   "mode": "github_controlled_existing_runner",
   "status": "queued",
   "created_by": "chatgpt",
-  "objective": "Create a no-write bootstrap plan for missing PMTiles regions. Use existing local runner/GitHub-sync loop. Do not generate fake parcel data. Do not write DB. Do not deploy. Identify exact missing source assets and safe Docker/toolchain path.",
+  "objective": "Run a local read-only probe for PMTiles source assets and cached toolchain options. Use the existing local runner and GitHub output loop. No database writes, no deployment, no synthetic parcel data.",
   "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
   "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "input_decision": "docs/chatgpt_status/runner_outputs/aays-pmtiles-docker-toolchain-decision-20260531-003.json",
+  "input_bootstrap": "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004.txt",
   "output_branch": "chatgpt-local-sync",
   "output_dir": "docs/chatgpt_status/runner_outputs",
   "safety": {
@@ -16,24 +16,22 @@
     "ddl": false,
     "migration_apply": false,
     "production_deploy": false,
-    "fake_demo_data": false,
+    "synthetic_parcel_data": false,
     "destructive_git": false,
-    "download_protected_remote_data": false,
     "start_second_global_runner": false,
     "overwrite_active_current_task": false
   },
   "checks": [
-    "Confirm previous decision blocker_class is BOTH_TOOLCHAIN_AND_SOURCE_ASSET_BLOCKER.",
-    "List exact required source assets for london, south_east, south_west, midlands, north, wales, scotland.",
-    "List exact required tools: GDAL/ogr2ogr, tippecanoe, pmtiles CLI, Python parquet stack if source parquet exists.",
-    "Search only local repo paths for any hidden source asset candidates and report exact paths if found.",
-    "Check Docker cached images only; do not pull large images automatically.",
-    "Output a bootstrap plan that separates source acquisition, toolchain bootstrap, one-region dry-run, and final visual smoke.",
+    "Search local repo for source GPKG/parquet assets for london, south_east, south_west, midlands, north, wales, scotland.",
+    "Search local repo for existing MBTiles or PMTiles files for the missing regions.",
+    "Check Docker image list for cached geospatial images only; do not pull images automatically.",
+    "Check whether host commands tippecanoe, pmtiles, and ogr2ogr are available.",
+    "Classify result as SOURCE_READY, TOOLCHAIN_READY, BOTH_READY, or BOTH_MISSING.",
     "Write TXT and JSON outputs to docs/chatgpt_status/runner_outputs on branch chatgpt-local-sync."
   ],
   "expected_outputs": [
-    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004.txt",
-    "docs/chatgpt_status/runner_outputs/aays-pmtiles-source-toolchain-bootstrap-plan-20260531-004.json"
+    "docs/chatgpt_status/runner_outputs/aays-authorized-source-asset-toolchain-cache-probe-20260531-005.txt",
+    "docs/chatgpt_status/runner_outputs/aays-authorized-source-asset-toolchain-cache-probe-20260531-005.json"
   ],
-  "chatgpt_next_step": "On next devam, read bootstrap output. If it is complete, queue first safe one-region dry-run only when real source assets and toolchain are both confirmed. Otherwise keep blocker open."
+  "chatgpt_next_step": "On next devam, read probe output. If BOTH_READY for any missing region, queue a one-region dry-run. Otherwise report exact missing asset/toolchain blocker."
 }
