@@ -1,0 +1,28 @@
+AAYS PMTILES TOOLCHAIN DECISION OUTPUT
+Timestamp=20260531_034500
+TaskId=aays-pmtiles-docker-toolchain-decision-20260531-003
+Status=DECISION_OUTPUT_CREATED_FROM_VERIFIED_PROBE_AND_REPO_SEARCH
+
+Input evidence:
+- latest_local_probe confirms docker, python, git and wsl are available.
+- latest_local_probe confirms tippecanoe, pmtiles and ogr2ogr are not installed on host PATH.
+- latest_local_probe confirms East PMTiles exists.
+- latest_local_probe confirms London, South East, South West, Midlands, North, Wales and Scotland source or PMTiles assets are missing in expected locations.
+- repository search for tippecanoe/pmtiles/ogr2ogr/build_pmtiles/Dockerfile/geospatial returned no matching repo-side toolchain script.
+
+Decision:
+blocker_class=BOTH_TOOLCHAIN_AND_SOURCE_ASSET_BLOCKER
+can_generate_missing_regions_now=false
+can_run_one_region_pmtiles_dry_run_now=false
+safe_next_step=SOURCE_ASSET_AND_TOOLCHAIN_BOOTSTRAP_PLAN
+progress=93
+
+Safety:
+db_write=false
+ddl=false
+migration_apply=false
+production_deploy=false
+fake_demo_data=false
+
+Next controlled task:
+Prepare a no-write bootstrap plan that identifies exact source asset requirement per missing region and a Docker/toolchain path for tippecanoe, pmtiles and ogr2ogr without downloading protected remote data or writing production data.
