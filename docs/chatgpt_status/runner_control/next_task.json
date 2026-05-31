@@ -1,14 +1,13 @@
 {
-  "task_id": "aays-region-source-manifest-access-plan-20260531-006",
+  "task_id": "aays-one-region-evidence-gate-20260531-007",
   "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
   "project": "AAYS_TerraYield",
   "mode": "github_controlled_existing_runner",
   "status": "queued",
   "created_by": "chatgpt",
-  "objective": "Create a concise region manifest and access plan for the missing PMTiles regions using existing GitHub runner-output loop. No DB write, no deploy, no generated parcel substitute.",
+  "objective": "Gate the first one-region PMTiles dry run. Confirm whether any missing region has both a real local source asset and a working tile build toolchain. If not, keep dry-run blocked.",
   "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
   "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
-  "input_status": "docs/chatgpt_status/runner_outputs/probe_005_status.txt",
   "output_branch": "chatgpt-local-sync",
   "output_dir": "docs/chatgpt_status/runner_outputs",
   "safety": {
@@ -16,20 +15,20 @@
     "ddl": false,
     "migration_apply": false,
     "production_deploy": false,
-    "generated_parcel_substitute": false,
+    "fake_or_generated_parcel_substitute": false,
     "destructive_git": false,
     "start_second_global_runner": false
   },
   "checks": [
-    "Produce region manifest for london, south_east, south_west, midlands, north, wales, scotland.",
-    "For each region, identify whether an approved local input exists or is still needed.",
-    "Identify whether cached Docker/toolchain can be used or must be installed separately.",
-    "State whether a one-region dry run is allowed now.",
-    "Write a short status TXT and JSON under docs/chatgpt_status/runner_outputs."
+    "Check source and tile outputs for london, south_east, south_west, midlands, north, wales, scotland.",
+    "Check host toolchain and cached Docker image availability.",
+    "If a missing region is BOTH_READY, mark that one region as dry-run candidate only.",
+    "If no missing region is BOTH_READY, keep one-region dry-run blocked and report exact missing gate.",
+    "Write short TXT/JSON status under docs/chatgpt_status/runner_outputs."
   ],
   "expected_outputs": [
-    "docs/chatgpt_status/runner_outputs/aays-region-source-manifest-access-plan-20260531-006.txt",
-    "docs/chatgpt_status/runner_outputs/aays-region-source-manifest-access-plan-20260531-006.json"
+    "docs/chatgpt_status/runner_outputs/aays-one-region-evidence-gate-20260531-007.txt",
+    "docs/chatgpt_status/runner_outputs/aays-one-region-evidence-gate-20260531-007.json"
   ],
-  "chatgpt_next_step": "On next devam, read the manifest output. If no region is ready, keep blocker open and request source/toolchain evidence before dry-run."
+  "chatgpt_next_step": "On next devam, read gate output. If BOTH_READY, queue one-region dry run. Otherwise stop increasing progress until real source/toolchain evidence exists."
 }
