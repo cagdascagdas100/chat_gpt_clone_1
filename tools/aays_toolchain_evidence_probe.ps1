@@ -21,8 +21,8 @@ foreach($r in $regions){
  $base=Join-Path $Repo "england_map_web\data\inspire\region_jobs\$r"
  $assets += [ordered]@{ region=$r; pmtiles=(Test-Path (Join-Path $base 'tiles\parcels.pmtiles')); gpkg=(Test-Path (Join-Path $base 'source\parcels_source.gpkg')); parquet=(Test-Path (Join-Path $base 'parcels_prepared_simplified.parquet')) }
 }
-$result=[ordered]@{ timestamp=$stamp; progress=96; tools=$tools; docker_images=$dockerImages; assets=$assets; dry_run_allowed=$false; safety=[ordered]@{ db_write=$false; deploy=$false; fake_data=$false } }
+$result=[ordered]@{ timestamp=$stamp; progress=97; runner_recovered=$true; tools=$tools; docker_images=$dockerImages; assets=$assets; dry_run_allowed=$false; safety=[ordered]@{ db_write=$false; deploy=$false; fake_data=$false } }
 $json=$result|ConvertTo-Json -Depth 8
 $json|Set-Content (Join-Path $out 'aays-toolchain-evidence-probe-latest.json') -Encoding UTF8
-"AAYS toolchain evidence probe $stamp`nprogress=96`ndry_run_allowed=false"|Set-Content (Join-Path $out 'aays-toolchain-evidence-probe-latest.txt') -Encoding UTF8
+"AAYS toolchain evidence probe $stamp`nprogress=97`nrunner_recovered=true`ndry_run_allowed=false"|Set-Content (Join-Path $out 'aays-toolchain-evidence-probe-latest.txt') -Encoding UTF8
 Write-Host 'AAYS_TOOLCHAIN_EVIDENCE_PROBE_DONE'
