@@ -1,13 +1,13 @@
 {
-  "task_id": "aays-one-region-evidence-gate-20260531-007",
+  "task_id": "aays-run-toolchain-evidence-probe-20260531-008",
   "page_key": "AAYS_SAME_PROJECT_NEW_PAGE",
   "project": "AAYS_TerraYield",
   "mode": "github_controlled_existing_runner",
   "status": "queued",
   "created_by": "chatgpt",
-  "objective": "Gate the first one-region PMTiles dry run. Confirm whether any missing region has both a real local source asset and a working tile build toolchain. If not, keep dry-run blocked.",
+  "objective": "Run the repo-side toolchain evidence probe script with the existing local runner, then publish its outputs to the chatgpt-local-sync branch.",
   "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
-  "bridge_root": "C:\\AAYS_GITHUB_BRIDGE_CLEAN2",
+  "script": "tools\\aays_toolchain_evidence_probe.ps1",
   "output_branch": "chatgpt-local-sync",
   "output_dir": "docs/chatgpt_status/runner_outputs",
   "safety": {
@@ -19,16 +19,9 @@
     "destructive_git": false,
     "start_second_global_runner": false
   },
-  "checks": [
-    "Check source and tile outputs for london, south_east, south_west, midlands, north, wales, scotland.",
-    "Check host toolchain and cached Docker image availability.",
-    "If a missing region is BOTH_READY, mark that one region as dry-run candidate only.",
-    "If no missing region is BOTH_READY, keep one-region dry-run blocked and report exact missing gate.",
-    "Write short TXT/JSON status under docs/chatgpt_status/runner_outputs."
-  ],
   "expected_outputs": [
-    "docs/chatgpt_status/runner_outputs/aays-one-region-evidence-gate-20260531-007.txt",
-    "docs/chatgpt_status/runner_outputs/aays-one-region-evidence-gate-20260531-007.json"
+    "docs/chatgpt_status/runner_outputs/aays-toolchain-evidence-probe-latest.txt",
+    "docs/chatgpt_status/runner_outputs/aays-toolchain-evidence-probe-latest.json"
   ],
-  "chatgpt_next_step": "On next devam, read gate output. If BOTH_READY, queue one-region dry run. Otherwise stop increasing progress until real source/toolchain evidence exists."
+  "chatgpt_next_step": "On next devam, read the probe output. Increase progress only if the output proves a working toolchain or a missing-region real source asset."
 }
