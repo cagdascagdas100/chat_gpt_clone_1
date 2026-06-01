@@ -1,72 +1,57 @@
 function ensureFallbackLessons(){
   window.DEUTSCH_LESSONS=window.DEUTSCH_LESSONS||{};
-
-  if(!window.DEUTSCH_LESSONS.t25){
-    window.DEUTSCH_LESSONS.t25={
-      short:`<h3>Studium im Ausland – Nachteile · Kurz</h3><p>Dieses Modul bereitet auf einen Nachteilsabsatz zum Thema Auslandsstudium vor. Der Fokus liegt auf hohen Kosten, finanzieller Belastung, Sprachbarrieren, kultureller Anpassung, sozialer Isolation und organisatorischen Hürden.</p><p><b>Grundthese:</b> Ein Studium im Ausland kann zwar persönlich bereichernd sein, bringt jedoch erhebliche finanzielle, sprachliche, soziale und organisatorische Belastungen mit sich, die den Studienerfolg gefährden können.</p>`,
-      medium:`<h3>Studium im Ausland – Nachteile · Mittel</h3><h4>1. Hohe Kosten und finanzielle Belastung</h4><p>Ein Auslandsstudium ist oft mit deutlich höheren Kosten verbunden als ein Studium im Heimatland. Die finanzielle Belastung entsteht nicht nur durch Studiengebühren, sondern auch durch Miete, Versicherung, Transport, Aufenthaltsdokumente und alltägliche Ausgaben. Viele Studierende sind deshalb auf Nebenjobs, Stipendien oder familiäre Unterstützung angewiesen.</p><h4>2. Sprachliche, kulturelle und soziale Schwierigkeiten</h4><p>Studierende müssen Vorlesungen verstehen, wissenschaftliche Texte lesen und Prüfungen in einer fremden Sprache bestehen. Wenn soziale Kontakte fehlen, können Heimweh, Unsicherheit und Isolation entstehen.</p>`,
-      long:`<h3>Studium im Ausland – Nachteile · C1/C2-Nachteilsabsatz · Lang</h3><p><b>Grundthese:</b> Ein Studium im Ausland kann zwar persönlich bereichernd sein, bringt jedoch erhebliche finanzielle, sprachliche, soziale und organisatorische Belastungen mit sich, die den Studienerfolg gefährden können.</p><h4>1. Finanzieller Nachteil</h4><p>Ein wesentlicher Nachteil eines Studiums im Ausland liegt in der finanziellen Belastung. Neben möglichen Studiengebühren müssen Studierende häufig hohe Miet- und Lebenshaltungskosten tragen. Hinzu kommen Ausgaben für Versicherungen, Visa, Lehrmaterialien und Reisen in das Heimatland. Viele Studierende sind deshalb auf Nebenjobs oder Stipendien angewiesen. Dies kann jedoch dazu führen, dass weniger Zeit für das eigentliche Studium bleibt und die Konzentration auf Prüfungen nachlässt.</p><h4>2. Sprache, Kultur und Isolation</h4><p>Ein weiterer negativer Aspekt eines Auslandsstudiums besteht in den sprachlichen und kulturellen Herausforderungen. Studierende müssen Vorlesungen verstehen, wissenschaftliche Texte lesen und Prüfungen in einer fremden Sprache bestehen. Wenn zusätzlich soziale Kontakte fehlen, können Heimweh und Isolation entstehen. Dadurch wird nicht nur der Alltag erschwert, sondern auch die akademische Leistung gefährdet.</p>`
-    };
-  }
-
-  if(!window.DEUTSCH_LESSONS.t26){
-    window.DEUTSCH_LESSONS.t26={
-      short:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · Kurz</h3><p>Dieses Modul bereitet auf einen Nachteilsabsatz in einer C1/C2-Erörterung vor. Der Fokus liegt nicht auf einer pauschalen Ablehnung von Mehrsprachigkeit, sondern auf möglichen Problemen bei fehlender Förderung.</p><p><b>Grundthese:</b> Mehrsprachiges Aufwachsen kann Kinder zwar bereichern, es kann jedoch auch sprachliche, schulische und soziale Herausforderungen mit sich bringen, wenn die Förderung in Familie und Schule nicht konsequent genug ist.</p><ul><li><b>Sprache:</b> Sprachlücken, Sprachmischungen und Unsicherheit können entstehen.</li><li><b>Schule:</b> Eine schwächere Schulsprache kann Textverständnis und Leistung beeinträchtigen.</li><li><b>Soziales:</b> Abwertung der Herkunftssprache kann Anpassungsdruck und Identitätskonflikte verursachen.</li><li><b>Familie:</b> Eine inkonsequente Sprachumgebung kann Förderbedarf verstärken.</li></ul>`,
-      medium:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · Mittel</h3><h4>1. Schreibziel</h4><p>In einer Erörterung sollte man sehr genau formulieren: Mehrsprachigkeit ist nicht automatisch problematisch. Schwierigkeiten entstehen vor allem dann, wenn Kinder keine ausreichende sprachliche Unterstützung erhalten, wenn die Schulsprache zu schwach entwickelt ist oder wenn die Herkunftssprache sozial abgewertet wird.</p><h4>2. Sprachliche Unsicherheit und Förderbedarf</h4><p>Mehrsprachige Kinder erwerben nicht immer alle Sprachen gleich stark. Häufig ist eine Sprache im familiären Bereich stärker, während die Schulsprache für Unterricht, Fachtexte und Prüfungen entscheidend wird. Dadurch können Fachbegriffe, komplexe Satzstrukturen oder schriftsprachliche Ausdrucksmittel fehlen.</p><p>Bei fehlender Förderung können Sprachlücken entstehen, die die Ausdrucksfähigkeit beeinträchtigen und das Selbstvertrauen schwächen.</p><h4>3. Schulische Herausforderungen</h4><p>Im Schulalltag reicht Alltagssprache nicht aus. Kinder müssen abstrakte Begriffe, komplexe Aufgabenstellungen und fachsprachliche Texte verstehen. Wenn die Unterrichtssprache nicht sicher beherrscht wird, können fachliche Fähigkeiten unterschätzt werden. Infolgedessen kann der Leistungsdruck steigen und die Beteiligung im Unterricht sinken.</p><h4>4. Soziale und familiäre Belastungen</h4><p>Mehrsprachige Kinder bewegen sich häufig zwischen unterschiedlichen sprachlichen und kulturellen Erwartungen. Wird die Herkunftssprache abgewertet, kann das Zugehörigkeitsgefühl geschwächt werden. Zusätzlich kann eine inkonsequente Sprachumgebung in der Familie Unsicherheit verstärken, wenn hochwertiger sprachlicher Input fehlt.</p>`,
-      long:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · C1/C2-Nachteilsabsatz · Lang</h3><h4>1. Ziel des Arbeitsblatts</h4><p>Dieses Material bereitet gezielt auf einen Nachteilsabsatz in einer Erörterung vor. Der Fokus liegt nicht auf einer Ablehnung der Mehrsprachigkeit, sondern auf möglichen Problemen bei fehlender Förderung. Ziel ist, Nachteile differenziert, vorsichtig und auf C1/C2-Niveau zu formulieren.</p><h4>2. Grundverständnis und Grundthese</h4><p>Mehrsprachiges Aufwachsen bedeutet, dass ein Kind von Anfang an oder im Laufe seiner Kindheit regelmäßig mit zwei oder mehreren Sprachen in Kontakt kommt. Das kann in Familien mit Migrationsgeschichte, in zweisprachigen Elternhäusern oder in international geprägten Bildungseinrichtungen vorkommen.</p><p><b>Grundthese:</b> Mehrsprachiges Aufwachsen kann Kinder zwar bereichern, es kann jedoch auch sprachliche, schulische und soziale Herausforderungen mit sich bringen, wenn die Förderung in Familie und Schule nicht konsequent genug ist.</p><p><b>Wichtige Differenzierung:</b> Nicht die Mehrsprachigkeit selbst ist das Hauptproblem, sondern fehlende Unterstützung, unklare Sprachstrukturen oder sozialer Druck.</p><h4>3. Nachteil 1: Sprachliche Unsicherheit und erhöhter Förderbedarf</h4><p>Ein häufig genannter Nachteil liegt in der möglichen sprachlichen Unsicherheit. Mehrsprachige Kinder erwerben nicht immer alle Sprachen gleich stark. Häufig ist eine Sprache im familiären Bereich stärker, während eine andere Sprache in der Schule wichtiger wird. Dadurch kann es vorkommen, dass Kinder in einer Sprache emotional sicher sprechen, ihnen in der anderen Sprache aber Fachbegriffe, komplexe Satzstrukturen oder schriftsprachliche Ausdrucksmittel fehlen.</p><p>Besonders problematisch wird dies, wenn die Schulsprache nicht ausreichend gefördert wird. Die Schulsprache umfasst nicht nur Alltagssprache, sondern auch abstrakte Begriffe, Fachvokabular, Textverständnis und schriftliche Ausdrucksfähigkeit. Wenn Kinder hier Defizite haben, kann dies ihre Leistungen in fast allen Fächern beeinflussen.</p><h4>4. C1/C2-Wortschatz zu Nachteil 1</h4><ul><li>die sprachliche Unsicherheit / zu Unsicherheit führen</li><li>der Förderbedarf / Förderbedarf entstehen lassen</li><li>die Schulsprache / die Schulsprache gezielt fördern</li><li>die Ausdrucksfähigkeit / die Ausdrucksfähigkeit beeinträchtigen</li><li>die Sprachlücke / Sprachlücken schließen</li><li>der Schriftspracherwerb / den Schriftspracherwerb unterstützen</li></ul><h4>5. Musterabsatz: Sprachliche Unsicherheit</h4><p><b>Ein möglicher Nachteil des mehrsprachigen Aufwachsens liegt in der sprachlichen Unsicherheit, die bei fehlender Förderung entstehen kann. Kinder, die mehrere Sprachen gleichzeitig erwerben, müssen unterschiedliche Sprachsysteme verarbeiten und voneinander trennen. Dadurch kann es in bestimmten Entwicklungsphasen zu Sprachmischungen, grammatischen Unsicherheiten oder Lücken im Wortschatz kommen. Besonders problematisch wird dies in der Schule, da die Unterrichtssprache nicht nur im Alltag, sondern auch beim Verstehen von Fachtexten und beim Schreiben längerer Aufgaben beherrscht werden muss. Wenn diese sprachlichen Anforderungen nicht ausreichend unterstützt werden, kann die Ausdrucksfähigkeit des Kindes beeinträchtigt und sein Selbstvertrauen geschwächt werden.</b></p><h4>6. Nachteil 2: Schulische Herausforderungen und Leistungsdruck</h4><p>Mehrsprachige Kinder können im Schulalltag mit besonderen Anforderungen konfrontiert sein. Sie müssen nicht nur Fachinhalte verstehen, sondern diese auch in der Unterrichtssprache ausdrücken können. Sprachliche Schwierigkeiten können deshalb schnell zu fachlichen Schwierigkeiten werden, obwohl das Kind den Inhalt grundsätzlich verstanden hat.</p><p>Ein Beispiel dafür ist der Mathematikunterricht: Ein Kind kann rechnen, versteht aber eine komplex formulierte Textaufgabe nicht vollständig. Ähnlich kann es in Geschichte, Biologie oder Sozialkunde Probleme geben, wenn abstrakte Begriffe fehlen. Dadurch entsteht zusätzlicher Leistungsdruck.</p><h4>7. C1/C2-Wortschatz zu Nachteil 2</h4><ul><li>die schulische Benachteiligung / zu schulischer Benachteiligung führen</li><li>die akademische Ausdrucksfähigkeit / akademische Anforderungen bewältigen</li><li>der Leistungsdruck / den Leistungsdruck erhöhen</li><li>die Lernvoraussetzungen / ungleiche Lernvoraussetzungen schaffen</li><li>die Bildungschance / Bildungschancen einschränken</li><li>das Textverständnis / das Textverständnis erschweren</li></ul><h4>8. Musterabsatz: Schulische Herausforderungen</h4><p><b>Ein weiterer Nachteil betrifft die schulischen Anforderungen, die für mehrsprachige Kinder besonders anspruchsvoll sein können. Im Unterricht reicht es häufig nicht aus, einfache Alltagssprache zu verstehen; vielmehr müssen Kinder abstrakte Begriffe, komplexe Aufgabenstellungen und fachsprachliche Texte erfassen. Wenn ein Kind die Schulsprache noch nicht sicher beherrscht, können fachliche Fähigkeiten unterschätzt werden. So kann ein Kind beispielsweise den Inhalt grundsätzlich verstehen, aber Schwierigkeiten haben, seine Gedanken präzise zu formulieren. Infolgedessen kann es zu schlechteren Leistungen, höherem Leistungsdruck und langfristig zu eingeschränkten Bildungschancen kommen.</b></p><h4>9. Nachteil 3: Soziale Unsicherheit und Identitätskonflikte</h4><p>Mehrsprachiges Aufwachsen betrifft nicht nur Sprache, sondern auch Identität. Kinder bewegen sich oft zwischen verschiedenen kulturellen Räumen: zu Hause gelten möglicherweise andere sprachliche und kulturelle Erwartungen als in der Schule oder im Freundeskreis. Ein Kind kann das Gefühl entwickeln, keiner Gruppe vollständig anzugehören.</p><p>Wenn die Herkunftssprache im Umfeld abgewertet wird oder Mitschüler sich über Akzent oder Aussprache lustig machen, kann sich das Kind für diese Sprache schämen. Dadurch können das Selbstbewusstsein und das Zugehörigkeitsgefühl geschwächt werden.</p><h4>10. Nachteil 4: Belastung der Familie und inkonsequente Sprachumgebung</h4><p>Auch die Familie spielt beim mehrsprachigen Aufwachsen eine zentrale Rolle. Eltern müssen entscheiden, welche Sprache zu Hause gesprochen wird, wie konsequent sie diese Sprache verwenden und wie sie gleichzeitig die Schulsprache fördern. Diese Aufgabe kann anspruchsvoll sein, besonders wenn Eltern selbst unsicher sind oder wenig Zeit haben.</p><p>Eine inkonsequente Sprachumgebung kann dazu führen, dass Kinder keine der Sprachen systematisch genug ausbauen. Problematisch wird dies vor allem dann, wenn Kinder zu wenig hochwertigen sprachlichen Input erhalten, etwa durch Gespräche, Vorlesen oder Erklärungen.</p><h4>11. Konnektoren und Satzmuster</h4><ul><li><b>Nachteil einleiten:</b> Ein möglicher Nachteil besteht darin, dass ...</li><li><b>Begründung:</b> Dies lässt sich damit erklären, dass ...</li><li><b>Einschränkung:</b> Dies gilt insbesondere dann, wenn ... / Unter bestimmten Umständen kann ...</li><li><b>Folge:</b> Dies kann dazu führen, dass ... / Infolgedessen kann ...</li><li><b>Langzeitwirkung:</b> Langfristig betrachtet kann ... / Auf lange Sicht besteht die Gefahr, dass ...</li><li><b>Differenzierung:</b> Dabei sollte betont werden, dass nicht die Mehrsprachigkeit an sich, sondern fehlende Förderung problematisch ist.</li></ul><h4>12. Mini-Kopiervorlage</h4><ul><li>Mehrere Sprachen → Sprachmischung / Sprachlücken → Förderbedarf → schulische Schwierigkeiten.</li><li>Schwache Schulsprache → Textverständnis und Schreiben schwieriger → Leistungsdruck.</li><li>Zwei Kulturen → Anpassungsdruck → soziale Unsicherheit → Identitätskonflikte.</li><li>Wichtige Einschränkung: Problematisch ist nicht Mehrsprachigkeit an sich, sondern fehlende Förderung.</li></ul>`
-    };
-  }
+  const L=window.DEUTSCH_LESSONS;
+  L.t25=L.t25||{
+    short:`<h3>Studium im Ausland – Nachteile · Kurz</h3><p><b>Grundthese:</b> Ein Studium im Ausland kann zwar persönlich bereichernd sein, bringt jedoch erhebliche finanzielle, sprachliche, soziale und organisatorische Belastungen mit sich.</p>`,
+    medium:`<h3>Studium im Ausland – Nachteile · Mittel</h3><p>Hohe Lebenshaltungskosten, Studiengebühren, Sprachbarrieren, kulturelle Anpassung und soziale Isolation können den Studienerfolg erschweren. Ein guter Nachteilsabsatz erklärt diese Punkte mit Ursache, Beispiel und Folge.</p>`,
+    long:`<h3>Studium im Ausland – Nachteile · Lang</h3><p><b>Grundthese:</b> Ein Studium im Ausland kann zwar persönlich bereichernd sein, bringt jedoch erhebliche finanzielle, sprachliche, soziale und organisatorische Belastungen mit sich, die den Studienerfolg gefährden können.</p><h4>Finanzen</h4><p>Studierende müssen häufig hohe Miet- und Lebenshaltungskosten tragen. Wenn sie zusätzlich arbeiten müssen, bleibt weniger Zeit für Vorlesungen und Prüfungsvorbereitung.</p><h4>Sprache, Kultur und Isolation</h4><p>Vorlesungen, Fachtexte und Prüfungen in einer fremden Sprache können überfordern. Wenn soziale Kontakte fehlen, können Heimweh und Isolation die Motivation verringern.</p>`
+  };
+  L.t26=L.t26||{
+    short:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · Kurz</h3><p><b>Grundthese:</b> Mehrsprachiges Aufwachsen kann Kinder zwar bereichern, es kann jedoch bei fehlender Förderung sprachliche, schulische und soziale Herausforderungen mit sich bringen.</p>`,
+    medium:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · Mittel</h3><p>Problematisch ist nicht die Mehrsprachigkeit selbst, sondern fehlende Förderung. Sprachlücken, eine schwächere Schulsprache, Förderbedarf, Leistungsdruck und Identitätskonflikte können entstehen.</p>`,
+    long:`<h3>Das mehrsprachige Aufwachsen von Kindern – Nachteile · Lang</h3><p><b>Wichtige Differenzierung:</b> Nicht die Mehrsprachigkeit selbst ist das Hauptproblem, sondern fehlende Unterstützung, unklare Sprachstrukturen oder sozialer Druck.</p><h4>Sprachliche Unsicherheit</h4><p>Kinder erwerben nicht immer alle Sprachen gleich stark. Besonders in der Schule können Fachbegriffe, Textverständnis und schriftsprachliche Ausdrucksfähigkeit fehlen.</p><h4>Schulische und soziale Folgen</h4><p>Wenn ein Kind die Schulsprache noch nicht sicher beherrscht, können fachliche Fähigkeiten unterschätzt werden. Gleichzeitig können Anpassungsdruck und Identitätskonflikte das Zugehörigkeitsgefühl schwächen.</p>`
+  };
+  L.t27=L.t27||{
+    short:`<h3>Mindestlohn – Nachteile · Kurz</h3><p><b>Grundthese:</b> Der Mindestlohn kann zwar sozialpolitisch sinnvoll erscheinen, kann jedoch wirtschaftliche Nebenwirkungen haben, wenn Unternehmen steigende Lohnkosten nicht ausgleichen können.</p><ul><li>höhere Personalkosten</li><li>Belastung kleiner Betriebe</li><li>mögliche Preissteigerungen</li><li>weniger Neueinstellungen</li><li>geringere Chancen für geringqualifizierte Arbeitnehmer</li></ul>`,
+    medium:`<h3>Mindestlohn – Nachteile · Mittel</h3><h4>1. Belastung kleiner Unternehmen</h4><p>Der Mindestlohn kann die Kostenstruktur von Unternehmen verändern. Besonders kleine Betriebe verfügen häufig über weniger finanzielle Reserven als große Konzerne. Wenn Lohnkosten steigen, müssen sie reagieren: Preise anheben, Arbeitszeiten kürzen oder auf Neueinstellungen verzichten.</p><h4>2. Weniger Chancen für Geringqualifizierte</h4><p>Wenn Arbeitgeber höhere Löhne zahlen müssen, können sie vorsichtiger bei Neueinstellungen werden. Besonders betroffen sind Berufsanfänger, Jugendliche oder Menschen ohne abgeschlossene Ausbildung.</p>`,
+    long:`<h3>Mindestlohn – Nachteile · C1/C2-Nachteilsabsatz · Lang</h3><h4>1. Grundthese</h4><p>Der Mindestlohn kann zwar sozialpolitisch sinnvoll erscheinen, kann jedoch wirtschaftliche Nebenwirkungen haben, wenn Unternehmen die steigenden Lohnkosten nicht ausgleichen können.</p><h4>2. Belastung kleiner Unternehmen</h4><p>Ein zentraler Nachteil besteht darin, dass der Mindestlohn die Kostenstruktur von Unternehmen verändert. Besonders kleine Betriebe können höhere Löhne nicht immer problemlos finanzieren, weil ihre Einnahmen begrenzt und ihre Gewinnspannen oft niedrig sind. In arbeitsintensiven Branchen wie Gastronomie, Einzelhandel, Reinigung oder Friseurhandwerk können steigende Personalkosten schnell zu wirtschaftlichem Druck führen.</p><p><b>Musterabsatz:</b> Ein wesentlicher Nachteil des Mindestlohns liegt in der finanziellen Belastung kleiner Unternehmen. Während große Unternehmen steigende Lohnkosten häufig leichter ausgleichen können, verfügen kleine Betriebe oft nur über begrenzte finanzielle Reserven. Besonders in Branchen mit niedrigen Gewinnspannen können höhere Personalkosten schnell zu wirtschaftlichem Druck führen. Die Folge könnte sein, dass Unternehmen Preise erhöhen, Arbeitszeiten reduzieren oder auf Neueinstellungen verzichten.</p><h4>3. Weniger Chancen für geringqualifizierte Arbeitnehmer</h4><p>Ein weiterer Nachteil betrifft den Arbeitsmarkt. Wenn Arbeitgeber höhere Löhne zahlen müssen, achten sie möglicherweise stärker auf Qualifikation, Erfahrung und Produktivität. Dadurch können Berufsanfänger, Jugendliche oder Menschen ohne abgeschlossene Ausbildung benachteiligt werden.</p><h4>4. Nomen-Verb-Verbindungen</h4><ul><li>Personalkosten erhöhen</li><li>wirtschaftlichen Druck erzeugen</li><li>die Wettbewerbsfähigkeit schwächen</li><li>Preise anheben</li><li>Neueinstellungen vermeiden</li><li>Einstiegschancen verringern</li><li>Arbeitsplätze gefährden</li><li>unbeabsichtigte Nebenwirkungen haben</li></ul>`
+  };
 }
 
-function startLesson(level) {
+function currentLessonKey(){
+  const checked=document.querySelector('input[name="tc"]:checked');
+  if(checked&&checked.value)return checked.value;
+  try{if(typeof selected!=='undefined'&&selected)return selected}catch(e){}
+  return '';
+}
+
+function startLesson(level){
   ensureFallbackLessons();
-  const lessons = window.DEUTSCH_LESSONS || {};
-  const tests = window.DEUTSCH_TESTS || {};
-  const key = selected || "t4";
-  const lesson = lessons[key];
-  const test = tests[key];
-  if (!lesson || !lesson[level]) {
-    alert("Bu test için konu anlatımı bulunamadı.");
-    return;
-  }
-
-  const levelName = level === "short" ? "Kısa" : level === "medium" ? "Orta" : "Uzun";
-  const title = test ? test.title : key;
-  const topic = test && test.topic ? test.topic : "C1/C2 Wortschatz und Grammatik";
-  const terms = (test && test.words ? test.words.slice(0, level === "short" ? 5 : level === "medium" ? 10 : 16) : []);
-  const termList = terms.length ? "<ul>" + terms.map(w => "<li>" + esc(w) + "</li>").join("") + "</ul>" : "";
-
+  const lessons=window.DEUTSCH_LESSONS||{};
+  const tests=window.DEUTSCH_TESTS||{};
+  const key=currentLessonKey();
+  const lesson=lessons[key];
+  const test=tests[key]||{};
+  if(!lesson||!lesson[level]){alert('Bu test için konu anlatımı bulunamadı.');return;}
+  const levelName=level==='short'?'Kısa':level==='medium'?'Orta':'Uzun';
+  const safe=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const terms=(test.words||[]).slice(0,level==='short'?6:level==='medium'?12:18).map(w=>'<li>'+safe(w)+'</li>').join('');
   hide();
-  document.getElementById("lesson").classList.remove("hide");
-  document.getElementById("lessonTitle").textContent = "Konu anlatımı: " + title;
-  document.getElementById("lessonMeta").textContent = "Seviye: " + levelName + " · Kalıp ezberleme ve doğru gramerle metin yazma";
-
-  document.getElementById("lessonContent").innerHTML = `
-    <section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#ffffff;margin-bottom:18px">
-      <h2>1. Genel bakış</h2>
-      <p><b>Thema:</b> ${esc(topic)}</p>
-      <p>Bu bölümde kelimeler tek tek değil, yazıda kullanılabilecek tam yapılar olarak çalışılır: <b>kalıp + doğru fiil + Präposition/Kasus + örnek cümle</b>.</p>
-      <p><b>Yazma sırası:</b> Kalıp → doğru gramer → neden/sonuç → örnek veya kısa değerlendirme.</p>
-      ${termList ? `<h3>Öncelikli kavramlar</h3>${termList}` : ""}
-    </section>
-
-    <section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#ffffff;margin-bottom:18px">
-      <h2>2. Konu açıklaması</h2>
-      ${lesson[level]}
-    </section>
-  `;
-
-  document.getElementById("lesson").scrollIntoView({ behavior: "smooth" });
+  document.getElementById('lesson').classList.remove('hide');
+  document.getElementById('lessonTitle').textContent='Konu anlatımı: '+(test.title||key);
+  document.getElementById('lessonMeta').textContent='Seviye: '+levelName+' · Kalıp ezberleme ve doğru gramerle metin yazma';
+  document.getElementById('lessonContent').innerHTML='<section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#fff;margin-bottom:18px"><h2>1. Genel bakış</h2><p><b>Thema:</b> '+safe(test.topic||'C1/C2 Nachteilsabsatz')+'</p>'+(terms?'<h3>Öncelikli kavramlar</h3><ul>'+terms+'</ul>':'')+'</section><section style="padding:14px;border:1px solid #d8d3ca;border-radius:14px;background:#fff;margin-bottom:18px"><h2>2. Konu açıklaması</h2>'+lesson[level]+'</section>';
+  document.getElementById('lesson').scrollIntoView({behavior:'smooth'});
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded',function(){
   ensureFallbackLessons();
-  const shortBtn = document.getElementById("btnLessonShort");
-  const mediumBtn = document.getElementById("btnLessonMedium");
-  const longBtn = document.getElementById("btnLessonLong");
-  const backBtn = document.getElementById("btnLessonBack");
-  if (shortBtn) shortBtn.onclick = function () { startLesson("short"); };
-  if (mediumBtn) mediumBtn.onclick = function () { startLesson("medium"); };
-  if (longBtn) longBtn.onclick = function () { startLesson("long"); };
-  if (backBtn) backBtn.onclick = menu;
+  const b1=document.getElementById('btnLessonShort');
+  const b2=document.getElementById('btnLessonMedium');
+  const b3=document.getElementById('btnLessonLong');
+  const bb=document.getElementById('btnLessonBack');
+  if(b1)b1.onclick=function(){startLesson('short')};
+  if(b2)b2.onclick=function(){startLesson('medium')};
+  if(b3)b3.onclick=function(){startLesson('long')};
+  if(bb)bb.onclick=menu;
 });
