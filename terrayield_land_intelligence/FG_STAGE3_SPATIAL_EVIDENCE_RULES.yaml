@@ -1,0 +1,161 @@
+metadata:
+  layer_name: Future Urban Growth & Value Shift Layer
+  calculation_version: future_growth_v1
+  disclaimer_required: "Kesin fiyat tahmini değildir"
+  scope: spatial evidence filtering rules for parcel-level popup and scoring
+
+relations:
+  - relation_type: INTERSECTS_PARCEL
+    distance_m_min: 0
+    distance_m_max: 0
+    requires_geometry: true
+    parcel_specific: true
+    popup_eligible: true
+    weight_hint: 1.00
+    confidence_cap: high_if_source_url_present
+    warning_rule: none
+  - relation_type: WITHIN_250M
+    distance_m_min: 0
+    distance_m_max: 250
+    requires_geometry: true
+    parcel_specific: true
+    popup_eligible: true
+    weight_hint: 0.85
+    confidence_cap: medium_high
+    warning_rule: proximity_not_intersection
+  - relation_type: WITHIN_500M
+    distance_m_min: 251
+    distance_m_max: 500
+    requires_geometry: true
+    parcel_specific: true
+    popup_eligible: true
+    weight_hint: 0.70
+    confidence_cap: medium
+    warning_rule: proximity_not_intersection
+  - relation_type: WITHIN_1000M
+    distance_m_min: 501
+    distance_m_max: 1000
+    requires_geometry: true
+    parcel_specific: true
+    popup_eligible: true
+    weight_hint: 0.52
+    confidence_cap: low_medium
+    warning_rule: broad_proximity
+  - relation_type: WITHIN_2000M
+    distance_m_min: 1001
+    distance_m_max: 2000
+    requires_geometry: true
+    parcel_specific: true
+    popup_eligible: true
+    weight_hint: 0.35
+    confidence_cap: low
+    warning_rule: broad_proximity
+  - relation_type: SAME_LSOA
+    requires_geometry: false
+    parcel_specific: false
+    popup_eligible: false
+    weight_hint: 0.42
+    confidence_cap: low_medium
+    warning_rule: area_level_not_parcel_specific
+  - relation_type: SAME_MSOA
+    requires_geometry: false
+    parcel_specific: false
+    popup_eligible: false
+    weight_hint: 0.32
+    confidence_cap: low
+    warning_rule: area_level_not_parcel_specific
+  - relation_type: SAME_LOCAL_AUTHORITY
+    requires_geometry: false
+    parcel_specific: false
+    popup_eligible: false
+    weight_hint: 0.20
+    confidence_cap: low
+    warning_rule: local_authority_level_not_parcel_specific
+  - relation_type: CITY_LEVEL_ONLY
+    requires_geometry: false
+    parcel_specific: false
+    popup_eligible: false
+    weight_hint: 0.12
+    confidence_cap: low
+    warning_rule: city_level_not_parcel_specific
+
+evidence_filtering:
+  only_current_parcel: true
+  include_global_sources_in_popup: false
+  require_parcel_specific_for_popup: true
+  require_source_url_for_high_confidence: true
+  exclude_other_parcel_evidence_from_popup: true
+  fallback_when_no_parcel_specific_evidence:
+    popup_message: No parcel-specific evidence available
+    show_contextual_summary: true
+    contextual_summary_confidence_cap: low
+    allow_high_confidence: false
+    evidence_list: []
+
+warning_rules:
+  proximity_not_intersection:
+    text: Bu veri parsele yakın konumdadır ancak parsel ile kesiştiği doğrulanmamıştır.
+    confidence_cap: medium_high
+  broad_proximity:
+    text: Bu veri geniş yakın çevre sinyalidir; parsel özelinde kesin etki göstermez.
+    confidence_cap: low_medium
+  area_level_not_parcel_specific:
+    text: Bu veri parsel özelinde değil, bağlı istatistik alanı düzeyinde kullanılmıştır.
+    confidence_cap: low_medium
+  local_authority_level_not_parcel_specific:
+    text: Bu veri parsel özelinde değil, bağlı local authority düzeyinde kullanılmıştır.
+    confidence_cap: low
+  city_level_not_parcel_specific:
+    text: Bu veri şehir düzeyinde bağlam sinyalidir; parsel popup evidence listesine alınmaz.
+    confidence_cap: low
+  missing_source_url:
+    text: Kaynak URL eksik olduğu için high confidence üretilemez.
+    confidence_cap: medium
+
+popup_rules:
+  allowed_relation_types:
+    - INTERSECTS_PARCEL
+    - WITHIN_250M
+    - WITHIN_500M
+    - WITHIN_1000M
+    - WITHIN_2000M
+  blocked_relation_types:
+    - SAME_LSOA
+    - SAME_MSOA
+    - SAME_LOCAL_AUTHORITY
+    - CITY_LEVEL_ONLY
+  must_match_parcel_id: true
+  must_not_show_other_parcel_evidence: true
+  empty_state_text: No parcel-specific evidence available
+  disclaimer_text: Kesin fiyat tahmini değildir
+
+demo_evidence_rows:
+  - parcel_id: 12345
+    factor_type: planning
+    source_key: planning_brownfield
+    source_url: https://www.planning.data.gov.uk/dataset/brownfield-land
+    relation_type: INTERSECTS_PARCEL
+    impact_weight: 0.92
+    geography_level: PARCEL
+    popup_eligible: true
+    confidence_hint: high
+  - parcel_id: 12345
+    factor_type: transport
+    source_key: naptan
+    source_url: https://www.data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/naptan
+    relation_type: WITHIN_500M
+    impact_weight: 0.70
+    geography_level: POINT
+    popup_eligible: true
+    display_warning: Bu veri parsele yakın konumdadır ancak parsel ile kesiştiği doğrulanmamıştır.
+    confidence_hint: medium
+  - parcel_id: 12345
+    factor_type: demographic
+    source_key: ons_internal_migration
+    source_url: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/internalmigrationz5
+    relation_type: SAME_LOCAL_AUTHORITY
+    impact_weight: 0.20
+    geography_level: LOCAL_AUTHORITY
+    popup_eligible: false
+    display_warning: Bu veri parsel özelinde değil, bağlı local authority düzeyinde kullanılmıştır.
+    confidence_hint: low

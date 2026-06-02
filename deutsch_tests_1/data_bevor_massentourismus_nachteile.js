@@ -1,0 +1,105 @@
+window.DEUTSCH_TESTS=window.DEUTSCH_TESTS||{};
+window.DEUTSCH_TESTS.t22={
+  category:'Bevor Schreiben',
+  slug:'massentourismus_nachteile_c1_c2',
+  title:'Massentourismus-Nachteile · C1/C2 Nachteile-Absatz',
+  topic:'Erörterung · Nachteile des Massentourismus · Umweltbelastung · Ressourcenverbrauch · Einheimische · Authentizitätsverlust · wirtschaftliche Abhängigkeit',
+  words:[
+    'der Massentourismus','die Umweltbelastung','die Ressourcenverschwendung','der Ressourcenverbrauch','der Wasserverbrauch','der Energieverbrauch','die CO2-Emissionen','die Luftverschmutzung','die Lärmbelastung','das Ökosystem','die Landschaftszerstörung','die Übernutzung','die lokale Bevölkerung','die Lebensqualität','die Wohnraumknappheit','die Mietsteigerung','die Verdrängung','die soziale Spannung','die Überfüllung','die kulturelle Authentizität','die Kommerzialisierung','die regionale Identität','die Tradition','die Inszenierung','der Kulturverlust','die wirtschaftliche Abhängigkeit','die Saisonarbeit','die Krisenanfälligkeit','die unsichere Beschäftigung','die einseitige Wirtschaftsstruktur','die Umwelt belasten','Ressourcen verbrauchen','Ökosysteme gefährden','die Lebensqualität beeinträchtigen','Mieten in die Höhe treiben','zur Verdrängung beitragen','kulturelle Authentizität verlieren','soziale Spannungen verursachen','langfristige Schäden verursachen','eine Abhängigkeit schaffen'
+  ],
+  fill:[
+    ['Massentourismus bezeichnet eine Form des Reisens, bei der sehr viele Menschen innerhalb kurzer Zeit dieselben Reiseziele ____.','besuchen','Grundverständnis'],
+    ['Das Problem entsteht nicht allein durch Reisen an sich, sondern durch die Konzentration großer Besucherzahlen an bestimmten Orten und zu bestimmten ____.','Zeiten','Grundverständnis'],
+    ['Massentourismus kann erhebliche ökologische, soziale und kulturelle Belastungen ____.','verursachen','Leitthese'],
+    ['Besonders problematisch sind Umweltverschmutzung, Ressourcenverbrauch, steigende Mieten, Überfüllung und der Verlust kultureller ____.','Authentizität','Leitthese'],
+    ['Ein starker Nachteile-Absatz verbindet Beobachtung, Erklärung, Beispiel und ____.','Wirkung','Absatzstruktur'],
+    ['Ein zentraler Nachteil des Massentourismus liegt in der starken Belastung der ____.','Umwelt','Umwelt'],
+    ['Wenn sehr viele Menschen an denselben Ort reisen, steigt der Verbrauch von Wasser, Energie und anderen Ressourcen ____.','erheblich','Ressourcenverbrauch'],
+    ['Gleichzeitig entstehen mehr Müll, Lärm, Abwasser und ____.','Verkehr','Umweltbelastung'],
+    ['Empfindliche Regionen wie Inseln, Küstengebiete, Berge oder Nationalparks können dadurch stark ____ werden.','geschädigt','Ökosysteme'],
+    ['Die vorhandene Infrastruktur eines Ortes kann durch dauerhaft hohe Besucherzahlen an ihre Grenzen ____.','stoßen','Infrastruktur'],
+    ['In heißen Urlaubsregionen kann der hohe Wasserverbrauch von Hotels zu Wasserknappheit ____.','beitragen','Wasserverbrauch'],
+    ['Kreuzfahrtschiffe und Flugreisen verursachen Emissionen und ____ das Klima.','belasten','Emissionen'],
+    ['Ein weiterer schwerwiegender Nachteil besteht darin, dass Massentourismus den Alltag der Einheimischen stark ____ kann.','beeinträchtigen','Einheimische'],
+    ['Wenn Ferienwohnungen mehr Gewinn bringen als normale Mietwohnungen, wird Wohnraum für Einheimische knapper und ____.','teurer','Wohnraum'],
+    ['Geschäfte und Dienstleistungen orientieren sich zunehmend an den Bedürfnissen der Besucher statt an denen der lokalen ____.','Bevölkerung','Soziales'],
+    ['Dadurch kann der Alltag der Einheimischen erschwert werden, obwohl sie selbst nicht unmittelbar vom Tourismus ____.','profitieren','Soziales'],
+    ['Massentourismus kann auch kulturelle Probleme ____.','verursachen','Kultur'],
+    ['Wenn Traditionen hauptsächlich für Touristen inszeniert werden, besteht die Gefahr, dass Kultur zu einem Produkt ____.','wird','Authentizität'],
+    ['Traditionen werden dann nicht mehr aus innerer Überzeugung gepflegt, sondern an touristische Erwartungen ____.','angepasst','Kulturverlust'],
+    ['Langfristig kann dies zu einem Verlust regionaler Identität ____.','führen','Langzeitwirkung'],
+    ['Eine zu starke Ausrichtung auf Tourismus kann wirtschaftliche Abhängigkeit ____.','schaffen','Wirtschaft'],
+    ['Viele Jobs im Tourismus sind saisonal, schlecht bezahlt oder ____.','unsicher','Arbeitsbedingungen'],
+    ['Bei Krisen wie Naturkatastrophen, Pandemien oder politischen Konflikten kann der Tourismus plötzlich ____.','einbrechen','Krisenanfälligkeit'],
+    ['Ein Nachteile-Absatz sollte nicht nur Probleme aufzählen, sondern ökologische, soziale und kulturelle Folgen präzise ____.','erklären','Schreibziel']
+  ],
+  mc:[
+    ['Welche Leitthese passt zum Thema Massentourismus-Nachteile?',['Massentourismus kann erhebliche ökologische, soziale und kulturelle Belastungen verursachen, wenn Reiseziele dauerhaft übernutzt werden.','Massentourismus ist schlecht, weil zu viele Menschen reisen.','Massentourismus bedeutet, dass viele Menschen Urlaub machen und das ist problematisch.','Touristen verursachen Probleme, weil sie in großen Gruppen reisen.','Reisen ist wegen Umwelt und Mieten grundsätzlich falsch.'],0,'Leitthese'],
+    ['Welche Aussage erklärt Umweltbelastung C1/C2-gerecht?',['Wenn sehr viele Besucher dieselben Orte nutzen, steigen Wasser- und Energieverbrauch, Müllaufkommen und Verkehr, wodurch empfindliche Ökosysteme gefährdet werden können.','Viele Touristen machen Müll und das ist schlecht für die Natur.','Umweltprobleme entstehen, weil Touristen reisen und Hotels benutzen.','Massentourismus macht Strände schmutzig und verbraucht Wasser.','Die Umwelt wird belastet, weil viele Leute dort sind.'],0,'Umwelt'],
+    ['Welche Formulierung beschreibt den sozialen Nachteil am präzisesten?',['Massentourismus kann die Lebensqualität der lokalen Bevölkerung beeinträchtigen, wenn Wohnraum knapper wird und öffentliche Räume dauerhaft überfüllt sind.','Einheimische mögen Touristen nicht, weil es laut ist.','Touristen machen Orte voll und Einheimische haben weniger Spaß.','Massentourismus stört die Menschen vor Ort sehr.','Lokale Menschen verlieren ihren Alltag, weil Touristen kommen.'],0,'Einheimische'],
+    ['Welche Aussage passt zum Verlust kultureller Authentizität?',['Wenn Traditionen vor allem für Besucher inszeniert und vermarktet werden, besteht die Gefahr, dass sie ihren ursprünglichen Sinn verlieren.','Kultur ist schlecht, wenn Touristen sie anschauen.','Traditionen werden dann nur noch gezeigt und sind nicht mehr schön.','Souvenirgeschäfte machen Kultur kaputt, weil sie Touristen anziehen.','Historische Innenstädte verlieren immer ihre Kultur.'],0,'Kultur'],
+    ['Welche Formulierung ist als wirtschaftlicher Nachteil geeignet?',['Eine einseitige Ausrichtung auf den Tourismussektor kann wirtschaftliche Abhängigkeit schaffen und Regionen krisenanfälliger machen.','Tourismus ist wirtschaftlich schlecht, weil Jobs saisonal sind.','Wenn viele Menschen im Tourismus arbeiten, gibt es Probleme.','Tourismus bringt Geld, aber manchmal nicht immer.','Saisonarbeit ist nicht gut, weil sie im Sommer ist.'],0,'Wirtschaft'],
+    ['Welche Nomen-Verb-Verbindung ist korrekt?',['die Lebensqualität der Einheimischen beeinträchtigen','Lebensqualität für Einheimische machen','Einheimische mit Lebensqualität belasten','Lebensqualität in Einheimischen verlieren','die Einheimischenqualität reduzieren'],0,'NVV'],
+    ['Welche Aussage ist zu absolut und daher stilistisch schwach?',['Massentourismus zerstört immer jede lokale Kultur vollständig.','Massentourismus kann kulturelle Authentizität gefährden.','Unter bestimmten Bedingungen kann touristische Vermarktung zur Kommerzialisierung von Traditionen führen.','Langfristig besteht die Gefahr eines Kulturverlusts.','In stark besuchten Orten können regionale Besonderheiten oberflächlicher inszeniert werden.'],0,'Fehlerdiagnose'],
+    ['Welche Konnektorformel leitet eine Begründung ein?',['Dies lässt sich damit begründen, dass ...','Langfristig besteht die Gefahr, dass ...','Infolgedessen kann ...','Ein konkretes Beispiel dafür ist ...','Somit kann Massentourismus ... beeinträchtigen.'],0,'Konnektor'],
+    ['Welche Folgeformulierung passt?',['Infolgedessen kann die Lebensqualität der lokalen Bevölkerung sinken.','Dies lässt sich damit begründen, Lebensqualität.','Ein Beispiel ist, weil die Mieten steigen können.','Der Grund liegt bei Einheimischen und Touristen.','Langfristig Tourismus Nachteile Umwelt.'],0,'Folge'],
+    ['Welche kompakte Prüfungsstruktur ist am sinnvollsten?',['Umweltbelastung und Belastung der Einheimischen als zwei Hauptgedanken verbinden.','Nur schreiben, dass Touristen Müll verursachen.','Alle Nachteile ohne Beispiele aufzählen.','Zuerst Vorteile und dann zufällig Nachteile nennen.','Nur über Kultur sprechen, weil Umwelt zu einfach ist.'],0,'Prüfungsstruktur']
+  ],
+  tf:[
+    ['Alle Inhalte dieses Moduls beziehen sich ausschließlich auf die negativen Seiten des Massentourismus.',true,'Fokus'],
+    ['Ein starker Nachteile-Absatz verbindet Beobachtung, Erklärung, Beispiel und Wirkung.',true,'Absatzstruktur'],
+    ['Massentourismus wird problematisch, wenn große Besucherzahlen an bestimmten Orten und Zeiten konzentriert auftreten.',true,'Grundverständnis'],
+    ['Umweltbelastung entsteht nur durch Reisen an sich, nicht durch Besucherzahlen oder Infrastrukturüberlastung.',false,'Umwelt'],
+    ['Wasserverbrauch, Müll, Lärm, Abwasser und Verkehr können empfindliche Regionen stark belasten.',true,'Umwelt'],
+    ['Ferienwohnungen können zur Wohnraumknappheit und Mietsteigerung beitragen.',true,'Soziales'],
+    ['Die lokale Bevölkerung profitiert immer unmittelbar vom Massentourismus.',false,'Differenzierung'],
+    ['Kulturelle Authentizität kann leiden, wenn Traditionen hauptsächlich für Touristen inszeniert werden.',true,'Kultur'],
+    ['Eine wirtschaftliche Abhängigkeit vom Tourismus kann Regionen krisenanfälliger machen.',true,'Wirtschaft'],
+    ['Saisonarbeit bietet grundsätzlich langfristige Sicherheit.',false,'Arbeitsbedingungen']
+  ],
+  wordMatch:[
+    ['die Umweltbelastung','negative Einwirkung auf Natur, Luft, Wasser oder Lebensräume'],
+    ['die Ressourcenverschwendung','ineffizienter oder übermäßiger Verbrauch von Wasser, Energie, Fläche oder Material'],
+    ['das Ökosystem','Zusammenspiel von Lebewesen und ihrer natürlichen Umgebung'],
+    ['die Wohnraumknappheit','Mangel an bezahlbaren Wohnungen für die lokale Bevölkerung'],
+    ['die Mietsteigerung','Anstieg der Mietpreise in einer Region'],
+    ['die Verdrängung','Prozess, bei dem Einheimische aus Wohn- oder Lebensräumen gedrängt werden'],
+    ['die kulturelle Authentizität','Echtheit und ursprüngliche Bedeutung kultureller Praktiken und Orte'],
+    ['die Kommerzialisierung','Umwandlung kultureller oder sozialer Praktiken in verkäufliche Produkte'],
+    ['die wirtschaftliche Abhängigkeit','Situation, in der eine Region stark von einem einzigen Wirtschaftsbereich abhängig ist'],
+    ['die Krisenanfälligkeit','erhöhte Verletzlichkeit gegenüber externen Krisen oder Einbrüchen']
+  ],
+  phraseMatch:[
+    ['die Umwelt','erheblich belasten'],
+    ['Ressourcen','in hohem Maße verbrauchen'],
+    ['empfindliche Ökosysteme','gefährden'],
+    ['langfristige Schäden','verursachen'],
+    ['die Lebensqualität der Einheimischen','beeinträchtigen'],
+    ['Mieten','in die Höhe treiben'],
+    ['zur Verdrängung','beitragen'],
+    ['soziale Spannungen','verursachen'],
+    ['kulturelle Authentizität','verlieren'],
+    ['Traditionen touristisch','inszenieren'],
+    ['Kultur als Produkt','vermarkten'],
+    ['regionale Identität','gefährden'],
+    ['eine wirtschaftliche Abhängigkeit','schaffen'],
+    ['Saisonarbeit','unsicher machen'],
+    ['eine einseitige Wirtschaftsstruktur','verstärken'],
+    ['die lokale Bevölkerung','belasten']
+  ],
+  prep:[
+    ['Massentourismus kann erhebliche Belastungen ___ die Umwelt verursachen.','für','Belastungen für'],
+    ['Viele Besucher tragen ___ Übernutzung natürlicher Räume bei.','zur','beitragen zu + Dativ'],
+    ['Die Infrastruktur stößt ___ ihre Grenzen.','an','stoßen an'],
+    ['Der hohe Wasserverbrauch kann ___ Wasserknappheit führen.','zu','führen zu'],
+    ['Ferienwohnungen tragen ___ Verdrängung der lokalen Bevölkerung bei.','zur','beitragen zu'],
+    ['Die Geschäfte orientieren sich zunehmend ___ den Bedürfnissen der Besucher.','an','sich orientieren an'],
+    ['Traditionen werden ___ touristische Erwartungen angepasst.','an','anpassen an'],
+    ['Die Region wird anfällig ___ Krisen.','für','anfällig für'],
+    ['Die Wirtschaft richtet sich zu stark ___ den Tourismus aus.','auf','sich ausrichten auf'],
+    ['Langfristig kann dies ___ einem Verlust kultureller Authentizität führen.','zu','führen zu']
+  ],
+  hang:[
+    'Massentourismus kann erhebliche Belastungen verursachen','die Umwelt erheblich belasten','Ressourcen in hohem Maße verbrauchen','empfindliche Ökosysteme gefährden','langfristige Schäden verursachen','die Lebensqualität der Einheimischen beeinträchtigen','Mieten in die Höhe treiben','zur Verdrängung beitragen','soziale Spannungen verursachen','kulturelle Authentizität verlieren','Traditionen touristisch inszenieren','Kultur als Produkt vermarkten','regionale Identität gefährden','eine wirtschaftliche Abhängigkeit schaffen','eine einseitige Wirtschaftsstruktur verstärken','Saisonarbeit bietet keine langfristige Sicherheit','die Infrastruktur an ihre Grenzen bringen','Wasserverbrauch und CO2 Emissionen erhöhen','Wohnraumknappheit und Mietsteigerungen verursachen','langfristig besteht die Gefahr dass','aus sozialer Perspektive darf nicht übersehen werden dass','aus ökologischer Sicht ist kritisch zu betrachten dass'
+  ]
+};

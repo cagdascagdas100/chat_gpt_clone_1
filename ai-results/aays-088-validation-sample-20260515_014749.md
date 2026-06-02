@@ -1,0 +1,51 @@
+﻿# AAYS 088 Validation Sample
+Generated: 2026-05-15T01:47:49
+TaskId: aays-088-validation-sample-20260515
+Csv: E:\AAYS_DATA\land_sales\final_outputs\stg_land_sales_50step_db_ready.csv
+Mode: read-only validation sample; no DB writes; no UI patch.
+total_rows: 120
+
+## Verdict distribution
+derived_ai_visual: 99
+derived_signal: 19
+derived_multi_signal: 2
+
+## Evidence type distribution
+visual_hint_assisted_candidate: 99
+signal_based_non_rectangular_candidate: 19
+multi_signal_non_rectangular_candidate: 2
+
+## Validation sample candidates
+Columns: verification_id | listing_id | verdict | evidence | uncertainty_m | postcode | authority | price | area
+L4-00001-OTM-16748769 | OTM-16748769 | derived_multi_signal | multi_signal_non_rectangular_candidate | 18.0 | DE21 5AH | Erewash | 675000.0 | 693.18
+L4-00002-OTM-17945851 | OTM-17945851 | derived_multi_signal | multi_signal_non_rectangular_candidate | 18.0 | DY10 | Wyre Forest | 1250000.0 | 135.05
+L4-00003-OTM-10225397 | OTM-10225397 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | CV21 | Rugby | 90000.0 | 897.8
+L4-00005-OTM-10371311 | OTM-10371311 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | B64 | Sandwell | 150000.0 | 734.35
+L4-00006-OTM-10541029 | OTM-10541029 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | PE12 7BZ | South Holland | 89950.0 | 700.58
+L4-00007-OTM-10693127 | OTM-10693127 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | DH7 | County Durham | 725000.0 | 412.09
+L4-00008-OTM-10849824 | OTM-10849824 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | LA18 5BH | Cumberland | 175000.0 | 23736.98
+L4-00009-OTM-10854933 | OTM-10854933 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | NE9 6DR | Gateshead | 300000.0 | 1848.51
+L4-00010-OTM-10866038 | OTM-10866038 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | DY5 | Dudley | 325000.0 | 29254.68
+L4-00011-OTM-10905789 | OTM-10905789 | derived_signal | signal_based_non_rectangular_candidate | 24.0 | LS25 | North Yorkshire | 70000.0 | 23628.78
+L4-00004-OTM-10278618 | OTM-10278618 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | RM8 3PA | Barking and Dagenham | 40500.0 | 220.44
+L4-00013-OTM-10968251 | OTM-10968251 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | BR2 | Bromley | 18000.0 | 397.83
+L4-00091-OTM-13125000 | OTM-13125000 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | W1J | Westminster | 29950000.0 | 1093503.0
+L4-00102-OTM-13262366 | OTM-13262366 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | M4 | Hounslow | 1800000.0 | 4414.59
+L4-00113-OTM-13405675 | OTM-13405675 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | TN16 | Bromley | 5000.0 | 99.3
+L4-00116-OTM-13486283 | OTM-13486283 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | EN4 | Enfield | 3500000.0 | 1264.41
+L4-00178-OTM-14105467 | OTM-14105467 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | HA8 | Barnet | 2300000.0 | 2972.48
+L4-00230-OTM-14565352 | OTM-14565352 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | SE25 | Croydon | 320000.0 | 449.42
+L4-00247-OTM-14648028 | OTM-14648028 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | CR2 | Croydon | 800000.0 | 98.31
+L4-00250-OTM-14695987 | OTM-14695987 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | NW7 | Barnet | 3000000.0 | 6027.75
+L4-00333-OTM-15166073 | OTM-15166073 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | TW8 0DT | Hounslow | 2500000.0 | 6131.37
+L4-00340-OTM-15203552 | OTM-15203552 | derived_ai_visual | visual_hint_assisted_candidate | 28.0 | KT6 | Kingston upon Thames | 1150000.0 | 98.31
+
+## Next manual validation rubric
+1. For each sample row, open listing_url_canonical/source_urls_json.
+2. Verify postcode/local authority normalization against authoritative source.
+3. Check whether geometry_verdict is supported by evidence type and uncertainty.
+4. Mark expected outcome: accept, downgrade, reject, needs_source.
+5. Use at least 25 rows before changing scoring thresholds.
+
+wide_accuracy_program_percent: 45
+AAYS_088_VALIDATION_SAMPLE_DONE=true

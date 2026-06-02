@@ -1,0 +1,3 @@
+﻿# RTSACC 020 HEARTBEAT
+stage=COMPLETE
+progress=100

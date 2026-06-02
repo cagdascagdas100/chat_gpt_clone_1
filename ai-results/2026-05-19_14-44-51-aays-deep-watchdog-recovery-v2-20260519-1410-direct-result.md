@@ -1,0 +1,865 @@
+﻿# AAYS Direct Autopilot Result
+
+TaskId: aays-deep-watchdog-recovery-v2-20260519-1410
+Script: aays_deep_watchdog_orchestrator.ps1
+ExitCode: 
+Time: 2026-05-19T14:44:51
+
+## STDOUT
+```text
+# AAYS Deep Watchdog Recovery V2
+mode=long_readonly_stdout_only_no_job_scope_helpers
+secret_values_printed=false
+db_write=none
+ddl=none
+migration_apply=none
+prod_deploy=none
+cycle=1
+cycle_utc=2026-05-19T11:13:14.2208274Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=2
+cycle_utc=2026-05-19T11:16:44.6554690Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=3
+cycle_utc=2026-05-19T11:20:16.6935873Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=4
+cycle_utc=2026-05-19T11:23:47.1774812Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=5
+cycle_utc=2026-05-19T11:27:17.6212098Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=6
+cycle_utc=2026-05-19T11:30:47.9801551Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=7
+cycle_utc=2026-05-19T11:34:18.3185244Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=8
+cycle_utc=2026-05-19T11:37:50.3845514Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=9
+cycle_utc=2026-05-19T11:41:20.8104701Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+cycle=10
+cycle_utc=2026-05-19T11:44:51.2139431Z
+root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence exists=True
+root=C:\Users\cagda\Documents\GitHub\AAYS exists=True
+scan_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2 hit_count=25
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_INSTALL_CLEAN2_RUNNER_WATCHDOG.ps1 last_write_utc=2026-05-13T23:01:26.4807516Z size=3402
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1229401Z size=3369
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\aw50_step01_smoke.ps1 last_write_utc=2026-05-19T01:14:25.2012429Z size=39
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\parcelsales_001_discovery_root_and_manifest_20260518.ps1 last_write_utc=2026-05-17T23:21:16.4437653Z size=7001
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\START_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1280244Z size=399
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\STOP_AAYS_USERMODE_WATCHDOG.ps1 last_write_utc=2026-05-11T20:25:28.1290241Z size=546
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\aays1-watchdog.md last_write_utc=2026-05-12T15:30:08.7233792Z size=126
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\newtask_001_runner_protocol_smoke_20260518_1609.md last_write_utc=2026-05-18T13:12:35.6570506Z size=945
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\remote-autopilot-v7-watchdog.md last_write_utc=2026-05-12T15:29:37.5049795Z size=71
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\review-gate-smoke-status.md last_write_utc=2026-05-17T15:52:52.0865718Z size=272
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_002_smoke_20260518.md last_write_utc=2026-05-18T15:31:13.4536529Z size=53
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\rtsacc_016_visible_final_smoke_20260519.md last_write_utc=2026-05-18T22:03:11.4392177Z size=57
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\self-heal-watchdog-safe.md last_write_utc=2026-05-11T20:25:28.1566865Z size=556
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\user-mode-watchdog.md last_write_utc=2026-05-11T20:25:28.1666769Z size=312
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\watchdog.md last_write_utc=2026-05-12T15:31:48.4035544Z size=95
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-02_19-44-30-task-0000-ready.md last_write_utc=2026-05-11T20:25:28.2643935Z size=475
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-04_03-21-27-terrayield-verification-026-comprehensive-parallel-watchdog-recovery.md last_write_utc=2026-05-11T20:25:28.3439205Z size=2301
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-06_23-58-17-terrayield-092-exitcode-final-smoke-5worker-safe.md last_write_utc=2026-05-11T20:25:28.4118750Z size=1554
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-43-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.4992094Z size=6022
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-07_22-51-45-terrayield-147-runner-watchdog-resume-146-scope-only.md last_write_utc=2026-05-11T20:25:28.5002127Z size=6232
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_00-22-47-cost50-004-db-config-smoke-audit-20260512.md last_write_utc=2026-05-11T22:58:05.8157606Z size=540
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_01-31-27-cost50-004c-db-config-smoke-clean2-20260512.md last_write_utc=2026-05-11T22:58:05.8177704Z size=577
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-18-48-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-11T23:18:58.2926732Z size=569
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-13-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+candidate=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\2026-05-12_02-25-47-cost50-007-api-app-smoke-audit-20260512.md last_write_utc=2026-05-12T10:25:59.3839357Z size=1715
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:14.8019023Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.7668513Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:15.0649205Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:15.1435204Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_rebuild_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.8777652Z size=36
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.9148494Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.8285391Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:14.4516918Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:14.6201596Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_admin_parcel_linking_status_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:14.0689994Z size=773
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:01.7645458Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.7317080Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:02.0148665Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:02.0813688Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:01.8340252Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:22:36.3149090Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.2768278Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:22:36.5382904Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:22:36.6102226Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_map_listings_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:22:36.3817675Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_sale_ready_true.txt last_write_utc=2026-05-02T14:23:13.0943921Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.0595046Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_limit_500.txt last_write_utc=2026-05-02T14:23:13.3530250Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_city_London_status_sale_ready_top_500.txt last_write_utc=2026-05-02T14:23:13.4241527Z size=27
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\.aays_final_stabilize\final_20260502_172148\resp_api_parcels_location_London_status_sale_ready.txt last_write_utc=2026-05-02T14:23:13.1654278Z size=27
+scan_root=C:\Users\cagda\Documents\GitHub\AAYS hit_count=25
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\chatgpt_handoff_ready_to_sell_ai_20260518.zip last_write_utc=2026-05-18T12:49:56.9681983Z size=947027
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\prepare_contractor_db_smoke_minizip.ps1 last_write_utc=2026-05-11T12:47:38.3535199Z size=1770
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_EXCEL_FILL_AUDIT.md last_write_utc=2026-05-17T16:11:29.3761511Z size=2518
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_3110_SOURCE_FILE_MAP.json last_write_utc=2026-05-17T16:12:28.2747854Z size=2000
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_VERIFICATION_PLAN.md last_write_utc=2026-05-18T12:48:35.8930399Z size=2499
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_AI_WEB_VERIFICATION_QUEUE.csv last_write_utc=2026-05-18T12:46:19.6318801Z size=791282
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_CHATGPT_AI_PROMPT_TR.txt last_write_utc=2026-05-18T12:48:07.9454047Z size=1720
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_DB_DRY_RUN.md last_write_utc=2026-05-18T12:46:19.5944542Z size=309
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_FILL_REPORT.md last_write_utc=2026-05-18T12:48:58.3718432Z size=1081
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\READY_TO_SELL_PRICE_SOURCE_AUDIT.md last_write_utc=2026-05-18T12:46:19.5944542Z size=3889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\run_contractor_db_migration_smoke.ps1 last_write_utc=2026-05-11T12:47:07.4024374Z size=1889
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.ps1 last_write_utc=2026-05-13T07:59:52.0000000Z size=956
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\smoke_test.sh last_write_utc=2026-05-13T07:59:52.0000000Z size=961
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_FILLED.xlsx last_write_utc=2026-05-17T16:11:29.3744607Z size=673796
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\TerraYield_ReadyToSell_3110_Dogruluk_Skalasi_PRICE_FILLED.xlsx last_write_utc=2026-05-18T12:46:19.5944542Z size=862198
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp\codex_docx_extracts\1.ready-to-sell-codex.txt last_write_utc=2026-05-01T13:31:44.5886353Z size=12068
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\.github\workflows\terrayield-cloud-readiness.yml last_write_utc=2026-05-18T12:27:52.4655132Z size=5874
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225144.md last_write_utc=2026-05-15T19:48:20.2138407Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\security_accuracy_expansion\run_reports\watchdog_resume_146_20260507_225145.md last_write_utc=2026-05-15T19:48:20.2148347Z size=303
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\.env.cloud.example last_write_utc=2026-05-18T20:48:51.8499491Z size=504
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\Dockerfile.cloud last_write_utc=2026-05-17T10:08:08.0865490Z size=959
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_RAW.txt last_write_utc=2026-05-18T14:01:52.4217902Z size=692
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012A_STATIC_CLOUD_READY_VALIDATE_REPORT.txt last_write_utc=2026-05-18T14:01:52.7547654Z size=719
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\012B_LOCAL_TEST_SMOKE_PERF_REPORT.txt last_write_utc=2026-05-18T14:02:03.8619451Z size=769
+candidate=C:\Users\cagda\Documents\GitHub\AAYS\.tmp_widescope_final_qa_20260515\terrayield_land_intelligence\docs\chatgpt_handoff\cloud_ready_20260517\013_WATCHDOG_SAFE_ONCE_BLOCKERS.md last_write_utc=2026-05-18T12:29:41.9817451Z size=48
+cycle_verdict=pass_continue
+WATCHDOG_PASS
+verdict=pass
+next_action=review_runner_result_then_queue_next_long_task
+
+```
+
+## STDERR
+```text
+```
