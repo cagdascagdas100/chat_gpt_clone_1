@@ -1,0 +1,59 @@
+AAYS free/no-contact source acquisition assessment
+stamp=20260602_manual_chatgpt_assessment
+status=PARTIAL_SOURCE_DISCOVERY_RECORDED_NO_RUNTIME_ASSET_VERIFICATION
+constraints=free_only;no_contact;no_paid_data;no_supplier_contact;no_fake_data;no_secret_printing
+
+current_gate_state:
+overall_progress=99
+full_coverage_verified=false
+runtime_verified_source_count=1
+remote_configured_region_count=6
+remote_runtime_verified_region_count=0
+token_present=false
+wales_remote_config_missing=true
+scotland_remote_config_missing=true
+
+assessment_result:
+accepted_runtime_verified_new_sources=0
+accepted_candidate_count=1
+supplementary_only_count=4
+blocked_by_constraint_count=2
+
+candidate_sources:
+1. HMLR/INSPIRE-style Index Polygon source for England and Wales
+   region_relevance=Wales possible candidate
+   classification=ACCEPT_AS_CANDIDATE_REQUIRES_RUNTIME_VERIFICATION
+   reason=This is the only plausible free/no-contact cadastral/title-polygon-like public source family for Wales under the constraint set. It still must be probed/downloaded and converted to PMTiles/GPKG/parquet before the region gate can count it.
+   runtime_verified=false
+   can_increase_progress_now=false
+
+blocked_or_not_accepted:
+1. Registers of Scotland / ScotLIS / title/cadastral map access
+   region_relevance=Scotland
+   classification=BLOCKED_BY_CONSTRAINT_OR_NOT_BULK_RUNTIME_SOURCE
+   reason=No free no-contact bulk cadastral parcel polygon source was verified. Search/view style services or paid title outputs are not enough for full runtime PMTiles/GPKG/parquet coverage.
+   runtime_verified=false
+
+2. Existing HuggingFace remote PMTiles manifest
+   region_relevance=London/South East/South West/Midlands/North/East where configured
+   classification=BLOCKED_BY_RUNTIME_VERIFICATION
+   reason=Sources are configured but remote_runtime_verified_region_count remains 0 and token_present=false.
+   runtime_verified=false
+
+supplementary_only_rejections:
+- OSM buildings/landuse: not authoritative cadastral/title parcel evidence.
+- ONS/admin boundaries: administrative geography, not parcel/title boundaries.
+- OS OpenMap/general map/building/road data: useful context, not cadastral parcel source.
+- Gazetteers/address/UPRN-style datasets: address points/properties, not parcel polygons.
+
+next_actions:
+1. Run a local no-contact Wales HMLR/INSPIRE download/probe job and write size/checksum/geometry evidence.
+2. If Wales data verifies, convert to region asset path such as england_map_web/data/inspire/region_jobs/wales/source/parcels_source.gpkg or tiles/parcels.pmtiles.
+3. For Scotland, continue only if a free no-contact bulk cadastral/title polygon source is found; otherwise keep Scotland blocked by constraints.
+4. Do not set overall_progress=100 until runtime verification passes for all required regions.
+
+safety_db_write=false
+safety_deploy=false
+safety_migration=false
+safety_fake_data=false
+secret_values_printed=false
