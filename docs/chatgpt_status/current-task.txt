@@ -1,0 +1,57 @@
+task_id=terrayield-046-free-no-contact-source-acquisition-direct
+status=QUEUED_CURRENT_TASK
+priority=urgent
+created_by=chatgpt
+constraints=free_only;no_contact;no_paid_data;no_supplier_contact;no_fake_data;no_secret_printing
+
+objective=Close remaining 99 percent blocker as far as possible using only free and no-contact sources. Do not write overall_progress=100 unless runtime evidence verifies coverage.
+
+current_observed_state:
+latest_output_stamp=20260602_095549
+status=REGION_GATE_MAPPING_MISMATCH_COVERAGE_PENDING
+scoped_progress=100
+overall_progress=99
+full_coverage_verified=false
+runtime_verified_source_count=1
+remote_configured_region_count=6
+remote_runtime_verified_region_count=0
+token_present=false
+wales_remote_config_missing=true
+scotland_remote_config_missing=true
+
+required_parallel_jobs:
+1. git_sync_recovery_and_stash_safe_pull
+2. runner_watchdog_and_stuck_detector
+3. free_no_contact_source_inventory_search
+4. repo_manifest_scan_for_existing_national_wales_scotland_assets
+5. endpoint_health_probe
+6. region_asset_gate_rerun
+7. source_classification_and_rejection_report
+8. latest_output_json_update_and_sync
+
+strict_source_rules:
+- ACCEPT_AS_CANDIDATE only if parcel/title/cadastral polygon or equivalent official real parcel boundary source, free to access without login/contact/payment, and runtime-verifiable.
+- SUPPLEMENTARY_ONLY for OSM buildings/landuse, ONS/admin boundaries, OS OpenMap/general maps, gazetteers, POI, topography, air-quality, score overlays.
+- BLOCKED_BY_CONSTRAINT for paid data, account login, supplier contact, manual licence negotiation, private token, or terms that prevent use.
+
+required_outputs:
+docs/chatgpt_status/runner_outputs/aays-free-no-contact-source-acquisition-latest.txt
+docs/chatgpt_status/runner_outputs/aays-free-no-contact-source-acquisition-latest.json
+docs/chatgpt_status/runner_outputs/latest_output.json
+
+minimum_text_output_fields:
+stamp
+status
+accepted_candidate_count
+supplementary_only_count
+blocked_by_constraint_count
+wales_candidate_status
+scotland_candidate_status
+runtime_verified_source_count
+overall_progress
+reason_if_still_99
+safety_db_write=false
+safety_deploy=false
+safety_migration=false
+safety_fake_data=false
+secret_values_printed=false
