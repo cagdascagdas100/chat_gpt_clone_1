@@ -1,2 +1,0 @@
-& (Join-Path $PSScriptRoot 'update_chatgpt_status.ps1') -PageKey '2.1 Sold Buildings' -ActiveTask 'emlakci101-status-refresh' -Status 'waiting' -OverallProgress 90 -WaitMinutes '2-3' -NextCommand 'devam et' -RunnerStatus 'finished' -RunnerMessage 'last heartbeat contractor-005 exit=0; current emlakci101 status refresh queued' -Blocker 'current task is emlakci101-status-refresh; last-task still contractor-005' -LastMessageText 'devam et - sitedeki guncel verileri son islem icin ver' -DbWrite:$false -ProductionDeploy:$false
-exit 0
