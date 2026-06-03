@@ -1,0 +1,41 @@
+status=OS_OPEN_UPRN_SUPPORTING_DOWNLOAD_STARTED_ON_F_DRIVE
+progress_estimate=55
+verified_publish_allowed=false
+db_write=false
+production_deploy=false
+migration_ddl=false
+fake_data=false
+candidate_file=none
+downloaded_files=in_progress_partial_not_accepted_yet
+next_single_action=let_current_download_finish_then_verify_or_resume_with_curl
+report_path=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\CODEX_F_DRIVE_OS_OPEN_UPRN_START_20260603-182347.txt
+repo_report_path=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\CODEX_F_DRIVE_OS_OPEN_UPRN_START_20260603-182347.txt
+
+target_root=F:\AAYS
+target_dir=F:\AAYS\open_sources\os_open_uprn
+target_file=F:\AAYS\open_sources\os_open_uprn\osopenuprn_202605_csv.zip
+target_file_expected_bytes=617106126
+target_file_expected_md5=b9b57e997a0ffc4f45c60c9157ffa689
+target_file_current_bytes_at_report=194494464
+target_file_status_at_report=in_progress_partial_not_accepted
+
+os_open_uprn_metadata_access=true
+os_open_uprn_csv_url=https://api.os.uk/downloads/v1/products/OpenUPRN/downloads?area=GB&format=CSV&redirect
+os_open_uprn_csv_file_name=osopenuprn_202605_csv.zip
+os_open_uprn_csv_size_bytes=617106126
+os_open_uprn_csv_md5=b9b57e997a0ffc4f45c60c9157ffa689
+
+policy=OS_Open_UPRN_is_supporting_only_not_AddressBase_replacement
+public_proxy_candidate_status=not_created
+public_proxy_candidate_reason=download_not_complete;no_candidate_generation_until_MD5_and_size_pass
+
+manual_verify_command=if(Test-Path -LiteralPath 'F:\AAYS\open_sources\os_open_uprn\osopenuprn_202605_csv.zip'){ $f=Get-Item -LiteralPath 'F:\AAYS\open_sources\os_open_uprn\osopenuprn_202605_csv.zip'; $md5=(Get-FileHash -Algorithm MD5 -LiteralPath $f.FullName).Hash.ToLowerInvariant(); [pscustomobject]@{Path=$f.FullName;Bytes=$f.Length;ExpectedBytes=617106126;MD5=$md5;ExpectedMD5='b9b57e997a0ffc4f45c60c9157ffa689';Complete=($f.Length -eq 617106126 -and $md5 -eq 'b9b57e997a0ffc4f45c60c9157ffa689')} | ConvertTo-Json -Depth 3 }
+resume_command_after_current_download_stops=curl.exe -L --fail --retry 5 --retry-delay 5 --continue-at - -o "F:\AAYS\open_sources\os_open_uprn\osopenuprn_202605_csv.zip" "https://api.os.uk/downloads/v1/products/OpenUPRN/downloads?area=GB&format=CSV&redirect"
+
+chatgpt_prompt=Bu raporu oku. F:\AAYS\open_sources\os_open_uprn\osopenuprn_202605_csv.zip dosyasi tamamlanana kadar bekle. Once manual_verify_command calistir. Complete=false ise mevcut aktif indirme durduktan sonra resume_command_after_current_download_stops komutunu calistir. Dosya MD5 ve byte sayisi gecmeden candidate uretme. OS Open UPRN sadece supporting source; AddressBase/HMLR NPS yerine gecmez. verified_publish_allowed=false, db_write=false, production_deploy=false, migration_ddl=false, fake_data=false kalacak.
+
+queue_status_not_modified=true
+runner_started=false
+current_task_written=false
+official_reference_os_open_uprn=https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn
+official_reference_os_download_api=https://osdatahub.os.uk/docs/downloads/technicalSpecification
