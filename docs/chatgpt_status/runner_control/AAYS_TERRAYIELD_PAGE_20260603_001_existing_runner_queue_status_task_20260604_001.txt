@@ -1,0 +1,59 @@
+page_key=AAYS_TERRAYIELD_PAGE_20260603_001
+task_id=AAYS_TERRAYIELD_EXISTING_RUNNER_QUEUE_STATUS_20260604_001
+status=QUEUED_FOR_EXISTING_SINGLE_RUNNER
+protocol=TEK_RUNNER_QUEUE_LOCK_KISA_CEVAP
+
+IMPORTANT:
+- Do not start a new global runner.
+- Use only existing runner path: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+- Do not overwrite current-task.json.
+- If an active running task exists, leave this task pending.
+- Use queue-lock before touching queue files.
+- Write results as readable .txt reports.
+
+requested_action:
+1. Existing runner should create a queue/status report from local machine.
+2. Report must be written to:
+   - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\AAYS_TERRAYIELD_PAGE_20260603_001_queue_status_latest.txt
+   - C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\runner_outputs\aays-queue-status-latest.txt
+3. Report fields must include:
+   - stamp
+   - runner_count for portable_queue_runner.ps1
+   - queue_root
+   - pending_count
+   - running_count
+   - done_count
+   - failed_count
+   - newest_pending_task
+   - newest_running_task
+   - newest_done_task
+   - newest_failed_task
+   - whether aays-stepwise-final-summary-latest.txt exists
+   - whether aays-stepwise-current-step-latest.txt exists
+   - overall_progress=99
+   - bridge_progress_estimate=39
+   - db_write=false
+   - deploy=false
+   - migration=false
+   - fake_data=false
+   - destructive_git=false
+4. Sync/push the report to chatgpt-local-sync if possible.
+5. If GitHub push fails, write exact failure to:
+   docs/chatgpt_status/runner_outputs/aays-queue-status-sync-failure-latest.txt
+
+known_current_state:
+- latest_output overall_progress=99
+- runtime_verified_source_count=1
+- missing_region_asset_count=7
+- Wales and Scotland still not runtime verified
+- temp storage report has been successfully visible on GitHub
+
+safety:
+db_write=false
+deploy=false
+migration=false
+fake_data=false
+destructive_git=false
+git_reset_hard=false
+git_clean=false
+force_push=false
