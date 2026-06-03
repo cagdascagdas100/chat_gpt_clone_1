@@ -1,12 +1,12 @@
 ﻿PAGE_KEY=AAYS_SAME_PROJECT_NEW_PAGE
-RUN_AT=2026-06-03T15:51:31.4500931+03:00
-MODE=V16_ICON_CONTEXT_READ_ONLY
+TASK_ID=
+MODE=V16_ICON_CONTEXT_READONLY_QUEUE
+RUN_AT=2026-06-03T17:05:41.3509214+03:00
 app_js_exists=True
 hight_differance_icon_exists=True
 app_has_hight_differance_png=False
 MATCH_CONTEXT_BEGIN
--- match_line=39 text=  const showTopographyOverlayEl = document.getElementById("showTopographyOverlay");
-000034:   const workspaceCollapseBtnEl = document.getElementById("workspaceCollapseBtn");
+-- anchor_line=39
 000035:   const workspaceExpandBtnEl = document.getElementById("workspaceExpandBtn");
 000036:   const mapStageEl = document.querySelector(".map-stage");
 000037:   const showPoiPointsEl = document.getElementById("showPoiPoints");
@@ -20,9 +20,7 @@ MATCH_CONTEXT_BEGIN
 000045:   const facilitiesCategoryFilterEl = document.getElementById("facilitiesCategoryFilter");
 000046:   const scenarioScoreModeEl = document.getElementById("scenarioScoreMode");
 000047:   const facilitiesStatusEl = document.getElementById("facilitiesStatus");
--- end_match_line=39
--- match_line=67 text=  const topographyConfigUrl = new URL(config.topographyOverlayConfigUrl || "./config/topography.overlay.json", window.location.href);
-000062: 
+-- anchor_line=67
 000063:   const protocol = new pmtiles.Protocol();
 000064:   maplibregl.addProtocol("pmtiles", protocol.tile);
 000065: 
@@ -36,9 +34,7 @@ MATCH_CONTEXT_BEGIN
 000073:     }
 000074:   } catch (_error) {
 000075:     topographyOverlayFileConfig = null;
--- end_match_line=67
--- match_line=68 text=  let topographyOverlayFileConfig = null;
-000063:   const protocol = new pmtiles.Protocol();
+-- anchor_line=68
 000064:   maplibregl.addProtocol("pmtiles", protocol.tile);
 000065: 
 000066:   const config = await fetch(configUrl.toString()).then((response) => response.json());
@@ -52,9 +48,7 @@ MATCH_CONTEXT_BEGIN
 000074:   } catch (_error) {
 000075:     topographyOverlayFileConfig = null;
 000076:   }
--- end_match_line=68
--- match_line=70 text=    const response = await fetch(topographyConfigUrl.toString());
-000065: 
+-- anchor_line=70
 000066:   const config = await fetch(configUrl.toString()).then((response) => response.json());
 000067:   const topographyConfigUrl = new URL(config.topographyOverlayConfigUrl || "./config/topography.overlay.json", window.location.href);
 000068:   let topographyOverlayFileConfig = null;
@@ -68,9 +62,7 @@ MATCH_CONTEXT_BEGIN
 000076:   }
 000077:   config.topographyOverlay = mergeTopographyOverlayConfig(topographyOverlayFileConfig, config.topographyOverlay);
 000078:   const topographyOverlayConfig = normalizeTopographyOverlayConfig(config.topographyOverlay);
--- end_match_line=70
--- match_line=72 text=      topographyOverlayFileConfig = await response.json();
-000067:   const topographyConfigUrl = new URL(config.topographyOverlayConfigUrl || "./config/topography.overlay.json", window.location.href);
+-- anchor_line=72
 000068:   let topographyOverlayFileConfig = null;
 000069:   try {
 000070:     const response = await fetch(topographyConfigUrl.toString());
@@ -84,9 +76,7 @@ MATCH_CONTEXT_BEGIN
 000078:   const topographyOverlayConfig = normalizeTopographyOverlayConfig(config.topographyOverlay);
 000079:   const futureGrowthConfigUrl = new URL(config.futureGrowthLayerConfigUrl || "./config/future-growth-layer.json", window.location.href);
 000080:   let futureGrowthOverlayFileConfig = null;
--- end_match_line=72
--- match_line=75 text=    topographyOverlayFileConfig = null;
-000070:     const response = await fetch(topographyConfigUrl.toString());
+-- anchor_line=75
 000071:     if (response.ok) {
 000072:       topographyOverlayFileConfig = await response.json();
 000073:     }
@@ -100,9 +90,7 @@ MATCH_CONTEXT_BEGIN
 000081:   try {
 000082:     const response = await fetch(futureGrowthConfigUrl.toString());
 000083:     if (response.ok) {
--- end_match_line=75
--- match_line=77 text=  config.topographyOverlay = mergeTopographyOverlayConfig(topographyOverlayFileConfig, config.topographyOverlay);
-000072:       topographyOverlayFileConfig = await response.json();
+-- anchor_line=77
 000073:     }
 000074:   } catch (_error) {
 000075:     topographyOverlayFileConfig = null;
@@ -116,9 +104,7 @@ MATCH_CONTEXT_BEGIN
 000083:     if (response.ok) {
 000084:       futureGrowthOverlayFileConfig = await response.json();
 000085:     }
--- end_match_line=77
--- match_line=78 text=  const topographyOverlayConfig = normalizeTopographyOverlayConfig(config.topographyOverlay);
-000073:     }
+-- anchor_line=78
 000074:   } catch (_error) {
 000075:     topographyOverlayFileConfig = null;
 000076:   }
@@ -132,9 +118,7 @@ MATCH_CONTEXT_BEGIN
 000084:       futureGrowthOverlayFileConfig = await response.json();
 000085:     }
 000086:   } catch (_error) {
--- end_match_line=78
--- match_line=120 text=  const AAYS_TOPOGRAPHY_TILE_REQUIRED = String(window.AAYS_TOPOGRAPHY_TILE_REQUIRED ?? config.aaysTopographyTileRequired ?? "false")
-000115:   const apiBackoffState = new Map();
+-- anchor_line=120
 000116:   const apiInFlightRequests = new Map();
 000117:   const layerRuntimeWarningGate = new Map();
 000118:   const AAYS_REAL_DATA_ONLY = String(window.AAYS_REAL_DATA_ONLY ?? config.aaysRealDataOnly ?? "true").trim().toLowerCase() !== "false";
@@ -148,9 +132,7 @@ MATCH_CONTEXT_BEGIN
 000126:   let localCombinedSalesFallbackPromise = null;
 000127: 
 000128:   const TURKISH_MOJIBAKE_REPLACEMENTS = [
--- end_match_line=120
--- match_line=382 text=  const TOPOGRAPHY_SOURCE_ID = "topography-overlay";
-000377:     direct: "Direct ve Calisan",
+-- anchor_line=382
 000378:     qa_direct_hit: "QA-backed Direct Hit",
 000379:     qa_snapped_hit: "QA-backed Snapped Parcel",
 000380:     qa_nearby_only: "QA-backed Nearest Parcel",
@@ -164,9 +146,7 @@ MATCH_CONTEXT_BEGIN
 000388:   const FUTURE_GROWTH_POINT_LAYER_ID = "future-growth-point";
 000389:   const FUTURE_GROWTH_VECTOR_SOURCE_ID = "future-growth-vector";
 000390:   const FUTURE_GROWTH_VECTOR_LAYER_ID = "future-growth-vector-line";
--- end_match_line=382
--- match_line=383 text=  const TOPOGRAPHY_LAYER_ID = "topography-overlay";
-000378:     qa_direct_hit: "QA-backed Direct Hit",
+-- anchor_line=383
 000379:     qa_snapped_hit: "QA-backed Snapped Parcel",
 000380:     qa_nearby_only: "QA-backed Nearest Parcel",
 000381:   };
@@ -180,9 +160,7 @@ MATCH_CONTEXT_BEGIN
 000389:   const FUTURE_GROWTH_VECTOR_SOURCE_ID = "future-growth-vector";
 000390:   const FUTURE_GROWTH_VECTOR_LAYER_ID = "future-growth-vector-line";
 000391:   const PLANNED_ASSETS_SOURCE_ID = "planned-assets-overlay-source";
--- end_match_line=383
--- match_line=384 text=  const TOPOGRAPHY_CONTROL_MODE = "__topography_overlay_toggle__";
-000379:     qa_snapped_hit: "QA-backed Snapped Parcel",
+-- anchor_line=384
 000380:     qa_nearby_only: "QA-backed Nearest Parcel",
 000381:   };
 000382:   const TOPOGRAPHY_SOURCE_ID = "topography-overlay";
@@ -196,9 +174,7 @@ MATCH_CONTEXT_BEGIN
 000390:   const FUTURE_GROWTH_VECTOR_LAYER_ID = "future-growth-vector-line";
 000391:   const PLANNED_ASSETS_SOURCE_ID = "planned-assets-overlay-source";
 000392:   const PLANNED_ASSETS_FILL_LAYER_ID = "planned-assets-overlay-fill";
--- end_match_line=384
--- match_line=400 text=  const TOPOGRAPHY_LOOKUP_BASE_URL = "http://127.0.0.1:8765/lookup?parcel_id=";
-000395:   const FUTURE_GROWTH_CONTROL_MODE = "__future_growth_toggle__";
+-- anchor_line=400
 000396:   const HISTORY_CONTROL_MODE = "__historic_sales_toggle__";
 000397:   const SECURITY_CONTROL_MODE = "__security_overlay_toggle__";
 000398:   const EMISSIONS_CONTROL_MODE = "__gas_emissions_toggle__";
@@ -212,9 +188,7 @@ MATCH_CONTEXT_BEGIN
 000406:   function mergeTopographyOverlayConfig(baseConfig, overrideConfig) {
 000407:     const base = baseConfig && typeof baseConfig === "object" ? baseConfig : {};
 000408:     const override = overrideConfig && typeof overrideConfig === "object" ? overrideConfig : {};
--- end_match_line=400
--- match_line=406 text=  function mergeTopographyOverlayConfig(baseConfig, overrideConfig) {
-000401:   const MAP_MODE_VISIBILITY_STORAGE_KEY = "aays.mapMode.visibleModes.v2";
+-- anchor_line=406
 000402:   const MAP_VIEW_STATE_STORAGE_KEY = "aays.map.lastView.v1";
 000403:   const PRESERVE_VIEW_ON_LAYER_TOGGLE = config.preserveViewOnLayerToggle !== false;
 000404:   const SHOW_DEBUG_BADGE = Boolean(config.showDebugBadge);
@@ -228,9 +202,7 @@ MATCH_CONTEXT_BEGIN
 000412:   function normalizeTopographyOverlayConfig(rawConfig) {
 000413:     const raw = rawConfig && typeof rawConfig === "object" ? rawConfig : {};
 000414:     const sourceType = String(raw.sourceType || "raster").toLowerCase() === "raster-dem" ? "raster-dem" : "raster";
--- end_match_line=406
--- match_line=412 text=  function normalizeTopographyOverlayConfig(rawConfig) {
-000407:     const base = baseConfig && typeof baseConfig === "object" ? baseConfig : {};
+-- anchor_line=412
 000408:     const override = overrideConfig && typeof overrideConfig === "object" ? overrideConfig : {};
 000409:     return { ...base, ...override };
 000410:   }
@@ -244,9 +216,7 @@ MATCH_CONTEXT_BEGIN
 000418:     const opacity = Number(raw.opacity);
 000419:     const contrast = Number(raw.contrast);
 000420:     const saturation = Number(raw.saturation);
--- end_match_line=412
--- match_line=4432 text=  let currentTopographyVisible = topographyOverlayConfig.defaultVisible && hasTopographyOverlayData();
-004427:   let landIntelligenceState = createLandIntelligenceState(null);
+-- anchor_line=4432
 004428:   const landIntelligenceCache = new Map();
 004429:   let pendingSwitch = null;
 004430:   let currentBaseMapMode = "standard";
@@ -260,9 +230,7 @@ MATCH_CONTEXT_BEGIN
 004438:   let workspacePanelCollapsed = false;
 004439:   let currentPoiPointsVisible = true;
 004440:   let currentPoiLinesVisible = true;
--- end_match_line=4432
--- match_line=4433 text=  let topographyTileRuntimeAvailable = null;
-004428:   const landIntelligenceCache = new Map();
+-- anchor_line=4433
 004429:   let pendingSwitch = null;
 004430:   let currentBaseMapMode = "standard";
 004431:   let currentMapViewMode = "parcel";
@@ -276,9 +244,7 @@ MATCH_CONTEXT_BEGIN
 004439:   let currentPoiPointsVisible = true;
 004440:   let currentPoiLinesVisible = true;
 004441:   let currentFacilitiesVisible = false;
--- end_match_line=4433
--- match_line=4434 text=  let topographyTileRuntimeCheckedAt = 0;
-004429:   let pendingSwitch = null;
+-- anchor_line=4434
 004430:   let currentBaseMapMode = "standard";
 004431:   let currentMapViewMode = "parcel";
 004432:   let currentTopographyVisible = topographyOverlayConfig.defaultVisible && hasTopographyOverlayData();
@@ -292,9 +258,7 @@ MATCH_CONTEXT_BEGIN
 004440:   let currentPoiLinesVisible = true;
 004441:   let currentFacilitiesVisible = false;
 004442:   let currentFacilitiesCategory = "all";
--- end_match_line=4434
--- match_line=4435 text=  let topographyTileRuntimeLastWarnedAt = 0;
-004430:   let currentBaseMapMode = "standard";
+-- anchor_line=4435
 004431:   let currentMapViewMode = "parcel";
 004432:   let currentTopographyVisible = topographyOverlayConfig.defaultVisible && hasTopographyOverlayData();
 004433:   let topographyTileRuntimeAvailable = null;
@@ -308,9 +272,7 @@ MATCH_CONTEXT_BEGIN
 004441:   let currentFacilitiesVisible = false;
 004442:   let currentFacilitiesCategory = "all";
 004443:   let currentScenarioScoreMode = "none";
--- end_match_line=4435
--- match_line=4637 text=  let topographyModeButton = null;
-004632:   const worthMenuButtons = new Map();
+-- anchor_line=4637
 004633:   let mapModeControlInstance = null;
 004634:   let worthModeButton = null;
 004635:   let worthMenuEl = null;
@@ -324,9 +286,7 @@ MATCH_CONTEXT_BEGIN
 004643:   let internetModeButton = null;
 004644:   let currentSecurityVisible = false;
 004645:   const parcelElevationCache = new Map();
--- end_match_line=4637
--- match_line=4645 text=  const parcelElevationCache = new Map();
-004640:   let historicSalesModeButton = null;
+-- anchor_line=4645
 004641:   let emissionsModeButton = null;
 004642:   let securityModeButton = null;
 004643:   let internetModeButton = null;
@@ -340,9 +300,7 @@ MATCH_CONTEXT_BEGIN
 004651:   const LAND_SALE_OVERVIEW_HIDE_ZOOM = Number(config.landSaleOverviewHideZoom || 24);
 004652:   const LAND_SIGNAL_FETCH_LIMIT = Number(config.landSignalFetchLimit || 900);
 004653:   const LAND_MARKET_FETCH_LIMIT = Number(config.landMarketFetchLimit || (PERF_PROFILE_AGGRESSIVE ? 1200 : 2000));
--- end_match_line=4645
--- match_line=4764 text=      mode: TOPOGRAPHY_CONTROL_MODE,
-004759:       label: "Gecmis satis katmani",
+-- anchor_line=4764
 004760:       iconUrl: "./assets/icons/map-mode-sales.svg",
 004761:       historyToggle: true,
 004762:     },
@@ -356,9 +314,7 @@ MATCH_CONTEXT_BEGIN
 004770:       mode: FUTURE_GROWTH_CONTROL_MODE,
 004771:       label: "Gelecek Gelisim katmani",
 004772:       iconUrl: "./assets/icons/terrayield_icons/future_growing_prognose.png",
--- end_match_line=4764
--- match_line=4804 text=    { id: "topography", label: "Yukselti", iconUrl: "./assets/icons/worth-waves.svg" },
-004799:   ];
+-- anchor_line=4804
 004800:   const MAP_WORTH_MENU_ITEMS = [
 004801:     { id: "planned", label: "Planlanan", iconUrl: "./assets/icons/worth-factory.svg" },
 004802:     { id: "cost", label: "Maliyet", iconUrl: "./assets/icons/worth-money.svg" },
@@ -372,9 +328,7 @@ MATCH_CONTEXT_BEGIN
 004810:   ];
 004811: 
 004812:   function getDefaultMapModeControlModes() {
--- end_match_line=4804
--- match_line=5162 text=    const topographySuffix = hasTopographyOverlayData()
-005157:       setSanitizedText(coverageStateEl, coverageState.isWithinSupportedArea ? `${coverageLabel} ici` : `${coverageLabel} disi`);
+-- anchor_line=5162
 005158:       coverageStateEl.dataset.coverage = coverageState.isWithinSupportedArea ? "inside" : "outside";
 005159:     }
 005160:     setSanitizedText(parcelThresholdEl, String(config.parcelMinZoom));
@@ -388,9 +342,7 @@ MATCH_CONTEXT_BEGIN
 005168:     setSanitizedText(renderModeEl, currentBaseMapMode === "satellite"
 005169:       ? `MapLibre + PMTiles + GeoJSON + Satellite Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`
 005170:       : `MapLibre + PMTiles + GeoJSON Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`);
--- end_match_line=5162
--- match_line=5163 text=      ? ` Ã‚Â· Topografya ${currentTopographyVisible ? "acik" : "kapali"}`
-005158:       coverageStateEl.dataset.coverage = coverageState.isWithinSupportedArea ? "inside" : "outside";
+-- anchor_line=5163
 005159:     }
 005160:     setSanitizedText(parcelThresholdEl, String(config.parcelMinZoom));
 005161:     setSanitizedText(poiThresholdEl, String(config.poiMinZoom));
@@ -404,9 +356,7 @@ MATCH_CONTEXT_BEGIN
 005169:       ? `MapLibre + PMTiles + GeoJSON + Satellite Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`
 005170:       : `MapLibre + PMTiles + GeoJSON Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`);
 005171:     updateDebug();
--- end_match_line=5163
--- match_line=5169 text=      ? `MapLibre + PMTiles + GeoJSON + Satellite Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`
-005164:       : "";
+-- anchor_line=5169
 005165:     const futureGrowthSuffix = futureGrowthLayerConfig.enabled
 005166:       ? ` Ã‚Â· Gelecek Gelisim ${currentFutureGrowthVisible ? "acik" : "kapali"}`
 005167:       : "";
@@ -420,9 +370,7 @@ MATCH_CONTEXT_BEGIN
 005175:     return { type: "FeatureCollection", features: [] };
 005176:   }
 005177: 
--- end_match_line=5169
--- match_line=5170 text=      : `MapLibre + PMTiles + GeoJSON Ã‚Â· ${getMapViewModeLabel(currentMapViewMode)}${topographySuffix}${futureGrowthSuffix}`);
-005165:     const futureGrowthSuffix = futureGrowthLayerConfig.enabled
+-- anchor_line=5170
 005166:       ? ` Ã‚Â· Gelecek Gelisim ${currentFutureGrowthVisible ? "acik" : "kapali"}`
 005167:       : "";
 005168:     setSanitizedText(renderModeEl, currentBaseMapMode === "satellite"
@@ -436,9 +384,7 @@ MATCH_CONTEXT_BEGIN
 005176:   }
 005177: 
 005178:   function coerceSalesLayerBoolean(value) {
--- end_match_line=5170
--- match_line=5322 text=  function hasTopographyOverlayData() {
-005317:     if (source && source.setData) {
+-- anchor_line=5322
 005318:       source.setData(data || createEmptyFeatureCollection());
 005319:     }
 005320:   }
@@ -452,9 +398,7 @@ MATCH_CONTEXT_BEGIN
 005328:   function getTopographyTileRuntimeProbeUrl() {
 005329:     const tileUrl = Array.isArray(topographyOverlayConfig.tiles) ? topographyOverlayConfig.tiles[0] : "";
 005330:     if (typeof tileUrl !== "string" || !tileUrl) return null;
--- end_match_line=5322
--- match_line=5323 text=    if (!topographyOverlayConfig.enabled) return false;
-005318:       source.setData(data || createEmptyFeatureCollection());
+-- anchor_line=5323
 005319:     }
 005320:   }
 005321: 
@@ -468,9 +412,7 @@ MATCH_CONTEXT_BEGIN
 005329:     const tileUrl = Array.isArray(topographyOverlayConfig.tiles) ? topographyOverlayConfig.tiles[0] : "";
 005330:     if (typeof tileUrl !== "string" || !tileUrl) return null;
 005331:     if (!/127\.0\.0\.1:8099|localhost:8099/i.test(tileUrl)) return null;
--- end_match_line=5323
--- match_line=5324 text=    if (topographyOverlayConfig.url) return true;
-005319:     }
+-- anchor_line=5324
 005320:   }
 005321: 
 005322:   function hasTopographyOverlayData() {
@@ -484,9 +426,7 @@ MATCH_CONTEXT_BEGIN
 005330:     if (typeof tileUrl !== "string" || !tileUrl) return null;
 005331:     if (!/127\.0\.0\.1:8099|localhost:8099/i.test(tileUrl)) return null;
 005332:     return tileUrl
--- end_match_line=5324
--- match_line=5325 text=    return Array.isArray(topographyOverlayConfig.tiles) && topographyOverlayConfig.tiles.length > 0;
-005320:   }
+-- anchor_line=5325
 005321: 
 005322:   function hasTopographyOverlayData() {
 005323:     if (!topographyOverlayConfig.enabled) return false;
@@ -500,9 +440,7 @@ MATCH_CONTEXT_BEGIN
 005331:     if (!/127\.0\.0\.1:8099|localhost:8099/i.test(tileUrl)) return null;
 005332:     return tileUrl
 005333:       .replace("{z}", "10")
--- end_match_line=5325
--- match_line=5328 text=  function getTopographyTileRuntimeProbeUrl() {
-005323:     if (!topographyOverlayConfig.enabled) return false;
+-- anchor_line=5328
 005324:     if (topographyOverlayConfig.url) return true;
 005325:     return Array.isArray(topographyOverlayConfig.tiles) && topographyOverlayConfig.tiles.length > 0;
 005326:   }
@@ -516,9 +454,7 @@ MATCH_CONTEXT_BEGIN
 005334:       .replace("{x}", "512")
 005335:       .replace("{y}", "340");
 005336:   }
--- end_match_line=5328
--- match_line=5329 text=    const tileUrl = Array.isArray(topographyOverlayConfig.tiles) ? topographyOverlayConfig.tiles[0] : "";
-005324:     if (topographyOverlayConfig.url) return true;
+-- anchor_line=5329
 005325:     return Array.isArray(topographyOverlayConfig.tiles) && topographyOverlayConfig.tiles.length > 0;
 005326:   }
 005327: 
@@ -532,9 +468,7 @@ MATCH_CONTEXT_BEGIN
 005335:       .replace("{y}", "340");
 005336:   }
 005337: 
--- end_match_line=5329
--- match_line=5338 text=  async function probeTopographyTileRuntime(force = false) {
-005333:       .replace("{z}", "10")
+-- anchor_line=5338
 005334:       .replace("{x}", "512")
 005335:       .replace("{y}", "340");
 005336:   }
@@ -548,9 +482,7 @@ MATCH_CONTEXT_BEGIN
 005344:     }
 005345:     const nowTs = Date.now();
 005346:     if (!force && Number.isFinite(topographyTileRuntimeCheckedAt) && (nowTs - topographyTileRuntimeCheckedAt) < 25000 && topographyTileRuntimeAvailable !== null) {
--- end_match_line=5338
--- match_line=5339 text=    const probeUrl = getTopographyTileRuntimeProbeUrl();
-005334:       .replace("{x}", "512")
+-- anchor_line=5339
 005335:       .replace("{y}", "340");
 005336:   }
 005337: 
@@ -564,9 +496,7 @@ MATCH_CONTEXT_BEGIN
 005345:     const nowTs = Date.now();
 005346:     if (!force && Number.isFinite(topographyTileRuntimeCheckedAt) && (nowTs - topographyTileRuntimeCheckedAt) < 25000 && topographyTileRuntimeAvailable !== null) {
 005347:       return Boolean(topographyTileRuntimeAvailable);
--- end_match_line=5339
--- match_line=5341 text=      topographyTileRuntimeAvailable = true;
-005336:   }
+-- anchor_line=5341
 005337: 
 005338:   async function probeTopographyTileRuntime(force = false) {
 005339:     const probeUrl = getTopographyTileRuntimeProbeUrl();
@@ -580,9 +510,7 @@ MATCH_CONTEXT_BEGIN
 005347:       return Boolean(topographyTileRuntimeAvailable);
 005348:     }
 005349:     const controller = new AbortController();
--- end_match_line=5341
--- match_line=5342 text=      topographyTileRuntimeCheckedAt = Date.now();
-005337: 
+-- anchor_line=5342
 005338:   async function probeTopographyTileRuntime(force = false) {
 005339:     const probeUrl = getTopographyTileRuntimeProbeUrl();
 005340:     if (!probeUrl) {
@@ -596,9 +524,7 @@ MATCH_CONTEXT_BEGIN
 005348:     }
 005349:     const controller = new AbortController();
 005350:     const timer = window.setTimeout(() => controller.abort(), 1800);
--- end_match_line=5342
--- match_line=5346 text=    if (!force && Number.isFinite(topographyTileRuntimeCheckedAt) && (nowTs - topographyTileRuntimeCheckedAt) < 25000 && topographyTileRuntimeAvailable !== null) {
-005341:       topographyTileRuntimeAvailable = true;
+-- anchor_line=5346
 005342:       topographyTileRuntimeCheckedAt = Date.now();
 005343:       return true;
 005344:     }
@@ -612,9 +538,7 @@ MATCH_CONTEXT_BEGIN
 005352:       const response = await fetch(probeUrl, {
 005353:         method: "GET",
 005354:         signal: controller.signal,
--- end_match_line=5346
--- match_line=5347 text=      return Boolean(topographyTileRuntimeAvailable);
-005342:       topographyTileRuntimeCheckedAt = Date.now();
+-- anchor_line=5347
 005343:       return true;
 005344:     }
 005345:     const nowTs = Date.now();
@@ -628,9 +552,7 @@ MATCH_CONTEXT_BEGIN
 005353:         method: "GET",
 005354:         signal: controller.signal,
 005355:       });
--- end_match_line=5347
--- match_line=5356 text=      topographyTileRuntimeAvailable = response.ok;
-005351:     try {
+-- anchor_line=5356
 005352:       const response = await fetch(probeUrl, {
 005353:         method: "GET",
 005354:         signal: controller.signal,
@@ -644,9 +566,7 @@ MATCH_CONTEXT_BEGIN
 005362:     }
 005363:     return Boolean(topographyTileRuntimeAvailable);
 005364:   }
--- end_match_line=5356
--- match_line=5358 text=      topographyTileRuntimeAvailable = false;
-005353:         method: "GET",
+-- anchor_line=5358
 005354:         signal: controller.signal,
 005355:       });
 005356:       topographyTileRuntimeAvailable = response.ok;
@@ -660,9 +580,7 @@ MATCH_CONTEXT_BEGIN
 005364:   }
 005365: 
 005366:   function resolveTopographyInsertBeforeLayerId() {
--- end_match_line=5358
--- match_line=5361 text=      topographyTileRuntimeCheckedAt = Date.now();
-005356:       topographyTileRuntimeAvailable = response.ok;
+-- anchor_line=5361
 005357:     } catch (_error) {
 005358:       topographyTileRuntimeAvailable = false;
 005359:     } finally {
@@ -676,9 +594,7 @@ MATCH_CONTEXT_BEGIN
 005367:     const preferredLayer = topographyOverlayConfig.insertBeforeLayerId;
 005368:     if (preferredLayer && map?.getLayer(preferredLayer)) {
 005369:       return preferredLayer;
--- end_match_line=5361
--- match_line=5363 text=    return Boolean(topographyTileRuntimeAvailable);
-005358:       topographyTileRuntimeAvailable = false;
+-- anchor_line=5363
 005359:     } finally {
 005360:       window.clearTimeout(timer);
 005361:       topographyTileRuntimeCheckedAt = Date.now();
@@ -692,9 +608,7 @@ MATCH_CONTEXT_BEGIN
 005369:       return preferredLayer;
 005370:     }
 005371:     for (const region of config.regions) {
--- end_match_line=5363
--- match_line=5366 text=  function resolveTopographyInsertBeforeLayerId() {
-005361:       topographyTileRuntimeCheckedAt = Date.now();
+-- anchor_line=5366
 005362:     }
 005363:     return Boolean(topographyTileRuntimeAvailable);
 005364:   }
@@ -708,9 +622,7 @@ MATCH_CONTEXT_BEGIN
 005372:       const parcelLayerId = getParcelFillLayerId(region);
 005373:       if (map?.getLayer(parcelLayerId)) {
 005374:         return parcelLayerId;
--- end_match_line=5366
--- match_line=5367 text=    const preferredLayer = topographyOverlayConfig.insertBeforeLayerId;
-005362:     }
+-- anchor_line=5367
 005363:     return Boolean(topographyTileRuntimeAvailable);
 005364:   }
 005365: 
@@ -724,9 +636,7 @@ MATCH_CONTEXT_BEGIN
 005373:       if (map?.getLayer(parcelLayerId)) {
 005374:         return parcelLayerId;
 005375:       }
--- end_match_line=5367
--- match_line=5380 text=  function syncTopographyControls() {
-005375:       }
+-- anchor_line=5380
 005376:     }
 005377:     return null;
 005378:   }
@@ -740,9 +650,7 @@ MATCH_CONTEXT_BEGIN
 005386: 
 005387:   function addTopographyOverlayLayer() {
 005388:     if (!map || !hasTopographyOverlayData()) {
--- end_match_line=5380
--- match_line=5381 text=    if (showTopographyOverlayEl) {
-005376:     }
+-- anchor_line=5381
 005377:     return null;
 005378:   }
 005379: 
@@ -756,9 +664,7 @@ MATCH_CONTEXT_BEGIN
 005387:   function addTopographyOverlayLayer() {
 005388:     if (!map || !hasTopographyOverlayData()) {
 005389:       syncTopographyControls();
--- end_match_line=5381
--- match_line=5382 text=      showTopographyOverlayEl.checked = Boolean(currentTopographyVisible && hasTopographyOverlayData());
-005377:     return null;
+-- anchor_line=5382
 005378:   }
 005379: 
 005380:   function syncTopographyControls() {
@@ -772,9 +678,7 @@ MATCH_CONTEXT_BEGIN
 005388:     if (!map || !hasTopographyOverlayData()) {
 005389:       syncTopographyControls();
 005390:       updateMapModeControlState();
--- end_match_line=5382
--- match_line=5383 text=      showTopographyOverlayEl.disabled = !hasTopographyOverlayData();
-005378:   }
+-- anchor_line=5383
 005379: 
 005380:   function syncTopographyControls() {
 005381:     if (showTopographyOverlayEl) {
@@ -788,9 +692,7 @@ MATCH_CONTEXT_BEGIN
 005389:       syncTopographyControls();
 005390:       updateMapModeControlState();
 005391:       return;
--- end_match_line=5383
--- match_line=5387 text=  function addTopographyOverlayLayer() {
-005382:       showTopographyOverlayEl.checked = Boolean(currentTopographyVisible && hasTopographyOverlayData());
+-- anchor_line=5387
 005383:       showTopographyOverlayEl.disabled = !hasTopographyOverlayData();
 005384:     }
 005385:   }
@@ -804,9 +706,7 @@ MATCH_CONTEXT_BEGIN
 005393:     if (!map.getSource(TOPOGRAPHY_SOURCE_ID)) {
 005394:       const sourceDef = {
 005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
--- end_match_line=5387
--- match_line=5388 text=    if (!map || !hasTopographyOverlayData()) {
-005383:       showTopographyOverlayEl.disabled = !hasTopographyOverlayData();
+-- anchor_line=5388
 005384:     }
 005385:   }
 005386: 
@@ -820,9 +720,7 @@ MATCH_CONTEXT_BEGIN
 005394:       const sourceDef = {
 005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
 005396:       };
--- end_match_line=5388
--- match_line=5389 text=      syncTopographyControls();
-005384:     }
+-- anchor_line=5389
 005385:   }
 005386: 
 005387:   function addTopographyOverlayLayer() {
@@ -836,9 +734,7 @@ MATCH_CONTEXT_BEGIN
 005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
 005396:       };
 005397:       if (topographyOverlayConfig.url) {
--- end_match_line=5389
--- match_line=5393 text=    if (!map.getSource(TOPOGRAPHY_SOURCE_ID)) {
-005388:     if (!map || !hasTopographyOverlayData()) {
+-- anchor_line=5393
 005389:       syncTopographyControls();
 005390:       updateMapModeControlState();
 005391:       return;
@@ -852,9 +748,7 @@ MATCH_CONTEXT_BEGIN
 005399:       } else {
 005400:         sourceDef.tiles = topographyOverlayConfig.tiles;
 005401:       }
--- end_match_line=5393
--- match_line=5395 text=        type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
-005390:       updateMapModeControlState();
+-- anchor_line=5395
 005391:       return;
 005392:     }
 005393:     if (!map.getSource(TOPOGRAPHY_SOURCE_ID)) {
@@ -868,9 +762,7 @@ MATCH_CONTEXT_BEGIN
 005401:       }
 005402:       if (topographyOverlayConfig.sourceType === "raster-dem") {
 005403:         sourceDef.encoding = topographyOverlayConfig.encoding;
--- end_match_line=5395
--- match_line=5397 text=      if (topographyOverlayConfig.url) {
-005392:     }
+-- anchor_line=5397
 005393:     if (!map.getSource(TOPOGRAPHY_SOURCE_ID)) {
 005394:       const sourceDef = {
 005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
@@ -884,9 +776,7 @@ MATCH_CONTEXT_BEGIN
 005403:         sourceDef.encoding = topographyOverlayConfig.encoding;
 005404:       }
 005405:       if (Number.isFinite(topographyOverlayConfig.tileSize)) {
--- end_match_line=5397
--- match_line=5398 text=        sourceDef.url = topographyOverlayConfig.url;
-005393:     if (!map.getSource(TOPOGRAPHY_SOURCE_ID)) {
+-- anchor_line=5398
 005394:       const sourceDef = {
 005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
 005396:       };
@@ -900,9 +790,7 @@ MATCH_CONTEXT_BEGIN
 005404:       }
 005405:       if (Number.isFinite(topographyOverlayConfig.tileSize)) {
 005406:         sourceDef.tileSize = topographyOverlayConfig.tileSize;
--- end_match_line=5398
--- match_line=5400 text=        sourceDef.tiles = topographyOverlayConfig.tiles;
-005395:         type: topographyOverlayConfig.sourceType === "raster-dem" ? "raster-dem" : "raster",
+-- anchor_line=5400
 005396:       };
 005397:       if (topographyOverlayConfig.url) {
 005398:         sourceDef.url = topographyOverlayConfig.url;
@@ -916,9 +804,7 @@ MATCH_CONTEXT_BEGIN
 005406:         sourceDef.tileSize = topographyOverlayConfig.tileSize;
 005407:       }
 005408:       if (Number.isFinite(topographyOverlayConfig.minzoom)) {
--- end_match_line=5400
--- match_line=5402 text=      if (topographyOverlayConfig.sourceType === "raster-dem") {
-005397:       if (topographyOverlayConfig.url) {
+-- anchor_line=5402
 005398:         sourceDef.url = topographyOverlayConfig.url;
 005399:       } else {
 005400:         sourceDef.tiles = topographyOverlayConfig.tiles;
@@ -932,9 +818,7 @@ MATCH_CONTEXT_BEGIN
 005408:       if (Number.isFinite(topographyOverlayConfig.minzoom)) {
 005409:         sourceDef.minzoom = topographyOverlayConfig.minzoom;
 005410:       }
--- end_match_line=5402
--- match_line=5403 text=        sourceDef.encoding = topographyOverlayConfig.encoding;
-005398:         sourceDef.url = topographyOverlayConfig.url;
+-- anchor_line=5403
 005399:       } else {
 005400:         sourceDef.tiles = topographyOverlayConfig.tiles;
 005401:       }
@@ -948,9 +832,7 @@ MATCH_CONTEXT_BEGIN
 005409:         sourceDef.minzoom = topographyOverlayConfig.minzoom;
 005410:       }
 005411:       if (Number.isFinite(topographyOverlayConfig.maxzoom)) {
--- end_match_line=5403
--- match_line=5405 text=      if (Number.isFinite(topographyOverlayConfig.tileSize)) {
-005400:         sourceDef.tiles = topographyOverlayConfig.tiles;
+-- anchor_line=5405
 005401:       }
 005402:       if (topographyOverlayConfig.sourceType === "raster-dem") {
 005403:         sourceDef.encoding = topographyOverlayConfig.encoding;
@@ -964,9 +846,7 @@ MATCH_CONTEXT_BEGIN
 005411:       if (Number.isFinite(topographyOverlayConfig.maxzoom)) {
 005412:         sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
 005413:       }
--- end_match_line=5405
--- match_line=5406 text=        sourceDef.tileSize = topographyOverlayConfig.tileSize;
-005401:       }
+-- anchor_line=5406
 005402:       if (topographyOverlayConfig.sourceType === "raster-dem") {
 005403:         sourceDef.encoding = topographyOverlayConfig.encoding;
 005404:       }
@@ -980,9 +860,7 @@ MATCH_CONTEXT_BEGIN
 005412:         sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
 005413:       }
 005414:       if (topographyOverlayConfig.attribution) {
--- end_match_line=5406
--- match_line=5408 text=      if (Number.isFinite(topographyOverlayConfig.minzoom)) {
-005403:         sourceDef.encoding = topographyOverlayConfig.encoding;
+-- anchor_line=5408
 005404:       }
 005405:       if (Number.isFinite(topographyOverlayConfig.tileSize)) {
 005406:         sourceDef.tileSize = topographyOverlayConfig.tileSize;
@@ -996,9 +874,7 @@ MATCH_CONTEXT_BEGIN
 005414:       if (topographyOverlayConfig.attribution) {
 005415:         sourceDef.attribution = topographyOverlayConfig.attribution;
 005416:       }
--- end_match_line=5408
--- match_line=5409 text=        sourceDef.minzoom = topographyOverlayConfig.minzoom;
-005404:       }
+-- anchor_line=5409
 005405:       if (Number.isFinite(topographyOverlayConfig.tileSize)) {
 005406:         sourceDef.tileSize = topographyOverlayConfig.tileSize;
 005407:       }
@@ -1012,9 +888,7 @@ MATCH_CONTEXT_BEGIN
 005415:         sourceDef.attribution = topographyOverlayConfig.attribution;
 005416:       }
 005417:       map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
--- end_match_line=5409
--- match_line=5411 text=      if (Number.isFinite(topographyOverlayConfig.maxzoom)) {
-005406:         sourceDef.tileSize = topographyOverlayConfig.tileSize;
+-- anchor_line=5411
 005407:       }
 005408:       if (Number.isFinite(topographyOverlayConfig.minzoom)) {
 005409:         sourceDef.minzoom = topographyOverlayConfig.minzoom;
@@ -1028,9 +902,7 @@ MATCH_CONTEXT_BEGIN
 005417:       map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
 005418:     }
 005419:     if (!map.getLayer(TOPOGRAPHY_LAYER_ID)) {
--- end_match_line=5411
--- match_line=5412 text=        sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
-005407:       }
+-- anchor_line=5412
 005408:       if (Number.isFinite(topographyOverlayConfig.minzoom)) {
 005409:         sourceDef.minzoom = topographyOverlayConfig.minzoom;
 005410:       }
@@ -1044,9 +916,7 @@ MATCH_CONTEXT_BEGIN
 005418:     }
 005419:     if (!map.getLayer(TOPOGRAPHY_LAYER_ID)) {
 005420:       const layerDef = topographyOverlayConfig.sourceType === "raster-dem"
--- end_match_line=5412
--- match_line=5414 text=      if (topographyOverlayConfig.attribution) {
-005409:         sourceDef.minzoom = topographyOverlayConfig.minzoom;
+-- anchor_line=5414
 005410:       }
 005411:       if (Number.isFinite(topographyOverlayConfig.maxzoom)) {
 005412:         sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
@@ -1060,9 +930,7 @@ MATCH_CONTEXT_BEGIN
 005420:       const layerDef = topographyOverlayConfig.sourceType === "raster-dem"
 005421:         ? {
 005422:             id: TOPOGRAPHY_LAYER_ID,
--- end_match_line=5414
--- match_line=5415 text=        sourceDef.attribution = topographyOverlayConfig.attribution;
-005410:       }
+-- anchor_line=5415
 005411:       if (Number.isFinite(topographyOverlayConfig.maxzoom)) {
 005412:         sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
 005413:       }
@@ -1076,9 +944,7 @@ MATCH_CONTEXT_BEGIN
 005421:         ? {
 005422:             id: TOPOGRAPHY_LAYER_ID,
 005423:             type: "hillshade",
--- end_match_line=5415
--- match_line=5417 text=      map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
-005412:         sourceDef.maxzoom = topographyOverlayConfig.maxzoom;
+-- anchor_line=5417
 005413:       }
 005414:       if (topographyOverlayConfig.attribution) {
 005415:         sourceDef.attribution = topographyOverlayConfig.attribution;
@@ -1092,9 +958,7 @@ MATCH_CONTEXT_BEGIN
 005423:             type: "hillshade",
 005424:             source: TOPOGRAPHY_SOURCE_ID,
 005425:             layout: {
--- end_match_line=5417
--- match_line=5419 text=    if (!map.getLayer(TOPOGRAPHY_LAYER_ID)) {
-005414:       if (topographyOverlayConfig.attribution) {
+-- anchor_line=5419
 005415:         sourceDef.attribution = topographyOverlayConfig.attribution;
 005416:       }
 005417:       map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
@@ -1108,9 +972,7 @@ MATCH_CONTEXT_BEGIN
 005425:             layout: {
 005426:               visibility: currentTopographyVisible ? "visible" : "none",
 005427:             },
--- end_match_line=5419
--- match_line=5420 text=      const layerDef = topographyOverlayConfig.sourceType === "raster-dem"
-005415:         sourceDef.attribution = topographyOverlayConfig.attribution;
+-- anchor_line=5420
 005416:       }
 005417:       map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
 005418:     }
@@ -1124,9 +986,7 @@ MATCH_CONTEXT_BEGIN
 005426:               visibility: currentTopographyVisible ? "visible" : "none",
 005427:             },
 005428:             paint: {
--- end_match_line=5420
--- match_line=5422 text=            id: TOPOGRAPHY_LAYER_ID,
-005417:       map.addSource(TOPOGRAPHY_SOURCE_ID, sourceDef);
+-- anchor_line=5422
 005418:     }
 005419:     if (!map.getLayer(TOPOGRAPHY_LAYER_ID)) {
 005420:       const layerDef = topographyOverlayConfig.sourceType === "raster-dem"
@@ -1140,9 +1000,7 @@ MATCH_CONTEXT_BEGIN
 005428:             paint: {
 005429:               "hillshade-exaggeration": topographyOverlayConfig.exaggeration,
 005430:               "hillshade-shadow-color": "#2f2f35",
--- end_match_line=5422
--- match_line=5424 text=            source: TOPOGRAPHY_SOURCE_ID,
-005419:     if (!map.getLayer(TOPOGRAPHY_LAYER_ID)) {
+-- anchor_line=5424
 005420:       const layerDef = topographyOverlayConfig.sourceType === "raster-dem"
 005421:         ? {
 005422:             id: TOPOGRAPHY_LAYER_ID,
@@ -1156,9 +1014,7 @@ MATCH_CONTEXT_BEGIN
 005430:               "hillshade-shadow-color": "#2f2f35",
 005431:               "hillshade-highlight-color": "#ffe3b5",
 005432:               "hillshade-accent-color": "#ffd37f",
--- end_match_line=5424
--- match_line=5426 text=              visibility: currentTopographyVisible ? "visible" : "none",
-005421:         ? {
+-- anchor_line=5426
 005422:             id: TOPOGRAPHY_LAYER_ID,
 005423:             type: "hillshade",
 005424:             source: TOPOGRAPHY_SOURCE_ID,
@@ -1172,9 +1028,7 @@ MATCH_CONTEXT_BEGIN
 005432:               "hillshade-accent-color": "#ffd37f",
 005433:             },
 005434:           }
--- end_match_line=5426
--- match_line=5429 text=              "hillshade-exaggeration": topographyOverlayConfig.exaggeration,
-005424:             source: TOPOGRAPHY_SOURCE_ID,
+-- anchor_line=5429
 005425:             layout: {
 005426:               visibility: currentTopographyVisible ? "visible" : "none",
 005427:             },
@@ -1188,9 +1042,7 @@ MATCH_CONTEXT_BEGIN
 005435:         : {
 005436:             id: TOPOGRAPHY_LAYER_ID,
 005437:             type: "raster",
--- end_match_line=5429
--- match_line=5436 text=            id: TOPOGRAPHY_LAYER_ID,
-005431:               "hillshade-highlight-color": "#ffe3b5",
+-- anchor_line=5436
 005432:               "hillshade-accent-color": "#ffd37f",
 005433:             },
 005434:           }
@@ -1204,9 +1056,7 @@ MATCH_CONTEXT_BEGIN
 005442:             paint: {
 005443:               "raster-opacity": topographyOverlayConfig.opacity,
 005444:               "raster-saturation": topographyOverlayConfig.saturation,
--- end_match_line=5436
--- match_line=5438 text=            source: TOPOGRAPHY_SOURCE_ID,
-005433:             },
+-- anchor_line=5438
 005434:           }
 005435:         : {
 005436:             id: TOPOGRAPHY_LAYER_ID,
@@ -1220,9 +1070,7 @@ MATCH_CONTEXT_BEGIN
 005444:               "raster-saturation": topographyOverlayConfig.saturation,
 005445:               "raster-contrast": topographyOverlayConfig.contrast,
 005446:               "raster-resampling": "linear",
--- end_match_line=5438
--- match_line=5440 text=              visibility: currentTopographyVisible ? "visible" : "none",
-005435:         : {
+-- anchor_line=5440
 005436:             id: TOPOGRAPHY_LAYER_ID,
 005437:             type: "raster",
 005438:             source: TOPOGRAPHY_SOURCE_ID,
@@ -1236,9 +1084,7 @@ MATCH_CONTEXT_BEGIN
 005446:               "raster-resampling": "linear",
 005447:             },
 005448:           };
--- end_match_line=5440
--- match_line=5443 text=              "raster-opacity": topographyOverlayConfig.opacity,
-005438:             source: TOPOGRAPHY_SOURCE_ID,
+-- anchor_line=5443
 005439:             layout: {
 005440:               visibility: currentTopographyVisible ? "visible" : "none",
 005441:             },
@@ -1252,9 +1098,7 @@ MATCH_CONTEXT_BEGIN
 005449:       const beforeLayerId = resolveTopographyInsertBeforeLayerId();
 005450:       if (beforeLayerId) {
 005451:         map.addLayer(layerDef, beforeLayerId);
--- end_match_line=5443
--- match_line=5444 text=              "raster-saturation": topographyOverlayConfig.saturation,
-005439:             layout: {
+-- anchor_line=5444
 005440:               visibility: currentTopographyVisible ? "visible" : "none",
 005441:             },
 005442:             paint: {
@@ -1268,9 +1112,7 @@ MATCH_CONTEXT_BEGIN
 005450:       if (beforeLayerId) {
 005451:         map.addLayer(layerDef, beforeLayerId);
 005452:       } else {
--- end_match_line=5444
--- match_line=5445 text=              "raster-contrast": topographyOverlayConfig.contrast,
-005440:               visibility: currentTopographyVisible ? "visible" : "none",
+-- anchor_line=5445
 005441:             },
 005442:             paint: {
 005443:               "raster-opacity": topographyOverlayConfig.opacity,
@@ -1284,9 +1126,7 @@ MATCH_CONTEXT_BEGIN
 005451:         map.addLayer(layerDef, beforeLayerId);
 005452:       } else {
 005453:         map.addLayer(layerDef);
--- end_match_line=5445
--- match_line=5449 text=      const beforeLayerId = resolveTopographyInsertBeforeLayerId();
-005444:               "raster-saturation": topographyOverlayConfig.saturation,
+-- anchor_line=5449
 005445:               "raster-contrast": topographyOverlayConfig.contrast,
 005446:               "raster-resampling": "linear",
 005447:             },
@@ -1300,9 +1140,7 @@ MATCH_CONTEXT_BEGIN
 005455:     }
 005456:     syncTopographyControls();
 005457:     updateMapModeControlState();
--- end_match_line=5449
--- match_line=5456 text=    syncTopographyControls();
-005451:         map.addLayer(layerDef, beforeLayerId);
+-- anchor_line=5456
 005452:       } else {
 005453:         map.addLayer(layerDef);
 005454:       }
@@ -1316,9 +1154,7 @@ MATCH_CONTEXT_BEGIN
 005462:       map.setLayoutProperty(TOPOGRAPHY_LAYER_ID, "visibility", currentTopographyVisible ? "visible" : "none");
 005463:     }
 005464:     syncTopographyControls();
--- end_match_line=5456
--- match_line=5460 text=  function updateTopographyLayerVisibility() {
-005455:     }
+-- anchor_line=5460
 005456:     syncTopographyControls();
 005457:     updateMapModeControlState();
 005458:   }
@@ -1332,9 +1168,7 @@ MATCH_CONTEXT_BEGIN
 005466:   }
 005467: 
 005468:   function setTopographyOverlayVisibility(nextVisible, options = {}) {
--- end_match_line=5460
--- match_line=5461 text=    if (map?.getLayer(TOPOGRAPHY_LAYER_ID)) {
-005456:     syncTopographyControls();
+-- anchor_line=5461
 005457:     updateMapModeControlState();
 005458:   }
 005459: 
@@ -1348,9 +1182,7 @@ MATCH_CONTEXT_BEGIN
 005467: 
 005468:   function setTopographyOverlayVisibility(nextVisible, options = {}) {
 005469:     const available = hasTopographyOverlayData();
--- end_match_line=5461
--- match_line=5462 text=      map.setLayoutProperty(TOPOGRAPHY_LAYER_ID, "visibility", currentTopographyVisible ? "visible" : "none");
-005457:     updateMapModeControlState();
+-- anchor_line=5462
 005458:   }
 005459: 
 005460:   function updateTopographyLayerVisibility() {
@@ -1364,9 +1196,7 @@ MATCH_CONTEXT_BEGIN
 005468:   function setTopographyOverlayVisibility(nextVisible, options = {}) {
 005469:     const available = hasTopographyOverlayData();
 005470:     if (!available) {
--- end_match_line=5462
--- match_line=5464 text=    syncTopographyControls();
-005459: 
+-- anchor_line=5464
 005460:   function updateTopographyLayerVisibility() {
 005461:     if (map?.getLayer(TOPOGRAPHY_LAYER_ID)) {
 005462:       map.setLayoutProperty(TOPOGRAPHY_LAYER_ID, "visibility", currentTopographyVisible ? "visible" : "none");
@@ -1380,9 +1210,7 @@ MATCH_CONTEXT_BEGIN
 005470:     if (!available) {
 005471:       currentTopographyVisible = false;
 005472:       syncTopographyControls();
--- end_match_line=5464
--- match_line=5468 text=  function setTopographyOverlayVisibility(nextVisible, options = {}) {
-005463:     }
+-- anchor_line=5468
 005464:     syncTopographyControls();
 005465:     updateMapModeControlState();
 005466:   }
@@ -1396,9 +1224,7 @@ MATCH_CONTEXT_BEGIN
 005474:       if (!options.silent) {
 005475:         showStatus("Topografya katmani icin veri tanimi bulunamadi. Once config/topography.overlay.json dosyasini doldurun.", true);
 005476:       }
--- end_match_line=5468
--- match_line=5469 text=    const available = hasTopographyOverlayData();
-005464:     syncTopographyControls();
+-- anchor_line=5469
 005465:     updateMapModeControlState();
 005466:   }
 005467: 
@@ -1412,9 +1238,7 @@ MATCH_CONTEXT_BEGIN
 005475:         showStatus("Topografya katmani icin veri tanimi bulunamadi. Once config/topography.overlay.json dosyasini doldurun.", true);
 005476:       }
 005477:       updateStats();
--- end_match_line=5469
--- match_line=5471 text=      currentTopographyVisible = false;
-005466:   }
+-- anchor_line=5471
 005467: 
 005468:   function setTopographyOverlayVisibility(nextVisible, options = {}) {
 005469:     const available = hasTopographyOverlayData();
@@ -1428,9 +1252,7 @@ MATCH_CONTEXT_BEGIN
 005477:       updateStats();
 005478:       return;
 005479:     }
--- end_match_line=5471
--- match_line=5472 text=      syncTopographyControls();
-005467: 
+-- anchor_line=5472
 005468:   function setTopographyOverlayVisibility(nextVisible, options = {}) {
 005469:     const available = hasTopographyOverlayData();
 005470:     if (!available) {
@@ -1444,9 +1266,7 @@ MATCH_CONTEXT_BEGIN
 005478:       return;
 005479:     }
 005480:     currentTopographyVisible = Boolean(nextVisible);
--- end_match_line=5472
--- match_line=5475 text=        showStatus("Topografya katmani icin veri tanimi bulunamadi. Once config/topography.overlay.json dosyasini doldurun.", true);
-005470:     if (!available) {
+-- anchor_line=5475
 005471:       currentTopographyVisible = false;
 005472:       syncTopographyControls();
 005473:       updateMapModeControlState();
@@ -1460,9 +1280,7 @@ MATCH_CONTEXT_BEGIN
 005481:     addTopographyOverlayLayer();
 005482:     updateTopographyLayerVisibility();
 005483:     updateStats();
--- end_match_line=5475
--- match_line=5480 text=    currentTopographyVisible = Boolean(nextVisible);
-005475:         showStatus("Topografya katmani icin veri tanimi bulunamadi. Once config/topography.overlay.json dosyasini doldurun.", true);
+-- anchor_line=5480
 005476:       }
 005477:       updateStats();
 005478:       return;
@@ -1476,9 +1294,7 @@ MATCH_CONTEXT_BEGIN
 005486:     }
 005487:   }
 005488: 
--- end_match_line=5480
--- match_line=5481 text=    addTopographyOverlayLayer();
-005476:       }
+-- anchor_line=5481
 005477:       updateStats();
 005478:       return;
 005479:     }
@@ -1492,9 +1308,7 @@ MATCH_CONTEXT_BEGIN
 005487:   }
 005488: 
 005489:   async function toggleTopographyOverlay() {
--- end_match_line=5481
--- match_line=5482 text=    updateTopographyLayerVisibility();
-005477:       updateStats();
+-- anchor_line=5482
 005478:       return;
 005479:     }
 005480:     currentTopographyVisible = Boolean(nextVisible);
@@ -1508,9 +1322,7 @@ MATCH_CONTEXT_BEGIN
 005488: 
 005489:   async function toggleTopographyOverlay() {
 005490:     const nextVisible = !currentTopographyVisible;
--- end_match_line=5482
--- match_line=5485 text=      showStatus(`Topografya katmani ${currentTopographyVisible ? "acildi" : "kapatildi"}.`);
-005480:     currentTopographyVisible = Boolean(nextVisible);
+-- anchor_line=5485
 005481:     addTopographyOverlayLayer();
 005482:     updateTopographyLayerVisibility();
 005483:     updateStats();
@@ -1524,9 +1336,7 @@ MATCH_CONTEXT_BEGIN
 005491:     if (nextVisible) {
 005492:       const runtimeAvailable = await probeTopographyTileRuntime(false);
 005493:       if (!runtimeAvailable) {
--- end_match_line=5485
--- match_line=5489 text=  async function toggleTopographyOverlay() {
-005484:     if (!options.silent) {
+-- anchor_line=5489
 005485:       showStatus(`Topografya katmani ${currentTopographyVisible ? "acildi" : "kapatildi"}.`);
 005486:     }
 005487:   }
@@ -1540,9 +1350,7 @@ MATCH_CONTEXT_BEGIN
 005495:         updateTopographyLayerVisibility();
 005496:         if (!AAYS_TOPOGRAPHY_TILE_REQUIRED) {
 005497:           if ((Date.now() - topographyTileRuntimeLastWarnedAt) > 5000) {
--- end_match_line=5489
--- match_line=5490 text=    const nextVisible = !currentTopographyVisible;
-005485:       showStatus(`Topografya katmani ${currentTopographyVisible ? "acildi" : "kapatildi"}.`);
+-- anchor_line=5490
 005486:     }
 005487:   }
 005488: 
@@ -1556,9 +1364,7 @@ MATCH_CONTEXT_BEGIN
 005496:         if (!AAYS_TOPOGRAPHY_TILE_REQUIRED) {
 005497:           if ((Date.now() - topographyTileRuntimeLastWarnedAt) > 5000) {
 005498:             showStatus("Topografya overlay runtime (8099) su an ulasilamiyor. Yukselti popup verisi devam eder.", true);
--- end_match_line=5490
--- match_line=5492 text=      const runtimeAvailable = await probeTopographyTileRuntime(false);
-005487:   }
+-- anchor_line=5492
 005488: 
 005489:   async function toggleTopographyOverlay() {
 005490:     const nextVisible = !currentTopographyVisible;
@@ -1572,9 +1378,7 @@ MATCH_CONTEXT_BEGIN
 005498:             showStatus("Topografya overlay runtime (8099) su an ulasilamiyor. Yukselti popup verisi devam eder.", true);
 005499:             topographyTileRuntimeLastWarnedAt = Date.now();
 005500:           }
--- end_match_line=5492
--- match_line=5494 text=        currentTopographyVisible = false;
-005489:   async function toggleTopographyOverlay() {
+-- anchor_line=5494
 005490:     const nextVisible = !currentTopographyVisible;
 005491:     if (nextVisible) {
 005492:       const runtimeAvailable = await probeTopographyTileRuntime(false);
@@ -1588,9 +1392,7 @@ MATCH_CONTEXT_BEGIN
 005500:           }
 005501:           updateStats();
 005502:           return;
--- end_match_line=5494
--- match_line=5495 text=        updateTopographyLayerVisibility();
-005490:     const nextVisible = !currentTopographyVisible;
+-- anchor_line=5495
 005491:     if (nextVisible) {
 005492:       const runtimeAvailable = await probeTopographyTileRuntime(false);
 005493:       if (!runtimeAvailable) {
@@ -1604,9 +1406,7 @@ MATCH_CONTEXT_BEGIN
 005501:           updateStats();
 005502:           return;
 005503:         }
--- end_match_line=5495
--- match_line=5496 text=        if (!AAYS_TOPOGRAPHY_TILE_REQUIRED) {
-005491:     if (nextVisible) {
+-- anchor_line=5496
 005492:       const runtimeAvailable = await probeTopographyTileRuntime(false);
 005493:       if (!runtimeAvailable) {
 005494:         currentTopographyVisible = false;
@@ -1620,9 +1420,7 @@ MATCH_CONTEXT_BEGIN
 005502:           return;
 005503:         }
 005504:         showStatus("Topografya runtime zorunlu ama su an ulasilamiyor (8099).", true);
--- end_match_line=5496
--- match_line=5497 text=          if ((Date.now() - topographyTileRuntimeLastWarnedAt) > 5000) {
-005492:       const runtimeAvailable = await probeTopographyTileRuntime(false);
+-- anchor_line=5497
 005493:       if (!runtimeAvailable) {
 005494:         currentTopographyVisible = false;
 005495:         updateTopographyLayerVisibility();
@@ -1636,9 +1434,7 @@ MATCH_CONTEXT_BEGIN
 005503:         }
 005504:         showStatus("Topografya runtime zorunlu ama su an ulasilamiyor (8099).", true);
 005505:         updateStats();
--- end_match_line=5497
--- match_line=5498 text=            showStatus("Topografya overlay runtime (8099) su an ulasilamiyor. Yukselti popup verisi devam eder.", true);
-005493:       if (!runtimeAvailable) {
+-- anchor_line=5498
 005494:         currentTopographyVisible = false;
 005495:         updateTopographyLayerVisibility();
 005496:         if (!AAYS_TOPOGRAPHY_TILE_REQUIRED) {
@@ -1652,9 +1448,7 @@ MATCH_CONTEXT_BEGIN
 005504:         showStatus("Topografya runtime zorunlu ama su an ulasilamiyor (8099).", true);
 005505:         updateStats();
 005506:         return;
--- end_match_line=5498
--- match_line=5499 text=            topographyTileRuntimeLastWarnedAt = Date.now();
-005494:         currentTopographyVisible = false;
+-- anchor_line=5499
 005495:         updateTopographyLayerVisibility();
 005496:         if (!AAYS_TOPOGRAPHY_TILE_REQUIRED) {
 005497:           if ((Date.now() - topographyTileRuntimeLastWarnedAt) > 5000) {
@@ -1668,9 +1462,7 @@ MATCH_CONTEXT_BEGIN
 005505:         updateStats();
 005506:         return;
 005507:       }
--- end_match_line=5499
--- match_line=5509 text=    setTopographyOverlayVisibility(nextVisible);
-005504:         showStatus("Topografya runtime zorunlu ama su an ulasilamiyor (8099).", true);
+-- anchor_line=5509
 005505:         updateStats();
 005506:         return;
 005507:       }
@@ -1684,9 +1476,7 @@ MATCH_CONTEXT_BEGIN
 005515:       acc.replaceAll(`{${key}}`, encodeURIComponent(String(value ?? "")))
 005516:     ), template);
 005517:     if (!rendered) return `${landIntelligenceApiBaseUrl}/api/future-growth/layer`;
--- end_match_line=5509
--- match_line=6600 text=  function getParcelElevationFromFeature(feature) {
-006595:   }
+-- anchor_line=6600
 006596: 
 006597:   function toggleInternetLayer() {
 006598:     void setInternetLayerVisibility(!isInternetLayerVisible());
@@ -1700,9 +1490,7 @@ MATCH_CONTEXT_BEGIN
 006606:       props.mean_elevation_m,
 006607:       props.dem_elevation_m,
 006608:       props.topography_elevation_m,
--- end_match_line=6600
--- match_line=6603 text=      props.center_elevation_m,
-006598:     void setInternetLayerVisibility(!isInternetLayerVisible());
+-- anchor_line=6603
 006599:   }
 006600:   function getParcelElevationFromFeature(feature) {
 006601:     const props = feature?.properties || {};
@@ -1716,9 +1504,7 @@ MATCH_CONTEXT_BEGIN
 006609:     ];
 006610:     for (const candidate of valueCandidates) {
 006611:       const numeric = Number(candidate);
--- end_match_line=6603
--- match_line=6604 text=      props.elevation_m,
-006599:   }
+-- anchor_line=6604
 006600:   function getParcelElevationFromFeature(feature) {
 006601:     const props = feature?.properties || {};
 006602:     const valueCandidates = [
@@ -1732,9 +1518,7 @@ MATCH_CONTEXT_BEGIN
 006610:     for (const candidate of valueCandidates) {
 006611:       const numeric = Number(candidate);
 006612:       if (Number.isFinite(numeric)) return numeric;
--- end_match_line=6604
--- match_line=6605 text=      props.avg_elevation_m,
-006600:   function getParcelElevationFromFeature(feature) {
+-- anchor_line=6605
 006601:     const props = feature?.properties || {};
 006602:     const valueCandidates = [
 006603:       props.center_elevation_m,
@@ -1748,9 +1532,7 @@ MATCH_CONTEXT_BEGIN
 006611:       const numeric = Number(candidate);
 006612:       if (Number.isFinite(numeric)) return numeric;
 006613:     }
--- end_match_line=6605
--- match_line=6606 text=      props.mean_elevation_m,
-006601:     const props = feature?.properties || {};
+-- anchor_line=6606
 006602:     const valueCandidates = [
 006603:       props.center_elevation_m,
 006604:       props.elevation_m,
@@ -1764,9 +1546,7 @@ MATCH_CONTEXT_BEGIN
 006612:       if (Number.isFinite(numeric)) return numeric;
 006613:     }
 006614:     return null;
--- end_match_line=6606
--- match_line=6607 text=      props.dem_elevation_m,
-006602:     const valueCandidates = [
+-- anchor_line=6607
 006603:       props.center_elevation_m,
 006604:       props.elevation_m,
 006605:       props.avg_elevation_m,
@@ -1780,9 +1560,7 @@ MATCH_CONTEXT_BEGIN
 006613:     }
 006614:     return null;
 006615:   }
--- end_match_line=6607
--- match_line=6608 text=      props.topography_elevation_m,
-006603:       props.center_elevation_m,
+-- anchor_line=6608
 006604:       props.elevation_m,
 006605:       props.avg_elevation_m,
 006606:       props.mean_elevation_m,
@@ -1796,9 +1574,7 @@ MATCH_CONTEXT_BEGIN
 006614:     return null;
 006615:   }
 006616: 
--- end_match_line=6608
--- match_line=6617 text=  function getParcelElevationCacheKey(feature) {
-006612:       if (Number.isFinite(numeric)) return numeric;
+-- anchor_line=6617
 006613:     }
 006614:     return null;
 006615:   }
@@ -1812,9 +1588,7 @@ MATCH_CONTEXT_BEGIN
 006623:       || props.PARCEL_ID
 006624:       || props.parcel_ref
 006625:       || props.inspire_id
--- end_match_line=6617
--- match_line=6630 text=  function getFeatureCenterForTopographyLookup(feature) {
-006625:       || props.inspire_id
+-- anchor_line=6630
 006626:       || ""
 006627:     ).trim();
 006628:   }
@@ -1828,9 +1602,7 @@ MATCH_CONTEXT_BEGIN
 006636:       const lon = Number(lonCandidates[i]);
 006637:       if (Number.isFinite(lat) && Number.isFinite(lon)) {
 006638:         return { lat, lon };
--- end_match_line=6630
--- match_line=6648 text=  async function fetchParcelElevationForPopup(feature) {
-006643:       return { lat: center.lat, lon: center.lng };
+-- anchor_line=6648
 006644:     }
 006645:     return null;
 006646:   }
@@ -1844,9 +1616,7 @@ MATCH_CONTEXT_BEGIN
 006654:     if (center) {
 006655:       url += `&lat=${encodeURIComponent(center.lat)}&lon=${encodeURIComponent(center.lon)}`;
 006656:     }
--- end_match_line=6648
--- match_line=6649 text=    const cacheKey = getParcelElevationCacheKey(feature);
-006644:     }
+-- anchor_line=6649
 006645:     return null;
 006646:   }
 006647: 
@@ -1860,9 +1630,7 @@ MATCH_CONTEXT_BEGIN
 006655:       url += `&lat=${encodeURIComponent(center.lat)}&lon=${encodeURIComponent(center.lon)}`;
 006656:     }
 006657:     try {
--- end_match_line=6649
--- match_line=6651 text=    if (parcelElevationCache.has(cacheKey)) return;
-006646:   }
+-- anchor_line=6651
 006647: 
 006648:   async function fetchParcelElevationForPopup(feature) {
 006649:     const cacheKey = getParcelElevationCacheKey(feature);
@@ -1876,9 +1644,7 @@ MATCH_CONTEXT_BEGIN
 006657:     try {
 006658:       const response = await fetch(url);
 006659:       if (!response.ok) return;
--- end_match_line=6651
--- match_line=6652 text=    const center = getFeatureCenterForTopographyLookup(feature);
-006647: 
+-- anchor_line=6652
 006648:   async function fetchParcelElevationForPopup(feature) {
 006649:     const cacheKey = getParcelElevationCacheKey(feature);
 006650:     if (!cacheKey) return;
@@ -1892,9 +1658,7 @@ MATCH_CONTEXT_BEGIN
 006658:       const response = await fetch(url);
 006659:       if (!response.ok) return;
 006660:       const payload = await response.json();
--- end_match_line=6652
--- match_line=6653 text=    let url = `${TOPOGRAPHY_LOOKUP_BASE_URL}${encodeURIComponent(cacheKey)}`;
-006648:   async function fetchParcelElevationForPopup(feature) {
+-- anchor_line=6653
 006649:     const cacheKey = getParcelElevationCacheKey(feature);
 006650:     if (!cacheKey) return;
 006651:     if (parcelElevationCache.has(cacheKey)) return;
@@ -1908,9 +1672,7 @@ MATCH_CONTEXT_BEGIN
 006659:       if (!response.ok) return;
 006660:       const payload = await response.json();
 006661:       const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
--- end_match_line=6653
--- match_line=6662 text=      const elevation = Number(data?.center_elevation_m);
-006657:     try {
+-- anchor_line=6662
 006658:       const response = await fetch(url);
 006659:       if (!response.ok) return;
 006660:       const payload = await response.json();
@@ -1924,9 +1686,7 @@ MATCH_CONTEXT_BEGIN
 006668:     }
 006669:   }
 006670: 
--- end_match_line=6662
--- match_line=6663 text=      if (Number.isFinite(elevation)) {
-006658:       const response = await fetch(url);
+-- anchor_line=6663
 006659:       if (!response.ok) return;
 006660:       const payload = await response.json();
 006661:       const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
@@ -1940,9 +1700,7 @@ MATCH_CONTEXT_BEGIN
 006669:   }
 006670: 
 006671:   function setBaseMapMode(nextMode) {
--- end_match_line=6663
--- match_line=6664 text=        parcelElevationCache.set(cacheKey, elevation);
-006659:       if (!response.ok) return;
+-- anchor_line=6664
 006660:       const payload = await response.json();
 006661:       const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
 006662:       const elevation = Number(data?.center_elevation_m);
@@ -1956,9 +1714,7 @@ MATCH_CONTEXT_BEGIN
 006670: 
 006671:   function setBaseMapMode(nextMode) {
 006672:     currentBaseMapMode = nextMode === "satellite" ? "satellite" : "standard";
--- end_match_line=6664
--- match_line=6977 text=      topography: () => {
-006972:         showStatus("Maliyet menusu acildi.");
+-- anchor_line=6977
 006973:       },
 006974:       compare: () => {
 006975:         setEmissionsLayerVisibility(!isEmissionsLayerVisible(), { mode: "apartment" });
@@ -1972,9 +1728,7 @@ MATCH_CONTEXT_BEGIN
 006983:       internet: () => {
 006984:         void toggleInternetLayer();
 006985:       },
--- end_match_line=6977
--- match_line=6978 text=        void toggleTopographyOverlay();
-006973:       },
+-- anchor_line=6978
 006974:       compare: () => {
 006975:         setEmissionsLayerVisibility(!isEmissionsLayerVisible(), { mode: "apartment" });
 006976:       },
@@ -1988,9 +1742,7 @@ MATCH_CONTEXT_BEGIN
 006984:         void toggleInternetLayer();
 006985:       },
 006986:       contact: () => {
--- end_match_line=6978
--- match_line=7026 text=    if (topographyModeButton) {
-007021:       historicSalesModeButton.classList.remove("is-placeholder");
+-- anchor_line=7026
 007022:       historicSalesModeButton.title = currentHistoricSalesVisible
 007023:         ? "Gecmis satis katmanini kapat"
 007024:         : "Gecmis satis katmanini ac";
@@ -2004,9 +1756,7 @@ MATCH_CONTEXT_BEGIN
 007032:         : "Topografya katmani icin once config/topography.overlay.json tanimi gerekli";
 007033:     }
 007034:     if (plannedModeButton) {
--- end_match_line=7026
--- match_line=7027 text=      const available = hasTopographyOverlayData();
-007022:       historicSalesModeButton.title = currentHistoricSalesVisible
+-- anchor_line=7027
 007023:         ? "Gecmis satis katmanini kapat"
 007024:         : "Gecmis satis katmanini ac";
 007025:     }
@@ -2020,9 +1770,7 @@ MATCH_CONTEXT_BEGIN
 007033:     }
 007034:     if (plannedModeButton) {
 007035:       plannedModeButton.classList.toggle("is-active", currentPlannedAssetsVisible);
--- end_match_line=7027
--- match_line=7028 text=      topographyModeButton.classList.toggle("is-active", available && currentTopographyVisible);
-007023:         ? "Gecmis satis katmanini kapat"
+-- anchor_line=7028
 007024:         : "Gecmis satis katmanini ac";
 007025:     }
 007026:     if (topographyModeButton) {
@@ -2036,9 +1784,7 @@ MATCH_CONTEXT_BEGIN
 007034:     if (plannedModeButton) {
 007035:       plannedModeButton.classList.toggle("is-active", currentPlannedAssetsVisible);
 007036:       plannedModeButton.classList.remove("is-placeholder");
--- end_match_line=7028
--- match_line=7029 text=      topographyModeButton.classList.toggle("is-placeholder", !available);
-007024:         : "Gecmis satis katmanini ac";
+-- anchor_line=7029
 007025:     }
 007026:     if (topographyModeButton) {
 007027:       const available = hasTopographyOverlayData();
@@ -2052,9 +1798,7 @@ MATCH_CONTEXT_BEGIN
 007035:       plannedModeButton.classList.toggle("is-active", currentPlannedAssetsVisible);
 007036:       plannedModeButton.classList.remove("is-placeholder");
 007037:       plannedModeButton.title = currentPlannedAssetsVisible
--- end_match_line=7029
--- match_line=7030 text=      topographyModeButton.title = available
-007025:     }
+-- anchor_line=7030
 007026:     if (topographyModeButton) {
 007027:       const available = hasTopographyOverlayData();
 007028:       topographyModeButton.classList.toggle("is-active", available && currentTopographyVisible);
@@ -2068,9 +1812,7 @@ MATCH_CONTEXT_BEGIN
 007036:       plannedModeButton.classList.remove("is-placeholder");
 007037:       plannedModeButton.title = currentPlannedAssetsVisible
 007038:         ? "Planlanan yapi katmanini kapat"
--- end_match_line=7030
--- match_line=7032 text=        : "Topografya katmani icin once config/topography.overlay.json tanimi gerekli";
-007027:       const available = hasTopographyOverlayData();
+-- anchor_line=7032
 007028:       topographyModeButton.classList.toggle("is-active", available && currentTopographyVisible);
 007029:       topographyModeButton.classList.toggle("is-placeholder", !available);
 007030:       topographyModeButton.title = available
@@ -2084,9 +1826,7 @@ MATCH_CONTEXT_BEGIN
 007038:         ? "Planlanan yapi katmanini kapat"
 007039:         : "Planlanan yapi katmanini ac";
 007040:     }
--- end_match_line=7032
--- match_line=7135 text=        topographyModeButton = worthMenuButtons.get("topography") || null;
-007130:           worthMenuEl.appendChild(buttonEl);
+-- anchor_line=7135
 007131:         });
 007132:         container.appendChild(worthMenuEl);
 007133: 
@@ -2100,9 +1840,7 @@ MATCH_CONTEXT_BEGIN
 007141: 
 007142:         updateMapModeControlState();
 007143:         return container;
--- end_match_line=7135
--- match_line=7151 text=        topographyModeButton = null;
-007146:         mapModeButtons.clear();
+-- anchor_line=7151
 007147:         worthMenuButtons.clear();
 007148:         worthModeButton = null;
 007149:         worthMenuEl = null;
@@ -2116,9 +1854,7 @@ MATCH_CONTEXT_BEGIN
 007157:         internetModeButton = null;
 007158:       },
 007159:     };
--- end_match_line=7151
--- match_line=10985 text=    const elevationCacheKey = getParcelElevationCacheKey(feature);
-010980:     const marketListingFeature = isMarketListingFeature(feature);
+-- anchor_line=10985
 010981:     const marketDisplayPolygonSource = feature?.properties?.display_polygon_source || (feature?.properties?.market_listing_source_geometry ? "feed_polygon" : "derived_parcel_geometry");
 010982:     const marketSourceStatus = feature?.properties?.source_polygon_original_site_status || "unknown_not_verified";
 010983:     const marketProvenanceNote = feature?.properties?.polygon_provenance_note || "-";
@@ -2132,9 +1868,7 @@ MATCH_CONTEXT_BEGIN
 010991:     const parcelElevationText = Number.isFinite(parcelElevationMeters)
 010992:       ? `${formatNumber(parcelElevationMeters, 2)} m`
 010993:       : "Veri bekleniyor";
--- end_match_line=10985
--- match_line=10986 text=    const elevationFromFeature = getParcelElevationFromFeature(feature);
-010981:     const marketDisplayPolygonSource = feature?.properties?.display_polygon_source || (feature?.properties?.market_listing_source_geometry ? "feed_polygon" : "derived_parcel_geometry");
+-- anchor_line=10986
 010982:     const marketSourceStatus = feature?.properties?.source_polygon_original_site_status || "unknown_not_verified";
 010983:     const marketProvenanceNote = feature?.properties?.polygon_provenance_note || "-";
 010984:     const marketGeometryQuality = feature?.properties?.geometry_quality_label || "-";
@@ -2148,9 +1882,7 @@ MATCH_CONTEXT_BEGIN
 010992:       ? `${formatNumber(parcelElevationMeters, 2)} m`
 010993:       : "Veri bekleniyor";
 010994: 
--- end_match_line=10986
--- match_line=10987 text=    const elevationFromCache = elevationCacheKey ? parcelElevationCache.get(elevationCacheKey) : null;
-010982:     const marketSourceStatus = feature?.properties?.source_polygon_original_site_status || "unknown_not_verified";
+-- anchor_line=10987
 010983:     const marketProvenanceNote = feature?.properties?.polygon_provenance_note || "-";
 010984:     const marketGeometryQuality = feature?.properties?.geometry_quality_label || "-";
 010985:     const elevationCacheKey = getParcelElevationCacheKey(feature);
@@ -2164,9 +1896,7 @@ MATCH_CONTEXT_BEGIN
 010993:       : "Veri bekleniyor";
 010994: 
 010995:     if (isSalesOnlyModeActive()) {
--- end_match_line=10987
--- match_line=10988 text=    const parcelElevationMeters = Number.isFinite(Number(elevationFromFeature))
-010983:     const marketProvenanceNote = feature?.properties?.polygon_provenance_note || "-";
+-- anchor_line=10988
 010984:     const marketGeometryQuality = feature?.properties?.geometry_quality_label || "-";
 010985:     const elevationCacheKey = getParcelElevationCacheKey(feature);
 010986:     const elevationFromFeature = getParcelElevationFromFeature(feature);
@@ -2180,9 +1910,7 @@ MATCH_CONTEXT_BEGIN
 010994: 
 010995:     if (isSalesOnlyModeActive()) {
 010996:       const history = Array.isArray(cachedState?.history) ? cachedState.history : [];
--- end_match_line=10988
--- match_line=10989 text=      ? Number(elevationFromFeature)
-010984:     const marketGeometryQuality = feature?.properties?.geometry_quality_label || "-";
+-- anchor_line=10989
 010985:     const elevationCacheKey = getParcelElevationCacheKey(feature);
 010986:     const elevationFromFeature = getParcelElevationFromFeature(feature);
 010987:     const elevationFromCache = elevationCacheKey ? parcelElevationCache.get(elevationCacheKey) : null;
@@ -2196,9 +1924,7 @@ MATCH_CONTEXT_BEGIN
 010995:     if (isSalesOnlyModeActive()) {
 010996:       const history = Array.isArray(cachedState?.history) ? cachedState.history : [];
 010997:       const latest = history[0] || null;
--- end_match_line=10989
--- match_line=10990 text=      : (Number.isFinite(Number(elevationFromCache)) ? Number(elevationFromCache) : null);
-010985:     const elevationCacheKey = getParcelElevationCacheKey(feature);
+-- anchor_line=10990
 010986:     const elevationFromFeature = getParcelElevationFromFeature(feature);
 010987:     const elevationFromCache = elevationCacheKey ? parcelElevationCache.get(elevationCacheKey) : null;
 010988:     const parcelElevationMeters = Number.isFinite(Number(elevationFromFeature))
@@ -2212,9 +1938,7 @@ MATCH_CONTEXT_BEGIN
 010996:       const history = Array.isArray(cachedState?.history) ? cachedState.history : [];
 010997:       const latest = history[0] || null;
 010998:       setSanitizedHtml(container, `
--- end_match_line=10990
--- match_line=10991 text=    const parcelElevationText = Number.isFinite(parcelElevationMeters)
-010986:     const elevationFromFeature = getParcelElevationFromFeature(feature);
+-- anchor_line=10991
 010987:     const elevationFromCache = elevationCacheKey ? parcelElevationCache.get(elevationCacheKey) : null;
 010988:     const parcelElevationMeters = Number.isFinite(Number(elevationFromFeature))
 010989:       ? Number(elevationFromFeature)
@@ -2228,9 +1952,7 @@ MATCH_CONTEXT_BEGIN
 010997:       const latest = history[0] || null;
 010998:       setSanitizedHtml(container, `
 010999:         <div class="parcel-popup-title">${parcel.ref}</div>
--- end_match_line=10991
--- match_line=10992 text=      ? `${formatNumber(parcelElevationMeters, 2)} m`
-010987:     const elevationFromCache = elevationCacheKey ? parcelElevationCache.get(elevationCacheKey) : null;
+-- anchor_line=10992
 010988:     const parcelElevationMeters = Number.isFinite(Number(elevationFromFeature))
 010989:       ? Number(elevationFromFeature)
 010990:       : (Number.isFinite(Number(elevationFromCache)) ? Number(elevationFromCache) : null);
@@ -2244,9 +1966,7 @@ MATCH_CONTEXT_BEGIN
 010998:       setSanitizedHtml(container, `
 010999:         <div class="parcel-popup-title">${parcel.ref}</div>
 011000:         <div class="signal-popup-list">
--- end_match_line=10992
--- match_line=11013 text=          <div><strong>Denizden yukseklik:</strong> ${parcelElevationText}</div>
-011008:           <div><strong>Mulkiyet:</strong> ${latest?.tenure || "-"}</div>
+-- anchor_line=11013
 011009:           <div><strong>Alan:</strong> ${latest?.building_area_m2 ? `${formatNumber(Number(latest.building_area_m2), 0)} m2` : (latest?.parcel_area_m2 ? `${formatNumber(Number(latest.parcel_area_m2), 0)} m2` : "-")}</div>
 011010:           <div><strong>m2 Fiyati:</strong> ${latest?.price_per_m2_gbp ? formatGbpPerM2(Number(latest.price_per_m2_gbp)) : "-"}</div>
 011011:           <div><strong>Postcode:</strong> ${latest?.postcode || "-"}</div>
@@ -2260,9 +1980,7 @@ MATCH_CONTEXT_BEGIN
 011019: 
 011020:     setSanitizedHtml(container, `
 011021:       <div class="parcel-popup-title">${parcel.ref}</div>
--- end_match_line=11013
--- match_line=11014 text=        <div class="parcel-popup-row"><span>Bölge ortalamasından fark:</span> <strong>${formatElevationDifferenceFromRegionAverage(parcelElevationCache?.get?.(parcelId) ?? properties?.topography_lookup ?? properties?.elevation_lookup ?? properties)}</strong></div>
-011009:           <div><strong>Alan:</strong> ${latest?.building_area_m2 ? `${formatNumber(Number(latest.building_area_m2), 0)} m2` : (latest?.parcel_area_m2 ? `${formatNumber(Number(latest.parcel_area_m2), 0)} m2` : "-")}</div>
+-- anchor_line=11014
 011010:           <div><strong>m2 Fiyati:</strong> ${latest?.price_per_m2_gbp ? formatGbpPerM2(Number(latest.price_per_m2_gbp)) : "-"}</div>
 011011:           <div><strong>Postcode:</strong> ${latest?.postcode || "-"}</div>
 011012:           <div><strong>Konum:</strong> ${latest?.location_label || parcel.regionLabel || "-"}</div>
@@ -2276,9 +1994,7 @@ MATCH_CONTEXT_BEGIN
 011020:     setSanitizedHtml(container, `
 011021:       <div class="parcel-popup-title">${parcel.ref}</div>
 011022:       <div class="parcel-popup-meta">${Object.entries(feature.properties || {})
--- end_match_line=11014
--- match_line=11034 text=              Denizden yukseklik: ${parcelElevationText}<br />
-011029:           ? `<div class="parcel-popup-meta" style="margin-top:8px;">
+-- anchor_line=11034
 011030:               Official sale: ${filteredView.officialSaleSources.length ? "Var" : "Yok"}<br />
 011031:               Brownfield: ${filteredView.brownfieldSources.length ? "Var" : "Yok"}<br />
 011032:               Market listing: ${filteredView.marketSources.length ? "Var" : "Yok"}<br />
@@ -2292,9 +2008,7 @@ MATCH_CONTEXT_BEGIN
 011040:       ${marketListingFeature ? `<div class="parcel-popup-meta" style="margin-top:8px;">
 011041:             Geometri modu: ${formatMarketPolygonSourceLabel(marketDisplayPolygonSource)}<br />
 011042:             Orijinal site: ${formatMarketOriginalSiteStatusLabel(marketSourceStatus)}<br />
--- end_match_line=11034
--- match_line=11084 text=    const elevationCacheKey = getParcelElevationCacheKey(feature);
-011079:     parcelPopup.on("close", () => {
+-- anchor_line=11084
 011080:       activeParcelPopupState = null;
 011081:       parcelPopup = null;
 011082:     });
@@ -2308,9 +2022,7 @@ MATCH_CONTEXT_BEGIN
 011090:         if (activeKey && activeKey === elevationCacheKey) {
 011091:           refreshActiveParcelPopup();
 011092:         }
--- end_match_line=11084
--- match_line=11085 text=    const hasElevationInFeature = Number.isFinite(getParcelElevationFromFeature(feature));
-011080:       activeParcelPopupState = null;
+-- anchor_line=11085
 011081:       parcelPopup = null;
 011082:     });
 011083: 
@@ -2324,9 +2036,7 @@ MATCH_CONTEXT_BEGIN
 011091:           refreshActiveParcelPopup();
 011092:         }
 011093:       });
--- end_match_line=11085
--- match_line=11086 text=    if (!hasElevationInFeature && elevationCacheKey && !parcelElevationCache.has(elevationCacheKey)) {
-011081:       parcelPopup = null;
+-- anchor_line=11086
 011082:     });
 011083: 
 011084:     const elevationCacheKey = getParcelElevationCacheKey(feature);
@@ -2340,9 +2050,7 @@ MATCH_CONTEXT_BEGIN
 011092:         }
 011093:       });
 011094:     }
--- end_match_line=11086
--- match_line=11087 text=      void fetchParcelElevationForPopup(feature).then(() => {
-011082:     });
+-- anchor_line=11087
 011083: 
 011084:     const elevationCacheKey = getParcelElevationCacheKey(feature);
 011085:     const hasElevationInFeature = Number.isFinite(getParcelElevationFromFeature(feature));
@@ -2356,9 +2064,7 @@ MATCH_CONTEXT_BEGIN
 011093:       });
 011094:     }
 011095:   }
--- end_match_line=11087
--- match_line=11089 text=        const activeKey = getParcelElevationCacheKey(activeParcelPopupState.feature);
-011084:     const elevationCacheKey = getParcelElevationCacheKey(feature);
+-- anchor_line=11089
 011085:     const hasElevationInFeature = Number.isFinite(getParcelElevationFromFeature(feature));
 011086:     if (!hasElevationInFeature && elevationCacheKey && !parcelElevationCache.has(elevationCacheKey)) {
 011087:       void fetchParcelElevationForPopup(feature).then(() => {
@@ -2372,9 +2078,7 @@ MATCH_CONTEXT_BEGIN
 011095:   }
 011096: 
 011097:   function refreshActiveParcelPopup() {
--- end_match_line=11089
--- match_line=11090 text=        if (activeKey && activeKey === elevationCacheKey) {
-011085:     const hasElevationInFeature = Number.isFinite(getParcelElevationFromFeature(feature));
+-- anchor_line=11090
 011086:     if (!hasElevationInFeature && elevationCacheKey && !parcelElevationCache.has(elevationCacheKey)) {
 011087:       void fetchParcelElevationForPopup(feature).then(() => {
 011088:         if (!activeParcelPopupState?.feature) return;
@@ -2388,9 +2092,7 @@ MATCH_CONTEXT_BEGIN
 011096: 
 011097:   function refreshActiveParcelPopup() {
 011098:     if (!parcelPopup || !activeParcelPopupState?.feature || !activeParcelPopupState?.lngLat) return;
--- end_match_line=11090
--- match_line=11441 text=      TOPOGRAPHY_LAYER_ID,
-011436:   }
+-- anchor_line=11441
 011437: 
 011438:   function clearDynamicSources() {
 011439:     [
@@ -2404,9 +2106,7 @@ MATCH_CONTEXT_BEGIN
 011447:       PLANNED_ASSETS_LINE_LAYER_ID,
 011448:       PLANNED_ASSETS_POINT_LAYER_ID,
 011449:       "compared-parcel-fill",
--- end_match_line=11441
--- match_line=11490 text=    [...getAllParcelSourceIds(), TOPOGRAPHY_SOURCE_ID, FUTURE_GROWTH_SOURCE_ID, FUTURE_GROWTH_VECTOR_SOURCE_ID, PLANNED_ASSETS_SOURCE_ID, "fallback-parcels", "compared-parcels", "selected-parcel", "official-sale-parcels", "historic-sale-parcels", "official-sale-footprints", "brownfield-sites", "market-listings", "facilities-overlay", "parcel-use-parcels", "scenario-score-parcels", "poi-lines", "poi-points"].forEach((sourceId) => {
-011485:     ].forEach((layerId) => {
+-- anchor_line=11490
 011486:       if (map.getLayer(layerId)) {
 011487:         map.removeLayer(layerId);
 011488:       }
@@ -2420,9 +2120,7 @@ MATCH_CONTEXT_BEGIN
 011496: 
 011497:   function resolveParcelPmtilesUrl(parcelRegion) {
 011498:     const localCandidate = String(parcelRegion?.parcelsPmtilesUrl || "").trim();
--- end_match_line=11490
--- match_line=12803 text=    updateTopographyLayerVisibility();
-012798:   function applyMapViewMode(forceRefresh = true) {
+-- anchor_line=12803
 012799:     updateParcelLayerVisibility();
 012800:     updatePoiLayerVisibility();
 012801:     updateFacilitiesLayerVisibility();
@@ -2436,9 +2134,7 @@ MATCH_CONTEXT_BEGIN
 012809:       } else {
 012810:         showFacilitiesOverlayEl.checked = currentFacilitiesVisible;
 012811:         showFacilitiesOverlayEl.disabled = false;
--- end_match_line=12803
--- match_line=13903 text=    addTopographyOverlayLayer();
-013898:     addParcelLayers(region);
+-- anchor_line=13903
 013899:     void syncParcelFallbackParcels(true);
 013900:     addFacilitiesLayers();
 013901:     addLandIntelligenceLayers();
@@ -2452,9 +2148,7 @@ MATCH_CONTEXT_BEGIN
 013909:     }
 013910:     updateComparedParcelsSource();
 013911:     clearFacilitiesOverlayState();
--- end_match_line=13903
--- match_line=14029 text=    syncTopographyControls();
-014024:         setMapViewMode(nextMode, true);
+-- anchor_line=14029
 014025:       });
 014026:     }
 014027:     renderMapModeCustomizer();
@@ -2468,9 +2162,7 @@ MATCH_CONTEXT_BEGIN
 014035:     syncFutureGrowthControls();
 014036:     if (showFutureGrowthEl) {
 014037:       showFutureGrowthEl.addEventListener("change", () => {
--- end_match_line=14029
--- match_line=14030 text=    if (showTopographyOverlayEl) {
-014025:       });
+-- anchor_line=14030
 014026:     }
 014027:     renderMapModeCustomizer();
 014028: 
@@ -2484,9 +2176,7 @@ MATCH_CONTEXT_BEGIN
 014036:     if (showFutureGrowthEl) {
 014037:       showFutureGrowthEl.addEventListener("change", () => {
 014038:         setFutureGrowthLayerVisibility(Boolean(showFutureGrowthEl.checked));
--- end_match_line=14030
--- match_line=14031 text=      showTopographyOverlayEl.addEventListener("change", () => {
-014026:     }
+-- anchor_line=14031
 014027:     renderMapModeCustomizer();
 014028: 
 014029:     syncTopographyControls();
@@ -2500,9 +2190,7 @@ MATCH_CONTEXT_BEGIN
 014037:       showFutureGrowthEl.addEventListener("change", () => {
 014038:         setFutureGrowthLayerVisibility(Boolean(showFutureGrowthEl.checked));
 014039:       });
--- end_match_line=14031
--- match_line=14032 text=        setTopographyOverlayVisibility(Boolean(showTopographyOverlayEl.checked));
-014027:     renderMapModeCustomizer();
+-- anchor_line=14032
 014028: 
 014029:     syncTopographyControls();
 014030:     if (showTopographyOverlayEl) {
@@ -2516,9 +2204,7 @@ MATCH_CONTEXT_BEGIN
 014038:         setFutureGrowthLayerVisibility(Boolean(showFutureGrowthEl.checked));
 014039:       });
 014040:     }
--- end_match_line=14032
--- match_line=15283 text=function normalizeElevationLookupResult(value) {
-015278:     reset: () => circuit.clear()
+-- anchor_line=15283
 015279:   };
 015280: })();
 015281: 
@@ -2532,9 +2218,7 @@ MATCH_CONTEXT_BEGIN
 015289:     const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : null; };
 015290:     return {
 015291:       center_elevation_m: n(value.center_elevation_m ?? value.elevation_m ?? value.height_m ?? value.altitude_m),
--- end_match_line=15283
--- match_line=15286 text=    return { center_elevation_m: Number.isFinite(value) ? value : null, region_average_elevation_m: null, elevation_difference_from_region_average_m: null };
-015281: 
+-- anchor_line=15286
 015282: 
 015283: function normalizeElevationLookupResult(value) {
 015284:   if (value == null) return null;
@@ -2548,9 +2232,7 @@ MATCH_CONTEXT_BEGIN
 015292:       region_average_elevation_m: n(value.region_average_elevation_m),
 015293:       elevation_difference_from_region_average_m: n(value.elevation_difference_from_region_average_m),
 015294:       region_scope_type: value.region_scope_type ?? null,
--- end_match_line=15286
--- match_line=15291 text=      center_elevation_m: n(value.center_elevation_m ?? value.elevation_m ?? value.height_m ?? value.altitude_m),
-015286:     return { center_elevation_m: Number.isFinite(value) ? value : null, region_average_elevation_m: null, elevation_difference_from_region_average_m: null };
+-- anchor_line=15291
 015287:   }
 015288:   if (typeof value === "object") {
 015289:     const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : null; };
@@ -2564,9 +2246,7 @@ MATCH_CONTEXT_BEGIN
 015297:     };
 015298:   }
 015299:   return null;
--- end_match_line=15291
--- match_line=15292 text=      region_average_elevation_m: n(value.region_average_elevation_m),
-015287:   }
+-- anchor_line=15292
 015288:   if (typeof value === "object") {
 015289:     const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : null; };
 015290:     return {
@@ -2580,9 +2260,7 @@ MATCH_CONTEXT_BEGIN
 015298:   }
 015299:   return null;
 015300: }
--- end_match_line=15292
--- match_line=15293 text=      elevation_difference_from_region_average_m: n(value.elevation_difference_from_region_average_m),
-015288:   if (typeof value === "object") {
+-- anchor_line=15293
 015289:     const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : null; };
 015290:     return {
 015291:       center_elevation_m: n(value.center_elevation_m ?? value.elevation_m ?? value.height_m ?? value.altitude_m),
@@ -2596,9 +2274,7 @@ MATCH_CONTEXT_BEGIN
 015299:   return null;
 015300: }
 015301: 
--- end_match_line=15293
--- match_line=15302 text=function formatElevationDifferenceFromRegionAverage(value) {
-015297:     };
+-- anchor_line=15302
 015298:   }
 015299:   return null;
 015300: }
@@ -2610,9 +2286,7 @@ MATCH_CONTEXT_BEGIN
 015306:   return `${diff >= 0 ? "+" : ""}${diff.toFixed(2)} m`;
 015307: }
 015308: 
--- end_match_line=15302
--- match_line=15303 text=  const lookup = normalizeElevationLookupResult(value);
-015298:   }
+-- anchor_line=15303
 015299:   return null;
 015300: }
 015301: 
@@ -2623,9 +2297,7 @@ MATCH_CONTEXT_BEGIN
 015306:   return `${diff >= 0 ? "+" : ""}${diff.toFixed(2)} m`;
 015307: }
 015308: 
--- end_match_line=15303
--- match_line=15304 text=  const diff = lookup?.elevation_difference_from_region_average_m;
-015299:   return null;
+-- anchor_line=15304
 015300: }
 015301: 
 015302: function formatElevationDifferenceFromRegionAverage(value) {
@@ -2635,7 +2307,6 @@ MATCH_CONTEXT_BEGIN
 015306:   return `${diff >= 0 ? "+" : ""}${diff.toFixed(2)} m`;
 015307: }
 015308: 
--- end_match_line=15304
 MATCH_CONTEXT_END
 KICK_ACTION=executed_one_task_done
 PROGRESS_ESTIMATE=44
