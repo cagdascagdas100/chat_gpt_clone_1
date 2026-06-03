@@ -1,0 +1,63 @@
+AAYS_TerraYield required source files manifest
+Generated: 2026-06-03
+Status: SOURCE_ACQUISITION_REQUIRED
+
+Purpose
+- This is a source acquisition/intake manifest only.
+- It is NOT a substitute for official/licensed source data.
+- It must not be used as AddressBase Premium, HMLR NPS, Title-UPRN lookup, or verified production input.
+
+Current verified status
+- Queue cleanup: 100
+- TerraYield verified/source progress: 55
+- Runner decision: no_runner_needed_queue_clean
+- Incoming folder exists: false in last report
+- Required address_to_uprn found: false
+- Required HMLR NPS Title_No-UPRN-polygon found: false
+
+Target local drop folder
+D:\sold_buildings\licensed\incoming
+
+Required official/licensed source files
+1. Address -> UPRN source
+   Acceptable examples:
+   - OS AddressBase Premium CSV/GPKG/GML export containing UPRN
+   - Equivalent licensed address-to-UPRN bridge with provenance/license evidence
+   Suggested filenames:
+   - addressbase_premium_full.csv
+   - addressbase_premium_full.gpkg
+   - address_to_uprn_bridge.csv
+
+2. HMLR NPS National Polygon + Title Number-UPRN Lookup
+   Required pair:
+   - National Polygon source containing Shape/geometry, Poly_ID, Title_No
+   - Title Number-UPRN Lookup containing Title_No and UPRN
+   Suggested filenames:
+   - hmlr_nps_national_polygon.gpkg
+   - hmlr_nps_national_polygon.shp.zip
+   - hmlr_title_number_uprn_lookup.csv
+   - title_no_uprn_polygon_bridge.csv
+
+Supporting but not sufficient alone
+- PPD sold price records
+- INSPIRE polygon cache
+- OS Open UPRN
+- Listing-derived polygon files
+
+Rejected as production verified source
+- Fake/synthetic address-to-UPRN mapping
+- Listing-derived polygon without Title_No and UPRN
+- Existing sample records without source provenance
+- Public proxy files that cannot prove the official bridge
+
+Read-only validation to run only after real files are dropped
+- Confirm incoming folder exists
+- Hash all candidate files
+- Validate headers
+- Validate minimum required fields
+- Validate no fake/generated bridge
+- Write report to ai-results and docs/chatgpt_status
+- Keep DB_WRITE=false, PRODUCTION_DEPLOY=false, MIGRATION_DDL=false, FAKE_DATA=false
+
+Final gate
+- verified_publish_allowed=false until both required source groups are present and read-only validation passes.
