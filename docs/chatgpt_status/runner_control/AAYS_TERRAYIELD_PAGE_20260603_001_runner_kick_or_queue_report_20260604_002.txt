@@ -1,0 +1,82 @@
+page_key=AAYS_TERRAYIELD_PAGE_20260603_001
+task_id=AAYS_TERRAYIELD_RUNNER_KICK_OR_QUEUE_REPORT_20260604_002
+status=QUEUED_FOR_EXISTING_SINGLE_RUNNER
+protocol=TEK_RUNNER_QUEUE_LOCK_KISA_CEVAP
+
+USER_REQUEST_SUMMARY:
+The user does not want to manually paste PowerShell output. The existing single runner should consume this file/task and create a readable report that ChatGPT can inspect from GitHub. If a runner is already active, do not start a new global runner. If no runner is active locally, start only the canonical runner path below.
+
+CANONICAL_RUNNER_ONLY:
+C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+
+DO_NOT:
+- Do not create a new global/parallel runner.
+- Do not overwrite current-task.json.
+- Do not use git reset --hard.
+- Do not use git clean.
+- Do not force push.
+- Do not include backup/bad/tmp files in final patch.
+- Do not write to DB.
+- Do not deploy.
+- Do not run migration/DDL.
+- Do not create fake data.
+
+RUNNER_ACTION_REQUIRED:
+1. Acquire queue lock under C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue if touching queue files.
+2. Check active process count matching portable_queue_runner.ps1.
+3. If active count > 0:
+   - Do not start another runner.
+   - Leave this task pending or mark consumed according to the queue protocol.
+4. If active count == 0:
+   - Start only C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1.
+5. Write a status report to BOTH locations:
+   - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\AAYS_TERRAYIELD_PAGE_20260603_001_runner_kick_or_queue_report_latest.txt
+   - C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\runner_outputs\aays-runner-kick-or-queue-report-latest.txt
+6. Sync/push the report to branch chatgpt-local-sync if possible.
+7. If push fails, still write local report and a sync failure report:
+   - C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\runner_outputs\aays-runner-kick-or-queue-sync-failure-latest.txt
+
+REPORT_FIELDS_REQUIRED:
+stamp
+page_key
+task_id
+runner_path
+runner_count_before
+runner_count_after
+action_taken
+queue_root
+pending_count
+running_count
+done_count
+failed_count
+newest_pending_task
+newest_running_task
+newest_done_task
+newest_failed_task
+stepwise_final_summary_exists
+stepwise_current_step_exists
+overall_progress=99
+bridge_progress_estimate=39
+next_action
+wait_minutes
+db_write=false
+deploy=false
+migration=false
+fake_data=false
+destructive_git=false
+
+KNOWN_LAST_GITHUB_QUEUE_STATUS:
+stamp=20260604_014505
+pending=6
+running=0
+done=42
+failed=1
+main_runner_preserved=C:\AAYS_GITHUB_BRIDGE_CLEAN2
+
+KNOWN_GATE_STATUS:
+overall_progress=99
+runtime_verified_source_count=1
+missing_region_asset_count=7
+reason=runtime verified coverage still missing for 7 UI regions; Wales/Scotland not verified.
+
+OUTPUT_MUST_BE_READABLE_BY_CHATGPT_FROM_GITHUB.
