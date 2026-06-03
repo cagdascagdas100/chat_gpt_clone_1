@@ -1,4 +1,0 @@
-﻿# AAYS 113B Light DEM Check
-
-Rows: 0
-TASK_COMPLETION=100/100
