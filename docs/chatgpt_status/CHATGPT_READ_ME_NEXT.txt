@@ -1,15 +1,9 @@
-﻿CHATGPT READABLE STATUS POINTER
-
-Read this file first:
-docs/chatgpt_status/CHATGPT_READABLE_LATEST_STATUS.txt
-
-Expected current decision:
-STATUS=queue_clean
-QUEUE_CLEANUP_PROGRESS=100
-TERRAYIELD_VERIFIED_SOURCE_PROGRESS=55
-NEXT_ACTION=source_acquisition_or_human_review
-
-Guards:
+﻿CHATGPT_READ_POINTER
+READ_FILE=docs/chatgpt_status/CHATGPT_READABLE_LATEST_STATUS.txt
+EXPECTED_STATUS=queue_clean
+EXPECTED_QUEUE_CLEANUP_PROGRESS=100
+EXPECTED_TERRAYIELD_VERIFIED_SOURCE_PROGRESS=55
+EXPECTED_NEXT_ACTION=source_acquisition_or_human_review
 verified_publish_allowed=false
 db_write=false
 production_deploy=false
