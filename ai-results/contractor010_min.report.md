@@ -1,0 +1,4 @@
+﻿# contractor010_min
+status=completed
+PLAN_PROGRESS_PERCENT=61
+TASK_COMPLETION=100/100

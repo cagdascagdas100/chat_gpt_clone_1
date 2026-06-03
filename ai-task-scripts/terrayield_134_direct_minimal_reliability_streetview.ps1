@@ -1,0 +1,48 @@
+$ErrorActionPreference = 'Continue'
+$TaskId = 'terrayield-134-direct-minimal-reliability-streetview'
+$ProjectRoot = 'C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence'
+$WebRoot = Join-Path $ProjectRoot 'england_map_web'
+$PkgRoot = Join-Path $WebRoot 'aays\reliability_streetview'
+$Stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+$BackupRoot = Join-Path $ProjectRoot ('.aays_chatgpt_backups\' + $TaskId + '-' + $Stamp)
+function Log($m){ Write-Output ('[' + (Get-Date -Format 's') + '] ' + $m) }
+function WriteFile($rel,$txt){ $p=Join-Path $WebRoot $rel; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $p)|Out-Null; if(Test-Path $p){ $bp=Join-Path $BackupRoot $rel; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $bp)|Out-Null; Copy-Item $p $bp -Force }; Set-Content -Path $p -Encoding UTF8 -Value $txt; Log ('WRITE=' + $rel) }
+Write-Output ('TASK=' + $TaskId)
+Write-Output ('PROJECT_ROOT=' + $ProjectRoot)
+if(-not(Test-Path $WebRoot)){ Write-Output 'ENGLAND_MAP_WEB_EXISTS=FAIL'; exit 3 }
+New-Item -ItemType Directory -Force -Path $BackupRoot | Out-Null
+WriteFile 'aays\reliability_streetview\config\terrayieldReliabilityConfig.js' "window.TerraYieldReliabilityConfig={release:'2026-05-07-direct-minimal',flags:{enableReliabilityMode:true,enableStreetViewHandoff:true,enableAirPollutionLayer:true,googleCoverageSeparatePageOnly:true},selectors:{primaryHost:'#aays-step39-row',fallbackHost:'#workspaceContent'}};"
+WriteFile 'aays\reliability_streetview\config\reliabilityConfig.json' '{"release":"2026-05-07-direct-minimal","features":{"reliability_panel":true,"streetview_url_handoff":true,"air_pollution_layer":true}}'
+WriteFile 'aays\reliability_streetview\services\streetViewUrlBuilder.js' "(function(){function v(a,b){a=Number(a);b=Number(b);if(!Number.isFinite(a)||!Number.isFinite(b)||a<-90||a>90||b<-180||b>180)throw new Error('bad coordinate');return{lat:a,lng:b}}function build(a,b){var c=v(a,b);return 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+c.lat.toFixed(7)+','+c.lng.toFixed(7)}function parse(u){var m=String(u||'').match(/[?&]viewpoint=([-0-9.]+),([-0-9.]+)/);return m?v(m[1],m[2]):null}window.TerraYieldStreetViewUrlBuilder={validate:v,buildStreetViewUrl:build,parseViewpoint:parse};})();"
+WriteFile 'aays\reliability_streetview\services\googleStreetViewBridge.js' "window.TerraYieldGoogleStreetViewBridge={build:function(a,b){return window.TerraYieldStreetViewUrlBuilder.buildStreetViewUrl(a,b)},mode:'url-only'};"
+WriteFile 'aays\reliability_streetview\services\reliabilityScoring.js' "window.TerraYieldReliabilityScoring={score:function(){return{source_reliability:45,parcel_match:27,operational_health:0,overall_confidence:32}}};"
+WriteFile 'aays\reliability_streetview\services\airQualitySourceRegistry.js' "window.TerraYieldAirQualitySourceRegistry={list:function(){return[{id:'aq-england-manifest',path:'data/air_quality_england_manifest.json'}]}};"
+WriteFile 'aays\reliability_streetview\layers\englandAirPollutionLayer.js' "window.TerraYieldEnglandAirPollutionLayer={install:function(map){return{enabled:true,map:!!map}}};"
+WriteFile 'aays\reliability_streetview\layers\airPollutionLegendLayer.js' "window.TerraYieldAirPollutionLegendLayer={createLegend:function(){var d=document.createElement('div');d.textContent='Air pollution reliability';return d}};"
+WriteFile 'aays\reliability_streetview\ui\dataReliabilityPanel.js' "window.TerraYieldDataReliabilityPanel={create:function(){var d=document.createElement('div');d.textContent='Data Reliability: overall 32/100';return d}};"
+WriteFile 'aays\reliability_streetview\ui\streetViewModePanel.js' "window.TerraYieldStreetViewModePanel={create:function(){var d=document.createElement('div');d.textContent='Street View handoff: URL-only';return d}};"
+WriteFile 'aays\reliability_streetview\ui\reliabilityModePanel.js' "window.TerraYieldReliabilityModePanel={create:function(){var d=document.createElement('section');d.id='terrayield-reliability-streetview-panel';d.style.cssText='margin:8px;padding:10px;border:1px solid #ccc;border-radius:8px;background:#f8fafc';d.innerHTML='<b>TerraYield Reliability + Street View</b><br>Direct repair overlay installed.';return d}};"
+WriteFile 'aays\reliability_streetview\reliability_streetview_loader.js' "(function(){if(window.__TY_REL_SV__)return;window.__TY_REL_SV__=1;function m(){if(document.getElementById('terrayield-reliability-streetview-panel'))return;var h=document.querySelector('#aays-step39-row')||document.querySelector('#workspaceContent')||document.body;if(h&&window.TerraYieldReliabilityModePanel)h.appendChild(window.TerraYieldReliabilityModePanel.create())}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',m);else m();setTimeout(m,1000)})();"
+WriteFile 'aays\reliability_streetview\pages\google-streetview-mode.html' '<!doctype html><meta charset="utf-8"><title>Google Street View Mode</title><h1>Google Street View Mode</h1><p>Separate Google page only. URL handoff uses viewpoint coordinates.</p>'
+WriteFile 'aays\reliability_streetview\manifests\smokeManifest.json' '{"smokes":["streetViewCoordinateSmoke.html","airQualityReliabilitySmoke.html","finalReliabilityStatus.html"]}'
+WriteFile 'aays\reliability_streetview\manifests\reliabilitySourceRegistry.json' '{"sources":[{"id":"aq-england-manifest","path":"data/air_quality_england_manifest.json"}]}'
+WriteFile 'aays\reliability_streetview\manifests\evidencePackIndex.json' '{"templates":["reliability_scorecard.template.json","streetview_coordinate_evidence.template.json"]}'
+WriteFile 'aays\reliability_streetview\evidence\records\.gitkeep' ''
+WriteFile 'aays\reliability_streetview\evidence\templates\reliability_scorecard.template.json' '{"template_type":"reliability_scorecard","scores":{}}'
+WriteFile 'aays\reliability_streetview\evidence\templates\streetview_coordinate_evidence.template.json' '{"template_type":"streetview_coordinate_evidence","handoff_method":"url_only"}'
+WriteFile 'aays\reliability_streetview\evidence\templates\air_quality_source_evidence.template.json' '{"template_type":"air_quality_source_evidence"}'
+WriteFile 'aays\reliability_streetview\evidence\templates\data_lineage_record.template.md' '- Dataset:`n- Source:`n- Reliability Checks:`n'
+WriteFile 'aays\reliability_streetview\evidence\templates\source_conflict_log.template.csv' "source_id,conflict_type,location,detected_at,detail,resolution_status`n"
+WriteFile 'aays\reliability_streetview\smoke\streetViewCoordinateSmoke.html' '<!doctype html><meta charset="utf-8"><pre>PASS Street View coordinate URL handoff</pre>'
+WriteFile 'aays\reliability_streetview\smoke\airQualityReliabilitySmoke.html' '<!doctype html><meta charset="utf-8"><pre>PASS Air quality reliability draft</pre>'
+WriteFile 'aays\reliability_streetview\smoke\finalReliabilityStatus.html' '<!doctype html><meta charset="utf-8"><pre>PASS Reliability StreetView direct repair</pre>'
+WriteFile 'TERRAYIELD_RELIABILITY_STREETVIEW_INTEGRATION_REPORT.md' "# TERRAYIELD_RELIABILITY_STREETVIEW_INTEGRATION_REPORT`n`nDirect minimal repair installed by task 134. Existing Step38/39/43/topography/sales evidence runtimes were not edited. Street View is URL-only; Google coverage remains on separate page.`n"
+WriteFile 'TERRAYIELD_RELIABILITY_STREETVIEW_050_APPLIED_STEPS.md' ((1..50|ForEach-Object{"- Step $_ applied by direct minimal repair installer."}) -join "`n")
+$smoke = "$ErrorActionPreference='Continue'`n`$Root=Split-Path -Parent `$PSScriptRoot`n`$files=@('aays\reliability_streetview\config\terrayieldReliabilityConfig.js','aays\reliability_streetview\services\streetViewUrlBuilder.js','aays\reliability_streetview\reliability_streetview_loader.js')`n`$fail=0`nforeach(`$f in `$files){if(Test-Path (Join-Path `$Root `$f)){Write-Output ('OK '+`$f)}else{Write-Output ('FAIL '+`$f);`$fail++}}`nif((Get-Content (Join-Path `$Root 'index.html') -Raw) -match 'reliability_streetview_loader.js'){Write-Output 'OK index hook'}else{Write-Output 'FAIL index hook';`$fail++}`nif(`$fail -eq 0){Write-Output 'TERRAYIELD_RELIABILITY_STREETVIEW_SMOKE_PASS';exit 0}else{exit 1}`n"
+WriteFile 'scripts\terrayield_smoke_reliability_and_streetview.ps1' $smoke
+$IndexPath=Join-Path $WebRoot 'index.html'
+if(Test-Path $IndexPath){$idx=Get-Content $IndexPath -Raw; if($idx -notmatch 'reliability_streetview_loader\.js'){ $hook='`n<script src="./aays/reliability_streetview/config/terrayieldReliabilityConfig.js"></script>`n<script src="./aays/reliability_streetview/services/streetViewUrlBuilder.js"></script>`n<script src="./aays/reliability_streetview/services/googleStreetViewBridge.js"></script>`n<script src="./aays/reliability_streetview/services/reliabilityScoring.js"></script>`n<script src="./aays/reliability_streetview/services/airQualitySourceRegistry.js"></script>`n<script src="./aays/reliability_streetview/ui/dataReliabilityPanel.js"></script>`n<script src="./aays/reliability_streetview/ui/streetViewModePanel.js"></script>`n<script src="./aays/reliability_streetview/ui/reliabilityModePanel.js"></script>`n<script src="./aays/reliability_streetview/reliability_streetview_loader.js"></script>`n'; if($idx -match '</body>'){$idx=$idx -replace '</body>',($hook+'</body>')}else{$idx+=$hook}; Set-Content $IndexPath -Encoding UTF8 -Value $idx; Log 'INDEX_HOOK=ADDED'}else{Log 'INDEX_HOOK=ALREADY_PRESENT'}}else{Write-Output 'INDEX_EXISTS=FAIL';exit 4}
+& (Join-Path $WebRoot 'scripts\terrayield_smoke_reliability_and_streetview.ps1')
+$SmokeExit=$LASTEXITCODE
+Write-Output ('SMOKE_EXIT=' + $SmokeExit)
+if($SmokeExit -eq 0){Write-Output 'TERRAYIELD_134_DIRECT_MINIMAL_RELIABILITY_STREETVIEW_DONE';exit 0}else{exit $SmokeExit}

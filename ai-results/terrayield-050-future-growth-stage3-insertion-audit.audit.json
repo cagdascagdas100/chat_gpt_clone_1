@@ -1,0 +1,95 @@
+﻿{
+    "task_id":  "terrayield-050-future-growth-stage3-insertion-audit",
+    "status":  "completed",
+    "generated_at":  "2026-05-11T14:35:37",
+    "scope":  "Read-only Stage3 insertion point audit. No backend/frontend source changes.",
+    "paths":  {
+                  "backend_exists":  true,
+                  "frontend_exists":  true,
+                  "planned_data_root_exists":  true,
+                  "bridge_root_exists":  true
+              },
+    "git_status":  {
+                       "backend":  {
+                                       "status":  "CLEAN",
+                                       "exit_code":  0,
+                                       "output":  "CLEAN"
+                                   },
+                       "frontend":  {
+                                        "status":  "CLEAN",
+                                        "exit_code":  0,
+                                        "output":  "CLEAN"
+                                    },
+                       "bridge":  {
+                                      "status":  "HAS_TRACKED_CHANGES",
+                                      "exit_code":  0,
+                                      "output":  " M ai-handoff/aays1-latest-status.json\n M ai-handoff/aays1-latest-status.md\n M ai-heartbeat/aays1-devam-loop.md"
+                                  }
+                   },
+    "counts":  {
+                   "backend_files_sampled":  6,
+                   "python_files_sampled":  0
+               },
+    "framework_signals":  {
+                              "fastapi":  [
+
+                                          ],
+                              "flask":  [
+
+                                        ],
+                              "django":  [
+
+                                         ],
+                              "sqlalchemy":  [
+
+                                             ],
+                              "pydantic":  [
+
+                                           ],
+                              "geospatial":  [
+
+                                             ]
+                          },
+    "path_signals":  {
+                         "api_like":  [
+
+                                      ],
+                         "model_like":  [
+
+                                        ],
+                         "service_like":  [
+
+                                          ],
+                         "test_like":  [
+
+                                       ],
+                         "config_like":  [
+
+                                         ]
+                     },
+    "existing_future_growth_related_files":  [
+
+                                             ],
+    "insertion_plan":  {
+                           "preferred_minimal_backend_package":  "future_growth",
+                           "proposed_files":  [
+                                                  "future_growth/__init__.py",
+                                                  "future_growth/connectors/__init__.py",
+                                                  "future_growth/connectors/base.py",
+                                                  "future_growth/evidence.py",
+                                                  "future_growth/timeline.py"
+                                              ],
+                           "rationale":  "Create an isolated package first. Do not wire into API/routes/database until framework insertion points are confirmed and tests are added.",
+                           "no_fake_data_rule":  "Connector interfaces must require source_url/source_name/retrieved_at/evidence_summary and must not include hardcoded demo records.",
+                           "timeline_rule":  "Exact dates remain exact only when present in source; otherwise use estimated language and carry evidence text."
+                       },
+    "policy":  {
+                   "no_repo_source_changes":  true,
+                   "fake_data_allowed":  false,
+                   "hardcoded_demo_data_allowed":  false,
+                   "official_structured_sources_priority":  true,
+                   "evidence_required_for_scores_and_timelines":  true,
+                   "estimated_language_required_when_exact_dates_missing":  true
+               },
+    "recommended_next_step":  "Create the isolated future_growth package skeleton only, with evidence/timeline dataclasses and connector protocol. Do not wire to API/database yet."
+}

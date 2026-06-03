@@ -1,0 +1,35 @@
+﻿# AAYS 074 Parallel Detached Launcher
+Generated: 2026-05-14T22:58:26
+launcher: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\aays_068_launch_056_detached_unique_20260514.ps1
+collector: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\aays_070_collect_longruns_status_20260514.ps1
+LAUNCHER_1_PID=24092
+LAUNCHER_1_STDOUT=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-1-20260514_225826.out.log
+LAUNCHER_1_STDERR=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-1-20260514_225826.err.log
+LAUNCHER_2_PID=12560
+LAUNCHER_2_STDOUT=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-2-20260514_225826.out.log
+LAUNCHER_2_STDERR=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-2-20260514_225826.err.log
+LAUNCHER_3_PID=27768
+LAUNCHER_3_STDOUT=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-3-20260514_225826.out.log
+LAUNCHER_3_STDERR=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-074-launch-3-20260514_225826.err.log
+LAUNCHER_1_EXITED=True
+## launcher 1 stdout tail
+AAYS_068_DETACHED_LAUNCHER_DONE=true
+MANIFEST=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-longruns\aays-068-20260514_225828_6630-pid24092-8a41806c.json
+## launcher 1 stderr tail
+LAUNCHER_2_EXITED=True
+## launcher 2 stdout tail
+AAYS_068_DETACHED_LAUNCHER_DONE=true
+MANIFEST=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-longruns\aays-068-20260514_225831_5449-pid12560-be2643af.json
+## launcher 2 stderr tail
+LAUNCHER_3_EXITED=True
+## launcher 3 stdout tail
+AAYS_068_DETACHED_LAUNCHER_DONE=true
+MANIFEST=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-longruns\aays-068-20260514_225832_7742-pid27768-52b85786.json
+## launcher 3 stderr tail
+COLLECTOR_EXIT=
+## collector stdout tail
+AAYS_070_LONGRUNS_STATUS_COLLECTOR_DONE=true
+REPORT=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\aays-070-longruns-status-20260514_225845_3291.md
+## collector stderr tail
+AAYS_074_PARALLEL_DETACHED_LAUNCHER_DONE=true
+plan_progress_percent: 100

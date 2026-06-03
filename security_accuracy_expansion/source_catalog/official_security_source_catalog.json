@@ -1,0 +1,154 @@
+{
+  "version": "security_accuracy_expansion_sources_v1",
+  "sources": [
+    {
+      "id": "data_police_bulk_downloads",
+      "name": "data.police.uk Data Downloads",
+      "type": "official_public_police_data",
+      "country_scope": "England and Wales; some datasets vary by force and availability",
+      "url": "https://data.police.uk/data/",
+      "use": "Street-level crime, outcomes, stop-and-search bulk CSV; force/LSOA/month coverage.",
+      "trust_tier": "A",
+      "limitations": "Street-level locations are approximate; not all outcome fields are present for all crimes; stop-search availability varies.",
+      "evidence_required": [
+        "download_month",
+        "force",
+        "file_size",
+        "row_count",
+        "date_range",
+        "checksum",
+        "schema_columns"
+      ]
+    },
+    {
+      "id": "data_police_street_api",
+      "name": "data.police.uk Street-level Crimes API",
+      "type": "official_public_police_api",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "use": "Point/poly based street-level crime query for validation samples and gap checks.",
+      "trust_tier": "A",
+      "limitations": "Location is approximate; API response can omit outcome_status for some crimes; API should not be used as sole high-volume pipeline if bulk CSV is available.",
+      "evidence_required": [
+        "request_url",
+        "date",
+        "lat_lng_or_poly",
+        "http_status",
+        "record_count",
+        "sample_hash"
+      ]
+    },
+    {
+      "id": "data_police_outcomes",
+      "name": "data.police.uk Street-level Outcomes / Outcomes for Crime",
+      "type": "official_public_police_api",
+      "url": "https://data.police.uk/docs/method/outcomes-at-location/",
+      "use": "Outcome severity/clearance context; supports confidence and severity weighting.",
+      "trust_tier": "A-",
+      "limitations": "Outcome data can lag and may be missing for some crimes.",
+      "evidence_required": [
+        "date",
+        "poly_or_location",
+        "record_count",
+        "outcome_categories",
+        "missing_outcome_rate"
+      ]
+    },
+    {
+      "id": "ons_lsoa_boundaries_2021",
+      "name": "ONS LSOA December 2021 Boundaries EW",
+      "type": "official_public_geography",
+      "url": "https://www.data.gov.uk/dataset/4190f779-9476-4ab2-a611-fe7aa14811be/lower-layer-super-output-areas-december-2021-boundaries-ew-bsc-v4",
+      "use": "Centroid/point-in-polygon spatial match from parcel/UPRN/postcode to LSOA.",
+      "trust_tier": "A",
+      "limitations": "Boundary generalisation level must match intended accuracy; use BFE/BSC appropriately.",
+      "evidence_required": [
+        "boundary_version",
+        "feature_count",
+        "crs",
+        "download_url",
+        "checksum"
+      ]
+    },
+    {
+      "id": "ons_postcode_directory",
+      "name": "ONS Postcode Directory",
+      "type": "official_public_geography_lookup",
+      "url": "https://ckan.publishing.service.gov.uk/dataset/ons-postcode-directory-august-2025-for-the-uk",
+      "use": "Postcode to OA/LSOA/MSOA/admin geographies; fallback bridge where parcel-to-LSOA geometry is weak.",
+      "trust_tier": "A",
+      "limitations": "Postcode centroid/lookup is not a parcel boundary; terminated/current postcode handling required.",
+      "evidence_required": [
+        "release_date",
+        "postcode_count",
+        "terminated_count",
+        "lsoa_field_mapping",
+        "checksum"
+      ]
+    },
+    {
+      "id": "os_open_uprn",
+      "name": "OS Open UPRN",
+      "type": "official_public_property_identifier_geography",
+      "url": "https://ckan.publishing.service.gov.uk/dataset/os-open-uprn",
+      "use": "UPRN point locations for addressable properties; helps bridge parcel/property to small-area geography.",
+      "trust_tier": "A-",
+      "limitations": "Open UPRN has identifier/geometry but not full address attributes; cannot by itself confirm parcel boundary.",
+      "evidence_required": [
+        "release_date",
+        "record_count",
+        "crs",
+        "unique_uprn_count",
+        "checksum"
+      ]
+    },
+    {
+      "id": "hm_land_registry_inspire",
+      "name": "HM Land Registry INSPIRE Index Polygons",
+      "type": "official_public_property_polygon",
+      "url": "https://www.gov.uk/guidance/inspire-index-polygons-spatial-data",
+      "use": "Registered freehold property polygon context; aids parcel-to-title geometry evidence where appropriate.",
+      "trust_tier": "A-",
+      "limitations": "Sub-set of registered property; conditions of use apply; polygon is indicative extent, not all land/property coverage.",
+      "evidence_required": [
+        "local_authority",
+        "download_date",
+        "polygon_count",
+        "inspire_id_count",
+        "licence_conditions_checked"
+      ]
+    },
+    {
+      "id": "iod2025_crime_domain",
+      "name": "English Indices of Deprivation 2025 — Crime Domain",
+      "type": "accredited_official_statistics",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-statistical-release",
+      "use": "Independent LSOA-level long-term crime/victimisation domain for cross-source agreement and baseline risk calibration.",
+      "trust_tier": "A",
+      "limitations": "Relative deprivation index; snapshot and not real-time police incidents. Use as cross-check, not current incident source.",
+      "evidence_required": [
+        "release",
+        "lsoa_count",
+        "crime_domain_field",
+        "rank_score_fields",
+        "methodology_version"
+      ]
+    },
+    {
+      "id": "aays_parcel_data",
+      "name": "AAYS/Terrayield local parcel data",
+      "type": "local_project_data",
+      "url": "local:england_map_web/data/*.geojson",
+      "use": "Target parcel geometries/features to receive security score and evidence metadata.",
+      "trust_tier": "project_internal",
+      "limitations": "Depends on source lineage and geometry quality; must be audited separately.",
+      "evidence_required": [
+        "feature_count",
+        "geometry_type_counts",
+        "crs",
+        "parcel_id_field",
+        "null_geometry_count",
+        "duplicate_id_count"
+      ]
+    }
+  ]
+}

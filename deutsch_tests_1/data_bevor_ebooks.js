@@ -1,0 +1,105 @@
+window.DEUTSCH_TESTS=window.DEUTSCH_TESTS||{};
+window.DEUTSCH_TESTS.t20={
+  category:'Bevor Schreiben',
+  slug:'ebooks_vorteile_c1_c2',
+  title:'E-Books · C1/C2 Vorteilsabsatz',
+  topic:'Erörterung · Vorteile von E-Books · flexibler Zugang · Komfort · Organisation · Nachhaltigkeit · C1/C2-Redemittel',
+  words:[
+    'E-Books','digitale Bücher','der flexible Zugang','die digitale Verfügbarkeit','die ortsunabhängige Nutzung','der Lesekomfort','die Benutzerfreundlichkeit','die Anpassungsmöglichkeit','die Mobilität','die Zugänglichkeit','die Alltagserleichterung','der praktische Nutzen','die Platzersparnis','die digitale Bibliothek','die Übersichtlichkeit','die Speicherfunktion','die Suchfunktion','die Markierungsfunktion','die Lernunterstützung','die Informationsverwaltung','der Papierverbrauch','die Ressourcenschonung','die Nachhaltigkeit','die Umweltbelastung','der Transportaufwand','die ökologische Perspektive','der Materialverbrauch','der nachhaltige Konsum','eine flexible Nutzung ermöglichen','den Zugang zu Literatur erleichtern','den Lernprozess unterstützen','einen Beitrag zur Nachhaltigkeit leisten'
+  ],
+  fill:[
+    ['Ein E-Book ist ein digitales Buch, das man auf einem E-Reader, Tablet, Laptop oder Smartphone ____ kann.','lesen','Thema verstehen'],
+    ['E-Books bieten zahlreiche Vorteile, da sie den Zugang zu Literatur erleichtern, Platz sparen und eine flexible Nutzung ____.','ermöglichen','Grundthese'],
+    ['Ein wesentlicher Vorteil von E-Books liegt in ihrer ____ Nutzung.','flexiblen','Komfort'],
+    ['Leserinnen und Leser können jederzeit auf eine große Anzahl von Büchern ____.','zugreifen','Zugang'],
+    ['Da viele Bücher auf einem Gerät gespeichert werden können, müssen keine schweren Bücher ____ werden.','transportiert','Alltagserleichterung'],
+    ['Die anpassbare Schriftgröße kann den Lesekomfort deutlich ____.','erhöhen','Lesekomfort'],
+    ['Ein weiterer Vorteil besteht darin, dass E-Books eine platzsparende Alternative zu gedruckten Büchern ____.','darstellen','Platzersparnis'],
+    ['Auf einem einzigen Gerät kann eine ganze Bibliothek ____ werden.','gespeichert','digitale Bibliothek'],
+    ['Durch Such- und Markierungsfunktionen lassen sich wichtige Informationen schneller ____.','finden','Lernen'],
+    ['E-Books können den Lernprozess effizient ____.','unterstützen','Lernunterstützung'],
+    ['Aus ökologischer Perspektive können E-Books ebenfalls Vorteile ____.','bieten','Umwelt'],
+    ['Da keine gedruckten Seiten benötigt werden, kann der Papierverbrauch ____ werden.','reduziert','Papierverbrauch'],
+    ['Langfristig könnten E-Books zu einem ressourcenschonenderen Umgang mit Literatur ____.','beitragen','Nachhaltigkeit'],
+    ['Besonders bei regelmäßig aktualisierten Texten kann die digitale Form ____ sein.','sinnvoll','digitale Alternative'],
+    ['Der höhere Komfort könnte positive Auswirkungen auf die Lebensqualität der Nutzer ____.','haben','NVV'],
+    ['E-Books können eine praktische Alternative zu gedruckten Büchern ____.','darstellen','NVV'],
+    ['Die Möglichkeit, Notizen zu speichern, kann den Umgang mit Texten ____.','erleichtern','Organisation'],
+    ['Je nach Nutzungsverhalten können E-Books langfristig einen Beitrag zur Nachhaltigkeit ____.','leisten','vorsichtige Formulierung'],
+    ['Ein C1/C2-Vorteilsabsatz sollte den Vorteil nicht nur nennen, sondern seine Wirkung ____.','erklären','Argumentation'],
+    ['Insgesamt verbinden E-Books Komfort, Zugänglichkeit und ____ miteinander.','Nachhaltigkeit','Schlussformel']
+  ],
+  mc:[
+    ['Welche Grundthese ist für eine C1/C2-Erörterung am geeignetsten?',['E-Books bieten zahlreiche Vorteile, da sie den Zugang zu Literatur erleichtern, Platz sparen und eine flexible Nutzung ermöglichen.','E-Books sind praktisch, weil man sie überall benutzen kann.','Digitale Bücher sind besser als normale Bücher, weil sie modern sind.','Viele Menschen lesen heute E-Books, deshalb sind sie gut.','E-Books sind Bücher im Internet und deswegen einfacher.'],0,'Grundthese'],
+    ['Welche Aussage formuliert den Komfortvorteil am präzisesten?',['Ein wesentlicher Vorteil von E-Books liegt darin, dass sie eine ortsunabhängige und flexible Nutzung von Literatur ermöglichen.','E-Books sind bequem, weil man sie schnell anklicken kann.','E-Books sind gut, weil man nicht mehr in eine Buchhandlung muss.','Digitale Bücher sind immer angenehmer als gedruckte Bücher.','Man kann viele Bücher lesen, also sind E-Books besser.'],0,'Komfort'],
+    ['Welche Formulierung passt zu Platzersparnis und Organisation?',['E-Books ermöglichen es, eine umfangreiche digitale Bibliothek auf einem einzigen Gerät übersichtlich zu verwalten.','E-Books brauchen keinen Platz, deshalb sind sie perfekt.','Bücherregale sind altmodisch und E-Books ersetzen alles.','Digitale Bücher machen Ordnung, weil sie digital sind.','Man hat Bücher im Gerät und braucht nichts anderes.'],0,'Organisation'],
+    ['Welche Aussage ist ökologisch differenziert?',['E-Books können langfristig zu einem ressourcenschonenderen Umgang mit Literatur beitragen, sofern elektronische Geräte sinnvoll und längerfristig genutzt werden.','E-Books sind immer umweltfreundlich und verursachen keine Belastung.','Gedruckte Bücher sind schlecht für die Umwelt, digitale Bücher nie.','E-Books sparen Papier, also lösen sie jedes Umweltproblem.','Elektronische Geräte haben keine Umweltbilanz.'],0,'Umwelt'],
+    ['Welche Nomen-Verb-Verbindung ist korrekt?',['den Zugang zu Literatur erleichtern','den Zugang zu Literatur machen','Literaturzugang benutzen','Zugang für Literatur tun','Literatur mit Zugang leisten'],0,'NVV'],
+    ['Welche C1/C2-Formulierung ersetzt „E-Books helfen beim Lernen“ am besten?',['Durch Such-, Notiz- und Markierungsfunktionen können E-Books den Lernprozess effizient unterstützen.','E-Books machen Lernen gut.','Mit E-Books lernt man schneller und alles ist besser.','E-Books sind praktisch für Schüler, weil sie helfen.','Das Lernen ist mit E-Books einfacher, weil man suchen kann.'],0,'Lernen'],
+    ['Welche Konnektorformel leitet eine Begründung ein?',['Dies lässt sich damit begründen, dass ...','Insgesamt bieten E-Books ...','Ein konkretes Beispiel dafür ist ...','Langfristig betrachtet ...','Besonders hervorzuheben ist, dass ...'],0,'Konnektoren'],
+    ['Welche Folgeformulierung ist korrekt?',['Dadurch können Leserinnen und Leser schneller auf relevante Informationen zugreifen.','Dies lässt sich damit begründen, dass Informationen schneller sind.','Ein Vorteil ist dadurch, weil Informationen kommen.','Dadurch ist es eine Begründung für Bücher.','Folglich deshalb wegen Informationen.'],0,'Folge'],
+    ['Welche Version ist am stärksten für eine Prüfung?',['Langfristig betrachtet könnten E-Books zu einem ressourcenschonenderen Umgang mit Literatur beitragen.','E-Books sind gut für die Umwelt.','Digitale Bücher sind ökologisch.','Man braucht kein Papier, das ist gut.','Umwelt ist besser mit E-Books.'],0,'Prüfungssatz'],
+    ['Welche Aussage ist zu absolut und daher stilistisch schwach?',['E-Books sind immer umweltfreundlicher als gedruckte Bücher.','E-Books können unter bestimmten Voraussetzungen Papierverbrauch reduzieren.','Je nach Nutzungsverhalten können E-Books Ressourcen schonen.','Langfristig betrachtet könnten digitale Bücher Vorteile bieten.','Besonders bei häufig gelesenen Texten kann die digitale Form sinnvoll sein.'],0,'Fehlerdiagnose']
+  ],
+  tf:[
+    ['Auf C1/C2-Niveau sollte man nicht nur schreiben, dass E-Books praktisch sind, sondern den Nutzen genauer erklären.',true,'Stil'],
+    ['Der flexible Zugang zu Literatur ist ein zentrales Argument für E-Books.',true,'Zugang'],
+    ['Die Suchfunktion kann den Umgang mit Texten erleichtern.',true,'Lernen'],
+    ['E-Books lösen automatisch alle Umweltprobleme des Buchmarkts.',false,'Umwelt'],
+    ['Die tatsächliche Umweltbilanz hängt auch von Herstellung und Nutzung elektronischer Geräte ab.',true,'Differenzierung'],
+    ['Platzersparnis ist bei E-Books kein relevantes Argument.',false,'Organisation'],
+    ['„Den Zugang zu Literatur erleichtern“ ist eine passende Nomen-Verb-Verbindung.',true,'NVV'],
+    ['„Nicht nur bequemer, sondern auch effizienter“ kann in einem Vorteilsabsatz sinnvoll verwendet werden.',true,'Konnektorik'],
+    ['Ein guter Vorteilsabsatz besteht aus einer Liste einzelner Vorteile ohne Begründung.',false,'Argumentation'],
+    ['Vorsichtige Formulierungen wie „könnten“ oder „je nach Nutzungsverhalten“ wirken in C1/C2-Erörterungen differenziert.',true,'Stil']
+  ],
+  wordMatch:[
+    ['der flexible Zugang','Möglichkeit, schnell und unabhängig von Ort und Zeit auf Inhalte zuzugreifen'],
+    ['die digitale Verfügbarkeit','Zustand, dass Bücher elektronisch abrufbar sind'],
+    ['die ortsunabhängige Nutzung','Verwendung ohne Bindung an einen bestimmten physischen Ort'],
+    ['der Lesekomfort','Bequemlichkeit und Benutzerfreundlichkeit beim Lesen'],
+    ['die Anpassungsmöglichkeit','Option, Schriftgröße oder Darstellung individuell zu verändern'],
+    ['die Platzersparnis','Verringerung des benötigten physischen Raums'],
+    ['die digitale Bibliothek','Sammlung vieler elektronischer Bücher auf einem Gerät oder in einem Konto'],
+    ['die Informationsverwaltung','geordnetes Speichern, Suchen und Bearbeiten von Informationen'],
+    ['die Ressourcenschonung','sparsamer Umgang mit Material, Energie oder Rohstoffen'],
+    ['der nachhaltige Konsum','Konsumverhalten, das langfristig Umwelt und Ressourcen berücksichtigt']
+  ],
+  phraseMatch:[
+    ['den Zugang zu Literatur','erleichtern'],
+    ['eine flexible Nutzung','ermöglichen'],
+    ['den Lesekomfort','erhöhen'],
+    ['den Alltag','erleichtern'],
+    ['eine praktische Alternative','darstellen'],
+    ['Zeit und Aufwand','sparen'],
+    ['die Nutzung individuell','anpassen'],
+    ['einen schnellen Zugriff','ermöglichen'],
+    ['eine digitale Bibliothek','anlegen'],
+    ['Informationen schneller','finden'],
+    ['Textstellen','markieren'],
+    ['Notizen','speichern'],
+    ['den Lernprozess','unterstützen'],
+    ['Papier','einsparen'],
+    ['Ressourcen','schonen'],
+    ['die Umweltbelastung','verringern'],
+    ['einen Beitrag zur Nachhaltigkeit','leisten'],
+    ['Transportwege','reduzieren'],
+    ['Materialverbrauch','senken'],
+    ['eine umweltfreundlichere Alternative','darstellen']
+  ],
+  prep:[
+    ['Ein wesentlicher Vorteil ___ E-Books liegt in ihrer flexiblen Nutzung.','von','Vorteil von'],
+    ['Leserinnen und Leser können jederzeit ___ eine große Anzahl von Büchern zugreifen.','auf','zugreifen auf + Akkusativ'],
+    ['E-Books stellen eine Alternative ___ gedruckten Büchern dar.','zu','Alternative zu + Dativ'],
+    ['Der höhere Komfort kann positive Auswirkungen ___ die Lebensqualität haben.','auf','Auswirkungen auf + Akkusativ'],
+    ['Suchfunktionen tragen ___ einem effizienteren Lernprozess bei.','zu','beitragen zu + Dativ'],
+    ['E-Books können einen Beitrag ___ Nachhaltigkeit leisten.','zur','Beitrag zu + Dativ'],
+    ['Die Vorteile hängen ___ Nutzungsverhalten ab.','vom','abhängen von + Dativ'],
+    ['Aus ökologischer Perspektive kann die digitale Form ___ bestimmten Voraussetzungen sinnvoll sein.','unter','unter bestimmten Voraussetzungen'],
+    ['Gedruckte Bücher werden häufig ___ Papier hergestellt.','aus','Material'],
+    ['Viele Bücher können ___ einem einzigen Gerät gespeichert werden.','auf','Speicherung auf']
+  ],
+  hang:[
+    'E-Books bieten zahlreiche Vorteile','den Zugang zu Literatur erleichtern','eine flexible Nutzung ermöglichen','den Lesekomfort erhöhen','die Nutzung individuell anpassen','einen schnellen Zugriff ermöglichen','eine praktische Alternative darstellen','eine digitale Bibliothek anlegen','Informationen schneller finden','Textstellen markieren und Notizen speichern','den Lernprozess effizient unterstützen','Platz sparen','die Übersicht behalten','Papier einsparen','Ressourcen schonen','die Umweltbelastung verringern','einen Beitrag zur Nachhaltigkeit leisten','Transportwege reduzieren','Materialverbrauch senken','unter bestimmten Voraussetzungen','langfristig betrachtet','je nach Nutzungsverhalten','Komfort Zugänglichkeit und Nachhaltigkeit verbinden'
+  ]
+};
