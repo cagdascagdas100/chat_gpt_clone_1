@@ -1,0 +1,52 @@
+AAYS stepwise orchestration checkpoint
+stamp=20260603_stepwise_001
+status=STEPWISE_REPORT_LOOP_REQUIRED
+
+observed_from_user_powershell_log:
+- deep_probe_local_txt_was_generated=true
+- deep_probe_local_status=BLOCKED_AT_DOWNLOAD_SERVICE_NO_DIRECT_RUNTIME_FILE
+- public_metadata_checked_count=52
+- forms_found_count=5
+- script_links_found_count=11
+- api_endpoint_candidates_count=722
+- candidate_link_count=762
+- wales_download_candidate_count=0
+- possible_runtime_file_count=0
+- runtime_verified=false
+- can_update_wales_region_asset=false
+- sync_result_previous=SYNC_DONE with STAMP=20260603_123749
+- github_deep_probe_output_missing=true
+
+current_gate_state_from_latest_output_json:
+- status=REGION_GATE_MAPPING_MISMATCH_COVERAGE_PENDING
+- scoped_progress=100
+- overall_progress=99
+- full_coverage_verified=false
+- runtime_verified_source_count=1
+- missing_region_asset_count=7
+- wales_remote_config_missing=true
+- scotland_remote_config_missing=true
+
+problem:
+Single large PowerShell blocks make failure localization difficult. Future execution must be decomposed into small named steps with per-step TXT and JSON outputs, heartbeat files, and GitHub sync after each meaningful checkpoint.
+
+required_execution_style:
+1. Do not run one opaque monolithic command when a task has many network probes or file conversions.
+2. Run named steps: preflight, repo-sync, source-discovery, endpoint-probe, file-candidate-classification, geometry-check, gate-rerun, github-sync, final-summary.
+3. After each named step write:
+   - docs/chatgpt_status/runner_outputs/aays-stepwise-current-step-latest.txt
+   - docs/chatgpt_status/runner_outputs/aays-stepwise-current-step-latest.json
+   - one per-step transcript file with timestamp.
+4. Each report must include start_time, end_time, duration_seconds, command_group, status, blocker_if_any, next_action, db_write, deploy, migration, fake_data, secret_values_printed.
+5. If a step fails, do not continue blindly; write a FAIL_STEP report and a next-fix recommendation.
+6. Run independent checks in parallel when safe: local asset scan, GitHub output audit, HMLR metadata audit, remote manifest audit, gate dry-run, but report each worker separately.
+7. Never set overall_progress=100 unless runtime coverage evidence exists for every required region.
+
+next_runner_task:
+Build or run a stepwise orchestration wrapper around current AAYS runner tasks. It must first verify why aays-hmlr-download-service-deep-probe-latest.txt was generated locally but is missing on chatgpt-local-sync, then sync that output, then continue with parallel non-destructive diagnostics.
+
+safety_db_write=false
+safety_deploy=false
+safety_migration=false
+safety_fake_data=false
+secret_values_printed=false
