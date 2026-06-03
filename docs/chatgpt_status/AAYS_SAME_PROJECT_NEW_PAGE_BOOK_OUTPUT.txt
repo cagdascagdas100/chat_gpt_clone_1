@@ -1,28 +1,14 @@
-PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
+﻿PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
 PROJECT: AAYS_TerraYield
-STATUS: v11_stepwise_reporting_protocol_ready
-SUGGESTED_PROGRESS_PERCENT: 47
-UPDATED_AT: 2026-06-03T13:10:00
+STATUS: db_service_source_identified_v11
+SUGGESTED_PROGRESS_PERCENT: 49
+UPDATED_AT: 2026-06-03T15:45:29
+REPORT_FILE: docs/chatgpt_status/AAYS_SAME_PROJECT_NEW_PAGE_v11_auto_report_20260603_154408.txt
 
-CURRENT_BLOCKER:
-FG444 read-only audit cannot continue until the local database service for port 55460 is identified and started or confirmed unavailable.
-
-NEW_PROTOCOL:
-Every long local PowerShell run must produce step checkpoints, not one opaque final output.
-Each step must write BEGIN, OK or FAIL, and a short explanation into a text report.
-The report must be copied into docs/chatgpt_status so ChatGPT can inspect the latest state from GitHub.
-Local dirty repo must not be used for push.
-Use GitHub API status updates when possible, or short-path safe clone only for docs/chatgpt_status.
-
-NEXT_RUNNER_MODEL:
-V11 will do read-only discovery only.
-It will check Docker availability, container list, compose candidates, port listeners, current runner state, and selected DB source.
-It will not run DB write, production deploy, migration, DDL, fake data, reset, clean, or force push.
-
-EXPECTED_NEXT_STATUS:
-If DB service source is found: db_service_source_identified_v11.
-If Docker or DB is unavailable: db_service_unavailable_v11.
-If a safe audit can run and JSON is created: fg444_readonly_audit_json_created.
+DB_PORT_55460_OPEN=False
+DOCKER_READY=True
+COMPOSE_FOUND=True
+MANUAL_OUTPUT_PASTE_REQUIRED=false
 
 SAFETY:
 DB_WRITE=false
