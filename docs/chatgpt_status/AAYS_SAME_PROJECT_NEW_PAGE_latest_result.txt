@@ -1,30 +1,25 @@
-PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
+﻿PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
 PROJECT: AAYS_TerraYield
-STATUS: local_clone_checkout_filename_too_long_and_delete_risk_recorded
-SUGGESTED_PROGRESS_PERCENT: 44
-UPDATED_AT: 2026-06-03T12:33:45
+STATUS: longpath_safe_clone_verified
+SUGGESTED_PROGRESS_PERCENT: 46
+UPDATED_AT: 2026-06-03T12:43:32
 
-SOURCE:
-User-provided PowerShell output file Yapıştırılan metin.txt
+WORKTREE:
+C:\aays_safe_clone
 
-OBSERVED:
-The temporary clean clone was attempted under C:\AAYS_GITHUB_BRIDGE_CLEAN2\github_status_push_local_safety_20260603_123345.
-Clone fetched objects, but checkout failed because Windows could not create several long-path files under ai-data/ty150-nista-pipeline-deep-discovery/raw.
-Git reported: Clone succeeded, but checkout failed.
-After checkout failure, git status in the clone showed mass deleted tracked files.
-The script correctly aborted push because unsafe status lines existed outside docs/chatgpt_status.
+CHECKOUT_OK:
+True
 
-LOCAL_RISK:
-The main local repo C:\Users\cagda\Documents\GitHub\AAYS reported warning lines for missing/permission denied folders and produced a mass D/delete-risk status sample.
-Do not push from that dirty local repo.
-Do not push from a clone whose checkout failed.
+DELETE_COUNT:
+0
+
+STATUS_SAMPLE:
+
 
 DECISION:
-Use GitHub API/status-only updates or a long-path-safe clone path/config for future status pushes.
-Do not use this failed temporary clone for any push.
-
-NEXT_SAFE_STEP:
-Use a short clone path plus git core.longpaths=true before checkout, or continue GitHub API-only for docs/chatgpt_status updates. Then retry read-only DB/FG444 audit only after push safety is clean.
+If CHECKOUT_OK=true and DELETE_COUNT=0, future status pushes can use this short-path longpaths clone.
+Do not push from C:\Users\cagda\Documents\GitHub\AAYS while it has delete-risk status.
+Do not use any failed checkout clone.
 
 SAFETY:
 DB_WRITE=false
