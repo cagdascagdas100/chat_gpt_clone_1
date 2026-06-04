@@ -1,0 +1,41 @@
+page_key=AAYS_TERRAYIELD_PAGE_20260603_001
+task_id=AAYS_TERRAYIELD_PERCENT_MOVE_CHECK_20260604_001
+status=QUEUED_FOR_EXISTING_SINGLE_RUNNER
+priority=highest_safe
+
+USER_GOAL:
+Determine whether the general percentage can increase with real evidence. If it cannot increase now, write that clearly. If it can increase, run only the checks that create real evidence for the percentage calculation.
+
+KNOWN_STATE:
+Technical overall_progress is 99. Full coverage is not verified. Known blockers are missing region assets/runtime verification and low verified source count. Broad accuracy expansion alone may improve accuracy score, but it will not move the technical overall percentage unless those blockers are reduced.
+
+RUNNER_ACTION:
+1. Use the existing canonical runner and normal queue lock.
+2. Read docs/chatgpt_status/runner_outputs/latest_output.json.
+3. Identify exact blockers preventing overall_progress from moving beyond 99.
+4. Runtime-check already configured remote region sources and record evidence.
+5. For Wales and Scotland, only inspect existing project config/assets and free/no-contact available configuration already in repo. Do not invent data.
+6. Recalculate candidate percentage only from evidence.
+7. Write reports to:
+   - F:\chatgpt\AAYS_AUTOMATION_STORAGE\reports\aays-percent-move-check-latest.txt
+   - docs/chatgpt_status/runner_outputs/aays-percent-move-check-latest.txt
+   - docs/chatgpt_status/runner_outputs/aays-percent-move-check-latest.json
+8. Push reports to chatgpt-local-sync when possible.
+
+REPORT_FIELDS:
+stamp
+old_overall_progress
+candidate_overall_progress
+percentage_delta
+percent_can_increase_now
+why_or_why_not
+blockers_before
+blockers_after
+regions_verified_this_pass
+regions_still_blocked
+next_wait_minutes
+db_write=false
+deploy=false
+migration=false
+fake_data=false
+destructive_git=false
