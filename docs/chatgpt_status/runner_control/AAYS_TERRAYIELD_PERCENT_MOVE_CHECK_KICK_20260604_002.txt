@@ -1,0 +1,52 @@
+page_key=AAYS_TERRAYIELD_PAGE_20260603_001
+task_id=AAYS_TERRAYIELD_PERCENT_MOVE_CHECK_KICK_20260604_002
+status=QUEUED_FOR_EXISTING_SINGLE_RUNNER
+priority=percent_move_check
+
+DO_NOT_START_EXTRA_RUNNER=true
+USE_EXISTING_CANONICAL_RUNNER_ONLY=true
+
+OBJECTIVE:
+The user wants the full-plan percentage to increase only through real evidence, not manual number editing. Run a focused percent move check before broad queue work when safe.
+
+CURRENT_EVIDENCE_FROM_GITHUB:
+runner_count=1
+running_count=1
+pending_count=644
+overall_progress=99
+bridge_progress_estimate=39
+percent_move_report_missing=true
+
+ACTION_REQUEST:
+1. Keep the single existing runner only.
+2. Do not start a second runner.
+3. Check whether the running task is stale or actively writing logs.
+4. If stale, safely snapshot it and allow the percent move check to run next.
+5. If active, do not interrupt; write a short GitHub-readable report explaining active task age and why percent cannot move yet.
+6. Read docs/chatgpt_status/runner_outputs/latest_output.json.
+7. Identify the exact blockers preventing overall_progress from exceeding 99.
+8. Verify already configured runtime/remote region sources where available.
+9. Write result reports to:
+   docs/chatgpt_status/runner_outputs/aays-percent-move-check-latest.txt
+   docs/chatgpt_status/runner_outputs/aays-percent-move-check-latest.json
+   F:\chatgpt\AAYS_AUTOMATION_STORAGE\reports\aays-percent-move-check-latest.txt
+10. Push reports to chatgpt-local-sync if possible.
+
+REQUIRED_REPORT_FIELDS:
+stamp
+runner_count
+running_count
+pending_count
+old_overall_progress
+candidate_overall_progress
+percentage_delta
+percent_can_increase_now
+why_or_why_not
+blockers_before
+blockers_after
+next_wait_minutes
+db_write=false
+deploy=false
+migration=false
+fake_data=false
+destructive_git=false
