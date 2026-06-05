@@ -1,12 +1,27 @@
-﻿PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
+PAGE_KEY: AAYS_SAME_PROJECT_NEW_PAGE
 PROJECT: AAYS_TerraYield
-STATUS: v21_queue_status_checked
-SUGGESTED_PROGRESS_PERCENT: 80
-UPDATED_AT: 2026-06-05T22:36:41
-REPORT_FILE: docs/chatgpt_status/AAYS_SAME_PROJECT_NEW_PAGE_v21_queue_status_20260605_223459.txt
-RUNNER_ACTIVE_COUNT=1
-V21_LOCAL_REPORT=
-MANUAL_OUTPUT_PASTE_REQUIRED=false
+STATUS: PRODUCT_CRITICAL_TRACK_ACTIVE_AUTOMATION_QUEUE_NON_BLOCKING
+PRODUCT_CRITICAL_PROGRESS_PERCENT: 82
+PRODUCT_CRITICAL_REMAINING_PERCENT: 18
+AUTOMATION_RUNNER_STATUS: NON_BLOCKING_TOOLING_ISSUE
+UPDATED_AT: 2026-06-05
+
+DECISION:
+Stop spending time on stale Kalife runner queue automation as a main project blocker.
+Treat runner/queue stale lock as a non-blocking tooling issue unless a project-critical report cannot be produced another way.
+
+PROJECT-CRITICAL_SCOPE_NOW:
+1. Confirm app/API can run for human review.
+2. Confirm core map/data/API outputs are readable and safe.
+3. Confirm no db write, no migration/DDL, no production deploy, no fake data, no destructive git.
+4. Produce concise human-review / Codex-ready status report.
+5. List only real product blockers, not automation pipeline blockers.
+
+NON_BLOCKING_AUTOMATION_ITEMS:
+- Kalife runner stale running lock.
+- V31/046/044 child automation queue not fully producing reports.
+- Parallel runner/fanout automation.
+
 SAFETY:
 DB_WRITE=false
 PRODUCTION_DEPLOY=false
@@ -16,3 +31,4 @@ DESTRUCTIVE_GIT=false
 GIT_RESET_HARD=false
 GIT_CLEAN=false
 FORCE_PUSH=false
+MANUAL_OUTPUT_PASTE_REQUIRED=false
