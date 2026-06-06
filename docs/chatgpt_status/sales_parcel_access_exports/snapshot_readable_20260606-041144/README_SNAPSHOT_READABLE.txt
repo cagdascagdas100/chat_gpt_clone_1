@@ -1,0 +1,6 @@
+﻿status=SNAPSHOT_READABLE_EXTRACTED
+source_zip=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\sales_parcel_access_exports\sales_parcel_access_snapshot_20260606-041144.zip
+output_folder=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\sales_parcel_access_exports\snapshot_readable_20260606-041144
+manual_output_paste_required=false
+next_action=chatgpt_read_from_github
+wait_minutes=1-2
