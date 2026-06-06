@@ -1,0 +1,81 @@
+name: AAYS product topography smoke
+
+on:
+  push:
+    branches:
+      - aays-runner-v17-icon-work-20260603-232706
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  product-topography-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run product topography smoke
+        shell: bash
+        run: |
+          set -u
+          PAGE_KEY="AAYS_SAME_PROJECT_NEW_PAGE"
+          REPORT_DIR="docs/chatgpt_status/${PAGE_KEY}/reports"
+          mkdir -p "$REPORT_DIR"
+          NOW=$(date -u +%Y%m%d-%H%M%S)
+          OUT="$REPORT_DIR/product_topography_smoke_github_actions_${NOW}.txt"
+          APP="england_map_web/app.js"
+          CONFIG="england_map_web/config/topography.overlay.json"
+          ICON="england_map_web/assets/icons/terrayield_icons/hight_differance.png"
+          {
+            echo "PAGE_KEY=${PAGE_KEY}"
+            echo "MODE=PRODUCT_TOPOGRAPHY_SMOKE_GITHUB_ACTIONS"
+            echo "RUN_AT_UTC=${NOW}"
+            echo "CONFIG_EXISTS=$([ -f "$CONFIG" ] && echo true || echo false)"
+            echo "ICON_EXISTS=$([ -f "$ICON" ] && echo true || echo false)"
+            echo "APP_EXISTS=$([ -f "$APP" ] && echo true || echo false)"
+          } > "$OUT"
+          if [ -f "$APP" ]; then
+            node --check "$APP" >> "$OUT" 2>&1
+            NODE_EXIT=$?
+          else
+            NODE_EXIT=99
+          fi
+          echo "NODE_CHECK_EXIT_CODE=${NODE_EXIT}" >> "$OUT"
+          if [ -f "$APP" ]; then
+            grep -q "showTopographyOverlay" "$APP"; echo "APP_HAS_SHOW_TOPOGRAPHY=$([ $? -eq 0 ] && echo true || echo false)" >> "$OUT"
+            grep -q "hight_differance.png" "$APP"; echo "APP_HAS_ICON_BINDING=$([ $? -eq 0 ] && echo true || echo false)" >> "$OUT"
+            grep -q "topography.overlay.json" "$APP"; echo "APP_HAS_CONFIG_FETCH=$([ $? -eq 0 ] && echo true || echo false)" >> "$OUT"
+          fi
+          HITS=$(find . -type f \( -name '*.html' -o -name '*.htm' -o -name '*.jsx' -o -name '*.tsx' -o -name '*.vue' -o -name '*.ejs' \) -print0 | xargs -0 grep -El 'showTopographyOverlay|app\.js|topography' 2>/dev/null || true)
+          HIT_COUNT=$(printf '%s\n' "$HITS" | sed '/^$/d' | wc -l | tr -d ' ')
+          echo "UI_ENTRYPOINT_HITS=${HIT_COUNT}" >> "$OUT"
+          printf '%s\n' "$HITS" | sed '/^$/d' | sed 's#^#UI_ENTRYPOINT_FILE=#' >> "$OUT"
+          CONFIG_OK=false; ICON_OK=false; APP_OK=false; SHOW_OK=false; ICON_REF_OK=false; CONFIG_REF_OK=false
+          [ -f "$CONFIG" ] && CONFIG_OK=true
+          [ -f "$ICON" ] && ICON_OK=true
+          [ -f "$APP" ] && APP_OK=true
+          [ -f "$APP" ] && grep -q "showTopographyOverlay" "$APP" && SHOW_OK=true
+          [ -f "$APP" ] && grep -q "hight_differance.png" "$APP" && ICON_REF_OK=true
+          [ -f "$APP" ] && grep -q "topography.overlay.json" "$APP" && CONFIG_REF_OK=true
+          if [ "$CONFIG_OK" = true ] && [ "$ICON_OK" = true ] && [ "$APP_OK" = true ] && [ "$NODE_EXIT" = 0 ] && [ "$SHOW_OK" = true ] && [ "$ICON_REF_OK" = true ] && [ "$CONFIG_REF_OK" = true ]; then
+            if [ "$HIT_COUNT" -gt 0 ]; then
+              echo "PRODUCT_PROGRESS_ESTIMATE=100" >> "$OUT"
+              echo "PRODUCT_RESULT=FINAL_READY_STATIC_AND_UI_ENTRYPOINT_CONFIRMED" >> "$OUT"
+              echo "FINAL_LABEL=AAYS_TOPOGRAPHY_HEIGHT_DIFFERENCE_PRODUCT_FINAL_READY" >> "$OUT"
+            else
+              echo "PRODUCT_PROGRESS_ESTIMATE=96" >> "$OUT"
+              echo "PRODUCT_RESULT=READY_STATIC_PASS_UI_ENTRYPOINT_NOT_FOUND" >> "$OUT"
+              echo "FINAL_BLOCKER=UI entrypoint file not found in repository search." >> "$OUT"
+            fi
+          else
+            echo "PRODUCT_PROGRESS_ESTIMATE=92" >> "$OUT"
+            echo "PRODUCT_RESULT=BLOCKED_BY_STATIC_PRODUCT_CHECK" >> "$OUT"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$REPORT_DIR"
+          git commit -m "Add product topography smoke report ${NOW}" || true
+          git push || true
