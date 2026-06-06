@@ -1,0 +1,25 @@
+﻿AAYS / TerraYield Acceptance Checklist
+
+EXPECTED_AFTER_PATCH
+[ ] Parcel layer visible on first load.
+[ ] Pan/zoom does not trigger repeated heavy JSON fetch while PMTiles source is active.
+[ ] /map/parcels?limit=200 no longer blocks UI, or UI uses PMTiles/vector rendering instead of waiting for JSON.
+[ ] /map/listings?limit=200 p95 < 1200ms or lazy-loads without blocking map movement.
+[ ] /map/sales-history/combined?limit=200 p95 < 1300ms or lazy-loads without blocking map movement.
+[ ] Full England parcel coverage is not claimed unless source proof exists.
+[ ] East of England local PMTiles remains verified.
+[ ] London/South East/South West/Midlands/North remote sources are runtime verified or marked pending.
+[ ] Wales/Scotland are not faked; source missing is reported.
+[ ] Contact appears in left Iletisim Menusu panel with real API result/no-data state.
+[ ] Cost appears in ROI/IRR/profit flow with real endpoint result/no-data state.
+[ ] Planned layer shows 'Bilgi bulunamadi' when no real planned assets exist.
+[ ] Topography overlay 8099 fail-closed; 8765 popup lookup separate.
+[ ] Worth icons/actions are not mixed.
+[ ] Duplicate floating Guvenlik button is absent if icon menu Guvenlik exists.
+[ ] No fake/demo data added.
+[ ] No DB write, DDL, migration, production deploy, secret print.
+
+COMPLETION_RULE
+- 45% current baseline.
+- 75-80% after performance and UI correctness pass but full England coverage remains partial.
+- 100% only after all-region parcel source coverage is runtime verified and performance/browser acceptance passes.

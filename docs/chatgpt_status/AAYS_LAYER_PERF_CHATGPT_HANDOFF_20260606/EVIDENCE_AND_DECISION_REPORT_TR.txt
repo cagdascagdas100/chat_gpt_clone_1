@@ -1,0 +1,55 @@
+﻿AAYS / TerraYield Layer + Performance Decision Report
+
+generated_at=2026-06-06T15:14:19+03:00
+repo_root=C:\Users\cagda\Documents\GitHub\AAYS
+frontend_root=C:\Users\cagda\Documents\GitHub\AAYS\england_map_web
+backend_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+
+RESULT
+current_phase_required_scope=100
+current_phase_required_remaining=0
+this_new_goal_completion_percent=45
+this_new_goal_name=fast_all_layers_full_england_parcels_real_only_ui
+classification=NEEDS_CHATGPT_HEAVY_PATCH_AND_PERF_VALIDATION
+
+WHY_45_PERCENT
+- Parcel layer is now visible, but current read-only probe shows slow payload/fetch behavior.
+- UI shell and worth panel exist, but icon/action mapping and panel placement still need QA.
+- Cost/contact real-only code paths appear present, but contact must render in the screen/contact panel with real contractor/estate data, not demo rows.
+- Topography popup/overlay hooks exist, but tile runtime 8099 remains a warning and must be separated from parcel elevation lookup 8765.
+- Planned assets layer exists, but no-data behavior must be strict. Future-growth fallback must not pretend to be planned structures.
+- Full England parcel shapes are not fully verified: local PMTiles proof exists for East of England only; 6 remote sources are configured but not runtime verified; Wales/Scotland source config is missing.
+
+READ_ONLY_LOCAL_PROBE_20260606
+health=http://127.0.0.1:8010/health status=200 ms=7650.3
+frontend=http://127.0.0.1:8010/england_map_web/ status=200 previous_closure_probe=200
+parcels=http://127.0.0.1:8010/map/parcels?limit=200 status=200 ms=3979.1 payload_bytes=2259163
+listings=http://127.0.0.1:8010/map/listings?limit=200 status=timeout_after_8s
+sales_history=http://127.0.0.1:8010/map/sales-history/combined?limit=200 status=timeout_after_8s
+internet_access=http://127.0.0.1:8010/map/internet-access?limit=200 status=200 ms=279.2 payload_bytes=42
+
+KEY_EVIDENCE
+- docs/chatgpt_status/AAYS_CURRENT_PHASE_CLOSURE_LATEST.txt says current required scope is complete but all-region production data coverage is optional future work.
+- docs/chatgpt_status/runner_outputs/latest_output.txt says scoped_progress=100, overall_progress=99, full_coverage_verified=False, runtime_verified_source_count=1, missing_region_asset_count=7.
+- docs/chatgpt_status/runner_outputs/aays-parcel-source-reconciliation-latest.txt says East local asset exists, full coverage is not verified, API fallback sample is not full coverage proof.
+- england_map_web/config/regions.local.json has parcelMinZoom=12.0 and localPmtilesAvailable=true only for east_england.
+- england_map_web/app.js has PMTiles support, fallback parcel API paging, cost endpoint calls, contractor endpoint calls, topography hooks, planned assets hooks, and worth dispatch table.
+
+MAIN_BLOCKERS
+BLOCKED_BY_PARCEL_PAYLOAD_AND_PAN_FETCH=parcels endpoint returns large JSON payload and pan/zoom likely triggers expensive fallback fetches; PMTiles/vector source should be primary and API fallback should be cached, abortable, bbox-limited, and no-data-aware.
+BLOCKED_BY_LISTINGS_AND_SALES_HISTORY_TIMEOUT=listings and combined sales endpoints timed out in an 8s read-only probe; they need read-path optimization or lazy loading.
+BLOCKED_BY_FULL_ENGLAND_PMILES_COVERAGE=all England parcel shapes cannot be claimed until London/South East/South West/Midlands/North/Wales/Scotland sources are runtime verified or local PMTiles are installed.
+BLOCKED_BY_TOPOGRAPHY_TILE_RUNTIME_8099=topography overlay tile runtime is not reliably available; parcel elevation lookup via 8765 must remain separate.
+BLOCKED_BY_PLANNED_LAYER_NO_DATA_POLICY=planned structures must show 'bilgi bulunamadı' when real features are absent; do not use future-growth fallback as planned structures.
+BLOCKED_BY_ICON_ACTION_MAPPING_QA=9 worth menu icons/actions must be mapped and tested one by one.
+BLOCKED_BY_CONTACT_COST_UI_PLACEMENT=contact data should appear in the left contact screen/panel, cost data should feed ROI/IRR/profit comparison using real cost endpoints.
+
+DO_NOT_DO
+- Do not add fake parcels, fake planned structures, fake contractor rows, fake costs, or demo fallback.
+- Do not run DB writes, migrations, DDL, production deploy, destructive git, git reset --hard, git clean, or force push.
+- Do not claim full England parcel coverage until real source/runtime proof exists.
+- Do not keep chasing overall_progress 99->100 unless the user explicitly requests production-final all-region parcel coverage.
+
+TARGET_COMPLETION_AFTER_CHATGPT_PATCH
+- If parcel pan/zoom is fast, endpoints pass local p95, icon/contact/cost/topography/planned behavior is fixed, and full England missing sources are cleanly no-data/remote-pending: this_new_goal_completion_percent should become 75-80.
+- It should become 100 only after all England parcel sources are runtime verified and hosted/local performance targets pass.

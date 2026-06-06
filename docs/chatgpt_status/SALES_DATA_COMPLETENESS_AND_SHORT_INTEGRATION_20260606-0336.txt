@@ -1,0 +1,141 @@
+status=SALES_DATA_COMPLETENESS_CHECK_DONE
+checked_at=2026-06-06T03:36:00+03:00
+db_mode=read_only
+db_write=false
+production_deploy=false
+migration_ddl=false
+fake_data=false
+
+QUESTION
+106944 official sales rows exist. Why are they not visible in the app, and what percent already contains requested sale content?
+
+CORE_ANSWER
+The main blocker is parcel/title matching and area enrichment, not sale price/year content.
+HMLR Price Paid rows mostly contain sale price, sale date/year, property type, address and source URL.
+They do not contain UPRN, title polygon, parcel id, building area m2 or price per m2.
+
+OFFICIAL_HMLR_PRICE_PAID_CONTENT
+table=public.transactions_price_paid
+total_rows=106944
+source_name=hmlr_price_paid
+date_range=1995-01-10_to_2026-03-31
+transaction_id_count=106944
+transaction_id_percent=100.0000
+price_paid_count=106944
+price_paid_percent=100.0000
+sale_date_count=106944
+sale_year_from_date_percent=100.0000
+source_url_count=106944
+source_url_percent=100.0000
+property_type_count=106944
+property_type_percent=100.0000
+tenure_count=106944
+tenure_percent=100.0000
+address_text_count=106944
+address_text_percent=100.0000
+postcode_count=106522
+postcode_percent=99.6054
+paon_count=106910
+paon_percent=99.9682
+street_count=104834
+street_percent=98.0270
+uprn_column_present=false
+building_area_m2_column_present=false
+parcel_id_column_present=false
+title_no_column_present=false
+
+REQUESTED_UI_FIELDS_STATUS_FROM_OFFICIAL_ROWS
+sale_year=100.0000_percent_available
+sale_price=100.0000_percent_available
+source_url=100.0000_percent_available
+property_type=100.0000_percent_available_as_HMLR_D_S_T_F_O_code
+exact_location_and_parcel_id=0.0000_percent_verified
+sold_building_area_m2=0.0000_percent_available_in_PPD
+price_per_m2=0.0000_percent_available_without_area
+accuracy_scale_for_verified_publish=0_A_CERTAIN_0_B_HIGH_0_C_PARTIAL_106944_D_UNKNOWN_current_verified_gate
+
+CURRENT_APP_VISIBLE_VERIFIED_LAYER
+status_endpoint=/map/sales-history/status
+mode=verified_only_fail_closed_v2
+publish_policy=A_CERTAIN_B_HIGH_ONLY
+total_official_sales_rows=106944
+verified_sales_row_count=0
+verified_parcel_count=0
+verified_match_percent=0.0000
+final_gate=BLOCKED_MISSING_OFFICIAL_BRIDGE
+
+LEGACY_AND_CANDIDATE_EXISTING_LINKS
+candidate_link_count_from_status=34
+candidate_link_percent_of_106944=0.0318
+candidate_parcel_count_from_status=32
+
+table=public.parcel_sales_history
+rows=28
+distinct_parcels=26
+row_percent_of_106944=0.0262
+sale_price_count=28
+sale_year_count=28
+property_type_count=28
+area_m2_count=0
+price_per_m2_count=0
+source_type=TRANSACTION_HISTORY_CANDIDATE
+decision=not_verified_publishable
+
+table=public.parcel_sales_history_candidate_staging
+rows=217
+distinct_candidate_parcels=26
+row_percent_of_106944=0.2029
+sale_price_count=217
+sale_year_count=217
+property_type_count=217
+area_m2_count=0
+price_per_m2_count=0
+decision=staging_candidate_only_not_verified_publishable
+
+PARTIAL_REVIEW_ONLY_EXISTING_UI_DATA
+file=terrayield_land_intelligence/england_map_web/data/aays_partial_sales_evidence_latest.json
+rows=474
+unique_parcels=61
+row_percent_of_106944=0.4432
+verified_l4=false
+show_sale_price=true
+show_sale_year=true
+show_property_type=true
+show_area_m2=false
+show_price_per_m2=false
+decision=can_be_shown_only_as_PUBLIC_PROXY_REVIEW_ONLY_if_UI_script_is_loaded_and_clearly_labelled
+
+SHORT_INTEGRATION_OPTIONS
+Option_A_verified_only_no_new_sources:
+  visible_verified_sales_rows=0
+  visible_verified_parcels=0
+  completion_percent=0.0000
+  reason=official_address_to_uprn_and_hmlr_nps_title_uprn_polygon_missing
+
+Option_B_review_only_existing_partial_overlay:
+  visible_review_only_rows=474
+  visible_review_only_parcels=61
+  row_percent_of_106944=0.4432
+  fields_visible=sale_price,sale_year,property_type,source_file,source_row_number,warning
+  fields_missing=area_m2,price_per_m2,verified_exact_parcel_match
+  risk=must_not_be_labelled_verified
+
+Option_C_legacy_candidate_layer:
+  visible_candidate_rows=28_to_34
+  visible_candidate_parcels=26_to_32
+  row_percent_of_106944=0.0262_to_0.0318
+  fields_visible=sale_price,sale_year,property_type,address,postcode,source_file
+  fields_missing=area_m2,price_per_m2,official_evidence_hash,official_bridge_chain
+  risk=source_type_candidate
+
+Option_D_full_requested_verified_map:
+  expected_content_after_required_sources=sale_year_100_percent,price_100_percent,property_type_100_percent,source_url_100_percent
+  expected_parcel_matching=unknown_until_address_to_uprn_and_hmlr_nps_files_are_loaded
+  required_sources=OS_AddressBase_or_equivalent_address_to_uprn;HMLR_NPS_National_Polygon;HMLR_Title_Number_UPRN_Lookup;EPC_for_area_m2
+  verified_publish_allowed=false_until_sources_validated
+
+CONCLUSION
+Current completion for verified sales map is 0.0000 percent.
+Current completion for sale content inside official HMLR PPD is high: price/year/source/property_type are 100 percent present.
+Current short integration can only show review-only candidates, not verified sales: 474 rows / 61 parcels / 0.4432 percent of official row count.
+The missing part is the official bridge from address to UPRN/title polygon and the EPC/building-area enrichment.

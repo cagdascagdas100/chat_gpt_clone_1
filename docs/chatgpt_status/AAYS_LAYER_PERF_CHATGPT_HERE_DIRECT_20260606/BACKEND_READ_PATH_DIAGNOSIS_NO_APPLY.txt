@@ -1,0 +1,47 @@
+﻿RESULT
+status=READ_ONLY_DIAGNOSIS_NO_APPLY
+
+ENDPOINT_TRACE
+### health
+url=http://127.0.0.1:8010/health
+p95_ms=825.4
+run=1 status=200 ms=825.4 bytes=137 error=
+run=2 status=200 ms=72.6 bytes=137 error=
+run=3 status=200 ms=50.8 bytes=137 error=
+
+### parcels
+url=http://127.0.0.1:8010/map/parcels?limit=200
+p95_ms=6983.8
+run=1 status=200 ms=6983.8 bytes=2259163 error=
+run=2 status=200 ms=2989.5 bytes=2259163 error=
+run=3 status=200 ms=3124.1 bytes=2259163 error=
+
+### listings
+url=http://127.0.0.1:8010/map/listings?limit=200
+p95_ms=9686.8
+run=1 status=TIMEOUT ms=8085.3 bytes=0 error=The operation has timed out.
+run=2 status=200 ms=9686.8 bytes=1199341 error=
+run=3 status=200 ms=2105.9 bytes=1199341 error=
+
+### sales_history_combined
+url=http://127.0.0.1:8010/map/sales-history/combined?limit=200
+p95_ms=6973.4
+run=1 status=200 ms=2421.5 bytes=1266815 error=
+run=2 status=200 ms=6973.4 bytes=1266815 error=
+run=3 status=200 ms=4023.7 bytes=1266815 error=
+
+### internet_access
+url=http://127.0.0.1:8010/map/internet-access?limit=200
+p95_ms=46
+run=1 status=200 ms=42.3 bytes=42 error=
+run=2 status=200 ms=46 bytes=42 error=
+run=3 status=200 ms=29.9 bytes=42 error=
+
+RECOMMENDATIONS_NO_APPLY
+- bbox-first filtering before geometry serialization.
+- fields projection.
+- geometry simplification by zoom.
+- gzip/br compression.
+- PMTiles/vector source primary for parcel rendering.
+- EXPLAIN ANALYZE only on read-only connection if backend diagnosis continues.
+- No DDL/index create/drop applied here.

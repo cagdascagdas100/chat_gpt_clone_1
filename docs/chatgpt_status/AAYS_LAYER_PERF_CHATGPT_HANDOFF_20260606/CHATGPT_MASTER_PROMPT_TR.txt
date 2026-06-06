@@ -1,0 +1,136 @@
+﻿AAYS / TerraYield ChatGPT Master Prompt - Layer Performance + Real-Only UI Fix
+
+ROL:
+Sen AAYS/TerraYield icin frontend performans ve katman dogrulugu uygulayicisisin. Karar mercii Codex raporudur. Bu prompt genis is yaptirmak icindir; DB write, migration, DDL, production deploy ve fake/demo data yasaktir.
+
+CALISMA KLASORU:
+C:\Users\cagda\Documents\GitHub\AAYS
+
+ANA HEDEF:
+Localde http://127.0.0.1:8010/england_map_web/ acildiginda harita gecisleri, pan/zoom, parsel yukleme ve katman gecisleri hizli olacak. Parsel katmani gorunur kalacak. Contact, cost, planned, topography, internet, security, air/pollution ve worth ikon davranislari real-only policy ile dogru calisacak.
+
+MEVCUT DURUM:
+- Current required phase already complete: 100%.
+- Bu yeni hedefin tamamlanma tahmini: 45%.
+- Parcel layer visible, but slow.
+- /map/parcels?limit=200: 3979 ms, 2.25 MB payload.
+- /map/listings?limit=200: 8s timeout.
+- /map/sales-history/combined?limit=200: 8s timeout.
+- /map/internet-access?limit=200: 279 ms.
+- Full England parcel coverage not verified. East local PMTiles exists; other regions are remote-pending/missing.
+
+KESIN KISITLAR:
+- DB write yok.
+- Migration apply yok.
+- DDL/index create/drop yok.
+- Production deploy yok.
+- Secret/token/env value yazdirma yok.
+- Fake/demo/sample parcel, contractor, cost, planned structure uretme yok.
+- Destructive git yok; git reset --hard/git clean/force push yok.
+- Existing user changes must not be overwritten.
+
+DOSYALAR:
+Oncelikli dosyalar:
+- england_map_web/app.js
+- england_map_web/config/regions.local.json
+- england_map_web/config/topography.overlay.json
+- terrayield_land_intelligence/app/api/routes/* only read if endpoint contract needed
+- terrayield_land_intelligence/app/services/* only read if endpoint contract needed
+
+KANIT DOSYALARI:
+- docs/chatgpt_status/AAYS_CURRENT_PHASE_CLOSURE_LATEST.txt
+- docs/chatgpt_status/runner_outputs/latest_output.txt
+- docs/chatgpt_status/runner_outputs/aays-parcel-source-reconciliation-latest.txt
+- docs/chatgpt_status/AAYS_LAYER_PERF_CHATGPT_HANDOFF_20260606/EVIDENCE_AND_DECISION_REPORT_TR.txt
+
+FAZ 1 - PERF BASELINE VE FETCH TRACE:
+1. Browser ve PowerShell ile read-only perf olc.
+2. app.js icinde pan/zoom sirasinda hangi fetchler tetikleniyor kaydet.
+3. /map/parcels, /map/listings, /map/sales-history/combined cagrilarinda URL, bbox, limit, offset, payload size, elapsed ms raporla.
+4. Duplicate/in-flight fetch, stale cache, empty cache, repeated clear/add layer sorunlarini bul.
+5. Rapor: docs/chatgpt_status/AAYS_LAYER_PERF_CHATGPT_HANDOFF_20260606/PERF_BASELINE_AND_FETCH_TRACE.txt
+
+FAZ 2 - PARSEL RENDER HIZLANDIRMA:
+1. PMTiles/vector source primary olacak. Harita pan/zoom sirasinda buyuk JSON parcel fallback surekli calismamali.
+2. Local PMTiles sadece localPmtilesAvailable=true ise kullanilacak; yoksa remote runtime verified ise remote; yoksa no-data/remote-pending state.
+3. API fallback sadece PMTiles source yoksa ve bbox gercekten gerekli ise calisacak.
+4. API fallback icin AbortController, in-flight de-dupe, bbox quantization, TTL cache, max payload guard ve pan debounce ekle.
+5. map move sirasinda fetch yapma; moveend/idle sonrasi tek fetch yap.
+6. Vector source/layer sadece bir kez add edilecek; sonra visibility toggled olacak. clear/add loop engellenecek.
+7. Opacity/z-index/pane ayarlari parcel layer'i tile altina sokmayacak.
+8. Rapor: PARCEL_PERFORMANCE_PATCH_REPORT.txt
+
+FAZ 3 - BACKEND READ PATH TESHIS, APPLY YOK:
+1. /map/parcels?limit=200, /map/listings?limit=200, /map/sales-history/combined?limit=200 icin read-only timing yap.
+2. Gerekirse EXPLAIN ANALYZE sadece read-only DB uzerinde ve secret yazdirmadan yap. Index create yok; sadece dry-run onerisi.
+3. Payload azaltma oner: bbox-first, geometry simplification by zoom, fields projection, gzip/static tile source.
+4. Rapor: BACKEND_READ_PATH_DIAGNOSIS_NO_APPLY.txt
+
+FAZ 4 - KATMAN DOGRU DAVRANIS:
+1. Worth menu 9 ikon dispatch tablosunu denetle:
+   - Planlanan: real planned asset layer; veri yoksa 'Bilgi bulunamadi'. Future-growth fallback planned structure gibi gosterilmez.
+   - Maliyet: ROI/IRR/karlilik ekranina real /cost/building-types/options ve /cost/estimate/preview ile baglanir.
+   - Hava Kirliligi: air/pollution layer dogru icon/action.
+   - Yukselti: 8099 overlay yoksa fail-closed warning; 8765 parcel popup lookup ayrica calisir.
+   - Guvenlik: sadece ikon menusu entry point; duplicate floating Guvenlik butonu yok.
+   - Internet: data yoksa bbox icin veri yok; runtime yoksa runtime warning.
+   - Kontakt: 2. foto worth popup icinde tablo gostermesin; 3. foto sol ekran Iletisim Menusu icinde real contractor/estate API sonuclarini gostersin. Demo isim yok.
+   - Gelecek Gelisim: future growth layer/score real data ile calisir, planned structures yerine gecmez.
+   - Legal: mevcut legal placeholder/next update policy bozulmaz.
+2. Rapor: LAYER_ACTION_MAPPING_AND_REAL_ONLY_REPORT.txt
+
+FAZ 5 - CONTACT VE COST REAL-ONLY:
+1. Contact akisinda demo emlakci/muteahhit satirlari olmayacak.
+2. Esas endpoint: GET /api/contractor/parcel/{parcel_id}/contacts.
+3. Veri yoksa 'Bu parsel icin gercek iliskili emlakci/muteahhit verisi bulunamadi' no-data state.
+4. Cost akisinda demo katsayi yok; endpointler:
+   - GET /cost/building-types/options
+   - POST /cost/estimate/preview
+5. Rapor: CONTACT_COST_REAL_ONLY_UI_REPORT.txt
+
+FAZ 6 - TOPOGRAPHY:
+1. 8099 tile overlay ve 8765 lookup iki ayri lifecycle olarak kalsin.
+2. 8099 kapaliysa overlay kapanir, popup lookup bozulmaz.
+3. Parcel tiklayinca denizden yukseklik ve bolge ortalamasindan fark gorunsun; lookup yoksa 'Veri bekleniyor' veya no-data net yazilsin.
+4. Rapor: TOPOGRAPHY_SEPARATION_REPORT.txt
+
+FAZ 7 - ACCEPTANCE TEST:
+PowerShell perf smoke:
+- /health p95 < 200ms
+- /map/parcels?limit=200 p95 < 700ms veya parcel render PMTiles ile API fallback olmadan akici kanitlanmali
+- /map/listings?limit=200 p95 < 1200ms
+- /map/sales-history/combined?limit=200 p95 < 1300ms
+- /map/internet-access?limit=200 p95 < 500ms
+
+Browser smoke:
+- Parsel layer ilk acilista gorunur.
+- Pan/zoom yapinca layer kaybolmaz ve kasma azalir.
+- Worth menu ikonlari dogru.
+- Contact sol panelde real-only.
+- Cost ROI/IRR/karlilik ekraninda real-only.
+- Planned no-data policy dogru.
+- Topography 8099 warning blocker degil, popup lookup ayridir.
+- Console critical error yok.
+
+CIKTI FORMATIN:
+RESULT
+- status=<PASS|BLOCKED>
+- completion_percent_before=45
+- completion_percent_after=<number>
+- parcel_pan_zoom_perf=<PASS|FAIL>
+- full_england_parcel_coverage=<VERIFIED|PARTIAL|MISSING>
+
+CHANGED FILES
+- path listesi
+
+VALIDATION
+- node --check england_map_web/app.js
+- PowerShell perf smoke sonucu
+- Browser manual smoke sonucu
+- fake/demo data scan sonucu
+- db_write=false deploy=false migration=false ddl=false secret_values_printed=false
+
+NEXT BLOCKERS
+- exact blockers, if any
+
+BASLA.

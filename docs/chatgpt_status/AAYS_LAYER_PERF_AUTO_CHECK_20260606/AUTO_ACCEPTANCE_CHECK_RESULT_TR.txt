@@ -1,0 +1,106 @@
+﻿
+AAYS AUTO ACCEPTANCE CHECK
+generated_at=2026-06-06T15:49:06
+repo=C:\Users\cagda\Documents\GitHub\AAYS
+frontend=http://127.0.0.1:8010/england_map_web/
+
+STATIC CHECKS
+app_js_exists=PASS
+runtime_guard_present=PASS
+contains=/map/parcels PASS
+contains=/map/listings PASS
+contains=/map/sales-history/combined PASS
+contains=/api/contractor/parcel PASS
+contains=/cost/building-types/options PASS
+contains=/cost/estimate/preview PASS
+obvious_fake_demo_appjs=PASS
+node_check=PASS
+
+CONFIG COVERAGE CHECKS
+regions_config_exists=PASS
+east_or_pmtiles_reference=
+wales_scotland_reference=INFO_PRESENT
+topography_config_exists=PASS
+topography_8099_reference=WARN
+
+READ-ONLY ENDPOINT PERF
+
+[health]
+url=http://127.0.0.1:8010/health
+threshold_ms=200
+p95_ms=776.1
+status=FAIL
+run=1 status=200 ms=776.1 bytes=137 error=
+run=2 status=200 ms=93.1 bytes=137 error=
+run=3 status=200 ms=73.2 bytes=137 error=
+run=4 status=200 ms=65.5 bytes=137 error=
+run=5 status=200 ms=63.7 bytes=137 error=
+
+[parcels_limit_200]
+url=http://127.0.0.1:8010/map/parcels?limit=200
+threshold_ms=700
+p95_ms=30828.7
+status=FAIL
+run=1 status=200 ms=9038.2 bytes=2259163 error=
+run=2 status=200 ms=6155.8 bytes=2259163 error=
+run=3 status=200 ms=12577.7 bytes=2259163 error=
+run=4 status=200 ms=13262.1 bytes=2259163 error=
+run=5 status=200 ms=30828.7 bytes=2259163 error=
+
+[listings_limit_200]
+url=http://127.0.0.1:8010/map/listings?limit=200
+threshold_ms=1200
+p95_ms=16337.6
+status=FAIL
+run=1 status=TIMEOUT ms=9244.6 bytes=0 error=The operation has timed out.
+run=2 status=200 ms=16337.6 bytes=1199341 error=
+run=3 status=200 ms=2179.1 bytes=1199341 error=
+run=4 status=200 ms=1598.3 bytes=1199341 error=
+run=5 status=200 ms=10525.9 bytes=1199341 error=
+
+[sales_history_combined_limit_200]
+url=http://127.0.0.1:8010/map/sales-history/combined?limit=200
+threshold_ms=1300
+p95_ms=10596.6
+status=FAIL
+run=1 status=200 ms=4123.5 bytes=1266815 error=
+run=2 status=200 ms=10596.6 bytes=1266815 error=
+run=3 status=200 ms=4893.7 bytes=1266815 error=
+run=4 status=200 ms=3707.9 bytes=1266815 error=
+run=5 status=200 ms=2145.1 bytes=1266815 error=
+
+[internet_access_limit_200]
+url=http://127.0.0.1:8010/map/internet-access?limit=200
+threshold_ms=500
+p95_ms=1027.6
+status=FAIL
+run=1 status=200 ms=42.1 bytes=42 error=
+run=2 status=200 ms=1027.6 bytes=42 error=
+run=3 status=200 ms=907.2 bytes=42 error=
+run=4 status=200 ms=637.1 bytes=42 error=
+run=5 status=200 ms=725.1 bytes=42 error=
+
+HEADLESS BROWSER LOAD CHECK
+headless_browser_load=FAIL timeout
+
+REPORT FILE CHECKS
+report_exists=PERF_BASELINE_AND_FETCH_TRACE.txt PASS
+report_exists=PARCEL_PERFORMANCE_PATCH_REPORT.txt PASS
+report_exists=BACKEND_READ_PATH_DIAGNOSIS_NO_APPLY.txt PASS
+report_exists=LAYER_ACTION_MAPPING_AND_REAL_ONLY_REPORT.txt PASS
+report_exists=CONTACT_COST_REAL_ONLY_UI_REPORT.txt PASS
+report_exists=TOPOGRAPHY_SEPARATION_REPORT.txt PASS
+report_exists=CHATGPT_HERE_DIRECT_RESULT_TR.txt PASS
+
+FINAL DECISION
+AUTO_CHECK_STATUS=PARTIAL_PASS_ENDPOINT_BLOCKED
+completion_percent_after_auto=65
+MANUAL_REQUIRED=NO_YET
+MANUAL_REASON=Endpoint perf still fails or runtime unavailable; fix/read backend path before manual UI acceptance.
+full_england_parcel_coverage=PARTIAL
+db_write=false
+deploy=false
+migration=false
+ddl=false
+secret_values_printed=false
+report_path=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\AAYS_LAYER_PERF_AUTO_CHECK_20260606\AUTO_ACCEPTANCE_CHECK_RESULT_TR.txt

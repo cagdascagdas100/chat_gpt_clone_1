@@ -1,0 +1,85 @@
+status=VERIFIED_SALES_LAYER_EMPTY_FAIL_CLOSED
+checked_at=2026-06-06T03:28:28+03:00
+local_url=http://127.0.0.1:8010/england_map_web/
+
+SUMMARY
+The requested verified historical sales map is not visible because the verified serving layer currently has zero publishable rows. This is a data/source gate condition, not a frontend rendering-only issue.
+
+LIVE_ENDPOINTS
+frontend=/england_map_web/ => PASS_200
+sales_status=/map/sales-history/status => PASS_200
+sales_parcels=/map/sales-history/parcels?limit=5 => PASS_200_EMPTY_FEATURE_COLLECTION
+parcel_70_history=/parcels/70/history => PASS_200_EMPTY_HISTORY
+
+SALES_STATUS_VALUES
+mode=verified_only_fail_closed_v2
+publish_policy=A_CERTAIN_B_HIGH_ONLY
+production_auto_accept=false
+total_official_sales_rows=106944
+candidate_link_count=34
+candidate_parcel_count=32
+legacy_summary_parcel_count=26
+verified_sales_row_count=0
+verified_parcel_count=0
+verified_summary_parcel_count=0
+unmatched_official_sales_rows=106944
+verified_match_ratio=0.0
+a_certain_count=0
+b_high_count=0
+c_partial_count=0
+d_unknown_count=106944
+final_gate=BLOCKED_MISSING_OFFICIAL_BRIDGE
+
+MATCHING_PERCENTAGES
+verified_match_percent=0.0000
+legacy_candidate_link_percent=0.0318
+legacy_candidate_note=34 candidate links are not accepted as verified because official bridge/evidence requirements are not met.
+
+FRONTEND_FINDING
+html_has_showHistoricSales_toggle=true
+html_loads_aays_sales_history_overlay_js=false
+html_loads_aays_partial_sales_evidence_overlay_js=false
+html_loaded_relevant_scripts=./app.js?v=perf-layer-recovery-20260530_184151;./aays_land_sales_evidence_review_panel.js?v=20260517-land-sales-review-v1;./aays_sales_popup_readability_fix.js
+
+REPO_PARTIAL_EVIDENCE
+partial_payload_path=terrayield_land_intelligence/england_map_web/data/aays_partial_sales_evidence_latest.json
+partial_payload_status=AAYS_55_PARTIAL_SALES_EVIDENCE_PAYLOAD_READY
+partial_payload_verified_l4=false
+partial_payload_rows=474
+partial_payload_unique_parcels=61
+partial_payload_strict_l4_ready_rows_no_write=0
+partial_payload_show_area_m2=false
+partial_payload_show_price_per_m2=false
+
+partial_bridge_path=terrayield_land_intelligence/england_map_web/data/aays_partial_sales_evidence_bridge_latest.json
+partial_bridge_status=AAYS_57B_PARTIAL_TO_COMBINED_BRIDGE_READY
+partial_bridge_selected_bridge_rows=12
+partial_bridge_exact_matches=12
+partial_bridge_fuzzy_matches=0
+
+OS_OPEN_UPRN_SUPPORTING_SOURCE
+path=F:/AAYS/open_sources/os_open_uprn/osopenuprn_202605_csv.zip
+bytes=617106126
+expected_bytes=617106126
+md5=a9f32b928a387ec423de864dc3e8a78e
+expected_md5=b9b57e997a0ffc4f45c60c9157ffa689
+md5_pass=false
+decision=REJECT_AS_SUPPORTING_SOURCE_UNTIL_REDOWNLOADED_AND_HASH_VERIFIED
+
+CODE_GATE_FINDING
+route_file=terrayield_land_intelligence/app/api/routes/aays_sales_history_layers.py
+verified_summary_table=public.parcel_verified_sales_history_summary
+minimum_confidence=75
+evidence_required=evidence_hash
+candidate_sources_rejected=true
+layer_kind=VERIFIED_SALES_HISTORY
+
+DECISION
+verified_publish_allowed=false
+db_write=false
+production_deploy=false
+migration_ddl=false
+fake_data=false
+
+NEXT_SINGLE_ACTION
+Use docs/chatgpt_handoff/sales_history_verified_map_low_credit_20260606-032828.zip in ChatGPT. Run the PowerShell runbook in review-only mode first. Do not publish verified sales until official address_to_uprn and HMLR NPS title_uprn_polygon bridge sources are present and validated.
