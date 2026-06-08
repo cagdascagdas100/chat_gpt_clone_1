@@ -1,0 +1,146 @@
+TASK_ID=validate-ppd-source-gate-20260609
+PROJECT=AAYS_TerraYield
+RUNNER_POLICY=single_existing_runner_only
+MANUAL_POWERSHELL_REQUIRED=false
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+FAKE_DATA=false
+WORK_ROOT=F:\chatgpt\AAYS_WORK
+PPD_FILE=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+LICENSED_INCOMING=F:\sold_buildings\licensed\incoming
+REPO=C:\Users\cagda\Documents\GitHub\AAYS
+BRANCH=feature/terrayield-aays-integration
+OUTPUT_REPO_FILE=docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+OBJECTIVE:
+Use the existing local Kalife/AAYS runner. Do not start duplicate runners. Validate the completed PPD file, scan licensed incoming bridge files, write a readable result to GitHub under docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt, and push it.
+
+EXPECTED_LAST_KNOWN_STATE:
+AAYS_PPD_RESUME_20260608-211812=Completed
+F:\sold_buildings\open_sources\ppd\pp-complete.csv bytes=4564569164
+
+RUN_STEPS:
+1. Confirm there is exactly one real queue runner process if possible. If more than one helper process exists, do not kill anything unless it is clearly a duplicate runner. Continue read-only.
+2. Validate PPD file:
+   - exists
+   - bytes
+   - sha256
+   - first line
+   - last line
+   - sample first 1000 lines count
+   - detect html/error pages
+3. Scan F:\sold_buildings\licensed\incoming for:
+   - addressbase_premium_full.csv
+   - addressbase_premium_full.gpkg
+   - address_to_uprn_bridge.csv
+   - hmlr_nps_national_polygon.gpkg
+   - hmlr_nps_national_polygon.shp.zip
+   - hmlr_title_number_uprn_lookup.csv
+   - title_no_uprn_polygon_bridge.csv
+4. Compute status:
+   - PPD_VALID=true only if file exists, size > 4000000000, first line is not HTML/error, sample can be read.
+   - SOURCE_GATE_READY=true only if address bridge exists AND either combined title_no_uprn_polygon_bridge exists OR both HMLR polygon and title-UPRN lookup exist.
+5. Write F report under F:\chatgpt\AAYS_WORK\source_generation_reports\AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt.
+6. Copy/write same report to C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt.
+7. git add/commit/push only that result file. If push rejected, fetch/rebase/push once. If still rejected, leave local repo report and write push_failed=true in the report.
+
+REPORT_FIELDS:
+status
+ppd_valid
+ppd_bytes
+ppd_sha256
+source_gate_ready
+has_address_bridge
+has_hmlr_polygon
+has_title_uprn
+has_combined_bridge
+found_files
+overall_progress
+next_action
+wait_minutes
+blockers
+warnings
+
+PROGRESS_RULE:
+- If PPD valid and source gate not ready: overall_progress=60, next_action=wait_for_licensed_sources.
+- If PPD valid and source gate ready: overall_progress=75, next_action=queue_full_db_address_match_v3_preflight.
+- If PPD invalid: overall_progress=55, next_action=repair_or_redownload_ppd.
+
+POWERSHELL_PAYLOAD:
+$ErrorActionPreference='Continue'
+$Repo='C:\Users\cagda\Documents\GitHub\AAYS'
+$Branch='feature/terrayield-aays-integration'
+$Work='F:\chatgpt\AAYS_WORK\source_generation_reports'
+$Ppd='F:\sold_buildings\open_sources\ppd\pp-complete.csv'
+$Incoming='F:\sold_buildings\licensed\incoming'
+$RepoStatus=Join-Path $Repo 'docs\chatgpt_status'
+New-Item -ItemType Directory -Force $Work,$Incoming,$RepoStatus | Out-Null
+$FReport=Join-Path $Work 'AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt'
+$GReport=Join-Path $RepoStatus 'AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt'
+$exists=Test-Path $Ppd
+$bytes=0; $sha=''; $first=''; $last=''; $sample=0; $ppdValid=$false; $warnings=@(); $blockers=@()
+if($exists){
+  $item=Get-Item $Ppd
+  $bytes=$item.Length
+  try { $sha=(Get-FileHash $Ppd -Algorithm SHA256).Hash } catch { $warnings+='sha256_failed' }
+  try { $first=(Get-Content $Ppd -TotalCount 1 -ErrorAction Stop) } catch { $first='READ_FIRST_FAILED'; $warnings+='read_first_failed' }
+  try { $last=(Get-Content $Ppd -Tail 1 -ErrorAction Stop) } catch { $last='READ_LAST_FAILED'; $warnings+='read_last_failed' }
+  try { $sample=(Get-Content $Ppd -TotalCount 1000 -ErrorAction Stop | Measure-Object -Line).Lines } catch { $warnings+='sample_read_failed' }
+  if($bytes -gt 4000000000 -and $first -notmatch '<html|<!DOCTYPE|AccessDenied|Error' -and $sample -gt 10){ $ppdValid=$true }
+}else{ $blockers+='ppd_file_missing' }
+if(-not $ppdValid){ $blockers+='ppd_not_validated' }
+$files=Get-ChildItem $Incoming -File -ErrorAction SilentlyContinue
+$hasAddress=(@($files | Where-Object { $_.Name -match 'addressbase|address_to_uprn' }).Count -gt 0)
+$hasCombined=(@($files | Where-Object { $_.Name -match 'title_no_uprn_polygon_bridge|polygon_bridge' }).Count -gt 0)
+$hasPolygon=(@($files | Where-Object { $_.Name -match 'national_polygon|polygon_bridge' }).Count -gt 0)
+$hasTitle=(@($files | Where-Object { $_.Name -match 'title.*uprn|polygon_bridge' }).Count -gt 0)
+$gateReady=($hasAddress -and ($hasCombined -or ($hasPolygon -and $hasTitle)))
+if(-not $hasAddress){ $blockers+='required_address_to_uprn_missing' }
+if(-not ($hasCombined -or ($hasPolygon -and $hasTitle))){ $blockers+='required_hmlr_nps_title_uprn_polygon_missing' }
+if($ppdValid -and $gateReady){ $progress=75; $status='SOURCE_GATE_READY_FOR_V3'; $next='queue_full_db_address_match_v3_preflight'; $wait='5-15' }
+elseif($ppdValid){ $progress=60; $status='PPD_VALID_SOURCE_GATE_BLOCKED'; $next='wait_for_licensed_sources'; $wait='0' }
+else { $progress=55; $status='PPD_VALIDATION_FAILED'; $next='repair_or_redownload_ppd'; $wait='5-15' }
+$lines=@(
+  "status=$status",
+  "updated_at=$(Get-Date -Format s)",
+  "ppd_file=$Ppd",
+  "ppd_exists=$exists",
+  "ppd_valid=$ppdValid",
+  "ppd_bytes=$bytes",
+  "ppd_sha256=$sha",
+  "ppd_first_line=$first",
+  "ppd_last_line=$last",
+  "sample_lines_1000=$sample",
+  "licensed_incoming=$Incoming",
+  "source_gate_ready=$gateReady",
+  "has_address_bridge=$hasAddress",
+  "has_hmlr_polygon=$hasPolygon",
+  "has_title_uprn=$hasTitle",
+  "has_combined_bridge=$hasCombined",
+  "found_files=$($files.Name -join ',')",
+  "overall_progress=$progress",
+  "next_action=$next",
+  "wait_minutes=$wait",
+  "blockers=$($blockers -join ';')",
+  "warnings=$($warnings -join ';')",
+  "db_write=false",
+  "production_deploy=false",
+  "fake_data=false"
+)
+$lines | Set-Content -Encoding UTF8 $FReport
+$lines | Set-Content -Encoding UTF8 $GReport
+try {
+  git -C $Repo add 'docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt'
+  git -C $Repo commit -m 'docs: update autonomous PPD source gate result'
+  git -C $Repo push origin $Branch
+} catch {
+  try {
+    git -C $Repo fetch origin $Branch
+    git -C $Repo pull --rebase origin $Branch
+    git -C $Repo push origin $Branch
+  } catch {}
+}
+Write-Host "STATUS=$status"
+Write-Host "OVERALL_PROGRESS=$progress"
+Write-Host "REPORT=$GReport"
+Write-Host "Bekleme suresi: $wait dakika"
