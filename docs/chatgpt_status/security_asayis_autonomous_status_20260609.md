@@ -3,6 +3,8 @@
 DATE_UTC=2026-06-09
 MODE=RUNNER_QUEUE_CONTROLLED
 PROJECT=AAYS security/asayis parcel layer
+LAST_CHECK_UTC=2026-06-09
+LAST_CHECK_STATUS=RUNNER_OUTPUT_PENDING
 
 ## User Operating Model
 The user will type only: `devam et`.
@@ -33,8 +35,22 @@ EXPECTED_OUTPUT_JSON=ai-results/security_asayis_latest_status.json
 - Security inventory task has been queued in GitHub.
 - The task script exists and is read-only.
 - `current-task.json` points to the security inventory task.
-- Expected output files are not yet present in GitHub at the time this tracker was created.
-- This indicates either the runner has not polled yet, has not pushed yet, or is running from a different bridge/result path.
+- Expected output files are still not present in GitHub after the latest continuation check.
+- `ai-heartbeat/latest.json` was not found in GitHub.
+- This indicates the currently open local runner has not polled/pushed this task yet, is stopped, or is running from a different bridge/result path.
+- Active task was not overwritten during this check.
+
+## Latest Continuation Check
+CHECK_NAME=security_asayis_runner_output_probe
+CHECK_RESULT=OUTPUT_NOT_FOUND
+MD_OUTPUT_FOUND=false
+JSON_OUTPUT_FOUND=false
+CURRENT_TASK_UNCHANGED=true
+HEARTBEAT_FOUND=false
+ACTION_TAKEN=status_tracker_updated_only
+NEXT_COMMAND=devam et
+PROGRESS_PERCENT=12
+ETA_MINUTES_NEXT=5-10 if runner is active; unknown if runner is stopped or pointed at a different bridge
 
 ## Next Continuation Logic
 If `ai-results/security_asayis_latest_status.md` exists:
