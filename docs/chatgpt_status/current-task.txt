@@ -1,25 +1,49 @@
-task_id=terrayield-048-internet-access-score10-completion
+task_id=terrayield-047-planned-parcel-layer-autonomous
 status=QUEUED_CURRENT_TASK_REPLACES_PREVIOUS
 priority=urgent
 created_by=chatgpt
-created_at=2026-06-09T01:35:00+03:00
+created_at=2026-06-09T00:00:00Z
 
-objective=Complete the AAYS internet_access_score_10 layer from the existing local handoff package. The layer should open from the internet icon, render parcel colors, expose status and summary endpoints, and show factor/source/confidence details in popup.
+objective=Implement AAYS / TerraYield Sayfa 7 Planlanan Yapilar matched parcel polygon layer. The layer must render existing parcel polygons matched to planned assets, not asset points from /planned-assets/search.
 
-handoff_folder=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\docs\chatgpt_handoff\internet_access_score10_gap_plan_20260609
-handoff_sha256=1280533889AFB2BD24A1DA1517776C41FFBE0282E3BDA88BB92D29C14058F8D7
+runner_input=docs/chatgpt_status/runner_inputs/terrayield-047-planned-parcel-layer-autonomous.txt
+local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
+backend_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
+frontend_file=C:\Users\cagda\Documents\GitHub\AAYS\england_map_web\app.js
 
 required_actions:
-1. Stash-safe git sync and runner health check.
-2. Read the handoff files and run the read-only verify script.
-3. Patch backend for /map/internet-access, /map/internet-access/status, /map/internet-access/summary, and parcel detail fallback using processed/static files if DB table is absent.
-4. Patch frontend config, no-data message, 5 score bands, popup factor table, source refs, confidence reason, and CSS.
-5. Build official source manifest and processed outputs only from verified source files; do not fabricate score rows.
-6. Run JS syntax, backend route smoke, GeoJSON validation, Excel validation if generated.
+1. Stash-safe git status/sync and runner health check.
+2. Read runner_input and current code files.
+3. Patch backend: add GET /planned-assets/parcel-layer using parcel_planned_asset_matches + planned_assets + parcels_inspire.
+4. Patch frontend: planned icon -> ./assets/icons/terrayield_icons/planed_buildings.png and loadPlannedAssetsLayer -> /planned-assets/parcel-layer.
+5. Keep future_growth fallback separate; never show it as planned parcel data.
+6. Add route-level test for planned parcel layer contract.
+7. Run node --check, python py_compile, and route-level pytest.
+8. Write text/json status outputs to GitHub paths below.
 
 required_outputs:
-docs/chatgpt_status/runner_outputs/internet_access_score10_latest.txt
-docs/chatgpt_status/runner_outputs/internet_access_score10_latest.json
+docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.txt
+docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.json
 docs/chatgpt_status/runner_outputs/latest_output.json
 
-safety: DB_WRITE=false; MIGRATION=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
+progress_contract:
+queued=10
+running_preflight=20
+backend_patched=45
+frontend_patched=65
+tests_running=80
+outputs_written=90
+success=100
+blocked_or_failed=percent_at_failure
+
+acceptance:
+- /planned-assets/parcel-layer exists
+- invalid bbox returns 400
+- matched parcels only via parcel_planned_asset_matches join
+- geometry is parcels_inspire Polygon/MultiPolygon transformed to EPSG:4326
+- planned icon uses planed_buildings.png
+- planned overlay no longer uses /planned-assets/search as map source
+- popup exposes evidence/source/probability/timeline/value/source-confidence/delay-risk
+- DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
+
+safety: DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
