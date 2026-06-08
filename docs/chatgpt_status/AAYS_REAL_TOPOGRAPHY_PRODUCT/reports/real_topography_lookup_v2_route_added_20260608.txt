@@ -1,0 +1,21 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+MODE=REAL_TOPOGRAPHY_LOOKUP_V2_ROUTE_ADDED
+PRODUCT_SCOPE=parsele tiklayinca iki gercek topography metrigi
+PREVIOUS_PROGRESS=78
+NEW_PROGRESS_ESTIMATE=82
+FILES_ADDED=terrayield_land_intelligence/app/api/routes/topography_lookup_v2.py
+FILES_UPDATED=terrayield_land_intelligence/app/main.py
+ROUTE_ADDED=/topography/lookup
+LEGACY_ROUTE_ADDED=/lookup
+ROUTE_BEHAVIOR=no_fake_data
+NO_DATA_BEHAVIOR=center_elevation_m/null region_average_elevation_m/null elevation_difference_from_region_average_m/null status/no_data
+STRUCTURED_FIELDS=center_elevation_m,region_average_elevation_m,elevation_difference_from_region_average_m,region_sample_count,datum,source_dataset,status
+DIFFERENCE_RULE=elevation_difference_from_region_average_m=center_elevation_m-region_average_elevation_m when both values exist and explicit difference absent
+DATA_SOURCE_RULE=reads AAYS_TOPOGRAPHY_LOOKUP_V2_PATH or known parcel_elevation_lookup_v2.json candidates
+DB_WRITE=false
+MIGRATION=false
+DEPLOY=false
+PRODUCTION_IMPORT=false
+REMAINING_BLOCKERS=real parcel_elevation_lookup_v2.json artifact not proven; local/API smoke not yet run; 8765 service runtime not verified
+NEXT_PROGRESS_IF_DATA_ARTIFACT_AND_SMOKE_PASS=90+
+FINAL_PROGRESS_REQUIRES=API response proof with real center_elevation_m and region_average_elevation_m plus browser popup smoke
