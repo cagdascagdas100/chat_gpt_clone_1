@@ -1,0 +1,47 @@
+timestamp=2026-06-08T23:55:00
+project_name=AAYS_SINGLE_RUNNER_TARGETED_BACKEND_FIX
+task_id=aays-single-runner-targeted-backend-fix-20260608
+status=queued_for_single_runner
+progress_before=65
+
+INPUT_REPORTS:
+- docs/chatgpt_status/AAYS_DIRECT_PARALLEL_DIAGNOSIS_20260608/ENDPOINT_PERF_REPEAT.txt
+- docs/chatgpt_status/AAYS_DIRECT_PARALLEL_DIAGNOSIS_20260608/FRONTEND_PMTILES_LAZYLOAD_SCAN.txt
+- docs/chatgpt_status/AAYS_DIRECT_PARALLEL_DIAGNOSIS_20260608/BACKEND_READ_PATH_SCAN.txt
+
+CURRENT_BLOCKERS:
+- /map/listings?limit=200 timed out 5/5 times.
+- /map/sales-history/combined?limit=200 remains slow.
+- frontend lazy marker is missing.
+- backend route scan reported no_backend_hits_found, so local API may be served from a code path not discovered by previous scan.
+
+REQUIRED_SINGLE_RUNNER_WORK:
+1. Verify exactly one portable_queue_runner.ps1 process is active. If zero, restart canonical runner. If more than one, write blocked report and do not run patch.
+2. Locate actual local API code path serving http://127.0.0.1:8010/map/listings and http://127.0.0.1:8010/map/sales-history/combined by scanning repo and live process command line.
+3. Do not perform DB writes, migrations, DDL, production deploy, git reset, git clean, force push, or fake/demo data creation.
+4. Apply safe read-path/frontend non-blocking optimization only if exact route code is found:
+   - listings and sales-history must not block pan/zoom;
+   - lazy-load only when user activates layer/action;
+   - cap default heavy limit where contract permits;
+   - avoid unnecessary geometry/field serialization where contract permits;
+   - preserve real-only contact/cost/planned behavior.
+5. If exact route code is not found, write exact blocker: local_api_code_path_mismatch.
+6. Validate:
+   - node --check england_map_web/app.js;
+   - python compile for changed .py files;
+   - read-only endpoint smoke for /map/listings?limit=200 and /map/sales-history/combined?limit=200;
+   - fake/demo guard scan.
+7. Write outputs to:
+   - docs/chatgpt_status/AAYS_SINGLE_RUNNER_TARGETED_BACKEND_FIX_20260608/ROUTE_CODEPATH_DISCOVERY.txt
+   - docs/chatgpt_status/AAYS_SINGLE_RUNNER_TARGETED_BACKEND_FIX_20260608/SAFE_PATCH_REPORT.txt
+   - docs/chatgpt_status/AAYS_SINGLE_RUNNER_TARGETED_BACKEND_FIX_20260608/POST_FIX_ENDPOINT_SMOKE.txt
+   - docs/chatgpt_status/AAYS_SINGLE_RUNNER_TARGETED_BACKEND_FIX_20260608/FINAL_SUMMARY.txt
+   - docs/chatgpt_status/runner_outputs/aays-single-runner-targeted-backend-fix-latest.txt
+
+EXPECTED_PROGRESS_RULE:
+- Keep progress at 65 if listings still times out or route code path mismatch remains.
+- Raise to 70-75 only if listings/sales-history either meet thresholds or UI non-blocking/lazy-load proof is produced.
+- Do not claim 100 until full England parcel source coverage and browser/UI acceptance are proven.
+
+wait_minutes=25-40
+safety_flags=db_write_false,deploy_false,migration_false,ddl_false,fake_data_false,destructive_git_false,force_push_false,secret_print_false
