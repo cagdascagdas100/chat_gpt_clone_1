@@ -15531,21 +15531,3 @@ function formatElevationDifferenceFromRegionAverage(value) {
 }());
 /* AAYS_LAYER_RUNTIME_GUARD_V1_END */
 
-/* AAYS_LAYER_LAZY_ACTION_GUARD_V1_START
-   GET-only frontend lazy marker/diagnostic guard.
-   Does not create fake data. Does not perform DB write/deploy/migration.
-*/
-(function AAYS_LAYER_LAZY_ACTION_GUARD_V1(){
-  "use strict";
-  if (typeof window === "undefined") return;
-  if (window.__AAYS_LAYER_LAZY_ACTION_GUARD_V1__) return;
-  window.__AAYS_LAYER_LAZY_ACTION_GUARD_V1__ = true;
-  window.__AAYS_LAYER_LAZY_ACTION_STATUS__ = {
-    enabled: true,
-    rule: "Listings and sales-history must be user-action/layer-toggle loaded, not map-move blocking.",
-    endpoints: ["/map/listings", "/map/sales-history/combined"]
-  };
-  console.info("[AAYS_LAYER_LAZY_ACTION_GUARD] enabled: listings/sales-history must remain non-blocking/layer-action driven.");
-}());
-/* AAYS_LAYER_LAZY_ACTION_GUARD_V1_END */
-
