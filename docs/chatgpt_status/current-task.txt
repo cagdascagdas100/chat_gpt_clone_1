@@ -1,117 +1,25 @@
-task_id=terrayield-047-planned-parcel-layer-autonomous
+task_id=terrayield-048-internet-access-score10-completion
 status=QUEUED_CURRENT_TASK_REPLACES_PREVIOUS
 priority=urgent
 created_by=chatgpt
-created_at_utc=2026-06-09T00:00:00Z
-constraints=free_only;no_contact;no_paid_data;no_supplier_contact;no_fake_data;no_secret_printing;no_db_write;no_migration;no_production_deploy;local_dev_validation_only
+created_at=2026-06-09T01:35:00+03:00
 
-project_goal:
-AAYS / TerraYield Sayfa 7 Planlanan Yapılar katmanı asset/nokta katmanı değil, planlanan yapı ile eşleşmiş mevcut parsel polygon katmanı olarak çalışmalı. planed_buildings.png ikonuna basılınca sadece parcel_planned_asset_matches ile eşleşen parcels_inspire polygonları görünmeli. Parsele tıklanınca planned asset bilgileri, evidence, source link, delivery probability, timeline, value impact, source confidence ve delay risk görünmeli.
+objective=Complete the AAYS internet_access_score_10 layer from the existing local handoff package. The layer should open from the internet icon, render parcel colors, expose status and summary endpoints, and show factor/source/confidence details in popup.
 
-source_context_from_chatgpt:
-- Step 1 kontrolü tamamlandı.
-- app.js içinde PLANNED_ASSETS_SOURCE_ID, PLANNED_ASSETS_FILL_LAYER_ID, PLANNED_ASSETS_LINE_LAYER_ID, PLANNED_ASSETS_POINT_LAYER_ID mevcut.
-- MAP_WORTH_MENU_ITEMS içinde id: planned şu an ./assets/icons/worth-factory.svg kullanıyor.
-- loadPlannedAssetsLayer mevcut ve şu an /planned-assets/search asset geometrisini kullanıyor.
-- openPlannedAssetPopup ve buildPlannedAssetPopupHtml mevcut.
-- planned_assets.py router mevcut; prefix yok, endpointler doğrudan /planned-assets/search, /planned-assets/nearby, /parcels/{parcel_id}/planned-assets.
-- planned_asset_service.py içinde ParcelInspire, ParcelPlannedAssetMatch, PlannedAsset, PlannedAssetSource importları ve match_to_parcels/get_parcel_planned_assets mevcut.
-- models.py içinde ParcelInspire.geometry MULTIPOLYGON SRID 27700, PlannedAsset.geometry GEOMETRY SRID 27700, ParcelPlannedAssetMatch distance/intersects/contains/impact_score/match_confidence_score mevcut.
-- app.main import zincirinde runtime_ops_service eksikliği görülebilir; planned parcel layer mantığından bağımsız blocker olarak raporlanmalı.
+handoff_folder=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\docs\chatgpt_handoff\internet_access_score10_gap_plan_20260609
+handoff_sha256=1280533889AFB2BD24A1DA1517776C41FFBE0282E3BDA88BB92D29C14058F8D7
 
-required_actions_in_order:
-1. Runner/Git sync recovery yap: stash-safe status/fetch/pull. Açık runner çalışıyorsa mevcut portable_queue_runner.ps1 akışını bozma.
-2. Local repo root olarak C:\Users\cagda\Documents\GitHub\AAYS kullan.
-3. Önce read-only snapshot yaz:
-   docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-preflight-latest.txt
-   docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-preflight-latest.json
-4. Backend'e GET /planned-assets/parcel-layer endpointi ekle.
-5. Service'e get_planned_asset_parcel_layer(session, bbox, limit, min_delivery_probability, asset_type, status_filter) fonksiyonu ekle.
-6. Endpoint sadece parcel_planned_asset_matches + planned_assets + parcels_inspire join ile eşleşmiş parselleri döndürsün.
-7. GeoJSON geometry mutlaka ParcelInspire.geometry üzerinden ST_Transform(..., 4326) + ST_AsGeoJSON ile polygon/MultiPolygon olsun. PlannedAsset geometry veya centroid katman geometry olarak kullanılmasın.
-8. BBOX west,south,east,north EPSG:4326 parse edilsin, invalid bbox 400 dönsün.
-9. Properties içinde en az şunlar olsun: layer_kind=planned_parcel, parcel_id, parcel_ref, local_authority, postcode, area_m2, planned_asset_count, top_planned_asset_id, top_title, top_asset_type, top_status, top_delivery_probability_score, top_delivery_probability_label, top_value_impact_score, top_source_confidence_score, top_delay_risk_score, top_timeline_confidence_score, estimated_delivery_window_start, estimated_delivery_window_end, nearest_distance_m, match_confidence_score, impact_score, evidence_summary, evidence_status, has_evidence, source_name, source_url, color_hex.
-10. Evidence yoksa evidence_status=insufficient_evidence ve has_evidence=false; fake/uydurma evidence üretme.
-11. Frontend app.js içinde planned ikon path'i ./assets/icons/terrayield_icons/planed_buildings.png olsun.
-12. loadPlannedAssetsLayer planned katmanı için /planned-assets/search yerine /planned-assets/parcel-layer?bbox=<map bbox>&limit=2000&min_delivery_probability=0 kullansın.
-13. Frontend planned parcel layer response FeatureCollection ise sadece Polygon/MultiPolygon özelliklerini source'a set etsin.
-14. future_growth fallback planned parcel layer default verisi gibi gösterilmesin; planned layer hatasında boş FeatureCollection + error state kullanılmalı.
-15. Popup parcel-aware olsun: top_title, asset type/status, delivery probability, timeline, value impact, source confidence, delay risk, distance, evidence_summary, source_url gösterilsin.
-16. Tests ekle veya güncelle: app.main import blocker'a takılmayan route-level test tercih edilir.
-17. Şu kontrolleri çalıştır:
-   node --check england_map_web\app.js
-   python -m py_compile app\api\routes\planned_assets.py app\services\planned_asset_service.py app\db\models.py
-   python -m pytest tests\test_planned_asset_parcel_layer_contract.py -q
-18. API açıksa smoke yap:
-   GET http://127.0.0.1:8000/planned-assets/parcel-layer?bbox=-0.5,51.2,0.3,51.8&limit=20
-19. Sonuçları GitHub'a sync et:
-   docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.txt
-   docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.json
-   docs/chatgpt_status/runner_outputs/latest_output.json
-20. Eğer işlem takılırsa hata snapshot yaz, ama DB write/migration/deploy yapma.
+required_actions:
+1. Stash-safe git sync and runner health check.
+2. Read the handoff files and run the read-only verify script.
+3. Patch backend for /map/internet-access, /map/internet-access/status, /map/internet-access/summary, and parcel detail fallback using processed/static files if DB table is absent.
+4. Patch frontend config, no-data message, 5 score bands, popup factor table, source refs, confidence reason, and CSS.
+5. Build official source manifest and processed outputs only from verified source files; do not fabricate score rows.
+6. Run JS syntax, backend route smoke, GeoJSON validation, Excel validation if generated.
 
-backend_implementation_notes:
-- planned_assets.py içine import ekle: get_planned_asset_parcel_layer.
-- search endpointinden önce @router.get("/planned-assets/parcel-layer") ekle; aksi halde /planned-assets/{planned_asset_id} route sırası ile karışmasın.
-- planned_asset_service.py içinde json import gerekebilir.
-- SQLAlchemy window row_number ile parcel başına en yüksek impact_score top asset seçilebilir.
-- planned_asset_count count over partition veya grouped subquery olabilir.
-- limit 1..10000 aralığında tutulmalı.
+required_outputs:
+docs/chatgpt_status/runner_outputs/internet_access_score10_latest.txt
+docs/chatgpt_status/runner_outputs/internet_access_score10_latest.json
+docs/chatgpt_status/runner_outputs/latest_output.json
 
-frontend_implementation_notes:
-- Existing addPlannedAssetsLayers fill/line/point bozulmasın; ancak parcel layer için point layer boş kalmalı.
-- buildPlannedAssetPopupHtml eski asset properties ile uyumlu kalacak şekilde planned_parcel properties'i de desteklemeli.
-- source_url varsa tıklanabilir link göster; yoksa kaynak yok diye uydurma link üretme.
-- mapBoundsToBboxString ve resolveFutureGrowthApiUrl mevcutsa kullanılabilir; yoksa mevcut API resolver patternine uy.
-
-required_output_json_schema:
-{
-  "task_id": "terrayield-047-planned-parcel-layer-autonomous",
-  "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
-  "progress_percent": 0,
-  "changed_files": [],
-  "endpoint_added": false,
-  "frontend_updated": false,
-  "icon_updated": false,
-  "tests_added": false,
-  "checks": {
-    "node_check_app_js": "pass|fail|skipped",
-    "py_compile": "pass|fail|skipped",
-    "pytest_contract": "pass|fail|skipped",
-    "api_smoke": "pass|fail|skipped"
-  },
-  "safety": {
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false,
-    "fake_data": false,
-    "secret_values_printed": false
-  },
-  "remaining_blockers": [],
-  "next_action": "none|continue|manual_review"
-}
-
-progress_policy:
-- preflight complete: 20
-- backend endpoint + service implemented: 45
-- frontend icon + layer fetch updated: 65
-- popup/tests implemented: 80
-- checks passed and outputs synced: 100
-- If app.main runtime_ops_service import blocker appears, do not mark planned implementation failed unless contract test also fails.
-
-acceptance_gate:
-[ ] /planned-assets/parcel-layer exists
-[ ] invalid bbox returns 400
-[ ] endpoint returns FeatureCollection
-[ ] returned geometries are existing parcel Polygon/MultiPolygon, not asset point geometry
-[ ] only parcel_planned_asset_matches matched parcels are included
-[ ] planned icon uses planed_buildings.png
-[ ] loadPlannedAssetsLayer no longer uses /planned-assets/search as primary planned layer source
-[ ] popup shows evidence/source/probability/timeline/value/source confidence/delay risk
-[ ] no DB write
-[ ] no migration
-[ ] no production deploy
-[ ] no fake data
-
-chatgpt_followup_behavior:
-User will type only "devam et". On each follow-up, ChatGPT should read docs/chatgpt_status/runner_outputs/latest_output.json and terrayield-047-planned-parcel-layer-latest.json/txt from GitHub, then report observed status and progress_percent. If output missing, report queued/pending based on current-task.txt and do not invent completion.
+safety: DB_WRITE=false; MIGRATION=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
