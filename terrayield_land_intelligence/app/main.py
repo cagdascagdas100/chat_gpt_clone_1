@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources
+from app.api.routes import admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources, topography_lookup_v2
 from app.api.routes import aays_sales_layers
 from app.core.config import get_settings
 
@@ -45,6 +45,8 @@ app.include_router(future_growth.router)
 app.include_router(contractor.router)
 app.include_router(proxy.router)
 app.include_router(ops.router)
+app.include_router(topography_lookup_v2.router)
+app.include_router(topography_lookup_v2.legacy_router)
 
 frontend_candidates = [
     Path(__file__).resolve().parents[2] / "england_map_web",
