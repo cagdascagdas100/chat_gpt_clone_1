@@ -1,0 +1,66 @@
+﻿timestamp=2026-06-08T22:54:43
+project_name=AAYS_FORCE_SYNC_AND_RUNNER_DIAGNOSIS
+task_id=aays-f-storage-local-map-data-parallel-20260608
+status=latest_exists_local_not_confirmed_pushed
+progress=65
+runner_count=0
+exact_blocker=latest_local_exists; forcing git commit_push
+next_action=read GitHub latest output
+wait_minutes=0
+f_output_dir=F:\chatgpt\AAYS_AUTOMATION_STORAGE\runs\aays-f-storage-local-map-data-parallel-20260608
+latest_local=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\runner_outputs\aays-f-storage-local-map-data-parallel-latest.txt
+latest_local_exists=True
+f_file_count=1
+repo_report_count=1
+safety_flags=db_write_false,deploy_false,migration_false,ddl_false,fake_data_false,destructive_git_false,secret_print_false
+
+F_RECENT_FILES:
+2026-06-08T17:32:02 F:\chatgpt\AAYS_AUTOMATION_STORAGE\runs\aays-f-storage-local-map-data-parallel-20260608\QUEUE_AND_STORAGE_STATUS.txt
+
+
+REPO_RECENT_REPORTS:
+2026-06-06T15:57:45 C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\AAYS_LAYER_PERF_BACKEND_AUTO_FIX_20260606\QUEUE_STATUS_TR.txt
+
+
+CURRENT_TASK_HEAD:
+TASK_ID=aays-f-storage-local-map-data-parallel-20260608
+PROJECT_NAME=AAYS_F_STORAGE_LOCAL_MAP_DATA_PARALLEL
+PROGRESS_BEFORE=65
+STATUS=queued
+REPO_ROOT=C:\Users\cagda\Documents\GitHub\AAYS
+F_STORAGE_ROOT=F:\chatgpt\AAYS_AUTOMATION_STORAGE
+F_OUTPUT_DIR=F:\chatgpt\AAYS_AUTOMATION_STORAGE\runs\aays-f-storage-local-map-data-parallel-20260608
+GITHUB_LATEST_OUTPUT=docs/chatgpt_status/runner_outputs/aays-f-storage-local-map-data-parallel-latest.txt
+
+PRIMARY_RULE:
+Use F storage for heavy queue/result/output work. Write only compact summaries to GitHub-readable files.
+
+LOCAL_MAP_DATA_WORK:
+1 check_local_frontend_url http://127.0.0.1:8010/england_map_web/
+2 check_local_health http://127.0.0.1:8010/health
+3 check_map_parcels http://127.0.0.1:8010/map/parcels?limit=200
+4 check_map_listings http://127.0.0.1:8010/map/listings?limit=200
+5 check_map_sales_history http://127.0.0.1:8010/map/sales-history/combined?limit=200
+6 check_map_internet http://127.0.0.1:8010/map/internet-access?limit=200
+7 inspect_map_data_files england_map_web/config/regions.local.json england_map_web/config/topography.overlay.json
+8 inspect_frontend_file england_map_web/app.js
+
+LONG_WORK_ITEMS:
+1 endpoint_perf_repeat
+2 backend_route_read_path_scan
+3 frontend_pmtiles_lazyload_scan
+4 contact_cost_planned_real_only_scan
+5 regions_topography_asset_coverage_scan
+6 fake_demo_guard_scan
+7 final_summary_report
+
+RULES:
+Use exactly one canonical runner.
+If multiple runners exist, write blocked report.
+Do not ask user for terminal output.
+Keep progress at 65 unless proof improves it.
+If endpoint or nonblocking UI proof passes, report 70-75.
+If browser/UI behaviour also passes, report 75-80.
+Full England coverage remains PARTIAL unless runtime source proof exists.
+No DB write. No production deploy. No migration or DDL. No fake data. No destructive git.
+
