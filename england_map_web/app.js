@@ -1,4 +1,4 @@
-﻿(async function () {
+(async function () {
   const configUrl = new URL(window.AAYS_CONFIG_URL || "./config/regions.local.json", window.location.href);
   configUrl.searchParams.set("v", "20260429-proxy-parcels-v22");
   const statusEl = document.getElementById("status");
@@ -8992,6 +8992,54 @@
     `;
   }
 
+
+
+  function normalizeParcelTopographyPayloadForPopup(rawValue) {
+    const source = rawValue && typeof rawValue === "object" ? rawValue : { center_elevation_m: rawValue };
+    const readNumber = (...keys) => {
+      for (const key of keys) {
+        const value = Number(source?.[key]);
+        if (Number.isFinite(value)) return value;
+      }
+      return null;
+    };
+    const center = readNumber("center_elevation_m", "elevation_m", "elevation", "height_m");
+    const regionAverage = readNumber("region_average_elevation_m", "average_elevation_m", "area_average_elevation_m");
+    const explicitDifference = readNumber("elevation_difference_from_region_average_m", "difference_from_region_average_m", "region_elevation_delta_m");
+    const difference = explicitDifference !== null ? explicitDifference : (center !== null && regionAverage !== null ? center - regionAverage : null);
+    return {
+      center_elevation_m: center,
+      region_average_elevation_m: regionAverage,
+      elevation_difference_from_region_average_m: difference,
+      region_sample_count: Number.isFinite(Number(source?.region_sample_count)) ? Number(source.region_sample_count) : null,
+      datum: source?.datum || source?.vertical_datum || null,
+      source_dataset: source?.source_dataset || source?.source || null,
+      status: source?.status || (center !== null ? "ok" : "no_data"),
+    };
+  }
+
+  function formatParcelElevationMetersForPopup(rawValue) {
+    const payload = normalizeParcelTopographyPayloadForPopup(rawValue);
+    return Number.isFinite(payload.center_elevation_m) ? `${formatNumber(payload.center_elevation_m, 1)} m` : "Veri yok";
+  }
+
+  function formatParcelElevationDifferenceFromRegionAverageForPopup(rawValue) {
+    const payload = normalizeParcelTopographyPayloadForPopup(rawValue);
+    return Number.isFinite(payload.elevation_difference_from_region_average_m)
+      ? `${payload.elevation_difference_from_region_average_m >= 0 ? "+" : ""}${formatNumber(payload.elevation_difference_from_region_average_m, 1)} m`
+      : "Veri yok";
+  }
+
+  function buildParcelTopographyPopupRows(feature) {
+    const props = feature?.properties || {};
+    const ref = getParcelRef(feature);
+    const cached = parcelElevationCache?.get?.(ref);
+    const payload = normalizeParcelTopographyPayloadForPopup(cached || props.topography_lookup || props);
+    return `
+      <div><strong>Denizden yükseklik:</strong> ${formatParcelElevationMetersForPopup(payload)}</div>
+      <div><strong>Bölge ortalamasından fark:</strong> ${formatParcelElevationDifferenceFromRegionAverageForPopup(payload)}</div>`;
+  }
+
   function getParcelRef(feature) {
     const props = feature?.properties || {};
     return (
@@ -9508,6 +9556,7 @@
           <div><strong>m2 Fiyati:</strong> ${latest?.price_per_m2_gbp ? formatGbpPerM2(Number(latest.price_per_m2_gbp)) : "-"}</div>
           <div><strong>Postcode:</strong> ${latest?.postcode || "-"}</div>
           <div><strong>Konum:</strong> ${latest?.location_label || parcel.regionLabel || "-"}</div>
+          ${buildParcelTopographyPopupRows(feature)}
         </div>
       `);
       return container;
@@ -9519,6 +9568,7 @@
         .slice(0, 4)
         .map(([key, value]) => `${key}: ${value}`)
         .join("<br />")}</div>
+      ${buildParcelTopographyPopupRows(feature)}
       ${dominantContextLabel ? `<div class="parcel-popup-meta" style="margin-top:8px;">Arazi kullanim tipi: ${dominantContextLabel}</div>` : ""}
       ${
         filteredView
