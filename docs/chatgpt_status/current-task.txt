@@ -1,49 +1,51 @@
-task_id=terrayield-047-planned-parcel-layer-autonomous
-status=QUEUED_CURRENT_TASK_REPLACES_PREVIOUS
+task_id=terrayield-048-emissions-air-icon-runner-recovery-dryrun
+status=QUEUED_CURRENT_TASK_REPLACES_PREVIOUS_STALE_QUEUE
 priority=urgent
 created_by=chatgpt
 created_at=2026-06-09T00:00:00Z
 
-objective=Implement AAYS / TerraYield Sayfa 7 Planlanan Yapilar matched parcel polygon layer. The layer must render existing parcel polygons matched to planned assets, not asset points from /planned-assets/search.
+objective=Continue AAYS/TerraYield through the single canonical runner. First recover runner/Git sync if needed, then run the air.png Gaz Emisyonu dry-run pipeline using existing local evidence and official-source manifests. Do not perform DB writes, migrations, DDL, production deploys, or fake data generation.
 
-runner_input=docs/chatgpt_status/runner_inputs/terrayield-047-planned-parcel-layer-autonomous.txt
+runner_input=docs/chatgpt_status/runner_inputs/terrayield-048-emissions-air-icon-runner-recovery-dryrun.txt
 local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
-backend_root=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence
-frontend_file=C:\Users\cagda\Documents\GitHub\AAYS\england_map_web\app.js
+bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2
+canonical_runner=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
 
 required_actions:
-1. Stash-safe git status/sync and runner health check.
-2. Read runner_input and current code files.
-3. Patch backend: add GET /planned-assets/parcel-layer using parcel_planned_asset_matches + planned_assets + parcels_inspire.
-4. Patch frontend: planned icon -> ./assets/icons/terrayield_icons/planed_buildings.png and loadPlannedAssetsLayer -> /planned-assets/parcel-layer.
-5. Keep future_growth fallback separate; never show it as planned parcel data.
-6. Add route-level test for planned parcel layer contract.
-7. Run node --check, python py_compile, and route-level pytest.
-8. Write text/json status outputs to GitHub paths below.
+1. Confirm the process is the single canonical runner, not a second ad-hoc runner.
+2. Perform git-safe sync/recovery: record git status, stash only if needed, fetch, pull/rebase or safe merge according to existing runner policy.
+3. Read this current-task and runner_input.
+4. Run read-only audit for air.png/emissions files.
+5. Generate review/dry-run emissions output files from existing local parcel_air_quality_scores.geojson without relabeling it as official CO2e.
+6. Create source_registry/evidence/hash manifests for official sources as reference rows; do not perform large downloads unless user later provides ONAY: BUYUK_VERI_INDIR.
+7. Create coverage/confidence/frontend patch plan/no-write acceptance reports.
+8. Write all runner outputs to the GitHub status paths below.
 
 required_outputs:
-docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.txt
-docs/chatgpt_status/runner_outputs/terrayield-047-planned-parcel-layer-latest.json
-docs/chatgpt_status/runner_outputs/latest_output.json
+- docs/chatgpt_status/runner_outputs/terrayield-048-emissions-air-icon-latest.txt
+- docs/chatgpt_status/runner_outputs/terrayield-048-emissions-air-icon-latest.json
+- docs/chatgpt_status/runner_outputs/latest_output.json
 
 progress_contract:
-queued=10
-running_preflight=20
-backend_patched=45
-frontend_patched=65
-tests_running=80
-outputs_written=90
-success=100
+queued=14
+runner_recovery_running=22
+readonly_audit_complete=35
+proxy_outputs_generated=55
+manifests_reports_generated=70
+validation_running=82
+outputs_written=92
+success_review_ready=100
 blocked_or_failed=percent_at_failure
 
 acceptance:
-- /planned-assets/parcel-layer exists
-- invalid bbox returns 400
-- matched parcels only via parcel_planned_asset_matches join
-- geometry is parcels_inspire Polygon/MultiPolygon transformed to EPSG:4326
-- planned icon uses planed_buildings.png
-- planned overlay no longer uses /planned-assets/search as map source
-- popup exposes evidence/source/probability/timeline/value/source-confidence/delay-risk
+- current runner only; no duplicate runner created
+- air.png exists under england_map_web and terrayield icon path
+- EMISSIONS_CONTROL_MODE, setEmissionsLayerVisibility, toggleEmissionsLayer, emissionsToggle verified
+- parcel_air_quality_scores.geojson feature count measured
+- emission_percent high=bad and derived only from pollutionRiskPercent proxy unless official source joins exist
+- airQualityPercent preserved as raw, never inverted/mislabeled as CO2e
+- outputs include parcel_emissions_scores.csv, parcel_emissions_scores.geojson, parcel_emissions_score_manifest.json, coverage/confidence reports, frontend patch plan, no-write acceptance report
+- FINAL_STATUS is one of READY_FOR_CODEX_MINIMAL_PATCH, NOT_READY_MISSING_SOURCES, NOT_READY_LOW_COVERAGE, NOT_READY_CONFLICT
 - DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
 
-safety: DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
+safety: DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false; BIG_DOWNLOADS_REQUIRE_APPROVAL=true
