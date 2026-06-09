@@ -1,0 +1,33 @@
+FG444_LONDON_BLOCKER_DIAGNOSIS_LATEST
+UPDATED_AT=2026-06-10T01:10:00Z
+PAGE_KEY=FG444_LONDON_ONLY_F_DRIVE
+SCOPE=LONDON_ONLY
+STATUS=BLOCKED_BEFORE_FAST_UNBLOCK_RESULT
+
+OBSERVED_FROM_GITHUB:
+- docs/chatgpt_control/FG444_LONDON_REQUEST.json is enabled and points to ai-task-scripts/fg444_london_fast_unblock_runner.ps1.
+- docs/chatgpt_control/FG444_CONTROLLER_NEXT.json is enabled with task_id_prefix=fg444-london-fast-unblock-github-r5.
+- watcher heartbeat branch fg444-controller-heartbeat-latest is updating and reports RUNNER_ACTIVE_COUNT=1.
+- fast-unblock result branch fg444-london-fast-unblock-latest does not exist.
+- readonly audit result branch fg444-london-readonly-audit-latest does not exist.
+
+ROOT_CAUSE_AS_FAR_AS_GITHUB_CAN SEE:
+- GitHub can confirm watcher process is alive and sees the correct control URLs.
+- GitHub cannot confirm whether the task JSON was created in C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\pending because heartbeat does not publish pending/running file names.
+- GitHub cannot confirm the local portable_queue_runner.ps1 contract because that runner file is not present in the repository.
+- Therefore the remaining blocker is local runner/queue observability or consumption, not the London request/control content.
+
+ACTIONS_ALREADY_DONE:
+- Fast-unblock script was changed to use C:\AAYS_GITHUB_BRIDGE_CLEAN2\fg444-london-fast-unblock-work for its own report/push workspace while keeping audit workspace_root on F:\chatgpt\AAYS_WORK\FG444_LONDON.
+- F drive existence and audit workspace existence are now reported by the fast-unblock script if it runs.
+- Controller retry prefix was advanced to fg444-london-fast-unblock-github-r5.
+
+NEXT_EXPECTED_REPORT:
+- Branch: fg444-london-fast-unblock-latest
+- Path: docs/chatgpt_status/FG444_LONDON_FAST_UNBLOCK/FG444_LONDON_FAST_UNBLOCK_LATEST.txt
+
+MANUAL_OUTPUT_PASTE_REQUIRED=false
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+MIGRATION_DDL=false
+FAKE_DATA=false
