@@ -1,0 +1,31 @@
+TASK_ID=automation-bridge-repair-and-ppd-source-gate-20260609T032148TR
+PROJECT=AAYS_TerraYield
+RUNNER_POLICY=single_existing_runner_only
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+FAKE_DATA=false
+BRANCH=feature/terrayield-aays-integration
+REPO=C:\Users\cagda\Documents\GitHub\AAYS
+WORK_ROOT=F:\chatgpt\AAYS_WORK
+PPD_FILE=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+LICENSED_INCOMING=F:\sold_buildings\licensed\incoming
+PRIMARY_OUTPUT=docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+HEALTH_OUTPUT=docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+
+PROBLEM:
+Previous inbox task exists, but PRIMARY_OUTPUT is missing. Repair the GitHub-to-runner pickup/report contract and then validate PPD plus official source gate.
+
+ACTIONS:
+1. Use the existing single runner only.
+2. Write HEALTH_OUTPUT with branch, runner pickup status, output existence, blockers, and next_action.
+3. Validate PPD_FILE: exists, byte size, sha256, first line, last line, sample read, and error-page detection.
+4. Scan LICENSED_INCOMING for address bridge, HMLR polygon, and title-UPRN/combined bridge.
+5. Write PRIMARY_OUTPUT to GitHub.
+6. No V2 rerun, no LOCATION_MATCH rerun, no duplicate PPD download, no DB write, no deploy.
+
+PROGRESS_RULE:
+55 if no valid report; 60 if PPD valid but official source gate missing; 75 if PPD valid and official source gate ready.
+
+NEXT_CHATGPT_CHECK_ORDER:
+1. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+2. docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
