@@ -1,0 +1,50 @@
+status=LONDON_ONLY_ACCELERATION_PLAN_READY
+created_at=2026-06-09T04:02:00+03:00
+scope=GREATER_LONDON_ONLY
+nationwide_run_allowed=false
+runner_policy=single_existing_runner_only
+
+WHY THIS CHANGE
+The full nationwide sold-buildings verified-sale-to-parcel pipeline is heavy. To get faster feedback, all source-gate, subset, match, staging, and review-gate work must first run as a Greater London pilot. Success in London can later be replicated region by region.
+
+WHAT CHANGED
+- The canonical next task now points to London-only accelerated work.
+- The current task now points to London-only accelerated work.
+- A dedicated GitHub inbox task was added for the London-only pilot.
+- A manual fallback note was added only for the case where the existing runner does not pick up GitHub tasks.
+
+CANONICAL FILES
+- docs/chatgpt_status/AUTONOMOUS_RUNNER_NEXT_TASK_20260609.txt
+- docs/chatgpt_status/AUTOMATION_REPAIR_CURRENT_TASK.txt
+- docs/chatgpt_status/GITHUB_INBOX_TASK_LONDON_ONLY_ALL_STRUCTURES_ACCELERATED_20260609T040200TR.txt
+- docs/chatgpt_status/MANUAL_FALLBACK_LONDON_ONLY_ALL_STRUCTURES_20260609T040200TR.txt
+
+REQUIRED REPORTS
+- docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_OUTPUT_MANIFEST_LATEST.json
+- docs/chatgpt_status/LONDON_ONLY_MISSING_SOURCES_LATEST.txt if blocked/missing
+- docs/chatgpt_status/LONDON_ONLY_V3_PREFLIGHT_LATEST.txt if V3 preflight starts
+
+SAFETY
+- Fail closed if Greater London AOI cannot be verified.
+- No nationwide processing.
+- No fake licensed data.
+- No DB write/migration/deploy.
+- No V2 rerun.
+- No LOCATION_MATCH rerun.
+- No PPD redownload.
+
+PARALLELIZATION
+Non-conflicting workstreams may run concurrently only if they use separate output roots and do not write DB tables:
+- london_ppd_extract
+- london_address_bridge_inventory
+- london_hmlr_polygon_title_inventory
+- london_code_preflight
+
+NEXT CHECK
+After 10-20 minutes, check for:
+- AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
