@@ -1,0 +1,55 @@
+CONTINUE CONTROL PROMPT — AAYS REAL TOPOGRAPHY PRODUCT
+
+Use this prompt/rule set when the user says only: devam et.
+
+PROJECT
+- Repo: cagdascagdas100/chat_gpt_clone_1
+- Branch: aays-runner-v17-icon-work-20260603-232706
+- Page key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+
+STATUS PATHS
+- Task path: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks
+- Report path: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports
+- Automation notes: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation
+
+LOCAL RUNNER EXPECTATION
+- Single runner only.
+- Canonical runner: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+- Local queue: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue
+- F worktree: F:\AAYS_GITHUB_WORK\AAYS
+
+WHEN USER SAYS DEVAM ET
+1. Search GitHub reports first.
+2. Find newest report under the report path.
+3. Read and classify:
+   - success
+   - failed
+   - blocker
+   - next action
+   - progress percentage
+4. If a report exists and shows a solvable blocker, create a corrected task under runner_tasks.
+5. If no report exists but a task exists, do not create duplicate product tasks. State that the missing link is local queue trigger / bridge.
+6. Do not ask the user to paste PowerShell output.
+7. Only give a PowerShell command when local runner/queue trigger is the real blocker.
+
+CURRENT KNOWN TASK
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/RUN_SOURCE_INVENTORY_MINIMAL_20260609.ps1
+
+EXPECTED NEXT REPORT
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/real_topography_source_inventory_*.txt
+
+PROGRESS RULE
+- Current baseline: 84
+- Source inventory report exists: 86
+- Real artifact found: 88
+- API smoke passed: 92
+- Browser popup proof passed: 100
+
+DO NOT DO
+- Do not count UI acceptance as real product completion.
+- Do not create fake elevation data.
+- Do not do DB write, migration, or deploy.
+- Do not start duplicate runner tasks when one task is already waiting.
+
+EXPLAIN STUCK PERCENTAGE AS
+The GitHub task exists, but the local Kalife runner has not copied or executed it from the local queue. The missing component is a GitHub-to-local-queue bridge/poller.
