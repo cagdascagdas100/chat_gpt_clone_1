@@ -1,0 +1,42 @@
+POWERSHELL BOOTSTRAP PROMPT — AAYS REAL TOPOGRAPHY PRODUCT
+
+Purpose:
+Create the missing bridge between GitHub runner_tasks and the local Kalife runner queue.
+
+Why this is needed:
+ChatGPT can create files under GitHub runner_tasks, but the local Kalife runner only executes jobs after they are present in the local queue folder. The current missing automation piece is copying the GitHub task into the local queue and ensuring the single canonical runner is running.
+
+Required one-shot behavior:
+1. Use branch: aays-runner-v17-icon-work-20260603-232706
+2. Use page key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+3. Download this GitHub task file:
+   docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/RUN_SOURCE_INVENTORY_MINIMAL_20260609.ps1
+4. Put that file into the local Kalife runner queue.
+5. Check whether the canonical portable queue runner is already running.
+6. If it is running, do not start a duplicate runner.
+7. If it is not running, start exactly one runner.
+8. Do not ask the user to paste PowerShell output.
+9. The source inventory task must write its own output to GitHub reports.
+
+Expected output report after successful runner execution:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/real_topography_source_inventory_*.txt
+
+Expected wait after bootstrap:
+5-10 minutes.
+
+Progress after report:
+- Source inventory report exists: 84 -> 86
+- Real elevation artifact found: 86 -> 88
+- API smoke passed: 88 -> 92
+- Browser popup proof passed: 92 -> 100
+
+Safety rules:
+- Single runner only.
+- No fake elevation data.
+- No DB write.
+- No migration.
+- No deploy.
+- No duplicate source-inventory tasks if one is already queued or running.
+
+Current blocker label:
+BLOCKED_WAITING_FOR_GITHUB_TO_LOCAL_QUEUE_BRIDGE
