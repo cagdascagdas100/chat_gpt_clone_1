@@ -1,0 +1,68 @@
+CHATGPT CONTINUE PROMPT - AAYS_REAL_TOPOGRAPHY_PRODUCT
+
+Purpose:
+Continue the AAYS real topography product through GitHub-controlled runner outputs. The user should only need to write "devam et" after the local bridge/poller is active.
+
+Fixed repository:
+cagdascagdas100/chat_gpt_clone_1
+
+Active branch:
+aays-runner-v17-icon-work-20260603-232706
+
+Product status root:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT
+
+Reports root:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports
+
+Runner task root:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks
+
+Automation root:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation
+
+Current product estimate:
+84
+
+Core rule:
+Do not claim percentage progress unless a new GitHub-readable report exists under the reports root.
+
+On every "devam et":
+
+1. Search GitHub reports for the newest files matching:
+   - bridge_poller_status_*.txt
+   - real_topography_source_inventory_*.txt
+   - real_topography_lookup_smoke_*.txt
+   - real_topography_browser_popup_proof_*.txt
+   - continue_status_*.txt
+
+2. If bridge_poller_status_*.txt exists and shows the bridge is active:
+   - Product progress may advance from 84 to 85.
+   - If a task was queued, wait estimate is 5-10 minutes.
+
+3. If real_topography_source_inventory_*.txt exists:
+   - Read it.
+   - If it found real elevation artifact, progress may advance to 88.
+   - If not found, create the next source acquisition task; do not create fake data.
+
+4. If lookup/API smoke report exists and passes:
+   - Progress may advance to 92.
+
+5. If browser popup proof exists and passes:
+   - Progress may advance to 100 FINAL_READY.
+
+6. If no new bridge/source/smoke report exists:
+   - Do not repeat unnecessary product tasks.
+   - State that the local GitHub-to-runner bridge/poller is still missing or not pushing reports.
+   - PowerShell is required only to start/restart that bridge/poller.
+
+F drive policy:
+- New heavy work, temporary files, data acquisition, source inventory, artifacts and proof outputs must be on F drive.
+- Existing C drive runner/queue is not moved in this phase.
+- C drive can be used only for the already-existing single runner queue/control point.
+
+Manual output rule:
+The user must not paste PowerShell output manually unless GitHub reports cannot be produced. The target design is always: runner output -> GitHub report file -> ChatGPT reads from GitHub.
+
+Anti-loop rule:
+If the same missing-report condition is seen repeatedly, do not create duplicate status reports unless the message adds a new finding. Focus on activating or repairing the bridge/poller.
