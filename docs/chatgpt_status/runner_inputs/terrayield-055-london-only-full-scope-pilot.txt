@@ -1,0 +1,44 @@
+task_id=terrayield-055-london-only-full-scope-pilot
+scope=london_only
+status=queued
+
+Goal:
+Apply the same requested TerraYield AAYS layer/update plan only for London pilot coverage, not all England.
+
+Pilot rule:
+- Do not run England-wide expansion.
+- Restrict discovery, coverage checks, joins, generated outputs, map artifacts, and reports to London.
+- Prefer Greater London boundary, London borough boundary, or existing project London area filters.
+- If multiple London definitions exist, report which one was used.
+
+Layers / structures to include:
+- air / emissions / air quality icon path
+- planned buildings / future planned assets path
+- security / asayis layer path
+- internet access layer path
+- all existing parcel-popup evidence, confidence, manifest, legend, and frontend hooks related to these layers
+
+Execution model:
+- Use the single existing runner only.
+- Keep DB writes, migrations, production deploys, and fake data disabled unless explicitly approved later.
+- Produce read-only audit first.
+- Then produce London-only candidate outputs and frontend patch plan.
+- Parallelize only non-conflicting read-only subtasks.
+- Stop and report before any destructive action.
+
+Expected outputs:
+- docs/chatgpt_status/runner_outputs/terrayield-055-london-only-full-scope-pilot.txt
+- docs/chatgpt_status/runner_outputs/terrayield-055-london-only-full-scope-pilot.json
+- docs/chatgpt_status/runner_outputs/latest_output.json
+
+Progress contract:
+queued_24
+london_boundary_confirmed_35
+layer_inventory_done_45
+parallel_readonly_audits_done_60
+london_candidate_outputs_done_75
+frontend_patch_plan_done_88
+final_report_done_100
+
+First required runner action:
+Write a small seen/heartbeat line to the 055 txt output, then continue the London-only pilot work.
