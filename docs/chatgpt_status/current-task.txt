@@ -1,51 +1,48 @@
-task_id=terrayield-048-emissions-air-icon-runner-recovery-dryrun
-status=QUEUED_CURRENT_TASK_REPLACES_PREVIOUS_STALE_QUEUE
+task_id=terrayield-049-runner-heartbeat-self-heal
+status=QUEUED_HEARTBEAT_SELF_HEAL
 priority=urgent
 created_by=chatgpt
 created_at=2026-06-09T00:00:00Z
 
-objective=Continue AAYS/TerraYield through the single canonical runner. First recover runner/Git sync if needed, then run the air.png Gaz Emisyonu dry-run pipeline using existing local evidence and official-source manifests. Do not perform DB writes, migrations, DDL, production deploys, or fake data generation.
+objective=Repair the autonomous ChatGPT-GitHub-single runner-output loop by requiring a lightweight heartbeat before any domain task.
 
-runner_input=docs/chatgpt_status/runner_inputs/terrayield-048-emissions-air-icon-runner-recovery-dryrun.txt
+runner_input=docs/chatgpt_status/runner_inputs/terrayield-049-runner-heartbeat-self-heal.txt
 local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
 bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2
-canonical_runner=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue
+local_result_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results
 
 required_actions:
-1. Confirm the process is the single canonical runner, not a second ad-hoc runner.
-2. Perform git-safe sync/recovery: record git status, stash only if needed, fetch, pull/rebase or safe merge according to existing runner policy.
-3. Read this current-task and runner_input.
-4. Run read-only audit for air.png/emissions files.
-5. Generate review/dry-run emissions output files from existing local parcel_air_quality_scores.geojson without relabeling it as official CO2e.
-6. Create source_registry/evidence/hash manifests for official sources as reference rows; do not perform large downloads unless user later provides ONAY: BUYUK_VERI_INDIR.
-7. Create coverage/confidence/frontend patch plan/no-write acceptance reports.
-8. Write all runner outputs to the GitHub status paths below.
+1. Use only the existing single runner.
+2. Read this current-task and the runner_input file.
+3. Write an immediate heartbeat output before any heavy job.
+4. Capture process id, git branch, head sha, git status, and whether current-task and runner input were seen.
+5. Publish heartbeat outputs to docs/chatgpt_status/runner_outputs.
+6. Produce a runner protocol audit explaining which path the runner polls and whether automatic input/output sync works.
+7. Do not run the heavy domain task in this diagnostic step.
 
 required_outputs:
-- docs/chatgpt_status/runner_outputs/terrayield-048-emissions-air-icon-latest.txt
-- docs/chatgpt_status/runner_outputs/terrayield-048-emissions-air-icon-latest.json
+- docs/chatgpt_status/runner_outputs/terrayield-049-runner-heartbeat-latest.txt
+- docs/chatgpt_status/runner_outputs/terrayield-049-runner-heartbeat-latest.json
+- docs/chatgpt_status/runner_outputs/terrayield-049-runner-protocol-audit.txt
+- docs/chatgpt_status/runner_outputs/terrayield-049-runner-protocol-audit.json
 - docs/chatgpt_status/runner_outputs/latest_output.json
 
 progress_contract:
-queued=14
-runner_recovery_running=22
-readonly_audit_complete=35
-proxy_outputs_generated=55
-manifests_reports_generated=70
-validation_running=82
-outputs_written=92
-success_review_ready=100
+queued_by_chatgpt=16
+runner_heartbeat_visible=22
+protocol_audit_complete=35
+self_heal_plan_written=50
+safe_resume_task_written=65
+output_sync_verified=80
+ready_for_domain_task_resume=100
 blocked_or_failed=percent_at_failure
 
 acceptance:
-- current runner only; no duplicate runner created
-- air.png exists under england_map_web and terrayield icon path
-- EMISSIONS_CONTROL_MODE, setEmissionsLayerVisibility, toggleEmissionsLayer, emissionsToggle verified
-- parcel_air_quality_scores.geojson feature count measured
-- emission_percent high=bad and derived only from pollutionRiskPercent proxy unless official source joins exist
-- airQualityPercent preserved as raw, never inverted/mislabeled as CO2e
-- outputs include parcel_emissions_scores.csv, parcel_emissions_scores.geojson, parcel_emissions_score_manifest.json, coverage/confidence reports, frontend patch plan, no-write acceptance report
-- FINAL_STATUS is one of READY_FOR_CODEX_MINIMAL_PATCH, NOT_READY_MISSING_SOURCES, NOT_READY_LOW_COVERAGE, NOT_READY_CONFLICT
-- DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false
+- latest_output.json no longer says local_runner_has_not_consumed_current_task_yet
+- heartbeat output exists in GitHub
+- heartbeat includes pid, branch, head sha, git status, current_task_seen, runner_input_seen
+- protocol audit identifies the actual polling path and output path
+- no heavy domain task runs before heartbeat is visible
 
-safety: DB_WRITE=false; MIGRATION=false; DDL=false; PRODUCTION_DEPLOY=false; FAKE_DATA=false; BIG_DOWNLOADS_REQUIRE_APPROVAL=true
+safety: no database writes; no migrations; no production deploy; no fake data; no heavy domain task
