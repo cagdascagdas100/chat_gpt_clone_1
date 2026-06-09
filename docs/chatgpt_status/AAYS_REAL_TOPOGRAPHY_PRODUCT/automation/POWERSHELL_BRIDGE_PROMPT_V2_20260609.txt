@@ -1,0 +1,29 @@
+POWERSHELL BRIDGE PROMPT V2 — ONE RUNNER DISPATCH BRIDGE
+
+Purpose:
+Create or run a local bridge that moves pending GitHub tasks into the existing single Kalife runner input queue and ensures the single runner is alive.
+
+Rules:
+- Use exactly one runner.
+- Do not create duplicate runner processes.
+- Do not ask the user to paste command output into ChatGPT.
+- Every command must write a readable report into the GitHub reports folder.
+- Do not create fake elevation data.
+- Do not run DB write, migration, or deploy.
+
+Pending task to dispatch:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/RUN_SOURCE_INVENTORY_MINIMAL_20260609.ps1
+
+Expected output report:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/real_topography_source_inventory_*.txt
+
+Required bridge behavior:
+1. Check whether the single canonical runner process is already running.
+2. If it is running, do not start another runner.
+3. If it is not running, start the canonical runner.
+4. Download or copy the pending GitHub task into the local runner input queue.
+5. Wait for the runner to execute it.
+6. Confirm that the expected report was committed to GitHub.
+7. If no report appears, write a blocker report into GitHub explaining whether the failure is download, queue, runner, git commit, or git push.
+
+After this bridge is active, the user should only write "devam et". ChatGPT will read GitHub reports and write the next task file if needed.
