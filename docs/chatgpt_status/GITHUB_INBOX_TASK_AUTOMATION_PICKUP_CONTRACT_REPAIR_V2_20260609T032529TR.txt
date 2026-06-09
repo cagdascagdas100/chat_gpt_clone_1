@@ -1,0 +1,122 @@
+TASK_ID=automation-pickup-contract-repair-v2-20260609T032529TR
+PROJECT=AAYS_TerraYield
+CREATED_AT=2026-06-09T03:25:29+03:00
+BRANCH=feature/terrayield-aays-integration
+RUNNER_POLICY=single_existing_runner_only
+MANUAL_POWERSHELL_REQUIRED=false
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+FAKE_DATA=false
+
+DIAGNOSIS:
+The previous GitHub task files exist, but both expected output files are still missing:
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+Therefore the missing automation piece is not the work request itself. The missing piece is the pickup/report contract: the existing runner must acknowledge which GitHub task file it consumed, must write an immediate health report, and must push an error report even if the local validation step fails.
+
+CANONICAL_TASK_FILES_TO_CONSUME:
+1. docs/chatgpt_status/AUTONOMOUS_RUNNER_NEXT_TASK_20260609.txt
+2. docs/chatgpt_status/AUTOMATION_REPAIR_CURRENT_TASK.txt
+
+LOCAL_PATHS:
+repo=C:\Users\cagda\Documents\GitHub\AAYS
+work_root=F:\chatgpt\AAYS_WORK
+ppd_file=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+licensed_incoming=F:\sold_buildings\licensed\incoming
+
+MANDATORY_FIRST_OUTPUTS_BEFORE_HEAVY_WORK:
+1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+
+ACK_OUTPUT_SCHEMA:
+status=RUNNER_PICKED_UP_TASK
+picked_task_file=<path consumed by runner>
+picked_at=<local timestamp>
+branch=<git branch>
+head_sha=<git head sha>
+runner_policy=single_existing_runner_only
+next_action=write health then validate ppd/source gate
+
+HEALTH_OUTPUT_SCHEMA:
+status=AUTOMATION_BRIDGE_HEALTH_OK or AUTOMATION_BRIDGE_HEALTH_BLOCKED
+checked_at=<local timestamp>
+repo=<local repo>
+branch=<branch>
+head_sha=<sha>
+git_pull_ok=true/false
+git_push_ok=true/false
+consumed_task_file=<path>
+ack_written=true/false
+primary_output_exists=true/false
+local_ppd_exists=true/false
+licensed_incoming_exists=true/false
+blocker=<none or exact blocker>
+next_action=<exact next action>
+
+PRIMARY_WORK_AFTER_ACK_AND_HEALTH:
+Validate F:\sold_buildings\open_sources\ppd\pp-complete.csv without re-downloading it:
+- exists
+- byte size
+- sha256
+- first line
+- last line
+- sample-read at several offsets
+- detect HTML/error-page/truncated file
+
+Scan F:\sold_buildings\licensed\incoming for required official/licensed bridge sources:
+- addressbase_premium_full.csv OR address_to_uprn_bridge.csv
+- hmlr_nps_national_polygon.gpkg OR hmlr_nps_national_polygon.shp.zip
+- hmlr_title_number_uprn_lookup.csv OR title_no_uprn_polygon_bridge.csv
+
+PRIMARY_OUTPUT:
+docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+PRIMARY_OUTPUT_SCHEMA:
+status=PPD_AND_SOURCE_GATE_DONE or PPD_AND_SOURCE_GATE_BLOCKED
+ppd_exists=true/false
+ppd_bytes=<number>
+ppd_last_known_expected_bytes=4564569164
+ppd_first_line=<first line>
+ppd_last_line=<last line>
+ppd_sha256=<hash>
+ppd_valid=true/false
+licensed_incoming=F:\sold_buildings\licensed\incoming
+licensed_incoming_exists=true/false
+has_address_bridge=true/false
+address_bridge_file=<file or missing>
+has_polygon=true/false
+polygon_file=<file or missing>
+has_title_uprn=true/false
+title_uprn_file=<file or missing>
+source_gate_ready=true/false
+overall_progress=<55|60|75>
+next_action=<exact next action>
+fake_data=false
+db_write=false
+production_deploy=false
+
+PROGRESS_RULE:
+55 if no valid report exists.
+60 if PPD is valid but official source gate is missing.
+75 if PPD is valid and official source gate is ready.
+92 only after V3 staging/import succeeds.
+100 only after FULL DB ADDRESS MATCH V3 plus review gate succeeds.
+
+DO_NOT:
+- Do not start a duplicate runner.
+- Do not rerun V2.
+- Do not rerun LOCATION_MATCH.
+- Do not re-download PPD.
+- Do not create fake AddressBase, fake UPRN, fake Title_No, or fake polygon bridge.
+- Do not write DB.
+- Do not deploy production.
+
+IF_ANY_STEP_FAILS:
+Still push both HEALTH_OUTPUT and PRIMARY_OUTPUT with status=BLOCKED and the exact blocker. Do not silently stop.
+
+NEXT_CHATGPT_CHECK_ORDER:
+1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+3. docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+WAIT_MINUTES=5-15
