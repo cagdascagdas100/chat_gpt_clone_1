@@ -1,0 +1,46 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=terrayield-047-output-harvest-stuck-recovery-20260610
+MODE=OUTPUT_HARVEST_STUCK_RECOVERY_AND_SAFE_CONTINUE
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPO=cagdascagdas100/chat_gpt_clone_1
+
+STRICT_RULES:
+- Use existing single runner only.
+- Do not duplicate an actively running 046 job.
+- No fake topography or elevation values.
+- No DB writes, migrations, or production deploys.
+- Write all evidence under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT reports or status.
+
+OBJECTIVE:
+Harvest 046 and 044 outputs if they exist. If not, diagnose why 046 has not produced a report. Then safely run read-only checks for the real two-metric topography product only if no active job conflict exists.
+
+READ_THIS_PAGE_ONLY:
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/control
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/heartbeat
+
+REPORT_TO_WRITE:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_output_harvest_stuck_recovery_<timestamp>.txt
+
+REPORT_FIELDS:
+PRODUCT_PROGRESS_ESTIMATE_BEFORE=84
+PRODUCT_PROGRESS_ESTIMATE_AFTER=<integer>
+RUNNER_STATUS=<running|polling|stuck|unknown>
+ACTIVE_TASK=<name or none>
+QUEUED_TASKS=<summary>
+FOUND_046_OUTPUTS=<yes/no paths>
+FOUND_044_OUTPUTS=<yes/no paths>
+FOUND_REAL_ELEVATION_LOOKUP=<yes/no path>
+LOOKUP_ENDPOINT_SMOKE=<pass/fail/not_run>
+POPUP_TWO_METRICS_STATUS=<pass/fail/not_run>
+NEXT_SAFE_TASK=<recommended next single-runner task>
+FAKE_DATA_CREATED=False
+
+ACCEPTANCE:
+Increase progress only if evidence is found or safe read-only product check completes and is reported.
+If still blocked, keep AFTER=84 and state exact blocker.
