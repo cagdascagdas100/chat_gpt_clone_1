@@ -1,0 +1,78 @@
+﻿param(
+  [string]$BridgeRoot = "C:\AAYS_GITHUB_BRIDGE_CLEAN2",
+  [string]$PageKey = "AAYS_SAME_PROJECT_NEW_PAGE",
+  [int]$LoopSeconds = 21600,
+  [int]$SleepSeconds = 15
+)
+
+$ErrorActionPreference = "Continue"
+$QueueRoot = Join-Path $BridgeRoot "ai-queue"
+$PendingDir = Join-Path $QueueRoot "pending"
+$RunningDir = Join-Path $QueueRoot "running"
+$DoneDir = Join-Path $QueueRoot "done"
+$FailedDir = Join-Path $QueueRoot "failed"
+$HeartbeatDir = Join-Path $BridgeRoot "ai-heartbeat"
+$LockDir = Join-Path $QueueRoot ".queue-lock"
+
+foreach($d in @($PendingDir,$RunningDir,$DoneDir,$FailedDir,$HeartbeatDir)){
+  New-Item -ItemType Directory -Force -Path $d | Out-Null
+}
+
+$EndAt = (Get-Date).AddSeconds($LoopSeconds)
+while((Get-Date) -lt $EndAt){
+  try {
+    "runner=active`npage_key=$PageKey`nupdated=$((Get-Date).ToString('o'))`npid=$PID" |
+      Set-Content -Path (Join-Path $HeartbeatDir "portable-runner.md") -Encoding UTF8
+  } catch {}
+
+  if(@(Get-ChildItem -Path $RunningDir -File -Filter "*.task.json" -ErrorAction SilentlyContinue).Count -gt 0){
+    Start-Sleep -Seconds $SleepSeconds
+    continue
+  }
+
+  $task = Get-ChildItem -Path $PendingDir -File -Filter "*.task.json" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime | Select-Object -First 1
+
+  if($null -eq $task){
+    Start-Sleep -Seconds $SleepSeconds
+    continue
+  }
+
+  $lockTaken = $false
+  try {
+    New-Item -ItemType Directory -Path $LockDir -ErrorAction Stop | Out-Null
+    $lockTaken = $true
+    "pid=$PID`nmode=runner_v10`nupdated=$((Get-Date).ToString('o'))" |
+      Set-Content -Path (Join-Path $LockDir "lock.txt") -Encoding UTF8
+
+    $runningPath = Join-Path $RunningDir $task.Name
+    Move-Item -Path $task.FullName -Destination $runningPath -Force
+
+    $obj = Get-Content -Path $runningPath -Raw | ConvertFrom-Json
+    $script = [string]$obj.script_path
+    $taskId = [string]$obj.task_id
+    $result = [string]$obj.result_path
+    $repoResult = [string]$obj.repo_result_path
+
+    if(Test-Path $script){
+      powershell -NoProfile -ExecutionPolicy Bypass -File $script -TaskId $taskId -ResultPath $result -RepoResultPath $repoResult
+      if($LASTEXITCODE -eq 0 -or $null -eq $LASTEXITCODE){
+        Move-Item -Path $runningPath -Destination (Join-Path $DoneDir (Split-Path $runningPath -Leaf)) -Force
+      } else {
+        Move-Item -Path $runningPath -Destination (Join-Path $FailedDir (Split-Path $runningPath -Leaf)) -Force
+      }
+    } else {
+      "missing_script=$script" | Set-Content -Path $result -Encoding UTF8
+      Move-Item -Path $runningPath -Destination (Join-Path $FailedDir (Split-Path $runningPath -Leaf)) -Force
+    }
+  } catch {
+    try {
+      $err = Join-Path $FailedDir ("runner_v10_error_" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".txt")
+      ($_ | Out-String) | Set-Content -Path $err -Encoding UTF8
+    } catch {}
+  } finally {
+    if($lockTaken -and (Test-Path $LockDir)){
+      Remove-Item -Path $LockDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+  }
+}
