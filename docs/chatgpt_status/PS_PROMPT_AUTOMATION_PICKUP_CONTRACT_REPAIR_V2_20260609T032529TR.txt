@@ -1,0 +1,32 @@
+status=PS_FALLBACK_PROMPT_CREATED
+created_at=2026-06-09T03:25:29+03:00
+use_only_if_runner_does_not_pick_tasks=true
+runner_policy=single_existing_runner_only
+manual_powershell_required=false_by_default
+repo=C:\Users\cagda\Documents\GitHub\AAYS
+branch=feature/terrayield-aays-integration
+work_root=F:\chatgpt\AAYS_WORK
+ppd_file=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+licensed_incoming=F:\sold_buildings\licensed\incoming
+task_file=docs/chatgpt_status/GITHUB_INBOX_TASK_AUTOMATION_PICKUP_CONTRACT_REPAIR_V2_20260609T032529TR.txt
+canonical_next_task=docs/chatgpt_status/AUTONOMOUS_RUNNER_NEXT_TASK_20260609.txt
+canonical_current_task=docs/chatgpt_status/AUTOMATION_REPAIR_CURRENT_TASK.txt
+expected_ack=docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+expected_health=docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+expected_primary=docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+POWER_SHELL_FALLBACK_INTENT:
+Use the already-open existing runner shell only. Do not open a duplicate runner. Pull branch feature/terrayield-aays-integration, make the runner consume the canonical task/current-task files, and ensure it first pushes ACK and HEALTH text reports before doing PPD/source gate validation. If local validation fails, still push BLOCKED reports with the exact blocker.
+
+DO_NOT:
+- Do not start a duplicate runner.
+- Do not rerun V2.
+- Do not rerun LOCATION_MATCH.
+- Do not re-download PPD.
+- Do not generate fake bridge data.
+- Do not write DB.
+- Do not deploy production.
+
+fake_data=false
+db_write=false
+production_deploy=false

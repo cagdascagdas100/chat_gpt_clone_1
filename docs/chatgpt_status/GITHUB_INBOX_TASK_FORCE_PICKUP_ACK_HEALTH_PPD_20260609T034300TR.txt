@@ -1,0 +1,114 @@
+TASK_ID=force-pickup-ack-health-ppd-source-gate-20260609T034300TR
+PROJECT=AAYS_TerraYield
+CREATED_AT=2026-06-09T03:43:00+03:00
+BRANCH=feature/terrayield-aays-integration
+RUNNER_POLICY=single_existing_runner_only
+MANUAL_POWERSHELL_REQUIRED=false
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+FAKE_DATA=false
+
+PURPOSE:
+Force the existing single runner to prove pickup and report push before doing heavy validation.
+This task is intentionally small at the beginning: write ACK first, then write health, then validate PPD/source gate.
+
+LOCAL_PATHS:
+repo=C:\Users\cagda\Documents\GitHub\AAYS
+work_root=F:\chatgpt\AAYS_WORK
+ppd_file=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+licensed_incoming=F:\sold_buildings\licensed\incoming
+
+STEP_1_IMMEDIATE_ACK_OUTPUT:
+Write this file immediately after consuming this task:
+docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+Required content:
+status=RUNNER_PICKED_UP_TASK
+picked_task_file=docs/chatgpt_status/GITHUB_INBOX_TASK_FORCE_PICKUP_ACK_HEALTH_PPD_20260609T034300TR.txt
+picked_at=<local timestamp>
+local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
+branch=feature/terrayield-aays-integration
+git_head=<sha>
+runner_policy=single_existing_runner_only
+manual_powershell_required=false
+next_action=write_health_report_then_validate_ppd_and_source_gate
+
+STEP_2_HEALTH_OUTPUT:
+Write this file even if local validation cannot continue:
+docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+Required content:
+status=AUTOMATION_BRIDGE_HEALTH_OK or AUTOMATION_BRIDGE_HEALTH_BLOCKED
+checked_at=<local timestamp>
+runner_seen=true
+git_pull_ok=true/false
+git_push_ok=true/false
+f_drive_visible=true/false
+ppd_path_visible=true/false
+licensed_incoming_visible=true/false
+consumed_task_file=docs/chatgpt_status/GITHUB_INBOX_TASK_FORCE_PICKUP_ACK_HEALTH_PPD_20260609T034300TR.txt
+last_error=<none or exact error>
+next_action=<exact next action>
+
+STEP_3_PRIMARY_PPD_AND_SOURCE_GATE_OUTPUT:
+Validate the existing PPD file without re-downloading it:
+F:\sold_buildings\open_sources\ppd\pp-complete.csv
+Expected last known bytes: 4564569164
+Compute existence, bytes, sha256, first line, last line, and simple sample-read/truncation/error-page checks.
+
+Scan official/licensed source gate folder:
+F:\sold_buildings\licensed\incoming
+Required groups:
+1. addressbase_premium_full.csv OR address_to_uprn_bridge.csv
+2. hmlr_nps_national_polygon.gpkg OR hmlr_nps_national_polygon.shp.zip
+3. hmlr_title_number_uprn_lookup.csv OR title_no_uprn_polygon_bridge.csv
+
+Write final report here:
+docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+Required content:
+status=PPD_AND_SOURCE_GATE_DONE or PPD_AND_SOURCE_GATE_BLOCKED
+ppd_exists=true/false
+ppd_bytes=<number>
+ppd_last_known_expected_bytes=4564569164
+ppd_first_line=<first line>
+ppd_last_line=<last line>
+ppd_sha256=<hash>
+ppd_valid=true/false
+licensed_incoming=F:\sold_buildings\licensed\incoming
+licensed_incoming_exists=true/false
+has_address_bridge=true/false
+address_bridge_file=<file or missing>
+has_polygon=true/false
+polygon_file=<file or missing>
+has_title_uprn=true/false
+title_uprn_file=<file or missing>
+source_gate_ready=true/false
+overall_progress=<55|60|75>
+next_action=<exact next action>
+fake_data=false
+db_write=false
+production_deploy=false
+
+PROGRESS_RULE:
+55 if no valid primary report exists.
+60 if PPD is valid but official source gate is missing.
+75 if PPD is valid and official source gate is ready.
+92 only after V3 staging/import succeeds.
+100 only after FULL DB ADDRESS MATCH V3 plus review gate succeeds.
+
+STRICT_FORBIDDEN:
+Do not start a duplicate runner.
+Do not rerun V2.
+Do not rerun LOCATION_MATCH.
+Do not re-download PPD.
+Do not create fake AddressBase, fake UPRN, fake Title_No, or fake polygon bridge.
+Do not write DB.
+Do not deploy production.
+
+IF_BLOCKED:
+Still write ACK and HEALTH. Also write AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt with status=PPD_AND_SOURCE_GATE_BLOCKED and exact blocker.
+
+NEXT_CHATGPT_CHECK_ORDER:
+1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+3. docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+WAIT_MINUTES=5-15

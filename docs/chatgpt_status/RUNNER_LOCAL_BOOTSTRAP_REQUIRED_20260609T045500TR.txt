@@ -1,0 +1,37 @@
+status=LOCAL_BOOTSTRAP_REQUIRED
+created_at=2026-06-09T04:55:00+03:00
+branch=feature/terrayield-aays-integration
+scope=Greater London only
+reason=Expected GitHub output reports are still missing after current-task and request files were written.
+
+checked_missing_reports:
+- docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_OUTPUT_MANIFEST_LATEST.json
+
+confirmed_existing_inputs:
+- docs/chatgpt_status/AUTOMATION_REPAIR_CURRENT_TASK.txt
+- docs/chatgpt_status/REQUEST_RUNNER_PICKUP_HEALTH_LONDON_FDISK_20260609T043000TR.txt
+
+required_action=Use the existing single local runner/PowerShell process to pull the branch and process the current task. Do not start a second concurrent runner if one is already running.
+
+rules:
+- single_runner=true
+- new_large_work_on_F_only=true
+- london_only=true
+- no_v2_rerun=true
+- no_location_match_rerun=true
+- no_duplicate_ppd_download=true
+- fake_data=false
+- db_write=false
+- production_deploy=false
+
+next_expected_reports:
+- docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt
+
+progress=55
+progress_reason=Runner pickup/push has not produced any GitHub-visible ACK or health report yet.

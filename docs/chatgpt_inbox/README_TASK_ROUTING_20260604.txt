@@ -1,0 +1,11 @@
+status=CHATGPT_INBOX_ROUTING_NOTE
+purpose=Explain why GitHub-only task creation does not reach the local runner unless a local poller imports tasks.
+progress_estimate=55
+runner_model=local_runner_reads_local_pending_queue
+missing_link=github_inbox_to_local_pending_importer
+required_one_time_action=install_or_enable_local_github_inbox_poller
+verified_publish_allowed=false
+db_write=false
+production_deploy=false
+migration_ddl=false
+fake_data=false

@@ -1,0 +1,34 @@
+status=AUTOMATION_PICKUP_CONTRACT_REPAIR_PLAN
+created_at=2026-06-09T03:25:29+03:00
+repo=cagdascagdas100/chat_gpt_clone_1
+branch=feature/terrayield-aays-integration
+runner_policy=single_existing_runner_only
+manual_action_required=false_unless_no_ack
+
+WHAT_IS_MISSING:
+The PPD/source-gate task text is present, but the expected reports are absent. The missing automation piece is the handoff contract between GitHub task files and runner result files.
+
+LIKELY_BREAKPOINTS:
+1. The existing runner did not consume the latest GitHub task file.
+2. The existing runner consumed it but did not write a pickup acknowledgement.
+3. The local validation failed before a report was written.
+4. The local report was written but was not pushed back to GitHub.
+
+FIX_APPLIED:
+1. A V2 pickup-contract task file now requires an ACK report before heavy work.
+2. A health report is required before PPD validation.
+3. If validation cannot complete, BLOCKED reports must still be written with the exact blocker.
+4. Canonical next/current task files will point to the V2 pickup contract.
+5. A fallback prompt file was created for the existing runner shell only; it is not needed unless no ACK appears.
+
+NEXT_FILES_TO_CHECK:
+1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+3. docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+PROGRESS_RULE:
+current=55 while valid report is missing
+ppd_valid_only=60
+ppd_valid_and_source_gate_ready=75
+v3_staging_import=92
+full_db_address_match_v3_review_gate=100

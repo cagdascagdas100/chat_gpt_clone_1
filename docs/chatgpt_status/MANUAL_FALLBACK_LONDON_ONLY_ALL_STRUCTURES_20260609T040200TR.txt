@@ -1,0 +1,29 @@
+MANUAL FALLBACK NOTE — USE ONLY IF THE SINGLE EXISTING RUNNER DOES NOT PICK UP GITHUB TASKS
+
+This is not the primary path. The primary path is GitHub-controlled automation through the existing single runner.
+
+Repository branch:
+feature/terrayield-aays-integration
+
+Canonical task files to be consumed by the existing runner:
+- docs/chatgpt_status/AUTONOMOUS_RUNNER_NEXT_TASK_20260609.txt
+- docs/chatgpt_status/AUTOMATION_REPAIR_CURRENT_TASK.txt
+- docs/chatgpt_status/GITHUB_INBOX_TASK_LONDON_ONLY_ALL_STRUCTURES_ACCELERATED_20260609T040200TR.txt
+
+Scope:
+- Greater London only.
+- Nationwide import or nationwide match is forbidden.
+- Fake AddressBase, fake UPRN, fake Title_No, and fake polygon bridge are forbidden.
+- DB write, migration, and production deploy are forbidden.
+
+Expected first reports:
+- docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+
+Expected London-only reports:
+- docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_OUTPUT_MANIFEST_LATEST.json
+- docs/chatgpt_status/LONDON_ONLY_MISSING_SOURCES_LATEST.txt if blocked or missing files exist
+- docs/chatgpt_status/LONDON_ONLY_V3_PREFLIGHT_LATEST.txt if V3 preflight starts
+
+The runner must first verify a real local/project Greater London AOI and fail closed if it cannot verify one. It must then validate the existing PPD file, scan licensed sources, create London-only subsets, run non-conflicting readonly preflights in separate output folders, and only then run London-only V3 staging/review preflight if source gate is ready.

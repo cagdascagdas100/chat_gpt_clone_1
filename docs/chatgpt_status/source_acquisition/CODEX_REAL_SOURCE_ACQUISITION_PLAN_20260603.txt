@@ -1,0 +1,108 @@
+AAYS_TerraYield Codex real source acquisition plan
+Generated: 2026-06-03
+Mode: READ_ONLY_SOURCE_ACQUISITION_PLANNING
+
+Current state from GitHub status
+- Queue is clean: pending=0, running=0, failed=0, done=31.
+- Runner process count was 1, but runner decision is no_runner_needed_queue_clean.
+- TerraYield verified/source progress is 55.
+- D:\sold_buildings\licensed\incoming did not exist in the latest report.
+- required_address_to_uprn_found=false.
+- required_hmlr_nps_title_uprn_polygon_found=false.
+
+Hard safety rules
+- Do not create fake/synthetic source data.
+- Do not infer UPRN from listing/public proxy data.
+- Do not write to DB.
+- Do not run production deploy.
+- Do not run migration/DDL.
+- Do not use destructive git commands.
+- Do not use git reset --hard, git clean, or force push.
+- Do not start a new global runner.
+- If local execution is needed, use the existing queue/lock protocol and portable_queue_runner.ps1 only.
+
+Goal
+Find whether the real official/licensed source files already exist locally or can be acquired through already-authenticated/self-service portals. If not available, produce a human-readable acquisition report and leave the final gate closed.
+
+Required source group A: Address -> UPRN
+Acceptable inputs:
+1. OS AddressBase Premium CSV, GeoPackage, or GML export containing UPRN.
+2. Equivalent licensed address_to_uprn bridge with provenance/license evidence.
+Suggested local filenames:
+- addressbase_premium_full.csv
+- addressbase_premium_full.gpkg
+- addressbase_premium_full.gml
+- address_to_uprn_bridge.csv
+
+Required source group B: HMLR NPS Title_No -> UPRN -> polygon
+Required pair:
+1. HMLR National Polygon source containing geometry/Shape, Poly_ID, Title_No.
+2. HMLR Title Number-UPRN Lookup containing Title_No and UPRN.
+Suggested local filenames:
+- hmlr_nps_national_polygon.gpkg
+- hmlr_nps_national_polygon.shp.zip
+- hmlr_title_number_uprn_lookup.csv
+- title_no_uprn_polygon_bridge.csv
+
+Supporting only, not sufficient alone
+- OS Open UPRN
+- PPD
+- INSPIRE cache
+- listing-derived polygons
+
+Codex task sequence
+1. Search local candidate locations read-only:
+   - D:\sold_buildings\licensed
+   - D:\sold_buildings\licensed\incoming
+   - F:\AAYS_DATA
+   - F:\AAYS_DATA\terrayield_land_intelligence
+   - C:\Users\cagda\Documents\GitHub\AAYS
+   - C:\AAYS_GITHUB_BRIDGE_CLEAN2
+2. Search filename patterns:
+   - addressbase, address_base, address_to_uprn, address.*uprn
+   - os_open_uprn, open_uprn
+   - hmlr, nps, national_polygon, polygon
+   - title.*uprn, uprn.*title, title_number, title_no
+3. For every candidate file, write sha256, path, size, extension, modified time.
+4. Validate candidate headers read-only:
+   - Address source must contain UPRN and usable address identifiers.
+   - HMLR polygon must contain Title_No or equivalent title number field plus geometry.
+   - HMLR lookup must contain Title_No and UPRN.
+5. Reject public proxy/listing-derived/sample-only files if they do not prove official provenance.
+6. If both source groups are valid, copy/move nothing automatically unless instructed. Write report: SOURCE_CANDIDATES_FOUND_READONLY_VALIDATION_REQUIRED.
+7. If files are missing, write report: SOURCE_FILES_MISSING_SOURCE_ACQUISITION_REQUIRED.
+8. Write reports to:
+   - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results
+   - C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status
+9. Also update:
+   - docs/chatgpt_status/CHATGPT_READABLE_LATEST_STATUS.txt
+   - docs/chatgpt_status/source_acquisition/CODEX_REAL_SOURCE_ACQUISITION_RESULT_YYYYMMDD-HHMMSS.txt
+10. Push only text reports to GitHub branch feature/terrayield-aays-integration if safe. Do not include licensed source data in GitHub.
+
+Self-service acquisition path to document, not bypass
+1. OS AddressBase Premium
+   - Check whether organisation has PSGA access.
+   - Check OS Data Hub availability.
+   - If no PSGA, check business/developer/partner or Data Exploration licence route.
+2. OS Open UPRN
+   - Can be downloaded free via OS Data Hub.
+   - Treat as supporting only; it does not replace AddressBase Premium/address bridge.
+3. HMLR National Polygon and Title Number-UPRN Lookup
+   - Check whether the user already has Land Registry/Use Land and Property Data service access.
+   - If subscribed, download official National Polygon and Title Number-UPRN Lookup.
+   - If not subscribed, report acquisition blocked by licence/account/payment requirement.
+
+Final expected output
+- A single concise status report with:
+  status
+  progress_estimate
+  source_group_A_found
+  source_group_B_found
+  accepted_candidates
+  rejected_candidates
+  blocker_summary
+  next_single_action
+  report_path
+  repo_report_path
+
+Do not fabricate the source files. The only acceptable progress beyond 55 is from real existing/acquired official files or read-only validation of such files.
