@@ -1,0 +1,90 @@
+TASK_ID=validate-ppd-source-gate-retry-20260609T031756+0300
+PROJECT=AAYS_TerraYield
+RUNNER_POLICY=single_existing_runner_only
+MANUAL_POWERSHELL_REQUIRED=false
+DB_WRITE=false
+PRODUCTION_DEPLOY=false
+FAKE_DATA=false
+WORK_ROOT=F:\chatgpt\AAYS_WORK
+PPD_FILE=F:\sold_buildings\open_sources\ppd\pp-complete.csv
+PPD_BYTES_EXPECTED_FROM_USER=4564569164
+LICENSED_INCOMING=F:\sold_buildings\licensed\incoming
+REPO=C:\Users\cagda\Documents\GitHub\AAYS
+BRANCH=feature/terrayield-aays-integration
+OUTPUT_REPO_FILE=docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+OBJECTIVE:
+Use the existing single runner only. Do not start a duplicate runner. Validate the completed PPD file and scan the licensed bridge source folder. Write the final readable report to GitHub at docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt and push it.
+
+DO_NOT:
+- Do not rerun V2.
+- Do not rerun LOCATION_MATCH.
+- Do not redownload PPD.
+- Do not create fake AddressBase, fake UPRN, fake Title_No, or fake polygon bridge data.
+- Do not write DB.
+- Do not run migrations.
+- Do not production deploy.
+
+VALIDATE_PPD:
+- Check F:\sold_buildings\open_sources\ppd\pp-complete.csv exists.
+- Record byte size.
+- Record sha256.
+- Read first line and last line.
+- Read/sample first 1000 lines.
+- Detect HTML/error/access-denied pages.
+- Set ppd_valid=true only if file exists, size > 4000000000, first line is not HTML/error, and sample can be read.
+
+SCAN_LICENSED_SOURCES:
+Folder: F:\sold_buildings\licensed\incoming
+Required address bridge, one of:
+- addressbase_premium_full.csv
+- address_to_uprn_bridge.csv
+Required polygon, one of:
+- hmlr_nps_national_polygon.gpkg
+- hmlr_nps_national_polygon.shp.zip
+Required title/uprn bridge, one of:
+- hmlr_title_number_uprn_lookup.csv
+- title_no_uprn_polygon_bridge.csv
+
+SOURCE_GATE_RULE:
+source_gate_ready=true only if:
+- address bridge exists, AND
+- title_no_uprn_polygon_bridge.csv exists OR both HMLR polygon and title-UPRN lookup exist.
+
+REPORT_FIELDS:
+status
+updated_at
+ppd_file
+ppd_exists
+ppd_valid
+ppd_bytes
+ppd_sha256
+ppd_first_line
+ppd_last_line
+sample_lines_1000
+licensed_incoming
+source_gate_ready
+has_address_bridge
+has_hmlr_polygon
+has_title_uprn
+has_combined_bridge
+found_files
+overall_progress
+next_action
+wait_minutes
+blockers
+warnings
+db_write=false
+production_deploy=false
+fake_data=false
+
+PROGRESS_RULE:
+- If PPD invalid: overall_progress=55, next_action=repair_or_redownload_ppd.
+- If PPD valid and source gate not ready: overall_progress=60, next_action=wait_for_licensed_sources.
+- If PPD valid and source gate ready: overall_progress=75, next_action=queue_full_db_address_match_v3_preflight.
+
+OUTPUTS:
+- Also write local copy under F:\chatgpt\AAYS_WORK\source_generation_reports\AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+- Write/push GitHub copy under docs/chatgpt_status/AUTONOMOUS_PPD_SOURCE_GATE_LATEST.txt
+
+EXPECTED_WAIT_MINUTES=5-15
