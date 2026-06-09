@@ -1,0 +1,42 @@
+TASK_ID=runner_contract_inventory_20260609T000000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_TYPE=RUNNER_CONTRACT_INVENTORY
+STATUS=REQUESTED_BY_CHATGPT
+
+PURPOSE
+Identify the real single-runner GitHub control contract before any product task is queued.
+
+SCOPE
+Read only the AAYS_REAL_TOPOGRAPHY_PRODUCT status area and runner bridge status evidence.
+Do not start elevation generation, browser proof, API smoke, data artifact generation, or product mutation until this contract inventory is written.
+
+REQUIRED QUESTIONS
+1. Which GitHub path does the runner actually poll for this page key?
+2. Is current-task a directory or a file contract?
+3. Which queue or manifest file format is consumed by the runner?
+4. Does the runner consume txt prompts, json manifests, ps1 tasks, or another format?
+5. Which reports path receives outputs?
+6. What is the latest runner heartbeat or bridge poller evidence?
+7. Is the runner process active, idle, stale, or unknown based on GitHub-visible evidence?
+8. What exact next file should ChatGPT write to trigger a product task safely?
+
+REQUIRED OUTPUTS
+Write a report file under:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_contract_inventory_20260609T000000Z.txt
+
+Also write/update a machine-readable status if the runner supports it:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_contract_inventory_20260609T000000Z.json
+
+REPORT MUST INCLUDE
+PRODUCT_PROGRESS_ESTIMATE=contract_inventory_only
+RUNNER_CONTRACT_KNOWN=yes/no
+RUNNER_POLLED_PATH=<path or unknown>
+TASK_INPUT_FORMAT=<format or unknown>
+OUTPUT_REPORT_PATH=<path or unknown>
+NEXT_SAFE_QUEUE_PATH=<path or unknown>
+BLOCKER=<none or exact blocker>
+
+STORAGE POLICY
+Use F:\AAYS_GITHUB_WORK for new heavy/temp/artifact/smoke work.
+Do not move existing C runner infrastructure.
+No heavy work is required for this inventory task.
