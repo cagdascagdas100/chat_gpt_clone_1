@@ -1,20 +1,38 @@
-status=RUNNER_HEALTH_CHECK_CURRENT
-updated_at=2026-06-09T04:30:00+03:00
+status=POST_SYNC_RUNNER_HEALTH_CHECK_CURRENT
+updated_at=2026-06-09T22:35:00+03:00
+page=auto-2.2-soldBuildings
+branch=feature/terrayield-aays-integration
 scope=Greater London only
 single_runner=true
 
-Read request:
-docs/chatgpt_status/REQUEST_RUNNER_PICKUP_HEALTH_LONDON_FDISK_20260609T043000TR.txt
+Purpose:
+After local git sync repair, prove that the single runner can read this current task and push small reports back to GitHub.
 
-Write reports:
+Write these small reports only:
 docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
 docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
 docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt
+docs/chatgpt_status/SOLD_BUILDINGS_RUNNER_CONTRACT_INVENTORY_LATEST.txt
 
-New large London work location:
-F:\chatgpt\AAYS_WORK\sold_buildings\london_only
+Required report fields:
+active_branch
+current_task_read
+runner_process_status
+queue_or_current_task_path_used
+f_drive_visible
+f_drive_writable
+large_work_root
+repo_sync_status
 
-This is only a pickup and disk health check.
-Stop after the small reports are written.
-Progress remains 55 until reports exist.
+Rules:
+Do not start London source-gate yet.
+Do not run V2.
+Do not run LOCATION_MATCH.
+Do not redownload PPD.
+Do not write DB.
+Do not deploy.
+Do not create large outputs on C.
+Keep new heavy work under F:\chatgpt\AAYS_WORK\sold_buildings\london_only.
+
 Expected time: 5 to 10 minutes.
+Progress remains 56 until one of the requested reports exists.
