@@ -1,49 +1,36 @@
-task_id=terrayield-050-queue-bridge-self-heal
-status=QUEUED_QUEUE_BRIDGE_SELF_HEAL
+task_id=terrayield-051-london-only-pilot
+status=QUEUED
 priority=critical
 created_by=chatgpt
-created_at=2026-06-09T00:00:00Z
 
-objective=Repair the missing handoff between GitHub current-task/runner_inputs and the existing single local runner queue.
+objective=Apply the current TerraYield AAYS plan as a London-only pilot before wider regional rollout.
 
-runner_input=docs/chatgpt_status/runner_inputs/terrayield-050-queue-bridge-self-heal.txt
-local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
-bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2
-queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue
-local_result_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results
-canonical_runner=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+scope_name=Greater London
+scope_mode=london_only
+bbox_4326=-0.5104,51.2868,0.3340,51.6919
+prefer_london_boundary_or_borough_filter=true
 
-problem_statement:
-ChatGPT can update GitHub files, but no runner-created output appears. The likely missing bridge is that runner polls local queue_root instead of docs/chatgpt_status/current-task.txt. This task must identify the actual polling path and output path before any domain task resumes.
-
-required_actions:
-1. Use only the existing single runner.
-2. Verify whether runner polls docs/chatgpt_status/current-task.txt, queue_root, or another path.
-3. Confirm whether GitHub current-task is automatically synced into queue_root.
-4. Write immediate queue bridge heartbeat output before heavy work.
-5. Push outputs to docs/chatgpt_status/runner_outputs.
-6. Do not run DB writes, migrations, production deploys, fake data, or heavy domain task.
+requirements:
+- keep processing limited to London
+- use parcel polygon output for planned structures
+- include evidence and source information in planned structure results
+- write a first heartbeat output before detailed checks
+- write blockers to output files if London pilot cannot continue
 
 required_outputs:
-- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-latest.json
-- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-latest.txt
-- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-audit.json
-- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-audit.txt
+- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-latest.json
+- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-latest.txt
+- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-audit.json
+- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-audit.txt
+- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-validation.txt
 - docs/chatgpt_status/runner_outputs/latest_output.json
 
-progress_contract:
-queued_by_chatgpt=18
-queue_bridge_checked=24
-protocol_audit_written=40
-safe_resume_packet_written=60
-output_push_verified=80
-ready_for_domain_resume=100
-blocked_or_failed=percent_at_failure
-
-acceptance:
-- latest_output.json no longer only says queued_by_chatgpt
-- queue bridge latest output exists in GitHub
-- audit identifies actual polling path and expected queue file format
-- if current-task is the wrong handoff file, audit states the correct GitHub-editable file or confirms one-time local bridge command is required
-
-safety: no database writes; no migrations; no production deploy; no fake data; no heavy domain task
+progress:
+queued=20
+heartbeat=22
+audit=35
+dry_run=50
+changes=65
+tests=80
+outputs=92
+complete=100
