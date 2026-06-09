@@ -1,0 +1,120 @@
+TASK_ID=terrayield-047-london-only-all-structures-accelerated
+CREATED_AT=2026-06-09T04:02:00+03:00
+REPO_BRANCH=feature/terrayield-aays-integration
+RUNNER_POLICY=single_existing_runner_only
+MANUAL_POWERSHELL_REQUIRED=false
+
+GOAL
+Apply the full sold-buildings verified-sale-to-parcel V3/source-gate plan as a London-only pilot, not for all England. Keep the same quality gates, source checks, evidence manifests, and review outputs, but constrain every heavy operation to Greater London only.
+
+HARD SCOPE
+- Scope is Greater London only.
+- Do not run nationwide import, nationwide match, or all-England staging.
+- Fail closed if a Greater London AOI/boundary cannot be verified from local official/project data.
+- If boundary is unavailable, write the missing-boundary blocker to GitHub and stop before any large match.
+- Do not silently fall back to nationwide processing.
+
+FIXED PATHS
+Local repo root: C:\Users\cagda\Documents\GitHub\AAYS
+Work root: F:\chatgpt\AAYS_WORK
+PPD file: F:\sold_buildings\open_sources\ppd\pp-complete.csv
+Licensed incoming: F:\sold_buildings\licensed\incoming
+London work root: F:\chatgpt\AAYS_WORK\sold_buildings\london_only
+
+FORBIDDEN
+- Do not rerun V2.
+- Do not rerun LOCATION_MATCH.
+- Do not redownload PPD.
+- Do not create fake AddressBase, fake UPRN, fake Title_No, fake polygon bridge, or synthetic licensed bridge data.
+- Do not perform DB write, migration, or production deploy without explicit user approval.
+- Do not start a new runner; use the existing single runner/polling flow.
+
+REQUIRED SOURCE GATE FILES
+At least one address bridge source:
+- addressbase_premium_full.csv OR address_to_uprn_bridge.csv
+At least one polygon source:
+- hmlr_nps_national_polygon.gpkg OR hmlr_nps_national_polygon.shp.zip
+At least one title/uprn source:
+- hmlr_title_number_uprn_lookup.csv OR title_no_uprn_polygon_bridge.csv
+
+REQUIRED FIRST OUTPUTS
+1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+   Must be written immediately after task pickup, before heavy work.
+2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+   Must include git branch, latest commit, local repo path, runner identity if available, F: visibility, PPD stat result, licensed folder visibility, push capability, and exact failure point.
+
+LONDON-ONLY AOI GATE
+1. Search local/project data for an official Greater London boundary/AOI file.
+2. Accept only a real local/project boundary or an already official boundary artifact; do not fabricate polygons.
+3. If no AOI exists, create docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt with status=BLOCKED_MISSING_LONDON_AOI and stop.
+4. If AOI exists, record path, layer name, CRS, feature count, bounds, and SHA256/mtime.
+
+PPD VALIDATION
+Validate existing PPD only:
+- Path: F:\sold_buildings\open_sources\ppd\pp-complete.csv
+- Expected known size context: 4,564,569,164 bytes
+- Check exists, size, mtime, sha256 or chunked sha if full hash is too slow, header, first rows, sample rows, tail rows, row count if feasible.
+- Check it is not HTML/error/partial download.
+- Do not download again.
+
+PARALLEL NON-CONFLICTING WORKSTREAMS
+Allowed to run these in parallel only if they write to separate output folders and do not write DB tables:
+A. london_ppd_extract
+   - Filter PPD to London-only candidates using verified AOI/address source logic.
+   - Output only to F:\chatgpt\AAYS_WORK\sold_buildings\london_only\ppd_extract\.
+   - Write counts by year, district/post town/postcode prefix if available, price stats, null stats, and sample CSV.
+B. london_address_bridge_inventory
+   - Inventory AddressBase/address_to_uprn bridge files.
+   - Filter/estimate London-only coverage if official fields/AOI allow.
+   - Output only to F:\chatgpt\AAYS_WORK\sold_buildings\london_only\address_bridge\.
+C. london_hmlr_polygon_title_inventory
+   - Inventory HMLR polygon and title/uprn bridge sources.
+   - Clip or index only London AOI if source files exist.
+   - Output only to F:\chatgpt\AAYS_WORK\sold_buildings\london_only\hmlr_polygon_title\.
+D. london_code_preflight
+   - Inspect existing V3 import/match scripts/endpoints/tests for London-only parameters.
+   - Do not execute nationwide paths.
+   - Output only to F:\chatgpt\AAYS_WORK\sold_buildings\london_only\code_preflight\.
+
+SYNCHRONIZATION STEP
+After A-D complete, run London-only V3 readonly/staging preflight only:
+- PPD sale address -> address bridge/uprn -> title/uprn -> polygon/parcel.
+- Produce confidence scoring and review sample.
+- No production DB write.
+- If a local staging file/table is needed, use london_only prefix and do not touch nationwide outputs.
+
+REQUIRED GITHUB OUTPUTS
+Write and push these files:
+- docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_OUTPUT_MANIFEST_LATEST.json
+- docs/chatgpt_status/LONDON_ONLY_MISSING_SOURCES_LATEST.txt if blocked/missing files exist
+- docs/chatgpt_status/LONDON_ONLY_V3_PREFLIGHT_LATEST.txt if V3 preflight starts
+- docs/chatgpt_status/LONDON_ONLY_REVIEW_SAMPLE_LATEST.csv if a sample is produced and size is reasonable
+
+REPORT FORMAT
+The latest report must include:
+- status
+- runner pickup acknowledged: yes/no
+- scope: Greater London only
+- nationwide_run_attempted: true/false
+- london_aoi_verified: true/false
+- ppd_valid: true/false
+- licensed source gate: READY/BLOCKED
+- exact missing source files
+- all output paths
+- counts for PPD London candidate records
+- counts for address/uprn/title/polygon matches where available
+- match confidence distribution
+- blockers
+- recommended next task
+- progress_for_london_pilot
+
+PROGRESS LOGIC
+- Current global sold-buildings progress remains 55 until PPD report is verified.
+- PPD valid: 60.
+- London source gate ready: 75 for London pilot.
+- London V3 staging/import preflight + review gate success: 92 for London pilot.
+- London FULL DB ADDRESS MATCH V3 + review gate success: 100 for London pilot only, not nationwide.
+
+WAIT
+After queuing this task, expected wait is 10-20 minutes for pickup/health and 20-60 minutes for London-only subset/preflight depending on local file speed.
