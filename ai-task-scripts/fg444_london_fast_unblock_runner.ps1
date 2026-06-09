@@ -5,9 +5,10 @@ $Bridge='C:\AAYS_GITHUB_BRIDGE_CLEAN2'
 $ScriptDir=Join-Path $Bridge 'ai-task-scripts'
 $Pending=Join-Path $Bridge 'ai-queue\pending'
 $Running=Join-Path $Bridge 'ai-queue\running'
-$WorkRoot='F:\chatgpt\AAYS_WORK\FG444_LONDON'
-$RunRoot=Join-Path $WorkRoot ('fast_unblock_' + $Stamp)
-New-Item -ItemType Directory -Force -Path $ScriptDir,$Pending,$Running,$WorkRoot,$RunRoot | Out-Null
+$AuditWorkRoot='F:\chatgpt\AAYS_WORK\FG444_LONDON'
+$ReportRoot=Join-Path $Bridge 'fg444-london-fast-unblock-work'
+$RunRoot=Join-Path $ReportRoot ('fast_unblock_' + $Stamp)
+New-Item -ItemType Directory -Force -Path $ScriptDir,$Pending,$Running,$ReportRoot,$RunRoot | Out-Null
 $Report=Join-Path $RunRoot ('FG444_LONDON_FAST_UNBLOCK_' + $Stamp + '.txt')
 function L([string]$m){ $m | Tee-Object -FilePath $Report -Append }
 L 'FG444_LONDON_FAST_UNBLOCK_START'
@@ -15,7 +16,9 @@ L ('CREATED_AT='+(Get-Date -Format s))
 L ('BRIDGE='+$Bridge)
 L ('PENDING='+$Pending)
 L ('RUNNING='+$Running)
-L ('WORK_ROOT='+$WorkRoot)
+L ('AUDIT_WORK_ROOT='+$AuditWorkRoot)
+L ('F_DRIVE_EXISTS='+(Test-Path 'F:\'))
+L ('AUDIT_WORK_ROOT_EXISTS='+(Test-Path $AuditWorkRoot))
 $prefix='fg444-london-01-readonly-audit'
 $pendingAudit=@(Get-ChildItem $Pending -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like ($prefix+'*') })
 $runningAudit=@(Get-ChildItem $Running -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like ($prefix+'*') })
@@ -49,7 +52,7 @@ if((-not $hasResult) -and $pendingAudit.Count -eq 0 -and $runningAudit.Count -eq
       fake_data=$false
       wait_minutes_after_start='20-45'
       purpose='London-only F-drive readonly audit queued by fast unblock'
-      workspace_root=$WorkRoot
+      workspace_root=$AuditWorkRoot
     }
     $task | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $Pending ($taskId+'.task.json'))
     L ('AUDIT_TASK_QUEUED='+$taskId)
@@ -59,7 +62,7 @@ if((-not $hasResult) -and $pendingAudit.Count -eq 0 -and $runningAudit.Count -eq
 }else{
   L 'AUDIT_TASK_NOT_REQUEUED_ALREADY_PENDING_RUNNING_OR_RESULT_EXISTS'
 }
-$PushWork=Join-Path $WorkRoot ('fast_unblock_push_' + $Stamp)
+$PushWork=Join-Path $ReportRoot ('fast_unblock_push_' + $Stamp)
 git clone $RepoUrl $PushWork 2>&1 | Add-Content -Encoding UTF8 $Report
 Push-Location $PushWork
 git checkout -B fg444-london-fast-unblock-latest origin/main 2>&1 | Add-Content -Encoding UTF8 $Report
