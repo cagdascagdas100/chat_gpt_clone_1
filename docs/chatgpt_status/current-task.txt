@@ -1,48 +1,49 @@
-task_id=terrayield-049-runner-heartbeat-self-heal
-status=QUEUED_HEARTBEAT_SELF_HEAL
-priority=urgent
+task_id=terrayield-050-queue-bridge-self-heal
+status=QUEUED_QUEUE_BRIDGE_SELF_HEAL
+priority=critical
 created_by=chatgpt
 created_at=2026-06-09T00:00:00Z
 
-objective=Repair the autonomous ChatGPT-GitHub-single runner-output loop by requiring a lightweight heartbeat before any domain task.
+objective=Repair the missing handoff between GitHub current-task/runner_inputs and the existing single local runner queue.
 
-runner_input=docs/chatgpt_status/runner_inputs/terrayield-049-runner-heartbeat-self-heal.txt
+runner_input=docs/chatgpt_status/runner_inputs/terrayield-050-queue-bridge-self-heal.txt
 local_repo_root=C:\Users\cagda\Documents\GitHub\AAYS
 bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2
 queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue
 local_result_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results
+canonical_runner=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+
+problem_statement:
+ChatGPT can update GitHub files, but no runner-created output appears. The likely missing bridge is that runner polls local queue_root instead of docs/chatgpt_status/current-task.txt. This task must identify the actual polling path and output path before any domain task resumes.
 
 required_actions:
 1. Use only the existing single runner.
-2. Read this current-task and the runner_input file.
-3. Write an immediate heartbeat output before any heavy job.
-4. Capture process id, git branch, head sha, git status, and whether current-task and runner input were seen.
-5. Publish heartbeat outputs to docs/chatgpt_status/runner_outputs.
-6. Produce a runner protocol audit explaining which path the runner polls and whether automatic input/output sync works.
-7. Do not run the heavy domain task in this diagnostic step.
+2. Verify whether runner polls docs/chatgpt_status/current-task.txt, queue_root, or another path.
+3. Confirm whether GitHub current-task is automatically synced into queue_root.
+4. Write immediate queue bridge heartbeat output before heavy work.
+5. Push outputs to docs/chatgpt_status/runner_outputs.
+6. Do not run DB writes, migrations, production deploys, fake data, or heavy domain task.
 
 required_outputs:
-- docs/chatgpt_status/runner_outputs/terrayield-049-runner-heartbeat-latest.txt
-- docs/chatgpt_status/runner_outputs/terrayield-049-runner-heartbeat-latest.json
-- docs/chatgpt_status/runner_outputs/terrayield-049-runner-protocol-audit.txt
-- docs/chatgpt_status/runner_outputs/terrayield-049-runner-protocol-audit.json
+- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-latest.json
+- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-latest.txt
+- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-audit.json
+- docs/chatgpt_status/runner_outputs/terrayield-050-queue-bridge-audit.txt
 - docs/chatgpt_status/runner_outputs/latest_output.json
 
 progress_contract:
-queued_by_chatgpt=16
-runner_heartbeat_visible=22
-protocol_audit_complete=35
-self_heal_plan_written=50
-safe_resume_task_written=65
-output_sync_verified=80
-ready_for_domain_task_resume=100
+queued_by_chatgpt=18
+queue_bridge_checked=24
+protocol_audit_written=40
+safe_resume_packet_written=60
+output_push_verified=80
+ready_for_domain_resume=100
 blocked_or_failed=percent_at_failure
 
 acceptance:
-- latest_output.json no longer says local_runner_has_not_consumed_current_task_yet
-- heartbeat output exists in GitHub
-- heartbeat includes pid, branch, head sha, git status, current_task_seen, runner_input_seen
-- protocol audit identifies the actual polling path and output path
-- no heavy domain task runs before heartbeat is visible
+- latest_output.json no longer only says queued_by_chatgpt
+- queue bridge latest output exists in GitHub
+- audit identifies actual polling path and expected queue file format
+- if current-task is the wrong handoff file, audit states the correct GitHub-editable file or confirms one-time local bridge command is required
 
 safety: no database writes; no migrations; no production deploy; no fake data; no heavy domain task
