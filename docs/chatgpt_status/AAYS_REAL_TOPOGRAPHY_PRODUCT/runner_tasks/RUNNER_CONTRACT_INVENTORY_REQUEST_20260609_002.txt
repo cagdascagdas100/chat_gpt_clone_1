@@ -1,0 +1,30 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=RUNNER_CONTRACT_INVENTORY_REQUEST_20260609_002
+TASK_TYPE=RUNNER_CONTRACT_INVENTORY
+PRIORITY=HIGH
+PRODUCT_PROGRESS_ESTIMATE=84
+FAKE_DATA_CREATED=False
+
+PURPOSE:
+Identify the active single-runner contract before any further product work is queued.
+
+RUNNER MUST REPORT:
+1. Whether exactly one runner process is active.
+2. Which GitHub control path it reads for new tasks.
+3. Which local queue/current-task location it reads.
+4. Accepted task format: txt prompt, ps1, json manifest, or other.
+5. Where stdout/stderr/status reports are written in GitHub.
+6. Whether this request was received through current-task, queue, control, runner_tasks, or another path.
+
+OUTPUT REQUIRED:
+Write a UTF-8 report under:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_contract_inventory_<timestamp>.txt
+
+DO NOT:
+Do not create fake elevation data.
+Do not run DB migration.
+Do not deploy.
+Do not run product smoke until the runner contract is documented.
+
+NEXT:
+After writing the report, stop. ChatGPT will read the GitHub report and create the next task in the confirmed format.
