@@ -1,0 +1,74 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=terrayield-047-output-harvest-stuck-recovery-20260610
+MODE=OUTPUT_HARVEST_STUCK_RECOVERY_AND_SAFE_CONTINUE
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPO=cagdascagdas100/chat_gpt_clone_1
+LOCAL_REPO_ROOT=F:\AAYS_GITHUB_WORK\AAYS
+HEAVY_WORK_ROOT=F:\AAYS_GITHUB_WORK
+
+STRICT RULES:
+- Use the existing single runner only. Do not spawn competing canonical runners.
+- Do not overwrite or duplicate an actively running 046 job.
+- Do not create fake topography/elevation values.
+- Do not run DB writes, migrations, or production deploys.
+- Keep existing C:\ runner/bridge infrastructure in place; use F:\ for heavy work/temp/artifacts/reports.
+- All evidence must be written to GitHub reports/status under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT.
+
+OBJECTIVE:
+Increase measurable progress by harvesting 046/044 outputs if they exist, diagnosing why progress is stuck if they do not, and safely continuing only non-conflicting work needed for the real two-metric topography product.
+
+STEP 1 - READ CURRENT STATE:
+- Pull/rebase branch aays-runner-v17-icon-work-20260603-232706.
+- Inspect this page only:
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/control
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/heartbeat
+
+STEP 2 - HARVEST OUTPUTS:
+- Find any 046, 044, endpoint health, watchdog, exit-code, runner stdout/stderr/status files.
+- Summarize latest outputs and whether 046 actually ran.
+- If 046 or 044 outputs exist outside reports/status, copy or summarize them into this page's reports folder.
+
+STEP 3 - STUCK DIAGNOSIS:
+- If no new output exists, diagnose why queued 046 did not produce report:
+  - runner alive/polling/stuck
+  - queue/current-task consumption path
+  - Git sync issues
+  - permissions/path issues
+  - active task collision
+- Do not ask user to paste PowerShell output. Write all findings to GitHub.
+
+STEP 4 - SAFE PROGRESS ACTIONS:
+Only if no conflict with an active 046 job:
+- Run read-only source inventory for real topography/elevation lookup data.
+- Check whether parcel_elevation_lookup_v2.json exists.
+- Check whether lookup endpoint can return altitude and delta fields.
+- Check whether popup can expose Denizden yükseklik and Bölge ortalamasından fark fields.
+- Do not invent values; missing real data must be reported as Veri yok.
+
+STEP 5 - REPORT:
+Write a timestamped report to:
+  docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_output_harvest_stuck_recovery_<timestamp>.txt
+
+Report must include:
+- PRODUCT_PROGRESS_ESTIMATE_BEFORE=84
+- PRODUCT_PROGRESS_ESTIMATE_AFTER=<integer>
+- RUNNER_STATUS=<running|polling|stuck|unknown>
+- ACTIVE_TASK=<name or none>
+- QUEUED_TASKS=<summary>
+- FOUND_046_OUTPUTS=<yes/no paths>
+- FOUND_044_OUTPUTS=<yes/no paths>
+- FOUND_REAL_ELEVATION_LOOKUP=<yes/no path>
+- LOOKUP_ENDPOINT_SMOKE=<pass/fail/not_run>
+- POPUP_TWO_METRICS_STATUS=<pass/fail/not_run>
+- NEXT_SAFE_TASK=<recommended next single-runner task>
+- FAKE_DATA_CREATED=False
+
+ACCEPTANCE FOR PROGRESS INCREASE:
+- Increase progress only if evidence is found or a safe read-only product check completes and is reported.
+- If still blocked, keep AFTER=84 and state exact blocker.
