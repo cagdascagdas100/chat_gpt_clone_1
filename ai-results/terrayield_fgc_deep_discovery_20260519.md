@@ -1,1 +1,0 @@
-﻿# TerraYield FGC Deep Discovery
