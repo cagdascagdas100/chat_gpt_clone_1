@@ -3,12 +3,14 @@ $ErrorActionPreference = 'Continue'
 $BridgeRoot = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2'
 $Runner = Join-Path $BridgeRoot 'ai-task-scripts\portable_queue_runner.ps1'
 $Stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-$Report = Join-Path $BridgeRoot "ai-results\security_london_source_restore_runner_$Stamp.txt"
-$Latest = Join-Path $BridgeRoot 'ai-results\security_london_source_restore_runner_latest.txt'
-$Expected = @(
-  'ai-results\security_london_source_restore_latest.json',
-  'ai-results\security_london_source_restore_latest.md',
-  'docs\chatgpt_status\security_london_source_restore_status_20260609.md'
+$ReportRel = "ai-results/security_london_source_restore_runner_$Stamp.txt"
+$LatestRel = 'ai-results/security_london_source_restore_runner_latest.txt'
+$Report = Join-Path $BridgeRoot ($ReportRel -replace '/', '\')
+$Latest = Join-Path $BridgeRoot ($LatestRel -replace '/', '\')
+$ExpectedRel = @(
+  'ai-results/security_london_source_restore_latest.json',
+  'ai-results/security_london_source_restore_latest.md',
+  'docs/chatgpt_status/security_london_source_restore_status_20260609.md'
 )
 
 New-Item -ItemType Directory -Force -Path (Join-Path $BridgeRoot 'ai-results') | Out-Null
@@ -21,6 +23,12 @@ function Add-Log($Text) {
 Add-Log "BridgeRoot=$BridgeRoot"
 Add-Log "Runner=$Runner"
 Add-Log "CurrentDir before cd=$(Get-Location)"
+
+if (-not (Test-Path $BridgeRoot)) {
+  Add-Log "BRIDGE_ROOT_MISSING=$BridgeRoot"
+  Copy-Item $Report $Latest -Force
+  exit 2
+}
 
 Set-Location $BridgeRoot
 Add-Log "CurrentDir after cd=$(Get-Location)"
@@ -62,22 +70,38 @@ if (Test-Path $Runner) {
 }
 
 Add-Log '=== expected outputs ==='
-foreach ($p in $Expected) {
-  if (Test-Path $p) { Add-Log "EXISTS $p size=$((Get-Item $p).Length)" } else { Add-Log "MISSING $p" }
+$ExistingRel = @($ReportRel, $LatestRel)
+foreach ($p in $ExpectedRel) {
+  $local = Join-Path $BridgeRoot ($p -replace '/', '\')
+  if (Test-Path $local) {
+    Add-Log "EXISTS $p size=$((Get-Item $local).Length)"
+    $ExistingRel += $p
+  } else {
+    Add-Log "MISSING $p"
+  }
 }
 
 Copy-Item $Report $Latest -Force
 Add-Log "LATEST_REPORT=$Latest"
 
-Add-Log '=== git push outputs ==='
-git add `
-  "ai-results/security_london_source_restore_runner_$Stamp.txt" `
-  'ai-results/security_london_source_restore_runner_latest.txt' `
-  'ai-results/security_london_source_restore_latest.json' `
-  'ai-results/security_london_source_restore_latest.md' `
-  'docs/chatgpt_status/security_london_source_restore_status_20260609.md' 2>&1 | Tee-Object -FilePath $Report -Append
+Add-Log '=== git push existing outputs only ==='
+$ExistingRel = $ExistingRel | Select-Object -Unique
+foreach ($rel in $ExistingRel) {
+  $local = Join-Path $BridgeRoot ($rel -replace '/', '\')
+  if (Test-Path $local) {
+    git add $rel 2>&1 | Tee-Object -FilePath $Report -Append
+    Add-Log "GIT_ADD_EXISTING $rel"
+  } else {
+    Add-Log "SKIP_MISSING $rel"
+  }
+}
+
+# Refresh latest after all git-add logs so ChatGPT can read final push diagnostics.
+Copy-Item $Report $Latest -Force
+git add $LatestRel 2>&1 | Tee-Object -FilePath $Report -Append
 
 git commit -m "Add security London source restore runner output $Stamp" 2>&1 | Tee-Object -FilePath $Report -Append
 git push origin main 2>&1 | Tee-Object -FilePath $Report -Append
 
+Copy-Item $Report $Latest -Force
 Add-Log 'DONE security London runner capture once'
