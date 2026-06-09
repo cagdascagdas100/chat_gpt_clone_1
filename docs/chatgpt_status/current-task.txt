@@ -1,47 +1,36 @@
-task_id=terrayield-051-london-only-pilot
+task_id=runner-contract-inventory-for-terrayield-051
 status=QUEUED
 priority=critical
 created_by=chatgpt
 
-objective=Apply the current TerraYield AAYS plan as a London-only pilot before wider regional rollout.
+objective=Detect the single runner contract before continuing terrayield-051-london-only-pilot.
 
-scope_name=Greater London
-scope_mode=london_only
-bbox_4326=-0.5104,51.2868,0.3340,51.6919
-prefer_london_boundary_or_borough_filter=true
+parent_task_id=terrayield-051-london-only-pilot
+page_scope=current_page_only
 
 storage_policy:
 - keep existing C-drive repo and runner files in place
-- do not move existing C-drive files
-- use F-drive for all new heavy London pilot scratch data, generated exports, and large intermediate outputs
-- keep only small status summaries in docs/chatgpt_status/runner_outputs
-- if F-drive is unavailable, write a blocker output and do not fall back to heavy processing on C-drive
+- use F-drive for any new heavy/temp inspection output
+- write only small reports to docs/chatgpt_status/runner_outputs
 
 requirements:
-- keep processing limited to London
-- use parcel polygon output for planned structures
-- include evidence and source information in planned structure results
-- write a first heartbeat output before detailed checks
-- write blockers to output files if London pilot cannot continue
-- prove storage policy in the first heartbeat output
+- identify which GitHub file or queue the local runner reads
+- identify current-task format accepted by the runner
+- identify where runner writes reports and heartbeat
+- identify whether one runner process is active
+- do not run product changes yet
+- write findings to GitHub, not chat paste
 
 required_outputs:
-- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-latest.json
-- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-latest.txt
-- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-audit.json
-- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-audit.txt
-- docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-validation.txt
+- docs/chatgpt_status/runner_outputs/runner_contract_inventory_for_051_latest.txt
+- docs/chatgpt_status/runner_outputs/runner_contract_inventory_for_051_latest.json
 - docs/chatgpt_status/runner_outputs/latest_output.json
 
 progress:
 queued=20
-heartbeat=22
-storage_verified=28
-audit=35
-dry_run=50
-changes=65
-tests=80
-outputs=92
-complete=100
+contract_inventory_seen=22
+contract_inventory_done=30
+resume_051=35
 
-kick=20260609_current_page_051_recheck
+next_required_action=write_runner_contract_inventory_report
+kick=20260609_contract_inventory_for_051
