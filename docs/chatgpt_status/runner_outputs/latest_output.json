@@ -1,18 +1,18 @@
 {
   "task_id": "runner-contract-inventory-for-terrayield-051",
   "parent_task_id": "terrayield-051-london-only-pilot",
-  "status": "waiting_for_runner_contract_inventory_output",
+  "status": "blocked_waiting_for_runner_contract_inventory_kick",
   "overall_progress_percent": 20,
-  "phase": "contract_inventory_current_task_written_waiting_for_single_runner_report",
+  "phase": "runner_contract_inventory_output_missing_after_polling_window",
   "london_only": true,
   "scope_name": "Greater London",
-  "reason_progress_not_increased": "current-task now asks the runner to detect its own contract, but the runner has not yet written the required inventory report",
+  "reason_progress_not_increased": "The current task asks the single runner to write its contract inventory, but the required inventory output is still missing after the polling window.",
   "next_expected_runner_outputs": [
     "docs/chatgpt_status/runner_outputs/runner_contract_inventory_for_051_latest.txt",
     "docs/chatgpt_status/runner_outputs/runner_contract_inventory_for_051_latest.json"
   ],
+  "manual_powershell_required_now": true,
+  "manual_powershell_reason": "No GitHub-visible runner contract inventory or heartbeat output exists; the next action must produce the contract report in GitHub runner_outputs before product work resumes.",
   "after_contract_inventory_expected_resume_task": "terrayield-051-london-only-pilot",
-  "manual_powershell_required_now": false,
-  "manual_powershell_condition": "required only if the runner remains silent and no contract inventory output appears after the next polling window",
   "storage_policy": "new heavy London scratch/export/intermediate files must be on F-drive; existing C-drive repo and runner stay in place"
 }
