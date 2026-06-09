@@ -1,11 +1,11 @@
-TASK_ID=terrayield-047-london-only-all-structures-accelerated
-CREATED_AT=2026-06-09T04:02:00+03:00
+TASK_ID=terrayield-047-london-only-all-structures-accelerated-f-disk-policy
+UPDATED_AT=2026-06-09T04:18:00+03:00
 REPO_BRANCH=feature/terrayield-aays-integration
 RUNNER_POLICY=single_existing_runner_only
 MANUAL_POWERSHELL_REQUIRED=false
 
 GOAL
-Apply the full sold-buildings verified-sale-to-parcel V3/source-gate plan as a London-only pilot, not for all England. Keep the same quality gates, source checks, evidence manifests, and review outputs, but constrain every heavy operation to Greater London only.
+Apply the full sold-buildings verified-sale-to-parcel V3/source-gate plan as a London-only pilot, not for all England. Keep the same quality gates, source checks, evidence manifests, and review outputs, but constrain every heavy operation to Greater London only and every new large work artifact to F drive.
 
 HARD SCOPE
 - Scope is Greater London only.
@@ -13,6 +13,16 @@ HARD SCOPE
 - Fail closed if a Greater London AOI/boundary cannot be verified from local official/project data.
 - If boundary is unavailable, write the missing-boundary blocker to GitHub and stop before any large match.
 - Do not silently fall back to nationwide processing.
+
+DISK POLICY
+- C drive has limited space.
+- Do not move existing files that are already on C.
+- Do not create new large outputs, extracts, staging files, indexes, caches, or work artifacts on C.
+- C drive may be used only for the existing local repo and small Git-tracked status/report text files under docs/chatgpt_status.
+- All new London-only heavy work must be written under F:\chatgpt\AAYS_WORK\sold_buildings\london_only.
+- Existing PPD source remains F:\sold_buildings\open_sources\ppd\pp-complete.csv.
+- Existing licensed incoming source root remains F:\sold_buildings\licensed\incoming.
+- Before heavy work, verify F drive is visible, writable, and has sufficient free space. If not, write a blocker report and stop.
 
 FIXED PATHS
 Local repo root: C:\Users\cagda\Documents\GitHub\AAYS
@@ -28,6 +38,8 @@ FORBIDDEN
 - Do not create fake AddressBase, fake UPRN, fake Title_No, fake polygon bridge, or synthetic licensed bridge data.
 - Do not perform DB write, migration, or production deploy without explicit user approval.
 - Do not start a new runner; use the existing single runner/polling flow.
+- Do not create new large outputs on C.
+- Do not move existing C files.
 
 REQUIRED SOURCE GATE FILES
 At least one address bridge source:
@@ -41,7 +53,9 @@ REQUIRED FIRST OUTPUTS
 1. docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
    Must be written immediately after task pickup, before heavy work.
 2. docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
-   Must include git branch, latest commit, local repo path, runner identity if available, F: visibility, PPD stat result, licensed folder visibility, push capability, and exact failure point.
+   Must include git branch, latest commit, local repo path, runner identity if available, F drive visibility, F drive writability, F drive free space, PPD stat result, licensed folder visibility, push capability, and exact failure point.
+3. docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt
+   Must confirm that all new large London-only outputs are on F and no new large outputs were created on C.
 
 LONDON-ONLY AOI GATE
 1. Search local/project data for an official Greater London boundary/AOI file.
@@ -58,7 +72,7 @@ Validate existing PPD only:
 - Do not download again.
 
 PARALLEL NON-CONFLICTING WORKSTREAMS
-Allowed to run these in parallel only if they write to separate output folders and do not write DB tables:
+Allowed to run these in parallel only if they write to separate output folders on F drive and do not write DB tables:
 A. london_ppd_extract
    - Filter PPD to London-only candidates using verified AOI/address source logic.
    - Output only to F:\chatgpt\AAYS_WORK\sold_buildings\london_only\ppd_extract\.
@@ -81,10 +95,14 @@ After A-D complete, run London-only V3 readonly/staging preflight only:
 - PPD sale address -> address bridge/uprn -> title/uprn -> polygon/parcel.
 - Produce confidence scoring and review sample.
 - No production DB write.
-- If a local staging file/table is needed, use london_only prefix and do not touch nationwide outputs.
+- If a local staging file/table is needed, use london_only prefix and write file artifacts only under F:\chatgpt\AAYS_WORK\sold_buildings\london_only.
+- Do not touch nationwide outputs.
 
 REQUIRED GITHUB OUTPUTS
-Write and push these files:
+Write and push these small status/report files:
+- docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt
+- docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt
+- docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt
 - docs/chatgpt_status/LONDON_ONLY_SOURCE_GATE_AND_MATCH_LATEST.txt
 - docs/chatgpt_status/LONDON_ONLY_OUTPUT_MANIFEST_LATEST.json
 - docs/chatgpt_status/LONDON_ONLY_MISSING_SOURCES_LATEST.txt if blocked/missing files exist
@@ -97,11 +115,13 @@ The latest report must include:
 - runner pickup acknowledged: yes/no
 - scope: Greater London only
 - nationwide_run_attempted: true/false
+- F drive visible/writable/free space
+- all new large output paths under F drive: true/false
+- new large C output detected: true/false
 - london_aoi_verified: true/false
 - ppd_valid: true/false
 - licensed source gate: READY/BLOCKED
 - exact missing source files
-- all output paths
 - counts for PPD London candidate records
 - counts for address/uprn/title/polygon matches where available
 - match confidence distribution
