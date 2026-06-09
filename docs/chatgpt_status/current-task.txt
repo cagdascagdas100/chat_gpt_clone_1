@@ -10,12 +10,20 @@ scope_mode=london_only
 bbox_4326=-0.5104,51.2868,0.3340,51.6919
 prefer_london_boundary_or_borough_filter=true
 
+storage_policy:
+- keep existing C-drive repo and runner files in place
+- do not move existing C-drive files
+- use F-drive for all new heavy London pilot scratch data, generated exports, and large intermediate outputs
+- keep only small status summaries in docs/chatgpt_status/runner_outputs
+- if F-drive is unavailable, write a blocker output and do not fall back to heavy processing on C-drive
+
 requirements:
 - keep processing limited to London
 - use parcel polygon output for planned structures
 - include evidence and source information in planned structure results
 - write a first heartbeat output before detailed checks
 - write blockers to output files if London pilot cannot continue
+- prove storage policy in the first heartbeat output
 
 required_outputs:
 - docs/chatgpt_status/runner_outputs/terrayield-051-london-pilot-latest.json
@@ -28,6 +36,7 @@ required_outputs:
 progress:
 queued=20
 heartbeat=22
+storage_verified=28
 audit=35
 dry_run=50
 changes=65
