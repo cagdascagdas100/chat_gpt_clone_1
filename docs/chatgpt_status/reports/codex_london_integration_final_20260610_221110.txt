@@ -1,0 +1,79 @@
+Codex London/Internet Integration Final Report
+timestamp=2026-06-10T22:11:10+03:00
+status=BLOCKED_SOURCE_PACKAGE_MISMATCH_NO_INTERNET_DATA
+requested_target=internet_access_score_10 map layer integration
+handoff_package=C:\Users\cagda\Downloads\terrayield_aays_london_codex_handoff.zip
+handoff_sha256=e8a673e74dccf2d0b84f2bc723823a76f2fd0767ce2a8ca95055f3c29e455c41
+extracted_to=C:\Users\cagda\Documents\GitHub\AAYS\terrayield_land_intelligence\docs\chatgpt_handoff\london_codex_handoff_20260610_extracted
+
+Summary:
+- The supplied ZIP is a London-only pilot FINAL_READY handoff, not an internet_access_score_10 data handoff.
+- The package contains status/evidence files and an Excel workbook with Dashboard, Evidence_Files, Timeline, DB_Integration, and Codex_Checklist sheets.
+- The package does not contain internet, broadband, Ofcom, WiFi, parcel_internet_access_scores, internet_access_score_10, or GeoJSON/CSV score data.
+- Therefore it cannot be safely loaded as the requested internet layer without fabricating source data or scores.
+
+Verified package contents:
+- CODEX_PROMPT_TR.md
+- DATABASE_INTEGRATION_NOTES_TR.md
+- DATABASE_TARGETS.csv
+- FILE_LOCATION_MAP.csv
+- FINAL_STATUS_REPORT_TR.md
+- HANDOFF_MANIFEST.json
+- OPERATION_CHRONOLOGY_TR.md
+- README_TR.md
+- terrayield_aays_london_final_results.xlsx
+
+Handoff claims:
+- scope=london_only
+- parent_task=terrayield-058-london-fast-finalize
+- final_status=FINAL_READY
+- overall_progress_percent=100
+- boundary_candidate_count=112
+- layer_candidate_count=1515
+- london_candidate_count=1764
+- database_transfer_status=not_executed_in_this_page
+
+Local source-of-truth check:
+- docs/chatgpt_status/reports/terrayield-086-final-ready.txt: missing
+- docs/chatgpt_status/reports/terrayield-086-final-ready.json: missing
+- docs/chatgpt_status/runner_outputs/latest_output.json: currently status=static_smoke_passed, task_id=terrayield-085-static-frontend-smoke, progress=88
+- docs/chatgpt_status/current-task.txt: currently task_id=terrayield-083-run-correct-london-frontend-smoke, status=running
+- docs/chatgpt_status/queue/latest.txt: currently task_id=terrayield-081-run-london-frontend-smoke, status=queued
+- docs/chatgpt_status/runner_outputs/terrayield-058-london-fast-finalize.json: present, count-only/status metadata
+- docs/chatgpt_status/runner_outputs/terrayield-080-london-candidate-outputs.json: present, count-only/status metadata
+- docs/chatgpt_status/runner_outputs/terrayield-081-london-frontend-smoke.json: present, static_smoke_passed
+- docs/chatgpt_status/reports/terrayield-085-static-frontend-smoke.json: present, static_smoke_passed
+
+Internet layer local state, from prior and current checks:
+- england_map_web/internet_access_overlay.js exists.
+- england_map_web/app.js wires INTERNET_CONTROL_MODE and AAYS_INTERNET.
+- terrayield_land_intelligence/app/api/routes/map_layers.py exposes GET /map/internet-access.
+- The backing table parcel_internet_access_scores was previously read-only probed as missing.
+- The static fallback england_map_web/data/parcel_internet_access_scores.geojson is not provided by this ZIP.
+
+DB/API/UI action taken:
+- DB_WRITE=false
+- MIGRATION=false
+- PRODUCTION_DEPLOY=false
+- FAKE_DATA=false
+- No DB loader was run.
+- No migration was created.
+- No frontend or backend code was changed for this handoff.
+- No runner/current-task/queue file was modified.
+
+Reason integration was blocked:
+The requested target is an internet access map layer, but the supplied artifact is a London pilot status bundle and does not provide the required source lineage, parcel-level score rows, factor breakdown, confidence scale data, or fallback GeoJSON needed by the existing internet layer architecture.
+
+Required next input for safe internet integration:
+- A real internet handoff package containing at minimum:
+  - processed/parcel_internet_access_scores.csv
+  - processed/parcel_internet_access_factor_breakdown.csv
+  - processed/parcel_internet_access_scores.geojson
+  - manifests/source_manifest.json
+  - manifests/calculation_manifest.json
+  - reports/internet_access_parcel_report.xlsx
+  - official source URLs and hashes, especially Ofcom/ONS/OS/BDUK lineage
+
+Final decision:
+- FINAL_READY_FOR_APP_INTEGRATION=false for internet_access_score_10.
+- Safe next_action=provide_correct_internet_access_data_package_or_authorize_file_based_pipeline_generation.
