@@ -1,0 +1,36 @@
+task_id=terrayield-071-force-058-finalize-output-or-failfast
+parent_task=terrayield-058-london-fast-finalize
+depends_on=terrayield-070-resume-058-london-finalize
+branch=feature/terrayield-aays-integration
+status=queued
+scope=london_only
+heavy_work_root=F:/chatgpt/AAYS_WORK/london_only_pilot/055/
+previous_verified=single_runner_restored_43
+problem=070 queued_waiting_for_058_outputs but 058 output files, 070 heartbeat, and 070 report are still missing.
+
+DO_NOT_CREATE_SECOND_RUNNER=true
+DO_NOT_MOVE_C_DRIVE_RUNNER_INFRA=true
+MANUAL_STDOUT_REQUIRED=false
+
+Required actions:
+1. Use the existing runner/poller queue contract already proven by 067 and restored by 068.
+2. Immediately write pickup heartbeat to docs/chatgpt_status/heartbeat/terrayield-071-force-058-finalize-output-or-failfast.txt when this task is consumed.
+3. Confirm active runner count remains exactly 1. Do not start a second runner.
+4. Resume/generate parent task terrayield-058-london-fast-finalize using F:/chatgpt/AAYS_WORK/london_only_pilot/055/ for heavy work.
+5. Write parent outputs:
+   - docs/chatgpt_status/runner_outputs/terrayield-058-london-fast-finalize.txt
+   - docs/chatgpt_status/runner_outputs/terrayield-058-london-fast-finalize.json
+6. If the parent outputs cannot be generated in this local attempt, write fail-fast evidence instead of hanging:
+   - docs/chatgpt_status/reports/terrayield-071-force-058-finalize-output-or-failfast.txt
+   - docs/chatgpt_status/reports/terrayield-071-force-058-finalize-output-or-failfast.json
+   The fail-fast report must include exact blocker, checked paths, runner_count_after, whether 058 source inputs exist, and next concrete fix. Do not ask for local stdout.
+7. Update docs/chatgpt_status/runner_outputs/latest_output.json with the new status.
+
+Progress contract:
+- task pickup heartbeat only => remain 43
+- runner_count_after=1 and fail-fast blocker report => remain 43, but unblock next correction
+- London boundary evidence in 058 outputs => 45
+- London layer inventory evidence => 60
+- candidate outputs => 75
+- frontend smoke evidence => 88
+- FINAL_READY => 100
