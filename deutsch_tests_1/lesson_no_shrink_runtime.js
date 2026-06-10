@@ -1,5 +1,5 @@
 (function(){
-  var VERSION='1.2-no-shrink-runtime-fertiggerichte-word-full';
+  var VERSION='1.3-no-shrink-runtime-fertiggerichte-bevor-only';
   var MIN_SAVE_CHARS=1200;
   var DROP_RATIO=0.78;
   var canon={};
@@ -21,16 +21,22 @@
     var s=document.createElement('script');
     s.src=src;
     s.dataset.aaysRuntimeLoader='1';
-    s.onload=function(){loadedScripts[file]=true;protectAll();restoreAll();if(cb)cb();};
+    s.onload=function(){loadedScripts[file]=true;protectAll();restoreAll();runFertiggerichtePlacementFix();if(cb)cb();};
     document.head.appendChild(s);
+  }
+  function runFertiggerichtePlacementFix(){
+    try{if(window.AAYS_FERTIGGERICHTE_BEFORE_FIX&&typeof window.AAYS_FERTIGGERICHTE_BEFORE_FIX.removeWrongPlace==='function')window.AAYS_FERTIGGERICHTE_BEFORE_FIX.removeWrongPlace();}catch(_){ }
+    try{if(window.AAYS_FERTIGGERICHTE_BEFORE_FIX&&typeof window.AAYS_FERTIGGERICHTE_BEFORE_FIX.place==='function')window.AAYS_FERTIGGERICHTE_BEFORE_FIX.place();}catch(_){ }
   }
   function ensureFertiggerichteVorteile(cb){
     loadScriptOnce('fertiggerichte_vorteile_final_fix.js?v=1',function(){
       loadScriptOnce('fertiggerichte_vorteile_word_full_override.js?v=1',function(){
-        if(typeof window.forceFertiggerichteVorteileWordFull==='function'){
-          try{window.forceFertiggerichteVorteileWordFull('init');}catch(_){ }
-        }
-        protectAll();restoreAll();if(cb)cb();
+        loadScriptOnce('fertiggerichte_vorteile_bevor_fix.js?v=2',function(){
+          if(typeof window.forceFertiggerichteVorteileWordFull==='function'){
+            try{window.forceFertiggerichteVorteileWordFull('init');}catch(_){ }
+          }
+          protectAll();restoreAll();runFertiggerichtePlacementFix();if(cb)cb();
+        });
       });
     });
   }
@@ -96,17 +102,17 @@
   function installObserver(){var content=document.getElementById('lessonContent');if(!content||content.dataset.noShrinkObserver==='1')return;content.dataset.noShrinkObserver='1';new MutationObserver(function(){setTimeout(verifyDom,100);}).observe(content,{childList:true,subtree:true,characterData:true});}
   function onLessonClick(ev){
     var btn=ev.target&&ev.target.closest&&ev.target.closest('#btnLessonLong');if(!btn)return;
-    ensureFertiggerichteVorteile();protectAll();restoreAll();var key=currentKey();
+    ensureFertiggerichteVorteile();protectAll();restoreAll();runFertiggerichtePlacementFix();var key=currentKey();
     if(key==='t33'){
       setTimeout(function(){if(typeof window.forceFertiggerichteVorteileWordFull==='function')window.forceFertiggerichteVorteileWordFull('long');else if(typeof window.forceFertiggerichteVorteileLessonFinal==='function')window.forceFertiggerichteVorteileLessonFinal('long');},160);
       return;
     }
-    setTimeout(function(){protectAll();restoreAll();if(key)verifyDom();},200);setTimeout(function(){if(key)renderCanonical(key);},700);
+    setTimeout(function(){protectAll();restoreAll();if(key)verifyDom();runFertiggerichtePlacementFix();},200);setTimeout(function(){if(key)renderCanonical(key);},700);
   }
-  function boot(){ensureFertiggerichteVorteile(function(){protectAll();restoreAll();});protectAll();restoreAll();installObserver();setTimeout(function(){ensureFertiggerichteVorteile();protectAll();restoreAll();installObserver();verifyDom();},600);setTimeout(function(){protectAll();restoreAll();installObserver();verifyDom();},1800);}
+  function boot(){ensureFertiggerichteVorteile(function(){protectAll();restoreAll();runFertiggerichtePlacementFix();});protectAll();restoreAll();installObserver();setTimeout(function(){ensureFertiggerichteVorteile();protectAll();restoreAll();installObserver();verifyDom();runFertiggerichtePlacementFix();},600);setTimeout(function(){protectAll();restoreAll();installObserver();verifyDom();runFertiggerichtePlacementFix();},1800);}
   document.addEventListener('pointerdown',onLessonClick,true);
   document.addEventListener('click',onLessonClick,true);
   document.addEventListener('DOMContentLoaded',boot);
-  setInterval(function(){ensureFertiggerichteVorteile();protectAll();restoreAll();installObserver();verifyDom();},2000);
+  setInterval(function(){ensureFertiggerichteVorteile();protectAll();restoreAll();installObserver();verifyDom();runFertiggerichtePlacementFix();},2000);
   window.AAYS_LONG_NO_SHRINK={version:VERSION,ensureFertiggerichteVorteile:ensureFertiggerichteVorteile,protectAll:protectAll,restoreAll:restoreAll,renderCanonical:renderCanonical,report:function(){try{return JSON.parse(localStorage.getItem('AAYS_LONG_SHRINK_EVENTS')||'[]');}catch(e){return [];}},canonical:canon};
 })();
