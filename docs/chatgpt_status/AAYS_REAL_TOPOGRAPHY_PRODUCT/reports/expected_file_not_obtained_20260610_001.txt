@@ -1,0 +1,23 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPORT_TYPE=EXPECTED_FILE_NOT_OBTAINED
+RUN_AT_UTC=2026-06-10T00:00:00Z
+PRODUCT_PROGRESS_ESTIMATE=99
+FINAL_READY=False
+
+EXPECTED_FILES_NOT_FOUND:
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_page_key_env_recovery_<timestamp>.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_target_branch_contract_probe_<timestamp>.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
+
+OBSERVED_INVALID_EVIDENCE:
+- Branch tip still references docs/chatgpt_status/AAYS_SAME_PROJECT_NEW_PAGE/reports/product_topography_smoke_github_actions_20260610-163300.txt
+- That report has PRODUCT_PROGRESS_ESTIMATE=100 but PAGE_KEY=AAYS_SAME_PROJECT_NEW_PAGE, so it is not valid for AAYS_REAL_TOPOGRAPHY_PRODUCT.
+
+DECISION:
+- Expected file cannot be honestly obtained from GitHub without the local runner/recovery execution producing and pushing it.
+- Do not mark FINAL_READY.
+- Do not create a fake final smoke/recovery report.
+
+NEXT_REQUIRED_ACTION:
+- Run local PowerShell recovery script runner_page_key_env_recovery_20260610_001.ps1 so it can start the single runner with PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT and push the expected recovery/probe/smoke reports to this page root.
