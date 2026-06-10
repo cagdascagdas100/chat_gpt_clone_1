@@ -1,0 +1,38 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=topography_real_lookup_endpoint_smoke_20260610_001
+TASK_TYPE=READONLY_PRODUCT_SMOKE
+PRODUCT_PROGRESS_ESTIMATE_BEFORE=91
+TARGET_PROGRESS_IF_PASS=94
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPO=cagdascagdas100/chat_gpt_clone_1
+
+SCOPE
+Use only this page key and branch. Do not use other page keys. Do not perform DB write, migration, production deploy, or fake data generation.
+
+GOAL
+Validate the real topography lookup chain enough to move the product beyond UI-only readiness.
+
+REQUIRED READS
+1. Locate the effective topography overlay config used by england_map_web.
+2. Locate parcel elevation lookup artifact: parcel_elevation_lookup_v2.json or an equivalent real lookup artifact.
+3. Locate API or static route used by /lookup or /topography/lookup.
+4. Run read-only smoke against the local app or available static route.
+5. Confirm response contains structured topography/elevation object or explicitly documents why it is missing.
+6. Confirm popup maps two metrics: Denizden yukseklik and Bolge ortalamasindan fark.
+7. Confirm missing values are rendered as Veri yok, not fake numeric values.
+
+OUTPUT
+Write exactly one report under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
+
+REPORT MUST INCLUDE
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=topography_real_lookup_endpoint_smoke_20260610_001
+FAKE_DATA_CREATED=False
+DB_WRITE=False
+MIGRATION=False
+DEPLOY=False
+PRODUCT_PROGRESS_ESTIMATE_BEFORE=91
+PRODUCT_PROGRESS_ESTIMATE_AFTER=<91-94 based on evidence>
+FINAL_READY=True only if lookup artifact, endpoint smoke, and popup runtime are all verified with real data.
+
+STOP_AFTER_REPORT=True
