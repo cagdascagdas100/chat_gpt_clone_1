@@ -16,19 +16,26 @@
     return '';
   }
   function isBevorList(){
+    try{if(typeof selectedCategory!=='undefined'&&selectedCategory==='Bevor Schreiben')return true;}catch(e){}
     var box=document.getElementById('testList');
     if(!box)return false;
-    var txt=box.textContent||'';
-    return /(Teamarbeit|Mindestlohn|Individualität|Individualitaet|Lebenslanges Lernen|Werbung|E-Books|Studium im Ausland|Mehrsprach|Massentourismus|selbstfahrende|Nachteile|Vorteile)/i.test(txt);
+    var h=box.querySelector('h2');
+    var htxt=String(h&&h.textContent||'').trim();
+    if(htxt==='Bevor Schreiben')return true;
+    return !!document.querySelector('#backCats') && /Bevor Schreiben/.test(htxt);
   }
   function label(){var i=document.querySelector('input[name="tc"][value="'+KEY+'"]');return i&&i.closest('label');}
+  function removeWrongPlace(){
+    var l=label();
+    if(l&&!isBevorList())l.remove();
+  }
   function choose(input){input.checked=true;try{selected=KEY}catch(e){}var m=document.getElementById('modeControls');if(m)m.classList.remove('hide');}
   function place(){
     var box=document.getElementById('testList');
     if(!box||!dataReady())return;
     var l=label();
     if(!isBevorList()){
-      if(l&&l.dataset.fertiggerichteFix==='1')l.remove();
+      if(l)l.remove();
       return;
     }
     if(l){l.dataset.fertiggerichteFix='1';return;}
@@ -53,7 +60,7 @@
     }
   }
   document.addEventListener('click',longClick,true);
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(place,200);});
-  setInterval(place,500);
-  window.AAYS_FERTIGGERICHTE_BEFORE_FIX={place:place};
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(place,200);setTimeout(removeWrongPlace,500);});
+  setInterval(function(){place();removeWrongPlace();},500);
+  window.AAYS_FERTIGGERICHTE_BEFORE_FIX={place:place,removeWrongPlace:removeWrongPlace,isBevorList:isBevorList};
 })();
