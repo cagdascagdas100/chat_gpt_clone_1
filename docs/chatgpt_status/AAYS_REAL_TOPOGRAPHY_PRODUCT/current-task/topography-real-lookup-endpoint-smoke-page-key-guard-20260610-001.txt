@@ -1,0 +1,27 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=topography-real-lookup-endpoint-smoke-page-key-guard-20260610-001
+TASK_TYPE=PRODUCT_SMOKE_PAGE_KEY_GUARD
+PRIORITY=HIGH
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+
+CONTEXT=The requested branch produced a topography smoke report under AAYS_SAME_PROJECT_NEW_PAGE. That report is invalid for this page. Rerun/verify the same topography smoke for AAYS_REAL_TOPOGRAPHY_PRODUCT only.
+
+STRICT_RULES:
+- Use only PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT.
+- Write outputs only under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports and status.
+- Do not count reports under AAYS_SAME_PROJECT_NEW_PAGE as final evidence.
+- Do not create fake elevation values.
+- No DB write, no migration, no deploy.
+
+VERIFY:
+- real or equivalent parcel elevation lookup artifact exists, such as parcel_elevation_lookup_v2.json or documented equivalent.
+- /lookup or /topography/lookup endpoint/static route can return structured topography/elevation response.
+- popup/runtime feature data can show Denizden yükseklik.
+- popup/runtime feature data can show Bölge ortalamasından fark.
+- missing data shows Veri yok, not fake numeric value.
+
+OUTPUT_REQUIRED:
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
+- include PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+- include FINAL_READY=true only if all VERIFY items pass with real evidence.
+- otherwise include FINAL_READY=false and exact missing items.
