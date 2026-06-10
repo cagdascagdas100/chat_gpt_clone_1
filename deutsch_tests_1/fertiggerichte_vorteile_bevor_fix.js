@@ -1,0 +1,1 @@
+window.AAYS_FERTIGGERICHTE_PLACEMENT_FIX='pending';
