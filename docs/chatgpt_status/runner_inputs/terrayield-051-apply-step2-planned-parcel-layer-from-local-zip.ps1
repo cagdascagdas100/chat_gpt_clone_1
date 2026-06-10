@@ -4,6 +4,7 @@ $ProgressPreference = "SilentlyContinue"
 # TerraYield 051 - Step 2 planned parcel layer local apply script
 # Does NOT pull, checkout, switch branch, stash, write DB, or deploy.
 # It uses the local planned_parcel_layer_low_credit_20260609.zip already present in the AAYS repo.
+# v4 fix: explicit git add/commit/push commands; earlier script accidentally called add/commit/push without git.
 
 $TaskId = "terrayield-051-london-only-pilot"
 $StepId = "terrayield-051-step2-planned-parcel-layer"
@@ -28,7 +29,35 @@ function Run([string]$cmd) {
   foreach ($l in $out) { Log "  $l" }
   return $LASTEXITCODE
 }
-function SafeJsonValue($v) { if ($null -eq $v) { return $null }; return $v }
+
+function Write-Result([string]$status, [int]$progress, [string]$phase) {
+  $obj = [ordered]@{
+    task_id=$StepId
+    parent_task_id=$TaskId
+    status=$status
+    overall_progress_percent=$progress
+    phase=$phase
+    branch=$script:currentBranch
+    repo=$script:repo
+    zip_found=$script:zipFound
+    patch_check_exit=$script:patchCheckExit
+    patch_apply_exit=$script:patchApplyExit
+    node_check_exit=$script:nodeExit
+    py_compile_exit=$script:pyExit
+    pytest_exit=$script:pytestExit
+    icon_fix_applied=$script:iconFixed
+    git_add_exit=$script:gitAddExit
+    commit_exit=$script:commitExit
+    push_exit=$script:pushExit
+    db_write=$false
+    production_deploy=$false
+    expected_next_report="docs/chatgpt_status/runner_outputs/terrayield_051_step2_planned_parcel_layer_latest.json"
+    timestamp=(Get-Date -Format o)
+  }
+  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:json
+  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:latest
+  $script:Log | Set-Content -Encoding UTF8 -LiteralPath $script:txt
+}
 
 function FindRepoRoot {
   $candidates = @()
@@ -49,25 +78,25 @@ function FindRepoRoot {
   return $null
 }
 
-Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START ==="
-$repo = FindRepoRoot
-if (-not $repo) {
+Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START v4 ==="
+$script:repo = FindRepoRoot
+if (-not $script:repo) {
   Write-Host "REPO_ROOT_NOT_FOUND"
   exit 2
 }
-Set-Location $repo
-$outDir = Join-Path $repo $OutRel
-$workDir = Join-Path $repo $WorkRel
-New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-New-Item -ItemType Directory -Force -Path $workDir | Out-Null
-$txt = Join-Path $outDir $TxtName
-$json = Join-Path $outDir $JsonName
-$latest = Join-Path $outDir $LatestName
+Set-Location $script:repo
+$script:outDir = Join-Path $script:repo $OutRel
+$script:workDir = Join-Path $script:repo $WorkRel
+New-Item -ItemType Directory -Force -Path $script:outDir | Out-Null
+New-Item -ItemType Directory -Force -Path $script:workDir | Out-Null
+$script:txt = Join-Path $script:outDir $TxtName
+$script:json = Join-Path $script:outDir $JsonName
+$script:latest = Join-Path $script:outDir $LatestName
 
-$currentBranch = "unknown"
-try { $currentBranch = (git rev-parse --abbrev-ref HEAD 2>$null) } catch {}
-Log "repo=$repo"
-Log "current_branch=$currentBranch"
+$script:currentBranch = "unknown"
+try { $script:currentBranch = (git rev-parse --abbrev-ref HEAD 2>$null) } catch {}
+Log "repo=$script:repo"
+Log "current_branch=$script:currentBranch"
 Log "NO_PULL_NO_CHECKOUT_NO_STASH=true"
 
 $targets = @(
@@ -76,22 +105,24 @@ $targets = @(
   "terrayield_land_intelligence\tests\test_planned_asset_parcel_layer_contract.py",
   "england_map_web\app.js"
 )
-foreach ($t in $targets) { Log "target_exists $t=$(Exists (Join-Path $repo $t))" }
+foreach ($t in $targets) { Log "target_exists $t=$(Exists (Join-Path $script:repo $t))" }
 
-$zipPath = Join-Path $repo $ZipRel
-$diffPath = Join-Path $workDir "STEP2_APPLY_PATCH_UNIFIED.diff"
-$extractDir = Join-Path $workDir "zip_extract"
-$zipFound = Exists $zipPath
-$patchCheckExit = 999
-$patchApplyExit = 999
-$nodeExit = 999
-$pyExit = 999
-$pytestExit = 999
-$commitExit = 999
-$pushExit = 999
+$zipPath = Join-Path $script:repo $ZipRel
+$diffPath = Join-Path $script:workDir "STEP2_APPLY_PATCH_UNIFIED.diff"
+$extractDir = Join-Path $script:workDir "zip_extract"
+$script:zipFound = Exists $zipPath
+$script:patchCheckExit = 999
+$script:patchApplyExit = 999
+$script:nodeExit = 999
+$script:pyExit = 999
+$script:pytestExit = 999
+$script:gitAddExit = 999
+$script:commitExit = 999
+$script:pushExit = 999
 $applied = $false
+$script:iconFixed = $false
 
-if (-not $zipFound) {
+if (-not $script:zipFound) {
   Log "ZIP_NOT_FOUND path=$zipPath"
 } else {
   Log "ZIP_FOUND path=$zipPath"
@@ -111,22 +142,21 @@ if (-not $zipFound) {
 }
 
 if (Exists $diffPath) {
-  $patchCheckExit = Run "git apply --check `"$diffPath`""
-  if ($patchCheckExit -eq 0) {
-    $patchApplyExit = Run "git apply --whitespace=nowarn `"$diffPath`""
-    if ($patchApplyExit -eq 0) { $applied = $true; Log "PATCH_APPLIED_CLEANLY=true" }
+  $script:patchCheckExit = Run "git apply --check `"$diffPath`""
+  if ($script:patchCheckExit -eq 0) {
+    $script:patchApplyExit = Run "git apply --whitespace=nowarn `"$diffPath`""
+    if ($script:patchApplyExit -eq 0) { $applied = $true; Log "PATCH_APPLIED_CLEANLY=true" }
   } else {
     Log "PATCH_CHECK_FAILED_TRY_REJECT=true"
-    $patchApplyExit = Run "git apply --reject --whitespace=nowarn `"$diffPath`""
-    if ($patchApplyExit -eq 0) { $applied = $true; Log "PATCH_APPLIED_WITH_REJECT_MODE=true" }
+    $script:patchApplyExit = Run "git apply --reject --whitespace=nowarn `"$diffPath`""
+    if ($script:patchApplyExit -eq 0) { $applied = $true; Log "PATCH_APPLIED_WITH_REJECT_MODE=true" }
   }
 } else {
   Log "PATCH_DIFF_MISSING_SKIP_APPLY"
 }
 
 # Independent critical frontend icon fix, safe and idempotent.
-$appJs = Join-Path $repo "england_map_web\app.js"
-$iconFixed = $false
+$appJs = Join-Path $script:repo "england_map_web\app.js"
 if (Exists $appJs) {
   try {
     $s = Get-Content -LiteralPath $appJs -Raw -Encoding UTF8
@@ -135,10 +165,10 @@ if (Exists $appJs) {
     if ($s.Contains($old)) {
       $s = $s.Replace($old, $new)
       Set-Content -LiteralPath $appJs -Value $s -Encoding UTF8
-      $iconFixed = $true
+      $script:iconFixed = $true
       Log "ICON_FIX_APPLIED=true"
     } elseif ($s.Contains('planed_buildings.png')) {
-      $iconFixed = $true
+      $script:iconFixed = $true
       Log "ICON_FIX_ALREADY_PRESENT=true"
     } else {
       Log "ICON_FIX_PATTERN_NOT_FOUND"
@@ -146,12 +176,12 @@ if (Exists $appJs) {
   } catch { Log "ICON_FIX_FAILED error=$($_.Exception.Message)" }
 }
 
-if (Exists $appJs) { $nodeExit = Run "node --check england_map_web\app.js" }
-if (Exists (Join-Path $repo "terrayield_land_intelligence\app\api\routes\planned_assets.py")) {
-  $pyExit = Run "cd terrayield_land_intelligence && python -m py_compile app\api\routes\planned_assets.py app\services\planned_asset_service.py"
+if (Exists $appJs) { $script:nodeExit = Run "node --check england_map_web\app.js" }
+if (Exists (Join-Path $script:repo "terrayield_land_intelligence\app\api\routes\planned_assets.py")) {
+  $script:pyExit = Run "cd terrayield_land_intelligence && python -m py_compile app\api\routes\planned_assets.py app\services\planned_asset_service.py"
 }
-if (Exists (Join-Path $repo "terrayield_land_intelligence\tests\test_planned_asset_parcel_layer_contract.py")) {
-  $pytestExit = Run "cd terrayield_land_intelligence && python -m pytest tests\test_planned_asset_parcel_layer_contract.py -q"
+if (Exists (Join-Path $script:repo "terrayield_land_intelligence\tests\test_planned_asset_parcel_layer_contract.py")) {
+  $script:pytestExit = Run "cd terrayield_land_intelligence && python -m pytest tests\test_planned_asset_parcel_layer_contract.py -q"
 }
 
 $changed = (git status --short 2>$null)
@@ -159,47 +189,40 @@ foreach ($c in $changed) { Log "GIT_STATUS $c" }
 
 $status = "STEP2_ATTEMPTED"
 $progress = 40
-if ($applied -and ($nodeExit -eq 0) -and ($pyExit -eq 0)) { $status = "STEP2_PATCH_APPLIED_LOCAL_CHECKS_PASSED"; $progress = 55 }
-elseif ($applied) { $status = "STEP2_PATCH_APPLIED_CHECKS_NEED_REVIEW"; $progress = 48 }
-elseif ($iconFixed) { $status = "STEP2_PARTIAL_ICON_FIX_ONLY_PATCH_FAILED"; $progress = 36 }
+if ($applied -and ($script:nodeExit -eq 0) -and ($script:pyExit -eq 0)) { $status = "STEP2_PATCH_APPLIED_LOCAL_CHECKS_PASSED"; $progress = 60 }
+elelseif ($applied) { $status = "STEP2_PATCH_APPLIED_CHECKS_NEED_REVIEW"; $progress = 48 }
+elelseif ($script:iconFixed) { $status = "STEP2_PARTIAL_ICON_FIX_ONLY_PATCH_FAILED"; $progress = 36 }
 else { $status = "STEP2_PATCH_FAILED_NO_PRODUCT_CHANGE"; $progress = 30 }
 
-$obj = [ordered]@{
-  task_id=$StepId
-  parent_task_id=$TaskId
-  status=$status
-  overall_progress_percent=$progress
-  branch=$currentBranch
-  zip_found=$zipFound
-  patch_check_exit=$patchCheckExit
-  patch_apply_exit=$patchApplyExit
-  node_check_exit=$nodeExit
-  py_compile_exit=$pyExit
-  pytest_exit=$pytestExit
-  icon_fix_applied=$iconFixed
-  db_write=$false
-  production_deploy=$false
-  expected_next_report="docs/chatgpt_status/runner_outputs/terrayield_051_step2_planned_parcel_layer_latest.json"
-  timestamp=(Get-Date -Format o)
-}
-$obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $json
-$obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $latest
-$Log | Set-Content -Encoding UTF8 -LiteralPath $txt
+Write-Result $status $progress "before_git_commit"
 
-# Commit only explicit Step 2 targets/reports. This does not require cleaning unrelated untracked files.
-Run "add terrayield_land_intelligence/app/api/routes/planned_assets.py terrayield_land_intelligence/app/services/planned_asset_service.py terrayield_land_intelligence/tests/test_planned_asset_parcel_layer_contract.py england_map_web/app.js $OutRel/$TxtName $OutRel/$JsonName $OutRel/$LatestName $WorkRel/STEP2_APPLY_PATCH_UNIFIED.diff" | Out-Null
-$commitExit = Run "commit -m `"Apply TerraYield 051 planned parcel layer step2 local patch`""
-if ($commitExit -ne 0) { Log "COMMIT_NONZERO exit=$commitExit maybe_no_changes_or_git_config_issue" }
-if ($currentBranch -and $currentBranch -ne "unknown" -and $currentBranch -ne "HEAD") {
-  $pushExit = Run "push origin $currentBranch"
+# Commit only explicit Step 2 targets/reports. No cleaning unrelated untracked files.
+$filesToAdd = @(
+  "terrayield_land_intelligence/app/api/routes/planned_assets.py",
+  "terrayield_land_intelligence/app/services/planned_asset_service.py",
+  "terrayield_land_intelligence/tests/test_planned_asset_parcel_layer_contract.py",
+  "england_map_web/app.js",
+  "docs/chatgpt_status/runner_outputs/$TxtName",
+  "docs/chatgpt_status/runner_outputs/$JsonName",
+  "docs/chatgpt_status/runner_outputs/$LatestName",
+  "docs/chatgpt_status/runner_work/terrayield_051_step2_planned_parcel_layer/STEP2_APPLY_PATCH_UNIFIED.diff"
+)
+$existingFilesToAdd = @()
+foreach ($f in $filesToAdd) { if (Exists (Join-Path $script:repo $f)) { $existingFilesToAdd += $f } else { Log "GIT_ADD_SKIP_MISSING $f" } }
+if ($existingFilesToAdd.Count -gt 0) {
+  $quoted = ($existingFilesToAdd | ForEach-Object { '"' + $_ + '"' }) -join " "
+  $script:gitAddExit = Run "git add -- $quoted"
+} else {
+  Log "GIT_ADD_SKIPPED_NO_EXISTING_TARGETS"
+}
+$script:commitExit = Run "git commit -m `"Apply TerraYield 051 planned parcel layer step2 local patch`""
+if ($script:commitExit -ne 0) { Log "COMMIT_NONZERO exit=$script:commitExit maybe_no_changes_or_git_config_issue" }
+if ($script:currentBranch -and $script:currentBranch -ne "unknown" -and $script:currentBranch -ne "HEAD") {
+  $script:pushExit = Run "git push origin $script:currentBranch"
 } else {
   Log "PUSH_SKIPPED_UNKNOWN_BRANCH"
 }
 
-$obj.commit_exit = $commitExit
-$obj.push_exit = $pushExit
-$obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $json
-$obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $latest
-$Log | Set-Content -Encoding UTF8 -LiteralPath $txt
+Write-Result $status $progress "after_git_push"
 Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY END status=$status progress=$progress ==="
 exit 0
