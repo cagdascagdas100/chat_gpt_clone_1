@@ -8,21 +8,27 @@ $Scripts = Join-Path $Bridge 'ai-task-scripts'
 $State = Join-Path $Bridge 'fg444-controller-state'
 $WorkRoot = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\fg444-london-queue-telemetry-work'
 $ReportRel = 'docs/chatgpt_status/FG444_LONDON_FAST_UNBLOCK'
-$Stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $Branch = 'fg444-london-queue-telemetry-latest'
+
 New-Item -ItemType Directory -Force $WorkRoot | Out-Null
 $RepoDir = Join-Path $WorkRoot 'repo'
 if (!(Test-Path $RepoDir)) { git clone "https://github.com/$Repo.git" $RepoDir | Out-Null }
 Set-Location $RepoDir
+
 git fetch origin main | Out-Null
 git checkout -B $Branch origin/main | Out-Null
+git config user.email 'aays-runner@example.local' | Out-Null
+git config user.name 'AAYS Runner' | Out-Null
+
 $ReportDir = Join-Path $RepoDir $ReportRel
 New-Item -ItemType Directory -Force $ReportDir | Out-Null
 $ReportPath = Join-Path $ReportDir 'FG444_LONDON_QUEUE_TELEMETRY_LATEST.txt'
+
 $PendingFiles = Get-ChildItem $Pending -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 80 Name, LastWriteTime, Length | Out-String
 $RunningFiles = Get-ChildItem $Running -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 80 Name, LastWriteTime, Length | Out-String
 $ScriptFiles = Get-ChildItem $Scripts -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 80 Name, LastWriteTime, Length | Out-String
 $WatcherFiles = Get-ChildItem $State -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 20 Name, LastWriteTime, Length | Out-String
+
 @"
 FG444_LONDON_QUEUE_TELEMETRY_LATEST
 UPDATED_AT=$(Get-Date -Format o)
@@ -52,6 +58,7 @@ PRODUCTION_DEPLOY=false
 MIGRATION_DDL=false
 FAKE_DATA=false
 "@ | Set-Content -Encoding UTF8 $ReportPath
+
 git add $ReportRel
 git commit -m 'Add FG444 London queue telemetry report' | Out-Null
 git push origin $Branch --force | Out-Null
