@@ -8,16 +8,20 @@
     'lebenslanges_lernen_super_override.js?v=2',
     'werbung_nachteile_final_fix.js?v=3',
     'werbung_nachteile_long_full_override.js?v=2',
-    'werbung_medien_nachteile_final_fix.js?v=2'
+    'werbung_medien_nachteile_final_fix.js?v=2',
+    'fertiggerichte_vorteile_final_fix.js?v=2',
+    'fertiggerichte_vorteile_word_full_override.js?v=2',
+    'fertiggerichte_vorteile_bevor_fix.js?v=1'
   ];
   var FULL_SIGNATURES={
     t28:['Teamarbeit','Vollständige Word-Version','Nachteil 4','Verantwortungsdiffusion','Übungen'],
     t29:['Individualität','Erweiterte vollständige Langversion','Nachteil 4','Kalıp Bankası','20 hazır Satzstarter'],
     t30:['Lebenslanges Lernen','Ziel dieses Arbeitsblattes','Nachteil 4','Kompakte C1/C2-Kopiervorlage','Musterlösung'],
     t31:['Werbung','Vollständige Word-Version','Manipulation','Reizüberflutung','Kompakte Kopiervorlage'],
-    t32:['Medien','Vollständige Word-Version','Filterblasen','Fake News','Kopiervorlage']
+    t32:['Medien','Vollständige Word-Version','Filterblasen','Fake News','Kopiervorlage'],
+    t33:['Fertiggerichte','Vollständige Word-Version','Vorteil 4','Musterabsatz','Endgültiger Mini-Merksatz']
   };
-  var MIN_FULL_LENGTH={t28:4500,t29:4500,t30:4500,t31:3500,t32:3500};
+  var MIN_FULL_LENGTH={t28:4500,t29:4500,t30:4500,t31:3500,t32:3500,t33:4500};
   var canonical={};
   var loading={};
   var restoring=false;
@@ -43,7 +47,7 @@
     var s=document.createElement('script');
     s.src=src;
     s.dataset.longIntegrityDependency='1';
-    s.onload=function(){setTimeout(function(){patchKnownFunctions();collectCanonicalLongs();restoreLessonObjects();},50);};
+    s.onload=function(){setTimeout(function(){patchKnownFunctions();collectCanonicalLongs();restoreLessonObjects();runPlacementFix();},50);};
     document.head.appendChild(s);
   }
   function ensureFullScripts(){FULL_SCRIPT_SOURCES.forEach(loadScript);}
@@ -110,12 +114,22 @@
       window.forceWerbungMedienLesson=window.forceWerbungMedienLessonFinal;
       window.forceWerbungMedienLessonFull=window.forceWerbungMedienLessonFinal;
     }
+    if(typeof window.forceFertiggerichteVorteileWordFull==='function'){
+      window.forceFertiggerichteVorteileLessonFull=window.forceFertiggerichteVorteileWordFull;
+    }
+  }
+  function runPlacementFix(){
+    try{if(window.AAYS_FERTIGGERICHTE_BEFORE_FIX&&typeof window.AAYS_FERTIGGERICHTE_BEFORE_FIX.place==='function')window.AAYS_FERTIGGERICHTE_BEFORE_FIX.place();}catch(e){}
   }
   function renderLong(key){
     ensureFullScripts();
     patchKnownFunctions();
+    runPlacementFix();
     collectCanonicalLongs();
     restoreLessonObjects();
+    if(key==='t33'&&typeof window.forceFertiggerichteVorteileWordFull==='function'){
+      return window.forceFertiggerichteVorteileWordFull('long');
+    }
     var tests=window.DEUTSCH_TESTS||{};
     var lessons=window.DEUTSCH_LESSONS||{};
     var test=tests[key]||{};
@@ -178,6 +192,7 @@
     if(!level)return;
     ensureFullScripts();
     patchKnownFunctions();
+    runPlacementFix();
     collectCanonicalLongs();
     restoreLessonObjects();
     if(level==='long'){
@@ -200,18 +215,19 @@
   function boot(){
     ensureFullScripts();
     patchKnownFunctions();
-    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();},200);
-    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();},1000);
-    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();},2500);
+    runPlacementFix();
+    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();runPlacementFix();},200);
+    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();runPlacementFix();},1000);
+    setTimeout(function(){collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();runPlacementFix();},2500);
   }
   document.addEventListener('pointerdown',captureLessonClick,true);
   document.addEventListener('mousedown',captureLessonClick,true);
   document.addEventListener('touchstart',captureLessonClick,true);
   document.addEventListener('click',captureLessonClick,true);
   document.addEventListener('DOMContentLoaded',boot);
-  setInterval(function(){patchKnownFunctions();collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();},1000);
+  setInterval(function(){patchKnownFunctions();collectCanonicalLongs();restoreLessonObjects();installObserver();verifyDom();runPlacementFix();},1000);
   window.AAYS_LONG_LESSON_GUARD={
-    version:'2.0-hard-canonical',
+    version:'2.1-hard-canonical-fertiggerichte',
     ensureFullScripts:ensureFullScripts,
     collectCanonicalLongs:collectCanonicalLongs,
     restoreLessonObjects:restoreLessonObjects,
