@@ -1,10 +1,11 @@
 (function(){
-  var VERSION='1.0-no-shrink-runtime';
+  var VERSION='1.1-no-shrink-runtime-fertiggerichte-loader';
   var MIN_SAVE_CHARS=1200;
   var DROP_RATIO=0.78;
   var canon={};
   var protectedKeys={};
   var rendering=false;
+  var loadedScripts={};
 
   function now(){return new Date().toISOString();}
   function safe(v){return String(v||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]});}
@@ -16,6 +17,21 @@
       localStorage.setItem('AAYS_LONG_SHRINK_EVENTS',JSON.stringify(arr));
     }catch(_){ }
     try{console.warn('[AAYS no-shrink]',e);}catch(_){ }
+  }
+  function scriptExists(fileName){
+    return !!Array.prototype.slice.call(document.scripts||[]).find(function(s){return String(s.getAttribute('src')||'').indexOf(fileName)!==-1;});
+  }
+  function loadScriptOnce(src,cb){
+    var file=String(src).split('?')[0];
+    if(loadedScripts[file]||scriptExists(file)){loadedScripts[file]=true;if(cb)setTimeout(cb,0);return;}
+    var s=document.createElement('script');
+    s.src=src;
+    s.dataset.aaysRuntimeLoader='1';
+    s.onload=function(){loadedScripts[file]=true;protectAll();restoreAll();if(cb)cb();};
+    document.head.appendChild(s);
+  }
+  function ensureFertiggerichteVorteile(cb){
+    loadScriptOnce('fertiggerichte_vorteile_final_fix.js?v=1',cb);
   }
   function storageKey(key){return 'AAYS_CANONICAL_LONG_V3_'+key;}
   function currentKey(){
@@ -35,7 +51,7 @@
     html=String(html||'');
     if(html.length<MIN_SAVE_CHARS)return false;
     var hits=0;
-    ['Nachteil','Musterabsatz','C1/C2','Wortschatz','Übung','Kopiervorlage','Beispiele','Erklärung','Redemittel','Satzbausteine','Nomen-Verb'].forEach(function(s){if(html.indexOf(s)!==-1)hits++;});
+    ['Vorteil','Nachteil','Musterabsatz','C1/C2','Wortschatz','Übung','Kopiervorlage','Beispiele','Erklärung','Redemittel','Satzbausteine','Nomen-Verb'].forEach(function(s){if(html.indexOf(s)!==-1)hits++;});
     return html.length>2500 || hits>=2;
   }
   function saveCanon(key,html,why){
@@ -149,19 +165,25 @@
   function onLessonClick(ev){
     var btn=ev.target&&ev.target.closest&&ev.target.closest('#btnLessonLong');
     if(!btn)return;
+    ensureFertiggerichteVorteile();
     protectAll(); restoreAll();
     var key=currentKey();
+    if(key==='t33'&&typeof window.forceFertiggerichteVorteileLessonFinal==='function'){
+      setTimeout(function(){window.forceFertiggerichteVorteileLessonFinal('long');},120);
+      return;
+    }
     setTimeout(function(){protectAll(); restoreAll(); if(key)verifyDom();},200);
     setTimeout(function(){if(key)renderCanonical(key);},700);
   }
   function boot(){
+    ensureFertiggerichteVorteile(function(){protectAll();restoreAll();});
     protectAll(); restoreAll(); installObserver();
-    setTimeout(function(){protectAll(); restoreAll(); installObserver(); verifyDom();},600);
+    setTimeout(function(){ensureFertiggerichteVorteile();protectAll(); restoreAll(); installObserver(); verifyDom();},600);
     setTimeout(function(){protectAll(); restoreAll(); installObserver(); verifyDom();},1800);
   }
   document.addEventListener('pointerdown',onLessonClick,true);
   document.addEventListener('click',onLessonClick,true);
   document.addEventListener('DOMContentLoaded',boot);
-  setInterval(function(){protectAll(); restoreAll(); installObserver(); verifyDom();},1200);
-  window.AAYS_LONG_NO_SHRINK={version:VERSION,protectAll:protectAll,restoreAll:restoreAll,renderCanonical:renderCanonical,report:function(){try{return JSON.parse(localStorage.getItem('AAYS_LONG_SHRINK_EVENTS')||'[]');}catch(e){return [];}},canonical:canon};
+  setInterval(function(){ensureFertiggerichteVorteile();protectAll(); restoreAll(); installObserver(); verifyDom();},2000);
+  window.AAYS_LONG_NO_SHRINK={version:VERSION,ensureFertiggerichteVorteile:ensureFertiggerichteVorteile,protectAll:protectAll,restoreAll:restoreAll,renderCanonical:renderCanonical,report:function(){try{return JSON.parse(localStorage.getItem('AAYS_LONG_SHRINK_EVENTS')||'[]');}catch(e){return [];}},canonical:canon};
 })();
