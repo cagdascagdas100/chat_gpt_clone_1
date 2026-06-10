@@ -1,0 +1,33 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPORT_TYPE=RECOVERY_SCRIPT_NONARRIVAL_DIAGNOSIS
+RUN_AT_UTC=2026-06-10T00:00:00Z
+PRODUCT_PROGRESS_ESTIMATE=99
+FINAL_READY=False
+
+OBSERVED:
+- Expected recovery report docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_page_key_env_recovery_<timestamp>.txt is still absent from GitHub.
+- ai-tasks/current-task.json exists on the target branch and points to page_key=AAYS_REAL_TOPOGRAPHY_PRODUCT and script_path=ai-task-scripts/aays_realtopography_contract_probe.ps1.
+- ai-task-scripts/aays_realtopography_contract_probe.ps1 exists and would write runner_target_branch_contract_probe_<timestamp>.txt if consumed.
+- Therefore the GitHub task contract is prepared, but the local runner/recovery path is not producing or pushing the required reports.
+
+DIAGNOSIS:
+- Repeating the same recovery script is not sufficient.
+- The previous recovery script writes runner_page_key_env_recovery_<timestamp>.txt before waiting for final smoke. If that report is absent, then the script either was not started, did not reach the report/push phase, selected a non-pushed/stale worktree, failed before commit/push, or pushed to a different branch/remote.
+- This is now a local recovery execution / git push / worktree selection problem, not a product code problem and not a missing current-task.json problem.
+
+MOST_LIKELY_FAILURE_POINTS:
+1. The command was not run against the actual downloaded .ps1 path, or the placeholder path was not replaced.
+2. The script selected a stale local worktree from its WorkRoots list.
+3. The script failed before GitHub push because the expected local .git worktree or bridge path was missing.
+4. The script wrote files locally but git push failed due to auth, rebase conflict, remote mismatch, or branch mismatch.
+5. The runner process was started but ignored inherited PAGE_KEY env or still reads a different local queue/current-task source.
+
+NEXT_REQUIRED_ACTION:
+- Do not keep reusing the same recovery script blindly.
+- Use a preflight recovery script that writes a local and GitHub-visible diagnosis first, checks git exit codes, prints the selected worktree/branch/remote, verifies the expected report file exists before push, and fails with a concrete status file if push cannot be completed.
+
+EXPECTED_AFTER_FIX:
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_page_key_env_recovery_<timestamp>.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_target_branch_contract_probe_<timestamp>.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
