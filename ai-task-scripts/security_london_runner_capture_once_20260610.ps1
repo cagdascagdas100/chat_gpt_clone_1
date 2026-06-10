@@ -8,11 +8,6 @@ $LatestRel = 'ai-results/security_london_source_restore_runner_latest.txt'
 $Report = Join-Path $BridgeRoot ($ReportRel -replace '/', '\')
 $Latest = Join-Path $BridgeRoot ($LatestRel -replace '/', '\')
 $TaskRel = 'ai-tasks/current-task.json'
-$ExpectedRel = @(
-  'ai-results/security_london_source_restore_latest.json',
-  'ai-results/security_london_source_restore_latest.md',
-  'docs/chatgpt_status/security_london_source_restore_status_20260609.md'
-)
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 New-Item -ItemType Directory -Force -Path (Join-Path $BridgeRoot 'ai-results') | Out-Null
@@ -52,7 +47,26 @@ function Add-ExistingRel([string[]]$Items) {
   }
 }
 
-[System.IO.File]::WriteAllText($Report, "SECURITY_LONDON_RUNNER_CAPTURE_ONCE_FALLBACK_UTF8 $Stamp" + [Environment]::NewLine, $Utf8NoBom)
+function Get-ExpectedRelForTask($TaskObj) {
+  $default = @(
+    'ai-results/security_london_source_restore_latest.json',
+    'ai-results/security_london_source_restore_latest.md',
+    'docs/chatgpt_status/security_london_source_restore_status_20260609.md'
+  )
+  if ($null -eq $TaskObj) { return $default }
+  $taskId = [string]$TaskObj.id
+  $scriptPath = [string]$TaskObj.script_path
+  if (($taskId -match 'official-source-manifest') -or ($scriptPath -match 'official_source_manifest')) {
+    return @(
+      'ai-results/security_london_official_source_manifest_latest.json',
+      'ai-results/security_london_official_source_manifest_latest.md',
+      'docs/chatgpt_status/security_london_official_source_manifest_status_20260610.md'
+    )
+  }
+  return $default
+}
+
+[System.IO.File]::WriteAllText($Report, "SECURITY_LONDON_RUNNER_CAPTURE_ONCE_TASK_AWARE $Stamp" + [Environment]::NewLine, $Utf8NoBom)
 Add-Log "BridgeRoot=$BridgeRoot"
 Add-Log "Runner=$Runner"
 Add-Log "CurrentDir before cd=$(Get-Location)"
@@ -68,23 +82,6 @@ Add-Log "CurrentDir after cd=$(Get-Location)"
 
 Run-Logged 'git sync' { git fetch origin main; git reset --hard origin/main }
 
-Add-Log '=== local runner contract files ==='
-@(
-  '.last-task-id',
-  'ai-tasks\current-task.json',
-  'ai-task-scripts\portable_queue_runner.ps1',
-  'ai-task-scripts\security_asayis_london_source_restore_20260609.ps1'
-) | ForEach-Object {
-  if (Test-Path $_) { Add-Log "EXISTS $_ size=$((Get-Item $_).Length)" } else { Add-Log "MISSING $_" }
-}
-
-if (Test-Path '.last-task-id') {
-  Add-Log '=== clear .last-task-id ==='
-  Get-Content '.last-task-id' -Raw 2>&1 | ForEach-Object { Add-Log $_ }
-  Remove-Item '.last-task-id' -Force
-  Add-Log 'CLEARED .last-task-id'
-}
-
 Add-Log '=== current-task ==='
 $TaskObj = $null
 if (Test-Path 'ai-tasks\current-task.json') {
@@ -93,6 +90,31 @@ if (Test-Path 'ai-tasks\current-task.json') {
   try { $TaskObj = $TaskRaw | ConvertFrom-Json } catch { Add-Log "TASK_JSON_PARSE_ERROR=$($_.Exception.Message)" }
 } else {
   Add-Log 'MISSING ai-tasks\current-task.json'
+}
+
+$ExpectedRel = @(Get-ExpectedRelForTask $TaskObj)
+Add-Log '=== task-aware expected outputs ==='
+foreach ($p in $ExpectedRel) { Add-Log "EXPECT $p" }
+
+Add-Log '=== local runner contract files ==='
+$contractItems = @(
+  '.last-task-id',
+  'ai-tasks\current-task.json',
+  'ai-task-scripts\portable_queue_runner.ps1'
+)
+if ($TaskObj -ne $null -and -not [string]::IsNullOrWhiteSpace([string]$TaskObj.script_path)) {
+  $sp = [string]$TaskObj.script_path
+  if (-not [System.IO.Path]::IsPathRooted($sp)) { $contractItems += ($sp -replace '/', '\') }
+}
+$contractItems | Select-Object -Unique | ForEach-Object {
+  if (Test-Path $_) { Add-Log "EXISTS $_ size=$((Get-Item $_).Length)" } else { Add-Log "MISSING $_" }
+}
+
+if (Test-Path '.last-task-id') {
+  Add-Log '=== clear .last-task-id ==='
+  Get-Content '.last-task-id' -Raw 2>&1 | ForEach-Object { Add-Log $_ }
+  Remove-Item '.last-task-id' -Force
+  Add-Log 'CLEARED .last-task-id'
 }
 
 Add-Log '=== run portable queue runner ==='
@@ -156,7 +178,7 @@ Add-Log '=== git push existing outputs only ==='
 Add-ExistingRel $ExistingRel
 Copy-Item $Report $Latest -Force
 Run-Logged "git add latest report" { git add $LatestRel }
-Run-Logged "git commit" { git commit -m "Add security London source restore runner output $Stamp" }
+Run-Logged "git commit" { git commit -m "Add security London runner output $Stamp" }
 Run-Logged "git push" { git push origin main }
 Copy-Item $Report $Latest -Force
-Add-Log 'DONE security London runner capture once fallback utf8'
+Add-Log 'DONE security London runner capture once task aware'
