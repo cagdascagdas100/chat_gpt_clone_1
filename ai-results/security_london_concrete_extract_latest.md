@@ -1,6 +1,6 @@
 ﻿# Security London concrete extract latest
 
-- generated_at: 2026-06-10T19:42:42
+- generated_at: 2026-06-10T20:00:09
 - final_ready: false
 - completion_percent: 99
 
@@ -12,4 +12,4 @@
 ## Decision
 BLOCKED_MISSING_CONCRETE_ARTIFACTS
 
-Next: Create real London-only boundary, parcel/security, and crime/security files under F-drive paths.
+Next: Run real London-only official-source extraction.
