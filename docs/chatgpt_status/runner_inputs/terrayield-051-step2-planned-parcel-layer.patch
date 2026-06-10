@@ -1,0 +1,418 @@
+diff --git a/terrayield_land_intelligence/app/api/routes/planned_assets.py b/terrayield_land_intelligence/app/api/routes/planned_assets.py
+--- a/terrayield_land_intelligence/app/api/routes/planned_assets.py
++++ b/terrayield_land_intelligence/app/api/routes/planned_assets.py
+@@
+ from app.services.planned_asset_service import (
+     get_parcel_future_growth_score,
+     get_parcel_planned_assets,
++    get_planned_asset_parcel_layer,
+     get_planned_asset,
+     ingest_planned_assets,
+     list_planned_asset_sources,
+     nearby_planned_assets,
+     recalculate_planned_assets,
+     search_planned_assets,
+@@
+ def get_parcel_future_growth_score_payload(
+     db: DBSession,
+     parcel_id: int,
+ ) -> ParcelFutureGrowthScoreResponse:
+     return get_parcel_future_growth_score(db, parcel_id)
+
+
++@router.get("/planned-assets/parcel-layer")
++def get_planned_asset_parcel_layer_payload(
++    db: DBSession,
++    bbox: str = Query(..., description="west,south,east,north in EPSG:4326"),
++    limit: int = Query(default=2000, ge=1, le=10000),
++    min_delivery_probability: float | None = Query(default=None, ge=0, le=100),
++    asset_type: str | None = None,
++    status: str | None = None,
++) -> dict[str, object]:
++    return get_planned_asset_parcel_layer(
++        db,
++        bbox=bbox,
++        limit=limit,
++        min_delivery_probability=min_delivery_probability,
++        asset_type=asset_type,
++        status_filter=status,
++    )
++
++
+ @router.get("/planned-assets/search", response_model=list[PlannedAssetItem])
+ def search_planned_assets_payload(
+     db: DBSession,
+     q: str | None = Query(default=None, alias="query"),
+diff --git a/terrayield_land_intelligence/app/services/planned_asset_service.py b/terrayield_land_intelligence/app/services/planned_asset_service.py
+--- a/terrayield_land_intelligence/app/services/planned_asset_service.py
++++ b/terrayield_land_intelligence/app/services/planned_asset_service.py
+@@
+ from __future__ import annotations
+
++import json
+@@
+ def _serialize_planned_asset_row(row: Any) -> PlannedAssetItem:
+@@
+     return PlannedAssetItem(
+         id=asset.id,
+@@
+         contains=bool(contains) if contains is not None else None,
+     )
+
+
++def _parse_bbox_4326(bbox: str) -> tuple[float, float, float, float]:
++    parts = [part.strip() for part in str(bbox or "").split(",")]
++    if len(parts) != 4:
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="bbox must be west,south,east,north in EPSG:4326",
++        )
++    try:
++        west, south, east, north = [float(part) for part in parts]
++    except ValueError as exc:
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="bbox values must be numeric",
++        ) from exc
++    if not (-180 <= west <= 180 and -180 <= east <= 180 and -90 <= south <= 90 and -90 <= north <= 90):
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="bbox values are outside EPSG:4326 bounds",
++        )
++    if west >= east or south >= north:
++        raise HTTPException(
++            status_code=status.HTTP_400_BAD_REQUEST,
++            detail="bbox must satisfy west < east and south < north",
++        )
++    return west, south, east, north
++
++
++def _json_geojson(value: Any) -> dict[str, Any] | None:
++    if value is None:
++        return None
++    if isinstance(value, dict):
++        return value
++    try:
++        parsed = json.loads(str(value))
++    except (TypeError, ValueError):
++        return None
++    return parsed if isinstance(parsed, dict) else None
++
++
++def _safe_float(value: Any) -> float | None:
++    if value is None:
++        return None
++    try:
++        return round(float(value), 2)
++    except (TypeError, ValueError):
++        return None
++
++
++def _safe_int(value: Any) -> int | None:
++    if value is None:
++        return None
++    try:
++        return int(value)
++    except (TypeError, ValueError):
++        return None
++
++
++def _short_evidence(*values: Any, max_len: int = 320) -> str:
++    for value in values:
++        text = str(value or "").strip()
++        if text:
++            return text if len(text) <= max_len else f"{text[: max_len - 1]}…"
++    return "insufficient evidence"
++
++
++def _planned_layer_color(score: Any) -> str:
++    value = _safe_float(score) or 0.0
++    if value >= 75:
++        return "#16a34a"
++    if value >= 55:
++        return "#f97316"
++    if value >= 35:
++        return "#f59e0b"
++    return "#dc2626"
++
++
++def get_planned_asset_parcel_layer(
++    session: Session,
++    *,
++    bbox: str,
++    limit: int = 2000,
++    min_delivery_probability: float | None = None,
++    asset_type: str | None = None,
++    status_filter: str | None = None,
++) -> dict[str, Any]:
++    west, south, east, north = _parse_bbox_4326(bbox)
++    safe_limit = max(1, min(int(limit or 2000), 10000))
++
++    bbox_geom_27700 = func.ST_Transform(func.ST_MakeEnvelope(west, south, east, north, 4326), 27700)
++    parcel_geometry_geojson = func.ST_AsGeoJSON(func.ST_Transform(ParcelInspire.geometry, 4326)).label("geometry_geojson")
++    planned_asset_count = func.count(PlannedAsset.id).over(
++        partition_by=ParcelPlannedAssetMatch.parcel_id
++    ).label("planned_asset_count")
++    rank_num = func.row_number().over(
++        partition_by=ParcelPlannedAssetMatch.parcel_id,
++        order_by=(
++            desc(ParcelPlannedAssetMatch.impact_score),
++            desc(PlannedAsset.delivery_probability_score),
++            ParcelPlannedAssetMatch.distance_m.asc().nulls_last(),
++            desc(PlannedAsset.updated_at),
++        ),
++    ).label("rank_num")
++
++    stmt = (
++        select(
++            ParcelInspire.parcel_id.label("parcel_id"),
++            ParcelInspire.parcel_ref.label("parcel_ref"),
++            ParcelInspire.local_authority.label("local_authority"),
++            ParcelInspire.postcode.label("postcode"),
++            ParcelInspire.address_text.label("address_text"),
++            ParcelInspire.area_m2.label("area_m2"),
++            parcel_geometry_geojson,
++            planned_asset_count,
++            rank_num,
++            PlannedAsset.id.label("top_planned_asset_id"),
++            PlannedAsset.title.label("top_title"),
++            PlannedAsset.asset_type.label("top_asset_type"),
++            PlannedAsset.asset_subtype.label("top_asset_subtype"),
++            PlannedAsset.status.label("top_status"),
++            PlannedAsset.delivery_probability_score.label("top_delivery_probability_score"),
++            PlannedAsset.delivery_probability_label.label("top_delivery_probability_label"),
++            PlannedAsset.value_impact_score.label("top_value_impact_score"),
++            PlannedAsset.source_confidence_score.label("top_source_confidence_score"),
++            PlannedAsset.delay_risk_score.label("top_delay_risk_score"),
++            PlannedAsset.timeline_confidence_score.label("top_timeline_confidence_score"),
++            PlannedAsset.estimated_delivery_window_start.label("estimated_delivery_window_start"),
++            PlannedAsset.estimated_delivery_window_end.label("estimated_delivery_window_end"),
++            PlannedAsset.source_name.label("source_name"),
++            PlannedAsset.source_url.label("source_url"),
++            PlannedAsset.evidence_text.label("evidence_text"),
++            PlannedAsset.evidence_for_probability.label("evidence_for_probability"),
++            PlannedAsset.evidence_for_timeline.label("evidence_for_timeline"),
++            PlannedAsset.geometry_confidence_score.label("geometry_confidence_score"),
++            ParcelPlannedAssetMatch.distance_m.label("nearest_distance_m"),
++            ParcelPlannedAssetMatch.intersects.label("intersects"),
++            ParcelPlannedAssetMatch.contains.label("contains"),
++            ParcelPlannedAssetMatch.impact_score.label("impact_score"),
++            ParcelPlannedAssetMatch.match_confidence_score.label("match_confidence_score"),
++        )
++        .join(ParcelPlannedAssetMatch, ParcelPlannedAssetMatch.parcel_id == ParcelInspire.parcel_id)
++        .join(PlannedAsset, PlannedAsset.id == ParcelPlannedAssetMatch.planned_asset_id)
++        .where(ParcelInspire.geometry.is_not(None))
++        .where(func.ST_Intersects(ParcelInspire.geometry, bbox_geom_27700))
++    )
++    if min_delivery_probability is not None:
++        stmt = stmt.where(PlannedAsset.delivery_probability_score >= float(min_delivery_probability))
++    if asset_type:
++        stmt = stmt.where(PlannedAsset.asset_type == asset_type)
++    if status_filter:
++        stmt = stmt.where(PlannedAsset.status == normalize_status(status_filter))
++
++    ranked = stmt.subquery()
++    rows = session.execute(
++        select(ranked)
++        .where(ranked.c.rank_num == 1)
++        .order_by(desc(ranked.c.impact_score), desc(ranked.c.top_delivery_probability_score))
++        .limit(safe_limit)
++    ).all()
++
++    features: list[dict[str, Any]] = []
++    for row in rows:
++        data = row._mapping
++        geometry = _json_geojson(data.get("geometry_geojson"))
++        if not geometry:
++            continue
++        evidence_summary = _short_evidence(
++            data.get("evidence_text"),
++            data.get("evidence_for_probability"),
++            data.get("evidence_for_timeline"),
++        )
++        has_evidence = evidence_summary != "insufficient evidence"
++        probability_score = _safe_float(data.get("top_delivery_probability_score"))
++        properties = {
++            "layer_kind": "planned_parcel",
++            "parcel_id": _safe_int(data.get("parcel_id")),
++            "parcel_ref": data.get("parcel_ref"),
++            "local_authority": data.get("local_authority"),
++            "postcode": data.get("postcode"),
++            "address_text": data.get("address_text"),
++            "area_m2": _safe_float(data.get("area_m2")),
++            "planned_asset_count": _safe_int(data.get("planned_asset_count")) or 0,
++            "top_planned_asset_id": _safe_int(data.get("top_planned_asset_id")),
++            "top_title": data.get("top_title"),
++            "top_asset_type": data.get("top_asset_type"),
++            "top_asset_subtype": data.get("top_asset_subtype"),
++            "top_status": data.get("top_status"),
++            "top_delivery_probability_score": probability_score,
++            "top_delivery_probability_label": data.get("top_delivery_probability_label"),
++            "top_value_impact_score": _safe_float(data.get("top_value_impact_score")),
++            "top_source_confidence_score": _safe_float(data.get("top_source_confidence_score")),
++            "top_delay_risk_score": _safe_float(data.get("top_delay_risk_score")),
++            "top_timeline_confidence_score": _safe_float(data.get("top_timeline_confidence_score")),
++            "estimated_delivery_window_start": _safe_int(data.get("estimated_delivery_window_start")),
++            "estimated_delivery_window_end": _safe_int(data.get("estimated_delivery_window_end")),
++            "nearest_distance_m": _safe_float(data.get("nearest_distance_m")),
++            "intersects": bool(data.get("intersects")) if data.get("intersects") is not None else None,
++            "contains": bool(data.get("contains")) if data.get("contains") is not None else None,
++            "match_confidence_score": _safe_float(data.get("match_confidence_score")),
++            "impact_score": _safe_float(data.get("impact_score")),
++            "geometry_confidence_score": _safe_float(data.get("geometry_confidence_score")),
++            "evidence_summary": evidence_summary,
++            "evidence_status": "provided" if has_evidence else "insufficient_evidence",
++            "has_evidence": has_evidence,
++            "source_name": data.get("source_name"),
++            "source_url": data.get("source_url"),
++            "color_hex": _planned_layer_color(probability_score),
++        }
++        features.append({"type": "Feature", "geometry": geometry, "properties": properties})
++
++    return {
++        "type": "FeatureCollection",
++        "features": features,
++        "metadata": {
++            "layer_kind": "planned_parcel",
++            "bbox": [west, south, east, north],
++            "feature_count": len(features),
++            "limit": safe_limit,
++            "filters": {
++                "min_delivery_probability": min_delivery_probability,
++                "asset_type": asset_type,
++                "status": status_filter,
++            },
++        },
++    }
++
++
+ def get_planned_asset(session: Session, planned_asset_id: int) -> PlannedAssetItem:
+     geom_expr = _asset_geom_4326_geojson_expr().label("geometry_geojson")
+     row = session.execute(
+diff --git a/terrayield_land_intelligence/tests/test_planned_asset_parcel_layer_contract.py b/terrayield_land_intelligence/tests/test_planned_asset_parcel_layer_contract.py
+new file mode 100644
+--- /dev/null
++++ b/terrayield_land_intelligence/tests/test_planned_asset_parcel_layer_contract.py
+@@
++from __future__ import annotations
++
++from fastapi import FastAPI
++from fastapi.testclient import TestClient
++
++from app.api.routes import planned_assets as planned_assets_routes
++from app.db.session import get_db
++
++
++def _build_test_app() -> FastAPI:
++    app = FastAPI()
++    app.include_router(planned_assets_routes.router)
++    app.dependency_overrides[get_db] = lambda: object()
++    return app
++
++
++def test_planned_asset_parcel_layer_route_contract(monkeypatch):
++    app = _build_test_app()
++    captured = {}
++
++    def fake_layer(_db, **kwargs):
++        captured.update(kwargs)
++        return {
++            "type": "FeatureCollection",
++            "features": [
++                {
++                    "type": "Feature",
++                    "geometry": {
++                        "type": "Polygon",
++                        "coordinates": [[[-0.12, 51.50], [-0.11, 51.50], [-0.11, 51.51], [-0.12, 51.51], [-0.12, 51.50]]],
++                    },
++                    "properties": {
++                        "layer_kind": "planned_parcel",
++                        "parcel_id": 42,
++                        "planned_asset_count": 1,
++                        "top_title": "Sample planned structure",
++                        "top_asset_type": "transport",
++                        "top_delivery_probability_score": 78.0,
++                        "top_delivery_probability_label": "High",
++                        "top_source_confidence_score": 87.0,
++                        "top_value_impact_score": 64.0,
++                        "nearest_distance_m": 850.0,
++                        "evidence_summary": "Council evidence text",
++                        "source_url": "https://example.test/source",
++                    },
++                }
++            ],
++        }
++
++    monkeypatch.setattr(planned_assets_routes, "get_planned_asset_parcel_layer", fake_layer)
++
++    try:
++        response = TestClient(app).get(
++            "/planned-assets/parcel-layer?bbox=-0.2,51.4,0.0,51.6&limit=500&min_delivery_probability=50&asset_type=transport&status=approved"
++        )
++    finally:
++        app.dependency_overrides.clear()
++
++    assert response.status_code == 200
++    payload = response.json()
++    assert payload["type"] == "FeatureCollection"
++    assert payload["features"][0]["geometry"]["type"] == "Polygon"
++    assert payload["features"][0]["properties"]["layer_kind"] == "planned_parcel"
++    assert captured["bbox"] == "-0.2,51.4,0.0,51.6"
++    assert captured["limit"] == 500
++    assert captured["min_delivery_probability"] == 50
++    assert captured["asset_type"] == "transport"
++    assert captured["status_filter"] == "approved"
++
++
++def test_planned_asset_parcel_layer_invalid_bbox_returns_400():
++    app = _build_test_app()
++    try:
++        response = TestClient(app).get("/planned-assets/parcel-layer?bbox=bad")
++    finally:
++        app.dependency_overrides.clear()
++
++    assert response.status_code == 400
++    assert "bbox" in response.json()["detail"]
+diff --git a/england_map_web/app.js b/england_map_web/app.js
+--- a/england_map_web/app.js
++++ b/england_map_web/app.js
+@@
+-    { id: "planned", label: "Planlanan", iconUrl: "./assets/icons/worth-factory.svg" },
++    { id: "planned", label: "Planlanan", iconUrl: "./assets/icons/terrayield_icons/planed_buildings.png" },
+@@
+   function openPlannedAssetPopup(feature, lngLat) {
+@@
+       .addTo(map);
+@@
+   }
+
++  function normalizePlannedParcelLayerPayload(payload) {
++    if (payload && payload.type === "FeatureCollection" && Array.isArray(payload.features)) {
++      return {
++        type: "FeatureCollection",
++        features: payload.features.filter((feature) => {
++          const geometryType = feature?.geometry?.type;
++          return geometryType === "Polygon" || geometryType === "MultiPolygon";
++        }),
++      };
++    }
++    return createEmptyFeatureCollection();
++  }
++
+@@
+-    // Existing implementation currently builds planned asset features from /planned-assets/search.
+-    // Replace that fetch block with the parcel-layer request below.
++    // Planned layer must render matched parcel polygons, not asset point geometries.
++    const bbox = mapBoundsToBboxString();
++    const plannedLayerUrl = new URL(resolveFutureGrowthApiUrl("/planned-assets/parcel-layer"));
++    plannedLayerUrl.searchParams.set("bbox", bbox);
++    plannedLayerUrl.searchParams.set("limit", "2000");
++    plannedLayerUrl.searchParams.set("min_delivery_probability", "0");
++    const response = await fetch(plannedLayerUrl.toString());
++    if (!response.ok) {
++      throw new Error(`planned parcel layer request failed: ${response.status}`);
++    }
++    const payload = await response.json();
++    featureCollection = normalizePlannedParcelLayerPayload(payload);
++    dataMode = "planned_parcel_layer";
++    errorMessage = null;
