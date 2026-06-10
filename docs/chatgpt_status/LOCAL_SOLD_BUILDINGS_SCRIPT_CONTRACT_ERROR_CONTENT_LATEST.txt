@@ -1,0 +1,204 @@
+﻿status=LOCAL_SOLD_BUILDINGS_SCRIPT_CONTRACT_ERROR_CONTENT
+created_at=2026-06-10T16:54:52+03:00
+page=auto-2.2-soldBuildings
+branch=feature/terrayield-aays-integration
+active_branch=feature/terrayield-aays-integration
+head=03678a3c9f3694ba2f48510ad2bad4881ff75b94
+runner_process_count=1
+runner_pids=19424
+single_runner_ok=True
+queue_lock_exists=False
+single_runner_lock_exists=False
+f_drive_visible=True
+f_drive_writable=True
+latest_runner_error_path=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\failed\runner_v10_error_20260610-164226.txt
+running_sold_task_path=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\running\sold-buildings-script-contract-pickup-proof-20260610_164209.task.json
+script_path_from_running_task=F:\chatgpt\AAYS_WORK\sold_buildings\london_only\runner_scripts\sold_buildings_runner_self_ack_20260610_164209.ps1
+script_exists=True
+
+latest_runner_error_content_begin
+Test-Path : Cannot bind argument to parameter 'Path' because it is an empty string.
+At C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1:65 char:18
++     if(Test-Path $script){
++                  ~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Test-Path], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorEmptyStringNotAllowed,Microsoft.PowerShell.Commands.Test 
+   PathCommand
+ 
+
+
+latest_runner_error_content_end
+
+running_task_content_begin
+{
+    "id":  "sold-buildings-script-contract-pickup-proof-20260610_164209",
+    "page":  "auto-2.2-soldBuildings",
+    "branch":  "feature/terrayield-aays-integration",
+    "scope":  "Greater London only",
+    "script":  "F:\\chatgpt\\AAYS_WORK\\sold_buildings\\london_only\\runner_scripts\\sold_buildings_runner_self_ack_20260610_164209.ps1",
+    "created_at":  "2026-06-10T16:42:20+03:00",
+    "task":  "Execute script field to write true runner self ACK and refresh bridge/F-disk/contract reports. Do not run source-gate, V2, LOCATION_MATCH, DB write, deploy, or PPD redownload."
+}
+
+running_task_content_end
+
+script_content_begin
+$ErrorActionPreference = 'Continue' $repo = 'C:\Users\cagda\Documents\GitHub\AAYS' $branch = 'feature/terrayield-aays-integration' $page = 'auto-2.2-soldBuildings' $queueRoot = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue' $pendingDir = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\pending' $runningDir = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\running' $doneDir = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\done' $failedDir = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\failed' $statusDir = 'C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status' $fRoot = 'F:\chatgpt\AAYS_WORK\sold_buildings\london_only' $runner = 'C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1' New-Item -ItemType Directory -Force -Path $statusDir,$fRoot | Out-Null Set-Location $repo 'ok' | Set-Content -Path (Join-Path $fRoot '_runner_self_ack_write_test.txt') -Encoding UTF8 $runnerProcs = @(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*portable_queue_runner.ps1*' }) $ack = @() $ack += 'status=AUTOMATION_RUNNER_PICKUP_ACK' $ack += ('created_at=' + (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssK')) $ack += 'page=auto-2.2-soldBuildings' $ack += 'ack_source=runner_self_report' $ack += ('active_branch=' + (git rev-parse --abbrev-ref HEAD)) $ack += ('head=' + (git rev-parse HEAD)) $ack += ('runner_process_count=' + $runnerProcs.Count) $ack += ('runner_pids=' + ($runnerProcs.ProcessId -join ',')) $ack += ('single_runner_ok=' + ($runnerProcs.Count -eq 1)) $ack += 'queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue' $ack += ('f_drive_visible=' + (Test-Path 'F:\')) $ack += ('f_drive_writable=' + (Test-Path (Join-Path $fRoot '_runner_self_ack_write_test.txt'))) $ack += 'next_required_action=run_london_only_source_gate_and_match' $ack -join [Environment]::NewLine | Set-Content -Path (Join-Path $statusDir 'AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt') -Encoding UTF8 $bridge = @() $bridge += 'status=AUTOMATION_BRIDGE_HEALTH' $bridge += ('created_at=' + (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssK')) $bridge += 'page=auto-2.2-soldBuildings' $bridge += 'bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2' $bridge += 'queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue' $bridge += 'runner_script=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1' $bridge += ('runner_process_count=' + $runnerProcs.Count) $bridge += ('single_runner_ok=' + ($runnerProcs.Count -eq 1)) $bridge -join [Environment]::NewLine | Set-Content -Path (Join-Path $statusDir 'AUTOMATION_BRIDGE_HEALTH_LATEST.txt') -Encoding UTF8 $fd = @() $fd += 'status=LONDON_ONLY_F_DISK_POLICY' $fd += ('created_at=' + (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssK')) $fd += 'page=auto-2.2-soldBuildings' $fd += 'scope=Greater London only' $fd += 'work_root=F:\chatgpt\AAYS_WORK\sold_buildings\london_only' $fd += ('f_drive_visible=' + (Test-Path 'F:\')) $fd += ('f_drive_writable=' + (Test-Path (Join-Path $fRoot '_runner_self_ack_write_test.txt'))) $fd -join [Environment]::NewLine | Set-Content -Path (Join-Path $statusDir 'LONDON_ONLY_F_DISK_POLICY_LATEST.txt') -Encoding UTF8 $contract = @() $contract += 'status=SOLD_BUILDINGS_RUNNER_CONTRACT_INVENTORY' $contract += ('created_at=' + (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssK')) $contract += 'page=auto-2.2-soldBuildings' $contract += 'contract=task_json_requires_script_path' $contract += 'queue_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue' $contract += 'pending_dir=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\pending' $contract += 'running_dir=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\running' $contract += 'done_dir=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\done' $contract += 'failed_dir=C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\failed' $contract += 'script_field_required=True' $contract += 'script_path_executed=F:\chatgpt\AAYS_WORK\sold_buildings\london_only\runner_scripts\sold_buildings_runner_self_ack_20260610_164209.ps1' $contract -join [Environment]::NewLine | Set-Content -Path (Join-Path $statusDir 'SOLD_BUILDINGS_RUNNER_CONTRACT_INVENTORY_LATEST.txt') -Encoding UTF8 git add docs/chatgpt_status/AUTOMATION_RUNNER_PICKUP_ACK_LATEST.txt docs/chatgpt_status/AUTOMATION_BRIDGE_HEALTH_LATEST.txt docs/chatgpt_status/LONDON_ONLY_F_DISK_POLICY_LATEST.txt docs/chatgpt_status/SOLD_BUILDINGS_RUNNER_CONTRACT_INVENTORY_LATEST.txt git commit -m 'status: sold buildings true runner self pickup ack' 2>$null git push origin HEAD:feature/terrayield-aays-integration
+
+script_content_end
+
+pending_listing_begin
+
+pending_listing_end
+
+running_listing_begin
+
+Name                                                                  Length LastWriteTime      
+----                                                                  ------ -------------      
+sold-buildings-script-contract-pickup-proof-20260610_164209.task.json    597 10.06.2026 16:42:20
+
+
+
+running_listing_end
+
+done_listing_begin
+
+Name                                                                                   Length LastWriteTime     
+----                                                                                   ------ -------------     
+parallel-fanout-unblock-and-accuracy-20260605-160936.task.json                            490 5.06.2026 16:09:46
+git-unblock-runtime-ops-20260605-154417.task.json                                         472 5.06.2026 15:44:20
+git-unblock-runtime-ops-20260605-150837.task.json                                         472 5.06.2026 15:08:41
+os-open-uprn-supporting-fast-profile-20260604-000001.task.json                            382 4.06.2026 23:43:26
+os-open-uprn-supporting-progress58-20260604-124022.task.json                              450 4.06.2026 12:40:22
+os-open-uprn-supporting-progress58-20260604-123814.task.json                              450 4.06.2026 12:38:14
+github-inbox-importer-once-20260604-121826.task.json                                      362 4.06.2026 12:18:26
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050519.task.json    488 4.06.2026 05:05:19
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050418.task.json    488 4.06.2026 05:04:19
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050317.task.json    488 4.06.2026 05:03:18
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050217.task.json    488 4.06.2026 05:02:17
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050116.task.json    488 4.06.2026 05:01:17
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050015.task.json    488 4.06.2026 05:00:16
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045915.task.json    488 4.06.2026 04:59:15
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045814.task.json    488 4.06.2026 04:58:15
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045713.task.json    488 4.06.2026 04:57:14
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045612.task.json    488 4.06.2026 04:56:13
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045512.task.json    488 4.06.2026 04:55:12
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045411.task.json    488 4.06.2026 04:54:12
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045310.task.json    488 4.06.2026 04:53:11
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045209.task.json    488 4.06.2026 04:52:10
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045108.task.json    488 4.06.2026 04:51:09
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-045008.task.json    488 4.06.2026 04:50:08
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044907.task.json    488 4.06.2026 04:49:08
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044806.task.json    488 4.06.2026 04:48:07
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044706.task.json    488 4.06.2026 04:47:06
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044605.task.json    488 4.06.2026 04:46:05
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044504.task.json    488 4.06.2026 04:45:05
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044403.task.json    488 4.06.2026 04:44:04
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044303.task.json    488 4.06.2026 04:43:03
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044202.task.json    488 4.06.2026 04:42:02
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044101.task.json    488 4.06.2026 04:41:02
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-044000.task.json    488 4.06.2026 04:40:01
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043859.task.json    488 4.06.2026 04:39:00
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043759.task.json    488 4.06.2026 04:37:59
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043658.task.json    488 4.06.2026 04:36:59
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043557.task.json    488 4.06.2026 04:35:58
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043456.task.json    488 4.06.2026 04:34:57
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043356.task.json    488 4.06.2026 04:33:56
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043255.task.json    488 4.06.2026 04:32:56
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043154.task.json    488 4.06.2026 04:31:55
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-043054.task.json    488 4.06.2026 04:30:54
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042953.task.json    488 4.06.2026 04:29:54
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042852.task.json    488 4.06.2026 04:28:53
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042751.task.json    488 4.06.2026 04:27:52
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042651.task.json    488 4.06.2026 04:26:51
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042550.task.json    488 4.06.2026 04:25:51
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042449.task.json    488 4.06.2026 04:24:50
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042349.task.json    488 4.06.2026 04:23:49
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042248.task.json    488 4.06.2026 04:22:49
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042147.task.json    488 4.06.2026 04:21:48
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-042046.task.json    488 4.06.2026 04:20:47
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041946.task.json    488 4.06.2026 04:19:46
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041845.task.json    488 4.06.2026 04:18:46
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041744.task.json    488 4.06.2026 04:17:45
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041643.task.json    488 4.06.2026 04:16:44
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041537.task.json    488 4.06.2026 04:15:43
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041437.task.json    488 4.06.2026 04:14:37
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041334.task.json    488 4.06.2026 04:13:37
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041233.task.json    488 4.06.2026 04:12:34
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041130.task.json    488 4.06.2026 04:11:33
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-041030.task.json    488 4.06.2026 04:10:30
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040929.task.json    488 4.06.2026 04:09:30
+github-inbox-importer-once-20260604-040908.task.json                                      362 4.06.2026 04:09:08
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040828.task.json    488 4.06.2026 04:08:29
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040727.task.json    488 4.06.2026 04:07:28
+aays-v26-future-growth-layer-empty-diagnosis.task.json                                    607 4.06.2026 04:07:03
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040643.task.json    488 4.06.2026 04:06:44
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040626.task.json    488 4.06.2026 04:06:27
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040527.task.json    488 4.06.2026 04:05:28
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040524.task.json    488 4.06.2026 04:05:26
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040423.task.json    488 4.06.2026 04:04:24
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040420.task.json    488 4.06.2026 04:04:21
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040323.task.json    488 4.06.2026 04:03:23
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040222.task.json    488 4.06.2026 04:02:23
+github-inbox-importer-once-20260604-040145.task.json                                      362 4.06.2026 04:01:45
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040123.task.json    488 4.06.2026 04:01:24
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040121.task.json    488 4.06.2026 04:01:22
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-040020.task.json    488 4.06.2026 04:00:21
+github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-035920.task.json    488 4.06.2026 03:59:20
+
+
+
+done_listing_end
+
+failed_listing_begin
+
+Name                                                                                                                   
+----                                                                                                                   
+runner_v10_error_20260610-164226.txt                                                                                   
+runner_v10_error_20260610-164159.txt                                                                                   
+runner_v10_error_20260610-163651.txt                                                                                   
+runner_v10_error_20260610-163650.txt                                                                                   
+runner_v10_error_20260610-163649.txt                                                                                   
+runner_v10_error_20260610-162031.txt                                                                                   
+runner_v10_error_20260610-162000.txt                                                                                   
+runner_v10_error_20260610-150948.txt                                                                                   
+old_sold_script_contract_20260610_160713_sold-buildings-full-queue-sweep-pickup-proof-20260610_150927.task.json        
+runner_v10_error_20260610-144525.txt                                                                                   
+old_sold_buildings_queue_sweep_20260610_150927_sold-buildings-stale-running-recovery-pickup-proof-20260610_144502.ta...
+runner_v10_error_20260610-142413.txt                                                                                   
+old_sold_buildings_queue_sweep_20260610_150927_sold-buildings-queue-isolation-pickup-proof-20260610_142348.task.json   
+runner_v10_error_20260610-135727.txt                                                                                   
+old_sold_buildings_queue_sweep_20260610_150927_sold-buildings-lockfix-pickup-proof-20260610_135703.task.json           
+runner_v10_error_20260610-034641.txt                                                                                   
+stale_sold_running_recovered_pickup_20260610_144502_sold-buildings-lock-unblock-proof-20260610_034624.task.json        
+runner_v10_error_20260610-031735.txt                                                                                   
+stale_running_recovered_lockfix_20260610_135703_sold-buildings-clean-pickup-proof-20260610_031144.task.json            
+stale_running_recovered_20260610_034624_sold-buildings-json-pickup-proof-20260610_005211.task.json                     
+runner_v10_error_20260610-005303.txt                                                                                   
+runner_v10_error_20260610-005257.txt                                                                                   
+runner_v10_error_20260610-005251.txt                                                                                   
+runner_v10_error_20260610-005250.txt                                                                                   
+runner_v10_error_20260610-005249.txt                                                                                   
+runner_v10_error_20260610-005245.txt                                                                                   
+runner_v10_error_20260610-005244.txt                                                                                   
+runner_v10_error_20260610-005238.txt                                                                                   
+runner_v10_error_20260610-005233.txt                                                                                   
+runner_v10_error_20260610-005213.txt                                                                                   
+runner_v10_error_20260610-005212.txt                                                                                   
+runner_v10_error_20260610-005210.txt                                                                                   
+runner_v10_error_20260610-005207.txt                                                                                   
+runner_v10_error_20260610-005205.txt                                                                                   
+old_sold_buildings_queue_sweep_20260610_150927_sold_buildings_ack_health_contract_20260609_235317.txt                  
+quarantine_046_unblock_20260605_223448                                                                                 
+stale_recovered_ty058_20260610_005159_aays-v31-future-growth-geometry-followup.task.json                               
+runner_v10_error_20260604-235319.txt                                                                                   
+stale_recovered_20260609_232749_github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-050619.task.json 
+runner_v10_error_20260604-030734.txt                                                                                   
+stale_github-task-V17_-CON_PATCH_W-TH_LOCAL_ASSET_COPY_FROM_RUNNER-20260604-030651.task.json                           
+aays-v21-candidate-score-readonly-diagnosis.task.json                                                                  
+ty_057_runner_contract_task_probe.task.json                                                                            
+stale_running_recovered_20260610_031144_ty_058_aays_layer_perf_readonly_audit.task.json                                
+
+
+
+failed_listing_end
