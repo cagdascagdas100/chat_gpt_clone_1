@@ -1,5 +1,23 @@
 $ErrorActionPreference = "Continue"
-$repo = "C:\Users\cagda\Documents\GitHub\AAYS"
+
+function Find-RepoRoot {
+  param([string]$StartDir)
+  $dir = Resolve-Path $StartDir
+  for ($i = 0; $i -lt 8; $i++) {
+    $gitDir = Join-Path $dir ".git"
+    $taskFile = Join-Path $dir "docs\chatgpt_status\current-task.txt"
+    if ((Test-Path $gitDir) -and (Test-Path $taskFile)) { return $dir }
+    $parent = Split-Path -Parent $dir
+    if ($parent -eq $dir) { break }
+    $dir = $parent
+  }
+  return $null
+}
+
+$scriptDir = Split-Path -Parent $PSCommandPath
+$repo = Find-RepoRoot -StartDir $scriptDir
+if (-not $repo) { $repo = "C:\Users\cagda\Documents\GitHub\AAYS" }
+
 $bridge = "C:\AAYS_GITHUB_BRIDGE_CLEAN2"
 $queue = Join-Path $bridge "ai-queue"
 $runner = Join-Path $bridge "ai-task-scripts\portable_queue_runner.ps1"
@@ -14,6 +32,7 @@ Set-Location $repo
 
 "=== RUNNER CONTRACT INVENTORY 051 $(Get-Date -Format o) ===" | Set-Content -Encoding UTF8 $txt
 "repo=$repo" | Add-Content $txt
+"script_dir=$scriptDir" | Add-Content $txt
 "bridge=$bridge" | Add-Content $txt
 "queue=$queue" | Add-Content $txt
 "runner=$runner" | Add-Content $txt
@@ -26,6 +45,7 @@ git pull --rebase origin main 2>&1 | Add-Content $txt
 "=== PATH CHECK ===" | Add-Content $txt
 @(
   "repo_exists=$(Test-Path $repo)",
+  "repo_git_exists=$(Test-Path (Join-Path $repo '.git'))",
   "bridge_exists=$(Test-Path $bridge)",
   "queue_exists=$(Test-Path $queue)",
   "runner_exists=$(Test-Path $runner)",
@@ -64,11 +84,13 @@ if ($procsAfter) { $procsAfter | Format-List | Out-String | Add-Content $txt } e
   status="contract_inventory_written_by_local_powershell"
   overall_progress_percent=30
   repo=$repo
+  script_dir=$scriptDir
   bridge=$bridge
   queue=$queue
   runner=$runner
   froot=$froot
   repo_exists=(Test-Path $repo)
+  repo_git_exists=(Test-Path (Join-Path $repo '.git'))
   bridge_exists=(Test-Path $bridge)
   queue_exists=(Test-Path $queue)
   runner_exists=(Test-Path $runner)
