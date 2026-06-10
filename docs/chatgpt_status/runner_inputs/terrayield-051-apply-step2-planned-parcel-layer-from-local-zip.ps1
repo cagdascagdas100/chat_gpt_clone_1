@@ -5,6 +5,7 @@ $ProgressPreference = "SilentlyContinue"
 # Does NOT pull, checkout, switch branch, stash, write DB, or deploy.
 # It uses the local planned_parcel_layer_low_credit_20260609.zip already present in the AAYS repo.
 # v4 fix: explicit git add/commit/push commands; earlier script accidentally called add/commit/push without git.
+# v4.1 fix: PowerShell elseif syntax corrected.
 
 $TaskId = "terrayield-051-london-only-pilot"
 $StepId = "terrayield-051-step2-planned-parcel-layer"
@@ -78,7 +79,7 @@ function FindRepoRoot {
   return $null
 }
 
-Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START v4 ==="
+Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START v4.1 ==="
 $script:repo = FindRepoRoot
 if (-not $script:repo) {
   Write-Host "REPO_ROOT_NOT_FOUND"
@@ -190,8 +191,8 @@ foreach ($c in $changed) { Log "GIT_STATUS $c" }
 $status = "STEP2_ATTEMPTED"
 $progress = 40
 if ($applied -and ($script:nodeExit -eq 0) -and ($script:pyExit -eq 0)) { $status = "STEP2_PATCH_APPLIED_LOCAL_CHECKS_PASSED"; $progress = 60 }
-elelseif ($applied) { $status = "STEP2_PATCH_APPLIED_CHECKS_NEED_REVIEW"; $progress = 48 }
-elelseif ($script:iconFixed) { $status = "STEP2_PARTIAL_ICON_FIX_ONLY_PATCH_FAILED"; $progress = 36 }
+elseif ($applied) { $status = "STEP2_PATCH_APPLIED_CHECKS_NEED_REVIEW"; $progress = 48 }
+elseif ($script:iconFixed) { $status = "STEP2_PARTIAL_ICON_FIX_ONLY_PATCH_FAILED"; $progress = 36 }
 else { $status = "STEP2_PATCH_FAILED_NO_PRODUCT_CHANGE"; $progress = 30 }
 
 Write-Result $status $progress "before_git_commit"
