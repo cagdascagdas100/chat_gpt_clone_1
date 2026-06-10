@@ -1,0 +1,26 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+MODE=LOCAL_ENV_PROBE_PUSH_NOT_EFFECTIVE
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+PRODUCT_PROGRESS_ESTIMATE=99
+FINAL_READY=False
+
+OBSERVATION
+The user ran a local page-key env probe and created local files named runner_page_key_env_probe_20260610-162035.txt, chatgpt_progress_98_runner_page_key_env_probe_20260610-162035.txt, and heartbeat_runner_page_key_env_probe_20260610-162035.txt.
+
+REMOTE_VERIFICATION
+The later successful push advanced the branch to commit 9cb12f49bb4eacf004bb6b27f81d699b3b6a62e5, but that remote commit contains only bridge_poller_status files, not the page-key env probe files.
+
+ROOT_CAUSE
+The first env-probe push was rejected as non-fast-forward while a rebase-merge directory existed. After rebase recovery, the pushed commit was not the env-probe commit. Therefore the expected runner_page_key_env_probe report is still absent on GitHub.
+
+NEXT_EXPECTED_REPORT
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_page_key_env_recovery_<timestamp>.txt
+
+FINAL_EXPECTED_REPORT
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
+
+SAFETY
+FAKE_DATA_CREATED=False
+DB_WRITE=False
+MIGRATION=False
+DEPLOY=False
