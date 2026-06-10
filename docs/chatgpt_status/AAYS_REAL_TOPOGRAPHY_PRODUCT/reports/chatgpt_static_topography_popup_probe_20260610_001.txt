@@ -1,0 +1,29 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+REPORT_ID=chatgpt_static_topography_popup_probe_20260610_001
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPO=cagdascagdas100/chat_gpt_clone_1
+MODE=STATIC_READONLY_PRODUCT_PROBE
+PRODUCT_PROGRESS_ESTIMATE_BEFORE=94
+PRODUCT_PROGRESS_ESTIMATE_AFTER=95
+FINAL_READY=False
+
+WHAT_WAS_PROVEN
+- england_map_web/config/topography.overlay.json exists and declares overlay_id=topography_height_difference, status=ready_for_ui_probe, readonly=true.
+- england_map_web/app.js loads the effective topography overlay config from config.topographyOverlayConfigUrl or ./config/topography.overlay.json.
+- england_map_web/app.js wires showTopographyOverlay and TOPOGRAPHY_ICON_URL.
+- england_map_web/app.js normalizes parcel topography payload fields including center_elevation_m, region_average_elevation_m, and elevation_difference_from_region_average_m.
+- Popup rows render Denizden yükseklik and Bölge ortalamasından fark.
+- Missing elevation values render Veri yok rather than generated numeric values.
+
+WHAT_IS_STILL_NOT_PROVEN
+- Real parcel_elevation_lookup_v2.json or equivalent real lookup artifact was not found by GitHub code search.
+- /lookup or /topography/lookup runtime endpoint smoke has not been produced.
+- Browser runtime popup smoke with live feature data has not been produced.
+
+SAFETY
+FAKE_DATA_CREATED=False
+DB_WRITE=False
+MIGRATION=False
+DEPLOY=False
+
+NEXT_EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
