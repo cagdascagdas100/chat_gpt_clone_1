@@ -1,0 +1,13 @@
+status=LOCAL_SOLD_BUILDINGS_RUNNER_LOCK_ROOT_CAUSE
+created_at=2026-06-10T00:00:00+03:00
+page=auto-2.2-soldBuildings
+branch=feature/terrayield-aays-integration
+root_cause=portable_queue_runner.ps1 fails when C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\.queue-lock already exists
+proof_file_1=docs/chatgpt_status/LOCAL_SOLD_BUILDINGS_FULL_MATCH_STAGING_ERROR_CONTENT_LATEST.txt
+proof_error=New-Item : An item with the specified name C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\.queue-lock already exists.
+proof_file_2=docs/chatgpt_status/LONDON_ONLY_FULL_MATCH_STAGING_LATEST.txt
+product_state=full_match_staging_ready_true
+blocked_step=LONDON_ONLY_IMPORT_REVIEW_GATE_LATEST.txt
+why_previous_commands_repeat_failed=they attempted to enqueue/run import-review gate while runner lock failure remained, so report was never produced
+required_fix=patch local portable_queue_runner.ps1 lock handling before enqueuing or running the next product task
+next_expected_report=LOCAL_SOLD_BUILDINGS_RUNNER_LOCK_PATCH_AND_IMPORT_GATE_LATEST.txt
