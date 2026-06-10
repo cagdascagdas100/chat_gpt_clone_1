@@ -86,7 +86,7 @@ $md += "Decision: $Decision"
 $md += "Ready for London build: $ReadyForBuild"
 $md += ''
 $md += '## Source probes'
-foreach($p in $ProbeResults){ $md += "- $($p.id): $($p.status) $($p.http_status) — $($p.url)" }
+foreach($p in $ProbeResults){ $md += "- $($p.id): $($p.status) $($p.http_status) - $($p.url)" }
 $md += ''
 $md += '## Local checks'
 foreach($c in $LocalChecks){ $md += "- $($c.id): exists=$($c.exists) length=$($c.length) path=$($c.path)" }
