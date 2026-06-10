@@ -1,24 +1,13 @@
-# Security London concrete extraction status
+﻿# Security London concrete extract latest
 
-- status: BLOCKED_BEFORE_FINAL_READY
-- completion_percent: 99
 - final_ready: false
+- completion_percent: 99
 
-## Completed evidence
-
-- Official source manifest: present
-- Official target plan: present
-- Boundary resolver plan: present
-- Extraction/build-prep plan: present
-- Final blocker report: present
-
-## Missing concrete evidence
-
-- London boundary extract candidate: missing
-- London parcel/security GeoJSON candidate: missing
-- London crime/security input candidate: missing
-- Frontend/smoke status: missing
+## Checks
+- boundary: exists=False size=0 path=F:\chatgpt\AAYS_WORK\security_asayis_london_extraction_build_prep_20260610\boundary\london_boundary_candidate.geojson
+- parcel_security: exists=False size=0 path=F:\chatgpt\AAYS_WORK\security_asayis_london_extraction_build_prep_20260610\parcel\london_parcel_security_candidate.geojson
+- crime_security: exists=False size=0 path=F:\chatgpt\AAYS_WORK\security_asayis_london_extraction_build_prep_20260610\crime\london_crime_security_candidate.json
 
 ## Decision
-
-Do not mark FINAL_READY. The remaining work must create real London-only concrete artifacts and smoke evidence. No fake data, no DB write, no production deploy.
+BLOCKED_MISSING_CONCRETE_ARTIFACTS
+Next: create real London-only boundary, parcel/security, and crime/security files under F-drive paths.
