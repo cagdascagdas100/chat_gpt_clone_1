@@ -1,0 +1,62 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+MODE=CHATGPT_READONLY_PRODUCT_PROBE
+RUN_AT=2026-06-10
+REPO=cagdascagdas100/chat_gpt_clone_1
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+
+PRODUCT_PROGRESS_ESTIMATE_BEFORE=88
+PRODUCT_PROGRESS_ESTIMATE_AFTER=90
+FAKE_DATA_CREATED=False
+DB_WRITE=False
+MIGRATION=False
+DEPLOY=False
+RUNNER_MUTATION=False
+
+WHY_PERCENT_CAN_INCREASE:
+A safe read-only GitHub code inspection completed and found product-level evidence that part of the real topography UI path is present. This satisfies the transfer prompt rule that progress can increase when evidence is found or a safe read-only product check completes and is reported.
+
+READ_FILES:
+- england_map_web/app.js
+- england_map_web/config/topography.overlay.json
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/terrayield-047-output-harvest-stuck-recovery-20260610.txt
+
+EVIDENCE_FOUND:
+1. Topography UI control exists in app.js:
+   - showTopographyOverlay element is read.
+   - TOPOGRAPHY_ICON_URL is set to ./assets/icons/terrayield_icons/hight_differance.png.
+   - The topography toggle receives data-icon-src and background image styling.
+
+2. Topography overlay config is loaded:
+   - app.js loads config.topographyOverlayConfigUrl or ./config/topography.overlay.json.
+   - config/topography.overlay.json exists and contains overlay_id=topography_height_difference, status=ready_for_ui_probe, readonly=true.
+
+3. Popup two-metric formatter exists:
+   - normalizeParcelTopographyPayloadForPopup reads center_elevation_m/elevation_m/elevation/height_m.
+   - It reads region_average_elevation_m/average_elevation_m/area_average_elevation_m.
+   - It reads or computes elevation_difference_from_region_average_m.
+   - formatParcelElevationMetersForPopup returns formatted meters or Veri yok.
+   - formatParcelElevationDifferenceFromRegionAverageForPopup returns signed meters or Veri yok.
+   - buildParcelTopographyPopupRows emits both labels: Denizden yükseklik and Bölge ortalamasından fark.
+
+STILL_MISSING_FOR_FINAL_READY:
+1. No GitHub-visible 047 runner harvester report found yet.
+2. No runner_contract_inventory report found yet.
+3. No runner_poller_local_diagnosis report found yet.
+4. parcel_elevation_lookup_v2.json or equivalent real lookup artifact has not yet been confirmed.
+5. /lookup or /topography/lookup endpoint smoke has not yet been confirmed.
+6. Browser popup runtime smoke has not yet been confirmed against live feature data.
+
+ROOT_CAUSE_OF_STUCK_PERCENTAGE:
+Percentage was stuck because previous progress depended on 047/runner reports. Those reports are not visible even though the 047 task exists in current-task and is expected to write terrayield_047_output_harvest_stuck_recovery_<timestamp>.txt. The new read-only product probe bypassed the stuck runner for non-mutating evidence only and produced measurable product evidence.
+
+NEXT_SAFE_SINGLE_RUNNER_TASK:
+Create exactly one follow-up task, after runner contract is proven, to verify real lookup artifact and endpoint smoke:
+- find parcel_elevation_lookup_v2.json or equivalent real source artifact
+- smoke /lookup or /topography/lookup read-only
+- validate popup receives topography_lookup or equivalent properties
+- write PRODUCT_PROGRESS_ESTIMATE_AFTER based only on evidence
+
+NEXT_EXPECTED_REPORTS:
+1. runner_contract_inventory_<timestamp>.txt
+2. terrayield_047_output_harvest_stuck_recovery_<timestamp>.txt
+3. topography_real_lookup_endpoint_smoke_<timestamp>.txt
