@@ -1,0 +1,26 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+REPORT_ID=chatgpt_runner_nonconsumption_confirmed_20260610_001
+BRANCH=aays-runner-v17-icon-work-20260603-232706
+REPO=cagdascagdas100/chat_gpt_clone_1
+STATUS=RUNNER_NONCONSUMPTION_CONFIRMED
+PRODUCT_PROGRESS_ESTIMATE=94
+PROGRESS_CHANGED=False
+
+EVIDENCE
+- PRODUCT_PROGRESS_ESTIMATE=94 status exists for automation intake visibility.
+- The same TASK_ID topography_real_lookup_endpoint_smoke_20260610_001 is visible in current-task and automation, and was previously made visible in control, queue, and runner_tasks.
+- Expected report remains docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt.
+- GitHub search did not surface any produced topography_real_lookup_endpoint_smoke report after all intake visibility fixes.
+
+CONCLUSION
+The blocker is no longer task visibility. The likely blocker is local runner, bridge, poller, wrong checkout branch, wrong PAGE_KEY output path, or missing push from local runner to GitHub.
+
+NEXT_REQUIRED_ACTION
+A single local runner recovery and diagnosis command is required. It must write all output to docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports and push to branch aays-runner-v17-icon-work-20260603-232706.
+
+SAFETY
+FAKE_DATA_CREATED=False
+DB_WRITE=False
+MIGRATION=False
+DEPLOY=False
+FINAL_READY=False
