@@ -1,0 +1,16 @@
+{
+  "task_id": "runner-contract-inventory-for-terrayield-051",
+  "parent_task_id": "terrayield-051-london-only-pilot",
+  "status": "LOCAL_BRANCH_MATERIALIZATION_FIX_READY",
+  "overall_progress_percent": 28,
+  "diagnosis": "Local repo is on feature/terrayield-aays-integration; repeated git pull --rebase origin main is blocked by untracked/unstaged files, so the runner input script never materializes locally and -File fails because the ps1 path does not exist.",
+  "fix": "Do not pull, checkout, or stash. Fetch the feature branch and materialize only the needed ps1 file with git show origin/feature/terrayield-aays-integration:path > local path, then run that file.",
+  "required_local_commands_changed": true,
+  "do_not_repeat_old_command": true,
+  "expected_next_report": "docs/chatgpt_status/runner_outputs/latest_output.json",
+  "expected_next_status": "contract_inventory_available",
+  "expected_next_percent": 30,
+  "manual_powershell_required_now": true,
+  "manual_powershell_reason": "A single local command is needed only to materialize and run the feature-branch-safe script; no local stdout should be pasted back.",
+  "timestamp_utc": "2026-06-10T00:00:00Z"
+}
