@@ -3,19 +3,20 @@ $ProgressPreference = "SilentlyContinue"
 
 # TerraYield 051 - Step 2 planned parcel layer local apply script
 # Does NOT pull, checkout, switch branch, stash, write DB, or deploy.
-# It uses the local planned_parcel_layer_low_credit_20260609.zip already present in the AAYS repo.
-# v4 fix: explicit git add/commit/push commands; earlier script accidentally called add/commit/push without git.
-# v4.1 fix: PowerShell elseif syntax corrected.
+# v4.2 fix: use planned_parcel_layer_step2_patch_20260609.zip, not the low_credit handoff zip.
 
 $TaskId = "terrayield-051-london-only-pilot"
 $StepId = "terrayield-051-step2-planned-parcel-layer"
-$StatusRootRel = "docs\chatgpt_status"
 $OutRel = "docs\chatgpt_status\runner_outputs"
 $TxtName = "terrayield_051_step2_planned_parcel_layer_latest.txt"
 $JsonName = "terrayield_051_step2_planned_parcel_layer_latest.json"
 $LatestName = "terrayield_051_latest_output.json"
-$ZipRel = "terrayield_land_intelligence\docs\chatgpt_handoff\planned_parcel_layer_low_credit_20260609.zip"
 $WorkRel = "docs\chatgpt_status\runner_work\terrayield_051_step2_planned_parcel_layer"
+$PatchZipNames = @(
+  "terrayield_land_intelligence\docs\chatgpt_handoff\planned_parcel_layer_step2_patch_20260609.zip",
+  "docs\chatgpt_handoff\planned_parcel_layer_step2_patch_20260609.zip",
+  "planned_parcel_layer_step2_patch_20260609.zip"
+)
 
 $Log = New-Object System.Collections.Generic.List[string]
 function Log([string]$s) {
@@ -29,35 +30,6 @@ function Run([string]$cmd) {
   $out = cmd /c "$cmd 2>&1"
   foreach ($l in $out) { Log "  $l" }
   return $LASTEXITCODE
-}
-
-function Write-Result([string]$status, [int]$progress, [string]$phase) {
-  $obj = [ordered]@{
-    task_id=$StepId
-    parent_task_id=$TaskId
-    status=$status
-    overall_progress_percent=$progress
-    phase=$phase
-    branch=$script:currentBranch
-    repo=$script:repo
-    zip_found=$script:zipFound
-    patch_check_exit=$script:patchCheckExit
-    patch_apply_exit=$script:patchApplyExit
-    node_check_exit=$script:nodeExit
-    py_compile_exit=$script:pyExit
-    pytest_exit=$script:pytestExit
-    icon_fix_applied=$script:iconFixed
-    git_add_exit=$script:gitAddExit
-    commit_exit=$script:commitExit
-    push_exit=$script:pushExit
-    db_write=$false
-    production_deploy=$false
-    expected_next_report="docs/chatgpt_status/runner_outputs/terrayield_051_step2_planned_parcel_layer_latest.json"
-    timestamp=(Get-Date -Format o)
-  }
-  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:json
-  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:latest
-  $script:Log | Set-Content -Encoding UTF8 -LiteralPath $script:txt
 }
 
 function FindRepoRoot {
@@ -79,7 +51,38 @@ function FindRepoRoot {
   return $null
 }
 
-Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START v4.1 ==="
+function Write-Result([string]$status, [int]$progress, [string]$phase) {
+  $obj = [ordered]@{
+    task_id=$StepId
+    parent_task_id=$TaskId
+    status=$status
+    overall_progress_percent=$progress
+    phase=$phase
+    branch=$script:currentBranch
+    repo=$script:repo
+    zip_path=$script:zipPath
+    zip_found=$script:zipFound
+    diff_found=$script:diffFound
+    patch_check_exit=$script:patchCheckExit
+    patch_apply_exit=$script:patchApplyExit
+    node_check_exit=$script:nodeExit
+    py_compile_exit=$script:pyExit
+    pytest_exit=$script:pytestExit
+    icon_fix_applied=$script:iconFixed
+    git_add_exit=$script:gitAddExit
+    commit_exit=$script:commitExit
+    push_exit=$script:pushExit
+    db_write=$false
+    production_deploy=$false
+    expected_next_report="docs/chatgpt_status/runner_outputs/terrayield_051_step2_planned_parcel_layer_latest.json"
+    timestamp=(Get-Date -Format o)
+  }
+  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:json
+  $obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 -LiteralPath $script:latest
+  $script:Log | Set-Content -Encoding UTF8 -LiteralPath $script:txt
+}
+
+Log "=== TERRAYIELD 051 STEP2 PLANNED PARCEL LAYER APPLY START v4.2 ==="
 $script:repo = FindRepoRoot
 if (-not $script:repo) {
   Write-Host "REPO_ROOT_NOT_FOUND"
@@ -100,18 +103,17 @@ Log "repo=$script:repo"
 Log "current_branch=$script:currentBranch"
 Log "NO_PULL_NO_CHECKOUT_NO_STASH=true"
 
-$targets = @(
-  "terrayield_land_intelligence\app\api\routes\planned_assets.py",
-  "terrayield_land_intelligence\app\services\planned_asset_service.py",
-  "terrayield_land_intelligence\tests\test_planned_asset_parcel_layer_contract.py",
-  "england_map_web\app.js"
-)
-foreach ($t in $targets) { Log "target_exists $t=$(Exists (Join-Path $script:repo $t))" }
+$script:zipPath = $null
+foreach ($z in $PatchZipNames) {
+  $candidate = Join-Path $script:repo $z
+  Log "zip_candidate $candidate exists=$(Exists $candidate)"
+  if (Exists $candidate) { $script:zipPath = $candidate; break }
+}
+$script:zipFound = -not [string]::IsNullOrWhiteSpace($script:zipPath)
 
-$zipPath = Join-Path $script:repo $ZipRel
 $diffPath = Join-Path $script:workDir "STEP2_APPLY_PATCH_UNIFIED.diff"
 $extractDir = Join-Path $script:workDir "zip_extract"
-$script:zipFound = Exists $zipPath
+$script:diffFound = $false
 $script:patchCheckExit = 999
 $script:patchApplyExit = 999
 $script:nodeExit = 999
@@ -123,19 +125,29 @@ $script:pushExit = 999
 $applied = $false
 $script:iconFixed = $false
 
+$targets = @(
+  "terrayield_land_intelligence\app\api\routes\planned_assets.py",
+  "terrayield_land_intelligence\app\services\planned_asset_service.py",
+  "terrayield_land_intelligence\tests\test_planned_asset_parcel_layer_contract.py",
+  "england_map_web\app.js"
+)
+foreach ($t in $targets) { Log "target_exists $t=$(Exists (Join-Path $script:repo $t))" }
+
 if (-not $script:zipFound) {
-  Log "ZIP_NOT_FOUND path=$zipPath"
+  Log "STEP2_PATCH_ZIP_NOT_FOUND"
+  Write-Result "STEP2_BLOCKED_PATCH_ZIP_NOT_FOUND" 46 "zip_missing"
 } else {
-  Log "ZIP_FOUND path=$zipPath"
+  Log "ZIP_FOUND path=$script:zipPath"
   try {
     Remove-Item -Recurse -Force $extractDir -ErrorAction SilentlyContinue
-    Expand-Archive -LiteralPath $zipPath -DestinationPath $extractDir -Force
+    Expand-Archive -LiteralPath $script:zipPath -DestinationPath $extractDir -Force
     $extractedDiff = Join-Path $extractDir "STEP2_APPLY_PATCH_UNIFIED.diff"
     if (Exists $extractedDiff) {
       Copy-Item -LiteralPath $extractedDiff -Destination $diffPath -Force
+      $script:diffFound = $true
       Log "DIFF_EXTRACTED path=$diffPath"
     } else {
-      Log "DIFF_NOT_FOUND_IN_ZIP"
+      Log "DIFF_NOT_FOUND_IN_STEP2_ZIP"
     }
   } catch {
     Log "ZIP_EXTRACT_FAILED error=$($_.Exception.Message)"
@@ -193,6 +205,7 @@ $progress = 40
 if ($applied -and ($script:nodeExit -eq 0) -and ($script:pyExit -eq 0)) { $status = "STEP2_PATCH_APPLIED_LOCAL_CHECKS_PASSED"; $progress = 60 }
 elseif ($applied) { $status = "STEP2_PATCH_APPLIED_CHECKS_NEED_REVIEW"; $progress = 48 }
 elseif ($script:iconFixed) { $status = "STEP2_PARTIAL_ICON_FIX_ONLY_PATCH_FAILED"; $progress = 36 }
+elseif (-not $script:zipFound) { $status = "STEP2_BLOCKED_PATCH_ZIP_NOT_FOUND"; $progress = 46 }
 else { $status = "STEP2_PATCH_FAILED_NO_PRODUCT_CHANGE"; $progress = 30 }
 
 Write-Result $status $progress "before_git_commit"
