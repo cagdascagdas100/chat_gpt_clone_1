@@ -1,0 +1,25 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+STATUS=RUNNER_STUCK_CONFIRMED
+PROGRESS=99
+FINAL_READY=false
+DIAGNOSIS_TIME=20260611
+
+Observed from user-provided local PowerShell log:
+1. Local repository checkout/pull flow did not reach a clean main worktree.
+2. git checkout main was blocked by local modified/untracked files.
+3. git pull --ff-only origin main failed because local branch diverged / could not fast-forward.
+4. git push origin main failed with: src refspec main does not match any.
+5. ai-tasks/current-task.json could not be written locally because the local path did not exist in the active worktree.
+6. portable_queue_runner.ps1 entered heartbeat write failure loop: Set-Content: Akış okunabilir değildi at line 30.
+
+Root cause:
+The existing local worktree and runner heartbeat path are not in a clean runnable state. Repeating the previous command will not increase completion. The remaining blocker is local runner/bridge/poller execution, not product code.
+
+Required next action:
+Use a clean temporary worktree or direct GitHub API status/report writer, and do not reuse the dirty C:\Users\cagda\Documents\GitHub\AAYS checkout for checkout/pull/commit steps. Runner heartbeat file/path must be repaired or bypassed for this page-key probe.
+
+Expected report still missing:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/runner_target_branch_contract_probe_<timestamp>.txt
+
+topography_expected_smoke_still_missing:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_real_lookup_endpoint_smoke_<timestamp>.txt
