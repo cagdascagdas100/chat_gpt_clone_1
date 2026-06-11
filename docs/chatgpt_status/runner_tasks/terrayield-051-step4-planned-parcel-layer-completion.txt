@@ -3,18 +3,18 @@ status=QUEUED
 parent_task_id=terrayield-051-london-only-pilot
 scope=london_only_planned_parcel_layer
 branch=feature/terrayield-aays-integration
+runner_input=docs/chatgpt_status/runner_inputs/terrayield-051-step4-planned-layer-minimal-fix.patch
 expected_report_json=docs/chatgpt_status/runner_outputs/terrayield_051_step4_planned_parcel_completion_latest.json
 manual_stdout_required=false
 
-Complete only the UI-blocking planned parcel layer gaps. Skip nonblocking reports.
-Required behavior:
-1. In england_map_web/app.js, planned layer must call /planned-assets/parcel-layer with bbox. Do not call /planned-assets/search for this layer.
-2. Render only matched parcel polygons from the parcel-layer FeatureCollection.
-3. Parcel popup should show up to 3 planned assets: value impact, probability, source_url, evidence_text, source_confidence_score.
-4. Backend parcel-layer should expose top_assets[0..2] per parcel when matches exist.
-5. Do not fabricate completion month. If month is absent, return completion_month="insufficient evidence" and expose year/window/timeline_confidence when available.
-6. If DB/PostGIS is unavailable, do not hang. Return fast empty FeatureCollection with metadata.warning. DB unavailable must not block app startup.
-7. Run only useful checks: node --check app.js, py_compile planned assets route/service, planned asset contract tests if available.
-8. Write JSON to expected_report_json and update terrayield_051_latest_output.json.
-9. Mark FINAL_READY only if app startup is not blocked and planned layer uses parcel-layer endpoint.
-No DB write. No production deploy. No unrelated page key or branch.
+Apply runner_input patch only. Skip nonblocking reports.
+Required final behavior:
+1. planned layer calls /planned-assets/parcel-layer with bbox, not /planned-assets/search.
+2. render matched parcel polygons only.
+3. popup shows up to 3 planned assets.
+4. backend returns top_assets[0..2].
+5. no fabricated completion month; use insufficient evidence when absent.
+6. DB unavailable returns fast empty FeatureCollection with metadata.warning.
+7. run node --check, py_compile route/service, available planned asset contract tests.
+8. write expected_report_json and latest output.
+No DB write. No production deploy. No unrelated page/branch.
