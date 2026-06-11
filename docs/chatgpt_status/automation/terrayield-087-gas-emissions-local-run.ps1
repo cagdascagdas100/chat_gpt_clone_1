@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Continue"
+﻿$ErrorActionPreference = "Continue"
 
 $repo = "C:\Users\cagda\Documents\GitHub\AAYS"
 $branch = "feature/terrayield-aays-integration"
@@ -89,9 +89,9 @@ if (-not (Test-Path $inputGeojson)) {
     $geoJsonOutLocal = Join-Path $outDir "parcel_emissions_scores.geojson"
     $csvOutLocal = Join-Path $outDir "parcel_emissions_scores.csv"
     $manifestLocal = Join-Path $outDir "parcel_emissions_score_manifest.json"
-    $geo | ConvertTo-Json -Depth 100 | Set-Content -Encoding utf8 $geoJsonOutLocal
-    ($csv -join "`n") | Set-Content -Encoding utf8 $csvOutLocal
-    @{schema_name="aays_parcel_emissions_score_v1";status="DATA_READY";source_type="air_quality_proxy";method_id="aq_proxy_pollution_risk_v1";feature_count=$featureCount;calculated_at=$generatedAt;db_write=$false;migration=$false;production_deploy=$false;fake_data=$false;warning="Proxy only; not official CO2e/GHG"} | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $manifestLocal
+    $geo | ConvertTo-Json -Depth 100 | Set-Content -Path $geoJsonOutLocal -Encoding utf8
+    ($csv -join "`n") | Set-Content -Path $csvOutLocal -Encoding utf8
+    @{schema_name="aays_parcel_emissions_score_v1";status="DATA_READY";source_type="air_quality_proxy";method_id="aq_proxy_pollution_risk_v1";feature_count=$featureCount;calculated_at=$generatedAt;db_write=$false;migration=$false;production_deploy=$false;fake_data=$false;warning="Proxy only; not official CO2e/GHG"} | ConvertTo-Json -Depth 8 | Set-Content -Path $manifestLocal -Encoding utf8
     Copy-Item $geoJsonOutLocal (Join-Path $frontend "data\parcel_emissions_scores.geojson") -Force
     Copy-Item $csvOutLocal (Join-Path $frontend "data\parcel_emissions_scores.csv") -Force
     Copy-Item $manifestLocal (Join-Path $frontend "data\parcel_emissions_score_manifest.json") -Force
@@ -288,15 +288,16 @@ errors=$($errors -join " | ")
 manual_stdout_required=false
 next_action=$(if ($progress -eq 100) { "none" } else { "fix_local_input_or_patch_failure" })
 "@
-$text | Set-Content -Encoding utf8 $reportTxt
+$text | Set-Content -Path $reportTxt -Encoding utf8
 $nextActionValue = if ($progress -eq 100) { "none" } else { "fix_local_input_or_patch_failure" }
 $obj = @{task_id=$taskId;status=$status;overall_progress_percent=$progress;feature_count=$featureCount;data_generated=$dataGenerated;app_patched=$appPatched;node_check_pass=$nodeCheckPass;static_smoke_pass=$staticSmokePass;local_app_url=$openUrl;local_server_pid=$serverPid;db_write=$false;migration=$false;production_deploy=$false;fake_data=$false;input_geojson=$inputGeojson;runtime_geojson="england_map_web/data/parcel_emissions_scores.geojson";runtime_csv="england_map_web/data/parcel_emissions_scores.csv";errors=$errors;manual_stdout_required=$false;next_action=$nextActionValue}
-$obj | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 $reportJson
-Copy-Item $reportJson $runnerJson -Force
-Copy-Item $reportJson $latestJson -Force
-"$(Get-Date -Format o) task_id=$taskId status=$status progress=$progress" | Set-Content -Encoding utf8 $heartbeat
-$text | Set-Content -Encoding utf8 $statusTxt
+$obj | ConvertTo-Json -Depth 8 | Set-Content -Path $reportJson -Encoding utf8
+Copy-Item -Path $reportJson -Destination $runnerJson -Force
+Copy-Item -Path $reportJson -Destination $latestJson -Force
+"$(Get-Date -Format o) task_id=$taskId status=$status progress=$progress" | Set-Content -Path $heartbeat -Encoding utf8
+$text | Set-Content -Path $statusTxt -Encoding utf8
 
 git add england_map_web/app.js england_map_web/data/parcel_emissions_scores.geojson england_map_web/data/parcel_emissions_scores.csv england_map_web/data/parcel_emissions_score_manifest.json docs/chatgpt_status/reports docs/chatgpt_status/runner_outputs docs/chatgpt_status/heartbeat docs/chatgpt_status/status 2>$null
 git commit -m "feat: run gas emissions air icon integration" | Out-Null 2>&1
 git push origin $branch | Out-Null 2>&1
+
