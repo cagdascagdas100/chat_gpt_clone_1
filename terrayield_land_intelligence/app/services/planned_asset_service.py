@@ -1,4 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
+
+import json
 
 import datetime as dt
 import re
@@ -1056,3 +1058,65 @@ def recalculate_planned_assets(
 def delete_all_planned_matches(session: Session) -> int:
     result = session.execute(delete(ParcelPlannedAssetMatch))
     return int(result.rowcount or 0)
+
+def _parse_bbox_4326(bbox: str) -> tuple[float, float, float, float]:
+    parts = [part.strip() for part in str(bbox or "").split(",")]
+    if len(parts) != 4:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bbox must be west,south,east,north in EPSG:4326")
+    west, south, east, north = [float(part) for part in parts]
+    if west >= east or south >= north:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bbox must satisfy west < east and south < north")
+    return west, south, east, north
+
+
+def _json_geojson(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value
+    try:
+        parsed = json.loads(str(value))
+    except (TypeError, ValueError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        return round(float(value), 2) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: Any) -> int | None:
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def get_planned_asset_parcel_layer(session: Session, *, bbox: str, limit: int = 2000, min_delivery_probability: float | None = None, asset_type: str | None = None, status_filter: str | None = None) -> dict[str, Any]:
+    west, south, east, north = _parse_bbox_4326(bbox)
+    safe_limit = max(1, min(int(limit or 2000), 10000))
+    bbox_geom_27700 = func.ST_Transform(func.ST_MakeEnvelope(west, south, east, north, 4326), 27700)
+    parcel_geometry_geojson = func.ST_AsGeoJSON(func.ST_Transform(ParcelInspire.geometry, 4326)).label("geometry_geojson")
+    planned_asset_count = func.count(PlannedAsset.id).over(partition_by=ParcelPlannedAssetMatch.parcel_id).label("planned_asset_count")
+    rank_num = func.row_number().over(partition_by=ParcelPlannedAssetMatch.parcel_id, order_by=(desc(ParcelPlannedAssetMatch.impact_score), desc(PlannedAsset.delivery_probability_score), ParcelPlannedAssetMatch.distance_m.asc().nulls_last(), desc(PlannedAsset.updated_at))).label("rank_num")
+    stmt = select(ParcelInspire.parcel_id.label("parcel_id"), ParcelInspire.parcel_ref.label("parcel_ref"), ParcelInspire.local_authority.label("local_authority"), ParcelInspire.postcode.label("postcode"), ParcelInspire.address_text.label("address_text"), ParcelInspire.area_m2.label("area_m2"), parcel_geometry_geojson, planned_asset_count, rank_num, PlannedAsset.id.label("top_planned_asset_id"), PlannedAsset.title.label("top_title"), PlannedAsset.asset_type.label("top_asset_type"), PlannedAsset.status.label("top_status"), PlannedAsset.delivery_probability_score.label("top_delivery_probability_score"), PlannedAsset.delivery_probability_label.label("top_delivery_probability_label"), PlannedAsset.value_impact_score.label("top_value_impact_score"), PlannedAsset.source_confidence_score.label("top_source_confidence_score"), PlannedAsset.source_name.label("source_name"), PlannedAsset.source_url.label("source_url"), PlannedAsset.evidence_text.label("evidence_text"), ParcelPlannedAssetMatch.distance_m.label("nearest_distance_m"), ParcelPlannedAssetMatch.impact_score.label("impact_score"), ParcelPlannedAssetMatch.match_confidence_score.label("match_confidence_score")).join(ParcelPlannedAssetMatch, ParcelPlannedAssetMatch.parcel_id == ParcelInspire.parcel_id).join(PlannedAsset, PlannedAsset.id == ParcelPlannedAssetMatch.planned_asset_id).where(ParcelInspire.geometry.is_not(None)).where(func.ST_Intersects(ParcelInspire.geometry, bbox_geom_27700))
+    if min_delivery_probability is not None:
+        stmt = stmt.where(PlannedAsset.delivery_probability_score >= float(min_delivery_probability))
+    if asset_type:
+        stmt = stmt.where(PlannedAsset.asset_type == asset_type)
+    if status_filter:
+        stmt = stmt.where(PlannedAsset.status == normalize_status(status_filter))
+    ranked = stmt.subquery()
+    rows = session.execute(select(ranked).where(ranked.c.rank_num == 1).order_by(desc(ranked.c.impact_score), desc(ranked.c.top_delivery_probability_score)).limit(safe_limit)).all()
+    features: list[dict[str, Any]] = []
+    for row in rows:
+        data = row._mapping
+        geometry = _json_geojson(data.get("geometry_geojson"))
+        if not geometry:
+            continue
+        properties = {"layer_kind": "planned_parcel", "parcel_id": _safe_int(data.get("parcel_id")), "parcel_ref": data.get("parcel_ref"), "local_authority": data.get("local_authority"), "postcode": data.get("postcode"), "address_text": data.get("address_text"), "area_m2": _safe_float(data.get("area_m2")), "planned_asset_count": _safe_int(data.get("planned_asset_count")) or 0, "top_planned_asset_id": _safe_int(data.get("top_planned_asset_id")), "top_title": data.get("top_title"), "top_asset_type": data.get("top_asset_type"), "top_status": data.get("top_status"), "top_delivery_probability_score": _safe_float(data.get("top_delivery_probability_score")), "top_delivery_probability_label": data.get("top_delivery_probability_label"), "top_value_impact_score": _safe_float(data.get("top_value_impact_score")), "top_source_confidence_score": _safe_float(data.get("top_source_confidence_score")), "nearest_distance_m": _safe_float(data.get("nearest_distance_m")), "match_confidence_score": _safe_float(data.get("match_confidence_score")), "impact_score": _safe_float(data.get("impact_score")), "evidence_summary": str(data.get("evidence_text") or "insufficient evidence"), "source_name": data.get("source_name"), "source_url": data.get("source_url"), "color_hex": "#16a34a"}
+        features.append({"type": "Feature", "geometry": geometry, "properties": properties})
+    return {"type": "FeatureCollection", "features": features, "metadata": {"layer_kind": "planned_parcel", "bbox": [west, south, east, north], "feature_count": len(features), "limit": safe_limit}}

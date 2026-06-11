@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 
@@ -15,6 +15,7 @@ from app.schemas.planned_asset import (
 from app.services.planned_asset_service import (
     get_parcel_future_growth_score,
     get_parcel_planned_assets,
+    get_planned_asset_parcel_layer,
     get_planned_asset,
     ingest_planned_assets,
     list_planned_asset_sources,
@@ -43,6 +44,25 @@ def get_parcel_future_growth_score_payload(
 ) -> ParcelFutureGrowthScoreResponse:
     return get_parcel_future_growth_score(db, parcel_id)
 
+
+
+@router.get("/planned-assets/parcel-layer")
+def get_planned_asset_parcel_layer_payload(
+    db: DBSession,
+    bbox: str = Query(..., description="west,south,east,north in EPSG:4326"),
+    limit: int = Query(default=2000, ge=1, le=10000),
+    min_delivery_probability: float | None = Query(default=None, ge=0, le=100),
+    asset_type: str | None = None,
+    status: str | None = None,
+) -> dict[str, object]:
+    return get_planned_asset_parcel_layer(
+        db,
+        bbox=bbox,
+        limit=limit,
+        min_delivery_probability=min_delivery_probability,
+        asset_type=asset_type,
+        status_filter=status,
+    )
 
 @router.get("/planned-assets/search", response_model=list[PlannedAssetItem])
 def search_planned_assets_payload(
@@ -104,3 +124,4 @@ def post_admin_planned_assets_recalculate_scores(
     _auth: None = Depends(require_admin_token),
 ) -> PlannedAssetsRecalculateResponse:
     return recalculate_planned_assets(db, payload)
+

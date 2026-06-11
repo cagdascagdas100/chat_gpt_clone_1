@@ -4798,7 +4798,7 @@
     { mode: WORTH_CONTROL_MODE, label: "Deger menusu", iconUrl: "./assets/icons/terrayield_icons/worh.png" },
   ];
   const MAP_WORTH_MENU_ITEMS = [
-    { id: "planned", label: "Planlanan", iconUrl: "./assets/icons/worth-factory.svg" },
+    { id: "planned", label: "Planlanan", iconUrl: "./assets/icons/terrayield_icons/planed_buildings.png" },
     { id: "cost", label: "Maliyet", iconUrl: "./assets/icons/worth-money.svg" },
     { id: "compare", label: "Hava Kirliligi", iconUrl: "./assets/icons/worth-trend.svg" },
     { id: "topography", label: "Yukselti", iconUrl: "./assets/icons/worth-waves.svg" },
@@ -15548,4 +15548,5 @@ function formatElevationDifferenceFromRegionAverage(value) {
   console.info("[AAYS_LAYER_LAZY_ACTION_GUARD] enabled: listings/sales-history must remain non-blocking/layer-action driven.");
 }());
 /* AAYS_LAYER_LAZY_ACTION_GUARD_V1_END */
+
 
