@@ -1,0 +1,66 @@
+*** Begin Patch
+*** Update File: england_map_web/app.js
+@@
+-  function normalizePlannedAssetsFeatureCollection(items, bboxObj = null) {
+-    const features = (Array.isArray(items) ? items : [])
++  function normalizePlannedAssetsFeatureCollection(items, bboxObj = null) {
++    if (items && items.type === "FeatureCollection" && Array.isArray(items.features)) {
++      const features = items.features
++        .filter((feature) => feature && feature.geometry && featureIntersectsBbox(feature, bboxObj));
++      return { type: "FeatureCollection", features };
++    }
++    const features = (Array.isArray(items) ? items : [])
+       .map((item, index) => normalizePlannedAssetFeature(item, index))
+       .filter(Boolean)
+       .filter((feature) => featureIntersectsBbox(feature, bboxObj));
+@@
+-  function buildPlannedAssetPopupHtml(props) {
++  function buildPlannedAssetPopupHtml(props) {
++    const topAssets = Array.isArray(props.top_assets) ? props.top_assets.slice(0, 3) : [];
++    if (topAssets.length) {
++      const items = topAssets.map((asset, index) => `
++        <div style="margin-top:6px;border-top:1px solid rgba(148,163,184,.35);padding-top:6px;">
++          <div><strong>Planned Building ${index + 1} Value:</strong> ${escapeHtml(String(asset.value_impact_score ?? asset.impact_score ?? "-"))}</div>
++          <div><strong>Planned Building ${index + 1} Probability:</strong> ${escapeHtml(String(asset.delivery_probability_score ?? asset.delivery_probability_label ?? "-"))}</div>
++          <div><strong>Completion Month:</strong> ${escapeHtml(String(asset.completion_month || "insufficient evidence"))}</div>
++          <div><strong>Source Confidence:</strong> ${escapeHtml(String(asset.source_confidence_score ?? "-"))}</div>
++          ${asset.source_url ? `<div><a href="${escapeHtml(asset.source_url)}" target="_blank" rel="noopener noreferrer">Kaynak linki</a></div>` : ""}
++          <div>${escapeHtml(String(asset.evidence_text || asset.evidence_summary || ""))}</div>
++        </div>`).join("");
++      return `<div class="future-growth-hover-card"><div><strong>Parcel:</strong> ${escapeHtml(props.parcel_ref || props.parcel_id || "-")}</div>${items}</div>`;
++    }
+     const delivery = Number(props.delivery_probability_score);
+@@
+-    const searchUrl = new URL(resolvePlannedAssetsApiUrl("/planned-assets/search"));
++    const searchUrl = new URL(resolvePlannedAssetsApiUrl("/planned-assets/parcel-layer"));
++    searchUrl.searchParams.set("bbox", bbox);
+     searchUrl.searchParams.set("limit", "2500");
+-    searchUrl.searchParams.set("offset", "0");
+@@
+-    let dataMode = searchResponse.ok ? "planned_assets" : "error";
++    let dataMode = searchResponse.ok ? "planned_parcels" : "error";
+*** Update File: terrayield_land_intelligence/app/services/planned_asset_service.py
+@@
+-def get_planned_asset_parcel_layer(session: Session, *, bbox: str, limit: int = 2000, min_delivery_probability: float | None = None, asset_type: str | None = None, status_filter: str | None = None) -> dict[str, Any]:
++def get_planned_asset_parcel_layer(session: Session, *, bbox: str, limit: int = 2000, min_delivery_probability: float | None = None, asset_type: str | None = None, status_filter: str | None = None) -> dict[str, Any]:
+@@
+-    rows = session.execute(select(ranked).where(ranked.c.rank_num == 1).order_by(desc(ranked.c.impact_score), desc(ranked.c.top_delivery_probability_score)).limit(safe_limit)).all()
++    try:
++        all_rows = session.execute(select(ranked).where(ranked.c.rank_num <= 3).order_by(ranked.c.parcel_id, ranked.c.rank_num).limit(safe_limit * 3)).all()
++    except Exception as exc:
++        return {"type": "FeatureCollection", "features": [], "metadata": {"layer_kind": "planned_parcel", "bbox": [west, south, east, north], "feature_count": 0, "limit": safe_limit, "warning": f"planned asset database unavailable: {exc.__class__.__name__}"}}
++    rows_by_parcel: dict[Any, list[Any]] = {}
++    for item in all_rows:
++        data = item._mapping
++        rows_by_parcel.setdefault(data.get("parcel_id"), []).append(data)
+     features: list[dict[str, Any]] = []
+-    for row in rows:
+-        data = row._mapping
++    for parcel_rows in rows_by_parcel.values():
++        data = parcel_rows[0]
+@@
+-        properties = {"layer_kind": "planned_parcel", "parcel_id": _safe_int(data.get("parcel_id")), "parcel_ref": data.get("parcel_ref"), "local_authority": data.get("local_authority"), "postcode": data.get("postcode"), "address_text": data.get("address_text"), "area_m2": _safe_float(data.get("area_m2")), "planned_asset_count": _safe_int(data.get("planned_asset_count")) or 0, "top_planned_asset_id": _safe_int(data.get("top_planned_asset_id")), "top_title": data.get("top_title"), "top_asset_type": data.get("top_asset_type"), "top_status": data.get("top_status"), "top_delivery_probability_score": _safe_float(data.get("top_delivery_probability_score")), "top_delivery_probability_label": data.get("top_delivery_probability_label"), "top_value_impact_score": _safe_float(data.get("top_value_impact_score")), "top_source_confidence_score": _safe_float(data.get("top_source_confidence_score")), "nearest_distance_m": _safe_float(data.get("nearest_distance_m")), "match_confidence_score": _safe_float(data.get("match_confidence_score")), "impact_score": _safe_float(data.get("impact_score")), "evidence_summary": str(data.get("evidence_text") or "insufficient evidence"), "source_name": data.get("source_name"), "source_url": data.get("source_url"), "color_hex": "#16a34a"}
++        top_assets = [{"planned_asset_id": _safe_int(asset.get("top_planned_asset_id")), "title": asset.get("top_title"), "asset_type": asset.get("top_asset_type"), "status": asset.get("top_status"), "delivery_probability_score": _safe_float(asset.get("top_delivery_probability_score")), "delivery_probability_label": asset.get("top_delivery_probability_label"), "value_impact_score": _safe_float(asset.get("top_value_impact_score")), "source_confidence_score": _safe_float(asset.get("top_source_confidence_score")), "distance_m": _safe_float(asset.get("nearest_distance_m")), "impact_score": _safe_float(asset.get("impact_score")), "evidence_text": str(asset.get("evidence_text") or "insufficient evidence"), "source_url": asset.get("source_url"), "completion_month": "insufficient evidence", "timeline_confidence": "insufficient evidence"} for asset in parcel_rows]
++        first_asset = top_assets[0] if top_assets else {}
++        properties = {"layer_kind": "planned_parcel", "parcel_id": _safe_int(data.get("parcel_id")), "parcel_ref": data.get("parcel_ref"), "local_authority": data.get("local_authority"), "postcode": data.get("postcode"), "address_text": data.get("address_text"), "area_m2": _safe_float(data.get("area_m2")), "planned_asset_count": _safe_int(data.get("planned_asset_count")) or len(top_assets), "top_assets": top_assets, "top_planned_asset_id": first_asset.get("planned_asset_id"), "top_title": first_asset.get("title"), "top_asset_type": first_asset.get("asset_type"), "top_status": first_asset.get("status"), "top_delivery_probability_score": first_asset.get("delivery_probability_score"), "top_delivery_probability_label": first_asset.get("delivery_probability_label"), "top_value_impact_score": first_asset.get("value_impact_score"), "top_source_confidence_score": first_asset.get("source_confidence_score"), "nearest_distance_m": first_asset.get("distance_m"), "match_confidence_score": _safe_float(data.get("match_confidence_score")), "impact_score": first_asset.get("impact_score"), "evidence_summary": first_asset.get("evidence_text") or "insufficient evidence", "source_name": data.get("source_name"), "source_url": first_asset.get("source_url"), "completion_month": "insufficient evidence", "timeline_confidence": "insufficient evidence", "color_hex": "#16a34a"}
+*** End Patch
