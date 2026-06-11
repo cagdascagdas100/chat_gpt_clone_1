@@ -1,0 +1,34 @@
+task_id=internet-access-100-runner-stuck-diagnosis-20260611
+scope=internet_access_score_10
+branch=feature/terrayield-aays-integration
+status=RUNNER_NOT_CONSUMING_QUEUE_OR_NOT_PUSHING_RESULT
+completion_percent=20
+
+OBSERVED_STATE
+- docs/chatgpt_status/current-task.txt points to internet-access-100-transform-ofcom-processed-package.
+- docs/chatgpt_status/queue/latest.txt points to internet-access-100-transform-ofcom-processed-package.
+- docs/chatgpt_status/runner_tasks/internet-access-100-transform-ofcom-processed-package.txt exists and points to docs/chatgpt_status/runner_inputs/internet-access-100-transform-ofcom-processed-package.ps1.
+- docs/chatgpt_status/reports/internet-access-100-transform-ofcom-processed-package.json is missing.
+- docs/chatgpt_status/runner_outputs/latest_output.json remains at internet-access-092-build-processed-package with completion_percent=20 and status=BLOCKED_MACHINE_READABLE_SOURCES_PRESENT_BUT_TRANSFORM_NOT_IMPLEMENTED.
+
+ROOT_CAUSE
+The official Ofcom machine-readable package is already downloaded and visible to 092, but the queued 100 transform task has not been consumed by the runner or its report has not been pushed to GitHub.
+
+SAFE_SKIP_DECISION
+Do not run DB_WRITE, MIGRATION, PRODUCTION_DEPLOY, backend change, frontend change, or smoke cycles now. These may affect app startup and are not required to raise the data-package progress gate.
+
+NEXT_REQUIRED_ACTION
+Run only docs/chatgpt_status/runner_inputs/internet-access-100-transform-ofcom-processed-package.ps1 once from the existing local PowerShell/repo window. This script writes its output to GitHub reports and runner_outputs/latest_output.json; no manual stdout paste is required.
+
+EXPECTED_REPORT
+- docs/chatgpt_status/reports/internet-access-100-transform-ofcom-processed-package.txt
+- docs/chatgpt_status/reports/internet-access-100-transform-ofcom-processed-package.json
+
+EXPECTED_PROGRESS_AFTER_SUCCESS
+60
+
+manual_stdout_required=false
+fake_data=false
+db_write=false
+migration=false
+production_deploy=false
