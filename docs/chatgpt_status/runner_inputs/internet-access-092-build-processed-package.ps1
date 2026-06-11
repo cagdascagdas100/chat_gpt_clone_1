@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Continue'
 $Repo="C:\Users\cagda\Documents\GitHub\AAYS"
 $Branch="feature/terrayield-aays-integration"
 $WorkRoot="F:\chatgpt\AAYS_WORK\internet_access_score10_real_build_20260610"
@@ -53,6 +54,7 @@ foreach ($f in $rawFiles) {
 
 $sourceManifestExists=Test-Path $SourceManifest
 $hashManifestExists=(Test-Path $HashManifest) -or (Test-Path $DownloadHashManifest)
+$downloadManifestExists=Test-Path $DownloadManifest
 $outputsReady=(Test-Path $ScoresCsv) -and (Test-Path $BreakdownCsv) -and (Test-Path $ScoresGeojson) -and (Test-Path $CalcManifest) -and (Test-Path $ExcelReport)
 
 if ($outputsReady) {
@@ -80,7 +82,7 @@ if ($outputsReady) {
 "completion_percent=$completion" | Add-Content $ReportTxt
 "source_manifest_exists=$sourceManifestExists" | Add-Content $ReportTxt
 "hash_manifest_exists=$hashManifestExists" | Add-Content $ReportTxt
-"download_manifest_exists=$(Test-Path $DownloadManifest)" | Add-Content $ReportTxt
+"download_manifest_exists=$downloadManifestExists" | Add-Content $ReportTxt
 "raw_file_count=$($rawFiles.Count)" | Add-Content $ReportTxt
 "machine_readable_file_count=$($machineReadable.Count)" | Add-Content $ReportTxt
 "html_like_file_count=$($htmlLike.Count)" | Add-Content $ReportTxt
@@ -89,9 +91,10 @@ if ($outputsReady) {
 "scores_geojson_exists=$(Test-Path $ScoresGeojson)" | Add-Content $ReportTxt
 "calculation_manifest_exists=$(Test-Path $CalcManifest)" | Add-Content $ReportTxt
 "excel_report_exists=$(Test-Path $ExcelReport)" | Add-Content $ReportTxt
+"next_action=$next" | Add-Content $ReportTxt
 "manual_stdout_required=false" | Add-Content $ReportTxt
 
-@{
+$result=@{
   task_id=$Task
   status=$status
   completion_percent=$completion
@@ -99,7 +102,7 @@ if ($outputsReady) {
   work_root=$WorkRoot
   source_manifest_exists=$sourceManifestExists
   hash_manifest_exists=$hashManifestExists
-  download_manifest_exists=(Test-Path $DownloadManifest)
+  download_manifest_exists=$downloadManifestExists
   raw_file_count=$rawFiles.Count
   machine_readable_file_count=$machineReadable.Count
   html_like_file_count=$htmlLike.Count
@@ -125,14 +128,12 @@ if ($outputsReady) {
   fake_data=$false
   manual_stdout_required=$false
   generated_at=(Get-Date -Format s)
-} | ConvertTo-Json -Depth 10 | Set-Content $ReportJson -Encoding UTF8
+}
 
+$result | ConvertTo-Json -Depth 8 | Set-Content $ReportJson -Encoding UTF8
 Copy-Item $ReportJson "$Out\latest_output.json" -Force
 
-git add docs/chatgpt_status/reports/$Task.txt docs/chatgpt_status/reports/$Task.json docs/chatgpt_status/runner_outputs/latest_output.json docs/chatgpt_status/runner_inputs/$Task.ps1
-$changed=(git status --porcelain)
-if ($changed) {
-  git commit -m "Run internet access 092 processed package check"
-  git pull --rebase origin $Branch
-  git push origin $Branch
-}
+git add docs/chatgpt_status/reports/$Task.txt docs/chatgpt_status/reports/$Task.json docs/chatgpt_status/runner_outputs/latest_output.json 2>&1 | Add-Content $ReportTxt
+git commit -m "Run internet access 092 processed package check" 2>&1 | Add-Content $ReportTxt
+git pull --rebase origin $Branch 2>&1 | Add-Content $ReportTxt
+git push origin $Branch 2>&1 | Add-Content $ReportTxt
