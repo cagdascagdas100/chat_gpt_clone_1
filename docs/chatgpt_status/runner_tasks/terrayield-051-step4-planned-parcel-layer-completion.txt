@@ -6,11 +6,15 @@ branch=feature/terrayield-aays-integration
 expected_report_json=docs/chatgpt_status/runner_outputs/terrayield_051_step4_planned_parcel_completion_latest.json
 manual_stdout_required=false
 
-Complete the planned parcel layer fix:
-- app.js planned layer must load /planned-assets/parcel-layer with bbox, not the old search endpoint.
-- map should render matched parcel polygons.
-- parcel popup should show up to three planned assets with probability, value impact, source and evidence.
-- backend parcel-layer should include top_assets list for each parcel.
-- do not invent completion month; use insufficient evidence when month is absent.
-- if database is unavailable, return a fast empty FeatureCollection with warning instead of hanging.
-- run syntax/tests and write final JSON output to the expected_report_json path.
+Complete only the UI-blocking planned parcel layer gaps. Skip nonblocking reports.
+Required behavior:
+1. In england_map_web/app.js, planned layer must call /planned-assets/parcel-layer with bbox. Do not call /planned-assets/search for this layer.
+2. Render only matched parcel polygons from the parcel-layer FeatureCollection.
+3. Parcel popup should show up to 3 planned assets: value impact, probability, source_url, evidence_text, source_confidence_score.
+4. Backend parcel-layer should expose top_assets[0..2] per parcel when matches exist.
+5. Do not fabricate completion month. If month is absent, return completion_month="insufficient evidence" and expose year/window/timeline_confidence when available.
+6. If DB/PostGIS is unavailable, do not hang. Return fast empty FeatureCollection with metadata.warning. DB unavailable must not block app startup.
+7. Run only useful checks: node --check app.js, py_compile planned assets route/service, planned asset contract tests if available.
+8. Write JSON to expected_report_json and update terrayield_051_latest_output.json.
+9. Mark FINAL_READY only if app startup is not blocked and planned layer uses parcel-layer endpoint.
+No DB write. No production deploy. No unrelated page key or branch.
