@@ -6,9 +6,11 @@ production_complete: false
 branch_detected: feature/terrayield-aays-integration
 power_shell_required_from_user: false
 
-changed: 
+changed: app_js_sold_icon_or_stale_status_syntax_cleanup
 
-errors: node check failed: C:\Users\cagda\Documents\GitHub\AAYS\england_map_web\app.js:8694
+checks: workspace_reset_to_origin_branch | node_check_ok | python_py_compile_ok
+
+errors: 
 
 counts: official=106944 candidate=34 verified_rows=0 verified_parcels=0 unmatched=106910
 gate: BLOCKED_MISSING_OFFICIAL_BRIDGE

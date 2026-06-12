@@ -1,28 +1,17 @@
-﻿# Sold Buildings Node Check Diagnosis
+﻿# Sold Buildings Historical Sales Next Patch Runner Report
 
-task_id: sold-buildings-historical-sales-node-check-diagnosis-20260613
-status: NODE_CHECK_BLOCKING_FINAL_READY
-final_ready: false
+status: PARTIAL_NEEDS_NEXT_PATCH
+final_ready: False
 production_complete: false
 branch_detected: feature/terrayield-aays-integration
 power_shell_required_from_user: false
 
-## node_exit_code
-1
+changed: app_js_sold_icon_or_stale_status_syntax_cleanup
 
-## node_output
-C:\Users\cagda\Documents\GitHub\AAYS\england_map_web\app.js:8694
-    window.__lastHistoricalSalesStatus = await fetchJsonWithTimeout(${landIntelligenceApiBaseUrl}/map/sales-history/status, { timeout: 8000 });
-                                                                    ^
-System.Management.Automation.RemoteException
-SyntaxError: missing ) after argument list
-    at wrapSafe (node:internal/modules/cjs/loader:1469:18)
-    at checkSyntax (node:internal/main/check_syntax:78:3)
-System.Management.Automation.RemoteException
-Node.js v22.11.0
+checks: workspace_reset_to_origin_branch | node_check_ok | python_py_compile_ok
 
-## app.js context 8686-8702
+errors: 
 
-
-## Known data gate
-BLOCKED_MISSING_OFFICIAL_BRIDGE
+counts: official=106944 candidate=34 verified_rows=0 verified_parcels=0 unmatched=106910
+gate: BLOCKED_MISSING_OFFICIAL_BRIDGE
+result_json: C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results\sold-buildings-historical-sales-next-patch-20260612.result.json
