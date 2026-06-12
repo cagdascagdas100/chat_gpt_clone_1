@@ -21,16 +21,32 @@ $changed = @()
 $checks = @()
 $errors = @()
 $Branch = 'unknown'
-try { & git -C $WorkspaceRoot checkout $ProductBranch | Out-Null; $Branch = (& git -C $WorkspaceRoot rev-parse --abbrev-ref HEAD).Trim() } catch { $errors += ('branch checkout failed: ' + $_.Exception.Message) }
+try {
+  & git -C $WorkspaceRoot fetch origin $ProductBranch | Out-Null
+  & git -C $WorkspaceRoot checkout $ProductBranch | Out-Null
+  & git -C $WorkspaceRoot reset --hard ('origin/' + $ProductBranch) | Out-Null
+  $Branch = (& git -C $WorkspaceRoot rev-parse --abbrev-ref HEAD).Trim()
+  $checks += 'workspace_reset_to_origin_branch'
+} catch {
+  $errors += ('branch reset failed: ' + $_.Exception.Message)
+}
 $AppJs = Join-Path $WorkspaceRoot 'england_map_web\app.js'
 if(Test-Path $AppJs){
   $s = Get-Content $AppJs -Raw
-  if($s -match 'map-mode-sales\.svg'){
-    $s = $s.Replace('./assets/icons/map-mode-sales.svg','./assets/icons/terrayield_icons/sold_buildings.png')
+  $before = $s
+  $s = $s.Replace('./assets/icons/map-mode-sales.svg','./assets/icons/terrayield_icons/sold_buildings.png')
+  $s = $s.Replace('window.__lastHistoricalSalesStatus = await fetchJsonWithTimeout(${landIntelligenceApiBaseUrl}/map/sales-history/status, { timeout: 8000 });','')
+  if($s -ne $before){
     Set-Content $AppJs $s -Encoding UTF8
-    $changed += 'frontend_icon_sold_buildings_png'
+    $changed += 'app_js_sold_icon_or_stale_status_syntax_cleanup'
   }
-  try { node --check $AppJs 2>&1 | Tee-Object -FilePath $LogPath -Append; $checks += 'node_check_attempted' } catch { $errors += ('node check failed: ' + $_.Exception.Message) }
+  try {
+    $nodeOut = & node --check $AppJs 2>&1
+    $nodeOut | Tee-Object -FilePath $LogPath -Append | Out-Null
+    if($LASTEXITCODE -eq 0){ $checks += 'node_check_ok' } else { $errors += ('node check failed with exit ' + $LASTEXITCODE + ': ' + ($nodeOut -join ' ')) }
+  } catch {
+    $errors += ('node check failed: ' + $_.Exception.Message)
+  }
 } else { $errors += 'app.js not found' }
 $RoutePy = Get-ChildItem -Path $WorkspaceRoot -Filter 'aays_sales_history_layers.py' -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
 if($RoutePy){
@@ -64,7 +80,13 @@ def get_sales_history_accuracy_label(value):
 '@
     $changed += 'backend_alias_accuracy_contract_appended'
   }
-  try { python -m py_compile $RoutePy.FullName 2>&1 | Tee-Object -FilePath $LogPath -Append; $checks += 'python_py_compile_attempted' } catch { $errors += ('python check failed: ' + $_.Exception.Message) }
+  try {
+    $pyOut = & python -m py_compile $RoutePy.FullName 2>&1
+    $pyOut | Tee-Object -FilePath $LogPath -Append | Out-Null
+    if($LASTEXITCODE -eq 0){ $checks += 'python_py_compile_ok' } else { $errors += ('python check failed with exit ' + $LASTEXITCODE + ': ' + ($pyOut -join ' ')) }
+  } catch {
+    $errors += ('python check failed: ' + $_.Exception.Message)
+  }
 } else { $errors += 'aays_sales_history_layers.py not found' }
 $appText = if(Test-Path $AppJs){ Get-Content $AppJs -Raw } else { '' }
 $routeText = if($RoutePy){ Get-Content $RoutePy.FullName -Raw } else { '' }
@@ -79,7 +101,7 @@ $status = if($finalReady){'FINAL_READY_DATA_GATE_BLOCKED'} else {'PARTIAL_NEEDS_
 $Finished = (Get-Date).ToString('s')
 $result = [ordered]@{ task_id=$TaskId; page_key=$PageKey; status=$status; final_ready=$finalReady; production_complete=$false; branch_detected=$Branch; changed=$changed; markers=$markers; checks=$checks; errors=$errors; started_at=$Started; finished_at=$Finished; known_data_gate='BLOCKED_MISSING_OFFICIAL_BRIDGE'; counts=[ordered]@{official_sales_rows=106944; candidate_link_count=34; verified_sales_rows=0; verified_parcels=0; unmatched_rows=106910}; power_shell_required_from_user=$false; report_path=$ReportPath }
 $result | ConvertTo-Json -Depth 10 | Set-Content $ResultPath -Encoding UTF8
-$md = @('# Sold Buildings Historical Sales Next Patch Runner Report','',"status: $status","final_ready: $finalReady",'production_complete: false',"branch_detected: $Branch",'power_shell_required_from_user: false','',"changed: $($changed -join ', ')",'',"errors: $($errors -join ' | ')",'','counts: official=106944 candidate=34 verified_rows=0 verified_parcels=0 unmatched=106910','gate: BLOCKED_MISSING_OFFICIAL_BRIDGE',"result_json: $ResultPath")
+$md = @('# Sold Buildings Historical Sales Next Patch Runner Report','',"status: $status","final_ready: $finalReady",'production_complete: false',"branch_detected: $Branch",'power_shell_required_from_user: false','',"changed: $($changed -join ', ')",'',"checks: $($checks -join ' | ')",'',"errors: $($errors -join ' | ')",'','counts: official=106944 candidate=34 verified_rows=0 verified_parcels=0 unmatched=106910','gate: BLOCKED_MISSING_OFFICIAL_BRIDGE',"result_json: $ResultPath")
 $md | Set-Content $ReportPath -Encoding UTF8
 $md | Set-Content (Join-Path $StatusDir 'latest.md') -Encoding UTF8
 @('# Sold Buildings Heartbeat','',"status: $status","task_id: $TaskId","checked_at: $Finished") | Set-Content (Join-Path $HeartbeatDir 'latest.md') -Encoding UTF8
