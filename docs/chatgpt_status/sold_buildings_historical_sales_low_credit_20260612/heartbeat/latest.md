@@ -1,5 +1,5 @@
 ﻿# Sold Buildings Heartbeat
 
-status: PARTIAL_NEEDS_NEXT_PATCH
-task_id: sold-buildings-historical-sales-next-patch-20260612
-checked_at: 2026-06-13T01:34:40
+status: FINAL_READY_DATA_GATE_BLOCKED
+task_id: sold-buildings-status-endpoint-final-patch-20260613
+checked_at: 2026-06-13T02:19:36
