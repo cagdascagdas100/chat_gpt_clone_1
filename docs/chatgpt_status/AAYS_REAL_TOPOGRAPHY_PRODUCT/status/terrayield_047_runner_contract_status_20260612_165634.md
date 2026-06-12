@@ -1,0 +1,4 @@
+﻿status: RUNNER_OUTPUT_MISSING
+completion_percent: 62
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md
+next_action: read docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_runner_contract_inventory_20260612_165634.md and fix runner queue/current-task consumption if missing
