@@ -1,0 +1,35 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=RUN_EXISTING_LOCAL_QUEUE_ITEM_20260612_1930
+TASK_TYPE=RUN_EXISTING_LOCAL_QUEUE_ITEM
+PRIORITY=HIGH
+PRODUCT_PROGRESS_ESTIMATE=84
+
+SCOPE:
+Use only repo cagdascagdas100/chat_gpt_clone_1, branch aays-runner-v17-icon-work-20260603-232706, page key AAYS_REAL_TOPOGRAPHY_PRODUCT.
+
+REQUEST:
+The dispatch bridge has already copied the existing source inventory task to the local queue. Do not create duplicate product work. Consume the existing queued item if it is still present, or report why it cannot be consumed.
+
+KNOWN LOCAL QUEUE ITEM FROM GITHUB REPORT:
+C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\AAYS_REAL_TOPOGRAPHY_PRODUCT_RUN_SOURCE_INVENTORY_MINIMAL_20260612_20260612_183136.ps1
+
+HARD CONSTRAINTS:
+- Do not modify product code in this task.
+- Do not run DB write, migration, import, index creation, or deploy.
+- Do not move existing C-drive runner or bridge infrastructure.
+- Use F:\AAYS_GITHUB_WORK\AAYS as the worktree if local execution is needed.
+- Preserve the single runner/bridge/queue setup.
+
+EXPECTED OUTPUT:
+Write one GitHub report under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports named:
+run_existing_local_queue_item_20260612_1930.txt
+
+REPORT MUST INCLUDE:
+- status = QUEUE_ITEM_EXECUTED | QUEUE_ITEM_MISSING | RUNNER_NOT_EXECUTING | ERROR
+- runner_alive = true/false/unknown
+- queue_item_path
+- execution_attempted = true/false
+- resulting_report_paths, especially real_topography_source_inventory_*.txt if created
+- blocker if not executed
+
+STOP AFTER REPORT.
