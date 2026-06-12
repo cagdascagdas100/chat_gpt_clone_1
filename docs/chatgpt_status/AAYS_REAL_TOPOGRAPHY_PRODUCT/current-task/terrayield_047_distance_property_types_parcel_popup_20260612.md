@@ -1,13 +1,21 @@
-# Current task candidate: 047 Distance Property Types parcel popup
+# Current task: 047 Distance Property Types run existing automation
 
-This task has been queued for the local runner.
+Date: 2026-06-12
+Page key: `AAYS_REAL_TOPOGRAPHY_PRODUCT`
+Branch: `aays-runner-v17-icon-work-20260603-232706`
+Status: `QUEUED_FOR_SINGLE_LOCAL_RUNNER`
 
-Status at creation: handoff package received and ZIP hash verified in ChatGPT. `local_outputs` was not uploaded to ChatGPT, so the runner must create fresh local evidence before any completion claim.
+This current-task pointer supersedes the earlier handoff-only queue entry and points the local runner to the existing checked-in automation task.
 
-Task file:
-`docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/terrayield_047_distance_property_types_parcel_popup_20260612.md`
+Active queue task:
+`docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/terrayield_047_distance_property_types_run_existing_automation_20260612.md`
 
-Report file:
-`docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_handoff_received_20260612.md`
+Automation artifact referenced by that queue task:
+`docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/RUN_DISTANCE_047_SELF_CONTAINED_REPAIR.ps1`
 
-Completion rule: icon/toggle alone is not enough. Parcel polygon layer plus parcel click detail fields are required.
+Expected evidence outputs:
+- `docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md`
+- `docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/terrayield_047_distance_property_types_status_<timestamp>.md`
+- `docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_outputs/terrayield_047_distance_property_types_self_contained_repair_<timestamp>.txt`
+
+Completion rule: mark `FINAL_READY` only when the smoke report proves parcel polygons, required popup/right-panel fields, frontend binding, static checks, and Excel schema evidence. If runtime data or service availability blocks this, write the exact blocker and do not claim `FINAL_READY`.
