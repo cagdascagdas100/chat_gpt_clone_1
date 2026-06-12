@@ -1,0 +1,54 @@
+TerraYield AAYS / AAYS_REAL_TOPOGRAPHY_PRODUCT / Planned Buildings continuation gate
+Timestamp UTC: 2026-06-12T13:25:00Z
+
+Scope requested by user:
+- Continue this page only.
+- Do not assume other page keys, branches, queues, or runner contracts.
+- Read control, queue, current-task, runner_tasks, automation, reports, status, heartbeat, runner outputs before writing product tasks.
+- Do not request local PowerShell unless GitHub cannot resolve runner/bridge/poller/contract.
+
+GitHub evidence gathered in this ChatGPT turn:
+- Repo: cagdascagdas100/chat_gpt_clone_1
+- Status branch with actual page directories detected: aays-runner-v17-icon-work-20260603-232706
+- Page key directory exists: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT
+- Existing subdirectories detected by GitHub contents API directory errors:
+  - control
+  - queue
+  - current-task
+  - runner_tasks
+  - automation
+  - reports
+  - status
+  - heartbeat
+
+Important constraint result:
+- The connector can confirm the folders exist, but it did not provide directory listing content for those folders.
+- Direct common filename probes under those folders returned 404.
+- Therefore runner queue/current-task contract is NOT confirmed yet.
+- Per user instruction, no new product task was written to queue/current-task before contract discovery.
+
+Planned Buildings code context already prepared in sandbox:
+- Patch package: planned_buildings_patch_package_20260612.zip
+- Unified diff: planned_buildings_contract_patch_20260612.diff
+- Static checks previously completed in sandbox:
+  - git apply --check: PASS against extracted package context
+  - node --check england_map_web/app.js: PASS
+  - python -m py_compile planned backend/service/schema/test files: PASS
+  - pytest: NOT RUN in sandbox because sqlalchemy/runtime deps unavailable
+
+Current decision:
+- Completion did not move to FINAL_READY because runner contract and live DB/API evidence are still missing.
+- Next safe action is runner contract inventory / directory manifest collection, not a product queue mutation.
+
+Required next artifact:
+- A runner-readable or local diagnostic report that lists exact file names and latest contents from:
+  control, queue, current-task, runner_tasks, automation, reports, status, heartbeat, and runner outputs.
+
+PowerShell necessity:
+- Necessary only if GitHub cannot list those directory files through the connector.
+- The command must be read-only for runner infrastructure and must write its output back to GitHub reports/status for ChatGPT to read.
+
+Status:
+- FINAL_READY: false
+- Overall completion estimate: 47%
+- Reason: patch design/static verification exists, but queue contract, runner execution, live endpoint, DB-backed count, and final acceptance report are not yet proven.
