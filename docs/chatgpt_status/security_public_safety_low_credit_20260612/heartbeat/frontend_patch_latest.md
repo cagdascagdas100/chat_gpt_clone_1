@@ -1,4 +1,4 @@
 # Security frontend patch heartbeat
 
-decision: FRONTEND_CONTRACT_PATCH_PARTIAL
-checked_at: 2026-06-12T23:31:57.6582354+03:00
+decision: FRONTEND_CONTRACT_PATCH_STATIC_READY
+checked_at: 2026-06-13T02:54:17.2804954+03:00
