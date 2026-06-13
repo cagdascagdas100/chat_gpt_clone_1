@@ -9,6 +9,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RunnerMutexCreated = $false
+$RunnerMutex = New-Object System.Threading.Mutex($true, "Global\AAYS_SINGLE_RUNNER_AAYS_REAL_TOPOGRAPHY_PRODUCT", [ref]$RunnerMutexCreated)
+if (-not $RunnerMutexCreated) {
+  Write-Host "AAYS single runner is already running for AAYS_REAL_TOPOGRAPHY_PRODUCT. Not starting a second runner."
+  exit 0
+}
+
 $StatusRootRel = "docs/chatgpt_status/$PageKey"
 $StatusRoot = Join-Path $RepoRoot ($StatusRootRel -replace '/', [IO.Path]::DirectorySeparatorChar)
 $ReportDir = Join-Path $StatusRoot "reports"
@@ -31,6 +38,7 @@ function Write-Text([string]$Path, [string]$Text) {
 
 function Run-Native([string]$Name, [scriptblock]$Block, [string]$LogPath) {
   Add-Content -Path $LogPath -Encoding UTF8 -Value "`n===== $Name START $(Get-Date -Format o) ====="
+  $global:LASTEXITCODE = 0
   $out = & $Block 2>&1 | Out-String
   $code = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
   Add-Content -Path $LogPath -Encoding UTF8 -Value $out
@@ -101,6 +109,9 @@ function Invoke-OnePoll {
   $pull = Run-Native "git_pull_rebase_autostash" { git pull --rebase --autostash origin $Branch } $runnerLog
   if (-not $fetch.ok -or -not $pull.ok) {
     Write-RunnerStatus "GIT_BLOCKED" "fetch_or_pull_failed" "" "" $runnerLog
+    Run-Native "git_add_git_blocked_status" { git add "$StatusRootRel/status" "$StatusRootRel/heartbeat" "$StatusRootRel/runner_outputs" } $runnerLog | Out-Null
+    Run-Native "git_commit_git_blocked_status" { git commit -m "Update single runner git blocked status" } $runnerLog | Out-Null
+    Run-Native "git_push_git_blocked_status" { git push origin HEAD:$Branch } $runnerLog | Out-Null
     return
   }
 
@@ -108,12 +119,18 @@ function Invoke-OnePoll {
   $task = Get-ChildItem -Path $CurrentTaskDir -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
   if (!$task) {
     Write-RunnerStatus "IDLE_NO_CURRENT_TASK" "no current-task file found" "" "" $runnerLog
+    Run-Native "git_add_idle_status" { git add "$StatusRootRel/status" "$StatusRootRel/heartbeat" "$StatusRootRel/runner_outputs" } $runnerLog | Out-Null
+    Run-Native "git_commit_idle_status" { git commit -m "Update single runner idle status" } $runnerLog | Out-Null
+    Run-Native "git_push_idle_status" { git push origin HEAD:$Branch } $runnerLog | Out-Null
     return
   }
 
   $automation = Resolve-AutomationFromTask $task.FullName
   if (!$automation -or !(Test-Path $automation)) {
     Write-RunnerStatus "TASK_BLOCKED_NO_AUTOMATION" "automation artifact missing" $task.FullName $automation $runnerLog
+    Run-Native "git_add_blocked_status" { git add "$StatusRootRel/status" "$StatusRootRel/heartbeat" "$StatusRootRel/runner_outputs" } $runnerLog | Out-Null
+    Run-Native "git_commit_blocked_status" { git commit -m "Update single runner blocked status" } $runnerLog | Out-Null
+    Run-Native "git_push_blocked_status" { git push origin HEAD:$Branch } $runnerLog | Out-Null
     return
   }
 
@@ -123,6 +140,9 @@ function Invoke-OnePoll {
   $state = Load-State
   if (-not $Force -and $state.ContainsKey('last_job_key') -and $state['last_job_key'] -eq $jobKey) {
     Write-RunnerStatus "IDLE_ALREADY_EXECUTED" "current task and automation hash already executed" $task.FullName $automation $runnerLog
+    Run-Native "git_add_already_status" { git add "$StatusRootRel/status" "$StatusRootRel/heartbeat" "$StatusRootRel/runner_outputs" } $runnerLog | Out-Null
+    Run-Native "git_commit_already_status" { git commit -m "Update single runner already executed status" } $runnerLog | Out-Null
+    Run-Native "git_push_already_status" { git push origin HEAD:$Branch } $runnerLog | Out-Null
     return
   }
 
@@ -130,11 +150,11 @@ function Invoke-OnePoll {
   $run = Run-Native "run_automation" { powershell -ExecutionPolicy Bypass -File $automation -RepoRoot $RepoRoot -PageKey $PageKey -Branch $Branch -BaseUrl $BaseUrl } $runnerLog
   $state = @{ last_job_key = $jobKey; last_task = $task.FullName; last_automation = $automation; last_run_ts = $ts; last_exit_code = $run.code }
   Save-State $state
+  Write-RunnerStatus "RUN_COMPLETE" "automation_exit_code=$($run.code)" $task.FullName $automation $runnerLog
 
   Run-Native "git_add_runner_outputs" { git add "$StatusRootRel/reports" "$StatusRootRel/status" "$StatusRootRel/heartbeat" "$StatusRootRel/runner_outputs" "$StatusRootRel/single_runner_state.json" } $runnerLog | Out-Null
   Run-Native "git_commit_runner_outputs" { git commit -m "Run single AAYS page runner" } $runnerLog | Out-Null
   Run-Native "git_push_runner_outputs" { git push origin HEAD:$Branch } $runnerLog | Out-Null
-  Write-RunnerStatus "RUN_COMPLETE" "automation_exit_code=$($run.code)" $task.FullName $automation $runnerLog
 }
 
 while ($true) {
