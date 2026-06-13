@@ -1,0 +1,14 @@
+TASK: planned_buildings_shared_runner_inventory
+PAGE_KEY: AAYS_REAL_TOPOGRAPHY_PRODUCT
+BRANCH: aays-runner-v17-icon-work-20260603-232706
+RUNNER_MODE: shared_single_runner
+AUTOMATION_SCRIPT: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/planned_buildings_shared_runner_inventory_20260614T000000Z.ps1
+OUTPUT_STATUS: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/planned_buildings_shared_runner_status_latest.txt
+OUTPUT_REPORT: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/planned_buildings_shared_runner_inventory_<timestamp>.txt
+DO_NOT_OPEN_NEW_RUNNER: true
+DO_NOT_USE_SEPARATE_POWERSHELL: true
+DO_NOT_TOUCH_OTHER_PAGE_KEYS: true
+SAFETY: read page control queue current-task runner_tasks automation reports status heartbeat; verify product tree; run non-conflicting read-only syntax checks; write reports under this page key only.
+PARALLEL_ALLOWED: read-only inventory and syntax checks may run in parallel if they do not modify the same files, database, or runner queue.
+FINAL_READY_TARGET: false
+NEXT_AFTER_REPORT: ChatGPT reads OUTPUT_REPORT and writes the next shared-runner product patch task using the confirmed contract and product tree.
