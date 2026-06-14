@@ -1,0 +1,11 @@
+PAGE_KEY: AAYS_REAL_TOPOGRAPHY_PRODUCT
+BRANCH: aays-runner-v17-icon-work-20260603-232706
+automation_script: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_final_smoke_20260614.ps1
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_final_smoke_20260614.txt
+mode: shared_runner_sequential
+parallel_safe: true
+conflicts_with: []
+no_db_write: true
+no_migration: true
+no_deploy: true
+status: queued
