@@ -8,9 +8,12 @@ $Report=Join-Path $ReportsDir "$TaskId.json"
 $StatusFile=Join-Path $StatusDir "$TaskId.txt"
 $Dep101=Join-Path $ReportsDir 'internet-access-101-safe-nested-zip-transform.json'
 $Dep102=Join-Path $ReportsDir 'internet-access-102-safe-final-validation.json'
-$DepsReady=((Test-Path $Dep101) -and (Test-Path $Dep102))
+$Dep102Alt=Join-Path $ReportsDir 'internet-access-102-marker.json'
+$Dep101Ready=Test-Path $Dep101
+$Dep102Ready=((Test-Path $Dep102) -or (Test-Path $Dep102Alt))
+$DepsReady=($Dep101Ready -and $Dep102Ready)
 $status=if($DepsReady){'READY_FOR_FINAL_VALIDATION'}else{'BLOCKED_WAITING_DEPENDENCY_REPORTS'}
-$percent=if($DepsReady){70}else{40}
+$percent=if($DepsReady){75}else{45}
 $payload=[ordered]@{
   task_id=$TaskId
   page_key=$PageKey
@@ -18,8 +21,10 @@ $payload=[ordered]@{
   completion_percent=$percent
   manual_stdout_required=$false
   expected_next_report='docs/chatgpt_status/reports/internet-access-105-shared-runner-package-and-validate.json'
-  dependency_101_exists=(Test-Path $Dep101)
-  dependency_102_exists=(Test-Path $Dep102)
+  dependency_101_exists=$Dep101Ready
+  dependency_102_exists=$Dep102Ready
+  dependency_102_exact_exists=(Test-Path $Dep102)
+  dependency_102_marker_exists=(Test-Path $Dep102Alt)
   power_shell_required=$false
 }
 ($payload | ConvertTo-Json -Depth 4) | Set-Content $Report -Encoding UTF8
