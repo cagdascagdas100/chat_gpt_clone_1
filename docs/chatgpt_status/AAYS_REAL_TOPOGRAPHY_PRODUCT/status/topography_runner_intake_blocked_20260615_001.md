@@ -1,0 +1,14 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=topography_final_validation_bundle_20260614_009
+QUEUE_TASK_PRESENT=True
+RUNNER_TASKS_PRESENT=True
+AUTOMATION_PRESENT=True
+FINAL_REPORT_PRESENT=False
+CURRENT_TASK_POINTER_PRESENT=False
+BLOCKING_STAGE=shared_runner_intake_or_report_push
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_final_validation_bundle_20260614_009.txt
+NO_NEW_RUNNER=True
+NO_DB_WRITE=True
+NO_MIGRATION=True
+NO_DEPLOY=True
+NEXT_STEP=shared runner must consume queue or runner_tasks and write expected report
