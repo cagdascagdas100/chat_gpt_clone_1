@@ -2,9 +2,9 @@ page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
 branch: aays-runner-v17-icon-work-20260603-232706
 request: GLOBAL_SLOT_FOR_THIS_PAGE
 status: REQUESTED
-reason: shared runner heartbeat and runner-produced smoke outputs are missing after valid current-task signal
+reason: refresh global slot for page-local current-task after missing heartbeat and missing smoke output
 current_task: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/terrayield_047_distance_property_types_fixed_20260614.md
 automation: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/RUN_DISTANCE_047_SELF_CONTAINED_REPAIR.ps1
-retry: 20260615T0030Z
+retry: 20260615T0050Z
 parallelism: single_page_task_only_no_conflicting_db_or_runner_resource
 expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md
