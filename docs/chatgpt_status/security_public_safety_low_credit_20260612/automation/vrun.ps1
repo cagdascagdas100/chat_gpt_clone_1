@@ -4,7 +4,8 @@ $rep = Join-Path $base 'reports'
 New-Item -ItemType Directory -Force -Path $rep | Out-Null
 $out = Join-Path $rep 'v_latest.txt'
 $boot = Join-Path $rep 'v_boot.txt'
-"state: ps_probe_started`ntime: $(Get-Date -Format o)" | Out-File -FilePath $boot -Encoding utf8
+$nodeLog = Join-Path $rep 'v_node.log'
+"state: ps_click_probe_started`ntime: $(Get-Date -Format o)" | Out-File -FilePath $boot -Encoding utf8
 $appRoots = @(
   'C:\Users\cagda\Documents\GitHub\AAYS\england_map_web',
   'C:\AAYS_GITHUB_BRIDGE_CLEAN2\england_map_web',
@@ -27,29 +28,44 @@ $data = if ($app) { Test-Path (Join-Path $app 'data\parcel_security_scores_reche
 $txt = if ($appjs) { Get-Content -Raw -Path (Join-Path $app 'app.js') } else { '' }
 $ovtxt = if ($overlay) { Get-Content -Raw -Path (Join-Path $app 'security_overlay.js') } else { '' }
 $contract = ($txt -match 'security\.png') -and ($txt -match 'AAYS_SECURITY') -and ($ovtxt -match 'parcel_security_scores_rechecked_0_120m_spatial')
-$shot = $false
-if ($browser -and $index) {
-  $shotPath = Join-Path $rep 'v_ps_view.png'
-  $url = 'file:///' + ((Join-Path $app 'index.html') -replace '\\','/')
-  $args = @('--headless=new','--disable-gpu','--no-first-run',"--screenshot=$shotPath",$url)
-  $p = Start-Process -FilePath $browser -ArgumentList $args -PassThru -WindowStyle Hidden
-  Wait-Process -Id $p.Id -Timeout 30 -ErrorAction SilentlyContinue
-  $shot = Test-Path $shotPath
+$ready = $index -and $appjs -and $overlay -and $data -and $contract -and $browser
+if (-not $ready) {
+  @(
+    'state: ps_preflight_done',
+    'percent: 97',
+    'final: false',
+    'reason: preflight_incomplete',
+    "app: $app",
+    "browser: $browser",
+    "index: $index",
+    "appjs: $appjs",
+    "overlay: $overlay",
+    "data: $data",
+    "contract: $contract"
+  ) | Out-File -FilePath $out -Encoding utf8
+  exit 0
 }
-$ready = $index -and $appjs -and $overlay -and $data -and $contract -and $shot
-$percent = if ($ready) { 99 } else { 97 }
-$reason = if ($ready) { 'static_render_ready_click_popup_needed' } else { 'preflight_incomplete' }
-@(
-  'state: ps_probe_done',
-  "percent: $percent",
-  'final: false',
-  "reason: $reason",
-  "app: $app",
-  "browser: $browser",
-  "index: $index",
-  "appjs: $appjs",
-  "overlay: $overlay",
-  "data: $data",
-  "contract: $contract",
-  "shot: $shot"
-) | Out-File -FilePath $out -Encoding utf8
+$nodeExe = (Get-Command node -ErrorAction SilentlyContinue)
+if (-not $nodeExe) {
+  @(
+    'state: ps_preflight_done',
+    'percent: 99',
+    'final: false',
+    'reason: node_missing_click_popup_needed',
+    "app: $app",
+    "browser: $browser"
+  ) | Out-File -FilePath $out -Encoding utf8
+  exit 0
+}
+$js = Join-Path $root 'v.js'
+& $nodeExe.Source $js *> $nodeLog
+if (-not (Test-Path $out)) {
+  @(
+    'state: ps_node_done',
+    'percent: 99',
+    'final: false',
+    'reason: node_finished_without_v_latest',
+    "node_exit: $LASTEXITCODE",
+    "node_log: $nodeLog"
+  ) | Out-File -FilePath $out -Encoding utf8
+}
