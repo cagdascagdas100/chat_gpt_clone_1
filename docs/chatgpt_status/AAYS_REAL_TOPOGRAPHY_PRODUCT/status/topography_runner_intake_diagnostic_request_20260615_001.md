@@ -1,0 +1,15 @@
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+diagnostic_id: topography_runner_intake_diagnostic_20260615_001
+status: RUNNER_INTAKE_DIAGNOSTIC_REQUESTED
+final_task_id: topography_final_validation_bundle_20260614_009
+queue_task: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/topography_final_validation_bundle_20260614_009.task.md
+runner_tasks: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/topography_final_validation_bundle_20260614_009.task.md
+current_task: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/topography_final_validation_bundle_20260614_009.task.md
+automation_script: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_final_validation_bundle_20260614_009.ps1
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_final_validation_bundle_20260614_009.txt
+no_new_runner: true
+no_db_write: true
+no_migration: true
+no_deploy: true
+blocking_area: shared_runner_intake_or_report_push
+notes: Intake files are present. Awaiting shared runner report publication.
