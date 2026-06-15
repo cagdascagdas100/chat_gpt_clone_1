@@ -1,0 +1,1 @@
+node "$PSScriptRoot\v.js"
