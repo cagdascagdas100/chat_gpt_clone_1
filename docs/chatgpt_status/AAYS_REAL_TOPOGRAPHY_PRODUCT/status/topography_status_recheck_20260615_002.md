@@ -1,0 +1,15 @@
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+status_id: topography_status_recheck_20260615_002
+final_task_id: topography_final_validation_bundle_20260614_009
+queue_task_present: true
+runner_tasks_present: true
+current_task_present: true
+automation_script_present: true
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_final_validation_bundle_20260614_009.txt
+final_report_present: false
+final_report_result: not_found
+search_result_for_final_status: no_match
+no_new_runner: true
+no_db_write: true
+no_migration: true
+no_deploy: true
