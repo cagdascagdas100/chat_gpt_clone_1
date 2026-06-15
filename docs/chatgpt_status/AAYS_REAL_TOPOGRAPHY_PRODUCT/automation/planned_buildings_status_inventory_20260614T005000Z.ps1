@@ -12,6 +12,11 @@ $ArtifactPairs = @(
     Report = 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/pb_runner_pickup_readiness_gate_20260615T013000Z.txt'
     Status = 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/pb_runner_pickup_readiness_gate_20260615T013000Z.txt'
     Task = 'planned_buildings_runner_pickup_readiness_gate'
+  },
+  @{
+    Report = 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/pb_next_20260615T022200Z.txt'
+    Status = 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/pb_next_20260615T022200Z.txt'
+    Task = 'pb_next'
   }
 )
 foreach ($Pair in $ArtifactPairs) {
