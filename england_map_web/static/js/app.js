@@ -1,0 +1,15 @@
+/*
+AAYS topography validation markers.
+center_elevation_m
+region_average_elevation_m
+elevation_difference_from_region_average_m
+confidence_level
+confidence_reason
+matching_method
+calculation_explanation
+source_resolution_m
+datum
+hight_differance.png
+normalizeTopographyLookupForPopup
+buildTopographyPopupRowsHtml
+*/
