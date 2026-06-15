@@ -1,8 +1,10 @@
 ﻿state: static_probe_done
 percent: 99
 final: false
-reason: proof_missing
+reason: browser_proof_missing
 appRoot: C:\Users\cagda\Documents\GitHub\AAYS\england_map_web
 overlay: True
 data: True
-summary: False
+summary: True
+createdSummary: True
+featureCount: 92283
