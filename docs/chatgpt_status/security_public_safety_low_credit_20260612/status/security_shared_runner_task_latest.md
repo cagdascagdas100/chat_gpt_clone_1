@@ -1,4 +1,4 @@
-state: pending
-percent: 94
+﻿state: script_reached
+percent: 99
 final: false
-reason: waiting for browser acceptance evidence
+reason: needs final browser proof
