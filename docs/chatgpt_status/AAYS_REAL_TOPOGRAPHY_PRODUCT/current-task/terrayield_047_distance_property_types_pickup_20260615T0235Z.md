@@ -1,0 +1,9 @@
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+branch: aays-runner-v17-icon-work-20260603-232706
+automation: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/RUN_DISTANCE_047_SELF_CONTAINED_REPAIR.ps1
+retry: 20260615T0235Z
+status: ACTIVE_CURRENT_TASK_PICKUP
+source_queue: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/terrayield_047_distance_property_types_pickup_20260615T0200Z.md
+reason: final retry pickup after queue and current-task are ready but smoke report raw output and shared heartbeat are still missing
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md
+parallelism: single_page_task_only_no_conflicting_db_or_runner_resource
