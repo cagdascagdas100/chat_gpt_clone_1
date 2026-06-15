@@ -22,13 +22,14 @@
     try{ if(window.__uniqueLongNoRepeatGuard) window.__uniqueLongNoRepeatGuard(); }catch(e){}
     try{ if(window.__edgeReaderEnhanceLesson) window.__edgeReaderEnhanceLesson(); }catch(e){}
   }
+  function refresh(){ runGuards(); rerender(); }
   function loadOnlineNachteile(){
     if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t38){rerender();return;}
-    loadScript('data_bevor_online_studium_nachteile.js?v=6',function(){runGuards();rerender();});
+    loadScript('data_bevor_online_studium_nachteile.js?v=6',function(){refresh();});
   }
   function loadSatzmuster2(){
     loadScript('data_grammar_satzmuster2_full.js?v=3',function(){
-      loadScript('t37_satzmuster2_source_boost.js?v=1',function(){runGuards();rerender();});
+      loadScript('t37_satzmuster2_source_boost.js?v=1',function(){refresh();});
     });
   }
   function loadReaderSupport(){
@@ -36,18 +37,19 @@
     loadScript('edge_reader_support.js?v=1',function(){runGuards();});
   }
   function loadUniqueNoRepeat(){
-    if(window.__uniqueLongNoRepeatGuard){runGuards();return;}
-    loadScript('lesson_unique_1400_no_repeat_guard.js?v=1',function(){runGuards();rerender();});
+    if(window.__uniqueLongNoRepeatGuard){refresh();return;}
+    loadScript('lesson_unique_1400_no_repeat_guard.js?v=2',function(){refresh();});
   }
   loadOnlineNachteile();
   setTimeout(loadSatzmuster2,0);
   setTimeout(loadReaderSupport,0);
   setTimeout(loadUniqueNoRepeat,20);
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(loadUniqueNoRepeat,220);setTimeout(runGuards,700);setTimeout(rerender,850);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(loadUniqueNoRepeat,220);setTimeout(refresh,700);setTimeout(refresh,1900);setTimeout(refresh,3600);setTimeout(refresh,5600);});
   setTimeout(loadOnlineNachteile,500);
   setTimeout(loadSatzmuster2,700);
   setTimeout(loadReaderSupport,750);
   setTimeout(loadUniqueNoRepeat,900);
-  setTimeout(runGuards,1600);
-  setTimeout(rerender,1800);
+  setTimeout(refresh,1600);
+  setTimeout(refresh,3500);
+  setTimeout(refresh,5500);
 })();
