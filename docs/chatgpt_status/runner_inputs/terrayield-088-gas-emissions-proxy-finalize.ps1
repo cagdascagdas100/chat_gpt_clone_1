@@ -53,11 +53,9 @@ try {
   if (Test-Path $WorkRoot) { Remove-Item -Recurse -Force $WorkRoot }
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $WorkRoot) | Out-Null
 
-  $worktreeOk = $false
   try {
     git -C $Repo fetch origin | Out-Null
     git -C $Repo worktree add -B gas_emissions_088_isolated_worktree $WorkRoot "origin/$Branch" | Out-Null
-    $worktreeOk = $true
     $diag += 'checkout_mode=git_worktree'
   } catch {
     $diag += "worktree_failed=$($_.Exception.Message)"
@@ -83,7 +81,6 @@ try {
   $diagPath = Join-Path $WorkRoot $DiagRel
 
   $statusKv = Read-KvFile $pageStatus
-  $reportKv = Read-KvFile $pageReport
   $outputExists = Test-Path $output
   $featureCount = 0
   if ($outputExists) {
@@ -167,8 +164,8 @@ try {
     $diag += 'git_commit_pushed=false'
   }
 
-  if ($finalReady) { exit 0 }
-  exit 4
+  # Non-fatal exit keeps the shared runner alive; readiness is reported through GitHub status/report files.
+  exit 0
 } catch {
   try {
     if (Test-Path $WorkRoot) {
@@ -189,5 +186,5 @@ try {
       if (git status --porcelain) { git commit -m 'gas-emissions: record 088 runner input failure' | Out-Null; git push origin $Branch | Out-Null }
     }
   } catch {}
-  exit 10
+  exit 0
 }
