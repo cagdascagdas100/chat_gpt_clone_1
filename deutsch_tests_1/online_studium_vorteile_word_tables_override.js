@@ -38,7 +38,7 @@
   }
   function loadUniqueNoRepeat(){
     if(window.__uniqueLongNoRepeatGuard){refresh();return;}
-    loadScript('lesson_unique_1400_no_repeat_guard.js?v=2',function(){refresh();});
+    loadScript('lesson_unique_1400_no_repeat_guard.js?v=3',function(){refresh();});
   }
   loadOnlineNachteile();
   setTimeout(loadSatzmuster2,0);
