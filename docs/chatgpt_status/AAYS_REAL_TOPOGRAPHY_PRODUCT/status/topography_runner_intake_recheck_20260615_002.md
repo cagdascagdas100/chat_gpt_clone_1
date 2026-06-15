@@ -1,0 +1,17 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK_ID=topography_final_validation_bundle_20260614_009
+CHECK_DATE_UTC=2026-06-15
+QUEUE_TASK_PRESENT=True
+RUNNER_TASKS_PRESENT=True
+CURRENT_TASK_PRESENT=True
+AUTOMATION_SCRIPT_PRESENT=True
+FINAL_REPORT_PRESENT=False
+FINAL_REPORT_PATH=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_final_validation_bundle_20260614_009.txt
+OBSERVED_BLOCKER=shared_runner_intake_or_report_publish
+NO_NEW_RUNNER=True
+NO_DB_WRITE=True
+NO_MIGRATION=True
+NO_DEPLOY=True
+COLLISION_CHECK=do_not_duplicate_final_validation_task
+PARALLEL_SAFE_WORK=separate_diagnostic_metadata_only
+PRODUCT_PROGRESS_ESTIMATE=99.85
