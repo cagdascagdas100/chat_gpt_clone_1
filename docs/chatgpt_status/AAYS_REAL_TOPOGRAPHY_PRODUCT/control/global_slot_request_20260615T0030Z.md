@@ -5,6 +5,6 @@ status: REQUESTED
 reason: refresh global slot for page-local current-task after missing heartbeat and missing smoke output
 current_task: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/terrayield_047_distance_property_types_fixed_20260614.md
 automation: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/RUN_DISTANCE_047_SELF_CONTAINED_REPAIR.ps1
-retry: 20260615T0050Z
+retry: 20260615T0105Z
 parallelism: single_page_task_only_no_conflicting_db_or_runner_resource
 expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md
