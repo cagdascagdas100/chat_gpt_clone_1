@@ -19,6 +19,7 @@
     try{ if(window.__ensureAllLongLessons1500) window.__ensureAllLongLessons1500(); }catch(e){}
     try{ if(window.__ensureAllLongLessons1500Final) window.__ensureAllLongLessons1500Final(); }catch(e){}
     try{ if(window.__boostSatzmuster2Source) window.__boostSatzmuster2Source(); }catch(e){}
+    try{ if(window.__edgeReaderEnhanceLesson) window.__edgeReaderEnhanceLesson(); }catch(e){}
   }
   function loadOnlineNachteile(){
     if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t38){rerender();return;}
@@ -29,11 +30,17 @@
       loadScript('t37_satzmuster2_source_boost.js?v=1',function(){runGuards();rerender();});
     });
   }
+  function loadReaderSupport(){
+    if(window.__edgeReaderEnhanceLesson){runGuards();return;}
+    loadScript('edge_reader_support.js?v=1',function(){runGuards();});
+  }
   loadOnlineNachteile();
   setTimeout(loadSatzmuster2,0);
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadSatzmuster2,150);setTimeout(runGuards,500);setTimeout(rerender,650);});
+  setTimeout(loadReaderSupport,0);
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(runGuards,500);setTimeout(rerender,650);});
   setTimeout(loadOnlineNachteile,500);
   setTimeout(loadSatzmuster2,700);
+  setTimeout(loadReaderSupport,750);
   setTimeout(runGuards,1300);
   setTimeout(rerender,1500);
 })();
