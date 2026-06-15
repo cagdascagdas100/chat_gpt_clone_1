@@ -5,7 +5,7 @@
     "production_deploy":  false,
     "fake_data":  false,
     "ddl":  false,
-    "task_id":  "aays-vrun-diag-20260615",
+    "task_id":  "aays-vrun-psprobe-20260615",
     "status":  "EXIT_",
-    "timestamp":  "20260615_221309"
+    "timestamp":  "20260615_224548"
 }
