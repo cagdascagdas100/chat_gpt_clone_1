@@ -13,7 +13,9 @@ $RootReportTxtRel = 'docs/chatgpt_status/reports/terrayield-088-gas-emissions-pr
 $RootReportJsonRel = 'docs/chatgpt_status/reports/terrayield-088-gas-emissions-proxy-finalize.json'
 $LatestRel = 'docs/chatgpt_status/runner_outputs/latest_output.json'
 $OutputRel = 'england_map_web/data/parcel_emissions_scores.geojson'
+$SourceRel = 'england_map_web/data/parcel_air_quality_scores.geojson'
 $DiagRel = 'docs/chatgpt_status/gas_emissions/reports/terrayield-088-runner-input-wrapper.txt'
+$ExpectedSourceSha256 = '820741F7E274787246BD23A12E05F25B0D5E32F92004C36F8861AFECD7529B41'
 
 function Write-Lines($Path, [string[]]$Lines) {
   $dir = Split-Path -Parent $Path
@@ -29,6 +31,49 @@ function Read-KvFile($Path) {
     }
   }
   return $h
+}
+
+function Get-FileSha256($Path) {
+  if (!(Test-Path $Path)) { return '' }
+  return (Get-FileHash -Algorithm SHA256 -Path $Path).Hash.ToUpperInvariant()
+}
+
+function Recover-Source($WorkRoot, $Repo, $SourceRel, $ExpectedSha) {
+  $target = Join-Path $WorkRoot $SourceRel
+  $targetDir = Split-Path -Parent $target
+  if (!(Test-Path $targetDir)) { New-Item -ItemType Directory -Force -Path $targetDir | Out-Null }
+
+  if (Test-Path $target) {
+    $hash = Get-FileSha256 $target
+    if ($hash -eq $ExpectedSha) { return @{ recovered = $false; source_path = $target; source_sha256 = $hash; source_status = 'SOURCE_ALREADY_PRESENT' } }
+  }
+
+  $candidateRels = @(
+    'backups\turkish_fix_20260525_162229\england_map_web\data\parcel_air_quality_scores.geojson',
+    'backups/turkish_fix_20260525_162229/england_map_web/data/parcel_air_quality_scores.geojson',
+    'england_map_web\data\parcel_air_quality_scores.geojson',
+    'england_map_web/data/parcel_air_quality_scores.geojson'
+  )
+
+  $candidates = @()
+  foreach ($rel in $candidateRels) {
+    $candidates += (Join-Path $Repo $rel)
+    $candidates += (Join-Path $WorkRoot $rel)
+  }
+
+  foreach ($candidate in $candidates) {
+    if (Test-Path $candidate) {
+      $hash = Get-FileSha256 $candidate
+      if ($hash -eq $ExpectedSha) {
+        Copy-Item -Force $candidate $target
+        $targetHash = Get-FileSha256 $target
+        if ($targetHash -ne $ExpectedSha) { throw "source_copy_hash_mismatch=$targetHash" }
+        return @{ recovered = $true; source_path = $candidate; source_sha256 = $targetHash; source_status = 'SOURCE_RECOVERED_FROM_VERIFIED_BACKUP' }
+      }
+    }
+  }
+
+  throw "source_missing_or_hash_mismatch expected_sha256=$ExpectedSha target=$target"
 }
 
 $started = Get-Date
@@ -65,6 +110,13 @@ try {
   }
 
   Set-Location $WorkRoot
+
+  $sourceRecovery = Recover-Source -WorkRoot $WorkRoot -Repo $Repo -SourceRel $SourceRel -ExpectedSha $ExpectedSourceSha256
+  $diag += "source_status=$($sourceRecovery.source_status)"
+  $diag += "source_recovered=$($sourceRecovery.recovered.ToString().ToLowerInvariant())"
+  $diag += "source_path=$($sourceRecovery.source_path)"
+  $diag += "source_sha256=$($sourceRecovery.source_sha256)"
+
   $automation = Join-Path $WorkRoot $AutomationRel
   if (!(Test-Path $automation)) { throw "automation_missing=$AutomationRel" }
 
@@ -111,6 +163,9 @@ try {
     final_ready = $finalReady
     output_exists = $outputExists
     feature_count = $featureCount
+    source_status = $sourceRecovery.source_status
+    source_recovered = $sourceRecovery.recovered
+    source_sha256 = $sourceRecovery.source_sha256
     source_type = 'air_quality_proxy'
     fake_data = $false
     db_write = $false
@@ -133,13 +188,14 @@ try {
     "final_ready=$($finalReady.ToString().ToLowerInvariant())",
     "output_exists=$($outputExists.ToString().ToLowerInvariant())",
     "feature_count=$featureCount",
+    "source_status=$($sourceRecovery.source_status)",
+    "source_recovered=$($sourceRecovery.recovered.ToString().ToLowerInvariant())",
+    "source_sha256=$($sourceRecovery.source_sha256)",
     'source_type=air_quality_proxy',
     'fake_data=false',
     'db_write=false',
     'migration=false',
     'production_deploy=false',
-    "page_report=$PageReportRel",
-    "page_status=$PageStatusRel",
     "output=$OutputRel"
   )
   $diag += "finished_at=$((Get-Date).ToString('s'))"
@@ -150,6 +206,7 @@ try {
           'england_map_web/data/parcel_emissions_score_manifest.json' `
           'england_map_web/data/parcel_emissions_source_registry.csv' `
           'england_map_web/data/parcel_emissions_evidence_manifest.jsonl' `
+          $SourceRel `
           'docs/chatgpt_status/gas_emissions/reports' `
           'docs/chatgpt_status/gas_emissions/status' `
           'docs/chatgpt_status/reports' `
@@ -164,7 +221,6 @@ try {
     $diag += 'git_commit_pushed=false'
   }
 
-  # Non-fatal exit keeps the shared runner alive; readiness is reported through GitHub status/report files.
   exit 0
 } catch {
   try {
