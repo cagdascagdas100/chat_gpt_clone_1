@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources, topography_lookup_v2
-from app.api.routes import aays_sales_layers
+from app.api.routes import distance_property_types, admin, brownfield, contractor, cost, etl, facilities, future_growth, health, listings, map_layers, ops, parcels, planned_assets, proxy, sources, topography_lookup_v2
+from app.api.routes import distance_property_types, aays_sales_layers
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 app.include_router(aays_sales_layers.router)
 # AAYS sales-history parcel/evidence layer routes
-from app.api.routes import aays_sales_history_layers
+from app.api.routes import distance_property_types, aays_sales_history_layers
 from app.middleware.map_listings_cache import MapListingsCacheMiddleware
 from app.api.routes.contractor_exports import router as contractor_exports_router
 app.include_router(aays_sales_history_layers.router)
@@ -91,3 +91,6 @@ except Exception as _aays_map_listings_cache_error:
     print(f"[AAYS] MapListingsCacheMiddleware not enabled: {_aays_map_listings_cache_error}")
 
 app.include_router(contractor_exports_router)
+
+app.include_router(distance_property_types.router)
+

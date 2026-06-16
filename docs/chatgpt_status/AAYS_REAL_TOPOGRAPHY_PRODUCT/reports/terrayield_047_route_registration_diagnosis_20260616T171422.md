@@ -1,0 +1,87 @@
+﻿# TerraYield 047 route registration diagnosis
+
+timestamp: 20260616T171422
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+branch: aays-runner-v17-icon-work-20260603-232706
+status: ROUTE_REGISTRATION_PATCH_APPLIED
+route_file: terrayield_land_intelligence\app\api\routes\distance_property_types.py
+main_file: terrayield_land_intelligence\app\main.py
+note: Added /map/distance-property-types router so 047 smoke can proceed past 404.
+found_candidate_files_count: 75
+
+## Candidate files
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\ai-task-scripts\aays_realtopography_047_harvest_status_probe.ps1
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\automation\RUN_DISTANCE_047_ORCHESTRATED_FINAL_READY.ps1
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\automation\RUN_DISTANCE_047_SELF_CONTAINED_REPAIR.ps1
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\automation\distance_047_repair_bundle\README_TR.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\control\terrayield-047-output-harvest-stuck-recovery-20260610.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield-047-output-harvest-stuck-recovery-20260610.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_apply_patch_smoke_20260612_1328.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_current_task_20260615T0115.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_fixed_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_parcel_popup_20260612.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_pickup_20260615T0215Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\current-task\terrayield_047_distance_property_types_pickup_20260615T0235Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield-047-output-harvest-stuck-recovery-20260610.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_apply_patch_smoke_20260612_1328.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_final_validation_rerun_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_fixed_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_full_validation_rerun_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_parcel_popup_20260612.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_pickup_20260615T0200Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_queue_pickup_20260615T0145Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_rerun_20260614_0001.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_runner_pickup_20260615T0135Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_distance_property_types_run_existing_automation_20260612.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_orchestrated_pickup_20260616T0020Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_runner_escalation_retry_20260616T0125Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\queue\terrayield_047_runner_intake_final_retry_20260616T0035Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\bridge_poller_status_20260609-091047.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\bridge_poller_status_20260609-104747.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\chatgpt_047_blocker_assessment_20260610_002.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\distance_047_runner_poller_block_20260614_0125.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_chatgpt_loop_checkpoint_20260612_1328.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_apply_patch_smoke_20260616_160859.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_apply_patch_smoke_20260616_164204.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_blocker_missing_6_metrics_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_handoff_received_20260612.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_manual_gap_fill_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_progress_block_20260614_0050.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_runner_intake_pending_20260614_0130.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_distance_property_types_runner_output_missing_20260612_1415.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_output_harvest_stuck_recovery_20260610_chatgpt_manual_harvest_001.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_pointer_conflict_resolved_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_runner_contract_inventory_20260612_165634.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\terrayield_047_shared_runner_heartbeat_missing_20260614.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\runner_outputs\terrayield_047_clean_runner_unblock_20260616T160857.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\runner_tasks\terrayield_047_runner_intake_diagnostic_20260615T0225Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\047_runner_output_pending_20260616T0015Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\chatgpt_progress_91_manual_047_harvest_20260610_001.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_clean_runner_unblock_20260616T160857.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_current_task_refreshed_20260616T0005Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_current_task_mirror_20260615_0115.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_manual_gap_fill_status_20260614.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_queue_pickup_pending_20260615T0135Z.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_runner_intake_block_20260615_0015.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_runner_pending_20260614_0130.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_runner_wait_20260615T0145Z.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_status_20260616_160859.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_distance_property_types_status_20260616_164204.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_runner_blocked_watchdog_20260616T0100Z.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_runner_contract_status_20260612_165634.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_runner_output_pending_20260615T0235Z.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\status\terrayield_047_waiting_proof_20260615T0235Z.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\AAYS_SAME_PROJECT_NEW_PAGE_failed_cleanup_v8_20260603-022047.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\AAYS_SAME_PROJECT_NEW_PAGE_github_task_poller_20260604-054047.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\AAYS_SAME_PROJECT_NEW_PAGE_github_task_poller_20260604-074047.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\AAYS_SAME_PROJECT_NEW_PAGE_github_task_poller_20260604-104749.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\AAYS_SAME_PROJECT_NEW_PAGE_v9_failed_diagnosis_20260603-115047.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\product_topography_smoke_github_actions_20260609-104757.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\topography_config_fix_20260605-004721.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\docs\chatgpt_status\AAYS_SAME_PROJECT_NEW_PAGE\reports\topography_config_fix_node_check_20260605-004721.txt
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\codex_tasks\047_security_accuracy_source_catalog_and_evidence_templates.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\hyper_scope_20260507\download_audit\card_0047.json
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\hyper_scope_20260507\download_audit\card_0047.md
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\mega_batch_20260507\audit\audit_event_types.csv
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\ultra_scope_20260507\run_manifest\stub_047.json
+C:\Users\cagda\Documents\GitHub\AAYS_CLEAN_RUNNER_WORK\aays-runner-v17-icon-work-20260603-232706\security_accuracy_expansion\ultra_scope_20260507\run_manifest\stub_047.md
