@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from terrayield_land_intelligence.app.services.planned_asset_response import get_empty_planned_assets_layer_response
+from app.services.planned_asset_response import get_empty_planned_assets_layer_response
 
 router = APIRouter()
 admin_router = APIRouter()
