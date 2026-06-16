@@ -29,7 +29,7 @@
   }
   function loadAnonymitaetVorteile(){
     if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t39){rerender();return;}
-    loadScript('data_bevor_anonymitaet_vorteile.js?v=1',function(){refresh();});
+    loadScript('data_bevor_anonymitaet_vorteile.js?v=2',function(){refresh();});
   }
   function loadSatzmuster2(){
     loadScript('data_grammar_satzmuster2_full.js?v=3',function(){
