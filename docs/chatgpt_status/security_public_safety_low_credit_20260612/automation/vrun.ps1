@@ -5,7 +5,11 @@ New-Item -ItemType Directory -Force -Path $rep | Out-Null
 $out = Join-Path $rep 'v_latest.txt'
 $boot = Join-Path $rep 'v_boot.txt'
 $nodeLog = Join-Path $rep 'v_node.log'
+$nodeOut = Join-Path $rep 'v_node.stdout.tmp'
+$nodeErr = Join-Path $rep 'v_node.stderr.tmp'
+$diag = Join-Path $rep ("v_timeout_diag_" + (Get-Date -Format yyyyMMdd_HHmmss) + ".txt")
 "state: ps_click_probe_started`ntime: $(Get-Date -Format o)" | Out-File -FilePath $boot -Encoding utf8
+"diag_started=$(Get-Date -Format o)" | Out-File -FilePath $diag -Encoding utf8
 $appRoots = @(
   'C:\Users\cagda\Documents\GitHub\AAYS\england_map_web',
   'C:\AAYS_GITHUB_BRIDGE_CLEAN2\england_map_web',
@@ -58,14 +62,58 @@ if (-not $nodeExe) {
   exit 0
 }
 $js = Join-Path $root 'v.js'
-& $nodeExe.Source $js *> $nodeLog
+if (-not (Test-Path $js)) {
+  @(
+    'state: ps_preflight_done',
+    'percent: 99',
+    'final: false',
+    'reason: vjs_missing_click_popup_needed',
+    "vjs: $js"
+  ) | Out-File -FilePath $out -Encoding utf8
+  exit 0
+}
+Remove-Item $nodeLog,$nodeOut,$nodeErr -Force -ErrorAction SilentlyContinue
+"node_start=$(Get-Date -Format o)" | Out-File -FilePath $diag -Append -Encoding utf8
+$p = Start-Process -FilePath $nodeExe.Source -ArgumentList @($js) -WorkingDirectory $root -RedirectStandardOutput $nodeOut -RedirectStandardError $nodeErr -PassThru -WindowStyle Hidden
+$finished = Wait-Process -Id $p.Id -Timeout 120 -ErrorAction SilentlyContinue
+if (-not $finished) {
+  "node_timeout=true" | Out-File -FilePath $diag -Append -Encoding utf8
+  Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+  Get-CimInstance Win32_Process | Where-Object {
+    (($_.Name -like 'msedge*') -or ($_.Name -like 'chrome*')) -and ($_.CommandLine -like '*v_profile_*')
+  } | ForEach-Object {
+    "killed_browser_pid=$($_.ProcessId)" | Out-File -FilePath $diag -Append -Encoding utf8
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+  @(
+    'state: ps_node_timeout',
+    'percent: 99',
+    'final: false',
+    'reason: node_timeout_120s_click_popup_needed',
+    "node_log: $nodeLog",
+    "diag: $diag"
+  ) | Out-File -FilePath $out -Encoding utf8
+} else {
+  "node_timeout=false" | Out-File -FilePath $diag -Append -Encoding utf8
+  "node_exit=$($p.ExitCode)" | Out-File -FilePath $diag -Append -Encoding utf8
+}
+@(
+  '=== STDOUT ==='
+  if (Test-Path $nodeOut) { Get-Content -Raw -Path $nodeOut } else { '<missing stdout>' }
+  '=== STDERR ==='
+  if (Test-Path $nodeErr) { Get-Content -Raw -Path $nodeErr } else { '<missing stderr>' }
+  '=== DIAG ==='
+  if (Test-Path $diag) { Get-Content -Raw -Path $diag } else { '<missing diag>' }
+  '=== LATEST ==='
+  if (Test-Path $out) { Get-Content -Raw -Path $out } else { '<missing latest>' }
+) | Out-File -FilePath $nodeLog -Encoding utf8
 if (-not (Test-Path $out)) {
   @(
     'state: ps_node_done',
     'percent: 99',
     'final: false',
     'reason: node_finished_without_v_latest',
-    "node_exit: $LASTEXITCODE",
     "node_log: $nodeLog"
   ) | Out-File -FilePath $out -Encoding utf8
 }
+"diag_finished=$(Get-Date -Format o)" | Out-File -FilePath $diag -Append -Encoding utf8
