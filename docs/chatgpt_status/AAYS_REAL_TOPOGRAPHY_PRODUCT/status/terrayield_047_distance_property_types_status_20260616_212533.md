@@ -1,0 +1,7 @@
+status: SMOKE_BLOCKED_APP_NOT_RUNNING_OR_ROUTE_NOT_REACHABLE
+completion_percent: 78
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_20260616_212533.md
+feature_count: 
+missing_required_fields: 
+missing_metric_value_fields: 
+no_db_write: true
