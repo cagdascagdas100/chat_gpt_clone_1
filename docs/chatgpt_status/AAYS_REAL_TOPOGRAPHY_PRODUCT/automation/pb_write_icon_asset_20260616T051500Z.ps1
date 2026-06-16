@@ -11,12 +11,22 @@ $b64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABnUlEQVR4nO2bPU4DQQyFB8RF
 $bytes = [Convert]::FromBase64String($b64)
 [IO.File]::WriteAllBytes($iconPath, $bytes)
 [IO.File]::WriteAllBytes($staticPath, $bytes)
-git add england_map_web/assets/icons/terrayield_icons/planed_buildings.png england_map_web/static/planed_buildings.png
-$changed = git status --porcelain
-if ($changed) { git commit -m 'Add planned buildings icon assets'; git push origin HEAD:aays-runner-v17-icon-work-20260603-232706 }
 $reportDir = Join-Path $RepoRoot 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports'
 $statusDir = Join-Path $RepoRoot 'docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status'
 New-Item -ItemType Directory -Force -Path $reportDir,$statusDir | Out-Null
-$lines = @('PAGE_KEY: ' + $PageKey, 'STATUS: ICON_ASSET_SCRIPT_DONE', 'ICON_FILE: planed_buildings.png', 'ICON_SIZE: 64x64', 'ICON_PATH: england_map_web/assets/icons/terrayield_icons/planed_buildings.png', 'STATIC_ICON_PATH: england_map_web/static/planed_buildings.png', 'FINAL_READY: false')
-$lines | Set-Content -Encoding UTF8 (Join-Path $reportDir 'pb_write_icon_asset_20260616T051500Z.txt')
-$lines | Set-Content -Encoding UTF8 (Join-Path $statusDir 'pb_write_icon_asset_20260616T051500Z.txt')
+$reportPath = Join-Path $reportDir 'pb_write_icon_asset_20260616T051500Z.txt'
+$statusPath = Join-Path $statusDir 'pb_write_icon_asset_20260616T051500Z.txt'
+$lines = @(
+  'PAGE_KEY: ' + $PageKey,
+  'STATUS: ICON_ASSET_SCRIPT_DONE',
+  'ICON_FILE: planed_buildings.png',
+  'ICON_SIZE: 64x64',
+  'ICON_PATH: england_map_web/assets/icons/terrayield_icons/planed_buildings.png',
+  'STATIC_ICON_PATH: england_map_web/static/planed_buildings.png',
+  'FINAL_READY: false'
+)
+$lines | Set-Content -Encoding UTF8 $reportPath
+$lines | Set-Content -Encoding UTF8 $statusPath
+git add england_map_web/assets/icons/terrayield_icons/planed_buildings.png england_map_web/static/planed_buildings.png $reportPath $statusPath
+$changed = git status --porcelain
+if ($changed) { git commit -m 'Add planned buildings icon assets and status'; git push origin HEAD:aays-runner-v17-icon-work-20260603-232706 }
