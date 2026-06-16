@@ -1,0 +1,29 @@
+status=QUEUED
+page_key=gas_emissions
+task_id=terrayield-093-gas-emissions-contract-runtime-finalize
+completion_percent=90
+final_ready=false
+runner_mode=single_shared_runner
+power_shell_required=false
+manual_stdout_required=false
+
+OBSERVED
+- Final report is still missing: docs/chatgpt_status/gas_emissions/reports/terrayield-093-gas-emissions-contract-runtime-finalize.txt
+- Runner output is still missing: docs/chatgpt_status/gas_emissions/runner_outputs/gas_emissions_093_final_contract_latest.json
+- Page-local current-task exists and points to v4 automation.
+- Root current-task belongs to internet_access and was not overwritten.
+
+FIX_APPLIED_THIS_LOOP
+- Added contract_pickup_ready=true to gas page current-task/status/queue/runner_tasks.
+- Added db_write=false, migration=false, production_deploy=false, fake_data=false to page-local pickup files.
+- Kept parallel_safe=false because v4 writes parcel_emissions_scores.geojson and app.js.
+
+WHY_NOT_100
+- FINAL_READY requires runner-created final report/status/output evidence.
+- Until shared runner executes v4 and commits/pushes final evidence, status must stay queued.
+
+NEXT_EXPECTED_GITHUB_EVIDENCE
+- docs/chatgpt_status/gas_emissions/reports/terrayield-093-gas-emissions-contract-runtime-finalize.txt
+- docs/chatgpt_status/gas_emissions/runner_outputs/gas_emissions_093_final_contract_latest.json
+
+WAIT_MINUTES=10
