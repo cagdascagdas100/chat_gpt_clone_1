@@ -1,0 +1,7 @@
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+active_task_id: topography_runtime_final_v2_20260616_2254
+preferred_current_task: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/topography_runtime_final_v2_20260616_2254.task.md
+automation_script: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_runtime_final_v2_20260616_2254.ps1
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_chatgpt_runtime_gap_report_20260616_2254_v2.txt
+ignore_superseded_task_id: topography_runtime_parallel_final_20260616_2254
+reason: v1 automation was incomplete on runner branch; v2 is complete and writes final/status report
