@@ -6,4 +6,6 @@ from terrayield_land_intelligence.app.services.planned_asset_service import buil
 
 
 def get_planned_assets_parcel_layer_response(features: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    return build_planned_buildings_feature_collection(features or [])
+    data = build_planned_buildings_feature_collection(features or [])
+    data.setdefault("metadata", {})["icon_file"] = "planed_buildings.png"
+    return data
