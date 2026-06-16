@@ -1,0 +1,7 @@
+status: CONTRACT_BLOCKED_NOT_FINAL_READY
+completion_percent: 82
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_20260616_222800.md
+feature_count: 1
+missing_required_fields: layer_name, parcel_ref, use6_label, overall_distance_property_type_score_pct, class_level, source_name, evidence_summary, accuracy_scale, matching_method, nearest_industrial_unit_m, nearest_detached_home_m, nearest_retail_property_m, nearest_apartment_building_m, nearest_office_building_m, nearest_mixed_building_program_m
+missing_metric_value_fields: nearest_industrial_unit_m, nearest_detached_home_m, nearest_retail_property_m, nearest_apartment_building_m, nearest_office_building_m, nearest_mixed_building_program_m
+no_db_write: true
