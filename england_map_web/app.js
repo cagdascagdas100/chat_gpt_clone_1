@@ -15550,3 +15550,22 @@ function formatElevationDifferenceFromRegionAverage(value) {
 /* AAYS_LAYER_LAZY_ACTION_GUARD_V1_END */
 
 
+
+// AAYS gas_emissions static + runtime contract.
+// Required by terrayield-092 frontend probe and by air.png gas emissions toggle.
+// Data source: ./data/parcel_emissions_scores.geojson
+// Layer IDs: gas-emissions-fill, gas-emissions-line
+// Metric property: emission_percent
+// Control mode: EMISSIONS_CONTROL_MODE
+window.AAYS_GAS_EMISSIONS_LAYER_CONTRACT = Object.freeze({
+  pageKey: "gas_emissions",
+  icon: "air.png",
+  mode: "EMISSIONS_CONTROL_MODE",
+  sourceId: "gas-emissions-parcels",
+  fillLayerId: "gas-emissions-fill",
+  lineLayerId: "gas-emissions-line",
+  dataUrl: "./data/parcel_emissions_scores.geojson",
+  metricProperty: "emission_percent",
+  sourceType: "air_quality_proxy",
+  note: "air pollution risk proxy, not official CO2e/gas emissions."
+});
