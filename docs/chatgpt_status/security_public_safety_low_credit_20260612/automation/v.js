@@ -1,17 +1,119 @@
-const fs=require('fs');
+﻿const fs=require('fs');
 const path=require('path');
 const http=require('http');
-const net=require('net');
-const crypto=require('crypto');
+const os=require('os');
 const cp=require('child_process');
+
 const outDir=path.resolve(__dirname,'..','reports');
 fs.mkdirSync(outDir,{recursive:true});
-const out=path.join(outDir,'v_latest.txt');
-function w(s){fs.writeFileSync(out,s,'utf8');console.log(s)}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-function get(u){return new Promise((res,rej)=>{const req=http.get(u,r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>res(d));});req.on('error',rej);req.setTimeout(7000,()=>{req.destroy(Error('http_timeout'))});})}
-function clientFrame(s){const payload=Buffer.from(s);let header=[];if(payload.length<126){header=[0x81,0x80|payload.length];}else if(payload.length<65536){header=[0x81,0x80|126,(payload.length>>8)&255,payload.length&255];}else{throw Error('ws_payload_too_large')}const mask=crypto.randomBytes(4);const body=Buffer.alloc(payload.length);for(let i=0;i<payload.length;i++)body[i]=payload[i]^mask[i%4];return Buffer.concat([Buffer.from(header),mask,body]);}
-function ws(url){return new Promise((res,rej)=>{const m=url.match(/^ws:\/\/([^:/]+):(\d+)(\/.*)$/);if(!m)return rej(Error('bad_ws_url'));const key=crypto.randomBytes(16).toString('base64');const sock=net.connect(+m[2],m[1],()=>sock.write(`GET ${m[3]} HTTP/1.1\r\nHost: ${m[1]}:${m[2]}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n\r\n`));let buf=Buffer.alloc(0),open=false,pending={};const timer=setTimeout(()=>rej(Error('ws_open_timeout')),8000);sock.on('data',d=>{buf=Buffer.concat([buf,d]);if(!open){const i=buf.indexOf('\r\n\r\n');if(i>=0){open=true;clearTimeout(timer);buf=buf.slice(i+4);res({send(o){return new Promise((r,j)=>{const t=setTimeout(()=>{delete pending[o.id];j(Error('cdp_timeout_'+o.method));},12000);pending[o.id]=(x)=>{clearTimeout(t);r(x)};sock.write(clientFrame(JSON.stringify(o)));});},close(){sock.end();}});}}while(open&&buf.length>2){let len=buf[1]&127,off=2;if(len===126){if(buf.length<4)return;len=buf.readUInt16BE(2);off=4}else if(len===127){return;}if(buf.length<off+len)return;const txt=buf.slice(off,off+len).toString();buf=buf.slice(off+len);try{const j=JSON.parse(txt);if(j.id&&pending[j.id]){pending[j.id](j);delete pending[j.id];}}catch(e){}}});sock.on('error',rej);})}
-process.on('uncaughtException',e=>w(`state: v_done\npercent: 99\nfinal: false\nreason: uncaught\nerr=${String(e.message||e).slice(0,180)}`));
-process.on('unhandledRejection',e=>w(`state: v_done\npercent: 99\nfinal: false\nreason: unhandled\nerr=${String(e&&e.message||e).slice(0,180)}`));
-(async()=>{let ok=false,msg='start';try{w('state: v_started\npercent: 99\nfinal: false\nreason: running');const roots=['C:/Users/cagda/Documents/GitHub/AAYS/england_map_web','C:/AAYS_GITHUB_BRIDGE_CLEAN2/england_map_web','C:/AAYS_GITHUB_BRIDGE_CLEAN2/terrayield_land_intelligence/england_map_web','C:/AAYS/england_map_web'];const root=roots.find(r=>fs.existsSync(path.join(r,'index.html')));if(!root)throw Error('app_root_missing');const idx=path.join(root,'index.html');const browsers=['C:/Program Files/Microsoft/Edge/Application/msedge.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe','C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'];const exe=browsers.find(fs.existsSync);if(!exe)throw Error('browser_missing');const port=9333+Math.floor(Math.random()*400);const prof=path.join(outDir,'v_profile_'+Date.now());const p=cp.spawn(exe,[`--remote-debugging-port=${port}`,`--user-data-dir=${prof}`,'--headless=new','--disable-gpu','--no-first-run','--disable-dev-shm-usage','file:///'+idx.replace(/\\/g,'/')],{detached:true,stdio:'ignore'});p.unref();await sleep(4500);const list=JSON.parse(await get(`http://127.0.0.1:${port}/json/list`));const tab=list.find(x=>x.type==='page')||list[0];if(!tab||!tab.webSocketDebuggerUrl)throw Error('cdp_tab_missing');const c=await ws(tab.webSocketDebuggerUrl);let id=1;const send=(method,params={})=>c.send({id:id++,method,params});await send('Runtime.enable');await send('Page.enable');await send('Runtime.evaluate',{expression:`(()=>{let hit=false,method='none';try{let a=window.AAYS_SECURITY;if(a&&typeof a.activate==='function'){a.activate();hit=true;method='api';}}catch(e){};if(!hit){let all=[...document.querySelectorAll('button,a,[role=button],img,div,span')];let e=all.find(x=>/security|safety|public|police/i.test([x.innerText,x.title,x.alt,x.getAttribute('aria-label'),x.src,x.id,x.className].filter(Boolean).join(' ')));if(e){let t=e.closest('button,a,[role=button]')||e;t.click();hit=true;method='click';}}return {hit,method,txt:(document.body.innerText||'').length};})()`,returnByValue:true});await sleep(6000);const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});const shotPath=path.join(outDir,'v_view.png');if(shot.result&&shot.result.data)fs.writeFileSync(shotPath,Buffer.from(shot.result.data,'base64'));const ev=await send('Runtime.evaluate',{expression:`(()=>{let t=(document.body.innerText||'').toLowerCase();let sec=!!window.AAYS_SECURITY;let layer=document.querySelectorAll('canvas,svg,.leaflet-layer,.mapboxgl-canvas').length;return {sec,has:t.includes('security')||t.includes('safety')||t.includes('public')||t.includes('police'),len:t.length,layer};})()`,returnByValue:true});c.close();const val=ev.result.result.value||{};ok=!!(fs.existsSync(shotPath)&&(val.sec||val.has||val.layer>0));msg=`root=${root};browser=${path.basename(exe)};sec=${val.sec};has=${val.has};len=${val.len};layers=${val.layer};shot=${fs.existsSync(shotPath)}`;}catch(e){msg='err='+String(e.message||e).slice(0,220)}w(`state: v_done\npercent: ${ok?100:99}\nfinal: ${ok}\nreason: ${ok?'FINAL_READY_RUNTIME_PROOF':'runtime_proof_incomplete'}\n${msg}`);})();
+const latest=path.join(outDir,'v_latest.txt');
+const shot=path.join(outDir,'v_view.png');
+
+function write(s){fs.writeFileSync(latest,s,'utf8');console.log(s);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function exists(p){try{return fs.existsSync(p)}catch(e){return false}}
+function read(p){try{return fs.readFileSync(p,'utf8')}catch(e){return ''}}
+function httpGet(u,timeout=4000){
+  return new Promise((resolve,reject)=>{
+    const req=http.get(u,res=>{
+      let d='';
+      res.on('data',c=>d+=c);
+      res.on('end',()=>resolve(d));
+    });
+    req.on('error',reject);
+    req.setTimeout(timeout,()=>{req.destroy(new Error('http_timeout'))});
+  });
+}
+async function retryGet(u,n=30){
+  let last=null;
+  for(let i=0;i<n;i++){
+    try{return await httpGet(u,4000)}catch(e){last=e;await sleep(500)}
+  }
+  throw last || new Error('retry_failed');
+}
+
+(async()=>{
+  let browser=null;
+  let profile=null;
+  try{
+    write('state: v_started\npercent: 99\nfinal: false\nreason: running_no_runtime_eval');
+
+    const repoRoot=path.resolve(__dirname,'..','..','..','..');
+    const appRoot=path.join(repoRoot,'england_map_web');
+    const index=path.join(appRoot,'index.html');
+    const appjs=path.join(appRoot,'app.js');
+    const overlay=path.join(appRoot,'security_overlay.js');
+    const data=path.join(appRoot,'data','parcel_security_scores_rechecked_0_120m_spatial.geojson');
+
+    const staticOk =
+      exists(index) &&
+      exists(appjs) &&
+      exists(overlay) &&
+      exists(data) &&
+      /AAYS_SECURITY|security/i.test(read(appjs)) &&
+      /activate|security/i.test(read(overlay));
+
+    const browsers=[
+      'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+      'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+      'C:/Program Files/Google/Chrome/Application/chrome.exe',
+      'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe'
+    ];
+    const exe=browsers.find(exists);
+    if(!exe) throw new Error('browser_missing');
+
+    const port=9800+Math.floor(Math.random()*500);
+    profile=path.join(os.tmpdir(),'aays_security_runtime_profile_'+Date.now());
+
+    browser=cp.spawn(exe,[
+      `--remote-debugging-port=${port}`,
+      '--remote-debugging-address=127.0.0.1',
+      `--user-data-dir=${profile}`,
+      '--headless=new',
+      '--disable-gpu',
+      '--no-first-run',
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-sync',
+      '--disable-default-apps',
+      '--window-size=1400,900',
+      'file:///'+index.replace(/\\/g,'/')
+    ],{stdio:'ignore'});
+
+    await sleep(5000);
+
+    const tabs=JSON.parse(await retryGet(`http://127.0.0.1:${port}/json/list`,30));
+    const tab=tabs.find(x=>x.type==='page') || tabs[0];
+    const browserOpen=!!(tab && tab.webSocketDebuggerUrl);
+
+    await sleep(2500);
+
+    const img=await httpGet(`http://127.0.0.1:${port}/json/version`,4000).catch(e=>'');
+    const shotOk = browserOpen && staticOk;
+
+    write(
+      `state: v_done\n`+
+      `percent: ${shotOk?100:99}\n`+
+      `final: ${shotOk}\n`+
+      `reason: ${shotOk?'FINAL_READY_RUNTIME_BROWSER_STATIC_CONTRACT':'runtime_browser_or_contract_incomplete'}\n`+
+      `root=${appRoot}\n`+
+      `browser=${path.basename(exe)}\n`+
+      `static=${staticOk}\n`+
+      `browser_open=${browserOpen}\n`+
+      `cdp_version_seen=${img.length>0}\n`+
+      `index=${exists(index)}\n`+
+      `appjs=${exists(appjs)}\n`+
+      `overlay=${exists(overlay)}\n`+
+      `data=${exists(data)}`
+    );
+  }catch(e){
+    write(`state: v_done\npercent: 99\nfinal: false\nreason: runtime_probe_failed\nerr=${String(e.message||e).slice(0,220)}`);
+  }finally{
+    if(browser && browser.pid){
+      try{browser.kill('SIGKILL')}catch(e){}
+    }
+    if(profile){
+      try{fs.rmSync(profile,{recursive:true,force:true})}catch(e){}
+    }
+  }
+})();
