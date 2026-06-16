@@ -1,66 +1,12 @@
 (function(){
-  function rerender(){
-    try{
-      if(typeof renderTests==='function' && window.selectedCategory==='Bevor Schreiben') renderTests('Bevor Schreiben');
-      else if(typeof renderTests==='function' && window.selectedCategory==='Genel Grammer') renderTests('Genel Grammer');
-      else if(typeof renderCategoryChoice==='function') renderCategoryChoice();
-    }catch(e){console.error('late rerender failed',e)}
-  }
-  function loadScript(src,done){
-    try{
-      var s=document.createElement('script');
-      s.src=src;
-      s.onload=done||function(){};
-      s.onerror=function(){console.error(src+' could not be loaded');};
-      document.head.appendChild(s);
-    }catch(e){console.error('script load failed',src,e)}
-  }
-  function runGuards(){
-    try{ if(window.__ensureAllLongLessons1500) window.__ensureAllLongLessons1500(); }catch(e){}
-    try{ if(window.__ensureAllLongLessons1500Final) window.__ensureAllLongLessons1500Final(); }catch(e){}
-    try{ if(window.__boostSatzmuster2Source) window.__boostSatzmuster2Source(); }catch(e){}
-    try{ if(window.__uniqueLongNoRepeatGuard) window.__uniqueLongNoRepeatGuard(); }catch(e){}
-    try{ if(window.__edgeReaderEnhanceLesson) window.__edgeReaderEnhanceLesson(); }catch(e){}
-  }
-  function refresh(){ runGuards(); rerender(); }
-  function loadOnlineNachteile(){
-    if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t38){rerender();return;}
-    loadScript('data_bevor_online_studium_nachteile.js?v=6',function(){refresh();});
-  }
-  function loadAnonymitaetVorteile(){
-    function loadOverride(){
-      loadScript('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){
-        loadScript('anonymitaet_edge_reader_link.js?v=1',function(){refresh();});
-      });
-    }
-    if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t39){loadOverride();return;}
-    loadScript('data_bevor_anonymitaet_vorteile.js?v=2',function(){loadOverride();});
-  }
-  function loadSatzmuster2(){
-    loadScript('data_grammar_satzmuster2_full.js?v=3',function(){
-      loadScript('t37_satzmuster2_source_boost.js?v=1',function(){refresh();});
-    });
-  }
-  function loadReaderSupport(){
-    if(window.__edgeReaderEnhanceLesson){runGuards();return;}
-    loadScript('edge_reader_support.js?v=1',function(){runGuards();});
-  }
-  function loadUniqueNoRepeat(){
-    if(window.__uniqueLongNoRepeatGuard){refresh();return;}
-    loadScript('lesson_unique_1400_no_repeat_guard.js?v=3',function(){refresh();});
-  }
-  loadOnlineNachteile();
-  loadAnonymitaetVorteile();
-  setTimeout(loadSatzmuster2,0);
-  setTimeout(loadReaderSupport,0);
-  setTimeout(loadUniqueNoRepeat,20);
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadAnonymitaetVorteile,120);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(loadUniqueNoRepeat,220);setTimeout(refresh,700);setTimeout(refresh,1900);setTimeout(refresh,3600);setTimeout(refresh,5600);});
-  setTimeout(loadOnlineNachteile,500);
-  setTimeout(loadAnonymitaetVorteile,550);
-  setTimeout(loadSatzmuster2,700);
-  setTimeout(loadReaderSupport,750);
-  setTimeout(loadUniqueNoRepeat,900);
-  setTimeout(refresh,1600);
-  setTimeout(refresh,3500);
-  setTimeout(refresh,5500);
+  function add(src,done){try{var s=document.createElement('script');s.src=src;s.onload=done||function(){};s.onerror=function(){console.error('load failed',src)};document.head.appendChild(s);}catch(e){console.error(e)}}
+  function rr(){try{if(window.__finalSchreibenFehlernCleanup)window.__finalSchreibenFehlernCleanup();}catch(e){}try{if(window.__edgeReaderEnhanceLesson)window.__edgeReaderEnhanceLesson();}catch(e){}try{if(typeof renderTests==='function'&&window.selectedCategory)renderTests(window.selectedCategory);else if(typeof renderCategoryChoice==='function')renderCategoryChoice();}catch(e){}}
+  function t38(){if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t38){rr();return;}add('data_bevor_online_studium_nachteile.js?v=6',rr)}
+  function t39(){function o(){add('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){add('anonymitaet_edge_reader_link.js?v=1',rr)})}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t39){o();return;}add('data_bevor_anonymitaet_vorteile.js?v=2',o)}
+  function satz2(){add('data_grammar_satzmuster2_full.js?v=3',function(){add('t37_satzmuster2_source_boost.js?v=1',rr)})}
+  function edge(){if(window.__edgeReaderEnhanceLesson){rr();return;}add('edge_reader_support.js?v=1',rr)}
+  function clean(){add('final_schreiben_fehlern_cleanup.js?v=1',rr)}
+  t38();t39();setTimeout(satz2,0);setTimeout(edge,0);setTimeout(clean,20);
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(t38,100);setTimeout(t39,130);setTimeout(satz2,160);setTimeout(edge,190);setTimeout(clean,240);setTimeout(rr,800);setTimeout(rr,2200);setTimeout(rr,5000);});
+  setTimeout(clean,1200);setTimeout(rr,6500);
 })();
