@@ -1,0 +1,14 @@
+page_key=AAYS_REAL_TOPOGRAPHY_PRODUCT
+branch=aays-runner-v17-icon-work-20260603-232706
+completion_percent=99.5
+final_ready=false
+queue_ready=true
+current_task_ready=true
+canonical_current_task_retry=20260616T0005Z
+smoke_report_found=false
+raw_output_found=false
+heartbeat_found=false
+blocker=single_shared_runner_has_not_published_outputs
+expected_report=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_<timestamp>.md
+wait_minutes=10
+power_shell_required=false
