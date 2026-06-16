@@ -1,0 +1,7 @@
+status: FINAL_READY
+completion_percent: 100
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/terrayield_047_distance_property_types_apply_patch_smoke_20260616_225951.md
+feature_count: 1
+missing_required_fields: 
+missing_metric_value_fields: 
+no_db_write: true
