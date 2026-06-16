@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
@@ -96,3 +96,4 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+
