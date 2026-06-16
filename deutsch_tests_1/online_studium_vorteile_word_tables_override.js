@@ -27,6 +27,10 @@
     if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t38){rerender();return;}
     loadScript('data_bevor_online_studium_nachteile.js?v=6',function(){refresh();});
   }
+  function loadAnonymitaetVorteile(){
+    if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t39){rerender();return;}
+    loadScript('data_bevor_anonymitaet_vorteile.js?v=1',function(){refresh();});
+  }
   function loadSatzmuster2(){
     loadScript('data_grammar_satzmuster2_full.js?v=3',function(){
       loadScript('t37_satzmuster2_source_boost.js?v=1',function(){refresh();});
@@ -41,11 +45,13 @@
     loadScript('lesson_unique_1400_no_repeat_guard.js?v=3',function(){refresh();});
   }
   loadOnlineNachteile();
+  loadAnonymitaetVorteile();
   setTimeout(loadSatzmuster2,0);
   setTimeout(loadReaderSupport,0);
   setTimeout(loadUniqueNoRepeat,20);
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(loadUniqueNoRepeat,220);setTimeout(refresh,700);setTimeout(refresh,1900);setTimeout(refresh,3600);setTimeout(refresh,5600);});
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(loadOnlineNachteile,100);setTimeout(loadAnonymitaetVorteile,120);setTimeout(loadSatzmuster2,150);setTimeout(loadReaderSupport,180);setTimeout(loadUniqueNoRepeat,220);setTimeout(refresh,700);setTimeout(refresh,1900);setTimeout(refresh,3600);setTimeout(refresh,5600);});
   setTimeout(loadOnlineNachteile,500);
+  setTimeout(loadAnonymitaetVorteile,550);
   setTimeout(loadSatzmuster2,700);
   setTimeout(loadReaderSupport,750);
   setTimeout(loadUniqueNoRepeat,900);
