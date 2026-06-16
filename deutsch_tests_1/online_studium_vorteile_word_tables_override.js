@@ -28,7 +28,11 @@
     loadScript('data_bevor_online_studium_nachteile.js?v=6',function(){refresh();});
   }
   function loadAnonymitaetVorteile(){
-    function loadOverride(){loadScript('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){refresh();});}
+    function loadOverride(){
+      loadScript('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){
+        loadScript('anonymitaet_edge_reader_link.js?v=1',function(){refresh();});
+      });
+    }
     if(window.DEUTSCH_TESTS && window.DEUTSCH_TESTS.t39){loadOverride();return;}
     loadScript('data_bevor_anonymitaet_vorteile.js?v=2',function(){loadOverride();});
   }
