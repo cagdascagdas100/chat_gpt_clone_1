@@ -53,9 +53,10 @@ try{
  if($a -notmatch 'AAYS_GAS_EMISSIONS_POPUP_BINDING_V093'){
   $binding=@'
       ${tagHtml}
+      <!-- AAYS_GAS_EMISSIONS_POPUP_BINDING_V093 -->
       ${(() => { const p = feature && feature.properties ? feature.properties : {}; return `<div class="gas-emissions-contract" data-gas-emissions-bound="true"><div><strong>Gas emissions score:</strong> ${p.emission_percent || p.score_percent || p.score || "not provided"}</div><div><strong>Class / level:</strong> ${p.emission_class || p.class || p.level || "not provided"}</div><div><strong>Color category:</strong> ${p.color_category || "not provided"}</div><div><strong>Source / evidence:</strong> ${p.source_evidence || p.source_file || p.source_type || "not provided"}</div><div><strong>Source date:</strong> ${p.source_date || "not provided"}</div><div><strong>Confidence / accuracy:</strong> ${p.confidence_scale || p.confidence_percent || p.confidence || "not provided"}</div><div><strong>Matching method:</strong> ${p.matching_method || "not provided"}</div><div><strong>Calculation explanation:</strong> ${p.calculation_explanation || "not provided"}</div><div><strong>Geometry status:</strong> ${p.geometry_status || p.geometry_degraded_status || "degraded_point_proxy"}</div></div>`; })()}
 '@
-  if($a.Contains('      ${tagHtml}')){$a=$a.Replace('      ${tagHtml}',$binding)}else{throw 'app.js popup tagHtml anchor missing'}
+  if($a -match 'gas-emissions-contract'){$a=$a -replace '(<div class="gas-emissions-contract")','<!-- AAYS_GAS_EMISSIONS_POPUP_BINDING_V093 -->$1'}elseif($a.Contains('      ${tagHtml}')){$a=$a.Replace('      ${tagHtml}',$binding)}else{throw 'app.js popup tagHtml anchor missing'}
  }
  if($a -notmatch 'STATIC_FALLBACK_ON_8010'){$a=$a -replace 'const EMISSIONS_CONTROL_MODE = "__gas_emissions_toggle__";','const EMISSIONS_CONTROL_MODE = "__gas_emissions_toggle__"; window.__AAYS_GAS_EMISSIONS_RUNTIME_MODE__ = window.__AAYS_GAS_EMISSIONS_RUNTIME_MODE__ || "STATIC_FALLBACK_ON_8010_OR_STATIC_GEOJSON";'}
  $a|Set-Content -Encoding UTF8 $App
