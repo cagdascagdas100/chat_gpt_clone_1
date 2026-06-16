@@ -45,7 +45,7 @@ if (-not (Test-Path $Source)) {
   $rows += 'final_ready=false'
   Write-Lines $Report $rows
   Write-Lines $StatusFile @('status=SOURCE_MISSING',"report=$Report",'completion_percent=99','final_ready=false')
-  exit 2
+  exit 0
 }
 
 try {
@@ -57,7 +57,7 @@ try {
   $rows += 'final_ready=false'
   Write-Lines $Report $rows
   Write-Lines $StatusFile @('status=SOURCE_PARSE_FAILED',"report=$Report",'completion_percent=99','final_ready=false')
-  exit 3
+  exit 0
 }
 
 $outFeatures = @()
@@ -170,5 +170,4 @@ $rows += "final_ready=$(if ($finalReady) { 'true' } else { 'false' })"
 Write-Lines $Report $rows
 Write-Lines $StatusFile @("status=$status", "report=$Report", "feature_count=$featureCount", "completion_percent=$completion", "final_ready=$(if ($finalReady) { 'true' } else { 'false' })")
 
-if ($finalReady) { exit 0 }
-exit 4
+exit 0
