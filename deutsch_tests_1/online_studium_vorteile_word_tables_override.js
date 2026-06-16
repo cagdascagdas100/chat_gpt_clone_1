@@ -5,7 +5,7 @@
   function t39(){function o(){add('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){add('anonymitaet_edge_reader_link.js?v=1',rr)})}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t39){o();return;}add('data_bevor_anonymitaet_vorteile.js?v=2',o)}
   function satz2(){add('data_grammar_satzmuster2_full.js?v=3',function(){add('t37_satzmuster2_source_boost.js?v=1',rr)})}
   function edge(){if(window.__edgeReaderEnhanceLesson){rr();return;}add('edge_reader_support.js?v=1',rr)}
-  function clean(){add('final_schreiben_fehlern_cleanup.js?v=1',rr)}
+  function clean(){add('no_generic_fillers.js?v=1',function(){add('final_schreiben_fehlern_cleanup.js?v=1',rr)})}
   t38();t39();setTimeout(satz2,0);setTimeout(edge,0);setTimeout(clean,20);
   document.addEventListener('DOMContentLoaded',function(){setTimeout(t38,100);setTimeout(t39,130);setTimeout(satz2,160);setTimeout(edge,190);setTimeout(clean,240);setTimeout(rr,800);setTimeout(rr,2200);setTimeout(rr,5000);});
   setTimeout(clean,1200);setTimeout(rr,6500);
