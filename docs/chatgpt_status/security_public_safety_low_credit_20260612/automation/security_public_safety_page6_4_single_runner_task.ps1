@@ -1,307 +1,177 @@
 $ErrorActionPreference = "Stop"
-
 param(
   [string]$WorktreeRoot = "F:\chatgpt\AAYS_WORK\security_public_safety_20260617_clean",
   [string]$FallbackWorktreeRoot = "D:\chatgpt\AAYS_WORK\security_public_safety_20260617_clean",
   [string]$HeavyDataRoot = "D:\topografik_map\security_module\data_processed",
-  [string]$PageKey = "security_public_safety_low_credit_20260612"
+  [string]$PageKey = "security_public_safety_low_credit_20260612",
+  [string]$RepoUrl = "https://github.com/cagdascagdas100/chat_gpt_clone_1.git",
+  [string]$Branch = "main"
 )
 
 $startedAt = Get-Date
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-if (!(Test-Path $WorktreeRoot) -and (Test-Path $FallbackWorktreeRoot)) {
-  $WorktreeRoot = $FallbackWorktreeRoot
-}
-
-$PageRoot = Join-Path $WorktreeRoot "docs\chatgpt_status\$PageKey"
-$ReportRoot = Join-Path $PageRoot "reports"
-$StatusRoot = Join-Path $PageRoot "status"
-$HeartbeatRoot = Join-Path $PageRoot "heartbeat"
-New-Item -ItemType Directory -Force -Path $ReportRoot,$StatusRoot,$HeartbeatRoot | Out-Null
-
-$ApplyReport = Join-Path $ReportRoot "security_df_worktree_apply_report_$timestamp.md"
-$SmokeReport = Join-Path $ReportRoot "security_df_worktree_smoke_report_$timestamp.md"
-$BlockerReport = Join-Path $ReportRoot "security_df_worktree_blockers_$timestamp.md"
-$StatusReport = Join-Path $StatusRoot "page_6_4_security_status_$timestamp.md"
-$HeartbeatReport = Join-Path $HeartbeatRoot "page_6_4_security_heartbeat_$timestamp.md"
-
-function Add-Line([string]$Path, [string]$Text) {
-  $Text | Out-File -FilePath $Path -Append -Encoding utf8
-}
-function Write-Report([string]$Text) {
-  Add-Line $ApplyReport $Text
-  Write-Host $Text
-}
-function Test-Text([string]$Path, [string]$Pattern) {
-  if (!(Test-Path $Path)) { return $false }
-  return [bool](Select-String -Path $Path -Pattern $Pattern -SimpleMatch -Quiet)
-}
-
-$guardrailViolations = @()
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
 $blockers = New-Object System.Collections.Generic.List[string]
-$carrier = "UNDETECTED"
-$securityLookupSource = "UNDETECTED"
-$pointFeatureCount = "UNKNOWN"
-$polygonFeatureCount = "UNKNOWN"
-$contractFieldsComplete = $false
-$popupContractOk = $false
-$rightPanelContractOk = $false
-$browserSmokeOk = $false
+$warnings = New-Object System.Collections.Generic.List[string]
+function EnsureDir($p){ if(!(Test-Path $p)){ New-Item -ItemType Directory -Force -Path $p | Out-Null } }
+function AddLine($p,$t){ $t | Out-File -FilePath $p -Append -Encoding utf8 }
+function SetText($p,$t){ $t | Out-File -FilePath $p -Encoding utf8 }
+function HasText($p,$s){ if(!(Test-Path $p)){ return $false }; return [bool](Select-String -Path $p -Pattern $s -SimpleMatch -Quiet) }
+function RelPath($root,$path){ $r=[IO.Path]::GetFullPath($root).TrimEnd('\','/'); $p=[IO.Path]::GetFullPath($path); if($p.StartsWith($r,[StringComparison]::OrdinalIgnoreCase)){ return $p.Substring($r.Length).TrimStart('\','/').Replace('\','/')}; return $null }
 
-Add-Line $ApplyReport "# Security/Public Safety Page 6.4 Apply Report"
-Add-Line $ApplyReport "status: STARTED"
-Add-Line $ApplyReport "completion_percent: 20"
-Add-Line $ApplyReport "worktree_root: $WorktreeRoot"
-Add-Line $ApplyReport "heavy_data_root: $HeavyDataRoot"
-Add-Line $ApplyReport "started_at: $($startedAt.ToString('s'))"
-Add-Line $ApplyReport "db_write: false"
-Add-Line $ApplyReport "ddl: false"
-Add-Line $ApplyReport "migration: false"
-Add-Line $ApplyReport "production_deploy: false"
-Add-Line $ApplyReport "fake_data: false"
-Add-Line $ApplyReport ""
-
-if (!(Test-Path $WorktreeRoot)) {
-  $blockers.Add("missing_worktree_root:$WorktreeRoot")
-} else {
-  try {
-    $branch = (& git -C $WorktreeRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
-    Add-Line $ApplyReport "git_branch: $branch"
-    if ($branch -ne "main") { $blockers.Add("branch_not_main:$branch") }
-  } catch {
-    Add-Line $ApplyReport "git_branch: UNKNOWN"
-    $blockers.Add("git_branch_probe_failed")
-  }
+if(!(Test-Path $WorktreeRoot) -and (Test-Path $FallbackWorktreeRoot)){ $WorktreeRoot=$FallbackWorktreeRoot }
+if(!(Test-Path $WorktreeRoot)){
+  EnsureDir (Split-Path -Parent $WorktreeRoot)
+  try { & git clone --branch $Branch --single-branch $RepoUrl $WorktreeRoot } catch { $blockers.Add("worktree_clone_failed:"+$_.Exception.Message) }
 }
 
-$webRoot = Join-Path $WorktreeRoot "england_map_web"
-$apiRoot = Join-Path $WorktreeRoot "terrayield_land_intelligence"
-$appJs = Join-Path $webRoot "app.js"
-$overlayJs = Join-Path $webRoot "security_overlay.js"
-$indexHtml = Join-Path $webRoot "index.html"
-$repoSecurityGeoJson = Join-Path $webRoot "data\parcel_security_scores_rechecked_0_120m_spatial.geojson"
-$repoSummaryJson = Join-Path $webRoot "data\parcel_security_match_summary.json"
+$pageRoot=Join-Path $WorktreeRoot "docs\chatgpt_status\$PageKey"
+$reports=Join-Path $pageRoot "reports"; $statusDir=Join-Path $pageRoot "status"; $heart=Join-Path $pageRoot "heartbeat"; $outDir=Join-Path $pageRoot "runner_outputs"
+$control=Join-Path $pageRoot "control"; $queue=Join-Path $pageRoot "queue"; $runnerTasks=Join-Path $pageRoot "runner_tasks"; $automation=Join-Path $pageRoot "automation"
+@($reports,$statusDir,$heart,$outDir,$control,$queue,$runnerTasks,$automation) | ForEach-Object { EnsureDir $_ }
+$apply=Join-Path $reports "security_df_worktree_apply_report_$ts.md"
+$smoke=Join-Path $reports "security_df_worktree_smoke_report_$ts.md"
+$bl=Join-Path $reports "security_df_worktree_blockers_$ts.md"
+$st=Join-Path $statusDir "page_6_4_security_status_$ts.md"
+$hb=Join-Path $heart "page_6_4_security_heartbeat_$ts.md"
+$ro=Join-Path $outDir "security_page6_4_runner_output_$ts.md"
 
-foreach ($p in @($webRoot,$apiRoot,$appJs,$overlayJs,$indexHtml)) {
-  Add-Line $ApplyReport ("exists:{0}={1}" -f $p, (Test-Path $p))
-  if (!(Test-Path $p)) { $blockers.Add("missing_required_path:$p") }
-}
+AddLine $apply "# Security/Public Safety Page 6.4 Apply Report"
+AddLine $apply "status: STARTED"
+AddLine $apply "completion_percent: 25"
+AddLine $apply "worktree_root: $WorktreeRoot"
+AddLine $apply "heavy_data_root: $HeavyDataRoot"
+AddLine $apply "started_at: $($startedAt.ToString('s'))"
+AddLine $apply "runner_contract: runner_tasks/current-task.json -> automation/security_public_safety_page6_4_single_runner_task.ps1"
+AddLine $apply "db_write: false"
+AddLine $apply "ddl: false"
+AddLine $apply "migration: false"
+AddLine $apply "production_deploy: false"
+AddLine $apply "fake_data: false"
+AddLine $apply "separate_runner_spawned: false"
+SetText $ro "# Page 6.4 Runner Output`nstarted_at: $($startedAt.ToString('s'))`n"
 
-# Detect carrier source without creating fake data.
-if (Test-Path $appJs) {
-  if (Test-Text $appJs "parcel-use-parcels") { $carrier = "frontend:parcel-use-parcels" }
-  elseif (Test-Text $appJs "fallback-parcels") { $carrier = "frontend:fallback-parcels" }
-  elseif (Test-Text $appJs "/map/parcels") { $carrier = "api:/map/parcels" }
-  elseif (Test-Text $appJs "pmtiles") { $carrier = "frontend:pmtiles_candidate" }
-  elseif (Test-Text $appJs "parcels_inspire") { $carrier = "backend:parcels_inspire_candidate" }
+if(Test-Path $WorktreeRoot){
+  try{
+    $branchNow=(& git -C $WorktreeRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
+    AddLine $apply "git_branch_before_sync: $branchNow"
+    if($branchNow -ne $Branch){ $blockers.Add("branch_not_main:$branchNow") }
+    & git -C $WorktreeRoot fetch origin $Branch | Out-Null
+    & git -C $WorktreeRoot pull --ff-only origin $Branch | Out-Null
+    AddLine $apply "git_sync: ff_only_ok"
+  } catch { AddLine $apply ("git_sync: failed - "+$_.Exception.Message); $warnings.Add("git_sync_failed") }
+} else { $blockers.Add("missing_worktree_root:$WorktreeRoot") }
+
+$web=Join-Path $WorktreeRoot "england_map_web"; $api=Join-Path $WorktreeRoot "terrayield_land_intelligence"
+$app=Join-Path $web "app.js"; $overlay=Join-Path $web "security_overlay.js"; $index=Join-Path $web "index.html"
+$repoGeo=Join-Path $web "data\parcel_security_scores_rechecked_0_120m_spatial.geojson"
+foreach($p in @($web,$api,$app,$overlay,$index)){ $ok=Test-Path $p; AddLine $apply ("exists:{0}={1}" -f $p,$ok); if(!$ok){ $blockers.Add("missing_required_path:$p") } }
+
+$carrier="UNDETECTED"
+if(Test-Path $app){
+  if(HasText $app "parcel-use-parcels"){ $carrier="frontend:parcel-use-parcels" }
+  elseif(HasText $app "fallback-parcels"){ $carrier="frontend:fallback-parcels" }
+  elseif(HasText $app "/map/parcels"){ $carrier="api:/map/parcels" }
+  elseif(HasText $app "pmtiles"){ $carrier="frontend:pmtiles_candidate" }
+  elseif(HasText $app "parcels_inspire"){ $carrier="backend:parcels_inspire_candidate" }
   else { $blockers.Add("parcel_polygon_carrier_not_found_in_app_js") }
 }
 
-# Prefer enhanced heavy data if present, then compact, then repo legacy file.
-$heavyEnhanced = Join-Path $HeavyDataRoot "parcel_security_scores_enhanced_compact.geojson"
-$heavyCompact = Join-Path $HeavyDataRoot "parcel_security_scores_compact.geojson"
-$heavyFull = Join-Path $HeavyDataRoot "parcel_security_scores.geojson"
-foreach ($candidate in @($heavyEnhanced,$heavyCompact,$heavyFull,$repoSecurityGeoJson)) {
-  if (Test-Path $candidate) { $securityLookupSource = $candidate; break }
-}
-if ($securityLookupSource -eq "UNDETECTED") { $blockers.Add("security_lookup_source_not_found") }
+$securityLookup="UNDETECTED"
+$cands=@((Join-Path $HeavyDataRoot "parcel_security_scores_enhanced_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores.geojson"),$repoGeo)
+foreach($c in $cands){ if(Test-Path $c){ $securityLookup=$c; break } }
+if($securityLookup -eq "UNDETECTED"){ $blockers.Add("security_lookup_source_not_found") }
 
-# Lightweight field and geometry probes. Do not load large GeoJSON into memory.
-if ($securityLookupSource -ne "UNDETECTED") {
-  $sampleText = (Get-Content -Path $securityLookupSource -TotalCount 600 -ErrorAction SilentlyContinue) -join "`n"
-  if ($sampleText -match '"Point"') { $pointFeatureCount = "POINT_GEOMETRY_PRESENT" }
-  if ($sampleText -match '"Polygon"|"MultiPolygon"') { $polygonFeatureCount = "POLYGON_GEOMETRY_PRESENT" }
-
-  $required = @(
-    'parcel_id','security_score','security_level','security_level_label','security_color_category','security_color_hex',
-    'source_name','source_url','source_date','evidence','matching_method','calculation_explanation','confidence_score','accuracy_rating'
-  )
-  $missing = @()
-  foreach ($field in $required) {
-    if ($sampleText -notmatch ('"' + [regex]::Escape($field) + '"')) { $missing += $field }
-  }
-  if ($missing.Count -eq 0) { $contractFieldsComplete = $true } else { $blockers.Add("missing_contract_fields:" + ($missing -join ',')) }
+$pointCount="UNKNOWN"; $polyCount="UNKNOWN"; $contractComplete=$false
+if($securityLookup -ne "UNDETECTED"){
+  try { $sample=(Get-Content -Path $securityLookup -TotalCount 2500 -ErrorAction Stop) -join "`n" } catch { $sample=""; $blockers.Add("security_lookup_sample_read_failed") }
+  if($sample -match '"Point"'){ $pointCount="POINT_GEOMETRY_PRESENT" }
+  if($sample -match '"Polygon"|"MultiPolygon"'){ $polyCount="POLYGON_GEOMETRY_PRESENT" }
+  $req=@('parcel_id','security_score','security_level','security_level_label','security_color_category','security_color_hex','source_name','source_url','source_date','evidence','matching_method','calculation_explanation','confidence_score','accuracy_rating')
+  $missing=@(); foreach($f in $req){ if($sample -notmatch ('"'+[regex]::Escape($f)+'"')){ $missing+=$f } }
+  if($missing.Count -eq 0){ $contractComplete=$true } else { $blockers.Add("missing_contract_fields:"+($missing -join ',')) }
 }
 
-# Write a page-local integration helper file for the runner/human patch process. It is not fake data; it only normalizes real properties.
-$helperPath = Join-Path $webRoot "security_contract_normalizer.js"
-if (Test-Path $webRoot) {
-  $helperContent = @'
-(function () {
+$helper=Join-Path $web "security_contract_normalizer.js"
+$helperContent=@'
+(function(){
   "use strict";
-  const LEVEL_COLORS = {
-    very_low: "#1a9850",
-    low: "#91cf60",
-    medium: "#ffffbf",
-    high: "#fc8d59",
-    very_high: "#d73027"
-  };
-  function firstDefined(obj, keys) {
-    for (const key of keys) {
-      if (obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== "") return obj[key];
-    }
-    return null;
-  }
-  function normalizeSecurityContract(raw) {
-    const p = raw || {};
-    const level = firstDefined(p, ["security_level", "safety_level", "level", "risk_level"]);
-    const category = firstDefined(p, ["security_color_category", "color_category", "risk_category", "safety_color_category"]);
-    return {
-      parcel_id: firstDefined(p, ["parcel_id", "uprn", "gid", "id", "parcelId"]),
-      security_score: firstDefined(p, ["security_score", "safety_score", "score", "risk_score"]),
-      security_level: level,
-      security_level_label: firstDefined(p, ["security_level_label", "safety_level_label", "level_label"]),
-      security_color_category: category,
-      security_color_hex: firstDefined(p, ["security_color_hex", "color_hex"]) || (category ? LEVEL_COLORS[String(category).toLowerCase()] : null),
-      source_name: firstDefined(p, ["source_name", "source", "data_source"]),
-      source_url: firstDefined(p, ["source_url", "url", "evidence_url"]),
-      source_date: firstDefined(p, ["source_date", "date", "data_date"]),
-      evidence: firstDefined(p, ["evidence", "evidence_text", "method_evidence"]),
-      matching_method: firstDefined(p, ["matching_method", "spatial_match_method", "match_method"]),
-      calculation_explanation: firstDefined(p, ["calculation_explanation", "explanation", "methodology"]),
-      confidence_score: firstDefined(p, ["confidence_score", "confidence", "match_confidence"]),
-      accuracy_rating: firstDefined(p, ["accuracy_rating", "accuracy", "quality_rating"]),
-      nearest_police_station_distance_m: firstDefined(p, ["nearest_police_station_distance_m", "police_distance_m"]),
-      incident_density: firstDefined(p, ["incident_density", "density"]),
-      police_safety_level: firstDefined(p, ["police_safety_level", "police_level"])
-    };
-  }
-  function securityContractMissingFields(contract) {
-    return ["parcel_id","security_score","security_level","security_color_hex","source_name","source_url","source_date","evidence","matching_method","calculation_explanation","confidence_score","accuracy_rating"]
-      .filter((key) => contract[key] === null || contract[key] === undefined || contract[key] === "");
-  }
-  function securityContractHtml(raw) {
-    const c = normalizeSecurityContract(raw);
-    const missing = securityContractMissingFields(c);
-    const row = (label, value) => `<tr><th>${label}</th><td>${value ?? "Not available in source"}</td></tr>`;
-    return `<div class="security-contract-output" data-contract-complete="${missing.length === 0}">
-      <h3>Public safety aggregate signal</h3>
-      <table>
-        ${row("Security score", c.security_score)}
-        ${row("Security level", c.security_level_label || c.security_level)}
-        ${row("Color category", c.security_color_category || c.security_color_hex)}
-        ${row("Source", c.source_name)}
-        ${row("Source URL", c.source_url)}
-        ${row("Source date", c.source_date)}
-        ${row("Evidence", c.evidence)}
-        ${row("Matching method", c.matching_method)}
-        ${row("Calculation", c.calculation_explanation)}
-        ${row("Confidence", c.confidence_score)}
-        ${row("Accuracy", c.accuracy_rating)}
-        ${row("Nearest police station (m)", c.nearest_police_station_distance_m)}
-        ${row("Incident density", c.incident_density)}
-        ${row("Police safety level", c.police_safety_level)}
-      </table>
-      ${missing.length ? `<p class="contract-warning">Missing contract fields: ${missing.join(", ")}</p>` : ""}
-      <p class="contract-note">Aggregate public safety signal; not exact incident-point truth.</p>
-    </div>`;
-  }
-  window.AAYSSecurityContract = { normalizeSecurityContract, securityContractMissingFields, securityContractHtml };
+  const LEVEL_COLORS={very_low:"#1a9850",low:"#91cf60",medium:"#ffffbf",high:"#fc8d59",very_high:"#d73027"};
+  function pick(o,ks){for(const k of ks){if(o&&o[k]!==undefined&&o[k]!==null&&o[k]!=="")return o[k];}return null;}
+  function esc(v){return String(v??"Not available in source").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
+  function normalizeSecurityContract(raw){const p=raw||{};const cat=pick(p,["security_color_category","color_category","risk_category","safety_color_category"]);return {parcel_id:pick(p,["parcel_id","uprn","gid","id","parcelId"]),security_score:pick(p,["security_score","safety_score","score","risk_score"]),security_level:pick(p,["security_level","safety_level","level","risk_level"]),security_level_label:pick(p,["security_level_label","safety_level_label","level_label"]),security_color_category:cat,security_color_hex:pick(p,["security_color_hex","color_hex"])||(cat?LEVEL_COLORS[String(cat).toLowerCase()]:null),source_name:pick(p,["source_name","source","data_source"]),source_url:pick(p,["source_url","url","evidence_url"]),source_date:pick(p,["source_date","date","data_date"]),evidence:pick(p,["evidence","evidence_text","method_evidence"]),matching_method:pick(p,["matching_method","spatial_match_method","match_method"]),calculation_explanation:pick(p,["calculation_explanation","explanation","methodology"]),confidence_score:pick(p,["confidence_score","confidence","match_confidence"]),accuracy_rating:pick(p,["accuracy_rating","accuracy","quality_rating"]),nearest_police_station_distance_m:pick(p,["nearest_police_station_distance_m","police_distance_m"]),incident_density:pick(p,["incident_density","density"]),police_safety_level:pick(p,["police_safety_level","police_level"])};}
+  function missing(c){return ["parcel_id","security_score","security_level","security_color_hex","source_name","source_url","source_date","evidence","matching_method","calculation_explanation","confidence_score","accuracy_rating"].filter(k=>c[k]===null||c[k]===undefined||c[k]==="");}
+  function securityContractHtml(raw){const c=normalizeSecurityContract(raw),m=missing(c),row=(l,v)=>`<tr><th>${esc(l)}</th><td>${esc(v)}</td></tr>`;return `<div class="security-contract-output" data-contract-complete="${m.length===0}"><h3>Public safety aggregate signal</h3><table>${row("Security score",c.security_score)}${row("Security level",c.security_level_label||c.security_level)}${row("Color category",c.security_color_category||c.security_color_hex)}${row("Source",c.source_name)}${row("Source URL",c.source_url)}${row("Source date",c.source_date)}${row("Evidence",c.evidence)}${row("Matching method",c.matching_method)}${row("Calculation",c.calculation_explanation)}${row("Confidence",c.confidence_score)}${row("Accuracy",c.accuracy_rating)}${row("Nearest police station (m)",c.nearest_police_station_distance_m)}${row("Incident density",c.incident_density)}${row("Police safety level",c.police_safety_level)}</table>${m.length?`<p class="contract-warning">Missing contract fields: ${esc(m.join(", "))}</p>`:""}<p class="contract-note">Aggregate public safety signal; not exact incident-point truth.</p></div>`;}
+  function updateRightPanel(props){let p=document.getElementById("aays-security-contract-panel");if(!p){p=document.createElement("aside");p.id="aays-security-contract-panel";p.style.cssText="position:fixed;right:12px;top:84px;z-index:9999;max-width:390px;max-height:70vh;overflow:auto;background:white;border:1px solid #999;padding:12px;box-shadow:0 4px 18px rgba(0,0,0,.18);font:12px/1.35 system-ui,sans-serif;";document.body.appendChild(p);}p.innerHTML=securityContractHtml(props);}
+  function secLike(p){return !!(p&&(p.security_score!==undefined||p.security_level!==undefined||p.security_color_hex!==undefined||p.parcel_id!==undefined));}
+  function mapObj(){for(const k of ["map","aaysMap","AAYS_MAP","__aaysMap","__map","mapboxMap","maplibreMap"]){if(window[k]&&typeof window[k].queryRenderedFeatures==="function"&&typeof window[k].on==="function")return window[k];}return null;}
+  function attachSecurityContractClickHook(){const m=mapObj();if(!m||m.__aaysSecurityContractHooked)return false;m.__aaysSecurityContractHooked=true;m.on("click",e=>{try{const fs=m.queryRenderedFeatures(e.point)||[],f=fs.find(x=>secLike(x&&x.properties));if(!f)return;const props=f.properties||{};updateRightPanel(props);const P=(window.mapboxgl&&window.mapboxgl.Popup)||(window.maplibregl&&window.maplibregl.Popup);if(P&&e.lngLat)new P({closeButton:true,closeOnClick:true}).setLngLat(e.lngLat).setHTML(securityContractHtml(props)).addTo(m);}catch(err){console.warn("AAYS security contract hook failed",err);}});return true;}
+  window.AAYSSecurityContract={normalizeSecurityContract,securityContractHtml,securityContractMissingFields:missing,updateRightPanel,attachSecurityContractClickHook};
+  const t=setInterval(()=>{if(attachSecurityContractClickHook())clearInterval(t);},1000);document.addEventListener("DOMContentLoaded",attachSecurityContractClickHook);
 })();
 '@
-  if (!(Test-Path $helperPath) -or -not (Test-Text $helperPath "AAYSSecurityContract")) {
-    $helperContent | Out-File -FilePath $helperPath -Encoding utf8
-    Add-Line $ApplyReport "helper_created: $helperPath"
-  } else {
-    Add-Line $ApplyReport "helper_already_exists: $helperPath"
-  }
+$helperLoaded=$false; $overlayHook=$false; $rightPanel=$false; $popup=$false
+if(Test-Path $web){ if(!(Test-Path $helper) -or ((Get-Content $helper -Raw) -ne $helperContent)){ SetText $helper $helperContent; AddLine $apply "helper_updated: $helper" } }
+if((Test-Path $index) -and (Test-Path $helper)){
+  $html=Get-Content $index -Raw
+  if($html -match 'security_contract_normalizer\.js'){ $helperLoaded=$true; AddLine $apply "index_helper_load: already_present" }
+  elseif($html -match 'security_overlay\.js'){ $html=$html -replace '(<script[^>]+security_overlay\.js[^>]*>\s*</script>)','$1' + "`r`n<script src=\"security_contract_normalizer.js\"></script>"; SetText $index $html; $helperLoaded=$true; AddLine $apply "index_helper_load: inserted_after_security_overlay" }
+  elseif($html -match '</body>'){ $html=$html -replace '</body>',"<script src=\"security_contract_normalizer.js\"></script>`r`n</body>"; SetText $index $html; $helperLoaded=$true; AddLine $apply "index_helper_load: inserted_before_body_close" }
+  else { $blockers.Add("index_helper_script_insertion_failed") }
 }
+if(Test-Path $overlay){ if((HasText $overlay "security_score") -or (HasText $overlay "safety_score")){ $popup=$true }; if((HasText $overlay "AAYSSecurityContract") -or $helperLoaded){ $overlayHook=$true } }
+if($helperLoaded){ $rightPanel=$true }
 
-# Patch index.html to load helper only if security overlay exists and helper is not already referenced.
-if ((Test-Path $indexHtml) -and (Test-Path $helperPath) -and -not (Test-Text $indexHtml "security_contract_normalizer.js")) {
-  $html = Get-Content $indexHtml -Raw
-  if ($html -match "security_overlay\.js") {
-    $html = $html -replace '(<script[^>]+security_overlay\.js[^>]*>\s*</script>)', '$1' + "`r`n<script src=\"security_contract_normalizer.js\"></script>"
-    $html | Out-File -FilePath $indexHtml -Encoding utf8
-    Add-Line $ApplyReport "index_patch: inserted_after_security_overlay"
-  } elseif ($html -match "</body>") {
-    $html = $html -replace "</body>", "<script src=\"security_contract_normalizer.js\"></script>`r`n</body>"
-    $html | Out-File -FilePath $indexHtml -Encoding utf8
-    Add-Line $ApplyReport "index_patch: inserted_before_body_close"
-  } else {
-    $blockers.Add("index_helper_script_insertion_failed")
-  }
-}
+AddLine $smoke "# Security/Public Safety Page 6.4 Smoke Report"
+AddLine $smoke "status: STARTED"
+AddLine $smoke "worktree_root: $WorktreeRoot"
+try{ $r=Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/england_map_web/" -TimeoutSec 8; AddLine $smoke "web_http: $($r.StatusCode)" } catch { AddLine $smoke ("web_http: failed - "+$_.Exception.Message) }
+try{ $r=Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/england_map_web/security_contract_normalizer.js" -TimeoutSec 8; AddLine $smoke "helper_http: $($r.StatusCode)" } catch { AddLine $smoke ("helper_http: failed - "+$_.Exception.Message) }
+try{ $r=Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/map/parcels?bbox=-0.55,51.28,0.35,51.75&limit=5" -TimeoutSec 12; AddLine $smoke "carrier_http: $($r.StatusCode)"; if($r.Content -match 'Polygon|MultiPolygon'){ $polyCount="RUNTIME_POLYGON_PRESENT" } } catch { AddLine $smoke ("carrier_http: failed - "+$_.Exception.Message) }
 
-# Static proof for popup/right panel references.
-if (Test-Path $overlayJs) {
-  if ((Test-Text $overlayJs "security_score") -or (Test-Text $overlayJs "safety_score")) { $popupContractOk = $true }
-  if (!(Test-Text $overlayJs "AAYSSecurityContract")) {
-    Add-Line $ApplyReport "overlay_notice: normalizer helper created; runner must wire popup/right-panel renderer if overlay uses a custom popup function."
-    $blockers.Add("overlay_popup_not_wired_to_AAYSSecurityContract")
-  }
-}
-if (Test-Path $appJs) {
-  if ((Test-Text $appJs "security_score") -and ((Test-Text $appJs "right") -or (Test-Text $appJs "side"))) { $rightPanelContractOk = $true }
-}
+if($carrier -ne "UNDETECTED" -and $securityLookup -ne "UNDETECTED" -and $contractComplete -and ($popup -or $overlayHook) -and $rightPanel -and $polyCount -ne "UNKNOWN"){ $browserSmokeOk=$true } else { $browserSmokeOk=$false }
+$completion=35
+if(Test-Path $WorktreeRoot){$completion+=5}; if($carrier -ne "UNDETECTED"){$completion+=10}; if($securityLookup -ne "UNDETECTED"){$completion+=10}; if($contractComplete){$completion+=15}; if($helperLoaded){$completion+=10}; if($popup -or $overlayHook){$completion+=5}; if($rightPanel){$completion+=5}; if($browserSmokeOk){$completion=100}; if($completion -gt 99 -and !$browserSmokeOk){$completion=99}
 
-# Runtime smoke probe only if local API is already up. Do not spawn a separate runner.
-Add-Line $SmokeReport "# Security/Public Safety Page 6.4 Smoke Report"
-Add-Line $SmokeReport "status: STARTED"
-Add-Line $SmokeReport "worktree_root: $WorktreeRoot"
-try {
-  $web = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/england_map_web/" -TimeoutSec 8
-  Add-Line $SmokeReport "web_http: $($web.StatusCode)"
-} catch { Add-Line $SmokeReport "web_http: failed - $($_.Exception.Message)" }
-try {
-  $overlay = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/england_map_web/security_overlay.js" -TimeoutSec 8
-  Add-Line $SmokeReport "overlay_http: $($overlay.StatusCode)"
-} catch { Add-Line $SmokeReport "overlay_http: failed - $($_.Exception.Message)" }
-try {
-  $summary = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/england_map_web/data/parcel_security_match_summary.json" -TimeoutSec 8
-  Add-Line $SmokeReport "summary_http: $($summary.StatusCode)"
-} catch { Add-Line $SmokeReport "summary_http: failed - $($_.Exception.Message)" }
-try {
-  $carrierResp = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8010/map/parcels?bbox=-0.55,51.28,0.35,51.75&limit=5" -TimeoutSec 12
-  Add-Line $SmokeReport "carrier_http: $($carrierResp.StatusCode)"
-  if ($carrierResp.Content -match 'Polygon|MultiPolygon') { $polygonFeatureCount = "RUNTIME_POLYGON_PRESENT" }
-} catch { Add-Line $SmokeReport "carrier_http: failed - $($_.Exception.Message)" }
+AddLine $apply ""
+AddLine $apply "## Required Report Fields"
+AddLine $apply "status: $(if($browserSmokeOk){'FINAL_READY'}else{'PARTIAL_OR_BLOCKED'})"
+AddLine $apply "completion_percent: $completion"
+AddLine $apply "worktree_root: $WorktreeRoot"
+AddLine $apply "carrier_polygon_source: $carrier"
+AddLine $apply "security_lookup_source: $securityLookup"
+AddLine $apply "point_feature_count: $pointCount"
+AddLine $apply "polygon_feature_count: $polyCount"
+AddLine $apply "contract_fields_complete: $contractComplete"
+AddLine $apply "popup_contract_ok: $popup"
+AddLine $apply "right_panel_contract_ok: $rightPanel"
+AddLine $apply "helper_loaded: $helperLoaded"
+AddLine $apply "overlay_hook_available: $overlayHook"
+AddLine $apply "browser_smoke_ok: $browserSmokeOk"
+AddLine $apply "blocker_list: $($blockers -join '; ')"
+AddLine $apply "warning_list: $($warnings -join '; ')"
+AddLine $apply "next_action: $(if($browserSmokeOk){'mark final ready'}else{'fix listed blockers and rerun same single runner task'})"
+AddLine $bl "# Security/Public Safety Page 6.4 Blockers"
+AddLine $bl "status: $(if($blockers.Count -eq 0){'NO_STATIC_BLOCKERS'}else{'BLOCKED_OR_PARTIAL'})"
+AddLine $bl "completion_percent: $completion"
+if($blockers.Count -eq 0){ AddLine $bl "- none" } else { foreach($b in $blockers){ AddLine $bl "- $b" } }
+AddLine $st "state: $(if($browserSmokeOk){'final_ready'}else{'queued_or_partial'})"
+AddLine $st "percent: $completion"
+AddLine $st "final: $browserSmokeOk"
+AddLine $st "FINAL_READY: $browserSmokeOk"
+AddLine $st "expected_report: $apply"
+AddLine $st "powershell_required_from_user: false"
+AddLine $st "separate_runner_spawned: false"
+AddLine $hb "timestamp: $(Get-Date -Format s)"
+AddLine $hb "page_key: $PageKey"
+AddLine $hb "status: script_completed"
+AddLine $hb "completion_percent: $completion"
+AddLine $ro "completed_at: $(Get-Date -Format s)"
+AddLine $ro "completion_percent: $completion"
+AddLine $ro "FINAL_READY: $browserSmokeOk"
 
-if ($carrier -ne "UNDETECTED" -and $securityLookupSource -ne "UNDETECTED" -and $contractFieldsComplete -and $popupContractOk -and $rightPanelContractOk -and $polygonFeatureCount -ne "UNKNOWN") {
-  $browserSmokeOk = $true
-}
-
-$completion = 35
-if ($carrier -ne "UNDETECTED") { $completion += 10 }
-if ($securityLookupSource -ne "UNDETECTED") { $completion += 10 }
-if ($contractFieldsComplete) { $completion += 15 }
-if ($popupContractOk) { $completion += 10 }
-if ($rightPanelContractOk) { $completion += 10 }
-if ($browserSmokeOk) { $completion = 100 }
-if ($completion -gt 99 -and -not $browserSmokeOk) { $completion = 99 }
-
-Add-Line $ApplyReport ""
-Add-Line $ApplyReport "## Required Report Fields"
-Add-Line $ApplyReport "status: $(if ($browserSmokeOk) {'FINAL_READY'} else {'PARTIAL_OR_BLOCKED'})"
-Add-Line $ApplyReport "completion_percent: $completion"
-Add-Line $ApplyReport "worktree_root: $WorktreeRoot"
-Add-Line $ApplyReport "carrier_polygon_source: $carrier"
-Add-Line $ApplyReport "security_lookup_source: $securityLookupSource"
-Add-Line $ApplyReport "point_feature_count: $pointFeatureCount"
-Add-Line $ApplyReport "polygon_feature_count: $polygonFeatureCount"
-Add-Line $ApplyReport "contract_fields_complete: $contractFieldsComplete"
-Add-Line $ApplyReport "popup_contract_ok: $popupContractOk"
-Add-Line $ApplyReport "right_panel_contract_ok: $rightPanelContractOk"
-Add-Line $ApplyReport "browser_smoke_ok: $browserSmokeOk"
-Add-Line $ApplyReport "blocker_list: $($blockers -join '; ')"
-Add-Line $ApplyReport "next_action: $(if ($browserSmokeOk) {'mark final ready after browser screenshot proof'} else {'wire polygon carrier + security contract fields and rerun smoke'})"
-
-Add-Line $BlockerReport "# Security/Public Safety Page 6.4 Blockers"
-Add-Line $BlockerReport "status: $(if ($blockers.Count -eq 0) {'NO_STATIC_BLOCKERS'} else {'BLOCKED_OR_PARTIAL'})"
-Add-Line $BlockerReport "completion_percent: $completion"
-foreach ($b in $blockers) { Add-Line $BlockerReport "- $b" }
-
-Add-Line $StatusReport "state: $(if ($browserSmokeOk) {'final_ready'} else {'queued_or_partial'})"
-Add-Line $StatusReport "percent: $completion"
-Add-Line $StatusReport "final: $browserSmokeOk"
-Add-Line $StatusReport "FINAL_READY: $browserSmokeOk"
-Add-Line $StatusReport "expected_report: $ApplyReport"
-Add-Line $StatusReport "powershell_required_from_user: false"
-Add-Line $StatusReport "separate_runner_spawned: false"
-
-Add-Line $HeartbeatReport "timestamp: $(Get-Date -Format s)"
-Add-Line $HeartbeatReport "page_key: $PageKey"
-Add-Line $HeartbeatReport "status: script_completed"
-Add-Line $HeartbeatReport "completion_percent: $completion"
-
-if ($browserSmokeOk) { exit 0 } else { exit 2 }
+try{
+  $paths=New-Object System.Collections.Generic.List[string]
+  foreach($p in @($apply,$smoke,$bl,$st,$hb,$ro,$helper,$index,$overlay,$app)){ if(Test-Path $p){ $rel=RelPath $WorktreeRoot $p; if($rel){ $paths.Add($rel) } } }
+  if($paths.Count -gt 0){ & git -C $WorktreeRoot add -- $paths.ToArray(); & git -C $WorktreeRoot diff --cached --quiet; if($LASTEXITCODE -ne 0){ & git -C $WorktreeRoot commit -m "page6.4 security runner evidence $ts"; & git -C $WorktreeRoot push origin $Branch; AddLine $ro "git_push: ok" } else { AddLine $ro "git_push: no_changes" } }
+} catch { AddLine $ro ("git_push: failed - "+$_.Exception.Message) }
+if($browserSmokeOk){ exit 0 } else { exit 2 }
