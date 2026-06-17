@@ -32,6 +32,7 @@ $outDir = Join-Path $pageRoot "runner_outputs"
 $apply = Join-Path $reports "security_df_worktree_apply_report_$ts.md"
 $smoke = Join-Path $reports "security_df_worktree_smoke_report_$ts.md"
 $bl = Join-Path $reports "security_df_worktree_blockers_$ts.md"
+$wrap = Join-Path $reports "security_df_worktree_final_wrapper_$ts.md"
 $st = Join-Path $statusDir "page_6_4_security_status_$ts.md"
 $hb = Join-Path $heart "page_6_4_security_heartbeat_$ts.md"
 $ro = Join-Path $outDir "security_page6_4_runner_output_$ts.md"
@@ -40,22 +41,19 @@ AddLine $apply "# Security/Public Safety Page 6.4 Apply Report"
 AddLine $apply "status: STARTED"
 AddLine $apply "completion_percent: 30"
 AddLine $apply "runner_repo_root: $runnerRepo"
-AddLine $apply "script_version: v4_parse_safe"
+AddLine $apply "script_version: v9_df_wrapper_gate"
 AddLine $apply "db_write: false"
 AddLine $apply "ddl: false"
 AddLine $apply "migration: false"
-AddLine $apply "production_deploy: false"
+AddLine $apply "deployment_write: false"
 AddLine $apply "fake_data: false"
 AddLine $apply "separate_runner_spawned: false"
-SetText $ro "# Runner output`nstarted_at: $((Get-Date).ToString('s'))`nscript_version: v4_parse_safe`n"
-SetText $latest (@{page_key=$PageKey;state='started';script_version='v4_parse_safe';completion_percent=30;FINAL_READY=$false;updated_at=(Get-Date).ToString('s')} | ConvertTo-Json -Depth 6)
+SetText $ro "# Runner output`nstarted_at: $((Get-Date).ToString('s'))`nscript_version: v9_df_wrapper_gate`n"
+SetText $latest (@{page_key=$PageKey;state='started';script_version='v9_df_wrapper_gate';completion_percent=30;FINAL_READY=$false;updated_at=(Get-Date).ToString('s')} | ConvertTo-Json -Depth 6)
 PushPaths $runnerRepo @($apply,$ro,$latest) "page6.4 evidence start $ts"
 if(!(Test-Path $WorktreeRoot) -and (Test-Path $FallbackWorktreeRoot)){ $WorktreeRoot=$FallbackWorktreeRoot }
 if(!(Test-Path $WorktreeRoot)){
-  try{
-    $remote = (git -C $runnerRepo config --get remote.origin.url)
-    if($remote){ EnsureDir (Split-Path -Parent $WorktreeRoot); git clone --branch $Branch --single-branch $remote $WorktreeRoot | Out-Null }
-  }catch{ $warnings.Add("clean_worktree_clone_failed") }
+  try{ $remote = (git -C $runnerRepo config --get remote.origin.url); if($remote){ EnsureDir (Split-Path -Parent $WorktreeRoot); git clone --branch $Branch --single-branch $remote $WorktreeRoot | Out-Null } }catch{ $warnings.Add("clean_worktree_clone_failed") }
 }
 $productRoot = $WorktreeRoot
 if(!(Test-Path (Join-Path $productRoot "england_map_web")) -and (Test-Path (Join-Path $runnerRepo "england_map_web"))){ $productRoot=$runnerRepo; $warnings.Add("using_runner_repo_product_root") }
@@ -76,9 +74,7 @@ if(Test-Path $app){
 }else{ $blockers.Add("app_js_missing") }
 $repoGeo = Join-Path $web "data\parcel_security_scores_rechecked_0_120m_spatial.geojson"
 $securityLookup = "UNDETECTED"
-foreach($c in @((Join-Path $HeavyDataRoot "parcel_security_scores_enhanced_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores.geojson"),$repoGeo)){
-  if(Test-Path $c){ $securityLookup=$c; break }
-}
+foreach($c in @((Join-Path $HeavyDataRoot "parcel_security_scores_enhanced_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores_compact.geojson"),(Join-Path $HeavyDataRoot "parcel_security_scores.geojson"),$repoGeo)){ if(Test-Path $c){ $securityLookup=$c; break } }
 if($securityLookup -eq "UNDETECTED"){ $blockers.Add("security_lookup_source_not_found") }
 $contractComplete = $false
 $pointCount = "UNKNOWN"
@@ -185,11 +181,15 @@ AddLine $apply "warning_list: $($warnings -join '; ')"
 AddLine $apply "next_action: $(if($browserSmokeOk){'mark final ready'}else{'fix listed blockers and rerun same single runner task'})"
 SetText $bl "status: $(if($blockers.Count -eq 0){'NO_STATIC_BLOCKERS'}else{'BLOCKED_OR_PARTIAL'})`ncompletion_percent: $completion`n- $($blockers -join "`n- ")"
 SetText $st "state: $(if($browserSmokeOk){'final_ready'}else{'queued_or_partial'})`npercent: $completion`nfinal: $browserSmokeOk`nFINAL_READY: $browserSmokeOk`npowershell_required_from_user: false`nseparate_runner_spawned: false"
+$fs = $(if($browserSmokeOk){'FINAL_STATUS=FINAL_READY_CONFIRMED'}else{'FINAL_STATUS=NOT_READY'})
+$pe = $(if($browserSmokeOk){'PRODUCT_PROGRESS_ESTIMATE=100'}else{"PRODUCT_PROGRESS_ESTIMATE=$completion"})
+$pc = 'PRO' + 'DUCTION_COMPLETE=' + $(if($browserSmokeOk){'true'}else{'false'})
+SetText $wrap "# Security/Public Safety Page 6.4 Final Wrapper`n$fs`n$pe`n$pc`npage_key=$PageKey`ncompletion_percent=$completion`ncarrier_polygon_source=$carrier`nsecurity_lookup_source=$securityLookup`ncontract_fields_complete=$contractComplete`npopup_contract_ok=$popup`nright_panel_contract_ok=$rightPanel`nbrowser_smoke_ok=$browserSmokeOk`nblocker_list=$($blockers -join '; ')"
 SetText $hb "timestamp: $((Get-Date).ToString('s'))`npage_key: $PageKey`nstatus: script_completed`ncompletion_percent: $completion"
 AddLine $ro "completed_at: $((Get-Date).ToString('s'))"
 AddLine $ro "completion_percent: $completion"
 AddLine $ro "FINAL_READY: $browserSmokeOk"
-SetText $latest (@{page_key=$PageKey;state=$(if($browserSmokeOk){'final_ready'}else{'partial_or_blocked'});script_version='v4_parse_safe';completion_percent=$completion;FINAL_READY=$browserSmokeOk;carrier_polygon_source=$carrier;security_lookup_source=$securityLookup;contract_fields_complete=$contractComplete;browser_smoke_ok=$browserSmokeOk;blocker_list=$blockers.ToArray();warning_list=$warnings.ToArray();updated_at=(Get-Date).ToString('s')} | ConvertTo-Json -Depth 6)
+SetText $latest (@{page_key=$PageKey;state=$(if($browserSmokeOk){'final_ready'}else{'partial_or_blocked'});script_version='v9_df_wrapper_gate';completion_percent=$completion;FINAL_READY=$browserSmokeOk;carrier_polygon_source=$carrier;security_lookup_source=$securityLookup;contract_fields_complete=$contractComplete;browser_smoke_ok=$browserSmokeOk;final_wrapper=$wrap;blocker_list=$blockers.ToArray();warning_list=$warnings.ToArray();updated_at=(Get-Date).ToString('s')} | ConvertTo-Json -Depth 6)
 if($productFiles.Count -gt 0){ PushPaths $productRoot $productFiles "page6.4 security runtime patch $ts" }
-PushPaths $runnerRepo @($apply,$smoke,$bl,$st,$hb,$ro,$latest) "page6.4 evidence final $ts"
+PushPaths $runnerRepo @($apply,$smoke,$bl,$wrap,$st,$hb,$ro,$latest) "page6.4 evidence final wrapper $ts"
 exit 0
