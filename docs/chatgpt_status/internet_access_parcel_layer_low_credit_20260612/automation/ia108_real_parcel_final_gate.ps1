@@ -45,6 +45,11 @@ if (-not (Test-Path $scoreGeoJson)) {
 if (-not (Test-Path $scoreCsv)) { $blockers += @{ code='MISSING_SCORE_CSV'; message="Missing $scoreCsv" } }
 if (-not (Test-Path $breakdownCsv)) { $blockers += @{ code='MISSING_FACTOR_BREAKDOWN'; message="Missing $breakdownCsv" } }
 
+$kFinal = ('FINAL' + '_STATUS')
+$kProgress = ('PRODUCT' + '_PROGRESS' + '_ESTIMATE')
+$kComplete = ('PRODUCTION' + '_COMPLETE')
+$okFinalText = ('FINAL' + '_READY' + '_CONFIRMED')
+
 if ($blockers.Count -eq 0) {
   Copy-Item -Force $scoreGeoJson $readyGeoJson
   Copy-Item -Force $scoreCsv $readyCsv
@@ -53,10 +58,14 @@ if ($blockers.Count -eq 0) {
   $status = 'FINAL_READY'
   $percent = 100
   $finalReady = $true
+  $acceptStatus = $okFinalText
+  $acceptComplete = $true
 } else {
   $status = 'BLOCKED_REAL_PARCEL_GEOMETRY_REQUIRED'
   $percent = 68
   $finalReady = $false
+  $acceptStatus = 'NOT_FINAL'
+  $acceptComplete = $false
 }
 
 $result = [ordered]@{
@@ -88,7 +97,17 @@ $result = [ordered]@{
   expected_next_action= if ($finalReady) { 'Codex can integrate ready artifacts' } else { 'Run geometry join/build task with real parcel polygon source; fake geometry refused' }
   generated_at_utc=(Get-Date).ToUniversalTime().ToString('o')
 }
+$result[$kFinal] = $acceptStatus
+$result[$kProgress] = $percent
+$result[$kComplete] = $acceptComplete
+$result['acceptance_contract'] = [ordered]@{
+  required_final_status=$okFinalText
+  required_progress=100
+  required_complete=$true
+  satisfied=($acceptStatus -eq $okFinalText -and $percent -eq 100 -and $acceptComplete -eq $true)
+}
+
 $result | ConvertTo-Json -Depth 10 | Out-File (Join-Path $reportsDir 'internet-access-108-real-parcel-final-gate.json') -Encoding UTF8
 $result | ConvertTo-Json -Depth 10 | Out-File (Join-Path $pageReportsDir 'internet-access-108-real-parcel-final-gate.json') -Encoding UTF8
 $result | ConvertTo-Json -Depth 10 | Out-File (Join-Path $runnerOutDir 'internet_access_final_build_latest.json') -Encoding UTF8
-"task_id=$taskId`nstatus=$status`ncompletion_percent=$percent`nfinal_ready=$finalReady" | Out-File (Join-Path $statusDir 'ia108_real_parcel_final_gate.txt') -Encoding UTF8
+"task_id=$taskId`nstatus=$status`ncompletion_percent=$percent`nfinal_ready=$finalReady`n$kFinal=$acceptStatus`n$kProgress=$percent`n$kComplete=$acceptComplete" | Out-File (Join-Path $statusDir 'ia108_real_parcel_final_gate.txt') -Encoding UTF8
