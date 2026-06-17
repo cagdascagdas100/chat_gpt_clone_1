@@ -4,7 +4,7 @@ page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
 branch: main
 status: QUEUED_FOR_SINGLE_SHARED_RUNNER
 FINAL_READY: false
-completion_percent: 20
+completion_percent: 35
 created_at: 2026-06-17T00:00:00+03:00
 
 ## Task
