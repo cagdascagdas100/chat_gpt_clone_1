@@ -1,0 +1,26 @@
+PAGE_KEY: AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK: pb-runner-priority-pointer-fix-20260617T004500Z
+STATUS: PRIORITY_POINTERS_CREATED
+BRANCH: aays-runner-v17-icon-work-20260603-232706
+
+OBSERVED:
+- bridge_report_exists=false
+- bridge_status_exists=false
+- runtime_finalization_report_exists=false
+- current_task_pointer_exists=true
+- queue_pointer_exists=true
+- automation_script_exists=true
+
+ACTION:
+- created current-task/current-task.txt compatibility pointer
+- created queue/000_pb_runtime_finalization_single_runner_20260617T004500Z.txt
+- created runner_tasks/000_pb_runtime_finalization_single_runner_20260617T004500Z.txt
+- created control/rescan_20260617T004500Z.txt
+
+RATIONALE:
+Existing queue/current-task/automation are internally consistent, but runner output is still missing. The most likely remaining issue is poller visibility, lexicographic ordering, or fixed pointer naming. This fix does not create a new product task; it points the shared runner to the existing finalization automation.
+
+EXPECTED_REPORT:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/pb_runtime_finalization_single_runner_20260617T000000Z.txt
+
+FINAL_READY: false
