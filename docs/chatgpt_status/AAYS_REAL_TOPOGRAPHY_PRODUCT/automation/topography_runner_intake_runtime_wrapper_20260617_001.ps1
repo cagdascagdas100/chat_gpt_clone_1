@@ -14,8 +14,8 @@ KV 'TASK_ID' 'topography_runner_intake_runtime_wrapper_20260617_001'
 KV 'BRANCH_ACTUAL' (& git -C $RepoRoot branch --show-current 2>$null)
 KV 'DB_WRITE' 'false'; KV 'MIGRATION' 'false'; KV 'DEPLOY' 'false'; KV 'FAKE_DATA_CREATED' 'false'
 KV 'CURRENT_TASK_EXISTS' (Test-Path (Join-Path $PageRoot 'current-task\topography_current.task.md'))
-KV 'QUEUE_EXISTS' (Test-Path (Join-Path $PageRoot 'queue\topography_final_validation_requeue_20260615_012.task.md'))
-KV 'RUNNER_TASK_EXISTS' (Test-Path (Join-Path $PageRoot 'runner_tasks\topography_final_validation_requeue_20260615_012.task.md'))
+KV 'QUEUE_EXISTS' (Test-Path (Join-Path $PageRoot 'queue\topography_runner_intake_runtime_wrapper_20260617_001.task.md'))
+KV 'RUNNER_TASK_EXISTS' (Test-Path (Join-Path $PageRoot 'runner_tasks\topography_runner_intake_runtime_wrapper_20260617_001.task.md'))
 KV 'RUNTIME_SCRIPT_EXISTS' (Test-Path $Runtime)
 if(Test-Path $Runtime){ & powershell -ExecutionPolicy Bypass -File $Runtime | Out-Null }
 Start-Sleep -Seconds 2
