@@ -1,0 +1,9 @@
+page_key: AAYS_REAL_TOPOGRAPHY_PRODUCT
+task_id: runner_contract_probe_20260618_001
+automation_script: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_runner_intake_runtime_wrapper_20260617_001.ps1
+expected_report: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_runner_intake_runtime_wrapper_20260617_001.txt
+purpose: verify_shared_runner_contract
+db_write: false
+migration: false
+deploy: false
+fake_data: false
