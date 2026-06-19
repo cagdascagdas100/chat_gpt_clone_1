@@ -1,15 +1,16 @@
 $ErrorActionPreference = "Continue"
-$script = Join-Path $PSScriptRoot "security_public_safety_page6_4_single_runner_task.ps1"
+$script = Join-Path $PSScriptRoot "security_public_safety_20260619_df_parcel_contract_task.ps1"
 $base = Split-Path -Parent $PSScriptRoot
 $reports = Join-Path $base "reports"
 $statusDir = Join-Path $base "status"
 $heartbeatDir = Join-Path $base "heartbeat"
 New-Item -ItemType Directory -Force -Path $reports,$statusDir,$heartbeatDir | Out-Null
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
-$shimReport = Join-Path $reports "security_page6_4_vrun_shim_$ts.md"
+$shimReport = Join-Path $reports "security_20260619_df_vrun_shim_$ts.md"
 @(
   "status: VRUN_SHIM_STARTED",
   "page_key: security_public_safety_low_credit_20260612",
+  "task_id: security_public_safety_20260619_df_parcel_contract",
   "script: $script",
   "separate_runner_spawned: false",
   "powershell_required_from_user: false",
