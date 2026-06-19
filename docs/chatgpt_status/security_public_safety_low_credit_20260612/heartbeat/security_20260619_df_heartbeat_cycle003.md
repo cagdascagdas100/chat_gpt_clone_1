@@ -1,0 +1,10 @@
+timestamp=2026-06-19T00:00:00
+page_key=security_public_safety_low_credit_20260612
+task_id=security_public_safety_20260619_df_parcel_contract
+cycle=003
+status=QUEUE_REFRESHED_WAITING_SINGLE_SHARED_RUNNER
+completion_percent=90
+final_ready=false
+PowerShell_required=false
+separate_runner_required=false
+expected_report=docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_final_wrapper_YYYYMMDD_HHMMSS.md
