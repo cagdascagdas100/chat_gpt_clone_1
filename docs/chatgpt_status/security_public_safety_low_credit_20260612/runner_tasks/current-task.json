@@ -9,25 +9,30 @@
   "run": "../automation/vrun.ps1",
   "script_path": "docs/chatgpt_status/security_public_safety_low_credit_20260612/automation/vrun.ps1",
   "target_script": "docs/chatgpt_status/security_public_safety_low_credit_20260612/automation/security_public_safety_20260619_df_parcel_contract_task.ps1",
+  "cycle": "003",
   "expected_reports": [
     "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_apply_report_YYYYMMDD_HHMMSS.md",
     "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_smoke_report_YYYYMMDD_HHMMSS.md",
     "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_blockers_YYYYMMDD_HHMMSS.md",
     "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_field_contract_report_YYYYMMDD_HHMMSS.md",
-    "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_final_wrapper_YYYYMMDD_HHMMSS.md"
+    "docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/security_df_worktree_final_wrapper_YYYYMMDD_HHMMSS.md",
+    "docs/chatgpt_status/security_public_safety_low_credit_20260612/runner_outputs/security_20260619_df_runner_output_YYYYMMDD_HHMMSS.md",
+    "docs/chatgpt_status/security_public_safety_low_credit_20260612/status/security_20260619_df_latest.json"
   ],
   "acceptance_mode": "PARCEL_BASED_PRODUCT_ACCEPTANCE_ONLY_NOT_RUNTIME_OPEN",
   "truth_basis": "2026-06-19 truth recheck: runtime open but final parcel acceptance still false",
-  "completion_percent": 88,
-  "percent_basis": "runner contract detected and queued; automation target exists; remaining percent depends on runner-published D/F worktree smoke and final wrapper reports",
+  "completion_percent": 90,
+  "percent_basis": "cycle003 verified runner contract and wrote control/status/diagnostic evidence; remaining percent depends on actual runner-published D/F worktree smoke and final wrapper reports",
   "final": false,
   "FINAL_READY": false,
   "why_not_100": [
-    "status/security_20260619_df_latest.json not yet published by runner",
-    "final wrapper with FINAL_STATUS=FINAL_READY_CONFIRMED not yet published",
-    "parcel polygon thematic browser smoke proof not yet published",
-    "canonical popup/right-panel contract proof not yet published"
+    "runner output report is still not published",
+    "security_df_worktree_smoke_report is still not published",
+    "final wrapper with FINAL_STATUS=FINAL_READY_CONFIRMED is still not published",
+    "parcel polygon thematic browser smoke proof is still not published",
+    "canonical popup/right-panel contract proof is still not published"
   ],
+  "detected_bottleneck": "single_shared_runner_has_not_published_evidence_for_this_queue_yet",
   "acceptance_required": {
     "security_toggle_opens": true,
     "parcel_polygon_thematic_layer": true,
@@ -52,5 +57,5 @@
     "git_add_dot": false,
     "explicit_git_add_only": true
   },
-  "notes": "Cycle 002 keeps the same single shared runner contract. No user PowerShell is required unless no runner output appears after the polling window. Final 100 is allowed only when the final wrapper has FINAL_STATUS=FINAL_READY_CONFIRMED, PRODUCT_PROGRESS_ESTIMATE=100 and PRODUCTION_COMPLETE=true."
+  "notes": "Cycle 003 keeps the exact single shared runner contract. No user PowerShell is required. The task is intentionally not final until runner-published evidence contains FINAL_STATUS=FINAL_READY_CONFIRMED, PRODUCT_PROGRESS_ESTIMATE=100 and PRODUCTION_COMPLETE=true."
 }
