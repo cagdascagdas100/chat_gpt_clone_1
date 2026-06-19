@@ -93,8 +93,9 @@ try {
       foreach ($task in $tasks) {
         if (-not $last.ContainsKey($task.Key)) {
           Write-RunnerLog "running page=$($task.PageKey) script=$($task.ScriptRel) source=$($task.SourceRel)"
-          $p = Start-Process powershell -ArgumentList @("-ExecutionPolicy", "Bypass", "-File", $task.ScriptFull) -WorkingDirectory $RepoRoot -NoNewWindow -Wait -PassThru
-          Write-RunnerLog "finished page=$($task.PageKey) exit=$($p.ExitCode) script=$($task.ScriptRel)"
+          & powershell -NoProfile -ExecutionPolicy Bypass -File $task.ScriptFull
+          $exitCode = $LASTEXITCODE
+          Write-RunnerLog "finished page=$($task.PageKey) exit=$exitCode script=$($task.ScriptRel)"
           $last[$task.Key] = (Get-Date).ToString("s")
           Save-LastTasks $last
           break
