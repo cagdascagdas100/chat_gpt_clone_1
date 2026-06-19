@@ -14,7 +14,7 @@ $temp = Join-Path $env:TEMP "security_public_safety_20260619_df_parcel_contract_
 @('status=HEADERFIX_WRAPPER_STARTED',"page_key=$pageKey","task_id=$taskId","source=$source","temp=$temp",'separate_runner=false','powershell_required_from_user=false') | Out-File -FilePath $runnerOutput -Encoding utf8
 if (-not (Test-Path $source)) {
   @('status=BLOCKED','reason=source_script_missing') | Out-File -FilePath $runnerOutput -Append -Encoding utf8
-  exit 0
+  exit 2
 }
 $raw = Get-Content -Path $source -Raw
 $fixed = $raw
@@ -31,4 +31,5 @@ Set-Content -Path $temp -Value $fixed -Encoding utf8
 & $temp
 $code = $LASTEXITCODE
 @('status=HEADERFIX_WRAPPER_COMPLETED',"exit_code=$code","completed_at=$((Get-Date).ToString('s'))") | Out-File -FilePath $runnerOutput -Append -Encoding utf8
+if ($null -ne $code) { exit $code }
 exit 0
