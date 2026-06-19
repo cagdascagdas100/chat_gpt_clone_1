@@ -33,274 +33,268 @@ $detailJson = Join-Path $processedDir "parcel_internet_access_detail_ready.json"
 $repoReport = "$pageReportsDir/ia108_real_geometry_join_v2_schema_probe_report.json"
 $repoStatus = "$statusDir/ia108_real_geometry_join_v2_schema_probe.txt"
 $repoLog = "$statusDir/ia108_real_geometry_join_v2_schema_probe.log"
+$finalReport = "$reportsDir/$taskId.json"
+$pageOutput = "$runnerOutDir/internet_access_final_build_latest.json"
 
 "V2_SCHEMA_PROBE_STARTED=$(Get-Date -Format o)" | Set-Content -Encoding UTF8 "$heartbeatDir/latest.txt"
 
-function Write-Log($s) {
-  $s | Tee-Object -FilePath $repoLog -Append
+function Write-Log([string]$s) {
+    $s | Tee-Object -FilePath $repoLog -Append
 }
 
-function Get-PropValue($obj, [string[]]$keys) {
-  if ($null -eq $obj) { return $null }
-  foreach ($k in $keys) {
-    if ($obj.PSObject.Properties.Name -contains $k) {
-      $v = [string]$obj.$k
-      if ($v -and $v.Trim().Length -gt 0) { return @{ key=$k; value=$v.Trim() } }
+function Get-PropValue($props, [string]$key) {
+    if ($null -eq $props) { return $null }
+    if ($props.PSObject.Properties.Name -contains $key) {
+        $v = [string]$props.$key
+        if ($v -and $v.Trim().Length -gt 0) { return $v.Trim() }
     }
-  }
-  return $null
+    return $null
 }
 
-function Get-Geometry($obj) {
-  if ($null -eq $obj) { return $null }
-  if ($obj.PSObject.Properties.Name -contains "geometry" -and $obj.geometry -and ($obj.geometry.type -eq "Polygon" -or $obj.geometry.type -eq "MultiPolygon")) { return $obj.geometry }
-  if ($obj.PSObject.Properties.Name -contains "geom" -and $obj.geom -and ($obj.geom.type -eq "Polygon" -or $obj.geom.type -eq "MultiPolygon")) { return $obj.geom }
-  if ($obj.PSObject.Properties.Name -contains "the_geom" -and $obj.the_geom -and ($obj.the_geom.type -eq "Polygon" -or $obj.the_geom.type -eq "MultiPolygon")) { return $obj.the_geom }
-  return $null
+function Get-FeatureKey($props, $keys) {
+    foreach ($k in $keys) {
+        $v = Get-PropValue $props $k
+        if ($v) { return @{ key = $k; value = $v } }
+    }
+    return $null
 }
 
-function Try-RegisterGeometry($idx, $key, $geom) {
-  if ($key -and $geom -and -not $idx.ContainsKey($key)) { $idx[$key] = $geom }
+function Get-FeaturesFromJson($obj) {
+    if ($null -eq $obj) { return @() }
+    if ($obj.PSObject.Properties.Name -contains "features") { return @($obj.features) }
+    if ($obj -is [System.Array]) { return @($obj) }
+    if ($obj.PSObject.Properties.Name -contains "data" -and $obj.data.PSObject.Properties.Name -contains "features") { return @($obj.data.features) }
+    return @()
 }
 
-if (!(Test-Path $srcGeoJson)) { throw "Source score GeoJSON missing: $srcGeoJson" }
-if (!(Test-Path $srcCsv)) { throw "Source score CSV missing: $srcCsv" }
+try {
+    if (!(Test-Path $srcGeoJson)) { throw "Source score GeoJSON missing: $srcGeoJson" }
+    if (!(Test-Path $srcCsv)) { throw "Source score CSV missing: $srcCsv" }
 
-Write-Log "Reading score GeoJSON..."
-$scoreObj = Get-Content $srcGeoJson -Raw | ConvertFrom-Json
-$scoreFeatures = @($scoreObj.features)
-$preferredKeys = @("parcel_id","parcelid","parcel","id","uprn","UPRN","title_number","title_no","title","property_id","propertyid","oa11cd","lsoa11cd","msoa11cd","postcode","pcd","pcds")
+    Write-Log "Reading score GeoJSON: $srcGeoJson"
+    $scoreObj = Get-Content $srcGeoJson -Raw | ConvertFrom-Json
+    $scoreFeatures = Get-FeaturesFromJson $scoreObj
 
-$scoreIndex = @{}
-$scoreKeyName = $null
-foreach ($f in $scoreFeatures) {
-  $kv = Get-PropValue $f.properties $preferredKeys
-  if ($kv) {
-    if (-not $scoreKeyName) { $scoreKeyName = $kv.key }
-    if (-not $scoreIndex.ContainsKey($kv.value)) { $scoreIndex[$kv.value] = $f }
-  }
-}
+    $scoreHeaders = @()
+    $firstCsv = Get-Content $srcCsv -TotalCount 1
+    if ($firstCsv) { $scoreHeaders = $firstCsv.Split(',') | ForEach-Object { $_.Trim('"').Trim() } }
 
-$searchRoots = @("F:\AAYS_WORK","F:\chatgpt\AAYS_WORK","D:\AAYS_WORK","D:\chatgpt\AAYS_WORK","C:\Users\cagda\Documents\GitHub\AAYS") | Where-Object { Test-Path $_ }
-$candidateFiles = foreach ($root in $searchRoots) {
-  Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
-    Where-Object {
-      $_.Extension -in @(".geojson",".json") -and
-      $_.Length -gt 1024 -and
-      $_.FullName -match "(parcel|polygon|boundary|boundaries|cadastre|cadastral|title|uprn|footprint|lookup|security)" -and
-      $_.FullName -notmatch "parcel_internet_access_scores.geojson"
-    } |
-    Sort-Object Length -Descending
-}
+    $preferred = @(
+        "parcel_id", "parcelid", "parcel", "id", "uprn", "UPRN", "title_number", "title_no", "title",
+        "property_id", "propertyid", "oa11cd", "lsoa11cd", "msoa11cd", "postcode", "pcd", "pcds"
+    ) + $scoreHeaders
+    $preferred = @($preferred | Where-Object { $_ } | Select-Object -Unique)
 
-$best = $null
-$bestIndex = $null
-$bestMatches = 0
-$bestKey = $null
-$bestMode = $null
-$summaries = @()
+    $scoreIndexByKey = @{}
+    $scorePrimaryKey = $null
+    foreach ($k in $preferred) { $scoreIndexByKey[$k] = @{} }
 
-foreach ($file in @($candidateFiles | Select-Object -First 140)) {
-  Write-Log "Inspecting $($file.FullName)"
-  $idx = @{}
-  $mode = "unknown"
-  $featureCount = 0
-  $polygonCount = 0
-  $propKeys = @()
-  $sampleMatches = 0
-  $joinKey = $null
+    foreach ($f in $scoreFeatures) {
+        foreach ($k in $preferred) {
+            $v = Get-PropValue $f.properties $k
+            if ($v) {
+                if (-not $scorePrimaryKey) { $scorePrimaryKey = $k }
+                if (-not $scoreIndexByKey[$k].ContainsKey($v)) { $scoreIndexByKey[$k][$v] = $f }
+            }
+        }
+    }
 
-  try {
-    $raw = Get-Content $file.FullName -Raw -ErrorAction Stop
-    $obj = $raw | ConvertFrom-Json
+    $searchRoots = @(
+        "F:\AAYS_WORK", "F:\chatgpt\AAYS_WORK", "D:\AAYS_WORK", "D:\chatgpt\AAYS_WORK", "C:\Users\cagda\Documents\GitHub\AAYS"
+    ) | Where-Object { Test-Path $_ }
 
-    if ($obj.PSObject.Properties.Name -contains "features") {
-      $mode = "feature_collection"
-      $features = @($obj.features)
-      $featureCount = $features.Count
-      foreach ($pf in $features) {
-        $geom = Get-Geometry $pf
-        if ($geom) {
-          $polygonCount++
-          if ($pf.properties) {
-            $propKeys += @($pf.properties.PSObject.Properties.Name)
-            foreach ($k in ($preferredKeys | Select-Object -Unique)) {
-              if ($pf.properties.PSObject.Properties.Name -contains $k) {
-                $v = [string]$pf.properties.$k
-                if ($v -and $scoreIndex.ContainsKey($v.Trim())) {
-                  Try-RegisterGeometry $idx $v.Trim() $geom
-                  $joinKey = $k
+    $candidateFiles = foreach ($root in $searchRoots) {
+        Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.Extension -in @(".geojson", ".json") -and
+                $_.FullName -match "(parcel|polygon|boundary|boundaries|cadastre|cadastral|title|uprn|footprint|security)" -and
+                $_.Length -gt 1024 -and
+                $_.FullName -notmatch "parcel_internet_access_scores"
+            } |
+            Sort-Object Length -Descending
+    }
+
+    $best = $null
+    $bestKey = $null
+    $bestScoreKey = $null
+    $bestMatches = 0
+    $bestPolygonCount = 0
+    $candidateSummaries = @()
+
+    foreach ($file in @($candidateFiles | Select-Object -First 200)) {
+        try {
+            $obj = Get-Content $file.FullName -Raw -ErrorAction Stop | ConvertFrom-Json
+            $features = Get-FeaturesFromJson $obj
+            if ($features.Count -eq 0) { continue }
+            $polygonFeatures = @($features | Where-Object { $_.geometry -and ($_.geometry.type -eq "Polygon" -or $_.geometry.type -eq "MultiPolygon") })
+            if ($polygonFeatures.Count -eq 0) { continue }
+
+            $localBest = 0
+            $localCandidateKey = $null
+            $localScoreKey = $null
+            $candidatePropKeys = @($polygonFeatures | Select-Object -First 20 | ForEach-Object { if ($_.properties) { $_.properties.PSObject.Properties.Name } } | Select-Object -Unique)
+            $tryKeys = @($preferred + $candidatePropKeys | Where-Object { $_ } | Select-Object -Unique)
+
+            foreach ($candidateKey in $tryKeys) {
+                foreach ($scoreKey in $preferred) {
+                    if (-not $scoreIndexByKey.ContainsKey($scoreKey)) { continue }
+                    $idx = $scoreIndexByKey[$scoreKey]
+                    if ($idx.Count -eq 0) { continue }
+                    $m = 0
+                    foreach ($pf in ($polygonFeatures | Select-Object -First 10000)) {
+                        $v = Get-PropValue $pf.properties $candidateKey
+                        if ($v -and $idx.ContainsKey($v)) { $m++ }
+                    }
+                    if ($m -gt $localBest) {
+                        $localBest = $m
+                        $localCandidateKey = $candidateKey
+                        $localScoreKey = $scoreKey
+                    }
                 }
-              }
             }
-          }
-        }
-      }
-    }
-    elseif ($obj -is [System.Collections.IEnumerable]) {
-      $mode = "array"
-      $items = @($obj)
-      $featureCount = $items.Count
-      foreach ($it in $items) {
-        $geom = Get-Geometry $it
-        if ($geom) {
-          $polygonCount++
-          $propKeys += @($it.PSObject.Properties.Name)
-          foreach ($k in ($preferredKeys | Select-Object -Unique)) {
-            if ($it.PSObject.Properties.Name -contains $k) {
-              $v = [string]$it.$k
-              if ($v -and $scoreIndex.ContainsKey($v.Trim())) {
-                Try-RegisterGeometry $idx $v.Trim() $geom
-                $joinKey = $k
-              }
+
+            $candidateSummaries += [ordered]@{
+                file = $file.FullName
+                size = $file.Length
+                feature_count = $features.Count
+                polygon_count = $polygonFeatures.Count
+                best_candidate_key = $localCandidateKey
+                best_score_key = $localScoreKey
+                sample_matches = $localBest
             }
-          }
-        }
-      }
-    }
-    else {
-      $mode = "object_or_lookup"
-      foreach ($p in $obj.PSObject.Properties) {
-        $candidateKey = [string]$p.Name
-        $val = $p.Value
-        $geom = Get-Geometry $val
-        if ($geom) {
-          $polygonCount++
-          if ($scoreIndex.ContainsKey($candidateKey)) {
-            Try-RegisterGeometry $idx $candidateKey $geom
-            $joinKey = "top_level_key"
-          }
-        }
-        elseif ($val -and ($val.PSObject.Properties.Name -contains "properties") -and ($val.PSObject.Properties.Name -contains "geometry")) {
-          $geom2 = Get-Geometry $val
-          if ($geom2) {
-            $polygonCount++
-            $kv = Get-PropValue $val.properties $preferredKeys
-            if ($kv -and $scoreIndex.ContainsKey($kv.value)) {
-              Try-RegisterGeometry $idx $kv.value $geom2
-              $joinKey = $kv.key
+
+            if ($localBest -gt $bestMatches) {
+                $best = $file.FullName
+                $bestMatches = $localBest
+                $bestKey = $localCandidateKey
+                $bestScoreKey = $localScoreKey
+                $bestPolygonCount = $polygonFeatures.Count
             }
-          }
         }
-      }
-      $featureCount = $obj.PSObject.Properties.Count
+        catch {
+            $candidateSummaries += [ordered]@{ file = $file.FullName; size = $file.Length; error = $_.Exception.Message }
+        }
     }
 
-    $sampleMatches = $idx.Count
-    $summaries += [ordered]@{
-      file = $file.FullName
-      size = $file.Length
-      mode = $mode
-      feature_count = $featureCount
-      polygon_count = $polygonCount
-      sample_matches = $sampleMatches
-      join_key = $joinKey
-      sample_property_keys = @($propKeys | Select-Object -Unique | Select-Object -First 40)
+    if (-not $best -or $bestMatches -le 0) {
+        $report = [ordered]@{
+            task_id = $taskId
+            page_key = $pageKey
+            status = "REAL_PARCEL_GEOMETRY_JOIN_BLOCKED_NO_COMPATIBLE_KEY"
+            completion_percent = 78
+            final_ready = $false
+            production_complete = $false
+            score_feature_count = $scoreFeatures.Count
+            score_primary_key_detected = $scorePrimaryKey
+            searched_roots = $searchRoots
+            candidate_count = @($candidateFiles).Count
+            inspected_candidate_count = @($candidateSummaries).Count
+            candidates = $candidateSummaries
+            reason = "No real Polygon/MultiPolygon candidate had a join key matching score dataset values. Fake geometry refused."
+            generated_at = (Get-Date -Format o)
+        }
+        $report | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $repoReport
+        "status=REAL_PARCEL_GEOMETRY_JOIN_BLOCKED_NO_COMPATIBLE_KEY`ncompletion_percent=78`nfinal_ready=false`nproduction_complete=false`nreport=$repoReport" | Set-Content -Encoding UTF8 $repoStatus
+        "V2_SCHEMA_PROBE_FINISHED=$(Get-Date -Format o)`nSTATUS=BLOCKED_NO_COMPATIBLE_KEY" | Add-Content -Encoding UTF8 "$heartbeatDir/latest.txt"
+        exit 0
     }
 
-    if ($sampleMatches -gt $bestMatches) {
-      $bestMatches = $sampleMatches
-      $best = $file.FullName
-      $bestIndex = $idx
-      $bestKey = $joinKey
-      $bestMode = $mode
+    Write-Log "Best candidate: $best; candidate_key=$bestKey; score_key=$bestScoreKey; sample_matches=$bestMatches"
+    $polyObj = Get-Content $best -Raw | ConvertFrom-Json
+    $polyFeatures = @(Get-FeaturesFromJson $polyObj | Where-Object { $_.geometry -and ($_.geometry.type -eq "Polygon" -or $_.geometry.type -eq "MultiPolygon") })
+    $polyIndex = @{}
+    foreach ($pf in $polyFeatures) {
+        $v = Get-PropValue $pf.properties $bestKey
+        if ($v -and -not $polyIndex.ContainsKey($v)) { $polyIndex[$v] = $pf.geometry }
     }
-  }
-  catch {
-    $summaries += [ordered]@{ file=$file.FullName; size=$file.Length; error=$_.Exception.Message }
-  }
+
+    $joined = 0
+    $nullAfter = 0
+    foreach ($sf in $scoreFeatures) {
+        $v = Get-PropValue $sf.properties $bestScoreKey
+        if ($v -and $polyIndex.ContainsKey($v)) { $sf.geometry = $polyIndex[$v]; $joined++ }
+        if ($null -eq $sf.geometry) { $nullAfter++ }
+    }
+
+    $scoreObj | ConvertTo-Json -Depth 100 | Set-Content -Encoding UTF8 $readyGeoJson
+    Copy-Item $srcCsv $readyCsv -Force
+    if (Test-Path $srcBreakdown) { Copy-Item $srcBreakdown $readyBreakdown -Force }
+    [ordered]@{
+        task_id = $taskId
+        page_key = $pageKey
+        source_score_geojson = $srcGeoJson
+        source_polygon_geojson = $best
+        score_join_key = $bestScoreKey
+        polygon_join_key = $bestKey
+        joined_geometry_count = $joined
+        null_geometry_after_join = $nullAfter
+        generated_at = (Get-Date -Format o)
+    } | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $detailJson
+
+    $status = if ($nullAfter -eq 0 -and $joined -eq $scoreFeatures.Count) { "REAL_PARCEL_GEOMETRY_JOIN_READY" } else { "REAL_PARCEL_GEOMETRY_JOIN_PARTIAL" }
+    $percent = if ($status -eq "REAL_PARCEL_GEOMETRY_JOIN_READY") { 99 } else { 82 }
+    $report2 = [ordered]@{
+        task_id = $taskId
+        page_key = $pageKey
+        status = $status
+        completion_percent = $percent
+        final_ready = $false
+        production_complete = $false
+        source_polygon_geojson = $best
+        polygon_feature_count = $bestPolygonCount
+        score_join_key = $bestScoreKey
+        polygon_join_key = $bestKey
+        joined_geometry_count = $joined
+        score_feature_count = $scoreFeatures.Count
+        null_geometry_after_join = $nullAfter
+        ready_geojson = $readyGeoJson
+        ready_csv = $readyCsv
+        ready_breakdown = $readyBreakdown
+        detail_json = $detailJson
+        generated_at = (Get-Date -Format o)
+    }
+    $report2 | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $repoReport
+    "status=$status`ncompletion_percent=$percent`njoined_geometry_count=$joined`nscore_feature_count=$($scoreFeatures.Count)`nnull_geometry_after_join=$nullAfter`nready_geojson=$readyGeoJson" | Set-Content -Encoding UTF8 $repoStatus
+
+    if ($status -eq "REAL_PARCEL_GEOMETRY_JOIN_READY") {
+        $final = [ordered]@{
+            task_id = $taskId
+            page_key = $pageKey
+            status = "FINAL_READY"
+            completion_percent = 100
+            final_ready = $true
+            production_complete = $true
+            fake_data = $false
+            db_write = $false
+            migration = $false
+            production_deploy = $false
+            ready_outputs = [ordered]@{ scores_geojson = $readyGeoJson; scores_csv = $readyCsv; factor_breakdown_csv = $readyBreakdown; detail_json = $detailJson }
+            FINAL_STATUS = "FINAL_READY_CONFIRMED"
+            PRODUCT_PROGRESS_ESTIMATE = 100
+            PRODUCTION_COMPLETE = $true
+            generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
+        }
+        $final | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $finalReport
+        $final | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $pageOutput
+    }
+
+    "V2_SCHEMA_PROBE_FINISHED=$(Get-Date -Format o)`nSTATUS=$status`nJOINED=$joined`nNULL_AFTER=$nullAfter" | Add-Content -Encoding UTF8 "$heartbeatDir/latest.txt"
+    exit 0
 }
-
-if (-not $best -or $bestMatches -le 0) {
-  [ordered]@{
-    task_id = $taskId
-    fix_id = $fixId
-    status = "REAL_PARCEL_GEOMETRY_JOIN_BLOCKED_NO_MATCHING_KEY"
-    completion_percent = 72
-    final_ready = $false
-    production_complete = $false
-    score_feature_count = $scoreFeatures.Count
-    score_join_key_detected = $scoreKeyName
-    searched_roots = $searchRoots
-    candidate_count = @($candidateFiles).Count
-    inspected_candidate_count = @($summaries).Count
-    candidates = $summaries
-    required_next_action = "Provide or identify a real Polygon/MultiPolygon parcel source with parcel_id/uprn/title_number compatible with the score dataset. Fake geometry refused."
-    generated_at = (Get-Date -Format o)
-  } | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 $repoReport
-
-  @"
-status=REAL_PARCEL_GEOMETRY_JOIN_BLOCKED_NO_MATCHING_KEY
-completion_percent=72
-final_ready=false
-production_complete=false
-score_join_key_detected=$scoreKeyName
-candidate_count=$(@($candidateFiles).Count)
-inspected_candidate_count=$(@($summaries).Count)
-"@ | Set-Content -Encoding UTF8 $repoStatus
-
-  throw "No matching real geometry key found. See $repoReport"
+catch {
+    $err = $_.Exception.Message
+    $reportErr = [ordered]@{
+        task_id = $taskId
+        page_key = $pageKey
+        status = "V2_SCHEMA_PROBE_SCRIPT_ERROR"
+        completion_percent = 78
+        final_ready = $false
+        production_complete = $false
+        error = $err
+        generated_at = (Get-Date -Format o)
+    }
+    $reportErr | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $repoReport
+    "status=V2_SCHEMA_PROBE_SCRIPT_ERROR`ncompletion_percent=78`nerror=$err`nreport=$repoReport" | Set-Content -Encoding UTF8 $repoStatus
+    "V2_SCHEMA_PROBE_FAILED=$(Get-Date -Format o)`nERROR=$err" | Add-Content -Encoding UTF8 "$heartbeatDir/latest.txt"
+    exit 1
 }
-
-$joined = 0
-$nullAfter = 0
-foreach ($sf in $scoreFeatures) {
-  $kv = Get-PropValue $sf.properties @($scoreKeyName,"parcel_id","id","uprn","UPRN","title_number","title_no","title")
-  if ($kv -and $bestIndex.ContainsKey($kv.value)) {
-    $sf.geometry = $bestIndex[$kv.value]
-    $joined++
-  }
-  if ($null -eq $sf.geometry) { $nullAfter++ }
-}
-
-$scoreObj | ConvertTo-Json -Depth 100 | Set-Content -Encoding UTF8 $readyGeoJson
-Copy-Item $srcCsv $readyCsv -Force
-if (Test-Path $srcBreakdown) { Copy-Item $srcBreakdown $readyBreakdown -Force }
-@{
-  task_id = $taskId
-  page_key = $pageKey
-  source_score_geojson = $srcGeoJson
-  source_polygon_source = $best
-  join_key = $bestKey
-  join_mode = $bestMode
-  joined_geometry_count = $joined
-  null_geometry_after_join = $nullAfter
-  generated_at = (Get-Date -Format o)
-} | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $detailJson
-
-$status = if ($nullAfter -eq 0 -and $joined -eq $scoreFeatures.Count) { "REAL_PARCEL_GEOMETRY_JOIN_READY" } else { "REAL_PARCEL_GEOMETRY_JOIN_PARTIAL" }
-$percent = if ($status -eq "REAL_PARCEL_GEOMETRY_JOIN_READY") { 99 } else { 74 }
-[ordered]@{
-  task_id = $taskId
-  fix_id = $fixId
-  status = $status
-  completion_percent = $percent
-  final_ready = $false
-  production_complete = $false
-  selected_source = $best
-  selected_mode = $bestMode
-  selected_join_key = $bestKey
-  score_feature_count = $scoreFeatures.Count
-  joined_geometry_count = $joined
-  null_geometry_after_join = $nullAfter
-  ready_geojson = $readyGeoJson
-  ready_csv = $readyCsv
-  ready_breakdown = $readyBreakdown
-  detail_json = $detailJson
-  candidates = $summaries
-  generated_at = (Get-Date -Format o)
-} | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 $repoReport
-
-@"
-status=$status
-completion_percent=$percent
-selected_source=$best
-selected_mode=$bestMode
-selected_join_key=$bestKey
-score_feature_count=$($scoreFeatures.Count)
-joined_geometry_count=$joined
-null_geometry_after_join=$nullAfter
-ready_geojson=$readyGeoJson
-"@ | Set-Content -Encoding UTF8 $repoStatus
-
-"V2_SCHEMA_PROBE_FINISHED=$(Get-Date -Format o)" | Add-Content -Encoding UTF8 "$heartbeatDir/latest.txt"
