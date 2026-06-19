@@ -23,10 +23,13 @@ function Write-RunnerLog([string]$Message) {
   Add-Content -Path $LogFile -Value $line
 }
 
-function Invoke-GitChecked([string[]]$Args) {
-  $p = Start-Process git -ArgumentList $Args -WorkingDirectory $RepoRoot -NoNewWindow -Wait -PassThru
-  if ($p.ExitCode -ne 0) {
-    throw "git failed: $($Args -join ' ') exit=$($p.ExitCode)"
+function Invoke-GitChecked([string[]]$GitArgs) {
+  if (-not $GitArgs -or $GitArgs.Count -eq 0) {
+    throw "git failed: empty argument list"
+  }
+  & git @GitArgs
+  if ($LASTEXITCODE -ne 0) {
+    throw "git failed: $($GitArgs -join ' ') exit=$LASTEXITCODE"
   }
 }
 
