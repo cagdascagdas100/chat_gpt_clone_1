@@ -1,5 +1,0 @@
-page=security_public_safety_low_credit_20260612
-state=waiting_for_runner
-ref=../current-task.json
-script=docs/chatgpt_status/security_public_safety_low_credit_20260612/automation/vrun.ps1
-expected_report=docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/v_latest.txt

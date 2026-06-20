@@ -1,8 +1,0 @@
-# Page 6.4 Security Control Marker
-
-page_key: security_public_safety_low_credit_20260612
-status: RUN_REQUESTED
-mode: single_shared_runner
-active_task: runner_tasks/current-task.json
-expected_report: reports/security_df_worktree_final_wrapper_YYYYMMDD_HHMMSS.md
-final: false

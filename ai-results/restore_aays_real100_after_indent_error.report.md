@@ -1,9 +1,0 @@
-﻿# Restore AAYS Real100 After Indentation Error
-status=finished_restored_compile_ok
-compile_ok=True
-changed=runtime_restored_from_bak_real100fix,estate_restored_from_bak_real100fix
-warnings=
-errors=
-db_write=false
-production_deploy=false
-fake_data=false
