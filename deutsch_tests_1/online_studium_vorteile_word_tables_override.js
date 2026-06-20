@@ -5,7 +5,7 @@
   function t39(){function o(){add('data_bevor_anonymitaet_vorteile_long_override.js?v=1',function(){add('anonymitaet_edge_reader_link.js?v=1',rr)})}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t39){o();return;}add('data_bevor_anonymitaet_vorteile.js?v=2',o)}
   function t40(){function o(){add('data_bevor_selbstoptimierung_vorteile_long_override.js?v=1',function(){add('selbstoptimierung_title_fix.js?v=1',function(){add('selbstoptimierung_reader_list_fix.js?v=1',function(){add('selbstoptimierung_quiz_grammar_fix.js?v=1',rr)})})})}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t40){o();return;}add('data_bevor_selbstoptimierung_vorteile.js?v=1',o)}
   function t41(){function o(){add('data_bevor_selbstoptimierung_nachteile_long_override.js?v=2',rr)}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t41){o();return;}add('data_bevor_selbstoptimierung_nachteile.js?v=1',o)}
-  function t42(){if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t42){rr();return;}add('data_bevor_freizeit_planen_vorteile.js?v=1',rr)}
+  function t42(){function o(){add('data_bevor_freizeit_planen_vorteile_long_override.js?v=1',rr)}if(window.DEUTSCH_TESTS&&window.DEUTSCH_TESTS.t42){o();return;}add('data_bevor_freizeit_planen_vorteile.js?v=1',o)}
   function satz2(){add('data_grammar_satzmuster2_full.js?v=3',function(){add('t37_satzmuster2_source_boost.js?v=1',rr)})}
   function edge(){if(window.__edgeReaderEnhanceLesson){rr();return;}add('edge_reader_support.js?v=1',rr)}
   function clean(){add('no_generic_fillers.js?v=2',function(){add('final_schreiben_fehlern_cleanup.js?v=1',rr)})}
