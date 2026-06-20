@@ -77,7 +77,7 @@ function Get-TaskCandidates {
       }
     }
   }
-  return $candidates | Sort-Object ModifiedTicks
+  return $candidates | Sort-Object ModifiedTicks -Descending
 }
 
 try {
