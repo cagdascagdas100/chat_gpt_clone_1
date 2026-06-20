@@ -1,0 +1,12 @@
+﻿# Security/Public Safety Field Contract Report
+
+status=BLOCKED_MISSING_POLYGON_CARRIER_OR_CONTRACT_FIELDS
+contract_fields_complete=False
+canonical_fields_found=confidence_score
+missing_canonical_fields=parcel_id,security_score,security_level,security_level_label,security_color_category,security_color_hex,source_name,source_url,source_date,evidence,matching_method,calculation_explanation,accuracy_rating
+point_feature_count=POINT_GEOMETRY_PRESENT
+polygon_feature_count=UNKNOWN
+popup_contract_ok=False
+right_panel_contract_ok=False
+bridge_loaded=False
+overlay_canonical_hook=False

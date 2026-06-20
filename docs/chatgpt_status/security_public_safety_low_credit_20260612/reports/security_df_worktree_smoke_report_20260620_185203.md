@@ -1,0 +1,10 @@
+﻿# Security/Public Safety Smoke Report
+
+status=BLOCKED_MISSING_POLYGON_CARRIER_OR_CONTRACT_FIELDS
+web_runtime=HTTP_200
+map_parcels_probe=HTTP_200
+polygon_thematic_ok=False
+field_contract_ok=False
+popup_contract_ok=False
+right_panel_contract_ok=False
+browser_smoke_ok=False
