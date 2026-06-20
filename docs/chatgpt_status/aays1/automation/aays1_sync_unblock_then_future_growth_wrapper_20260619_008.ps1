@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Continue"
 
 $pageKey = "aays1"
+$taskId = "fg100-local-sync-20260619-008"
 $stamp = "20260619_008"
 $root = "docs/chatgpt_status/$pageKey"
 $reportDir = "$root/reports"
@@ -16,13 +17,12 @@ $heartbeat = "$heartbeatDir/aays1_sync_unblock_then_future_growth_wrapper_heartb
 
 $lines = @()
 $lines += "page_key=$pageKey"
-$lines += "task_id=aays1-sync-unblock-then-future-growth-wrapper-20260619-008"
+$lines += "task_id=$taskId"
 $lines += "started_at=$(Get-Date -Format o)"
 $lines += "repo_root=$(Get-Location)"
 $lines += "git_branch_before=$((git branch --show-current) 2>$null)"
 $lines += "git_head_before=$((git rev-parse HEAD) 2>$null)"
 
-# Move only the known untracked files that were proven to block git pull. Do not delete them.
 $blockers = @(
   "docs/chatgpt_status/gas_emissions/reports/terrayield-088-gas-emissions-proxy-finalize.txt",
   "docs/chatgpt_status/gas_emissions/reports/terrayield-092-gas-emissions-frontend-static-probe.txt",
@@ -43,7 +43,6 @@ foreach ($f in $blockers) {
   }
 }
 
-# Keep tracked local product edits safe; do not stage unrelated files.
 git stash push -m "aays1-sync-unblock-before-main-$stamp" -- terrayield_land_intelligence/app/schemas/contractor.py | Out-Null
 $lines += "stash_exit=$LASTEXITCODE"
 
@@ -127,7 +126,7 @@ $lines += "finished_at=$(Get-Date -Format o)"
 $lines | Set-Content -Encoding UTF8 $report
 @"
 PAGE_KEY=$pageKey
-TASK_ID=aays1-sync-unblock-then-future-growth-wrapper-20260619-008
+TASK_ID=$taskId
 SYNC_OK=$syncOk
 FINAL_STATUS=$finalStatus
 PRODUCT_PROGRESS_ESTIMATE=$estimate
@@ -136,7 +135,7 @@ REPORT=$report
 "@ | Set-Content -Encoding UTF8 $status
 @"
 PAGE_KEY=$pageKey
-TASK_ID=aays1-sync-unblock-then-future-growth-wrapper-20260619-008
+TASK_ID=$taskId
 HEARTBEAT_AT=$(Get-Date -Format o)
 SYNC_OK=$syncOk
 FINAL_STATUS=$finalStatus
@@ -144,7 +143,6 @@ PRODUCT_PROGRESS_ESTIMATE=$estimate
 PRODUCTION_COMPLETE=$complete
 "@ | Set-Content -Encoding UTF8 $heartbeat
 
-# Commit only aays1 evidence; never stage unrelated page keys or product files.
 git add "docs/chatgpt_status/$pageKey/reports" "docs/chatgpt_status/$pageKey/status" "docs/chatgpt_status/$pageKey/heartbeat" 2>$null
 git commit -m "Add aays1 sync unblock wrapper runtime evidence" 2>$null
 git push origin main 2>$null
