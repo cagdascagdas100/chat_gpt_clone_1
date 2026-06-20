@@ -1,0 +1,10 @@
+﻿status=HEADERFIX_WRAPPER_STARTED
+page_key=security_public_safety_low_credit_20260612
+task_id=security_public_safety_20260619_df_parcel_contract
+source=C:\Users\cagda\Documents\GitHub\chat_gpt_clone_1_security_evidence_run\docs\chatgpt_status\security_public_safety_low_credit_20260612\automation\security_public_safety_20260619_df_parcel_contract_task.ps1
+temp=C:\Users\cagda\AppData\Local\Temp\security_public_safety_20260619_df_parcel_contract_task_fixed_20260620_185203.ps1
+separate_runner=false
+powershell_required_from_user=false
+status=HEADERFIX_WRAPPER_COMPLETED
+exit_code=0
+completed_at=2026-06-20T18:52:31
