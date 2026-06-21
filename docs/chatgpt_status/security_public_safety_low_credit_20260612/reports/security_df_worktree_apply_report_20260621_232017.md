@@ -1,0 +1,19 @@
+﻿# Security/Public Safety D/F Worktree Apply Report
+
+status=BLOCKED_MISSING_POLYGON_CARRIER_OR_CONTRACT_FIELDS
+completion_percent=55
+page_key=security_public_safety_low_credit_20260612
+task_id=security_public_safety_20260619_df_parcel_contract
+worktree_root=F:\chatgpt\AAYS_WORK\security_public_safety_20260619_clean
+product_root=C:\Users\cagda\Documents\GitHub\chat_gpt_clone_1_security_evidence_run
+carrier_polygon_source=UNDETECTED
+security_lookup_source=D:\topografik_map\security_module\data_processed\parcel_security_scores_enhanced_compact.geojson
+geometry_status=POINT_ONLY_SAMPLE
+changed_files=C:\Users\cagda\Documents\GitHub\chat_gpt_clone_1_security_evidence_run\england_map_web\security_contract_bridge.js
+db_write=false
+ddl=false
+migration=false
+production_deploy=false
+fake_data=false
+separate_runner=false
+git_add_dot=false
