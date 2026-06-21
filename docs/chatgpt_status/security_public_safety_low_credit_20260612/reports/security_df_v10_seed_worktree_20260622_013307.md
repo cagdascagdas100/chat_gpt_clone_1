@@ -1,0 +1,12 @@
+﻿# Security DF v10 seeded clean worktree
+- page_key: security_public_safety_low_credit_20260612
+- task_id: security_public_safety_20260619_df_parcel_contract
+- clean_worktree: F:\chatgpt\AAYS_WORK\security_public_safety_20260619_clean
+- log: C:\Users\cagda\OneDrive - hacettepe.edu.tr\Masaüstü\security_df_v10_seed_worktree_log.txt
+- automation_exit_code: 0
+- separate_runner: false
+- final_wrapper_count: 15
+- smoke_report_count: 15
+- runner_output_count: 15
+- final_ready: False
+- latest_final: C:\Users\cagda\Documents\GitHub\chat_gpt_clone_1_security_evidence_run\docs\chatgpt_status\security_public_safety_low_credit_20260612\reports\security_df_worktree_final_wrapper_20260622_013239.md
