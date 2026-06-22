@@ -1,0 +1,50 @@
+name: IA108 self-hosted watchdog
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/terrayield-aays-integration
+    paths:
+      - 'docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/**'
+      - 'docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/current-task.txt'
+      - 'docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/runner_tasks/**'
+      - 'docs/chatgpt_status/control/ia108_runner_watchdog_v2_execute.txt'
+      - 'docs/chatgpt_status/status/current-task.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ia108-self-hosted-watchdog
+  cancel-in-progress: false
+
+jobs:
+  run-watchdog:
+    name: Run IA108 watchdog on local Windows runner
+    runs-on:
+      - self-hosted
+      - Windows
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/terrayield-aays-integration
+          fetch-depth: 0
+
+      - name: Run IA108 watchdog script
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $script = 'docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/ia108_runner_watchdog_v2_execute.ps1'
+          if (-not (Test-Path $script)) {
+            throw "Missing watchdog script: $script"
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File $script
+
+      - name: Commit generated IA108 reports
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: feature/terrayield-aays-integration
+          commit_message: ia108 run watchdog and publish reports
+          file_pattern: docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/* docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/* docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/heartbeat/* docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/runner_outputs/* docs/chatgpt_status/reports/*
