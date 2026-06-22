@@ -1,0 +1,22 @@
+Target: england_map_web/app.js
+
+Change 1:
+Replace:
+const directSourceMode = true;
+With:
+const directSourceMode = false; // final acceptance prefers parcel polygon join; point source remains fail-soft fallback
+
+Change 2:
+Inside findGasEmissionsRecordForParcel(feature), remove lookup references that use sourceLookupByParcelId and sourceLookupByParcelRef outside their safe bridge scope.
+
+Change 3:
+Popup gas metadata must expose these field names when a record is matched:
+emission_percent
+emission_level
+emission_color_hex
+confidence
+source_type
+source_date
+source/evidence
+matching_method
+calculation_explanation
