@@ -1,6 +1,6 @@
-param()
+﻿param()
 $ErrorActionPreference='Continue'
-$RepoRoot='C:\Users\cagda\Documents\GitHub\AAYS'
+$RepoRoot$RepoRoot=(Resolve-Path (Join-Path $PSScriptRoot '..\\..\\..\\..')).Path
 $PageRoot=Join-Path $RepoRoot 'docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT'
 $Reports=Join-Path $PageRoot 'reports'; $Status=Join-Path $PageRoot 'status'
 New-Item -ItemType Directory -Force -Path $Reports,$Status | Out-Null
@@ -27,3 +27,4 @@ KV 'PRODUCT_PROGRESS_ESTIMATE' $progress
 KV 'FINAL_STATUS' $final
 Copy-Item -Force $Out (Join-Path $Status 'topography_runner_intake_runtime_wrapper_20260617_001.status.txt')
 Write-Host "WROTE_REPORT=$Out"
+
