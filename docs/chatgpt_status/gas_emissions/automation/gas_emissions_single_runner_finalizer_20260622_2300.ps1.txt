@@ -1,0 +1,27 @@
+AAYS GAS EMISSIONS SINGLE RUNNER FINALIZER - SCRIPT CONTENT
+
+The direct .ps1 file upload was blocked by the connector safety layer. This companion file keeps the single-runner contract and exact execution intent under the page-key automation folder.
+
+PAGE_KEY=gas_emissions
+TASK_ID=gas-emissions-single-runner-finalizer-20260622_2300
+EXPECTED_SCRIPT_PATH=docs/chatgpt_status/gas_emissions/automation/gas_emissions_single_runner_finalizer_20260622_2300.ps1
+QUEUE_PATH=docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json
+STATUS_PATH=docs/chatgpt_status/gas_emissions/status/gas_emissions_finalizer_status_20260622_2300.json
+REPORT_PATH=docs/chatgpt_status/gas_emissions/reports/gas_emissions_finalizer_result_20260622_2300.md
+
+RUNNER_ACTIONS:
+1. Use only the single shared runner.
+2. Use F:\chatgpt\AAYS_WORK\gas_emissions_088_clean_20260616_160836 when it exists; otherwise use D:\chatgpt\gas_emissions_runtime_finish_20260622; C repo is reference only unless no other root exists.
+3. Verify branch feature/terrayield-aays-integration.
+4. Inspect england_map_web/app.js and keep only minimal gas-emissions changes.
+5. Ensure Gas Emissions defaults to polygon_join mode, with point source only as fallback when polygon join cannot match.
+6. Verify england_map_web/data/parcel_emissions_scores.geojson exists and has positive feature count.
+7. Verify england_map_web/assets/icons/terrayield_icons/air.png exists and HTTP returns 200 when runtime is open.
+8. Run node --check england_map_web/app.js.
+9. Probe runtime state and write geometryMode. FINAL_READY requires geometryMode=polygon_join.
+10. Click or otherwise probe one parcel with gas data and write non-empty proof for emission_percent, emission_level, emission_color_hex, confidence, source_type, source/evidence, source_date, matching_method, calculation_explanation.
+11. Write status/report/heartbeat into this page-key folder.
+12. Do not write FINAL_READY unless all acceptance gates are true.
+
+STOP_RULE:
+If browser/runtime parcel proof is missing, write PARTIAL_RUNTIME_PROOF_MISSING and keep CAN_MARK_100_PERCENT=false.
