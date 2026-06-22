@@ -41,3 +41,4 @@ if($missing.Count -eq 0){$final='FINAL_READY_CONFIRMED';$prod='true';$progress='
 KV $Report 'PRODUCTION_COMPLETE' $prod; KV $Report 'PRODUCT_PROGRESS_ESTIMATE' $progress; KV $Report 'FINAL_STATUS' $final; KV $Report 'MISSING_ITEMS' ($missing -join '; ')
 Copy-Item -Force $Report (Join-Path $Status 'topography_runtime_final_v2_20260616_2254.status.txt')
 Write-Host "WROTE_REPORT=$Report"
+
