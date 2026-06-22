@@ -1,0 +1,63 @@
+AAYS1 FG100 local runner blocker
+timestamp=20260622-222532
+page_key=aays1
+task_id=fg100-local-sync-20260619-008
+repo_full_name=cagdascagdas100/chat_gpt_clone_1
+worktree=C:\Users\cagda\Documents\GitHub\AAYS\.codex_worktrees\aays1_main
+git_ref=origin/main
+git_commit=289ec3dd25c5950f406f351c04cac7b3fbe06895
+final_report_target=docs/chatgpt_status/aays1/reports/aays1_sync_unblock_then_future_growth_wrapper_20260619_008.txt
+status=blocked
+no_fake_completion=true
+
+verified_now
+git_status_short=clean
+git_remote_v=origin https://github.com/cagdascagdas100/chat_gpt_clone_1
+git_branch_show_current=(detached)
+api_root_status=200
+england_map_web_status=200
+future_growth_methodology_status=200
+openapi_status=200
+
+failing_check_1
+command=Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 http://127.0.0.1:8010/api/future-growth/layer?bbox=-0.6,51.25,0.3,51.75&zoom=12&limit=20
+result=ERROR
+output=The operation has timed out.
+meaning=parcel thematic future growth layer did not complete within bounded local runtime probe
+
+failing_check_2
+command=docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+result=ERROR
+output=failed to connect to the docker API at npipe:////./pipe/docker_engine; check if the path is correct and if the daemon is running: open //./pipe/docker_engine: The system cannot find the file specified.
+meaning=required local Docker runtime is unavailable from this machine/session
+
+failing_check_3
+command=Select-String -Path F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\runner.log -Pattern aays1,fg100,future_growth
+result=ERROR
+output=NO_MATCHES_IN_RUNNER_LOG_FOR_AAYS1_FG100
+meaning=shared runner log does not show consumption of the aays1 FG100 task chain
+
+failing_check_4
+command=Get-Content docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+result=ERROR
+output=path does not exist in origin/main
+meaning=handoff references a shared runner script path that is absent in the verified main branch content
+
+failing_check_5
+command=repo content inspection on origin/main
+result=ERROR
+output=origin/main top-level app.js contains APP_SHELL_PAGE=security_public_safety_low_credit_20260612 and no verified Future Growth runtime code or full backend tree
+meaning=the supplied handoff expects a Future Growth runtime chain, but the verified main branch content is currently a different product shell
+
+conclusion
+The required final wrapper report cannot be produced honestly from the current verified local state.
+FINAL_STATUS=BLOCKED_LOCAL_RUNTIME_AND_REPO_MISMATCH
+PRODUCT_PROGRESS_ESTIMATE=99.9999998
+PRODUCTION_COMPLETE=false
+
+next_deterministic_fix
+1. restore or identify the correct local main worktree/repo content that actually contains the Future Growth runtime stack expected by the handoff
+2. restore Docker engine availability for local DB-backed layer checks
+3. confirm shared runner task consumer path for page_key=aays1
+4. rerun bounded future growth layer endpoint probe
+5. only then write the final wrapper with FINAL_READY_CONFIRMED markers if all runtime checks pass
