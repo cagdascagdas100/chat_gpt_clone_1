@@ -1,0 +1,40 @@
+TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+REPORT=v6_checkpoint_report
+
+GITHUB_OBSERVED_FINAL_REPORT=false
+GITHUB_OBSERVED_FINAL_STATUS=false
+GITHUB_OBSERVED_V5_PUBLISH_REPORT=false
+
+ACTION_TAKEN:
+- Added v6 terminal bridge diagnostic automation under the same page-key.
+- Updated canonical automation wrapper to prefer v6, then v5, then v4.
+- Updated active queue alias to v6.
+- Updated active current-task alias to v6.
+- Updated active runner-task alias to v6.
+- Updated pickup request alias to v6.
+
+WHY_PROGRESS_INCREASED:
+- The task now has a terminal diagnostic layer that can prove whether the existing single runner actually invoked the page-key automation.
+- If invoked, v6 writes heartbeat, runner_output, terminal report, terminal status, and publish report under this page-key only.
+- v6 delegates to v5 and v4, so earlier long read-only audits are preserved.
+
+WHY_NOT_100:
+- Final report is still absent on GitHub.
+- Final status is still absent on GitHub.
+- Existing runner contract is still not proven from GitHub evidence.
+- Product evidence blockers may still remain after runner pickup.
+
+SAFETY:
+NO_SECOND_RUNNER=true
+NO_DB_WRITE=true
+NO_MIGRATION=true
+NO_DEPLOY=true
+NO_FORCE_PUSH=true
+OUTPUT_SCOPE=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT
+
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
+EXPECTED_STATUS=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/topography_single_runner_contract_recovery_20260623T010000Z_final.status.txt
+EXPECTED_V6_TERMINAL_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_terminal_bridge_report.txt
+EXPECTED_V6_PUBLISH_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_publish_report.txt
+WAIT_MINUTES=10-15
