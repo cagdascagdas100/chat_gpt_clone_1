@@ -1,0 +1,12 @@
+# ACTIVE RUNNER TASK
+
+TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+RUNNER_TASK_STATUS=READY
+
+AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v3.ps1
+CANONICAL_RUNNER_TASK=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/topography_single_runner_contract_recovery_20260623T010000Z.task.md
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
+EXPECTED_STATUS=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/topography_single_runner_contract_recovery_20260623T010000Z_final.status.txt
+
+Run the automation once through the existing shared runner. Internal checks write separate report files and do not share output paths.
