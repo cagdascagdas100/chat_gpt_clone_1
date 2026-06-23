@@ -1,4 +1,6 @@
-MANUAL_RUNNER_TRIGGER_STARTED=2026-06-23T21:33:11
+MANUAL_RUNNER_TRIGGER_STARTED=2026-06-23T21:43:56
 PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
-RUNNER=docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+REPO_ROOT=C:\Users\cagda\Documents\GitHub\AAYS
+RUNNER=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+EXPECTED_REPORT=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\AAYS_REAL_TOPOGRAPHY_PRODUCT\reports\page34_repo_inventory_evidence_gate_20260623_008_report.md
 ERROR=SHARED_RUNNER_SCRIPT_NOT_FOUND
