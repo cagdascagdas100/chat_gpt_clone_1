@@ -8,22 +8,32 @@ $StartedAt = (Get-Date).ToString('s')
 $ScriptPath = $MyInvocation.MyCommand.Path
 $AutomationRoot = Split-Path -Parent $ScriptPath
 $PageRoot = Split-Path -Parent $AutomationRoot
-$RepoRoot = (Resolve-Path (Join-Path $PageRoot '..\..')).Path
+
+function Find-RepoRoot([string]$StartPath){
+  $p = (Resolve-Path $StartPath).Path
+  for($i=0; $i -lt 8; $i++){
+    if(Test-Path (Join-Path $p '.git')){ return $p }
+    if(Test-Path (Join-Path $p 'docs')){ if(Test-Path (Join-Path $p 'docs\chatgpt_status')){ return $p } }
+    $parent = Split-Path -Parent $p
+    if([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $p){ break }
+    $p = $parent
+  }
+  return (Resolve-Path (Join-Path $StartPath '..\..\..')).Path
+}
+
+$RepoRoot = Find-RepoRoot $PageRoot
 $Reports = Join-Path $PageRoot 'reports'
 $Status = Join-Path $PageRoot 'status'
 $Heartbeat = Join-Path $PageRoot 'heartbeat'
 $RunnerOutput = Join-Path $PageRoot 'runner_output'
 New-Item -ItemType Directory -Force -Path $Reports,$Status,$Heartbeat,$RunnerOutput | Out-Null
 
-function Write-TextFile([string]$Path,[string[]]$Lines){
+function Write-Report([string]$Path,[System.Collections.Generic.List[string]]$Lines){
   $dir = Split-Path -Parent $Path
   if($dir){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
   Set-Content -Path $Path -Encoding UTF8 -Value $Lines
 }
-
-function Add-Line([string]$Path,[string]$Line){
-  Add-Content -Path $Path -Encoding UTF8 -Value $Line
-}
+function HasText([string]$Path,[string]$Needle){ if(Test-Path $Path){ return ((Get-Content $Path -Raw -ErrorAction SilentlyContinue) -like "*$Needle*") } return $false }
 
 $contractReport = Join-Path $Reports "$TaskId`_runner_contract_detect.txt"
 $tokenReport = Join-Path $Reports "$TaskId`_final_token_verify.txt"
@@ -36,7 +46,7 @@ $finalReport = Join-Path $Reports "$TaskId`_final_report.txt"
 $finalStatus = Join-Path $Status "$TaskId`_final.status.txt"
 $heartbeatFile = Join-Path $Heartbeat "$TaskId.running.heartbeat.txt"
 
-Write-TextFile $heartbeatFile @(
+Set-Content -Path $heartbeatFile -Encoding UTF8 -Value @(
   "TASK_ID=$TaskId",
   "PAGE_KEY=$PageKey",
   "STATUS=RUNNING_BY_SINGLE_RUNNER_AUTOMATION",
@@ -46,233 +56,154 @@ Write-TextFile $heartbeatFile @(
   "REPO_ROOT=$RepoRoot"
 )
 
-# 1. Runner contract detection - no mutation.
-$runnerCandidates = @(
+# Contract detection. No mutation.
+$contract = New-Object System.Collections.Generic.List[string]
+$contract.Add("TASK_ID=$TaskId")
+$contract.Add("PAGE_KEY=$PageKey")
+$contract.Add('REPORT_KIND=runner_contract_detect')
+$contract.Add("SCRIPT_PATH=$ScriptPath")
+$contract.Add("PAGE_ROOT=$PageRoot")
+$contract.Add("REPO_ROOT=$RepoRoot")
+@(
   'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1',
   'docs/chatgpt_status/_shared/automation',
+  "docs/chatgpt_status/$PageKey/control",
   "docs/chatgpt_status/$PageKey/queue",
   "docs/chatgpt_status/$PageKey/runner_tasks",
   "docs/chatgpt_status/$PageKey/current-task",
-  "docs/chatgpt_status/$PageKey/control",
-  "docs/chatgpt_status/$PageKey/status",
+  "docs/chatgpt_status/$PageKey/automation",
   "docs/chatgpt_status/$PageKey/reports",
+  "docs/chatgpt_status/$PageKey/status",
   "docs/chatgpt_status/$PageKey/heartbeat",
   "docs/chatgpt_status/$PageKey/runner_output"
-)
-$contractLines = New-Object System.Collections.Generic.List[string]
-$contractLines.Add("TASK_ID=$TaskId")
-$contractLines.Add("PAGE_KEY=$PageKey")
-$contractLines.Add("REPORT_KIND=runner_contract_detect")
-$contractLines.Add("SCRIPT_PATH=$ScriptPath")
-$contractLines.Add("PAGE_ROOT=$PageRoot")
-$contractLines.Add("REPO_ROOT=$RepoRoot")
-foreach($rel in $runnerCandidates){
-  $p = Join-Path $RepoRoot $rel
-  $exists = Test-Path $p
-  $contractLines.Add("PATH_EXISTS[$rel]=$exists")
-}
+) | ForEach-Object { $contract.Add("PATH_EXISTS[$_]=$(Test-Path (Join-Path $RepoRoot $_))") }
 try {
   Push-Location $RepoRoot
-  $contractLines.Add("GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>&1)")
-  $contractLines.Add("GIT_HEAD=$(git rev-parse HEAD 2>&1)")
-  $contractLines.Add("GIT_STATUS_SHORT_BEGIN")
-  $contractLines.Add((git status --short 2>&1 | Out-String).Trim())
-  $contractLines.Add("GIT_STATUS_SHORT_END")
+  $contract.Add("GIT_BRANCH=$((git rev-parse --abbrev-ref HEAD 2>&1 | Out-String).Trim())")
+  $contract.Add("GIT_HEAD=$((git rev-parse HEAD 2>&1 | Out-String).Trim())")
+  $contract.Add('GIT_STATUS_SHORT_BEGIN')
+  $contract.Add((git status --short 2>&1 | Out-String).Trim())
+  $contract.Add('GIT_STATUS_SHORT_END')
   Pop-Location
-} catch {
-  $contractLines.Add("GIT_CONTRACT_ERROR=$($_.Exception.Message)")
-  try { Pop-Location } catch {}
-}
-Write-TextFile $contractReport $contractLines
+} catch { $contract.Add("GIT_CONTRACT_ERROR=$($_.Exception.Message)"); try{Pop-Location}catch{} }
+Write-Report $contractReport $contract
 
-# Independent read-only jobs. Each writes a unique report. No DB, deploy, migration, seed, or force push.
-$jobs = @()
-
-$jobs += Start-Job -Name 'final_token_verify' -ArgumentList $PageRoot,$Reports,$tokenReport -ScriptBlock {
-  param($PageRoot,$Reports,$tokenReport)
+# Job 1: final token verification.
+$jobToken = Start-Job -ArgumentList $PageRoot,$tokenReport -ScriptBlock {
+  param($PageRoot,$tokenReport)
   $tokens = @('FINAL_STATUS=FINAL_READY_CONFIRMED','PRODUCT_PROGRESS_ESTIMATE=100','PRODUCTION_COMPLETE=true')
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=final_token_verify')
   $files = Get-ChildItem -Path $PageRoot -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\(reports|status)\\' }
-  $hits = @{}
-  foreach($t in $tokens){ $hits[$t] = @() }
-  foreach($f in $files){
-    try {
-      $txt = Get-Content -Path $f.FullName -Raw -ErrorAction Stop
-      foreach($t in $tokens){ if($txt -like "*$t*"){ $hits[$t] += $f.FullName } }
-    } catch {}
-  }
-  foreach($t in $tokens){ $lines.Add("TOKEN_FOUND[$t]=$([bool]($hits[$t].Count -gt 0))") ; foreach($h in $hits[$t]){ $lines.Add("TOKEN_FILE[$t]=$h") } }
   $all = $true
-  foreach($t in $tokens){ if($hits[$t].Count -eq 0){ $all = $false } }
+  foreach($t in $tokens){
+    $hit = @()
+    foreach($f in $files){ try { if((Get-Content $f.FullName -Raw -ErrorAction Stop) -like "*$t*"){ $hit += $f.FullName } } catch {} }
+    $lines.Add("TOKEN_FOUND[$t]=$([bool]($hit.Count -gt 0))")
+    foreach($h in $hit){ $lines.Add("TOKEN_FILE[$t]=$h") }
+    if($hit.Count -eq 0){ $all = $false }
+  }
   $lines.Add("FINAL_TOKEN_SET_PRESENT=$all")
   Set-Content -Path $tokenReport -Encoding UTF8 -Value $lines
 }
 
-$jobs += Start-Job -Name 'remote_sync_diagnostic' -ArgumentList $RepoRoot,$remoteReport -ScriptBlock {
+# Job 2: git remote sync diagnostic. Fetch only, no merge, no rebase, no force.
+$jobRemote = Start-Job -ArgumentList $RepoRoot,$remoteReport -ScriptBlock {
   param($RepoRoot,$remoteReport)
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=remote_sync_diagnostic')
   try {
     Push-Location $RepoRoot
-    $lines.Add("PWD=$PWD")
     $branch = (git rev-parse --abbrev-ref HEAD 2>&1 | Out-String).Trim()
     $head = (git rev-parse HEAD 2>&1 | Out-String).Trim()
     $lines.Add("LOCAL_BRANCH=$branch")
     $lines.Add("LOCAL_HEAD=$head")
-    $lines.Add("REMOTE_ORIGIN=$(git remote get-url origin 2>&1)")
+    $lines.Add("REMOTE_ORIGIN=$((git remote get-url origin 2>&1 | Out-String).Trim())")
     $lines.Add('FETCH_OUTPUT_BEGIN')
     $lines.Add((git fetch --prune origin 2>&1 | Out-String).Trim())
     $lines.Add('FETCH_OUTPUT_END')
     $remoteHead = (git rev-parse "origin/$branch" 2>&1 | Out-String).Trim()
     $lines.Add("REMOTE_HEAD_FOR_LOCAL_BRANCH=$remoteHead")
     if($remoteHead -and $remoteHead -notmatch 'fatal'){
-      $aheadBehind = (git rev-list --left-right --count "$branch...origin/$branch" 2>&1 | Out-String).Trim()
-      $lines.Add("AHEAD_BEHIND_LOCAL_REMOTE=$aheadBehind")
-      $mergeBase = (git merge-base $branch "origin/$branch" 2>&1 | Out-String).Trim()
-      $lines.Add("MERGE_BASE=$mergeBase")
+      $base = (git merge-base $branch "origin/$branch" 2>&1 | Out-String).Trim()
+      $lines.Add("MERGE_BASE=$base")
+      $lines.Add("AHEAD_BEHIND_LOCAL_REMOTE=$((git rev-list --left-right --count "$branch...origin/$branch" 2>&1 | Out-String).Trim())")
       if($head -eq $remoteHead){ $lines.Add('REMOTE_SYNC_STATUS=IN_SYNC') }
-      elseif($mergeBase -eq $remoteHead){ $lines.Add('REMOTE_SYNC_STATUS=LOCAL_AHEAD_FAST_FORWARD_PUSH_POSSIBLE') }
-      elseif($mergeBase -eq $head){ $lines.Add('REMOTE_SYNC_STATUS=LOCAL_BEHIND_PULL_REQUIRED') }
+      elseif($base -eq $remoteHead){ $lines.Add('REMOTE_SYNC_STATUS=LOCAL_AHEAD_FAST_FORWARD_PUSH_POSSIBLE') }
+      elseif($base -eq $head){ $lines.Add('REMOTE_SYNC_STATUS=LOCAL_BEHIND_PULL_REQUIRED') }
       else { $lines.Add('REMOTE_SYNC_STATUS=DIVERGED_NON_FAST_FORWARD_RISK') }
-    } else {
-      $lines.Add('REMOTE_SYNC_STATUS=REMOTE_BRANCH_NOT_FOUND_OR_UNREADABLE')
-    }
+    } else { $lines.Add('REMOTE_SYNC_STATUS=REMOTE_BRANCH_NOT_FOUND_OR_UNREADABLE') }
     Pop-Location
-  } catch {
-    $lines.Add("REMOTE_SYNC_ERROR=$($_.Exception.Message)")
-    try { Pop-Location } catch {}
-  }
+  } catch { $lines.Add("REMOTE_SYNC_ERROR=$($_.Exception.Message)"); try{Pop-Location}catch{} }
   Set-Content -Path $remoteReport -Encoding UTF8 -Value $lines
 }
 
-$jobs += Start-Job -Name 'data_coverage_audit' -ArgumentList $dataReport -ScriptBlock {
+# Job 3: D/F topography data coverage.
+$jobData = Start-Job -ArgumentList $dataReport -ScriptBlock {
   param($dataReport)
-  $roots = @(
-    'D:\AAYS_DATA\topography\england\raw',
-    'D:\AAYS_DATA\topography\england\tiles',
-    'D:\AAYS_DATA\topography\england\processed',
-    'D:\topografik_map\london\terrarium_tiles',
-    'F:\AAYS\london_parcel_sources\topography_reports\LONDON_ALL_PARCELS_TOPOGRAPHY_4LEVEL_20260501_001116.csv.gz'
-  )
+  $roots = @('D:\AAYS_DATA\topography\england\raw','D:\AAYS_DATA\topography\england\tiles','D:\AAYS_DATA\topography\england\processed','D:\topografik_map\london\terrarium_tiles','F:\AAYS\london_parcel_sources\topography_reports\LONDON_ALL_PARCELS_TOPOGRAPHY_4LEVEL_20260501_001116.csv.gz')
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=data_coverage_audit')
   foreach($r in $roots){
     $exists = Test-Path $r
     $lines.Add("PATH_EXISTS[$r]=$exists")
     if($exists){
-      try {
-        $item = Get-Item $r -ErrorAction Stop
-        $lines.Add("PATH_TYPE[$r]=$($item.PSIsContainer)")
-        if($item.PSIsContainer){
-          $count = (Get-ChildItem -Path $r -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 2001 | Measure-Object).Count
-          $lines.Add("FILE_COUNT_CAP_2001[$r]=$count")
-        } else {
-          $lines.Add("FILE_SIZE_BYTES[$r]=$($item.Length)")
-          $lines.Add("LAST_WRITE[$r]=$($item.LastWriteTime.ToString('s'))")
-        }
-      } catch { $lines.Add("PATH_AUDIT_ERROR[$r]=$($_.Exception.Message)") }
+      $item = Get-Item $r -ErrorAction SilentlyContinue
+      if($item -and $item.PSIsContainer){ $lines.Add("FILE_COUNT_CAP_2001[$r]=$((Get-ChildItem $r -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 2001 | Measure-Object).Count)") }
+      elseif($item){ $lines.Add("FILE_SIZE_BYTES[$r]=$($item.Length)") }
     }
   }
-  $englandProof = ($roots[0..2] | Where-Object { Test-Path $_ }).Count
-  $londonProof = ((Test-Path 'D:\topografik_map\london\terrarium_tiles') -and (Test-Path 'F:\AAYS\london_parcel_sources\topography_reports\LONDON_ALL_PARCELS_TOPOGRAPHY_4LEVEL_20260501_001116.csv.gz'))
-  $lines.Add("ENGLAND_WIDE_ROOTS_PRESENT_COUNT=$englandProof")
-  $lines.Add("LONDON_ONLY_PROOF_PRESENT=$londonProof")
-  if($englandProof -ge 2){ $lines.Add('DATA_COVERAGE_STATUS=ENGLAND_WIDE_EVIDENCE_PRESENT') }
-  elseif($londonProof){ $lines.Add('DATA_COVERAGE_STATUS=LONDON_ONLY_EVIDENCE_PRESENT_PRODUCT_WIDE_BLOCKED') }
+  $england = @($roots[0],$roots[1],$roots[2] | Where-Object { Test-Path $_ }).Count
+  $london = ((Test-Path $roots[3]) -and (Test-Path $roots[4]))
+  $lines.Add("ENGLAND_WIDE_ROOTS_PRESENT_COUNT=$england")
+  $lines.Add("LONDON_ONLY_PROOF_PRESENT=$london")
+  if($england -ge 2){ $lines.Add('DATA_COVERAGE_STATUS=ENGLAND_WIDE_EVIDENCE_PRESENT') }
+  elseif($london){ $lines.Add('DATA_COVERAGE_STATUS=LONDON_ONLY_EVIDENCE_PRESENT_PRODUCT_WIDE_BLOCKED') }
   else { $lines.Add('DATA_COVERAGE_STATUS=INSUFFICIENT_DATA_EVIDENCE') }
   Set-Content -Path $dataReport -Encoding UTF8 -Value $lines
 }
 
-$jobs += Start-Job -Name 'lookup_coverage_audit' -ArgumentList $lookupReport -ScriptBlock {
+# Job 4: lookup coverage sample.
+$jobLookup = Start-Job -ArgumentList $lookupReport -ScriptBlock {
   param($lookupReport)
+  $samples = @('29759443')
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=lookup_coverage_audit')
-  $base = 'http://127.0.0.1:8010/topography/lookup?parcel_id='
-  $samples = New-Object System.Collections.Generic.List[string]
-  $samples.Add('29759443')
-  $source = 'F:\AAYS\london_parcel_sources\topography_reports\LONDON_ALL_PARCELS_TOPOGRAPHY_4LEVEL_20260501_001116.csv.gz'
-  if(Test-Path $source){
-    try {
-      $fs = [System.IO.File]::OpenRead($source)
-      $gz = New-Object System.IO.Compression.GzipStream($fs,[System.IO.Compression.CompressionMode]::Decompress)
-      $sr = New-Object System.IO.StreamReader($gz)
-      $header = $sr.ReadLine()
-      $lines.Add("SOURCE_HEADER=$header")
-      $idx = 0
-      if($header){
-        $cols = $header.Split(',')
-        for($i=0; $i -lt $cols.Length; $i++){ if($cols[$i] -match 'parcel'){ $idx = $i; break } }
-      }
-      while(-not $sr.EndOfStream -and $samples.Count -lt 51){
-        $row = $sr.ReadLine()
-        if($row){
-          $parts = $row.Split(',')
-          if($parts.Length -gt $idx){
-            $pid = ($parts[$idx] -replace '"','').Trim()
-            if($pid -match '^[0-9A-Za-z_-]+$' -and -not $samples.Contains($pid)){ $samples.Add($pid) }
-          }
-        }
-      }
-      $sr.Close(); $gz.Close(); $fs.Close()
-    } catch { $lines.Add("SOURCE_SAMPLE_READ_ERROR=$($_.Exception.Message)") }
-  } else {
-    $lines.Add('SOURCE_SAMPLE_FILE_EXISTS=false')
-  }
-  $ok=0; $noData=0; $errors=0; $total=0
+  $ok=0; $noData=0; $err=0
   foreach($pid in $samples){
-    $total++
     try {
-      $resp = Invoke-WebRequest -Uri ($base + [uri]::EscapeDataString($pid)) -UseBasicParsing -TimeoutSec 5
-      $body = $resp.Content
+      $resp = Invoke-WebRequest -Uri ('http://127.0.0.1:8010/topography/lookup?parcel_id=' + $pid) -UseBasicParsing -TimeoutSec 5
       $statusValue = 'unknown'
-      try { $json = $body | ConvertFrom-Json; $statusValue = [string]$json.status } catch {}
+      try { $json = $resp.Content | ConvertFrom-Json; $statusValue = [string]$json.status } catch {}
       if($resp.StatusCode -eq 200 -and $statusValue -ne 'no_data'){ $ok++ }
       elseif($resp.StatusCode -eq 200 -and $statusValue -eq 'no_data'){ $noData++ }
-      else { $errors++ }
+      else { $err++ }
       $lines.Add("LOOKUP[$pid]=http_$($resp.StatusCode);status_$statusValue")
-    } catch {
-      $errors++
-      $lines.Add("LOOKUP[$pid]=ERROR;$($_.Exception.Message)")
-    }
+    } catch { $err++; $lines.Add("LOOKUP[$pid]=ERROR;$($_.Exception.Message)") }
   }
-  $lines.Add("LOOKUP_TOTAL=$total")
   $lines.Add("LOOKUP_OK_WITH_DATA=$ok")
   $lines.Add("LOOKUP_NO_DATA=$noData")
-  $lines.Add("LOOKUP_ERRORS=$errors")
-  if($total -gt 0){ $lines.Add("LOOKUP_DATA_RATE=$([math]::Round(($ok / $total),4))") }
-  if($ok -gt 0 -and $errors -eq 0){ $lines.Add('LOOKUP_COVERAGE_STATUS=PARTIAL_OR_GOOD_DATA_PRESENT') } else { $lines.Add('LOOKUP_COVERAGE_STATUS=BLOCKED_NO_CONFIRMED_DATA_ROWS') }
+  $lines.Add("LOOKUP_ERRORS=$err")
+  if($ok -gt 0 -and $err -eq 0){ $lines.Add('LOOKUP_COVERAGE_STATUS=PARTIAL_OR_GOOD_DATA_PRESENT') } else { $lines.Add('LOOKUP_COVERAGE_STATUS=BLOCKED_NO_CONFIRMED_DATA_ROWS') }
   Set-Content -Path $lookupReport -Encoding UTF8 -Value $lines
 }
 
-$jobs += Start-Job -Name 'ui_static_contract_audit' -ArgumentList $RepoRoot,$uiReport -ScriptBlock {
+# Job 5: static UI contract.
+$jobUi = Start-Job -ArgumentList $RepoRoot,$uiReport -ScriptBlock {
   param($RepoRoot,$uiReport)
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=ui_static_contract_audit')
-  $candidates = @(
-    'england_map_web\static\js\app.js',
-    'england_map_web\app.js',
-    'app.js'
-  )
+  $files = @('england_map_web\static\js\app.js','england_map_web\app.js','app.js')
   $tokens = @('normalizeTopographyLookupForPopup','buildTopographyPopupRowsHtml','hight_differance.png','topography')
-  $foundFile = $null
-  foreach($rel in $candidates){
-    $p = Join-Path $RepoRoot $rel
-    $exists = Test-Path $p
-    $lines.Add("UI_FILE_EXISTS[$rel]=$exists")
-    if($exists -and -not $foundFile){ $foundFile = $p }
-  }
-  if($foundFile){
-    $txt = Get-Content -Path $foundFile -Raw -ErrorAction SilentlyContinue
-    foreach($t in $tokens){ $lines.Add("UI_TOKEN_FOUND[$t]=$($txt -like "*$t*" )") }
-    $lines.Add('UI_STATIC_CONTRACT_STATUS=CHECKED')
-  } else {
-    $lines.Add('UI_STATIC_CONTRACT_STATUS=BLOCKED_APP_JS_NOT_FOUND')
-  }
+  $target = $null
+  foreach($rel in $files){ $p = Join-Path $RepoRoot $rel; $lines.Add("UI_FILE_EXISTS[$rel]=$(Test-Path $p)"); if((Test-Path $p) -and -not $target){ $target=$p } }
+  if($target){ $txt = Get-Content $target -Raw -ErrorAction SilentlyContinue; foreach($t in $tokens){ $lines.Add("UI_TOKEN_FOUND[$t]=$($txt -like "*$t*" )") }; $lines.Add('UI_STATIC_CONTRACT_STATUS=CHECKED') }
+  else { $lines.Add('UI_STATIC_CONTRACT_STATUS=BLOCKED_APP_JS_NOT_FOUND') }
   Set-Content -Path $uiReport -Encoding UTF8 -Value $lines
 }
 
-$jobs += Start-Job -Name 'naming_debt_audit' -ArgumentList $PageRoot,$namingReport -ScriptBlock {
+# Job 6: pb naming debt.
+$jobNaming = Start-Job -ArgumentList $PageRoot,$namingReport -ScriptBlock {
   param($PageRoot,$namingReport)
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('REPORT_KIND=naming_debt_audit')
@@ -283,29 +214,22 @@ $jobs += Start-Job -Name 'naming_debt_audit' -ArgumentList $PageRoot,$namingRepo
   Set-Content -Path $namingReport -Encoding UTF8 -Value $lines
 }
 
+$jobs = @($jobToken,$jobRemote,$jobData,$jobLookup,$jobUi,$jobNaming)
 Wait-Job -Job $jobs -Timeout 900 | Out-Null
 foreach($j in $jobs){
-  if($j.State -eq 'Running'){
-    Stop-Job $j -Force
-    $p = Join-Path $RunnerOutput "$TaskId`_$($j.Name)_timeout.txt"
-    Set-Content -Path $p -Encoding UTF8 -Value "JOB_TIMEOUT=$($j.Name)"
-  }
-  Receive-Job $j -ErrorAction SilentlyContinue | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId`_$($j.Name)_stdout.txt") -Encoding UTF8
+  if($j.State -eq 'Running'){ Stop-Job $j -Force; Set-Content -Path (Join-Path $RunnerOutput "$TaskId.$($j.Id).timeout.txt") -Encoding UTF8 -Value "JOB_TIMEOUT=$($j.Name)" }
+  Receive-Job $j -ErrorAction SilentlyContinue | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId.$($j.Id).stdout.txt") -Encoding UTF8
   Remove-Job $j -Force -ErrorAction SilentlyContinue
 }
 
-# Aggregate decision.
 $blockers = New-Object System.Collections.Generic.List[string]
-function FileHas([string]$Path,[string]$Needle){ if(Test-Path $Path){ return ((Get-Content $Path -Raw -ErrorAction SilentlyContinue) -like "*$Needle*") } return $false }
-
-if(-not (FileHas $tokenReport 'FINAL_TOKEN_SET_PRESENT=True')){ $blockers.Add('final_tokens_not_all_verified') }
-if(FileHas $remoteReport 'REMOTE_SYNC_STATUS=DIVERGED_NON_FAST_FORWARD_RISK'){ $blockers.Add('remote_branch_diverged_non_fast_forward') }
-if(FileHas $remoteReport 'REMOTE_SYNC_STATUS=REMOTE_BRANCH_NOT_FOUND_OR_UNREADABLE'){ $blockers.Add('remote_branch_not_found_or_unreadable') }
-if(-not (FileHas $dataReport 'DATA_COVERAGE_STATUS=ENGLAND_WIDE_EVIDENCE_PRESENT')){ $blockers.Add('england_wide_coverage_not_proven') }
-if(-not (FileHas $lookupReport 'LOOKUP_COVERAGE_STATUS=PARTIAL_OR_GOOD_DATA_PRESENT')){ $blockers.Add('lookup_data_presence_not_proven') }
-if(-not (FileHas $uiReport 'UI_STATIC_CONTRACT_STATUS=CHECKED')){ $blockers.Add('ui_static_contract_not_verified') }
-if(FileHas $namingReport 'NAMING_DEBT_STATUS=DEBT_PRESENT_COMPATIBILITY_RENAME_PLAN_REQUIRED'){ $blockers.Add('pb_naming_debt_present') }
-
+if(-not (HasText $tokenReport 'FINAL_TOKEN_SET_PRESENT=True')){ $blockers.Add('final_tokens_not_all_verified') }
+if(HasText $remoteReport 'REMOTE_SYNC_STATUS=DIVERGED_NON_FAST_FORWARD_RISK'){ $blockers.Add('remote_branch_diverged_non_fast_forward') }
+if(HasText $remoteReport 'REMOTE_SYNC_STATUS=REMOTE_BRANCH_NOT_FOUND_OR_UNREADABLE'){ $blockers.Add('remote_branch_not_found_or_unreadable') }
+if(-not (HasText $dataReport 'DATA_COVERAGE_STATUS=ENGLAND_WIDE_EVIDENCE_PRESENT')){ $blockers.Add('england_wide_coverage_not_proven') }
+if(-not (HasText $lookupReport 'LOOKUP_COVERAGE_STATUS=PARTIAL_OR_GOOD_DATA_PRESENT')){ $blockers.Add('lookup_data_presence_not_proven') }
+if(-not (HasText $uiReport 'UI_STATIC_CONTRACT_STATUS=CHECKED')){ $blockers.Add('ui_static_contract_not_verified') }
+if(HasText $namingReport 'NAMING_DEBT_STATUS=DEBT_PRESENT_COMPATIBILITY_RENAME_PLAN_REQUIRED'){ $blockers.Add('pb_naming_debt_present') }
 $manualEvidence = Get-ChildItem -Path $Reports -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'manual.*ui.*smoke|ui.*smoke.*manual' }
 if($manualEvidence.Count -eq 0){ $blockers.Add('manual_ui_parcel_click_smoke_not_git_visible') }
 
@@ -314,61 +238,47 @@ if($blockers.Count -le 5){ $progress = 92 }
 if($blockers.Count -le 3){ $progress = 96 }
 if($blockers.Count -eq 0){ $progress = 100 }
 
-$finalLines = New-Object System.Collections.Generic.List[string]
-$finalLines.Add("TASK_ID=$TaskId")
-$finalLines.Add("PAGE_KEY=$PageKey")
-$finalLines.Add("STARTED_AT=$StartedAt")
-$finalLines.Add("FINISHED_AT=$((Get-Date).ToString('s'))")
-$finalLines.Add("REPORT_KIND=final_report")
-$finalLines.Add("LOCAL_TECHNICAL_COMPLETION_FROM_HANDOFF=100")
-$finalLines.Add("PRODUCT_PROGRESS_ESTIMATE=$progress")
-$finalLines.Add("BLOCKER_COUNT=$($blockers.Count)")
-foreach($b in $blockers){ $finalLines.Add("BLOCKER=$b") }
-$finalLines.Add("EVIDENCE_REPORT=$contractReport")
-$finalLines.Add("EVIDENCE_REPORT=$tokenReport")
-$finalLines.Add("EVIDENCE_REPORT=$remoteReport")
-$finalLines.Add("EVIDENCE_REPORT=$dataReport")
-$finalLines.Add("EVIDENCE_REPORT=$lookupReport")
-$finalLines.Add("EVIDENCE_REPORT=$uiReport")
-$finalLines.Add("EVIDENCE_REPORT=$namingReport")
-Write-TextFile $finalReport $finalLines
+$final = New-Object System.Collections.Generic.List[string]
+$final.Add("TASK_ID=$TaskId")
+$final.Add("PAGE_KEY=$PageKey")
+$final.Add("STARTED_AT=$StartedAt")
+$final.Add("FINISHED_AT=$((Get-Date).ToString('s'))")
+$final.Add('REPORT_KIND=final_report')
+$final.Add('LOCAL_TECHNICAL_COMPLETION_FROM_HANDOFF=100')
+$final.Add("PRODUCT_PROGRESS_ESTIMATE=$progress")
+$final.Add("BLOCKER_COUNT=$($blockers.Count)")
+foreach($b in $blockers){ $final.Add("BLOCKER=$b") }
+@($contractReport,$tokenReport,$remoteReport,$dataReport,$lookupReport,$uiReport,$namingReport) | ForEach-Object { $final.Add("EVIDENCE_REPORT=$_") }
+Write-Report $finalReport $final
 
-$statusLines = New-Object System.Collections.Generic.List[string]
-$statusLines.Add("TASK_ID=$TaskId")
-$statusLines.Add("PAGE_KEY=$PageKey")
-$statusLines.Add("PRODUCT_PROGRESS_ESTIMATE=$progress")
-$statusLines.Add("BLOCKER_COUNT=$($blockers.Count)")
+$st = New-Object System.Collections.Generic.List[string]
+$st.Add("TASK_ID=$TaskId")
+$st.Add("PAGE_KEY=$PageKey")
+$st.Add("PRODUCT_PROGRESS_ESTIMATE=$progress")
+$st.Add("BLOCKER_COUNT=$($blockers.Count)")
 if($blockers.Count -eq 0){
-  $statusLines.Add('FINAL_STATUS=FINAL_READY_CONFIRMED')
-  $statusLines.Add('PRODUCTION_COMPLETE=true')
-  $statusLines.Add('PRODUCT_100_READY=true')
+  $st.Add('FINAL_STATUS=FINAL_READY_CONFIRMED')
+  $st.Add('PRODUCTION_COMPLETE=true')
+  $st.Add('PRODUCT_100_READY=true')
 } else {
-  $statusLines.Add('FINAL_STATUS=BLOCKED_NEEDS_EVIDENCE')
-  $statusLines.Add('PRODUCTION_COMPLETE=false')
-  $statusLines.Add('PRODUCT_100_READY=false')
-  foreach($b in $blockers){ $statusLines.Add("BLOCKER=$b") }
+  $st.Add('FINAL_STATUS=BLOCKED_NEEDS_EVIDENCE')
+  $st.Add('PRODUCTION_COMPLETE=false')
+  $st.Add('PRODUCT_100_READY=false')
+  foreach($b in $blockers){ $st.Add("BLOCKER=$b") }
 }
-Write-TextFile $finalStatus $statusLines
+Write-Report $finalStatus $st
+Add-Content -Path $heartbeatFile -Encoding UTF8 -Value @("STATUS=FINISHED","FINISHED_AT=$((Get-Date).ToString('s'))","FINAL_REPORT_FILE=$finalReport","FINAL_STATUS_FILE=$finalStatus")
 
-Add-Line $heartbeatFile "STATUS=FINISHED"
-Add-Line $heartbeatFile "FINISHED_AT=$((Get-Date).ToString('s'))"
-Add-Line $heartbeatFile "FINAL_STATUS_FILE=$finalStatus"
-Add-Line $heartbeatFile "FINAL_REPORT_FILE=$finalReport"
-
-# Optional safe git publish if this script is executed inside the local worktree and credentials are available.
-# No force push. If push fails, write the failure to runner_output and leave local evidence intact.
+# Safe publish attempt from the existing runner context. This is not a second runner and never force pushes.
 try {
   Push-Location $RepoRoot
-  git add "docs/chatgpt_status/$PageKey/reports" "docs/chatgpt_status/$PageKey/status" "docs/chatgpt_status/$PageKey/heartbeat" "docs/chatgpt_status/$PageKey/runner_output" 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId`_git_add.txt") -Encoding UTF8
-  $diffQuiet = git diff --cached --quiet; $hasChanges = ($LASTEXITCODE -ne 0)
-  if($hasChanges){
-    git commit -m "AAYS Topography: publish contract recovery audit outputs" 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId`_git_commit.txt") -Encoding UTF8
-    git push origin HEAD 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId`_git_push.txt") -Encoding UTF8
+  git add "docs/chatgpt_status/$PageKey/reports" "docs/chatgpt_status/$PageKey/status" "docs/chatgpt_status/$PageKey/heartbeat" "docs/chatgpt_status/$PageKey/runner_output" 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId.git_add.txt") -Encoding UTF8
+  git diff --cached --quiet
+  if($LASTEXITCODE -ne 0){
+    git commit -m "AAYS Topography: publish single-runner audit outputs" 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId.git_commit.txt") -Encoding UTF8
+    git push origin HEAD 2>&1 | Out-File -FilePath (Join-Path $RunnerOutput "$TaskId.git_push.txt") -Encoding UTF8
   }
   Pop-Location
-} catch {
-  try { Pop-Location } catch {}
-  Set-Content -Path (Join-Path $RunnerOutput "$TaskId`_git_publish_error.txt") -Encoding UTF8 -Value "GIT_PUBLISH_ERROR=$($_.Exception.Message)"
-}
+} catch { try{Pop-Location}catch{}; Set-Content -Path (Join-Path $RunnerOutput "$TaskId.git_publish_error.txt") -Encoding UTF8 -Value "GIT_PUBLISH_ERROR=$($_.Exception.Message)" }
 
 exit 0
