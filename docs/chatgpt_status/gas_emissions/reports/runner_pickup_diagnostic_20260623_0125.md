@@ -1,6 +1,6 @@
 ﻿# Gas Emissions Runner Pickup Diagnostic
 
-UPDATED_AT=2026-06-23T21:31:13.0367857+03:00
+UPDATED_AT=2026-06-23T21:38:56.8616361+03:00
 STATUS=queue_and_script_exist_but_runner_has_not_picked_task
 COMPLETION_PERCENT=89
 CAN_MARK_100_PERCENT=false
@@ -9,11 +9,11 @@ SHARED_RUNNER_SCRIPT=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULT
 
 ## Checked paths
 - exists=False length=0 path=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1 last_write=
-- exists=True length=3716 path=docs\chatgpt_status\gas_emissions\queue\gas_emissions_finalizer_20260622_2300.queue.json last_write=2026-06-23T21:31:11.8315634+03:00
-- exists=True length=9995 path=docs\chatgpt_status\gas_emissions\automation\gas_emissions_single_runner_finalizer_20260622_2300.ps1 last_write=2026-06-23T21:31:11.7095573+03:00
-- exists=True length=1851 path=docs\chatgpt_status\gas_emissions\status\gas_emissions_finalizer_status_20260622_2300.json last_write=2026-06-23T21:31:11.9505645+03:00
-- exists=True length=838 path=docs\chatgpt_status\gas_emissions\heartbeat\gas_emissions_finalizer_heartbeat_20260622_2300.json last_write=2026-06-23T21:31:11.7895568+03:00
-- exists=True length=2039 path=docs\chatgpt_status\gas_emissions\reports\gas_emissions_finalizer_result_20260622_2300.md last_write=2026-06-23T21:31:11.8685685+03:00
+- exists=True length=3716 path=docs\chatgpt_status\gas_emissions\queue\gas_emissions_finalizer_20260622_2300.queue.json last_write=2026-06-23T21:36:05.2147757+03:00
+- exists=True length=9995 path=docs\chatgpt_status\gas_emissions\automation\gas_emissions_single_runner_finalizer_20260622_2300.ps1 last_write=2026-06-23T21:36:01.6278971+03:00
+- exists=True length=1851 path=docs\chatgpt_status\gas_emissions\status\gas_emissions_finalizer_status_20260622_2300.json last_write=2026-06-23T21:36:12.2871892+03:00
+- exists=True length=838 path=docs\chatgpt_status\gas_emissions\heartbeat\gas_emissions_finalizer_heartbeat_20260622_2300.json last_write=2026-06-23T21:36:03.6806041+03:00
+- exists=True length=2039 path=docs\chatgpt_status\gas_emissions\reports\gas_emissions_finalizer_result_20260622_2300.md last_write=2026-06-23T21:36:06.5761956+03:00
 - exists=True length=1 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE last_write=2026-06-23T02:40:24.8052297+03:00
 - exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\current-task.json last_write=
 - exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\queue last_write=
@@ -100,9 +100,9 @@ docs/chatgpt_status/gas_emissions/queue/terrayield-093-gas-emissions-contract-ru
 docs/chatgpt_status/gas_emissions/queue/terrayield-093-gas-emissions-contract-runtime-finalize.task:27:blocked_stage=v6_runner_tasks_ready_waiting_for_runner_pickup
 docs/chatgpt_status/gas_emissions/queue/terrayield-097-bound-096-source-search.task:5:runner_task=docs/chatgpt_status/gas_emissions/runner_tasks/terrayield-097-bound-096-source-search.task
 docs/chatgpt_status/gas_emissions/reports/runner-consume-blocker-098.txt:9:runner_task=docs/chatgpt_status/gas_emissions/runner_tasks/terrayield-096-runtime-source-final.task
-docs/chatgpt_status/gas_emissions/reports/terrayield-093-gas-emissions-contract-runtime-finalize.txt:6:runner_task=docs/chatgpt_status/gas_emissions/runner_tasks/terrayield-096-runtime-source-final.task
-docs/chatgpt_status/gas_emissions/reports/terrayield-093-v4-pickup-contract-ready-20260617.txt:17:- Added contract_pickup_ready=true to gas page current-task/status/queue/runner_tasks.
-docs/chatgpt_status/gas_emissions/reports/terrayield-093-v4-runner-pickup-diagnosis-20260617-compat.txt:18:fixed_in_this_cycle=current-task/status/runner_tasks/queue aligned to status=QUEUED priority=critical; v4 popup marker AAYS_GAS_EMISSIONS_POPUP_BINDING_V093 added
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:84:### runner_tasks
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:86:docs/chatgpt_status/control/current-task.txt:5:runner_task=docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/runner_tasks/ia108_real_geometry_join_v2_schema_probe.txt
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:87:docs/chatgpt_status/control/terrayield-051-step2-planned-parcel-layer.txt:7:runner_task=docs/chatgpt_status/runner_tasks/terrayield-051-step2-planned-parcel-layer.txt
 ```
 ### gas_emissions_finalizer_20260622_2300
 ```text
@@ -114,7 +114,18 @@ docs/chatgpt_status/gas_emissions/current_task/README_20260622_2300.txt:6:QUEUE_
 docs/chatgpt_status/gas_emissions/heartbeat/gas_emissions_finalizer_heartbeat_20260622_2300.json:7:  "queue_path": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
 docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:16:- `gas_emissions_finalizer_20260622_2300`
 docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:24:- `docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json`
-docs/chatgpt_status/gas_emissions/status/gas_emissions_finalizer_status_20260622_2300.json:12:  "queue_path": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:12:- exists=True length=3716 path=docs\chatgpt_status\gas_emissions\queue\gas_emissions_finalizer_20260622_2300.queue.json last_write=2026-06-23T21:31:11.8315634+03:00
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:37:  "queue_path": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:59:  "queue_path": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:88:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:107:### gas_emissions_finalizer_20260622_2300
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:109:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:10:$ExpectedQueue = Join-Path $PageRoot 'queue/gas_emissions_finalizer_20260622_2300.queue.json'
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:110:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:111:docs/chatgpt_status/gas_emissions/automation/gas_emissions_single_runner_finalizer_20260622_2300.ps1.txt:8:QUEUE_PATH=docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:112:docs/chatgpt_status/gas_emissions/control/gas_emissions_control_20260622_2300.json:14:  "expected_queue_file": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:113:docs/chatgpt_status/gas_emissions/current_task/README_20260622_2300.txt:6:QUEUE_PATH=docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:114:docs/chatgpt_status/gas_emissions/heartbeat/gas_emissions_finalizer_heartbeat_20260622_2300.json:7:  "queue_path": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_finalizer_20260622_2300.queue.json",
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:115:docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:16:- `gas_emissions_finalizer_20260622_2300`
 ```
 ### single_runner
 ```text
@@ -141,16 +152,46 @@ docs/chatgpt_status/LOCAL_SOLD_BUILDINGS_MULTI_FIELD_CONTRACT_V3_PICKUP_LATEST.t
 ```
 ### MULTI_PAGE
 ```text
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/manual_runner_trigger_20260623.md:3:RUNNER=docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
 docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:8:$SharedState = 'F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE'
 docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:9:$SharedRunnerScript = 'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1'
 docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
 docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:13:- `RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER`
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:7:SHARED_STATE=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:8:SHARED_RUNNER_SCRIPT=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:11:- exists=False length=0 path=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1 last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:17:- exists=True length=1 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE last_write=2026-06-23T02:40:24.8052297+03:00
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:18:- exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\current-task.json last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:19:- exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\queue last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:20:- exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\history last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:21:- exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\logs last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:22:- exists=False length=0 path=F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE\status last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:88:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:110:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:142:### MULTI_PAGE
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:144:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:8:$SharedState = 'F:\chatgpt\AAYS_WORK\single_runner\state\MULTI_PAGE'
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:145:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:9:$SharedRunnerScript = 'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1'
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:146:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
 ```
 ### RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER
 ```text
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/manual_runner_trigger_20260623.md:3:RUNNER=docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
 docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:9:$SharedRunnerScript = 'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1'
 docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
 docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:13:- `RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER`
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:8:SHARED_RUNNER_SCRIPT=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:11:- exists=False length=0 path=docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1 last_write=
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:88:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:110:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:145:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:9:$SharedRunnerScript = 'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1'
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:146:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:147:docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:13:- `RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER`
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:149:### RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:151:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:9:$SharedRunnerScript = 'docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1'
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:152:docs/chatgpt_status/gas_emissions/automation/gas_emissions_runner_pickup_diagnostic_20260623_0125.ps1:49:foreach ($term in @('RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER','current-task','runner_tasks','single_runner','MULTI_PAGE','gas_emissions_finalizer_20260622_2300')) {
+docs/chatgpt_status/gas_emissions/reports/runner_pickup_diagnostic_20260623_0125.md:153:docs/chatgpt_status/gas_emissions/reports/runner_pickup_contract_gap_20260623_0108.md:13:- `RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER`
+docs/chatgpt_status/gas_emissions/status/runner_pickup_diagnostic_20260623_0125.json:10:    "shared_runner_script":  "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1",
+docs/chatgpt_status/gas_emissions/status/runner_pickup_diagnostic_20260623_0125.json:18:                              "path":  "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1",
 ```
 ### current-task
 ```text
