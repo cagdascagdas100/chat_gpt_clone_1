@@ -1,0 +1,33 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK=page34-final-evidence-gate-blocker
+TASK_ID=page34_final_evidence_gate_blocker_20260623_007
+SCRIPT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/page34_final_evidence_gate_blocker_20260623_007.ps1
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/page34_final_evidence_gate_blocker_20260623_007_report.md
+OUTPUT_ROOT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT
+NO_SEPARATE_RUNNER=true
+NO_FAKE_DATA=true
+NO_FAKE_FINAL_MARKER=true
+STATUS=READY
+PROGRESS=75
+FINAL=false
+
+PURPOSE
+- Do not create a duplicate product implementation task.
+- Read task 006 expected report if present.
+- If task 006 report is still missing, write a single blocker result under reports.
+- Preserve the acceptance gate in control/page34_acceptance_gate_rules_20260623.md.
+- Preserve the repo scope blocker in control/page34_repo_scope_blocker_20260623.md.
+
+FINAL_READY_ALLOWED_ONLY_IF
+- real product source path evidence exists
+- live map visibility is confirmed
+- non-empty feature set is confirmed
+- popup or right-panel required fields are confirmed
+- geometry accuracy is confirmed
+- no fake parcel geometry, parcel_id, point, or polygon is used
+
+OTHERWISE_REPORT
+FINAL_STATUS=BLOCKED_RUNTIME_ACCEPTANCE_NOT_CONFIRMED
+PRODUCT_PROGRESS_ESTIMATE=75
+PRODUCTION_COMPLETE=false
+DATA_STATE=DATA_GATE_BLOCKED_OR_REPO_SCOPE_BLOCKED
