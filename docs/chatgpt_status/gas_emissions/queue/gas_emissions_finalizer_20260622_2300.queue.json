@@ -2,11 +2,11 @@
   "schema_version": "aays.single_runner.queue.v1",
   "page_key": "gas_emissions",
   "task_id": "gas-emissions-single-runner-finalizer-20260622_2300",
-  "status": "queued_enhanced_runtime_probe_script_available",
+  "status": "queued_enhanced_runtime_probe_script_available_with_strict_open_data_rules",
   "priority": 98,
   "single_runner_only": true,
   "created_at": "2026-06-22T23:10:00+03:00",
-  "updated_at": "2026-06-23T00:36:00+03:00",
+  "updated_at": "2026-06-23T03:00:00+03:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "branch": "feature/terrayield-aays-integration",
   "local_worktree_preferred": "F:\\chatgpt\\AAYS_WORK\\gas_emissions_088_clean_20260616_160836",
@@ -18,6 +18,32 @@
   "status_path": "docs/chatgpt_status/gas_emissions/status/gas_emissions_finalizer_status_20260622_2300.json",
   "report_path": "docs/chatgpt_status/gas_emissions/reports/gas_emissions_finalizer_result_20260622_2300.md",
   "heartbeat_path": "docs/chatgpt_status/gas_emissions/heartbeat/gas_emissions_finalizer_heartbeat_20260622_2300.json",
+  "data_source_policy": {
+    "forbidden_sources": [
+      "paid_data_sources",
+      "contact_required_sources",
+      "invitation_only_sources",
+      "login_required_sources"
+    ],
+    "allowed_sources": [
+      "repository_files_already_present",
+      "local_existing_files_on_D_F_C_disks",
+      "open_free_public_internet_sources"
+    ],
+    "fake_data_prohibited": [
+      "fake_parcel_geometry",
+      "fake_parcel_id",
+      "fake_point",
+      "fake_polygon"
+    ],
+    "non_parcel_level_disclosure_required": true,
+    "allowed_non_parcel_level_statuses": [
+      "POSTCODE_LEVEL_ONLY",
+      "POINT_LEVEL_ONLY",
+      "OPEN_DATA_PROXY_READY",
+      "DATA_GATE_BLOCKED"
+    ]
+  },
   "acceptance_gate": {
     "required_geometry_mode": "polygon_join",
     "allow_point_fallback_only_for_no_match": true,
@@ -32,15 +58,25 @@
       "matching_method",
       "calculation_explanation"
     ],
+    "required_final_ready_proof": [
+      "live_map_visibility",
+      "non_empty_feature_set",
+      "popup_or_right_panel_required_fields_non_empty",
+      "geometry_accuracy_verified"
+    ],
     "must_write_github_report": true,
-    "must_not_mark_final_without_runtime_proof": true
+    "must_not_mark_final_without_runtime_proof": true,
+    "must_not_mark_final_without_open_data_policy_result": true,
+    "must_not_mark_final_without_required_final_ready_proof": true
   },
   "parallel_safe_work": [
     "static_code_patch_scan",
     "dataset_schema_probe",
     "asset_http_probe",
     "runtime_state_probe",
-    "optional_playwright_browser_probe"
+    "optional_playwright_browser_probe",
+    "open_data_source_policy_probe",
+    "non_parcel_level_disclosure_probe"
   ],
-  "stop_rule": "Write FINAL_READY only if syntax, dataset, asset, HTTP, runtime polygon_join, and non-empty parcel popup/side-panel proof are all true in GitHub status/report files. Otherwise write PARTIAL with exact blocker paths."
+  "stop_rule": "Write FINAL_READY only if syntax, dataset, asset, HTTP, live map visibility, non-empty feature set, runtime polygon_join or explicitly disclosed allowed non-parcel-level status, popup/right-panel required fields, geometry accuracy proof, and open/free data-source policy proof are all true in GitHub status/report files. Otherwise write PARTIAL with exact blocker paths. Never use paid/contact-required/invitation-only/login-required sources and never create fake parcel geometry, fake parcel_id, fake point, or fake polygon."
 }
