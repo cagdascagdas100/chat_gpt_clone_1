@@ -1,0 +1,39 @@
+TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+REPORT_KIND=v5_checkpoint_report
+OBSERVED_AT_CHATGPT_UTC=2026-06-23T02:10:00Z
+
+GITHUB_OBSERVED_FINAL_REPORT=false
+GITHUB_OBSERVED_FINAL_STATUS=false
+GITHUB_OBSERVED_V4_RUNNER_OUTPUT=false
+PREVIOUS_STATUS=V4_QUEUED_FOR_EXISTING_SINGLE_RUNNER
+
+ACTION_TAKEN:
+- read expected final report path and final status path; both were absent on GitHub
+- read v4 queued status and v4 checkpoint report
+- read v4 automation and confirmed it contains 900 second parallel read-only audit jobs
+- created automation/topography_single_runner_contract_recovery_20260623T010000Z_v5.ps1
+- updated canonical automation wrapper to delegate to v5, with v4 fallback
+- updated queue/_ACTIVE_TASK.md to v5
+- updated current-task/ACTIVE_TASK.md to v5
+- updated runner_tasks/_ACTIVE_TASK.md to v5
+- updated control/RUNNER_PICKUP_REQUEST.md to v5
+
+V5_PURPOSE:
+- run the existing v4 audit first
+- keep all outputs under docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/
+- make runner-produced evidence easier to appear in GitHub reports/status
+- avoid any second runner process
+
+SAFETY:
+- no db write
+- no migration
+- no deploy
+- no force push
+- no other page-key output
+- only report/status/heartbeat/runner_output paths under this page key are affected
+
+PRODUCT_100_READY=false
+REASON_NOT_100=existing_single_runner_has_not_yet_published_final_report_or_final_status_to_GitHub
+NEXT_EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
+NEXT_EXPECTED_STATUS=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/topography_single_runner_contract_recovery_20260623T010000Z_final.status.txt
