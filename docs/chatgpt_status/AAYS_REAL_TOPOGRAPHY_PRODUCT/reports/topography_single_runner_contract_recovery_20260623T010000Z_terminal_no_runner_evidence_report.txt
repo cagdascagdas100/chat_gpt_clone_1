@@ -1,0 +1,30 @@
+TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+REPORT_KIND=terminal_no_runner_evidence_report
+STATUS=BLOCKED_ON_EXISTING_SINGLE_RUNNER_PICKUP_OR_PUBLISH
+PRODUCT_COMPLETENESS_ESTIMATE=93
+LOCAL_TECHNICAL_COMPLETION_FROM_HANDOFF=100
+PRODUCT_100_READY=false
+
+OBSERVED_ON_GITHUB:
+- active queue alias exists
+- active queue alias points to v6 terminal bridge diagnostic
+- canonical automation path is present in active queue alias
+- final report is not present on GitHub
+- final status is not present on GitHub
+- v6 terminal bridge report is not present on GitHub
+
+DECISION:
+- Do not create another product task until runner evidence appears.
+- Do not create a second runner.
+- Do not claim FINAL_READY or PRODUCT_PROGRESS_ESTIMATE=100.
+- Existing blocker class is single_runner_pickup_or_publish_blocked.
+
+EXPECTED_NEXT_REPORT:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_terminal_bridge_report.txt
+
+EXPECTED_FINAL_REPORT:
+docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
+
+NEXT_ACTION:
+Read expected reports from GitHub first. If still absent, keep blocker classification and avoid redundant task creation.
