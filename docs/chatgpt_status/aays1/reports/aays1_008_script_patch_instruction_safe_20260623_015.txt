@@ -1,0 +1,23 @@
+TASK_ID=aays1_fg100_runner_contract_blocker_20260623_008
+PAGE_KEY=aays1
+STATUS=PATCH_INSTRUCTION_FOR_CONSOLE_ONLY_SCRIPT_SAFE
+TARGET_SCRIPT=docs/chatgpt_status/aays1/automation/aays1_fg100_runner_contract_blocker_20260623_008.ps1
+TARGET_SCRIPT_SHA_AT_READ=e845cbfcc70c5913556c0a33a618a56af576d7fe
+REASON=current_script_only_uses_console_output_and_does_not_create_expected_report_or_heartbeat
+QUEUE_STATUS=READY
+RUNNER_TASK_SCRIPT_PATH_MATCH=true
+NO_FAKE_COMPLETION=true
+FINAL_READY_CONFIRMED=false
+PRODUCTION_COMPLETE=false
+
+REQUIRED_SAFE_FIX_NO_COMMAND_BODY:
+1. Update TARGET_SCRIPT so that when the existing shared runner executes it, the script creates the expected runner output file and heartbeat file inside this same repo worktree.
+2. The script must not mark product complete and must keep FINAL_READY_CONFIRMED=false until real product checks pass.
+3. The runner output file must record TASK_ID, PAGE_KEY, runner execution timestamp, working directory, and RUNNER_TOUCHED=true.
+4. The heartbeat file must record TASK_ID, PAGE_KEY, timestamp, and RUNNER_TOUCHED=true.
+5. If git push is not available from the script context, the local bridge or shared poller must push the files.
+6. After these files exist, continue with Future Growth product contract checks, local API smoke, and final wrapper.
+
+EXPECTED_RUNNER_OUTPUT=docs/chatgpt_status/aays1/reports/aays1_fg100_runner_contract_blocker_20260623_008_runner_output.txt
+EXPECTED_HEARTBEAT=docs/chatgpt_status/aays1/heartbeat/aays1_fg100_runner_contract_blocker_20260623_008_heartbeat.txt
+NEXT_AFTER_OUTPUT_EXISTS=read_runner_output_then_continue_future_growth_product_contract_tasks
