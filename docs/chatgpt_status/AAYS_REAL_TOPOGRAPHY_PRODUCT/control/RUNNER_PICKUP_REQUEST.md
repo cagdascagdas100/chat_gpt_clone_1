@@ -2,12 +2,13 @@
 
 TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
 PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
-STATUS=PICKUP_REQUESTED_V4
+STATUS=PICKUP_REQUESTED_V5
 MODE=single_shared_runner
 
 PRIMARY_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z.ps1
-EXPANDED_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v4.ps1
+EXPANDED_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v5.ps1
+FALLBACK_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v4.ps1
 EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
 EXPECTED_STATUS=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/topography_single_runner_contract_recovery_20260623T010000Z_final.status.txt
 
-This file is a pickup alias for the existing Topography task. Keep outputs under this page key and use the existing single-runner flow.
+This file is a pickup alias for the existing Topography task. Keep outputs under this page key and use the existing single-runner flow. v5 runs v4 audit first, then may publish only this page-key evidence with a normal non-forced Git push.
