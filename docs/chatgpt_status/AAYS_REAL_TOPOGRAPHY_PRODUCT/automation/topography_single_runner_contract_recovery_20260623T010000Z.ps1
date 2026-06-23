@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$v2 = Join-Path $PSScriptRoot 'topography_single_runner_contract_recovery_20260623T010000Z_v2.ps1'
-if(Test-Path $v2){
-  & $v2 -PageKey $PageKey -TaskId $TaskId
+$v4 = Join-Path $PSScriptRoot 'topography_single_runner_contract_recovery_20260623T010000Z_v4.ps1'
+if(Test-Path -LiteralPath $v4){
+  & $v4
   exit $LASTEXITCODE
 }
-Write-Host "Missing delegated automation script"
+Write-Host "Missing delegated automation script: $v4"
 exit 2
