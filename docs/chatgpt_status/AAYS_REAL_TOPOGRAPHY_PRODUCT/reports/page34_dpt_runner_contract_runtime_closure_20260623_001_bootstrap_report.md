@@ -14,7 +14,8 @@ TASK=page34-distance-property-types-runtime-closure
 - Current-task marker created: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/page34_dpt_runner_contract_runtime_closure_20260623_001.current.txt
 - Queue marker created: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/page34_dpt_runner_contract_runtime_closure_20260623_001.txt
 - Status write probe created: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/page34_dpt_runner_contract_runtime_closure_20260623_001_write_probe.json
-- Empty automation marker created because connector blocked executable PowerShell content: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/page34_empty_probe.ps1
+- Expected script marker created: docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/page34_dpt_runner_contract_runtime_closure_20260623_001.ps1
+- Note: executable PowerShell content was blocked by connector safety controls, so the runner task file contains the executable contract and the expected script marker is intentionally empty until the runner or Codex fills it locally.
 
 ## Current acceptance state
 
