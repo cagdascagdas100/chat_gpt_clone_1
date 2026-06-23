@@ -1,5 +1,5 @@
 {
-  "schema_version": "aays_single_runner_task_v1",
+  "schema_version": "aays_single_runner_task_v2",
   "page_key": "internet_access_parcel_layer_low_credit_20260612",
   "task_name": "internet-access-parcel-gap-closure",
   "status": "queued",
@@ -7,19 +7,10 @@
   "runner_contract": "single_shared_runner_only",
   "automation_script": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet-access-parcel-gap-closure.ps1",
   "must_not_start_new_runner": true,
-  "acceptance_gates": [
-    "real_parcel_geometry_present",
-    "parcel_level_scores_csv_present",
-    "factor_breakdown_contract_complete",
-    "manifest_present",
-    "endpoint_returns_non_empty_features",
-    "browser_smoke_confirms_colored_parcels_and_panel"
-  ],
-  "known_blockers": [
-    "P0_geometry_missing",
-    "P0_postcode_level_only",
-    "P1_factor_breakdown_schema_partial",
-    "P1_endpoint_empty_or_unproven"
-  ],
+  "write_outputs_under_page_key_only": true,
+  "safe_parallel_groups": ["read_only_inventory", "factor_contract_validation", "endpoint_smoke_read_only"],
+  "serialized_groups": ["heavy_dataset_build", "db_import_if_gate_open", "browser_smoke"],
+  "acceptance_gates": ["real_parcel_geometry_present", "parcel_level_scores_csv_present", "factor_breakdown_contract_complete", "manifest_present", "endpoint_returns_non_empty_features", "browser_smoke_confirms_colored_parcels_and_panel"],
+  "known_blockers": ["P0_geometry_missing", "P0_postcode_level_only", "P1_factor_breakdown_schema_partial", "P1_endpoint_empty_or_unproven", "P1_browser_smoke_missing"],
   "next_single_command": "devam et"
 }
