@@ -1,0 +1,82 @@
+{
+  "scope": "internet_access_parcel_layer_low_credit_20260612",
+  "repo": "cagdascagdas100/chat_gpt_clone_1",
+  "branch": "feature/terrayield-aays-integration",
+  "priority": "P0_P1_closeout",
+  "heavy_root_preferred": "F:\\AAYS_WORK\\internet_access_final_20260616",
+  "heavy_root_fallback": "D:\\AAYS_WORK\\internet_access_final_20260616",
+  "tasks": [
+    {
+      "id": "IA-P0-001",
+      "owner": "chatgpt",
+      "status": "missing",
+      "title": "Produce parcel-renderable geometry output",
+      "blocker_if_open": true,
+      "evidence": "processed geojson has geometry null for all 50000 features",
+      "outputs": [
+        "processed\\parcel_internet_access_scores_ready.geojson",
+        "processed\\parcel_internet_access_scores_ready.csv"
+      ]
+    },
+    {
+      "id": "IA-P0-002",
+      "owner": "chatgpt",
+      "status": "missing",
+      "title": "Replace postcode-level processed package with parcel-ready publish package",
+      "blocker_if_open": true,
+      "evidence": "calculation_manifest.json says POSTCODE_LEVEL official source, db_write=false, production_deploy=false",
+      "outputs": [
+        "reports\\internet_access_gap_closeout.md",
+        "diagnostics\\internet_access_blockers.json"
+      ]
+    },
+    {
+      "id": "IA-P1-003",
+      "owner": "chatgpt",
+      "status": "missing",
+      "title": "Define full factor breakdown contract",
+      "blocker_if_open": true,
+      "evidence": "factor breakdown csv only has source_unit_id, parcel_id, source_unit_type, source_dataset, source_file, fake_data",
+      "outputs": [
+        "processed\\parcel_internet_access_factor_breakdown_ready.csv",
+        "processed\\parcel_internet_access_detail_ready.json"
+      ]
+    },
+    {
+      "id": "IA-P1-004",
+      "owner": "chatgpt",
+      "status": "missing",
+      "title": "Generate repo patch text for popup and right-panel integration",
+      "blocker_if_open": true,
+      "outputs": [
+        "repo_patch\\PATCH_APP_JS.diff",
+        "repo_patch\\PATCH_INTERNET_OVERLAY.diff",
+        "repo_patch\\PATCH_MAP_LAYERS.diff",
+        "repo_patch\\PATCH_OPTIONAL_DETAIL_ENDPOINT.diff"
+      ]
+    },
+    {
+      "id": "IA-P1-005",
+      "owner": "local_shell",
+      "status": "pending",
+      "title": "Prepare heavy root on F or D",
+      "outputs": [
+        "F:\\AAYS_WORK\\internet_access_final_20260616",
+        "D:\\AAYS_WORK\\internet_access_final_20260616"
+      ]
+    },
+    {
+      "id": "IA-P2-006",
+      "owner": "codex",
+      "status": "pending",
+      "title": "Apply final narrow repo patches and smoke test",
+      "outputs": [
+        "repo patch applied",
+        "node --check ok",
+        "py_compile ok",
+        "localhost smoke report"
+      ]
+    }
+  ]
+}
+
