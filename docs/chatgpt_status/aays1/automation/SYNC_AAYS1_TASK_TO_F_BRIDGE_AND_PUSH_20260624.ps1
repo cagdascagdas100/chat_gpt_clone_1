@@ -1,128 +1,133 @@
-# Sync aays1 repo-side task to F bridge pending, check/start portable shared runner, and push repo-visible diagnostics.
-# No fake heartbeat/output/final marker is produced by this script.
+# AAYS1 F repo + F bridge sync/test script.
+# Purpose: copy repo-side aays1 task to F bridge pending, verify shared runner, wait for real output/heartbeat, then push only aays1 evidence.
+# No fake heartbeat/output/report/final marker is produced.
 $ErrorActionPreference = 'Continue'
-$RepoRoot = 'C:\Users\cagda\Documents\GitHub\AAYS'
+$env:AAYS_REPO_ROOT = 'F:\chatgpt\chat_gpt_clone_1_main'
+$env:AAYS_BRIDGE_ROOT = 'F:\AAYS_GITHUB_BRIDGE_CLEAN2'
+
+$RepoRoot = $env:AAYS_REPO_ROOT
+$BridgeRoot = $env:AAYS_BRIDGE_ROOT
 $PageKey = 'aays1'
 $TaskId = 'aays1_fg100_runner_contract_blocker_20260623_008'
-$TaskRel = 'docs\chatgpt_status\aays1\queue\aays1_fg100_runner_contract_blocker_20260623_008_live_bridge.task.json'
-$ReportRel = 'docs\chatgpt_status\aays1\reports\aays1_f_bridge_queue_sync_and_runner_check_20260624.txt'
-$ExpectedOutputRel = 'docs\chatgpt_status\aays1\reports\aays1_fg100_runner_contract_blocker_20260623_008_runner_output.txt'
-$ExpectedHeartbeatRel = 'docs\chatgpt_status\aays1\heartbeat\aays1_fg100_runner_contract_blocker_20260623_008_heartbeat.txt'
+$TaskName = 'aays1_fg100_runner_contract_blocker_20260623_008_live_bridge.task.json'
+$TaskRel = "docs\chatgpt_status\$PageKey\queue\$TaskName"
+$ReportRel = "docs\chatgpt_status\$PageKey\reports\aays1_f_repo_f_bridge_runner_test_20260625.txt"
+$ExpectedOutputRel = "docs\chatgpt_status\$PageKey\reports\aays1_fg100_runner_contract_blocker_20260623_008_runner_output.txt"
+$ExpectedHeartbeatRel = "docs\chatgpt_status\$PageKey\heartbeat\aays1_fg100_runner_contract_blocker_20260623_008_heartbeat.txt"
+$RunnerBootstrapRel = 'docs\chatgpt_status\runner_outputs\aays-runner-bootstrap-report-latest.txt'
 
-function Resolve-BridgeRoot {
-  $candidates = @()
-  if ($env:AAYS_BRIDGE_ROOT) { $candidates += $env:AAYS_BRIDGE_ROOT }
-  $candidates += @('F:\AAYS_GITHUB_BRIDGE_CLEAN2','D:\AAYS_GITHUB_BRIDGE_CLEAN2','C:\AAYS_GITHUB_BRIDGE_CLEAN2')
-  foreach ($candidate in $candidates) {
-    if ($candidate -and (Test-Path $candidate)) { return $candidate }
-  }
-  return $null
+function Write-Report([string]$line) {
+  $line | Out-File -FilePath $script:ReportPath -Encoding utf8 -Append
 }
 
-$BridgeRoot = Resolve-BridgeRoot
 $ReportPath = Join-Path $RepoRoot $ReportRel
 New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath) | Out-Null
-function Add-ReportLine([string]$line) { $line | Out-File -FilePath $ReportPath -Encoding utf8 -Append }
-
 if (Test-Path $ReportPath) { Remove-Item $ReportPath -Force }
-Add-ReportLine "time=$(Get-Date -Format o)"
-Add-ReportLine "page_key=$PageKey"
-Add-ReportLine "task_id=$TaskId"
-Add-ReportLine "repo_root=$RepoRoot"
-Add-ReportLine "bridge_root=$BridgeRoot"
-Add-ReportLine "fake_data=false"
-Add-ReportLine "final_ready=false"
+
+Write-Report "time=$(Get-Date -Format o)"
+Write-Report "page_key=$PageKey"
+Write-Report "task_id=$TaskId"
+Write-Report "repo_root=$RepoRoot"
+Write-Report "bridge_root=$BridgeRoot"
+Write-Report "fake_data=false"
+Write-Report "final_ready=false"
 
 if (!(Test-Path $RepoRoot)) {
-  Add-ReportLine "blocker=wrong_root"
-  Add-ReportLine "detail=Repo root path does not exist."
+  Write-Report 'blocker=wrong_root'
+  Write-Report 'detail=F repo root missing.'
+  Write-Output "AAYS1_BLOCKER wrong_root report=$ReportPath"
   exit 2
 }
+if (!(Test-Path $BridgeRoot)) {
+  Write-Report 'blocker=missing_bridge_root'
+  Write-Report 'detail=F bridge root missing.'
+  Write-Output "AAYS1_BLOCKER missing_bridge_root report=$ReportPath"
+  exit 3
+}
+
 Set-Location $RepoRoot
+Write-Report "branch=$(git branch --show-current 2>&1)"
+Write-Report 'remote_begin'
+(git remote -v 2>&1) | ForEach-Object { Write-Report $_ }
+Write-Report 'remote_end'
 
-Add-ReportLine "branch=$(git branch --show-current 2>&1)"
-Add-ReportLine "remote_begin"
-(git remote -v 2>&1) | ForEach-Object { Add-ReportLine $_ }
-Add-ReportLine "remote_end"
-
-Add-ReportLine "git_pull_begin"
-(git pull 2>&1) | ForEach-Object { Add-ReportLine $_ }
-Add-ReportLine "git_pull_end"
+Write-Report 'git_pull_begin'
+(git pull 2>&1) | ForEach-Object { Write-Report $_ }
+Write-Report 'git_pull_end'
 
 $TaskSrc = Join-Path $RepoRoot $TaskRel
 if (!(Test-Path $TaskSrc)) {
-  Add-ReportLine "blocker=missing_repo_side_task"
-  Add-ReportLine "missing=$TaskRel"
-} elseif (!$BridgeRoot) {
-  Add-ReportLine "blocker=missing_bridge_root"
-  Add-ReportLine "detail=AAYS_BRIDGE_ROOT/F/D/C bridge root not found."
+  Write-Report 'blocker=missing_repo_side_task'
+  Write-Report "missing=$TaskRel"
 } else {
   $PendingDir = Join-Path $BridgeRoot 'ai-queue\pending'
   New-Item -ItemType Directory -Force -Path $PendingDir | Out-Null
-  $PendingPath = Join-Path $PendingDir (Split-Path $TaskSrc -Leaf)
+  $PendingPath = Join-Path $PendingDir $TaskName
   Copy-Item -Path $TaskSrc -Destination $PendingPath -Force
-  Add-ReportLine "pending_task_copied=true"
-  Add-ReportLine "pending_task_path=$PendingPath"
-  Add-ReportLine "pending_task_exists=$(Test-Path $PendingPath)"
+  Write-Report 'pending_task_copied=true'
+  Write-Report "pending_task_path=$PendingPath"
+  Write-Report "pending_task_exists=$(Test-Path $PendingPath)"
+}
+
+$HeartbeatFile = Join-Path $BridgeRoot 'ai-queue\heartbeat.txt'
+Write-Report "bridge_heartbeat_exists=$(Test-Path $HeartbeatFile)"
+if (Test-Path $HeartbeatFile) {
+  Write-Report 'bridge_heartbeat_begin'
+  Get-Content $HeartbeatFile -Tail 20 | ForEach-Object { Write-Report $_ }
+  Write-Report 'bridge_heartbeat_end'
 }
 
 $runnerProcesses = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'portable_queue_runner\.ps1' })
-Add-ReportLine "portable_runner_process_count_before=$($runnerProcesses.Count)"
-
-if ($BridgeRoot -and $runnerProcesses.Count -eq 0) {
-  $runnerCandidates = @(
-    (Join-Path $BridgeRoot 'portable_queue_runner.ps1'),
-    (Join-Path $BridgeRoot 'tools\portable_queue_runner.ps1'),
-    (Join-Path $RepoRoot 'tools\portable_queue_runner.ps1')
-  )
-  $runnerScript = $runnerCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if ($runnerScript) {
-    Add-ReportLine "runner_start_attempt=true"
-    Add-ReportLine "runner_script=$runnerScript"
-    Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$runnerScript) -WorkingDirectory $BridgeRoot
-    Start-Sleep -Seconds 10
-  } else {
-    Add-ReportLine "blocker=missing_portable_queue_runner"
-    Add-ReportLine "searched=$($runnerCandidates -join ';')"
-  }
+Write-Report "portable_runner_process_count=$($runnerProcesses.Count)"
+if ($runnerProcesses.Count -gt 0) {
+  $runnerProcesses | ForEach-Object { Write-Report "runner_pid=$($_.ProcessId)" }
 } else {
-  Add-ReportLine "runner_start_attempt=false"
+  Write-Report 'blocker=runner_not_active'
+  Write-Report 'detail=No new runner started by this script because single shared runner rule is active.'
 }
 
-$runnerProcessesAfter = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'portable_queue_runner\.ps1' })
-Add-ReportLine "portable_runner_process_count_after=$($runnerProcessesAfter.Count)"
+# Give existing runner a short window to pick up and write real repo evidence.
+Start-Sleep -Seconds 45
 
 $ExpectedOutput = Join-Path $RepoRoot $ExpectedOutputRel
 $ExpectedHeartbeat = Join-Path $RepoRoot $ExpectedHeartbeatRel
-Start-Sleep -Seconds 20
-Add-ReportLine "expected_output_exists=$(Test-Path $ExpectedOutput)"
-Add-ReportLine "expected_heartbeat_exists=$(Test-Path $ExpectedHeartbeat)"
-if (Test-Path $ExpectedOutput) { Add-ReportLine "expected_output_path=$ExpectedOutput" }
-if (Test-Path $ExpectedHeartbeat) { Add-ReportLine "expected_heartbeat_path=$ExpectedHeartbeat" }
+$RunnerBootstrap = Join-Path $RepoRoot $RunnerBootstrapRel
+Write-Report "expected_output_exists=$(Test-Path $ExpectedOutput)"
+Write-Report "expected_heartbeat_exists=$(Test-Path $ExpectedHeartbeat)"
+Write-Report "runner_bootstrap_report_exists=$(Test-Path $RunnerBootstrap)"
 
-Add-ReportLine "git_status_before_add_begin"
-(git status --short 2>&1) | ForEach-Object { Add-ReportLine $_ }
-Add-ReportLine "git_status_before_add_end"
+if (!(Test-Path $ExpectedOutput) -or !(Test-Path $ExpectedHeartbeat)) {
+  Write-Report 'blocker=runner_pickup_or_output_not_proven'
+  Write-Report "expected_output_rel=$ExpectedOutputRel"
+  Write-Report "expected_heartbeat_rel=$ExpectedHeartbeatRel"
+}
+
+Write-Report 'git_status_before_add_begin'
+(git status --short 2>&1) | ForEach-Object { Write-Report $_ }
+Write-Report 'git_status_before_add_end'
 
 $pathsToAdd = @($ReportRel)
 if (Test-Path $ExpectedOutput) { $pathsToAdd += $ExpectedOutputRel }
 if (Test-Path $ExpectedHeartbeat) { $pathsToAdd += $ExpectedHeartbeatRel }
+if (Test-Path $RunnerBootstrap) { $pathsToAdd += $RunnerBootstrapRel }
 
-Add-ReportLine "git_add_begin"
-foreach ($p in $pathsToAdd) { (git add -- $p 2>&1) | ForEach-Object { Add-ReportLine $_ } }
-Add-ReportLine "git_add_end"
+Write-Report 'git_add_begin'
+foreach ($p in $pathsToAdd) {
+  (git add -- $p 2>&1) | ForEach-Object { Write-Report $_ }
+}
+Write-Report 'git_add_end'
 
-$hasStaged = git diff --cached --name-only
-if ($hasStaged) {
-  Add-ReportLine "git_commit_begin"
-  (git commit -m "sync aays1 task to F bridge and report runner check" 2>&1) | ForEach-Object { Add-ReportLine $_ }
-  Add-ReportLine "git_commit_end"
-  Add-ReportLine "git_push_begin"
-  (git push 2>&1) | ForEach-Object { Add-ReportLine $_ }
-  Add-ReportLine "git_push_end"
+$staged = git diff --cached --name-only
+if ($staged) {
+  Write-Report 'git_commit_begin'
+  (git commit -m 'test aays1 F repo F bridge runner pickup' 2>&1) | ForEach-Object { Write-Report $_ }
+  Write-Report 'git_commit_end'
+  Write-Report 'git_push_begin'
+  (git push origin main 2>&1) | ForEach-Object { Write-Report $_ }
+  Write-Report 'git_push_end'
 } else {
-  Add-ReportLine "git_commit_skipped=no_staged_changes"
+  Write-Report 'git_commit_skipped=no_staged_changes'
 }
 
-Add-ReportLine "done=true"
-Write-Output "AAYS1_F_BRIDGE_SYNC_AND_RUNNER_CHECK_DONE report=$ReportPath"
+Write-Report 'done=true'
+Write-Output "AAYS1_F_REPO_F_BRIDGE_RUNNER_TEST_DONE report=$ReportPath"
