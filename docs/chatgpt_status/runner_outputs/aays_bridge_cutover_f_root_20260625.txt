@@ -1,0 +1,28 @@
+AAYS bridge cutover report
+date=2026-06-25
+status=ACTIVE_F_ROOT_WITH_C_JUNCTION
+
+repo_root=C:\Users\cagda\Documents\GitHub\AAYS
+live_bridge_root=F:\AAYS_GITHUB_BRIDGE_CLEAN2
+legacy_bridge_root=C:\AAYS_GITHUB_BRIDGE_CLEAN2
+legacy_bridge_mode=JUNCTION_TO_F
+
+verified_now
+- active portable_queue_runner process was started from:
+  F:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-task-scripts\portable_queue_runner.ps1
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2 is now a junction
+- junction target:
+  F:\AAYS_GITHUB_BRIDGE_CLEAN2
+- C path heartbeat and F path heartbeat resolve to the same live file
+
+meaning
+- Hardcoded old C bridge paths no longer require a full 5 GB real folder on C.
+- Heavy runner/bridge data now lives on F.
+- Repo/GitHub-facing docs/chatgpt_status files still live under the C repo checkout.
+- This preserves compatibility for older scripts while keeping bridge storage off C.
+
+next_rule
+- Continue to run shared runner from F root.
+- Continue to write GitHub/status/report files only under:
+  C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\<PAGE_KEY>\
+- Do not recreate a real C:\AAYS_GITHUB_BRIDGE_CLEAN2 folder.

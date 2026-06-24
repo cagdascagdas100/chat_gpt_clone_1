@@ -1,0 +1,78 @@
+Bu promptu ChatGPT'ye aynen ver. Yalniz ekteki dosyalari ve bu promptu kullan. Disaridan varsayim yapma.
+
+Gorev:
+
+`Parcel Future Growth Potential` katmanini `%100 final-ready` seviyesine tasimak icin kod ve dokuman tarafindaki eksikleri tamamla; ama lokal runtime gecmeden `FINAL_READY_CONFIRMED` veya `PRODUCTION_COMPLETE=true` deme.
+
+Sabitler:
+
+- Repo: `cagdascagdas100/chat_gpt_clone_1`
+- Page key: `aays1`
+- Hedef final rapor:
+  `docs/chatgpt_status/aays1/reports/aays1_sync_unblock_then_future_growth_wrapper_20260619_008.txt`
+
+Verilen paket icindeki gercekler:
+
+1. Final wrapper su an yok.
+2. `main` dogrulamasinda urun koku / runtime zinciri Future Growth ile uyusmuyor.
+3. `http://127.0.0.1:8010/api/future-growth/methodology` calisiyor.
+4. `http://127.0.0.1:8010/api/future-growth/layer?...` timeout veriyor.
+5. Docker ve shared runner lokal dogrulama gerektiriyor; bunlari sen dogrulayamazsin.
+6. Mevcut feature branch kodunda Future Growth frontend/backend yapisi var.
+
+Senin gorevin:
+
+## A. Kod eksiklerini tamamla
+
+Ekli kaynak dosyalari incele ve asagidaki eksikler icin patch oner:
+
+1. Backend detail contract eksikleri:
+   - `probability_status`
+   - `layer_name`
+   - `calculation_explanation`
+   - `no_data_reason`
+   - gerekiyorsa `source_summary` veya `sources`
+2. Backend service tarafinda bu alanlari gercek/temkinli degerlerle doldur:
+   - `growth_probability_percent` kalibre degilse `null`
+   - `probability_status=probability_not_calibrated`
+   - `calculation_explanation` icinde su disclaimer mantigi yer alsin:
+     `This is not a guaranteed price prediction. It is a future growth potential signal based on planning, transport, market momentum, demographic demand, social amenities, land supply, and policy/risk factors.`
+3. Frontend popup/panel binding eksikleri:
+   - `growth_probability_percent`
+   - `probability_status`
+   - `calculation_explanation`
+   - `calculation_version`
+   - `horizon_years`
+   - `calculated_at`
+   - `no_data_reason`
+   - warning/disclaimer
+4. Frontend, `confidence_score` ile `growth_probability_percent` alanlarini karistirmasin.
+
+## B. Runtime zincirine hazir dokuman uret
+
+Su ciktilari uret:
+
+1. `apply_patch` bloklari veya net diff onerileri
+2. Lokal uygulama sonrasi smoke checklist
+3. Fail-closed acceptance checklist
+4. Hangi alanlar yalniz lokal dogrulanabilir, bunu ayir
+
+## C. Cikti formati
+
+Cevabini su basliklarla ver:
+
+1. `VERIFIED GAPS`
+2. `PATCH PLAN`
+3. `APPLY_PATCH BLOCKS`
+4. `LOCAL POWERSHELL / DOCKER COMMANDS`
+5. `WHAT MUST BE VERIFIED LOCALLY`
+6. `DO NOT MARK FINAL READY UNTIL`
+
+Kurallar:
+
+- Yeni page key uretme.
+- Baska branch varsayma.
+- Final wrapper'i sahte doldurma.
+- `PRODUCTION_COMPLETE=true` yazma; sadece gercek lokal runtime gecerse yazilabilir.
+- Docker, runner, local API sonucunu tahmin etme.
+- Elindeki dosyalarin disina tasma.
