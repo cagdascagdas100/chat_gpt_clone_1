@@ -1,0 +1,3 @@
+﻿# runner pickup blocker
+missing_script=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\gas_emissions\automation\gas_emissions_single_runner_finalizer_20260622_2300.ps1
+final_ready=false
