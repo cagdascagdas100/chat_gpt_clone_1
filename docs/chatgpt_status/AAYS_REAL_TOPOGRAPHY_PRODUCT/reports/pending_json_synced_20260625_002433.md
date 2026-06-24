@@ -1,0 +1,4 @@
+﻿pending_json_synced=F:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\pending\topography_single_runner_contract_recovery_20260623T010000Z.task.json
+expected_report=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_terminal_bridge_report.txt
+final_ready=false
+percent=93

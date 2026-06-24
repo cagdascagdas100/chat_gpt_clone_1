@@ -1,0 +1,12 @@
+﻿repo_full_name=cagdascagdas100/chat_gpt_clone_1
+branch=feature/terrayield-aays-integration
+local_worktree=C:\Users\cagda\Documents\GitHub\AAYS
+git_remote=https://github.com/cagdascagdas100/chat_gpt_clone_1
+current_branch=feature/terrayield-aays-integration
+page_key=AAYS_REAL_TOPOGRAPHY_PRODUCT
+consumed_queue_file=page34_runner_pickup_ping_20260623_011.task.json
+generated_report=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/page34_runner_pickup_ping_20260623_011_report.md
+push_result=not_proven
+blocker_remaining=main_branch_not_active;queue_contract_split;expected_ready_json_missing_in_checkout
+completion_percent=75
+final_ready=false
