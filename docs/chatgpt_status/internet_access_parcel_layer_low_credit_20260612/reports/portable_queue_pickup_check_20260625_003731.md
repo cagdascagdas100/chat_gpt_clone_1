@@ -1,0 +1,8 @@
+﻿total_percent=66
+runner_pickup=proven_or_in_progress
+runner_push=proven_local_repo
+live_task_still_pending=False
+runner_process_seen=True
+evidence_count=4
+expected_next_report=docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/*runner-output*.md
+final_ready=false
