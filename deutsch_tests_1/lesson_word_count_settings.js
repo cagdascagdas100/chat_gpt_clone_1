@@ -99,3 +99,30 @@
   }
   onReady(function(){setTimeout(install,250);setTimeout(function(){if(!document.getElementById('btnSettingsWordCount')) install();},1500);});
 })();
+
+/* Ana menü düzeltmesi: ana sayfada yalnızca 5 ana kart kalır. */
+(function(){
+  var cards=[
+    ['catTest','Test','C1/C2 Erörterung test sistemini aç.','./erorterung_tests.html?v=stable1',''],
+    ['catGrammar','Genel Grammar','Satzbau, Kasus, Artikel, Pronomen, Negation ve doğru gramerle yazma.','','Genel Grammer'],
+    ['catWrite','Schreiben Fehler','Kelime, kalıp, Präposition ve C1/C2 yazma hatası testleri.','','Schreiben Fehlern'],
+    ['catNVV','NVV','Nomen-Verb-Verbindungen ve akademik yazma kalıpları.','','NVV'],
+    ['catBefore','Bevor Schreiben / Bewerbungsschreiben','Selbstfahrende Autos: C1/C2 Vorteilsabsatz, Redemittel, NVV ve yazma hazırlığı dahil tüm Vorteile/Nachteile konu anlatımları burada.','','Bevor Schreiben']
+  ];
+  function e(s){return String(s||'').replace(/[&<>']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;'}[c];});}
+  function render(){
+    var list=document.getElementById('testList'); if(!list) return;
+    try{selectedCategory=''; selected='';}catch(x){}
+    try{ if(typeof setControls==='function') setControls(false); }catch(x){}
+    var html='<h2>İlk olarak ana başlığı seç</h2><p class="muted">Ana menüde sadece 5 ana başlık gösterilir. Alt konu başlıkları kendi ana bölümünün içine girince görünür.</p><div id="strictMainGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px">';
+    cards.forEach(function(c){
+      var inner='<b>'+e(c[1])+'</b><br><span class="muted">'+e(c[2])+'</span>';
+      html += c[3] ? '<a class="opt" id="'+c[0]+'" href="'+e(c[3])+'" style="text-align:left;display:block;text-decoration:none;color:inherit">'+inner+'</a>' : '<button class="opt" style="text-align:left" id="'+c[0]+'">'+inner+'</button>';
+    });
+    list.innerHTML=html+'</div>';
+    cards.forEach(function(c){ if(!c[4]) return; var b=document.getElementById(c[0]); if(b) b.onclick=function(){ if(typeof renderTests==='function') renderTests(c[4]); }; });
+  }
+  window.renderCategoryChoice=render;
+  document.addEventListener('DOMContentLoaded',function(){render(); setTimeout(render,400);});
+  if(document.readyState!=='loading'){render(); setTimeout(render,400);}
+})();
