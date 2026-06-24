@@ -100,3 +100,4 @@
     try { applyMenuPatch(); } catch(e) { console.error(e); }
   }
 })();
+/* smart grammar options file added separately */
