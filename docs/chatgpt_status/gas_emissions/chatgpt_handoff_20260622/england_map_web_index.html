@@ -1,0 +1,510 @@
+﻿<!doctype html>
+<html lang="tr">
+  <head>
+
+
+
+<meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Great Britain Parcel Map</title>
+    <script src="./aays_turkish_exact_ascii_fix.js?v=20260611-local-stability-v7" data-aays-turkish-fix="1"></script>
+    <link rel="stylesheet" href="./vendor/maplibre-gl.css" />
+    <link rel="stylesheet" href="./styles.css?v=static-3110-sale-ready-20260615-v25" />
+      <link rel="stylesheet" href="./security_overlay.css?v=20260501_021247" data-aays-security-overlay="1">
+  <link rel="stylesheet" href="./remaining_low_review_overlay.css?v=20260501_022705" data-aays-low-review-overlay="1">
+</head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="eyebrow">AAYS</div>
+          <h1>Great Britain Parcel Map</h1>
+          <p>England, Wales ve Scotland parcel katmanlarini ayri frontend ustunde akici calistirmak icin hazirlanmis statik harita. Scotland parcelleri resmi RoS INSPIRE verisinden gelir ve bazi alanlarda parcali olabilir.</p>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Ekran</div>
+          <div id="screenMenu" class="screen-menu"></div>
+        </div>
+
+        <div class="panel">
+          <label class="field-label" for="regionSelect">AKTİF BÖLGE</label>
+          <select id="regionSelect"></select>
+          <div class="hint">`Auto` seçiliyken harita merkezine göre bölge otomatik değişir.</div>
+        </div>
+
+        <div class="panel">
+          <label class="field-label" for="citySelect">HIZLI ŞEHİR ATLAMA</label>
+          <select id="citySelect"></select>
+          <div id="cityInfo" class="hint">Edinburgh ve Dundee gibi Scotland şehirleri için alias/QA notları burada gösterilir.</div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Ucretsiz Kapsam</div>
+          <div id="freeCoverageInfo" class="hint">
+            Great Britain parcel kapsam ozeti yukleniyor...
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Sehir Kapsam Raporu</div>
+          <div id="coverageCitiesSummary" class="hint">Sehir kapsam raporu yukleniyor...</div>
+          <div id="coverageCitiesList" class="coverage-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Tum Destekli Sehir / Birim</div>
+          <input id="supportedUnitsSearch" type="text" placeholder="Sehir veya authority ara" />
+          <div id="supportedUnitsSummary" class="hint">Tum destekli birimler yukleniyor...</div>
+          <div id="supportedUnitsList" class="coverage-list"></div>
+        </div>
+
+        <div class="panel">
+          <label class="toggle">
+            <input type="checkbox" id="showPoiPoints" checked />
+            <span>POI / Birimler</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showPoiLines" checked />
+            <span>Ağ / Çizgi Katmanları</span>
+          </label>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Çevre ve Senaryo Katmanları</div>
+          <label class="filter-field" for="baseMapSelect">
+            <span class="filter-field-label">Base map</span>
+            <select id="baseMapSelect">
+              <option value="standard">Standart</option>
+              <option value="topographic">Topographic</option>
+              <option value="satellite">Satellite</option>
+            </select>
+          </label>
+          <label class="filter-field" for="mapViewMode">
+            <span class="filter-field-label">Harita görünümü</span>
+            <select id="mapViewMode">
+              <option value="parcel">Parsellerli</option>
+              <option value="map_only">Sadece harita</option>
+              <option value="topographic">Topographic Map</option>
+              <option value="land_use">Arazi kullanım (renkli)</option>
+            </select>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showTopographyOverlay" />
+            <span>Topografya Katmanı (Yükseklik)</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showSecurityOverlay" />
+            <span>Güvenlik / Asayis Katmani</span>
+          </label>
+          <div id="securityOverlayStatus" class="hint">Güvenlik katmani kapali.</div>
+          <label class="toggle">
+            <input type="checkbox" id="showFutureGrowth" />
+            <span>Gelecek Gelisim (Future Growth)</span>
+          </label>
+          <div id="futureGrowthStatus" class="hint">Gelecek Gelisim katmani kapalı.</div>
+          <div id="futureGrowthLegend" class="future-growth-legend hidden"></div>
+          <a id="futureGrowthMethodologyLink" class="future-growth-methodology-link" href="#" target="_blank" rel="noopener noreferrer">Methodology</a>
+          <label class="toggle">
+            <input type="checkbox" id="showFacilitiesOverlay" />
+            <span>Buildings & Facilities Overlay</span>
+          </label>
+          <label class="filter-field" for="facilitiesCategoryFilter">
+            <span class="filter-field-label">Facility kategorisi</span>
+            <select id="facilitiesCategoryFilter">
+              <option value="all">Hepsi</option>
+              <option value="residential">Residential</option>
+              <option value="industrial">Industrial</option>
+              <option value="commercial">Commercial</option>
+              <option value="office">Office</option>
+              <option value="retail">Retail</option>
+              <option value="education">Education</option>
+              <option value="health">Health</option>
+              <option value="cultural">Cultural</option>
+              <option value="transport">Transport</option>
+              <option value="utilities">Utilities</option>
+              <option value="religious">Religious</option>
+              <option value="energy">Energy</option>
+            </select>
+          </label>
+          <label class="filter-field" for="scenarioScoreMode">
+            <span class="filter-field-label">Senaryo skoru</span>
+            <select id="scenarioScoreMode">
+              <option value="none">Kapalı</option>
+              <option value="apartment">Konut / Apartman</option>
+              <option value="retail">Perakende</option>
+              <option value="office">Ofis</option>
+              <option value="industrial">Endüstriyel</option>
+              <option value="mixed_use">Karma Kullanım</option>
+            </select>
+          </label>
+          <div id="facilitiesStatus" class="hint">Facilities overlay kapalı.</div>
+        </div>
+
+        <div class="panel" id="contractorIntegrationPanel">
+          <div class="field-label">Contractor Intelligence</div>
+          <div id="contractorStatusBadge" class="hint">Contractor durumu yukleniyor...</div>
+          <div id="contractorStatusSummary" class="hint"></div>
+          <div id="contractorStatusWarnings" class="hint"></div>
+          <button id="refreshContractorStatus" class="workspace-button subtle" type="button">Contractor durumunu yenile</button>
+          <div id="contractorParcelMatchesPreview" class="coverage-list"></div>
+          <div class="hint" id="contractorParcelContactsHint">Parsel secildiginde temas-onerileri burada gosterilir.</div>
+          <div id="contractorParcelContactsPreview" class="coverage-list"></div>
+        </div>
+
+        <div class="panel" id="cost50IntegrationPanel">
+          <div class="field-label">Cost50 Integration</div>
+          <div id="cost50StatusBadge" class="hint">Cost50 durumu yukleniyor...</div>
+          <div id="cost50StatusSummary" class="hint"></div>
+          <div id="cost50StatusWarnings" class="hint"></div>
+          <button id="refreshCost50Status" class="workspace-button subtle" type="button">Cost50 durumunu yenile</button>
+          <div class="hint" id="cost50SelectedParcelHint">Secili parcel icin cost preview burada gosterilir.</div>
+          <div id="cost50SelectedParcelPreview" class="coverage-list"></div>
+          <div class="hint">Artefact ve kaynak ozeti:</div>
+          <div id="cost50ArtifactPreview" class="coverage-list"></div>
+        </div>
+
+        <div class="panel" id="landSalesEvidenceReviewPanel">
+          <div class="field-label">Land Sales Evidence Review</div>
+          <div id="landSalesReviewGateBadge" class="hint">Evidence gate durumu yukleniyor...</div>
+          <div id="landSalesReviewGateSummary" class="hint"></div>
+          <div id="landSalesReviewWarnings" class="hint"></div>
+          <button id="refreshLandSalesReviewStatus" class="workspace-button subtle" type="button">Evidence review durumunu yenile</button>
+          <div class="filter-stack">
+            <label class="filter-field" for="landSalesReviewFilterLabel">
+              <span class="filter-field-label">current_label</span>
+              <select id="landSalesReviewFilterLabel">
+                <option value="">Hepsi</option>
+                <option value="needs_source">needs_source</option>
+                <option value="ambiguous">ambiguous</option>
+                <option value="manual_review">manual_review</option>
+              </select>
+            </label>
+            <label class="filter-field" for="landSalesReviewFilterDecision">
+              <span class="filter-field-label">final_decision</span>
+              <select id="landSalesReviewFilterDecision">
+                <option value="">Hepsi</option>
+                <option value="needs_source">needs_source</option>
+                <option value="ambiguous">ambiguous</option>
+                <option value="manual_review">manual_review</option>
+                <option value="accept_candidate">accept_candidate</option>
+                <option value="accept">accept</option>
+              </select>
+            </label>
+            <label class="filter-field" for="landSalesReviewFilterChecked">
+              <span class="filter-field-label">checked</span>
+              <select id="landSalesReviewFilterChecked">
+                <option value="">Hepsi</option>
+                <option value="yes">yes</option>
+                <option value="no">no</option>
+              </select>
+            </label>
+            <label class="filter-field" for="landSalesReviewFilterRisk">
+              <span class="filter-field-label">risk_label_v2</span>
+              <select id="landSalesReviewFilterRisk">
+                <option value="">Hepsi</option>
+                <option value="critical">critical</option>
+                <option value="high">high</option>
+              </select>
+            </label>
+            <label class="filter-field" for="landSalesReviewFilterIssue">
+              <span class="filter-field-label">issue_type</span>
+              <select id="landSalesReviewFilterIssue">
+                <option value="">Hepsi</option>
+                <option value="missing_source">missing_source</option>
+                <option value="ambiguous_signal">ambiguous_signal</option>
+              </select>
+            </label>
+          </div>
+          <div id="landSalesReviewSummaryStats" class="hint"></div>
+          <div id="landSalesReviewRows" class="coverage-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Harita Buton Duzeni</div>
+          <div id="mapModeCustomizer" class="map-mode-customizer"></div>
+          <div class="hint">Harita sag ust butonlarini ac/kapat. Harita konumu korunur.</div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Parcel Bazlı Satış Sinyalleri</div>
+          <label class="toggle">
+            <input type="checkbox" id="showOfficialSale" checked />
+            <span>Satışa Uygun Parcel Vurgusu</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showHistoricSales" />
+            <span class="signal-icon" data-signal="history" aria-hidden="true"></span>
+            <span>Geçmiş Satış ($ Price Paid)</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showBrownfieldSignals" checked />
+            <span>Brownfield Parcel Sinyali</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="showMarketListings" checked />
+            <span>Portal Listing Parcel Sinyali</span>
+          </label>
+          <div id="landSourceStatus" class="hint">
+            Kaynak durumu ve parcel vurguları yükleniyor...
+          </div>
+          <div class="hint">Program parcel tabanı ile açılır. Satış kaydı olan parcel'lar aynı parcel yapısını bozmadan vurgulu gösterilir; geçmiş satış sinyali ayrı ikonlu menüden açılır.</div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Land Intelligence Filtreleri</div>
+          <div class="filter-stack">
+            <label class="filter-field" for="landMinConfidence">
+              <span class="filter-field-label">Minimum confidence</span>
+              <div class="filter-range-row">
+                <input id="landMinConfidence" type="range" min="0" max="100" step="5" value="0" />
+                <strong id="landMinConfidenceValue" class="range-value-badge">0+</strong>
+              </div>
+            </label>
+
+            <label class="filter-field" for="brownfieldSourceFilter">
+              <span class="filter-field-label">Brownfield kaynağı</span>
+              <select id="brownfieldSourceFilter">
+                <option value="all">Hepsi</option>
+                <option value="planning_data_brownfield">Planning Data</option>
+                <option value="local_authority_brownfield">Local Authority Register</option>
+              </select>
+            </label>
+
+            <label class="filter-field" for="listingStatusFilter">
+              <span class="filter-field-label">Listing durumu</span>
+              <select id="listingStatusFilter">
+                <option value="all">Hepsi</option>
+                <option value="on_market">On market</option>
+                <option value="pipeline">Pipeline</option>
+                <option value="sold_stc">Sold STC</option>
+                <option value="disposed">Disposed</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </label>
+
+            <div class="filter-field">
+              <span class="filter-field-label">Hızlı Satış Görünümü</span>
+              <div id="saleReadyQuickFilters" class="quick-filter-row">
+                <button type="button" class="quick-filter-chip" data-sale-ready-quick-filter="all">Hepsi</button>
+                <button type="button" class="quick-filter-chip" data-sale-ready-quick-filter="on_market">On market</button>
+                <button type="button" class="quick-filter-chip" data-sale-ready-quick-filter="priced">Fiyatı olan</button>
+                <button type="button" class="quick-filter-chip" data-sale-ready-quick-filter="linked">Linki olan</button>
+              </div>
+            </div>
+
+            <label class="toggle">
+              <input type="checkbox" id="landReviewOnly" />
+              <span>Sadece review gereken inferred kayıtlar</span>
+            </label>
+
+            <button id="resetLandFilters" class="workspace-button subtle" type="button">Filtreleri Sıfırla</button>
+          </div>
+          <div id="landFilterSummary" class="hint">Harita sinyalleri tüm confidence seviyeleriyle gösteriliyor.</div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Land Intelligence Efsane ve Uyarılar</div>
+          <div class="legend-list">
+            <div class="legend-item">
+              <span class="legend-swatch" data-signal="official-sale"></span>
+              <div>
+                <strong>Satışa Uygun Parcel</strong>
+                <div class="legend-note">Homes England veya market eşleşmesiyle satışa uygun görülen parcel vurgusu.</div>
+              </div>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch" data-signal="brownfield"></span>
+              <div>
+                <strong>Brownfield Parcel</strong>
+                <div class="legend-note">Brownfield kaydıyla eşleşen parcel; otomatik satılık değildir.</div>
+              </div>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch" data-signal="market"></span>
+              <div>
+                <strong>Portal Listing Parcel</strong>
+                <div class="legend-note">Portal veya vendor feed ile eşleşmiş parcel vurgusu.</div>
+              </div>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch" data-signal="history"></span>
+              <div>
+                <strong>Geçmiş Satış Parcel</strong>
+                <div class="legend-note">Price Paid geçmişinde satış kaydı bulunan parcel vurgusu.</div>
+              </div>
+            </div>
+          </div>
+          <div class="hint">
+            Brownfield ? satılık garantisi değildir.<br />
+            INSPIRE boundaries are indicative.<br />
+            Source freshness matters.<br />
+            Some matches are inferred.
+          </div>
+        </div>
+
+        <div class="panel stats">
+          <div><span>Render modu</span><strong id="renderMode">PMTiles + GeoJSON</strong></div>
+          <div><span>Aktif bölge</span><strong id="activeRegion">-</strong></div>
+          <div><span>Kapsam</span><strong id="coverageState">Great Britain ici</strong></div>
+          <div><span>Parcel eşiği</span><strong id="parcelThreshold">-</strong></div>
+          <div><span>POI eşiği</span><strong id="poiThreshold">-</strong></div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Seçili Parsel</div>
+          <pre id="selectedParcel" class="selected-panel">Henüz seçim yok.</pre>
+        </div>
+      </aside>
+
+      <main class="map-stage">
+        <div id="map"></div>
+        <button id="jumpNearestSaleBtn" class="map-action-button hidden" type="button">
+          En Yakın Satışa Uygun Parsele Git
+        </button>
+        <section class="workspace-shell">
+          <div class="workspace-header">
+            <div class="field-label">TerraYield Panelleri</div>
+            <div class="workspace-header-main">
+              <div class="workspace-title">Web Workspace</div>
+              <button id="workspaceCollapseBtn" class="workspace-panel-toggle" type="button" aria-label="Sag paneli gizle" title="Sag paneli gizle">&gt;</button>
+            </div>
+          </div>
+          <div id="workspaceContent" class="workspace-content"></div>
+        </section>
+        <button id="workspaceExpandBtn" class="workspace-panel-reopen hidden" type="button" aria-label="Sag paneli goster" title="Sag paneli goster">&lt;</button>
+        <div id="status" class="status hidden"></div>
+        <div id="debugBadge" class="debug-badge"></div>
+      </main>
+    </div>
+
+    <script src="./vendor/maplibre-gl.js"></script>
+    <script src="./vendor/pmtiles.js"></script>
+    <script src="./supabase_bridge.js"></script>
+    
+    <script id="aays-overlay-api-fail-closed-inline">
+(function installAaysOverlayApiFailClosedInline() {
+  if (window.AAYS_OVERLAY_API_FAIL_CLOSED_PATCH && window.AAYS_OVERLAY_API_FAIL_CLOSED_PATCH.status) return;
+
+  const CIRCUIT_TTL_MS = 60000;
+  const circuit = new Map();
+
+  function normalizeUrl(input) {
+    try {
+      const raw = input && input.url ? input.url : input;
+      return new URL(String(raw), window.location.origin);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function isReadOnlyMapOverlayEndpoint(url) {
+    if (!url) return false;
+    const path = url.pathname || "";
+    return (
+      path === "/map/parcels"
+      || path === "/map/listings"
+      || path === "/map/brownfield"
+      || path === "/map/sales-history/combined"
+      || path === "/map/sales-history/parcels"
+      || path === "/facilities"
+    );
+  }
+
+  function emptyFeatureCollection(endpoint, reason) {
+    return {
+      type: "FeatureCollection",
+      features: [],
+      source: "real_only_empty",
+      real_data_only: true,
+      fake_demo_data: false,
+      fail_closed: true,
+      endpoint,
+      reason
+    };
+  }
+
+  function keyOf(url) {
+    return `${url.origin}${url.pathname}`;
+  }
+
+  function isCircuitOpen(url) {
+    return (circuit.get(keyOf(url)) || 0) > Date.now();
+  }
+
+  function openCircuit(url, reason) {
+    circuit.set(keyOf(url), Date.now() + CIRCUIT_TTL_MS);
+    console.warn("AAYS overlay API fail-closed circuit opened:", keyOf(url), reason);
+  }
+
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async function aaysOverlayFailClosedFetch(input, init) {
+    const url = normalizeUrl(input);
+
+    if (isReadOnlyMapOverlayEndpoint(url) && isCircuitOpen(url)) {
+      const payload = emptyFeatureCollection(url.pathname, "circuit_open_after_recent_backend_failure");
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    try {
+      const response = await originalFetch(input, init);
+
+      if (isReadOnlyMapOverlayEndpoint(url) && response && response.status >= 500) {
+        openCircuit(url, `http_${response.status}`);
+        const payload = emptyFeatureCollection(url.pathname, `backend_${response.status}`);
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return response;
+    } catch (error) {
+      if (isReadOnlyMapOverlayEndpoint(url)) {
+        openCircuit(url, error && error.message ? error.message : "network_error");
+        const payload = emptyFeatureCollection(url.pathname, error && error.message ? error.message : "network_error");
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw error;
+    }
+  };
+
+  window.AAYS_OVERLAY_API_FAIL_CLOSED_PATCH = {
+    status: function () {
+      return {
+        installed: true,
+        mode: "index_inline_before_appjs",
+        circuitCount: circuit.size,
+        circuitKeys: Array.from(circuit.keys())
+      };
+    },
+    reset: function () {
+      circuit.clear();
+    }
+  };
+})();
+</script>
+<script src="./app.js?v=static-3110-sale-ready-20260622-v43"></script>
+    <script src="./aays_contractor_integration_panel.js?v=20260512-contractor-status-v3" defer></script>
+    <script src="./aays_cost50_integration_panel.js?v=20260524-cost50-panel-v7" defer></script>
+    <script src="./aays_land_sales_evidence_review_panel.js?v=20260517-land-sales-review-v1" defer></script>
+    <script type="module" src="./aays/reliability_streetview/reliability_streetview_loader.js?v=street-wiev-panel-disabled-20260614-v4"></script>
+
+    <script src="./security_overlay.js?v=20260622-security-root-data-v2" data-aays-security-overlay="1"></script>
+    <script src="./internet_access_overlay.js?v=20260525-internet-layer-v1" data-aays-internet-overlay="1"></script>
+    <script src="./remaining_low_review_overlay.js?v=20260501_022705" data-aays-low-review-overlay="1"></script>
+    <script src="./aays_sales_popup_readability_fix.js" defer></script>
+</body>
+</html>
+
+
+
+
