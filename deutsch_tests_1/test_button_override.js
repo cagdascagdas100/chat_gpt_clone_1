@@ -100,4 +100,66 @@
     try { applyMenuPatch(); } catch(e) { console.error(e); }
   }
 })();
-/* smart grammar options file added separately */
+
+/* Possessivartikel I/II ve Deklination I/II: tek kelimelik ipuçlarını kaldıran zor şık patch'i. */
+(function(){
+  function lower(s){return String(s||'').toLocaleLowerCase('de-DE').replace(/\s+/g,' ').trim();}
+  var poss=[
+    ['Nach der Prüfung änderte die Behörde ____.','ihre ursprüngliche Einschätzung','ihren ursprünglichen Einschätzung','ihrer ursprünglichen Einschätzung','ihrem ursprünglichen Einschätzung','ihres ursprünglichen Einschätzung'],
+    ['Trotz ____ blieb der Beschluss gültig.','seines verspäteten Widerspruchs','seinem verspäteten Widerspruch','seinen verspäteten Widerspruch','sein verspäteter Widerspruch','seine verspätete Widersprüche'],
+    ['Die Kommission folgte ____ nur teilweise.','unserer sachlichen Begründung','unsere sachliche Begründung','unseren sachlichen Begründung','unseres sachlichen Begründung','unserem sachliche Begründung'],
+    ['Ohne ____ kann der Antrag nicht genehmigt werden.','Ihren schriftlichen Nachweis','Ihrem schriftlichen Nachweis','Ihres schriftlichen Nachweises','Ihr schriftlicher Nachweis','Ihrer schriftlichen Nachweis'],
+    ['Die Kritik widerspricht ____.','seinen eigenen Interessen','seine eigenen Interessen','seiner eigenen Interessen','seinem eigenen Interessen','seines eigenen Interesses'],
+    ['Angesichts ____ ist eine Neubewertung nötig.','eurer kritischen Einwände','euren kritischen Einwänden','eure kritischen Einwände','eurem kritischen Einwand','eures kritischen Einwands'],
+    ['Die Verwaltung kam ____ entgegen.','Ihren berechtigten Forderungen','Ihre berechtigten Forderungen','Ihrer berechtigten Forderungen','Ihres berechtigten Forderungen','Ihrem berechtigten Forderung'],
+    ['Wegen ____ wurde die Frist verlängert.','meines früheren Versäumnisses','meinem früheren Versäumnis','mein früheres Versäumnis','meinen früheren Versäumnis','meiner früheren Versäumnisse']
+  ];
+  var dekl=[
+    ['____ wurde die Verordnung geändert.','Wegen neuer gesetzlicher Vorgaben','Wegen neuen gesetzlichen Vorgaben','Mit neuen gesetzlichen Vorgaben','Durch neue gesetzliche Vorgaben','Bei neue gesetzliche Vorgaben'],
+    ['____ musste die Studie überarbeitet werden.','Trotz deutlicher methodischer Schwächen','Trotz deutliche methodische Schwächen','Mit deutlichen methodischen Schwächen','Für deutliche methodische Schwächen','Bei deutlicher methodischer Schwächen'],
+    ['Die Entscheidung beruht auf ____.','einem nachvollziehbaren fachlichen Gutachten','ein nachvollziehbares fachliches Gutachten','eines nachvollziehbaren fachlichen Gutachtens','einen nachvollziehbaren fachlichen Gutachten','einer nachvollziehbaren fachlichen Gutachten'],
+    ['Ohne ____ ist die These nicht haltbar.','ausreichende empirische Belege','ausreichenden empirischen Belegen','ausreichender empirischer Belege','ausreichendem empirischem Belegen','ausreichende empirischen Belege'],
+    ['Die Kommission veröffentlichte ____.','die von Experten geprüften Unterlagen','der von Experten geprüften Unterlagen','den von Experten geprüften Unterlagen','die von Experten geprüfte Unterlagen','dem von Experten geprüften Unterlagen'],
+    ['Die Bewertung ____ wurde kritisiert.','der von Experten geprüften Unterlagen','die von Experten geprüften Unterlagen','den von Experten geprüften Unterlagen','dem von Experten geprüften Unterlagen','des von Experten geprüften Unterlagen'],
+    ['Die Behörde arbeitet mit ____.','den in der Sitzung vorgelegten Anträgen','die in der Sitzung vorgelegten Anträge','der in der Sitzung vorgelegten Anträge','das in der Sitzung vorgelegte Anträge','den in der Sitzung vorgelegte Anträge'],
+    ['Erforderlich ist ____.','ein nach transparenten Kriterien entwickeltes Verfahren','eines nach transparenten Kriterien entwickelten Verfahrens','einem nach transparenten Kriterien entwickelten Verfahren','einen nach transparenten Kriterien entwickelten Verfahren','eine nach transparenten Kriterien entwickelte Verfahren']
+  ];
+  function apply(t,rows,tag){
+    t._smartOptions=true;
+    t.words=[];
+    rows.forEach(function(r){t.words=t.words.concat(r.slice(1));});
+    t.fill=rows.map(function(r){return ['Welche vollständige Form passt? '+r[0],r[1],tag];});
+    t.mc=rows.map(function(r){return ['Welche Option ist grammatisch korrekt? '+r[0],r.slice(1),0,tag];});
+    t.wordMatch=rows.map(function(r){return [r[1],'korrekte vollständige Nominalgruppe im passenden Kasus'];});
+    t.phraseMatch=rows.map(function(r){return [r[0].replace('____','...'),r[1]];});
+    t.tf=[
+      ['Die Lösung muss zur Präposition, zum Verb und zum Kasus der ganzen Nominalgruppe passen.',true,tag],
+      ['Bei diesen Aufgaben reicht es nicht, nur auf den letzten Buchstaben zu achten.',true,tag],
+      ['Kasus, Artikelwort und Adjektivendung müssen zusammenpassen.',true,tag],
+      ['Eine Option ist schon korrekt, wenn nur das Nomen richtig endet.',false,tag]
+    ];
+    t.prep=[];
+  }
+  function install(){
+    var all=window.DEUTSCH_TESTS||{};
+    Object.keys(all).forEach(function(k){
+      var t=all[k]||{}, h=lower([k,t.slug,t.title,t.topic].join(' '));
+      if(h.indexOf('possessivartikel i')>-1 || h.indexOf('possessivartikel ii')>-1) apply(t,poss,'Possessivartikel');
+      if(h.indexOf('deklination i')>-1 || h.indexOf('deklination ii')>-1) apply(t,dekl,'Deklination');
+    });
+  }
+  var oldBuild=(typeof build==='function')?build:null;
+  function smartBuild(t,n){
+    if(!t||!t._smartOptions||typeof bank!=='function') return oldBuild?oldBuild(t,n):[];
+    var g=bank(t), keys=['tf','fill','mc','wordMatch','phraseMatch'], out=[], i=0;
+    while(out.length<n && keys.some(function(k){return (g[k]||[]).length;})){
+      var a=g[keys[i%keys.length]]||[];
+      if(a.length) out.push(a.shift());
+      i++;
+    }
+    return out;
+  }
+  install();
+  try{ if(oldBuild){ window.build=smartBuild; build=smartBuild; } }catch(e){}
+  document.addEventListener('DOMContentLoaded', install);
+})();
