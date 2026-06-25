@@ -1,0 +1,97 @@
+# Runner Push Chain Check
+
+page_key=security_public_safety_low_credit_20260612
+task_id=terrayield-050-security-single-runner-contract-alignment-20260625_132444
+created_at=20260625_132444
+repo_root=C:\Users\cagda\Documents\GitHub\AAYS
+bridge_root=F:\AAYS_GITHUB_BRIDGE_CLEAN2
+script_path=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\security_public_safety_low_credit_20260612\automation\vrun.ps1
+repo_task=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\security_public_safety_low_credit_20260612\queue\terrayield-050-security-single-runner-contract-alignment-20260625_132444.task.json
+bridge_task=F:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-queue\pending\terrayield-050-security-single-runner-contract-alignment-20260625_132444.task.json
+result_path=C:\Users\cagda\Documents\GitHub\AAYS\docs\chatgpt_status\security_public_safety_low_credit_20260612\runner_outputs\050_runner_output_20260625_132444.log
+
+bootstrap_status=ran
+bootstrap_output=
+``text
+AAYS_CANONICAL_RUNNER_BOOTSTRAP_DONE
+runner_count_before=0
+runner_count_after=1
+action_taken=started_canonical_runner_only
+report=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\runner_outputs\aays-runner-bootstrap-report-latest.txt
+wait_minutes=10-20
+
+``
+
+pending_exists=False
+running_exists=False
+done_exists=False
+failed_exists=False
+runner_output_exists=False
+single_runner_apply_exists=False
+field_contract_exists=False
+runner_pickup=not_proven
+
+push_precheck_blocker=wrong_branch
+git_status_before=
+``text
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/automation/
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/current-task/
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/handoffs/
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/heartbeat/
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/queue/050_security_public_safety_cycle050_20260624.task.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/queue/terrayield-050-security-single-runner-contract-alignment-20260625_132444.task.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260624_235638.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260625_002354.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260625_120911.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260625_120946.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260625_121159.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_blockers_20260625_121224.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260624_235638.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260625_002354.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260625_120911.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260625_120946.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260625_121159.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_20260625_121224.json
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260624_235638.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260625_002354.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260625_120911.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260625_120946.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260625_121159.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_20260625_121224.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_latest.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260624_235638.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260625_002354.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260625_120911.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260625_120946.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260625_121159.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_smoke_20260625_121224.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/codex_page_6_4_security_closeout_20260619.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/codex_security_chatgpt_df_package_20260619.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/codex_security_truth_recheck_20260619.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/codex_security_truth_recheck_20260622.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/direct_test_20260625_002.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/runner_fix_note_20260625.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/runner_push_chain_blocker_20260624.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/temp_runner_test_20260625_003_repo_result.md
+?? docs/chatgpt_status/security_public_safety_low_credit_20260612/runner_outputs/
+
+``
+
+expected_next_report=docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_single_runner_apply_*.md
+expected_field_contract=docs/chatgpt_status/security_public_safety_low_credit_20260612/reports/050_field_contract_*.json
+expected_runner_output=docs/chatgpt_status/security_public_safety_low_credit_20260612/runner_outputs/050_runner_output_*.log
+
+final_ready=false
+completion_percent=88
+git_commit_output=
+``text
+
+``
+
+git_push_output=
+``text
+
+``
+
+runner_push=False
+push_blocker_type=wrong_branch
