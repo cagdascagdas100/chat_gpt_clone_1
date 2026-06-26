@@ -1,7 +1,6 @@
 (function(){
   window.DEUTSCH_LESSONS = window.DEUTSCH_LESSONS || {};
   const CFG = {
-    t19:{title:'Selbstfahrende Autos · C1/C2 Vorteilsabsatz',side:'Vorteile',source:'bestehende App-Daten zu Selbstfahrenden Autos – Vorteile',points:['Höhere Verkehrssicherheit durch technische Assistenz','Entlastung der Fahrer und mehr Komfort','Bessere Mobilität für ältere oder eingeschränkte Menschen','Effizienterer Verkehr und weniger Staus']},
     t20:{title:'E-Books · C1/C2 Vorteilsabsatz',side:'Vorteile',source:'bestehende App-Daten zu E-Books – Vorteile',points:['Leichter Zugang zu vielen Texten','Praktischer Nutzen im Alltag und in der Schule','Ökologische Entlastung bei sinnvoller Nutzung','Individuelle Anpassung des Lesens']},
     t21:{title:'Massentourismus · C1/C2 Vorteilsabsatz',side:'Vorteile',source:'bestehende App-Daten zu Massentourismus – Vorteile',points:['Wirtschaftliche Impulse für Regionen','Arbeitsplätze und Ausbildungsmöglichkeiten','Ausbau von Infrastruktur','Kultureller Austausch']},
     t22:{title:'Massentourismus-Nachteile · C1/C2 Nachteile-Absatz',side:'Nachteile',source:'bestehende App-Daten zu Massentourismus – Nachteile',points:['Umweltbelastung durch große Besucherzahlen','Überfüllung und Verlust von Lebensqualität','Abhängigkeit vom Tourismus','Kommerzialisierung von Kultur']},
