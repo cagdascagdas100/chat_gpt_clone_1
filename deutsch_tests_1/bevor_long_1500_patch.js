@@ -6,6 +6,7 @@ if(!window.DEUTSCH_PATCH_8106C1F_LOADED){
   window.DEUTSCH_PATCH_8106C1F_LOADED=true;
   document.write('<script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/8106c1f58b83d7f6e69b3e152fe351b5bce3e51f/deutsch_tests_1/bevor_long_1500_patch.js"><\/script>');
 }
+var forcedSourceLocks={t22:true,t47:true};
 function currentBevorKey(){
   var checked=document.querySelector('input[name="tc"]:checked');
   if(checked&&checked.value)return checked.value;
@@ -13,10 +14,14 @@ function currentBevorKey(){
   try{if(window.selected)return window.selected;}catch(e){}
   return '';
 }
+function knownSourceLockedTopic(key,T,L){
+  var text=[key,T.slug,T.title,T.topic,T.source,L.source,L.longSourceDocx].join(' ').toLowerCase();
+  return !!(forcedSourceLocks[key]||(text.indexOf('massentourismus')>-1&&text.indexOf('nachteile')>-1)||(text.indexOf('haustiere')>-1&&text.indexOf('nachteile')>-1));
+}
 function isBevorSourceLocked(key){
   var T=(window.DEUTSCH_TESTS||{})[key]||{};
   var L=(window.DEUTSCH_LESSONS||{})[key]||{};
-  return !!(key&&T.category==='Bevor Schreiben'&&(T.source||L.source||L.longSourceDocx||L.longSourceVerified));
+  return !!(key&&T.category==='Bevor Schreiben'&&(T.source||L.source||L.longSourceDocx||L.longSourceVerified||knownSourceLockedTopic(key,T,L)));
 }
 function clearBevorSourceCache(key){
   if(!key)return;
@@ -128,4 +133,5 @@ window.AAYS_BEVOR_SOURCE_LOCKED_GENERIC_EXAMPLES_DISABLED=true;
 window.AAYS_BEVOR_SOURCE_CACHE_CLEANUP_OK=true;
 window.AAYS_BEVOR_SOURCE_RENDER_OK=true;
 window.AAYS_APPEND_EXAMPLES_TRAP_OK=true;
+window.AAYS_FORCED_SOURCE_LOCKS_OK=true;
 })();
