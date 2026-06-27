@@ -46,5 +46,19 @@ const OLD='https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/1000c0eba
 <script src="strict_main_menu_five.js?v=2"></script>
 <!-- Late source-clean reload: reapplies Haustiere and disables generic Bevor lesson blocks after older runtime scripts. -->
 <script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/72cf160a653031dabbb48b0fef208f99d72efb62/deutsch_tests_1/bevor_long_1500_patch.js?v=sourceCleanLate1"></script>
+<script>
+(function(){
+function currentKey(){var c=document.querySelector('input[name="tc"]:checked');if(c&&c.value)return c.value;try{if(typeof selected!=='undefined'&&selected)return selected}catch(e){}return window.selected||'';}
+function locked(k){var T=(window.DEUTSCH_TESTS||{})[k]||{},L=(window.DEUTSCH_LESSONS||{})[k]||{};return !!(k&&T.category==='Bevor Schreiben'&&(T.source||L.source||L.longSourceDocx||L.longSourceVerified));}
+var headings=['Mini paragraf örnekleri','Ezberlenecek kalıplar','Gramer ve Rektion','C1/C2 örnek cümleler','Hata uyarıları','Yazma görevi'];
+function patchExamples(){if(typeof window.appendGeneratedLessonExamples==='function'&&!window.appendGeneratedLessonExamples.__aaysSourceOnly){var old=window.appendGeneratedLessonExamples;window.appendGeneratedLessonExamples=function(level){if(locked(currentKey()))return false;return old.apply(this,arguments)};window.appendGeneratedLessonExamples.__aaysSourceOnly=true;}}
+function clean(){var k=currentKey();if(!locked(k))return;var root=document.getElementById('lessonContent');if(!root)return;Array.prototype.slice.call(root.querySelectorAll('section')).forEach(function(s){var t=s.textContent||'';if(headings.some(function(h){return t.indexOf(h)>-1;}))s.remove();});}
+function run(){patchExamples();clean();}
+document.addEventListener('DOMContentLoaded',function(){run();setTimeout(run,200);setTimeout(run,1000);});
+document.addEventListener('click',function(){setTimeout(run,0);setTimeout(run,200);setTimeout(run,800);},true);
+setInterval(run,1200);
+window.AAYS_SOURCE_WORD_ONLY_CLEANUP_OK=true;
+})();
+</script>
 </body>
 </html>
