@@ -48,8 +48,10 @@ const OLD='https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/1000c0eba
 <script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/3808797244c9dbc10a688c93db8e5b5576e39c8f/deutsch_tests_1/bevor_long_1500_patch.js?v=sourceCleanLate4"></script>
 <script>
 (function(){
+var forcedInlineLocks={t22:true,t47:true};
 function currentKey(){var c=document.querySelector('input[name="tc"]:checked');if(c&&c.value)return c.value;try{if(typeof selected!=='undefined'&&selected)return selected}catch(e){}return window.selected||'';}
-function locked(k){var T=(window.DEUTSCH_TESTS||{})[k]||{},L=(window.DEUTSCH_LESSONS||{})[k]||{};return !!(k&&T.category==='Bevor Schreiben'&&(T.source||L.source||L.longSourceDocx||L.longSourceVerified));}
+function known(k,T,L){var text=[k,T.slug,T.title,T.topic,T.source,L.source,L.longSourceDocx].join(' ').toLowerCase();return !!(forcedInlineLocks[k]||(text.indexOf('massentourismus')>-1&&text.indexOf('nachteile')>-1)||(text.indexOf('haustiere')>-1&&text.indexOf('nachteile')>-1));}
+function locked(k){var T=(window.DEUTSCH_TESTS||{})[k]||{},L=(window.DEUTSCH_LESSONS||{})[k]||{};return !!(k&&T.category==='Bevor Schreiben'&&(T.source||L.source||L.longSourceDocx||L.longSourceVerified||known(k,T,L)));}
 function levelOfButton(b){if(!b)return'';if(b.id==='btnLessonShort')return'short';if(b.id==='btnLessonMedium')return'medium';if(b.id==='btnLessonLong')return'long';return'';}
 function visibleLevel(){var m=String((document.getElementById('lessonMeta')||{}).textContent||'');if(m.indexOf('Kısa')>-1)return'short';if(m.indexOf('Orta')>-1)return'medium';if(m.indexOf('Uzun')>-1)return'long';return window.AAYS_LAST_SOURCE_LEVEL||'';}
 function levelName(l){return l==='short'?'Kısa':l==='medium'?'Orta':'Uzun';}
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded',function(){enforce();setTimeout(enf
 setInterval(enforce,1200);
 window.AAYS_SOURCE_CACHE_CLEANUP_OK=true;
 window.AAYS_SOURCE_WORD_ONLY_RENDER_OK=true;
+window.AAYS_INLINE_FORCED_SOURCE_LOCKS_OK=true;
 })();
 </script>
 </body>
