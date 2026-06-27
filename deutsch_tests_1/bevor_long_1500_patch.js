@@ -48,16 +48,16 @@ function textWords(html){var t=String(html||'').replace(/<[^>]+>/g,' ').replace(
 function p(label,val){return val?'<p><b>'+esc(label)+':</b> '+val+'</p>':'';}
 function list(arr){return '<ul>'+arr.filter(Boolean).map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';}
 function rows(arr,label){return (arr||[]).map(function(x,i){return p(label+' '+(i+1),esc(x&&x[0]||'')+(x&&x[1]?' → '+esc(x[1]):''));}).join('');}
-function applyT21SourceLong1500(){
-  var key='t21',T=(window.DEUTSCH_TESTS||{})[key],L=(window.DEUTSCH_LESSONS||{})[key];
+function sourceLong1500(key,heading,orderText){
+  var T=(window.DEUTSCH_TESTS||{})[key],L=(window.DEUTSCH_LESSONS||{})[key];
   if(!T||!L||L.__aaysSourceLong1500)return;
   var fill=(T.fill||[]).map(function(x,i){return p('Lückensatz '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(String(x&&x[0]||'').replace('____',x&&x[1]||'')));}).join('');
   var mc=(T.mc||[]).map(function(x,i){var opts=(x&&x[1])||[],right=opts[x&&x[2]||0]||'';return p('MC '+(i+1)+' · '+esc(x&&x[3]||'Quelle'),esc(x&&x[0]||'')+' <b>Kern:</b> '+esc(right)+' <span class="muted">Optionen: '+esc(opts.join(' | '))+'</span>');}).join('');
   var tf=(T.tf||[]).map(function(x,i){return p('Wahr/Falsch '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(x&&x[0]||'')+' → '+((x&&x[1])?'richtig':'falsch'));}).join('');
   var prep=(T.prep||[]).map(function(x,i){return p('Rektion '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(String(x&&x[0]||'').replace('___',x&&x[1]||'')));}).join('');
   var base=[L.long,L.medium,L.short].filter(Boolean).join('');
-  var html='<h3>Massentourismus · C1/C2 Vorteilsabsatz · Quellenfassung 1500+</h3>'+
-  '<p><b>Prinzip:</b> Diese lange Fassung nutzt nur die im Repository vorhandenen Quellen zu t21: vorhandene Kurz-, Mittel- und Langfassung, Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Lösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Präpositionen und Harf-kutucukları-Formulierungen. Es werden keine fremden Beispiele und keine zusätzlichen Fakten außerhalb dieser Quelle eingeführt.</p>'+
+  var html='<h3>'+esc(heading)+' · Quellenfassung 1500+</h3>'+
+  '<p><b>Prinzip:</b> Diese lange Fassung nutzt nur die im Repository vorhandenen Quellen zu '+esc(key)+': vorhandene Kurz-, Mittel- und Langfassung, Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Lösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Präpositionen und Harf-kutucukları-Formulierungen. Es werden keine fremden Beispiele und keine zusätzlichen Fakten außerhalb dieser Quelle eingeführt.</p>'+
   '<section>'+base+'</section>'+
   '<h4>Vollständiger Quellenwortschatz</h4>'+list((T.words||[]).map(esc))+
   '<h4>Quellenbasierte Lückensätze</h4>'+fill+
@@ -67,9 +67,16 @@ function applyT21SourceLong1500(){
   '<h4>Nomen-Verb-Verbindungen und Kollokationen</h4>'+rows(T.phraseMatch,'Kollokation')+
   '<h4>Präpositionen und Rektion</h4>'+prep+
   '<h4>Harf-kutucukları-Register</h4>'+list((T.hang||[]).map(esc))+
-  '<h4>Schreiblogik ohne Wiederholung und ohne Erfindung</h4><p>Für den langen Vorteilsabsatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Grundthese, danach der wirtschaftliche Nutzen, anschließend Beschäftigungsmöglichkeiten und Infrastruktur, danach Zugang zu Reisen, kulturelle Begegnungen, Horizonterweiterung, Weltoffenheit, Toleranz und internationale Verständigung. Jede Formulierung muss sich auf einen Eintrag aus dem Quellenwortschatz, eine Lückensatzlösung, eine MC-Kernlösung, eine Wahr/Falsch-Aussage, eine Kollokation oder ein Rektionmuster zurückführen lassen.</p>';
-  L.long=html;L.source=T.source||L.source||'t21 source arrays';L.longSourceVerified=true;L.__aaysSourceLong1500=true;L.__aaysSourceLongWordCount=textWords(html);
+  '<h4>Schreiblogik ohne Wiederholung und ohne Erfindung</h4><p>'+esc(orderText)+'</p>';
+  L.long=html;L.source=T.source||L.source||key+' source arrays';L.longSourceVerified=true;L.__aaysSourceLong1500=true;L.__aaysSourceLongWordCount=textWords(html);
 }
+function applyT21SourceLong1500(){
+  sourceLong1500('t21','Massentourismus · C1/C2 Vorteilsabsatz','Für den langen Vorteilsabsatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Grundthese, danach der wirtschaftliche Nutzen, anschließend Beschäftigungsmöglichkeiten und Infrastruktur, danach Zugang zu Reisen, kulturelle Begegnungen, Horizonterweiterung, Weltoffenheit, Toleranz und internationale Verständigung. Jede Formulierung muss sich auf einen Eintrag aus dem Quellenwortschatz, eine Lückensatzlösung, eine MC-Kernlösung, eine Wahr/Falsch-Aussage, eine Kollokation oder ein Rektionmuster zurückführen lassen.');
+}
+function applyT22SourceLong1500(){
+  sourceLong1500('t22','Massentourismus-Nachteile · C1/C2 Nachteile-Absatz','Für den langen Nachteile-Absatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Leitthese, danach Umweltbelastung und Ressourcenverbrauch, anschließend Belastung der Einheimischen und sinkende Lebensqualität, danach kulturelle Authentizität, Kommerzialisierung, wirtschaftliche Abhängigkeit und unsichere Arbeitsbedingungen. Jede Formulierung muss sich auf einen Eintrag aus dem Quellenwortschatz, eine Lückensatzlösung, eine MC-Kernlösung, eine Wahr/Falsch-Aussage, eine Kollokation oder ein Rektionmuster zurückführen lassen.');
+}
+function applySourceLong1500(){applyT21SourceLong1500();applyT22SourceLong1500();}
 function wrapGeneratedLessonExamples(original){
   if(typeof original!=='function')return original;
   if(original.__bevorSourceLockedDisabled)return original;
@@ -108,7 +115,7 @@ function cleanBevorGeneratedBlocks(){
   });
 }
 function renderBevorSourceLesson(level){
-  applyT21SourceLong1500();
+  applySourceLong1500();
   var key=currentBevorKey();
   var L=(window.DEUTSCH_LESSONS||{})[key]||{};
   var T=(window.DEUTSCH_TESTS||{})[key]||{};
@@ -129,7 +136,7 @@ function renderBevorSourceLesson(level){
   return true;
 }
 function enforceBevorSourceRender(){
-  applyT21SourceLong1500();
+  applySourceLong1500();
   cleanBevorGeneratedBlocks();
   var key=currentBevorKey();
   if(!isBevorSourceLocked(key))return;
@@ -141,8 +148,8 @@ function enforceBevorSourceRender(){
   var bad=blockedHeadings.some(function(h){return text.indexOf(h)!==-1;});
   if(bad){renderBevorSourceLesson(level);}
 }
-function installBevorSourceLock(){applyT21SourceLong1500();patchGeneratedLessonExamples();cleanBevorGeneratedBlocks();enforceBevorSourceRender();}
-applyT21SourceLong1500();
+function installBevorSourceLock(){applySourceLong1500();patchGeneratedLessonExamples();cleanBevorGeneratedBlocks();enforceBevorSourceRender();}
+applySourceLong1500();
 installGeneratedLessonExamplesTrap();
 document.addEventListener('click',function(ev){
   var btn=ev.target&&ev.target.closest&&ev.target.closest('#btnLessonShort,#btnLessonMedium,#btnLessonLong');
@@ -165,4 +172,5 @@ window.AAYS_BEVOR_SOURCE_RENDER_OK=true;
 window.AAYS_APPEND_EXAMPLES_TRAP_OK=true;
 window.AAYS_FORCED_SOURCE_LOCKS_OK=true;
 window.AAYS_T21_SOURCE_LONG_1500_OK=true;
+window.AAYS_T22_SOURCE_LONG_1500_OK=true;
 })();
