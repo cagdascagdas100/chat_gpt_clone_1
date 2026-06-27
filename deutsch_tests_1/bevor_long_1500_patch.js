@@ -4,6 +4,10 @@
   window.DEUTSCH_TESTS = window.DEUTSCH_TESTS || {};
   window.DEUTSCH_LONG_SOURCE_PATCH_DISABLED = true;
   window.DEUTSCH_LONG_SOURCE_PATCH_NOTE = 'Generic 1500-word lesson generator disabled. Long lessons must come from source DOCX-based lesson files only.';
+  if(!window.DEUTSCH_SOURCE_PATCH_T23_T26_LOADED){
+    window.DEUTSCH_SOURCE_PATCH_T23_T26_LOADED = true;
+    document.write('<script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/767222d1a156b2ef417b10a75cc8b44c2f5e8c00/deutsch_tests_1/bevor_long_1500_patch.js"><\/script>');
+  }
   window.DEUTSCH_TESTS.t34 = Object.assign(window.DEUTSCH_TESTS.t34 || {}, {
     category:'Bevor Schreiben',
     slug:'t34_fertiggerichte_nachteile_c1_c2_konuanlatimi_(2)',
