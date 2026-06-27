@@ -38,10 +38,9 @@ var blockedHeadings=[
   'Hata uyarıları',
   'Yazma görevi'
 ];
-function patchGeneratedLessonExamples(){
-  if(typeof window.appendGeneratedLessonExamples!=='function')return;
-  if(window.appendGeneratedLessonExamples.__bevorSourceLockedDisabled)return;
-  var original=window.appendGeneratedLessonExamples;
+function wrapGeneratedLessonExamples(original){
+  if(typeof original!=='function')return original;
+  if(original.__bevorSourceLockedDisabled)return original;
   var wrapped=function(level){
     var key=currentBevorKey();
     if(isBevorSourceLocked(key)){clearBevorSourceCache(key);return false;}
@@ -49,8 +48,22 @@ function patchGeneratedLessonExamples(){
   };
   wrapped.__bevorSourceLockedDisabled=true;
   wrapped.__original=original;
-  window.appendGeneratedLessonExamples=wrapped;
+  return wrapped;
 }
+function installGeneratedLessonExamplesTrap(){
+  if(window.__AAYS_APPEND_EXAMPLES_TRAP_INSTALLED){
+    if(typeof window.appendGeneratedLessonExamples==='function')window.appendGeneratedLessonExamples=wrapGeneratedLessonExamples(window.appendGeneratedLessonExamples);
+    return;
+  }
+  try{
+    var stored=wrapGeneratedLessonExamples(window.appendGeneratedLessonExamples);
+    Object.defineProperty(window,'appendGeneratedLessonExamples',{configurable:true,enumerable:true,get:function(){return stored;},set:function(fn){stored=wrapGeneratedLessonExamples(fn);}});
+    window.__AAYS_APPEND_EXAMPLES_TRAP_INSTALLED=true;
+  }catch(e){
+    if(typeof window.appendGeneratedLessonExamples==='function')window.appendGeneratedLessonExamples=wrapGeneratedLessonExamples(window.appendGeneratedLessonExamples);
+  }
+}
+function patchGeneratedLessonExamples(){installGeneratedLessonExamplesTrap();}
 function cleanBevorGeneratedBlocks(){
   var key=currentBevorKey();
   if(!isBevorSourceLocked(key))return;
@@ -95,6 +108,7 @@ function enforceBevorSourceRender(){
   if(bad){renderBevorSourceLesson(level);}
 }
 function installBevorSourceLock(){patchGeneratedLessonExamples();cleanBevorGeneratedBlocks();enforceBevorSourceRender();}
+installGeneratedLessonExamplesTrap();
 document.addEventListener('click',function(ev){
   var btn=ev.target&&ev.target.closest&&ev.target.closest('#btnLessonShort,#btnLessonMedium,#btnLessonLong');
   var level=buttonLevel(btn);
@@ -113,4 +127,5 @@ setInterval(installBevorSourceLock,1000);
 window.AAYS_BEVOR_SOURCE_LOCKED_GENERIC_EXAMPLES_DISABLED=true;
 window.AAYS_BEVOR_SOURCE_CACHE_CLEANUP_OK=true;
 window.AAYS_BEVOR_SOURCE_RENDER_OK=true;
+window.AAYS_APPEND_EXAMPLES_TRAP_OK=true;
 })();
