@@ -6,7 +6,7 @@ if(!window.DEUTSCH_PATCH_8106C1F_LOADED){
   window.DEUTSCH_PATCH_8106C1F_LOADED=true;
   document.write('<script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/8106c1f58b83d7f6e69b3e152fe351b5bce3e51f/deutsch_tests_1/bevor_long_1500_patch.js"><\/script>');
 }
-var forcedSourceLocks={t21:true,t22:true,t23:true,t24:true,t25:true,t47:true};
+var forcedSourceLocks={t21:true,t22:true,t23:true,t24:true,t25:true,t26:true,t47:true};
 function currentBevorKey(){
   var checked=document.querySelector('input[name="tc"]:checked');
   if(checked&&checked.value)return checked.value;
@@ -87,7 +87,10 @@ function applyT24SourceLong1500(){
 function applyT25SourceLong1500(){
   sourceLong1500('t25','Studium im Ausland – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t25 vollständig geordnet: Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
-function applySourceLong1500(){applyT21SourceLong1500();applyT22SourceLong1500();applyT23SourceLong1500();applyT24SourceLong1500();applyT25SourceLong1500();}
+function applyT26SourceLong1500(){
+  sourceLong1500('t26','Das mehrsprachige Aufwachsen von Kindern – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t26 vollständig geordnet: Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
+}
+function applySourceLong1500(){applyT21SourceLong1500();applyT22SourceLong1500();applyT23SourceLong1500();applyT24SourceLong1500();applyT25SourceLong1500();applyT26SourceLong1500();}
 function wrapGeneratedLessonExamples(original){
   if(typeof original!=='function')return original;
   if(original.__bevorSourceLockedDisabled)return original;
@@ -187,4 +190,5 @@ window.AAYS_T22_SOURCE_LONG_1500_OK=true;
 window.AAYS_T23_SOURCE_LONG_1500_OK=true;
 window.AAYS_T24_SOURCE_LONG_1500_OK=true;
 window.AAYS_T25_SOURCE_LONG_1500_OK=true;
+window.AAYS_T26_SOURCE_LONG_1500_OK=true;
 })();
