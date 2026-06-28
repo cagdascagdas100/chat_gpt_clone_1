@@ -243,7 +243,7 @@ function injectMenu(){
  var list=document.getElementById('testList')||document.querySelector('#start .card')||document.getElementById('start');
  if(!list||document.getElementById('artikelMenuCard'))return;
  var card=document.createElement('div');card.id='artikelMenuCard';card.className='card';card.style.marginTop='14px';
- card.innerHTML='<h2>Artikel</h2><p class="muted">der · die · das artikel testi. Doğru cevap yeşil, yanlış cevap kırmızı yanar. Yanlış yapılanlar tekrar karışık gelir; doğru yapılınca test bitene kadar tekrar çıkmaz.</p><button id="btnArtikelQuiz" class="sec">Artikel testini başlat</button>';
+ card.innerHTML='<h2>Artikel</h2><p class="muted">der · die · das artikel testi. Doğru cevapta otomatik sonraki soruya geçer. Yanlışta doğru cevap gösterilmez; soru daha sonra tekrar karışık gelir.</p><button id="btnArtikelQuiz" class="sec">Artikel testini başlat</button>';
  list.appendChild(card);
  var btn=document.getElementById('btnArtikelQuiz');if(btn)btn.addEventListener('click',startQuiz);
 }
@@ -270,13 +270,13 @@ function nextQuestion(){
 }
 function wrongListHtml(){
  var keys=Object.keys(state.wrongStats).filter(function(k){return !state.wrongStats[k].fixed;});
- if(!keys.length)return '<p class="muted">Henüz yanlış yapılan soru yok.</p>';
+ if(!keys.length)return '<p class="muted">Henüz tekrar gelecek yanlış soru yok.</p>';
  return '<ul>'+keys.map(function(k){return '<li>'+esc(k)+'</li>';}).join('')+'</ul>';
 }
 function renderQuestion(){
  var q=state.current,root=ensureRoot();
  var progress=state.done+' / '+state.total;
- root.innerHTML='<h2>Artikel testi</h2><p class="muted">Doğru yapılan soru tekrar gelmez. Yanlış yapılan soru karışık şekilde tekrar gelebilir; doğru yapılınca listeden çıkar.</p><div class="bar" style="margin:10px 0"><div style="width:'+(state.done/state.total*100)+'%"></div></div><p><b>İlerleme:</b> '+progress+' · <b>Doğru:</b> '+state.correct+' · <b>Aktif yanlış:</b> '+Object.keys(state.wrongStats).filter(function(k){return !state.wrongStats[k].fixed;}).length+'</p><div style="font-size:34px;font-weight:bold;margin:18px 0">'+esc(q.word)+'</div><div id="artikelOpts"></div><p id="artikelFeedback" style="min-height:28px;font-weight:bold"></p><button id="artikelNext" class="ghost hide">Sonraki</button><button id="artikelBack" class="ghost" style="margin-left:8px">Ana menü</button><h3>Yanlış yapılanlar</h3><div id="artikelWrongList">'+wrongListHtml()+'</div>';
+ root.innerHTML='<h2>Artikel testi</h2><p class="muted">Doğru yapılan soru tekrar gelmez. Yanlış yapılan soru doğru cevap gösterilmeden karışık şekilde tekrar gelir; sonra doğru yapılırsa test bitene kadar tekrar çıkmaz.</p><div class="bar" style="margin:10px 0"><div style="width:'+(state.done/state.total*100)+'%"></div></div><p><b>İlerleme:</b> '+progress+' · <b>Doğru:</b> '+state.correct+' · <b>Tekrar gelecek yanlış:</b> '+Object.keys(state.wrongStats).filter(function(k){return !state.wrongStats[k].fixed;}).length+'</p><div style="font-size:34px;font-weight:bold;margin:18px 0">'+esc(q.word)+'</div><div id="artikelOpts"></div><p id="artikelFeedback" style="min-height:28px;font-weight:bold"></p><button id="artikelNext" class="ghost hide">Sonraki</button><button id="artikelBack" class="ghost" style="margin-left:8px">Ana menü</button><h3>Yanlış yapılanlar</h3><div id="artikelWrongList">'+wrongListHtml()+'</div>';
  var opts=document.getElementById('artikelOpts');
  ['der','die','das'].forEach(function(a){var b=document.createElement('button');b.textContent=a;b.dataset.article=a;b.style.margin='4px';b.addEventListener('click',answer);opts.appendChild(b);});
  document.getElementById('artikelNext').addEventListener('click',nextQuestion);
@@ -288,22 +288,23 @@ function answer(ev){
  var q=state.current,ans=ev.currentTarget.dataset.article;
  var buttons=[].slice.call(document.querySelectorAll('#artikelOpts button'));
  var ok=q.answers.indexOf(ans)!==-1;
- buttons.forEach(function(b){b.disabled=true;if(q.answers.indexOf(b.dataset.article)!==-1){b.style.background='#16a34a';b.style.color='#fff';}});
+ buttons.forEach(function(b){b.disabled=true;});
  if(ok){
   ev.currentTarget.style.background='#16a34a';ev.currentTarget.style.color='#fff';
   state.done++;state.correct++;q.done=true;
   if(state.wrongStats[q.word])state.wrongStats[q.word].fixed=true;
-  document.getElementById('artikelFeedback').textContent='Doğru: '+q.article+' '+q.word;
+  document.getElementById('artikelFeedback').textContent='Doğru';
+  setTimeout(nextQuestion,280);
  }else{
   ev.currentTarget.style.background='#dc2626';ev.currentTarget.style.color='#fff';
   if(!state.wrongStats[q.word])state.wrongStats[q.word]={article:q.article,count:0,fixed:false};
   state.wrongStats[q.word].count++;
   var pos=Math.min(state.queue.length,Math.max(2,Math.floor(Math.random()*8)+2));
   state.queue.splice(pos,0,q);
-  document.getElementById('artikelFeedback').textContent='Yanlış. Doğru cevap: '+q.article+' '+q.word;
+  document.getElementById('artikelFeedback').textContent='Yanlış. Doğru cevap gösterilmeyecek; bu soru tekrar gelecek.';
   document.getElementById('artikelWrongList').innerHTML=wrongListHtml();
+  document.getElementById('artikelNext').classList.remove('hide');
  }
- document.getElementById('artikelNext').classList.remove('hide');
 }
 function finishQuiz(){
  var root=ensureRoot();
@@ -319,4 +320,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 setInterval(injectMenu,2000);
 window.AAYS_ARTIKEL_QUIZ_COUNT=QUESTIONS.length;
 window.AAYS_ARTIKEL_QUIZ_MENU_OK=true;
+window.AAYS_ARTIKEL_QUIZ_AUTO_NEXT_CORRECT_OK=true;
+window.AAYS_ARTIKEL_QUIZ_NO_ANSWER_REVEAL_OK=true;
 })();
