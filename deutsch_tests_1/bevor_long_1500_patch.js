@@ -45,50 +45,49 @@ var blockedHeadings=[
 ];
 function esc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function textWords(html){var t=String(html||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();return t?t.split(' ').length:0;}
-function p(label,val){return val?'<p><b>'+esc(label)+':</b> '+val+'</p>':'';}
 function list(arr){return '<ul>'+arr.filter(Boolean).map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';}
-function rows(arr,label){return (arr||[]).map(function(x,i){return p(label+' '+(i+1),esc(x&&x[0]||'')+(x&&x[1]?' → '+esc(x[1]):''));}).join('');}
+function pairList(arr){return '<ul>'+(arr||[]).filter(Boolean).map(function(x){return '<li>'+esc(x&&x[0]||'')+(x&&x[1]?' → '+esc(x[1]):'')+'</li>';}).join('')+'</ul>';}
+function fillList(T){return '<ul>'+(T.fill||[]).map(function(x){return '<li>'+esc(String(x&&x[0]||'').replace('____',x&&x[1]||''))+'</li>';}).join('')+'</ul>';}
+function mcList(T){return '<ul>'+(T.mc||[]).map(function(x){var opts=(x&&x[1])||[],right=opts[x&&x[2]||0]||'';return '<li><b>'+esc(right)+'</b><br><span class="muted">Ausgangspunkt: '+esc(x&&x[0]||'')+'</span></li>';}).join('')+'</ul>';}
+function tfList(T){return '<ul>'+(T.tf||[]).map(function(x){return '<li>'+esc(x&&x[0]||'')+' <span class="muted">('+((x&&x[1])?'richtig':'falsch')+')</span></li>';}).join('')+'</ul>';}
+function prepList(T){return '<ul>'+(T.prep||[]).map(function(x){var s=esc(String(x&&x[0]||'')).replace('___','<b>'+esc(x&&x[1]||'')+'</b>');return '<li>'+s+'</li>';}).join('')+'</ul>';}
 function sourceLong1500(key,heading,orderText){
   var T=(window.DEUTSCH_TESTS||{})[key],L=(window.DEUTSCH_LESSONS||{})[key];
   if(!T||T.category!=='Bevor Schreiben')return;
   if(!L){L={};window.DEUTSCH_LESSONS[key]=L;}
   if(L.__aaysSourceLong1500)return;
-  var fill=(T.fill||[]).map(function(x,i){return p('Lückensatz '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(String(x&&x[0]||'').replace('____',x&&x[1]||'')));}).join('');
-  var mc=(T.mc||[]).map(function(x,i){var opts=(x&&x[1])||[],right=opts[x&&x[2]||0]||'';return p('MC '+(i+1)+' · '+esc(x&&x[3]||'Quelle'),esc(x&&x[0]||'')+' <b>Kern:</b> '+esc(right)+' <span class="muted">Optionen: '+esc(opts.join(' | '))+'</span>');}).join('');
-  var tf=(T.tf||[]).map(function(x,i){return p('Wahr/Falsch '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(x&&x[0]||'')+' → '+((x&&x[1])?'richtig':'falsch'));}).join('');
-  var prep=(T.prep||[]).map(function(x,i){return p('Rektion '+(i+1)+' · '+esc(x&&x[2]||'Quelle'),esc(String(x&&x[0]||'').replace('___',x&&x[1]||'')));}).join('');
   var base=[L.long,L.medium,L.short].filter(Boolean).join('');
-  var html='<h3>'+esc(heading)+' · Quellenfassung 1500+</h3>'+
-  '<p><b>Prinzip:</b> Diese lange Fassung nutzt nur die im Repository vorhandenen Quellen zu '+esc(key)+': vorhandene Kurz-, Mittel- und Langfassung, Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Lösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Präpositionen und Harf-kutucukları-Formulierungen. Es werden keine fremden Beispiele und keine zusätzlichen Fakten außerhalb dieser Quelle eingeführt.</p>'+
+  var html='<h3>'+esc(heading)+' · ausführliche Quellenfassung</h3>'+
+  '<p><b>Prinzip:</b> Diese lange Fassung nutzt nur die im Repository vorhandenen Quellen zu '+esc(key)+'. Die Informationen werden nicht als technische Übungsliste angezeigt, sondern als geordnetes Material für eine flüssige C1/C2-Konu anlatımı. Fremde Beispiele und erfundene Zusatzinformationen werden nicht ergänzt.</p>'+
   '<section>'+base+'</section>'+
-  '<h4>Vollständiger Quellenwortschatz</h4>'+list((T.words||[]).map(esc))+
-  '<h4>Quellenbasierte Lückensätze</h4>'+fill+
-  '<h4>Multiple-Choice-Kernformulierungen aus der Quelle</h4>'+mc+
-  '<h4>Wahr/Falsch-Kontrolle als Argumentationsgrenze</h4>'+tf+
-  '<h4>Wortschatzdefinitionen aus der Quelle</h4>'+rows(T.wordMatch,'Definition')+
-  '<h4>Nomen-Verb-Verbindungen und Kollokationen</h4>'+rows(T.phraseMatch,'Kollokation')+
-  '<h4>Präpositionen und Rektion</h4>'+prep+
-  '<h4>Harf-kutucukları-Register</h4>'+list((T.hang||[]).map(esc))+
+  '<h4>Zentraler Wortschatz aus der Quelle</h4>'+list((T.words||[]).map(esc))+
+  '<h4>Satzbausteine aus dem Quellenmaterial</h4>'+fillList(T)+
+  '<h4>Kernformulierungen für die Argumentation</h4>'+mcList(T)+
+  '<h4>Inhaltliche Grenzen und stilistische Kontrolle</h4>'+tfList(T)+
+  '<h4>Begriffe und Bedeutungen</h4>'+pairList(T.wordMatch)+
+  '<h4>Feste Verbindungen für einen natürlichen Stil</h4>'+pairList(T.phraseMatch)+
+  '<h4>Präpositionen und Satzanschlüsse</h4>'+prepList(T)+
+  '<h4>Formulierungen, die im Absatz wiederverwendet werden können</h4>'+list((T.hang||[]).map(esc))+
   '<h4>Schreiblogik ohne Wiederholung und ohne Erfindung</h4><p>'+esc(orderText)+'</p>';
   L.long=html;L.source=T.source||L.source||key+' source arrays';L.longSourceVerified=true;L.__aaysSourceLong1500=true;L.__aaysSourceLongWordCount=textWords(html);
 }
 function applyT21SourceLong1500(){
-  sourceLong1500('t21','Massentourismus · C1/C2 Vorteilsabsatz','Für den langen Vorteilsabsatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Grundthese, danach der wirtschaftliche Nutzen, anschließend Beschäftigungsmöglichkeiten und Infrastruktur, danach Zugang zu Reisen, kulturelle Begegnungen, Horizonterweiterung, Weltoffenheit, Toleranz und internationale Verständigung. Jede Formulierung muss sich auf einen Eintrag aus dem Quellenwortschatz, eine Lückensatzlösung, eine MC-Kernlösung, eine Wahr/Falsch-Aussage, eine Kollokation oder ein Rektionmuster zurückführen lassen.');
+  sourceLong1500('t21','Massentourismus · C1/C2 Vorteilsabsatz','Für den langen Vorteilsabsatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Grundthese, danach der wirtschaftliche Nutzen, anschließend Beschäftigungsmöglichkeiten und Infrastruktur, danach Zugang zu Reisen, kulturelle Begegnungen, Horizonterweiterung, Weltoffenheit, Toleranz und internationale Verständigung. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applyT22SourceLong1500(){
-  sourceLong1500('t22','Massentourismus-Nachteile · C1/C2 Nachteile-Absatz','Für den langen Nachteile-Absatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Leitthese, danach Umweltbelastung und Ressourcenverbrauch, anschließend Belastung der Einheimischen und sinkende Lebensqualität, danach kulturelle Authentizität, Kommerzialisierung, wirtschaftliche Abhängigkeit und unsichere Arbeitsbedingungen. Jede Formulierung muss sich auf einen Eintrag aus dem Quellenwortschatz, eine Lückensatzlösung, eine MC-Kernlösung, eine Wahr/Falsch-Aussage, eine Kollokation oder ein Rektionmuster zurückführen lassen.');
+  sourceLong1500('t22','Massentourismus-Nachteile · C1/C2 Nachteile-Absatz','Für den langen Nachteile-Absatz werden die Quellenbausteine in eine klare Reihenfolge gebracht: zuerst Grundverständnis und Leitthese, danach Umweltbelastung und Ressourcenverbrauch, anschließend Belastung der Einheimischen und sinkende Lebensqualität, danach kulturelle Authentizität, Kommerzialisierung, wirtschaftliche Abhängigkeit und unsichere Arbeitsbedingungen. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applyT23SourceLong1500(){
-  sourceLong1500('t23','t23 · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t23 vollständig geordnet: vorhandene Lektion, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
+  sourceLong1500('t23','t23 · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t23 vollständig geordnet: vorhandene Lektion, Wortschatz, Satzbausteine, Kernformulierungen, inhaltliche Kontrolle, Begriffe, feste Verbindungen, Satzanschlüsse und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applyT24SourceLong1500(){
-  sourceLong1500('t24','t24 · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t24 vollständig geordnet: vorhandene Lektion, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
+  sourceLong1500('t24','t24 · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t24 vollständig geordnet: vorhandene Lektion, Wortschatz, Satzbausteine, Kernformulierungen, inhaltliche Kontrolle, Begriffe, feste Verbindungen, Satzanschlüsse und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applyT25SourceLong1500(){
-  sourceLong1500('t25','Studium im Ausland – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t25 vollständig geordnet: Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
+  sourceLong1500('t25','Studium im Ausland – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t25 vollständig geordnet: Titel, Thema, Wortschatz, Satzbausteine, Kernformulierungen, inhaltliche Kontrolle, Begriffe, feste Verbindungen, Satzanschlüsse und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applyT26SourceLong1500(){
-  sourceLong1500('t26','Das mehrsprachige Aufwachsen von Kindern – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t26 vollständig geordnet: Titel, Thema, Wortschatz, Lückensätze, Multiple-Choice-Kernlösungen, Wahr/Falsch-Kontrolle, Wortdefinitionen, Kollokationen, Rektion und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
+  sourceLong1500('t26','Das mehrsprachige Aufwachsen von Kindern – Nachteile · C1/C2 Nachteilsabsatz','Für den langen Absatz werden ausschließlich die geladenen Quellenbausteine von t26 vollständig geordnet: Titel, Thema, Wortschatz, Satzbausteine, Kernformulierungen, inhaltliche Kontrolle, Begriffe, feste Verbindungen, Satzanschlüsse und Formulierungsregister. Jede Formulierung muss sich auf einen vorhandenen Quellenbaustein zurückführen lassen.');
 }
 function applySourceLong1500(){applyT21SourceLong1500();applyT22SourceLong1500();applyT23SourceLong1500();applyT24SourceLong1500();applyT25SourceLong1500();applyT26SourceLong1500();}
 function wrapGeneratedLessonExamples(original){
@@ -191,4 +190,5 @@ window.AAYS_T23_SOURCE_LONG_1500_OK=true;
 window.AAYS_T24_SOURCE_LONG_1500_OK=true;
 window.AAYS_T25_SOURCE_LONG_1500_OK=true;
 window.AAYS_T26_SOURCE_LONG_1500_OK=true;
+window.AAYS_SOURCE_LONG_FLUENT_LABELS_OK=true;
 })();
