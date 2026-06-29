@@ -4,7 +4,8 @@ param(
   [string]$RepoRoot = "F:\chatgpt\chat_gpt_clone_1_main",
   [string]$BridgeRoot = "F:\AAYS_GITHUB_BRIDGE_CLEAN2",
   [string]$PageKey = "aays1",
-  [int]$SleepSeconds = 60
+  [int]$SleepSeconds = 60,
+  [int]$RepoHeartbeatSeconds = 300
 )
 
 $ScriptDir = Join-Path $BridgeRoot "ai-task-scripts"
@@ -18,7 +19,8 @@ param(
   [string]$RepoRoot = "F:\chatgpt\chat_gpt_clone_1_main",
   [string]$BridgeRoot = "F:\AAYS_GITHUB_BRIDGE_CLEAN2",
   [string]$PageKey = "aays1",
-  [int]$SleepSeconds = 60
+  [int]$SleepSeconds = 60,
+  [int]$RepoHeartbeatSeconds = 300
 )
 
 $StateDir = Join-Path $BridgeRoot "state\repo_to_bridge_watch\$PageKey"
@@ -54,8 +56,41 @@ function EnsureRunner() {
   }
 }
 
+function PublishRepoHeartbeat($text) {
+  try {
+    if (!(Test-Path $RepoRoot)) { return }
+    $now = Get-Date
+    $lastPath = Join-Path $StateDir "last_repo_heartbeat_push.txt"
+    $shouldPush = $true
+    if (Test-Path $lastPath) {
+      try {
+        $last = [datetime](Get-Content $lastPath -Raw)
+        if (($now - $last).TotalSeconds -lt $RepoHeartbeatSeconds) { $shouldPush = $false }
+      } catch { $shouldPush = $true }
+    }
+    if (!$shouldPush) { return }
+
+    Set-Location $RepoRoot
+    $statusDir = Join-Path $RepoRoot "docs\chatgpt_status\$PageKey\status"
+    New-Item -ItemType Directory -Force -Path $statusDir | Out-Null
+    $repoStatus = Join-Path $statusDir "061_repo_to_bridge_watch_heartbeat_latest.txt"
+    $text | Set-Content -Encoding UTF8 $repoStatus
+    git add -- "docs/chatgpt_status/$PageKey/status/061_repo_to_bridge_watch_heartbeat_latest.txt" | Out-Null
+    $changes = git status --porcelain -- "docs/chatgpt_status/$PageKey/status/061_repo_to_bridge_watch_heartbeat_latest.txt"
+    if ($changes) {
+      git commit -m "Update aays1 repo-to-bridge watcher heartbeat" | Out-Null
+      git pull --rebase origin main | Out-Null
+      git push origin HEAD:main | Out-Null
+    }
+    $now.ToString("o") | Set-Content -Encoding UTF8 $lastPath
+  } catch {
+    "heartbeat_push_error=$($_.Exception.Message)" | Set-Content -Encoding UTF8 (Join-Path $StateDir "last_push_error.txt")
+  }
+}
+
 while ($true) {
   $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
+  $copied = 0
   try {
     if (Test-Path $RepoRoot) {
       Set-Location $RepoRoot
@@ -71,14 +106,19 @@ while ($true) {
           Copy-Item -Force $_.FullName $dest
           $marker = Join-Path $StateDir ("copied_" + ($taskId -replace '[^A-Za-z0-9_.-]','_') + ".txt")
           "copied_at=$stamp`nsource=$($_.FullName)`ndest=$dest`ntask_id=$taskId" | Set-Content -Encoding UTF8 $marker
+          $copied += 1
         }
       }
     }
 
     EnsureRunner
-    "status=WATCHING`npage_key=$PageKey`nrepo_root=$RepoRoot`nbridge_root=$BridgeRoot`nqueue_dir=$QueueDir`nupdated_at=$stamp" | Set-Content -Encoding UTF8 (Join-Path $StateDir "heartbeat.txt")
+    $hb = "status=WATCHING`npage_key=$PageKey`nrepo_root=$RepoRoot`nbridge_root=$BridgeRoot`nqueue_dir=$QueueDir`nbridge_pending=$PendingDir`ncopied_this_loop=$copied`nupdated_at=$stamp`nfinal_ready=false"
+    $hb | Set-Content -Encoding UTF8 (Join-Path $StateDir "heartbeat.txt")
+    PublishRepoHeartbeat $hb
   } catch {
-    "status=WATCH_ERROR`npage_key=$PageKey`nerror=$($_.Exception.Message)`nupdated_at=$stamp" | Set-Content -Encoding UTF8 (Join-Path $StateDir "last_error.txt")
+    $err = "status=WATCH_ERROR`npage_key=$PageKey`nerror=$($_.Exception.Message)`nupdated_at=$stamp`nfinal_ready=false"
+    $err | Set-Content -Encoding UTF8 (Join-Path $StateDir "last_error.txt")
+    PublishRepoHeartbeat $err
   }
   Start-Sleep -Seconds $SleepSeconds
 }
@@ -88,13 +128,22 @@ $Watcher | Set-Content -Encoding UTF8 $WatcherPath
 
 $already = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match [regex]::Escape($WatcherPath) } | Select-Object -First 1
 if (!$already) {
-  Start-Process powershell -ArgumentList "-NoExit","-NoProfile","-ExecutionPolicy","Bypass","-File",$WatcherPath,"-RepoRoot",$RepoRoot,"-BridgeRoot",$BridgeRoot,"-PageKey",$PageKey,"-SleepSeconds",$SleepSeconds
+  Start-Process powershell -ArgumentList "-NoExit","-NoProfile","-ExecutionPolicy","Bypass","-File",$WatcherPath,"-RepoRoot",$RepoRoot,"-BridgeRoot",$BridgeRoot,"-PageKey",$PageKey,"-SleepSeconds",$SleepSeconds,"-RepoHeartbeatSeconds",$RepoHeartbeatSeconds
 }
 
 $StatusDir = Join-Path $RepoRoot "docs\chatgpt_status\$PageKey\status"
 New-Item -ItemType Directory -Force -Path $StatusDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-"status=REPO_TO_BRIDGE_WATCH_INSTALLED`nfinal_ready=false`nwatcher_path=$WatcherPath`nbridge_root=$BridgeRoot`nrepo_root=$RepoRoot`npage_key=$PageKey`nupdated_at=$stamp" | Set-Content -Encoding UTF8 (Join-Path $StatusDir "061_repo_to_bridge_watch_installed_$stamp.txt")
+$statusText = "status=REPO_TO_BRIDGE_WATCH_INSTALLED`nfinal_ready=false`nwatcher_path=$WatcherPath`nbridge_root=$BridgeRoot`nrepo_root=$RepoRoot`npage_key=$PageKey`nupdated_at=$stamp"
+$statusText | Set-Content -Encoding UTF8 (Join-Path $StatusDir "061_repo_to_bridge_watch_installed_latest.txt")
+
+try {
+  Set-Location $RepoRoot
+  git add -- "docs/chatgpt_status/$PageKey/status/061_repo_to_bridge_watch_installed_latest.txt"
+  git commit -m "Record aays1 repo-to-bridge watcher install" | Out-Null
+  git pull --rebase origin main | Out-Null
+  git push origin HEAD:main | Out-Null
+} catch {}
 
 Write-Host "Repo-to-bridge watcher installed and started: $WatcherPath" -ForegroundColor Green
 Write-Host "From now on, GitHub queue task files will be copied into the bridge pending queue." -ForegroundColor Cyan
