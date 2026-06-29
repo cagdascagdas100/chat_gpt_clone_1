@@ -14,6 +14,10 @@ if(!window.AAYS_EHRENAMT_NACHTEILE_LOADER_OK){
   window.AAYS_EHRENAMT_NACHTEILE_LOADER_OK=true;
   document.write('<script src="data_bevor_ehrenamt_nachteile.js?v=1"><\/script>');
 }
+if(!window.AAYS_EHRENAMT_NACHTEILE_LONG_V2_LOADER_OK){
+  window.AAYS_EHRENAMT_NACHTEILE_LONG_V2_LOADER_OK=true;
+  document.write('<script src="data_bevor_ehrenamt_nachteile_long_v2.js?v=1"><\/script>');
+}
 if(!window.AAYS_ARTIKEL_QUIZ_LOADER_OK){
   window.AAYS_ARTIKEL_QUIZ_LOADER_OK=true;
   document.write('<script src="artikel_quiz.js?v=1"><\/script>');
@@ -88,5 +92,6 @@ window.AAYS_T26_SOURCE_LONG_1500_OK=true;
 window.AAYS_SOURCE_LONG_FLUENT_LABELS_OK=true;
 window.AAYS_EHRENAMT_VORTEILE_LOADER_PATCH_OK=true;
 window.AAYS_EHRENAMT_NACHTEILE_LOADER_PATCH_OK=true;
+window.AAYS_EHRENAMT_NACHTEILE_LONG_V2_LOADER_PATCH_OK=true;
 window.AAYS_ARTIKEL_QUIZ_LOADER_PATCH_OK=true;
 })();
