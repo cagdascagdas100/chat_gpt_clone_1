@@ -10,11 +10,15 @@ if(!window.AAYS_EHRENAMT_VORTEILE_LOADER_OK){
   window.AAYS_EHRENAMT_VORTEILE_LOADER_OK=true;
   document.write('<script src="data_bevor_ehrenamt_vorteile.js?v=1"><\/script>');
 }
+if(!window.AAYS_EHRENAMT_NACHTEILE_LOADER_OK){
+  window.AAYS_EHRENAMT_NACHTEILE_LOADER_OK=true;
+  document.write('<script src="data_bevor_ehrenamt_nachteile.js?v=1"><\/script>');
+}
 if(!window.AAYS_ARTIKEL_QUIZ_LOADER_OK){
   window.AAYS_ARTIKEL_QUIZ_LOADER_OK=true;
   document.write('<script src="artikel_quiz.js?v=1"><\/script>');
 }
-var forcedSourceLocks={t21:true,t22:true,t23:true,t24:true,t25:true,t26:true,t47:true,t48:true};
+var forcedSourceLocks={t21:true,t22:true,t23:true,t24:true,t25:true,t26:true,t47:true,t48:true,t49:true};
 function currentBevorKey(){
   var checked=document.querySelector('input[name="tc"]:checked');
   if(checked&&checked.value)return checked.value;
@@ -83,5 +87,6 @@ window.AAYS_T25_SOURCE_LONG_1500_OK=true;
 window.AAYS_T26_SOURCE_LONG_1500_OK=true;
 window.AAYS_SOURCE_LONG_FLUENT_LABELS_OK=true;
 window.AAYS_EHRENAMT_VORTEILE_LOADER_PATCH_OK=true;
+window.AAYS_EHRENAMT_NACHTEILE_LOADER_PATCH_OK=true;
 window.AAYS_ARTIKEL_QUIZ_LOADER_PATCH_OK=true;
 })();
