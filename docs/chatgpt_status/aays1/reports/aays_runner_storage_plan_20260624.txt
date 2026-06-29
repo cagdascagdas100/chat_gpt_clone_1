@@ -1,0 +1,58 @@
+PAGE_KEY=aays1
+DATE=2026-06-24
+STATUS=RUNNER_STORAGE_RELOCATION_PREPARED
+
+OBSERVED_STORAGE
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2 total size ~= 4.614 GB
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-runner-logs ~= 1.092 GB
+- C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-results ~= 0.082 GB
+- current active bridge still points to C:
+  - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-tasks\current-task.json
+  - C:\AAYS_GITHUB_BRIDGE_CLEAN2\ai-heartbeat\portable-runner.md
+
+RECOMMENDED_TARGET
+1. Preferred: F:\AAYS_GITHUB_BRIDGE_CLEAN2
+2. Fallback: D:\AAYS_GITHUB_BRIDGE_CLEAN2
+
+WHY_F_FIRST
+- F: already contains AAYS_WORK, chatgpt, AAYS_DATA, and related project storage.
+- Moving bridge state there keeps large queue/log/result files off C: without changing repo root.
+
+REPO_CHANGES_DONE
+- Added bridge-root resolver:
+  - tools\Get-AaysBridgeRoot.ps1
+- Updated these scripts to honor AAYS_BRIDGE_ROOT first:
+  - tools\AAYS_CANONICAL_RUNNER_BOOTSTRAP_AND_REPORT_20260604_001.ps1
+  - tools\AAYS_STEPWISE_QUEUE_AND_KICK_20260603_001.ps1
+  - docs\chatgpt_status\AAYS_AUTOMATION_BRIDGE_REPAIR_20260609\AAYS_BRIDGE_REPAIR_BOOTSTRAP.ps1
+- Added manual relocation helper:
+  - tools\Move-AaysBridge-To-AltDrive.ps1
+
+SAFE_MANUAL_COMMANDS
+1. Copy bridge root to F:
+   powershell -ExecutionPolicy Bypass -File tools\Move-AaysBridge-To-AltDrive.ps1 -TargetDrive F -SetUserEnv
+
+2. Or copy bridge root to D:
+   powershell -ExecutionPolicy Bypass -File tools\Move-AaysBridge-To-AltDrive.ps1 -TargetDrive D -SetUserEnv
+
+3. In the current shell, force the new root explicitly if needed:
+   $env:AAYS_BRIDGE_ROOT='F:\AAYS_GITHUB_BRIDGE_CLEAN2'
+
+4. Then start the canonical bootstrap again:
+   powershell -ExecutionPolicy Bypass -File tools\AAYS_CANONICAL_RUNNER_BOOTSTRAP_AND_REPORT_20260604_001.ps1
+
+WHAT_NOT_DONE_HERE
+- The bridge was not physically moved by Codex in this run.
+- No runner output, heartbeat, or FINAL_READY marker was faked.
+- No deletion was performed under C:.
+
+NEXT_REAL_VALIDATION
+- Confirm that new root contains:
+  - ai-task-scripts
+  - ai-tasks
+  - ai-queue
+  - ai-heartbeat
+  - ai-results
+- Confirm portable runner writes heartbeat under the new root.
+- Confirm current-task or queue consumption happens from the new root, not the old C: root.
+- Only then consider removing or archiving the old C: bridge.
