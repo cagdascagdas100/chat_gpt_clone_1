@@ -6,7 +6,7 @@ $Worktree = "F:\chatgpt\aays_2of4_table_restore_worktree"
 $Branch = "aays-2of4-table-restore"
 $Stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
-function H($v) {
+function HtmlEsc($v) {
   if ($null -eq $v) { return "" }
   return [System.Net.WebUtility]::HtmlEncode([string]$v)
 }
@@ -88,11 +88,13 @@ $Results | Export-Csv -NoTypeInformation -Encoding UTF8 $UpdatesCsv
 
 $tableRows = New-Object System.Text.StringBuilder
 foreach ($r in $Results) {
-  [void]$tableRows.AppendLine("<tr><td>$(H $r.row_index)</td><td>$(H $r.site)</td><td><a href='$(H $r.listing_url)' target='_blank'>$(H $r.listing_url)</a></td><td>$(H $r.title_or_address)</td><td>$(H $r.price)</td><td>$(H $r.area)</td><td>$(H $r.location)</td><td>$(H $r.candidate_centroid)</td><td>$(H $r.candidate_bbox)</td><td>$(H $r.source_fetch_status)</td><td>$(H $r.evidence_path)</td><td>$(H $r.review_decision)</td><td>$(H $r.do_not_upgrade_reason)</td></tr>")
+  $url = HtmlEsc $r.listing_url
+  [void]$tableRows.AppendLine("<tr><td>$(HtmlEsc $r.row_index)</td><td>$(HtmlEsc $r.site)</td><td><a href='$url' target='_blank'>$url</a></td><td>$(HtmlEsc $r.title_or_address)</td><td>$(HtmlEsc $r.price)</td><td>$(HtmlEsc $r.area)</td><td>$(HtmlEsc $r.location)</td><td>$(HtmlEsc $r.candidate_centroid)</td><td>$(HtmlEsc $r.candidate_bbox)</td><td>$(HtmlEsc $r.source_fetch_status)</td><td>$(HtmlEsc $r.evidence_path)</td><td>$(HtmlEsc $r.review_decision)</td><td>$(HtmlEsc $r.do_not_upgrade_reason)</td></tr>")
 }
 
 $HtmlPath = "england_map_web\geometry_review_2of4_20260629.html"
 New-Item -ItemType Directory -Force -Path (Split-Path $HtmlPath) | Out-Null
+$queueCsvEsc = HtmlEsc $QueueCsv.FullName
 @"
 <!doctype html>
 <html lang="tr">
@@ -115,7 +117,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path $HtmlPath) | Out-Null
   <p><b>Toplam queue:</b> $($Rows.Count)</p>
   <p><b>Tabloda gösterilen:</b> $($Results.Count)</p>
   <p><b>Durum:</b> Tablo gerçek F repo kaynak CSV’den geri yüklendi. Source/evidence review sonraki batchte yapılacak.</p>
-  <p><b>Kaynak CSV:</b> $(H $QueueCsv.FullName)</p>
+  <p><b>Kaynak CSV:</b> $queueCsvEsc</p>
   <p><b>Final:</b> false</p>
 </div>
 <div class="warn">
