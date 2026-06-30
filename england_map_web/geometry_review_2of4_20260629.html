@@ -5,35 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TerraYield 2/4 Satis Parsel Geometry Review</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f8fafc;color:#111827}.panel{border:2px solid #2563eb;background:#eff6ff;padding:16px;border-radius:12px;margin-bottom:14px}.warn{border:1px solid #f59e0b;background:#fffbeb;padding:12px;border-radius:10px;margin-bottom:14px}.ok{border:1px solid #22c55e;background:#f0fdf4;padding:12px;border-radius:10px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.card{background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:12px}.actions a{display:inline-block;margin:4px 8px 4px 0;padding:8px 10px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none}.muted{color:#64748b;font-size:13px}code{background:#e5e7eb;padding:2px 4px;border-radius:4px}table{border-collapse:collapse;width:100%;background:white;margin-top:10px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#e5e7eb}
+body{font-family:Arial,sans-serif;margin:20px;background:#f8fafc;color:#111827}.panel{border:2px solid #2563eb;background:#eff6ff;padding:16px;border-radius:12px;margin-bottom:14px}.warn{border:1px solid #f59e0b;background:#fffbeb;padding:12px;border-radius:10px;margin-bottom:14px}.ok{border:1px solid #22c55e;background:#f0fdf4;padding:12px;border-radius:10px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.card{background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:12px}.bad{background:#fef2f2;border-color:#fecaca}.mid{background:#fff7ed;border-color:#fed7aa}.good{background:#f0fdf4;border-color:#bbf7d0}.actions a{display:inline-block;margin:4px 8px 4px 0;padding:8px 10px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none}.muted{color:#64748b;font-size:13px}code{background:#e5e7eb;padding:2px 4px;border-radius:4px}table{border-collapse:collapse;width:100%;background:white;margin-top:10px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;vertical-align:top}th{background:#e5e7eb}.score{font-weight:bold;font-size:20px}
 </style>
 </head>
 <body>
 <div class="panel">
 <h1>AAYS / TerraYield 2/4 Satis Parsel Geometry Review</h1>
-<p><b>Durum:</b> Sayfa onarildi. Eski bozuk tablo yerine guvenli fallback ekran aktif.</p>
+<p><b>Durum:</b> Kanit ve geometri kalite ozeti eklendi. Bu sayfa 2/4 kaynak/parsel geometri inceleme ekranidir.</p>
 <div class="grid">
-<div class="card"><b>Toplam queue</b><br>1264</div>
-<div class="card"><b>Islenen</b><br>225</div>
-<div class="card"><b>Ilerleme</b><br>%17.8</div>
-<div class="card"><b>Final</b><br>false</div>
+<div class="card"><b>Toplam queue</b><br><span class="score">1264</span></div>
+<div class="card"><b>Gorunur/islenen</b><br><span class="score">225</span></div>
+<div class="card"><b>Ilerleme</b><br><span class="score">%17.8</span></div>
+<div class="card"><b>Acik problem</b><br><span class="score">9</span></div>
+<div class="card"><b>Final</b><br><span class="score">false</span></div>
 </div>
 </div>
-<div class="ok"><b>Site acilabilir durumda.</b> Ayrintili 275 satir rebuild runner kuyrugunda devam ediyor.</div>
-<div class="warn">Sahte polygon yok. Bu ekran 2/4 kaynak kontrolu icindir; resmi boundary kaniti olmadan final kabul yok.</div>
-<div class="actions">
-<a href="data/geometry_review_2of4_20260629/TerraYield_2OF4_Geometry_Review_Queue_20260629.csv" target="_blank" rel="noopener noreferrer">Kaynak CSV</a>
-<a href="./" target="_blank" rel="noopener noreferrer">Klasor</a>
-</div>
+<div class="warn"><b>Onemli:</b> Sahte polygon yok. Resmi boundary veya kanitli parsel siniri olmadan hicbir satir 4/4 final geometri kabulune alinmaz.</div>
+<div class="ok"><b>Yeni bulgu:</b> Kaynak URL kanitlari toplaniyor ve acilmayan kaynaklar problem listesine ayriliyor. Fakat resmi parsel siniri kaniti henuz yok; bu nedenle geometri kanitlanabilirligi sinirli.</div>
+<h2>Guncel 4 uzerinden dogruluk skalasi</h2>
 <table>
-<thead><tr><th>Alan</th><th>Deger</th></tr></thead>
+<thead><tr><th>Kategori</th><th>Skor</th><th>Anlam</th><th>Mevcut kanit</th><th>4/4 icin gereken</th></tr></thead>
 <tbody>
-<tr><td>Aktif dosya</td><td><code>england_map_web/geometry_review_2of4_20260629.html</code></td></tr>
-<tr><td>Beklenen otomatik rebuild</td><td><code>docs/chatgpt_status/aays1/automation/064_rebuild_geometry_review_html_safe.ps1</code></td></tr>
-<tr><td>Runner queue</td><td><code>docs/chatgpt_status/aays1/queue/z280.task.json</code></td></tr>
-<tr><td>Sonraki is</td><td>Runner rebuild tamamlandiginda tablo tekrar genisletilecek; bu fallback sayfa bozuk ekranı kapatir.</td></tr>
+<tr><td>Kaynak URL dogrulugu</td><td><b>2/4</b></td><td>Ilan kaynaklari aciliyor veya manuel/otomatik kontrol kaydi var; 9 problem acik.</td><td>OnTheMarket URL kontrolleri, manuel kullanici onayi, retry/problem kayitlari.</td><td>Her satir icin acilan kaynak, arsiv/evidence snapshot ve tutarli metadata.</td></tr>
+<tr><td>Konum/centroid dogrulugu</td><td><b>1/4</b></td><td>CSVden gelen postcode/centroid var; resmi parsel siniri ile eslesme yok.</td><td>225 gorunur satirda konum/centroid alanlari.</td><td>Adres + resmi boundary + centroidin boundary icinde kalmasi.</td></tr>
+<tr><td>Parsel geometri kaniti</td><td><b>1/4</b></td><td>Henuz kanitli polygon yok; sadece kaynak/geometri hazirlik verisi var.</td><td>Kaynak URL ve tablo restore verisi.</td><td>HM Land Registry / resmi kadastro / belediye plan boundary kaniti.</td></tr>
+<tr><td>Uretim final kabul</td><td><b>0/4</b></td><td>Final kabul kapali; fake polygon yasak.</td><td>final=false, review devam ediyor.</td><td>1264/1264 satir tamamlanip resmi kanitlarla gecmesi.</td></tr>
 </tbody>
 </table>
-<p class="muted">Son guncelleme: 2026-06-30. Bu sayfa bilerek minimal tutuldu; veri kaybi yok, onceki HTML Git gecmisinde duruyor.</p>
+<h2>Su anda kanitlanabilir parsel geometrisi nedir?</h2>
+<table>
+<thead><tr><th>Seviye</th><th>Durum</th><th>Aciklama</th></tr></thead>
+<tbody>
+<tr><td>Listing source</td><td>Toplaniyor</td><td>Ilan URLleri kaynak kaniti olarak kontrol ediliyor.</td></tr>
+<tr><td>Centroid / postcode</td><td>Var ama zayif</td><td>CSVden gelen noktasal konum var; bu tek basina parsel geometrisi degildir.</td></tr>
+<tr><td>Parcel polygon</td><td>Yok</td><td>Resmi sinir/polygon kaniti henuz elde edilmedi.</td></tr>
+<tr><td>Kanıtlanabilirlik</td><td>Dusuk-Orta</td><td>2/4 kaynak seviyesi ilerliyor; 4/4 icin resmi boundary gerekir.</td></tr>
+</tbody>
+</table>
+<h2>Sonraki otomatik is</h2>
+<table>
+<tbody>
+<tr><td>1</td><td>225 satirin kaynak kanitlarini tamamla, kalan 9 problemi ayir.</td></tr>
+<tr><td>2</td><td>226-275 tablo genisletmesini runner ile gorunur hale getir.</td></tr>
+<tr><td>3</td><td>Her satir icin resmi boundary arama asamasina gec; kanit yoksa 4/4 verme.</td></tr>
+</tbody>
+</table>
+<div class="actions">
+<a href="data/geometry_review_2of4_20260629/TerraYield_2OF4_Geometry_Review_Queue_20260629.csv" target="_blank" rel="noopener noreferrer">Kaynak CSV</a>
+</div>
+<p class="muted">GitHub guncel dosya onarildi. Local ekranda eski tablo gorunuyorsa F repo icinde <code>git pull origin main</code> calistirip sayfayi yenile.</p>
 </body>
 </html>
