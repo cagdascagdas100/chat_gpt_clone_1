@@ -61,7 +61,7 @@ if (!$QueueCsv) {
 $Rows = Import-Csv $QueueCsv.FullName
 if (!$Rows -or $Rows.Count -eq 0) { throw "Queue CSV is empty: $($QueueCsv.FullName)" }
 
-$Batch = $Rows | Select-Object -First 125
+$Batch = $Rows | Select-Object -First 175
 $Results = New-Object System.Collections.Generic.List[object]
 for ($i = 0; $i -lt $Batch.Count; $i++) {
   $row = $Batch[$i]
