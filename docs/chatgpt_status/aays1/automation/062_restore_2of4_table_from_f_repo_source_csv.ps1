@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $RepoRoot = "F:\chatgpt\chat_gpt_clone_1_main"
 $BridgeRoot = "F:\AAYS_GITHUB_BRIDGE_CLEAN2"
@@ -61,7 +61,7 @@ if (!$QueueCsv) {
 $Rows = Import-Csv $QueueCsv.FullName
 if (!$Rows -or $Rows.Count -eq 0) { throw "Queue CSV is empty: $($QueueCsv.FullName)" }
 
-$Batch = $Rows | Select-Object -First 175
+$Batch = $Rows | Select-Object -First 225
 $Results = New-Object System.Collections.Generic.List[object]
 for ($i = 0; $i -lt $Batch.Count; $i++) {
   $row = $Batch[$i]
@@ -153,3 +153,4 @@ Copy-Item -Force $HtmlPath $LocalHtml
 
 "status=OK`nfinal_ready=false`nqueue_total=$($Rows.Count)`nrows_visible=$($Results.Count)`nsource_csv=$($QueueCsv.FullName)`nupdated_at=$Stamp" | Set-Content -Encoding UTF8 "$BridgeRoot\ai-results\terrayield_062_restore_2of4_table_from_f_repo_source_csv.result.txt"
 exit 0
+
