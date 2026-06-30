@@ -61,7 +61,7 @@ if (!$QueueCsv) {
 $Rows = Import-Csv $QueueCsv.FullName
 if (!$Rows -or $Rows.Count -eq 0) { throw "Queue CSV is empty: $($QueueCsv.FullName)" }
 
-$Batch = $Rows | Select-Object -First 25
+$Batch = $Rows | Select-Object -First 75
 $Results = New-Object System.Collections.Generic.List[object]
 for ($i = 0; $i -lt $Batch.Count; $i++) {
   $row = $Batch[$i]
@@ -79,7 +79,7 @@ for ($i = 0; $i -lt $Batch.Count; $i++) {
     evidence_path = ""
     review_decision = "KEEP_2OF4_PENDING_SOURCE_REVIEW"
     corrected_polygon_geojson = ""
-    do_not_upgrade_reason = "Kaynak CSV’den tabloya alındı; kaynak site/evidence incelemesi sonraki küçük batchte yapılacak. Fake polygon yok."
+    do_not_upgrade_reason = "Kaynak CSVden tabloya alindi; kaynak site/evidence incelemesi sonraki batchte yapilacak. Fake polygon yok."
   })
 }
 
@@ -100,7 +100,7 @@ $queueCsvEsc = HtmlEsc $QueueCsv.FullName
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <title>TerraYield 2/4 Satış Parsel Geometry Review</title>
+  <title>TerraYield 2/4 Satis Parsel Geometry Review</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f8fafc; color: #111827; }
     .panel { border: 2px solid #2563eb; background: #eff6ff; padding: 14px; border-radius: 10px; margin-bottom: 14px; }
@@ -113,20 +113,20 @@ $queueCsvEsc = HtmlEsc $QueueCsv.FullName
 </head>
 <body>
 <div class="panel">
-  <h1>AAYS / TerraYield 2/4 Satış Parsel Geometry Review</h1>
+  <h1>AAYS / TerraYield 2/4 Satis Parsel Geometry Review</h1>
   <p><b>Toplam queue:</b> $($Rows.Count)</p>
-  <p><b>Tabloda gösterilen:</b> $($Results.Count)</p>
-  <p><b>Durum:</b> Tablo gerçek F repo kaynak CSV’den geri yüklendi. Source/evidence review sonraki batchte yapılacak.</p>
+  <p><b>Tabloda gosterilen:</b> $($Results.Count)</p>
+  <p><b>Durum:</b> Tablo F repo kaynak CSVden geri yuklendi. Source/evidence review sonraki batchte yapilacak.</p>
   <p><b>Kaynak CSV:</b> $queueCsvEsc</p>
   <p><b>Final:</b> false</p>
 </div>
 <div class="warn">
-  Sahte polygon yok. Bu aşama tablo restorasyonudur; parsel sınırı yükseltmesi için source URL/evidence/resmi boundary kanıtı gerekir.
+  Sahte polygon yok. Bu asama tablo restorasyonudur; parsel siniri yukseltmesi icin source URL/evidence/resmi boundary kaniti gerekir.
 </div>
 <table>
 <thead>
 <tr>
-<th>#</th><th>Site</th><th>Listing / Source URL</th><th>Başlık / Adres</th><th>Fiyat</th><th>Alan</th><th>Konum</th><th>Centroid</th><th>BBox</th><th>Source status</th><th>Evidence path</th><th>Karar</th><th>Gerekçe</th>
+<th>#</th><th>Site</th><th>Listing / Source URL</th><th>Baslik / Adres</th><th>Fiyat</th><th>Alan</th><th>Konum</th><th>Centroid</th><th>BBox</th><th>Source status</th><th>Evidence path</th><th>Karar</th><th>Gerekce</th>
 </tr>
 </thead>
 <tbody>
