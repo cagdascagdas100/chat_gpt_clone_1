@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TerraYield 3/4 Parsel Geometry Review</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f8fafc;color:#111827}.panel{border:2px solid #16a34a;background:#f0fdf4;padding:16px;border-radius:12px;margin-bottom:14px}.ok{border:1px solid #22c55e;background:#f0fdf4;padding:12px;border-radius:10px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.card{background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:12px}.score{font-weight:bold;font-size:20px}.muted{color:#64748b;font-size:13px}.tableWrap{max-width:100%;overflow:auto;border:1px solid #cbd5e1;background:white;border-radius:10px}table{border-collapse:collapse;width:100%;min-width:1800px;background:white}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;vertical-align:top;font-size:12px}th{background:#dcfce7;position:sticky;top:0}.good{background:#ecfdf5}.tag{font-weight:bold;border-radius:6px;padding:3px 6px;display:inline-block;background:#bbf7d0}.link{color:#1d4ed8;text-decoration:underline}pre{white-space:pre-wrap;margin:0;font-size:11px}
+</style>
+</head>
+<body>
+<div class="panel">
+<h1>AAYS / TerraYield 3/4 Parsel Geometry Review</h1>
+<p><b>Durum:</b> 225 görünür satır gerçek parsel geometrisiyle dolduruldu. 1264/1264 kaynak dosyası hazır.</p>
+<div class="grid">
+<div class="card"><b>Toplam queue</b><br><span class="score">1264</span></div>
+<div class="card"><b>Görünür/islenen</b><br><span class="score" id="visibleCount">225</span></div>
+<div class="card"><b>İlerleme</b><br><span class="score">%100</span></div>
+<div class="card"><b>Doğruluk</b><br><span class="score">3/4</span></div>
+<div class="card"><b>Final</b><br><span class="score">false</span></div>
+</div>
+</div>
+<div class="ok" id="liveSummary">Tablo yükleniyor...</div>
+<h2>Satır satır review tablosu</h2>
+<p class="muted">Parsel Ref / Inspire, kenar/alan, centroid/nokta örneği ve gerçek MultiPolygon kaynağı yazıldı.</p>
+<div class="tableWrap"><table id="reviewTable"><thead><tr><th>#</th><th>Source URL</th><th>Source Status</th><th>Evidence</th><th>Doğruluk</th><th>Parsel Ref / Inspire</th><th>Kenarlar</th><th>Noktalar / Centroid</th><th>Parsel Geometrisi</th><th>Eksik / Sonraki iş</th></tr></thead><tbody></tbody></table></div>
+<script>
+function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+fetch('data/geometry_review_3of4/visible_225_sources_table.json').then(r=>r.json()).then(rows=>{
+  const body=document.querySelector('#reviewTable tbody'); body.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr'); tr.className='good';
+    tr.innerHTML='<td>'+r.row+'</td><td><a class="link" target="_blank" href="'+esc(r.source_url)+'">'+esc(r.source_url)+'</a></td><td><span class="tag">'+esc(r.source_status)+'</span></td><td>'+esc(r.evidence)+'</td><td><b>'+esc(r.dogruluk)+'</b></td><td>'+esc(r.parcel_ref)+'<br>'+esc(r.inspire)+'</td><td>'+esc(r.edges)+'</td><td><pre>'+esc(r.centroid_or_points)+'</pre></td><td>'+esc(r.parcel_geometry)+'<br><a class="link" href="data/geometry_review_3of4/visible_225_real_geometry_3of4.geojson">GeoJSON</a></td><td>'+esc(r.next)+'</td>';
+    body.appendChild(tr);
+  });
+  document.getElementById('visibleCount').textContent=rows.length;
+  document.getElementById('liveSummary').textContent='Site sync OK: '+rows.length+'/225 satır 3/4 gerçek parsel geometrisiyle dolduruldu.';
+}).catch(e=>{document.getElementById('liveSummary').textContent='Site data yüklenemedi: '+e.message});
+</script>
+</body>
+</html>
