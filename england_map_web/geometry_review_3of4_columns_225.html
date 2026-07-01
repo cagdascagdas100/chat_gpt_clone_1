@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>AAYS 3/4 Parsel Geometri Kolonlari</title>
+<style>
+body{font-family:Arial;margin:18px;background:#f8fafc;color:#111827} .summary{border:1px solid #22c55e;background:#ecfdf5;padding:12px;border-radius:10px;margin-bottom:12px} table{border-collapse:collapse;width:100%;font-size:12px;background:white} th,td{border:1px solid #cbd5e1;padding:6px;vertical-align:top} th{background:#dcfce7;position:sticky;top:0}.good{background:#f0fdf4}.cellbox{max-height:130px;overflow:auto;white-space:pre-wrap}.geom svg{width:240px;height:150px;border:1px solid #94a3b8;background:#fff;border-radius:8px}.score{font-weight:bold;color:#166534}
+</style>
+</head>
+<body>
+<h1>AAYS / 225 Satır 3/4 Parsel Geometri Kolonları</h1>
+<div class="summary" id="status">Veri yükleniyor...</div>
+<table><thead><tr><th>#</th><th>Source URL</th><th>Evidence</th><th>Doğruluk</th><th>Parsel Ref / Inspire</th><th>Kenarlar</th><th>Noktalar</th><th>Parsel Geometrisi</th><th>Sonraki iş</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const DATA='data/geometry_review_3of4/visible_225_sources_table.json';
+const esc=v=>String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+function pts(row){try{return JSON.parse(row.centroid_or_points).map(x=>Array.isArray(x.value)?x.value:x).filter(x=>Array.isArray(x)&&x.length>=2)}catch(e){return []}}
+function dist(a,b){const dx=(a[0]-b[0])*111320*Math.cos((a[1]+b[1])*0.008726646);const dy=(a[1]-b[1])*110540;return Math.sqrt(dx*dx+dy*dy)}
+function edgeText(p){let out=[];for(let i=0;i<Math.min(8,p.length-1);i++){out.push(String.fromCharCode(65+i)+'='+dist(p[i],p[i+1]).toFixed(2)+' m')}return out.join('\n')}
+function pointText(p){return p.slice(0,12).map((x,i)=>'Nokta_'+(i+1)+'('+x[0]+','+x[1]+')').join('\n')}
+function svg(p){if(p.length<3)return 'geometri noktası eksik';let xs=p.map(x=>x[0]),ys=p.map(x=>x[1]),minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);let pp=p.map(x=>{let X=10+(x[0]-minx)/(maxx-minx||1)*220;let Y=140-(x[1]-miny)/(maxy-miny||1)*120;return X.toFixed(1)+','+Y.toFixed(1)}).join(' ');return '<svg viewBox="0 0 240 150"><polygon points="'+pp+'" fill="#dcfce7" stroke="#166534" stroke-width="3"/><text x="10" y="145" font-size="10">real parcel polygon sample</text></svg>'}
+fetch(DATA).then(r=>r.json()).then(data=>{document.getElementById('status').textContent='OK: '+data.length+'/225 satır kolon formatına çevrildi. 1264 için aynı format uygulanacak.';document.getElementById('rows').innerHTML=data.map(r=>{let p=pts(r);return '<tr class="good"><td>'+r.row+'</td><td>'+esc(r.source_url)+'</td><td>'+esc(r.evidence)+'</td><td class="score">'+esc(r.dogruluk)+'</td><td>'+esc(r.parcel_ref)+'<br>'+esc(r.inspire)+'</td><td><div class="cellbox">'+esc(edgeText(p)||r.edges)+'</div></td><td><div class="cellbox">'+esc(pointText(p))+'</div></td><td class="geom">'+svg(p)+'<br>'+esc(r.parcel_geometry)+'</td><td>'+esc(r.next)+'</td></tr>'}).join('')}).catch(e=>{document.getElementById('status').textContent='Hata: '+e.message});
+</script>
+</body></html>
