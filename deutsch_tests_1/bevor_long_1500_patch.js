@@ -10,5 +10,14 @@ if(!window.AAYS_MASCHINEN_VORTEILE_LOADER_OK){
   window.AAYS_MASCHINEN_VORTEILE_LOADER_OK=true;
   document.write('<script src="data_bevor_maschinen_vorteile.js?v=1"><\/script>');
 }
+if(!window.AAYS_MASCHINEN_NACHTEILE_LOADER_OK){
+  window.AAYS_MASCHINEN_NACHTEILE_LOADER_OK=true;
+  document.write('<script src="data_bevor_maschinen_nachteile.js?v=1"><\/script>');
+}
+if(!window.AAYS_MASCHINEN_NACHTEILE_EXPAND_LOADER_OK){
+  window.AAYS_MASCHINEN_NACHTEILE_EXPAND_LOADER_OK=true;
+  document.write('<script src="data_bevor_maschinen_nachteile_expand.js?v=1"><\/script>');
+}
 window.AAYS_MASCHINEN_VORTEILE_BOOTSTRAP_OK=true;
+window.AAYS_MASCHINEN_NACHTEILE_BOOTSTRAP_OK=true;
 })();
