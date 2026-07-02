@@ -30,7 +30,16 @@ if(!window.AAYS_MASCHINEN_NACHTEILE_EXPAND_LOADER_OK){
   window.AAYS_MASCHINEN_NACHTEILE_EXPAND_LOADER_OK=true;
   document.write('<script src="data_bevor_maschinen_nachteile_expand.js?v=1"><\/script>');
 }
+if(!window.AAYS_KI_ARBEITSPLATZ_VORTEILE_LOADER_OK){
+  window.AAYS_KI_ARBEITSPLATZ_VORTEILE_LOADER_OK=true;
+  document.write('<script src="data_bevor_ki_arbeitsplatz_vorteile.js?v=1"><\/script>');
+}
+if(!window.AAYS_KI_ARBEITSPLATZ_VORTEILE_EXPAND_LOADER_OK){
+  window.AAYS_KI_ARBEITSPLATZ_VORTEILE_EXPAND_LOADER_OK=true;
+  document.write('<script src="data_bevor_ki_arbeitsplatz_vorteile_expand.js?v=1"><\/script>');
+}
 window.AAYS_MASCHINEN_VORTEILE_BOOTSTRAP_OK=true;
 window.AAYS_MASCHINEN_NACHTEILE_BOOTSTRAP_OK=true;
+window.AAYS_KI_ARBEITSPLATZ_VORTEILE_BOOTSTRAP_OK=true;
 window.AAYS_HOME_HEADINGS_BLACK_OK=true;
 })();
