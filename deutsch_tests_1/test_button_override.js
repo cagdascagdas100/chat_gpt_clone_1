@@ -1,6 +1,6 @@
 /* C1/C2 Erörterung-Testsystem: mevcut ana menüyü bozmadan "Test" başlığını ekler. */
 (function(){
-  const TEST_URL = './erorterung_tests.html?v=stable1';
+  const TEST_URL = './erorterung_tests.html?v=erorterung-8a3d0618c';
   const TITLE_BY_ID = {
     catGrammar: 'Genel Grammar',
     catWrite: 'Schreiben Fehler',
