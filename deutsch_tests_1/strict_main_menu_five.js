@@ -1,36 +1,46 @@
-/* Strict main menu black heading bootstrap: keeps previous strict menu/source locks and forces visible card headings to black. */
+/* Strict main menu final bootstrap: keeps Artikel quiz card, black headings, and hides the unwanted Bevor topic rows shown on the main page. */
 (function(){
   'use strict';
-  if(!window.AAYS_STRICT_MAIN_MENU_PRE_BLACK_LOADER_OK){
-    window.AAYS_STRICT_MAIN_MENU_PRE_BLACK_LOADER_OK=true;
-    document.write('<script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/e8d0737003a0f459fea7a8df8e207fb8d4e9e6bd/deutsch_tests_1/strict_main_menu_five.js?v=preBlack"><\/script>');
+  if(!window.AAYS_STRICT_MAIN_MENU_PRE_HIDE_LOADER_OK){
+    window.AAYS_STRICT_MAIN_MENU_PRE_HIDE_LOADER_OK=true;
+    document.write('<script src="https://rawcdn.githack.com/cagdascagdas100/chat_gpt_clone_1/c84db34e60a1aa5df2c527bfcad858496e2a22e6/deutsch_tests_1/strict_main_menu_five.js?v=preHide"><\/script>');
   }
+  var HIDE_TITLES=[
+    'Individualität – Nachteile',
+    'Lebenslanges Lernen – Nachteile',
+    'Werbung – Nachteile · C1/C2 Nachteilsabsatz',
+    'Werbung – Nachteile · Medien-Einfluss'
+  ];
   function addStyle(){
-    var st=document.getElementById('aays-main-card-black-final-style');
+    var st=document.getElementById('aays-main-menu-hide-photo-topic-rows-style');
     if(!st){
       st=document.createElement('style');
-      st.id='aays-main-card-black-final-style';
-      st.textContent='#testList #strictMainGrid .opt,#testList #strictMainGrid .opt b,#testList #strictMainGrid .opt strong,#testList #catTest b,#testList #catGrammar b,#testList #catWrite b,#testList #catNVV b,#testList #catBefore b{color:#111827!important;text-shadow:none!important;opacity:1!important;}#testList #strictMainGrid .opt .muted,#testList #catTest .muted,#testList #catGrammar .muted,#testList #catWrite .muted,#testList #catNVV .muted,#testList #catBefore .muted{color:#4b5563!important;text-shadow:none!important;opacity:1!important;}';
+      st.id='aays-main-menu-hide-photo-topic-rows-style';
+      st.textContent='[data-aays-main-photo-row-hidden="1"]{display:none!important;}#artikelMenuCard,#artikelMenuCard *{display:revert-layer;}';
       (document.head||document.documentElement).appendChild(st);
     }
   }
-  function forceBlack(){
-    addStyle();
-    ['catTest','catGrammar','catWrite','catNVV','catBefore'].forEach(function(id){
-      var n=document.getElementById(id);
-      if(!n)return;
-      try{n.style.setProperty('color','#111827','important');n.style.setProperty('text-shadow','none','important');n.style.setProperty('opacity','1','important');}catch(e){}
-      Array.prototype.slice.call(n.querySelectorAll('b,strong')).forEach(function(x){
-        try{x.style.setProperty('color','#111827','important');x.style.setProperty('text-shadow','none','important');x.style.setProperty('opacity','1','important');}catch(e){}
-      });
-      Array.prototype.slice.call(n.querySelectorAll('.muted,span')).forEach(function(x){
-        try{x.style.setProperty('color','#4b5563','important');x.style.setProperty('text-shadow','none','important');x.style.setProperty('opacity','1','important');}catch(e){}
-      });
-    });
-    window.AAYS_MAIN_MENU_HEADINGS_BLACK_FORCED_OK=true;
+  function shouldHide(text){
+    text=String(text||'').replace(/\s+/g,' ').trim();
+    return HIDE_TITLES.some(function(t){return text.indexOf(t)>-1;});
   }
-  addStyle();
-  document.addEventListener('DOMContentLoaded',function(){forceBlack();[50,150,300,700,1200,2000].forEach(function(ms){setTimeout(forceBlack,ms);});});
-  if(document.readyState!=='loading'){forceBlack();[50,150,300,700,1200,2000].forEach(function(ms){setTimeout(forceBlack,ms);});}
-  setInterval(forceBlack,1200);
+  function hidePhotoRows(){
+    addStyle();
+    var list=document.getElementById('testList');
+    if(!list)return;
+    Array.prototype.slice.call(list.querySelectorAll('.opt,label,button,a,div')).forEach(function(n){
+      if(!n || n.id==='artikelMenuCard' || (n.closest&&n.closest('#artikelMenuCard')))return;
+      if(n.id==='catTest'||n.id==='catGrammar'||n.id==='catWrite'||n.id==='catNVV'||n.id==='catBefore')return;
+      var txt=n.textContent||'';
+      if(shouldHide(txt)){
+        n.setAttribute('data-aays-main-photo-row-hidden','1');
+        try{n.style.setProperty('display','none','important');}catch(e){}
+      }
+    });
+    window.AAYS_MAIN_PHOTO_BEVOR_ROWS_HIDDEN_OK=true;
+    window.AAYS_ARTIKEL_CARD_PRESERVE_OK=!!document.getElementById('artikelMenuCard') || window.AAYS_ARTIKEL_QUIZ_MENU_OK===true;
+  }
+  document.addEventListener('DOMContentLoaded',function(){hidePhotoRows();[50,150,300,700,1200,2000].forEach(function(ms){setTimeout(hidePhotoRows,ms);});});
+  if(document.readyState!=='loading'){hidePhotoRows();[50,150,300,700,1200,2000].forEach(function(ms){setTimeout(hidePhotoRows,ms);});}
+  setInterval(hidePhotoRows,1000);
 })();
