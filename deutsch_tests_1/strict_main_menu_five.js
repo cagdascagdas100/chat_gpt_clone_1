@@ -89,3 +89,20 @@
   window.AAYS_NO_FLICKER_STRICT_MENU_OK=true;
   window.AAYS_ARTIKEL_CARD_PRESERVED_BY_STABLE_MENU_OK=true;
 })();
+
+/* Loader for KI Arbeitsplatz Nachteile t53: local files only, keeps the fixed URL unchanged. */
+(function(){
+  'use strict';
+  function loadLocal(src,flag){
+    if(window[flag])return;
+    window[flag]=true;
+    var s=document.createElement('script');
+    s.src=src;
+    s.async=false;
+    s.onload=function(){try{if(window.__strictMainMenuActive===false&&typeof window.renderTests==='function')window.renderTests('Bevor Schreiben');}catch(e){}};
+    (document.head||document.documentElement).appendChild(s);
+  }
+  loadLocal('data_bevor_ki_arbeitsplatz_nachteile.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_STRICT_LOADER_OK');
+  loadLocal('data_bevor_ki_arbeitsplatz_nachteile_expand.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_EXPAND_STRICT_LOADER_OK');
+  window.AAYS_KI_ARBEITSPLATZ_NACHTEILE_STRICT_BOOTSTRAP_OK=true;
+})();
