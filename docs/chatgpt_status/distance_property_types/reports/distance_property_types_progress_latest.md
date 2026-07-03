@@ -2,7 +2,7 @@
 
 page_key=distance_property_types
 task_id=distance_property_types_runner_pickup_20260703_0918
-run_finished_at=2026-07-03T09:30:00Z
+run_finished_at=2026-07-03T09:40:00Z
 layer_name=Distance to Nearby Property Types
 status=SINGLE_RUNNER_PICKUP_REQUESTED_NO_OUTPUT_YET
 completion_percent=16
@@ -13,16 +13,17 @@ blocker_issue=19
 single_runner_pickup_requested=true
 current_task=docs/chatgpt_status/distance_property_types/current_task.json
 pickup_request=docs/chatgpt_status/distance_property_types/runner_control/PICKUP_REQUEST_20260703_0918.md
-latest_continuation_check=docs/chatgpt_status/distance_property_types/reports/continuation_check_20260703_0930.md
+latest_continuation_check=docs/chatgpt_status/distance_property_types/reports/continuation_check_20260703_0940.md
 
-## Latest continue check
+## Latest runner-open request check
 
-- continuation_state read successfully.
-- current_task read successfully.
-- progress_latest read successfully.
+- current_task.json read successfully.
+- progress_latest.md read successfully.
+- Issue #19 read and commented.
 - No committed runner output found for distance_property_types.
-- No committed RUNNER_NOT_RUNNING output found for distance_property_types.
 - No committed evidence batch found for distance_property_types.
+- No committed RUNNER_NOT_RUNNING output found for distance_property_types.
+- Repo-side pickup remains active.
 - No fake parcel/property rows were generated.
 
 ## Counters
