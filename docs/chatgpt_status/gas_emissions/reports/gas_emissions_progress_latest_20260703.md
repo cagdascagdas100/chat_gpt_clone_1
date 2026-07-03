@@ -1,22 +1,26 @@
-# Gas Emissions Progress Latest
+﻿# Gas Emissions Progress Latest
 
-updated_at=2026-07-03T14:20:00Z
-layer=Gas Emissions
-program_output=Gas Emission Level
-runner_status=queued_for_local_single_runner
-final_ready=false
-verification_score_after=0/4
+updated_at=2026-07-03T17:39:29Z
+final_ready=False
+verification_score_after=1/4
+blocker_count=2
+source_row_gate_passed=False
+ui_token_gate_passed=True
+browser_smoke_passed=False
 
-## Prepared
+## Blockers
+[
+    {
+        "code":  "missing_verified_source_backed_rows",
+        "severity":  "blocking",
+        "detail":  "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
+    },
+    {
+        "code":  "browser_smoke_failed",
+        "severity":  "blocking",
+        "detail":  "Browser smoke exists but did not pass."
+    }
+]
 
-- Current task JSON was converted into a local single-runner executable task.
-- Site-visible JSON was added with final_ready=false.
-- Fixture CSV remains placeholder-only until real source-backed parcel rows are added.
-- No fake parcel data was written.
-
-## Blocking Gates
-
-1. Replace the fixture CSV placeholder row with real source-backed parcel Gas Emissions rows.
-2. Confirm app.js includes Gas Emissions layer binding, green-to-red emission_percent styling, legend, and popup/right-panel fields.
-3. Run the local single runner bridge from the AAYS worktree.
-4. Pass browser smoke on the local 8020 matrix site before setting final_ready=true.
+## Next Action
+Resolve blockers and rerun the same single bridge.

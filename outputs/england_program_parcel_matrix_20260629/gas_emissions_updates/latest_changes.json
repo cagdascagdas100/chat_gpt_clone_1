@@ -1,54 +1,33 @@
-{
-  "layer": "Gas Emissions",
-  "program_output": "Gas Emission Level",
-  "status": "QUEUED_FOR_SINGLE_RUNNER_LOCAL_EXECUTION",
-  "fake_data": false,
-  "db_write": false,
-  "migration_apply": false,
-  "prod_deploy": false,
-  "last_updated": "2026-07-03T14:20:00Z",
-  "runner_status": "queued_not_yet_executed_here",
-  "verification_score_before": "0/4",
-  "verification_score_after": "0/4",
-  "final_ready": false,
-  "manual_review_required": true,
-  "summary": {
-    "changed_count": 0,
-    "verified_count": 0,
-    "manual_review_count": 1,
-    "accuracy_ge_3_count": 0,
-    "browser_smoke_passed": false,
-    "ui_token_gate_passed": false,
-    "source_row_gate_passed": false,
-    "final_ready": false
-  },
-  "required_fields": [
-    "emission_percent",
-    "level",
-    "risk_color",
-    "confidence",
-    "source",
-    "source_date",
-    "matching_method",
-    "calculation_explanation"
-  ],
-  "changes": [],
-  "blockers": [
-    {
-      "code": "missing_verified_source_backed_rows",
-      "severity": "blocking",
-      "detail": "Fixture CSV must be replaced with real source-backed Gas Emissions parcel rows."
-    },
-    {
-      "code": "missing_or_unverified_runtime_ui_binding",
-      "severity": "blocking",
-      "detail": "Runner must verify app.js binds Gas Emissions to air.png/toggle, green-to-red emission_percent styling, legend, and required popup/right-panel fields."
-    },
-    {
-      "code": "missing_local_8020_browser_smoke",
-      "severity": "blocking",
-      "detail": "Browser smoke against the local 8020 matrix site is still required on the user machine."
-    }
-  ],
-  "next_action": "Local single runner must process real CSV rows, verify UI binding and run 8020 browser smoke. Keep final_ready=false until all gates pass."
+﻿{
+    "layer":  "Gas Emissions",
+    "program_output":  "Gas Emission Level",
+    "status":  "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
+    "fake_data":  false,
+    "db_write":  false,
+    "migration_apply":  false,
+    "prod_deploy":  false,
+    "last_updated":  "2026-07-03T17:39:29Z",
+    "runner_status":  "single_runner_bridge_completed",
+    "source_row_gate_passed":  false,
+    "ui_token_gate_passed":  true,
+    "browser_smoke_passed":  false,
+    "verification_score_after":  "1/4",
+    "final_ready":  false,
+    "manual_review_required":  true,
+    "changes":  [
+
+                ],
+    "blockers":  [
+                     {
+                         "code":  "missing_verified_source_backed_rows",
+                         "severity":  "blocking",
+                         "detail":  "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
+                     },
+                     {
+                         "code":  "browser_smoke_failed",
+                         "severity":  "blocking",
+                         "detail":  "Browser smoke exists but did not pass."
+                     }
+                 ],
+    "next_action":  "Resolve blockers and rerun the same single bridge."
 }
