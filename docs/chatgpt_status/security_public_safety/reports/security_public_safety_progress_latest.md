@@ -3,8 +3,8 @@
 page_key=security_public_safety
 layer=Safety / Security
 program_output=Security Level percent
-status=RUNNER_AUTO_PICKUP_NOT_ESTABLISHED_LOCAL_REF_BROKEN
-last_updated=2026-07-03T23:30:00+03:00
+status=CLEAN_CLONE_OUTPUT_PROOF_STILL_MISSING
+last_updated=2026-07-04T00:12:00+03:00
 active_task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion
 active_continuation_bundle=terrayield-046-continuation-bundle-20260703-1438
 final_ready=false
@@ -16,11 +16,10 @@ prod_deploy=false
 
 ## Current finding
 
-- GitHub contains the Security 046 probe script.
-- Local F repo did not fetch/reset to the GitHub main state.
-- Local Git reports a broken `refs/remotes/origin/main` reference.
-- Local script path is missing in F repo, so the probe script did not run.
-- The five expected probe outputs are not visible in GitHub.
+- Latest local log snippet shows a long file-copy or backup operation, but not the final success markers.
+- GitHub search still does not show the five Security 046 probe outputs.
+- The automatic `devam et` to runner execution loop is not proven yet.
+- Next proof required: clean active F repo, script present, 046A-046E outputs created, and push succeeds.
 
 ## Expected runner outputs still missing
 
@@ -32,4 +31,4 @@ prod_deploy=false
 
 ## Conclusion
 
-The repo-side task/script/pointer files exist, but an automatic `devam et` -> runner execution loop is not proven yet. The next fix must repair or recreate the active F repo checkout so it can pull GitHub main and run the probe script.
+Continue with clean clone proof. Do not mark final_ready true.
