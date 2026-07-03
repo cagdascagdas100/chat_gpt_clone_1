@@ -1,5 +1,5 @@
 ﻿PAGE_KEY=gas_emissions
-TASK_ID=052_gas_emissions_runner_contract_bridge_20260624
+TASK_ID=gas_emissions_runner_contract_bridge_20260624
 STATUS=BLOCKED_MAIN_BRANCH_PROOF
 completion_percent=89
 final_ready=false
