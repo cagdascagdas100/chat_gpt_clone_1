@@ -1,34 +1,36 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_continue_20260703_2055
-run_finished_at=2026-07-03T20:55:00
-status=RUNNER_PROCESS_ACTIVE_OUTPUT_NOT_PUBLISHED_YET
-completion_percent=21
+task_id=distance_property_types_missing_script_20260703_2110
+run_finished_at=2026-07-03T21:10:00
+status=BRIDGE_TASKS_FAILED_MISSING_SCRIPT
+completion_percent=22
 final_ready=false
 chatgpt_continue_mode=true
 continue_command=devam et
-latest_continuation_check=docs/chatgpt_status/distance_property_types/reports/continuation_check_20260703_2055.md
+latest_bridge_failure_report=docs/chatgpt_status/distance_property_types/reports/bridge_failed_missing_script_20260703_2110.md
 latest_runner_fix_report=docs/chatgpt_status/distance_property_types/runner_outputs/fix_runner_git_sync_20260703_203814.report.json
 
 ## Current verified state
 
-- Local git sync fix report exists in GitHub.
-- Queue files were copied to the bridge pending folder.
-- User provided process proof for portable_queue_runner.ps1.
-- Runner process is active, so a second runner must not be started.
-- Expected distance_property_types output reports are not published yet.
+- Portable queue runner is active.
+- Queue files were copied to bridge pending.
+- Bridge processed the tasks and moved them to failed.
+- Failure class is missing script / unresolved executable script.
+- Do not start a second runner.
 
-## Missing expected output reports
+## Failed distance_property_types task family
 
-- worker probe report
-- evidence discovery report
-- site check report
-- output collector report
+- bootstrap
+- worker probe
+- evidence discovery
+- site check
+- output collector
+- blocker narrowdown
 
 ## Narrowed blocker
 
-runner_process_active_but_no_task_output_published_yet
+bridge_runner_requires_task_script_path_or_existing_script
 
 ## Counters
 
@@ -49,4 +51,4 @@ prod_deploy=false
 
 ## Next action
 
-Check the portable queue runner window for errors or confirm whether files appear under the bridge result/output folder. Then say `devam et` in this page.
+Create or map the executable local script expected by the failed task files, then requeue only distance_property_types tasks. Keep final_ready=false until real output is produced.
