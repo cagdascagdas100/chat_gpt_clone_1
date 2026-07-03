@@ -3,9 +3,9 @@
 page_key=distance_property_types
 task_id=distance_property_types_runner_pickup_20260703_0918
 run_started_at=2026-07-03T08:50:00Z
-run_finished_at=2026-07-03T09:18:00Z
+run_finished_at=2026-07-03T09:25:00Z
 layer_name=Distance to Nearby Property Types
-status=SINGLE_RUNNER_PICKUP_REQUESTED
+status=SINGLE_RUNNER_PICKUP_REQUESTED_NO_OUTPUT_YET
 completion_percent=16
 final_ready=false
 chatgpt_continue_mode=true
@@ -14,6 +14,7 @@ blocker_issue=19
 single_runner_pickup_requested=true
 current_task=docs/chatgpt_status/distance_property_types/current_task.json
 pickup_request=docs/chatgpt_status/distance_property_types/runner_control/PICKUP_REQUEST_20260703_0918.md
+latest_continuation_check=docs/chatgpt_status/distance_property_types/reports/continuation_check_20260703_0925.md
 
 ## Scope applied in this ChatGPT page
 
@@ -22,6 +23,7 @@ pickup_request=docs/chatgpt_status/distance_property_types/runner_control/PICKUP
 - Handoff docs committed for data contract, accuracy scale, runner workflow, site filter requirements, and manual review rules.
 - ChatGPT continuation state committed for future `devam et` commands in this page.
 - Current task and pickup request committed for single shared runner pickup.
+- Continuation check committed after user re-requested runner pickup.
 - Accuracy target preserved: accuracy_score_4 >= 3.0.
 - No fake parcel/property rows were generated.
 - changed_in_latest_run=true filter contract preserved for site integration.
@@ -78,6 +80,7 @@ prod_deploy=false
 - ChatGPT continuation state created so future `devam et` messages can resume from GitHub state.
 - Current task created for single runner pickup.
 - Pickup request created for the shared worker flow.
+- Continuation check report created for the latest user runner pickup request.
 
 ## Continue behavior
 
@@ -89,4 +92,4 @@ next_batch=Existing single shared runner should pick up the distance_property_ty
 
 ## Next single action
 
-next_single_action=Wait for real committed runner output or evidence batch in the repo, then say `devam et` in this page. ChatGPT will read GitHub state and continue from there.
+next_single_action=Commit a real runner output or evidence batch to the repo, then say `devam et` in this page. ChatGPT will read GitHub state and continue from there.
