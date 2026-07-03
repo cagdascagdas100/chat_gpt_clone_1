@@ -3,8 +3,8 @@
 page_key=security_public_safety
 layer=Safety / Security
 program_output=Security Level percent
-status=CLEAN_ACTIVE_REPO_OK_SCRIPT_FOUND_OUTPUT_ROOT_FIX_REQUIRED
-last_updated=2026-07-04T01:18:00+03:00
+status=PROBE_OUTPUTS_PUSHED_AUTO_PICKUP_SMOKE_QUEUED
+last_updated=2026-07-04T01:28:00+03:00
 active_task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion
 active_continuation_bundle=terrayield-046-continuation-bundle-20260703-1438
 final_ready=false
@@ -17,20 +17,19 @@ prod_deploy=false
 ## Current finding
 
 - Clean active clone succeeded at `F:\chatgpt\chat_gpt_clone_1_main_CLEAN_ACTIVE`.
-- Remote is `https://github.com/cagdascagdas100/chat_gpt_clone_1.git`.
-- Security 046 probe script is present in the clean active clone.
-- The script executed but the expected 046A-046E output files were not found under the clean active repo.
-- The probe script uses `$env:AAYS_REPO_ROOT` and falls back to the old F repo path when that environment variable is not set.
-- Next proof required: run the script again with `$env:AAYS_REPO_ROOT` explicitly set to the clean active repo, verify 046A-046E outputs, commit, and push.
+- Security 046 probe script was run with `$env:AAYS_REPO_ROOT` set to the clean active repo.
+- The five Security 046 probe outputs were created locally and pushed to GitHub main in commit `c93cc906f`.
+- GitHub now contains readable 046A-046E probe outputs.
+- A separate auto-pickup smoke task was queued at `docs/chatgpt_status/aays1/queue/security046_auto_pickup_smoke_20260704_0128.task.json`.
 
-## Expected runner outputs still missing on GitHub
+## Probe result summary
 
-- `docs/chatgpt_status/security_public_safety/runner_outputs/046A_git_sync_and_runner_state_probe.json`
-- `docs/chatgpt_status/security_public_safety/runner_outputs/046B_site_and_panel_probe.json`
-- `docs/chatgpt_status/security_public_safety/runner_outputs/046C_security_data_contract_probe.json`
-- `docs/chatgpt_status/security_public_safety/runner_outputs/046D_official_source_discovery_probe.json`
-- `docs/chatgpt_status/security_public_safety/runner_outputs/046E_blocker_classifier_and_next_queue.json`
+- 046A: git/queue probe ok; queue exists; final_ready=false.
+- 046B: site and matrix probes returned HTTP 200; final_ready=false.
+- 046C: blocked because verified security CSV/GeoJSON/manifest are missing.
+- 046D: no source rows created; no fake/person-level data.
+- 046E: blockers remain: missing verified security parcel outputs and browser smoke evidence.
 
 ## Conclusion
 
-The clean active repo is now usable, but the runner/probe output proof is still missing. Do not mark final_ready true.
+Manual clean-active probe/output/push proof is complete. The remaining proof for the phrase `devam et -> runner ile devam` is whether the existing single shared runner automatically picks up the smoke task and writes a new runner status/output. Do not mark final_ready true.
