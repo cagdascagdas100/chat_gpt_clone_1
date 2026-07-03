@@ -1,0 +1,37 @@
+AAYS / TerraYield 2/4 Parsel Geometri İnceleme Görevi
+
+Karar mercii Codex'tir. ChatGPT bu pakette yalnızca 2/4 doğruluklu candidate/footprint geometrileri kanıtla inceleyecek.
+
+Girdi dosyaları:
+- TerraYield_2OF4_Geometry_Review_Queue_20260629.csv
+- TerraYield_2OF4_Geometry_Review_Queue_20260629.json
+- TerraYield_2OF4_Geometry_Review_Updates_Template_20260629.csv
+
+Toplam incelenecek kayıt: 1264
+
+Kesin kurallar:
+1. Sahte geometri üretme.
+2. Listing/source sayfasında veya resmi kaynakta görünmeyen parsel sınırını resmi sınır gibi yazma.
+3. Sadece görsel tahmin ile 4/4 verme.
+4. 3/4 için kaynak URL, ekran görüntüsü veya resmi/pipeline-matched parcel boundary kanıtı zorunlu.
+5. 4/4 için insan/source-page doğrulaması ve kayıtlı evidence zorunlu.
+6. Koordinat, bbox, centroid ve mevcut candidate geometri sadece yardımcı kanıttır; tek başına resmi parsel geometrisi değildir.
+7. Her satır için sonucu Updates_Template formatına yaz.
+
+Yapılacak işlem:
+1. Queue dosyasındaki her satır için listing_url ve kaynak alanlarını aç.
+2. Görünür plan, satış çizimi, resmi harita, tapu/parsel dokümanı, belediye/planlama dokümanı veya güvenilir harita kanıtı var mı kontrol et.
+3. Gerekirse ekran görüntüsü kaydet ve source_file_or_screenshot_path alanına yaz.
+4. Candidate centroid/bbox ile görülen kaynak sınırını karşılaştır.
+5. Güvenilir sınır varsa corrected_polygon_geojson alanına gerçek polygon/multipolygon GeoJSON yaz.
+6. Güvenilir sınır yoksa do_not_upgrade_reason doldur ve kayıt 2/4 kalsın.
+
+Çıktı:
+- Doldurulmuş TerraYield_2OF4_Geometry_Review_Updates_Template_20260629.csv
+- Review summary raporu: kaç kayıt 3/4'e çıktı, kaç kayıt 4/4'e çıktı, kaç kayıt 2/4 kaldı.
+
+Güvenlik:
+- DB write yok.
+- Migration/deploy yok.
+- Secret yazdırma yok.
+- Fake polygon yok.
