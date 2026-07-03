@@ -1,34 +1,16 @@
 {
   "id": "aays1-087-photo-ai-boundary-review",
-  "title": "AAYS photo AI boundary review integration",
   "page_key": "aays1",
-  "status": "runner_pickup_blocked_waiting_export_output",
+  "status": "runner_recovered_assets_missing",
   "total_rows": 1264,
-  "target_accuracy": "3.5/4 when visible photo boundary agrees with existing polygon",
-  "first_batch": {
-    "rows": [1, 2, 3, 4, 5, 6],
-    "candidate_photo_urls": "6/6",
-    "queued_tasks": ["089_photo_download_first6", "090_polygon_svg", "091_vision_compare_first6", "096_ai_boundary_detection_first6", "097_ai_boundary_site_update_check", "098_ai_boundary_next20_manifest", "099_ai_boundary_visual_review_packet", "100_export_ai_boundary_outputs_to_repo"]
+  "first_batch_rows": [1, 2, 3, 4, 5, 6],
+  "candidate_photo_urls": "6/6",
+  "latest_export": "docs/chatgpt_status/aays1/runner_outputs/ai_boundary_review/ai_boundary_export_latest.json",
+  "asset_counts": {
+    "photos": 0,
+    "polygon_renders": 0,
+    "vision_outputs": 0
   },
-  "runner_pickup": {
-    "active_json_queue": "docs/chatgpt_status/aays1/queue/q091.task.json",
-    "automation_script": "docs/chatgpt_status/aays1/automation/100_export_ai_boundary_outputs_to_repo.ps1",
-    "expected_repo_outputs": [
-      "docs/chatgpt_status/aays1/runner_tasks/ai_boundary_export_latest_<timestamp>.json",
-      "docs/chatgpt_status/aays1/reports/ai_boundary_export_latest_<timestamp>.md",
-      "docs/chatgpt_status/aays1/status/100_ai_boundary_export_status_<timestamp>.txt"
-    ],
-    "observed_repo_output": "not_found_yet"
-  },
-  "rules": {
-    "rule_file": "docs/chatgpt_status/aays1/photo_ai_boundary_review/ai_boundary_detection_rules_v2.md",
-    "upgrade_gate": "3.5/4 only if photo_boundary_visible=true, visual_match_score>=0.70, and geometry_mismatch_flag=false",
-    "safe_geometry_rule": "photo-derived geometry cannot overwrite stored polygon automatically"
-  },
-  "inputs": {
-    "geometry_page": "england_map_web/geometry_review_3of4_columns_1264.html",
-    "geometry_geojson": "docs/chatgpt_status/aays1/geometry_review_3of4/all_1264_real_geometry_3of4.geojson",
-    "ai_results": "england_map_web/data/geometry_review_3of4/photo_ai_boundary_review_results.json"
-  },
+  "next_step": "prepare_first6_assets",
   "final_ready": false
 }
