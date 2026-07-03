@@ -1,29 +1,30 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_runner_pickup_20260703_0918
-run_finished_at=2026-07-03T09:40:00Z
+task_id=distance_property_types_multi_task_queue_20260703_0950
+run_finished_at=2026-07-03T09:50:00Z
 layer_name=Distance to Nearby Property Types
-status=SINGLE_RUNNER_PICKUP_REQUESTED_NO_OUTPUT_YET
-completion_percent=16
+status=MULTI_TASK_QUEUED_WAITING_FOR_OUTPUT
+completion_percent=17
 final_ready=false
 chatgpt_continue_mode=true
 continue_command=devam et
 blocker_issue=19
 single_runner_pickup_requested=true
-current_task=docs/chatgpt_status/distance_property_types/current_task.json
-pickup_request=docs/chatgpt_status/distance_property_types/runner_control/PICKUP_REQUEST_20260703_0918.md
-latest_continuation_check=docs/chatgpt_status/distance_property_types/reports/continuation_check_20260703_0940.md
 
-## Latest runner-open request check
+## Newly queued parallel tasks
 
-- current_task.json read successfully.
-- progress_latest.md read successfully.
-- Issue #19 read and commented.
-- No committed runner output found for distance_property_types.
-- No committed evidence batch found for distance_property_types.
-- No committed RUNNER_NOT_RUNNING output found for distance_property_types.
-- Repo-side pickup remains active.
+- docs/chatgpt_status/distance_property_types/queue/distance_property_types_probe_worker_20260703_0950.task.json
+- docs/chatgpt_status/distance_property_types/queue/distance_property_types_find_evidence_batch_20260703_0950.task.json
+- docs/chatgpt_status/distance_property_types/queue/distance_property_types_site_check_20260703_0950.task.json
+
+## Current state
+
+- current_task.json remains READY_FOR_SINGLE_RUNNER_PICKUP.
+- Existing single worker must be used.
+- New worker must not be opened.
+- No committed runner output found yet.
+- No committed evidence batch found yet.
 - No fake parcel/property rows were generated.
 
 ## Counters
@@ -55,8 +56,8 @@ prod_deploy=false
 
 ## Continue behavior
 
-When the user says `devam et`, read current_task, continuation_state, queue task, Issue #19, latest progress, and any committed output. Process only real evidence. Keep final_ready=false until real runner/evidence/site proof exists.
+When the user says `devam et`, read current_task, continuation_state, queue tasks, Issue #19, latest progress, and any committed output. Process only real evidence. Keep final_ready=false until real runner/evidence/site proof exists.
 
 ## Next action
 
-next_single_action=Commit a real runner output or evidence batch to the repo, then say `devam et` in this page.
+next_single_action=Wait for the existing single worker to commit any of the expected reports, then say `devam et` in this page.
