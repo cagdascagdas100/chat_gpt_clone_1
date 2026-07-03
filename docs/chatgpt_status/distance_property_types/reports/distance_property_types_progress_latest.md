@@ -1,25 +1,26 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_missing_script_20260703_2110
-run_finished_at=2026-07-03T21:10:00
-status=BRIDGE_TASKS_FAILED_MISSING_SCRIPT
-completion_percent=22
+task_id=distance_property_types_script_path_fixed_requeued_20260703_2130
+run_finished_at=2026-07-03T21:30:00
+status=SCRIPT_PATH_CREATED_TASKS_REQUEUED_WAITING_FOR_RUNNER_OUTPUT
+completion_percent=23
 final_ready=false
 chatgpt_continue_mode=true
 continue_command=devam et
 latest_bridge_failure_report=docs/chatgpt_status/distance_property_types/reports/bridge_failed_missing_script_20260703_2110.md
-latest_runner_fix_report=docs/chatgpt_status/distance_property_types/runner_outputs/fix_runner_git_sync_20260703_203814.report.json
+latest_missing_script_report=docs/chatgpt_status/distance_property_types/reports/missing_script_path_identified_20260703_2120.md
 
 ## Current verified state
 
-- Portable queue runner is active.
-- Queue files were copied to bridge pending.
-- Bridge processed the tasks and moved them to failed.
-- Failure class is missing script / unresolved executable script.
-- Do not start a second runner.
+- Missing executable script path was identified.
+- Local script was created at docs/chatgpt_status/distance_property_types/automation/distance_property_types_batch_runner.ps1.
+- Test-Path returned true for the local script.
+- Six distance_property_types failed tasks were requeued to the bridge pending folder with script_path added.
+- Portable queue runner should remain open.
+- New runner output is not visible in GitHub yet.
 
-## Failed distance_property_types task family
+## Requeued task family
 
 - bootstrap
 - worker probe
@@ -30,7 +31,7 @@ latest_runner_fix_report=docs/chatgpt_status/distance_property_types/runner_outp
 
 ## Narrowed blocker
 
-bridge_runner_requires_task_script_path_or_existing_script
+waiting_for_requeued_tasks_to_publish_runner_output
 
 ## Counters
 
@@ -51,4 +52,4 @@ prod_deploy=false
 
 ## Next action
 
-Create or map the executable local script expected by the failed task files, then requeue only distance_property_types tasks. Keep final_ready=false until real output is produced.
+On the next `devam et`, read runner_outputs and ai-results output paths. Keep final_ready=false until real evidence-backed rows exist.
