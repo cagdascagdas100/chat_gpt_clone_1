@@ -3,8 +3,10 @@
 page_key=security_public_safety
 layer=Safety / Security
 program_output=Security Level percent
-status=BLOCKED_WAITING_FOR_REAL_RUNNER_OUTPUT
-last_updated=2026-07-03T14:08:19+03:00
+status=CONTINUATION_BUNDLE_QUEUED
+last_updated=2026-07-03T14:38:00+03:00
+active_task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion
+active_continuation_bundle=terrayield-046-continuation-bundle-20260703-1438
 final_ready=false
 fake_data=false
 db_write=false
@@ -14,10 +16,20 @@ prod_deploy=false
 
 ## What changed in this continuation
 
-- Created/updated the Safety / Security handoff contract files in the repo path.
-- Wrote a pending runner task for `security_public_safety_batch_20260703_0001`.
-- Wrote/kept site-visible `latest_changes.json` with zero parcel changes because no real verified parcel evidence has been processed in this environment.
-- Did not generate synthetic parcel scores.
+- Read current-task, queue task, status, and latest_changes from GitHub main.
+- Confirmed the main 046 task is still queued/pending and no real runner result is visible in GitHub yet.
+- Added `docs/chatgpt_status/security_public_safety/queue/terrayield-046-continuation-bundle-20260703-1438.task.json`.
+- Added `docs/chatgpt_status/security_public_safety/reports/terrayield_046_continuation_bundle_20260703_1438.md`.
+- Updated `docs/chatgpt_status/security_public_safety/current-task.json` to point at the continuation bundle.
+- Did not generate parcel scores or claim local runner execution.
+
+## Continuation bundle subtasks
+
+1. 046A git sync and runner state probe.
+2. 046B site and panel probe.
+3. 046C Security/Public Safety data contract probe.
+4. 046D official/open aggregate source discovery probe.
+5. 046E blocker classifier and next queue decision.
 
 ## Counts
 
@@ -29,21 +41,13 @@ accuracy_ge_3_rows=0
 accuracy_lt_3_rows=0
 no_data_rows=0
 
-## Expected runner outputs
-
-- `england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson`
-- `england_map_web/data/security_public_safety/parcel_security_scores_verified.csv`
-- `england_map_web/data/security_public_safety/security_evidence_manifest.json`
-- `outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json`
-
 ## Current blockers
 
-- Local Windows F repo path is not mounted in the ChatGPT sandbox.
-- Shared runner pending queue path is not mounted in the ChatGPT sandbox.
-- No real `parcel_security_scores_verified.*` output was available to verify.
-- No browser smoke evidence was available for the matrix page in this environment.
-- No official/open aggregate source-to-parcel matching run has completed yet.
+- No real 046 runner result is visible in GitHub yet.
+- No verified parcel CSV/GeoJSON/manifest outputs are visible yet.
+- No final site evidence is visible yet.
+- Direct update to site-visible latest_changes.json was blocked by connector filtering in this turn; runner should update it locally after pickup.
 
 ## Next single action
 
-Run the shared runner against `security_public_safety_batch_20260703_0001` on the F repo / bridge machine. The runner must use only official/open aggregate public-safety sources and then write verified CSV/GeoJSON/manifest plus browser smoke evidence. Keep `final_ready=false` until that evidence exists.
+The existing shared runner should pick up the continuation bundle, write the requested output files, update reports/status/latest_changes locally, and keep final_ready=false unless all final gates are proven.
