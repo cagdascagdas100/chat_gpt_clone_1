@@ -1,19 +1,26 @@
 {
   "layer": "Safety / Security",
   "program_output": "Security Level percent",
-  "status": "BLOCKED_WAITING_FOR_REAL_RUNNER_OUTPUT",
+  "status": "QUEUED_046_RUNNER_SYNC_RECOVERY_TASK",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
-  "last_updated": "2026-07-03T14:08:19+03:00",
-  "source_note": "No parcel-level score rows are shown because no real official/open aggregate public-safety batch output was available in this continuation. This file is intentionally non-final and contains no placeholder parcel scores.",
+  "last_updated": "2026-07-03T14:20:00+03:00",
+  "source_note": "046 runner sync recovery and accuracy-expansion handoff task was queued from this ChatGPT page. No parcel-level score rows are shown because real runner output and official/open aggregate public-safety evidence are still required.",
   "summary": {
     "changed_count": 0,
     "verified_count": 0,
     "manual_review_count": 0,
     "accuracy_ge_3_count": 0,
     "final_ready": false
+  },
+  "task": {
+    "task_id": "terrayield-046-runner-sync-recovery-then-accuracy-expansion",
+    "status": "queued_for_shared_runner",
+    "report_path": "docs/chatgpt_status/security_public_safety/reports/terrayield_046_runner_sync_recovery_then_accuracy_expansion_latest.md",
+    "status_path": "docs/chatgpt_status/security_public_safety/status/terrayield_046_runner_sync_recovery_then_accuracy_expansion.status.json",
+    "queue_path": "docs/chatgpt_status/security_public_safety/queue/terrayield-046-runner-sync-recovery-then-accuracy-expansion.task.json"
   },
   "expected_output_files": [
     "F:\\chatgpt\\chat_gpt_clone_1_main\\england_map_web\\data\\security_public_safety\\parcel_security_scores_verified.geojson",
@@ -22,10 +29,10 @@
   ],
   "changes": [],
   "blockers": [
-    "Shared runner/F repo paths are not mounted in this ChatGPT sandbox.",
+    "ChatGPT connector can write GitHub files but cannot directly execute the local Windows F runner.",
+    "No real 046 runner result exists yet.",
     "No verified parcel CSV/GeoJSON/manifest was available to read.",
-    "No official/open aggregate source matching run has completed.",
     "No popup/right-panel/browser smoke evidence is available yet."
   ],
-  "next_single_action": "Run the pending shared-runner task and write verified public-safety parcel outputs; do not set final_ready=true until parcel layer, popup/right-panel, latest_changes panel, and browser smoke evidence are all verified."
+  "next_single_action": "Single shared runner should pick up the queued 046 task on the F bridge, run recovery/preflight checks, then queue or block the 044 accuracy expansion child with evidence."
 }
