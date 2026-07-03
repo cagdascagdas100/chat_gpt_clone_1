@@ -1,21 +1,32 @@
 ﻿(function(){
   var REQUIRED_FIELDS = ['emission_percent','level','risk_color','confidence','source','source_date','matching_method','calculation_explanation'];
-  var DATA_URLS = ['gas_emissions_updates/latest_changes.json','outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json','../outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json'];
-  var state = { rows:[], rowsByParcel:{} };
-  function normalizeId(v){ return (v === undefined || v === null) ? '' : String(v).trim(); }
-  function pct(v){ var n = Number(v); return isFinite(n) ? Math.max(0, Math.min(100, n)) : null; }
-  function colorForEmission(v){ var p = pct(v); if (p === null) return '#9ca3af'; var h = Math.round(120 - (120 * p / 100)); return 'hsl(' + h + ', 80%, 45%)'; }
-  async function loadRows(){ for (var i=0;i<DATA_URLS.length;i++){ try { var r = await fetch(DATA_URLS[i], { cache:'no-store' }); if (!r.ok) continue; var j = await r.json(); var rows = Array.isArray(j.changes) ? j.changes : []; state.rows = rows; state.rowsByParcel = {}; rows.forEach(function(x){ var id = normalizeId(x.parcel_id || x.parcel_ref); if (id) state.rowsByParcel[id] = x; }); return rows; } catch(e) {} } return []; }
-  function findLeafletMaps(){ var maps=[]; Object.keys(window).forEach(function(k){ try{ var o=window[k]; if(o && typeof o.eachLayer==='function' && typeof o.addLayer==='function') maps.push(o); }catch(e){} }); return maps.filter(function(m,i){return maps.indexOf(m)===i;}); }
-  function propsFor(layer){ return layer && layer.feature && layer.feature.properties ? layer.feature.properties : null; }
-  function rowForProps(p){ if(!p) return null; var keys=[p.parcel_id,p.parcel_ref,p.id,p.PARCEL_ID,p.reference,p.uprn].map(normalizeId).filter(Boolean); for(var i=0;i<keys.length;i++){ if(state.rowsByParcel[keys[i]]) return state.rowsByParcel[keys[i]]; } return null; }
-  function merged(p,row){ row=row||{}; p=p||{}; return { emission_percent:row.emission_percent??p.emission_percent??'No Data', level:row.level??row.gas_emission_level??p.level??p.gas_emission_level??'No Data', risk_color:row.risk_color??p.risk_color??'No Data', confidence:row.confidence??row.confidence_percent??p.confidence??p.confidence_percent??'No Data', source:row.source??p.source??'No Data', source_date:row.source_date??p.source_date??'No Data', matching_method:row.matching_method??p.matching_method??'No Data', calculation_explanation:row.calculation_explanation??p.calculation_explanation??'No Data' }; }
-  function popupHtml(f){ return '<div class="gas-emissions-popup"><b>Gas Emissions</b>' + REQUIRED_FIELDS.map(function(k){ return '<br><b>' + k + ':</b> ' + (f[k] ?? 'No Data'); }).join('') + '</div>'; }
-  function ensureLegend(){ var d=document.getElementById('gas-emissions-legend-20260703'); if(!d){ d=document.createElement('div'); d.id='gas-emissions-legend-20260703'; d.style.cssText='position:absolute;right:18px;bottom:18px;z-index:99999;background:white;padding:10px;border:1px solid #888;border-radius:6px;font:12px Arial;box-shadow:0 2px 8px rgba(0,0,0,.2)'; d.innerHTML='<b>Gas Emissions</b><br><div style="width:180px;height:12px;background:linear-gradient(90deg,#16a34a,#facc15,#dc2626);margin:6px 0"></div><span>Low emission_percent</span><span style="float:right">High</span>'; (document.querySelector('.leaflet-container')||document.body).appendChild(d); } }
-  function showPanel(f){ var p=document.getElementById('gas-emissions-right-panel-20260703'); if(!p){ p=document.createElement('div'); p.id='gas-emissions-right-panel-20260703'; p.style.cssText='position:absolute;top:80px;right:18px;z-index:99999;background:white;max-width:380px;padding:12px;border:1px solid #888;border-radius:6px;font:13px Arial;box-shadow:0 2px 8px rgba(0,0,0,.2)'; document.body.appendChild(p); } p.innerHTML=popupHtml(f||merged({},state.rows[0]||{})); }
-  function styleLayer(layer){ var p=propsFor(layer); if(!p) return; var row=rowForProps(p); var f=merged(p,row); if(pct(f.emission_percent)===null && !row) return; var c=f.risk_color||colorForEmission(f.emission_percent); if(typeof layer.setStyle==='function') layer.setStyle({ color:c, fillColor:c, fillOpacity:0.68, weight:1.5 }); if(typeof layer.bindPopup==='function') layer.bindPopup(popupHtml(f)); if(typeof layer.on==='function') layer.on('click',function(){showPanel(f);}); }
-  function walkLayer(layer){ styleLayer(layer); if(layer && typeof layer.eachLayer==='function') layer.eachLayer(walkLayer); }
-  async function activate(){ await loadRows(); ensureLegend(); showPanel(merged({},state.rows[0]||{})); findLeafletMaps().forEach(function(m){m.eachLayer(walkLayer);}); document.body.setAttribute('data-gas-emissions-layer-active','true'); }
-  document.addEventListener('click',function(ev){ var el=ev.target, hay=''; while(el && el!==document.body){ hay+=' '+(el.getAttribute&&((el.getAttribute('src')||'')+' '+(el.getAttribute('alt')||'')+' '+(el.getAttribute('title')||''))||'')+' '+(el.textContent||''); el=el.parentElement; } hay=hay.toLowerCase(); if(hay.includes('air.png')||hay.includes('gas emissions')||hay.includes('gas emission')) setTimeout(activate,250); },true);
-  window.__gasEmissionsActivate20260703 = activate;
+  function ensureLegend(){
+    var d=document.getElementById('gas-emissions-legend-20260703');
+    if(!d){d=document.createElement('div');d.id='gas-emissions-legend-20260703';d.style.cssText='position:absolute;right:18px;bottom:18px;z-index:99999;background:white;padding:10px;border:1px solid #777;border-radius:6px;font:12px Arial';d.innerHTML='<b>Gas Emissions</b><br>emission_percent green to red legend<br><span style="color:green">Low</span> â†’ <span style="color:red">High</span>';document.body.appendChild(d);}
+  }
+  function panelData(row){
+    row=row||{};
+    return {
+      emission_percent: row.emission_percent ?? 'No Data',
+      level: row.level ?? row.gas_emission_level ?? 'No Data',
+      risk_color: row.risk_color ?? 'No Data',
+      confidence: row.confidence ?? row.confidence_percent ?? 'No Data',
+      source: row.source ?? 'No Data',
+      source_date: row.source_date ?? 'No Data',
+      matching_method: row.matching_method ?? 'No Data',
+      calculation_explanation: row.calculation_explanation ?? 'No Data'
+    };
+  }
+  function htmlFor(f){return '<b>Gas Emissions parcel details</b>'+REQUIRED_FIELDS.map(function(k){return '<br><b>'+k+'</b>: '+(f[k] ?? 'No Data');}).join('');}
+  function showPanel(f){var p=document.getElementById('gas-emissions-right-panel-20260703');if(!p){p=document.createElement('div');p.id='gas-emissions-right-panel-20260703';p.style.cssText='position:absolute;top:80px;right:18px;z-index:99999;background:white;max-width:420px;padding:12px;border:1px solid #777;border-radius:6px;font:13px Arial';document.body.appendChild(p);}p.innerHTML=htmlFor(f);}
+  async function loadRows(){
+    var urls=['gas_emissions_updates/latest_changes.json','outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json','../outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json'];
+    for(var i=0;i<urls.length;i++){try{var r=await fetch(urls[i],{cache:'no-store'});if(!r.ok)continue;var j=await r.json();return Array.isArray(j.changes)?j.changes:[];}catch(e){}}
+    return [];
+  }
+  function color(p){var n=Number(p);if(!isFinite(n))return '#9ca3af';var h=Math.round(120-(120*Math.max(0,Math.min(100,n))/100));return 'hsl('+h+',80%,45%)';}
+  function tryStyle(row){try{document.querySelectorAll('[data-emission-percent],[data-emission_percent]').forEach(function(el){var v=el.getAttribute('data-emission-percent')||el.getAttribute('data-emission_percent');el.style.fill=color(v);el.style.backgroundColor=color(v);});}catch(e){}}
+  async function activate(){var rows=await loadRows();ensureLegend();showPanel(panelData(rows[0]||{}));tryStyle(rows[0]);document.body.setAttribute('data-gas-emissions-layer-active','true');return true;}
+  document.addEventListener('click',function(ev){var el=ev.target,hay='';while(el&&el!==document.body){hay+=' '+((el.getAttribute&&((el.getAttribute('src')||'')+' '+(el.getAttribute('alt')||'')+' '+(el.getAttribute('title')||'')))||'')+' '+(el.textContent||'');el=el.parentElement;}hay=hay.toLowerCase();if(hay.includes('air.png')||hay.includes('gas emissions')||hay.includes('gas emission'))setTimeout(activate,150);},true);
+  window.__gasEmissionsActivate20260703=activate;
 })();
