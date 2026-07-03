@@ -2,13 +2,18 @@
   "id": "aays1-087-photo-ai-boundary-review",
   "title": "AAYS photo AI boundary review integration",
   "page_key": "aays1",
-  "status": "in_progress_parallel_queue",
+  "status": "ai_boundary_detection_integrated",
   "total_rows": 1264,
-  "target_accuracy": "3.5/4 when photo evidence agrees",
+  "target_accuracy": "3.5/4 when visible photo boundary agrees with existing polygon",
   "first_batch": {
     "rows": [1, 2, 3, 4, 5, 6],
     "candidate_photo_urls": "6/6",
-    "queued_tasks": ["089_photo_download_first6", "090_polygon_svg", "091_vision_compare_first6"]
+    "queued_tasks": ["089_photo_download_first6", "090_polygon_svg", "091_vision_compare_first6", "096_ai_boundary_detection_first6", "097_ai_boundary_site_update_check"]
+  },
+  "rules": {
+    "rule_file": "docs/chatgpt_status/aays1/photo_ai_boundary_review/ai_boundary_detection_rules_v2.md",
+    "upgrade_gate": "3.5/4 only if photo_boundary_visible=true, visual_match_score>=0.70, and geometry_mismatch_flag=false",
+    "safe_geometry_rule": "photo-derived geometry cannot overwrite stored polygon automatically"
   },
   "inputs": {
     "geometry_page": "england_map_web/geometry_review_3of4_columns_1264.html",
