@@ -3,17 +3,21 @@
 page_key=distance_property_types
 task_id=distance_property_types_bootstrap_20260703
 run_started_at=2026-07-03T08:50:00Z
-run_finished_at=2026-07-03T08:58:00Z
+run_finished_at=2026-07-03T09:10:00Z
 layer_name=Distance to Nearby Property Types
 status=BLOCKED_INPUT_REQUIRED
-completion_percent=14
+completion_percent=15
 final_ready=false
+chatgpt_continue_mode=true
+continue_command=devam et
+blocker_issue=19
 
 ## Scope applied in this ChatGPT page
 
 - Six-category contract loaded: Industrial Unit, Detached Home, Retail Property, Apartment Building, Office Building, Mixed Building.
 - Output schema committed for CSV, GeoJSON, evidence manifest, latest progress report, and manual review CSV.
 - Handoff docs committed for data contract, accuracy scale, runner workflow, site filter requirements, and manual review rules.
+- ChatGPT continuation state committed for future `devam et` commands in this page.
 - Accuracy target preserved: accuracy_score_4 >= 3.0.
 - No fake parcel/property rows were generated.
 - changed_in_latest_run=true filter contract preserved for site integration.
@@ -36,6 +40,8 @@ manifest_output=F:\chatgpt\chat_gpt_clone_1_main\england_map_web\data\distance_p
 manual_review_output=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\distance_property_types\reports\distance_property_types_manual_review_latest.csv
 queue_task=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\distance_property_types\queue\distance_property_types_bootstrap_20260703.task.json
 site_requirements=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\distance_property_types\site_integration\distance_property_types_site_requirements.md
+continuation_state=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\distance_property_types\state\chatgpt_continuation_state.json
+continuation_rules=F:\chatgpt\chat_gpt_clone_1_main\docs\chatgpt_status\distance_property_types\state\CHATGPT_CONTINUE_RULES_TR.md
 
 ## Safety flags
 
@@ -64,6 +70,12 @@ prod_deploy=false
 - Handoff/control docs created.
 - Site integration checklist created.
 - Runner notes created.
+- Blocker issue #19 created, labeled, and assigned.
+- ChatGPT continuation state created so future `devam et` messages can resume from GitHub state.
+
+## Continue behavior
+
+When the user says `devam et`, ChatGPT must read the continuation state, latest progress report, queue task, and Issue #19 from GitHub main, then continue only with real repo evidence. If no new runner output or evidence batch exists, keep final_ready=false and update blockers. Never create fake parcel/property evidence.
 
 ## Next batch
 
