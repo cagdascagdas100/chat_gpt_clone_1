@@ -3,8 +3,8 @@
 page_key=security_public_safety
 layer=Safety / Security
 program_output=Security Level percent
-status=CLEAN_SYNC_LOCAL_OK_PUSH_REBASE_REQUIRED
-last_updated=2026-07-03T20:40:00+03:00
+status=CLEAN_SYNC_PUSH_OK_AWAITING_RUNNER_OUTPUTS
+last_updated=2026-07-03T20:48:00+03:00
 active_task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion
 active_continuation_bundle=terrayield-046-continuation-bundle-20260703-1438
 final_ready=false
@@ -16,23 +16,22 @@ prod_deploy=false
 
 ## What changed in this continuation
 
-- User ran the clean F repo sync window locally.
-- The initial directory move was blocked by a file handle, so the script continued inside the existing F repo.
-- `git reset --hard origin/main` and `git clean -fd` completed, producing clean head `29e7ab7660121f29686245fee81df0f4fe09c17f`.
-- All required Security/Public Safety task files were found locally after clean sync.
-- Local clean sync proof files were created and committed locally as commit `e60b855d0`.
-- `git push origin main` was rejected because remote `main` advanced after the local sync; this now requires a small rebase/push fix.
-- Bridge pickup marker was written locally at `F:\AAYS_GITHUB_BRIDGE_CLEAN2\state\repo_to_bridge_watch\security_public_safety\pickup_clean_sync_20260703_202954.txt`.
+- User ran the rebase-and-push fix locally.
+- Rebase completed successfully.
+- Push completed with `PUSH_OK_REAL`.
+- The pushed range shown locally was `3ea90088e..58983c1aa main -> main`.
+- GitHub still did not show the exact local clean-sync report path after the push, so a GitHub-side record was written at `docs/chatgpt_status/security_public_safety/reports/clean_f_repo_sync_20260703_202954_github_record.md`.
+- `current-task.json` is still present and points to the continuation bundle.
+- No runner output files for the five continuation probes are visible in GitHub yet.
 
 ## Current blockers
 
-- Local commit `e60b855d0` has not reached GitHub yet.
-- F repo needs `git fetch origin main`, `git pull --rebase origin main`, then `git push origin main`.
+- Real runner outputs for the five continuation probes are not visible in GitHub yet.
 - Verified Security/Public Safety parcel outputs are still missing:
   - `england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson`
   - `england_map_web/data/security_public_safety/parcel_security_scores_verified.csv`
   - `england_map_web/data/security_public_safety/security_evidence_manifest.json`
-- Browser endpoints are reachable, but final browser smoke evidence is not complete.
+- Browser smoke evidence for final acceptance is not visible yet.
 
 ## Counts
 
@@ -46,4 +45,4 @@ no_data_rows=0
 
 ## Next single action
 
-Run the short rebase-and-push PowerShell fix in `F:\chatgpt\chat_gpt_clone_1_main`, then say `devam et`. Do not set final_ready=true until verified parcel outputs and browser smoke evidence exist.
+Existing shared runner should process `docs/chatgpt_status/security_public_safety/queue/terrayield-046-continuation-bundle-20260703-1438.task.json`, then write the five probe outputs, status/report/latest_changes evidence, and keep final_ready=false until all final gates are proven.
