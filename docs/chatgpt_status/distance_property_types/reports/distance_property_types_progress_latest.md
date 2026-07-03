@@ -1,16 +1,19 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_bootstrap_20260703
+task_id=distance_property_types_runner_pickup_20260703_0918
 run_started_at=2026-07-03T08:50:00Z
-run_finished_at=2026-07-03T09:10:00Z
+run_finished_at=2026-07-03T09:18:00Z
 layer_name=Distance to Nearby Property Types
-status=BLOCKED_INPUT_REQUIRED
-completion_percent=15
+status=SINGLE_RUNNER_PICKUP_REQUESTED
+completion_percent=16
 final_ready=false
 chatgpt_continue_mode=true
 continue_command=devam et
 blocker_issue=19
+single_runner_pickup_requested=true
+current_task=docs/chatgpt_status/distance_property_types/current_task.json
+pickup_request=docs/chatgpt_status/distance_property_types/runner_control/PICKUP_REQUEST_20260703_0918.md
 
 ## Scope applied in this ChatGPT page
 
@@ -18,10 +21,10 @@ blocker_issue=19
 - Output schema committed for CSV, GeoJSON, evidence manifest, latest progress report, and manual review CSV.
 - Handoff docs committed for data contract, accuracy scale, runner workflow, site filter requirements, and manual review rules.
 - ChatGPT continuation state committed for future `devam et` commands in this page.
+- Current task and pickup request committed for single shared runner pickup.
 - Accuracy target preserved: accuracy_score_4 >= 3.0.
 - No fake parcel/property rows were generated.
 - changed_in_latest_run=true filter contract preserved for site integration.
-- GitHub main repo writes completed for non-executable bootstrap files.
 
 ## Counters
 
@@ -54,8 +57,9 @@ prod_deploy=false
 ## Remaining blockers
 
 - missing_verified_parcel_input_batch
-- local_runner_not_executed_from_this_chat
-- live_pending_queue_copy_not_verifiable_from_this_chat
+- no_committed_runner_output_seen_yet
+- local_runner_execution_not_proven_yet
+- live_pending_queue_copy_not_verified_yet
 - official/web/map/photo evidence collection not yet run
 - site layer/popup/right-panel/filter integration not yet verified
 - executable runner file must be created in the local F repo outside this ChatGPT GitHub write path
@@ -70,17 +74,19 @@ prod_deploy=false
 - Handoff/control docs created.
 - Site integration checklist created.
 - Runner notes created.
-- Blocker issue #19 created, labeled, and assigned.
+- Blocker issue #19 created, labeled, assigned, and commented.
 - ChatGPT continuation state created so future `devam et` messages can resume from GitHub state.
+- Current task created for single runner pickup.
+- Pickup request created for the shared worker flow.
 
 ## Continue behavior
 
-When the user says `devam et`, ChatGPT must read the continuation state, latest progress report, queue task, and Issue #19 from GitHub main, then continue only with real repo evidence. If no new runner output or evidence batch exists, keep final_ready=false and update blockers. Never create fake parcel/property evidence.
+When the user says `devam et`, ChatGPT must read current_task, continuation state, latest progress report, queue task, Issue #19, and any committed runner outputs from GitHub main. If new real runner output or evidence exists, process it. If no new output exists, keep final_ready=false and update blockers. Never create fake parcel/property evidence.
 
 ## Next batch
 
-next_batch=Run the queued bootstrap task on the single shared runner after placing the local runner file in F repo. Then process a real parcel source batch containing parcel_id, geometry or centroid, candidate source/evidence fields, distance fields, and official/web/map/photo evidence. The runner must populate verified/manual-review rows only from real evidence.
+next_batch=Existing single shared runner should pick up the distance_property_types queue task. If no evidence batch exists, runner should write a blocker output rather than fake results. Then ChatGPT can continue from committed output on the next `devam et`.
 
 ## Next single action
 
-next_single_action=Place the local runner file in F repo, copy queue task to live pending queue, run the existing single shared runner, and return the real runner output report. Keep final_ready=false until evidence-backed data and site verification are complete.
+next_single_action=Wait for real committed runner output or evidence batch in the repo, then say `devam et` in this page. ChatGPT will read GitHub state and continue from there.
