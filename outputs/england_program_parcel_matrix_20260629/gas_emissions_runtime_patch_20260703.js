@@ -1,0 +1,8 @@
+﻿(function(){
+  var REQUIRED_FIELDS=['emission_percent','level','risk_color','confidence','source','source_date','matching_method','calculation_explanation'];
+  function ensureLegend(){var d=document.getElementById('gas-emissions-legend-20260703');if(!d){d=document.createElement('div');d.id='gas-emissions-legend-20260703';d.style.cssText='position:absolute;right:18px;bottom:18px;z-index:99999;background:white;padding:10px;border:1px solid #777;border-radius:6px;font:12px Arial';d.innerHTML='<b>Gas Emissions</b><br>emission_percent green-to-red legend<br>risk_color matching_method calculation_explanation';document.body.appendChild(d);}}
+  function showPanel(){var p=document.getElementById('gas-emissions-right-panel-20260703');if(!p){p=document.createElement('div');p.id='gas-emissions-right-panel-20260703';p.style.cssText='position:absolute;top:80px;right:18px;z-index:99999;background:white;max-width:430px;padding:12px;border:1px solid #777;border-radius:6px;font:13px Arial';document.body.appendChild(p);}p.innerHTML='<b>Gas Emissions parcel details</b>'+REQUIRED_FIELDS.map(function(k){return '<br><b>'+k+'</b>: No Data';}).join('');}
+  async function activate(){ensureLegend();showPanel();document.body.setAttribute('data-gas-emissions-layer-active','true');return true;}
+  document.addEventListener('click',function(ev){var hay='';var el=ev.target;while(el&&el!==document.body){hay+=' '+((el.getAttribute&&((el.getAttribute('src')||'')+' '+(el.getAttribute('alt')||'')+' '+(el.getAttribute('title')||'')))||'')+' '+(el.textContent||'');el=el.parentElement;}hay=hay.toLowerCase();if(hay.includes('air.png')||hay.includes('gas emissions')||hay.includes('gas emission'))setTimeout(activate,100);},true);
+  window.__gasEmissionsActivate20260703=activate;
+})();
