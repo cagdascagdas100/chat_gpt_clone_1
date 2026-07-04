@@ -1,37 +1,35 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_script_path_fixed_requeued_20260703_2130
-run_finished_at=2026-07-03T21:30:00
-status=SCRIPT_PATH_CREATED_TASKS_REQUEUED_WAITING_FOR_RUNNER_OUTPUT
+task_id=distance_property_types_continue_verify_publish_20260704_1500
+run_requested_at=2026-07-04T15:00:00+03:00
+status=CONTINUE_VERIFY_PUBLISH_TASK_QUEUED
 completion_percent=23
 final_ready=false
 chatgpt_continue_mode=true
 continue_command=devam et
-latest_bridge_failure_report=docs/chatgpt_status/distance_property_types/reports/bridge_failed_missing_script_20260703_2110.md
-latest_missing_script_report=docs/chatgpt_status/distance_property_types/reports/missing_script_path_identified_20260703_2120.md
+latest_queue_task=docs/chatgpt_status/distance_property_types/queue/distance_property_types_continue_verify_publish_20260704_1500.task.json
+expected_runner_report=docs/chatgpt_status/distance_property_types/runner_outputs/distance_property_types_continue_verify_publish_20260704_1500.report.json
 
 ## Current verified state
 
-- Missing executable script path was identified.
-- Local script was created at docs/chatgpt_status/distance_property_types/automation/distance_property_types_batch_runner.ps1.
-- Test-Path returned true for the local script.
-- Six distance_property_types failed tasks were requeued to the bridge pending folder with script_path added.
-- Portable queue runner should remain open.
-- New runner output is not visible in GitHub yet.
+- Codex summary claims runner-system level fixes were implemented.
+- GitHub search did not show CONTINUE_RUNNER_READY, PUSH_SYNC_OK, or runner_output_uploaded markers yet.
+- Previous progress was still SCRIPT_PATH_CREATED_TASKS_REQUEUED_WAITING_FOR_RUNNER_OUTPUT at 23 percent.
+- A new continue verification/publish task has been queued in GitHub for the shared runner.
+- final_ready remains false until a GitHub-visible runner report and real evidence-backed output rows exist.
 
-## Requeued task family
+## Required runner-system markers
 
-- bootstrap
-- worker probe
-- evidence discovery
-- site check
-- output collector
-- blocker narrowdown
-
-## Narrowed blocker
-
-waiting_for_requeued_tasks_to_publish_runner_output
+- queue_seen
+- queue_started
+- single_runner_lock_acquired
+- task_runs_in_clean_worktree
+- allowed_paths_enforced
+- runner_output_uploaded
+- post_sync_ok
+- PUSH_SYNC_OK
+- CONTINUE_RUNNER_READY
 
 ## Counters
 
@@ -50,6 +48,10 @@ ddl=false
 migration_apply=false
 prod_deploy=false
 
+## Narrowed blocker
+
+waiting_for_shared_runner_to_pick_up_continue_verify_publish_task_and_push_github_visible_report
+
 ## Next action
 
-On the next `devam et`, read runner_outputs and ai-results output paths. Keep final_ready=false until real evidence-backed rows exist.
+On the next `devam et`, read the expected runner report, progress_latest, verified CSV, verified GeoJSON, evidence manifest, and manual review CSV from GitHub. Keep final_ready=false until real evidence-backed rows and acceptance gates pass.
