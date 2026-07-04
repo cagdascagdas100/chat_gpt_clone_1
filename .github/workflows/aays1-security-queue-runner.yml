@@ -1,0 +1,92 @@
+name: AAYS1 Security Queue Runner
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/chatgpt_status/aays1/queue/**'
+      - 'docs/chatgpt_status/security_public_safety/automation/**'
+      - '.github/workflows/aays1-security-queue-runner.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays1-security-queue-runner
+  cancel-in-progress: false
+
+jobs:
+  run-pending-security-task:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        shell: pwsh
+        run: |
+          git config user.name "aays1-security-runner"
+          git config user.email "aays1-security-runner@users.noreply.github.com"
+
+      - name: Run pending AAYS1 Security queue task
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $RepoRoot = (Get-Location).Path
+          $env:AAYS_REPO_ROOT = $RepoRoot
+          $env:AAYS_BRIDGE_ROOT = $RepoRoot
+          $QueueDir = Join-Path $RepoRoot 'docs/chatgpt_status/aays1/queue'
+          $StatusDir = Join-Path $RepoRoot 'docs/chatgpt_status/aays1/status'
+          $ReportDir = Join-Path $RepoRoot 'docs/chatgpt_status/aays1/reports'
+          New-Item -ItemType Directory -Force -Path $StatusDir,$ReportDir | Out-Null
+          $pending = Get-ChildItem -LiteralPath $QueueDir -Filter '*.json' |
+            Sort-Object Name |
+            ForEach-Object {
+              try {
+                $q = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
+                [pscustomobject]@{ File=$_.FullName; Queue=$q; Status=[string]$q.status; Name=$_.Name }
+              } catch { $null }
+            } |
+            Where-Object { $_ -and $_.Status -eq 'pending' -and $_.Queue.automation_script -match 'security_public_safety' } |
+            Select-Object -First 1
+          if (-not $pending) {
+            'No pending security queue task.' | Set-Content -LiteralPath (Join-Path $ReportDir 'github-actions-security-queue-idle.md') -Encoding UTF8
+            exit 0
+          }
+          $queueFile = $pending.File
+          $queue = $pending.Queue
+          $scriptRaw = [string]$queue.automation_script
+          $norm = $scriptRaw -replace '/', '\'
+          $idx = $norm.IndexOf('docs\chatgpt_status\')
+          if ($idx -lt 0) { throw "Cannot resolve automation_script: $scriptRaw" }
+          $rel = $norm.Substring($idx)
+          $scriptFile = Join-Path $RepoRoot $rel
+          if (-not (Test-Path -LiteralPath $scriptFile)) { throw "Automation script not found: $scriptFile" }
+          $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+          @{ status='GITHUB_ACTIONS_QUEUE_STARTED'; timestamp=$stamp; queue_file=$queueFile; automation_script=$scriptFile; final_ready=$false; fake_data=$false } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $StatusDir "github-actions-security-queue-started-$stamp.json") -Encoding UTF8
+          $queue.status = 'running'
+          $queue | Add-Member -NotePropertyName picked_at -NotePropertyValue (Get-Date).ToString('o') -Force
+          $queue | Add-Member -NotePropertyName runner_status -NotePropertyValue 'GITHUB_ACTIONS_RUNNING' -Force
+          $queue | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $queueFile -Encoding UTF8
+          & pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptFile
+          if ($LASTEXITCODE -ne 0) { throw "Automation failed with exit code $LASTEXITCODE" }
+          $queueDone = Get-Content -LiteralPath $queueFile -Raw | ConvertFrom-Json
+          $queueDone.status = 'done'
+          $queueDone | Add-Member -NotePropertyName completed_at -NotePropertyValue (Get-Date).ToString('o') -Force
+          $queueDone | Add-Member -NotePropertyName runner_status -NotePropertyValue 'GITHUB_ACTIONS_DONE' -Force
+          $queueDone | Add-Member -NotePropertyName automation_exit_code -NotePropertyValue 0 -Force
+          $queueDone | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $queueFile -Encoding UTF8
+          @{ status='GITHUB_ACTIONS_QUEUE_DONE'; timestamp=(Get-Date).ToString('o'); queue_file=$queueFile; automation_script=$scriptFile; final_ready=$false; fake_data=$false } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $StatusDir "github-actions-security-queue-done-$stamp.json") -Encoding UTF8
+
+      - name: Commit outputs
+        shell: pwsh
+        run: |
+          git add docs/chatgpt_status/aays1/queue docs/chatgpt_status/aays1/status docs/chatgpt_status/aays1/reports docs/chatgpt_status/security_public_safety/runner_outputs docs/chatgpt_status/security_public_safety/status docs/chatgpt_status/security_public_safety/reports england_map_web/data/security_public_safety outputs/england_program_parcel_matrix_20260629/security_public_safety_updates
+          $changes = git status --porcelain
+          if ($changes) {
+            git commit -m "Run AAYS1 Security queued task"
+            git pull --rebase origin main
+            git push origin main
+          }
