@@ -1,0 +1,193 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TerraYield Program Parcel Layer Matrix</title>
+  <style>
+    :root { --bg:#0b1118; --panel:#141b24; --line:#2b3442; --text:#e7edf5; --muted:#9aa7b4; --accent:#ff8a00; }
+    * { box-sizing:border-box; } body { margin:0; font-family:Segoe UI,Arial,sans-serif; color:var(--text); background:var(--bg); }
+    header { position:sticky; top:0; z-index:20; padding:14px 16px; background:#101720; border-bottom:1px solid var(--line); }
+    h1 { margin:0 0 6px; font-size:21px; } .meta { color:var(--muted); font-size:13px; line-height:1.4; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+    input,select,button { background:#080d12; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+    .chips { display:flex; gap:8px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line); background:#0d141d; }
+    .chip { border:1px solid var(--line); border-radius:999px; padding:5px 9px; color:#c7d1dc; font-size:12px; }
+    .layer-update-panel { margin:10px 16px; padding:10px 12px; border:1px solid #36465a; border-radius:12px; background:#101923; color:#d8e3ef; font-size:12px; }
+    .layer-update-panel strong { color:#ffcc8a; }
+    .layer-update-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .layer-update-pill { border:1px solid #344155; border-radius:999px; padding:4px 8px; background:#0b1118; }
+    .layer-update-list { margin:8px 0 0; padding-left:18px; color:#b8c4d1; }    .table-wrap { height:calc(100vh - 250px); overflow:auto; }
+    table { border-collapse:separate; border-spacing:0; min-width:7200px; width:max-content; font-size:12px; }
+    th,td { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; max-width:320px; overflow-wrap:anywhere; background:#0f151d; }
+    th { position:sticky; top:0; z-index:4; background:#202a36; color:#f7d49a; text-align:left; } thead tr:nth-child(2) th { top:32px; background:#192331; color:#dfe8f2; }
+    .sticky { position:sticky; left:0; z-index:3; background:#111b26; } th.sticky { z-index:6; background:#263241; }
+    .value { font-weight:600; } .source { color:#aab6c3; } .nodata { color:#ff9d9d; } .acc-0 { color:#ff8a8a; } .acc-1 { color:#ffb86b; } .acc-2 { color:#ffd166; } .acc-3 { color:#8bd17c; } .acc-4 { color:#56d364; }
+    #status { color:#ffd6a0; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>TerraYield / AAYS - Program Parsel Katman Matrisi</h1>
+  <div class="meta">Bu sÃ¼rÃ¼m parÃ§alÄ±/chunk veri okur; tablo ilk sayfayÄ± hemen gÃ¶sterir. Ä°lk sÃ¼tun <strong>Parcel ID</strong>. Toplam satÄ±r: <strong>92283</strong>.</div>
+  <div class="controls">
+    <input id="searchBox" placeholder="Mevcut sayfada ara: parcel id, LSOA, parcel ref..." size="42" />
+    <select id="coverageFilter">
+      <option value="all">TÃ¼m kayÄ±tlar (92283)</option>
+      <option value="has_distance">Distance dolu (92283)</option>
+      <option value="has_topography">Topography dolu (77970)</option>
+      <option value="has_gas">Gas dolu (3533)</option>
+      <option value="has_security">Security dolu (92283)</option>
+      <option value="has_future_growth">Future Growth dolu (0)</option>
+      <option value="has_planned">Planned dolu (0)</option>
+      <option value="has_internet">Internet dolu (33785)</option>
+      <option value="missing_any">Eksik alanÄ± olanlar (92283)</option>
+      <option value="london_yes">London Region = Evet (92283)</option>
+      <option value="london_no">London Region = HayÄ±r (0)</option>
+      <option value="missing_distance">Distance eksik (0)</option>
+      <option value="missing_topography">Topography eksik (14313)</option>
+      <option value="missing_gas">Gas Emissions eksik (88750)</option>
+      <option value="missing_security">Security eksik (0)</option>
+      <option value="missing_future_growth">Future Growth eksik (92283)</option>
+      <option value="missing_planned">Planned Developments eksik (92283)</option>
+      <option value="missing_internet">Internet eksik (58498)</option>
+    </select>
+    <button id="prevBtn">Ã–nceki 100</button><button id="nextBtn">Sonraki 100</button><span id="status"></span>
+  </div>
+</header>
+<div class="chips">
+  <span class="chip">Rows: 92283</span>
+  <span class="chip">Distance: 92283</span>
+  <span class="chip">Topography: 77970</span>
+  <span class="chip">Gas: 3533</span>
+  <span class="chip">Security: 92283</span>
+  <span class="chip">London yes: 92283</span>
+  <span class="chip">London kontrol: 0</span>
+  <span class="chip">Future eksik: 92283</span>
+  <span class="chip">Internet eksik: 58498</span>
+  <span class="chip">Fake data: false</span>
+</div>
+<section class="layer-update-panel" id="securityUpdatePanel">
+  <strong>Security / Public Safety - Guncel Degisiklikler</strong>
+  <div id="securityUpdateSummary">Yukleniyor...</div>
+  <div class="layer-update-grid" id="securityUpdateGrid"></div>
+  <ul class="layer-update-list" id="securityUpdateList"></ul>
+</section>
+<section class="layer-update-panel" id="gasEmissionsUpdatePanel">
+  <strong>Gas Emissions - Guncel Degisiklikler</strong>
+  <div id="gasEmissionsUpdateSummary">Yukleniyor...</div>
+  <div class="layer-update-grid" id="gasEmissionsUpdateGrid"></div>
+  <ul class="layer-update-list" id="gasEmissionsUpdateList"></ul>
+</section>
+<section class="layer-update-panel" id="internetAccessUpdatePanel">
+  <strong>Internet Access - Guncel Degisiklikler</strong>
+  <div id="internetAccessUpdateSummary">Yukleniyor...</div>
+  <div class="layer-update-grid" id="internetAccessUpdateGrid"></div>
+  <ul class="layer-update-list" id="internetAccessUpdateList"></ul>
+</section>
+<div class="table-wrap"><table id="matrixTable"><tbody><tr><td>YÃ¼kleniyor...</td></tr></tbody></table></div>
+<script>
+let manifest = null, filterIndexes = null, currentRows = [], page = 0;
+const pageSize = 100; const chunkCache = new Map();
+const table = document.getElementById('matrixTable'); const statusEl = document.getElementById('status');
+function accClass(acc) { const n = String(acc || '0/4').split('/')[0]; return 'acc-' + (['0','1','2','3','4'].includes(n) ? n : '0'); }
+async function json(path) { const r = await fetch(path); if (!r.ok) throw new Error(path + ' -> ' + r.status); return await r.json(); }
+async function renderSecurityUpdatePanel() {
+  const summaryEl = document.getElementById('securityUpdateSummary');
+  const gridEl = document.getElementById('securityUpdateGrid');
+  const listEl = document.getElementById('securityUpdateList');
+  if (!summaryEl || !gridEl || !listEl) return;
+  try {
+    const data = await json('security_public_safety_updates/latest_changes.json?v=20260703-security-template');
+    const summary = data.summary || {};
+    summaryEl.textContent = `${data.layer || 'Safety / Security'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
+    gridEl.innerHTML = [
+      ['changed', summary.changed_count ?? 0],
+      ['verified', summary.verified_count ?? 0],
+      ['manual review', summary.manual_review_count ?? 0],
+      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
+      ['fake data', data.fake_data === true ? 'true' : 'false']
+    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
+    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
+    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.security_level || 'No Data'} - ${row.accuracy_score_4 ?? '0'}/4 - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman için henüz güncel değişiklik yok.</li>';
+  } catch (e) {
+    summaryEl.textContent = `Safety / Security güncelleme dosyası okunamadı: ${e.message}`;
+    gridEl.innerHTML = '';
+    listEl.innerHTML = '';
+  }
+}
+async function renderGasEmissionsUpdatePanel() {
+  const summaryEl = document.getElementById('gasEmissionsUpdateSummary');
+  const gridEl = document.getElementById('gasEmissionsUpdateGrid');
+  const listEl = document.getElementById('gasEmissionsUpdateList');
+  if (!summaryEl || !gridEl || !listEl) return;
+  try {
+    const data = await json('gas_emissions_updates/latest_changes.json?v=20260703-gas-template');
+    const summary = data.summary || {};
+    summaryEl.textContent = `${data.layer || 'Gas Emissions'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
+    gridEl.innerHTML = [
+      ['changed', summary.changed_count ?? 0],
+      ['verified', summary.verified_count ?? 0],
+      ['manual review', summary.manual_review_count ?? 0],
+      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
+      ['score', data.verification_score_after || data.verification_score || '0/4'],
+      ['runner', data.runner_status || 'waiting'],
+      ['next', data.next_action || 'runner bekleniyor'],
+      ['fake data', data.fake_data === true ? 'true' : 'false']
+    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
+    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
+    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.gas_emission_level || 'No Data'} - ${row.emission_percent ?? 'null'}% - ${row.accuracy_score_4 ?? '0'}/4 - ${row.source_date || 'source date yok'} - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman icin henuz guncel degisiklik yok.</li>';
+  } catch (e) {
+    summaryEl.textContent = `Gas Emissions guncelleme dosyasi okunamadi: ${e.message}`;
+    gridEl.innerHTML = '';
+    listEl.innerHTML = '';
+  }
+}
+async function renderInternetAccessUpdatePanel() {
+  const summaryEl = document.getElementById('internetAccessUpdateSummary');
+  const gridEl = document.getElementById('internetAccessUpdateGrid');
+  const listEl = document.getElementById('internetAccessUpdateList');
+  if (!summaryEl || !gridEl || !listEl) return;
+  try {
+    const data = await json('internet_access_updates/latest_changes.json?v=20260703-internet-template');
+    const summary = data.summary || {};
+    summaryEl.textContent = `${data.layer || 'Internet Access'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
+    gridEl.innerHTML = [
+      ['changed', summary.changed_count ?? 0],
+      ['verified', summary.verified_count ?? 0],
+      ['manual review', summary.manual_review_count ?? 0],
+      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
+      ['score', data.verification_score_after || data.verification_score || '0/4'],
+      ['runner', data.runner_status || 'waiting'],
+      ['next', data.next_action || 'runner bekleniyor'],
+      ['fake data', data.fake_data === true ? 'true' : 'false']
+    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
+    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
+    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.internet_access_level || 'No Data'} - ${row.internet_access_percent ?? 'null'}% - ${row.accuracy_score_4 ?? '0'}/4 - ${row.source_date || 'source date yok'} - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman icin henuz guncel degisiklik yok.</li>';
+  } catch (e) {
+    summaryEl.textContent = `Internet Access guncelleme dosyasi okunamadi: ${e.message}`;
+    gridEl.innerHTML = '';
+    listEl.innerHTML = '';
+  }
+}
+async function loadChunk(id) { if (chunkCache.has(id)) return chunkCache.get(id); const data = await json(`chunks/page_${String(id).padStart(6,'0')}.json`); chunkCache.set(id, data); return data; }
+async function rowsForIndices(indices) { const byChunk = new Map(); for (const idx of indices) { const cid = Math.floor(idx / manifest.chunk_size); if (!byChunk.has(cid)) byChunk.set(cid, []); byChunk.get(cid).push(idx); } const out = []; for (const [cid, idxs] of byChunk) { const chunk = await loadChunk(cid); for (const idx of idxs) out.push(chunk[idx % manifest.chunk_size]); } return out; }
+function visibleIndices() { const f = document.getElementById('coverageFilter').value; const list = filterIndexes[f] || filterIndexes.all; return list.slice(page * pageSize, page * pageSize + pageSize); }
+function filteredOnPage(rows) { const q = document.getElementById('searchBox').value.trim().toLowerCase(); if (!q) return rows; return rows.filter(row => [row.canonical_program_parcel_id,row.security_parcel_id,row.distance_parcel_ref,row.distance_parcel_id,row.gas_parcel_ref,row.topography_parcel_id,row.program_matching_ids,row.parcel_location].join(' ').toLowerCase().includes(q)); }
+function isNoData(value) { return value === null || value === undefined || String(value).startsWith('Veri bulunamad'); }
+function renderTable(rows) { const data = filteredOnPage(rows); let h = '<thead><tr>'; h += `<th colspan="${manifest.base_columns.length}" class="sticky">Program Parsel / Konum / ID EÅŸleÅŸtirme</th>`; for (const g of manifest.groups) h += `<th colspan="${g[1].length*3}">${g[0]}</th>`; h += '</tr><tr>'; for (const c of manifest.base_columns) h += `<th class="sticky">${c[0]}</th>`; for (const g of manifest.groups) for (const fld of g[1]) h += `<th>${fld[0]} - Ã‡Ä±ktÄ±</th><th>${fld[0]} - Kaynak/KanÄ±t</th><th>${fld[0]} - DoÄŸruluk</th>`; h += '</tr></thead><tbody>'; for (const row of data) { h += '<tr>'; for (const c of manifest.base_columns) h += `<td class="sticky">${row[c[1]] ?? ''}</td>`; for (const g of manifest.groups) for (const fld of g[1]) { const cell = row.outputs[fld[1]] || {value:'Veri bulunamadÄ±',source:'Eksik',accuracy:'0/4'}; const nd = isNoData(cell.value) ? ' nodata' : ''; h += `<td class="value${nd}">${cell.value}</td><td class="source">${cell.source}</td><td class="${accClass(cell.accuracy)}">${cell.accuracy}</td>`; } h += '</tr>'; } table.innerHTML = h + '</tbody>'; }
+async function render() { const f = document.getElementById('coverageFilter').value; const total = (filterIndexes[f] || []).length; const maxPage = Math.max(0, Math.ceil(total / pageSize) - 1); if (page > maxPage) page = maxPage; statusEl.textContent = 'YÃ¼kleniyor...'; currentRows = await rowsForIndices(visibleIndices()); renderTable(currentRows); statusEl.textContent = `${total} kayÄ±t, sayfa ${page+1} / ${maxPage+1}`; }
+document.getElementById('prevBtn').onclick = () => { if (page > 0) page--; render(); }; document.getElementById('nextBtn').onclick = () => { page++; render(); }; document.getElementById('coverageFilter').onchange = () => { page = 0; render(); }; document.getElementById('searchBox').oninput = () => renderTable(currentRows);
+(async () => { try { await renderSecurityUpdatePanel(); await renderGasEmissionsUpdatePanel(); await renderInternetAccessUpdatePanel(); manifest = await json('chunks/manifest.json'); filterIndexes = await json('chunks/filter_indexes.json'); await render(); } catch(e) { table.innerHTML = `<tbody><tr><td>Tablo yÃ¼klenemedi: ${e.message}. Bu HTML'i 127.0.0.1 lokal server Ã¼zerinden aÃ§Ä±n.</td></tr></tbody>`; } })();
+</script>
+<script src="gas_emissions_runtime_patch_20260703.js?refresh=1783120747"></script></body>
+</html>
+
+
+
+
+
+
+
+
+
