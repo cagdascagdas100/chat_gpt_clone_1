@@ -5,6 +5,7 @@
     {id:'catTest',kind:'link',href:'./erorterung_tests.html?v=erorterung-8a3d0618c',title:'Test',desc:'C1/C2 Erörterung test sistemini aç.'},
     {id:'catGrammar',cat:'Genel Grammer',title:'Genel Grammar',desc:'Satzbau, Kasus, Artikel, Pronomen, Negation ve doğru gramerle yazma.'},
     {id:'catWrite',cat:'Schreiben Fehlern',title:'Schreiben Fehler',desc:'Kelime, kalıp, Präposition ve C1/C2 yazma hatası testleri.'},
+    {id:'catWrite2',cat:'Schreiben Fehler 2',title:'Schreiben Fehler 2',desc:'Kalıplar, Präpositionen, Rektion, Kollokationen ve NVV/FVG çalışmaları.'},
     {id:'catNVV',cat:'NVV',title:'NVV',desc:'Nomen-Verb-Verbindungen ve akademik yazma kalıpları.'},
     {id:'catBefore',cat:'Bevor Schreiben',title:'Bevor Schreiben / Bewerbungsschreiben',desc:'Selbstfahrende Autos: C1/C2 Vorteilsabsatz, Redemittel, NVV ve yazma hazırlığı dahil tüm Vorteile/Nachteile konu anlatımları burada.'}
   ];
@@ -46,7 +47,7 @@
     try{window.selectedCategory='';window.selected='';}catch(e){}
     try{if(typeof window.setControls==='function')window.setControls(false);else if(typeof setControls==='function')setControls(false);else setModeControls(false);}catch(e){setModeControls(false);}
     var html='<h2 style="color:#111827!important;text-shadow:none!important;opacity:1!important">İlk olarak ana başlığı seç</h2>'+
-      '<p class="muted" style="color:#4b5563!important;text-shadow:none!important;opacity:1!important">Ana menüde sadece 5 ana başlık gösterilir. Alt konu başlıkları kendi ana bölümünün içine girince görünür.</p>'+
+      '<p class="muted" style="color:#4b5563!important;text-shadow:none!important;opacity:1!important">Ana menüde sadece ana başlıklar gösterilir. Alt konu başlıkları kendi ana bölümünün içine girince görünür.</p>'+
       '<div id="strictMainGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px">'+MAIN_CARDS.map(cardHtml).join('')+'</div>';
     list.innerHTML=html;
     if(artikel)list.appendChild(artikel);
@@ -62,21 +63,25 @@
   window.AAYS_NO_FLICKER_STRICT_MENU_OK=true;
   window.AAYS_ARTIKEL_CARD_PRESERVED_BY_STABLE_MENU_OK=true;
   window.AAYS_HOME_MENU_OBSERVER_REMOVED_OK=true;
+  window.AAYS_SCHREIBEN_FEHLER2_MENU_OK=true;
 })();
 
-/* Loader for KI Arbeitsplatz Nachteile t53: local files only, keeps the fixed URL unchanged. */
+/* Local content loaders: keeps the fixed URL unchanged. */
 (function(){
   'use strict';
-  function loadLocal(src,flag){
+  function loadLocal(src,flag,cat){
     if(window[flag])return;
     window[flag]=true;
     var s=document.createElement('script');
     s.src=src;
     s.async=false;
-    s.onload=function(){try{if(window.__strictMainMenuActive===false&&typeof window.renderTests==='function')window.renderTests('Bevor Schreiben');}catch(e){}};
+    s.onload=function(){try{if(cat&&window.__strictMainMenuActive===false&&typeof window.renderTests==='function')window.renderTests(cat);}catch(e){}};
     (document.head||document.documentElement).appendChild(s);
   }
-  loadLocal('data_bevor_ki_arbeitsplatz_nachteile.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_STRICT_LOADER_OK');
-  loadLocal('data_bevor_ki_arbeitsplatz_nachteile_expand.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_EXPAND_STRICT_LOADER_OK');
+  loadLocal('data_schreiben_fehler2_kaliplar_praep_nvv.js?v=1','AAYS_SCHREIBEN_FEHLER2_CORE_LOADER_OK','Schreiben Fehler 2');
+  loadLocal('data_schreiben_fehler2_kaliplar_praep_nvv_long.js?v=1','AAYS_SCHREIBEN_FEHLER2_LONG_LOADER_OK','Schreiben Fehler 2');
+  loadLocal('data_bevor_ki_arbeitsplatz_nachteile.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_STRICT_LOADER_OK','Bevor Schreiben');
+  loadLocal('data_bevor_ki_arbeitsplatz_nachteile_expand.js?v=1','AAYS_KI_ARBEITSPLATZ_NACHTEILE_EXPAND_STRICT_LOADER_OK','Bevor Schreiben');
+  window.AAYS_SCHREIBEN_FEHLER2_STRICT_BOOTSTRAP_OK=true;
   window.AAYS_KI_ARBEITSPLATZ_NACHTEILE_STRICT_BOOTSTRAP_OK=true;
 })();
