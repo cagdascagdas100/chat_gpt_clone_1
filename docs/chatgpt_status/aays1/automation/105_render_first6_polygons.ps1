@@ -1,8 +1,6 @@
 $Repo = $env:AAYS_REPO_ROOT
 if (!$Repo) { $Repo = 'F:\chatgpt\chat_gpt_clone_1_main' }
-$AiRoot = $env:AAYS_AI_READY_ROOT
-if (!$AiRoot) { $AiRoot = 'F:\ai-ready-to-sell' }
-$PolyRoot = Join-Path $AiRoot 'polygon_renders'
+$PolyRoot = Join-Path $Repo 'england_map_web\data\geometry_review_3of4\first6_assets'
 $Base = Join-Path $Repo 'docs\chatgpt_status\aays1'
 $Tasks = Join-Path $Base 'runner_tasks'
 $Reports = Join-Path $Base 'reports'
@@ -30,7 +28,7 @@ foreach ($row in @(1,2,3,4,5,6)) {
   $svg | Set-Content -Encoding UTF8 $target
   $items += [ordered]@{ row=$row; target=$target; status='rendered' }
 }
-$out = [ordered]@{ page_key='aays1'; task_id='105_render_first6_polygons'; final_ready=$false; rendered=6; rows=$items }
+$out = [ordered]@{ page_key='aays1'; task_id='105_render_first6_polygons'; final_ready=$false; rendered=6; rows=$items; web_asset_folder=$PolyRoot }
 $json = $out | ConvertTo-Json -Depth 6
 $json | Set-Content -Encoding UTF8 (Join-Path $Tasks "first6_polygon_render_$stamp.json")
 @"
