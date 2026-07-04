@@ -143,3 +143,53 @@ Future C-to-F move rollback:
 - Existing F main files were not overwritten.
 - Low-risk missing Gas Emissions/site files were added.
 - Security archive remains staged for later page-specific validation.
+## Program Layer Matrix Integration - Continued
+
+Additional missing parcel layer data files were integrated from C staging into F main after the first low-risk import.
+
+Integrated runtime/data files:
+
+- england_map_web/data/program_layer_matrix/distance_property_types.geojson
+- england_map_web/data/program_layer_matrix/future_growth.geojson
+- england_map_web/data/program_layer_matrix/gas_emissions.geojson
+- england_map_web/data/program_layer_matrix/internet.geojson
+- england_map_web/data/program_layer_matrix/manifest.json
+- england_map_web/data/program_layer_matrix/planned_buildings.geojson
+- england_map_web/data/program_layer_matrix/security.geojson
+- england_map_web/data/program_layer_matrix/topography.geojson
+
+Topography note: F main had a 480 byte placeholder with 0 features. It was backed up under docs/chatgpt_status/_shared/imports/replaced_placeholders_20260704/ and replaced with the C staging version containing 77970 features.
+
+Validation file:
+
+- docs/chatgpt_status/_shared/imports/program_layer_matrix_validation_20260704.json
+
+Feature counts validated:
+
+- distance_property_types.geojson: 92283 features, bytes=94075297
+- future_growth.geojson: 0 features, bytes=572
+- gas_emissions.geojson: 3533 features, bytes=2711733
+- internet.geojson: 33785 features, bytes=24704099
+- manifest.json: 0 features, bytes=1981
+- planned_buildings.geojson: 47 features, bytes=179990
+- security.geojson: 92283 features, bytes=61369763
+- topography.geojson: 77970 features, bytes=61981121
+
+Additional update outputs copied without overwriting existing latest_changes conflicts:
+
+- outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/README_TR.md
+- outputs/england_program_parcel_matrix_20260629/internet_access_updates/latest_changes.json
+- outputs/england_program_parcel_matrix_20260629/internet_access_updates/README_TR.md
+- outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/README_TR.md
+- outputs/england_program_parcel_matrix_20260629/topography_updates/README_TR.md
+
+Smoke checks:
+
+- 8010 /health: HTTP 200
+- 8010 /england_map_web/: HTTP 200
+- 8010 program_layer_matrix gas_emissions/internet/security/topography/manifest: HTTP 200
+- 8020 matrix page: HTTP 200 and contains Gas Emissions, Security, Internet, Topography tokens
+- 8020 internet_access latest_changes: HTTP 200
+- 8020 gas_emissions runtime patch: HTTP 200
+
+C drive move status: not moved yet. The data/app integration phase now has a Git rollback point before physical junction work.
