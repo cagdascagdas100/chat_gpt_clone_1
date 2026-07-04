@@ -10,13 +10,19 @@ if (-not $repoFull.ToUpperInvariant().StartsWith('F:\')) {
 }
 Set-Location $repoFull
 
+function Resolve-RepoPath([string]$p) {
+  if ([System.IO.Path]::IsPathRooted($p)) { return $p }
+  return [System.IO.Path]::Combine($repoFull, $p)
+}
 function Ensure-Dir([string]$p) {
-  $d = Split-Path -Parent $p
+  $fullPath = Resolve-RepoPath $p
+  $d = Split-Path -Parent $fullPath
   if ($d -and -not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
 }
 function Write-Utf8([string]$p, [string]$c) {
-  Ensure-Dir $p
-  [System.IO.File]::WriteAllText($p, $c, [System.Text.UTF8Encoding]::new($false))
+  $fullPath = Resolve-RepoPath $p
+  Ensure-Dir $fullPath
+  [System.IO.File]::WriteAllText($fullPath, $c, [System.Text.UTF8Encoding]::new($false))
 }
 function Json([object]$o) { return ($o | ConvertTo-Json -Depth 12) }
 
@@ -47,13 +53,22 @@ if (Test-Path $csvPath) {
 
 if ($rows.Count -eq 0) { $blockers.Add('verified_rows_missing') }
 if ($validRows.Count -lt $rows.Count) { $blockers.Add('some_rows_missing_required_fields') }
-if (-not (Test-Path $smokePath)) { $blockers.Add('browser_smoke_missing') }
+$smokeOk = $false
+if (Test-Path $smokePath) {
+  try {
+    $smoke = Get-Content $smokePath -Raw | ConvertFrom-Json
+    $smokeOk = ($smoke.overall_ok -eq $true)
+  } catch {
+    $smokeOk = $false
+  }
+}
+if (-not $smokeOk) { $blockers.Add('browser_smoke_missing_or_failed') }
 
 $hasUiPatch = (Test-Path 'england_map_web/topography_panel_runtime_patch_20260704.js') -and (Test-Path 'outputs/england_program_parcel_matrix_20260629/topography_matrix_runtime_patch_20260704.js')
 if (-not $hasUiPatch) { $blockers.Add('ui_runtime_patch_missing') }
 
 $canPatchGeo = $false
-if (Test-Path $geoPath -and $validRows.Count -gt 0) {
+if ((Test-Path $geoPath) -and $validRows.Count -gt 0) {
   try {
     $geo = Get-Content $geoPath -Raw | ConvertFrom-Json
     foreach ($feat in @($geo.features)) {
@@ -76,7 +91,7 @@ if (Test-Path $geoPath -and $validRows.Count -gt 0) {
 }
 
 $filled = $validRows.Count
-$smokeOk = Test-Path $smokePath
+$smokeOk = [bool]$smokeOk
 $completion = 25
 $programPct = 25
 $sitePct = 25
@@ -164,4 +179,22 @@ website_update_percent=$sitePct
 blockers=$([string]::Join(';', @($blockers)))
 "@
 Write-Utf8 $reportPath $report
+
+$heartbeatPath = 'docs/chatgpt_status/topography/heartbeat/topography_bridge_heartbeat_latest_20260704.json'
+$heartbeat = [ordered]@{
+  layer = 'Topography'
+  runner = 'topography_single_runner_bridge'
+  repo_root = $repoFull
+  pid = $PID
+  updated_at = ((Get-Date).ToUniversalTime().ToString('s') + 'Z')
+  final_ready = $finalReady
+  filled_parcel_count = $filled
+  verified_parcel_count = $filled
+  smoke_ok = [bool]$smokeOk
+  ui_patch_ok = [bool]$hasUiPatch
+  geojson_patch_ok = [bool]$canPatchGeo
+  blockers = @($blockers)
+  fake_data_created = $false
+}
+Write-Utf8 $heartbeatPath (Json $heartbeat)
 Write-Output $status
