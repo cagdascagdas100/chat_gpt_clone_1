@@ -1,8 +1,6 @@
 $Repo = $env:AAYS_REPO_ROOT
 if (!$Repo) { $Repo = 'F:\chatgpt\chat_gpt_clone_1_main' }
-$AiRoot = $env:AAYS_AI_READY_ROOT
-if (!$AiRoot) { $AiRoot = 'F:\ai-ready-to-sell' }
-$PhotoRoot = Join-Path $AiRoot 'photos'
+$PhotoRoot = Join-Path $Repo 'england_map_web\data\geometry_review_3of4\first6_assets'
 $Base = Join-Path $Repo 'docs\chatgpt_status\aays1'
 $Tasks = Join-Path $Base 'runner_tasks'
 $Reports = Join-Path $Base 'reports'
@@ -22,7 +20,7 @@ foreach ($r in $data.rows) {
   $items += [ordered]@{ row=$r.row; parcel=$r.parcel; target=$target; status=$st }
 }
 $downloaded = @($items | Where-Object { $_.status -eq 'downloaded' }).Count
-$out = [ordered]@{ page_key='aays1'; task_id='104_download_first6_photos'; final_ready=$false; downloaded=$downloaded; rows=$items }
+$out = [ordered]@{ page_key='aays1'; task_id='104_download_first6_photos'; final_ready=$false; downloaded=$downloaded; rows=$items; web_asset_folder=$PhotoRoot }
 $json = $out | ConvertTo-Json -Depth 6
 $json | Set-Content -Encoding UTF8 (Join-Path $Tasks "first6_photo_download_$stamp.json")
 @"
