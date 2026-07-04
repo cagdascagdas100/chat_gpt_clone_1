@@ -43,4 +43,7 @@ L.long=long;
 window.AAYS_SCHREIBEN_FEHLER2_LONG_OK=true;
 window.AAYS_SCHREIBEN_FEHLER2_LONG_1500_PLUS_OK=true;
 window.AAYS_SCHREIBEN_FEHLER2_LONG_EXTENDED_OK=true;
+function loadSf2(src,flag){if(window[flag])return;window[flag]=true;var s=document.createElement('script');s.src=src;s.async=false;(document.head||document.documentElement).appendChild(s);}
+loadSf2('data_schreiben_fehler2_medien_wirtschaft_praep_nvv.js?v=1','AAYS_SCHREIBEN_FEHLER2_T2_CORE_FROM_T1_LONG_OK');
+loadSf2('data_schreiben_fehler2_medien_wirtschaft_praep_nvv_long.js?v=1','AAYS_SCHREIBEN_FEHLER2_T2_LONG_FROM_T1_LONG_OK');
 })();
