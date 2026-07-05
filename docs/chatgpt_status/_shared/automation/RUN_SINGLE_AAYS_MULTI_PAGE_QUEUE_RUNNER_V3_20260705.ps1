@@ -44,6 +44,12 @@ function Path-IsAllowed([string]$Path, [string[]]$Allowed) {
   }
   return $false
 }
+function Is-ControllerRuntimePath([string]$Path) {
+  $r = (Rel $Path).TrimEnd('/')
+  return ($r -eq 'docs/chatgpt_status/_shared/heartbeat/MULTI_PAGE_heartbeat_latest.json' -or
+    $r.StartsWith('docs/chatgpt_status/_shared/logs/') -or
+    $r.StartsWith('docs/chatgpt_status/_shared/runner_lock/'))
+}
 
 $RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
 if (-not $RepoRoot.StartsWith('F:\', [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -143,7 +149,7 @@ function Sync-ControllerRepo {
     $url = 'https://github.com/' + $RepoFullName + '.git'
     Assert-GitOk (Invoke-AaysGit (Split-Path -Parent $RepoRoot) clone --branch $MainBranch --single-branch $url $RepoRoot) 'CLONE_CONTROLLER_FAILED'
   }
-  $dirty = @(Get-GitChangedPaths $RepoRoot)
+  $dirty = @(Get-GitChangedPaths $RepoRoot | Where-Object { -not (Is-ControllerRuntimePath $_) })
   Assert-GitOk (Invoke-AaysGit $RepoRoot fetch origin $MainBranch) 'CONTROLLER_FETCH_FAILED'
   if ($dirty.Count -eq 0) {
     Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
@@ -440,11 +446,11 @@ if (Test-Path -LiteralPath $LockPath) {
 
 $lockPayload = [ordered]@{ pid=$PID; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V3_20260705'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath }
 Write-Utf8 $LockPath (To-JsonText $lockPayload)
-Write-Utf8 $RunnerHeartbeatPath (To-JsonText $lockPayload)
 $script:Summary.single_runner_lock_acquired = $true
 
 try {
   Sync-ControllerRepo
+  Write-Utf8 $RunnerHeartbeatPath (To-JsonText $lockPayload)
   $queueRoot = Join-Path $RepoRoot 'docs\chatgpt_status'
   $queueFiles = @(Get-ChildItem -LiteralPath $queueRoot -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '[\\/]queue[\\/]' -and $_.Extension -in @('.json','.txt') })
   $parsed = @()
