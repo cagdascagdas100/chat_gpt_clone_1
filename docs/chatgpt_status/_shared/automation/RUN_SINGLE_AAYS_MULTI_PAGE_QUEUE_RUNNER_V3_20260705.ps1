@@ -52,6 +52,7 @@ function Is-ControllerRuntimePath([string]$Path) {
     $r -eq 'docs/chatgpt_status/_shared/status/queue_skip_status_check_20260705.json' -or
     $r.StartsWith('docs/chatgpt_status/_shared/logs/') -or
     $r.StartsWith('docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_') -or
+    $r -eq 'docs/chatgpt_status/_shared/runner_lock' -or
     $r.StartsWith('docs/chatgpt_status/_shared/runner_lock/'))
 }
 
