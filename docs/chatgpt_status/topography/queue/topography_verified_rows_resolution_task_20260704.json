@@ -2,13 +2,28 @@
   "task_id": "topography-verified-rows-resolution-20260704",
   "page_key": "topography",
   "layer": "Topography",
-  "status": "QUEUED_FOR_SINGLE_SHARED_RUNNER",
+  "status": "queued",
+  "priority": 10,
   "created_at": "2026-07-04T00:00:00Z",
+  "target_branch": "main",
+  "script_path": "docs/chatgpt_status/topography/automation/topography_verified_rows_shared_runner_entry_20260705.ps1",
+  "automation_script": "docs/chatgpt_status/topography/automation/topography_verified_rows_shared_runner_entry_20260705.ps1",
+  "repo_root": "F:\\chatgpt\\chat_gpt_clone_1_main",
   "new_runner_allowed": false,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
   "runner_system_status": "SOLVED",
   "remaining_blocker": "verified_rows_missing",
-  "goal": "Resolve verified_rows_missing without fake data by finding or generating at least one official/evidence-backed Topography parcel row, then rerun the existing bridge.",
-  "repo_root": "F:\\chatgpt\\chat_gpt_clone_1_main",
+  "goal": "Resolve verified_rows_missing without fake data by finding or extracting at least one official/evidence-backed Topography parcel row, then rerun bridge and push outputs.",
+  "allowed_paths": [
+    "docs/chatgpt_status/topography/",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/",
+    "england_map_web/data/program_layer_matrix/topography.geojson",
+    "england_map_web/topography_panel_runtime_patch_20260704.js",
+    "outputs/england_program_parcel_matrix_20260629/topography_matrix_runtime_patch_20260704.js"
+  ],
   "required_inputs": [
     "england_map_web/data/program_layer_matrix/topography.geojson",
     "docs/chatgpt_status/topography/fixtures/topography_verified_rows_template_20260703.csv",
@@ -48,20 +63,20 @@
     "do not start duplicate runner"
   ],
   "steps": [
-    "sync GitHub main into F repo clean worktree",
-    "inspect topography.geojson for parcel_id or parcel_ref and existing elevation fields",
-    "run RESOLVE_TOPOGRAPHY_VERIFIED_ROWS_BLOCKER_20260704.ps1",
-    "if zero rows are extracted, write audit with missing fields and keep final_ready=false",
-    "if at least one verified row is produced, run topography_single_runner_bridge_20260703.ps1",
-    "run 8010/8020 smoke through existing bootstrap",
-    "push updated CSV, geojson, latest_changes, status, report, audit, heartbeat to GitHub main"
+    "shared runner validates this V3 queue contract",
+    "run topography_verified_rows_shared_runner_entry_20260705.ps1 in clean task worktree",
+    "entry script runs verified rows resolver and bridge",
+    "if zero rows are extracted, write audit/gate with verified_rows_missing and keep final_ready=false",
+    "if at least one verified row is produced, update CSV, GeoJSON, latest_changes, status and reports",
+    "shared runner stages only allowed paths, pushes result to GitHub main, and writes completion mirror"
   ],
   "expected_outputs": [
     "docs/chatgpt_status/topography/fixtures/topography_verified_rows_template_20260703.csv",
     "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json",
     "docs/chatgpt_status/topography/status/topography_current_status_20260703.txt",
     "docs/chatgpt_status/topography/reports/topography_progress_latest_20260703.md",
-    "docs/chatgpt_status/topography/reports/topography_verified_rows_blocker_audit_20260704.json"
+    "docs/chatgpt_status/topography/reports/topography_verified_rows_blocker_audit_20260704.json",
+    "docs/chatgpt_status/topography/status/topography-verified-rows-resolution-20260704_gate.json"
   ],
   "final_ready": false
 }
