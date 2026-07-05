@@ -3,13 +3,27 @@ param(
   [string]$RepoFullName = 'cagdascagdas100/chat_gpt_clone_1',
   [string]$MainBranch = 'main',
   [int]$StaleMinutes = 20,
-  [int]$MaxTasks = 1
+  [int]$MaxTasks = 1,
+  [switch]$ScanOnly
 )
 
 $ErrorActionPreference = 'Stop'
-$launcher = Join-Path $RepoRoot 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V2_LOCKED_20260704.ps1'
-if (-not (Test-Path -LiteralPath $launcher)) {
-  throw 'V2 locked launcher missing: ' + $launcher
+$runner = Join-Path $RepoRoot 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V3_20260705.ps1'
+if (-not (Test-Path -LiteralPath $runner)) {
+  throw 'V3 shared runner missing: ' + $runner
 }
-& powershell -NoProfile -ExecutionPolicy Bypass -File $launcher -RepoRoot $RepoRoot -StaleMinutes $StaleMinutes
+
+$argsList = @(
+  '-NoProfile',
+  '-ExecutionPolicy', 'Bypass',
+  '-File', $runner,
+  '-RepoRoot', $RepoRoot,
+  '-RepoFullName', $RepoFullName,
+  '-MainBranch', $MainBranch,
+  '-StaleMinutes', ([string]$StaleMinutes),
+  '-MaxTasks', ([string]$MaxTasks)
+)
+if ($ScanOnly) { $argsList += '-ScanOnly' }
+
+& powershell @argsList
 exit $LASTEXITCODE
