@@ -47,7 +47,11 @@ function Path-IsAllowed([string]$Path, [string[]]$Allowed) {
 function Is-ControllerRuntimePath([string]$Path) {
   $r = (Rel $Path).TrimEnd('/')
   return ($r -eq 'docs/chatgpt_status/_shared/heartbeat/MULTI_PAGE_heartbeat_latest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/MULTI_PAGE_latest_status.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/queue_selection_debug_20260705.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/queue_skip_status_check_20260705.json' -or
     $r.StartsWith('docs/chatgpt_status/_shared/logs/') -or
+    $r.StartsWith('docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_') -or
     $r.StartsWith('docs/chatgpt_status/_shared/runner_lock/'))
 }
 
@@ -149,15 +153,24 @@ function Sync-ControllerRepo {
     $url = 'https://github.com/' + $RepoFullName + '.git'
     Assert-GitOk (Invoke-AaysGit (Split-Path -Parent $RepoRoot) clone --branch $MainBranch --single-branch $url $RepoRoot) 'CLONE_CONTROLLER_FAILED'
   }
-  $dirty = @(Get-GitChangedPaths $RepoRoot | Where-Object { -not (Is-ControllerRuntimePath $_) })
+  $allDirty = @(Get-GitChangedPaths $RepoRoot)
+  $runtimeDirty = @($allDirty | Where-Object { Is-ControllerRuntimePath $_ })
+  $dirty = @($allDirty | Where-Object { -not (Is-ControllerRuntimePath $_) })
+  $script:Summary.controller_runtime_dirty_paths = $runtimeDirty
+  $script:Summary.controller_dirty_paths = $dirty
   Assert-GitOk (Invoke-AaysGit $RepoRoot fetch origin $MainBranch) 'CONTROLLER_FETCH_FAILED'
-  if ($dirty.Count -eq 0) {
+  if ($dirty.Count -eq 0 -and $runtimeDirty.Count -eq 0) {
     Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
     Assert-GitOk (Invoke-AaysGit $RepoRoot pull --ff-only origin $MainBranch) 'CONTROLLER_PULL_FAILED'
     $script:Summary.controller_sync_ok = $true
+    $script:Summary.controller_sync_mode = 'pull_ff_only'
+  } elseif ($dirty.Count -eq 0) {
+    $script:Summary.controller_sync_ok = $true
+    $script:Summary.controller_sync_mode = 'fetch_only_runtime_dirty'
   } else {
     Add-Blocker 'CONTROLLER_DIRTY_NO_PULL'
     $script:Summary.controller_sync_ok = $false
+    $script:Summary.controller_sync_mode = 'blocked_unscoped_dirty'
   }
 }
 function Ensure-TaskWorktree([object]$Task) {
