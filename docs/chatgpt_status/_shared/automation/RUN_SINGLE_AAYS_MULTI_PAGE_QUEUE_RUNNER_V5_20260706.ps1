@@ -702,12 +702,12 @@ function Sync-AllowedOutputs {
   if ($LASTEXITCODE -ne 0) {
     return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git commit failed" }
   }
-  & git -C $script:RepoRoot pull --rebase origin $currentBranch
+  & git -C $script:RepoRoot pull --rebase origin $script:CurrentBranch
   $postSyncOk = ($LASTEXITCODE -eq 0)
   if (-not $postSyncOk) {
     return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git pull --rebase failed" }
   }
-  & git -C $script:RepoRoot push origin HEAD:$currentBranch
+  & git -C $script:RepoRoot push origin HEAD:$script:CurrentBranch
   return [pscustomobject]@{ push_ok = ($LASTEXITCODE -eq 0); post_sync_ok = $postSyncOk; message = "push attempted" }
 }
 
@@ -794,6 +794,8 @@ function Invoke-RunnerScan {
 }
 
 $script:RepoRoot = Get-RepoRoot
+$script:CurrentBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
+if ([string]::IsNullOrWhiteSpace($script:CurrentBranch)) { $script:CurrentBranch = $script:MainBranch }
 Set-Location $script:RepoRoot
 $lockResult = Test-RunnerLock
 if (-not $lockResult.acquired) {
@@ -820,4 +822,5 @@ try {
     }
   }
 }
+
 
