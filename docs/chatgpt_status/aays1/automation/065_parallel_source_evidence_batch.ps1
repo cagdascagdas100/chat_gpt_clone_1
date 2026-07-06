@@ -1,19 +1,40 @@
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = "F:\chatgpt\chat_gpt_clone_1_main"
-$BridgeRoot = "F:\AAYS_GITHUB_BRIDGE_CLEAN2"
+$RepoRoot = $env:AAYS_REPO_ROOT
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+  $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..\..")).Path
+}
+$TaskId = if ([string]::IsNullOrWhiteSpace($env:AAYS_TASK_ID)) { "normalized-065-progress-report-20260706" } else { $env:AAYS_TASK_ID }
+$PageKey = if ([string]::IsNullOrWhiteSpace($env:AAYS_PAGE_KEY)) { "aays1" } else { $env:AAYS_PAGE_KEY }
+$TargetBranch = if ([string]::IsNullOrWhiteSpace($env:AAYS_TARGET_BRANCH)) { "codex/aays-single-runner-v5-20260706" } else { $env:AAYS_TARGET_BRANCH }
 $Stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$StatusDir = Join-Path $RepoRoot "docs\chatgpt_status\aays1\status"
-$ReportDir = Join-Path $RepoRoot "docs\chatgpt_status\aays1\reports"
+
+$StatusDir = Join-Path $RepoRoot "docs\chatgpt_status\$PageKey\status"
+$ReportDir = Join-Path $RepoRoot "docs\chatgpt_status\$PageKey\reports"
 New-Item -ItemType Directory -Force -Path $StatusDir,$ReportDir | Out-Null
 
-$status = "status=BLOCKED_SCRIPT_CREATION_REQUIRES_SOURCE_FETCH_IMPLEMENTATION`nfinal_ready=false`nblocker=parallel_source_fetch_script_was_not_committed_by_chatgpt_connector`nupdated_at=$Stamp"
+$status = @"
+status=BLOCKED_SCRIPT_CREATION_REQUIRES_SOURCE_FETCH_IMPLEMENTATION
+page_key=$PageKey
+task_id=$TaskId
+target_branch=$TargetBranch
+final_ready=false
+fake_data=false
+db_write=false
+migration=false
+production_deploy=false
+blocker=parallel_source_fetch_script_requires_real_source_fetch_implementation
+updated_at=$Stamp
+"@
 $status | Set-Content -Encoding UTF8 (Join-Path $StatusDir "065_parallel_source_evidence_batch_blocked_$Stamp.txt")
-"# 065 Parallel Source Evidence Batch Blocked`n`nThe runner model is installed and working. The next acceleration step is source/evidence fetch in a parallel batch. No fake evidence, no fake polygon, no DB write." | Set-Content -Encoding UTF8 (Join-Path $ReportDir "065_parallel_source_evidence_batch_blocked_$Stamp.md")
 
-Set-Location $RepoRoot
-git add -- "docs/chatgpt_status/aays1/status" "docs/chatgpt_status/aays1/reports"
-git commit -m "Report blocked parallel evidence batch implementation"
-git pull --rebase origin main
-git push origin HEAD:main
+@"
+# 065 Parallel Source Evidence Batch Blocked
+
+Runner repair-safe mode executed the 065 task without local git push, DB write, migration, production deploy, fake evidence, or fake final_ready.
+
+The remaining implementation work is real source/evidence fetch logic. This task intentionally does not fabricate verified rows.
+"@ | Set-Content -Encoding UTF8 (Join-Path $ReportDir "065_parallel_source_evidence_batch_blocked_$Stamp.md")
+
+Write-Output "AAYS1_065_BLOCKED_REAL_SOURCE_FETCH_IMPLEMENTATION_REQUIRED page_key=$PageKey task_id=$TaskId final_ready=false fake_data=false db_write=false migration=false production_deploy=false"
 exit 0
