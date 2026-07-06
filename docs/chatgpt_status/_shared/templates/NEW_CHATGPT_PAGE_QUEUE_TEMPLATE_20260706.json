@@ -1,0 +1,47 @@
+{
+  "task_id": "<page_key>-<short-task-name>-<yyyymmdd-hhmmss>",
+  "page_key": "<page_key>",
+  "display_name": "<Human readable page name>",
+  "status": "queued",
+  "priority": 100,
+  "created_at": "<ISO-UTC>",
+  "target_branch": "main",
+  "script_path": "docs/chatgpt_status/<page_key>/automation/<script-name>.ps1",
+  "automation_script": "docs/chatgpt_status/<page_key>/automation/<script-name>.ps1",
+  "repo_root": "F:\\chatgpt\\chat_gpt_clone_1_main",
+  "new_runner_allowed": false,
+  "single_shared_runner_required": true,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "allowed_paths": [
+    "docs/chatgpt_status/<page_key>/",
+    "outputs/<page_key>/"
+  ],
+  "required_outputs": [
+    "docs/chatgpt_status/<page_key>/status/<task_id>_started.json",
+    "docs/chatgpt_status/<page_key>/status/<task_id>_gate.json",
+    "docs/chatgpt_status/<page_key>/status/<task_id>_completed.json",
+    "docs/chatgpt_status/<page_key>/completed/<task_id>_completed.json",
+    "docs/chatgpt_status/<page_key>/reports/<task_id>_runner_output.txt",
+    "docs/chatgpt_status/<page_key>/heartbeat/<task_id>_heartbeat.txt",
+    "docs/chatgpt_status/_shared/status/queue_result_mirror_<task_id>.json"
+  ],
+  "acceptance_gates": {
+    "queue_seen": true,
+    "queue_started": true,
+    "single_runner_lock_acquired": true,
+    "task_runs_in_clean_worktree": true,
+    "allowed_paths_enforced": true,
+    "runner_output_uploaded": true,
+    "post_sync_ok": true,
+    "PUSH_SYNC_OK": true,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "blockers": []
+}
