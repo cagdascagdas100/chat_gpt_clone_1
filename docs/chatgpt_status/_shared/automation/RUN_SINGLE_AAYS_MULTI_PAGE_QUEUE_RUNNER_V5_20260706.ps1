@@ -117,7 +117,17 @@ function Dirty-Paths([string]$Root) {
 }
 function Is-Runtime([string]$Path) {
   $p = Rel $Path
-  return ($p.StartsWith("docs/chatgpt_status/_shared/status/") -or $p.StartsWith("docs/chatgpt_status/_shared/heartbeat/") -or $p.StartsWith("docs/chatgpt_status/_shared/logs/") -or $p.StartsWith("docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_V5_") -or $p.StartsWith("docs/chatgpt_status/_shared/runner_lock/") -or $p.StartsWith("docs/chatgpt_status/_shared/locks/") -or $p.StartsWith("docs/chatgpt_status/_shared/panel/page_status_index_latest.json") -or $p.StartsWith("england_map_web/data/runner_panel/"))
+  return ($p.StartsWith("docs/chatgpt_status/_shared/status/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/heartbeat/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/logs/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/reports/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/runner_lock/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/locks/") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/panel/page_status_index_latest.json") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/contracts/PAGE_KEY_REGISTRY.json") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/page_registry.json") -or
+    $p.StartsWith("docs/chatgpt_status/_shared/page_registry/") -or
+    $p.StartsWith("england_map_web/data/runner_panel/"))
 }
 function Path-Allowed([string]$Path,[string[]]$Allowed) {
   $p = (Rel $Path).TrimEnd('/')
@@ -185,7 +195,7 @@ function Commit-And-Push([string]$Msg,[string[]]$Allowed) {
   Git-Ok (Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)) "POST_PUSH_FAILED"
 }
 function Commit-Runtime-Summary([string]$Msg) {
-  $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock","docs/chatgpt_status/_shared/locks","docs/chatgpt_status/_shared/panel","england_map_web/data/runner_panel")
+  $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock","docs/chatgpt_status/_shared/locks","docs/chatgpt_status/_shared/panel","docs/chatgpt_status/_shared/contracts","docs/chatgpt_status/_shared/page_registry","docs/chatgpt_status/_shared/page_registry.json","england_map_web/data/runner_panel")
   $runtimeDirty=@(Dirty-Paths $script:RepoRoot | Where-Object { Is-Runtime $_ })
   if ($runtimeDirty.Count -gt 0) { Commit-And-Push $Msg $runtimeAllowed }
 }
@@ -248,8 +258,22 @@ try {
   Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "CONTROLLER_FETCH_FAILED"
   Git-Ok (Invoke-Git $script:RepoRoot checkout $script:RunnerBranch) "CONTROLLER_CHECKOUT_FAILED"
   $pull=Invoke-Git $script:RepoRoot pull --ff-only origin $script:RunnerBranch; if ($pull.code -ne 0) { throw ("CONTROLLER_PULL_FAILED: " + $pull.output) }
-  if (Test-Path -LiteralPath $LockPath) { $age=((Get-Date)-(Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes; if ($age -lt $StaleMinutes) { Add-Blocker "RUNNER_ALREADY_ACTIVE"; throw "RUNNER_ALREADY_ACTIVE" } else { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } }
-  Ensure-Dir $LockPath; $script:Summary.single_runner_lock_acquired=$true
+  if (Test-Path -LiteralPath $LockPath) {
+    $lockItem = Get-Item -LiteralPath $LockPath -ErrorAction SilentlyContinue
+    $age = if ($lockItem) { ((Get-Date) - $lockItem.LastWriteTime).TotalMinutes } else { 999999 }
+    if ($lockItem -and $lockItem.PSIsContainer) {
+      Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue
+    } elseif ($age -lt $StaleMinutes) {
+      Add-Blocker "RUNNER_ALREADY_ACTIVE"
+      throw "RUNNER_ALREADY_ACTIVE"
+    } else {
+      Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue
+    }
+  }
+  $lockPayload = To-JsonText ([ordered]@{pid=$PID;started_at=Now-Utc;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";runner_branch=$script:RunnerBranch;repo_root=$script:RepoRoot})
+  Write-Utf8 $LockPath $lockPayload
+  Write-Utf8 $CompatLockPath $lockPayload
+  $script:Summary.single_runner_lock_acquired=$true
   Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{pid=$PID;started_at=Now-Utc;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";runner_branch=$script:RunnerBranch;repo_root=$script:RepoRoot}))
   $queueFiles=@(Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot "docs\chatgpt_status") -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
   $parsed=@($queueFiles | ForEach-Object { Parse-Queue $_ })
@@ -262,7 +286,7 @@ try {
 } catch { Add-Blocker ("RUNNER_FATAL: " + $_.Exception.Message) } finally {
   try { Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary) } catch {}
   try { Write-Utf8 (Join-Path $ReportDir "MULTI_PAGE_runner_output_V5_$RunId.json") (To-JsonText $script:Summary) } catch {}
-  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath $CompatLockPath) { Remove-Item -LiteralPath $CompatLockPath -Force -ErrorAction SilentlyContinue } } catch {}
+  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath $CompatLockPath) { Remove-Item -LiteralPath $CompatLockPath -Force -Recurse -ErrorAction SilentlyContinue } } catch {}
 }
 try {
   Commit-Runtime-Summary "AAYS shared runner V5 scan summary $RunId"
