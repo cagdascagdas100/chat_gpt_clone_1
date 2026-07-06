@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AAYS single shared runner queue contract",
+  "type": "object",
+  "required": [
+    "task_id",
+    "page_key",
+    "status",
+    "target_branch",
+    "script_path",
+    "automation_script",
+    "allowed_paths",
+    "no_fake_final_ready",
+    "no_db_write",
+    "no_migration",
+    "no_production_deploy"
+  ],
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "page_key": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "ready",
+        "pending",
+        "pending_repo_queue",
+        "pickup_requested",
+        "queued_for_single_shared_runner",
+        "retry_pending",
+        "failed_transient",
+        "running",
+        "done",
+        "completed",
+        "blocked",
+        "failed",
+        "archived"
+      ]
+    },
+    "target_branch": { "type": "string" },
+    "script_path": { "type": "string", "minLength": 1 },
+    "automation_script": { "type": "string", "minLength": 1 },
+    "allowed_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "new_runner_allowed": { "const": false },
+    "single_shared_runner_required": { "const": true },
+    "no_fake_final_ready": { "const": true },
+    "no_db_write": { "const": true },
+    "no_migration": { "const": true },
+    "no_production_deploy": { "const": true },
+    "final_ready": { "type": "boolean" }
+  }
+}
