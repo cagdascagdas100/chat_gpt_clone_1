@@ -1,6 +1,6 @@
 ﻿# AAYS Page Contract Inventory 20260706
 
-Generated: 2026-07-06T14:57:16.1703557Z
+Generated: 2026-07-06T14:59:35.7785178Z
 Repo: cagdascagdas100/chat_gpt_clone_1
 Branch: main
 Runner contract: single_shared_runner_v1
@@ -15,7 +15,7 @@ Runner contract: single_shared_runner_v1
 | page_key | display_name | queue_status | percent | final_ready | blocker |
 | --- | --- | --- | ---: | --- | --- |
 | AAYS_REAL_TOPOGRAPHY_PRODUCT | AAYS_REAL_TOPOGRAPHY_PRODUCT | unknown | 0 | False | queue_not_json_or_unreadable |
-| aays1 | aays1 | done | 0 | False | missing_script_path; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; automation_script_failed |
+| aays1 | aays1 | done | 0 | False | missing_script_path; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; push_sync_failed |
 | distance_property_types | distance_property_types | queued | 35 | False | missing_script_path; missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; missing_real_evidence_rows; missing_input_file:docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv |
 | gas_emissions | auto-5.6-gasEmission | done_on_target_branch | 0 | False | missing_automation_script; BLOCKED_BROWSER_ENVIRONMENT |
 | height_difference | auto-4.6-heightDifferance | unknown | 0 | False |  |
@@ -24,6 +24,6 @@ Runner contract: single_shared_runner_v1
 | planned-buildings-codex-20260622 | planned-buildings-codex-20260622 | unknown | 0 | False |  |
 | ready_to_sell | auto-1.4-readyToSell | unknown | 0 | False |  |
 | runner_outputs | runner_outputs | unknown | 0 | False |  |
-| security_public_safety | auto-6.7-security | pending | 0 | False | missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; runner heartbeat and expected output are missing on GitHub; REAL_115_SECURITY_BATCH_JOIN_PROCESSOR_NOT_IMPLEMENTED |
+| security_public_safety | auto-6.7-security | pending | 0 | False | missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; runner heartbeat and expected output are missing on GitHub |
 | security_public_safety_low_credit_20260612 | security_public_safety_low_credit_20260612 | pending | 70 | False | missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy |
 | topography | topography | done | 0 | False | missing_script_path; missing_automation_script; missing_allowed_paths |
