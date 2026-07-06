@@ -53,9 +53,9 @@ if ([string]::IsNullOrWhiteSpace($sourceGeoJsonPath)) {
   throw "Missing verified security source GeoJSON. Checked: $($sourceCandidates -join '; ')"
 }
 
-$sourceGeoJson = Get-Content -Raw -LiteralPath $sourceGeoJsonPath | ConvertFrom-Json -Depth 100
+$sourceGeoJson = Get-Content -Raw -LiteralPath $sourceGeoJsonPath | ConvertFrom-Json
 $sourceSummary = if (Test-Path -LiteralPath $sourceSummaryPath) {
-  Get-Content -Raw -LiteralPath $sourceSummaryPath | ConvertFrom-Json -Depth 100
+  Get-Content -Raw -LiteralPath $sourceSummaryPath | ConvertFrom-Json
 } else {
   $null
 }
