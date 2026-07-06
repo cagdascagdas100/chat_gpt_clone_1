@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [switch]$Loop,
   [int]$IntervalSeconds = 60,
@@ -520,6 +520,7 @@ function Test-CleanWorktree {
   }
 }
 
+<<<<<<< HEAD
 function Get-ScriptBlockers {
   param([string]$ScriptOutput)
   $blockers = New-Object System.Collections.Generic.List[string]
@@ -540,6 +541,8 @@ function Get-ScriptBlockers {
   return @($blockers.ToArray() | Select-Object -Unique)
 }
 
+=======
+>>>>>>> 0267b226dc4664182d4be1a0138d3691943a49a2
 function Write-TaskEvidence {
   param(
     [object]$Task,
@@ -699,12 +702,12 @@ function Sync-AllowedOutputs {
   if ($LASTEXITCODE -ne 0) {
     return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git commit failed" }
   }
-  & git -C $script:RepoRoot pull --rebase origin main
+  & git -C $script:RepoRoot pull --rebase origin $currentBranch
   $postSyncOk = ($LASTEXITCODE -eq 0)
   if (-not $postSyncOk) {
     return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git pull --rebase failed" }
   }
-  & git -C $script:RepoRoot push origin main
+  & git -C $script:RepoRoot push origin HEAD:$currentBranch
   return [pscustomobject]@{ push_ok = ($LASTEXITCODE -eq 0); post_sync_ok = $postSyncOk; message = "push attempted" }
 }
 
@@ -753,6 +756,7 @@ function Invoke-RunnerScan {
     }
 
     if ($exitCode -ne 0) {
+<<<<<<< HEAD
       $scriptBlockers = @(Get-ScriptBlockers -ScriptOutput $scriptOutput)
       if ($exitCode -eq 2 -or $scriptBlockers.Count -gt 0) {
         if ($scriptBlockers.Count -eq 0) { $scriptBlockers = @("automation_script_reported_blocker") }
@@ -761,6 +765,8 @@ function Invoke-RunnerScan {
         foreach ($scriptBlocker in $scriptBlockers) { $blockers.Add($scriptBlocker) }
         continue
       }
+=======
+>>>>>>> 0267b226dc4664182d4be1a0138d3691943a49a2
       $null = Write-TaskEvidence -Task $task -Status "failed" -Blockers @("automation_script_failed") -Errors @($scriptOutput) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
       $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "failed"; blockers = @("automation_script_failed") })
       $blockers.Add("automation_script_failed")
@@ -814,3 +820,4 @@ try {
     }
   }
 }
+
