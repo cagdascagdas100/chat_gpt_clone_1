@@ -76,7 +76,7 @@ The pasted task context says prior branch evidence had PUSH_SYNC_OK=true. In thi
 
 ## Push Result
 
-pending_commit_push: commit and push are attempted after this report is written. If push fails, docs/chatgpt_status/_shared/status/runner_push_blocker_latest.json will contain the real error text.
+pushed: commit 0cc486222 was pushed to origin/codex/aays-single-runner-v5-20260706 at 2026-07-06T19:35:27.7455856Z. This follow-up report update records the successful push outcome.
 
 ## Safety Flags
 
@@ -89,4 +89,4 @@ pending_commit_push: commit and push are attempted after this report is written.
 
 ## Prompt To Paste Into New ChatGPT Pages
 
-AAYS / TerraYield devam. Repo cagdascagdas100/chat_gpt_clone_1 branch codex/aays-single-runner-v5-20260706. Tek shared runner kullan; yeni runner açma. Önce docs/chatgpt_status/_shared/status/codex_single_runner_panel_repair_result_20260706.json ve docs/chatgpt_status/_shared/reports/SINGLE_RUNNER_PANEL_AND_NEW_PAGE_FLOW_FINAL_20260706.md dosyalarını oku. Sonra kendi page_key kuyruğunu docs/chatgpt_status/<PAGE_KEY>/queue altına allowed_paths ve safe flags ile yaz. final_ready=false kalsın; gerçek GitHub kanıtı olmadan completed, yüzde 100 veya final_ready=true yazma. Kullanıcı sadece "devam et" derse aynı shared runner status/panel kanıtlarını kontrol et ve gerçek blocker varsa blocker olarak raporla.
+AAYS / TerraYield devam. Repo cagdascagdas100/chat_gpt_clone_1 branch codex/aays-single-runner-v5-20260706. Tek shared runner kullan; yeni runner aÃ§ma. Ã–nce docs/chatgpt_status/_shared/status/codex_single_runner_panel_repair_result_20260706.json ve docs/chatgpt_status/_shared/reports/SINGLE_RUNNER_PANEL_AND_NEW_PAGE_FLOW_FINAL_20260706.md dosyalarÄ±nÄ± oku. Sonra kendi page_key kuyruÄŸunu docs/chatgpt_status/<PAGE_KEY>/queue altÄ±na allowed_paths ve safe flags ile yaz. final_ready=false kalsÄ±n; gerÃ§ek GitHub kanÄ±tÄ± olmadan completed, yÃ¼zde 100 veya final_ready=true yazma. KullanÄ±cÄ± sadece "devam et" derse aynÄ± shared runner status/panel kanÄ±tlarÄ±nÄ± kontrol et ve gerÃ§ek blocker varsa blocker olarak raporla.
