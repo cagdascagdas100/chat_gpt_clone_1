@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AAYS Runner Panel</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, sans-serif;
+      background: #f6f7f9;
+      color: #17202a;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border: 1px solid #d8dee8;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e4e8ef;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2f7;
+      font-weight: 700;
+    }
+    .Runner-Aktif { background: #e0f5e8; }
+    .Problem { background: #ffe2e2; }
+    .Bekliyor { background: #fff6cc; }
+    .Calisiyor { background: #e0efff; }
+    .muted { color: #627083; }
+  </style>
+</head>
+<body>
+  <h1>AAYS Single Shared Runner Panel</h1>
+  <div id="status" class="muted">Loading...</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Menu</th>
+        <th>Page key</th>
+        <th>Runner</th>
+        <th>%</th>
+        <th>Remaining</th>
+        <th>Final</th>
+        <th>Task</th>
+        <th>Heartbeat</th>
+        <th>Blocker</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    const priority = new Map([
+      ["auto-1.4-readyToSell", 1],
+      ["auto-3.5-parcelLabel", 2],
+      ["auto-6.7-security", 3],
+      ["auto-5.6-gasEmission", 4],
+      ["auto-4.6-heightDifferance", 5]
+    ]);
+
+    function cell(value) {
+      const td = document.createElement("td");
+      td.textContent = value == null ? "" : String(value);
+      return td;
+    }
+
+    async function refresh() {
+      const status = document.getElementById("status");
+      const tbody = document.getElementById("rows");
+      try {
+        const response = await fetch("data/runner_panel/page_status_index.json", { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const pages = [...(data.pages || [])].sort((a, b) => {
+          const pa = priority.get(a.display_name) || 1000;
+          const pb = priority.get(b.display_name) || 1000;
+          if (pa !== pb) return pa - pb;
+          return String(a.page_key).localeCompare(String(b.page_key));
+        });
+        tbody.replaceChildren();
+        for (const page of pages) {
+          const tr = document.createElement("tr");
+          tr.className = String(page.runner_status || "").replace(/\s+/g, "-");
+          tr.append(
+            cell(page.display_name),
+            cell(page.page_key),
+            cell(page.runner_status),
+            cell(page.completion_percent),
+            cell(page.remaining_percent),
+            cell(page.final_ready),
+            cell(page.latest_task_id),
+            cell(page.last_heartbeat_at),
+            cell(page.latest_blocker || (page.blockers || []).join("; "))
+          );
+          tbody.appendChild(tr);
+        }
+        status.textContent = `Updated ${data.generated_at || ""} - ${pages.length} pages`;
+      } catch (error) {
+        status.textContent = `status unavailable: ${error.message}`;
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 30000);
+  </script>
+</body>
+</html>
