@@ -520,6 +520,26 @@ function Test-CleanWorktree {
   }
 }
 
+function Get-ScriptBlockers {
+  param([string]$ScriptOutput)
+  $blockers = New-Object System.Collections.Generic.List[string]
+  if ([string]::IsNullOrWhiteSpace($ScriptOutput)) { return @() }
+  foreach ($line in ($ScriptOutput -split "`r?`n")) {
+    $text = $line.Trim()
+    if ($text -match '^(BLOCKER|blocker)\s*=\s*(.+)$') {
+      $value = $Matches[2].Trim()
+      if ($value -and $value -ne "none") { $blockers.Add($value) }
+    }
+    if ($text -match '^(BLOCKERS|blockers)\s*=\s*(.+)$') {
+      foreach ($value in ($Matches[2] -split ';')) {
+        $clean = $value.Trim()
+        if ($clean -and $clean -ne "none") { $blockers.Add($clean) }
+      }
+    }
+  }
+  return @($blockers.ToArray() | Select-Object -Unique)
+}
+
 function Write-TaskEvidence {
   param(
     [object]$Task,
@@ -733,6 +753,14 @@ function Invoke-RunnerScan {
     }
 
     if ($exitCode -ne 0) {
+      $scriptBlockers = @(Get-ScriptBlockers -ScriptOutput $scriptOutput)
+      if ($exitCode -eq 2 -or $scriptBlockers.Count -gt 0) {
+        if ($scriptBlockers.Count -eq 0) { $scriptBlockers = @("automation_script_reported_blocker") }
+        $null = Write-TaskEvidence -Task $task -Status "blocked" -Blockers $scriptBlockers -Errors @($scriptOutput) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
+        $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "blocked"; blockers = $scriptBlockers })
+        foreach ($scriptBlocker in $scriptBlockers) { $blockers.Add($scriptBlocker) }
+        continue
+      }
       $null = Write-TaskEvidence -Task $task -Status "failed" -Blockers @("automation_script_failed") -Errors @($scriptOutput) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
       $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "failed"; blockers = @("automation_script_failed") })
       $blockers.Add("automation_script_failed")
