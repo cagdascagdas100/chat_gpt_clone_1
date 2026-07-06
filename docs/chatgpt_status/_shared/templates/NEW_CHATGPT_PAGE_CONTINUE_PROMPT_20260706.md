@@ -1,25 +1,34 @@
-# AAYS / TerraYield Continue Prompt 20260706
+﻿# AAYS / TerraYield - New ChatGPT Page Continue Prompt 20260706
 
-Bu sayfada sadece devam et.
+Use this prompt in a new ChatGPT page when the user says only "devam et".
 
-Repo:
-C:\Users\cagda\Documents\GitHub\AAYS
+Fill these fields before starting:
+- repo_root: C:\AAYS_WT\AAYS_REPAIR_20260706_1738
+- repo: cagdascagdas100/chat_gpt_clone_1
+- branch: codex/aays-single-runner-v5-20260706
+- page_key: <PAGE_KEY>
+- task_id: <TASK_ID>
 
-Kurallar:
-- C: ana proje yoludur. Proje dosyalarini silme.
-- F: sadece kopya/test alani olarak kabul edilir.
-- Tek runner kullan: docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
-- Canonical V5 runner: docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706.ps1
-- Panel index: docs/chatgpt_status/_shared/panel/page_status_index_latest.json
-- Her sayfa icin heartbeat: docs/chatgpt_status/<PAGE_KEY>/status/heartbeat_latest.txt
-- final_ready=true yazma; sadece gercek, push edilmis ve kanitli output varsa final_ready true olabilir.
-- fake_data, db_write, migration, production_deploy false kalmali.
+Rules:
+- Use the existing single shared runner only.
+- Do not start a new or parallel runner.
+- Put queue tasks only under docs/chatgpt_status/<PAGE_KEY>/queue/.
+- Put status, heartbeat, reports, completed, and blocked evidence only under docs/chatgpt_status/<PAGE_KEY>/.
+- Every queue task must include allowed_paths and expected_outputs.
+- Keep fake_data=false, db_write=false, migration=false, production_deploy=false.
+- Keep final_ready=false until real GitHub evidence proves every acceptance criterion.
+- Do not write fake completed, fake heartbeat, fake percent, fake 115-output, or fake final_ready=true.
+- Main integration is separate; do not claim product completion while product_final_ready=false.
 
-Baslatma:
-1. Kokteki AAYS_RUNNER_BASLAT.bat veya RUN_AAYS_SINGLE_RUNNER_PANEL.cmd dosyasini kullan.
-2. Ucuz kontrolleri calistir: PowerShell syntax, /health, /england_map_web/, /openapi.json.
-3. Kuyruk varsa sadece allowed_paths icindeki dosyalara yaz.
-4. Yapilamayanlari blocker olarak docs/chatgpt_status/_shared/blocked altina yaz.
+When the user says "devam et":
+1. Read docs/chatgpt_status/_shared/status/page_panel_index.json and docs/chatgpt_status/_shared/panel/page_status_index_latest.json.
+2. Check this page_key queue/status/report evidence.
+3. If work is needed, create or update a .task.json using NEW_CHATGPT_PAGE_QUEUE_TEMPLATE_20260706.json.
+4. Let the shared runner pick it up; do not launch a page-specific runner.
+5. Report real blockers if runner status is not active, if lock is stale, if push/fetch fails, or if contract fields are missing.
 
-Devam komutu:
-Sadece devam et.
+Safe launcher for the user:
+- START_AAYS_SINGLE_RUNNER_PANEL.cmd
+- START_AAYS_RUNNER.bat
+- AAYS_RUNNER_BASLAT.bat
+- RUN_AAYS_SINGLE_RUNNER_PANEL.cmd

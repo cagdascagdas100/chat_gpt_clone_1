@@ -44,15 +44,42 @@ function Invoke-Git {
   } finally { $ErrorActionPreference = $old; Pop-Location }
 }
 function Git-Ok([object]$Result,[string]$Code) { if ($Result.code -ne 0) { throw ($Code + ": " + $Result.output) } }
-function Invoke-LowMemoryFetch([string]$Root,[string]$Branch) {
-  if ([string]::IsNullOrWhiteSpace($Branch)) { throw "LOW_MEMORY_FETCH_BRANCH_NULL" }
-  $refspec = "+refs/heads/$Branch:refs/remotes/origin/$Branch"
-  return Invoke-Git $Root -c core.preloadindex=false -c gc.auto=0 -c pack.threads=1 fetch --no-tags --depth=1 origin $refspec
+function Is-LowMemoryGitFailure([string]$Text) {
+  if ([string]::IsNullOrWhiteSpace($Text)) { return $false }
+  return ($Text -match '(?i)(out of memory|malloc failed|stale info|fetch failed|did not send all necessary objects|bad object|failed to run repack|cannot lock ref)')
 }
-function Short-Out([object]$Result,[int]$MaxLen=900) {
-  $text = [string]$Result.output
-  if ($text.Length -gt $MaxLen) { return $text.Substring(0,$MaxLen) }
-  return $text
+function Test-ConflictMarkers([string]$Root) {
+  $r = Invoke-Git $Root grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- .
+  if ($r.code -eq 0 -and -not [string]::IsNullOrWhiteSpace($r.output)) { throw ("CONFLICT_MARKERS_PRESENT: " + $r.output) }
+  if ($r.code -ne 0 -and $r.code -ne 1) { throw ("CONFLICT_MARKER_SCAN_FAILED: " + $r.output) }
+  return $true
+}
+function Invoke-LowMemoryFetch([string]$Root,[string]$Branch) {
+  return Invoke-Git $Root -c core.preloadindex=false -c gc.auto=0 -c pack.threads=1 fetch --no-tags --depth=1 origin $Branch
+}
+function Sync-Controller([string]$Root,[string]$Branch) {
+  $result = [ordered]@{ fetch_ok=$false; pull_ok=$false; degraded=$false; blocker=""; output="" }
+  $fetch = Invoke-LowMemoryFetch $Root $Branch
+  $result.output = $fetch.output
+  if ($fetch.code -eq 0) {
+    $result.fetch_ok = $true
+    $null = Invoke-Git $Root update-ref ("refs/remotes/origin/" + $Branch) FETCH_HEAD
+  } else {
+    $result.degraded = $true
+    $result.blocker = if (Is-LowMemoryGitFailure $fetch.output) { "LOW_MEMORY_REMOTE_SYNC_DEGRADED" } else { "CONTROLLER_FETCH_FAILED" }
+    Add-Blocker $result.blocker
+    return [pscustomobject]$result
+  }
+  $pull = Invoke-Git $Root pull --ff-only origin $Branch
+  $result.output = (($result.output, $pull.output) -join "`n").Trim()
+  if ($pull.code -eq 0) {
+    $result.pull_ok = $true
+  } else {
+    $result.degraded = $true
+    $result.blocker = if (Is-LowMemoryGitFailure $pull.output) { "LOW_MEMORY_REMOTE_SYNC_DEGRADED" } else { "CONTROLLER_PULL_FAILED" }
+    Add-Blocker $result.blocker
+  }
+  return [pscustomobject]$result
 }
 
 function Get-RepoRoot {
@@ -90,7 +117,7 @@ function Dirty-Paths([string]$Root) {
 }
 function Is-Runtime([string]$Path) {
   $p = Rel $Path
-  return ($p.StartsWith("docs/chatgpt_status/_shared/status/") -or $p.StartsWith("docs/chatgpt_status/_shared/heartbeat/") -or $p.StartsWith("docs/chatgpt_status/_shared/logs/") -or $p.StartsWith("docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_V5_") -or $p.StartsWith("docs/chatgpt_status/_shared/runner_lock/"))
+  return ($p.StartsWith("docs/chatgpt_status/_shared/status/") -or $p.StartsWith("docs/chatgpt_status/_shared/heartbeat/") -or $p.StartsWith("docs/chatgpt_status/_shared/logs/") -or $p.StartsWith("docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_V5_") -or $p.StartsWith("docs/chatgpt_status/_shared/runner_lock/") -or $p.StartsWith("docs/chatgpt_status/_shared/locks/") -or $p.StartsWith("docs/chatgpt_status/_shared/panel/page_status_index_latest.json") -or $p.StartsWith("england_map_web/data/runner_panel/"))
 }
 function Path-Allowed([string]$Path,[string[]]$Allowed) {
   $p = (Rel $Path).TrimEnd('/')
@@ -152,18 +179,13 @@ function Commit-And-Push([string]$Msg,[string[]]$Allowed) {
   Git-Ok $cached "DIFF_CACHED_FAILED"
   if ($cached.output) { Git-Ok (Invoke-Git $script:RepoRoot commit -m $Msg) "COMMIT_FAILED" }
   if ($NoPush) { Add-Blocker "NO_PUSH_MODE"; return }
-  $fetch = Invoke-LowMemoryFetch $script:RepoRoot $script:RunnerBranch
-  if ($fetch.code -eq 0) {
-    $rb=Invoke-Git $script:RepoRoot rebase ("origin/" + $script:RunnerBranch)
-    if ($rb.code -ne 0) { Add-Blocker ("BLOCKED_REBASE_CONFLICT: " + (Short-Out $rb)); return }
-  } else {
-    Add-Blocker ("LOW_MEMORY_POST_FETCH_SKIPPED: " + (Short-Out $fetch))
-  }
-  $push = Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)
-  if ($push.code -ne 0) { Add-Blocker ("POST_PUSH_FAILED: " + (Short-Out $push)) }
+  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "POST_FETCH_FAILED"
+  $rb=Invoke-Git $script:RepoRoot rebase ("origin/" + $script:RunnerBranch)
+  if ($rb.code -ne 0) { throw ("BLOCKED_REBASE_CONFLICT: " + $rb.output) }
+  Git-Ok (Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)) "POST_PUSH_FAILED"
 }
 function Commit-Runtime-Summary([string]$Msg) {
-  $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock")
+  $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock","docs/chatgpt_status/_shared/locks","docs/chatgpt_status/_shared/panel","england_map_web/data/runner_panel")
   $runtimeDirty=@(Dirty-Paths $script:RepoRoot | Where-Object { Is-Runtime $_ })
   if ($runtimeDirty.Count -gt 0) { Commit-And-Push $Msg $runtimeAllowed }
 }
@@ -208,13 +230,13 @@ function Run-Task([object]$Task) {
 
 $script:RepoRoot=[System.IO.Path]::GetFullPath((Get-RepoRoot))
 $SharedRoot=Join-Path $script:RepoRoot "docs\chatgpt_status\_shared"
-$StatusDir=Join-Path $SharedRoot "status"; $ReportDir=Join-Path $SharedRoot "reports"; $HeartbeatDir=Join-Path $SharedRoot "heartbeat"; $LockDir=Join-Path $SharedRoot "runner_lock"; $LogDir=Join-Path $SharedRoot "logs"
-foreach ($d in @($StatusDir,$ReportDir,$HeartbeatDir,$LockDir,$LogDir)) { Ensure-Dir $d }
+$StatusDir=Join-Path $SharedRoot "status"; $ReportDir=Join-Path $SharedRoot "reports"; $HeartbeatDir=Join-Path $SharedRoot "heartbeat"; $LockDir=Join-Path $SharedRoot "locks"; $CompatLockDir=Join-Path $SharedRoot "runner_lock"; $LogDir=Join-Path $SharedRoot "logs"
+foreach ($d in @($StatusDir,$ReportDir,$HeartbeatDir,$LockDir,$CompatLockDir,$LogDir)) { Ensure-Dir $d }
 $RunId=Get-Date -Format "yyyyMMdd_HHmmss"
 $script:GitLogPath=Join-Path $LogDir "MULTI_PAGE_git_args_V5_$RunId.log"
 $script:RunnerBranch = if ([string]::IsNullOrWhiteSpace($MainBranch)) { Get-Branch $script:RepoRoot } else { $MainBranch }
 $script:WorkRoot=[System.IO.Path]::GetFullPath($WorkRoot)
-$LockPath=Join-Path $LockDir "MULTI_PAGE.lock"
+$LockPath=Join-Path $LockDir "single_runner.lock"; $CompatLockPath=Join-Path $CompatLockDir "MULTI_PAGE.lock"
 $LatestStatusPath=Join-Path $StatusDir "MULTI_PAGE_latest_status.json"
 $RunnerHeartbeatPath=Join-Path $HeartbeatDir "MULTI_PAGE_heartbeat_latest.json"
 $script:Summary=[ordered]@{run_id=$RunId;checked_at=Now-Utc;repo_root=$script:RepoRoot;runner_branch=$script:RunnerBranch;queue_seen=$false;queue_started=$false;single_runner_lock_acquired=$false;task_runs_in_clean_worktree=$false;allowed_paths_enforced=$false;runner_output_uploaded=$false;post_sync_ok=$false;PUSH_SYNC_OK=$false;CONTINUE_RUNNER_READY=$false;final_ready=$false;fake_data=$false;db_write=$false;ddl=$false;migration=$false;production_deploy=$false;blockers=@();processed=@();skipped=@()}
@@ -223,14 +245,9 @@ try {
   $dirty=@(Dirty-Paths $script:RepoRoot); $realDirty=@($dirty | Where-Object { -not (Is-Runtime $_) })
   $script:InitialClean=($realDirty.Count -eq 0)
   if (-not $script:InitialClean) { throw ("CONTROLLER_DIRTY_NO_RUN: " + ($realDirty -join ',')) }
-  $controllerFetch = Invoke-LowMemoryFetch $script:RepoRoot $script:RunnerBranch
-  if ($controllerFetch.code -eq 0) {
-    $pull=Invoke-Git $script:RepoRoot merge --ff-only ("origin/" + $script:RunnerBranch)
-    if ($pull.code -ne 0) { Add-Blocker ("LOW_MEMORY_CONTROLLER_SYNC_SKIPPED: " + (Short-Out $pull)) }
-  } else {
-    Add-Blocker ("LOW_MEMORY_CONTROLLER_FETCH_SKIPPED: " + (Short-Out $controllerFetch))
-  }
+  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "CONTROLLER_FETCH_FAILED"
   Git-Ok (Invoke-Git $script:RepoRoot checkout $script:RunnerBranch) "CONTROLLER_CHECKOUT_FAILED"
+  $pull=Invoke-Git $script:RepoRoot pull --ff-only origin $script:RunnerBranch; if ($pull.code -ne 0) { throw ("CONTROLLER_PULL_FAILED: " + $pull.output) }
   if (Test-Path -LiteralPath $LockPath) { $age=((Get-Date)-(Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes; if ($age -lt $StaleMinutes) { Add-Blocker "RUNNER_ALREADY_ACTIVE"; throw "RUNNER_ALREADY_ACTIVE" } else { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } }
   Ensure-Dir $LockPath; $script:Summary.single_runner_lock_acquired=$true
   Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{pid=$PID;started_at=Now-Utc;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";runner_branch=$script:RunnerBranch;repo_root=$script:RepoRoot}))
@@ -245,7 +262,7 @@ try {
 } catch { Add-Blocker ("RUNNER_FATAL: " + $_.Exception.Message) } finally {
   try { Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary) } catch {}
   try { Write-Utf8 (Join-Path $ReportDir "MULTI_PAGE_runner_output_V5_$RunId.json") (To-JsonText $script:Summary) } catch {}
-  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } } catch {}
+  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath $CompatLockPath) { Remove-Item -LiteralPath $CompatLockPath -Force -ErrorAction SilentlyContinue } } catch {}
 }
 try {
   Commit-Runtime-Summary "AAYS shared runner V5 scan summary $RunId"

@@ -1,20 +1,103 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
-  [string]$RepoRoot = "",
-  [switch]$NoPanel,
+  [string]$RepoRoot = "C:\AAYS_WT\AAYS_REPAIR_20260706_1738",
+  [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
+  [string]$MainBranch = "codex/aays-single-runner-v5-20260706",
+  [string]$WorkRoot = "C:\AAYS_WT",
   [int]$IntervalSeconds = 60,
-  [int]$MaxTasks = 1
+  [int]$MaxTasks = 1,
+  [int]$StaleMinutes = 15,
+  [switch]$NoPanel,
+  [switch]$NoLoop,
+  [switch]$NoPush
 )
 
-$canonical = Join-Path $PSScriptRoot "START_AAYS_CANONICAL_RUNNER_AND_PANEL_20260706.ps1"
-if (-not (Test-Path -LiteralPath $canonical)) {
-  throw "Missing canonical launcher: $canonical"
+$ErrorActionPreference = "Stop"
+
+function Resolve-AaysRepoRoot {
+  param([string]$RequestedRoot)
+  $candidates = @($RequestedRoot, (Join-Path $PSScriptRoot "..\..\..\.."), "C:\AAYS_WT\AAYS_REPAIR_20260706_1738", "C:\Users\cagda\Documents\GitHub\AAYS")
+  foreach ($candidate in $candidates) {
+    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+    $resolved = Resolve-Path -LiteralPath $candidate -ErrorAction SilentlyContinue
+    if ($resolved -and (Test-Path -LiteralPath (Join-Path $resolved.Path "docs/chatgpt_status/_shared"))) { return $resolved.Path }
+  }
+  throw "AAYS repo root not found. Pass -RepoRoot."
+}
+function Read-JsonFile([string]$Path) {
+  try { if (Test-Path -LiteralPath $Path) { return Get-Content -Raw -LiteralPath $Path | ConvertFrom-Json } } catch {}
+  return $null
+}
+function Test-RunnerActive([string]$LockPath) {
+  $lock = Read-JsonFile $LockPath
+  if ($null -eq $lock -or $null -eq $lock.pid) { return [pscustomobject]@{ active=$false; pid=$null; stale=$false } }
+  $pidValue = [int]$lock.pid
+  $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
+  $age = if (Test-Path -LiteralPath $LockPath) { ((Get-Date) - (Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes } else { 999999 }
+  return [pscustomobject]@{ active=($null -ne $proc); pid=$pidValue; stale=($age -gt $StaleMinutes) }
 }
 
-$args = @{
-  RepoRoot = $RepoRoot
-  IntervalSeconds = $IntervalSeconds
-  MaxTasks = $MaxTasks
+$repoRoot = Resolve-AaysRepoRoot $RepoRoot
+$sharedRoot = Join-Path $repoRoot "docs/chatgpt_status/_shared"
+$automationRoot = Join-Path $sharedRoot "automation"
+$runner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706.ps1"
+$builder = Join-Path $automationRoot "BUILD_AAYS_PAGE_PANEL_INDEX.ps1"
+$panel = Join-Path $sharedRoot "panel/AAYS_RUNNER_PANEL.ps1"
+$statusDir = Join-Path $sharedRoot "status"
+$locksDir = Join-Path $sharedRoot "locks"
+$logsDir = Join-Path $sharedRoot "logs"
+New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir | Out-Null
+$lockPath = Join-Path $locksDir "single_runner.lock"
+$bootstrapStatus = Join-Path $statusDir "runner_bootstrap_latest.json"
+
+if (-not (Test-Path -LiteralPath $runner)) { throw "Missing runner: $runner" }
+if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $builder" }
+
+$runnerState = Test-RunnerActive $lockPath
+if ($runnerState.stale -and -not $runnerState.active -and (Test-Path -LiteralPath $lockPath)) {
+  Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
+  $runnerState = [pscustomobject]@{ active=$false; pid=$null; stale=$false }
 }
-if ($NoPanel) { $args.NoPanel = $true }
-& $canonical @args
+
+$runnerPid = $runnerState.pid
+$runnerStatus = if ($runnerState.active) { "runner_active" } else { "runner_not_running" }
+if (-not $runnerState.active) {
+  if ($NoLoop) {
+    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks",$MaxTasks,"-StaleMinutes",$StaleMinutes,"-ScanOnly")
+    if ($NoPush) { $args += "-NoPush" }
+    $out = & powershell @args 2>&1
+    $runnerStatus = "runner_scan_only_completed"
+  } else {
+    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-Loop","-IntervalSeconds",$IntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
+    if ($NoPush) { $args += "-NoPush" }
+    $proc = Start-Process -FilePath powershell -ArgumentList $args -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
+    $runnerPid = $proc.Id
+    $runnerStatus = "runner_started"
+    Start-Sleep -Seconds 2
+  }
+}
+
+& powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
+if (-not $NoPanel -and (Test-Path -LiteralPath $panel)) {
+  Start-Process -FilePath powershell -ArgumentList @("-NoProfile","-ExecutionPolicy","Bypass","-File",$panel) -WorkingDirectory $repoRoot | Out-Null
+}
+
+$state = [ordered]@{
+  updated_at = (Get-Date).ToUniversalTime().ToString("o")
+  repo_root = $repoRoot
+  repo_full_name = $RepoFullName
+  runner_branch = $MainBranch
+  runner_status = $runnerStatus
+  runner_pid = $runnerPid
+  runner_lock_active = (Test-Path -LiteralPath $lockPath)
+  lock_file = "docs/chatgpt_status/_shared/locks/single_runner.lock"
+  panel_index = "docs/chatgpt_status/_shared/panel/page_status_index_latest.json"
+  final_ready = $false
+  product_final_ready = $false
+  fake_data = $false
+  db_write = $false
+  migration = $false
+  production_deploy = $false
+}
+$state | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $bootstrapStatus -Encoding UTF8
+$state | ConvertTo-Json -Depth 8

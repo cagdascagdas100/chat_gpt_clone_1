@@ -1,120 +1,81 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AAYS Runner Panel</title>
+  <title>AAYS Single Runner Panel</title>
   <style>
-    :root {
-      color-scheme: light;
-      font-family: Arial, sans-serif;
-      background: #f6f7f9;
-      color: #17202a;
-    }
-    body {
-      margin: 0;
-      padding: 24px;
-    }
-    h1 {
-      font-size: 22px;
-      margin: 0 0 16px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #ffffff;
-      border: 1px solid #d8dee8;
-    }
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e4e8ef;
-      text-align: left;
-      font-size: 13px;
-      vertical-align: top;
-    }
-    th {
-      background: #eef2f7;
-      font-weight: 700;
-    }
-    .Runner-Aktif { background: #e0f5e8; }
-    .Problem { background: #ffe2e2; }
-    .Bekliyor { background: #fff6cc; }
-    .Calisiyor { background: #e0efff; }
-    .muted { color: #627083; }
+    :root { color-scheme: light; --bg:#f6f7f9; --ink:#172033; --muted:#667085; --line:#d8dee9; --ok:#dff6e6; --warn:#fff1c7; --bad:#ffe1df; --card:#fff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Segoe UI, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+    header { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:14px 18px; background:var(--card); border-bottom:1px solid var(--line); }
+    h1 { margin:0; font-size:18px; letter-spacing:0; }
+    main { padding:14px 18px; }
+    .meta { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; font-size:12px; color:var(--muted); }
+    .menus { display:grid; grid-template-columns:repeat(5, minmax(120px, 1fr)); gap:8px; margin-bottom:12px; }
+    .menu { background:var(--card); border:1px solid var(--line); padding:9px 10px; font-size:13px; min-height:38px; }
+    table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); }
+    th, td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:left; font-size:13px; vertical-align:top; }
+    th { background:#eef1f6; font-weight:650; white-space:nowrap; }
+    tr.ok { background:var(--ok); } tr.warn { background:var(--warn); } tr.bad { background:var(--bad); }
+    .small { color:var(--muted); font-size:12px; }
+    .empty { padding:16px; border:1px solid var(--line); background:var(--card); }
+    @media (max-width: 900px) { .menus { grid-template-columns:1fr; } th, td { font-size:12px; } }
   </style>
 </head>
 <body>
-  <h1>AAYS Single Shared Runner Panel</h1>
-  <div id="status" class="muted">Loading...</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Menu</th>
-        <th>Page key</th>
-        <th>Runner</th>
-        <th>%</th>
-        <th>Remaining</th>
-        <th>Final</th>
-        <th>Task</th>
-        <th>Heartbeat</th>
-        <th>Blocker</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <header>
+    <h1>AAYS Single Shared Runner Panel</h1>
+    <div class="meta">
+      <span id="runner">runner: loading</span>
+      <span id="repo">repo: loading</span>
+      <span id="updated">updated: loading</span>
+    </div>
+  </header>
+  <main>
+    <div id="menus" class="menus"></div>
+    <div id="mount" class="empty">Loading panel index...</div>
+  </main>
   <script>
-    const priority = new Map([
-      ["auto-1.4-readyToSell", 1],
-      ["auto-3.5-parcelLabel", 2],
-      ["auto-6.7-security", 3],
-      ["auto-5.6-gasEmission", 4],
-      ["auto-4.6-heightDifferance", 5]
-    ]);
-
-    function cell(value) {
-      const td = document.createElement("td");
-      td.textContent = value == null ? "" : String(value);
-      return td;
-    }
-
-    async function refresh() {
-      const status = document.getElementById("status");
-      const tbody = document.getElementById("rows");
-      try {
-        const response = await fetch("data/runner_panel/page_status_index.json", { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const pages = [...(data.pages || [])].sort((a, b) => {
-          const pa = priority.get(a.display_name) || 1000;
-          const pb = priority.get(b.display_name) || 1000;
-          if (pa !== pb) return pa - pb;
-          return String(a.page_key).localeCompare(String(b.page_key));
-        });
-        tbody.replaceChildren();
-        for (const page of pages) {
-          const tr = document.createElement("tr");
-          tr.className = String(page.runner_status || "").replace(/\s+/g, "-");
-          tr.append(
-            cell(page.display_name),
-            cell(page.page_key),
-            cell(page.runner_status),
-            cell(page.completion_percent),
-            cell(page.remaining_percent),
-            cell(page.final_ready),
-            cell(page.latest_task_id),
-            cell(page.last_heartbeat_at),
-            cell(page.latest_blocker || (page.blockers || []).join("; "))
-          );
-          tbody.appendChild(tr);
-        }
-        status.textContent = `Updated ${data.generated_at || ""} - ${pages.length} pages`;
-      } catch (error) {
-        status.textContent = `status unavailable: ${error.message}`;
+    const indexSources = ["page_status_index_latest.json", "/england_map_web/data/runner_panel/page_status_index.json"];
+    const configSources = ["panel_menu_config.json", "PANEL_MENU_CONFIG.json", "aays_single_runner_panel_menu_config.json", "data/runner_panel/panel_menu_config.json", "/england_map_web/data/runner_panel/panel_menu_config.json"];
+    async function firstJson(sources) {
+      let err = null;
+      for (const source of sources) {
+        try { const res = await fetch(source, { cache: "no-store" }); if (res.ok) return await res.json(); err = new Error(`${source}: ${res.status}`); }
+        catch (e) { err = e; }
       }
+      throw err || new Error("json not found");
     }
-
-    refresh();
-    setInterval(refresh, 30000);
+    function esc(value) { return String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+    function normalizeRunner(index) {
+      const blockers = new Set();
+      for (const p of index.pages || []) for (const b of p.blockers || []) if (b) blockers.add(String(b));
+      if (blockers.size) return { label: "RUNNER BLOCKED", blockers: Array.from(blockers).join("; ") };
+      if (index.single_runner_active || index.single_runner_status === "active") return { label: "RUNNER AKTIF", blockers: "" };
+      return { label: "RUNNER CALISMIYOR", blockers: "" };
+    }
+    function rowClass(row) {
+      const text = `${row.runner_status || ""} ${row.latest_blocker || ""}`.toLowerCase();
+      if (text.includes("problem") || text.includes("blocked") || row.latest_blocker) return "bad";
+      if (text.includes("aktif") || text.includes("active") || text.includes("completed")) return "ok";
+      return "warn";
+    }
+    function renderMenus(config) {
+      const menus = Array.isArray(config.menus) ? config.menus : [];
+      document.getElementById("menus").innerHTML = menus.slice(0, 5).map(m => `<div class="menu"><b>${esc(m.id)}</b><br>${esc(m.label)}</div>`).join("");
+    }
+    function render(index) {
+      const r = normalizeRunner(index);
+      document.getElementById("runner").textContent = `runner: ${r.label}${r.blockers ? " - " + r.blockers : ""}`;
+      document.getElementById("repo").textContent = `repo: ${index.repo_root || ""}`;
+      document.getElementById("updated").textContent = `updated: ${index.updated_at || index.generated_at || ""}`;
+      const rows = Array.from(index.pages || []).sort((a, b) => String(a.page_key).localeCompare(String(b.page_key)));
+      if (!rows.length) { document.getElementById("mount").textContent = "No page rows in panel index."; return; }
+      document.getElementById("mount").className = "";
+      document.getElementById("mount").innerHTML = `<table><thead><tr><th>Page key</th><th>Status</th><th>Percent</th><th>Task</th><th>Heartbeat</th><th>Push</th><th>Safety</th><th>Blocker</th></tr></thead><tbody>${rows.map(row => `<tr class="${rowClass(row)}"><td>${esc(row.page_key)}</td><td>${esc(row.runner_status || row.single_runner_status || "")}</td><td>${Number(row.completion_percent || 0)}%</td><td><div>${esc(row.latest_task_id || "")}</div><div class="small">${esc(row.latest_queue_task || "")}</div></td><td>${esc(row.last_heartbeat_at || row.heartbeat_at || "")}</td><td>${esc(row.PUSH_SYNC_OK ?? row.push_sync_ok ?? "unknown")}</td><td>fake=${esc(row.fake_data ?? false)} db=${esc(row.db_write ?? false)} migration=${esc(row.migration ?? false)} prod=${esc(row.production_deploy ?? false)} final=${esc(row.final_ready ?? false)}</td><td>${esc(row.latest_blocker || (row.blockers || []).join("; "))}</td></tr>`).join("")}</tbody></table>`;
+    }
+    Promise.all([firstJson(configSources).catch(() => ({menus: []})), firstJson(indexSources)]).then(([config, index]) => { renderMenus(config); render(index); }).catch(err => { document.getElementById("mount").textContent = `Panel index could not be loaded: ${err.message}`; });
   </script>
 </body>
 </html>
