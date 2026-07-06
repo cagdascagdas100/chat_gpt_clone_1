@@ -1,0 +1,39 @@
+{
+  "schema_name": "AAYS shared page status panel index",
+  "version": "20260706",
+  "source_contract": "docs/chatgpt_status/_shared/contracts/AAYS_SINGLE_RUNNER_PAGE_CONTRACT_20260706.md",
+  "latest_index_path": "docs/chatgpt_status/_shared/panel/page_status_index_latest.json",
+  "entry_schema": {
+    "page_key": "string, required, matches docs/chatgpt_status/<page_key>/",
+    "display_name": "string, required",
+    "latest_queue_status": "queued|running|done|blocked|failed|unknown",
+    "latest_task_id": "string|null",
+    "completion_percent": "integer 0..100",
+    "remaining_percent": "integer 0..100",
+    "final_ready": "boolean, never true without real gate evidence",
+    "last_heartbeat_at": "ISO-UTC|null",
+    "last_completed_at": "ISO-UTC|null",
+    "blockers": "array of string blocker codes",
+    "evidence_paths": "array of repository relative evidence paths",
+    "runner_contract_valid": "boolean",
+    "queue_contract_errors": "array of string validation errors"
+  },
+  "known_page_keys_seed": [
+    "aays1",
+    "topography",
+    "distance_property_types",
+    "gas_emissions",
+    "internet_access_parcel_layer_low_credit_20260612",
+    "security_public_safety",
+    "security_public_safety_low_credit_20260612",
+    "AAYS_REAL_TOPOGRAPHY_PRODUCT"
+  ],
+  "discovery_rule": "Treat every direct child folder under docs/chatgpt_status/ as a page candidate except _shared. Validate page_key from queue path and queue payload before execution.",
+  "panel_rules": [
+    "Prefer task-level completed/status/heartbeat evidence over stale shared heartbeat.",
+    "Show stale heartbeat as blocker, not as success.",
+    "Show final_ready=false unless completed and gate evidence agree.",
+    "Show invalid queue contract errors directly in the panel.",
+    "Never hide missing script_path, missing allowed_paths, or missing safety flags."
+  ]
+}
