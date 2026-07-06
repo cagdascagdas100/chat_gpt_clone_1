@@ -24,13 +24,16 @@ function Ensure-Dir([string]$Path) { if ($Path -and -not (Test-Path -LiteralPath
 function Write-Utf8([string]$Path, [string]$Content) { Ensure-Dir (Split-Path -Parent $Path); [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false)) }
 function To-JsonText([object]$Obj) { $Obj | ConvertTo-Json -Depth 80 }
 function Get-Prop([object]$Obj, [string]$Name) { if ($null -eq $Obj) { return $null }; $p = $Obj.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
-function Add-Blocker([string]$Code) { if ($Code -and -not ($script:Summary.blockers -contains $Code)) { $script:Summary.blockers += $Code } }
+function Add-Blocker([string]$Code) { if ($Code -and $script:Summary -and -not ($script:Summary.blockers -contains $Code)) { $script:Summary.blockers += $Code } }
 
 function Invoke-Git {
   param([Parameter(Mandatory=$true)][string]$Cwd,[Parameter(ValueFromRemainingArguments=$true)][string[]]$Args)
+  if ([string]::IsNullOrWhiteSpace($Cwd)) { throw "BLOCKED_NULL_GIT_CWD" }
   if ($null -eq $Args -or $Args.Count -eq 0) { throw "BLOCKED_BARE_GIT_USAGE" }
-  Ensure-Dir (Split-Path -Parent $script:GitLogPath)
-  Add-Content -LiteralPath $script:GitLogPath -Encoding UTF8 -Value ("[{0}] cwd={1} git {2}" -f (Now-Utc), $Cwd, ($Args -join ' '))
+  if ($script:GitLogPath) {
+    Ensure-Dir (Split-Path -Parent $script:GitLogPath)
+    Add-Content -LiteralPath $script:GitLogPath -Encoding UTF8 -Value ("[{0}] cwd={1} git {2}" -f (Now-Utc), $Cwd, ($Args -join ' '))
+  }
   Push-Location -LiteralPath $Cwd
   $old = $ErrorActionPreference
   try {
@@ -56,6 +59,7 @@ function Get-RepoRoot {
   throw "AAYS repo root not found. Pass -RepoRoot."
 }
 function Get-Branch([string]$Root) {
+  if ([string]::IsNullOrWhiteSpace($Root)) { throw "CURRENT_BRANCH_ROOT_NULL" }
   $r = Invoke-Git $Root rev-parse --abbrev-ref HEAD
   Git-Ok $r "CURRENT_BRANCH_FAILED"
   $b = ($r.output -split "\r?\n" | Select-Object -First 1).Trim()
@@ -188,13 +192,13 @@ function Run-Task([object]$Task) {
 }
 
 $script:RepoRoot=[System.IO.Path]::GetFullPath((Get-RepoRoot))
-$script:RunnerBranch = if ([string]::IsNullOrWhiteSpace($MainBranch)) { Get-Branch $script:RepoRoot } else { $MainBranch }
-$script:WorkRoot=[System.IO.Path]::GetFullPath($WorkRoot)
 $SharedRoot=Join-Path $script:RepoRoot "docs\chatgpt_status\_shared"
 $StatusDir=Join-Path $SharedRoot "status"; $ReportDir=Join-Path $SharedRoot "reports"; $HeartbeatDir=Join-Path $SharedRoot "heartbeat"; $LockDir=Join-Path $SharedRoot "runner_lock"; $LogDir=Join-Path $SharedRoot "logs"
 foreach ($d in @($StatusDir,$ReportDir,$HeartbeatDir,$LockDir,$LogDir)) { Ensure-Dir $d }
 $RunId=Get-Date -Format "yyyyMMdd_HHmmss"
 $script:GitLogPath=Join-Path $LogDir "MULTI_PAGE_git_args_V5_$RunId.log"
+$script:RunnerBranch = if ([string]::IsNullOrWhiteSpace($MainBranch)) { Get-Branch $script:RepoRoot } else { $MainBranch }
+$script:WorkRoot=[System.IO.Path]::GetFullPath($WorkRoot)
 $LockPath=Join-Path $LockDir "MULTI_PAGE.lock"
 $LatestStatusPath=Join-Path $StatusDir "MULTI_PAGE_latest_status.json"
 $RunnerHeartbeatPath=Join-Path $HeartbeatDir "MULTI_PAGE_heartbeat_latest.json"
