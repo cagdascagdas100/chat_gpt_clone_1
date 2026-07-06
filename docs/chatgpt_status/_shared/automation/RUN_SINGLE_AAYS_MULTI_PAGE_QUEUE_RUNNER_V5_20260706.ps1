@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [switch]$Loop,
   [int]$IntervalSeconds = 60,
@@ -221,3 +221,4 @@ try {
 Write-Output (To-JsonText $script:Summary)
 if ($script:Summary.blockers.Count -gt 0) { exit 1 }
 exit 0
+
