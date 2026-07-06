@@ -1,6 +1,6 @@
 ﻿# AAYS Page Contract Inventory 20260706
 
-Generated: 2026-07-06T14:48:48.3442872Z
+Generated: 2026-07-06T14:53:52.8906383Z
 Repo: cagdascagdas100/chat_gpt_clone_1
 Branch: main
 Runner contract: single_shared_runner_v1
@@ -15,7 +15,7 @@ Runner contract: single_shared_runner_v1
 | page_key | display_name | queue_status | percent | final_ready | blocker |
 | --- | --- | --- | ---: | --- | --- |
 | AAYS_REAL_TOPOGRAPHY_PRODUCT | AAYS_REAL_TOPOGRAPHY_PRODUCT | unknown | 0 | False | queue_not_json_or_unreadable |
-| aays1 | aays1 | done | 0 | False | missing_script_path; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; REAL_115_SECURITY_BATCH_JOIN_PROCESSOR_NOT_IMPLEMENTED |
+| aays1 | aays1 | done | 0 | False | missing_script_path; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; automation_script_failed |
 | distance_property_types | distance_property_types | queued | 35 | False | missing_script_path; missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; missing_real_evidence_rows; missing_input_file:docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv |
 | gas_emissions | auto-5.6-gasEmission | done_on_target_branch | 0 | False | missing_automation_script; BLOCKED_BROWSER_ENVIRONMENT |
 | height_difference | auto-4.6-heightDifferance | unknown | 0 | False |  |

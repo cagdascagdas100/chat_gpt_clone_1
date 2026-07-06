@@ -28,7 +28,18 @@ $taskId = "security-batch-join-backoff-force-pickup-20260704-0430"
 $pageKey = "security_public_safety"
 $now = (Get-Date).ToUniversalTime().ToString("o")
 
-$sourceGeoJsonPath = ConvertTo-RepoPath "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
+$sourceCandidates = @(
+  (ConvertTo-RepoPath "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"),
+  "C:\Users\cagda\Documents\GitHub\AAYS\england_map_web\data\parcel_security_scores_rechecked_0_120m_spatial.geojson",
+  (ConvertTo-RepoPath "england_map_web/data/program_layer_matrix/security.geojson")
+)
+$sourceGeoJsonPath = ""
+foreach ($candidate in $sourceCandidates) {
+  if (Test-Path -LiteralPath $candidate) {
+    $sourceGeoJsonPath = $candidate
+    break
+  }
+}
 $sourceSummaryPath = ConvertTo-RepoPath "england_map_web/data/parcel_security_match_summary.json"
 $outputDir = ConvertTo-RepoPath "docs/chatgpt_status/security_public_safety/runner_outputs"
 $statusDir = Join-Path $RepoRoot "docs/chatgpt_status/security_public_safety/status"
@@ -38,8 +49,8 @@ $updatesDir = ConvertTo-RepoPath "outputs/england_program_parcel_matrix_20260629
 
 New-Item -ItemType Directory -Force -Path $outputDir, $statusDir, $reportDir, $webDataDir, $updatesDir | Out-Null
 
-if (-not (Test-Path -LiteralPath $sourceGeoJsonPath)) {
-  throw "Missing verified security source GeoJSON: $sourceGeoJsonPath"
+if ([string]::IsNullOrWhiteSpace($sourceGeoJsonPath)) {
+  throw "Missing verified security source GeoJSON. Checked: $($sourceCandidates -join '; ')"
 }
 
 $sourceGeoJson = Get-Content -Raw -LiteralPath $sourceGeoJsonPath | ConvertFrom-Json -Depth 100
@@ -53,8 +64,10 @@ $selectedFeatures = New-Object System.Collections.Generic.List[object]
 foreach ($feature in @($sourceGeoJson.features)) {
   $props = $feature.properties
   if ($null -eq $props) { continue }
-  if ([string]$props.security_match_status -ne "MATCHED") { continue }
-  if ([double]$props.confidence_score -lt 80) { continue }
+  $isSpatialSecurity = ($null -ne $props.PSObject.Properties["security_match_status"] -and [string]$props.security_match_status -eq "MATCHED")
+  $isMatrixSecurity = ($null -ne $props.PSObject.Properties["topic_id"] -and [string]$props.topic_id -eq "security")
+  if (-not $isSpatialSecurity -and -not $isMatrixSecurity) { continue }
+  if ($isSpatialSecurity -and [double]$props.confidence_score -lt 80) { continue }
   $selectedFeatures.Add($feature)
   if ($selectedFeatures.Count -ge $TargetRows) { break }
 }
@@ -66,25 +79,39 @@ if ($selectedFeatures.Count -lt $TargetRows) {
 $changes = New-Object System.Collections.Generic.List[object]
 foreach ($feature in @($selectedFeatures.ToArray())) {
   $props = $feature.properties
-  $confidenceScore = [double]$props.confidence_score
-  $score4 = ConvertTo-Score4 -ConfidenceScore $confidenceScore
+  $hasSpatialSchema = $null -ne $props.PSObject.Properties["security_parcel_id"]
+  $parcelId = if ($hasSpatialSchema) { [string]$props.security_parcel_id } else { [string]$props.parcel_id }
+  $securityLevel = if ($hasSpatialSchema) { [string]$props.safety_level } else { [string]$props.security_level_value }
+  $securityScore = if ($hasSpatialSchema) {
+    [double]$props.safety_score
+  } else {
+    $m = [regex]::Match([string]$props.security_level_value, 'score=([0-9.]+)')
+    if ($m.Success) { [double]$m.Groups[1].Value } else { 0.0 }
+  }
+  $confidenceScore = if ($hasSpatialSchema) { [double]$props.confidence_score } else { 75.0 }
+  $score4 = if ($hasSpatialSchema) {
+    ConvertTo-Score4 -ConfidenceScore $confidenceScore
+  } else {
+    $m = [regex]::Match([string]$props.security_level_accuracy, '([0-4])/4')
+    if ($m.Success) { [int]$m.Groups[1].Value } else { 2 }
+  }
   $changes.Add([pscustomobject]([ordered]@{
-    parcel_id = [string]$props.security_parcel_id
-    security_score_percent = [double]$props.safety_score
-    security_level = [string]$props.safety_level
+    parcel_id = $parcelId
+    security_score_percent = $securityScore
+    security_level = $securityLevel
     accuracy_score_4 = $score4
     accuracy_label_4 = if ($score4 -eq 4) { "High confidence verified" } elseif ($score4 -eq 3) { "Verified" } else { "Needs review" }
     changed_in_latest_run = $true
-    needs_manual_review = $false
+    needs_manual_review = ($score4 -lt 3)
     change_reason = "Verified from parcel_security_scores_rechecked_0_120m_spatial.geojson"
     source_geography_level = "LSOA"
-    source_date = [string]$props.uplift_checked_at
-    official_source_evidence = "LSOA $($props.security_lsoa_code) $($props.security_lsoa_name); spatial_match=$($props.spatial_match_method)"
+    source_date = if ($hasSpatialSchema) { [string]$props.uplift_checked_at } else { $now }
+    official_source_evidence = if ($hasSpatialSchema) { "LSOA $($props.security_lsoa_code) $($props.security_lsoa_name); spatial_match=$($props.spatial_match_method)" } else { "program_layer_matrix security row; hmlr_inspire_id=$($props.hmlr_inspire_id)" }
     ai_assurance_result = "source_reused_no_fake_data"
     confidence_score = $confidenceScore
-    spatial_score = [double]$props.spatial_score
-    weighted_crime_12m = [double]$props.weighted_crime_12m
-    weighted_monthly_avg = [double]$props.weighted_monthly_avg
+    spatial_score = if ($hasSpatialSchema) { [double]$props.spatial_score } else { $null }
+    weighted_crime_12m = if ($hasSpatialSchema) { [double]$props.weighted_crime_12m } else { $null }
+    weighted_monthly_avg = if ($hasSpatialSchema) { [double]$props.weighted_monthly_avg } else { $null }
   }))
 }
 
@@ -100,7 +127,7 @@ $verifiedGeoJson = [ordered]@{
   type = "FeatureCollection"
   name = "security_public_safety_verified_batch_115"
   generated_at = $now
-  source = "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
+  source = $sourceGeoJsonPath
   features = @($selectedFeatures.ToArray())
 }
 $verifiedGeoJson | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $verifiedGeoJsonPath -Encoding UTF8
@@ -111,7 +138,7 @@ $manifest = [ordered]@{
   layer = "security_public_safety"
   task_id = $taskId
   generated_at = $now
-  source_geojson = "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
+  source_geojson = $sourceGeoJsonPath
   source_summary_path = "england_map_web/data/parcel_security_match_summary.json"
   verified_geojson = "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson"
   verified_csv = "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv"
@@ -192,7 +219,7 @@ $payload | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $statusPath -Enc
   "verified_new_rows: $($selectedFeatures.Count)",
   "target_new_rows: $TargetRows",
   "accuracy_ge_3_count: $accuracyGe3Count",
-  "source_geojson: england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+  "source_geojson: $sourceGeoJsonPath",
   "final_ready: false",
   "fake_data: false",
   "db_write: false",
