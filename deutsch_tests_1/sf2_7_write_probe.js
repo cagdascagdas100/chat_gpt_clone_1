@@ -1,1 +1,0 @@
-window.AAYS_SF2_7_WRITE_PROBE=true;
