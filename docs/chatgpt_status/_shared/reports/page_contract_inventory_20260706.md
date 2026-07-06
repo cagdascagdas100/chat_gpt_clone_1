@@ -1,10 +1,14 @@
 ﻿# AAYS Page Contract Inventory 20260706
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Generated: 2026-07-06T15:33:00.4999765Z
 =======
 Generated: 2026-07-06T15:26:07.7892051Z
 >>>>>>> be9a04a57 (Refresh panel index after 115 security batch completion)
+=======
+Generated: 2026-07-06T15:33:00.4999765Z
+>>>>>>> de102a0c9 (Refresh panel index after aays1 115 completion evidence)
 Repo: cagdascagdas100/chat_gpt_clone_1
 Branch: main
 Runner contract: single_shared_runner_v1
@@ -20,10 +24,14 @@ Runner contract: single_shared_runner_v1
 | --- | --- | --- | ---: | --- | --- |
 | AAYS_REAL_TOPOGRAPHY_PRODUCT | AAYS_REAL_TOPOGRAPHY_PRODUCT | unknown | 0 | False | queue_not_json_or_unreadable |
 <<<<<<< HEAD
+<<<<<<< HEAD
 | aays1 | aays1 | done | 0 | False |  |
 =======
 | aays1 | aays1 | done | 0 | False | push_sync_failed; git_status_unavailable |
 >>>>>>> be9a04a57 (Refresh panel index after 115 security batch completion)
+=======
+| aays1 | aays1 | done | 0 | False |  |
+>>>>>>> de102a0c9 (Refresh panel index after aays1 115 completion evidence)
 | distance_property_types | distance_property_types | queued | 35 | False | missing_script_path; missing_automation_script; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; missing_real_evidence_rows; missing_input_file:docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv |
 | gas_emissions | auto-5.6-gasEmission | done_on_target_branch | 0 | False | missing_automation_script; BLOCKED_BROWSER_ENVIRONMENT |
 | height_difference | auto-4.6-heightDifferance | unknown | 0 | False |  |
