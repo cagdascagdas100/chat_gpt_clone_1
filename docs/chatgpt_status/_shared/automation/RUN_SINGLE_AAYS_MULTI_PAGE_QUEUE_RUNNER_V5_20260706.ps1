@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   [switch]$Loop,
   [int]$IntervalSeconds = 60,
@@ -143,6 +143,11 @@ function Commit-And-Push([string]$Msg,[string[]]$Allowed) {
   if ($rb.code -ne 0) { throw ("BLOCKED_REBASE_CONFLICT: " + $rb.output) }
   Git-Ok (Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)) "POST_PUSH_FAILED"
 }
+function Commit-Runtime-Summary([string]$Msg) {
+  $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock")
+  $runtimeDirty=@(Dirty-Paths $script:RepoRoot | Where-Object { Is-Runtime $_ })
+  if ($runtimeDirty.Count -gt 0) { Commit-And-Push $Msg $runtimeAllowed }
+}
 function Run-Task([object]$Task) {
   $page=$Task.page_key; $taskId=$Task.task_id; $allowed=@($Task.allowed_paths)
   $script:Summary.queue_started=$true; $script:Summary.task_runs_in_clean_worktree=$script:InitialClean
@@ -218,7 +223,12 @@ try {
   try { Write-Utf8 (Join-Path $ReportDir "MULTI_PAGE_runner_output_V5_$RunId.json") (To-JsonText $script:Summary) } catch {}
   try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } } catch {}
 }
+try {
+  Commit-Runtime-Summary "AAYS shared runner V5 scan summary $RunId"
+} catch {
+  Add-Blocker ("SUMMARY_PUSH_FAILED: " + $_.Exception.Message)
+  try { Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary) } catch {}
+}
 Write-Output (To-JsonText $script:Summary)
 if ($script:Summary.blockers.Count -gt 0) { exit 1 }
 exit 0
-
