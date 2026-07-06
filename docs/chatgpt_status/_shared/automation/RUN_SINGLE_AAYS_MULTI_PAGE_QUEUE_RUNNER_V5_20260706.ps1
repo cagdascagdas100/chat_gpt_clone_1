@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   [switch]$Loop,
   [int]$IntervalSeconds = 60,
@@ -6,821 +6,218 @@ param(
   [int]$MaxTasks = 0,
   [string]$RepoRoot = "",
   [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
-  [string]$MainBranch = "main",
+  [string]$MainBranch = "",
   [string]$WorkRoot = "C:\AAYS_WT",
   [int]$StaleMinutes = 15,
-  [switch]$NoPush
+  [switch]$NoPush,
+  [switch]$ScanOnly
 )
 
 $ErrorActionPreference = "Stop"
+if ($MaxTasks -gt 0) { $MaxTasksPerScan = $MaxTasks }
+$RunnableStatuses = @("queued","ready","pending","pending_repo_queue","pickup_requested","queued_for_single_shared_runner","retry_pending","failed_transient")
 
-if ($MaxTasks -gt 0) {
-  $MaxTasksPerScan = $MaxTasks
+function Now-Utc { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+function Safe-Name([string]$Value) { (($Value -replace '[^A-Za-z0-9_.-]', '_').Trim('_')) }
+function Rel([string]$Path) { (($Path -replace '\\','/').TrimStart('/')) }
+function Ensure-Dir([string]$Path) { if ($Path -and -not (Test-Path -LiteralPath $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
+function Write-Utf8([string]$Path, [string]$Content) { Ensure-Dir (Split-Path -Parent $Path); [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false)) }
+function To-JsonText([object]$Obj) { $Obj | ConvertTo-Json -Depth 80 }
+function Get-Prop([object]$Obj, [string]$Name) { if ($null -eq $Obj) { return $null }; $p = $Obj.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
+function Add-Blocker([string]$Code) { if ($Code -and -not ($script:Summary.blockers -contains $Code)) { $script:Summary.blockers += $Code } }
+
+function Invoke-Git {
+  param([Parameter(Mandatory=$true)][string]$Cwd,[Parameter(ValueFromRemainingArguments=$true)][string[]]$Args)
+  if ($null -eq $Args -or $Args.Count -eq 0) { throw "BLOCKED_BARE_GIT_USAGE" }
+  Ensure-Dir (Split-Path -Parent $script:GitLogPath)
+  Add-Content -LiteralPath $script:GitLogPath -Encoding UTF8 -Value ("[{0}] cwd={1} git {2}" -f (Now-Utc), $Cwd, ($Args -join ' '))
+  Push-Location -LiteralPath $Cwd
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    $out = & git @Args 2>&1
+    $code = $LASTEXITCODE
+    return [pscustomobject]@{ code=$code; output=(($out | Out-String).TrimEnd()); args=$Args }
+  } finally { $ErrorActionPreference = $old; Pop-Location }
 }
-$script:RepoFullName = $RepoFullName
-$script:MainBranch = $MainBranch
-$script:WorkRoot = $WorkRoot
-$script:StaleMinutes = $StaleMinutes
-
-$RunnableStatuses = @(
-  "queued",
-  "ready",
-  "pending",
-  "pending_repo_queue",
-  "pickup_requested",
-  "queued_for_single_shared_runner",
-  "retry_pending",
-  "failed_transient"
-)
+function Git-Ok([object]$Result,[string]$Code) { if ($Result.code -ne 0) { throw ($Code + ": " + $Result.output) } }
 
 function Get-RepoRoot {
-  $candidates = New-Object System.Collections.Generic.List[string]
-  if (-not [string]::IsNullOrWhiteSpace($RepoRoot)) { $candidates.Add($RepoRoot) }
-  $candidates.Add((Join-Path $PSScriptRoot "..\..\..\.."))
-  $candidates.Add("C:\Users\cagda\Documents\GitHub\AAYS")
-  $candidates.Add("F:\chatgpt\chat_gpt_clone_1_main")
-  $candidates.Add("F:\chatgpt\chat_gpt_clone_1_main_fresh")
-
-  foreach ($candidate in @($candidates.ToArray())) {
-    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
-    $resolved = Resolve-Path -LiteralPath $candidate -ErrorAction SilentlyContinue
-    if ($null -eq $resolved) { continue }
-    $root = $resolved.Path
-    if (Test-Path -LiteralPath (Join-Path $root "docs/chatgpt_status/_shared")) {
-      return $root
-    }
+  $candidates = @()
+  if ($RepoRoot) { $candidates += $RepoRoot }
+  $candidates += (Join-Path $PSScriptRoot "..\..\..\..")
+  $candidates += "C:\AAYS_WT\AAYS_REPAIR_20260706_1738"
+  $candidates += "C:\Users\cagda\Documents\GitHub\AAYS"
+  $candidates += "F:\chatgpt\chat_gpt_clone_1_main"
+  foreach ($c in $candidates) {
+    $r = Resolve-Path -LiteralPath $c -ErrorAction SilentlyContinue
+    if ($r -and (Test-Path -LiteralPath (Join-Path $r.Path ".git")) -and (Test-Path -LiteralPath (Join-Path $r.Path "docs/chatgpt_status/_shared"))) { return $r.Path }
   }
-
-  throw "AAYS repo root not found. Pass -RepoRoot or run from the AAYS checkout."
+  throw "AAYS repo root not found. Pass -RepoRoot."
 }
-
-function Join-RepoPath {
-  param([string]$RelativePath)
-  return Join-Path $script:RepoRoot $RelativePath
+function Get-Branch([string]$Root) {
+  $r = Invoke-Git $Root rev-parse --abbrev-ref HEAD
+  Git-Ok $r "CURRENT_BRANCH_FAILED"
+  $b = ($r.output -split "\r?\n" | Select-Object -First 1).Trim()
+  if (-not $b -or $b -eq "HEAD") { throw "CURRENT_BRANCH_DETACHED" }
+  return $b
 }
-
-function ConvertTo-RepoRelative {
-  param([string]$Path)
-  if ([string]::IsNullOrWhiteSpace($Path)) { return "" }
-  $full = [System.IO.Path]::GetFullPath($Path)
-  $root = [System.IO.Path]::GetFullPath($script:RepoRoot).TrimEnd('\')
-  if ($full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
-    return $full.Substring($root.Length).TrimStart('\').Replace('\', '/')
+function Dirty-Paths([string]$Root) {
+  $r = Invoke-Git $Root status --porcelain
+  Git-Ok $r "STATUS_FAILED"
+  $paths = @()
+  foreach ($line in @($r.output -split "\r?\n" | Where-Object { $_ })) {
+    if ($line.Length -lt 4) { continue }
+    $p = $line.Substring(3).Trim().Trim('"')
+    if ($p -match " -> ") { $p = ($p -split " -> ")[-1] }
+    $paths += (Rel $p)
   }
-  return $full.Replace('\', '/')
+  return @($paths)
 }
-
-function Read-JsonFile {
-  param([string]$Path)
-  try {
-    $text = Get-Content -Raw -LiteralPath $Path
-    if ([string]::IsNullOrWhiteSpace($text)) { return $null }
-    return $text | ConvertFrom-Json -ErrorAction Stop
-  } catch {
-    return $null
-  }
+function Is-Runtime([string]$Path) {
+  $p = Rel $Path
+  return ($p.StartsWith("docs/chatgpt_status/_shared/status/") -or $p.StartsWith("docs/chatgpt_status/_shared/heartbeat/") -or $p.StartsWith("docs/chatgpt_status/_shared/logs/") -or $p.StartsWith("docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_V5_") -or $p.StartsWith("docs/chatgpt_status/_shared/runner_lock/"))
 }
-
-function Get-JsonValue {
-  param([object]$Object, [string[]]$Names, [object]$Default = $null)
-  if ($null -eq $Object) { return $Default }
-  foreach ($name in $Names) {
-    $prop = $Object.PSObject.Properties[$name]
-    if ($null -ne $prop -and $null -ne $prop.Value) { return $prop.Value }
-  }
-  return $Default
-}
-
-function ConvertTo-SafeBool {
-  param([object]$Value, [bool]$Default = $false)
-  if ($null -eq $Value) { return $Default }
-  if ($Value -is [bool]) { return [bool]$Value }
-  $text = [string]$Value
-  if ($text -match '^(?i:true|1|yes|y)$') { return $true }
-  if ($text -match '^(?i:false|0|no|n)$') { return $false }
-  return $Default
-}
-
-function Convert-Priority {
-  param([object]$Value)
-  $parsed = 100
-  if ($null -eq $Value) { return $parsed }
-  if ([int]::TryParse([string]$Value, [ref]$parsed)) { return $parsed }
-  return 100
-}
-
-function Ensure-PageDirs {
-  param([string]$PageKey)
-  $root = Join-RepoPath "docs/chatgpt_status/$PageKey"
-  foreach ($dir in @("queue", "status", "reports", "heartbeat", "completed", "blocked", "runner_outputs", "automation", "fixtures", "runner_tasks")) {
-    New-Item -ItemType Directory -Force -Path (Join-Path $root $dir) | Out-Null
-  }
-}
-
-function Write-CompatibilityRunnerLocks {
-  param([string]$Now)
-  $payload = [ordered]@{
-    pid = $PID
-    runner_pid = $PID
-    host = $env:COMPUTERNAME
-    repo_root = $script:RepoRoot
-    repo_full_name = $script:RepoFullName
-    main_branch = $script:MainBranch
-    work_root = $script:WorkRoot
-    acquired_at = $Now
-    updated_at = $Now
-    runner_mode = "single_shared_runner"
-    runner_version = "v5_20260706"
-    lock_schema = "single_runner_v5_20260706"
-  }
-
-  $paths = @(
-    "docs/chatgpt_status/_shared/state/single_runner.lock.json",
-    "docs/chatgpt_status/_shared/lock/single_runner.lock",
-    "docs/chatgpt_status/_shared/runner_lock/MULTI_PAGE.lock"
-  )
-  $script:CompatibilityLockPaths = @()
-  foreach ($relativePath in $paths) {
-    $fullPath = Join-RepoPath $relativePath
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $fullPath) | Out-Null
-    $payload | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $fullPath -Encoding UTF8
-    $script:CompatibilityLockPaths += $fullPath
-  }
-}
-
-function Test-RunnerLock {
-  $lockDir = Join-RepoPath "docs/chatgpt_status/_shared/state"
-  New-Item -ItemType Directory -Force -Path $lockDir | Out-Null
-  $script:LockPath = Join-Path $lockDir "single_runner.lock.json"
-
-  if (Test-Path -LiteralPath $script:LockPath) {
-    $lock = Read-JsonFile -Path $script:LockPath
-    $existingPid = if ($lock) { Get-JsonValue -Object $lock -Names @("pid", "runner_pid") } else { $null }
-    if ($existingPid) {
-      $existingProcess = Get-Process -Id ([int]$existingPid) -ErrorAction SilentlyContinue
-      if ($null -ne $existingProcess -and [int]$existingPid -ne $PID) {
-        return [pscustomobject]@{
-          acquired = $false
-          active_pid = [int]$existingPid
-          lock_path = $script:LockPath
-        }
-      }
-    }
-  }
-
-  $now = (Get-Date).ToUniversalTime().ToString("o")
-  [ordered]@{
-    pid = $PID
-    runner_pid = $PID
-    host = $env:COMPUTERNAME
-    repo_root = $script:RepoRoot
-    repo_full_name = $script:RepoFullName
-    main_branch = $script:MainBranch
-    work_root = $script:WorkRoot
-    acquired_at = $now
-    updated_at = $now
-    runner_mode = "single_shared_runner"
-    runner_version = "v5_20260706"
-  } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $script:LockPath -Encoding UTF8
-  Write-CompatibilityRunnerLocks -Now $now
-
-  return [pscustomobject]@{
-    acquired = $true
-    active_pid = $PID
-    lock_path = $script:LockPath
-  }
-}
-
-function Get-RegisteredPageKeys {
-  $chatRoot = Join-RepoPath "docs/chatgpt_status"
-  $keys = New-Object System.Collections.Generic.List[string]
-  $keys.Add("aays1")
-  $menuRegistryPath = Join-RepoPath "docs/chatgpt_status/_shared/automation/aays_runner_pages.json"
-  $menuRegistry = Read-JsonFile -Path $menuRegistryPath
-  if ($null -ne $menuRegistry) {
-    foreach ($page in @($menuRegistry.pages)) {
-      $key = [string](Get-JsonValue -Object $page -Names @("page_key"))
-      if (-not [string]::IsNullOrWhiteSpace($key)) { $keys.Add($key) }
-    }
-  }
-  if (Test-Path -LiteralPath $chatRoot) {
-    foreach ($dir in Get-ChildItem -LiteralPath $chatRoot -Directory -ErrorAction SilentlyContinue) {
-      if ($dir.Name -ne "_shared") { $keys.Add($dir.Name) }
-    }
-  }
-  return @($keys | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
-}
-
-function Get-PageLatestQueueInfo {
-  param([string]$PageKey)
-  $queueDir = Join-RepoPath "docs/chatgpt_status/$PageKey/queue"
-  if (-not (Test-Path -LiteralPath $queueDir)) {
-    return [pscustomobject]@{ exists = $false; path = ""; status = ""; task_id = "" }
-  }
-  $file = Get-ChildItem -LiteralPath $queueDir -File -Filter "*.json" -ErrorAction SilentlyContinue |
-    Sort-Object @{ Expression = { if ($_.Name -eq "current.task.json") { 0 } else { 1 } } }, LastWriteTime -Descending |
-    Select-Object -First 1
-  if ($null -eq $file) {
-    return [pscustomobject]@{ exists = $false; path = ""; status = ""; task_id = "" }
-  }
-  $json = Read-JsonFile -Path $file.FullName
-  return [pscustomobject]@{
-    exists = $true
-    path = (ConvertTo-RepoRelative -Path $file.FullName)
-    status = [string](Get-JsonValue -Object $json -Names @("status") -Default "unknown")
-    task_id = [string](Get-JsonValue -Object $json -Names @("task_id", "taskId") -Default ([System.IO.Path]::GetFileNameWithoutExtension($file.Name)))
-  }
-}
-
-function Get-PageRunItem {
-  param(
-    [string]$PageKey,
-    [object[]]$Processed = @(),
-    [object[]]$Skipped = @()
-  )
-  foreach ($item in @($Processed + $Skipped)) {
-    if ([string]$item.page_key -eq $PageKey) { return $item }
-  }
-  return $null
-}
-
-function Test-PageLifecycleEvidence {
-  param([string]$PageKey)
-  foreach ($relativeDir in @(
-    "docs/chatgpt_status/$PageKey/completed",
-    "docs/chatgpt_status/$PageKey/reports",
-    "docs/chatgpt_status/$PageKey/runner_outputs"
-  )) {
-    $dir = Join-RepoPath $relativeDir
-    if (-not (Test-Path -LiteralPath $dir)) { continue }
-    $file = Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($null -ne $file) { return $true }
-  }
+function Path-Allowed([string]$Path,[string[]]$Allowed) {
+  $p = (Rel $Path).TrimEnd('/')
+  foreach ($a in $Allowed) { $z=(Rel $a).TrimEnd('/'); if ($p -eq $z -or $p.StartsWith($z + "/")) { return $true } }
   return $false
 }
-
-function Write-PerPageHeartbeats {
-  param(
-    [object[]]$Processed = @(),
-    [object[]]$Skipped = @(),
-    [string[]]$Blockers = @(),
-    [string]$CheckedAt
-  )
-  foreach ($pageKey in (Get-RegisteredPageKeys)) {
-    Ensure-PageDirs -PageKey $pageKey
-    $queueInfo = Get-PageLatestQueueInfo -PageKey $pageKey
-    $runItem = Get-PageRunItem -PageKey $pageKey -Processed $Processed -Skipped $Skipped
-    $pageBlockers = New-Object System.Collections.Generic.List[string]
-
-    if ($null -ne $runItem) {
-      foreach ($b in @($runItem.blockers)) {
-        if (-not [string]::IsNullOrWhiteSpace([string]$b)) { $pageBlockers.Add([string]$b) }
-      }
-    }
-    if ($pageKey -eq "aays1" -and $queueInfo.task_id -match "security-batch-join-backoff") {
-      $expected = Join-RepoPath "docs/chatgpt_status/security_public_safety/runner_outputs/115_security_batch_join_backoff.json"
-      if (-not (Test-Path -LiteralPath $expected)) { $pageBlockers.Add("FIXED_QUEUE_PICKED_UP_OUTPUT_MISSING") }
-    }
-    if ($pageKey -eq "distance_property_types" -and $queueInfo.exists -and -not (Test-PageLifecycleEvidence -PageKey $pageKey)) {
-      $pageBlockers.Add("DISTANCE_PROPERTY_TYPES_LIFECYCLE_EVIDENCE_MISSING")
-    }
-
-    $pageBlockerArray = @($pageBlockers.ToArray() | Select-Object -Unique)
-    $primaryBlocker = if ($pageBlockerArray.Count -gt 0) { [string]$pageBlockerArray[0] } else { "none" }
-    $queueStarted = ($null -ne $runItem -and [string]$runItem.status -ne "blocked")
-    $runnerStatus = if ($primaryBlocker -ne "none") { "blocked" } elseif ($queueInfo.exists) { "waiting_or_idle" } else { "alive" }
-
-    $lines = @(
-      "PAGE_KEY=$pageKey",
-      "RUNNER_ALIVE=true",
-      "RUNNER_MODE=single_shared_runner",
-      "RUNNER_VERSION=v5_20260706",
-      "HEARTBEAT_AT=$CheckedAt",
-      "REPO_ROOT=$script:RepoRoot",
-      "REPO_FULL_NAME=$script:RepoFullName",
-      "MAIN_BRANCH=$script:MainBranch",
-      "QUEUE_SEEN=$($queueInfo.exists)",
-      "QUEUE_STARTED=$queueStarted",
-      "QUEUE_FILE=$($queueInfo.path)",
-      "QUEUE_STATUS=$($queueInfo.status)",
-      "TASK_ID=$($queueInfo.task_id)",
-      "SINGLE_RUNNER_LOCK_ACQUIRED=true",
-      "TASK_RUNS_IN_CLEAN_WORKTREE=$(if ($pageBlockerArray -contains 'worktree_not_clean' -or $pageBlockerArray -contains 'git_status_unavailable') { 'false' } else { 'unknown' })",
-      "ALLOWED_PATHS_ENFORCED=true",
-      "RUNNER_OUTPUT_UPLOADED=false",
-      "POST_SYNC_OK=false",
-      "PUSH_SYNC_OK=false",
-      "FINAL_READY=false",
-      "FAKE_DATA=false",
-      "DB_WRITE=false",
-      "MIGRATION=false",
-      "PRODUCTION_DEPLOY=false",
-      "RUNNER_STATUS=$runnerStatus",
-      "BLOCKER=$primaryBlocker",
-      "BLOCKERS=$($pageBlockerArray -join ';')"
-    )
-
-    $statusPath = Join-RepoPath "docs/chatgpt_status/$pageKey/status/heartbeat_latest.txt"
-    $heartbeatPath = Join-RepoPath "docs/chatgpt_status/$pageKey/heartbeat/heartbeat_latest.txt"
-    $lines | Set-Content -LiteralPath $statusPath -Encoding UTF8
-    $lines | Set-Content -LiteralPath $heartbeatPath -Encoding UTF8
-  }
+function Normalize-Allowed([object]$Value,[string]$Page) {
+  $items = @()
+  if ($null -ne $Value) { if ($Value -is [System.Array]) { $items=@($Value) } else { $items=@(([string]$Value) -split '[,;]') } }
+  $items += @("docs/chatgpt_status/$Page/**","docs/chatgpt_status/_shared/status/**","docs/chatgpt_status/_shared/heartbeat/**","docs/chatgpt_status/_shared/logs/**","docs/chatgpt_status/_shared/reports/**")
+  return @($items | ForEach-Object { $x=Rel ([string]$_); $x=$x -replace '/\*\*$',''; $x=$x -replace '/\*$',''; $x.TrimEnd('/') } | Where-Object { $_ } | Select-Object -Unique)
 }
-
-function Update-RunnerHeartbeat {
-  param(
-    [object[]]$Processed = @(),
-    [object[]]$Skipped = @(),
-    [string[]]$Blockers = @()
-  )
-  $now = (Get-Date).ToUniversalTime().ToString("o")
-  $statusDir = Join-RepoPath "docs/chatgpt_status/_shared/status"
-  $heartbeatDir = Join-RepoPath "docs/chatgpt_status/_shared/heartbeat"
-  New-Item -ItemType Directory -Force -Path $statusDir | Out-Null
-  New-Item -ItemType Directory -Force -Path $heartbeatDir | Out-Null
-
-  $payload = [ordered]@{
-    run_id = "single_runner_$($PID)"
-    checked_at = $now
-    repo_root = $script:RepoRoot
-    repo_full_name = $script:RepoFullName
-    main_branch = $script:MainBranch
-    work_root = $script:WorkRoot
-    stale_minutes = $script:StaleMinutes
-    runner_mode = "single_shared_runner"
-    runner_version = "v5_20260706"
-    runner_ready = $true
-    queue_seen = ($Processed.Count -gt 0 -or $Skipped.Count -gt 0)
-    queue_started = ($Processed.Count -gt 0)
-    single_runner_lock_acquired = $true
-    controller_sync_ok = $true
-    task_runs_in_clean_worktree = $null
-    allowed_paths_enforced = $true
-    runner_output_uploaded = ($Processed.Count -gt 0)
-    post_sync_ok = $null
-    PUSH_SYNC_OK = $null
-    CONTINUE_RUNNER_READY = $true
-    main_summary_push_ok = $null
-    processed = @($Processed)
-    skipped = @($Skipped)
-    blockers = @($Blockers | Select-Object -Unique)
-    fake_data = $false
-    db_write = $false
-    migration = $false
-    production_deploy = $false
-  }
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $statusDir "MULTI_PAGE_latest_status.json") -Encoding UTF8
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $heartbeatDir "MULTI_PAGE_heartbeat_latest.json") -Encoding UTF8
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $statusDir "runner_daemon_heartbeat_latest.json") -Encoding UTF8
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $statusDir "MULTI_PAGE_runner_output_$($PID).json") -Encoding UTF8
-  Write-CompatibilityRunnerLocks -Now $now
-  Write-PerPageHeartbeats -Processed $Processed -Skipped $Skipped -Blockers $Blockers -CheckedAt $now
+function Stage-Allowed([string]$Root,[string[]]$Allowed) {
+  $changed = @(Dirty-Paths $Root)
+  $bad = @($changed | Where-Object { -not (Path-Allowed $_ $Allowed) })
+  if ($bad.Count -gt 0) { throw ("BLOCKED_UNSCOPED_CHANGES: " + ($bad -join ',')) }
+  foreach ($p in $changed) { Git-Ok (Invoke-Git $Root add -- $p) "ADD_FAILED" }
+  return $changed
 }
-
-function Get-QueueCandidates {
-  $chatRoot = Join-RepoPath "docs/chatgpt_status"
-  $candidates = New-Object System.Collections.Generic.List[object]
-  foreach ($pageDir in Get-ChildItem -LiteralPath $chatRoot -Directory -ErrorAction SilentlyContinue) {
-    if ($pageDir.Name -eq "_shared") { continue }
-    $queueDir = Join-Path $pageDir.FullName "queue"
-    if (-not (Test-Path -LiteralPath $queueDir)) { continue }
-    $files = Get-ChildItem -LiteralPath $queueDir -File -Filter "*.json" -ErrorAction SilentlyContinue |
-      Sort-Object @{ Expression = { if ($_.Name -eq "current.task.json") { 0 } else { 1 } } }, LastWriteTime
-    foreach ($file in $files) {
-      $queue = Read-JsonFile -Path $file.FullName
-      if ($null -eq $queue) { continue }
-      $status = ([string](Get-JsonValue -Object $queue -Names @("status") -Default "")).ToLowerInvariant()
-      if ($RunnableStatuses -contains $status) {
-        $candidates.Add([pscustomobject]@{
-          page_key_from_path = $pageDir.Name
-          queue_path = $file.FullName
-          queue = $queue
-          status = $status
-        })
-      }
-    }
-  }
-  return @($candidates | Sort-Object @{ Expression = { Convert-Priority -Value (Get-JsonValue -Object $_.queue -Names @("priority") -Default 100) } }, queue_path)
+function Read-Queue([System.IO.FileInfo]$File) {
+  $raw = Get-Content -LiteralPath $File.FullName -Raw
+  if ($File.Extension -ieq ".json") { return ($raw | ConvertFrom-Json) }
+  $map=[ordered]@{}
+  foreach ($line in ($raw -split "`r?`n")) { $t=$line.Trim(); if (-not $t -or $t.StartsWith('#') -or $t -notmatch '=') { continue }; $i=$t.IndexOf('='); $map[$t.Substring(0,$i).Trim()]=$t.Substring($i+1).Trim() }
+  return [pscustomobject]$map
 }
-
-function Normalize-QueueInMemory {
-  param([object]$Candidate)
-  $queue = $Candidate.queue
-  $pageKey = [string]$Candidate.page_key_from_path
-  $taskId = [string](Get-JsonValue -Object $queue -Names @("task_id", "taskId") -Default ([System.IO.Path]::GetFileNameWithoutExtension($Candidate.queue_path)))
-  $taskId = ($taskId -replace '[^A-Za-z0-9_.-]', '_')
-  $payloadPageKey = [string](Get-JsonValue -Object $queue -Names @("page_key", "pageKey") -Default "")
-  $scriptPath = [string](Get-JsonValue -Object $queue -Names @("script_path", "scriptPath") -Default "")
-  $automationScript = [string](Get-JsonValue -Object $queue -Names @("automation_script", "script") -Default "")
-  if ([string]::IsNullOrWhiteSpace($scriptPath) -and -not [string]::IsNullOrWhiteSpace($automationScript)) { $scriptPath = $automationScript }
-  if ([string]::IsNullOrWhiteSpace($automationScript) -and -not [string]::IsNullOrWhiteSpace($scriptPath)) { $automationScript = $scriptPath }
-  $allowedPaths = @(Get-JsonValue -Object $queue -Names @("allowed_paths", "allowedPaths") -Default @())
-
-  $errors = New-Object System.Collections.Generic.List[string]
-  if ([string]::IsNullOrWhiteSpace($payloadPageKey)) { $errors.Add("missing_page_key") }
-  elseif ($payloadPageKey -ne $pageKey) { $errors.Add("PAGE_KEY_PATH_MISMATCH") }
-  if ([string]::IsNullOrWhiteSpace($scriptPath)) { $errors.Add("missing_script_path") }
-  if ([string]::IsNullOrWhiteSpace($automationScript)) { $errors.Add("missing_automation_script") }
-  if ($scriptPath -and $automationScript -and $scriptPath -ne $automationScript) { $errors.Add("script_path_automation_script_mismatch") }
-  if ($allowedPaths.Count -eq 0) { $errors.Add("missing_allowed_paths") }
-  foreach ($flag in @("no_fake_final_ready", "no_db_write", "no_migration", "no_production_deploy")) {
-    if (-not (ConvertTo-SafeBool -Value (Get-JsonValue -Object $queue -Names @($flag)) -Default $false)) {
-      $errors.Add("missing_or_false_$flag")
-    }
-  }
-  if ((ConvertTo-SafeBool -Value (Get-JsonValue -Object $queue -Names @("final_ready", "finalReady")) -Default $false)) {
-    $errors.Add("final_ready_true_requires_gate_evidence")
-  }
-
-  $scriptFull = if ($scriptPath) { Join-RepoPath $scriptPath } else { "" }
-  if ($scriptPath -and -not (Test-Path -LiteralPath $scriptFull)) {
-    $errors.Add("missing_script_file")
-  }
-
-  $scriptAllowed = $false
-  foreach ($allowed in $allowedPaths) {
-    $allowedText = ([string]$allowed).Replace('\', '/').TrimEnd('/') + '/'
-    $scriptText = $scriptPath.Replace('\', '/')
-    if ($scriptText.StartsWith($allowedText, [System.StringComparison]::OrdinalIgnoreCase)) {
-      $scriptAllowed = $true
-    }
-  }
-  if ($scriptPath -eq "docs/chatgpt_status/_shared/automation/SAFE_STATUS_ONLY_PAGE_TASK_20260706.ps1") {
-    $scriptAllowed = $true
-  }
-  if ($scriptPath -and -not $scriptAllowed) {
-    $errors.Add("script_path_outside_allowed_paths")
-  }
-
-  return [pscustomobject]@{
-    page_key = $pageKey
-    task_id = $taskId
-    queue_path = $Candidate.queue_path
-    queue_status = $Candidate.status
-    script_path = $scriptPath
-    script_full_path = $scriptFull
-    allowed_paths = @($allowedPaths | ForEach-Object { [string]$_ })
-    errors = @($errors | Select-Object -Unique)
-  }
+function Parse-Queue([System.IO.FileInfo]$File) {
+  $rel = Rel ($File.FullName.Substring($script:RepoRoot.Length).TrimStart('\','/'))
+  if ($rel -notmatch '^docs/chatgpt_status/([^/]+)/queue/[^/]+$') { return [pscustomobject]@{ valid=$false; queue_rel=$rel; reason="bad_path" } }
+  $pageFromPath=$Matches[1]
+  $data=Read-Queue $File
+  $page=[string](Get-Prop $data "page_key"); if (-not $page) { $page=$pageFromPath }
+  $taskId=[string](Get-Prop $data "task_id"); if (-not $taskId) { $taskId=[System.IO.Path]::GetFileNameWithoutExtension($File.Name) }
+  $status=[string](Get-Prop $data "status"); if (-not $status) { $status="queued" }
+  $scriptPath=[string](Get-Prop $data "script_path"); if (-not $scriptPath) { $scriptPath=[string](Get-Prop $data "automation_script") }
+  $priority=1000; $pr=Get-Prop $data "priority"; if ($null -ne $pr) { [void][int]::TryParse(([string]$pr), [ref]$priority) }
+  $errors=@(); if ($page -ne $pageFromPath) { $errors += "PAGE_KEY_PATH_MISMATCH" }; if (-not $scriptPath) { $errors += "MISSING_SCRIPT_PATH" }
+  return [pscustomobject]@{ valid=($errors.Count -eq 0); errors=$errors; page_key=$page; task_id=(Safe-Name $taskId); status_norm=$status.Trim().ToLowerInvariant(); script_path=$scriptPath; allowed_paths=(Normalize-Allowed (Get-Prop $data "allowed_paths") $page); queue_rel=$rel; priority=$priority; data=$data }
 }
-
-function Test-CleanWorktree {
-  $oldErrorActionPreference = $ErrorActionPreference
-  $ErrorActionPreference = "Continue"
-  try {
-    $status = & git -C $script:RepoRoot status --short 2>&1
-    $exitCode = $LASTEXITCODE
-  } catch {
-    $status = @($_.Exception.Message)
-    $exitCode = 1
-  } finally {
-    $ErrorActionPreference = $oldErrorActionPreference
+function Resolve-Script([string]$ScriptPath) {
+  $p=$ScriptPath -replace '/', '\'
+  if ([System.IO.Path]::IsPathRooted($p)) {
+    $full=[System.IO.Path]::GetFullPath($p)
+    $roots=@([System.IO.Path]::GetFullPath($script:RepoRoot).TrimEnd('\'),"C:\Users\cagda\Documents\GitHub\AAYS","C:\AAYS_WT\AAYS_REPAIR_20260706_1738","F:\chatgpt\chat_gpt_clone_1_main","F:\chatgpt\chat_gpt_clone_1_main_fresh")
+    foreach ($root in $roots) { if ($full.StartsWith($root,[System.StringComparison]::OrdinalIgnoreCase)) { return Join-Path $script:RepoRoot ($full.Substring($root.Length).TrimStart('\')) } }
+    $idx=$full.IndexOf('docs\chatgpt_status',[System.StringComparison]::OrdinalIgnoreCase); if ($idx -ge 0) { return Join-Path $script:RepoRoot $full.Substring($idx) }
+    return $full
   }
-  $dirtyStatus = New-Object System.Collections.Generic.List[string]
-  $ignoredPrefixes = @(
-    "docs/chatgpt_status/_shared/state/",
-    "docs/chatgpt_status/_shared/lock/",
-    "docs/chatgpt_status/_shared/runner_lock/",
-    "docs/chatgpt_status/_shared/heartbeat/",
-    "docs/chatgpt_status/_shared/status/MULTI_PAGE_",
-    "docs/chatgpt_status/_shared/status/runner_daemon_heartbeat_latest.json",
-    "docs/chatgpt_status/_shared/status/runner_panel_state.json",
-    "docs/chatgpt_status/_shared/panel/page_status_index_latest.json",
-    "docs/chatgpt_status/_shared/status/page_panel_index.json",
-    "docs/chatgpt_status/_shared/status/pages_status_dashboard.json",
-    "england_map_web/data/runner_panel/page_status_index.json"
-  )
-  foreach ($line in @($status)) {
-    $text = [string]$line
-    if ([string]::IsNullOrWhiteSpace($text)) { continue }
-    if ($text -match '^fatal:') {
-      $dirtyStatus.Add($text)
-      continue
-    }
-    $path = if ($text.Length -ge 4) { $text.Substring(3).Trim().Trim('"') } else { $text.Trim() }
-    $path = $path.Replace('\', '/')
-    $ignore = $false
-    foreach ($prefix in $ignoredPrefixes) {
-      if ($path.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-        $ignore = $true
-        break
-      }
-    }
-    if (-not $ignore -and $path -match '^docs/chatgpt_status/[^/]+/(status|heartbeat)/heartbeat_latest\.txt$') {
-      $ignore = $true
-    }
-    if (-not $ignore) { $dirtyStatus.Add($text) }
-  }
-  return [pscustomobject]@{
-    clean = ($exitCode -eq 0 -and $dirtyStatus.Count -eq 0)
-    git_status_ok = ($exitCode -eq 0)
-    git_status_exit_code = $exitCode
-    status = @($dirtyStatus.ToArray())
-    raw_status = @($status)
-  }
+  return Join-Path $script:RepoRoot $p
 }
-
-<<<<<<< HEAD
-function Get-ScriptBlockers {
-  param([string]$ScriptOutput)
-  $blockers = New-Object System.Collections.Generic.List[string]
-  if ([string]::IsNullOrWhiteSpace($ScriptOutput)) { return @() }
-  foreach ($line in ($ScriptOutput -split "`r?`n")) {
-    $text = $line.Trim()
-    if ($text -match '^(BLOCKER|blocker)\s*=\s*(.+)$') {
-      $value = $Matches[2].Trim()
-      if ($value -and $value -ne "none") { $blockers.Add($value) }
-    }
-    if ($text -match '^(BLOCKERS|blockers)\s*=\s*(.+)$') {
-      foreach ($value in ($Matches[2] -split ';')) {
-        $clean = $value.Trim()
-        if ($clean -and $clean -ne "none") { $blockers.Add($clean) }
-      }
-    }
-  }
-  return @($blockers.ToArray() | Select-Object -Unique)
+function Write-RepoFile([string]$RelPath,[object]$Payload) {
+  $full=Join-Path $script:RepoRoot ($RelPath -replace '/', '\')
+  $text = if ($Payload -is [string]) { $Payload } else { To-JsonText $Payload }
+  Write-Utf8 $full $text
 }
-
-=======
->>>>>>> 0267b226dc4664182d4be1a0138d3691943a49a2
-function Write-TaskEvidence {
-  param(
-    [object]$Task,
-    [string]$Status,
-    [string[]]$Blockers = @(),
-    [string[]]$Errors = @(),
-    [string]$ScriptOutput = "",
-    [bool]$QueueStarted = $false,
-    [bool]$CleanWorktree = $false,
-    [bool]$PushSyncOk = $false,
-    [bool]$PostSyncOk = $false
-  )
-
-  Ensure-PageDirs -PageKey $Task.page_key
-  $now = (Get-Date).ToUniversalTime().ToString("o")
-  $pageRoot = Join-RepoPath "docs/chatgpt_status/$($Task.page_key)"
-  $sharedStatusDir = Join-RepoPath "docs/chatgpt_status/_shared/status"
-  New-Item -ItemType Directory -Force -Path $sharedStatusDir | Out-Null
-
-  $payload = [ordered]@{
-    task_id = $Task.task_id
-    page_key = $Task.page_key
-    status = $Status
-    completed_at = if ($Status -eq "completed") { $now } else { $null }
-    checked_at = $now
-    queue_seen = $true
-    queue_started = [bool]$QueueStarted
-    single_runner_lock_acquired = $true
-    task_runs_in_clean_worktree = [bool]$CleanWorktree
-    allowed_paths_enforced = $true
-    runner_output_uploaded = ($Status -eq "completed")
-    post_sync_ok = [bool]$PostSyncOk
-    PUSH_SYNC_OK = [bool]$PushSyncOk
-    CONTINUE_RUNNER_READY = ($Status -eq "completed" -and $PushSyncOk)
-    final_ready = $false
-    product_final_ready = $false
-    fake_data = $false
-    db_write = $false
-    migration = $false
-    production_deploy = $false
-    blockers = @($Blockers | Select-Object -Unique)
-    errors = @($Errors | Select-Object -Unique)
-    outputs = @{}
-    queue_path = ConvertTo-RepoRelative -Path $Task.queue_path
-    script_path = $Task.script_path
-  }
-
-  $startedPath = Join-Path $pageRoot "status/$($Task.task_id)_started.json"
-  $gatePath = Join-Path $pageRoot "status/$($Task.task_id)_gate.json"
-  $statusPath = if ($Status -eq "completed") {
-    Join-Path $pageRoot "status/$($Task.task_id)_completed.json"
+function Commit-And-Push([string]$Msg,[string[]]$Allowed) {
+  $changed=Stage-Allowed $script:RepoRoot $Allowed
+  $cached=Invoke-Git $script:RepoRoot diff --cached --name-only
+  Git-Ok $cached "DIFF_CACHED_FAILED"
+  if ($cached.output) { Git-Ok (Invoke-Git $script:RepoRoot commit -m $Msg) "COMMIT_FAILED" }
+  if ($NoPush) { Add-Blocker "NO_PUSH_MODE"; return }
+  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "POST_FETCH_FAILED"
+  $rb=Invoke-Git $script:RepoRoot rebase ("origin/" + $script:RunnerBranch)
+  if ($rb.code -ne 0) { throw ("BLOCKED_REBASE_CONFLICT: " + $rb.output) }
+  Git-Ok (Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)) "POST_PUSH_FAILED"
+}
+function Run-Task([object]$Task) {
+  $page=$Task.page_key; $taskId=$Task.task_id; $allowed=@($Task.allowed_paths)
+  $script:Summary.queue_started=$true; $script:Summary.task_runs_in_clean_worktree=$script:InitialClean
+  $started="docs/chatgpt_status/$page/status/${taskId}_started.json"
+  $heartbeat="docs/chatgpt_status/$page/heartbeat/${taskId}_heartbeat.txt"
+  $report="docs/chatgpt_status/$page/runner_outputs/${taskId}.report.json"
+  $completed="docs/chatgpt_status/$page/completed/${taskId}.completed.json"
+  $blocked="docs/chatgpt_status/$page/blocked/${taskId}.blocked.json"
+  $mirror="docs/chatgpt_status/_shared/status/queue_result_mirror_${taskId}.json"
+  Write-RepoFile $started ([ordered]@{task_id=$taskId;page_key=$page;started_at=Now-Utc;queue_seen=$true;queue_started=$true;single_runner_lock_acquired=$true;task_runs_in_clean_worktree=$script:InitialClean;target_branch=$script:RunnerBranch;final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false})
+  Write-RepoFile $heartbeat "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=running`nHEARTBEAT_AT=$(Now-Utc)`n"
+  Write-RepoFile $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status="running";target_branch=$script:RunnerBranch;script_path=$Task.script_path;allowed_paths=$Task.allowed_paths;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+  $scriptPath=Resolve-Script $Task.script_path
+  if (-not (Test-Path -LiteralPath $scriptPath)) { throw "SCRIPT_MISSING: $scriptPath" }
+  Git-Ok (Invoke-Git $script:RepoRoot ls-remote origin) "BLOCKED_GITHUB_AUTH"
+  if (-not $NoPush) { Git-Ok (Invoke-Git $script:RepoRoot push --dry-run origin ("HEAD:" + $script:RunnerBranch)) "BLOCKED_GITHUB_AUTH" }
+  $oldRoot=$env:AAYS_REPO_ROOT; $oldTask=$env:AAYS_TASK_ID; $oldPage=$env:AAYS_PAGE_KEY; $oldBranch=$env:AAYS_TARGET_BRANCH
+  $env:AAYS_REPO_ROOT=$script:RepoRoot; $env:AAYS_TASK_ID=$taskId; $env:AAYS_PAGE_KEY=$page; $env:AAYS_TARGET_BRANCH=$script:RunnerBranch
+  $outText=""; $code=0
+  try { Push-Location -LiteralPath $script:RepoRoot; try { $out=& powershell -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1; $code=$LASTEXITCODE; $outText=($out | Out-String) } finally { Pop-Location } } finally { $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch }
+  if ($code -ne 0) { Add-Blocker "AUTOMATION_EXIT_NONZERO" }
+  $tail=$outText; if ($tail.Length -gt 12000) { $tail=$tail.Substring($tail.Length-12000) }
+  Write-RepoFile $report ([ordered]@{task_id=$taskId;page_key=$page;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";updated_at=Now-Utc;target_branch=$script:RunnerBranch;queue_seen=$true;queue_started=$true;single_runner_lock_acquired=$true;task_runs_in_clean_worktree=$script:InitialClean;allowed_paths_enforced=$false;runner_output_uploaded=$true;post_sync_ok=$false;PUSH_SYNC_OK=$false;CONTINUE_RUNNER_READY=$true;automation_exit_code=$code;final_ready=$false;fake_data=$false;db_write=$false;ddl=$false;migration=$false;production_deploy=$false;blockers=@($script:Summary.blockers);automation_output_tail=$tail})
+  $script:Summary.allowed_paths_enforced=$true
+  Commit-And-Push "AAYS shared runner V5 output $page $taskId" $allowed
+  if ($script:Summary.blockers.Count -eq 0 -and $code -eq 0) {
+    $done=[ordered]@{task_id=$taskId;page_key=$page;completed_at=Now-Utc;status="completed";queue_seen=$true;queue_started=$true;single_runner_lock_acquired=$true;task_runs_in_clean_worktree=$script:InitialClean;allowed_paths_enforced=$true;runner_output_uploaded=$true;post_sync_ok=(-not $NoPush);PUSH_SYNC_OK=(-not $NoPush);CONTINUE_RUNNER_READY=$true;final_ready=$false;fake_data=$false;db_write=$false;ddl=$false;migration=$false;production_deploy=$false;blockers=@()}
+    Write-RepoFile $completed $done; Write-RepoFile $mirror $done; Write-RepoFile $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status="done";runner_completed_at=Now-Utc;PUSH_SYNC_OK=(-not $NoPush);CONTINUE_RUNNER_READY=$true;final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+    Write-RepoFile $heartbeat "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=completed`nPUSH_SYNC_OK=$((-not $NoPush).ToString().ToLower())`nCONTINUE_RUNNER_READY=true`nFINAL_READY=false`nHEARTBEAT_AT=$(Now-Utc)`n"
   } else {
-    Join-Path $pageRoot "status/$($Task.task_id)_blocked.json"
+    $b=[ordered]@{task_id=$taskId;page_key=$page;blocked_at=Now-Utc;status="blocked";final_ready=$false;blockers=@($script:Summary.blockers);automation_exit_code=$code;fake_data=$false;db_write=$false;ddl=$false;migration=$false;production_deploy=$false}
+    Write-RepoFile $blocked $b; Write-RepoFile $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status="blocked";blocked_at=Now-Utc;blockers=@($script:Summary.blockers);final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+    Write-RepoFile $heartbeat "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=blocked`nFINAL_READY=false`nHEARTBEAT_AT=$(Now-Utc)`n"
   }
-  $completedPath = Join-Path $pageRoot "completed/$($Task.task_id)_completed.json"
-  $blockedPath = Join-Path $pageRoot "blocked/$($Task.task_id)_blocked.json"
-  $heartbeatPath = Join-Path $pageRoot "heartbeat/$($Task.task_id)_heartbeat.txt"
-  $reportPath = Join-Path $pageRoot "reports/$($Task.task_id)_runner_output.txt"
-  $mirrorPath = Join-Path $sharedStatusDir "queue_result_mirror_$($Task.task_id).json"
-
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $startedPath -Encoding UTF8
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $gatePath -Encoding UTF8
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statusPath -Encoding UTF8
-  if ($Status -eq "completed") {
-    $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $completedPath -Encoding UTF8
-  } else {
-    $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $blockedPath -Encoding UTF8
-  }
-  $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $mirrorPath -Encoding UTF8
-
-  @(
-    "PAGE_KEY=$($Task.page_key)",
-    "TASK_ID=$($Task.task_id)",
-    "RUNNER_ALIVE=true",
-    "RUNNER_MODE=single_shared_runner",
-    "HEARTBEAT_AT=$now",
-    "QUEUE_FILE=$(ConvertTo-RepoRelative -Path $Task.queue_path)",
-    "QUEUE_SEEN=true",
-    "QUEUE_STARTED=$QueueStarted",
-    "SINGLE_RUNNER_LOCK_ACQUIRED=true",
-    "TASK_RUNS_IN_CLEAN_WORKTREE=$CleanWorktree",
-    "ALLOWED_PATHS_ENFORCED=true",
-    "RUNNER_OUTPUT_UPLOADED=$(if ($Status -eq 'completed') { 'true' } else { 'false' })",
-    "POST_SYNC_OK=$PostSyncOk",
-    "PUSH_SYNC_OK=$PushSyncOk",
-    "FINAL_READY=false",
-    "BLOCKER=$(if ($Blockers.Count -gt 0) { $Blockers[0] } else { 'none' })"
-  ) | Set-Content -LiteralPath $heartbeatPath -Encoding UTF8
-
-  @(
-    "AAYS single shared runner task report",
-    "checked_at: $now",
-    "page_key: $($Task.page_key)",
-    "task_id: $($Task.task_id)",
-    "status: $Status",
-    "queue: $(ConvertTo-RepoRelative -Path $Task.queue_path)",
-    "script_path: $($Task.script_path)",
-    "final_ready: false",
-    "fake_data: false",
-    "db_write: false",
-    "migration: false",
-    "production_deploy: false",
-    "blockers: $($Blockers -join '; ')",
-    "errors: $($Errors -join '; ')",
-    "",
-    "script_output:",
-    $ScriptOutput
-  ) | Set-Content -LiteralPath $reportPath -Encoding UTF8
-
-  return @($startedPath, $gatePath, $statusPath, $completedPath, $blockedPath, $heartbeatPath, $reportPath, $mirrorPath) |
-    Where-Object { Test-Path -LiteralPath $_ }
+  Commit-And-Push "AAYS shared runner V5 completion $page $taskId" $allowed
+  $script:Summary.runner_output_uploaded=$true; $script:Summary.post_sync_ok=(-not $NoPush); $script:Summary.PUSH_SYNC_OK=(-not $NoPush); $script:Summary.CONTINUE_RUNNER_READY=$true
+  return [pscustomobject]@{task_id=$taskId;page_key=$page;completed=($script:Summary.blockers.Count -eq 0 -and $code -eq 0);final_ready=$false}
 }
 
-function Sync-AllowedOutputs {
-  param([object]$Task, [string[]]$TouchedPaths)
-  if ($NoPush) {
-    return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "NoPush enabled" }
-  }
-
-  $allowedPrefixes = New-Object System.Collections.Generic.List[string]
-  foreach ($allowed in $Task.allowed_paths) {
-    $allowedPrefixes.Add(([string]$allowed).Replace('\', '/').TrimEnd('/') + '/')
-  }
-  foreach ($prefix in @(
-    "docs/chatgpt_status/_shared/status/",
-    "docs/chatgpt_status/_shared/heartbeat/",
-    "docs/chatgpt_status/_shared/reports/",
-    "docs/chatgpt_status/_shared/panel/",
-    "docs/chatgpt_status/_shared/contracts/",
-    "docs/chatgpt_status/_shared/templates/"
-  )) {
-    $allowedPrefixes.Add($prefix)
-  }
-
-  $changed = & git -C $script:RepoRoot status --short
-  $allowedChanges = New-Object System.Collections.Generic.List[string]
-  foreach ($line in $changed) {
-    if ([string]::IsNullOrWhiteSpace($line)) { continue }
-    $path = $line.Substring(3).Trim().Trim('"').Replace('\', '/')
-    foreach ($prefix in $allowedPrefixes) {
-      if ($path.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-        $allowedChanges.Add($path)
-        break
-      }
-    }
-  }
-  if ($allowedChanges.Count -eq 0) {
-    return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "No allowed changes to push" }
-  }
-
-  & git -C $script:RepoRoot add -- @($allowedChanges)
-  & git -C $script:RepoRoot diff --cached --quiet
-  if ($LASTEXITCODE -eq 0) {
-    return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "No staged diff" }
-  }
-  & git -C $script:RepoRoot commit -m "AAYS single shared runner evidence $($Task.task_id)"
-  if ($LASTEXITCODE -ne 0) {
-    return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git commit failed" }
-  }
-  & git -C $script:RepoRoot pull --rebase origin $script:CurrentBranch
-  $postSyncOk = ($LASTEXITCODE -eq 0)
-  if (-not $postSyncOk) {
-    return [pscustomobject]@{ push_ok = $false; post_sync_ok = $false; message = "git pull --rebase failed" }
-  }
-  & git -C $script:RepoRoot push origin HEAD:$script:CurrentBranch
-  return [pscustomobject]@{ push_ok = ($LASTEXITCODE -eq 0); post_sync_ok = $postSyncOk; message = "push attempted" }
-}
-
-function Invoke-RunnerScan {
-  $processed = New-Object System.Collections.Generic.List[object]
-  $skipped = New-Object System.Collections.Generic.List[object]
-  $blockers = New-Object System.Collections.Generic.List[string]
-
-  $candidates = Get-QueueCandidates
-  if ($candidates.Count -eq 0) {
-    Update-RunnerHeartbeat -Processed @() -Skipped @() -Blockers @()
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-RepoPath "docs/chatgpt_status/_shared/automation/BUILD_AAYS_PAGE_PANEL_INDEX.ps1") -RepoRoot $script:RepoRoot | Out-Null
-    return [pscustomobject]@{ processed = @(); skipped = @(); candidates = 0 }
-  }
-
-  foreach ($candidate in ($candidates | Select-Object -First $MaxTasksPerScan)) {
-    $task = Normalize-QueueInMemory -Candidate $candidate
-    if ($task.errors.Count -gt 0) {
-      $null = Write-TaskEvidence -Task $task -Status "blocked" -Blockers $task.errors -Errors $task.errors -QueueStarted $false -CleanWorktree $false
-      $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "blocked"; blockers = @($task.errors) })
-      foreach ($err in $task.errors) { $blockers.Add($err) }
-      continue
-    }
-
-    $clean = Test-CleanWorktree
-    if (-not $clean.clean) {
-      $block = if ($clean.git_status_ok) { @("worktree_not_clean") } else { @("git_status_unavailable", "worktree_not_clean") }
-      $null = Write-TaskEvidence -Task $task -Status "blocked" -Blockers $block -Errors @($clean.status) -QueueStarted $false -CleanWorktree $false
-      $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "blocked"; blockers = $block })
-      foreach ($item in $block) { $blockers.Add($item) }
-      continue
-    }
-
-    $scriptOutput = ""
-    $exitCode = 0
-    try {
-      if ($task.script_path -eq "docs/chatgpt_status/_shared/automation/SAFE_STATUS_ONLY_PAGE_TASK_20260706.ps1") {
-        $scriptOutput = (& powershell -NoProfile -ExecutionPolicy Bypass -File $task.script_full_path -PageKey $task.page_key -TaskId $task.task_id 2>&1 | Out-String)
-      } else {
-        $scriptOutput = (& powershell -NoProfile -ExecutionPolicy Bypass -File $task.script_full_path 2>&1 | Out-String)
-      }
-      $exitCode = $LASTEXITCODE
-    } catch {
-      $scriptOutput = $_.Exception.Message
-      $exitCode = 1
-    }
-
-    if ($exitCode -ne 0) {
-<<<<<<< HEAD
-      $scriptBlockers = @(Get-ScriptBlockers -ScriptOutput $scriptOutput)
-      if ($exitCode -eq 2 -or $scriptBlockers.Count -gt 0) {
-        if ($scriptBlockers.Count -eq 0) { $scriptBlockers = @("automation_script_reported_blocker") }
-        $null = Write-TaskEvidence -Task $task -Status "blocked" -Blockers $scriptBlockers -Errors @($scriptOutput) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
-        $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "blocked"; blockers = $scriptBlockers })
-        foreach ($scriptBlocker in $scriptBlockers) { $blockers.Add($scriptBlocker) }
-        continue
-      }
-=======
->>>>>>> 0267b226dc4664182d4be1a0138d3691943a49a2
-      $null = Write-TaskEvidence -Task $task -Status "failed" -Blockers @("automation_script_failed") -Errors @($scriptOutput) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
-      $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "failed"; blockers = @("automation_script_failed") })
-      $blockers.Add("automation_script_failed")
-      continue
-    }
-
-    $paths = Write-TaskEvidence -Task $task -Status "completed" -Blockers @() -Errors @() -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true
-    $sync = Sync-AllowedOutputs -Task $task -TouchedPaths $paths
-    if (-not $sync.push_ok) {
-      $null = Write-TaskEvidence -Task $task -Status "blocked" -Blockers @("push_sync_failed") -Errors @($sync.message) -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true -PostSyncOk $sync.post_sync_ok -PushSyncOk $false
-      $skipped.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "blocked"; blockers = @("push_sync_failed") })
-      $blockers.Add("push_sync_failed")
-      continue
-    }
-    $null = Write-TaskEvidence -Task $task -Status "completed" -Blockers @() -Errors @() -ScriptOutput $scriptOutput -QueueStarted $true -CleanWorktree $true -PostSyncOk $sync.post_sync_ok -PushSyncOk $sync.push_ok
-    $processed.Add([pscustomobject]@{ page_key = $task.page_key; task_id = $task.task_id; status = "completed"; push_sync_ok = $sync.push_ok })
-  }
-
-  $processedArray = @($processed.ToArray())
-  $skippedArray = @($skipped.ToArray())
-  $blockerArray = @($blockers.ToArray())
-  Update-RunnerHeartbeat -Processed $processedArray -Skipped $skippedArray -Blockers $blockerArray
-  & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-RepoPath "docs/chatgpt_status/_shared/automation/BUILD_AAYS_PAGE_PANEL_INDEX.ps1") -RepoRoot $script:RepoRoot | Out-Null
-  return [pscustomobject]@{ processed = $processedArray; skipped = $skippedArray; candidates = $candidates.Count }
-}
-
-$script:RepoRoot = Get-RepoRoot
-$script:CurrentBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
-if ([string]::IsNullOrWhiteSpace($script:CurrentBranch)) { $script:CurrentBranch = $script:MainBranch }
-Set-Location $script:RepoRoot
-$lockResult = Test-RunnerLock
-if (-not $lockResult.acquired) {
-  Write-Output "runner already active pid=$($lockResult.active_pid)"
-  exit 0
-}
-
+$script:RepoRoot=[System.IO.Path]::GetFullPath((Get-RepoRoot))
+$script:RunnerBranch = if ([string]::IsNullOrWhiteSpace($MainBranch)) { Get-Branch $script:RepoRoot } else { $MainBranch }
+$script:WorkRoot=[System.IO.Path]::GetFullPath($WorkRoot)
+$SharedRoot=Join-Path $script:RepoRoot "docs\chatgpt_status\_shared"
+$StatusDir=Join-Path $SharedRoot "status"; $ReportDir=Join-Path $SharedRoot "reports"; $HeartbeatDir=Join-Path $SharedRoot "heartbeat"; $LockDir=Join-Path $SharedRoot "runner_lock"; $LogDir=Join-Path $SharedRoot "logs"
+foreach ($d in @($StatusDir,$ReportDir,$HeartbeatDir,$LockDir,$LogDir)) { Ensure-Dir $d }
+$RunId=Get-Date -Format "yyyyMMdd_HHmmss"
+$script:GitLogPath=Join-Path $LogDir "MULTI_PAGE_git_args_V5_$RunId.log"
+$LockPath=Join-Path $LockDir "MULTI_PAGE.lock"
+$LatestStatusPath=Join-Path $StatusDir "MULTI_PAGE_latest_status.json"
+$RunnerHeartbeatPath=Join-Path $HeartbeatDir "MULTI_PAGE_heartbeat_latest.json"
+$script:Summary=[ordered]@{run_id=$RunId;checked_at=Now-Utc;repo_root=$script:RepoRoot;runner_branch=$script:RunnerBranch;queue_seen=$false;queue_started=$false;single_runner_lock_acquired=$false;task_runs_in_clean_worktree=$false;allowed_paths_enforced=$false;runner_output_uploaded=$false;post_sync_ok=$false;PUSH_SYNC_OK=$false;CONTINUE_RUNNER_READY=$false;final_ready=$false;fake_data=$false;db_write=$false;ddl=$false;migration=$false;production_deploy=$false;blockers=@();processed=@();skipped=@()}
 try {
-  do {
-    $scan = Invoke-RunnerScan
-    $scan | ConvertTo-Json -Depth 8
-    if ($Loop) { Start-Sleep -Seconds $IntervalSeconds }
-  } while ($Loop)
-} finally {
-  $lockPaths = @($script:LockPath)
-  if ($script:CompatibilityLockPaths) { $lockPaths += @($script:CompatibilityLockPaths) }
-  foreach ($lockPath in @($lockPaths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)) {
-    if (Test-Path -LiteralPath $lockPath) {
-      $lock = Read-JsonFile -Path $lockPath
-      $pidValue = if ($lock) { Get-JsonValue -Object $lock -Names @("pid", "runner_pid") } else { $null }
-      if ($pidValue -and [int]$pidValue -eq $PID) {
-        Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
-      }
-    }
-  }
+  Git-Ok (Invoke-Git $script:RepoRoot config core.longpaths true) "CONFIG_LONGPATHS_FAILED"
+  $dirty=@(Dirty-Paths $script:RepoRoot); $realDirty=@($dirty | Where-Object { -not (Is-Runtime $_) })
+  $script:InitialClean=($realDirty.Count -eq 0)
+  if (-not $script:InitialClean) { throw ("CONTROLLER_DIRTY_NO_RUN: " + ($realDirty -join ',')) }
+  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "CONTROLLER_FETCH_FAILED"
+  Git-Ok (Invoke-Git $script:RepoRoot checkout $script:RunnerBranch) "CONTROLLER_CHECKOUT_FAILED"
+  $pull=Invoke-Git $script:RepoRoot pull --ff-only origin $script:RunnerBranch; if ($pull.code -ne 0) { throw ("CONTROLLER_PULL_FAILED: " + $pull.output) }
+  if (Test-Path -LiteralPath $LockPath) { $age=((Get-Date)-(Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes; if ($age -lt $StaleMinutes) { Add-Blocker "RUNNER_ALREADY_ACTIVE"; throw "RUNNER_ALREADY_ACTIVE" } else { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } }
+  Ensure-Dir $LockPath; $script:Summary.single_runner_lock_acquired=$true
+  Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{pid=$PID;started_at=Now-Utc;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";runner_branch=$script:RunnerBranch;repo_root=$script:RepoRoot}))
+  $queueFiles=@(Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot "docs\chatgpt_status") -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
+  $parsed=@($queueFiles | ForEach-Object { Parse-Queue $_ })
+  $ready=@($parsed | Where-Object { $_.valid -and $_.status_norm -in $RunnableStatuses } | Sort-Object priority,page_key,task_id)
+  $script:Summary.queue_seen=($parsed.Count -gt 0)
+  Write-Utf8 (Join-Path $StatusDir "queue_selection_debug_20260706_v5.json") (To-JsonText ([ordered]@{checked_at=Now-Utc;ready_count=$ready.Count;ready=$ready}))
+  Write-Utf8 (Join-Path $StatusDir "queue_skip_status_check_20260706_v5.json") (To-JsonText ([ordered]@{checked_at=Now-Utc;skipped=@($parsed | Where-Object { -not $_.valid -or -not ($_.status_norm -in $RunnableStatuses) })}))
+  if (-not $ScanOnly) { $count=0; foreach ($task in $ready) { if ($count -ge $MaxTasksPerScan) { break }; $res=Run-Task $task; $script:Summary.processed += $res; $count++ } }
+  $script:Summary.CONTINUE_RUNNER_READY=$true
+} catch { Add-Blocker ("RUNNER_FATAL: " + $_.Exception.Message) } finally {
+  try { Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary) } catch {}
+  try { Write-Utf8 (Join-Path $ReportDir "MULTI_PAGE_runner_output_V5_$RunId.json") (To-JsonText $script:Summary) } catch {}
+  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } } catch {}
 }
-
-
+Write-Output (To-JsonText $script:Summary)
+if ($script:Summary.blockers.Count -gt 0) { exit 1 }
+exit 0
