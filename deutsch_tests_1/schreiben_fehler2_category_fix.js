@@ -17,7 +17,7 @@ function load(src,flag,cb){
   (document.head||document.documentElement).appendChild(s);
 }
 function loadSf2(cb){
-  var n=7;
+  var n=8;
   function done(){n--;if(n<=0&&cb)cb();}
   load('data_schreiben_fehler2_kaliplar_praep_nvv.js?v=5','AAYS_SF2_1_CORE_FORCE_OK',done);
   load('data_schreiben_fehler2_kaliplar_praep_nvv_long.js?v=5','AAYS_SF2_1_LONG_FORCE_OK',done);
@@ -26,6 +26,7 @@ function loadSf2(cb){
   load('data_schreiben_fehler3_sprachfehler_praep_nvv.js?v=1','AAYS_SF2_3_SOURCE_FORCE_OK',done);
   load('sf2_4_pure_de_1500_final.js?v=1','AAYS_SF2_4_PURE_DE_1500_FORCE_OK',done);
   load('data_schreiben_fehler6_schulsprache_auslandsstudium_autonome_fahrzeuge.js?v=1','AAYS_SF2_6_SOURCE_FORCE_OK',done);
+  load('data_schreiben_fehler8_ebooks_massentourismus_alltag.js?v=1','AAYS_SF2_8_SOURCE_FORCE_OK',done);
 }
 function openSf2(){
   patchCatOf();
@@ -52,7 +53,7 @@ try{
     window.renderTests=renderTests;
   }
 }catch(e){}
-document.addEventListener('DOMContentLoaded',function(){patchCatOf();loadSf2(function(){window.AAYS_SF2_PRELOAD_FORCE_OK=true;window.AAYS_SF2_3_PRELOAD_FORCE_OK=true;window.AAYS_SF2_4_PURE_DE_PRELOAD_OK=true;window.AAYS_SF2_6_PRELOAD_FORCE_OK=true;});bind();setTimeout(bind,300);setTimeout(bind,1200);});
+document.addEventListener('DOMContentLoaded',function(){patchCatOf();loadSf2(function(){window.AAYS_SF2_PRELOAD_FORCE_OK=true;window.AAYS_SF2_3_PRELOAD_FORCE_OK=true;window.AAYS_SF2_4_PURE_DE_PRELOAD_OK=true;window.AAYS_SF2_6_PRELOAD_FORCE_OK=true;window.AAYS_SF2_8_PRELOAD_FORCE_OK=true;});bind();setTimeout(bind,300);setTimeout(bind,1200);});
 document.addEventListener('click',function(ev){var t=ev.target&&ev.target.closest&&ev.target.closest('#catWrite2');if(t){ev.preventDefault();ev.stopPropagation();openSf2();return false;}},true);
-if(document.readyState!=='loading'){patchCatOf();loadSf2(function(){window.AAYS_SF2_PRELOAD_FORCE_OK=true;window.AAYS_SF2_3_PRELOAD_FORCE_OK=true;window.AAYS_SF2_4_PURE_DE_PRELOAD_OK=true;window.AAYS_SF2_6_PRELOAD_FORCE_OK=true;});bind();setTimeout(bind,300);}
+if(document.readyState!=='loading'){patchCatOf();loadSf2(function(){window.AAYS_SF2_PRELOAD_FORCE_OK=true;window.AAYS_SF2_3_PRELOAD_FORCE_OK=true;window.AAYS_SF2_4_PURE_DE_PRELOAD_OK=true;window.AAYS_SF2_6_PRELOAD_FORCE_OK=true;window.AAYS_SF2_8_PRELOAD_FORCE_OK=true;});bind();setTimeout(bind,300);}
 })();
