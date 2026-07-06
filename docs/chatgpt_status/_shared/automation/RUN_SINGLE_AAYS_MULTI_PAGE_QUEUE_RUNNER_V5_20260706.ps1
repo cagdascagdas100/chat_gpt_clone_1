@@ -44,6 +44,16 @@ function Invoke-Git {
   } finally { $ErrorActionPreference = $old; Pop-Location }
 }
 function Git-Ok([object]$Result,[string]$Code) { if ($Result.code -ne 0) { throw ($Code + ": " + $Result.output) } }
+function Invoke-LowMemoryFetch([string]$Root,[string]$Branch) {
+  if ([string]::IsNullOrWhiteSpace($Branch)) { throw "LOW_MEMORY_FETCH_BRANCH_NULL" }
+  $refspec = "+refs/heads/$Branch:refs/remotes/origin/$Branch"
+  return Invoke-Git $Root -c core.preloadindex=false -c gc.auto=0 -c pack.threads=1 fetch --no-tags --depth=1 origin $refspec
+}
+function Short-Out([object]$Result,[int]$MaxLen=900) {
+  $text = [string]$Result.output
+  if ($text.Length -gt $MaxLen) { return $text.Substring(0,$MaxLen) }
+  return $text
+}
 
 function Get-RepoRoot {
   $candidates = @()
@@ -142,10 +152,15 @@ function Commit-And-Push([string]$Msg,[string[]]$Allowed) {
   Git-Ok $cached "DIFF_CACHED_FAILED"
   if ($cached.output) { Git-Ok (Invoke-Git $script:RepoRoot commit -m $Msg) "COMMIT_FAILED" }
   if ($NoPush) { Add-Blocker "NO_PUSH_MODE"; return }
-  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "POST_FETCH_FAILED"
-  $rb=Invoke-Git $script:RepoRoot rebase ("origin/" + $script:RunnerBranch)
-  if ($rb.code -ne 0) { throw ("BLOCKED_REBASE_CONFLICT: " + $rb.output) }
-  Git-Ok (Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)) "POST_PUSH_FAILED"
+  $fetch = Invoke-LowMemoryFetch $script:RepoRoot $script:RunnerBranch
+  if ($fetch.code -eq 0) {
+    $rb=Invoke-Git $script:RepoRoot rebase ("origin/" + $script:RunnerBranch)
+    if ($rb.code -ne 0) { Add-Blocker ("BLOCKED_REBASE_CONFLICT: " + (Short-Out $rb)); return }
+  } else {
+    Add-Blocker ("LOW_MEMORY_POST_FETCH_SKIPPED: " + (Short-Out $fetch))
+  }
+  $push = Invoke-Git $script:RepoRoot push origin ("HEAD:" + $script:RunnerBranch)
+  if ($push.code -ne 0) { Add-Blocker ("POST_PUSH_FAILED: " + (Short-Out $push)) }
 }
 function Commit-Runtime-Summary([string]$Msg) {
   $runtimeAllowed=@("docs/chatgpt_status/_shared/status","docs/chatgpt_status/_shared/heartbeat","docs/chatgpt_status/_shared/logs","docs/chatgpt_status/_shared/reports","docs/chatgpt_status/_shared/runner_lock")
@@ -208,9 +223,14 @@ try {
   $dirty=@(Dirty-Paths $script:RepoRoot); $realDirty=@($dirty | Where-Object { -not (Is-Runtime $_) })
   $script:InitialClean=($realDirty.Count -eq 0)
   if (-not $script:InitialClean) { throw ("CONTROLLER_DIRTY_NO_RUN: " + ($realDirty -join ',')) }
-  Git-Ok (Invoke-Git $script:RepoRoot fetch origin $script:RunnerBranch) "CONTROLLER_FETCH_FAILED"
+  $controllerFetch = Invoke-LowMemoryFetch $script:RepoRoot $script:RunnerBranch
+  if ($controllerFetch.code -eq 0) {
+    $pull=Invoke-Git $script:RepoRoot merge --ff-only ("origin/" + $script:RunnerBranch)
+    if ($pull.code -ne 0) { Add-Blocker ("LOW_MEMORY_CONTROLLER_SYNC_SKIPPED: " + (Short-Out $pull)) }
+  } else {
+    Add-Blocker ("LOW_MEMORY_CONTROLLER_FETCH_SKIPPED: " + (Short-Out $controllerFetch))
+  }
   Git-Ok (Invoke-Git $script:RepoRoot checkout $script:RunnerBranch) "CONTROLLER_CHECKOUT_FAILED"
-  $pull=Invoke-Git $script:RepoRoot pull --ff-only origin $script:RunnerBranch; if ($pull.code -ne 0) { throw ("CONTROLLER_PULL_FAILED: " + $pull.output) }
   if (Test-Path -LiteralPath $LockPath) { $age=((Get-Date)-(Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes; if ($age -lt $StaleMinutes) { Add-Blocker "RUNNER_ALREADY_ACTIVE"; throw "RUNNER_ALREADY_ACTIVE" } else { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } }
   Ensure-Dir $LockPath; $script:Summary.single_runner_lock_acquired=$true
   Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{pid=$PID;started_at=Now-Utc;runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706";runner_branch=$script:RunnerBranch;repo_root=$script:RepoRoot}))
