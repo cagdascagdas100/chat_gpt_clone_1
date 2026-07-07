@@ -44,6 +44,7 @@ if (Test-Path -LiteralPath $lockPath) {
 
 $lockPayload = [ordered]@{ pid=$PID; runner="RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; repo_root=$RepoRoot; branch=$MainBranch; started_at=Now-Utc; updated_at=Now-Utc; final_ready=$false }
 Write-Json $lockPath $lockPayload
+Start-Sleep -Seconds 5
 $loop = 0
 try {
   do {

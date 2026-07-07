@@ -55,6 +55,7 @@ if (-not (Test-Path -LiteralPath $runner)) { throw "Missing runner daemon: $runn
 if (-not (Test-Path -LiteralPath $scanRunner)) { throw "Missing scan runner: $scanRunner" }
 if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $builder" }
 
+& powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
 $runnerState = Test-RunnerActive $lockPath
 if ($runnerState.stale -and -not $runnerState.active -and (Test-Path -LiteralPath $lockPath)) {
   Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
@@ -79,7 +80,6 @@ if (-not $runnerState.active) {
   }
 }
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
 if (-not $NoPanel -and (Test-Path -LiteralPath $panel)) {
   Start-Process -FilePath powershell -ArgumentList @("-NoProfile","-ExecutionPolicy","Bypass","-File",$panel) -WorkingDirectory $repoRoot | Out-Null
 }
