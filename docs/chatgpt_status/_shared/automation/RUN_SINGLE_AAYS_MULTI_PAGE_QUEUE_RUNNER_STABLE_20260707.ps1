@@ -165,7 +165,7 @@ function Sync-ControllerRepo {
       return
     }
   }
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$MainBranch:refs/remotes/origin/$MainBranch"))) 'CONTROLLER_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))) 'CONTROLLER_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
   $controllerRebased = Invoke-AaysGit $RepoRoot rebase ('origin/' + $MainBranch)
   if ($controllerRebased.code -ne 0) { throw ('CONTROLLER_REBASE_FAILED: ' + $controllerRebased.output) }
@@ -330,7 +330,7 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   $cached = Invoke-AaysGit $Worktree diff --cached --name-only
   Assert-GitOk $cached 'DIFF_CACHED_FAILED'
   if ($cached.output) { Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'COMMIT_FAILED' }
-  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$Branch:refs/remotes/origin/$Branch"))) 'POST_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${Branch}:refs/remotes/origin/${Branch}"))) 'POST_FETCH_FAILED'
   $rebased = Invoke-AaysGit $Worktree rebase ('origin/' + $Branch)
   if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
   Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))) 'POST_PUSH_FAILED'
