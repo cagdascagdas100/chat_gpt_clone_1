@@ -1,12 +1,12 @@
 ﻿# AAYS Page Contract Inventory 20260706
 
-Generated: 2026-07-07T00:57:20.8717941Z
+Generated: 2026-07-07T09:15:54.3654278Z
 Repo: cagdascagdas100/chat_gpt_clone_1
 Branch: main
 Runner contract: single_shared_runner_v1
 
 - pages_detected: 13
-- pages_with_queue_contract_errors: 8
+- pages_with_queue_contract_errors: 7
 - fake_data: false
 - db_write: false
 - migration: false
@@ -15,8 +15,8 @@ Runner contract: single_shared_runner_v1
 | page_key | display_name | queue_status | percent | final_ready | blocker |
 | --- | --- | --- | ---: | --- | --- |
 | AAYS_REAL_TOPOGRAPHY_PRODUCT | AAYS_REAL_TOPOGRAPHY_PRODUCT | unknown | 0 | False | queue_not_json_or_unreadable |
-| aays1 | aays1 | pending | 0 | False | missing_automation_script |
-| distance_property_types | distance_property_types | queued | 35 | False | missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; missing_real_evidence_rows; missing_input_file:docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv |
+| aays1 | aays1 | blocked | 0 | False | BLOCKED_WORKTREE_DIRTY_EXISTING_OUTPUTS; runner_status_reports_controller_dirty_sync_skipped; CONTROLLER_DIRTY_SYNC_SKIPPED; RUNNER_TASK_FAILED |
+| distance_property_types | distance_property_types | queued | 35 | False | missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; runner_report_missing:docs/chatgpt_status/distance_property_types/runner_outputs/distance_property_types_site_check_20260703_0950.report.json; missing_input_file:docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv; missing_real_evidence_rows; shared_runner_runtime_not_healthy |
 | gas_emissions | auto-5.6-gasEmission | done_on_target_branch | 0 | False | missing_automation_script; BLOCKED_BROWSER_ENVIRONMENT |
 | height_difference | auto-4.6-heightDifferance | unknown | 0 | False |  |
 | internet_access_parcel_layer_low_credit_20260612 | internet_access_parcel_layer_low_credit_20260612 | queued | 66 | False | missing_script_path; missing_allowed_paths; missing_or_false_no_fake_final_ready; missing_or_false_no_db_write; missing_or_false_no_migration; missing_or_false_no_production_deploy; RUNNER_PICKUP_NOT_PROVEN |
