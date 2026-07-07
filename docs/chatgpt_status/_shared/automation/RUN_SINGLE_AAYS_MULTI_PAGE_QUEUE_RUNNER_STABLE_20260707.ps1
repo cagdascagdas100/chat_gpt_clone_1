@@ -165,7 +165,7 @@ function Sync-ControllerRepo {
       return
     }
   }
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$MainBranch)) 'CONTROLLER_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$MainBranch:refs/remotes/origin/$MainBranch"))) 'CONTROLLER_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
   $controllerRebased = Invoke-AaysGit $RepoRoot rebase ('origin/' + $MainBranch)
   if ($controllerRebased.code -ne 0) { throw ('CONTROLLER_REBASE_FAILED: ' + $controllerRebased.output) }
@@ -218,14 +218,14 @@ function Ensure-TaskWorktree([object]$Task) {
     Archive-TaskWorktree $worktree 'existing_dirty_task_worktree' | Out-Null
     New-TaskWorktreeClone $worktree $Task $url
   }
-  Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Task.target_branch)) 'TASK_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED'
   $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
   if ($rebased.code -ne 0) {
     $script:Summary.task_worktree_rebase_error = $rebased.output
     Archive-TaskWorktree $worktree 'task_rebase_conflict' | Out-Null
     New-TaskWorktreeClone $worktree $Task $url
-    Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Task.target_branch)) 'TASK_FETCH_FAILED_AFTER_ARCHIVE'
+    Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_FETCH_FAILED_AFTER_ARCHIVE'
     Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED_AFTER_ARCHIVE'
     $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
     if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
@@ -330,7 +330,7 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   $cached = Invoke-AaysGit $Worktree diff --cached --name-only
   Assert-GitOk $cached 'DIFF_CACHED_FAILED'
   if ($cached.output) { Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'COMMIT_FAILED' }
-  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Branch)) 'POST_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$Branch:refs/remotes/origin/$Branch"))) 'POST_FETCH_FAILED'
   $rebased = Invoke-AaysGit $Worktree rebase ('origin/' + $Branch)
   if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
   Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))) 'POST_PUSH_FAILED'
@@ -382,11 +382,11 @@ function Run-Task([object]$Task) {
     $gate = [pscustomobject]@{ source_row_gate_passed=$false; ui_token_gate_passed=$false; browser_smoke_passed=$browser.browser_smoke_passed; post_sync_ok=$false; manual_review_required=$true; fake_data=$false }
     Write-TaskFile $worktree $gateRel $gate
   }
-  Write-TaskFile $worktree $reportRel ("TASK_ID=$taskId`nPAGE_KEY=$page`nRUNNER_V4=20260706`nwork_root=$WorkRoot`nnode_exists=$($browser.node_exists)`nnpm_exists=$($browser.npm_exists)`nedge_or_chrome_exists=$($browser.edge_or_chrome_exists)`nplaywright_available=$($browser.playwright_available)`nsite_8010_ok=$($browser.site_8010_ok)`nsite_8020_ok=$($browser.site_8020_ok)`nbrowser_smoke_passed=$($browser.browser_smoke_passed)`nautomation_exit_code=$automationCode`nfake_data=false`n--- output ---`n$automationOutput")
+  Write-TaskFile $worktree $reportRel ("TASK_ID=$taskId`nPAGE_KEY=$page`nRUNNER_STABLE=20260707`nwork_root=$WorkRoot`nnode_exists=$($browser.node_exists)`nnpm_exists=$($browser.npm_exists)`nedge_or_chrome_exists=$($browser.edge_or_chrome_exists)`nplaywright_available=$($browser.playwright_available)`nsite_8010_ok=$($browser.site_8010_ok)`nsite_8020_ok=$($browser.site_8020_ok)`nbrowser_smoke_passed=$($browser.browser_smoke_passed)`nautomation_exit_code=$automationCode`nfake_data=false`n--- output ---`n$automationOutput")
   $stage = Stage-AllowedOnly $worktree $allowed
   if (-not $stage.ok) { throw ('BLOCKED_UNSCOPED_CHANGES: ' + ($stage.unscoped -join ',')) }
   $script:Summary.allowed_paths_enforced = $true
-  Push-Sync $worktree $Task.target_branch "AAYS shared runner V4 output $page $taskId"
+  Push-Sync $worktree $Task.target_branch "AAYS shared runner stable output $page $taskId"
   $finalReady = ((As-Bool (Get-Prop $gate 'source_row_gate_passed')) -and (As-Bool (Get-Prop $gate 'ui_token_gate_passed')) -and $browser.browser_smoke_passed -and (-not (As-Bool (Get-Prop $gate 'manual_review_required'))) -and (-not (As-Bool (Get-Prop $gate 'fake_data'))) -and $automationCode -eq 0)
   $completed = [ordered]@{ task_id=$taskId; page_key=$page; completed_at=Now-Utc; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; allowed_paths_enforced=$true; runner_output_uploaded=$true; post_sync_ok=$true; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; browser_environment=$browser; final_ready=$finalReady; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@($script:Summary.blockers) }
   Write-TaskFile $worktree $completedRel $completed
@@ -395,7 +395,7 @@ function Run-Task([object]$Task) {
   Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=completed`nPUSH_SYNC_OK=true`nCONTINUE_RUNNER_READY=true`nFINAL_READY=$finalReady`nHEARTBEAT_AT=$(Now-Utc)`n"
   $stage2 = Stage-AllowedOnly $worktree $allowed
   if (-not $stage2.ok) { throw ('BLOCKED_UNSCOPED_CHANGES: ' + ($stage2.unscoped -join ',')) }
-  Push-Sync $worktree $Task.target_branch "AAYS shared runner V4 completion $page $taskId"
+  Push-Sync $worktree $Task.target_branch "AAYS shared runner stable completion $page $taskId"
   $script:Summary.runner_output_uploaded=$true; $script:Summary.post_sync_ok=$true; $script:Summary.PUSH_SYNC_OK=$true; $script:Summary.CONTINUE_RUNNER_READY=$true; $script:Summary.final_ready=[bool]$finalReady
   return [pscustomobject]@{ task_id=$taskId; page_key=$page; completed=$true; final_ready=[bool]$finalReady; worktree=$worktree }
 }
@@ -431,7 +431,7 @@ try {
   if ($lockFresh) { Add-Blocker 'RUNNER_ALREADY_ACTIVE'; $script:Summary.CONTINUE_RUNNER_READY=$true; Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary); Write-Output (To-JsonText $script:Summary); exit 0 }
   Ensure-Dir $LockPath
   $script:Summary.single_runner_lock_acquired = $true
-  Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V4_20260706'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
+  Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
   $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
   $ready = @($parsed | Where-Object { $_.valid -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
