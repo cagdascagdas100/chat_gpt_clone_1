@@ -1,0 +1,57 @@
+{
+  "page_key": "aays1",
+  "task_id": "aays1-065-product-evidence-implementation-20260708",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "expected_repo_root": "C:\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707",
+  "runner": "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707",
+  "launcher": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS\\START_AAYS_RUNNER.bat",
+  "layer": "Safety / Security",
+  "program_output": "Security Level percent",
+  "objective": "Replace the placeholder 065 script with a real evidence-verification implementation that uses existing verified Security/Public Safety artifacts, writes runner-visible proof files, and keeps final_ready false until browser/site proof exists.",
+  "required_source_artifacts": [
+    "docs/chatgpt_status/security_public_safety/runner_outputs/115_security_batch_join_backoff.json",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
+  ],
+  "required_outputs": [
+    "docs/chatgpt_status/aays1/runner_outputs/aays1_065_product_evidence_summary.json",
+    "docs/chatgpt_status/aays1/status/aays1_065_product_evidence_latest.json",
+    "docs/chatgpt_status/aays1/reports/aays1_065_product_evidence_report.md",
+    "docs/chatgpt_status/aays1/heartbeat/aays1_065_product_evidence_heartbeat_latest.txt",
+    "docs/chatgpt_status/aays1/status/aays1_site_visible_current_status_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
+  ],
+  "acceptance_checks": [
+    "runner picks up a pending queue task for page_key aays1",
+    "065 script is no longer a placeholder blocker-only script",
+    "script verifies existing security batch 115 runner output completed with fake_data=false",
+    "script verifies manifest and data artifacts exist and contain nonzero verified rows/features",
+    "script writes aays1 runner_outputs, status, report and heartbeat proof",
+    "script keeps final_ready=false and product_final_ready=false"
+  ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "docs/chatgpt_status/security_public_safety",
+    "england_map_web/data/security_public_safety",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates",
+    "docs/chatgpt_status/_shared/status",
+    "docs/chatgpt_status/_shared/reports",
+    "docs/chatgpt_status/_shared/heartbeat"
+  ],
+  "safety_flags": {
+    "final_ready": false,
+    "product_final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "person_level_data": false
+  },
+  "known_blockers_after_this_task": [
+    "browser smoke and popup/right-panel proof still required before final_ready=true",
+    "full real source URL trace expansion may still require a separate follow-up task if evidence source_summary is null"
+  ],
+  "created_at": "2026-07-08T00:00:00+03:00"
+}
