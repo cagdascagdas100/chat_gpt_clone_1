@@ -78,14 +78,28 @@ function Invoke-AaysGit {
   )
   if ($null -eq $GitArgs -or $GitArgs.Count -eq 0) { throw 'BLOCKED_BARE_GIT_USAGE' }
   Ensure-Dir (Split-Path -Parent $script:GitLogPath)
-  Add-Content -LiteralPath $script:GitLogPath -Encoding UTF8 -Value ("[{0}] cwd={1} git {2}" -f (Now-Utc), $Cwd, ($GitArgs -join ' '))
+
+  $safeDirs = New-Object System.Collections.Generic.List[string]
+  foreach ($candidate in @($Cwd, $script:RepoRoot)) {
+    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+    try {
+      $full = [System.IO.Path]::GetFullPath($candidate).TrimEnd('\') -replace '\\','/'
+      if (-not $safeDirs.Contains($full)) { [void]$safeDirs.Add($full) }
+    } catch { }
+  }
+
+  $effectiveArgs = @()
+  foreach ($safeDir in $safeDirs) { $effectiveArgs += @('-c', "safe.directory=$safeDir") }
+  $effectiveArgs += $GitArgs
+
+  Add-Content -LiteralPath $script:GitLogPath -Encoding UTF8 -Value ("[{0}] cwd={1} git {2}" -f (Now-Utc), $Cwd, ($effectiveArgs -join ' '))
   Push-Location -LiteralPath $Cwd
   $oldEap = $ErrorActionPreference
   try {
     $ErrorActionPreference = 'Continue'
-    $out = & git @GitArgs 2>&1
+    $out = & git @effectiveArgs 2>&1
     $code = $LASTEXITCODE
-    return [pscustomobject]@{ code = $code; output = (($out | Out-String).TrimEnd()); args = $GitArgs }
+    return [pscustomobject]@{ code = $code; output = (($out | Out-String).TrimEnd()); args = $effectiveArgs }
   } finally {
     $ErrorActionPreference = $oldEap
     Pop-Location
