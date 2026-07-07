@@ -108,6 +108,14 @@ function Invoke-AaysGit {
 function Assert-GitOk([object]$Result, [string]$Blocker) {
   if ($Result.code -ne 0) { throw ($Blocker + ': ' + $Result.output) }
 }
+function Abort-GitRebaseIfPresent([string]$Root) {
+  $rebaseMerge = Join-Path $Root '.git\rebase-merge'
+  $rebaseApply = Join-Path $Root '.git\rebase-apply'
+  if ((Test-Path -LiteralPath $rebaseMerge) -or (Test-Path -LiteralPath $rebaseApply)) {
+    return (Invoke-AaysGit $Root rebase --abort)
+  }
+  return [pscustomobject]@{ code = 0; output = ''; args = @() }
+}
 function Get-GitChangedPaths([string]$Root) {
   $r = Invoke-AaysGit $Root status --porcelain
   Assert-GitOk $r 'STATUS_FAILED'
@@ -168,7 +176,16 @@ function Sync-ControllerRepo {
   Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))) 'CONTROLLER_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
   $controllerRebased = Invoke-AaysGit $RepoRoot rebase ('origin/' + $MainBranch)
-  if ($controllerRebased.code -ne 0) { throw ('CONTROLLER_REBASE_FAILED: ' + $controllerRebased.output) }
+  if ($controllerRebased.code -ne 0) {
+    $script:Summary.controller_rebase_error = $controllerRebased.output
+    $abort = Abort-GitRebaseIfPresent $RepoRoot
+    if ($abort.code -ne 0) { throw ('CONTROLLER_REBASE_ABORT_FAILED: ' + $abort.output + "`nORIGINAL: " + $controllerRebased.output) }
+    Assert-GitOk (Invoke-AaysGit $RepoRoot reset --hard ('origin/' + $MainBranch)) 'CONTROLLER_RESET_TO_ORIGIN_FAILED'
+    $script:Summary.controller_rebase_recovered = $true
+    $script:Summary.controller_sync_ok = $true
+    $script:Summary.controller_sync_mode = 'rebase_failed_reset_to_origin'
+    return
+  }
   $script:Summary.controller_sync_ok = $true
   $script:Summary.controller_sync_mode = 'restore_runtime_then_fetch_rebase_controller'
 }
@@ -350,7 +367,10 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   if ($cached.output) { Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'COMMIT_FAILED' }
   Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${Branch}:refs/remotes/origin/${Branch}"))) 'POST_FETCH_FAILED'
   $rebased = Invoke-AaysGit $Worktree rebase ('origin/' + $Branch)
-  if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
+  if ($rebased.code -ne 0) {
+    [void](Abort-GitRebaseIfPresent $Worktree)
+    throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output)
+  }
   Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))) 'POST_PUSH_FAILED'
 }
 function Run-Task([object]$Task) {
