@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   [string]$RepoRoot = "C:\AAYS_WT\AAYS_REPAIR_20260706_1738",
   [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
@@ -40,7 +40,8 @@ function Test-RunnerActive([string]$LockPath) {
 $repoRoot = Resolve-AaysRepoRoot $RepoRoot
 $sharedRoot = Join-Path $repoRoot "docs/chatgpt_status/_shared"
 $automationRoot = Join-Path $sharedRoot "automation"
-$runner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706.ps1"
+$runner = Join-Path $automationRoot "RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1"
+$scanRunner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1"
 $builder = Join-Path $automationRoot "BUILD_AAYS_PAGE_PANEL_INDEX.ps1"
 $panel = Join-Path $sharedRoot "panel/AAYS_RUNNER_PANEL.ps1"
 $statusDir = Join-Path $sharedRoot "status"
@@ -50,7 +51,8 @@ New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir | Out-
 $lockPath = Join-Path $locksDir "single_runner.lock"
 $bootstrapStatus = Join-Path $statusDir "runner_bootstrap_latest.json"
 
-if (-not (Test-Path -LiteralPath $runner)) { throw "Missing runner: $runner" }
+if (-not (Test-Path -LiteralPath $runner)) { throw "Missing runner daemon: $runner" }
+if (-not (Test-Path -LiteralPath $scanRunner)) { throw "Missing scan runner: $scanRunner" }
 if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $builder" }
 
 $runnerState = Test-RunnerActive $lockPath
@@ -63,12 +65,12 @@ $runnerPid = $runnerState.pid
 $runnerStatus = if ($runnerState.active) { "runner_active" } else { "runner_not_running" }
 if (-not $runnerState.active) {
   if ($NoLoop) {
-    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks",$MaxTasks,"-StaleMinutes",$StaleMinutes,"-ScanOnly")
+    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$scanRunner,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks",$MaxTasks,"-StaleMinutes",$StaleMinutes,"-ScanOnly")
     if ($NoPush) { $args += "-NoPush" }
     $out = & powershell @args 2>&1
     $runnerStatus = "runner_scan_only_completed"
   } else {
-    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-Loop","-IntervalSeconds",$IntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
+    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-IntervalSeconds",$IntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
     if ($NoPush) { $args += "-NoPush" }
     $proc = Start-Process -FilePath powershell -ArgumentList $args -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
     $runnerPid = $proc.Id
@@ -88,6 +90,7 @@ $state = [ordered]@{
   repo_full_name = $RepoFullName
   runner_branch = $MainBranch
   runner_status = $runnerStatus
+  runner_engine = "stable_legacy_worktree_runner_20260707"
   runner_pid = $runnerPid
   runner_lock_active = (Test-Path -LiteralPath $lockPath)
   lock_file = "docs/chatgpt_status/_shared/locks/single_runner.lock"

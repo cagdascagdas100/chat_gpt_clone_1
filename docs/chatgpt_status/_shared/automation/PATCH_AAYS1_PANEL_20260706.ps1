@@ -7,7 +7,7 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
 function JP([string]$p) { Join-Path $RepoRoot $p }
 function RJ([string]$p) { Get-Content -Raw -LiteralPath (JP $p) | ConvertFrom-Json -ErrorAction Stop }
 function WJ([string]$p, [object]$v) { $v | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath (JP $p) -Encoding UTF8 }
-function SP($o,[string]$n,$v) { if ($null -eq $o.PSObject.Properties[$n]) { $o | Add-Member -NotePropertyName $n -NotePropertyValue $v } else { $o.PSObject.Properties[$n].Value = $v } }
+function Set-JsonProp($o,[string]$n,$v) { if ($null -eq $o.PSObject.Properties[$n]) { $o | Add-Member -NotePropertyName $n -NotePropertyValue $v } else { $o.PSObject.Properties[$n].Value = $v } }
 $ov = RJ "docs/chatgpt_status/_shared/panel/aays1_115_completed_latest.json"
 $paths = @(
   "docs/chatgpt_status/_shared/panel/page_status_index_latest.json",
@@ -22,20 +22,20 @@ foreach ($p in $paths) {
   $idx = RJ $p
   foreach ($pg in @($idx.pages)) {
     if ([string]$pg.page_key -ne "aays1") { continue }
-    SP $pg "runner_status" "CompletedEvidence"
-    SP $pg "single_runner_status" "CompletedEvidence"
-    SP $pg "latest_queue_status" "done"
-    SP $pg "completion_percent" 100
-    SP $pg "remaining_percent" 0
-    SP $pg "latest_blocker" ""
-    SP $pg "blockers" @()
-    SP $pg "evidence_paths" $evidence
-    SP $pg "verified_new_rows" ([int]$ov.verified_new_rows)
-    SP $pg "target_new_rows" ([int]$ov.target_new_rows)
-    SP $pg "final_ready" $false
+    Set-JsonProp $pg "runner_status" "CompletedEvidence"
+    Set-JsonProp $pg "single_runner_status" "CompletedEvidence"
+    Set-JsonProp $pg "latest_queue_status" "done"
+    Set-JsonProp $pg "completion_percent" 100
+    Set-JsonProp $pg "remaining_percent" 0
+    Set-JsonProp $pg "latest_blocker" ""
+    Set-JsonProp $pg "blockers" @()
+    Set-JsonProp $pg "evidence_paths" $evidence
+    Set-JsonProp $pg "verified_new_rows" ([int]$ov.verified_new_rows)
+    Set-JsonProp $pg "target_new_rows" ([int]$ov.target_new_rows)
+    Set-JsonProp $pg "final_ready" $false
     $count++
   }
-  SP $idx "updated_at" ((Get-Date).ToUniversalTime().ToString("o"))
+    Set-JsonProp $idx "updated_at" ((Get-Date).ToUniversalTime().ToString("o"))
   WJ $p $idx
 }
 $sum = [ordered]@{ page_key="aays1"; status="panel_patch_completed"; patched_entries=$count; final_ready=$false }

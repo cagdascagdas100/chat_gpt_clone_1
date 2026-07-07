@@ -1,4 +1,4 @@
-﻿# AAYS / TerraYield - Ortak Devam Promptu 20260706
+# AAYS / TerraYield - Ortak Devam Promptu 20260706
 
 Bu promptu her ChatGPT sayfasina aynen yapistir. Kullanici daha sonra sadece "devam" derse asagidaki kurallarla devam et.
 
@@ -87,3 +87,18 @@ Cevap formati:
 - Son satirda su bayraklari bildir:
   final_ready=false, product_final_ready=false, fake_data=false, db_write=false, migration=false, production_deploy=false
 - Eger gercek kabul kriterleri tamamlandiysa final_ready sadece kanitla true olabilir; aksi halde false kalir.
+## Runner Strategy Update 20260707
+
+Current decision:
+- Use the stable legacy worktree runner engine: docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1.
+- Root launchers start docs/chatgpt_status/_shared/automation/RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1 through START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1.
+- Do not call RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706.ps1 as the default continuation runner. V5 remains as evidence/diagnostic code only until separately repaired.
+- The old V4 F-drive-only runner is not used directly because F is not canonical. The stable runner keeps the old worktree execution model but uses C:\AAYS_WT\AAYS_REPAIR_20260706_1738 as canonical.
+
+When user says "devam":
+1. Do not start a new or parallel runner.
+2. Check docs/chatgpt_status/_shared/status/stable_runner_daemon_latest.json and docs/chatgpt_status/_shared/status/runner_bootstrap_latest.json.
+3. If daemon status is already_running or runner_started, do not start another one.
+4. If no daemon is active, use START_AAYS_SINGLE_RUNNER_PANEL.cmd once.
+5. Repair only your own page_key queue/status/report files.
+6. Skip main integration, DB write, migration, production deploy, fake heartbeat, fake completed, fake 100 percent, fake final_ready=true, and unverified 115 metric changes.

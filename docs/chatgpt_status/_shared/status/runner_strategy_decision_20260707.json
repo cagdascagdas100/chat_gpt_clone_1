@@ -1,0 +1,41 @@
+﻿{
+    "generated_at":  "2026-07-07T00:47:16.3821287Z",
+    "repo":  "cagdascagdas100/chat_gpt_clone_1",
+    "branch":  "codex/aays-single-runner-v5-20260706",
+    "decision":  "use_stable_legacy_worktree_runner_as_default",
+    "rationale":  [
+                      "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1 was only a V5 wrapper, so old runner was not actually active.",
+                      "V4 old runner has the desired worktree execution model but had F-drive canonical restrictions.",
+                      "Stable 20260707 runner keeps V4 worktree model, blocks F as canonical, and runs from the C repair clone.",
+                      "V5 remains diagnostic until fixed; it is not the default continuation runner."
+                  ],
+    "default_launcher":  "START_AAYS_SINGLE_RUNNER_PANEL.cmd",
+    "bootstrap":  "docs/chatgpt_status/_shared/automation/START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1",
+    "daemon":  "docs/chatgpt_status/_shared/automation/RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1",
+    "runner":  "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1",
+    "generic_runner":  "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1",
+    "skipped_as_unnecessary_or_unsafe":  [
+                                             "default V5 runner path",
+                                             "direct F-drive old runner",
+                                             "main integration",
+                                             "DB write",
+                                             "migration",
+                                             "production deploy",
+                                             "fake completed",
+                                             "fake heartbeat",
+                                             "fake 100 percent",
+                                             "fake final_ready=true"
+                                         ],
+    "scan_only_result":  {
+                             "status":  "passed_with_expected_dirty_controller_blocker_before_commit",
+                             "CONTINUE_RUNNER_READY":  true,
+                             "queue_seen":  true,
+                             "blocker":  "CONTROLLER_DIRTY_SYNC_SKIPPED before commit/push"
+                         },
+    "final_ready":  false,
+    "product_final_ready":  false,
+    "fake_data":  false,
+    "db_write":  false,
+    "migration":  false,
+    "production_deploy":  false
+}
