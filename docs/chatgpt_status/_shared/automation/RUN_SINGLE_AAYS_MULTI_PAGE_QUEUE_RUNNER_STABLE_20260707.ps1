@@ -139,6 +139,30 @@ function Sync-ControllerRepo {
   $script:Summary.controller_sync_ok = $true
   $script:Summary.controller_sync_mode = 'fetch_rebase_clean_controller'
 }
+function Add-ArchivedTaskWorktree([string]$Path, [string]$ArchivePath, [string]$Reason) {
+  if (-not $script:Summary.Contains('archived_task_worktrees')) { $script:Summary['archived_task_worktrees'] = @() }
+  $script:Summary['archived_task_worktrees'] = @($script:Summary['archived_task_worktrees']) + [ordered]@{ path=$Path; archive_path=$ArchivePath; reason=$Reason; archived_at=Now-Utc }
+}
+function Archive-TaskWorktree([string]$Worktree, [string]$Reason) {
+  if (-not (Test-Path -LiteralPath $Worktree)) { return $null }
+  $archiveRoot = Join-Path $WorkRoot '_archived_task_worktrees'
+  Ensure-Dir $archiveRoot
+  $leaf = Split-Path -Leaf $Worktree
+  $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMdd_HHmmss')
+  $target = Join-Path $archiveRoot ("${leaf}_${stamp}")
+  $suffix = 1
+  while (Test-Path -LiteralPath $target) {
+    $target = Join-Path $archiveRoot ("${leaf}_${stamp}_$suffix")
+    $suffix++
+  }
+  Move-Item -LiteralPath $Worktree -Destination $target
+  Add-ArchivedTaskWorktree $Worktree $target $Reason
+  return $target
+}
+function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
+  Assert-GitOk (Invoke-AaysGit -Cwd $WorkRoot -GitArgs @('-c','core.longpaths=true','-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','clone','--branch',$Task.target_branch,'--single-branch',$Url,$Worktree)) 'TASK_CLONE_FAILED'
+  Assert-GitOk (Invoke-AaysGit $Worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
+}
 function Ensure-TaskWorktree([object]$Task) {
   $safePage = Safe-Name $Task.page_key
   $safeTask = Safe-Name $Task.task_id
@@ -147,20 +171,32 @@ function Ensure-TaskWorktree([object]$Task) {
   $url = 'https://github.com/' + $RepoFullName + '.git'
   Ensure-Dir $WorkRoot
   Assert-GitOk (Invoke-AaysGit $RepoRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
-  if (-not (Test-Path -LiteralPath $worktree)) {
-    Assert-GitOk (Invoke-AaysGit -Cwd $WorkRoot -GitArgs @('-c','core.longpaths=true','-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','clone','--branch',$Task.target_branch,'--single-branch',$url,$worktree)) 'TASK_CLONE_FAILED'
+  if (Test-Path -LiteralPath $worktree) {
+    $rebaseMerge = Join-Path $worktree '.git\rebase-merge'
+    $rebaseApply = Join-Path $worktree '.git\rebase-apply'
+    if ((Test-Path -LiteralPath $rebaseMerge) -or (Test-Path -LiteralPath $rebaseApply)) { Archive-TaskWorktree $worktree 'existing_rebase_in_progress' | Out-Null }
   }
+  if (-not (Test-Path -LiteralPath $worktree)) { New-TaskWorktreeClone $worktree $Task $url }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   $dirty = @(Get-GitChangedPaths $worktree)
   $script:TaskWorktreeHadDirty = ($dirty.Count -gt 0)
   if ($dirty.Count -gt 0) {
     $script:Summary.existing_task_worktree_dirty_paths = $dirty
-    return $worktree
+    Archive-TaskWorktree $worktree 'existing_dirty_task_worktree' | Out-Null
+    New-TaskWorktreeClone $worktree $Task $url
   }
   Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Task.target_branch)) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED'
   $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
-  if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
+  if ($rebased.code -ne 0) {
+    $script:Summary.task_worktree_rebase_error = $rebased.output
+    Archive-TaskWorktree $worktree 'task_rebase_conflict' | Out-Null
+    New-TaskWorktreeClone $worktree $Task $url
+    Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Task.target_branch)) 'TASK_FETCH_FAILED_AFTER_ARCHIVE'
+    Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED_AFTER_ARCHIVE'
+    $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
+    if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
+  }
   return $worktree
 }
 function Read-QueueFile([System.IO.FileInfo]$File) {
