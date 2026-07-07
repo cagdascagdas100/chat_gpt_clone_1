@@ -1,0 +1,3 @@
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS=window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS||[];
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[2]=`<h4>3. Prävention und Verantwortung</h4><p>Ein zweiter Vorteil liegt in der präventiven Wirkung. Wenn gemeinsame Räume klar organisiert sind, gehen Lernende häufig sorgfältiger mit ihnen um. Dadurch kann eine ruhigere Lernumgebung entstehen.</p><p>Für die Prüfung ist folgende Formulierung nützlich: <i>Die Maßnahme kann Verantwortungsbewusstsein fördern, weil Regeln im Schulalltag sichtbarer und verbindlicher werden.</i></p>`;
+if(window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD)window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD();
