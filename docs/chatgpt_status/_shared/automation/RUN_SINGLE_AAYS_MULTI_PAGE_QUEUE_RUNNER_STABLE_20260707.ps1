@@ -250,7 +250,25 @@ function Parse-Queue([System.IO.FileInfo]$File) {
     return [pscustomobject]@{ valid=$false; queue_rel=$relative; skip_reason='NOT_CANONICAL_QUEUE_PATH' }
   }
   $pageFromPath = $Matches[1]
-  $data = Read-QueueFile $File
+  try {
+    $data = Read-QueueFile $File
+  } catch {
+    return [pscustomobject]@{
+      valid = $false
+      validation_errors = @('QUEUE_PARSE_FAILED')
+      page_key = $pageFromPath
+      task_id = (Safe-Name ([System.IO.Path]::GetFileNameWithoutExtension($File.Name)))
+      status = 'invalid'
+      status_norm = 'invalid'
+      script_path = ''
+      target_branch = $MainBranch
+      allowed_paths = @()
+      priority = 1000
+      queue_rel = $relative
+      parse_error = $_.Exception.Message
+      data = $null
+    }
+  }
   $page = [string](Get-Prop $data 'page_key')
   $scriptPath = [string](Get-Prop $data 'script_path')
   if (-not $scriptPath) { $scriptPath = [string](Get-Prop $data 'automation_script') }
