@@ -146,7 +146,11 @@ function Ensure-TaskWorktree([object]$Task) {
   }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   $dirty = @(Get-GitChangedPaths $worktree)
-  if ($dirty.Count -gt 0) { throw ('BLOCKED_WORKTREE_DIRTY: ' + ($dirty -join ',')) }
+  $script:TaskWorktreeHadDirty = ($dirty.Count -gt 0)
+  if ($dirty.Count -gt 0) {
+    $script:Summary.existing_task_worktree_dirty_paths = $dirty
+    return $worktree
+  }
   Assert-GitOk (Invoke-AaysGit $worktree fetch origin $Task.target_branch) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED'
   $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
@@ -260,7 +264,7 @@ function Run-Task([object]$Task) {
   $script:Summary.queue_started = $true
   $page = $Task.page_key
   $taskId = $Task.task_id
-  $allowed = @($Task.allowed_paths + @(
+  $allowedSeed = @($Task.allowed_paths) + @(
     "docs/chatgpt_status/$page/status",
     "docs/chatgpt_status/$page/heartbeat",
     "docs/chatgpt_status/$page/reports",
@@ -269,9 +273,10 @@ function Run-Task([object]$Task) {
     "docs/chatgpt_status/_shared/status",
     "docs/chatgpt_status/_shared/reports",
     "docs/chatgpt_status/_shared/heartbeat"
-  ) | ForEach-Object { Rel $_ } | Select-Object -Unique)
+  )
+  $allowed = @($allowedSeed | ForEach-Object { Rel $_ } | Select-Object -Unique)
   $worktree = Ensure-TaskWorktree $Task
-  $script:Summary.task_runs_in_clean_worktree = $true
+  $script:Summary.task_runs_in_clean_worktree = (-not $script:TaskWorktreeHadDirty)
   $scriptPath = Resolve-ScriptPath $worktree $Task.script_path
   $startedRel = "docs/chatgpt_status/$page/status/${taskId}_started.json"
   $heartbeatRel = "docs/chatgpt_status/$page/heartbeat/${taskId}_heartbeat.txt"
