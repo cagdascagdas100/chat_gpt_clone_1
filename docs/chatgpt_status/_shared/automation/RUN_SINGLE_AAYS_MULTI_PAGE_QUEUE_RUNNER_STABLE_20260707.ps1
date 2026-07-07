@@ -55,7 +55,15 @@ function Is-ControllerRuntimePath([string]$Path) {
     $r.StartsWith('docs/chatgpt_status/_shared/logs/') -or
     $r.StartsWith('docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_') -or
     $r -eq 'docs/chatgpt_status/_shared/runner_lock' -or
-    $r.StartsWith('docs/chatgpt_status/_shared/runner_lock/'))
+    $r.StartsWith('docs/chatgpt_status/_shared/runner_lock/') -or
+    $r.StartsWith('docs/chatgpt_status/_shared/locks/') -or
+    $r -eq 'docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/stable_runner_daemon_latest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/runner_bootstrap_latest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/panel/page_status_index_latest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/page_panel_index.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/pages_status_dashboard.json' -or
+    $r -eq 'england_map_web/data/runner_panel/page_status_index.json')
 }
 function Invoke-AaysGit {
   param(
@@ -133,7 +141,7 @@ function Ensure-TaskWorktree([object]$Task) {
   Ensure-Dir $WorkRoot
   Assert-GitOk (Invoke-AaysGit $RepoRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
   if (-not (Test-Path -LiteralPath $worktree)) {
-    Assert-GitOk (Invoke-AaysGit $WorkRoot -c core.longpaths=true clone --branch $Task.target_branch --single-branch $url $worktree) 'TASK_CLONE_FAILED'
+    Assert-GitOk (Invoke-AaysGit -Cwd $WorkRoot -GitArgs @('-c','core.longpaths=true','clone','--branch',$Task.target_branch,'--single-branch',$url,$worktree)) 'TASK_CLONE_FAILED'
   }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   $dirty = @(Get-GitChangedPaths $worktree)
