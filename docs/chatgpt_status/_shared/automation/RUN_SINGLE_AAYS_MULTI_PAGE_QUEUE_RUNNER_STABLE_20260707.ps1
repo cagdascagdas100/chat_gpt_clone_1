@@ -121,17 +121,23 @@ function Sync-ControllerRepo {
   if (-not (Test-Path -LiteralPath $RepoRoot)) { throw 'REPO_ROOT_MISSING: ' + $RepoRoot }
   Assert-GitOk (Invoke-AaysGit $RepoRoot config core.longpaths true) 'CONFIG_LONGPATHS_FAILED'
   $dirtyInfo = Clean-ControllerRuntimeDirty $RepoRoot
-  if (@($dirtyInfo.all).Count -gt 0) {
+  if (@($dirtyInfo.non_runtime).Count -gt 0) {
     $script:Summary.controller_sync_ok = $false
     $script:Summary.controller_sync_mode = 'skipped_pull_dirty_controller_non_destructive'
     Add-Blocker 'CONTROLLER_DIRTY_SYNC_SKIPPED'
     return
   }
-  Assert-GitOk (Invoke-AaysGit $RepoRoot fetch origin $MainBranch) 'CONTROLLER_FETCH_FAILED'
+  if (@($dirtyInfo.runtime).Count -gt 0) {
+    $script:Summary.controller_sync_ok = $true
+    $script:Summary.controller_sync_mode = 'skipped_pull_runtime_dirty_non_destructive'
+    return
+  }
+  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$MainBranch)) 'CONTROLLER_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
-  Assert-GitOk (Invoke-AaysGit $RepoRoot pull --ff-only origin $MainBranch) 'CONTROLLER_PULL_FAILED'
+  $controllerRebased = Invoke-AaysGit $RepoRoot rebase ('origin/' + $MainBranch)
+  if ($controllerRebased.code -ne 0) { throw ('CONTROLLER_REBASE_FAILED: ' + $controllerRebased.output) }
   $script:Summary.controller_sync_ok = $true
-  $script:Summary.controller_sync_mode = 'pull_ff_only_clean_controller'
+  $script:Summary.controller_sync_mode = 'fetch_rebase_clean_controller'
 }
 function Ensure-TaskWorktree([object]$Task) {
   $safePage = Safe-Name $Task.page_key
@@ -142,7 +148,7 @@ function Ensure-TaskWorktree([object]$Task) {
   Ensure-Dir $WorkRoot
   Assert-GitOk (Invoke-AaysGit $RepoRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
   if (-not (Test-Path -LiteralPath $worktree)) {
-    Assert-GitOk (Invoke-AaysGit -Cwd $WorkRoot -GitArgs @('-c','core.longpaths=true','clone','--branch',$Task.target_branch,'--single-branch',$url,$worktree)) 'TASK_CLONE_FAILED'
+    Assert-GitOk (Invoke-AaysGit -Cwd $WorkRoot -GitArgs @('-c','core.longpaths=true','-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','clone','--branch',$Task.target_branch,'--single-branch',$url,$worktree)) 'TASK_CLONE_FAILED'
   }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   $dirty = @(Get-GitChangedPaths $worktree)
@@ -151,7 +157,7 @@ function Ensure-TaskWorktree([object]$Task) {
     $script:Summary.existing_task_worktree_dirty_paths = $dirty
     return $worktree
   }
-  Assert-GitOk (Invoke-AaysGit $worktree fetch origin $Task.target_branch) 'TASK_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Task.target_branch)) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout $Task.target_branch) 'TASK_CHECKOUT_FAILED'
   $rebased = Invoke-AaysGit $worktree rebase ('origin/' + $Task.target_branch)
   if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
@@ -255,10 +261,10 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   $cached = Invoke-AaysGit $Worktree diff --cached --name-only
   Assert-GitOk $cached 'DIFF_CACHED_FAILED'
   if ($cached.output) { Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'COMMIT_FAILED' }
-  Assert-GitOk (Invoke-AaysGit $Worktree fetch origin $Branch) 'POST_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$Branch)) 'POST_FETCH_FAILED'
   $rebased = Invoke-AaysGit $Worktree rebase ('origin/' + $Branch)
   if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
-  Assert-GitOk (Invoke-AaysGit $Worktree push origin ('HEAD:' + $Branch)) 'POST_PUSH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))) 'POST_PUSH_FAILED'
 }
 function Run-Task([object]$Task) {
   $script:Summary.queue_started = $true
@@ -290,8 +296,8 @@ function Run-Task([object]$Task) {
   Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=running`nHEARTBEAT_AT=$(Now-Utc)`n"
   Write-TaskFile $worktree $Task.queue_rel ([ordered]@{ task_id=$taskId; page_key=$page; status='running'; target_branch=$Task.target_branch; script_path=$Task.script_path; allowed_paths=$Task.allowed_paths; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true })
   if (-not (Test-Path -LiteralPath $scriptPath)) { throw ('SCRIPT_MISSING: ' + $scriptPath) }
-  Assert-GitOk (Invoke-AaysGit $worktree ls-remote origin) 'BLOCKED_GITHUB_AUTH'
-  if (-not $NoPush) { Assert-GitOk (Invoke-AaysGit $worktree push --dry-run origin ('HEAD:' + $Task.target_branch)) 'BLOCKED_GITHUB_AUTH' }
+  $script:Summary.github_auth_preflight = 'skipped_to_avoid_low_memory_ls_remote_oom'
+  $script:Summary.final_push_is_authoritative = $true
   $oldRoot=$env:AAYS_REPO_ROOT; $oldTask=$env:AAYS_TASK_ID; $oldPage=$env:AAYS_PAGE_KEY
   $env:AAYS_REPO_ROOT=$worktree; $env:AAYS_TASK_ID=$taskId; $env:AAYS_PAGE_KEY=$page
   $automationOutput=''; $automationCode=0
