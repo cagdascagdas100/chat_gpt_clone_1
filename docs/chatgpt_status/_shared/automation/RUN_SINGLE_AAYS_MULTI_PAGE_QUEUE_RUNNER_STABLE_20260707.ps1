@@ -75,6 +75,8 @@ function Is-ControllerRuntimePath([string]$Path) {
     $r -eq 'docs/chatgpt_status/_shared/status/MULTI_PAGE_latest_status.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/queue_selection_debug_20260705.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/queue_skip_status_check_20260705.json' -or
+    $r.StartsWith('docs/chatgpt_status/_shared/status/queue_selection_debug_') -or
+    $r.StartsWith('docs/chatgpt_status/_shared/status/queue_skip_status_check_') -or
     $r -eq 'docs/chatgpt_status/_shared/status/local_reboot_runner_start_latest.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/local_reboot_runner_start_result_latest.json' -or
     $r.StartsWith('docs/chatgpt_status/_shared/status/reboot_runner_start_request_') -or
