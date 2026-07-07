@@ -64,6 +64,11 @@ function Is-ControllerRuntimePath([string]$Path) {
     $r -eq 'docs/chatgpt_status/_shared/panel/page_status_index_latest.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/page_panel_index.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/pages_status_dashboard.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/contracts/PAGE_KEY_REGISTRY.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/page_registry.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/page_registry/pages_manifest.json' -or
+    $r -eq 'docs/chatgpt_status/_shared/reports/page_contract_inventory_20260706.md' -or
+    $r -eq 'docs/chatgpt_status/_shared/status/page_contract_inventory_20260706.json' -or
     $r -eq 'england_map_web/data/runner_panel/page_status_index.json')
 }
 function Invoke-AaysGit {
@@ -128,16 +133,30 @@ function Sync-ControllerRepo {
     return
   }
   if (@($dirtyInfo.runtime).Count -gt 0) {
-    $script:Summary.controller_sync_ok = $true
-    $script:Summary.controller_sync_mode = 'skipped_pull_runtime_dirty_non_destructive'
-    return
+    $restoredRuntime = @()
+    foreach ($runtimePath in @($dirtyInfo.runtime)) {
+      $tracked = Invoke-AaysGit $RepoRoot ls-files --error-unmatch -- $runtimePath
+      if ($tracked.code -eq 0) {
+        Assert-GitOk (Invoke-AaysGit $RepoRoot restore -- $runtimePath) 'CONTROLLER_RUNTIME_RESTORE_FAILED'
+        $restoredRuntime += $runtimePath
+      }
+    }
+    $script:Summary.controller_runtime_dirty_cleaned = ($restoredRuntime.Count -gt 0)
+    $script:Summary.controller_runtime_dirty_restored_paths = $restoredRuntime
+    $dirtyInfo = Clean-ControllerRuntimeDirty $RepoRoot
+    if (@($dirtyInfo.non_runtime).Count -gt 0) {
+      $script:Summary.controller_sync_ok = $false
+      $script:Summary.controller_sync_mode = 'skipped_pull_dirty_controller_after_runtime_restore'
+      Add-Blocker 'CONTROLLER_DIRTY_SYNC_SKIPPED'
+      return
+    }
   }
   Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','fetch','origin',$MainBranch)) 'CONTROLLER_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $RepoRoot checkout $MainBranch) 'CONTROLLER_CHECKOUT_FAILED'
   $controllerRebased = Invoke-AaysGit $RepoRoot rebase ('origin/' + $MainBranch)
   if ($controllerRebased.code -ne 0) { throw ('CONTROLLER_REBASE_FAILED: ' + $controllerRebased.output) }
   $script:Summary.controller_sync_ok = $true
-  $script:Summary.controller_sync_mode = 'fetch_rebase_clean_controller'
+  $script:Summary.controller_sync_mode = 'restore_runtime_then_fetch_rebase_controller'
 }
 function Add-ArchivedTaskWorktree([string]$Path, [string]$ArchivePath, [string]$Reason) {
   if (-not $script:Summary.Contains('archived_task_worktrees')) { $script:Summary['archived_task_worktrees'] = @() }
