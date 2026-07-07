@@ -1,0 +1,1 @@
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS=window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS||[];window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[3]='<h4>4. Ordnung</h4><p>Ein weiterer Vorteil besteht darin, dass gemeinsame Räume bewusster genutzt werden.</p>';if(window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD)window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD();
