@@ -18,10 +18,36 @@ function Ensure-Dir([string]$Path) { if ($Path -and -not (Test-Path -LiteralPath
 function Write-Utf8([string]$Path, [string]$Content) { Ensure-Dir (Split-Path -Parent $Path); [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false)) }
 function To-JsonText([object]$Obj) { $Obj | ConvertTo-Json -Depth 60 }
 function Get-Prop([object]$Obj, [string]$Name) { if ($null -eq $Obj) { return $null }; $p = $Obj.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
+function Get-NestedProp([object]$Obj, [string]$Parent, [string]$Name) {
+  $parentObj = Get-Prop $Obj $Parent
+  if ($null -eq $parentObj) { return $null }
+  return Get-Prop $parentObj $Name
+}
 function As-Bool([object]$Value) {
   if ($Value -is [bool]) { return $Value }
   if ($null -eq $Value) { return $false }
   return ([string]$Value).Trim().ToLowerInvariant() -in @('true','1','yes','y')
+}
+function Has-ExplicitFalseFlag([object]$Obj, [string]$Name) {
+  foreach ($value in @((Get-Prop $Obj $Name), (Get-NestedProp $Obj 'safety_flags' $Name), (Get-NestedProp $Obj 'safety' $Name))) {
+    if ($null -ne $value) { return (-not (As-Bool $value)) }
+  }
+  return $false
+}
+function Queue-SafetyFlagOk([object]$Obj, [string]$Name) {
+  if (As-Bool (Get-Prop $Obj $Name)) { return $true }
+  if (As-Bool (Get-NestedProp $Obj 'safety_flags' $Name)) { return $true }
+  if (As-Bool (Get-NestedProp $Obj 'safety' $Name)) { return $true }
+  switch ($Name) {
+    'no_fake_final_ready' {
+      if (As-Bool (Get-NestedProp $Obj 'safety' 'final_ready_must_be_evidence_based')) { return $true }
+      return ((Has-ExplicitFalseFlag $Obj 'final_ready') -and (Has-ExplicitFalseFlag $Obj 'product_final_ready'))
+    }
+    'no_db_write' { return (Has-ExplicitFalseFlag $Obj 'db_write') }
+    'no_migration' { return (Has-ExplicitFalseFlag $Obj 'migration') }
+    'no_production_deploy' { return (Has-ExplicitFalseFlag $Obj 'production_deploy') }
+  }
+  return $false
 }
 function Add-Blocker([string]$Code) { if ($Code -and -not ($script:Summary.blockers -contains $Code)) { $script:Summary.blockers += $Code } }
 function Normalize-Allowed([object]$Value) {
@@ -306,7 +332,7 @@ function Parse-Queue([System.IO.FileInfo]$File) {
   if (-not $targetBranch) { $errors += 'MISSING_target_branch' }
   if ($allowed.Count -eq 0) { $errors += 'MISSING_allowed_paths' }
   foreach ($flag in @('no_fake_final_ready','no_db_write','no_migration','no_production_deploy')) {
-    if (-not (As-Bool (Get-Prop $data $flag))) { $errors += ('MISSING_OR_FALSE_' + $flag) }
+    if (-not (Queue-SafetyFlagOk $data $flag)) { $errors += ('MISSING_OR_FALSE_' + $flag) }
   }
   return [pscustomobject]@{
     valid = ($errors.Count -eq 0)
@@ -457,6 +483,9 @@ $RunnerHeartbeatPath = Join-Path $HeartbeatDir 'MULTI_PAGE_heartbeat_latest.json
 $LatestStatusPath = Join-Path $StatusDir 'MULTI_PAGE_latest_status.json'
 $SelectionDebugPath = Join-Path $StatusDir 'queue_selection_debug_20260705.json'
 $SkipDebugPath = Join-Path $StatusDir 'queue_skip_status_check_20260705.json'
+$TodayStamp = (Get-Date).ToString('yyyyMMdd')
+$SelectionDebugPathToday = Join-Path $StatusDir "queue_selection_debug_${TodayStamp}.json"
+$SkipDebugPathToday = Join-Path $StatusDir "queue_skip_status_check_${TodayStamp}.json"
 $script:Summary = [ordered]@{ run_id=$RunId; checked_at=Now-Utc; repo_root=$RepoRoot; work_root=$WorkRoot; main_branch=$MainBranch; queue_seen=$false; queue_started=$false; single_runner_lock_acquired=$false; task_runs_in_clean_worktree=$false; allowed_paths_enforced=$false; runner_output_uploaded=$false; post_sync_ok=$false; PUSH_SYNC_OK=$false; CONTINUE_RUNNER_READY=$false; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@(); processed=@(); skipped=@() }
 
 try {
@@ -474,8 +503,12 @@ try {
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
   $ready = @($parsed | Where-Object { $_.valid -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
   $script:Summary.queue_seen = ($parsed.Count -gt 0)
-  Write-Utf8 $SelectionDebugPath (To-JsonText ([ordered]@{ checked_at=Now-Utc; ready_count=$ready.Count; ready=$ready }))
-  Write-Utf8 $SkipDebugPath (To-JsonText ([ordered]@{ checked_at=Now-Utc; skipped=@($parsed | Where-Object { -not $_.valid -or -not ($_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner')) }) }))
+  $selectionPayload = [ordered]@{ checked_at=Now-Utc; parsed_count=$parsed.Count; ready_count=$ready.Count; ready=$ready }
+  $skipPayload = [ordered]@{ checked_at=Now-Utc; skipped=@($parsed | Where-Object { -not $_.valid -or -not ($_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner')) }) }
+  Write-Utf8 $SelectionDebugPath (To-JsonText $selectionPayload)
+  Write-Utf8 $SelectionDebugPathToday (To-JsonText $selectionPayload)
+  Write-Utf8 $SkipDebugPath (To-JsonText $skipPayload)
+  Write-Utf8 $SkipDebugPathToday (To-JsonText $skipPayload)
   if ($ScanOnly) { $script:Summary.CONTINUE_RUNNER_READY=$true; Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary); Write-Output (To-JsonText $script:Summary); exit 0 }
   $count = 0
   foreach ($task in $ready) {
