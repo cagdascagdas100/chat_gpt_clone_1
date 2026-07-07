@@ -22,6 +22,7 @@ $lockDir = Join-Path $sharedRoot "locks"
 foreach ($dir in @($statusDir,$heartbeatDir,$lockDir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 $lockPath = Join-Path $lockDir "single_runner.lock"
 $statusPath = Join-Path $statusDir "stable_runner_daemon_latest.json"
+$bootstrapPath = Join-Path $statusDir "runner_bootstrap_latest.json"
 $heartbeatPath = Join-Path $heartbeatDir "stable_runner_daemon_heartbeat_latest.json"
 
 function Now-Utc { (Get-Date).ToUniversalTime().ToString("o") }
@@ -36,6 +37,26 @@ if (Test-Path -LiteralPath $lockPath) {
   if ($existing -and $age -lt $StaleMinutes) {
     $payload = [ordered]@{ checked_at=Now-Utc; status="already_running"; active_pid=$existingPid; lock_path="docs/chatgpt_status/_shared/locks/single_runner.lock"; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false }
     Write-Json $statusPath $payload
+    Write-Json $bootstrapPath ([ordered]@{
+      updated_at=Now-Utc
+      repo_root=$RepoRoot
+      repo_full_name=$RepoFullName
+      runner_branch=$MainBranch
+      runner_status='runner_active'
+      runner_engine='stable_legacy_worktree_runner_20260707'
+      scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'
+      runner_pid=$existingPid
+      runner_lock_active=(Test-Path -LiteralPath $lockPath)
+      lock_file='docs/chatgpt_status/_shared/locks/single_runner.lock'
+      panel_index='docs/chatgpt_status/_shared/panel/page_status_index_latest.json'
+      CONTINUE_RUNNER_READY=$true
+      final_ready=$false
+      product_final_ready=$false
+      fake_data=$false
+      db_write=$false
+      migration=$false
+      production_deploy=$false
+    })
     Write-Output ($payload | ConvertTo-Json -Depth 20)
     exit 0
   }
@@ -59,6 +80,26 @@ try {
     if ($tail.Length -gt 6000) { $tail = $tail.Substring($tail.Length - 6000) }
     $payload = [ordered]@{ checked_at=Now-Utc; daemon_pid=$PID; loop=$loop; status="runner_loop_completed"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; runner_exit_code=$code; runner_output_tail=$tail; CONTINUE_RUNNER_READY=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false }
     Write-Json $statusPath $payload
+    Write-Json $bootstrapPath ([ordered]@{
+      updated_at=Now-Utc
+      repo_root=$RepoRoot
+      repo_full_name=$RepoFullName
+      runner_branch=$MainBranch
+      runner_status='runner_active'
+      runner_engine='stable_legacy_worktree_runner_20260707'
+      scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'
+      runner_pid=$PID
+      runner_lock_active=(Test-Path -LiteralPath $lockPath)
+      lock_file='docs/chatgpt_status/_shared/locks/single_runner.lock'
+      panel_index='docs/chatgpt_status/_shared/panel/page_status_index_latest.json'
+      CONTINUE_RUNNER_READY=$true
+      final_ready=$false
+      product_final_ready=$false
+      fake_data=$false
+      db_write=$false
+      migration=$false
+      production_deploy=$false
+    })
     if ($MaxLoops -gt 0 -and $loop -ge $MaxLoops) { break }
     Start-Sleep -Seconds $IntervalSeconds
   } while ($true)
