@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
 $sharedRoot = Join-Path $RepoRoot "docs\chatgpt_status\_shared"
 $automationRoot = Join-Path $sharedRoot "automation"
-$runner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706.ps1"
+$runner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1"
 $statusDir = Join-Path $sharedRoot "status"
 $heartbeatDir = Join-Path $sharedRoot "heartbeat"
 $lockDir = Join-Path $sharedRoot "locks"
@@ -42,21 +42,21 @@ if (Test-Path -LiteralPath $lockPath) {
   Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
 }
 
-$lockPayload = [ordered]@{ pid=$PID; runner="RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706"; repo_root=$RepoRoot; branch=$MainBranch; started_at=Now-Utc; updated_at=Now-Utc; final_ready=$false }
+$lockPayload = [ordered]@{ pid=$PID; runner="RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; repo_root=$RepoRoot; branch=$MainBranch; started_at=Now-Utc; updated_at=Now-Utc; final_ready=$false }
 Write-Json $lockPath $lockPayload
 $loop = 0
 try {
   do {
     $loop++
     $started = Now-Utc
-    Write-Json $heartbeatPath ([ordered]@{ daemon_pid=$PID; loop=$loop; heartbeat_at=$started; runner_active=$true; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706"; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
+    Write-Json $heartbeatPath ([ordered]@{ daemon_pid=$PID; loop=$loop; heartbeat_at=$started; runner_active=$true; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
     $args = @("-RepoRoot", $RepoRoot, "-RepoFullName", $RepoFullName, "-MainBranch", $MainBranch, "-WorkRoot", $WorkRoot, "-MaxTasks", "$MaxTasks", "-StaleMinutes", "$StaleMinutes")
     if ($NoPush) { $args += "-NoPush" }
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $runner @args 2>&1
     $code = $LASTEXITCODE
     $tail = ($out | Out-String).Trim()
     if ($tail.Length -gt 6000) { $tail = $tail.Substring($tail.Length - 6000) }
-    $payload = [ordered]@{ checked_at=Now-Utc; daemon_pid=$PID; loop=$loop; status="runner_loop_completed"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_V5_20260706"; runner_exit_code=$code; runner_output_tail=$tail; CONTINUE_RUNNER_READY=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false }
+    $payload = [ordered]@{ checked_at=Now-Utc; daemon_pid=$PID; loop=$loop; status="runner_loop_completed"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; runner_exit_code=$code; runner_output_tail=$tail; CONTINUE_RUNNER_READY=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false }
     Write-Json $statusPath $payload
     if ($MaxLoops -gt 0 -and $loop -ge $MaxLoops) { break }
     Start-Sleep -Seconds $IntervalSeconds
