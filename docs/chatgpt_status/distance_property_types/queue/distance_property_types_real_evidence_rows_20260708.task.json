@@ -1,0 +1,45 @@
+{
+  "task_id": "distance_property_types_real_evidence_rows_20260708",
+  "page_key": "distance_property_types",
+  "layer_name": "Distance to Nearby Property Types",
+  "created_at": "2026-07-07T23:47:13Z",
+  "status": "pending",
+  "priority": 95,
+  "purpose": "Run the conservative Distance Property Types validator after real parcel-level source candidates are available; do not fabricate evidence rows.",
+  "script_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\distance_property_types\\automation\\distance_property_types_batch_runner.ps1",
+  "input_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\distance_property_types\\inputs\\distance_property_types_source_candidates.csv",
+  "repo_result_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\distance_property_types\\reports\\distance_property_types_progress_latest.md",
+  "result_path": "F:\\AAYS_GITHUB_BRIDGE_CLEAN2\\results\\distance_property_types_real_evidence_rows_20260708.result.json",
+  "expected_outputs": [
+    "F:\\chatgpt\\chat_gpt_clone_1_main\\england_map_web\\data\\distance_property_types\\distance_property_types_verified.geojson",
+    "F:\\chatgpt\\chat_gpt_clone_1_main\\england_map_web\\data\\distance_property_types\\distance_property_types_verified.csv",
+    "F:\\chatgpt\\chat_gpt_clone_1_main\\england_map_web\\data\\distance_property_types\\distance_property_types_evidence_manifest.json",
+    "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\distance_property_types\\reports\\distance_property_types_manual_review_latest.csv",
+    "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\distance_property_types\\reports\\distance_property_types_progress_latest.md"
+  ],
+  "acceptance_criteria": [
+    "Read docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv",
+    "Reject header-only or evidence-free input as missing_real_evidence_rows",
+    "Accept only rows with real parcel_id or parcel_ref, supported source evidence, valid property type, and accuracy_score_4 in 0..4",
+    "Allowed property types are Industrial Unit, Detached Home, Retail Property, Apartment Building, Office Building, Mixed Building, and Unknown",
+    "Rows with Unknown, weak evidence, conflict, missing geometry, or accuracy below 3.0 stay in manual review",
+    "Do not generate fake parcel ids, geometries, distances, source URLs, source dates, or photo AI observations",
+    "Keep final_ready=false unless real GeoJSON features, source manifest, manual review split, site layer, right-panel/popup, and changed_in_latest_run filter are all verified"
+  ],
+  "current_known_blockers": [
+    "missing_real_evidence_rows",
+    "source_candidate_csv_is_header_only",
+    "site_integration_not_verified_with_real_features"
+  ],
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "ddl": false,
+  "migration": false,
+  "production_deploy": false
+}
