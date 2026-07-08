@@ -1,30 +1,31 @@
 # Distance Property Types - Progress Latest
 
 page_key=distance_property_types
-task_id=distance_property_types_bootstrap_20260703
-run_started_at=2026-07-08T15:27:06.2481575Z
-run_finished_at=2026-07-08T15:27:06.3861381Z
+task_id=distance_property_types_run_source_seed_20260708
+run_started_at=2026-07-08T15:45:00Z
+run_finished_at=2026-07-08T15:45:00Z
 layer_name=Distance to Nearby Property Types
-status=BLOCKED_INPUT_REQUIRED
-completion_percent=35
+status=INPUT_READY_WAITING_SINGLE_RUNNER_VALIDATION
+completion_percent=62
 final_ready=false
 product_final_ready=false
 
 ## Counters
 
-input_rows=0
+input_rows=6
 processed_rows=0
 verified_rows=0
 manual_review_rows=0
-accuracy_ge_3_rows=0
+accuracy_ge_3_rows=6
 accuracy_lt_3_rows=0
 
 ## Outputs
 
-geojson_output=C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_distance_property_types_valid_single_runne\england_map_web\data\distance_property_types\distance_property_types_verified.geojson
-csv_output=C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_distance_property_types_valid_single_runne\england_map_web\data\distance_property_types\distance_property_types_verified.csv
-manifest_output=C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_distance_property_types_valid_single_runne\england_map_web\data\distance_property_types\distance_property_types_evidence_manifest.json
-manual_review_output=C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_distance_property_types_valid_single_runne\docs\chatgpt_status\distance_property_types\reports\distance_property_types_manual_review_latest.csv
+source_input=docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv
+queued_task=docs/chatgpt_status/distance_property_types/queue/0002_distance_property_types_run_source_seed_20260708.task.json
+csv_output=england_map_web/data/distance_property_types/distance_property_types_verified.csv
+geojson_output=england_map_web/data/distance_property_types/distance_property_types_verified.geojson
+manual_review_output=docs/chatgpt_status/distance_property_types/reports/distance_property_types_manual_review_latest.csv
 
 ## Safety flags
 
@@ -34,15 +35,21 @@ ddl=false
 migration_apply=false
 prod_deploy=false
 
+## Resolved blockers
+
+- source_candidate_csv_is_header_only
+- missing_real_evidence_rows_at_input_stage
+
 ## Remaining blockers
 
-- missing_real_evidence_rows
-- source_candidate_csv_is_header_only
+- waiting_single_runner_validation_output
+- geometry_distance_join_required_before_final
+- site_integration_not_verified_with_real_features
 
 ## Next batch
 
-next_batch=Provide or generate a real source batch with parcel_id, geometry/centroid, candidate property type, distance fields, and official/web/map/photo evidence. Rows below 3.0/4 or with conflict must remain in manual review.
+next_batch=Single runner must validate the 6 source-backed candidate rows, then join geometry/distance evidence before any final_ready claim.
 
 ## Next single action
 
-next_single_action=Run evidence-backed source batch through this script, then verify GeoJSON rendering and the Guncel degisiklikler filter in the local site.
+next_single_action=Run queued task distance_property_types_run_source_seed_20260708 through the single shared runner and verify site 8020 changed-status panel.
