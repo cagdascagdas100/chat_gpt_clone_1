@@ -1,0 +1,37 @@
+{
+  "task_id": "distance_property_types_valid_single_runner_20260708",
+  "page_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner",
+  "priority": 1,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/distance_property_types/automation/distance_property_types_batch_runner.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/distance_property_types",
+    "england_map_web/data/distance_property_types"
+  ],
+  "purpose": "Run the Distance Property Types validator through the stable single shared runner with a valid queue contract, upload real runner status, and keep final_ready false until source-backed evidence rows exist.",
+  "input_path": "docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv",
+  "expected_outputs": [
+    "docs/chatgpt_status/distance_property_types/status/distance_property_types_valid_single_runner_20260708_started.json",
+    "docs/chatgpt_status/distance_property_types/reports/distance_property_types_valid_single_runner_20260708_runner_output.txt",
+    "docs/chatgpt_status/distance_property_types/status/distance_property_types_valid_single_runner_20260708_completed.json",
+    "docs/chatgpt_status/distance_property_types/heartbeat/distance_property_types_valid_single_runner_20260708_heartbeat.txt",
+    "docs/chatgpt_status/distance_property_types/reports/distance_property_types_progress_latest.md"
+  ],
+  "acceptance_criteria": [
+    "Stable single runner must parse this task as valid and start it",
+    "Runner output must be uploaded through GitHub push sync",
+    "No fake parcel/property evidence rows may be created",
+    "If source CSV is still header-only, report missing_real_evidence_rows and keep final_ready=false"
+  ],
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
