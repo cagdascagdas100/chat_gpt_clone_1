@@ -1,0 +1,25 @@
+{
+  "task_id": "resolve-appjs-and-rerun-verified-rows-20260708",
+  "page_key": "gas_emissions",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_shared_runner_only",
+  "created_at": "2026-07-08T12:30:00+03:00",
+  "app_js_fix_commit_sha": "117cf0d9392e502b8c04a3e6e503097896596791",
+  "required_actions": [
+    "pull latest main containing england_map_web/app.js",
+    "rerun the existing single runner bridge for Gas Emissions only",
+    "write real source-backed Gas Emissions parcel rows; do not write fake or placeholder rows",
+    "update outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json",
+    "refresh the 8020 control site data so changed/verified/score badges reflect the rerun"
+  ],
+  "acceptance_gates": {
+    "fake_data": false,
+    "db_write": false,
+    "migration_apply": false,
+    "prod_deploy": false,
+    "final_ready_requires_accuracy_score_at_least_3_of_4": true,
+    "site_visibility_required": true
+  },
+  "known_remaining_blocker": "missing_verified_source_backed_rows"
+}
