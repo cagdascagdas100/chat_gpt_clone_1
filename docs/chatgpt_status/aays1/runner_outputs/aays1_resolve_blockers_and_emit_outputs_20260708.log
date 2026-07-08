@@ -1,0 +1,14 @@
+TASK_ID=aays1-resolve-blockers-20260708-1225
+PAGE_KEY=aays1
+STATUS=AAYS1_BLOCKER_OUTPUTS_EMITTED
+checked_at=2026-07-08T15:23:48Z
+watchdog_exists=true
+endpoint_health_exists=true
+red_flag_quickscan_exists=true
+accuracy_044_exists=true
+site_visible=True
+program_layer_geojson_count=7
+progress_percent=65
+final_ready=false
+fake_data=false
+manual_review_required=true
