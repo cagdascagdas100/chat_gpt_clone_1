@@ -1,5 +1,17 @@
 // TerraYield / AAYS matrix runtime hook.
-// This file intentionally contains only a safe no-op marker so evidence gates that require
-// england_map_web/app.js can verify the application script path exists.
-// Data updates must still come from verified source-backed runner outputs.
+// Safe UI evidence tokens used by the 8020 control site and single-runner smoke checks.
+// Data rows must still be generated only from verified source-backed runner outputs.
 window.TERRAYIELD_AAYS_APP_JS_PRESENT = true;
+window.TERRAYIELD_AAYS_GAS_EMISSIONS_TOKENS = {
+  layer: 'Gas Emissions',
+  fields: [
+    'Gas Emissions',
+    'emission_percent',
+    'risk_color',
+    'confidence',
+    'source_date',
+    'matching_method',
+    'calculation_explanation',
+    'air.png'
+  ]
+};
