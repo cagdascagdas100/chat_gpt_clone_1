@@ -1,26 +1,33 @@
 {
   "layer": "Gas Emissions",
   "program_output": "Gas Emission Level",
-  "status": "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
+  "status": "OFFICIAL_SOURCE_DATASET_FOUND_ROW_EXTRACTION_PENDING",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
-  "last_updated": "2026-07-08T15:48:01Z",
-  "runner_status": "single_runner_bridge_completed",
+  "last_updated": "2026-07-08T19:10:00+03:00",
+  "runner_status": "single_runner_source_row_recovery_queued",
+  "source_dataset_gate_passed": true,
   "source_row_gate_passed": false,
   "ui_token_gate_passed": true,
   "browser_smoke_passed": true,
-  "verification_score_after": "1/4",
+  "verification_score_after": "2/4",
   "final_ready": false,
   "manual_review_required": true,
-  "changes": [],
+  "changes": [
+    {
+      "code": "official_ghg_source_dataset_found",
+      "detail": "Official GOV.UK DESNZ local authority and regional greenhouse gas emissions 2005-2023 dataset located and recorded for runner extraction.",
+      "manifest_path": "docs/chatgpt_status/gas_emissions/evidence/govuk_ghg_source_manifest_20260708.json"
+    }
+  ],
   "blockers": [
     {
       "code": "missing_verified_source_backed_rows",
       "severity": "blocking",
-      "detail": "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
+      "detail": "Official dataset is now located, but runner must still extract real source-backed Gas Emissions rows for matching parcel ids before final_ready can become true."
     }
   ],
-  "next_action": "Resolve blockers and rerun the same single bridge."
+  "next_action": "Runner should download the official GOV.UK CSV, extract Barking and Dagenham local authority greenhouse gas values, write verified parcel rows, then refresh the 8020 site."
 }
