@@ -4,7 +4,7 @@ function loadVideoNachteile(){
   if(window.AAYS_BEFORE_VIDEO_SCHULE_NACHTEILE_LOADER_OK)return;
   window.AAYS_BEFORE_VIDEO_SCHULE_NACHTEILE_LOADER_OK=true;
   var s=document.createElement('script');
-  s.src='data_bevor_videoueberwachung_schule_nachteile.js?v=1';
+  s.src='data_bevor_videoueberwachung_schule_nachteile.js?v=2';
   s.async=false;
   s.onload=function(){setTimeout(function(){try{if(typeof window.renderTests==='function')window.renderTests('Bevor Schreiben');else if(typeof renderTests==='function')renderTests('Bevor Schreiben');}catch(e){}},120);};
   (document.head||document.documentElement).appendChild(s);
