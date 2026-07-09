@@ -1,0 +1,41 @@
+{
+  "task_id": "aays1-101-real-visible-security-site-test-20260709",
+  "page_key": "aays1",
+  "status": "pending",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "priority": "real_visible_site_test",
+  "user_goal": "Show a positive real Security/Public Safety data change on local 127.0.0.1 site using existing verified data.",
+  "real_data_only": true,
+  "source_file": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json",
+  "latest_changes_file": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json",
+  "test_record": {
+    "parcel_id": "parcel_1",
+    "security_score_percent": 12.13,
+    "security_level": "Cok Dusuk",
+    "accuracy_score_4": 4,
+    "official_source_evidence": "LSOA E01000090 Barking and Dagenham 020E; spatial_match=parcel_centroid_inside_lsoa_polygon"
+  },
+  "actions": [
+    "git_fetch_pull_current_branch",
+    "verify latest_changes.real_visible_test_written true",
+    "verify real_visible_test_20260709.json exists and fake_data false",
+    "verify Security layer reads latest_changes or site_visibility_status",
+    "open or probe local site http://127.0.0.1:8020/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=20260630-final if available",
+    "confirm Security button/legend/colors visible",
+    "click parcel_1 or first matching Security feature and confirm popup/right-panel fields",
+    "write docs/chatgpt_status/aays1/runner_outputs/101_real_visible_security_site_test.json with real evidence only"
+  ],
+  "acceptance": [
+    "A positive non-final Security/Public Safety status is visible or fetchable by site layer",
+    "At least one real verified parcel record is visible in popup/right-panel or equivalent local evidence",
+    "No fake data, DB write, migration, or production deploy",
+    "Keep final_ready false unless browser smoke evidence exists"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
