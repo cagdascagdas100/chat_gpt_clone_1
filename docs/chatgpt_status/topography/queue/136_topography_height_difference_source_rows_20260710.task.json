@@ -1,0 +1,61 @@
+{
+  "task_id": "topography-136-height-difference-source-rows-20260710",
+  "page_key": "topography",
+  "layer": "Topography",
+  "program_output": "Elevation Difference from Sea Level, Elevation Difference from Regional Average",
+  "status": "queued",
+  "runner_policy": "existing_f_portable_single_runner_only",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "do_not_change": {
+    "final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "current_inputs": {
+    "current_task": "docs/chatgpt_status/topography/current_task/topography_current_task_20260703.json",
+    "schema": "docs/chatgpt_status/topography/schemas/topography_site_update_schema_20260703.json",
+    "geojson": "england_map_web/data/program_layer_matrix/topography.geojson",
+    "fixture_template": "docs/chatgpt_status/topography/fixtures/topography_verified_rows_template_20260703.csv",
+    "site_latest_changes": "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json"
+  },
+  "required_outputs": [
+    "docs/chatgpt_status/topography/fixtures/topography_verified_rows_template_20260703.csv",
+    "england_map_web/data/program_layer_matrix/topography.geojson",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json",
+    "docs/chatgpt_status/topography/reports/topography_progress_latest_20260703.md",
+    "docs/chatgpt_status/topography/status/topography_current_status_20260703.txt"
+  ],
+  "source_priority": [
+    "Environment Agency LIDAR terrain where parcel coordinates are available",
+    "Copernicus DEM GLO-30 or EEA-10 where access is available",
+    "Ordnance Survey Terrain 50 or Terrain 5 as official GB terrain fallback",
+    "USGS SRTM only if official local sources are unavailable"
+  ],
+  "actions": [
+    "Ignore Gas Emissions files and queues for this task.",
+    "Use only real internet or official DEM source evidence for Topography.",
+    "Select a small starter batch of parcels with coordinates or canonical parcel match evidence.",
+    "For each row calculate elevation_sea_level_m, regional_average_elevation_m, and elevation_difference_regional_average_m.",
+    "Write source_url, source_date, matching_method, calculation_explanation, confidence_percent, accuracy_score_4, needs_manual_review, and changed_in_latest_run for every row.",
+    "Keep geometry null unless canonical boundary evidence exists; do not invent parcel geometry.",
+    "Update latest_changes so the 8020 Topography panel can show row-by-row progress.",
+    "Keep final_ready false until browser smoke, popup or side panel proof, and runner report are complete."
+  ],
+  "acceptance_checks": {
+    "runner_active": true,
+    "pid_alive": true,
+    "lock_valid": true,
+    "minimum_starter_rows": 3,
+    "minimum_accuracy_score_4": 3.0,
+    "website_row_visibility_required": true,
+    "final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "created_by": "chatgpt",
+  "created_at": "2026-07-10T03:30:00+03:00"
+}
