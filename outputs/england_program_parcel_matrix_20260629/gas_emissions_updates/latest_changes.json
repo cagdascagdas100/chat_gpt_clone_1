@@ -1,31 +1,44 @@
 {
   "layer": "Gas Emissions",
   "program_output": "Gas Emission Level",
-  "status": "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
+  "status": "OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY",
+  "branch": "codex/aays-single-runner-v5-20260706",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
-  "last_updated": "2026-07-06T15:08:48Z",
-  "runner_status": "single_runner_bridge_completed",
-  "source_row_gate_passed": false,
-  "ui_token_gate_passed": false,
-  "browser_smoke_passed": true,
-  "verification_score_after": "0/4",
+  "last_updated": "2026-07-09T21:45:00Z",
+  "runner_status": "f_portable_single_runner_active_waiting_for_8012_site_refresh_smoke",
+  "source_dataset_gate_passed": true,
+  "source_row_gate_passed": true,
+  "parcel_binding_gate_passed": false,
+  "ui_token_gate_passed": true,
+  "browser_smoke_passed": false,
+  "verification_score_after": "2.5/4",
   "final_ready": false,
   "manual_review_required": true,
-  "changes": [],
+  "trial_mode": true,
+  "extracted_row_count": 47,
+  "source": "GOV.UK DESNZ local authority and regional greenhouse gas emissions statistics 2005 to 2023",
+  "site_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions_status_latest.json",
+  "site_url_expected_now": "http://127.0.0.1:8012/england_map_web/index.html",
+  "changes": [
+    "runner_branch_latest_changes_synced_with_verified_marker",
+    "source_row_gate_restored_true_for_branch",
+    "stale_zero_score_blocker_replaced_with_current_trial_status",
+    "8012_site_refresh_smoke_required"
+  ],
   "blockers": [
     {
-      "code": "missing_verified_source_backed_rows",
-      "severity": "blocking",
-      "detail": "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
+      "code": "parcel_binding_pending",
+      "severity": "review",
+      "detail": "Official trial rows are real GOV.UK data, but final parcel-specific authority binding still needs runner review before final_ready."
     },
     {
-      "code": "missing_app_js",
-      "severity": "blocking",
-      "detail": "england_map_web/app.js is missing."
+      "code": "browser_smoke_pending",
+      "severity": "review",
+      "detail": "Refresh http://127.0.0.1:8012/england_map_web/index.html after the F portable runner pulls this branch, then write smoke evidence."
     }
   ],
-  "next_action": "Resolve blockers and rerun the same single bridge."
+  "next_action": "Existing F portable single runner should pull this branch, refresh the 8012 site, write f_portable_site_8012_smoke_latest.json, then continue parcel binding."
 }
