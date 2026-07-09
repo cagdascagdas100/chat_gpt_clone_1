@@ -14,6 +14,7 @@ production_deploy=false
 Latest checked evidence:
 - distance_property_types_source_seed_priority_20260708_completed: missing
 - dpt_queue_compaction_bundle_completed: missing
+- recheck_status: unchanged_waiting_for_existing_F_runner
 
 Blocker:
 - existing F single runner has not yet written real started/completed/report evidence for this page.
