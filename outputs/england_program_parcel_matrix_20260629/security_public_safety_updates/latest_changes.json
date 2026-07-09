@@ -1,19 +1,22 @@
 {
   "layer": "Safety / Security",
   "program_output": "Security Level percent",
-  "status": "AAYS1_REAL_VISIBLE_TEST_WRITTEN_PENDING_BROWSER_FINAL",
+  "status": "RUNNER_PICKUP_FIXED_PENDING_ROUNDTRIP_OUTPUT",
   "display_state": "positive_progress_not_final",
-  "visible_user_message_tr": "Deneme icin gercek verified veriyle islem baslatildi: parcel_1 Security/Public Safety kaydi site JSON'una yazildi. Local 8020 sayfada Security katmani/popup smoke bekleniyor.",
-  "last_updated": "2026-07-09T00:40:00+03:00",
+  "visible_user_message_tr": "Gercek verified Security/Public Safety verisi site dosyalarinda mevcut. Runner pickup kok sorunu duzeltildi; 136 roundtrip output ve 135/104 gercek is outputlari bekleniyor.",
+  "last_updated": "2026-07-09T21:45:00+03:00",
   "progress_percent": 99,
   "remaining_percent": 1,
   "final_ready": false,
   "data_ready": true,
+  "runner_pickup_fix_applied": true,
+  "runner_roundtrip_output_pending": true,
   "real_visible_test_written": true,
   "real_visible_test_file": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json",
-  "site_positive_status": "Real verified parcel_1 security test is written and ready for local site visibility check; final browser smoke is still pending.",
-  "runner_gate_status": "101_real_visible_security_test_pending",
-  "root_cause_tr": "Sorun kaynak degil; veri yazildi. Kalan kisim F runner'in bu dosyalari cekip local 8020 sitede Security katmani/popup gorunurluk kaniti uretmesi.",
+  "site_visible_status_file": "england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json",
+  "site_positive_status": "150 verified Security/Public Safety records are available; runner queue pickup fix is applied; final browser smoke is still pending.",
+  "runner_gate_status": "136_roundtrip_pending_then_135_104_real_work",
+  "root_cause_tr": "Eski shared queue runner C-path odakliydi ve yeni task dosyalari runner'in bekledigi script_path/target_branch/allowed_paths/no_* formatini tasimiyordu. F portable runner ve 135/136 task formatlari duzeltildi.",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
@@ -21,7 +24,9 @@
   "verified_csv_rows": 150,
   "verified_geojson_features": 150,
   "accuracy_ge_3_count": 150,
-  "source_note": "Validated existing Security/Public Safety batch 115 artifacts from official/open source flow; no fake rows added. Real visible test uses parcel_1 from verified latest_changes.",
+  "score_4_count": 150,
+  "manual_review_count": 0,
+  "source_note": "Validated existing Security/Public Safety batch 115 artifacts from official/open source flow; no fake rows added.",
   "summary": {
     "changed_count": 150,
     "verified_count": 150,
@@ -31,14 +36,16 @@
     "final_ready": false,
     "data_ready": true,
     "site_visibility_recovery_applied": true,
-    "user_visible_positive_status_added": true,
-    "real_visible_test_written": true
+    "runner_pickup_fix_applied": true,
+    "roundtrip_output_pending": true
   },
   "expected_output_files": [
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
     "england_map_web/data/security_public_safety/security_evidence_manifest.json",
-    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json"
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json",
+    "docs/chatgpt_status/aays1/runner_outputs/136_runner_github_roundtrip_test.json",
+    "docs/chatgpt_status/aays1/runner_outputs/104_visible_expansion_orchestrator.json"
   ],
   "changes": [
     {
@@ -79,8 +86,9 @@
     }
   ],
   "blockers": [
+    "136 runner GitHub roundtrip output required before runner health is fully proven",
+    "104 real visible expansion output pending",
     "browser smoke proof required for Security layer button, thematic colors, legend, popup/right-panel fields",
-    "101 F single-runner real visible security test output pending",
     "final_ready remains false until local 127.0.0.1:8020 smoke proof exists"
   ]
 }
