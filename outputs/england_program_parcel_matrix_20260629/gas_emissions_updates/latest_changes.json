@@ -1,13 +1,13 @@
 {
   "layer": "Gas Emissions",
   "program_output": "Gas Emission Level",
-  "status": "OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY",
+  "status": "OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY_GEOJSON_MARKER_FIXED",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
   "last_updated": "2026-07-09T00:00:00Z",
-  "runner_status": "chatgpt_official_trial_rows_expanded_waiting_for_f_runner_site_refresh",
+  "runner_status": "chatgpt_geojson_status_marker_written_waiting_for_f_runner_site_refresh",
   "source_dataset_gate_passed": true,
   "source_row_gate_passed": true,
   "parcel_binding_gate_passed": false,
@@ -22,6 +22,8 @@
     "official_govuk_trial_rows_expanded_to_47",
     "verified_source_backed_rows_csv_expanded",
     "source_rows_extraction_status_updated",
+    "generic_site_latest_marker_added",
+    "gas_emissions_geojson_was_empty_and_now_contains_valid_non_spatial_status_marker",
     "site_runtime_marker_update_required_on_f_runner"
   ],
   "blockers": [
@@ -36,5 +38,10 @@
       "detail": "Refresh 127.0.0.1:8020 site after F runner pulls latest main."
     }
   ],
-  "next_action": "F portable single runner should pull main, refresh site data, then replace trial rows with parcel-bound rows when extraction completes."
+  "site_visibility_fix": {
+    "geojson_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions.geojson",
+    "generic_latest_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions_status_latest.json",
+    "reason": "The gas_emissions.geojson file was empty, so local site code that reads the layer GeoJSON could not display positive Gas Emissions progress."
+  },
+  "next_action": "F portable single runner should pull main, refresh site data, run browser smoke, then continue parcel-bound GOV.UK extraction."
 }
