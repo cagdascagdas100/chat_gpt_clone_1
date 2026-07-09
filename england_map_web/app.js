@@ -17,16 +17,16 @@ window.TERRAYIELD_AAYS_GAS_EMISSIONS_TOKENS = {
 };
 window.TERRAYIELD_AAYS_GAS_EMISSIONS_REAL_TRIAL_STATUS = {
   layer: 'Gas Emissions',
-  status: 'OFFICIAL_TRIAL_SOURCE_ROWS_WRITTEN_SITE_VISIBILITY',
+  status: 'OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY',
   source_row_gate_passed: true,
   parcel_binding_gate_passed: false,
   trial_mode: true,
-  extracted_row_count: 4,
-  verification_score_after: '2/4',
+  extracted_row_count: 47,
+  verification_score_after: '2.5/4',
   final_ready: false,
   fake_data: false,
   source: 'GOV.UK DESNZ local authority and regional greenhouse gas emissions statistics 2005 to 2023',
   verified_rows_path: 'outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/verified_source_backed_rows_govuk_ghg_20260708.csv',
   latest_changes_path: 'outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json',
-  site_note: 'Real official trial rows exist; F portable runner must refresh 127.0.0.1:8020 to display this positive status.'
+  site_note: 'Real official trial rows expanded to 47; F portable runner must refresh 127.0.0.1:8020 to display this positive status.'
 };
