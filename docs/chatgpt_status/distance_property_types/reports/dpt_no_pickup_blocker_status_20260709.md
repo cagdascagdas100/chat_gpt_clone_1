@@ -12,14 +12,15 @@ migration=false
 production_deploy=false
 
 Latest checked evidence:
-- source_candidates_csv: input_ready_6_rows
+- priority_queue_task: visible_status_queued_for_single_shared_runner
+- priority_queue_target_branch: codex/aays-single-runner-v5-20260706
+- priority_queue_script_path: docs/chatgpt_status/distance_property_types/automation/distance_property_types_batch_runner.ps1
 - distance_property_types_source_seed_priority_20260708_started: missing
-- distance_property_types_source_seed_priority_20260708_heartbeat: missing
 - recheck_status: unchanged_waiting_for_existing_F_runner
 - queue_addition_status: paused_until_pickup_changes
 
 Blocker:
-- source input exists, so current blocker is runner pickup/output generation.
+- queue task is visible and valid on repo side.
 - existing F single runner has not yet written real started/heartbeat/report evidence for this page.
 
 Next:
