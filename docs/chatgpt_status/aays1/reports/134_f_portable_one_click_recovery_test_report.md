@@ -1,8 +1,8 @@
 # AAYS F Portable One-Click Runner Recovery Test Report
 
-updated_at: 2026-07-09T21:23:16.9220878Z
+updated_at: 2026-07-09T21:28:10.9349883Z
 runner_active: True
-pid: 19312
+pid: 10108
 lock_valid: True
 portable_root: F:\TerraYield_AAYS_Portable
 repo_root: F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707
