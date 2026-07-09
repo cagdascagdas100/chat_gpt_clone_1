@@ -27,6 +27,8 @@ Latest checked evidence:
 - root_cmd_launcher_completed: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd
 - root_ps1_launcher_verified: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1
 - covered_property_types: Industrial Unit; Detached Home; Retail Property; Apartment Building; Office Building; Mixed Building
+- bulk_ready_status_marker: missing
+- source_seed_priority_completed_marker: missing
 - started_marker: missing
 - completed_marker: missing
 
@@ -34,6 +36,7 @@ Blocker:
 - pilot site-visible data is now written directly to CSV/GeoJSON/program layer.
 - source audit, data manifest, panel override, panel latest index, refresh marker, bulk expansion ready check, and root F launchers are ready.
 - existing F runner pickup is still pending for full parcel-distance matrix expansion and automated refresh.
+- no additional queue flood was added in this check; pickup evidence must appear before more bulk queue expansion.
 
 Next:
 - continue with existing F single runner only
