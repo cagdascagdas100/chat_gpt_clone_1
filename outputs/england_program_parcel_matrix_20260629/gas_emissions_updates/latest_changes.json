@@ -1,47 +1,26 @@
 {
   "layer": "Gas Emissions",
   "program_output": "Gas Emission Level",
-  "status": "OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY_GEOJSON_MARKER_FIXED",
+  "status": "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
-  "last_updated": "2026-07-09T00:00:00Z",
-  "runner_status": "chatgpt_geojson_status_marker_written_waiting_for_f_runner_site_refresh",
-  "source_dataset_gate_passed": true,
-  "source_row_gate_passed": true,
-  "parcel_binding_gate_passed": false,
+  "last_updated": "2026-07-09T16:29:42Z",
+  "runner_status": "single_runner_bridge_completed",
+  "source_row_gate_passed": false,
   "ui_token_gate_passed": true,
-  "browser_smoke_passed": false,
-  "verification_score_after": "2.5/4",
+  "browser_smoke_passed": true,
+  "verification_score_after": "1/4",
   "final_ready": false,
   "manual_review_required": true,
-  "trial_mode": true,
-  "extracted_row_count": 47,
-  "changes": [
-    "official_govuk_trial_rows_expanded_to_47",
-    "verified_source_backed_rows_csv_expanded",
-    "source_rows_extraction_status_updated",
-    "generic_site_latest_marker_added",
-    "gas_emissions_geojson_was_empty_and_now_contains_valid_non_spatial_status_marker",
-    "site_runtime_marker_update_required_on_f_runner"
-  ],
+  "changes": [],
   "blockers": [
     {
-      "code": "parcel_binding_pending",
-      "severity": "review",
-      "detail": "Official trial rows are real GOV.UK data, but final parcel-specific authority binding still needs runner review before final_ready."
-    },
-    {
-      "code": "browser_smoke_pending",
-      "severity": "review",
-      "detail": "Refresh 127.0.0.1:8020 site after F runner pulls latest main."
+      "code": "missing_verified_source_backed_rows",
+      "severity": "blocking",
+      "detail": "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
     }
   ],
-  "site_visibility_fix": {
-    "geojson_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions.geojson",
-    "generic_latest_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions_status_latest.json",
-    "reason": "The gas_emissions.geojson file was empty, so local site code that reads the layer GeoJSON could not display positive Gas Emissions progress."
-  },
-  "next_action": "F portable single runner should pull main, refresh site data, run browser smoke, then continue parcel-bound GOV.UK extraction."
+  "next_action": "Resolve blockers and rerun the same single bridge."
 }
