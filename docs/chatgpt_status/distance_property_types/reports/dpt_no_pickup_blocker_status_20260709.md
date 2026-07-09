@@ -14,14 +14,13 @@ production_deploy=false
 Latest checked evidence:
 - started_marker: missing
 - completed_marker: missing
-- hotfix_script_added: docs/chatgpt_status/_shared/automation/APPLY_F_PORTABLE_SINGLE_RUNNER_HOTFIX_20260709.ps1
-- existing_f_runner_cmd_launcher_added: docs/chatgpt_status/_shared/automation/RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.cmd
-- existing_f_runner_ps1_launcher_added: docs/chatgpt_status/_shared/automation/RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1
 - existing_f_runner_start_request_added: docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260709_f_portable_hotfix_continue.json
+- site_status_json_added: england_map_web/data/distance_property_types/distance_property_types_site_status.json
+- site_status_truthful: verified_output_rows_0_geojson_feature_count_0_waiting_for_runner_pickup
 
 Blocker:
 - repo-side launcher/hotfix/request is ready.
-- existing F runner must pull this branch and run or honor the CMD/PS1 launcher request before real started/heartbeat/report evidence can appear.
+- site-readable status exists, but real parcel CSV/GeoJSON/site layer still requires existing F runner pickup.
 
 Next:
 - continue with existing F single runner only
