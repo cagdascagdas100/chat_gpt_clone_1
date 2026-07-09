@@ -21,13 +21,14 @@ Latest checked evidence:
 - data_manifest_added: england_map_web/data/distance_property_types/distance_property_types_data_manifest_20260709.json
 - panel_override_added: england_map_web/data/runner_panel/distance_property_types_status_override_20260709.json
 - panel_latest_index_added: england_map_web/data/runner_panel/distance_property_types_panel_index_latest.json
+- site_refresh_marker_added: england_map_web/data/distance_property_types/distance_property_types_site_refresh_marker_20260709.json
 - covered_property_types: Industrial Unit; Detached Home; Retail Property; Apartment Building; Office Building; Mixed Building
 - started_marker: missing
 - completed_marker: missing
 
 Blocker:
 - pilot site-visible data is now written directly to CSV/GeoJSON/program layer.
-- source audit, data manifest, panel override, and panel latest index are written.
+- source audit, data manifest, panel override, panel latest index, and refresh marker are written.
 - existing F runner pickup is still pending for full parcel-distance matrix expansion and automated refresh.
 
 Next:
