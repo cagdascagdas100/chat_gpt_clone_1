@@ -14,7 +14,7 @@ production_deploy=false
 Latest checked evidence:
 - source_candidates_csv: input_ready_6_rows
 - distance_property_types_source_seed_priority_20260708_started: missing
-- distance_property_types_source_seed_priority_20260708_completed: missing
+- distance_property_types_source_seed_priority_20260708_runner_output: missing
 - recheck_status: unchanged_waiting_for_existing_F_runner
 - queue_addition_status: paused_until_pickup_changes
 
