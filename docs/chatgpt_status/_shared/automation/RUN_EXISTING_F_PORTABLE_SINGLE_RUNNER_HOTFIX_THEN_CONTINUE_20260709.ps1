@@ -12,5 +12,8 @@ Set-Location -LiteralPath $env:AAYS_REPO_ROOT
 & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\APPLY_F_PORTABLE_SINGLE_RUNNER_HOTFIX_20260709.ps1'
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+& powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\distance_property_types\automation\patch_dpt_site_panel_status_20260709.ps1'
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1' -RepoRoot $env:AAYS_REPO_ROOT -WorkRoot $workRoot -MainBranch $branch -MaxTasks 5
 exit $LASTEXITCODE
