@@ -26,6 +26,11 @@ Latest checked evidence:
 - bulk_expand_ready_queue_added: docs/chatgpt_status/distance_property_types/queue/0029_dpt_bulk_expand_ready_check_20260709.task.json
 - root_cmd_launcher_completed: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd
 - root_ps1_launcher_verified: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1
+- main_panel_root_cause: distance_property_types entry was missing from england_map_web/data/runner_panel/page_status_index.json
+- main_panel_fix_applied: distance_property_types entry added to page_status_index.json
+- main_panel_status: PilotDataPublished
+- main_panel_site_visible_positive: true
+- main_panel_completion_percent: 99.998
 - covered_property_types: Industrial Unit; Detached Home; Retail Property; Apartment Building; Office Building; Mixed Building
 - bulk_ready_status_marker: missing
 - source_seed_priority_completed_marker: missing
@@ -34,13 +39,14 @@ Latest checked evidence:
 
 Blocker:
 - pilot site-visible data is now written directly to CSV/GeoJSON/program layer.
-- source audit, data manifest, panel override, panel latest index, refresh marker, bulk expansion ready check, and root F launchers are ready.
+- main site panel visibility blocker is fixed by adding the DPT entry into page_status_index.json.
 - existing F runner pickup is still pending for full parcel-distance matrix expansion and automated refresh.
 - no additional queue flood was added in this check; pickup evidence must appear before more bulk queue expansion.
 
 Next:
 - continue with existing F single runner only
 - do not create a second runner/worktree/clone
+- reload site/panel after GitHub pull or local refresh so page_status_index.json is re-read
 - run root launcher from F portable disk if the runner is idle/stopped
 - let existing runner validate six visible outputs, then expand to full parcel-distance matrix
 - keep final_ready=false until real runner evidence and bulk output appear
