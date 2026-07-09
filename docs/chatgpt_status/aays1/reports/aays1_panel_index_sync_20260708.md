@@ -1,0 +1,1 @@
+﻿AAYS1_PANEL_INDEX_SYNC_DONE completion_percent=65 remaining_percent=35 final_ready=false fake_data=false
