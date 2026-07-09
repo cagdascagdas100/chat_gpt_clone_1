@@ -12,19 +12,22 @@ migration=false
 production_deploy=false
 
 Latest checked evidence:
+- problem_resolution_plan_added: docs/chatgpt_status/distance_property_types/reports/dpt_problem_resolution_plan_20260709.md
+- panel_source_found: england_map_web/data/runner_panel/page_status_index.json_has_stale_dpt_status
+- site_status_json_added: england_map_web/data/distance_property_types/distance_property_types_site_status.json
+- site_panel_patch_script_added: docs/chatgpt_status/distance_property_types/automation/patch_dpt_site_panel_status_20260709.ps1
+- cmd_launcher_now_runs_panel_patch: docs/chatgpt_status/_shared/automation/RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.cmd
+- ps1_launcher_now_runs_panel_patch: docs/chatgpt_status/_shared/automation/RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1
 - started_marker: missing
 - completed_marker: missing
-- existing_f_runner_start_request_added: docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260709_f_portable_hotfix_continue.json
-- site_status_json_added: england_map_web/data/distance_property_types/distance_property_types_site_status.json
-- site_status_truthful: verified_output_rows_0_geojson_feature_count_0_waiting_for_runner_pickup
 
 Blocker:
-- repo-side launcher/hotfix/request is ready.
-- site-readable status exists, but real parcel CSV/GeoJSON/site layer still requires existing F runner pickup.
+- the site panel was stale because page_status_index.json still had the old DPT problem/task status.
+- repo-side patch and launchers are ready, but the existing F runner must pull/run them to refresh the live site-visible panel and produce real CSV/GeoJSON.
 
 Next:
 - continue with existing F single runner only
 - do not create a second runner/worktree/clone
 - run/honor the hotfix-then-continue launcher on the existing F runner repo root
-- process queued tasks sequentially with MaxTasks=5
+- patch site panel first, then process queued tasks sequentially with MaxTasks=5
 - keep final_ready=false until real runner evidence appears
