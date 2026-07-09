@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TerraYield AAYS - Gas Emissions Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f7; color: #222; }
+    .card { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 18px; max-width: 920px; }
+    .ok { color: #116611; font-weight: 700; }
+    .wait { color: #9a6500; font-weight: 700; }
+    .bad { color: #9a0000; font-weight: 700; }
+    table { border-collapse: collapse; margin-top: 12px; width: 100%; }
+    td { border-bottom: 1px solid #eee; padding: 8px; }
+    td:first-child { font-weight: 700; width: 280px; }
+    code { background: #f1f1f1; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>TerraYield AAYS - Gas Emissions</h1>
+    <p id="summary" class="wait">Loading verified status...</p>
+    <table id="statusTable"></table>
+    <p><strong>Important:</strong> This page displays verified trial evidence only. It must not mark final_ready=true until parcel binding and browser smoke evidence are complete.</p>
+  </div>
+  <script src="app.js"></script>
+  <script>
+    const fallback = window.TERRAYIELD_AAYS_GAS_EMISSIONS_REAL_TRIAL_STATUS || {};
+    const table = document.getElementById('statusTable');
+    const summary = document.getElementById('summary');
+    function render(data) {
+      const rows = {
+        layer: data.layer,
+        status: data.status,
+        source_row_gate_passed: data.source_row_gate_passed,
+        extracted_row_count: data.extracted_row_count,
+        verification_score_after: data.verification_score_after,
+        parcel_binding_gate_passed: data.parcel_binding_gate_passed,
+        browser_smoke_passed: data.browser_smoke_passed,
+        final_ready: data.final_ready,
+        fake_data: data.fake_data,
+        source: data.source,
+        latest_changes_path: data.latest_changes_path,
+        verified_rows_path: data.verified_rows_path
+      };
+      table.innerHTML = Object.entries(rows).map(([k, v]) => `<tr><td>${k}</td><td><code>${String(v)}</code></td></tr>`).join('');
+      if (data.source_row_gate_passed === true && data.fake_data === false && data.final_ready === false) {
+        summary.className = 'ok';
+        summary.textContent = `Verified trial status visible: ${data.extracted_row_count} GOV.UK rows, score ${data.verification_score_after}. Final parcel binding is still pending.`;
+      } else {
+        summary.className = 'bad';
+        summary.textContent = 'Status marker loaded, but verified trial checks are not complete.';
+      }
+    }
+    fetch('data/program_layer_matrix/gas_emissions_status_latest.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : fallback)
+      .then(render)
+      .catch(() => render(fallback));
+  </script>
+</body>
+</html>
