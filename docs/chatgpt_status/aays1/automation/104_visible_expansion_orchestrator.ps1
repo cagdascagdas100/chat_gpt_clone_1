@@ -31,12 +31,44 @@ $expected = @(
   'england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson',
   'england_map_web/data/security_public_safety/parcel_security_scores_verified.csv',
   'england_map_web/data/security_public_safety/security_evidence_manifest.json',
-  'outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json'
+  'outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json',
+  'docs/chatgpt_status/aays1/runner_outputs/102_real_visible_security_site_bridge.json',
+  'docs/chatgpt_status/aays1/runner_outputs/103_security_accuracy_count_expansion.json',
+  'docs/chatgpt_status/aays1/runner_outputs/104_visible_expansion_orchestrator.json'
 )
 $outputs = @()
 foreach ($rel in $expected) {
   $p = Join-Path $repoRoot $rel
   $outputs += [pscustomobject]@{ path=$rel; exists=(Test-Path $p) }
+}
+
+$gitSync = [ordered]@{ attempted=$false; status='not_attempted'; exit_code=$null; stdout=@(); stderr=@() }
+try {
+  Push-Location $repoRoot
+  $gitSync.attempted = $true
+  & git add -- @($expected) 2>&1 | ForEach-Object { $gitSync.stdout += [string]$_ }
+  $changes = & git status --porcelain
+  $gitSync.changed_count = @($changes).Count
+  if (@($changes).Count -gt 0) {
+    & git commit -m 'aays1 sync visible expansion runner outputs' 2>&1 | ForEach-Object { $gitSync.stdout += [string]$_ }
+    $commitExit = $LASTEXITCODE
+    if ($commitExit -eq 0) {
+      & git push 2>&1 | ForEach-Object { $gitSync.stdout += [string]$_ }
+      $gitSync.exit_code = $LASTEXITCODE
+      $gitSync.status = if ($LASTEXITCODE -eq 0) { 'pushed' } else { 'push_failed' }
+    } else {
+      $gitSync.exit_code = $commitExit
+      $gitSync.status = 'commit_failed'
+    }
+  } else {
+    $gitSync.exit_code = 0
+    $gitSync.status = 'no_changes_to_push'
+  }
+} catch {
+  $gitSync.status = 'exception'
+  $gitSync.stderr += $_.Exception.Message
+} finally {
+  try { Pop-Location } catch {}
 }
 
 $result = [ordered]@{
@@ -50,6 +82,7 @@ $result = [ordered]@{
   parallel_runner=$false
   scripts=$results
   expected_outputs=$outputs
+  git_sync=$gitSync
   final_ready=$false
   fake_data=$false
   db_write=$false
