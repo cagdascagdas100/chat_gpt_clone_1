@@ -1,26 +1,39 @@
 {
   "layer": "Gas Emissions",
   "program_output": "Gas Emission Level",
-  "status": "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
+  "status": "OFFICIAL_TRIAL_SOURCE_ROWS_WRITTEN_SITE_VISIBILITY",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
   "prod_deploy": false,
-  "last_updated": "2026-07-08T16:20:23Z",
-  "runner_status": "single_runner_bridge_completed",
-  "source_row_gate_passed": false,
+  "last_updated": "2026-07-09T00:00:00Z",
+  "runner_status": "chatgpt_official_trial_rows_written_waiting_for_f_runner_site_refresh",
+  "source_dataset_gate_passed": true,
+  "source_row_gate_passed": true,
+  "parcel_binding_gate_passed": false,
   "ui_token_gate_passed": true,
-  "browser_smoke_passed": true,
-  "verification_score_after": "1/4",
+  "browser_smoke_passed": false,
+  "verification_score_after": "2/4",
   "final_ready": false,
   "manual_review_required": true,
-  "changes": [],
+  "trial_mode": true,
+  "changes": [
+    "official_govuk_trial_rows_written",
+    "verified_source_backed_rows_csv_exists",
+    "source_rows_extraction_status_exists",
+    "site_refresh_required_on_f_runner"
+  ],
   "blockers": [
     {
-      "code": "missing_verified_source_backed_rows",
-      "severity": "blocking",
-      "detail": "No real source-backed Gas Emissions parcel rows were found in the fixture CSV."
+      "code": "parcel_binding_pending",
+      "severity": "review",
+      "detail": "Official trial rows are real GOV.UK data, but final parcel-specific authority binding still needs runner review before final_ready."
+    },
+    {
+      "code": "browser_smoke_pending",
+      "severity": "review",
+      "detail": "Refresh 127.0.0.1:8020 site after F runner pulls latest main."
     }
   ],
-  "next_action": "Resolve blockers and rerun the same single bridge."
+  "next_action": "F portable single runner should pull main, refresh site data, then replace trial rows with parcel-bound rows when extraction completes."
 }
