@@ -35,7 +35,9 @@ $logDir = Join-Path $portableRoot '_portable_logs'
 New-Item -ItemType Directory -Force -Path $logDir,$workRoot | Out-Null
 
 $cmdPath = Join-Path $portableRoot 'START_AAYS_SINGLE_RUNNER.cmd'
+$legacyCmdPath = Join-Path $portableRoot 'RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd'
 $ps1Path = Join-Path $portableRoot 'START_AAYS_SINGLE_RUNNER.ps1'
+$legacyPs1Path = Join-Path $portableRoot 'RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1'
 $readmePath = Join-Path $portableRoot 'README_ONE_CLICK_RUNNER_RESTART.md'
 $statusPath = Join-Path $repoRoot 'docs\chatgpt_status\aays1\status\130_f_portable_one_click_recovery_bootstrap_latest.json'
 
@@ -89,6 +91,10 @@ git -c safe.directory="%AAYS_REPO_ROOT%" fetch origin "%AAYS_BRANCH%" || exit /b
 git -c safe.directory="%AAYS_REPO_ROOT%" checkout "%AAYS_BRANCH%" || exit /b 6
 git -c safe.directory="%AAYS_REPO_ROOT%" pull --ff-only origin "%AAYS_BRANCH%" || exit /b 7
 
+call :log APPLY_BOOTSTRAP_REFRESH=true
+powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\aays1\automation\130_f_portable_one_click_recovery_bootstrap_20260709.ps1" 2>&1 | tee -FilePath "%AAYS_LOG%" -Append
+call :log BOOTSTRAP_REFRESH_EXIT=%ERRORLEVEL%
+
 call :log QUEUE_RUNNER_STARTING=true
 powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\_shared\automation\RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1" 2>&1 | tee -FilePath "%AAYS_LOG%" -Append
 set "EXITCODE=%ERRORLEVEL%"
@@ -127,13 +133,16 @@ if (-not (Test-Path -LiteralPath (Join-Path $env:AAYS_REPO_ROOT '.git'))) { thro
 Set-Location -LiteralPath $env:AAYS_REPO_ROOT
 & git -c "safe.directory=$env:AAYS_REPO_ROOT" rebase --abort 2>$null | Out-Null
 & git -c "safe.directory=$env:AAYS_REPO_ROOT" merge --abort 2>$null | Out-Null
-$lock = 'docs\chatgpt_status\_shared\runner_lock\MULTI_PAGE.lock'
-if (Test-Path -LiteralPath $lock) { Remove-Item -LiteralPath $lock -Recurse -Force -ErrorAction SilentlyContinue }
+$multiLock = 'docs\chatgpt_status\_shared\runner_lock\MULTI_PAGE.lock'
+if (Test-Path -LiteralPath $multiLock) { Remove-Item -LiteralPath $multiLock -Recurse -Force -ErrorAction SilentlyContinue }
 $dirty = (& git -c "safe.directory=$env:AAYS_REPO_ROOT" status --porcelain)
 if ($dirty) { Log 'local_changes=stash_before_pull'; & git -c "safe.directory=$env:AAYS_REPO_ROOT" stash push -u -m 'auto_one_click_before_pull' | Tee-Object -FilePath $log -Append }
 & git -c "safe.directory=$env:AAYS_REPO_ROOT" fetch origin $branch | Tee-Object -FilePath $log -Append
 & git -c "safe.directory=$env:AAYS_REPO_ROOT" checkout $branch | Tee-Object -FilePath $log -Append
 & git -c "safe.directory=$env:AAYS_REPO_ROOT" pull --ff-only origin $branch | Tee-Object -FilePath $log -Append
+Log 'APPLY_BOOTSTRAP_REFRESH=true'
+& powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\aays1\automation\130_f_portable_one_click_recovery_bootstrap_20260709.ps1' 2>&1 | Tee-Object -FilePath $log -Append
+Log "BOOTSTRAP_REFRESH_EXIT=$LASTEXITCODE"
 Log 'QUEUE_RUNNER_STARTING=true'
 & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1' 2>&1 | Tee-Object -FilePath $log -Append
 $exit = $LASTEXITCODE
@@ -154,9 +163,10 @@ Open the portable disk root folder:
 TerraYield_AAYS_Portable
 ```
 
-Double-click:
+Double-click either file. Both are wired to the same real queue runner path:
 
 ```text
+RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd
 START_AAYS_SINGLE_RUNNER.cmd
 ```
 
@@ -165,11 +175,12 @@ The launcher automatically:
 1. Locates the portable root from its own path, so it survives drive-letter changes.
 2. Uses only the existing single runner repository under `runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707`.
 3. Aborts stale rebase/merge states.
-4. Removes stale runner lock folders.
+4. Removes stale MULTI_PAGE runner lock folders.
 5. Stashes local dirty runtime files before pull.
 6. Pulls the configured branch from GitHub.
-7. Runs the existing F portable single-runner continuation script.
-8. Writes logs under `_portable_logs`.
+7. Refreshes this bootstrap so root launchers stay current.
+8. Runs the existing F portable single-runner continuation script.
+9. Writes logs under `_portable_logs`.
 
 ## Safety contract
 
@@ -184,12 +195,16 @@ The launcher automatically:
 '@
 
 Write-Utf8NoBom $cmdPath $cmd
+Write-Utf8NoBom $legacyCmdPath $cmd
 Write-Utf8NoBom $ps1Path $ps1
+Write-Utf8NoBom $legacyPs1Path $ps1
 Write-Utf8NoBom $readmePath $readme
 
 # Also mirror launchers into the healthy repo root for users who open PowerShell inside the repo instead of the portable root.
 Write-Utf8NoBom (Join-Path $healthyRepo 'START_AAYS_SINGLE_RUNNER.cmd') $cmd
+Write-Utf8NoBom (Join-Path $healthyRepo 'RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd') $cmd
 Write-Utf8NoBom (Join-Path $healthyRepo 'START_AAYS_SINGLE_RUNNER.ps1') $ps1
+Write-Utf8NoBom (Join-Path $healthyRepo 'RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1') $ps1
 
 $status = [ordered]@{
   status = 'F_PORTABLE_ONE_CLICK_RECOVERY_BOOTSTRAP_INSTALLED'
@@ -197,8 +212,12 @@ $status = [ordered]@{
   repo_root = $healthyRepo
   work_root = $workRoot
   root_cmd = $cmdPath
+  root_legacy_cmd = $legacyCmdPath
   root_ps1 = $ps1Path
+  root_legacy_ps1 = $legacyPs1Path
   readme = $readmePath
+  launcher_aliases_bound_to_queue_runner = $true
+  queue_runner_script = 'docs/chatgpt_status/_shared/automation/RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1'
   single_runner_only = $true
   new_runner = $false
   parallel_runner = $false
