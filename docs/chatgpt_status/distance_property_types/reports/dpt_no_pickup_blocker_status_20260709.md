@@ -24,17 +24,20 @@ Latest checked evidence:
 - site_refresh_marker_added: england_map_web/data/distance_property_types/distance_property_types_site_refresh_marker_20260709.json
 - bulk_expand_ready_script_added: docs/chatgpt_status/distance_property_types/automation/expand_dpt_from_existing_pilot_features_20260709.ps1
 - bulk_expand_ready_queue_added: docs/chatgpt_status/distance_property_types/queue/0029_dpt_bulk_expand_ready_check_20260709.task.json
+- root_cmd_launcher_completed: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd
+- root_ps1_launcher_verified: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1
 - covered_property_types: Industrial Unit; Detached Home; Retail Property; Apartment Building; Office Building; Mixed Building
 - started_marker: missing
 - completed_marker: missing
 
 Blocker:
 - pilot site-visible data is now written directly to CSV/GeoJSON/program layer.
-- source audit, data manifest, panel override, panel latest index, refresh marker, and bulk expansion ready check are written.
+- source audit, data manifest, panel override, panel latest index, refresh marker, bulk expansion ready check, and root F launchers are ready.
 - existing F runner pickup is still pending for full parcel-distance matrix expansion and automated refresh.
 
 Next:
 - continue with existing F single runner only
 - do not create a second runner/worktree/clone
+- run root launcher from F portable disk if the runner is idle/stopped
 - let existing runner validate six visible outputs, then expand to full parcel-distance matrix
 - keep final_ready=false until real runner evidence and bulk output appear
