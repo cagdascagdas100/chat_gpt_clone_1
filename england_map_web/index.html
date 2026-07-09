@@ -6,14 +6,16 @@
   <title>TerraYield AAYS - Gas Emissions Status</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f7; color: #222; }
-    .card { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 18px; max-width: 920px; }
+    .card { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 18px; max-width: 1180px; margin-bottom: 18px; }
     .ok { color: #116611; font-weight: 700; }
     .wait { color: #9a6500; font-weight: 700; }
     .bad { color: #9a0000; font-weight: 700; }
-    table { border-collapse: collapse; margin-top: 12px; width: 100%; }
-    td { border-bottom: 1px solid #eee; padding: 8px; }
-    td:first-child { font-weight: 700; width: 280px; }
+    table { border-collapse: collapse; margin-top: 12px; width: 100%; background: white; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f1f1f1; }
+    #statusTable td:first-child { font-weight: 700; width: 280px; }
     code { background: #f1f1f1; padding: 2px 4px; border-radius: 4px; }
+    .small { font-size: 12px; color: #555; }
   </style>
 </head>
 <body>
@@ -21,13 +23,30 @@
     <h1>TerraYield AAYS - Gas Emissions</h1>
     <p id="summary" class="wait">Loading verified status...</p>
     <table id="statusTable"></table>
-    <p><strong>Important:</strong> This page displays verified trial evidence only. It must not mark final_ready=true until parcel binding and browser smoke evidence are complete.</p>
+    <p><strong>Important:</strong> This page displays verified official-source trial evidence only. It must not mark final_ready=true until parcel binding and browser smoke evidence are complete.</p>
   </div>
+
+  <div class="card">
+    <h2>Official visible evidence rows</h2>
+    <p id="rowsSummary" class="wait">Loading official GOV.UK rows...</p>
+    <table id="rowsTable">
+      <thead>
+        <tr>
+          <th>Row ID</th><th>Sector</th><th>Sub-sector</th><th>Gas</th><th>Territorial kt CO2e</th><th>Scope kt CO2</th><th>Accuracy</th><th>Confidence</th><th>Source line</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <script src="app.js"></script>
   <script>
     const fallback = window.TERRAYIELD_AAYS_GAS_EMISSIONS_REAL_TRIAL_STATUS || {};
     const table = document.getElementById('statusTable');
     const summary = document.getElementById('summary');
+    const rowsSummary = document.getElementById('rowsSummary');
+    const rowsBody = document.querySelector('#rowsTable tbody');
+
     function render(data) {
       const rows = {
         layer: data.layer,
@@ -52,10 +71,42 @@
         summary.textContent = 'Status marker loaded, but verified trial checks are not complete.';
       }
     }
+
+    function renderVisibleRows(payload) {
+      const rows = payload.rows || [];
+      rowsBody.innerHTML = rows.map(row => `
+        <tr>
+          <td><code>${row.row_id}</code></td>
+          <td>${row.sector}</td>
+          <td>${row.sub_sector}</td>
+          <td>${row.greenhouse_gas}</td>
+          <td>${row.territorial_emissions_kt_co2e}</td>
+          <td>${row.scope_of_influence_kt_co2}</td>
+          <td>${row.accuracy_score_4}</td>
+          <td>${row.confidence_percent}%</td>
+          <td>${row.source_lines}</td>
+        </tr>`).join('');
+      if (rows.length > 0 && payload.fake_data === false && payload.final_ready === false) {
+        rowsSummary.className = 'ok';
+        rowsSummary.textContent = `${rows.length} official GOV.UK visible rows loaded. Source accuracy ${payload.source_row_accuracy_score_4}; parcel binding still pending.`;
+      } else {
+        rowsSummary.className = 'bad';
+        rowsSummary.textContent = 'Visible row data could not be loaded.';
+      }
+    }
+
     fetch('data/program_layer_matrix/gas_emissions_status_latest.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : fallback)
       .then(render)
       .catch(() => render(fallback));
+
+    fetch('data/program_layer_matrix/gas_emissions_visible_rows_latest.json', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(renderVisibleRows)
+      .catch(() => {
+        rowsSummary.className = 'bad';
+        rowsSummary.textContent = 'Visible official rows JSON missing or unreadable.';
+      });
   </script>
 </body>
 </html>
