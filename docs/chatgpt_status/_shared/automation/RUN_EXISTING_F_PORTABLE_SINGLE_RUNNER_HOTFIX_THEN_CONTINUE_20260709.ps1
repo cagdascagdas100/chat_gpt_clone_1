@@ -1,7 +1,8 @@
 # AAYS existing F portable single-runner continuation launcher.
 # Does not create a new runner, worktree, queue, DB write, migration, or production deploy.
+# Setup gates are non-blocking; the actual single queue runner is always attempted.
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
 
 $env:AAYS_REPO_ROOT = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $workRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES'
@@ -9,11 +10,28 @@ $branch = 'codex/aays-single-runner-v5-20260706'
 
 Set-Location -LiteralPath $env:AAYS_REPO_ROOT
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\APPLY_F_PORTABLE_SINGLE_RUNNER_HOTFIX_20260709.ps1'
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Output 'AAYS_F_SINGLE_RUNNER_CONTINUE_START=true'
+Write-Output "repo_root=$env:AAYS_REPO_ROOT"
+Write-Output "branch=$branch"
+Write-Output 'new_runner=false'
+Write-Output 'parallel_runner=false'
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\distance_property_types\automation\patch_dpt_site_panel_status_20260709.ps1'
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+try {
+  & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\APPLY_F_PORTABLE_SINGLE_RUNNER_HOTFIX_20260709.ps1'
+  Write-Output "hotfix_exit=$LASTEXITCODE"
+} catch {
+  Write-Output "hotfix_warning=$($_.Exception.Message)"
+}
 
+try {
+  & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\distance_property_types\automation\patch_dpt_site_panel_status_20260709.ps1'
+  Write-Output "panel_patch_exit=$LASTEXITCODE"
+} catch {
+  Write-Output "panel_patch_warning=$($_.Exception.Message)"
+}
+
+Write-Output 'QUEUE_RUNNER_STARTING=true'
 & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1' -RepoRoot $env:AAYS_REPO_ROOT -WorkRoot $workRoot -MainBranch $branch -MaxTasks 5
-exit $LASTEXITCODE
+$runnerExit = $LASTEXITCODE
+Write-Output "QUEUE_RUNNER_EXIT=$runnerExit"
+exit $runnerExit
