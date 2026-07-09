@@ -1,17 +1,19 @@
 {
   "layer": "Safety / Security",
   "program_output": "Security Level percent",
-  "status": "AAYS1_SITE_VISIBILITY_RECOVERY_APPLIED_PENDING_BROWSER_FINAL",
+  "status": "AAYS1_REAL_VISIBLE_TEST_WRITTEN_PENDING_BROWSER_FINAL",
   "display_state": "positive_progress_not_final",
-  "visible_user_message_tr": "Kaynak/veri islemi yapildi: 150 parsel Security/Public Safety kaydi dogrulandi ve site JSON'una yazildi. Final tamamlandi mesaji icin yerel 8020 browser smoke/popup kaniti bekleniyor.",
-  "last_updated": "2026-07-09T00:20:00+03:00",
+  "visible_user_message_tr": "Deneme icin gercek verified veriyle islem baslatildi: parcel_1 Security/Public Safety kaydi site JSON'una yazildi. Local 8020 sayfada Security katmani/popup smoke bekleniyor.",
+  "last_updated": "2026-07-09T00:40:00+03:00",
   "progress_percent": 99,
   "remaining_percent": 1,
   "final_ready": false,
   "data_ready": true,
-  "site_positive_status": "150 verified parcel security records are synced; final browser smoke is still pending.",
-  "runner_gate_status": "100_f_runner_consolidated_gate_pending",
-  "root_cause_tr": "Sorun kaynak degil; eski manifest negatif 429/error bilgisi tasiyordu ve final gate local browser smoke bekliyordu. Manifest ve latest_changes pozitif ara durum icin guncellendi.",
+  "real_visible_test_written": true,
+  "real_visible_test_file": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json",
+  "site_positive_status": "Real verified parcel_1 security test is written and ready for local site visibility check; final browser smoke is still pending.",
+  "runner_gate_status": "101_real_visible_security_test_pending",
+  "root_cause_tr": "Sorun kaynak degil; veri yazildi. Kalan kisim F runner'in bu dosyalari cekip local 8020 sitede Security katmani/popup gorunurluk kaniti uretmesi.",
   "fake_data": false,
   "db_write": false,
   "migration_apply": false,
@@ -19,7 +21,7 @@
   "verified_csv_rows": 150,
   "verified_geojson_features": 150,
   "accuracy_ge_3_count": 150,
-  "source_note": "Validated existing Security/Public Safety batch 115 artifacts from official/open source flow; no fake rows added. Stale manifest was repaired for site visibility.",
+  "source_note": "Validated existing Security/Public Safety batch 115 artifacts from official/open source flow; no fake rows added. Real visible test uses parcel_1 from verified latest_changes.",
   "summary": {
     "changed_count": 150,
     "verified_count": 150,
@@ -29,12 +31,14 @@
     "final_ready": false,
     "data_ready": true,
     "site_visibility_recovery_applied": true,
-    "user_visible_positive_status_added": true
+    "user_visible_positive_status_added": true,
+    "real_visible_test_written": true
   },
   "expected_output_files": [
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
-    "england_map_web/data/security_public_safety/security_evidence_manifest.json"
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json"
   ],
   "changes": [
     {
@@ -45,7 +49,7 @@
       "accuracy_label_4": "High confidence verified",
       "changed_in_latest_run": true,
       "needs_manual_review": false,
-      "change_reason": "Verified from parcel_security_scores_rechecked_0_120m_spatial.geojson",
+      "change_reason": "REAL_VISIBLE_TEST: verified from parcel_security_scores_rechecked_0_120m_spatial.geojson",
       "source_geography_level": "LSOA",
       "source_date": "2026-05-01T01:32:47",
       "official_source_evidence": "LSOA E01000090 Barking and Dagenham 020E; spatial_match=parcel_centroid_inside_lsoa_polygon",
@@ -76,7 +80,7 @@
   ],
   "blockers": [
     "browser smoke proof required for Security layer button, thematic colors, legend, popup/right-panel fields",
-    "100 F single-runner consolidated gate output still pending",
+    "101 F single-runner real visible security test output pending",
     "final_ready remains false until local 127.0.0.1:8020 smoke proof exists"
   ]
 }
