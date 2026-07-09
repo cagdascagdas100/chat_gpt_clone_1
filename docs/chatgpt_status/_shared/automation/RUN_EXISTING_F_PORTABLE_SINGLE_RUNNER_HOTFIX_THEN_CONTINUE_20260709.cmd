@@ -13,5 +13,8 @@ cd /d "%AAYS_REPO_ROOT%" || exit /b 1
 powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\_shared\automation\APPLY_F_PORTABLE_SINGLE_RUNNER_HOTFIX_20260709.ps1"
 if errorlevel 1 exit /b %errorlevel%
 
+powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\distance_property_types\automation\patch_dpt_site_panel_status_20260709.ps1"
+if errorlevel 1 exit /b %errorlevel%
+
 powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1" -RepoRoot "%AAYS_REPO_ROOT%" -WorkRoot "%AAYS_WORK_ROOT%" -MainBranch "%AAYS_BRANCH%" -MaxTasks 5
 exit /b %errorlevel%
