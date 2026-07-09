@@ -11,9 +11,9 @@ db_write=false
 migration=false
 production_deploy=false
 
-Checked evidence:
+Latest checked evidence:
 - distance_property_types_source_seed_priority_20260708_completed: missing
-- dpt_final_qa_bundle_completed: missing
+- dpt_queue_compaction_bundle_completed: missing
 
 Blocker:
 - existing F single runner has not yet written real started/completed/report evidence for this page.
@@ -22,3 +22,4 @@ Next:
 - continue with existing F single runner only
 - do not create a second runner/worktree/clone
 - keep queued tasks pending until real pickup evidence appears
+- avoid adding more queue tasks until pickup evidence changes
