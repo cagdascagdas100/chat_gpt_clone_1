@@ -32,6 +32,7 @@ Latest checked evidence:
 - main_panel_site_visible_positive: true
 - main_panel_completion_percent: 99.998
 - covered_property_types: Industrial Unit; Detached Home; Retail Property; Apartment Building; Office Building; Mixed Building
+- latest_recheck_after_panel_fix: pickup still missing
 - bulk_ready_status_marker: missing
 - source_seed_priority_completed_marker: missing
 - started_marker: missing
