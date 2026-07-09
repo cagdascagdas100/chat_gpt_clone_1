@@ -19,5 +19,5 @@ git fetch origin "%AAYS_BRANCH%" || exit /b 1
 git checkout "%AAYS_BRANCH%" || exit /b 1
 git pull --ff-only origin "%AAYS_BRANCH%" || exit /b 1
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "docs\chatgpt_status\_shared\automation\RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1"
+call "docs\chatgpt_status\_shared\automation\RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.cmd"
 exit /b %errorlevel%
