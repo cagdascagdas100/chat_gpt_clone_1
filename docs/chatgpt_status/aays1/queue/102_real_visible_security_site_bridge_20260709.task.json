@@ -1,0 +1,31 @@
+{
+  "task_id": "aays1-102-real-visible-security-site-bridge-20260709",
+  "page_key": "aays1",
+  "status": "pending",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "priority": "real_visible_site_bridge",
+  "purpose": "Copy the real verified Security/Public Safety test into a data path closer to the map UI so the local site can show a positive non-final result.",
+  "script": "docs/chatgpt_status/aays1/automation/102_real_visible_security_site_bridge.ps1",
+  "inputs": [
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/real_visible_test_20260709.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/site_visibility_status.json"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json",
+    "docs/chatgpt_status/aays1/runner_outputs/102_real_visible_security_site_bridge.json"
+  ],
+  "acceptance": [
+    "Use real verified parcel_1 data only",
+    "Write positive non-final site visibility status",
+    "Keep final_ready false unless real 8020 browser smoke exists",
+    "No fake data, DB write, migration, or production deploy"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
