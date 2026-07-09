@@ -4,9 +4,13 @@
 
 $ErrorActionPreference = 'Continue'
 
+$env:AAYS_PORTABLE_ROOT = 'F:\TerraYield_AAYS_Portable'
 $env:AAYS_REPO_ROOT = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $workRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES'
 $branch = 'codex/aays-single-runner-v5-20260706'
+$repoRunner = 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1'
+$patchedRunner = 'F:\TerraYield_AAYS_Portable\_portable_runtime\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_PATCHED_20260709.ps1'
+$runnerToUse = $repoRunner
 
 Set-Location -LiteralPath $env:AAYS_REPO_ROOT
 
@@ -23,6 +27,15 @@ try {
   Write-Output "hotfix_warning=$($_.Exception.Message)"
 }
 
+if (Test-Path -LiteralPath $patchedRunner) {
+  $runnerToUse = $patchedRunner
+  Write-Output "patched_runner=true"
+  Write-Output "runner_to_use=$runnerToUse"
+} else {
+  Write-Output "patched_runner=false"
+  Write-Output "runner_to_use=$runnerToUse"
+}
+
 try {
   & powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\distance_property_types\automation\patch_dpt_site_panel_status_20260709.ps1'
   Write-Output "panel_patch_exit=$LASTEXITCODE"
@@ -31,7 +44,7 @@ try {
 }
 
 Write-Output 'QUEUE_RUNNER_STARTING=true'
-& powershell -NoProfile -ExecutionPolicy Bypass -File 'docs\chatgpt_status\_shared\automation\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1' -RepoRoot $env:AAYS_REPO_ROOT -WorkRoot $workRoot -MainBranch $branch -MaxTasks 5
+& powershell -NoProfile -ExecutionPolicy Bypass -File $runnerToUse -RepoRoot $env:AAYS_REPO_ROOT -WorkRoot $workRoot -MainBranch $branch -MaxTasks 5
 $runnerExit = $LASTEXITCODE
 Write-Output "QUEUE_RUNNER_EXIT=$runnerExit"
 exit $runnerExit
