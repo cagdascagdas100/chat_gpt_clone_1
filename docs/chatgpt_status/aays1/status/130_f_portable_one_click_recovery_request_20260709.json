@@ -1,0 +1,45 @@
+{
+  "status": "REQUESTED_F_PORTABLE_ONE_CLICK_RUNNER_RECOVERY",
+  "user_problem": "After PC restart, runner close, or moving the portable F disk to another Windows PC, the runner cannot always be restored in one action because local runtime files, stale locks, dirty panel files, and git rebase/merge states can block GitHub pull and queue pickup.",
+  "required_outcome": "Create a one-click portable launch structure at TerraYield_AAYS_Portable root so START_AAYS_SINGLE_RUNNER.cmd can restart the same runner from GitHub with one double-click.",
+  "must_not_do": [
+    "do not create a new runner topology",
+    "do not create a parallel runner",
+    "do not create a new canonical C drive worktree",
+    "do not mark final_ready true",
+    "do not write fake data",
+    "do not perform DB writes",
+    "do not run migrations",
+    "do not deploy production"
+  ],
+  "must_do": [
+    "derive portable root from launcher location instead of hardcoding a drive letter",
+    "use runner_system/AAYS_WT/AAYS_RUNNER_HEALTHY_20260707 as the single runner repo",
+    "use runner_system/AAYS_WT/AAYS_STABLE_RUNNER_WORKTREES as the runner workroot",
+    "abort stale rebase or merge states",
+    "remove stale MULTI_PAGE runner locks",
+    "stash dirty runtime files before pull",
+    "pull codex/aays-single-runner-v5-20260706 from GitHub",
+    "run RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709.ps1",
+    "write logs under TerraYield_AAYS_Portable/_portable_logs",
+    "write status proof under docs/chatgpt_status/aays1/status/130_f_portable_one_click_recovery_bootstrap_latest.json"
+  ],
+  "queue_task": "docs/chatgpt_status/aays1/queue/130_f_portable_one_click_recovery_bootstrap_20260709.task.json",
+  "automation_script": "docs/chatgpt_status/aays1/automation/130_f_portable_one_click_recovery_bootstrap_20260709.ps1",
+  "expected_portable_root_outputs": [
+    "START_AAYS_SINGLE_RUNNER.cmd",
+    "START_AAYS_SINGLE_RUNNER.ps1",
+    "README_ONE_CLICK_RUNNER_RESTART.md",
+    "_portable_logs"
+  ],
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "requested_at_utc": "2026-07-09T15:55:00Z"
+}
