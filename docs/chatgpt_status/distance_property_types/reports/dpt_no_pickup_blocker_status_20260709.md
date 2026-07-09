@@ -28,6 +28,7 @@ Latest checked evidence:
 - root_ps1_launcher_verified: RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1
 - main_panel_root_cause: distance_property_types entry was missing from england_map_web/data/runner_panel/page_status_index.json
 - main_panel_fix_applied: distance_property_types entry added to page_status_index.json
+- latest_panel_recheck: distance_property_types entry still present in page_status_index.json
 - main_panel_status: PilotDataPublished
 - main_panel_site_visible_positive: true
 - main_panel_completion_percent: 99.998
@@ -40,7 +41,7 @@ Latest checked evidence:
 
 Blocker:
 - pilot site-visible data is now written directly to CSV/GeoJSON/program layer.
-- main site panel visibility blocker is fixed by adding the DPT entry into page_status_index.json.
+- main site panel visibility blocker is fixed and remains fixed in page_status_index.json.
 - existing F runner pickup is still pending for full parcel-distance matrix expansion and automated refresh.
 - no additional queue flood was added in this check; pickup evidence must appear before more bulk queue expansion.
 
