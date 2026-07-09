@@ -1,9 +1,9 @@
 {
   "task_id": "f-canonical-aays1-next-accuracy-expansion-20260709",
   "page_key": "aays1",
-  "status": "running_requested_force_pickup_refreshed",
+  "status": "wide_batch_running_requested_force_pickup",
   "created_at": "2026-07-09T00:36:00+03:00",
-  "refreshed_at": "2026-07-09T00:55:00+03:00",
+  "refreshed_at": "2026-07-09T01:02:00+03:00",
   "priority": 0,
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "canonical_portable_root": "F:\\TerraYield_AAYS_Portable",
@@ -12,6 +12,7 @@
   "single_click_launcher": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
+  "wide_batch_mode": true,
   "allowed_paths": [
     "docs/chatgpt_status/aays1",
     "england_map_web/data/aays1",
@@ -19,6 +20,37 @@
     "england_map_web/data/security_public_safety"
   ],
   "goal": "continue real evidence expansion after visible 65 percent progress; increase verified source-backed rows and accuracy while keeping final false until browser smoke proof",
+  "workstreams": [
+    {
+      "name": "new_verified_rows_source_backfill",
+      "target_new_rows": 10,
+      "source_required": true,
+      "minimum_accuracy_score_4": 3
+    },
+    {
+      "name": "existing_verified_rows_accuracy_upgrade",
+      "target_existing_rows_to_recheck": 25,
+      "source_required": true,
+      "minimum_accuracy_score_4": 3
+    },
+    {
+      "name": "source_summary_null_cleanup",
+      "target_rows_to_cleanup": 25,
+      "skip_if_source_unavailable": true
+    },
+    {
+      "name": "site_visibility_sync",
+      "write_outputs": [
+        "england_map_web/data/aays1/aays1_product_status_latest.json",
+        "england_map_web/data/runner_panel/page_status_index.json",
+        "england_map_web/data/runner_panel/aays1_visible_positive_progress_latest.json"
+      ]
+    },
+    {
+      "name": "blocker_non_stop_policy",
+      "on_row_blocked": "record_blocker_and_continue_next_available_row"
+    }
+  ],
   "internet_source_plan": {
     "enabled": true,
     "source_types": [
@@ -35,15 +67,13 @@
     "current_verified_rows": 150,
     "next_target_verified_rows": 160,
     "stretch_target_verified_rows": 175,
+    "opportunistic_target_verified_rows": 200,
     "minimum_accuracy_score_4": 3,
     "target_panel_percent_after_batch": 70,
-    "target_remaining_percent_after_batch": 30
+    "stretch_panel_percent_after_batch": 75,
+    "target_remaining_percent_after_batch": 30,
+    "stretch_remaining_percent_after_batch": 25
   },
-  "site_visibility_outputs": [
-    "england_map_web/data/aays1/aays1_product_status_latest.json",
-    "england_map_web/data/runner_panel/page_status_index.json",
-    "england_map_web/data/runner_panel/aays1_visible_positive_progress_latest.json"
-  ],
   "skip_if_blocked": true,
   "blocker_policy": "record_blocker_and_continue_next_available_rows",
   "final_ready": false,
