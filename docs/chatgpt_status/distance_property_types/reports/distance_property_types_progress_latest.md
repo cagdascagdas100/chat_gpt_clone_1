@@ -2,8 +2,8 @@
 
 page_key=distance_property_types
 task_id=distance_property_types_bootstrap_20260703
-run_started_at=2026-07-09T19:29:28.4828926Z
-run_finished_at=2026-07-09T19:29:28.9385752Z
+run_started_at=2026-07-09T19:42:45.7381374Z
+run_finished_at=2026-07-09T19:42:45.9123829Z
 layer_name=Distance to Nearby Property Types
 status=BLOCKED_INPUT_REQUIRED
 completion_percent=45
