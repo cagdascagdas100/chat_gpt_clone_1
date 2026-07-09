@@ -1,32 +1,33 @@
 {
   "task_id": "aays1-114-live-source-verification-from-113-candidates-20260709",
   "page_key": "aays1",
-  "status": "force_pickup_requested_existing_f_single_runner_refresh_2",
-  "created_at": "2026-07-09T22:24:00+03:00",
-  "refreshed_at": "2026-07-09T23:05:00+03:00",
-  "priority": -2,
+  "status": "pending",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "new_runner_allowed": false,
+  "priority": "force_pickup_live_source_verification",
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "canonical_portable_root": "F:\\TerraYield_AAYS_Portable",
   "canonical_runner_repo_root": "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707",
-  "single_shared_runner_required": true,
-  "new_runner_allowed": false,
+  "purpose": "Run 114 live source accessibility verification for the 24 candidates produced by 113 using the existing F portable single runner. This fixes the previous non-pickup issue by providing runner-compatible pending status and script path.",
+  "script": "docs/chatgpt_status/aays1/automation/114_live_source_verification_from_113_candidates.ps1",
   "input_status_file": "docs/chatgpt_status/aays1/status/113_aays1_next_geometry_source_candidate_extraction_latest.json",
   "input_candidates_count": 24,
-  "goal": "verify live sources for the 24 candidates produced by 113; add only source-backed verified rows; skip blocked rows and continue",
+  "expected_outputs": [
+    "docs/chatgpt_status/aays1/status/114_aays1_live_source_verification_latest.json",
+    "docs/chatgpt_status/aays1/reports/114_aays1_live_source_verification_report.md",
+    "docs/chatgpt_status/aays1/runner_outputs/114_live_source_verification_from_113_candidates.json"
+  ],
+  "skip_unresolved_blockers": true,
   "work_policy": {
     "internet_source_verification_required": true,
     "minimum_source_trace_per_row": 1,
     "minimum_accuracy_score_4": 3,
     "on_row_blocked": "record_blocker_and_continue_next_available_candidate",
-    "no_fake_sources": true
+    "no_fake_sources": true,
+    "metric_increase_requires_downstream_csv_geojson_product_integration": true
   },
-  "target_outputs": [
-    "docs/chatgpt_status/aays1/status/114_aays1_live_source_verification_latest.json",
-    "docs/chatgpt_status/aays1/reports/114_aays1_live_source_verification_report.md",
-    "england_map_web/data/aays1/aays1_product_status_latest.json",
-    "england_map_web/data/runner_panel/page_status_index.json",
-    "england_map_web/data/runner_panel/aays1_visible_positive_progress_latest.json"
-  ],
   "progress_targets": {
     "current_verified_rows": 150,
     "minimum_new_verified_rows": 10,
@@ -36,12 +37,11 @@
     "target_panel_completion_percent": 70,
     "target_remaining_percent": 30
   },
-  "pickup_blocker_if_no_output_after_next_cycle": "existing_f_single_runner_not_processing_114_queue_yet",
-  "note": "Runner health proof is accepted. This refresh does not create a new runner and does not mark completion. It only nudges the existing F portable single runner to process 114.",
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false
+  "production_deploy": false,
+  "person_level_data": false
 }
