@@ -12,14 +12,14 @@ migration=false
 production_deploy=false
 
 Latest checked evidence:
-- distance_property_types_source_seed_priority_20260708_started: missing
 - distance_property_types_source_seed_priority_20260708_completed: missing
-- distance_property_types_source_seed_priority_20260708_runner_output: missing
+- distance_property_types_verified_csv: header_only_no_verified_rows
 - recheck_status: unchanged_waiting_for_existing_F_runner
 - queue_addition_status: paused_until_pickup_changes
 
 Blocker:
 - existing F single runner has not yet written real started/completed/report evidence for this page.
+- verified output still has no verified data rows.
 
 Next:
 - continue with existing F single runner only
