@@ -1,0 +1,29 @@
+{
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "RECOVERY_PLAN_APPLIED_TO_SINGLE_RUNNER_QUEUE",
+  "created_at": "2026-07-09T00:00:00+03:00",
+  "problem": "Internet official source exists, but runner has not converted it into verified source-backed CSV/status output for the site.",
+  "plan": [
+    "Keep single F portable runner only; do not start a new runner.",
+    "Run GOV.UK DESNZ GHG extraction from official CSV.",
+    "Write verified_source_backed_rows CSV and source_rows_extraction_status_latest.json.",
+    "Only after real rows exist, update latest_changes.json and refresh 127.0.0.1:8020 site data.",
+    "If extraction fails, write blocker status and move to next review task without fake progress."
+  ],
+  "expected_outputs": [
+    "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/verified_source_backed_rows_govuk_ghg_20260708.csv",
+    "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/source_rows_extraction_status_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json"
+  ],
+  "safety": {
+    "single_runner_only": true,
+    "new_runner_started": false,
+    "parallel_runner_started": false,
+    "fake_data": false,
+    "final_ready": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}
