@@ -12,14 +12,14 @@ migration=false
 production_deploy=false
 
 Latest checked evidence:
+- source_candidates_csv: input_ready_6_rows
 - distance_property_types_source_seed_priority_20260708_completed: missing
-- program_layer_matrix_distance_property_types_geojson: empty_file
 - recheck_status: unchanged_waiting_for_existing_F_runner
 - queue_addition_status: paused_until_pickup_changes
 
 Blocker:
+- source input exists, so current blocker is runner pickup/output generation.
 - existing F single runner has not yet written real started/completed/report evidence for this page.
-- program layer output still has no rendered GeoJSON features.
 
 Next:
 - continue with existing F single runner only
