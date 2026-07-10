@@ -1,0 +1,82 @@
+{
+  "task_id": "gas-emissions-146-one-click-runner-recovery-self-test-20260710",
+  "page_key": "gas_emissions",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "priority": "critical",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "portable_panel": "AAYS TerraYield Portable Kontrol Paneli - Sabit 8012",
+  "button": "Tek Runner Başlat",
+  "objective": "Make the existing one-click runner flow self-recovering, idempotent and provable. One click must perform all required checks, keep a single shared runner, create a small real self-test file, commit and push it to GitHub, and expose a stable proof path readable by ChatGPT.",
+  "required_behavior": [
+    "Use only the existing F portable shared runner. Never start a second or parallel runner.",
+    "On one click, detect an existing live PID and valid lock. If healthy, keep it and do not bootstrap another process.",
+    "If stale, validate PID age, process existence, lock ownership and heartbeat before clearing only the stale lock.",
+    "Check repository path, active branch, git status, rebase/merge state, remote reachability and write permission.",
+    "If the worktree is dirty, create a timestamped stash before pull and record the stash result.",
+    "Pull the required branch and stop with an explicit blocker if pull fails. Do not report success on failure.",
+    "Start or reuse exactly one runner, wait for a fresh heartbeat, and verify that the PID reported by the panel matches the active runner process or provide a documented parent/child PID mapping.",
+    "Run a small self-test after health passes. The self-test must create a real UTF-8 JSON file with a unique timestamp and random nonce; it must not copy a pre-existing proof.",
+    "Commit and push the self-test file to the same GitHub branch.",
+    "Update a stable latest pointer file so ChatGPT can fetch the most recent successful self-test without knowing the timestamp.",
+    "Display the final state in the portable panel: runner active, PID, heartbeat time, branch, pull status, self-test status, commit SHA and proof path.",
+    "Keep final_ready=false, product_final_ready=false, fake_data=false, db_write=false, migration=false and production_deploy=false."
+  ],
+  "self_test_output": {
+    "timestamped_path_pattern": "docs/chatgpt_status/_shared/runner_outputs/one_click_runner_self_test_<YYYYMMDD_HHMMSS>.json",
+    "stable_latest_path": "docs/chatgpt_status/_shared/runner_outputs/one_click_runner_self_test_latest.json",
+    "required_fields": [
+      "test_id",
+      "created_at",
+      "nonce",
+      "portable_root",
+      "repo_root",
+      "branch",
+      "runner_pid",
+      "runner_process_alive",
+      "single_runner_only",
+      "lock_valid",
+      "heartbeat_fresh",
+      "git_pull_status",
+      "git_commit_sha",
+      "git_push_status",
+      "proof_path",
+      "final_ready",
+      "fake_data"
+    ]
+  },
+  "acceptance_criteria": [
+    "Pressing Tek Runner Başlat once either reuses one healthy runner or recovers one stale runner; it never creates a second runner.",
+    "A fresh timestamped self-test JSON is produced during that click flow.",
+    "The self-test JSON is committed and pushed to branch codex/aays-single-runner-v5-20260706.",
+    "The stable latest proof path exists and points to the new test.",
+    "GitHub fetch of the stable latest path returns the expected nonce, PID, heartbeat, commit SHA and push status.",
+    "The portable panel shows the same PID and proof path, or an explicit parent/child PID relationship.",
+    "No completed, 100 percent or final_ready=true claim is allowed unless all acceptance criteria have real GitHub proof."
+  ],
+  "failure_output": {
+    "path": "docs/chatgpt_status/_shared/runner_outputs/one_click_runner_self_test_blocker_latest.json",
+    "required_fields": [
+      "status",
+      "failed_step",
+      "error",
+      "runner_pid",
+      "heartbeat_at",
+      "branch",
+      "git_status",
+      "next_action",
+      "final_ready"
+    ]
+  },
+  "safety": {
+    "single_runner_only": true,
+    "new_parallel_runner": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false,
+    "product_final_ready": false
+  }
+}
