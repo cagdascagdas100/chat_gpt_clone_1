@@ -1,0 +1,35 @@
+{
+  "task_id": "topography-142-site-visibility-row-level-fix-20260710",
+  "page_key": "topography",
+  "layer": "Topography",
+  "program_output": "Height Difference",
+  "status": "queued",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "runner_policy": "existing_f_portable_single_runner_only",
+  "problem": "The local matrix page does not show Topography Height Difference work as row-level visible records with source paths and new-row markers.",
+  "required_actions": [
+    "Use the visible hmlr_lat and hmlr_lon matrix fields as Topography coordinate source.",
+    "Write at least parcel_2757, parcel_2758, and parcel_2759 into Topography coordinate handoff files.",
+    "Update topography_updates/latest_changes.json with row-level site-visible changes.",
+    "Mark new rows with changed_in_latest_run=true and NEW_HEIGHT_DIFFERENCE.",
+    "Keep elevation fields null until real DEM/LiDAR or terrain evidence is sampled."
+  ],
+  "required_outputs": [
+    "docs/chatgpt_status/topography/handoff/topography_parcel_coordinate_handoff_20260710/topography_parcel_coordinate_export.csv",
+    "docs/chatgpt_status/topography/handoff/topography_parcel_coordinate_handoff_20260710/topography_parcel_coordinate_export.geojson",
+    "england_map_web/data/program_layer_matrix/topography_coordinate_handoff_latest.json",
+    "docs/chatgpt_status/topography/status/140_site_visibility_matrix_coordinate_fix_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json"
+  ],
+  "acceptance": {
+    "minimum_visible_rows": 3,
+    "required_parcels": ["parcel_2757", "parcel_2758", "parcel_2759"],
+    "source_paths_visible": true,
+    "no_fake_elevation": true,
+    "final_ready": false
+  }
+}
