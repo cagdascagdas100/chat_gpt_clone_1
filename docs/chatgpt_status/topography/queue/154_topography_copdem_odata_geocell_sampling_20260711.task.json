@@ -1,7 +1,7 @@
 {
   "task_id": "topography-154-copdem-odata-geocell-sampling-20260711",
   "page_key": "topography",
-  "status": "queued",
+  "status": "queued_query_contract_ready",
   "runner_mode": "single_shared_runner_only",
   "input_candidates": [
     {"parcel_id":"parcel_2757","parcel_ref":"52213412","lat":51.6167362,"lon":-0.1421556,"bng_tile":"TQ2892"},
@@ -12,21 +12,26 @@
     "provider": "Copernicus Data Space Ecosystem",
     "dataset": "COP-DEM_GLO-30-DGED/2024_1",
     "product_type": "SAR_DGE_30_A4AD",
-    "derived_grid_id_candidate": "N51_W001",
+    "grid_id": "N51_W001",
     "tile_extent": "1 degree x 1 degree",
     "horizontal_crs": "WGS84 EPSG:4326",
     "vertical_crs": "EGM2008 EPSG:3855",
     "vertical_unit": "metres",
-    "catalogue_method": "OData gridId query followed by dataset/productType confirmation",
-    "catalogue_readback_required": true
+    "official_query_contract_verified": true,
+    "odata_filters": {
+      "grid": "Attributes StringAttribute any Name=gridId Value=N51_W001",
+      "dataset": "Attributes StringAttribute any Name=dataset Value=COP-DEM_GLO-30-DGED/2024_1",
+      "product_type": "Attributes StringAttribute any Name=productType Value=SAR_DGE_30_A4AD"
+    },
+    "expand": "Attributes"
   },
   "required_operations": [
-    "query Copernicus OData catalogue for gridId N51_W001",
-    "confirm dataset COP-DEM_GLO-30-DGED/2024_1 and productType SAR_DGE_30_A4AD",
-    "record returned product name id release and raster metadata",
-    "download or access raster through authenticated CDSE route",
-    "sample source-backed elevation for the three coordinates",
-    "leave all numeric elevation fields null if catalogue or raster proof is missing"
+    "run gridId catalogue query and retain product id name footprint and attributes",
+    "confirm dataset and productType attributes on the returned product",
+    "download or access authenticated raster product",
+    "sample source-backed elevation for all three coordinates",
+    "record raster metadata coordinate pixel method and source proof per row",
+    "leave numeric elevation fields null if catalogue or raster proof is missing"
   ],
   "required_output": "docs/chatgpt_status/topography/status/154_topography_copdem_odata_geocell_sampling_latest.json",
   "site_output": "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json",
