@@ -7,28 +7,35 @@
   "canonical_storage": "F_PORTABLE_ROOT",
   "single_runner_only": true,
   "parallel_runner": false,
-  "purpose": "Use the linked report to fix Security/Public Safety row-by-row source, artifact, GeoJSON count, and new-batch visibility problems. Do not redo runner recovery. After browser proof and GitHub remote readback pass, resume the existing 151+ official-source expansion task.",
+  "long_batch_mode": true,
+  "requested_subtask_count": 9,
+  "purpose": "Execute a long sequential Security/Public Safety batch on the existing F portable runner: fix row evidence visibility, produce browser proof, resume existing task 137, fetch multiple official-source candidates, publish only accuracy 4/4 rows, update all site-visible outputs, and push remote proof. Do not start another runner or duplicate task 137.",
   "current_task_path": "docs/chatgpt_status/aays1/current_task/142_security_site_row_evidence_visibility_fix_current.json",
   "report_path": "docs/chatgpt_status/aays1/reports/142_security_site_row_evidence_visibility_fix_20260711.md",
+  "multiwork_plan_path": "docs/chatgpt_status/aays1/reports/143_security_official_source_multiwork_batch_plan_20260711.md",
   "expected_runner_output": "docs/chatgpt_status/aays1/runner_outputs/142_security_site_row_evidence_visibility_fix.json",
   "expected_browser_proof": "docs/chatgpt_status/_shared/reports/security_row_evidence_browser_validation_20260711.json",
   "baseline_visible_rows": 150,
   "baseline_verified_geojson_features": 150,
   "resume_after_fix_task_id": "aays1-137-next-batch-source-fetch-20260710",
-  "pickup_requested_at": "2026-07-11T04:38:56+03:00",
-  "pickup_request_source": "chatgpt_continuation_bu.auto-6.8-security",
-  "local_panel_observation": {
-    "observed_at": "2026-07-11T04:35:50+03:00",
-    "app_active": true,
-    "runner_health": "HEALTHY",
-    "runner_pid": 15156,
-    "smoke_status": "PASS",
-    "git_push_status": "pushed",
-    "remote": true,
-    "portable_root": "F:\\TerraYield_AAYS_Portable",
-    "evidence_type": "user_supplied_panel_screenshot_not_remote_runner_output"
+  "official_source_urls": [
+    "https://data.police.uk/docs/",
+    "https://data.police.uk/data/",
+    "https://geoportal.statistics.gov.uk/"
+  ],
+  "required_outputs": [
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
+  ],
+  "accuracy_policy": {
+    "automatic_publish_requires_accuracy_score_4": 4,
+    "automatic_publish_requires_manual_review_false": true,
+    "official_source_and_checksum_required": true,
+    "valid_lsoa_and_reproducible_match_required": true,
+    "browser_visible_row_and_evidence_required": true
   },
-  "required_next_action": "The existing F portable single runner must pick up and execute this same task through the canonical current-task contract. Do not create or start another runner.",
   "acceptance_summary": [
     "GeoJSON feature counter shows 150 instead of not_available",
     "Old baseline rows are not all labeled YENI/LATEST",
@@ -36,6 +43,8 @@
     "Valid browser-safe artifact links return HTTP 200 and missing artifacts show MISSING",
     "Only real latest-batch rows receive the new-batch badge and style",
     "Chrome/Selenium proof passes with zero console errors",
+    "Existing task 137 resumes and checks multiple official-source candidates",
+    "Only real accuracy 4/4 rows increase verified totals",
     "Git push and remote readback pass"
   ],
   "final_ready": false,
