@@ -1,1 +1,95 @@
-{"layer":"Safety / Security","program_output":"Security Level percent","status":"NEXT_BATCH_SOURCE_FETCH_REQUIRED_AFTER_VISIBLE_SAMPLE_150","display_state":"blocked_not_final_no_fake_rows","visible_user_message_tr":"Verified Security/Public Safety havuzundaki 150 satirin tamami site-visible dosyalara alindi. 151+ verified satir mevcut olmadigi icin yeni satir uydurulmadan devam edilemez; 300 hedefi icin resmi/open kaynakli yeni source fetch ve runner output gereklidir.","last_updated":"2026-07-10T00:00:00+03:00","progress_percent":99,"remaining_percent":1,"final_ready":false,"data_ready":true,"runner_pickup_fix_applied":true,"runner_roundtrip_output_pending":true,"visible_sample_rows_before":150,"visible_sample_rows_after":150,"visible_sample_rows_added_this_run":0,"site_visible_status_file":"england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json","site_visible_rows_file":"england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json","site_positive_status":"150 visible Security/Public Safety records are available from the 150-row verified pool; final browser smoke is still pending.","runner_gate_status":"136_roundtrip_pending_then_next_batch_source_fetch","fake_data":false,"db_write":false,"migration_apply":false,"prod_deploy":false,"verified_csv_rows":150,"verified_geojson_features":150,"accuracy_ge_3_count":150,"score_4_count":150,"manual_review_count":0,"source_note":"No 151+ verified rows were present in england_map_web/data/security_public_safety/parcel_security_scores_verified.csv. Official/open source expansion must be performed by the existing F portable runner before more rows are added.","summary":{"changed_count":0,"verified_count":150,"manual_review_count":0,"accuracy_ge_3_count":150,"score_4_count":150,"final_ready":false,"data_ready":true,"roundtrip_output_pending":true,"next_batch_source_fetch_required":true},"changes":[],"blockers":["No 151+ verified rows currently exist in parcel_security_scores_verified.csv","300 target requires new official/open data.police.uk source fetch and verified LSOA spatial match expansion","136 runner GitHub roundtrip output required before runner health is fully proven","104 real visible expansion output pending","browser smoke proof required for Security layer button, thematic colors, legend, popup/right-panel fields","final_ready remains false until local 127.0.0.1:8020 smoke proof exists"]}
+{
+  "layer": "Safety / Security",
+  "program_output": "Security Level percent",
+  "status": "MULTIWORK_IMPLEMENTATION_READY_WAITING_SINGLE_RUNNER_PICKUP",
+  "display_state": "queued_not_final_no_fake_rows",
+  "visible_user_message_tr": "150 doğrulanmış Security/Public Safety satırı korunuyor. 15 aşamalı geniş iş akışının 7 hazırlık aşaması GitHub'da tamamlandı; mevcut F portable tek runner'ın priority-0 142 görevini alması bekleniyor. Yeni satır, runner output ve browser kanıtı oluşmadan eklenmedi.",
+  "last_updated": "2026-07-11T05:31:24+03:00",
+  "progress_percent": 99,
+  "remaining_percent": 1,
+  "progress_increase_this_turn": 0,
+  "final_ready": false,
+  "product_final_ready": false,
+  "data_ready": true,
+  "visible_sample_rows_before": 150,
+  "visible_sample_rows_after": 150,
+  "visible_sample_rows_added_this_run": 0,
+  "verified_csv_rows": 150,
+  "verified_geojson_features": 150,
+  "accuracy_ge_3_count": 150,
+  "score_4_count": 150,
+  "manual_review_count": 0,
+  "candidate_pool_features": 92283,
+  "candidate_pool_status": "available_not_selected_by_runner",
+  "target_verified_rows": 300,
+  "target_new_rows": 150,
+  "queue_task_path": "docs/chatgpt_status/aays1/queue/142_security_site_row_evidence_visibility_fix_20260711.task.json",
+  "queue_task_status": "pickup_requested",
+  "queue_priority": 0,
+  "resume_queue_task_path": "docs/chatgpt_status/aays1/queue/137_next_batch_source_fetch_20260710.task.json",
+  "orchestrator_path": "docs/chatgpt_status/aays1/automation/146_security_strict_multiwork_orchestrator.ps1",
+  "site_visible_status_file": "england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json",
+  "site_visible_rows_file": "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
+  "official_source_targets": [
+    {
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "purpose": "latest official crime data month",
+      "runner_status": "not_fetched_yet"
+    },
+    {
+      "url": "https://data.police.uk/api/crimes-street/all-crime",
+      "purpose": "latest-month representative-point validation for every unique selected LSOA",
+      "runner_status": "not_fetched_yet"
+    },
+    {
+      "url": "https://data.police.uk/data/",
+      "purpose": "official force and 2021 LSOA CSV documentation",
+      "runner_status": "documented_not_downloaded"
+    }
+  ],
+  "workflow_total_steps": 15,
+  "workflow_completed_steps": 7,
+  "workflow_pending_steps": 8,
+  "runner_execution_completed_steps": 0,
+  "workflow_steps": [
+    {"step": 1, "name": "canonical_queue_contract", "status": "completed", "evidence": "142 queue contains script_path, allowed_paths, expected_outputs and safety flags"},
+    {"step": 2, "name": "baseline_visibility_automation", "status": "completed", "evidence": "docs/chatgpt_status/aays1/automation/142_security_site_row_evidence_visibility_fix.ps1"},
+    {"step": 3, "name": "strict_300_candidate_automation", "status": "completed", "evidence": "docs/chatgpt_status/aays1/automation/103_security_accuracy_count_expansion.ps1"},
+    {"step": 4, "name": "official_api_every_lsoa_validation", "status": "completed", "evidence": "docs/chatgpt_status/aays1/automation/145_security_official_api_lsoa_validation.ps1"},
+    {"step": 5, "name": "atomic_publish_or_restore_orchestrator", "status": "completed", "evidence": "docs/chatgpt_status/aays1/automation/146_security_strict_multiwork_orchestrator.ps1"},
+    {"step": 6, "name": "strict_300_total_150_latest_browser_test", "status": "completed", "evidence": "docs/chatgpt_status/aays1/automation/147_security_300_browser_validation.ps1"},
+    {"step": 7, "name": "priority_zero_pickup_request", "status": "completed", "evidence": "142 queue status=pickup_requested priority=0"},
+    {"step": 8, "name": "single_runner_pickup", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/142_security_site_row_evidence_visibility_fix.json"},
+    {"step": 9, "name": "baseline_150_browser_proof", "status": "pending", "expected_output": "docs/chatgpt_status/_shared/reports/security_row_evidence_browser_validation_20260711.json"},
+    {"step": 10, "name": "strict_300_candidate_selection", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/103_security_accuracy_count_expansion.json"},
+    {"step": 11, "name": "official_latest_month_fetch", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/145_security_official_api_lsoa_validation.json"},
+    {"step": 12, "name": "all_unique_lsoa_api_http_200_validation", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/145_security_official_api_lsoa_validation.json"},
+    {"step": 13, "name": "browser_300_total_150_latest_zero_console_errors", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/147_security_300_browser_validation.json"},
+    {"step": 14, "name": "atomic_site_publish_or_restore", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/146_security_strict_multiwork_orchestrator.json"},
+    {"step": 15, "name": "github_remote_readback", "status": "pending", "expected_output": "docs/chatgpt_status/aays1/runner_outputs/146_security_strict_multiwork_orchestrator.json"}
+  ],
+  "summary": {
+    "changed_count": 0,
+    "verified_count": 150,
+    "manual_review_count": 0,
+    "accuracy_ge_3_count": 150,
+    "score_4_count": 150,
+    "workflow_completed_steps": 7,
+    "workflow_total_steps": 15,
+    "final_ready": false,
+    "data_ready": true,
+    "runner_output_pending": true
+  },
+  "changes": [],
+  "blockers": [
+    "142 runner output is not present on GitHub",
+    "Current GitHub queue-selection debug has not been refreshed since 2026-07-07",
+    "No real 151+ row has been published",
+    "Baseline and 300-row Chrome/Selenium proof files are pending",
+    "final_ready remains false"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration_apply": false,
+  "prod_deploy": false
+}
