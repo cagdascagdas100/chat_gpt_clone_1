@@ -83,6 +83,23 @@ function Get-TextHash([string]$Text) {
   $sha = [System.Security.Cryptography.SHA256]::Create()
   try { return ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes([string]$Text)))).Replace("-","").ToLowerInvariant() } finally { $sha.Dispose() }
 }
+function ConvertTo-ProcessArgument([string]$Value) {
+  if ($null -eq $Value -or $Value.Length -eq 0) { return '""' }
+  if ($Value -notmatch '[\s"]') { return $Value }
+  return '"' + $Value.Replace('"','\"') + '"'
+}
+function Start-TrackedPowerShell([string[]]$Arguments) {
+  $psi = [System.Diagnostics.ProcessStartInfo]::new()
+  $psi.FileName = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+  $psi.Arguments = (($Arguments | ForEach-Object { ConvertTo-ProcessArgument ([string]$_) }) -join ' ')
+  $psi.WorkingDirectory = $RepoRoot
+  $psi.UseShellExecute = $false
+  $psi.CreateNoWindow = $true
+  $child = [System.Diagnostics.Process]::new()
+  $child.StartInfo = $psi
+  if (-not $child.Start()) { throw "WORKER_PROCESS_START_RETURNED_FALSE" }
+  return $child
+}
 function Rotate-Log {
   if ((Test-Path -LiteralPath $logPath) -and (Get-Item -LiteralPath $logPath).Length -gt 5242880) {
     $archive = "$logPath.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
@@ -266,19 +283,17 @@ try {
     if ((Get-Date).ToUniversalTime() -ge $script:NextRefreshAt) { Invoke-SafeRefresh }
     $script:Loop++
     $script:State="starting_worker"
-    $stdout=Join-Path $logDir ("worker_{0}_{1}.out.log" -f $PID,$script:Loop)
-    $stderr=Join-Path $logDir ("worker_{0}_{1}.err.log" -f $PID,$script:Loop)
     if($SelfTestFailFirstWorker -and -not $script:DummyFailureUsed){
       $script:DummyFailureUsed=$true
-      $worker=Start-Process -FilePath powershell -ArgumentList @("-NoProfile","-Command","exit 7") -WorkingDirectory $RepoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+      $worker=Start-TrackedPowerShell @("-NoProfile","-Command","exit 7")
       Add-Log "self_test_dummy_worker_started pid=$($worker.Id)"
     }elseif($SelfTestMode){
-      $worker=Start-Process -FilePath powershell -ArgumentList @("-NoProfile","-Command","Start-Sleep -Seconds 2; exit 0") -WorkingDirectory $RepoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+      $worker=Start-TrackedPowerShell @("-NoProfile","-Command","Start-Sleep -Seconds 2; exit 0")
       Add-Log "self_test_success_worker_started pid=$($worker.Id)"
     }else{
       $args=@("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-RepoRoot",$RepoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks","$MaxTasks","-StaleMinutes","$StaleMinutes")
       if($NoPush){$args+="-NoPush"}
-      $worker=Start-Process -FilePath powershell -ArgumentList $args -WorkingDirectory $RepoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+      $worker=Start-TrackedPowerShell $args
     }
     $script:WorkerPid=$worker.Id
     $script:State="worker_running"
