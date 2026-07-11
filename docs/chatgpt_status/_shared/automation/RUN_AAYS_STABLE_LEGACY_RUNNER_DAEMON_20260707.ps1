@@ -285,9 +285,12 @@ try {
     $script:LastQueueScanAt=Now-Utc
     Write-Heartbeat
     while(-not $worker.HasExited){Wait-WithHeartbeat -Seconds $HeartbeatSeconds -AllowSiteRecovery; $worker.Refresh()}
-    $script:LastWorkerExitCode=$worker.ExitCode
+    $worker.WaitForExit()
+    $worker.Refresh()
+    $exitCode=$worker.ExitCode
+    $script:LastWorkerExitCode=$exitCode
     $script:WorkerPid=$null
-    if($worker.ExitCode -eq 0){$script:ConsecutiveFailures=0;$script:LastSuccessAt=Now-Utc;$script:State="idle";Add-Log "worker_completed loop=$($script:Loop) exit=0"}else{$script:ConsecutiveFailures++;$script:State=if($script:ConsecutiveFailures-ge5){"degraded"}else{"worker_backoff"};Add-Log "worker_failed loop=$($script:Loop) exit=$($worker.ExitCode) failures=$($script:ConsecutiveFailures)"}
+    if($exitCode -eq 0){$script:ConsecutiveFailures=0;$script:LastSuccessAt=Now-Utc;$script:State="idle";Add-Log "worker_completed loop=$($script:Loop) exit=0"}else{$script:ConsecutiveFailures++;$script:State=if($script:ConsecutiveFailures-ge5){"degraded"}else{"worker_backoff"};Add-Log "worker_failed loop=$($script:Loop) exit=$exitCode failures=$($script:ConsecutiveFailures)"}
     Write-Heartbeat
     Write-DaemonStatus $(if($script:ConsecutiveFailures-ge5){"degraded"}else{"runner_active"})
     if($MaxLoops -gt 0 -and $script:Loop -ge $MaxLoops){break}
