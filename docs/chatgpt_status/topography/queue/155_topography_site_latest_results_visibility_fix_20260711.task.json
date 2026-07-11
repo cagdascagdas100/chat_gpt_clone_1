@@ -1,0 +1,44 @@
+{
+  "task_id": "topography-155-site-latest-results-visibility-fix-20260711",
+  "page_key": "topography",
+  "status": "queued",
+  "runner_mode": "single_shared_runner_only",
+  "canonical_runner_pid_observed": 24020,
+  "problem_report": "docs/chatgpt_status/topography/reports/155_topography_site_latest_results_visibility_fix_report_20260711.md",
+  "frontend_file": "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+  "stale_data_file": "england_map_web/data/program_layer_matrix/topography_coordinate_handoff_latest.json",
+  "current_operations_source": "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json",
+  "required_outputs": [
+    "england_map_web/data/program_layer_matrix/topography_visible_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/topography_visible_status_latest.json",
+    "docs/chatgpt_status/topography/status/155_topography_site_latest_results_visibility_fix_latest.json",
+    "docs/chatgpt_status/topography/reports/155_topography_site_latest_results_browser_validation_20260711.json"
+  ],
+  "required_operations": [
+    "replace stale topography coordinate-only frontend wiring with current visible rows and status artifacts",
+    "merge coordinate provenance with latest task status source report queue and local source paths",
+    "render display_badge task_id updated_at sampling_status boundary_status dataset productType gridId and elevation fields",
+    "show internet source URL local downloaded source path report path status path queue path and commit SHA per row",
+    "visually distinguish changed_in_latest_run queued blocked and source-backed-ready rows",
+    "add newest-first ordering and only-new-operations filter",
+    "preserve null elevation values until source-backed raster sampling proof exists",
+    "run Chrome Selenium validation and GitHub remote readback"
+  ],
+  "acceptance": {
+    "topography_data_path": "data/program_layer_matrix/topography_visible_rows_latest.json",
+    "topography_status_path": "data/program_layer_matrix/topography_visible_status_latest.json",
+    "minimum_rendered_rows": 3,
+    "required_visible_badge": "COPERNICUS_ODATA_QUERY_CONTRACT_READY",
+    "required_visible_grid_id": "N51_W001",
+    "required_visible_queue_path": "docs/chatgpt_status/topography/queue/154_topography_copdem_odata_geocell_sampling_20260711.task.json",
+    "console_errors": 0,
+    "no_fake_geometry": true,
+    "no_fake_elevation": true,
+    "final_ready": false
+  },
+  "after_acceptance_next_task": "resume topography-154 Copernicus catalogue readback and raster sampling",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
