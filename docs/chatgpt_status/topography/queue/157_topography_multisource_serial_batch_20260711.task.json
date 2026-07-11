@@ -1,0 +1,59 @@
+{
+  "task_id": "topography-157-multisource-serial-batch-20260711",
+  "page_key": "topography",
+  "status": "queued",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "runner_mode": "single_shared_runner_only",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "priority": 1,
+  "script_path": "docs/chatgpt_status/topography/automation/157_topography_multisource_serial_batch_20260711.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/topography/source_snapshots",
+    "docs/chatgpt_status/topography/fixtures",
+    "docs/chatgpt_status/topography/status",
+    "docs/chatgpt_status/topography/reports",
+    "docs/chatgpt_status/topography/runner_outputs",
+    "docs/chatgpt_status/topography/queue",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "england_map_web/data/program_layer_matrix",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates"
+  ],
+  "purpose": "Increase throughput without opening a second runner. In one serial canonical-runner batch: reuse or execute task 156 EU-DEM sampling, perform independent SRTM 90 m cross-checks for all three pilot parcels, expose both source values and source differences row by row on the 8012 website, then run real Chrome/Selenium validation.",
+  "serial_stages": [
+    "EU-DEM 25 m source-backed sampling for 3 parcel centroids and 8 regional controls",
+    "SRTM 90 m independent cross-check for the same 3 parcel centroids",
+    "row-level multisource evidence and difference fields added to website artifacts",
+    "Chrome/Selenium rendered-row and console validation",
+    "GitHub runner output, report, status and remote-readable artifacts"
+  ],
+  "input_candidates": [
+    {"parcel_id":"parcel_2757","parcel_ref":"52213412","lat":51.6167362,"lon":-0.1421556},
+    {"parcel_id":"parcel_2758","parcel_ref":"52213916","lat":51.6168592,"lon":-0.1417993},
+    {"parcel_id":"parcel_2759","parcel_ref":"52040420","lat":51.6169525,"lon":-0.1430858}
+  ],
+  "acceptance": {
+    "eudem_source_backed_rows": 3,
+    "srtm_crosscheck_rows": 3,
+    "regional_control_rows": 8,
+    "height_difference_rows": 3,
+    "browser_rendered_rows": 3,
+    "browser_console_errors": 0,
+    "row_level_secondary_source_visible": true,
+    "row_level_source_difference_visible": true,
+    "maximum_accuracy_claim": "2.5/4 fallback multisource until primary CopDEM, real boundaries and official LiDAR or OS Terrain validation",
+    "no_fake_geometry": true,
+    "no_fake_elevation": true,
+    "final_ready": false
+  },
+  "no_parallel_runner": true,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
