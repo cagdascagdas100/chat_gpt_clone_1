@@ -66,11 +66,11 @@ let state={layer:'security',rows:[],filtered:[],data:null,status:null,page:0,pag
 async function getJson(path){const r=await fetch(`${path}${path.includes('?')?'&':'?'}${bust()}`,{cache:'no-store'});if(!r.ok)throw new Error(`${path} -> HTTP ${r.status}`);return r.json()}
 function valueFor(row,key,data){if(key.startsWith('$')){const clean=key.trim().slice(1),v=data[clean];return Array.isArray(v)?v.join(', '):(v??'not_available')}for(const candidate of key.split('|')){if(row[candidate]!==undefined&&row[candidate]!==null&&row[candidate]!=='')return row[candidate]}return 'not_available'}
 const isLatest=row=>bool(row.is_new_in_latest_batch)||bool(row.new_this_run)||bool(row.changed_in_latest_run);
-const stateText=row=>[row.display_badge,row.candidate_status,row.run_status,row.status,row.blocker].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR');
+const stateText=row=>[row.display_badge,row.candidate_status,row.run_status,row.status,row.blocker].filter(Boolean).join(' ').toLowerCase();
 const isPending=row=>/pending|queued|waiting|bekliyor/.test(stateText(row));
 const isCompleted=row=>/completed_visible|\bcompleted\b|vision_compared/.test(stateText(row));
 const isVisible=row=>/visible|kaynakli|source_backed|verified/.test(stateText(row));
-const hasMissing=row=>/not_available|not_downloaded|missing/.test(JSON.stringify(row).toLocaleLowerCase('tr-TR'));
+const hasMissing=row=>/not_available|not_downloaded|missing/.test(JSON.stringify(row).toLowerCase());
 function rowClass(row){return [isLatest(row)?'latest':'',isPending(row)?'pending':'',bool(row.needs_manual_review)?'manual':'',row.blocker&&row.blocker!=='none'?'blocked':''].filter(Boolean).join(' ')}
 function statusBadges(row){const badges=[];const main=row.display_badge||row.candidate_status||row.run_status;if(main)badges.push(`<span class="badge meta">${esc(main)}</span>`);if(isLatest(row))badges.push('<span class="badge latest">YENİ / LATEST</span>');if(isPending(row))badges.push('<span class="badge pending">PENDING / QUEUED</span>');if(bool(row.needs_manual_review))badges.push('<span class="badge manual">MANUEL İNCELEME</span>');if(row.blocker&&row.blocker!=='none')badges.push('<span class="badge blocked">BLOCKED</span>');if(!badges.length)badges.push('<span class="badge">KAYNAKLI / MEVCUT</span>');return `<div class="badges">${badges.join('')}</div>`}
 function webRelative(value){const text=String(value||'');if(text.startsWith('england_map_web/'))return text.slice('england_map_web/'.length);if(text.startsWith('data/'))return text;return null}
