@@ -50,6 +50,7 @@ $appLauncher = Join-Path $portableRoot "START_TERRAYIELD_PORTABLE_8012.ps1"
 $logPath = Join-Path $logDir ("persistent_runner_daemon_{0}.log" -f (Get-Date -Format "yyyyMMdd"))
 
 $script:Loop = 0
+$script:HeartbeatSequence = 0
 $script:WorkerPid = $null
 $script:CurrentTaskId = $null
 $script:LastQueueScanAt = $null
@@ -180,8 +181,12 @@ function Update-SiteState([switch]$AllowRecovery) {
 }
 function Write-Heartbeat {
   Update-Lock
+  $script:HeartbeatSequence++
   $payload = [ordered]@{
     heartbeat_at = Now-Utc
+    heartbeat_sequence = $script:HeartbeatSequence
+    supervisor_started_at = $processStartUtc
+    supervisor_uptime_seconds = [math]::Round(((Get-Date).ToUniversalTime() - ([datetime]$processStartUtc).ToUniversalTime()).TotalSeconds, 3)
     instance_id = $instanceId
     supervisor_pid = $PID
     daemon_pid = $PID
@@ -196,9 +201,12 @@ function Write-Heartbeat {
     last_success_at = $script:LastSuccessAt
     last_refresh_at = $script:LastRefreshAt
     next_refresh_at = $script:NextRefreshAt.ToString("o")
+    refresh_interval_seconds = $RefreshIntervalSeconds
     refresh_result = $script:RefreshResult
     site_8012_ok = $script:Site8012Ok
     ready_to_sell_site_ok = $script:ReadySiteOk
+    site_watchdog_active = $true
+    last_site_check_at = if($script:LastSiteCheckAt -eq [datetime]::MinValue){$null}else{$script:LastSiteCheckAt.ToString("o")}
     site_failure_count = $script:SiteFailureCount
     app_command_verified = $script:AppCommandVerified
     runner_active = $true
@@ -217,9 +225,9 @@ function Write-DaemonStatus([string]$Status) {
   Write-JsonAtomic $statusPath ([ordered]@{ checked_at=Now-Utc; status=$Status; instance_id=$instanceId; supervisor_pid=$PID; worker_pid=$script:WorkerPid; loop=$script:Loop; state=$script:State; last_worker_exit_code=$script:LastWorkerExitCode; consecutive_failures=$script:ConsecutiveFailures; last_success_at=$script:LastSuccessAt; last_refresh_at=$script:LastRefreshAt; next_refresh_at=$script:NextRefreshAt.ToString("o"); refresh_result=$script:RefreshResult; site_8012_ok=$script:Site8012Ok; CONTINUE_RUNNER_READY=$true; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
   Write-JsonAtomic $bootstrapPath ([ordered]@{ updated_at=Now-Utc; repo_root=$RepoRoot; repo_full_name=$RepoFullName; runner_branch=$MainBranch; runner_status=$Status; runner_engine="persistent_stable_supervisor_20260711"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; runner_pid=$PID; supervisor_pid=$PID; instance_id=$instanceId; runner_lock_active=(Test-Path -LiteralPath $lockPath); lock_file="docs/chatgpt_status/_shared/locks/single_runner.lock"; CONTINUE_RUNNER_READY=$true; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
 }
-function Invoke-Git([string[]]$Args) {
+function Invoke-Git([string[]]$GitArgs) {
   $old=$ErrorActionPreference
-  try { $ErrorActionPreference="Continue"; $output=& git -c "safe.directory=$RepoRoot" -C $RepoRoot @Args 2>&1; $code=$LASTEXITCODE } finally { $ErrorActionPreference=$old }
+  try { $ErrorActionPreference="Continue"; $output=& git -c "safe.directory=$RepoRoot" -C $RepoRoot @GitArgs 2>&1; $code=$LASTEXITCODE } finally { $ErrorActionPreference=$old }
   [pscustomobject]@{ code=$code; output=(($output|Out-String).Trim()) }
 }
 function Test-RuntimePath([string]$Path) {
@@ -230,15 +238,15 @@ function Invoke-SafeRefresh {
   $script:State="refreshing"
   Write-Heartbeat
   try {
-    $status=Invoke-Git @("status","--porcelain")
+    $status=Invoke-Git -GitArgs @("status","--porcelain")
     if($status.code -ne 0){$script:RefreshResult="git_status_failed";return}
     $dirty=@($status.output -split "`r?`n" | Where-Object {$_} | ForEach-Object {if($_.Length -gt 3){$_.Substring(3).Trim()}else{""}})
     $nonRuntime=@($dirty | Where-Object {-not(Test-RuntimePath $_)})
     if($nonRuntime.Count -gt 0){$script:RefreshResult="blocked_dirty_repo";Add-Log ("refresh_blocked_dirty_repo="+($nonRuntime -join ","));return}
-    $fetch=Invoke-Git @("fetch","--no-tags","origin",$MainBranch)
+    $fetch=Invoke-Git -GitArgs @("fetch","--no-tags","origin",$MainBranch)
     if($fetch.code -ne 0){$script:RefreshResult="fetch_failed";Add-Log "refresh_fetch_failed=$($fetch.output)";return}
     if($dirty.Count -gt 0){$script:RefreshResult="fetch_only_runtime_changes_preserved"}else{
-      $pull=Invoke-Git @("pull","--ff-only","origin",$MainBranch)
+      $pull=Invoke-Git -GitArgs @("pull","--ff-only","origin",$MainBranch)
       $script:RefreshResult=if($pull.code -eq 0){"pull_ff_ok"}else{"pull_ff_failed"}
     }
     Update-SiteState -AllowRecovery
