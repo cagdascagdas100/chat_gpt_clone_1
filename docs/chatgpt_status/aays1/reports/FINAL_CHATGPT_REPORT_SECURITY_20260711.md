@@ -14,9 +14,8 @@ Bu sayfa yeni runner acmasin. Mevcut tek shared runner queue/status/output kanit
 
 Kanıt commitleri: `76cb0d8b`, `de5c678f`
 
-`final_ready=false`  
-`fake_data=false`  
-`db_write=false`  
-`migration=false`  
+`final_ready=false`
+`fake_data=false`
+`db_write=false`
+`migration=false`
 `production_deploy=false`
-
