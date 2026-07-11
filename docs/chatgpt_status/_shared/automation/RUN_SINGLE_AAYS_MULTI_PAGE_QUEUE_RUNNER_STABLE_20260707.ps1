@@ -16,6 +16,17 @@ function Safe-Name([string]$Value) { (($Value -replace '[^A-Za-z0-9_.-]', '_').T
 function Rel([string]$Path) { (($Path -replace '\\','/').TrimStart('/')) }
 function Ensure-Dir([string]$Path) { if ($Path -and -not (Test-Path -LiteralPath $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
 function Write-Utf8([string]$Path, [string]$Content) { Ensure-Dir (Split-Path -Parent $Path); [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false)) }
+function Write-Utf8Atomic([string]$Path, [string]$Content) { Ensure-Dir (Split-Path -Parent $Path); $temp="$Path.tmp.$PID.$([guid]::NewGuid().ToString('N'))"; [System.IO.File]::WriteAllText($temp,$Content,[System.Text.UTF8Encoding]::new($false)); Move-Item -LiteralPath $temp -Destination $Path -Force }
+function Read-JsonFile([string]$Path) { try { if(Test-Path -LiteralPath $Path -PathType Leaf){return Get-Content -LiteralPath $Path -Raw -Encoding UTF8|ConvertFrom-Json} } catch {}; return $null }
+function Test-PidAlive([int]$ProcessId) { if($ProcessId-le0){return $false}; return $null-ne(Get-Process -Id $ProcessId -ErrorAction SilentlyContinue) }
+function Test-ScanLockOwner([object]$Lock) {
+  if(-not$Lock){return $false}
+  $ownerPid=if($Lock.pid){[int]$Lock.pid}else{0}
+  if(-not(Test-PidAlive $ownerPid)){return $false}
+  if([string]$Lock.lock_scope-ne'single_scan_worker'){return $false}
+  if($Lock.process_start_time){try{$process=Get-Process -Id $ownerPid -ErrorAction Stop;if([math]::Abs(($process.StartTime.ToUniversalTime()-([datetime]$Lock.process_start_time).ToUniversalTime()).TotalSeconds)-ge2){return $false}}catch{return $false}}
+  return $true
+}
 function To-JsonText([object]$Obj) { $Obj | ConvertTo-Json -Depth 60 }
 function Get-Prop([object]$Obj, [string]$Name) { if ($null -eq $Obj) { return $null }; $p = $Obj.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
 function Get-NestedProp([object]$Obj, [string]$Parent, [string]$Name) {
@@ -550,6 +561,7 @@ foreach ($d in @($StatusDir,$ReportDir,$HeartbeatDir,$LockDir,$LogDir)) { Ensure
 $RunId = (Get-Date -Format 'yyyyMMdd_HHmmss')
 $script:GitLogPath = Join-Path $LogDir "MULTI_PAGE_git_args_$RunId.log"
 $LockPath = Join-Path $LockDir 'MULTI_PAGE.lock'
+$ScanInstanceId = [guid]::NewGuid().ToString('N')
 $RunnerHeartbeatPath = Join-Path $HeartbeatDir 'MULTI_PAGE_heartbeat_latest.json'
 $LatestStatusPath = Join-Path $StatusDir 'MULTI_PAGE_latest_status.json'
 $SelectionDebugPath = Join-Path $StatusDir 'queue_selection_debug_20260705.json'
@@ -563,13 +575,17 @@ try {
   Sync-ControllerRepo
   $lockFresh = $false
   if (Test-Path -LiteralPath $LockPath) {
-    $age = ((Get-Date) - (Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes
-    if ($age -lt $StaleMinutes) { $lockFresh = $true } else { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue }
+    $existingLock=$null
+    if(Test-Path -LiteralPath $LockPath -PathType Leaf){$existingLock=Read-JsonFile $LockPath}
+    elseif(Test-Path -LiteralPath $LockPath -PathType Container){$existingLock=Read-JsonFile (Join-Path $LockPath 'owner.json')}
+    if(Test-ScanLockOwner $existingLock){$lockFresh=$true}else{Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue}
   }
   if ($lockFresh) { Add-Blocker 'RUNNER_ALREADY_ACTIVE'; $script:Summary.CONTINUE_RUNNER_READY=$true; Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary); Write-Output (To-JsonText $script:Summary); exit 0 }
-  Ensure-Dir $LockPath
+  $scanProcess=Get-Process -Id $PID -ErrorAction Stop
+  $scanLock=[ordered]@{instance_id=$ScanInstanceId;pid=$PID;process_start_time=$scanProcess.StartTime.ToUniversalTime().ToString('o');executable_path=$scanProcess.Path;created_at=Now-Utc;updated_at=Now-Utc;lock_scope='single_scan_worker';repo_root=$RepoRoot;work_root=$WorkRoot;final_ready=$false}
+  Write-Utf8Atomic $LockPath (To-JsonText $scanLock)
   $script:Summary.single_runner_lock_acquired = $true
-  Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
+  Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; instance_id=$ScanInstanceId; lock_scope='single_scan_worker'; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
   $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
   $ready = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
@@ -604,7 +620,7 @@ try {
 } finally {
   try { if (Test-Path -LiteralPath $LatestStatusPath) { } ; Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary) } catch {}
   try { Write-Utf8 (Join-Path $ReportDir "MULTI_PAGE_runner_output_$RunId.json") (To-JsonText $script:Summary) } catch {}
-  try { if (Test-Path -LiteralPath $LockPath) { Remove-Item -LiteralPath $LockPath -Force -Recurse -ErrorAction SilentlyContinue } } catch {}
+  try { $owned=Read-JsonFile $LockPath; if($owned-and[string]$owned.instance_id-eq$ScanInstanceId-and[int]$owned.pid-eq$PID){Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue} } catch {}
 }
 Write-Output (To-JsonText $script:Summary)
 if ($script:Summary.blockers.Count -gt 0) { exit 1 }

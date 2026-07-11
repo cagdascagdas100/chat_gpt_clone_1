@@ -5,8 +5,10 @@ param(
   [string]$MainBranch = "codex/aays-single-runner-v5-20260706",
   [string]$WorkRoot = "C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES",
   [int]$IntervalSeconds = 60,
-  [int]$MaxTasks = 1,
+  [int]$MaxTasks = 8,
   [int]$StaleMinutes = 15,
+  [int]$HeartbeatSeconds = 15,
+  [int]$RefreshIntervalSeconds = 43200,
   [switch]$NoPanel,
   [switch]$NoLoop,
   [switch]$NoPush
@@ -30,11 +32,18 @@ function Read-JsonFile([string]$Path) {
 }
 function Test-RunnerActive([string]$LockPath) {
   $lock = Read-JsonFile $LockPath
-  if ($null -eq $lock -or $null -eq $lock.pid) { return [pscustomobject]@{ active=$false; pid=$null; stale=$false } }
+  if ($null -eq $lock -or $null -eq $lock.pid) { return [pscustomobject]@{ active=$false; pid=$null; stale=$false; verified=$false } }
   $pidValue = [int]$lock.pid
   $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
-  $age = if (Test-Path -LiteralPath $LockPath) { ((Get-Date) - (Get-Item -LiteralPath $LockPath).LastWriteTime).TotalMinutes } else { 999999 }
-  return [pscustomobject]@{ active=($null -ne $proc); pid=$pidValue; stale=($age -gt $StaleMinutes) }
+  if ($null -eq $proc) { return [pscustomobject]@{ active=$false; pid=$pidValue; stale=$true; verified=$false } }
+  $startMatches = $false
+  try {
+    $expected = [datetime]::Parse([string]$lock.process_start_time).ToUniversalTime()
+    $actual = $proc.StartTime.ToUniversalTime()
+    $startMatches = ([math]::Abs(($actual - $expected).TotalSeconds) -lt 2)
+  } catch {}
+  $scopeMatches = ([string]$lock.lock_scope -eq "single_shared_runner_daemon")
+  return [pscustomobject]@{ active=($startMatches -and $scopeMatches); pid=$pidValue; stale=(-not $startMatches); verified=($startMatches -and $scopeMatches) }
 }
 
 $repoRoot = Resolve-AaysRepoRoot $RepoRoot
@@ -71,7 +80,7 @@ if (-not $runnerState.active) {
     $out = & powershell @args 2>&1
     $runnerStatus = "runner_scan_only_completed"
   } else {
-    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-IntervalSeconds",$IntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
+    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-IntervalSeconds",$IntervalSeconds,"-HeartbeatSeconds",$HeartbeatSeconds,"-RefreshIntervalSeconds",$RefreshIntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
     if ($NoPush) { $args += "-NoPush" }
     $proc = Start-Process -FilePath powershell -ArgumentList $args -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
     $runnerPid = $proc.Id
