@@ -9,20 +9,30 @@
   "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
   "single_runner_only": true,
   "parallel_runner": false,
+  "long_batch_mode": true,
+  "requested_subtask_count": 9,
   "queue_task_path": "docs/chatgpt_status/aays1/queue/142_security_site_row_evidence_visibility_fix_20260711.task.json",
   "report_path": "docs/chatgpt_status/aays1/reports/142_security_site_row_evidence_visibility_fix_20260711.md",
+  "multiwork_plan_path": "docs/chatgpt_status/aays1/reports/143_security_official_source_multiwork_batch_plan_20260711.md",
   "expected_runner_output": "docs/chatgpt_status/aays1/runner_outputs/142_security_site_row_evidence_visibility_fix.json",
   "expected_browser_proof": "docs/chatgpt_status/_shared/reports/security_row_evidence_browser_validation_20260711.json",
-  "resume_after_pass_task_id": "aays1-137-next-batch-source-fetch-20260710",
-  "goal": "Fix row-by-row official source and artifact visibility for the existing 150 verified Security rows, produce real Chrome/browser proof, then resume official-source 151+ expansion without fake rows.",
-  "acceptance_criteria": [
-    "GeoJSON feature count displays 150 instead of not_available",
-    "Baseline 150 rows are not all marked YENI/LATEST",
-    "Official source URL and CSV/GeoJSON/manifest/report evidence are visible per row",
-    "Browser-safe valid artifact links return HTTP 200 and missing artifacts display MISSING",
-    "Only real latest-batch rows receive YENI BATCH styling",
-    "Chrome/Selenium smoke passes with zero console errors",
-    "Git push and remote readback pass"
+  "resume_existing_task_after_visibility_pass": "aays1-137-next-batch-source-fetch-20260710",
+  "goal": "Use one long execution by the existing F portable runner to fix row-by-row evidence visibility, run browser proof, resume the existing official-source expansion, validate high-accuracy candidates, publish real 151+ rows, refresh site-visible files, and push remote evidence. Do not create another runner or duplicate task 137.",
+  "official_source_urls": [
+    "https://data.police.uk/docs/",
+    "https://data.police.uk/data/",
+    "https://geoportal.statistics.gov.uk/"
+  ],
+  "execution_plan": [
+    "Fix GeoJSON count and old/new row classification for the existing verified 150 rows",
+    "Expose official source and CSV/GeoJSON/manifest/report evidence per row",
+    "Run Chrome/Selenium visibility proof with zero console errors",
+    "Resume existing task 137 without creating a duplicate queue item",
+    "Fetch multiple eligible force/geography candidates from official data.police.uk sources in one batch",
+    "Apply the existing parcel-to-LSOA matching and Security score methodology",
+    "Publish only accuracy_score_4=4 and needs_manual_review=false rows",
+    "Update CSV, GeoJSON, evidence manifest, visible rows/status, and latest_changes.json atomically",
+    "Run final browser smoke, git push, and GitHub remote readback"
   ],
   "site_visible_outputs": [
     "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
@@ -31,12 +41,17 @@
     "england_map_web/data/security_public_safety/security_evidence_manifest.json",
     "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
   ],
-  "allowed_paths": [
-    "england_map_web/",
-    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/",
-    "docs/chatgpt_status/aays1/",
-    "docs/chatgpt_status/_shared/reports/"
-  ],
+  "accuracy_gate": {
+    "required_accuracy_score_4": 4,
+    "needs_manual_review": false,
+    "official_source_required": true,
+    "source_checksum_required": true,
+    "valid_lsoa_required": true,
+    "reproducible_spatial_match_required": true,
+    "csv_geojson_count_parity_required": true,
+    "browser_visible_evidence_required": true,
+    "git_remote_readback_required": true
+  },
   "baseline_visible_rows": 150,
   "baseline_verified_csv_rows": 150,
   "baseline_verified_geojson_features": 150,
