@@ -5,7 +5,17 @@ param(
   [Parameter(Mandatory=$true)][string[]]$Paths
 )
 $ErrorActionPreference='Stop'
-function Invoke-GitCommand([string]$Root,[string[]]$GitArgs){$o=& git.exe -C $Root @GitArgs 2>&1;[pscustomobject]@{code=$LASTEXITCODE;output=(($o|Out-String).Trim())}}
+function Invoke-GitCommand([string]$Root,[string[]]$GitArgs){
+  $previousPreference=$ErrorActionPreference
+  try {
+    $ErrorActionPreference='Continue'
+    $o=& git.exe -C $Root @GitArgs 2>&1
+    $code=$LASTEXITCODE
+  } finally {
+    $ErrorActionPreference=$previousPreference
+  }
+  [pscustomobject]@{code=$code;output=(($o|Out-String).Trim())}
+}
 function Hash-File([string]$Path){if(Test-Path -LiteralPath $Path){(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()}else{$null}}
 $taskRoot=[IO.Path]::GetFullPath($TaskRepoRoot);$controller=[IO.Path]::GetFullPath($ControllerRoot)
 if($taskRoot-eq$controller){throw 'TASK_AND_CONTROLLER_ROOT_MUST_DIFFER'}
