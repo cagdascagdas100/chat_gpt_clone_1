@@ -1,0 +1,61 @@
+{
+  "task_id": "174_aays1_parcel_label_matrix_visibility_source_paths_codex_fix_20260711",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "READY_FOR_CODEX_IMPLEMENTATION",
+  "priority": -2000,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "report_path": "docs/chatgpt_status/aays1/reports/174_parcel_label_matrix_row_visibility_source_paths_codex_fix_report_20260711.md",
+  "problem_summary": "The browser serves a stale batch-161 matrix with 98 tracked rows and does not surface newer candidate/enrichment work or complete source/audit paths. Summary semantics and repo-path linking are also incorrect.",
+  "required_files_to_inspect": [
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "docs/chatgpt_status/aays1/inputs",
+    "docs/chatgpt_status/aays1/evidence",
+    "docs/chatgpt_status/aays1/reports",
+    "docs/chatgpt_status/aays1/status"
+  ],
+  "required_actions": [
+    "build a deterministic unique-parcel consolidation pipeline for all current distance_property_types inputs and enrichments",
+    "surface every represented row on the website with source URL and all available payload/queue/report/evidence/local/downloaded/runner-output paths",
+    "make docs/chatgpt_status repo paths clickable from the matrix page",
+    "separate tracked, visible, pending, geometry-bound, new, updated and downloaded-source counts",
+    "fix blocker precedence to include status.bulk_blocker",
+    "add NEW_ROW, SOURCE_UPGRADED and ADDRESS_GEOMETRY_ENRICHED badges and filters",
+    "publish served_commit_sha, artifact_sha and freshness metadata",
+    "generate browser and GitHub remote-readback proof"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_row_artifact_index_latest.json",
+    "docs/chatgpt_status/aays1/runner_outputs/174_aays1_parcel_label_matrix_visibility_source_paths_fix_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/174_aays1_parcel_label_matrix_visibility_source_paths_browser_proof.json",
+    "docs/chatgpt_status/aays1/status/174_aays1_parcel_label_matrix_visibility_source_paths_fix_status.json",
+    "docs/chatgpt_status/aays1/reports/174_aays1_parcel_label_matrix_visibility_source_paths_fix_completion_report.md"
+  ],
+  "acceptance_contract": {
+    "unique_row_count_matches_browser": true,
+    "all_valid_inputs_through_batch_171_represented_or_rejected_with_reason": true,
+    "new_and_updated_rows_visually_distinct": true,
+    "repo_and_external_links_verified": true,
+    "browser_console_errors": 0,
+    "http_artifacts_ok": true,
+    "github_remote_readback_required": true,
+    "final_ready": false
+  },
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
