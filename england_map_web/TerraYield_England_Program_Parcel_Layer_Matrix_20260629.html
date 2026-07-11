@@ -9,7 +9,7 @@
     :root{color-scheme:dark;--bg:#0b1118;--band:#111b27;--line:#2b3b50;--text:#e8eef6;--muted:#a7b5c6;--ok:#60d394;--warn:#ffca6a;--bad:#ff7b7b;--accent:#ff8a3d}
     *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;font-size:14px;letter-spacing:0}
     header{padding:16px 18px;background:#0e1722;border-bottom:1px solid var(--line)}h1{font-size:24px;margin:0 0 6px}h2{font-size:17px;margin:0}p{margin:4px 0;color:var(--muted)}
-    .toolbar{display:grid;grid-template-columns:minmax(220px,320px) minmax(220px,1fr) minmax(180px,230px) auto auto;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--band)}
+    .toolbar{display:grid;grid-template-columns:minmax(220px,320px) minmax(220px,1fr) minmax(180px,230px) minmax(180px,230px) auto auto;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--band)}
     select,input,button{min-height:38px;border:1px solid #3c4d63;background:#08111b;color:var(--text);padding:7px 10px;font:inherit}button{cursor:pointer}button:hover{border-color:var(--accent)}
     .summary{padding:12px 18px;border-bottom:1px solid var(--line);display:grid;gap:8px}.summary-line{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #405168;padding:4px 7px;background:#0a141f}.pill.ok{border-color:#27734c;color:var(--ok)}.pill.warn{border-color:#8a6422;color:var(--warn)}.pill.bad{border-color:#8a3434;color:var(--bad)}
     .paths{font-family:Consolas,monospace;font-size:12px;color:#b8c8da;overflow-wrap:anywhere}.message{padding:10px 18px;border-bottom:1px solid var(--line);color:var(--muted)}.message.error{color:var(--bad)}
@@ -40,6 +40,12 @@
       <option value="manual">Yalnız manuel inceleme</option>
       <option value="missing">Yalnız eksik kanıt</option>
       <option value="completed">Yalnız completed</option>
+    </select>
+    <select id="viewSelect" aria-label="Topography görünümü">
+      <option value="parcel">Parsel sonuçları</option>
+      <option value="new_operations">Yeni işlemler</option>
+      <option value="all_operations">Tüm işlemler</option>
+      <option value="blockers">Blocker işlemleri</option>
     </select>
     <button id="prev" type="button">Önceki</button>
     <button id="next" type="button">Sonraki</button>
@@ -84,6 +90,18 @@ async function loadLayer(layer){state.layer=layer;state.page=0;document.getEleme
 async function loadMatrix(){state.matrixManifest=await getJson('chunks/manifest.json');state.matrixFilters=await getJson('chunks/filter_indexes.json');const key='all';const pages=state.matrixFilters[key]||[];state.rows=pages;state.filtered=pages;state.data={final_ready:false,fake_data:false};state.status={blocker:'none'};renderSummary();await renderMatrixPage()}
 async function renderMatrixPage(){const pages=state.filtered.length?state.filtered:[0];const idx=Math.min(state.page,pages.length-1);const pageNo=pages[idx]??idx;try{const chunk=await getJson(`chunks/page_${String(pageNo).padStart(6,'0')}.json`),rows=chunk.rows||[];const base=state.matrixManifest.base_columns||[],groups=state.matrixManifest.groups||[];let head='<tr>'+base.map(c=>`<th>${esc(c[0])}</th>`).join('');for(const g of groups)for(const f of g[1])head+=`<th>${esc(f[0])} - Çıktı</th><th>${esc(f[0])} - Kaynak/Kanıt</th><th>${esc(f[0])} - Doğruluk</th>`;head+='</tr>';document.querySelector('#table thead').innerHTML=head;document.querySelector('#table tbody').innerHTML=rows.map(r=>{let cells=base.map(c=>`<td>${esc(r[c[1]])}</td>`).join('');for(const g of groups)for(const f of g[1]){const cell=(r.outputs||{})[f[1]]||{};cells+=`<td>${esc(cell.value)}</td><td>${esc(cell.source)}</td><td>${esc(cell.accuracy)}</td>`}return `<tr>${cells}</tr>`}).join('');document.getElementById('pageInfo').textContent=`Chunk ${pageNo} - ${rows.length} satır`;document.getElementById('message').textContent='Tam parsel matrisi canonical chunk dosyasından yüklendi.'}catch(e){document.getElementById('message').className='message error';document.getElementById('message').textContent=`Matrix chunk hatası: ${e.message}`}}
 document.getElementById('layerSelect').addEventListener('change',e=>loadLayer(e.target.value));document.getElementById('search').addEventListener('input',applySearch);document.getElementById('statusFilter').addEventListener('change',applySearch);document.getElementById('prev').addEventListener('click',()=>{if(state.page>0){state.page--;renderRows()}});document.getElementById('next').addEventListener('click',()=>{const pages=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.page+1<pages||state.layer==='matrix'&&state.page+1<state.filtered.length){state.page++;renderRows()}});document.getElementById('refresh').addEventListener('click',()=>loadLayer(state.layer));
+configs.topography.operations='data/program_layer_matrix/topography_operations_latest.json';
+configs.security.operations='data/program_layer_matrix/security_public_safety_operations_latest.json';
+configs.gas.operations='data/program_layer_matrix/gas_emissions_pipeline_latest.json';
+configs.security.columns.unshift(['İşlem tipi','operation_type'],['Aşama','stage'],['İşlem durumu','status']);
+configs.gas.columns.push(['Resmi CSV eşleşmesi','official_csv_evidence_status'],['Kaynak SHA-256','source_sha256'],['Kaynak manifesti','source_manifest_path'],['Satır kanıtı','row_evidence_path'],['Pipeline','pipeline_path'],['Blocker','blocker']);
+configs.distance.columns.unshift(['Değişiklik','change_kind'],['Artifact index','artifact_index_path']);
+configs.topography.columns.unshift(['İşlem tipi','operation_type'],['Aşama','stage'],['Dataset','dataset'],['İstek durumu','request_status'],['Sayısal örnek durumu','numeric_sample_status']);
+state.operations=[];
+const baseLoadLayer=loadLayer;
+loadLayer=async function(layer){await baseLoadLayer(layer);if(state.status&&state.status.bulk_blocker){state.status.blocker=state.status.bulk_blocker;renderSummary()}const cfg=configs[layer];if(cfg&&cfg.operations){try{const operationDoc=await getJson(cfg.operations);state.operations=Array.isArray(operationDoc.operations)?operationDoc.operations:(Array.isArray(operationDoc.stages)?operationDoc.stages:[])}catch(e){state.operations=[];state.status.operations_fetch_error=e.message}}};
+function applyView(){const view=document.getElementById('viewSelect').value;if(view==='parcel'||!configs[state.layer]||!configs[state.layer].operations){state.rows=Array.isArray(state.data&&state.data.rows)?state.data.rows:[]}else if(view==='new_operations'){state.rows=state.operations.filter(x=>bool(x.is_new_operation))}else if(view==='blockers'){state.rows=state.operations.filter(x=>/blocked|failed|unavailable|request_failed|not_downloaded/i.test(String(x.status)+' '+String(x.blocker)))}else{state.rows=state.operations.slice()}state.filtered=state.rows.slice();state.page=0;renderSummary();renderRows()}
+document.getElementById('viewSelect').addEventListener('change',applyView);
 loadLayer('security');
 </script>
 </body>

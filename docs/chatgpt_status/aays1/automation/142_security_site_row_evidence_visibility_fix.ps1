@@ -16,6 +16,8 @@ $htmlRel = 'england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260
 $reportRel = 'docs/chatgpt_status/aays1/reports/142_security_site_row_evidence_visibility_fix_completion_20260711.md'
 $outputRel = 'docs/chatgpt_status/aays1/runner_outputs/142_security_site_row_evidence_visibility_fix.json'
 $browserProofRel = 'docs/chatgpt_status/_shared/reports/security_row_evidence_browser_validation_20260711.json'
+$operationsRel = 'england_map_web/data/program_layer_matrix/security_public_safety_operations_latest.json'
+$reportMirrorRel = 'england_map_web/data/program_layer_matrix/security_142_completion_report.md'
 
 $visibleRowsPath = Join-Path $repoRoot $visibleRowsRel
 $visibleStatusPath = Join-Path $repoRoot $visibleStatusRel
@@ -88,13 +90,22 @@ try {
   }
 
   $latestBatchId = if ($visible.latest_batch_id) { [string]$visible.latest_batch_id } else { 'security_baseline_150_verified' }
+  if ($rows.Count -eq 150) { $latestBatchId = 'security_baseline_150_verified' }
+  $csvSha = (Get-FileHash -LiteralPath $csvPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  $geoSha = (Get-FileHash -LiteralPath $geoPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  $manifestSha = (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
   $newCount = 0
   foreach ($row in $rows) {
     if ([string]::IsNullOrWhiteSpace([string]$row.source_url)) { $row | Add-Member -NotePropertyName source_url -NotePropertyValue 'https://data.police.uk/' -Force }
     if ([string]::IsNullOrWhiteSpace([string]$row.source_path)) { $row | Add-Member -NotePropertyName source_path -NotePropertyValue $csvRel -Force }
     if ([string]::IsNullOrWhiteSpace([string]$row.evidence_path)) { $row | Add-Member -NotePropertyName evidence_path -NotePropertyValue $geoRel -Force }
     if ([string]::IsNullOrWhiteSpace([string]$row.source_manifest_path)) { $row | Add-Member -NotePropertyName source_manifest_path -NotePropertyValue $manifestRel -Force }
-    $row | Add-Member -NotePropertyName report_path -NotePropertyValue $reportRel -Force
+    $row | Add-Member -NotePropertyName report_path -NotePropertyValue $reportMirrorRel -Force
+    $row | Add-Member -NotePropertyName task_id -NotePropertyValue $taskId -Force
+    $row | Add-Member -NotePropertyName source_csv_sha256 -NotePropertyValue $csvSha -Force
+    $row | Add-Member -NotePropertyName source_geojson_sha256 -NotePropertyValue $geoSha -Force
+    $row | Add-Member -NotePropertyName source_manifest_sha256 -NotePropertyValue $manifestSha -Force
+    $row | Add-Member -NotePropertyName operation_status -NotePropertyValue 'BASELINE_SOURCE_EVIDENCE_VISIBLE' -Force
     if ([string]::IsNullOrWhiteSpace([string]$row.candidate_status)) { $row | Add-Member -NotePropertyName candidate_status -NotePropertyValue 'VISIBLE_SOURCE_BACKED' -Force }
     if ([string]::IsNullOrWhiteSpace([string]$row.batch_id)) { $row | Add-Member -NotePropertyName batch_id -NotePropertyValue 'security_baseline_150_verified' -Force }
     if ([string]::IsNullOrWhiteSpace([string]$row.first_seen_at)) { $row | Add-Member -NotePropertyName first_seen_at -NotePropertyValue ([string]$row.source_date) -Force }
@@ -113,6 +124,8 @@ try {
   $visible | Add-Member -NotePropertyName new_rows_in_latest_batch -NotePropertyValue $newCount -Force
   $visible | Add-Member -NotePropertyName source_manifest_path -NotePropertyValue $manifestRel -Force
   $visible | Add-Member -NotePropertyName latest_report_path -NotePropertyValue $reportRel -Force
+  $visible | Add-Member -NotePropertyName browser_report_path -NotePropertyValue $reportMirrorRel -Force
+  $visible | Add-Member -NotePropertyName operations_path -NotePropertyValue $operationsRel -Force
   $visible | Add-Member -NotePropertyName latest_runner_output_path -NotePropertyValue $outputRel -Force
   $visible | Add-Member -NotePropertyName final_ready -NotePropertyValue $false -Force
   $visible | Add-Member -NotePropertyName fake_data -NotePropertyValue $false -Force
@@ -120,7 +133,26 @@ try {
   $visible | Add-Member -NotePropertyName migration -NotePropertyValue $false -Force
   $visible | Add-Member -NotePropertyName production_deploy -NotePropertyValue $false -Force
   $visible | Add-Member -NotePropertyName rows -NotePropertyValue $rows -Force
+  $manifest | Add-Member -NotePropertyName visible_rows_count -NotePropertyValue $rows.Count -Force
+  $manifest | Add-Member -NotePropertyName verified_csv_rows -NotePropertyValue $csvRows.Count -Force
+  $manifest | Add-Member -NotePropertyName verified_geojson_features -NotePropertyValue $geoFeatures.Count -Force
+  $manifest | Add-Member -NotePropertyName csv_sha256 -NotePropertyValue $csvSha -Force
+  $manifest | Add-Member -NotePropertyName geojson_sha256 -NotePropertyValue $geoSha -Force
+  $manifest | Add-Member -NotePropertyName manifest_sha256_before_update -NotePropertyValue $manifestSha -Force
+  $manifest | Add-Member -NotePropertyName browser_report_path -NotePropertyValue $reportMirrorRel -Force
+  $manifest | Add-Member -NotePropertyName operations_path -NotePropertyValue $operationsRel -Force
+  $manifest | Add-Member -NotePropertyName updated_at -NotePropertyValue $generatedAt -Force
+  $manifest | Add-Member -NotePropertyName blockers -NotePropertyValue @('PRODUCT_FINAL_VALIDATION_PENDING') -Force
+  $manifest | Add-Member -NotePropertyName final_ready -NotePropertyValue $false -Force
+  $manifest | Add-Member -NotePropertyName fake_data -NotePropertyValue $false -Force
+  $manifest | ConvertTo-Json -Depth 30 | Set-Content -Encoding UTF8 $manifestPath
   $visible | ConvertTo-Json -Depth 30 | Set-Content -Encoding UTF8 $visibleRowsPath
+  $operations=@(
+    [ordered]@{operation_id="${taskId}_validate_counts";task_id=$taskId;operation_type='baseline_validation';stage='csv_geojson_visible_count';status='passed';row_count=$rows.Count;source_path=$csvRel;evidence_path=$geoRel;blocker='';is_new_operation=$true;completed_at=$generatedAt;final_ready=$false;fake_data=$false},
+    [ordered]@{operation_id="${taskId}_row_provenance";task_id=$taskId;operation_type='row_provenance';stage='attach_source_manifest_report_checksums';status='passed';row_count=$rows.Count;source_path=$manifestRel;evidence_path=$operationsRel;blocker='';is_new_operation=$true;completed_at=$generatedAt;final_ready=$false;fake_data=$false},
+    [ordered]@{operation_id="${taskId}_browser_gate";task_id=$taskId;operation_type='browser_acceptance';stage='http_and_selenium_visibility';status='pending';row_count=$rows.Count;source_path=$visibleRowsRel;evidence_path=$browserProofRel;blocker='BROWSER_ACCEPTANCE_PENDING';is_new_operation=$true;completed_at=$null;final_ready=$false;fake_data=$false}
+  )
+  ([ordered]@{task_id=$taskId;updated_at=$generatedAt;operation_count=$operations.Count;new_operations_count=$operations.Count;blocked_operation_count=0;operations=$operations;final_ready=$false;fake_data=$false}|ConvertTo-Json -Depth 30)|Set-Content -LiteralPath (Join-Path $repoRoot $operationsRel) -Encoding UTF8
 
   $status | Add-Member -NotePropertyName verified_csv_rows -NotePropertyValue $csvRows.Count -Force
   $status | Add-Member -NotePropertyName verified_geojson_features -NotePropertyValue $geoFeatures.Count -Force
@@ -181,6 +213,8 @@ try {
 
 Browser proof is recorded separately and final readiness remains false.
 "@ | Set-Content -Encoding UTF8 $reportPath
+  Copy-Item -LiteralPath $reportPath -Destination (Join-Path $repoRoot $reportMirrorRel) -Force
+  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths @($visibleRowsRel,$visibleStatusRel,$operationsRel,$reportMirrorRel);if($LASTEXITCODE-ne0){$result.blockers+='live_controller_publish_blocked'}}
 
   $baseUrl = $null
   foreach ($candidate in @('http://127.0.0.1:8012','http://127.0.0.1:8020')) {
@@ -196,7 +230,7 @@ Browser proof is recorded separately and final readiness remains false.
       "$baseUrl/england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
       "$baseUrl/england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
       "$baseUrl/england_map_web/data/security_public_safety/security_evidence_manifest.json",
-      "$baseUrl/$reportRel"
+      "$baseUrl/$reportMirrorRel"
     )
     foreach ($url in $artifactUrls) {
       $result.clickable_source_links_checked++
@@ -297,7 +331,7 @@ Save-Result
 
 try {
   Push-Location $repoRoot
-  $paths = @($visibleRowsRel,$visibleStatusRel,$reportRel,$outputRel,$browserProofRel)
+  $paths = @($visibleRowsRel,$visibleStatusRel,$reportRel,$reportMirrorRel,$operationsRel,$outputRel,$browserProofRel)
   & git add -- @paths | Out-Null
   $changes = @(& git status --porcelain -- @paths)
   if ($changes.Count -gt 0) {

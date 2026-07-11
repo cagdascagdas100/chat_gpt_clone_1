@@ -38,8 +38,8 @@ if ($branch -ne 'codex/aays-single-runner-v5-20260706') {
   throw 'GAS_EMISSIONS_37_PIPELINE_WRONG_BRANCH'
 }
 
-$portableRoot = 'F:\TerraYield_AAYS_Portable'
-$servedRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
+$portableRoot=$repoRoot;while($portableRoot-and(Split-Path -Leaf $portableRoot)-ne'runner_system'){$parent=Split-Path -Parent $portableRoot;if($parent-eq$portableRoot){break};$portableRoot=$parent};if((Split-Path -Leaf $portableRoot)-eq'runner_system'){$portableRoot=Split-Path -Parent $portableRoot}else{throw'PORTABLE_ROOT_NOT_RESOLVED'}
+$servedRoot=[string]$env:AAYS_CONTROLLER_REPO_ROOT;if(-not$servedRoot){throw'AAYS_CONTROLLER_REPO_ROOT_MISSING'}
 $rowsRel = 'england_map_web\data\program_layer_matrix\gas_emissions_visible_rows_latest.json'
 $statusRel = 'england_map_web\data\program_layer_matrix\gas_emissions_status_latest.json'
 $matrixRel = 'england_map_web\TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html'
@@ -78,7 +78,7 @@ if ([string]$gate.status -ne 'PASS' -or [int]$gate.unique_row_count -ne 28) {
 }
 
 # Stage 2: materialize the official GOV.UK CSV outside the repository.
-$sourceDir = Join-Path $portableRoot 'runner_data\gas_emissions\official_sources'
+$sourceDir = Join-Path $portableRoot 'sources\gas_emissions'
 Ensure-Dir $sourceDir
 $sourceLocalPath = Join-Path $sourceDir '2005-23-uk-local-authority-ghg-emissions-CSV-dataset.csv'
 $sourceUrl = 'https://assets.publishing.service.gov.uk/media/68653c7ee6c3cc924228943f/2005-23-uk-local-authority-ghg-emissions-CSV-dataset.csv'
@@ -106,7 +106,7 @@ foreach ($candidate in @($candidateManifest.candidates)) {
   })
   if ($match.Count -ne 1) { throw "OFFICIAL_CSV_MATCH_COUNT_NOT_ONE: $($candidate.row_id) count=$($match.Count)" }
   $m = $match[0]
-  $actualTerritorial = [double]$_ = [double]$m.'Territorial emissions (kt CO2e)'
+  $actualTerritorial = [double]$m.'Territorial emissions (kt CO2e)'
   $actualScope = [double]$m.'Emissions within the scope of influence of LAs (kt CO2)'
   if ([Math]::Abs($actualTerritorial - [double]$candidate.territorial_emissions_kt_co2e) -gt 0.000000001) {
     throw "TERRITORIAL_VALUE_MISMATCH: $($candidate.row_id)"
@@ -212,9 +212,7 @@ $status.production_deploy = $false
 Write-Json $statusPath $status
 
 # Stage 4: publish to the fixed 8012 root and prove all 37 rows in Chrome/Selenium.
-foreach ($rel in @($rowsRel,$statusRel,$matrixRel)) {
-  Copy-Atomic (Join-Path $repoRoot $rel) (Join-Path $servedRoot $rel)
-}
+$publisher=Join-Path $repoRoot 'docs\chatgpt_status\_shared\automation\PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRoot -Paths @($rowsRel,$statusRel,$matrixRel);if($LASTEXITCODE-ne0){throw'GAS37_LIVE_CONTROLLER_PUBLISH_BLOCKED'}
 $httpUrl = 'http://127.0.0.1:8012/england_map_web/data/program_layer_matrix/gas_emissions_visible_rows_latest.json?gas37=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $httpCount = -1
 for ($i=0; $i -lt 15; $i++) {
@@ -335,7 +333,7 @@ if ($browserPassed) {
   $status | Add-Member -NotePropertyName browser_smoke_passed_at -NotePropertyValue ((Get-Date).ToUniversalTime().ToString('o')) -Force
   $status.next_required_runner_action = 'Proceed to parcel-level binding and required popup/legend field coverage; do not infer parcel emissions from authority totals.'
   Write-Json $statusPath $status
-  Copy-Atomic $statusPath (Join-Path $servedRoot $statusRel)
+  & powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRoot -Paths @($statusRel);if($LASTEXITCODE-ne0){throw'GAS37_STATUS_LIVE_CONTROLLER_PUBLISH_BLOCKED'}
 }
 
 # Stage 5: perform a non-destructive parcel/UI readiness audit in the same task.

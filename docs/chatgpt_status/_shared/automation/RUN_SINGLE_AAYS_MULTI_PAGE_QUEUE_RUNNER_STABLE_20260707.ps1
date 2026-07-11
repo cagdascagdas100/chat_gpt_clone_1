@@ -1,8 +1,8 @@
 param(
-  [string]$RepoRoot = 'C:\AAYS_WT\AAYS_REPAIR_20260706_1738',
+  [string]$RepoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707',
   [string]$RepoFullName = 'cagdascagdas100/chat_gpt_clone_1',
   [string]$MainBranch = 'codex/aays-single-runner-v5-20260706',
-  [string]$WorkRoot = 'C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES',
+  [string]$WorkRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES',
   [int]$StaleMinutes = 20,
   [int]$MaxTasks = 1,
   [switch]$ScanOnly,
@@ -10,6 +10,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$script:QueueScanRoot = $RepoRoot
+$script:RemoteQueueCommit = $null
 
 function Now-Utc { (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') }
 function Safe-Name([string]$Value) { (($Value -replace '[^A-Za-z0-9_.-]', '_').Trim('_')) }
@@ -96,6 +98,7 @@ function Is-ControllerRuntimePath([string]$Path) {
     $r -eq 'docs/chatgpt_status/_shared/status/local_reboot_runner_start_latest.json' -or
     $r -eq 'docs/chatgpt_status/_shared/status/local_reboot_runner_start_result_latest.json' -or
     $r.StartsWith('docs/chatgpt_status/_shared/status/reboot_runner_start_request_') -or
+    $r.StartsWith('docs/chatgpt_status/_shared/control/') -or
     $r.StartsWith('docs/chatgpt_status/_shared/logs/') -or
     $r.StartsWith('docs/chatgpt_status/_shared/reports/MULTI_PAGE_runner_output_') -or
     $r -eq 'docs/chatgpt_status/_shared/runner_lock' -or
@@ -188,7 +191,8 @@ function Clean-ControllerRuntimeDirty([string]$Root) {
   $script:Summary.controller_runtime_dirty_cleaned = $false
   return [pscustomobject]@{ all=$allDirty; runtime=$runtimeDirty; non_runtime=$dirty }
 }
-function Sync-ControllerRepo {
+function Sync-ControllerRepoDeprecated {
+  throw 'DEPRECATED_CONTROLLER_MUTATION_PATH_DISABLED'
   if (-not (Test-Path -LiteralPath $RepoRoot)) { throw 'REPO_ROOT_MISSING: ' + $RepoRoot }
   Assert-GitOk (Invoke-AaysGit $RepoRoot config core.longpaths true) 'CONFIG_LONGPATHS_FAILED'
   $dirtyInfo = Clean-ControllerRuntimeDirty $RepoRoot
@@ -202,7 +206,7 @@ function Sync-ControllerRepo {
     foreach ($runtimePath in @($dirtyInfo.runtime)) {
       $tracked = Invoke-AaysGit $RepoRoot ls-files --error-unmatch -- $runtimePath
       if ($tracked.code -eq 0) {
-        Assert-GitOk (Invoke-AaysGit $RepoRoot restore -- $runtimePath) 'CONTROLLER_RUNTIME_RESTORE_FAILED'
+        $script:Summary.controller_runtime_restore_skipped = $true
         $restoredRuntime += $runtimePath
       }
     }
@@ -222,7 +226,7 @@ function Sync-ControllerRepo {
     $script:Summary.controller_rebase_error = $controllerRebased.output
     $abort = Abort-GitRebaseIfPresent $RepoRoot
     if ($abort.code -ne 0) { throw ('CONTROLLER_REBASE_ABORT_FAILED: ' + $abort.output + "`nORIGINAL: " + $controllerRebased.output) }
-    Assert-GitOk (Invoke-AaysGit $RepoRoot reset --hard ('origin/' + $MainBranch)) 'CONTROLLER_RESET_TO_ORIGIN_FAILED'
+    throw 'DEPRECATED_CONTROLLER_REBASE_RECOVERY_DISABLED'
     $script:Summary.controller_rebase_recovered = $true
     $script:Summary.controller_sync_ok = $true
     $script:Summary.controller_sync_mode = 'rebase_failed_reset_to_origin'
@@ -230,6 +234,55 @@ function Sync-ControllerRepo {
   }
   $script:Summary.controller_sync_ok = $true
   $script:Summary.controller_sync_mode = 'restore_runtime_then_fetch_rebase_controller'
+}
+function Assert-GeneratedQueueMirrorPath([string]$Path) {
+  $rootFull = [System.IO.Path]::GetFullPath($WorkRoot).TrimEnd('\','/') + [System.IO.Path]::DirectorySeparatorChar
+  $pathFull = [System.IO.Path]::GetFullPath($Path)
+  if (-not $pathFull.StartsWith($rootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw ('QUEUE_MIRROR_OUTSIDE_WORKROOT: ' + $pathFull)
+  }
+}
+function New-RemoteQueueMirror {
+  $remoteRef = 'refs/remotes/origin/' + $MainBranch
+  $commitResult = Invoke-AaysGit $RepoRoot rev-parse $remoteRef
+  Assert-GitOk $commitResult 'REMOTE_QUEUE_REF_MISSING'
+  $remoteCommit = ([string]$commitResult.output).Trim()
+  $listResult = Invoke-AaysGit $RepoRoot ls-tree -r --name-only $remoteRef -- 'docs/chatgpt_status'
+  Assert-GitOk $listResult 'REMOTE_QUEUE_LIST_FAILED'
+  $mirrorRoot = Join-Path $WorkRoot '_remote_queue_mirror'
+  $tempRoot = Join-Path $WorkRoot ('_remote_queue_mirror_tmp_' + $PID)
+  Assert-GeneratedQueueMirrorPath $mirrorRoot
+  Assert-GeneratedQueueMirrorPath $tempRoot
+  if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
+  Ensure-Dir $tempRoot
+  $queuePaths = @($listResult.output -split '\r?\n' | Where-Object { $_ -match '^docs/chatgpt_status/[^/]+/queue/[^/]+$' })
+  foreach ($queuePath in $queuePaths) {
+    $showResult = Invoke-AaysGit $RepoRoot show ($remoteRef + ':' + $queuePath)
+    Assert-GitOk $showResult ('REMOTE_QUEUE_READ_FAILED: ' + $queuePath)
+    $destination = Join-Path $tempRoot ($queuePath -replace '/', '\\')
+    Ensure-Dir (Split-Path -Parent $destination)
+    Write-Utf8 $destination ([string]$showResult.output)
+  }
+  if (Test-Path -LiteralPath $mirrorRoot) { Remove-Item -LiteralPath $mirrorRoot -Recurse -Force }
+  Move-Item -LiteralPath $tempRoot -Destination $mirrorRoot
+  $script:RemoteQueueCommit = $remoteCommit
+  $script:Summary.remote_queue_commit = $remoteCommit
+  $script:Summary.remote_queue_count = $queuePaths.Count
+  $script:Summary.queue_source = 'generated_remote_queue_mirror'
+  return $mirrorRoot
+}
+function Sync-ControllerRepoSafe {
+  if (-not (Test-Path -LiteralPath $RepoRoot)) { throw 'REPO_ROOT_MISSING: ' + $RepoRoot }
+  Assert-GitOk (Invoke-AaysGit $RepoRoot config core.longpaths true) 'CONFIG_LONGPATHS_FAILED'
+  $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+  $dirtyInfo = Clean-ControllerRuntimeDirty $RepoRoot
+  $script:Summary.controller_fetch_ok = ($fetchResult.code -eq 0)
+  if ($fetchResult.code -ne 0) { $script:Summary.controller_fetch_error = $fetchResult.output }
+  $script:Summary.controller_sync_ok = ($fetchResult.code -eq 0)
+  $script:Summary.controller_sync_mode = if($fetchResult.code -eq 0){'fresh_remote_queue_mirror_local_changes_preserved'}else{'cached_remote_queue_mirror_fetch_failed_local_changes_preserved'}
+  $script:Summary.queue_refresh_fresh = ($fetchResult.code -eq 0)
+  $script:Summary.controller_local_changes_preserved = (@($dirtyInfo.all).Count -gt 0)
+  return (New-RemoteQueueMirror)
 }
 function Add-ArchivedTaskWorktree([string]$Path, [string]$ArchivePath, [string]$Reason) {
   if (-not $script:Summary.Contains('archived_task_worktrees')) { $script:Summary['archived_task_worktrees'] = @() }
@@ -307,7 +360,7 @@ function Read-QueueFile([System.IO.FileInfo]$File) {
   return [pscustomobject]$map
 }
 function Parse-Queue([System.IO.FileInfo]$File) {
-  $relative = Rel ($File.FullName.Substring($RepoRoot.Length).TrimStart('\','/'))
+  $relative = Rel ($File.FullName.Substring($script:QueueScanRoot.Length).TrimStart('\','/'))
   if ($relative -notmatch '^docs/chatgpt_status/([^/]+)/queue/[^/]+$') {
     return [pscustomobject]@{ valid=$false; queue_rel=$relative; skip_reason='NOT_CANONICAL_QUEUE_PATH' }
   }
@@ -527,6 +580,19 @@ function Run-Task([object]$Task) {
     Write-TaskFile $worktree $gateRel $gate
   }
   Write-TaskFile $worktree $reportRel ("TASK_ID=$taskId`nPAGE_KEY=$page`nRUNNER_STABLE=20260707`nwork_root=$WorkRoot`nnode_exists=$($browser.node_exists)`nnpm_exists=$($browser.npm_exists)`nedge_or_chrome_exists=$($browser.edge_or_chrome_exists)`nplaywright_available=$($browser.playwright_available)`nsite_8010_ok=$($browser.site_8010_ok)`nsite_8020_ok=$($browser.site_8020_ok)`nbrowser_smoke_passed=$($browser.browser_smoke_passed)`nautomation_exit_code=$automationCode`nfake_data=false`n--- output ---`n$automationOutput")
+  if ($automationCode -ne 0) {
+    $blockedPayload=[ordered]@{task_id=$taskId;page_key=$page;status='blocked';blocked_at=Now-Utc;automation_exit_code=$automationCode;runner_output_uploaded=$true;PUSH_SYNC_OK=$true;CONTINUE_RUNNER_READY=$true;blockers=@('AUTOMATION_EXIT_NONZERO');final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+    Write-TaskFile $worktree $gateRel $blockedPayload
+    Write-TaskFile $worktree $mirrorRel $blockedPayload
+    Write-TaskFile $worktree $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status='blocked';runner_blocked_at=Now-Utc;automation_exit_code=$automationCode;blockers=@('AUTOMATION_EXIT_NONZERO');final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+    Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=blocked`nAUTOMATION_EXIT_CODE=$automationCode`nFINAL_READY=false`nHEARTBEAT_AT=$(Now-Utc)`n"
+    $blockedStage=Stage-AllowedOnly $worktree $allowed
+    if(-not$blockedStage.ok){throw('BLOCKED_UNSCOPED_CHANGES: '+($blockedStage.unscoped-join','))}
+    Push-Sync $worktree $Task.target_branch "AAYS shared runner blocked evidence $page $taskId"
+    Sync-TaskResultBackToController $worktree $Task $null
+    $script:Summary.runner_output_uploaded=$true;$script:Summary.post_sync_ok=$true;$script:Summary.PUSH_SYNC_OK=$true;$script:Summary.CONTINUE_RUNNER_READY=$true
+    return [pscustomobject]@{task_id=$taskId;page_key=$page;completed=$false;status='blocked';automation_exit_code=$automationCode;final_ready=$false;worktree=$worktree}
+  }
   $stage = Stage-AllowedOnly $worktree $allowed
   if (-not $stage.ok) { throw ('BLOCKED_UNSCOPED_CHANGES: ' + ($stage.unscoped -join ',')) }
   $script:Summary.allowed_paths_enforced = $true
@@ -572,7 +638,7 @@ $SkipDebugPathToday = Join-Path $StatusDir "queue_skip_status_check_${TodayStamp
 $script:Summary = [ordered]@{ run_id=$RunId; checked_at=Now-Utc; repo_root=$RepoRoot; work_root=$WorkRoot; main_branch=$MainBranch; queue_seen=$false; queue_started=$false; single_runner_lock_acquired=$false; task_runs_in_clean_worktree=$false; allowed_paths_enforced=$false; runner_output_uploaded=$false; post_sync_ok=$false; PUSH_SYNC_OK=$false; CONTINUE_RUNNER_READY=$false; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@(); processed=@(); skipped=@() }
 
 try {
-  Sync-ControllerRepo
+  $script:QueueScanRoot = Sync-ControllerRepoSafe
   $lockFresh = $false
   if (Test-Path -LiteralPath $LockPath) {
     $existingLock=$null
@@ -586,11 +652,11 @@ try {
   Write-Utf8Atomic $LockPath (To-JsonText $scanLock)
   $script:Summary.single_runner_lock_acquired = $true
   Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; instance_id=$ScanInstanceId; lock_scope='single_scan_worker'; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
-  $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
+  $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $script:QueueScanRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
   $ready = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
   $script:Summary.queue_seen = ($parsed.Count -gt 0)
-  $selectionPayload = [ordered]@{ checked_at=Now-Utc; parsed_count=$parsed.Count; ready_count=$ready.Count; ready=$ready }
+  $selectionPayload = [ordered]@{ checked_at=Now-Utc; queue_source=$script:Summary.queue_source; remote_queue_commit=$script:RemoteQueueCommit; parsed_count=$parsed.Count; ready_count=$ready.Count; ready=$ready }
   $skipPayload = [ordered]@{ checked_at=Now-Utc; skipped=@($parsed | Where-Object { -not $_.valid -or -not ($_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner')) }) }
   Write-Utf8 $SelectionDebugPath (To-JsonText $selectionPayload)
   Write-Utf8 $SelectionDebugPathToday (To-JsonText $selectionPayload)

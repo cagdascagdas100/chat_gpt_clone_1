@@ -8,6 +8,8 @@ $AiRelative = 'england_map_web/data/geometry_review_3of4/photo_ai_boundary_revie
 $EvidenceRelative = 'england_map_web/data/geometry_review_3of4/vision_evidence/146_rows_1_3_20260711'
 $StatusRelative = 'docs/chatgpt_status/aays1/status/146_aays1_prepare_vision_evidence_rows_1_3_latest.json'
 $ReportRelative = 'docs/chatgpt_status/aays1/reports/146_aays1_prepare_vision_evidence_rows_1_3_report.md'
+$StatusMirrorRelative = 'england_map_web/data/geometry_review_3of4/task_reports/146_aays1_prepare_vision_evidence_rows_1_3_latest.json'
+$ReportMirrorRelative = 'england_map_web/data/geometry_review_3of4/task_reports/146_aays1_prepare_vision_evidence_rows_1_3_report.md'
 
 function Get-RepoRoot {
     if ($env:AAYS_REPO_ROOT -and (Test-Path -LiteralPath $env:AAYS_REPO_ROOT)) {
@@ -201,8 +203,8 @@ foreach ($rowId in $TargetRows) {
     Set-JsonField $row 'downloaded_photo_paths' @($photoRelatives)
     Set-JsonField $row 'polygon_render_path' $(if ($polygonOk) { $polygonRelative } else { $null })
     Set-JsonField $row 'vision_output_path' $visionRelative
-    Set-JsonField $row 'status_json_path' $StatusRelative
-    Set-JsonField $row 'report_md_path' $ReportRelative
+    Set-JsonField $row 'status_json_path' $StatusMirrorRelative
+    Set-JsonField $row 'report_md_path' $ReportMirrorRelative
     Set-JsonField $row 'photo_boundary_visible' 'not_yet_assessed'
     Set-JsonField $row 'visual_match_score' $null
     Set-JsonField $row 'geometry_mismatch_flag' $null
@@ -266,7 +268,7 @@ $status | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $StatusPath -Encod
 $lines = [System.Collections.Generic.List[string]]::new()
 $lines.Add('# Ready To Sell - Rows 1-3 Real Evidence Preparation')
 $lines.Add('')
-$lines.Add("- Task: `$TaskId`")
+$lines.Add("- Task: $TaskId")
 $lines.Add("- Targeted rows: $($TargetRows -join ', ')")
 $lines.Add("- Rows with real listing photo download this run: $downloadedCount / $($TargetRows.Count)")
 $lines.Add("- Rows with canonical polygon render this run: $renderedCount / $($TargetRows.Count)")
@@ -281,5 +283,7 @@ foreach ($r in $rowOutputs) {
 $lines.Add('')
 $lines.Add('`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 [System.IO.File]::WriteAllLines($ReportPath, $lines, [System.Text.UTF8Encoding]::new($false))
+$statusMirrorPath=Join-Path $RepoRoot $StatusMirrorRelative;$reportMirrorPath=Join-Path $RepoRoot $ReportMirrorRelative;New-Item -ItemType Directory -Force -Path (Split-Path -Parent $statusMirrorPath)|Out-Null;Copy-Item -LiteralPath $StatusPath -Destination $statusMirrorPath -Force;Copy-Item -LiteralPath $ReportPath -Destination $reportMirrorPath -Force
+if($env:AAYS_CONTROLLER_REPO_ROOT){$publishPaths=@($AiRelative,$StatusMirrorRelative,$ReportMirrorRelative);$publishPaths+=@(Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File|ForEach-Object{$_.FullName.Substring($RepoRoot.TrimEnd('\').Length).TrimStart('\')-replace'\','/'});$publisher=Join-Path $RepoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $RepoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishPaths;if($LASTEXITCODE-ne0){throw'READY_TO_SELL_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 
 $status | ConvertTo-Json -Depth 30

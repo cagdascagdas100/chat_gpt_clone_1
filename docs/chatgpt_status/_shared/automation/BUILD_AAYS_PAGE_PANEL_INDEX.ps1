@@ -124,7 +124,7 @@ function Get-PercentFromEvidence {
       continue
     }
   }
-  return 0
+  return $null
 }
 
 function Get-BlockersFromEvidence {
@@ -195,27 +195,27 @@ foreach ($dir in $requiredSharedDirs) {
 New-Item -ItemType Directory -Force -Path (Join-RepoPath "england_map_web/data/runner_panel") | Out-Null
 
 $script:DisplayNames = @{}
+$script:SourcePageKeys = @{}
+$script:QueueMatchPatterns = @{}
+$script:QueuePageKeys = @{}
+$script:PreferredTaskPatterns = @{}
 $menuRegistryPath = Join-Path $sharedRoot "automation/aays_runner_pages.json"
 $menuRegistry = Read-JsonFile -Path $menuRegistryPath
 $seedPages = New-Object System.Collections.Generic.List[string]
-foreach ($seed in @(
-  "aays1",
-  "topography",
-  "distance_property_types",
-  "gas_emissions",
-  "internet_access_parcel_layer_low_credit_20260612",
-  "security_public_safety",
-  "security_public_safety_low_credit_20260612",
-  "AAYS_REAL_TOPOGRAPHY_PRODUCT"
-)) {
-  $seedPages.Add($seed)
-}
 if ($null -ne $menuRegistry) {
   foreach ($menuPage in @($menuRegistry.pages)) {
     $key = [string]$menuPage.page_key
     if ($key) {
       $seedPages.Add($key)
       $script:DisplayNames[$key] = [string]$menuPage.display_name
+      $sourceKey = [string]$menuPage.source_page_key
+      if (-not $sourceKey) { $sourceKey = $key }
+      $script:SourcePageKeys[$key] = $sourceKey
+      $script:QueueMatchPatterns[$key] = [string]$menuPage.queue_match_pattern
+      $queueKey = [string]$menuPage.queue_page_key
+      if (-not $queueKey) { $queueKey = $sourceKey }
+      $script:QueuePageKeys[$key] = $queueKey
+      $script:PreferredTaskPatterns[$key] = [string]$menuPage.preferred_task_pattern
     }
   }
 }
@@ -224,19 +224,15 @@ $pageSet = [ordered]@{}
 foreach ($page in $seedPages) {
   if (-not [string]::IsNullOrWhiteSpace($page)) { $pageSet[$page] = $true }
 }
-if (Test-Path -LiteralPath $chatRoot) {
-  foreach ($dir in Get-ChildItem -LiteralPath $chatRoot -Directory -ErrorAction SilentlyContinue) {
-    if ($dir.Name -eq "_shared") { continue }
-    $pageSet[$dir.Name] = $true
-  }
-}
 
 $pageDirNames = @("queue", "status", "reports", "heartbeat", "completed", "blocked", "runner_outputs", "automation", "fixtures", "runner_tasks")
 $pages = New-Object System.Collections.Generic.List[object]
 $registryPages = New-Object System.Collections.Generic.List[object]
 
 foreach ($pageKey in $pageSet.Keys) {
-  $pageRoot = Join-Path $chatRoot $pageKey
+  $sourcePageKey = if ($script:SourcePageKeys.ContainsKey($pageKey)) { [string]$script:SourcePageKeys[$pageKey] } else { $pageKey }
+  $queuePageKey = if ($script:QueuePageKeys.ContainsKey($pageKey)) { [string]$script:QueuePageKeys[$pageKey] } else { $sourcePageKey }
+  $pageRoot = Join-Path $chatRoot $sourcePageKey
   if ($EnsurePageDirs) {
     New-Item -ItemType Directory -Force -Path $pageRoot | Out-Null
     foreach ($dirName in $pageDirNames) {
@@ -244,7 +240,7 @@ foreach ($pageKey in $pageSet.Keys) {
     }
   }
 
-  $queueDir = Join-Path $pageRoot "queue"
+  $queueDir = Join-Path (Join-Path $chatRoot $queuePageKey) "queue"
   $statusDir = Join-Path $pageRoot "status"
   $reportsDir = Join-Path $pageRoot "reports"
   $heartbeatDir = Join-Path $pageRoot "heartbeat"
@@ -256,7 +252,16 @@ foreach ($pageKey in $pageSet.Keys) {
   $runnerTasksDir = Join-Path $pageRoot "runner_tasks"
 
   $queueFiles = Get-QueueFiles -QueueDir $queueDir
-  $latestQueue = $queueFiles | Select-Object -First 1
+  $queueMatchPattern = if ($script:QueueMatchPatterns.ContainsKey($pageKey)) { [string]$script:QueueMatchPatterns[$pageKey] } else { '' }
+  if ($queueMatchPattern) { $queueFiles = @($queueFiles | Where-Object { $_.Name -match $queueMatchPattern }) }
+  $preferredPattern = if ($script:PreferredTaskPatterns.ContainsKey($pageKey)) { [string]$script:PreferredTaskPatterns[$pageKey] } else { '' }
+  if ($preferredPattern) {
+    $preferredFiles = @($queueFiles | Where-Object { $_.Name -match $preferredPattern })
+    if ($preferredFiles.Count -gt 0) { $queueFiles = $preferredFiles }
+  }
+  $activeStatuses = @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner','retry_pending')
+  $latestQueue = $queueFiles | Where-Object { $q=Read-JsonFile -Path $_.FullName; $q -and ([string]$q.status).ToLowerInvariant() -in $activeStatuses } | Sort-Object @{Expression={ $q=Read-JsonFile -Path $_.FullName; $n=1000; [void][int]::TryParse([string]$q.priority,[ref]$n); $n }},LastWriteTime -Descending | Select-Object -First 1
+  if ($null -eq $latestQueue) { $latestQueue = $queueFiles | Select-Object -First 1 }
   $queue = $null
   $queueErrors = New-Object System.Collections.Generic.List[string]
   $latestTaskId = ""
@@ -276,14 +281,13 @@ foreach ($pageKey in $pageSet.Keys) {
       $payloadPageKey = [string](Get-JsonValue -Object $queue -Names @("page_key", "pageKey") -Default "")
       if ([string]::IsNullOrWhiteSpace($payloadPageKey)) {
         $queueErrors.Add("missing_page_key")
-      } elseif ($payloadPageKey -ne $pageKey) {
+      } elseif ($payloadPageKey -ne $queuePageKey) {
         $queueErrors.Add("PAGE_KEY_PATH_MISMATCH")
       }
 
       $scriptPath = [string](Get-JsonValue -Object $queue -Names @("script_path", "scriptPath") -Default "")
       $automationScript = [string](Get-JsonValue -Object $queue -Names @("automation_script", "script") -Default "")
-      if ([string]::IsNullOrWhiteSpace($scriptPath)) { $queueErrors.Add("missing_script_path") }
-      if ([string]::IsNullOrWhiteSpace($automationScript)) { $queueErrors.Add("missing_automation_script") }
+      if ([string]::IsNullOrWhiteSpace($scriptPath) -and [string]::IsNullOrWhiteSpace($automationScript)) { $queueErrors.Add("missing_script_path_or_automation_script") }
       if ($scriptPath -and $automationScript -and $scriptPath -ne $automationScript) { $queueErrors.Add("script_path_automation_script_mismatch") }
 
       $allowedPathsValue = Get-JsonValue -Object $queue -Names @("allowed_paths", "allowedPaths")
@@ -313,8 +317,9 @@ foreach ($pageKey in $pageSet.Keys) {
   $evidenceFiles = @($latestQueue, $latestHeartbeat, $latestCompleted, $latestBlocked, $latestReport, $latestStatus) |
     Where-Object { $null -ne $_ }
   $completionPercent = Get-PercentFromEvidence -Files $evidenceFiles
-  $remainingPercent = 100 - $completionPercent
-  if ($remainingPercent -lt 0) { $remainingPercent = 0 }
+  $progressProven = ($null -ne $completionPercent)
+  $remainingPercent = if ($progressProven) { 100 - [int]$completionPercent } else { $null }
+  if ($null -ne $remainingPercent -and $remainingPercent -lt 0) { $remainingPercent = 0 }
 
   $blockers = New-Object System.Collections.Generic.List[string]
   foreach ($err in $queueErrors) { $blockers.Add($err) }
@@ -347,13 +352,17 @@ foreach ($pageKey in $pageSet.Keys) {
   $evidencePaths = @($evidenceFiles | ForEach-Object { ConvertTo-RepoRelative -Path $_.FullName } | Select-Object -Unique)
   $entry = [ordered]@{
     page_key = $pageKey
+    source_page_key = $sourcePageKey
+    queue_page_key = $queuePageKey
     display_name = Get-DisplayName -PageKey $pageKey
     runner_status = $runnerStatus
     latest_queue_status = $latestQueueStatus
     latest_task_id = $latestTaskId
     latest_queue_task = if ($latestQueue) { ConvertTo-RepoRelative -Path $latestQueue.FullName } else { "" }
-    completion_percent = [int]$completionPercent
-    remaining_percent = [int]$remainingPercent
+    completion_percent = if ($progressProven) { [int]$completionPercent } else { $null }
+    remaining_percent = if ($progressProven) { [int]$remainingPercent } else { $null }
+    completion_display = if ($progressProven) { ([string]$completionPercent + '%') } else { 'NOT_PROVEN' }
+    progress_proven = [bool]$progressProven
     final_ready = [bool]$finalReady
     last_heartbeat_at = Get-HeartbeatTime -File $latestHeartbeat
     heartbeat_at = Get-HeartbeatTime -File $latestHeartbeat
@@ -386,27 +395,29 @@ foreach ($pageKey in $pageSet.Keys) {
 
   $registryPages.Add([pscustomobject]([ordered]@{
     page_key = $pageKey
+    source_page_key = $sourcePageKey
+    queue_page_key = $queuePageKey
     display_name = Get-DisplayName -PageKey $pageKey
-    root = "docs/chatgpt_status/$pageKey"
-    queue_dir = "docs/chatgpt_status/$pageKey/queue"
-    status_dir = "docs/chatgpt_status/$pageKey/status"
-    report_dir = "docs/chatgpt_status/$pageKey/reports"
-    reports_dir = "docs/chatgpt_status/$pageKey/reports"
-    heartbeat_dir = "docs/chatgpt_status/$pageKey/heartbeat"
-    completed_dir = "docs/chatgpt_status/$pageKey/completed"
-    blocked_dir = "docs/chatgpt_status/$pageKey/blocked"
-    runner_outputs_dir = "docs/chatgpt_status/$pageKey/runner_outputs"
-    automation_dir = "docs/chatgpt_status/$pageKey/automation"
-    fixtures_dir = "docs/chatgpt_status/$pageKey/fixtures"
-    runner_tasks_dir = "docs/chatgpt_status/$pageKey/runner_tasks"
-    canonical_queue = "docs/chatgpt_status/$pageKey/queue/current.task.json"
-    heartbeat_file = "docs/chatgpt_status/$pageKey/status/heartbeat_latest.txt"
-    allowed_paths = @("docs/chatgpt_status/$pageKey/")
+    root = "docs/chatgpt_status/$sourcePageKey"
+    queue_dir = "docs/chatgpt_status/$queuePageKey/queue"
+    status_dir = "docs/chatgpt_status/$sourcePageKey/status"
+    report_dir = "docs/chatgpt_status/$sourcePageKey/reports"
+    reports_dir = "docs/chatgpt_status/$sourcePageKey/reports"
+    heartbeat_dir = "docs/chatgpt_status/$sourcePageKey/heartbeat"
+    completed_dir = "docs/chatgpt_status/$sourcePageKey/completed"
+    blocked_dir = "docs/chatgpt_status/$sourcePageKey/blocked"
+    runner_outputs_dir = "docs/chatgpt_status/$sourcePageKey/runner_outputs"
+    automation_dir = "docs/chatgpt_status/$sourcePageKey/automation"
+    fixtures_dir = "docs/chatgpt_status/$sourcePageKey/fixtures"
+    runner_tasks_dir = "docs/chatgpt_status/$sourcePageKey/runner_tasks"
+    canonical_queue = "docs/chatgpt_status/$queuePageKey/queue/current.task.json"
+    heartbeat_file = "docs/chatgpt_status/$sourcePageKey/status/heartbeat_latest.txt"
+    allowed_paths = @("docs/chatgpt_status/$sourcePageKey/")
     final_ready_policy = "real_evidence_only"
   }))
 }
 
-$lockPath = Join-Path $sharedRoot "state/single_runner.lock.json"
+$lockPath = Join-Path $sharedRoot "locks/single_runner.lock"
 $runnerPid = $null
 $runnerActive = $false
 if (Test-Path -LiteralPath $lockPath) {
@@ -438,6 +449,7 @@ if ($null -ne $menuRegistry) {
       display_name = [string]$_.display_name
       menu_name = [string]$_.display_name
       page_key = [string]$_.page_key
+      source_page_key = [string]$_.source_page_key
       aliases = @($_.aliases)
     })
   })
@@ -455,13 +467,8 @@ $index = [ordered]@{
   single_runner_active = [bool]$runnerActive
   single_runner_status = $singleRunnerStatus
   runner_pid = $runnerPid
+  global_heartbeat_file = "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json"
   github_push_status = "not_attempted_by_panel_builder"
-  repo_root_compatibility = [ordered]@{
-    active_repo_root = $script:RepoRoot
-    c_drive_checkout_supported = (Test-Path -LiteralPath "C:\Users\cagda\Documents\GitHub\AAYS")
-    f_drive_main_supported = (Test-Path -LiteralPath "F:\chatgpt\chat_gpt_clone_1_main")
-    f_drive_fresh_supported = (Test-Path -LiteralPath "F:\chatgpt\chat_gpt_clone_1_main_fresh")
-  }
   menu_mappings = @($menuMappings)
   pages = $pageArray
 }

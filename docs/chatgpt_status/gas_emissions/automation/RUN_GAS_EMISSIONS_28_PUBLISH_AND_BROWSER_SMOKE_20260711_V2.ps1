@@ -43,8 +43,9 @@ if ($branch -ne 'codex/aays-single-runner-v5-20260706') {
   throw 'GAS_EMISSIONS_V2_WRONG_BRANCH'
 }
 
-$portableRoot = 'F:\TerraYield_AAYS_Portable'
-$servedRepoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
+$portableRoot=$repoRoot;while($portableRoot -and (Split-Path -Leaf $portableRoot) -ne 'runner_system'){$parent=Split-Path -Parent $portableRoot;if($parent-eq$portableRoot){break};$portableRoot=$parent};if((Split-Path -Leaf $portableRoot)-eq'runner_system'){$portableRoot=Split-Path -Parent $portableRoot}else{throw'PORTABLE_ROOT_NOT_RESOLVED'}
+$servedRepoRoot=[string]$env:AAYS_CONTROLLER_REPO_ROOT
+if(-not$servedRepoRoot){throw'AAYS_CONTROLLER_REPO_ROOT_MISSING'}
 $matrixRel = 'england_map_web\TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html'
 $rowsRel = 'england_map_web\data\program_layer_matrix\gas_emissions_visible_rows_latest.json'
 $statusRel = 'england_map_web\data\program_layer_matrix\gas_emissions_status_latest.json'
@@ -61,6 +62,27 @@ foreach ($required in @($sourceRows,$sourceStatus,$sourceMatrix)) {
 
 $canonicalCount = Get-RowCountFromJson $sourceRows
 if ($canonicalCount -ne 28) { throw "CANONICAL_ROW_COUNT_NOT_28: $canonicalCount" }
+$sourceUrl='https://assets.publishing.service.gov.uk/media/68653c7ee6c3cc924228943f/2005-23-uk-local-authority-ghg-emissions-CSV-dataset.csv'
+$sourceDir=Join-Path $portableRoot 'sources\gas_emissions';Ensure-Dir $sourceDir;$sourceLocalPath=Join-Path $sourceDir '2005-23-uk-local-authority-ghg-emissions-CSV-dataset.csv'
+if(-not(Test-Path $sourceLocalPath)-or(Get-Item $sourceLocalPath).Length-lt1000000){$partial=$sourceLocalPath+'.partial';if(Test-Path $partial){Remove-Item $partial -Force};Invoke-WebRequest -UseBasicParsing -Uri $sourceUrl -OutFile $partial -TimeoutSec 1800;if((Get-Item $partial).Length-lt1000000){throw'OFFICIAL_CSV_DOWNLOAD_TOO_SMALL'};Move-Item $partial $sourceLocalPath -Force}
+$sourceSha=(Get-FileHash $sourceLocalPath -Algorithm SHA256).Hash.ToLowerInvariant();$sourceSize=(Get-Item $sourceLocalPath).Length;$csvRows=@([IO.File]::ReadLines($sourceLocalPath)|Select-Object -First 260|ConvertFrom-Csv);if(-not($csvRows|Where-Object{$_.'Local Authority Code'-eq'E06000001'})){throw'HARTLEPOOL_E06000001_NOT_FOUND'}
+$visible=Get-Content $sourceRows -Raw -Encoding UTF8|ConvertFrom-Json;$evidence=@();$matchCount=0
+foreach($row in @($visible.rows)){
+  $m=@($csvRows|Where-Object{[string]$_.'Local Authority Code'-eq'E06000001'-and[int]$_.'Calendar Year'-eq[int]$row.calendar_year-and[string]$_.'LA GHG Sector'-eq[string]$row.sector-and[string]$_.'LA GHG Sub-sector'-eq[string]$row.sub_sector-and[string]$_.'Greenhouse gas'-eq[string]$row.greenhouse_gas})
+  $ok=$false;if($m.Count-eq1){$ok=([Math]::Abs([double]($m[0].'Territorial emissions (kt CO2e)')-[double]$row.territorial_emissions_kt_co2e)-lt0.000000001)};if($ok){$matchCount++}
+  $row|Add-Member -NotePropertyName source_local_raw_path -NotePropertyValue $sourceLocalPath -Force
+  $row|Add-Member -NotePropertyName source_sha256 -NotePropertyValue $sourceSha -Force
+  $row|Add-Member -NotePropertyName official_csv_evidence_status -NotePropertyValue $(if($ok){'OFFICIAL_CSV_EXACT_MATCH'}else{'OFFICIAL_CSV_MISMATCH'}) -Force
+  $row|Add-Member -NotePropertyName blocker -NotePropertyValue $(if($ok){'PARCEL_BINDING_PENDING'}else{'OFFICIAL_CSV_ROW_MISMATCH'}) -Force
+  $row|Add-Member -NotePropertyName source_manifest_path -NotePropertyValue 'england_map_web/data/program_layer_matrix/gas_emissions_source_manifest_latest.json' -Force
+  $row|Add-Member -NotePropertyName row_evidence_path -NotePropertyValue 'england_map_web/data/program_layer_matrix/gas_emissions_row_evidence_latest.json' -Force
+  $row|Add-Member -NotePropertyName pipeline_path -NotePropertyValue 'england_map_web/data/program_layer_matrix/gas_emissions_pipeline_latest.json' -Force
+  $row|Add-Member -NotePropertyName report_path -NotePropertyValue 'england_map_web/data/program_layer_matrix/gas_emissions_row_evidence_latest.json' -Force
+  $evidence+=[ordered]@{row_id=$row.row_id;official_csv_match=$ok;source_url=$sourceUrl;source_local_raw_path=$sourceLocalPath;source_sha256=$sourceSha;parcel_binding_status=$row.parcel_binding_status;blocker=$row.blocker;final_ready=$false;fake_data=$false}
+}
+if($matchCount-ne28){throw"OFFICIAL_CSV_EXACT_MATCH_COUNT_NOT_28:$matchCount"}
+$visible.rows=@($visible.rows|Sort-Object @{Expression={if($_.is_new_in_latest_batch-eq$true){0}else{1}}},row_id)
+$manifestRel='england_map_web\data\program_layer_matrix\gas_emissions_source_manifest_latest.json';$evidenceRel='england_map_web\data\program_layer_matrix\gas_emissions_row_evidence_latest.json';$pipelineRel='england_map_web\data\program_layer_matrix\gas_emissions_pipeline_latest.json';Write-Json (Join-Path $repoRoot $manifestRel) ([ordered]@{source_url=$sourceUrl;source_local_raw_path=$sourceLocalPath;size_bytes=$sourceSize;sha256=$sourceSha;hartlepool_code='E06000001';visible_rows_checked=28;exact_match_count=$matchCount;final_ready=$false;fake_data=$false});Write-Json (Join-Path $repoRoot $evidenceRel) ([ordered]@{row_count=28;exact_match_count=$matchCount;rows=$evidence;final_ready=$false;fake_data=$false});Write-Json (Join-Path $repoRoot $pipelineRel) ([ordered]@{stages=@([ordered]@{stage='official_csv_materialization';status='passed'},[ordered]@{stage='row_level_csv_comparison';status='passed'},[ordered]@{stage='browser_smoke';status='running'},[ordered]@{stage='parcel_binding';status='blocked';blocker='PARCEL_BINDING_PENDING'},[ordered]@{stage='dispatcher_continuation';status='queued'});final_ready=$false;fake_data=$false});Write-Json $sourceRows $visible
 
 if (-not (Test-Path -LiteralPath $servedRepoRoot)) {
   throw 'CANONICAL_SERVED_REPO_ROOT_NOT_FOUND'
@@ -71,7 +93,7 @@ if (-not ([System.IO.Path]::GetFullPath($servedRepoRoot).StartsWith([System.IO.P
 
 $gitPullStatus = 'not_attempted'
 $git = Get-Command git -ErrorAction SilentlyContinue
-if ($git) {
+if ($false -and $git) {
   try {
     $dirty = @(& $git.Source -C $servedRepoRoot status --porcelain 2>$null)
     if (@($dirty).Count -eq 0) {
@@ -92,6 +114,7 @@ $publishFiles = @(
   @{ Source=$sourceStatus; Target=(Join-Path $servedRepoRoot $statusRel) },
   @{ Source=$sourceMatrix; Target=(Join-Path $servedRepoRoot $matrixRel) }
 )
+$publisher=Join-Path $repoRoot 'docs\chatgpt_status\_shared\automation\PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($rowsRel,$statusRel,$matrixRel,$manifestRel,$evidenceRel,$pipelineRel);if($LASTEXITCODE-ne0){throw'GAS28_LIVE_CONTROLLER_PUBLISH_BLOCKED'}
 foreach ($item in $publishFiles) {
   $sourceHash = (Get-FileHash -LiteralPath $item.Source -Algorithm SHA256).Hash
   $targetHash = if (Test-Path -LiteralPath $item.Target) { (Get-FileHash -LiteralPath $item.Target -Algorithm SHA256).Hash } else { '' }
@@ -296,6 +319,7 @@ Write-Json $reportPath $payload
 Write-Json $resultStatusPath $payload
 
 if ($passed) {
+  $pipeline=Get-Content (Join-Path $repoRoot $pipelineRel) -Raw -Encoding UTF8|ConvertFrom-Json;foreach($stage in @($pipeline.stages)){if($stage.stage-eq'browser_smoke'){$stage.status='passed'}elseif($stage.stage-eq'dispatcher_continuation'){$stage.status='ready'}};Write-Json (Join-Path $repoRoot $pipelineRel) $pipeline;powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($statusRel,$pipelineRel)|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_FINAL_STATUS_PUBLISH_BLOCKED'}
   $canonical = Get-Content -LiteralPath $canonicalStatusPath -Raw -Encoding UTF8 | ConvertFrom-Json
   $canonical.browser_smoke_passed = $true
   $canonical | Add-Member -NotePropertyName browser_smoke_row_count -NotePropertyValue 28 -Force
@@ -310,6 +334,7 @@ if ($passed) {
   $canonical.product_final_ready = $false
   $canonical.fake_data = $false
   Write-Json $canonicalStatusPath $canonical
+  powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($statusRel,$pipelineRel)|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_CANONICAL_STATUS_PUBLISH_BLOCKED'}
 
   if (Test-Path -LiteralPath $blockerPath) {
     $blocker = Get-Content -LiteralPath $blockerPath -Raw -Encoding UTF8 | ConvertFrom-Json

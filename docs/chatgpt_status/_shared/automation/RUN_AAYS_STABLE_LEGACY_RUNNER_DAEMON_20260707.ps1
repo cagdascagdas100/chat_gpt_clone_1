@@ -38,6 +38,7 @@ $lockPath = Join-Path $lockDir "single_runner.lock"
 $statusPath = Join-Path $statusDir "stable_runner_daemon_latest.json"
 $bootstrapPath = Join-Path $statusDir "runner_bootstrap_latest.json"
 $heartbeatPath = Join-Path $heartbeatDir "stable_runner_daemon_heartbeat_latest.json"
+$queueRefreshSignal = Join-Path $sharedRoot "control/request_queue_refresh.json"
 $instanceId = [guid]::NewGuid().ToString("N")
 $process = Get-Process -Id $PID -ErrorAction Stop
 $processStartUtc = $process.StartTime.ToUniversalTime().ToString("o")
@@ -232,19 +233,19 @@ function Invoke-Git([string[]]$GitArgs) {
 }
 function Test-RuntimePath([string]$Path) {
   $p=$Path.Replace("\","/")
-  return $p -like "docs/chatgpt_status/_shared/heartbeat/*" -or $p -like "docs/chatgpt_status/_shared/status/*" -or $p -like "docs/chatgpt_status/_shared/logs/*" -or $p -like "docs/chatgpt_status/_shared/locks/*" -or $p -like "docs/chatgpt_status/_shared/runner_lock/*" -or $p -like "docs/chatgpt_status/*/heartbeat/*" -or $p -like "docs/chatgpt_status/*/runner_outputs/*"
+  return $p -like "docs/chatgpt_status/_shared/heartbeat/*" -or $p -like "docs/chatgpt_status/_shared/status/*" -or $p -like "docs/chatgpt_status/_shared/logs/*" -or $p -like "docs/chatgpt_status/_shared/locks/*" -or $p -like "docs/chatgpt_status/_shared/runner_lock/*" -or $p -like "docs/chatgpt_status/_shared/control/*" -or $p -like "docs/chatgpt_status/*/heartbeat/*" -or $p -like "docs/chatgpt_status/*/runner_outputs/*"
 }
 function Invoke-SafeRefresh {
   $script:State="refreshing"
   Write-Heartbeat
   try {
+    $fetch=Invoke-Git -GitArgs @("fetch","--no-tags","origin",("+refs/heads/$MainBranch`:refs/remotes/origin/$MainBranch"))
+    if($fetch.code -ne 0){$script:RefreshResult="fetch_failed";Add-Log "refresh_fetch_failed=$($fetch.output)";return}
     $status=Invoke-Git -GitArgs @("status","--porcelain")
     if($status.code -ne 0){$script:RefreshResult="git_status_failed";return}
     $dirty=@($status.output -split "`r?`n" | Where-Object {$_} | ForEach-Object {if($_.Length -gt 3){$_.Substring(3).Trim()}else{""}})
     $nonRuntime=@($dirty | Where-Object {-not(Test-RuntimePath $_)})
-    if($nonRuntime.Count -gt 0){$script:RefreshResult="blocked_dirty_repo";Add-Log ("refresh_blocked_dirty_repo="+($nonRuntime -join ","));return}
-    $fetch=Invoke-Git -GitArgs @("fetch","--no-tags","origin",$MainBranch)
-    if($fetch.code -ne 0){$script:RefreshResult="fetch_failed";Add-Log "refresh_fetch_failed=$($fetch.output)";return}
+    if($nonRuntime.Count -gt 0){$script:RefreshResult="fetch_ok_local_changes_preserved";Add-Log ("refresh_local_changes_preserved="+($nonRuntime -join ","));return}
     if($dirty.Count -gt 0){$script:RefreshResult="fetch_only_runtime_changes_preserved"}else{
       $pull=Invoke-Git -GitArgs @("pull","--ff-only","origin",$MainBranch)
       $script:RefreshResult=if($pull.code -eq 0){"pull_ff_ok"}else{"pull_ff_failed"}
@@ -288,7 +289,10 @@ Add-Log "persistent_daemon_started pid=$PID instance=$instanceId repo=$RepoRoot"
 try {
   while ($true) {
     try {
-    if ((Get-Date).ToUniversalTime() -ge $script:NextRefreshAt) { Invoke-SafeRefresh }
+    if (Test-Path -LiteralPath $queueRefreshSignal) {
+      Invoke-SafeRefresh
+      Remove-Item -LiteralPath $queueRefreshSignal -Force -ErrorAction SilentlyContinue
+    } elseif ((Get-Date).ToUniversalTime() -ge $script:NextRefreshAt) { Invoke-SafeRefresh }
     $script:Loop++
     $script:State="starting_worker"
     if($SelfTestFailFirstWorker -and -not $script:DummyFailureUsed){

@@ -72,8 +72,8 @@ function Invoke-ElevationDataset([string]$Dataset, [object[]]$Rows) {
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([string]$env:AAYS_REPO_ROOT)
-if (-not $repoRoot -or -not $repoRoot.StartsWith('F:\TerraYield_AAYS_Portable\', [System.StringComparison]::OrdinalIgnoreCase)) {
-  throw 'TOPOGRAPHY_159_REQUIRES_F_PORTABLE_SHARED_RUNNER_WORKTREE'
+if (-not $repoRoot -or $repoRoot -notmatch '(?i)[\\/]TerraYield_AAYS_Portable[\\/]runner_system[\\/]') {
+  throw 'TOPOGRAPHY_159_REQUIRES_PORTABLE_SHARED_RUNNER_WORKTREE'
 }
 
 $taskId = if ($env:AAYS_TASK_ID) { [string]$env:AAYS_TASK_ID } else { 'aays1-159-topography-official-source-acceleration-bridge-20260711' }
@@ -94,6 +94,25 @@ $statusRel = 'docs/chatgpt_status/topography/status/159_topography_extended_cons
 $reportRel = 'docs/chatgpt_status/topography/reports/159_topography_extended_consensus_report_20260711.md'
 $browserProofRel = 'docs/chatgpt_status/topography/reports/159_topography_extended_consensus_browser_validation_20260711.json'
 $runnerOutputRel = 'docs/chatgpt_status/topography/runner_outputs/159_topography_extended_consensus_batch.json'
+$operationsRel = 'england_map_web/data/program_layer_matrix/topography_operations_latest.json'
+$operationsStatusRel = 'docs/chatgpt_status/topography/status/topography_operations_latest.json'
+function Write-OperationLedger([object[]]$StageItems,[object[]]$ParcelRows,[string]$RunStatus,[string]$FailureBlocker='') {
+  $now=Now-Utc; $runKey=($startedAt -replace '[^0-9]',''); $ops=@(); $sequence=0
+  foreach($stageItem in @($StageItems)){
+    $sequence++; $stageName=[string](Get-Prop $stageItem 'stage'); $stageStatus=[string](Get-Prop $stageItem 'status')
+    $blocked=($stageStatus -match 'blocked|unavailable|failed'); $ops += [ordered]@{
+      operation_id="${taskId}_${runKey}_stage_$sequence"; task_id=$taskId; page_key='topography'; operation_type='pipeline_stage'; stage_index=$sequence; stage=$stageName; dataset=$stageName; source_url=if($stageName -match 'srtm30'){$srtm30.request_url}elseif($stageName -match 'aster30'){$aster30.request_url}else{$null}; request_status=$stageStatus; numeric_sample_status=if($stageName -match 'source|catalogue|discovery'){'SOURCE_REACHABILITY_ONLY'}else{$stageStatus}; parcel_id=$null; started_at=$startedAt; completed_at=$now; status=if($blocked){'blocked'}else{$stageStatus}; source_path=$sourceSnapshotRel; evidence_path=$sourceSnapshotRel; report_path=$reportRel; runner_output_path=$runnerOutputRel; blocker=if($blocked){$stageStatus}else{''}; is_new_operation=$true; final_ready=$false; fake_data=$false
+    }
+  }
+  foreach($parcel in @($ParcelRows)){
+    $sequence++; $ops += [ordered]@{operation_id="${taskId}_${runKey}_parcel_$([string]$parcel.parcel_id)";task_id=$taskId;page_key='topography';operation_type='parcel_result';stage_index=$sequence;stage='parcel_consensus_result';dataset=[string]$parcel.consensus_sources;source_url=[string]$parcel.source_url;request_status='completed';numeric_sample_status='REAL_NUMERIC_VALUES_FROM_RECORDED_DEM_RESPONSES';parcel_id=[string]$parcel.parcel_id;parcel_ref=[string]$parcel.parcel_ref;centroid_lat=$parcel.centroid_lat;centroid_lon=$parcel.centroid_lon;elevation_consensus_median_m=$parcel.elevation_consensus_median_m;source_spread_m=$parcel.source_spread_m;started_at=$startedAt;completed_at=$now;status=[string]$parcel.consensus_status;source_path=$consensusRowsRel;evidence_path=$consensusRowsRel;report_path=$reportRel;runner_output_path=$runnerOutputRel;blocker=[string]$parcel.blocker;is_new_operation=$true;final_ready=$false;fake_data=$false}
+  }
+  if($FailureBlocker){$sequence++;$ops += [ordered]@{operation_id="${taskId}_${runKey}_failure_$sequence";task_id=$taskId;page_key='topography';operation_type='runner_failure';stage_index=$sequence;stage='task_159';dataset=$null;source_url=$null;request_status='failed';numeric_sample_status='NOT_PRODUCED';parcel_id=$null;started_at=$startedAt;completed_at=$now;status='blocked';source_path=$null;evidence_path=$statusRel;report_path=$reportRel;runner_output_path=$runnerOutputRel;blocker=$FailureBlocker;is_new_operation=$true;final_ready=$false;fake_data=$false}}
+  $path=Join-Path $repoRoot ($operationsRel-replace'/','\');$old=Read-Json $path;$existing=@(if($old){$old.operations}else{@()});$seen=@{};foreach($op in $existing){$seen[[string]$op.operation_id]=$true};foreach($op in $ops){if(-not$seen.ContainsKey([string]$op.operation_id)){$existing+=$op}}
+  $blockedOps=@($existing|Where-Object{$_.status-match'blocked|failed|unavailable|request_failed|not_downloaded'})
+  $payload=[ordered]@{task_id=$taskId;updated_at=$now;run_status=$RunStatus;operation_count=$existing.Count;new_operations_count=$ops.Count;blocked_operation_count=$blockedOps.Count;last_blocked_operation=if($blockedOps.Count){$blockedOps[-1]}else{$null};operations=$existing;final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+  Write-Json $path $payload; Write-Json (Join-Path $repoRoot ($operationsStatusRel-replace'/','\')) $payload
+}
 
 try {
   # Stages 1-9: execute or reuse the complete task-158 chain in this same canonical runner process.
@@ -261,6 +280,8 @@ try {
     [System.IO.File]::WriteAllText($htmlPath, $html, [System.Text.UTF8Encoding]::new($false))
   }
   $stages += [ordered]@{ stage='extended_consensus_site_rows'; status='completed'; rows=$rows.Count }
+  Write-OperationLedger -StageItems $stages -ParcelRows $rows -RunStatus 'RUNNING_BROWSER_GATE'
+  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths @($visibleRowsRel,$visibleStatusRel,$operationsRel,$htmlRel);if($LASTEXITCODE-ne0){throw'TOPOGRAPHY_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 
   # Stage 14: third real Chrome/Selenium validation after the extended consensus columns are published.
   $python = Get-Python
@@ -401,10 +422,12 @@ All work ran serially inside the existing F-portable canonical shared runner. No
   Write-Json (Join-Path $repoRoot ($runnerOutputRel -replace '/', '\')) ([ordered]@{
     task_id=$taskId; started_at=$startedAt; completed_at=$completedAt; status='COMPLETED_VISIBLE_NOT_FINAL'; stages=$stages; status_path=$statusRel; report_path=$reportRel; browser_proof_path=$browserProofRel; source_snapshot_path=$sourceSnapshotRel; consensus_rows_path=$consensusRowsRel; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false
   })
+  Write-OperationLedger -StageItems $stages -ParcelRows $rows -RunStatus 'COMPLETED_VISIBLE_NOT_FINAL'
   Write-Output ($statusPayload | ConvertTo-Json -Depth 50)
   exit 0
 } catch {
   $failedAt = Now-Utc
+  Write-OperationLedger -StageItems $stages -ParcelRows @() -RunStatus 'BLOCKED' -FailureBlocker $_.Exception.Message
   $failure = [ordered]@{ task_id=$taskId; page_key='topography'; status='BLOCKED_EXTENDED_MULTI_DEM_CONSENSUS_BATCH'; started_at=$startedAt; failed_at=$failedAt; error=$_.Exception.Message; stages=$stages; completion_percent=40; percent_increase=0; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false }
   Write-Json (Join-Path $repoRoot ($statusRel -replace '/', '\')) $failure
   Write-Json (Join-Path $repoRoot ($runnerOutputRel -replace '/', '\')) $failure
