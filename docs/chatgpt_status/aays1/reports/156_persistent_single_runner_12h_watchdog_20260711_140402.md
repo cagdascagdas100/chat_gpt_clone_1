@@ -43,3 +43,10 @@ Status: PASS
 
 Proof nonce: `aays156-20260711-140402-51ab94e1`
 
+## GitHub readback
+
+- Proof commit: `fd04df9e13e59104cae3d042e17867b76e0f54dc`
+- Remote branch fetch: PASS
+- Remote nonce: MATCH
+- Remote latest JSON SHA-256: `e037b83d9214d86dffd49fb09d89c07a5a728f99ab555a19472dc53f996d5b21`
+- `remote_readback_ok=true`
