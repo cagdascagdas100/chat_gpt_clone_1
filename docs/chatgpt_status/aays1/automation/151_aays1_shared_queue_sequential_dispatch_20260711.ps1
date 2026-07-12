@@ -23,8 +23,12 @@ $jobs = @(
 $startedAt = [DateTimeOffset]::UtcNow.ToString('o')
 $results = [System.Collections.Generic.List[object]]::new()
 $blockers = [System.Collections.Generic.List[string]]::new()
-$currentBranch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
-if ($currentBranch -ne $branch) { $blockers.Add("wrong_branch:$currentBranch") }
+
+# The canonical runner executes tasks in a detached clean worktree. Do not require
+# a local branch checkout and do not commit/push from inside this dispatcher.
+# The outer single shared runner owns allowed-path validation, commit, push and readback.
+$currentRef = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
+$currentCommit = (& git -C $repoRoot rev-parse HEAD 2>$null).Trim()
 
 foreach ($job in $jobs) {
   $scriptPath = Join-Path $repoRoot $job.script
@@ -51,24 +55,19 @@ foreach ($job in $jobs) {
       if ($null -eq $exitCode) { $exitCode = 0 }
       $expectedExistsAfterRun = Test-Path -LiteralPath $expectedPath
       if ($exitCode -eq 0 -and $expectedExistsAfterRun) { $state = 'executed_output_created' }
-      elseif ($exitCode -eq 0) { $state = 'executed_but_expected_output_missing' }
-      else { $state = 'execution_failed' }
+      elseif ($exitCode -eq 0) {
+        $state = 'executed_but_expected_output_missing'
+        $blockers.Add("expected_output_missing:$($job.expected)")
+      } else {
+        $state = 'execution_failed'
+        $blockers.Add("job_failed:$($job.id):exit_$exitCode")
+      }
     } catch {
       $exitCode = 1
       $state = 'execution_exception'
       $_.Exception.ToString() | Add-Content -LiteralPath $logPath -Encoding UTF8
+      $blockers.Add("job_exception:$($job.id):$($_.Exception.Message)")
     }
-  }
-
-  try {
-    git -C $repoRoot add -- 'england_map_web/data/geometry_review_3of4' 'england_map_web/data/aays1' 'docs/chatgpt_status/aays1/status' 'docs/chatgpt_status/aays1/reports' 'docs/chatgpt_status/aays1/runner_outputs' 2>$null | Out-Null
-    $pending = (& git -C $repoRoot status --porcelain)
-    if ($pending) {
-      git -C $repoRoot commit -m "AAYS1 sequential dispatch job $($job.id) outputs" 2>> $logPath | Out-Null
-      git -C $repoRoot push origin $branch 2>> $logPath | Out-Null
-    }
-  } catch {
-    $blockers.Add("git_sync_job_$($job.id):$($_.Exception.Message)")
   }
 
   $results.Add([pscustomobject]@{
@@ -91,6 +90,8 @@ $status = [ordered]@{
   page_key = 'aays1'
   status = if ($completedCount -eq $jobs.Count -and $failedCount -eq 0) { 'SEQUENTIAL_DISPATCH_OUTPUTS_PRESENT' } elseif ($completedCount -gt 0) { 'SEQUENTIAL_DISPATCH_PARTIAL' } else { 'SEQUENTIAL_DISPATCH_BLOCKED_OR_NO_OUTPUT' }
   runner_mode = 'single_shared_runner_sequential'
+  git_ref = $currentRef
+  git_commit_at_start = $currentCommit
   jobs_total = $jobs.Count
   jobs_with_expected_output = $completedCount
   jobs_failed = $failedCount
@@ -113,16 +114,11 @@ $lines.Add('')
 $lines.Add("- Jobs with expected real output: $completedCount / $($jobs.Count)")
 $lines.Add("- Failed jobs: $failedCount")
 $lines.Add('- Execution mode: one canonical F portable shared runner; no parallel runner.')
+$lines.Add('- Existing real outputs are skipped; task 146 is not duplicated.')
+$lines.Add('- Commit, push and remote readback are owned by the outer canonical runner.')
 $lines.Add('')
 foreach ($r in $results) { $lines.Add("- $($r.job_id): $($r.state); output=$($r.expected_output_exists); exit=$($r.exit_code); log=$($r.log_path)") }
 if ($blockers.Count -gt 0) { $lines.Add(''); $lines.Add('- Blockers: ' + ($blockers -join '; ')) }
 $lines.Add('')
-$lines.Add('`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
+$lines.Add('`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 [System.IO.File]::WriteAllLines($reportPath,$lines,[System.Text.UTF8Encoding]::new($false))
-
-try {
-  git -C $repoRoot add -- $statusRelative $reportRelative $logRootRelative | Out-Null
-  $pending = (& git -C $repoRoot status --porcelain)
-  if ($pending) { git -C $repoRoot commit -m 'Record AAYS1 sequential dispatch result' | Out-Null }
-  git -C $repoRoot push origin $branch | Out-Null
-} catch {}
