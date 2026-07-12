@@ -2,9 +2,9 @@
 
 ## Overall status
 - Total reviewer comments: 32
-- Completed through: Comment 5
-- Completion: 5/32 = 15.625%
-- Next item: Comment 6
+- Completed through: Comment 6
+- Completion: 6/32 = 18.75%
+- Next item: Comment 7
 
 ## Comment 1 — Abstract / LLM wording
 - Status: Completed pending final consistency check
@@ -70,6 +70,44 @@
   - `Revised. The general statement that BIM can “incorporate and manage risk factors” was replaced with a specific description of the information handled in mobile BIM-based safety applications, including hazard locations, worker-location data, safety records, and preventive measures. The revised sentence also clarifies that these functions support location-based hazard visualization and safety decision-making. Existing references [18,19,27] were used; no new source was added.`
 - Consistency note:
   - The following examples by Tariq et al. [19], Park et al. [27], and Aksu and Ofluoğlu [18] should remain because they provide the study-level evidence underlying the revised synthesis sentence.
+
+## Comment 6 — Meaning of “multiple target formulations”
+- Status: Completed
+- Reviewer comment:
+  - `Bu multiple target combination’dan kasıt nedir?`
+- Exact selected wording in the manuscript:
+  - `multiple target formulations`
+- Interpretation based on the verified project outputs:
+  - Model 01 uses the complete dataset, including zero-day cases, and retains categorized indemnity-payment-day values as the outcome.
+  - Model 02 excludes zero-day cases and evaluates the remaining categorized indemnity-payment-day values.
+  - Model 03 converts the outcome into four injury-severity classes: first aid, temporary incapacity, permanent incapacity, and fatality.
+  - All three analyses use the same 14-predictor set, so the comparison changes the outcome definition rather than the predictors.
+- Terminology decision:
+  - Replace the vague phrase `multiple target formulations` with the standard and explicit phrase `three definitions of the outcome variable`.
+  - Use `outcome variable` or `outcome definition` rather than `target combination`; the latter is not the actual design used in the study.
+- Existing sentence:
+  - `In contrast, this study deployed large-scale historical accident data and adopted a controlled comparative modeling framework, where multiple target formulations were evaluated using consistent feature sets.`
+- Recommended full replacement sentence:
+  - `In contrast, this study used a large historical accident dataset and a controlled comparative modeling framework to evaluate three definitions of the outcome variable using the same predictor set: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome comprising first aid, temporary incapacity, permanent incapacity, and fatality.`
+- Red-highlighted replacement segment for the final workbook:
+  - The full revised sentence should be shown, with the following newly inserted explanatory segment in red: `three definitions of the outcome variable using the same predictor set: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome comprising first aid, temporary incapacity, permanent incapacity, and fatality`
+- Rationale:
+  - The reviewer should not have to infer what the three models represent from their later labels.
+  - `Definitions of the outcome variable` is standard U.S. academic terminology and directly describes what changed across the three analyses.
+  - The revision separates the outcome definition from the predictor set and makes the controlled comparison transparent.
+  - `Large historical accident dataset` is more idiomatic than `deployed large-scale historical accident data`.
+- Literature and citation handling:
+  - No new literature source is required because the sentence describes the authors' own analytical design.
+  - Do not attach an external citation to the three outcome definitions unless the source is being cited only for the general comparative-modeling rationale.
+- Internal evidence retained for the final workbook:
+  - Risk_01: 64,999 records; zero-day cases included; 21 observed outcome categories; 14 predictors.
+  - Risk_02: 13,570 records; zero-day cases excluded; 20 observed outcome categories; the same 14 predictors.
+  - Risk_03: 64,999 records; four outcome classes; the same 14 predictors.
+- Reviewer-response draft:
+  - `Revised. The phrase “multiple target formulations” was replaced with an explicit description of the three outcome definitions evaluated in the comparative framework: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome. The revised sentence also clarifies that the same predictor set was used across the three analyses.`
+- Consistency note:
+  - The same three definitions must be described consistently in Section 3.1.3, figure captions, tables, and the Results section.
+  - Model labels F/E/A should not be finalized here because Comments 10 and 19 separately require a manuscript-wide naming standard.
 
 ## Workflow rule
 - Continue one reviewer comment at a time.
