@@ -11,9 +11,23 @@ if (-not (Test-Path -LiteralPath $source)) { throw 'GAS_EMISSIONS_37_SOURCE_SCRI
 $text = Get-Content -LiteralPath $source -Raw -Encoding UTF8
 $bad = '$actualTerritorial = [double]$_ = [double]$m.''Territorial emissions (kt CO2e)'''
 $good = '$actualTerritorial = [double]$m.''Territorial emissions (kt CO2e)'''
-if (-not $text.Contains($bad)) { throw 'EXPECTED_FIX_TARGET_NOT_FOUND' }
-$fixed = $text.Replace($bad, $good)
-$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('gas_emissions_37_fixed_' + [Guid]::NewGuid().ToString('N') + '.ps1')
+if ($text.Contains($bad)) {
+  $fixed = $text.Replace($bad, $good)
+} elseif ($text.Contains($good)) {
+  $fixed = $text
+} else {
+  throw 'EXPECTED_FIX_TARGET_NOT_FOUND'
+}
+$portableCursor = $repoRoot
+while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
+  $portableParent = Split-Path -Parent $portableCursor
+  if ($portableParent -eq $portableCursor) { break }
+  $portableCursor = $portableParent
+}
+if ((Split-Path -Leaf $portableCursor) -ne 'runner_system') { throw 'F_PORTABLE_ROOT_NOT_RESOLVED_FOR_GAS37_TEMP' }
+$portableTempRoot = Join-Path (Split-Path -Parent $portableCursor) '_portable_logs\temp'
+New-Item -ItemType Directory -Force -Path $portableTempRoot | Out-Null
+$tmp = Join-Path $portableTempRoot ('gas_emissions_37_fixed_' + [Guid]::NewGuid().ToString('N') + '.ps1')
 [System.IO.File]::WriteAllText($tmp, $fixed, [System.Text.UTF8Encoding]::new($false))
 try {
   & powershell -NoProfile -ExecutionPolicy Bypass -File $tmp

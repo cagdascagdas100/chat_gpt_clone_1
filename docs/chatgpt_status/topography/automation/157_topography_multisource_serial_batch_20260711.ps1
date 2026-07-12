@@ -79,9 +79,9 @@ try {
     $queue156Path = Join-Path $repoRoot ($queue156Rel -replace '/', '\')
     $queue156 = Read-Json $queue156Path
     if ($queue156) {
-      $queue156.status = 'done_via_topography_157_serial_batch'
-      $queue156.completed_via = $taskId
-      $queue156.completed_at = Now-Utc
+      $queue156 | Add-Member -NotePropertyName status -NotePropertyValue 'done_via_topography_157_serial_batch' -Force
+      $queue156 | Add-Member -NotePropertyName completed_via -NotePropertyValue $taskId -Force
+      $queue156 | Add-Member -NotePropertyName completed_at -NotePropertyValue (Now-Utc) -Force
       Write-Json $queue156Path $queue156
     }
   } else {
