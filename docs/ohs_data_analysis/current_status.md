@@ -1,32 +1,28 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 13
-- Processed: 13/32 = 40.625%
-- Fully finalized: 12/32 = 37.5%
+- Processed through: Comment 14
+- Processed: 14/32 = 43.75%
+- Fully finalized: 13/32 = 40.625%
 - Conditional item: Comment 12, pending scenario-provenance verification
-- Next item: Comment 14
+- Next item: Comment 15
 
-## Latest decision — Comment 13
-The grammatically defective risk-scenario sentence was replaced with a direct description of the ranking workflow:
+## Latest decision — Comment 14
+NACE is now defined at first use as the `Statistical Classification of Economic Activities in the European Community, Revision 2 (NACE Rev. 2)`.
 
-`The scenario-assessment step ranks the nine candidate accident scenarios by their calculated risk scores and reports the three highest-ranked scenarios, together with the associated injury types, severity categories, and body regions (Figure 2).`
-
-## Terminology corrections
-- Use `calculated risk scores`, not `highest risk factors`, when referring to scenario ranking.
-- Use `the three highest-ranked scenarios`, not `the three scenarios that have highest risk factors were generated`.
-- Use `body regions` consistently for the anatomical outcome variable.
-- Preserve the verified nine-to-three ranking structure.
+## Methodological corrections
+- The 2019–2023 observation period requires NACE Rev. 2; NACE Rev. 2.1 applies to statistics from 2025 onward.
+- Codes 41, 42, and 43 are three two-digit divisions within Section F (Construction), not three different code levels.
+- The official divisions are Division 41 (Construction of Buildings), Division 42 (Civil Engineering), and Division 43 (Specialised Construction Activities).
+- The preferred paragraph states that NACE defines the sectoral scope of the exposure baseline and does not imply that NACE itself measures exposure.
+- The unsupported phrase `enabled automatic assignment` was removed unless an automated mapping procedure can be documented.
+- One authoritative Eurostat or EU legal source should be added at the first definition.
 
 ## Quality re-audit
-- Comment 12 is now explicitly treated as conditional. The absence of an auditable LLM record does not prove that no LLM was used; it means that a model name, version, or generation protocol must not be invented.
-- The final manuscript must either document the actual LLM provenance or use neutral scenario-library wording. It must not conceal verified LLM use if such records later become available.
-- The Comment 13 sentence remains valid under either provenance outcome because it describes scoring and ranking rather than scenario authorship.
-
-## Cross-comment consistency updates
-- Sections 3.2, 3.2.2, 4.2, figure captions, and the mobile-application description should use `nine candidate scenarios` and `three highest-ranked scenarios` consistently.
-- Higher risk scores indicate higher priority; statements claiming that higher-scoring scenarios were excluded must be corrected.
-- Comments 1 and 12 continue to govern LLM wording; Comment 13 governs the scoring-and-ranking sentence.
+- Comment 3 remains consistent: use `exposure` only for a defined exposure construct.
+- The later claim that equipment headings were mapped to the NACE hierarchy is flagged for verification because NACE classifies economic activities rather than equipment types.
+- Figure 3, captions, tables, and preprocessing text must consistently use `NACE Rev. 2`, `Section F`, and `Divisions 41–43`.
+- Comment 12 remains conditional; Comments 13 and 14 are valid regardless of the unresolved scenario-provenance question.
 
 ## Next item
-Comment 14 — define NACE at first use, provide its full name, and clarify how the classification is used in the study.
+Comment 15 — replace approximate equipment-heading counts with exact verified numbers and reassess the claim that equipment categories were mapped to the NACE hierarchy.
