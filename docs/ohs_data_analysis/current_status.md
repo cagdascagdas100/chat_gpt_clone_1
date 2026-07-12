@@ -1,30 +1,30 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 21
-- Processed: 21/32 = 65.625%
-- Fully finalized: 16/32 = 50.0%
+- Processed through: Comment 22
+- Processed: 22/32 = 68.75%
+- Fully finalized: 17/32 = 53.125%
 - Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), Comment 17 (internal–external weighting), Comment 18 (regional-decay value selection), and Comment 20 (final composite depends on Comment 17 and the missing fifth-region input)
-- Next item: Comment 22
+- Next item: Comment 23
 
-## Latest decision — Comment 21
-Figure 14 is the correct reference for the decision-rule comparison and CVaR-based prioritization, whereas Figure 15 is the correct reference for the illustrative application test-case inputs. The paragraph will cite both figures separately rather than assigning one figure number to two different functions.
+## Latest decision — Comment 22
+Figures 16, 17, and 18 will no longer be described collectively in one generic sentence. Each figure will be introduced separately according to the application module actually visible in the image.
 
-## Verified figure content
-- Figure 14 plots risk-specific outputs for `EV_add`, `EV_single`, and `CVaR × P(any)` against Risk ID.
-- Figure 15 shows the illustrative personal-risk inputs and the work-environment/equipment hierarchy used in the application case example.
+## Verified figure descriptions
+- Figure 16 presents the work-section and machine-selection workflow and the resulting overall risk-summary screen.
+- Figure 17 presents precaution recommendations, relevant legal provisions, and body-region-specific risk values.
+- Figure 18 presents the consequences displayed for unmitigated hazards and the cost-analysis interface, including preventive-cost inputs and displayed payment/risk-cost fields.
 
-## Required corrections
-- Revise the Figure 14 caption to describe the three decision rules rather than `risk-ranking overlap and agreement`.
-- Revise the Figure 15 caption to identify it as an illustrative application input configuration.
-- Regenerate Figure 14 with `Predicted payment days` or another source-verified axis label instead of unverified DAFW wording.
-- Do not describe payment days as monetary indemnity cost without a documented conversion rule and units.
-- Restore the missing CVaR objective expression and define its symbols in accordance with Comment 16.
+## Caption and terminology corrections
+- Replace vague terms such as `interface and functionality` and `visual results` with screen-specific descriptions.
+- Describe the legal screen as a legal-information module, not individualized legal advice.
+- Keep Figure 18 cost and payment terminology conditional on the source-variable and unit checks from Comments 8, 9, and 21.
+- Do not characterize the displayed overall percentage as validated or accurate until the aggregation rule is finalized under Comments 17 and 20.
 
 ## Cross-comment consistency updates
-- Comments 8–9 control payment-day versus DAFW/cost terminology.
-- Comment 16 controls equation visibility and symbol definitions.
-- Comment 20 keeps the body-region aggregate, payment-day output, and final composite distinct.
+- Comment 20 controls interpretation of the displayed overall percentage.
+- Comment 21 controls payment-day, cost, and CVaR terminology.
+- Comment 23 may add more application screens, but Figures 16–18 must retain separate figure-specific descriptions.
 
 ## Next item
-Comment 22 — describe Figures 16, 17, and 18 in separate sentences, stating precisely which application screen, module, or output each figure presents.
+Comment 23 — determine whether additional mobile-application figures should be added and identify the minimum set of screens needed to document the application workflow without turning the manuscript into a user manual.
