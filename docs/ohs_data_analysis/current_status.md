@@ -3,31 +3,29 @@
 - Total reviewer comments: 32
 - Processed through: Comment 32
 - Processed: 32/32 = 100.0%
-- Fully finalized: 27/32 = 84.375%
-- Conditional-resolution phase: 2/7 items resolved = 28.571%
-- Remaining conditional items: Comment 17 (internal–external weighting), Comment 18 (regional-decay value selection), Comment 20 (final composite depends on Comment 17 and the missing fifth-region input), Comment 23 (original high-resolution landing-page and personal-input screenshots), and Comment 24 (meaning of `yz`)
-- Next item: resolve Comment 17 by deciding whether the unsupported 0.10/0.90 internal–external weighting can be retained or must be removed
+- Fully finalized: 28/32 = 87.5%
+- Conditional-resolution phase: 3/7 items resolved = 42.857%
+- Remaining conditional items: Comment 18 (regional-decay value selection), Comment 20 (final composite and missing fifth-region input), Comment 23 (original high-resolution landing-page and personal-input screenshots), and Comment 24 (meaning of `yz`)
+- Next item: resolve Comment 18 by deciding whether the unsupported regional-decay value `0.60` can be retained or must be removed/reparameterized
 
-## Latest decision — Conditional Item 15 resolved
-The exact equipment count cannot be reproduced from the auditable project package. No version-controlled equipment inventory, canonical-item export, alias table, counting script, database query, or documented deduplication rule is available. The submission will therefore remove all unsupported inventory-size claims rather than invent an exact number.
+## Latest decision — Conditional Item 17 resolved
+The fixed `0.10/0.90` internal–external weighting is removed. No prespecified rationale, expert-elicitation record, empirical derivation, optimization result, independent validation, or sensitivity analysis supports assigning 10% of the composite to internal factors and 90% to external factors.
 
-## Claims removed
-- more than `1,800` headings;
-- approximately `500` construction items;
-- approximately `4,000` construction equipment entries;
-- approximately `16,000` cross-sector equipment options;
-- expansion from `4,000` to `16,000` items.
+## Reporting decision
+- Internal-risk and external-risk components will be reported separately.
+- A `0.50/0.50` replacement will not be introduced because it would also be arbitrary.
+- The former 10/90 equation is a linear convex combination, not exponential weighting.
+- The application and manuscript must not present a 10/90 result as a validated overall risk percentage.
+- The `50.62%` worked-example value is an external body-region component and not a final overall composite.
 
-## Evidence distinction
-- Figure 4 supports five application domains and their correspondence with broad historical operated-machine categories, but it does not establish an item-level inventory count.
-- The preprocessing manifests document 25–26 broad `makine` levels in the historical accident data; these are analytical categories, not the number of equipment items in the application.
-- NACE is an economic-activity classification and must not be used as an equipment hierarchy.
-
-## Approved manuscript wording
-`To align application inputs with the operated-machine categories recorded in the SSI accident data, equipment-related inputs were organized into five application domains: building and infrastructure machines; hand tools and portable machines; production and manufacturing machines; transport vehicles and logistics equipment; and environmental risks and hazardous substances. Figure 4 presents the correspondence between these application domains and the broader operated-machine categories used in the historical records.`
+## Approved wording
+`Internal and external risk components were calculated and reported separately. The study did not combine them into a single overall percentage because the available project records did not provide an empirically derived or prospectively specified weighting rule. This separation prevents an arbitrary weighting choice from determining the final risk ranking.`
 
 ## Restoration rule
-A numerical count may be reintroduced only with a dated, version-controlled canonical inventory, explicit alias/duplicate/Other rules, a clear counting unit, and a reproducible query or script.
+A combined score may be reintroduced only after the components are placed on a documented common scale, the decision purpose is prespecified, weights are obtained through a reproducible elicitation or estimation method, plausible alternatives are examined in sensitivity analyses, and the selected rule is evaluated prospectively or on an independent validation set.
+
+## Consequence for Comment 20
+No numerical final internal–external composite can be reported from the current evidence. Comment 20 will retain the body-region calculation only after its own regional-input and labeling issues are resolved.
 
 ## Next item
-Conditional Item 17 — determine the final treatment of the 0.10/0.90 internal–external weighting and remove it if no defensible prespecification and sensitivity evidence can be documented.
+Conditional Item 18 — determine the final treatment of the across-region exponential-decay value `0.60` and remove or parameterize it if no defensible selection evidence can be documented.
