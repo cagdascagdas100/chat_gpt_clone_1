@@ -53,6 +53,9 @@ if ($fixed.Contains($gasSelectBad)) {
 } elseif (-not $fixed.Contains('dispatchEvent(new Event(''change''')) {
   throw 'EXPECTED_GAS37_CHANGE_DISPATCH_TARGET_NOT_FOUND'
 }
+$fixed = $fixed.Replace('wait.until(lambda d:"37 satır" in d.find_element(By.ID,"pageInfo").text)', 'wait.until(lambda d:"37" in d.find_element(By.ID,"pageInfo").text)')
+$fixed = $fixed.Replace('if "YENİ / LATEST" in rows.get(rid,"")', 'if "LATEST" in rows.get(rid,"")')
+$fixed = $fixed.Replace('if "MANUEL İNCELEME" in rows.get(rid,"")', 'if "MANUEL" in rows.get(rid,"")')
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
   $portableParent = Split-Path -Parent $portableCursor
