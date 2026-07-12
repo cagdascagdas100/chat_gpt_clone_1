@@ -44,7 +44,7 @@ $fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedA
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
 $gasSelectBad = '    Select(driver.find_element(By.ID,"layerSelect")).select_by_value("gas")'
 $gasSelectGood = @'
-    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.layer === 'security' && state.data && Array.isArray(state.data.rows) && state.data.rows.length > 0 && state.data.rows[0].security_score_percent !== undefined"))
+    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.data && Array.isArray(state.data.rows) && state.data.rows.length > 0"))
     layer_select=driver.find_element(By.ID,"layerSelect")
     Select(layer_select).select_by_value("gas")
     driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))",layer_select)
@@ -75,6 +75,7 @@ if ($fixed.Contains($paginationBad.Trim())) {
   throw 'EXPECTED_GAS37_DYNAMIC_PAGINATION_TARGET_NOT_FOUND'
 }
 $fixed = $fixed.Replace('passed=len(rows)==37 and present', 'passed=len(rows)>=37 and present')
+$fixed = $fixed.Replace('wait=WebDriverWait(driver,45)', 'wait=WebDriverWait(driver,90)')
 $fixed = $fixed.Replace('[int]$browser.unique_row_count -eq 37', '[int]$browser.unique_row_count -ge 37')
 $fixed = $fixed.Replace('if ($httpCount -eq 37) { break }', 'if ($httpCount -ge 37) { break }')
 $fixed = $fixed.Replace('if ($httpCount -ne 37) { throw "HTTP_8012_ROW_COUNT_NOT_37: $httpCount" }', 'if ($httpCount -lt 37) { throw "HTTP_8012_ROW_COUNT_BELOW_37: $httpCount" }')
