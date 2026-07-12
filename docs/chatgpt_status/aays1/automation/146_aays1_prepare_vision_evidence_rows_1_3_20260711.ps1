@@ -37,10 +37,12 @@ function Test-NumberValue {
 function Find-FirstRing {
     param($Node)
     if ($null -eq $Node) { return $null }
-    if ($Node -is [System.Collections.IList] -and $Node.Count -ge 4) {
-        $first = $Node[0]
-        if ($first -is [System.Collections.IList] -and $first.Count -ge 2 -and (Test-NumberValue $first[0]) -and (Test-NumberValue $first[1])) {
-            return ,$Node
+    if ($Node -is [System.Collections.IList]) {
+        if ($Node.Count -ge 4) {
+            $first = $Node[0]
+            if ($first -is [System.Collections.IList] -and $first.Count -ge 2 -and (Test-NumberValue $first[0]) -and (Test-NumberValue $first[1])) {
+                return ,$Node
+            }
         }
         foreach ($child in $Node) {
             $ring = Find-FirstRing $child
