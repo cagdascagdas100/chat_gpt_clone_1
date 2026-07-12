@@ -64,7 +64,9 @@ $allPoints = @()
 foreach ($item in $candidates) { $allPoints += [pscustomobject]@{ id=$item.parcel_id; lat=$item.lat; lon=$item.lon; kind='candidate' } }
 foreach ($item in $regionalControls) { $allPoints += [pscustomobject]@{ id=$item.id; lat=$item.lat; lon=$item.lon; kind='regional_control' } }
 
-$locations = ($allPoints | ForEach-Object { ('{0},{1}' -f $_.lat, $_.lon) }) -join '|'
+$locations = ($allPoints | ForEach-Object {
+  [string]::Format([Globalization.CultureInfo]::InvariantCulture,'{0:R},{1:R}',[double]$_.lat,[double]$_.lon)
+}) -join '|'
 $encodedLocations = [System.Uri]::EscapeDataString($locations)
 $requestUrl = "https://api.opentopodata.org/v1/eudem25m?locations=$encodedLocations&interpolation=bilinear"
 $requestEndpoint = 'https://api.opentopodata.org/v1/eudem25m'

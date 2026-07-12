@@ -39,7 +39,9 @@ function Get-Median([double[]]$Values) {
   return ([double]$sorted[$mid - 1] + [double]$sorted[$mid]) / 2.0
 }
 function Invoke-ElevationDataset([string]$Dataset, [object[]]$Rows) {
-  $locations = ($Rows | ForEach-Object { ('{0},{1}' -f $_.centroid_lat, $_.centroid_lon) }) -join '|'
+  $locations = ($Rows | ForEach-Object {
+    [string]::Format([Globalization.CultureInfo]::InvariantCulture,'{0:R},{1:R}',[double]$_.centroid_lat,[double]$_.centroid_lon)
+  }) -join '|'
   $requestEndpoint = "https://api.opentopodata.org/v1/$Dataset"
   $requestUrl = "$requestEndpoint?locations=$([System.Uri]::EscapeDataString($locations))&interpolation=bilinear"
   $payload = [ordered]@{

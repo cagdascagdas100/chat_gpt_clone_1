@@ -340,15 +340,15 @@ if ($passed) {
 
   if (Test-Path -LiteralPath $blockerPath) {
     $blocker = Get-Content -LiteralPath $blockerPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $blocker.status = 'RESOLVED_8012_VISIBLE_28_BROWSER_PASS'
-    $blocker.local_8012_visible_rows = 28
-    $blocker.browser_smoke_28_passed = $true
-    $blocker.new_data_expansion_paused = $false
+    $blocker | Add-Member -NotePropertyName status -NotePropertyValue 'RESOLVED_8012_VISIBLE_28_BROWSER_PASS' -Force
+    $blocker | Add-Member -NotePropertyName local_8012_visible_rows -NotePropertyValue 28 -Force
+    $blocker | Add-Member -NotePropertyName browser_smoke_28_passed -NotePropertyValue $true -Force
+    $blocker | Add-Member -NotePropertyName new_data_expansion_paused -NotePropertyValue $false -Force
     $blocker | Add-Member -NotePropertyName resolved_report_path -NotePropertyValue $reportRel -Force
     $blocker | Add-Member -NotePropertyName resolved_at -NotePropertyValue ((Get-Date).ToUniversalTime().ToString('o')) -Force
-    $blocker.final_ready = $false
-    $blocker.product_final_ready = $false
-    $blocker.fake_data = $false
+    $blocker | Add-Member -NotePropertyName final_ready -NotePropertyValue $false -Force
+    $blocker | Add-Member -NotePropertyName product_final_ready -NotePropertyValue $false -Force
+    $blocker | Add-Member -NotePropertyName fake_data -NotePropertyValue $false -Force
     Write-Json $blockerPath $blocker
   }
 }
