@@ -136,7 +136,7 @@ try {
   }
 
   $baselineRows = @(Import-Csv -LiteralPath $verifiedCsvPath)
-  if ($baselineRows.Count -ne $baselineExpected) { throw "baseline_count_not_$baselineExpected:$($baselineRows.Count)" }
+  if ($baselineRows.Count -ne $baselineExpected) { throw "baseline_count_not_${baselineExpected}:$($baselineRows.Count)" }
 
   $selectedSourceFeatures = New-Object System.Collections.Generic.List[object]
   $selectedIds = @{}
