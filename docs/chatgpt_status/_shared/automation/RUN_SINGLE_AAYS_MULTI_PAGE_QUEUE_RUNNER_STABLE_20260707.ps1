@@ -465,13 +465,62 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   $cached = Invoke-AaysGit $Worktree diff --cached --name-only
   Assert-GitOk $cached 'DIFF_CACHED_FAILED'
   if ($cached.output) { Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'COMMIT_FAILED' }
-  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${Branch}:refs/remotes/origin/${Branch}"))) 'POST_FETCH_FAILED'
-  $rebased = Invoke-AaysGit $Worktree rebase ('origin/' + $Branch)
-  if ($rebased.code -ne 0) {
-    [void](Abort-GitRebaseIfPresent $Worktree)
-    throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output)
+
+  # Cloud ChatGPT pages can replace the branch history while a task is running.
+  # Preserve only this task's final commit paths and replay them on the newest
+  # remote tip instead of rebasing unrelated historical commits.
+  $changedResult = Invoke-AaysGit $Worktree diff-tree --no-commit-id --name-only -r HEAD
+  Assert-GitOk $changedResult 'TASK_COMMIT_PATHS_FAILED'
+  $changedPaths = @(($changedResult.output -split "`r?`n") | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -Unique)
+  if ($changedPaths.Count -eq 0) { return }
+
+  $recoveryRoot = Join-Path $WorkRoot ('_push_recovery\' + [guid]::NewGuid().ToString('N'))
+  Ensure-Dir $recoveryRoot
+  $presentPaths = @{}
+  foreach ($rel in $changedPaths) {
+    $source = Join-Path $Worktree ($rel -replace '/', '\')
+    if (Test-Path -LiteralPath $source -PathType Leaf) {
+      $backup = Join-Path $recoveryRoot ($rel -replace '/', '\')
+      Ensure-Dir (Split-Path -Parent $backup)
+      Copy-Item -LiteralPath $source -Destination $backup -Force
+      $presentPaths[$rel] = $true
+    } else {
+      $presentPaths[$rel] = $false
+    }
   }
-  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))) 'POST_PUSH_FAILED'
+
+  $lastPush = $null
+  try {
+    for ($attempt = 1; $attempt -le 4; $attempt++) {
+      Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${Branch}:refs/remotes/origin/${Branch}"))) 'POST_FETCH_FAILED'
+      Assert-GitOk (Invoke-AaysGit $Worktree checkout --detach ('origin/' + $Branch)) 'REMOTE_REPLAY_CHECKOUT_FAILED'
+
+      foreach ($rel in $changedPaths) {
+        $target = Join-Path $Worktree ($rel -replace '/', '\')
+        if ([bool]$presentPaths[$rel]) {
+          $backup = Join-Path $recoveryRoot ($rel -replace '/', '\')
+          Ensure-Dir (Split-Path -Parent $target)
+          Copy-Item -LiteralPath $backup -Destination $target -Force
+        } elseif (Test-Path -LiteralPath $target) {
+          Remove-Item -LiteralPath $target -Force
+        }
+      }
+
+      $addArgs = @('add','-A','--') + $changedPaths
+      Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs $addArgs) 'REMOTE_REPLAY_STAGE_FAILED'
+      $replayed = Invoke-AaysGit $Worktree diff --cached --name-only
+      Assert-GitOk $replayed 'REMOTE_REPLAY_DIFF_FAILED'
+      if (-not $replayed.output) { return }
+      Assert-GitOk (Invoke-AaysGit $Worktree commit -m $CommitMessage) 'REMOTE_REPLAY_COMMIT_FAILED'
+
+      $lastPush = Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=16m','-c','pack.packSizeLimit=50m','-c','pack.threads=1','push','origin',('HEAD:' + $Branch))
+      if ($lastPush.code -eq 0) { return }
+      Start-Sleep -Seconds ([math]::Min(8, 2 * $attempt))
+    }
+    throw ('POST_PUSH_REPLAY_RETRIES_EXHAUSTED: ' + $lastPush.output)
+  } finally {
+    if (Test-Path -LiteralPath $recoveryRoot) { Remove-Item -LiteralPath $recoveryRoot -Recurse -Force -ErrorAction SilentlyContinue }
+  }
 }
 function Update-OneClickSmokeProof([string]$Worktree, [string]$Branch, [string]$TaskId) {
   if ($TaskId -notlike 'one_click_runner_smoke_*') { return $null }
