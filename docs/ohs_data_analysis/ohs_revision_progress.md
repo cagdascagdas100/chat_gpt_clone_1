@@ -2,23 +2,23 @@
 
 ## Overall status
 - Total reviewer comments: 32
-- Completed through: Comment 7
-- Completion: 7/32 = 21.875%
-- Next item: Comment 8
+- Completed through: Comment 8
+- Completion: 8/32 = 25.0%
+- Next item: Comment 9
 
-## Quality re-audit of Comments 1–6
-- Comments 1–5 remain methodologically defensible after a second review.
+## Quality re-audit of Comments 1–7
+- Comments 1–5 remain methodologically defensible after another review.
 - Comment 1 remains provisionally complete because the manuscript still contains LLM claims outside the Abstract; final wording depends on verified scenario-generation provenance.
-- Comment 2 remains unchanged: the abstract should report concrete outputs rather than the vague phrase `interpretable risk coefficients`.
-- Comment 3 wording is tightened to the more domain-specific U.S.-journal phrase `predict occupational injury outcomes, including injury severity`.
+- Comment 2 remains unchanged: the Abstract should report concrete outputs rather than the vague phrase `interpretable risk coefficients`.
+- Comment 3 remains best expressed as `predict occupational injury outcomes, including injury severity`; do not use `safety exposure` unless exposure itself is measured.
 - Comment 4 remains unchanged; `augmented reality` should be written in full because the abbreviation is not reused meaningfully.
-- Comment 5 remains unchanged; the BIM sentence should describe specific information flows and decision-support functions rather than the vague phrase `manage risk factors`.
-- Comment 6 required a substantive correction after rechecking the YAML and Excel outputs:
-  - Model 01 contains 18 observed nonzero-frequency outcome categories, including the zero-day category.
-  - Model 02 contains 17 observed positive-day categories after zero-day cases are excluded.
-  - Model 03 contains four observed injury-severity classes.
-  - Earlier references to 21 and 20 observed categories reflected the encoded label space rather than the categories actually represented by nonzero observations and must not be used in the manuscript.
-- Terminology safeguard added for Comment 6: do not equate the recorded `ODEME_GUNSAYISI` field with DAFW or indemnity days until Comments 8–9 establish the operational definition. Use the neutral phrase `recorded payment-day outcome` for now.
+- Comment 5 remains unchanged; the BIM sentence should describe specific information flows and decision-support functions rather than `manage risk factors`.
+- Comment 6 is strengthened by Comment 8: continue using the neutral term `recorded payment-day outcome` rather than DAFW until source-level equivalence is demonstrated.
+- Comment 7 remains unchanged in model scope and rationale; its phrase `within each outcome encoding` is consistent with the clarified target-variable treatment in Comment 8.
+- Model 01 contains 18 observed nonzero-frequency outcome categories, including the zero-day category.
+- Model 02 contains 17 observed positive-day categories after zero-day cases are excluded.
+- Model 03 contains four observed injury-severity classes.
+- Earlier references to 21 and 20 observed categories reflected the encoded label space rather than categories represented by nonzero observations and must not be used in the manuscript.
 
 ## Comment 1 — Abstract / LLM wording
 - Status: Completed pending final consistency check
@@ -140,6 +140,43 @@
   - The revised paragraph therefore uses weighted AUPRC as the primary metric.
 - Reviewer-response draft:
   - `Revised. The original sentence listed only three algorithms, although nine supervised classifiers were evaluated. The Methods section now reports the complete candidate set and explains that the portfolio was designed to compare complementary tree-based, linear, margin-based, instance-based, and neural-network model classes under the same preprocessing and cross-validation splits. A majority-class classifier is also identified as a noninformative baseline. Algorithm names and capitalization were standardized, and the model-selection criterion was aligned with the generated results.`
+
+## Comment 8 — Definition and validity of DAFW
+- Status: Completed with a manuscript-wide terminology safeguard
+- Reviewer comment:
+  - `Bu nedir?`
+- Exact selected wording:
+  - `DAFW`
+- Original sentence:
+  - `The model with the highest area under the receiver operating characteristic (AUROC) curve score was chosen, with DAFW as the target variable, reflecting the injury severity of workers involved in an occupational accident.`
+- Core finding:
+  - In U.S. occupational-injury recordkeeping, DAFW conventionally means `days away from work`.
+  - OSHA 29 CFR 1904.7(b)(3) defines this as the number of calendar days an employee is unable to work because of a work-related injury or illness, beginning the day after the event and including weekends, holidays, and other nonworkdays when the employee would have remained unable to work.
+  - The verified project artifacts do not document the target field as this OSHA calendar-day construct.
+  - The implemented target is the administrative field `ODEME_GUNSAYISI`, represented in Models 01 and 02 as categorized payment-day outcomes and recoded in Model 03 into four injury-severity classes.
+  - Model 03 includes fatality and permanent-incapacity classes, so `DAFW as the target variable` cannot accurately describe all three analyses.
+- Terminology decision:
+  - Do not use DAFW as a synonym for `ODEME_GUNSAYISI` unless the source-data dictionary explicitly verifies that the field records calendar days away from work.
+  - In the modeling section, introduce the field by its verified administrative meaning rather than assigning an unverified U.S. recordkeeping label.
+  - Use `recorded payment-day outcome` as the neutral manuscript term until the exact institutional definition is documented.
+- Preferred full replacement text:
+  - `The outcome variable was derived from the recorded payment-day field (ODEME_GUNSAYISI) in the administrative accident data. In the first two analyses, this field was represented as categorized payment-day outcomes with and without zero-day cases; in the third analysis, it was recoded into four injury-severity classes: first aid, temporary incapacity, permanent incapacity, and fatality.`
+- Red-highlighted replacement treatment for the final workbook:
+  - The full two-sentence replacement should be red because the original sentence incorrectly identifies both the outcome name and the model-selection criterion.
+- Citation handling:
+  - No new citation is required for the internal field definition; the authoritative source is the study data dictionary or administrative metadata.
+  - If the authors later verify that `ODEME_GUNSAYISI` is identical to calendar days away from work, DAFW may be introduced as `days away from work (DAFW)` and supported with the applicable official recordkeeping definition.
+  - An OSHA citation should not be used to relabel Turkish social-insurance payment days as DAFW without demonstrated equivalence.
+- Manuscript-wide consistency consequences:
+  - The subsection title `Days Away from Work (DAFW) and indemnity benefit probability` must be reconsidered.
+  - Unless equivalence is verified, use a title such as `Payment-day severity and indemnity-benefit probability`.
+  - `Indemnity cost expressed in DAFW days` is dimensionally incorrect: days represent a duration or severity proxy, whereas monetary cost must be reported in currency after the documented wage/benefit conversion.
+  - Replace `DAFW severity` with `payment-day severity` unless source-level validation supports DAFW.
+  - Never expand DAFW as `Damage and Financial Waiver`; that expansion is incorrect and must not appear in any manuscript version.
+- Reviewer-response draft:
+  - `Revised. DAFW was not sufficiently defined and did not precisely match the administrative outcome field used in the analyses. The Methods section now introduces the recorded payment-day field (ODEME_GUNSAYISI) at its first occurrence and explains how it was encoded in the three analyses. The term DAFW is reserved for documented calendar days away from work and is not used as a synonym for benefit-payment days without source-level verification.`
+- Link to Comment 9:
+  - Comment 9 is partly anticipated by this change because the outcome is now introduced at its first occurrence; Comment 9 will separately determine the optimal placement and wording of the formal definition.
 
 ## Workflow rule
 - Continue one reviewer comment at a time.
