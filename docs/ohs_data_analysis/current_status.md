@@ -3,29 +3,32 @@
 - Total reviewer comments: 32
 - Processed through: Comment 32
 - Processed: 32/32 = 100.0%
-- Fully finalized: 28/32 = 87.5%
-- Conditional-resolution phase: 3/7 items resolved = 42.857%
-- Remaining conditional items: Comment 18 (regional-decay value selection), Comment 20 (final composite and missing fifth-region input), Comment 23 (original high-resolution landing-page and personal-input screenshots), and Comment 24 (meaning of `yz`)
-- Next item: resolve Comment 18 by deciding whether the unsupported regional-decay value `0.60` can be retained or must be removed/reparameterized
+- Fully finalized: 29/32 = 90.625%
+- Conditional-resolution phase: 4/7 items resolved = 57.143%
+- Remaining conditional items: Comment 20 (worked-example composite and four-versus-five-region inconsistency), Comment 23 (original high-resolution landing-page and personal-input screenshots), and Comment 24 (meaning of `yz`)
+- Next item: resolve Comment 20 by removing the unsupported `50.62%` scalar, correcting the regional-input inconsistency, and aligning the example with separate regional reporting
 
-## Latest decision — Conditional Item 17 resolved
-The fixed `0.10/0.90` internal–external weighting is removed. No prespecified rationale, expert-elicitation record, empirical derivation, optimization result, independent validation, or sensitivity analysis supports assigning 10% of the composite to internal factors and 90% to external factors.
+## Latest decision — Conditional Item 18 resolved
+The fixed across-region exponential-decay value `0.60` and the corresponding weighted regional sum are removed. No prespecified rationale, expert-elicitation record, empirical derivation, validation result, or sensitivity analysis supports this value.
 
-## Reporting decision
-- Internal-risk and external-risk components will be reported separately.
-- A `0.50/0.50` replacement will not be introduced because it would also be arbitrary.
-- The former 10/90 equation is a linear convex combination, not exponential weighting.
-- The application and manuscript must not present a 10/90 result as a validated overall risk percentage.
-- The `50.62%` worked-example value is an external body-region component and not a final overall composite.
+## Evidence and mathematical implications
+- With five ranked regions, `0.60` creates normalized weights of approximately `0.434, 0.260, 0.156, 0.094, and 0.056`, so the scalar is strongly driven by the highest-ranked region.
+- Reference `[103]` is a Brier-score source and does not justify regional rank-decay weighting.
+- The within-region value near `0.80` and the across-region value `0.60` belong to different aggregation stages and cannot be treated as interchangeable.
+- The worked example supplies four regions although the method claims five, so the reported scalar is not a reproducible five-region result.
+
+## Final reporting rule
+- Report body-region-specific risk percentages separately.
+- Regions may be ordered from highest to lowest, and the maximum may be labeled `highest regional risk`.
+- Do not call the maximum or any regional statistic an overall validated risk percentage.
+- Do not substitute equal weights or another decay value without prespecification and validation.
+- Delete the across-region weight, normalization, and weighted-sum equations and remove `[103]` from this context.
 
 ## Approved wording
-`Internal and external risk components were calculated and reported separately. The study did not combine them into a single overall percentage because the available project records did not provide an empirically derived or prospectively specified weighting rule. This separation prevents an arbitrary weighting choice from determining the final risk ranking.`
-
-## Restoration rule
-A combined score may be reintroduced only after the components are placed on a documented common scale, the decision purpose is prespecified, weights are obtained through a reproducible elicitation or estimation method, plausible alternatives are examined in sensitivity analyses, and the selected rule is evaluated prospectively or on an independent validation set.
+`The application reports body-region-specific risk percentages separately. For presentation, the regions are ordered from highest to lowest and the highest regional value is identified to support prioritization. The regional values are not collapsed into a single overall score because the study did not prespecify or validate an across-region weighting rule.`
 
 ## Consequence for Comment 20
-No numerical final internal–external composite can be reported from the current evidence. Comment 20 will retain the body-region calculation only after its own regional-input and labeling issues are resolved.
+The worked-example value `50.62%` will not be retained as an overall or external composite. Comment 20 will remove that scalar, correct the four-versus-five-region inconsistency, and present the example only through region-specific outputs.
 
 ## Next item
-Conditional Item 18 — determine the final treatment of the across-region exponential-decay value `0.60` and remove or parameterize it if no defensible selection evidence can be documented.
+Conditional Item 20 — finalize the worked example after the removal of both the 10/90 internal–external weighting and the 0.60 across-region decay rule.
