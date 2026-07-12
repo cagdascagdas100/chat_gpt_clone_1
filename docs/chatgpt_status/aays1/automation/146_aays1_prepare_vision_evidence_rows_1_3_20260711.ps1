@@ -101,8 +101,45 @@ New-Item -ItemType Directory -Force -Path $EvidenceRoot, (Split-Path $StatusPath
 if (-not (Test-Path -LiteralPath $AiPath)) { throw "AI JSON missing: $AiPath" }
 $health = Invoke-WebRequest -Uri 'http://127.0.0.1:8012/health' -UseBasicParsing -TimeoutSec 20
 if ($health.StatusCode -ne 200) { throw "Site health failed: HTTP $($health.StatusCode)" }
-$geometry = Invoke-RestMethod -Uri "$SiteBase/data/geometry_review_3of4/all_1264_real_geometry_3of4.geojson?v=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -TimeoutSec 60
-if (-not $geometry.features -or $geometry.features.Count -lt 1264) { throw "Canonical geometry unavailable or incomplete: $($geometry.features.Count) features" }
+$portableRoot=$RepoRoot
+while($portableRoot-and(Split-Path -Leaf $portableRoot)-ne'runner_system'){$parent=Split-Path -Parent $portableRoot;if($parent-eq$portableRoot){break};$portableRoot=$parent}
+$geometryPath=$null
+if((Split-Path -Leaf $portableRoot)-eq'runner_system'){$portableRoot=Split-Path -Parent $portableRoot;$candidate=Join-Path $portableRoot 'AAYS\england_map_web\data\geometry_review_3of4\all_1264_real_geometry_3of4.geojson';if(Test-Path -LiteralPath $candidate){$geometryPath=$candidate}}
+$featureByRow=@{}
+$featureCount=0
+if($geometryPath){
+    $pythonCandidates=@((Join-Path $portableRoot 'runtime\python312\python.exe'),(Join-Path $portableRoot 'runtime\python\python.exe'))
+    $python=$pythonCandidates|Where-Object{Test-Path -LiteralPath $_}|Select-Object -First 1
+    if($python){
+        $tempRoot=Join-Path $portableRoot '_portable_logs\temp';New-Item -ItemType Directory -Path $tempRoot -Force|Out-Null
+        $tempPython=Join-Path $tempRoot ("ready_geometry_subset_$PID.py")
+        $pythonCode=@'
+import json
+import sys
+
+rows = [int(value) for value in sys.argv[2].split(",")]
+with open(sys.argv[1], encoding="utf-8-sig") as handle:
+    data = json.load(handle)
+features = data.get("features", [])
+selected = {str(index): features[index - 1] for index in rows if 0 < index <= len(features)}
+print(json.dumps({"feature_count": len(features), "selected": selected}))
+'@
+        [IO.File]::WriteAllText($tempPython,$pythonCode,[Text.UTF8Encoding]::new($false))
+        try{$geometrySubsetText=& $python $tempPython $geometryPath ($TargetRows-join',');if($LASTEXITCODE-ne0){throw 'LOCAL_GEOMETRY_SUBSET_EXTRACTION_FAILED'}}finally{Remove-Item -LiteralPath $tempPython -Force -ErrorAction SilentlyContinue}
+        $geometrySubset=($geometrySubsetText-join"`n")|ConvertFrom-Json
+        $featureCount=[int]$geometrySubset.feature_count
+        foreach($rowId in $TargetRows){$property=$geometrySubset.selected.PSObject.Properties[[string]$rowId];if($property){$featureByRow[[int]$rowId]=$property.Value}}
+    }
+}
+if($featureCount-lt1264){
+    $geometryResponse=Invoke-WebRequest -Uri "$SiteBase/data/geometry_review_3of4/all_1264_real_geometry_3of4.geojson?v=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -UseBasicParsing -TimeoutSec 180
+    $geometry=$geometryResponse.Content|ConvertFrom-Json
+    $featuresProperty=$geometry.PSObject.Properties['features']
+    $features=if($featuresProperty){@($featuresProperty.Value)}else{@()}
+    $featureCount=$features.Count
+    foreach($rowId in $TargetRows){if($rowId-le$featureCount){$featureByRow[[int]$rowId]=$features[$rowId-1]}}
+}
+if ($featureCount -lt 1264) { throw "Canonical geometry unavailable or incomplete: $featureCount features" }
 $ai = Get-Content -LiteralPath $AiPath -Raw -Encoding UTF8 | ConvertFrom-Json
 if (-not $ai.results) { throw 'AI results array is missing.' }
 
@@ -120,7 +157,7 @@ foreach ($rowId in $TargetRows) {
         $rowOutputs.Add([pscustomobject]@{row_id=$rowId; status='BLOCKED_ROW_NOT_IN_AI_RESULTS'; photos_downloaded=0; polygon_rendered=$false; visual_match_score=$null})
         continue
     }
-    $feature = $geometry.features[$rowId - 1]
+    $feature = $featureByRow[[int]$rowId]
     $rowDirRelative = "$EvidenceRelative/row_$rowId"
     $rowDir = Join-Path $RepoRoot $rowDirRelative
     New-Item -ItemType Directory -Force -Path $rowDir | Out-Null
@@ -284,6 +321,6 @@ $lines.Add('')
 $lines.Add('`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 [System.IO.File]::WriteAllLines($ReportPath, $lines, [System.Text.UTF8Encoding]::new($false))
 $statusMirrorPath=Join-Path $RepoRoot $StatusMirrorRelative;$reportMirrorPath=Join-Path $RepoRoot $ReportMirrorRelative;New-Item -ItemType Directory -Force -Path (Split-Path -Parent $statusMirrorPath)|Out-Null;Copy-Item -LiteralPath $StatusPath -Destination $statusMirrorPath -Force;Copy-Item -LiteralPath $ReportPath -Destination $reportMirrorPath -Force
-if($env:AAYS_CONTROLLER_REPO_ROOT){$publishPaths=@($AiRelative,$StatusMirrorRelative,$ReportMirrorRelative);$publishPaths+=@(Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File|ForEach-Object{$_.FullName.Substring($RepoRoot.TrimEnd('\').Length).TrimStart('\')-replace'\','/'});$publisher=Join-Path $RepoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $RepoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishPaths;if($LASTEXITCODE-ne0){throw'READY_TO_SELL_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
+if($env:AAYS_CONTROLLER_REPO_ROOT){$publishPaths=@($AiRelative,$StatusMirrorRelative,$ReportMirrorRelative);$publishPaths+=@(Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File|ForEach-Object{$_.FullName.Substring($RepoRoot.TrimEnd('\').Length).TrimStart('\')-replace'\','/'});$publisher=Join-Path $RepoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $RepoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths ($publishPaths-join'|') -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){throw'READY_TO_SELL_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 
 $status | ConvertTo-Json -Depth 30

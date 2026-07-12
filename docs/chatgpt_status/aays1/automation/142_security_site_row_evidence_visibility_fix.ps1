@@ -75,6 +75,7 @@ try {
 
   $visible = Get-Content -Raw -Encoding UTF8 $visibleRowsPath | ConvertFrom-Json
   $status = Get-Content -Raw -Encoding UTF8 $visibleStatusPath | ConvertFrom-Json
+  $manifest = Get-Content -Raw -Encoding UTF8 $manifestPath | ConvertFrom-Json
   $csvRows = @(Import-Csv -LiteralPath $csvPath)
   $geo = Get-Content -Raw -Encoding UTF8 $geoPath | ConvertFrom-Json
   $geoFeatures = @($geo.features)
@@ -214,7 +215,7 @@ try {
 Browser proof is recorded separately and final readiness remains false.
 "@ | Set-Content -Encoding UTF8 $reportPath
   Copy-Item -LiteralPath $reportPath -Destination (Join-Path $repoRoot $reportMirrorRel) -Force
-  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths @($visibleRowsRel,$visibleStatusRel,$operationsRel,$reportMirrorRel);if($LASTEXITCODE-ne0){$result.blockers+='live_controller_publish_blocked'}}
+  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';$publishArg=(@($visibleRowsRel,$visibleStatusRel,$operationsRel,$reportMirrorRel)-join'|');& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){$result.blockers+='live_controller_publish_blocked'}}
 
   $baseUrl = $null
   foreach ($candidate in @('http://127.0.0.1:8012','http://127.0.0.1:8020')) {

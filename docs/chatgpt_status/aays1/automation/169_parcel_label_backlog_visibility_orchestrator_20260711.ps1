@@ -278,7 +278,7 @@ $manifestOut = [ordered]@{
   production_deploy = $false
 }
 Write-Json (Join-Path $repoRoot ($manifestRel -replace '/','\')) $manifestOut
-if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths @($allRowsRel,$statusRel,$changesRel,$manifestRel);if($LASTEXITCODE-ne0){throw'PARCEL_LABEL_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
+if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';$publishArg=(@($allRowsRel,$statusRel,$changesRel,$manifestRel)-join'|');& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){throw'PARCEL_LABEL_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 
 $siteChecks = @()
 foreach ($port in @(8012,8010,8020)) {

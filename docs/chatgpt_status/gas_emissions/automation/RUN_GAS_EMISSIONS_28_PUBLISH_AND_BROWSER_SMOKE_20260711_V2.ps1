@@ -114,7 +114,7 @@ $publishFiles = @(
   @{ Source=$sourceStatus; Target=(Join-Path $servedRepoRoot $statusRel) },
   @{ Source=$sourceMatrix; Target=(Join-Path $servedRepoRoot $matrixRel) }
 )
-$publisher=Join-Path $repoRoot 'docs\chatgpt_status\_shared\automation\PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($rowsRel,$statusRel,$matrixRel,$manifestRel,$evidenceRel,$pipelineRel);if($LASTEXITCODE-ne0){throw'GAS28_LIVE_CONTROLLER_PUBLISH_BLOCKED'}
+$publisher=Join-Path $repoRoot 'docs\chatgpt_status\_shared\automation\PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';$publishArg=(@($rowsRel,$statusRel,$matrixRel,$manifestRel,$evidenceRel,$pipelineRel)-join'|');& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){throw'GAS28_LIVE_CONTROLLER_PUBLISH_BLOCKED'}
 foreach ($item in $publishFiles) {
   $sourceHash = (Get-FileHash -LiteralPath $item.Source -Algorithm SHA256).Hash
   $targetHash = if (Test-Path -LiteralPath $item.Target) { (Get-FileHash -LiteralPath $item.Target -Algorithm SHA256).Hash } else { '' }
@@ -319,7 +319,7 @@ Write-Json $reportPath $payload
 Write-Json $resultStatusPath $payload
 
 if ($passed) {
-  $pipeline=Get-Content (Join-Path $repoRoot $pipelineRel) -Raw -Encoding UTF8|ConvertFrom-Json;foreach($stage in @($pipeline.stages)){if($stage.stage-eq'browser_smoke'){$stage.status='passed'}elseif($stage.stage-eq'dispatcher_continuation'){$stage.status='ready'}};Write-Json (Join-Path $repoRoot $pipelineRel) $pipeline;powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($statusRel,$pipelineRel)|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_FINAL_STATUS_PUBLISH_BLOCKED'}
+  $pipeline=Get-Content (Join-Path $repoRoot $pipelineRel) -Raw -Encoding UTF8|ConvertFrom-Json;foreach($stage in @($pipeline.stages)){if($stage.stage-eq'browser_smoke'){$stage.status='passed'}elseif($stage.stage-eq'dispatcher_continuation'){$stage.status='ready'}};Write-Json (Join-Path $repoRoot $pipelineRel) $pipeline;$publishArg=(@($statusRel,$pipelineRel)-join'|');powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_FINAL_STATUS_PUBLISH_BLOCKED'}
   $canonical = Get-Content -LiteralPath $canonicalStatusPath -Raw -Encoding UTF8 | ConvertFrom-Json
   $canonical.browser_smoke_passed = $true
   $canonical | Add-Member -NotePropertyName browser_smoke_row_count -NotePropertyValue 28 -Force
@@ -334,7 +334,7 @@ if ($passed) {
   $canonical.product_final_ready = $false
   $canonical.fake_data = $false
   Write-Json $canonicalStatusPath $canonical
-  powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths @($statusRel,$pipelineRel)|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_CANONICAL_STATUS_PUBLISH_BLOCKED'}
+  $publishArg=(@($statusRel,$pipelineRel)-join'|');powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $servedRepoRoot -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb|Out-Null;if($LASTEXITCODE-ne0){throw'GAS28_CANONICAL_STATUS_PUBLISH_BLOCKED'}
 
   if (Test-Path -LiteralPath $blockerPath) {
     $blocker = Get-Content -LiteralPath $blockerPath -Raw -Encoding UTF8 | ConvertFrom-Json

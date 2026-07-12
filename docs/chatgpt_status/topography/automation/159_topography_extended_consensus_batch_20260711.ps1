@@ -40,10 +40,13 @@ function Get-Median([double[]]$Values) {
 }
 function Invoke-ElevationDataset([string]$Dataset, [object[]]$Rows) {
   $locations = ($Rows | ForEach-Object { ('{0},{1}' -f $_.centroid_lat, $_.centroid_lon) }) -join '|'
-  $requestUrl = "https://api.opentopodata.org/v1/$Dataset?locations=$([System.Uri]::EscapeDataString($locations))&interpolation=bilinear"
+  $requestEndpoint = "https://api.opentopodata.org/v1/$Dataset"
+  $requestUrl = "$requestEndpoint?locations=$([System.Uri]::EscapeDataString($locations))&interpolation=bilinear"
   $payload = [ordered]@{
     dataset = $Dataset
+    request_method = 'POST'
     request_url = $requestUrl
+    request_locations = $locations
     reachable = $false
     api_status = 'NOT_RUN'
     result_count = 0
@@ -52,7 +55,7 @@ function Invoke-ElevationDataset([string]$Dataset, [object[]]$Rows) {
     error = $null
   }
   try {
-    $response = Invoke-RestMethod -Method Get -Uri $requestUrl -TimeoutSec 120 -Headers @{ 'User-Agent'='TerraYield-AAYS-Topography/1.0 extended-consensus' }
+    $response = Invoke-RestMethod -Method Post -Uri $requestEndpoint -Body @{locations=$locations;interpolation='bilinear'} -ContentType 'application/x-www-form-urlencoded' -TimeoutSec 120 -Headers @{ 'User-Agent'='TerraYield-AAYS-Topography/1.0 extended-consensus' }
     $results = @($response.results)
     if ([string]$response.status -ne 'OK') { throw "${Dataset}_API_STATUS_$($response.status)" }
     if ($results.Count -ne $Rows.Count) { throw "${Dataset}_RESULT_COUNT_$($results.Count)_EXPECTED_$($Rows.Count)" }
@@ -122,16 +125,22 @@ try {
     $script158Path = Join-Path $repoRoot ($script158Rel -replace '/', '\')
     if (-not (Test-Path -LiteralPath $script158Path)) { throw 'TASK_158_SCRIPT_MISSING' }
     $savedTaskId = $env:AAYS_TASK_ID
+    $task158Error = $null
     try {
       $env:AAYS_TASK_ID = 'topography-158-official-source-acceleration-batch-20260711'
       & powershell -NoProfile -ExecutionPolicy Bypass -File $script158Path
-      if ($LASTEXITCODE -ne 0) { throw "TASK_158_EXIT_CODE_$LASTEXITCODE" }
+      if ($LASTEXITCODE -ne 0) { $task158Error = "TASK_158_EXIT_CODE_$LASTEXITCODE" }
+    } catch {
+      $task158Error = $_.Exception.Message
     } finally {
       $env:AAYS_TASK_ID = $savedTaskId
     }
     $output158 = Read-Json $output158Path
-    if ($null -eq $output158 -or [string]$output158.status -ne 'COMPLETED_VISIBLE_NOT_FINAL') { throw 'TASK_158_OUTPUT_NOT_READY_AFTER_RUN' }
-    $stages += [ordered]@{ stage='official_source_acceleration_chain'; status='completed_in_same_runner_process'; inherited_stage_count=9 }
+    if ($null -ne $output158 -and [string]$output158.status -eq 'COMPLETED_VISIBLE_NOT_FINAL') {
+      $stages += [ordered]@{ stage='official_source_acceleration_chain'; status='completed_in_same_runner_process'; inherited_stage_count=9 }
+    } else {
+      $stages += [ordered]@{ stage='official_source_acceleration_chain'; status='blocked_source_api_continuing_with_existing_real_dem_rows'; inherited_stage_count=9; blocker=if($task158Error){$task158Error}else{'TASK_158_OUTPUT_NOT_READY_AFTER_RUN'} }
+    }
   } else {
     $stages += [ordered]@{ stage='official_source_acceleration_chain'; status='reused_existing_runner_output'; inherited_stage_count=9 }
   }
@@ -281,7 +290,7 @@ try {
   }
   $stages += [ordered]@{ stage='extended_consensus_site_rows'; status='completed'; rows=$rows.Count }
   Write-OperationLedger -StageItems $stages -ParcelRows $rows -RunStatus 'RUNNING_BROWSER_GATE'
-  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths @($visibleRowsRel,$visibleStatusRel,$operationsRel,$htmlRel);if($LASTEXITCODE-ne0){throw'TOPOGRAPHY_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
+  if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $repoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';$publishArg=(@($visibleRowsRel,$visibleStatusRel,$operationsRel,$htmlRel)-join'|');& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $repoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){throw'TOPOGRAPHY_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 
   # Stage 14: third real Chrome/Selenium validation after the extended consensus columns are published.
   $python = Get-Python

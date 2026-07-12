@@ -67,6 +67,7 @@ foreach ($item in $regionalControls) { $allPoints += [pscustomobject]@{ id=$item
 $locations = ($allPoints | ForEach-Object { ('{0},{1}' -f $_.lat, $_.lon) }) -join '|'
 $encodedLocations = [System.Uri]::EscapeDataString($locations)
 $requestUrl = "https://api.opentopodata.org/v1/eudem25m?locations=$encodedLocations&interpolation=bilinear"
+$requestEndpoint = 'https://api.opentopodata.org/v1/eudem25m'
 $datasetInfoUrl = 'https://www.opentopodata.org/datasets/eudem/'
 
 $rawRel = 'docs/chatgpt_status/topography/source_snapshots/156_eudem25m_api_response_latest.json'
@@ -80,7 +81,7 @@ $latestChangesRel = 'outputs/england_program_parcel_matrix_20260629/topography_u
 
 try {
   $headers = @{ 'User-Agent'='TerraYield-AAYS-Topography/1.0 source-backed pilot' }
-  $response = Invoke-RestMethod -Method Get -Uri $requestUrl -Headers $headers -TimeoutSec 120
+  $response = Invoke-RestMethod -Method Post -Uri $requestEndpoint -Headers $headers -Body @{locations=$locations;interpolation='bilinear'} -ContentType 'application/x-www-form-urlencoded' -TimeoutSec 120
   if ([string]$response.status -ne 'OK') { throw "EUDEM_API_STATUS_$($response.status)" }
   $results = @($response.results)
   if ($results.Count -ne $allPoints.Count) { throw "EUDEM_RESULT_COUNT_$($results.Count)_EXPECTED_$($allPoints.Count)" }
@@ -98,7 +99,9 @@ try {
     source_dataset = 'Copernicus EU-DEM v1.1'
     dataset_endpoint = 'eudem25m'
     dataset_information_url = $datasetInfoUrl
+    request_method = 'POST'
     request_url = $requestUrl
+    request_locations = $locations
     interpolation = 'bilinear'
     candidate_count = $candidates.Count
     regional_control_count = $regionalControls.Count
