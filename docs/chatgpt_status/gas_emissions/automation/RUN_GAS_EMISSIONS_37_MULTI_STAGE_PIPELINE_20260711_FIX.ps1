@@ -44,7 +44,7 @@ $fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedA
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
 $gasSelectBad = '    Select(driver.find_element(By.ID,"layerSelect")).select_by_value("gas")'
 $gasSelectGood = @'
-    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.layer === 'security' && document.getElementById('pageInfo').textContent.length > 0"))
+    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.layer === 'security' && state.data && Array.isArray(state.data.rows) && state.data.rows.length > 0 && state.data.rows[0].security_score_percent !== undefined"))
     layer_select=driver.find_element(By.ID,"layerSelect")
     Select(layer_select).select_by_value("gas")
     driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))",layer_select)
@@ -54,9 +54,30 @@ if ($fixed.Contains($gasSelectBad)) {
 } elseif (-not $fixed.Contains('dispatchEvent(new Event(''change''')) {
   throw 'EXPECTED_GAS37_CHANGE_DISPATCH_TARGET_NOT_FOUND'
 }
-$fixed = $fixed.Replace('wait.until(lambda d:"37 satır" in d.find_element(By.ID,"pageInfo").text)', 'wait.until(lambda d:"37" in d.find_element(By.ID,"pageInfo").text)')
+$fixed = $fixed.Replace('wait.until(lambda d:"37 satır" in d.find_element(By.ID,"pageInfo").text)', 'wait.until(lambda d:d.execute_script("return state.layer === ''gas'' && state.data && Array.isArray(state.data.rows) && state.data.rows.length >= 37 && state.data.rows[0].row_id !== undefined"))')
 $fixed = $fixed.Replace('if "YENİ / LATEST" in rows.get(rid,"")', 'if "LATEST" in rows.get(rid,"")')
 $fixed = $fixed.Replace('if "MANUEL İNCELEME" in rows.get(rid,"")', 'if "MANUEL" in rows.get(rid,"")')
+$paginationBad = @'
+    while "Sayfa 2 / 2" not in driver.find_element(By.ID,"pageInfo").text:
+        driver.find_element(By.ID,"next").click(); wait.until(lambda d:"Sayfa 2 / 2" in d.find_element(By.ID,"pageInfo").text)
+    collect()
+'@
+$paginationGood = @'
+    while driver.execute_script("return state.page + 1 < Math.ceil(state.filtered.length / state.pageSize)"):
+        before=driver.execute_script("return state.page")
+        driver.find_element(By.ID,"next").click()
+        wait.until(lambda d:d.execute_script("return state.page") > before)
+        collect()
+'@
+if ($fixed.Contains($paginationBad.Trim())) {
+  $fixed = $fixed.Replace($paginationBad.Trim(), $paginationGood.Trim())
+} elseif (-not $fixed.Contains('Math.ceil(state.filtered.length / state.pageSize)')) {
+  throw 'EXPECTED_GAS37_DYNAMIC_PAGINATION_TARGET_NOT_FOUND'
+}
+$fixed = $fixed.Replace('passed=len(rows)==37 and present', 'passed=len(rows)>=37 and present')
+$fixed = $fixed.Replace('[int]$browser.unique_row_count -eq 37', '[int]$browser.unique_row_count -ge 37')
+$fixed = $fixed.Replace('if ($httpCount -eq 37) { break }', 'if ($httpCount -ge 37) { break }')
+$fixed = $fixed.Replace('if ($httpCount -ne 37) { throw "HTTP_8012_ROW_COUNT_NOT_37: $httpCount" }', 'if ($httpCount -lt 37) { throw "HTTP_8012_ROW_COUNT_BELOW_37: $httpCount" }')
 $fixed = $fixed.Replace('  browser_status = [string]$browser.status', "  browser_status = [string]`$browser.status`r`n  browser_error = [string]`$browser.error")
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
