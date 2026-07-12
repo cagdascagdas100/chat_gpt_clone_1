@@ -1,32 +1,37 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 29
-- Processed: 29/32 = 90.625%
-- Fully finalized: 22/32 = 68.75%
+- Processed through: Comment 30
+- Processed: 30/32 = 93.75%
+- Fully finalized: 23/32 = 71.875%
 - Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), Comment 17 (internal–external weighting), Comment 18 (regional-decay value selection), Comment 20 (final composite depends on Comment 17 and the missing fifth-region input), Comment 23 (original high-resolution landing-page and personal-input screenshots), and Comment 24 (meaning of `yz`)
-- Next item: Comment 30
+- Next item: Comment 31
 
-## Latest decision — Comment 29
-The paragraph presenting ECE and the Brier score as a principal contribution will be deleted. Probability agreement will be described in plain language as a secondary internal-validation check; technical definitions and full values will be confined to the Methods or supplementary materials.
+## Latest decision — Comment 30
+Section 5.3 will be retitled `Intended Operational Use of the OSH-RA Mobile Decision-Support Application` and rebuilt around the verified user workflow, modules, decision points, and deployment limits. The complete software system will not be called a `model`.
 
-## Calibration-reporting corrections
-- Remove the unsupported statement that ECE and Brier score `ensure` reliable or decision-useful probabilities.
-- Do not compare calibration values directly across Analysis 1, Analysis 2, and Analysis 3 because their outcome structures and class prevalences differ.
-- The detailed reports include ECE values up to approximately `0.032`; the current blanket `0–0.02` statement is incomplete unless restricted to the subset displayed in Figure 9.
-- Undefined or missing Brier/ECE values for baseline records must not be treated as zero.
-- No independent holdout or external calibration validation is documented.
+## Intended use and users
+- The primary interaction is worker-facing: personal/contextual inputs, hierarchical work and machine selection, and reporting of observable machine faults.
+- Occupational-safety professionals, competent persons, and site supervisors may review the outputs when deciding whether inspection, maintenance, repair, isolation, or other controls are required.
+- Management may use the control and cost modules for resource planning, but cost estimates must not be used to postpone mandatory controls.
 
-## Critical Figure 13 correction
-Figure 13 evaluates a continuous observed-versus-predicted overall-risk score but reports Brier score, ECE, c-index, and decision-curve net benefit. These probability-classification diagnostics will be removed unless a valid probabilistic event target and threshold definition are documented. The regenerated figure should use regression-appropriate diagnostics such as predicted-versus-observed agreement, calibration slope/intercept, MAE or RMSE, MAPE, R², residual analysis, and uncertainty intervals.
+## Verified workflow and modules
+- Input path: personal/contextual variables followed by sector, category, subcategory, work section, machine, and machine-condition questions.
+- Output path: risk summary, body-region distribution, and prioritized machine–fault scenarios.
+- Detailed modules: `Visual Results`, `Precautions`, `What If No Precautions?`, `My Legal Rights`, and `Cost Analysis`.
+- The assessment is repeated when worker, shift, work area, equipment, or observed condition changes; it is not continuous real-time monitoring.
 
-## Main-text approach
-The revised text will state that predicted class probabilities were compared with observed class frequencies during internal validation because those probabilities enter later ranking calculations. The checks will be described as secondary diagnostics and not as evidence of external validity, application reliability, or practical effectiveness.
+## Claims removed or constrained
+- Remove unsupported claims concerning reduced OSH workload, increased awareness, peer accountability, community-of-practice reporting, safety-culture effects, and field effectiveness.
+- Remove the claimed `10 companies / approximately 250 employees` pilot and proposed `50 companies / 2,500–3,000 employees` expansion unless auditable protocol, recruitment, ethics/privacy, usage-log, and analysis records are supplied.
+- State that the application supplements rather than replaces statutory risk assessment, competent-person inspection, engineering judgment, emergency procedures, and regulatory duties.
+- No usability, user-acceptance, accident-reduction, economic-benefit, or external-validity claim will be made from the current evidence.
 
-## Citation and terminology corrections
-- References `[103]` and `[104]` may remain only where calibration metrics are formally defined.
-- Correct `Brie, G.W.` to `Brier, G.W.` in the reference list.
-- Keep classifier probability calibration separate from the continuous risk-score aggregation analysis.
+## Deployment safeguards
+- Personal-risk outputs must not be used for blame, discriminatory job allocation, or denial of work.
+- Legal-information output is not individualized legal advice.
+- Cost output must not be interpreted as permission to trade required controls against savings.
+- Comments 17 and 20 control the overall-composite wording; Comments 8, 9, and 21 control payment-day and cost terminology.
 
 ## Next item
-Comment 30 — rebuild Section 5.3 around practical use: intended users, workflow, modules, decision points, and realistic field deployment without unsupported effectiveness claims.
+Comment 31 — prepare the concise, answer-style practical-use content requested by the coauthor and align it with the finalized Section 5.3 structure from Comment 30.
