@@ -1,27 +1,32 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 18
-- Processed: 18/32 = 56.25%
-- Fully finalized: 14/32 = 43.75%
+- Processed through: Comment 19
+- Processed: 19/32 = 59.375%
+- Fully finalized: 15/32 = 46.875%
 - Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), Comment 17 (internal–external weighting), and Comment 18 (regional-decay value selection)
-- Next item: Comment 19
+- Next item: Comment 20
 
-## Latest decision — Comment 18
-The value `0.60` is interpreted as an across-region exponential rank-decay parameter used to generate the normalized weights for combining the five body-region risk percentages. It is not a probability, risk coefficient, or threshold.
+## Latest decision — Comment 19
+The F/E/A naming scheme will be removed throughout the manuscript and all visual outputs. The final convention is `Analysis 1`, `Analysis 2`, and `Analysis 3`, not Model A/B/C, because each analytical setting compares multiple fitted classifiers rather than representing one model.
 
-## Mathematical correction
-- Sort the five regional scores as `BPRP_(1) ≥ ... ≥ BPRP_(5)`.
-- Define `q_j = γ_R^(j-1)` and `v_j = q_j / Σ_(k=1)^5 q_k`.
-- Calculate `R_BP = Σ_(j=1)^5 v_j BPRP_(j)`.
-- Use `γ_R` for regional decay and reserve `α` for the CVaR confidence level.
-- With `γ_R = 0.60`, the normalized regional weights are approximately `0.434, 0.260, 0.156, 0.094, 0.056`.
+## Standard mapping
+- Model F → Analysis 1 — all-case payment-day classification
+- Model E → Analysis 2 — positive payment-day classification
+- Model A → Analysis 3 — four-level injury-severity classification
 
-## Evidence and consistency findings
-- Reference [103] concerns the Brier score and does not justify a regional-decay value of `0.60`; remove it from this statement.
-- Distinguish the within-region decay value reported as `0.80` from the across-region value reported as `0.60` by using separate symbols.
-- The manuscript's statements about the selected decay value are internally inconsistent; retention of `0.60` requires the exact candidate grid, objective function, validation design, and sensitivity results.
-- Comment 17's 0.10/0.90 internal–external linear weighting is mathematically separate from this exponential rank-decay parameter.
+## Figure and interpretation corrections
+- Figure 9 must be regenerated with Analysis 1/2/3 legend labels and a title describing classifier performance within the three outcome analyses.
+- Figure 10 must replace F/E/A on the x-axis and remove the misleading phrase `scenario stability`.
+- A grouped point plot or aligned panels are preferable to connecting the analyses with lines, because the targets and class structures differ.
+- Absolute AUROC values across the three analyses should be interpreted descriptively rather than as directly comparable performance estimates.
+- Statements using `best`, `highest`, `improvement`, or `decrease` must identify the metric and acknowledge differences in outcome definition.
+- Figures must be regenerated from source data or plotting code; raster labels must not be edited manually.
+
+## Cross-comment consistency updates
+- Comment 10 is confirmed and extended to every text, table, figure, legend, caption, and supplementary output.
+- Comment 11 metric terminology must be used in regenerated Figure 9.
+- Discussion claims about Analysis 3 must be metric-specific and verified against the final validated tables.
 
 ## Next item
-Comment 19 — standardize the F/E/A labels across the text, figures, legends, and captions using the Analysis 1/2/3 naming convention established in Comment 10.
+Comment 20 — explain the relationship between the later prose description of the internal/external allocation and the unresolved 0.10/0.90 weighting decision from Comment 17.
