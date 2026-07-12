@@ -41,7 +41,7 @@ try:
     stable=False
     for attempt in range(3):
         result["phase"]="load_gas_"+str(attempt+1)
-        loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='gas';Promise.resolve(loadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
+        loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='gas';Promise.resolve(baseLoadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
         if loaded!="ok": raise RuntimeError("gas_load_failed:"+str(loaded))
         wait.until(lambda d:d.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
         time.sleep(3)
