@@ -1,24 +1,25 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Completed through: Comment 11
-- Completion: 11/32 = 34.375%
-- Next item: Comment 12
+- Completed through: Comment 12
+- Completion: 12/32 = 37.5%
+- Next item: Comment 13
 
 ## Latest decision
-The manuscript will not mechanically expand AUPRC. The verified output metadata identifies the implemented primary metric as `average_precision_weighted`; therefore, the manuscript-facing term is `class-support-weighted average precision (AP)` unless later source-code verification demonstrates trapezoidal integration of the precision–recall curve.
+The manuscript will not add an LLM name or version without auditable implementation records. Because the available project artifacts do not identify a specific provider, model identifier, dated version, access route, prompt protocol, or generation settings, claims that the proposed framework generated scenarios with an LLM will be removed rather than supplemented with speculative details.
 
-## Comment 11 corrections
-- Removed the incorrect statement assigning mean absolute error and quantile-loss summaries to Analysis 2.
-- Standardized the primary selection metric across the three analyses as class-support-weighted AP.
-- Retained macro AP as a complementary equal-class-weight summary.
-- Retained AUROC, weighted F1 score, accuracy, calibration metrics, and training time as secondary criteria.
-- Added a methodological citation recommendation for precision–recall evaluation under class imbalance.
+## Comment 12 corrections
+- Replace the LLM-integration subsection with a neutral description of a structured equipment–malfunction scenario library.
+- Describe the verified machine-learning-based scoring, injury-type mapping, body-region mapping, and ranking procedure without asserting an unverified generative mechanism.
+- Change the subsection title from `Integration of large language models` to `Structured definition of equipment-related accident scenarios`.
+- Retain literature-review references describing LLM use in external studies; remove only implementation claims about the proposed framework.
+- Report a specific LLM only if provider, model identifier, version or dated snapshot, access route, prompt protocol, generation settings, and author-review procedure can be verified.
 
 ## Cross-comment consistency updates
-- Comment 7: replace `weighted AUPRC` with `class-support-weighted average precision (AP)` unless code verification supports true AUPRC.
-- Comment 10: use `within each analysis` and the Analysis 1/2/3 naming standard.
-- Results tables and figures: use manuscript-facing labels `weighted AP` and `macro AP`; preserve original artifact column names only in the reproducibility archive.
+- Comment 1: the LLM-removal decision now applies manuscript-wide, not only to the Abstract.
+- Comment 2: retain concrete risk-output terminology in the Abstract.
+- Remove wording such as `simulates high-priority accident sequences`, which indirectly implies automated generation.
+- Comments 6–11 remain methodologically unchanged.
 
 ## Next item
-Comment 12 — determine whether an LLM was actually used; if retained, report the exact model name, version, access date, configuration, and role, and if not verified, remove the LLM-generation claim.
+Comment 13 — repair the grammar and logic of the sentence describing selection of the three highest-risk scenarios and their associated injury locations.
