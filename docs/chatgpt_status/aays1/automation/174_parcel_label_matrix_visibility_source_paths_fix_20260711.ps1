@@ -2,7 +2,7 @@
 param([string]$RepoRoot)
 $ErrorActionPreference = 'Stop'
 if (-not $RepoRoot) { $RepoRoot = (& git -C $PSScriptRoot rev-parse --show-toplevel).Trim() }
-$taskId = '174_aays1_parcel_label_matrix_visibility_source_paths_codex_fix_20260711'
+$taskId = if($env:AAYS_TASK_ID){[string]$env:AAYS_TASK_ID}else{'174_aays1_parcel_label_matrix_visibility_source_paths_codex_fix_20260711'}
 function Now-Utc { (Get-Date).ToUniversalTime().ToString('o') }
 function Read-Json([string]$Path) { if (Test-Path -LiteralPath $Path) { Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json } }
 function Ensure-Dir([string]$Path) { if (-not (Test-Path -LiteralPath $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
@@ -67,8 +67,72 @@ Set-Value $status 'latest_task_id' $taskId;Set-Value $status 'tracked_row_count'
 Write-Json (Join-Path $RepoRoot ($statusRel-replace'/','\')) $status
 if($env:AAYS_CONTROLLER_REPO_ROOT){$publisher=Join-Path $RepoRoot 'docs/chatgpt_status/_shared/automation/PUBLISH_AAYS_WEB_ARTIFACTS_TO_LIVE_CONTROLLER_20260711.ps1';$publishArg=(@($allRowsRel,$statusRel,$changesRel,$manifestRel,$indexRel)-join'|');& powershell -NoProfile -ExecutionPolicy Bypass -File $publisher -TaskRepoRoot $RepoRoot -ControllerRoot $env:AAYS_CONTROLLER_REPO_ROOT -Paths $publishArg -AllowGeneratedArtifacts -SyncPortableWeb;if($LASTEXITCODE-ne0){throw'PARCEL_LABEL_174_LIVE_CONTROLLER_PUBLISH_BLOCKED'}}
 $artifactSha=Hash-File $allRowsPath
-$proof=[ordered]@{task_id=$taskId;checked_at=$generated;local_data_parse_ok=$true;unique_row_count=$rows.Count;artifact_sha=$artifactSha;http_status=$null;browser_row_count=$null;browser_match=$false;blockers=@('BROWSER_HTTP_PROOF_PENDING_AFTER_PUBLISH');final_ready=$false;fake_data=$false}
-try{$r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 20 -Uri 'http://127.0.0.1:8012/england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json';$served=$r.Content|ConvertFrom-Json;$proof.http_status=[int]$r.StatusCode;$proof.browser_row_count=@($served.rows).Count;$proof.browser_match=($proof.http_status-eq200-and$proof.browser_row_count-eq$rows.Count);if($proof.browser_match){$proof.blockers=@()}}catch{$proof.blockers=@('BROWSER_HTTP_PROOF_FAILED:'+$_.Exception.Message)}
+$proof=[ordered]@{task_id=$taskId;checked_at=$generated;local_data_parse_ok=$true;unique_row_count=$rows.Count;artifact_sha=$artifactSha;http_status=$null;browser_row_count=$null;http_match=$false;selenium_browser_proof=$false;selenium_rendered_row_count=0;selenium_unique_parcel_count=0;selenium_console_errors=@();selenium_error=$null;browser_match=$false;blockers=@('BROWSER_HTTP_PROOF_PENDING_AFTER_PUBLISH');final_ready=$false;fake_data=$false}
+try{$r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 20 -Uri 'http://127.0.0.1:8012/england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json';$served=$r.Content|ConvertFrom-Json;$proof.http_status=[int]$r.StatusCode;$proof.browser_row_count=@($served.rows).Count;$proof.http_match=($proof.http_status-eq200-and$proof.browser_row_count-eq$rows.Count)}catch{$proof.blockers=@('BROWSER_HTTP_PROOF_FAILED:'+$_.Exception.Message)}
+if($proof.http_match){
+  $tmpBase=Join-Path ([IO.Path]::GetTempPath()) ($taskId+'_'+[Guid]::NewGuid().ToString('N'))
+  $tmpPy=$tmpBase+'.py';$tmpOut=$tmpBase+'.json'
+  $pySource=@'
+import json, sys, time
+from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+
+out_path=Path(sys.argv[1]); expected=int(sys.argv[2])
+url="http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?parcel174="+str(int(time.time()))
+result={"status":"FAIL","url":url,"data_row_count":0,"unique_parcel_count":0,"rendered_row_count":0,"console_errors":[],"error":None}
+driver=None
+try:
+    options=webdriver.ChromeOptions()
+    for arg in ("--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage","--window-size=1920,1400"):
+        options.add_argument(arg)
+    options.set_capability("goog:loggingPrefs",{"browser":"ALL"})
+    driver=webdriver.Chrome(options=options);driver.set_script_timeout(90);driver.get(url)
+    wait=WebDriverWait(driver,90);wait.until(lambda d:d.find_element(By.ID,"layerSelect"))
+    loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='distance';Promise.resolve(loadLayer('distance')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
+    if loaded!="ok": raise RuntimeError("distance_load_failed:"+str(loaded))
+    wait.until(lambda d:d.execute_script("return state.layer==='distance' && state.data && Array.isArray(state.data.rows) && state.data.rows.length===arguments[0]",expected))
+    parcel_ids=driver.execute_script("return state.data.rows.map(row=>String(row.parcel_id||'')).filter(Boolean)")
+    rendered=0
+    while True:
+        rendered+=len(driver.find_elements(By.CSS_SELECTOR,"#table tbody tr"))
+        more=driver.execute_script("return state.page + 1 < Math.ceil(state.filtered.length / state.pageSize)")
+        if not more: break
+        before=driver.execute_script("return state.page")
+        driver.find_element(By.ID,"next").click()
+        wait.until(lambda d:d.execute_script("return state.page")>before)
+    severe=[]
+    try: severe=[entry for entry in driver.get_log("browser") if str(entry.get("level","")).upper()=="SEVERE"]
+    except Exception: severe=[]
+    passed=len(parcel_ids)==expected and len(set(parcel_ids))==expected and rendered==expected and not severe
+    result.update({"status":"PASS" if passed else "FAIL","data_row_count":len(parcel_ids),"unique_parcel_count":len(set(parcel_ids)),"rendered_row_count":rendered,"page_info":driver.find_element(By.ID,"pageInfo").text,"console_errors":severe})
+    if not passed: result["error"]="row_count_unique_ids_rendered_pages_or_console_failed"
+except Exception as exc:
+    result["error"]=f"{type(exc).__name__}: {exc}"
+finally:
+    if driver:
+        try: driver.quit()
+        except Exception: pass
+    out_path.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
+sys.exit(0 if result["status"]=="PASS" else 1)
+'@
+  [IO.File]::WriteAllText($tmpPy,$pySource,[Text.UTF8Encoding]::new($false))
+  try{
+    $python=Get-Command python -ErrorAction SilentlyContinue
+    if($python){& $python.Source $tmpPy $tmpOut $rows.Count}else{& (Get-Command py -ErrorAction Stop).Source -3 $tmpPy $tmpOut $rows.Count}
+    $browserExit=$LASTEXITCODE
+    $browser=Read-Json $tmpOut
+    $proof.selenium_browser_proof=($browserExit-eq0-and[string]$browser.status-eq'PASS')
+    $proof.selenium_rendered_row_count=[int]$browser.rendered_row_count
+    $proof.selenium_unique_parcel_count=[int]$browser.unique_parcel_count
+    $proof.selenium_console_errors=@($browser.console_errors)
+    $proof.selenium_error=[string]$browser.error
+  }catch{$proof.selenium_error=$_.Exception.Message}
+  finally{Remove-Item -LiteralPath $tmpPy,$tmpOut -Force -ErrorAction SilentlyContinue}
+}
+$proof.browser_match=($proof.http_match-and$proof.selenium_browser_proof-and$proof.selenium_rendered_row_count-eq$rows.Count-and$proof.selenium_unique_parcel_count-eq$rows.Count)
+if($proof.browser_match){$proof.blockers=@()}elseif($proof.http_match){$proof.blockers=@('SELENIUM_BROWSER_PROOF_FAILED:'+$proof.selenium_error)}
 Write-Json (Join-Path $RepoRoot ($proofRel-replace'/','\')) $proof
 $output=[ordered]@{task_id=$taskId;status=if($proof.browser_match){'COMPLETED_VISIBLE_NOT_FINAL'}else{'LOCAL_BUILD_COMPLETE_BROWSER_PUBLISH_PENDING'};generated_at=$generated;unique_parcel_count=$rows.Count;new_row_count=$new;source_upgraded_count=$upgraded;address_geometry_enriched_count=$enriched;rejected_input_count=$rejected.Count;row_artifact_index_path=$indexRel;artifact_sha=$artifactSha;browser_match=$proof.browser_match;blockers=@($proof.blockers);final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
 Write-Json (Join-Path $RepoRoot ($outputRel-replace'/','\')) $output;Write-Json (Join-Path $RepoRoot ($statusOutRel-replace'/','\')) $output
