@@ -1,33 +1,30 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 16
-- Processed: 16/32 = 50.0%
+- Processed through: Comment 17
+- Processed: 17/32 = 53.125%
 - Fully finalized: 14/32 = 43.75%
-- Conditional items: Comment 12 (scenario provenance) and Comment 15 (authoritative equipment inventory)
-- Linked follow-up items: Comment 17 (0.10/0.90 weighting rationale) and Comment 18 (regional-decay parameter)
-- Next item: Comment 17
+- Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), and Comment 17 (0.10/0.90 weighting validation)
+- Next item: Comment 18
 
-## Latest decision — Comment 16
-Every displayed equation will be followed immediately by a concise `where ...` statement defining every newly introduced symbol. Concatenated labels such as `RCSWA` will be standardized using structured subscripts such as `RC_{S,WA}`.
+## Latest decision — Comment 17
+The exact 0.10/0.90 internal–external split is not supported by an auditable derivation, expert-elicitation protocol, optimization result, or sensitivity analysis in the available project records. It must not be described as empirically established.
 
 ## Mathematical corrections
-- Preserve the square roots in Equations (3)–(8), because these equations are geometric means rather than simple products.
-- Preserve summation indices and limits in Equations (11)–(14).
-- Preserve the explicit fractions `2/3` and `1/2` in Equations (15)–(16).
-- Do not assign units, ranges, or dimensionless status to risk coefficients unless the normalization procedure verifies them.
+- Equation (9) is a weighted linear combination, not an exponential weighting scheme.
+- Internal and external components must be normalized to the same dimensionless scale before aggregation.
+- Raw coefficients must be distinguished from normalized component scores and weighted percentage contributions.
+- The general formulation should use a parameterized convex combination: `P_overall = 100 [w_INT r_INT + (1 - w_INT) r_EXT]`.
+- Equal weighting must not be substituted automatically, because 0.50/0.50 would also be arbitrary without a stated rationale.
 
-## Major notation conflicts identified
-- Equation (9) and Equation (12) currently use `RiskOverall` for two different constructions. Use `R_IE` for the internal–external composite and `R_BP` for the body-region aggregate until their relationship is explicitly defined.
-- The symbol `α` is used both for regional decay and for the CVaR confidence level. Use `γ` for regional decay and reserve `α` for CVaR.
-- Payment-day severity and monetary compensation cost must use different symbols and units.
-- The text says feasibility was excluded, but Equation (1) still uses a feasibility-derived weight `λ`; this contradiction must be resolved.
+## Conditional retention rule
+The 0.10/0.90 split may be retained only if it was prespecified as a normative design choice to limit the influence of individual-level characteristics, the common-scale normalization is documented, and sensitivity analysis demonstrates that conclusions and rankings are robust to alternative weights. Otherwise, internal and external component scores should be reported separately and the fixed composite score removed.
 
 ## Cross-comment consistency updates
-- Comment 17 will justify or revise the 0.10/0.90 internal–external weights in Equation (9).
-- Comment 18 will explain the regional-decay parameter and where it enters Equations (10)–(12).
-- Comments 8–9 continue to govern the distinction between recorded payment days, days away from work, and monetary compensation cost.
-- The final Word and PDF exports must be checked for missing radicals, fractions, subscripts, and summation limits.
+- Comment 16 notation rules apply to the revised Equation (9) and its `where ...` statement.
+- The Section 4.5 case example must be recalculated after normalization and weighting are finalized.
+- The later statement that the model assigned approximately 10% and 90% must be revised; these are exact design weights if retained, not approximate empirical findings.
+- Comment 20 will address the later prose description of the same allocation.
 
 ## Next item
-Comment 17 — determine and document the methodological basis for weighting the internal component by 0.10 and the external component by 0.90.
+Comment 18 — define the regional-decay parameter, explain its interpretation, and show exactly where it enters the body-region aggregation equations.
