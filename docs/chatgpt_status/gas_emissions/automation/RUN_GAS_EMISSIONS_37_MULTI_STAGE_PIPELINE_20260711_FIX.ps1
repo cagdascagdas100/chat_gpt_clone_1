@@ -44,6 +44,7 @@ $fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedA
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
 $gasSelectBad = '    Select(driver.find_element(By.ID,"layerSelect")).select_by_value("gas")'
 $gasSelectGood = @'
+    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.layer === 'security' && document.getElementById('pageInfo').textContent.length > 0"))
     layer_select=driver.find_element(By.ID,"layerSelect")
     Select(layer_select).select_by_value("gas")
     driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))",layer_select)
@@ -56,6 +57,7 @@ if ($fixed.Contains($gasSelectBad)) {
 $fixed = $fixed.Replace('wait.until(lambda d:"37 satır" in d.find_element(By.ID,"pageInfo").text)', 'wait.until(lambda d:"37" in d.find_element(By.ID,"pageInfo").text)')
 $fixed = $fixed.Replace('if "YENİ / LATEST" in rows.get(rid,"")', 'if "LATEST" in rows.get(rid,"")')
 $fixed = $fixed.Replace('if "MANUEL İNCELEME" in rows.get(rid,"")', 'if "MANUEL" in rows.get(rid,"")')
+$fixed = $fixed.Replace('  browser_status = [string]$browser.status', "  browser_status = [string]`$browser.status`r`n  browser_error = [string]`$browser.error")
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
   $portableParent = Split-Path -Parent $portableCursor
