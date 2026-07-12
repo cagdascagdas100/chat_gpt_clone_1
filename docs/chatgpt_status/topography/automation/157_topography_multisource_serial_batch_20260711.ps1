@@ -90,7 +90,11 @@ try {
 
   # Stage 2: independent SRTM 90 m fallback cross-check for the same verified centroids.
   $candidateRows = @($rows156.rows)
-  $locations = ($candidateRows | ForEach-Object { ('{0},{1}' -f $_.centroid_lat, $_.centroid_lon) }) -join '|'
+  $locations = ($candidateRows | ForEach-Object {
+    $lat = ([double]$_.centroid_lat).ToString('R', [System.Globalization.CultureInfo]::InvariantCulture)
+    $lon = ([double]$_.centroid_lon).ToString('R', [System.Globalization.CultureInfo]::InvariantCulture)
+    "$lat,$lon"
+  }) -join '|'
   $requestUrl = 'https://api.opentopodata.org/v1/srtm90m?locations=' + [System.Uri]::EscapeDataString($locations) + '&interpolation=bilinear'
   $srtmInfoUrl = 'https://www.opentopodata.org/datasets/srtm/'
   $headers = @{ 'User-Agent'='TerraYield-AAYS-Topography/1.0 multisource validation' }

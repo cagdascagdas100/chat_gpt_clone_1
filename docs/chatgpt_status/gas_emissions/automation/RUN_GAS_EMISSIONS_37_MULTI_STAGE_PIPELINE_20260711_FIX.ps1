@@ -18,6 +18,13 @@ if ($text.Contains($bad)) {
 } else {
   throw 'EXPECTED_FIX_TARGET_NOT_FOUND'
 }
+$listCastBad = '$visible.rows = @($oldRows) + @($verified)'
+$listCastGood = '$visible.rows = @($oldRows) + $verified.ToArray()'
+if ($fixed.Contains($listCastBad)) {
+  $fixed = $fixed.Replace($listCastBad, $listCastGood)
+} elseif (-not $fixed.Contains($listCastGood)) {
+  throw 'EXPECTED_LIST_CAST_FIX_TARGET_NOT_FOUND'
+}
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
   $portableParent = Split-Path -Parent $portableCursor
