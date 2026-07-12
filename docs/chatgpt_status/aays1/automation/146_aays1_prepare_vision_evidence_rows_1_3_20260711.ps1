@@ -264,7 +264,10 @@ foreach ($rowId in $TargetRows) {
     })
 }
 
-$rowsWithEvidence = @($ai.results | Where-Object { $_.downloaded_photo_path }).Count
+$rowsWithEvidence = @($ai.results | Where-Object {
+    $photoProperty = $_.PSObject.Properties['downloaded_photo_path']
+    $photoProperty -and -not [string]::IsNullOrWhiteSpace([string]$photoProperty.Value)
+}).Count
 Set-JsonField $ai 'status' 'ROWS_1_3_REAL_EVIDENCE_PREPARED__VISION_COMPARE_PENDING'
 Set-JsonField $ai 'rows_with_downloaded_photo_evidence' $rowsWithEvidence
 Set-JsonField $ai 'rows_pending_vision_download' ([Math]::Max(0, 30 - $rowsWithEvidence))

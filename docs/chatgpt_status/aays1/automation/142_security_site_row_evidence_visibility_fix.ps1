@@ -299,7 +299,16 @@ out.write_text(json.dumps(proof, ensure_ascii=False, indent=2), encoding="utf-8"
 sys.exit(0 if proof["status"] == "pass" else 2)
 '@
 
-  $tempPy = Join-Path $env:TEMP "aays1_security_browser_$PID.py"
+  $portableCursor = $repoRoot
+  while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
+    $portableParent = Split-Path -Parent $portableCursor
+    if ($portableParent -eq $portableCursor) { break }
+    $portableCursor = $portableParent
+  }
+  if ((Split-Path -Leaf $portableCursor) -ne 'runner_system') { throw 'F_PORTABLE_ROOT_NOT_RESOLVED_FOR_SECURITY_BROWSER_TEMP' }
+  $portableTempRoot = Join-Path (Split-Path -Parent $portableCursor) '_portable_logs\temp'
+  New-Item -ItemType Directory -Force -Path $portableTempRoot | Out-Null
+  $tempPy = Join-Path $portableTempRoot "aays1_security_browser_$PID.py"
   $pythonScript | Set-Content -Encoding UTF8 $tempPy
   $matrixUrls = @(
     'http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=142',
@@ -330,48 +339,11 @@ catch {
 
 Save-Result
 
-try {
-  Push-Location $repoRoot
-  $paths = @($visibleRowsRel,$visibleStatusRel,$reportRel,$reportMirrorRel,$operationsRel,$outputRel,$browserProofRel)
-  & git add -- @paths | Out-Null
-  $changes = @(& git status --porcelain -- @paths)
-  if ($changes.Count -gt 0) {
-    & git commit -m 'aays1 complete 142 security row evidence visibility proof' | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-      $result.commit_sha = (& git rev-parse HEAD).Trim()
-      & git push origin $branch | Out-Null
-      $result.git_push_status = if ($LASTEXITCODE -eq 0) { 'pushed' } else { 'push_failed' }
-    } else { $result.git_push_status = 'commit_failed' }
-  } else {
-    $result.commit_sha = (& git rev-parse HEAD).Trim()
-    $result.git_push_status = 'no_changes_to_push'
-  }
-
-  if ($result.git_push_status -in @('pushed','no_changes_to_push')) {
-    & git fetch origin $branch | Out-Null
-    $remoteText = & git show "origin/$branch`:$visibleStatusRel" 2>$null
-    $result.remote_readback_status = if ($LASTEXITCODE -eq 0 -and ($remoteText -join "`n") -match 'verified_geojson_features') { 'passed' } else { 'failed' }
-  } else { $result.remote_readback_status = 'not_attempted_due_push_failure' }
-}
-catch {
-  $result.git_push_status = 'exception'
-  $result.remote_readback_status = 'exception'
-  $result.blockers += "git_sync_exception:$($_.Exception.Message)"
-}
-finally { try { Pop-Location } catch {} }
-
+# The canonical runner owns staging, commit, push and remote readback. A task-side
+# push races other page jobs and PowerShell treats Git's progress stream as an error.
+$result.git_push_status = 'delegated_to_single_runner'
+$result.remote_readback_status = 'pending_runner_wrapper'
 Save-Result
-try {
-  Push-Location $repoRoot
-  & git add -- $outputRel | Out-Null
-  $outputChange = @(& git status --porcelain -- $outputRel)
-  if ($outputChange.Count -gt 0) {
-    & git commit -m 'aays1 sync 142 final runner output status' | Out-Null
-    if ($LASTEXITCODE -eq 0) { & git push origin $branch | Out-Null }
-  }
-}
-catch { $result.blockers += "final_output_push_exception:$($_.Exception.Message)"; Save-Result }
-finally { try { Pop-Location } catch {} }
 
 Write-Host "OUTPUT=$outputPath"
 if ($result.blockers.Count -gt 0 -or $result.browser_smoke_status -ne 'pass') { exit 2 }

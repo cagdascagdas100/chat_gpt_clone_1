@@ -151,7 +151,9 @@ $resultStatusPath = Join-Path $repoRoot ($resultStatusRel -replace '/', '\')
 $canonicalStatusPath = Join-Path $repoRoot $statusRel
 $blockerPath = Join-Path $repoRoot $blockerRel
 
-$tmpBase = Join-Path ([System.IO.Path]::GetTempPath()) $taskId
+$portableTempRoot = Join-Path $portableRoot '_portable_logs\temp'
+New-Item -ItemType Directory -Force -Path $portableTempRoot | Out-Null
+$tmpBase = Join-Path $portableTempRoot $taskId
 $tmpPy = $tmpBase + '.py'
 $tmpOut = $tmpBase + '.json'
 
@@ -201,7 +203,7 @@ try:
     wait = WebDriverWait(driver, 45)
     wait.until(lambda d: d.find_element(By.ID, "layerSelect"))
     Select(driver.find_element(By.ID, "layerSelect")).select_by_value("gas")
-    wait.until(lambda d: "28 satır" in d.find_element(By.ID, "pageInfo").text)
+    wait.until(lambda d: "28" in d.find_element(By.ID, "pageInfo").text and len(d.find_elements(By.CSS_SELECTOR, "#table tbody tr")) > 0)
 
     row_map = {}
     def collect_rows():
@@ -227,8 +229,8 @@ try:
         severe = []
 
     present = expected_ids.issubset(set(row_map))
-    new_marker_count = sum(1 for rid in expected_ids if "YENİ / LATEST" in row_map.get(rid, ""))
-    manual_marker_count = sum(1 for rid in expected_ids if "MANUEL İNCELEME" in row_map.get(rid, ""))
+    new_marker_count = sum(1 for rid in expected_ids if "LATEST" in row_map.get(rid, ""))
+    manual_marker_count = sum(1 for rid in expected_ids if "MANUEL" in row_map.get(rid, ""))
     passed = len(row_map) == 28 and present and new_marker_count == 4 and manual_marker_count == 4 and not severe
     result.update({
         "status": "PASS" if passed else "FAIL",

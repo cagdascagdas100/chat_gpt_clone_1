@@ -51,7 +51,15 @@ foreach($row in $rows){
 Set-Value $doc 'rows' $rows;Set-Value $doc 'row_count' $rows.Count;Set-Value $doc 'visible_row_count' $rows.Count;Set-Value $doc 'unique_parcel_count' $rows.Count;Set-Value $doc 'new_row_count' $new;Set-Value $doc 'source_upgraded_count' $upgraded;Set-Value $doc 'address_geometry_enriched_count' $enriched;Set-Value $doc 'row_artifact_index_path' $indexRel;Set-Value $doc 'updated_at' $generated;Set-Value $doc 'final_ready' $false;Set-Value $doc 'fake_data' $false
 Write-Json $allRowsPath $doc
 $inputRoot=Join-Path $RepoRoot 'docs/chatgpt_status/aays1/inputs';$rejected=@()
-Get-ChildItem -LiteralPath $inputRoot -File -Filter '*.json' -ErrorAction SilentlyContinue|ForEach-Object{try{$j=Read-Json $_.FullName;$features=@(if($j.features){$j.features}elseif($j.rows){$j.rows}elseif($j.parcels){$j.parcels}else{@()});foreach($f in $features){if(-not [string](Get-Value $f 'parcel_id' '')){$rejected+=[ordered]@{input_path=Rel $_.FullName;reason='MISSING_PARCEL_ID'}}}}catch{$rejected+=[ordered]@{input_path=Rel $_.FullName;reason='JSON_PARSE_FAILED';error=$_.Exception.Message}}}
+Get-ChildItem -LiteralPath $inputRoot -File -Filter '*.json' -ErrorAction SilentlyContinue|ForEach-Object{
+  $inputFile=$_.FullName
+  $inputRel=Rel $inputFile
+  try{
+    $j=Read-Json $inputFile
+    $features=@(if($j.features){$j.features}elseif($j.rows){$j.rows}elseif($j.parcels){$j.parcels}else{@()})
+    foreach($f in $features){if(-not [string](Get-Value $f 'parcel_id' '')){$rejected+=[ordered]@{input_path=$inputRel;reason='MISSING_PARCEL_ID'}}}
+  }catch{$rejected+=[ordered]@{input_path=$inputRel;reason='JSON_PARSE_FAILED';error=$_.Exception.Message}}
+}
 Write-Json (Join-Path $RepoRoot ($rejectedRel-replace'/','\')) ([ordered]@{generated_at=$generated;rejected_count=$rejected.Count;duplicate_ids=@($duplicateIds|Select-Object -Unique);rejected=$rejected;final_ready=$false;fake_data=$false})
 Write-Json (Join-Path $RepoRoot ($indexRel-replace'/','\')) ([ordered]@{task_id=$taskId;generated_at=$generated;unique_parcel_count=$rows.Count;local_present_artifact_count=$present;missing_artifact_count=$missing;rows=$indexRows;final_ready=$false;fake_data=$false})
 $status=Read-Json (Join-Path $RepoRoot ($statusRel-replace'/','\'));if($null-eq$status){$status=[pscustomobject]@{}}

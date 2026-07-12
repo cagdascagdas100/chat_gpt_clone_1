@@ -295,8 +295,17 @@ try {
   # Stage 14: third real Chrome/Selenium validation after the extended consensus columns are published.
   $python = Get-Python
   if (-not $python) { throw 'PYTHON_NOT_FOUND_FOR_159_BROWSER_VALIDATION' }
-  $tempPy = Join-Path $env:TEMP ("aays_topography_159_" + [guid]::NewGuid().ToString('N') + '.py')
-  $tempJson = Join-Path $env:TEMP ("aays_topography_159_" + [guid]::NewGuid().ToString('N') + '.json')
+  $portableCursor = $repoRoot
+  while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
+    $portableParent = Split-Path -Parent $portableCursor
+    if ($portableParent -eq $portableCursor) { break }
+    $portableCursor = $portableParent
+  }
+  if ((Split-Path -Leaf $portableCursor) -ne 'runner_system') { throw 'F_PORTABLE_ROOT_NOT_RESOLVED_FOR_TOPOGRAPHY_BROWSER_TEMP' }
+  $portableTempRoot = Join-Path (Split-Path -Parent $portableCursor) '_portable_logs\temp'
+  Ensure-Dir $portableTempRoot
+  $tempPy = Join-Path $portableTempRoot ("aays_topography_159_" + [guid]::NewGuid().ToString('N') + '.py')
+  $tempJson = Join-Path $portableTempRoot ("aays_topography_159_" + [guid]::NewGuid().ToString('N') + '.json')
   $pyCode = @'
 import json, sys, time
 from selenium import webdriver

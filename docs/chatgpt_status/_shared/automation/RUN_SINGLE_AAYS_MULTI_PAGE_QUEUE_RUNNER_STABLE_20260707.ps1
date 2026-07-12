@@ -567,10 +567,15 @@ function Run-Task([object]$Task) {
   $env:AAYS_CONTROLLER_REPO_ROOT=$RepoRoot
   $env:AAYS_TARGET_BRANCH=$Task.target_branch
   $automationOutput=''; $automationCode=0
+  $oldAutomationEap=$ErrorActionPreference
   try {
+    $ErrorActionPreference='Continue'
     Push-Location -LiteralPath $worktree
     try { $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1; $automationCode=$LASTEXITCODE; $automationOutput=($out | Out-String) } finally { Pop-Location }
-  } finally { $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_CONTROLLER_REPO_ROOT=$oldController; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch }
+  } finally {
+    $ErrorActionPreference=$oldAutomationEap
+    $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_CONTROLLER_REPO_ROOT=$oldController; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch
+  }
   if ($automationCode -ne 0) { Add-Blocker 'AUTOMATION_EXIT_NONZERO' }
   $gatePath = Join-Path $worktree ($gateRel -replace '/', '\')
   $gate = $null
