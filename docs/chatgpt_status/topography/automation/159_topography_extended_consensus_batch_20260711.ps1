@@ -284,10 +284,12 @@ try {
   $htmlPath = Join-Path $repoRoot ($htmlRel -replace '/', '\')
   $html = Get-Content -LiteralPath $htmlPath -Raw -Encoding UTF8
   if (-not $html.Contains("['Consensus median','elevation_consensus_median_m']")) {
-    $needle = "['Resmi kaynak discovery','official_source_discovery_path'],['Güven (%)','confidence_percent']"
-    $replacement = "['Resmi kaynak discovery','official_source_discovery_path'],['SRTM 30 m','srtm30m_elevation_m'],['ASTER 30 m','aster30m_elevation_m'],['Consensus kaynak sayısı','consensus_source_count'],['Consensus median','elevation_consensus_median_m'],['Kaynak yayılımı (m)','source_spread_m'],['Consensus durumu','consensus_status'],['Consensus kaynakları','consensus_sources'],['Consensus kanıtı','extended_consensus_evidence_path'],['Güven (%)','confidence_percent']"
-    if (-not $html.Contains($needle)) { throw 'TOPOGRAPHY_159_HTML_INSERT_POINT_NOT_FOUND' }
-    $html = $html.Replace($needle, $replacement)
+    $key = "'official_source_discovery_path']"
+    $keyIndex = $html.IndexOf($key, [System.StringComparison]::Ordinal)
+    if ($keyIndex -lt 0) { throw 'TOPOGRAPHY_159_HTML_INSERT_POINT_NOT_FOUND' }
+    $insertAt = $keyIndex + $key.Length
+    $extraColumns = ",['SRTM 30 m','srtm30m_elevation_m'],['ASTER 30 m','aster30m_elevation_m'],['Consensus kaynak sayısı','consensus_source_count'],['Consensus median','elevation_consensus_median_m'],['Kaynak yayılımı (m)','source_spread_m'],['Consensus durumu','consensus_status'],['Consensus kaynakları','consensus_sources'],['Consensus kanıtı','extended_consensus_evidence_path']"
+    $html = $html.Insert($insertAt, $extraColumns)
     [System.IO.File]::WriteAllText($htmlPath, $html, [System.Text.UTF8Encoding]::new($false))
   }
   $stages += [ordered]@{ stage='extended_consensus_site_rows'; status='completed'; rows=$rows.Count }

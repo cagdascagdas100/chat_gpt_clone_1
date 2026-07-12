@@ -202,7 +202,9 @@ try:
     driver.get(url)
     wait = WebDriverWait(driver, 45)
     wait.until(lambda d: d.find_element(By.ID, "layerSelect"))
-    Select(driver.find_element(By.ID, "layerSelect")).select_by_value("gas")
+    layer_select = driver.find_element(By.ID, "layerSelect")
+    Select(layer_select).select_by_value("gas")
+    driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))", layer_select)
     wait.until(lambda d: "28" in d.find_element(By.ID, "pageInfo").text and len(d.find_elements(By.CSS_SELECTOR, "#table tbody tr")) > 0)
 
     row_map = {}

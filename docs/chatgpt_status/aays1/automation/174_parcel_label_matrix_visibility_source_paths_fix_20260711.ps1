@@ -6,7 +6,7 @@ $taskId = '174_aays1_parcel_label_matrix_visibility_source_paths_codex_fix_20260
 function Now-Utc { (Get-Date).ToUniversalTime().ToString('o') }
 function Read-Json([string]$Path) { if (Test-Path -LiteralPath $Path) { Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json } }
 function Ensure-Dir([string]$Path) { if (-not (Test-Path -LiteralPath $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
-function Write-Json([string]$Path,[object]$Value) { Ensure-Dir (Split-Path -Parent $Path); $tmp=$Path+'.tmp.'+$PID; [IO.File]::WriteAllText($tmp,(($Value|ConvertTo-Json -Depth 60)+'`n'),[Text.UTF8Encoding]::new($false)); Move-Item -LiteralPath $tmp -Destination $Path -Force }
+function Write-Json([string]$Path,[object]$Value) { Ensure-Dir (Split-Path -Parent $Path); $tmp=$Path+'.tmp.'+$PID; [IO.File]::WriteAllText($tmp,(($Value|ConvertTo-Json -Depth 60)+[Environment]::NewLine),[Text.UTF8Encoding]::new($false)); Move-Item -LiteralPath $tmp -Destination $Path -Force }
 function Rel([string]$Path) { ([IO.Path]::GetFullPath($Path).Substring([IO.Path]::GetFullPath($RepoRoot).TrimEnd('\').Length).TrimStart('\') -replace '\\','/') }
 function Hash-File([string]$Path) { if(Test-Path -LiteralPath $Path){(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()}else{$null} }
 function Get-Value([object]$Object,[string]$Name,[object]$Default=$null){$p=$Object.PSObject.Properties[$Name];if($p -and $null-ne $p.Value){$p.Value}else{$Default}}

@@ -71,7 +71,14 @@ $reportRel = "docs/chatgpt_status/$pageKey/reports/${taskId}_visibility_orchestr
 
 $allRowsPath = Join-Path $repoRoot ($allRowsRel -replace '/','\')
 if (Test-Path -LiteralPath $allRowsPath) {
-  $allRowsDoc = Get-Content -LiteralPath $allRowsPath -Raw | ConvertFrom-Json
+  $allRowsRaw = Get-Content -LiteralPath $allRowsPath -Raw
+  try {
+    $allRowsDoc = $allRowsRaw | ConvertFrom-Json
+  } catch {
+    $lastObjectBrace = $allRowsRaw.LastIndexOf('}')
+    if ($lastObjectBrace -lt 0) { throw }
+    $allRowsDoc = $allRowsRaw.Substring(0, $lastObjectBrace + 1) | ConvertFrom-Json
+  }
 } else {
   $allRowsDoc = [pscustomobject]@{ rows=@() }
 }
