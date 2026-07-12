@@ -2,29 +2,45 @@
 
 ## Overall status
 - Total reviewer comments: 32
-- Completed through: Comment 6
-- Completion: 6/32 = 18.75%
-- Next item: Comment 7
+- Completed through: Comment 7
+- Completion: 7/32 = 21.875%
+- Next item: Comment 8
+
+## Quality re-audit of Comments 1–6
+- Comments 1–5 remain methodologically defensible after a second review.
+- Comment 1 remains provisionally complete because the manuscript still contains LLM claims outside the Abstract; final wording depends on verified scenario-generation provenance.
+- Comment 2 remains unchanged: the abstract should report concrete outputs rather than the vague phrase `interpretable risk coefficients`.
+- Comment 3 wording is tightened to the more domain-specific U.S.-journal phrase `predict occupational injury outcomes, including injury severity`.
+- Comment 4 remains unchanged; `augmented reality` should be written in full because the abbreviation is not reused meaningfully.
+- Comment 5 remains unchanged; the BIM sentence should describe specific information flows and decision-support functions rather than the vague phrase `manage risk factors`.
+- Comment 6 required a substantive correction after rechecking the YAML and Excel outputs:
+  - Model 01 contains 18 observed nonzero-frequency outcome categories, including the zero-day category.
+  - Model 02 contains 17 observed positive-day categories after zero-day cases are excluded.
+  - Model 03 contains four observed injury-severity classes.
+  - Earlier references to 21 and 20 observed categories reflected the encoded label space rather than the categories actually represented by nonzero observations and must not be used in the manuscript.
+- Terminology safeguard added for Comment 6: do not equate the recorded `ODEME_GUNSAYISI` field with DAFW or indemnity days until Comments 8–9 establish the operational definition. Use the neutral phrase `recorded payment-day outcome` for now.
 
 ## Comment 1 — Abstract / LLM wording
 - Status: Completed pending final consistency check
-- Decision: Remove unsupported LLM-based scenario-generation claim from the Abstract.
+- Decision: Remove the unsupported LLM-based scenario-generation claim from the Abstract.
 - Literature: No new citation required because the sentence describes the authors' own method.
-- Final manuscript wording uses verified machine-learning-based accident consequence modeling and risk-scenario prioritization terminology.
+- Final manuscript wording should use verified machine-learning-based accident-consequence modeling and risk-scenario prioritization terminology.
+- Final audit note: retain no sentence that indirectly implies automated LLM generation, such as `simulates high-priority accident sequences`, unless the runtime implementation is verified.
 
 ## Comment 2 — “interpretable risk coefficients”
 - Status: Completed
 - Decision: Replace the ambiguous phrase with the actual reported outputs: normalized internal, external, and overall risk percentages.
 - Literature: No new citation required; this is an internal model-output description.
+- Final audit note: use `risk percentages` only where the manuscript has already defined the normalization procedure and scale.
 
 ## Comment 3 — “risk coefficients that quantify individualized safety exposure”
 - Status: Completed
-- Decision: Replace nonstandard and potentially misleading terminology with established U.S.-journal wording focused on prediction of incident outcomes, including injury severity.
+- Decision: Replace nonstandard and potentially misleading terminology with established U.S.-journal wording focused on prediction of occupational injury outcomes.
 - Preferred revision:
   - Old: `generate risk coefficients that quantify individualized safety exposure`
-  - New: `predict incident outcomes such as injury severity`
+  - New: `predict occupational injury outcomes, including injury severity`
 - Citation handling: Retain and reposition existing reference [2] to support the revised predictive-modeling statement.
-- Terminology rule: Do not use “safety exposure” unless exposure frequency, duration, dose, or contact with a hazard is actually measured.
+- Terminology rule: Do not use `safety exposure` unless exposure frequency, duration, dose, or contact with a hazard is actually measured.
 
 ## Comment 4 — AR abbreviation
 - Status: Completed
@@ -35,10 +51,6 @@
   - `At the same time, emerging digital technologies such as building information modeling (BIM), digital twins, augmented reality, and virtual reality can be integrated into mobile platforms to support interactive safety management [18,24].`
 - Red-highlighted replacement segment for the final workbook:
   - `digital twins, augmented reality, and virtual reality can be integrated into mobile platforms to support interactive safety management`
-- Rationale:
-  - The abbreviation is used only incidentally and does not improve readability.
-  - `Digital twins` is preferred in the plural when referring to the technology category.
-  - `To support interactive safety management` is more direct and idiomatic than the participial phrase `enhancing interactive safety management capabilities`.
 - Literature: No new source required; existing references [18,24] remain attached to the technology-integration claim.
 - Reviewer-response draft:
   - `Revised. The abbreviation “AR” was removed, and the term “augmented reality” is now written in full. The sentence was also streamlined for clarity while retaining the existing references.`
@@ -48,70 +60,91 @@
 - Reviewer comment: `Incorporate and manage risk factors böyle çok genel bir ifade`
 - Selected wording:
   - `due to its capability to incorporate and manage risk factors`
-- Problem identified:
-  - `Incorporate and manage risk factors` does not specify what information BIM contains, how that information is used, or what decision process it supports.
-  - `BIM is widely used` is a broad prevalence claim that is not necessary and is not established by reference [18] alone.
-  - The claim that BIM reduces `time and cost losses` is too broad for the cited fall-risk application and should not be retained without direct quantitative evidence.
-- Citation-specific evidence already present in the manuscript:
-  - [18] supports BIM–augmented-reality visualization of fall hazards and corresponding preventive measures.
-  - [19] supports BIM-based organization and retrieval of construction-safety records.
-  - [27] supports linking BIM-defined hazard zones with real-time worker-location data for mobile safety monitoring.
 - Recommended full replacement sentence:
   - `In mobile construction-safety applications, BIM provides a project-specific digital environment in which hazard locations, worker-location data, safety records, and preventive measures can be organized and visualized to support location-based safety decisions [18,19,27].`
 - Red-highlighted replacement segment for the final workbook:
   - The entire revised sentence should be red because the original sentence is being replaced in full.
 - Citation handling:
   - No new literature source is required.
-  - Expand the citation from [18] to [18,19,27], because the revised synthesis combines the distinct BIM functions documented by the three studies already cited in the same subsection.
-- American academic-language choices:
-  - Use `construction-safety applications`, `project-specific digital environment`, `worker-location data`, `preventive measures`, and `location-based safety decisions`.
-  - Avoid vague phrases such as `manage risk factors`, `improve performance`, and `reduce time and cost losses` unless the relevant outcomes were directly measured.
+  - Expand the citation from [18] to [18,19,27], because the revised synthesis combines the distinct BIM functions documented by the three studies already cited in the subsection.
 - Reviewer-response draft:
   - `Revised. The general statement that BIM can “incorporate and manage risk factors” was replaced with a specific description of the information handled in mobile BIM-based safety applications, including hazard locations, worker-location data, safety records, and preventive measures. The revised sentence also clarifies that these functions support location-based hazard visualization and safety decision-making. Existing references [18,19,27] were used; no new source was added.`
-- Consistency note:
-  - The following examples by Tariq et al. [19], Park et al. [27], and Aksu and Ofluoğlu [18] should remain because they provide the study-level evidence underlying the revised synthesis sentence.
 
 ## Comment 6 — Meaning of “multiple target formulations”
-- Status: Completed
+- Status: Completed after quality re-audit
 - Reviewer comment:
   - `Bu multiple target combination’dan kasıt nedir?`
-- Exact selected wording in the manuscript:
+- Exact selected wording:
   - `multiple target formulations`
-- Interpretation based on the verified project outputs:
-  - Model 01 uses the complete dataset, including zero-day cases, and retains categorized indemnity-payment-day values as the outcome.
-  - Model 02 excludes zero-day cases and evaluates the remaining categorized indemnity-payment-day values.
-  - Model 03 converts the outcome into four injury-severity classes: first aid, temporary incapacity, permanent incapacity, and fatality.
-  - All three analyses use the same 14-predictor set, so the comparison changes the outcome definition rather than the predictors.
+- Verified analytical design:
+  - Model 01 uses the complete 64,999-record dataset and the observed categories of the recorded payment-day outcome, including zero-day cases; 18 categories have nonzero observations.
+  - Model 02 excludes zero-day cases and uses the remaining 13,570 records; 17 positive-day categories have nonzero observations.
+  - Model 03 uses the complete 64,999-record dataset and converts the outcome into four classes: first aid, temporary incapacity, permanent incapacity, and fatality.
+  - The same 14 predictors are used across all three analyses.
 - Terminology decision:
-  - Replace the vague phrase `multiple target formulations` with the standard and explicit phrase `three definitions of the outcome variable`.
-  - Use `outcome variable` or `outcome definition` rather than `target combination`; the latter is not the actual design used in the study.
-- Existing sentence:
-  - `In contrast, this study deployed large-scale historical accident data and adopted a controlled comparative modeling framework, where multiple target formulations were evaluated using consistent feature sets.`
-- Recommended full replacement sentence:
-  - `In contrast, this study used a large historical accident dataset and a controlled comparative modeling framework to evaluate three definitions of the outcome variable using the same predictor set: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome comprising first aid, temporary incapacity, permanent incapacity, and fatality.`
+  - Replace `multiple target formulations` with `three prespecified encodings of the outcome variable`.
+  - Avoid `target combination`, which does not describe the implemented design.
+- Corrected recommended sentence:
+  - `In contrast, this study used a large historical accident dataset and a controlled comparative modeling framework to evaluate three prespecified encodings of the recorded payment-day outcome using the same predictor set: the observed categories including zero-day cases, the corresponding positive-day categories after zero-day cases were excluded, and a four-level injury-severity classification comprising first aid, temporary incapacity, permanent incapacity, and fatality.`
 - Red-highlighted replacement segment for the final workbook:
-  - The full revised sentence should be shown, with the following newly inserted explanatory segment in red: `three definitions of the outcome variable using the same predictor set: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome comprising first aid, temporary incapacity, permanent incapacity, and fatality`
-- Rationale:
-  - The reviewer should not have to infer what the three models represent from their later labels.
-  - `Definitions of the outcome variable` is standard U.S. academic terminology and directly describes what changed across the three analyses.
-  - The revision separates the outcome definition from the predictor set and makes the controlled comparison transparent.
-  - `Large historical accident dataset` is more idiomatic than `deployed large-scale historical accident data`.
-- Literature and citation handling:
-  - No new literature source is required because the sentence describes the authors' own analytical design.
-  - Do not attach an external citation to the three outcome definitions unless the source is being cited only for the general comparative-modeling rationale.
-- Internal evidence retained for the final workbook:
-  - Risk_01: 64,999 records; zero-day cases included; 21 observed outcome categories; 14 predictors.
-  - Risk_02: 13,570 records; zero-day cases excluded; 20 observed outcome categories; the same 14 predictors.
-  - Risk_03: 64,999 records; four outcome classes; the same 14 predictors.
+  - `three prespecified encodings of the recorded payment-day outcome using the same predictor set: the observed categories including zero-day cases, the corresponding positive-day categories after zero-day cases were excluded, and a four-level injury-severity classification comprising first aid, temporary incapacity, permanent incapacity, and fatality`
+- Literature: No new source required because this sentence describes the authors' analytical design.
 - Reviewer-response draft:
-  - `Revised. The phrase “multiple target formulations” was replaced with an explicit description of the three outcome definitions evaluated in the comparative framework: categorized indemnity-payment days including zero-day cases, the corresponding categories after zero-day cases were excluded, and a four-level injury-severity outcome. The revised sentence also clarifies that the same predictor set was used across the three analyses.`
-- Consistency note:
-  - The same three definitions must be described consistently in Section 3.1.3, figure captions, tables, and the Results section.
-  - Model labels F/E/A should not be finalized here because Comments 10 and 19 separately require a manuscript-wide naming standard.
+  - `Revised. The phrase “multiple target formulations” was replaced with an explicit description of the three prespecified outcome encodings evaluated using the same predictor set: the observed payment-day categories including zero-day cases, the corresponding positive-day categories after zero-day cases were excluded, and a four-level injury-severity classification.`
+
+## Comment 7 — Algorithms evaluated and reasons for their selection
+- Status: Completed, with a critical cross-validation consistency flag
+- Reviewer comment:
+  - `Sadece bu üç yöntem mi kullanıldı? Eğer öyleyse neden bu üçü, birer ikişer cümleyle bu yöntemlerin seçimlerinin sebeplerini verelim.`
+- Exact selected wording:
+  - `Adaboost, extremly randomized trees (ERT), and GBDT`
+- Verified model portfolio from all three result workbooks:
+  - Random Forest
+  - Extremely Randomized Trees (Extra Trees)
+  - Gradient Boosting Decision Trees (GBDT)
+  - Histogram-Based Gradient Boosting
+  - AdaBoost
+  - Logistic Regression
+  - Support Vector Machine (SVM)
+  - k-Nearest Neighbors (k-NN)
+  - Multilayer Perceptron (MLP)
+  - A majority-class classifier was also evaluated as a noninformative baseline and should not be described as a substantive candidate model.
+- Main correction:
+  - The manuscript is incorrect in implying that only three algorithms were evaluated.
+  - Use `Extremely Randomized Trees (Extra Trees)`, not the misspelled `Extremly Randomized Trees` and not the uncommon abbreviation `ERT`.
+  - Use `AdaBoost`, not `Adaboost`.
+- Selection rationale:
+  - Tree-based bagging and boosting models were included to capture nonlinear effects and higher-order interactions in mixed tabular predictors without imposing a single linear functional form.
+  - Logistic regression provides a regularized linear benchmark.
+  - Support vector machines provide a margin-based benchmark capable of representing nonlinear decision boundaries through kernels.
+  - k-nearest neighbors provides a local, instance-based benchmark.
+  - The multilayer perceptron provides a flexible neural-network benchmark.
+  - The portfolio therefore compares complementary inductive biases under a common preprocessing and evaluation protocol rather than selecting algorithms arbitrarily.
+- Preferred full replacement paragraph:
+  - `Nine supervised classifiers were evaluated within a common preprocessing and repeated cross-validation framework: random forest, extremely randomized trees (Extra Trees), gradient boosting decision trees, histogram-based gradient boosting, AdaBoost, logistic regression, support vector machines, k-nearest neighbors, and multilayer perceptrons. A majority-class classifier was included as a noninformative baseline. The candidate set was selected to compare complementary model classes: tree ensembles for nonlinear effects and feature interactions, logistic regression as a regularized linear benchmark, support vector machines as a margin-based benchmark, k-nearest neighbors as an instance-based benchmark, and multilayer perceptrons as a flexible neural-network benchmark. Within each outcome encoding, all candidates were trained using identical preprocessing steps and the same cross-validation splits. Model selection was based primarily on the weighted area under the precision–recall curve (AUPRC), while AUROC, F1 score, calibration, and training time were retained as secondary evaluation criteria.`
+- Red-highlighted replacement treatment for the final workbook:
+  - The entire paragraph should be red because the original algorithm sentence and the adjacent model-selection statement are both materially inaccurate.
+- Citation handling:
+  - Existing references [57] and [79] can support the use of comparative ML portfolios in construction and occupational-accident prediction.
+  - No new literature source is strictly necessary for the reviewer response.
+  - A software citation to Pedregosa et al. (2011) may be added later if the journal requires citation of the scikit-learn implementation.
+- Critical method consistency finding:
+  - The manuscript currently states `stratified 5-fold cross-validation with optional repeats`.
+  - The generated Markdown summaries report repeated two-fold evaluation for Models 01 and 02 and group-aware two-fold evaluation for Model 03, whereas parts of the YAML runtime metadata list five splits.
+  - The generated quality checks also flag the cross-validation configuration as inconsistent.
+  - Therefore, the phrase `stratified 5-fold cross-validation` must not be retained until the implementation, YAML metadata, and report summaries are reconciled.
+  - The final manuscript should either report the exact verified protocol or the models should be rerun under the intended stratified five-fold design.
+- Model-selection consistency finding:
+  - The manuscript currently says that the model with the highest AUROC was selected.
+  - The generated result summaries identify weighted AUPRC as the primary selection metric and retain AUROC, F1, calibration, and training time as supporting criteria.
+  - The revised paragraph therefore uses weighted AUPRC as the primary metric.
+- Reviewer-response draft:
+  - `Revised. The original sentence listed only three algorithms, although nine supervised classifiers were evaluated. The Methods section now reports the complete candidate set and explains that the portfolio was designed to compare complementary tree-based, linear, margin-based, instance-based, and neural-network model classes under the same preprocessing and cross-validation splits. A majority-class classifier is also identified as a noninformative baseline. Algorithm names and capitalization were standardized, and the model-selection criterion was aligned with the generated results.`
 
 ## Workflow rule
 - Continue one reviewer comment at a time.
+- Re-audit earlier decisions whenever new project evidence exposes an inconsistency.
 - Preserve American academic English.
-- Avoid invented or obsolete terminology.
+- Avoid invented, obsolete, or implementation-inconsistent terminology.
 - In the final workbook, show only the newly inserted or replaced wording in red within the complete revised sentence or paragraph.
 - Deliver the consolidated workbook only after all comments are processed.
