@@ -1,0 +1,73 @@
+{
+  "task_id": "aays1-160-topography-regional-control-expansion-20260713",
+  "page_key": "aays1",
+  "status": "queued",
+  "queue_status": "queued_for_single_shared_runner",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "runner_mode": "single_shared_runner_only",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "priority": -3100,
+  "queued_at": "2026-07-13T00:00:00Z",
+  "script_path": "docs/chatgpt_status/topography/automation/160_topography_regional_control_expansion_runner_20260713.ps1",
+  "automation_script": "docs/chatgpt_status/topography/automation/160_topography_regional_control_expansion_runner_20260713.ps1",
+  "purpose": "Continue after completed task 159 without duplicating it. In one bounded batch on the existing persistent single shared runner, create eight deterministic 500 m regional control points, query EU-DEM 25 m, SRTM 90 m, SRTM 30 m and ASTER 30 m, calculate control-point multi-DEM medians and a reproducible regional average, recalculate all three parcel height differences, refresh official Copernicus/EA LiDAR/OS Terrain source checks as source_check_only, append every operation to the site ledger, publish the site artifacts, and perform HTTP readback. Never fabricate unavailable numbers.",
+  "allowed_paths": [
+    "docs/chatgpt_status/topography/source_snapshots",
+    "docs/chatgpt_status/topography/fixtures",
+    "docs/chatgpt_status/topography/status",
+    "docs/chatgpt_status/topography/reports",
+    "docs/chatgpt_status/topography/runner_outputs",
+    "england_map_web/data/program_layer_matrix",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/topography/source_snapshots/160_regional_control_sources_latest.json",
+    "docs/chatgpt_status/topography/fixtures/topography_regional_control_rows_20260713.json",
+    "docs/chatgpt_status/topography/fixtures/topography_regional_control_rows_20260713.csv",
+    "docs/chatgpt_status/topography/status/160_topography_regional_control_expansion_latest.json",
+    "docs/chatgpt_status/topography/reports/160_topography_regional_control_expansion_report_20260713.md",
+    "docs/chatgpt_status/topography/runner_outputs/160_topography_regional_control_expansion_batch.json",
+    "england_map_web/data/program_layer_matrix/topography_visible_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/topography_visible_status_latest.json",
+    "england_map_web/data/program_layer_matrix/topography_operations_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json"
+  ],
+  "workload": {
+    "candidate_parcel_rows": 3,
+    "regional_control_points": 8,
+    "dem_datasets": 4,
+    "planned_real_dem_samples": 32,
+    "control_consensus_rows": 8,
+    "parcel_height_difference_rows": 3,
+    "official_source_checks": 3,
+    "serial_stage_count": 8
+  },
+  "completion_policy": {
+    "baseline_percent": 60,
+    "four_dem_sources_and_site_readback_percent": 70,
+    "three_dem_sources_and_site_readback_percent": 68,
+    "minimum_two_dem_sources_and_site_readback_percent": 65,
+    "accuracy_cap": "2.5/4 fallback until primary CopDEM raster, real parcel boundaries and official EA LiDAR or OS Terrain numeric validation exist"
+  },
+  "website_policy": "Append every design, request, sample, consensus, average, parcel calculation, official source check and blocker as a separate operation row. Keep parcel result rows current and source paths visible.",
+  "batch_concurrency_policy": "one canonical runner; one larger bounded batch; four source requests executed serially inside the same task; no parallel runner",
+  "supersedes_without_duplicate_execution": [
+    "aays1-159-topography-official-source-acceleration-bridge-20260711"
+  ],
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "no_parallel_runner": true,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
