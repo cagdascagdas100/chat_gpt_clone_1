@@ -3,33 +3,30 @@
 - Total reviewer comments: 32
 - Processed through: Comment 32
 - Processed: 32/32 = 100.0%
-- Fully finalized: 30/32 = 93.75%
-- Conditional-resolution phase: 5/7 items resolved = 71.429%
-- Remaining conditional items: Comment 23 (original high-resolution landing-page and personal-input screenshots) and Comment 24 (meaning of `yz`)
-- Next item: resolve Comment 23 by determining whether the required original high-resolution landing-page and personal-input screenshots are available; otherwise lock a reduced figure plan that uses only verified screens
+- Fully finalized: 31/32 = 96.875%
+- Conditional-resolution phase: 6/7 items resolved = 85.714%
+- Remaining conditional item: Comment 24 (meaning of `yz`)
+- Next item: resolve Comment 24 by determining whether `yz` has a recoverable contextual meaning; otherwise record it as an unresolvable annotation and make no manuscript change
 
-## Latest decision — Conditional Item 20 resolved
-The worked-example scalar `50.62%` is removed. It depended on the unsupported `0.10/0.90` internal–external weighting and the unsupported across-region decay value `0.60`, both of which have been deleted. No substitute composite or inferred fifth-region value will be introduced.
+## Latest decision — Conditional Item 23 resolved
+The application-figure request is closed with a reduced evidence-based plan. The project package contains three high-resolution composite images of existing application screens and one high-resolution workflow schematic, but no original landing-page or personal-input-form screenshot. Missing interface screens will not be recreated or presented as original evidence.
 
-## Region-specific outputs retained
-- arms: `56.48%`;
-- head: `50.56%`;
-- legs: `49.49%`;
-- torso: `25.57%`.
+## Verified image inventory
+- `image16.jpg` — 2987 × 2065 pixels: section selection, machine selection/detail, and an overall-risk dashboard panel.
+- `image17.jpg` — 2982 × 2069 pixels: Precautions, My Legal Rights, and Visual Results.
+- `image18.jpg` — 2983 × 2052 pixels: What If No Precautions? and Cost Analysis.
+- `image15.jpg` — 4957 × 7015 pixels: workflow schematic with personal-risk inputs and the work/machine hierarchy; this is a diagram, not a screenshot.
 
-These values will be reported separately as illustrative region-specific outputs. The arms value may be identified as the `highest regional value`, but no value will be called an overall validated risk percentage.
+## Locked figure plan
+- Retain the workflow schematic as an illustrative input-path diagram.
+- Use the first two panels of `image16.jpg` for section and machine selection.
+- Omit or crop the right-hand `Overall Risk` panel because it conflicts with the finalized removal of unsupported composite scores under Comments 17, 18, and 20.
+- Retain `image17.jpg` with separate panel descriptions for precautions, legal-information content, and body-region visualization.
+- Use `image18.jpg` only where cost and payment labels remain consistent with Comments 8, 9, and 21; omit any uncorrected panel.
+- Do not add landing-page or personal-input screenshots unless original application captures are later supplied.
 
-## Four-versus-five-region correction
-- The worked example contains four reported regions although the Methods text referred to five.
-- No fifth-region input or output is available in the auditable example, so none will be fabricated.
-- The manuscript will describe this as a four-region illustrative example unless an original fifth-region calculation trace is later supplied.
-- No five-region aggregate will be reported.
-
-## Figure and interface consequence
-Any figure or screenshot showing `50.62%` under an `Overall Risk` label must be regenerated after the interface logic and label are corrected. If a corrected original screenshot is unavailable, the misleading panel will be omitted or cropped rather than digitally relabeled.
-
-## Approved wording
-`In the illustrative case, the application displayed region-specific values of 56.48% for the arms, 50.56% for the head, 49.49% for the legs, and 25.57% for the torso. The values were reported separately and ordered to support prioritization; they were not combined into an overall percentage. Because the example contained four reported regions, no fifth-region value or five-region aggregate was inferred.`
+## Evidence boundary
+The figures document the interface workflow only. They do not establish usability, user acceptance, external validity, accident reduction, or field effectiveness. No digitally reconstructed screenshot will be used as evidence.
 
 ## Next item
-Conditional Item 23 — verify the availability of original high-resolution landing-page and personal-input screenshots and finalize the application-figure plan without inventing or digitally reconstructing missing evidence.
+Conditional Item 24 — determine whether the annotation `yz` has a defensible contextual meaning; if it cannot be resolved from the source files, preserve it as an author clarification dependency and make no textual revision.
