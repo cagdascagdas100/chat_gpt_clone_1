@@ -1,22 +1,24 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Completed through: Comment 10
-- Completion: 10/32 = 31.25%
-- Next item: Comment 11
+- Completed through: Comment 11
+- Completion: 11/32 = 34.375%
+- Next item: Comment 12
 
 ## Latest decision
-The F/E/A naming scheme was replaced with `Analysis 1`, `Analysis 2`, and `Analysis 3`. This is preferred over Model A/B/C because each analytical setting compares multiple classifiers rather than representing a single fitted model.
+The manuscript will not mechanically expand AUPRC. The verified output metadata identifies the implemented primary metric as `average_precision_weighted`; therefore, the manuscript-facing term is `class-support-weighted average precision (AP)` unless later source-code verification demonstrates trapezoidal integration of the precision–recall curve.
 
-## Standard definitions
-- Analysis 1: all-case payment-day classification, including zero-day cases.
-- Analysis 2: positive payment-day classification after zero-day cases were excluded.
-- Analysis 3: four-level injury-severity classification.
+## Comment 11 corrections
+- Removed the incorrect statement assigning mean absolute error and quantile-loss summaries to Analysis 2.
+- Standardized the primary selection metric across the three analyses as class-support-weighted AP.
+- Retained macro AP as a complementary equal-class-weight summary.
+- Retained AUROC, weighted F1 score, accuracy, calibration metrics, and training time as secondary criteria.
+- Added a methodological citation recommendation for precision–recall evaluation under class imbalance.
 
 ## Cross-comment consistency updates
-- Comment 6: describe three prespecified modeling analyses, each defined by a distinct outcome encoding.
-- Comment 7: use `within each analysis` and `across the three analyses`.
-- Comments 8–9: retain `recorded payment-day outcome`; do not relabel it as DAFW without source-level verification.
+- Comment 7: replace `weighted AUPRC` with `class-support-weighted average precision (AP)` unless code verification supports true AUPRC.
+- Comment 10: use `within each analysis` and the Analysis 1/2/3 naming standard.
+- Results tables and figures: use manuscript-facing labels `weighted AP` and `macro AP`; preserve original artifact column names only in the reproducibility archive.
 
 ## Next item
-Comment 11 — define AUPRC at first occurrence and explain its role in imbalanced multiclass evaluation.
+Comment 12 — determine whether an LLM was actually used; if retained, report the exact model name, version, access date, configuration, and role, and if not verified, remove the LLM-generation claim.
