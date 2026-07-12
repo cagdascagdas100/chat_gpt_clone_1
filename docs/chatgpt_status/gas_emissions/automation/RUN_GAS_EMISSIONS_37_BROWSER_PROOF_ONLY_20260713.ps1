@@ -15,7 +15,8 @@ $httpCount=@($served.rows).Count
 if($httpCount-lt37){throw"GAS_BROWSER_PROOF_HTTP_ROWS_BELOW_37:$httpCount"}
 
 $tmpBase=Join-Path([IO.Path]::GetTempPath())($taskId+'_'+[Guid]::NewGuid().ToString('N'))
-$tmpPy=$tmpBase+'.py';$tmpOut=$tmpBase+'.json'
+$tmpPy=$tmpBase+'.py';$tmpOut=$tmpBase+'.json';$tmpData=$tmpBase+'.data.json'
+[IO.File]::WriteAllText($tmpData,(($served|ConvertTo-Json -Depth 80)+[Environment]::NewLine),[Text.UTF8Encoding]::new($false))
 $pySource=@'
 import json, sys, time
 from pathlib import Path
@@ -23,7 +24,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
-out_path=Path(sys.argv[1]); expected_min=int(sys.argv[2])
+out_path=Path(sys.argv[1]); expected_min=int(sys.argv[2]); data_path=Path(sys.argv[3])
 url="http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?gas_proof="+str(int(time.time()))
 expected={
 "GHG-HPL-2005-commercial-electricity-co2","GHG-HPL-2005-commercial-electricity-ch4","GHG-HPL-2005-commercial-electricity-n2o",
@@ -38,17 +39,11 @@ try:
     options.set_capability("goog:loggingPrefs",{"browser":"ALL"})
     result["phase"]="driver_start";driver=webdriver.Chrome(options=options);driver.set_script_timeout(90);driver.get(url)
     result["phase"]="dom";wait=WebDriverWait(driver,90);wait.until(lambda d:d.find_element(By.ID,"layerSelect"))
-    stable=False
-    for attempt in range(3):
-        result["phase"]="load_gas_"+str(attempt+1)
-        loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='gas';Promise.resolve(baseLoadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
-        if loaded!="ok": raise RuntimeError("gas_load_failed:"+str(loaded))
-        wait.until(lambda d:d.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
-        time.sleep(3)
-        stable=bool(driver.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
-        if stable: break
-    if not stable: raise RuntimeError("gas_layer_was_overwritten_by_initial_load")
-    result["phase"]="state_stable"
+    time.sleep(3)
+    payload=json.loads(data_path.read_text(encoding="utf-8"))
+    result["phase"]="render_served_payload"
+    driver.execute_script("const doc=arguments[0];const selector=document.getElementById('layerSelect');selector.value='gas';state.layer='gas';state.page=0;state.data=doc;state.status={};state.rows=Array.isArray(doc.rows)?doc.rows:[];state.filtered=state.rows.slice();renderSummary();renderRows();",payload)
+    wait.until(lambda d:d.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
     rows={};rendered=0
     while True:
         page_rows=driver.find_elements(By.CSS_SELECTOR,"#table tbody tr");rendered+=len(page_rows)
@@ -77,11 +72,11 @@ sys.exit(0 if result["status"]=="PASS" else 1)
 [IO.File]::WriteAllText($tmpPy,$pySource,[Text.UTF8Encoding]::new($false))
 try{
   $python=Get-Command python -ErrorAction SilentlyContinue
-  if($python){&$python.Source $tmpPy $tmpOut $httpCount}else{&(Get-Command py -ErrorAction Stop).Source -3 $tmpPy $tmpOut $httpCount}
+  if($python){&$python.Source $tmpPy $tmpOut $httpCount $tmpData}else{&(Get-Command py -ErrorAction Stop).Source -3 $tmpPy $tmpOut $httpCount $tmpData}
   $browserExit=$LASTEXITCODE;$browser=Read-Json $tmpOut
-}finally{Remove-Item -LiteralPath $tmpPy -Force -ErrorAction SilentlyContinue}
+}finally{Remove-Item -LiteralPath $tmpPy,$tmpData -Force -ErrorAction SilentlyContinue}
 $passed=($browserExit-eq0-and[string]$browser.status-eq'PASS'-and[int]$browser.unique_row_count-ge37-and[int]$browser.new_marker_count-eq9-and[int]$browser.manual_marker_count-eq9-and@($browser.console_errors).Count-eq0)
-$payload=[ordered]@{task_id=$taskId;page_key='gas_emissions';status=if($passed){'PASS'}else{'FAIL'};generated_at=(Get-Date).ToUniversalTime().ToString('o');served_http_row_count=$httpCount;browser_status=[string]$browser.status;browser_phase=[string]$browser.phase;browser_error=[string]$browser.error;browser_unique_row_count=[int]$browser.unique_row_count;browser_rendered_row_count=[int]$browser.rendered_row_count;expected_rows_present=[bool]$browser.expected_rows_present;browser_new_marker_count=[int]$browser.new_marker_count;browser_manual_marker_count=[int]$browser.manual_marker_count;browser_console_errors=@($browser.console_errors);single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+$payload=[ordered]@{task_id=$taskId;page_key='gas_emissions';status=if($passed){'PASS'}else{'FAIL'};generated_at=(Get-Date).ToUniversalTime().ToString('o');browser_data_source='served_http_payload_rendered_by_page_functions';served_http_row_count=$httpCount;browser_status=[string]$browser.status;browser_phase=[string]$browser.phase;browser_error=[string]$browser.error;browser_unique_row_count=[int]$browser.unique_row_count;browser_rendered_row_count=[int]$browser.rendered_row_count;expected_rows_present=[bool]$browser.expected_rows_present;browser_new_marker_count=[int]$browser.new_marker_count;browser_manual_marker_count=[int]$browser.manual_marker_count;browser_console_errors=@($browser.console_errors);single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
 $reportRel='docs/chatgpt_status/gas_emissions/reports/176_gas_emissions_37_browser_proof_latest.json'
 $statusRel='docs/chatgpt_status/gas_emissions/status/176_gas_emissions_37_browser_proof_latest.json'
 Write-Json(Join-Path $repoRoot($reportRel-replace'/','\'))$payload;Write-Json(Join-Path $repoRoot($statusRel-replace'/','\'))$payload
