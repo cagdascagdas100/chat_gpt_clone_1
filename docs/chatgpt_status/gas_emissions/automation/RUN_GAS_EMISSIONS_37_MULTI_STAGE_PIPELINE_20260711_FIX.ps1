@@ -44,10 +44,10 @@ $fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedA
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
 $gasSelectBad = '    Select(driver.find_element(By.ID,"layerSelect")).select_by_value("gas")'
 $gasSelectGood = @'
-    wait.until(lambda d:d.execute_script("return typeof state !== 'undefined' && state.data && Array.isArray(state.data.rows) && state.data.rows.length > 0"))
     layer_select=driver.find_element(By.ID,"layerSelect")
-    Select(layer_select).select_by_value("gas")
-    driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))",layer_select)
+    driver.set_script_timeout(90)
+    load_result=driver.execute_async_script("const done=arguments[arguments.length-1]; const selector=document.getElementById('layerSelect'); selector.value='gas'; Promise.resolve(loadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
+    if load_result != "ok": raise RuntimeError("gas_load_failed:" + str(load_result))
 '@
 if ($fixed.Contains($gasSelectBad)) {
   $fixed = $fixed.Replace($gasSelectBad, $gasSelectGood.TrimEnd())
