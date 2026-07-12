@@ -174,21 +174,26 @@ try {
   foreach ($row in @($visible.rows)) {
     $cross = $crossRows | Where-Object { $_.parcel_id -eq $row.parcel_id } | Select-Object -First 1
     if ($cross) {
-      $row.display_badge = 'EUDEM25M_SRTM_CROSSCHECK_READY'
-      $row.secondary_source = $cross.secondary_source
-      $row.secondary_source_url = $cross.secondary_source_url
-      $row.secondary_elevation_m = $cross.srtm90m_elevation_m
-      $row.source_difference_m = $cross.absolute_source_difference_m
-      $row.crosscheck_status = $cross.crosscheck_status
-      $row.multisource_evidence_path = $crossRowsRel
-      $row.sampling_status = 'source_backed_eudem_sample_and_srtm_crosscheck_ready'
-      $row.accuracy_score_4 = $cross.accuracy_score_4
-      $row.task_id = $taskId
-      $row.updated_at = $generatedAt
-      $row.report_path = $reportRel
-      $row.status_path = $statusRel
-      $row.queue_path = 'docs/chatgpt_status/topography/queue/157_topography_multisource_serial_batch_20260711.task.json'
-      $row.blocker = 'real_parcel_boundary_required; primary_copdem_glo30_sampling_required; official_lidar_or_os_terrain_crosscheck_required'
+      $rowUpdates = [ordered]@{
+        display_badge = 'EUDEM25M_SRTM_CROSSCHECK_READY'
+        secondary_source = $cross.secondary_source
+        secondary_source_url = $cross.secondary_source_url
+        secondary_elevation_m = $cross.srtm90m_elevation_m
+        source_difference_m = $cross.absolute_source_difference_m
+        crosscheck_status = $cross.crosscheck_status
+        multisource_evidence_path = $crossRowsRel
+        sampling_status = 'source_backed_eudem_sample_and_srtm_crosscheck_ready'
+        accuracy_score_4 = $cross.accuracy_score_4
+        task_id = $taskId
+        updated_at = $generatedAt
+        report_path = $reportRel
+        status_path = $statusRel
+        queue_path = 'docs/chatgpt_status/topography/queue/157_topography_multisource_serial_batch_20260711.task.json'
+        blocker = 'real_parcel_boundary_required; primary_copdem_glo30_sampling_required; official_lidar_or_os_terrain_crosscheck_required'
+      }
+      foreach ($entry in $rowUpdates.GetEnumerator()) {
+        $row | Add-Member -NotePropertyName $entry.Key -NotePropertyValue $entry.Value -Force
+      }
       $row.needs_manual_review = $true
       $row.final_ready = $false
       $row.fake_data = $false

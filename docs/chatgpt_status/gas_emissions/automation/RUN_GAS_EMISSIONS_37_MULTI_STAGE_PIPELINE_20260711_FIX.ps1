@@ -25,6 +25,18 @@ if ($fixed.Contains($listCastBad)) {
 } elseif (-not $fixed.Contains($listCastGood)) {
   throw 'EXPECTED_LIST_CAST_FIX_TARGET_NOT_FOUND'
 }
+$safetyTargets = @('final_ready','product_final_ready','fake_data','db_write','migration','production_deploy')
+foreach ($objectName in @('visible','status')) {
+  foreach ($propertyName in $safetyTargets) {
+    $directAssignment = '$' + $objectName + '.' + $propertyName + ' = $false'
+    $safeAssignment = '$' + $objectName + ' | Add-Member -NotePropertyName ' + $propertyName + ' -NotePropertyValue $false -Force'
+    if ($fixed.Contains($directAssignment)) {
+      $fixed = $fixed.Replace($directAssignment, $safeAssignment)
+    } elseif (-not $fixed.Contains($safeAssignment)) {
+      throw "EXPECTED_SAFETY_PROPERTY_TARGET_NOT_FOUND_${objectName}_${propertyName}"
+    }
+  }
+}
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
   $portableParent = Split-Path -Parent $portableCursor
