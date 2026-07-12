@@ -239,11 +239,13 @@ try {
 
   $htmlPath = Join-Path $repoRoot ($htmlRel -replace '/', '\')
   $html = Get-Content -LiteralPath $htmlPath -Raw -Encoding UTF8
-  if (-not $html.Contains("['İkincil kaynak','secondary_source']")) {
-    $needle = "['Commit SHA','commit_sha'],['Güven (%)','confidence_percent']"
-    $replacement = "['Commit SHA','commit_sha'],['İkincil kaynak','secondary_source'],['İkincil kaynak URL','secondary_source_url'],['SRTM elevation','secondary_elevation_m'],['Kaynak farkı (m)','source_difference_m'],['Cross-check','crosscheck_status'],['Çoklu kaynak kanıtı','multisource_evidence_path'],['Güven (%)','confidence_percent']"
-    if (-not $html.Contains($needle)) { throw 'TOPOGRAPHY_HTML_COLUMN_INSERT_POINT_NOT_FOUND' }
-    $html = $html.Replace($needle, $replacement)
+  if (-not $html.Contains("'secondary_source']")) {
+    $layerStart = $html.IndexOf("topography:{title:", [System.StringComparison]::Ordinal)
+    if ($layerStart -lt 0) { throw 'TOPOGRAPHY_HTML_LAYER_NOT_FOUND' }
+    $columnsEnd = $html.IndexOf("]]}", $layerStart, [System.StringComparison]::Ordinal)
+    if ($columnsEnd -lt 0) { throw 'TOPOGRAPHY_HTML_COLUMNS_END_NOT_FOUND' }
+    $extraColumns = ",['Secondary source','secondary_source'],['Secondary source URL','secondary_source_url'],['SRTM elevation','secondary_elevation_m'],['Source difference (m)','source_difference_m'],['Cross-check','crosscheck_status'],['Multisource evidence','multisource_evidence_path']"
+    $html = $html.Insert($columnsEnd + 1, $extraColumns)
     [System.IO.File]::WriteAllText($htmlPath, $html, [System.Text.UTF8Encoding]::new($false))
   }
   $stages += [ordered]@{ stage='site_row_visibility'; status='completed'; rows=3 }

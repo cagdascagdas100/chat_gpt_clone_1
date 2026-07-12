@@ -39,6 +39,8 @@ foreach ($objectName in @('visible','status')) {
 }
 $fixed = $fixed.Replace('-Paths @($rowsRel,$statusRel,$matrixRel)', '-Paths ((@($rowsRel,$statusRel,$matrixRel)) -join ''|'')')
 $fixed = $fixed.Replace('-Paths @($statusRel)', '-Paths $statusRel')
+$fixed = $fixed.Replace("-Paths ((@(`$rowsRel,`$statusRel,`$matrixRel)) -join '|')", "-Paths ((@(`$rowsRel,`$statusRel,`$matrixRel)) -join '|') -AllowGeneratedArtifacts -SyncPortableWeb")
+$fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedArtifacts -SyncPortableWeb')
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
