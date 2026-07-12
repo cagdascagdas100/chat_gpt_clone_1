@@ -1,32 +1,35 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Processed through: Comment 19
-- Processed: 19/32 = 59.375%
+- Processed through: Comment 20
+- Processed: 20/32 = 62.5%
 - Fully finalized: 15/32 = 46.875%
-- Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), Comment 17 (internal–external weighting), and Comment 18 (regional-decay value selection)
-- Next item: Comment 20
+- Conditional items: Comment 12 (scenario provenance), Comment 15 (authoritative equipment inventory), Comment 17 (internal–external weighting), Comment 18 (regional-decay value selection), and Comment 20 (final composite depends on Comment 17 and the missing fifth-region input)
+- Next item: Comment 21
 
-## Latest decision — Comment 19
-The F/E/A naming scheme will be removed throughout the manuscript and all visual outputs. The final convention is `Analysis 1`, `Analysis 2`, and `Analysis 3`, not Model A/B/C, because each analytical setting compares multiple fitted classifiers rather than representing one model.
+## Latest decision — Comment 20
+The paragraph currently conflates two different calculations. The reported `50.62%` is the external body-region component produced by the two-stage rank-weighted aggregation; it is not the final internal–external composite.
 
-## Standard mapping
-- Model F → Analysis 1 — all-case payment-day classification
-- Model E → Analysis 2 — positive payment-day classification
-- Model A → Analysis 3 — four-level injury-severity classification
+## Verified calculation pathway
+- Within-region decay `0.80` produces approximately: head `50.5556%`, arms `56.4754%`, legs `49.4851%`, and torso `25.5738%`.
+- Across-region decay `0.60`, with weights renormalized over the four supplied regions, produces `50.6192%`, which rounds to `50.62%`.
+- This confirms that `50.62%` is independent of the separate 10/90 internal–external weighting rule.
 
-## Figure and interpretation corrections
-- Figure 9 must be regenerated with Analysis 1/2/3 legend labels and a title describing classifier performance within the three outcome analyses.
-- Figure 10 must replace F/E/A on the x-axis and remove the misleading phrase `scenario stability`.
-- A grouped point plot or aligned panels are preferable to connecting the analyses with lines, because the targets and class structures differ.
-- Absolute AUROC values across the three analyses should be interpreted descriptively rather than as directly comparable performance estimates.
-- Statements using `best`, `highest`, `improvement`, or `decrease` must identify the metric and acknowledge differences in outcome definition.
-- Figures must be regenerated from source data or plotting code; raster labels must not be edited manually.
+## Required wording and notation corrections
+- Replace `overall risk of 50.62%` with `external body-region component of 50.62%`.
+- If the 10/90 allocation is retained after Comment 17 is resolved, define the final composite separately as `P_overall = 0.10 P_INT + 0.90 P_EXT`.
+- Because the example does not provide `P_INT`, no numerical final composite can be reported.
+- Remove the unsupported phrase `accurate risk percentages` and the claim that restricting variables mathematically generated the 10/90 split.
+- Use exact rather than approximate weights if 0.10/0.90 is retained.
+
+## Additional inconsistency
+The Methods section describes five body regions, but the example provides only four. The final version must either add the fifth-region input and recalculate the example or state that the illustration uses four available regions with renormalized weights.
 
 ## Cross-comment consistency updates
-- Comment 10 is confirmed and extended to every text, table, figure, legend, caption, and supplementary output.
-- Comment 11 metric terminology must be used in regenerated Figure 9.
-- Discussion claims about Analysis 3 must be metric-specific and verified against the final validated tables.
+- Comment 16: keep distinct notation for the body-region aggregate and the final internal–external composite.
+- Comment 17: controls whether the 0.10/0.90 weighting remains in the manuscript.
+- Comment 18: controls the within-region and across-region decay parameters.
+- Comment 20 is processed but remains conditional until the weighting rule and the four-versus-five-region issue are resolved.
 
 ## Next item
-Comment 20 — explain the relationship between the later prose description of the internal/external allocation and the unresolved 0.10/0.90 weighting decision from Comment 17.
+Comment 21 — verify whether the corrected figure reference is Figure 14 rather than Figure 15 and align the text with the actual figure content and numbering.
