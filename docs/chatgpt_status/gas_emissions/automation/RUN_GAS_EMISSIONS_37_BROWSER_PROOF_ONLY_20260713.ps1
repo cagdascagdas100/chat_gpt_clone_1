@@ -38,9 +38,17 @@ try:
     options.set_capability("goog:loggingPrefs",{"browser":"ALL"})
     result["phase"]="driver_start";driver=webdriver.Chrome(options=options);driver.set_script_timeout(90);driver.get(url)
     result["phase"]="dom";wait=WebDriverWait(driver,90);wait.until(lambda d:d.find_element(By.ID,"layerSelect"))
-    result["phase"]="load_gas";loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='gas';Promise.resolve(loadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
-    if loaded!="ok": raise RuntimeError("gas_load_failed:"+str(loaded))
-    result["phase"]="state";wait.until(lambda d:d.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]",expected_min))
+    stable=False
+    for attempt in range(3):
+        result["phase"]="load_gas_"+str(attempt+1)
+        loaded=driver.execute_async_script("const done=arguments[arguments.length-1];const selector=document.getElementById('layerSelect');selector.value='gas';Promise.resolve(loadLayer('gas')).then(()=>done('ok')).catch(error=>done('error:'+String(error)))")
+        if loaded!="ok": raise RuntimeError("gas_load_failed:"+str(loaded))
+        wait.until(lambda d:d.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
+        time.sleep(3)
+        stable=bool(driver.execute_script("return state.layer==='gas'&&state.data&&Array.isArray(state.data.rows)&&state.data.rows.length>=arguments[0]&&state.data.rows[0].row_id!==undefined",expected_min))
+        if stable: break
+    if not stable: raise RuntimeError("gas_layer_was_overwritten_by_initial_load")
+    result["phase"]="state_stable"
     rows={};rendered=0
     while True:
         page_rows=driver.find_elements(By.CSS_SELECTOR,"#table tbody tr");rendered+=len(page_rows)
