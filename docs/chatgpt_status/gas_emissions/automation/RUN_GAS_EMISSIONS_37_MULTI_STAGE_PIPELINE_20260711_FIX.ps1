@@ -42,6 +42,17 @@ $fixed = $fixed.Replace('-Paths @($statusRel)', '-Paths $statusRel')
 $fixed = $fixed.Replace("-Paths ((@(`$rowsRel,`$statusRel,`$matrixRel)) -join '|')", "-Paths ((@(`$rowsRel,`$statusRel,`$matrixRel)) -join '|') -AllowGeneratedArtifacts -SyncPortableWeb")
 $fixed = $fixed.Replace('-Paths $statusRel', '-Paths $statusRel -AllowGeneratedArtifacts -SyncPortableWeb')
 $fixed = $fixed.Replace("{throw'GAS37_", "{ throw 'GAS37_")
+$gasSelectBad = '    Select(driver.find_element(By.ID,"layerSelect")).select_by_value("gas")'
+$gasSelectGood = @'
+    layer_select=driver.find_element(By.ID,"layerSelect")
+    Select(layer_select).select_by_value("gas")
+    driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles: true}))",layer_select)
+'@
+if ($fixed.Contains($gasSelectBad)) {
+  $fixed = $fixed.Replace($gasSelectBad, $gasSelectGood.TrimEnd())
+} elseif (-not $fixed.Contains('dispatchEvent(new Event(''change''')) {
+  throw 'EXPECTED_GAS37_CHANGE_DISPATCH_TARGET_NOT_FOUND'
+}
 $portableCursor = $repoRoot
 while ($portableCursor -and (Split-Path -Leaf $portableCursor) -ne 'runner_system') {
   $portableParent = Split-Path -Parent $portableCursor

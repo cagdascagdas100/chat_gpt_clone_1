@@ -474,7 +474,8 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   $changedPaths = @(($changedResult.output -split "`r?`n") | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -Unique)
   if ($changedPaths.Count -eq 0) { return }
 
-  $recoveryRoot = Join-Path $WorkRoot ('_push_recovery\' + [guid]::NewGuid().ToString('N'))
+  $portableRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $WorkRoot))
+  $recoveryRoot = Join-Path $portableRoot ('_push_recovery\' + [guid]::NewGuid().ToString('N'))
   Ensure-Dir $recoveryRoot
   $presentPaths = @{}
   foreach ($rel in $changedPaths) {
