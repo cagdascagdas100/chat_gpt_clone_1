@@ -194,17 +194,22 @@ try {
       foreach ($entry in $rowUpdates.GetEnumerator()) {
         $row | Add-Member -NotePropertyName $entry.Key -NotePropertyValue $entry.Value -Force
       }
-      $row.needs_manual_review = $true
-      $row.final_ready = $false
-      $row.fake_data = $false
+      $row | Add-Member -NotePropertyName needs_manual_review -NotePropertyValue $true -Force
+      $row | Add-Member -NotePropertyName final_ready -NotePropertyValue $false -Force
+      $row | Add-Member -NotePropertyName fake_data -NotePropertyValue $false -Force
     }
   }
-  $visible.status = 'MULTISOURCE_FALLBACK_CROSSCHECK_VISIBLE_PRIMARY_SOURCES_PENDING'
-  $visible.latest_task_id = $taskId
-  $visible.updated_at = $generatedAt
-  $visible.secondary_source_url = $srtmInfoUrl
-  $visible.final_ready = $false
-  $visible.fake_data = $false
+  $visibleUpdates = [ordered]@{
+    status = 'MULTISOURCE_FALLBACK_CROSSCHECK_VISIBLE_PRIMARY_SOURCES_PENDING'
+    latest_task_id = $taskId
+    updated_at = $generatedAt
+    secondary_source_url = $srtmInfoUrl
+    final_ready = $false
+    fake_data = $false
+  }
+  foreach ($entry in $visibleUpdates.GetEnumerator()) {
+    $visible | Add-Member -NotePropertyName $entry.Key -NotePropertyValue $entry.Value -Force
+  }
   Write-Json $visibleRowsPath $visible
 
   $visibleStatus = [ordered]@{
