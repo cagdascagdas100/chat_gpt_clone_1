@@ -1,25 +1,32 @@
 # OHS Manuscript Revision — Current Status
 
 - Total reviewer comments: 32
-- Completed through: Comment 12
-- Completion: 12/32 = 37.5%
-- Next item: Comment 13
+- Processed through: Comment 13
+- Processed: 13/32 = 40.625%
+- Fully finalized: 12/32 = 37.5%
+- Conditional item: Comment 12, pending scenario-provenance verification
+- Next item: Comment 14
 
-## Latest decision
-The manuscript will not add an LLM name or version without auditable implementation records. Because the available project artifacts do not identify a specific provider, model identifier, dated version, access route, prompt protocol, or generation settings, claims that the proposed framework generated scenarios with an LLM will be removed rather than supplemented with speculative details.
+## Latest decision — Comment 13
+The grammatically defective risk-scenario sentence was replaced with a direct description of the ranking workflow:
 
-## Comment 12 corrections
-- Replace the LLM-integration subsection with a neutral description of a structured equipment–malfunction scenario library.
-- Describe the verified machine-learning-based scoring, injury-type mapping, body-region mapping, and ranking procedure without asserting an unverified generative mechanism.
-- Change the subsection title from `Integration of large language models` to `Structured definition of equipment-related accident scenarios`.
-- Retain literature-review references describing LLM use in external studies; remove only implementation claims about the proposed framework.
-- Report a specific LLM only if provider, model identifier, version or dated snapshot, access route, prompt protocol, generation settings, and author-review procedure can be verified.
+`The scenario-assessment step ranks the nine candidate accident scenarios by their calculated risk scores and reports the three highest-ranked scenarios, together with the associated injury types, severity categories, and body regions (Figure 2).`
+
+## Terminology corrections
+- Use `calculated risk scores`, not `highest risk factors`, when referring to scenario ranking.
+- Use `the three highest-ranked scenarios`, not `the three scenarios that have highest risk factors were generated`.
+- Use `body regions` consistently for the anatomical outcome variable.
+- Preserve the verified nine-to-three ranking structure.
+
+## Quality re-audit
+- Comment 12 is now explicitly treated as conditional. The absence of an auditable LLM record does not prove that no LLM was used; it means that a model name, version, or generation protocol must not be invented.
+- The final manuscript must either document the actual LLM provenance or use neutral scenario-library wording. It must not conceal verified LLM use if such records later become available.
+- The Comment 13 sentence remains valid under either provenance outcome because it describes scoring and ranking rather than scenario authorship.
 
 ## Cross-comment consistency updates
-- Comment 1: the LLM-removal decision now applies manuscript-wide, not only to the Abstract.
-- Comment 2: retain concrete risk-output terminology in the Abstract.
-- Remove wording such as `simulates high-priority accident sequences`, which indirectly implies automated generation.
-- Comments 6–11 remain methodologically unchanged.
+- Sections 3.2, 3.2.2, 4.2, figure captions, and the mobile-application description should use `nine candidate scenarios` and `three highest-ranked scenarios` consistently.
+- Higher risk scores indicate higher priority; statements claiming that higher-scoring scenarios were excluded must be corrected.
+- Comments 1 and 12 continue to govern LLM wording; Comment 13 governs the scoring-and-ranking sentence.
 
 ## Next item
-Comment 13 — repair the grammar and logic of the sentence describing selection of the three highest-risk scenarios and their associated injury locations.
+Comment 14 — define NACE at first use, provide its full name, and clarify how the classification is used in the study.
