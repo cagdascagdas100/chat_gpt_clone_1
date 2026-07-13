@@ -371,11 +371,25 @@ function Archive-TaskWorktree([string]$Worktree, [string]$Reason) {
   return $target
 }
 function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
-  # Portable mode: avoid a full GitHub clone for each task. Reuse the controller repo object store.
+  # Portable mode: reuse the controller object store and materialize only the
+  # task contract paths. A full checkout can be tens of GB on the portable disk.
   Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
   Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('rev-parse','--verify',("refs/remotes/origin/$($Task.target_branch)"))) 'TASK_REMOTE_REF_MISSING'
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','add','--detach',$Worktree,('origin/' + $Task.target_branch))) 'TASK_WORKTREE_ADD_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','add','--detach','--no-checkout',$Worktree,('origin/' + $Task.target_branch))) 'TASK_WORKTREE_ADD_FAILED'
   Assert-GitOk (Invoke-AaysGit $Worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
+  Assert-GitOk (Invoke-AaysGit $Worktree sparse-checkout init --no-cone) 'TASK_SPARSE_INIT_FAILED'
+  $sparsePaths = New-Object System.Collections.Generic.List[string]
+  foreach ($path in @(Normalize-Allowed (Get-Prop $Task 'allowed_paths'))) {
+    if ($path -and -not $sparsePaths.Contains($path)) { [void]$sparsePaths.Add($path) }
+  }
+  foreach ($path in @([string](Get-Prop $Task 'script_path'), [string](Get-Prop $Task 'queue_rel'))) {
+    $relative = Rel $path
+    if ($relative -and -not $sparsePaths.Contains($relative)) { [void]$sparsePaths.Add($relative) }
+  }
+  if ($sparsePaths.Count -eq 0) { throw 'TASK_SPARSE_PATHS_EMPTY' }
+  $sparseArgs = @('sparse-checkout','set','--no-cone','--') + @($sparsePaths)
+  Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs $sparseArgs) 'TASK_SPARSE_SET_FAILED'
+  Assert-GitOk (Invoke-AaysGit $Worktree checkout --detach ('origin/' + $Task.target_branch)) 'TASK_SPARSE_CHECKOUT_FAILED'
 }
 function Ensure-TaskWorktree([object]$Task) {
   $safePage = Safe-Name $Task.page_key
