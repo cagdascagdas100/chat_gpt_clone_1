@@ -11,11 +11,17 @@ $logPath = Join-Path $repoRoot $logRelative
 $expectedRelative = 'docs/chatgpt_status/aays1/status/152_aays1_bulk_live_source_verify_300x60_latest.json'
 $expectedPath = Join-Path $repoRoot $expectedRelative
 
+function Replace-Once([string]$text, [string]$pattern, [string]$replacement, [string]$failureCode) {
+  $regex = [regex]::new($pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  if (-not $regex.IsMatch($text)) { throw $failureCode }
+  return $regex.Replace($text,$replacement,1)
+}
+
 if (-not (Test-Path -LiteralPath $basePath)) { throw "Base automation missing: $baseRelative" }
 New-Item -ItemType Directory -Force -Path (Split-Path $tempPath),(Split-Path $logPath) | Out-Null
-$template = Get-Content -LiteralPath $basePath -Raw -Encoding UTF8
+$template = (Get-Content -LiteralPath $basePath -Raw -Encoding UTF8) -replace "`r`n","`n"
 $replacements = [ordered]@{
-  "aays1-ready-to-sell-bulk-live-source-verify-120x25-20260711" = "aays1-ready-to-sell-bulk-live-source-verify-300x60-20260711"
+  'aays1-ready-to-sell-bulk-live-source-verify-120x25-20260711' = 'aays1-ready-to-sell-bulk-live-source-verify-300x60-20260711'
   '$maxCandidates = 120' = '$maxCandidates = 300'
   '$maxVerified = 25' = '$maxVerified = 60'
   '149_bulk_live_verify_20260711' = '152_bulk_live_verify_300x60_20260711'
@@ -26,10 +32,28 @@ $replacements = [ordered]@{
   'Record ReadyToSell bulk source verification proof' = 'Record ReadyToSell bulk source verification 300x60 proof'
 }
 foreach ($entry in $replacements.GetEnumerator()) { $template = $template.Replace([string]$entry.Key,[string]$entry.Value) }
-[System.IO.File]::WriteAllText($tempPath,$template,[System.Text.UTF8Encoding]::new($false))
+
+$branchPattern = '^\s*\$branch\s*=\s*\(&\s*git\s+-C\s+\$repoRoot\s+rev-parse\s+--abbrev-ref\s+HEAD\s+2>\$null\)\.Trim\(\)\s*\n\s*if\s*\(\$branch\s+-ne\s+\$targetBranch\)\s*\{\s*\$blockers\.Add\("wrong_branch:\$branch"\)\s*\}'
+$branchReplacement = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`n" + '$detachedCanonical = ($branch -eq ''HEAD'' -and $env:AAYS_CANONICAL_DETACHED_WORKTREE -eq ''true'')' + "`n" + 'if ($branch -ne $targetBranch -and -not $detachedCanonical) { $blockers.Add("wrong_branch:$branch") }'
+$template = Replace-Once $template $branchPattern $branchReplacement '152_detached_branch_guard_not_found'
+
+$blockedPattern = '^\s*\$blocked\s*=\s*\$plain\s+-match\s+''[^''\r\n]*''\s*$'
+$blockedReplacement = '$titleSignal = (-not [string]::IsNullOrWhiteSpace([string]$title)) -and ($title -match ''(?i)(land for sale|plot for sale|development land|building plot|development site|agricultural land)'')' + "`n" + '$challengeSignal = (($title -match ''(?i)(captcha|access denied|cloudflare|verify you are human)'') -or ($plain -match ''(?i)(captcha|access denied|unusual traffic|verify you are human)''))'
+$template = Replace-Once $template $blockedPattern $blockedReplacement '152_blocked_signal_line_not_found'
+$landPattern = '^\s*\$landSignal\s*=\s*\$plain\s+-match\s+''[^''\r\n]*''\s*$'
+$landReplacement = '$bodySignal = $plain -match ''(?i)(land for sale|plot for sale|development land|building plot|building plots|development site|agricultural land|parcel of land)''' + "`n" + '$landSignal = ($titleSignal -or $bodySignal)' + "`n" + '$blocked = ($challengeSignal -and -not $titleSignal)'
+$template = Replace-Once $template $landPattern $landReplacement '152_land_signal_line_not_found'
+
+[System.IO.File]::WriteAllText($tempPath,$template,[System.Text.UTF8Encoding]::new($true))
 "[$([DateTimeOffset]::UtcNow.ToString('o'))] START $tempRelative" | Set-Content -LiteralPath $logPath -Encoding UTF8
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
-$exitCode = $LASTEXITCODE
-if ($null -eq $exitCode) { $exitCode = 0 }
-if ($exitCode -ne 0) { throw "Generated bulk source automation failed with exit code $exitCode; log=$logRelative" }
-if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing: $expectedRelative" }
+$previousDetached = $env:AAYS_CANONICAL_DETACHED_WORKTREE
+try {
+  $env:AAYS_CANONICAL_DETACHED_WORKTREE = 'true'
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
+  $exitCode = $LASTEXITCODE
+  if ($null -eq $exitCode) { $exitCode = 0 }
+  if ($exitCode -ne 0) { throw "Generated bulk source automation failed with exit code $exitCode; log=$logRelative" }
+  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing: $expectedRelative" }
+} finally {
+  $env:AAYS_CANONICAL_DETACHED_WORKTREE = $previousDetached
+}
