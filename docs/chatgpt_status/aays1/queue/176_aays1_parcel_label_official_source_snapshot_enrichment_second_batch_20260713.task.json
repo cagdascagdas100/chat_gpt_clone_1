@@ -1,0 +1,60 @@
+{
+  "task_id": "176_aays1_parcel_label_official_source_snapshot_enrichment_second_batch_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner",
+  "priority": -1400,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/176_parcel_label_official_source_snapshot_enrichment_second_batch_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "docs/chatgpt_status/aays1/inputs/176_distance_property_types_official_source_snapshot_enrichment_second_batch_20260713.json"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_row_artifact_index_latest.json",
+    "docs/chatgpt_status/aays1/evidence/176_parcel_label_official_source_snapshot_enrichment_second_batch_evidence_20260713.json",
+    "docs/chatgpt_status/aays1/reports/176_parcel_label_official_source_snapshot_enrichment_second_batch_report_20260713.md",
+    "docs/chatgpt_status/aays1/runner_outputs/176_aays1_parcel_label_official_source_snapshot_enrichment_second_batch_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/176_aays1_parcel_label_official_source_snapshot_enrichment_second_batch_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/176_aays1_parcel_label_official_source_snapshot_enrichment_second_batch_20260713_status.json"
+  ],
+  "purpose": "Sequentially upgrade six additional existing Parcel Label rows with official internet sources, addresses and source snapshots after Task 175. Do not create new candidates or exact geometry.",
+  "required_runner_actions": [
+    "run only after higher-priority Task 175 or when selected by the same single shared runner",
+    "update only the six matching existing parcel IDs",
+    "download bounded source snapshots when remote pages allow it",
+    "publish complete source and audit paths per updated row",
+    "mark updated rows SOURCE_AND_ADDRESS_ENRICHED",
+    "keep all exact geometry statuses NOT_BOUND",
+    "perform port 8012 HTTP page and JSON visibility checks",
+    "push outputs and verify GitHub remote readback",
+    "leave final_ready=false"
+  ],
+  "acceptance_contract": {
+    "existing_rows_updated_expected": 6,
+    "new_rows_created_expected": 0,
+    "exact_geometry_created_expected": 0,
+    "source_snapshot_failures_are_honestly_reported": true,
+    "http_updated_rows_match_required": true,
+    "github_remote_readback_required": true,
+    "selenium_proof_required_for_product_completion": false,
+    "final_ready": false
+  },
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "no_fake_final_ready": true,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
