@@ -1,9 +1,9 @@
 {
   "task_id": "aays1-164-topography-public-copdem-cog-sampling-20260713",
   "page_key": "aays1",
-  "status": "queued",
-  "queue_status": "queued_for_single_shared_runner",
-  "priority": -11000,
+  "status": "deferred_after_ready_to_sell_159",
+  "queue_status": "deferred_not_deleted",
+  "priority": 5000,
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
   "runner_mode": "single_shared_runner_only",
@@ -12,28 +12,10 @@
   "automation_script": "docs/chatgpt_status/topography/automation/164_topography_public_copdem_cog_sampling_runner_20260713_v4.ps1",
   "expected_output": "docs/chatgpt_status/topography/status/164_topography_public_copdem_cog_sampling_latest.json",
   "expected_report": "docs/chatgpt_status/topography/reports/164_topography_public_copdem_cog_sampling_report_20260713.md",
-  "resume_from_verified_stage_count": 11,
+  "completed_stage_count": 11,
   "total_stage_count": 12,
-  "workload": {
-    "candidate_parcel_rows": 3,
-    "verified_rasters_to_reuse": 2,
-    "verified_sha256_rows": 2,
-    "planned_glo30_samples": 3,
-    "planned_glo90_samples": 3,
-    "planned_comparisons": 3,
-    "planned_browser_readbacks": 3
-  },
-  "required_sequence": [
-    "reuse two verified Copernicus rasters and SHA256 values",
-    "reuse or repair portable rasterio environment",
-    "produce three GLO-30 samples and three GLO-90 samples",
-    "produce three cross-resolution comparisons",
-    "write browser sample JSON into england_map_web/data/program_layer_matrix",
-    "publish controller and portable web copies",
-    "retry 8012 rows, operations and sample HTTP readback with cache busting",
-    "verify task-id in all three browser artifacts",
-    "return ReadyToSell task 159 to the queue after this 11-of-12 recovery completes"
-  ],
+  "blocker": "stage_12_browser_sample_json_http_404",
+  "resume_after_task": "aays1-ready-to-sell-four-wave-pickup-recovery-20260713",
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue",
     "docs/chatgpt_status/topography",
@@ -57,8 +39,6 @@
   "db_write": false,
   "migration": false,
   "production_deploy": false,
-  "retry_generation": 6,
-  "script_repair_commit": "ff26db93f18ac5af23eeaa5a2218b8e74ddb68d8",
-  "resume_requested_at": "2026-07-13T11:05:00+03:00",
-  "retry_reason": "Stage 12 failed because the browser sample JSON returned HTTP 404. V4 always creates the web artifact, validates controller and portable copies, and retries the 8012 readback."
+  "deferred_at": "2026-07-13T11:15:00+03:00",
+  "deferred_reason": "ReadyToSell 159 is the user-requested active batch. Preserve topography 164 at 11/12 and resume it only after ReadyToSell progresses."
 }
