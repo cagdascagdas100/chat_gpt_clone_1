@@ -198,7 +198,7 @@ try {
     & git commit -m $message 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
       $result.commit_sha = (& git rev-parse HEAD).Trim()
-      & git push origin $branch 2>&1 | Out-Null
+      & git push origin ("HEAD:refs/heads/" + $branch) 2>&1 | Out-Null
       $result.git_push_status = if ($LASTEXITCODE -eq 0) { 'pushed' } else { 'push_failed' }
     } else { $result.git_push_status = 'commit_failed' }
   } else {
@@ -243,7 +243,7 @@ try {
   $outChanges = @(& git status --porcelain -- $outRel)
   if ($outChanges.Count -gt 0) {
     & git commit -m 'aays1 sync final 146 strict Security orchestrator status' 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) { & git push origin $branch 2>&1 | Out-Null }
+    if ($LASTEXITCODE -eq 0) { & git push origin ("HEAD:refs/heads/" + $branch) 2>&1 | Out-Null }
   }
 } catch {} finally { try { Pop-Location } catch {} }
 
