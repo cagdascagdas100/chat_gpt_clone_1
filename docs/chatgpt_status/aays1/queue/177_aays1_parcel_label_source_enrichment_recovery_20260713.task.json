@@ -1,0 +1,48 @@
+{
+  "task_id": "177_aays1_parcel_label_source_enrichment_recovery_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued",
+  "priority": -3000,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/177_parcel_label_source_enrichment_recovery_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "docs/chatgpt_status/aays1/inputs/175_distance_property_types_official_source_snapshot_enrichment_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/176_distance_property_types_official_source_snapshot_enrichment_second_batch_20260713.json"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_row_artifact_index_latest.json",
+    "docs/chatgpt_status/aays1/evidence/177_parcel_label_source_enrichment_recovery_evidence_20260713.json",
+    "docs/chatgpt_status/aays1/reports/177_parcel_label_source_enrichment_recovery_report_20260713.md",
+    "docs/chatgpt_status/aays1/runner_outputs/177_aays1_parcel_label_source_enrichment_recovery_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/177_aays1_parcel_label_source_enrichment_recovery_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/177_aays1_parcel_label_source_enrichment_recovery_20260713_status.json"
+  ],
+  "purpose": "Recover blocked Tasks 175 and 176 in one sequential single-runner execution, update twelve existing rows only, preserve source and audit paths, and emit a diagnostic output even on failure.",
+  "required_runner_actions": [
+    "update only the twelve existing parcel IDs from inputs 175 and 176",
+    "attempt bounded source snapshots without failing the whole task when a remote page blocks download",
+    "publish source, address, payload, queue, report, evidence and runner-output paths",
+    "keep exact geometry NOT_BOUND",
+    "verify port 8012 page and JSON visibility",
+    "push outputs and verify GitHub remote readback",
+    "leave final_ready=false"
+  ],
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
