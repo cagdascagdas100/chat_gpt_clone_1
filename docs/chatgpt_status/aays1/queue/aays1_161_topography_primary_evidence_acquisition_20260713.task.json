@@ -1,15 +1,75 @@
 {
-    "task_id":  "aays1-161-topography-primary-evidence-acquisition-20260713",
-    "page_key":  "aays1",
-    "status":  "blocked",
-    "runner_blocked_at":  "2026-07-13T00:49:25Z",
-    "automation_exit_code":  1,
-    "blockers":  [
-                     "AUTOMATION_EXIT_NONZERO"
-                 ],
-    "final_ready":  false,
-    "no_fake_final_ready":  true,
-    "no_db_write":  true,
-    "no_migration":  true,
-    "no_production_deploy":  true
+  "task_id": "aays1-161-topography-primary-evidence-acquisition-20260713",
+  "page_key": "aays1",
+  "status": "pickup_requested",
+  "queue_status": "queued_for_single_shared_runner",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "runner_mode": "single_shared_runner_only",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "priority": -3200,
+  "queued_at": "2026-07-13T00:00:00Z",
+  "retry_generation": 3,
+  "previous_status": "blocked",
+  "previous_blocker": "The term 'if' is not recognized as the name of a cmdlet, function, script file, or operable program.",
+  "retry_reason": "Repair the same task 161 after the second run reached stage 1 and failed on inline PowerShell if expressions. Use the hardened v2 automation with explicit assigned condition values, guaranteed status/output on failure, bounded inventories, separate website operation rows and task-id HTTP readback. Do not create another task or runner.",
+  "script_repair_commit": "9a3862d066542098dce4e4578057d4bd37842bc5",
+  "script_path": "docs/chatgpt_status/topography/automation/161_topography_primary_evidence_acquisition_runner_20260713_v2.ps1",
+  "automation_script": "docs/chatgpt_status/topography/automation/161_topography_primary_evidence_acquisition_runner_20260713_v2.ps1",
+  "purpose": "Continue after completed task 160 on the existing persistent single shared runner. In one bounded batch, verify official HMLR INSPIRE, Environment Agency LiDAR, OS Terrain 50 and Copernicus Data Space sources; inventory canonical F boundary and primary-raster artifacts; match any real parcel-reference polygon geometry; query the Copernicus OData catalogue for the N51/W001 cell; record the authenticated CopDEM download gate without fabricating a raster; publish every check, candidate, match, blocker and HTTP readback as separate website operation rows; and preserve all safety flags.",
+  "allowed_paths": [
+    "docs/chatgpt_status/topography/source_snapshots",
+    "docs/chatgpt_status/topography/fixtures",
+    "docs/chatgpt_status/topography/status",
+    "docs/chatgpt_status/topography/reports",
+    "docs/chatgpt_status/topography/runner_outputs",
+    "england_map_web/data/program_layer_matrix",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/topography/source_snapshots/161_primary_evidence_sources_latest.json",
+    "docs/chatgpt_status/topography/source_snapshots/161_boundary_artifact_inventory_latest.json",
+    "docs/chatgpt_status/topography/fixtures/topography_real_boundary_candidates_20260713.json",
+    "docs/chatgpt_status/topography/status/161_topography_primary_evidence_acquisition_latest.json",
+    "docs/chatgpt_status/topography/reports/161_topography_primary_evidence_acquisition_report_20260713.md",
+    "docs/chatgpt_status/topography/runner_outputs/161_topography_primary_evidence_acquisition_batch.json",
+    "england_map_web/data/program_layer_matrix/topography_visible_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/topography_visible_status_latest.json",
+    "england_map_web/data/program_layer_matrix/topography_operations_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json"
+  ],
+  "workload": {
+    "candidate_parcel_rows": 3,
+    "official_source_systems": 4,
+    "bounded_boundary_inventory_limit_per_root": 250,
+    "copernicus_catalogue_query_limit": 100,
+    "local_primary_raster_inventory_limit_per_root": 50,
+    "serial_stage_count": 8
+  },
+  "completion_policy": {
+    "baseline_percent": 70,
+    "copernicus_product_or_three_real_boundary_rows_percent": 72,
+    "copernicus_product_and_three_real_boundary_rows_percent": 74,
+    "accuracy_cap": "2.5/4 fallback because this batch is discovery and acquisition gating only; do not raise accuracy without primary CopDEM raster samples plus official EA LiDAR or OS Terrain numeric validation"
+  },
+  "website_policy": "Append every official check, boundary candidate inventory, real geometry match, Copernicus catalogue result, download/auth gate, local primary raster candidate, site publication, HTTP readback and blocker as a separate operation row. Keep parcel rows current and all evidence paths visible.",
+  "batch_concurrency_policy": "one canonical runner; one larger bounded batch; network requests and filesystem inventories are serial inside the same task; no parallel runner",
+  "supersedes_without_duplicate_execution": [
+    "aays1-160-topography-regional-control-expansion-20260713"
+  ],
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "no_parallel_runner": true,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
 }
