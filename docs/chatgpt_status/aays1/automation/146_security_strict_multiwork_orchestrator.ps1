@@ -158,7 +158,7 @@ if ($visibilityPass) {
         $result.browser_latest_filter_rows = $out147.latest_filter_rows
         $result.console_error_count = $out147.console_error_count
       }
-      $browserPass = ($step147.exit_code -eq 0 -and $null -ne $out147 -and $out147.browser_status -eq 'pass' -and $out147.console_error_count -eq 0 -and [string]$out147.latest_filter_rows -match '150 satır')
+      $browserPass = ($step147.exit_code -eq 0 -and $null -ne $out147 -and $out147.browser_status -eq 'pass' -and $out147.console_error_count -eq 0 -and [string]$out147.latest_filter_rows -match '150\s+sat')
       if (-not $browserPass) { $result.blockers += '300_row_browser_gate_not_passed' }
       if ($browserPass) { $result.site_data_publish_allowed = $true }
     }
