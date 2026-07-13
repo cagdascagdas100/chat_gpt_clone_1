@@ -21,7 +21,7 @@ $source = Get-Content -LiteralPath $v7Path -Raw -Encoding UTF8
 $patched = $source
 $patched = $patched.Replace(
   'docs/chatgpt_status/gas_emissions/automation/RUN_GAS_EMISSIONS_PUBLISH_CURRENT_AND_BROWSER_PROOF_20260713_DOM_READY_FIX.ps1',
-  'docs/chatgpt_status/gas_emissions/automation/RUN_GAS_EMISSIONS_PUBLISH_CURRENT_AND_BROWSER_PROOF_20260713_STANDALONE.ps1'
+  'docs/chatgpt_status/gas_emissions/automation/RUN_GAS_EMISSIONS_PUBLISH_CURRENT_AND_BROWSER_PROOF_20260713_STANDALONE_IF_FIX.ps1'
 )
 $patched = $patched.Replace('178_gas_emissions_direct_chain_v7_20260713_latest.json','183_gas_emissions_direct_chain_v11_20260713_latest.json')
 $patched = $patched.Replace("chain_version='v7_20260713'","chain_version='v11_20260713'")
@@ -32,7 +32,7 @@ $patched = $patched.Replace('GAS_EMISSIONS_DIRECT_CHAIN_V7_WRONG_BRANCH','GAS_EM
 if ($patched -eq $source) {
   throw 'GAS_EMISSIONS_DIRECT_CHAIN_V11_NO_PATCH_APPLIED'
 }
-if ($patched -notmatch 'STANDALONE') {
+if ($patched -notmatch 'STANDALONE_IF_FIX') {
   throw 'GAS_EMISSIONS_DIRECT_CHAIN_V11_PROOF_ROUTE_MISSING'
 }
 if ($patched -notmatch '183_gas_emissions_direct_chain_v11') {
