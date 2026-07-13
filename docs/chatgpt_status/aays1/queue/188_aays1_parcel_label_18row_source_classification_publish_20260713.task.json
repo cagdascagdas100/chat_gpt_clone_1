@@ -1,0 +1,63 @@
+{
+  "task_id": "188_aays1_parcel_label_18row_source_classification_publish_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner_after_task_184_proof",
+  "priority": -2600,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/188_parcel_label_18row_source_classification_publish_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "docs/chatgpt_status/aays1/inputs/185_distance_property_types_source_classification_research_hold_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/186_distance_property_types_source_classification_research_hold_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/187_distance_property_types_source_classification_research_hold_20260713.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/aays1/runner_outputs/188_aays1_parcel_label_18row_source_classification_publish_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/188_aays1_parcel_label_18row_source_classification_publish_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/188_aays1_parcel_label_18row_source_classification_publish_20260713_status.json",
+    "docs/chatgpt_status/aays1/reports/188_parcel_label_18row_source_classification_publish_report_20260713.md"
+  ],
+  "purpose": "Apply the three completed research batches to eighteen existing Parcel Label rows, preserve conflict and manual-review truth, keep every row NOT_BOUND, publish the five matrix artifacts to the effective port 8012 runtime copies, and prove all eighteen updated rows through HTTP and GitHub readback.",
+  "required_runner_actions": [
+    "use only the existing single shared runner",
+    "update exactly eighteen matching existing rows and create zero new rows",
+    "preserve taxonomy and scope conflicts rather than forcing unsupported classifications",
+    "create no coordinates, polygons, parcel boundaries or exact geometry",
+    "keep all eighteen rows geometry_status NOT_BOUND",
+    "synchronize five matrix artifacts only to runtime roots matching the current port 8012 JSON hash",
+    "verify 194 total rows and eighteen Task 188 rows through cache-busted HTTP",
+    "push proof artifacts and verify GitHub remote readback",
+    "leave final_ready false"
+  ],
+  "acceptance_contract": {
+    "existing_rows_updated_expected": 18,
+    "new_rows_created_expected": 0,
+    "exact_geometry_created_expected": 0,
+    "served_row_count_expected": 194,
+    "task_188_rows_visible_expected": 18,
+    "file_hash_match_required": true,
+    "http_match_required": true,
+    "github_remote_readback_required": true,
+    "final_ready": false
+  },
+  "dependency_proof": {
+    "task_184_status": "COMPLETED_HTTP_HASH_RUNTIME_SYNC_VISIBLE_NOT_FINAL",
+    "task_184_updated_ids_visible": 12,
+    "task_184_http_updated_rows_match": true,
+    "task_184_github_readback": true
+  },
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
