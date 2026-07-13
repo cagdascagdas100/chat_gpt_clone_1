@@ -47,9 +47,10 @@ if (-not $repoRoot -or -not $taskId -or $pageKey -ne 'gas_emissions') {
 if ($branch -ne 'codex/aays-single-runner-v5-20260706') {
   throw 'GAS_EMISSIONS_STANDALONE_PROOF_WRONG_BRANCH'
 }
-if (-not $controllerRoot) {
-  $controllerRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
+if (-not $controllerRoot -and $env:AAYS_PORTABLE_ROOT) {
+  $controllerRoot = Join-Path ([string]$env:AAYS_PORTABLE_ROOT) 'runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 }
+if (-not $controllerRoot) { $controllerRoot = $repoRoot }
 if (-not (Test-Path -LiteralPath $controllerRoot)) {
   throw "GAS_EMISSIONS_STANDALONE_CONTROLLER_NOT_FOUND: $controllerRoot"
 }
@@ -212,12 +213,13 @@ try:
         WebDriverWait(driver, 45).until(lambda d, p=next_page: re.search(rf"Sayfa\s+{p}\s*/", d.find_element(By.ID, "pageInfo").text))
 
     headers = [x.text.strip() for x in driver.find_elements(By.CSS_SELECTOR, "#table thead th")]
-    required_headers = {"Hesap açıklaması","Parcel binding","Ham yerel kaynak","Visible artifact","Status yolu","Rapor yolu","Served commit","Artifact SHA"}
+    required_headers = {"Hesap a\u00e7\u0131klamas\u0131","Parcel binding","Ham yerel kaynak","Visible artifact","Status yolu","Rapor yolu","Served commit","Artifact SHA"}
     import unicodedata
     def norm_text(value):
         return " ".join(unicodedata.normalize("NFC", str(value)).split())
     headers_norm = {norm_text(x) for x in headers}
     required_headers_norm = {norm_text(x) for x in required_headers}
+    missing_required_headers = sorted(required_headers_norm - headers_norm)
     try:
         severe = [e for e in driver.get_log("browser") if str(e.get("level", "")).upper() == "SEVERE"]
     except Exception:
@@ -229,13 +231,14 @@ try:
     passed = (
         len(rows) == target and expected_ids.issubset(rows) and
         new_count == expected_latest and manual_count == expected_latest and
-        required_headers_norm.issubset(headers_norm) and not severe
+        not missing_required_headers and not severe
     )
     result.update({
         "status":"PASS" if passed else "FAIL", "unique_row_count":len(rows),
         "new_marker_count":new_count, "manual_marker_on_new_count":manual_count,
         "expected_latest_rows_present":expected_ids.issubset(rows),
-        "headers":headers, "required_headers_present":required_headers_norm.issubset(headers_norm),
+        "headers":headers, "required_headers_present":not missing_required_headers,
+        "missing_required_headers":missing_required_headers,
         "console_errors":severe, "title":driver.title,
     })
     if not passed:
