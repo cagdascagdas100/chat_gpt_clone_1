@@ -1,19 +1,33 @@
 {
   "task_id": "aays1-ready-to-sell-four-wave-pickup-recovery-20260713",
   "page_key": "aays1",
-  "status": "superseded_by_current_task_pointer",
-  "priority": -10002,
+  "status": "queued",
+  "priority": -12000,
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "script_path": "docs/chatgpt_status/aays1/automation/159_aays1_ready_to_sell_four_wave_pickup_recovery_20260713.ps1",
   "automation_script": "docs/chatgpt_status/aays1/automation/159_aays1_ready_to_sell_four_wave_pickup_recovery_20260713.ps1",
   "expected_output": "docs/chatgpt_status/aays1/status/159_aays1_ready_to_sell_four_wave_pickup_recovery_latest.json",
   "expected_report": "docs/chatgpt_status/aays1/reports/159_aays1_ready_to_sell_four_wave_pickup_recovery_report.md",
-  "canonical_ready_pointer": "docs/chatgpt_status/aays1/queue/current.task.json",
-  "scope": "The same four-wave ReadyToSell continuation is now represented only by the canonical current.task pointer to prevent duplicate execution.",
+  "scope": "Run four sequential real-internet ReadyToSell source and evidence waves in the one existing shared runner, with incremental 8012 site synchronization after each wave.",
   "planned_candidate_scan": 1200,
   "planned_max_new_live_sources": 240,
   "planned_evidence_operations": 160,
   "site_checkpoint_count": 5,
+  "jobs": [
+    "pre_site_sync",
+    "source_scan_300x60_a",
+    "evidence_40_a",
+    "checkpoint_site_sync_a",
+    "source_scan_300x60_b",
+    "evidence_40_b",
+    "checkpoint_site_sync_b",
+    "source_scan_300x60_c",
+    "evidence_40_c",
+    "checkpoint_site_sync_c",
+    "source_scan_300x60_d",
+    "evidence_40_d",
+    "post_site_sync_readback"
+  ],
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue",
     "docs/chatgpt_status/aays1/status",
@@ -24,6 +38,17 @@
     "england_map_web/data/aays1",
     "england_map_web/geometry_review_3of4_columns_1264.html"
   ],
+  "acceptance": [
+    "Only real HTTP responses with positive land or plot listing evidence may be promoted.",
+    "Existing downloaded photos must be preserved and polygons rendered only from canonical geometry.",
+    "Every accepted row must retain source, status, report, photo and polygon paths for row-level website visibility.",
+    "The active 8012 site must be synchronized after each source-plus-evidence wave.",
+    "Only child status generated during the current execution may be accepted as proof.",
+    "No visual score or 3.5+ confidence without separate real visual comparison output.",
+    "Outer canonical runner must commit, push and remote-readback allowed-path outputs."
+  ],
+  "CONTINUE_RUNNER_READY": true,
+  "PUSH_SYNC_REQUIRED": true,
   "single_runner_only": true,
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -39,6 +64,7 @@
   "db_write": false,
   "migration": false,
   "production_deploy": false,
-  "superseded_at": "2026-07-13T09:11:00+03:00",
-  "superseded_reason": "Canonical queue/current.task.json now carries the full valid task contract. Keeping this file non-ready prevents two executions of the same logical task."
+  "queued_at": "2026-07-13T11:16:00+03:00",
+  "pickup_revision": "aays1-159-reactivated-after-topography-deferral-20260713-1116",
+  "resume_reason": "Topography 164 is preserved at 11/12 but deferred. ReadyToSell 159 is now the sole active high-priority batch requested by the user."
 }
