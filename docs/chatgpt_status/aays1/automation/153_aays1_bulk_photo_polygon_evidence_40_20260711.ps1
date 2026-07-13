@@ -46,7 +46,7 @@ try {
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
   $exitCode = $LASTEXITCODE
   if ($null -eq $exitCode) { $exitCode = 0 }
-  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing after child exit $exitCode: $expectedRelative; log=$logRelative" }
+  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing after child exit ${exitCode}: $expectedRelative; log=$logRelative" }
   if ($exitCode -ne 0) { "Child returned $exitCode but expected status exists; outer runner will judge real before/after progress." | Add-Content -LiteralPath $logPath -Encoding UTF8 }
   exit 0
 } finally {
