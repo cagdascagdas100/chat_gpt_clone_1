@@ -193,10 +193,14 @@ function Add-GitPathsInBatches([string]$Root, [string[]]$Paths, [switch]$All) {
   }
 }
 function Stage-AllowedOnly([string]$Root, [string[]]$Allowed) {
-  $changed = @(Get-GitChangedPaths $Root)
+  # Stage only the contract paths. This avoids a full worktree scan on the
+  # portable disk while still making it impossible to commit out-of-scope files.
+  Add-GitPathsInBatches -Root $Root -Paths $Allowed -All
+  $stagedResult = Invoke-AaysGit -Cwd $Root -GitArgs @('diff','--cached','--name-only','--diff-filter=ACMRD')
+  Assert-GitOk $stagedResult 'STAGED_PATH_LIST_FAILED'
+  $changed = @($stagedResult.output -split '\r?\n' | ForEach-Object { Rel $_ } | Where-Object { $_ })
   $unscoped = @($changed | Where-Object { -not (Path-IsAllowed $_ $Allowed) })
   if ($unscoped.Count -gt 0) { return [pscustomobject]@{ ok = $false; changed = $changed; unscoped = $unscoped } }
-  Add-GitPathsInBatches -Root $Root -Paths $changed
   return [pscustomobject]@{ ok = $true; changed = $changed; unscoped = @() }
 }
 function Add-TaskBlocker([string]$TaskId, [string]$PageKey, [string]$Code, [string]$Detail = '') {
@@ -352,20 +356,15 @@ function Ensure-TaskWorktree([object]$Task) {
       Archive-TaskWorktree $worktree 'invalid_or_stale_git_worktree' | Out-Null
       Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
     } else {
-      $rebaseMerge = Join-Path $worktree '.git\rebase-merge'
-      $rebaseApply = Join-Path $worktree '.git\rebase-apply'
-      if ((Test-Path -LiteralPath $rebaseMerge) -or (Test-Path -LiteralPath $rebaseApply)) { Archive-TaskWorktree $worktree 'existing_rebase_in_progress' | Out-Null }
+      # Task worktrees are disposable. Replacing an old one is faster and safer
+      # than a repository-wide status scan on a large portable checkout.
+      Archive-TaskWorktree $worktree 'existing_task_worktree_replaced_for_clean_run' | Out-Null
+      Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
     }
   }
   if (-not (Test-Path -LiteralPath $worktree)) { New-TaskWorktreeClone $worktree $Task $url }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
-  $dirty = @(Get-GitChangedPaths $worktree)
-  $script:TaskWorktreeHadDirty = ($dirty.Count -gt 0)
-  if ($dirty.Count -gt 0) {
-    $script:Summary.existing_task_worktree_dirty_paths = $dirty
-    Archive-TaskWorktree $worktree 'existing_dirty_task_worktree' | Out-Null
-    New-TaskWorktreeClone $worktree $Task $url
-  }
+  $script:TaskWorktreeHadDirty = $false
   Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout --detach ('origin/' + $Task.target_branch)) 'TASK_CHECKOUT_FAILED'
   $rebased = [pscustomobject]@{ code = 0; output = 'portable_detached_worktree_no_rebase_needed' }
