@@ -20,15 +20,21 @@ $replacements = [ordered]@{
   '150_bulk_evidence_20260711' = '153_bulk_evidence_40_20260711'
   '150_aays1_bulk_photo_polygon_evidence_latest.json' = '153_aays1_bulk_photo_polygon_evidence_40_latest.json'
   '150_aays1_bulk_photo_polygon_evidence_report.md' = '153_aays1_bulk_photo_polygon_evidence_40_report.md'
-  'ReadyToSell Bulk Photo and Polygon Evidence 20' = 'ReadyToSell Bulk Photo and Polygon Evidence 40'
-  'Bulk prepare ReadyToSell photo and polygon evidence' = 'Bulk prepare ReadyToSell photo and polygon evidence 40'
-  'Record ReadyToSell bulk photo polygon evidence proof' = 'Record ReadyToSell bulk photo polygon evidence 40 proof'
+  'ReadyToSell Bulk Photo and Polygon Evidence - 20 Rows' = 'ReadyToSell Bulk Photo and Polygon Evidence - 40 Rows'
+  'Prepare bulk ReadyToSell photo and polygon evidence' = 'Prepare bulk ReadyToSell photo and polygon evidence 40'
+  'Record ReadyToSell bulk evidence preparation proof' = 'Record ReadyToSell bulk evidence preparation 40 proof'
 }
 foreach ($entry in $replacements.GetEnumerator()) { $template = $template.Replace([string]$entry.Key,[string]$entry.Value) }
-[System.IO.File]::WriteAllText($tempPath,$template,[System.Text.UTF8Encoding]::new($false))
+[System.IO.File]::WriteAllText($tempPath,$template,[System.Text.UTF8Encoding]::new($true))
 "[$([DateTimeOffset]::UtcNow.ToString('o'))] START $tempRelative" | Set-Content -LiteralPath $logPath -Encoding UTF8
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
-$exitCode = $LASTEXITCODE
-if ($null -eq $exitCode) { $exitCode = 0 }
-if ($exitCode -ne 0) { throw "Generated evidence automation failed with exit code $exitCode; log=$logRelative" }
-if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing: $expectedRelative" }
+$previousDetached = $env:AAYS_CANONICAL_DETACHED_WORKTREE
+try {
+  $env:AAYS_CANONICAL_DETACHED_WORKTREE = 'true'
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
+  $exitCode = $LASTEXITCODE
+  if ($null -eq $exitCode) { $exitCode = 0 }
+  if ($exitCode -ne 0) { throw "Generated evidence automation failed with exit code $exitCode; log=$logRelative" }
+  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing: $expectedRelative" }
+} finally {
+  $env:AAYS_CANONICAL_DETACHED_WORKTREE = $previousDetached
+}
