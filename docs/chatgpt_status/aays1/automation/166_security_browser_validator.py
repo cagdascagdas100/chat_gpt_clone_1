@@ -364,6 +364,7 @@ def main() -> int:
             for binary, engine in ((chrome_binary, "chrome_cli"), (edge_binary, "edge_cli")):
                 if not binary:
                     continue
+                cli_profile = tempfile.mkdtemp(prefix=f"aays_{engine}_")
                 try:
                     process = subprocess.run(
                         [
@@ -375,6 +376,7 @@ def main() -> int:
                             "--disable-extensions",
                             "--no-first-run",
                             "--no-default-browser-check",
+                            "--user-data-dir=" + cli_profile,
                             "--virtual-time-budget=22000",
                             "--dump-dom",
                             wrapper_url,
@@ -384,7 +386,7 @@ def main() -> int:
                         timeout=75,
                         errors="replace",
                     )
-                    match = re.search(r'<pre id="proof">([^<]*)</pre>', process.stdout, re.S)
+                    match = re.search(r"""<pre[^>]*\bid\s*=\s*['"]proof['"][^>]*>(.*?)</pre>""", process.stdout, re.S | re.I)
                     if not match:
                         proof["diagnostics"].append(
                             f"{engine}: probe block missing; rc={process.returncode}; stderr={process.stderr[-1200:]}"
@@ -424,6 +426,8 @@ def main() -> int:
                     proof["diagnostics"].append(
                         f"{engine}: {type(exc).__name__}: {exc!r}"
                     )
+                finally:
+                    shutil.rmtree(cli_profile, ignore_errors=True)
 
         if proof["status"] != "pass":
             proof["error"] = proof.get("error") or (
