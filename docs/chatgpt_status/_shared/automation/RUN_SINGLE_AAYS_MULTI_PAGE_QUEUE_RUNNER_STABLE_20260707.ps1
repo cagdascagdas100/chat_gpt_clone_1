@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$RepoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707',
   [string]$RepoFullName = 'cagdascagdas100/chat_gpt_clone_1',
   [string]$MainBranch = 'codex/aays-single-runner-v5-20260706',
@@ -181,6 +181,17 @@ function Stage-AllowedOnly([string]$Root, [string[]]$Allowed) {
   if ($unscoped.Count -gt 0) { return [pscustomobject]@{ ok = $false; changed = $changed; unscoped = $unscoped } }
   foreach ($p in $changed) { Assert-GitOk (Invoke-AaysGit $Root add -- $p) 'ADD_FAILED' }
   return [pscustomobject]@{ ok = $true; changed = $changed; unscoped = @() }
+}
+
+function Add-TaskBlocker([string]$TaskId, [string]$PageKey, [string]$Code, [string]$Detail = '') {
+  $script:Summary.task_blockers += [ordered]@{
+    task_id = $TaskId
+    page_key = $PageKey
+    blocker = $Code
+    detail = $Detail
+    recorded_at = Now-Utc
+    final_ready = $false
+  }
 }
 function Clean-ControllerRuntimeDirty([string]$Root) {
   $allDirty = @(Get-GitChangedPaths $Root)
@@ -507,8 +518,10 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
         }
       }
 
-      $addArgs = @('add','-A','--') + $changedPaths
-      Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs $addArgs) 'REMOTE_REPLAY_STAGE_FAILED'
+      # Keep every native command comfortably below Windows' command-line limit.
+      foreach ($rel in $changedPaths) {
+        Assert-GitOk (Invoke-AaysGit $Worktree add -A -- $rel) 'REMOTE_REPLAY_STAGE_FAILED'
+      }
       $replayed = Invoke-AaysGit $Worktree diff --cached --name-only
       Assert-GitOk $replayed 'REMOTE_REPLAY_DIFF_FAILED'
       if (-not $replayed.output) { return }
@@ -569,7 +582,7 @@ function Update-OneClickSmokeProof([string]$Worktree, [string]$Branch, [string]$
   return [pscustomobject]@{ ok=($nonceMatch -and $payloadMatch); latest_rel=$latestRel; push_proof_rel=$pushProofRel; commit_sha=$head.output }
 }
 function Sync-TaskResultBackToController([string]$Worktree, [object]$Task, [object]$SmokeProof) {
-  $rels = @($Task.queue_rel)
+  $rels = @($Task.queue_rel, "docs/chatgpt_status/$($Task.page_key)/queue/current.task.json")
   if ($SmokeProof) { $rels += @($SmokeProof.latest_rel,$SmokeProof.push_proof_rel) }
   foreach ($relPath in @($rels | Where-Object { $_ } | Select-Object -Unique)) {
     $source = Join-Path $Worktree ($relPath -replace '/', '\')
@@ -604,18 +617,31 @@ function Run-Task([object]$Task) {
   $completedRel = "docs/chatgpt_status/$page/status/${taskId}_completed.json"
   $gateRel = "docs/chatgpt_status/$page/status/${taskId}_gate.json"
   $mirrorRel = "docs/chatgpt_status/_shared/status/queue_result_mirror_${taskId}.json"
+  $currentRel = "docs/chatgpt_status/$page/queue/current.task.json"
   $browser = Browser-Gate
-  if (-not $browser.browser_smoke_passed) { Add-Blocker 'BLOCKED_BROWSER_ENVIRONMENT' }
-  Write-TaskFile $worktree $startedRel ([ordered]@{ task_id=$taskId; page_key=$page; started_at=Now-Utc; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
-  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=running`nHEARTBEAT_AT=$(Now-Utc)`n"
-  Write-TaskFile $worktree $Task.queue_rel ([ordered]@{ task_id=$taskId; page_key=$page; status='running'; target_branch=$Task.target_branch; script_path=$Task.script_path; allowed_paths=$Task.allowed_paths; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true })
+  if (-not $browser.browser_smoke_passed) { Add-TaskBlocker $taskId $page 'BLOCKED_BROWSER_ENVIRONMENT' }
   if (-not (Test-Path -LiteralPath $scriptPath)) { throw ('SCRIPT_MISSING: ' + $scriptPath) }
+  $claimedAt = Now-Utc
+  $runningPayload = [ordered]@{ task_id=$taskId; page_key=$page; status='running'; claimed_at=$claimedAt; claim_owner='single_shared_runner'; claim_pid=$PID; target_branch=$Task.target_branch; script_path=$Task.script_path; allowed_paths=$Task.allowed_paths; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true; final_ready=$false }
+  Write-TaskFile $worktree $startedRel ([ordered]@{ task_id=$taskId; page_key=$page; started_at=$claimedAt; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
+  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=running`nHEARTBEAT_AT=$(Now-Utc)`n"
+  Write-TaskFile $worktree $Task.queue_rel $runningPayload
+  Write-TaskFile $worktree $currentRel $runningPayload
+  $claimStage = Stage-AllowedOnly $worktree $allowed
+  if (-not $claimStage.ok) { throw ('CLAIM_UNSCOPED_CHANGES: ' + ($claimStage.unscoped -join ',')) }
+  Push-Sync $worktree $Task.target_branch "AAYS shared runner claim $page $taskId"
+  Sync-TaskResultBackToController $worktree $Task $null
+  $script:Summary.last_pickup_task_id = $taskId
+  $script:Summary.last_pickup_at = $claimedAt
+  $script:Summary.current_task_id = $taskId
+  Write-Utf8 $LatestStatusPath (To-JsonText $script:Summary)
   $script:Summary.github_auth_preflight = 'skipped_to_avoid_low_memory_ls_remote_oom'
   $script:Summary.final_push_is_authoritative = $true
-  $oldRoot=$env:AAYS_REPO_ROOT; $oldController=$env:AAYS_CONTROLLER_REPO_ROOT; $oldTask=$env:AAYS_TASK_ID; $oldPage=$env:AAYS_PAGE_KEY; $oldBranch=$env:AAYS_TARGET_BRANCH
+  $oldRoot=$env:AAYS_REPO_ROOT; $oldController=$env:AAYS_CONTROLLER_REPO_ROOT; $oldTask=$env:AAYS_TASK_ID; $oldPage=$env:AAYS_PAGE_KEY; $oldBranch=$env:AAYS_TARGET_BRANCH; $oldNoBytecode=$env:PYTHONDONTWRITEBYTECODE
   $env:AAYS_REPO_ROOT=$worktree; $env:AAYS_TASK_ID=$taskId; $env:AAYS_PAGE_KEY=$page
   $env:AAYS_CONTROLLER_REPO_ROOT=$RepoRoot
   $env:AAYS_TARGET_BRANCH=$Task.target_branch
+  $env:PYTHONDONTWRITEBYTECODE='1'
   $automationOutput=''; $automationCode=0
   $oldAutomationEap=$ErrorActionPreference
   try {
@@ -624,12 +650,12 @@ function Run-Task([object]$Task) {
     try { $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1; $automationCode=$LASTEXITCODE; $automationOutput=($out | Out-String) } finally { Pop-Location }
   } finally {
     $ErrorActionPreference=$oldAutomationEap
-    $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_CONTROLLER_REPO_ROOT=$oldController; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch
+    $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_CONTROLLER_REPO_ROOT=$oldController; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch; $env:PYTHONDONTWRITEBYTECODE=$oldNoBytecode
   }
-  if ($automationCode -ne 0) { Add-Blocker 'AUTOMATION_EXIT_NONZERO' }
+  if ($automationCode -ne 0) { Add-TaskBlocker $taskId $page 'AUTOMATION_EXIT_NONZERO' ([string]$automationCode) }
   $gatePath = Join-Path $worktree ($gateRel -replace '/', '\')
   $gate = $null
-  if (Test-Path -LiteralPath $gatePath) { try { $gate = Get-Content -LiteralPath $gatePath -Raw | ConvertFrom-Json } catch { Add-Blocker 'GATE_PARSE_FAILED' } }
+  if (Test-Path -LiteralPath $gatePath) { try { $gate = Get-Content -LiteralPath $gatePath -Raw | ConvertFrom-Json } catch { Add-TaskBlocker $taskId $page 'GATE_PARSE_FAILED' $_.Exception.Message } }
   if ($null -eq $gate) {
     $gate = [pscustomobject]@{ source_row_gate_passed=$false; ui_token_gate_passed=$false; browser_smoke_passed=$browser.browser_smoke_passed; post_sync_ok=$false; manual_review_required=$true; fake_data=$false }
     Write-TaskFile $worktree $gateRel $gate
@@ -640,6 +666,7 @@ function Run-Task([object]$Task) {
     Write-TaskFile $worktree $gateRel $blockedPayload
     Write-TaskFile $worktree $mirrorRel $blockedPayload
     Write-TaskFile $worktree $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status='blocked';runner_blocked_at=Now-Utc;automation_exit_code=$automationCode;blockers=@('AUTOMATION_EXIT_NONZERO');final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+    Write-TaskFile $worktree $currentRel ([ordered]@{task_id=$taskId;page_key=$page;status='blocked';runner_blocked_at=Now-Utc;automation_exit_code=$automationCode;blockers=@('AUTOMATION_EXIT_NONZERO');claim_owner='single_shared_runner';claim_pid=$PID;final_ready=$false})
     Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=blocked`nAUTOMATION_EXIT_CODE=$automationCode`nFINAL_READY=false`nHEARTBEAT_AT=$(Now-Utc)`n"
     $blockedStage=Stage-AllowedOnly $worktree $allowed
     if(-not$blockedStage.ok){throw('BLOCKED_UNSCOPED_CHANGES: '+($blockedStage.unscoped-join','))}
@@ -658,6 +685,7 @@ function Run-Task([object]$Task) {
   Write-TaskFile $worktree $completedRel $completed
   Write-TaskFile $worktree $mirrorRel $completed
   Write-TaskFile $worktree $Task.queue_rel ([ordered]@{ task_id=$taskId; page_key=$page; status='done'; runner_completed_at=Now-Utc; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; final_ready=$finalReady; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true })
+  Write-TaskFile $worktree $currentRel ([ordered]@{ task_id=$taskId; page_key=$page; status='done'; runner_completed_at=Now-Utc; claim_owner='single_shared_runner'; claim_pid=$PID; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; final_ready=$finalReady })
   Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=completed`nPUSH_SYNC_OK=true`nCONTINUE_RUNNER_READY=true`nFINAL_READY=$finalReady`nHEARTBEAT_AT=$(Now-Utc)`n"
   $stage2 = Stage-AllowedOnly $worktree $allowed
   if (-not $stage2.ok) { throw ('BLOCKED_UNSCOPED_CHANGES: ' + ($stage2.unscoped -join ',')) }
@@ -690,7 +718,7 @@ $SkipDebugPath = Join-Path $StatusDir 'queue_skip_status_check_20260705.json'
 $TodayStamp = (Get-Date).ToString('yyyyMMdd')
 $SelectionDebugPathToday = Join-Path $StatusDir "queue_selection_debug_${TodayStamp}.json"
 $SkipDebugPathToday = Join-Path $StatusDir "queue_skip_status_check_${TodayStamp}.json"
-$script:Summary = [ordered]@{ run_id=$RunId; checked_at=Now-Utc; repo_root=$RepoRoot; work_root=$WorkRoot; main_branch=$MainBranch; queue_seen=$false; queue_started=$false; single_runner_lock_acquired=$false; task_runs_in_clean_worktree=$false; allowed_paths_enforced=$false; runner_output_uploaded=$false; post_sync_ok=$false; PUSH_SYNC_OK=$false; CONTINUE_RUNNER_READY=$false; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@(); processed=@(); skipped=@() }
+$script:Summary = [ordered]@{ run_id=$RunId; checked_at=Now-Utc; repo_root=$RepoRoot; work_root=$WorkRoot; main_branch=$MainBranch; queue_seen=$false; queue_started=$false; queue_detected_count=0; queue_ready_count=0; selected_task_ids=@(); last_queue_scan_at=$null; last_pickup_task_id=$null; last_pickup_at=$null; current_task_id=$null; single_runner_lock_acquired=$false; task_runs_in_clean_worktree=$false; allowed_paths_enforced=$false; runner_output_uploaded=$false; post_sync_ok=$false; PUSH_SYNC_OK=$false; CONTINUE_RUNNER_READY=$false; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@(); task_blockers=@(); processed=@(); skipped=@() }
 
 try {
   $script:QueueScanRoot = Sync-ControllerRepoSafe
@@ -707,11 +735,27 @@ try {
   Write-Utf8Atomic $LockPath (To-JsonText $scanLock)
   $script:Summary.single_runner_lock_acquired = $true
   Write-Utf8 $RunnerHeartbeatPath (To-JsonText ([ordered]@{ pid=$PID; instance_id=$ScanInstanceId; lock_scope='single_scan_worker'; started_at=Now-Utc; runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; scan_runner='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'; heartbeat_path=$RunnerHeartbeatPath; lock_path=$LockPath; work_root=$WorkRoot }))
-  $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $script:QueueScanRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' })
+  # current.task.json is an advisory runner-owned pointer, never a queue item.
+  $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $script:QueueScanRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' -and $_.Name -ne 'current.task.json' })
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
-  $ready = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
+  $readyCandidates = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
+  $ready = @()
+  $seenTaskIds = @{}
+  foreach ($candidate in $readyCandidates) {
+    if ($seenTaskIds.ContainsKey([string]$candidate.task_id)) {
+      $script:Summary.skipped += [ordered]@{task_id=$candidate.task_id;page_key=$candidate.page_key;status='duplicate_queue_entry_ignored';queue_rel=$candidate.queue_rel;final_ready=$false}
+      continue
+    }
+    $seenTaskIds[[string]$candidate.task_id] = $true
+    $ready += $candidate
+  }
   $script:Summary.queue_seen = ($parsed.Count -gt 0)
-  $selectionPayload = [ordered]@{ checked_at=Now-Utc; queue_source=$script:Summary.queue_source; remote_queue_commit=$script:RemoteQueueCommit; parsed_count=$parsed.Count; ready_count=$ready.Count; ready=$ready }
+  $scanAt = Now-Utc
+  $script:Summary.queue_detected_count = $parsed.Count
+  $script:Summary.queue_ready_count = $ready.Count
+  $script:Summary.selected_task_ids = @($ready | Select-Object -First $MaxTasks | ForEach-Object {$_.task_id})
+  $script:Summary.last_queue_scan_at = $scanAt
+  $selectionPayload = [ordered]@{ checked_at=$scanAt; queue_source=$script:Summary.queue_source; poll_repo_root=$RepoRoot; poll_branch=$MainBranch; remote_queue_commit=$script:RemoteQueueCommit; parsed_count=$parsed.Count; ready_candidate_count=$readyCandidates.Count; ready_count=$ready.Count; duplicate_task_count=($readyCandidates.Count-$ready.Count); selected_task_ids=$script:Summary.selected_task_ids; ready=$ready }
   $skipPayload = [ordered]@{ checked_at=Now-Utc; skipped=@($parsed | Where-Object { -not $_.valid -or -not ($_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner')) }) }
   Write-Utf8 $SelectionDebugPath (To-JsonText $selectionPayload)
   Write-Utf8 $SelectionDebugPathToday (To-JsonText $selectionPayload)
@@ -725,6 +769,7 @@ try {
       $res = Run-Task $task
       $script:Summary.processed += $res
     } catch {
+      Add-TaskBlocker $task.task_id $task.page_key 'RUNNER_TASK_FAILED' $_.Exception.Message
       $script:Summary.skipped += [ordered]@{ task_id=$task.task_id; page_key=$task.page_key; status='blocked'; blocker='RUNNER_TASK_FAILED'; final_ready=$false; error=$_.Exception.Message }
       try {
         Add-Member -InputObject $task.data -NotePropertyName status -NotePropertyValue 'blocked' -Force

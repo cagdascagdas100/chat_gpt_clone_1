@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [string]$RepoRoot = "F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707",
   [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
@@ -55,6 +55,11 @@ $script:HeartbeatSequence = 0
 $script:WorkerPid = $null
 $script:CurrentTaskId = $null
 $script:LastQueueScanAt = $null
+$script:LastQueueScanCount = 0
+$script:LastQueueReadyCount = 0
+$script:LastPickupTaskId = $null
+$script:LastPickupAt = $null
+$script:TaskBlockerCount = 0
 $script:LastWorkerExitCode = $null
 $script:ConsecutiveFailures = 0
 $script:LastSuccessAt = $null
@@ -182,6 +187,16 @@ function Update-SiteState([switch]$AllowRecovery) {
 }
 function Write-Heartbeat {
   Update-Lock
+  $workerStatus = Read-Json (Join-Path $statusDir 'MULTI_PAGE_latest_status.json')
+  if ($workerStatus) {
+    if ($workerStatus.last_queue_scan_at) { $script:LastQueueScanAt = [string]$workerStatus.last_queue_scan_at }
+    if ($null -ne $workerStatus.queue_detected_count) { $script:LastQueueScanCount = [int]$workerStatus.queue_detected_count }
+    if ($null -ne $workerStatus.queue_ready_count) { $script:LastQueueReadyCount = [int]$workerStatus.queue_ready_count }
+    if ($workerStatus.last_pickup_task_id) { $script:LastPickupTaskId = [string]$workerStatus.last_pickup_task_id }
+    if ($workerStatus.last_pickup_at) { $script:LastPickupAt = [string]$workerStatus.last_pickup_at }
+    $script:TaskBlockerCount = @($workerStatus.task_blockers).Count
+    if ($script:State -eq 'worker_running' -and $workerStatus.current_task_id) { $script:CurrentTaskId = [string]$workerStatus.current_task_id }
+  }
   $script:HeartbeatSequence++
   $payload = [ordered]@{
     heartbeat_at = Now-Utc
@@ -197,6 +212,11 @@ function Write-Heartbeat {
     state = $script:State
     current_task_id = $script:CurrentTaskId
     last_queue_scan_at = $script:LastQueueScanAt
+    last_queue_scan_count = $script:LastQueueScanCount
+    last_queue_ready_count = $script:LastQueueReadyCount
+    last_pickup_task_id = $script:LastPickupTaskId
+    last_pickup_at = $script:LastPickupAt
+    task_blocker_count = $script:TaskBlockerCount
     last_worker_exit_code = $script:LastWorkerExitCode
     consecutive_failures = $script:ConsecutiveFailures
     last_success_at = $script:LastSuccessAt
@@ -223,7 +243,7 @@ function Write-Heartbeat {
   Write-JsonAtomic $heartbeatPath $payload
 }
 function Write-DaemonStatus([string]$Status) {
-  Write-JsonAtomic $statusPath ([ordered]@{ checked_at=Now-Utc; status=$Status; instance_id=$instanceId; supervisor_pid=$PID; worker_pid=$script:WorkerPid; loop=$script:Loop; state=$script:State; last_worker_exit_code=$script:LastWorkerExitCode; consecutive_failures=$script:ConsecutiveFailures; last_success_at=$script:LastSuccessAt; last_refresh_at=$script:LastRefreshAt; next_refresh_at=$script:NextRefreshAt.ToString("o"); refresh_result=$script:RefreshResult; site_8012_ok=$script:Site8012Ok; CONTINUE_RUNNER_READY=$true; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
+  Write-JsonAtomic $statusPath ([ordered]@{ checked_at=Now-Utc; status=$Status; instance_id=$instanceId; supervisor_pid=$PID; worker_pid=$script:WorkerPid; loop=$script:Loop; state=$script:State; current_task_id=$script:CurrentTaskId; last_queue_scan_at=$script:LastQueueScanAt; last_queue_scan_count=$script:LastQueueScanCount; last_queue_ready_count=$script:LastQueueReadyCount; last_pickup_task_id=$script:LastPickupTaskId; last_pickup_at=$script:LastPickupAt; task_blocker_count=$script:TaskBlockerCount; last_worker_exit_code=$script:LastWorkerExitCode; consecutive_failures=$script:ConsecutiveFailures; last_success_at=$script:LastSuccessAt; last_refresh_at=$script:LastRefreshAt; next_refresh_at=$script:NextRefreshAt.ToString("o"); refresh_result=$script:RefreshResult; site_8012_ok=$script:Site8012Ok; CONTINUE_RUNNER_READY=$true; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
   Write-JsonAtomic $bootstrapPath ([ordered]@{ updated_at=Now-Utc; repo_root=$RepoRoot; repo_full_name=$RepoFullName; runner_branch=$MainBranch; runner_status=$Status; runner_engine="persistent_stable_supervisor_20260711"; scan_runner="RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"; runner_pid=$PID; supervisor_pid=$PID; instance_id=$instanceId; runner_lock_active=(Test-Path -LiteralPath $lockPath); lock_file="docs/chatgpt_status/_shared/locks/single_runner.lock"; CONTINUE_RUNNER_READY=$true; final_ready=$false; product_final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
 }
 function Invoke-Git([string[]]$GitArgs) {
@@ -317,6 +337,7 @@ try {
     $exitCode=$worker.ExitCode
     $script:LastWorkerExitCode=$exitCode
     $script:WorkerPid=$null
+    $script:CurrentTaskId=$null
     if($exitCode -eq 0){$script:ConsecutiveFailures=0;$script:LastSuccessAt=Now-Utc;$script:State="idle";Add-Log "worker_completed loop=$($script:Loop) exit=0"}else{$script:ConsecutiveFailures++;$script:State=if($script:ConsecutiveFailures-ge5){"degraded"}else{"worker_backoff"};Add-Log "worker_failed loop=$($script:Loop) exit=$exitCode failures=$($script:ConsecutiveFailures)"}
     Write-Heartbeat
     Write-DaemonStatus $(if($script:ConsecutiveFailures-ge5){"degraded"}else{"runner_active"})
