@@ -386,6 +386,19 @@ function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
     $relative = Rel $path
     if ($relative -and -not $sparsePaths.Contains($relative)) { [void]$sparsePaths.Add($relative) }
   }
+  $pagePath = Safe-Name ([string](Get-Prop $Task 'page_key'))
+  foreach ($path in @(
+    "docs/chatgpt_status/$pagePath/status",
+    "docs/chatgpt_status/$pagePath/reports",
+    "docs/chatgpt_status/$pagePath/heartbeat",
+    "docs/chatgpt_status/$pagePath/runner_outputs",
+    "docs/chatgpt_status/$pagePath/queue",
+    'docs/chatgpt_status/_shared/status',
+    'docs/chatgpt_status/_shared/reports',
+    'docs/chatgpt_status/_shared/heartbeat'
+  )) {
+    if (-not $sparsePaths.Contains($path)) { [void]$sparsePaths.Add($path) }
+  }
   if ($sparsePaths.Count -eq 0) { throw 'TASK_SPARSE_PATHS_EMPTY' }
   $sparseArgs = @('sparse-checkout','set','--no-cone','--') + @($sparsePaths)
   Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs $sparseArgs) 'TASK_SPARSE_SET_FAILED'
