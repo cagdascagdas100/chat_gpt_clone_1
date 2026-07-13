@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$RepoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707',
   [string]$RepoFullName = 'cagdascagdas100/chat_gpt_clone_1',
   [string]$MainBranch = 'codex/aays-single-runner-v5-20260706',
@@ -175,14 +175,30 @@ function Get-GitChangedPaths([string]$Root) {
   }
   return @($paths)
 }
+function Add-GitPathsInBatches([string]$Root, [string[]]$Paths, [switch]$All) {
+  $batch = [System.Collections.Generic.List[string]]::new()
+  $batchChars = 0
+  foreach ($path in @($Paths)) {
+    $cost = ([string]$path).Length + 3
+    if ($batch.Count -gt 0 -and ($batch.Count -ge 50 -or ($batchChars + $cost) -gt 6000)) {
+      $args = @('add'); if ($All) { $args += '-A' }; $args += '--'; $args += @($batch)
+      Assert-GitOk (Invoke-AaysGit -Cwd $Root -GitArgs $args) 'ADD_BATCH_FAILED'
+      $batch.Clear(); $batchChars = 0
+    }
+    [void]$batch.Add([string]$path); $batchChars += $cost
+  }
+  if ($batch.Count -gt 0) {
+    $args = @('add'); if ($All) { $args += '-A' }; $args += '--'; $args += @($batch)
+    Assert-GitOk (Invoke-AaysGit -Cwd $Root -GitArgs $args) 'ADD_BATCH_FAILED'
+  }
+}
 function Stage-AllowedOnly([string]$Root, [string[]]$Allowed) {
   $changed = @(Get-GitChangedPaths $Root)
   $unscoped = @($changed | Where-Object { -not (Path-IsAllowed $_ $Allowed) })
   if ($unscoped.Count -gt 0) { return [pscustomobject]@{ ok = $false; changed = $changed; unscoped = $unscoped } }
-  foreach ($p in $changed) { Assert-GitOk (Invoke-AaysGit $Root add -- $p) 'ADD_FAILED' }
+  Add-GitPathsInBatches -Root $Root -Paths $changed
   return [pscustomobject]@{ ok = $true; changed = $changed; unscoped = @() }
 }
-
 function Add-TaskBlocker([string]$TaskId, [string]$PageKey, [string]$Code, [string]$Detail = '') {
   $script:Summary.task_blockers += [ordered]@{
     task_id = $TaskId
@@ -331,9 +347,15 @@ function Ensure-TaskWorktree([object]$Task) {
   Ensure-Dir $WorkRoot
   Assert-GitOk (Invoke-AaysGit $RepoRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
   if (Test-Path -LiteralPath $worktree) {
-    $rebaseMerge = Join-Path $worktree '.git\rebase-merge'
-    $rebaseApply = Join-Path $worktree '.git\rebase-apply'
-    if ((Test-Path -LiteralPath $rebaseMerge) -or (Test-Path -LiteralPath $rebaseApply)) { Archive-TaskWorktree $worktree 'existing_rebase_in_progress' | Out-Null }
+    $probe = Invoke-AaysGit $worktree rev-parse --is-inside-work-tree
+    if ($probe.code -ne 0 -or $probe.output.Trim() -ne 'true') {
+      Archive-TaskWorktree $worktree 'invalid_or_stale_git_worktree' | Out-Null
+      Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
+    } else {
+      $rebaseMerge = Join-Path $worktree '.git\rebase-merge'
+      $rebaseApply = Join-Path $worktree '.git\rebase-apply'
+      if ((Test-Path -LiteralPath $rebaseMerge) -or (Test-Path -LiteralPath $rebaseApply)) { Archive-TaskWorktree $worktree 'existing_rebase_in_progress' | Out-Null }
+    }
   }
   if (-not (Test-Path -LiteralPath $worktree)) { New-TaskWorktreeClone $worktree $Task $url }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
@@ -519,9 +541,7 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
       }
 
       # Keep every native command comfortably below Windows' command-line limit.
-      foreach ($rel in $changedPaths) {
-        Assert-GitOk (Invoke-AaysGit $Worktree add -A -- $rel) 'REMOTE_REPLAY_STAGE_FAILED'
-      }
+      Add-GitPathsInBatches -Root $Worktree -Paths $changedPaths -All
       $replayed = Invoke-AaysGit $Worktree diff --cached --name-only
       Assert-GitOk $replayed 'REMOTE_REPLAY_DIFF_FAILED'
       if (-not $replayed.output) { return }
