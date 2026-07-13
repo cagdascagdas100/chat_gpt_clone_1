@@ -106,8 +106,8 @@ def main() -> int:
     result.status = (
       result.visible_rows_text && result.visible_rows_text.includes("300") &&
       result.geojson_metric_present &&
-      result.total_page_info && result.total_page_info.includes("300 satır") &&
-      result.latest_filter_rows && result.latest_filter_rows.includes("150 satır") &&
+      result.total_page_info && /300\s+sat/i.test(result.total_page_info) &&
+      result.latest_filter_rows && /150\s+sat/i.test(result.latest_filter_rows) &&
       result.source_link_count > 0 &&
       result.artifact_link_count > 0 &&
       result.console_errors.length === 0
@@ -254,7 +254,7 @@ def main() -> int:
                 "arguments[0].dispatchEvent(new Event('change', {bubbles:true}))", element
             )
             WebDriverWait(driver, 25).until(
-                lambda d: "150 satır" in d.find_element(By.ID, "pageInfo").text
+                lambda d: re.search(r"150\s+sat", d.find_element(By.ID, "pageInfo").text, re.I)
             )
             latest_text = driver.find_element(By.ID, "pageInfo").text
             try:
@@ -269,7 +269,7 @@ def main() -> int:
                 visible_text
                 and "300" in visible_text
                 and geo_ok
-                and "150 satır" in latest_text
+                and re.search(r"150\s+sat", latest_text, re.I)
                 and source_links > 0
                 and artifact_links > 0
                 and len(errors) == 0
@@ -399,7 +399,7 @@ def main() -> int:
                         and "300" in data["visible_rows_text"]
                         and data.get("geojson_metric_present") is True
                         and data.get("latest_filter_rows")
-                        and "150 satır" in data["latest_filter_rows"]
+                        and re.search(r"150\s+sat", data["latest_filter_rows"], re.I)
                         and int(data.get("source_link_count") or 0) > 0
                         and int(data.get("artifact_link_count") or 0) > 0
                         and len(data.get("console_errors") or []) == 0
