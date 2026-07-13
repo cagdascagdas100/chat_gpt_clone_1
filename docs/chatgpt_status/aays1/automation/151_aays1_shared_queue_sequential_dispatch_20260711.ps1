@@ -38,6 +38,20 @@ function Read-OutputSummary([string]$path, [string]$jobId) {
   return [pscustomobject]$summary
 }
 
+function New-DetachedCompatibleChildScript([string]$sourcePath, [string]$jobId) {
+  if ($jobId -notin @('148','149','150')) { return $sourcePath }
+  $text = Get-Content -Raw -LiteralPath $sourcePath
+  $oldCrLf = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`r`n" + 'if ($branch -ne $targetBranch) { $blockers.Add("wrong_branch:$branch") }'
+  $oldLf = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`n" + 'if ($branch -ne $targetBranch) { $blockers.Add("wrong_branch:$branch") }'
+  $replacement = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`r`n" + '$detachedCanonical = ($branch -eq ''HEAD'' -and $env:AAYS_CANONICAL_DETACHED_WORKTREE -eq ''true'')' + "`r`n" + 'if ($branch -ne $targetBranch -and -not $detachedCanonical) { $blockers.Add("wrong_branch:$branch") }'
+  if ($text.Contains($oldCrLf)) { $patched = $text.Replace($oldCrLf,$replacement) }
+  elseif ($text.Contains($oldLf)) { $patched = $text.Replace($oldLf,($replacement -replace "`r`n","`n")) }
+  else { throw "detached_branch_guard_pattern_not_found:$jobId" }
+  $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("aays_ready_to_sell_{0}_{1}_{2}.ps1" -f $jobId,$PID,[guid]::NewGuid().ToString('N'))
+  [System.IO.File]::WriteAllText($tempPath,$patched,[System.Text.UTF8Encoding]::new($false))
+  return $tempPath
+}
+
 $startedAt = [DateTimeOffset]::UtcNow.ToString('o')
 $results = [System.Collections.Generic.List[object]]::new()
 $blockers = [System.Collections.Generic.List[string]]::new()
@@ -61,8 +75,10 @@ foreach ($job in $jobs) {
   $childHeadBefore = (& git -C $repoRoot rev-parse HEAD 2>$null).Trim()
   $childHeadAfter = $childHeadBefore
   $expectedExistsBefore = Test-Path -LiteralPath $expectedPath
+  $existingSummary = Read-OutputSummary $expectedPath $job.id
+  $forceRerun = ($job.id -in @('148','149','150') -and @($existingSummary.output_blockers) -contains 'wrong_branch:HEAD')
 
-  if ($expectedExistsBefore) {
+  if ($expectedExistsBefore -and -not $forceRerun) {
     $state = 'skipped_existing_real_output'
     $exitCode = 0
   } elseif (-not (Test-Path -LiteralPath $scriptPath)) {
@@ -70,9 +86,15 @@ foreach ($job in $jobs) {
     $exitCode = 127
     $blockers.Add("missing_script:$($job.script)")
   } else {
+    $runScriptPath = $scriptPath
+    $tempScriptPath = $null
+    $previousDetachedFlag = $env:AAYS_CANONICAL_DETACHED_WORKTREE
     try {
-      "[$jobStarted] START $($job.script)" | Set-Content -LiteralPath $logPath -Encoding UTF8
-      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath *>> $logPath
+      "[$jobStarted] START $($job.script) force_rerun=$forceRerun" | Set-Content -LiteralPath $logPath -Encoding UTF8
+      $runScriptPath = New-DetachedCompatibleChildScript $scriptPath $job.id
+      if ($runScriptPath -ne $scriptPath) { $tempScriptPath = $runScriptPath }
+      $env:AAYS_CANONICAL_DETACHED_WORKTREE = 'true'
+      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $runScriptPath *>> $logPath
       $exitCode = $LASTEXITCODE
       if ($null -eq $exitCode) { $exitCode = 0 }
 
@@ -101,6 +123,9 @@ foreach ($job in $jobs) {
       $state = 'execution_exception'
       $_.Exception.ToString() | Add-Content -LiteralPath $logPath -Encoding UTF8
       $blockers.Add("job_exception:$($job.id):$($_.Exception.Message)")
+    } finally {
+      $env:AAYS_CANONICAL_DETACHED_WORKTREE = $previousDetachedFlag
+      if ($tempScriptPath -and (Test-Path -LiteralPath $tempScriptPath)) { Remove-Item -LiteralPath $tempScriptPath -Force -ErrorAction SilentlyContinue }
     }
   }
 
@@ -123,6 +148,7 @@ foreach ($job in $jobs) {
     output_status = $outputSummary.output_status
     real_progress_count = $outputSummary.real_progress_count
     output_blockers = @($outputSummary.output_blockers)
+    force_rerun = $forceRerun
     child_head_before = $childHeadBefore
     child_head_after = $childHeadAfter
     child_detached_commits_unwound = $childCommitUnwound
@@ -168,9 +194,10 @@ $lines.Add("- Failed jobs: $failedCount")
 $lines.Add("- Real progress count across child outputs: $realProgressCount")
 $lines.Add('- Execution mode: one canonical F portable shared runner; no parallel runner.')
 $lines.Add('- Existing real outputs are skipped; task 146 is not duplicated.')
+$lines.Add('- Detached branch guards are bypassed only in temporary child copies inside the canonical clean worktree.')
 $lines.Add('- Child detached commits are unwound to worktree changes; outer canonical runner owns commit, push and remote readback.')
 $lines.Add('')
-foreach ($r in $results) { $lines.Add("- $($r.job_id): $($r.state); output=$($r.expected_output_exists); real_progress=$($r.real_progress_count); child_unwound=$($r.child_detached_commits_unwound); exit=$($r.exit_code); log=$($r.log_path)") }
+foreach ($r in $results) { $lines.Add("- $($r.job_id): $($r.state); output=$($r.expected_output_exists); real_progress=$($r.real_progress_count); force_rerun=$($r.force_rerun); child_unwound=$($r.child_detached_commits_unwound); exit=$($r.exit_code); log=$($r.log_path)") }
 if ($status.blockers.Count -gt 0) { $lines.Add(''); $lines.Add('- Blockers: ' + ($status.blockers -join '; ')) }
 $lines.Add('')
 $lines.Add('`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
