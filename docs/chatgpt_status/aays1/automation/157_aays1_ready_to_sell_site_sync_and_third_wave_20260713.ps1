@@ -80,7 +80,7 @@ function Invoke-ChildJob {
       if ($output.blockers) { foreach ($b in @($output.blockers)) { if ($b) { $jobBlockers.Add([string]$b) } } }
       if ($RequiredStatus -and $outputStatus -ne $RequiredStatus) {
         $state = 'output_created_status_partial'
-        $jobBlockers.Add("required_status_not_met:$RequiredStatus:$outputStatus")
+        $jobBlockers.Add("required_status_not_met:${RequiredStatus}:${outputStatus}")
       } elseif ($exitCode -eq 0) {
         $state = if ($metric -gt 0) { 'output_created_with_real_progress' } else { 'output_created' }
       } else {
