@@ -50,9 +50,24 @@ function Decode-HttpJson($response) {
 }
 function Backup-CanonicalState {
   param([string]$Root,[string]$Backup,[string[]]$AllowedPaths)
-  try { @(& git -C $Root status --porcelain -- $AllowedPaths 2>$null) | Set-Content -LiteralPath (Join-Path $Backup 'site_paths_status_before.txt') -Encoding UTF8 } catch {}
+  $dirtyRoot = Join-Path $Backup 'dirty_files'
+  New-Item -ItemType Directory -Force -Path $dirtyRoot | Out-Null
+  $statusLines = @(& git -C $Root status --porcelain -- $AllowedPaths 2>$null)
+  $statusLines | Set-Content -LiteralPath (Join-Path $Backup 'site_paths_status_before.txt') -Encoding UTF8
   try { @(& git -C $Root diff --binary -- $AllowedPaths 2>$null) | Set-Content -LiteralPath (Join-Path $Backup 'site_paths_unstaged_before.patch') -Encoding UTF8 } catch {}
   try { @(& git -C $Root diff --cached --binary -- $AllowedPaths 2>$null) | Set-Content -LiteralPath (Join-Path $Backup 'site_paths_staged_before.patch') -Encoding UTF8 } catch {}
+  foreach ($line in $statusLines) {
+    if ([string]::IsNullOrWhiteSpace($line) -or $line.Length -lt 4) { continue }
+    $rel = $line.Substring(3).Trim('"')
+    if ($rel -match ' -> ') { $rel = ($rel -split ' -> ')[-1].Trim('"') }
+    $src = Join-Path $Root $rel
+    $dst = Join-Path $dirtyRoot $rel
+    if (Test-Path -LiteralPath $src) {
+      New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
+      if ((Get-Item -LiteralPath $src).PSIsContainer) { Copy-Item -LiteralPath $src -Destination $dst -Recurse -Force -ErrorAction SilentlyContinue }
+      else { Copy-Item -LiteralPath $src -Destination $dst -Force -ErrorAction SilentlyContinue }
+    }
+  }
   foreach ($rel in @($dataRelative,$htmlRelative,$activeBatchRelative)) {
     $src = Join-Path $Root $rel
     if (Test-Path -LiteralPath $src) {
@@ -61,11 +76,27 @@ function Backup-CanonicalState {
     }
   }
 }
+function Overlay-AllowedPaths {
+  param([string]$SourceRoot,[string]$TargetRoot,[string[]]$AllowedPaths)
+  foreach ($rel in $AllowedPaths) {
+    $src = Join-Path $SourceRoot $rel
+    $dst = Join-Path $TargetRoot $rel
+    if (-not (Test-Path -LiteralPath $src)) { throw "source_overlay_path_missing:$rel" }
+    if ((Get-Item -LiteralPath $src).PSIsContainer) {
+      if (Test-Path -LiteralPath $dst) { Remove-Item -LiteralPath $dst -Recurse -Force }
+      New-Item -ItemType Directory -Force -Path $dst | Out-Null
+      Get-ChildItem -LiteralPath $src -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $dst -Recurse -Force }
+    } else {
+      New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
+      Copy-Item -LiteralPath $src -Destination $dst -Force
+    }
+  }
+}
 
 $startedAt = [DateTimeOffset]::UtcNow.ToString('o')
 $blockers = [System.Collections.Generic.List[string]]::new()
 $sourceData = $null; $sourceCounts = $null; $canonicalCounts = $null; $servedCounts = $null
-$syncMode = 'not_run'; $canonicalBeforeSha = $null; $canonicalAfterSha = $null; $remoteSha = $null
+$syncMode = 'not_run'; $canonicalBeforeSha = $null; $canonicalAfterSha = $null; $sourceWorktreeSha = $null
 $sourceDataPath = Join-Path $repoRoot $dataRelative
 
 try {
@@ -73,6 +104,7 @@ try {
   $sourceData = Read-JsonFile $sourceDataPath
   $sourceCounts = Get-Counts $sourceData
   if ($sourceCounts.rows -lt 115) { $blockers.Add("source_rows_below_expected:$($sourceCounts.rows)") }
+  $sourceWorktreeSha = (& git -C $repoRoot rev-parse HEAD 2>$null | Select-Object -First 1).Trim()
 } catch { $blockers.Add('source_data_read_failed:' + $_.Exception.Message) }
 
 if (-not (Test-Path -LiteralPath $canonicalRoot)) {
@@ -81,37 +113,12 @@ if (-not (Test-Path -LiteralPath $canonicalRoot)) {
   $blockers.Add('canonical_repo_git_missing')
 } else {
   $canonicalBeforeSha = (& git -C $canonicalRoot rev-parse HEAD 2>$null | Select-Object -First 1).Trim()
-  Backup-CanonicalState -Root $canonicalRoot -Backup $backupRoot -AllowedPaths $paths
-  & git -C $canonicalRoot fetch origin $branch 2>$null | Out-Null
-  if ($LASTEXITCODE -ne 0) {
-    $blockers.Add('canonical_fetch_failed')
-  } else {
-    $remoteSha = (& git -C $canonicalRoot rev-parse "origin/$branch" 2>$null | Select-Object -First 1).Trim()
-    $archivePath = Join-Path ([System.IO.Path]::GetTempPath()) ("aays155_site_{0}_{1}.zip" -f $PID,[guid]::NewGuid().ToString('N'))
-    $extractRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("aays155_site_{0}_{1}" -f $PID,[guid]::NewGuid().ToString('N'))
-    try {
-      & git -C $canonicalRoot archive --format=zip -o $archivePath "origin/$branch" -- $paths 2>$null
-      if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archivePath)) { throw 'remote_site_archive_failed' }
-      Expand-Archive -LiteralPath $archivePath -DestinationPath $extractRoot -Force
-      foreach ($rel in $paths) {
-        $src = Join-Path $extractRoot $rel
-        $dst = Join-Path $canonicalRoot $rel
-        if (-not (Test-Path -LiteralPath $src)) { throw "archive_path_missing:$rel" }
-        if ((Get-Item -LiteralPath $src).PSIsContainer) {
-          New-Item -ItemType Directory -Force -Path $dst | Out-Null
-          Copy-Item -Path (Join-Path $src '*') -Destination $dst -Recurse -Force
-        } else {
-          New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
-          Copy-Item -LiteralPath $src -Destination $dst -Force
-        }
-      }
-      $syncMode = 'selective_remote_archive_overlay_with_backup'
-    } catch {
-      $blockers.Add('canonical_selective_site_sync_failed:' + $_.Exception.Message)
-    } finally {
-      Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
-      Remove-Item -LiteralPath $extractRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
+  try {
+    Backup-CanonicalState -Root $canonicalRoot -Backup $backupRoot -AllowedPaths $paths
+    Overlay-AllowedPaths -SourceRoot $repoRoot -TargetRoot $canonicalRoot -AllowedPaths $paths
+    $syncMode = 'selective_task_worktree_overlay_with_dirty_backup'
+  } catch {
+    $blockers.Add('canonical_selective_site_sync_failed:' + $_.Exception.Message)
   }
   $canonicalAfterSha = (& git -C $canonicalRoot rev-parse HEAD 2>$null | Select-Object -First 1).Trim()
 }
@@ -122,7 +129,7 @@ try {
   $canonicalData = Read-JsonFile $canonicalDataPath
   $canonicalCounts = Get-Counts $canonicalData
   if ($sourceCounts -and ($canonicalCounts.rows -ne $sourceCounts.rows -or $canonicalCounts.live -ne $sourceCounts.live -or $canonicalCounts.photos -ne $sourceCounts.photos -or $canonicalCounts.polygons -ne $sourceCounts.polygons)) {
-    $blockers.Add('canonical_counts_do_not_match_source_branch')
+    $blockers.Add('canonical_counts_do_not_match_source_worktree')
   }
 } catch { $blockers.Add('canonical_data_read_failed:' + $_.Exception.Message) }
 
@@ -146,7 +153,7 @@ try {
   $servedData = Decode-HttpJson $r
   $servedCounts = Get-Counts $servedData
   $servedMatchesSource = $jsonStatus -eq 200 -and $sourceCounts -and $servedCounts.rows -eq $sourceCounts.rows -and $servedCounts.live -eq $sourceCounts.live -and $servedCounts.photos -eq $sourceCounts.photos -and $servedCounts.polygons -eq $sourceCounts.polygons
-  if (-not $servedMatchesSource) { $blockers.Add('served_json_still_not_synced_with_source_branch') }
+  if (-not $servedMatchesSource) { $blockers.Add('served_json_still_not_synced_with_source_worktree') }
 } catch { $blockers.Add('json_probe_failed:' + $_.Exception.Message) }
 
 $uniqueBlockers = @($blockers | Select-Object -Unique)
@@ -154,7 +161,7 @@ $statusName = if ($uniqueBlockers.Count -eq 0 -and $servedMatchesSource -and $ht
 $status = [ordered]@{
   task_id=$taskId; page_key='aays1'; status=$statusName; runner_mode='single_shared_runner_sequential'
   canonical_sync_mode=$syncMode; canonical_root=$canonicalRoot; canonical_backup_path=$backupRelative
-  canonical_before_sha=$canonicalBeforeSha; canonical_after_sha=$canonicalAfterSha; remote_branch_sha=$remoteSha
+  canonical_before_sha=$canonicalBeforeSha; canonical_after_sha=$canonicalAfterSha; source_worktree_sha=$sourceWorktreeSha
   health_http_status=$healthStatus; page_http_status=$pageStatus; json_http_status=$jsonStatus
   html_contract_ok=[bool]$htmlContractOk; served_json_matches_source=[bool]$servedMatchesSource
   source_counts=$sourceCounts; canonical_counts=$canonicalCounts; served_counts=$servedCounts
