@@ -213,24 +213,7 @@ $blocked = ($challengeSignal -and -not $titleSignal)
   }
 }
 
-$workPushStatus = 'not_attempted'
-$workCommit = $null
-if ($blockers.Count -eq 0) {
-  try {
-    & git -C $repoRoot add -- $dataRelative $batchRelative $sourceRootRelative | Out-Null
-    $staged = (& git -C $repoRoot diff --cached --name-only)
-    if ($staged) {
-      & git -C $repoRoot commit -m 'Bulk verify ReadyToSell live source rows 300x60' | Out-Null
-      $workCommit = (& git -C $repoRoot rev-parse HEAD).Trim()
-      & git -C $repoRoot push origin $targetBranch | Out-Null
-      if ($LASTEXITCODE -eq 0) {
-        $remote = (& git -C $repoRoot ls-remote origin "refs/heads/$targetBranch" 2>$null | Select-Object -First 1)
-        $workPushStatus = if ($remote -and $remote.StartsWith($workCommit)) { 'pushed_remote_readback_ok' } else { 'pushed_remote_readback_unconfirmed' }
-      } else { $workPushStatus = 'push_failed' }
-    } else { $workPushStatus = 'no_work_changes' }
-  } catch { $workPushStatus = 'push_exception:' + $_.Exception.Message }
-}
-
+$workPushStatus = 'outer_runner_promotion'; $workCommit = $null
 $afterVerified = if ($data -and $data.results) { @($data.results | Where-Object { $_.source_verification_status -eq 'verified_live_listing_page' }).Count } else { $beforeVerified }
 $status = [ordered]@{
   task_id = $taskId; page_key = $pageKey
@@ -267,11 +250,4 @@ $batch.current_row = $null
 $batch.updated_at = [DateTimeOffset]::UtcNow.ToString('o')
 Write-JsonFile $batchPath $batch
 
-try {
-  & git -C $repoRoot add -- $statusRelative $reportRelative $batchRelative | Out-Null
-  $proofStaged = (& git -C $repoRoot diff --cached --name-only)
-  if ($proofStaged) {
-    & git -C $repoRoot commit -m 'Record ReadyToSell bulk source verification 300x60 proof' | Out-Null
-    & git -C $repoRoot push origin $targetBranch | Out-Null
-  }
-} catch {}
+# Outer canonical runner owns status/report commit, push and remote readback.

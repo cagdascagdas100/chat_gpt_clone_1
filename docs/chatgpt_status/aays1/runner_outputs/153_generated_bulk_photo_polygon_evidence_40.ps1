@@ -249,23 +249,7 @@ foreach ($row in $targets) {
   Write-JsonFile $batchPath $batch
 }
 
-$workPushStatus = 'not_attempted'; $workCommit = $null
-if ($blockers.Count -eq 0) {
-  try {
-    & git -C $repoRoot add -- $dataRelative $batchRelative $evidenceRootRelative | Out-Null
-    $staged = (& git -C $repoRoot diff --cached --name-only)
-    if ($staged) {
-      & git -C $repoRoot commit -m 'Prepare bulk ReadyToSell photo and polygon evidence 40' | Out-Null
-      $workCommit = (& git -C $repoRoot rev-parse HEAD).Trim()
-      & git -C $repoRoot push origin $targetBranch | Out-Null
-      if ($LASTEXITCODE -eq 0) {
-        $remote = (& git -C $repoRoot ls-remote origin "refs/heads/$targetBranch" 2>$null | Select-Object -First 1)
-        $workPushStatus = if ($remote -and $remote.StartsWith($workCommit)) { 'pushed_remote_readback_ok' } else { 'pushed_remote_readback_unconfirmed' }
-      } else { $workPushStatus = 'push_failed' }
-    } else { $workPushStatus = 'no_work_changes' }
-  } catch { $workPushStatus = 'push_exception:' + $_.Exception.Message }
-}
-
+$workPushStatus = 'outer_runner_promotion'; $workCommit = $null
 $afterPhotoEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count } else { $beforePhotoEvidence }
 $afterPolygonEvidence = if ($data -and $data.results) { @($data.results | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { $beforePolygonEvidence }
 $afterReadyEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { $beforeReadyEvidence }
@@ -306,11 +290,4 @@ $batch.status = if ($blockers.Count -gt 0) { 'BLOCKED' } else { 'COMPLETED_EVIDE
 $batch.current_row = $null; $batch.updated_at = [DateTimeOffset]::UtcNow.ToString('o')
 Write-JsonFile $batchPath $batch
 
-try {
-  & git -C $repoRoot add -- $statusRelative $reportRelative $batchRelative | Out-Null
-  $proofStaged = (& git -C $repoRoot diff --cached --name-only)
-  if ($proofStaged) {
-    & git -C $repoRoot commit -m 'Record ReadyToSell bulk evidence preparation 40 proof' | Out-Null
-    & git -C $repoRoot push origin $targetBranch | Out-Null
-  }
-} catch {}
+# Outer canonical runner owns status/report commit, push and remote readback.
