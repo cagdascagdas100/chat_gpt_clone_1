@@ -45,6 +45,29 @@ $payload = [ordered]@{
 $patched = $patched.Replace($payloadMarker, $payloadPrefix.TrimEnd())
 $patched = $patched.Replace("  status=if(`$browserPassed){'PASS_STANDALONE_LIVE_PUBLISH_AND_BROWSER_PROOF'}else{'FAIL_STANDALONE_BROWSER_PROOF'}", '  status=$payloadStatus')
 
+$oldRowCapture = '                    rows[rid] = cells[0].text.strip()'
+$newRowCapture = @'
+                    rows[rid] = {
+                        "status_text": cells[0].text.strip(),
+                        "classes": (tr.get_attribute("class") or "").split()
+                    }
+'@
+$patched = $patched.Replace($oldRowCapture, $newRowCapture.TrimEnd())
+
+$oldRequiredHeaders = '    required_headers = {"Hesap açıklaması","Parcel binding","Ham yerel kaynak","Visible artifact","Status yolu","Rapor yolu","Served commit","Artifact SHA"}'
+$newRequiredHeaders = @'
+    required_headers = {"Hesap açıklaması","Parcel binding","Ham yerel kaynak","Visible artifact","Status yolu","Rapor yolu","Served commit","Artifact SHA"}
+    import unicodedata
+    def norm_text(value):
+        return " ".join(unicodedata.normalize("NFC", str(value)).split())
+    headers_norm = {norm_text(x) for x in headers}
+    required_headers_norm = {norm_text(x) for x in required_headers}
+'@
+$patched = $patched.Replace($oldRequiredHeaders, $newRequiredHeaders.TrimEnd())
+$patched = $patched.Replace('    new_count = sum("YENİ / LATEST" in rows.get(rid, "") for rid in expected_ids)', '    new_count = sum("latest" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)')
+$patched = $patched.Replace('    manual_count = sum("MANUEL İNCELEME" in rows.get(rid, "") for rid in expected_ids)', '    manual_count = sum("manual" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)')
+$patched = $patched.Replace('required_headers.issubset(set(headers))', 'required_headers_norm.issubset(headers_norm)')
+
 if ($patched -eq $source) {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_NO_PATCH_APPLIED'
 }
@@ -59,6 +82,18 @@ if ($patched -notmatch '\$statusLabel = if') {
 }
 if ($patched -notmatch '\$payloadStatus = if') {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_PAYLOAD_ASSIGNMENT_MISSING'
+}
+if ($patched -notmatch 'rows\[rid\] = \{') {
+  throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_ROW_CLASS_CAPTURE_MISSING'
+}
+if ($patched -notmatch 'required_headers_norm') {
+  throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_HEADER_NORMALIZATION_MISSING'
+}
+if ($patched -notmatch '"latest" in rows\.get') {
+  throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_LATEST_CLASS_CHECK_MISSING'
+}
+if ($patched -notmatch '"manual" in rows\.get') {
+  throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_MANUAL_CLASS_CHECK_MISSING'
 }
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('gas_standalone_if_fix_' + [Guid]::NewGuid().ToString('N') + '.ps1')
