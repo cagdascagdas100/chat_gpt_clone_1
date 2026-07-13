@@ -26,9 +26,11 @@ function Test-NumberValue($value) {
 }
 function Find-FirstRing($node) {
   if ($null -eq $node) { return $null }
-  if ($node -is [System.Collections.IList] -and $node.Count -ge 4) {
-    $first = $node[0]
-    if ($first -is [System.Collections.IList] -and $first.Count -ge 2 -and (Test-NumberValue $first[0]) -and (Test-NumberValue $first[1])) { return ,$node }
+  if ($node -is [System.Collections.IList]) {
+    if ($node.Count -ge 4) {
+      $first = $node[0]
+      if ($first -is [System.Collections.IList] -and $first.Count -ge 2 -and (Test-NumberValue $first[0]) -and (Test-NumberValue $first[1])) { return ,$node }
+    }
     foreach ($child in $node) {
       $ring = Find-FirstRing $child
       if ($null -ne $ring) { return ,$ring }
@@ -84,7 +86,8 @@ New-Item -ItemType Directory -Force -Path $evidenceRoot,(Split-Path $statusPath)
 $blockers = [System.Collections.Generic.List[string]]::new()
 $results = [System.Collections.Generic.List[object]]::new()
 $branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
-if ($branch -ne $targetBranch) { $blockers.Add("wrong_branch:$branch") }
+$detachedCanonical = ($branch -eq 'HEAD' -and $env:AAYS_CANONICAL_DETACHED_WORKTREE -eq 'true')
+if ($branch -ne $targetBranch -and -not $detachedCanonical) { $blockers.Add("wrong_branch:$branch") }
 if (-not (Test-Path -LiteralPath $dataPath)) { $blockers.Add('site_data_json_missing') }
 if (-not (Test-Path -LiteralPath $geoPath)) { $blockers.Add('canonical_geometry_missing') }
 $data = $null; $geo = $null
@@ -92,13 +95,16 @@ if ($blockers.Count -eq 0) {
   try { $data = Get-Content -LiteralPath $dataPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $blockers.Add('site_data_read_failed:' + $_.Exception.Message) }
   try { $geo = Get-Content -LiteralPath $geoPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $blockers.Add('geometry_read_failed:' + $_.Exception.Message) }
 }
-$beforeEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count } else { 0 }
+$beforePhotoEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count } else { 0 }
+$beforePolygonEvidence = if ($data -and $data.results) { @($data.results | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { 0 }
+$beforeReadyEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { 0 }
 $targets = @()
 if ($blockers.Count -eq 0 -and $data.results) {
   foreach ($row in @($data.results | Sort-Object {[int]$_.row_id})) { Set-Prop $row 'new_this_run' $false }
   $targets = @($data.results | Where-Object {
-    -not [string]::IsNullOrWhiteSpace([string]$_.listing_url) -and
-    (-not $_.downloaded_photo_paths -or @($_.downloaded_photo_paths).Count -eq 0)
+    $hasPhotos = $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0
+    $hasPolygon = -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path)
+    -not [string]::IsNullOrWhiteSpace([string]$_.listing_url) -and (-not $hasPhotos -or -not $hasPolygon)
   } | Sort-Object {[int]$_.row_id} | Select-Object -First $maxRows)
 }
 
@@ -136,36 +142,44 @@ foreach ($row in $targets) {
   } catch { $polygonError = $_.Exception.Message }
 
   $photoPaths = [System.Collections.Generic.List[string]]::new()
-  $sourceStatus = 'SOURCE_FETCH_NOT_RUN'; $sourceHttp = $null; $sourceError = $null
-  try {
-    $page = Invoke-WebRequest -Uri ([string]$row.listing_url) -Headers $headers -UseBasicParsing -MaximumRedirection 8 -TimeoutSec 45
-    $sourceHttp = [int]$page.StatusCode
-    if ($sourceHttp -lt 200 -or $sourceHttp -ge 400) { throw "Listing returned HTTP $sourceHttp" }
-    $sourceStatus = 'LIVE_LISTING_OPENED'
-    $imageUrls = @(Get-ImageUrls ([string]$page.Content) | Select-Object -First 16)
-    $index = 0
-    foreach ($imageUrl in $imageUrls) {
-      if ($photoPaths.Count -ge 2) { break }
-      $index++
-      $ext = '.jpg'
-      try {
-        $candidateExt = [System.IO.Path]::GetExtension(([uri]$imageUrl).AbsolutePath).ToLowerInvariant()
-        if ($candidateExt -in @('.jpg','.jpeg','.png','.webp')) { $ext = $candidateExt }
-      } catch {}
-      $photoRelative = "$rowRootRelative/source_photo_$index$ext"
-      $photoPath = Join-Path $repoRoot $photoRelative
-      try {
-        Invoke-WebRequest -Uri $imageUrl -Headers $headers -UseBasicParsing -MaximumRedirection 8 -TimeoutSec 45 -OutFile $photoPath
-        $length = (Get-Item -LiteralPath $photoPath).Length
-        if ($length -lt 5000) { Remove-Item -LiteralPath $photoPath -Force; continue }
-        $photoPaths.Add($photoRelative)
-      } catch {
-        if (Test-Path -LiteralPath $photoPath) { Remove-Item -LiteralPath $photoPath -Force }
+  foreach ($existingPhoto in @($row.downloaded_photo_paths)) {
+    if ([string]::IsNullOrWhiteSpace([string]$existingPhoto)) { continue }
+    $existingPhotoPath = Join-Path $repoRoot ([string]$existingPhoto)
+    if (Test-Path -LiteralPath $existingPhotoPath) { $photoPaths.Add([string]$existingPhoto) }
+  }
+  $sourceStatus = if ($photoPaths.Count -gt 0) { 'EXISTING_DOWNLOADED_PHOTO_EVIDENCE_REUSED' } else { 'SOURCE_FETCH_NOT_RUN' }
+  $sourceHttp = $null; $sourceError = $null
+  if ($photoPaths.Count -eq 0) {
+    try {
+      $page = Invoke-WebRequest -Uri ([string]$row.listing_url) -Headers $headers -UseBasicParsing -MaximumRedirection 8 -TimeoutSec 45
+      $sourceHttp = [int]$page.StatusCode
+      if ($sourceHttp -lt 200 -or $sourceHttp -ge 400) { throw "Listing returned HTTP $sourceHttp" }
+      $sourceStatus = 'LIVE_LISTING_OPENED'
+      $imageUrls = @(Get-ImageUrls ([string]$page.Content) | Select-Object -First 16)
+      $index = 0
+      foreach ($imageUrl in $imageUrls) {
+        if ($photoPaths.Count -ge 2) { break }
+        $index++
+        $ext = '.jpg'
+        try {
+          $candidateExt = [System.IO.Path]::GetExtension(([uri]$imageUrl).AbsolutePath).ToLowerInvariant()
+          if ($candidateExt -in @('.jpg','.jpeg','.png','.webp')) { $ext = $candidateExt }
+        } catch {}
+        $photoRelative = "$rowRootRelative/source_photo_$index$ext"
+        $photoPath = Join-Path $repoRoot $photoRelative
+        try {
+          Invoke-WebRequest -Uri $imageUrl -Headers $headers -UseBasicParsing -MaximumRedirection 8 -TimeoutSec 45 -OutFile $photoPath
+          $length = (Get-Item -LiteralPath $photoPath).Length
+          if ($length -lt 5000) { Remove-Item -LiteralPath $photoPath -Force; continue }
+          $photoPaths.Add($photoRelative)
+        } catch {
+          if (Test-Path -LiteralPath $photoPath) { Remove-Item -LiteralPath $photoPath -Force }
+        }
       }
+      if ($photoPaths.Count -eq 0) { $sourceStatus = 'LIVE_LISTING_OPENED_NO_DOWNLOADABLE_IMAGE_FOUND' }
+    } catch {
+      $sourceStatus = 'LIVE_LISTING_FETCH_BLOCKED'; $sourceError = $_.Exception.Message
     }
-    if ($photoPaths.Count -eq 0) { $sourceStatus = 'LIVE_LISTING_OPENED_NO_DOWNLOADABLE_IMAGE_FOUND' }
-  } catch {
-    $sourceStatus = 'LIVE_LISTING_FETCH_BLOCKED'; $sourceError = $_.Exception.Message
   }
   if ($photoPaths.Count -gt 0) { $photoRows++ }
   $runStatus = if ($photoPaths.Count -gt 0 -and $polygonOk) { 'EVIDENCE_READY_VISION_PENDING' } else { 'LIVE_SOURCE_VERIFIED_VISION_PENDING' }
@@ -205,15 +219,22 @@ foreach ($row in $targets) {
     row_id = $rowId; status = $runStatus; source_fetch_status = $sourceStatus
     photos_downloaded = $photoPaths.Count; downloaded_photo_paths = @($photoPaths)
     polygon_rendered = $polygonOk; polygon_render_path = if ($polygonOk) { $polygonRelative } else { $null }
-    vision_output_path = $manifestRelative; visual_match_score = $null; confidence_after = '3/4_source_verified_vision_pending'
+    polygon_render_error = $polygonError; vision_output_path = $manifestRelative; visual_match_score = $null; confidence_after = '3/4_source_verified_vision_pending'
   })
-  $rowsWithEvidenceNow = @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count
+
+  $photoTotalNow = @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count
+  $polygonTotalNow = @($data.results | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count
+  $readyTotalNow = @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count
   $sourceVerifiedNow = @($data.results | Where-Object { $_.source_verification_status -eq 'verified_live_listing_page' }).Count
+  $visionTotalNow = @($data.results | Where-Object { $null -ne $_.visual_match_score }).Count
   Set-Prop $data 'status' 'BULK_REAL_EVIDENCE_PREPARATION_RUNNING__VISION_COMPARE_PENDING'
-  Set-Prop $data 'rows_with_downloaded_photo_evidence' $rowsWithEvidenceNow
-  Set-Prop $data 'rows_pending_vision_download' ([Math]::Max(0, $sourceVerifiedNow - $rowsWithEvidenceNow))
-  Set-Prop $data 'rows_vision_compared' 0
-  Set-Prop $data 'rows_3_5_plus_verified' 0
+  Set-Prop $data 'rows_with_downloaded_photo_evidence' $photoTotalNow
+  Set-Prop $data 'rows_with_polygon_render' $polygonTotalNow
+  Set-Prop $data 'rows_evidence_ready' $readyTotalNow
+  Set-Prop $data 'rows_pending_vision_download' ([Math]::Max(0, $sourceVerifiedNow - $photoTotalNow))
+  Set-Prop $data 'rows_pending_polygon_render' ([Math]::Max(0, $sourceVerifiedNow - $polygonTotalNow))
+  Set-Prop $data 'rows_vision_compared' $visionTotalNow
+  Set-Prop $data 'rows_3_5_plus_verified' @($data.results | Where-Object { $null -ne $_.visual_match_score -and [double]$_.visual_match_score -ge 3.5 }).Count
   Set-Prop $data 'last_vision_evidence_task' $taskId
   Set-Prop $data 'updated_at' ([DateTimeOffset]::UtcNow.ToString('o'))
   Set-Prop $data 'final_ready' $false
@@ -245,7 +266,9 @@ if ($blockers.Count -eq 0) {
   } catch { $workPushStatus = 'push_exception:' + $_.Exception.Message }
 }
 
-$afterEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count } else { $beforeEvidence }
+$afterPhotoEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 }).Count } else { $beforePhotoEvidence }
+$afterPolygonEvidence = if ($data -and $data.results) { @($data.results | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { $beforePolygonEvidence }
+$afterReadyEvidence = if ($data -and $data.results) { @($data.results | Where-Object { $_.downloaded_photo_paths -and @($_.downloaded_photo_paths).Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$_.polygon_render_path) }).Count } else { $beforeReadyEvidence }
 $status = [ordered]@{
   task_id = $taskId; page_key = $pageKey
   status = if ($blockers.Count -gt 0) { 'BLOCKED_PREFLIGHT' } elseif ($readyRows -gt 0) { 'REAL_EVIDENCE_PREPARED_VISION_COMPARE_PENDING' } else { 'PARTIAL_OR_NO_EVIDENCE_PREPARED' }
@@ -253,11 +276,12 @@ $status = [ordered]@{
   rows_processed_this_run = $results.Count; rows_with_photo_downloaded_this_run = $photoRows
   rows_with_polygon_render_this_run = $polygonRows; rows_evidence_ready_this_run = $readyRows
   rows_vision_compared_this_run = 0; rows_3_5_plus_verified_this_run = 0
-  rows_with_downloaded_photo_evidence_before = $beforeEvidence; rows_with_downloaded_photo_evidence_after = $afterEvidence
-  evidence_preparation_progress_percent_of_verified_rows = if ($data -and $data.rows_with_live_source_verified) { [Math]::Round(($afterEvidence / [double]$data.rows_with_live_source_verified) * 100, 2) } else { 0 }
+  rows_with_downloaded_photo_evidence_before = $beforePhotoEvidence; rows_with_downloaded_photo_evidence_after = $afterPhotoEvidence
+  rows_with_polygon_evidence_before = $beforePolygonEvidence; rows_with_polygon_evidence_after = $afterPolygonEvidence
+  rows_evidence_ready_before = $beforeReadyEvidence; rows_evidence_ready_after = $afterReadyEvidence
+  evidence_preparation_progress_percent_of_verified_rows = if ($data -and $data.rows_with_live_source_verified) { [Math]::Round(($afterReadyEvidence / [double]$data.rows_with_live_source_verified) * 100, 2) } else { 0 }
   results = @($results); blockers = @($blockers); work_git_commit_sha = $workCommit; git_push_status = $workPushStatus
-  site_visible_progress_percent = if ($data) { $data.site_visible_progress_percent } else { 86 }
-  overall_progress_percent = 97; this_run_overall_percent_increase = 0
+  product_completion_percent_not_modified = $true; this_run_overall_percent_increase = 0
   next_required = 'real_vision_comparison_for_evidence_ready_rows'
   generated_at = [DateTimeOffset]::UtcNow.ToString('o')
   final_ready = $false; product_final_ready = $false; fake_data = $false; db_write = $false; migration = $false; production_deploy = $false
@@ -268,10 +292,12 @@ $lines.Add('# ReadyToSell Bulk Photo and Polygon Evidence - 20 Rows')
 $lines.Add('')
 $lines.Add("- Status: $($status.status)")
 $lines.Add("- Targeted / processed: $($status.rows_targeted_count) / $($status.rows_processed_this_run)")
-$lines.Add("- Rows with real photo download: $photoRows")
-$lines.Add("- Rows with canonical polygon render: $polygonRows")
-$lines.Add("- Rows evidence-ready: $readyRows")
-$lines.Add("- Evidence total: $beforeEvidence -> $afterEvidence")
+$lines.Add("- Rows with real photo evidence in this run: $photoRows")
+$lines.Add("- Rows with canonical polygon render in this run: $polygonRows")
+$lines.Add("- Rows evidence-ready in this run: $readyRows")
+$lines.Add("- Photo evidence total: $beforePhotoEvidence -> $afterPhotoEvidence")
+$lines.Add("- Polygon evidence total: $beforePolygonEvidence -> $afterPolygonEvidence")
+$lines.Add("- Evidence-ready total: $beforeReadyEvidence -> $afterReadyEvidence")
 $lines.Add("- Git work proof: $workPushStatus / $workCommit")
 $lines.Add('- Vision compared: 0; 3.5+ rows: 0.')
 $lines.Add('- Safety: final_ready=false, fake_data=false, db_write=false, migration=false, production_deploy=false.')
