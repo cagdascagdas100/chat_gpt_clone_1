@@ -10,6 +10,9 @@ if (-not $repoRoot -or [string]$env:AAYS_PAGE_KEY -ne 'gas_emissions') {
 if ([string]$env:AAYS_TARGET_BRANCH -ne 'codex/aays-single-runner-v5-20260706') {
   throw 'GAS_EMISSIONS_66_TYPE_FIX_WRONG_BRANCH'
 }
+if (-not [string]$env:AAYS_CONTROLLER_REPO_ROOT) {
+  throw 'AAYS_CONTROLLER_REPO_ROOT_MISSING'
+}
 
 $sourceRel = 'docs\chatgpt_status\gas_emissions\automation\RUN_GAS_EMISSIONS_66_MULTI_BATCH_PIPELINE_20260711.ps1'
 $sourcePath = Join-Path $repoRoot $sourceRel
@@ -34,9 +37,14 @@ $oldUi = '($uiAudit.Values -contains $false)'
 $newUi = '(@($uiAudit.GetEnumerator() | Where-Object { $_.Value -eq $false }).Count -gt 0)'
 $patched = $patched.Replace($oldUi, $newUi)
 
+$oldServed = '$servedRoot=''F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'''
+$newServed = '$servedRoot=[string]$env:AAYS_CONTROLLER_REPO_ROOT; if (-not $servedRoot) { throw ''AAYS_CONTROLLER_REPO_ROOT_MISSING'' }'
+$patched = $patched.Replace($oldServed, $newServed)
+
 if ($patched -eq $source) { throw 'GAS_EMISSIONS_66_TYPE_FIX_NO_REPLACEMENTS_APPLIED' }
 if ($patched -notmatch [regex]::Escape('$verifiedArray=[object[]]')) { throw 'GAS_EMISSIONS_66_VERIFIED_ARRAY_PATCH_MISSING' }
 if ($patched -notmatch [regex]::Escape('$visible.rows=[object[]]')) { throw 'GAS_EMISSIONS_66_COMBINED_ROWS_PATCH_MISSING' }
+if ($patched -notmatch [regex]::Escape('$env:AAYS_CONTROLLER_REPO_ROOT')) { throw 'GAS_EMISSIONS_66_CONTROLLER_ROOT_PATCH_MISSING' }
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('gas66_type_fix_' + [Guid]::NewGuid().ToString('N') + '.ps1')
 try {
