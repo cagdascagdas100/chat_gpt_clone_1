@@ -236,7 +236,7 @@ try {
     verified_feature_count = $verifiedFeatures.Count
     final_ready = $false
     fake_data = $false
-    features = @($verifiedFeatures)
+    features = $verifiedFeatures.ToArray()
   }
   $geo | ConvertTo-Json -Depth 40 | Set-Content -Encoding UTF8 $verifiedGeoPath
   $csvRows | Export-Csv -NoTypeInformation -Encoding UTF8 $verifiedCsvPath
@@ -294,7 +294,7 @@ try {
     db_write = $false
     migration = $false
     production_deploy = $false
-    rows = @($visibleRows)
+    rows = $visibleRows.ToArray()
   }
   $visible | ConvertTo-Json -Depth 25 | Set-Content -Encoding UTF8 $visibleRowsPath
 
@@ -327,7 +327,7 @@ try {
   }
   $visibleStatus | ConvertTo-Json -Depth 15 | Set-Content -Encoding UTF8 $visibleStatusPath
 
-  $newRows = @($visibleRows | Where-Object { $_.is_new_in_latest_batch -eq $true })
+  $newRows = @($visibleRows.ToArray() | Where-Object { $_.is_new_in_latest_batch -eq $true })
   $latest = [ordered]@{
     layer = 'Safety / Security'
     program_output = 'Security Level percent'
