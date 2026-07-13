@@ -305,7 +305,7 @@ function New-RemoteQueueMirror {
 function Sync-ControllerRepoSafe {
   if (-not (Test-Path -LiteralPath $RepoRoot)) { throw 'REPO_ROOT_MISSING: ' + $RepoRoot }
   Assert-GitOk (Invoke-AaysGit $RepoRoot config core.longpaths true) 'CONFIG_LONGPATHS_FAILED'
-  $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','-c','http.lowSpeedLimit=1','-c','http.lowSpeedTime=15','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+  $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','-c','fetch.negotiationAlgorithm=noop','-c','http.lowSpeedLimit=1','-c','http.lowSpeedTime=15','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))
   $fetchResult = $null
   $transportRoot = $null
   $worktreeContainer = Split-Path -Parent $RepoRoot
@@ -314,12 +314,29 @@ function Sync-ControllerRepoSafe {
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
   if ($transport) {
-    $transportFetch = Invoke-AaysGit -Cwd $transport.FullName -GitArgs $fetchArgs
-    if ($transportFetch.code -eq 0) {
-      $transportRoot = $transport.FullName
-      $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('fetch','--no-tags',$transport.FullName,("+refs/remotes/origin/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+    $transportRoot = $transport.FullName
+    $localProbe = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('rev-parse',("refs/heads/${MainBranch}"))
+    $remoteProbe = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('ls-remote','--heads','origin',("refs/heads/${MainBranch}"))
+    $localCommit = if($localProbe.code -eq 0){$localProbe.output.Trim()}else{''}
+    $remoteCommit = if($remoteProbe.code -eq 0 -and $remoteProbe.output){[string](($remoteProbe.output -split '\s+')[0])}else{''}
+    $transportSourceRef = "refs/heads/${MainBranch}"
+    if ($localCommit -and $remoteCommit -and $localCommit -eq $remoteCommit) {
+      $script:Summary.transport_fetch_mode = 'remote_already_current'
+    } elseif ($remoteCommit) {
+      $transportFetch = Invoke-AaysGit -Cwd $transport.FullName -GitArgs $fetchArgs
+      if ($transportFetch.code -eq 0) {
+        $transportSourceRef = "refs/remotes/origin/${MainBranch}"
+        $script:Summary.transport_fetch_mode = 'remote_updated_noop_negotiation'
+      } else {
+        $script:Summary.transport_fetch_error = $transportFetch.output
+        $script:Summary.transport_fetch_mode = 'cached_local_after_fetch_failure'
+      }
     } else {
-      $script:Summary.transport_fetch_error = $transportFetch.output
+      $script:Summary.transport_fetch_error = $remoteProbe.output
+      $script:Summary.transport_fetch_mode = 'cached_local_after_remote_probe_failure'
+    }
+    if ($localProbe.code -eq 0) {
+      $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('fetch','--no-tags',$transport.FullName,("+${transportSourceRef}:refs/remotes/origin/${MainBranch}"))
     }
   }
   if ($null -eq $fetchResult) { $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs $fetchArgs }
