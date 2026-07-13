@@ -1,0 +1,57 @@
+{
+  "task_id": "183_aays1_parcel_label_actual_runtime_root_sync_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner",
+  "priority": -2400,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/183_parcel_label_actual_runtime_root_sync_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_row_artifact_index_latest.json"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/aays1/runner_outputs/183_aays1_parcel_label_actual_runtime_root_sync_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/183_aays1_parcel_label_actual_runtime_root_sync_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/183_aays1_parcel_label_actual_runtime_root_sync_20260713_status.json",
+    "docs/chatgpt_status/aays1/reports/183_parcel_label_actual_runtime_root_sync_report_20260713.md"
+  ],
+  "purpose": "Identify the exact filesystem root served by port 8012 using a temporary marker probe, copy the five current Parcel Label matrix artifacts only to that root, and verify all twelve Task 181 enriched rows through HTTP and browser text.",
+  "required_runner_actions": [
+    "do not create a new or parallel runner",
+    "discover the actual port 8012 served root rather than trusting the runner health repo_root",
+    "copy five current matrix artifacts to the actual served root",
+    "verify 194 served rows and twelve task_id 181 rows through cache-busted HTTP",
+    "attempt Selenium browser text and console proof without inventing success",
+    "push proof artifacts and verify GitHub remote readback",
+    "leave final_ready=false"
+  ],
+  "acceptance_contract": {
+    "source_row_count_expected": 194,
+    "served_row_count_expected": 194,
+    "task_181_rows_visible_expected": 12,
+    "new_rows_created_expected": 0,
+    "exact_geometry_created_expected": 0,
+    "file_hash_match_required": true,
+    "http_match_required": true,
+    "github_remote_readback_required": true,
+    "final_ready": false
+  },
+  "supersedes_runtime_sync_task": "182_aays1_parcel_label_runtime_served_sync_20260713",
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
