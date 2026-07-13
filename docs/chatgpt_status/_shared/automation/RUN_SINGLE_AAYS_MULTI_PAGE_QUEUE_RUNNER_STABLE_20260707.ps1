@@ -12,6 +12,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $script:QueueScanRoot = $RepoRoot
 $script:RemoteQueueCommit = $null
+$script:QueueGitRoot = $RepoRoot
+$script:TaskGitRoot = $RepoRoot
+$script:QueueGitRef = 'refs/remotes/origin/' + $MainBranch
 
 function Now-Utc { (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') }
 function Safe-Name([string]$Value) { (($Value -replace '[^A-Za-z0-9_.-]', '_').Trim('_')) }
@@ -273,12 +276,25 @@ function Assert-GeneratedQueueMirrorPath([string]$Path) {
     throw ('QUEUE_MIRROR_OUTSIDE_WORKROOT: ' + $pathFull)
   }
 }
+function Get-GitBlobSha([string]$Path) {
+  $bytes = [System.IO.File]::ReadAllBytes($Path)
+  $prefix = [System.Text.Encoding]::ASCII.GetBytes(('blob {0}' -f $bytes.Length) + [char]0)
+  $sha = [System.Security.Cryptography.SHA1]::Create()
+  try {
+    [void]$sha.TransformBlock($prefix,0,$prefix.Length,$prefix,0)
+    [void]$sha.TransformFinalBlock($bytes,0,$bytes.Length)
+    return ([System.BitConverter]::ToString($sha.Hash)).Replace('-','').ToLowerInvariant()
+  } finally {
+    $sha.Dispose()
+  }
+}
 function New-RemoteQueueMirror {
-  $remoteRef = 'refs/remotes/origin/' + $MainBranch
-  $commitResult = Invoke-AaysGit $RepoRoot rev-parse $remoteRef
+  $sourceRoot = $script:QueueGitRoot
+  $remoteRef = $script:QueueGitRef
+  $commitResult = Invoke-AaysGit $sourceRoot rev-parse $remoteRef
   Assert-GitOk $commitResult 'REMOTE_QUEUE_REF_MISSING'
   $remoteCommit = ([string]$commitResult.output).Trim()
-  $listResult = Invoke-AaysGit $RepoRoot ls-tree -r --name-only $remoteRef -- 'docs/chatgpt_status'
+  $listResult = Invoke-AaysGit $sourceRoot ls-tree -r $remoteRef -- 'docs/chatgpt_status'
   Assert-GitOk $listResult 'REMOTE_QUEUE_LIST_FAILED'
   $mirrorRoot = Join-Path $WorkRoot '_remote_queue_mirror'
   $tempRoot = Join-Path $WorkRoot ('_remote_queue_mirror_tmp_' + $PID)
@@ -286,19 +302,40 @@ function New-RemoteQueueMirror {
   Assert-GeneratedQueueMirrorPath $tempRoot
   if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
   Ensure-Dir $tempRoot
-  $queuePaths = @($listResult.output -split '\r?\n' | Where-Object { $_ -match '^docs/chatgpt_status/[^/]+/queue/[^/]+$' })
-  foreach ($queuePath in $queuePaths) {
-    $showResult = Invoke-AaysGit $RepoRoot show ($remoteRef + ':' + $queuePath)
-    Assert-GitOk $showResult ('REMOTE_QUEUE_READ_FAILED: ' + $queuePath)
+  if (Test-Path -LiteralPath $mirrorRoot) {
+    Get-ChildItem -LiteralPath $mirrorRoot -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $tempRoot -Recurse -Force }
+  }
+  $queueEntries = @($listResult.output -split '\r?\n' | ForEach-Object {
+    if ($_ -match '^[0-9]+\s+\w+\s+([0-9a-f]{40})\t(.+)$') {
+      [pscustomobject]@{ sha=$Matches[1]; path=$Matches[2] }
+    }
+  } | Where-Object { $_.path -match '^docs/chatgpt_status/[^/]+/queue/[^/]+$' })
+  $remotePaths = @{}
+  $changedQueueCount = 0
+  foreach ($entry in $queueEntries) {
+    $queuePath = [string]$entry.path
+    $remotePaths[$queuePath] = $true
     $destination = Join-Path $tempRoot ($queuePath -replace '/', '\\')
+    if ((Test-Path -LiteralPath $destination) -and (Get-GitBlobSha $destination) -eq [string]$entry.sha) { continue }
+    $showResult = Invoke-AaysGit $sourceRoot show ($remoteRef + ':' + $queuePath)
+    Assert-GitOk $showResult ('REMOTE_QUEUE_READ_FAILED: ' + $queuePath)
     Ensure-Dir (Split-Path -Parent $destination)
     Write-Utf8 $destination ([string]$showResult.output)
+    $changedQueueCount++
+  }
+  $tempDocs = Join-Path $tempRoot 'docs\chatgpt_status'
+  if (Test-Path -LiteralPath $tempDocs) {
+    Get-ChildItem -LiteralPath $tempDocs -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' } | ForEach-Object {
+      $relative = Rel ($_.FullName.Substring($tempRoot.Length).TrimStart('\','/'))
+      if (-not $remotePaths.ContainsKey($relative)) { Remove-Item -LiteralPath $_.FullName -Force }
+    }
   }
   if (Test-Path -LiteralPath $mirrorRoot) { Remove-Item -LiteralPath $mirrorRoot -Recurse -Force }
   Move-Item -LiteralPath $tempRoot -Destination $mirrorRoot
   $script:RemoteQueueCommit = $remoteCommit
   $script:Summary.remote_queue_commit = $remoteCommit
-  $script:Summary.remote_queue_count = $queuePaths.Count
+  $script:Summary.remote_queue_count = $queueEntries.Count
+  $script:Summary.remote_queue_changed_count = $changedQueueCount
   $script:Summary.queue_source = 'generated_remote_queue_mirror'
   return $mirrorRoot
 }
@@ -321,6 +358,8 @@ function Sync-ControllerRepoSafe {
     $remoteCommit = if($remoteProbe.code -eq 0 -and $remoteProbe.output){[string](($remoteProbe.output -split '\s+')[0])}else{''}
     $transportSourceRef = "refs/heads/${MainBranch}"
     if ($localCommit -and $remoteCommit -and $localCommit -eq $remoteCommit) {
+      $updateRemoteRef = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('update-ref',("refs/remotes/origin/${MainBranch}"),$localCommit)
+      Assert-GitOk $updateRemoteRef 'TRANSPORT_REMOTE_REF_UPDATE_FAILED'
       $script:Summary.transport_fetch_mode = 'remote_already_current'
     } elseif ($remoteCommit) {
       $transportFetch = Invoke-AaysGit -Cwd $transport.FullName -GitArgs $fetchArgs
@@ -335,8 +374,13 @@ function Sync-ControllerRepoSafe {
       $script:Summary.transport_fetch_error = $remoteProbe.output
       $script:Summary.transport_fetch_mode = 'cached_local_after_remote_probe_failure'
     }
-    if ($localProbe.code -eq 0) {
-      $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('fetch','--no-tags',$transport.FullName,("+${transportSourceRef}:refs/remotes/origin/${MainBranch}"))
+    $transportRefProbe = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('rev-parse',$transportSourceRef)
+    if ($transportRefProbe.code -eq 0) {
+      $script:QueueGitRoot = $transport.FullName
+      $script:TaskGitRoot = $transport.FullName
+      $script:QueueGitRef = $transportSourceRef
+      $fetchResult = [pscustomobject]@{ code=0; output='queue_and_task_git_source_uses_lightweight_transport_clone' }
+      $script:Summary.controller_object_source = 'lightweight_transport_clone'
     }
   }
   if ($null -eq $fetchResult) { $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs $fetchArgs }
@@ -373,9 +417,10 @@ function Archive-TaskWorktree([string]$Worktree, [string]$Reason) {
 function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
   # Portable mode: reuse the controller object store and materialize only the
   # task contract paths. A full checkout can be tens of GB on the portable disk.
-  Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('rev-parse','--verify',("refs/remotes/origin/$($Task.target_branch)"))) 'TASK_REMOTE_REF_MISSING'
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','add','--detach','--no-checkout',$Worktree,('origin/' + $Task.target_branch))) 'TASK_WORKTREE_ADD_FAILED'
+  $gitRoot = $script:TaskGitRoot
+  Invoke-AaysGit -Cwd $gitRoot -GitArgs @('worktree','prune') | Out-Null
+  Assert-GitOk (Invoke-AaysGit -Cwd $gitRoot -GitArgs @('rev-parse','--verify',("refs/remotes/origin/$($Task.target_branch)"))) 'TASK_REMOTE_REF_MISSING'
+  Assert-GitOk (Invoke-AaysGit -Cwd $gitRoot -GitArgs @('worktree','add','--detach','--no-checkout',$Worktree,('origin/' + $Task.target_branch))) 'TASK_WORKTREE_ADD_FAILED'
   Assert-GitOk (Invoke-AaysGit $Worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   Assert-GitOk (Invoke-AaysGit $Worktree sparse-checkout init --no-cone) 'TASK_SPARSE_INIT_FAILED'
   $sparsePaths = New-Object System.Collections.Generic.List[string]
@@ -411,17 +456,18 @@ function Ensure-TaskWorktree([object]$Task) {
   $worktree = Join-Path $WorkRoot ("${safePage}_${safeTask}")
   $url = 'https://github.com/' + $RepoFullName + '.git'
   Ensure-Dir $WorkRoot
-  Assert-GitOk (Invoke-AaysGit $RepoRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
+  $gitRoot = $script:TaskGitRoot
+  Assert-GitOk (Invoke-AaysGit $gitRoot config --global core.longpaths true) 'GLOBAL_LONGPATHS_FAILED'
   if (Test-Path -LiteralPath $worktree) {
     $probe = Invoke-AaysGit $worktree rev-parse --is-inside-work-tree
     if ($probe.code -ne 0 -or $probe.output.Trim() -ne 'true') {
       Archive-TaskWorktree $worktree 'invalid_or_stale_git_worktree' | Out-Null
-      Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
+      Invoke-AaysGit -Cwd $gitRoot -GitArgs @('worktree','prune') | Out-Null
     } else {
       # Task worktrees are disposable. Replacing an old one is faster and safer
       # than a repository-wide status scan on a large portable checkout.
       Archive-TaskWorktree $worktree 'existing_task_worktree_replaced_for_clean_run' | Out-Null
-      Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
+      Invoke-AaysGit -Cwd $gitRoot -GitArgs @('worktree','prune') | Out-Null
     }
   }
   if (-not (Test-Path -LiteralPath $worktree)) { New-TaskWorktreeClone $worktree $Task $url }
