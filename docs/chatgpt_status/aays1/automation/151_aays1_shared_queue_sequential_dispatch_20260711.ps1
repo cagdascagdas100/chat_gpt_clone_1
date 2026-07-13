@@ -20,13 +20,32 @@ $jobs = @(
   [ordered]@{ id='150'; script='docs/chatgpt_status/aays1/automation/150_aays1_bulk_photo_polygon_evidence_20_20260711.ps1'; expected='docs/chatgpt_status/aays1/status/150_aays1_bulk_photo_polygon_evidence_latest.json' }
 )
 
+function Read-OutputSummary([string]$path, [string]$jobId) {
+  $summary = [ordered]@{ output_status=$null; real_progress_count=0; output_blockers=@(); parse_error=$null }
+  if (-not (Test-Path -LiteralPath $path)) { return [pscustomobject]$summary }
+  try {
+    $j = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    $summary.output_status = [string]$j.status
+    if ($j.blockers) { $summary.output_blockers = @($j.blockers) }
+    switch ($jobId) {
+      '145' { if ($j.verified_rows_added_this_run) { $summary.real_progress_count = @($j.verified_rows_added_this_run).Count } }
+      '146' { if ($j.rows_with_photo_downloaded_this_run) { $summary.real_progress_count = [int]$j.rows_with_photo_downloaded_this_run } }
+      '148' { if ($j.verified_rows_added_this_run) { $summary.real_progress_count = @($j.verified_rows_added_this_run).Count } }
+      '149' { if ($j.verified_rows_added_count -ne $null) { $summary.real_progress_count = [int]$j.verified_rows_added_count } }
+      '150' { if ($j.rows_evidence_ready_this_run -ne $null) { $summary.real_progress_count = [int]$j.rows_evidence_ready_this_run } }
+    }
+  } catch { $summary.parse_error = $_.Exception.Message }
+  return [pscustomobject]$summary
+}
+
 $startedAt = [DateTimeOffset]::UtcNow.ToString('o')
 $results = [System.Collections.Generic.List[object]]::new()
 $blockers = [System.Collections.Generic.List[string]]::new()
 
-# The canonical runner executes tasks in a detached clean worktree. Do not require
-# a local branch checkout and do not commit/push from inside this dispatcher.
-# The outer single shared runner owns allowed-path validation, commit, push and readback.
+# The canonical runner executes tasks in a detached clean worktree. Child scripts may
+# create detached commits. After each child, rewind only HEAD/index to the pre-child
+# commit while preserving worktree files. The outer canonical runner then validates,
+# commits, pushes and performs remote readback for the complete allowed-path change set.
 $currentRef = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
 $currentCommit = (& git -C $repoRoot rev-parse HEAD 2>$null).Trim()
 
@@ -38,6 +57,9 @@ foreach ($job in $jobs) {
   $jobStarted = [DateTimeOffset]::UtcNow.ToString('o')
   $state = 'not_run'
   $exitCode = $null
+  $childCommitUnwound = $false
+  $childHeadBefore = (& git -C $repoRoot rev-parse HEAD 2>$null).Trim()
+  $childHeadAfter = $childHeadBefore
   $expectedExistsBefore = Test-Path -LiteralPath $expectedPath
 
   if ($expectedExistsBefore) {
@@ -53,6 +75,18 @@ foreach ($job in $jobs) {
       & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath *>> $logPath
       $exitCode = $LASTEXITCODE
       if ($null -eq $exitCode) { $exitCode = 0 }
+
+      $childHeadAfter = (& git -C $repoRoot rev-parse HEAD 2>$null).Trim()
+      if ($childHeadAfter -and $childHeadBefore -and $childHeadAfter -ne $childHeadBefore) {
+        & git -C $repoRoot reset --mixed $childHeadBefore *>> $logPath
+        if ($LASTEXITCODE -eq 0) {
+          $childCommitUnwound = $true
+          "[$([DateTimeOffset]::UtcNow.ToString('o'))] CHILD_DETACHED_COMMITS_UNWOUND $childHeadAfter -> $childHeadBefore" | Add-Content -LiteralPath $logPath -Encoding UTF8
+        } else {
+          $blockers.Add("child_commit_unwind_failed:$($job.id):$childHeadAfter")
+        }
+      }
+
       $expectedExistsAfterRun = Test-Path -LiteralPath $expectedPath
       if ($exitCode -eq 0 -and $expectedExistsAfterRun) { $state = 'executed_output_created' }
       elseif ($exitCode -eq 0) {
@@ -70,6 +104,15 @@ foreach ($job in $jobs) {
     }
   }
 
+  $outputSummary = Read-OutputSummary $expectedPath $job.id
+  if ($outputSummary.parse_error) { $blockers.Add("status_parse_failed:$($job.id):$($outputSummary.parse_error)") }
+  if ($outputSummary.output_blockers.Count -gt 0) {
+    foreach ($b in $outputSummary.output_blockers) { $blockers.Add("job_$($job.id):$b") }
+  }
+  if ($state -eq 'executed_output_created') {
+    $state = if ($outputSummary.real_progress_count -gt 0) { 'executed_output_created_with_real_progress' } else { 'executed_output_created_no_new_progress' }
+  }
+
   $results.Add([pscustomobject]@{
     job_id = $job.id
     script_path = $job.script
@@ -77,6 +120,12 @@ foreach ($job in $jobs) {
     state = $state
     exit_code = $exitCode
     expected_output_exists = (Test-Path -LiteralPath $expectedPath)
+    output_status = $outputSummary.output_status
+    real_progress_count = $outputSummary.real_progress_count
+    output_blockers = @($outputSummary.output_blockers)
+    child_head_before = $childHeadBefore
+    child_head_after = $childHeadAfter
+    child_detached_commits_unwound = $childCommitUnwound
     log_path = $logRelative
     started_at = $jobStarted
     finished_at = [DateTimeOffset]::UtcNow.ToString('o')
@@ -84,19 +133,22 @@ foreach ($job in $jobs) {
 }
 
 $completedCount = @($results | Where-Object { $_.expected_output_exists -eq $true }).Count
-$failedCount = @($results | Where-Object { $_.state -match 'failed|exception|missing' }).Count
+$failedCount = @($results | Where-Object { $_.state -match 'failed|exception|missing|blocked' }).Count
+$realProgressCount = (@($results | Measure-Object -Property real_progress_count -Sum).Sum)
 $status = [ordered]@{
   task_id = $taskId
   page_key = 'aays1'
-  status = if ($completedCount -eq $jobs.Count -and $failedCount -eq 0) { 'SEQUENTIAL_DISPATCH_OUTPUTS_PRESENT' } elseif ($completedCount -gt 0) { 'SEQUENTIAL_DISPATCH_PARTIAL' } else { 'SEQUENTIAL_DISPATCH_BLOCKED_OR_NO_OUTPUT' }
+  status = if ($completedCount -eq $jobs.Count -and $failedCount -eq 0) { 'SEQUENTIAL_DISPATCH_OUTPUTS_PRESENT_FOR_OUTER_PROMOTION' } elseif ($completedCount -gt 0) { 'SEQUENTIAL_DISPATCH_PARTIAL' } else { 'SEQUENTIAL_DISPATCH_BLOCKED_OR_NO_OUTPUT' }
   runner_mode = 'single_shared_runner_sequential'
   git_ref = $currentRef
   git_commit_at_start = $currentCommit
   jobs_total = $jobs.Count
   jobs_with_expected_output = $completedCount
   jobs_failed = $failedCount
+  real_progress_count_across_jobs = $realProgressCount
   results = @($results)
-  blockers = @($blockers)
+  blockers = @($blockers | Select-Object -Unique)
+  outer_runner_promotion_required = $true
   started_at = $startedAt
   finished_at = [DateTimeOffset]::UtcNow.ToString('o')
   final_ready = $false
@@ -111,14 +163,15 @@ $status | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $statusPath -Encod
 $lines = [System.Collections.Generic.List[string]]::new()
 $lines.Add('# AAYS1 ReadyToSell Shared Queue Sequential Dispatch')
 $lines.Add('')
-$lines.Add("- Jobs with expected real output: $completedCount / $($jobs.Count)")
+$lines.Add("- Jobs with expected output: $completedCount / $($jobs.Count)")
 $lines.Add("- Failed jobs: $failedCount")
+$lines.Add("- Real progress count across child outputs: $realProgressCount")
 $lines.Add('- Execution mode: one canonical F portable shared runner; no parallel runner.')
 $lines.Add('- Existing real outputs are skipped; task 146 is not duplicated.')
-$lines.Add('- Commit, push and remote readback are owned by the outer canonical runner.')
+$lines.Add('- Child detached commits are unwound to worktree changes; outer canonical runner owns commit, push and remote readback.')
 $lines.Add('')
-foreach ($r in $results) { $lines.Add("- $($r.job_id): $($r.state); output=$($r.expected_output_exists); exit=$($r.exit_code); log=$($r.log_path)") }
-if ($blockers.Count -gt 0) { $lines.Add(''); $lines.Add('- Blockers: ' + ($blockers -join '; ')) }
+foreach ($r in $results) { $lines.Add("- $($r.job_id): $($r.state); output=$($r.expected_output_exists); real_progress=$($r.real_progress_count); child_unwound=$($r.child_detached_commits_unwound); exit=$($r.exit_code); log=$($r.log_path)") }
+if ($status.blockers.Count -gt 0) { $lines.Add(''); $lines.Add('- Blockers: ' + ($status.blockers -join '; ')) }
 $lines.Add('')
 $lines.Add('`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 [System.IO.File]::WriteAllLines($reportPath,$lines,[System.Text.UTF8Encoding]::new($false))
