@@ -27,7 +27,9 @@ function Read-JsonSafe([string]$path) {
   } catch { return $null }
 }
 
-$startedAt = [DateTimeOffset]::UtcNow.ToString('o')
+$started = [DateTimeOffset]::UtcNow
+$startedAt = $started.ToString('o')
+$childStatusWriteBefore = if (Test-Path -LiteralPath $childStatusPath) { (Get-Item -LiteralPath $childStatusPath).LastWriteTimeUtc.ToString('o') } else { $null }
 $previousDetached = $env:AAYS_CANONICAL_DETACHED_WORKTREE
 $childExitCode = 1
 try {
@@ -43,11 +45,22 @@ try {
   $env:AAYS_CANONICAL_DETACHED_WORKTREE = $previousDetached
 }
 
-$child = Read-JsonSafe $childStatusPath
+$childFresh = $false
+$childStatusWriteAfter = $null
+if (Test-Path -LiteralPath $childStatusPath) {
+  $childItem = Get-Item -LiteralPath $childStatusPath
+  $childStatusWriteAfter = $childItem.LastWriteTimeUtc.ToString('o')
+  $childFresh = $childItem.LastWriteTimeUtc -ge $started.UtcDateTime.AddSeconds(-2)
+}
+$child = if ($childFresh) { Read-JsonSafe $childStatusPath } else { $null }
+
 if ($child) {
   $child | Add-Member -NotePropertyName continuation_task_id -NotePropertyValue $taskId -Force
   $child | Add-Member -NotePropertyName continuation_of -NotePropertyValue 'aays1-ready-to-sell-double-wave-continuation-20260713' -Force
   $child | Add-Member -NotePropertyName pickup_recovery_child_exit_code -NotePropertyValue $childExitCode -Force
+  $child | Add-Member -NotePropertyName child_status_fresh_this_run -NotePropertyValue $true -Force
+  $child | Add-Member -NotePropertyName child_status_write_before -NotePropertyValue $childStatusWriteBefore -Force
+  $child | Add-Member -NotePropertyName child_status_write_after -NotePropertyValue $childStatusWriteAfter -Force
   $child.task_id = $taskId
   $child.final_ready = $false
   $child.product_final_ready = $false
@@ -61,6 +74,7 @@ if ($child) {
   $lines.Add('')
   $lines.Add('- Child status: ' + [string]$child.status)
   $lines.Add('- Child exit code: ' + [string]$childExitCode)
+  $lines.Add('- Fresh child output this run: true')
   $lines.Add('- Jobs completed with output: ' + [string]$child.jobs_completed_with_output + ' / ' + [string]$child.jobs_total)
   $lines.Add('- Source verified delta: ' + [string]$child.source_verified_delta)
   $lines.Add('- Photo delta: ' + [string]$child.photo_rows_delta)
@@ -78,13 +92,17 @@ if ($child) {
   exit 0
 }
 
+$missingReason = if (Test-Path -LiteralPath $childStatusPath) { 'child_status_not_fresh_this_run:' + $childStatusRelative } else { 'child_status_missing:' + $childStatusRelative }
 $status = [ordered]@{
   task_id = $taskId
   page_key = 'aays1'
-  status = 'FOUR_WAVE_PICKUP_RECOVERY_CHILD_OUTPUT_MISSING'
+  status = 'FOUR_WAVE_PICKUP_RECOVERY_CHILD_OUTPUT_MISSING_OR_STALE'
   child_script = $childScriptRelative
   child_exit_code = $childExitCode
-  blockers = @('child_status_missing:' + $childStatusRelative)
+  child_status_fresh_this_run = $false
+  child_status_write_before = $childStatusWriteBefore
+  child_status_write_after = $childStatusWriteAfter
+  blockers = @($missingReason)
   started_at = $startedAt
   finished_at = [DateTimeOffset]::UtcNow.ToString('o')
   final_ready = $false
@@ -95,5 +113,5 @@ $status = [ordered]@{
   production_deploy = $false
 }
 $status | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $statusPath -Encoding UTF8
-[System.IO.File]::WriteAllLines($reportPath,@('# AAYS1 ReadyToSell Four-Wave Pickup Recovery','',('- Status: ' + $status.status),('- Child exit code: ' + $childExitCode),('- Blocker: child status missing.'),'','`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.'),[System.Text.UTF8Encoding]::new($false))
+[System.IO.File]::WriteAllLines($reportPath,@('# AAYS1 ReadyToSell Four-Wave Pickup Recovery','',('- Status: ' + $status.status),('- Child exit code: ' + $childExitCode),('- Blocker: ' + $missingReason),'','`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.'),[System.Text.UTF8Encoding]::new($false))
 exit 1
