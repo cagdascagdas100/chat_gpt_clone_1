@@ -1,0 +1,54 @@
+{
+  "task_id": "198_aays1_parcel_label_18row_bom_parse_recovery_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner",
+  "priority": -2700,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/198_parcel_label_18row_bom_parse_recovery_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "docs/chatgpt_status/aays1/automation/188_parcel_label_18row_source_classification_publish_20260713.ps1",
+    "docs/chatgpt_status/aays1/inputs/185_distance_property_types_source_classification_research_hold_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/186_distance_property_types_source_classification_research_hold_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/187_distance_property_types_source_classification_research_hold_20260713.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/aays1/runner_outputs/198_aays1_parcel_label_18row_bom_parse_recovery_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/198_aays1_parcel_label_18row_bom_parse_recovery_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/198_aays1_parcel_label_18row_bom_parse_recovery_20260713_status.json",
+    "docs/chatgpt_status/aays1/reports/198_parcel_label_18row_bom_parse_recovery_report_20260713.md"
+  ],
+  "purpose": "Recover only the Task 188 HTTP JSON proof failure caused by a UTF-8 BOM decoded as ï»¿. Reapply the same eighteen researched existing-row updates idempotently, parse the served JSON BOM-safely, synchronize the five matrix artifacts and prove all eighteen rows through port 8012 and GitHub readback.",
+  "failure_diagnostic": {
+    "source_task_id": "188_aays1_parcel_label_18row_source_classification_publish_20260713",
+    "source_status": "FAILED_WITH_DIAGNOSTIC",
+    "source_error": "Geçersiz JSON basit öğesi: ï.",
+    "failing_statement": "$served = $dataResponse.Content | ConvertFrom-Json",
+    "recovery_change": "strip U+FEFF and mojibake UTF-8 BOM bytes before ConvertFrom-Json"
+  },
+  "acceptance_contract": {
+    "existing_rows_updated_expected": 18,
+    "new_rows_created_expected": 0,
+    "exact_geometry_created_expected": 0,
+    "served_row_count_expected": 194,
+    "task_198_rows_visible_expected": 18,
+    "file_hash_match_required": true,
+    "http_match_required": true,
+    "github_remote_readback_required": true,
+    "final_ready": false
+  },
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
