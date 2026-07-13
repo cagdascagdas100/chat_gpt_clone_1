@@ -37,27 +37,34 @@ function Read-OutputSummary([string]$path, [string]$jobId) {
   return [pscustomobject]$summary
 }
 
+function Replace-Once([string]$text, [string]$pattern, [string]$replacement, [string]$failureCode) {
+  $regex = [regex]::new($pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  $match = $regex.Match($text)
+  if (-not $match.Success) { throw $failureCode }
+  return $regex.Replace($text, $replacement, 1)
+}
+
 function New-DetachedCompatibleChildScript([string]$sourcePath, [string]$jobId) {
   if ($jobId -notin @('148','149','150')) { return $sourcePath }
   $text = (Get-Content -Raw -LiteralPath $sourcePath) -replace "`r`n","`n"
 
-  $branchOld = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`n" + 'if ($branch -ne $targetBranch) { $blockers.Add("wrong_branch:$branch") }'
-  $branchNew = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`n" + '$detachedCanonical = ($branch -eq ''HEAD'' -and $env:AAYS_CANONICAL_DETACHED_WORKTREE -eq ''true'')' + "`n" + 'if ($branch -ne $targetBranch -and -not $detachedCanonical) { $blockers.Add("wrong_branch:$branch") }'
-  if (-not $text.Contains($branchOld)) { throw "detached_branch_guard_pattern_not_found:$jobId" }
-  $text = $text.Replace($branchOld,$branchNew)
+  $branchPattern = '^\s*\$branch\s*=\s*\(&\s*git\s+-C\s+\$repoRoot\s+rev-parse\s+--abbrev-ref\s+HEAD\s+2>\$null\)\.Trim\(\)\s*\n\s*if\s*\(\$branch\s+-ne\s+\$targetBranch\)\s*\{\s*\$blockers\.Add\("wrong_branch:\$branch"\)\s*\}'
+  $branchReplacement = '$branch = (& git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()' + "`n" + '$detachedCanonical = ($branch -eq ''HEAD'' -and $env:AAYS_CANONICAL_DETACHED_WORKTREE -eq ''true'')' + "`n" + 'if ($branch -ne $targetBranch -and -not $detachedCanonical) { $blockers.Add("wrong_branch:$branch") }'
+  $text = Replace-Once $text $branchPattern $branchReplacement "detached_branch_guard_pattern_not_found:$jobId"
 
   if ($jobId -in @('148','149')) {
-    $old148 = '$blocked = $plain -match ''(captcha|access denied|unusual traffic|cloudflare|verify you are human)''' + "`n" + '$landSignal = $plain -match ''(Land for sale|Plot for sale|development land|building plot|building plots|development site|parcel of land)'''
-    $old149 = '$blocked = $plain -match ''(captcha|access denied|unusual traffic|cloudflare|verify you are human)''' + "`n" + '$landSignal = $plain -match ''(land for sale|plot for sale|development land|building plot|building plots|development site|agricultural land)'''
-    $signalNew = '$titleSignal = (-not [string]::IsNullOrWhiteSpace([string]$title)) -and ($title -match ''(?i)(land for sale|plot for sale|development land|building plot|development site|agricultural land|\bplot\b.*(?:£|for sale)|\bland\b.*(?:£|for sale))'')' + "`n" + '$bodySignal = $plain -match ''(?i)(land for sale|plot for sale|development land|building plot|building plots|development site|agricultural land|parcel of land)''' + "`n" + '$challengeSignal = (($title -match ''(?i)(captcha|access denied|cloudflare|verify you are human)'') -or ($plain -match ''(?i)(captcha|access denied|unusual traffic|verify you are human)''))' + "`n" + '$landSignal = ($titleSignal -or $bodySignal)' + "`n" + '$blocked = ($challengeSignal -and -not $titleSignal)'
-    if ($text.Contains($old148)) { $text = $text.Replace($old148,$signalNew) }
-    elseif ($text.Contains($old149)) { $text = $text.Replace($old149,$signalNew) }
-    else { throw "source_signal_guard_pattern_not_found:$jobId" }
+    $blockedPattern = '^\s*\$blocked\s*=\s*\$plain\s+-match\s+''[^''\r\n]*''\s*$'
+    $blockedReplacement = '$titleSignal = (-not [string]::IsNullOrWhiteSpace([string]$title)) -and ($title -match ''(?i)(land for sale|plot for sale|development land|building plot|development site|agricultural land|\bplot\b.*(?:£|for sale)|\bland\b.*(?:£|for sale))'')' + "`n" + '$challengeSignal = (($title -match ''(?i)(captcha|access denied|cloudflare|verify you are human)'') -or ($plain -match ''(?i)(captcha|access denied|unusual traffic|verify you are human)''))'
+    $text = Replace-Once $text $blockedPattern $blockedReplacement "blocked_signal_line_not_found:$jobId"
+
+    $landPattern = '^\s*\$landSignal\s*=\s*\$plain\s+-match\s+''[^''\r\n]*''\s*$'
+    $landReplacement = '$bodySignal = $plain -match ''(?i)(land for sale|plot for sale|development land|building plot|building plots|development site|agricultural land|parcel of land)''' + "`n" + '$landSignal = ($titleSignal -or $bodySignal)' + "`n" + '$blocked = ($challengeSignal -and -not $titleSignal)'
+    $text = Replace-Once $text $landPattern $landReplacement "land_signal_line_not_found:$jobId"
 
     if ($jobId -eq '148') {
-      $oldLengthGate = 'if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 400 -or $blocked -or -not $landSignal -or $html.Length -lt 5000) {'
-      $newLengthGate = 'if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 400 -or $blocked -or -not $landSignal -or ($html.Length -lt 5000 -and -not $titleSignal)) {'
-      if ($text.Contains($oldLengthGate)) { $text = $text.Replace($oldLengthGate,$newLengthGate) }
+      $lengthPattern = 'if\s*\(\$resp\.StatusCode\s+-lt\s+200\s+-or\s+\$resp\.StatusCode\s+-ge\s+400\s+-or\s+\$blocked\s+-or\s+-not\s+\$landSignal\s+-or\s+\$html\.Length\s+-lt\s+5000\)\s*\{'
+      $lengthReplacement = 'if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 400 -or $blocked -or -not $landSignal -or ($html.Length -lt 5000 -and -not $titleSignal)) {'
+      $text = Replace-Once $text $lengthPattern $lengthReplacement "html_length_gate_pattern_not_found:$jobId"
     }
   }
 
