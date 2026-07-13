@@ -58,7 +58,15 @@ if (-not ([string]$proof.latest_filter_rows -match '150\s+sat')) { $blockers.Add
 $remoteStatus = $null
 $remoteProof = $null
 try {
-  & git -C $repoRoot fetch --no-tags origin $branch 2>&1 | Out-Null
+  $oldFetchEap = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    & git -C $repoRoot fetch --no-tags origin $branch 2>&1 | Out-Null
+    $fetchCode = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $oldFetchEap
+  }
+  if ($fetchCode -ne 0) { throw "remote_fetch_failed_exit_$fetchCode" }
   $remoteStatus = Read-GitJson $statusRelWeb
   $remoteProof = Read-GitJson $proofRel
 } catch {
