@@ -1,0 +1,64 @@
+{
+  "task_id": "180_aays1_parcel_label_source_enrichment_minimal_recovery_20260713",
+  "page_key": "aays1",
+  "layer_key": "distance_property_types",
+  "status": "queued_for_single_shared_runner",
+  "priority": -2200,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "script_path": "docs/chatgpt_status/aays1/automation/180_parcel_label_source_enrichment_minimal_recovery_20260713.ps1",
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "england_map_web/data/program_layer_matrix"
+  ],
+  "input_paths": [
+    "docs/chatgpt_status/aays1/inputs/175_distance_property_types_official_source_snapshot_enrichment_20260713.json",
+    "docs/chatgpt_status/aays1/inputs/176_distance_property_types_official_source_snapshot_enrichment_second_batch_20260713.json"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_status_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_latest_changes.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_source_manifest_latest.json",
+    "england_map_web/data/program_layer_matrix/distance_property_types_row_artifact_index_latest.json",
+    "docs/chatgpt_status/aays1/evidence/180_parcel_label_source_enrichment_minimal_recovery_evidence_20260713.json",
+    "docs/chatgpt_status/aays1/reports/180_parcel_label_source_enrichment_minimal_recovery_report_20260713.md",
+    "docs/chatgpt_status/aays1/runner_outputs/180_aays1_parcel_label_source_enrichment_minimal_recovery_20260713_output.json",
+    "docs/chatgpt_status/aays1/runner_outputs/180_aays1_parcel_label_source_enrichment_minimal_recovery_20260713_browser_http_proof.json",
+    "docs/chatgpt_status/aays1/status/180_aays1_parcel_label_source_enrichment_minimal_recovery_20260713_status.json"
+  ],
+  "purpose": "Recover the same twelve existing Parcel Label source/address enrichments after Tasks 175, 176 and 177 failed with AUTOMATION_EXIT_NONZERO. Use a simpler Windows PowerShell-compatible script and always write a diagnostic output on runtime failure.",
+  "required_runner_actions": [
+    "update only the twelve matching existing parcel IDs",
+    "create no new candidate rows",
+    "attempt bounded source snapshots without failing the whole task when a remote source rejects automation",
+    "publish row-level source, local snapshot, payload, queue, report, evidence and runner-output paths",
+    "keep exact geometry NOT_BOUND",
+    "write output and diagnostic artifacts",
+    "perform port 8012 page and JSON visibility checks",
+    "push outputs and verify GitHub remote readback",
+    "leave final_ready=false"
+  ],
+  "acceptance_contract": {
+    "existing_rows_updated_expected": 12,
+    "new_rows_created_expected": 0,
+    "exact_geometry_created_expected": 0,
+    "automation_exit_zero_required": true,
+    "diagnostic_output_required_on_runtime_failure": true,
+    "github_remote_readback_required": true,
+    "final_ready": false
+  },
+  "supersedes_blocked_tasks": [
+    "175_aays1_parcel_label_official_source_snapshot_enrichment_20260713",
+    "176_aays1_parcel_label_official_source_snapshot_enrichment_second_batch_20260713",
+    "177_aays1_parcel_label_source_enrichment_recovery_20260713"
+  ],
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "product_final_ready": false
+}
