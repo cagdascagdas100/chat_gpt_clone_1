@@ -9,7 +9,83 @@ playwright_available=False
 site_8010_ok=False
 site_8020_ok=False
 browser_smoke_passed=True
-automation_exit_code=2
+automation_exit_code=1
 fake_data=false
 --- output ---
-OUTPUT=F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\aays1_aays1-137-next-batch\docs\chatgpt_status\aays1\runner_outputs\164_security_103_145_preflight_chain_recovery.json
+powershell.exe : At F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\aays1_aays1-137-next
+-batch\docs\chatg
+At F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707\docs\chatgpt_status\_shared\automatio
+n\RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1:624 char:18
++ ... ry { $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $sc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (At F:\TerraYiel...atch\docs\chatg:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+pt_status\aays1\automation\165_security_browser_worktree_recovery_orchestrator.ps1:389 char:66
++   $result.completed_at = (Get-Date).ToUniversalTime().ToString('o')
++                                                                  ~~
+The string is missing the terminator: '.
+At F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\aays1_aays1-137-next-batch\docs\chatg
+pt_status\aays1\automation\165_security_browser_worktree_recovery_orchestrator.ps1:348 char:24
++ ...  Read-Json 'docs/chatgpt_status/aays1/runner_outputs/103_security_acc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token 'docs/chatgpt_status/aays1/runner_outputs/103_security_accuracy_count_expansion.json'
+  $out145 = Read-Json 'docs/chatgpt_status/aays1/runner_outputs/145_security_official_api_lsoa_validation.json'
+  $out147 = Read-Json 'docs/chatgpt_status/aays1/runner_outputs/147_security_300_browser_validation.json'
+  $out146 = Read-Json 'docs/chatgpt_status/aays1/runner_outputs/146_security_strict_multiwork_orchestrator.json'
+  if ($null -ne $out103) {
+    $result.selected_verified_rows = $out103.selected_count
+    $result.added_rows = $out103.added_count
+    $result.score_4_count = $out103.score_4_count
+    $result.manual_review_count = $out103.manual_review_count
+  }
+  if ($null -ne $out145) {
+    $result.official_latest_month = $out145.official_latest_month
+    $result.unique_lsoa_count = $out145.unique_lsoa_count
+    $result.lsoa_http_200_count = $out145.lsoa_http_200_count
+  }
+  if ($null -ne $out147) {
+    $result.browser_status = $out147.browser_status
+    $result.browser_engine = $out147.browser_engine
+    $result.browser_url = $out147.browser_url
+    $result.latest_filter_rows = $out147.latest_filter_rows
+    $result.console_error_count = $out147.console_error_count
+  }
+  if ($null -ne $out146) {
+    $result.child_status = $out146.status
+    $result.site_data_published = [bool]$out146.site_data_published
+    $result.git_push_status = $out146.git_push_status
+    $result.remote_readback_status = $out146.remote_readback_status
+    if ($out146.blockers) { $result.blockers += @($out146.blockers | ForEach-Object { "146:$_" }) }
+  }
+  if ($result.child_exit_code -eq 0 -and $result.child_status -eq 'completed_atomic_publish_remote_readback_pass') {
+    $result.status = 'browser_recovery_strict_chain_completed'
+  } else {
+    $result.status = 'browser_recovery_strict_chain_blocked'
+    if ($result.child_exit_code -ne 0) { $result.blockers += "child_orchestrator_exit_$($result.child_exit_code)" }
+  }
+} catch {
+  $result.status = 'blocked_browser_worktree_recovery'
+  $result.blockers += $_.Exception.Message
+} finally {
+  $result.completed_at = (Get-Date).ToUniversalTime().ToString('o')
+  $result.blockers = @($result.blockers | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Objec
+t -Unique)
+  Save-Result
+}
+Write-Host "OUTPUT=$outputPath"
+if ($result.blockers.Count -gt 0 -or $result.child_exit_code -notin @(0,$null)) { exit 2 }
+exit 0
+' in expression or statement.
+At F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\aays1_aays1-137-next-batch\docs\chatg
+pt_status\aays1\automation\165_security_browser_worktree_recovery_orchestrator.ps1:83 char:5
++ try {
++     ~
+Missing closing '}' in statement block or type definition.
+At F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\aays1_aays1-137-next-batch\docs\chatg
+pt_status\aays1\automation\165_security_browser_worktree_recovery_orchestrator.ps1:397 char:1
++ 
+The Try statement is missing its Catch or Finally block.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : TerminatorExpectedAtEndOfString
+ 
