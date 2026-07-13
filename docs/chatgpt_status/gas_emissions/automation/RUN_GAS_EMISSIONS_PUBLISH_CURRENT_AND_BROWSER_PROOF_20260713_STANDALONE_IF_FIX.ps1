@@ -64,8 +64,10 @@ $newRequiredHeaders = @'
     required_headers_norm = {norm_text(x) for x in required_headers}
 '@
 $patched = $patched.Replace($oldRequiredHeaders, $newRequiredHeaders.TrimEnd())
-$patched = $patched.Replace('    new_count = sum("YENİ / LATEST" in rows.get(rid, "") for rid in expected_ids)', '    new_count = sum("latest" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)')
-$patched = $patched.Replace('    manual_count = sum("MANUEL İNCELEME" in rows.get(rid, "") for rid in expected_ids)', '    manual_count = sum("manual" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)')
+$latestClassLine = '    new_count = sum("latest" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)'
+$manualClassLine = '    manual_count = sum("manual" in rows.get(rid, {}).get("classes", []) for rid in expected_ids)'
+$patched = $patched.Replace('    new_count = sum("YENİ / LATEST" in rows.get(rid, "") for rid in expected_ids)', $latestClassLine)
+$patched = $patched.Replace('    manual_count = sum("MANUEL İNCELEME" in rows.get(rid, "") for rid in expected_ids)', $manualClassLine)
 $patched = $patched.Replace('required_headers.issubset(set(headers))', 'required_headers_norm.issubset(headers_norm)')
 
 if ($patched -eq $source) {
@@ -83,16 +85,16 @@ if ($patched -notmatch '\$statusLabel = if') {
 if ($patched -notmatch '\$payloadStatus = if') {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_PAYLOAD_ASSIGNMENT_MISSING'
 }
-if ($patched -notmatch 'rows\[rid\] = \{') {
+if (-not $patched.Contains('rows[rid] = {')) {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_ROW_CLASS_CAPTURE_MISSING'
 }
-if ($patched -notmatch 'required_headers_norm') {
+if (-not $patched.Contains('required_headers_norm')) {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_HEADER_NORMALIZATION_MISSING'
 }
-if ($patched -notmatch '"latest" in rows\.get') {
+if (-not $patched.Contains($latestClassLine)) {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_LATEST_CLASS_CHECK_MISSING'
 }
-if ($patched -notmatch '"manual" in rows\.get') {
+if (-not $patched.Contains($manualClassLine)) {
   throw 'GAS_EMISSIONS_STANDALONE_IF_FIX_MANUAL_CLASS_CHECK_MISSING'
 }
 
