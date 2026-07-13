@@ -13,7 +13,7 @@ $allowedPaths = @('england_map_web/data/geometry_review_3of4','england_map_web/d
 $statusPath = Join-Path $repoRoot $statusRelative
 $reportPath = Join-Path $repoRoot $reportRelative
 $stamp = [DateTimeOffset]::UtcNow.ToString('yyyyMMdd_HHmmss')
-$backupRelative = "docs/chatgpt_status/aays1/runner_outputs/155_canonical_site_sync_backup_$stamp"
+$backupRelative = "docs/chatgpt_status/aays1/runner_outputs/155_sync_$stamp"
 $backupRoot = Join-Path $repoRoot $backupRelative
 New-Item -ItemType Directory -Force -Path (Split-Path $statusPath),(Split-Path $reportPath),$backupRoot | Out-Null
 
@@ -43,7 +43,7 @@ function Decode-HttpJson($response) {
   return ($text | ConvertFrom-Json)
 }
 function Backup-CanonicalState([string]$Root,[string]$Backup,[string[]]$Paths) {
-  $flatRoot = Join-Path $Backup 'dirty_files_flat'
+  $flatRoot = Join-Path $Backup 'd'
   New-Item -ItemType Directory -Force -Path $flatRoot | Out-Null
   $statusLines = @(& git -C $Root status --porcelain -- $Paths 2>$null)
   $statusLines | Set-Content -LiteralPath (Join-Path $Backup 'site_paths_status_before.txt') -Encoding UTF8
@@ -57,17 +57,20 @@ function Backup-CanonicalState([string]$Root,[string]$Backup,[string[]]$Paths) {
     $src = Join-Path $Root $rel
     if (-not (Test-Path -LiteralPath $src)) { continue }
     $i++; $leaf = (Split-Path $rel -Leaf); if ([string]::IsNullOrWhiteSpace($leaf)) { $leaf = 'item' }
-    $safeLeaf = ($leaf -replace '[^A-Za-z0-9._-]','_')
-    $dst = Join-Path $flatRoot ('{0:D4}_{1}' -f $i,$safeLeaf)
+    $ext = [System.IO.Path]::GetExtension($leaf)
+    if ($ext.Length -gt 12) { $ext = '' }
+    $dst = Join-Path $flatRoot ('{0:D4}{1}' -f $i,$ext)
     if ((Get-Item -LiteralPath $src).PSIsContainer) { Copy-Item -LiteralPath $src -Destination $dst -Recurse -Force }
     else { Copy-Item -LiteralPath $src -Destination $dst -Force }
     $manifest.Add([pscustomobject]@{ original=$rel; backup=(Resolve-Path -LiteralPath $dst).Path })
   }
   $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $Backup 'dirty_files_manifest.json') -Encoding UTF8
+  $namedBackupIndex = 0
   foreach ($rel in @($dataRelative,$htmlRelative,$activeBatchRelative)) {
     $src = Join-Path $Root $rel
     if (Test-Path -LiteralPath $src) {
-      $flatName = ($rel -replace '[/\\]','__')
+      $namedBackupIndex++
+      $flatName = ('site_{0:D2}{1}' -f $namedBackupIndex,[System.IO.Path]::GetExtension($src))
       Copy-Item -LiteralPath $src -Destination (Join-Path $Backup $flatName) -Force
     }
   }

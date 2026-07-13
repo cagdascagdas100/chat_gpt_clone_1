@@ -229,7 +229,15 @@ try {
     '- final_ready: false'
   ) | Set-Content -LiteralPath $reportPath -Encoding UTF8
 
-  $portableRoot = 'F:\TerraYield_AAYS_Portable'
+  $portableRoot = if ($env:AAYS_PORTABLE_ROOT) {
+    [System.IO.Path]::GetFullPath($env:AAYS_PORTABLE_ROOT)
+  } else {
+    $controllerRoot = if ($env:AAYS_CANONICAL_REPO_ROOT) { $env:AAYS_CANONICAL_REPO_ROOT } else { $repoRoot }
+    $marker = [System.IO.Path]::DirectorySeparatorChar + 'runner_system' + [System.IO.Path]::DirectorySeparatorChar
+    $markerIndex = $controllerRoot.IndexOf($marker, [System.StringComparison]::OrdinalIgnoreCase)
+    if ($markerIndex -lt 0) { throw 'AAYS_PORTABLE_ROOT is not set and cannot be derived from the controller root' }
+    $controllerRoot.Substring(0, $markerIndex)
+  }
   $pageUrl = 'http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=portable&cb=' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
   $dataBaseUrl = 'http://127.0.0.1:8012/' + $matrixRel
   $tempServed = Join-Path $env:TEMP ('aays202_served_' + [Guid]::NewGuid().ToString('N') + '.json')
@@ -239,13 +247,19 @@ try {
 
   $relativeSuffix = $matrixRel.Replace('/', [char]92)
   $matchedRoots = @()
-  foreach ($candidateFile in @(Get-ChildItem -LiteralPath $portableRoot -Filter 'distance_property_types_all_rows_latest.json' -File -Recurse -ErrorAction SilentlyContinue)) {
+  $candidateRoots = @(
+    $repoRoot,
+    $env:AAYS_CANONICAL_REPO_ROOT,
+    $env:AAYS_REPO_ROOT,
+    (Join-Path $portableRoot 'AAYS\terrayield_land_intelligence'),
+    (Join-Path $portableRoot 'runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707')
+  ) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -Unique
+  foreach ($root in $candidateRoots) {
+    $candidatePath = Join-Path ([System.IO.Path]::GetFullPath([string]$root)) $relativeSuffix
+    if (-not (Test-Path -LiteralPath $candidatePath -PathType Leaf)) { continue }
     try {
-      $candidateHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $candidateFile.FullName).Hash.ToLowerInvariant()
-      if ($candidateHash -eq $servedBeforeHash -and $candidateFile.FullName.EndsWith($relativeSuffix, [System.StringComparison]::OrdinalIgnoreCase)) {
-        $root = $candidateFile.FullName.Substring(0, $candidateFile.FullName.Length - $relativeSuffix.Length).TrimEnd([char]92)
-        if (-not ($matchedRoots -contains $root)) { $matchedRoots += $root }
-      }
+      $candidateHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $candidatePath).Hash.ToLowerInvariant()
+      if ($candidateHash -eq $servedBeforeHash -and -not ($matchedRoots -contains $root)) { $matchedRoots += $root }
     } catch { }
   }
   if ($matchedRoots.Count -lt 1) { throw 'no runtime root matched the current port 8012 matrix hash' }
