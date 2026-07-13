@@ -1,25 +1,30 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 2
-- Reassessed: 2/32 = 6.25%
-- Fully finalized in reassessment: 2/32 = 6.25%
-- Next item: Comment 3
+- Reassessed through: Comment 3
+- Reassessed: 3/32 = 9.375%
+- Fully finalized in reassessment: 3/32 = 9.375%
+- Next item: Comment 4
 
-## Latest decision — Comment 2
-The ambiguous phrase `interpretable risk coefficients` will be removed. The manuscript will distinguish classifier probabilities, category-specific severity and frequency scores, application-level risk components, and scenario-priority scores. No derived quantity will be presented as a regression coefficient, causal effect, or validated overall individual risk probability unless that interpretation is explicitly supported.
+## Latest decision — Comment 3
+The sentence claiming that machine-learning algorithms generate `risk coefficients that quantify individualized safety exposure` will be deleted. The verified analytical task is classification of accident-related payment-day and injury-severity outcomes among recorded construction-accident cases.
 
-## Required terminology changes
-- `3.1 The calculation of risk coefficients` → `3.1 Derivation of category-specific severity and frequency scores`
-- `risk coefficient` → exact score or component name
-- `internal risk coefficient` → `internal risk component`
-- `external risk coefficient` → `external risk component`
-- `body-part risk coefficient` → `body-region-specific risk value`
-- `overall risk coefficient` → remove
-- ranking quantity → `scenario-priority score`
+## Evidence boundary
+- The Risk 01/02/03 artifacts identify `ODEME_GUNSAYISI` as the target and document payment-day and injury-severity class formulations.
+- No explicit individualized-exposure variable is present.
+- The supplied case records do not document worker-time, task-time, machine-operating-time, exposed-population, or person-time denominators.
+- No independently sampled non-accident population is available for estimating absolute accident probability.
+- Injury type and injury location are post-event variables in the feature set and cannot support a prospective pre-accident personal-risk claim.
 
-## Cross-comment consistency
-The Abstract replacement remains aligned with Comment 1. Comments 17, 18, and 20 prohibit reintroducing a single unsupported composite score. Equation definitions and symbol explanations will be handled consistently with Comment 16.
+## Approved replacement
+`Using structured historical accident records, supervised machine-learning models were evaluated for classifying accident-related payment-day and injury-severity outcomes among recorded construction-accident cases.`
+
+## Required consistency actions
+- Remove `individualized safety exposure`, `personal safety exposure`, and equivalent formulations.
+- Replace or delete `personalized risk coefficient` according to the exact output being described.
+- Use `classification of recorded accident outcomes`, not `prediction of individual accident risk`.
+- Remove continuous, real-time, and adaptive personal-risk claims from the present-system description.
+- Keep the wording aligned with Comments 2, 8, 9, 25, 27, and 32.
 
 ## Next item
-Comment 3 — reassess the phrases `risk coefficients` and `individual safety exposure` and replace them with terminology that precisely matches the verified prediction targets and application outputs.
+Comment 4 — replace the abbreviation `AR` with the full term `augmented reality` and check whether the manuscript uses the abbreviation consistently or unnecessarily elsewhere.
