@@ -6,7 +6,7 @@ window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[4]=`<h4>C1/C2-Wortschatz und Formul
 
 <h4>Prüfungsnahe Gesamtstruktur nur mit Vorteilen</h4>
 <p>Für die schriftliche Prüfung lassen sich die drei Vorteile klar voneinander trennen. Zuerst wird die Sicherheit behandelt: Kameras machen unübersichtliche Bereiche sichtbarer und ermöglichen schnelleres Reagieren. Danach folgt die Prävention: Weniger Anonymität kann die Hemmschwelle für Vandalismus, Diebstahl und Regelverstöße erhöhen. Schließlich wird die Konfliktklärung erklärt: Aufnahmen können bei ernsthaften Vorfällen eine zusätzliche Grundlage schaffen und damit faire Entscheidungen unterstützen. Diese Reihenfolge ist übersichtlich, weil sie von unmittelbarem Schutz über vorbeugende Wirkung bis zur nachträglichen Aufarbeitung führt.</p>
-<p>Eine vollständige Gesamtformulierung könnte lauten: KI-gestützte Videoüberwachung kann in Schulen eine unterstützende Funktion erfüllen. Sie kann sensible Bereiche sichtbarer machen, auffällige Situationen schneller markieren und dadurch das Sicherheitsgefühl stärken. Gleichzeitig kann sie Vandalismus und Diebstahl vorbeugen, weil Fehlverhalten weniger anonym bleibt. Bei ernsthaften Konflikten können relevante Aufnahmen außerdem eine zusätzliche Entscheidungsgrundlage schaffen. Entscheidend ist, dass die Technik gezielt eingesetzt wird und die abschließende Verantwortung bei Menschen bleibt.</p>
+<p>Eine vollständige Gesamtformulierung könnte lauten: Videoüberwachung kann in Schulen eine unterstützende Funktion erfüllen. Sie kann sensible Bereiche sichtbarer machen und dadurch das Sicherheitsgefühl stärken. Gleichzeitig kann sie Vandalismus und Diebstahl vorbeugen, weil Fehlverhalten weniger anonym bleibt. Bei ernsthaften Konflikten können relevante Aufnahmen außerdem eine zusätzliche Entscheidungsgrundlage schaffen. Entscheidend ist, dass die Kameras gezielt eingesetzt werden und die abschließende Verantwortung bei Menschen bleibt.</p>
 
 <h4>Typische Fehler vermeiden</h4>
 <ul>
@@ -14,7 +14,7 @@ window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[4]=`<h4>C1/C2-Wortschatz und Formul
 <li>Nicht Vorteile und Nachteile im selben Modul vermischen.</li>
 <li>Keine technischen Details über Kameramodelle oder Speichersysteme ausführen; für die Prüfung zählt die Argumentation.</li>
 <li>Immer erklären, für wen ein Vorteil entsteht und welche konkrete Folge sichtbar wird.</li>
-<li>KI nicht als autonome Entscheidungsinstanz darstellen, sondern als unterstützende Markierungs- und Suchfunktion.</li>
+<li>Aufnahmen nicht als automatische oder vollständige Wahrheit darstellen; der Kontext muss von Menschen geprüft werden.</li>
 <li>Beispiele aus dem Schulalltag verwenden: Eingang, Flur, Treppenhaus, Pausenhof, Fahrradkeller und Schließfachbereich.</li>
 </ul>
 
@@ -23,4 +23,4 @@ window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[4]=`<h4>C1/C2-Wortschatz und Formul
 <p><b>Gedanke:</b> Kameras verhindern Vandalismus. <b>Ausformulierung:</b> Eine sichtbare Überwachung kann vorbeugend wirken, weil Fehlverhalten weniger anonym bleibt. Dadurch können Sachbeschädigungen und Diebstähle zurückgehen. Die Schule spart Reparaturkosten und kann finanzielle Mittel stärker für Bildungsangebote nutzen.</p>
 <p><b>Gedanke:</b> Kameras helfen bei Streit. <b>Ausformulierung:</b> Nach einem Konflikt schildern Beteiligte den Ablauf häufig unterschiedlich. Relevante Aufnahmen können eine zusätzliche Grundlage bieten, damit die Situation sachlicher rekonstruiert wird. Dadurch lassen sich falsche Beschuldigungen eher vermeiden und Maßnahmen gerechter begründen.</p>`;
 if(window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD)window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD();
-window.AAYS_VIDEO_SCHULE_VORTEILE_LONG5_TEMPLATE_V3_OK=true;
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG5_TEMPLATE_V4_OK=true;
