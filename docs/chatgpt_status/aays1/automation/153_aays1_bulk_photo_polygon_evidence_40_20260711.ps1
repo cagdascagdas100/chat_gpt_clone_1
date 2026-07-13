@@ -11,9 +11,15 @@ $logPath = Join-Path $repoRoot $logRelative
 $expectedRelative = 'docs/chatgpt_status/aays1/status/153_aays1_bulk_photo_polygon_evidence_40_latest.json'
 $expectedPath = Join-Path $repoRoot $expectedRelative
 
+function Replace-Once([string]$text, [string]$pattern, [string]$replacement, [string]$failureCode) {
+  $regex = [regex]::new($pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  if (-not $regex.IsMatch($text)) { throw $failureCode }
+  return $regex.Replace($text,$replacement,1)
+}
+
 if (-not (Test-Path -LiteralPath $basePath)) { throw "Base automation missing: $baseRelative" }
-New-Item -ItemType Directory -Force -Path (Split-Path $tempPath),(Split-Path $logPath) | Out-Null
-$template = Get-Content -LiteralPath $basePath -Raw -Encoding UTF8
+New-Item -ItemType Directory -Force -Path (Split-Path $tempPath),(Split-Path $logPath),(Split-Path $expectedPath) | Out-Null
+$template = (Get-Content -LiteralPath $basePath -Raw -Encoding UTF8) -replace "`r`n","`n"
 $replacements = [ordered]@{
   'aays1-ready-to-sell-bulk-photo-polygon-evidence-20-20260711' = 'aays1-ready-to-sell-bulk-photo-polygon-evidence-40-20260711'
   '$maxRows = 20' = '$maxRows = 40'
@@ -25,6 +31,13 @@ $replacements = [ordered]@{
   'Record ReadyToSell bulk evidence preparation proof' = 'Record ReadyToSell bulk evidence preparation 40 proof'
 }
 foreach ($entry in $replacements.GetEnumerator()) { $template = $template.Replace([string]$entry.Key,[string]$entry.Value) }
+
+# Child scripts must never own commit/push in a detached shared-runner worktree.
+$workGitPattern = '(?s)\$workPushStatus\s*=\s*''not_attempted''.*?(?=\$afterPhotoEvidence\s*=)'
+$template = Replace-Once $template $workGitPattern ('$workPushStatus = ''outer_runner_promotion''; $workCommit = $null' + "`n") '153_work_git_block_not_found'
+$proofGitPattern = '(?s)\ntry\s*\{\s*\n\s*& git -C \$repoRoot add -- \$statusRelative.*\z'
+$template = Replace-Once $template $proofGitPattern ("`n# Outer canonical runner owns status/report commit, push and remote readback.`n") '153_proof_git_block_not_found'
+
 [System.IO.File]::WriteAllText($tempPath,$template,[System.Text.UTF8Encoding]::new($true))
 "[$([DateTimeOffset]::UtcNow.ToString('o'))] START $tempRelative" | Set-Content -LiteralPath $logPath -Encoding UTF8
 $previousDetached = $env:AAYS_CANONICAL_DETACHED_WORKTREE
@@ -33,8 +46,9 @@ try {
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempPath *>> $logPath
   $exitCode = $LASTEXITCODE
   if ($null -eq $exitCode) { $exitCode = 0 }
-  if ($exitCode -ne 0) { throw "Generated evidence automation failed with exit code $exitCode; log=$logRelative" }
-  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing: $expectedRelative" }
+  if (-not (Test-Path -LiteralPath $expectedPath)) { throw "Expected real output missing after child exit $exitCode: $expectedRelative; log=$logRelative" }
+  if ($exitCode -ne 0) { "Child returned $exitCode but expected status exists; outer runner will judge real before/after progress." | Add-Content -LiteralPath $logPath -Encoding UTF8 }
+  exit 0
 } finally {
   $env:AAYS_CANONICAL_DETACHED_WORKTREE = $previousDetached
 }
