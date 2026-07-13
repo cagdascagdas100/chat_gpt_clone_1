@@ -1,7 +1,7 @@
 {
   "task_id": "aays1-ready-to-sell-four-wave-pickup-recovery-20260713",
   "page_key": "aays1",
-  "status": "queued",
+  "status": "pickup_requested",
   "priority": -10002,
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "script_path": "docs/chatgpt_status/aays1/automation/159_aays1_ready_to_sell_four_wave_pickup_recovery_20260713.ps1",
@@ -30,6 +30,16 @@
     "evidence_40_d",
     "post_site_sync_readback"
   ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1/queue",
+    "docs/chatgpt_status/aays1/status",
+    "docs/chatgpt_status/aays1/reports",
+    "docs/chatgpt_status/aays1/heartbeat",
+    "docs/chatgpt_status/aays1/runner_outputs",
+    "england_map_web/data/geometry_review_3of4",
+    "england_map_web/data/aays1",
+    "england_map_web/geometry_review_3of4_columns_1264.html"
+  ],
   "acceptance": [
     "Only real HTTP responses with positive land or plot listing evidence may be promoted.",
     "Existing downloaded photos must be preserved and polygons rendered only from canonical geometry.",
@@ -41,8 +51,13 @@
   "CONTINUE_RUNNER_READY": true,
   "PUSH_SYNC_REQUIRED": true,
   "single_runner_only": true,
+  "single_shared_runner_required": true,
   "new_runner_allowed": false,
   "parallel_runner_allowed": false,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
@@ -50,5 +65,6 @@
   "migration": false,
   "production_deploy": false,
   "queued_at": "2026-07-13T09:11:00+03:00",
-  "pickup_recovery_reason": "The canonical current.task pointer still referenced task 145, preventing the queued 159 continuation from becoming the active ReadyToSell task."
+  "pickup_revision": "aays1-159-current-task-contract-fix-20260713-0911",
+  "pickup_recovery_reason": "The canonical current.task pointer referenced task 145 and lacked the queue validator safety contract. It now points to task 159 with all required fields."
 }
