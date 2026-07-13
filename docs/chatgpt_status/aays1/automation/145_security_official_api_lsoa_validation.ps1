@@ -149,7 +149,7 @@ try {
     } catch {
       $entry.error = $_.Exception.Message
       $result.lsoa_failed_count++
-      $result.blockers += "lsoa_api_validation_failed:$lsoa:$($_.Exception.Message)"
+      $result.blockers += "lsoa_api_validation_failed:${lsoa}:$($_.Exception.Message)"
     }
     $validationByLsoa[$lsoa] = [pscustomobject]$entry
     $result.validations += [pscustomobject]$entry
