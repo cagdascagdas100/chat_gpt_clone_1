@@ -10,10 +10,10 @@
 
 - 145: skipped_existing_real_output; output=True; real_progress=0; force_rerun=False; child_unwound=False; exit=0; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_145.log
 - 146: skipped_existing_real_output; output=True; real_progress=3; force_rerun=False; child_unwound=False; exit=0; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_146.log
-- 148: execution_exception; output=True; real_progress=0; force_rerun=True; child_unwound=False; exit=1; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_148.log
-- 149: execution_exception; output=True; real_progress=0; force_rerun=True; child_unwound=False; exit=1; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_149.log
+- 148: execution_failed; output=True; real_progress=0; force_rerun=True; child_unwound=False; exit=1; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_148.log
+- 149: execution_failed; output=True; real_progress=0; force_rerun=True; child_unwound=False; exit=1; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_149.log
 - 150: executed_output_created_no_new_progress; output=True; real_progress=0; force_rerun=True; child_unwound=True; exit=0; log=docs/chatgpt_status/aays1/runner_outputs/151_sequential_dispatch_20260711/job_150.log
 
-- Blockers: job_exception:148:source_signal_guard_pattern_not_found:148; job_exception:149:source_signal_guard_pattern_not_found:149
+- Blockers: job_failed:148:exit_1; job_failed:149:exit_1
 
 `final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.
