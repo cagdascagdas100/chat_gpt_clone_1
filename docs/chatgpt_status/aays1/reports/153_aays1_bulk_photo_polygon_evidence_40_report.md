@@ -5,9 +5,9 @@
 - Rows with real photo evidence in this run: 39
 - Rows with canonical polygon render in this run: 40
 - Rows evidence-ready in this run: 39
-- Photo evidence total: 372 -> 411
-- Polygon evidence total: 373 -> 412
-- Evidence-ready total: 372 -> 411
+- Photo evidence total: 430 -> 469
+- Polygon evidence total: 431 -> 470
+- Evidence-ready total: 430 -> 469
 - Git work proof: outer_runner_promotion / 
 - Vision compared: 0; 3.5+ rows: 0.
 - Safety: final_ready=false, fake_data=false, db_write=false, migration=false, production_deploy=false.
