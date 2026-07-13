@@ -305,7 +305,25 @@ function New-RemoteQueueMirror {
 function Sync-ControllerRepoSafe {
   if (-not (Test-Path -LiteralPath $RepoRoot)) { throw 'REPO_ROOT_MISSING: ' + $RepoRoot }
   Assert-GitOk (Invoke-AaysGit $RepoRoot config core.longpaths true) 'CONFIG_LONGPATHS_FAILED'
-  $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+  $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','-c','http.lowSpeedLimit=1','-c','http.lowSpeedTime=15','fetch','--no-tags','--depth=1','origin',("+refs/heads/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+  $fetchResult = $null
+  $transportRoot = $null
+  $worktreeContainer = Split-Path -Parent $RepoRoot
+  $transport = Get-ChildItem -LiteralPath $worktreeContainer -Directory -Filter 'AAYS_RUNNER_PICKUP_FIX_PUBLISH_*' -ErrorAction SilentlyContinue |
+    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName '.git') } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+  if ($transport) {
+    $transportFetch = Invoke-AaysGit -Cwd $transport.FullName -GitArgs $fetchArgs
+    if ($transportFetch.code -eq 0) {
+      $transportRoot = $transport.FullName
+      $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('fetch','--no-tags',$transport.FullName,("+refs/remotes/origin/${MainBranch}:refs/remotes/origin/${MainBranch}"))
+    } else {
+      $script:Summary.transport_fetch_error = $transportFetch.output
+    }
+  }
+  if ($null -eq $fetchResult) { $fetchResult = Invoke-AaysGit -Cwd $RepoRoot -GitArgs $fetchArgs }
+  $script:Summary.queue_transport_root = $transportRoot
   $dirtyInfo = Clean-ControllerRuntimeDirty $RepoRoot
   $script:Summary.controller_fetch_ok = ($fetchResult.code -eq 0)
   if ($fetchResult.code -ne 0) { $script:Summary.controller_fetch_error = $fetchResult.output }
@@ -338,7 +356,7 @@ function Archive-TaskWorktree([string]$Worktree, [string]$Reason) {
 function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
   # Portable mode: avoid a full GitHub clone for each task. Reuse the controller repo object store.
   Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','prune') | Out-Null
-  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_WORKTREE_FETCH_FAILED'
+  Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('rev-parse','--verify',("refs/remotes/origin/$($Task.target_branch)"))) 'TASK_REMOTE_REF_MISSING'
   Assert-GitOk (Invoke-AaysGit -Cwd $RepoRoot -GitArgs @('worktree','add','--detach',$Worktree,('origin/' + $Task.target_branch))) 'TASK_WORKTREE_ADD_FAILED'
   Assert-GitOk (Invoke-AaysGit $Worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
 }
@@ -365,14 +383,12 @@ function Ensure-TaskWorktree([object]$Task) {
   if (-not (Test-Path -LiteralPath $worktree)) { New-TaskWorktreeClone $worktree $Task $url }
   Assert-GitOk (Invoke-AaysGit $worktree config core.longpaths true) 'TASK_CONFIG_LONGPATHS_FAILED'
   $script:TaskWorktreeHadDirty = $false
-  Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_FETCH_FAILED'
   Assert-GitOk (Invoke-AaysGit $worktree checkout --detach ('origin/' + $Task.target_branch)) 'TASK_CHECKOUT_FAILED'
   $rebased = [pscustomobject]@{ code = 0; output = 'portable_detached_worktree_no_rebase_needed' }
   if ($rebased.code -ne 0) {
     $script:Summary.task_worktree_rebase_error = $rebased.output
     Archive-TaskWorktree $worktree 'task_rebase_conflict' | Out-Null
     New-TaskWorktreeClone $worktree $Task $url
-    Assert-GitOk (Invoke-AaysGit -Cwd $worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/$($Task.target_branch):refs/remotes/origin/$($Task.target_branch)"))) 'TASK_FETCH_FAILED_AFTER_ARCHIVE'
     Assert-GitOk (Invoke-AaysGit $worktree checkout --detach ('origin/' + $Task.target_branch)) 'TASK_CHECKOUT_FAILED_AFTER_ARCHIVE'
     $rebased = [pscustomobject]@{ code = 0; output = 'portable_detached_worktree_no_rebase_needed_after_archive' }
     if ($rebased.code -ne 0) { throw ('BLOCKED_REBASE_CONFLICT: ' + $rebased.output) }
