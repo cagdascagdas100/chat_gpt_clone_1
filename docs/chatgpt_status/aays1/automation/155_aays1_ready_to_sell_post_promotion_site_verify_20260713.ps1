@@ -29,7 +29,7 @@ $allowedPaths = @('england_map_web/data/geometry_review_3of4','england_map_web/d
 $statusPath = Join-Path $repoRoot $statusRelative
 $reportPath = Join-Path $repoRoot $reportRelative
 $stamp = [DateTimeOffset]::UtcNow.ToString('yyyyMMdd_HHmmss')
-$backupRelative = "docs/chatgpt_status/aays1/runner_outputs/155_canonical_site_sync_backup_$stamp"
+$backupRelative = "docs/chatgpt_status/aays1/runner_outputs/155b_$stamp"
 $backupRoot = Join-Path $repoRoot $backupRelative
 New-Item -ItemType Directory -Force -Path (Split-Path $statusPath),(Split-Path $reportPath),$backupRoot | Out-Null
 
@@ -83,7 +83,7 @@ function Backup-CanonicalState([string]$Root,[string]$Backup,[string[]]$Paths) {
   foreach ($rel in @($dataRelative,$htmlRelative,$activeBatchRelative)) {
     $src = Join-Path $Root $rel
     if (Test-Path -LiteralPath $src) {
-      $flatName = ($rel -replace '[/\\]','__')
+      $flatName = if ($rel -eq $dataRelative) { 'data.json' } elseif ($rel -eq $htmlRelative) { 'page.html' } else { 'batch.json' }
       Copy-Item -LiteralPath $src -Destination (Join-Path $Backup $flatName) -Force
     }
   }
