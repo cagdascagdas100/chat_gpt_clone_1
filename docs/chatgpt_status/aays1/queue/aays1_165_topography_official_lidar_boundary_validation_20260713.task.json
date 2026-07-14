@@ -1,11 +1,11 @@
 {
   "task_id": "aays1-165-topography-official-lidar-boundary-validation-20260713",
   "page_key": "aays1",
-  "status": "deferred_by_active_ready_to_sell_166",
-  "priority": 6000,
+  "status": "queued",
+  "priority": -16000,
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
-  "runner_policy": "single_existing_shared_runner_resumable_sequential_chain_only",
+  "runner_policy": "single_existing_shared_runner_claim_lease_cas_only",
   "script_path": "docs/chatgpt_status/topography/automation/165_topography_official_lidar_boundary_validation_runner_20260713.ps1",
   "automation_script": "docs/chatgpt_status/topography/automation/165_topography_official_lidar_boundary_validation_runner_20260713.ps1",
   "payload_path": "docs/chatgpt_status/topography/automation/165_topography_official_lidar_boundary_validation_payload_20260713.b64",
@@ -14,10 +14,17 @@
   "baseline_accuracy_score_4": "2.5/4 fallback",
   "candidate_parcel_rows": 3,
   "planned_stage_count": 14,
-  "resume_after_task": "aays1-ready-to-sell-eight-wave-continuation-20260713",
-  "deferred_reason": "The active user request is ReadyToSell internet-source and row-level website work. Preserve Topography 165 without execution until ReadyToSell 166 completes or is explicitly blocked.",
-  "CONTINUE_RUNNER_READY": false,
+  "official_source_targets": [
+    "HM Land Registry INSPIRE guidance and dataset service",
+    "Defra Survey Data Download / Environment Agency LiDAR",
+    "OS Data Hub Terrain 50"
+  ],
+  "website_row_policy": "Publish every source check, discovered link, evidence file, safe download, extraction, raster sample, comparison, HMLR boundary match, blocker, publication and HTTP readback as a separate website operation row.",
+  "queued_at": "2026-07-14T13:31:50+03:00",
+  "resume_reason": "Runner ownership A-F tests passed and the previous current claim is terminal. Resume the preserved Topography 165 batch from Task 164 evidence. Use only the canonical single F runner and the claim/lease/CAS scheduler; do not overwrite current.task manually.",
+  "CONTINUE_RUNNER_READY": true,
   "PUSH_SYNC_REQUIRED": true,
+  "claim_lease_cas_required": true,
   "single_runner_only": true,
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -31,6 +38,5 @@
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false,
-  "deferred_at": "2026-07-13T12:34:00+03:00"
+  "production_deploy": false
 }
