@@ -889,7 +889,8 @@ function Run-Task([object]$Task) {
       }
     }
     $child.WaitForExit()
-    $automationCode = if ($automationTimedOut) { 124 } else { $child.ExitCode }
+    $child.Refresh()
+    $automationCode = if ($automationTimedOut) { 124 } else { [int]$child.ExitCode }
     $stdout = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw } else { '' }
     $stderr = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw } else { '' }
     $automationOutput = ($stdout + $(if($stderr){"`n--- stderr ---`n$stderr"}else{''}))
