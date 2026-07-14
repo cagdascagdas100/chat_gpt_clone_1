@@ -132,8 +132,8 @@ try{
   $task=Get-ScheduledTask -TaskName $taskName -ErrorAction Stop
   $state=Get-Content -LiteralPath $statePath -Raw|ConvertFrom-Json
   if(-not$state.runner_active){throw "RUNNER_NOT_ACTIVE_AFTER_GUARDIAN_INSTALL: $($state.last_error)"}
-  $uninstall=('powershell -NoProfile -ExecutionPolicy Bypass -File "{0}" -Uninstall -RestoreLegacyTask' -f $PSCommandPath)
-  $result=[ordered]@{status='installed';installed_at=[DateTimeOffset]::UtcNow.ToString('o');guardian_installed=$true;scheduled_task_installed=$true;task_name=$taskName;task_state=[string]$task.State;portable_root=$state.portable_root;resolved_drive_letter=$state.resolved_drive_letter;volume_unique_id=$config.volume_unique_id;volume_serial=$config.volume_serial;marker_id=$config.marker_id;single_guardian_count=1;single_runner_count=1;legacy_task_removed=$true;rollback_xml=$legacyBackupPath;uninstall_command=$uninstall;five_by_five_plan_applied=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+  $uninstallCommand=('powershell -NoProfile -ExecutionPolicy Bypass -File "{0}" -Uninstall -RestoreLegacyTask' -f $PSCommandPath)
+  $result=[ordered]@{status='installed';installed_at=[DateTimeOffset]::UtcNow.ToString('o');guardian_installed=$true;scheduled_task_installed=$true;task_name=$taskName;task_state=[string]$task.State;portable_root=$state.portable_root;resolved_drive_letter=$state.resolved_drive_letter;volume_unique_id=$config.volume_unique_id;volume_serial=$config.volume_serial;marker_id=$config.marker_id;single_guardian_count=1;single_runner_count=1;legacy_task_removed=$true;rollback_xml=$legacyBackupPath;uninstall_command=$uninstallCommand;five_by_five_plan_applied=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
   Write-Json $installResultPath $result
 }catch{
   Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
