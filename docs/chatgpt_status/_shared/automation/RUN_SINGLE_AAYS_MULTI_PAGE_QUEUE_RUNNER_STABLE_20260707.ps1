@@ -535,6 +535,10 @@ function Parse-Queue([System.IO.FileInfo]$File) {
   $priorityRaw = Get-Prop $data 'priority'
   $priority = 1000
   if ($priorityRaw -ne $null) { [void][int]::TryParse(([string]$priorityRaw), [ref]$priority) }
+  $createdAt = [string](Get-Prop $data 'created_at')
+  if (-not $createdAt) { $createdAt = '9999-12-31T23:59:59Z' }
+  $sourceShaResult = Invoke-AaysGit -Cwd $script:QueueGitRoot -GitArgs @('rev-parse',("$($script:QueueGitRef):$relative"))
+  $sourceSha = if ($sourceShaResult.code -eq 0) { $sourceShaResult.output.Trim() } else { '' }
   $errors = @()
   if (-not $page) { $errors += 'MISSING_page_key' }
   if ($page -and $page -ne $pageFromPath) { $errors += 'PAGE_KEY_PATH_MISMATCH' }
@@ -555,6 +559,8 @@ function Parse-Queue([System.IO.FileInfo]$File) {
     target_branch = $targetBranch
     allowed_paths = $allowed
     priority = $priority
+    created_at = $createdAt
+    claim_source_sha = $sourceSha
     queue_rel = $relative
     data = $data
   }
@@ -598,6 +604,35 @@ function Write-TaskFile([string]$Worktree, [string]$RelPath, [object]$Payload) {
   $content = if ($Payload -is [string]) { $Payload } else { To-JsonText $Payload }
   Write-Utf8 $full $content
 }
+function Get-GitBlobShaForFile([string]$Path) {
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return '' }
+  $bytes = [IO.File]::ReadAllBytes($Path)
+  $header = [Text.Encoding]::ASCII.GetBytes("blob $($bytes.Length)`0")
+  $stream = [IO.MemoryStream]::new()
+  try {
+    $stream.Write($header,0,$header.Length)
+    $stream.Write($bytes,0,$bytes.Length)
+    $sha1 = [Security.Cryptography.SHA1]::Create()
+    try { return (($sha1.ComputeHash($stream.ToArray()) | ForEach-Object { $_.ToString('x2') }) -join '') }
+    finally { $sha1.Dispose() }
+  } finally { $stream.Dispose() }
+}
+function Read-ClaimFile([string]$Path) {
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+  try { return (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json) } catch { return $null }
+}
+function Test-ClaimTerminal([object]$Claim) {
+  if ($null -eq $Claim) { return $true }
+  return ([string]$Claim.state).ToLowerInvariant() -in @('done','blocked','failed','failed_recoverable','cancelled','released')
+}
+function Write-ClaimCas([string]$Path,[string]$ExpectedSha,[object]$Payload) {
+  $actualSha = Get-GitBlobShaForFile $Path
+  if ([string]$ExpectedSha -ne [string]$actualSha) {
+    return [pscustomobject]@{ ok=$false; expected_sha=$ExpectedSha; actual_sha=$actualSha; reason='CLAIM_SHA_CONFLICT' }
+  }
+  Write-Utf8Atomic $Path (To-JsonText $Payload)
+  return [pscustomobject]@{ ok=$true; expected_sha=$ExpectedSha; actual_sha=(Get-GitBlobShaForFile $Path); reason='' }
+}
 function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
   if ($NoPush) { Add-Blocker 'NO_PUSH_MODE'; return }
   $cached = Invoke-AaysGit $Worktree diff --cached --name-only
@@ -633,6 +668,14 @@ function Push-Sync([string]$Worktree, [string]$Branch, [string]$CommitMessage) {
     for ($attempt = 1; $attempt -le 4; $attempt++) {
       Assert-GitOk (Invoke-AaysGit -Cwd $Worktree -GitArgs @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=1','origin',("+refs/heads/${Branch}:refs/remotes/origin/${Branch}"))) 'POST_FETCH_FAILED'
       Assert-GitOk (Invoke-AaysGit $Worktree checkout --detach ('origin/' + $Branch)) 'REMOTE_REPLAY_CHECKOUT_FAILED'
+
+      if ($script:ClaimPublished -and $script:ActiveClaimRel -and $script:ActiveClaimId) {
+        $remoteClaimPath = Join-Path $Worktree ($script:ActiveClaimRel -replace '/', '\')
+        $remoteClaim = Read-ClaimFile $remoteClaimPath
+        if ($null -eq $remoteClaim -or [string]$remoteClaim.claim_id -ne [string]$script:ActiveClaimId) {
+          throw ('CLAIM_CAS_CONFLICT: expected=' + $script:ActiveClaimId + '; actual=' + [string]$remoteClaim.claim_id)
+        }
+      }
 
       foreach ($rel in $changedPaths) {
         $target = Join-Path $Worktree ($rel -replace '/', '\')
@@ -720,6 +763,9 @@ function Sync-TaskResultBackToController([string]$Worktree, [object]$Task, [obje
 }
 function Run-Task([object]$Task) {
   $script:Summary.queue_started = $true
+  $script:ClaimPublished = $false
+  $script:ActiveClaimRel = $null
+  $script:ActiveClaimId = $null
   $page = $Task.page_key
   $taskId = $Task.task_id
   $allowedSeed = @($Task.allowed_paths) + @(
@@ -730,7 +776,8 @@ function Run-Task([object]$Task) {
     "docs/chatgpt_status/$page/queue",
     "docs/chatgpt_status/_shared/status",
     "docs/chatgpt_status/_shared/reports",
-    "docs/chatgpt_status/_shared/heartbeat"
+    "docs/chatgpt_status/_shared/heartbeat",
+    "docs/chatgpt_status/_shared/control"
   )
   $allowed = @($allowedSeed | ForEach-Object { Rel $_ } | Select-Object -Unique)
   $worktree = Ensure-TaskWorktree $Task
@@ -743,18 +790,56 @@ function Run-Task([object]$Task) {
   $gateRel = "docs/chatgpt_status/$page/status/${taskId}_gate.json"
   $mirrorRel = "docs/chatgpt_status/_shared/status/queue_result_mirror_${taskId}.json"
   $currentRel = "docs/chatgpt_status/$page/queue/current.task.json"
+  $claimRel = 'docs/chatgpt_status/_shared/control/single_runner_active_claim.json'
+  $claimRecoveryRel = 'docs/chatgpt_status/_shared/status/single_runner_claim_timeout_recovery_latest.json'
+  $claimPath = Join-Path $worktree ($claimRel -replace '/', '\')
   $browser = Browser-Gate
   if (-not $browser.browser_smoke_passed) { Add-TaskBlocker $taskId $page 'BLOCKED_BROWSER_ENVIRONMENT' }
   if (-not (Test-Path -LiteralPath $scriptPath)) { throw ('SCRIPT_MISSING: ' + $scriptPath) }
   $claimedAt = Now-Utc
-  $runningPayload = [ordered]@{ task_id=$taskId; page_key=$page; status='running'; claimed_at=$claimedAt; claim_owner='single_shared_runner'; claim_pid=$PID; target_branch=$Task.target_branch; script_path=$Task.script_path; allowed_paths=$Task.allowed_paths; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true; final_ready=$false }
-  Write-TaskFile $worktree $startedRel ([ordered]@{ task_id=$taskId; page_key=$page; started_at=$claimedAt; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
-  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=running`nHEARTBEAT_AT=$(Now-Utc)`n"
+  $leaseSeconds = 21600
+  $leaseRaw = Get-Prop $Task.data 'lease_seconds'
+  if ($null -ne $leaseRaw) { [void][int]::TryParse([string]$leaseRaw,[ref]$leaseSeconds) }
+  $leaseSeconds = [math]::Max(5,$leaseSeconds)
+  $claimId = [guid]::NewGuid().ToString('N')
+  $existingClaim = Read-ClaimFile $claimPath
+  $claimExpectedSha = Get-GitBlobShaForFile $claimPath
+  if ($null -ne $existingClaim -and -not (Test-ClaimTerminal $existingClaim)) {
+    $leaseExpiry = [DateTimeOffset]::MinValue
+    [void][DateTimeOffset]::TryParse([string]$existingClaim.lease_expires_at,[ref]$leaseExpiry)
+    if ($leaseExpiry -gt [DateTimeOffset]::UtcNow) {
+      throw ('ACTIVE_CLAIM_EXISTS: ' + [string]$existingClaim.task_id + '; claim_id=' + [string]$existingClaim.claim_id)
+    }
+    Write-TaskFile $worktree $claimRecoveryRel ([ordered]@{ status='failed_recoverable'; recovered_at=Now-Utc; previous_task_id=[string]$existingClaim.task_id; previous_claim_id=[string]$existingClaim.claim_id; lease_expires_at=[string]$existingClaim.lease_expires_at; reason='LEASE_EXPIRED_WITHOUT_TERMINAL_STATE'; final_ready=$false })
+  }
+  $runningPayload = [ordered]@{ task_id=$taskId; page_key=$page; state='claimed'; status='claimed'; claim_id=$claimId; claimed_by='canonical-single-runner'; claimed_at=$claimedAt; claim_source_sha=[string]$Task.claim_source_sha; lease_expires_at=[DateTimeOffset]::UtcNow.AddSeconds($leaseSeconds).ToString('o'); runner_pid=$PID; last_heartbeat_at=$null; target_branch=$Task.target_branch; script_path=$Task.script_path; allowed_paths=$Task.allowed_paths; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true; final_ready=$false }
+  $claimWrite = Write-ClaimCas $claimPath $claimExpectedSha $runningPayload
+  if (-not $claimWrite.ok) { throw ('CLAIM_CAS_CONFLICT: expected=' + $claimWrite.expected_sha + '; actual=' + $claimWrite.actual_sha) }
+  Write-TaskFile $worktree $startedRel ([ordered]@{ task_id=$taskId; page_key=$page; claim_id=$claimId; claim_source_sha=[string]$Task.claim_source_sha; runner_pid=$PID; started_at=$claimedAt; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; final_ready=$false; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false })
+  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nCLAIM_ID=$claimId`nRUNNER_PID=$PID`nSTATUS=claimed`nHEARTBEAT_AT=$(Now-Utc)`n"
   Write-TaskFile $worktree $Task.queue_rel $runningPayload
   Write-TaskFile $worktree $currentRel $runningPayload
   $claimStage = Stage-AllowedOnly $worktree $allowed
   if (-not $claimStage.ok) { throw ('CLAIM_UNSCOPED_CHANGES: ' + ($claimStage.unscoped -join ',')) }
   Push-Sync $worktree $Task.target_branch "AAYS shared runner claim $page $taskId"
+  $script:ActiveClaimRel = $claimRel
+  $script:ActiveClaimId = $claimId
+  $script:ClaimPublished = $true
+  $runningPayload.state = 'running'
+  $runningPayload.status = 'running'
+  $runningPayload.last_heartbeat_at = Now-Utc
+  $runningPayload.lease_expires_at = [DateTimeOffset]::UtcNow.AddSeconds($leaseSeconds).ToString('o')
+  $claimRunningWrite = Write-ClaimCas $claimPath (Get-GitBlobShaForFile $claimPath) $runningPayload
+  if (-not $claimRunningWrite.ok) { throw 'CLAIM_RUNNING_TRANSITION_CONFLICT' }
+  Write-TaskFile $worktree $Task.queue_rel $runningPayload
+  Write-TaskFile $worktree $currentRel $runningPayload
+  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nCLAIM_ID=$claimId`nRUNNER_PID=$PID`nSTATUS=running`nHEARTBEAT_AT=$($runningPayload.last_heartbeat_at)`n"
+  $ackStage = Stage-AllowedOnly $worktree $allowed
+  if (-not $ackStage.ok) { throw ('ACK_UNSCOPED_CHANGES: ' + ($ackStage.unscoped -join ',')) }
+  Push-Sync $worktree $Task.target_branch "AAYS shared runner acknowledgement $page $taskId"
+  $expectedClaimShaAfterAck = Get-GitBlobShaForFile $claimPath
+  $currentPath = Join-Path $worktree ($currentRel -replace '/', '\')
+  $expectedCurrentShaAfterAck = Get-GitBlobShaForFile $currentPath
   Sync-TaskResultBackToController $worktree $Task $null
   $script:Summary.last_pickup_task_id = $taskId
   $script:Summary.last_pickup_at = $claimedAt
@@ -768,15 +853,63 @@ function Run-Task([object]$Task) {
   $env:AAYS_TARGET_BRANCH=$Task.target_branch
   $env:PYTHONDONTWRITEBYTECODE='1'
   $automationOutput=''; $automationCode=0
-  $oldAutomationEap=$ErrorActionPreference
+  $automationTimedOut=$false
+  $disableRunnerHeartbeat = As-Bool (Get-Prop $Task.data 'diagnostic_disable_runner_heartbeat')
+  $maxRuntimeSeconds = $leaseSeconds
+  $maxRuntimeRaw = Get-Prop $Task.data 'max_runtime_seconds'
+  if ($null -ne $maxRuntimeRaw) { [void][int]::TryParse([string]$maxRuntimeRaw,[ref]$maxRuntimeSeconds) }
+  $maxRuntimeSeconds = [math]::Max(5,$maxRuntimeSeconds)
+  $stdoutPath = Join-Path ([IO.Path]::GetTempPath()) ("aays_${taskId}_$PID.stdout.log")
+  $stderrPath = Join-Path ([IO.Path]::GetTempPath()) ("aays_${taskId}_$PID.stderr.log")
   try {
-    $ErrorActionPreference='Continue'
-    Push-Location -LiteralPath $worktree
-    try { $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1; $automationCode=$LASTEXITCODE; $automationOutput=($out | Out-String) } finally { Pop-Location }
+    Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
+    $child = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $scriptPath + '"')) -WorkingDirectory $worktree -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru -WindowStyle Hidden
+    $automationStarted = [DateTimeOffset]::UtcNow
+    $nextHeartbeat = $automationStarted.AddSeconds(5)
+    while (-not $child.HasExited) {
+      Start-Sleep -Seconds 2
+      $child.Refresh()
+      $now = [DateTimeOffset]::UtcNow
+      if (-not $disableRunnerHeartbeat -and $now -ge $nextHeartbeat) {
+        $runningPayload.last_heartbeat_at = $now.ToString('o')
+        $runningPayload.lease_expires_at = $now.AddSeconds($leaseSeconds).ToString('o')
+        $heartbeatClaim = Write-ClaimCas $claimPath (Get-GitBlobShaForFile $claimPath) $runningPayload
+        if (-not $heartbeatClaim.ok) { throw 'CLAIM_HEARTBEAT_CAS_CONFLICT' }
+        $expectedClaimShaAfterAck = $heartbeatClaim.actual_sha
+        Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nCLAIM_ID=$claimId`nRUNNER_PID=$PID`nSTATUS=running`nHEARTBEAT_AT=$($runningPayload.last_heartbeat_at)`n"
+        $nextHeartbeat = $now.AddSeconds(5)
+      }
+      $heartbeatExpired = $disableRunnerHeartbeat -and $now -ge [DateTimeOffset]::Parse([string]$runningPayload.lease_expires_at)
+      $runtimeExpired = ($now - $automationStarted).TotalSeconds -ge $maxRuntimeSeconds
+      if ($heartbeatExpired -or $runtimeExpired) {
+        Stop-Process -Id $child.Id -Force -ErrorAction SilentlyContinue
+        $automationTimedOut=$true
+        break
+      }
+    }
+    $child.WaitForExit()
+    $automationCode = if ($automationTimedOut) { 124 } else { $child.ExitCode }
+    $stdout = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw } else { '' }
+    $stderr = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw } else { '' }
+    $automationOutput = ($stdout + $(if($stderr){"`n--- stderr ---`n$stderr"}else{''}))
+  } catch {
+    $automationCode=127
+    $automationOutput=$_.Exception.Message
   } finally {
-    $ErrorActionPreference=$oldAutomationEap
+    Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
     $env:AAYS_REPO_ROOT=$oldRoot; $env:AAYS_CONTROLLER_REPO_ROOT=$oldController; $env:AAYS_TASK_ID=$oldTask; $env:AAYS_PAGE_KEY=$oldPage; $env:AAYS_TARGET_BRANCH=$oldBranch; $env:PYTHONDONTWRITEBYTECODE=$oldNoBytecode
   }
+  if ((Get-GitBlobShaForFile $currentPath) -ne $expectedCurrentShaAfterAck) {
+    Assert-GitOk (Invoke-AaysGit $worktree checkout HEAD -- $currentRel) 'CURRENT_TASK_RESTORE_FAILED'
+    Add-TaskBlocker $taskId $page 'DOMAIN_CURRENT_TASK_WRITE_BLOCKED'
+    if ($automationCode -eq 0) { $automationCode=125 }
+  }
+  if ((Get-GitBlobShaForFile $claimPath) -ne $expectedClaimShaAfterAck) {
+    Write-Utf8Atomic $claimPath (To-JsonText $runningPayload)
+    Add-TaskBlocker $taskId $page 'DOMAIN_SHARED_CLAIM_WRITE_BLOCKED'
+    if ($automationCode -eq 0) { $automationCode=125 }
+  }
+  if ($automationTimedOut) { Add-TaskBlocker $taskId $page 'CLAIM_HEARTBEAT_TIMEOUT_RECOVERY' }
   if ($automationCode -ne 0) { Add-TaskBlocker $taskId $page 'AUTOMATION_EXIT_NONZERO' ([string]$automationCode) }
   $gatePath = Join-Path $worktree ($gateRel -replace '/', '\')
   $gate = $null
@@ -787,12 +920,18 @@ function Run-Task([object]$Task) {
   }
   Write-TaskFile $worktree $reportRel ("TASK_ID=$taskId`nPAGE_KEY=$page`nRUNNER_STABLE=20260707`nwork_root=$WorkRoot`nnode_exists=$($browser.node_exists)`nnpm_exists=$($browser.npm_exists)`nedge_or_chrome_exists=$($browser.edge_or_chrome_exists)`nplaywright_available=$($browser.playwright_available)`nsite_8010_ok=$($browser.site_8010_ok)`nsite_8020_ok=$($browser.site_8020_ok)`nbrowser_smoke_passed=$($browser.browser_smoke_passed)`nautomation_exit_code=$automationCode`nfake_data=false`n--- output ---`n$automationOutput")
   if ($automationCode -ne 0) {
-    $blockedPayload=[ordered]@{task_id=$taskId;page_key=$page;status='blocked';blocked_at=Now-Utc;automation_exit_code=$automationCode;runner_output_uploaded=$true;PUSH_SYNC_OK=$true;CONTINUE_RUNNER_READY=$true;blockers=@('AUTOMATION_EXIT_NONZERO');final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+    $terminalState = if ($automationTimedOut) { 'failed_recoverable' } else { 'blocked' }
+    $terminalReason = if ($automationTimedOut) { 'CLAIM_HEARTBEAT_TIMEOUT_RECOVERY' } else { 'AUTOMATION_EXIT_NONZERO' }
+    $terminalAt = Now-Utc
+    $terminalClaim=[ordered]@{task_id=$taskId;page_key=$page;state=$terminalState;status=$terminalState;claim_id=$claimId;claimed_by='canonical-single-runner';claimed_at=$claimedAt;claim_source_sha=[string]$Task.claim_source_sha;lease_expires_at=[string]$runningPayload.lease_expires_at;runner_pid=$PID;last_heartbeat_at=[string]$runningPayload.last_heartbeat_at;terminal_at=$terminalAt;release_reason=$terminalReason;final_ready=$false}
+    $terminalClaimWrite=Write-ClaimCas $claimPath (Get-GitBlobShaForFile $claimPath) $terminalClaim
+    if(-not $terminalClaimWrite.ok){throw 'CLAIM_TERMINAL_CAS_CONFLICT'}
+    $blockedPayload=[ordered]@{task_id=$taskId;page_key=$page;claim_id=$claimId;status=$terminalState;blocked_at=$terminalAt;automation_exit_code=$automationCode;runner_output_uploaded=$true;PUSH_SYNC_OK=$true;CONTINUE_RUNNER_READY=$true;blockers=@($terminalReason);final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
     Write-TaskFile $worktree $gateRel $blockedPayload
     Write-TaskFile $worktree $mirrorRel $blockedPayload
-    Write-TaskFile $worktree $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;status='blocked';runner_blocked_at=Now-Utc;automation_exit_code=$automationCode;blockers=@('AUTOMATION_EXIT_NONZERO');final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
-    Write-TaskFile $worktree $currentRel ([ordered]@{task_id=$taskId;page_key=$page;status='blocked';runner_blocked_at=Now-Utc;automation_exit_code=$automationCode;blockers=@('AUTOMATION_EXIT_NONZERO');claim_owner='single_shared_runner';claim_pid=$PID;final_ready=$false})
-    Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=blocked`nAUTOMATION_EXIT_CODE=$automationCode`nFINAL_READY=false`nHEARTBEAT_AT=$(Now-Utc)`n"
+    Write-TaskFile $worktree $Task.queue_rel ([ordered]@{task_id=$taskId;page_key=$page;claim_id=$claimId;status=$terminalState;runner_blocked_at=$terminalAt;automation_exit_code=$automationCode;blockers=@($terminalReason);final_ready=$false;no_fake_final_ready=$true;no_db_write=$true;no_migration=$true;no_production_deploy=$true})
+    Write-TaskFile $worktree $currentRel $terminalClaim
+    Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nCLAIM_ID=$claimId`nSTATUS=$terminalState`nAUTOMATION_EXIT_CODE=$automationCode`nFINAL_READY=false`nHEARTBEAT_AT=$terminalAt`n"
     $blockedStage=Stage-AllowedOnly $worktree $allowed
     if(-not$blockedStage.ok){throw('BLOCKED_UNSCOPED_CHANGES: '+($blockedStage.unscoped-join','))}
     Push-Sync $worktree $Task.target_branch "AAYS shared runner blocked evidence $page $taskId"
@@ -805,13 +944,17 @@ function Run-Task([object]$Task) {
   $script:Summary.allowed_paths_enforced = $true
   Push-Sync $worktree $Task.target_branch "AAYS shared runner stable output $page $taskId"
   $smokeProof = Update-OneClickSmokeProof $worktree $Task.target_branch $taskId
-  $finalReady = ((As-Bool (Get-Prop $gate 'source_row_gate_passed')) -and (As-Bool (Get-Prop $gate 'ui_token_gate_passed')) -and $browser.browser_smoke_passed -and (-not (As-Bool (Get-Prop $gate 'manual_review_required'))) -and (-not (As-Bool (Get-Prop $gate 'fake_data'))) -and $automationCode -eq 0)
-  $completed = [ordered]@{ task_id=$taskId; page_key=$page; completed_at=Now-Utc; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; allowed_paths_enforced=$true; runner_output_uploaded=$true; post_sync_ok=$true; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; browser_environment=$browser; final_ready=$finalReady; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@($script:Summary.blockers) }
+  $finalReady = $false
+  $completedAt=Now-Utc
+  $doneClaim=[ordered]@{task_id=$taskId;page_key=$page;state='done';status='done';claim_id=$claimId;claimed_by='canonical-single-runner';claimed_at=$claimedAt;claim_source_sha=[string]$Task.claim_source_sha;lease_expires_at=[string]$runningPayload.lease_expires_at;runner_pid=$PID;last_heartbeat_at=[string]$runningPayload.last_heartbeat_at;terminal_at=$completedAt;release_reason='completed';final_ready=$false}
+  $doneClaimWrite=Write-ClaimCas $claimPath (Get-GitBlobShaForFile $claimPath) $doneClaim
+  if(-not $doneClaimWrite.ok){throw 'CLAIM_TERMINAL_CAS_CONFLICT'}
+  $completed = [ordered]@{ task_id=$taskId; page_key=$page; claim_id=$claimId; completed_at=$completedAt; queue_seen=$true; queue_started=$true; single_runner_lock_acquired=$true; task_runs_in_clean_worktree=$true; allowed_paths_enforced=$true; runner_output_uploaded=$true; post_sync_ok=$true; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; browser_environment=$browser; final_ready=$finalReady; fake_data=$false; db_write=$false; migration=$false; production_deploy=$false; blockers=@($script:Summary.blockers) }
   Write-TaskFile $worktree $completedRel $completed
   Write-TaskFile $worktree $mirrorRel $completed
-  Write-TaskFile $worktree $Task.queue_rel ([ordered]@{ task_id=$taskId; page_key=$page; status='done'; runner_completed_at=Now-Utc; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; final_ready=$finalReady; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true })
-  Write-TaskFile $worktree $currentRel ([ordered]@{ task_id=$taskId; page_key=$page; status='done'; runner_completed_at=Now-Utc; claim_owner='single_shared_runner'; claim_pid=$PID; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; final_ready=$finalReady })
-  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nSTATUS=completed`nPUSH_SYNC_OK=true`nCONTINUE_RUNNER_READY=true`nFINAL_READY=$finalReady`nHEARTBEAT_AT=$(Now-Utc)`n"
+  Write-TaskFile $worktree $Task.queue_rel ([ordered]@{ task_id=$taskId; page_key=$page; claim_id=$claimId; status='done'; runner_completed_at=$completedAt; PUSH_SYNC_OK=$true; CONTINUE_RUNNER_READY=$true; final_ready=$finalReady; no_fake_final_ready=$true; no_db_write=$true; no_migration=$true; no_production_deploy=$true })
+  Write-TaskFile $worktree $currentRel $doneClaim
+  Write-TaskFile $worktree $heartbeatRel "TASK_ID=$taskId`nPAGE_KEY=$page`nCLAIM_ID=$claimId`nSTATUS=completed`nPUSH_SYNC_OK=true`nCONTINUE_RUNNER_READY=true`nFINAL_READY=$finalReady`nHEARTBEAT_AT=$completedAt`n"
   $stage2 = Stage-AllowedOnly $worktree $allowed
   if (-not $stage2.ok) { throw ('BLOCKED_UNSCOPED_CHANGES: ' + ($stage2.unscoped -join ',')) }
   Push-Sync $worktree $Task.target_branch "AAYS shared runner stable completion $page $taskId"
@@ -863,7 +1006,8 @@ try {
   # current.task.json is an advisory runner-owned pointer, never a queue item.
   $queueFiles = @(Get-ChildItem -LiteralPath (Join-Path $script:QueueScanRoot 'docs\chatgpt_status') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\queue\\' -and $_.Name -ne 'current.task.json' })
   $parsed = @($queueFiles | ForEach-Object { Parse-Queue $_ })
-  $readyCandidates = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, page_key, task_id)
+  # Lower numeric priority wins; equal priority is deterministic FIFO by created_at.
+  $readyCandidates = @($parsed | Where-Object { $_.valid -and $_.task_id -ne 'aays1-f-portable-one-click-recovery-bootstrap-20260709' -and $_.status_norm -in @('queued','ready','pending','pending_repo_queue','pickup_requested','queued_for_single_shared_runner') } | Sort-Object priority, created_at, page_key, task_id)
   $ready = @()
   $seenTaskIds = @{}
   foreach ($candidate in $readyCandidates) {
