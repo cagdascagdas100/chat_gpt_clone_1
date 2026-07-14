@@ -440,7 +440,8 @@ function New-TaskWorktreeClone([string]$Worktree, [object]$Task, [string]$Url) {
     "docs/chatgpt_status/$pagePath/queue",
     'docs/chatgpt_status/_shared/status',
     'docs/chatgpt_status/_shared/reports',
-    'docs/chatgpt_status/_shared/heartbeat'
+    'docs/chatgpt_status/_shared/heartbeat',
+    'docs/chatgpt_status/_shared/control'
   )) {
     if (-not $sparsePaths.Contains($path)) { [void]$sparsePaths.Add($path) }
   }
