@@ -1,0 +1,37 @@
+name: Defans Mania repository audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run repository audit
+        run: python tools/defans_mania_repo_audit.py
+
+      - name: Show audit report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('defans_mania_repo_audit.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          print(json.dumps(data, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: defans-mania-repo-audit
+          path: defans_mania_repo_audit.json
+          if-no-files-found: error

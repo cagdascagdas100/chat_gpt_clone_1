@@ -1,0 +1,27 @@
+name: Defans Mania reference tests
+
+on:
+  push:
+    branches:
+      - defans-mania-repo-audit
+  pull_request:
+    paths:
+      - 'defans_mania_reference/**'
+      - 'tests/test_defans_mania_*.py'
+      - '.github/workflows/defans-mania-reference-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run regression suite
+        run: python -m unittest discover -v -s tests -p 'test_defans_mania_*.py'
