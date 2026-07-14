@@ -1,8 +1,8 @@
 {
-  "task_id": "aays1-ready-to-sell-site-visibility-resume-20260715",
+  "task_id": "aays1-ready-to-sell-site-visibility-dom-resume-20260715",
   "page_key": "aays1",
-  "status": "RESUME_PREPARED",
-  "updated_at": "2026-07-14T22:09:43Z",
+  "status": "QUEUED_FOR_EXISTING_SINGLE_SHARED_RUNNER",
+  "updated_at": "2026-07-14T22:14:36Z",
   "events": [
     {
       "sequence": 1,
@@ -41,22 +41,38 @@
     },
     {
       "sequence": 6,
-      "event": "row_level_website_fallback_prepared",
-      "result": "in_progress",
-      "detail": "The evidence page is being updated to render verified AI/source rows even when canonical geometry is unavailable, without fabricating geometry.",
+      "event": "row_level_website_fallback_published",
+      "result": "pass",
+      "detail": "The evidence page now renders real AI/source evidence rows when canonical geometry is unavailable and labels the mode ai_evidence_fallback without fabricating geometry. Commit 04fdd8f3d1a0d4264c91fc5c6feb2fbbcada5f4f.",
       "accuracy_score": 98
     },
     {
       "sequence": 7,
-      "event": "single_runner_resume_prepared",
-      "result": "in_progress",
-      "detail": "A sequential site-visibility and browser-DOM verification continuation is being prepared for the existing shared runner.",
-      "accuracy_score": 98
+      "event": "single_runner_dom_resume_published",
+      "result": "pass",
+      "detail": "Resume automation 167 invokes only child 155 once, then performs a real headless browser DOM readback. It does not call source scan 152, evidence 153, or task 146. Commit eb0151dea761a84d1d074548e7c885ac38660172.",
+      "accuracy_score": 100
+    },
+    {
+      "sequence": 8,
+      "event": "resume_task_queued_remote",
+      "result": "pass",
+      "detail": "The stale task 166 claim was replaced by a queued sequential resume on the existing shared runner. No new runner, guardian, or parallel task was created. Queue commit 8b84478e91ae2967633c81b0e391aec847b86801.",
+      "accuracy_score": 100
+    },
+    {
+      "sequence": 9,
+      "event": "runner_execution_and_remote_readback",
+      "result": "pending",
+      "detail": "Waiting for the existing shared runner to claim automation 167, publish its terminal status/report/DOM proof, push, and expose remote readback.",
+      "accuracy_score": 100
     }
   ],
-  "completed_events": 5,
-  "total_events": 7,
-  "progress_percent": 71.43,
+  "completed_events": 8,
+  "total_events": 9,
+  "progress_percent": 88.89,
+  "source_coverage_percent": 51.82,
+  "evidence_coverage_percent": 37.1,
   "baseline": {
     "live": 655,
     "photo": 469,
@@ -67,6 +83,14 @@
     "researched": 5,
     "high_source_confidence": 5,
     "promoted": 0
+  },
+  "commits": {
+    "candidate_research": "e098048d18237a05765c6d89a6ccf6234aa25df7",
+    "initial_progress_feed": "8a8aaabe78d665c47450799f38f9d08123ed6860",
+    "website_fallback": "04fdd8f3d1a0d4264c91fc5c6feb2fbbcada5f4f",
+    "resume_automation": "eb0151dea761a84d1d074548e7c885ac38660172",
+    "queue_resume": "8b84478e91ae2967633c81b0e391aec847b86801",
+    "active_batch": "53c36160efff732955be4c2ad046a0566cf74a46"
   },
   "single_runner_only": true,
   "new_runner": false,
