@@ -67,7 +67,7 @@ $backupRoot = if ($portableRoot) { Join-Path $portableRoot $backupRelative } els
     $siteText = $siteText.Replace($old.Trim(),$replacement.Trim())
     [System.IO.File]::WriteAllText($siteScriptPath,$siteText,[System.Text.UTF8Encoding]::new($false))
     $patchApplied = $true
-  } elseif ($siteText -match 'runner_system/recovery/155_canonical_site_sync_backup_') {
+  } elseif ($siteText -match 'runner_system/recovery/155_canonical_site_sync_backup_' -or $siteText -match 'docs/chatgpt_status/aays1/runner_outputs/155b_\$stamp') {
     $patchApplied = $false
   } else {
     throw 'site_backup_path_contract_not_found'
