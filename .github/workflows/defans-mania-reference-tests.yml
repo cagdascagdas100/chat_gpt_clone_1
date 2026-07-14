@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - 'defans_mania_reference/**'
-      - 'tests/test_defans_mania_reference.py'
+      - 'tests/test_defans_mania_*.py'
       - '.github/workflows/defans-mania-reference-tests.yml'
 
 permissions:
@@ -24,4 +24,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run regression suite
-        run: python -m unittest -v tests/test_defans_mania_reference.py
+        run: python -m unittest discover -v -s tests -p 'test_defans_mania_*.py'
