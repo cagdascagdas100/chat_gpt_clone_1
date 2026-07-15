@@ -1,25 +1,27 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 11
-- Reassessed: 11/32 = 34.375%
-- Fully finalized in reassessment: 11/32 = 34.375%
-- Next item: Comment 12
+- Reassessed through: Comment 12
+- Reassessed: 12/32 = 37.5%
+- Fully finalized in reassessment: 12/32 = 37.5%
+- Next item: Comment 13
 
-## Latest decision — Comment 11
-The undefined precision–recall abbreviation will be corrected to the metric name supported by the project artifacts. The machine-readable outputs use `average_precision`, `average_precision_weighted`, and `average_precision_macro`, while `AUPRC` appears only as a presentation label. In the absence of documented curve-area integration, the manuscript will report `class-support-weighted average precision (weighted AP)` and `macro-average precision (macro AP)` rather than AUPRC or PR-AUC.
+## Latest decision — Comment 12
+No LLM name or version will be added. The project package contains no auditable provider, model identifier, version, access date, prompt protocol, decoding configuration, request/response log, retrieval setup, output provenance, or runtime-integration record demonstrating that an LLM was implemented in OSH-RA. Adding a plausible model name would fabricate methodological provenance.
 
-## Interpretation rule
-- Weighted AP is the class-support-weighted mean of class-specific one-versus-rest AP values.
-- Macro AP gives each class equal weight.
-- Weighted AP must be interpreted with macro AP and the DummyMajority baseline because frequent classes can dominate the weighted summary.
-- AP is a ranking/discrimination metric; it is not accuracy, calibration, absolute accident probability, or application-level validation.
+## Approved present-system description
+`The application uses predefined equipment–malfunction scenarios and prespecified decision rules. For each selected equipment–malfunction pair, the candidate scenarios are scored and ranked deterministically, and the highest-ranked scenarios are linked to the corresponding preventive information.`
 
-## Approved first-use wording
-`Model discrimination was assessed primarily using class-support-weighted average precision (weighted AP), calculated as the support-weighted mean of the one-versus-rest average-precision values across outcome classes. Macro-average precision (macro AP), which assigns equal weight to each class, was reported as a complementary measure of performance across minority and majority classes.`
+## Required corrections
+- Remove present-system claims of LLM-based scenario generation from the Abstract, Methods, Results, Discussion, and Conclusion.
+- Replace `LLM-generated scenarios` with `predefined equipment–malfunction scenarios`.
+- Describe scenario ranking as a prespecified deterministic process.
+- Remove unsupported runtime-LLM, retrieval-augmented generation, autonomous updating, adaptive, and multimodal claims.
+- Retain LLM references only for external literature or explicitly labeled future research; audit references [119]–[122] for orphan citations.
+- Do not report a provider, model name, version, prompt, or API parameter unless an original auditable implementation record is later supplied.
 
-## Required audit
-Replace publication-facing `AUPRC (weighted)` and `AUPRC (macro)` labels in the text, tables, figures, captions, and regenerated spreadsheet outputs. Keep AP distinct from AUROC, F1, accuracy, Brier score, and ECE.
+## Cross-comment consistency
+This decision aligns with Comment 1 and with the claim constraints established under Comments 27, 28, and 32. It resolves the reviewer’s reporting concern by removing the unsupported implementation claim rather than inventing missing technical details.
 
 ## Next item
-Comment 12 — verify whether any implemented large-language-model component has an auditable provider, model name, version, prompt protocol, runtime integration, or provenance record; otherwise remove the model-name/version requirement by deleting the unsupported LLM implementation claim.
+Comment 13 — repair the unclear sentence describing scenario selection and state precisely that nine predefined candidate scenarios are evaluated for each equipment–malfunction pair and that the three highest-ranked scenarios are presented.
