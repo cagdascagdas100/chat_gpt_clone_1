@@ -1,30 +1,26 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 3
-- Reassessed: 3/32 = 9.375%
-- Fully finalized in reassessment: 3/32 = 9.375%
-- Next item: Comment 4
+- Reassessed through: Comment 4
+- Reassessed: 4/32 = 12.5%
+- Fully finalized in reassessment: 4/32 = 12.5%
+- Next item: Comment 5
 
-## Latest decision — Comment 3
-The sentence claiming that machine-learning algorithms generate `risk coefficients that quantify individualized safety exposure` will be deleted. The verified analytical task is classification of accident-related payment-day and injury-severity outcomes among recorded construction-accident cases.
+## Latest decision — Comment 4
+All narrative uses of `AR` will be replaced with `augmented reality`. Paired shorthand such as `AR/VR` and `VR/AR` will be written as `augmented reality and virtual reality` in manuscript prose.
 
-## Evidence boundary
-- The Risk 01/02/03 artifacts identify `ODEME_GUNSAYISI` as the target and document payment-day and injury-severity class formulations.
-- No explicit individualized-exposure variable is present.
-- The supplied case records do not document worker-time, task-time, machine-operating-time, exposed-population, or person-time denominators.
-- No independently sampled non-accident population is available for estimating absolute accident probability.
-- Injury type and injury location are post-event variables in the feature set and cannot support a prospective pre-accident personal-risk claim.
+## Audit and exception rule
+- The Introduction already uses the full terms and requires no abbreviation.
+- Literature-review uses of `AR`, `AR/VR`, and `VR/AR` will be expanded.
+- Compound phrasing will be revised for grammatical clarity after expansion.
+- The exact title of reference `[18]` will retain `AR`, because published bibliographic titles must not be silently rewritten.
+- Augmented reality and virtual reality are discussed only as prior-literature technologies and will not be described as implemented OSH-RA functions.
 
-## Approved replacement
-`Using structured historical accident records, supervised machine-learning models were evaluated for classifying accident-related payment-day and injury-severity outcomes among recorded construction-accident cases.`
+## Approved reviewer-response position
+The response will state that all body-text abbreviations were expanded, exact source titles were preserved, and the scope distinction between prior literature and the present application was clarified.
 
-## Required consistency actions
-- Remove `individualized safety exposure`, `personal safety exposure`, and equivalent formulations.
-- Replace or delete `personalized risk coefficient` according to the exact output being described.
-- Use `classification of recorded accident outcomes`, not `prediction of individual accident risk`.
-- Remove continuous, real-time, and adaptive personal-risk claims from the present-system description.
-- Keep the wording aligned with Comments 2, 8, 9, 25, 27, and 32.
+## Cross-comment consistency
+This decision aligns with Comments 27, 28, and 32, which remove unsupported multimodal, adaptive, and real-time capability claims from the proposed application.
 
 ## Next item
-Comment 4 — replace the abbreviation `AR` with the full term `augmented reality` and check whether the manuscript uses the abbreviation consistently or unnecessarily elsewhere.
+Comment 5 — replace the overly general phrase `incorporate and manage risk factors` with a concrete description of what BIM-supported systems organize, visualize, record, and communicate.
