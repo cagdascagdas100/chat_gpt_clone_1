@@ -1,27 +1,24 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 12
-- Reassessed: 12/32 = 37.5%
-- Fully finalized in reassessment: 12/32 = 37.5%
-- Next item: Comment 13
+- Reassessed through: Comment 13
+- Reassessed: 13/32 = 40.625%
+- Fully finalized in reassessment: 13/32 = 40.625%
+- Next item: Comment 14
 
-## Latest decision — Comment 12
-No LLM name or version will be added. The project package contains no auditable provider, model identifier, version, access date, prompt protocol, decoding configuration, request/response log, retrieval setup, output provenance, or runtime-integration record demonstrating that an LLM was implemented in OSH-RA. Adding a plausible model name would fabricate methodological provenance.
+## Latest decision — Comment 13
+The grammatically defective scenario-selection sentence will be replaced with a stepwise description. For each selected equipment–malfunction pair, all nine predefined injury scenarios are evaluated and ordered using the prespecified scenario-priority procedure; the three highest-ranked scenarios are then presented with their associated injury regions and injury types.
 
-## Approved present-system description
-`The application uses predefined equipment–malfunction scenarios and prespecified decision rules. For each selected equipment–malfunction pair, the candidate scenarios are scored and ranked deterministically, and the highest-ranked scenarios are linked to the corresponding preventive information.`
+## Approved wording
+`For each selected equipment–malfunction pair, nine predefined injury scenarios were evaluated using the prespecified scoring and ranking procedure. The scenarios were ordered from highest to lowest scenario-priority score, and the three highest-ranked scenarios—together with their associated injury regions and injury types—were presented in the application.`
 
-## Required corrections
-- Remove present-system claims of LLM-based scenario generation from the Abstract, Methods, Results, Discussion, and Conclusion.
-- Replace `LLM-generated scenarios` with `predefined equipment–malfunction scenarios`.
-- Describe scenario ranking as a prespecified deterministic process.
-- Remove unsupported runtime-LLM, retrieval-augmented generation, autonomous updating, adaptive, and multimodal claims.
-- Retain LLM references only for external literature or explicitly labeled future research; audit references [119]–[122] for orphan citations.
-- Do not report a provider, model name, version, prompt, or API parameter unless an original auditable implementation record is later supplied.
-
-## Cross-comment consistency
-This decision aligns with Comment 1 and with the claim constraints established under Comments 27, 28, and 32. It resolves the reviewer’s reporting concern by removing the unsupported implementation claim rather than inventing missing technical details.
+## Reporting boundaries
+- Use `predefined`, not `LLM-generated`.
+- Use `highest-ranked`, not `highest-risk`, unless absolute-risk validity is established.
+- Make clear that all nine scenarios are evaluated before three are selected.
+- Keep the separately described non-injury baseline condition outside the ranked nine-scenario injury pool.
+- State an implemented deterministic tie-breaking rule if equal scores can occur at the third-place cutoff; do not invent one.
+- Leave the exact score equation and feasibility-variable treatment to the audits under Comments 16 and 18.
 
 ## Next item
-Comment 13 — repair the unclear sentence describing scenario selection and state precisely that nine predefined candidate scenarios are evaluated for each equipment–malfunction pair and that the three highest-ranked scenarios are presented.
+Comment 14 — define NACE at first use, provide its full name and revision, and explain that it is an economic-activity classification used to delimit the construction-sector scope rather than an equipment or hazard taxonomy.
