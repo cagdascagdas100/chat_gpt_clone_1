@@ -29,6 +29,6 @@ DUPLICATE_RUNNER_COUNT: 0
 COMMIT_SHA: `f75575af4e0a19bbb7a04d4603d29b9dcb823214`, queue retry `c6018fac672af06328ba0805d8f6b4d274600178`
 PUSH_RESULT: passed via GitHub branch update
 REMOTE_READBACK: passed
-REMAINING_BLOCKER: An older already-running scan worker must finish before the daemon loads the patched source and claims the re-queued Gas task. It was not killed because it was processing an existing Topography task.
+REMAINING_BLOCKER: The patched worker is active and currently owns the earlier canonical task `aays1-170-current-five-pages-verified-continuation-20260714`. The same Gas task remains remotely queued and will be scanned sequentially; no parallel runner was started.
 final_ready=false
 
