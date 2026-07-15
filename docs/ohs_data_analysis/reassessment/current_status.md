@@ -1,31 +1,29 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 7
-- Reassessed: 7/32 = 21.875%
-- Fully finalized in reassessment: 7/32 = 21.875%
-- Next item: Comment 8
+- Reassessed through: Comment 8
+- Reassessed: 8/32 = 25.0%
+- Fully finalized in reassessment: 8/32 = 25.0%
+- Next item: Comment 9
 
-## Latest decision — Comment 7
-The Methods section incorrectly listed only AdaBoost, Extra Trees, and GBDT. The verified candidate portfolio contains nine supervised classifiers—Logistic Regression, SVM, KNN, MLP, Random Forest, Extra Trees, AdaBoost, GBDT, and Histogram-Based Gradient Boosting—plus a DummyMajority reference baseline.
+## Latest decision — Comment 8
+The undefined abbreviation `DAFW` will not be used as a synonym for the study target. The auditable Risk 01/02/03 artifacts consistently identify the target column as `ODEME_GUNSAYISI`, while no source-data dictionary or administrative definition establishes equivalence with Days Away From Work.
 
-## Selection rationale
-- Logistic Regression: linear parametric reference.
-- SVM: margin-based classifier.
-- KNN: local instance-based benchmark.
-- MLP: flexible neural nonlinear model.
-- Random Forest: bagged tree ensemble.
-- Extra Trees: strongly randomized tree ensemble.
-- AdaBoost: sequential error-reweighting ensemble.
-- GBDT: gradient-based sequential tree ensemble.
-- Histogram-Based Gradient Boosting: computationally efficient boosted-tree alternative.
-- DummyMajority: non-informative majority-class reference.
+## Approved terminology
+- First use: `payment-day outcome (source field: ODEME_GUNSAYISI)`.
+- Analysis 1: `18-class payment-day outcome, including the zero-day class`.
+- Analysis 2: `17-class positive payment-day outcome after exclusion of zero-day records`.
+- Analysis 3: `four-class grouped payment-day outcome derived from ODEME_GUNSAYISI`.
 
-## Reporting boundary
-The complete candidate portfolio must be distinguished from the smaller subset of algorithms that emerged as leaders in a particular feature, analysis, figure, or table. The manuscript will not claim that every model–resampling combination completed successfully when project logs document skipped configurations.
+## Required corrections
+- Remove `DAFW as the target variable` and the joint-target phrase `days away from work and fatalities`.
+- Do not describe Analyses 1 and 2 as continuous-outcome models; the recorded tasks are multiclass classifications.
+- Do not conflate payment days with lost workdays, temporary-incapacity days, compensable days, fatality prediction, accident probability, compensation probability, or financial loss.
+- Rename Section 3.3.4 using payment-day terminology and audit all related tables, figures, equations, captions, and interface labels.
+- Remove `DAFW-monetized` and `DAFW-equivalent days` unless an independently auditable derivation is supplied.
 
-## Approved concise wording
-`Nine supervised classifiers were evaluated: logistic regression, support vector machine, k-nearest neighbors, multilayer perceptron, random forest, extremely randomized trees, AdaBoost, gradient boosting decision trees, and histogram-based gradient boosting. A majority-class dummy classifier was included as a non-informative baseline. The portfolio was selected to compare complementary linear, margin-based, local, neural-network, bagged-tree, randomized-tree, and boosting approaches under a common preprocessing and evaluation framework.`
+## Approved wording
+`The modeling target was the source-data field ODEME_GUNSAYISI. In this manuscript, it is referred to as the payment-day outcome. Because the available project documentation does not establish that this administrative field is equivalent to Days Away From Work, the abbreviation DAFW is not used as a synonym for the modeled target.`
 
 ## Next item
-Comment 8 — determine the exact meaning of the undefined target abbreviation and replace it with the verified data-field and outcome terminology.
+Comment 9 — introduce the payment-day outcome at its first occurrence and reorganize the surrounding Methods text so that the target definition, zero-day handling, and analysis-specific recoding are explained before later use.
