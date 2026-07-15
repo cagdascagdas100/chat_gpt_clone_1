@@ -1,26 +1,26 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 4
-- Reassessed: 4/32 = 12.5%
-- Fully finalized in reassessment: 4/32 = 12.5%
-- Next item: Comment 5
+- Reassessed through: Comment 5
+- Reassessed: 5/32 = 15.625%
+- Fully finalized in reassessment: 5/32 = 15.625%
+- Next item: Comment 6
 
-## Latest decision — Comment 4
-All narrative uses of `AR` will be replaced with `augmented reality`. Paired shorthand such as `AR/VR` and `VR/AR` will be written as `augmented reality and virtual reality` in manuscript prose.
+## Latest decision — Comment 5
+The generic phrase `incorporate and manage risk factors` will be removed. BIM will be described through concrete information functions: linking identified hazards to building elements or work zones, visualizing hazard and control locations, storing structured inspection or incident records, associating hazards with preventive measures, and communicating location-specific safety information.
 
-## Audit and exception rule
-- The Introduction already uses the full terms and requires no abbreviation.
-- Literature-review uses of `AR`, `AR/VR`, and `VR/AR` will be expanded.
-- Compound phrasing will be revised for grammatical clarity after expansion.
-- The exact title of reference `[18]` will retain `AR`, because published bibliographic titles must not be silently rewritten.
-- Augmented reality and virtual reality are discussed only as prior-literature technologies and will not be described as implemented OSH-RA functions.
+## Approved replacement
+`In construction-safety applications, BIM has been used as a spatial information layer that links identified hazards to specific building elements or work zones and enables associated safety information—such as inspection or incident records and preventive measures—to be visualized, stored, and communicated [18,19,27].`
 
-## Approved reviewer-response position
-The response will state that all body-text abbreviations were expanded, exact source titles were preserved, and the scope distinction between prior literature and the present application was clarified.
+## Claims constrained
+- Remove the undefined statement that BIM `manages risk factors`.
+- Remove broad time- and cost-performance claims unless a defined metric and direct study result are provided.
+- Do not imply that BIM independently identifies, controls, or reduces risk.
+- Do not describe OSH-RA as BIM-integrated without implementation evidence.
+- Tie References `[18]`, `[19]`, and `[27]` to their specific augmented-reality, repository, or location-monitoring functions.
 
 ## Cross-comment consistency
-This decision aligns with Comments 27, 28, and 32, which remove unsupported multimodal, adaptive, and real-time capability claims from the proposed application.
+The revised wording retains the full term `augmented reality` under Comment 4 and follows the manuscript-wide rule that information-processing functions must be distinguished from validated safety outcomes.
 
 ## Next item
-Comment 5 — replace the overly general phrase `incorporate and manage risk factors` with a concrete description of what BIM-supported systems organize, visualize, record, and communicate.
+Comment 6 — define exactly what `multiple target formulations` means by naming the three analyses, their target structures, dataset inclusion rules, and analytical purpose.
