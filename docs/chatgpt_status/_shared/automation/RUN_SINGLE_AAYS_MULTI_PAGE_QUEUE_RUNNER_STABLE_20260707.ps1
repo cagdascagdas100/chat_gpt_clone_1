@@ -182,13 +182,20 @@ function Add-GitPathsInBatches([string]$Root, [string[]]$Paths, [switch]$All) {
   $batch = [System.Collections.Generic.List[string]]::new()
   $batchChars = 0
   foreach ($path in @($Paths)) {
-    $cost = ([string]$path).Length + 3
+    $relativePath = Rel ([string]$path)
+    if (-not $relativePath) { continue }
+    $fullPath = Join-Path $Root ($relativePath -replace '/', '\')
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+      $tracked = Invoke-AaysGit -Cwd $Root -GitArgs @('ls-files','--',$relativePath)
+      if ($tracked.code -ne 0 -or -not $tracked.output.Trim()) { continue }
+    }
+    $cost = $relativePath.Length + 3
     if ($batch.Count -gt 0 -and ($batch.Count -ge 50 -or ($batchChars + $cost) -gt 6000)) {
       $args = @('add'); if ($All) { $args += '-A' }; $args += '--'; $args += @($batch)
       Assert-GitOk (Invoke-AaysGit -Cwd $Root -GitArgs $args) 'ADD_BATCH_FAILED'
       $batch.Clear(); $batchChars = 0
     }
-    [void]$batch.Add([string]$path); $batchChars += $cost
+    [void]$batch.Add($relativePath); $batchChars += $cost
   }
   if ($batch.Count -gt 0) {
     $args = @('add'); if ($All) { $args += '-A' }; $args += '--'; $args += @($batch)
@@ -352,10 +359,7 @@ function Sync-ControllerRepoSafe {
     Select-Object -First 1
   if ($transport) {
     $transportRoot = $transport.FullName
-    $localProbe = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('rev-parse',("refs/heads/${MainBranch}"))
-    $remoteProbe = Invoke-AaysGit -Cwd $transport.FullName -GitArgs @('ls-remote','--heads','origin',("refs/heads/${MainBranch}"))
-    $localCommit = if($localProbe.code -eq 0){$localProbe.output.Trim()}else{''}
-    $remoteCommit = if($remoteProbe.code -eq 0 -and $rem…8074 tokens truncated… Push-Sync $worktree $Task.target_branch "AAYS shared runner acknowledgement $page $taskId"
+    $localProbe = Invo…8226 tokens truncated… Push-Sync $worktree $Task.target_branch "AAYS shared runner acknowledgement $page $taskId"
   $expectedClaimShaAfterAck = Get-GitBlobShaForFile $claimPath
   $currentPath = Join-Path $worktree ($currentRel -replace '/', '\')
   $expectedCurrentShaAfterAck = Get-GitBlobShaForFile $currentPath
@@ -582,4 +586,3 @@ try {
 Write-Output (To-JsonText $script:Summary)
 if ($script:Summary.blockers.Count -gt 0) { exit 1 }
 exit 0
-
