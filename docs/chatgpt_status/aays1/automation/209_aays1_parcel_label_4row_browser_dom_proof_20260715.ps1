@@ -30,16 +30,17 @@ function Write-Json([string]$Path, [object]$Value) {
   Write-Utf8 $Path ($Value | ConvertTo-Json -Depth 40)
 }
 function Resolve-Browser {
+  $programFilesX86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
   $candidates = @(
-    "$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
-    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-    "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe",
-    "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-    "$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe",
-    "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
-  )
+    $(if ($programFilesX86) { Join-Path $programFilesX86 'Microsoft\Edge\Application\msedge.exe' }),
+    $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe' }),
+    $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\Application\msedge.exe' }),
+    $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe' }),
+    $(if ($programFilesX86) { Join-Path $programFilesX86 'Google\Chrome\Application\chrome.exe' }),
+    $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe' })
+  ) | Where-Object { $_ }
   foreach ($candidate in $candidates) {
-    if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return $candidate }
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
   }
   foreach ($name in @('msedge.exe','chrome.exe')) {
     $command = Get-Command $name -ErrorAction SilentlyContinue
