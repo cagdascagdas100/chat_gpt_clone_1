@@ -1,19 +1,17 @@
-# Parcel Label Task 209 - Four-row browser DOM proof
+# Parcel Label Task 209 â€” Restore and browser DOM proof
 
-- Tracked rows: 194
-- Data JSON IDs: 0/4
-- Browser DOM IDs: 0/4
-- Browser: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
-- Headless mode: --headless=new
-- Page HTTP: 200; data HTTP: 200
-- Browser DOM proof passed: False
-- Exact geometry remains 0; manual scope review remains required.
+- Rows: 194 -> 198; served=198; restored=0
+- Official-source validation: 0/4
+- Data JSON IDs: 4/4; browser DOM IDs: 0/4
+- Average accuracy: 3.9375/4 (%98.44)
+- Browser DOM proof: False
+- Exact geometry remains 0; four rows require manual scope review.
 
 | Parcel ID | JSON | Browser DOM |
 |---|---:|---:|
-| SOURCE_BULLRING_BIRMINGHAM_RETAIL_001 | False | False |
-| SOURCE_THE_CUBE_BIRMINGHAM_MIXED_001 | False | False |
-| SOURCE_ONE_ANGEL_SQUARE_MANCHESTER_OFFICE_001 | False | False |
-| SOURCE_MAGNA_PARK_MPS187_INDUSTRIAL_001 | False | False |
+| SOURCE_BULLRING_BIRMINGHAM_RETAIL_001 | True | False |
+| SOURCE_THE_CUBE_BIRMINGHAM_MIXED_001 | True | False |
+| SOURCE_ONE_ANGEL_SQUARE_MANCHESTER_OFFICE_001 | True | False |
+| SOURCE_MAGNA_PARK_MPS187_INDUSTRIAL_001 | True | False |
 
-`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.
+`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.
