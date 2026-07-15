@@ -1,26 +1,27 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 5
-- Reassessed: 5/32 = 15.625%
-- Fully finalized in reassessment: 5/32 = 15.625%
-- Next item: Comment 6
+- Reassessed through: Comment 6
+- Reassessed: 6/32 = 18.75%
+- Fully finalized in reassessment: 6/32 = 18.75%
+- Next item: Comment 7
 
-## Latest decision — Comment 5
-The generic phrase `incorporate and manage risk factors` will be removed. BIM will be described through concrete information functions: linking identified hazards to building elements or work zones, visualizing hazard and control locations, storing structured inspection or incident records, associating hazards with preventive measures, and communicating location-specific safety information.
+## Latest decision — Comment 6
+The vague phrase `multiple target formulations/combination` will be replaced by an explicit description of three independently fitted classification analyses based on the same source target column, `ODEME_GUNSAYISI`, under different inclusion and recoding rules. The analyses do not constitute a combined target, multi-output model, or target ensemble.
 
-## Approved replacement
-`In construction-safety applications, BIM has been used as a spatial information layer that links identified hazards to specific building elements or work zones and enables associated safety information—such as inspection or incident records and preventive measures—to be visualized, stored, and communicated [18,19,27].`
+## Verified analysis definitions
+- Analysis 1: 64,999 records, 14 predictors, zero-day class retained, 18 observed payment-day classes.
+- Analysis 2: 13,570 records, the same 14-predictor set, zero-day records excluded, 17 positive payment-day classes.
+- Analysis 3: 64,999 records, the same 14-predictor set, payment-day outcome recoded into four project-defined grouped classes.
 
-## Claims constrained
-- Remove the undefined statement that BIM `manages risk factors`.
-- Remove broad time- and cost-performance claims unless a defined metric and direct study result are provided.
-- Do not imply that BIM independently identifies, controls, or reduces risk.
-- Do not describe OSH-RA as BIM-integrated without implementation evidence.
-- Tie References `[18]`, `[19]`, and `[27]` to their specific augmented-reality, repository, or location-monitoring functions.
+## Terminology boundary
+- Replace `three occupational injury severity models` with `three separate outcome-classification analyses`.
+- Analyses 1 and 2 are payment-day classifications, not injury-severity models.
+- Analysis 3 should be described as a four-class grouped payment-day outcome formulation unless the independent provenance and substantive validity of the severity labels are documented.
+- Do not claim an identical validation protocol across all three analyses until the recorded cross-validation configuration difference is reconciled.
 
-## Cross-comment consistency
-The revised wording retains the full term `augmented reality` under Comment 4 and follows the manuscript-wide rule that information-processing functions must be distinguished from validated safety outcomes.
+## Approved wording
+`To examine how outcome definition and the treatment of zero-day records affected model performance, three separate classification analyses were conducted using the same 14-predictor set. Analysis 1 included all 64,999 records and treated ODEME_GUNSAYISI as an 18-class outcome, including the zero-day class. Analysis 2 excluded zero-day records and classified the remaining 13,570 cases into 17 positive payment-day classes. Analysis 3 retained all 64,999 records but recoded the payment-day outcome into four project-defined grouped categories. The three analyses were fitted and evaluated independently; they do not represent a combined target, a multi-output model, or an ensemble of target definitions.`
 
 ## Next item
-Comment 6 — define exactly what `multiple target formulations` means by naming the three analyses, their target structures, dataset inclusion rules, and analytical purpose.
+Comment 7 — verify the full classifier portfolio and provide concise, technically accurate reasons for selecting the algorithm families used in the comparative analysis.
