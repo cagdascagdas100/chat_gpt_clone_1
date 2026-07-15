@@ -1,29 +1,33 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 8
-- Reassessed: 8/32 = 25.0%
-- Fully finalized in reassessment: 8/32 = 25.0%
-- Next item: Comment 9
+- Reassessed through: Comment 9
+- Reassessed: 9/32 = 28.125%
+- Fully finalized in reassessment: 9/32 = 28.125%
+- Next item: Comment 10
 
-## Latest decision — Comment 8
-The undefined abbreviation `DAFW` will not be used as a synonym for the study target. The auditable Risk 01/02/03 artifacts consistently identify the target column as `ODEME_GUNSAYISI`, while no source-data dictionary or administrative definition establishes equivalence with Days Away From Work.
+## Latest decision — Comment 9
+The modeled outcome will be defined at its first substantive occurrence in the Methods section, immediately after the dataset and predictor description and before preprocessing, class construction, model fitting, or evaluation. The first-use definition will identify the source field `ODEME_GUNSAYISI`, use the neutral term `payment-day outcome`, explain zero-day handling, and distinguish the three independently evaluated class formulations.
 
-## Approved terminology
-- First use: `payment-day outcome (source field: ODEME_GUNSAYISI)`.
-- Analysis 1: `18-class payment-day outcome, including the zero-day class`.
-- Analysis 2: `17-class positive payment-day outcome after exclusion of zero-day records`.
-- Analysis 3: `four-class grouped payment-day outcome derived from ODEME_GUNSAYISI`.
+## Approved first-use wording
+`The modeling target was the source-data field ODEME_GUNSAYISI, referred to in this manuscript as the payment-day outcome. The available project documentation does not establish that this administrative field is equivalent to Days Away From Work, temporary-incapacity duration, financial loss, or absolute accident risk. Three separate classification analyses were therefore defined from this field. Analysis 1 retained all 64,999 records and represented the observed outcome as 18 classes, including the zero-day class. Analysis 2 excluded zero-day records and represented the remaining 13,570 cases as 17 positive payment-day classes. Analysis 3 retained all 64,999 records and recoded the same source field into four project-defined grouped categories. The three outcome formulations were modeled and evaluated independently.`
 
-## Required corrections
-- Remove `DAFW as the target variable` and the joint-target phrase `days away from work and fatalities`.
-- Do not describe Analyses 1 and 2 as continuous-outcome models; the recorded tasks are multiclass classifications.
-- Do not conflate payment days with lost workdays, temporary-incapacity days, compensable days, fatality prediction, accident probability, compensation probability, or financial loss.
-- Rename Section 3.3.4 using payment-day terminology and audit all related tables, figures, equations, captions, and interface labels.
-- Remove `DAFW-monetized` and `DAFW-equivalent days` unless an independently auditable derivation is supplied.
+## Required Methods order
+1. data source and unit of analysis;
+2. predictor set;
+3. target definition and class construction;
+4. preprocessing;
+5. data partitioning and cross-validation;
+6. imbalance handling;
+7. classifiers and tuning;
+8. evaluation metrics;
+9. application-level use of outputs.
 
-## Approved wording
-`The modeling target was the source-data field ODEME_GUNSAYISI. In this manuscript, it is referred to as the payment-day outcome. Because the available project documentation does not establish that this administrative field is equivalent to Days Away From Work, the abbreviation DAFW is not used as a synonym for the modeled target.`
+## Reporting boundaries
+- Do not introduce `DAFW`, target combinations, injury severity, or Model F/E/A before defining the verified source field and analysis rules.
+- Keep the historical-data outcome separate from application risk components and scenario-priority scores.
+- Do not label the four grouped classes as validated clinical or legal severity categories without independent provenance.
+- Reproduce the detailed four-class mapping exactly from auditable project artifacts during manuscript implementation; do not infer missing meanings.
 
 ## Next item
-Comment 9 — introduce the payment-day outcome at its first occurrence and reorganize the surrounding Methods text so that the target definition, zero-day handling, and analysis-specific recoding are explained before later use.
+Comment 10 — replace the non-sequential Model F/E/A labels with a clear and consistent Analysis 1/2/3 nomenclature and audit every occurrence across text, figures, tables, and captions.
