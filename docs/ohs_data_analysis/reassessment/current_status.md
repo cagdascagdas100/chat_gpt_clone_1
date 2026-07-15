@@ -1,33 +1,27 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 9
-- Reassessed: 9/32 = 28.125%
-- Fully finalized in reassessment: 9/32 = 28.125%
-- Next item: Comment 10
+- Reassessed through: Comment 10
+- Reassessed: 10/32 = 31.25%
+- Fully finalized in reassessment: 10/32 = 31.25%
+- Next item: Comment 11
 
-## Latest decision — Comment 9
-The modeled outcome will be defined at its first substantive occurrence in the Methods section, immediately after the dataset and predictor description and before preprocessing, class construction, model fitting, or evaluation. The first-use definition will identify the source field `ODEME_GUNSAYISI`, use the neutral term `payment-day outcome`, explain zero-day handling, and distinguish the three independently evaluated class formulations.
+## Latest decision — Comment 10
+The unexplained labels `Model F`, `Model E`, and `Model A` will be retired. They will not be replaced by `Model A/B/C`, because each label denotes a separate outcome-classification analysis in which multiple classifiers were evaluated rather than a single fitted model.
 
-## Approved first-use wording
-`The modeling target was the source-data field ODEME_GUNSAYISI, referred to in this manuscript as the payment-day outcome. The available project documentation does not establish that this administrative field is equivalent to Days Away From Work, temporary-incapacity duration, financial loss, or absolute accident risk. Three separate classification analyses were therefore defined from this field. Analysis 1 retained all 64,999 records and represented the observed outcome as 18 classes, including the zero-day class. Analysis 2 excluded zero-day records and represented the remaining 13,570 cases as 17 positive payment-day classes. Analysis 3 retained all 64,999 records and recoded the same source field into four project-defined grouped categories. The three outcome formulations were modeled and evaluated independently.`
+## Locked nomenclature
+- Analysis 1: all 64,999 records; zero-day class retained; 18 observed payment-day classes.
+- Analysis 2: zero-day records excluded; 13,570 records; 17 positive payment-day classes.
+- Analysis 3: all 64,999 records; four project-defined grouped classes derived from `ODEME_GUNSAYISI`.
 
-## Required Methods order
-1. data source and unit of analysis;
-2. predictor set;
-3. target definition and class construction;
-4. preprocessing;
-5. data partitioning and cross-validation;
-6. imbalance handling;
-7. classifiers and tuning;
-8. evaluation metrics;
-9. application-level use of outputs.
+## Naming rule
+The manuscript will distinguish the analysis, classifier, preprocessing/imbalance configuration, selected configuration, and downstream application output. A result will therefore be reported as, for example, `the selected [classifier/configuration] within Analysis 1`, not as `Model F` or simply `Analysis 1 achieved...`.
 
-## Reporting boundaries
-- Do not introduce `DAFW`, target combinations, injury severity, or Model F/E/A before defining the verified source field and analysis rules.
-- Keep the historical-data outcome separate from application risk components and scenario-priority scores.
-- Do not label the four grouped classes as validated clinical or legal severity categories without independent provenance.
-- Reproduce the detailed four-class mapping exactly from auditable project artifacts during manuscript implementation; do not infer missing meanings.
+## Required audit
+The mapping will be applied across Methods, Results, Discussion, Conclusion, tables, figures, captions, panel labels, legends, axes, equations, supplementary material, cross-references, and publication-facing filenames. Historical raw-artifact filenames may be retained for provenance but must be mapped explicitly in the revision record.
+
+## Reporting boundary
+Raw performance values from the three analyses will not be treated as directly interchangeable without acknowledging their different record-inclusion rules and class structures. Legacy letters will not be converted by visual order alone; each occurrence must be verified against sample size and target definition.
 
 ## Next item
-Comment 10 — replace the non-sequential Model F/E/A labels with a clear and consistent Analysis 1/2/3 nomenclature and audit every occurrence across text, figures, tables, and captions.
+Comment 11 — identify the abbreviation requiring expansion, verify whether the reported quantity is class-support-weighted average precision rather than trapezoidal AUPRC, and align the metric name, definition, and interpretation across the manuscript.
