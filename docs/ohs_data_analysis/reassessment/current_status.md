@@ -1,27 +1,25 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 10
-- Reassessed: 10/32 = 31.25%
-- Fully finalized in reassessment: 10/32 = 31.25%
-- Next item: Comment 11
+- Reassessed through: Comment 11
+- Reassessed: 11/32 = 34.375%
+- Fully finalized in reassessment: 11/32 = 34.375%
+- Next item: Comment 12
 
-## Latest decision — Comment 10
-The unexplained labels `Model F`, `Model E`, and `Model A` will be retired. They will not be replaced by `Model A/B/C`, because each label denotes a separate outcome-classification analysis in which multiple classifiers were evaluated rather than a single fitted model.
+## Latest decision — Comment 11
+The undefined precision–recall abbreviation will be corrected to the metric name supported by the project artifacts. The machine-readable outputs use `average_precision`, `average_precision_weighted`, and `average_precision_macro`, while `AUPRC` appears only as a presentation label. In the absence of documented curve-area integration, the manuscript will report `class-support-weighted average precision (weighted AP)` and `macro-average precision (macro AP)` rather than AUPRC or PR-AUC.
 
-## Locked nomenclature
-- Analysis 1: all 64,999 records; zero-day class retained; 18 observed payment-day classes.
-- Analysis 2: zero-day records excluded; 13,570 records; 17 positive payment-day classes.
-- Analysis 3: all 64,999 records; four project-defined grouped classes derived from `ODEME_GUNSAYISI`.
+## Interpretation rule
+- Weighted AP is the class-support-weighted mean of class-specific one-versus-rest AP values.
+- Macro AP gives each class equal weight.
+- Weighted AP must be interpreted with macro AP and the DummyMajority baseline because frequent classes can dominate the weighted summary.
+- AP is a ranking/discrimination metric; it is not accuracy, calibration, absolute accident probability, or application-level validation.
 
-## Naming rule
-The manuscript will distinguish the analysis, classifier, preprocessing/imbalance configuration, selected configuration, and downstream application output. A result will therefore be reported as, for example, `the selected [classifier/configuration] within Analysis 1`, not as `Model F` or simply `Analysis 1 achieved...`.
+## Approved first-use wording
+`Model discrimination was assessed primarily using class-support-weighted average precision (weighted AP), calculated as the support-weighted mean of the one-versus-rest average-precision values across outcome classes. Macro-average precision (macro AP), which assigns equal weight to each class, was reported as a complementary measure of performance across minority and majority classes.`
 
 ## Required audit
-The mapping will be applied across Methods, Results, Discussion, Conclusion, tables, figures, captions, panel labels, legends, axes, equations, supplementary material, cross-references, and publication-facing filenames. Historical raw-artifact filenames may be retained for provenance but must be mapped explicitly in the revision record.
-
-## Reporting boundary
-Raw performance values from the three analyses will not be treated as directly interchangeable without acknowledging their different record-inclusion rules and class structures. Legacy letters will not be converted by visual order alone; each occurrence must be verified against sample size and target definition.
+Replace publication-facing `AUPRC (weighted)` and `AUPRC (macro)` labels in the text, tables, figures, captions, and regenerated spreadsheet outputs. Keep AP distinct from AUROC, F1, accuracy, Brier score, and ECE.
 
 ## Next item
-Comment 11 — identify the abbreviation requiring expansion, verify whether the reported quantity is class-support-weighted average precision rather than trapezoidal AUPRC, and align the metric name, definition, and interpretation across the manuscript.
+Comment 12 — verify whether any implemented large-language-model component has an auditable provider, model name, version, prompt protocol, runtime integration, or provenance record; otherwise remove the model-name/version requirement by deleting the unsupported LLM implementation claim.
