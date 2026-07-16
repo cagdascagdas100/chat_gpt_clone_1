@@ -1,22 +1,26 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 15
-- Reassessed: 15/32 = 46.875%
-- Fully finalized in reassessment: 15/32 = 46.875%
-- Next item: Comment 16
+- Reassessed through: Comment 16
+- Reassessed: 16/32 = 50.0%
+- Fully finalized in reassessment: 16/32 = 50.0%
+- Next item: Comment 17
 
-## Latest decision — Comment 15
-The unsupported expressions `over 1,800 headings` and `approximately 500 construction-related items` will be removed. The archived project package contains no reproducible machine-dictionary export, counting script, version record, deduplication protocol, or documented construction-selection rule from which exact totals can be derived. Reporting guessed exact numbers would create false precision.
+## Latest decision — Comment 16
+The equation system requires a validity audit before symbol definitions are added. Sixteen numbered equations were reviewed. Unsupported equations will be removed; retained equations will use score/component notation rather than ambiguous `RC` coefficients and will define every symbol, source, scale, direction, unit of analysis, and interpretation immediately after the equation.
 
-## Approved replacement
-`Construction-related machinery and equipment were organized in a project-specific classification comprising five domains: (1) building and infrastructure machinery, (2) hand tools and portable machinery, (3) production and manufacturing machinery, (4) transport vehicles and logistics equipment, and (5) environmental hazards and hazardous substances.`
+## Locked mathematical corrections
+- Delete the undocumented feasibility-adjusted-frequency equation unless its original code and complete `G → λ` mapping are supplied.
+- Retain category/component geometric-mean equations only with common-scale inputs and explicit notation for work area, operated machine, injury region, and injury type.
+- Correct the malformed injury-type subscript that renders as `RC¿`.
+- Delete the unsupported 0.10/0.90 internal–external composite.
+- Use `r` for body region, `k` for within-region rank, and `λ` for normalized rank decay.
+- Report region-specific aggregates separately; delete the across-region `Risk_Overall` equations.
+- Remove indemnity/CVaR equations unless their event definitions, calibrated probabilities, cost units, time horizon, and estimator are auditable.
+- Retain allowance formulas only with an authoritative legal source, effective period, jurisdiction, and output units.
 
-## Evidence rule for all taxonomy counts
-- Retain a numerical count only when the source snapshot, counting unit, inclusion criteria, duplicate-handling rule, and exact reproducible total are documented.
-- Otherwise describe the classification qualitatively.
-- Apply the same audit to the claims of 61 sub-work areas, 10 headings, about 4,000 entries, 12 classes, 162 sub-work areas, approximately 16,000 options, and three alternative names.
-- Keep the project-specific machine taxonomy separate from NACE Rev. 2, which classifies economic activities rather than machinery.
+## Interpretation boundary
+Derived scores are not probabilities, exposure rates, causal effects, regression coefficients, or validated personal-risk percentages. A value may be presented as a percentage only when an explicit and validated transformation to a bounded 0–100 scale is documented.
 
 ## Next item
-Comment 16 — define every symbol after each equation, resolve inconsistent notation and symbol collisions, and state the scale, direction, unit of analysis, and interpretation of every derived quantity.
+Comment 17 — determine whether any empirical, expert-elicitation, legal, or validation basis supports weighting the internal component by 0.10 and the external component by 0.90; otherwise remove the weighted composite and report the components separately.
