@@ -45,6 +45,12 @@ SLOT_IDS = (
     ("security_public_safety", "Security"),
     ("parcel_label", "Parcel Label"),
 )
+V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_5_WORKER.ps1"
+V2_STATE_ROOT = PORTABLE_ROOT / "state"
+V2_STATUS = V2_STATE_ROOT / "coordinator_status_latest.json"
+V2_HEARTBEAT = V2_STATE_ROOT / "coordinator_heartbeat_latest.json"
+V2_LOCK = V2_STATE_ROOT / "coordinator.lock.json"
+V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
 POWERSHELL = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
@@ -151,11 +157,13 @@ class AaysPanel(tk.Tk):
             ("Uygulamayı Başlat", self.start_app_only),
             ("Uygulamayı Aç", self.start_app_and_open),
             ("Tek Runner Başlat", self.start_runner),
+            ("Runner'ı Durdur", self.stop_runner),
+            ("Runner'ı Yeniden Başlat", self.restart_runner),
             ("Durumu Yenile", self.refresh_status),
         ]
         for idx, (label, command) in enumerate(buttons):
-            ttk.Button(grid, text=label, command=command).grid(row=0, column=idx, padx=4, pady=4, sticky="ew")
-            grid.columnconfigure(idx, weight=1)
+            ttk.Button(grid, text=label, command=command).grid(row=idx // 3, column=idx % 3, padx=4, pady=4, sticky="ew")
+            grid.columnconfigure(idx % 3, weight=1)
 
         links = ttk.LabelFrame(root, text="Sabit Linkler", padding=12)
         links.pack(fill="x", pady=(12, 0))
@@ -246,38 +254,42 @@ class AaysPanel(tk.Tk):
 
     def start_runner(self) -> None:
         self.set_status("Tek runner recovery ve gerçek smoke testi başlatılıyor")
-        bootstrap = self.run_powershell(SLOT_BOOTSTRAP_SCRIPT, [])
-        if bootstrap is None:
-            return
-        threading.Thread(target=self._start_runner_after_slot_bootstrap, args=(bootstrap,), daemon=True).start()
+        process = self.run_powershell(V2_LAUNCHER, ["-Action", "Start"])
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "başlatıldı"), daemon=True).start()
 
-    def _start_runner_after_slot_bootstrap(self, bootstrap: subprocess.Popen) -> None:
+    def stop_runner(self) -> None:
+        self.set_status("Coordinator güvenli durdurma ve checkpoint flush başlatılıyor")
+        process = self.run_powershell(V2_LAUNCHER, ["-Action", "Stop"])
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "durduruldu"), daemon=True).start()
+
+    def restart_runner(self) -> None:
+        self.set_status("Coordinator checkpointten yeniden başlatılıyor")
+        process = self.run_powershell(V2_LAUNCHER, ["-Action", "Restart"])
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "yeniden başlatıldı"), daemon=True).start()
+
+    def _wait_for_runner_action(self, process: subprocess.Popen, success_text: str) -> None:
         try:
-            exit_code = bootstrap.wait(timeout=90)
+            exit_code = process.wait(timeout=150)
         except subprocess.TimeoutExpired:
-            self.after(0, lambda: self.set_status("5 slot dogrulamasi zaman asimina ugradi; runner baslatilmadi"))
+            self.after(0, lambda: self.set_status("Runner işlemi zaman aşımına uğradı; logu kontrol edin"))
             return
-        if exit_code != 0:
-            self.after(0, lambda: self.set_status(f"5 slot dogrulamasi basarisiz (exit {exit_code}); runner baslatilmadi"))
-            return
-        if RUNNER_CMD.exists():
-            subprocess.Popen(["cmd.exe", "/c", str(RUNNER_CMD)], cwd=str(PORTABLE_ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE)
+        if exit_code == 0:
+            self.after(0, lambda: self.set_status(f"Coordinator {success_text}"))
         else:
-            self.run_powershell(RUNNER_SCRIPT, [])
-        self.after(0, lambda: self.set_status("5 slot hazir; mevcut tek runner baslatildi veya zaten aktif"))
-        self.after(5000, self.refresh_status)
+            self.after(0, lambda: self.set_status(f"Runner işlemi başarısız (exit {exit_code})"))
+        self.after(1000, self.refresh_status)
 
     def read_slot_info(self, slot_id: str) -> dict:
-        manifest = read_json(SLOT_MANIFEST)
-        status = read_json(SLOT_ROOT / slot_id / "status_latest.json")
-        ownership = read_json(SLOT_ROOT / slot_id / "ownership_latest.json")
-        heartbeat = read_json(SLOT_ROOT / slot_id / "heartbeat_latest.json")
-        checkpoint = read_json(SLOT_ROOT / slot_id / "checkpoint_latest.json")
+        status = read_json(V2_SLOT_ROOT / slot_id / "status_latest.json")
+        heartbeat = read_json(V2_SLOT_ROOT / slot_id / "heartbeat_latest.json")
+        checkpoint = read_json(V2_SLOT_ROOT / slot_id / "checkpoint_latest.json")
+        current = read_json(V2_SLOT_ROOT / slot_id / "current_task_latest.json")
         valid = (
-            manifest.get("workstream_id") == "AAYS_5_SLOT_SAFE_PARALLEL_V1"
-            and int(manifest.get("slot_count") or 0) == 5
+            status.get("workstream_id") == "AAYS_5_SLOT_SAFE_PARALLEL_V1"
             and status.get("slot_id") == slot_id
-            and ownership.get("slot_id") == slot_id
             and checkpoint.get("slot_id") == slot_id
         )
         age = utc_age_seconds(heartbeat.get("heartbeat_at"))
@@ -285,8 +297,8 @@ class AaysPanel(tk.Tk):
         return {
             "valid": valid,
             "state": status.get("state", "missing"),
-            "owner": ownership.get("owner_page_session_id"),
-            "task": status.get("current_task_id"),
+            "owner": current.get("attempt_id"),
+            "task": current.get("task_id"),
             "step": checkpoint.get("first_unverified_step", "missing"),
             "heartbeat_live": live,
         }
@@ -306,6 +318,28 @@ class AaysPanel(tk.Tk):
             self.slot_vars[slot_id].set(text)
 
     def read_runner_info(self) -> dict:
+        v2_status = read_json(V2_STATUS)
+        v2_heartbeat = read_json(V2_HEARTBEAT)
+        v2_lock = read_json(V2_LOCK)
+        if v2_status or v2_lock:
+            runner_pid = v2_lock.get("pid") or v2_status.get("coordinator_pid")
+            heartbeat_age = utc_age_seconds(v2_heartbeat.get("heartbeat_at"))
+            alive = pid_alive(runner_pid)
+            fresh = heartbeat_age is not None and heartbeat_age <= 45
+            return {
+                "status": "HEALTHY" if alive and fresh else ("STALE" if alive else "FAILED"),
+                "pid": runner_pid,
+                "pid_alive": alive,
+                "ready": alive and fresh,
+                "heartbeat_age": heartbeat_age,
+                "queue_scan_count": 0,
+                "queue_ready_count": 0,
+                "current_task_id": ", ".join(v2_status.get("active_tasks", {}).values()) or None,
+                "active_workers": int(v2_status.get("active_workers") or 0),
+                "max_child_workers": 5,
+                "consecutive_failures": 0,
+                "blocker": None,
+            }
         bootstrap = read_json(RUNNER_STATUS)
         daemon = read_json(RUNNER_DAEMON_STATUS)
         lock = read_json(RUNNER_LOCK)
@@ -365,6 +399,7 @@ class AaysPanel(tk.Tk):
             age = int(info.get("heartbeat_age") or 0)
             self.runner_var.set(
                 f"Runner: HEALTHY - PID {info.get('pid')} - heartbeat {age} sn - "
+                f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 5)} - "
                 f"queue {info.get('queue_ready_count')}/{info.get('queue_scan_count')} - "
                 f"aktif görev {info.get('current_task_id') or '-'}"
             )
