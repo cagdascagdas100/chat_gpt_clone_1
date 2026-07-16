@@ -1,30 +1,22 @@
 # OHS Manuscript Revision — Reassessment Status
 
 - Total reviewer comments: 32
-- Reassessed through: Comment 14
-- Reassessed: 14/32 = 43.75%
-- Fully finalized in reassessment: 14/32 = 43.75%
-- Next item: Comment 15
+- Reassessed through: Comment 15
+- Reassessed: 15/32 = 46.875%
+- Fully finalized in reassessment: 15/32 = 46.875%
+- Next item: Comment 16
 
-## Latest decision — Comment 14
-NACE will be defined at first use as the `Statistical Classification of Economic Activities in the European Community, Revision 2 (NACE Rev. 2)`. The manuscript will explain that NACE is an economic-activity classification used to delimit the construction-sector scope, not a taxonomy of work areas, machinery, hazards, or injuries.
+## Latest decision — Comment 15
+The unsupported expressions `over 1,800 headings` and `approximately 500 construction-related items` will be removed. The archived project package contains no reproducible machine-dictionary export, counting script, version record, deduplication protocol, or documented construction-selection rule from which exact totals can be derived. Reporting guessed exact numbers would create false precision.
 
-## Approved scope description
-- Section F: Construction.
-- Division 41: Construction of buildings.
-- Division 42: Civil engineering.
-- Division 43: Specialised construction activities.
+## Approved replacement
+`Construction-related machinery and equipment were organized in a project-specific classification comprising five domains: (1) building and infrastructure machinery, (2) hand tools and portable machinery, (3) production and manufacturing machinery, (4) transport vehicles and logistics equipment, and (5) environmental hazards and hazardous substances.`
 
-## Required corrections
-- Replace `at three code levels` because 41–43 are three two-digit divisions at the same hierarchical level.
-- Remove wording that machines were mapped to the NACE hierarchy; the project-defined machine classification must remain separate.
-- Avoid `automatic assignment` unless the linkage field and procedure are documented.
-- Review Figure 3 and rename it if it represents sector scope rather than work-area classification.
-- Add an authoritative NACE Rev. 2 source.
-- Do not treat NACE as an exposure denominator or a basis for worker-, machine-, or hazard-specific risk estimates.
-
-## Approved wording
-`Construction-sector records were delimited using the Statistical Classification of Economic Activities in the European Community, Revision 2 (NACE Rev. 2). Under NACE Rev. 2, construction is classified in Section F and comprises the two-digit divisions 41 (Construction of buildings), 42 (Civil engineering), and 43 (Specialised construction activities). The NACE code was used only to identify the economic activity associated with each record; work areas, machinery, hazards, and injury characteristics were classified separately.`
+## Evidence rule for all taxonomy counts
+- Retain a numerical count only when the source snapshot, counting unit, inclusion criteria, duplicate-handling rule, and exact reproducible total are documented.
+- Otherwise describe the classification qualitatively.
+- Apply the same audit to the claims of 61 sub-work areas, 10 headings, about 4,000 entries, 12 classes, 162 sub-work areas, approximately 16,000 options, and three alternative names.
+- Keep the project-specific machine taxonomy separate from NACE Rev. 2, which classifies economic activities rather than machinery.
 
 ## Next item
-Comment 15 — replace the unsupported approximate equipment-count claims with exact, auditable counts from the classification source or remove the numbers if they cannot be reproduced.
+Comment 16 — define every symbol after each equation, resolve inconsistent notation and symbol collisions, and state the scale, direction, unit of analysis, and interpretation of every derived quantity.
