@@ -126,6 +126,7 @@ class AaysPanel(tk.Tk):
         self.app_var = tk.StringVar(value="App: kontrol edilmedi")
         self.runner_var = tk.StringVar(value="Runner: kontrol edilmedi")
         self.path_var = tk.StringVar(value=f"Portable root: {PORTABLE_ROOT}")
+        self.safe_remove_var = tk.StringVar(value="Güvenli disk çıkarma: kontrol edilmedi")
         self.slot_vars = {
             slot_id: tk.StringVar(value=f"{label}: kontrol edilmedi")
             for slot_id, label in SLOT_IDS
@@ -177,6 +178,7 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.app_var, style="Status.TLabel").pack(anchor="w")
         ttk.Label(status, textvariable=self.runner_var, style="Status.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.path_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
+        ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
         slots = ttk.LabelFrame(root, text="5 Slot Durumu", padding=12)
@@ -337,6 +339,7 @@ class AaysPanel(tk.Tk):
                 "current_task_id": ", ".join(v2_status.get("active_tasks", {}).values()) or None,
                 "active_workers": int(v2_status.get("active_workers") or 0),
                 "max_child_workers": 5,
+                "coordinator_state": v2_status.get("state", "NOT_STARTED"),
                 "consecutive_failures": 0,
                 "blocker": None,
             }
@@ -416,6 +419,10 @@ class AaysPanel(tk.Tk):
             )
         else:
             self.runner_var.set(f"Runner: FAILED/KAPALI - {info.get('blocker') or info.get('status')}")
+        if info.get("coordinator_state") == "STOPPED_CLEAN" and not info.get("pid_alive"):
+            self.safe_remove_var.set("Güvenli disk çıkarma: EVET")
+        else:
+            self.safe_remove_var.set("Güvenli disk çıkarma: HAYIR - önce Runner'ı Durdur")
         self.refresh_slot_status()
         self.set_status("Durum yenilendi")
 

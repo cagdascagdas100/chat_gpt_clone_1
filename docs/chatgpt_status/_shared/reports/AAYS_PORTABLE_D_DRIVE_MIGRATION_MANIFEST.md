@@ -1,0 +1,22 @@
+# AAYS Portable Location and Cutover Manifest
+
+- REQUESTED_FINAL_LOCATION: `F portable disk only`
+- D_INSTALL_CANCELLED_BY_USER: `true`
+- D_TARGET_CREATED: `false`
+- F_PORTABLE_ROOT_RUNTIME_DIAGNOSTIC: `F:\TerraYield_AAYS_Portable`
+- PERSISTED_DRIVE_LETTER: `none`
+- ROOT_RESOLUTION: launcher `%~dp0`, PowerShell `$PSScriptRoot`, Python `Path(__file__).resolve()`
+- IDENTITY: `.aays_portable_identity.json`, schema 2
+- F_SOURCE_DELETED_OR_MOVED: `false`
+- V1_BACKUP: `F:\TerraYield_AAYS_Portable\_portable_backups\adaptive_v2_20260716_172128`
+- PANEL_BACKUP: `F:\TerraYield_AAYS_Portable\_portable_backups\adaptive_v2_panel_20260716_175907`
+- FAILED_STAGING_QUARANTINE: `F:\TerraYield_AAYS_Portable\recovery\quarantine\global\adaptive_v2_failed_promisor_20260716_171335`
+- SUCCESS_STAGING_MANIFEST: `F:\TerraYield_AAYS_Portable\_v2_staging\20260716_172128\staging_sha256_manifest.json`
+- PUBLISHER_RELATIVE: `runner_system\adaptive_v2\publisher`
+- WORKTREE_ROOT_RELATIVE: `runner_system\adaptive_v2\worktrees`
+- SLOT_CLONES: `ready_to_sell`, `gas_emissions`, `height_difference`, `security_public_safety`, `parcel_label`
+- SLOT_BASE_HEAD: `b728543a91c6716a92c8ebf052bd8162e7a4e4a1`
+- CHILD_PUSH_URL: `DISABLED_CHILD_DIRECT_PUSH`
+- CUTOVER: atomic per-file root payload replace plus atomic adaptive_v2 directory rename
+- ROLLBACK: restore root files from V1 backup; preserve state, journal, quarantine and business output
+- FINAL_READY: `false`
