@@ -220,6 +220,8 @@ class Coordinator:
         self.active_paths: dict[str, list[str]] = {}
         self.active_tasks: dict[str, dict[str, Any]] = {}
         self.seen_task_ids: set[str] = set()
+        self.last_remote_refresh = 0.0
+        self.remote_sync: dict[str, Any] = {"state": "NOT_RUN", "head": None, "error": None}
 
     def selected_limits(self) -> dict[str, int]:
         limits = dict(DEFAULT_LIMITS)
@@ -445,6 +447,7 @@ class Coordinator:
                 "max_child_workers": 5,
                 "active_tasks": active,
                 "resource_limits": self.resources.limits,
+                "remote_sync": self.remote_sync,
                 "portable_root": str(self.root),
                 "portable_root_is_runtime_diagnostic": True,
                 "updated_at": utc_now(),
@@ -480,6 +483,58 @@ class Coordinator:
                     found.append((path, task))
         return found
 
+    def refresh_publisher(self, force: bool = False) -> dict[str, Any]:
+        if not force and time.monotonic() - self.last_remote_refresh < 60:
+            return self.remote_sync
+        self.last_remote_refresh = time.monotonic()
+        status = subprocess.run(
+            ["git", "-C", str(self.repo), "status", "--porcelain", "--untracked-files=no"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if status.returncode != 0 or status.stdout.strip():
+            self.remote_sync = {"state": "WAITING_GIT_CLEAN_PUBLISHER", "head": None, "error": status.stderr.strip() or status.stdout.strip()}
+            return self.remote_sync
+        fetch = subprocess.run(
+            ["git", "-C", str(self.repo), "fetch", "--depth=1", "origin", str(self.identity["branch"])],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if fetch.returncode != 0:
+            self.remote_sync = {"state": "WAITING_FOR_NETWORK_OR_GIT_AUTH", "head": None, "error": fetch.stderr.strip()}
+            return self.remote_sync
+        checkout = subprocess.run(
+            ["git", "-C", str(self.repo), "checkout", "--detach", "FETCH_HEAD"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if checkout.returncode != 0:
+            self.remote_sync = {"state": "WAITING_GIT_CHECKOUT", "head": None, "error": checkout.stderr.strip()}
+            return self.remote_sync
+        head = subprocess.run(
+            ["git", "-C", str(self.repo), "rev-parse", "HEAD"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        ).stdout.strip()
+        self.remote_sync = {"state": "PASS", "head": head, "error": None, "refreshed_at": utc_now()}
+        return self.remote_sync
+
+    def refresh_child(self, worktree: Path) -> None:
+        status = subprocess.run(
+            ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=no"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if status.returncode != 0 or status.stdout.strip():
+            raise RuntimeError("CHILD_WORKTREE_NOT_CLEAN_FOR_REMOTE_REFRESH")
+        fetch = subprocess.run(
+            ["git", "-C", str(worktree), "fetch", "--depth=1", "origin", str(self.identity["branch"])],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if fetch.returncode != 0:
+            raise RuntimeError(f"CHILD_REMOTE_REFRESH_FAILED: {fetch.stderr.strip()}")
+        checkout = subprocess.run(
+            ["git", "-C", str(worktree), "checkout", "--detach", "FETCH_HEAD"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        )
+        if checkout.returncode != 0:
+            raise RuntimeError(f"CHILD_REMOTE_CHECKOUT_FAILED: {checkout.stderr.strip()}")
+
     def execute_task(self, source: Path, task: dict[str, Any]) -> dict[str, Any]:
         slot_id = self.classify_task(task)
         write_paths = [str(value) for value in task["exact_write_paths"]]
@@ -512,6 +567,7 @@ class Coordinator:
                     {**task, "state": "RUNNING", "started_at": utc_now(), "final_ready": False},
                 )
                 worktree = self.worktrees / "slots" / slot_id
+                self.refresh_child(worktree)
                 sparse_roots = sorted(
                     {
                         normalize_repo_path(value).split("/", 1)[0]
@@ -572,6 +628,7 @@ class Coordinator:
 
     def run(self) -> int:
         self.initialize_state()
+        self.refresh_publisher(force=True)
         self.hydrate_checkpoints()
         acquired, lock = self.acquire_lock()
         if not acquired:
@@ -588,6 +645,7 @@ class Coordinator:
                     self.stop_event.set()
                     break
                 self.heartbeat()
+                self.refresh_publisher()
                 for source, task in self.scan_tasks():
                     if len(futures) >= 5:
                         break
