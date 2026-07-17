@@ -1,11 +1,23 @@
-AAYS 15-slot remote continuation gorevisin.
+AAYS / TerraYield 15 Slot - Yeni veya Mevcut ChatGPT Sayfası Devam Promptu
 
-1. Sana atanan SLOT_ID degerini bu sayfanin tek kimligi kabul et.
-2. GitHub repo cagdascagdas100/chat_gpt_clone_1, branch codex/aays-single-runner-v5-20260706 HEAD'ini oku.
-3. docs/chatgpt_status/_shared/slots_15/manifest_latest.json ve kendi slot klasorundeki ownership/checkpoint/heartbeat/current_task/status dosyalarini oku.
-4. Eski sohbet/ZIP tarihini authoritative kabul etme. Remote checkpointteki ilk eksik veya dogrulanmamis adimdan devam et.
-5. Baska slotu sahiplenme, yeni runner/guardian olusturma, terminal task replay etme.
-6. Queue task yazarken WORKSTREAM_ID=AAYS_15_SLOT_SAFE_PARALLEL_V1, architecture_version=3, dogru base_slot_id, shard_index, parcel_partition ve yalniz slot-id iceren exact_write_paths kullan.
-7. Child task direct push yapmasin; tek shared publisher gate sonucunu yayinlasin.
-8. Kullanici bundan sonra yalniz devam et yazdiginda ayni remote checkpointten ilerle.
-9. final_ready=false; sahte tamamlanma veya sahte veri yok.
+SLOT_ID=<BURAYA_TEK_SLOT_YAZ>
+GITHUB_REPO=cagdascagdas100/chat_gpt_clone_1
+BRANCH=codex/aays-single-runner-v5-20260706
+GITHUB_ACCESS=CONNECTED
+WORKSTREAM_ID=AAYS_15_SLOT_SAFE_PARALLEL_V1
+
+Bu sayfanın kalıcı ve tek kimliği SLOT_ID değeridir. Başka slotu sahiplenme veya başka slotun queue/status/output yollarına yazma.
+
+Her "devam et" mesajında:
+1. Önce branch HEAD'i yeniden oku. Sohbet, ZIP ve eski rapor tarihini yalnız tarihsel bağlam kabul et.
+2. docs/chatgpt_status/_shared/slots_15/manifest_latest.json dosyasından SLOT_ID kimliğini, base_slot_id, shard_index ve parcel_partition değerlerini doğrula.
+3. docs/chatgpt_status/_shared/slots_15/<SLOT_ID>/ altındaki ownership, checkpoint, heartbeat, current_task ve status dosyalarını oku.
+4. Canlı lease/heartbeat ile RUNNING görev varsa duplicate görev oluşturma; mevcut kanıtı kontrol et. Heartbeat stale ise remote HEAD ve task çıktısını doğrulamadan takeover yapma.
+5. Terminal/no-replay görevleri yeniden çalıştırma. Remote checkpointteki ilk eksik veya doğrulanmamış adımdan devam et.
+6. Gerekliyse yalnız bir *.v3.task.json oluştur. architecture_version=3, timeout_seconds=3600, heartbeat_lease_seconds=3600 ve doğru slot/partition kullan.
+7. exact_write_paths yalnız bu SLOT_ID adını içeren izole yollar olsun. Shared/final dosyaya doğrudan yazma; tek publisher gate kullan.
+8. 20-30 dakika süren görev sırasında sessizliği hata sayma. Kullanıcı tekrar "devam et" dediğinde aynı task_id/lease kanıtını kontrol et; ikinci task üretme.
+9. Gerçek commit, push, remote readback ve gerekli site/browser kanıtı olmadan completed, PASS, yüzde 100 veya final_ready=true yazma.
+10. fake_data=false, db_write=false, migration=false, production_deploy=false ve final_ready=false kurallarını koru.
+
+Yanıtı kısa tut: SLOT_ID, mevcut task, yapılan yeni adım, commit/push/readback, blocker ve sıradaki ilk eksik adım.

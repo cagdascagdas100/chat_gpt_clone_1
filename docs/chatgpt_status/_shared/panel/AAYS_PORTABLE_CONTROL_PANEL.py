@@ -89,8 +89,15 @@ def now_text() -> str:
 def is_http_ok(url: str, timeout: float = 2.5) -> tuple[bool, str]:
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
-            code = getattr(response, "status", 0)
-            return 200 <= int(code) < 500, f"HTTP {code}"
+            code = int(getattr(response, "status", 0))
+            body = response.read().decode("utf-8", errors="replace")
+            if code != 200:
+                return False, f"HTTP {code}"
+            if url == HEALTH_URL:
+                payload = json.loads(body)
+                valid = payload.get("status") == "ok" and payload.get("app") == "TerraYield Land Intelligence"
+                return valid, "HTTP 200 TerraYield" if valid else "HTTP 200 fakat TerraYield sağlık yanıtı değil"
+            return True, "HTTP 200"
     except Exception as exc:
         return False, str(exc)
 
@@ -213,7 +220,7 @@ class AaysPanel(tk.Tk):
         text_box.pack(fill="x", pady=(12, 0))
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
-            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 5 Slot Başlat düğmesini kullanın. "
+            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 15 Slot Başlat düğmesini kullanın. "
             "Uygulama URL'si sabittir: 127.0.0.1:8012. 15 Slot Runner Başlat düğmesi gerçek runner recovery ve GitHub smoke testini çalıştırır; sağlıklı runner varsa ikinci runner açmaz."
         )
         ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=1000, justify="left").pack(anchor="w")

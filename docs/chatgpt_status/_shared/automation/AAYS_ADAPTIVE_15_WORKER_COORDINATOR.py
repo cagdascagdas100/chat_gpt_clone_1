@@ -16,14 +16,17 @@ import sys
 import threading
 import time
 import uuid
+import urllib.request
 from contextlib import ExitStack, contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
 WORKSTREAM_ID = "AAYS_15_SLOT_SAFE_PARALLEL_V1"
 ARCHITECTURE_VERSION = 3
+TASK_LEASE_SECONDS = 3600
+MAX_TASK_TIMEOUT_SECONDS = 7200
 BASE_SLOT_SPECS = {
     "ready_to_sell": {
         "page_key": "aays1",
@@ -293,6 +296,8 @@ class Coordinator:
         self.status_path = self.state / "coordinator_status_latest.json"
         self.control_path = self.state / "control_latest.json"
         self.preflight_path = self.state / "portable_preflight_latest.json"
+        self.publish_queue = self.state / "publish_queue"
+        self.publish_archive = self.state / "publish_archive"
         self.stop_event = threading.Event()
         self.instance_id = uuid.uuid4().hex
         self.memory_gb = total_memory_gb()
@@ -301,6 +306,7 @@ class Coordinator:
         self.resources = ResourceManager(resource_limits)
         self.git_executable = find_git_executable(self.root)
         self.active_lock = threading.Lock()
+        self.publish_lock = threading.Lock()
         self.active_paths: dict[str, list[str]] = {}
         self.active_tasks: dict[str, dict[str, Any]] = {}
         self.seen_task_ids: set[str] = set()
@@ -335,14 +341,64 @@ class Coordinator:
 
     def preflight(self) -> dict[str, Any]:
         self.state.mkdir(parents=True, exist_ok=True)
+        resolved_python = Path(sys.executable).resolve()
+        portable_python = resolved_python.is_file() and (
+            resolved_python == (self.root / "runtime" / "python312" / "python.exe").resolve()
+            or resolved_python == (self.root / "runtime" / "python" / "python.exe").resolve()
+        )
+        slot_worktrees = [self.worktree_for_slot(slot_id) for slot_id in SLOT_SPECS]
+        relative_identity_paths = all(
+            value and not Path(str(value)).is_absolute()
+            for value in (
+                self.identity.get("relative_repo_path"),
+                self.identity.get("relative_worktree_root"),
+                self.identity.get("relative_runtime_path"),
+                self.identity.get("relative_launcher_path"),
+            )
+        )
+        app_project = self.root / "AAYS" / "terrayield_land_intelligence"
+        dependency_probe = subprocess.run(
+            [str(resolved_python), "-c", "import tkinter, fastapi, uvicorn, sqlalchemy, psycopg"],
+            cwd=app_project if app_project.is_dir() else self.root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        port_8012_state = "FREE"
+        port_8012_compatible = True
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe_socket:
+            probe_socket.settimeout(0.5)
+            listener_present = probe_socket.connect_ex(("127.0.0.1", 8012)) == 0
+        if listener_present:
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:8012/health", timeout=2.0) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                port_8012_compatible = (
+                    int(response.status) == 200
+                    and payload.get("status") == "ok"
+                    and payload.get("app") == "TerraYield Land Intelligence"
+                )
+                port_8012_state = "TERRAYIELD_ACTIVE" if port_8012_compatible else "OCCUPIED_BY_OTHER_SERVICE"
+            except Exception:
+                port_8012_compatible = False
+                port_8012_state = "OCCUPIED_BY_OTHER_SERVICE"
         checks = {
             "portable_identity": self.identity.get("canonical_drive_letter_persisted") is False,
-            "portable_python": Path(sys.executable).is_file(),
+            "identity_architecture_v3": int(self.identity.get("architecture_version") or 0) == ARCHITECTURE_VERSION,
+            "identity_workstream_launcher": self.identity.get("relative_launcher_path") == "RUN_AAYS_ADAPTIVE_15_WORKER.cmd",
+            "identity_paths_are_relative": relative_identity_paths,
+            "portable_python": portable_python,
             "portable_git": self.git_executable is not None and self.git_executable.is_file(),
-            "publisher_repo": self.repo.is_dir() and (self.repo / ".git").exists(),
+            "publisher_repo": self.repo.is_dir() and (self.repo / ".git").is_dir(),
             "worktree_root": self.worktrees.is_dir(),
             "fifteen_slot_contract": len(SLOT_SPECS) == 15 and len(set(SLOT_SPECS)) == 15,
-            "slot_worktrees": all(self.worktree_for_slot(slot_id).is_dir() for slot_id in SLOT_SPECS),
+            "slot_worktrees": all(path.is_dir() for path in slot_worktrees),
+            "slot_git_repositories_are_self_contained": all((path / ".git").is_dir() for path in slot_worktrees),
+            "portable_app_launcher": (self.root / "START_TERRAYIELD_PORTABLE_8012.ps1").is_file(),
+            "portable_app_project": app_project.is_dir(),
+            "portable_app_dependencies": dependency_probe.returncode == 0,
+            "port_8012_available_or_terrayield": port_8012_compatible,
         }
         git_version = None
         remote_head = None
@@ -375,6 +431,8 @@ class Coordinator:
             "resource_profile": self.resource_profile,
             "resource_limits": self.resources.limits,
             "free_space_gb": free_gb,
+            "port_8012_state": port_8012_state,
+            "portable_dependency_error": dependency_probe.stderr.strip() or None,
             "max_child_workers": self.max_workers,
             "heavy_jobs_serialized": True,
             "slot_count": len(SLOT_SPECS),
@@ -390,7 +448,7 @@ class Coordinator:
         return self.state / "slots" / slot_id
 
     def initialize_state(self, remote_head: str | None = None) -> None:
-        for directory in (self.state, self.runtime, self.logs, self.recovery):
+        for directory in (self.state, self.runtime, self.logs, self.recovery, self.publish_queue, self.publish_archive):
             directory.mkdir(parents=True, exist_ok=True)
         for slot_id, spec in SLOT_SPECS.items():
             directory = self.slot_dir(slot_id)
@@ -599,6 +657,9 @@ class Coordinator:
         ).casefold()
         if spec["page_key"] == "aays1" and not any(marker in evidence for marker in spec["markers"]):
             raise ValueError("AMBIGUOUS_AAYS1_TASK_WITHOUT_SLOT_MARKER")
+        timeout_seconds = int(task.get("timeout_seconds") or TASK_LEASE_SECONDS)
+        if timeout_seconds < 60 or timeout_seconds > MAX_TASK_TIMEOUT_SECONDS:
+            raise ValueError("TASK_TIMEOUT_OUT_OF_RANGE_60_TO_7200")
         for value in task["exact_write_paths"]:
             normalize_repo_path(str(value))
         return slot_id
@@ -611,6 +672,48 @@ class Coordinator:
                 if any(paths_overlap(left, right) for left in paths for right in active):
                     return False
             return True
+
+    def write_slot_runtime_state(
+        self,
+        slot_id: str,
+        task: dict[str, Any],
+        state: str,
+        result: dict[str, Any] | None = None,
+        blocker: str | None = None,
+    ) -> None:
+        now = utc_now()
+        lease_expires_at = (datetime.now(timezone.utc) + timedelta(seconds=TASK_LEASE_SECONDS)).isoformat().replace("+00:00", "Z")
+        common = {
+            "schema_version": 3,
+            "architecture_version": ARCHITECTURE_VERSION,
+            "workstream_id": WORKSTREAM_ID,
+            "slot_id": slot_id,
+            "base_slot_id": task.get("base_slot_id"),
+            "shard_index": task.get("shard_index"),
+            "parcel_partition": task.get("parcel_partition"),
+            "task_id": task.get("task_id"),
+            "attempt_id": task.get("attempt_id"),
+            "state": state,
+            "updated_at": now,
+            "final_ready": False,
+        }
+        atomic_write_json(
+            self.slot_dir(slot_id) / "status_latest.json",
+            {**common, "blocker": blocker, "result": result},
+        )
+        atomic_write_json(
+            self.slot_dir(slot_id) / "current_task_latest.json",
+            {**task, **common, "blocker": blocker, "result": result},
+        )
+        atomic_write_json(
+            self.slot_dir(slot_id) / "heartbeat_latest.json",
+            {
+                **common,
+                "heartbeat_at": now,
+                "stale_after_seconds": TASK_LEASE_SECONDS,
+                "lease_expires_at": lease_expires_at,
+            },
+        )
 
     def write_global_status(self, state: str) -> None:
         with self.active_lock:
@@ -645,20 +748,45 @@ class Coordinator:
         )
 
     def heartbeat(self, state: str = "RUNNING") -> None:
+        now = utc_now()
         atomic_write_json(
             self.heartbeat_path,
             {
-                "schema_version": 2,
+                "schema_version": 3,
                 "workstream_id": WORKSTREAM_ID,
                 "architecture_version": ARCHITECTURE_VERSION,
                 "state": state,
                 "pid": os.getpid(),
                 "machine_id": machine_id(),
                 "boot_id": boot_id(),
-                "heartbeat_at": utc_now(),
+                "heartbeat_at": now,
+                "stale_after_seconds": 45,
                 "final_ready": False,
             },
         )
+        with self.active_lock:
+            active = list(self.active_tasks.items())
+        for slot_id, task in active:
+            lease_expires_at = (datetime.now(timezone.utc) + timedelta(seconds=TASK_LEASE_SECONDS)).isoformat().replace("+00:00", "Z")
+            atomic_write_json(
+                self.slot_dir(slot_id) / "heartbeat_latest.json",
+                {
+                    "schema_version": 3,
+                    "architecture_version": ARCHITECTURE_VERSION,
+                    "workstream_id": WORKSTREAM_ID,
+                    "slot_id": slot_id,
+                    "base_slot_id": task.get("base_slot_id"),
+                    "shard_index": task.get("shard_index"),
+                    "parcel_partition": task.get("parcel_partition"),
+                    "task_id": task.get("task_id"),
+                    "attempt_id": task.get("attempt_id"),
+                    "state": "RUNNING",
+                    "heartbeat_at": now,
+                    "stale_after_seconds": TASK_LEASE_SECONDS,
+                    "lease_expires_at": lease_expires_at,
+                    "final_ready": False,
+                },
+            )
 
     def scan_tasks(self) -> list[tuple[Path, dict[str, Any]]]:
         found: list[tuple[Path, dict[str, Any]]] = []
@@ -667,7 +795,8 @@ class Coordinator:
             queue = self.repo / Path(business_root) / "queue"
             if not queue.exists():
                 continue
-            for path in sorted(queue.glob("*.v2.task.json")):
+            task_paths = sorted({*queue.glob("*.v3.task.json"), *queue.glob("*.v2.task.json")})
+            for path in task_paths:
                 task = read_json(path, {})
                 if task and task.get("status", "pending") in ("pending", "queued"):
                     found.append((path, task))
@@ -684,10 +813,14 @@ class Coordinator:
         if status.returncode != 0 or status.stdout.strip():
             self.remote_sync = {"state": "WAITING_GIT_CLEAN_PUBLISHER", "head": None, "error": status.stderr.strip() or status.stdout.strip()}
             return self.remote_sync
-        fetch = subprocess.run(
-            self.git_command("-C", str(self.repo), "fetch", "--depth=1", "origin", str(self.identity["branch"])),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
-        )
+        try:
+            fetch = subprocess.run(
+                self.git_command("-C", str(self.repo), "fetch", "--depth=1", "origin", str(self.identity["branch"])),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
+            )
+        except subprocess.TimeoutExpired:
+            self.remote_sync = {"state": "WAITING_FOR_NETWORK_OR_GIT_AUTH", "head": None, "error": "GIT_FETCH_TIMEOUT_120S"}
+            return self.remote_sync
         if fetch.returncode != 0:
             self.remote_sync = {"state": "WAITING_FOR_NETWORK_OR_GIT_AUTH", "head": None, "error": fetch.stderr.strip()}
             return self.remote_sync
@@ -725,6 +858,225 @@ class Coordinator:
         if checkout.returncode != 0:
             raise RuntimeError(f"CHILD_REMOTE_CHECKOUT_FAILED: {checkout.stderr.strip()}")
 
+    def git_path_list(self, repo: Path, *args: str) -> list[str]:
+        completed = subprocess.run(
+            self.git_command("-C", str(repo), *args),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"GIT_PATH_LIST_FAILED: {completed.stderr.decode('utf-8', errors='replace').strip()}")
+        return [value.decode("utf-8", errors="surrogateescape") for value in completed.stdout.split(b"\0") if value]
+
+    @staticmethod
+    def changed_path_allowed(path: str, allowed_paths: list[str]) -> bool:
+        normalized = normalize_repo_path(path)
+        return any(normalized == allowed or normalized.startswith(allowed + "/") for allowed in allowed_paths)
+
+    def prepare_publish_item(self, source: Path, task: dict[str, Any], worktree: Path, base_head: str) -> Path | None:
+        working = set(self.git_path_list(worktree, "diff", "--name-only", "-z", "--"))
+        working.update(self.git_path_list(worktree, "diff", "--cached", "--name-only", "-z", "--"))
+        working.update(self.git_path_list(worktree, "ls-files", "--others", "--exclude-standard", "-z"))
+        current_head = subprocess.run(
+            self.git_command("-C", str(worktree), "rev-parse", "HEAD"),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        ).stdout.strip()
+        committed = set()
+        if current_head and current_head != base_head:
+            committed.update(self.git_path_list(worktree, "diff", "--name-only", "-z", base_head, current_head, "--"))
+        changed = sorted(working | committed)
+        allowed = [normalize_repo_path(str(value)) for value in task["exact_write_paths"]]
+        outside = [path for path in changed if not self.changed_path_allowed(path, allowed)]
+        if outside:
+            raise RuntimeError("CHILD_CHANGED_OUTSIDE_EXACT_WRITE_PATHS: " + ",".join(outside))
+        if not changed:
+            return None
+        if working:
+            staged = subprocess.run(
+                self.git_command("-C", str(worktree), "add", "-A", "--", *sorted(working)),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+            )
+            if staged.returncode != 0:
+                raise RuntimeError(f"CHILD_STAGE_FAILED: {staged.stderr.strip()}")
+            commit = subprocess.run(
+                self.git_command("-C", str(worktree), "commit", "-m", f"Local slot result {task['task_id']}"),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+            )
+            if commit.returncode != 0:
+                raise RuntimeError(f"CHILD_LOCAL_COMMIT_FAILED: {commit.stderr.strip() or commit.stdout.strip()}")
+        child_commit = subprocess.run(
+            self.git_command("-C", str(worktree), "rev-parse", "HEAD"),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+        ).stdout.strip()
+        changed = sorted(set(self.git_path_list(worktree, "diff", "--name-only", "-z", base_head, child_commit, "--")))
+        task_key = sha256_bytes(str(task["task_id"]).encode("utf-8"))[:20]
+        item_path = self.publish_queue / f"{task_key}.json"
+        atomic_write_json(
+            item_path,
+            {
+                "schema_version": 3,
+                "workstream_id": WORKSTREAM_ID,
+                "slot_id": task["slot_id"],
+                "task_id": task["task_id"],
+                "attempt_id": task["attempt_id"],
+                "source_queue_path": str(source.relative_to(self.repo)).replace("\\", "/"),
+                "worktree": str(worktree),
+                "child_commit": child_commit,
+                "changed_paths": changed,
+                "exact_write_paths": task["exact_write_paths"],
+                "attempts": 0,
+                "state": "PUBLISH_PENDING",
+                "created_at": utc_now(),
+                "final_ready": False,
+            },
+        )
+        return item_path
+
+    def pending_publish_slots(self) -> set[str]:
+        slots: set[str] = set()
+        if self.publish_queue.is_dir():
+            for path in self.publish_queue.glob("*.json"):
+                item = read_json(path, {})
+                if item.get("slot_id"):
+                    slots.add(str(item["slot_id"]))
+        return slots
+
+    def copy_slot_proofs(self, slot_id: str) -> list[str]:
+        target_root = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_15" / slot_id
+        target_root.mkdir(parents=True, exist_ok=True)
+        copied: list[str] = []
+        for name in ("checkpoint_latest.json", "heartbeat_latest.json", "current_task_latest.json", "status_latest.json"):
+            source = self.slot_dir(slot_id) / name
+            if source.is_file():
+                target = target_root / name
+                shutil.copy2(source, target)
+                copied.append(str(target.relative_to(self.repo)).replace("\\", "/"))
+        return copied
+
+    def publish_item(self, item_path: Path) -> dict[str, Any]:
+        with self.publish_lock:
+            item = read_json(item_path, {})
+            if not item:
+                return {"state": "PUBLISH_ITEM_MISSING"}
+            item["attempts"] = int(item.get("attempts") or 0) + 1
+            item["last_attempt_at"] = utc_now()
+            atomic_write_json(item_path, item)
+            try:
+                sync = self.refresh_publisher(force=True)
+                if sync.get("state") != "PASS":
+                    raise RuntimeError(f"PUBLISHER_REFRESH_NOT_READY: {sync.get('error') or sync.get('state')}")
+                worktree = Path(str(item["worktree"]))
+                changed_paths = [str(value) for value in item["changed_paths"]]
+                for relative in changed_paths:
+                    source = worktree / Path(relative)
+                    target = self.repo / Path(relative)
+                    if source.is_file():
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(source, target)
+                    elif target.exists():
+                        target.unlink()
+                queue_relative = str(item["source_queue_path"])
+                queue_path = self.repo / Path(queue_relative)
+                queue_task = read_json(queue_path, {})
+                if not queue_task:
+                    raise RuntimeError("SOURCE_QUEUE_TASK_MISSING_DURING_PUBLISH")
+                queue_task.update(
+                    {
+                        "status": "result_ready_for_remote_acceptance",
+                        "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
+                        "runner_child_commit": item["child_commit"],
+                        "runner_published_at": utc_now(),
+                        "final_ready": False,
+                    }
+                )
+                atomic_write_json(queue_path, queue_task)
+                proof_paths = self.copy_slot_proofs(str(item["slot_id"]))
+                stage_paths = sorted(set([*changed_paths, queue_relative, *proof_paths]))
+                stage = subprocess.run(
+                    self.git_command("-C", str(self.repo), "add", "-A", "--", *stage_paths),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+                )
+                if stage.returncode != 0:
+                    raise RuntimeError(f"PUBLISHER_STAGE_FAILED: {stage.stderr.strip()}")
+                staged_paths = self.git_path_list(self.repo, "diff", "--cached", "--name-only", "-z", "--")
+                unexpected = [path for path in staged_paths if path not in stage_paths]
+                if unexpected:
+                    raise RuntimeError("PUBLISHER_STAGED_UNEXPECTED_PATHS: " + ",".join(unexpected))
+                commit = subprocess.run(
+                    self.git_command("-C", str(self.repo), "commit", "-m", f"Publish {item['slot_id']} task {item['task_id']}"),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+                )
+                if commit.returncode != 0:
+                    raise RuntimeError(f"PUBLISHER_COMMIT_FAILED: {commit.stderr.strip() or commit.stdout.strip()}")
+                branch = str(self.identity["branch"])
+                push_error = None
+                for _attempt in range(3):
+                    push = subprocess.run(
+                        self.git_command("-C", str(self.repo), "push", "origin", f"HEAD:{branch}"),
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
+                    )
+                    if push.returncode == 0:
+                        push_error = None
+                        break
+                    push_error = push.stderr.strip() or push.stdout.strip()
+                    fetch = subprocess.run(
+                        self.git_command("-C", str(self.repo), "fetch", "--depth=20", "origin", branch),
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
+                    )
+                    if fetch.returncode != 0:
+                        continue
+                    rebase = subprocess.run(
+                        self.git_command("-C", str(self.repo), "rebase", "FETCH_HEAD"),
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+                    )
+                    if rebase.returncode != 0:
+                        subprocess.run(self.git_command("-C", str(self.repo), "rebase", "--abort"), check=False)
+                        raise RuntimeError(f"PUBLISHER_REBASE_CONFLICT: {rebase.stderr.strip() or rebase.stdout.strip()}")
+                if push_error:
+                    raise RuntimeError(f"PUBLISHER_PUSH_FAILED: {push_error}")
+                local_head = subprocess.run(
+                    self.git_command("-C", str(self.repo), "rev-parse", "HEAD"),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+                ).stdout.strip()
+                remote = subprocess.run(
+                    self.git_command("-C", str(self.repo), "ls-remote", "origin", f"refs/heads/{branch}"),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=60,
+                )
+                remote_head = remote.stdout.split()[0] if remote.returncode == 0 and remote.stdout.split() else None
+                if remote_head != local_head:
+                    raise RuntimeError("PUBLISH_REMOTE_READBACK_MISMATCH")
+                archive = self.publish_archive / item_path.name
+                item.update({"state": "PUBLISHED", "publisher_commit": local_head, "remote_readback": True, "published_at": utc_now()})
+                atomic_write_json(item_path, item)
+                shutil.move(str(item_path), str(archive))
+                try:
+                    self.refresh_child(worktree)
+                except Exception:
+                    pass
+                return {"state": "PUBLISHED", "publisher_commit": local_head, "remote_readback": True}
+            except Exception as exc:
+                item["state"] = "PUBLISH_PENDING"
+                item["last_error"] = str(exc)
+                atomic_write_json(item_path, item)
+                return {"state": "PUBLISH_PENDING", "error": str(exc)}
+
+    def process_publish_queue(self) -> dict[str, Any] | None:
+        if not self.publish_queue.is_dir():
+            return None
+        pending = sorted(self.publish_queue.glob("*.json"))
+        if not pending:
+            return None
+        item = read_json(pending[0], {})
+        last_attempt = item.get("last_attempt_at")
+        if last_attempt:
+            try:
+                stamp = datetime.fromisoformat(str(last_attempt).replace("Z", "+00:00"))
+                if (datetime.now(timezone.utc) - stamp).total_seconds() < 60:
+                    return {"state": "WAITING_PUBLISH_RETRY"}
+            except ValueError:
+                pass
+        return self.publish_item(pending[0])
     def execute_task(self, source: Path, task: dict[str, Any]) -> dict[str, Any]:
         slot_id = self.classify_task(task)
         write_paths = [str(value) for value in task["exact_write_paths"]]
@@ -752,12 +1104,15 @@ class Coordinator:
         self.append_event(slot_id, {"transition": "CLAIMED", "task_id": task["task_id"], "attempt_id": task["attempt_id"]})
         try:
             with self.resources.acquire([*resource_names, *gates]):
-                atomic_write_json(
-                    slot_dir / "current_task_latest.json",
-                    {**task, "state": "RUNNING", "started_at": utc_now(), "final_ready": False},
-                )
+                self.write_slot_runtime_state(slot_id, task, "RUNNING")
                 worktree = self.worktree_for_slot(slot_id)
                 self.refresh_child(worktree)
+                base_head = subprocess.run(
+                    self.git_command("-C", str(worktree), "rev-parse", "HEAD"),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+                ).stdout.strip()
+                if not base_head:
+                    raise RuntimeError("CHILD_BASE_HEAD_MISSING")
                 sparse_roots = sorted(
                     {
                         normalize_repo_path(value).split("/", 1)[0]
@@ -801,16 +1156,36 @@ class Coordinator:
                         env=env,
                         stdout=output,
                         stderr=subprocess.STDOUT,
-                        timeout=int(task.get("timeout_seconds") or 900),
+                        timeout=int(task.get("timeout_seconds") or TASK_LEASE_SECONDS),
                         check=False,
                     )
-                state = "RESULT_READY_FOR_SERIAL_PUBLISH" if completed.returncode == 0 else "BLOCKED"
-                result = {"state": state, "exit_code": completed.returncode, "log": str(log.relative_to(self.root))}
+                if completed.returncode != 0:
+                    state = "BLOCKED"
+                    result = {"state": state, "exit_code": completed.returncode, "log": str(log.relative_to(self.root))}
+                else:
+                    self.write_slot_runtime_state(slot_id, task, "RESULT_READY_FOR_SERIAL_PUBLISH")
+                    item_path = self.prepare_publish_item(source, task, worktree, base_head)
+                    if item_path is None:
+                        state = "BLOCKED_NO_DECLARED_OUTPUT"
+                        result = {"state": state, "exit_code": 0, "log": str(log.relative_to(self.root))}
+                    else:
+                        self.write_slot_runtime_state(slot_id, task, "PUBLISHING")
+                        publish_result = self.publish_item(item_path)
+                        state = str(publish_result.get("state") or "PUBLISH_PENDING")
+                        result = {
+                            "state": state,
+                            "exit_code": 0,
+                            "log": str(log.relative_to(self.root)),
+                            **publish_result,
+                        }
+                self.write_slot_runtime_state(slot_id, task, state, result=result)
                 self.append_event(slot_id, {"transition": state, "task_id": task["task_id"], **result})
                 return {"slot_id": slot_id, "task_id": task["task_id"], **result}
         except Exception as exc:
-            self.append_event(slot_id, {"transition": "BLOCKED", "task_id": task["task_id"], "error": str(exc)})
-            return {"state": "BLOCKED", "slot_id": slot_id, "task_id": task["task_id"], "error": str(exc)}
+            blocker = str(exc)
+            self.write_slot_runtime_state(slot_id, task, "BLOCKED", blocker=blocker)
+            self.append_event(slot_id, {"transition": "BLOCKED", "task_id": task["task_id"], "error": blocker})
+            return {"state": "BLOCKED", "slot_id": slot_id, "task_id": task["task_id"], "error": blocker}
         finally:
             with self.active_lock:
                 self.active_tasks.pop(slot_id, None)
@@ -839,12 +1214,18 @@ class Coordinator:
                     self.stop_event.set()
                     break
                 self.heartbeat()
-                self.refresh_publisher()
+                publish_result = self.process_publish_queue()
+                if publish_result is None:
+                    self.refresh_publisher()
+                pending_publish_slots = self.pending_publish_slots()
                 if self.can_schedule():
                     for source, task in self.scan_tasks():
                         if len(futures) >= self.max_workers:
                             break
                         task_id = str(task.get("task_id"))
+                        slot_id = str(task.get("slot_id") or "")
+                        if slot_id in pending_publish_slots:
+                            continue
                         if task_id in self.seen_task_ids or task_id in self.scheduled_task_ids:
                             continue
                         self.scheduled_task_ids.add(task_id)
@@ -919,7 +1300,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
     wrong_slot_blocked = False
     duplicate_blocked = False
     base_task = {
-        "schema_version": 2,
+        "schema_version": 3,
         "architecture_version": ARCHITECTURE_VERSION,
         "workstream_id": WORKSTREAM_ID,
         "slot_id": "security_public_safety_1",
@@ -951,6 +1332,18 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
     except ValueError as exc:
         wrong_slot_blocked = "SLOT_WRITE_PATH_NOT_ISOLATED" in str(exc) or "SLOT_SHARD_IDENTITY_MISMATCH" in str(exc)
 
+    with coordinator.active_lock:
+        coordinator.active_tasks[base_task["slot_id"]] = base_task
+    coordinator.heartbeat()
+    long_lease_heartbeat = read_json(coordinator.slot_dir(base_task["slot_id"]) / "heartbeat_latest.json", {})
+    with coordinator.active_lock:
+        coordinator.active_tasks.pop(base_task["slot_id"], None)
+    long_task_heartbeat_ok = (
+        long_lease_heartbeat.get("state") == "RUNNING"
+        and int(long_lease_heartbeat.get("stale_after_seconds") or 0) == TASK_LEASE_SECONDS
+        and long_lease_heartbeat.get("task_id") == base_task["task_id"]
+    )
+
     recovery_sandbox = coordinator.runtime / "recovery_fixture"
     recovery_sandbox.mkdir(parents=True, exist_ok=True)
     corrupt = recovery_sandbox / "checkpoint.json"
@@ -978,6 +1371,8 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         "path_overlap_blocked": overlap_blocked,
         "wrong_slot_blocked": wrong_slot_blocked,
         "duplicate_task_blocked": duplicate_blocked,
+        "long_task_timeout_seconds": TASK_LEASE_SECONDS,
+        "long_task_heartbeat_refresh": long_task_heartbeat_ok,
         "resource_peaks": {
             name: measured_serial(name)
             for name in ("ram_heavy", "raster_heavy", "git_publish", "runtime_sync", "browser_acceptance", "shared_publish")
