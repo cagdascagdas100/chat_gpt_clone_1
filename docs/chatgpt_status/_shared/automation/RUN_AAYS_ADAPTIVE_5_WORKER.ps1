@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("Start", "Stop", "Restart", "Status", "FixtureTest")]
+  [ValidateSet("Start", "Stop", "Restart", "Status", "Preflight", "FixtureTest")]
   [string]$Action = "Start",
   [int]$StopTimeoutSeconds = 120
 )
@@ -58,6 +58,10 @@ if ($Action -eq "Stop") {
   Request-Stop | ConvertTo-Json -Depth 10
   exit 0
 }
+if ($Action -eq "Preflight") {
+  & $python $coordinator preflight --root $root
+  exit $LASTEXITCODE
+}
 if ($Action -eq "FixtureTest") {
   & $python $coordinator fixtures --root $root
   exit $LASTEXITCODE
@@ -66,6 +70,11 @@ if ($Action -eq "Restart") {
   Request-Stop | Out-Null
 }
 
+$preflightRaw = & $python $coordinator preflight --root $root
+if ($LASTEXITCODE -ne 0) {
+  Write-Output $preflightRaw
+  throw "PORTABLE_PREFLIGHT_FAILED"
+}
 $current = Get-CoordinatorStatus
 if ($current.pid_alive) {
   [ordered]@{ status = "already_running"; pid = $current.pid; second_launch_blocked = $true; final_ready = $false } | ConvertTo-Json
@@ -77,7 +86,7 @@ do {
   Start-Sleep -Milliseconds 500
   $current = Get-CoordinatorStatus
   if ($current.pid_alive) {
-    [ordered]@{ status = "started"; pid = $current.pid; child_capacity = 5; portable_root = $root; final_ready = $false } | ConvertTo-Json
+    [ordered]@{ status = "started"; pid = $current.pid; child_capacity = 5; resource_profile = $current.resource_profile; portable_root = $root; final_ready = $false } | ConvertTo-Json
     exit 0
   }
 } while ((Get-Date) -lt $deadline)

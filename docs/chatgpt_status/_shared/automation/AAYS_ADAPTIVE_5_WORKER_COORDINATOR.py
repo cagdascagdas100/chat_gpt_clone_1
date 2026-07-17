@@ -57,7 +57,7 @@ SLOT_SPECS = {
         "page_key": "aays1",
         "business_root": "docs/chatgpt_status/aays1",
         "markers": ("parcel_label", "distance_property_types"),
-        "first_unverified": "HYDRATE_SEQUENCE_214_THEN_UNIQUE_RECOVERY_FOR_4_OF_4_DOM_PROOF",
+        "first_unverified": "BUILD_CANONICAL_92283_ROW_RECONCILIATION_MANIFEST_THEN_FIRST_UNVERIFIED_BATCH",
         "terminal": ("207", "209", "210", "214"),
     },
 }
@@ -76,6 +76,57 @@ DEFAULT_LIMITS = {
     "runtime_sync": 1,
     "shared_publish": 1,
 }
+
+
+def total_memory_gb() -> float:
+    if os.name != "nt":
+        return 0.0
+
+    class MemoryStatus(ctypes.Structure):
+        _fields_ = [
+            ("length", ctypes.wintypes.DWORD),
+            ("memory_load", ctypes.wintypes.DWORD),
+            ("total_physical", ctypes.c_ulonglong),
+            ("available_physical", ctypes.c_ulonglong),
+            ("total_page_file", ctypes.c_ulonglong),
+            ("available_page_file", ctypes.c_ulonglong),
+            ("total_virtual", ctypes.c_ulonglong),
+            ("available_virtual", ctypes.c_ulonglong),
+            ("available_extended_virtual", ctypes.c_ulonglong),
+        ]
+
+    status = MemoryStatus()
+    status.length = ctypes.sizeof(MemoryStatus)
+    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+        return 0.0
+    return round(status.total_physical / (1024 ** 3), 2)
+
+
+def select_resource_profile(memory_gb: float, logical_cpus: int) -> tuple[str, dict[str, int]]:
+    limits = dict(DEFAULT_LIMITS)
+    if memory_gb and memory_gb < 10:
+        profile = "low_memory_8gb"
+        limits.update(network_fetch=2, cpu_heavy=1, browser_research=1)
+    elif memory_gb and memory_gb < 24:
+        profile = "balanced_16gb"
+        limits.update(network_fetch=3, cpu_heavy=min(2, max(1, logical_cpus // 4)), browser_research=2)
+    else:
+        profile = "performance_32gb_plus"
+        limits.update(network_fetch=4, cpu_heavy=min(3, max(1, logical_cpus // 4)), ram_heavy=2)
+    limits.update(heavy_disk_io=1, browser_acceptance=1, geometry=1, vision=1,
+                  raster_heavy=1, git_publish=1, runtime_sync=1, shared_publish=1)
+    return profile, limits
+
+
+def find_git_executable(root: Path) -> Path | None:
+    for candidate in (
+        root / "runtime" / "git" / "cmd" / "git.exe",
+        root / "runtime" / "git" / "bin" / "git.exe",
+    ):
+        if candidate.is_file():
+            return candidate
+    discovered = shutil.which("git")
+    return Path(discovered) if discovered else None
 
 
 def utc_now() -> str:
@@ -213,9 +264,14 @@ class Coordinator:
         self.heartbeat_path = self.state / "coordinator_heartbeat_latest.json"
         self.status_path = self.state / "coordinator_status_latest.json"
         self.control_path = self.state / "control_latest.json"
+        self.preflight_path = self.state / "portable_preflight_latest.json"
         self.stop_event = threading.Event()
         self.instance_id = uuid.uuid4().hex
-        self.resources = ResourceManager(self.selected_limits())
+        self.memory_gb = total_memory_gb()
+        self.logical_cpus = os.cpu_count() or 1
+        self.resource_profile, resource_limits = select_resource_profile(self.memory_gb, self.logical_cpus)
+        self.resources = ResourceManager(resource_limits)
+        self.git_executable = find_git_executable(self.root)
         self.active_lock = threading.Lock()
         self.active_paths: dict[str, list[str]] = {}
         self.active_tasks: dict[str, dict[str, Any]] = {}
@@ -223,13 +279,60 @@ class Coordinator:
         self.last_remote_refresh = 0.0
         self.remote_sync: dict[str, Any] = {"state": "NOT_RUN", "head": None, "error": None}
 
-    def selected_limits(self) -> dict[str, int]:
-        limits = dict(DEFAULT_LIMITS)
-        # This machine has less than 8 GiB RAM. Keep all RAM/raster writers serialized.
-        limits["ram_heavy"] = 1
-        limits["raster_heavy"] = 1
-        limits["heavy_disk_io"] = 1
-        return limits
+    def git_command(self, *args: str) -> list[str]:
+        if self.git_executable is None:
+            raise RuntimeError("PORTABLE_GIT_NOT_AVAILABLE")
+        return [str(self.git_executable), *args]
+
+    def preflight(self) -> dict[str, Any]:
+        self.state.mkdir(parents=True, exist_ok=True)
+        checks = {
+            "portable_identity": self.identity.get("canonical_drive_letter_persisted") is False,
+            "portable_python": Path(sys.executable).is_file(),
+            "portable_git": self.git_executable is not None and self.git_executable.is_file(),
+            "publisher_repo": self.repo.is_dir() and (self.repo / ".git").exists(),
+            "worktree_root": self.worktrees.is_dir(),
+            "five_slot_contract": len(SLOT_SPECS) == 5 and len(set(SLOT_SPECS)) == 5,
+        }
+        git_version = None
+        remote_head = None
+        error = None
+        if checks["portable_git"] and checks["publisher_repo"]:
+            version = subprocess.run(self.git_command("--version"), stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, text=True, check=False)
+            head = subprocess.run(self.git_command("-C", str(self.repo), "rev-parse", "HEAD"),
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+            git_version = version.stdout.strip() if version.returncode == 0 else None
+            remote_head = head.stdout.strip() if head.returncode == 0 else None
+            checks["git_executes"] = bool(git_version and remote_head)
+            error = version.stderr.strip() or head.stderr.strip() or None
+        else:
+            checks["git_executes"] = False
+        free_gb = round(shutil.disk_usage(self.root).free / (1024 ** 3), 2)
+        checks["free_space_minimum_10gb"] = free_gb >= 10
+        report = {
+            "status": "PASS" if all(checks.values()) else "BLOCKED",
+            "ready": all(checks.values()),
+            "checks": checks,
+            "portable_root": str(self.root),
+            "drive_letter_is_runtime_only": True,
+            "python_executable": str(Path(sys.executable)),
+            "git_executable": str(self.git_executable) if self.git_executable else None,
+            "git_version": git_version,
+            "publisher_head": remote_head,
+            "total_memory_gb": self.memory_gb,
+            "logical_cpus": self.logical_cpus,
+            "resource_profile": self.resource_profile,
+            "resource_limits": self.resources.limits,
+            "free_space_gb": free_gb,
+            "max_child_workers": 5,
+            "heavy_jobs_serialized": True,
+            "error": error,
+            "checked_at": utc_now(),
+            "final_ready": False,
+        }
+        atomic_write_json(self.preflight_path, report)
+        return report
 
     def slot_dir(self, slot_id: str) -> Path:
         return self.state / "slots" / slot_id
@@ -281,7 +384,7 @@ class Coordinator:
 
     def hydrate_checkpoints(self) -> dict[str, Any]:
         completed = subprocess.run(
-            ["git", "-C", str(self.repo), "rev-parse", "HEAD"],
+            self.git_command("-C", str(self.repo), "rev-parse", "HEAD"),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -445,8 +548,15 @@ class Coordinator:
                 "coordinator_pid": os.getpid(),
                 "active_workers": len(active),
                 "max_child_workers": 5,
+                "resource_profile": self.resource_profile,
+                "total_memory_gb": self.memory_gb,
+                "logical_cpus": self.logical_cpus,
                 "active_tasks": active,
                 "resource_limits": self.resources.limits,
+                "resource_profile": self.resource_profile,
+                "total_memory_gb": self.memory_gb,
+                "logical_cpus": self.logical_cpus,
+                "git_executable": str(self.git_executable) if self.git_executable else None,
                 "remote_sync": self.remote_sync,
                 "portable_root": str(self.root),
                 "portable_root_is_runtime_diagnostic": True,
@@ -488,28 +598,28 @@ class Coordinator:
             return self.remote_sync
         self.last_remote_refresh = time.monotonic()
         status = subprocess.run(
-            ["git", "-C", str(self.repo), "status", "--porcelain", "--untracked-files=no"],
+            self.git_command("-C", str(self.repo), "status", "--porcelain", "--untracked-files=no"),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if status.returncode != 0 or status.stdout.strip():
             self.remote_sync = {"state": "WAITING_GIT_CLEAN_PUBLISHER", "head": None, "error": status.stderr.strip() or status.stdout.strip()}
             return self.remote_sync
         fetch = subprocess.run(
-            ["git", "-C", str(self.repo), "fetch", "--depth=1", "origin", str(self.identity["branch"])],
+            self.git_command("-C", str(self.repo), "fetch", "--depth=1", "origin", str(self.identity["branch"])),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if fetch.returncode != 0:
             self.remote_sync = {"state": "WAITING_FOR_NETWORK_OR_GIT_AUTH", "head": None, "error": fetch.stderr.strip()}
             return self.remote_sync
         checkout = subprocess.run(
-            ["git", "-C", str(self.repo), "checkout", "--detach", "FETCH_HEAD"],
+            self.git_command("-C", str(self.repo), "checkout", "--detach", "FETCH_HEAD"),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if checkout.returncode != 0:
             self.remote_sync = {"state": "WAITING_GIT_CHECKOUT", "head": None, "error": checkout.stderr.strip()}
             return self.remote_sync
         head = subprocess.run(
-            ["git", "-C", str(self.repo), "rev-parse", "HEAD"],
+            self.git_command("-C", str(self.repo), "rev-parse", "HEAD"),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         ).stdout.strip()
         self.remote_sync = {"state": "PASS", "head": head, "error": None, "refreshed_at": utc_now()}
@@ -517,19 +627,19 @@ class Coordinator:
 
     def refresh_child(self, worktree: Path) -> None:
         status = subprocess.run(
-            ["git", "-C", str(worktree), "status", "--porcelain", "--untracked-files=no"],
+            self.git_command("-C", str(worktree), "status", "--porcelain", "--untracked-files=no"),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if status.returncode != 0 or status.stdout.strip():
             raise RuntimeError("CHILD_WORKTREE_NOT_CLEAN_FOR_REMOTE_REFRESH")
         fetch = subprocess.run(
-            ["git", "-C", str(worktree), "fetch", "--depth=1", "origin", str(self.identity["branch"])],
+            self.git_command("-C", str(worktree), "fetch", "--depth=1", "origin", str(self.identity["branch"])),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if fetch.returncode != 0:
             raise RuntimeError(f"CHILD_REMOTE_REFRESH_FAILED: {fetch.stderr.strip()}")
         checkout = subprocess.run(
-            ["git", "-C", str(worktree), "checkout", "--detach", "FETCH_HEAD"],
+            self.git_command("-C", str(worktree), "checkout", "--detach", "FETCH_HEAD"),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         )
         if checkout.returncode != 0:
@@ -576,7 +686,7 @@ class Coordinator:
                 )
                 if (worktree / ".git").exists() and sparse_roots:
                     sparse = subprocess.run(
-                        ["git", "-C", str(worktree), "sparse-checkout", "add", "--skip-checks", *sparse_roots],
+                        self.git_command("-C", str(worktree), "sparse-checkout", "add", "--skip-checks", *sparse_roots),
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.PIPE,
                         text=True,
@@ -627,6 +737,10 @@ class Coordinator:
                 self.active_paths.pop(slot_id, None)
 
     def run(self) -> int:
+        preflight = self.preflight()
+        if not preflight["ready"]:
+            print(json.dumps(preflight, ensure_ascii=False))
+            return 2
         self.initialize_state()
         self.refresh_publisher(force=True)
         self.hydrate_checkpoints()
@@ -817,6 +931,9 @@ def status(root: Path) -> dict[str, Any]:
         "heartbeat_at": heartbeat.get("heartbeat_at"),
         "active_workers": global_status.get("active_workers", 0),
         "max_child_workers": 5,
+        "resource_profile": global_status.get("resource_profile", coordinator.resource_profile),
+        "total_memory_gb": global_status.get("total_memory_gb", coordinator.memory_gb),
+        "logical_cpus": global_status.get("logical_cpus", coordinator.logical_cpus),
         "portable_root": str(root.resolve()),
         "final_ready": False,
     }
@@ -824,7 +941,7 @@ def status(root: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("run", "fixtures", "hydrate", "request-stop", "status"))
+    parser.add_argument("command", choices=("run", "fixtures", "hydrate", "preflight", "request-stop", "status"))
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     root = args.root.resolve()
@@ -838,6 +955,10 @@ def main() -> int:
         coordinator.initialize_state()
         print(json.dumps(coordinator.hydrate_checkpoints(), ensure_ascii=False, indent=2))
         return 0
+    if args.command == "preflight":
+        report = Coordinator(root).preflight()
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report["ready"] else 2
     if args.command == "request-stop":
         print(json.dumps(request_stop(root), ensure_ascii=False, indent=2))
         return 0

@@ -50,6 +50,7 @@ V2_STATE_ROOT = PORTABLE_ROOT / "state"
 V2_STATUS = V2_STATE_ROOT / "coordinator_status_latest.json"
 V2_HEARTBEAT = V2_STATE_ROOT / "coordinator_heartbeat_latest.json"
 V2_LOCK = V2_STATE_ROOT / "coordinator.lock.json"
+V2_PREFLIGHT = V2_STATE_ROOT / "portable_preflight_latest.json"
 V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
@@ -118,8 +119,8 @@ class AaysPanel(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("AAYS TerraYield Portable Panel - Sabit 8012")
-        self.geometry("900x790")
-        self.minsize(840, 720)
+        self.geometry("1100x900")
+        self.minsize(900, 820)
         self.configure(bg="#f4f6f8")
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         self.status_var = tk.StringVar(value="Hazır")
@@ -127,6 +128,7 @@ class AaysPanel(tk.Tk):
         self.runner_var = tk.StringVar(value="Runner: kontrol edilmedi")
         self.path_var = tk.StringVar(value=f"Portable root: {PORTABLE_ROOT}")
         self.safe_remove_var = tk.StringVar(value="Güvenli disk çıkarma: kontrol edilmedi")
+        self.machine_var = tk.StringVar(value="Bilgisayar profili: ön kontrol yapılmadı")
         self.slot_vars = {
             slot_id: tk.StringVar(value=f"{label}: kontrol edilmedi")
             for slot_id, label in SLOT_IDS
@@ -155,8 +157,10 @@ class AaysPanel(tk.Tk):
         grid = ttk.Frame(actions)
         grid.pack(fill="x")
         buttons = [
-            ("Uygulamayı Başlat", self.start_app_only),
+            ("Uygulama + 5 Slot Başlat", self.start_all),
+            ("Yeni PC Ön Kontrol", self.run_preflight),
             ("Uygulamayı Aç", self.start_app_and_open),
+            ("Uygulamayı Başlat", self.start_app_only),
             ("Tek Runner Başlat", self.start_runner),
             ("Runner'ı Durdur", self.stop_runner),
             ("Runner'ı Yeniden Başlat", self.restart_runner),
@@ -178,22 +182,24 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.app_var, style="Status.TLabel").pack(anchor="w")
         ttk.Label(status, textvariable=self.runner_var, style="Status.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.path_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
+        ttk.Label(status, textvariable=self.machine_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
-        slots = ttk.LabelFrame(root, text="5 Slot Durumu", padding=12)
+        slots = ttk.LabelFrame(root, text="5 Slot Durumu", padding=12, height=170)
         slots.pack(fill="x", pady=(12, 0))
+        slots.pack_propagate(False)
         for slot_id, _label in SLOT_IDS:
             ttk.Label(slots, textvariable=self.slot_vars[slot_id], style="Body.TLabel").pack(anchor="w", pady=2)
 
         text_box = ttk.LabelFrame(root, text="Not", padding=12)
-        text_box.pack(fill="both", expand=True, pady=(12, 0))
+        text_box.pack(fill="x", pady=(12, 0))
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
-            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. "
+            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 5 Slot Başlat düğmesini kullanın. "
             "Uygulama URL'si sabittir: 127.0.0.1:8012. Tek Runner Başlat düğmesi gerçek runner recovery ve GitHub smoke testini çalıştırır; sağlıklı runner varsa ikinci runner açmaz."
         )
-        ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=700, justify="left").pack(anchor="w")
+        ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=1000, justify="left").pack(anchor="w")
 
     def log(self, message: str) -> None:
         with LOG_FILE.open("a", encoding="utf-8") as handle:
@@ -226,6 +232,20 @@ class AaysPanel(tk.Tk):
             self.set_status(f"Kontrol sitesi yenileniyor: {label}")
             self.sync_control_sites_if_due(force=True)
         webbrowser.open(url)
+    def start_all(self) -> None:
+        self.set_status("Uygulama ve tek koordinatör içindeki 5 slot başlatılıyor")
+        self.run_powershell(APP_SCRIPT, ["-NoBrowser"])
+        process = self.run_powershell(V2_LAUNCHER, ["-Action", "Start"])
+        threading.Thread(target=self._wait_for_app, args=(True,), daemon=True).start()
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "başlatıldı"), daemon=True).start()
+
+    def run_preflight(self) -> None:
+        self.set_status("Yeni bilgisayar için Python, Git, repo, disk ve kaynak kontrolü yapılıyor")
+        process = self.run_powershell(V2_LAUNCHER, ["-Action", "Preflight"])
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "ön kontrolden geçti"), daemon=True).start()
+
     def start_app_only(self) -> None:
         self.set_status("Uygulama 8012 baslatiliyor")
         self.run_powershell(APP_SCRIPT, ["-NoBrowser"])
@@ -397,6 +417,13 @@ class AaysPanel(tk.Tk):
             self.app_var.set(f"App: AKTIF - {HEALTH_URL}")
         else:
             self.app_var.set(f"App: KAPALI - {msg}")
+        preflight = read_json(V2_PREFLIGHT)
+        if preflight:
+            self.machine_var.set(
+                f"Bilgisayar profili: {preflight.get('resource_profile', 'bilinmiyor')} - "
+                f"RAM {preflight.get('total_memory_gb', '?')} GB - CPU {preflight.get('logical_cpus', '?')} izlek - "
+                f"Git {'HAZIR' if preflight.get('checks', {}).get('git_executes') else 'EKSIK'}"
+            )
         info = self.read_runner_info()
         if info.get("ready"):
             age = int(info.get("heartbeat_age") or 0)
