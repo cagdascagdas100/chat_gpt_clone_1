@@ -39,18 +39,31 @@ SLOT_BOOTSTRAP_SCRIPT = PORTABLE_ROOT / "START_AAYS_5_SLOT_COORDINATOR.ps1"
 SLOT_ROOT = RUNNER_REPO / "docs" / "chatgpt_status" / "_shared" / "slots"
 SLOT_MANIFEST = SLOT_ROOT / "manifest_latest.json"
 SLOT_IDS = (
-    ("ready_to_sell", "ReadyToSell"),
-    ("gas_emissions", "Gas Emissions"),
-    ("height_difference", "Height Difference"),
-    ("security_public_safety", "Security"),
-    ("parcel_label", "Parcel Label"),
+    ("ready_to_sell_1", "ReadyToSell 1"),
+    ("ready_to_sell_2", "ReadyToSell 2"),
+    ("ready_to_sell_3", "ReadyToSell 3"),
+    ("gas_emissions_1", "Gas Emissions 1"),
+    ("gas_emissions_2", "Gas Emissions 2"),
+    ("gas_emissions_3", "Gas Emissions 3"),
+    ("height_difference_1", "Height Difference 1"),
+    ("height_difference_2", "Height Difference 2"),
+    ("height_difference_3", "Height Difference 3"),
+    ("security_public_safety_1", "Security 1"),
+    ("security_public_safety_2", "Security 2"),
+    ("security_public_safety_3", "Security 3"),
+    ("parcel_label_1", "Parcel Label 1"),
+    ("parcel_label_2", "Parcel Label 2"),
+    ("parcel_label_3", "Parcel Label 3"),
 )
-V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_5_WORKER.ps1"
+V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"
 V2_STATE_ROOT = PORTABLE_ROOT / "state"
 V2_STATUS = V2_STATE_ROOT / "coordinator_status_latest.json"
 V2_HEARTBEAT = V2_STATE_ROOT / "coordinator_heartbeat_latest.json"
 V2_LOCK = V2_STATE_ROOT / "coordinator.lock.json"
 V2_PREFLIGHT = V2_STATE_ROOT / "portable_preflight_latest.json"
+REMOTE_CHECK_SCRIPT = PORTABLE_ROOT / "CHECK_AAYS_REMOTE_ACCESS.ps1"
+REMOTE_GUIDE = PORTABLE_ROOT / "AAYS_REMOTE_ACCESS_SETUP_TR.md"
+REMOTE_STATUS = V2_STATE_ROOT / "remote_access_preflight_latest.json"
 V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
@@ -119,8 +132,8 @@ class AaysPanel(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("AAYS TerraYield Portable Panel - Sabit 8012")
-        self.geometry("1100x900")
-        self.minsize(900, 820)
+        self.geometry("1100x1030")
+        self.minsize(900, 760)
         self.configure(bg="#f4f6f8")
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         self.status_var = tk.StringVar(value="Hazır")
@@ -129,6 +142,7 @@ class AaysPanel(tk.Tk):
         self.path_var = tk.StringVar(value=f"Portable root: {PORTABLE_ROOT}")
         self.safe_remove_var = tk.StringVar(value="Güvenli disk çıkarma: kontrol edilmedi")
         self.machine_var = tk.StringVar(value="Bilgisayar profili: ön kontrol yapılmadı")
+        self.remote_var = tk.StringVar(value="Uzaktan erişim: kontrol edilmedi")
         self.slot_vars = {
             slot_id: tk.StringVar(value=f"{label}: kontrol edilmedi")
             for slot_id, label in SLOT_IDS
@@ -157,13 +171,15 @@ class AaysPanel(tk.Tk):
         grid = ttk.Frame(actions)
         grid.pack(fill="x")
         buttons = [
-            ("Uygulama + 5 Slot Başlat", self.start_all),
+            ("Uygulama + 15 Slot Başlat", self.start_all),
             ("Yeni PC Ön Kontrol", self.run_preflight),
             ("Uygulamayı Aç", self.start_app_and_open),
             ("Uygulamayı Başlat", self.start_app_only),
-            ("Tek Runner Başlat", self.start_runner),
+            ("15 Slot Runner Başlat", self.start_runner),
             ("Runner'ı Durdur", self.stop_runner),
             ("Runner'ı Yeniden Başlat", self.restart_runner),
+            ("Uzaktan Erişim Kontrol", self.check_remote_access),
+            ("Uzaktan Erişim Rehberi", self.open_remote_guide),
             ("Durumu Yenile", self.refresh_status),
         ]
         for idx, (label, command) in enumerate(buttons):
@@ -183,10 +199,11 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.runner_var, style="Status.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.path_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.machine_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
+        ttk.Label(status, textvariable=self.remote_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
-        slots = ttk.LabelFrame(root, text="5 Slot Durumu", padding=12, height=170)
+        slots = ttk.LabelFrame(root, text="15 Slot Durumu", padding=12, height=370)
         slots.pack(fill="x", pady=(12, 0))
         slots.pack_propagate(False)
         for slot_id, _label in SLOT_IDS:
@@ -197,7 +214,7 @@ class AaysPanel(tk.Tk):
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
             "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 5 Slot Başlat düğmesini kullanın. "
-            "Uygulama URL'si sabittir: 127.0.0.1:8012. Tek Runner Başlat düğmesi gerçek runner recovery ve GitHub smoke testini çalıştırır; sağlıklı runner varsa ikinci runner açmaz."
+            "Uygulama URL'si sabittir: 127.0.0.1:8012. 15 Slot Runner Başlat düğmesi gerçek runner recovery ve GitHub smoke testini çalıştırır; sağlıklı runner varsa ikinci runner açmaz."
         )
         ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=1000, justify="left").pack(anchor="w")
 
@@ -232,8 +249,21 @@ class AaysPanel(tk.Tk):
             self.set_status(f"Kontrol sitesi yenileniyor: {label}")
             self.sync_control_sites_if_due(force=True)
         webbrowser.open(url)
+    def check_remote_access(self) -> None:
+        self.set_status("Chrome Remote Desktop, Tailscale ve 8012 erişimi kontrol ediliyor")
+        process = self.run_powershell(REMOTE_CHECK_SCRIPT, [])
+        if process is not None:
+            threading.Thread(target=self._wait_for_runner_action, args=(process, "uzaktan erişim kontrolü tamamlandı"), daemon=True).start()
+
+    def open_remote_guide(self) -> None:
+        if REMOTE_GUIDE.exists():
+            os.startfile(str(REMOTE_GUIDE))
+            self.set_status("Uzaktan erişim rehberi açıldı")
+        else:
+            self.set_status(f"Eksik rehber: {REMOTE_GUIDE}")
+
     def start_all(self) -> None:
-        self.set_status("Uygulama ve tek koordinatör içindeki 5 slot başlatılıyor")
+        self.set_status("Uygulama ve tek koordinatör içindeki 15 slot başlatılıyor")
         self.run_powershell(APP_SCRIPT, ["-NoBrowser"])
         process = self.run_powershell(V2_LAUNCHER, ["-Action", "Start"])
         threading.Thread(target=self._wait_for_app, args=(True,), daemon=True).start()
@@ -310,7 +340,7 @@ class AaysPanel(tk.Tk):
         checkpoint = read_json(V2_SLOT_ROOT / slot_id / "checkpoint_latest.json")
         current = read_json(V2_SLOT_ROOT / slot_id / "current_task_latest.json")
         valid = (
-            status.get("workstream_id") == "AAYS_5_SLOT_SAFE_PARALLEL_V1"
+            status.get("workstream_id") == "AAYS_15_SLOT_SAFE_PARALLEL_V1"
             and status.get("slot_id") == slot_id
             and checkpoint.get("slot_id") == slot_id
         )
@@ -358,7 +388,7 @@ class AaysPanel(tk.Tk):
                 "queue_ready_count": 0,
                 "current_task_id": ", ".join(v2_status.get("active_tasks", {}).values()) or None,
                 "active_workers": int(v2_status.get("active_workers") or 0),
-                "max_child_workers": 5,
+                "max_child_workers": int(v2_status.get("max_child_workers") or 15),
                 "coordinator_state": v2_status.get("state", "NOT_STARTED"),
                 "consecutive_failures": 0,
                 "blocker": None,
@@ -424,12 +454,19 @@ class AaysPanel(tk.Tk):
                 f"RAM {preflight.get('total_memory_gb', '?')} GB - CPU {preflight.get('logical_cpus', '?')} izlek - "
                 f"Git {'HAZIR' if preflight.get('checks', {}).get('git_executes') else 'EKSIK'}"
             )
+        remote = read_json(REMOTE_STATUS)
+        if remote:
+            self.remote_var.set(
+                f"Uzaktan erişim: {remote.get('status', 'bilinmiyor')} - "
+                f"Chrome {'HAZIR' if remote.get('chrome_remote_desktop_running') else 'KURULUM GEREKLI'} - "
+                f"Tailscale {'HAZIR' if remote.get('tailscale_backend_state') == 'Running' else 'KURULUM/GIRIS GEREKLI'}"
+            )
         info = self.read_runner_info()
         if info.get("ready"):
             age = int(info.get("heartbeat_age") or 0)
             self.runner_var.set(
                 f"Runner: HEALTHY - PID {info.get('pid')} - heartbeat {age} sn - "
-                f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 5)} - "
+                f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 15)} - "
                 f"queue {info.get('queue_ready_count')}/{info.get('queue_scan_count')} - "
                 f"aktif görev {info.get('current_task_id') or '-'}"
             )

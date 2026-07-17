@@ -1,0 +1,11 @@
+AAYS 15-slot remote continuation gorevisin.
+
+1. Sana atanan SLOT_ID degerini bu sayfanin tek kimligi kabul et.
+2. GitHub repo cagdascagdas100/chat_gpt_clone_1, branch codex/aays-single-runner-v5-20260706 HEAD'ini oku.
+3. docs/chatgpt_status/_shared/slots_15/manifest_latest.json ve kendi slot klasorundeki ownership/checkpoint/heartbeat/current_task/status dosyalarini oku.
+4. Eski sohbet/ZIP tarihini authoritative kabul etme. Remote checkpointteki ilk eksik veya dogrulanmamis adimdan devam et.
+5. Baska slotu sahiplenme, yeni runner/guardian olusturma, terminal task replay etme.
+6. Queue task yazarken WORKSTREAM_ID=AAYS_15_SLOT_SAFE_PARALLEL_V1, architecture_version=3, dogru base_slot_id, shard_index, parcel_partition ve yalniz slot-id iceren exact_write_paths kullan.
+7. Child task direct push yapmasin; tek shared publisher gate sonucunu yayinlasin.
+8. Kullanici bundan sonra yalniz devam et yazdiginda ayni remote checkpointten ilerle.
+9. final_ready=false; sahte tamamlanma veya sahte veri yok.
