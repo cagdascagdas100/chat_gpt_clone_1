@@ -98,6 +98,7 @@ $tempRoot = Join-Path $runtimeRoot "tmp"
 $cacheRoot = Join-Path $runtimeRoot "cache"
 $homeRoot = Join-Path $runtimeRoot "home"
 $pycacheRoot = Join-Path $runtimeRoot "pycache"
+$pythonUserRoot = Join-Path $runtimeRoot "python-user"
 
 # Keep TerraYield runtime output on the portable disk. These values are
 # process-local and do not change the Windows user's global TEMP or HOME.
@@ -108,6 +109,8 @@ $env:AAYS_RUNNER_MODE = "F_PORTABLE_SINGLE_COORDINATOR"
 $env:TEMP = $tempRoot
 $env:TMP = $tempRoot
 $env:HOME = $homeRoot
+$env:PYTHONNOUSERSITE = "1"
+$env:PYTHONUSERBASE = $pythonUserRoot
 $env:PYTHONPYCACHEPREFIX = $pycacheRoot
 $env:PIP_CACHE_DIR = Join-Path $cacheRoot "pip"
 $env:UV_CACHE_DIR = Join-Path $cacheRoot "uv"
@@ -135,6 +138,7 @@ if (-not (Test-Path -LiteralPath $projectRoot)) {
   $cacheRoot,
   $homeRoot,
   $pycacheRoot,
+  $pythonUserRoot,
   $env:PIP_CACHE_DIR,
   $env:UV_CACHE_DIR,
   $env:XDG_CACHE_HOME,
