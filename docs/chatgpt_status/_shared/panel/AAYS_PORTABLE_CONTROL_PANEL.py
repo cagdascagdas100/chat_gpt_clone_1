@@ -79,7 +79,10 @@ CONTINUE_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_21_PAGE_CONTINUE_DRY_
 AI_PHOTO_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_AI_PHOTO_EVIDENCE_AUDIT_latest.json"
 BROWSER_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_AI_BROWSER_SMOKE_latest.json"
 DATA_QUALITY_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_DATA_QUALITY_RECHECK_latest.json"
-COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_AND_AI_PHOTO_TEST_latest.json"
+COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_21_PAGE_CONTINUE_AND_AI_PHOTO_TEST_latest.json"
+if not COMBINED_TEST_STATUS.is_file():
+    COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_AND_AI_PHOTO_TEST_latest.json"
+REMOTE_SLOT_ROOT = PUBLISHER_SHARED / "slots_21"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
 POWERSHELL = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
@@ -411,6 +414,7 @@ class AaysPanel(tk.Tk):
         heartbeat = read_json(V2_SLOT_ROOT / slot_id / "heartbeat_latest.json")
         checkpoint = read_json(V2_SLOT_ROOT / slot_id / "checkpoint_latest.json")
         current = read_json(V2_SLOT_ROOT / slot_id / "current_task_latest.json")
+        remote_status = read_json(REMOTE_SLOT_ROOT / slot_id / "status_latest.json")
         valid = (
             status.get("workstream_id") == "AAYS_21_SLOT_SAFE_PARALLEL_V1"
             and status.get("slot_id") == slot_id
@@ -427,7 +431,7 @@ class AaysPanel(tk.Tk):
             "heartbeat_live": live,
             "heartbeat_age": age,
             "partition": checkpoint.get("parcel_partition") or status.get("parcel_partition") or {},
-            "blocker": status.get("blocker") or current.get("blocker"),
+            "blocker": status.get("blocker") or current.get("blocker") or remote_status.get("blocker"),
         }
 
     def refresh_slot_status(self) -> None:
@@ -660,4 +664,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
