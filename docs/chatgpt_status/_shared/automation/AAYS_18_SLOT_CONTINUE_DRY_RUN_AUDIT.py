@@ -69,9 +69,18 @@ def audit(root: Path, coordinator_script: Path) -> dict:
     validation_errors: list[dict] = []
     wrong_slot_results: list[dict] = []
     samples: list[dict] = []
+    slot_contracts: list[dict] = []
 
     for slot_id, slot_spec in module.SLOT_SPECS.items():
         task = build_task(module, slot_id, slot_spec)
+        slot_contracts.append(
+            {
+                "slot_id": slot_id,
+                "base_slot_id": slot_spec["base_slot_id"],
+                "shard_index": slot_spec["shard_index"],
+                "parcel_partition": slot_spec["parcel_partition"],
+            }
+        )
         try:
             accepted.append(coordinator.classify_task(task))
         except Exception as exc:
@@ -170,10 +179,13 @@ def audit(root: Path, coordinator_script: Path) -> dict:
         else "BLOCKED",
         "workstream_id": module.WORKSTREAM_ID,
         "valid_continue_contracts": len(accepted),
+        "accepted_slots": accepted,
+        "slot_contracts": slot_contracts,
         "validation_errors": validation_errors,
         "wrong_slot_blocked_count": sum(
             bool(item["blocked"]) for item in wrong_slot_results
         ),
+        "wrong_slot_results": wrong_slot_results,
         "legacy_non_internet_accepted": legacy_non_internet_accepted,
         "legacy_internet_blocked": legacy_internet_blocked,
         "incomplete_source_web_publish_blocked": incomplete_source_web_publish_blocked,
