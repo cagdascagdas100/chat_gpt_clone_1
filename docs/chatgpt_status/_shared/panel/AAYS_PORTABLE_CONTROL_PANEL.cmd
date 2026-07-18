@@ -2,6 +2,23 @@
 setlocal
 chcp 65001 >nul
 set "ROOT=%~dp0"
+set "TEMP=%ROOT%runtime\tmp"
+set "TMP=%ROOT%runtime\tmp"
+set "HOME=%ROOT%runtime\home"
+set "PYTHONPYCACHEPREFIX=%ROOT%runtime\pycache"
+set "PIP_CACHE_DIR=%ROOT%runtime\cache\pip"
+set "UV_CACHE_DIR=%ROOT%runtime\cache\uv"
+set "XDG_CACHE_HOME=%ROOT%runtime\cache\xdg"
+set "MPLCONFIGDIR=%ROOT%runtime\cache\matplotlib"
+set "NUMBA_CACHE_DIR=%ROOT%runtime\cache\numba"
+set "JOBLIB_TEMP_FOLDER=%ROOT%runtime\tmp\joblib"
+set "HF_HOME=%ROOT%runtime\cache\huggingface"
+set "TORCH_HOME=%ROOT%runtime\cache\torch"
+set "PLAYWRIGHT_BROWSERS_PATH=%ROOT%runtime\playwright-browsers"
+if not exist "%TEMP%" mkdir "%TEMP%"
+if not exist "%HOME%" mkdir "%HOME%"
+if not exist "%PYTHONPYCACHEPREFIX%" mkdir "%PYTHONPYCACHEPREFIX%"
+if not exist "%ROOT%runtime\cache" mkdir "%ROOT%runtime\cache"
 set "PYW=%ROOT%runtime\python312\pythonw.exe"
 set "PY=%ROOT%runtime\python312\python.exe"
 if exist "%PYW%" (

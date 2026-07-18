@@ -28,8 +28,15 @@ $portableGitConfig = Join-Path $root "runtime\gitconfig.aays.portable"
 $stateRoot = Join-Path $root "state"
 $manualStopPath = Join-Path $stateRoot "manual_stop.requested.json"
 $writeProbe = Join-Path $stateRoot ("write_probe_" + [guid]::NewGuid().ToString("N") + ".tmp")
+$runtimeRoot = Join-Path $root "runtime"
+$tempRoot = Join-Path $runtimeRoot "tmp"
+$cacheRoot = Join-Path $runtimeRoot "cache"
+$homeRoot = Join-Path $runtimeRoot "home"
+$pycacheRoot = Join-Path $runtimeRoot "pycache"
 
-New-Item -ItemType Directory -Force -Path $stateRoot | Out-Null
+@($stateRoot, $tempRoot, $cacheRoot, $homeRoot, $pycacheRoot) | ForEach-Object {
+  New-Item -ItemType Directory -Force -Path $_ | Out-Null
+}
 try {
   [System.IO.File]::WriteAllText($writeProbe, "ok", (New-Object System.Text.UTF8Encoding($false)))
 } finally {
@@ -42,6 +49,19 @@ if (-not (Test-Path -LiteralPath $worktreeRoot -PathType Container)) { throw "WO
 $env:AAYS_PORTABLE_ROOT = $root
 $env:AAYS_REPO_ROOT = $publisherRepo
 $env:AAYS_RUNNER_MODE = "F_PORTABLE_SINGLE_COORDINATOR_18_SLOT"
+$env:TEMP = $tempRoot
+$env:TMP = $tempRoot
+$env:HOME = $homeRoot
+$env:PYTHONPYCACHEPREFIX = $pycacheRoot
+$env:PIP_CACHE_DIR = Join-Path $cacheRoot "pip"
+$env:UV_CACHE_DIR = Join-Path $cacheRoot "uv"
+$env:XDG_CACHE_HOME = Join-Path $cacheRoot "xdg"
+$env:MPLCONFIGDIR = Join-Path $cacheRoot "matplotlib"
+$env:NUMBA_CACHE_DIR = Join-Path $cacheRoot "numba"
+$env:JOBLIB_TEMP_FOLDER = Join-Path $tempRoot "joblib"
+$env:HF_HOME = Join-Path $cacheRoot "huggingface"
+$env:TORCH_HOME = Join-Path $cacheRoot "torch"
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $runtimeRoot "playwright-browsers"
 $env:GIT_CONFIG_GLOBAL = $portableGitConfig
 $env:GIT_TERMINAL_PROMPT = "0"
 $env:GCM_INTERACTIVE = "Never"

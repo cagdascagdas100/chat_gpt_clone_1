@@ -94,6 +94,30 @@ $repoRoot = Join-Path $portableRoot "AAYS"
 $projectRoot = Join-Path $repoRoot "terrayield_land_intelligence"
 $runtimeRoot = Join-Path $portableRoot "runtime"
 $logRoot = Join-Path $runtimeRoot "logs"
+$tempRoot = Join-Path $runtimeRoot "tmp"
+$cacheRoot = Join-Path $runtimeRoot "cache"
+$homeRoot = Join-Path $runtimeRoot "home"
+$pycacheRoot = Join-Path $runtimeRoot "pycache"
+
+# Keep TerraYield runtime output on the portable disk. These values are
+# process-local and do not change the Windows user's global TEMP or HOME.
+$env:AAYS_PORTABLE_ROOT = $portableRoot
+$env:AAYS_REPO_ROOT = $repoRoot
+$env:AAYS_PROJECT_ROOT = $projectRoot
+$env:AAYS_RUNNER_MODE = "F_PORTABLE_SINGLE_COORDINATOR"
+$env:TEMP = $tempRoot
+$env:TMP = $tempRoot
+$env:HOME = $homeRoot
+$env:PYTHONPYCACHEPREFIX = $pycacheRoot
+$env:PIP_CACHE_DIR = Join-Path $cacheRoot "pip"
+$env:UV_CACHE_DIR = Join-Path $cacheRoot "uv"
+$env:XDG_CACHE_HOME = Join-Path $cacheRoot "xdg"
+$env:MPLCONFIGDIR = Join-Path $cacheRoot "matplotlib"
+$env:NUMBA_CACHE_DIR = Join-Path $cacheRoot "numba"
+$env:JOBLIB_TEMP_FOLDER = Join-Path $tempRoot "joblib"
+$env:HF_HOME = Join-Path $cacheRoot "huggingface"
+$env:TORCH_HOME = Join-Path $cacheRoot "torch"
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $runtimeRoot "playwright-browsers"
 
 if (-not (Test-Path -LiteralPath $repoRoot)) {
   throw "Missing AAYS repo folder: $repoRoot"
@@ -107,7 +131,19 @@ if (-not (Test-Path -LiteralPath $projectRoot)) {
   $logRoot,
   (Join-Path $runtimeRoot "postgres-data"),
   (Join-Path $runtimeRoot "raw"),
-  (Join-Path $runtimeRoot "tmp"),
+  $tempRoot,
+  $cacheRoot,
+  $homeRoot,
+  $pycacheRoot,
+  $env:PIP_CACHE_DIR,
+  $env:UV_CACHE_DIR,
+  $env:XDG_CACHE_HOME,
+  $env:MPLCONFIGDIR,
+  $env:NUMBA_CACHE_DIR,
+  $env:JOBLIB_TEMP_FOLDER,
+  $env:HF_HOME,
+  $env:TORCH_HOME,
+  $env:PLAYWRIGHT_BROWSERS_PATH,
   (Join-Path $runtimeRoot "live-feeds-cache"),
   (Join-Path $runtimeRoot "live-feeds-exports")
 ) | ForEach-Object {
