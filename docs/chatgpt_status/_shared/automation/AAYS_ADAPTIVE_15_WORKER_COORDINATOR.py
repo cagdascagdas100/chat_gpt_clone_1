@@ -657,6 +657,64 @@ class Coordinator:
         for flag in ("fake_data", "db_write", "migration", "production_deploy"):
             if safety.get(flag) is not False:
                 raise ValueError(f"UNSAFE_TASK_FLAG: {flag}")
+        if task.get("final_ready") not in (None, False):
+            raise ValueError("UNSAFE_TASK_FLAG: final_ready")
+        quality = task.get("data_quality_contract")
+        if task_workstream == WORKSTREAM_ID:
+            if not isinstance(quality, dict):
+                raise ValueError("DATA_QUALITY_CONTRACT_REQUIRED")
+            quality_required = (
+                "source_urls",
+                "source_snapshot_date",
+                "source_discovery_required",
+                "measurement_level",
+                "output_semantics",
+                "parcel_binding_method",
+                "confidence_method",
+                "no_data_policy",
+                "ai_role",
+                "human_review_required_when",
+            )
+            quality_missing = [name for name in quality_required if name not in quality]
+            if quality_missing:
+                raise ValueError("DATA_QUALITY_CONTRACT_MISSING: " + ",".join(quality_missing))
+            if not isinstance(quality["source_urls"], list):
+                raise ValueError("DATA_QUALITY_SOURCE_URLS_MUST_BE_LIST")
+            if quality["source_discovery_required"] not in (True, False):
+                raise ValueError("DATA_QUALITY_SOURCE_DISCOVERY_MUST_BE_BOOLEAN")
+            if str(quality["no_data_policy"]) != "NO_DATA_NOT_INFERRED":
+                raise ValueError("DATA_QUALITY_NO_DATA_POLICY_REQUIRED")
+            if str(quality["measurement_level"]) not in {
+                "unknown_pending_source",
+                "parcel",
+                "postcode",
+                "lsoa",
+                "local_authority",
+                "grid",
+                "candidate_point",
+                "document",
+            }:
+                raise ValueError("DATA_QUALITY_MEASUREMENT_LEVEL_INVALID")
+            if str(quality["output_semantics"]) not in {
+                "NO_DATA",
+                "MEASURED",
+                "AREA_LEVEL_PROXY",
+                "CANDIDATE",
+                "MIXED_WITH_ROW_LABELS",
+            }:
+                raise ValueError("DATA_QUALITY_OUTPUT_SEMANTICS_INVALID")
+            if str(quality["ai_role"]) not in {
+                "not_used",
+                "evidence_assist_only",
+                "vision_comparison_only",
+            }:
+                raise ValueError("DATA_QUALITY_AI_ROLE_INVALID")
+            if not str(quality["parcel_binding_method"]).strip():
+                raise ValueError("DATA_QUALITY_PARCEL_BINDING_METHOD_REQUIRED")
+            if not str(quality["confidence_method"]).strip():
+                raise ValueError("DATA_QUALITY_CONFIDENCE_METHOD_REQUIRED")
+            if not isinstance(quality["human_review_required_when"], list) or not quality["human_review_required_when"]:
+                raise ValueError("DATA_QUALITY_HUMAN_REVIEW_RULE_REQUIRED")
         if task["task_id"] in self.seen_task_ids:
             raise ValueError("DUPLICATE_TASK_ID")
         spec = SLOT_SPECS[slot_id]
@@ -673,8 +731,37 @@ class Coordinator:
         ):
             raise ValueError("PARCEL_PARTITION_MISMATCH")
         normalized_writes = [normalize_repo_path(str(value)) for value in task["exact_write_paths"]]
-        if any(slot_id.casefold() not in value for value in normalized_writes):
+        normalized_slot_id = slot_id.casefold()
+        if any(normalized_slot_id not in value.split("/") for value in normalized_writes):
             raise ValueError("SLOT_WRITE_PATH_NOT_ISOLATED")
+        canonical_write_roots = (
+            f"{spec['business_root']}/shards/{slot_id}",
+            f"docs/chatgpt_status/_shared/slots_18/{slot_id}",
+            f"england_map_web/data/aays_18_slots/{slot_id}",
+        )
+        if task_workstream in LEGACY_WORKSTREAM_IDS:
+            canonical_write_roots = (
+                f"{spec['business_root']}/shards/{slot_id}",
+                f"docs/chatgpt_status/_shared/slots_15/{slot_id}",
+                f"england_map_web/data/aays_15_slots/{slot_id}",
+            )
+        normalized_roots = tuple(normalize_repo_path(value) for value in canonical_write_roots)
+        if any(
+            not any(value == root or value.startswith(root + "/") for root in normalized_roots)
+            for value in normalized_writes
+        ):
+            raise ValueError("SLOT_WRITE_PATH_OUTSIDE_CANONICAL_ROOTS")
+        web_publish_requested = any(
+            value.startswith("england_map_web/data/aays_18_slots/")
+            for value in normalized_writes
+        )
+        if web_publish_requested:
+            if quality["source_discovery_required"] is not False:
+                raise ValueError("WEB_PUBLISH_REQUIRES_COMPLETED_SOURCE_DISCOVERY")
+            if not quality["source_urls"] or not str(quality["source_snapshot_date"]).strip():
+                raise ValueError("WEB_PUBLISH_REQUIRES_SOURCE_AND_SNAPSHOT")
+            if quality["measurement_level"] != "parcel" and quality["output_semantics"] == "MEASURED":
+                raise ValueError("NON_PARCEL_DATA_CANNOT_BE_PUBLISHED_AS_PARCEL_MEASUREMENT")
         evidence = "|".join(
             [str(task["task_id"]), str(task["script_path"]), *map(str, task["exact_write_paths"])]
         ).casefold()

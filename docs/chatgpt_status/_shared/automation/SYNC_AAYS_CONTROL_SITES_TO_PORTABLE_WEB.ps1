@@ -53,6 +53,7 @@ $matrixHtml=Join-Path $runnerRepo "england_map_web\TerraYield_England_Program_Pa
 if(-not(Test-Path -LiteralPath $matrixHtml)){$matrixHtml=Join-Path $runnerRepo "outputs\england_program_parcel_matrix_20260629\TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html"}
 $results += Copy-FileIfChanged $matrixHtml (Join-Path $webRoot "TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html") "program_parcel_layer_matrix_html"
 $results += Copy-FileIfChanged (Join-Path $runnerRepo "england_map_web\geometry_review_3of4_columns_1264.html") (Join-Path $webRoot "geometry_review_3of4_columns_1264.html") "geometry_review_html"
+$results += Copy-FileIfChanged (Join-Path $runnerRepo "england_map_web\internet_access_overlay.js") (Join-Path $webRoot "internet_access_overlay.js") "internet_access_overlay"
 
 foreach($dir in @("program_layer_matrix","distance_property_types","security_public_safety","geometry_review_3of4","aays1")){
   $results += Copy-DirectoryFilesIfChanged (Join-Path $runnerRepo "england_map_web\data\$dir") (Join-Path $webRoot "data\$dir") "data_$dir"
