@@ -23,7 +23,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-WORKSTREAM_ID = "AAYS_15_SLOT_SAFE_PARALLEL_V1"
+WORKSTREAM_ID = "AAYS_18_SLOT_SAFE_PARALLEL_V1"
+LEGACY_WORKSTREAM_IDS = {"AAYS_15_SLOT_SAFE_PARALLEL_V1"}
 ARCHITECTURE_VERSION = 3
 TASK_LEASE_SECONDS = 3600
 MAX_TASK_TIMEOUT_SECONDS = 7200
@@ -62,6 +63,13 @@ BASE_SLOT_SPECS = {
         "markers": ("parcel_label", "distance_property_types"),
         "first_unverified": "BUILD_CANONICAL_92283_ROW_RECONCILIATION_MANIFEST_THEN_FIRST_UNVERIFIED_BATCH",
         "terminal": ("207", "209", "210", "214"),
+    },
+    "internet_access": {
+        "page_key": "internet_access_parcel_layer_low_credit_20260612",
+        "business_root": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612",
+        "markers": ("internet_access", "internet", "broadband"),
+        "first_unverified": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+        "terminal": (),
     },
 }
 PARCEL_SHARDS = {
@@ -143,8 +151,8 @@ def select_resource_profile(memory_gb: float, logical_cpus: int) -> tuple[str, d
                       ram_heavy=2, browser_research=4, browser_acceptance=2, geometry=2)
     else:
         profile = "performance_32gb_plus"
-        max_workers = 15
-        limits.update(light_read=15, network_fetch=10, cpu_heavy=min(6, max(3, logical_cpus // 2)),
+        max_workers = 18
+        limits.update(light_read=18, network_fetch=10, cpu_heavy=min(6, max(3, logical_cpus // 2)),
                       ram_heavy=3, browser_research=5, browser_acceptance=3, geometry=3, vision=2)
     limits.update(heavy_disk_io=1, raster_heavy=1, git_publish=1, runtime_sync=1, shared_publish=1)
     return profile, limits, max_workers
@@ -393,7 +401,7 @@ class Coordinator:
             "portable_git": self.git_executable is not None and self.git_executable.is_file(),
             "publisher_repo": self.repo.is_dir() and (self.repo / ".git").is_dir(),
             "worktree_root": self.worktrees.is_dir(),
-            "fifteen_slot_contract": len(SLOT_SPECS) == 15 and len(set(SLOT_SPECS)) == 15,
+            "eighteen_slot_contract": len(SLOT_SPECS) == 18 and len(set(SLOT_SPECS)) == 18,
             "slot_worktrees": all(path.is_dir() for path in slot_worktrees),
             "slot_git_repositories_are_self_contained": all((path / ".git").is_dir() for path in slot_worktrees),
             "portable_app_launcher": (self.root / "START_TERRAYIELD_PORTABLE_8012.ps1").is_file(),
@@ -438,6 +446,9 @@ class Coordinator:
             "heavy_jobs_serialized": True,
             "slot_count": len(SLOT_SPECS),
             "parcel_count": 92283,
+            "parcel_scope": "LONDON_CANONICAL_MATRIX",
+            "national_england_canonical_inventory_ready": False,
+            "national_england_blocker": "NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED",
             "error": error,
             "checked_at": utc_now(),
             "final_ready": False,
@@ -483,21 +494,22 @@ class Coordinator:
                 "recovery_latest.json": {"state": "CLEAN", "last_recovery": None},
             }.items():
                 path = directory / name
-                if not path.exists():
-                    atomic_write_json(
-                        path,
-                        {
-                            "schema_version": 2,
-                            "architecture_version": ARCHITECTURE_VERSION,
-                            "workstream_id": WORKSTREAM_ID,
-                            "slot_id": slot_id,
-                            "base_slot_id": spec["base_slot_id"],
-                            "shard_index": spec["shard_index"],
-                            "parcel_partition": spec["parcel_partition"],
-                            **payload,
-                            "final_ready": False,
-                        },
-                    )
+                existing = read_json(path, {}) if path.exists() else {}
+                atomic_write_json(
+                    path,
+                    {
+                        **payload,
+                        **existing,
+                        "schema_version": 2,
+                        "architecture_version": ARCHITECTURE_VERSION,
+                        "workstream_id": WORKSTREAM_ID,
+                        "slot_id": slot_id,
+                        "base_slot_id": spec["base_slot_id"],
+                        "shard_index": spec["shard_index"],
+                        "parcel_partition": spec["parcel_partition"],
+                        "final_ready": False,
+                    },
+                )
 
     def hydrate_checkpoints(self) -> dict[str, Any]:
         completed = subprocess.run(
@@ -514,7 +526,11 @@ class Coordinator:
         for slot_id, spec in SLOT_SPECS.items():
             local_path = self.slot_dir(slot_id) / "checkpoint_latest.json"
             local = read_json(local_path, {})
-            remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_15" / slot_id / "checkpoint_latest.json"
+            remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_18" / slot_id / "checkpoint_latest.json"
+            remote_contract_source = "slots_18"
+            if not remote_path.exists() and spec["base_slot_id"] != "internet_access":
+                remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_15" / slot_id / "checkpoint_latest.json"
+                remote_contract_source = "slots_15_legacy_fallback"
             remote = read_json(remote_path, {})
             remote_bytes = remote_path.read_bytes() if remote_path.exists() else b""
             value = {
@@ -531,6 +547,7 @@ class Coordinator:
                 "remote_head": remote_head,
                 "remote_slot_checkpoint_sequence": remote.get("sequence", 0),
                 "remote_slot_checkpoint_sha256": sha256_bytes(remote_bytes) if remote_bytes else None,
+                "remote_contract_source": remote_contract_source,
                 "first_unverified_step": spec["first_unverified"],
                 "terminal_no_replay": list(spec["terminal"]),
                 "zip_timestamp_ignored": True,
@@ -592,7 +609,7 @@ class Coordinator:
             "machine_id": machine_id(),
             "boot_id": boot_id(),
             "instance_id": self.instance_id,
-            "command": "AAYS_ADAPTIVE_15_WORKER_COORDINATOR.py run",
+            "command": "AAYS_ADAPTIVE_SINGLE_COORDINATOR_18_SLOT run",
             "portable_root_relative": ".",
             "created_at": utc_now(),
             "final_ready": False,
@@ -626,7 +643,10 @@ class Coordinator:
         missing = [name for name in required if name not in task]
         if missing:
             raise ValueError("TASK_CONTRACT_MISSING: " + ",".join(missing))
-        if int(task["architecture_version"]) != ARCHITECTURE_VERSION or task["workstream_id"] != WORKSTREAM_ID:
+        if int(task["architecture_version"]) != ARCHITECTURE_VERSION:
+            raise ValueError("TASK_ARCHITECTURE_MISMATCH")
+        task_workstream = str(task["workstream_id"])
+        if task_workstream != WORKSTREAM_ID and task_workstream not in LEGACY_WORKSTREAM_IDS:
             raise ValueError("TASK_ARCHITECTURE_MISMATCH")
         slot_id = str(task["slot_id"])
         if slot_id not in SLOT_SPECS:
@@ -640,6 +660,8 @@ class Coordinator:
         if task["task_id"] in self.seen_task_ids:
             raise ValueError("DUPLICATE_TASK_ID")
         spec = SLOT_SPECS[slot_id]
+        if task_workstream in LEGACY_WORKSTREAM_IDS and spec["base_slot_id"] == "internet_access":
+            raise ValueError("INTERNET_SLOT_REQUIRES_18_SLOT_WORKSTREAM")
         if str(task["base_slot_id"]) != str(spec["base_slot_id"]) or int(task["shard_index"]) != int(spec["shard_index"]):
             raise ValueError("SLOT_SHARD_IDENTITY_MISMATCH")
         partition = task["parcel_partition"]
@@ -729,6 +751,9 @@ class Coordinator:
                 "coordinator_pid": os.getpid(),
                 "active_workers": len(active),
                 "max_child_workers": self.max_workers,
+                "logical_slot_count": len(SLOT_SPECS),
+                "parcel_scope": "LONDON_CANONICAL_MATRIX",
+                "national_england_canonical_inventory_ready": False,
                 "resource_profile": self.resource_profile,
                 "total_memory_gb": self.memory_gb,
                 "logical_cpus": self.logical_cpus,
@@ -762,6 +787,7 @@ class Coordinator:
                 "boot_id": boot_id(),
                 "heartbeat_at": now,
                 "stale_after_seconds": 45,
+                "logical_slot_count": len(SLOT_SPECS),
                 "final_ready": False,
             },
         )
@@ -944,7 +970,7 @@ class Coordinator:
         return slots
 
     def copy_slot_proofs(self, slot_id: str) -> list[str]:
-        target_root = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_15" / slot_id
+        target_root = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_18" / slot_id
         target_root.mkdir(parents=True, exist_ok=True)
         copied: list[str] = []
         for name in ("checkpoint_latest.json", "heartbeat_latest.json", "current_task_latest.json", "status_latest.json"):
@@ -1263,9 +1289,9 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
     active = 0
     maximum = 0
     lock = threading.Lock()
-    fixture_profile, fixture_limits, fixture_workers = select_resource_profile(16.0, 12)
+    fixture_profile, fixture_limits, fixture_workers = select_resource_profile(32.0, 16)
     coordinator.resources = ResourceManager(fixture_limits)
-    barrier = threading.Barrier(15)
+    barrier = threading.Barrier(len(SLOT_SPECS))
 
     def light(slot_id: str) -> dict[str, Any]:
         nonlocal active, maximum
@@ -1399,7 +1425,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         "production_deploy": False,
         "tested_at": utc_now(),
     }
-    atomic_write_json(coordinator.state / "acceptance" / "adaptive_v3_15_slot_fixture_test_latest.json", report)
+    atomic_write_json(coordinator.state / "acceptance" / "adaptive_v3_18_slot_fixture_test_latest.json", report)
     return report
 
 

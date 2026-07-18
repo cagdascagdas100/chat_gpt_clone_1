@@ -54,8 +54,13 @@ SLOT_IDS = (
     ("parcel_label_1", "Parcel Label 1"),
     ("parcel_label_2", "Parcel Label 2"),
     ("parcel_label_3", "Parcel Label 3"),
+    ("internet_access_1", "Internet Access 1"),
+    ("internet_access_2", "Internet Access 2"),
+    ("internet_access_3", "Internet Access 3"),
 )
-V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"
+V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_18_SLOT.ps1"
+if not V2_LAUNCHER.is_file():
+    V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"
 V2_STATE_ROOT = PORTABLE_ROOT / "state"
 V2_STATUS = V2_STATE_ROOT / "coordinator_status_latest.json"
 V2_HEARTBEAT = V2_STATE_ROOT / "coordinator_heartbeat_latest.json"
@@ -150,6 +155,7 @@ class AaysPanel(tk.Tk):
         self.safe_remove_var = tk.StringVar(value="Güvenli disk çıkarma: kontrol edilmedi")
         self.machine_var = tk.StringVar(value="Bilgisayar profili: ön kontrol yapılmadı")
         self.remote_var = tk.StringVar(value="Uzaktan erişim: kontrol edilmedi")
+        self.data_scope_var = tk.StringVar(value="Veri kapsamı: kontrol edilmedi")
         self.slot_vars = {
             slot_id: tk.StringVar(value=f"{label}: kontrol edilmedi")
             for slot_id, label in SLOT_IDS
@@ -178,11 +184,11 @@ class AaysPanel(tk.Tk):
         grid = ttk.Frame(actions)
         grid.pack(fill="x")
         buttons = [
-            ("Uygulama + 15 Slot Başlat", self.start_all),
+            ("Uygulama + 18 Slot Başlat", self.start_all),
             ("Yeni PC Ön Kontrol", self.run_preflight),
             ("Uygulamayı Aç", self.start_app_and_open),
             ("Uygulamayı Başlat", self.start_app_only),
-            ("15 Slot Runner Başlat", self.start_runner),
+            ("18 Slot Runner Başlat", self.start_runner),
             ("Runner'ı Durdur", self.stop_runner),
             ("Runner'ı Yeniden Başlat", self.restart_runner),
             ("Uzaktan Erişim Kontrol", self.check_remote_access),
@@ -207,10 +213,11 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.path_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.machine_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.remote_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
+        ttk.Label(status, textvariable=self.data_scope_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
-        slots = ttk.LabelFrame(root, text="15 Slot Durumu", padding=12, height=370)
+        slots = ttk.LabelFrame(root, text="18 Slot Durumu", padding=12, height=400)
         slots.pack(fill="x", pady=(12, 0))
         slots.pack_propagate(False)
         for slot_id, _label in SLOT_IDS:
@@ -220,8 +227,8 @@ class AaysPanel(tk.Tk):
         text_box.pack(fill="x", pady=(12, 0))
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
-            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 15 Slot Başlat düğmesini kullanın. "
-            "Uygulama URL'si sabittir: 127.0.0.1:8012. 15 Slot Runner Başlat düğmesi gerçek runner recovery ve GitHub smoke testini çalıştırır; sağlıklı runner varsa ikinci runner açmaz."
+            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 18 Slot Başlat düğmesini kullanın. "
+            "Uygulama URL'si sabittir: 127.0.0.1:8012. 18 Slot Runner Başlat düğmesi tek koordinatörü çalıştırır; RAM'e göre aynı anda 5, 15 veya 18 görev yürütür ve ikinci koordinatör açmaz."
         )
         ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=1000, justify="left").pack(anchor="w")
 
@@ -270,7 +277,7 @@ class AaysPanel(tk.Tk):
             self.set_status(f"Eksik rehber: {REMOTE_GUIDE}")
 
     def start_all(self) -> None:
-        self.set_status("Uygulama ve tek koordinatör içindeki 15 slot başlatılıyor")
+        self.set_status("Uygulama ve tek koordinatör içindeki 18 slot başlatılıyor")
         self.run_powershell(APP_SCRIPT, ["-NoBrowser"])
         process = self.run_powershell(V2_LAUNCHER, ["-Action", "Start"])
         threading.Thread(target=self._wait_for_app, args=(True,), daemon=True).start()
@@ -347,7 +354,7 @@ class AaysPanel(tk.Tk):
         checkpoint = read_json(V2_SLOT_ROOT / slot_id / "checkpoint_latest.json")
         current = read_json(V2_SLOT_ROOT / slot_id / "current_task_latest.json")
         valid = (
-            status.get("workstream_id") == "AAYS_15_SLOT_SAFE_PARALLEL_V1"
+            status.get("workstream_id") == "AAYS_18_SLOT_SAFE_PARALLEL_V1"
             and status.get("slot_id") == slot_id
             and checkpoint.get("slot_id") == slot_id
         )
@@ -395,10 +402,12 @@ class AaysPanel(tk.Tk):
                 "queue_ready_count": 0,
                 "current_task_id": ", ".join(v2_status.get("active_tasks", {}).values()) or None,
                 "active_workers": int(v2_status.get("active_workers") or 0),
-                "max_child_workers": int(v2_status.get("max_child_workers") or 15),
+                "max_child_workers": int(v2_status.get("max_child_workers") or 18),
+                "logical_slot_count": int(v2_status.get("logical_slot_count") or 18),
                 "coordinator_state": v2_status.get("state", "NOT_STARTED"),
                 "consecutive_failures": 0,
-                "blocker": None,
+                "scheduling_pause_reason": v2_status.get("scheduling_pause_reason"),
+                "blocker": v2_status.get("scheduling_pause_reason"),
             }
         bootstrap = read_json(RUNNER_STATUS)
         daemon = read_json(RUNNER_DAEMON_STATUS)
@@ -459,7 +468,13 @@ class AaysPanel(tk.Tk):
             self.machine_var.set(
                 f"Bilgisayar profili: {preflight.get('resource_profile', 'bilinmiyor')} - "
                 f"RAM {preflight.get('total_memory_gb', '?')} GB - CPU {preflight.get('logical_cpus', '?')} izlek - "
+                f"18 mantıksal slot / aynı anda en fazla {preflight.get('max_child_workers', '?')} - "
                 f"Git {'HAZIR' if preflight.get('checks', {}).get('git_executes') else 'EKSIK'}"
+            )
+            national_ready = bool(preflight.get("national_england_canonical_inventory_ready"))
+            self.data_scope_var.set(
+                f"Veri kapsamı: 92.283 kayıt = Londra kanonik matrisi; tüm İngiltere kanonik envanteri "
+                f"{'HAZIR' if national_ready else 'HAZIR DEĞİL'} - internet eşleşen 33.785 / NO_DATA veya eksik 58.498"
             )
         remote = read_json(REMOTE_STATUS)
         if remote:
@@ -473,9 +488,11 @@ class AaysPanel(tk.Tk):
             age = int(info.get("heartbeat_age") or 0)
             self.runner_var.set(
                 f"Runner: HEALTHY - PID {info.get('pid')} - heartbeat {age} sn - "
-                f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 15)} - "
+                f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 18)} - "
+                f"slot {info.get('logical_slot_count', 18)} - "
                 f"queue {info.get('queue_ready_count')}/{info.get('queue_scan_count')} - "
-                f"aktif görev {info.get('current_task_id') or '-'}"
+                f"aktif görev {info.get('current_task_id') or '-'} - "
+                f"bekleme {info.get('scheduling_pause_reason') or 'yok'}"
             )
         elif info.get("status") == "DEGRADED":
             self.runner_var.set(
@@ -513,7 +530,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
 
 
