@@ -49,7 +49,7 @@ if (-not (Test-Path -LiteralPath $worktreeRoot -PathType Container)) { throw "WO
 
 $env:AAYS_PORTABLE_ROOT = $root
 $env:AAYS_REPO_ROOT = $publisherRepo
-$env:AAYS_RUNNER_MODE = "F_PORTABLE_SINGLE_COORDINATOR_18_SLOT"
+$env:AAYS_RUNNER_MODE = "F_PORTABLE_SINGLE_COORDINATOR_21_SLOT"
 $env:TEMP = $tempRoot
 $env:TMP = $tempRoot
 $env:HOME = $homeRoot
@@ -103,7 +103,7 @@ $hostProof = [ordered]@{
   portable_root = $root
   drive_letter_runtime_only = $true
   architecture_version = 3
-  workstream_id = "AAYS_18_SLOT_SAFE_PARALLEL_V1"
+  workstream_id = "AAYS_21_SLOT_SAFE_PARALLEL_V1"
   portable_python = $python
   portable_git = $portableGit
   publisher_repo = $publisherRepo

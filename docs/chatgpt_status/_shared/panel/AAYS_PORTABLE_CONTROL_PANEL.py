@@ -57,8 +57,11 @@ SLOT_IDS = (
     ("internet_access_1", "Internet Access 1"),
     ("internet_access_2", "Internet Access 2"),
     ("internet_access_3", "Internet Access 3"),
+    ("future_growth_1", "Future Growth 1"),
+    ("future_growth_2", "Future Growth 2"),
+    ("future_growth_3", "Future Growth 3"),
 )
-V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_18_SLOT.ps1"
+V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_21_SLOT.ps1"
 if not V2_LAUNCHER.is_file():
     V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"
 V2_STATE_ROOT = PORTABLE_ROOT / "state"
@@ -72,7 +75,7 @@ REMOTE_STATUS = V2_STATE_ROOT / "remote_access_preflight_latest.json"
 V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 PUBLISHER_REPO = PORTABLE_ROOT / "runner_system" / "adaptive_v2" / "publisher"
 PUBLISHER_SHARED = PUBLISHER_REPO / "docs" / "chatgpt_status" / "_shared"
-CONTINUE_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_DRY_RUN_latest.json"
+CONTINUE_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_21_PAGE_CONTINUE_DRY_RUN_latest.json"
 AI_PHOTO_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_AI_PHOTO_EVIDENCE_AUDIT_latest.json"
 BROWSER_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_AI_BROWSER_SMOKE_latest.json"
 DATA_QUALITY_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_DATA_QUALITY_RECHECK_latest.json"
@@ -163,7 +166,7 @@ class AaysPanel(tk.Tk):
         self.machine_var = tk.StringVar(value="Bilgisayar profili: ön kontrol yapılmadı")
         self.remote_var = tk.StringVar(value="Uzaktan erişim: kontrol edilmedi")
         self.data_scope_var = tk.StringVar(value="Veri kapsamı: kontrol edilmedi")
-        self.continue_test_var = tk.StringVar(value="18 sayfa devam testi: kontrol edilmedi")
+        self.continue_test_var = tk.StringVar(value="21 sayfa devam testi: kontrol edilmedi")
         self.layer_test_var = tk.StringVar(value="Katman testi: kontrol edilmedi")
         self.ai_test_var = tk.StringVar(value="AI fotoğraf testi: kontrol edilmedi")
         self.browser_test_var = tk.StringVar(value="Tarayıcı testi: kontrol edilmedi")
@@ -207,11 +210,11 @@ class AaysPanel(tk.Tk):
         grid = ttk.Frame(actions)
         grid.pack(fill="x")
         buttons = [
-            ("Uygulama + 18 Slot Başlat", self.start_all),
+            ("Uygulama + 21 Slot Başlat", self.start_all),
             ("Yeni PC Ön Kontrol", self.run_preflight),
             ("Uygulamayı Aç", self.start_app_and_open),
             ("Uygulamayı Başlat", self.start_app_only),
-            ("18 Slot Runner Başlat", self.start_runner),
+            ("21 Slot Runner Başlat", self.start_runner),
             ("Runner'ı Durdur", self.stop_runner),
             ("Runner'ı Yeniden Başlat", self.restart_runner),
             ("Uzaktan Erişim Kontrol", self.check_remote_access),
@@ -240,7 +243,7 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
-        tests = ttk.LabelFrame(root, text="Son 18 Slot + AI/Fotoğraf Testleri", padding=12)
+        tests = ttk.LabelFrame(root, text="Son 21 Slot + AI/Fotoğraf Testleri", padding=12)
         tests.pack(fill="x", pady=(12, 0))
         for variable in (
             self.continue_test_var,
@@ -253,7 +256,7 @@ class AaysPanel(tk.Tk):
             label.pack(fill="x", anchor="w", pady=2)
             self.wrap_labels.append(label)
 
-        slots = ttk.LabelFrame(root, text="18 Slot Canlı Durumu", padding=12)
+        slots = ttk.LabelFrame(root, text="21 Slot Canlı Durumu", padding=12)
         slots.pack(fill="x", pady=(12, 0))
         for slot_id, _label in SLOT_IDS:
             label = ttk.Label(
@@ -269,8 +272,8 @@ class AaysPanel(tk.Tk):
         text_box.pack(fill="x", pady=(12, 0))
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
-            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 18 Slot Başlat düğmesini kullanın. "
-            "Uygulama URL'si sabittir: 127.0.0.1:8012. 18 Slot Runner Başlat düğmesi tek koordinatörü çalıştırır; RAM'e göre aynı anda 5, 15 veya 18 görev yürütür ve ikinci koordinatör açmaz."
+            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 21 Slot Başlat düğmesini kullanın. "
+            "Uygulama URL'si sabittir: 127.0.0.1:8012. 21 Slot Runner Başlat düğmesi tek koordinatörü çalıştırır; RAM'e göre sınırlı sayıda görevi aynı anda yürütür ve ikinci koordinatör açmaz."
         )
         note_label = ttk.Label(text_box, text=note, style="Body.TLabel", justify="left")
         note_label.pack(fill="x", anchor="w")
@@ -332,7 +335,7 @@ class AaysPanel(tk.Tk):
             self.set_status(f"Eksik rehber: {REMOTE_GUIDE}")
 
     def start_all(self) -> None:
-        self.set_status("Uygulama ve tek koordinatör içindeki 18 slot başlatılıyor")
+        self.set_status("Uygulama ve tek koordinatör içindeki 21 slot başlatılıyor")
         self.run_powershell(APP_SCRIPT, ["-NoBrowser"])
         process = self.run_powershell(V2_LAUNCHER, ["-Action", "Start"])
         threading.Thread(target=self._wait_for_app, args=(True,), daemon=True).start()
@@ -409,7 +412,7 @@ class AaysPanel(tk.Tk):
         checkpoint = read_json(V2_SLOT_ROOT / slot_id / "checkpoint_latest.json")
         current = read_json(V2_SLOT_ROOT / slot_id / "current_task_latest.json")
         valid = (
-            status.get("workstream_id") == "AAYS_18_SLOT_SAFE_PARALLEL_V1"
+            status.get("workstream_id") == "AAYS_21_SLOT_SAFE_PARALLEL_V1"
             and status.get("slot_id") == slot_id
             and checkpoint.get("slot_id") == slot_id
         )
@@ -462,13 +465,13 @@ class AaysPanel(tk.Tk):
 
         if continue_test:
             self.continue_test_var.set(
-                f"18 sayfa devam testi: {continue_test.get('status', 'bilinmiyor')} - "
-                f"doğru slot {continue_test.get('valid_continue_contracts', 0)}/18 - "
-                f"yanlış slot engeli {continue_test.get('wrong_slot_blocked_count', 0)}/18 - "
+                f"21 sayfa devam testi: {continue_test.get('status', 'bilinmiyor')} - "
+                f"doğru slot {continue_test.get('valid_continue_contracts', 0)}/21 - "
+                f"yanlış slot engeli {continue_test.get('wrong_slot_blocked_count', 0)}/21 - "
                 f"business yazımı {continue_test.get('business_files_written', 0)}"
             )
         else:
-            self.continue_test_var.set("18 sayfa devam testi: kanıt dosyası bulunamadı")
+            self.continue_test_var.set("21 sayfa devam testi: kanıt dosyası bulunamadı")
 
         topics = layer_test.get("topics", {}) if layer_test else {}
         layer_text = (
@@ -529,7 +532,7 @@ class AaysPanel(tk.Tk):
                 "current_task_id": ", ".join(v2_status.get("active_tasks", {}).values()) or None,
                 "active_workers": int(v2_status.get("active_workers") or 0),
                 "max_child_workers": int(v2_status.get("max_child_workers") or 18),
-                "logical_slot_count": int(v2_status.get("logical_slot_count") or 18),
+                "logical_slot_count": int(v2_status.get("logical_slot_count") or 21),
                 "coordinator_state": v2_status.get("state", "NOT_STARTED"),
                 "consecutive_failures": 0,
                 "scheduling_pause_reason": v2_status.get("scheduling_pause_reason"),
@@ -615,7 +618,7 @@ class AaysPanel(tk.Tk):
             self.runner_var.set(
                 f"Runner: HEALTHY - PID {info.get('pid')} - heartbeat {age} sn - "
                 f"workers {info.get('active_workers', 0)}/{info.get('max_child_workers', 18)} - "
-                f"slot {info.get('logical_slot_count', 18)} - "
+                f"slot {info.get('logical_slot_count', 21)} - "
                 f"queue {info.get('queue_ready_count')}/{info.get('queue_scan_count')} - "
                 f"aktif görev {info.get('current_task_id') or '-'} - "
                 f"bekleme {info.get('scheduling_pause_reason') or 'yok'}"
@@ -657,5 +660,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 

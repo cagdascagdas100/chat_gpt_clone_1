@@ -23,8 +23,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-WORKSTREAM_ID = "AAYS_18_SLOT_SAFE_PARALLEL_V1"
-LEGACY_WORKSTREAM_IDS = {"AAYS_15_SLOT_SAFE_PARALLEL_V1"}
+WORKSTREAM_ID = "AAYS_21_SLOT_SAFE_PARALLEL_V1"
+LEGACY_WORKSTREAM_IDS = {"AAYS_15_SLOT_SAFE_PARALLEL_V1", "AAYS_18_SLOT_SAFE_PARALLEL_V1"}
 ARCHITECTURE_VERSION = 3
 TASK_LEASE_SECONDS = 3600
 MAX_TASK_TIMEOUT_SECONDS = 7200
@@ -69,6 +69,13 @@ BASE_SLOT_SPECS = {
         "business_root": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612",
         "markers": ("internet_access", "internet", "broadband"),
         "first_unverified": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+        "terminal": (),
+    },
+    "future_growth": {
+        "page_key": "aays1",
+        "business_root": "docs/chatgpt_status/aays1",
+        "markers": ("future_growth", "future-growth", "growth_forecast"),
+        "first_unverified": "BUILD_VERIFIED_92283_ROW_FUTURE_GROWTH_EVIDENCE_MATRIX_THEN_SCORE_WITH_CONFIDENCE",
         "terminal": (),
     },
 }
@@ -435,7 +442,7 @@ class Coordinator:
             "portable_git": self.git_executable is not None and self.git_executable.is_file(),
             "publisher_repo": self.repo.is_dir() and (self.repo / ".git").is_dir(),
             "worktree_root": self.worktrees.is_dir(),
-            "eighteen_slot_contract": len(SLOT_SPECS) == 18 and len(set(SLOT_SPECS)) == 18,
+            "twenty_one_slot_contract": len(SLOT_SPECS) == 21 and len(set(SLOT_SPECS)) == 21,
             "slot_worktrees": all(path.is_dir() for path in slot_worktrees),
             "slot_git_repositories_are_self_contained": all((path / ".git").is_dir() for path in slot_worktrees),
             "portable_app_launcher": (self.root / "START_TERRAYIELD_PORTABLE_8012.ps1").is_file(),
@@ -560,9 +567,12 @@ class Coordinator:
         for slot_id, spec in SLOT_SPECS.items():
             local_path = self.slot_dir(slot_id) / "checkpoint_latest.json"
             local = read_json(local_path, {})
-            remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_18" / slot_id / "checkpoint_latest.json"
-            remote_contract_source = "slots_18"
-            if not remote_path.exists() and spec["base_slot_id"] != "internet_access":
+            remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_21" / slot_id / "checkpoint_latest.json"
+            remote_contract_source = "slots_21"
+            if not remote_path.exists() and spec["base_slot_id"] != "future_growth":
+                remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_18" / slot_id / "checkpoint_latest.json"
+                remote_contract_source = "slots_18_legacy_fallback"
+            if not remote_path.exists() and spec["base_slot_id"] not in {"internet_access", "future_growth"}:
                 remote_path = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_15" / slot_id / "checkpoint_latest.json"
                 remote_contract_source = "slots_15_legacy_fallback"
             remote = read_json(remote_path, {})
@@ -643,7 +653,7 @@ class Coordinator:
             "machine_id": machine_id(),
             "boot_id": boot_id(),
             "instance_id": self.instance_id,
-            "command": "AAYS_ADAPTIVE_SINGLE_COORDINATOR_18_SLOT run",
+            "command": "AAYS_ADAPTIVE_SINGLE_COORDINATOR_21_SLOT run",
             "portable_root_relative": ".",
             "created_at": utc_now(),
             "final_ready": False,
@@ -752,8 +762,10 @@ class Coordinator:
         if task["task_id"] in self.seen_task_ids:
             raise ValueError("DUPLICATE_TASK_ID")
         spec = SLOT_SPECS[slot_id]
-        if task_workstream in LEGACY_WORKSTREAM_IDS and spec["base_slot_id"] == "internet_access":
-            raise ValueError("INTERNET_SLOT_REQUIRES_18_SLOT_WORKSTREAM")
+        if task_workstream == "AAYS_15_SLOT_SAFE_PARALLEL_V1" and spec["base_slot_id"] == "internet_access":
+            raise ValueError("INTERNET_SLOT_REQUIRES_18_OR_21_SLOT_WORKSTREAM")
+        if task_workstream in LEGACY_WORKSTREAM_IDS and spec["base_slot_id"] == "future_growth":
+            raise ValueError("FUTURE_GROWTH_SLOT_REQUIRES_21_SLOT_WORKSTREAM")
         if str(task["base_slot_id"]) != str(spec["base_slot_id"]) or int(task["shard_index"]) != int(spec["shard_index"]):
             raise ValueError("SLOT_SHARD_IDENTITY_MISMATCH")
         partition = task["parcel_partition"]
@@ -768,12 +780,19 @@ class Coordinator:
         normalized_slot_id = slot_id.casefold()
         if any(normalized_slot_id not in value.split("/") for value in normalized_writes):
             raise ValueError("SLOT_WRITE_PATH_NOT_ISOLATED")
-        canonical_write_roots = (
-            f"{spec['business_root']}/shards/{slot_id}",
-            f"docs/chatgpt_status/_shared/slots_18/{slot_id}",
-            f"england_map_web/data/aays_18_slots/{slot_id}",
-        )
-        if task_workstream in LEGACY_WORKSTREAM_IDS:
+        if task_workstream == WORKSTREAM_ID:
+            canonical_write_roots = (
+                f"{spec['business_root']}/shards/{slot_id}",
+                f"docs/chatgpt_status/_shared/slots_21/{slot_id}",
+                f"england_map_web/data/aays_21_slots/{slot_id}",
+            )
+        elif task_workstream == "AAYS_18_SLOT_SAFE_PARALLEL_V1":
+            canonical_write_roots = (
+                f"{spec['business_root']}/shards/{slot_id}",
+                f"docs/chatgpt_status/_shared/slots_18/{slot_id}",
+                f"england_map_web/data/aays_18_slots/{slot_id}",
+            )
+        else:
             canonical_write_roots = (
                 f"{spec['business_root']}/shards/{slot_id}",
                 f"docs/chatgpt_status/_shared/slots_15/{slot_id}",
@@ -785,8 +804,9 @@ class Coordinator:
             for value in normalized_writes
         ):
             raise ValueError("SLOT_WRITE_PATH_OUTSIDE_CANONICAL_ROOTS")
+        normalized_web_root = normalize_repo_path(canonical_write_roots[2])
         web_publish_requested = any(
-            value.startswith("england_map_web/data/aays_18_slots/")
+            value == normalized_web_root or value.startswith(normalized_web_root + "/")
             for value in normalized_writes
         )
         if web_publish_requested:
@@ -1091,7 +1111,7 @@ class Coordinator:
         return slots
 
     def copy_slot_proofs(self, slot_id: str) -> list[str]:
-        target_root = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_18" / slot_id
+        target_root = self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_21" / slot_id
         target_root.mkdir(parents=True, exist_ok=True)
         copied: list[str] = []
         for name in ("checkpoint_latest.json", "heartbeat_latest.json", "current_task_latest.json", "status_latest.json"):
@@ -1560,7 +1580,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         for name in ("ram_heavy", "raster_heavy", "git_publish", "runtime_sync", "browser_acceptance", "shared_publish")
     }
     checks = {
-        "all_18_slot_fixtures_passed": len(results) == len(SLOT_SPECS) and all(item.get("state") == "PASS" for item in results),
+        "all_21_slot_fixtures_passed": len(results) == len(SLOT_SPECS) and all(item.get("state") == "PASS" for item in results),
         "light_read_limit_observed": maximum == min(fixture_limits["light_read"], len(SLOT_SPECS)),
         "path_overlap_blocked": overlap_blocked,
         "wrong_slot_blocked": wrong_slot_blocked,
@@ -1607,7 +1627,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         "production_deploy": False,
         "tested_at": utc_now(),
     }
-    atomic_write_json(coordinator.state / "acceptance" / "adaptive_v3_18_slot_fixture_test_latest.json", report)
+    atomic_write_json(coordinator.state / "acceptance" / "adaptive_v3_21_slot_fixture_test_latest.json", report)
     return report
 
 

@@ -4,10 +4,10 @@ param([switch]$NoBrowser, [switch]$NoPanel)
 $ErrorActionPreference = "Stop"
 $root = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
 $app = Join-Path $root "START_TERRAYIELD_PORTABLE_8012.ps1"
-$runner = Join-Path $root "RUN_AAYS_ADAPTIVE_18_SLOT.ps1"
+$runner = Join-Path $root "RUN_AAYS_ADAPTIVE_21_SLOT.ps1"
 $panel = Join-Path $root "AAYS_PORTABLE_CONTROL_PANEL.cmd"
 $state = Join-Path $root "state"
-$proof = Join-Path $state "one_click_app_and_18_slot_latest.json"
+$proof = Join-Path $state "one_click_app_and_21_slot_latest.json"
 New-Item -ItemType Directory -Force -Path $state | Out-Null
 
 $result = [ordered]@{
