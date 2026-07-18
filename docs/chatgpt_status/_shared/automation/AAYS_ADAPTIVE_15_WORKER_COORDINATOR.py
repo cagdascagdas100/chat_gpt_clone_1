@@ -1404,6 +1404,31 @@ class Coordinator:
 
 def concurrency_fixture(root: Path) -> dict[str, Any]:
     coordinator = Coordinator(root)
+    production_state_root = coordinator.state
+
+    def state_snapshot(directory: Path) -> dict[str, str]:
+        if not directory.is_dir():
+            return {}
+        return {
+            str(path.relative_to(directory)).replace("\\", "/"): sha256_bytes(path.read_bytes())
+            for path in sorted(directory.rglob("*"))
+            if path.is_file()
+        }
+
+    production_state_before = state_snapshot(production_state_root)
+    fixture_sandbox = coordinator.runtime / "fixture_sandbox" / uuid.uuid4().hex
+    coordinator.state = fixture_sandbox / "state"
+    coordinator.runtime = fixture_sandbox / "runtime"
+    coordinator.logs = fixture_sandbox / "logs"
+    coordinator.recovery = fixture_sandbox / "recovery" / "quarantine"
+    coordinator.lock_path = coordinator.state / "coordinator.lock.json"
+    coordinator.heartbeat_path = coordinator.state / "coordinator_heartbeat_latest.json"
+    coordinator.status_path = coordinator.state / "coordinator_status_latest.json"
+    coordinator.control_path = coordinator.state / "control_latest.json"
+    coordinator.manual_stop_path = coordinator.state / "manual_stop.requested.json"
+    coordinator.preflight_path = coordinator.state / "portable_preflight_latest.json"
+    coordinator.publish_queue = coordinator.state / "publish_queue"
+    coordinator.publish_archive = coordinator.state / "publish_archive"
     coordinator.initialize_state("FIXTURE_REMOTE_HEAD")
     fixture_root = coordinator.runtime / "fixtures"
     fixture_root.mkdir(parents=True, exist_ok=True)
@@ -1416,8 +1441,8 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
 
     def light(slot_id: str) -> dict[str, Any]:
         nonlocal active, maximum
+        barrier.wait(timeout=30)
         with coordinator.resources.acquire(["light_read"]):
-            barrier.wait(timeout=15)
             with lock:
                 active += 1
                 maximum = max(maximum, active)
@@ -1428,7 +1453,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
                 active -= 1
             return {"slot_id": slot_id, "state": "PASS"}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=fixture_workers) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(SLOT_SPECS)) as pool:
         results = list(pool.map(light, SLOT_SPECS.keys()))
 
     def measured_serial(resource: str) -> int:
@@ -1469,6 +1494,18 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         "resource_class": "light_read",
         "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
         "safety_flags": {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False},
+        "data_quality_contract": {
+            "source_urls": [],
+            "source_snapshot_date": "",
+            "source_discovery_required": True,
+            "measurement_level": "unknown_pending_source",
+            "output_semantics": "NO_DATA",
+            "parcel_binding_method": "NOT_RUN",
+            "confidence_method": "NOT_SCORED",
+            "no_data_policy": "NO_DATA_NOT_INFERRED",
+            "ai_role": "not_used",
+            "human_review_required_when": ["source_conflict", "low_confidence", "geometry_mismatch"],
+        },
     }
     coordinator.classify_task(base_task)
     coordinator.seen_task_ids.add(base_task["task_id"])
@@ -1512,10 +1549,37 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
     atomic_write_json(alternate_root / ".aays_portable_identity.json", alternate_identity)
     alternate_ok = read_json(alternate_root / ".aays_portable_identity.json", {}).get("relative_repo_path") == coordinator.identity.get("relative_repo_path")
 
+    production_state_after = state_snapshot(production_state_root)
+    production_state_files_changed = sorted(
+        path
+        for path in set(production_state_before) | set(production_state_after)
+        if production_state_before.get(path) != production_state_after.get(path)
+    )
+    resource_peaks = {
+        name: measured_serial(name)
+        for name in ("ram_heavy", "raster_heavy", "git_publish", "runtime_sync", "browser_acceptance", "shared_publish")
+    }
+    checks = {
+        "all_18_slot_fixtures_passed": len(results) == len(SLOT_SPECS) and all(item.get("state") == "PASS" for item in results),
+        "light_read_limit_observed": maximum == min(fixture_limits["light_read"], len(SLOT_SPECS)),
+        "path_overlap_blocked": overlap_blocked,
+        "wrong_slot_blocked": wrong_slot_blocked,
+        "duplicate_task_blocked": duplicate_blocked,
+        "long_task_heartbeat_refresh": long_task_heartbeat_ok,
+        "serialized_resources_observed": all(resource_peaks[name] == 1 for name in ("raster_heavy", "git_publish", "runtime_sync", "shared_publish")),
+        "bounded_resources_observed": all(resource_peaks[name] <= fixture_limits[name] for name in resource_peaks),
+        "corrupt_checkpoint_quarantined": (quarantine / "checkpoint.corrupt.json").exists(),
+        "alternate_drive_root_simulation": alternate_ok,
+        "production_state_untouched": not production_state_files_changed,
+    }
+
     report = {
-        "status": "PASS_WITH_PHYSICAL_TEST_LIMITATIONS",
+        "status": "PASS_WITH_PHYSICAL_TEST_LIMITATIONS" if all(checks.values()) else "FAIL",
         "workstream_id": WORKSTREAM_ID,
         "architecture_version": ARCHITECTURE_VERSION,
+        "checks": checks,
+        "fixture_sandbox": str(fixture_sandbox),
+        "production_state_files_changed": production_state_files_changed,
         "coordinator_process_count": 1,
         "max_child_workers": fixture_workers,
         "fixture_resource_profile": fixture_profile,
@@ -1527,10 +1591,7 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
         "duplicate_task_blocked": duplicate_blocked,
         "long_task_timeout_seconds": TASK_LEASE_SECONDS,
         "long_task_heartbeat_refresh": long_task_heartbeat_ok,
-        "resource_peaks": {
-            name: measured_serial(name)
-            for name in ("ram_heavy", "raster_heavy", "git_publish", "runtime_sync", "browser_acceptance", "shared_publish")
-        },
+        "resource_peaks": resource_peaks,
         "child_crash_isolated": True,
         "disk_disconnect_simulation": "PASS",
         "network_disconnect_simulation": "PASS",
