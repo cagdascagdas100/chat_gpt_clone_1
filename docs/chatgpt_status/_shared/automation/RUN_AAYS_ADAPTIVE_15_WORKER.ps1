@@ -26,6 +26,7 @@ $worktreeRoot = Join-Path $root ([string]$identity.relative_worktree_root)
 $portableGit = Join-Path $root "runtime\git\cmd\git.exe"
 $portableGitConfig = Join-Path $root "runtime\gitconfig.aays.portable"
 $stateRoot = Join-Path $root "state"
+$manualStopPath = Join-Path $stateRoot "manual_stop.requested.json"
 $writeProbe = Join-Path $stateRoot ("write_probe_" + [guid]::NewGuid().ToString("N") + ".tmp")
 
 New-Item -ItemType Directory -Force -Path $stateRoot | Out-Null
@@ -115,6 +116,13 @@ if ($Action -eq "Status") {
   exit 0
 }
 if ($Action -eq "Stop") {
+  $manualStop = [ordered]@{
+    requested = $true
+    requested_at = [DateTime]::UtcNow.ToString("o")
+    reason = "USER_REQUESTED_STOP"
+    final_ready = $false
+  } | ConvertTo-Json
+  [System.IO.File]::WriteAllText($manualStopPath, $manualStop + "`n", (New-Object System.Text.UTF8Encoding($false)))
   Request-Stop | ConvertTo-Json -Depth 10
   exit 0
 }
@@ -129,6 +137,9 @@ if ($Action -eq "FixtureTest") {
 if ($Action -eq "Restart") {
   Request-Stop | Out-Null
 }
+
+# Only explicit Start and Restart actions clear a persistent manual stop.
+Remove-Item -LiteralPath $manualStopPath -Force -ErrorAction SilentlyContinue
 
 $preflightRaw = & $python $coordinator preflight --root $root
 if ($LASTEXITCODE -ne 0) {

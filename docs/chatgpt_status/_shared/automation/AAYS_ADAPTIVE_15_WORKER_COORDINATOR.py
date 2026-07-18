@@ -295,6 +295,7 @@ class Coordinator:
         self.heartbeat_path = self.state / "coordinator_heartbeat_latest.json"
         self.status_path = self.state / "coordinator_status_latest.json"
         self.control_path = self.state / "control_latest.json"
+        self.manual_stop_path = self.state / "manual_stop.requested.json"
         self.preflight_path = self.state / "portable_preflight_latest.json"
         self.publish_queue = self.state / "publish_queue"
         self.publish_archive = self.state / "publish_archive"
@@ -1192,6 +1193,9 @@ class Coordinator:
                 self.active_paths.pop(slot_id, None)
 
     def run(self) -> int:
+        if self.manual_stop_path.exists():
+            print(json.dumps({"status": "manual_stop_requested", "started": False, "final_ready": False}))
+            return 0
         preflight = self.preflight()
         if not preflight["ready"]:
             print(json.dumps(preflight, ensure_ascii=False))
@@ -1209,6 +1213,9 @@ class Coordinator:
         try:
             self.write_global_status("RUNNING")
             while not self.stop_event.is_set():
+                if self.manual_stop_path.exists():
+                    self.stop_event.set()
+                    break
                 control = read_json(self.control_path, {})
                 if control.get("requested_action") == "STOP":
                     self.stop_event.set()
@@ -1398,6 +1405,10 @@ def concurrency_fixture(root: Path) -> dict[str, Any]:
 
 def request_stop(root: Path) -> dict[str, Any]:
     coordinator = Coordinator(root)
+    atomic_write_json(
+        coordinator.manual_stop_path,
+        {"requested": True, "requested_at": utc_now(), "reason": "USER_REQUESTED_STOP"},
+    )
     atomic_write_json(coordinator.control_path, {"requested_action": "STOP", "requested_at": utc_now()})
     return {"status": "STOP_REQUESTED", "control": str(coordinator.control_path), "final_ready": False}
 
@@ -1419,6 +1430,7 @@ def status(root: Path) -> dict[str, Any]:
         "total_memory_gb": global_status.get("total_memory_gb", coordinator.memory_gb),
         "logical_cpus": global_status.get("logical_cpus", coordinator.logical_cpus),
         "portable_root": str(root.resolve()),
+        "manual_stop_requested": coordinator.manual_stop_path.exists(),
         "final_ready": False,
     }
 
