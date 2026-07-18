@@ -98,6 +98,20 @@ varlığı AI görsel karşılaştırmasının yapıldığı anlamına gelmez. G
 9. Program matrisi manifestindeki iki yanlış sayım ve C-hardcoded yollar düzeltildi.
 10. Internet fallback gerçek 33.785 postcode kapsam satırını yükler; satış geçmişinden internet
     kalitesi üretmez ve ölçülmüş hız iddiası yazmaz.
+11. 8012 health yanıtı geçici geciktiğinde portu yanlışlıkla başka servis sayan preflight hatası
+    üç sınırlı yeniden deneme ve son port kontrolüyle düzeltildi.
+12. Windows okuyucu kilidi `coordinator_status_latest.json` atomik replace işlemini engellediğinde
+    daemon artık kontrollü retry ve fsync fallback uygular; hata daemon'u düşürmez.
+
+## Portable Başlatma Doğrulaması
+
+- Uygulama health: HTTP 200, TerraYield Land Intelligence, database `degraded`.
+- 8012 preflight: PASS, `port_8012_state=TERRAYIELD_ACTIVE`.
+- Koordinatör başlatma: PASS.
+- Gözlenen canlı PID: 12064.
+- 30 saniye canlılık testi: PASS; aynı PID ve yenilenen heartbeat.
+- Temiz stop testi: PASS, `STOPPED_CLEAN`.
+- Başlangıç/lock düzeltmelerinin remote implementation commit'i: `b99d659`.
 
 ## Test Sonuçları
 
@@ -110,6 +124,9 @@ varlığı AI görsel karşılaştırmasının yapıldığı anlamına gelmez. G
 - GeoJSON count/manifest integrity: PASS, hardcoded C path false.
 - Browser smoke: 3/3 HTTP 200.
 - Internet overlay smoke: PASS, 33.785 feature, proxy label present.
+- Portable preflight with active 8012: PASS.
+- Coordinator 30-second heartbeat persistence: PASS.
+- Coordinator clean stop: PASS.
 - Fake business data written: 0.
 
 ## Kalan Gerçek Blockerlar
