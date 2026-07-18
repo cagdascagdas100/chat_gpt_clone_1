@@ -70,6 +70,13 @@ REMOTE_CHECK_SCRIPT = PORTABLE_ROOT / "CHECK_AAYS_REMOTE_ACCESS.ps1"
 REMOTE_GUIDE = PORTABLE_ROOT / "AAYS_REMOTE_ACCESS_SETUP_TR.md"
 REMOTE_STATUS = V2_STATE_ROOT / "remote_access_preflight_latest.json"
 V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
+PUBLISHER_REPO = PORTABLE_ROOT / "runner_system" / "adaptive_v2" / "publisher"
+PUBLISHER_SHARED = PUBLISHER_REPO / "docs" / "chatgpt_status" / "_shared"
+CONTINUE_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_DRY_RUN_latest.json"
+AI_PHOTO_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_AI_PHOTO_EVIDENCE_AUDIT_latest.json"
+BROWSER_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_AI_BROWSER_SMOKE_latest.json"
+DATA_QUALITY_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_SLOT_DATA_QUALITY_RECHECK_latest.json"
+COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_AND_AI_PHOTO_TEST_latest.json"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
 POWERSHELL = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
@@ -156,10 +163,16 @@ class AaysPanel(tk.Tk):
         self.machine_var = tk.StringVar(value="Bilgisayar profili: ön kontrol yapılmadı")
         self.remote_var = tk.StringVar(value="Uzaktan erişim: kontrol edilmedi")
         self.data_scope_var = tk.StringVar(value="Veri kapsamı: kontrol edilmedi")
+        self.continue_test_var = tk.StringVar(value="18 sayfa devam testi: kontrol edilmedi")
+        self.layer_test_var = tk.StringVar(value="Katman testi: kontrol edilmedi")
+        self.ai_test_var = tk.StringVar(value="AI fotoğraf testi: kontrol edilmedi")
+        self.browser_test_var = tk.StringVar(value="Tarayıcı testi: kontrol edilmedi")
+        self.test_blocker_var = tk.StringVar(value="Test blockerları: kontrol edilmedi")
         self.slot_vars = {
             slot_id: tk.StringVar(value=f"{label}: kontrol edilmedi")
             for slot_id, label in SLOT_IDS
         }
+        self.wrap_labels: list[ttk.Label] = []
         self.last_control_sync = 0.0
         self._build_ui()
         self.refresh_status()
@@ -173,8 +186,18 @@ class AaysPanel(tk.Tk):
         style.configure("Body.TLabel", font=("Segoe UI", 10), background="#f4f6f8")
         style.configure("Status.TLabel", font=("Segoe UI", 10, "bold"), background="#f4f6f8")
 
-        root = ttk.Frame(self, padding=16)
-        root.pack(fill="both", expand=True)
+        viewport = ttk.Frame(self)
+        viewport.pack(fill="both", expand=True)
+        self.scroll_canvas = tk.Canvas(viewport, background="#f4f6f8", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(viewport, orient="vertical", command=self.scroll_canvas.yview)
+        self.scroll_canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        self.scroll_canvas.pack(side="left", fill="both", expand=True)
+        root = ttk.Frame(self.scroll_canvas, padding=16)
+        self.scroll_window = self.scroll_canvas.create_window((0, 0), window=root, anchor="nw")
+        root.bind("<Configure>", lambda _event: self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all")))
+        self.scroll_canvas.bind("<Configure>", self._resize_scroll_content)
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
 
         ttk.Label(root, text="AAYS TerraYield Portable Kontrol Paneli", style="Title.TLabel").pack(anchor="w")
         ttk.Label(root, text="Sabit ana URL: http://127.0.0.1:8012/england_map_web/index.html", style="Body.TLabel").pack(anchor="w", pady=(4, 12))
@@ -217,11 +240,30 @@ class AaysPanel(tk.Tk):
         ttk.Label(status, textvariable=self.safe_remove_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(status, textvariable=self.status_var, style="Body.TLabel").pack(anchor="w", pady=(6, 0))
 
-        slots = ttk.LabelFrame(root, text="18 Slot Durumu", padding=12, height=400)
+        tests = ttk.LabelFrame(root, text="Son 18 Slot + AI/Fotoğraf Testleri", padding=12)
+        tests.pack(fill="x", pady=(12, 0))
+        for variable in (
+            self.continue_test_var,
+            self.layer_test_var,
+            self.ai_test_var,
+            self.browser_test_var,
+            self.test_blocker_var,
+        ):
+            label = ttk.Label(tests, textvariable=variable, style="Body.TLabel", justify="left")
+            label.pack(fill="x", anchor="w", pady=2)
+            self.wrap_labels.append(label)
+
+        slots = ttk.LabelFrame(root, text="18 Slot Canlı Durumu", padding=12)
         slots.pack(fill="x", pady=(12, 0))
-        slots.pack_propagate(False)
         for slot_id, _label in SLOT_IDS:
-            ttk.Label(slots, textvariable=self.slot_vars[slot_id], style="Body.TLabel").pack(anchor="w", pady=2)
+            label = ttk.Label(
+                slots,
+                textvariable=self.slot_vars[slot_id],
+                style="Body.TLabel",
+                justify="left",
+            )
+            label.pack(fill="x", anchor="w", pady=3)
+            self.wrap_labels.append(label)
 
         text_box = ttk.LabelFrame(root, text="Not", padding=12)
         text_box.pack(fill="x", pady=(12, 0))
@@ -230,7 +272,20 @@ class AaysPanel(tk.Tk):
             "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 18 Slot Başlat düğmesini kullanın. "
             "Uygulama URL'si sabittir: 127.0.0.1:8012. 18 Slot Runner Başlat düğmesi tek koordinatörü çalıştırır; RAM'e göre aynı anda 5, 15 veya 18 görev yürütür ve ikinci koordinatör açmaz."
         )
-        ttk.Label(text_box, text=note, style="Body.TLabel", wraplength=1000, justify="left").pack(anchor="w")
+        note_label = ttk.Label(text_box, text=note, style="Body.TLabel", justify="left")
+        note_label.pack(fill="x", anchor="w")
+        self.wrap_labels.append(note_label)
+
+    def _resize_scroll_content(self, event: tk.Event) -> None:
+        self.scroll_canvas.itemconfigure(self.scroll_window, width=event.width)
+        wraplength = max(640, int(event.width) - 90)
+        for label in self.wrap_labels:
+            label.configure(wraplength=wraplength)
+
+    def _on_mousewheel(self, event: tk.Event) -> None:
+        delta = int(-event.delta / 120) if event.delta else 0
+        if delta:
+            self.scroll_canvas.yview_scroll(delta, "units")
 
     def log(self, message: str) -> None:
         with LOG_FILE.open("a", encoding="utf-8") as handle:
@@ -367,21 +422,92 @@ class AaysPanel(tk.Tk):
             "task": current.get("task_id"),
             "step": checkpoint.get("first_unverified_step", "missing"),
             "heartbeat_live": live,
+            "heartbeat_age": age,
+            "partition": checkpoint.get("parcel_partition") or status.get("parcel_partition") or {},
+            "blocker": status.get("blocker") or current.get("blocker"),
         }
 
     def refresh_slot_status(self) -> None:
         for slot_id, label in SLOT_IDS:
             info = self.read_slot_info(slot_id)
             if not info["valid"]:
-                text = f"{label}: HAZIR DEGIL - slot dosyalari eksik veya kimlik uyusmuyor"
+                text = f"{label} [{slot_id}]: HAZIR DEĞİL - slot dosyaları eksik veya kimlik uyuşmuyor"
             else:
                 owner = info["owner"] or "sahipsiz"
                 task = info["task"] or "-"
+                partition = info.get("partition") or {}
+                start = int(partition.get("start") or 0)
+                end = int(partition.get("end") or 0)
+                partition_text = (
+                    f"{start:,}-{end:,}".replace(",", ".") if start and end else "bilinmiyor"
+                )
+                age = info.get("heartbeat_age")
+                if task != "-":
+                    heartbeat_text = f"{int(age)} sn" if info.get("heartbeat_live") and age is not None else "STALE/YOK"
+                else:
+                    heartbeat_text = "aktif görev yok"
                 text = (
-                    f"{label}: {info['state']} | owner {owner} | task {task} | "
-                    f"next {info['step']}"
+                    f"{label} [{slot_id}]: {info['state']} | aralık {partition_text} | "
+                    f"owner {owner} | görev {task} | heartbeat {heartbeat_text} | "
+                    f"sıradaki {info['step']} | blocker {info.get('blocker') or 'yok'}"
                 )
             self.slot_vars[slot_id].set(text)
+
+    def refresh_test_status(self) -> None:
+        combined = read_json(COMBINED_TEST_STATUS)
+        continue_test = read_json(CONTINUE_TEST_STATUS)
+        layer_test = read_json(DATA_QUALITY_TEST_STATUS)
+        ai_test = read_json(AI_PHOTO_TEST_STATUS)
+        browser_test = read_json(BROWSER_TEST_STATUS)
+
+        if continue_test:
+            self.continue_test_var.set(
+                f"18 sayfa devam testi: {continue_test.get('status', 'bilinmiyor')} - "
+                f"doğru slot {continue_test.get('valid_continue_contracts', 0)}/18 - "
+                f"yanlış slot engeli {continue_test.get('wrong_slot_blocked_count', 0)}/18 - "
+                f"business yazımı {continue_test.get('business_files_written', 0)}"
+            )
+        else:
+            self.continue_test_var.set("18 sayfa devam testi: kanıt dosyası bulunamadı")
+
+        topics = layer_test.get("topics", {}) if layer_test else {}
+        layer_text = (
+            f"Katman bütünlüğü: {layer_test.get('status', 'kanıt yok') if layer_test else 'kanıt yok'} - "
+            f"distance {topics.get('distance-property-types', {}).get('actual_feature_count', 0)} - "
+            f"topography {topics.get('topography', {}).get('actual_feature_count', 0):,} - "
+            f"gas {topics.get('gas-emissions', {}).get('actual_feature_count', 0):,} - "
+            f"security {topics.get('security', {}).get('actual_feature_count', 0):,} - "
+            f"internet {topics.get('internet', {}).get('actual_feature_count', 0):,}"
+        )
+        self.layer_test_var.set(layer_text.replace(",", "."))
+
+        if ai_test:
+            self.ai_test_var.set(
+                f"AI fotoğraf kanıtı: {ai_test.get('status', 'bilinmiyor')} - "
+                f"geometri {ai_test.get('geometry_features', 0)} - sonuç {ai_test.get('result_rows', 0)}/"
+                f"{ai_test.get('rows_total_declared', 0)} - fotoğraf decode "
+                f"{ai_test.get('photo_files_decoded', 0)}/{ai_test.get('unique_photo_files_referenced', 0)} - "
+                f"poligon {ai_test.get('unique_polygon_files_referenced', 0)} - "
+                f"manifest {ai_test.get('parsed_manifest_files', 0)} - visual skor "
+                f"{ai_test.get('visual_match_score_rows', 0)}"
+            )
+        else:
+            self.ai_test_var.set("AI fotoğraf kanıtı: kanıt dosyası bulunamadı")
+
+        checks = browser_test.get("checks", {}) if browser_test else {}
+        browser_pass = sum(value is True for value in checks.values())
+        self.browser_test_var.set(
+            f"Tarayıcı testi: {browser_test.get('status', 'kanıt yok') if browser_test else 'kanıt yok'} - "
+            f"kontrol {browser_pass}/{len(checks)} - load "
+            f"{browser_test.get('dom', {}).get('loadState', 'bilinmiyor') if browser_test else 'bilinmiyor'} - "
+            f"mod {browser_test.get('dom', {}).get('loadMode', 'bilinmiyor') if browser_test else 'bilinmiyor'} - "
+            f"foto linki {'AÇILIYOR' if checks.get('firstPhotoHttpImage') else 'SORUNLU'} - WEBP image/webp"
+        )
+
+        blockers = combined.get("blockers", []) if combined else []
+        self.test_blocker_var.set(
+            "Gerçek kalanlar: " + (" | ".join(map(str, blockers)) if blockers else "blocker yok")
+        )
 
     def read_runner_info(self) -> dict:
         v2_status = read_json(V2_STATUS)
@@ -511,6 +637,7 @@ class AaysPanel(tk.Tk):
             self.safe_remove_var.set("Güvenli disk çıkarma: EVET")
         else:
             self.safe_remove_var.set("Güvenli disk çıkarma: HAYIR - önce Runner'ı Durdur")
+        self.refresh_test_status()
         self.refresh_slot_status()
         self.set_status("Durum yenilendi")
 
@@ -530,7 +657,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
 
 
