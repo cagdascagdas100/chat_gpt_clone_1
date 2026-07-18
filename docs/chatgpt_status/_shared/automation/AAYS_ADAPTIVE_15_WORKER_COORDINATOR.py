@@ -195,7 +195,30 @@ def atomic_write_json(path: Path, value: Any) -> None:
         handle.write(data)
         handle.flush()
         os.fsync(handle.fileno())
-    os.replace(temporary, path)
+    last_error: OSError | None = None
+    for attempt in range(20):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as exc:
+            last_error = exc
+            time.sleep(min(0.05 * (attempt + 1), 0.25))
+
+    # Some Windows readers do not share delete access, so replace can remain
+    # blocked while ordinary writes are still permitted. Keep this fallback
+    # narrow and fsync the small JSON payload before removing the temp file.
+    for attempt in range(10):
+        try:
+            with path.open("wb") as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+            temporary.unlink(missing_ok=True)
+            return
+        except PermissionError as exc:
+            last_error = exc
+            time.sleep(min(0.1 * (attempt + 1), 0.5))
+    raise last_error or PermissionError(f"ATOMIC_JSON_WRITE_FAILED: {path}")
 
 
 def process_identity(pid: int) -> dict[str, Any] | None:
