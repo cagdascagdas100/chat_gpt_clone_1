@@ -380,18 +380,29 @@ class Coordinator:
             probe_socket.settimeout(0.5)
             listener_present = probe_socket.connect_ex(("127.0.0.1", 8012)) == 0
         if listener_present:
-            try:
-                with urllib.request.urlopen("http://127.0.0.1:8012/health", timeout=2.0) as response:
-                    payload = json.loads(response.read().decode("utf-8"))
-                port_8012_compatible = (
-                    int(response.status) == 200
-                    and payload.get("status") == "ok"
-                    and payload.get("app") == "TerraYield Land Intelligence"
-                )
-                port_8012_state = "TERRAYIELD_ACTIVE" if port_8012_compatible else "OCCUPIED_BY_OTHER_SERVICE"
-            except Exception:
-                port_8012_compatible = False
-                port_8012_state = "OCCUPIED_BY_OTHER_SERVICE"
+            port_8012_compatible = False
+            for _attempt in range(3):
+                try:
+                    with urllib.request.urlopen("http://127.0.0.1:8012/health", timeout=5.0) as response:
+                        payload = json.loads(response.read().decode("utf-8"))
+                        response_status = int(response.status)
+                    port_8012_compatible = (
+                        response_status == 200
+                        and payload.get("status") == "ok"
+                        and payload.get("app") == "TerraYield Land Intelligence"
+                    )
+                    if port_8012_compatible:
+                        break
+                except Exception:
+                    time.sleep(0.5)
+            if port_8012_compatible:
+                port_8012_state = "TERRAYIELD_ACTIVE"
+            else:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as final_probe:
+                    final_probe.settimeout(0.5)
+                    listener_still_present = final_probe.connect_ex(("127.0.0.1", 8012)) == 0
+                port_8012_compatible = not listener_still_present
+                port_8012_state = "FREE" if port_8012_compatible else "OCCUPIED_BY_OTHER_SERVICE"
         checks = {
             "portable_identity": self.identity.get("canonical_drive_letter_persisted") is False,
             "identity_architecture_v3": int(self.identity.get("architecture_version") or 0) == ARCHITECTURE_VERSION,
