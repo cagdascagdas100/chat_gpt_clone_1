@@ -9,6 +9,8 @@
 - Single coordinator: active, duplicate coordinator prevention enabled
 - Fixed application URL: `http://127.0.0.1:8012/england_map_web/index.html`
 - Implementation commit and remote readback: `cd7592159155d93f77dd84247cbaf50070f520cd`
+- Panel/evidence commit, push and remote readback: `d22cc4000fcf77677576d737ea250161a6686bd9`
+- Coordinator remote sync after evidence push: `PASS`
 - `final_ready=false`
 
 ## Future Growth Partitions
