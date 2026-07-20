@@ -6,11 +6,12 @@
   "base_slot_id": "security_public_safety",
   "shard_index": 1,
   "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
-  "attempt_id": "security-public-safety-1-20260720-002",
-  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v2",
+  "attempt_id": "security-public-safety-1-20260720-003",
+  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v3",
   "status": "pending",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v2.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v3.py",
   "read_paths": [
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v2.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py",
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
@@ -44,6 +45,8 @@
     "source_urls": [
       "https://data.police.uk/api/crime-last-updated",
       "https://data.police.uk/api/crimes-street-dates",
+      "https://data.police.uk/docs/method/crime-street/",
+      "https://data.police.uk/changelog/",
       "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
       "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
       "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/"
@@ -53,7 +56,10 @@
     "measurement_level": "lsoa",
     "output_semantics": "AREA_LEVEL_PROXY",
     "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
-    "confidence_method": "primary_data_police_spatial_match_plus_four_official_freshness_context_checks_not_parcel_measurement",
+    "candidate_api_validation_method": "deduplicated_one_mile_representative_point_http_json_count_sha256_parity",
+    "candidate_api_unique_endpoints_expected": 6,
+    "confidence_method": "primary_data_police_spatial_match_plus_live_candidate_api_parity_plus_official_context_not_parcel_measurement",
+    "location_accuracy_limit": "data.police.uk street locations are approximate and anonymised",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "not_used",
     "human_review_required_when": [
@@ -61,7 +67,10 @@
       "low_confidence",
       "geometry_mismatch",
       "missing_area_proxy_disclaimer",
-      "fewer_than_four_official_source_checks_pass"
+      "fewer_than_four_official_source_checks_pass",
+      "candidate_live_api_count_mismatch",
+      "candidate_live_api_sha256_mismatch",
+      "candidate_live_api_http_or_json_failure"
     ]
   },
   "acceptance_contract": {
@@ -77,6 +86,11 @@
     "web_progress_line_items_required": true,
     "candidate_examples_required": 20,
     "candidate_accuracy_score_4_required": 20,
+    "candidate_live_api_parity_required": true,
+    "candidate_live_api_unique_endpoints_required": 6,
+    "candidate_live_api_http_json_pass_required": 6,
+    "candidate_live_api_count_parity_required": 20,
+    "candidate_live_api_sha256_parity_required": 20,
     "official_source_checks_total": 5,
     "fresh_official_source_checks_required": 4,
     "remote_commit_push_readback_required": true
