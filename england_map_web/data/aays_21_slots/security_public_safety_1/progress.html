@@ -21,19 +21,27 @@
   <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Detay</th></tr></thead><tbody id="events"></tbody></table>
   <h2>Resmî kaynaklar</h2>
   <table><thead><tr><th>Kaynak</th><th>Rol</th><th>Güncellik</th><th>Doğruluk sınırı</th></tr></thead><tbody id="sources"></tbody></table>
-  <h2>20 adayın API kanıtı</h2>
+  <h2>30 adayın API kanıtı</h2>
   <table><thead><tr><th>Parsel</th><th>Alan proxy skoru</th><th>Doğruluk</th><th>Coğrafya</th><th>Saklı HTTP</th><th>Saklı suç sayısı</th><th>Canlı durum</th><th>API</th><th>SHA256</th></tr></thead><tbody id="candidateEvidence"></tbody></table>
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const getJson=(url,required=true)=>fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok){if(required)throw new Error(url+' HTTP '+r.status);return null}return r.json()});
 Promise.all([
-  fetch('./progress_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('progress HTTP '+r.status);return r.json()}),
-  fetch('./candidate_live_api_parity_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('candidate HTTP '+r.status);return r.json()})
-]).then(([d,c])=>{
+  getJson('./progress_latest.json'),
+  getJson('./candidate_live_api_parity_latest.json'),
+  getJson('./candidate_stored_evidence_21_30.json'),
+  getJson('./metropolitan_force_scope_latest.json',false)
+]).then(([d,c,supplement,force])=>{
   const blocker=d.blocker||(d.events||[]).find(x=>x.status==='BLOCKED'||x.status==='PENDING')?.detail||'none';
-  document.getElementById('summary').innerHTML=`<div class="metrics"><div class="metric"><b>İlerleme</b><br>${esc(d.overall_percent)}%</div><div class="metric"><b>Yüzde artışı</b><br>${esc(d.percent_change_this_turn)} puan</div><div class="metric"><b>İşlem</b><br>${esc(d.completed_units)}/${esc(d.total_units)}</div><div class="metric"><b>Hazır satır</b><br>${esc(d.verified_source_rows_available)}</div><div class="metric"><b>Doğruluk 4/4</b><br>${esc(d.accuracy_score_4_rows_available)}</div><div class="metric"><b>Aday kanıtı</b><br>${esc(c.stored_evidence_rows)}/${esc(c.candidate_count)}</div><div class="metric"><b>Benzersiz API</b><br>${esc(c.unique_endpoint_count)}</div><div class="metric"><b>Resmî kaynak</b><br>${esc(d.upgraded_official_sources)}</div></div><p><b>Durum:</b> ${esc(d.status)} · <b>Queue:</b> ${esc(d.queue_status)} · <b>Blocker:</b> ${esc(blocker)} · <b>Bekleme tahmini:</b> fresh runner claim olmadan hesaplanamaz · <b>final_ready:</b> ${esc(d.final_ready)}</p><p><b>API doğrulama:</b> ${esc(c.status)}. Canlı runner sonucu oluşana kadar bu tablo saklanan kanıttır; kabul kanıtı değildir.</p>`;
+  const liveRows=(c.candidates||[]);
+  const candidateRows=(Number(c.candidate_count)>=30||liveRows.length>=30)?liveRows:liveRows.concat(supplement?.candidates||[]);
+  const evidenceCount=candidateRows.length;
+  const liveStatus=Number(c.candidate_count)>=30?c.status:'PENDING_SINGLE_RUNNER';
+  const forceStatus=force?.status||'PENDING_SINGLE_RUNNER';
+  document.getElementById('summary').innerHTML=`<div class="metrics"><div class="metric"><b>İlerleme</b><br>${esc(d.overall_percent)}%</div><div class="metric"><b>Yüzde artışı</b><br>${esc(d.percent_change_this_turn)} puan</div><div class="metric"><b>İşlem</b><br>${esc(d.completed_units)}/${esc(d.total_units)}</div><div class="metric"><b>Hazır satır</b><br>${esc(d.verified_source_rows_available)}</div><div class="metric"><b>Doğruluk 4/4</b><br>${esc(d.accuracy_score_4_rows_available)}</div><div class="metric"><b>Aday kanıtı</b><br>${esc(evidenceCount)}/30</div><div class="metric"><b>Benzersiz API</b><br>${esc(d.candidate_unique_api_endpoints)}</div><div class="metric"><b>Resmî kaynak</b><br>${esc(d.upgraded_official_sources)}</div></div><p><b>Durum:</b> ${esc(d.status)} · <b>Queue:</b> ${esc(d.queue_status)} · <b>Blocker:</b> ${esc(blocker)} · <b>Bekleme tahmini:</b> fresh runner claim olmadan hesaplanamaz · <b>final_ready:</b> ${esc(d.final_ready)}</p><p><b>Aday canlı parity:</b> ${esc(liveStatus)} · <b>Metropolitan force scope:</b> ${esc(forceStatus)}. Canlı runner sonucu oluşana kadar tablolar saklanan hazırlık kanıtıdır; kabul kanıtı değildir.</p>`;
   document.getElementById('events').innerHTML=(d.events||[]).map((x,i)=>`<tr><td>${esc(x.index||i+1)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.step)}</td><td>${esc(x.detail)}</td></tr>`).join('');
   document.getElementById('sources').innerHTML=(d.official_sources||[]).map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.role)}</td><td>${esc(x.latest_data_month||x.release_date)}</td><td>${esc(x.accuracy_note)}</td></tr>`).join('');
-  document.getElementById('candidateEvidence').innerHTML=(c.candidates||[]).map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.stored_http_status)}</td><td>${esc(x.stored_crime_count)}</td><td class="${esc(x.live_status||x.status)}">${esc(x.live_status||x.status)}</td><td class="url">${esc(x.official_api_url)}</td><td class="hash">${esc(x.stored_sha256||x.live_sha256)}</td></tr>`).join('');
+  document.getElementById('candidateEvidence').innerHTML=candidateRows.map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.stored_http_status??x.http_status)}</td><td>${esc(x.stored_crime_count)}</td><td class="${esc(x.live_status||x.status)}">${esc(x.live_status||x.status)}</td><td class="url">${esc(x.official_api_url)}</td><td class="hash">${esc(x.stored_sha256||x.live_sha256)}</td></tr>`).join('');
 }).catch(e=>document.getElementById('summary').textContent='İlerleme verisi okunamadı: '+e);
 </script>
 </body>
