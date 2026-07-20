@@ -23,7 +23,8 @@
     "england_map_web/data/aays_21_slots/security_public_safety_1"
   ],
   "resource_class": [
-    "light_read"
+    "light_read",
+    "network_fetch"
   ],
   "requires_browser_acceptance_gate": true,
   "requires_git_publish_gate": true,
@@ -41,14 +42,15 @@
   "data_quality_contract": {
     "source_urls": [
       "https://data.police.uk/",
-      "https://data.police.uk/api/forces"
+      "https://data.police.uk/api/forces",
+      "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current"
     ],
     "source_snapshot_date": "2026-05",
     "source_discovery_required": false,
     "measurement_level": "lsoa",
     "output_semantics": "AREA_LEVEL_PROXY",
     "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
-    "confidence_method": "official_source_coverage_plus_spatial_match_not_parcel_measurement",
+    "confidence_method": "official_source_coverage_plus_spatial_match_with_ons_context_not_parcel_measurement",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "not_used",
     "human_review_required_when": [
@@ -68,6 +70,9 @@
     "console_error_count_required": 0,
     "actual_headless_browser_required": true,
     "product_matrix_area_proxy_label_required": true,
+    "web_progress_line_items_required": true,
+    "candidate_examples_required": 12,
+    "fresh_official_source_checks_required": 2,
     "remote_commit_push_readback_required": true
   },
   "timeout_seconds": 1800,
