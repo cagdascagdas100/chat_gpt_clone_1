@@ -8,6 +8,7 @@
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
   "attempt_id": "official-source-batch-004",
   "idempotency_key": "height_difference_1-004-20260720",
+  "payload_revision": 2,
   "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_runner_20260720.py",
   "read_paths": [
     "docs/chatgpt_status/topography/shards/height_difference_1",
@@ -42,21 +43,37 @@
       "https://inspire.landregistry.gov.uk/inspire/ows",
       "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
       "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
-      "https://osdatahub.os.uk/downloads/open/Terrain50"
+      "https://api.os.uk/downloads/v1/products/Terrain50/downloads?area=GB&format=ASCII%20Grid%20and%20GML%20(Grid)&redirect"
     ],
     "source_snapshot_date": "2026-07-20",
     "source_discovery_required": false,
     "measurement_level": "parcel",
     "output_semantics": "MIXED_WITH_ROW_LABELS",
-    "parcel_binding_method": "HMLR_INSPIRE_POINT_IN_POLYGON_THEN_OFFICIAL_DTM_SAMPLE",
-    "confidence_method": "REAL_GEOMETRY_PLUS_OFFICIAL_NUMERIC_SOURCE_AND_SAME_PROVIDER_RESOLUTION_CHECK",
+    "parcel_binding_method": "HMLR_WFS_POINT_IN_POLYGON_THEN_3X3_WMS_15M_TOLERANCE_FALLBACK",
+    "confidence_method": "REAL_HMLR_GEOMETRY_PLUS_EA_1M_NUMERIC_PLUS_EA_2M_RESOLUTION_CHECK_PLUS_INDEPENDENT_OS_TERRAIN50_TQ29",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only",
     "human_review_required_when": [
       "source_conflict",
       "low_confidence",
       "geometry_mismatch",
-      "independent_second_source_missing"
+      "independent_second_source_missing",
+      "ea_vs_os_difference_over_8m"
+    ]
+  },
+  "execution_protocols": {
+    "hmlr": [
+      "WFS_1_1_0_BBOX_POINT_IN_POLYGON",
+      "WMS_1_1_1_GETFEATUREINFO_3X3_GRID_WITH_15M_TOLERANCE"
+    ],
+    "ea": [
+      "WCS_2_0_1_CAPABILITIES",
+      "WCS_2_0_1_GETCOVERAGE_MULTI_AXIS_20M_WINDOW"
+    ],
+    "os": [
+      "DOWNLOADS_V1_TERRAIN50_ASCII_GRID_GB",
+      "SELECT_TQ29_10KM_TILE",
+      "SAMPLE_50M_GRID_CELL"
     ]
   },
   "timeout_seconds": 7200,
