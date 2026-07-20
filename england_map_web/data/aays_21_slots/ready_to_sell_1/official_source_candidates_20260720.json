@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
+  "generated_at": "2026-07-20T16:30:00Z",
+  "purpose": "Official internet source registry and conservative sample candidate plan. No parcel value is published until an exact join is verified.",
+  "scoring_method": {
+    "source_verification_dimensions": [
+      "official_publisher",
+      "current_or_regular_publication",
+      "machine_accessible_data",
+      "documented_join_key"
+    ],
+    "dimension_points": 25,
+    "parcel_binding_score_is_separate": true
+  },
+  "sources": [
+    {
+      "source_id": "HMLR_INSPIRE_INDEX_POLYGONS",
+      "publisher": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "snapshot_date": "2026-07-05",
+      "update_frequency": "monthly_first_sunday",
+      "coverage": "registered freehold property locations in England and Wales",
+      "primary_join_keys": ["Land Registry INSPIRE ID", "geometry intersection"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 75,
+      "binding_limit": "Indicative extent only; legal title extent requires the individual title plan. Leasehold and other tenures may be absent.",
+      "licence": "Open Government Licence",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "HMLR_PRICE_PAID_DATA",
+      "publisher": "HM Land Registry",
+      "url": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",
+      "guidance_url": "https://www.gov.uk/guidance/about-the-price-paid-data",
+      "snapshot_date": "2026-06-26",
+      "update_frequency": "monthly_20th_working_day",
+      "coverage": "property sales in England and Wales sold for value and lodged for registration",
+      "primary_join_keys": ["transaction unique identifier", "postcode", "PAON", "SAON", "street", "town"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 70,
+      "binding_limit": "Address join is not a cadastral identifier; recent months are incomplete and some transaction types are excluded or categorised separately.",
+      "licence": "Open Government Licence v3.0 with address-data conditions",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "MHCLG_EPC_DATA",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "url": "https://get-energy-performance-data.communities.gov.uk/",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "service_dataset",
+      "coverage": "domestic and non-domestic EPC and DEC certificate data for England and Wales",
+      "primary_join_keys": ["certificate identifier", "address", "postcode"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 70,
+      "binding_limit": "Certificates may be expired or replaced; an address match alone does not establish parcel identity.",
+      "licence": "service-specific terms and licensing restrictions",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    }
+  ],
+  "sample_candidate_rows": [
+    {
+      "row_reference": 1,
+      "candidate_channels": ["HMLR_INSPIRE_INDEX_POLYGONS"],
+      "current_verified_dimensions": 1,
+      "target_verified_dimensions": 3,
+      "parcel_value_publication": false,
+      "status": "PENDING_EXACT_INSPIRE_ID_READBACK"
+    },
+    {
+      "row_reference": 2,
+      "candidate_channels": ["HMLR_INSPIRE_INDEX_POLYGONS", "HMLR_PRICE_PAID_DATA"],
+      "current_verified_dimensions": 1,
+      "target_verified_dimensions": 3,
+      "parcel_value_publication": false,
+      "status": "PENDING_EXACT_ADDRESS_AND_GEOMETRY_JOIN"
+    },
+    {
+      "row_reference": 3,
+      "candidate_channels": ["HMLR_INSPIRE_INDEX_POLYGONS", "HMLR_PRICE_PAID_DATA", "MHCLG_EPC_DATA"],
+      "current_verified_dimensions": 1,
+      "target_verified_dimensions": 3,
+      "parcel_value_publication": false,
+      "status": "PENDING_MULTI_SOURCE_IDENTITY_RECONCILIATION"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
