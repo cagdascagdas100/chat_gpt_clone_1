@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "generated_at": "2026-07-20T20:45:00Z",
+  "purpose": "Official due-diligence source expansion. Source verification does not imply a site-specific pass until a coordinate or title join is executed.",
+  "sources": [
+    {
+      "source_id": "HMLR_SEARCH_LAND_PROPERTY_INFORMATION",
+      "publisher": "HM Land Registry",
+      "url": "https://www.gov.uk/search-property-information-land-registry",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "live_register_service",
+      "coverage": "registered land and property in England and Wales; property summaries, title registers and title plans",
+      "primary_join_keys": ["title number", "address", "map location"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 90,
+      "binding_limit": "Title plans show general boundaries rather than exact legal boundaries. Downloaded online copies are not proof of ownership; official copies are required when evidential proof is needed.",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "EA_FLOOD_MAP_FOR_PLANNING",
+      "publisher": "Environment Agency",
+      "url": "https://flood-map-for-planning.service.gov.uk/",
+      "dataset_url": "https://www.data.gov.uk/dataset/104434b0-5263-4c90-9b1e-e43b1d57c750/flood-map-for-planning-flood-zones1",
+      "snapshot_date": "2026-07-20",
+      "dataset_last_updated": "2026-07-06",
+      "update_frequency": "as_needed",
+      "coverage": "Flood Zones and planning-oriented flood information for England",
+      "primary_join_keys": ["postcode", "place", "national grid reference", "easting and northing", "site geometry"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 85,
+      "binding_limit": "The map is a planning-screening source and does not guarantee whether an individual property will flood. Site-specific flood risk assessment may still be required.",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "HISTORIC_ENGLAND_NHLE",
+      "publisher": "Historic England",
+      "url": "https://www.api.gov.uk/he/national-heritage-list-for-england-nhle/",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "daily",
+      "coverage": "nationally protected historic buildings and sites in England",
+      "primary_join_keys": ["list entry number", "British National Grid point or polygon", "site geometry"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 85,
+      "binding_limit": "A heritage designation is a planning constraint, not evidence of ownership, market availability or exact cadastral identity.",
+      "licence": "Open Government Licence",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "DEFRA_NATURAL_ENGLAND_MAGIC",
+      "publisher": "Natural England and MAGIC partner organisations",
+      "url": "https://magic.defra.gov.uk/MagicMap.html",
+      "guidance_url": "https://www.gov.uk/guidance/how-to-access-natural-englands-maps-and-data",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "multi_dataset_service",
+      "coverage": "authoritative natural-environment and designated-site datasets across Great Britain",
+      "primary_join_keys": ["coordinates", "site geometry", "dataset feature identifiers"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 80,
+      "binding_limit": "MAGIC supports screening for protected sites and environmental constraints but is not survey-level evidence and does not establish title boundaries.",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
