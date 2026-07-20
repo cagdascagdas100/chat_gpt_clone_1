@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any
 
@@ -48,5 +49,17 @@ def write_markdown_v4(report: dict[str, Any]) -> None:
 v3.write_markdown = write_markdown_v4
 
 
+def main_v4() -> int:
+    result = v3.main()
+    report_path = v3.v2.REPORT_JSON
+    report = json.loads(report_path.read_text(encoding="utf-8-sig"))
+    report["automation_version"] = "V4"
+    next_step = report.get("next_step")
+    if isinstance(next_step, str):
+        report["next_step"] = next_step.replace("AUTOMATION_167_V3", "AUTOMATION_167_V4")
+    v3.v2.write_json(report_path, report)
+    return result
+
+
 if __name__ == "__main__":
-    raise SystemExit(v3.main())
+    raise SystemExit(main_v4())
