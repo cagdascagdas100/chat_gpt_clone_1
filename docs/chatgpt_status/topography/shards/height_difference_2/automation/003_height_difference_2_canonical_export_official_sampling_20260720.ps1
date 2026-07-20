@@ -38,9 +38,19 @@ foreach($module in $required){
   }
 }
 
+$canonicalWebRoot = Join-Path $root 'england_map_web\data\aays_21_slots\height_difference_2'
+$legacyWebRoot = Join-Path $root 'england_map_web\data\aays_18_slots\height_difference_2'
+$slotStateRoot = Join-Path $root 'docs\chatgpt_status\_shared\slots_21\height_difference_2'
+New-Item -ItemType Directory -Force -Path $canonicalWebRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $slotStateRoot | Out-Null
+
 $env:AAYS_TASK_ID = $taskId
 $env:AAYS_PORTABLE_ROOT = $portableRoot
 $env:AAYS_HEIGHT_DIFFERENCE_2_PACKAGE_ROOT = $packageRoot
+$env:AAYS_HEIGHT_DIFFERENCE_2_WEB_ROOT = $canonicalWebRoot
+$env:AAYS_HEIGHT_DIFFERENCE_2_SLOT_STATE_ROOT = $slotStateRoot
+$env:AAYS_HEIGHT_DIFFERENCE_2_RUNNER_OUTPUT = Join-Path $root 'docs\chatgpt_status\topography\shards\height_difference_2\runner_outputs\003_height_difference_2_canonical_export_official_sampling_latest.json'
+
 $payloadPath = Join-Path $root 'docs\chatgpt_status\topography\shards\height_difference_2\automation\003_height_difference_2_canonical_export_official_sampling_20260720.py.gz.b64'
 if(-not(Test-Path -LiteralPath $payloadPath)){ throw 'HEIGHT_DIFFERENCE_2_PAYLOAD_NOT_FOUND' }
 $payload = (Get-Content -LiteralPath $payloadPath -Raw -Encoding UTF8).Trim()
@@ -58,3 +68,12 @@ $pythonPath = Join-Path $tempRoot '003_height_difference_2_canonical_export_offi
 & $pythonCommand @pythonPrefix $pythonPath
 $code = $LASTEXITCODE
 if($code -ne 0){ throw "HEIGHT_DIFFERENCE_2_PYTHON_EXIT_$code" }
+
+# Compatibility only: if an older payload writes into aays_18_slots, copy those real outputs
+# into the authoritative AAYS 21-slot web folder. No values are generated here.
+if(Test-Path -LiteralPath $legacyWebRoot){
+  foreach($name in @('operations_latest.json','candidates_latest.json','status_latest.json')){
+    $source = Join-Path $legacyWebRoot $name
+    if(Test-Path -LiteralPath $source){ Copy-Item -LiteralPath $source -Destination (Join-Path $canonicalWebRoot $name) -Force }
+  }
+}
