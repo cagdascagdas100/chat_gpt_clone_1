@@ -1,0 +1,66 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "base_slot_id": "height_difference",
+  "shard_index": 1,
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "attempt_id": "official-source-batch-004",
+  "idempotency_key": "height_difference_1-004-20260720",
+  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_runner_20260720.py",
+  "read_paths": [
+    "docs/chatgpt_status/topography/shards/height_difference_1",
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1",
+    "england_map_web/data/aays_21_slots/height_difference_1"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs",
+    "docs/chatgpt_status/topography/shards/height_difference_1/reports",
+    "england_map_web/data/aays_21_slots/height_difference_1"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "geometry",
+    "raster_heavy"
+  ],
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "https://inspire.landregistry.gov.uk/inspire/ows",
+      "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
+      "https://osdatahub.os.uk/downloads/open/Terrain50"
+    ],
+    "source_snapshot_date": "2026-07-20",
+    "source_discovery_required": false,
+    "measurement_level": "parcel",
+    "output_semantics": "MIXED_WITH_ROW_LABELS",
+    "parcel_binding_method": "HMLR_INSPIRE_POINT_IN_POLYGON_THEN_OFFICIAL_DTM_SAMPLE",
+    "confidence_method": "REAL_GEOMETRY_PLUS_OFFICIAL_NUMERIC_SOURCE_AND_SAME_PROVIDER_RESOLUTION_CHECK",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "source_conflict",
+      "low_confidence",
+      "geometry_mismatch",
+      "independent_second_source_missing"
+    ]
+  },
+  "timeout_seconds": 7200,
+  "requires_git_publish_gate": true,
+  "status": "pending",
+  "final_ready": false
+}
