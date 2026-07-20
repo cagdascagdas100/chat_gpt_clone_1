@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "status": "PREPARED_FOR_LIVE_RUNNER_VALIDATION",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "parcel_measurement": false,
+  "verified_at": "2026-07-20T19:07:37Z",
+  "sources": [
+    {
+      "name": "data.police.uk last-updated API",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "verified_fact": "Latest published crime month is 2026-05",
+      "role": "primary row-source freshness",
+      "limitation": "Street-level locations are approximate; no parcel measurement claim"
+    },
+    {
+      "name": "data.police.uk street availability API",
+      "url": "https://data.police.uk/api/crimes-street-dates",
+      "verified_fact": "API exposes available street-crime months",
+      "role": "month coverage check",
+      "limitation": "Availability alone does not validate a parcel score"
+    },
+    {
+      "name": "ONS Police Force Area data tables",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
+      "verified_fact": "Release date 23 April 2026; year ending December 2025 edition",
+      "role": "official contextual cross-check",
+      "limitation": "Force or local-authority scale only"
+    },
+    {
+      "name": "Home Office police recorded crime open tables",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "verified_fact": "Page updated 23 April 2026 with recorded-crime and outcome tables",
+      "role": "official classification and force/CSP context",
+      "limitation": "No row-level parcel substitution"
+    },
+    {
+      "name": "Metropolitan Police stats and data",
+      "url": "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/",
+      "verified_fact": "Official dashboards and downloadable London crime datasets are available",
+      "role": "London contextual cross-check",
+      "limitation": "Met/London context only"
+    }
+  ],
+  "minimum_live_checks_required": 4,
+  "live_http_hash_checks_completed": 0,
+  "browser_acceptance_completed": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
