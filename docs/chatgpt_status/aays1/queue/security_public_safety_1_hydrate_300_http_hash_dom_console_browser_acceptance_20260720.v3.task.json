@@ -41,23 +41,26 @@
   },
   "data_quality_contract": {
     "source_urls": [
-      "https://data.police.uk/",
-      "https://data.police.uk/api/forces",
-      "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current"
+      "https://data.police.uk/api/crime-last-updated",
+      "https://data.police.uk/api/crimes-street-dates",
+      "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
+      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/"
     ],
     "source_snapshot_date": "2026-05",
     "source_discovery_required": false,
     "measurement_level": "lsoa",
     "output_semantics": "AREA_LEVEL_PROXY",
     "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
-    "confidence_method": "official_source_coverage_plus_spatial_match_with_ons_context_not_parcel_measurement",
+    "confidence_method": "primary_data_police_spatial_match_plus_four_official_freshness_context_checks_not_parcel_measurement",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "not_used",
     "human_review_required_when": [
       "source_conflict",
       "low_confidence",
       "geometry_mismatch",
-      "missing_area_proxy_disclaimer"
+      "missing_area_proxy_disclaimer",
+      "fewer_than_four_official_source_checks_pass"
     ]
   },
   "acceptance_contract": {
@@ -72,7 +75,8 @@
     "product_matrix_area_proxy_label_required": true,
     "web_progress_line_items_required": true,
     "candidate_examples_required": 12,
-    "fresh_official_source_checks_required": 2,
+    "official_source_checks_total": 5,
+    "fresh_official_source_checks_required": 4,
     "remote_commit_push_readback_required": true
   },
   "timeout_seconds": 1800,
