@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-official-measurement-pipeline-selftest-20260720",
+  "executed_at": "2026-07-20T20:12:56Z",
+  "environment": {
+    "python": "3.x",
+    "fiona_available": true,
+    "rasterio_version": "1.5.0",
+    "shapely_version": "2.1.2",
+    "pyproj_version": "3.7.2",
+    "numpy_version": "2.3.5"
+  },
+  "script_sha256": {
+    "008_match_hmlr_inspire_gml.py": "4e8b4c36cd8ee02986258d669aaa6295e64cbd0c3b02fb768c8bdd031167f421",
+    "009_sample_ea_dtm_and_os_terrain50.py": "1c763b7edfa61175bfdb078cfc170351652107cb1126fb86c3863ccae5b6a819",
+    "010_publish_verified_height_difference_examples.py": "61a2dec845c5baea8b88a415da0deaa5d13620029a0264ba2132ef6ace348368",
+    "011_execute_three_real_parcel_measurements.py": "9f669d0970f15cb18b9339ffb3861bb30290601d859e54e147e24e61e028e9f1"
+  },
+  "tests": [
+    {
+      "test_id": "python_compile_all_four_scripts",
+      "status": "PASS",
+      "evidence": "all scripts compiled without syntax errors"
+    },
+    {
+      "test_id": "hmlr_three_candidate_match",
+      "status": "PASS",
+      "evidence": "three non-production EPSG27700 polygons produced two exact-ID matches and one unique point-in-polygon match"
+    },
+    {
+      "test_id": "hmlr_ambiguous_polygon_fail_closed",
+      "status": "PASS",
+      "evidence": "two overlapping polygons returned AMBIGUOUS_POINT_IN_POLYGON_MATCH and exit code 2"
+    },
+    {
+      "test_id": "ea_and_os_three_candidate_sampling",
+      "status": "PASS",
+      "evidence": "three non-production polygons each produced 10000 valid 1m cells and a unique 50m Terrain50 centroid sample"
+    },
+    {
+      "test_id": "cross_source_threshold_positive",
+      "status": "PASS",
+      "evidence": "three non-production candidates passed with 0.025m cross-source absolute difference and HIGH confidence"
+    },
+    {
+      "test_id": "cross_source_threshold_fail_closed",
+      "status": "PASS",
+      "evidence": "deliberately offset Terrain50 raster produced zero promoted rows and CROSS_SOURCE_DIFFERENCE_EXCEEDS_THRESHOLD"
+    },
+    {
+      "test_id": "website_publisher_positive",
+      "status": "PASS",
+      "evidence": "three non-production promoted measurements generated three JSON rows and three polygon GeoJSON features"
+    },
+    {
+      "test_id": "website_publisher_empty_fail_closed",
+      "status": "PASS",
+      "evidence": "empty measurement input generated BLOCKED_NO_VERIFIED_MEASUREMENTS and exit code 2"
+    },
+    {
+      "test_id": "single_runner_orchestrator_positive",
+      "status": "PASS",
+      "evidence": "three-stage boundary, sampling and publication orchestration completed with synthetic fixtures"
+    },
+    {
+      "test_id": "single_runner_orchestrator_boundary_failure",
+      "status": "PASS",
+      "evidence": "ambiguous boundary stopped at stage one and did not run numeric or publication stages"
+    }
+  ],
+  "summary": {
+    "tests_total": 10,
+    "tests_passed": 10,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_parcel_results_produced": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blocker": "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
