@@ -17,9 +17,12 @@
   <div class="note"><strong>Önemli:</strong> Bu satırlar DESNZ yerel yönetim düzeyi resmî kaynak adaylarıdır. Parsel ölçümü değildir; parsel bağlama yapılmadan harita parsel değeri olarak kullanılamaz.</div>
   <div class="summary">
     <div class="card">Slot: <strong id="slot">—</strong></div>
+    <div class="card">Kaynak sürümü: <strong id="release">—</strong></div>
     <div class="card">Aday satır: <strong id="count">—</strong></div>
+    <div class="card">Yeni satır: <strong id="newCount">—</strong></div>
     <div class="card">Yüksek doğruluklu kaynak satırı: <strong id="accurate">—</strong></div>
     <div class="card">Parsel bağlı: <strong id="bound">—</strong></div>
+    <div class="card">Browser görünümü: <strong id="browser">—</strong></div>
   </div>
   <table>
     <thead><tr><th>#</th><th>Aday</th><th>Kaynak satırı</th><th>Yerel yönetim</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Territorial kt CO2e</th><th>Etki alanı kt CO2</th><th>Kaynak doğruluğu</th><th>Parsel bağlama</th><th>Resmî kaynak</th></tr></thead>
@@ -34,9 +37,12 @@
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     document.getElementById('slot').textContent=d.slot_id;
+    document.getElementById('release').textContent=d.source_upgrade.current_release;
     document.getElementById('count').textContent=d.candidate_count;
+    document.getElementById('newCount').textContent=d.batch_summary.new_candidate_count;
     document.getElementById('accurate').textContent=d.high_accuracy_source_row_count;
     document.getElementById('bound').textContent=d.parcel_bound_count;
+    document.getElementById('browser').textContent=d.batch_summary.browser_render_status;
     tbody.innerHTML='';
     d.candidate_rows.forEach((x,i)=>{
       const tr=document.createElement('tr');
@@ -44,7 +50,7 @@
       cells.forEach((v,j)=>{const td=document.createElement('td');if(j===12)td.innerHTML=v;else td.textContent=v;tr.appendChild(td);});
       tbody.appendChild(tr);
     });
-    document.getElementById('meta').textContent='Üretim: '+d.generated_at+' · Satırlar yalnız resmî kaynak adayıdır; parsel bağı yoktur.';
+    document.getElementById('meta').textContent='Üretim: '+d.generated_at+' · '+d.candidate_count+' satır resmî CSV önizlemesinden birebir doğrulandı · parsel bağı yoktur.';
   }catch(e){tbody.innerHTML='<tr><td colspan="13" class="blocked">Veri yüklenemedi: '+String(e)+'</td></tr>';}
 })();
 </script>
