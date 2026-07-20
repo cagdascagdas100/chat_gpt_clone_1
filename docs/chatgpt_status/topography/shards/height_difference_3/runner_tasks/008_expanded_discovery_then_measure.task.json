@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-expanded-discovery-then-measure-20260721",
+  "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "queue_submission": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {"start":61523,"end":92283,"count":30761},
+  "execution_order": [
+    {
+      "stage": 1,
+      "script": "automation/005_discover_export_and_prepare_three.py",
+      "purpose": "bounded F-disk and port-8012 canonical discovery"
+    },
+    {
+      "stage": 2,
+      "script": "automation/016_discover_canonical_via_github_tree.py",
+      "purpose": "read-only remote tree and manifest fallback"
+    },
+    {
+      "stage": 3,
+      "script": "automation/017_capture_validate_os_terrain50_download.py",
+      "purpose": "capture official OS Data Hub download URL or HAR and validate archive"
+    },
+    {
+      "stage": 4,
+      "script": "automation/004_prepare_three_real_sample_queries.py",
+      "purpose": "select first three source-backed unresolved shard rows"
+    },
+    {
+      "stage": 5,
+      "script": "automation/015_execute_auto_source_and_measurement_pipeline.py",
+      "purpose": "HMLR, EA DTM, Terrain50 sampling and verified website publication"
+    }
+  ],
+  "acceptance": [
+    "exact 30761-row export for 61523-92283",
+    "explicit row_no and parcel_id",
+    "source-backed location or exact UPRN",
+    "official boundary match without nearest fill",
+    "EA DTM 1m numeric polygon sample",
+    "OS Terrain50 exact tile crosscheck",
+    "only HIGH or MEDIUM_HIGH rows published"
+  ],
+  "current_blockers": [
+    "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+    "OS_TERRAIN50_LIVE_DOWNLOAD_URL_OR_ARCHIVE_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
