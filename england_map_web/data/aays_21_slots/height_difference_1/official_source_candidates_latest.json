@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "parcel_partition": {
@@ -8,158 +8,125 @@
     "count": 30761
   },
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
-  "generated_at": "2026-07-20T19:15:11Z",
-  "status": "OFFICIAL_QUERY_AND_SINGLE_COORDINATOR_DISPATCH_PUBLISHED_RESULT_PENDING",
-  "execution_status": "queued_existing_single_coordinator_remote_observation_pending",
+  "payload_revision": 2,
+  "generated_at": "2026-07-20T20:05:00Z",
+  "status": "BUFFERED_OFFICIAL_EXECUTION_READY_SINGLE_COORDINATOR_RESULT_PENDING",
+  "execution_status": "queue_pending_slot_idle",
   "product_completion_percent": 78,
-  "percent_increase": 0,
+  "product_percent_increase": 0,
   "batch_progress": {
-    "planned_operations": 24,
-    "completed_operations": 19,
+    "planned_operations": 30,
+    "completed_operations": 25,
     "blocked_operations": 5,
-    "completion_percent": 79.17
+    "completion_percent": 83.33,
+    "percentage_point_increase_this_run": 4.16
   },
-  "official_sources_count": 6,
-  "source_upgrades_count": 9,
-  "source_upgrades_this_run": 3,
+  "source_upgrades_count": 13,
+  "source_upgrades_this_run": 4,
   "candidate_rows_count": 3,
   "measured_candidate_rows_count": 0,
   "real_boundary_match_rows_count": 0,
   "official_numeric_rows_count": 0,
+  "official_two_source_numeric_rows_count": 0,
   "accuracy": {
     "current_score_4": "2.5/4 fallback",
     "parcel_accuracy_increase": 0,
-    "target_after_boundary_and_independent_two_source_numeric_validation": "3.5/4 or higher",
-    "reason_not_increased": "The execution contract is queued, but no new remote runner result containing a real HMLR polygon and official numeric elevation has been accepted."
-  },
-  "dispatch": {
-    "queue_path": "docs/chatgpt_status/topography/queue/height_difference_1_004_official_boundary_numeric_samples_20260720.v3.task.json",
-    "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_runner_20260720.py",
-    "payload_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_payload_20260720.b64",
-    "query_manifest_path": "docs/chatgpt_status/topography/shards/height_difference_1/source_queries/003_official_point_query_manifest_20260720.md",
-    "coordinator_mode": "existing_single_coordinator_only",
-    "parallel_runner_created": false,
-    "queue_status": "pending"
+    "target_after_real_boundary_and_independent_two_source_validation": "3.5/4 or higher",
+    "acceptance_guard": "Real HMLR polygon plus EA numeric DTM plus independent OS Terrain 50 numeric evidence required."
   },
   "official_sources": [
     {
-      "source_id": "hmlr_inspire_download_20260705",
+      "source_id": "hmlr_inspire_20260705",
       "provider": "HM Land Registry",
       "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
       "publication_date": "2026-07-05",
       "data_type": "INSPIRE Index Polygons GML",
-      "update_frequency": "monthly",
       "crs": "EPSG:27700",
-      "authority_search_scope": [
-        "London Borough of Barnet",
-        "London Borough of Enfield"
-      ],
       "source_quality_score_4": 4,
-      "status": "download_entries_confirmed_execution_payload_queued"
+      "status": "current_monthly_release_verified"
     },
     {
-      "source_id": "hmlr_inspire_wms_feature_info",
+      "source_id": "hmlr_inspire_wfs_wms",
       "provider": "HM Land Registry",
       "source_url": "https://inspire.landregistry.gov.uk/inspire/ows",
-      "data_type": "official cadastral parcel WMS GetFeatureInfo point query",
-      "crs": "EPSG:27700",
+      "data_type": "WFS polygon geometry with WMS GetFeatureInfo fallback",
+      "transformation_tolerance_m": 15,
       "source_quality_score_4": 4,
-      "status": "three_candidate_queries_built_execution_payload_queued"
+      "status": "execution_protocol_ready"
     },
     {
       "source_id": "ea_lidar_dtm_1m_wcs",
       "provider": "Environment Agency",
-      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
-      "data_type": "Digital Terrain Model",
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "data_type": "official Digital Terrain Model",
       "resolution_m": 1,
-      "vertical_accuracy_rmse_m": 0.15,
-      "coverage_description": "approximately 99 percent of England",
       "source_quality_score_4": 4,
-      "status": "coverage_and_numeric_sampling_contract_queued"
+      "status": "multi_axis_numeric_sampling_ready"
     },
     {
       "source_id": "ea_lidar_dtm_2m_wcs",
       "provider": "Environment Agency",
-      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
-      "data_type": "Digital Terrain Model same-provider resolution cross-check",
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
+      "data_type": "same-provider resolution cross-check",
       "resolution_m": 2,
-      "vertical_accuracy_rmse_m": 0.15,
-      "source_quality_score_4": 4,
       "independent_second_source": false,
-      "status": "resolution_crosscheck_contract_queued"
-    },
-    {
-      "source_id": "os_terrain50_202607",
-      "provider": "Ordnance Survey",
-      "source_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
-      "version_date": "2026-07",
-      "data_type": "OS Terrain 50 open elevation data",
-      "resolution_m": 50,
-      "source_quality_score_4": 3,
-      "independent_second_source": true,
-      "status": "independent_numeric_download_discovery_queued"
-    },
-    {
-      "source_id": "ea_survey_coverage_ogc_api",
-      "provider": "Environment Agency",
-      "source_url": "https://environment.data.gov.uk/spatialdata/survey-index-files/ogc/features/v1",
-      "data_type": "official survey coverage metadata",
       "source_quality_score_4": 4,
-      "status": "collections_queryables_and_candidate_envelope_queries_built"
+      "status": "multi_axis_numeric_sampling_ready"
+    },
+    {
+      "source_id": "os_terrain50_202607_direct_api",
+      "provider": "Ordnance Survey",
+      "source_url": "https://api.os.uk/downloads/v1/products/Terrain50/downloads?area=GB&format=ASCII%20Grid%20and%20GML%20(Grid)&redirect",
+      "version_date": "2026-07",
+      "data_type": "independent official 50 m DTM grid",
+      "resolution_m": 50,
+      "rmse_m": 4,
+      "tile": "TQ29",
+      "independent_second_source": true,
+      "source_quality_score_4": 3,
+      "status": "direct_download_and_tile_sampling_ready"
     }
   ],
   "candidates": [
     {
       "parcel_id": "parcel_2759",
       "parcel_ref": "52040420",
-      "centroid_wgs84": {
-        "lat": 51.6169525,
-        "lon": -0.1430858
-      },
-      "centroid_epsg27700": {
-        "easting": 528658.656,
-        "northing": 192535.809
-      },
-      "bng_tile": "TQ2892",
-      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
-      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
-      "os_terrain_query_status": "official_independent_source_discovery_queued",
+      "centroid_wgs84": {"lat": 51.6169525, "lon": -0.1430858},
+      "centroid_epsg27700": {"easting": 528658.656, "northing": 192535.809},
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_query_count_planned": 10,
+      "ea_query_windows": ["1m_20m_window", "2m_20m_window"],
+      "boundary_status": "payload_revision_2_pending_remote_result",
+      "numeric_status": "payload_revision_2_pending_remote_result",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     },
     {
       "parcel_id": "parcel_2758",
       "parcel_ref": "52213916",
-      "centroid_wgs84": {
-        "lat": 51.6168592,
-        "lon": -0.1417993
-      },
-      "centroid_epsg27700": {
-        "easting": 528747.982,
-        "northing": 192527.698
-      },
-      "bng_tile": "TQ2892",
-      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
-      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
-      "os_terrain_query_status": "official_independent_source_discovery_queued",
+      "centroid_wgs84": {"lat": 51.6168592, "lon": -0.1417993},
+      "centroid_epsg27700": {"easting": 528747.982, "northing": 192527.698},
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_query_count_planned": 10,
+      "ea_query_windows": ["1m_20m_window", "2m_20m_window"],
+      "boundary_status": "payload_revision_2_pending_remote_result",
+      "numeric_status": "payload_revision_2_pending_remote_result",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     },
     {
       "parcel_id": "parcel_2757",
       "parcel_ref": "52213412",
-      "centroid_wgs84": {
-        "lat": 51.6167362,
-        "lon": -0.1421556
-      },
-      "centroid_epsg27700": {
-        "easting": 528723.664,
-        "northing": 192513.392
-      },
-      "bng_tile": "TQ2892",
-      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
-      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
-      "os_terrain_query_status": "official_independent_source_discovery_queued",
+      "centroid_wgs84": {"lat": 51.6167362, "lon": -0.1421556},
+      "centroid_epsg27700": {"easting": 528723.664, "northing": 192513.392},
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_query_count_planned": 10,
+      "ea_query_windows": ["1m_20m_window", "2m_20m_window"],
+      "boundary_status": "payload_revision_2_pending_remote_result",
+      "numeric_status": "payload_revision_2_pending_remote_result",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     }
@@ -178,17 +145,23 @@
     {"operation_no": 11, "name": "identify_os_terrain50_secondary", "status": "completed"},
     {"operation_no": 12, "name": "transform_three_centroids_to_epsg27700", "status": "completed"},
     {"operation_no": 13, "name": "publish_web_candidate_rows", "status": "completed"},
-    {"operation_no": 14, "name": "fetch_hmlr_barnet_and_enfield_gml_bytes", "status": "blocked", "blocker": "remote_coordinator_result_not_yet_present"},
-    {"operation_no": 15, "name": "match_hmlr_polygons_to_candidate_points", "status": "blocked", "blocker": "real_gml_or_wms_geometry_response_required"},
-    {"operation_no": 16, "name": "sample_ea_lidar_1m_numeric_pixels", "status": "blocked", "blocker": "remote_coordinator_result_not_yet_present"},
-    {"operation_no": 17, "name": "sample_os_terrain50_numeric_values", "status": "blocked", "blocker": "independent_numeric_grid_result_required"},
+    {"operation_no": 14, "name": "fetch_hmlr_geometry_bytes", "status": "blocked", "blocker": "single_coordinator_result_not_yet_present"},
+    {"operation_no": 15, "name": "match_hmlr_polygons_to_candidate_points", "status": "blocked", "blocker": "real_geometry_response_required"},
+    {"operation_no": 16, "name": "sample_ea_lidar_1m_numeric_pixels", "status": "blocked", "blocker": "single_coordinator_result_not_yet_present"},
+    {"operation_no": 17, "name": "sample_os_terrain50_numeric_values", "status": "blocked", "blocker": "single_coordinator_result_not_yet_present"},
     {"operation_no": 18, "name": "two_source_numeric_validation", "status": "blocked", "blocker": "official_numeric_rows_missing"},
-    {"operation_no": 19, "name": "build_corrected_official_point_query_manifest", "status": "completed"},
+    {"operation_no": 19, "name": "build_official_point_query_manifest", "status": "completed"},
     {"operation_no": 20, "name": "verify_current_hmlr_monthly_gml_contract", "status": "completed"},
-    {"operation_no": 21, "name": "verify_ea_1m_and_2m_wcs_execution_contract", "status": "completed"},
+    {"operation_no": 21, "name": "verify_ea_wcs_execution_contract", "status": "completed"},
     {"operation_no": 22, "name": "build_real_geometry_and_numeric_sampling_payload", "status": "completed"},
     {"operation_no": 23, "name": "build_shard_isolated_runner_wrapper", "status": "completed"},
-    {"operation_no": 24, "name": "queue_existing_single_coordinator_v3_task", "status": "completed", "result_status": "pending_remote_observation"}
+    {"operation_no": 24, "name": "queue_existing_single_coordinator_v3_task", "status": "completed"},
+    {"operation_no": 25, "name": "verify_hmlr_15m_transformation_tolerance", "status": "completed"},
+    {"operation_no": 26, "name": "add_hmlr_wfs_bbox_point_in_polygon", "status": "completed"},
+    {"operation_no": 27, "name": "add_hmlr_3x3_wms_tolerance_grid", "status": "completed"},
+    {"operation_no": 28, "name": "add_ea_multi_axis_1m_2m_wcs_sampling", "status": "completed"},
+    {"operation_no": 29, "name": "add_os_direct_download_api_and_tq29_selector", "status": "completed"},
+    {"operation_no": 30, "name": "publish_payload_revision_2_to_existing_queue_task", "status": "completed", "result_status": "pending_remote_observation"}
   ],
   "blockers": [
     "SINGLE_COORDINATOR_REMOTE_RESULT_NOT_YET_PRESENT",
@@ -197,6 +170,8 @@
     "OS_TERRAIN50_INDEPENDENT_NUMERIC_ROWS_0",
     "OFFICIAL_TWO_SOURCE_NUMERIC_VALIDATION_ROWS_0"
   ],
+  "parallel_runner_created": false,
+  "single_coordinator_only": true,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
