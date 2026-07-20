@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "task_id": "height_difference_3-discover-enrich-prepare-three-20260720",
+  "status": "CONTRACT_READY_NOT_QUEUED",
+  "runner_policy": {
+    "existing_single_shared_runner_only": true,
+    "create_new_runner": false,
+    "parallel_runner": false,
+    "other_shard_claim": false,
+    "internal_read_only_lanes_allowed": true,
+    "heavy_downloads_serialized": true,
+    "git_publication_serialized": true
+  },
+  "execution_steps": [
+    {
+      "step": 1,
+      "action": "run_005_canonical_discovery",
+      "script": "docs/chatgpt_status/topography/shards/height_difference_3/automation/005_discover_export_and_prepare_three.py",
+      "roots": ["AAYS_REPO_ROOT", "AAYS_BRIDGE_ROOT", "F:/TerraYield_AAYS_Portable"],
+      "probe_local_http_8012": true,
+      "max_files": 250,
+      "status": "ready"
+    },
+    {
+      "step": 2,
+      "action": "validate_exact_30761_row_range",
+      "requirements": ["unique_row_no_61523_92283", "parcel_id_present", "official_id_rows_at_least_3", "no_row_number_inference"],
+      "status": "ready"
+    },
+    {
+      "step": 3,
+      "action": "optional_exact_uprn_coordinate_enrichment",
+      "script": "docs/chatgpt_status/topography/shards/height_difference_3/automation/006_resolve_uprn_coordinates.py",
+      "source": "OS_Open_UPRN_2026_06",
+      "matching_method": "exact_uprn_only",
+      "nearest_point_matching": false,
+      "status": "ready_if_uprn_present"
+    },
+    {
+      "step": 4,
+      "action": "select_first_three_real_unresolved_rows",
+      "script": "docs/chatgpt_status/topography/shards/height_difference_3/automation/004_prepare_three_real_sample_queries.py",
+      "selection_rule": "deterministic_row_no_order_source_backed_coordinates_official_identity",
+      "status": "ready"
+    },
+    {
+      "step": 5,
+      "action": "prepare_boundary_and_tile_plans",
+      "script": "docs/chatgpt_status/topography/shards/height_difference_3/automation/007_prepare_boundary_and_tile_plans.py",
+      "outputs": ["HMLR_exact_local_authority_download_url", "EA_DTM_extent_query", "OS_Terrain50_10km_tile_key"],
+      "status": "ready"
+    },
+    {
+      "step": 6,
+      "action": "download_only_selected_HMLR_authority_GML_files",
+      "limit": "unique_authorities_for_three_candidates_only",
+      "status": "blocked_until_candidates"
+    },
+    {
+      "step": 7,
+      "action": "match_HMLR_boundary",
+      "methods": ["exact_hmlr_inspire_id", "point_inside_polygon"],
+      "arbitrary_nearest_polygon": false,
+      "status": "blocked_until_GML_and_candidates"
+    },
+    {
+      "step": 8,
+      "action": "sample_EA_DTM_1m",
+      "method": "polygon_median_and_IQR_or_documented_centroid_when_polygon_unavailable",
+      "status": "blocked_until_real_geometry"
+    },
+    {
+      "step": 9,
+      "action": "sample_OS_Terrain50_independent_crosscheck",
+      "method": "matched_10km_tile_grid_interpolation_documented",
+      "status": "blocked_until_real_coordinates"
+    },
+    {
+      "step": 10,
+      "action": "publish_web_rows_commit_push_remote_readback",
+      "requirements": ["source_provenance", "method", "source_dates", "resolution", "cross_source_difference", "confidence", "no_data_preserved"],
+      "status": "blocked_until_measurements"
+    }
+  ],
+  "acceptance_gate": {
+    "starter_candidate_count": 3,
+    "real_geometry_or_explicit_no_match": true,
+    "EA_DTM_numeric_sample_required": true,
+    "OS_Terrain50_crosscheck_required": true,
+    "measured_value_before_gate": false
+  },
+  "current_blocker": "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+  "queue_submission": "NOT_SUBMITTED_DIRECT_PUSH_FORBIDDEN",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
