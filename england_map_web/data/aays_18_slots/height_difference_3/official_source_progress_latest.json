@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_3",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "task_id": "height_difference_3-official-internet-source-readiness-20260720",
+  "updated_at": "2026-07-20T16:22:25Z",
+  "status": "SOURCE_ENDPOINTS_VERIFIED_PARCEL_SAMPLING_BLOCKED",
+  "overall_product_completion_percent": 78,
+  "percent_increase": 0,
+  "source_readiness": {
+    "candidate_source_count": 4,
+    "verified_official_source_count": 4,
+    "high_confidence_source_count": 3,
+    "source_readiness_percent": 100,
+    "measured_parcel_rows": 0,
+    "parcel_geometry_rows": 0,
+    "official_numeric_sample_rows": 0
+  },
+  "source_candidates": [
+    {
+      "row_no": 1,
+      "source_name": "HM Land Registry INSPIRE Index Polygons",
+      "source_role": "authoritative_boundary_candidate",
+      "publisher": "HM Land Registry",
+      "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "coverage": "England and Wales, local-authority GML files",
+      "update_cycle": "monthly",
+      "current_publication_observed": "2026-07-05",
+      "format": "GML",
+      "crs": "British National Grid / EPSG:27700",
+      "source_confidence_score_100": 99,
+      "measurement_accuracy_score_100": null,
+      "status": "OFFICIAL_DOWNLOAD_ENDPOINT_VERIFIED",
+      "blocker": "shard parcel-to-local-authority mapping and GML acquisition not yet executed"
+    },
+    {
+      "row_no": 2,
+      "source_name": "Environment Agency LiDAR Time Stamped Point Cloud",
+      "source_role": "primary_official_numeric_elevation_candidate",
+      "publisher": "Environment Agency",
+      "source_url": "https://environment.data.gov.uk/dataset/094d4ec8-4c21-4aa6-817f-b7e45843c5e0",
+      "coverage": "England where surveyed; 5 km LAZ download tiles",
+      "update_cycle": "quarterly",
+      "format": "LAZ and coverage metadata",
+      "crs": "EPSG:27700",
+      "published_vertical_accuracy": "+/-15 cm RMSE",
+      "source_confidence_score_100": 99,
+      "measurement_accuracy_score_100": null,
+      "status": "OFFICIAL_DATASET_AND_DOWNLOAD_WORKFLOW_VERIFIED",
+      "blocker": "coverage intersection and actual tile download require shard parcel geometry or centroids"
+    },
+    {
+      "row_no": 3,
+      "source_name": "OS Terrain 50",
+      "source_role": "primary_official_numeric_elevation_candidate",
+      "publisher": "Ordnance Survey",
+      "source_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "coverage": "Great Britain",
+      "version_date": "2026-07",
+      "format": "50 m ASCII grid and GML grid; contour alternatives",
+      "crs": "British National Grid",
+      "source_confidence_score_100": 98,
+      "measurement_accuracy_score_100": null,
+      "status": "OFFICIAL_OPEN_DOWNLOAD_ENDPOINT_VERIFIED",
+      "blocker": "required 10 km tiles cannot be selected until shard coordinates are resolved"
+    },
+    {
+      "row_no": 4,
+      "source_name": "Copernicus DEM GLO-30",
+      "source_role": "secondary_numeric_crosscheck_only",
+      "publisher": "Copernicus Data Space Ecosystem",
+      "source_url": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM.html",
+      "coverage": "global",
+      "resolution": "30 m where public GLO-30 is available; GLO-90 infill may occur",
+      "surface_model": "DSM",
+      "source_confidence_score_100": 92,
+      "measurement_accuracy_score_100": null,
+      "status": "OFFICIAL_SECONDARY_SOURCE_VERIFIED",
+      "blocker": "not accepted as sole official UK bare-earth validation source"
+    }
+  ],
+  "operation_rows": [
+    {"row_no": 1, "operation": "remote_head_read", "status": "PASS", "detail": "branch HEAD re-read before work"},
+    {"row_no": 2, "operation": "slot_checkpoint_read", "status": "PASS", "detail": "sequence 1 and blocker state preserved"},
+    {"row_no": 3, "operation": "hmlr_boundary_source_discovery", "status": "PASS", "detail": "monthly local-authority GML download endpoint verified"},
+    {"row_no": 4, "operation": "ea_lidar_source_discovery", "status": "PASS", "detail": "official 5 km LAZ workflow, EPSG:27700 and published vertical accuracy verified"},
+    {"row_no": 5, "operation": "os_terrain50_source_discovery", "status": "PASS", "detail": "July 2026 GB 50 m grid download endpoint verified"},
+    {"row_no": 6, "operation": "copernicus_secondary_source_discovery", "status": "PASS", "detail": "official GLO-30 DSM access contract verified for secondary crosscheck"},
+    {"row_no": 7, "operation": "shard_coordinate_inventory", "status": "BLOCKED", "detail": "no exposed canonical coordinates or polygons for parcel IDs 61523-92283"},
+    {"row_no": 8, "operation": "measured_value_publication", "status": "NOT_RUN", "detail": "evidence gate correctly prevented inferred values"}
+  ],
+  "next_required_step": "RESOLVE_CANONICAL_SHARD_COORDINATES_AND_LOCAL_AUTHORITIES_THEN_DOWNLOAD_HMLR_GML_AND_EA_LIDAR_OR_OS_TERRAIN50_TILES",
+  "blockers": [
+    "CANONICAL_SHARD_61523_92283_COORDINATES_OR_POLYGONS_NOT_EXPOSED",
+    "HMLR_LOCAL_AUTHORITY_GML_NOT_DOWNLOADED",
+    "EA_LIDAR_OR_OS_TERRAIN50_TILE_NOT_DOWNLOADED",
+    "SECOND_OFFICIAL_NUMERIC_CROSSCHECK_NOT_SAMPLED"
+  ],
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
