@@ -1,7 +1,8 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "slot_id": "security_public_safety_1",
   "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
+  "attempt_id": "security-public-safety-1-20260720-002",
   "status": "PREPARED_PENDING_SINGLE_RUNNER_CLAIM",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "output_semantics": "AREA_LEVEL_PROXY",
@@ -15,72 +16,64 @@
   "total_units": 8,
   "overall_percent": 50.0,
   "percent_change_this_turn": 0.0,
-  "preparation_changes_this_turn": {
-    "official_source_endpoints_added": 3,
-    "candidate_examples_added": 4,
-    "minimum_live_source_checks_raised_from": 2,
-    "minimum_live_source_checks_raised_to": 4
-  },
   "verified_source_rows_available": 300,
   "accuracy_score_4_rows_available": 300,
-  "candidate_examples_count": 12,
+  "candidate_examples_count": 20,
+  "candidate_accuracy_score_4_count": 20,
   "upgraded_official_sources": 5,
+  "preparation_changes_this_turn": {
+    "worker_entry_v2_added": true,
+    "candidate_examples_raised_from": 12,
+    "candidate_examples_raised_to": 20,
+    "official_research_snapshot_added": true,
+    "queue_attempt": 2
+  },
   "events": [
-    {"index": 1, "status": "PASS", "step": "REMOTE_HEAD_AND_SLOT_READBACK", "detail": "slot ready_for_claim; current_task idle; checkpoint sequence 0"},
-    {"index": 2, "status": "PASS", "step": "OFFICIAL_SOURCE_BUNDLE_RESEARCH", "detail": "5 official endpoints defined; minimum 4 fresh live checks required at runner execution"},
-    {"index": 3, "status": "PASS", "step": "WORKER_AND_V3_QUEUE_HARDENED", "detail": "live source hashes, freshness dates, browser gate and AREA_LEVEL_PROXY semantic lock added"},
-    {"index": 4, "status": "PASS", "step": "WEB_LINE_ITEM_PROGRESS_AND_12_EXAMPLES", "detail": "web progress JSON shows 12 source-backed LSOA proxy examples and source limitations"},
+    {"index": 1, "status": "PASS", "step": "REMOTE_HEAD_AND_SLOT_READBACK", "detail": "queue pending; slot ready_for_claim; current_task idle; checkpoint sequence 0"},
+    {"index": 2, "status": "PASS", "step": "OFFICIAL_SOURCE_BUNDLE_RESEARCH", "detail": "5 official endpoints researched; live runner must pass at least 4"},
+    {"index": 3, "status": "PASS", "step": "WORKER_V2_AND_QUEUE_HARDENED", "detail": "20 candidate examples, source scope limits, hashes and browser gate required"},
+    {"index": 4, "status": "PASS", "step": "WEB_LINE_ITEM_PROGRESS", "detail": "web progress shows 20 high-confidence LSOA proxy examples and official source limitations"},
     {"index": 5, "status": "PENDING", "step": "SINGLE_RUNNER_CLAIM", "detail": "fresh shared coordinator claim not yet visible on remote"},
     {"index": 6, "status": "PENDING", "step": "HYDRATE_300_ROWS", "detail": "runner must materialize shard-local AREA_LEVEL_PROXY output"},
     {"index": 7, "status": "PENDING", "step": "HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE", "detail": "actual browser, DOM hash and zero-console-error proof required"},
     {"index": 8, "status": "PENDING", "step": "COMMIT_PUSH_REMOTE_READBACK", "detail": "single publisher result readback required"}
   ],
   "official_sources": [
-    {
-      "name": "data.police.uk last-updated API",
-      "role": "primary row-source freshness check",
-      "latest_data_month": "2026-05",
-      "accuracy_note": "Street-level locations are approximate; values remain AREA_LEVEL_PROXY, not parcel measurements"
-    },
-    {
-      "name": "data.police.uk availability API",
-      "role": "available crime-month catalogue",
-      "latest_data_month": "2026-05",
-      "accuracy_note": "Availability verifies month coverage only; it does not create a parcel measurement"
-    },
-    {
-      "name": "Office for National Statistics Police Force Area tables",
-      "role": "official contextual cross-check only",
-      "release_date": "2026-04-23",
-      "accuracy_note": "Force or local-authority scope; never promoted to LSOA or parcel measurement"
-    },
-    {
-      "name": "Home Office police recorded crime open tables",
-      "role": "official classification and force/CSP context",
-      "release_date": "2026-04-23",
-      "accuracy_note": "Force/CSP context only; no row-level parcel substitution"
-    },
-    {
-      "name": "Metropolitan Police stats and data",
-      "role": "official London context and download catalogue",
-      "latest_data_month": "monthly/current catalogue",
-      "accuracy_note": "London/Met context only; not used as an LSOA or parcel score"
-    }
+    {"name": "data.police.uk last-updated API", "role": "primary row-source freshness", "latest_data_month": "2026-05", "accuracy_note": "Approximate street locations; AREA_LEVEL_PROXY only"},
+    {"name": "data.police.uk availability API", "role": "crime-month availability", "latest_data_month": "2026-05", "accuracy_note": "Coverage evidence only"},
+    {"name": "Office for National Statistics Police Force Area tables", "role": "official contextual cross-check", "release_date": "2026-04-23", "accuracy_note": "Force/local-authority context; not LSOA or parcel measurement"},
+    {"name": "Home Office police recorded crime open tables", "role": "classification and force/CSP context", "release_date": "2026-04-23", "accuracy_note": "No row-level parcel substitution"},
+    {"name": "Metropolitan Police stats and data", "role": "official London monthly context", "latest_data_month": "current catalogue", "accuracy_note": "London/Met context only"}
   ],
   "candidate_examples": [
-    {"parcel_id": "parcel_1", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_2", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_3", "security_score_percent": "51,31", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_4", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_5", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_6", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_7", "security_score_percent": "2,53", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_8", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_9", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_10", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_11", "security_score_percent": "12,13", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"},
-    {"parcel_id": "parcel_12", "security_score_percent": "13,15", "accuracy_score_4": 4, "source_geography_level": "LSOA", "output_semantics": "AREA_LEVEL_PROXY"}
+    {"parcel_id":"parcel_1","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_2","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_3","security_score_percent":"51,31","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_4","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_5","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_6","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_7","security_score_percent":"2,53","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_8","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_9","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_10","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_11","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_12","security_score_percent":"13,15","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_13","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_14","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_15","security_score_percent":"12,13","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_16","security_score_percent":"72,03","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_17","security_score_percent":"66,95","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_18","security_score_percent":"66,95","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_19","security_score_percent":"72,03","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"},
+    {"parcel_id":"parcel_20","security_score_percent":"72,03","accuracy_score_4":4,"source_geography_level":"LSOA","output_semantics":"AREA_LEVEL_PROXY"}
   ],
+  "queue_status": "pending",
+  "slot_status": "ready_for_claim",
+  "current_task_state": "idle",
+  "checkpoint_sequence": 0,
+  "blocker": "FRESH_SINGLE_RUNNER_CLAIM_NOT_VISIBLE_ON_REMOTE",
+  "estimated_minutes": null,
+  "estimated_minutes_reason": "Cannot be calculated before a fresh single-runner claim",
   "http_proof": false,
   "hash_proof": false,
   "dom_proof": false,
@@ -91,5 +84,5 @@
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "updated_at": "2026-07-20T19:07:37Z"
+  "updated_at": "2026-07-20"
 }
