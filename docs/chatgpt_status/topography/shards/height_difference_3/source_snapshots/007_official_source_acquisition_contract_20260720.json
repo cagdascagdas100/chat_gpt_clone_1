@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "verified_at": "2026-07-20T22:48:45Z",
+  "verification_scope": "official_source_acquisition_contract",
+  "source_contract_accuracy_score_4": "3.9/4",
+  "sources": [
+    {
+      "source_name": "HM Land Registry INSPIRE Index Polygons",
+      "role": "official_indicative_boundary",
+      "official_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "publication_date": "2026-07-05",
+      "update_rule": "first_Sunday_monthly",
+      "delivery": "GML_by_local_authority",
+      "automation": "012_download_hmlr_inspire_sources.py",
+      "verification_rules": [
+        "candidate local_authority_name required",
+        "unique normalized row-context or URL match only",
+        "download resolved URL and SHA256 recorded",
+        "HTML error responses rejected",
+        "ZIP extraction constrained to GML/XML and size caps"
+      ],
+      "status": "AUTO_DOWNLOAD_READY_CANDIDATE_AUTHORITY_PENDING"
+    },
+    {
+      "source_name": "Environment Agency LIDAR Composite DTM 1m",
+      "role": "primary_official_numeric_elevation",
+      "official_url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "wcs_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "coverage": "approximately_99_percent_of_England",
+      "delivery": "5km_GeoTIFF_and_WCS",
+      "crs": "EPSG:27700",
+      "vertical_datum": "Ordnance_Datum_Newlyn",
+      "input_survey_accuracy": "plus_or_minus_0.15m_RMSE",
+      "automation": "013_fetch_ea_dtm_wcs_for_matches.py",
+      "verification_rules": [
+        "coverage identifier discovered from GetCapabilities",
+        "axis labels discovered from DescribeCoverage",
+        "GetCoverage bounded by matched HMLR polygon plus explicit buffer",
+        "response must open as GeoTIFF in EPSG27700",
+        "resolution must be 1.1m or finer",
+        "raster must intersect matched polygon",
+        "SHA256 and resolved request URL recorded"
+      ],
+      "status": "BOUNDED_WCS_AUTO_RETRIEVAL_READY_HMLR_MATCH_PENDING"
+    },
+    {
+      "source_name": "OS Terrain 50",
+      "role": "secondary_official_numeric_crosscheck",
+      "official_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "version_date": "2026-07",
+      "coverage": "Great_Britain",
+      "formats": ["ASCII Grid", "GML Grid", "ESRI Shapefile", "GML", "GeoPackage", "Vector Tiles"],
+      "grid_contract": {"tile_size_km": 10, "ncols": 200, "nrows": 200, "cellsize_m": 50, "height_precision_m": 0.1},
+      "automation": "014_prepare_os_terrain50_tiles.py",
+      "verification_rules": [
+        "deterministic BNG two-letter plus 10km tile key",
+        "exact tile only",
+        "200x200 and 50m header required",
+        "southwest origin must match tile",
+        "SHA256 recorded",
+        "nearest or neighbouring tile substitution forbidden"
+      ],
+      "status": "EXACT_ARCHIVE_EXTRACTION_READY_JULY_2026_ASCII_ARCHIVE_PENDING"
+    }
+  ],
+  "orchestration": {
+    "script": "015_execute_auto_source_and_measurement_pipeline.py",
+    "stages": ["HMLR_SOURCE_PREPARATION", "HMLR_BOUNDARY_MATCH", "EA_DTM_WCS_PREPARATION", "TERRAIN50_SOURCE_PREPARATION", "EA_DTM_AND_TERRAIN50_SAMPLE", "WEBSITE_PUBLICATION"],
+    "single_shared_runner_only": true,
+    "new_runner_created": false,
+    "parallel_runner_used": false,
+    "fail_closed_at_first_nonzero_stage": true
+  },
+  "remaining_input_gate": [
+    "canonical source-backed shard export for rows 61523-92283",
+    "three real candidates with local authority and BNG identity",
+    "OS Terrain50 July 2026 ASCII Grid archive or directory"
+  ],
+  "real_parcel_results_produced": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
