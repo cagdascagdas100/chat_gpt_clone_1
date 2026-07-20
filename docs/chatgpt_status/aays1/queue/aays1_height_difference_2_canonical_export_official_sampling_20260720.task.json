@@ -1,0 +1,124 @@
+{
+  "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+  "page_key": "aays1",
+  "layer_key": "height_difference",
+  "slot_id": "height_difference_2",
+  "status": "queued",
+  "state": "queued",
+  "priority": 6800,
+  "queued_at": "2026-07-20T19:08:00Z",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "runner_policy": "single_existing_shared_runner_resumable_sequential_multi_stage_only",
+  "execution_mode": "single_runner_sequential_multiwork",
+  "new_runner_allowed": false,
+  "parallel_runner_allowed": false,
+  "runner_max_tasks_requested": 1,
+  "resume_checkpoint_sequence": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "script_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/003_height_difference_2_canonical_export_official_sampling_20260720.ps1",
+  "payload_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/003_height_difference_2_canonical_export_official_sampling_20260720.py.gz.b64",
+  "allowed_paths": [
+    "docs/chatgpt_status/topography/shards/height_difference_2",
+    "england_map_web/data/aays_18_slots/height_difference_2",
+    "docs/chatgpt_status/_shared/slots_18/height_difference_2"
+  ],
+  "official_sources": [
+    {
+      "role": "indicative_real_boundary",
+      "name": "HM Land Registry INSPIRE Index Polygons monthly GML",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "crs": "EPSG:27700"
+    },
+    {
+      "role": "primary_numeric_elevation",
+      "name": "Environment Agency LIDAR Composite DTM 1m",
+      "url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "crs": "EPSG:27700",
+      "vertical_datum": "ODN"
+    },
+    {
+      "role": "secondary_numeric_crosscheck",
+      "name": "OS Terrain 50",
+      "url": "https://api.os.uk/downloads/v1/products",
+      "crs": "EPSG:27700"
+    }
+  ],
+  "required_sequence": [
+    "discover canonical matrix chunk files in bounded F portable and repository paths",
+    "export minimal canonical rows 30762-61522 without changing identifiers",
+    "select up to three rows with parcel_id, HMLR INSPIRE ID, latitude and longitude",
+    "transform candidate coordinates to British National Grid EPSG:27700",
+    "download current HMLR INSPIRE GML by local authority",
+    "match each candidate INSPIRE ID to an indicative polygon",
+    "resolve the current EA DTM 1m WCS CoverageId",
+    "request bounded DTM GeoTIFF coverage for each real polygon",
+    "calculate polygon median, Q1 and Q3 from valid DTM pixels",
+    "resolve OS Terrain 50 through the unauthenticated OS OpenData Downloads API",
+    "download the matching 100km grid-square package",
+    "sample OS Terrain 50 as an independent coarse secondary crosscheck",
+    "publish candidate and operation JSON row by row",
+    "verify local port 8012 HTTP readback",
+    "write shard runner output and report",
+    "leave missing evidence as NO_DATA and preserve final_ready=false"
+  ],
+  "workload": {
+    "serial_stage_count": 16,
+    "starter_candidate_limit": 3,
+    "official_source_families": 3,
+    "minimum_planned_operation_rows": 24,
+    "maximum_hmlr_authority_downloads": 3,
+    "maximum_ea_wcs_requests": 3,
+    "maximum_os_terrain_area_downloads": 3,
+    "website_http_readback_files": 3
+  },
+  "accuracy_policy": {
+    "processing_crs": "EPSG:27700",
+    "boundary_source": "HMLR_INSPIRE_GML_INDICATIVE_ONLY",
+    "primary_statistic": "EA_DTM_1M_POLYGON_MEDIAN_WITH_Q1_Q3",
+    "centroid_fallback_promoted_as_measurement": false,
+    "secondary_source": "OS_TERRAIN50_POINT_CROSSCHECK_ONLY",
+    "measured_publication_requires_real_boundary": true,
+    "measured_publication_requires_two_official_numeric_sources": true,
+    "no_metric_increase_without_real_output_evidence": true
+  },
+  "conditional_progress_policy": {
+    "baseline_percent": 78,
+    "three_ea_dtm_polygon_samples_percent": 82,
+    "three_ea_plus_three_os_crosschecks_percent": 84,
+    "two_numeric_sources_plus_three_hmlr_matches_percent": 86
+  },
+  "expected_outputs": [
+    "docs/chatgpt_status/topography/shards/height_difference_2/exports/003_height_difference_2_canonical_shard_rows_minimal.json",
+    "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/003_height_difference_2_canonical_export_official_sampling_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_2/reports/003_height_difference_2_canonical_export_official_sampling_20260720.md",
+    "england_map_web/data/aays_18_slots/height_difference_2/operations_latest.json",
+    "england_map_web/data/aays_18_slots/height_difference_2/candidates_latest.json",
+    "england_map_web/data/aays_18_slots/height_difference_2/status_latest.json"
+  ],
+  "acceptance_criteria": [
+    "Only rows 30762-61522 are read and exported",
+    "No identifier, coordinate, boundary or elevation is synthesized",
+    "Every official request, download, match, sample, blocker and readback is a separate web operation row",
+    "A parcel value is only promoted when real HMLR geometry, EA DTM numeric evidence and OS Terrain secondary evidence all exist",
+    "Port 8012 readback checks operations, candidates and page visibility",
+    "The existing single shared runner is used and no second runner or parallel task is created",
+    "final_ready remains false"
+  ],
+  "single_runner_only": true,
+  "single_shared_runner_required": true,
+  "CONTINUE_RUNNER_READY": true,
+  "PUSH_SYNC_REQUIRED": true,
+  "no_fake_final_ready": true,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
