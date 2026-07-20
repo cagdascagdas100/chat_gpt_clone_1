@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_3",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "task_id": "height_difference_3-resolve-shard-coordinates-and-acquire-official-boundary-elevation-sources",
+  "execution_policy": {
+    "existing_single_shared_runner_only": true,
+    "new_runner_allowed": false,
+    "competing_shard_claim_allowed": false,
+    "internal_parallel_read_only_lanes_allowed": true,
+    "heavy_downloads_serialized": true,
+    "git_publish_serialized": true
+  },
+  "required_input_gate": {
+    "canonical_parcel_ids": "61523-92283",
+    "required_fields": [
+      "parcel_id",
+      "longitude",
+      "latitude",
+      "local_authority_or_boundary_lookup_key"
+    ],
+    "status": "BLOCKED_INPUT_PATH_NOT_IDENTIFIED"
+  },
+  "lanes": [
+    {
+      "lane_id": "A_BOUNDARY",
+      "resource_class": "network_fetch",
+      "source": "HM Land Registry INSPIRE Index Polygons",
+      "steps": [
+        "resolve each sample parcel local authority",
+        "download current local-authority GML",
+        "verify checksum and CRS",
+        "match exact official ID first, then point-in-polygon",
+        "write no_data when no authoritative polygon match exists"
+      ]
+    },
+    {
+      "lane_id": "B_EA_LIDAR",
+      "resource_class": "network_fetch",
+      "source": "Environment Agency LiDAR",
+      "steps": [
+        "intersect sample geometry or centroid with coverage metadata",
+        "download only required 5 km tiles",
+        "verify product type, year, resolution and checksum",
+        "sample DTM or ground-class evidence",
+        "preserve published vertical accuracy and source date"
+      ]
+    },
+    {
+      "lane_id": "C_OS_TERRAIN50",
+      "resource_class": "network_fetch",
+      "source": "OS Terrain 50",
+      "steps": [
+        "derive British National Grid tile from sample coordinates",
+        "download only required 10 km ASCII grid tiles",
+        "verify July 2026 version and checksum",
+        "sample 50 m grid",
+        "use as official national fallback or crosscheck"
+      ]
+    },
+    {
+      "lane_id": "D_COPERNICUS",
+      "resource_class": "light_read",
+      "source": "Copernicus DEM GLO-30",
+      "steps": [
+        "reuse verified public COG only when the shard sample lies inside its bounds",
+        "sample as DSM secondary evidence",
+        "do not promote as sole official UK DTM validation",
+        "compare against EA LiDAR or OS Terrain result"
+      ]
+    }
+  ],
+  "merge_gate": [
+    "real parcel geometry or documented centroid binding exists",
+    "at least one official UK numeric elevation source sampled",
+    "second independent numeric source sampled",
+    "source resolution, date, method and confidence recorded",
+    "no arbitrary nearest-point assignment",
+    "web operation row and remote readback produced"
+  ],
+  "initial_example_batch_size": 3,
+  "example_selection_rule": "first three unresolved canonical parcel IDs inside 61523-92283 after deterministic registry read",
+  "measured_rows_before_gate": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "updated_at": "2026-07-20T16:22:25Z"
+}
