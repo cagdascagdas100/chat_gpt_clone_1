@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gas Emissions 2 — Resmî Kaynak Adayları</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f7f8;color:#171717}
+    h1{margin:0 0 8px;font-size:24px}.note{background:#fff4ce;border:1px solid #e6c75a;padding:12px;border-radius:8px;margin:12px 0}
+    .summary{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}.card{background:white;border:1px solid #ddd;border-radius:8px;padding:10px 14px}
+    table{width:100%;border-collapse:collapse;background:white;font-size:13px}th,td{border:1px solid #ddd;padding:7px;text-align:left;vertical-align:top}
+    th{background:#efefef;position:sticky;top:0}.blocked{font-weight:700}a{word-break:break-all}.footer{margin-top:12px;font-size:12px}
+  </style>
+</head>
+<body>
+  <h1>Gas Emissions 2 — Resmî Kaynak Adayları</h1>
+  <div class="note"><strong>Önemli:</strong> Bu satırlar DESNZ yerel yönetim düzeyi resmî kaynak adaylarıdır. Parsel ölçümü değildir; parsel bağlama yapılmadan harita parsel değeri olarak kullanılamaz.</div>
+  <div class="summary">
+    <div class="card">Slot: <strong id="slot">—</strong></div>
+    <div class="card">Aday satır: <strong id="count">—</strong></div>
+    <div class="card">Yüksek doğruluklu kaynak satırı: <strong id="accurate">—</strong></div>
+    <div class="card">Parsel bağlı: <strong id="bound">—</strong></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Aday</th><th>Kaynak satırı</th><th>Yerel yönetim</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Territorial kt CO2e</th><th>Etki alanı kt CO2</th><th>Kaynak doğruluğu</th><th>Parsel bağlama</th><th>Resmî kaynak</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="13">Yükleniyor…</td></tr></tbody>
+  </table>
+  <div class="footer" id="meta"></div>
+<script>
+(async()=>{
+  const tbody=document.getElementById('rows');
+  try{
+    const r=await fetch('./candidates_latest.json',{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    document.getElementById('slot').textContent=d.slot_id;
+    document.getElementById('count').textContent=d.candidate_count;
+    document.getElementById('accurate').textContent=d.high_accuracy_source_row_count;
+    document.getElementById('bound').textContent=d.parcel_bound_count;
+    tbody.innerHTML='';
+    d.candidate_rows.forEach((x,i)=>{
+      const tr=document.createElement('tr');
+      const cells=[i+1,x.candidate_id,'L'+x.preview_line,x.local_authority+' ('+x.local_authority_code+')',x.calendar_year,x.sector,x.sub_sector,x.greenhouse_gas,x.territorial_emissions_kt_co2e,x.scope_of_influence_kt_co2,x.source_row_accuracy_percent+'%',x.parcel_binding_status,'<a href="'+d.source_url+'" target="_blank" rel="noopener">GOV.UK DESNZ 2005–2024</a>'];
+      cells.forEach((v,j)=>{const td=document.createElement('td');if(j===12)td.innerHTML=v;else td.textContent=v;tr.appendChild(td);});
+      tbody.appendChild(tr);
+    });
+    document.getElementById('meta').textContent='Üretim: '+d.generated_at+' · Satırlar yalnız resmî kaynak adayıdır; parsel bağı yoktur.';
+  }catch(e){tbody.innerHTML='<tr><td colspan="13" class="blocked">Veri yüklenemedi: '+String(e)+'</td></tr>';}
+})();
+</script>
+</body></html>
