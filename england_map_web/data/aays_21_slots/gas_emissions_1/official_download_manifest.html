@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gas Emissions 1 — Resmî indirme manifesti</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}table{border-collapse:collapse;width:100%;background:white;font-size:13px}th,td{border:1px solid #cfd8dc;padding:8px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}.pending{font-weight:700}</style>
+</head>
+<body>
+<h1>gas_emissions_1 — Resmî veri indirme manifesti</h1>
+<p>Parsel aralığı: 1–30761 · Resmî dosya: 3 · Runner SHA-256 doğrulaması: 0 · Örnek tesis satırı: 0</p>
+<div class="notice">Bu tablo yalnız resmî veri edinme planını gösterir. İndirme, şema ve koordinat doğrulaması tamamlanmadan parsel emisyon değeri oluşturulmaz.</div>
+<table>
+<thead><tr><th>Kaynak</th><th>Yayıncı / tarih</th><th>Format</th><th>Beklenen alanlar</th><th>Kaynak rolü</th><th>Parsel kuralı</th><th>Runner</th></tr></thead>
+<tbody>
+<tr><td><a href="https://www.gov.uk/government/publications/download-industrial-emissions-and-waste-transfer-uk-prtr-data" target="_blank" rel="noreferrer">UK PRTR 2024</a></td><td>Defra · 30 Haziran 2026</td><td>XML · 14 MB</td><td>Tesis kimliği, coğrafi konum, faaliyet, kirletici, ortam, miktar, yöntem kodu</td><td>Birincil resmî tesis salımı adayı</td><td>Koordinat ve CRS doğrulanıp nokta gerçek parsel poligonu içinde olmadan bağlama yok.</td><td class="pending">Bekliyor</td></tr>
+<tr><td><a href="https://naei.energysecurity.gov.uk/data/maps/emissions-point-sources" target="_blank" rel="noreferrer">NAEI Point Sources 2023</a></td><td>NAEI · 30 Eylül 2025</td><td>XLSX · 96,44 MB</td><td>Tesis/kaynak kimliği, grid referansı, kirletici, yıl, sektör, emisyon</td><td>Birincil point-in-polygon adayı</td><td>Yalnız kesin point-in-polygon; residual area emissions ayrı kalır.</td><td class="pending">Bekliyor</td></tr>
+<tr><td><a href="https://environment.data.gov.uk/dataset/695ac7e1-d465-11e4-abfc-f0def148f590" target="_blank" rel="noreferrer">EA Pollution Inventory 2024</a></td><td>Environment Agency · 17 Nisan 2026</td><td>ZIP · EPSG:27700</td><td>Regüle tesis/izin, easting, northing, madde, salım ortamı, yıllık miktar, sektör</td><td>İngiltere regüle tesis adayı</td><td>Lisans atfı korunur; CRS açıkça dönüştürülür; yalnız içeren poligona bağlanır.</td><td class="pending">Bekliyor</td></tr>
+</tbody>
+</table>
+<script>fetch('official_download_manifest_latest.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{document.querySelector('p').textContent=`Parsel aralığı: ${d.parcel_partition.start}–${d.parcel_partition.end} · Resmî dosya: ${d.source_count} · Runner SHA-256 doğrulaması: ${d.sha256_verified_count} · Örnek tesis satırı: ${d.sample_rows_created}`}).catch(()=>{});</script>
+</body>
+</html>
