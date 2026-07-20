@@ -7,10 +7,10 @@
   <title>Gas Emissions 3 İlerleme</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f7f8;color:#171717}
-    h1{margin-bottom:6px}.muted{color:#666}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0}
-    .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:24px;font-weight:700}
-    table{width:100%;border-collapse:collapse;background:white;font-size:13px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{position:sticky;top:0;background:#eee}
-    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.scroll{overflow:auto;max-height:70vh}.error{white-space:pre-wrap;color:#8b0000}
+    h1{margin-bottom:6px}.muted{color:#666}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:18px 0}
+    .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:23px;font-weight:700}
+    table{width:100%;border-collapse:collapse;background:white;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left}th{position:sticky;top:0;background:#eee}
+    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.scroll{overflow:auto;max-height:72vh}.error{white-space:pre-wrap;color:#8b0000}a{white-space:nowrap}
   </style>
 </head>
 <body>
@@ -20,7 +20,7 @@
   <h2>Kaynak revizyon adayları</h2>
   <p class="muted">Satırlar resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin birebir anahtar eşleşmeleridir; parsel değeri değildir.</p>
   <div class="scroll"><table>
-    <thead><tr><th>#</th><th>Satır</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Kaynak güveni</th><th>Karar</th></tr></thead>
+    <thead><tr><th>#</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Güven</th><th>Eski satır</th><th>Yeni satır</th><th>Karar</th><th>Resmî kaynak</th></tr></thead>
     <tbody id="rows"></tbody>
   </table></div>
   <h2>Blocker</h2><div id="blocker" class="error"></div>
@@ -36,18 +36,24 @@
     if(responses.some(r=>!r.ok)) throw new Error('Aday JSON dosyalarından biri yüklenemedi');
     const documents=await Promise.all(responses.map(r=>r.json()));
     const rows=documents.flatMap(d=>d.rows||[]);
-    document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Satır=${rows.length}`;
     const m=summary.metrics;
+    document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Satır=${rows.length}`;
     const cards=[
       ['Shard ilerleme',m.shard_progress_percent+'%'],
       ['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],
+      ['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],
       ['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],
-      ['Revizyon adayı',rows.length],
-      ['Yüksek etkili aday',m.high_impact_revision_candidates],
+      ['Yüksek etkili',m.high_impact_revision_candidates],
+      ['Maddi revizyon',m.material_revision_candidates],
       ['Kaynak güveni',m.candidate_source_confidence_percent+'%']
     ];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('rows').innerHTML=rows.map((x,i)=>{const cls=x.decision.includes('HIGH')?'warn':x.decision.includes('MATERIAL')?'material':'ok';return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td class="${cls}">${x.decision}</td></tr>`}).join('');
+    const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
+    document.getElementById('rows').innerHTML=rows.map((x,i)=>{
+      const cls=x.decision.includes('HIGH')?'warn':x.decision.includes('MATERIAL')?'material':'ok';
+      const oldLine=x.old_preview_line??'—',newLine=x.new_preview_line??'—';
+      return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year??'—'}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td>${oldLine}</td><td>${newLine}</td><td class="${cls}">${x.decision}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`
+    }).join('');
     document.getElementById('blocker').textContent=summary.blocker;
   }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
 })();
