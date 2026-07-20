@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="60">
+  <title>Gas Emissions 3 İlerleme</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f7f8;color:#171717}
+    h1{margin-bottom:6px}.muted{color:#666}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0}
+    .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:24px;font-weight:700}
+    table{width:100%;border-collapse:collapse;background:white;font-size:13px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{position:sticky;top:0;background:#eee}
+    .ok{font-weight:700}.warn{font-weight:700}.scroll{overflow:auto;max-height:70vh}.error{white-space:pre-wrap;color:#8b0000}
+  </style>
+</head>
+<body>
+  <h1>Gas Emissions — Shard 3</h1>
+  <div id="meta" class="muted">Yükleniyor…</div>
+  <div id="cards" class="cards"></div>
+  <h2>Kaynak revizyon adayları</h2>
+  <p class="muted">Bu satırlar güncel resmî DESNZ serisinden kaynak yükseltme adaylarıdır; parsel değeri değildir.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>Satır</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Kaynak güveni</th><th>Karar</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <h2>Blocker</h2><div id="blocker" class="error"></div>
+<script>
+(async()=>{
+  try{
+    const r=await fetch('./progress_latest.json?ts='+Date.now(),{cache:'no-store'});
+    if(!r.ok) throw new Error('JSON yüklenemedi: '+r.status);
+    const d=await r.json();
+    document.getElementById('meta').textContent=`SLOT_ID=${d.slot_id} | Parsel=${d.parcel_range} | Güncelleme=${d.updated_at} | Durum=${d.status}`;
+    const m=d.metrics;
+    const cards=[
+      ['Shard ilerleme',m.shard_progress_percent+'%'],
+      ['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],
+      ['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],
+      ['Revizyon adayı',m.revision_candidates],
+      ['Yüksek etkili aday',m.high_impact_revision_candidates],
+      ['Kaynak güveni',m.candidate_source_confidence_percent+'%']
+    ];
+    document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
+    document.getElementById('rows').innerHTML=d.rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td class="${x.decision.includes('HIGH')?'warn':'ok'}">${x.decision}</td></tr>`).join('');
+    document.getElementById('blocker').textContent=d.blocker;
+  }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
+})();
+</script>
+</body>
+</html>
