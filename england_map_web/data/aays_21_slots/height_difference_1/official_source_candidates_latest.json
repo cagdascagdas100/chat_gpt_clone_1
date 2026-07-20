@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "parcel_partition": {
@@ -7,25 +7,39 @@
     "end": 30761,
     "count": 30761
   },
-  "task_id": "aays1-height-difference-1-official-source-upgrade-candidates-20260720",
-  "generated_at": "2026-07-20T16:21:07Z",
-  "status": "OFFICIAL_SOURCE_CANDIDATES_PUBLISHED_NUMERIC_SAMPLING_BLOCKED",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "generated_at": "2026-07-20T19:15:11Z",
+  "status": "OFFICIAL_QUERY_AND_SINGLE_COORDINATOR_DISPATCH_PUBLISHED_RESULT_PENDING",
+  "execution_status": "queued_existing_single_coordinator_remote_observation_pending",
   "product_completion_percent": 78,
   "percent_increase": 0,
   "batch_progress": {
-    "planned_operations": 18,
-    "completed_operations": 13,
+    "planned_operations": 24,
+    "completed_operations": 19,
     "blocked_operations": 5,
-    "completion_percent": 72.22
+    "completion_percent": 79.17
   },
-  "source_upgrades_count": 6,
+  "official_sources_count": 6,
+  "source_upgrades_count": 9,
+  "source_upgrades_this_run": 3,
   "candidate_rows_count": 3,
   "measured_candidate_rows_count": 0,
+  "real_boundary_match_rows_count": 0,
+  "official_numeric_rows_count": 0,
   "accuracy": {
     "current_score_4": "2.5/4 fallback",
     "parcel_accuracy_increase": 0,
-    "target_after_boundary_and_two_source_numeric_validation": "3.5/4 or higher",
-    "reason_not_increased": "No HMLR polygon bytes or EA/OS numeric pixels were retrieved in this environment."
+    "target_after_boundary_and_independent_two_source_numeric_validation": "3.5/4 or higher",
+    "reason_not_increased": "The execution contract is queued, but no new remote runner result containing a real HMLR polygon and official numeric elevation has been accepted."
+  },
+  "dispatch": {
+    "queue_path": "docs/chatgpt_status/topography/queue/height_difference_1_004_official_boundary_numeric_samples_20260720.v3.task.json",
+    "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_runner_20260720.py",
+    "payload_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_payload_20260720.b64",
+    "query_manifest_path": "docs/chatgpt_status/topography/shards/height_difference_1/source_queries/003_official_point_query_manifest_20260720.md",
+    "coordinator_mode": "existing_single_coordinator_only",
+    "parallel_runner_created": false,
+    "queue_status": "pending"
   },
   "official_sources": [
     {
@@ -41,15 +55,16 @@
         "London Borough of Enfield"
       ],
       "source_quality_score_4": 4,
-      "status": "download_entries_confirmed_bytes_not_fetched"
+      "status": "download_entries_confirmed_execution_payload_queued"
     },
     {
-      "source_id": "hmlr_inspire_technical_guidance",
+      "source_id": "hmlr_inspire_wms_feature_info",
       "provider": "HM Land Registry",
-      "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
-      "data_type": "official CRS and GML processing guidance",
+      "source_url": "https://inspire.landregistry.gov.uk/inspire/ows",
+      "data_type": "official cadastral parcel WMS GetFeatureInfo point query",
+      "crs": "EPSG:27700",
       "source_quality_score_4": 4,
-      "status": "verified"
+      "status": "three_candidate_queries_built_execution_payload_queued"
     },
     {
       "source_id": "ea_lidar_dtm_1m_wcs",
@@ -60,7 +75,7 @@
       "vertical_accuracy_rmse_m": 0.15,
       "coverage_description": "approximately 99 percent of England",
       "source_quality_score_4": 4,
-      "status": "official_endpoint_confirmed_pixel_fetch_pending"
+      "status": "coverage_and_numeric_sampling_contract_queued"
     },
     {
       "source_id": "ea_lidar_dtm_2m_wcs",
@@ -71,7 +86,7 @@
       "vertical_accuracy_rmse_m": 0.15,
       "source_quality_score_4": 4,
       "independent_second_source": false,
-      "status": "official_endpoint_confirmed_pixel_fetch_pending"
+      "status": "resolution_crosscheck_contract_queued"
     },
     {
       "source_id": "os_terrain50_202607",
@@ -82,7 +97,7 @@
       "resolution_m": 50,
       "source_quality_score_4": 3,
       "independent_second_source": true,
-      "status": "official_download_page_confirmed_numeric_fetch_pending"
+      "status": "independent_numeric_download_discovery_queued"
     },
     {
       "source_id": "ea_survey_coverage_ogc_api",
@@ -90,7 +105,7 @@
       "source_url": "https://environment.data.gov.uk/spatialdata/survey-index-files/ogc/features/v1",
       "data_type": "official survey coverage metadata",
       "source_quality_score_4": 4,
-      "status": "collections_and_queryables_verified"
+      "status": "collections_queryables_and_candidate_envelope_queries_built"
     }
   ],
   "candidates": [
@@ -106,13 +121,9 @@
         "northing": 192535.809
       },
       "bng_tile": "TQ2892",
-      "authority_search_scope": [
-        "London Borough of Barnet",
-        "London Borough of Enfield"
-      ],
-      "boundary_status": "official_gml_candidates_identified_not_matched",
-      "ea_lidar_status": "official_wcs_identified_no_numeric_pixel",
-      "os_terrain_status": "official_secondary_identified_no_numeric_pixel",
+      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
+      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
+      "os_terrain_query_status": "official_independent_source_discovery_queued",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     },
@@ -128,13 +139,9 @@
         "northing": 192527.698
       },
       "bng_tile": "TQ2892",
-      "authority_search_scope": [
-        "London Borough of Barnet",
-        "London Borough of Enfield"
-      ],
-      "boundary_status": "official_gml_candidates_identified_not_matched",
-      "ea_lidar_status": "official_wcs_identified_no_numeric_pixel",
-      "os_terrain_status": "official_secondary_identified_no_numeric_pixel",
+      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
+      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
+      "os_terrain_query_status": "official_independent_source_discovery_queued",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     },
@@ -150,13 +157,9 @@
         "northing": 192513.392
       },
       "bng_tile": "TQ2892",
-      "authority_search_scope": [
-        "London Borough of Barnet",
-        "London Borough of Enfield"
-      ],
-      "boundary_status": "official_gml_candidates_identified_not_matched",
-      "ea_lidar_status": "official_wcs_identified_no_numeric_pixel",
-      "os_terrain_status": "official_secondary_identified_no_numeric_pixel",
+      "boundary_query_status": "official_hmlr_wms_and_barnet_enfield_gml_queries_queued",
+      "ea_lidar_query_status": "official_1m_and_2m_wcs_sampling_queued",
+      "os_terrain_query_status": "official_independent_source_discovery_queued",
       "output_semantics": "NO_DATA_NOT_INFERRED",
       "accuracy_score_4": "2.5/4 fallback"
     }
@@ -175,17 +178,23 @@
     {"operation_no": 11, "name": "identify_os_terrain50_secondary", "status": "completed"},
     {"operation_no": 12, "name": "transform_three_centroids_to_epsg27700", "status": "completed"},
     {"operation_no": 13, "name": "publish_web_candidate_rows", "status": "completed"},
-    {"operation_no": 14, "name": "fetch_hmlr_barnet_and_enfield_gml_bytes", "status": "blocked", "blocker": "download_bytes_not_available_through_current_execution_channel"},
-    {"operation_no": 15, "name": "match_hmlr_polygons_to_candidate_points", "status": "blocked", "blocker": "gml_bytes_required"},
-    {"operation_no": 16, "name": "sample_ea_lidar_1m_numeric_pixels", "status": "blocked", "blocker": "wcs_binary_coverage_fetch_not_available_through_current_execution_channel"},
-    {"operation_no": 17, "name": "sample_os_terrain50_numeric_values", "status": "blocked", "blocker": "terrain_grid_bytes_required"},
-    {"operation_no": 18, "name": "two_source_numeric_validation", "status": "blocked", "blocker": "official_numeric_rows_missing"}
+    {"operation_no": 14, "name": "fetch_hmlr_barnet_and_enfield_gml_bytes", "status": "blocked", "blocker": "remote_coordinator_result_not_yet_present"},
+    {"operation_no": 15, "name": "match_hmlr_polygons_to_candidate_points", "status": "blocked", "blocker": "real_gml_or_wms_geometry_response_required"},
+    {"operation_no": 16, "name": "sample_ea_lidar_1m_numeric_pixels", "status": "blocked", "blocker": "remote_coordinator_result_not_yet_present"},
+    {"operation_no": 17, "name": "sample_os_terrain50_numeric_values", "status": "blocked", "blocker": "independent_numeric_grid_result_required"},
+    {"operation_no": 18, "name": "two_source_numeric_validation", "status": "blocked", "blocker": "official_numeric_rows_missing"},
+    {"operation_no": 19, "name": "build_corrected_official_point_query_manifest", "status": "completed"},
+    {"operation_no": 20, "name": "verify_current_hmlr_monthly_gml_contract", "status": "completed"},
+    {"operation_no": 21, "name": "verify_ea_1m_and_2m_wcs_execution_contract", "status": "completed"},
+    {"operation_no": 22, "name": "build_real_geometry_and_numeric_sampling_payload", "status": "completed"},
+    {"operation_no": 23, "name": "build_shard_isolated_runner_wrapper", "status": "completed"},
+    {"operation_no": 24, "name": "queue_existing_single_coordinator_v3_task", "status": "completed", "result_status": "pending_remote_observation"}
   ],
   "blockers": [
-    "HMLR_BARNET_ENFIELD_GML_BYTES_NOT_FETCHED",
-    "EA_LIDAR_1M_WCS_NUMERIC_PIXELS_NOT_FETCHED",
-    "OS_TERRAIN50_NUMERIC_GRID_NOT_FETCHED",
+    "SINGLE_COORDINATOR_REMOTE_RESULT_NOT_YET_PRESENT",
     "REAL_BOUNDARY_MATCH_ROWS_0",
+    "EA_LIDAR_OFFICIAL_NUMERIC_ROWS_0",
+    "OS_TERRAIN50_INDEPENDENT_NUMERIC_ROWS_0",
     "OFFICIAL_TWO_SOURCE_NUMERIC_VALIDATION_ROWS_0"
   ],
   "final_ready": false,
