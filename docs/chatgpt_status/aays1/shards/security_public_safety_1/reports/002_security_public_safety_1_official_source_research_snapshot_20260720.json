@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "slot_id": "security_public_safety_1",
+  "research_date": "2026-07-20",
+  "status": "EXTERNAL_RESEARCH_PREPARED_NOT_RUNNER_ACCEPTANCE",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "measurement_level": "lsoa",
+  "parcel_measurement": false,
+  "acceptance_evidence": false,
+  "observations": [
+    {
+      "source": "data.police.uk crime-last-updated API",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "observed_value": "2026-05-01",
+      "role": "primary source freshness",
+      "scope_limit": "Does not create a parcel measurement"
+    },
+    {
+      "source": "data.police.uk crimes-street-dates API",
+      "url": "https://data.police.uk/api/crimes-street-dates",
+      "observed_latest_month": "2026-05",
+      "role": "month availability catalogue",
+      "scope_limit": "Coverage evidence only"
+    },
+    {
+      "source": "data.police.uk street-level crime method",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "observed_method": "single-point requests return crimes within a one-mile radius",
+      "accuracy_limit": "returned locations are approximate and anonymised, not exact incident locations",
+      "scope_limit": "Supporting area evidence only; never a parcel measurement"
+    },
+    {
+      "source": "data.police.uk May 2026 changelog",
+      "url": "https://data.police.uk/changelog/",
+      "observed_known_missing_crime_data_forces": [
+        "British Transport Police",
+        "Gloucestershire Constabulary"
+      ],
+      "target_force": "Metropolitan Police",
+      "target_force_note": "Metropolitan Police is not named in the observed May 2026 missing-crime-data notices; six target API endpoints still require live HTTP/JSON/count/SHA256 parity before acceptance",
+      "scope_limit": "Absence from a warning list is contextual evidence, not proof of complete coverage"
+    },
+    {
+      "source": "data.police.uk archive catalogue",
+      "url": "https://data.police.uk/data/archive/",
+      "observed_latest_archive": "May 2026",
+      "observed_archive_size": "1.6 GB",
+      "role": "monthly archive freshness and reproducibility context",
+      "scope_limit": "Archive catalogue does not replace live row and browser acceptance"
+    },
+    {
+      "source": "Office for National Statistics Police Force Area tables",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
+      "release_date": "2026-04-23",
+      "next_release_date": "2026-07-23",
+      "role": "official force/local-authority context",
+      "scope_limit": "Not substituted for LSOA or parcel values"
+    },
+    {
+      "source": "Home Office police recorded crime and outcomes open data tables",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "last_updated": "2026-04-23",
+      "role": "official classification, force and CSP context",
+      "scope_limit": "Not substituted for LSOA or parcel values"
+    },
+    {
+      "source": "Metropolitan Police Stats and data",
+      "url": "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/",
+      "observed_catalogue": "monthly Crime, Business Crime and Custody datasets plus crime dashboards",
+      "role": "official London context",
+      "scope_limit": "Not substituted for LSOA or parcel values"
+    }
+  ],
+  "candidate_display_target": 20,
+  "candidate_stored_evidence_rows": 20,
+  "candidate_unique_api_endpoints": 6,
+  "candidate_live_checks": {
+    "http_200_required": 6,
+    "json_array_required": 6,
+    "stored_count_parity_required": 20,
+    "stored_sha256_parity_required": 20,
+    "status": "PENDING_SINGLE_RUNNER"
+  },
+  "live_runner_source_checks_required": 4,
+  "live_runner_source_checks_total": 5,
+  "http_hash_dom_console_browser_acceptance": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "updated_at": "2026-07-20T19:42:00Z"
+}
