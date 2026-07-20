@@ -116,19 +116,22 @@ try {
     $blockers.Add('AUTOMATION_167_PAGE_HTTP_UNAVAILABLE:' + $_.Exception.Message)
 }
 
-$browserCandidates = [System.Collections.Generic.List[string]]::new()
-foreach ($candidate in @(
-    (Join-Path $env:AAYS_PORTABLE_ROOT 'runtime/browser/chrome.exe'),
-    (Join-Path $env:AAYS_PORTABLE_ROOT 'runtime/chrome/chrome.exe'),
-    (Join-Path $env:AAYS_PORTABLE_ROOT 'runtime/chromium/chrome.exe'),
-    (Join-Path $env:AAYS_PORTABLE_ROOT 'runtime/msedge/msedge.exe'),
-    (if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe' }),
-    (if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Microsoft/Edge/Application/msedge.exe' }),
-    (if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe' }),
-    (if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Google/Chrome/Application/chrome.exe' })
-)) {
-    if ($candidate -and (Test-Path -LiteralPath $candidate)) { $browserCandidates.Add([string]$candidate) }
+$candidatePaths = [System.Collections.Generic.List[string]]::new()
+$portableRoot = [string]$env:AAYS_PORTABLE_ROOT
+if ($portableRoot) {
+    foreach ($relative in @('runtime/browser/chrome.exe','runtime/chrome/chrome.exe','runtime/chromium/chrome.exe','runtime/msedge/msedge.exe')) {
+        $candidatePaths.Add((Join-Path $portableRoot $relative))
+    }
 }
+if (${env:ProgramFiles(x86)}) {
+    $candidatePaths.Add((Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe'))
+    $candidatePaths.Add((Join-Path ${env:ProgramFiles(x86)} 'Google/Chrome/Application/chrome.exe'))
+}
+if ($env:ProgramFiles) {
+    $candidatePaths.Add((Join-Path $env:ProgramFiles 'Microsoft/Edge/Application/msedge.exe'))
+    $candidatePaths.Add((Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'))
+}
+$browserCandidates = @($candidatePaths | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique)
 $browser = $browserCandidates | Select-Object -First 1
 $browserExitCode = $null
 $dom = ''
@@ -221,23 +224,23 @@ Write-JsonNoBom -Path $statusPath -Value $status
 $reportLines = @(
     '# ReadyToSell Shard 3 — Automation 167 DOM Proof',
     '',
-    "- Task: `$taskId`",
-    "- Slot: `$slotId` (61523-92283)",
-    "- Status: `$statusName`",
-    "- Acceptance pass: `$acceptancePass`",
-    "- Terminal 155 remote business state verified: `$terminal155Verified`",
-    '- Terminal/source task replay: false',
-    "- Health/page HTTP: `$healthStatus / $pageHttpStatus`",
-    "- Browser exit: `$browserExitCode`",
-    "- DOM load ready/mode: `$loadReady / $loadMode`",
-    "- Visible rows/live sources: `$visibleRowCount / $liveSourceCount`",
-    "- Evidence rows/progress events/research candidates: `$renderedEvidenceRows / $renderedProgressEvents / $renderedResearchCandidates`",
-    "- Browser error lines (diagnostic only): `$browserErrorLineCount`",
-    "- Blockers: `$($uniqueBlockers -join '; ')`",
+    "- Task: ``$taskId``",
+    "- Slot: ``$slotId`` (61523-92283)",
+    "- Status: ``$statusName``",
+    "- Acceptance pass: ``$acceptancePass``",
+    "- Terminal 155 remote business state verified: ``$terminal155Verified``",
+    '- Terminal/source task replay: `false`',
+    "- Health/page HTTP: ``$healthStatus / $pageHttpStatus``",
+    "- Browser exit: ``$browserExitCode``",
+    "- DOM load ready/mode: ``$loadReady / $loadMode``",
+    "- Visible rows/live sources: ``$visibleRowCount / $liveSourceCount``",
+    "- Evidence rows/progress events/research candidates: ``$renderedEvidenceRows / $renderedProgressEvents / $renderedResearchCandidates``",
+    "- Browser error lines (diagnostic only): ``$browserErrorLineCount``",
+    "- Blockers: ``$($uniqueBlockers -join '; ')``",
     '',
-    "- DOM: `$domRelative`",
-    "- Browser stderr: `$stderrRelative`",
-    "- Remote business snapshot: `$businessSnapshotRelative`",
+    "- DOM: ``$domRelative``",
+    "- Browser stderr: ``$stderrRelative``",
+    "- Remote business snapshot: ``$businessSnapshotRelative``",
     '',
     '`final_ready=false`; `product_final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.'
 )
