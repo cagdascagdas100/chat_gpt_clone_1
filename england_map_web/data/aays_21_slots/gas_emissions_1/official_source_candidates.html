@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gas Emissions 1 - Resmî Kaynak Adayları</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}h1{margin-bottom:6px}.meta{margin:4px 0 18px;color:#455a64}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin-bottom:14px}table{border-collapse:collapse;width:100%;background:white;font-size:13px}th,td{border:1px solid #cfd8dc;padding:8px;vertical-align:top;text-align:left}th{background:#eceff1;position:sticky;top:0}.score{font-weight:700}</style>
+</head>
+<body>
+<h1>Gas Emissions / gas_emissions_1</h1>
+<div class="meta">Parsel aralığı: 1-30761 · Resmî kaynak adayı: 5 · Yüksek öncelik: 2 · Ölçülmüş parsel satırı: 0</div>
+<div class="notice">Bu tablo kaynak adaylarını gösterir; parsel emisyon ölçümü değildir. Yerel otorite toplamı parsel değeri olarak kullanılmaz. Grid veya nokta verisi yalnız belgelenmiş containment/intersection ya da point-in-polygon kanıtıyla bağlanır.</div>
+<table>
+<thead><tr><th>ID</th><th>Resmî kaynak</th><th>Seviye / çözünürlük</th><th>Uygunluk</th><th>Öncelik</th><th>Kullanım</th><th>Parsel kuralı</th></tr></thead>
+<tbody>
+<tr><td>DESNZ_LA_GHG_2005_2024</td><td><a href="https://www.gov.uk/government/statistics/uk-local-authority-and-regional-greenhouse-gas-emissions-statistics-2005-to-2024" target="_blank" rel="noreferrer">DESNZ 2005-2024 yerel ve bölgesel GHG</a></td><td>Local authority / idari poligon</td><td class="score">70/100</td><td>İkincil doğrulama</td><td>Resmî authority baseline ve reconciliation</td><td>Authority toplamını parsel ölçümü olarak yayınlama; AREA_LEVEL_PROXY etiketi kullan.</td></tr>
+<tr><td>NAEI_GRIDDED_EMISSIONS_1KM_2005_2023</td><td><a href="https://naei.energysecurity.gov.uk/data/maps/download-gridded-emissions" target="_blank" rel="noreferrer">NAEI 1×1 km gridded emissions</a></td><td>Grid / 1×1 km</td><td class="score">92/100</td><td>Birincil grid adayı</td><td>Parcel centroid veya polygon intersection ile belgeli eşleme</td><td>Pollutant, yıl, grid ID, sektör ve çözünürlüğü koru; grid değerini parsel ölçümü gibi küçültme.</td></tr>
+<tr><td>NAEI_POINT_SOURCES_2023</td><td><a href="https://naei.energysecurity.gov.uk/data/maps/emissions-point-sources" target="_blank" rel="noreferrer">NAEI point sources 2023</a></td><td>Koordinatlı nokta</td><td class="score">95/100</td><td>Birincil nokta adayı</td><td>Kesin point-in-polygon kanıtı</td><td>Yalnız resmî nokta parsel poligonu içindeyse bağla; nokta yokluğu sıfır emisyon değildir.</td></tr>
+<tr><td>NAEI_INTERACTIVE_MAP_2023</td><td><a href="https://naei.energysecurity.gov.uk/emissionsapp/" target="_blank" rel="noreferrer">NAEI Interactive Map 2023</a></td><td>Grid görselleştirme / 1×1 km</td><td class="score">81/100</td><td>Browser QA</td><td>Manuel ve görsel çapraz kontrol</td><td>İndirilen resmî veri ve belgeli grid join için doğrulama amacıyla kullan.</td></tr>
+<tr><td>NAEI_SPATIAL_METHOD_2023</td><td><a href="https://naei.energysecurity.gov.uk/reports/uk-spatial-emissions-methodology-report-national-atmospheric-emissions-inventory-2023" target="_blank" rel="noreferrer">NAEI Spatial Methodology 2023</a></td><td>Metodoloji belgesi</td><td class="score">78/100</td><td>Metodoloji kanıtı</td><td>Provenance ve spatial allocation açıklaması</td><td>Her grid/nokta eşlemesinde atıf ver; belge parsel değeri değildir.</td></tr>
+</tbody>
+</table>
+<script>
+fetch('official_source_candidates_latest.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{document.querySelector('.meta').textContent=`Parsel aralığı: ${d.parcel_partition.start}-${d.parcel_partition.end} · Resmî kaynak adayı: ${d.candidate_count} · Yüksek öncelik: ${d.high_priority_candidate_count} · Ölçülmüş parsel satırı: ${d.measured_parcel_rows_created}`}).catch(()=>{});
+</script>
+</body>
+</html>
