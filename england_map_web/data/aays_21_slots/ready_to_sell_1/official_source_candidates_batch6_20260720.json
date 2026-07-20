@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "generated_at": "2026-07-20T21:42:00Z",
+  "purpose": "Official rural due-diligence source expansion. No site-specific result is asserted until the candidate geometry or title is joined to the source record.",
+  "sources": [
+    {
+      "source_id": "WARWICKSHIRE_DEFINITIVE_MAP_AND_STATEMENT",
+      "publisher": "Warwickshire County Council",
+      "url": "https://www.warwickshire.gov.uk/definitivemap",
+      "map_url": "https://maps.warwickshire.gov.uk/rightsofway/",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "legal_record_with_modification_orders",
+      "coverage": "public footpaths, bridleways, restricted byways and byways open to all traffic in Warwickshire",
+      "primary_join_keys": ["site geometry", "route code", "parish", "postcode or address"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 80,
+      "binding_limit": "The online image is not itself the legal Definitive Map and may not show all rights. A property search or authoritative extract is needed for a definitive site answer.",
+      "status": "VERIFIED_OFFICIAL_SOURCE_WITH_MAP_DISCLAIMER"
+    },
+    {
+      "source_id": "WARWICKSHIRE_PROPERTY_RIGHTS_OF_WAY_SEARCH",
+      "publisher": "Warwickshire County Council",
+      "url": "https://www.warwickshire.gov.uk/propertypublicrightsofway",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "request_service",
+      "coverage": "property-specific searches of the list of streets and Definitive Map and Statement",
+      "primary_join_keys": ["property boundary", "address", "site plan"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 95,
+      "binding_limit": "A site-specific search must be requested and returned; merely discovering the service does not prove whether a candidate is affected by a right of way.",
+      "status": "VERIFIED_OFFICIAL_SOURCE_REQUIRES_SITE_SPECIFIC_REQUEST"
+    },
+    {
+      "source_id": "NATURAL_ENGLAND_AGRICULTURAL_LAND_CLASSIFICATION_POST_1988",
+      "publisher": "Natural England",
+      "url": "https://www.data.gov.uk/dataset/c002ceea-d650-4408-b302-939e9b88eb0b/agricultural-land-classification-alc-grades-post-1988-survey-polygons1",
+      "snapshot_date": "2026-07-20",
+      "dataset_last_updated": "2026-06-19",
+      "update_frequency": "dataset_updates",
+      "coverage": "post-1988 Agricultural Land Classification survey polygons for England",
+      "primary_join_keys": ["site geometry", "survey polygon", "job number"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 85,
+      "binding_limit": "Coverage reflects surveyed polygons and does not guarantee that every candidate has a post-1988 detailed survey. General published grade descriptions must not be converted into parcel-specific grades without a geometry join.",
+      "status": "VERIFIED_OFFICIAL_SOURCE"
+    },
+    {
+      "source_id": "RURAL_PAYMENTS_SERVICE_DIGITAL_LAND_MAP_GUIDANCE",
+      "publisher": "Rural Payments Agency",
+      "url": "https://www.gov.uk/guidance/rural-payments-service-how-to-register-land-and-update-digital-maps",
+      "snapshot_date": "2026-07-20",
+      "update_frequency": "guidance_updates",
+      "coverage": "registration and maintenance of agricultural land parcels, permanent boundaries, land cover and hedgerows in the Rural Payments service",
+      "primary_join_keys": ["RPA land parcel", "SBI-linked holding", "digital map boundary"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 70,
+      "binding_limit": "The service is account and holding based; public guidance does not expose a candidate parcel boundary or establish legal ownership. RPA field numbers must not be treated as Land Registry title identifiers.",
+      "status": "VERIFIED_OFFICIAL_GUIDANCE_SOURCE"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
