@@ -10,7 +10,7 @@
     .notice{padding:12px;border:1px solid #999;background:#fff;margin-bottom:16px}
     .metrics{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}.metric{background:#fff;border:1px solid #ccc;padding:12px;min-width:150px}
     table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0}th,td{border:1px solid #ccc;padding:7px;text-align:left;vertical-align:top}
-    code{background:#eee;padding:2px 5px}.PASS{font-weight:bold}.PENDING{color:#555}
+    code{background:#eee;padding:2px 5px}.PASS{font-weight:bold}.PENDING{color:#555}.BLOCKED{font-weight:bold}
   </style>
 </head>
 <body>
@@ -23,7 +23,8 @@
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 fetch('./progress_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
-  document.getElementById('summary').innerHTML=`<div class="metrics"><div class="metric"><b>İlerleme</b><br>${esc(d.overall_percent)}%</div><div class="metric"><b>İşlem</b><br>${esc(d.completed_units)}/${esc(d.total_units)}</div><div class="metric"><b>Hazır satır</b><br>${esc(d.verified_source_rows_available)}</div><div class="metric"><b>Doğruluk 4</b><br>${esc(d.accuracy_score_4_rows_available)}</div><div class="metric"><b>Kaynak yükseltme</b><br>${esc(d.upgraded_official_sources)}</div></div><p><b>Durum:</b> ${esc(d.status)} · <b>final_ready:</b> ${esc(d.final_ready)}</p>`;
+  const blocker=(d.events||[]).find(x=>x.status==='BLOCKED'||x.status==='PENDING')?.detail||'none';
+  document.getElementById('summary').innerHTML=`<div class="metrics"><div class="metric"><b>İlerleme</b><br>${esc(d.overall_percent)}%</div><div class="metric"><b>Yüzde artışı</b><br>${esc(d.percent_change_this_turn)} puan</div><div class="metric"><b>İşlem</b><br>${esc(d.completed_units)}/${esc(d.total_units)}</div><div class="metric"><b>Hazır satır</b><br>${esc(d.verified_source_rows_available)}</div><div class="metric"><b>Doğruluk 4/4</b><br>${esc(d.accuracy_score_4_rows_available)}</div><div class="metric"><b>Aday örnek</b><br>${esc(d.candidate_examples_count)}</div><div class="metric"><b>Resmî kaynak</b><br>${esc(d.upgraded_official_sources)}</div></div><p><b>Durum:</b> ${esc(d.status)} · <b>Blocker:</b> ${esc(blocker)} · <b>Bekleme tahmini:</b> fresh runner claim olmadan hesaplanamaz · <b>final_ready:</b> ${esc(d.final_ready)}</p>`;
   document.getElementById('events').innerHTML=(d.events||[]).map(x=>`<tr><td>${esc(x.index)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.step)}</td><td>${esc(x.detail)}</td></tr>`).join('');
   document.getElementById('sources').innerHTML=(d.official_sources||[]).map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.role)}</td><td>${esc(x.latest_data_month||x.release_date)}</td><td>${esc(x.accuracy_note)}</td></tr>`).join('');
   document.getElementById('candidates').innerHTML=(d.candidate_examples||[]).map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.output_semantics)}</td></tr>`).join('');
