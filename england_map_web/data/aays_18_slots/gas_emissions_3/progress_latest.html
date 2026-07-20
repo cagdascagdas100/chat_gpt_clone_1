@@ -18,7 +18,7 @@
   <div id="meta" class="muted">Yükleniyor…</div>
   <div id="cards" class="cards"></div>
   <h2>Kaynak revizyon adayları</h2>
-  <p class="muted">Bu satırlar güncel resmî DESNZ serisinden kaynak yükseltme adaylarıdır; parsel değeri değildir.</p>
+  <p class="muted">Satırlar resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin birebir anahtar eşleşmeleridir; parsel değeri değildir.</p>
   <div class="scroll"><table>
     <thead><tr><th>#</th><th>Satır</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Kaynak güveni</th><th>Karar</th></tr></thead>
     <tbody id="rows"></tbody>
@@ -27,22 +27,28 @@
 <script>
 (async()=>{
   try{
-    const r=await fetch('./progress_latest.json?ts='+Date.now(),{cache:'no-store'});
-    if(!r.ok) throw new Error('JSON yüklenemedi: '+r.status);
-    const d=await r.json();
-    document.getElementById('meta').textContent=`SLOT_ID=${d.slot_id} | Parsel=${d.parcel_range} | Güncelleme=${d.updated_at} | Durum=${d.status}`;
-    const m=d.metrics;
+    const ts=Date.now();
+    const [summaryResponse,baseResponse,batchResponse]=await Promise.all([
+      fetch('./summary_latest.json?ts='+ts,{cache:'no-store'}),
+      fetch('./progress_latest.json?ts='+ts,{cache:'no-store'}),
+      fetch('./candidate_batch3_latest.json?ts='+ts,{cache:'no-store'})
+    ]);
+    if(!summaryResponse.ok||!baseResponse.ok||!batchResponse.ok) throw new Error('İlerleme JSON dosyalarından biri yüklenemedi');
+    const [summary,base,batch]=await Promise.all([summaryResponse.json(),baseResponse.json(),batchResponse.json()]);
+    const rows=[...(base.rows||[]),...(batch.rows||[])];
+    document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Satır=${rows.length}`;
+    const m=summary.metrics;
     const cards=[
       ['Shard ilerleme',m.shard_progress_percent+'%'],
       ['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],
       ['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],
-      ['Revizyon adayı',m.revision_candidates],
+      ['Revizyon adayı',rows.length],
       ['Yüksek etkili aday',m.high_impact_revision_candidates],
       ['Kaynak güveni',m.candidate_source_confidence_percent+'%']
     ];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('rows').innerHTML=d.rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td class="${x.decision.includes('HIGH')?'warn':'ok'}">${x.decision}</td></tr>`).join('');
-    document.getElementById('blocker').textContent=d.blocker;
+    document.getElementById('rows').innerHTML=rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td class="${x.decision.includes('HIGH')?'warn':'ok'}">${x.decision}</td></tr>`).join('');
+    document.getElementById('blocker').textContent=summary.blocker;
   }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
 })();
 </script>
