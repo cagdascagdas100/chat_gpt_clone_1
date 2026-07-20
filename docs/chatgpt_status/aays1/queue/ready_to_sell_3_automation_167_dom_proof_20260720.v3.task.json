@@ -1,0 +1,87 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "ready_to_sell_3",
+  "base_slot_id": "ready_to_sell",
+  "shard_index": 3,
+  "task_id": "aays1-ready-to-sell-3-automation-167-dom-proof-20260720",
+  "attempt_id": "ready-to-sell-3-20260720-002",
+  "idempotency_key": "ready-to-sell-3-automation-167-dom-proof-v1",
+  "status": "pending",
+  "script_path": "docs/chatgpt_status/aays1/automation/ready_to_sell_3_automation_167_dom_worker.ps1",
+  "read_paths": [
+    "docs/chatgpt_status/aays1/automation/167_aays1_ready_to_sell_site_visibility_dom_resume_20260715.ps1",
+    "docs/chatgpt_status/aays1/status/155_aays1_ready_to_sell_second_wave_dispatch_latest.json",
+    "docs/chatgpt_status/aays1/status",
+    "docs/chatgpt_status/aays1/shards/ready_to_sell_3/reports/001_ready_to_sell_3_remote_business_state_and_automation_167_dom_proof_20260720.md",
+    "docs/chatgpt_status/_shared/slots_21/ready_to_sell_3",
+    "england_map_web/geometry_review_3of4_columns_1264.html"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/ready_to_sell_3"
+  ],
+  "resource_class": [
+    "light_read",
+    "browser_research"
+  ],
+  "requires_browser_acceptance_gate": true,
+  "requires_runtime_sync_gate": true,
+  "requires_git_publish_gate": true,
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "http://127.0.0.1:8012/england_map_web/geometry_review_3of4_columns_1264.html"
+    ],
+    "source_snapshot_date": "2026-07-15",
+    "source_discovery_required": false,
+    "measurement_level": "document",
+    "output_semantics": "NO_DATA",
+    "parcel_binding_method": "NOT_APPLICABLE_BROWSER_ACCEPTANCE_ONLY",
+    "confidence_method": "EXACT_HTTP_STATUS_DOM_ATTRIBUTE_AND_RENDERED_ELEMENT_COUNTS",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "terminal_155_business_state_not_verified",
+      "port_8012_unavailable",
+      "browser_missing_or_nonzero_exit",
+      "dom_attribute_or_rendered_count_mismatch"
+    ]
+  },
+  "acceptance_contract": {
+    "terminal_task_reexecution_forbidden": true,
+    "terminal_155_status_required": "SECOND_WAVE_SITE_VISIBILITY_VERIFIED",
+    "terminal_155_served_json_matches_source_required": true,
+    "health_http_status_required": 200,
+    "page_http_status_required": 200,
+    "actual_headless_browser_required": true,
+    "dom_load_state_required": "ready",
+    "dom_load_modes_allowed": [
+      "canonical_geometry",
+      "ai_evidence_fallback"
+    ],
+    "dom_visible_row_count_minimum": 655,
+    "dom_live_source_count_required": 655,
+    "rendered_evidence_rows_minimum": 1,
+    "rendered_progress_events_minimum": 5,
+    "rendered_research_candidates_minimum": 5,
+    "remote_commit_push_readback_required": true,
+    "acceptance_truth_path": "docs/chatgpt_status/aays1/shards/ready_to_sell_3/status/automation_167_dom_proof_latest.json"
+  },
+  "timeout_seconds": 1800,
+  "single_runner_only": true,
+  "child_direct_push_forbidden": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "final_ready": false
+}
