@@ -33,11 +33,15 @@ const [p,c]=await Promise.all([loadJson(base+'progress_latest.json'),loadJson(ba
 document.getElementById('metrics').innerHTML=[
 `<span class="pill">Batch: <b>${esc(p.completed_operations)}/${esc(p.total_operations)}</b></span>`,
 `<span class="pill">Batch ilerleme: <b>${esc(p.batch_progress_percent)}%</b></span>`,
+`<span class="pill">Batch artışı: <b>+${esc(p.batch_progress_percent_increase||0)} puan</b></span>`,
 `<span class="pill">Genel kanıt ilerlemesi: <b>${esc(p.overall_progress_percent)}%</b></span>`,
-`<span class="pill">Artış: <b>+${esc(p.overall_progress_percent_increase)} puan</b></span>`,
+`<span class="pill">Genel artış: <b>+${esc(p.overall_progress_percent_increase)} puan</b></span>`,
 `<span class="pill">Canlı kaynak: <b>${esc(p.terminal_business_counts.live_sources)}</b></span>`,
 `<span class="pill">Foto / polygon / hazır: <b>${esc(p.terminal_business_counts.photos)} / ${esc(p.terminal_business_counts.polygons)} / ${esc(p.terminal_business_counts.evidence_ready)}</b></span>`,
-`<span class="pill">Yeni aday: <b>${esc(c.candidate_count)}</b></span>`,
+`<span class="pill">Toplam aday: <b>${esc(c.candidate_count)}</b></span>`,
+`<span class="pill">Son batch: <b>${esc(c.latest_batch_candidate_count)}</b></span>`,
+`<span class="pill">Yüksek güven: <b>${esc(c.high_source_confidence_count)}</b></span>`,
+`<span class="pill">Ortalama kaynak güveni: <b>${esc(c.average_source_confidence)}/100</b></span>`,
 `<span class="pill">Yükseltilen: <b>${esc(c.promoted_row_count)}</b></span>`].join('');
 document.getElementById('events').innerHTML=(p.events||[]).map(e=>`<div class="card" data-progress-sequence="${esc(e.sequence)}"><b>${esc(e.sequence)}. ${esc(e.event)}</b> — <span class="${e.result==='pass'?'ok':e.result==='pending'?'warn':'bad'}">${esc(e.result)}</span><div>${esc(e.detail)}</div><div class="small">Doğruluk: ${esc(e.accuracy_score)}/100</div></div>`).join('');
 document.getElementById('blockers').innerHTML=(p.blockers||[]).map(b=>`<div class="card bad">${esc(b)}</div>`).join('')||'<div class="card ok">Blocker yok</div>';
