@@ -4,7 +4,10 @@ param()
 $ErrorActionPreference = "Stop"
 
 function Find-PortableRoot {
-    $candidate = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
+    $candidate = [System.IO.Path]::GetFullPath($PSScriptRoot)
+    if ($candidate.Length -gt [System.IO.Path]::GetPathRoot($candidate).Length) {
+        $candidate = $candidate.TrimEnd("\")
+    }
     for ($i = 0; $i -lt 10; $i++) {
         if (Test-Path -LiteralPath (Join-Path $candidate ".aays_portable_identity.json") -PathType Leaf) {
             return $candidate
@@ -78,4 +81,3 @@ $proofPath = Join-Path $root "state\portable_desktop_shortcuts_latest.json"
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $proofPath) | Out-Null
 [System.IO.File]::WriteAllText($proofPath, (($proof | ConvertTo-Json -Depth 8) + "`n"), (New-Object System.Text.UTF8Encoding($false)))
 $proof | ConvertTo-Json -Depth 8
-

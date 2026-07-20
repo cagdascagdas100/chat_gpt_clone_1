@@ -7,7 +7,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Find-PortableRoot {
-    $candidate = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
+    $candidate = [System.IO.Path]::GetFullPath($PSScriptRoot)
+    if ($candidate.Length -gt [System.IO.Path]::GetPathRoot($candidate).Length) {
+        $candidate = $candidate.TrimEnd("\")
+    }
     for ($i = 0; $i -lt 10; $i++) {
         if (Test-Path -LiteralPath (Join-Path $candidate ".aays_portable_identity.json") -PathType Leaf) {
             return $candidate
@@ -35,7 +38,7 @@ function Get-PanelProcessCount([string]$PanelPath) {
 $root = Find-PortableRoot
 $systemPowerShell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
 $runner = Join-Path $root "RUN_AAYS_ADAPTIVE_21_SLOT.ps1"
-$combined = Join-Path $root "START_AAYS_APP_AND_21_SLOT_FROM_THIS_DISK.ps1"
+$appLauncher = Join-Path $root "START_TERRAYIELD_PORTABLE_8012.ps1"
 $panelCmd = Join-Path $root "AAYS_PORTABLE_CONTROL_PANEL.cmd"
 $panelPy = Join-Path $root "AAYS_PORTABLE_CONTROL_PANEL.py"
 $stateRoot = Join-Path $root "state"
@@ -62,7 +65,7 @@ $result = [ordered]@{
 }
 
 try {
-    foreach ($required in @($systemPowerShell, $runner, $combined, $panelCmd, $panelPy)) {
+    foreach ($required in @($systemPowerShell, $runner, $appLauncher, $panelCmd, $panelPy)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "REQUIRED_FILE_MISSING: $required"
         }
@@ -78,28 +81,47 @@ try {
     $result.resource_profile = $preflight.resource_profile
     $result.max_child_workers = $preflight.max_child_workers
 
-    $startText = & $systemPowerShell -NoProfile -ExecutionPolicy Bypass -File $combined -NoBrowser -NoPanel | Out-String
-    if ($LASTEXITCODE -ne 0) { throw "APP_AND_RUNNER_START_FAILED_$LASTEXITCODE" }
-    $startResult = $startText | ConvertFrom-Json
-    if ($startResult.status -ne "PASS") {
-        throw ("APP_AND_RUNNER_NOT_READY: " + $startResult.error)
+    $health = $null
+    try { $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 5 } catch { }
+    if ($null -eq $health -or $health.status -ne "ok" -or $health.app -ne "TerraYield Land Intelligence") {
+        $appArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ('"{0}"' -f $appLauncher), "-NoBrowser")
+        $appHelper = Start-Process -FilePath $systemPowerShell -ArgumentList $appArgs -WorkingDirectory $root -WindowStyle Hidden -PassThru
+        $appDeadline = (Get-Date).AddSeconds(150)
+        do {
+            Start-Sleep -Seconds 2
+            try { $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 5 } catch { $health = $null }
+            if ($null -ne $health -and $health.status -eq "ok" -and $health.app -eq "TerraYield Land Intelligence") { break }
+            if ($appHelper.HasExited -and $appHelper.ExitCode -ne 0) { throw "APP_START_FAILED_$($appHelper.ExitCode)" }
+        } while ((Get-Date) -lt $appDeadline)
+        if (-not $appHelper.HasExited) { Stop-Process -Id $appHelper.Id -Force -ErrorAction SilentlyContinue }
     }
+    if ($null -eq $health -or $health.status -ne "ok" -or $health.app -ne "TerraYield Land Intelligence") { throw "APP_HEALTH_TIMEOUT" }
+    $result.app_health = "PASS"
 
-    $runnerText = & $systemPowerShell -NoProfile -ExecutionPolicy Bypass -File $runner -Action Status | Out-String
-    if ($LASTEXITCODE -ne 0) { throw "RUNNER_STATUS_FAILED_$LASTEXITCODE" }
-    $runnerStatus = $runnerText | ConvertFrom-Json
+    $runnerStatus = $null
+    try {
+        $runnerStatus = (& $systemPowerShell -NoProfile -ExecutionPolicy Bypass -File $runner -Action Status | Out-String) | ConvertFrom-Json
+    } catch { }
+    if ($null -eq $runnerStatus -or $runnerStatus.status -ne "RUNNING" -or -not $runnerStatus.pid_alive) {
+        $runnerArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ('"{0}"' -f $runner), "-Action", "Start")
+        $runnerHelper = Start-Process -FilePath $systemPowerShell -ArgumentList $runnerArgs -WorkingDirectory $root -WindowStyle Hidden -PassThru
+        $runnerDeadline = (Get-Date).AddSeconds(120)
+        do {
+            Start-Sleep -Seconds 2
+            try {
+                $runnerStatus = (& $systemPowerShell -NoProfile -ExecutionPolicy Bypass -File $runner -Action Status | Out-String) | ConvertFrom-Json
+            } catch { $runnerStatus = $null }
+            if ($null -ne $runnerStatus -and $runnerStatus.status -eq "RUNNING" -and $runnerStatus.pid_alive) { break }
+            if ($runnerHelper.HasExited -and $runnerHelper.ExitCode -ne 0) { throw "RUNNER_START_FAILED_$($runnerHelper.ExitCode)" }
+        } while ((Get-Date) -lt $runnerDeadline)
+        if (-not $runnerHelper.HasExited) { Stop-Process -Id $runnerHelper.Id -Force -ErrorAction SilentlyContinue }
+    }
     if ($runnerStatus.status -ne "RUNNING" -or -not $runnerStatus.pid_alive) {
         throw "RUNNER_NOT_HEALTHY"
     }
     $result.runner_status = "RUNNING"
     $result.runner_pid = $runnerStatus.pid
     $result.single_coordinator = $true
-
-    $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 10
-    if ($health.status -ne "ok" -or $health.app -ne "TerraYield Land Intelligence") {
-        throw "APP_HEALTH_NOT_OK"
-    }
-    $result.app_health = "PASS"
 
     if (-not $NoPanel) {
         $panelCount = Get-PanelProcessCount $panelPy
@@ -130,4 +152,3 @@ try {
 
 $result | ConvertTo-Json -Depth 12
 if ($result.status -ne "PASS") { exit 1 }
-
