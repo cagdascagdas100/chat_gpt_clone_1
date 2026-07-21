@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $slotId = 'gas_emissions_3'
 $branch = 'codex/aays-single-runner-v5-20260706'
 $repoRoot = (Get-Location).Path.TrimEnd('\')
+$portableRoot = [string]$env:AAYS_PORTABLE_ROOT
 $wrapperRelative = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/automation/021_gas_emissions_3_queue_runtime_token_wrapper.ps1'
 $carrierRelative = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/automation/020_gas_emissions_3_coordinator_browser_acceptance_carrier.ps1'
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
@@ -15,9 +16,21 @@ $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissi
 $expectedTokenId = 'gas_emissions_3_v6_queue_20260721_001'
 $expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v6_20260721_01'
 
+$gitCandidates = @()
+if (-not [string]::IsNullOrWhiteSpace($portableRoot)) {
+    $gitCandidates += (Join-Path $portableRoot 'runtime\git\cmd\git.exe')
+    $gitCandidates += (Join-Path $portableRoot 'runtime\git\bin\git.exe')
+}
+$gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
+if (-not $gitCommand) { $gitCommand = Get-Command git -ErrorAction SilentlyContinue }
+if ($gitCommand) { $gitCandidates += $gitCommand.Source }
+$gitExe = $gitCandidates | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -Unique | Select-Object -First 1
+if (-not $gitExe) { throw 'Portable or system git executable was not found.' }
+$gitExe = [string]$gitExe
+
 function Invoke-Git([string[]]$GitArgs) {
-    $output = & git -C $repoRoot @GitArgs 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git $($GitArgs -join ' ') failed: $($output -join [Environment]::NewLine)" }
+    $output = & $gitExe -C $repoRoot @GitArgs 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "$gitExe $($GitArgs -join ' ') failed: $($output -join [Environment]::NewLine)" }
     return (($output -join [Environment]::NewLine).Trim())
 }
 
@@ -58,7 +71,7 @@ if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_
     throw 'Runtime token safety flags are invalid.'
 }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead wrapper=$wrapperBlob carrier=$carrierBlob"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob"
 $carrierExitCode = 1
 try {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath
