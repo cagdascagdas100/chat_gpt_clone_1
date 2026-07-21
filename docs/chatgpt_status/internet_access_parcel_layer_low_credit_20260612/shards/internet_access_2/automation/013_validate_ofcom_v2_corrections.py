@@ -87,6 +87,19 @@ def parse_percent(value: Any, *, field: str, file_name: str, row_number: int) ->
     return number
 
 
+def validate_speed_threshold_order(metrics: dict[str, float | None], *, file_name: str, row_number: int) -> None:
+    """Higher fixed-line speed thresholds cannot cover more premises than lower thresholds."""
+    ordered = ("sfbb", "ufbb100", "ufbb300", "gigabit")
+    for lower_name, higher_name in zip(ordered, ordered[1:]):
+        lower = metrics[lower_name]
+        higher = metrics[higher_name]
+        if lower is not None and higher is not None and higher > lower:
+            raise ValueError(
+                f"Coverage threshold order violation in {file_name} row {row_number}: "
+                f"{higher_name}={higher} exceeds {lower_name}={lower}"
+            )
+
+
 def expected_area_from_postcode(postcode: str) -> str:
     match = re.match(r"^([A-Z]{1,3})", postcode)
     return match.group(1) if match else ""
@@ -159,11 +172,12 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
                 if postcode in seen_postcodes:
                     raise ValueError(f"Duplicate postcode across corrected r2 files: {postcode}")
                 seen_postcodes.add(postcode)
-                metrics = [
-                    parse_percent(first_present(row, REQUIRED_FIELDS[name]), field=name, file_name=path.name, row_number=csv_row_no)
+                metrics = {
+                    name: parse_percent(first_present(row, REQUIRED_FIELDS[name]), field=name, file_name=path.name, row_number=csv_row_no)
                     for name in ("sfbb", "ufbb100", "ufbb300", "gigabit", "unable30", "unable_decent")
-                ]
-                if all(value is None for value in metrics):
+                }
+                validate_speed_threshold_order(metrics, file_name=path.name, row_number=csv_row_no)
+                if all(value is None for value in metrics.values()):
                     null_metric_rows += 1
         if file_rows == 0:
             raise ValueError(f"Empty corrected r2 postcode file: {path.name}")
@@ -175,7 +189,7 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
         raise ValueError("Unique postcode count does not equal total row count")
 
     return {
-        "schema_version": 4,
+        "schema_version": 5,
         "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
         "source_snapshot": "2026-01",
         "source_revision": "v2-r2",
@@ -195,6 +209,8 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
         "postcode_space_exact_single_separator_validated": True,
         "duplicate_normalized_headers_rejected": True,
         "postcode_full_fibre_field_present": False,
+        "coverage_speed_threshold_order_validated": True,
+        "coverage_speed_threshold_order": ["SFBB_30_PLUS", "UFBB_100_PLUS", "UFBB_300_PLUS", "GIGABIT_CAPABLE"],
         "coverage_network_scope": "FIXED_LINE_ONLY_EXCEPT_FIELDS_EXPLICITLY_NAMED_FIXED_OR_FWA",
         "sfbb_ufbb_gigabit_denominator": "ALL_PREMISES_IN_POSTCODE",
         "unable_30mbps_denominator": "MATCHED_PREMISES",
@@ -216,7 +232,7 @@ def main() -> int:
     report = validate(args.ofcom_postcode_dir)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("status", "file_count", "row_count", "unique_postcode_count", "cw_not_cv_duplicate", "mk_not_me_duplicate", "postcode_space_exact_single_separator_validated", "postcode_full_fibre_availability_published", "actual_business_data_rows_written", "final_ready")}, sort_keys=True))
+    print(json.dumps({k: report[k] for k in ("status", "file_count", "row_count", "unique_postcode_count", "cw_not_cv_duplicate", "mk_not_me_duplicate", "postcode_space_exact_single_separator_validated", "coverage_speed_threshold_order_validated", "postcode_full_fibre_availability_published", "actual_business_data_rows_written", "final_ready")}, sort_keys=True))
     return 0
 
 
