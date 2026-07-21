@@ -38,7 +38,7 @@ v3.EXPECTED_TOTAL_CANDIDATES = 23
 v3.EXPECTED_EXACT_INSPIRE = 2
 v3.EXPECTED_INTERNET_REVERIFIED = 23
 v3.EXPECTED_COMPLETED_OPERATIONS = 38
-v3.EXPECTED_TOTAL_OPERATIONS = 39
+v3.EXPECTED_TOTAL_OPERATIONS = 40
 
 _original_write_markdown = v3.write_markdown
 
@@ -52,7 +52,7 @@ def write_markdown_v8(report: dict[str, Any]) -> None:
     text += (
         "\nV8 aggregate contract: 7 candidate batches, 7 official-source batches, "
         "23 candidates, 21 official sources, 3 official planning evidence rows, "
-        "38/39 operations and zero unverified parcel values.\n"
+        "38/40 operations and zero unverified parcel values.\n"
     )
     path.write_text(text, encoding="utf-8")
 
@@ -76,7 +76,7 @@ def main_v8() -> int:
         "official_planning_evidence_rows": 3,
         "strengthened_candidate_rows": 3,
         "completed_operations": 38,
-        "total_operations": 39,
+        "total_operations": 40,
         "unverified_parcel_value_rows": 0,
     }
     v3.v2.write_json(report_path, report)
