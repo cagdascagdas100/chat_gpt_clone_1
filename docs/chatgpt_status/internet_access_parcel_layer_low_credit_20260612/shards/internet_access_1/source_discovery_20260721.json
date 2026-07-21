@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_1",
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
+  "generated_at": "2026-07-21T04:34:33+03:00",
+  "status": "SOURCE_DISCOVERY_AND_DATA_CONTRACT_VALIDATED",
+  "measurement_level": "postcode",
+  "output_semantics": "AREA_LEVEL_PROXY_OR_NO_DATA",
+  "official_source_candidates": 6,
+  "promoted_sources": 4,
+  "accuracy_ge_90_source_count": 3,
+  "accuracy_ge_85_source_count": 4,
+  "sources": [
+    {
+      "name": "Ofcom Connected Nations Spring 2026 fixed broadband postcode files",
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "role": "PRIMARY_BULK_POSTCODE_COVERAGE",
+      "snapshot_date": "2026-01",
+      "published_date": "2026-05-13",
+      "confidence_percent": 98,
+      "promoted": true,
+      "notes": "Use postcode all-premises files named 202601_fixed_postcode_coverage_r2_XX.csv. The July 2026 v2 correction fixed duplicated CW/CV and MK/ME files."
+    },
+    {
+      "name": "Ofcom Spring 2026 fixed coverage methodology v2",
+      "url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf",
+      "role": "PRIMARY_DATA_CONTRACT",
+      "snapshot_date": "2026-01",
+      "revision_date": "2026-07-07",
+      "confidence_percent": 99,
+      "promoted": true,
+      "notes": "Defines 121 postcode-area files, 1,741,096 all-premises postcode rows and the coverage fields."
+    },
+    {
+      "name": "Ofcom broadband and mobile coverage checker",
+      "url": "https://checker.ofcom.org.uk/en-gb/broadband-coverage",
+      "role": "POSTCODE_SPOT_VALIDATION",
+      "confidence_percent": 93,
+      "promoted": true,
+      "notes": "Checker values are predicted area availability and may differ by property; do not treat as parcel-level truth."
+    },
+    {
+      "name": "ONS Explore Local Statistics gigabit-capable broadband",
+      "url": "https://www.ons.gov.uk/explore-local-statistics/indicators/gigabit-capable-broadband",
+      "role": "LOCAL_AUTHORITY_AGGREGATE_CROSSCHECK",
+      "snapshot_date": "2026-01",
+      "confidence_percent": 88,
+      "promoted": true,
+      "notes": "Ofcom-derived lower-tier/unitary-authority percentage; valid only for aggregate cross-checks."
+    },
+    {
+      "name": "BDUK Project Gigabit monthly contract progress",
+      "url": "https://www.gov.uk/government/publications/premises-contracted-and-built-project-gigabit-contracts",
+      "role": "PROGRAMME_PROGRESS_CONTEXT_ONLY",
+      "confidence_percent": 78,
+      "promoted": false,
+      "rejection_reason": "Contract-level rounded delivery counts cannot provide postcode or parcel coverage values."
+    },
+    {
+      "name": "Ordnance Survey AddressBase Premium premise base",
+      "role": "RESTRICTED_CANONICAL_PREMISE_BASE",
+      "confidence_percent": 99,
+      "promoted": false,
+      "rejection_reason": "Not an open/free source under this task's source guardrails."
+    }
+  ],
+  "verified_business_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "blockers": [
+    "FULL_SHARD_CANONICAL_JOIN_AND_OFCom_R2_REFRESH_NOT_VERIFIED",
+    "OFCom_R2_BULK_ZIP_NOT_INGESTED_IN_THIS_RUNTIME",
+    "NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED"
+  ]
+}
