@@ -20,7 +20,7 @@ from typing import Any
 
 SLOT_ID = "future_growth_1"
 TASK_ID = "aays1-future-growth-1-official-geometry-pipeline-20260721"
-ATTEMPT_ID = "future-growth-1-20260721-001"
+ATTEMPT_ID = "future-growth-1-20260721-002"
 REPO = Path(os.environ.get("AAYS_REPO_ROOT", ".")).resolve()
 PIPELINE = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/002_fetch_official_geometry_and_build_sample_matrix.py"
 HMLR_PREPARER = REPO / "docs/chatgpt_status/topography/shards/height_difference_2/automation/009_prepare_hmlr_inspire_sources.py"
@@ -30,7 +30,9 @@ WEB_ROOT = REPO / "england_map_web/data/aays_21_slots/future_growth_1/geometry_w
 RUNNER_STATUS = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/runner_outputs/002_official_geometry_pipeline_latest.json"
 WEB_STATUS = REPO / "england_map_web/data/aays_21_slots/future_growth_1/geometry_runner_status_latest.json"
 GLA_QUERY = "https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/FeatureServer/101/query"
-SITE_REFS = ("LBBD49/XJ", "LBBD72/ZZ", "LBBD23", "LBBD91/DI")
+CURRENT_SITE_REFS = ("LBBD49/XJ", "LBBD72/ZZ", "LBBD91/DI")
+OPTIONAL_STALE_SITE_REFS = ("LBBD23",)
+SITE_REFS = CURRENT_SITE_REFS + OPTIONAL_STALE_SITE_REFS
 TIMEOUT_SECONDS = 180
 MAX_GLA_BYTES = 25 * 1024 * 1024
 
@@ -100,9 +102,12 @@ def fetch_gla(destination: Path) -> dict[str, Any]:
         if payload.get("type") != "FeatureCollection" or not isinstance(features, list):
             raise ValueError("GLA response is not a GeoJSON FeatureCollection")
         refs = {str((feature.get("properties") or {}).get("sitereference") or "").strip() for feature in features}
-        missing = set(SITE_REFS) - refs
-        if missing:
-            raise ValueError(f"GLA response missing references: {sorted(missing)}")
+        unexpected = refs - set(SITE_REFS)
+        if unexpected:
+            raise ValueError(f"GLA response contains unexpected references: {sorted(unexpected)}")
+        missing_current = set(CURRENT_SITE_REFS) - refs
+        if missing_current:
+            raise ValueError(f"GLA response missing current references: {sorted(missing_current)}")
         if any(not feature.get("geometry") for feature in features):
             raise ValueError("GLA response contains missing geometry")
         return {
@@ -112,7 +117,10 @@ def fetch_gla(destination: Path) -> dict[str, Any]:
             "bytes": total,
             "sha256": digest.hexdigest(),
             "feature_count": len(features),
-            "site_references": sorted(refs),
+            "current_site_references_required": list(CURRENT_SITE_REFS),
+            "optional_stale_site_references": list(OPTIONAL_STALE_SITE_REFS),
+            "site_references_returned": sorted(refs),
+            "optional_stale_references_missing": sorted(set(OPTIONAL_STALE_SITE_REFS) - refs),
             "path": str(destination),
             "elapsed_seconds": round(time.time() - started, 3),
         }
@@ -249,43 +257,64 @@ def main() -> int:
 
     vectors = [Path(value) for value in hmlr_manifest.get("vector_paths") or []]
     vectors = [path for path in vectors if path.is_file()]
-    if len(vectors) != 1:
+    if not vectors:
         result.update(
             state="BLOCKED",
             status="BLOCKED_HMLR_VECTOR_SELECTION",
-            blocker=f"EXPECTED_ONE_AUTHORITY_VECTOR_RECEIVED_{len(vectors)}",
-            hmlr_vector_paths=[str(path) for path in vectors],
+            blocker="NO_AUTHORITY_VECTOR_RETURNED",
+            hmlr_vector_paths=[],
         )
         publish(result)
         return 2
 
-    geometry_output = WEB_ROOT / "verified"
-    pipeline_execution = run(
-        [
-            sys.executable,
-            str(PIPELINE),
-            "--repo-root",
-            str(REPO),
-            "--canonical-geojson",
-            str(CANONICAL),
-            "--gla-geojson",
-            str(gla_path),
-            "--hmlr-gml",
-            str(vectors[0]),
-            "--output-dir",
-            str(geometry_output),
-        ]
-    )
-    result["source_steps"]["geometry_pipeline_execution"] = pipeline_execution
-    geometry_result_path = geometry_output / "official_geometry_verification_latest.json"
-    geometry_result = json.loads(geometry_result_path.read_text(encoding="utf-8-sig")) if geometry_result_path.is_file() else None
+    pipeline_attempts: list[dict[str, Any]] = []
+    selected_vector: Path | None = None
+    geometry_result: dict[str, Any] | None = None
+    geometry_output: Path | None = None
+    for index, vector in enumerate(vectors, start=1):
+        attempt_output = WEB_ROOT / "verified" / f"vector_{index}"
+        execution = run(
+            [
+                sys.executable,
+                str(PIPELINE),
+                "--repo-root",
+                str(REPO),
+                "--canonical-geojson",
+                str(CANONICAL),
+                "--gla-geojson",
+                str(gla_path),
+                "--hmlr-gml",
+                str(vector),
+                "--output-dir",
+                str(attempt_output),
+            ]
+        )
+        candidate_path = attempt_output / "official_geometry_verification_latest.json"
+        candidate_result = json.loads(candidate_path.read_text(encoding="utf-8-sig")) if candidate_path.is_file() else None
+        attempt = {
+            "vector_path": str(vector),
+            "vector_sha256": sha256(vector),
+            "execution": execution,
+            "result_path": str(candidate_path),
+            "result_available": isinstance(candidate_result, dict),
+        }
+        pipeline_attempts.append(attempt)
+        if execution["exit_code"] == 0 and isinstance(candidate_result, dict):
+            selected_vector = vector
+            geometry_result = candidate_result
+            geometry_output = attempt_output
+            break
+
+    result["source_steps"]["geometry_pipeline_attempts"] = pipeline_attempts
     result["geometry_result"] = geometry_result
-    result["source_sha256"] = {
-        "gla_geojson": sha256(gla_path),
-        "hmlr_vector": sha256(vectors[0]),
-    }
-    if pipeline_execution["exit_code"] != 0 or not isinstance(geometry_result, dict):
-        result.update(state="BLOCKED", status="BLOCKED_OFFICIAL_GEOMETRY_PIPELINE", blocker="FAIL_CLOSED_GEOMETRY_VALIDATOR_DID_NOT_PASS")
+    if selected_vector is not None:
+        result["selected_hmlr_vector"] = {
+            "path": str(selected_vector),
+            "sha256": sha256(selected_vector),
+        }
+    result["source_sha256"] = {"gla_geojson": sha256(gla_path)}
+    if geometry_result is None or selected_vector is None or geometry_output is None:
+        result.update(state="BLOCKED", status="BLOCKED_OFFICIAL_GEOMETRY_PIPELINE", blocker="NO_HMLR_VECTOR_PASSED_EXACT_ID_FAIL_CLOSED_VALIDATOR")
         publish(result)
         return 2
 
@@ -294,6 +323,7 @@ def main() -> int:
         state="COMPLETED_SOURCE_GEOMETRY_WAVE",
         status="COMPLETED_OFFICIAL_GEOMETRY_WAVE_NO_SCORE",
         official_polygon_relations_verified=verified,
+        selected_geometry_output=str(geometry_output),
         next_unverified_step="BUILD_30761_ROW_FULL_FACTOR_MATRIX_THEN_SCORE_WITH_CONFIDENCE",
         completed_at_epoch=time.time(),
     )
