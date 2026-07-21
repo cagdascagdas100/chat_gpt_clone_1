@@ -1,10 +1,13 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "internet_access_3",
-  "updated_at": "2026-07-21T08:55:00+03:00",
-  "state": "AREA_PARTITIONED_EXACT_UNIQUENESS_LOCAL_PASS_PR_PENDING",
-  "summary": "121 duzeltilmis Ofcom CSV uyesi diske acilmadan taranir. Normalised postcode alanlari benzersiz olmak zorundadir; exact duplicate kontrolu her alan uyesi icinde yapilarak global dogruluk korunurken tepe bellek yuku sinirlanir.",
+  "updated_at": "2026-07-21T09:10:00+03:00",
+  "state": "AREA_PARTITIONED_EXACT_UNIQUENESS_AUTHORITATIVE_PUBLISHED_RUNNER_PENDING",
+  "summary": "121 duzeltilmis Ofcom CSV uyesi diske acilmadan taranir. Normalised postcode alanlari benzersiz olmak zorundadir; exact duplicate kontrolu her alan uyesi icinde yapilarak global dogruluk korunurken tepe bellek yuku sinirlanir. Paket PR #122 ile authoritative branch'e yayinlandi.",
   "strategy": "DIRECT_ZIP_MEMBER_STREAM_AREA_PARTITIONED_EXACT_UNIQUENESS_NO_CSV_EXTRACTION",
+  "publish_pr": 122,
+  "publish_merge_commit": "23771ebbf7edd38b6e7b6135d29b47a850a6a5ca",
+  "authoritative_python_readback": "5/5 PASS",
   "gates": [
     {"gate_no":1,"name":"ZIP_SIGNATURE_AND_VALIDATED_SOURCE","state":"PASS_LOCAL_TEST","detail":"PK imzasi zorunlu; mevcut ZIP secim katmani minimum boyut, CRC, ZIP SHA256 ve r2 sayisini fail-closed dogrular."},
     {"gate_no":2,"name":"ZERO_R1_EXACT_R2_COUNT","state":"PASS_LOCAL_TEST","detail":"Herhangi bir all-premises r1 uyesi reddedilir; tam 121 benzersiz r2 basename gerekir."},
@@ -24,7 +27,8 @@
     "updated_wiring": "8/8 PASS",
     "local_combined": "82/82 PASS",
     "python_compile": "5/5 PASS",
-    "remote_branch_readback": "PENDING",
+    "remote_branch_readback": "5/5 PASS",
+    "authoritative_python_readback": "5/5 PASS",
     "remote_runner_execution": false
   },
   "zip_csv_extracted_to_disk": false,
