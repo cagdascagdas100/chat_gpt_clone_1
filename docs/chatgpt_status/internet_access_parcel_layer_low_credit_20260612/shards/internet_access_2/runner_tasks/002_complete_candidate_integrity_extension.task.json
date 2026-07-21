@@ -1,19 +1,20 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "slot_id": "internet_access_2",
-  "task_id": "internet-access-2-complete-zip-safe-review-consistency-and-candidate-integrity-extension-20260721",
+  "task_id": "internet-access-2-complete-postcode-resolution-zip-safe-review-consistency-and-candidate-integrity-extension-20260721",
   "dispatch_state": "BLOCKED_PRE_QUEUE_READINESS_8_PASS_4_BLOCKED_1_DEFERRED",
   "canonical_command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_run_and_audit_slot2.ps1 -RepoRoot <REPO_ROOT> -PythonExe <PYTHON_EXE>",
   "required_preflight": {
     "inner_runner_container_payload_contract": {"passed": 39, "total": 39},
     "zip_container_safety": {"passed": 18, "total": 18},
     "complete_candidate_jsonl_integrity": {"passed": 25, "total": 25},
+    "candidate_postcode_resolution": {"passed": 18, "total": 18},
     "published_bundle_truth_boundary": {"passed": 23, "total": 23},
     "single_run_provenance": {"passed": 24, "total": 24},
-    "run_and_audit_wrapper": {"passed": 36, "total": 36},
+    "run_and_audit_wrapper": {"passed": 40, "total": 40},
     "candidate_integrity_web_contract": {"passed": 20, "total": 20},
     "review_contract_consistency": {"passed": 14, "total": 14},
-    "combined_all_suites": {"passed": 292, "total": 292}
+    "combined_all_suites": {"passed": 314, "total": 314}
   },
   "source_integrity_boundary": {
     "outer_zip_r1_name_is_transport_container_only": true,
@@ -29,6 +30,7 @@
     "outputs/internet_access_2_verified_run/internet_access_2_ofcom_zip_container_audit_latest.json",
     "outputs/internet_access_2_verified_run/internet_access_2_ofcom_v2_validation_latest.json",
     "outputs/internet_access_2_verified_run/candidate_outputs/internet_access_2_candidates_latest.jsonl",
+    "england_map_web/data/aays_18_slots/internet_access_2/candidate_postcode_resolution_latest.json",
     "england_map_web/data/aays_18_slots/internet_access_2/candidate_jsonl_integrity_latest.json",
     "england_map_web/data/aays_18_slots/internet_access_2/runner_readback_latest.json",
     "england_map_web/data/aays_18_slots/internet_access_2/verified_examples_latest.json",
@@ -42,9 +44,11 @@
     "ZIP traversal, duplicate normalized paths, encrypted entries and symlinks are rejected",
     "exact 121 unique corrected r2 postcode files and zero internal r1 files",
     "exact 30,761 ordered candidate JSONL rows and unique parcel IDs",
+    "invalid canonical postcode never blocks a valid legacy fallback",
+    "canonical-versus-legacy postcode conflicts remain visible and canonical wins",
     "direct and legacy matches contain at least one non-null published Ofcom metric",
     "NO_POSTCODE and POSTCODE_NOT_IN_CURRENT_R2 truth boundaries remain distinct",
-    "candidate JSONL, bundle and twelve-artifact provenance audits all pass",
+    "candidate postcode-resolution, JSONL, bundle and twelve-artifact provenance audits all pass",
     "zero score, business, DB, migration and deployment writes",
     "final_ready remains false"
   ],
