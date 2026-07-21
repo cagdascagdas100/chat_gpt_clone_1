@@ -79,7 +79,6 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
 
     for label, payload in (
         ("diagnostics", diagnostics),
-        ("V2 validation", v2),
         ("slice manifest", slice_manifest),
         ("extraction manifest", extraction),
         ("runner readback", readback),
@@ -89,6 +88,7 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
         if payload.get("slot_id") != SLOT_ID:
             raise ValueError(f"{label} slot_id mismatch")
         require_review_only(payload, label)
+    require_review_only(v2, "V2 validation")
 
     if diagnostics.get("state") != "COMPLETE_REVIEW_OUTPUT_READY":
         raise ValueError("diagnostics is not terminal review-output complete")
@@ -98,6 +98,13 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     if int(diagnostics.get("r1_file_count", -1)) != 0 or int(diagnostics.get("r2_file_count", -1)) != EXPECTED_OFcom_FILES:
         raise ValueError("diagnostics r1/r2 file count mismatch")
 
+    if (
+        v2.get("source") != "Ofcom Connected Nations Spring 2026 fixed broadband coverage"
+        or v2.get("source_snapshot") != "2026-01"
+        or v2.get("source_revision") != "v2-r2"
+        or v2.get("source_revision_date") != "2026-07-07"
+    ):
+        raise ValueError("V2 source identity/revision mismatch")
     if v2.get("status") != "PASS_OFFICIAL_V2_R2_CORRECTION_AND_SEMANTICS_VALIDATED":
         raise ValueError("V2 validation status mismatch")
     if int(v2.get("file_count", -1)) != EXPECTED_OFcom_FILES:
