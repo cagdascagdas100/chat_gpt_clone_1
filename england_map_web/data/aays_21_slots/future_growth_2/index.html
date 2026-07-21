@@ -6,7 +6,7 @@
 <h1>future_growth_2</h1><p class="muted">Parsel satırları 30.762–61.522 · Kesin fiyat tahmini değildir.</p>
 <div id="cards" class="cards"></div>
 <section><h2>Satır satır işlem görünümü</h2><div class="scroll"><table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th></tr></thead><tbody id="operations"></tbody></table></div></section>
-<section><h2>Kaynak sözleşmeleri</h2><p class="warning">Provider kalite sayfaları, nokta geometrisi, connector blob başlangıç okuması, HMLR listesi ve offline fixture yürütmeleri doğrudan period=current, gerçek site sınırı veya parsel kesişimi değildir. Büyük saha–çok düşük kapasite anomalileri doğrulanana kadar güven yükseltmez.</p><div class="scroll"><table><thead><tr><th>Kaynak</th><th>Yayıncı</th><th>Durum</th><th>Format/CRS</th><th>Doğruluk rolü</th><th>Uyarı</th><th>Kaynak</th></tr></thead><tbody id="sources"></tbody></table></div></section>
+<section><h2>Kaynak sözleşmeleri</h2><p class="warning">Provider kalite sayfaları, nokta geometrisi, connector blob başlangıç okuması, HMLR listesi ve offline fixture yürütmeleri doğrudan period=current, gerçek site sınırı veya parsel kesişimi değildir. Bitiş tarihli kayıtlar tarihsel olarak dışlanır; güven yükseltmez.</p><div class="scroll"><table><thead><tr><th>Kaynak</th><th>Yayıncı</th><th>Durum</th><th>Format/CRS</th><th>Doğruluk rolü</th><th>Uyarı</th><th>Kaynak</th></tr></thead><tbody id="sources"></tbody></table></div></section>
 <section><h2>Resmî kaynak adayları</h2><p class="warning">Kaynak güveni parsel eşleşme doğruluğu değildir. Nokta kayıtları saha sınırı değildir; doğrudan period=current API cevabı, gerçek HMLR kesişimi ve açık INSPIRE-ID shard eşleşmesi olmadan ürün skoru null kalır.</p>
 <div class="scroll"><table><thead><tr><th>Aday</th><th>Referans</th><th>Saha</th><th>Yerel idare</th><th>Ha</th><th>Konut</th><th>Planlama</th><th>Kaynak doğruluğu</th><th>Geometri rolü</th><th>Durum</th><th>Kaynak</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
 <section><h2>Gerçek blocker</h2><ul id="blockers"></ul></section>
@@ -22,6 +22,7 @@ Promise.all([
  fetch('progress_wave_15b_delta.json').then(r=>r.json()),
  fetch('progress_port_manifest_delta.json').then(r=>r.json()),
  fetch('progress_wave_16_delta.json').then(r=>r.json()),
+ fetch('progress_wave_17_delta.json').then(r=>r.json()),
  fetch('candidates_latest.json').then(r=>r.json()),
  fetch('candidates_wave_5_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_6_20260721.json').then(r=>r.json()),
@@ -35,44 +36,45 @@ Promise.all([
  fetch('candidates_wave_14_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_15_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_16_20260721.json').then(r=>r.json()),
+ fetch('candidates_wave_17_20260721.json').then(r=>r.json()),
  fetch('source_contracts_latest.json').then(r=>r.json()),
  fetch('source_contracts_wave_12_delta.json').then(r=>r.json()),
  fetch('source_contracts_wave_13_delta.json').then(r=>r.json()),
  fetch('source_contracts_wave_14_delta.json').then(r=>r.json()),
  fetch('source_contracts_wave_15_delta.json').then(r=>r.json())
-]).then(([p,d11,d12,d13,d14,d15,d15b,dport,d16,base,w5,w6,w7,w8,w9,w10,w11,w12,w13,w14,w15,w16,s,s12,s13,s14,s15])=>{
- const allCandidates=[...(base.candidates||[]),...(w5.candidates||[]),...(w6.candidates||[]),...(w7.candidates||[]),...(w8.candidates||[]),...(w9.candidates||[]),...(w10.candidates||[]),...(w11.candidates||[]),...(w12.candidates||[]),...(w13.candidates||[]),...(w14.candidates||[]),...(w15.candidates||[]),...(w16.candidates||[])];
+]).then(([p,d11,d12,d13,d14,d15,d15b,dport,d16,d17,base,w5,w6,w7,w8,w9,w10,w11,w12,w13,w14,w15,w16,w17,s,s12,s13,s14,s15])=>{
+ const allCandidates=[...(base.candidates||[]),...(w5.candidates||[]),...(w6.candidates||[]),...(w7.candidates||[]),...(w8.candidates||[]),...(w9.candidates||[]),...(w10.candidates||[]),...(w11.candidates||[]),...(w12.candidates||[]),...(w13.candidates||[]),...(w14.candidates||[]),...(w15.candidates||[]),...(w16.candidates||[]),...(w17.candidates||[])];
  const historical=(p.line_progress||[]).filter(x=>x.line<=73);
- const operations=[...historical,...(d11.line_progress||[]),...(d12.line_progress||[]),...(d13.line_progress||[]),...(d14.line_progress||[]),...(d15.line_progress||[]),...(d15b.line_progress||[]),...(dport.line_progress||[]),...(d16.line_progress||[])];
+ const operations=[...historical,...(d11.line_progress||[]),...(d12.line_progress||[]),...(d13.line_progress||[]),...(d14.line_progress||[]),...(d15.line_progress||[]),...(d15b.line_progress||[]),...(dport.line_progress||[]),...(d16.line_progress||[]),...(d17.line_progress||[])];
  const contracts=[...(s.contracts||[]),...(s12.contracts||[]),...(s13.contracts||[]),...(s14.contracts||[]),...(s15.contracts||[])];
  const cards=[
- ['Operasyon',`${d16.operational_progress.completed_operations}/${d16.operational_progress.total_operations}`],
- ['Operasyon %',`${d16.operational_progress.percent.toFixed(2)} (+${d16.operational_progress.percent_increase.toFixed(2)})`],
- ['Doğrulanmış ürün satırı',`${d16.verified_product_progress.verified_rows}/${d16.verified_product_progress.target_rows}`],
- ['Araştırılan aday',d16.candidate_summary.researched],['Uygun',d16.candidate_summary.eligible],
- ['Dışlanan/bekletilen',d16.candidate_summary.excluded_or_held],
- ['≥90 uygun kaynak doğruluğu',d16.candidate_summary.eligible_source_confidence_ge_90],
- ['Ortalama uygun doğruluk',`${d16.candidate_summary.average_eligible_source_confidence}/100`],
- ['Yükseltilen kaynak',d16.source_summary.promoted_sources],
- ['Tanısal kaynak',d16.source_summary.diagnostic_only_sources],
- ['Kalite uyarısı',d16.source_summary.quality_warning_sources],
- ['Kaynak sözleşmesi',d16.source_summary.source_contracts_upgraded],
- ['Kaynak düzeltmesi',d16.source_summary.source_contract_corrections],
- ['Yazılım testi',`${d16.source_summary.executed_tests_passed}/${d16.source_summary.executed_tests_total}`],
- ['Remote kanıt',`${d16.source_summary.manual_remote_evidence_checks_passed}/${d16.source_summary.manual_remote_evidence_checks_total}`],
- ['Offline canonical özellik',d16.source_summary.offline_canonical_features_exercised],
- ['Offline tam-matris satırı',d16.source_summary.offline_full_matrix_rows_exercised],
- ['Nokta-only güncel aday',d16.source_summary.point_only_current_candidates],
- ['Büyük saha kapasite anomalisi',d16.source_summary.large_site_low_capacity_anomalies_held],
- ['Provider kalite readback',d16.source_summary.provider_quality_readbacks],
- ['Gerçek HMLR indirme',d16.source_summary.actual_hmlr_downloads],
- ['Gerçek kesişim',d16.source_summary.actual_exact_intersections],
- ['period=current API',d16.source_summary.period_current_api_responses]
+ ['Operasyon',`${d17.operational_progress.completed_operations}/${d17.operational_progress.total_operations}`],
+ ['Operasyon %',`${d17.operational_progress.percent.toFixed(2)} (+${d17.operational_progress.percent_increase.toFixed(2)})`],
+ ['Doğrulanmış ürün satırı',`${d17.verified_product_progress.verified_rows}/${d17.verified_product_progress.target_rows}`],
+ ['Araştırılan aday',d17.candidate_summary.researched],['Uygun',d17.candidate_summary.eligible],
+ ['Dışlanan/bekletilen',d17.candidate_summary.excluded_or_held],
+ ['≥90 uygun kaynak doğruluğu',d17.candidate_summary.eligible_source_confidence_ge_90],
+ ['Ortalama uygun doğruluk',`${d17.candidate_summary.average_eligible_source_confidence}/100`],
+ ['Yükseltilen kaynak',d17.source_summary.promoted_sources],
+ ['Tanısal kaynak',d17.source_summary.diagnostic_only_sources],
+ ['Kalite uyarısı',d17.source_summary.quality_warning_sources],
+ ['Kaynak sözleşmesi',d17.source_summary.source_contracts_upgraded],
+ ['Kaynak düzeltmesi',d17.source_summary.source_contract_corrections],
+ ['Yazılım testi',`${d17.source_summary.executed_tests_passed}/${d17.source_summary.executed_tests_total}`],
+ ['Remote kanıt',`${d17.source_summary.manual_remote_evidence_checks_passed}/${d17.source_summary.manual_remote_evidence_checks_total}`],
+ ['Offline canonical özellik',d17.source_summary.offline_canonical_features_exercised],
+ ['Offline tam-matris satırı',d17.source_summary.offline_full_matrix_rows_exercised],
+ ['Nokta-only güncel aday',d17.source_summary.point_only_current_candidates],
+ ['Tarihsel dışlanan kayıt',d17.source_summary.historical_records_excluded],
+ ['Provider kalite readback',d17.source_summary.provider_quality_readbacks],
+ ['Gerçek HMLR indirme',d17.source_summary.actual_hmlr_downloads],
+ ['Gerçek kesişim',d17.source_summary.actual_exact_intersections],
+ ['period=current API',d17.source_summary.period_current_api_responses]
  ];
  document.querySelector('#cards').innerHTML=cards.map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
  document.querySelector('#operations').innerHTML=operations.map(x=>`<tr><td>${x.line}</td><td>${x.operation}</td><td class="${cls(x.state)}">${x.state}</td></tr>`).join('');
  document.querySelector('#sources').innerHTML=contracts.map(x=>`<tr><td>${x.source_id}</td><td>${x.publisher}</td><td>${x.status}</td><td>${x.format||''} / ${x.crs||''}</td><td>${x.accuracy_role}</td><td>${x.caveat}</td><td><a href="${x.url||x.url_pattern}" target="_blank" rel="noopener">kaynak</a></td></tr>`).join('');
  document.querySelector('#candidates').innerHTML=allCandidates.map(x=>`<tr><td>${x.candidate_id}</td><td>${x.source_reference}</td><td>${x.site_name}</td><td>${x.local_authority}</td><td>${x.hectares??''}</td><td>${x.maximum_net_dwellings??''}</td><td>${x.planning_permission_status??''}</td><td>${x.source_confidence}/100</td><td>${x.geometry_role||''}</td><td>${x.eligibility}</td><td><a href="${x.source_url}" target="_blank" rel="noopener">resmî kayıt</a></td></tr>`).join('');
- document.querySelector('#blockers').innerHTML=d16.blockers.map(x=>`<li>${x}</li>`).join('');
+ document.querySelector('#blockers').innerHTML=d17.blockers.map(x=>`<li>${x}</li>`).join('');
 }).catch(err=>document.body.insertAdjacentHTML('beforeend',`<pre>${String(err)}</pre>`));
 </script></body></html>
