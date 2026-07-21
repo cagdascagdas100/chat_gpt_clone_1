@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "architecture_version": 3,
   "workstream_id": "AAYS_18_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_2",
@@ -21,12 +21,18 @@
   "do_not_replace_global_current_task": true,
   "preflight_guard": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_path_contract_guard.ps1",
   "sample_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_sample_hydrate.py",
-  "batch_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_batch_hydrate.py",
+  "batch_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_batch_hydrate_v2.py",
   "acceptance_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_acceptance.py --html-url http://127.0.0.1:8012/england_map_web/data/aays_18_slots/security_public_safety_2/progress.html --json-url http://127.0.0.1:8012/england_map_web/data/aays_18_slots/security_public_safety_2/hydrated_300_latest.json --browser --output docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/security_public_safety_2_acceptance_latest.json",
+  "optional_input_env": {
+    "AAYS_IOD25_V2_CSV": "Corrected English Indices of Deprivation 2025 v2 LSOA crime-domain CSV",
+    "AAYS_MPS_LSOA_CSV": "Latest Metropolitan Police LSOA Level Crime CSV; auto-discovery is also attempted"
+  },
   "acceptance_criteria": [
     "3 canonical IDs resolved without order inference",
     "Police.uk latest month and three point responses HTTP 200 with SHA256",
     "IoD25 corrected v2 LSOA join present before 4/4",
+    "MPS LSOA Level Crime join present before 4/4",
+    "4/4 requires canonical identity plus Police.uk plus IoD25 v2 plus MPS LSOA",
     "exactly 300 real rows in JSON CSV and GeoJSON",
     "HTTP 200 plus SHA256 plus DOM row count 300 plus zero console/page errors",
     "remote commit/push/readback proof"
