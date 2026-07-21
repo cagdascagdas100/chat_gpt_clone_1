@@ -18,6 +18,13 @@ checks={
 "provenance_verifier":"019_verify_single_run_provenance.py" in script,
 "provenance_selftest":"020_selftest_verify_single_run_provenance.py" in script,
 "provenance_selftest_20":"tests_passed -ne 20" in script and "tests_total -ne 20" in script,
+"consistency_verifier":"024_validate_review_contract_consistency.py" in script,
+"consistency_selftest":"025_selftest_validate_review_contract_consistency.py" in script,
+"consistency_selftest_14":"tests_passed -ne 14" in script and "tests_total -ne 14" in script,
+"consistency_audit_output":"review_contract_consistency_latest.json" in script,
+"consistency_audit_status":"PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" in script,
+"combined_validation_260":"$expectedCombinedValidation = 260" in script and "combined_validation_total" in script,
+"consistency_before_network":script.index("$consistencyAuditRaw") < script.index("$innerArgs"),
 "effective_work_root":"outputs/internet_access_2_verified_run" in script and "$effectiveWorkRoot" in script,
 "bundle_audit_output":"runner_bundle_audit_latest.json" in script,
 "provenance_audit_output":"runner_provenance_audit_latest.json" in script,
@@ -32,6 +39,7 @@ checks={
 "no_db_migration":"db_write = $false" in script and "migration = $false" in script,
 "no_deploy":"production_deploy = $false" in script,
 "not_final":"final_ready = $false" in script,
+"schema_v4":"schema_version = 4" in script,
 }
 failed=[name for name,ok in checks.items() if not ok]
 if failed: raise AssertionError(f"failed: {failed}")
