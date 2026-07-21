@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "updated_at": "2026-07-21T12:10:00+03:00",
+  "status": "PREPARED_LOCAL_CONTRACT_PASS_REAL_MAP_NOT_EXECUTED",
+  "summary": "Ana harita dosyası tracked repo taramasıyla keşfedilir; yalnız 019 tarafından doğrulanmış gerçek runtime örneğiyle exact polygon popup kabul edilir.",
+  "discovery_script": "automation/031_discover_polygon_popup_contract.py",
+  "acceptance_script": "automation/033_polygon_popup_acceptance.py",
+  "orchestrator": "automation/035_run_review_acceptance_with_polygon.py",
+  "local_selftests": {
+    "map_contract_discovery": "20/20 PASS",
+    "polygon_popup_contract": "23/23 PASS",
+    "polygon_orchestrator": "10/10 PASS",
+    "increment": "53/53 PASS",
+    "combined": "227/227 PASS"
+  },
+  "gates": [
+    {"gate_no":1,"name":"TRACKED_MAIN_MAP_BUNDLE_DISCOVERY","state":"PREPARED","detail":"england_map_web tracked HTML plus local script dependencies are scored; ambiguity fails closed"},
+    {"gate_no":2,"name":"MAP_ENGINE_AND_POPUP_EVIDENCE","state":"PREPARED","detail":"Leaflet or MapLibre evidence plus internet and exact identity tokens are required"},
+    {"gate_no":3,"name":"REAL_RUNTIME_SAMPLE_REQUIRED","state":"WAITING_EXISTING_RUNNER","detail":"runtime_results_latest.json must contain 30,761 validated real rows and one to eight real samples"},
+    {"gate_no":4,"name":"EXACT_FEATURE_IDENTITY","state":"PREPARED","detail":"exact parcel_id or row_no; exactly one feature; nearest-feature and manual coordinate fallbacks forbidden"},
+    {"gate_no":5,"name":"POPUP_STATUS_AND_POSTCODE_CONTRACT","state":"PREPARED","detail":"popup must preserve identity and current proxy postcode or explicit NO_DATA semantics"},
+    {"gate_no":6,"name":"PORT_8012_MAP_HTTP_AND_BROWSER","state":"WAITING_EXISTING_RUNNER","detail":"real canonical map page and browser execution required"},
+    {"gate_no":7,"name":"ZERO_BROWSER_ERRORS","state":"WAITING_EXISTING_RUNNER","detail":"zero console errors and page errors"},
+    {"gate_no":8,"name":"POLYGON_POPUP_ACCEPTANCE_RECEIPT","state":"WAITING_EXISTING_RUNNER","detail":"popup text SHA256 and exact sample identity receipt required"}
+  ],
+  "real_repository_map_discovery_execution": false,
+  "real_runtime_sample_used": false,
+  "exact_feature_match_count": 0,
+  "nearest_feature_fallback_used": false,
+  "manual_coordinate_fallback_used": false,
+  "polygon_popup_acceptance": false,
+  "actual_business_data_rows_written": 0,
+  "scores_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
