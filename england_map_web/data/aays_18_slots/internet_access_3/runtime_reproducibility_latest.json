@@ -1,26 +1,18 @@
 {
-  "schema_version": 1,
-  "slot_id": "internet_access_3",
-  "updated_at": "2026-07-21T14:10:00+03:00",
-  "status": "WAITING_TWO_REAL_VALIDATED_RUNTIME_RECEIPTS",
-  "summary": "İki bağımsız gerçek runner receipt henüz yok. Denetçi aynı girdilerde JSONL, dört durumlu sayımlar, örnekler ve kapıların exact tekrar üretilebilirliğini fail-closed karşılaştıracak.",
-  "exact_reproducibility_pass": false,
-  "real_validated_receipts_available": 0,
-  "required_receipts": 2,
-  "automatic_acceptance": false,
-  "gates": [
-    {"gate_no": 1, "name": "SOURCE_INPUT_HASHES", "state": "WAITING_EXISTING_RUNNER", "detail": "Ofcom ZIP, canonical slice ve legacy slice SHA-256 iki gerçek receipt arasında eşit olmalı."},
-    {"gate_no": 2, "name": "CANDIDATE_JSONL_HASH", "state": "WAITING_EXISTING_RUNNER", "detail": "Aynı girdilerde 30.761 satırlık candidate JSONL SHA-256 değişemez."},
-    {"gate_no": 3, "name": "FOUR_STATE_AND_AUXILIARY_COUNTS", "state": "WAITING_EXISTING_RUNNER", "detail": "Dört durumlu partition ve yardımcı sayımlar birebir eşit olmalı."},
-    {"gate_no": 4, "name": "REAL_SAMPLE_RECEIPT", "state": "WAITING_EXISTING_RUNNER", "detail": "Yayımlanan gerçek örnek receipt'i değişemez."},
-    {"gate_no": 5, "name": "VALIDATION_GATE_RECEIPT", "state": "WAITING_EXISTING_RUNNER", "detail": "019 PASS kapı numarası, adı ve durumu değişemez."},
-    {"gate_no": 6, "name": "NO_AUTOMATIC_ACCEPTANCE", "state": "PASS", "detail": "Exact tekrar üretilebilirlik bile yalnız review kanıtıdır; queue, claim, business write veya final_ready üretmez."}
+  "schema_version":2,
+  "slot_id":"internet_access_3",
+  "updated_at":"2026-07-21T14:30:00+03:00",
+  "status":"WAITING_TWO_REAL_VALIDATED_RUNTIME_RECEIPTS",
+  "summary":"İki bağımsız gerçek runner receipt henüz yok. Fail-closed denetçi authoritative branch'e yayımlandı ve 15 dosya 15/15 geri okundu; aynı girdilerde JSONL, dört durumlu sayımlar, örnekler ve kapılar exact eşleşmeden PASS vermez.",
+  "exact_reproducibility_pass":false,"real_validated_receipts_available":0,"required_receipts":2,"automatic_acceptance":false,
+  "gates":[
+    {"gate_no":1,"name":"SOURCE_INPUT_HASHES","state":"WAITING_EXISTING_RUNNER","detail":"Ofcom ZIP, canonical slice ve legacy slice SHA-256 iki gerçek receipt arasında eşit olmalı."},
+    {"gate_no":2,"name":"CANDIDATE_JSONL_HASH","state":"WAITING_EXISTING_RUNNER","detail":"Aynı girdilerde 30.761 satırlık candidate JSONL SHA-256 değişemez."},
+    {"gate_no":3,"name":"FOUR_STATE_AND_AUXILIARY_COUNTS","state":"WAITING_EXISTING_RUNNER","detail":"Dört durumlu partition ve yardımcı sayımlar birebir eşit olmalı."},
+    {"gate_no":4,"name":"REAL_SAMPLE_RECEIPT","state":"WAITING_EXISTING_RUNNER","detail":"Yayımlanan gerçek örnek receipt'i değişemez."},
+    {"gate_no":5,"name":"VALIDATION_GATE_RECEIPT","state":"WAITING_EXISTING_RUNNER","detail":"019 PASS kapı numarası, adı ve durumu değişemez."},
+    {"gate_no":6,"name":"NO_AUTOMATIC_ACCEPTANCE","state":"PASS","detail":"Exact tekrar üretilebilirlik bile yalnız review kanıtıdır; queue, claim, business write veya final_ready üretmez."}
   ],
-  "actual_business_data_rows_written": 0,
-  "scores_written": 0,
-  "fake_data": false,
-  "db_write": false,
-  "migration": false,
-  "production_deploy": false,
-  "final_ready": false
+  "authoritative_publish":{"state":"PASS","publish_pr":185,"publish_merge_commit":"36d016e534764a7cede1ce7b7c1c5f18fe6034d7","readback_passed":15,"readback_total":15,"authoritative_head":"36d016e534764a7cede1ce7b7c1c5f18fe6034d7"},
+  "actual_business_data_rows_written":0,"scores_written":0,"fake_data":false,"db_write":false,"migration":false,"production_deploy":false,"final_ready":false
 }
