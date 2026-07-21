@@ -25,6 +25,7 @@
   "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_smoke_candidates_v5_2_latest.json",
   "reconciliation_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_smoke_reconciliation_v5_2_latest.json",
   "website_output": "england_map_web/data/security_public_safety/security_public_safety_3_smoke_rows_latest.json",
+  "official_quality_readback": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_web_readback_20260721_1028.json",
   "canonical_source": {
     "historical_branch": "codex/aays-single-runner-v5-20260706",
     "repo_path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
@@ -32,6 +33,13 @@
     "feature_count": 92283,
     "working_tree_write": false,
     "fail_closed": true
+  },
+  "quality_caveats": {
+    "latest_month": "2026-05",
+    "crime_data_missing_forces": ["British Transport Police","Gloucestershire Constabulary","Greater Manchester Police","Lincolnshire Police"],
+    "outcome_data_missing_forces": ["British Transport Police","Police Service of Northern Ireland"],
+    "locations_are_anonymised_and_approximate": true,
+    "missing_coverage_is_not_zero": true
   },
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_3_smoke_v5_2_20260721.task.json",
@@ -56,7 +64,8 @@
     "Require the exact corrected IoD2025 File 7 v2 URL, HTTP 200, 64-hex response SHA256 and positive response bytes",
     "Require matching LSOA code plus finite Crime Score, positive Crime Rank and Crime Decile from 1 through 10",
     "Treat police API results as anonymised approximate area evidence only",
-    "Do not interpret British Transport Police or Gloucestershire May 2026 missing coverage as zero crime",
+    "Do not interpret May 2026 missing crime coverage for BTP, Gloucestershire, Greater Manchester or Lincolnshire as zero crime",
+    "Do not interpret absent BTP or PSNI outcome data as a complete negative signal",
     "Publish security_score_percent only when all four strict gates pass",
     "Require three rows, three unique IDs and twelve explicit gate cells in reconciliation",
     "Return nonzero unless exact blob, ordered identity, valid latest evidence, core success, null suppression and at least one strict 4/4 row all pass",
