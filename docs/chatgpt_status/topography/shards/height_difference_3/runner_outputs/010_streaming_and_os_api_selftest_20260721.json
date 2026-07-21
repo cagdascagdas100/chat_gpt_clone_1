@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-streaming-os-api-selftest-20260721",
+  "executed_at": "2026-07-21T04:20:00+03:00",
+  "scripts": {
+    "020_stream_extract_security_canonical.py": {
+      "sha256": "f054d8e5fae39a9de13f31a23ced4b980043d4d384e2834a845e6e1856c4a49a",
+      "lines": 342,
+      "syntax_compile": "PASS"
+    },
+    "021_download_os_terrain50_via_api.py": {
+      "sha256": "c8eed51f2d49307549017fe04d09bf00eaac80fceafb04597a07555d8edc1a1d",
+      "lines": 236,
+      "syntax_compile": "PASS"
+    },
+    "022_execute_canonical_api_measurement_pipeline.py": {
+      "sha256": "2393945ca3c5ee633a4b23094638d113ccbadcb3fe9ee28da87b68f24b75d1ab",
+      "lines": 144,
+      "syntax_compile": "PASS"
+    }
+  },
+  "test_groups": [
+    {
+      "group": "STREAMING_CANONICAL_EXTRACTOR",
+      "tests_total": 5,
+      "tests_passed": 5,
+      "evidence": [
+        "one-line shuffled FeatureCollection parsed incrementally",
+        "explicit rows sorted to deterministic 61,62,63 in reduced fixture",
+        "only requested shard rows exported",
+        "duplicate row_no failed closed",
+        "geometry/HMLR coordinate mismatch failed closed"
+      ]
+    },
+    {
+      "group": "OFFICIAL_TERRAIN50_API_ACQUISITION",
+      "tests_total": 7,
+      "tests_passed": 7,
+      "evidence": [
+        "Terrain50 GB ASCII candidate selected deterministically",
+        "irrelevant candidate rejected",
+        "ZIP signature accepted",
+        "ASCII tile inventory threshold enforced",
+        "200x200 and 50m headers accepted",
+        "wrong grid dimensions failed closed",
+        "unsafe archive traversal path failed closed"
+      ]
+    },
+    {
+      "group": "CANONICAL_TO_PUBLICATION_ORCHESTRATOR",
+      "tests_total": 5,
+      "tests_passed": 5,
+      "evidence": [
+        "positive stub chain executed three stages",
+        "canonical stage output path propagated",
+        "Terrain50 archive path propagated",
+        "measurement stage output path propagated",
+        "first-stage failure prevented all later stages"
+      ]
+    }
+  ],
+  "summary": {
+    "tests_total": 17,
+    "tests_passed": 17,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_security_geojson_extraction_executed": false,
+    "real_terrain50_archive_downloaded": false,
+    "real_canonical_shard_rows_exported": 0,
+    "real_parcel_candidates_selected": 0,
+    "real_measurement_rows_written": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blockers": [
+    "EXISTING_F_RUNNER_MUST_EXECUTE_022_ON_COMMITTED_SECURITY_GEOJSON",
+    "OFFICIAL_NETWORK_CALLS_MUST_COMPLETE_ON_EXISTING_RUNNER",
+    "OFFICIAL_HMLR_EA_DTM_AND_TERRAIN50_CROSSCHECK_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
