@@ -1,21 +1,117 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_2 progress</title><style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}.muted{color:#5d6878}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}.metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}table{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem;word-break:break-all}</style></head><body>
-<h1>internet_access_2 — official r2 extraction and audited readback</h1><p class="muted">Partition 30,762–61,522. Frozen review branch; authoritative ownership, heartbeat, queue and business data remain unchanged.</p><div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
-<h2>Line-by-line operations</h2><table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody id="operations"><tr><td colspan="3">Loading…</td></tr></tbody></table>
-<h2>Shared-runner dispatch readiness</h2><p class="muted">Dispatch is fail-closed. No queue entry or ownership claim is written unless every gate passes.</p><table><thead><tr><th>Gate</th><th>Check</th><th>State</th><th>Evidence</th><th>Blocker</th></tr></thead><tbody id="runnerReadiness"></tbody></table>
-<h2>Official source decisions</h2><table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody id="sources"></tbody></table>
-<h2>Official-source semantic examples</h2><p class="muted">Allowed/forbidden source-use examples; not parcel observations.</p><table><thead><tr><th>#</th><th>Source</th><th>Verified fact</th><th>Allowed use</th><th>Forbidden use</th></tr></thead><tbody id="sourceExamples"></tbody></table>
-<h2>Provenance examples</h2><table><thead><tr><th>#</th><th>Candidate</th><th>Required match</th><th>Accuracy class</th><th>Status</th></tr></thead><tbody id="provenanceExamples"></tbody></table>
-<h2>Candidate truth-boundary examples</h2><table><thead><tr><th>#</th><th>Candidate class</th><th>Postcode state</th><th>Method</th><th>Confidence</th><th>Resolution</th><th>Metric boundary</th><th>Decision</th></tr></thead><tbody id="candidateIntegrityExamples"></tbody></table>
-<h2>Network and execution attempts</h2><table><thead><tr><th>#</th><th>Operation</th><th>State</th><th>Evidence</th><th>Bytes</th></tr></thead><tbody id="networkAttempts"></tbody></table>
-<h2>Review-contract consistency</h2><p class="muted">Counters, operation IDs, readiness, scope and truth boundaries must agree before any network request.</p><table><thead><tr><th>Status</th><th>Tests</th><th>Operations</th><th>Validation</th><th>Scope files</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="reviewConsistency"></tbody></table>
-<h2>Pre-extraction ZIP container safety</h2><p class="muted">CRC, traversal, normalized duplicate, encryption, symlink, compression and exact internal r2 payload gates run before extraction.</p><table><thead><tr><th>Status</th><th>Tests</th><th>ZIP bytes</th><th>Entries</th><th>r1/r2</th><th>ZIP SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="zipContainerAudit"></tbody></table>
-<h2>Candidate postcode resolution</h2><p class="muted">Malformed candidates cannot become selected lookup keys. Valid legacy fallback and canonical-versus-legacy conflicts remain explicit.</p><table><thead><tr><th>Status</th><th>Tests</th><th>Rows</th><th>Legacy fallback</th><th>Conflicts</th><th>Invalid candidate rows</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="postcodeResolutionAudit"></tbody></table>
-<h2>Complete candidate JSONL integrity</h2><table><thead><tr><th>Status</th><th>Tests</th><th>Rows</th><th>Unique parcels</th><th>JSONL SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="candidateAudit"></tbody></table>
-<h2>Published runner bundle audit</h2><table><thead><tr><th>Status</th><th>Rows</th><th>Examples</th><th>Readback SHA-256</th><th>Examples SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="bundleAudit"></tbody></table>
-<h2>Single-run provenance chain</h2><p class="muted">Diagnostics, ZIP container audit, V2 validation, bounded slices, extraction and web files form one recomputed twelve-artifact SHA-256 chain.</p><table><thead><tr><th>Status</th><th>Artifacts</th><th>Verifier</th><th>Wrapper</th><th>Rows</th><th>Chain SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="provenanceAudit"></tbody></table>
-<h2>Validated real review examples</h2><table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
-<h2>Truth boundary</h2><p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code> availability data, not measured connection performance. Runtime byte count, PK signature, SHA-256, pre-extraction ZIP container audit and internal V2 validation define package integrity. <code>Invoke-WebRequest</code> uses <code>OutFile</code> without <code>PassThru</code>. No parcel score, geometry, migration, DB row or production layer is written.</p>
-<script>const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cls=v=>String(v).startsWith('PASS')||v==='DONE'?'ok':'blocked',getJson=async p=>{const r=await fetch(p,{cache:'no-store'});if(!r.ok)throw Error(`${p}: ${r.status}`);return r.json()};
-async function render(){const[p,o,so,po,s,n,x,r,pc,px,ci]=await Promise.all(['progress_latest.json','operations_latest.json','scope_operations_latest.json','operations_provenance_latest.json','source_candidates_latest.json','network_attempts_latest.json','source_examples_latest.json','runner_readiness_latest.json','provenance_contract_latest.json','provenance_examples_latest.json','candidate_integrity_examples_latest.json'].map(getJson));const byId=new Map;[...o.operations,...so.operations,...po.operations].forEach(v=>byId.set(v.id,v));const ops=[...byId.values()].sort((a,b)=>a.id-b.id),done=ops.filter(v=>v.status==='DONE').length,total=ops.length;metrics.innerHTML=`<div class="metric"><span>Operations</span><strong>${done} / ${total}</strong><span>${(100*done/total).toFixed(2)}%</span></div><div class="metric"><span>Sources</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div><div class="metric"><span>Validation</span><strong>${pc.combined_validation.passed} / ${pc.combined_validation.total}</strong></div><div class="metric"><span>Runner gates</span><strong>${r.passed_gate_count} / ${r.gate_count}</strong><span>${r.blocked_gate_count} blocked</span></div><div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;operations.innerHTML=ops.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.status)}">${esc(v.status)}</td></tr>`).join('');runnerReadiness.innerHTML=r.gates.map(v=>`<tr><td>${esc(v.gate_id)}</td><td>${esc(v.title)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.blocker||'')}</td></tr>`).join('');sources.innerHTML=s.candidates.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(v.title)}</td><td>${esc(v.decision)}</td><td>${esc(v.confidence_percent)}%</td></tr>`).join('');sourceExamples.innerHTML=x.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.source)}</td><td>${esc(v.verified_fact)}</td><td>${esc(v.allowed_use)}</td><td>${esc(v.forbidden_use)}</td></tr>`).join('');provenanceExamples.innerHTML=px.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.candidate)}</td><td>${esc(v.required_match)}</td><td>${esc(v.accuracy_class)}</td><td>${esc(v.status)}</td></tr>`).join('');candidateIntegrityExamples.innerHTML=ci.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.candidate_class)}</td><td>${esc(v.postcode_state)}</td><td>${esc(v.required_method)}</td><td>${esc(v.required_confidence)}</td><td>${esc(v.postcode_resolution||'')}</td><td>${esc(v.metric_boundary)}</td><td>${esc(v.decision)}</td></tr>`).join('');networkAttempts.innerHTML=n.attempts.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td>${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.data_bytes_acquired)}</td></tr>`).join('');reviewConsistency.innerHTML=`<tr><td class="blocked">PENDING REAL RUN</td><td>${pc.review_contract_consistency_selftest.passed}/${pc.review_contract_consistency_selftest.total}</td><td>${p.completed_operations}/${p.total_operations}</td><td>${pc.combined_validation.passed}/${pc.combined_validation.total}</td><td>${p.review_scope_file_count}</td><td>0</td><td>false</td></tr>`;zipContainerAudit.innerHTML=`<tr><td class="blocked">PENDING REAL RUN</td><td>${pc.zip_container_safety_selftest.passed}/${pc.zip_container_safety_selftest.total}</td><td>0</td><td>0</td><td>0/0</td><td>PENDING</td><td>0</td><td>false</td></tr>`;postcodeResolutionAudit.innerHTML=`<tr><td class="blocked">PENDING REAL RUN</td><td>${pc.postcode_resolution_selftest.passed}/${pc.postcode_resolution_selftest.total}</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>false</td></tr>`;candidateAudit.innerHTML=`<tr><td class="blocked">PENDING REAL RUN</td><td>${pc.candidate_integrity_selftest.passed}/${pc.candidate_integrity_selftest.total}</td><td>0</td><td>0</td><td>PENDING</td><td>0</td><td>false</td></tr>`;bundleAudit.innerHTML='<tr><td colspan="7">PENDING EXISTING RUNNER</td></tr>';provenanceAudit.innerHTML=`<tr><td class="blocked">${esc(pc.status)}</td><td>${pc.required_chain.length}</td><td>${pc.provenance_selftest.passed}/${pc.provenance_selftest.total}</td><td>${pc.run_and_audit_wrapper_contract.passed}/${pc.run_and_audit_wrapper_contract.total}</td><td>0</td><td>PENDING</td><td>0</td><td>false</td></tr>`;
-try{const a=await getJson('review_contract_consistency_latest.json');reviewConsistency.innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${a.tests_passed}/${a.tests_total}</td><td>${a.completed_operations}/${a.total_operations}</td><td>${a.combined_validation_passed}/${a.combined_validation_total}</td><td>${a.review_scope_file_count}</td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`}catch(_){}try{const a=await getJson('candidate_postcode_resolution_latest.json');postcodeResolutionAudit.innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${pc.postcode_resolution_selftest.passed}/${pc.postcode_resolution_selftest.total}</td><td>${a.canonical_rows}</td><td>${a.legacy_fallback_rows}</td><td>${a.canonical_legacy_conflict_rows}</td><td>${a.invalid_postcode_candidate_rows}</td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`}catch(_){}try{const a=await getJson('candidate_jsonl_integrity_latest.json');candidateAudit.innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${pc.candidate_integrity_selftest.passed}/${pc.candidate_integrity_selftest.total}</td><td>${a.canonical_rows}</td><td>${a.unique_parcel_ids}</td><td><code>${a.candidate_rows_jsonl_sha256}</code></td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`}catch(_){}try{const a=await getJson('runner_bundle_audit_latest.json');bundleAudit.innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${a.canonical_rows}</td><td>${a.visible_example_rows}</td><td><code>${a.runner_readback_file_sha256}</code></td><td><code>${a.verified_examples_file_sha256}</code></td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`}catch(_){}try{const a=await getJson('runner_provenance_audit_latest.json');zipContainerAudit.innerHTML=`<tr><td class="${cls(a.zip_container_status)}">${esc(a.zip_container_status)}</td><td>${pc.zip_container_safety_selftest.passed}/${pc.zip_container_safety_selftest.total}</td><td>${a.zip_bytes}</td><td>${a.zip_container_entry_count}</td><td>${a.zip_container_r1_postcode_file_count}/${a.zip_container_r2_postcode_file_count}</td><td><code>${a.zip_sha256}</code></td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`;provenanceAudit.innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${a.provenance_artifact_count}</td><td>${pc.provenance_selftest.passed}/${pc.provenance_selftest.total}</td><td>${pc.run_and_audit_wrapper_contract.passed}/${pc.run_and_audit_wrapper_contract.total}</td><td>${a.canonical_rows}</td><td><code>${a.provenance_chain_sha256}</code></td><td>${a.actual_business_data_rows_written}</td><td>${a.final_ready}</td></tr>`}catch(_){}try{const e=await getJson('verified_examples_latest.json');examples.innerHTML=e.rows.map(v=>`<tr><td>${esc(v.canonical_row_no)}</td><td>${esc(v.canonical_program_parcel_id)}</td><td>${esc(v.postcode||'NO_DATA')}</td><td>${esc(v.status)}</td><td>${esc(v.gigabit_available_pct)}</td><td>${esc(v.ufbb_100mbps_available_pct)}</td><td>${esc(v.sfbb_30mbps_available_pct)}</td><td>${esc(v.unable_30mbps_pct)}</td></tr>`).join('')}catch(_){}}
-render().catch(e=>metrics.innerHTML=`<div class="metric"><strong>Readback error</strong><span>${esc(e.message)}</span></div>`);</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>internet_access_2 progress</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}
+    .muted{color:#5d6878}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}
+    .metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}
+    table{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}
+    th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem;word-break:break-all}
+  </style>
+</head>
+<body>
+<h1>internet_access_2 — official r2 extraction and audited readback</h1>
+<p class="muted">Partition 30,762–61,522. Frozen review branch; authoritative ownership, heartbeat, queue and business data remain unchanged.</p>
+<div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
+
+<h2>Line-by-line operations</h2>
+<table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody id="operations"><tr><td colspan="3">Loading…</td></tr></tbody></table>
+
+<h2>Shared-runner dispatch readiness</h2>
+<p class="muted">Dispatch is fail-closed. No queue entry or ownership claim is written unless every gate passes.</p>
+<table><thead><tr><th>Gate</th><th>Check</th><th>State</th><th>Evidence</th><th>Blocker</th></tr></thead><tbody id="runnerReadiness"></tbody></table>
+
+<h2>Official source decisions</h2>
+<table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody id="sources"></tbody></table>
+
+<h2>Official-source semantic examples</h2>
+<p class="muted">Allowed/forbidden source-use examples; not parcel observations.</p>
+<table><thead><tr><th>#</th><th>Source</th><th>Verified fact</th><th>Allowed use</th><th>Forbidden use</th></tr></thead><tbody id="sourceExamples"></tbody></table>
+
+<h2>Provenance examples</h2>
+<table><thead><tr><th>#</th><th>Candidate</th><th>Required match</th><th>Accuracy class</th><th>Status</th></tr></thead><tbody id="provenanceExamples"></tbody></table>
+
+<h2>Candidate truth-boundary examples</h2>
+<table><thead><tr><th>#</th><th>Candidate class</th><th>Postcode state</th><th>Method</th><th>Confidence</th><th>Resolution</th><th>Metric boundary</th><th>Decision</th></tr></thead><tbody id="candidateIntegrityExamples"></tbody></table>
+
+<h2>Network and execution attempts</h2>
+<table><thead><tr><th>#</th><th>Operation</th><th>State</th><th>Evidence</th><th>Bytes</th></tr></thead><tbody id="networkAttempts"></tbody></table>
+
+<h2>Review-contract consistency</h2>
+<p class="muted">Counters, operation IDs, readiness, scope and truth boundaries must agree before any network request.</p>
+<table><thead><tr><th>Status</th><th>Tests</th><th>Operations</th><th>Validation</th><th>Scope files</th><th>Artifacts</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="reviewConsistency"></tbody></table>
+
+<h2>Pre-extraction ZIP container safety</h2>
+<p class="muted">CRC, traversal, normalized duplicate, encryption, symlink, compression and exact internal r2 payload gates run before extraction.</p>
+<table><thead><tr><th>Status</th><th>Tests</th><th>ZIP bytes</th><th>Entries</th><th>r1/r2</th><th>ZIP SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="zipContainerAudit"></tbody></table>
+
+<h2>Coverage-aware candidate postcode resolution</h2>
+<p class="muted">A canonical postcode absent from current r2 may fall back only to a different valid legacy postcode present in current r2. The result remains a 0.70-confidence legacy proxy pending spatial QA.</p>
+<table><thead><tr><th>Status</th><th>Tests</th><th>Rows</th><th>Legacy r2 rows</th><th>Coverage fallback</th><th>Conflicts</th><th>Invalid candidates</th><th>Selected not in r2</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="postcodeResolutionAudit"></tbody></table>
+
+<h2>Complete candidate JSONL integrity</h2>
+<table><thead><tr><th>Status</th><th>Tests</th><th>Rows</th><th>Unique parcels</th><th>JSONL SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="candidateAudit"></tbody></table>
+
+<h2>Published runner bundle audit</h2>
+<table><thead><tr><th>Status</th><th>Rows</th><th>Examples</th><th>Readback SHA-256</th><th>Examples SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="bundleAudit"></tbody></table>
+
+<h2>Extended single-run provenance chain</h2>
+<p class="muted">The original twelve source/output artifacts plus the hash-bound carrier, consistency audit, coverage-aware postcode audit and candidate-integrity audit form one recomputed sixteen-artifact SHA-256 chain.</p>
+<table><thead><tr><th>Status</th><th>Artifacts</th><th>Verifier</th><th>Wrapper</th><th>Rows</th><th>Chain SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="provenanceAudit"></tbody></table>
+
+<h2>Validated real review examples</h2>
+<table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
+
+<h2>Truth boundary</h2>
+<p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code> availability data, not measured connection performance. Runtime byte count, PK signature, SHA-256, pre-extraction ZIP container audit, internal V2 validation and the sixteen-artifact provenance chain define integrity. No parcel score, geometry, migration, DB row or production layer is written.</p>
+
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cls=v=>String(v).startsWith('PASS')||v==='DONE'?'ok':'blocked';
+const getJson=async p=>{const r=await fetch(p,{cache:'no-store'});if(!r.ok)throw Error(`${p}: ${r.status}`);return r.json()};
+const row=(cells)=>`<tr>${cells.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+
+async function render(){
+  const [p,o,so,po,s,n,x,r,pc,px,ci]=await Promise.all([
+    'progress_latest.json','operations_latest.json','scope_operations_latest.json','operations_provenance_latest.json',
+    'source_candidates_latest.json','network_attempts_latest.json','source_examples_latest.json','runner_readiness_latest.json',
+    'provenance_contract_latest.json','provenance_examples_latest.json','candidate_integrity_examples_latest.json'
+  ].map(getJson));
+
+  const byId=new Map;[...o.operations,...so.operations,...po.operations].forEach(v=>byId.set(v.id,v));
+  const ops=[...byId.values()].sort((a,b)=>a.id-b.id),done=ops.filter(v=>v.status==='DONE').length,total=ops.length;
+  metrics.innerHTML=`<div class="metric"><span>Operations</span><strong>${done} / ${total}</strong><span>${(100*done/total).toFixed(2)}%</span></div>`+
+    `<div class="metric"><span>Sources</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>`+
+    `<div class="metric"><span>Validation</span><strong>${pc.combined_validation.passed} / ${pc.combined_validation.total}</strong></div>`+
+    `<div class="metric"><span>Runner gates</span><strong>${r.passed_gate_count} / ${r.gate_count}</strong><span>${r.blocked_gate_count} blocked</span></div>`+
+    `<div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
+
+  operations.innerHTML=ops.map(v=>row([v.id,esc(v.operation),`<span class="${cls(v.status)}">${esc(v.status)}</span>`])).join('');
+  runnerReadiness.innerHTML=r.gates.map(v=>row([esc(v.gate_id),esc(v.title),`<span class="${cls(v.state)}">${esc(v.state)}</span>`,esc(v.evidence),esc(v.blocker||'')])).join('');
+  sources.innerHTML=s.candidates.map((v,i)=>row([i+1,esc(v.title),esc(v.decision),`${esc(v.confidence_percent)}%`])).join('');
+  sourceExamples.innerHTML=x.examples.map(v=>row([v.id,esc(v.source),esc(v.verified_fact),esc(v.allowed_use),esc(v.forbidden_use)])).join('');
+  provenanceExamples.innerHTML=px.examples.map(v=>row([v.id,esc(v.candidate),esc(v.required_match),esc(v.accuracy_class),esc(v.status)])).join('');
+  candidateIntegrityExamples.innerHTML=ci.examples.map(v=>row([v.id,esc(v.candidate_class),esc(v.postcode_state),esc(v.required_method),esc(v.required_confidence),esc(v.postcode_resolution||''),esc(v.metric_boundary),esc(v.decision)])).join('');
+  networkAttempts.innerHTML=n.attempts.map(v=>row([v.id,esc(v.operation),esc(v.state),esc(v.evidence),esc(v.data_bytes_acquired)])).join('');
+
+  reviewConsistency.innerHTML=row(['<span class="blocked">PENDING REAL RUN</span>',`${pc.review_contract_consistency_selftest.passed}/${pc.review_contract_consistency_selftest.total}`,`${p.completed_operations}/${p.total_operations}`,`${pc.combined_validation.passed}/${pc.combined_validation.total}`,p.review_scope_file_count,pc.required_chain.length,0,false]);
+  zipContainerAudit.innerHTML=row(['<span class="blocked">PENDING REAL RUN</span>',`${pc.zip_container_safety_selftest.passed}/${pc.zip_container_safety_selftest.total}`,0,0,'0/0','PENDING',0,false]);
+  postcodeResolutionAudit.innerHTML=row(['<span class="blocked">PENDING REAL RUN</span>',`${pc.postcode_resolution_selftest.passed}/${pc.postcode_resolution_selftest.total}`,0,0,0,0,0,0,0,false]);
+  candidateAudit.innerHTML=row(['<span class="blocked">PENDING REAL RUN</span>',`${pc.candidate_integrity_selftest.passed}/${pc.candidate_integrity_selftest.total}`,0,0,'PENDING',0,false]);
+  bundleAudit.innerHTML='<tr><td colspan="7">PENDING EXISTING RUNNER</td></tr>';
+  provenanceAudit.innerHTML=row([`<span class="blocked">${esc(pc.status)}</span>`,pc.required_chain.length,`${pc.provenance_selftest.passed}/${pc.provenance_selftest.total}`,`${pc.run_and_audit_wrapper_contract.passed}/${pc.run_and_audit_wrapper_contract.total}`,0,'PENDING',0,false]);
+
+  try{const a=await getJson('review_contract_consistency_latest.json');reviewConsistency.innerHTML=row([`<span class="${cls(a.status)}">${esc(a.status)}</span>`,`${a.tests_passed}/${a.tests_total}`,`${a.completed_operations}/${a.total_operations}`,`${a.combined_validation_passed}/${a.combined_validation_total}`,a.review_scope_file_count,a.provenance_chain_artifact_count,a.actual_business_data_rows_written,a.final_ready])}catch(_){}
+  try{const a=await getJson('candidate_postcode_resolution_latest.json');postcodeResolutionAudit.innerHTML=row([`<span class="${cls(a.status)}">${esc(a.status)}</span>`,`${pc.postcode_resolution_selftest.passed}/${pc.postcode_resolution_selftest.total}`,a.canonical_rows,a.legacy_current_r2_rows,a.coverage_fallback_from_canonical_rows,a.canonical_legacy_conflict_rows,a.invalid_postcode_candidate_rows,a.selected_postcode_not_in_current_r2_rows,a.actual_business_data_rows_written,a.final_ready])}catch(_){}
+  try{const a=await getJson('candidate_jsonl_integrity_latest.json');candidateAudit.innerHTML=row([`<span class="${cls(a.status)}">${esc(a.status)}</span>`,`${pc.candidate_integrity_selftest.passed}/${pc.candidate_integrity_selftest.total}`,a.canonical_rows,a.unique_parcel_ids,`<code>${esc(a.candidate_rows_jsonl_sha256)}</code>`,a.actual_business_data_rows_written,a.final_ready])}catch(_){}
+  try{const a=await getJson('runner_bundle_audit_latest.json');bundleAudit.innerHTML=row([`<span class="${cls(a.status)}">${esc(a.status)}</span>`,a.canonical_rows,a.visible_example_rows,`<code>${esc(a.runner_readback_file_sha256)}</code>`,`<code>${esc(a.verified_examples_file_sha256)}</code>`,a.actual_business_data_rows_written,a.final_ready])}catch(_){}
+  try{const a=await getJson('runner_provenance_audit_latest.json');zipContainerAudit.innerHTML=row([`<span class="${cls(a.zip_container_status)}">${esc(a.zip_container_status)}</span>`,`${pc.zip_container_safety_selftest.passed}/${pc.zip_container_safety_selftest.total}`,a.zip_bytes,a.zip_container_entry_count,`${a.zip_container_r1_postcode_file_count}/${a.zip_container_r2_postcode_file_count}`,`<code>${esc(a.zip_sha256)}</code>`,a.actual_business_data_rows_written,a.final_ready]);provenanceAudit.innerHTML=row([`<span class="${cls(a.status)}">${esc(a.status)}</span>`,a.provenance_artifact_count,`${pc.provenance_selftest.passed}/${pc.provenance_selftest.total}`,`${pc.run_and_audit_wrapper_contract.passed}/${pc.run_and_audit_wrapper_contract.total}`,a.canonical_rows,`<code>${esc(a.provenance_chain_sha256)}</code>`,a.actual_business_data_rows_written,a.final_ready])}catch(_){}
+  try{const e=await getJson('verified_examples_latest.json');examples.innerHTML=e.rows.map(v=>row([esc(v.canonical_row_no),esc(v.canonical_program_parcel_id),esc(v.postcode||'NO_DATA'),esc(v.status),esc(v.gigabit_available_pct),esc(v.ufbb_100mbps_available_pct),esc(v.sfbb_30mbps_available_pct),esc(v.unable_30mbps_pct)])).join('')}catch(_){}
+}
+render().catch(e=>metrics.innerHTML=`<div class="metric"><strong>Readback error</strong><span>${esc(e.message)}</span></div>`);
+</script>
+</body>
+</html>
