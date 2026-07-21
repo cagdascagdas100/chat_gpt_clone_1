@@ -6,8 +6,8 @@ import tempfile
 from pathlib import Path
 
 CORE_PATH = Path(__file__).with_name("security_public_safety_3_sample_hydrate_v4.py")
-TASK_VERSION = "5.2-smoke-powershell-carrier"
-ATTEMPT_ID = "security-public-safety-3-20260721-009"
+TASK_VERSION = "5.2.1-smoke-fail-closed"
+ATTEMPT_ID = "security-public-safety-3-20260721-010"
 EXPECTED_BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
 TARGET_IDS = ["parcel_61523", "parcel_61524", "parcel_61525"]
 STATUS_BY_ACCURACY = {
@@ -35,7 +35,7 @@ def write_json(path: Path, payload: dict) -> None:
 
 def main() -> int:
     core = load_core()
-    temp_root = Path(tempfile.gettempdir()) / "aays_security_public_safety_slot3_smoke_v5_2"
+    temp_root = Path(tempfile.gettempdir()) / "aays_security_public_safety_slot3_smoke_v5_2_1"
     temp_out = temp_root / "runner_outputs"
     temp_web = temp_root / "web"
     temp_out.mkdir(parents=True, exist_ok=True)
@@ -84,6 +84,12 @@ def main() -> int:
     accuracy_ge_3 = sum(1 for row in rows if row.get("accuracy_score_4", 0) >= 3)
     accuracy_4 = sum(1 for row in rows if row.get("accuracy_score_4") == 4)
     api_attempted_count = sum(1 for row in rows if row.get("area_evidence"))
+    runtime_acceptance_pass = bool(
+        exact_blob_pass
+        and identity_pass
+        and accuracy_4 > 0
+        and core_return_code == 0
+    )
 
     output = {
         "schema_version": 5,
@@ -114,7 +120,9 @@ def main() -> int:
         "actual_slot_rows_written": accuracy_4,
         "api_attempted_row_count": api_attempted_count,
         "runtime_execution_complete": True,
-        "runtime_execution_success": bool(exact_blob_pass and identity_pass),
+        "runtime_acceptance_passed": runtime_acceptance_pass,
+        "runtime_execution_success": runtime_acceptance_pass,
+        "success_rule": "exit zero only when exact blob, exact ordered identity, core success, and at least one 4/4 row are all present",
         "core_return_code": core_return_code,
         "semantic_limits": [
             "Police API locations are anonymised and approximate supporting area evidence, not exact parcel incidents.",
@@ -139,6 +147,7 @@ def main() -> int:
         "task_version": TASK_VERSION,
         "attempt_id": ATTEMPT_ID,
         "runtime_execution_complete": True,
+        "runtime_acceptance_passed": runtime_acceptance_pass,
         "canonical_source_acceptance_passed": exact_blob_pass,
         "target_identity_acceptance_passed": identity_pass,
         "expected_rows": 3,
@@ -149,6 +158,7 @@ def main() -> int:
         "passed_gate_cells": passed_gate_cells,
         "accuracy_ge_3_count": accuracy_ge_3,
         "accuracy_score_4_count": accuracy_4,
+        "requires_at_least_one_accuracy_4_for_success": True,
         "all_unverified_published_scores_null": all(
             row.get("accuracy_score_4") == 4 or row.get("security_score_percent") is None
             for row in rows
@@ -169,11 +179,12 @@ def main() -> int:
     print(f"TARGET_IDENTITY_ACCEPTANCE_PASSED={identity_pass}")
     print(f"PASSED_GATE_CELLS={passed_gate_cells}")
     print(f"ACCURACY_SCORE_4_COUNT={accuracy_4}")
+    print(f"RUNTIME_ACCEPTANCE_PASSED={runtime_acceptance_pass}")
     print(f"OUTPUT={output_path}")
     print(f"RECONCILIATION={reconciliation_path}")
     print("FINAL_READY=false")
 
-    return 0 if exact_blob_pass and identity_pass else 2
+    return 0 if runtime_acceptance_pass else 2
 
 
 if __name__ == "__main__":
