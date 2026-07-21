@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReadyToSell 2 — Dalga 12 İlerleme</title>
+<style>
+body{margin:0;background:#f4f7fa;color:#152033;font-family:Segoe UI,Arial,sans-serif}header,section{background:#fff;border-bottom:1px solid #bdc8d5;padding:16px 20px}h1{margin:0 0 6px;font-size:24px}h2{font-size:18px}.metrics{display:flex;flex-wrap:wrap;gap:8px}.pill,.tag{border:1px solid #8294a8;padding:5px 8px;background:#fff}.tag{display:inline-block;padding:2px 5px;margin-top:3px;font-size:11px}.ok{color:#137a43}.warn{color:#9a5b00}.bad{color:#a02727}.latest{border-color:#137a43;color:#137a43}.upgraded{border-color:#7b55b5;color:#65429c}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{border:1px solid #bdc8d5;padding:10px;background:#fbfcfd;margin-bottom:8px}.small{font-size:12px;color:#536176}.table-wrap{overflow:auto;max-height:62vh}table{border-collapse:collapse;width:100%;min-width:1950px;font-size:12px}th,td{border:1px solid #c2cedb;padding:7px;vertical-align:top}th{background:#dff7e9;position:sticky;top:0}tr.latest-row td{background:#eefaf2}tr.upgraded-row td{background:#f5f0fc}a{color:#075eb5}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-load-state="loading">
+<header><h1>ReadyToSell Shard 2 — Dalga 12 Satır Görünümü</h1><div>Parsel aralığı 30762-61522. Canonical parsel/geometri ve bağımsız resmi kayıt kanıtı olmayan kayıtlar araştırma adayı olarak kalır.</div></header>
+<section><div class="metrics" id="metrics">Yükleniyor...</div></section>
+<section class="grid"><div><h2>İşlem akışı</h2><div id="events"></div></div><div><h2>Blockerlar</h2><div id="blockers"></div><h2>Dışlanan kayıtlar</h2><div id="excluded"></div></div></section>
+<section><h2>İnternet kaynaklı adaylar</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Aday / batch</th><th>Konum</th><th>Durum</th><th>Fiyat</th><th>Planlama ref.</th><th>Planlama kanıtı</th><th>Kaynak güveni</th><th>Parsel eşleşmesi</th><th>Kaynaklar</th><th>Blocker</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<script>
+'use strict';
+const base='data/aays_21_slots/ready_to_sell_2/';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const link=(u,l)=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`:'not_available';
+async function j(name){const r=await fetch(base+name+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(name+': HTTP '+r.status);return r.json()}
+async function load(){try{
+const [p,c,w4,w5,w6,w7,w8,w9,w10,w11,w12]=await Promise.all([j('progress_latest.json'),j('candidate_examples_latest.json'),j('candidate_wave_4_latest.json'),j('candidate_wave_5_latest.json'),j('candidate_wave_6_latest.json'),j('candidate_wave_7_latest.json'),j('candidate_wave_8_latest.json'),j('candidate_wave_9_latest.json'),j('candidate_wave_10_latest.json'),j('candidate_wave_11_latest.json'),j('candidate_wave_12_latest.json')]);
+const upgradeMap=new Map([...(w11.source_upgrades||[]),...(w12.source_upgrades||[])].map(x=>[x.candidate_id,x]));
+const rows=[...(c.candidates||[]).map(x=>({...x,latest_batch:false})),...(w4.candidates||[]).map(x=>({...x,latest_batch:false})),...(w5.candidates||[]).map(x=>({...x,latest_batch:false})),...(w6.candidates||[]).map(x=>({...x,latest_batch:false})),...(w7.candidates||[]).map(x=>({...x,latest_batch:false})),...(w8.candidates||[]).map(x=>({...x,latest_batch:false})),...(w9.candidates||[]).map(x=>({...x,latest_batch:false})),...(w10.candidates||[]).map(x=>({...x,latest_batch:false})),...(w11.candidates||[]).map(x=>({...x,latest_batch:false})),...(w12.candidates||[])].map(x=>({...x,source_upgrade:upgradeMap.get(x.candidate_id)||null}));
+const s=p.candidate_summary;
+document.getElementById('metrics').innerHTML=[`<span class="pill">İşlem <b>${esc(p.completed_operations)}/${esc(p.total_operations)}</b></span>`,`<span class="pill">Batch <b>${esc(p.batch_progress_percent)}%</b></span>`,`<span class="pill">Batch artışı <b>+${esc(p.batch_progress_percent_increase)} puan</b></span>`,`<span class="pill">Genel <b>${esc(p.overall_progress_percent)}%</b></span>`,`<span class="pill">Genel artış <b>+${esc(p.overall_progress_percent_increase)} puan</b></span>`,`<span class="pill">Toplam aday <b>${esc(s.researched_total)}</b></span>`,`<span class="pill">Yeni <b>${esc(s.new_in_latest_batch)}</b></span>`,`<span class="pill">Kaynak yükseltme <b>${esc(s.source_upgraded_in_latest_batch)}</b></span>`,`<span class="pill">Yüksek güven <b>${esc(s.high_source_confidence)}</b></span>`,`<span class="pill">Güncel/açık <b>${esc(s.current_upcoming_or_available_count)}</b></span>`,`<span class="pill">Ortalama <b>${esc(s.average_source_confidence)}/100</b></span>`,`<span class="pill">Son batch <b>${esc(s.latest_batch_average_source_confidence)}/100</b></span>`,`<span class="pill">Yükseltilen ürün <b>${esc(s.promoted)}</b></span>`].join('');
+document.getElementById('events').innerHTML=(p.events||[]).map(e=>`<div class="card"><b>${esc(e.sequence)}. ${esc(e.event)}</b> — <span class="${e.result==='pass'?'ok':'warn'}">${esc(e.result)}</span><div>${esc(e.detail)}</div><div class="small">Doğruluk ${esc(e.accuracy_score)}/100</div></div>`).join('');
+document.getElementById('blockers').innerHTML=(p.blockers||[]).map(b=>`<div class="card bad">${esc(b)}</div>`).join('');
+const excluded=[...(w11.excluded_records||[]),...(w12.excluded_records||[])];
+document.getElementById('excluded').innerHTML=excluded.map(x=>`<div class="card bad"><b>${esc(x.title)}</b><div>${esc(x.reason)}</div><div>${link(x.source_url,'Doğrudan kaynak')}</div></div>`).join('')||'<div class="card">Dışlanan kayıt yok.</div>';
+document.getElementById('rows').innerHTML=rows.map((x,i)=>{const u=x.source_upgrade;return `<tr class="${x.latest_batch?'latest-row':u?'upgraded-row':''}"><td>${i+1}</td><td><b>${esc(x.title)}</b><div class="small">${esc(x.candidate_id)}</div>${x.latest_batch?'<span class="tag latest">son batch</span>':''}${u?'<span class="tag upgraded">kaynak yükseltildi</span>':''}</td><td>${esc(x.location)}</td><td>${esc(x.marketing_status)}</td><td>${esc(x.price)}</td><td>${esc(x.official_planning_reference)}</td><td>${esc(x.planning_signal)}</td><td>${esc(x.source_confidence_score)}/100</td><td>${esc(x.parcel_match_confidence_score)}/100<br>${esc(x.geometry_match_status)}<br>promotion_allowed=${esc(x.promotion_allowed)}</td><td>${link(x.source_url,'Ana kaynak')}<br>${link(x.secondary_source_url,'Katalog')}<br>${link(x.official_register_url||x.official_policy_url,'Resmi kayıt')}${x.historic_conflict_source_url?'<br>'+link(x.historic_conflict_source_url,'Tarihsel çelişki'):''}</td><td>${esc((x.blockers||[]).join('; '))}${u?'<hr>'+esc(u.previous_value)+' → '+esc(u.current_direct_page_value)+'; '+esc(u.resolution):''}</td></tr>`}).join('');
+document.body.dataset.loadState='ready';
+}catch(e){document.body.dataset.loadState='error';document.getElementById('metrics').innerHTML='<span class="bad">'+esc(e.message)+'</span>'}}
+load();
+</script>
+</body>
+</html>
