@@ -18,27 +18,32 @@
   <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir.</div>
   <div class="summary" id="summary"></div>
   <table>
-    <thead><tr><th>#</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="9">Yükleniyor…</td></tr></tbody>
+    <thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="10">Yükleniyor…</td></tr></tbody>
   </table>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-fetch('data/distance_property_types/parcel_label_2_candidates.json',{cache:'no-store'})
- .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
- .then(d=>{
+const files=['data/distance_property_types/parcel_label_2_candidates.json','data/distance_property_types/parcel_label_2_candidates_batch3.json'];
+Promise.all(files.map(u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()})))
+ .then(parts=>{
+   const candidates=parts.flatMap(d=>d.candidates||[]);
+   const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
+   const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
+   const average=count?Math.round(weighted/count*100)/100:0;
    const cards=[
-    ['Görünür aday',d.candidate_count],
-    ['Sınıf kapsamı',d.classification_class_coverage],
-    ['Sınıflandırma doğruluğu','%'+d.classification_accuracy_average_percent],
-    ['Canonical slot satırı',d.verified_slot_rows],
-    ['Exact geometri',d.exact_geometry_rows]
+    ['Görünür aday',count],
+    ['Araştırma batch','3'],
+    ['Sınıf kapsamı','6_of_6_each_class_3'],
+    ['Sınıflandırma doğruluğu','%'+average],
+    ['Canonical slot satırı',0],
+    ['Exact geometri',0]
    ];
    document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
-   document.getElementById('rows').innerHTML=d.candidates.map((c,i)=>`<tr>
-    <td>${i+1}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
+   document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr>
+    <td>${i+1}</td><td>${esc(c.research_batch)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
     <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmi kaynak</a></td>
     <td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
- }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="9">${esc(e.message)}</td></tr>`});
+ }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="10">${esc(e.message)}</td></tr>`});
 </script>
 </body>
 </html>
