@@ -7,17 +7,35 @@
 <div id="cards" class="cards"></div>
 <section><h2>Satır satır işlem görünümü</h2><div class="scroll"><table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th></tr></thead><tbody id="operations"></tbody></table></div></section>
 <section><h2>Yükseltilen kaynak sözleşmeleri</h2><div class="scroll"><table><thead><tr><th>Kaynak</th><th>Yayıncı</th><th>Durum</th><th>Format/CRS</th><th>Doğruluk rolü</th><th>Uyarı</th><th>Kaynak</th></tr></thead><tbody id="sources"></tbody></table></div></section>
-<section><h2>Resmî kaynak adayları</h2><p class="warning">Kaynak güveni parsel eşleşme doğruluğu değildir. Geometri kesişimi ve açık INSPIRE-ID shard eşleşmesi doğrulanmadan ürün skoru null kalır.</p>
+<section><h2>Resmî kaynak adayları</h2><p class="warning">Kaynak güveni parsel eşleşme doğruluğu değildir. Current-period doğrulaması, geometri kesişimi ve açık INSPIRE-ID shard eşleşmesi kanıtlanmadan ürün skoru null kalır.</p>
 <div class="scroll"><table><thead><tr><th>Aday</th><th>Referans</th><th>Saha</th><th>Yerel idare</th><th>Ha</th><th>Konut</th><th>Planlama</th><th>Kaynak doğruluğu</th><th>Durum</th><th>Kaynak</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
 <section><h2>Gerçek blocker</h2><ul id="blockers"></ul></section>
 </main><script>
 const cls=s=>s.includes('complete')?'ok':s.includes('pending')?'pending':'blocked';
-Promise.all([fetch('progress_latest.json').then(r=>r.json()),fetch('candidates_latest.json').then(r=>r.json()),fetch('source_contracts_latest.json').then(r=>r.json())]).then(([p,c,s])=>{
-const cards=[['Operasyon',`${p.operational_progress.completed_operations}/${p.operational_progress.total_operations}`],['Operasyon %',`${p.operational_progress.percent.toFixed(2)} (+${p.operational_progress.percent_increase.toFixed(2)})`],['Doğrulanmış ürün satırı',`${p.verified_product_progress.verified_rows}/${p.verified_product_progress.target_rows}`],['Aday',c.candidate_summary.researched],['Uygun',c.candidate_summary.eligible],['≥90 kaynak doğruluğu',c.candidate_summary.high_source_confidence_ge_90],['Ortalama uygun doğruluk',`${c.candidate_summary.average_eligible_source_confidence}/100`],['Yükseltilen kaynak',p.source_summary.promoted_sources],['Kaynak sözleşmesi',p.source_summary.source_contracts_upgraded],['Yazılım testi',`${p.source_summary.executed_tests_passed}/${p.source_summary.executed_tests_total}`],['Remote kanıt denetimi',`${p.source_summary.manual_remote_evidence_checks_passed}/${p.source_summary.manual_remote_evidence_checks_total}`],['Tazelik doğrulama',p.source_summary.source_freshness_revalidated]];
-document.querySelector('#cards').innerHTML=cards.map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
-document.querySelector('#operations').innerHTML=p.line_progress.map(x=>`<tr><td>${x.line}</td><td>${x.operation}</td><td class="${cls(x.state)}">${x.state}</td></tr>`).join('');
-document.querySelector('#sources').innerHTML=s.contracts.map(x=>`<tr><td>${x.source_id}</td><td>${x.publisher}</td><td>${x.status}</td><td>${x.format||''} / ${x.crs||''}</td><td>${x.accuracy_role}</td><td>${x.caveat}</td><td><a href="${x.url||x.url_pattern}" target="_blank" rel="noopener">resmî kaynak</a></td></tr>`).join('');
-document.querySelector('#candidates').innerHTML=c.candidates.map(x=>`<tr><td>${x.candidate_id}</td><td>${x.source_reference}</td><td>${x.site_name}</td><td>${x.local_authority}</td><td>${x.hectares??''}</td><td>${x.maximum_net_dwellings??''}</td><td>${x.planning_permission_status}</td><td>${x.source_confidence}/100</td><td>${x.eligibility}</td><td><a href="${x.source_url}" target="_blank" rel="noopener">resmî kayıt</a></td></tr>`).join('');
-document.querySelector('#blockers').innerHTML=p.blockers.map(x=>`<li>${x}</li>`).join('');
+Promise.all([
+ fetch('progress_latest.json').then(r=>r.json()),
+ fetch('candidates_latest.json').then(r=>r.json()),
+ fetch('candidates_wave_5_20260721.json').then(r=>r.json()),
+ fetch('source_contracts_latest.json').then(r=>r.json())
+]).then(([p,base,w5,s])=>{
+ const allCandidates=[...(base.candidates||[]),...(w5.candidates||[])];
+ const cards=[
+ ['Operasyon',`${p.operational_progress.completed_operations}/${p.operational_progress.total_operations}`],
+ ['Operasyon %',`${p.operational_progress.percent.toFixed(2)} (+${p.operational_progress.percent_increase.toFixed(2)})`],
+ ['Doğrulanmış ürün satırı',`${p.verified_product_progress.verified_rows}/${p.verified_product_progress.target_rows}`],
+ ['Araştırılan aday',p.candidate_summary.researched],['Uygun',p.candidate_summary.eligible],
+ ['Dışlanan/bekletilen',p.candidate_summary.excluded_or_held],
+ ['≥90 uygun kaynak doğruluğu',p.candidate_summary.eligible_source_confidence_ge_90],
+ ['Ortalama uygun doğruluk',`${p.candidate_summary.average_eligible_source_confidence}/100`],
+ ['Yükseltilen kaynak',p.source_summary.promoted_sources],
+ ['Kaynak sözleşmesi',p.source_summary.source_contracts_upgraded],
+ ['Yazılım testi',`${p.source_summary.executed_tests_passed}/${p.source_summary.executed_tests_total}`],
+ ['Remote kanıt denetimi',`${p.source_summary.manual_remote_evidence_checks_passed}/${p.source_summary.manual_remote_evidence_checks_total}`]
+ ];
+ document.querySelector('#cards').innerHTML=cards.map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
+ document.querySelector('#operations').innerHTML=p.line_progress.map(x=>`<tr><td>${x.line}</td><td>${x.operation}</td><td class="${cls(x.state)}">${x.state}</td></tr>`).join('');
+ document.querySelector('#sources').innerHTML=s.contracts.map(x=>`<tr><td>${x.source_id}</td><td>${x.publisher}</td><td>${x.status}</td><td>${x.format||''} / ${x.crs||''}</td><td>${x.accuracy_role}</td><td>${x.caveat}</td><td><a href="${x.url||x.url_pattern}" target="_blank" rel="noopener">resmî kaynak</a></td></tr>`).join('');
+ document.querySelector('#candidates').innerHTML=allCandidates.map(x=>`<tr><td>${x.candidate_id}</td><td>${x.source_reference}</td><td>${x.site_name}</td><td>${x.local_authority}</td><td>${x.hectares??''}</td><td>${x.maximum_net_dwellings??''}</td><td>${x.planning_permission_status??''}</td><td>${x.source_confidence}/100</td><td>${x.eligibility}</td><td><a href="${x.source_url}" target="_blank" rel="noopener">resmî kayıt</a></td></tr>`).join('');
+ document.querySelector('#blockers').innerHTML=p.blockers.map(x=>`<li>${x}</li>`).join('');
 }).catch(err=>document.body.insertAdjacentHTML('beforeend',`<pre>${String(err)}</pre>`));
 </script></body></html>
