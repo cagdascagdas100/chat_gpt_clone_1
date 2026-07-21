@@ -1,0 +1,147 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_3",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "generated_at": "2026-07-21T04:23:20+03:00",
+  "status": "OFFICIAL_SOURCE_DISCOVERY_COMPLETED_SLOT_DATA_PENDING",
+  "scoring_method": {
+    "authority_weight": 0.35,
+    "spatial_fit_weight": 0.25,
+    "freshness_weight": 0.20,
+    "licence_weight": 0.10,
+    "reproducibility_weight": 0.10
+  },
+  "candidates": [
+    {
+      "candidate_id": "SRC-01",
+      "name": "English Indices of Deprivation 2025 - Crime domain",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "geography": "LSOA",
+      "source_accuracy_score": 97,
+      "spatial_fit_score": 94,
+      "freshness_score": 78,
+      "overall_candidate_score": 92,
+      "decision": "PROMOTED_PRIMARY_BASELINE",
+      "limitations": [
+        "Relative deprivation measure, not a current incident count",
+        "Must use corrected v2 workbooks and official LSOA lookup"
+      ]
+    },
+    {
+      "candidate_id": "SRC-02",
+      "name": "data.police.uk street-level crimes API",
+      "publisher": "UK Police open data",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "geography": "Anonymised street point or custom polygon",
+      "source_accuracy_score": 95,
+      "spatial_fit_score": 66,
+      "freshness_score": 94,
+      "overall_candidate_score": 84,
+      "decision": "PROMOTED_SUPPORTING_EVIDENCE",
+      "limitations": [
+        "Locations are anonymised and are not exact incident locations",
+        "One-mile point queries must not be represented as exact parcel counts",
+        "Use explicit month, backoff and response hash"
+      ]
+    },
+    {
+      "candidate_id": "SRC-03",
+      "name": "Home Office police recorded crime and outcomes open data",
+      "publisher": "Home Office",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "geography": "Police force area and Community Safety Partnership",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 71,
+      "freshness_score": 95,
+      "overall_candidate_score": 88,
+      "decision": "PROMOTED_CALIBRATION_AND_QA",
+      "limitations": [
+        "Too coarse for direct parcel attribution",
+        "Use for area calibration, trend checks and category validation"
+      ]
+    },
+    {
+      "candidate_id": "SRC-04",
+      "name": "ONS Crime in England and Wales Police Force Area tables",
+      "publisher": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "geography": "Police force area and Community Safety Partnership",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 69,
+      "freshness_score": 94,
+      "overall_candidate_score": 87,
+      "decision": "PROMOTED_INDEPENDENT_QA",
+      "limitations": [
+        "Not suitable as a direct parcel score",
+        "Use for independent aggregate reconciliation"
+      ]
+    },
+    {
+      "candidate_id": "SRC-05",
+      "name": "ONS Community Safety Partnership boundaries and codes",
+      "publisher": "Office for National Statistics",
+      "url": "https://www.data.gov.uk/dataset/f5688594-2344-477d-953c-b17d449a2a83/community-safety-partnerships-december-2022-boundaries-ew-bgc",
+      "geography": "Community Safety Partnership polygon",
+      "source_accuracy_score": 96,
+      "spatial_fit_score": 93,
+      "freshness_score": 72,
+      "overall_candidate_score": 89,
+      "decision": "PROMOTED_GEOGRAPHY_JOIN_SUPPORT",
+      "limitations": [
+        "Boundary vintage must be aligned with the statistical table vintage"
+      ]
+    },
+    {
+      "candidate_id": "SRC-06",
+      "name": "Fire and rescue incident statistics",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "url": "https://www.gov.uk/government/collections/fire-and-rescue-incident-statistics",
+      "geography": "England and fire and rescue service area",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 55,
+      "freshness_score": 94,
+      "overall_candidate_score": 80,
+      "decision": "HOLD_OPTIONAL_PUBLIC_SAFETY_COMPONENT",
+      "limitations": [
+        "Geography is too coarse for direct parcel attribution",
+        "Keep separate from crime score unless a documented composite model is approved"
+      ]
+    }
+  ],
+  "promoted_source_count": 5,
+  "held_source_count": 1,
+  "sample_slot_candidates": [
+    {
+      "parcel_id": "parcel_61523",
+      "candidate_status": "PENDING_CANONICAL_GEOMETRY",
+      "security_score_percent": null,
+      "planned_primary_source": "SRC-01",
+      "planned_supporting_sources": ["SRC-02", "SRC-03", "SRC-05"]
+    },
+    {
+      "parcel_id": "parcel_61524",
+      "candidate_status": "PENDING_CANONICAL_GEOMETRY",
+      "security_score_percent": null,
+      "planned_primary_source": "SRC-01",
+      "planned_supporting_sources": ["SRC-02", "SRC-03", "SRC-05"]
+    },
+    {
+      "parcel_id": "parcel_61525",
+      "candidate_status": "PENDING_CANONICAL_GEOMETRY",
+      "security_score_percent": null,
+      "planned_primary_source": "SRC-01",
+      "planned_supporting_sources": ["SRC-02", "SRC-03", "SRC-05"]
+    }
+  ],
+  "actual_slot_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
