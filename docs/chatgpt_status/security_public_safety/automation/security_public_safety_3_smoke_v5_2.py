@@ -1,31 +1,41 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import math
 import re
 import tempfile
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 CORE_PATH = Path(__file__).with_name("security_public_safety_3_sample_hydrate_v4.py")
-TASK_VERSION = "5.2.2-strict-payload-and-field-gates"
-ATTEMPT_ID = "security-public-safety-3-20260721-011"
+TASK_VERSION = "5.2.3-force-coverage-locate-neighbourhood-gate"
+ATTEMPT_ID = "security-public-safety-3-20260721-012"
 EXPECTED_BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
 EXPECTED_IOD25_FILE7_V2_URL = (
     "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/"
     "File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv"
 )
+LOCATE_NEIGHBOURHOOD_URL = "https://data.police.uk/api/locate-neighbourhood"
 TARGET_IDS = ["parcel_61523", "parcel_61524", "parcel_61525"]
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 LSOA_RE = re.compile(r"^E01[0-9]{6}$")
 MONTH_RE = re.compile(r"^[0-9]{4}-(0[1-9]|1[0-2])$")
+FORCE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+MAY_2026_MISSING_TERRITORIAL_CRIME_FORCE_IDS = {
+    "gloucestershire",
+    "greater-manchester",
+    "lincolnshire",
+}
+SPECIAL_FORCE_CRIME_GAPS = {"british-transport-police"}
+NO_OUTCOME_FORCE_IDS = {"british-transport-police", "northern-ireland"}
 STATUS_BY_ACCURACY = {
     0: "NO_ACCEPTANCE_GATE_PASSED",
     1: "ONE_OF_FOUR_GATES_PASSED",
     2: "TWO_OF_FOUR_GATES_PASSED",
     3: "THREE_OF_FOUR_GATES_PASSED",
-    4: "STRICT_CANONICAL_APIS_IOD25_V2_VERIFIED",
+    4: "STRICT_CANONICAL_FORCE_COVERAGE_APIS_IOD25_V2_VERIFIED",
 }
 
 
@@ -99,6 +109,92 @@ def url_contract_ok(url: object, month: str, lat: float, lng: float, endpoint_fr
         return False
 
 
+def force_lookup_url_contract_ok(url: object, lat: float, lng: float) -> bool:
+    try:
+        parsed = urlparse(str(url))
+        query = parse_qs(parsed.query)
+        if parsed.scheme != "https" or parsed.netloc != "data.police.uk":
+            return False
+        if parsed.path != "/api/locate-neighbourhood":
+            return False
+        raw_q = query.get("q", [None])[0]
+        if raw_q is None:
+            return False
+        parts = str(raw_q).split(",")
+        if len(parts) != 2:
+            return False
+        query_lat = finite_number(parts[0])
+        query_lng = finite_number(parts[1])
+        if query_lat is None or query_lng is None:
+            return False
+        return abs(query_lat - lat) <= 1e-5 and abs(query_lng - lng) <= 1e-5
+    except Exception:
+        return False
+
+
+def locate_force(core, lat: float, lng: float, cache: dict[str, dict]) -> dict:
+    key = f"{lat:.6f},{lng:.6f}"
+    if key in cache:
+        return cache[key]
+    url = f"{LOCATE_NEIGHBOURHOOD_URL}?{urlencode({'q': key})}"
+    evidence = {
+        "url": url,
+        "http_status": None,
+        "response_sha256": None,
+        "payload_is_object": False,
+        "force_id": None,
+        "neighbourhood_id": None,
+        "url_contract_passed": False,
+        "error": None,
+    }
+    try:
+        status, body, payload = core.http_json(url)
+        evidence.update(
+            {
+                "http_status": status,
+                "response_sha256": hashlib.sha256(body).hexdigest(),
+                "payload_is_object": isinstance(payload, dict),
+                "force_id": payload.get("force") if isinstance(payload, dict) else None,
+                "neighbourhood_id": payload.get("neighbourhood") if isinstance(payload, dict) else None,
+                "url_contract_passed": force_lookup_url_contract_ok(url, lat, lng),
+            }
+        )
+    except Exception as exc:
+        evidence["error"] = str(exc)
+    force_id = str(evidence.get("force_id") or "")
+    neighbourhood_id = str(evidence.get("neighbourhood_id") or "")
+    evidence["acceptance_passed"] = bool(
+        evidence.get("http_status") == 200
+        and sha256_ok(evidence.get("response_sha256"))
+        and evidence.get("payload_is_object")
+        and evidence.get("url_contract_passed")
+        and FORCE_ID_RE.fullmatch(force_id)
+        and neighbourhood_id
+    )
+    cache[key] = evidence
+    return evidence
+
+
+def territorial_coverage(force_id: str, latest_month: str) -> dict:
+    missing_crime = bool(
+        latest_month == "2026-05"
+        and force_id in MAY_2026_MISSING_TERRITORIAL_CRIME_FORCE_IDS
+    )
+    missing_outcomes = force_id in NO_OUTCOME_FORCE_IDS
+    return {
+        "force_id": force_id,
+        "latest_month": latest_month,
+        "territorial_crime_coverage_available": not missing_crime,
+        "territorial_outcomes_coverage_available": not missing_outcomes,
+        "special_force_crime_gap_present": latest_month == "2026-05" and bool(SPECIAL_FORCE_CRIME_GAPS),
+        "special_force_outcome_gap_present": bool(NO_OUTCOME_FORCE_IDS),
+        "semantic_rule": (
+            "Territorial force coverage is checked by the official locate-neighbourhood endpoint. "
+            "British Transport Police and other special-force gaps remain disclosed and prevent claims of complete national coverage."
+        ),
+    }
+
+
 def strict_api_gate(
     row: dict,
     prefix: str,
@@ -106,6 +202,8 @@ def strict_api_gate(
     latest_month: str,
     lat: float,
     lng: float,
+    force_lookup: dict,
+    coverage_available: bool,
 ) -> tuple[bool, dict]:
     area = row.get("area_evidence")
     if not isinstance(area, dict):
@@ -120,6 +218,8 @@ def strict_api_gate(
             area.get(f"{prefix}_url"), latest_month, lat, lng, endpoint_fragment
         ),
         "row_month_matches_latest": row.get("official_api_month") == latest_month,
+        "force_lookup_accepted": bool(force_lookup.get("acceptance_passed")),
+        "territorial_force_coverage_available": coverage_available,
     }
     return all(checks.values()), checks
 
@@ -147,7 +247,7 @@ def strict_iod_gate(row: dict, iod_evidence: object, lsoa_code: str) -> tuple[bo
 
 def main() -> int:
     core = load_core()
-    temp_root = Path(tempfile.gettempdir()) / "aays_security_public_safety_slot3_smoke_v5_2_2"
+    temp_root = Path(tempfile.gettempdir()) / "aays_security_public_safety_slot3_smoke_v5_2_3"
     temp_out = temp_root / "runner_outputs"
     temp_web = temp_root / "web"
     temp_out.mkdir(parents=True, exist_ok=True)
@@ -183,8 +283,10 @@ def main() -> int:
         and sha256_ok(latest.get("response_sha256"))
     )
     iod_evidence = payload.get("iod25_v2_evidence") or {}
+    force_cache: dict[str, dict] = {}
 
     passed_gate_cells = 0
+    force_lookup_pass_count = 0
     for row in rows:
         candidate_score = row.get("security_score_percent")
         row["candidate_security_score_percent"] = candidate_score
@@ -201,12 +303,36 @@ def main() -> int:
         }
         canonical_gate = all(canonical_checks.values())
 
+        force_lookup = {
+            "acceptance_passed": False,
+            "reason": "POINT_OR_LATEST_MONTH_NOT_READY",
+        }
+        coverage = territorial_coverage("", latest_month)
         if point_ok and official_latest_pass and lat is not None and lng is not None:
+            force_lookup = locate_force(core, lat, lng, force_cache)
+            if force_lookup.get("acceptance_passed"):
+                force_lookup_pass_count += 1
+            force_id = str(force_lookup.get("force_id") or "")
+            coverage = territorial_coverage(force_id, latest_month)
             crime_gate, crime_checks = strict_api_gate(
-                row, "crime", "/api/crimes-street/all-crime", latest_month, lat, lng
+                row,
+                "crime",
+                "/api/crimes-street/all-crime",
+                latest_month,
+                lat,
+                lng,
+                force_lookup,
+                bool(coverage["territorial_crime_coverage_available"]),
             )
             outcomes_gate, outcomes_checks = strict_api_gate(
-                row, "outcomes", "/api/outcomes-at-location", latest_month, lat, lng
+                row,
+                "outcomes",
+                "/api/outcomes-at-location",
+                latest_month,
+                lat,
+                lng,
+                force_lookup,
+                bool(coverage["territorial_outcomes_coverage_available"]),
             )
         else:
             crime_gate = False
@@ -222,6 +348,8 @@ def main() -> int:
         row["crime_api_gate"] = crime_gate
         row["outcomes_api_gate"] = outcomes_gate
         row["iod25_gate"] = iod_gate
+        row["force_lookup_evidence"] = force_lookup
+        row["territorial_coverage"] = coverage
         row["strict_gate_checks"] = {
             "canonical": canonical_checks,
             "crime_api": crime_checks,
@@ -256,13 +384,33 @@ def main() -> int:
         latest_month_quality_caveats = [
             {
                 "force": "British Transport Police",
+                "force_id": "british-transport-police",
                 "issue": "Crime data not provided for May 2026; outcome data is not supplied to data.police.uk.",
-                "effect": "Missing coverage must not be interpreted as zero crime or complete outcome coverage.",
+                "effect": "Special-force undercoverage remains disclosed and must not be interpreted as zero crime or complete outcome coverage.",
             },
             {
                 "force": "Gloucestershire Constabulary",
+                "force_id": "gloucestershire",
                 "issue": "Crime data not provided for May 2026.",
-                "effect": "Missing coverage must not be interpreted as zero crime.",
+                "effect": "Territorial crime gate fails when locate-neighbourhood resolves this force.",
+            },
+            {
+                "force": "Greater Manchester Police",
+                "force_id": "greater-manchester",
+                "issue": "Crime data not provided for May 2026.",
+                "effect": "Territorial crime gate fails when locate-neighbourhood resolves this force.",
+            },
+            {
+                "force": "Lincolnshire Police",
+                "force_id": "lincolnshire",
+                "issue": "Crime data not provided for May 2026.",
+                "effect": "Territorial crime gate fails when locate-neighbourhood resolves this force.",
+            },
+            {
+                "force": "Police Service of Northern Ireland",
+                "force_id": "northern-ireland",
+                "issue": "Outcome data is not supplied to data.police.uk.",
+                "effect": "Territorial outcomes gate fails if this force is resolved; slot parcels are expected to be in England.",
             },
         ]
 
@@ -285,12 +433,15 @@ def main() -> int:
         "source_file_sha256": payload.get("source_file_sha256"),
         "official_api_latest": latest,
         "iod25_v2_evidence": iod_evidence,
+        "force_lookup_endpoint": LOCATE_NEIGHBOURHOOD_URL,
+        "force_lookup_attempted_count": len(force_cache),
+        "force_lookup_acceptance_pass_count": force_lookup_pass_count,
         "latest_month_quality_caveats": latest_month_quality_caveats,
-        "strict_gate_version": "exact-blob-point-numeric-list-payload-sha256-iod25-fields-v1",
+        "strict_gate_version": "exact-blob-point-numeric-force-lookup-territorial-coverage-list-payload-sha256-iod25-fields-v2",
         "acceptance_gates": [
             "exact canonical Git blob, exact ordered identity, Point geometry, finite coordinates, finite preexisting score and valid LSOA code",
-            "latest-month street-crime HTTPS URL contract, HTTP 200, 64-hex SHA256 and list payload including valid zero count",
-            "latest-month outcomes-at-location HTTPS URL contract, HTTP 200, 64-hex SHA256 and list payload including valid zero count",
+            "latest-month street-crime HTTPS URL contract, HTTP 200, 64-hex SHA256, list payload and accepted territorial force coverage",
+            "latest-month outcomes-at-location HTTPS URL contract, HTTP 200, 64-hex SHA256, list payload and accepted territorial force coverage",
             "corrected IoD2025 File 7 v2 exact URL, HTTP 200, 64-hex SHA256 and matching non-empty Crime Score, positive Rank and Decile 1-10",
         ],
         "rows": rows,
@@ -305,10 +456,11 @@ def main() -> int:
         "runtime_execution_complete": True,
         "runtime_acceptance_passed": runtime_acceptance_pass,
         "runtime_execution_success": runtime_acceptance_pass,
-        "success_rule": "exit zero only when exact blob, exact ordered identity, valid latest-month evidence, core success, null suppression and at least one strict 4/4 row are all present",
+        "success_rule": "exit zero only when exact blob, ordered identity, valid latest-month metadata, accepted force lookup and territorial coverage, strict API lists, strict IoD fields, core success, null suppression and at least one strict 4/4 row are all present",
         "core_return_code": core_return_code,
         "semantic_limits": [
             "Police API locations are anonymised and approximate supporting area evidence, not exact parcel incidents.",
+            "Territorial force lookup does not remove British Transport Police or other special-force undercoverage.",
             "IoD2025 Crime fields are relative LSOA context and are not converted directly into an absolute parcel percentage.",
             "The published score is the preexisting canonical score and remains null unless all four strict gates pass.",
         ],
@@ -343,8 +495,12 @@ def main() -> int:
         "passed_gate_cells": passed_gate_cells,
         "accuracy_ge_3_count": accuracy_ge_3,
         "accuracy_score_4_count": accuracy_4,
+        "force_lookup_attempted_count": len(force_cache),
+        "force_lookup_acceptance_pass_count": force_lookup_pass_count,
         "requires_at_least_one_accuracy_4_for_success": True,
         "requires_list_payload_for_api_gates": True,
+        "requires_force_lookup_for_api_gates": True,
+        "requires_territorial_coverage_for_api_gates": True,
         "requires_nonempty_iod25_crime_fields": True,
         "all_unverified_published_scores_null": all_unverified_scores_null,
         "fake_data": False,
@@ -362,6 +518,7 @@ def main() -> int:
     print(f"CANONICAL_SOURCE_ACCEPTANCE_PASSED={exact_blob_pass}")
     print(f"TARGET_IDENTITY_ACCEPTANCE_PASSED={identity_pass}")
     print(f"OFFICIAL_LATEST_MONTH_ACCEPTANCE_PASSED={official_latest_pass}")
+    print(f"FORCE_LOOKUP_ACCEPTANCE_PASS_COUNT={force_lookup_pass_count}")
     print(f"PASSED_GATE_CELLS={passed_gate_cells}")
     print(f"ACCURACY_SCORE_4_COUNT={accuracy_4}")
     print(f"RUNTIME_ACCEPTANCE_PASSED={runtime_acceptance_pass}")
