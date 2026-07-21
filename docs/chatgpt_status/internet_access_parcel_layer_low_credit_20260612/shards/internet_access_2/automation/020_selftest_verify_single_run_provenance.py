@@ -71,7 +71,10 @@ with tempfile.TemporaryDirectory() as tmp:
         path.write_text(text, encoding="utf-8")
 
     v2 = {
-        "slot_id": "internet_access_2",
+        "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+        "source_snapshot": "2026-01",
+        "source_revision": "v2-r2",
+        "source_revision_date": "2026-07-07",
         "status": "PASS_OFFICIAL_V2_R2_CORRECTION_AND_SEMANTICS_VALIDATED",
         "file_count": 4, "row_count": 4, "unique_postcode_count": 4,
         "actual_business_data_rows_written": 0, "final_ready": False,
@@ -197,6 +200,11 @@ with tempfile.TemporaryDirectory() as tmp:
     expect_fail("v2_unique_count_rejected", lambda: module.audit(work, web), "postcode row/unique")
     dump(work / "internet_access_2_ofcom_v2_validation_latest.json", v2)
 
+    bad_v2_revision = dict(v2); bad_v2_revision["source_revision_date"] = "2026-07-06"
+    dump(work / "internet_access_2_ofcom_v2_validation_latest.json", bad_v2_revision)
+    expect_fail("v2_revision_rejected", lambda: module.audit(work, web), "source identity/revision")
+    dump(work / "internet_access_2_ofcom_v2_validation_latest.json", v2)
+
     bad_diag = dict(diagnostics); bad_diag["zip_sha256"] = "UPPER"
     dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", bad_diag)
     expect_fail("zip_hash_format_rejected", lambda: module.audit(work, web), "not a lowercase SHA-256")
@@ -210,7 +218,7 @@ with tempfile.TemporaryDirectory() as tmp:
 print(json.dumps({
     "status": "PASS",
     "tests_passed": len(passed),
-    "tests_total": 19,
+    "tests_total": 20,
     "test_names": passed,
     "actual_business_data_rows_written": 0,
     "final_ready": False,
