@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_1",
+  "display_state": "official_bulk_execution_ready_for_local_inputs_not_executed_not_final",
+  "visible_user_message_tr": "Resmî Ofcom ZIP ve canonical GeoJSON yerel olarak sağlandığında preflight + 33.785 satırlık preview tek komutla çalıştırılabilir. İnternet indirme ve parametreli ONS sorgusu bu runtime'da fail-closed kaldı.",
+  "last_updated": "2026-07-21T14:20:00+03:00",
+  "official_contract": {
+    "ofcom_publication": "Connected Nations update Spring 2026",
+    "snapshot": "January 2026",
+    "publication_date": "2026-05-13",
+    "postcode_members": 121,
+    "postcode_rows": 1741096,
+    "corrected_member_pattern": "postcode_files/202601_fixed_postcode_coverage_r2_XX.csv",
+    "ons_centroid_period": "May 2026",
+    "ons_layer_fields": ["PCD7","PCDS","DOTERM","LAD25CD","RGN25CD","LAT","LONG"]
+  },
+  "runtime_paths": [
+    {"line":1,"path":"Ofcom publication page","state":"PASS","result":"official page and ZIP link visible"},
+    {"line":2,"path":"Ofcom ZIP web fetch","state":"BLOCKED_FAIL_CLOSED","result":"download response not exposed as archive"},
+    {"line":3,"path":"Ofcom ZIP container fetch","state":"BLOCKED_FAIL_CLOSED","result":"Temporary failure in name resolution"},
+    {"line":4,"path":"ONS FeatureServer schema","state":"PASS","result":"May 2026 layer and query capability visible"},
+    {"line":5,"path":"ONS parameterised row query via web","state":"BLOCKED_FAIL_CLOSED","result":"safe URL policy rejected generated query URL"},
+    {"line":6,"path":"ONS parameterised row query via container","state":"BLOCKED_FAIL_CLOSED","result":"Temporary failure in name resolution"},
+    {"line":7,"path":"local official-input preflight","state":"READY","result":"automation/014 validates 121 r2 members and target postcodes"},
+    {"line":8,"path":"local official-input orchestration","state":"READY","result":"automation/015 runs preflight then refresh preview"},
+    {"line":9,"path":"business database write","state":"FORBIDDEN","result":"preview only; zero rows written"},
+    {"line":10,"path":"final readiness","state":"BLOCKED","result":"official ZIP ingestion and full 33785-row preview not executed"}
+  ],
+  "orchestration_fixture": {"checks_passed":20,"checks_failed":0,"negative_fail_closed_cases":4},
+  "official_rows_read": 0,
+  "r2_refreshed_rows": 0,
+  "business_rows_written": 0,
+  "migration_applied": false,
+  "fake_data": false,
+  "db_write": false,
+  "production_deploy": false,
+  "final_ready": false
+}
