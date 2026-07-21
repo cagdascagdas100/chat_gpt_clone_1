@@ -18,6 +18,10 @@
   <h2>Line-by-line operations</h2>
   <table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody id="operations"><tr><td colspan="3">Loading…</td></tr></tbody></table>
 
+  <h2>Shared-runner dispatch readiness</h2>
+  <p class="muted">Dispatch is fail-closed. No queue entry or ownership claim is written unless every gate passes.</p>
+  <table><thead><tr><th>Gate</th><th>Check</th><th>State</th><th>Evidence</th><th>Blocker</th></tr></thead><tbody id="runnerReadiness"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+
   <h2>Official source decisions</h2>
   <table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody id="sources"><tr><td colspan="4">Loading…</td></tr></tbody></table>
 
@@ -33,26 +37,29 @@
   <table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
 
   <h2>Truth boundary</h2>
-  <p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code>. National percentages are sanity checks only. ONS and OS postcode locations are QA references only. Canonical parcel identity comes from <code>security.geojson</code>. Legacy postcode matches require spatial QA; absent matches remain <code>NO_DATA</code>. No parcel score, geometry, migration, DB row or production layer is written.</p>
+  <p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code> availability data, not measured connection performance. National percentages are sanity checks only. ONS and OS postcode locations are QA references only. Canonical parcel identity comes from <code>security.geojson</code>. Legacy postcode matches require spatial QA; absent matches remain <code>NO_DATA</code>. No parcel score, geometry, migration, DB row or production layer is written.</p>
 
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cls=v=>String(v).startsWith('PASS')||v==='DONE'?'ok':'blocked';
 async function getJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: ${r.status}`);return r.json()}
 async function render(){
-  const [p,o,s,n,x]=await Promise.all([
+  const [p,o,s,n,x,r]=await Promise.all([
     getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('source_candidates_latest.json'),
-    getJson('network_attempts_latest.json'),getJson('source_examples_latest.json')
+    getJson('network_attempts_latest.json'),getJson('source_examples_latest.json'),getJson('runner_readiness_latest.json')
   ]);
   document.getElementById('metrics').innerHTML=`
     <div class="metric"><span>Operations</span><strong>${p.completed_operations} / ${p.total_operations}</strong><span>${p.operational_progress_percent}% (+${p.progress_delta_percent})</span></div>
-    <div class="metric"><span>Source decisions</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
+    <div class="metric"><span>Sources</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
     <div class="metric"><span>Validation</span><strong>${p.combined_validation_passed} / ${p.combined_validation_total}</strong><span>contract tests passed</span></div>
-    <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows}</strong><span>operation/source/network/example rows</span></div>
+    <div class="metric"><span>Runner gates</span><strong>${r.passed_gate_count} / ${r.gate_count}</strong><span>${r.blocked_gate_count} blocked; dispatch ${r.dispatch_permitted?'allowed':'blocked'}</span></div>
+    <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows+p.runner_readiness_rows}</strong><span>line-by-line rows</span></div>
     <div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
-  document.getElementById('operations').innerHTML=o.operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${v.status==='DONE'?'ok':'blocked'}">${esc(v.status)}</td></tr>`).join('');
+  document.getElementById('operations').innerHTML=o.operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.status)}">${esc(v.status)}</td></tr>`).join('');
+  document.getElementById('runnerReadiness').innerHTML=r.gates.map(v=>`<tr><td>${esc(v.gate_id)}</td><td>${esc(v.title)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.blocker||'')}</td></tr>`).join('');
   document.getElementById('sources').innerHTML=s.candidates.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(v.title)}</td><td class="${String(v.decision).startsWith('PROMOTED')?'ok':'blocked'}">${esc(v.decision)}</td><td>${esc(v.confidence_percent)}%</td></tr>`).join('');
   document.getElementById('sourceExamples').innerHTML=x.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.source)}</td><td>${esc(v.verified_fact)}</td><td>${esc(v.allowed_use)}</td><td>${esc(v.forbidden_use)}</td></tr>`).join('');
-  document.getElementById('networkAttempts').innerHTML=n.attempts.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${String(v.state).startsWith('PASS')?'ok':'blocked'}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.data_bytes_acquired)}</td></tr>`).join('');
+  document.getElementById('networkAttempts').innerHTML=n.attempts.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.data_bytes_acquired)}</td></tr>`).join('');
   try{
     const e=await getJson('verified_examples_latest.json');
     document.getElementById('examples').innerHTML=e.rows.length?e.rows.map(v=>`<tr><td>${esc(v.canonical_row_no)}</td><td>${esc(v.canonical_program_parcel_id)}</td><td>${esc(v.postcode||'NO_DATA')}</td><td>${esc(v.status)}</td><td>${esc(v.gigabit_available_pct)}</td><td>${esc(v.ufbb_100mbps_available_pct)}</td><td>${esc(v.sfbb_30mbps_available_pct)}</td><td>${esc(v.unable_30mbps_pct)}</td></tr>`).join(''):'<tr><td colspan="8">No review examples published.</td></tr>';
