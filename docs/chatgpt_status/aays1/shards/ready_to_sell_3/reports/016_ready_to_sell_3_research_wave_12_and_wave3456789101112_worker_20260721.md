@@ -1,0 +1,25 @@
+# ReadyToSell 3 — Wave 12 research and existing queue expansion
+
+- Slot: `ready_to_sell_3`
+- Parcel partition: `61523-92283` (`30761` parcels)
+- New candidates: `8`
+- New source-confidence >=90: `7`
+- New cross-check targets: `7`
+- New marketing/planning status revalidation rows: `1`
+- Promoted rows: `0`
+- Source hashes: `0` (canonical runner pending)
+- Parcel matches: `0`
+- Geometry matches: `0`
+- Existing secondary queue expanded to `80` candidates and `126` source/planning HTTP targets.
+- Concurrent request ceiling remains `3`.
+- Web view expanded to `88` research rows and `43` process steps.
+- Coordinator contract search produced no indexed repository code result; remote business evidence still shows no active host execution.
+- Ownership: `unclaimed`
+- Heartbeat: absent/stale
+- Queue tasks: `2 pending`
+- Blocker: `NO_ACTIVE_CANONICAL_COORDINATOR_EXECUTION; HTTP_SHA256_DOM_AND_REMOTE_PUBLISH_PROOFS_NOT_EXECUTED`
+- `final_ready=false`
+- `fake_data=false`
+- `db_write=false`
+- `migration=false`
+- `production_deploy=false`
