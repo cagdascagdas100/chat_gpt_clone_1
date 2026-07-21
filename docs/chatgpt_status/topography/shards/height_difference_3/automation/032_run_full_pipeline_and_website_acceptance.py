@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the real pipeline, then transactional website publication acceptance."""
+"""Safely sync the existing worktree, run the real pipeline, then transactional website acceptance."""
 from __future__ import annotations
 
 import argparse
@@ -63,11 +63,12 @@ def main() -> int:
         raise ValueError("timeouts must be positive")
 
     scripts = args.script_dir.resolve()
+    syncer = scripts / "035_sync_existing_f_worktree_ff_only.py"
     bootstrap = scripts / "029_preflight_then_execute_resumable.py"
     acceptance = scripts / "031_publish_verify_three_examples_port8012.py"
     transaction = scripts / "033_transactional_website_acceptance.py"
     worktree_verifier = scripts / "034_verify_existing_f_worktree.py"
-    for path in (bootstrap, acceptance, transaction, worktree_verifier):
+    for path in (syncer, bootstrap, acceptance, transaction, worktree_verifier):
         if not path.is_file():
             raise FileNotFoundError(path)
 
@@ -75,10 +76,11 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     report_path = out / "full_pipeline_and_website_acceptance_execution.json"
     state = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": "height_difference_3",
         "updated_at": now(),
-        "status": "034_REMOTE_PARITY_WORKTREE_PREFLIGHT_STARTING",
+        "status": "035_SAFE_FAST_FORWARD_SYNC_STARTING",
+        "worktree_sync": None,
         "worktree_preflight": None,
         "pipeline": None,
         "website_acceptance_transaction": None,
@@ -96,6 +98,32 @@ def main() -> int:
     write(report_path, state)
 
     repo_root = args.repo_root.resolve()
+    sync_command = [
+        sys.executable,
+        str(syncer),
+        "--repo-root", str(repo_root),
+        "--expected-branch", args.expected_branch,
+        "--remote-name", args.remote_name,
+        "--expected-remote-repository", args.expected_remote_repository,
+        "--git-timeout", str(args.git_timeout),
+        "--output", str(out / "worktree_sync_latest.json"),
+    ]
+    state["worktree_sync"] = run(sync_command)
+    state["updated_at"] = now()
+    if state["worktree_sync"]["exit_code"] != 0:
+        state["status"] = "BLOCKED_035_SAFE_FAST_FORWARD_SYNC"
+        write(report_path, state)
+        return int(state["worktree_sync"]["exit_code"])
+
+    scripts = args.script_dir.resolve()
+    bootstrap = scripts / "029_preflight_then_execute_resumable.py"
+    acceptance = scripts / "031_publish_verify_three_examples_port8012.py"
+    transaction = scripts / "033_transactional_website_acceptance.py"
+    worktree_verifier = scripts / "034_verify_existing_f_worktree.py"
+    for path in (bootstrap, acceptance, transaction, worktree_verifier):
+        if not path.is_file():
+            raise FileNotFoundError(path)
+
     required_files = [
         "docs/chatgpt_status/topography/shards/height_difference_3/automation/004_prepare_three_real_sample_queries.py",
         "docs/chatgpt_status/topography/shards/height_difference_3/automation/008_match_hmlr_inspire_gml.py",
@@ -116,8 +144,11 @@ def main() -> int:
         "docs/chatgpt_status/topography/shards/height_difference_3/automation/032_run_full_pipeline_and_website_acceptance.py",
         "docs/chatgpt_status/topography/shards/height_difference_3/automation/033_transactional_website_acceptance.py",
         "docs/chatgpt_status/topography/shards/height_difference_3/automation/034_verify_existing_f_worktree.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/035_sync_existing_f_worktree_ff_only.py",
         "docs/chatgpt_status/topography/shards/height_difference_3/runner_tasks/012_resumable_targeted_sources.task.json",
     ]
+    state["status"] = "034_REMOTE_PARITY_WORKTREE_PREFLIGHT_STARTING"
+    write(report_path, state)
     worktree_command = [
         sys.executable,
         str(worktree_verifier),
