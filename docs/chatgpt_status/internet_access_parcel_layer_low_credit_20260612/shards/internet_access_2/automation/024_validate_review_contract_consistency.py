@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,7 @@ EXPECTED_COMPLETED = 120
 EXPECTED_TOTAL = 121
 EXPECTED_COMBINED = 260
 EXPECTED_SCOPE_FILES = 71
+EXPECTED_HISTORICAL_OVERRIDE_IDS = {55, 90}
 
 SHARD = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2")
 WEB = Path("england_map_web/data/aays_18_slots/internet_access_2")
@@ -48,6 +50,8 @@ def main() -> int:
     for name in ("operations_latest.json", "scope_operations_latest.json", "operations_provenance_latest.json"):
         payload = load(repo / WEB / name)
         operation_rows.extend(payload.get("operations") or [])
+    id_counts = Counter(int(row["id"]) for row in operation_rows)
+    duplicate_ids = {operation_id for operation_id, count in id_counts.items() if count > 1}
     by_id = {int(row["id"]): row for row in operation_rows}
     done = sum(row.get("status") == "DONE" for row in by_id.values())
     blocked = [row for row in by_id.values() if row.get("status") != "DONE"]
@@ -72,7 +76,7 @@ def main() -> int:
     checks = {
         "slot_identity_consistent": all(payload.get("slot_id") == SLOT_ID for payload in (progress, provenance, readiness, scope, task1, task2)),
         "parcel_partition_exact": progress.get("parcel_start") == EXPECTED_START and progress.get("parcel_end") == EXPECTED_END and progress.get("parcel_count") == EXPECTED_ROWS,
-        "operation_ids_unique_and_contiguous": len(by_id) == len(operation_rows) and sorted(by_id) == list(range(1, EXPECTED_TOTAL + 1)),
+        "operation_override_contract": duplicate_ids == EXPECTED_HISTORICAL_OVERRIDE_IDS and sorted(by_id) == list(range(1, EXPECTED_TOTAL + 1)) and all(by_id[operation_id].get("status") == "DONE" for operation_id in EXPECTED_HISTORICAL_OVERRIDE_IDS),
         "single_current_blocker": done == EXPECTED_COMPLETED and len(blocked) == 1 and int(blocked[0]["id"]) == EXPECTED_TOTAL,
         "progress_operation_counts_match": progress.get("completed_operations") == EXPECTED_COMPLETED and progress.get("total_operations") == EXPECTED_TOTAL and progress.get("visible_operation_rows") == EXPECTED_TOTAL,
         "source_decision_totals_match": progress.get("official_source_candidates") == 8 and progress.get("promoted_sources", 0) + progress.get("held_sources", 0) + progress.get("rejected_sources", 0) == 8,
@@ -91,12 +95,13 @@ def main() -> int:
         raise ValueError("Review contract consistency failed: " + ", ".join(failed))
 
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "status": "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY",
         "tests_passed": len(checks),
         "tests_total": len(checks),
         "test_names": list(checks),
+        "historical_override_ids": sorted(EXPECTED_HISTORICAL_OVERRIDE_IDS),
         "completed_operations": EXPECTED_COMPLETED,
         "total_operations": EXPECTED_TOTAL,
         "combined_validation_passed": EXPECTED_COMBINED,
