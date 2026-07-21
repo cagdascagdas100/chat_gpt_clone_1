@@ -10,7 +10,7 @@
 
 ## Remote authoritative readback
 
-The branch HEAD, ownership, checkpoint, status, heartbeat and current-task files were re-read before work began and again before publication. Latest base-branch readback was `81f39500c2e85e2e78281e8558798d865bd020d4`. The slot remained `UNCLAIMED`; owner, lease, task, attempt and heartbeat timestamp were null. No other slot was claimed or modified.
+The branch HEAD, ownership, checkpoint, status, heartbeat and current-task files were re-read before work began and again after publication. Latest base-branch readback was `39ad4b26a9e0c066199a82665b863a911aa9c850`. The slot remained `UNCLAIMED`; owner, lease, task, attempt and heartbeat timestamp were null. No other slot was claimed or modified.
 
 ## Completed in this wave
 
