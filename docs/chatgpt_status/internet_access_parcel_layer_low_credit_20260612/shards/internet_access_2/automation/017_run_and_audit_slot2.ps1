@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $slotId = "internet_access_2"
 $expectedRows = 30761
-$expectedCombinedValidation = 260
+$expectedCombinedValidation = 292
 $automationRoot = Join-Path $RepoRoot "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation"
 $webRoot = Join-Path $RepoRoot "england_map_web/data/aays_18_slots/internet_access_2"
 $effectiveWorkRoot = if ($WorkRoot) { $WorkRoot } else { Join-Path $RepoRoot "outputs/internet_access_2_verified_run" }
@@ -59,7 +59,7 @@ if ($bundleSelftest.status -ne "PASS" -or $bundleSelftest.tests_passed -ne 23 -o
 $provenanceSelftestRaw = & $PythonExe $provenanceVerifierSelftest
 if ($LASTEXITCODE -ne 0) { throw "Single-run provenance verifier self-test failed with exit code $LASTEXITCODE" }
 $provenanceSelftest = $provenanceSelftestRaw | ConvertFrom-Json
-if ($provenanceSelftest.status -ne "PASS" -or $provenanceSelftest.tests_passed -ne 20 -or $provenanceSelftest.tests_total -ne 20) {
+if ($provenanceSelftest.status -ne "PASS" -or $provenanceSelftest.tests_passed -ne 24 -or $provenanceSelftest.tests_total -ne 24) {
     throw "Single-run provenance verifier self-test contract mismatch"
 }
 
@@ -99,7 +99,7 @@ if ($bundleAudit.actual_business_data_rows_written -ne 0 -or $bundleAudit.scores
 $provenanceAuditRaw = & $PythonExe $provenanceVerifier --work-root $effectiveWorkRoot --web-root $webRoot --audit-output $provenanceAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Single-run provenance audit failed with exit code $LASTEXITCODE" }
 $provenanceAudit = $provenanceAuditRaw | ConvertFrom-Json
-if ($provenanceAudit.status -ne "PASS_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY" -or $provenanceAudit.canonical_rows -ne $expectedRows) {
+if ($provenanceAudit.status -ne "PASS_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY" -or $provenanceAudit.canonical_rows -ne $expectedRows -or $provenanceAudit.provenance_artifact_count -ne 12) {
     throw "Single-run provenance audit readback mismatch"
 }
 if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudit.scores_written -ne 0 -or $provenanceAudit.final_ready -ne $false) {
@@ -107,7 +107,7 @@ if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudi
 }
 
 [ordered]@{
-    schema_version = 4
+    schema_version = 5
     slot_id = $slotId
     status = "COMPLETE_REAL_RUN_CONSISTENCY_CANDIDATE_BUNDLE_AND_PROVENANCE_AUDITED_REVIEW_ONLY"
     canonical_rows = $provenanceAudit.canonical_rows
@@ -118,6 +118,8 @@ if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudi
     candidate_rows_jsonl_sha256 = $candidateAudit.candidate_rows_jsonl_sha256
     runner_bundle_audit = $bundleAuditOutput
     runner_provenance_audit = $provenanceAuditOutput
+    provenance_artifact_count = $provenanceAudit.provenance_artifact_count
+    zip_container_audit_sha256 = $provenanceAudit.zip_container_audit_sha256
     provenance_chain_sha256 = $provenanceAudit.provenance_chain_sha256
     actual_business_data_rows_written = 0
     scores_written = 0
