@@ -23,6 +23,7 @@ R2_GLOB = "202601_fixed_postcode_coverage_r2_*.csv"
 R1_GLOB = "202601_fixed_postcode_coverage_r1_*.csv"
 EXPECTED_OFCOM_FILE_COUNT = 121
 EXPECTED_OFCOM_POSTCODE_ROWS = 1741096
+POSTCODE_RE = re.compile(r"^(GIR0AA|[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2})$")
 
 FIELD_ALIASES = {
     "postcode": ["postcode", "postcode_space"],
@@ -44,6 +45,10 @@ def normalise_postcode(value: Any) -> str | None:
         return None
     cleaned = re.sub(r"\s+", "", str(value)).upper().strip()
     return cleaned or None
+
+
+def valid_postcode(value: str | None) -> bool:
+    return bool(value and POSTCODE_RE.fullmatch(value))
 
 
 def as_number(value: Any) -> float | None:
@@ -219,6 +224,47 @@ def load_ofcom_postcodes(directory: Path) -> tuple[dict[str, dict[str, Any]], li
     return coverage, file_manifest
 
 
+def resolve_postcode(canonical_value: Any, legacy_value: Any) -> dict[str, Any]:
+    canonical = normalise_postcode(canonical_value)
+    legacy = normalise_postcode(legacy_value)
+    canonical_valid = valid_postcode(canonical)
+    legacy_valid = valid_postcode(legacy)
+    invalid = [value for value, ok in ((canonical, canonical_valid), (legacy, legacy_valid)) if value and not ok]
+    conflict = bool(canonical_valid and legacy_valid and canonical != legacy)
+
+    if canonical_valid:
+        selected = canonical
+        origin = "CANONICAL"
+        if conflict:
+            resolution = "CANONICAL_VALID_LEGACY_CONFLICT_IGNORED"
+        elif legacy_valid:
+            resolution = "CANONICAL_VALID_LEGACY_SAME"
+        elif legacy:
+            resolution = "CANONICAL_VALID_LEGACY_INVALID_IGNORED"
+        else:
+            resolution = "CANONICAL_VALID"
+    elif legacy_valid:
+        selected = legacy
+        origin = "LEGACY"
+        resolution = "LEGACY_VALID_FALLBACK_CANONICAL_INVALID" if canonical else "LEGACY_VALID_FALLBACK_CANONICAL_MISSING"
+    else:
+        selected = None
+        origin = "NONE"
+        resolution = "NO_VALID_POSTCODE"
+
+    return {
+        "selected": selected,
+        "origin": origin,
+        "resolution": resolution,
+        "canonical": canonical,
+        "canonical_valid": canonical_valid,
+        "legacy": legacy,
+        "legacy_valid": legacy_valid,
+        "conflict": conflict,
+        "invalid": invalid,
+    }
+
+
 def build_rows(
     canonical_rows: list[dict[str, Any]],
     legacy_rows: dict[int, dict[str, Any]],
@@ -228,17 +274,18 @@ def build_rows(
     for canonical in canonical_rows:
         number = row_number(canonical)
         assert number is not None
-        direct_postcode = normalise_postcode(first_present(canonical, ["postcode", "postcode_space"]))
-        legacy_postcode = parse_legacy_postcode(legacy_rows.get(number, {}))
-        postcode = direct_postcode or legacy_postcode
+        canonical_raw = first_present(canonical, ["postcode", "postcode_space"])
+        legacy_raw = parse_legacy_postcode(legacy_rows.get(number, {}))
+        resolved = resolve_postcode(canonical_raw, legacy_raw)
+        postcode = resolved["selected"]
         source = coverage.get(postcode or "")
-        if source and direct_postcode:
+        if source and resolved["origin"] == "CANONICAL":
             match_method = "CANONICAL_POSTCODE"
             source_level = "POSTCODE_PROXY"
             confidence = 0.95
             accuracy = "CURRENT_R2_POSTCODE_COVERAGE_DIRECT"
             status = "CURRENT_R2_DIRECT_POSTCODE_READY_FOR_REVIEW"
-        elif source and legacy_postcode:
+        elif source and resolved["origin"] == "LEGACY":
             match_method = "LEGACY_POSTCODE_PROXY"
             source_level = "POSTCODE_PROXY_LEGACY_MATCH"
             confidence = 0.70
@@ -260,6 +307,13 @@ def build_rows(
             "parcel_centroid_lat": as_number(first_present(canonical, ["parcel_centroid_lat", "hmlr_lat", "lat", "latitude"])),
             "existing_geometry_type": canonical.get("_existing_geometry_type"),
             "postcode": postcode,
+            "canonical_postcode_candidate": resolved["canonical"],
+            "canonical_postcode_valid": resolved["canonical_valid"],
+            "legacy_postcode_candidate": resolved["legacy"],
+            "legacy_postcode_valid": resolved["legacy_valid"],
+            "postcode_resolution": resolved["resolution"],
+            "postcode_conflict": resolved["conflict"],
+            "invalid_postcode_candidates": resolved["invalid"],
             "internet_match_method": match_method,
             "source_level": source_level,
             "internet_match_confidence": confidence,
@@ -301,8 +355,12 @@ def main() -> int:
     direct = sum(row["status"] == "CURRENT_R2_DIRECT_POSTCODE_READY_FOR_REVIEW" for row in rows)
     legacy = sum(row["status"] == "CURRENT_R2_LEGACY_POSTCODE_MATCH_PENDING_SPATIAL_QA" for row in rows)
     no_data = sum(row["status"] == "NO_DATA" for row in rows)
+    resolution_counts: dict[str, int] = {}
+    for row in rows:
+        key = str(row["postcode_resolution"])
+        resolution_counts[key] = resolution_counts.get(key, 0) + 1
     manifest = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "parcel_start": ROW_START,
         "parcel_end": ROW_END,
@@ -314,6 +372,9 @@ def main() -> int:
         "direct_current_r2_matches": direct,
         "legacy_current_r2_matches_pending_spatial_qa": legacy,
         "no_data_rows": no_data,
+        "postcode_resolution_counts": resolution_counts,
+        "invalid_postcode_candidate_rows": sum(bool(row["invalid_postcode_candidates"]) for row in rows),
+        "canonical_legacy_postcode_conflict_rows": sum(bool(row["postcode_conflict"]) for row in rows),
         "ofcom_postcodes_loaded": len(coverage),
         "ofcom_files_loaded": len(source_files),
         "ofcom_required_pattern": R2_GLOB,
@@ -335,6 +396,7 @@ def main() -> int:
         "direct_current_r2_matches": direct,
         "legacy_current_r2_matches_pending_spatial_qa": legacy,
         "no_data_rows": no_data,
+        "postcode_resolution_counts": resolution_counts,
         "actual_business_data_rows_written": 0,
         "final_ready": False,
         "manifest": str(manifest_path),
