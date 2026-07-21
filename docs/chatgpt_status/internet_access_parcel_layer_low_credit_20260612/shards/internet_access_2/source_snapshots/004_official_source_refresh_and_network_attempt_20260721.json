@@ -1,14 +1,23 @@
 {
   "schema_version": 3,
   "slot_id": "internet_access_2",
-  "status": "OFFICIAL_METADATA_REFRESHED_CURRENT_RUNTIME_BYTES_BLOCKED",
+  "status": "OFFICIAL_V2_METADATA_REFRESHED_CURRENT_RUNTIME_BYTES_BLOCKED",
   "official_web_readback": {
     "ofcom_publication": {
       "published_date": "2026-05-13",
       "snapshot": "2026-01",
-      "listed_fixed_broadband_zip_mb": 32.3,
+      "listed_fixed_broadband_zip_mb": 32.2,
       "uk_residential_gigabit_percent": 89,
       "uk_residential_full_fibre_percent": 82
+    },
+    "ofcom_v2_schema": {
+      "revision_date": "2026-07-07",
+      "all_premises_postcode_files": 121,
+      "all_premises_postcode_rows": 1741096,
+      "required_pattern": "202601_fixed_postcode_coverage_r2_*.csv",
+      "rejected_pattern": "202601_fixed_postcode_coverage_r1_*.csv",
+      "corrected_duplicate_pairs": ["CW/CV", "MK/ME"],
+      "required_sha_guards": ["CW != CV", "MK != ME"]
     },
     "onspd_hosted": {"vintage":"May 2026","last_updated":"2026-06-10","use":"postcode/geography QA only"},
     "onspd_live": {"vintage":"May 2026","last_updated":"2026-06-17","use":"live postcode centroid QA only"},
@@ -28,13 +37,17 @@
     "streamer": "automation/007_stream_extract_slot2_inputs.py",
     "streamer_selftest": "automation/008_selftest_stream_extract_slot2_inputs.py",
     "orchestrator": "automation/009_probe_download_slice_join_publish_slot2.ps1",
-    "orchestrator_contract_selftest": "automation/010_selftest_probe_runner_contract.py"
+    "orchestrator_contract_selftest": "automation/010_selftest_probe_runner_contract.py",
+    "dispatch_readiness": "automation/011_runner_dispatch_readiness.py",
+    "v2_correction_validator": "automation/013_validate_ofcom_v2_corrections.py",
+    "v2_correction_validator_selftest": "automation/014_selftest_validate_ofcom_v2_corrections.py"
   },
+  "combined_validation": {"passed":88,"total":88},
   "actual_business_data_rows_written": 0,
   "fake_data": false,
   "db_write": false,
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "updated_at": "2026-07-21T03:31:00Z"
+  "updated_at": "2026-07-21T04:25:00Z"
 }
