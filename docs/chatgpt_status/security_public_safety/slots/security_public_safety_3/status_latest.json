@@ -1,0 +1,64 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_3",
+  "base_slot_id": "security_public_safety",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "updated_at": "2026-07-21T04:23:20+03:00",
+  "state": "SOURCE_DISCOVERY_COMPLETE_DATA_CONTRACT_REPAIR_REQUIRED",
+  "remote_head_before_work": "ff9ba15370fcf1df244dd64c8d03885002a156c4",
+  "kickoff_head": "bc8efc47fa670815264049d961659efbe9221abf",
+  "first_unverified_step": "HYDRATE_300_ROWS_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
+  "audit": {
+    "main_manifest_claimed_rows": 150,
+    "main_csv_actual_rows": 9,
+    "main_geojson_actual_features": 9,
+    "main_geojson_unknown_parcel_ids": 9,
+    "main_geojson_null_geometries": 9,
+    "main_claim_consistent": false,
+    "verified_rows_inside_slot": 0,
+    "rejected_existing_rows": 9,
+    "rejection_reasons": [
+      "parcel_id is unknown",
+      "geometry is null",
+      "manifest row count does not match CSV and GeoJSON",
+      "records cannot be assigned to parcel range 61523-92283"
+    ]
+  },
+  "source_discovery": {
+    "candidate_count": 6,
+    "promoted_count": 5,
+    "held_count": 1,
+    "output_path": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_source_discovery_20260721.json"
+  },
+  "progress": {
+    "completed_operations": 7,
+    "total_operations": 12,
+    "overall_percent": 18,
+    "percent_delta": 18,
+    "actual_slot_rows_written": 0,
+    "verified_slot_rows": 0,
+    "candidate_source_rows": 6,
+    "accuracy_ge_90_source_count": 2,
+    "accuracy_ge_85_source_count": 4
+  },
+  "next_required_actions": [
+    "Resolve canonical parcel geometry and centroid records for parcel_61523 through parcel_92283",
+    "Build a corrected evidence manifest whose counts are computed from the actual CSV and GeoJSON",
+    "Hydrate an initial 3-row slot sample using LSOA spatial join and explicit-month official API hashes",
+    "Expand to 300 verified slot rows only after the 3-row sample passes contract checks",
+    "Run HTTP, hash, DOM, console and browser acceptance"
+  ],
+  "blockers": [
+    "Canonical slot parcel geometry is not exposed by the current main verified output files",
+    "Main manifest and latest_changes claim 150 rows while the current main CSV and GeoJSON contain 9 unusable rows"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
