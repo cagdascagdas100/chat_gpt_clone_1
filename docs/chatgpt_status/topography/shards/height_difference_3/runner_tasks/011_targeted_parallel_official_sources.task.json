@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-targeted-parallel-official-sources-20260721",
+  "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "queue_submission": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "command": [
+    "python",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/024_execute_parallel_targeted_sources.py",
+    "--security-geojson",
+    "england_map_web/data/program_layer_matrix/security.geojson",
+    "--output-dir",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/011_real_targeted_parallel_run"
+  ],
+  "execution_order": [
+    {
+      "stage": 1,
+      "mode": "serial",
+      "action": "Stream-validate the 92,283-feature canonical carrier and export exact rows 61523-92283."
+    },
+    {
+      "stage": 2,
+      "mode": "parallel_within_same_process",
+      "maximum_workers": 2,
+      "actions": [
+        "Download current HMLR INSPIRE GML for candidate local authorities.",
+        "Download only the OS Terrain50 100 km areas required by candidate BNG coordinates."
+      ]
+    },
+    {
+      "stage": 3,
+      "mode": "serial",
+      "action": "Match exact HMLR INSPIRE polygons without nearest fill."
+    },
+    {
+      "stage": 4,
+      "mode": "parallel_within_same_process",
+      "maximum_workers": 2,
+      "actions": [
+        "Retrieve bounded Environment Agency DTM 1m WCS coverages.",
+        "Extract and validate exact Terrain50 10 km ASCII tiles from acquired area packages."
+      ]
+    },
+    {
+      "stage": 5,
+      "mode": "serial",
+      "action": "Calculate official EA polygon statistics and independent Terrain50 cross-checks."
+    },
+    {
+      "stage": 6,
+      "mode": "serial",
+      "action": "Publish only HIGH or MEDIUM_HIGH verified JSON and GeoJSON rows."
+    }
+  ],
+  "acceptance": [
+    "exact 92,283 canonical explicit row registry validated",
+    "exact 30,761-row shard export for 61523-92283",
+    "first three source-backed unresolved candidates selected",
+    "only candidate-required Terrain50 100 km areas downloaded",
+    "OS API metadata MD5 verified when supplied",
+    "local SHA256 and safe ZIP validation recorded",
+    "current HMLR polygon exact match",
+    "EA DTM 1m numeric polygon sample",
+    "OS Terrain50 exact tile independent cross-check",
+    "only verified rows published"
+  ],
+  "current_blockers": [
+    "EXISTING_F_RUNNER_MUST_EXECUTE_024_ON_COMMITTED_SECURITY_GEOJSON",
+    "OFFICIAL_HMLR_OS_AND_EA_NETWORK_CALLS_MUST_COMPLETE",
+    "OFFICIAL_CROSSCHECKED_REAL_ROWS_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
