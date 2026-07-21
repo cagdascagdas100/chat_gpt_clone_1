@@ -20,7 +20,8 @@
   <div id="summary" class="grid"></div>
   <div id="blockers"></div>
   <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2 smoke doğrulaması</h2><div id="smoke" class="scroll"></div></section>
-  <section class="section"><h2>Yapılan işlemler</h2><div id="operations" class="scroll"></div></section>
+  <section class="section smoke"><h2>V5.2 smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
+  <section class="section"><h2>Önceki ve genel işlemler</h2><div id="operations" class="scroll"></div></section>
   <section class="section"><h2>48 parsel adayı ve dört kabul kapısı</h2><div id="rows" class="scroll"></div></section>
   <section class="section"><h2>Resmî kaynak adayları, tarihler ve kullanım sınırları</h2><div id="sources" class="scroll"></div></section>
 <script>
@@ -34,9 +35,10 @@ function rowsTable(rows,showChunk=true){return `<table><thead><tr><th>Satır</th
 function sourcesTable(rows){return `<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Ad</th><th>Yayıncı</th><th>Doğruluk</th><th>Karar</th><th>Kanıt tarihi</th><th>Tazelik</th><th>Kullanım sınırı</th><th>Resmî URL</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.source_id)}</td><td>${esc(r.name)}</td><td>${esc(r.publisher)}</td><td>${esc(r.authority_accuracy)}</td><td>${esc(r.decision)}</td><td>${esc(r.evidence_date)}</td><td>${esc(r.freshness_status)}</td><td>${esc(r.semantic_limit)}</td><td class="url"><a href="${esc(r.official_url)}" target="_blank" rel="noopener">${esc(r.official_url)}</a></td></tr>`).join('')}</tbody></table>`}
 async function main(){
   try{
-    const[p,o,smoke,r,s]=await Promise.all([
+    const[p,o,so,smoke,r,s]=await Promise.all([
       load('security_public_safety_3_progress_latest.json'),
       load('security_public_safety_3_operations_latest.json'),
+      load('security_public_safety_3_smoke_operations_latest.json'),
       load('security_public_safety_3_smoke_rows_latest.json'),
       load('security_public_safety_3_rows_latest.json'),
       load('security_public_safety_3_source_candidates_latest.json')
@@ -45,9 +47,10 @@ async function main(){
       card('Genel ilerleme','%'+p.overall_progress_percent,'ok')+
       card('Artış','+'+p.progress_delta_percent+'%','ok')+
       card('İşlemler',p.completed_operations+' / '+p.total_operations)+
+      card('Web işlem satırı',p.visible_operation_rows)+
       card('Smoke aday',p.smoke_candidate_rows||3)+
       card('Toplam parsel',p.visible_parcel_rows)+
-      card('Kapı hücresi',p.prepared_acceptance_gate_cells)+
+      card('Bulk kapısı',p.prepared_acceptance_gate_cells)+
       card('Smoke kapısı',p.smoke_prepared_gate_cells||12)+
       card('4/4 doğrulanmış',p.accuracy_score_4_rows,p.accuracy_score_4_rows?'ok':'warn')+
       card('Yükseltilen kaynak',p.promoted_sources,'ok')+
@@ -55,6 +58,7 @@ async function main(){
       card('Runner heartbeat',p.runner_heartbeat_fresh?'taze':'eski',p.runner_heartbeat_fresh?'ok':'bad');
     document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
     document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,false);
+    document.getElementById('smokeOperations').innerHTML=operationsTable(so.rows);
     document.getElementById('operations').innerHTML=operationsTable(o.rows);
     document.getElementById('rows').innerHTML=rowsTable(r.rows,true);
     document.getElementById('sources').innerHTML=sourcesTable(s.rows);
