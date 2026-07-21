@@ -20,7 +20,10 @@
   <h2>Kabul durumu</h2>
   <div id="acceptance" class="path">Yükleniyor…</div>
   <p><a href="./browser_acceptance_precheck.html">100 satırlık statik ön-kabul sonuçlarını satır satır aç</a></p>
-  <h2>Browser runner v4 — 17 adım</h2>
+  <h2>Existing single runner pickup preflight — 17 satır</h2>
+  <p class="muted">İlk 15 satır hazırlık kanıtıdır; son iki satır yalnız canonical F runner çalışınca PASS olabilir.</p>
+  <div class="scroll"><table><thead><tr><th>Satır</th><th>Kontrol</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th></tr></thead><tbody id="pickupChecks"></tbody></table></div>
+  <h2>Browser runner v5 — 19 adım</h2>
   <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th><th>Beklenen/üretilen kanıt</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
   <h2>Yükseltilen resmî kaynaklar</h2>
   <div class="scroll"><table><thead><tr><th>#</th><th>Kaynak</th><th>Yüzey</th><th>Durum</th><th>Yetki</th><th>Doğrulama</th><th>Bağlantı</th></tr></thead><tbody id="sources"></tbody></table></div>
@@ -35,10 +38,10 @@
 (async()=>{
   try{
     const ts=Date.now();
-    const urls=['summary_latest.json','browser_acceptance_runner_status_latest.json','source_provenance_latest.json','official_spotcheck_latest.json','official_spotcheck_batch2_latest.json','official_spotcheck_batch3_latest.json','official_spotcheck_batch4_latest.json'];
+    const urls=['summary_latest.json','browser_acceptance_runner_status_latest.json','source_provenance_latest.json','runner_pickup_preflight_latest.json','official_spotcheck_latest.json','official_spotcheck_batch2_latest.json','official_spotcheck_batch3_latest.json','official_spotcheck_batch4_latest.json'];
     const responses=await Promise.all(urls.map(x=>fetch('./'+x+'?ts='+ts,{cache:'no-store'})));
-    if(responses.some(r=>!r.ok)) throw new Error('Özet, runner, kaynak veya satır denetimi JSON yüklenemedi');
-    const [summary,runner,provenance,...spotchecks]=await Promise.all(responses.map(r=>r.json()));
+    if(responses.some(r=>!r.ok)) throw new Error('Özet, runner, pickup, kaynak veya satır denetimi JSON yüklenemedi');
+    const [summary,runner,provenance,pickup,...spotchecks]=await Promise.all(responses.map(r=>r.json()));
     const spotRows=spotchecks.flatMap((d,i)=>(d.rows||[]).map(x=>({...x,group:String(i+1)})));
     const spotPassed=spotchecks.reduce((n,d)=>n+(d.passed_count||0),0);
     const candidatePaths=[summary.base_rows_path,...(summary.batch_paths||[])];
@@ -48,16 +51,17 @@
     const rows=documents.flatMap(d=>d.rows||[]);
     const m=summary.metrics,a=summary.acceptance||{},p=summary.precheck||{},audit=runner.static_audit||{};
     document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Aday=${rows.length} | Resmî denetim=${spotPassed}/${spotRows.length}`;
-    const cards=[['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotPassed+' / '+spotRows.length],['Denetim güveni','99%'],['Runner sürümü','v'+(runner.runner_version||1)],['V4 statik audit',audit.status||'BEKLİYOR'],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']];
+    const cards=[['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotPassed+' / '+spotRows.length],['Denetim güveni','99%'],['Runner sürümü','v'+(runner.runner_version||1)],['Pickup hazırlık',pickup.prepared_checks_passed+' / '+pickup.prepared_checks_total],['Pickup runtime',pickup.runtime_checks_passed+' / '+pickup.runtime_checks_total],['Ekran görüntüsü',runner.screenshot_captured===true?'PASS':'BEKLİYOR'],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Resmî kaynak satırı denetimi=${spotPassed}/${spotRows.length} | V4 statik audit=${audit.status||'BEKLİYOR'} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status}`;
+    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Resmî kaynak satırı denetimi=${spotPassed}/${spotRows.length} | Pickup=${pickup.status} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status}`;
+    document.getElementById('pickupChecks').innerHTML=(pickup.checks||[]).map(x=>{const cls=x.state==='PASS'?'ok':x.state.includes('WAITING')?'pending':'fail';return `<tr><td>${x.row}</td><td>${x.check}</td><td>${String(x.expected)}</td><td>${String(x.actual)}</td><td class="${cls}">${x.state}</td></tr>`}).join('');
     document.getElementById('runnerSteps').innerHTML=(runner.steps||[]).map(x=>{const cls=x.state==='PASS'?'ok':x.state==='FAIL'?'fail':'pending';return `<tr><td>${x.step}</td><td>${x.name}</td><td class="${cls}">${x.state}</td><td>${x.evidence||'—'}</td></tr>`}).join('');
     document.getElementById('sources').innerHTML=(provenance.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${x.title}</td><td>${x.surface}</td><td>${x.status}</td><td>${x.authority_score}/100</td><td class="ok">${x.verification}</td><td><a href="${x.url}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
     const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
     document.getElementById('spotchecks').innerHTML=spotRows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.group}</td><td>${x.row_id}</td><td>${x.calendar_year}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.old_preview_line}</td><td>${x.new_preview_line}</td><td>${x.candidate_confidence}%</td><td>${x.spotcheck_verification_confidence}%</td><td class="ok">${x.verification}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`).join('');
     document.getElementById('rows').innerHTML=rows.map((x,i)=>{const decision=x.decision||'';const cls=decision.includes('HIGH')?'warn':decision.includes('MATERIAL')?'material':'ok';return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year??'—'}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td>${x.old_preview_line??'—'}</td><td>${x.new_preview_line??'—'}</td><td class="${cls}">${decision}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`}).join('');
     document.getElementById('blocker').textContent=summary.blocker;
-    window.__gasEmissions3Progress={slot_id:summary.slot_id,candidate_rows:rows.length,official_spotcheck_rows:spotRows.length,official_spotcheck_passed:spotPassed,runner_version:runner.runner_version,browser_rows:a.last_proven_dom_rows,browser_passed:a.passed===true};
+    window.__gasEmissions3Progress={slot_id:summary.slot_id,candidate_rows:rows.length,official_spotcheck_rows:spotRows.length,official_spotcheck_passed:spotPassed,pickup_prepared:pickup.prepared_checks_passed,pickup_runtime:pickup.runtime_checks_passed,runner_version:runner.runner_version,browser_rows:a.last_proven_dom_rows,browser_passed:a.passed===true};
   }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
 })();
 </script>
