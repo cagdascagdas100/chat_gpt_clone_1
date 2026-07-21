@@ -6,18 +6,18 @@ if "%AAYS_REPO_ROOT%"=="" (
   exit /b 10
 )
 
-set "PUBLISHER=%~dp0publish_gas_emissions_3_100_browser_proof.ps1"
-if not exist "%PUBLISHER%" (
-  echo ERROR: Publisher script not found: %PUBLISHER%
+set "WRAPPER=%~dp0publish_gas_emissions_3_100_browser_proof_v4.ps1"
+if not exist "%WRAPPER%" (
+  echo ERROR: V4 browser proof wrapper not found: %WRAPPER%
   exit /b 11
 )
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PUBLISHER%" -RepoRoot "%AAYS_REPO_ROOT%" -Branch "codex/aays-single-runner-v5-20260706"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%WRAPPER%" -RepoRoot "%AAYS_REPO_ROOT%" -Branch "codex/aays-single-runner-v5-20260706"
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" (
-  echo GAS_EMISSIONS_3_BROWSER_ACCEPTANCE_FAILED RC=%RC%
+  echo GAS_EMISSIONS_3_BROWSER_ACCEPTANCE_V4_FAILED RC=%RC%
   exit /b %RC%
 )
 
-echo GAS_EMISSIONS_3_BROWSER_ACCEPTANCE_AND_REMOTE_READBACK_COMPLETE
+echo GAS_EMISSIONS_3_BROWSER_ACCEPTANCE_V4_DURABLE_REMOTE_READBACK_COMPLETE
 exit /b 0
