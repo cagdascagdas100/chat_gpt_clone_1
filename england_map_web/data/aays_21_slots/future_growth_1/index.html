@@ -2,20 +2,17 @@
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>future_growth_1 ilerleme</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}
-.cards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:12px;min-width:170px}
-.big{font-size:26px;font-weight:700}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}
-table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
-.ok{font-weight:700}.blocked{font-weight:700}.muted{color:#546e7a}
-</style></head><body>
+body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}.cards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:12px;min-width:170px}.big{font-size:26px;font-weight:700}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.ok{font-weight:700}.blocked{font-weight:700}.muted{color:#546e7a}a{color:#0b57d0}</style></head><body>
 <h1>future_growth_1 — Resmî kaynak adayları</h1>
 <div class="notice">Aday satırlar resmî kaynak noktalarından hazırlanmıştır. Site poligonu ve tam faktör matrisi doğrulanmadan Future Growth skoru üretilmez. Kesin fiyat tahmini değildir.</div>
+<p><a href="geometry_wave_2.html">Resmî geometri edinme işlemlerini satır satır aç</a></p>
 <div class="cards">
 <div class="card"><div>Kaynak doğrulama</div><div class="big" id="sources">-</div></div>
 <div class="card"><div>Örnek parsel</div><div class="big" id="parcels">-</div></div>
 <div class="card"><div>Aday satır</div><div class="big" id="rows">-</div></div>
 <div class="card"><div>Güncel aday</div><div class="big" id="current">-</div></div>
 <div class="card"><div>Eski kayıt reddi</div><div class="big" id="rejected">-</div></div>
+<div class="card"><div>Geometri testi</div><div class="big" id="geometryTests">-</div></div>
 <div class="card"><div>Skorlu iş satırı</div><div class="big" id="scored">0</div></div>
 </div>
 <h2>Satır satır adaylar</h2>
@@ -24,12 +21,12 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:
 <table><thead><tr><th>Kaynak</th><th>Durum</th><th>Resmî URL</th><th>İnternet doğrulaması</th></tr></thead><tbody id="sourceBody"></tbody></table>
 <p class="muted" id="generated"></p>
 <script>
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-Promise.all(['candidates_latest.json','progress_latest.json'].map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p);return r.json()}))).then(([d,p])=>{
-sources.textContent=`${p.official_source_validation.validated}/${p.official_source_validation.registry_total}`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+Promise.all(['candidates_latest.json','progress_latest.json','geometry_acquisition_latest.json'].map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p);return r.json()}))).then(([d,p,g])=>{
+sources.textContent=`${g.official_sources_validated}/${g.official_source_registry_total}`;geometryTests.textContent=g.quality.geometry_pipeline_selftest;
 parcels.textContent=d.counts.canonical_parcels_sampled;rows.textContent=d.counts.candidate_rows;current.textContent=d.counts.current_official_candidates;rejected.textContent=d.counts.stale_or_completed_rejections;scored.textContent=d.counts.scored_business_rows;
 candidateBody.innerHTML=d.candidates.map(x=>`<tr><td>${esc(x.row_no)}</td><td>${esc(x.parcel_id)}</td><td>${esc(x.hmlr_inspire_id)}</td><td><a href="${esc(x.source_url)}" target="_blank" rel="noopener">${esc(x.source_reference)}</a><br>${esc(x.site_address)}</td><td>${esc(x.point_distance_m)} m<br>${esc(x.relation_candidate)}</td><td>${esc(x.hectares)} ha</td><td>${esc(x.minimum_net_dwellings)}–${esc(x.maximum_net_dwellings)}</td><td class="${x.source_current?'ok':'blocked'}">${esc(x.verification_state)}</td><td>${esc(x.confidence_cap)}</td><td>${x.future_growth_score==null?'NO_DATA':esc(x.future_growth_score)}</td></tr>`).join('');
 sourceBody.innerHTML=d.source_upgrades.map(x=>`<tr><td>${esc(x.source_key)}</td><td>${esc(x.status)}</td><td><a href="${esc(x.official_url)}" target="_blank" rel="noopener">resmî kaynak</a></td><td><pre>${esc(JSON.stringify(x.internet_readback,null,2))}</pre></td></tr>`).join('');
-generated.textContent=`Üretim: ${d.generated_at} | Branch: ${d.branch} | actual_business_data_rows_written=${d.counts.actual_business_data_rows_written}`;
-}).catch(e=>{candidateBody.innerHTML='<tr><td colspan="10">JSON dosyaları okunamadı</td></tr>';sourceBody.innerHTML='<tr><td colspan="4">Kaynak JSON dosyası okunamadı</td></tr>'});
+generated.textContent=`Aday dalgası: ${d.generated_at} | Geometri dalgası: ${g.generated_at} | actual_business_data_rows_written=${d.counts.actual_business_data_rows_written}`;
+}).catch(()=>{candidateBody.innerHTML='<tr><td colspan="10">JSON dosyaları okunamadı</td></tr>';sourceBody.innerHTML='<tr><td colspan="4">Kaynak JSON dosyası okunamadı</td></tr>'});
 </script></body></html>
