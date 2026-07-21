@@ -24,7 +24,7 @@ checks={
   "examples_not_real":examples.get("real_parcel_rows")==0 and examples.get("actual_business_data_rows_written")==0,
   "no_data_methods":{x["required_method"] for x in examples["examples"] if x["candidate_class"]=="NO_DATA"}=={"NO_POSTCODE","POSTCODE_NOT_IN_CURRENT_R2"},
   "reject_examples":sum(x["decision"]=="REJECT_FAIL_CLOSED" for x in examples["examples"])==2,
-  "validation_215":contract["combined_validation"]=={"passed":215,"total":215},
+  "validation_228":contract["combined_validation"]=={"passed":228,"total":228},
   "candidate_tests_25":contract["candidate_integrity_selftest"]=={"passed":25,"total":25},
   "rendered_operations_109":len(rendered)==109 and rendered[0]["id"]==1 and rendered[-1]["id"]==109,
   "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==109,
