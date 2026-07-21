@@ -100,16 +100,30 @@ class RasterUse:
         }
 
 
-def _polygon_values(geometry_27700: Any, paths: list[Path]) -> tuple[np.ndarray, list[RasterUse], list[str]]:
+def _raster_crs(dataset: Any, path: Path, *, terrain50_ascii: bool) -> CRS:
+    if dataset.crs is not None:
+        return CRS.from_user_input(dataset.crs)
+    # Esri ASCII grids do not embed a CRS. Official OS Terrain 50 GB grids
+    # are explicitly British National Grid; the preceding tile/header gate
+    # has already validated their 10 km BNG origin and 50 m cell size.
+    if terrain50_ascii and path.suffix.casefold() == ".asc":
+        return TARGET_CRS
+    raise ValueError("raster CRS missing")
+
+
+def _polygon_values(
+    geometry_27700: Any,
+    paths: list[Path],
+    *,
+    terrain50_ascii: bool = False,
+) -> tuple[np.ndarray, list[RasterUse], list[str]]:
     arrays: list[np.ndarray] = []
     uses: list[RasterUse] = []
     errors: list[str] = []
     for path in paths:
         try:
             with rasterio.open(path) as dataset:
-                if dataset.crs is None:
-                    raise ValueError("raster CRS missing")
-                raster_crs = CRS.from_user_input(dataset.crs)
+                raster_crs = _raster_crs(dataset, path, terrain50_ascii=terrain50_ascii)
                 geometry_raster = _transform_geometry(geometry_27700, TARGET_CRS, raster_crs)
                 if not geometry_raster.intersects(box(*dataset.bounds)):
                     continue
@@ -148,9 +162,7 @@ def _centroid_sample(centroid_27700: Point, paths: list[Path]) -> tuple[float | 
     for path in paths:
         try:
             with rasterio.open(path) as dataset:
-                if dataset.crs is None:
-                    raise ValueError("raster CRS missing")
-                raster_crs = CRS.from_user_input(dataset.crs)
+                raster_crs = _raster_crs(dataset, path, terrain50_ascii=True)
                 point_raster = _transform_geometry(centroid_27700, TARGET_CRS, raster_crs)
                 if not box(*dataset.bounds).covers(point_raster):
                     continue
@@ -245,7 +257,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         display_geometry = _transform_geometry(geometry, TARGET_CRS, DISPLAY_CRS)
         centroid = geometry.centroid
         ea_values, ea_uses, ea_errors = _polygon_values(geometry, ea_paths)
-        os_values, os_uses, os_errors = _polygon_values(geometry, os_paths)
+        os_values, os_uses, os_errors = _polygon_values(geometry, os_paths, terrain50_ascii=True)
         os_centroid, os_centroid_source, os_centroid_errors = _centroid_sample(centroid, os_paths)
         ea_stats = _stats(ea_values)
         os_stats = _stats(os_values)
