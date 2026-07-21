@@ -9,21 +9,20 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
+
 def _write(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
+
 def _run(command: list[str], cwd: Path) -> dict[str, Any]:
     process = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
-    return {
-        "command": command,
-        "exit_code": process.returncode,
-        "stdout": process.stdout[-8000:],
-        "stderr": process.stderr[-8000:],
-    }
+    return {"command": command, "exit_code": process.returncode, "stdout": process.stdout[-8000:], "stderr": process.stderr[-8000:]}
+
 
 def _load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
 
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
@@ -36,25 +35,25 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--terrain50-root", type=Path)
     parser.add_argument("--wcs-url")
     parser.add_argument("--coverage-id")
+    parser.add_argument("--web-base-url", default=os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_WEB_BASE_URL", "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/"))
+    parser.add_argument("--expected-web-operation-rows", type=int, default=int(os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "125")))
     args = parser.parse_args(argv)
 
     repo_root = args.repo_root.resolve()
     automation = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/automation"
     ea_script = automation / "012_sample_ea_dtm1m_polygons.py"
-    terrain_script = automation / "013_crosscheck_os_terrain50.py"
+    terrain_wrapper = automation / "016_prepare_and_crosscheck_os_terrain50.py"
+    web_verifier = automation / "017_verify_height_difference_2_web_8012.py"
     ea_output = args.output_dir / "ea_dtm1m_polygon_samples.json"
     terrain_output = args.output_dir / "os_terrain50_crosschecks.json"
+    web_acceptance_output = args.output_dir / "port_8012_web_acceptance.json"
     execution_output = args.output_dir / "official_numeric_gate_execution.json"
     stages: list[dict[str, Any]] = []
 
     try:
-        if not ea_script.is_file() or not terrain_script.is_file():
+        if not ea_script.is_file() or not terrain_wrapper.is_file():
             raise FileNotFoundError("official numeric gate script missing")
-        ea_command = [
-            sys.executable, str(ea_script),
-            "--hmlr-exact-matches", str(args.hmlr_exact_matches),
-            "--output", str(ea_output),
-        ]
+        ea_command = [sys.executable, str(ea_script), "--hmlr-exact-matches", str(args.hmlr_exact_matches), "--output", str(ea_output)]
         if args.wcs_url:
             ea_command.extend(["--wcs-url", args.wcs_url])
         if args.coverage_id:
@@ -63,140 +62,55 @@ def main(argv: Iterable[str] | None = None) -> int:
         stages.append(ea_stage)
 
         if ea_stage["exit_code"] != 0:
-            terrain_stage = {
-                "stage": "OS_TERRAIN50_CROSSCHECK",
-                "exit_code": 2,
-                "status": "SKIPPED_EA_DTM1M_GATE_FAILED",
-            }
+            terrain_stage = {"stage": "OS_TERRAIN50_PREPARATION_AND_CROSSCHECK", "exit_code": 2, "status": "SKIPPED_EA_DTM1M_GATE_FAILED"}
             stages.append(terrain_stage)
         else:
-            terrain_command = [
-                sys.executable, str(terrain_script),
-                "--hmlr-exact-matches", str(args.hmlr_exact_matches),
-                "--ea-samples", str(ea_output),
-                "--work-dir", str(args.output_dir / "terrain50_work"),
-                "--output", str(terrain_output),
-            ]
-            archive = args.terrain50_archive or (
-                Path(os.environ["AAYS_TERRAIN50_ARCHIVE"]) if os.environ.get("AAYS_TERRAIN50_ARCHIVE") else None
-            )
-            root = args.terrain50_root or (
-                Path(os.environ["AAYS_TERRAIN50_ROOT"]) if os.environ.get("AAYS_TERRAIN50_ROOT") else None
-            )
+            terrain_command = [sys.executable, str(terrain_wrapper), "--repo-root", str(repo_root), "--hmlr-exact-matches", str(args.hmlr_exact_matches), "--ea-samples", str(ea_output), "--output-dir", str(args.output_dir / "terrain50_preparation"), "--output", str(terrain_output)]
+            archive = args.terrain50_archive or (Path(os.environ["AAYS_TERRAIN50_ARCHIVE"]) if os.environ.get("AAYS_TERRAIN50_ARCHIVE") else None)
+            root = args.terrain50_root or (Path(os.environ["AAYS_TERRAIN50_ROOT"]) if os.environ.get("AAYS_TERRAIN50_ROOT") else None)
             if archive:
                 terrain_command.extend(["--terrain50-archive", str(archive)])
             elif root:
                 terrain_command.extend(["--terrain50-root", str(root)])
-            else:
-                terrain_stage = {
-                    "stage": "OS_TERRAIN50_CROSSCHECK",
-                    "exit_code": 2,
-                    "status": "BLOCKED_TERRAIN50_ARCHIVE_OR_ROOT_NOT_CONFIGURED",
-                }
-                stages.append(terrain_stage)
-                terrain_command = []
-            if terrain_command:
-                terrain_stage = {"stage": "OS_TERRAIN50_CROSSCHECK", **_run(terrain_command, repo_root)}
-                stages.append(terrain_stage)
+            terrain_stage = {"stage": "OS_TERRAIN50_PREPARATION_AND_CROSSCHECK", **_run(terrain_command, repo_root)}
+            stages.append(terrain_stage)
 
         ea_payload = _load(ea_output) if ea_output.is_file() else {}
         terrain_payload = _load(terrain_output) if terrain_output.is_file() else {}
-        success = (
-            ea_payload.get("status") == "THREE_EA_DTM1M_POLYGON_SAMPLES_READY"
-            and terrain_payload.get("status") == "THREE_OS_TERRAIN50_CROSSCHECKS_READY"
-        )
+        success = ea_payload.get("status") == "THREE_EA_DTM1M_POLYGON_SAMPLES_READY" and terrain_payload.get("status") == "THREE_OS_TERRAIN50_CROSSCHECKS_READY"
         ea_rows = {int(row["row_no"]): row for row in ea_payload.get("samples", [])}
         terrain_rows = {int(row["row_no"]): row for row in terrain_payload.get("crosschecks", [])}
         measured_rows = []
         if success:
+            if set(ea_rows) != set(terrain_rows) or len(ea_rows) != 3:
+                raise ValueError("EA and Terrain50 row sets are not the same three rows")
             for row_no in sorted(ea_rows):
                 ea_row = ea_rows[row_no]
                 os_row = terrain_rows[row_no]
-                measured_rows.append({
-                    "row_no": row_no,
-                    "parcel_id": ea_row["parcel_id"],
-                    "hmlr_inspire_id": ea_row["hmlr_inspire_id"],
-                    "height_difference_from_sea_level_m": ea_row["median_m_odn"],
-                    "ea_dtm1m_q1_m_odn": ea_row["q1_m_odn"],
-                    "ea_dtm1m_median_m_odn": ea_row["median_m_odn"],
-                    "ea_dtm1m_q3_m_odn": ea_row["q3_m_odn"],
-                    "ea_valid_pixel_count": ea_row["valid_pixel_count"],
-                    "os_terrain50_median_m_odn": os_row["terrain50_median_m_odn"],
-                    "os_terrain50_minus_ea_median_m": os_row["terrain50_minus_ea_median_m"],
-                    "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
-                    "secondary_crosscheck_source": "OS Terrain 50",
-                    "measurement_geometry": "exact HMLR INSPIRE polygon",
-                    "processing_crs": "EPSG:27700",
-                    "vertical_reference": "Ordnance Datum Newlyn",
-                    "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review",
-                    "final_ready": False,
-                })
+                measured_rows.append({"row_no": row_no, "parcel_id": ea_row["parcel_id"], "hmlr_inspire_id": ea_row["hmlr_inspire_id"], "height_difference_from_sea_level_m": ea_row["median_m_odn"], "ea_dtm1m_q1_m_odn": ea_row["q1_m_odn"], "ea_dtm1m_median_m_odn": ea_row["median_m_odn"], "ea_dtm1m_q3_m_odn": ea_row["q3_m_odn"], "ea_valid_pixel_count": ea_row["valid_pixel_count"], "os_terrain50_median_m_odn": os_row["terrain50_median_m_odn"], "os_terrain50_minus_ea_median_m": os_row["terrain50_minus_ea_median_m"], "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m", "secondary_crosscheck_source": "OS Terrain 50", "measurement_geometry": "exact HMLR INSPIRE polygon", "processing_crs": "EPSG:27700", "vertical_reference": "Ordnance Datum Newlyn", "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review", "final_ready": False})
         status = "THREE_OFFICIAL_NUMERIC_ROWS_READY_PENDING_REVIEW" if success else "BLOCKED_OFFICIAL_NUMERIC_GATE"
-        payload = {
-            "schema_version": 2,
-            "slot_id": "height_difference_2",
-            "status": status,
-            "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
-            "stage_order": [
-                "THREE_EXACT_HMLR_INSPIRE_POLYGONS",
-                "EA_DTM1M_POLYGON_SAMPLING",
-                "OS_TERRAIN50_CROSSCHECK",
-            ],
-            "stages": stages,
-            "hmlr_exact_matches_path": str(args.hmlr_exact_matches),
-            "ea_output_path": str(ea_output),
-            "terrain50_output_path": str(terrain_output),
-            "official_numeric_row_count": len(measured_rows),
-            "measured_rows": measured_rows,
-            "automatic_final_promotion": False,
-            "human_crosscheck_review_required": True,
-            "source_urls": {
-                "hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-                "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
-                "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50",
-            },
-            "final_ready": False,
-            "fake_data": False,
-            "db_write": False,
-            "migration": False,
-            "production_deploy": False,
-        }
+        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": status, "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720", "stage_order": ["THREE_EXACT_HMLR_INSPIRE_POLYGONS", "EA_DTM1M_POLYGON_SAMPLING", "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50", "OS_TERRAIN50_CROSSCHECK", "PORT_8012_WEB_ACCEPTANCE"], "stages": stages, "hmlr_exact_matches_path": str(args.hmlr_exact_matches), "ea_output_path": str(ea_output), "terrain50_output_path": str(terrain_output), "official_numeric_row_count": len(measured_rows), "measured_rows": measured_rows, "automatic_final_promotion": False, "human_crosscheck_review_required": True, "source_urls": {"hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download", "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs", "os_downloads_api": "https://api.os.uk/downloads/v1/products", "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50"}, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 0 if success else 2
     except Exception as exc:
-        payload = {
-            "schema_version": 2,
-            "slot_id": "height_difference_2",
-            "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR",
-            "error": f"{type(exc).__name__}: {exc}",
-            "stages": stages,
-            "official_numeric_row_count": 0,
-            "final_ready": False,
-            "fake_data": False,
-            "db_write": False,
-            "migration": False,
-            "production_deploy": False,
-        }
+        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR", "error": f"{type(exc).__name__}: {exc}", "stages": stages, "official_numeric_row_count": 0, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 2
 
     _write(args.final_output, payload)
     _write(execution_output, payload)
     if args.web_output:
-        web_payload = {
-            "schema_version": 1,
-            "slot_id": "height_difference_2",
-            "status": payload["status"],
-            "candidate_count": payload.get("official_numeric_row_count", 0),
-            "candidates": payload.get("measured_rows", []),
-            "final_ready": False,
-            "fake_data": False,
-        }
-        _write(args.web_output, web_payload)
-    print(json.dumps({
-        "ok": code == 0,
-        "status": payload["status"],
-        "rows": payload.get("official_numeric_row_count", 0),
-    }))
+        _write(args.web_output, {"schema_version": 1, "slot_id": "height_difference_2", "status": payload["status"], "candidate_count": payload.get("official_numeric_row_count", 0), "candidates": payload.get("measured_rows", []), "final_ready": False, "fake_data": False})
+    if web_verifier.is_file():
+        web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", **_run([sys.executable, str(web_verifier), "--base-url", args.web_base_url, "--expected-operation-rows", str(args.expected_web_operation_rows), "--output", str(web_acceptance_output)], repo_root)}
+        stages.append(web_stage)
+        payload["stages"] = stages
+        payload["web_acceptance_output_path"] = str(web_acceptance_output)
+        if web_acceptance_output.is_file():
+            payload["web_acceptance"] = _load(web_acceptance_output)
+        _write(args.final_output, payload)
+        _write(execution_output, payload)
+    print(json.dumps({"ok": code == 0, "status": payload["status"], "rows": payload.get("official_numeric_row_count", 0)}))
     return code
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
