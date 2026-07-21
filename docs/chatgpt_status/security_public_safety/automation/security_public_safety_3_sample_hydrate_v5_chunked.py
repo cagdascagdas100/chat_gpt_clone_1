@@ -7,8 +7,8 @@ from pathlib import Path
 CORE_PATH = Path(__file__).with_name("security_public_safety_3_sample_hydrate_v4.py")
 EXPECTED_BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
 TARGET_IDS = [f"parcel_{value}" for value in range(61523, 61571)]
-TASK_VERSION = "5.0-chunked-fail-closed"
-ATTEMPT_ID = "security-public-safety-3-20260721-007"
+TASK_VERSION = "5.1-powershell-carrier"
+ATTEMPT_ID = "security-public-safety-3-20260721-008"
 STATUS_BY_ACCURACY = {
     0: "NO_ACCEPTANCE_GATE_PASSED",
     1: "ONE_OF_FOUR_GATES_PASSED",
