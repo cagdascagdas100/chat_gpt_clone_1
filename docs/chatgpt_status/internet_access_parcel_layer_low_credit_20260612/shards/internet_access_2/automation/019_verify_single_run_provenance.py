@@ -219,7 +219,7 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     chain_id = hashlib.sha256("\n".join(chain_inputs).encode("ascii")).hexdigest()
 
     result = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "status": "PASS_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY",
         "provenance_artifact_count": len(chain_inputs),
@@ -229,6 +229,11 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
         "status_counts": expected_counts,
         "visible_example_rows": visible,
         "zip_sha256": zip_sha,
+        "zip_bytes": zip_bytes,
+        "zip_container_status": zip_container["status"],
+        "zip_container_entry_count": int(zip_container.get("entry_count", -1)),
+        "zip_container_r1_postcode_file_count": int(zip_container.get("r1_postcode_file_count", -1)),
+        "zip_container_r2_postcode_file_count": int(zip_container.get("r2_postcode_file_count", -1)),
         "zip_container_audit_sha256": zip_container_sha,
         "canonical_slice_sha256": canonical_slice_sha,
         "legacy_slice_sha256": legacy_slice_sha,
