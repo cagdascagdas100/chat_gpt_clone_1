@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>internet_access_2 source wave 1</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}
+    h1{margin-bottom:.25rem}.muted{color:#5d6878}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}
+    .metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}
+    table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border:1px solid #d7dde6;padding:.55rem;text-align:left;vertical-align:top}
+    th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem}
+  </style>
+</head>
+<body>
+  <h1>internet_access_2 — official source wave 1</h1>
+  <p class="muted">Partition 30,762–61,522. Review branch only; authoritative slot remains unclaimed.</p>
+  <div class="metrics">
+    <div class="metric"><span>Preparation</span><strong>8 / 9</strong><span>88.89%</span></div>
+    <div class="metric"><span>Official candidates</span><strong>4</strong><span>average confidence 99.5%</span></div>
+    <div class="metric"><span>Visible source rows</span><strong>4</strong><span>parcel rows promoted: 0</span></div>
+    <div class="metric"><span>Business rows written</span><strong>0</strong><span>final_ready=false</span></div>
+  </div>
+  <h2>Line-by-line source candidates</h2>
+  <table>
+    <thead><tr><th>#</th><th>Source</th><th>Authority</th><th>Date</th><th>Level</th><th>Confidence</th><th>Allowed use</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Connected Nations Spring 2026 fixed broadband ZIP</td><td>Ofcom</td><td>Jan 2026 snapshot; 13 May 2026 release</td><td>POSTCODE_LEVEL_ONLY</td><td>100%</td><td>Primary broadband coverage values</td><td class="blocked">download pending runner</td></tr>
+      <tr><td>2</td><td>About this data — fixed coverage and full-fibre take-up v2</td><td>Ofcom</td><td>7 Jul 2026 correction</td><td>POSTCODE_LEVEL_ONLY</td><td>100%</td><td>Schema, field semantics, filename and row-count validation</td><td class="ok">schema verified</td></tr>
+      <tr><td>3</td><td>ONS Postcode Directory May 2026 hosted table</td><td>ONS</td><td>10 Jun 2026</td><td>POSTCODE_CROSSWALK_ONLY</td><td>99%</td><td>Postcode normalization and geography QA</td><td class="ok">candidate verified</td></tr>
+      <tr><td>4</td><td>Online ONS Postcode Directory Live May 2026</td><td>ONS</td><td>17 Jun 2026</td><td>POSTCODE_CENTROID_ONLY</td><td>99%</td><td>Centroid QA only; never parcel geometry replacement</td><td class="ok">candidate verified</td></tr>
+    </tbody>
+  </table>
+  <h2>Current truth boundary</h2>
+  <p>Checkpoint: <code>33,785</code> postcode-backed rows and <code>58,498</code> pending or NO_DATA rows. This review wave writes no business row. The prepared extractor is bounded to row numbers <code>30,762–61,522</code> and never creates parcel geometry or imputes a missing postcode.</p>
+  <h2>Open blockers</h2>
+  <ol>
+    <li>Ofcom 2026 postcode ZIP has not been ingested by the canonical single runner.</li>
+    <li>Shard-2 matrix rows have not been extracted and exact-postcode cross-checked.</li>
+    <li>Canonical parcel geometry and parcel-level promotion remain unproven.</li>
+    <li>Live port-8012 web readback has not been verified.</li>
+  </ol>
+</body>
+</html>

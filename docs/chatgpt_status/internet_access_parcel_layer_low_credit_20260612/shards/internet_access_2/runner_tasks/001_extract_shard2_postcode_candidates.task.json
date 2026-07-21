@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_2",
+  "task_id": "internet-access-2-extract-postcode-candidates-20260721",
+  "dispatch_state": "PREPARED_NOT_QUEUED",
+  "single_shared_runner_only": true,
+  "do_not_start_new_runner": true,
+  "requires_fresh_remote_claim_before_dispatch": true,
+  "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+  "inputs": {
+    "matrix_geojson": "england_map_web/data/program_layer_matrix/internet.geojson",
+    "ofcom_postcode_directory": "runtime-resolved path containing 202601_fixed_postcode_coverage_r2_XX.csv files",
+    "row_start": 30762,
+    "row_end": 61522
+  },
+  "command": "python docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/001_extract_shard2_postcode_candidates.py --repo-root <REPO_ROOT> --ofcom-dir <OFCOM_POSTCODE_FILES_DIR> --limit 12",
+  "outputs": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runner_outputs/001_shard2_postcode_candidates_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runner_outputs/001_shard2_postcode_candidates_latest.csv"
+  ],
+  "acceptance": [
+    "Every output row has row_no between 30762 and 61522",
+    "Every value is traceable to existing matrix and, when supplied, exact Ofcom r2 postcode row",
+    "Data level remains POSTCODE_LEVEL_ONLY",
+    "Canonical parcel geometry is not created or altered",
+    "Missing exact postcode source row is NO_DATA/pending, never imputed",
+    "actual_business_data_rows_written remains zero until reviewed migration"
+  ],
+  "write_policy": {
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "fake_data": false
+  }
+}
