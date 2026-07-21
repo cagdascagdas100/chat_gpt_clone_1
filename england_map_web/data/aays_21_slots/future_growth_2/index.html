@@ -20,6 +20,7 @@ Promise.all([
  fetch('progress_wave_14_delta.json').then(r=>r.json()),
  fetch('progress_wave_15_delta.json').then(r=>r.json()),
  fetch('progress_wave_15b_delta.json').then(r=>r.json()),
+ fetch('progress_port_manifest_delta.json').then(r=>r.json()),
  fetch('candidates_latest.json').then(r=>r.json()),
  fetch('candidates_wave_5_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_6_20260721.json').then(r=>r.json()),
@@ -37,39 +38,41 @@ Promise.all([
  fetch('source_contracts_wave_13_delta.json').then(r=>r.json()),
  fetch('source_contracts_wave_14_delta.json').then(r=>r.json()),
  fetch('source_contracts_wave_15_delta.json').then(r=>r.json())
-]).then(([p,d11,d12,d13,d14,d15,d15b,base,w5,w6,w7,w8,w9,w10,w11,w12,w13,w14,w15,s,s12,s13,s14,s15])=>{
+]).then(([p,d11,d12,d13,d14,d15,d15b,dport,base,w5,w6,w7,w8,w9,w10,w11,w12,w13,w14,w15,s,s12,s13,s14,s15])=>{
  const allCandidates=[...(base.candidates||[]),...(w5.candidates||[]),...(w6.candidates||[]),...(w7.candidates||[]),...(w8.candidates||[]),...(w9.candidates||[]),...(w10.candidates||[]),...(w11.candidates||[]),...(w12.candidates||[]),...(w13.candidates||[]),...(w14.candidates||[]),...(w15.candidates||[])];
  const historical=(p.line_progress||[]).filter(x=>x.line<=73);
- const operations=[...historical,...(d11.line_progress||[]),...(d12.line_progress||[]),...(d13.line_progress||[]),...(d14.line_progress||[]),...(d15.line_progress||[]),...(d15b.line_progress||[])];
+ const operations=[...historical,...(d11.line_progress||[]),...(d12.line_progress||[]),...(d13.line_progress||[]),...(d14.line_progress||[]),...(d15.line_progress||[]),...(d15b.line_progress||[]),...(dport.line_progress||[])];
  const contracts=[...(s.contracts||[]),...(s12.contracts||[]),...(s13.contracts||[]),...(s14.contracts||[]),...(s15.contracts||[])];
  const cards=[
- ['Operasyon',`${d15b.operational_progress.completed_operations}/${d15b.operational_progress.total_operations}`],
- ['Operasyon %',`${d15b.operational_progress.percent.toFixed(2)} (+${d15b.operational_progress.percent_increase.toFixed(2)})`],
- ['Doğrulanmış ürün satırı',`${d15b.verified_product_progress.verified_rows}/${d15b.verified_product_progress.target_rows}`],
- ['Araştırılan aday',d15b.candidate_summary.researched],['Uygun',d15b.candidate_summary.eligible],
- ['Dışlanan/bekletilen',d15b.candidate_summary.excluded_or_held],
- ['≥90 uygun kaynak doğruluğu',d15b.candidate_summary.eligible_source_confidence_ge_90],
- ['Ortalama uygun doğruluk',`${d15b.candidate_summary.average_eligible_source_confidence}/100`],
- ['Yükseltilen kaynak',d15b.source_summary.promoted_sources],
- ['Tanısal kaynak',d15b.source_summary.diagnostic_only_sources],
- ['Kalite uyarısı',d15b.source_summary.quality_warning_sources],
- ['Kaynak sözleşmesi',d15b.source_summary.source_contracts_upgraded],
- ['Kaynak düzeltmesi',d15b.source_summary.source_contract_corrections],
- ['Yazılım testi',`${d15b.source_summary.executed_tests_passed}/${d15b.source_summary.executed_tests_total}`],
- ['Remote kanıt',`${d15b.source_summary.manual_remote_evidence_checks_passed}/${d15b.source_summary.manual_remote_evidence_checks_total}`],
- ['Offline tam-matris satırı',d15b.source_summary.offline_full_matrix_rows_exercised],
- ['Nokta-only güncel aday',d15b.source_summary.point_only_current_candidates],
- ['Eksik mekânsal konum',d15b.source_summary.missing_spatial_locator_candidates_held],
- ['Başlama çelişkisi',d15b.source_summary.commencement_conflicts_held],
- ['HMLR transport düzeltmesi',d15b.source_summary.hmlr_transport_contract_corrections],
- ['Gerçek HMLR indirme',d15b.source_summary.actual_hmlr_downloads],
- ['Gerçek kesişim',d15b.source_summary.actual_exact_intersections],
- ['period=current API',d15b.source_summary.period_current_api_responses]
+ ['Operasyon',`${dport.operational_progress.completed_operations}/${dport.operational_progress.total_operations}`],
+ ['Operasyon %',`${dport.operational_progress.percent.toFixed(2)} (+${dport.operational_progress.percent_increase.toFixed(2)})`],
+ ['Doğrulanmış ürün satırı',`${dport.verified_product_progress.verified_rows}/${dport.verified_product_progress.target_rows}`],
+ ['Araştırılan aday',dport.candidate_summary.researched],['Uygun',dport.candidate_summary.eligible],
+ ['Dışlanan/bekletilen',dport.candidate_summary.excluded_or_held],
+ ['≥90 uygun kaynak doğruluğu',dport.candidate_summary.eligible_source_confidence_ge_90],
+ ['Ortalama uygun doğruluk',`${dport.candidate_summary.average_eligible_source_confidence}/100`],
+ ['Yükseltilen kaynak',dport.source_summary.promoted_sources],
+ ['Tanısal kaynak',dport.source_summary.diagnostic_only_sources],
+ ['Kalite uyarısı',dport.source_summary.quality_warning_sources],
+ ['Kaynak sözleşmesi',dport.source_summary.source_contracts_upgraded],
+ ['Kaynak düzeltmesi',dport.source_summary.source_contract_corrections],
+ ['Yazılım testi',`${dport.source_summary.executed_tests_passed}/${dport.source_summary.executed_tests_total}`],
+ ['Remote kanıt',`${dport.source_summary.manual_remote_evidence_checks_passed}/${dport.source_summary.manual_remote_evidence_checks_total}`],
+ ['Offline tam-matris satırı',dport.source_summary.offline_full_matrix_rows_exercised],
+ ['Nokta-only güncel aday',dport.source_summary.point_only_current_candidates],
+ ['Eksik mekânsal konum',dport.source_summary.missing_spatial_locator_candidates_held],
+ ['Başlama çelişkisi',dport.source_summary.commencement_conflicts_held],
+ ['HMLR transport düzeltmesi',dport.source_summary.hmlr_transport_contract_corrections],
+ ['Port manifesti',dport.source_summary.safe_port_manifest_count],
+ ['Port dosya envanteri',dport.source_summary.expected_port_file_count],
+ ['Gerçek HMLR indirme',dport.source_summary.actual_hmlr_downloads],
+ ['Gerçek kesişim',dport.source_summary.actual_exact_intersections],
+ ['period=current API',dport.source_summary.period_current_api_responses]
  ];
  document.querySelector('#cards').innerHTML=cards.map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
  document.querySelector('#operations').innerHTML=operations.map(x=>`<tr><td>${x.line}</td><td>${x.operation}</td><td class="${cls(x.state)}">${x.state}</td></tr>`).join('');
  document.querySelector('#sources').innerHTML=contracts.map(x=>`<tr><td>${x.source_id}</td><td>${x.publisher}</td><td>${x.status}</td><td>${x.format||''} / ${x.crs||''}</td><td>${x.accuracy_role}</td><td>${x.caveat}</td><td><a href="${x.url||x.url_pattern}" target="_blank" rel="noopener">kaynak</a></td></tr>`).join('');
  document.querySelector('#candidates').innerHTML=allCandidates.map(x=>`<tr><td>${x.candidate_id}</td><td>${x.source_reference}</td><td>${x.site_name}</td><td>${x.local_authority}</td><td>${x.hectares??''}</td><td>${x.maximum_net_dwellings??''}</td><td>${x.planning_permission_status??''}</td><td>${x.source_confidence}/100</td><td>${x.geometry_role||''}</td><td>${x.eligibility}</td><td><a href="${x.source_url}" target="_blank" rel="noopener">resmî kayıt</a></td></tr>`).join('');
- document.querySelector('#blockers').innerHTML=d15b.blockers.map(x=>`<li>${x}</li>`).join('');
+ document.querySelector('#blockers').innerHTML=dport.blockers.map(x=>`<li>${x}</li>`).join('');
 }).catch(err=>document.body.insertAdjacentHTML('beforeend',`<pre>${String(err)}</pre>`));
 </script></body></html>
