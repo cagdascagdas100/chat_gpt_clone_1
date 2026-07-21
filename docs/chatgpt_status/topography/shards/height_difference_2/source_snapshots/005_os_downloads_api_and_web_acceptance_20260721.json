@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "captured_at": "2026-07-21T06:12:00+03:00",
+  "sources": [
+    {
+      "source_id": "os_downloads_api_products",
+      "publisher": "Ordnance Survey",
+      "official_url": "https://api.os.uk/downloads/v1/products",
+      "documentation_url": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification/opendata-products",
+      "contract": "List OpenData products; expanded=true may return full product details.",
+      "operational_gate": "Unique normalized OS Terrain 50 product identity; ambiguous products fail closed."
+    },
+    {
+      "source_id": "os_downloads_api_product_downloads",
+      "publisher": "Ordnance Survey",
+      "official_url_template": "https://api.os.uk/downloads/v1/products/{productId}/downloads",
+      "documentation_url": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification/download-an-opendata-product",
+      "contract": "Discover OpenData downloads by product, format, subformat and National Grid area; redirect supported for a unique download.",
+      "operational_gate": "Unique area-specific or GB ASCII/Grid ZIP, HTTPS redirect, ZIP/ASCII validation and SHA-256."
+    },
+    {
+      "source_id": "os_terrain_50",
+      "publisher": "Ordnance Survey",
+      "official_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "version_date": "July 2026",
+      "coverage": "Great Britain",
+      "grid_spacing_m": 50,
+      "tile_structure": "10km National Grid tiles",
+      "role": "secondary polygon crosscheck only"
+    },
+    {
+      "source_id": "local_web_acceptance",
+      "publisher": "TerraYield AAYS local web runtime",
+      "official_local_url": "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/",
+      "contract": "HTTP 200 index, operations manifest, contiguous unique operation rows, candidate safety flags and content SHA-256.",
+      "remote_claimed_as_passed": false
+    }
+  ],
+  "source_contract_count": 4,
+  "official_publisher_count": 1,
+  "real_candidate_rows_written": 0,
+  "official_polygon_measurements_written": 0,
+  "port_8012_http_acceptance_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
