@@ -1,0 +1,34 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_3",
+  "updated_at": "2026-07-21T08:13:15+03:00",
+  "state": "LOCAL_VALIDATED_REMOTE_PUBLISH_PENDING",
+  "summary": "121 duzeltilmis Ofcom CSV uyesi diske acilmadan resmî ZIP icinden dogrudan taranir; tam satir, global uniqueness, sema, alan, yuzde, uye SHA256 ve CRC kapilari uygulanir.",
+  "strategy": "DIRECT_ZIP_MEMBER_STREAM_NO_CSV_EXTRACTION",
+  "gates": [
+    {"gate_no":1,"name":"ZIP_SIGNATURE_AND_VALIDATED_SOURCE","state":"PASS_LOCAL_TEST","detail":"PK imzasi zorunlu; mevcut ZIP secim katmani minimum boyut, CRC, ZIP SHA256 ve r2 sayisini fail-closed dogrular."},
+    {"gate_no":2,"name":"ZERO_R1_EXACT_R2_COUNT","state":"PASS_LOCAL_TEST","detail":"Herhangi bir all-premises r1 uyesi reddedilir; tam 121 benzersiz r2 basename gerekir."},
+    {"gate_no":3,"name":"NO_CSV_EXTRACTION","state":"PASS_LOCAL_TEST","detail":"CSV uyeleri zipfile.open ile dogrudan okunur; 121 CSV icin disk extraction klasoru uretilmez."},
+    {"gate_no":4,"name":"ALL_ROWS_AND_GLOBAL_UNIQUENESS","state":"CONTRACT_TESTED","detail":"Gercek calismada tam 1.741.096 satir taranir; blank ve tum dosyalar arasi duplicate postcode reddedilir."},
+    {"gate_no":5,"name":"STRICT_SCHEMA_AND_PERCENTAGE","state":"PASS_LOCAL_TEST","detail":"Postcode, spaced postcode, area ve alti coverage yuzdesi zorunlu; yuzdeler 0-100 olmalidir."},
+    {"gate_no":6,"name":"POSTCODE_AREA_CONSISTENCY","state":"PASS_LOCAL_TEST","detail":"ZIP uye basename alani, postcode area alani ve postcode harf prefiksi ayni olmalidir."},
+    {"gate_no":7,"name":"MEMBER_SHA256_AND_CRC","state":"PASS_LOCAL_TEST","detail":"Her CSV uyesi tek akista SHA256 ile hashlenir; tam stream okuma ZIP CRC dogrulamasini tetikler."},
+    {"gate_no":8,"name":"TARGETED_DETAIL_RETENTION","state":"PASS_LOCAL_TEST","detail":"Ayrintili coverage yalniz same-row parcel/HMLR kimligi dogrulanmis slot postcode ihtiyaclari icin tutulur."},
+    {"gate_no":9,"name":"FOUR_STATE_PARTITION","state":"PASS_LOCAL_TEST","detail":"Proxy, identity conflict, postcode-not-found ve no-verified-postcode sonuclari ayrik ve tamdir."},
+    {"gate_no":10,"name":"NO_SCORE_NO_WRITE","state":"PASS_LOCAL_TEST","detail":"Nearest postcode, parcel skoru, business yazimi, DB, migration ve deploy yoktur."}
+  ],
+  "validation": {
+    "previous_total": "56/56 PASS",
+    "direct_zip_stream": "14/14 PASS",
+    "updated_wiring": "6/6 PASS",
+    "local_combined": "76/76 PASS",
+    "python_compile": "5/5 PASS",
+    "remote_branch_readback": "PENDING",
+    "remote_runner_execution": false
+  },
+  "zip_csv_extracted_to_disk": false,
+  "verified_product_rows": 0,
+  "verified_product_target_rows": 30761,
+  "actual_business_data_rows_written": 0,
+  "final_ready": false
+}
