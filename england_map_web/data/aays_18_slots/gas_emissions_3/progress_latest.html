@@ -19,69 +19,76 @@
   <div id="cards" class="cards"></div>
   <h2>Kabul durumu</h2>
   <div id="acceptance" class="path">Yükleniyor…</div>
-  <p><a href="./browser_acceptance_precheck.html">100 satırlık statik ön-kabul sonuçlarını aç</a> · <a href="./canonical_matrix_100_browser_harness.html">Canonical Gas pages 1–4 / 100 satır browser harness’ını aç</a></p>
+  <p><a href="./browser_acceptance_precheck.html">100 satırlık statik ön-kabul</a> · <a href="./canonical_matrix_100_browser_harness.html">Canonical Gas 4×25 browser harness</a></p>
 
   <h2>Runner liveness ve recovery — 18 satır</h2>
-  <p class="muted">Heartbeat yaşı, priority-1 recovery durumu, Gas queue claim’i ve gerçek browser çıktıları ayrı ayrı gösterilir. Bu tablo runner çalıştırmaz ve browser kabulü değildir.</p>
+  <p class="muted">Heartbeat yaşı, priority-1 recovery, Gas queue claim’i ve gerçek browser çıktıları. Browser kabulü değildir.</p>
   <div class="scroll"><table><thead><tr><th>Satır</th><th>Kontrol</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th></tr></thead><tbody id="livenessChecks"></tbody></table></div>
 
-  <h2>Resmî kaynak freshness — 6/6</h2>
-  <p class="muted">GOV.UK ana yayın, istatistik bülteni, teknik rapor, koleksiyon, güncel CSV ve NAEI yüzeyi güncellik açısından yeniden doğrulanmıştır.</p>
+  <h2>Resmî kaynak güncellik denetimi — 6/6</h2>
+  <p class="muted">GOV.UK ana yayın, istatistik bülteni, teknik rapor, koleksiyon, güncel veri ve NAEI yüzeyi.</p>
   <div class="scroll"><table><thead><tr><th>Satır</th><th>Yüzey</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th><th>Bağlantı</th></tr></thead><tbody id="freshnessChecks"></tbody></table></div>
 
-  <h2>Stable runner native queue sözleşmesi — 26 satır</h2>
-  <p class="muted">Gerçek stable scanner alanları, güvenlik bayrakları, portable-root çözümü, forward remote atalık ve Gas blob eşitliği satır satır denetlenir. Browser kabulü değildir.</p>
+  <h2>Stable runner native sözleşmesi — 31 satır</h2>
+  <p class="muted">Queue alanları, güvenlik bayrakları, remote atalık, iki-faz parity ve PNG bütünlüğü satır satır denetlenir.</p>
   <div class="scroll"><table><thead><tr><th>Satır</th><th>Kontrol</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th></tr></thead><tbody id="nativeChecks"></tbody></table></div>
-  <h2>Gerçek coordinator queue sözleşmesi — 31 satır</h2>
-  <p class="muted">İlk 29 satır remote hazırlık kanıtıdır. Son iki satır mevcut F runner, öndeki priority-1 görevden sonra bu görevi claim edip serial publish yaptığında PASS olabilir.</p>
+
+  <h2>Gerçek coordinator queue sözleşmesi — 37 satır</h2>
+  <p class="muted">İlk 35 satır remote hazırlık kanıtıdır. Son iki satır mevcut F runner claim ve serial remote readback yaptığında PASS olabilir.</p>
   <div class="scroll"><table><thead><tr><th>Satır</th><th>Kontrol</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th></tr></thead><tbody id="queueChecks"></tbody></table></div>
+
   <h2>Önceki pickup preflight — tarihsel 17 satır</h2>
-  <p class="muted">Bu kanal gerçek coordinator queue göreviyle değiştirilmiştir; tarihsel güvenlik ve kaynak kontrolleri korunur.</p>
+  <p class="muted">Gerçek coordinator queue ile değiştirilmiştir; tarihsel kontroller yalnız görünür kanıt olarak korunur.</p>
   <div class="scroll"><table><thead><tr><th>Satır</th><th>Kontrol</th><th>Beklenen</th><th>Gerçek</th><th>Durum</th></tr></thead><tbody id="pickupChecks"></tbody></table></div>
-  <h2>Browser runner v10 — 29 adım</h2>
-  <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th><th>Beklenen/üretilen kanıt</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
+
+  <h2>Browser runner v11 — 35 adım</h2>
+  <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
+
   <h2>Yükseltilen resmî kaynaklar</h2>
   <div class="scroll"><table><thead><tr><th>#</th><th>Kaynak</th><th>Yüzey</th><th>Durum</th><th>Yetki</th><th>Doğrulama</th><th>Bağlantı</th></tr></thead><tbody id="sources"></tbody></table></div>
+
   <h2>Resmî CSV satır denetimi — 100/100</h2>
-  <p class="muted">Dört denetim grubu tüm kaynak revizyon adaylarını iki resmî CSV sürümünde aynı yerel yönetim, yıl, sektör, alt sektör, gaz ve satır anahtarıyla doğrular. Bu tablo parsel değeri veya browser kabulü değildir.</p>
+  <p class="muted">Birebir yerel yönetim, yıl, sektör, alt sektör, gaz ve satır anahtarı doğrulamasıdır; parsel değeri veya browser kabulü değildir.</p>
   <div class="scroll"><table><thead><tr><th>#</th><th>Grup</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Eski satır</th><th>Yeni satır</th><th>Aday güveni</th><th>Denetim güveni</th><th>Sonuç</th><th>Resmî kaynak</th></tr></thead><tbody id="spotchecks"></tbody></table></div>
-  <h2>Kaynak revizyon adayları</h2>
-  <p class="muted">Satırlar resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin birebir anahtar eşleşmeleridir; parsel değeri değildir.</p>
+
+  <h2>Kaynak revizyon adayları — 100 satır</h2>
+  <p class="muted">Resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin anahtar eşleşmeleridir; parsel değeri değildir.</p>
   <div class="scroll"><table><thead><tr><th>#</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Güven</th><th>Eski satır</th><th>Yeni satır</th><th>Karar</th><th>Resmî kaynak</th></tr></thead><tbody id="rows"></tbody></table></div>
   <h2>Blocker</h2><div id="blocker" class="error"></div>
 <script>
 (async()=>{
+  const esc=value=>String(value??'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const rowClass=x=>{const s=String(x.state||'');return ['PASS','PASS_PREPARED','PASS_FIXED'].includes(s)?'ok':s.includes('STALE')?'warn':s.includes('WAITING')||s.includes('PENDING')||s==='PREPARED'?'pending':'fail'};
   try{
     const ts=Date.now();
     const urls=['summary_latest.json','browser_acceptance_runner_status_latest.json','source_provenance_latest.json','runner_queue_contract_latest.json','runner_native_contract_latest.json','runner_pickup_preflight_latest.json','runner_liveness_latest.json','official_source_freshness_latest.json','official_spotcheck_latest.json','official_spotcheck_batch2_latest.json','official_spotcheck_batch3_latest.json','official_spotcheck_batch4_latest.json'];
     const responses=await Promise.all(urls.map(x=>fetch('./'+x+'?ts='+ts,{cache:'no-store'})));
-    if(responses.some(r=>!r.ok)) throw new Error('Özet, runner, queue, liveness, freshness, kaynak veya satır denetimi JSON yüklenemedi');
+    if(responses.some(r=>!r.ok))throw new Error('Gerekli ilerleme JSON dosyalarından biri yüklenemedi');
     const [summary,runner,provenance,queue,native,pickup,liveness,freshness,...spotchecks]=await Promise.all(responses.map(r=>r.json()));
     const spotRows=spotchecks.flatMap((d,i)=>(d.rows||[]).map(x=>({...x,group:String(i+1)})));
     const spotPassed=spotchecks.reduce((n,d)=>n+(d.passed_count||0),0);
     const candidatePaths=[summary.base_rows_path,...(summary.batch_paths||[])];
     const candidateResponses=await Promise.all(candidatePaths.map(p=>fetch('./'+p+'?ts='+ts,{cache:'no-store'})));
-    if(candidateResponses.some(r=>!r.ok)) throw new Error('Aday JSON dosyalarından biri yüklenemedi');
-    const documents=await Promise.all(candidateResponses.map(r=>r.json()));
-    const rows=documents.flatMap(d=>d.rows||[]);
+    if(candidateResponses.some(r=>!r.ok))throw new Error('Aday JSON dosyalarından biri yüklenemedi');
+    const rows=(await Promise.all(candidateResponses.map(r=>r.json()))).flatMap(d=>d.rows||[]);
     const m=summary.metrics,a=summary.acceptance||{},p=summary.precheck||{},g=queue.global_control||{},br=summary.browser_runner||{};
     document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Queue=${queue.status} | Aday=${rows.length} | Resmî denetim=${spotPassed}/${spotRows.length}`;
-    const cards=[['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotPassed+' / '+spotRows.length],['Kaynak freshness',freshness.passed_count+' / '+freshness.source_count],['Denetim güveni','99%'],['Heartbeat yaşı',String(liveness.heartbeat_age_hours)+' saat'],['Operator recovery',liveness.priority_one_operator_recovery_executed===true?'ÇALIŞTI':'BEKLİYOR'],['Runner sürümü','v'+(runner.runner_version||1)],['Native sözleşme',native.prepared_checks_passed+' / '+native.prepared_checks_total],['Queue hazırlık',queue.prepared_checks_passed+' / '+queue.prepared_checks_total],['Queue runtime',queue.runtime_checks_passed+' / '+queue.runtime_checks_total],['Queue durumu',runner.queue_status||'—'],['Forward branch kapısı',br.local_head_must_be_remote_ancestor===true?'HAZIR':'EKSİK'],['Gas blob eşitliği',br.remote_gas_blob_parity_required===true?'3 / 3 HAZIR':'EKSİK'],['Portable root fallback',br.portable_root_fallback_required===true?'HAZIR':'EKSİK'],['Browser süre bütçesi',String(runner.virtual_time_budget_ms||0)+' ms'],['Canonical harness',runner.canonical_harness_executed===true?'PASS':'HAZIR'],['Global öncelik',g.current_slot?g.current_slot+' / P'+g.current_priority:'—'],['Ekran görüntüsü',runner.screenshot_captured===true?'PASS':'BEKLİYOR'],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']];
-    document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('acceptance').textContent=`Statik ön-kabul=${p.static_remote_precheck_passed===true} | Resmî kaynak satırı=${spotPassed}/${spotRows.length} | Freshness=${freshness.passed_count}/${freshness.source_count} | Heartbeat stale=${liveness.heartbeat_stale===true} | Native=${native.prepared_checks_passed}/${native.prepared_checks_total} | Queue=${queue.prepared_checks_passed}/${queue.prepared_checks_total} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows}`;
-    const rowClass=x=>{const s=String(x.state);return ['PASS','PASS_PREPARED','PASS_FIXED'].includes(s)?'ok':s.includes('STALE')?'warn':s.includes('WAITING')||s.includes('PENDING')?'pending':'fail'};
-    document.getElementById('livenessChecks').innerHTML=(liveness.checks||[]).map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td>${String(x.expected)}</td><td>${String(x.actual)}</td><td class="${rowClass(x)}">${x.state}</td></tr>`).join('');
-    document.getElementById('freshnessChecks').innerHTML=(freshness.checks||[]).map(x=>`<tr><td>${x.row}</td><td>${x.surface}</td><td>${x.expected}</td><td>${x.actual}</td><td class="${rowClass(x)}">${x.state}</td><td><a href="${x.url}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
-    document.getElementById('nativeChecks').innerHTML=(native.checks||[]).map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td>${String(x.expected)}</td><td>${String(x.actual)}</td><td class="${rowClass(x)}">${x.state}</td></tr>`).join('');
-    document.getElementById('queueChecks').innerHTML=(queue.checks||[]).map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td>${String(x.expected)}</td><td>${String(x.actual)}</td><td class="${rowClass(x)}">${x.state}</td></tr>`).join('');
-    document.getElementById('pickupChecks').innerHTML=(pickup.checks||[]).map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td>${String(x.expected)}</td><td>${String(x.actual)}</td><td class="${rowClass(x)}">${x.state}</td></tr>`).join('');
-    document.getElementById('runnerSteps').innerHTML=(runner.steps||[]).map(x=>{const cls=x.state==='PASS'?'ok':x.state==='FAIL'?'fail':'pending';return `<tr><td>${x.step}</td><td>${x.name}</td><td class="${cls}">${x.state}</td><td>${x.evidence||'—'}</td></tr>`}).join('');
-    document.getElementById('sources').innerHTML=(provenance.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${x.title}</td><td>${x.surface}</td><td>${x.status}</td><td>${x.authority_score}/100</td><td class="ok">${x.verification}</td><td><a href="${x.url}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
+    const cards=[['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotPassed+' / '+spotRows.length],['Kaynak güncellik',freshness.passed_count+' / '+freshness.source_count],['Denetim güveni','99%'],['Heartbeat yaşı',String(m.runner_heartbeat_age_hours)+' saat'],['Operator recovery',m.priority_one_operator_recovery_executed===true?'ÇALIŞTI':'BEKLİYOR'],['Runner sürümü','v'+runner.runner_version],['Native sözleşme',native.prepared_checks_passed+' / '+native.prepared_checks_total],['Queue hazırlık',queue.prepared_checks_passed+' / '+queue.prepared_checks_total],['Queue runtime',queue.runtime_checks_passed+' / '+queue.runtime_checks_total],['Queue durumu',runner.queue_status],['İki-faz remote parity',br.two_phase_remote_parity_required===true?'HAZIR':'EKSİK'],['Gas blob parity','3 / 3 × 2 FAZ'],['PNG imzası',br.png_signature_required===true?'HAZIR':'EKSİK'],['Screenshot boyutu',(br.screenshot_width_required||0)+' × '+(br.screenshot_height_required||0)],['Screenshot stderr','0 hata zorunlu'],['Browser süre bütçesi',runner.virtual_time_budget_ms+' ms'],['Canonical harness',runner.canonical_harness_executed===true?'PASS':'HAZIR'],['Global öncelik',g.current_slot?g.current_slot+' / P'+g.current_priority:'—'],['Ekran görüntüsü',runner.screenshot_captured===true?'PASS':'BEKLİYOR'],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']];
+    document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="value">${esc(x[1])}</div></div>`).join('');
+    document.getElementById('acceptance').textContent=`Statik=${p.static_remote_precheck_passed===true} | Resmî satır=${spotPassed}/${spotRows.length} | Freshness=${freshness.passed_count}/${freshness.source_count} | Native=${native.prepared_checks_passed}/${native.prepared_checks_total} | Queue=${queue.prepared_checks_passed}/${queue.prepared_checks_total} | İki-faz parity=${br.two_phase_remote_parity_required===true} | PNG=${br.png_signature_required===true} | Gerçek browser=${a.passed===true} | DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows}`;
+    const fill=(id,data,cols)=>{document.getElementById(id).innerHTML=(data||[]).map(x=>`<tr>${cols.map(fn=>fn(x)).join('')}</tr>`).join('')};
+    fill('livenessChecks',liveness.checks,[x=>`<td>${esc(x.row)}</td>`,x=>`<td>${esc(x.check)}</td>`,x=>`<td>${esc(x.expected)}</td>`,x=>`<td>${esc(x.actual)}</td>`,x=>`<td class="${rowClass(x)}">${esc(x.state)}</td>`]);
+    fill('freshnessChecks',freshness.checks,[x=>`<td>${esc(x.row)}</td>`,x=>`<td>${esc(x.surface)}</td>`,x=>`<td>${esc(x.expected)}</td>`,x=>`<td>${esc(x.actual)}</td>`,x=>`<td class="${rowClass(x)}">${esc(x.state)}</td>`,x=>`<td><a href="${esc(x.url)}" target="_blank" rel="noopener">Resmî kaynak</a></td>`]);
+    fill('nativeChecks',native.checks,[x=>`<td>${esc(x.row)}</td>`,x=>`<td>${esc(x.check)}</td>`,x=>`<td>${esc(x.expected)}</td>`,x=>`<td>${esc(x.actual)}</td>`,x=>`<td class="${rowClass(x)}">${esc(x.state)}</td>`]);
+    fill('queueChecks',queue.checks,[x=>`<td>${esc(x.row)}</td>`,x=>`<td>${esc(x.check)}</td>`,x=>`<td>${esc(x.expected)}</td>`,x=>`<td>${esc(x.actual)}</td>`,x=>`<td class="${rowClass(x)}">${esc(x.state)}</td>`]);
+    fill('pickupChecks',pickup.checks,[x=>`<td>${esc(x.row)}</td>`,x=>`<td>${esc(x.check)}</td>`,x=>`<td>${esc(x.expected)}</td>`,x=>`<td>${esc(x.actual)}</td>`,x=>`<td class="${rowClass(x)}">${esc(x.state)}</td>`]);
+    fill('runnerSteps',runner.steps,[x=>`<td>${esc(x.step)}</td>`,x=>`<td>${esc(x.name)}</td>`,x=>`<td class="${x.state==='PASS'?'ok':'pending'}">${esc(x.state)}</td>`,x=>`<td>${esc(x.evidence)}</td>`]);
+    document.getElementById('sources').innerHTML=(provenance.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.title)}</td><td>${esc(x.surface)}</td><td>${esc(x.status)}</td><td>${esc(x.authority_score)}/100</td><td class="ok">${esc(x.verification)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
     const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
-    document.getElementById('spotchecks').innerHTML=spotRows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.group}</td><td>${x.row_id}</td><td>${x.calendar_year}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.old_preview_line}</td><td>${x.new_preview_line}</td><td>${x.candidate_confidence}%</td><td>${x.spotcheck_verification_confidence}%</td><td class="ok">${x.verification}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`).join('');
-    document.getElementById('rows').innerHTML=rows.map((x,i)=>{const decision=x.decision||'';const cls=decision.includes('HIGH')?'warn':decision.includes('MATERIAL')?'material':'ok';return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year??'—'}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td>${x.old_preview_line??'—'}</td><td>${x.new_preview_line??'—'}</td><td class="${cls}">${decision}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`}).join('');
+    document.getElementById('spotchecks').innerHTML=spotRows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.group)}</td><td>${esc(x.row_id)}</td><td>${esc(x.calendar_year)}</td><td>${esc(x.sector)}</td><td>${esc(x.sub_sector)}</td><td>${esc(x.gas)}</td><td>${esc(x.old_value)}</td><td>${esc(x.new_value)}</td><td>${esc(x.change_percent)}</td><td>${esc(x.old_preview_line)}</td><td>${esc(x.new_preview_line)}</td><td>${esc(x.candidate_confidence)}%</td><td>${esc(x.spotcheck_verification_confidence)}%</td><td class="ok">${esc(x.verification)}</td><td><a href="${esc(oldUrl)}" target="_blank">Eski CSV</a> · <a href="${esc(newUrl)}" target="_blank">Yeni CSV</a></td></tr>`).join('');
+    document.getElementById('rows').innerHTML=rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.row_id)}</td><td>${esc(x.calendar_year)}</td><td>${esc(x.sector)}</td><td>${esc(x.sub_sector)}</td><td>${esc(x.gas)}</td><td>${esc(x.old_value)}</td><td>${esc(x.new_value)}</td><td>${esc(x.change_percent)}</td><td>${esc(x.confidence)}%</td><td>${esc(x.old_preview_line)}</td><td>${esc(x.new_preview_line)}</td><td>${esc(x.decision)}</td><td><a href="${esc(oldUrl)}" target="_blank">Eski CSV</a> · <a href="${esc(newUrl)}" target="_blank">Yeni CSV</a></td></tr>`).join('');
     document.getElementById('blocker').textContent=summary.blocker;
-    window.__gasEmissions3Progress={slot_id:summary.slot_id,candidate_rows:rows.length,official_spotcheck_rows:spotRows.length,official_spotcheck_passed:spotPassed,source_freshness_passed:freshness.passed_count,runner_heartbeat_stale:liveness.heartbeat_stale,native_prepared:native.prepared_checks_passed,queue_prepared:queue.prepared_checks_passed,queue_runtime:queue.runtime_checks_passed,queue_status:queue.status,runner_version:runner.runner_version,browser_rows:a.last_proven_dom_rows,browser_passed:a.passed===true};
+    window.__gasEmissions3Progress={slot_id:summary.slot_id,candidate_rows:rows.length,official_spotcheck_rows:spotRows.length,native_prepared:native.prepared_checks_passed,queue_prepared:queue.prepared_checks_passed,queue_runtime:queue.runtime_checks_passed,runner_version:runner.runner_version,two_phase_remote_parity:br.two_phase_remote_parity_required===true,png_signature:br.png_signature_required===true,browser_rows:a.last_proven_dom_rows,browser_passed:a.passed===true};
   }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
 })();
 </script>
