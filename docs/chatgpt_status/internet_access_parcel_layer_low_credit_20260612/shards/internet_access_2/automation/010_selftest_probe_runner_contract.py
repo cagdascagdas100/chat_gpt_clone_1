@@ -9,13 +9,18 @@ checks = {
     "slot_scope": "internet_access_2" in script and "internet_access_3" not in script,
     "official_https_url": "https://www.ofcom.org.uk/" in script,
     "official_v2_date": '$officialV2Date = "2026-07-07"' in script,
-    "official_zip_size_metadata": "official_listed_zip_size_mb = 32.3" in script,
-    "diagnostics_schema_v5": "schema_version = 5" in script,
+    "outer_zip_r1_transport_name": 'official_outer_zip_filename = "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"' in script,
+    "outer_zip_r1_name_not_payload_revision": "outer_zip_r1_name_is_transport_container_only = $true" in script,
+    "display_size_conflict_recorded": "official_page_display_size_mb_observations = @(32.2,32.3)" in script and 'official_page_display_size_consistency = "CONFLICTING_READBACK_METADATA_ONLY"' in script,
+    "display_size_not_exact_integrity_gate": "official_listed_zip_size_mb =" not in script,
+    "no_published_checksum_claim": "official_checksum_published = $false" in script,
+    "runtime_integrity_basis": "RUNTIME_BYTE_COUNT_ZIP_SIGNATURE_SHA256_AND_INTERNAL_V2_VALIDATION" in script and "Get-FileHash -Algorithm SHA256" in script,
+    "diagnostics_schema_v6": "schema_version = 6" in script,
     "dns_gate": "Resolve-DnsName" in script and "BLOCKED_DNS" in script,
     "retry_gate": "DownloadRetries" in script and "download_attempts" in script,
     "zip_size_gate": "30000000" in script,
     "zip_signature_gate": "0x50" in script and "0x4B" in script,
-    "r1_rejected": "r1 postcode files found" in script,
+    "internal_r1_rejected": "r1 postcode files found" in script,
     "r2_exact_count": "Expected $expectedR2Count corrected r2 postcode files" in script,
     "v2_validator_present": "013_validate_ofcom_v2_corrections.py" in script,
     "v2_validator_selftest": "014_selftest_validate_ofcom_v2_corrections.py" in script and "Run-JsonSelftest $v2ValidatorSelftest 43" in script,
@@ -36,4 +41,4 @@ checks = {
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
     raise AssertionError(f"failed: {failed}")
-print(json.dumps({"status": "PASS", "tests_passed": len(checks), "tests_total": len(checks), "business_rows_written": 0}, sort_keys=True))
+print(json.dumps({"status": "PASS", "tests_passed": len(checks), "tests_total": len(checks), "test_names": list(checks), "business_rows_written": 0, "final_ready": False}, sort_keys=True))
