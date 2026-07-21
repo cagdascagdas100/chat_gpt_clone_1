@@ -22,8 +22,8 @@ foreach($name in @('python','py','python3')) {
 }
 if(-not $pythonCommand){ throw 'HEIGHT_DIFFERENCE_2_PYTHON_NOT_AVAILABLE' }
 
-$entrypoint = Join-Path $root 'docs\chatgpt_status\aays1\automation\height_difference_2_official_sampling_entry.py'
-if(-not(Test-Path -LiteralPath $entrypoint)){ throw 'HEIGHT_DIFFERENCE_2_ENTRYPOINT_NOT_FOUND' }
+$entrypoint = Join-Path $root 'docs\chatgpt_status\aays1\automation\height_difference_2_candidate_then_sampling_entry.py'
+if(-not(Test-Path -LiteralPath $entrypoint)){ throw 'HEIGHT_DIFFERENCE_2_CANDIDATE_THEN_SAMPLING_ENTRYPOINT_NOT_FOUND' }
 
 $env:AAYS_TASK_ID = $taskId
 $env:AAYS_REPO_ROOT = $root
