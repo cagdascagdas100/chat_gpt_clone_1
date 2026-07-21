@@ -2,12 +2,12 @@
   "schema_version": 1,
   "slot_id": "ready_to_sell_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
-  "updated_at": "2026-07-20T21:52:00Z",
+  "updated_at": "2026-07-21T00:42:00Z",
   "progress": {
-    "completed_operations": 31,
-    "total_operations": 32,
-    "completion_percent": 96.88,
-    "increase_from_previous_percent": 0.45,
+    "completed_operations": 34,
+    "total_operations": 35,
+    "completion_percent": 97.14,
+    "increase_from_previous_percent": 0.26,
     "final_ready": false
   },
   "metrics": {
@@ -24,11 +24,13 @@
     "title_number_disclosed_not_officially_read_back_rows": 4,
     "unregistered_title_position_rows": 1,
     "rural_rights_heritage_or_use_risk_disclosure_rows": 4,
+    "official_planning_evidence_rows": 3,
+    "candidate_rows_strengthened_by_official_planning_evidence": 3,
     "published_parcel_value_rows": 0
   },
   "operations": [
     {"sequence": 1, "status": "complete", "operation": "REMOTE_HEAD_READBACK", "evidence": "remote branch HEAD resolved"},
-    {"sequence": 2, "status": "complete", "operation": "LIVE_LEASE_CHECK", "evidence": "slot ready_for_claim; no live lease"},
+    {"sequence": 2, "status": "complete", "operation": "LIVE_LEASE_CHECK", "evidence": "slot ready_for_claim or idle; no live lease"},
     {"sequence": 3, "status": "complete", "operation": "REMOTE_BUSINESS_STATE_READ", "evidence": "1264 processed; real geometry confirmed; final_ready=false"},
     {"sequence": 4, "status": "complete", "operation": "AUTOMATION_167_TARGET_HTML_INSPECT", "evidence": "target HTML present"},
     {"sequence": 5, "status": "complete", "operation": "RESTORE_LIVE_JAVASCRIPT", "evidence": "row renderer restored"},
@@ -58,10 +60,14 @@
     {"sequence": 29, "status": "complete", "operation": "INTERNET_CANDIDATE_BATCH6", "evidence": "Church Lawford, Wolfhampcote, Fieldgate Farm and Dunsmore Home Farm reverified with title, heritage, use and rights risks separated"},
     {"sequence": 30, "status": "complete", "operation": "WEB_PROGRESS_BATCH6_INTEGRATION", "evidence": "progress page renders six candidate and official-source batches"},
     {"sequence": 31, "status": "complete", "operation": "HARDEN_AUTOMATION_167_V6_AGGREGATE_AND_QUEUE_SCOPE", "evidence": "six batches require 1264 rows, 20 candidates, 18 sources, 31/32 operations and zero unverified parcel values"},
-    {"sequence": 32, "status": "queued", "operation": "SHARED_COORDINATOR_BROWSER_ACCEPTANCE_AND_REPORT", "evidence": "runner report not yet published"}
+    {"sequence": 32, "status": "complete", "operation": "OFFICIAL_PLANNING_CORROBORATION_BATCH7", "evidence": "Montilo Lane, Buchanan Road and Dunsmore Home Farm strengthened with three official document rows"},
+    {"sequence": 33, "status": "complete", "operation": "WEB_PLANNING_EVIDENCE_ROW_INTEGRATION", "evidence": "progress page displays the three official planning evidence rows separately"},
+    {"sequence": 34, "status": "complete", "operation": "HARDEN_AUTOMATION_167_V7_EVIDENCE_CONTRACT", "evidence": "browser contract requires 20 candidates, 18 sources, 3 planning evidence rows, 34/35 operations and zero unverified parcel values"},
+    {"sequence": 35, "status": "queued", "operation": "SHARED_COORDINATOR_BROWSER_ACCEPTANCE_AND_REPORT", "evidence": "ready_to_sell_1 report not yet published; shared coordinator current task is height_difference_2"}
   ],
   "blockers": [
     "WAITING_SHARED_COORDINATOR_PICKUP",
+    "SHARED_COORDINATOR_CURRENT_TASK_HEIGHT_DIFFERENCE_2_PENDING",
     "OFFICIAL_LPA_DETAIL_READBACK_PENDING_FOR_REFERENCED_CANDIDATES",
     "EXACT_GEOMETRY_IDENTITY_MISSING_FOR_EIGHTEEN_INTERNET_ONLY_CANDIDATES",
     "FIVE_ROWS_ARE_UNDER_OFFER_WITHDRAWN_SOLD_OR_HAVE_UNCONFIRMED_OUTCOME",
