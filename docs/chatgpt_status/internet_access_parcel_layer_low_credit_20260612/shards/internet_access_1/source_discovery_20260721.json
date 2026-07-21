@@ -1,25 +1,33 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_1",
-  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
-  "generated_at": "2026-07-21T04:34:33+03:00",
-  "status": "SOURCE_DISCOVERY_AND_DATA_CONTRACT_VALIDATED",
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "generated_at": "2026-07-21T05:17:46+03:00",
+  "status": "SOURCE_DISCOVERY_R2_RETRIEVAL_CONTRACT_AND_TOOL_VALIDATED",
   "measurement_level": "postcode",
   "output_semantics": "AREA_LEVEL_PROXY_OR_NO_DATA",
-  "official_source_candidates": 6,
+  "official_source_candidates": 7,
   "promoted_sources": 4,
-  "accuracy_ge_90_source_count": 3,
-  "accuracy_ge_85_source_count": 4,
+  "source_confidence_ge_90_count": 4,
+  "promoted_confidence_ge_90_count": 3,
+  "promoted_confidence_ge_85_count": 4,
   "sources": [
     {
       "name": "Ofcom Connected Nations Spring 2026 fixed broadband postcode files",
       "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "download_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
       "role": "PRIMARY_BULK_POSTCODE_COVERAGE",
       "snapshot_date": "2026-01",
       "published_date": "2026-05-13",
+      "download_size_mb": 32.2,
       "confidence_percent": 98,
       "promoted": true,
-      "notes": "Use postcode all-premises files named 202601_fixed_postcode_coverage_r2_XX.csv. The July 2026 v2 correction fixed duplicated CW/CV and MK/ME files."
+      "notes": "Package name remains r1; corrected all-premises postcode members are r2."
     },
     {
       "name": "Ofcom Spring 2026 fixed coverage methodology v2",
@@ -29,7 +37,7 @@
       "revision_date": "2026-07-07",
       "confidence_percent": 99,
       "promoted": true,
-      "notes": "Defines 121 postcode-area files, 1,741,096 all-premises postcode rows and the coverage fields."
+      "notes": "121 postcode-area r2 files, 1,741,096 all-premises postcode rows; CW and MK corrections documented."
     },
     {
       "name": "Ofcom broadband and mobile coverage checker",
@@ -37,7 +45,7 @@
       "role": "POSTCODE_SPOT_VALIDATION",
       "confidence_percent": 93,
       "promoted": true,
-      "notes": "Checker values are predicted area availability and may differ by property; do not treat as parcel-level truth."
+      "notes": "Predicted area availability; not measured parcel speed."
     },
     {
       "name": "ONS Explore Local Statistics gigabit-capable broadband",
@@ -46,15 +54,24 @@
       "snapshot_date": "2026-01",
       "confidence_percent": 88,
       "promoted": true,
-      "notes": "Ofcom-derived lower-tier/unitary-authority percentage; valid only for aggregate cross-checks."
+      "notes": "Aggregate only; cannot replace postcode rows."
     },
     {
-      "name": "BDUK Project Gigabit monthly contract progress",
-      "url": "https://www.gov.uk/government/publications/premises-contracted-and-built-project-gigabit-contracts",
-      "role": "PROGRAMME_PROGRESS_CONTEXT_ONLY",
-      "confidence_percent": 78,
+      "name": "Ofcom fixed broadband developer API",
+      "url": "https://api.ofcom.org.uk/apis",
+      "role": "API_ALTERNATIVE_REJECTED_BY_GUARDRAIL",
+      "confidence_percent": 98,
       "promoted": false,
-      "rejection_reason": "Contract-level rounded delivery counts cannot provide postcode or parcel coverage values."
+      "rejection_reason": "Developer portal requires sign-up/API key; login-required sources are excluded by task guardrails."
+    },
+    {
+      "name": "BDUK Project Gigabit address checker",
+      "url": "https://www.gov.uk/guidance/check-your-gigabit-broadband-availability",
+      "role": "ADDRESS_PLAN_CONTEXT_ONLY",
+      "snapshot_date": "2026-01",
+      "confidence_percent": 82,
+      "promoted": false,
+      "rejection_reason": "Address-level service requires interactive address selection and does not provide open bulk parcel-row values."
     },
     {
       "name": "Ordnance Survey AddressBase Premium premise base",
@@ -64,6 +81,29 @@
       "rejection_reason": "Not an open/free source under this task's source guardrails."
     }
   ],
+  "retrieval_attempts": [
+    {
+      "method": "web_source_page",
+      "result": "PASS",
+      "evidence": "Official page confirms 32.2 MB ZIP and January 2026 snapshot."
+    },
+    {
+      "method": "web_binary_fetch",
+      "result": "BLOCKED",
+      "error": "Binary fetch returned tool-level 400/OK handling error."
+    },
+    {
+      "method": "container_direct_download",
+      "result": "BLOCKED",
+      "error": "Runtime DNS/outbound connection unavailable."
+    },
+    {
+      "method": "ofcom_api",
+      "result": "REJECTED_GUARDRAIL",
+      "error": "Sign-up and API key required."
+    }
+  ],
+  "automation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/001_refresh_ofcom_r2_postcode.py",
   "verified_business_rows_written": 0,
   "fake_data": false,
   "db_write": false,
@@ -71,8 +111,8 @@
   "production_deploy": false,
   "final_ready": false,
   "blockers": [
-    "FULL_SHARD_CANONICAL_JOIN_AND_OFCom_R2_REFRESH_NOT_VERIFIED",
     "OFCom_R2_BULK_ZIP_NOT_INGESTED_IN_THIS_RUNTIME",
+    "FULL_33785_ROW_R2_REFRESH_NOT_EXECUTED",
     "NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED"
   ]
 }
