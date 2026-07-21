@@ -1,0 +1,54 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_3",
+  "recorded_at": "2026-07-21T08:10:00+03:00",
+  "state": "TARGETED_LOW_MEMORY_JOIN_READY_EXISTING_RUNNER_PENDING",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "official_source_contract": {
+    "snapshot": "Ofcom Connected Nations Spring 2026, January 2026",
+    "required_r2_files": 121,
+    "required_postcode_rows": 1741096,
+    "superseded_r1_files_allowed": 0,
+    "postcode_full_fibre_field_expected": false
+  },
+  "join_strategy": {
+    "scan_all_official_rows": true,
+    "global_postcode_uniqueness_check": true,
+    "strict_schema_check": true,
+    "postcode_area_consistency_check": true,
+    "percentage_range_check": true,
+    "retain_detail_for_needed_slot_postcodes_only": true,
+    "memory_strategy": "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
+    "nearest_postcode_assignment": false,
+    "parcel_score_written": false
+  },
+  "automation": {
+    "targeted_extractor": "automation/012_extract_slot3_ofcom_needed_postcodes.py",
+    "targeted_extractor_selftest": "automation/013_selftest_targeted_postcode_join.py",
+    "targeted_pipeline": "automation/014_run_slot3_targeted_pipeline.py",
+    "exact_blob_entrypoint": "automation/015_materialize_exact_blobs_and_run_targeted_slot3.py",
+    "wiring_selftest": "automation/016_selftest_targeted_pipeline_wiring.py"
+  },
+  "validation": {
+    "local_combined_passed": 60,
+    "local_combined_total": 60,
+    "remote_branch_files_read_back": 5,
+    "critical_byte_identical_files": 1,
+    "remote_execution_claimed": false
+  },
+  "verified_product_rows": 0,
+  "verified_product_target_rows": 30761,
+  "new_candidate_rows": 0,
+  "actual_business_data_rows_written": 0,
+  "blockers": [
+    "existing single runner has not executed automation 015",
+    "official ZIP bytes and SHA256 remain pending",
+    "real 30761-row status counts and samples remain pending",
+    "HTTP 8012 browser acceptance remains pending"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
