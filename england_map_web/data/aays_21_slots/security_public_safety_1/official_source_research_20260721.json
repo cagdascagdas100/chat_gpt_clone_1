@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "slot_id": "security_public_safety_1",
   "research_date": "2026-07-21",
   "status": "EXTERNAL_OFFICIAL_RESEARCH_REFRESH_NOT_RUNNER_ACCEPTANCE",
@@ -15,10 +15,13 @@
     {"source":"data.police.uk changelog","observed_value":"Metropolitan Police Service stop and search refresh for April 2026","role":"separate dataset freshness context","scope_limit":"Stop and search refresh is not substituted for crime counts"},
     {"source":"Office for National Statistics Police Force Area tables","observed_value":"Released 23 April 2026; next release 23 July 2026; year ending December 2025 edition","role":"official force and CSP contextual cross-check","scope_limit":"Force/CSP context; not LSOA or parcel measurement"},
     {"source":"Metropolitan Police knife-enabled crime tables","observed_value":"May 2026 monthly detailed tables available","role":"official London serious-violence context","scope_limit":"Force/month context only; not substituted for LSOA candidate values"},
-    {"source":"Metropolitan Police stats and data catalogue","observed_value":"Monthly Crime, Business Crime and Custody datasets available through London Datastore","role":"official London data catalogue cross-check","scope_limit":"Catalogue context only; live candidate parity remains mandatory"}
+    {"source":"Metropolitan Police stats and data catalogue","observed_value":"Monthly Crime, Business Crime and Custody datasets available through London Datastore","role":"official London data catalogue cross-check","scope_limit":"Catalogue context only; live candidate parity remains mandatory"},
+    {"source":"London Datastore MPS Recorded Crime Geographic Breakdown","observed_value":"Monthly crime counts are published at borough, ward and LSOA geography; rolling and historic files are provided","role":"direct official LSOA-level cross-check and provenance gate","scope_limit":"LSOA source context only; parcel values remain AREA_LEVEL_PROXY and require centroid-to-LSOA binding"},
+    {"source":"London Datastore MPS Monthly Crime Dashboard Data","observed_value":"Dataset is updated monthly by the 6th and runs through the end of the previous month","role":"official update-cadence cross-check","scope_limit":"Dashboard cadence does not prove individual candidate HTTP/count/SHA parity"}
   ],
-  "candidate_display_target": 50,
+  "candidate_display_target": 60,
   "candidate_live_unique_endpoints_required": 8,
+  "live_london_lsoa_source_gate_required": true,
   "live_runner_checks_required": true,
   "http_hash_dom_console_browser_acceptance": false,
   "fake_data": false,
