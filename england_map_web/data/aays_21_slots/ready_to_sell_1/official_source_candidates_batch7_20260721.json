@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "generated_at": "2026-07-21T01:07:00Z",
+  "purpose": "Official due-diligence source expansion for candidates close to Rugby but within West Northamptonshire. No site-specific conclusion is asserted until the candidate address, title or geometry is joined to the official record.",
+  "sources": [
+    {
+      "source_id": "WEST_NORTHANTS_PLANNING_APPLICATION_REGISTER",
+      "publisher": "West Northamptonshire Council",
+      "url": "https://www.westnorthants.gov.uk/planning-applications-and-enforcement/view-and-comment-planning-application",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "live_register_service",
+      "coverage": "current and historic planning applications, property history and planning appeals in West Northamptonshire",
+      "primary_join_keys": ["planning application number", "site address", "development address"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 85,
+      "binding_limit": "The register must be searched using a candidate address or application number. Discovering the service alone does not verify an agent planning statement or establish cadastral identity.",
+      "status": "VERIFIED_OFFICIAL_SOURCE_REQUIRES_CANDIDATE_QUERY"
+    },
+    {
+      "source_id": "WEST_NORTHANTS_DEFINITIVE_MAP",
+      "publisher": "West Northamptonshire Council",
+      "url": "https://www.westnorthants.gov.uk/rights-way-and-searches/definitive-map",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "legal_record_with_modification_orders",
+      "coverage": "legal records of public footpaths, bridleways, restricted byways and byways open to all traffic in Northamptonshire",
+      "primary_join_keys": ["site geometry", "parish", "route reference", "candidate site plan"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 85,
+      "binding_limit": "The council states that its interactive map is approximate and is not the legal Definitive Map. A legal-map inspection or site-specific search is required for a definitive candidate result.",
+      "status": "VERIFIED_OFFICIAL_SOURCE_WITH_MAP_DISCLAIMER"
+    },
+    {
+      "source_id": "WEST_NORTHANTS_LOCAL_PLAN_2043_REGULATION18",
+      "publisher": "West Northamptonshire Council",
+      "url": "https://www.westnorthants.gov.uk/local-plan",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "plan_stage_updates",
+      "coverage": "emerging West Northamptonshire Local Plan intended to guide decisions up to 2043",
+      "primary_join_keys": ["site geometry", "settlement", "proposed village confines", "policy map"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 60,
+      "binding_limit": "The Regulation 18 consultation closed on 27 March 2026 and the council is analysing feedback. The emerging plan is not an adopted allocation and must not be represented as planning permission.",
+      "status": "VERIFIED_OFFICIAL_EMERGING_POLICY_SOURCE_NOT_ADOPTED"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
