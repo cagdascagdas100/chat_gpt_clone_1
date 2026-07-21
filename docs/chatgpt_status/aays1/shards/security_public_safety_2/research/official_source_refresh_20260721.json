@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "generated_at": "2026-07-21T03:08:00Z",
+  "purpose": "OFFICIAL_SOURCE_VERSION_AND_SEMANTICS_REFRESH_ONLY",
+  "business_rows_created": 0,
+  "sources": [
+    {
+      "id": "police_uk_last_updated",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "status": "LIVE_VERIFIED",
+      "observed_value": "2026-05-01",
+      "use": "latest available monthly street-crime period gate",
+      "parcel_measurement": false
+    },
+    {
+      "id": "police_uk_availability",
+      "url": "https://data.police.uk/api/crimes-street-dates",
+      "status": "LIVE_VERIFIED",
+      "use": "available month enumeration before point requests",
+      "parcel_measurement": false
+    },
+    {
+      "id": "metropolitan_police_force_identity",
+      "url": "https://data.police.uk/api/forces/metropolitan",
+      "status": "LIVE_VERIFIED",
+      "use": "Metropolitan Police force identity and metadata",
+      "parcel_measurement": false
+    },
+    {
+      "id": "police_uk_call_limits",
+      "url": "https://data.police.uk/docs/api-call-limits/",
+      "status": "LIVE_VERIFIED",
+      "use": "rate-safe request scheduling",
+      "parcel_measurement": false
+    },
+    {
+      "id": "iod25_domains_v2",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "status": "LIVE_VERIFIED",
+      "published": "2025-10-30",
+      "last_updated": "2025-11-17",
+      "required_version": "v2",
+      "observed_note": "Files 1 to 9 were corrected; updated v2 workbooks are required.",
+      "use": "LSOA-level crime-domain contextual join",
+      "output_semantics": "AREA_LEVEL_PROXY",
+      "parcel_measurement": false
+    },
+    {
+      "id": "ons_police_force_area_tables",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "status": "LIVE_VERIFIED",
+      "release_date": "2026-04-23",
+      "next_release": "2026-07-23",
+      "latest_edition": "year ending December 2025",
+      "use": "aggregate Police Force Area quality assurance only",
+      "parcel_measurement": false
+    },
+    {
+      "id": "home_office_recorded_crime_open_tables",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "status": "LIVE_VERIFIED",
+      "last_updated": "2026-04-23",
+      "use": "aggregate recorded-crime and outcomes crosscheck only",
+      "parcel_measurement": false
+    }
+  ],
+  "quality_rules": [
+    "Police.uk point results are anonymised approximate supporting evidence and are not exact parcel counts.",
+    "ONS and Home Office tables are aggregate QA sources and cannot promote a parcel row by themselves.",
+    "IoD25 File 2 or File 7 corrected v2 LSOA data is required before assigning 4/4 source completeness.",
+    "No candidate is bound to a canonical parcel without canonical identity or spatial evidence.",
+    "HTTP status and response SHA256 must be captured by the shared runner for row-level acceptance."
+  ],
+  "official_sources_live": 7,
+  "official_sources_total": 7,
+  "actual_business_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
