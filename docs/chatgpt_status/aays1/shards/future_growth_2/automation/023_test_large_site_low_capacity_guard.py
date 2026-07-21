@@ -28,7 +28,7 @@ def main() -> int:
         checks.append({"check":name,"passed":passed,"detail":detail})
     flagged=mod.validate(payload)
     check("actual_wave_two_flagged",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_count"]!=2 else None)
-    check("actual_wave_exact_ids",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_candidates"]! =["FG2-W16-005","FG2-W16-006"] else None)
+    check("actual_wave_exact_ids",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_candidates"] != ["FG2-W16-005","FG2-W16-006"] else None)
     base=deepcopy(payload["candidates"][4])
     def run(c): return mod.validate({"slot_id":"future_growth_2","candidates":[c]})
     c=deepcopy(base); c["eligibility"]="eligible_bad"; check("eligible_anomaly_rejected",lambda:run(c),"must be held")
