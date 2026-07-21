@@ -3,10 +3,11 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
-$attemptId = 'height-difference-2-20260721-017'
+$attemptId = 'height-difference-2-20260721-019'
 $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $expectedPageKey = 'aays1'
 $expectedCanonicalBlob = 'ca95400a5644f77a79cbaf47b2c2d611d3777a55'
+$expectedWebRows = 305
 $entryRel = 'docs\chatgpt_status\aays1\automation\height_difference_2_candidate_then_sampling_entry.py'
 $canonicalRel = 'england_map_web\data\program_layer_matrix\topography.geojson'
 
@@ -42,6 +43,7 @@ if ($LASTEXITCODE -ne 0 -or $canonicalBlob -ne $expectedCanonicalBlob) {
 
 if ([string]$env:AAYS_TARGET_BRANCH -and [string]$env:AAYS_TARGET_BRANCH -ne $expectedBranch) { throw 'HEIGHT_DIFFERENCE_2_TARGET_BRANCH_ENV_MISMATCH' }
 if ([string]$env:AAYS_PAGE_KEY -and [string]$env:AAYS_PAGE_KEY -ne $expectedPageKey) { throw 'HEIGHT_DIFFERENCE_2_PAGE_KEY_ENV_MISMATCH' }
+if ([string]$env:AAYS_TASK_ID -and [string]$env:AAYS_TASK_ID -ne $taskId) { throw 'HEIGHT_DIFFERENCE_2_TASK_ID_ENV_MISMATCH' }
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
@@ -53,14 +55,16 @@ $env:AAYS_TARGET_BRANCH = $expectedBranch
 $env:AAYS_PAGE_KEY = $expectedPageKey
 $env:AAYS_TASK_ID = $taskId
 $env:AAYS_ATTEMPT_ID = $attemptId
+$env:AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS = [string]$expectedWebRows
 
 Write-Output 'SLOT_ID=height_difference_2'
-Write-Output 'TASK_VERSION=5.3-priority-fifo-restart-request'
+Write-Output 'TASK_VERSION=5.5-actual-hotfix-persistent-daemon'
 Write-Output "TASK_ID=$taskId"
 Write-Output "ATTEMPT_ID=$attemptId"
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "ACTIVE_BRANCH=$actualBranch"
 Write-Output "CANONICAL_BLOB_SHA=$canonicalBlob"
+Write-Output "EXPECTED_WEB_OPERATION_ROWS=$expectedWebRows"
 Write-Output "PYTHON_SCRIPT=$entrypoint"
 
 if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
