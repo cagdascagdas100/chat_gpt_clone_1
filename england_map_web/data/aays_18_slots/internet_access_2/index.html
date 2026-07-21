@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <h1>internet_access_2 — official r2 extraction and readback</h1>
+  <h1>internet_access_2 — official r2 extraction and audited readback</h1>
   <p class="muted">Partition 30,762–61,522. Frozen review branch; authoritative ownership, heartbeat, queue and business data remain unchanged.</p>
   <div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
 
@@ -31,6 +31,10 @@
 
   <h2>Network and execution attempts</h2>
   <table><thead><tr><th>#</th><th>Operation</th><th>State</th><th>Evidence</th><th>Bytes</th></tr></thead><tbody id="networkAttempts"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+
+  <h2>Published runner bundle audit</h2>
+  <p class="muted">After the real run, the readback and examples must agree on 30,761 rows, status totals, SHA-256 evidence, example quotas and review-only truth boundaries.</p>
+  <table><thead><tr><th>Status</th><th>Rows</th><th>Examples</th><th>Readback SHA-256</th><th>Examples SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="bundleAudit"><tr><td colspan="7">PENDING EXISTING RUNNER</td></tr></tbody></table>
 
   <h2>Validated real review examples</h2>
   <p class="muted">This section remains pending until the existing canonical runner publishes exact current-r2 readback. At most three examples per status are displayed.</p>
@@ -54,13 +58,17 @@ async function render(){
     <div class="metric"><span>Sources</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
     <div class="metric"><span>Validation</span><strong>${p.combined_validation_passed} / ${p.combined_validation_total}</strong><span>contract tests passed</span></div>
     <div class="metric"><span>Runner gates</span><strong>${r.passed_gate_count} / ${r.gate_count}</strong><span>${r.blocked_gate_count} blocked; dispatch ${r.dispatch_permitted?'allowed':'blocked'}</span></div>
-    <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows+p.runner_readiness_rows}</strong><span>line-by-line rows</span></div>
+    <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows+p.runner_readiness_rows}</strong><span>line-by-line rows before real audit/examples</span></div>
     <div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
   document.getElementById('operations').innerHTML=operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.status)}">${esc(v.status)}</td></tr>`).join('');
   document.getElementById('runnerReadiness').innerHTML=r.gates.map(v=>`<tr><td>${esc(v.gate_id)}</td><td>${esc(v.title)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.blocker||'')}</td></tr>`).join('');
   document.getElementById('sources').innerHTML=s.candidates.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(v.title)}</td><td class="${String(v.decision).startsWith('PROMOTED')?'ok':'blocked'}">${esc(v.decision)}</td><td>${esc(v.confidence_percent)}%</td></tr>`).join('');
   document.getElementById('sourceExamples').innerHTML=x.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.source)}</td><td>${esc(v.verified_fact)}</td><td>${esc(v.allowed_use)}</td><td>${esc(v.forbidden_use)}</td></tr>`).join('');
   document.getElementById('networkAttempts').innerHTML=n.attempts.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.data_bytes_acquired)}</td></tr>`).join('');
+  try{
+    const a=await getJson('runner_bundle_audit_latest.json');
+    document.getElementById('bundleAudit').innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${esc(a.canonical_rows)}</td><td>${esc(a.visible_example_rows)}</td><td><code>${esc(a.runner_readback_file_sha256)}</code></td><td><code>${esc(a.verified_examples_file_sha256)}</code></td><td>${esc(a.actual_business_data_rows_written)}</td><td>${esc(a.final_ready)}</td></tr>`;
+  }catch(_){document.getElementById('bundleAudit').innerHTML='<tr><td colspan="7">PENDING EXISTING RUNNER</td></tr>'}
   try{
     const e=await getJson('verified_examples_latest.json');
     document.getElementById('examples').innerHTML=e.rows.length?e.rows.map(v=>`<tr><td>${esc(v.canonical_row_no)}</td><td>${esc(v.canonical_program_parcel_id)}</td><td>${esc(v.postcode||'NO_DATA')}</td><td>${esc(v.status)}</td><td>${esc(v.gigabit_available_pct)}</td><td>${esc(v.ufbb_100mbps_available_pct)}</td><td>${esc(v.sfbb_30mbps_available_pct)}</td><td>${esc(v.unable_30mbps_pct)}</td></tr>`).join(''):'<tr><td colspan="8">No review examples published.</td></tr>';
