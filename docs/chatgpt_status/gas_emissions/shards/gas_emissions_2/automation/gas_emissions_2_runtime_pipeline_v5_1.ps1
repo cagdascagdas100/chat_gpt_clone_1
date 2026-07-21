@@ -14,7 +14,7 @@ if ($SlotId -ne $expectedSlot) { throw "WRONG_SLOT:$SlotId" }
 if ($TargetBranch -ne $expectedBranch) { throw "WRONG_BRANCH:$TargetBranch" }
 
 if (-not $RepoRoot) {
-  $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..\..'))
+  $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..\..\..'))
 } else {
   $RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
 }
