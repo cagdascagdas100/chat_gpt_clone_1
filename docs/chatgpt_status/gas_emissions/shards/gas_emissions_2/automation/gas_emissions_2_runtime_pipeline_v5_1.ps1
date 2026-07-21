@@ -19,9 +19,9 @@ if (-not $RepoRoot) {
   $RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
 }
 
-$pipeline = Join-Path $RepoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_2\automation\gas_emissions_2_runtime_pipeline.py'
+$pipeline = Join-Path $RepoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_2\automation\gas_emissions_2_runtime_pipeline_guard_v2.py'
 if (-not (Test-Path -LiteralPath $pipeline -PathType Leaf)) {
-  throw "PIPELINE_SCRIPT_MISSING:$pipeline"
+  throw "PIPELINE_GUARD_MISSING:$pipeline"
 }
 
 $env:AAYS_REPO_ROOT = $RepoRoot
@@ -33,11 +33,14 @@ if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
 if (-not $python) { throw 'PYTHON_EXECUTABLE_NOT_FOUND' }
 
 Write-Output "SLOT_ID=$expectedSlot"
-Write-Output 'TASK_VERSION=20260721_23-powershell-v5.1-carrier'
+Write-Output 'TASK_VERSION=20260721_24-guard-v2-powershell-v5.1-carrier'
 Write-Output "TARGET_BRANCH=$expectedBranch"
 Write-Output "REPO_ROOT=$RepoRoot"
-Write-Output "PIPELINE=$pipeline"
+Write-Output "PIPELINE_GUARD=$pipeline"
 Write-Output "PORT=$Port"
+Write-Output 'PORT_OWNERSHIP_PREFLIGHT=true'
+Write-Output 'SERVED_ASSET_SHA256_GUARD=true'
+Write-Output 'BROWSER_EXECUTABLE_FALLBACK=true'
 Write-Output 'SINGLE_SHARED_RUNNER_ONLY=true'
 Write-Output 'NEW_RUNNER=false'
 Write-Output 'PARALLEL_RUNNER=false'
