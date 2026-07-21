@@ -38,11 +38,16 @@ const files=[
  'data/distance_property_types/parcel_label_2_candidates_batch7.json',
  'data/distance_property_types/parcel_label_2_candidates_batch8.json'
 ];
+const activityFiles=[
+ 'data/distance_property_types/parcel_label_2_activity_latest.json',
+ 'data/distance_property_types/parcel_label_2_activity_batch8_postmerge.json'
+];
 const candidatePromise=Promise.all(files.map(u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()})));
-const activityPromise=fetch('data/distance_property_types/parcel_label_2_activity_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('activity HTTP '+r.status);return r.json()});
+const activityPromise=Promise.all(activityFiles.map(u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()})));
 Promise.all([candidatePromise,activityPromise])
- .then(([parts,activity])=>{
+ .then(([parts,activityParts])=>{
    const candidates=parts.flatMap(d=>d.candidates||[]);
+   const activities=activityParts.flatMap(d=>d.activities||[]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
    const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
    const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
    const average=count?Math.round(weighted/count*100)/100:0;
@@ -56,10 +61,10 @@ Promise.all([candidatePromise,activityPromise])
     ['Carrier sayısı','92.283 exact'],
     ['Kimlik kapısı','parcel_1…92283'],
     ['Runner','PICKUP_REQUESTED'],
-    ['İşlem satırı',activity.activity_count]
+    ['İşlem satırı',activities.length]
    ];
    document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
-   document.getElementById('activity').innerHTML=(activity.activities||[]).map(a=>`<tr><td>${esc(a.sequence)}</td><td>${esc(a.operation)}</td><td>${esc(a.result)}</td><td>${esc(a.state)}</td></tr>`).join('');
+   document.getElementById('activity').innerHTML=activities.map(a=>`<tr><td>${esc(a.sequence)}</td><td>${esc(a.operation)}</td><td>${esc(a.result)}</td><td>${esc(a.state)}</td></tr>`).join('');
    document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr>
     <td>${i+1}</td><td>${esc(c.research_batch)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
     <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmi kaynak</a></td>
