@@ -1,0 +1,39 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_3",
+  "updated_at": "2026-07-21T05:23:51+03:00",
+  "example_semantics": "EXTRACTOR_BEHAVIOR_ONLY_NOT_BUSINESS_ROWS",
+  "examples": [
+    {
+      "example_no": 1,
+      "condition": "Canonical row and legacy internet row have the same row_no, parcel_id and compatible HMLR INSPIRE ID; legacy postcode exists in current Ofcom r2",
+      "result_state": "CURRENT_R2_POSTCODE_PROXY_READY_FOR_REVIEW",
+      "source_level": "POSTCODE_PROXY",
+      "match_confidence": 0.90,
+      "parcel_score": null,
+      "business_row_written": false
+    },
+    {
+      "example_no": 2,
+      "condition": "Legacy internet evidence exists but parcel_id or HMLR INSPIRE ID conflicts with the canonical row",
+      "result_state": "IDENTITY_CONFLICT_NO_DATA",
+      "source_level": "NO_DATA",
+      "match_confidence": 0.0,
+      "parcel_score": null,
+      "business_row_written": false
+    },
+    {
+      "example_no": 3,
+      "condition": "No postcode evidence exists on the same canonical row, or the postcode is absent from current Ofcom r2",
+      "result_state": "NO_VERIFIED_POSTCODE_NO_DATA_OR_POSTCODE_NOT_FOUND_IN_CURRENT_R2_NO_DATA",
+      "source_level": "NO_DATA",
+      "match_confidence": 0.0,
+      "parcel_score": null,
+      "business_row_written": false
+    }
+  ],
+  "example_count": 3,
+  "actual_business_data_rows_written": 0,
+  "fake_data_business": false,
+  "final_ready": false
+}
