@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Build truthful internet_access_3 candidate rows from canonical rows and Ofcom 2026 postcode files.
 
-This program never invents a parcel, postcode or score. It rejects the superseded
-all-premises r1 postcode files documented by Ofcom on 7 July 2026 and accepts only
-202601_fixed_postcode_coverage_r2_*.csv for the current all-premises snapshot.
+No parcel, postcode, coverage value, score, or confidence is invented. The current
+all-premises postcode input must be the corrected Ofcom January 2026 r2 release.
 """
-
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -21,6 +20,18 @@ ROW_END = 92283
 EXPECTED_ROWS = 30761
 R2_GLOB = "202601_fixed_postcode_coverage_r2_*.csv"
 R1_GLOB = "202601_fixed_postcode_coverage_r1_*.csv"
+EXPECTED_OFCOM_FILE_COUNT = 121
+EXPECTED_OFCOM_POSTCODE_ROWS = 1741096
+
+FIELD_ALIASES = {
+    "postcode": ["postcode", "postcode_space"],
+    "sfbb": ["SFBB availability (% premises)"],
+    "ufbb100": ["UFBB (100Mbit/s) availability (% premises)"],
+    "ufbb300": ["UFBB availability (% premises)"],
+    "gigabit": ["Gigabit availability (% premises)"],
+    "unable30": ["% of premises unable to receive 30Mbit/s"],
+    "unable_decent": ["% of premises unable to receive decent broadband from fixed or FWA"],
+}
 
 
 def normalise_key(value: str) -> str:
@@ -41,9 +52,12 @@ def as_float(value: Any) -> float | None:
     if not text or text.lower() in {"null", "none", "na", "n/a", "-"}:
         return None
     try:
-        return float(text)
+        number = float(text)
     except ValueError:
         return None
+    if not 0 <= number <= 100:
+        raise ValueError(f"Coverage percentage outside 0-100: {number}")
+    return number
 
 
 def first_present(row: dict[str, Any], aliases: Iterable[str]) -> Any:
@@ -53,6 +67,11 @@ def first_present(row: dict[str, Any], aliases: Iterable[str]) -> Any:
         if key in normalised:
             return normalised[key]
     return None
+
+
+def has_alias(headers: Iterable[str], aliases: Iterable[str]) -> bool:
+    keys = {normalise_key(header) for header in headers}
+    return any(normalise_key(alias) in keys for alias in aliases)
 
 
 def row_number(row: dict[str, Any]) -> int | None:
@@ -66,6 +85,14 @@ def row_number(row: dict[str, Any]) -> int | None:
 def canonical_id(row: dict[str, Any]) -> str | None:
     value = first_present(row, ["canonical_program_parcel_id", "parcel_id", "canonical parcel id"])
     return str(value).strip() if value not in (None, "") else None
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_canonical(path: Path) -> list[dict[str, Any]]:
@@ -94,10 +121,12 @@ def load_canonical(path: Path) -> list[dict[str, Any]]:
     selected = [row for row in rows if (number := row_number(row)) is not None and ROW_START <= number <= ROW_END]
     if len(selected) != EXPECTED_ROWS:
         raise ValueError(f"Expected {EXPECTED_ROWS} canonical slot rows, found {len(selected)}")
-
     numbers = [row_number(row) for row in selected]
+    ids = [canonical_id(row) for row in selected]
     if len(set(numbers)) != EXPECTED_ROWS or min(numbers) != ROW_START or max(numbers) != ROW_END:
         raise ValueError("Canonical slot range has duplicate rows or a gap")
+    if any(not parcel_id for parcel_id in ids) or len(set(ids)) != EXPECTED_ROWS:
+        raise ValueError("Canonical slot has missing or duplicate parcel IDs")
     return sorted(selected, key=lambda row: row_number(row) or 0)
 
 
@@ -111,6 +140,8 @@ def load_legacy_internet(path: Path | None) -> dict[int, dict[str, Any]]:
         properties = feature.get("properties") or {}
         number = row_number(properties)
         if number is not None and ROW_START <= number <= ROW_END:
+            if number in result:
+                raise ValueError(f"Duplicate legacy internet row_no: {number}")
             result[number] = properties
     return result
 
@@ -128,34 +159,44 @@ def ofcom_value(row: dict[str, Any], aliases: list[str]) -> float | None:
     return as_float(first_present(row, aliases))
 
 
-def load_ofcom_postcodes(directory: Path) -> tuple[dict[str, dict[str, Any]], list[str]]:
-    superseded = sorted(directory.glob(R1_GLOB))
+def load_ofcom_postcodes(directory: Path) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]]]:
+    superseded = sorted(directory.rglob(R1_GLOB))
     if superseded:
         names = ", ".join(path.name for path in superseded[:5])
         raise ValueError(f"Superseded all-premises r1 postcode files present: {names}")
 
-    files = sorted(directory.glob(R2_GLOB))
-    if not files:
-        raise ValueError(f"No files matched required pattern {R2_GLOB}")
+    files = sorted(directory.rglob(R2_GLOB))
+    if len(files) != EXPECTED_OFCOM_FILE_COUNT:
+        raise ValueError(f"Expected {EXPECTED_OFCOM_FILE_COUNT} Ofcom r2 postcode files, found {len(files)}")
 
     coverage: dict[str, dict[str, Any]] = {}
     duplicate_postcodes: set[str] = set()
+    file_manifest: list[dict[str, Any]] = []
+    total_rows = 0
     for file_path in files:
         with file_path.open("r", encoding="utf-8-sig", newline="") as handle:
-            for row in csv.DictReader(handle):
-                postcode = normalise_postcode(first_present(row, ["postcode", "postcode_space"]))
+            reader = csv.DictReader(handle)
+            headers = reader.fieldnames or []
+            missing = [field for field, aliases in FIELD_ALIASES.items() if not has_alias(headers, aliases)]
+            if missing:
+                raise ValueError(f"{file_path.name} missing required fields: {missing}")
+            file_rows = 0
+            for row in reader:
+                file_rows += 1
+                total_rows += 1
+                postcode = normalise_postcode(first_present(row, FIELD_ALIASES["postcode"]))
                 if not postcode:
-                    continue
+                    raise ValueError(f"Blank postcode in {file_path.name} row {file_rows + 1}")
                 record = {
                     "postcode": postcode,
                     "postcode_space": first_present(row, ["postcode_space"]),
                     "postcode_area": first_present(row, ["postcode area", "postcode_area"]),
-                    "sfbb_30mbps_available_pct": ofcom_value(row, ["SFBB availability (% premises)"]),
-                    "ufbb_100mbps_available_pct": ofcom_value(row, ["UFBB (100Mbit/s) availability (% premises)"]),
-                    "ufbb_300mbps_available_pct": ofcom_value(row, ["UFBB availability (% premises)"]),
-                    "gigabit_available_pct": ofcom_value(row, ["Gigabit availability (% premises)"]),
-                    "unable_30mbps_pct": ofcom_value(row, ["% of premises unable to receive 30Mbit/s", "% of premises unable to receive [X]Mbit/s"]),
-                    "unable_decent_fixed_or_fwa_pct": ofcom_value(row, ["% of premises unable to receive decent broadband from fixed or FWA"]),
+                    "sfbb_30mbps_available_pct": ofcom_value(row, FIELD_ALIASES["sfbb"]),
+                    "ufbb_100mbps_available_pct": ofcom_value(row, FIELD_ALIASES["ufbb100"]),
+                    "ufbb_300mbps_available_pct": ofcom_value(row, FIELD_ALIASES["ufbb300"]),
+                    "gigabit_available_pct": ofcom_value(row, FIELD_ALIASES["gigabit"]),
+                    "unable_30mbps_pct": ofcom_value(row, FIELD_ALIASES["unable30"]),
+                    "unable_decent_fixed_or_fwa_pct": ofcom_value(row, FIELD_ALIASES["unable_decent"]),
                     "source_file": file_path.name,
                     "source_snapshot_date": "2026-01",
                     "source_revision": "r2",
@@ -163,17 +204,16 @@ def load_ofcom_postcodes(directory: Path) -> tuple[dict[str, dict[str, Any]], li
                 if postcode in coverage and coverage[postcode] != record:
                     duplicate_postcodes.add(postcode)
                 coverage[postcode] = record
+        file_manifest.append({"file": file_path.name, "rows": file_rows, "sha256": sha256_file(file_path)})
 
+    if total_rows != EXPECTED_OFCOM_POSTCODE_ROWS:
+        raise ValueError(f"Expected {EXPECTED_OFCOM_POSTCODE_ROWS} Ofcom postcode rows, found {total_rows}")
     if duplicate_postcodes:
         raise ValueError(f"Conflicting duplicate Ofcom postcode rows: {len(duplicate_postcodes)}")
-    return coverage, [path.name for path in files]
+    return coverage, file_manifest
 
 
-def build_rows(
-    canonical_rows: list[dict[str, Any]],
-    legacy_rows: dict[int, dict[str, Any]],
-    coverage: dict[str, dict[str, Any]],
-) -> list[dict[str, Any]]:
+def build_rows(canonical_rows: list[dict[str, Any]], legacy_rows: dict[int, dict[str, Any]], coverage: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
     for canonical in canonical_rows:
         number = row_number(canonical)
@@ -181,8 +221,25 @@ def build_rows(
         direct_postcode = normalise_postcode(first_present(canonical, ["postcode", "postcode_space"]))
         legacy_postcode = parse_legacy_postcode(legacy_rows.get(number, {}))
         postcode = direct_postcode or legacy_postcode
-        match_method = "CANONICAL_POSTCODE" if direct_postcode else "LEGACY_VERIFIED_PROXY_POSTCODE" if legacy_postcode else "NO_POSTCODE"
         source = coverage.get(postcode or "")
+        if source and direct_postcode:
+            match_method = "CANONICAL_POSTCODE"
+            source_level = "POSTCODE_PROXY"
+            confidence = 0.95
+            accuracy = "CURRENT_R2_POSTCODE_COVERAGE_DIRECT"
+            status = "CURRENT_R2_DIRECT_POSTCODE_READY_FOR_SCORING"
+        elif source and legacy_postcode:
+            match_method = "LEGACY_POSTCODE_PROXY"
+            source_level = "POSTCODE_PROXY_LEGACY_MATCH"
+            confidence = 0.70
+            accuracy = "CURRENT_R2_COVERAGE_LEGACY_POSTCODE_REQUIRES_SPATIAL_QA"
+            status = "CURRENT_R2_LEGACY_POSTCODE_MATCH_PENDING_SPATIAL_QA"
+        else:
+            match_method = "NO_POSTCODE" if not postcode else "POSTCODE_NOT_IN_CURRENT_R2"
+            source_level = "NO_DATA"
+            confidence = 0.0
+            accuracy = "NO_DATA"
+            status = "NO_DATA"
 
         record: dict[str, Any] = {
             "slot_id": SLOT_ID,
@@ -193,14 +250,14 @@ def build_rows(
             "parcel_centroid_lat": as_float(first_present(canonical, ["parcel_centroid_lat", "hmlr_lat", "lat", "latitude"])),
             "postcode": postcode,
             "internet_match_method": match_method,
-            "source_level": "POSTCODE_PROXY" if source else "NO_DATA",
-            "internet_match_confidence": 0.95 if source and direct_postcode else 0.80 if source and legacy_postcode else 0.0,
+            "source_level": source_level,
+            "internet_match_confidence": confidence,
             "internet_availability_quality_percent": None,
             "internet_quality_band": None,
-            "internet_accuracy": "SCHEMA_VERIFIED_SCORE_NOT_YET_APPROVED" if source else "NO_DATA",
+            "internet_accuracy": accuracy,
             "calculation_version": None,
-            "calculation_explanation": "No score emitted until a column-aware scoring contract is approved.",
-            "status": "CURRENT_POSTCODE_COVERAGE_READY_FOR_SCORING" if source else "NO_DATA",
+            "calculation_explanation": "No score emitted until a column-aware scoring contract and required spatial QA pass.",
+            "status": status,
         }
         if source:
             record.update(source)
@@ -227,33 +284,36 @@ def main() -> int:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
-    ready = sum(row["status"] == "CURRENT_POSTCODE_COVERAGE_READY_FOR_SCORING" for row in rows)
-    no_data = len(rows) - ready
-    direct = sum(row["internet_match_method"] == "CANONICAL_POSTCODE" and row["status"] != "NO_DATA" for row in rows)
-    legacy = sum(row["internet_match_method"] == "LEGACY_VERIFIED_PROXY_POSTCODE" and row["status"] != "NO_DATA" for row in rows)
+    direct = sum(row["status"] == "CURRENT_R2_DIRECT_POSTCODE_READY_FOR_SCORING" for row in rows)
+    legacy = sum(row["status"] == "CURRENT_R2_LEGACY_POSTCODE_MATCH_PENDING_SPATIAL_QA" for row in rows)
+    no_data = sum(row["status"] == "NO_DATA" for row in rows)
     manifest = {
         "schema_version": 3,
         "slot_id": SLOT_ID,
         "parcel_start": ROW_START,
         "parcel_end": ROW_END,
+        "canonical_source": str(args.canonical),
+        "canonical_source_sha256": sha256_file(args.canonical),
+        "legacy_internet_source": str(args.legacy_internet_geojson) if args.legacy_internet_geojson else None,
+        "legacy_internet_source_sha256": sha256_file(args.legacy_internet_geojson) if args.legacy_internet_geojson else None,
         "canonical_rows": len(rows),
-        "candidate_ready_for_scoring_rows": ready,
+        "direct_current_r2_matches": direct,
+        "legacy_current_r2_matches_pending_spatial_qa": legacy,
         "no_data_rows": no_data,
-        "direct_canonical_postcode_matches": direct,
-        "legacy_proxy_postcode_matches": legacy,
         "ofcom_postcodes_loaded": len(coverage),
         "ofcom_files_loaded": len(source_files),
         "ofcom_required_pattern": R2_GLOB,
+        "ofcom_source_files": source_files,
         "scores_written": 0,
         "actual_business_data_rows_written": 0,
         "migration": False,
         "fake_data": False,
         "final_ready": False,
-        "samples": rows[:3],
+        "samples": rows[:5],
     }
     manifest_path = args.output_dir / "internet_access_3_candidate_manifest_latest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(manifest, ensure_ascii=False, sort_keys=True))
+    print(json.dumps({k: v for k, v in manifest.items() if k != "ofcom_source_files"}, ensure_ascii=False, sort_keys=True))
     return 0
 
 
