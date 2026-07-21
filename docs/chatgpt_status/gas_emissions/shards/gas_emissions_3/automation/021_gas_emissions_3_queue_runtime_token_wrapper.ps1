@@ -15,16 +15,29 @@ $harnessRelative = 'england_map_web/data/aays_18_slots/gas_emissions_3/canonical
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
 $runtimeProofRoot = Join-Path $repoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_3\acceptance\020_coordinator_browser_runtime_latest'
 $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/runner_runtime_token_latest.json'
-$expectedTokenId = 'gas_emissions_3_v9_queue_20260721_001'
-$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v9_20260721_01'
+$expectedTokenId = 'gas_emissions_3_v10_queue_20260721_001'
+$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v10_20260721_01'
 $virtualTimeBudgetMs = 180000
 $httpTimeoutSeconds = 45
+$remoteTrackingRef = "refs/remotes/origin/$branch"
 
-$gitCandidates = @()
-if (-not [string]::IsNullOrWhiteSpace($portableRoot)) {
-    $gitCandidates += (Join-Path $portableRoot 'runtime\git\cmd\git.exe')
-    $gitCandidates += (Join-Path $portableRoot 'runtime\git\bin\git.exe')
+function Resolve-PortableRoot([string]$StartPath) {
+    if (-not [string]::IsNullOrWhiteSpace($portableRoot) -and (Test-Path -LiteralPath $portableRoot -PathType Container)) { return $portableRoot.TrimEnd('\') }
+    $cursor = [System.IO.Path]::GetFullPath($StartPath).TrimEnd('\')
+    while (-not [string]::IsNullOrWhiteSpace($cursor)) {
+        if ((Split-Path -Leaf $cursor) -eq 'runner_system') { return (Split-Path -Parent $cursor) }
+        $parent = Split-Path -Parent $cursor
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $cursor) { break }
+        $cursor = $parent
+    }
+    throw "AAYS portable root could not be resolved from $StartPath"
 }
+$portableRoot = Resolve-PortableRoot $repoRoot
+
+$gitCandidates = @(
+    (Join-Path $portableRoot 'runtime\git\cmd\git.exe'),
+    (Join-Path $portableRoot 'runtime\git\bin\git.exe')
+)
 $gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
 if (-not $gitCommand) { $gitCommand = Get-Command git -ErrorAction SilentlyContinue }
 if ($gitCommand) { $gitCandidates += $gitCommand.Source }
@@ -37,17 +50,20 @@ function Invoke-Git([string[]]$GitArgs) {
     if ($LASTEXITCODE -ne 0) { throw "$gitExe $($GitArgs -join ' ') failed: $($output -join [Environment]::NewLine)" }
     return (($output -join [Environment]::NewLine).Trim())
 }
-
-function Get-RemoteHead {
-    $raw = Invoke-Git @('ls-remote','origin',"refs/heads/$branch")
-    if ([string]::IsNullOrWhiteSpace($raw)) { throw "Remote branch not found: $branch" }
-    return ($raw -split '\s+')[0]
+function Sync-RemoteTrackingHead {
+    $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=64','origin',("+refs/heads/$branch`:$remoteTrackingRef"))
+    [void](Invoke-Git $fetchArgs)
+    return Invoke-Git @('rev-parse',$remoteTrackingRef)
 }
-
+function Assert-RemoteBlobParity([string]$Path, [string]$LocalRef, [string]$RemoteRef) {
+    $localBlob = Invoke-Git @('rev-parse',"$LocalRef`:$Path")
+    $remoteBlob = Invoke-Git @('rev-parse',"$RemoteRef`:$Path")
+    if ($localBlob -ne $remoteBlob) { throw "Remote blob changed for $Path. local=$localBlob remote=$remoteBlob" }
+    return $localBlob
+}
 function Remove-BrowserProfiles {
     foreach ($name in @('profile_precheck','profile_matrix','profile_screenshot')) {
-        $path = Join-Path $runtimeProofRoot $name
-        Remove-Item -Recurse -Force -LiteralPath $path -ErrorAction SilentlyContinue
+        Remove-Item -Recurse -Force -LiteralPath (Join-Path $runtimeProofRoot $name) -ErrorAction SilentlyContinue
     }
 }
 
@@ -59,11 +75,13 @@ if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_CHILD_DIRECT_PUSH_FORBID
 if (-not (Test-Path -LiteralPath $carrierPath -PathType Leaf)) { throw "Carrier missing: $carrierPath" }
 
 $localHead = Invoke-Git @('rev-parse','HEAD')
-$remoteHead = Get-RemoteHead
-if ($localHead -ne $remoteHead) { throw "Detached child HEAD does not match remote HEAD. local=$localHead remote=$remoteHead" }
-$wrapperBlob = Invoke-Git @('rev-parse',"HEAD:$wrapperRelative")
-$carrierBlob = Invoke-Git @('rev-parse',"HEAD:$carrierRelative")
-$harnessBlob = Invoke-Git @('rev-parse',"HEAD:$harnessRelative")
+$remoteHead = Sync-RemoteTrackingHead
+$mergeBase = Invoke-Git @('merge-base',$localHead,$remoteHead)
+if ($mergeBase -ne $localHead) { throw "Detached child HEAD is not an ancestor of remote HEAD. local=$localHead remote=$remoteHead merge_base=$mergeBase" }
+$remoteAheadCount = [int](Invoke-Git @('rev-list','--count',"$localHead..$remoteHead"))
+$wrapperBlob = Assert-RemoteBlobParity $wrapperRelative 'HEAD' $remoteTrackingRef
+$carrierBlob = Assert-RemoteBlobParity $carrierRelative 'HEAD' $remoteTrackingRef
+$harnessBlob = Assert-RemoteBlobParity $harnessRelative 'HEAD' $remoteTrackingRef
 
 $response = Invoke-WebRequest -Uri $tokenUrl -UseBasicParsing -TimeoutSec 30 -Headers @{'Cache-Control'='no-cache'}
 if ([int]$response.StatusCode -ne 200) { throw "Runtime token HTTP status is $($response.StatusCode)" }
@@ -71,29 +89,31 @@ $token = [string]$response.Content | ConvertFrom-Json
 if ($token.slot_id -ne $slotId) { throw "Runtime token slot mismatch: $($token.slot_id)" }
 if ($token.token_id -ne $expectedTokenId) { throw "Runtime token id mismatch: $($token.token_id)" }
 if ($token.task_id -ne $expectedTaskId) { throw "Runtime token task mismatch: $($token.task_id)" }
-if ($token.wrapper_path -ne $wrapperRelative) { throw "Runtime token wrapper path mismatch: $($token.wrapper_path)" }
-if ($token.wrapper_blob_sha -ne $wrapperBlob) { throw "Served runtime token wrapper SHA mismatch. token=$($token.wrapper_blob_sha) local=$wrapperBlob" }
-if ($token.carrier_path -ne $carrierRelative) { throw "Runtime token carrier path mismatch: $($token.carrier_path)" }
-if ($token.carrier_blob_sha -ne $carrierBlob) { throw "Served runtime token carrier SHA mismatch. token=$($token.carrier_blob_sha) local=$carrierBlob" }
-if ($token.harness_path -ne $harnessRelative) { throw "Runtime token harness path mismatch: $($token.harness_path)" }
-if ($token.harness_blob_sha -ne $harnessBlob) { throw "Served runtime token harness SHA mismatch. token=$($token.harness_blob_sha) local=$harnessBlob" }
-if ([int]$token.virtual_time_budget_ms -ne $virtualTimeBudgetMs) { throw "Runtime token virtual time budget mismatch. token=$($token.virtual_time_budget_ms) local=$virtualTimeBudgetMs" }
-if ([int]$token.http_timeout_seconds -ne $httpTimeoutSeconds) { throw "Runtime token HTTP timeout mismatch. token=$($token.http_timeout_seconds) local=$httpTimeoutSeconds" }
+if ($token.wrapper_path -ne $wrapperRelative -or $token.wrapper_blob_sha -ne $wrapperBlob) { throw 'Served runtime token wrapper contract mismatch.' }
+if ($token.carrier_path -ne $carrierRelative -or $token.carrier_blob_sha -ne $carrierBlob) { throw 'Served runtime token carrier contract mismatch.' }
+if ($token.harness_path -ne $harnessRelative -or $token.harness_blob_sha -ne $harnessBlob) { throw 'Served runtime token harness contract mismatch.' }
+if ([int]$token.virtual_time_budget_ms -ne $virtualTimeBudgetMs -or [int]$token.http_timeout_seconds -ne $httpTimeoutSeconds) { throw 'Runtime token time budget contract mismatch.' }
 if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) { throw 'Runtime token safety flags are invalid.' }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId task=$expectedTaskId page=$pageKey local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob virtual_time_ms=$virtualTimeBudgetMs"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId task=$expectedTaskId local=$localHead remote=$remoteHead remote_ahead=$remoteAheadCount wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob"
 $carrierExitCode = 1
-$oldSlotId = [Environment]::GetEnvironmentVariable('AAYS_SLOT_ID','Process')
-$oldDirectPush = [Environment]::GetEnvironmentVariable('AAYS_CHILD_DIRECT_PUSH_FORBIDDEN','Process')
+$oldValues = @{}
+foreach ($name in @('AAYS_SLOT_ID','AAYS_CHILD_DIRECT_PUSH_FORBIDDEN','AAYS_PORTABLE_ROOT','AAYS_VALIDATED_LOCAL_HEAD','AAYS_VALIDATED_REMOTE_HEAD','AAYS_REMOTE_HEAD_RELATION','AAYS_REMOTE_BLOB_PARITY')) { $oldValues[$name] = [Environment]::GetEnvironmentVariable($name,'Process') }
 try {
     $env:AAYS_SLOT_ID = $slotId
     $env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN = 'true'
+    $env:AAYS_PORTABLE_ROOT = $portableRoot
+    $env:AAYS_VALIDATED_LOCAL_HEAD = $localHead
+    $env:AAYS_VALIDATED_REMOTE_HEAD = $remoteHead
+    $env:AAYS_REMOTE_HEAD_RELATION = 'LOCAL_ANCESTOR_OF_REMOTE'
+    $env:AAYS_REMOTE_BLOB_PARITY = 'true'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath -VirtualTimeBudgetMs $virtualTimeBudgetMs -HttpTimeoutSeconds $httpTimeoutSeconds
     $carrierExitCode = $LASTEXITCODE
 }
 finally {
-    if ($null -eq $oldSlotId) { Remove-Item Env:AAYS_SLOT_ID -ErrorAction SilentlyContinue } else { $env:AAYS_SLOT_ID = $oldSlotId }
-    if ($null -eq $oldDirectPush) { Remove-Item Env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN -ErrorAction SilentlyContinue } else { $env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN = $oldDirectPush }
+    foreach ($name in $oldValues.Keys) {
+        if ($null -eq $oldValues[$name]) { Remove-Item "Env:$name" -ErrorAction SilentlyContinue } else { [Environment]::SetEnvironmentVariable($name,[string]$oldValues[$name],'Process') }
+    }
     Remove-BrowserProfiles
 }
 exit $carrierExitCode
