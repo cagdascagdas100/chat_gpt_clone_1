@@ -121,7 +121,7 @@ def main() -> int:
         "repo_root": str(repo_root),
         "exact_repo_root": str(exact_repo_root),
         "target_pipeline": TARGET_ENTRYPOINT,
-        "join_strategy": "DIRECT_ZIP_STREAM_SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES",
+        "join_strategy": "DIRECT_ZIP_STREAM_AREA_PARTITIONED_EXACT_UNIQUENESS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES",
         "ofcom_csv_extracted_to_disk": False,
         "actual_business_data_rows_written": 0,
         "scores_written": 0,
