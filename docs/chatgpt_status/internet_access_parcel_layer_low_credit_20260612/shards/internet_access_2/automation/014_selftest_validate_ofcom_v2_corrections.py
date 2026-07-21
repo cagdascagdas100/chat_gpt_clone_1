@@ -22,9 +22,9 @@ HEADERS = [
 ]
 
 
-def row(postcode: str, area: str, gigabit: str = "90") -> dict[str, str]:
+def row(postcode: str, area: str, *, sfbb: str = "100", ufbb100: str = "95", ufbb300: str = "92", gigabit: str = "90") -> dict[str, str]:
     spaced = postcode[:-3] + " " + postcode[-3:]
-    return {"postcode":postcode,"postcode_space":spaced,"postcode area":area,"SFBB availability (% premises)":"100","UFBB (100Mbit/s) availability (% premises)":"95","UFBB availability (% premises)":"92","Gigabit availability (% premises)":gigabit,"% of premises unable to receive 30Mbit/s":"0","% of premises unable to receive decent broadband from fixed or FWA":"0"}
+    return {"postcode":postcode,"postcode_space":spaced,"postcode area":area,"SFBB availability (% premises)":sfbb,"UFBB (100Mbit/s) availability (% premises)":ufbb100,"UFBB availability (% premises)":ufbb300,"Gigabit availability (% premises)":gigabit,"% of premises unable to receive 30Mbit/s":"0","% of premises unable to receive decent broadband from fixed or FWA":"0"}
 
 
 def write(path: Path, rows: list[dict[str,str]], headers: list[str] | None = None) -> None:
@@ -56,6 +56,8 @@ with tempfile.TemporaryDirectory() as tmp:
         "cw_cv_distinct": report["cw_sha256"] != report["cv_sha256"],
         "mk_me_distinct": report["mk_sha256"] != report["me_sha256"],
         "single_space_validated": report["postcode_space_exact_single_separator_validated"] is True,
+        "threshold_order_validated": report["coverage_speed_threshold_order_validated"] is True,
+        "threshold_order_recorded": report["coverage_speed_threshold_order"] == ["SFBB_30_PLUS", "UFBB_100_PLUS", "UFBB_300_PLUS", "GIGABIT_CAPABLE"],
         "no_postcode_full_fibre": report["postcode_full_fibre_availability_published"] is False,
         "unable30_denominator_recorded": report["unable_30mbps_denominator"] == "MATCHED_PREMISES",
         "fixed_scope_recorded": report["coverage_network_scope"].startswith("FIXED_LINE_ONLY"),
@@ -80,12 +82,24 @@ with tempfile.TemporaryDirectory() as tmp:
     expect_fail("postcode_space_separator_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "exactly one inward-code separator", passed); write(bad, [row("CW11AA", "CW")])
     write(bad, [dict(row("CW11AA", "CW"), **{"postcode area":"CV"})])
     expect_fail("postcode_area_mismatch_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "Postcode area mismatch", passed); write(bad, [row("CW11AA", "CW")])
-    write(bad, [row("CW11AA", "CW", "nan")])
+    write(bad, [row("CW11AA", "CW", gigabit="nan")])
     expect_fail("nan_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "Non-finite percentage", passed); write(bad, [row("CW11AA", "CW")])
-    write(bad, [row("CW11AA", "CW", "101")])
+    write(bad, [row("CW11AA", "CW", gigabit="101")])
     expect_fail("percent_101_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "outside 0-100", passed); write(bad, [row("CW11AA", "CW")])
     write(bad, [row("CV11AA", "CW")])
     expect_fail("duplicate_postcode_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "Postcode area mismatch", passed); write(bad, [row("CW11AA", "CW")])
+
+    write(bad, [row("CW11AA", "CW", sfbb="94", ufbb100="95")])
+    expect_fail("ufbb100_above_sfbb_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "ufbb100=95.0 exceeds sfbb=94.0", passed); write(bad, [row("CW11AA", "CW")])
+    write(bad, [row("CW11AA", "CW", ufbb100="91", ufbb300="92")])
+    expect_fail("ufbb300_above_ufbb100_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "ufbb300=92.0 exceeds ufbb100=91.0", passed); write(bad, [row("CW11AA", "CW")])
+    write(bad, [row("CW11AA", "CW", ufbb300="89", gigabit="90")])
+    expect_fail("gigabit_above_ufbb300_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "gigabit=90.0 exceeds ufbb300=89.0", passed); write(bad, [row("CW11AA", "CW")])
+    write(bad, [row("CW11AA", "CW", sfbb="95", ufbb100="95", ufbb300="95", gigabit="95")])
+    equal_report = module.validate(root, expected_files=4, expected_rows=4)
+    if not equal_report["coverage_speed_threshold_order_validated"]: raise AssertionError("equal_thresholds_allowed")
+    passed.append("equal_thresholds_allowed")
+    write(bad, [row("CW11AA", "CW")])
 
     duplicate_headers = HEADERS + ["postcode "]
     with bad.open("w", encoding="utf-8", newline="") as handle:
@@ -105,4 +119,4 @@ with tempfile.TemporaryDirectory() as tmp:
     missing = root / "202601_fixed_postcode_coverage_r2_MK.csv"; missing.unlink()
     expect_fail("file_count_rejected", lambda: module.validate(root, expected_files=4, expected_rows=4), "Expected 4", passed)
 
-print({"status":"PASS","tests_passed":len(passed),"tests_total":26,"test_names":passed,"business_rows_written":0})
+print({"status":"PASS","tests_passed":len(passed),"tests_total":32,"test_names":passed,"business_rows_written":0})
