@@ -2,16 +2,12 @@
   "schema_version": 3,
   "slot_id": "security_public_safety_3",
   "base_slot_id": "security_public_safety",
-  "parcel_partition": {
-    "start": 61523,
-    "end": 92283,
-    "count": 30761
-  },
-  "updated_at": "2026-07-21T04:23:20+03:00",
-  "state": "SOURCE_DISCOVERY_COMPLETE_DATA_CONTRACT_REPAIR_REQUIRED",
-  "remote_head_before_work": "ff9ba15370fcf1df244dd64c8d03885002a156c4",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "updated_at": "2026-07-21T05:00:00+03:00",
+  "state": "OFFICIAL_SOURCES_VERIFIED_SAMPLE_HYDRATE_QUEUED",
+  "remote_head_verified_before_status_update": "32ffaefc175fca920823a6c4ff53640d39202890",
   "kickoff_head": "bc8efc47fa670815264049d961659efbe9221abf",
-  "first_unverified_step": "HYDRATE_300_ROWS_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
+  "first_unverified_step": "RUN_3_ROW_SAMPLE_THEN_IOD25_V2_JOIN_THEN_EXPAND_TO_300",
   "audit": {
     "main_manifest_claimed_rows": 150,
     "main_csv_actual_rows": 9,
@@ -20,41 +16,46 @@
     "main_geojson_null_geometries": 9,
     "main_claim_consistent": false,
     "verified_rows_inside_slot": 0,
-    "rejected_existing_rows": 9,
-    "rejection_reasons": [
-      "parcel_id is unknown",
-      "geometry is null",
-      "manifest row count does not match CSV and GeoJSON",
-      "records cannot be assigned to parcel range 61523-92283"
-    ]
+    "rejected_existing_rows": 9
   },
-  "source_discovery": {
+  "official_sources": {
     "candidate_count": 6,
     "promoted_count": 5,
     "held_count": 1,
-    "output_path": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_source_discovery_20260721.json"
+    "accuracy_ge_90_source_count": 3,
+    "accuracy_ge_85_source_count": 5,
+    "data_police_latest_month": "2026-05",
+    "iod25_version_rule": "corrected v2 LSOA files; relative context only",
+    "home_office_latest_update": "2026-04-23",
+    "ons_latest_release": "2026-04-23"
+  },
+  "sample_work": {
+    "target_rows": 3,
+    "target_parcels": ["parcel_61523", "parcel_61524", "parcel_61525"],
+    "queue_status": "pending_shared_runner_pickup",
+    "queue_task": "docs/chatgpt_status/security_public_safety/queue/0000_000_security_public_safety_3_sample_hydrate_20260721.task.json",
+    "runner_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate.py",
+    "website_rows": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json",
+    "verified_sample_rows": 0
   },
   "progress": {
-    "completed_operations": 7,
-    "total_operations": 12,
-    "overall_percent": 18,
-    "percent_delta": 18,
+    "completed_operations": 11,
+    "total_operations": 15,
+    "overall_percent": 26,
+    "percent_delta": 8,
     "actual_slot_rows_written": 0,
     "verified_slot_rows": 0,
-    "candidate_source_rows": 6,
-    "accuracy_ge_90_source_count": 2,
-    "accuracy_ge_85_source_count": 4
+    "pending_sample_rows": 3
   },
-  "next_required_actions": [
-    "Resolve canonical parcel geometry and centroid records for parcel_61523 through parcel_92283",
-    "Build a corrected evidence manifest whose counts are computed from the actual CSV and GeoJSON",
-    "Hydrate an initial 3-row slot sample using LSOA spatial join and explicit-month official API hashes",
-    "Expand to 300 verified slot rows only after the 3-row sample passes contract checks",
+  "remaining_operations": [
+    "Shared runner executes the three-row canonical geometry and explicit-month API verifier",
+    "Corrected IoD25 v2 Crime-domain LSOA join raises accepted rows from accuracy 3/4 to 4/4",
+    "Expand the accepted method to 300 verified rows inside parcel_61523-parcel_92283",
     "Run HTTP, hash, DOM, console and browser acceptance"
   ],
   "blockers": [
-    "Canonical slot parcel geometry is not exposed by the current main verified output files",
-    "Main manifest and latest_changes claim 150 rows while the current main CSV and GeoJSON contain 9 unusable rows"
+    "Shared runner has not yet produced the three-row sample output",
+    "The active main verified CSV/GeoJSON still contain 9 unusable unknown/null records while the manifest claims 150"
   ],
   "fake_data": false,
   "db_write": false,
