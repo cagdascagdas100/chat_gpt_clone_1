@@ -45,6 +45,9 @@ def main() -> int:
     parser.add_argument("--web-geojson", type=Path, default=Path("england_map_web/data/aays_18_slots/height_difference_3/verified_examples_latest.geojson"))
     parser.add_argument("--base-url", default="http://127.0.0.1:8012")
     parser.add_argument("--script-dir", type=Path, default=Path(__file__).resolve().parent)
+    parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--expected-branch", default="codex/aays-single-runner-v5-20260706")
+    parser.add_argument("--minimum-commit", default="b0b8bd63d95d8193ce5b14ad19051bdc33201173")
     parser.add_argument("--operation-start", type=int)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--preflight-timeout", type=int, default=30)
@@ -60,7 +63,8 @@ def main() -> int:
     bootstrap = scripts / "029_preflight_then_execute_resumable.py"
     acceptance = scripts / "031_publish_verify_three_examples_port8012.py"
     transaction = scripts / "033_transactional_website_acceptance.py"
-    for path in (bootstrap, acceptance, transaction):
+    worktree_verifier = scripts / "034_verify_existing_f_worktree.py"
+    for path in (bootstrap, acceptance, transaction, worktree_verifier):
         if not path.is_file():
             raise FileNotFoundError(path)
 
@@ -68,10 +72,11 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     report_path = out / "full_pipeline_and_website_acceptance_execution.json"
     state = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "updated_at": now(),
-        "status": "029_PIPELINE_STARTING",
+        "status": "034_WORKTREE_PREFLIGHT_STARTING",
+        "worktree_preflight": None,
         "pipeline": None,
         "website_acceptance_transaction": None,
         "single_shared_runner_only": True,
@@ -87,6 +92,48 @@ def main() -> int:
     }
     write(report_path, state)
 
+    repo_root = args.repo_root.resolve()
+    required_files = [
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/004_prepare_three_real_sample_queries.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/008_match_hmlr_inspire_gml.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/009_sample_ea_dtm_and_os_terrain50.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/010_publish_verified_height_difference_examples.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/012_download_hmlr_inspire_sources.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/013_fetch_ea_dtm_wcs_for_matches.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/014_prepare_os_terrain50_tiles.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/020_stream_extract_security_canonical.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/023_download_os_terrain50_required_areas.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/025_validate_resumable_targeted_sources.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/026_execute_resumable_targeted_sources.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/027_validate_resumable_alias_safe.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/028_preflight_existing_f_runner.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/029_preflight_then_execute_resumable.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/030_stream_combined_runtime.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/031_publish_verify_three_examples_port8012.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/032_run_full_pipeline_and_website_acceptance.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/033_transactional_website_acceptance.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/automation/034_verify_existing_f_worktree.py",
+        "docs/chatgpt_status/topography/shards/height_difference_3/runner_tasks/012_resumable_targeted_sources.task.json",
+    ]
+    worktree_command = [
+        sys.executable,
+        str(worktree_verifier),
+        "--repo-root", str(repo_root),
+        "--expected-branch", args.expected_branch,
+        "--minimum-commit", args.minimum_commit,
+        "--output", str(out / "worktree_preflight_latest.json"),
+    ]
+    for required_file in required_files:
+        worktree_command.extend(["--required-file", required_file])
+    state["worktree_preflight"] = run(worktree_command)
+    state["updated_at"] = now()
+    if state["worktree_preflight"]["exit_code"] != 0:
+        state["status"] = "BLOCKED_034_EXISTING_F_WORKTREE_PREFLIGHT"
+        write(report_path, state)
+        return int(state["worktree_preflight"]["exit_code"])
+
+    state["status"] = "029_PIPELINE_STARTING"
+    write(report_path, state)
     pipeline = [
         sys.executable,
         str(bootstrap),
