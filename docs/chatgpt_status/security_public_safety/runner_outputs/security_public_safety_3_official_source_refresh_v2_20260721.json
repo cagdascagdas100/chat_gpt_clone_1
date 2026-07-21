@@ -1,0 +1,99 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_3",
+  "verified_online_at": "2026-07-21T05:06:00+03:00",
+  "status": "OFFICIAL_SOURCE_REFRESH_V2_COMPLETE",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "sources": [
+    {
+      "source_id": "SRC-01",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 - File 7 v2",
+      "official_page": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "direct_data_url": "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+      "published": "2025-10-30",
+      "updated": "2025-11-17",
+      "version_rule": "Use corrected v2 LSOA files 1-9.",
+      "lsoa_count": 33755,
+      "required_fields": [
+        "LSOA code (2021)",
+        "Crime Score",
+        "Crime Rank (where 1 is most deprived)",
+        "Crime Decile (where 1 is most deprived 10% of LSOAs)"
+      ],
+      "decision": "PROMOTED_PRIMARY_RELATIVE_CONTEXT",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Relative deprivation context only; do not convert rank, score or decile directly into an absolute parcel security percentage."
+    },
+    {
+      "source_id": "SRC-02",
+      "publisher": "data.police.uk",
+      "name": "Street-level crimes API and monthly archive",
+      "last_updated_endpoint": "https://data.police.uk/api/crime-last-updated",
+      "latest_month": "2026-05",
+      "latest_archive_page": "https://data.police.uk/data/archive/",
+      "may_2026_archive_md5": "9a1dcd49501f489bba3132c6f98c13fa",
+      "decision": "PROMOTED_CURRENT_SUPPORTING_EVIDENCE",
+      "accuracy_score_100": 95,
+      "semantic_limit": "Published locations are anonymised and point-radius results are supporting evidence, not exact parcel incident counts."
+    },
+    {
+      "source_id": "SRC-03",
+      "publisher": "Home Office",
+      "name": "Police recorded crime and outcomes open data tables",
+      "official_page": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "last_updated": "2026-04-23",
+      "coverage": "Police Force Area and Community Safety Partnership data through year ending December 2025; outcomes data through year ending March 2026.",
+      "decision": "PROMOTED_AGGREGATE_CALIBRATION_QA",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Too coarse for direct parcel attribution."
+    },
+    {
+      "source_id": "SRC-04",
+      "publisher": "Office for National Statistics",
+      "name": "Crime in England and Wales: Police Force Area data tables",
+      "official_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "release_date": "2026-04-23",
+      "next_release": "2026-07-23",
+      "latest_edition": "Year ending December 2025",
+      "decision": "PROMOTED_INDEPENDENT_AGGREGATE_QA",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Police Force Area and Community Safety Partnership reconciliation only."
+    },
+    {
+      "source_id": "SRC-05",
+      "publisher": "Office for National Statistics",
+      "name": "Official small-area and administrative geography joins",
+      "official_page": "https://geoportal.statistics.gov.uk/",
+      "decision": "PROMOTED_GEOGRAPHY_JOIN_SUPPORT",
+      "accuracy_score_100": 96,
+      "semantic_limit": "Boundary and lookup vintage must match the statistical data vintage."
+    },
+    {
+      "source_id": "SRC-06",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "Fire and rescue incident statistics",
+      "official_page": "https://www.gov.uk/government/collections/fire-and-rescue-incident-statistics",
+      "decision": "HELD_OPTIONAL_SEPARATE_COMPONENT",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Do not merge into the crime score without a separately approved and reproducible composite model."
+    }
+  ],
+  "candidate_count": 6,
+  "promoted_count": 5,
+  "held_count": 1,
+  "accuracy_ge_90_count": 6,
+  "accuracy_ge_95_count": 6,
+  "new_verified_metadata": [
+    "IoD25 File 7 direct v2 CSV URL and exact Crime field names",
+    "data.police.uk May 2026 archive MD5",
+    "Home Office April 2026 coverage details",
+    "ONS next scheduled PFA release 2026-07-23"
+  ],
+  "actual_slot_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
