@@ -6,12 +6,12 @@
   "base_slot_id": "security_public_safety",
   "shard_index": 1,
   "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
-  "attempt_id": "security-public-safety-1-20260720-006",
-  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v6",
+  "attempt_id": "security-public-safety-1-20260720-007",
+  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v7",
   "status": "pending",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v6.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v7.py",
   "read_paths": [
-    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v6.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v7.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v5.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v3.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v2.py",
@@ -49,7 +49,8 @@
       "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
       "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
       "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/",
-      "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/met/knife-enabled-crime/"
+      "https://www.met.police.uk/police-forces/metropolitan-police/areas/stats-and-data/stats-and-data/met/knife-enabled-crime/",
+      "https://data.london.gov.uk/publisher/mps/"
     ],
     "source_snapshot_date": "2026-05",
     "source_discovery_required": false,
@@ -59,7 +60,8 @@
     "candidate_api_validation_method": "deduplicated_one_mile_representative_point_http_json_count_sha256_parity",
     "candidate_api_unique_endpoints_expected": 8,
     "force_scope_validation_method": "official_force_list_plus_specific_metropolitan_force_json_identity",
-    "confidence_method": "primary_data_police_spatial_match_plus_live_candidate_api_parity_plus_metropolitan_force_scope_plus_official_context_not_parcel_measurement",
+    "london_lsoa_source_validation_method": "official_london_datastore_http_sha_content_gate_for_monthly_recorded_crime_lsoa_catalogue",
+    "confidence_method": "primary_data_police_spatial_match_plus_live_candidate_api_parity_plus_metropolitan_force_scope_plus_london_lsoa_catalogue_plus_official_context_not_parcel_measurement",
     "location_accuracy_limit": "data.police.uk street locations are approximate and anonymised",
     "known_data_issue_policy": "record official changelog gaps; do not infer missing values; preserve AREA_LEVEL_PROXY",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
@@ -73,7 +75,8 @@
       "candidate_live_api_count_mismatch",
       "candidate_live_api_sha256_mismatch",
       "candidate_live_api_http_or_json_failure",
-      "metropolitan_force_identity_mismatch"
+      "metropolitan_force_identity_mismatch",
+      "london_datastore_lsoa_source_validation_failure"
     ]
   },
   "acceptance_contract": {
@@ -87,14 +90,15 @@
     "actual_headless_browser_required": true,
     "product_matrix_area_proxy_label_required": true,
     "web_progress_line_items_required": true,
-    "candidate_examples_required": 50,
-    "candidate_accuracy_score_4_required": 50,
+    "candidate_examples_required": 60,
+    "candidate_accuracy_score_4_required": 60,
     "candidate_live_api_parity_required": true,
     "candidate_live_api_unique_endpoints_required": 8,
     "candidate_live_api_http_json_pass_required": 8,
-    "candidate_live_api_count_parity_required": 50,
-    "candidate_live_api_sha256_parity_required": 50,
+    "candidate_live_api_count_parity_required": 60,
+    "candidate_live_api_sha256_parity_required": 60,
     "metropolitan_force_scope_http_json_required": true,
+    "london_datastore_lsoa_source_http_sha_content_required": true,
     "official_source_checks_total": 5,
     "fresh_official_source_checks_required": 4,
     "remote_commit_push_readback_required": true
