@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "recorded_at": "2026-07-21T02:15:00Z",
+  "purpose": "Reduce official-source runtime while retaining fail-closed parcel evidence gates.",
+  "official_sources": [
+    {
+      "source_id": "OS_DOWNLOADS_API_OPENDATA",
+      "authority": "Ordnance Survey",
+      "product_id": "Terrain50",
+      "product_details_endpoint": "https://api.os.uk/downloads/v1/products/Terrain50",
+      "downloads_endpoint": "https://api.os.uk/downloads/v1/products/Terrain50/downloads",
+      "documentation": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification/download-an-opendata-product",
+      "automation_guidance": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/getting-started/automating-os-opendata-downloads",
+      "verified_contract": [
+        "OpenData product downloads can be automated through the official downloads endpoint.",
+        "Each download record exposes URL, file name, optional size, optional MD5, area, format and subformat.",
+        "Area filters include GB and British National Grid 100 km codes such as TQ, SU and SJ.",
+        "Redirected or guessed static URLs are not required."
+      ]
+    },
+    {
+      "source_id": "OS_TERRAIN50_PRODUCT_SUPPLY",
+      "authority": "Ordnance Survey",
+      "documentation": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/product-supply",
+      "verified_contract": [
+        "Terrain 50 grid data is supplied in ASCII grid and GML.",
+        "The national product has 2,858 10 km tiles arranged in 55 100 km grid folders.",
+        "The product is updated annually in July.",
+        "Only the 100 km areas required by the three candidates need to be downloaded."
+      ]
+    },
+    {
+      "source_id": "OS_TERRAIN50_GRID_SCHEMA",
+      "authority": "Ordnance Survey",
+      "documentation": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "verified_contract": [
+        "Each ASCII tile is 200 by 200 pixels.",
+        "Each cell is 50 metres by 50 metres.",
+        "Height values are supplied to 0.1 metre precision.",
+        "GML and PRJ companion files are expected in grid supplies."
+      ]
+    },
+    {
+      "source_id": "HMLR_INSPIRE_JULY_2026",
+      "authority": "HM Land Registry",
+      "documentation": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "verified_contract": [
+        "The current files were published on 5 July 2026.",
+        "Files are published as GML by local authority.",
+        "New files are published on the first Sunday of each month."
+      ]
+    },
+    {
+      "source_id": "EA_LIDAR_COMPOSITE_DTM_1M",
+      "authority": "Environment Agency",
+      "documentation": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "persistent_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "verified_contract": [
+        "Approximately 99 percent of England is covered at 1 metre resolution.",
+        "The coordinate reference system is EPSG:27700.",
+        "The stated vertical accuracy is plus or minus 15 centimetres RMSE."
+      ]
+    }
+  ],
+  "implementation": {
+    "targeted_area_downloader": "docs/chatgpt_status/topography/shards/height_difference_3/automation/023_download_os_terrain50_required_areas.py",
+    "targeted_area_downloader_sha256": "027275a402001ec4e63c3480754677095c47f93fc2a24cbeb10421d292b18e99",
+    "single_process_parallel_orchestrator": "docs/chatgpt_status/topography/shards/height_difference_3/automation/024_execute_parallel_targeted_sources.py",
+    "single_process_parallel_orchestrator_sha256": "20a173abef190fd5a547e0e1ce7d08e25d8afd685780badcffcabf993c475f19",
+    "download_scope": "ONLY_UNIQUE_100KM_AREAS_FOR_FIRST_THREE_EXPLICIT_CANDIDATES",
+    "concurrency": {
+      "runner_count": 1,
+      "maximum_parallel_network_stages": 2,
+      "parallel_group_1": ["HMLR_SOURCE_PREPARATION", "TERRAIN50_REQUIRED_AREA_ACQUISITION"],
+      "parallel_group_2": ["EA_DTM_WCS_PREPARATION", "TERRAIN50_EXACT_TILE_PREPARATION"]
+    },
+    "integrity_gates": [
+      "official API metadata URL only",
+      "exact required 100 km area",
+      "optional official MD5 match",
+      "locally calculated SHA256",
+      "safe ZIP paths",
+      "ASCII tile name belongs to requested area",
+      "200 by 200 cells",
+      "50 metre cell size",
+      "GML and PRJ companion presence",
+      "no nearest or neighbouring area substitution"
+    ]
+  },
+  "real_execution": {
+    "targeted_area_downloads_completed": 0,
+    "canonical_shard_rows_exported": 0,
+    "parcel_candidates_selected": 0,
+    "official_measurement_rows": 0,
+    "verified_website_rows": 0,
+    "status": "READY_FOR_EXISTING_SINGLE_RUNNER_EXECUTION"
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
