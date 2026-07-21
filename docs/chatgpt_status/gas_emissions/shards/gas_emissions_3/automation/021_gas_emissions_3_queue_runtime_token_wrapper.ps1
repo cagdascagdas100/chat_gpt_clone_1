@@ -5,6 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $slotId = 'gas_emissions_3'
+$pageKey = 'gas_emissions'
 $branch = 'codex/aays-single-runner-v5-20260706'
 $repoRoot = (Get-Location).Path.TrimEnd('\')
 $portableRoot = [string]$env:AAYS_PORTABLE_ROOT
@@ -14,8 +15,8 @@ $harnessRelative = 'england_map_web/data/aays_18_slots/gas_emissions_3/canonical
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
 $runtimeProofRoot = Join-Path $repoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_3\acceptance\020_coordinator_browser_runtime_latest'
 $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/runner_runtime_token_latest.json'
-$expectedTokenId = 'gas_emissions_3_v8_queue_20260721_001'
-$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v8_20260721_01'
+$expectedTokenId = 'gas_emissions_3_v9_queue_20260721_001'
+$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v9_20260721_01'
 $virtualTimeBudgetMs = 180000
 $httpTimeoutSeconds = 45
 
@@ -50,8 +51,11 @@ function Remove-BrowserProfiles {
     }
 }
 
-if ([string]$env:AAYS_SLOT_ID -ne $slotId) { throw "AAYS_SLOT_ID mismatch: $env:AAYS_SLOT_ID" }
-if ([string]$env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN -ne 'true') { throw 'Coordinator child direct-push guard is not active.' }
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_TASK_ID) -and [string]$env:AAYS_TASK_ID -ne $expectedTaskId) { throw "AAYS_TASK_ID mismatch: $env:AAYS_TASK_ID" }
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_PAGE_KEY) -and [string]$env:AAYS_PAGE_KEY -ne $pageKey) { throw "AAYS_PAGE_KEY mismatch: $env:AAYS_PAGE_KEY" }
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_TARGET_BRANCH) -and [string]$env:AAYS_TARGET_BRANCH -ne $branch) { throw "AAYS_TARGET_BRANCH mismatch: $env:AAYS_TARGET_BRANCH" }
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_SLOT_ID) -and [string]$env:AAYS_SLOT_ID -ne $slotId) { throw "AAYS_SLOT_ID mismatch: $env:AAYS_SLOT_ID" }
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN) -and [string]$env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN -ne 'true') { throw 'Coordinator child direct-push guard conflicts with queue contract.' }
 if (-not (Test-Path -LiteralPath $carrierPath -PathType Leaf)) { throw "Carrier missing: $carrierPath" }
 
 $localHead = Invoke-Git @('rev-parse','HEAD')
@@ -75,17 +79,21 @@ if ($token.harness_path -ne $harnessRelative) { throw "Runtime token harness pat
 if ($token.harness_blob_sha -ne $harnessBlob) { throw "Served runtime token harness SHA mismatch. token=$($token.harness_blob_sha) local=$harnessBlob" }
 if ([int]$token.virtual_time_budget_ms -ne $virtualTimeBudgetMs) { throw "Runtime token virtual time budget mismatch. token=$($token.virtual_time_budget_ms) local=$virtualTimeBudgetMs" }
 if ([int]$token.http_timeout_seconds -ne $httpTimeoutSeconds) { throw "Runtime token HTTP timeout mismatch. token=$($token.http_timeout_seconds) local=$httpTimeoutSeconds" }
-if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) {
-    throw 'Runtime token safety flags are invalid.'
-}
+if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) { throw 'Runtime token safety flags are invalid.' }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob virtual_time_ms=$virtualTimeBudgetMs"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId task=$expectedTaskId page=$pageKey local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob virtual_time_ms=$virtualTimeBudgetMs"
 $carrierExitCode = 1
+$oldSlotId = [Environment]::GetEnvironmentVariable('AAYS_SLOT_ID','Process')
+$oldDirectPush = [Environment]::GetEnvironmentVariable('AAYS_CHILD_DIRECT_PUSH_FORBIDDEN','Process')
 try {
+    $env:AAYS_SLOT_ID = $slotId
+    $env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN = 'true'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath -VirtualTimeBudgetMs $virtualTimeBudgetMs -HttpTimeoutSeconds $httpTimeoutSeconds
     $carrierExitCode = $LASTEXITCODE
 }
 finally {
+    if ($null -eq $oldSlotId) { Remove-Item Env:AAYS_SLOT_ID -ErrorAction SilentlyContinue } else { $env:AAYS_SLOT_ID = $oldSlotId }
+    if ($null -eq $oldDirectPush) { Remove-Item Env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN -ErrorAction SilentlyContinue } else { $env:AAYS_CHILD_DIRECT_PUSH_FORBIDDEN = $oldDirectPush }
     Remove-BrowserProfiles
 }
 exit $carrierExitCode
