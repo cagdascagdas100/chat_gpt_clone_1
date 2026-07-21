@@ -15,28 +15,26 @@ $WebRel = 'england_map_web/data/aays_21_slots/height_difference_1/noninteractive
 function Write-Json([string]$Path, [object]$Value) {
   $parent = Split-Path -Parent $Path
   if ($parent -and -not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-  [System.IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth 20), [System.Text.UTF8Encoding]::new($false))
+  $utf8 = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth 20), $utf8)
 }
 
 function Invoke-Captured([string]$File, [string[]]$Arguments, [string]$WorkingDirectory) {
-  $psi = [System.Diagnostics.ProcessStartInfo]::new()
-  $psi.FileName = $File
-  $psi.WorkingDirectory = $WorkingDirectory
-  $psi.UseShellExecute = $false
-  $psi.RedirectStandardOutput = $true
-  $psi.RedirectStandardError = $true
-  $psi.CreateNoWindow = $true
-  foreach ($argument in $Arguments) { [void]$psi.ArgumentList.Add($argument) }
-  $process = [System.Diagnostics.Process]::new()
-  $process.StartInfo = $psi
-  [void]$process.Start()
-  $stdout = $process.StandardOutput.ReadToEnd()
-  $stderr = $process.StandardError.ReadToEnd()
-  $process.WaitForExit()
-  return [pscustomobject]@{ exit_code = $process.ExitCode; stdout = $stdout.Trim(); stderr = $stderr.Trim() }
+  Push-Location -LiteralPath $WorkingDirectory
+  $oldEap = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = 'Continue'
+    $lines = @(& $File @Arguments 2>&1)
+    $code = $LASTEXITCODE
+    $text = (($lines | Out-String).Trim())
+    return [pscustomobject]@{ exit_code = $code; stdout = $text; stderr = $text }
+  } finally {
+    $ErrorActionPreference = $oldEap
+    Pop-Location
+  }
 }
 
-$blockers = [System.Collections.Generic.List[string]]::new()
+$blockers = New-Object System.Collections.Generic.List[string]
 $facts = [ordered]@{}
 $git = Get-Command git -ErrorAction SilentlyContinue
 $gh = Get-Command gh -ErrorAction SilentlyContinue
@@ -72,7 +70,7 @@ try {
   if (-not $Apply) {
     $status = if ($blockers.Count -gt 0) { 'BLOCKED_NONINTERACTIVE_PUBLISH_AUTH_PREFLIGHT' } elseif ($alreadyReady) { 'GIT_ALREADY_NONINTERACTIVE_AUTHENTICATED' } else { 'READY_FOR_GH_SETUP_GIT_APPLY' }
   } else {
-    if ($blockers.Count -gt 0 -and -not ($blockers.Count -eq 0)) {
+    if ($blockers.Count -gt 0) {
       $status = 'BLOCKED_NONINTERACTIVE_PUBLISH_AUTH_APPLY'
     } elseif ($alreadyReady) {
       $status = 'GIT_ALREADY_NONINTERACTIVE_AUTHENTICATED'
@@ -111,6 +109,7 @@ $result = [ordered]@{
   blockers = @($blockers)
   facts = $facts
   token_or_secret_output_forbidden = $true
+  windows_powershell_5_1_compatible = $true
   starts_runner = $false
   stops_runner = $false
   creates_runner = $false
