@@ -1,22 +1,29 @@
 {
   "schema_version": 1,
   "slot_id": "internet_access_3",
-  "updated_at": "2026-07-21T06:45:00+03:00",
+  "updated_at": "2026-07-21T07:40:00+03:00",
   "task_id": "internet_access_3-ofcom-r2-bounded-join-20260721",
   "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
   "single_shared_runner_only": true,
   "create_new_runner": false,
   "parallel_runner_allowed": false,
   "queue_submission": false,
-  "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\008_download_validate_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main",
-  "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\008_download_validate_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --ofcom-zip F:\\path\\to\\official_ofcom.zip",
+  "runner_execution_claimed": false,
+  "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\010_materialize_exact_blobs_and_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD",
+  "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\010_materialize_exact_blobs_and_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD --ofcom-zip F:\\path\\to\\official_ofcom.zip",
+  "exact_blob_sources": [
+    {"role":"canonical","path":"england_map_web/data/program_layer_matrix/security.geojson","git_blob_sha":"8afd1d2bac414cf0f6b9484014e7878a4ceff877","state":"PASS"},
+    {"role":"legacy_internet","path":"england_map_web/data/program_layer_matrix/internet.geojson","git_blob_sha":"9c24fd366e29c3356b1e5178295b903edf8680ff","state":"PASS"}
+  ],
   "stages": [
-    {"stage": 1, "name": "IDENTITY_EXTRACTOR_SELFTEST", "state": "PREPARED", "expected": "9/9 PASS"},
-    {"stage": 2, "name": "STREAMING_SLICER_SELFTEST", "state": "PREPARED", "expected": "9/9 PASS"},
+    {"stage": 1, "name": "IDENTITY_EXTRACTOR_SELFTEST", "state": "PASS", "expected": "9/9 PASS"},
+    {"stage": 2, "name": "STREAMING_SLICER_SELFTEST", "state": "PASS", "expected": "9/9 PASS"},
     {"stage": 3, "name": "MULTICLIENT_DOWNLOAD_SELFTEST", "state": "PASS", "expected": "10/10 PASS"},
-    {"stage": 4, "name": "OFFICIAL_ZIP_SELECTION_DOWNLOAD_AND_SHA256", "state": "WAITING_EXISTING_RUNNER", "expected": "explicit ZIP or cache or urllib/curl/PowerShell; signature, size, CRC and SHA256"},
-    {"stage": 5, "name": "EXACT_30761_ROW_SLICE", "state": "WAITING_EXISTING_RUNNER", "expected": "30,761 unique row_no and parcel_id"},
-    {"stage": 6, "name": "REVIEW_ONLY_R2_JOIN", "state": "WAITING_EXISTING_RUNNER", "expected": "proxy/conflict/postcode-not-found/NO_DATA counts"}
+    {"stage": 4, "name": "EXACT_GIT_BLOB_MATERIALIZER_SELFTEST", "state": "PASS", "expected": "16/16 PASS"},
+    {"stage": 5, "name": "EXACT_BLOB_MATERIALIZATION", "state": "WAITING_EXISTING_RUNNER", "expected": "HEAD path blob verification and isolated git cat-file materialization without working-tree mutation"},
+    {"stage": 6, "name": "OFFICIAL_ZIP_SELECTION_DOWNLOAD_AND_SHA256", "state": "WAITING_EXISTING_RUNNER", "expected": "explicit ZIP or cache or urllib/curl/PowerShell; signature, size, CRC and SHA256"},
+    {"stage": 7, "name": "EXACT_30761_ROW_SLICE", "state": "WAITING_EXISTING_RUNNER", "expected": "30,761 unique row_no and parcel_id plus hashes and first rows"},
+    {"stage": 8, "name": "REVIEW_ONLY_R2_JOIN", "state": "WAITING_EXISTING_RUNNER", "expected": "proxy/conflict/postcode-not-found/NO_DATA counts"}
   ],
   "actual_business_data_rows_written": 0,
   "migration": false,
