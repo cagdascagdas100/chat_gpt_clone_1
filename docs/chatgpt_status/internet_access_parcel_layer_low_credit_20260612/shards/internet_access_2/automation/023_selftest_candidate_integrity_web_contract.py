@@ -28,13 +28,15 @@ checks={
   "examples_not_real":examples.get("real_parcel_rows")==0 and examples.get("actual_business_data_rows_written")==0,
   "no_data_methods":{x["required_method"] for x in examples["examples"] if x["candidate_class"]=="NO_DATA"}=={"NO_POSTCODE","POSTCODE_NOT_IN_CURRENT_R2"},
   "reject_examples":sum(x["decision"]=="REJECT_FAIL_CLOSED" for x in examples["examples"])==2,
-  "validation_260":contract["combined_validation"]=={"passed":260,"total":260},
+  "validation_292":contract["combined_validation"]=={"passed":292,"total":292},
   "candidate_tests_25":contract["candidate_integrity_selftest"]=={"passed":25,"total":25},
   "consistency_tests_14":contract["review_contract_consistency_selftest"]=={"passed":14,"total":14},
   "wrapper_tests_36":contract["run_and_audit_wrapper_contract"]=={"passed":36,"total":36},
+  "zip_container_tests_18":contract["zip_container_safety_selftest"]=={"passed":18,"total":18},
+  "provenance_tests_24_and_chain_12":contract["provenance_selftest"]=={"passed":24,"total":24} and len(contract["required_chain"])==12,
   "historical_override_ids_exact":duplicate_ids=={55,90} and by_id[55]["status"]=="DONE" and by_id[90]["status"]=="DONE",
-  "operation_range_121":sorted(by_id)==list(range(1,122)),
-  "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==121,
+  "operation_range_129":sorted(by_id)==list(range(1,130)),
+  "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==129,
   "review_only":progress.get("actual_business_data_rows_written")==0 and progress.get("final_ready") is False and contract.get("final_ready") is False,
 }
 failed=[name for name,ok in checks.items() if not ok]
