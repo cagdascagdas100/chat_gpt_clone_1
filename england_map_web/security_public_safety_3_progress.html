@@ -16,11 +16,11 @@
 </head>
 <body>
   <h1>security_public_safety_3</h1>
-  <div class="muted">Parsel aralığı 61.523–92.283 · exact blob + resmî force lookup + bölgesel kapsam + strict API liste yanıtı + IoD2025 Crime alanları · doğrulanmamış skorlar kabul edilmez · otomatik yenileme 60 saniye</div>
+  <div class="muted">Parsel aralığı 61.523–92.283 · exact blob + düşük-bellek akış çıkarımı + resmî force lookup + bölgesel kapsam + strict API liste yanıtı + IoD2025 Crime alanları · doğrulanmamış skorlar kabul edilmez · otomatik yenileme 60 saniye</div>
   <div id="summary" class="grid"></div>
   <div id="blockers"></div>
-  <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2.3 force-coverage smoke doğrulaması</h2><div id="smoke" class="scroll"></div></section>
-  <section class="section smoke"><h2>V5.2.3 force-coverage smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
+  <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2.4 düşük-bellek smoke doğrulaması</h2><div id="smoke" class="scroll"></div></section>
+  <section class="section smoke"><h2>V5.2.4 düşük-bellek smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
   <section class="section"><h2>Önceki ve genel işlemler</h2><div id="operations" class="scroll"></div></section>
   <section class="section"><h2>48 parsel adayı ve dört kabul kapısı</h2><div id="rows" class="scroll"></div></section>
   <section class="section"><h2>Resmî kaynak adayları, doğrulukları, tarihler ve kullanım sınırları</h2><div id="sources" class="scroll"></div></section>
@@ -31,11 +31,13 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function card(l,v,c=''){return `<div class="card"><div class="muted">${esc(l)}</div><div class="value ${c}">${esc(v)}</div></div>`}
 function gate(v){return `<span class="gate ${v?'ok':'warn'}">${v?'GEÇTİ':'BEKLİYOR'}</span>`}
 function operationsTable(rows){return `<table><thead><tr><th>Satır</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.operation)}</td><td class="status">${esc(r.status)}</td><td>${esc(r.evidence)}</td></tr>`).join('')}</tbody></table>`}
-function rowsTable(rows,showChunk=true,showForce=false){
+function rowsTable(rows,showChunk=true,showForce=false,showStream=false){
+  const streamHead=showStream?'<th>Akış çıkarım</th><th>Tam JSON yüklenmedi</th>':'';
   const forceHead=showForce?'<th>Force lookup</th><th>Crime kapsam</th><th>Outcome kapsam</th>':'';
-  return `<table><thead><tr><th>Satır</th>${showChunk?'<th>Grup</th>':''}<th>Parsel</th><th>Durum</th><th>Kanonik</th>${forceHead}<th>Crime API</th><th>Outcomes API</th><th>IoD2025 v2</th><th>Doğruluk /4</th><th>Yayımlanan skor</th><th>İnceleme</th></tr></thead><tbody>${rows.map(r=>{
+  return `<table><thead><tr><th>Satır</th>${showChunk?'<th>Grup</th>':''}<th>Parsel</th><th>Durum</th>${streamHead}<th>Kanonik</th>${forceHead}<th>Crime API</th><th>Outcomes API</th><th>IoD2025 v2</th><th>Doğruluk /4</th><th>Yayımlanan skor</th><th>İnceleme</th></tr></thead><tbody>${rows.map(r=>{
+    const streamCells=showStream?`<td>${gate(r.stream_extraction_gate)}</td><td>${gate(r.full_json_load_avoided_gate)}</td>`:'';
     const forceCells=showForce?`<td>${gate(r.force_lookup_gate)}</td><td>${gate(r.territorial_crime_coverage_gate)}</td><td>${gate(r.territorial_outcomes_coverage_gate)}</td>`:'';
-    return `<tr><td>${esc(r.line)}</td>${showChunk?`<td>${esc(r.chunk)}</td>`:''}<td>${esc(r.parcel_id)}</td><td>${esc(r.candidate_status)}</td><td>${gate(r.canonical_gate)}</td>${forceCells}<td>${gate(r.crime_api_gate)}</td><td>${gate(r.outcomes_api_gate)}</td><td>${gate(r.iod25_gate)}</td><td>${esc(r.accuracy_score_4)}</td><td>${esc(r.security_score_percent)}</td><td>${esc(r.needs_manual_review)}</td></tr>`
+    return `<tr><td>${esc(r.line)}</td>${showChunk?`<td>${esc(r.chunk)}</td>`:''}<td>${esc(r.parcel_id)}</td><td>${esc(r.candidate_status)}</td>${streamCells}<td>${gate(r.canonical_gate)}</td>${forceCells}<td>${gate(r.crime_api_gate)}</td><td>${gate(r.outcomes_api_gate)}</td><td>${gate(r.iod25_gate)}</td><td>${esc(r.accuracy_score_4)}</td><td>${esc(r.security_score_percent)}</td><td>${esc(r.needs_manual_review)}</td></tr>`
   }).join('')}</tbody></table>`
 }
 function sourcesTable(rows){return `<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Ad</th><th>Yayıncı</th><th>Doğruluk</th><th>Karar</th><th>Kanıt tarihi</th><th>Tazelik</th><th>Kullanım sınırı</th><th>Resmî URL</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.source_id)}</td><td>${esc(r.name)}</td><td>${esc(r.publisher)}</td><td>${esc(r.authority_accuracy)}</td><td>${esc(r.decision)}</td><td>${esc(r.evidence_date)}</td><td>${esc(r.freshness_status)}</td><td>${esc(r.semantic_limit)}</td><td class="url"><a href="${esc(r.official_url)}" target="_blank" rel="noopener">${esc(r.official_url)}</a></td></tr>`).join('')}</tbody></table>`}
@@ -54,8 +56,11 @@ async function main(){
       card('Artış','+'+p.progress_delta_percent+'%','ok')+
       card('İşlemler',p.completed_operations+' / '+p.total_operations)+
       card('Web işlem satırı',p.visible_operation_rows)+
-      card('Smoke sürüm',p.smoke_task_version||'V5.2.3')+
-      card('Strict statik kontrol',p.smoke_strict_gate_static_checks_passed||0,'ok')+
+      card('Smoke sürüm',p.smoke_task_version||'V5.2.4')+
+      card('Statik kontrol',p.smoke_strict_gate_static_checks_passed||0,'ok')+
+      card('Akış okuyucu',p.low_memory_streaming_required?'AÇIK':'EKSİK',p.low_memory_streaming_required?'ok':'bad')+
+      card('Tam JSON yükleme',p.canonical_full_json_load_forbidden?'YASAK':'AÇIK',p.canonical_full_json_load_forbidden?'ok':'bad')+
+      card('Runtime akış',p.canonical_runtime_streaming_verified?'GEÇTİ':'BEKLİYOR',p.canonical_runtime_streaming_verified?'ok':'warn')+
       card('Smoke aday',p.smoke_candidate_rows||3)+
       card('Toplam parsel',p.visible_parcel_rows)+
       card('Bulk kapısı',p.prepared_acceptance_gate_cells)+
@@ -70,11 +75,11 @@ async function main(){
       card('Canonical queue',p.smoke_queue_visible?'hazır':'bekliyor',p.smoke_queue_visible?'ok':'warn')+
       card('Runner heartbeat',p.runner_heartbeat_fresh?'taze':'eski',p.runner_heartbeat_fresh?'ok':'bad');
     const caveats=(p.data_police_quality_caveats||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
-    document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><b>Resmî veri kalite uyarıları</b><ul>'+caveats+'</ul><div class="muted">Strict smoke başarı kuralı: '+esc(p.smoke_success_rule)+'</div><div class="muted">Force lookup: '+esc(p.force_lookup_endpoint||'')+'</div><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
-    document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,false,true);
+    document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><b>Resmî veri kalite uyarıları</b><ul>'+caveats+'</ul><div class="muted">Smoke başarı kuralı: '+esc(p.smoke_success_rule)+'</div><div class="muted">Akış denetimi: '+esc(p.low_memory_stream_audit||'')+'</div><div class="muted">Force lookup: '+esc(p.force_lookup_endpoint||'')+'</div><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
+    document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,false,true,true);
     document.getElementById('smokeOperations').innerHTML=operationsTable(so.rows);
     document.getElementById('operations').innerHTML=operationsTable(o.rows);
-    document.getElementById('rows').innerHTML=rowsTable(r.rows,true,false);
+    document.getElementById('rows').innerHTML=rowsTable(r.rows,true,false,false);
     document.getElementById('sources').innerHTML=sourcesTable(s.rows);
   }catch(e){document.body.insertAdjacentHTML('beforeend','<div class="error">'+esc(e.stack||e)+'</div>')}
 }
