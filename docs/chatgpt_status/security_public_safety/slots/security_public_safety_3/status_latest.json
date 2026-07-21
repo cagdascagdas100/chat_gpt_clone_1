@@ -3,11 +3,11 @@
   "slot_id": "security_public_safety_3",
   "base_slot_id": "security_public_safety",
   "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
-  "updated_at": "2026-07-21T05:00:00+03:00",
-  "state": "OFFICIAL_SOURCES_VERIFIED_SAMPLE_HYDRATE_QUEUED",
-  "remote_head_verified_before_status_update": "32ffaefc175fca920823a6c4ff53640d39202890",
+  "updated_at": "2026-07-21T05:06:00+03:00",
+  "state": "SIX_ROW_CANONICAL_API_IOD25_V2_VERIFICATION_QUEUED",
+  "remote_head_verified_before_status_update": "1e03f4358fb51447dd174af729e66fb2c0a20dd4",
   "kickoff_head": "bc8efc47fa670815264049d961659efbe9221abf",
-  "first_unverified_step": "RUN_3_ROW_SAMPLE_THEN_IOD25_V2_JOIN_THEN_EXPAND_TO_300",
+  "first_unverified_step": "SHARED_RUNNER_EXECUTES_SIX_ROW_V2_SAMPLE_THEN_EXPAND_TO_300",
   "audit": {
     "main_manifest_claimed_rows": 150,
     "main_csv_actual_rows": 9,
@@ -22,39 +22,55 @@
     "candidate_count": 6,
     "promoted_count": 5,
     "held_count": 1,
-    "accuracy_ge_90_source_count": 3,
-    "accuracy_ge_85_source_count": 5,
+    "source_authority_accuracy_ge_95_count": 6,
     "data_police_latest_month": "2026-05",
-    "iod25_version_rule": "corrected v2 LSOA files; relative context only",
+    "data_police_may_2026_archive_md5": "9a1dcd49501f489bba3132c6f98c13fa",
+    "iod25_version_rule": "corrected v2 File 7 LSOA fields; relative context only",
+    "iod25_lsoa_count": 33755,
     "home_office_latest_update": "2026-04-23",
-    "ons_latest_release": "2026-04-23"
+    "ons_latest_release": "2026-04-23",
+    "ons_next_release": "2026-07-23",
+    "source_refresh_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_source_refresh_v2_20260721.json"
   },
   "sample_work": {
-    "target_rows": 3,
-    "target_parcels": ["parcel_61523", "parcel_61524", "parcel_61525"],
-    "queue_status": "pending_shared_runner_pickup",
-    "queue_task": "docs/chatgpt_status/security_public_safety/queue/0000_000_security_public_safety_3_sample_hydrate_20260721.task.json",
-    "runner_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate.py",
+    "target_rows": 6,
+    "target_parcels": [
+      "parcel_61523",
+      "parcel_61524",
+      "parcel_61525",
+      "parcel_61526",
+      "parcel_61527",
+      "parcel_61528"
+    ],
+    "queue_status": "pickup_requested_waiting_for_shared_runner_output",
+    "queue_task": "docs/chatgpt_status/security_public_safety/queue/0000_000_security_public_safety_3_sample_hydrate_v2_20260721.task.json",
+    "pickup_marker": "docs/chatgpt_status/security_public_safety/queue/0000_000_SECURITY_PUBLIC_SAFETY_3_PICKUP_NOW_20260721_0506.txt",
+    "runner_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
+    "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
     "website_rows": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json",
-    "verified_sample_rows": 0
+    "verified_sample_rows": 0,
+    "pending_sample_rows": 6
   },
   "progress": {
-    "completed_operations": 11,
-    "total_operations": 15,
-    "overall_percent": 26,
-    "percent_delta": 8,
+    "completed_operations": 16,
+    "total_operations": 22,
+    "overall_percent": 35,
+    "percent_delta": 9,
     "actual_slot_rows_written": 0,
     "verified_slot_rows": 0,
-    "pending_sample_rows": 3
+    "accuracy_score_4_rows": 0,
+    "visible_candidate_rows": 6
   },
   "remaining_operations": [
-    "Shared runner executes the three-row canonical geometry and explicit-month API verifier",
-    "Corrected IoD25 v2 Crime-domain LSOA join raises accepted rows from accuracy 3/4 to 4/4",
+    "Shared runner executes the six-row canonical geometry, explicit-month police API and IoD25 v2 verifier",
+    "Reconcile generated counts and accept only accuracy 4/4 rows",
     "Expand the accepted method to 300 verified rows inside parcel_61523-parcel_92283",
-    "Run HTTP, hash, DOM, console and browser acceptance"
+    "Replace or isolate the unusable 9-row unknown/null canonical output",
+    "Run HTTP, hash, DOM, console and browser acceptance",
+    "Keep final_ready false until all acceptance evidence exists"
   ],
   "blockers": [
-    "Shared runner has not yet produced the three-row sample output",
+    "Shared runner has not yet produced security_public_safety_3_sample_candidates_v2_latest.json",
     "The active main verified CSV/GeoJSON still contain 9 unusable unknown/null records while the manifest claims 150"
   ],
   "fake_data": false,
