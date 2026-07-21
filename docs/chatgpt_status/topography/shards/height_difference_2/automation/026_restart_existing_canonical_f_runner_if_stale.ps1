@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
-$attemptId = 'height-difference-2-20260721-019'
+$attemptId = 'height-difference-2-20260721-020'
 $portableRoot = 'F:\TerraYield_AAYS_Portable'
 $repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $launcher = 'F:\TerraYield_AAYS_Portable\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd'
@@ -24,7 +24,7 @@ function Write-Result(
   $parent = Split-Path -Parent $output
   if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
   [ordered]@{
-    schema_version = 3
+    schema_version = 4
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -40,6 +40,8 @@ function Write-Result(
     existing_canonical_process_count_after = $ProcessCountAfter
     persistent_daemon_count_after = $DaemonCountAfter
     canonical_runner_started = $Started
+    exact_target_rows = @(30762,46142,61522)
+    nearest_row_fallback_allowed = $false
     existing_single_runner_architecture_reused = $true
     new_runner_architecture_created = $false
     parallel_runner_started = $false
