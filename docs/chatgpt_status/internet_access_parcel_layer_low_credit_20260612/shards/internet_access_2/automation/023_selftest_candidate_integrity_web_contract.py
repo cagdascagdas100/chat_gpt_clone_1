@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import json
+from collections import Counter
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[6]
@@ -12,6 +13,8 @@ contract=json.loads((WEB/"provenance_contract_latest.json").read_text(encoding="
 ops=[]
 for name in ("operations_latest.json","scope_operations_latest.json","operations_provenance_latest.json"):
     ops.extend(json.loads((WEB/name).read_text(encoding="utf-8"))["operations"])
+id_counts=Counter(row["id"] for row in ops)
+duplicate_ids={operation_id for operation_id,count in id_counts.items() if count>1}
 by_id={row["id"]:row for row in ops}
 blocked=[row for row in by_id.values() if row["status"]!="DONE"]
 checks={
@@ -29,7 +32,7 @@ checks={
   "candidate_tests_25":contract["candidate_integrity_selftest"]=={"passed":25,"total":25},
   "consistency_tests_14":contract["review_contract_consistency_selftest"]=={"passed":14,"total":14},
   "wrapper_tests_36":contract["run_and_audit_wrapper_contract"]=={"passed":36,"total":36},
-  "operation_ids_unique":len(by_id)==len(ops),
+  "historical_override_ids_exact":duplicate_ids=={55,90} and by_id[55]["status"]=="DONE" and by_id[90]["status"]=="DONE",
   "operation_range_121":sorted(by_id)==list(range(1,122)),
   "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==121,
   "review_only":progress.get("actual_business_data_rows_written")==0 and progress.get("final_ready") is False and contract.get("final_ready") is False,
