@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_3",
+  "task_version": "5.2.5-memory-safe-canonical-sha256",
+  "attempt_id": "security-public-safety-3-20260721-014",
+  "checked_at": "2026-07-21T12:14:00+03:00",
+  "purpose": "Prevent the 92283-feature canonical GeoJSON from being copied into the Python heap while computing its full-file SHA256 after low-memory target extraction.",
+  "root_cause": "The V5.2.4 stream locator avoided json.load for the canonical file, but the inherited core still evaluated hashlib.sha256(source_path.read_bytes()), which could allocate a full-file Python bytes object.",
+  "static_checks": {
+    "passed": 12,
+    "failed": 0,
+    "items": [
+      "task version is V5.2.5-memory-safe-canonical-sha256",
+      "attempt id is security-public-safety-3-20260721-014",
+      "mmap module is imported",
+      "mapping is read-only with mmap.ACCESS_READ",
+      "interception is restricted to the exact canonical filename",
+      "interception requires an at-least-8MiB file",
+      "Path.read_bytes is restored in finally",
+      "mapped objects are closed",
+      "file handles are closed",
+      "reconciliation requires mmap SHA256 without heap copy",
+      "runtime acceptance requires previous acceptance plus mmap gate plus zero base return code",
+      "FINAL_READY remains false"
+    ]
+  },
+  "compile_checks": {"passed": 1, "failed": 0, "result": "py_compile passed"},
+  "synthetic_end_to_end_checks": {
+    "passed": 16,
+    "failed": 0,
+    "cases": [
+      {"case": "valid_9_6mb_exact_filename", "exit_code": 0, "runtime_acceptance": true, "mmap_sha256_used": true, "full_heap_read_avoided": true},
+      {"case": "small_exact_filename", "exit_code": 2, "runtime_acceptance": false, "mmap_sha256_used": false},
+      {"case": "large_wrong_filename", "exit_code": 2, "runtime_acceptance": false, "mmap_sha256_used": false},
+      {"case": "large_exact_filename_base_nonzero", "exit_code": 2, "runtime_acceptance": false, "mmap_sha256_used": true},
+      {"case": "large_exact_filename_previous_gate_false", "exit_code": 2, "runtime_acceptance": false, "mmap_sha256_used": true}
+    ]
+  },
+  "total_checks_passed": 29,
+  "total_checks_failed": 0,
+  "canonical_runtime_executed": false,
+  "parcel_scores_generated": false,
+  "verified_rows": 0,
+  "actual_rows_written": 0,
+  "single_shared_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}
