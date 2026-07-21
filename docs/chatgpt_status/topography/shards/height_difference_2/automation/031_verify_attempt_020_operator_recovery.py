@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,11 @@ BRANCH = "codex/aays-single-runner-v5-20260706"
 HELPER_BLOB = "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
 OPERATOR_BLOB = "1632d6d7467c21d0ba0bfdd880a137afb2f905f3"
 TARGET_ROWS = [30762, 46142, 61522]
+
+
+def git_blob_sha(path: Path) -> str:
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
 
 
 def main() -> int:
@@ -28,6 +34,8 @@ def main() -> int:
 
     helper = helper_path.read_text(encoding="utf-8-sig")
     operator = operator_path.read_text(encoding="utf-8-sig")
+    helper_actual_blob = git_blob_sha(helper_path)
+    operator_actual_blob = git_blob_sha(operator_path)
     queue: dict[str, Any] = json.loads(queue_path.read_text(encoding="utf-8-sig"))
     request: dict[str, Any] = json.loads(request_path.read_text(encoding="utf-8-sig"))
     control: dict[str, Any] = json.loads(control_path.read_text(encoding="utf-8-sig"))
@@ -37,6 +45,8 @@ def main() -> int:
     def check(name: str, passed: bool, detail: str) -> None:
         checks.append({"name": name, "passed": bool(passed), "detail": detail})
 
+    check("helper_blob_actual", helper_actual_blob == HELPER_BLOB, f"actual={helper_actual_blob}")
+    check("operator_blob_actual", operator_actual_blob == OPERATOR_BLOB, f"actual={operator_actual_blob}")
     check("helper_attempt_020", ATTEMPT_ID in helper and "height-difference-2-20260721-019" not in helper, "Restart receipt is bound only to attempt 020.")
     check("helper_single_architecture", "existing_single_runner_architecture_reused = $true" in helper and "new_runner_architecture_created = $false" in helper and "parallel_runner_started = $false" in helper, "Helper preserves the single-runner architecture.")
     check("helper_multiple_process_fail_closed", "BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES" in helper and "BLOCKED_MULTIPLE_PERSISTENT_DAEMONS_AFTER_START" in helper, "Multiple canonical processes fail closed.")
@@ -54,14 +64,16 @@ def main() -> int:
     check("operator_receipt_path", "015_operator_recovery_preflight_latest.json" in operator, "Operator preflight writes a deterministic receipt path.")
     check("operator_safety_flags", all(token in operator for token in ["new_runner_architecture_created = $false", "parallel_runner_started = $false", "fake_data = $false", "db_write = $false", "migration = $false", "production_deploy = $false"]), "Safety flags remain false.")
     check("queue_attempt_and_helper", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("restart_helper_blob_sha") == HELPER_BLOB, "Queue binds the exact task, attempt and helper blob.")
+    check("queue_operator_blob", queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB, "Queue binds the exact operator entry blob.")
     check("queue_exact_target_gate", queue.get("sample_rows") == TARGET_ROWS and queue.get("measurement_contract", {}).get("nearest_row_fallback_allowed") is False, "Queue requires exact target rows and no nearest fallback.")
     check("request_attempt_and_helper", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("required_restart_helper_blob_sha") == HELPER_BLOB, "Restart request binds attempt 020 and the helper blob.")
+    check("request_operator_blob", request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB, "Restart request binds the operator entry blob.")
     check("control_attempt_and_helper", control.get("task_id") == TASK_ID and control.get("attempt_id") == ATTEMPT_ID and control.get("required_restart_helper_blob_sha") == HELPER_BLOB, "Queue refresh control binds attempt 020 and the helper blob.")
-    check("operator_blob_declared", OPERATOR_BLOB == "1632d6d7467c21d0ba0bfdd880a137afb2f905f3", "Verifier contract records the remote operator blob.")
+    check("control_operator_blob", control.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB, "Queue refresh control binds the operator entry blob.")
 
     passed = sum(1 for item in checks if item["passed"])
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -69,6 +81,8 @@ def main() -> int:
         "passed": passed,
         "total": len(checks),
         "checks": checks,
+        "helper_actual_blob_sha": helper_actual_blob,
+        "operator_actual_blob_sha": operator_actual_blob,
         "operator_recovery_executed": False,
         "runner_restart_observed": False,
         "product_rows_promoted": 0,
