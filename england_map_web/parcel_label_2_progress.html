@@ -14,20 +14,14 @@
 </head>
 <body>
   <h1>parcel_label_2</h1>
-  <div class="muted">30762–61522 · yalnız resmi kaynak adayları · canonical parsel ve exact geometri bağlaması bekliyor</div>
-  <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Kendi attempt-010 görevimiz gerçek shared-runner queue branch'inde geçerlidir ancak daha düşük sayısal öncelikli başka bir görev seçilidir. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
+  <div class="muted">30762–61522 · yalnız resmî kaynak adayları · canonical parsel ve exact geometri bağlaması bekliyor</div>
+  <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Kendi attempt-010 görevimiz gerçek shared-runner queue branch'inde priority 2 olarak geçerlidir; seçili görev priority 0 security_public_safety_3 attempt-013'tür. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
   <div class="note" id="integrity">Veri manifesti yükleniyor…</div>
   <div class="summary" id="summary"></div>
   <h2>İşlem günlüğü</h2>
-  <table>
-    <thead><tr><th>#</th><th>İşlem</th><th>Sonuç</th><th>Durum</th></tr></thead>
-    <tbody id="activity"><tr><td colspan="4">Yükleniyor…</td></tr></tbody>
-  </table>
+  <table><thead><tr><th>#</th><th>İşlem</th><th>Sonuç</th><th>Durum</th></tr></thead><tbody id="activity"><tr><td colspan="4">Yükleniyor…</td></tr></tbody></table>
   <h2>Aday satırları</h2>
-  <table>
-    <thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="10">Yükleniyor…</td></tr></tbody>
-  </table>
+  <table><thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead><tbody id="rows"><tr><td colspan="10">Yükleniyor…</td></tr></tbody></table>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').toLocaleLowerCase('en-GB').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -35,15 +29,11 @@ const uniqueCount=values=>new Set(values).size;
 const dataRoot='data/distance_property_types/';
 const fetchJson=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()});
 fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
- .then(manifest=>{
-   const candidateFiles=(manifest.candidate_files||[]).map(n=>dataRoot+n);
-   const activityFiles=(manifest.activity_files||[]).map(n=>dataRoot+n);
-   return Promise.all([
-     Promise.all(candidateFiles.map(fetchJson)),
-     Promise.all(activityFiles.map(fetchJson))
-   ]).then(([parts,activityParts])=>({manifest,candidateFiles,activityFiles,parts,activityParts}));
- })
- .then(({manifest,candidateFiles,activityFiles,parts,activityParts})=>{
+ .then(manifest=>Promise.all([
+   Promise.all((manifest.candidate_files||[]).map(n=>fetchJson(dataRoot+n))),
+   Promise.all((manifest.activity_files||[]).map(n=>fetchJson(dataRoot+n)))
+ ]).then(([parts,activityParts])=>({manifest,parts,activityParts})))
+ .then(({manifest,parts,activityParts})=>{
    const candidates=parts.flatMap(d=>d.candidates||[]);
    const activities=activityParts.flatMap(d=>d.activities||[]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
    const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
@@ -56,61 +46,38 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const sequences=activities.map(a=>Number(a.sequence));
    const expectedSequences=Array.from({length:Number(manifest.expected_activity_rows)},(_,i)=>Number(manifest.expected_activity_sequence_start)+i);
    const classCounts=candidates.reduce((m,c)=>{const k=String(c.selected_property_type||'');m[k]=(m[k]||0)+1;return m;},{});
-   const expectedClassCounts=manifest.expected_class_counts||{};
-   const classBalance=Object.entries(expectedClassCounts).every(([k,v])=>Number(classCounts[k]||0)===Number(v));
-   const candidateFileMatch=candidateFiles.length===Number(manifest.expected_candidate_files);
-   const activityFileMatch=activityFiles.length===Number(manifest.expected_activity_files);
-   const candidateMatch=count===Number(manifest.expected_candidate_rows);
-   const activityMatch=activities.length===Number(manifest.expected_activity_rows);
+   const classBalance=Object.entries(manifest.expected_class_counts||{}).every(([k,v])=>Number(classCounts[k]||0)===Number(v));
+   const fileMatch=parts.length===Number(manifest.expected_candidate_files)&&activityParts.length===Number(manifest.expected_activity_files);
+   const rowMatch=count===Number(manifest.expected_candidate_rows)&&activities.length===Number(manifest.expected_activity_rows);
    const batchMatch=batchCount===Number(manifest.expected_research_batches);
    const allHttpsSources=candidates.every(c=>String(c.source_url||'').startsWith('https://'));
    const allHighAccuracy=candidates.every(c=>Number(c.accuracy_percent)>=97);
+   const scoreRange=candidates.every(c=>Number(c.accuracy_score_4)>=0&&Number(c.accuracy_score_4)<=4);
+   const scoreRelation=candidates.every(c=>Math.abs(Number(c.accuracy_percent)-Number(c.accuracy_score_4)*25)<0.001);
+   const evidenceComplete=candidates.every(c=>String(c.fresh_evidence||'').trim().length>0);
    const allSourcePlaceholders=candidates.every(c=>String(c.parcel_id||'').startsWith('SOURCE_'));
    const uniqueIds=uniqueCount(candidateIds)===Number(manifest.expected_unique_candidate_ids);
    const uniqueRefs=uniqueCount(normalizedRefs)===Number(manifest.expected_unique_normalized_candidate_refs);
    const uniqueUrls=uniqueCount(sourceUrls)===Number(manifest.expected_unique_source_urls);
    const uniqueSequences=uniqueCount(sequences)===sequences.length;
    const contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
-   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&classBalance&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
+   const integrityOk=fileMatch&&rowMatch&&batchMatch&&classBalance&&allHttpsSources&&allHighAccuracy&&scoreRange&&scoreRelation&&evidenceComplete&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
    document.getElementById('integrity').textContent=integrityOk
-     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım ve ${activities.length} sıralı işlem satırı.`
-     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, sınıf ${classBalance?'OK':'HATA'}, ID ${uniqueCount(candidateIds)}/${manifest.expected_unique_candidate_ids}, yer ${uniqueCount(normalizedRefs)}/${manifest.expected_unique_normalized_candidate_refs}, URL ${uniqueCount(sourceUrls)}/${manifest.expected_unique_source_urls}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
+    ?`Veri manifesti eşleşti: ${parts.length} aday dosyası, ${activityParts.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım, puan ilişkisi ve ${activities.length} sıralı işlem satırı.`
+    :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, sınıf ${classBalance?'OK':'HATA'}, puan ${scoreRange&&scoreRelation?'OK':'HATA'}, kanıt ${evidenceComplete?'OK':'HATA'}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
+   const classEach=Object.values(manifest.expected_class_counts||{})[0]||0;
    const cards=[
-    ['Görünür aday',count],
-    ['Araştırma batch',batchCount],
-    ['Sınıf kapsamı',manifest.expected_class_coverage],
-    ['Sınıf dağılımı',classBalance?'18 × 6':'HATA'],
-    ['Sınıflandırma doğruluğu','%'+average],
-    ['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],
-    ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
-    ['Benzersiz ID',uniqueCount(candidateIds)],
-    ['Benzersiz yer',uniqueCount(normalizedRefs)],
-    ['Benzersiz kaynak',uniqueCount(sourceUrls)],
-    ['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],
-    ['Canonical slot satırı',manifest.canonical_verified_slot_rows],
-    ['Exact geometri',manifest.exact_geometry_rows],
-    ['Canonical blob','bb48164…'],
-    ['Carrier sayısı','92.283 exact'],
-    ['Kimlik kapısı','parcel_1…92283'],
-    ['Satır kapısı','row_no = parcel_n'],
-    ['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],
-    ['Seçili görev',manifest.selected_runner_task],
-    ['Seçili sürüm',manifest.selected_runner_task_version],
-    ['Kendi görevimiz',manifest.own_runner_attempt],
-    ['Queue branch','aays-single-runner-v5'],
-    ['İşlem satırı',activities.length]
+    ['Görünür aday',count],['Araştırma batch',batchCount],['Sınıf kapsamı',manifest.expected_class_coverage],['Sınıf dağılımı',classBalance?classEach+' × 6':'HATA'],
+    ['Sınıflandırma doğruluğu','%'+average],['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],['Puan ilişkisi',scoreRange&&scoreRelation?'MATCH':'MISMATCH'],['Kanıt alanları',evidenceComplete?'DOLU':'HATA'],
+    ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],['Benzersiz ID',uniqueCount(candidateIds)],['Benzersiz yer',uniqueCount(normalizedRefs)],['Benzersiz kaynak',uniqueCount(sourceUrls)],
+    ['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],['Canonical slot satırı',manifest.canonical_verified_slot_rows],['Exact geometri',manifest.exact_geometry_rows],
+    ['Canonical blob','bb48164…'],['Carrier sayısı','92.283 exact'],['Kimlik kapısı','parcel_1…92283'],['Satır kapısı','row_no = parcel_n'],
+    ['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],['Seçili görev',manifest.selected_runner_task],['Seçili sürüm',manifest.selected_runner_task_version],['Kendi görevimiz',manifest.own_runner_attempt],['İşlem satırı',activities.length]
    ];
    document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
    document.getElementById('activity').innerHTML=activities.map(a=>`<tr><td>${esc(a.sequence)}</td><td>${esc(a.operation)}</td><td>${esc(a.result)}</td><td>${esc(a.state)}</td></tr>`).join('');
-   document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr>
-    <td>${i+1}</td><td>${esc(c.research_batch)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
-    <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmi kaynak</a></td>
-    <td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
- }).catch(e=>{
-   document.getElementById('integrity').textContent=e.message;
-   document.getElementById('activity').innerHTML=`<tr><td colspan="4">${esc(e.message)}</td></tr>`;
-   document.getElementById('rows').innerHTML=`<tr><td colspan="10">${esc(e.message)}</td></tr>`;
- });
+   document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.research_batch)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td><td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmî kaynak</a></td><td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
+ }).catch(e=>{document.getElementById('integrity').textContent=e.message;document.getElementById('activity').innerHTML=`<tr><td colspan="4">${esc(e.message)}</td></tr>`;document.getElementById('rows').innerHTML=`<tr><td colspan="10">${esc(e.message)}</td></tr>`;});
 </script>
 </body>
 </html>
