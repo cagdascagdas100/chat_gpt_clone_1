@@ -12,7 +12,7 @@ checks = {
     "bundle_selftest_18": "tests_passed -ne 18" in script and "tests_total -ne 18" in script,
     "provenance_verifier": "019_verify_single_run_provenance.py" in script,
     "provenance_selftest": "020_selftest_verify_single_run_provenance.py" in script,
-    "provenance_selftest_19": "tests_passed -ne 19" in script and "tests_total -ne 19" in script,
+    "provenance_selftest_20": "tests_passed -ne 20" in script and "tests_total -ne 20" in script,
     "effective_work_root": 'outputs/internet_access_2_verified_run' in script and "$effectiveWorkRoot" in script,
     "bundle_audit_output": "runner_bundle_audit_latest.json" in script,
     "provenance_audit_output": "runner_provenance_audit_latest.json" in script,
