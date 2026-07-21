@@ -1,18 +1,18 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "base_slot_id": "height_difference",
   "shard_index": 1,
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
-  "attempt_id": "official-source-batch-004-revision-11-pixel-center-sampling-provenance",
+  "attempt_id": "official-source-batch-004-revision-12-direct-ea-pixel-center-resample",
   "idempotency_key": "height_difference_1-004-20260720",
-  "payload_revision": 11,
-  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/032_height_difference_1_revision_11_pixel_center_sampling_provenance_20260721.py",
-  "script_blob_sha": "8c1495282fabec4e12faf3f624f26d2a2cd94f90",
-  "upstream_revision_10_entry": "docs/chatgpt_status/topography/shards/height_difference_1/automation/027_height_difference_1_revision_10_explicit_identity_evidence_gate_20260721.py",
-  "output_integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/033_validate_revision_11_output_integrity_20260721.py",
+  "payload_revision": 12,
+  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/035_height_difference_1_revision_12_direct_ea_pixel_center_resample_20260721.py",
+  "script_blob_sha": "70c11dd3648a29240bba94c22ddb09298b3db217",
+  "upstream_revision_11_entry": "docs/chatgpt_status/topography/shards/height_difference_1/automation/032_height_difference_1_revision_11_pixel_center_sampling_provenance_20260721.py",
+  "output_integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/036_validate_revision_12_output_integrity_20260721.py",
   "read_paths": [
     "docs/chatgpt_status/topography/shards/height_difference_1",
     "docs/chatgpt_status/_shared/slots_21/height_difference_1",
@@ -24,24 +24,43 @@
     "docs/chatgpt_status/topography/shards/height_difference_1/reports",
     "england_map_web/data/aays_21_slots/height_difference_1"
   ],
-  "resource_class": ["network_fetch", "geometry", "raster_heavy", "streaming_disk_bounded"],
-  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
-  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
+  "resource_class": [
+    "network_fetch",
+    "geometry",
+    "raster_heavy",
+    "streaming_disk_bounded"
+  ],
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
   "data_quality_contract": {
     "source_snapshot_date": "2026-07-21",
     "measurement_level": "parcel_polygon",
     "metric_name": "parcel_ground_height_difference",
-    "metric_definition": "maximum minus minimum valid EA DTM 1m pixel-center elevations inside official HMLR parcel polygon",
+    "metric_definition": "maximum minus minimum directly resampled EA DTM 1m pixel-center elevations inside official HMLR parcel polygon",
     "metric_unit": "metre",
-    "primary_numeric_source": "Environment Agency LIDAR Composite DTM 1m",
+    "primary_numeric_source": "Environment Agency LIDAR Composite DTM 1m persistent WCS",
     "independent_crosscheck": "OS Terrain 50 absolute elevation and ODN datum consistency",
     "minimum_valid_ea_pixels": 3,
     "maximum_ea_os_absolute_difference_m": 8.0,
+    "direct_ea_wcs_resample_required": true,
+    "persistent_wcs_endpoint_required": true,
+    "wcs_capabilities_and_describe_sha256_required": true,
+    "geotiff_sha256_required": true,
+    "centroid_fallback_forbidden": true,
     "pixel_inclusion_policy": "pixel_center_inside_official_hmlr_polygon",
     "all_touched": false,
     "pixel_center_verification_required": true,
     "sampling_mask_sha256_required": true,
-    "declared_and_recomputed_polygon_area_required": true,
+    "selected_pixel_centers_sha256_required": true,
     "ea_source_vertical_rmse_m": 0.15,
     "indicative_range_endpoint_rss_rmse_m": 0.212,
     "horizontal_crs": "EPSG:27700",
@@ -50,24 +69,57 @@
     "explicit_output_identity_required": true,
     "script_runtime_sha256_required": true,
     "runner_web_snapshot_hash_consistency_required": true,
-    "output_semantics": "MEASURED_ONLY_AFTER_REVISION_11_PIXEL_CENTER_AND_THREE_SOURCE_EVIDENCE_GATE",
+    "output_semantics": "MEASURED_ONLY_AFTER_REVISION_12_DIRECT_EA_RESAMPLE_PIXEL_CENTER_AND_THREE_SOURCE_GATE",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only_not_numeric_measurement"
   },
   "execution_protocols": {
-    "hmlr": ["MONTHLY_BARNET_ENFIELD_GML_REQUIRED", "REAL_POINT_IN_POLYGON", "EPSG27700_REQUIRED", "SOURCE_SHA256_REQUIRED"],
-    "ea": ["DTM_1M_POLYGON_MIN_MAX_MEDIAN_IQR", "MINIMUM_3_VALID_PIXELS", "HEIGHT_DIFFERENCE_MAX_MINUS_MIN", "PIXEL_CENTER_ONLY", "ALL_TOUCHED_FALSE", "MASK_SHA256_REQUIRED", "EPSG27700_REQUIRED", "EPSG5701_ODN"],
-    "os": ["200_BY_200_GRID", "50M_CELLSIZE", "NODATA_REJECTED", "ABSOLUTE_ELEVATION_DATUM_CROSSCHECK_ONLY", "EPSG27700_REQUIRED", "EPSG5701_ODN"],
-    "conflict": ["EA_OS_ABSOLUTE_DIFFERENCE_OVER_8M_REQUIRES_HUMAN_REVIEW", "UNRESOLVED_CONFLICT_PROMOTION_FORBIDDEN"],
-    "concurrency": ["MAX_3_OFFICIAL_SOURCE_FAMILIES", "STREAM_LARGE_DOWNLOADS_TO_DISK"]
+    "hmlr": [
+      "MONTHLY_BARNET_ENFIELD_GML_REQUIRED",
+      "REAL_POINT_IN_POLYGON",
+      "EPSG27700_REQUIRED",
+      "SOURCE_SHA256_REQUIRED"
+    ],
+    "ea": [
+      "PERSISTENT_WCS_2_0_1",
+      "CAPABILITIES_AND_DESCRIBE_SHA256",
+      "DIRECT_GEOTIFF_RESAMPLE",
+      "GEOTIFF_SHA256",
+      "DTM_1M_POLYGON_MIN_MAX_MEDIAN_IQR",
+      "MINIMUM_3_VALID_PIXELS",
+      "HEIGHT_DIFFERENCE_MAX_MINUS_MIN",
+      "PIXEL_CENTER_ONLY",
+      "ALL_TOUCHED_FALSE",
+      "MASK_SHA256_REQUIRED",
+      "CENTER_LIST_SHA256_REQUIRED",
+      "CENTROID_FALLBACK_FORBIDDEN",
+      "EPSG27700_REQUIRED",
+      "EPSG5701_ODN"
+    ],
+    "os": [
+      "200_BY_200_GRID",
+      "50M_CELLSIZE",
+      "NODATA_REJECTED",
+      "ABSOLUTE_ELEVATION_DATUM_CROSSCHECK_ONLY",
+      "EPSG27700_REQUIRED",
+      "EPSG5701_ODN"
+    ],
+    "conflict": [
+      "EA_OS_ABSOLUTE_DIFFERENCE_OVER_8M_REQUIRES_HUMAN_REVIEW",
+      "UNRESOLVED_CONFLICT_PROMOTION_FORBIDDEN"
+    ],
+    "concurrency": [
+      "MAX_3_OFFICIAL_SOURCE_FAMILIES",
+      "STREAM_LARGE_DOWNLOADS_TO_DISK"
+    ]
   },
-  "validation_path": "docs/chatgpt_status/topography/shards/height_difference_1/validation/018_revision_11_pixel_center_sampling_provenance_selftest_20260721.json",
+  "validation_path": "docs/chatgpt_status/topography/shards/height_difference_1/validation/019_revision_12_direct_ea_pixel_center_resample_selftest_20260721.json",
   "expected_outputs": [
-    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/013_revision_11_pixel_center_sampling_provenance_latest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/013_revision_11_pixel_center_sampling_provenance_manifest_latest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_1/reports/018_height_difference_1_revision_11_pixel_center_sampling_provenance_result.md",
-    "england_map_web/data/aays_21_slots/height_difference_1/revision_11_pixel_center_sampling_provenance_latest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/022_revision_11_output_integrity_readback_latest.json"
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/014_revision_12_direct_ea_pixel_center_resample_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/014_revision_12_direct_ea_pixel_center_resample_manifest_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/reports/019_height_difference_1_revision_12_direct_ea_pixel_center_resample_result.md",
+    "england_map_web/data/aays_21_slots/height_difference_1/revision_12_direct_ea_pixel_center_resample_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/023_revision_12_output_integrity_readback_latest.json"
   ],
   "timeout_seconds": 7200,
   "requires_git_publish_gate": true,
