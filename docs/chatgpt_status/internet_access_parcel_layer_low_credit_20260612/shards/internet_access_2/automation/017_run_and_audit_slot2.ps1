@@ -10,6 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $slotId = "internet_access_2"
 $expectedRows = 30761
+$expectedCombinedValidation = 260
 $automationRoot = Join-Path $RepoRoot "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation"
 $webRoot = Join-Path $RepoRoot "england_map_web/data/aays_18_slots/internet_access_2"
 $effectiveWorkRoot = if ($WorkRoot) { $WorkRoot } else { Join-Path $RepoRoot "outputs/internet_access_2_verified_run" }
@@ -20,12 +21,32 @@ $candidateVerifier = Join-Path $automationRoot "021_verify_candidate_jsonl_integ
 $candidateVerifierSelftest = Join-Path $automationRoot "022_selftest_verify_candidate_jsonl_integrity.py"
 $provenanceVerifier = Join-Path $automationRoot "019_verify_single_run_provenance.py"
 $provenanceVerifierSelftest = Join-Path $automationRoot "020_selftest_verify_single_run_provenance.py"
+$consistencyVerifier = Join-Path $automationRoot "024_validate_review_contract_consistency.py"
+$consistencyVerifierSelftest = Join-Path $automationRoot "025_selftest_validate_review_contract_consistency.py"
+$consistencyAuditOutput = Join-Path $webRoot "review_contract_consistency_latest.json"
 $bundleAuditOutput = Join-Path $webRoot "runner_bundle_audit_latest.json"
 $provenanceAuditOutput = Join-Path $webRoot "runner_provenance_audit_latest.json"
 $candidateAuditOutput = Join-Path $webRoot "candidate_jsonl_integrity_latest.json"
 
-foreach ($required in @($innerRunner,$bundleVerifier,$bundleVerifierSelftest,$candidateVerifier,$candidateVerifierSelftest,$provenanceVerifier,$provenanceVerifierSelftest)) {
+foreach ($required in @($innerRunner,$bundleVerifier,$bundleVerifierSelftest,$candidateVerifier,$candidateVerifierSelftest,$provenanceVerifier,$provenanceVerifierSelftest,$consistencyVerifier,$consistencyVerifierSelftest)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required file missing: $required" }
+}
+
+$consistencySelftestRaw = & $PythonExe $consistencyVerifierSelftest
+if ($LASTEXITCODE -ne 0) { throw "Review contract consistency self-test failed with exit code $LASTEXITCODE" }
+$consistencySelftest = $consistencySelftestRaw | ConvertFrom-Json
+if ($consistencySelftest.status -ne "PASS" -or $consistencySelftest.tests_passed -ne 14 -or $consistencySelftest.tests_total -ne 14) {
+    throw "Review contract consistency self-test mismatch"
+}
+
+$consistencyAuditRaw = & $PythonExe $consistencyVerifier --repo-root $RepoRoot --audit-output $consistencyAuditOutput
+if ($LASTEXITCODE -ne 0) { throw "Review contract consistency audit failed with exit code $LASTEXITCODE" }
+$consistencyAudit = $consistencyAuditRaw | ConvertFrom-Json
+if ($consistencyAudit.status -ne "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" -or $consistencyAudit.combined_validation_total -ne $expectedCombinedValidation) {
+    throw "Review contract consistency audit readback mismatch"
+}
+if ($consistencyAudit.actual_business_data_rows_written -ne 0 -or $consistencyAudit.final_ready -ne $false) {
+    throw "Review contract consistency audit violated review-only truth boundary"
 }
 
 $bundleSelftestRaw = & $PythonExe $bundleVerifierSelftest
@@ -86,11 +107,13 @@ if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudi
 }
 
 [ordered]@{
-    schema_version = 3
+    schema_version = 4
     slot_id = $slotId
-    status = "COMPLETE_REAL_RUN_CANDIDATE_BUNDLE_AND_PROVENANCE_AUDITED_REVIEW_ONLY"
+    status = "COMPLETE_REAL_RUN_CONSISTENCY_CANDIDATE_BUNDLE_AND_PROVENANCE_AUDITED_REVIEW_ONLY"
     canonical_rows = $provenanceAudit.canonical_rows
     visible_example_rows = $provenanceAudit.visible_example_rows
+    review_contract_consistency_audit = $consistencyAuditOutput
+    combined_validation_total = $consistencyAudit.combined_validation_total
     candidate_jsonl_integrity_audit = $candidateAuditOutput
     candidate_rows_jsonl_sha256 = $candidateAudit.candidate_rows_jsonl_sha256
     runner_bundle_audit = $bundleAuditOutput
