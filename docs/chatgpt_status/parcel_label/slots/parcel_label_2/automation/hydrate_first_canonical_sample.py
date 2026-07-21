@@ -10,6 +10,9 @@ SLOT_ID = "parcel_label_2"
 TARGET_IDS = ["parcel_30762", "parcel_30763", "parcel_30764"]
 CANONICAL_FEATURE_COUNT = 92283
 REQUIRED_TARGET_SCHEMA_KEYS = {"row_no", "hmlr_inspire_id", "hmlr_lon", "hmlr_lat"}
+ALLOWED_GEOMETRY_TYPES = {"Point", "Polygon", "MultiPolygon"}
+ENGLAND_LONGITUDE_RANGE = (-6.5, 2.1)
+ENGLAND_LATITUDE_RANGE = (49.8, 56.2)
 REPO = Path(os.environ.get("AAYS_REPO_ROOT", r"F:\chatgpt\chat_gpt_clone_1_main"))
 DATA_ROOT = REPO / "england_map_web" / "data"
 SLOT_ROOT = REPO / "docs" / "chatgpt_status" / "parcel_label" / "slots" / SLOT_ID
@@ -54,6 +57,31 @@ def parcel_index(parcel_id: object) -> int | None:
     return int(suffix)
 
 
+def normalized_integer(value: object) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
+
+
+def normalized_float(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
 def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str, dict], dict]:
     seen_ids: set[str] = set()
     found: dict[str, dict] = {}
@@ -74,6 +102,15 @@ def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str
             return False, "PARCEL_ID_OUTSIDE_CANONICAL_RANGE", {}, {"parcel_id": parcel_id}
         if parcel_id in seen_ids:
             return False, "DUPLICATE_CANONICAL_PARCEL_ID", {}, {"parcel_id": parcel_id}
+
+        row_no = normalized_integer(props.get("row_no"))
+        if row_no != index:
+            return False, "ROW_NO_PARCEL_ID_MISMATCH", {}, {
+                "parcel_id": parcel_id,
+                "parcel_index": index,
+                "row_no": props.get("row_no"),
+            }
+
         seen_ids.add(parcel_id)
         minimum_index = index if minimum_index is None else min(minimum_index, index)
         maximum_index = index if maximum_index is None else max(maximum_index, index)
@@ -84,6 +121,7 @@ def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str
         "unique_parcel_id_count": len(seen_ids),
         "minimum_parcel_index": minimum_index,
         "maximum_parcel_index": maximum_index,
+        "row_no_parcel_id_alignment_passed": True,
         "target_ids_found": sorted(found),
     }
     if len(seen_ids) != CANONICAL_FEATURE_COUNT:
@@ -94,16 +132,76 @@ def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str
         return False, "TARGET_CANONICAL_IDS_MISSING", {}, identity_summary
 
     schema_missing: dict[str, list[str]] = {}
+    target_coordinate_summary: dict[str, dict] = {}
+    target_inspire_ids: set[str] = set()
     for parcel_id, feature in found.items():
         props = feature.get("properties") or {}
         missing = sorted(key for key in REQUIRED_TARGET_SCHEMA_KEYS if key not in props)
         if missing:
             schema_missing[parcel_id] = missing
+            continue
+
+        inspire_id = props.get("hmlr_inspire_id")
+        if not isinstance(inspire_id, str) or not inspire_id.strip():
+            return False, "TARGET_HMLR_INSPIRE_ID_INVALID", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "hmlr_inspire_id": inspire_id,
+            }
+        if inspire_id in target_inspire_ids:
+            return False, "TARGET_HMLR_INSPIRE_ID_DUPLICATE", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "hmlr_inspire_id": inspire_id,
+            }
+        target_inspire_ids.add(inspire_id)
+
+        longitude = normalized_float(props.get("hmlr_lon"))
+        latitude = normalized_float(props.get("hmlr_lat"))
+        if longitude is None or latitude is None:
+            return False, "TARGET_HMLR_COORDINATE_NOT_NUMERIC", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "hmlr_lon": props.get("hmlr_lon"),
+                "hmlr_lat": props.get("hmlr_lat"),
+            }
+        if not (ENGLAND_LONGITUDE_RANGE[0] <= longitude <= ENGLAND_LONGITUDE_RANGE[1]):
+            return False, "TARGET_HMLR_LONGITUDE_OUTSIDE_ENGLAND_RANGE", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "hmlr_lon": longitude,
+            }
+        if not (ENGLAND_LATITUDE_RANGE[0] <= latitude <= ENGLAND_LATITUDE_RANGE[1]):
+            return False, "TARGET_HMLR_LATITUDE_OUTSIDE_ENGLAND_RANGE", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "hmlr_lat": latitude,
+            }
+
+        geometry = feature.get("geometry")
+        geometry_type = geometry.get("type") if isinstance(geometry, dict) else None
+        if geometry_type not in ALLOWED_GEOMETRY_TYPES:
+            return False, "TARGET_GEOMETRY_TYPE_INVALID", {}, {
+                **identity_summary,
+                "parcel_id": parcel_id,
+                "geometry_type": geometry_type,
+            }
+
+        target_coordinate_summary[parcel_id] = {
+            "hmlr_lon": longitude,
+            "hmlr_lat": latitude,
+            "geometry_type": geometry_type,
+        }
+
     if schema_missing:
         identity_summary["target_schema_missing"] = schema_missing
         return False, "TARGET_HMLR_SCHEMA_SIGNATURE_MISMATCH", {}, identity_summary
 
     identity_summary["target_schema_signature_passed"] = True
+    identity_summary["target_hmlr_inspire_ids_unique"] = True
+    identity_summary["target_coordinate_plausibility_passed"] = True
+    identity_summary["target_geometry_type_gate_passed"] = True
+    identity_summary["target_coordinate_summary"] = target_coordinate_summary
     return True, "ACCEPTED", found, identity_summary
 
 
@@ -190,10 +288,10 @@ def main() -> int:
             rows.append(
                 {
                     "parcel_id": parcel_id,
-                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND_IN_IDENTITY_PROVEN_92283_FEATURE_CARRIER",
+                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND_IN_STRICTLY_VALIDATED_92283_FEATURE_CARRIER",
                     "accuracy_score_4": 0,
                     "needs_manual_review": True,
-                    "next_gate": "restore or expose an identity-proven canonical 92,283-feature carrier",
+                    "next_gate": "restore or expose a strictly identity-proven canonical 92,283-feature carrier",
                 }
             )
             continue
@@ -208,9 +306,9 @@ def main() -> int:
             {
                 "parcel_id": parcel_id,
                 "candidate_status": (
-                    "IDENTITY_PROVEN_CANONICAL_POLYGON_CARRIER_FOUND_SOURCE_BINDING_PENDING"
+                    "STRICTLY_VALIDATED_CANONICAL_POLYGON_CARRIER_FOUND_SOURCE_BINDING_PENDING"
                     if is_polygon
-                    else "IDENTITY_PROVEN_CANONICAL_POINT_CARRIER_FOUND_EXACT_GEOMETRY_PENDING"
+                    else "STRICTLY_VALIDATED_CANONICAL_POINT_CARRIER_FOUND_EXACT_GEOMETRY_PENDING"
                 ),
                 "source_file": str(source_path) if source_path else None,
                 "source_feature_count": source_feature_count,
@@ -224,7 +322,7 @@ def main() -> int:
         )
 
     exact_count_gate_passed = source_feature_count == CANONICAL_FEATURE_COUNT
-    identity_range_gate_passed = bool(identity_summary.get("target_schema_signature_passed"))
+    strict_identity_gate_passed = bool(identity_summary.get("target_coordinate_plausibility_passed"))
     output = {
         "schema_version": 4,
         "slot_id": SLOT_ID,
@@ -233,8 +331,14 @@ def main() -> int:
         "target_ids": TARGET_IDS,
         "required_canonical_feature_count": CANONICAL_FEATURE_COUNT,
         "required_target_schema_keys": sorted(REQUIRED_TARGET_SCHEMA_KEYS),
+        "required_row_no_parcel_id_alignment": True,
+        "required_target_coordinate_ranges": {
+            "longitude": list(ENGLAND_LONGITUDE_RANGE),
+            "latitude": list(ENGLAND_LATITUDE_RANGE),
+        },
+        "required_target_geometry_types": sorted(ALLOWED_GEOMETRY_TYPES),
         "exact_feature_count_gate_passed": exact_count_gate_passed,
-        "identity_range_and_schema_gate_passed": identity_range_gate_passed,
+        "strict_identity_schema_coordinate_gate_passed": strict_identity_gate_passed,
         "identity_summary": identity_summary,
         "priority_carriers": [str(path) for path in PRIORITY_CARRIERS],
         "scanned_file_count": scanned_files,
@@ -263,12 +367,12 @@ def main() -> int:
     print(f"SOURCE_FILE={source_path}")
     print(f"SOURCE_FEATURE_COUNT={source_feature_count}")
     print(f"EXACT_FEATURE_COUNT_GATE_PASSED={str(exact_count_gate_passed).lower()}")
-    print(f"IDENTITY_RANGE_AND_SCHEMA_GATE_PASSED={str(identity_range_gate_passed).lower()}")
+    print(f"STRICT_IDENTITY_SCHEMA_COORDINATE_GATE_PASSED={str(strict_identity_gate_passed).lower()}")
     print(f"CANONICAL_CARRIER_ROWS_FOUND={carrier_rows}")
     print(f"POLYGON_ROWS_FOUND={polygon_rows}")
     print("ACTUAL_VERIFIED_SLOT_ROWS_WRITTEN=0")
     print("FINAL_READY=false")
-    return 0 if carrier_rows and exact_count_gate_passed and identity_range_gate_passed else 2
+    return 0 if carrier_rows and exact_count_gate_passed and strict_identity_gate_passed else 2
 
 
 if __name__ == "__main__":
