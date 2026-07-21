@@ -15,6 +15,10 @@ checks={
 "candidate_audit_output":"candidate_jsonl_integrity_latest.json" in script,
 "candidate_audit_status":"PASS_COMPLETE_CANDIDATE_JSONL_INTEGRITY_REVIEW_ONLY" in script,
 "candidate_sha_output":"candidate_rows_jsonl_sha256" in script,
+"postcode_resolution_verifier":"028_validate_candidate_postcode_resolution.py" in script,
+"postcode_resolution_selftest":"029_selftest_validate_candidate_postcode_resolution.py" in script,
+"postcode_resolution_selftest_18":"tests_passed -ne 18" in script and "tests_total -ne 18" in script,
+"postcode_resolution_before_candidate":script.index("$postcodeResolutionAuditRaw") < script.index("$candidateAuditRaw"),
 "provenance_verifier":"019_verify_single_run_provenance.py" in script,
 "provenance_selftest":"020_selftest_verify_single_run_provenance.py" in script,
 "provenance_selftest_24":"tests_passed -ne 24" in script and "tests_total -ne 24" in script,
@@ -23,7 +27,7 @@ checks={
 "consistency_selftest_14":"tests_passed -ne 14" in script and "tests_total -ne 14" in script,
 "consistency_audit_output":"review_contract_consistency_latest.json" in script,
 "consistency_audit_status":"PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" in script,
-"combined_validation_292":"$expectedCombinedValidation = 292" in script and "combined_validation_total" in script,
+"combined_validation_314":"$expectedCombinedValidation = 314" in script and "combined_validation_total" in script,
 "consistency_before_network":script.index("$consistencyAuditRaw") < script.index("$innerArgs"),
 "effective_work_root":"outputs/internet_access_2_verified_run" in script and "$effectiveWorkRoot" in script,
 "bundle_audit_output":"runner_bundle_audit_latest.json" in script,
@@ -39,7 +43,7 @@ checks={
 "no_db_migration":"db_write = $false" in script and "migration = $false" in script,
 "no_deploy":"production_deploy = $false" in script,
 "not_final":"final_ready = $false" in script,
-"schema_v5":"schema_version = 5" in script,
+"schema_v6":"schema_version = 6" in script,
 }
 failed=[name for name,ok in checks.items() if not ok]
 if failed: raise AssertionError(f"failed: {failed}")
