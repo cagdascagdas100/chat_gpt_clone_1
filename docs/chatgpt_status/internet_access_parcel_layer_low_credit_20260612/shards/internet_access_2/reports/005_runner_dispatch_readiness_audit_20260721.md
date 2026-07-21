@@ -15,8 +15,8 @@ The read-only readiness audit evaluated 13 gates against fresh remote slot state
 ## Blocking gates
 
 1. Repo-to-bridge watcher heartbeat is stale (`20260703_225536`).
-2. Existing shared runner heartbeat is stale (`2026-07-16T13:45:53.0433295Z`).
-3. `security_public_safety_3` attempt `006` is already pending at the watcher-visible queue head.
+2. Shared runner pickup is still not observed; the latest watcher-visible slot heartbeat reports `runner_heartbeat_fresh=false`.
+3. `parcel_label_3` attempt `parcel-label-3-20260721-001` is pending at the watcher-visible queue head with priority 90 and `execution_claimed=false`.
 4. PR #61 is not merged to watcher-visible `main`.
 5. PR #61 is currently not mergeable.
 
