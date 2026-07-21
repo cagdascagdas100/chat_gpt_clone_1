@@ -19,8 +19,8 @@
   <div class="muted">Parsel aralığı 61.523–92.283 · doğrulanmamış skorlar kabul edilmez · otomatik yenileme 60 saniye</div>
   <div id="summary" class="grid"></div>
   <div id="blockers"></div>
-  <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2 smoke doğrulaması</h2><div id="smoke" class="scroll"></div></section>
-  <section class="section smoke"><h2>V5.2 smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
+  <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2.1 fail-closed smoke doğrulaması</h2><div id="smoke" class="scroll"></div></section>
+  <section class="section smoke"><h2>V5.2.1 smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
   <section class="section"><h2>Önceki ve genel işlemler</h2><div id="operations" class="scroll"></div></section>
   <section class="section"><h2>48 parsel adayı ve dört kabul kapısı</h2><div id="rows" class="scroll"></div></section>
   <section class="section"><h2>Resmî kaynak adayları, tarihler ve kullanım sınırları</h2><div id="sources" class="scroll"></div></section>
@@ -48,15 +48,17 @@ async function main(){
       card('Artış','+'+p.progress_delta_percent+'%','ok')+
       card('İşlemler',p.completed_operations+' / '+p.total_operations)+
       card('Web işlem satırı',p.visible_operation_rows)+
+      card('Smoke sürüm',p.smoke_task_version||'V5.2.1')+
       card('Smoke aday',p.smoke_candidate_rows||3)+
       card('Toplam parsel',p.visible_parcel_rows)+
       card('Bulk kapısı',p.prepared_acceptance_gate_cells)+
       card('Smoke kapısı',p.smoke_prepared_gate_cells||12)+
       card('4/4 doğrulanmış',p.accuracy_score_4_rows,p.accuracy_score_4_rows?'ok':'warn')+
+      card('Sıfır doğrulama koruması',p.smoke_zero_verified_success_guard?'AÇIK':'EKSİK',p.smoke_zero_verified_success_guard?'ok':'bad')+
       card('Yükseltilen kaynak',p.promoted_sources,'ok')+
       card('Canonical queue',p.smoke_queue_visible?'hazır':'bekliyor',p.smoke_queue_visible?'ok':'warn')+
       card('Runner heartbeat',p.runner_heartbeat_fresh?'taze':'eski',p.runner_heartbeat_fresh?'ok':'bad');
-    document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
+    document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><div class="muted">Smoke başarı kuralı: '+esc(p.smoke_success_rule)+'</div><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
     document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,false);
     document.getElementById('smokeOperations').innerHTML=operationsTable(so.rows);
     document.getElementById('operations').innerHTML=operationsTable(o.rows);
