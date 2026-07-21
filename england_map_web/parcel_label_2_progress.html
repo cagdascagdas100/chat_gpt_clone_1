@@ -55,6 +55,9 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const sourceUrls=candidates.map(c=>String(c.source_url||''));
    const sequences=activities.map(a=>Number(a.sequence));
    const expectedSequences=Array.from({length:Number(manifest.expected_activity_rows)},(_,i)=>Number(manifest.expected_activity_sequence_start)+i);
+   const classCounts=candidates.reduce((m,c)=>{const k=String(c.selected_property_type||'');m[k]=(m[k]||0)+1;return m;},{});
+   const expectedClassCounts=manifest.expected_class_counts||{};
+   const classBalance=Object.entries(expectedClassCounts).every(([k,v])=>Number(classCounts[k]||0)===Number(v));
    const candidateFileMatch=candidateFiles.length===Number(manifest.expected_candidate_files);
    const activityFileMatch=activityFiles.length===Number(manifest.expected_activity_files);
    const candidateMatch=count===Number(manifest.expected_candidate_rows);
@@ -68,14 +71,15 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const uniqueUrls=uniqueCount(sourceUrls)===Number(manifest.expected_unique_source_urls);
    const uniqueSequences=uniqueCount(sequences)===sequences.length;
    const contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
-   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
+   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&classBalance&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
    document.getElementById('integrity').textContent=integrityOk
-     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} benzersiz aday ve ${activities.length} sıralı işlem satırı.`
-     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, ID ${uniqueCount(candidateIds)}/${manifest.expected_unique_candidate_ids}, yer ${uniqueCount(normalizedRefs)}/${manifest.expected_unique_normalized_candidate_refs}, URL ${uniqueCount(sourceUrls)}/${manifest.expected_unique_source_urls}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
+     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım ve ${activities.length} sıralı işlem satırı.`
+     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, sınıf ${classBalance?'OK':'HATA'}, ID ${uniqueCount(candidateIds)}/${manifest.expected_unique_candidate_ids}, yer ${uniqueCount(normalizedRefs)}/${manifest.expected_unique_normalized_candidate_refs}, URL ${uniqueCount(sourceUrls)}/${manifest.expected_unique_source_urls}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
    const cards=[
     ['Görünür aday',count],
     ['Araştırma batch',batchCount],
     ['Sınıf kapsamı',manifest.expected_class_coverage],
+    ['Sınıf dağılımı',classBalance?'18 × 6':'HATA'],
     ['Sınıflandırma doğruluğu','%'+average],
     ['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],
     ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
@@ -89,8 +93,9 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
     ['Carrier sayısı','92.283 exact'],
     ['Kimlik kapısı','parcel_1…92283'],
     ['Satır kapısı','row_no = parcel_n'],
-    ['Runner','QUEUED / STALE'],
+    ['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],
     ['Seçili görev',manifest.selected_runner_task],
+    ['Seçili sürüm',manifest.selected_runner_task_version],
     ['Kendi görevimiz',manifest.own_runner_attempt],
     ['Queue branch','aays-single-runner-v5'],
     ['İşlem satırı',activities.length]
