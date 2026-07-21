@@ -14,8 +14,8 @@ checks = {
     "display_size_conflict_recorded": "official_page_display_size_mb_observations = @(32.2,32.3)" in script and 'official_page_display_size_consistency = "CONFLICTING_READBACK_METADATA_ONLY"' in script,
     "display_size_not_exact_integrity_gate": "official_listed_zip_size_mb =" not in script,
     "no_published_checksum_claim": "official_checksum_published = $false" in script,
-    "runtime_integrity_basis": "RUNTIME_BYTE_COUNT_ZIP_SIGNATURE_SHA256_AND_INTERNAL_V2_VALIDATION" in script and "Get-FileHash -Algorithm SHA256" in script,
-    "diagnostics_schema_v6": "schema_version = 6" in script,
+    "runtime_integrity_basis": "PREEXTRACTION_CONTAINER_AUDIT" in script and "Get-FileHash -Algorithm SHA256" in script,
+    "diagnostics_schema_v7": "schema_version = 7" in script,
     "dns_gate": "Resolve-DnsName" in script and "BLOCKED_DNS" in script,
     "retry_gate": "DownloadRetries" in script and "download_attempts" in script,
     "zip_size_gate": "30000000" in script,
@@ -37,6 +37,14 @@ checks = {
     "no_business_write": "actual_business_data_rows_written = 0" in script,
     "no_deploy": "production_deploy = $false" in script and "direct_push = $false" in script,
     "final_not_ready": "final_ready = $false" in script,
+    "zip_container_validator_present": "026_validate_ofcom_zip_container.py" in script,
+    "zip_container_selftest_18": "027_selftest_validate_ofcom_zip_container.py" in script and "Run-JsonSelftest $zipContainerValidatorSelftest 18" in script,
+    "zip_container_before_expand": script.index("$zipAuditRaw") < script.index("Expand-Archive"),
+    "zip_container_status_gate": "PASS_SAFE_OFFICIAL_ZIP_CONTAINER_REVIEW_ONLY" in script,
+    "zip_container_hash_and_byte_match": "$zipAudit.zip_sha256 -ne $diagnostics.zip_sha256" in script and "$zipAudit.zip_bytes -ne $diagnostics.zip_bytes" in script,
+    "zip_container_exact_area_gate": "r2_postcode_area_count -ne $expectedR2Count" in script,
+    "zip_container_safety_guards": all(token in script for token in ("path_traversal_rejected", "duplicate_normalized_paths_rejected", "encrypted_entries_rejected", "symlink_entries_rejected", "crc_validation_passed")),
+    "outfile_without_passthru": "powershell_outfile_passthru_used = $false" in script and "-PassThru" not in script.split("Invoke-WebRequest", 1)[1].splitlines()[0],
 }
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
