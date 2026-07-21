@@ -75,6 +75,7 @@ def run(repo: Path) -> dict[str, Any]:
         check(token in carrier, "carrier_token", token, results)
 
     check("git push" not in pipeline.lower() and "git push" not in carrier.lower(), "no_direct_push_command", "git push absent", results)
+    check("..\\..\\..\\..\\..\\.." in carrier, "repo_root_fallback_six_levels", "six parent traversals to repository root", results)
     check("new runner" not in pipeline.lower(), "no_new_runner_instruction", "no new runner text", results)
     check(re.search(r"EXPECTED_CHECKS\s*=\s*21", pipeline) is not None, "expected_checks_21", "EXPECTED_CHECKS=21", results)
     check(re.search(r"EXPECTED_METADATA_LOCAL\s*=\s*8", pipeline) is not None, "expected_local_metadata_8", "EXPECTED_METADATA_LOCAL=8", results)
