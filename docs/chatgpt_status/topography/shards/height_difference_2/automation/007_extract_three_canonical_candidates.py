@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Extract exactly three canonical identity/location seeds for height_difference_2.
 
-Reads the committed program-layer Topography GeoJSON incrementally. It never
-promotes legacy point elevation values, never creates parcel geometry or numeric
-measurements, and never substitutes a nearby row when an explicit target row is
-missing or invalid.
+The committed Topography GeoJSON is parsed as a binary feature-object stream.
+The file is never loaded as one JSON document. The same pass computes SHA256,
+checks every feature through EOF, and rejects missing, invalid, duplicate, or
+non-distinct exact target rows. Legacy point elevation values are never promoted.
 """
 from __future__ import annotations
 
@@ -12,82 +12,17 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any, Iterable
 
 ROW_START = 30762
 ROW_END = 61522
 EXPECTED_RANGE_COUNT = 30761
 TARGET_ROWS = (ROW_START, (ROW_START + ROW_END) // 2, ROW_END)
 TARGET_ROW_SET = frozenset(TARGET_ROWS)
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _iter_feature_objects(path: Path, chunk_size: int = 1024 * 1024) -> Iterator[dict[str, Any]]:
-    decoder = json.JSONDecoder()
-    marker = '"features"'
-    buffer = ""
-    found_array = False
-    eof = False
-    with path.open("r", encoding="utf-8-sig") as handle:
-        while True:
-            if not eof and (not found_array or len(buffer) < chunk_size // 4):
-                chunk = handle.read(chunk_size)
-                if chunk:
-                    buffer += chunk
-                else:
-                    eof = True
-            if not found_array:
-                pos = buffer.find(marker)
-                if pos < 0:
-                    if eof:
-                        raise ValueError("GeoJSON features key not found")
-                    buffer = buffer[-64:]
-                    continue
-                colon = buffer.find(":", pos + len(marker))
-                if colon < 0:
-                    if eof:
-                        raise ValueError("GeoJSON features colon not found")
-                    buffer = buffer[pos:]
-                    continue
-                bracket = buffer.find("[", colon + 1)
-                if bracket < 0:
-                    if eof:
-                        raise ValueError("GeoJSON features array not found")
-                    buffer = buffer[pos:]
-                    continue
-                buffer = buffer[bracket + 1 :]
-                found_array = True
-            buffer = buffer.lstrip()
-            while buffer.startswith(","):
-                buffer = buffer[1:].lstrip()
-            if buffer.startswith("]"):
-                return
-            if not buffer:
-                if eof:
-                    raise ValueError("Unexpected EOF in features array")
-                continue
-            try:
-                value, end = decoder.raw_decode(buffer)
-            except json.JSONDecodeError:
-                if eof:
-                    raise
-                chunk = handle.read(chunk_size)
-                if chunk:
-                    buffer += chunk
-                else:
-                    eof = True
-                continue
-            buffer = buffer[end:]
-            if isinstance(value, dict):
-                yield value
+FEATURES_ARRAY_RE = re.compile(br'"features"\s*:\s*\[')
+DEFAULT_CHUNK_BYTES = 1024 * 1024
 
 
 def _number(value: Any) -> float | None:
@@ -159,30 +94,145 @@ def _valid_exact_seed(feature: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def extract(source: Path) -> dict[str, Any]:
+def _scan_binary_feature_stream(source: Path, chunk_bytes: int) -> dict[str, Any]:
+    digest = hashlib.sha256()
     raw_target_occurrences = {row: 0 for row in TARGET_ROWS}
     valid_by_target: dict[int, list[dict[str, Any]]] = {row: [] for row in TARGET_ROWS}
-    features_seen = 0
-    range_features_seen = 0
-    for feature in _iter_feature_objects(source):
-        features_seen += 1
-        properties = feature.get("properties")
-        row_no = _explicit_row_no(properties) if isinstance(properties, dict) else None
-        if row_no is not None and ROW_START <= row_no <= ROW_END:
-            range_features_seen += 1
-        if row_no in TARGET_ROW_SET:
-            raw_target_occurrences[row_no] += 1
-        seed = _valid_exact_seed(feature)
-        if seed is not None:
-            valid_by_target[seed["row_no"]].append(seed)
+    metrics: dict[str, Any] = {
+        "parser": "binary-feature-object-stream-v2",
+        "chunk_bytes": chunk_bytes,
+        "source_size_bytes": source.stat().st_size,
+        "features_array_found": False,
+        "features_seen": 0,
+        "range_features_seen": 0,
+        "max_feature_object_bytes": 0,
+        "full_json_load_avoided": True,
+        "scanned_through_features_array_end": False,
+        "sha256_same_pass": True,
+    }
+
+    with source.open("rb") as handle:
+        tail = b""
+        pending = b""
+        found_array = False
+        parsing_done = False
+        root_object = bytearray()
+        depth = 0
+        in_string = False
+        escaped = False
+
+        while True:
+            chunk = handle.read(chunk_bytes)
+            if not chunk:
+                break
+            digest.update(chunk)
+
+            if parsing_done:
+                continue
+
+            if not found_array:
+                data = tail + chunk
+                match = FEATURES_ARRAY_RE.search(data)
+                if match is None:
+                    tail = data[-256:]
+                    continue
+                pending = data[match.end():]
+                found_array = True
+                metrics["features_array_found"] = True
+                tail = b""
+            else:
+                pending = chunk
+
+            position = 0
+            while position < len(pending):
+                byte = pending[position]
+                position += 1
+
+                if depth == 0:
+                    if byte in b" \t\r\n,":
+                        continue
+                    if byte == ord("]"):
+                        parsing_done = True
+                        metrics["scanned_through_features_array_end"] = True
+                        break
+                    if byte != ord("{"):
+                        raise ValueError(f"Unexpected feature token byte={byte}")
+                    root_object = bytearray(b"{")
+                    depth = 1
+                    in_string = False
+                    escaped = False
+                    continue
+
+                root_object.append(byte)
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif byte == ord("\\"):
+                        escaped = True
+                    elif byte == ord('"'):
+                        in_string = False
+                    continue
+
+                if byte == ord('"'):
+                    in_string = True
+                elif byte == ord("{"):
+                    depth += 1
+                elif byte == ord("}"):
+                    depth -= 1
+                    if depth != 0:
+                        continue
+                    metrics["features_seen"] += 1
+                    metrics["max_feature_object_bytes"] = max(
+                        metrics["max_feature_object_bytes"], len(root_object)
+                    )
+                    try:
+                        feature = json.loads(root_object.decode("utf-8"))
+                    except Exception as exc:
+                        raise ValueError(
+                            f"Feature JSON parse failed at feature {metrics['features_seen']}: {exc}"
+                        ) from exc
+                    root_object = bytearray()
+                    if not isinstance(feature, dict):
+                        continue
+                    properties = feature.get("properties")
+                    row_no = _explicit_row_no(properties) if isinstance(properties, dict) else None
+                    if row_no is not None and ROW_START <= row_no <= ROW_END:
+                        metrics["range_features_seen"] += 1
+                    if row_no in TARGET_ROW_SET:
+                        raw_target_occurrences[row_no] += 1
+                    seed = _valid_exact_seed(feature)
+                    if seed is not None:
+                        valid_by_target[seed["row_no"]].append(seed)
+
+        if not found_array:
+            raise ValueError("GeoJSON features array not found")
+        if not parsing_done:
+            raise ValueError("Unexpected EOF before features array end")
+        if depth != 0 or in_string:
+            raise ValueError("Unbalanced feature object at EOF")
+
+    metrics["source_sha256"] = digest.hexdigest()
+    return {
+        "metrics": metrics,
+        "raw_target_occurrences": raw_target_occurrences,
+        "valid_by_target": valid_by_target,
+    }
+
+
+def _build_payload(source: Path, scan: dict[str, Any]) -> dict[str, Any]:
+    metrics = scan["metrics"]
+    raw_target_occurrences = scan["raw_target_occurrences"]
+    valid_by_target = scan["valid_by_target"]
 
     missing_target_rows = [row for row in TARGET_ROWS if raw_target_occurrences[row] == 0]
     duplicate_target_rows = [
-        row for row in TARGET_ROWS
+        row
+        for row in TARGET_ROWS
         if raw_target_occurrences[row] > 1 or len(valid_by_target[row]) > 1
     ]
     invalid_target_rows = [
-        row for row in TARGET_ROWS
+        row
+        for row in TARGET_ROWS
         if raw_target_occurrences[row] > 0 and len(valid_by_target[row]) == 0
     ]
     selected = [
@@ -206,17 +256,29 @@ def extract(source: Path) -> dict[str, Any]:
         and not invalid_target_rows
         and not duplicate_target_rows
     )
+
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_2",
-        "parcel_partition": {"start": ROW_START, "end": ROW_END, "expected_count": EXPECTED_RANGE_COUNT},
+        "parcel_partition": {
+            "start": ROW_START,
+            "end": ROW_END,
+            "expected_count": EXPECTED_RANGE_COUNT,
+        },
         "target_rows": list(TARGET_ROWS),
-        "status": "THREE_EXACT_CANONICAL_CANDIDATE_SEEDS_EXTRACTED" if complete else "BLOCKED_THREE_EXACT_CANONICAL_CANDIDATE_SEEDS_NOT_FOUND",
+        "status": (
+            "THREE_EXACT_CANONICAL_CANDIDATE_SEEDS_EXTRACTED"
+            if complete
+            else "BLOCKED_THREE_EXACT_CANONICAL_CANDIDATE_SEEDS_NOT_FOUND"
+        ),
         "source_path": str(source),
-        "source_sha256": _sha256(source),
-        "features_seen": features_seen,
-        "range_features_seen": range_features_seen,
-        "raw_target_occurrences": {str(row): raw_target_occurrences[row] for row in TARGET_ROWS},
+        "source_sha256": metrics["source_sha256"],
+        "stream_metrics": metrics,
+        "features_seen": metrics["features_seen"],
+        "range_features_seen": metrics["range_features_seen"],
+        "raw_target_occurrences": {
+            str(row): raw_target_occurrences[row] for row in TARGET_ROWS
+        },
         "missing_target_rows": missing_target_rows,
         "invalid_target_rows": invalid_target_rows,
         "duplicate_target_rows": duplicate_target_rows,
@@ -231,7 +293,10 @@ def extract(source: Path) -> dict[str, Any]:
         "nearest_row_fallback_used": False,
         "legacy_point_topography_values_promoted": False,
         "official_polygon_measurements_written": 0,
-        "next_step": "MATCH_HMLR_INSPIRE_GML_POLYGONS_THEN_SAMPLE_EA_DTM1M_AND_CROSSCHECK_OS_TERRAIN50",
+        "next_step": (
+            "MATCH_HMLR_INSPIRE_GML_POLYGONS_THEN_SAMPLE_EA_DTM1M_"
+            "AND_CROSSCHECK_OS_TERRAIN50"
+        ),
         "final_ready": False,
         "fake_data": False,
         "db_write": False,
@@ -240,9 +305,16 @@ def extract(source: Path) -> dict[str, Any]:
     }
 
 
+def extract(source: Path, chunk_bytes: int = DEFAULT_CHUNK_BYTES) -> dict[str, Any]:
+    return _build_payload(source, _scan_binary_feature_stream(source, chunk_bytes))
+
+
 def _write(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -250,10 +322,15 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--web-output", type=Path)
+    parser.add_argument("--chunk-bytes", type=int, default=DEFAULT_CHUNK_BYTES)
     args = parser.parse_args(argv)
+
+    if args.chunk_bytes < 4096:
+        raise SystemExit("--chunk-bytes must be at least 4096")
+
     if not args.source.is_file():
         payload = {
-            "schema_version": 2,
+            "schema_version": 3,
             "slot_id": "height_difference_2",
             "status": "BLOCKED_CANONICAL_TOPOGRAPHY_GEOJSON_MISSING",
             "source_path": str(args.source),
@@ -272,11 +349,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             _write(args.web_output, payload)
         print(json.dumps({"ok": False, "status": payload["status"]}))
         return 2
+
     try:
-        payload = extract(args.source)
+        payload = extract(args.source, args.chunk_bytes)
     except Exception as exc:
         payload = {
-            "schema_version": 2,
+            "schema_version": 3,
             "slot_id": "height_difference_2",
             "status": "BLOCKED_CANONICAL_CANDIDATE_EXTRACTION_ERROR",
             "source_path": str(args.source),
@@ -291,11 +369,20 @@ def main(argv: Iterable[str] | None = None) -> int:
             "migration": False,
             "production_deploy": False,
         }
+
     _write(args.output, payload)
     if args.web_output:
         _write(args.web_output, payload)
     ok = payload.get("status") == "THREE_EXACT_CANONICAL_CANDIDATE_SEEDS_EXTRACTED"
-    print(json.dumps({"ok": ok, "status": payload.get("status"), "candidates": payload.get("candidate_seed_count", 0)}))
+    print(
+        json.dumps(
+            {
+                "ok": ok,
+                "status": payload.get("status"),
+                "candidates": payload.get("candidate_seed_count", 0),
+            }
+        )
+    )
     return 0 if ok else 2
 
 
