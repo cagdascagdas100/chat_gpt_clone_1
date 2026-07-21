@@ -6,6 +6,7 @@ from pathlib import Path
 import runpy
 import subprocess
 import sys
+from typing import Any
 
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 EXPECTED_BRANCH = "codex/aays-single-runner-v5-20260706"
@@ -22,41 +23,43 @@ def _write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _run_candidate_extraction(repo_root: Path) -> dict[str, object]:
-    script = repo_root / "docs" / "chatgpt_status" / "topography" / "shards" / "height_difference_2" / "automation" / "007_extract_three_canonical_candidates.py"
-    source = repo_root / "england_map_web" / "data" / "program_layer_matrix" / "topography.geojson"
-    output = repo_root / "docs" / "chatgpt_status" / "topography" / "shards" / "height_difference_2" / "runner_outputs" / "005_canonical_candidate_seeds_latest.json"
-    web_output = repo_root / "england_map_web" / "data" / "aays_21_slots" / "height_difference_2" / "candidate_seeds_latest.json"
-    result: dict[str, object] = {
-        "stage": "CANONICAL_CANDIDATE_SEED_EXTRACTION",
-        "script": str(script),
-        "source": str(source),
-        "output": str(output),
-        "web_output": str(web_output),
+def _run(command: list[str], cwd: Path, stage: str) -> dict[str, Any]:
+    process = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
+    return {
+        "stage": stage,
+        "command": command,
+        "exit_code": process.returncode,
+        "stdout": process.stdout[-8000:],
+        "stderr": process.stderr[-8000:],
     }
+
+
+def _run_candidate_extraction(repo_root: Path) -> dict[str, Any]:
+    script = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/automation/007_extract_three_canonical_candidates.py"
+    source = repo_root / "england_map_web/data/program_layer_matrix/topography.geojson"
+    output = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/005_canonical_candidate_seeds_latest.json"
+    web_output = repo_root / "england_map_web/data/aays_21_slots/height_difference_2/candidate_seeds_latest.json"
     if not script.is_file():
-        result.update({"exit_code": 2, "status": "BLOCKED_CANDIDATE_EXTRACTOR_SCRIPT_MISSING"})
-        return result
-    command = [
-        sys.executable,
-        str(script),
-        "--source",
-        str(source),
-        "--output",
-        str(output),
-        "--web-output",
-        str(web_output),
-    ]
-    process = subprocess.run(command, cwd=repo_root, text=True, capture_output=True, check=False)
-    result.update(
-        {
-            "command": command,
-            "exit_code": process.returncode,
-            "stdout": process.stdout[-8000:],
-            "stderr": process.stderr[-8000:],
-            "status": "CANDIDATE_EXTRACTION_EXECUTED",
+        return {
+            "stage": "CANONICAL_CANDIDATE_SEED_EXTRACTION",
+            "exit_code": 2,
+            "status": "BLOCKED_CANDIDATE_EXTRACTOR_SCRIPT_MISSING",
         }
+    result = _run(
+        [
+            sys.executable,
+            str(script),
+            "--source",
+            str(source),
+            "--output",
+            str(output),
+            "--web-output",
+            str(web_output),
+        ],
+        repo_root,
+        "CANONICAL_CANDIDATE_SEED_EXTRACTION",
     )
+    result.update({"script": str(script), "source": str(source), "output": str(output), "web_output": str(web_output)})
     if output.is_file():
         try:
             payload = json.loads(output.read_text(encoding="utf-8"))
@@ -68,15 +71,60 @@ def _run_candidate_extraction(repo_root: Path) -> dict[str, object]:
     return result
 
 
-def _run_existing_entrypoint(repo_root: Path) -> tuple[int, dict[str, object]]:
-    existing = repo_root / "docs" / "chatgpt_status" / "aays1" / "automation" / "height_difference_2_official_sampling_entry.py"
-    result: dict[str, object] = {
+def _run_hmlr_polygon_preparation(repo_root: Path) -> dict[str, Any]:
+    script = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/automation/011_prepare_three_hmlr_polygons.py"
+    seed_manifest = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/005_canonical_candidate_seeds_latest.json"
+    output_dir = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/007_hmlr_polygon_preparation_latest"
+    if not script.is_file():
+        return {
+            "stage": "HMLR_EXACT_POLYGON_PREPARATION",
+            "exit_code": 2,
+            "status": "BLOCKED_HMLR_ORCHESTRATOR_MISSING",
+        }
+    result = _run(
+        [
+            sys.executable,
+            str(script),
+            "--seed-manifest",
+            str(seed_manifest),
+            "--output-dir",
+            str(output_dir),
+        ],
+        repo_root,
+        "HMLR_EXACT_POLYGON_PREPARATION",
+    )
+    execution = output_dir / "hmlr_polygon_preparation_execution.json"
+    exact_matches = output_dir / "hmlr_exact_matches.json"
+    starter = output_dir / "starter_manifest.json"
+    result.update(
+        {
+            "script": str(script),
+            "seed_manifest": str(seed_manifest),
+            "output_dir": str(output_dir),
+            "execution": str(execution),
+            "starter_manifest": str(starter),
+            "hmlr_exact_matches": str(exact_matches),
+        }
+    )
+    if execution.is_file():
+        try:
+            payload = json.loads(execution.read_text(encoding="utf-8"))
+            result["hmlr_status"] = payload.get("status")
+            result["hmlr_source_manifest"] = payload.get("hmlr_source_manifest")
+        except Exception as exc:
+            result["hmlr_output_read_error"] = f"{type(exc).__name__}: {exc}"
+    return result
+
+
+def _run_existing_entrypoint(repo_root: Path) -> dict[str, Any]:
+    existing = repo_root / "docs/chatgpt_status/aays1/automation/height_difference_2_official_sampling_entry.py"
+    result: dict[str, Any] = {
         "stage": "EXPANDED_DISCOVERY_AND_OFFICIAL_SAMPLING",
         "existing_entrypoint": str(existing),
     }
     if not existing.is_file():
         result.update({"exit_code": 2, "status": "BLOCKED_EXISTING_ENTRYPOINT_MISSING"})
-        return 2, result
+        return result
     exit_code = 0
     try:
         runpy.run_path(str(existing), run_name="__main__")
@@ -86,7 +134,7 @@ def _run_existing_entrypoint(repo_root: Path) -> tuple[int, dict[str, object]]:
         exit_code = 2
         result["error"] = f"{type(exc).__name__}: {exc}"
     result.update({"exit_code": exit_code, "status": "EXISTING_ENTRYPOINT_EXECUTED"})
-    return exit_code, result
+    return result
 
 
 def main() -> int:
@@ -96,21 +144,62 @@ def main() -> int:
     page_key = os.environ.get("AAYS_PAGE_KEY", "").strip()
     if page_key and page_key != EXPECTED_PAGE_KEY:
         raise RuntimeError("HEIGHT_DIFFERENCE_2_WRONG_PAGE_KEY")
+
     repo_root = _repo_root()
+    stages: list[dict[str, Any]] = []
     candidate_result = _run_candidate_extraction(repo_root)
-    os.environ["AAYS_HEIGHT_DIFFERENCE_2_CANDIDATE_SEED_OUTPUT"] = str(
-        repo_root / "docs" / "chatgpt_status" / "topography" / "shards" / "height_difference_2" / "runner_outputs" / "005_canonical_candidate_seeds_latest.json"
-    )
-    sampling_code, sampling_result = _run_existing_entrypoint(repo_root)
+    stages.append(candidate_result)
+
+    if candidate_result.get("exit_code") != 0:
+        hmlr_result = {
+            "stage": "HMLR_EXACT_POLYGON_PREPARATION",
+            "exit_code": 2,
+            "status": "SKIPPED_CANDIDATE_GATE_FAILED",
+        }
+        sampling_result = {
+            "stage": "EXPANDED_DISCOVERY_AND_OFFICIAL_SAMPLING",
+            "exit_code": 2,
+            "status": "SKIPPED_CANDIDATE_GATE_FAILED",
+        }
+    else:
+        hmlr_result = _run_hmlr_polygon_preparation(repo_root)
+        if hmlr_result.get("exit_code") != 0:
+            sampling_result = {
+                "stage": "EXPANDED_DISCOVERY_AND_OFFICIAL_SAMPLING",
+                "exit_code": 2,
+                "status": "SKIPPED_HMLR_EXACT_POLYGON_GATE_FAILED",
+            }
+        else:
+            os.environ["AAYS_HEIGHT_DIFFERENCE_2_CANDIDATE_SEED_OUTPUT"] = str(
+                repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/005_canonical_candidate_seeds_latest.json"
+            )
+            os.environ["AAYS_HEIGHT_DIFFERENCE_2_STARTER_MANIFEST"] = str(
+                repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/007_hmlr_polygon_preparation_latest/starter_manifest.json"
+            )
+            os.environ["AAYS_HEIGHT_DIFFERENCE_2_HMLR_EXACT_MATCHES"] = str(
+                repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/007_hmlr_polygon_preparation_latest/hmlr_exact_matches.json"
+            )
+            sampling_result = _run_existing_entrypoint(repo_root)
+
+    stages.extend([hmlr_result, sampling_result])
+    all_codes = [int(stage.get("exit_code", 2)) for stage in stages]
+    success = all(code == 0 for code in all_codes)
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
-        "stages": [candidate_result, sampling_result],
+        "stage_order": [
+            "CANONICAL_CANDIDATE_SEED_EXTRACTION",
+            "HMLR_EXACT_POLYGON_PREPARATION",
+            "EXPANDED_DISCOVERY_AND_OFFICIAL_SAMPLING",
+        ],
+        "stages": stages,
         "candidate_seed_count": candidate_result.get("candidate_seed_count", 0),
         "candidate_extraction_exit_code": candidate_result.get("exit_code", 2),
-        "sampling_exit_code": sampling_code,
-        "status": "CANDIDATE_SEEDS_AND_SAMPLING_EXECUTED" if candidate_result.get("exit_code") == 0 and sampling_code == 0 else "BLOCKED_CANDIDATE_OR_SAMPLING_STAGE",
+        "hmlr_polygon_exit_code": hmlr_result.get("exit_code", 2),
+        "sampling_exit_code": sampling_result.get("exit_code", 2),
+        "status": "CANDIDATES_HMLR_POLYGONS_AND_SAMPLING_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_STAGE_GATE",
+        "sampling_started_without_three_exact_hmlr_polygons": False,
         "official_polygon_measurements_written_by_wrapper": 0,
         "single_shared_runner_only": True,
         "new_runner": False,
@@ -121,9 +210,12 @@ def main() -> int:
         "migration": False,
         "production_deploy": False,
     }
-    summary_path = repo_root / "docs" / "chatgpt_status" / "topography" / "shards" / "height_difference_2" / "runner_outputs" / "006_candidate_seed_and_sampling_entrypoint_latest.json"
+    summary_path = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/006_candidate_seed_and_sampling_entrypoint_latest.json"
     _write_json(summary_path, summary)
-    return sampling_code if sampling_code != 0 else int(candidate_result.get("exit_code", 2))
+    for code in all_codes:
+        if code != 0:
+            return code
+    return 0
 
 
 if __name__ == "__main__":
