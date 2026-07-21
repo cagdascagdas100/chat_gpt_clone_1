@@ -6,13 +6,12 @@
   "base_slot_id": "security_public_safety",
   "shard_index": 1,
   "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
-  "attempt_id": "security-public-safety-1-20260720-013",
-  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v13",
+  "attempt_id": "security-public-safety-1-20260720-014",
+  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v14",
   "status": "pending",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v13.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v14.py",
   "read_paths": [
-    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v13.py",
-    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v12.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v14.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v11.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v7.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v5.py",
@@ -26,7 +25,7 @@
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
     "england_map_web/data/security_public_safety/security_evidence_manifest.json",
     "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
-    "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v13.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v14.html",
     "docs/chatgpt_status/aays1/control/current_task.txt",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_1"
   ],
@@ -34,11 +33,23 @@
     "docs/chatgpt_status/aays1/shards/security_public_safety_1",
     "england_map_web/data/aays_21_slots/security_public_safety_1"
   ],
-  "resource_class": ["light_read", "network_fetch"],
+  "resource_class": [
+    "light_read",
+    "network_fetch"
+  ],
   "requires_browser_acceptance_gate": true,
   "requires_git_publish_gate": true,
-  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
-  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
   "data_quality_contract": {
     "source_urls": [
       "https://data.police.uk/api/crime-last-updated",
@@ -71,9 +82,10 @@
     "candidate_api_validation_method": "deduplicated_one_mile_representative_point_http_json_count_sha256_parity",
     "candidate_api_unique_endpoints_expected": 16,
     "candidate_endpoint_reuse_policy": "reuse identical official API URLs; expand candidate rows without duplicate live calls",
+    "worker_chain_policy": "v14 directly invokes recursion-safe v11 to avoid wrapper-depth drift",
     "force_scope_validation_method": "official_force_list_plus_specific_metropolitan_force_json_identity",
     "london_lsoa_source_validation_method": "official_london_datastore_exact_dataset_http_sha_content_gate_for_monthly_recorded_crime_lsoa_catalogue",
-    "deterministic_preflight_method": "recursion_safe_no_network_required_files_python_syntax_csv_row_endpoint_queue_legacy_wrapper_safety_contract",
+    "deterministic_preflight_method": "flattened_recursion_safe_no_network_required_files_python_syntax_csv_row_endpoint_queue_legacy_wrapper_safety_contract",
     "confidence_method": "primary_data_police_spatial_match_plus_live_candidate_api_parity_plus_metropolitan_force_scope_plus_exact_london_lsoa_catalogue_plus_official_context_not_parcel_measurement",
     "location_accuracy_limit": "data.police.uk street locations are approximate and anonymised",
     "known_data_issue_policy": "record official changelog, London CONNECT comparability limits and scheduled national releases; do not infer missing values; preserve AREA_LEVEL_PROXY",
@@ -90,7 +102,8 @@
       "candidate_live_api_http_or_json_failure",
       "metropolitan_force_identity_mismatch",
       "london_datastore_lsoa_source_validation_failure",
-      "deterministic_preflight_failure"
+      "deterministic_preflight_failure",
+      "worker_chain_drift"
     ]
   },
   "acceptance_contract": {
@@ -104,14 +117,15 @@
     "actual_headless_browser_required": true,
     "product_matrix_area_proxy_label_required": true,
     "web_progress_line_items_required": true,
-    "candidate_examples_required": 120,
-    "candidate_accuracy_score_4_required": 120,
+    "candidate_examples_required": 130,
+    "candidate_accuracy_score_4_required": 130,
     "candidate_live_api_parity_required": true,
     "candidate_live_api_unique_endpoints_required": 16,
     "candidate_live_api_http_json_pass_required": 16,
-    "candidate_live_api_count_parity_required": 120,
-    "candidate_live_api_sha256_parity_required": 120,
+    "candidate_live_api_count_parity_required": 130,
+    "candidate_live_api_sha256_parity_required": 130,
     "candidate_endpoint_reuse_no_duplicate_live_requests_required": true,
+    "worker_chain_flattened_to_recursion_safe_v11_required": true,
     "metropolitan_force_scope_http_json_required": true,
     "london_datastore_lsoa_source_http_sha_content_required": true,
     "deterministic_preflight_required": true,
