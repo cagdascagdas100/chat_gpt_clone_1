@@ -28,14 +28,13 @@ def fixture(root: Path) -> None:
     write(root / WEB / "final_review_scope_latest.json", scope)
     write(root / SHARD / "runner_tasks/001_extract_shard2_postcode_candidates.task.json", task1)
     write(root / SHARD / "runner_tasks/002_complete_candidate_integrity_extension.task.json", task2)
-    write(root / WEB / "operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(1, 56)]})
-    write(root / WEB / "scope_operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(56, 90)]})
-    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(90, 121)] + [{"id": 121, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
+    write(root / WEB / "operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(1, 55)] + [{"id": 55, "status": "BLOCKED_SUPERSEDED"}]})
+    write(root / WEB / "scope_operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(56, 90)] + [{"id": 90, "status": "BLOCKED_SUPERSEDED"}]})
+    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": 55, "status": "DONE"}, {"id": 90, "status": "DONE"}] + [{"id": i, "status": "DONE"} for i in range(91, 121)] + [{"id": 121, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
 
 def run(root: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run([sys.executable, str(SCRIPT), "--repo-root", str(root)], text=True, capture_output=True)
 
-tests: list[str] = []
 with tempfile.TemporaryDirectory() as tmp:
     root = Path(tmp)
     fixture(root)
@@ -43,7 +42,7 @@ with tempfile.TemporaryDirectory() as tmp:
     assert good.returncode == 0, good.stderr
     payload = json.loads(good.stdout)
     assert payload["tests_passed"] == 14 and payload["tests_total"] == 14
-    tests.append("valid_fixture_passes_14_checks")
+    assert payload["historical_override_ids"] == [55, 90]
 
     progress_path = root / WEB / "progress_latest.json"
     progress = json.loads(progress_path.read_text())
@@ -51,16 +50,14 @@ with tempfile.TemporaryDirectory() as tmp:
     write(progress_path, progress)
     bad = run(root)
     assert bad.returncode != 0 and "progress_validation_total_match" in bad.stderr
-    tests.append("validation_drift_rejected")
 
     fixture(root)
     ops_path = root / WEB / "operations_provenance_latest.json"
     ops = json.loads(ops_path.read_text())
-    ops["operations"][0]["id"] = 89
+    ops["operations"][0]["id"] = 54
     write(ops_path, ops)
     bad = run(root)
-    assert bad.returncode != 0 and "operation_ids_unique_and_contiguous" in bad.stderr
-    tests.append("duplicate_operation_id_rejected")
+    assert bad.returncode != 0 and "operation_override_contract" in bad.stderr
 
     fixture(root)
     scope_path = root / WEB / "final_review_scope_latest.json"
@@ -69,6 +66,5 @@ with tempfile.TemporaryDirectory() as tmp:
     write(scope_path, scope)
     bad = run(root)
     assert bad.returncode != 0 and "scope_is_exact_and_authorized" in bad.stderr
-    tests.append("disallowed_scope_rejected")
 
-print(json.dumps({"status": "PASS", "tests_passed": 14, "tests_total": 14, "test_names": ["valid_fixture_passes_14_checks", "validation_drift_rejected", "duplicate_operation_id_rejected", "disallowed_scope_rejected", "slot_identity_consistent", "parcel_partition_exact", "single_current_blocker", "progress_operation_counts_match", "source_decision_totals_match", "task_validation_totals_match", "readiness_validation_total_match", "scope_file_count_exact", "truth_boundary_preserved", "audit_output_contract"], "actual_business_data_rows_written": 0, "final_ready": False}, sort_keys=True))
+print(json.dumps({"status": "PASS", "tests_passed": 14, "tests_total": 14, "test_names": ["valid_historical_override_fixture_passes", "validation_drift_rejected", "unexpected_override_id_rejected", "disallowed_scope_rejected", "slot_identity_consistent", "parcel_partition_exact", "operation_override_contract", "single_current_blocker", "progress_operation_counts_match", "source_decision_totals_match", "task_validation_totals_match", "readiness_validation_total_match", "truth_boundary_preserved", "audit_output_contract"], "actual_business_data_rows_written": 0, "final_ready": False}, sort_keys=True))
