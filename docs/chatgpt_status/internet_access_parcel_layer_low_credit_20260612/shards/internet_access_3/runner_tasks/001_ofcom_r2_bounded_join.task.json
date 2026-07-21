@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "task_id": "internet_access_3-ofcom-r2-bounded-join-20260721",
+  "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "queue_submission": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "canonical_source": "england_map_web/data/program_layer_matrix/security.geojson",
+  "legacy_postcode_source": "england_map_web/data/program_layer_matrix/internet.geojson",
+  "official_source": "Ofcom Connected Nations Spring 2026 fixed broadband ZIP",
+  "execution_order": [
+    {
+      "stage": 1,
+      "script": "automation/003_selftest_slot3_extractor.py",
+      "purpose": "reconfirm identity-safe extractor contract"
+    },
+    {
+      "stage": 2,
+      "script": "automation/006_selftest_stream_extract_slot3_inputs.py",
+      "purpose": "reconfirm bounded low-memory slicing contract"
+    },
+    {
+      "stage": 3,
+      "script": "automation/007_probe_download_and_run_slot3.ps1",
+      "purpose": "download and hash official ZIP, reject superseded r1 postcode files, slice exact shard and produce review-only join counts"
+    }
+  ],
+  "expected_command": "powershell -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\007_probe_download_and_run_slot3.ps1 -RepoRoot F:\\chatgpt\\chat_gpt_clone_1_main",
+  "acceptance": [
+    "authoritative slot has no live lease before execution",
+    "exact canonical rows 61523-92283 count 30761",
+    "unique row_no and parcel_id",
+    "same-row parcel_id and compatible HMLR INSPIRE ID",
+    "official ZIP signature, byte count and SHA256",
+    "zero all-premises r1 postcode files",
+    "exactly 121 corrected all-premises r2 postcode files",
+    "exactly 1741096 Ofcom postcode rows",
+    "exact current-r2 proxy, identity-conflict, postcode-not-found and no-verified-postcode counts",
+    "no nearest-postcode assignment",
+    "no parcel score, migration, database write or production deploy"
+  ],
+  "output_contract": {
+    "diagnostics": "outputs/internet_access_3_verified_run/internet_access_3_network_and_execution_diagnostics_latest.json",
+    "slice_manifest": "outputs/internet_access_3_verified_run/slot_inputs/internet_access_3_stream_slice_manifest_latest.json",
+    "candidate_manifest": "outputs/internet_access_3_verified_run/candidate_outputs/internet_access_3_candidate_manifest_latest.json",
+    "business_rows_written": 0
+  },
+  "current_blockers": [
+    "EXISTING_SINGLE_RUNNER_MUST_EXECUTE_ON_CANONICAL_F_WORKSPACE",
+    "OFFICIAL_OFCOM_ZIP_DOWNLOAD_AND_SHA256_REQUIRED",
+    "REAL_30761_ROW_JOIN_COUNTS_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
