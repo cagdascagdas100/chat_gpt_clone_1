@@ -10,11 +10,12 @@ $repoRoot = (Get-Location).Path.TrimEnd('\')
 $portableRoot = [string]$env:AAYS_PORTABLE_ROOT
 $wrapperRelative = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/automation/021_gas_emissions_3_queue_runtime_token_wrapper.ps1'
 $carrierRelative = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/automation/020_gas_emissions_3_coordinator_browser_acceptance_carrier.ps1'
+$harnessRelative = 'england_map_web/data/aays_18_slots/gas_emissions_3/canonical_matrix_100_browser_harness.html'
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
 $runtimeProofRoot = Join-Path $repoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_3\acceptance\020_coordinator_browser_runtime_latest'
 $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/runner_runtime_token_latest.json'
-$expectedTokenId = 'gas_emissions_3_v6_queue_20260721_001'
-$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v6_20260721_01'
+$expectedTokenId = 'gas_emissions_3_v7_queue_20260721_001'
+$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v7_20260721_01'
 
 $gitCandidates = @()
 if (-not [string]::IsNullOrWhiteSpace($portableRoot)) {
@@ -56,6 +57,7 @@ $remoteHead = Get-RemoteHead
 if ($localHead -ne $remoteHead) { throw "Detached child HEAD does not match remote HEAD. local=$localHead remote=$remoteHead" }
 $wrapperBlob = Invoke-Git @('rev-parse',"HEAD:$wrapperRelative")
 $carrierBlob = Invoke-Git @('rev-parse',"HEAD:$carrierRelative")
+$harnessBlob = Invoke-Git @('rev-parse',"HEAD:$harnessRelative")
 
 $response = Invoke-WebRequest -Uri $tokenUrl -UseBasicParsing -TimeoutSec 30 -Headers @{'Cache-Control'='no-cache'}
 if ([int]$response.StatusCode -ne 200) { throw "Runtime token HTTP status is $($response.StatusCode)" }
@@ -67,11 +69,13 @@ if ($token.wrapper_path -ne $wrapperRelative) { throw "Runtime token wrapper pat
 if ($token.wrapper_blob_sha -ne $wrapperBlob) { throw "Served runtime token wrapper SHA mismatch. token=$($token.wrapper_blob_sha) local=$wrapperBlob" }
 if ($token.carrier_path -ne $carrierRelative) { throw "Runtime token carrier path mismatch: $($token.carrier_path)" }
 if ($token.carrier_blob_sha -ne $carrierBlob) { throw "Served runtime token carrier SHA mismatch. token=$($token.carrier_blob_sha) local=$carrierBlob" }
+if ($token.harness_path -ne $harnessRelative) { throw "Runtime token harness path mismatch: $($token.harness_path)" }
+if ($token.harness_blob_sha -ne $harnessBlob) { throw "Served runtime token harness SHA mismatch. token=$($token.harness_blob_sha) local=$harnessBlob" }
 if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) {
     throw 'Runtime token safety flags are invalid.'
 }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob"
 $carrierExitCode = 1
 try {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath
