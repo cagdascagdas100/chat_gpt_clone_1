@@ -16,7 +16,7 @@ if (-not $WorkRoot) { $WorkRoot = Join-Path $RepoRoot "outputs/internet_access_2
 
 $canonicalSource = Join-Path $RepoRoot "england_map_web/data/program_layer_matrix/security.geojson"
 $legacySource = Join-Path $RepoRoot "england_map_web/data/program_layer_matrix/internet.geojson"
-$webRoot = Join-Path $RepoRoot "england_map_web/data/aays_21_slots/internet_access_2"
+$webRoot = Join-Path $RepoRoot "england_map_web/data/aays_18_slots/internet_access_2"
 $automationRoot = Join-Path $RepoRoot "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation"
 $extractor = Join-Path $automationRoot "002_extract_slot2_ofcom_2026_candidates.py"
 $extractorSelftest = Join-Path $automationRoot "003_selftest_slot2_extractor.py"
@@ -41,6 +41,7 @@ $diagnostics = [ordered]@{
     official_zip_url = $officialZipUrl
     canonical_source = $canonicalSource
     legacy_source = $legacySource
+    allowed_web_output_root = $webRoot
     dns_state = "NOT_CHECKED"
     download_state = "NOT_STARTED"
     download_attempts = @()
