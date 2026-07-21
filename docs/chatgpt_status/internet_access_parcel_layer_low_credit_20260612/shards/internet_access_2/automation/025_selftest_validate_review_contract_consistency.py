@@ -18,12 +18,12 @@ def write(path: Path, value: object) -> None:
 
 
 def fixture(root: Path) -> None:
-    progress = {"slot_id": SLOT, "parcel_start": 30762, "parcel_end": 61522, "parcel_count": 30761, "completed_operations": 128, "total_operations": 129, "visible_operation_rows": 129, "official_source_candidates": 8, "promoted_sources": 5, "held_sources": 1, "rejected_sources": 2, "combined_validation_passed": 292, "combined_validation_total": 292, "actual_business_data_rows_written": 0, "final_ready": False}
-    provenance = {"slot_id": SLOT, "combined_validation": {"passed": 292, "total": 292}, "actual_business_data_rows_written": 0, "final_ready": False}
-    readiness = {"slot_id": SLOT, "official_v2_semantic_preflight": {"combined_tests_passed": 292, "combined_tests_total": 292}, "actual_business_data_rows_written": 0, "final_ready": False}
-    scope = {"slot_id": SLOT, "review_scope_file_count": 75, "other_slot_path_count": 0, "shared_state_path_count": 0, "queue_path_count": 0, "disallowed_path_count": 0, "business_rows_written": 0, "final_ready": False}
-    task1 = {"slot_id": SLOT, "preflight_validation": {"combined": {"passed": 292, "total": 292}}, "write_policy": {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "direct_push": False, "final_ready": False}}
-    task2 = {"slot_id": SLOT, "required_preflight": {"combined_all_suites": {"passed": 292, "total": 292}}, "actual_business_data_rows_written": 0, "final_ready": False}
+    progress = {"slot_id": SLOT, "parcel_start": 30762, "parcel_end": 61522, "parcel_count": 30761, "completed_operations": 134, "total_operations": 135, "visible_operation_rows": 135, "official_source_candidates": 8, "promoted_sources": 5, "held_sources": 1, "rejected_sources": 2, "combined_validation_passed": 314, "combined_validation_total": 314, "actual_business_data_rows_written": 0, "final_ready": False}
+    provenance = {"slot_id": SLOT, "combined_validation": {"passed": 314, "total": 314}, "actual_business_data_rows_written": 0, "final_ready": False}
+    readiness = {"slot_id": SLOT, "official_v2_semantic_preflight": {"combined_tests_passed": 314, "combined_tests_total": 314}, "actual_business_data_rows_written": 0, "final_ready": False}
+    scope = {"slot_id": SLOT, "review_scope_file_count": 79, "other_slot_path_count": 0, "shared_state_path_count": 0, "queue_path_count": 0, "disallowed_path_count": 0, "business_rows_written": 0, "final_ready": False}
+    task1 = {"slot_id": SLOT, "preflight_validation": {"combined": {"passed": 314, "total": 314}}, "write_policy": {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "direct_push": False, "final_ready": False}}
+    task2 = {"slot_id": SLOT, "required_preflight": {"combined_all_suites": {"passed": 314, "total": 314}}, "actual_business_data_rows_written": 0, "final_ready": False}
     write(root / WEB / "progress_latest.json", progress)
     write(root / WEB / "provenance_contract_latest.json", provenance)
     write(root / WEB / "runner_readiness_latest.json", readiness)
@@ -32,7 +32,7 @@ def fixture(root: Path) -> None:
     write(root / SHARD / "runner_tasks/002_complete_candidate_integrity_extension.task.json", task2)
     write(root / WEB / "operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(1, 55)] + [{"id": 55, "status": "BLOCKED_SUPERSEDED"}]})
     write(root / WEB / "scope_operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(56, 90)] + [{"id": 90, "status": "BLOCKED_SUPERSEDED"}]})
-    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": 55, "status": "DONE"}, {"id": 90, "status": "DONE"}] + [{"id": i, "status": "DONE"} for i in range(91, 129)] + [{"id": 129, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
+    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": 55, "status": "DONE"}, {"id": 90, "status": "DONE"}] + [{"id": i, "status": "DONE"} for i in range(91, 135)] + [{"id": 135, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
 
 
 def run(root: Path) -> subprocess.CompletedProcess[str]:
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
     progress_path = root / WEB / "progress_latest.json"
     progress = json.loads(progress_path.read_text())
-    progress["combined_validation_total"] = 291
+    progress["combined_validation_total"] = 313
     write(progress_path, progress)
     bad = run(root)
     assert bad.returncode != 0 and "progress_validation_total_match" in bad.stderr
