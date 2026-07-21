@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "security_public_safety_1",
   "research_date": "2026-07-21",
   "status": "EXTERNAL_OFFICIAL_RESEARCH_REFRESH_NOT_RUNNER_ACCEPTANCE",
@@ -8,18 +8,17 @@
   "measurement_level": "lsoa",
   "parcel_measurement": false,
   "official_observations": [
-    {"source":"data.police.uk crime last updated","observed_value":"2026-05-01","role":"monthly crime API freshness","scope_limit":"Freshness evidence only; not a parcel measurement"},
+    {"source":"data.police.uk crime last updated API","observed_value":"2026-05-01 confirmed by live official JSON on 2026-07-21","role":"monthly crime API freshness","scope_limit":"Police API candidate parity remains May 2026; freshness evidence only; not a parcel measurement"},
     {"source":"data.police.uk street crime method","observed_value":"One-mile point requests; returned locations are approximate and anonymised","role":"candidate API semantics and accuracy ceiling","scope_limit":"Supporting area evidence only; not exact incident or parcel location"},
     {"source":"data.police.uk archive","observed_value":"May 2026 archive; contains June 2023 to May 2026 data; MD5 verification available","role":"bulk snapshot and integrity context","scope_limit":"Archive availability does not prove individual candidate parity"},
     {"source":"data.police.uk changelog","observed_value":"May 2026 crime data not provided for British Transport Police, Gloucestershire, Greater Manchester and Lincolnshire","role":"known force-level data gap control","scope_limit":"Missing values are not inferred; Metropolitan candidate endpoints still require live parity"},
-    {"source":"data.police.uk changelog","observed_value":"Metropolitan Police Service stop and search refresh for April 2026","role":"separate dataset freshness context","scope_limit":"Stop and search refresh is not substituted for crime counts"},
     {"source":"Office for National Statistics Police Force Area tables","observed_value":"Released 23 April 2026; next release 23 July 2026; year ending December 2025 edition","role":"official force and CSP contextual cross-check","scope_limit":"Force/CSP context; not LSOA or parcel measurement"},
     {"source":"Metropolitan Police knife-enabled crime tables","observed_value":"May 2026 monthly detailed tables available","role":"official London serious-violence context","scope_limit":"Force/month context only; not substituted for LSOA candidate values"},
-    {"source":"Metropolitan Police stats and data catalogue","observed_value":"Full datasets are distributed through London Datastore","role":"official catalogue provenance","scope_limit":"Catalogue context only; live candidate parity remains mandatory"},
-    {"source":"London Datastore MPS Recorded Crime Geographic Breakdown","observed_value":"Current LSOA file covers July 2024 to June 2026 and reports monthly crime by type at borough, ward and LSOA levels","role":"direct official LSOA source quality gate","scope_limit":"Sexual offences are not supplied at LSOA; data after February 2024 is sourced from CONNECT and may not be fully comparable with legacy data; not a parcel measurement"}
+    {"source":"London Datastore MPS Recorded Crime Geographic Breakdown","observed_value":"Official page refreshed in July 2026; current LSOA file covers July 2024 to June 2026 and reports monthly crime by type","role":"direct official LSOA source quality gate","scope_limit":"Sexual offences are not supplied at LSOA; post-February 2024 CONNECT data may not be fully comparable with legacy data; not a parcel measurement"},
+    {"source":"London Datastore MPS publisher catalogue","observed_value":"Recorded Crime Geographic Breakdown shown as recently updated and distributed as CSV at borough, ward and LSOA geography","role":"publisher-level freshness cross-check","scope_limit":"Catalogue freshness does not replace candidate HTTP/count/SHA parity"}
   ],
-  "candidate_display_target": 70,
-  "candidate_live_unique_endpoints_required": 10,
+  "candidate_display_target": 80,
+  "candidate_live_unique_endpoints_required": 13,
   "live_runner_checks_required": true,
   "deterministic_preflight_required": true,
   "http_hash_dom_console_browser_acceptance": false,
