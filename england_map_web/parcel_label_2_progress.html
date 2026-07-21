@@ -30,6 +30,8 @@
   </table>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').toLocaleLowerCase('en-GB').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const uniqueCount=values=>new Set(values).size;
 const dataRoot='data/distance_property_types/';
 const fetchJson=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()});
 fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
@@ -48,6 +50,11 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
    const average=count?Math.round(weighted/count*100)/100:0;
    const batchCount=new Set(candidates.map(c=>Number(c.research_batch)).filter(Number.isFinite)).size;
+   const candidateIds=candidates.map(c=>String(c.parcel_id||''));
+   const normalizedRefs=candidates.map(c=>norm(c.parcel_ref));
+   const sourceUrls=candidates.map(c=>String(c.source_url||''));
+   const sequences=activities.map(a=>Number(a.sequence));
+   const expectedSequences=Array.from({length:Number(manifest.expected_activity_rows)},(_,i)=>Number(manifest.expected_activity_sequence_start)+i);
    const candidateFileMatch=candidateFiles.length===Number(manifest.expected_candidate_files);
    const activityFileMatch=activityFiles.length===Number(manifest.expected_activity_files);
    const candidateMatch=count===Number(manifest.expected_candidate_rows);
@@ -56,10 +63,15 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const allHttpsSources=candidates.every(c=>String(c.source_url||'').startsWith('https://'));
    const allHighAccuracy=candidates.every(c=>Number(c.accuracy_percent)>=97);
    const allSourcePlaceholders=candidates.every(c=>String(c.parcel_id||'').startsWith('SOURCE_'));
-   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders;
+   const uniqueIds=uniqueCount(candidateIds)===Number(manifest.expected_unique_candidate_ids);
+   const uniqueRefs=uniqueCount(normalizedRefs)===Number(manifest.expected_unique_normalized_candidate_refs);
+   const uniqueUrls=uniqueCount(sourceUrls)===Number(manifest.expected_unique_source_urls);
+   const uniqueSequences=uniqueCount(sequences)===sequences.length;
+   const contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
+   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
    document.getElementById('integrity').textContent=integrityOk
-     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} aday ve ${activities.length} işlem satırı.`
-     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}.`;
+     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} benzersiz aday ve ${activities.length} sıralı işlem satırı.`
+     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, ID ${uniqueCount(candidateIds)}/${manifest.expected_unique_candidate_ids}, yer ${uniqueCount(normalizedRefs)}/${manifest.expected_unique_normalized_candidate_refs}, URL ${uniqueCount(sourceUrls)}/${manifest.expected_unique_source_urls}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
    const cards=[
     ['Görünür aday',count],
     ['Araştırma batch',batchCount],
@@ -67,6 +79,10 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
     ['Sınıflandırma doğruluğu','%'+average],
     ['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],
     ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
+    ['Benzersiz ID',uniqueCount(candidateIds)],
+    ['Benzersiz yer',uniqueCount(normalizedRefs)],
+    ['Benzersiz kaynak',uniqueCount(sourceUrls)],
+    ['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],
     ['Canonical slot satırı',manifest.canonical_verified_slot_rows],
     ['Exact geometri',manifest.exact_geometry_rows],
     ['Canonical blob','bb48164…'],
