@@ -31,7 +31,7 @@ def main() -> int:
     check("product_fields_null",lambda: (_ for _ in ()).throw(AssertionError()) if any(c.get("canonical_row_no") is not None or c.get("canonical_parcel_id") is not None or c.get("future_growth_score") is not None or c.get("future_growth_confidence") not in (0,None) for c in candidates) else None)
     flagged=mod.validate(payload)
     check("guard_flags_three",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_count"]!=3 else None)
-    check("guard_exact_ids",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_candidates"]! =["FG2-W18-004","FG2-W18-005","FG2-W18-006"] else None)
+    check("guard_exact_ids",lambda: (_ for _ in ()).throw(AssertionError(flagged)) if flagged["flagged_candidates"]!=["FG2-W18-004","FG2-W18-005","FG2-W18-006"] else None)
     base=deepcopy(candidates[3])
     def run(c): return mod.validate({"slot_id":"future_growth_2","candidates":[c]})
     c=deepcopy(base); c["eligibility"]="eligible_bad"; check("eligible_conflict_rejected",lambda:run(c),"must be held or excluded")
