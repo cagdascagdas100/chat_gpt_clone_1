@@ -14,22 +14,40 @@ SLOT_ROOT = REPO / "docs" / "chatgpt_status" / "parcel_label" / "slots" / SLOT_I
 OUT_ROOT = SLOT_ROOT / "runner_outputs"
 WEB_OUTPUT = DATA_ROOT / "distance_property_types" / "parcel_label_2_canonical_sample_latest.json"
 CANDIDATE_PATH = DATA_ROOT / "distance_property_types" / "parcel_label_2_candidates.json"
+PRIORITY_CARRIERS = [
+    DATA_ROOT / "security.geojson",
+    DATA_ROOT / "parcel_security_scores_rechecked_0_120m_spatial.geojson",
+]
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def locate_targets() -> tuple[Path | None, dict[str, dict]]:
-    found: dict[str, dict] = {}
-    candidates = sorted(
-        [p for p in DATA_ROOT.rglob("*") if p.is_file() and p.suffix.lower() in {".json", ".geojson"}],
-        key=lambda p: p.stat().st_size,
+def candidate_carrier_paths() -> list[Path]:
+    priority = [path for path in PRIORITY_CARRIERS if path.is_file()]
+    priority_set = set(priority)
+    excluded = {WEB_OUTPUT, CANDIDATE_PATH}
+    fallback = sorted(
+        [
+            path
+            for path in DATA_ROOT.rglob("*")
+            if path.is_file()
+            and path.suffix.lower() in {".json", ".geojson"}
+            and path not in excluded
+            and path not in priority_set
+        ],
+        key=lambda path: path.stat().st_size,
         reverse=True,
     )
-    for path in candidates:
-        if path in {WEB_OUTPUT, CANDIDATE_PATH}:
-            continue
+    return priority + fallback
+
+
+def locate_targets() -> tuple[Path | None, dict[str, dict], int]:
+    found: dict[str, dict] = {}
+    scanned_files = 0
+    for path in candidate_carrier_paths():
+        scanned_files += 1
         try:
             with path.open("r", encoding="utf-8-sig") as handle:
                 payload = json.load(handle)
@@ -38,14 +56,17 @@ def locate_targets() -> tuple[Path | None, dict[str, dict]]:
         features = payload.get("features") if isinstance(payload, dict) else None
         if not isinstance(features, list):
             continue
+        local_found: dict[str, dict] = {}
         for feature in features:
             props = feature.get("properties") or {}
             parcel_id = props.get("parcel_id") or props.get("security_parcel_id")
             if parcel_id in TARGET_IDS:
-                found[parcel_id] = feature
-        if len(found) == len(TARGET_IDS):
-            return path, found
-    return None, found
+                local_found[parcel_id] = feature
+        if local_found:
+            found.update(local_found)
+            if len(found) == len(TARGET_IDS):
+                return path, found, scanned_files
+    return None, found, scanned_files
 
 
 def compact_properties(props: dict) -> dict:
@@ -53,6 +74,7 @@ def compact_properties(props: dict) -> dict:
         "row_no",
         "matrix_record",
         "parcel_id",
+        "security_parcel_id",
         "hmlr_row_id",
         "hmlr_inspire_id",
         "hmlr_area_m2",
@@ -70,7 +92,7 @@ def compact_properties(props: dict) -> dict:
 def main() -> int:
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     WEB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    source_path, features = locate_targets()
+    source_path, features, scanned_files = locate_targets()
     rows = []
     polygon_rows = 0
     carrier_rows = 0
@@ -114,11 +136,13 @@ def main() -> int:
         )
 
     output = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "generated_at": utc_now(),
         "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
         "target_ids": TARGET_IDS,
+        "priority_carriers": [str(path) for path in PRIORITY_CARRIERS],
+        "scanned_file_count": scanned_files,
         "source_file": str(source_path) if source_path else None,
         "source_file_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest() if source_path else None,
         "canonical_carrier_rows_found": carrier_rows,
@@ -138,6 +162,7 @@ def main() -> int:
     result_path.write_text(text, encoding="utf-8")
     WEB_OUTPUT.write_text(text, encoding="utf-8")
     print(f"SLOT_ID={SLOT_ID}")
+    print(f"SCANNED_FILE_COUNT={scanned_files}")
     print(f"SOURCE_FILE={source_path}")
     print(f"CANONICAL_CARRIER_ROWS_FOUND={carrier_rows}")
     print(f"POLYGON_ROWS_FOUND={polygon_rows}")
