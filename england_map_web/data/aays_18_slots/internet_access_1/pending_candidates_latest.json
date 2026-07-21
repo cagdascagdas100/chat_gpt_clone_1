@@ -1,8 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_1",
-  "generated_at": "2026-07-21T06:42:51+03:00",
-  "display_state": "PENDING_EXACT_CANONICAL_POSTCODE_AND_VALUE_EXTRACTION",
+  "generated_at": "2026-07-21T07:24:00+03:00",
+  "display_state": "PENDING_EXACT_CANONICAL_POSTCODE_AFTER_NEIGHBOURHOOD_AMBIGUITY_AUDIT",
+  "visible_user_message_tr": "parcel_89 çevresinde 160 metre içinde 9 aktif postcode merkezi bulundu. En yakın üç aday yalnız 12,4 metre aralıkta olduğu için postcode seçilmedi; tüm broadband alanları null kaldı.",
   "candidates": [
     {
       "row_no": 89,
@@ -18,9 +19,21 @@
       "ultrafast_or_100mbps_available_pct": null,
       "superfast_30mbps_available_pct": null,
       "unable_30mbps_pct": null,
-      "source_level": "NO_DATA_PENDING_EXACT_EXTRACTION",
+      "source_level": "NO_DATA_PENDING_EXACT_CANONICAL_JOIN",
       "internet_accuracy": "0/4",
-      "reason": "Canonical blob record was only partially readable in this runtime; missing fields were not inferred.",
+      "postcode_neighbourhood_audit": {
+        "candidate_postcodes": 9,
+        "candidates_within_100m": 5,
+        "candidates_within_160m": 9,
+        "nearest_candidate": "RM10 9XJ",
+        "nearest_distance_m": 58.3,
+        "nearest_second_gap_m": 6.8,
+        "top_three_distance_span_m": 12.4,
+        "promotion_allowed": false,
+        "decision": "AMBIGUOUS_NEAREST_CENTROID_NOT_CANONICAL"
+      },
+      "reason": "Several active postcode centroids are similarly close. Proximity cannot replace an exact canonical parcel-to-postcode join; missing fields were not inferred.",
+      "audit_output": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/parcel_89_postcode_ambiguity_audit_20260721.json",
       "fake_data": false
     }
   ],
