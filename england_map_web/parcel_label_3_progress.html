@@ -31,7 +31,7 @@
 <script>
 const base='data/distance_property_types/';
 const files=[
- ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json'],['B7','parcel_label_3_candidates_batch_7.json'],['B8','parcel_label_3_candidates_batch_8.json'],['B9','parcel_label_3_candidates_batch_9.json']
+ ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json'],['B7','parcel_label_3_candidates_batch_7.json'],['B8','parcel_label_3_candidates_batch_8.json'],['B9','parcel_label_3_candidates_batch_9.json'],['B10','parcel_label_3_candidates_batch_10.json']
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function load(path){const r=await fetch(base+path,{cache:'no-store'});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()}
@@ -42,6 +42,7 @@ Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_op
    const probeRows=(g.canonical_points||[]);
    const historical=g.historical_audit||{};
    const runner=g.runner_observation||{};
+   const direct=g.direct_blob_observation||{};
    document.getElementById('summary').innerHTML=[
     ['Genel ilerleme','%'+Number(p.workflow_percent).toFixed(2)],['Yüzde artışı','+'+Number(p.workflow_percent_delta).toFixed(2)],['İşlemler',p.completed_operations+' / '+p.total_operations],
     ['Görünür aday',rows.length],['Yükseltilen kaynak',p.promoted_sources],['≥97 doğruluk',p.source_authority_accuracy_ge_97_count],['Ortalama doğruluk','%'+Number(p.classification_accuracy_average_percent).toFixed(2)],
@@ -49,7 +50,7 @@ Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_op
    ].map(x=>card(x[0],x[1])).join('');
    document.getElementById('blockers').innerHTML='<div class="blockers"><b>Aktif engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
    document.getElementById('probe-state').innerHTML='<div class="probe-state"><b>Probe durumu:</b> '+esc(g.state)+' · <b>198 satır tam audit:</b> '+esc(historical.full_parse_status??historical.full_parse_complete??'PENDING')+'</div>';
-   document.getElementById('runner-state').innerHTML='<div class="runner-state"><b>Shared runner kuyruğu:</b> '+esc(runner.queue_present??false)+' · <b>Beklenen çıktı:</b> '+esc(runner.expected_output_exists??false)+' · <b>Çalıştırma iddiası:</b> '+esc(runner.execution_claimed??false)+' · <b>Yeni runner:</b> '+esc(runner.new_runner_opened??false)+'</div>';
+   document.getElementById('runner-state').innerHTML='<div class="runner-state"><b>Shared runner kuyruğu:</b> '+esc(runner.queue_present??false)+' · <b>Beklenen çıktı:</b> '+esc(runner.expected_output_exists??false)+' · <b>Doğrudan blob okundu:</b> '+esc(direct.fetch_blob_succeeded??false)+' · <b>Hedef satırlar görünür:</b> '+esc(direct.target_ids_visible??false)+' · <b>Çalıştırma iddiası:</b> '+esc(runner.execution_claimed??false)+' · <b>Yeni runner:</b> '+esc(runner.new_runner_opened??false)+'</div>';
    document.getElementById('probe').innerHTML=probeRows.map((r,i)=>`<tr><td>${i+1}</td><td><code>${esc(r.parcel_id)}</code></td><td class="${r.point_valid?'ok':'warn'}">${esc(r.status??(r.point_valid?'EXTRACTED':'PENDING'))}</td><td>${esc(r.longitude)}</td><td>${esc(r.latitude)}</td><td>${esc(r.point_valid??false)}</td><td>${esc(r.property_type_bound??false)}</td></tr>`).join('')||'<tr><td colspan="7">Probe satırı yok</td></tr>';
    document.getElementById('operations').innerHTML=(o.rows||[]).map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.operation)}</td><td>${esc(r.scope)}</td><td class="${r.status==='COMPLETE'?'ok':r.status==='BLOCKED'?'bad':'warn'}">${esc(r.status)}</td><td>${esc(r.result)}</td></tr>`).join('');
    document.getElementById('rows').innerHTML=rows.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.batch_label)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td><td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener">resmî kaynak</a></td><td>${esc(c.fresh_evidence)}</td><td>${esc(c.official_scope)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
