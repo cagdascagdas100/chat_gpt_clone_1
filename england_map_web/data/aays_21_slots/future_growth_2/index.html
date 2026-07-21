@@ -6,7 +6,7 @@
 <h1>future_growth_2</h1><p class="muted">Parsel satırları 30.762–61.522 · Kesin fiyat tahmini değildir.</p>
 <div id="cards" class="cards"></div>
 <section><h2>Satır satır işlem görünümü</h2><div class="scroll"><table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th></tr></thead><tbody id="operations"></tbody></table></div></section>
-<section><h2>Kaynak sözleşmeleri</h2><p class="warning">Tanısal kaynaklar parsel eşleşmesine veya skora yükseltilmez. Çelişen resmî readback kayıtları fail-closed bekletilir.</p><div class="scroll"><table><thead><tr><th>Kaynak</th><th>Yayıncı</th><th>Durum</th><th>Format/CRS</th><th>Doğruluk rolü</th><th>Uyarı</th><th>Kaynak</th></tr></thead><tbody id="sources"></tbody></table></div></section>
+<section><h2>Kaynak sözleşmeleri</h2><p class="warning">Tanısal ve filtresiz API kanıtları doğrudan period=current yerine geçmez; parsel eşleşmesine veya skora yükseltilmez.</p><div class="scroll"><table><thead><tr><th>Kaynak</th><th>Yayıncı</th><th>Durum</th><th>Format/CRS</th><th>Doğruluk rolü</th><th>Uyarı</th><th>Kaynak</th></tr></thead><tbody id="sources"></tbody></table></div></section>
 <section><h2>Resmî kaynak adayları</h2><p class="warning">Kaynak güveni parsel eşleşme doğruluğu değildir. Doğrudan period=current API cevabı, HMLR kesişimi ve açık INSPIRE-ID shard eşleşmesi olmadan ürün skoru null kalır.</p>
 <div class="scroll"><table><thead><tr><th>Aday</th><th>Referans</th><th>Saha</th><th>Yerel idare</th><th>Ha</th><th>Konut</th><th>Planlama</th><th>Kaynak doğruluğu</th><th>Durum</th><th>Kaynak</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
 <section><h2>Gerçek blocker</h2><ul id="blockers"></ul></section>
@@ -19,9 +19,10 @@ Promise.all([
  fetch('candidates_wave_6_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_7_20260721.json').then(r=>r.json()),
  fetch('candidates_wave_8_20260721.json').then(r=>r.json()),
+ fetch('candidates_wave_9_20260721.json').then(r=>r.json()),
  fetch('source_contracts_latest.json').then(r=>r.json())
-]).then(([p,base,w5,w6,w7,w8,s])=>{
- const allCandidates=[...(base.candidates||[]),...(w5.candidates||[]),...(w6.candidates||[]),...(w7.candidates||[]),...(w8.candidates||[])];
+]).then(([p,base,w5,w6,w7,w8,w9,s])=>{
+ const allCandidates=[...(base.candidates||[]),...(w5.candidates||[]),...(w6.candidates||[]),...(w7.candidates||[]),...(w8.candidates||[]),...(w9.candidates||[])];
  const cards=[
  ['Operasyon',`${p.operational_progress.completed_operations}/${p.operational_progress.total_operations}`],
  ['Operasyon %',`${p.operational_progress.percent.toFixed(2)} (+${p.operational_progress.percent_increase.toFixed(2)})`],
@@ -35,10 +36,9 @@ Promise.all([
  ['Kaynak sözleşmesi',p.source_summary.source_contracts_upgraded],
  ['Yazılım testi',`${p.source_summary.executed_tests_passed}/${p.source_summary.executed_tests_total}`],
  ['Remote kanıt',`${p.source_summary.manual_remote_evidence_checks_passed}/${p.source_summary.manual_remote_evidence_checks_total}`],
- ['Canlı current-page',`${p.source_summary.live_current_page_records_passed}/${p.source_summary.live_current_page_records_total}`],
+ ['Filtresiz resmî API',p.source_summary.direct_unfiltered_api_responses],
  ['period=current API',p.source_summary.period_current_api_responses],
- ['Resmî readback çelişkisi',p.source_summary.official_readback_conflicts_held],
- ['Tazelik düzeltmesi',p.source_summary.freshness_corrections]
+ ['Canonical blob probe',p.source_summary.canonical_blob_access_probes]
  ];
  document.querySelector('#cards').innerHTML=cards.map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
  document.querySelector('#operations').innerHTML=p.line_progress.map(x=>`<tr><td>${x.line}</td><td>${x.operation}</td><td class="${cls(x.state)}">${x.state}</td></tr>`).join('');
