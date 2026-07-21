@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "generated_at": "2026-07-21T01:36:00Z",
+  "purpose": "Official legal, occupancy and commercial-property due-diligence sources. No candidate-specific result is asserted until an address, title number or exact geometry query is executed.",
+  "sources": [
+    {
+      "source_id": "HMLR_LOCAL_LAND_CHARGES_SEARCH",
+      "publisher": "HM Land Registry",
+      "url": "https://search-local-land-charges.service.gov.uk/terms-and-conditions",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "live_register_service",
+      "coverage": "registered local land charges and restrictions affecting land or property in migrated authority areas",
+      "primary_join_keys": ["postcode", "address", "title number", "coordinates", "INSPIRE ID", "drawn map geometry"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 95,
+      "binding_limit": "The service can bind by title, INSPIRE ID, coordinates or map geometry, but it does not include planning applications, building control or nearby road schemes. CON29 remains a separate local-authority enquiry.",
+      "status": "VERIFIED_OFFICIAL_LIVE_SERVICE_REQUIRES_CANDIDATE_QUERY"
+    },
+    {
+      "source_id": "RUGBY_CON29_AND_LOCAL_LAND_CHARGES_GUIDANCE",
+      "publisher": "Rugby Borough Council",
+      "url": "https://www.rugby.gov.uk/pl/w/local-land-charges",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "service_and_fee_updates",
+      "coverage": "Rugby CON29 enquiries, planning and road-related property information, common-land search routes and local search fees",
+      "primary_join_keys": ["property address", "site location plan", "exact parcel boundary"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 90,
+      "binding_limit": "Rugby states that ownership is not held in the Local Land Charges Register. A site location plan is required for candidate-specific CON29 or EIR information, and questions 4 and 16 have separate limitations.",
+      "status": "VERIFIED_OFFICIAL_CONVEYANCING_SOURCE_REQUIRES_SITE_PLAN"
+    },
+    {
+      "source_id": "VOA_FIND_BUSINESS_RATES_VALUATION",
+      "publisher": "Valuation Office Agency via GOV.UK",
+      "url": "https://www.gov.uk/find-business-rates",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "live_valuation_service",
+      "coverage": "rateable values and valuation summaries for non-domestic property in England and Wales",
+      "primary_join_keys": ["commercial property address", "valuation reference", "postcode"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 80,
+      "binding_limit": "A rateable-value record supports commercial occupation and assessment context but does not establish ownership, vacant possession, sale authority, planning permission or cadastral extent.",
+      "status": "VERIFIED_OFFICIAL_COMMERCIAL_VALUATION_SOURCE_REQUIRES_ADDRESS_QUERY"
+    },
+    {
+      "source_id": "CHARITY_COMMISSION_REGISTER",
+      "publisher": "Charity Commission for England and Wales",
+      "url": "https://register-of-charities.charitycommission.gov.uk/en/charity-search/-/charity-details/4035326/contact-information",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "regulatory_filing_updates",
+      "coverage": "registered charity identity, reporting status and contact address; used here to corroborate the 4-6 Kimberley Road organisation-address relationship",
+      "primary_join_keys": ["charity number", "registered name", "contact address"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 55,
+      "binding_limit": "A charity contact address corroborates identity and occupation/contact context only. It does not verify ownership, title extent, authority to sell, planning use or vacant possession.",
+      "status": "VERIFIED_OFFICIAL_IDENTITY_AND_ADDRESS_CORROBORATION_ONLY"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
