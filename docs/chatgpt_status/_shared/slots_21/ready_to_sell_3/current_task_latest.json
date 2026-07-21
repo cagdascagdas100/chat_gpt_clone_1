@@ -1,24 +1,100 @@
 {
-  "schema_version": 3,
+  "state": "PUBLISH_PENDING",
+  "task_id": "aays1-ready-to-sell-3-automation-167-dom-proof-20260720",
+  "schema_version": 2,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "ready_to_sell_3",
   "base_slot_id": "ready_to_sell",
   "shard_index": 3,
+  "attempt_id": "ready-to-sell-3-20260720-003",
+  "idempotency_key": "ready-to-sell-3-automation-167-dom-and-live-candidates-v2",
+  "status": "pending",
+  "script_path": "docs/chatgpt_status/aays1/automation/ready_to_sell_3_multi_work_entry.py",
+  "read_paths": [
+    "docs/chatgpt_status/aays1/automation/ready_to_sell_3_multi_work_worker.py",
+    "docs/chatgpt_status/aays1/automation/167_aays1_ready_to_sell_site_visibility_dom_resume_20260715.ps1",
+    "docs/chatgpt_status/aays1/status/155_aays1_ready_to_sell_second_wave_dispatch_latest.json",
+    "docs/chatgpt_status/aays1/status",
+    "docs/chatgpt_status/_shared/slots_21/ready_to_sell_3",
+    "england_map_web/geometry_review_3of4_columns_1264.html"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/ready_to_sell_3",
+    "england_map_web/data/aays_21_slots/ready_to_sell_3"
+  ],
+  "resource_class": [
+    "light_read",
+    "network_fetch",
+    "browser_research"
+  ],
+  "requires_browser_acceptance_gate": true,
+  "requires_runtime_sync_gate": true,
+  "requires_git_publish_gate": true,
   "parcel_partition": {
     "start": 61523,
     "end": 92283,
-    "count": 30761,
-    "canonical_count": 92283
+    "count": 30761
   },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.rightmove.co.uk/properties/762013672911873",
+      "https://www.rightmove.co.uk/commercial-property-for-sale/W5.html",
+      "https://search.savills.com/property-detail/b5599839-9b12-43a3-8daf-b6f1aa6da90e",
+      "https://www.rightmove.co.uk/properties/166553672",
+      "https://planning.wandsworth.gov.uk/Northgate/PlanningExplorer/Generic/StdDetails.aspx?DAURI=PLANNING&FT=Planning+Application+Details&PARAM0=518807&PT=Planning+Applications+On-Line&PUBLIC=N&TYPE=PL%2FPlanningPK.xml&XMLSIDE=&XSLT=%2FNorthgate%2FPlanningExplorer%2FSiteFiles%2FSkins%2FWandsworth%2Fxslt%2FPL%2FPLDetailsSiteHistory.xslt"
+    ],
+    "source_snapshot_date": "2026-07-20",
+    "source_discovery_required": false,
+    "measurement_level": "document",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "NOT_RUN_RESEARCH_CANDIDATES_ONLY",
+    "confidence_method": "HTTP_STATUS_PLUS_RESPONSE_SHA256_PLUS_EXPECTED_MARKER_MATCHING",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "source_http_or_marker_failure",
+      "marketing_status_under_offer",
+      "planning_source_conflict",
+      "canonical_parcel_match_missing",
+      "geometry_proof_missing"
+    ]
+  },
+  "acceptance_contract": {
+    "terminal_task_reexecution_forbidden": true,
+    "terminal_155_status_required": "SECOND_WAVE_SITE_VISIBILITY_VERIFIED",
+    "concurrent_source_request_limit": 3,
+    "candidate_sources_expected": 5,
+    "source_sha256_required_per_successful_fetch": true,
+    "source_confidence_threshold": 90,
+    "parcel_promotion_without_geometry_forbidden": true,
+    "slot_web_view_required": "england_map_web/data/aays_21_slots/ready_to_sell_3/index.html",
+    "actual_headless_browser_required": true,
+    "health_http_status_required": 200,
+    "page_http_status_required": 200,
+    "dom_load_state_required": "ready",
+    "dom_visible_row_count_minimum": 655,
+    "dom_live_source_count_required": 655,
+    "remote_commit_push_readback_required": true
+  },
+  "timeout_seconds": 2400,
+  "single_runner_only": true,
+  "child_direct_push_forbidden": true,
+  "new_runner": false,
+  "parallel_runner": false,
   "final_ready": false,
-  "state": "idle",
-  "task_id": null,
-  "owner_page_session_id": null,
-  "allowed_paths": [
-    "docs/chatgpt_status/aays1/shards/ready_to_sell_3",
-    "docs/chatgpt_status/_shared/slots_21/ready_to_sell_3",
-    "england_map_web/data/aays_21_slots/ready_to_sell_3"
-  ],
-  "direct_push_forbidden": true
+  "updated_at": "2026-07-21T01:54:21.764542Z",
+  "blocker": null,
+  "result": {
+    "state": "PUBLISH_PENDING",
+    "exit_code": 0,
+    "log": "logs\\adaptive_v2\\slots\\ready_to_sell_3\\aays1-ready-to-sell-3-automation-167-dom-proof-20260720.ready-to-sell-3-20260720-003.log",
+    "error": "PUBLISHER_PUSH_FAILED: fatal: Cannot prompt because user interactivity has been disabled.\nfatal: could not read Username for 'https://github.com': terminal prompts disabled"
+  }
 }
