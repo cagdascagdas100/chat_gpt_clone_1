@@ -1,0 +1,51 @@
+{
+  "schema_version": 5,
+  "slot_id": "internet_access_1",
+  "parcel_partition": {"start":1,"end":30761,"count":30761,"canonical_count":92283},
+  "generated_at": "2026-07-21T06:28:00+03:00",
+  "status": "SOURCE_DISCOVERY_R2_ONS_LIVE_ONSPD_AND_NHS_FALLBACKS_VALIDATED",
+  "measurement_level": "postcode",
+  "output_semantics": "AREA_LEVEL_PROXY_OR_NO_DATA",
+  "official_source_candidates": 10,
+  "promoted_sources": 7,
+  "source_confidence_ge_90_count": 8,
+  "promoted_confidence_ge_90_count": 6,
+  "promoted_confidence_ge_85_count": 7,
+  "sources": [
+    {"name":"Ofcom Spring 2026 postcode coverage package","role":"PRIMARY_BULK_POSTCODE_COVERAGE","snapshot_date":"2026-01","confidence_percent":98,"promoted":true,"state":"official_package_verified_runtime_download_blocked"},
+    {"name":"Ofcom Spring 2026 fixed coverage methodology v2","role":"PRIMARY_DATA_CONTRACT","revision_date":"2026-07-07","confidence_percent":99,"promoted":true,"state":"121_r2_postcode_files_and_corrections_verified"},
+    {"name":"Ofcom broadband coverage checker","role":"POSTCODE_SPOT_VALIDATION","confidence_percent":93,"promoted":true,"state":"area_prediction_only"},
+    {"name":"ONS Explore Local Statistics gigabit-capable broadband","role":"LOCAL_AUTHORITY_AGGREGATE_CROSSCHECK","snapshot_date":"2026-01","confidence_percent":88,"promoted":true,"state":"aggregate_only"},
+    {"name":"Online ONS Postcode Directory Live","role":"OFFICIAL_POSTCODE_CENTROID_AND_LAD_JOIN_VALIDATION","dataset_period":"2026-05","catalog_last_updated":"2026-06-17","required_fields":["PCDS","LAT","LONG","LAD25CD"],"confidence_percent":99,"promoted":true,"state":"catalog_and_schema_verified_live_row_query_runtime_blocked"},
+    {"name":"ONS Postcode Directory May 2026","role":"OFFICIAL_QUARTERLY_POSTCODE_DIRECTORY_BULK_FALLBACK","dataset_period":"2026-05","correction_date":"2026-06-04","catalog_last_updated":"2026-07-16","confidence_percent":99,"promoted":true,"state":"bulk_product_and_ssr95cd_correction_verified"},
+    {"name":"NHS England ODS London postcode file pcodey56","role":"OFFICIAL_DERIVATIVE_POSTCODE_EXISTENCE_AND_REGION_FALLBACK","upstream_supplier":"Office for National Statistics","uploaded_date":"2026-05-27","confidence_percent":91,"promoted":true,"state":"postcode_existence_only_no_broadband_upgrade"},
+    {"name":"Ofcom developer interface","role":"LOGIN_REQUIRED_ALTERNATIVE_REJECTED","confidence_percent":98,"promoted":false,"state":"excluded_by_source_guardrail"},
+    {"name":"BDUK Project Gigabit address checker","role":"ADDRESS_PLAN_CONTEXT_ONLY","confidence_percent":82,"promoted":false,"state":"not_open_bulk_parcel_values"},
+    {"name":"Ordnance Survey AddressBase Premium","role":"RESTRICTED_CANONICAL_PREMISE_BASE","confidence_percent":99,"promoted":false,"state":"excluded_not_open_free"}
+  ],
+  "secondary_join_sources": {"role":"SUPPORTING_CENTROID_CROSSCHECK_ONLY","rows_with_centroid":15,"conflicting_rows":1,"internet_accuracy_upgrade_allowed":false},
+  "retrieval_attempts": [
+    {"method":"ofcom_source_and_methodology","result":"PASS"},
+    {"method":"ofcom_bulk_download","result":"BLOCKED_RUNTIME_NETWORK"},
+    {"method":"ons_live_catalog_and_csv_schema","result":"PASS","dataset_period":"2026-05","catalog_last_updated":"2026-06-17"},
+    {"method":"ons_live_row_query","result":"BLOCKED_RUNTIME_NETWORK"},
+    {"method":"onspd_may_2026_product_and_correction","result":"PASS","correction_date":"2026-06-04"},
+    {"method":"nhs_ods_london_postcode_fallback","result":"PASS","uploaded_date":"2026-05-27"}
+  ],
+  "automation_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/001_refresh_ofcom_r2_postcode.py",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/002_verify_ons_postcode_centroids.py"
+  ],
+  "reports": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/postcode_centroid_join_audit_20260721.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/ons_live_catalog_freshness_20260721.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/ons_quarterly_correction_and_nhs_fallback_20260721.json"
+  ],
+  "verified_business_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "blockers": ["OFFICIAL_ONS_LIVE_QUERY_NOT_EXECUTED_IN_THIS_RUNTIME","OFCom_R2_BULK_ZIP_NOT_INGESTED_IN_THIS_RUNTIME","FULL_33785_ROW_R2_REFRESH_NOT_EXECUTED","NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED"]
+}
