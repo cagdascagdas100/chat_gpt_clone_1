@@ -1,8 +1,8 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "slot_id": "internet_access_2",
   "example_type": "OFFICIAL_SOURCE_SEMANTIC_EXAMPLES_NOT_PARCEL_ROWS",
-  "example_count": 11,
+  "example_count": 12,
   "examples": [
     {"id":1,"source":"Ofcom Connected Nations Spring 2026","published_date":"2026-05-13","snapshot":"2026-01","verified_fact":"UK residential gigabit-capable availability is 89% and full-fibre availability is 82%.","allowed_use":"National aggregate sanity check only","forbidden_use":"Do not assign these national percentages to a postcode or parcel."},
     {"id":2,"source":"ONS Postcode Directory May 2026 hosted table","last_updated":"2026-06-10","verified_fact":"Quarterly directory linking current and terminated UK postcodes to statutory and statistical geographies.","allowed_use":"Postcode normalization and geography crosswalk QA","forbidden_use":"No broadband coverage value substitution."},
@@ -14,10 +14,11 @@
     {"id":8,"source":"Ofcom Spring 2026 fixed coverage V2 schema","revision_date":"2026-07-07","verified_fact":"Ofcom corrected the CW file that duplicated CV and the MK file that duplicated ME, then renamed all 121 all-premises postcode files from r1 to r2.","allowed_use":"Require r2 names and verify CW!=CV and MK!=ME by SHA-256 before any join","forbidden_use":"Do not accept the superseded r1 postcode files or a package retaining either duplicate defect."},
     {"id":9,"source":"Ofcom Spring 2026 fixed coverage V2 schema","verified_fact":"The postcode field has spaces removed and postcode_space uses one space before the inward code.","allowed_use":"Require exact UK postcode syntax, exact one-space postcode_space formatting and matching normalized values","forbidden_use":"Do not silently accept malformed spacing or conflicting postcode identifiers."},
     {"id":10,"source":"Ofcom Spring 2026 fixed coverage V2 schema","verified_fact":"SFBB, UFBB and gigabit fields are availability percentages; the unable-to-receive-30 field is defined for matched premises, while unable-to-receive-decent fixed-or-FWA includes unmatched and zero-speed records.","allowed_use":"Preserve the documented denominator for each metric in validation/readback metadata","forbidden_use":"Do not treat unable-30 as the exact complement of SFBB or mix the two denominators."},
-    {"id":11,"source":"Ofcom Spring 2026 fixed coverage V2 schema","verified_fact":"Postcode and output-area files contain gigabit-capable coverage but not full-fibre coverage due to commercial confidentiality; coverage is fixed-line except fields explicitly referring to FWA.","allowed_use":"Reject unexpected postcode-level full-fibre columns and label explicit FWA fields separately","forbidden_use":"Do not infer postcode full-fibre availability or describe every field as fixed-plus-FWA coverage."}
+    {"id":11,"source":"Ofcom Spring 2026 fixed coverage V2 schema","verified_fact":"Postcode and output-area files contain gigabit-capable coverage but not full-fibre coverage due to commercial confidentiality; coverage is fixed-line except fields explicitly referring to FWA.","allowed_use":"Reject unexpected postcode-level full-fibre columns and label explicit FWA fields separately","forbidden_use":"Do not infer postcode full-fibre availability or describe every field as fixed-plus-FWA coverage."},
+    {"id":12,"source":"Ofcom fixed coverage threshold definitions","verified_fact":"SFBB is coverage at 30 Mbit/s or greater, UFBB fields are coverage at 100 and 300 Mbit/s or greater, and gigabit is gigabit-capable service.","allowed_use":"Validate each postcode row as SFBB30 >= UFBB100 >= UFBB300 >= Gigabit before joining","forbidden_use":"Do not accept a higher-speed coverage percentage exceeding its lower-speed parent threshold."}
   ],
   "parcel_examples": 0,
   "actual_business_data_rows_written": 0,
   "final_ready": false,
-  "updated_at": "2026-07-21T04:42:00Z"
+  "updated_at": "2026-07-21T05:22:00Z"
 }
