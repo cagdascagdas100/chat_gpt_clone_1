@@ -1,0 +1,175 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_3",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "audit_id": "internet_access_3_official_source_schema_audit_20260721_01",
+  "audit_time": "2026-07-21T04:42:23+03:00",
+  "status": "OFFICIAL_SOURCE_SCHEMA_VERIFIED_SLOT_EXTRACTION_PENDING",
+  "first_unverified_step_before": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+  "completed_substep": "VERIFY_LATEST_OFCOM_POSTCODE_SCHEMA_AND_CORRECTION_GATE",
+  "source_candidates": [
+    {
+      "source_id": "ofcom_connected_nations_spring_2026_fixed_coverage",
+      "publisher": "Ofcom",
+      "source_type": "official_regulator_coverage_snapshot",
+      "snapshot_date": "2026-01",
+      "published_date": "2026-05-13",
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "download_name": "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip",
+      "postcode_all_premises_rows": 1741096,
+      "postcode_file_count": 121,
+      "postcode_filename_contract": "202601_fixed_postcode_coverage_r2_XX.csv",
+      "promoted": true,
+      "source_confidence_score": 99,
+      "use": "current postcode coverage refresh"
+    },
+    {
+      "source_id": "ofcom_spring_2026_about_data_v2",
+      "publisher": "Ofcom",
+      "source_type": "official_schema_and_methodology",
+      "snapshot_date": "2026-01",
+      "revision_date": "2026-07-07",
+      "url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf",
+      "promoted": true,
+      "source_confidence_score": 99,
+      "use": "column contract and r2 correction gate"
+    },
+    {
+      "source_id": "onspd_may_2026_hosted_table",
+      "publisher": "Office for National Statistics",
+      "source_type": "official_postcode_directory",
+      "snapshot_date": "2026-05",
+      "published_or_updated_date": "2026-06-10",
+      "url": "https://www.data.gov.uk/dataset/65a2ee49-d331-41c9-b09f-c7defc68b965/ons-postcode-directory-may-2026-for-the-united-kingdom-hosted-table",
+      "promoted": true,
+      "source_confidence_score": 97,
+      "use": "postcode normalization, live/terminated status and geography join"
+    },
+    {
+      "source_id": "online_onspd_live_may_2026",
+      "publisher": "Office for National Statistics",
+      "source_type": "official_live_postcode_centroids",
+      "snapshot_date": "2026-05",
+      "published_or_updated_date": "2026-06-17",
+      "url": "https://www.data.gov.uk/dataset/b1c6d498-278a-4b0b-b53c-4d58d0d0646e/online-ons-postcode-directory-live2",
+      "promoted": true,
+      "source_confidence_score": 97,
+      "use": "live postcode centroid fallback for spatial matching"
+    },
+    {
+      "source_id": "os_code_point_open",
+      "publisher": "Ordnance Survey",
+      "source_type": "official_open_postcode_centroids",
+      "update_frequency": "quarterly",
+      "url": "https://www.ordnancesurvey.co.uk/products/code-point-open",
+      "promoted": true,
+      "source_confidence_score": 95,
+      "use": "secondary official postcode centroid cross-check"
+    },
+    {
+      "source_id": "ofcom_connected_nations_2025_fixed_coverage",
+      "publisher": "Ofcom",
+      "source_type": "official_prior_snapshot",
+      "snapshot_date": "2025-07",
+      "published_date": "2025-11-19",
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-20252/data-downloads-2025",
+      "promoted": false,
+      "source_confidence_score": 94,
+      "use": "regression and change-detection baseline only"
+    }
+  ],
+  "verified_2026_postcode_fields": [
+    "postcode",
+    "postcode_space",
+    "postcode area",
+    "SFBB availability (% premises)",
+    "UFBB (100Mbit/s) availability (% premises)",
+    "UFBB availability (% premises)",
+    "Gigabit availability (% premises)",
+    "% of premises unable to receive [X]Mbit/s",
+    "% of premises unable to receive decent broadband from fixed or FWA",
+    "% of premises with [X]<[Y]Mbit/s download speed",
+    "% of premises with >=300Mbit/s download speed"
+  ],
+  "postcode_level_unavailable_fields": [
+    "Full Fibre availability (% premises)",
+    "provider_count",
+    "measured_latency",
+    "measured_usage_speed",
+    "outage_rate",
+    "indoor_wifi_quality"
+  ],
+  "critical_source_gate": {
+    "reject_all_premises_r1_postcode_files": true,
+    "required_filename_pattern": "202601_fixed_postcode_coverage_r2_*.csv",
+    "reason": "Ofcom v2 documentation records corrected CW and MK files and renames all all-premises postcode files to r2"
+  },
+  "scoring_decision": {
+    "state": "BLOCKED_UNTIL_COLUMN_AWARE_CALCULATION_VERSION_IS_APPROVED",
+    "full_fibre_weight_for_postcode_rows": "FORBIDDEN_FIELD_NOT_PUBLISHED_AT_POSTCODE_LEVEL",
+    "provider_count_weight": "FORBIDDEN_FIELD_NOT_VERIFIED",
+    "output_score_written": false
+  },
+  "current_matrix_evidence": {
+    "verified_proxy_features_total": 33785,
+    "pending_or_no_data_total": 58498,
+    "existing_source_level": "POSTCODE_PROXY",
+    "existing_accuracy_label": "2/4",
+    "slot_3_verified_row_count": null,
+    "slot_3_pending_row_count": null,
+    "slot_3_count_reason": "canonical row-range extraction not yet executed"
+  },
+  "sample_slot_rows": [
+    {
+      "canonical_row_no": 61523,
+      "canonical_program_parcel_id": null,
+      "postcode": null,
+      "status": "PENDING_CANONICAL_LOOKUP",
+      "internet_availability_quality_percent": null
+    },
+    {
+      "canonical_row_no": 61524,
+      "canonical_program_parcel_id": null,
+      "postcode": null,
+      "status": "PENDING_CANONICAL_LOOKUP",
+      "internet_availability_quality_percent": null
+    },
+    {
+      "canonical_row_no": 61525,
+      "canonical_program_parcel_id": null,
+      "postcode": null,
+      "status": "PENDING_CANONICAL_LOOKUP",
+      "internet_availability_quality_percent": null
+    }
+  ],
+  "progress": {
+    "overall_progress_percent": 12,
+    "progress_delta_percent": 11,
+    "completed_operations": 6,
+    "total_operations": 12,
+    "official_source_candidates": 6,
+    "promoted_sources": 5,
+    "source_confidence_ge_95_count": 5,
+    "verified_slot_rows": 0,
+    "actual_business_data_rows_written": 0
+  },
+  "next_unverified_step": "EXTRACT_CANONICAL_ROWS_61523_92283_AND_COMPUTE_SLOT_POSTCODE_GAP_COUNTS",
+  "blockers": [
+    "OFCom official ZIP bytes could not be downloaded in this execution environment; schema and correction metadata were verified from the official page and PDF",
+    "slot-3 canonical row slice has not yet been extracted",
+    "NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "remote_publish": false,
+  "final_ready": false
+}
