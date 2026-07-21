@@ -37,7 +37,7 @@ function Watchers {
 function Runners {
   return @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'portable_queue_runner\.ps1' } | Select-Object ProcessId,Name,CommandLine)
 }
-function Emit([hashtable]$Payload) {
+function Emit([System.Collections.IDictionary]$Payload) {
   $Payload.output_path = $OutputPath
   $Payload.final_ready = $false
   $Payload.product_final_ready = $false
