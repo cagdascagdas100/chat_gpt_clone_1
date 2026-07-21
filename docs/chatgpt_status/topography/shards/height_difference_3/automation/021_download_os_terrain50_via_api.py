@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
 import sys
@@ -123,16 +124,19 @@ def safe_names(archive: zipfile.ZipFile) -> list[str]:
 
 def validate_ascii_header(archive: zipfile.ZipFile, name: str) -> dict[str, float]:
     with archive.open(name) as handle:
-        lines = [handle.readline().decode("ascii", errors="strict").strip() for _ in range(6)]
+        lines = [handle.readline().decode("ascii", errors="strict").strip() for _ in range(8)]
     header: dict[str, float] = {}
+    recognized = {"ncols", "nrows", "xllcorner", "xllcenter", "yllcorner", "yllcenter", "cellsize", "nodata_value"}
     for line in lines:
         parts = line.split()
-        if len(parts) != 2:
-            raise ValueError(f"invalid ASCII header in {name}: {line!r}")
+        if len(parts) < 2 or parts[0].lower() not in recognized:
+            break
         header[parts[0].lower()] = float(parts[1])
     required = {"ncols", "nrows", "cellsize"}
     if not required.issubset(header):
         raise ValueError(f"ASCII header missing {sorted(required - set(header))}: {name}")
+    if not ({"xllcorner", "xllcenter"} & set(header)) or not ({"yllcorner", "yllcenter"} & set(header)):
+        raise ValueError(f"ASCII header lacks southwest origin: {name}")
     if int(header["ncols"]) != 200 or int(header["nrows"]) != 200 or abs(header["cellsize"] - 50.0) > 1e-9:
         raise ValueError(f"Terrain50 grid dimensions are not 200x200 at 50m: {name}")
     return header
@@ -149,11 +153,45 @@ def validate_zip(path: Path, min_tiles: int = MIN_ASC_TILES) -> dict[str, Any]:
         asc = sorted(name for name in names if name.lower().endswith(".asc"))
         gml = sorted(name for name in names if name.lower().endswith(".gml"))
         prj = sorted(name for name in names if name.lower().endswith(".prj"))
-        if len(asc) < min_tiles:
-            raise ValueError(f"expected at least {min_tiles} ASCII tiles, found {len(asc)}")
-        samples = sorted(set([asc[0], asc[len(asc) // 2], asc[-1]]))
-        headers = {name: validate_ascii_header(archive, name) for name in samples}
-    return {"archive_entries": len(names), "ascii_tile_count": len(asc), "gml_count": len(gml), "prj_count": len(prj), "sample_headers": headers}
+        nested = sorted(name for name in names if name.lower().endswith(".zip"))
+        if len(asc) >= min_tiles:
+            samples = sorted(set([asc[0], asc[len(asc) // 2], asc[-1]]))
+            headers = {name: validate_ascii_header(archive, name) for name in samples}
+            tile_count = len(asc)
+            packaging = "direct_ascii_members"
+        else:
+            # Current official Terrain 50 packages contain one safe per-tile
+            # ZIP (ASC/GML/PRJ) inside the GB ZIP. Validate the package shape
+            # and three representative inner ASCII headers without extracting
+            # the full national archive.
+            if len(nested) < min_tiles:
+                raise ValueError(
+                    f"expected at least {min_tiles} direct ASCII tiles or nested tile ZIPs, "
+                    f"found asc={len(asc)} nested_zip={len(nested)}"
+                )
+            sample_zips = sorted(set([nested[0], nested[len(nested) // 2], nested[-1]]))
+            headers = {}
+            for nested_name in sample_zips:
+                with archive.open(nested_name) as handle:
+                    payload = handle.read()
+                with zipfile.ZipFile(io.BytesIO(payload)) as inner:
+                    inner_names = safe_names(inner)
+                    inner_asc = sorted(name for name in inner_names if name.lower().endswith(".asc"))
+                    if len(inner_asc) != 1:
+                        raise ValueError(f"nested Terrain50 tile must contain exactly one ASCII grid: {nested_name}")
+                    headers[f"{nested_name}!{inner_asc[0]}"] = validate_ascii_header(inner, inner_asc[0])
+            tile_count = len(nested)
+            packaging = "nested_per_tile_zip"
+    return {
+        "archive_entries": len(names),
+        "ascii_tile_count": tile_count,
+        "direct_ascii_count": len(asc),
+        "nested_tile_zip_count": len(nested),
+        "gml_count": len(gml),
+        "prj_count": len(prj),
+        "packaging": packaging,
+        "sample_headers": headers,
+    }
 
 
 def download_to(url: str, output: Path, timeout: int, api_key: str | None) -> tuple[str, dict[str, str]]:
@@ -242,3 +280,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}), file=sys.stderr)
         raise
+
