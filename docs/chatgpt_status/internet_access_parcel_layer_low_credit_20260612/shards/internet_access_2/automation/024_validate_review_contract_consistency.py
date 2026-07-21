@@ -11,10 +11,10 @@ SLOT_ID = "internet_access_2"
 EXPECTED_ROWS = 30761
 EXPECTED_START = 30762
 EXPECTED_END = 61522
-EXPECTED_COMPLETED = 128
-EXPECTED_TOTAL = 129
-EXPECTED_COMBINED = 292
-EXPECTED_SCOPE_FILES = 75
+EXPECTED_COMPLETED = 134
+EXPECTED_TOTAL = 135
+EXPECTED_COMBINED = 314
+EXPECTED_SCOPE_FILES = 79
 EXPECTED_HISTORICAL_OVERRIDE_IDS = {55, 90}
 
 SHARD = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2")
@@ -69,8 +69,9 @@ def main() -> int:
         "zip_container_safety": (18, 18),
         "published_bundle": (23, 23),
         "candidate_jsonl": (25, 25),
+        "candidate_postcode_resolution": (18, 18),
         "single_run_provenance": (24, 24),
-        "run_and_audit_wrapper": (36, 36),
+        "run_and_audit_wrapper": (40, 40),
         "candidate_web_contract": (20, 20),
         "review_contract_consistency": (14, 14),
     }
@@ -84,7 +85,7 @@ def main() -> int:
         "single_current_blocker": done == EXPECTED_COMPLETED and len(blocked) == 1 and int(blocked[0]["id"]) == EXPECTED_TOTAL,
         "progress_operation_counts_match": progress.get("completed_operations") == EXPECTED_COMPLETED and progress.get("total_operations") == EXPECTED_TOTAL and progress.get("visible_operation_rows") == EXPECTED_TOTAL,
         "source_decision_totals_match": progress.get("official_source_candidates") == 8 and progress.get("promoted_sources", 0) + progress.get("held_sources", 0) + progress.get("rejected_sources", 0) == 8,
-        "suite_definition_total_292": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
+        "suite_definition_total_314": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
         "progress_validation_total_match": progress.get("combined_validation_passed") == EXPECTED_COMBINED and progress.get("combined_validation_total") == EXPECTED_COMBINED,
         "provenance_validation_total_match": pair(provenance.get("combined_validation")) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
         "primary_task_validation_total_match": pair(task1["preflight_validation"]["combined"]) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
@@ -99,7 +100,7 @@ def main() -> int:
         raise ValueError("Review contract consistency failed: " + ", ".join(failed))
 
     result = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "status": "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY",
         "tests_passed": len(checks),
