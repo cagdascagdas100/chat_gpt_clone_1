@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "internet_access_3",
   "task_id": "internet_access_3-ofcom-r2-direct-zip-targeted-join-20260721",
   "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
@@ -25,55 +25,23 @@
     "known_rows_all_shards": 33785
   },
   "official_source": "Ofcom Connected Nations Spring 2026 fixed broadband ZIP",
-  "memory_strategy": "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
+  "memory_strategy": "AREA_PARTITIONED_EXACT_UNIQUENESS_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
   "disk_strategy": "DIRECT_ZIP_MEMBER_STREAM_NO_CSV_EXTRACTION",
   "execution_order": [
-    {
-      "stage": 1,
-      "script": "automation/003_selftest_slot3_extractor.py",
-      "purpose": "reconfirm identity-safe extractor contract"
-    },
-    {
-      "stage": 2,
-      "script": "automation/006_selftest_stream_extract_slot3_inputs.py",
-      "purpose": "reconfirm bounded canonical slicing contract"
-    },
-    {
-      "stage": 3,
-      "script": "automation/009_selftest_download_orchestrator.py",
-      "purpose": "reconfirm ZIP selection, r1/r2 and truth gates"
-    },
-    {
-      "stage": 4,
-      "script": "automation/011_selftest_exact_blob_materializer.py",
-      "purpose": "reconfirm exact path-to-blob materialization gates"
-    },
-    {
-      "stage": 5,
-      "script": "automation/013_selftest_targeted_postcode_join.py",
-      "purpose": "reconfirm targeted retention and four-state partition gates"
-    },
-    {
-      "stage": 6,
-      "script": "automation/018_selftest_direct_zip_stream_join.py",
-      "purpose": "reconfirm direct ZIP member stream, no extraction, member hashes and global source gates"
-    },
-    {
-      "stage": 7,
-      "script": "automation/016_selftest_targeted_pipeline_wiring.py",
-      "purpose": "reconfirm direct ZIP pipeline wiring and no-write boundary"
-    },
-    {
-      "stage": 8,
-      "script": "automation/015_materialize_exact_blobs_and_run_targeted_slot3.py",
-      "purpose": "materialize exact sources and run direct-ZIP targeted bounded review pipeline"
-    }
+    {"stage":1,"script":"automation/003_selftest_slot3_extractor.py","purpose":"reconfirm identity-safe extractor contract"},
+    {"stage":2,"script":"automation/006_selftest_stream_extract_slot3_inputs.py","purpose":"reconfirm bounded canonical slicing contract"},
+    {"stage":3,"script":"automation/009_selftest_download_orchestrator.py","purpose":"reconfirm ZIP selection, r1/r2 and truth gates"},
+    {"stage":4,"script":"automation/011_selftest_exact_blob_materializer.py","purpose":"reconfirm exact path-to-blob materialization gates"},
+    {"stage":5,"script":"automation/013_selftest_targeted_postcode_join.py","purpose":"reconfirm targeted retention and four-state partition gates"},
+    {"stage":6,"script":"automation/018_selftest_direct_zip_stream_join.py","purpose":"reconfirm direct ZIP stream, unique normalised areas, exact within-area duplicates, no extraction and member hashes"},
+    {"stage":7,"script":"automation/016_selftest_targeted_pipeline_wiring.py","purpose":"reconfirm area-partitioned direct ZIP wiring and no-write boundary"},
+    {"stage":8,"script":"automation/015_materialize_exact_blobs_and_run_targeted_slot3.py","purpose":"materialize exact sources and run direct-ZIP targeted bounded review pipeline"}
   ],
   "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD",
   "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD --ofcom-zip F:\\path\\to\\official_ofcom.zip",
   "acceptance": [
     "authoritative slot has no live lease before execution",
-    "all local validation suites total 76/76 PASS before runner execution",
+    "all local validation suites total 82/82 PASS before runner execution",
     "HEAD source blobs match the two pinned Git blob SHAs",
     "exact canonical rows 61523-92283 count 30761 with unique row_no and parcel_id",
     "same-row parcel_id and compatible HMLR INSPIRE ID",
@@ -82,7 +50,10 @@
     "exactly 121 corrected all-premises r2 postcode members",
     "do not extract Ofcom CSV members to disk",
     "scan exactly 1741096 Ofcom postcode rows",
-    "global blank and duplicate postcode rejection",
+    "exactly 121 unique normalised postcode areas",
+    "exact within-area blank and duplicate postcode rejection",
+    "cross-area duplicate bypass rejected by filename, field and postcode-prefix consistency",
+    "peak postcode uniqueness memory bounded to the largest area member",
     "strict postcode, spaced postcode, area and six percentage field validation",
     "compute per-member SHA256 and complete-stream CRC evidence",
     "retain detailed Ofcom values only for needed identity-matched slot postcodes",
@@ -107,5 +78,6 @@
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false
+  "production_deploy": false,
+  "postcode_uniqueness_strategy": "AREA_PARTITIONED_EXACT_PER_MEMBER_SET"
 }
