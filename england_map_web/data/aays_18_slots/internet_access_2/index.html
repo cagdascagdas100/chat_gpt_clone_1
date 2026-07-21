@@ -12,7 +12,7 @@
 </head>
 <body>
   <h1>internet_access_2 — official r2 extraction and readback</h1>
-  <p class="muted">Partition 30,762–61,522. Review-only branch; authoritative ownership, heartbeat and business data remain unchanged.</p>
+  <p class="muted">Partition 30,762–61,522. Frozen review branch; authoritative ownership, heartbeat, queue and business data remain unchanged.</p>
   <div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
 
   <h2>Line-by-line operations</h2>
@@ -44,10 +44,11 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const cls=v=>String(v).startsWith('PASS')||v==='DONE'?'ok':'blocked';
 async function getJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: ${r.status}`);return r.json()}
 async function render(){
-  const [p,o,s,n,x,r]=await Promise.all([
-    getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('source_candidates_latest.json'),
+  const [p,o,so,s,n,x,r]=await Promise.all([
+    getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('scope_operations_latest.json'),getJson('source_candidates_latest.json'),
     getJson('network_attempts_latest.json'),getJson('source_examples_latest.json'),getJson('runner_readiness_latest.json')
   ]);
+  const operations=[...o.operations,...so.operations].sort((a,b)=>a.id-b.id);
   document.getElementById('metrics').innerHTML=`
     <div class="metric"><span>Operations</span><strong>${p.completed_operations} / ${p.total_operations}</strong><span>${p.operational_progress_percent}% (+${p.progress_delta_percent})</span></div>
     <div class="metric"><span>Sources</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
@@ -55,7 +56,7 @@ async function render(){
     <div class="metric"><span>Runner gates</span><strong>${r.passed_gate_count} / ${r.gate_count}</strong><span>${r.blocked_gate_count} blocked; dispatch ${r.dispatch_permitted?'allowed':'blocked'}</span></div>
     <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows+p.runner_readiness_rows}</strong><span>line-by-line rows</span></div>
     <div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
-  document.getElementById('operations').innerHTML=o.operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.status)}">${esc(v.status)}</td></tr>`).join('');
+  document.getElementById('operations').innerHTML=operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${cls(v.status)}">${esc(v.status)}</td></tr>`).join('');
   document.getElementById('runnerReadiness').innerHTML=r.gates.map(v=>`<tr><td>${esc(v.gate_id)}</td><td>${esc(v.title)}</td><td class="${cls(v.state)}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.blocker||'')}</td></tr>`).join('');
   document.getElementById('sources').innerHTML=s.candidates.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(v.title)}</td><td class="${String(v.decision).startsWith('PROMOTED')?'ok':'blocked'}">${esc(v.decision)}</td><td>${esc(v.confidence_percent)}%</td></tr>`).join('');
   document.getElementById('sourceExamples').innerHTML=x.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.source)}</td><td>${esc(v.verified_fact)}</td><td>${esc(v.allowed_use)}</td><td>${esc(v.forbidden_use)}</td></tr>`).join('');
