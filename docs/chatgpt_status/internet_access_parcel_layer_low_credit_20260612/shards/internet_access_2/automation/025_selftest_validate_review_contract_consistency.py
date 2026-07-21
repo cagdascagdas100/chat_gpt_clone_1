@@ -18,12 +18,12 @@ def write(path: Path, value: object) -> None:
 
 
 def fixture(root: Path) -> None:
-    progress = {"slot_id": SLOT, "parcel_start": 30762, "parcel_end": 61522, "parcel_count": 30761, "completed_operations": 134, "total_operations": 135, "visible_operation_rows": 135, "official_source_candidates": 8, "promoted_sources": 5, "held_sources": 1, "rejected_sources": 2, "combined_validation_passed": 314, "combined_validation_total": 314, "actual_business_data_rows_written": 0, "final_ready": False}
-    provenance = {"slot_id": SLOT, "combined_validation": {"passed": 314, "total": 314}, "actual_business_data_rows_written": 0, "final_ready": False}
-    readiness = {"slot_id": SLOT, "official_v2_semantic_preflight": {"combined_tests_passed": 314, "combined_tests_total": 314}, "actual_business_data_rows_written": 0, "final_ready": False}
-    scope = {"slot_id": SLOT, "review_scope_file_count": 79, "other_slot_path_count": 0, "shared_state_path_count": 0, "queue_path_count": 0, "disallowed_path_count": 0, "business_rows_written": 0, "final_ready": False}
-    task1 = {"slot_id": SLOT, "preflight_validation": {"combined": {"passed": 314, "total": 314}}, "write_policy": {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "direct_push": False, "final_ready": False}}
-    task2 = {"slot_id": SLOT, "required_preflight": {"combined_all_suites": {"passed": 314, "total": 314}}, "actual_business_data_rows_written": 0, "final_ready": False}
+    progress = {"slot_id": SLOT, "parcel_start": 30762, "parcel_end": 61522, "parcel_count": 30761, "completed_operations": 144, "total_operations": 145, "visible_operation_rows": 145, "official_source_candidates": 8, "promoted_sources": 5, "held_sources": 1, "rejected_sources": 2, "combined_validation_passed": 404, "combined_validation_total": 404, "actual_business_data_rows_written": 0, "final_ready": False}
+    provenance = {"slot_id": SLOT, "combined_validation": {"passed": 404, "total": 404}, "required_chain": [f"ARTIFACT_{i}" for i in range(1, 17)], "actual_business_data_rows_written": 0, "final_ready": False}
+    readiness = {"slot_id": SLOT, "official_v2_semantic_preflight": {"combined_tests_passed": 404, "combined_tests_total": 404, "provenance_chain_artifact_count": 16}, "actual_business_data_rows_written": 0, "final_ready": False}
+    scope = {"slot_id": SLOT, "review_scope_file_count": 89, "other_slot_path_count": 0, "shared_state_path_count": 0, "queue_path_count": 0, "disallowed_path_count": 0, "business_rows_written": 0, "final_ready": False}
+    task1 = {"slot_id": SLOT, "preflight_validation": {"combined": {"passed": 404, "total": 404}}, "write_policy": {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "direct_push": False, "final_ready": False}}
+    task2 = {"slot_id": SLOT, "required_preflight": {"combined_all_suites": {"passed": 404, "total": 404}}, "actual_business_data_rows_written": 0, "final_ready": False}
     write(root / WEB / "progress_latest.json", progress)
     write(root / WEB / "provenance_contract_latest.json", provenance)
     write(root / WEB / "runner_readiness_latest.json", readiness)
@@ -32,7 +32,7 @@ def fixture(root: Path) -> None:
     write(root / SHARD / "runner_tasks/002_complete_candidate_integrity_extension.task.json", task2)
     write(root / WEB / "operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(1, 55)] + [{"id": 55, "status": "BLOCKED_SUPERSEDED"}]})
     write(root / WEB / "scope_operations_latest.json", {"operations": [{"id": i, "status": "DONE"} for i in range(56, 90)] + [{"id": 90, "status": "BLOCKED_SUPERSEDED"}]})
-    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": 55, "status": "DONE"}, {"id": 90, "status": "DONE"}] + [{"id": i, "status": "DONE"} for i in range(91, 135)] + [{"id": 135, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
+    write(root / WEB / "operations_provenance_latest.json", {"operations": [{"id": 55, "status": "DONE"}, {"id": 90, "status": "DONE"}] + [{"id": i, "status": "DONE"} for i in range(91, 145)] + [{"id": 145, "status": "BLOCKED_PENDING_EXISTING_RUNNER"}]})
 
 
 def run(root: Path) -> subprocess.CompletedProcess[str]:
@@ -47,13 +47,22 @@ with tempfile.TemporaryDirectory() as tmp:
     payload = json.loads(good.stdout)
     assert payload["tests_passed"] == 14 and payload["tests_total"] == 14
     assert payload["historical_override_ids"] == [55, 90]
+    assert payload["provenance_chain_artifact_count"] == 16
 
     progress_path = root / WEB / "progress_latest.json"
     progress = json.loads(progress_path.read_text())
-    progress["combined_validation_total"] = 313
+    progress["combined_validation_total"] = 403
     write(progress_path, progress)
     bad = run(root)
     assert bad.returncode != 0 and "progress_validation_total_match" in bad.stderr
+
+    fixture(root)
+    provenance_path = root / WEB / "provenance_contract_latest.json"
+    provenance = json.loads(provenance_path.read_text())
+    provenance["required_chain"].pop()
+    write(provenance_path, provenance)
+    bad = run(root)
+    assert bad.returncode != 0 and "provenance_validation_total_match" in bad.stderr
 
     fixture(root)
     ops_path = root / WEB / "operations_provenance_latest.json"
@@ -71,4 +80,4 @@ with tempfile.TemporaryDirectory() as tmp:
     bad = run(root)
     assert bad.returncode != 0 and "scope_is_exact_and_authorized" in bad.stderr
 
-print(json.dumps({"status": "PASS", "tests_passed": 14, "tests_total": 14, "test_names": ["valid_historical_override_fixture_passes", "validation_drift_rejected", "unexpected_override_id_rejected", "disallowed_scope_rejected", "slot_identity_consistent", "parcel_partition_exact", "operation_override_contract", "single_current_blocker", "progress_operation_counts_match", "source_decision_totals_match", "task_validation_totals_match", "readiness_validation_total_match", "truth_boundary_preserved", "audit_output_contract"], "actual_business_data_rows_written": 0, "final_ready": False}, sort_keys=True))
+print(json.dumps({"status": "PASS", "tests_passed": 14, "tests_total": 14, "test_names": ["valid_historical_override_fixture_passes", "validation_drift_rejected", "provenance_artifact_drift_rejected", "unexpected_override_id_rejected", "disallowed_scope_rejected", "slot_identity_consistent", "parcel_partition_exact", "operation_override_contract", "single_current_blocker", "progress_operation_counts_match", "source_decision_totals_match", "task_validation_totals_match", "truth_boundary_preserved", "audit_output_contract"], "actual_business_data_rows_written": 0, "final_ready": False}, sort_keys=True))
