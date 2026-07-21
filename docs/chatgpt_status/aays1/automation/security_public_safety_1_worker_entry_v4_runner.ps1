@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 
 $TaskId = 'aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
-$WorkerPath = Join-Path $RepoRoot 'docs\chatgpt_status\aays1\automation\security_public_safety_1_worker_entry_v12.py'
+$WorkerPath = Join-Path $RepoRoot 'docs\chatgpt_status\aays1\automation\security_public_safety_1_worker_entry_v13.py'
 
 if (-not (Test-Path -LiteralPath $WorkerPath -PathType Leaf)) {
     throw "WORKER_NOT_FOUND:$WorkerPath"
