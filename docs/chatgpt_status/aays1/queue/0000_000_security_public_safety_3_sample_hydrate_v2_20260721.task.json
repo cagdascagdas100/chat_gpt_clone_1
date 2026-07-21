@@ -1,0 +1,73 @@
+{
+  "schema_version": 3,
+  "task_id": "security-public-safety-3-sample-hydrate-v2-20260721",
+  "attempt_id": "security-public-safety-3-20260721-001",
+  "idempotency_key": "security-public-safety-3-parcel-61523-61528-iod25v2-api-v1",
+  "page_key": "aays1",
+  "layer_page_key": "security_public_safety",
+  "slot_id": "security_public_safety_3",
+  "status": "pickup_requested",
+  "priority": 98,
+  "created_at": "2026-07-21T05:18:00+03:00",
+  "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "source_branch": "codex/aays-single-runner-v5-20260706",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "sample_parcels": [
+    "parcel_61523",
+    "parcel_61524",
+    "parcel_61525",
+    "parcel_61526",
+    "parcel_61527",
+    "parcel_61528"
+  ],
+  "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
+  "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
+  "command": "python docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
+  "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
+  "website_output": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json",
+  "read_paths": [
+    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py"
+  ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1/queue",
+    "docs/chatgpt_status/aays1/status",
+    "docs/chatgpt_status/aays1/reports",
+    "docs/chatgpt_status/security_public_safety/automation",
+    "docs/chatgpt_status/security_public_safety/runner_outputs",
+    "docs/chatgpt_status/security_public_safety/slots/security_public_safety_3",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json"
+  ],
+  "acceptance_checks": [
+    "Resolve parcel_61523 through parcel_61528 from the 92283-feature canonical spatial GeoJSON",
+    "Require non-null Point geometry and preexisting canonical score",
+    "Read data.police.uk crime-last-updated and use an explicit latest month",
+    "Store HTTP status, URL, response SHA256 and anonymised one-mile supporting count for each API success",
+    "Download and SHA256 the corrected IoD25 File 7 v2 CSV",
+    "Join Crime Score, Rank and Decile by 2021 LSOA code without converting relative values into an absolute parcel percentage",
+    "Accept accuracy_score_4=4 only when canonical geometry, existing score, official API HTTP 200 hash and IoD25 v2 join all pass",
+    "Write six rows to the website output and keep final_ready=false"
+  ],
+  "single_shared_runner_required": true,
+  "new_runner_allowed": false,
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "max_minutes": 20
+}
