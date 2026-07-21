@@ -48,6 +48,9 @@ def main() -> int:
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--expected-branch", default="codex/aays-single-runner-v5-20260706")
     parser.add_argument("--minimum-commit", default="b0b8bd63d95d8193ce5b14ad19051bdc33201173")
+    parser.add_argument("--remote-name", default="origin")
+    parser.add_argument("--expected-remote-repository", default="cagdascagdas100/chat_gpt_clone_1")
+    parser.add_argument("--git-timeout", type=int, default=120)
     parser.add_argument("--operation-start", type=int)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--preflight-timeout", type=int, default=30)
@@ -56,7 +59,7 @@ def main() -> int:
     parser.add_argument("--min-free-bytes", type=int, default=4 * 1024 * 1024 * 1024)
     parser.add_argument("--expected-git-blob-sha1", default="8afd1d2bac414cf0f6b9484014e7878a4ceff877")
     args = parser.parse_args()
-    if min(args.timeout, args.preflight_timeout, args.acceptance_timeout) < 1:
+    if min(args.timeout, args.preflight_timeout, args.acceptance_timeout, args.git_timeout) < 1:
         raise ValueError("timeouts must be positive")
 
     scripts = args.script_dir.resolve()
@@ -72,10 +75,10 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     report_path = out / "full_pipeline_and_website_acceptance_execution.json"
     state = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": "height_difference_3",
         "updated_at": now(),
-        "status": "034_WORKTREE_PREFLIGHT_STARTING",
+        "status": "034_REMOTE_PARITY_WORKTREE_PREFLIGHT_STARTING",
         "worktree_preflight": None,
         "pipeline": None,
         "website_acceptance_transaction": None,
@@ -121,6 +124,9 @@ def main() -> int:
         "--repo-root", str(repo_root),
         "--expected-branch", args.expected_branch,
         "--minimum-commit", args.minimum_commit,
+        "--remote-name", args.remote_name,
+        "--expected-remote-repository", args.expected_remote_repository,
+        "--git-timeout", str(args.git_timeout),
         "--output", str(out / "worktree_preflight_latest.json"),
     ]
     for required_file in required_files:
@@ -128,7 +134,7 @@ def main() -> int:
     state["worktree_preflight"] = run(worktree_command)
     state["updated_at"] = now()
     if state["worktree_preflight"]["exit_code"] != 0:
-        state["status"] = "BLOCKED_034_EXISTING_F_WORKTREE_PREFLIGHT"
+        state["status"] = "BLOCKED_034_REMOTE_PARITY_OR_EXISTING_F_WORKTREE_PREFLIGHT"
         write(report_path, state)
         return int(state["worktree_preflight"]["exit_code"])
 
