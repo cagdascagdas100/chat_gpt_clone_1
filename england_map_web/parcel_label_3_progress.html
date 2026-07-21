@@ -27,7 +27,7 @@
 <script>
 const base='data/distance_property_types/';
 const files=[
- ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json']
+ ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json'],['B7','parcel_label_3_candidates_batch_7.json']
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function load(path){const r=await fetch(base+path,{cache:'no-store'});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()}
@@ -38,7 +38,7 @@ Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_op
    document.getElementById('summary').innerHTML=[
     ['Genel ilerleme','%'+Number(p.workflow_percent).toFixed(2)],['Yüzde artışı','+'+Number(p.workflow_percent_delta).toFixed(2)],['İşlemler',p.completed_operations+' / '+p.total_operations],
     ['Görünür aday',rows.length],['Yükseltilen kaynak',p.promoted_sources],['≥97 doğruluk',p.source_authority_accuracy_ge_97_count],['Ortalama doğruluk','%'+Number(p.classification_accuracy_average_percent).toFixed(2)],
-    ['Canonical slot satırı',p.verified_slot_rows],['Exact geometri',p.exact_geometry_rows]
+    ['Tarihsel artifact',p.historical_artifact_rows],['Örnek ayrıştırılan',p.historical_sample_rows_parsed],['Canonical slot satırı',p.verified_slot_rows],['Exact geometri',p.exact_geometry_rows]
    ].map(x=>card(x[0],x[1])).join('');
    document.getElementById('blockers').innerHTML='<div class="blockers"><b>Aktif engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
    document.getElementById('operations').innerHTML=(o.rows||[]).map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.operation)}</td><td>${esc(r.scope)}</td><td class="${r.status==='COMPLETE'?'ok':r.status==='BLOCKED'?'bad':'warn'}">${esc(r.status)}</td><td>${esc(r.result)}</td></tr>`).join('');
