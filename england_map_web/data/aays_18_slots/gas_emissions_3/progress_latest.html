@@ -8,9 +8,9 @@
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f7f8;color:#171717}
     h1{margin-bottom:6px}.muted{color:#666}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:18px 0}
-    .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:23px;font-weight:700}
-    table{width:100%;border-collapse:collapse;background:white;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left}th{position:sticky;top:0;background:#eee}
-    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.pending{font-weight:700}.scroll{overflow:auto;max-height:72vh}.error{white-space:pre-wrap;color:#8b0000}a{white-space:nowrap}.path{font-family:ui-monospace,monospace;overflow-wrap:anywhere;background:#fff;padding:10px;border:1px solid #ddd;border-radius:6px}
+    .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:22px;font-weight:700;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;background:white;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#eee}
+    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.pending{font-weight:700}.fail{font-weight:700}.scroll{overflow:auto;max-height:72vh}.error{white-space:pre-wrap;color:#8b0000}a{white-space:nowrap}.path{font-family:ui-monospace,monospace;overflow-wrap:anywhere;background:#fff;padding:10px;border:1px solid #ddd;border-radius:6px}
   </style>
 </head>
 <body>
@@ -20,8 +20,8 @@
   <h2>Kabul durumu</h2>
   <div id="acceptance" class="path">Yükleniyor…</div>
   <p><a href="./browser_acceptance_precheck.html">100 satırlık statik ön-kabul sonuçlarını satır satır aç</a></p>
-  <h2>Browser runner adımları</h2>
-  <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
+  <h2>Browser runner v2 adımları</h2>
+  <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th><th>Beklenen/üretilen kanıt</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
   <h2>Yükseltilen resmî kaynaklar</h2>
   <div class="scroll"><table><thead><tr><th>#</th><th>Kaynak</th><th>Yüzey</th><th>Durum</th><th>Yetki</th><th>Doğrulama</th><th>Bağlantı</th></tr></thead><tbody id="sources"></tbody></table></div>
   <h2>Kaynak revizyon adayları</h2>
@@ -44,14 +44,14 @@
     if(responses.some(r=>!r.ok)) throw new Error('Aday JSON dosyalarından biri yüklenemedi');
     const documents=await Promise.all(responses.map(r=>r.json()));
     const rows=documents.flatMap(d=>d.rows||[]);
-    const m=summary.metrics,a=summary.acceptance||{},p=summary.precheck||{};
+    const m=summary.metrics,a=summary.acceptance||{},p=summary.precheck||{},br=summary.browser_runner||{};
     document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Satır=${rows.length}`;
     const cards=[
-      ['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Browser runner',runner.status],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']
+      ['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Runner sürümü','v'+(runner.runner_version||1)],['HTTP veri kapısı',runner.http_data_gate_prepared===true?'HAZIR':'BEKLİYOR'],['Git readback kapısı',runner.git_readback_gate_prepared===true?'HAZIR':'BEKLİYOR'],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']
     ];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Statik satır=${p.actual_rows}/${p.expected_rows} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status}`;
-    document.getElementById('runnerSteps').innerHTML=(runner.steps||[]).map(x=>`<tr><td>${x.step}</td><td>${x.name}</td><td class="${x.state==='PASS'?'ok':'pending'}">${x.state}</td></tr>`).join('');
+    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Statik satır=${p.actual_rows}/${p.expected_rows} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status} | Çekirdek çalıştı=${runner.core_runner_executed===true} | Yayınlayıcı çalıştı=${runner.publisher_executed===true}`;
+    document.getElementById('runnerSteps').innerHTML=(runner.steps||[]).map(x=>{const cls=x.state==='PASS'?'ok':x.state==='FAIL'?'fail':'pending';return `<tr><td>${x.step}</td><td>${x.name}</td><td class="${cls}">${x.state}</td><td>${x.evidence||'—'}</td></tr>`}).join('');
     document.getElementById('sources').innerHTML=(provenance.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${x.title}</td><td>${x.surface}</td><td>${x.status}</td><td>${x.authority_score}/100</td><td class="ok">${x.verification}</td><td><a href="${x.url}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
     const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
     document.getElementById('rows').innerHTML=rows.map((x,i)=>{const cls=x.decision.includes('HIGH')?'warn':x.decision.includes('MATERIAL')?'material':'ok';const oldLine=x.old_preview_line??'—',newLine=x.new_preview_line??'—';return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year??'—'}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td>${oldLine}</td><td>${newLine}</td><td class="${cls}">${x.decision}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`}).join('');
