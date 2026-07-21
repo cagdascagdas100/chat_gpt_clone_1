@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "slot_id": "security_public_safety_3",
-  "updated_at": "2026-07-21T10:00:00+03:00",
+  "updated_at": "2026-07-21T09:28:00+03:00",
   "rows": [
     {"line":50,"operation":"V5.1 bulk ve smoke runtime çıktılarının yokluğunu yeniden doğrula","status":"DONE_NO_OUTPUT","evidence":"main ve canonical branch smoke/bulk çıktı yolları 404; doğrulanmış satır artırılmadı"},
     {"line":51,"operation":"Resmî internet kaynaklarını yeniden doğrula","status":"DONE","evidence":"data.police 2026-05; ONS 2026-04-23, sonraki 2026-07-23; IoD2025 corrected v2"},
@@ -9,20 +9,29 @@
     {"line":53,"operation":"V5.2 PowerShell taşıyıcısını main üzerine yayınla","status":"DONE","evidence":"commit afcc9798c4800f1610ea2373a06ee30c85085460"},
     {"line":54,"operation":"V5.2 smoke queue görevini main üzerinde aynala","status":"DONE","evidence":"commit 2fa029d6516f592a5b7151e9aee2b41bbc61275c"},
     {"line":55,"operation":"V5.2 Python ve PowerShell dosyalarını canonical runner branch'e yayınla","status":"DONE","evidence":"commits 9dd34347e5b76df2bc7f9bdcc40450ad03179243 ve 60d6af6a362dd05a6e1697a7edcf89035daac0db"},
-    {"line":56,"operation":"Üç satırlık smoke görevini canonical kuyruğa priority 0 ile yayınla","status":"DONE_WAITING_RUNNER","evidence":"commit b85f9ba01d01179754a4e8259944ed5adf84daa0; attempt 009; bulk attempt 008 korundu"},
+    {"line":56,"operation":"Üç satırlık smoke görevini canonical kuyruğa priority 0 ile yayınla","status":"DONE","evidence":"commit b85f9ba01d01179754a4e8259944ed5adf84daa0; attempt 009; bulk attempt 008 korundu"},
     {"line":57,"operation":"Smoke web satır beslemesini üç bekleyen parsel ile yayınla","status":"DONE","evidence":"commit 35a619069ba6df0895e07c9392b77cd75df60ed3; skorlar null, 12 kapı false"},
     {"line":58,"operation":"Web sayfasına ayrı V5.2 smoke tablosu ekle","status":"DONE","evidence":"commit d1eca24e904edc9598de91d52e3cbdfff9501234"},
     {"line":59,"operation":"Güncel resmî web readback kanıtını yayınla","status":"DONE","evidence":"commits 87b61dd72a0d8978426dcef26a11f2252737856b ve 7b0df928eac84e585a16a814c0e99f049e177a2e"},
     {"line":60,"operation":"24 maddelik smoke readiness denetimini yayınla","status":"DONE","evidence":"commit 5111dcb4f88b20f63bf6000caca1bc941dc45313; 24/24 hazırlık kontrolü geçti"},
     {"line":61,"operation":"Global shared refresh sahipliğine müdahale etmeden tek-runner kuyruğunu koru","status":"DONE_NON_INTERFERENCE","evidence":"refresh isteği height_difference_2 slotuna ait; üzerine yazılmadı, slot 3 önceki istek geçmişte korunuyor"},
-    {"line":62,"operation":"V5.2 smoke runtime çıktısını ve uzlaştırmayı üret","status":"PENDING_SHARED_RUNNER","evidence":"shared runner heartbeat hâlâ eski; smoke çıktı henüz yok"},
+    {"line":62,"operation":"V5.2 attempt 009 smoke runtime çıktısını üret","status":"SUPERSEDED_BY_ATTEMPT_010","evidence":"çıkış kodu kabul kuralı yeterince fail-closed olmadığı için görev çalışmadan önce supersede edildi"},
     {"line":63,"operation":"data.police aylık arşivini ayrı resmî bütünlük çapraz kontrolü olarak yükselt","status":"DONE_SOURCE_PROMOTED","evidence":"commit e6d9cc9b55109edc91d9d5a501dc5e7e45b9a864"},
     {"line":64,"operation":"V5.2 Python smoke doğrulayıcıyı yerel py_compile ve fail-closed kontrollerinden geçir","status":"DONE_10_OF_10","evidence":"commit 9564d49b1988981c84e9ebb9e9e3e7ba647ff64a; runtime veya skor üretme iddiası yok"},
-    {"line":65,"operation":"Mayıs 2026 force-availability eksikliğini ayrı kalite kapısı olarak yükselt","status":"DONE_SOURCE_PROMOTED","evidence":"commit 2d40ea1466fb2f20f843dbf8dfc5674ae63064a0; BTP Mayıs suç verisi eksikliği sıfır suç olarak yorumlanmayacak"}
+    {"line":65,"operation":"Mayıs 2026 force-availability eksikliğini ayrı kalite kapısı olarak yükselt","status":"DONE_SOURCE_PROMOTED","evidence":"commit 2d40ea1466fb2f20f843dbf8dfc5674ae63064a0; BTP Mayıs suç verisi eksikliği sıfır suç olarak yorumlanmayacak"},
+    {"line":66,"operation":"Smoke wrapper sıfır 4/4 satırla başarılı çıkabilir mi denetle","status":"DONE_ROOT_CAUSE","evidence":"attempt 009 return kuralı exact blob ve identity ile yetiniyordu; accuracy_score_4 zorunlu değildi"},
+    {"line":67,"operation":"Smoke Python wrapperı en az bir 4/4 satır şartıyla fail-closed yap","status":"DONE","evidence":"main commit 60720455c5330c5daaced2db142380f2f951bc6c; canonical commit d8e013454cfa95a2c4461b526cab45ab40a9fe53"},
+    {"line":68,"operation":"PowerShell taşıyıcısını V5.2.1 attempt 010 ile eşitle","status":"DONE","evidence":"main commit 116a9d50e58125061acde5de5c6c679dd610996e; canonical commit 0be4730dbf779af8f55bd8f132c12ac8deefa3fc"},
+    {"line":69,"operation":"Smoke queue görevini benzersiz task_id ve attempt 010 ile supersede et","status":"DONE","evidence":"main commit e73cc0e6d0fc7eabdbd361b395d15f0c815eb691; canonical commit 8b1eded6331f22b566f4e87f06aa46cc5cf38f9a"},
+    {"line":70,"operation":"V5.2.1 fail-closed düzeltmesini py_compile ve 16 maddelik statik denetimden geçir","status":"DONE_16_OF_16","evidence":"commit d2df83bd355bbc2a57b6a76dd779febc8ad0634c; ağ runtime veya skor üretimi iddia edilmedi"},
+    {"line":71,"operation":"Üç smoke web satırını attempt 010 metadatasıyla eşitle","status":"DONE","evidence":"commit 722b4ae78a2a34b0d3ae88df28fb8b37722183ca; skorlar null ve 12 kapı false kaldı"},
+    {"line":72,"operation":"Exact kanonik blobu connector üzerinden yeniden oku","status":"DONE_BLOB_METADATA","evidence":"blob bb48164e7a0af78df875f30421a6a3068c43edb8 FeatureCollection ve feature_count 92283 olarak yeniden okundu; tek satırlı büyük payload doğrudan üç özellik çıkarımını yine engelledi"},
+    {"line":73,"operation":"V5.2.1 attempt 010 smoke runtime çıktısını ve uzlaştırmayı üret","status":"PENDING_SHARED_RUNNER","evidence":"shared runner heartbeat hâlâ eski; en az bir 4/4 satır olmadan görev başarı sayılmayacak"}
   ],
-  "done_count": 15,
+  "done_count": 22,
   "pending_count": 1,
-  "visible_operation_rows": 16,
+  "superseded_count": 1,
+  "visible_operation_rows": 24,
   "fake_data": false,
   "final_ready": false
 }
