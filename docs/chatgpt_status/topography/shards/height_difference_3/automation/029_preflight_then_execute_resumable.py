@@ -3,8 +3,8 @@
 
 This bootstrap runs inside one already-running shared runner. It creates no queue,
 lease, owner, heartbeat, new runner or parallel runner. Runtime operation numbers
-are allocated after the latest committed website operation row and validated again
-from the preflight report before 026 starts.
+are allocated after the latest committed website operation row. The 030 bridge
+preserves preflight rows while streaming 026 rows into the same web runtime JSON.
 """
 from __future__ import annotations
 
@@ -125,6 +125,7 @@ def main() -> int:
     parser.add_argument("--operation-start", type=int)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--preflight-timeout", type=int, default=30)
+    parser.add_argument("--runtime-poll-seconds", type=float, default=0.5)
     parser.add_argument("--min-free-bytes", type=int, default=4 * 1024 * 1024 * 1024)
     parser.add_argument("--expected-git-blob-sha1", default="8afd1d2bac414cf0f6b9484014e7878a4ceff877")
     args = parser.parse_args()
@@ -140,11 +141,13 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     execution_path = output_dir / "preflight_then_resumable_execution.json"
     preflight_report = output_dir / "preflight_latest.json"
+    pipeline_runtime = output_dir / "runtime_progress_latest.json"
 
     preflight_script = script_dir / "028_preflight_existing_f_runner.py"
     orchestrator = script_dir / "026_execute_resumable_targeted_sources.py"
     validator = script_dir / "027_validate_resumable_alias_safe.py"
-    for path in (preflight_script, orchestrator, validator):
+    runtime_bridge = script_dir / "030_stream_combined_runtime.py"
+    for path in (preflight_script, orchestrator, validator, runtime_bridge):
         if not path.is_file():
             raise FileNotFoundError(path)
 
@@ -161,7 +164,7 @@ def main() -> int:
         "--timeout", str(args.preflight_timeout),
     ]
     state: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "updated_at": utc_now(),
         "status": "PREFLIGHT_RUNNING",
@@ -169,6 +172,12 @@ def main() -> int:
             **numbering,
             "website_operations_history": str(history_path),
             "monotonic_contiguous_required": True,
+        },
+        "runtime_visibility": {
+            "preflight_and_pipeline_rows_preserved": True,
+            "runtime_bridge": str(runtime_bridge),
+            "web_runtime_status": str(web_runtime),
+            "pipeline_internal_runtime": str(pipeline_runtime),
         },
         "preflight": None,
         "pipeline": None,
@@ -196,25 +205,35 @@ def main() -> int:
     preflight_numbering = pipeline_start_from_preflight(preflight_report, preflight_start)
     state["operation_numbering"].update(preflight_numbering)
     pipeline_operation_start = preflight_numbering["pipeline_operation_start"]
-    pipeline_command = [
+    child_pipeline_command = [
         sys.executable, str(orchestrator),
         "--security-geojson", str(source),
         "--output-dir", str(output_dir),
         "--validator-script", str(validator),
-        "--web-runtime-status", str(web_runtime),
         "--operation-start", str(pipeline_operation_start),
         "--timeout", str(args.timeout),
     ]
-    state["status"] = "PREFLIGHT_PASSED_026_RUNNING"
+    bridge_command = [
+        sys.executable, str(runtime_bridge),
+        "--preflight-report", str(preflight_report),
+        "--pipeline-runtime", str(pipeline_runtime),
+        "--web-runtime-status", str(web_runtime),
+        "--pipeline-operation-start", str(pipeline_operation_start),
+        "--poll-seconds", str(args.runtime_poll_seconds),
+        "--",
+        *child_pipeline_command,
+    ]
+    state["status"] = "PREFLIGHT_PASSED_COMBINED_RUNTIME_BRIDGE_RUNNING"
     state["updated_at"] = utc_now()
+    state["runtime_visibility"]["pipeline_child_command"] = child_pipeline_command
     atomic_json(execution_path, state)
-    pipeline_result = run(pipeline_command, Path.cwd())
+    pipeline_result = run(bridge_command, Path.cwd())
     state["pipeline"] = pipeline_result
     state["updated_at"] = utc_now()
     state["status"] = (
-        "026_COMPLETED_READ_REMOTE_OUTPUTS_NEXT"
+        "026_COMPLETED_COMBINED_RUNTIME_READY_READ_REMOTE_OUTPUTS_NEXT"
         if pipeline_result["exit_code"] == 0
-        else "BLOCKED_026_SEE_RUNTIME_AND_EXECUTION_OUTPUT"
+        else "BLOCKED_026_SEE_COMBINED_RUNTIME_AND_EXECUTION_OUTPUT"
     )
     atomic_json(execution_path, state)
     return pipeline_result["exit_code"]
