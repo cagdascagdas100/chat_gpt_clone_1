@@ -1,56 +1,104 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "slot_id": "internet_access_3",
-  "task_id": "internet_access_3-ofcom-r2-targeted-bounded-join-20260721",
+  "task_id": "internet_access_3-ofcom-r2-direct-zip-targeted-join-20260721",
   "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
   "single_shared_runner_only": true,
   "create_new_runner": false,
   "parallel_runner_allowed": false,
   "queue_submission": false,
   "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
-  "parcel_partition": {"start":61523,"end":92283,"count":30761},
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
   "source_git_ref": "HEAD",
-  "canonical_source": {"repo_path":"england_map_web/data/program_layer_matrix/security.geojson","expected_git_blob_sha":"8afd1d2bac414cf0f6b9484014e7878a4ceff877","expected_rows":92283},
-  "legacy_postcode_source": {"repo_path":"england_map_web/data/program_layer_matrix/internet.geojson","expected_git_blob_sha":"9c24fd366e29c3356b1e5178295b903edf8680ff","known_rows_all_shards":33785},
+  "canonical_source": {
+    "repo_path": "england_map_web/data/program_layer_matrix/security.geojson",
+    "expected_git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+    "expected_rows": 92283
+  },
+  "legacy_postcode_source": {
+    "repo_path": "england_map_web/data/program_layer_matrix/internet.geojson",
+    "expected_git_blob_sha": "9c24fd366e29c3356b1e5178295b903edf8680ff",
+    "known_rows_all_shards": 33785
+  },
   "official_source": "Ofcom Connected Nations Spring 2026 fixed broadband ZIP",
   "memory_strategy": "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
+  "disk_strategy": "DIRECT_ZIP_MEMBER_STREAM_NO_CSV_EXTRACTION",
   "execution_order": [
-    {"stage":1,"script":"automation/003_selftest_slot3_extractor.py","purpose":"reconfirm identity-safe extractor contract"},
-    {"stage":2,"script":"automation/006_selftest_stream_extract_slot3_inputs.py","purpose":"reconfirm bounded canonical slicing contract"},
-    {"stage":3,"script":"automation/009_selftest_download_orchestrator.py","purpose":"reconfirm ZIP selection, r1/r2 and truth gates"},
-    {"stage":4,"script":"automation/011_selftest_exact_blob_materializer.py","purpose":"reconfirm exact path-to-blob materialization gates"},
-    {"stage":5,"script":"automation/013_selftest_targeted_postcode_join.py","purpose":"reconfirm all-row scan, global uniqueness, strict schema, area, percentage and four-state partition gates"},
-    {"stage":6,"script":"automation/016_selftest_targeted_pipeline_wiring.py","purpose":"reconfirm targeted entrypoint and no-write wiring"},
-    {"stage":7,"script":"automation/015_materialize_exact_blobs_and_run_targeted_slot3.py","purpose":"materialize exact source blobs and run targeted bounded review pipeline"}
+    {
+      "stage": 1,
+      "script": "automation/003_selftest_slot3_extractor.py",
+      "purpose": "reconfirm identity-safe extractor contract"
+    },
+    {
+      "stage": 2,
+      "script": "automation/006_selftest_stream_extract_slot3_inputs.py",
+      "purpose": "reconfirm bounded canonical slicing contract"
+    },
+    {
+      "stage": 3,
+      "script": "automation/009_selftest_download_orchestrator.py",
+      "purpose": "reconfirm ZIP selection, r1/r2 and truth gates"
+    },
+    {
+      "stage": 4,
+      "script": "automation/011_selftest_exact_blob_materializer.py",
+      "purpose": "reconfirm exact path-to-blob materialization gates"
+    },
+    {
+      "stage": 5,
+      "script": "automation/013_selftest_targeted_postcode_join.py",
+      "purpose": "reconfirm targeted retention and four-state partition gates"
+    },
+    {
+      "stage": 6,
+      "script": "automation/018_selftest_direct_zip_stream_join.py",
+      "purpose": "reconfirm direct ZIP member stream, no extraction, member hashes and global source gates"
+    },
+    {
+      "stage": 7,
+      "script": "automation/016_selftest_targeted_pipeline_wiring.py",
+      "purpose": "reconfirm direct ZIP pipeline wiring and no-write boundary"
+    },
+    {
+      "stage": 8,
+      "script": "automation/015_materialize_exact_blobs_and_run_targeted_slot3.py",
+      "purpose": "materialize exact sources and run direct-ZIP targeted bounded review pipeline"
+    }
   ],
   "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD",
   "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD --ofcom-zip F:\\path\\to\\official_ofcom.zip",
   "acceptance": [
     "authoritative slot has no live lease before execution",
-    "all local validation suites total 60/60 PASS before runner execution",
+    "all local validation suites total 76/76 PASS before runner execution",
     "HEAD source blobs match the two pinned Git blob SHAs",
     "exact canonical rows 61523-92283 count 30761 with unique row_no and parcel_id",
     "same-row parcel_id and compatible HMLR INSPIRE ID",
     "official ZIP signature, minimum size, CRC, byte count and SHA256",
-    "zero all-premises r1 postcode files",
-    "exactly 121 corrected all-premises r2 postcode files",
+    "zero all-premises r1 postcode members",
+    "exactly 121 corrected all-premises r2 postcode members",
+    "do not extract Ofcom CSV members to disk",
     "scan exactly 1741096 Ofcom postcode rows",
     "global blank and duplicate postcode rejection",
     "strict postcode, spaced postcode, area and six percentage field validation",
+    "compute per-member SHA256 and complete-stream CRC evidence",
     "retain detailed Ofcom values only for needed identity-matched slot postcodes",
     "exact proxy, identity-conflict, postcode-not-found and no-verified-postcode counts",
     "no nearest-postcode assignment",
     "no working-tree source mutation, parcel score, migration, database write or production deploy"
   ],
   "output_contract": {
-    "exact_blob_manifest":"outputs/internet_access_3_verified_run/internet_access_3_exact_targeted_materialization_latest.json",
-    "diagnostics":"outputs/internet_access_3_verified_run/internet_access_3_network_and_execution_diagnostics_latest.json",
-    "slice_manifest":"outputs/internet_access_3_verified_run/slot_inputs/internet_access_3_stream_slice_manifest_latest.json",
-    "candidate_manifest":"outputs/internet_access_3_verified_run/candidate_outputs/internet_access_3_candidate_manifest_latest.json",
-    "business_rows_written":0
+    "exact_blob_manifest": "outputs/internet_access_3_verified_run/internet_access_3_exact_targeted_materialization_latest.json",
+    "diagnostics": "outputs/internet_access_3_verified_run/internet_access_3_network_and_execution_diagnostics_latest.json",
+    "slice_manifest": "outputs/internet_access_3_verified_run/slot_inputs/internet_access_3_stream_slice_manifest_latest.json",
+    "candidate_manifest": "outputs/internet_access_3_verified_run/candidate_outputs/internet_access_3_candidate_manifest_latest.json",
+    "business_rows_written": 0
   },
   "current_blockers": [
-    "EXISTING_SINGLE_RUNNER_MUST_EXECUTE_TARGETED_EXACT_BLOB_ENTRYPOINT",
+    "EXISTING_SINGLE_RUNNER_MUST_EXECUTE_DIRECT_ZIP_TARGETED_EXACT_BLOB_ENTRYPOINT",
     "OFFICIAL_OFCOM_ZIP_BYTES_OR_VALIDATED_LOCAL_COPY_REQUIRED",
     "REAL_30761_ROW_JOIN_COUNTS_AND_SAMPLES_REQUIRED"
   ],

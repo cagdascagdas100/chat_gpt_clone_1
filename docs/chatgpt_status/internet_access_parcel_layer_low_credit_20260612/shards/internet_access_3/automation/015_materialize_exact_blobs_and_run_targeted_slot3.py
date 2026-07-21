@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Materialize exact source blobs and run the targeted internet_access_3 pipeline.
-
-The authoritative path-to-blob SHAs are verified fail-closed. Exact canonical and
-legacy blobs are materialized into an isolated repo skeleton with git cat-file.
-Only slot automation required for the targeted bounded pipeline is copied. The
-source working tree and all business/deployment targets remain untouched.
-"""
+"""Materialize exact source blobs and run the direct-ZIP targeted slot-3 pipeline."""
 from __future__ import annotations
 
 import argparse
@@ -33,6 +27,9 @@ REQUIRED_AUTOMATION = (
     "012_extract_slot3_ofcom_needed_postcodes.py",
     "013_selftest_targeted_postcode_join.py",
     "014_run_slot3_targeted_pipeline.py",
+    "016_selftest_targeted_pipeline_wiring.py",
+    "017_stream_ofcom_zip_needed_postcodes.py",
+    "018_selftest_direct_zip_stream_join.py",
 )
 
 
@@ -118,13 +115,14 @@ def main() -> int:
     work_root.mkdir(parents=True, exist_ok=True)
 
     diagnostics: dict[str, Any] = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": SLOT_ID,
         "git_ref": args.git_ref,
         "repo_root": str(repo_root),
         "exact_repo_root": str(exact_repo_root),
         "target_pipeline": TARGET_ENTRYPOINT,
-        "join_strategy": "SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES",
+        "join_strategy": "DIRECT_ZIP_STREAM_SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES",
+        "ofcom_csv_extracted_to_disk": False,
         "actual_business_data_rows_written": 0,
         "scores_written": 0,
         "fake_data": False,
@@ -150,21 +148,32 @@ def main() -> int:
             "legacy_internet": base.materialize_blob(repo_root, legacy_resolved, legacy_target),
         }
         diagnostics["automation"] = copy_targeted_automation(repo_root, exact_repo_root, base)
-        command = build_child_command(exact_repo_root, work_root, args.ofcom_zip, args.ofcom_url, args.download_retries, args.download_timeout_seconds)
+        command = build_child_command(
+            exact_repo_root,
+            work_root,
+            args.ofcom_zip,
+            args.ofcom_url,
+            args.download_retries,
+            args.download_timeout_seconds,
+        )
         diagnostics["child_command"] = command
-        diagnostics["state"] = "EXACT_BLOBS_MATERIALIZED_TARGETED_CHILD_STARTING"
+        diagnostics["state"] = "EXACT_BLOBS_MATERIALIZED_DIRECT_ZIP_TARGETED_CHILD_STARTING"
         manifest_path.write_text(json.dumps(diagnostics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
         completed = subprocess.run(command, capture_output=True, text=True, check=False)
         diagnostics["child_returncode"] = completed.returncode
         diagnostics["child_stdout_tail"] = completed.stdout[-8000:]
         diagnostics["child_stderr_tail"] = completed.stderr[-8000:]
-        diagnostics["state"] = "COMPLETE_TARGETED_REVIEW_OUTPUT_READY" if completed.returncode == 0 else "TARGETED_CHILD_BLOCKED_AT_VERIFIED_GATE"
+        diagnostics["state"] = (
+            "COMPLETE_DIRECT_ZIP_TARGETED_REVIEW_OUTPUT_READY"
+            if completed.returncode == 0
+            else "DIRECT_ZIP_TARGETED_CHILD_BLOCKED_AT_VERIFIED_GATE"
+        )
         manifest_path.write_text(json.dumps(diagnostics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(json.dumps({k: v for k, v in diagnostics.items() if k not in {"child_stdout_tail", "child_stderr_tail"}}, sort_keys=True))
         return completed.returncode
     except Exception as exc:
-        diagnostics["state"] = "BLOCKED_EXACT_TARGETED_BLOB_GATE"
+        diagnostics["state"] = "BLOCKED_EXACT_DIRECT_ZIP_TARGETED_BLOB_GATE"
         diagnostics["error"] = f"{type(exc).__name__}: {exc}"
         manifest_path.write_text(json.dumps(diagnostics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(diagnostics["error"], file=sys.stderr)
