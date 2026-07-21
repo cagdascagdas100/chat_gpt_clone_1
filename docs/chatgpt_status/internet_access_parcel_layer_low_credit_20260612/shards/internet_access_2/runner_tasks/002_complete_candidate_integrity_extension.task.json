@@ -1,15 +1,24 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_2",
   "task_id": "internet-access-2-complete-candidate-integrity-extension-20260721",
   "dispatch_state": "BLOCKED_PRE_QUEUE_READINESS_8_PASS_4_BLOCKED_1_DEFERRED",
   "canonical_command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_run_and_audit_slot2.ps1 -RepoRoot <REPO_ROOT> -PythonExe <PYTHON_EXE>",
   "required_preflight": {
+    "inner_runner_container_payload_contract": {"passed": 31, "total": 31},
     "complete_candidate_jsonl_integrity": {"passed": 25, "total": 25},
     "published_bundle_truth_boundary": {"passed": 23, "total": 23},
     "single_run_provenance": {"passed": 20, "total": 20},
     "run_and_audit_wrapper": {"passed": 28, "total": 28},
-    "combined_all_suites": {"passed": 215, "total": 215}
+    "candidate_integrity_web_contract": {"passed": 13, "total": 13},
+    "combined_all_suites": {"passed": 233, "total": 233}
+  },
+  "source_integrity_boundary": {
+    "outer_zip_r1_name_is_transport_container_only": true,
+    "display_size_mb_observations": [32.2, 32.3],
+    "display_size_is_integrity_gate": false,
+    "official_checksum_published": false,
+    "runtime_integrity_required": ["minimum_byte_count", "zip_pk_signature", "sha256", "internal_v2_validation"]
   },
   "required_real_outputs": [
     "england_map_web/data/aays_18_slots/internet_access_2/candidate_jsonl_integrity_latest.json",
@@ -21,6 +30,8 @@
   "acceptance": [
     "exact 30,761 ordered candidate JSONL rows",
     "exact row range 30762-61522 and 30,761 unique parcel IDs",
+    "outer ZIP transport name never substitutes for internal V2 revision validation",
+    "displayed package size is metadata only and runtime SHA-256 is mandatory",
     "direct and legacy matches contain at least one non-null published Ofcom metric",
     "NO_POSTCODE and POSTCODE_NOT_IN_CURRENT_R2 truth boundaries remain distinct",
     "candidate status totals equal extraction manifest and readback totals",
