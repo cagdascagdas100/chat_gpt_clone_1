@@ -10,7 +10,7 @@
 
 ## Remote authoritative readback
 
-The branch HEAD, ownership, checkpoint, status, heartbeat and current-task files were re-read before work began. The slot was `UNCLAIMED`; owner, lease, task, attempt and heartbeat timestamp were null. No other slot was claimed or modified.
+The branch HEAD, ownership, checkpoint, status, heartbeat and current-task files were re-read before work began and again before publication. Latest base-branch readback was `81f39500c2e85e2e78281e8558798d865bd020d4`. The slot remained `UNCLAIMED`; owner, lease, task, attempt and heartbeat timestamp were null. No other slot was claimed or modified.
 
 ## Completed in this wave
 
@@ -29,7 +29,7 @@ The branch HEAD, ownership, checkpoint, status, heartbeat and current-task files
 - Eligible source candidates: **6**
 - Excluded or held: **2**
 - Eligible candidates with source confidence ≥90: **6**
-- Average eligible source confidence: **96.0/100**
+- Average eligible source confidence: **98.3/100**
 - Canonical parcel matches: **0**
 - Future Growth product scores: **0**
 - Actual business rows written: **0**
