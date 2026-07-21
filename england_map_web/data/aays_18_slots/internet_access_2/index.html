@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>internet_access_2 progress</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}.muted{color:#5d6878}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}.metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}
+    table{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem}
+  </style>
+</head>
+<body>
+  <h1>internet_access_2 — official r2 extraction and readback</h1>
+  <p class="muted">Partition 30,762–61,522. Review-only branch; authoritative ownership, heartbeat and business data remain unchanged.</p>
+  <div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
+
+  <h2>Line-by-line operations</h2>
+  <table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody id="operations"><tr><td colspan="3">Loading…</td></tr></tbody></table>
+
+  <h2>Official source decisions</h2>
+  <table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody id="sources"><tr><td colspan="4">Loading…</td></tr></tbody></table>
+
+  <h2>Official-source semantic examples</h2>
+  <p class="muted">These rows explain allowed and forbidden source use. They are not parcel observations.</p>
+  <table><thead><tr><th>#</th><th>Source</th><th>Verified fact</th><th>Allowed use</th><th>Forbidden use</th></tr></thead><tbody id="sourceExamples"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+
+  <h2>Network and execution attempts</h2>
+  <table><thead><tr><th>#</th><th>Operation</th><th>State</th><th>Evidence</th><th>Bytes</th></tr></thead><tbody id="networkAttempts"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+
+  <h2>Validated real review examples</h2>
+  <p class="muted">This section remains pending until the existing canonical runner publishes exact current-r2 readback. At most three examples per status are displayed.</p>
+  <table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
+
+  <h2>Truth boundary</h2>
+  <p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code>. National percentages are sanity checks only. ONS and OS postcode locations are QA references only. Canonical parcel identity comes from <code>security.geojson</code>. Legacy postcode matches require spatial QA; absent matches remain <code>NO_DATA</code>. No parcel score, geometry, migration, DB row or production layer is written.</p>
+
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function getJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: ${r.status}`);return r.json()}
+async function render(){
+  const [p,o,s,n,x]=await Promise.all([
+    getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('source_candidates_latest.json'),
+    getJson('network_attempts_latest.json'),getJson('source_examples_latest.json')
+  ]);
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><span>Operations</span><strong>${p.completed_operations} / ${p.total_operations}</strong><span>${p.operational_progress_percent}% (+${p.progress_delta_percent})</span></div>
+    <div class="metric"><span>Source decisions</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
+    <div class="metric"><span>Validation</span><strong>${p.combined_validation_passed} / ${p.combined_validation_total}</strong><span>contract tests passed</span></div>
+    <div class="metric"><span>Visible evidence</span><strong>${p.visible_operation_rows+p.visible_source_rows+p.network_attempt_rows+p.source_semantic_example_rows}</strong><span>operation/source/network/example rows</span></div>
+    <div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
+  document.getElementById('operations').innerHTML=o.operations.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${v.status==='DONE'?'ok':'blocked'}">${esc(v.status)}</td></tr>`).join('');
+  document.getElementById('sources').innerHTML=s.candidates.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(v.title)}</td><td class="${String(v.decision).startsWith('PROMOTED')?'ok':'blocked'}">${esc(v.decision)}</td><td>${esc(v.confidence_percent)}%</td></tr>`).join('');
+  document.getElementById('sourceExamples').innerHTML=x.examples.map(v=>`<tr><td>${v.id}</td><td>${esc(v.source)}</td><td>${esc(v.verified_fact)}</td><td>${esc(v.allowed_use)}</td><td>${esc(v.forbidden_use)}</td></tr>`).join('');
+  document.getElementById('networkAttempts').innerHTML=n.attempts.map(v=>`<tr><td>${v.id}</td><td>${esc(v.operation)}</td><td class="${String(v.state).startsWith('PASS')?'ok':'blocked'}">${esc(v.state)}</td><td>${esc(v.evidence)}</td><td>${esc(v.data_bytes_acquired)}</td></tr>`).join('');
+  try{
+    const e=await getJson('verified_examples_latest.json');
+    document.getElementById('examples').innerHTML=e.rows.length?e.rows.map(v=>`<tr><td>${esc(v.canonical_row_no)}</td><td>${esc(v.canonical_program_parcel_id)}</td><td>${esc(v.postcode||'NO_DATA')}</td><td>${esc(v.status)}</td><td>${esc(v.gigabit_available_pct)}</td><td>${esc(v.ufbb_100mbps_available_pct)}</td><td>${esc(v.sfbb_30mbps_available_pct)}</td><td>${esc(v.unable_30mbps_pct)}</td></tr>`).join(''):'<tr><td colspan="8">No review examples published.</td></tr>';
+  }catch(_){document.getElementById('examples').innerHTML='<tr><td colspan="8">PENDING EXISTING RUNNER</td></tr>'}
+}
+render().catch(err=>{document.getElementById('metrics').innerHTML=`<div class="metric"><strong>Readback error</strong><span>${esc(err.message)}</span></div>`});
+</script>
+</body>
+</html>
