@@ -1,5 +1,5 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "slot_id": "security_public_safety_1",
   "research_date": "2026-07-21",
   "status": "EXTERNAL_OFFICIAL_RESEARCH_REFRESH_NOT_RUNNER_ACCEPTANCE",
@@ -16,19 +16,19 @@
     },
     {
       "source": "data.police.uk archive",
-      "observed_value": "May 2026 archive contains June 2023 to May 2026 data and remains the latest bulk snapshot",
+      "observed_value": "May 2026 archive contains June 2023 to May 2026 data, remains the latest bulk snapshot and provides MD5 integrity data",
       "role": "bulk snapshot integrity",
       "scope_limit": "Archive availability does not prove individual candidate parity"
     },
     {
-      "source": "data.police.uk changelog",
-      "observed_value": "British Transport Police crime data is not provided for May 2026",
+      "source": "data.police.uk May 2026 changelog",
+      "observed_value": "Crime data was not provided for British Transport Police, Gloucestershire, Greater Manchester and Lincolnshire",
       "role": "known missing-data control",
-      "scope_limit": "Missing values are recorded and not inferred; Metropolitan candidates still require live parity"
+      "scope_limit": "Missing force values are recorded and not inferred; Metropolitan candidate endpoints still require live parity"
     },
     {
       "source": "London Datastore MPS Recorded Crime Geographic Breakdown",
-      "observed_value": "Current MPS LSOA file covers July 2024 to June 2026 and the catalogue is updated monthly",
+      "observed_value": "Current MPS LSOA file covers July 2024 to June 2026 and the catalogue provides monthly borough, ward and LSOA counts",
       "role": "direct official LSOA source quality gate",
       "scope_limit": "Sexual offences are not supplied at LSOA; CONNECT comparability limits apply; not a parcel measurement"
     },
@@ -46,24 +46,26 @@
     },
     {
       "source": "target branch canonical runner alias",
-      "observed_value": "docs/chatgpt_status/aays1/control/current_task.txt points to aays1-height-difference-2-canonical-export-official-sampling-20260720",
+      "observed_value": "docs/chatgpt_status/aays1/control/current_task.txt still points to aays1-height-difference-2-canonical-export-official-sampling-20260720",
       "role": "single-runner ownership safety check",
       "scope_limit": "Operational evidence only; alias was not overwritten and does not validate candidate data"
     },
     {
-      "source": "candidate endpoint reuse audit",
-      "observed_value": "parcel_121 through parcel_130 map to four endpoints already present in the first 120 candidates",
-      "role": "network-load minimisation and parity scope",
-      "scope_limit": "Stored evidence only; live parity remains pending the canonical runner"
+      "source": "supplemental candidate endpoint reuse audit",
+      "observed_value": "parcel_131 through parcel_140 map to three endpoints already present in the 130-row acceptance set",
+      "role": "network-load minimisation and display expansion",
+      "scope_limit": "Supplemental stored evidence only; acceptance target remains 130 and live parity remains pending"
     },
     {
-      "source": "worker-chain audit",
-      "observed_value": "v14 directly invokes recursion-safe v11 instead of stacking v13 and v12 wrappers",
-      "role": "runtime failure-risk reduction",
+      "source": "worker and queue stability audit",
+      "observed_value": "V14 and attempt 014 remain unchanged while 10 supplemental examples are added",
+      "role": "runtime contract stability and replay prevention",
       "scope_limit": "Authoring control only; canonical runner preflight remains unexecuted"
     }
   ],
-  "candidate_display_target": 130,
+  "candidate_display_target": 140,
+  "acceptance_candidate_target": 130,
+  "supplemental_candidate_count": 10,
   "candidate_live_unique_endpoints_required": 16,
   "candidate_rows_added_this_turn": 10,
   "candidate_new_unique_endpoints_this_turn": 0,
@@ -77,5 +79,5 @@
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "updated_at": "2026-07-21T08:35:00Z"
+  "updated_at": "2026-07-21T09:35:00Z"
 }
