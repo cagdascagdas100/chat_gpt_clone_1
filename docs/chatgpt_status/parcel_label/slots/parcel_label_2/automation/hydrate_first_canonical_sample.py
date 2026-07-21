@@ -8,6 +8,7 @@ from pathlib import Path
 
 SLOT_ID = "parcel_label_2"
 TARGET_IDS = ["parcel_30762", "parcel_30763", "parcel_30764"]
+CANONICAL_FEATURE_COUNT = 92283
 REPO = Path(os.environ.get("AAYS_REPO_ROOT", r"F:\chatgpt\chat_gpt_clone_1_main"))
 DATA_ROOT = REPO / "england_map_web" / "data"
 SLOT_ROOT = REPO / "docs" / "chatgpt_status" / "parcel_label" / "slots" / SLOT_ID
@@ -43,30 +44,49 @@ def candidate_carrier_paths() -> list[Path]:
     return priority + fallback
 
 
-def locate_targets() -> tuple[Path | None, dict[str, dict], int]:
-    found: dict[str, dict] = {}
+def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, list[dict]]:
     scanned_files = 0
+    rejected_carriers: list[dict] = []
     for path in candidate_carrier_paths():
         scanned_files += 1
         try:
             with path.open("r", encoding="utf-8-sig") as handle:
                 payload = json.load(handle)
-        except Exception:
+        except Exception as exc:
+            if len(rejected_carriers) < 25:
+                rejected_carriers.append(
+                    {"path": str(path), "reason": "JSON_READ_FAILED", "error": str(exc)[:240]}
+                )
             continue
+
         features = payload.get("features") if isinstance(payload, dict) else None
         if not isinstance(features, list):
             continue
-        local_found: dict[str, dict] = {}
+
+        feature_count = len(features)
+        if feature_count != CANONICAL_FEATURE_COUNT:
+            if len(rejected_carriers) < 25:
+                rejected_carriers.append(
+                    {
+                        "path": str(path),
+                        "reason": "FEATURE_COUNT_MISMATCH",
+                        "feature_count": feature_count,
+                        "expected_feature_count": CANONICAL_FEATURE_COUNT,
+                    }
+                )
+            continue
+
+        found: dict[str, dict] = {}
         for feature in features:
             props = feature.get("properties") or {}
             parcel_id = props.get("parcel_id") or props.get("security_parcel_id")
             if parcel_id in TARGET_IDS:
-                local_found[parcel_id] = feature
-        if local_found:
-            found.update(local_found)
-            if len(found) == len(TARGET_IDS):
-                return path, found, scanned_files
-    return None, found, scanned_files
+                found[parcel_id] = feature
+
+        if found:
+            return path, found, scanned_files, feature_count, rejected_carriers
+
+    return None, {}, scanned_files, None, rejected_carriers
 
 
 def compact_properties(props: dict) -> dict:
@@ -92,7 +112,7 @@ def compact_properties(props: dict) -> dict:
 def main() -> int:
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     WEB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    source_path, features, scanned_files = locate_targets()
+    source_path, features, scanned_files, source_feature_count, rejected_carriers = locate_targets()
     rows = []
     polygon_rows = 0
     carrier_rows = 0
@@ -103,10 +123,10 @@ def main() -> int:
             rows.append(
                 {
                     "parcel_id": parcel_id,
-                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND",
+                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND_IN_EXACT_92283_FEATURE_CARRIER",
                     "accuracy_score_4": 0,
                     "needs_manual_review": True,
-                    "next_gate": "restore or expose the canonical 92,283-row carrier",
+                    "next_gate": "restore or expose an identity-proven canonical 92,283-feature carrier",
                 }
             )
             continue
@@ -126,6 +146,7 @@ def main() -> int:
                     else "CANONICAL_POINT_CARRIER_FOUND_EXACT_GEOMETRY_PENDING"
                 ),
                 "source_file": str(source_path) if source_path else None,
+                "source_feature_count": source_feature_count,
                 "geometry_type": geometry_type,
                 "geometry": geometry,
                 "properties": compact_properties(feature.get("properties") or {}),
@@ -135,15 +156,20 @@ def main() -> int:
             }
         )
 
+    exact_count_gate_passed = source_feature_count == CANONICAL_FEATURE_COUNT
     output = {
         "schema_version": 4,
         "slot_id": SLOT_ID,
         "generated_at": utc_now(),
         "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
         "target_ids": TARGET_IDS,
+        "required_canonical_feature_count": CANONICAL_FEATURE_COUNT,
+        "exact_feature_count_gate_passed": exact_count_gate_passed,
         "priority_carriers": [str(path) for path in PRIORITY_CARRIERS],
         "scanned_file_count": scanned_files,
+        "rejected_carrier_sample": rejected_carriers,
         "source_file": str(source_path) if source_path else None,
+        "source_feature_count": source_feature_count,
         "source_file_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest() if source_path else None,
         "canonical_carrier_rows_found": carrier_rows,
         "polygon_or_multipolygon_rows_found": polygon_rows,
@@ -164,11 +190,13 @@ def main() -> int:
     print(f"SLOT_ID={SLOT_ID}")
     print(f"SCANNED_FILE_COUNT={scanned_files}")
     print(f"SOURCE_FILE={source_path}")
+    print(f"SOURCE_FEATURE_COUNT={source_feature_count}")
+    print(f"EXACT_FEATURE_COUNT_GATE_PASSED={str(exact_count_gate_passed).lower()}")
     print(f"CANONICAL_CARRIER_ROWS_FOUND={carrier_rows}")
     print(f"POLYGON_ROWS_FOUND={polygon_rows}")
     print("ACTUAL_VERIFIED_SLOT_ROWS_WRITTEN=0")
     print("FINAL_READY=false")
-    return 0 if carrier_rows else 2
+    return 0 if carrier_rows and exact_count_gate_passed else 2
 
 
 if __name__ == "__main__":
