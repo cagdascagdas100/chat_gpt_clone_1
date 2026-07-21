@@ -1,16 +1,16 @@
 {
   "schema_version": 4,
   "task_id": "security-public-safety-3-sample-hydrate-v4-20260721",
-  "task_version": "4.1",
-  "attempt_id": "security-public-safety-3-20260721-005",
-  "idempotency_key": "security-public-safety-3-parcel-61523-61546-exact-blob-iod25v2-crime-outcomes-v4",
+  "task_version": "4.2-guarded",
+  "attempt_id": "security-public-safety-3-20260721-006",
+  "idempotency_key": "security-public-safety-3-parcel-61523-61546-exact-blob-guarded-iod25v2-crime-outcomes-v5",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_3",
   "status": "pickup_requested",
   "priority": 100,
-  "created_at": "2026-07-21T07:00:00+03:00",
-  "supersedes_attempt_id": "security-public-safety-3-20260721-004",
+  "created_at": "2026-07-21T07:05:00+03:00",
+  "supersedes_attempt_id": "security-public-safety-3-20260721-005",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "target_branch": "main",
   "source_branch": "main",
@@ -24,9 +24,11 @@
     "parcel_61539", "parcel_61540", "parcel_61541", "parcel_61542",
     "parcel_61543", "parcel_61544", "parcel_61545", "parcel_61546"
   ],
-  "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4.py",
-  "script_blob_sha": "3add8c507757ac7459187539d04965fe5b89b77b",
-  "command": "python docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4.py",
+  "core_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4.py",
+  "core_script_blob_sha": "3add8c507757ac7459187539d04965fe5b89b77b",
+  "guard_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4_guarded.py",
+  "guard_script_commit": "b8c3e1723b8c7e348b620971696ff970f9f71114",
+  "command": "python docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4_guarded.py",
   "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v4_latest.json",
   "website_output": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json",
   "canonical_source": {
@@ -36,12 +38,14 @@
     "required_git_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
     "feature_count": 92283,
     "materialization_method": "git show origin/codex branch, then git fetch plus FETCH_HEAD fallback, write to OS temp cache",
+    "guard_rule": "canonical_gate is forced false unless materialization is verified and source_file_git_blob_sha exactly matches required_git_blob_sha",
     "working_tree_write": false
   },
   "read_paths": [
     "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
     "england_map_web/data/security_public_safety/security_evidence_manifest.json",
-    "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4.py"
+    "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4.py",
+    "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v4_guarded.py"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v4_latest.json",
@@ -50,6 +54,7 @@
   "acceptance_checks": [
     "Materialize the exact required canonical source blob without adding the large source file to the main working tree",
     "Reject canonical source unless git hash-object equals bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "Force canonical_gate false in the guarded output if exact blob verification fails",
     "Resolve parcel_61523 through parcel_61546 from the 92283-feature canonical spatial GeoJSON",
     "Require non-null Point geometry and a non-null preexisting canonical score",
     "Read data.police.uk crime-last-updated and use an explicit latest month",
