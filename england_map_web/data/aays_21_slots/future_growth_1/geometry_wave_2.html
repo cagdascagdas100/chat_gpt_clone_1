@@ -3,13 +3,14 @@
 <title>future_growth_1 geometri dalgası</title>
 <style>
 body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}.cards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:12px;min-width:165px}.big{font-size:25px;font-weight:700}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.PASS{font-weight:700}.PENDING{font-weight:700}.BLOCKED{font-weight:700}.muted{color:#546e7a}a{color:#0b57d0}</style></head><body>
-<h1>future_growth_1 — Resmî geometri edinme dalgası</h1>
-<div class="notice">Poligon verileri GitHub readback ile doğrulanmadan hiçbir Future Growth skoru üretilmez. Nokta yakınlığı, parsel kesişimi olarak sunulmaz. Kesin fiyat tahmini değildir.</div>
-<p><a href="index.html">Aday özetine dön</a></p>
+<h1>future_growth_1 — Resmî geometri ve kaynak ilerlemesi</h1>
+<div class="notice">Poligon verileri GitHub readback ile doğrulanmadan hiçbir Future Growth skoru üretilmez. 16/16 kaynak sayacı endpoint/kapsam readback’idir; loader veya parsel doğruluğu değildir. Kesin fiyat tahmini değildir.</div>
+<p><a href="index.html">Aday özetine dön</a> · <a href="source_registry_wave_2.html">16 kaynak satırı</a></p>
 <div class="cards">
 <div class="card"><div>İşlem</div><div class="big" id="ops">-</div></div>
 <div class="card"><div>Hazırlık ilerleme</div><div class="big" id="batch">-</div></div>
-<div class="card"><div>Resmî kaynak</div><div class="big" id="sources">-</div></div>
+<div class="card"><div>Registry</div><div class="big" id="sources">-</div></div>
+<div class="card"><div>Loader</div><div class="big" id="loaders">-</div></div>
 <div class="card"><div>Entity readback</div><div class="big" id="entities">-</div></div>
 <div class="card"><div>Alan kontrolü</div><div class="big" id="fieldChecks">-</div></div>
 <div class="card"><div>Self-test</div><div class="big" id="tests">-</div></div>
@@ -29,12 +30,13 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}.
 <p class="muted" id="meta"></p>
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-Promise.all(['geometry_acquisition_latest.json','exact_attempt_3_latest.json'].map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p);return r.json()}))).then(([base,d])=>{
-ops.textContent=`${d.overall_operations_completed}/${d.overall_operations_total}`;batch.textContent=`${d.overall_operations_percent}%`;sources.textContent=`${d.official_sources_validated}/${d.official_source_registry_total}`;entities.textContent=`${d.official_entity_readbacks}/4`;fieldChecks.textContent=`${d.source_field_checks_passed}/${d.source_field_checks_total}`;tests.textContent=d.quality.geometry_relation_selftest;queueStatus.textContent=d.queue?.status||'-';relations.textContent=d.candidate_summary.verified_polygon_relations;business.textContent=d.candidate_summary.actual_business_data_rows_written;
+const get=(p,required=true)=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok&&required)throw new Error(p);return r.ok?r.json():null});
+Promise.all([get('geometry_acquisition_latest.json'),get('exact_attempt_3_latest.json',false)]).then(([d,a])=>{
+ops.textContent=`${d.operations_completed}/${d.operations_total}`;batch.textContent=`${d.batch_percent}%`;sources.textContent=`${d.source_registry_validated}/${d.source_registry_total}`;loaders.textContent=`${d.source_loader_executions_completed}/${d.source_loader_executions_total}`;entities.textContent=`${d.candidate_summary.official_entity_readbacks}/4`;fieldChecks.textContent=`${d.candidate_summary.source_field_checks_passed}/${d.candidate_summary.source_field_checks_total}`;tests.textContent=d.quality.geometry_pipeline_selftest;queueStatus.textContent=d.queue?.status||'-';relations.textContent=d.candidate_summary.verified_polygon_relations;business.textContent=d.candidate_summary.actual_business_data_rows_written;
 taskBody.innerHTML=`<tr><td>${esc(d.queue?.task_id)}</td><td>${esc(d.queue?.attempt_id)}</td><td>${esc(d.queue?.status)}</td><td>${esc(d.queue?.sequential_after_task_id)}</td><td>${esc(d.queue?.single_shared_runner_only)}</td><td>${esc(d.queue?.relation_builder_blob_sha)}</td></tr>`;
-const allOps=[...(base.operations||[]).filter(x=>Number(x.index)<=36),...(d.operations||[])];operations.innerHTML=allOps.map(x=>`<tr><td>${esc(x.index)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.step)}</td><td>${esc(x.detail)}</td></tr>`).join('');
-acceptance.innerHTML=Object.entries(d.acceptance||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
+operations.innerHTML=(d.operations||[]).map(x=>`<tr><td>${esc(x.index)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.step)}</td><td>${esc(x.detail)}</td></tr>`).join('');
+const contract=a?.acceptance||{exact_hmlr_parcel_polygons_expected:3,candidate_point_inside_exact_hmlr_polygon_required:true,current_gla_site_polygons_required:3,current_candidate_polygon_relations_expected:5,stale_completed_rejections_expected:1,future_growth_scores_expected:0};acceptance.innerHTML=Object.entries(contract).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
 quality.innerHTML=Object.entries(d.quality||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
 blockers.innerHTML=(d.blockers||[]).map(x=>`<li>${esc(x)}</li>`).join('');meta.textContent=`Üretim: ${d.generated_at} | overall_verified_business_percent=${d.overall_verified_business_percent} | final_ready=${d.final_ready}`;
-}).catch(()=>{operations.innerHTML='<tr><td colspan="4">Geometri ilerleme JSON dosyaları okunamadı</td></tr>'});
+}).catch(()=>{operations.innerHTML='<tr><td colspan="4">Geometri ilerleme JSON dosyası okunamadı</td></tr>'});
 </script></body></html>
