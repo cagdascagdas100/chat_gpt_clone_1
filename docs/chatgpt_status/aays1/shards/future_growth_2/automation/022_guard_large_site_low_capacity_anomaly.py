@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse, json
 from pathlib import Path
 
-MIN_LARGE_SITE_HECTARES = 5.0
+MIN_LARGE_SITE_HECTARES = 4.0
 MAX_SUSPICIOUS_DWELLINGS = 5.0
 
 def _number(value):
@@ -50,7 +50,7 @@ def validate(payload: dict) -> dict:
         raise ValueError("candidate array missing")
     flagged = [str(c.get("candidate_id") or "") for c in candidates if validate_candidate(c)]
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "future_growth_2",
         "executed": True,
         "flagged_candidates": flagged,
@@ -69,15 +69,9 @@ def validate(payload: dict) -> dict:
     }
 
 def main() -> int:
-    p=argparse.ArgumentParser()
-    p.add_argument("--wave",type=Path,required=True)
-    p.add_argument("--output",type=Path,required=True)
-    a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument("--wave",type=Path,required=True); p.add_argument("--output",type=Path,required=True); a=p.parse_args()
     out=validate(json.loads(a.wave.read_text(encoding="utf-8")))
     a.output.parent.mkdir(parents=True,exist_ok=True)
     a.output.write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print(json.dumps(out))
-    return 0
-
-if __name__=="__main__":
-    raise SystemExit(main())
+    print(json.dumps(out)); return 0
+if __name__=="__main__": raise SystemExit(main())
