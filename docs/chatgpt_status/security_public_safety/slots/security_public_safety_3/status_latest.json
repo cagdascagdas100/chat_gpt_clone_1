@@ -3,10 +3,10 @@
   "slot_id": "security_public_safety_3",
   "base_slot_id": "security_public_safety",
   "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
-  "updated_at": "2026-07-21T05:18:00+03:00",
-  "state": "CANONICAL_RUNNER_BRANCH_AND_QUEUE_CORRECTED_OUTPUT_PENDING",
+  "updated_at": "2026-07-21T05:36:00+03:00",
+  "state": "TWELVE_ROW_CANONICAL_CRIME_OUTCOMES_IOD25_OUTPUT_PENDING",
   "kickoff_head": "bc8efc47fa670815264049d961659efbe9221abf",
-  "first_unverified_step": "EXISTING_SHARED_RUNNER_HEARTBEAT_RECOVERS_AND_EXECUTES_CORRECTLY_ROUTED_SIX_ROW_TASK",
+  "first_unverified_step": "EXISTING_SHARED_RUNNER_HEARTBEAT_RECOVERS_AND_EXECUTES_CORRECTLY_ROUTED_TWELVE_ROW_V3_TASK",
   "audit": {
     "main_manifest_claimed_rows": 150,
     "main_csv_actual_rows": 9,
@@ -30,17 +30,15 @@
     "reuse_rule": "Use the 92283-feature spatial source to resolve this slot; do not claim the parcel_1-parcel_300 verified sample as slot data."
   },
   "official_sources": {
-    "candidate_count": 6,
-    "promoted_count": 5,
-    "held_count": 1,
-    "source_authority_accuracy_ge_95_count": 6,
+    "candidate_count": 12,
+    "promoted_count": 10,
+    "held_count": 2,
+    "source_authority_accuracy_ge_90_count": 12,
+    "source_authority_accuracy_ge_95_count": 11,
     "data_police_latest_month": "2026-05",
-    "data_police_may_2026_archive_md5": "9a1dcd49501f489bba3132c6f98c13fa",
     "iod25_version_rule": "corrected v2 File 7 LSOA fields; relative context only",
-    "iod25_lsoa_count": 33755,
-    "home_office_latest_update": "2026-04-23",
-    "ons_latest_release": "2026-04-23",
-    "ons_next_release": "2026-07-23"
+    "source_refresh_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_source_refresh_v3_20260721.json",
+    "source_row_feed": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_source_candidates_latest.json"
   },
   "runner_routing": {
     "runner_branch": "codex/aays-single-runner-v5-20260706",
@@ -50,42 +48,46 @@
     "registry_queue_dir": "docs/chatgpt_status/aays1/queue",
     "previous_wrong_queue_dir": "docs/chatgpt_status/security_public_safety/queue",
     "queue_root_cause_resolved": true,
-    "mirrored_script_commit": "9e74dcad6a4f1a2b4c243aa54cb02e869f216b99",
-    "canonical_queue_commit": "bb78eabd2d841b5f4a0786fffd68e255d4780cd8",
-    "pickup_marker_commit": "5be6d2099e7128645ec6c650609ed3f0f1bc72fd",
-    "queue_task": "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_3_sample_hydrate_v2_20260721.task.json",
-    "pickup_marker": "docs/chatgpt_status/aays1/queue/0000_000_SECURITY_PUBLIC_SAFETY_3_PICKUP_NOW_20260721_0518.txt",
-    "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
+    "v3_script_commit": "5ecea03433429bf247714ee2ea137c164a879232",
+    "v3_queue_commit": "177327adfa322316c56e2e5dc1e7dba499e1b48f",
+    "v3_pickup_marker_commit": "52f987cfb7c2f853a242cfaf4749e671a4ec9a7e",
+    "queue_task": "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_3_sample_hydrate_v3_20260721.task.json",
+    "pickup_marker": "docs/chatgpt_status/aays1/queue/0000_000_SECURITY_PUBLIC_SAFETY_3_V3_PICKUP_NOW_20260721_0536.txt",
+    "runner_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v3.py",
+    "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v3_latest.json",
     "expected_output_exists": false
   },
   "sample_work": {
-    "target_rows": 6,
+    "target_rows": 12,
     "target_parcels": [
-      "parcel_61523",
-      "parcel_61524",
-      "parcel_61525",
-      "parcel_61526",
-      "parcel_61527",
-      "parcel_61528"
+      "parcel_61523", "parcel_61524", "parcel_61525", "parcel_61526",
+      "parcel_61527", "parcel_61528", "parcel_61529", "parcel_61530",
+      "parcel_61531", "parcel_61532", "parcel_61533", "parcel_61534"
     ],
     "queue_status": "pickup_requested_on_canonical_runner_branch",
+    "validation_components": [
+      "canonical Point geometry and preexisting score",
+      "explicit-month street crimes HTTP 200 response SHA256",
+      "explicit-month outcomes-at-location HTTP 200 response SHA256",
+      "corrected IoD2025 File 7 v2 LSOA Crime join"
+    ],
     "verified_sample_rows": 0,
-    "pending_sample_rows": 6,
+    "pending_sample_rows": 12,
     "website_rows": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json"
   },
   "progress": {
-    "completed_operations": 24,
-    "total_operations": 31,
-    "overall_percent": 46,
-    "percent_delta": 11,
+    "completed_operations": 30,
+    "total_operations": 38,
+    "overall_percent": 52,
+    "percent_delta": 6,
     "actual_slot_rows_written": 0,
     "verified_slot_rows": 0,
     "accuracy_score_4_rows": 0,
-    "visible_candidate_rows": 6
+    "visible_candidate_rows": 12
   },
   "remaining_operations": [
-    "Existing shared runner produces a fresh heartbeat and picks up the correctly routed task",
-    "Execute and reconcile the six-row canonical geometry, explicit-month police API and IoD25 v2 verifier",
+    "Existing shared runner produces a fresh heartbeat and picks up the correctly routed v3 task",
+    "Execute and reconcile the twelve-row canonical geometry, explicit-month crime and outcomes APIs, and IoD2025 v2 verifier",
     "Accept only accuracy 4/4 rows",
     "Expand the accepted method to 300 verified rows inside parcel_61523-parcel_92283",
     "Replace or isolate the unusable 9-row unknown/null main output",
@@ -94,12 +96,13 @@
   ],
   "blockers": [
     "The existing shared runner heartbeat is stale since 2026-07-16 and no new runner may be started",
-    "The correctly routed expected six-row output has not yet been produced",
+    "The correctly routed expected twelve-row v3 output has not yet been produced",
     "The active main verified CSV/GeoJSON still contain 9 unusable unknown/null records while the manifest claims 150"
   ],
   "fake_data": false,
   "db_write": false,
   "migration": false,
   "production_deploy": false,
+  "person_level_data": false,
   "final_ready": false
 }
