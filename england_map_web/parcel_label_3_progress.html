@@ -31,12 +31,12 @@
 <script>
 const base='data/distance_property_types/';
 const files=[
- ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json'],['B7','parcel_label_3_candidates_batch_7.json'],['B8','parcel_label_3_candidates_batch_8.json'],['B9','parcel_label_3_candidates_batch_9.json'],['B10','parcel_label_3_candidates_batch_10.json'],['B11','parcel_label_3_candidates_batch_11.json'],['B12','parcel_label_3_candidates_batch_12.json'],['B13','parcel_label_3_candidates_batch_13.json'],['B14','parcel_label_3_candidates_batch_14.json'],['B15','parcel_label_3_candidates_batch_15.json'],['B16','parcel_label_3_candidates_batch_16.json'],['B17','parcel_label_3_candidates_batch_17.json'],['B18','parcel_label_3_candidates_batch_18.json'],['B19','parcel_label_3_candidates_batch_19.json'],['B20','parcel_label_3_candidates_batch_20.json']
+ ['B1-2','parcel_label_3_candidates.json'],['B3','parcel_label_3_candidates_batch_3.json'],['B4','parcel_label_3_candidates_batch_4.json'],['B5','parcel_label_3_candidates_batch_5.json'],['B6','parcel_label_3_candidates_batch_6.json'],['B7','parcel_label_3_candidates_batch_7.json'],['B8','parcel_label_3_candidates_batch_8.json'],['B9','parcel_label_3_candidates_batch_9.json'],['B10','parcel_label_3_candidates_batch_10.json'],['B11','parcel_label_3_candidates_batch_11.json'],['B12','parcel_label_3_candidates_batch_12.json'],['B13','parcel_label_3_candidates_batch_13.json'],['B14','parcel_label_3_candidates_batch_14.json'],['B15','parcel_label_3_candidates_batch_15.json'],['B16','parcel_label_3_candidates_batch_16.json'],['B17','parcel_label_3_candidates_batch_17.json'],['B18','parcel_label_3_candidates_batch_18.json'],['B19','parcel_label_3_candidates_batch_19.json'],['B20','parcel_label_3_candidates_batch_20.json'],['B21','parcel_label_3_candidates_batch_21.json']
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function load(path){const r=await fetch(base+path,{cache:'no-store'});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()}
 function card(label,value){return `<div class="card"><div class="muted">${esc(label)}</div><div class="value">${esc(value)}</div></div>`}
-Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_operations_latest.json'),load('parcel_label_3_operations_batch_20.json'),load('parcel_label_3_canonical_probe_latest.json'),load('parcel_label_3_jurisdiction_exclusions_latest.json'),Promise.all(files.map(([label,path])=>load(path).then(data=>({label,data}))))]).then(([p,o,od,g,x,batches])=>{
+Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_operations_latest.json'),load('parcel_label_3_operations_batch_20.json'),load('parcel_label_3_operations_batch_21.json'),load('parcel_label_3_canonical_probe_latest.json'),load('parcel_label_3_jurisdiction_exclusions_latest.json'),Promise.all(files.map(([label,path])=>load(path).then(data=>({label,data}))))]).then(([p,o,od20,od21,g,x,batches])=>{
  const allRows=batches.flatMap(({label,data})=>(data.candidates||[]).map(c=>({...c,batch_label:label})));
  const excludedIds=new Set(x.excluded_candidate_ids||[]);
  const rows=allRows.filter(c=>!excludedIds.has(c.parcel_id));
@@ -44,7 +44,7 @@ Promise.all([load('parcel_label_3_progress_latest.json'),load('parcel_label_3_op
  const probeRows=g.canonical_points||[];
  const historical=g.historical_audit||{};
  const runner=g.runner_observation||{};
- const operationRows=[...(o.rows||[]),...(od.rows||[])];
+ const operationRows=[...(o.rows||[]),...(od20.rows||[]),...(od21.rows||[])];
  document.getElementById('summary').innerHTML=[
   ['Genel ilerleme','%'+Number(p.workflow_percent).toFixed(2)],['Yüzde artışı','+'+Number(p.workflow_percent_delta).toFixed(2)],['İşlemler',p.completed_operations+' / '+p.total_operations],['Web işlem satırı',operationRows.length],
   ['Araştırılan resmî kaynak',p.researched_official_source_rows],['Görünür İngiltere adayı',rows.length],['Karantina',excludedRows.length],['Yükseltilen kaynak',p.promoted_sources],
