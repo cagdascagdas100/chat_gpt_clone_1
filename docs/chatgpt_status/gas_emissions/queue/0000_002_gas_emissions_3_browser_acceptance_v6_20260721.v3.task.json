@@ -1,0 +1,115 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_18_SLOT_SAFE_PARALLEL_V1",
+  "task_id": "gas_emissions_3_coordinator_browser_acceptance_v6_20260721_01",
+  "attempt_id": "gas-emissions-3-20260721-001",
+  "idempotency_key": "gas-emissions-3-browser-100-dom-screenshot-coordinator-v6",
+  "page_key": "gas_emissions",
+  "slot_id": "gas_emissions_3",
+  "base_slot_id": "gas_emissions",
+  "shard_index": 3,
+  "status": "queued",
+  "state": "queued",
+  "priority": 2,
+  "queued_at": "2026-07-21T06:10:00Z",
+  "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
+  "source_branch": "codex/aays-single-runner-v5-20260706",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "claimable": true,
+  "ready_for_claim": true,
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/automation/020_gas_emissions_3_coordinator_browser_acceptance_carrier.ps1",
+  "script_blob_sha": "6b68808618a762aa3138b4fc577b933aaf1c0c0d",
+  "read_paths": [
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3",
+    "docs/chatgpt_status/_shared/slots_21/gas_emissions_3",
+    "england_map_web/data/aays_18_slots/gas_emissions_3",
+    "england_map_web/data/program_layer_matrix",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/012_gas_emissions_3_100_browser_acceptance_local_result_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/013_gas_emissions_3_matrix_browser_screenshot_latest.png",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/013_gas_emissions_3_matrix_browser_screenshot_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/020_coordinator_browser_runtime_latest",
+    "england_map_web/data/aays_18_slots/gas_emissions_3/browser_acceptance_runner_status_latest.json",
+    "england_map_web/data/aays_18_slots/gas_emissions_3/runner_pickup_preflight_latest.json"
+  ],
+  "resource_class": "browser_acceptance",
+  "requires_browser_acceptance_gate": true,
+  "requires_git_publish_gate": true,
+  "requires_runtime_sync_gate": true,
+  "requires_shared_publish_gate": true,
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.gov.uk/government/statistics/uk-local-authority-and-regional-greenhouse-gas-emissions-statistics-2005-to-2024",
+      "https://www.gov.uk/government/statistics/uk-local-authority-and-regional-greenhouse-gas-emissions-statistics-2005-to-2024/2005-to-2024-uk-local-and-regional-greenhouse-gas-emissions-technical-report-web-accessible"
+    ],
+    "source_snapshot_date": "2026-06-30",
+    "source_discovery_required": false,
+    "measurement_level": "document",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "NOT_RUN_SEPARATE_GATE",
+    "confidence_method": "HTTP_DOM_CONSOLE_SCREENSHOT_SHA256_AND_REMOTE_READBACK",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "source_conflict",
+      "low_confidence",
+      "geometry_mismatch",
+      "browser_console_error",
+      "remote_readback_mismatch"
+    ]
+  },
+  "expected_outputs": [
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/012_gas_emissions_3_100_browser_acceptance_local_result_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/013_gas_emissions_3_matrix_browser_screenshot_latest.png",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/013_gas_emissions_3_matrix_browser_screenshot_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/020_coordinator_browser_runtime_latest/precheck_dom.html",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/020_coordinator_browser_runtime_latest/matrix_dom.html",
+    "england_map_web/data/aays_18_slots/gas_emissions_3/browser_acceptance_runner_status_latest.json",
+    "england_map_web/data/aays_18_slots/gas_emissions_3/runner_pickup_preflight_latest.json"
+  ],
+  "acceptance_checks": [
+    "Detached child HEAD equals current remote branch HEAD",
+    "Authoritative remote checkpoint sequence is preserved in coordinator runtime state",
+    "Five port-8012 endpoints return HTTP 200",
+    "Served rows equal 100 and unique row IDs equal 100",
+    "Static precheck DOM contains 100 PASS and 0 FAIL rows",
+    "Canonical matrix DOM contains 100 rows and all 28 required headers",
+    "Browser stderr contains zero script-error markers",
+    "Canonical matrix PNG screenshot exists and has SHA-256 metadata",
+    "Child task performs no direct push",
+    "Single coordinator publisher commits and verifies remote readback",
+    "Parcel binding remains a separate false gate",
+    "final_ready remains false"
+  ],
+  "runner_contract": {
+    "execution_host": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File script_path",
+    "existing_single_runner_only": true,
+    "new_runner_allowed": false,
+    "parallel_runner_allowed": false,
+    "child_direct_push_forbidden": true,
+    "coordinator_serial_publish_required": true,
+    "queue_filename_suffix": ".v3.task.json"
+  },
+  "timeout_seconds": 1800,
+  "completion_forbidden_without_runtime_proof": true,
+  "parcel_binding_gate_separate": true,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
