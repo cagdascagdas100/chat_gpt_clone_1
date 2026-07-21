@@ -1,24 +1,89 @@
 {
-    "schema_version":  3,
-    "architecture_version":  3,
-    "workstream_id":  "AAYS_21_SLOT_SAFE_PARALLEL_V1",
-    "slot_id":  "gas_emissions_1",
-    "base_slot_id":  "gas_emissions",
-    "shard_index":  1,
-    "parcel_partition":  {
-                             "start":  1,
-                             "end":  30761,
-                             "count":  30761,
-                             "canonical_count":  92283
-                         },
-    "final_ready":  false,
-    "state":  "idle",
-    "task_id":  null,
-    "owner_page_session_id":  null,
-    "allowed_paths":  [
-                          "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1",
-                          "docs/chatgpt_status/_shared/slots_18/gas_emissions_1",
-                          "england_map_web/data/aays_18_slots/gas_emissions_1"
-                      ],
-    "direct_push_forbidden":  true
+  "state": "PUBLISH_PENDING",
+  "task_id": "gas_emissions_1_official_ingestion_samples_20260720_01",
+  "schema_version": 2,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "gas_emissions_1",
+  "base_slot_id": "gas_emissions",
+  "shard_index": 1,
+  "attempt_id": "gas-emissions-1-official-ingestion-a1",
+  "idempotency_key": "gas_emissions_1:61f3583e622cb4b3da47dcdb1446c8f4c1179dec:official_ingestion_samples",
+  "status": "queued",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "remote_head_basis": "61f3583e622cb4b3da47dcdb1446c8f4c1179dec",
+  "first_unverified_step": "DOWNLOAD_HASH_SCHEMA_AND_EXTRACT_BOUNDED_OFFICIAL_FACILITY_SAMPLES",
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/INGEST_OFFICIAL_PRTR_NAEI_PI_SAMPLES_20260720.py",
+  "read_paths": [
+    "docs/chatgpt_status/gas_emissions",
+    "docs/chatgpt_status/_shared/slots_21/gas_emissions_1",
+    "england_map_web/data/aays_21_slots/gas_emissions_1"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_official_ingestion_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_official_ingestion_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/official_facility_samples_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/official_facility_samples.html"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "cpu_heavy",
+    "light_read"
+  ],
+  "requires_shared_publish_gate": true,
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://assets.publishing.service.gov.uk/media/6a3d096c4c7605ab56723a63/uk_prtr_dataset_2024.xml",
+      "https://naei.energysecurity.gov.uk/sites/default/files/2025-09/NAEIPointsSources_2023.xlsx",
+      "https://environment.data.gov.uk/api/file/download?fileDataSetId=4faa4a52-7df2-4047-bc3f-877dd04222d8&fileName=2024+Pollution+Inventory+Dataset.zip"
+    ],
+    "source_snapshot_date": "2026-07-20",
+    "source_discovery_required": false,
+    "measurement_level": "candidate_point",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "NOT_RUN_OFFICIAL_COORDINATED_SAMPLE_EXTRACTION_ONLY",
+    "confidence_method": "OFFICIAL_DOWNLOAD_SHA256_SCHEMA_COORDINATE_FIELD_AND_SOURCE_PROVENANCE",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "source_conflict",
+      "low_confidence",
+      "geometry_mismatch",
+      "coordinate_crs_unknown",
+      "schema_not_recognised",
+      "download_hash_missing"
+    ]
+  },
+  "source_target_count": 3,
+  "maximum_sample_candidate_rows": 18,
+  "measured_parcel_rows_target": 0,
+  "single_runner_only": true,
+  "new_runner": false,
+  "parallel_runner": false,
+  "timeout_seconds": 1800,
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "updated_at": "2026-07-21T02:06:16.310158Z",
+  "blocker": null,
+  "result": {
+    "state": "PUBLISH_PENDING",
+    "exit_code": 0,
+    "log": "logs\\adaptive_v2\\slots\\gas_emissions_1\\gas_emissions_1_official_ingestion_samples_20260720_01.gas-emissions-1-official-ingestion-a1.log",
+    "error": "PUBLISHER_PUSH_FAILED: fatal: Cannot prompt because user interactivity has been disabled.\nfatal: could not read Username for 'https://github.com': terminal prompts disabled"
+  }
 }
