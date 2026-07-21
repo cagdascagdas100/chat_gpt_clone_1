@@ -3,7 +3,9 @@
 
 Read-only and fail-closed. The validator verifies the 7 July 2026 correction,
 including the exact r2 naming contract and the two duplicate-file defects fixed
-by Ofcom (CW!=CV and MK!=ME). It writes evidence only.
+by Ofcom (CW!=CV and MK!=ME). It also enforces the documented postcode CSV
+format and records denominator/network semantics so coverage fields are not
+misrepresented as parcel performance or full-fibre postcode evidence.
 """
 from __future__ import annotations
 
@@ -32,7 +34,12 @@ REQUIRED_FIELDS = {
     "unable30": ["% of premises unable to receive 30Mbit/s"],
     "unable_decent": ["% of premises unable to receive decent broadband from fixed or FWA"],
 }
+FORBIDDEN_POSTCODE_FIELDS = {
+    "full fibre availability premises": "Full Fibre availability (% premises)",
+    "number of premises with full fibre availability": "Number of premises with Full Fibre availability",
+}
 POSTCODE_RE = re.compile(r"^(GIR0AA|[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2})$")
+POSTCODE_SPACE_RE = re.compile(r"^(GIR 0AA|[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2})$")
 
 
 def normalise_key(value: str) -> str:
@@ -81,7 +88,7 @@ def parse_percent(value: Any, *, field: str, file_name: str, row_number: int) ->
 
 
 def expected_area_from_postcode(postcode: str) -> str:
-    match = re.match(r"^([A-Z]{1,2})", postcode)
+    match = re.match(r"^([A-Z]{1,3})", postcode)
     return match.group(1) if match else ""
 
 
@@ -95,7 +102,7 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
 
     by_area: dict[str, Path] = {}
     for path in files:
-        match = re.search(r"_r2_([A-Za-z]{1,2})\.csv$", path.name)
+        match = re.search(r"_r2_([A-Za-z]{1,3})\.csv$", path.name)
         if not match:
             raise ValueError(f"Unexpected r2 file name: {path.name}")
         area = match.group(1).upper()
@@ -122,18 +129,28 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
             reader = csv.DictReader(handle)
             headers = reader.fieldnames or []
-            header_keys = {normalise_key(h) for h in headers}
+            normalised_headers = [normalise_key(h) for h in headers]
+            duplicates = sorted({h for h in normalised_headers if normalised_headers.count(h) > 1})
+            if duplicates:
+                raise ValueError(f"Duplicate normalized CSV headers in {path.name}: {duplicates}")
+            header_keys = set(normalised_headers)
             missing = [name for name, aliases in REQUIRED_FIELDS.items() if not any(normalise_key(a) in header_keys for a in aliases)]
             if missing:
                 raise ValueError(f"{path.name} missing required fields: {missing}")
+            forbidden = [display for key, display in FORBIDDEN_POSTCODE_FIELDS.items() if key in header_keys]
+            if forbidden:
+                raise ValueError(f"Postcode-level full-fibre field prohibited by V2 schema in {path.name}: {forbidden}")
             for csv_row_no, row in enumerate(reader, start=2):
                 file_rows += 1
                 total_rows += 1
                 postcode = normalise_postcode(first_present(row, REQUIRED_FIELDS["postcode"]))
-                postcode_space = normalise_postcode(first_present(row, REQUIRED_FIELDS["postcode_space"]))
+                postcode_space_raw = str(first_present(row, REQUIRED_FIELDS["postcode_space"]) or "").strip().upper()
+                postcode_space = normalise_postcode(postcode_space_raw)
                 postcode_area = str(first_present(row, REQUIRED_FIELDS["postcode_area"]) or "").strip().upper()
                 if not postcode or not POSTCODE_RE.fullmatch(postcode):
                     raise ValueError(f"Invalid UK postcode in {path.name} row {csv_row_no}: {postcode}")
+                if not POSTCODE_SPACE_RE.fullmatch(postcode_space_raw):
+                    raise ValueError(f"postcode_space must contain exactly one inward-code separator in {path.name} row {csv_row_no}: {postcode_space_raw}")
                 if postcode_space != postcode:
                     raise ValueError(f"postcode/postcode_space mismatch in {path.name} row {csv_row_no}: {postcode}/{postcode_space}")
                 derived_area = expected_area_from_postcode(postcode)
@@ -148,6 +165,8 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
                 ]
                 if all(value is None for value in metrics):
                     null_metric_rows += 1
+        if file_rows == 0:
+            raise ValueError(f"Empty corrected r2 postcode file: {path.name}")
         manifests.append({"postcode_area": area, "file": path.name, "rows": file_rows, "sha256": hashes[area]})
 
     if total_rows != expected_rows:
@@ -156,7 +175,7 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
         raise ValueError("Unique postcode count does not equal total row count")
 
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
         "source_snapshot": "2026-01",
         "source_revision": "v2-r2",
@@ -173,8 +192,17 @@ def validate(directory: Path, *, expected_files: int = EXPECTED_FILES, expected_
         "me_sha256": hashes["ME"],
         "cw_not_cv_duplicate": True,
         "mk_not_me_duplicate": True,
+        "postcode_space_exact_single_separator_validated": True,
+        "duplicate_normalized_headers_rejected": True,
+        "postcode_full_fibre_field_present": False,
+        "coverage_network_scope": "FIXED_LINE_ONLY_EXCEPT_FIELDS_EXPLICITLY_NAMED_FIXED_OR_FWA",
+        "sfbb_ufbb_gigabit_denominator": "ALL_PREMISES_IN_POSTCODE",
+        "unable_30mbps_denominator": "MATCHED_PREMISES",
+        "unable_decent_fixed_or_fwa_denominator": "ALL_PREMISES_INCLUDING_UNMATCHED_AND_ZERO_PREDICTED_SPEED",
+        "postcode_full_fibre_availability_published": False,
+        "metric_semantics_source": "Ofcom About this data fixed coverage and full-fibre take-up v2 pages 3-5",
         "files": manifests,
-        "status": "PASS_OFFICIAL_V2_R2_CORRECTION_VALIDATED",
+        "status": "PASS_OFFICIAL_V2_R2_CORRECTION_AND_SEMANTICS_VALIDATED",
         "actual_business_data_rows_written": 0,
         "final_ready": False,
     }
@@ -188,7 +216,7 @@ def main() -> int:
     report = validate(args.ofcom_postcode_dir)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("status", "file_count", "row_count", "unique_postcode_count", "cw_not_cv_duplicate", "mk_not_me_duplicate", "actual_business_data_rows_written", "final_ready")}, sort_keys=True))
+    print(json.dumps({k: report[k] for k in ("status", "file_count", "row_count", "unique_postcode_count", "cw_not_cv_duplicate", "mk_not_me_duplicate", "postcode_space_exact_single_separator_validated", "postcode_full_fibre_availability_published", "actual_business_data_rows_written", "final_ready")}, sort_keys=True))
     return 0
 
 
