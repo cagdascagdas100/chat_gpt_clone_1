@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
-$attemptId = 'height-difference-2-20260721-015'
+$attemptId = 'height-difference-2-20260721-017'
 $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $expectedPageKey = 'aays1'
 $expectedCanonicalBlob = 'ca95400a5644f77a79cbaf47b2c2d611d3777a55'
@@ -55,7 +55,7 @@ $env:AAYS_TASK_ID = $taskId
 $env:AAYS_ATTEMPT_ID = $attemptId
 
 Write-Output 'SLOT_ID=height_difference_2'
-Write-Output 'TASK_VERSION=5.1-powershell-carrier'
+Write-Output 'TASK_VERSION=5.3-priority-fifo-restart-request'
 Write-Output "TASK_ID=$taskId"
 Write-Output "ATTEMPT_ID=$attemptId"
 Write-Output "REPO_ROOT=$repoRoot"
