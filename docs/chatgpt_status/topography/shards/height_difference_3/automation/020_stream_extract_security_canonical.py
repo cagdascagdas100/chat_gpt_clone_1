@@ -3,7 +3,7 @@
 
 Production invariants:
 - canonical registry is explicit row_no 1..92283 (feature order is never identity)
-- parcel_id and HMLR INSPIRE identifiers are non-empty and globally unique
+- parcel_id is unique; exact-coordinate HMLR authority-overlap aliases are explicitly linked
 - source HMLR lon/lat agrees with GeoJSON Point geometry
 - only rows 61523..92283 are exported
 - no elevation value is produced
@@ -236,8 +236,11 @@ def stream_extract(
     row_numbers: set[int] = set()
     parcel_ids: set[str] = set()
     inspire_ids: set[str] = set()
+    primary_by_inspire: dict[str, tuple[int, float, float]] = {}
     identity_by_row: dict[int, tuple[str, str, float, float, str]] = {}
     shard: list[dict[str, Any]] = []
+    shard_by_row: dict[int, dict[str, Any]] = {}
+    duplicate_alias_rows = 0
     feature_count = 0
 
     try:
@@ -248,16 +251,33 @@ def stream_extract(
                 raise ValueError(f"duplicate row_no {row_no}")
             if row["parcel_id"] in parcel_ids:
                 raise ValueError(f"duplicate parcel_id {row['parcel_id']}")
-            if row["hmlr_inspire_id"] in inspire_ids:
-                raise ValueError(f"duplicate hmlr_inspire_id {row['hmlr_inspire_id']}")
+            inspire_id = row["hmlr_inspire_id"]
+            if inspire_id in inspire_ids:
+                primary_row_no, primary_lon, primary_lat = primary_by_inspire[inspire_id]
+                # The source contains authority-boundary overlap aliases: the
+                # same official INSPIRE id and point can occur under two London
+                # authorities. Keep all compatibility rows but bind the alias
+                # to one measurement identity; conflicting coordinates block.
+                if abs(row["longitude"] - primary_lon) > tolerance or abs(row["latitude"] - primary_lat) > tolerance:
+                    raise ValueError(f"conflicting duplicate hmlr_inspire_id {inspire_id}")
+                duplicate_alias_rows += 1
+                row["canonical_identity_status"] = "authority_overlap_alias"
+                row["canonical_primary_row_no"] = primary_row_no
+                if primary_row_no in shard_by_row:
+                    shard_by_row[primary_row_no]["canonical_identity_status"] = "authority_overlap_primary"
             row_numbers.add(row_no)
             parcel_ids.add(row["parcel_id"])
-            inspire_ids.add(row["hmlr_inspire_id"])
+            if inspire_id not in inspire_ids:
+                inspire_ids.add(inspire_id)
+                primary_by_inspire[inspire_id] = (row_no, row["longitude"], row["latitude"])
+                row["canonical_identity_status"] = "unique"
+                row["canonical_primary_row_no"] = row_no
             identity_by_row[row_no] = (
                 row["parcel_id"], row["hmlr_inspire_id"], row["longitude"], row["latitude"], row["local_authority_name"]
             )
             if row_start <= row_no <= row_end:
                 shard.append(row)
+                shard_by_row[row_no] = row
 
         if feature_count != canonical_count:
             raise ValueError(f"expected {canonical_count} canonical features, received {feature_count}")
@@ -287,6 +307,8 @@ def stream_extract(
             "canonical_unique_row_numbers": len(row_numbers),
             "canonical_unique_parcel_ids": len(parcel_ids),
             "canonical_unique_hmlr_inspire_ids": len(inspire_ids),
+            "canonical_authority_overlap_alias_rows": duplicate_alias_rows,
+            "canonical_measurement_identity_count": len(inspire_ids),
             "shard_rows_exported": len(shard),
             "row_start": row_start,
             "row_end": row_end,
