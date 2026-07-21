@@ -10,6 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $slotId = "internet_access_2"
 $officialZipUrl = "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620"
+$officialV2Date = "2026-07-07"
 $expectedRows = 30761
 $expectedR2Count = 121
 if (-not $WorkRoot) { $WorkRoot = Join-Path $RepoRoot "outputs/internet_access_2_verified_run" }
@@ -24,6 +25,8 @@ $publisher = Join-Path $automationRoot "005_publish_slot2_readback.py"
 $publisherSelftest = Join-Path $automationRoot "006_selftest_publish_slot2_readback.py"
 $streamer = Join-Path $automationRoot "007_stream_extract_slot2_inputs.py"
 $streamerSelftest = Join-Path $automationRoot "008_selftest_stream_extract_slot2_inputs.py"
+$v2Validator = Join-Path $automationRoot "013_validate_ofcom_v2_corrections.py"
+$v2ValidatorSelftest = Join-Path $automationRoot "014_selftest_validate_ofcom_v2_corrections.py"
 
 $stageRoot = Join-Path $WorkRoot "stage"
 $extractRoot = Join-Path $WorkRoot "ofcom_extract"
@@ -32,6 +35,7 @@ $outputRoot = Join-Path $WorkRoot "candidate_outputs"
 $zipPath = Join-Path $stageRoot "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
 $partialZip = "$zipPath.part"
 $diagnosticsPath = Join-Path $WorkRoot "internet_access_2_network_and_execution_diagnostics_latest.json"
+$v2ValidationPath = Join-Path $WorkRoot "internet_access_2_ofcom_v2_validation_latest.json"
 
 New-Item -ItemType Directory -Force -Path $WorkRoot,$stageRoot,$sliceRoot,$outputRoot,$webRoot | Out-Null
 $diagnostics = [ordered]@{
@@ -39,6 +43,8 @@ $diagnostics = [ordered]@{
     slot_id = $slotId
     started_at = (Get-Date).ToUniversalTime().ToString("o")
     official_zip_url = $officialZipUrl
+    official_v2_correction_date = $officialV2Date
+    official_listed_zip_size_mb = 32.2
     canonical_source = $canonicalSource
     legacy_source = $legacySource
     allowed_web_output_root = $webRoot
@@ -52,6 +58,8 @@ $diagnostics = [ordered]@{
     extractor_selftest = $null
     streamer_selftest = $null
     publisher_selftest = $null
+    v2_validator_selftest = $null
+    v2_validation_report = $null
     canonical_slice_rows = $null
     legacy_slice_rows = $null
     candidate_manifest = $null
@@ -83,13 +91,14 @@ function Run-JsonSelftest([string]$path, [int]$expected) {
 }
 
 try {
-    foreach ($required in @($canonicalSource,$legacySource,$extractor,$extractorSelftest,$publisher,$publisherSelftest,$streamer,$streamerSelftest)) {
+    foreach ($required in @($canonicalSource,$legacySource,$extractor,$extractorSelftest,$publisher,$publisherSelftest,$streamer,$streamerSelftest,$v2Validator,$v2ValidatorSelftest)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required file missing: $required" }
     }
 
     $diagnostics.extractor_selftest = Run-JsonSelftest $extractorSelftest 12
     $diagnostics.streamer_selftest = Run-JsonSelftest $streamerSelftest 12
     $diagnostics.publisher_selftest = Run-JsonSelftest $publisherSelftest 10
+    $diagnostics.v2_validator_selftest = Run-JsonSelftest $v2ValidatorSelftest 18
 
     try {
         $dns = Resolve-DnsName -Name "www.ofcom.org.uk" -Type A -ErrorAction Stop
@@ -107,7 +116,7 @@ try {
     for ($attempt = 1; $attempt -le $DownloadRetries; $attempt++) {
         $entry = [ordered]@{ attempt=$attempt; started_at=(Get-Date).ToUniversalTime().ToString("o"); state="STARTED" }
         try {
-            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/3"}
+            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/5"}
             $length = (Get-Item -LiteralPath $partialZip).Length
             if ($length -lt 30000000) { throw "Downloaded ZIP is unexpectedly small: $length bytes" }
             $stream = [System.IO.File]::OpenRead($partialZip)
@@ -140,6 +149,17 @@ try {
     if ($r1.Count -ne 0) { throw "Superseded all-premises r1 postcode files found: $($r1.Count)" }
     if ($r2.Count -ne $expectedR2Count) { throw "Expected $expectedR2Count corrected r2 postcode files, found $($r2.Count)" }
 
+    $v2Raw = & $PythonExe $v2Validator --ofcom-postcode-dir $extractRoot --output $v2ValidationPath
+    if ($LASTEXITCODE -ne 0) { throw "Official V2 correction validation failed with exit code $LASTEXITCODE" }
+    $v2Result = $v2Raw | ConvertFrom-Json
+    if ($v2Result.status -ne "PASS_OFFICIAL_V2_R2_CORRECTION_VALIDATED" -or -not $v2Result.cw_not_cv_duplicate -or -not $v2Result.mk_not_me_duplicate) {
+        throw "Official V2 correction readback contract mismatch"
+    }
+    $diagnostics.v2_validation_report = $v2ValidationPath
+    $diagnostics.v2_validation_status = $v2Result.status
+    $diagnostics.cw_not_cv_duplicate = $v2Result.cw_not_cv_duplicate
+    $diagnostics.mk_not_me_duplicate = $v2Result.mk_not_me_duplicate
+
     & $PythonExe $streamer --canonical $canonicalSource --legacy-internet $legacySource --output-dir $sliceRoot
     if ($LASTEXITCODE -ne 0) { throw "Streaming bounded input extraction failed with exit code $LASTEXITCODE" }
     $sliceManifestPath = Join-Path $sliceRoot "internet_access_2_stream_slice_manifest_latest.json"
@@ -169,7 +189,7 @@ try {
     $diagnostics.legacy_current_r2_matches_pending_spatial_qa = $manifest.legacy_current_r2_matches_pending_spatial_qa
     $diagnostics.no_data_rows = $manifest.no_data_rows
     $diagnostics.visible_example_rows = $publisherResult.visible_example_rows
-    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, hashes, bounded inputs, exact r2 join and strict web readback completed. No migration or business write occurred."
+    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, hashes, V2 duplicate corrections, bounded inputs, exact r2 join and strict web readback completed. No migration or business write occurred."
     exit 0
 } catch {
     $diagnostics.error = $_.Exception.Message
