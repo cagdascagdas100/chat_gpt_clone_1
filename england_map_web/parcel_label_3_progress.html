@@ -7,46 +7,49 @@
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45}
     h1{margin-bottom:6px}.muted{color:#555}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}
-    .card{border:1px solid #bbb;border-radius:8px;padding:12px}table{border-collapse:collapse;width:100%;font-size:14px}
+    .card{border:1px solid #bbb;border-radius:8px;padding:12px}table{border-collapse:collapse;width:100%;font-size:13px}
     th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#fff}
     .ok{font-weight:700}.warn{font-weight:700}code{white-space:nowrap}.audit-link{margin:12px 0 18px}
   </style>
 </head>
 <body>
   <h1>parcel_label_3</h1>
-  <div class="muted">61523–92283 · yalnız resmi kaynak adayları · canonical geometri bağlaması bekliyor</div>
+  <div class="muted">61523–92283 · resmi kaynak adayları · canonical geometri bağlaması bekliyor</div>
   <div class="audit-link"><a href="parcel_label_3_historical_audit.html">198 satırlık tarihsel artifact audit tablosunu aç</a></div>
   <div class="summary" id="summary"></div>
   <table>
-    <thead><tr><th>#</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="9">Yükleniyor…</td></tr></tbody>
+    <thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Resmi kapsam</th><th>Geometri</th><th>Bloker</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="11">Yükleniyor…</td></tr></tbody>
   </table>
 <script>
 const files=[
-  'data/distance_property_types/parcel_label_3_candidates.json',
-  'data/distance_property_types/parcel_label_3_candidates_batch_3.json',
-  'data/distance_property_types/parcel_label_3_candidates_batch_4.json'
+  ['B1-2','data/distance_property_types/parcel_label_3_candidates.json'],
+  ['B3','data/distance_property_types/parcel_label_3_candidates_batch_3.json'],
+  ['B4','data/distance_property_types/parcel_label_3_candidates_batch_4.json'],
+  ['B5','data/distance_property_types/parcel_label_3_candidates_batch_5.json']
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-Promise.all(files.map(path=>fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()})))
+Promise.all(files.map(([label,path])=>fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()}).then(d=>({label,data:d}))))
  .then(batches=>{
-   const candidates=batches.flatMap(d=>d.candidates||[]);
-   const weighted=batches.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
-   const average=candidates.length?Math.round(weighted/candidates.length*100)/100:0;
-   const verified=Math.max(...batches.map(d=>Number(d.verified_slot_rows)||0));
-   const exact=Math.max(...batches.map(d=>Number(d.exact_geometry_rows)||0));
+   const rows=batches.flatMap(({label,data})=>(data.candidates||[]).map(c=>({...c,batch_label:label})));
+   const average=rows.length?rows.reduce((s,c)=>s+(Number(c.accuracy_percent)||0),0)/rows.length:0;
+   const ge97=rows.filter(c=>(Number(c.accuracy_percent)||0)>=97).length;
+   const verified=Math.max(...batches.map(x=>Number(x.data.verified_slot_rows)||0));
+   const exact=Math.max(...batches.map(x=>Number(x.data.exact_geometry_rows)||0));
    const cards=[
-    ['Görünür aday',candidates.length],
-    ['Sınıflandırma doğruluğu','%'+average.toFixed(2)],
+    ['Görünür aday',rows.length],
+    ['Yükseltilen kaynak',rows.length],
+    ['≥97 doğruluk',ge97],
+    ['Ortalama doğruluk','%'+average.toFixed(2)],
     ['Canonical slot satırı',verified],
     ['Exact geometri',exact]
    ];
    document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
-   document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr>
-    <td>${i+1}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
+   document.getElementById('rows').innerHTML=rows.map((c,i)=>`<tr>
+    <td>${i+1}</td><td>${esc(c.batch_label)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
     <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener">resmi kaynak</a></td>
-    <td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
- }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="9">${esc(e.message)}</td></tr>`});
+    <td>${esc(c.fresh_evidence)}</td><td>${esc(c.official_scope)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
+ }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="11">${esc(e.message)}</td></tr>`});
 </script>
 </body>
 </html>
