@@ -1,0 +1,74 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_2",
+  "generated_at": "2026-07-21T05:30:00Z",
+  "status": "SOURCE_DOWNLOAD_AND_CANONICAL_EXTRACTION_CONTRACT_HARDENED_NOT_EXECUTED",
+  "authoritative_remote_readback": {
+    "checkpoint_sequence": 0,
+    "status": "ready_for_claim",
+    "heartbeat": "unclaimed_stale",
+    "current_task": "idle",
+    "ownership": "unclaimed",
+    "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA"
+  },
+  "ofcom": {
+    "publication_page": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+    "snapshot_date": "2026-01",
+    "published_date": "2026-05-13",
+    "official_zip_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    "about_data_v2_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
+    "about_data_revision_date": "2026-07-07",
+    "outer_zip_filename": "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip",
+    "required_all_premises_postcode_pattern": "202601_fixed_postcode_coverage_r2_*.csv",
+    "rejected_all_premises_postcode_pattern": "202601_fixed_postcode_coverage_r1_*.csv",
+    "expected_r2_postcode_file_count": 121,
+    "expected_all_premises_postcode_rows": 1741096,
+    "postcode_full_fibre_field_available": false
+  },
+  "canonical_sources": {
+    "slot_partition": {
+      "start": 30762,
+      "end": 61522,
+      "count": 30761
+    },
+    "canonical_geojson": {
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "feature_count": 92283,
+      "git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+      "required_fields": [
+        "row_no",
+        "parcel_id",
+        "hmlr_row_id",
+        "hmlr_inspire_id",
+        "hmlr_lon",
+        "hmlr_lat"
+      ]
+    },
+    "legacy_internet_geojson": {
+      "path": "england_map_web/data/program_layer_matrix/internet.geojson",
+      "feature_count": 33785,
+      "git_blob_sha": "9c24fd366e29c3356b1e5178295b903edf8680ff",
+      "use": "legacy postcode evidence only; refreshed values must come from corrected Ofcom r2"
+    }
+  },
+  "extractor_contract": {
+    "script": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/002_extract_slot2_ofcom_2026_candidates.py",
+    "selftest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/003_selftest_slot2_extractor.py",
+    "runner": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/004_download_validate_extract_slot2.ps1",
+    "local_selftest": {
+      "status": "PASS",
+      "tests_passed": 12,
+      "tests_total": 12,
+      "business_rows_written": 0
+    },
+    "required_output_rows": 30761,
+    "required_status_sum": "direct_current_r2_matches + legacy_current_r2_matches_pending_spatial_qa + no_data_rows = 30761",
+    "scoring": "DISABLED_UNTIL_COLUMN_AWARE_SCORING_AND_SPATIAL_QA_PASS"
+  },
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
