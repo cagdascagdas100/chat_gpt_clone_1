@@ -1,11 +1,11 @@
 [CmdletBinding()]
 param(
-  [string]$RepoRoot = "C:\AAYS_WT\AAYS_REPAIR_20260706_1738",
+  [string]$RepoRoot = "",
   [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
   [string]$MainBranch = "codex/aays-single-runner-v5-20260706",
-  [string]$WorkRoot = "C:\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES",
+  [string]$WorkRoot = "",
   [int]$IntervalSeconds = 60,
-  [int]$MaxTasks = 8,
+  [int]$MaxTasks = 1,
   [int]$StaleMinutes = 15,
   [int]$HeartbeatSeconds = 15,
   [int]$RefreshIntervalSeconds = 43200,
@@ -18,7 +18,8 @@ $ErrorActionPreference = "Stop"
 
 function Resolve-AaysRepoRoot {
   param([string]$RequestedRoot)
-  $candidates = @($RequestedRoot, (Join-Path $PSScriptRoot "..\..\..\.."), "C:\AAYS_WT\AAYS_REPAIR_20260706_1738", "C:\Users\cagda\Documents\GitHub\AAYS")
+  $localRepo = Join-Path $PSScriptRoot "..\..\..\.."
+  $candidates = @($RequestedRoot, $localRepo, "F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707")
   foreach ($candidate in $candidates) {
     if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
     $resolved = Resolve-Path -LiteralPath $candidate -ErrorAction SilentlyContinue
@@ -46,7 +47,18 @@ function Test-RunnerActive([string]$LockPath) {
   return [pscustomobject]@{ active=($startMatches -and $scopeMatches); pid=$pidValue; stale=(-not $startMatches); verified=($startMatches -and $scopeMatches) }
 }
 
-$repoRoot = Resolve-AaysRepoRoot $RepoRoot
+$repoRoot = [System.IO.Path]::GetFullPath((Resolve-AaysRepoRoot $RepoRoot)).TrimEnd('\')
+if ($repoRoot.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
+  throw "BLOCKED_C_DRIVE_NOT_CANONICAL=$repoRoot"
+}
+if ([string]::IsNullOrWhiteSpace($WorkRoot)) {
+  $WorkRoot = Join-Path (Split-Path -Parent $repoRoot) 'AAYS_STABLE_RUNNER_WORKTREES'
+}
+$WorkRoot = [System.IO.Path]::GetFullPath($WorkRoot).TrimEnd('\')
+if ($WorkRoot.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
+  throw "BLOCKED_C_WORK_ROOT_NOT_CANONICAL=$WorkRoot"
+}
+
 $sharedRoot = Join-Path $repoRoot "docs/chatgpt_status/_shared"
 $automationRoot = Join-Path $sharedRoot "automation"
 $runner = Join-Path $automationRoot "RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1"
@@ -56,7 +68,7 @@ $panel = Join-Path $sharedRoot "panel/AAYS_RUNNER_PANEL.ps1"
 $statusDir = Join-Path $sharedRoot "status"
 $locksDir = Join-Path $sharedRoot "locks"
 $logsDir = Join-Path $sharedRoot "logs"
-New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir | Out-Null
+New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir, $WorkRoot | Out-Null
 $lockPath = Join-Path $locksDir "single_runner.lock"
 $bootstrapStatus = Join-Path $statusDir "runner_bootstrap_latest.json"
 
@@ -96,11 +108,13 @@ if (-not $NoPanel -and (Test-Path -LiteralPath $panel)) {
 $state = [ordered]@{
   updated_at = (Get-Date).ToUniversalTime().ToString("o")
   repo_root = $repoRoot
+  work_root = $WorkRoot
   repo_full_name = $RepoFullName
   runner_branch = $MainBranch
   runner_status = $runnerStatus
   runner_engine = "stable_legacy_worktree_runner_20260707"
   scan_runner = "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"
+  max_tasks_per_scan = $MaxTasks
   runner_pid = $runnerPid
   runner_lock_active = (Test-Path -LiteralPath $lockPath)
   lock_file = "docs/chatgpt_status/_shared/locks/single_runner.lock"
