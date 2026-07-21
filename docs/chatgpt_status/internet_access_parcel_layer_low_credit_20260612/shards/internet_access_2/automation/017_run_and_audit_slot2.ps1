@@ -35,7 +35,7 @@ if ($bundleSelftest.status -ne "PASS" -or $bundleSelftest.tests_passed -ne 18 -o
 $provenanceSelftestRaw = & $PythonExe $provenanceVerifierSelftest
 if ($LASTEXITCODE -ne 0) { throw "Single-run provenance verifier self-test failed with exit code $LASTEXITCODE" }
 $provenanceSelftest = $provenanceSelftestRaw | ConvertFrom-Json
-if ($provenanceSelftest.status -ne "PASS" -or $provenanceSelftest.tests_passed -ne 19 -or $provenanceSelftest.tests_total -ne 19) {
+if ($provenanceSelftest.status -ne "PASS" -or $provenanceSelftest.tests_passed -ne 20 -or $provenanceSelftest.tests_total -ne 20) {
     throw "Single-run provenance verifier self-test contract mismatch"
 }
 
