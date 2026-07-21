@@ -9,22 +9,24 @@
 </head>
 <body>
 <h1>Security / Public Safety — Runner Pickup</h1>
-<div class="notice"><code>security_public_safety_1</code> · <code>AREA_LEVEL_PROXY</code> · parsel ölçümü değildir · <code>final_ready=false</code> · <a id="progressLink" href="progress_v14.html">130 satırlık V14 ilerleme sayfası</a></div>
+<div class="notice"><code>security_public_safety_1</code> · <code>AREA_LEVEL_PROXY</code> · parsel ölçümü değildir · <code>final_ready=false</code> · <a id="progressLink" href="progress_v14.html">150 görünür satırlık V14 ilerleme sayfası</a></div>
 <table><thead><tr><th>Alan</th><th>Güncel değer</th></tr></thead><tbody id="rows"><tr><td colspan="2">Yükleniyor…</td></tr></tbody></table>
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-fetch('./runner_pickup_status_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+const getJson=url=>fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(url+' HTTP '+r.status);return r.json()});
+Promise.all([getJson('./runner_pickup_status_latest.json'),getJson('./supplemental_status_latest.json')]).then(([d,s])=>{
  document.getElementById('progressLink').href=d.progress_page||'progress_v14.html';
  const rows=[
   ['Durum',d.status],['Attempt',d.attempt_id],['Checkpoint',d.checkpoint_sequence],['İlk doğrulanmamış adım',d.first_unverified_step],
   ['Slot status',d.slot_status],['Current task',d.slot_current_task],['Heartbeat',`${d.slot_heartbeat}; stale=${d.slot_heartbeat_stale}`],
   ['JSON queue',`${d.json_queue_status}; consumed=${d.json_queue_consumed_by_existing_runner}`],['Legacy bridge',`ready=${d.legacy_bridge_ready}; worker=v${d.legacy_bridge_worker_version}`],
-  ['Hazır aday',d.prepared_candidate_count],['Aday doğruluk 4/4',d.prepared_candidate_accuracy_score_4_count],['Benzersiz API',d.prepared_candidate_unique_endpoints],
-  ['Bu tur eklenen aday',d.candidate_rows_added_this_turn],['Bu tur yeni endpoint',d.candidate_new_endpoints_this_turn],['Endpoint yeniden kullanım',`${d.candidate_endpoint_reuse_ratio} satır/API`],
-  ['Resmî kaynak',d.upgraded_official_sources],['Bu tur kaynak kalite kontrolü',d.official_source_quality_upgrades_this_turn],['Planlanan canlı ağ kontrolü',d.planned_live_network_checks],
-  ['Police API son ay',d.police_api_latest_month],['London LSOA son ay',d.london_lsoa_latest_month],['ONS sonraki yayın',d.ons_next_release_date],['ONS yeni yayın yayımlandı',d.ons_next_release_published],
-  ['London LSOA kapısı',d.london_lsoa_source_gate_ready],['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],
-  ['V14 AST authoring kontrolü',d.authoring_worker_v14_ast_parse_pass],['Worker zinciri V11’e düzleştirildi',d.worker_chain_flattened_to_v11],['Recursion regresyonu düzeltildi',d.preflight_recursion_regression_fixed],['Endpoint reuse kapısı hazır',d.candidate_endpoint_reuse_gate_ready],
+  ['Acceptance adayı',s.acceptance_candidate_target],['Acceptance benzersiz API',s.acceptance_unique_endpoints],['Acceptance yeniden kullanım',`${s.acceptance_endpoint_reuse_ratio} satır/API`],
+  ['Supplemental aday',s.supplemental_candidate_count],['Supplemental doğruluk 4/4',s.supplemental_accuracy_score_4_count],['Supplemental HTTP 200',s.supplemental_stored_http_200_count],
+  ['Supplemental benzersiz API',s.supplemental_unique_endpoints],['Supplemental yeni API',s.supplemental_new_unique_endpoints_vs_acceptance],['Görünür toplam',s.visible_candidate_total],
+  ['Görünür benzersiz API',s.visible_unique_endpoint_total],['Görünür yeniden kullanım',`${s.visible_endpoint_reuse_ratio} satır/API`],['Acceptance sözleşmesi değişti',!s.acceptance_contract_unchanged],
+  ['Resmî kaynak',s.official_source_count],['Bu tur resmî kaynak kontrolü',s.official_source_rechecks_this_turn],['Planlanan canlı ağ kontrolü',s.planned_live_network_checks_unchanged],
+  ['Police API son ay',s.police_api_latest_month],['London LSOA son ay',s.london_lsoa_latest_month],['ONS sonraki yayın',s.ons_next_release_date],['ONS yayımlandı',s.ons_next_release_published],
+  ['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],['V14 AST authoring kontrolü',d.authoring_worker_v14_ast_parse_pass],
   ['Control alias durumu',d.control_alias_state],['Global alias',d.global_control_alias],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],['Alias değiştirildi',d.global_control_alias_overwritten],
   ['Claim oluşturuldu',d.claim_created],['Acceptance raporu',d.acceptance_report_present],['Blocker',d.blocker],['Sonraki adım',d.next_step]
  ];
