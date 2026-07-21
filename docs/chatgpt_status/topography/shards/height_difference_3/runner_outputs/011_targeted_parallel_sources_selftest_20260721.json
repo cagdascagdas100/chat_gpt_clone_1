@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-targeted-parallel-sources-selftest-20260721",
+  "executed_at": "2026-07-21T02:12:00Z",
+  "scripts": [
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/023_download_os_terrain50_required_areas.py",
+      "sha256": "027275a402001ec4e63c3480754677095c47f93fc2a24cbeb10421d292b18e99",
+      "python_lines": 310,
+      "syntax_compile": "PASS"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/024_execute_parallel_targeted_sources.py",
+      "sha256": "20a173abef190fd5a547e0e1ce7d08e25d8afd685780badcffcabf993c475f19",
+      "python_lines": 173,
+      "syntax_compile": "PASS"
+    }
+  ],
+  "tests": [
+    {"test_id": "grid_letters_TQ", "status": "PASS", "evidence": "530000,180000 resolves to TQ"},
+    {"test_id": "grid_letters_SU", "status": "PASS", "evidence": "440000,110000 resolves to SU"},
+    {"test_id": "grid_letters_SJ", "status": "PASS", "evidence": "360000,390000 resolves to SJ"},
+    {"test_id": "candidate_area_map", "status": "PASS", "evidence": "candidate rows preserve explicit identity and deterministic 100 km area"},
+    {"test_id": "exact_download_selection", "status": "PASS", "evidence": "one official ASCII Grid download selected per required area"},
+    {"test_id": "ambiguous_download_fail_closed", "status": "PASS", "evidence": "duplicate official candidates are rejected"},
+    {"test_id": "missing_area_fail_closed", "status": "PASS", "evidence": "missing required grid area is rejected"},
+    {"test_id": "safe_archive_validates", "status": "PASS", "evidence": "area ZIP with ASCII, GML and PRJ passes"},
+    {"test_id": "bad_header_fail_closed", "status": "PASS", "evidence": "non-200 by 200 Terrain50 grid is rejected"},
+    {"test_id": "unsafe_path_fail_closed", "status": "PASS", "evidence": "archive traversal path is rejected"},
+    {"test_id": "wrong_area_fail_closed", "status": "PASS", "evidence": "TQ tiles cannot satisfy SU acquisition"},
+    {"test_id": "offline_three_area_manifest", "status": "PASS", "evidence": "SJ, SU and TQ fixtures produce three provenance records"},
+    {"test_id": "non_july_release_fail_closed", "status": "PASS", "evidence": "non-July Terrain50 release metadata is rejected"},
+    {"test_id": "parallel_orchestrator_success", "status": "PASS", "evidence": "mock end-to-end chain reaches verified publication with one process"},
+    {"test_id": "parallel_helper_preserves_order", "status": "PASS", "evidence": "parallel result records remain deterministic"},
+    {"test_id": "failed_stage_detected", "status": "PASS", "evidence": "any parallel stage failure blocks later sampling and publication"}
+  ],
+  "summary": {
+    "tests_total": 16,
+    "tests_passed": 16,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "single_process_bounded_concurrency_validated": true,
+    "maximum_parallel_network_stages": 2,
+    "new_runner_created": false,
+    "parallel_runner_used": false,
+    "queue_submission": false,
+    "real_targeted_download_executed": false,
+    "real_canonical_shard_rows_exported": 0,
+    "real_parcel_candidates_selected": 0,
+    "real_measurement_rows_written": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blockers": [
+    "EXISTING_F_RUNNER_MUST_EXECUTE_024_ON_COMMITTED_SECURITY_GEOJSON",
+    "OFFICIAL_HMLR_OS_AND_EA_NETWORK_CALLS_MUST_COMPLETE",
+    "OFFICIAL_CROSSCHECKED_REAL_ROWS_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
