@@ -120,7 +120,10 @@ def list_corrected_members(
     basenames = [member_basename(info.filename) for info in r2]
     if len(set(basenames)) != len(basenames):
         raise GateError("Duplicate corrected r2 member basenames found")
-    return sorted(r2, key=lambda info: member_basename(info.filename))
+    normalised_areas = [member_postcode_area(info.filename) for info in r2]
+    if len(set(normalised_areas)) != len(normalised_areas):
+        raise GateError("Duplicate corrected r2 postcode areas found")
+    return sorted(r2, key=lambda info: (member_postcode_area(info.filename), member_basename(info.filename)))
 
 
 def scan_ofcom_zip(
@@ -142,9 +145,10 @@ def scan_ofcom_zip(
             raise GateError("Official file does not have a ZIP signature")
 
     selected: dict[str, dict[str, Any]] = {}
-    seen_postcodes: set[str] = set()
     source_files: list[dict[str, Any]] = []
     total_rows = 0
+    unique_postcodes = 0
+    peak_member_unique_postcodes = 0
 
     try:
         with zipfile.ZipFile(zip_path) as archive:
@@ -154,6 +158,7 @@ def scan_ofcom_zip(
                 expected_area = member_postcode_area(info.filename)
                 file_rows = 0
                 retained_rows = 0
+                seen_in_member: set[str] = set()
                 digest = hashlib.sha256()
 
                 with archive.open(info, "r") as source:
@@ -187,10 +192,6 @@ def scan_ofcom_zip(
                                         f"postcode/postcode_space mismatch in {basename} row {logical_row}: "
                                         f"{postcode!r} != {postcode_space!r}"
                                     )
-                                if postcode in seen_postcodes:
-                                    raise GateError(f"Duplicate Ofcom postcode: {postcode}")
-                                seen_postcodes.add(postcode)
-
                                 area_value = str(
                                     required_value(row, base, "postcode_area", basename, logical_row)
                                 ).strip().upper()
@@ -200,6 +201,9 @@ def scan_ofcom_zip(
                                         f"Postcode area mismatch in {basename} row {logical_row}: "
                                         f"field={area_value}, derived={derived_area}, file={expected_area}"
                                     )
+                                if postcode in seen_in_member:
+                                    raise GateError(f"Duplicate Ofcom postcode within {expected_area}: {postcode}")
+                                seen_in_member.add(postcode)
 
                                 percentages: dict[str, float] = {}
                                 for field in (
@@ -236,12 +240,15 @@ def scan_ofcom_zip(
                                     }
                                     retained_rows += 1
 
+                unique_postcodes += len(seen_in_member)
+                peak_member_unique_postcodes = max(peak_member_unique_postcodes, len(seen_in_member))
                 source_files.append(
                     {
                         "file": basename,
                         "zip_member": info.filename,
                         "postcode_area": expected_area,
                         "rows": file_rows,
+                        "unique_postcodes": len(seen_in_member),
                         "retained_needed_rows": retained_rows,
                         "uncompressed_bytes": info.file_size,
                         "compressed_bytes": info.compress_size,
@@ -254,12 +261,15 @@ def scan_ofcom_zip(
 
     if total_rows != expected_total_rows:
         raise GateError(f"Expected {expected_total_rows} Ofcom postcode rows, found {total_rows}")
-    if len(seen_postcodes) != total_rows:
-        raise GateError("Global Ofcom postcode uniqueness count does not equal scanned rows")
+    if unique_postcodes != total_rows:
+        raise GateError("Area-partitioned exact postcode uniqueness count does not equal scanned rows")
 
     stats: dict[str, Any] = {
         "ofcom_postcodes_scanned": total_rows,
-        "ofcom_unique_postcodes": len(seen_postcodes),
+        "ofcom_unique_postcodes": unique_postcodes,
+        "postcode_uniqueness_strategy": "AREA_PARTITIONED_EXACT_PER_MEMBER_SET",
+        "postcode_area_member_count": len(source_files),
+        "peak_member_unique_postcodes": peak_member_unique_postcodes,
         "needed_postcodes": len(needed_postcodes),
         "retained_postcodes": len(selected),
         "needed_postcodes_not_found": len(needed_postcodes - set(selected)),
@@ -317,6 +327,9 @@ def main() -> int:
             "ofcom_csv_extracted_to_disk": False,
             "zip_member_stream_sha256_count": scan_stats["zip_member_stream_sha256_count"],
             "zip_member_crc_verified_by_complete_stream_read": True,
+            "postcode_uniqueness_strategy": scan_stats["postcode_uniqueness_strategy"],
+            "postcode_area_member_count": scan_stats["postcode_area_member_count"],
+            "peak_member_unique_postcodes": scan_stats["peak_member_unique_postcodes"],
         }
     )
 

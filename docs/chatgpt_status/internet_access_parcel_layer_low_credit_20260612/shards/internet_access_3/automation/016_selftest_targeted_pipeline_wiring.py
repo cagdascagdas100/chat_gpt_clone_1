@@ -81,6 +81,19 @@ def test_exact_truth_boundary() -> None:
         assert literal in source
 
 
+def test_direct_zip_uses_area_partitioned_exact_uniqueness() -> None:
+    source = (ROOT / "017_stream_ofcom_zip_needed_postcodes.py").read_text(encoding="utf-8")
+    assert "seen_in_member: set[str]" in source
+    assert "AREA_PARTITIONED_EXACT_PER_MEMBER_SET" in source
+    assert "seen_postcodes: set[str]" not in source
+
+
+def test_direct_zip_rejects_duplicate_normalised_areas() -> None:
+    source = (ROOT / "017_stream_ofcom_zip_needed_postcodes.py").read_text(encoding="utf-8")
+    assert "Duplicate corrected r2 postcode areas found" in source
+    assert "normalised_areas" in source
+
+
 TESTS = [
     test_targeted_command_uses_direct_zip_017,
     test_pipeline_required_set_complete,
@@ -88,6 +101,8 @@ TESTS = [
     test_exact_entrypoint_targets_014,
     test_exact_copy_set_contains_direct_zip_layer,
     test_exact_truth_boundary,
+    test_direct_zip_uses_area_partitioned_exact_uniqueness,
+    test_direct_zip_rejects_duplicate_normalised_areas,
 ]
 
 

@@ -93,7 +93,7 @@ def main() -> int:
     diagnostics = base.initial_diagnostics(repo_root, work_root, ofcom_url)
     diagnostics["pipeline_entrypoint"] = Path(__file__).name
     diagnostics["join_strategy"] = "DIRECT_ZIP_STREAM_SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES"
-    diagnostics["memory_strategy"] = "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY"
+    diagnostics["memory_strategy"] = "AREA_PARTITIONED_EXACT_UNIQUENESS_PLUS_NEEDED_POSTCODE_ROWS_ONLY"
     diagnostics["csv_extraction_mode"] = "NONE_DIRECT_ZIP_STREAM"
     diagnostics["ofcom_csv_extracted_to_disk"] = False
     stage_root.mkdir(parents=True, exist_ok=True)
@@ -192,6 +192,10 @@ def main() -> int:
             raise base.GateError("Candidate manifest reported CSV extraction to disk")
         if candidate_manifest.get("ofcom_zip_sha256") != zip_metadata["sha256"]:
             raise base.GateError("Candidate manifest ZIP SHA256 does not match validated source")
+        if candidate_manifest.get("postcode_uniqueness_strategy") != "AREA_PARTITIONED_EXACT_PER_MEMBER_SET":
+            raise base.GateError("Candidate manifest did not use area-partitioned exact uniqueness")
+        if int(candidate_manifest.get("postcode_area_member_count", -1)) != base.EXPECTED_OFCOM_FILE_COUNT:
+            raise base.GateError("Candidate manifest postcode-area member count mismatch")
         if int(candidate_manifest.get("actual_business_data_rows_written", -1)) != 0:
             raise base.GateError("Review-only extractor reported business writes")
 
@@ -204,6 +208,9 @@ def main() -> int:
         diagnostics["needed_postcodes"] = int(candidate_manifest["needed_postcodes"])
         diagnostics["ofcom_postcodes_retained"] = int(candidate_manifest["ofcom_postcodes_retained"])
         diagnostics["zip_member_stream_sha256_count"] = int(candidate_manifest["zip_member_stream_sha256_count"])
+        diagnostics["postcode_uniqueness_strategy"] = candidate_manifest["postcode_uniqueness_strategy"]
+        diagnostics["postcode_area_member_count"] = int(candidate_manifest["postcode_area_member_count"])
+        diagnostics["peak_member_unique_postcodes"] = int(candidate_manifest["peak_member_unique_postcodes"])
         diagnostics["samples"] = candidate_manifest.get("samples", [])
         base.save_diagnostics(
             diagnostics_path,

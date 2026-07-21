@@ -158,6 +158,24 @@ def test_valid_direct_stream() -> None:
         assert stats["ofcom_csv_extracted_to_disk"] is False
 
 
+def test_area_partition_stats() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        path = make_zip(Path(temp) / "official.zip", valid_members())
+        _, files, stats = scan(path, {"AA11AA"})
+        assert stats["postcode_uniqueness_strategy"] == "AREA_PARTITIONED_EXACT_PER_MEMBER_SET"
+        assert stats["postcode_area_member_count"] == 3
+        assert stats["ofcom_unique_postcodes"] == 6
+        assert stats["peak_member_unique_postcodes"] == 2
+
+
+def test_member_unique_count_manifest() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        path = make_zip(Path(temp) / "official.zip", valid_members())
+        _, files, _ = scan(path)
+        assert [item["unique_postcodes"] for item in files] == [2, 2, 2]
+        assert all(item["unique_postcodes"] == item["rows"] for item in files)
+
+
 def test_member_hash_crc_manifest() -> None:
     with tempfile.TemporaryDirectory() as temp:
         path = make_zip(Path(temp) / "official.zip", valid_members())
@@ -199,12 +217,31 @@ def test_reject_total_rows() -> None:
         expect_error(lambda: scan(path, rows=7), "Expected 7")
 
 
-def test_reject_duplicate_postcode() -> None:
+def test_reject_duplicate_postcode_within_area() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        members = valid_members()
+        members[0] = (members[0][0], [csv_row("AA11AA", "AA"), csv_row("AA11AA", "AA")], None)
+        path = make_zip(Path(temp) / "official.zip", members)
+        expect_error(lambda: scan(path), "Duplicate Ofcom postcode within AA")
+
+
+def test_reject_duplicate_normalised_area_members() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        members = [
+            ("folder/202601_fixed_postcode_coverage_r2_AA.csv", [csv_row("AA11AA", "AA")], None),
+            ("other/202601_fixed_postcode_coverage_r2_aa.csv", [csv_row("AA11AB", "AA")], None),
+            ("folder/202601_fixed_postcode_coverage_r2_BB.csv", [csv_row("BB11AA", "BB")], None),
+        ]
+        path = make_zip(Path(temp) / "official.zip", members)
+        expect_error(lambda: scan(path, files=3, rows=3), "Duplicate corrected r2 postcode areas")
+
+
+def test_cross_area_duplicate_cannot_bypass_partition() -> None:
     with tempfile.TemporaryDirectory() as temp:
         members = valid_members()
         members[2] = (members[2][0], [csv_row("AA11AA", "CC"), csv_row("CC11AB", "CC")], None)
         path = make_zip(Path(temp) / "official.zip", members)
-        expect_error(lambda: scan(path), "Duplicate Ofcom postcode")
+        expect_error(lambda: scan(path), "Postcode area mismatch")
 
 
 def test_reject_missing_field() -> None:
@@ -253,13 +290,17 @@ def test_reject_percentage_range() -> None:
 
 TESTS = [
     test_valid_direct_stream,
+    test_area_partition_stats,
+    test_member_unique_count_manifest,
     test_member_hash_crc_manifest,
     test_reject_non_zip_signature,
     test_reject_r1_member,
     test_reject_file_count,
     test_reject_duplicate_member_basename,
     test_reject_total_rows,
-    test_reject_duplicate_postcode,
+    test_reject_duplicate_postcode_within_area,
+    test_reject_duplicate_normalised_area_members,
+    test_cross_area_duplicate_cannot_bypass_partition,
     test_reject_missing_field,
     test_reject_blank_postcode,
     test_reject_postcode_space_mismatch,
