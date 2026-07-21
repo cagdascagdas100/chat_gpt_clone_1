@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_1",
+  "generated_at": "2026-07-21T16:10:00+03:00",
+  "tool": "automation/003_verify_onspd_may2026_hosted_table.py",
+  "status": "PASS",
+  "test_mode": "ENHANCED_ONSPD_MAY2026_CONTRACT_FIXTURES_NOT_OFFICIAL_ROWS",
+  "official_source": {
+    "name": "ONS Postcode Directory May 2026 hosted table",
+    "service_visible_on_official_arcgis_directory": true,
+    "required_fields": ["pcds", "lat", "long", "lad25cd", "rgn25cd", "doterm"],
+    "official_direct_rows_read": 0
+  },
+  "syntax_compile": "PASS",
+  "checks_passed": 35,
+  "checks_failed": 0,
+  "checks_total": 35,
+  "positive_fixture": {
+    "rows": 2,
+    "active_rows": 1,
+    "terminated_rows": 1,
+    "current_join_eligible_rows": 1,
+    "identical_duplicate_deduped": true
+  },
+  "negative_fail_closed_cases": [
+    "missing_pcds",
+    "malformed_lat",
+    "non_finite_longitude",
+    "latitude_outside_uk_range",
+    "longitude_outside_uk_range",
+    "conflicting_duplicate_coordinates",
+    "conflicting_duplicate_metadata",
+    "centroid_distance_over_300m",
+    "non_london_lad",
+    "non_london_region",
+    "invalid_doterm",
+    "missing_requested_postcode",
+    "unexpected_returned_postcode",
+    "missing_features_array",
+    "arcgis_error_payload",
+    "feature_not_object",
+    "attributes_not_object",
+    "missing_lad25cd",
+    "invalid_postcode_format"
+  ],
+  "guardrails": {
+    "terminated_postcode_current_join_eligible": false,
+    "broadband_value_allowed": false,
+    "internet_accuracy_upgraded_rows": 0,
+    "broadband_values_written": 0,
+    "business_rows_written": 0,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "fake_business_data": false,
+    "final_ready": false
+  },
+  "official_network_run": "BLOCKED_RUNTIME_DNS_AND_WEB_SAFE_URL_POLICY"
+}
