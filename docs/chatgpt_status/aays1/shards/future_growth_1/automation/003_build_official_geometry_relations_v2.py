@@ -122,7 +122,7 @@ def load_candidate_pairs(path: Path) -> list[dict[str, Any]]:
         if row.get("future_growth_score") is not None or bool(row.get("scorable")):
             raise ValueError("input candidate already contains an impermissible score")
         result.append(row)
-    current_pairs = sum(bool(row.get("source_current")) for row in result)
+    current_pairs = sum(1 for row in result if bool(row.get("source_current")))
     stale_pairs = len(result) - current_pairs
     if current_pairs != 5 or stale_pairs != 1:
         raise ValueError("candidate current/stale partition changed")
@@ -408,7 +408,7 @@ def publish(
             "optional_stale_gla_site_polygons": len(OPTIONAL_STALE_SITE_REFS & set(gla)),
             "candidate_rows": len(rows),
             "current_polygon_relations_verified": len(current_rows),
-            "stale_or_completed_rejections": sum(not bool(row.get("source_current")) for row in rows),
+            "stale_or_completed_rejections": sum(1 for row in rows if not bool(row.get("source_current"))),
             "scored_business_rows": 0,
             "actual_business_data_rows_written": 0,
         },
@@ -419,8 +419,8 @@ def publish(
             "current_gla_polygon_readback": "3/3",
             "current_candidate_polygon_relations": "5/5",
             "stale_false_positive_rejected": "1/1",
-            "nearest_polygon_fill_used": false,
-            "point_only_promotion_used": false,
+            "nearest_polygon_fill_used": False,
+            "point_only_promotion_used": False,
             "future_growth_score_emitted": "0/30761",
         },
         "first_unverified_step": "BUILD_30761_ROW_FULL_FACTOR_MATRIX_THEN_SCORE_WITH_CONFIDENCE",
