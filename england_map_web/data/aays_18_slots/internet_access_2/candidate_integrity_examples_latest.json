@@ -1,0 +1,104 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_2",
+  "description": "Contract examples only; these are not real parcel observations.",
+  "examples": [
+    {
+      "id": 1,
+      "candidate_class": "CURRENT_R2_DIRECT_POSTCODE_READY_FOR_REVIEW",
+      "postcode_state": "VALID_POSTCODE_PRESENT_IN_CURRENT_R2",
+      "required_method": "CANONICAL_POSTCODE",
+      "required_confidence": 0.95,
+      "metric_boundary": "AT_LEAST_ONE_PUBLISHED_OFCOM_METRIC_NON_NULL",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 2,
+      "candidate_class": "CURRENT_R2_LEGACY_POSTCODE_MATCH_PENDING_SPATIAL_QA",
+      "postcode_state": "VALID_LEGACY_POSTCODE_PRESENT_IN_CURRENT_R2",
+      "required_method": "LEGACY_POSTCODE_PROXY",
+      "required_confidence": 0.7,
+      "metric_boundary": "AT_LEAST_ONE_PUBLISHED_OFCOM_METRIC_NON_NULL_AND_SPATIAL_QA_STILL_REQUIRED",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 3,
+      "candidate_class": "NO_DATA",
+      "postcode_state": "NO_POSTCODE",
+      "required_method": "NO_POSTCODE",
+      "required_confidence": 0,
+      "metric_boundary": "POSTCODE_NULL_AND_ALL_OFCOM_METRICS_NULL",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 4,
+      "candidate_class": "NO_DATA",
+      "postcode_state": "VALID_POSTCODE_NOT_FOUND_IN_CURRENT_R2",
+      "required_method": "POSTCODE_NOT_IN_CURRENT_R2",
+      "required_confidence": 0,
+      "metric_boundary": "POSTCODE_MAY_BE_RETAINED_BUT_ALL_OFCOM_METRICS_NULL",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 5,
+      "candidate_class": "DIRECT_OR_LEGACY_WITH_ALL_METRICS_NULL",
+      "postcode_state": "POSTCODE_MAY_EXIST",
+      "required_method": "ANY_MATCH_METHOD",
+      "required_confidence": "NOT_ACCEPTED",
+      "metric_boundary": "ALL_PUBLISHED_OFCOM_METRICS_NULL",
+      "decision": "REJECT_FAIL_CLOSED"
+    },
+    {
+      "id": 6,
+      "candidate_class": "NO_DATA_WITH_NON_NULL_METRIC",
+      "postcode_state": "ANY",
+      "required_method": "NO_POSTCODE_OR_POSTCODE_NOT_IN_CURRENT_R2",
+      "required_confidence": 0,
+      "metric_boundary": "ANY_OFCOM_METRIC_NON_NULL",
+      "decision": "REJECT_FAIL_CLOSED"
+    },
+    {
+      "id": 7,
+      "candidate_class": "LEGACY_FALLBACK_AFTER_INVALID_CANONICAL",
+      "postcode_state": "CANONICAL_INVALID_LEGACY_VALID",
+      "required_method": "LEGACY_POSTCODE_PROXY",
+      "required_confidence": 0.7,
+      "postcode_resolution": "LEGACY_VALID_FALLBACK_CANONICAL_INVALID",
+      "metric_boundary": "INVALID_CANONICAL_IS_PROVENANCE_ONLY; VALID_LEGACY_MAY_MATCH_CURRENT_R2",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 8,
+      "candidate_class": "CANONICAL_WINS_VISIBLE_LEGACY_CONFLICT",
+      "postcode_state": "CANONICAL_VALID_AND_LEGACY_VALID_BUT_DIFFERENT",
+      "required_method": "CANONICAL_POSTCODE",
+      "required_confidence": 0.95,
+      "postcode_resolution": "CANONICAL_VALID_LEGACY_CONFLICT_IGNORED",
+      "metric_boundary": "CANONICAL_SELECTED; CONFLICT_FLAG_TRUE; LEGACY_NOT_USED",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 9,
+      "candidate_class": "NO_VALID_POSTCODE",
+      "postcode_state": "ONLY_INVALID_CANDIDATES",
+      "required_method": "NO_POSTCODE",
+      "required_confidence": 0,
+      "postcode_resolution": "NO_VALID_POSTCODE",
+      "metric_boundary": "SELECTED_POSTCODE_NULL; INVALID_VALUES_PRESERVED_ONLY_IN_PROVENANCE",
+      "decision": "PASS_CONTRACT_EXAMPLE"
+    },
+    {
+      "id": 10,
+      "candidate_class": "INVALID_POSTCODE_LEAKED_TO_SELECTED_FIELD",
+      "postcode_state": "SELECTED_POSTCODE_FAILS_UK_SYNTAX",
+      "required_method": "ANY",
+      "required_confidence": "NOT_ACCEPTED",
+      "postcode_resolution": "ANY",
+      "metric_boundary": "INVALID_SELECTED_LOOKUP_KEY",
+      "decision": "REJECT_FAIL_CLOSED"
+    }
+  ],
+  "real_parcel_rows": 0,
+  "actual_business_data_rows_written": 0,
+  "final_ready": false
+}
