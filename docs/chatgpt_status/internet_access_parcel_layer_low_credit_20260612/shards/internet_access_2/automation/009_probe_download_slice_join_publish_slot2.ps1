@@ -39,12 +39,17 @@ $v2ValidationPath = Join-Path $WorkRoot "internet_access_2_ofcom_v2_validation_l
 
 New-Item -ItemType Directory -Force -Path $WorkRoot,$stageRoot,$sliceRoot,$outputRoot,$webRoot | Out-Null
 $diagnostics = [ordered]@{
-    schema_version = 5
+    schema_version = 6
     slot_id = $slotId
     started_at = (Get-Date).ToUniversalTime().ToString("o")
     official_zip_url = $officialZipUrl
+    official_outer_zip_filename = "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
+    outer_zip_r1_name_is_transport_container_only = $true
     official_v2_correction_date = $officialV2Date
-    official_listed_zip_size_mb = 32.3
+    official_page_display_size_mb_observations = @(32.2,32.3)
+    official_page_display_size_consistency = "CONFLICTING_READBACK_METADATA_ONLY"
+    official_checksum_published = $false
+    package_integrity_basis = "RUNTIME_BYTE_COUNT_ZIP_SIGNATURE_SHA256_AND_INTERNAL_V2_VALIDATION"
     canonical_source = $canonicalSource
     legacy_source = $legacySource
     allowed_web_output_root = $webRoot
@@ -119,7 +124,7 @@ try {
     for ($attempt = 1; $attempt -le $DownloadRetries; $attempt++) {
         $entry = [ordered]@{ attempt=$attempt; started_at=(Get-Date).ToUniversalTime().ToString("o"); state="STARTED" }
         try {
-            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/7"}
+            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/8"}
             $length = (Get-Item -LiteralPath $partialZip).Length
             if ($length -lt 30000000) { throw "Downloaded ZIP is unexpectedly small: $length bytes" }
             $stream = [System.IO.File]::OpenRead($partialZip)
@@ -204,7 +209,7 @@ try {
     $diagnostics.legacy_current_r2_matches_pending_spatial_qa = $manifest.legacy_current_r2_matches_pending_spatial_qa
     $diagnostics.no_data_rows = $manifest.no_data_rows
     $diagnostics.visible_example_rows = $publisherResult.visible_example_rows
-    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, hashes, V2 duplicate corrections, postcode folder/level schema, all percentage ranges, speed-threshold semantics, bounded inputs, exact r2 join and strict web readback completed. No migration or business write occurred."
+    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, runtime SHA-256, internal V2 payload corrections, postcode folder/level schema, percentage ranges, threshold semantics, bounded inputs, exact r2 join and strict web readback completed. The outer r1 ZIP name and conflicting displayed size labels were treated as metadata only. No migration or business write occurred."
     exit 0
 } catch {
     $diagnostics.error = $_.Exception.Message
