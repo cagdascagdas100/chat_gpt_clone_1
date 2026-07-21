@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-stream-extract-api-download-measure-20260721",
+  "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "queue_submission": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "source": "england_map_web/data/program_layer_matrix/security.geojson",
+  "execution_order": [
+    {
+      "stage": 1,
+      "script": "automation/020_stream_extract_security_canonical.py",
+      "purpose": "stream-validate all explicit canonical rows and export only 61523-92283"
+    },
+    {
+      "stage": 2,
+      "script": "automation/004_prepare_three_real_sample_queries.py",
+      "purpose": "select the first three explicit source-backed unresolved shard rows"
+    },
+    {
+      "stage": 3,
+      "script": "automation/021_download_os_terrain50_via_api.py",
+      "purpose": "download current Terrain50 GB ASCII Grid package through the official OS Downloads API and validate ZIP/tile schema"
+    },
+    {
+      "stage": 4,
+      "script": "automation/015_execute_auto_source_and_measurement_pipeline.py",
+      "purpose": "download current HMLR data, match exact boundaries, retrieve EA DTM 1m, sample, crosscheck Terrain50 and publish verified rows"
+    }
+  ],
+  "one_command_orchestrator": "automation/022_execute_canonical_api_measurement_pipeline.py",
+  "acceptance": [
+    "exact explicit canonical registry 1-92283",
+    "exact shard rows 61523-92283 count 30761",
+    "unique parcel_id and HMLR INSPIRE ID",
+    "GeoJSON Point and HMLR coordinate agreement",
+    "first three explicit deterministic shard rows",
+    "official OS Downloads API provenance and SHA256",
+    "current HMLR polygon match without nearest fill",
+    "EA DTM 1m numeric polygon sample",
+    "OS Terrain50 exact tile crosscheck",
+    "only HIGH or MEDIUM_HIGH rows published"
+  ],
+  "expected_command": "python automation/022_execute_canonical_api_measurement_pipeline.py --security-geojson F:\\chatgpt\\chat_gpt_clone_1_main\\england_map_web\\data\\program_layer_matrix\\security.geojson --output-dir F:\\TerraYield_AAYS_Portable\\outputs\\height_difference_3\\010",
+  "current_blockers": [
+    "EXISTING_F_RUNNER_MUST_EXECUTE_022_ON_COMMITTED_SECURITY_GEOJSON",
+    "OFFICIAL_NETWORK_CALLS_MUST_COMPLETE_ON_EXISTING_RUNNER",
+    "OFFICIAL_HMLR_EA_DTM_AND_TERRAIN50_CROSSCHECK_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
