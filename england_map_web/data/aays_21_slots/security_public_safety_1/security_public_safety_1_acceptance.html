@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AAYS Security Public Safety Shard 1 Acceptance</title></head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false" data-row-count="300">
+<h1>Security / Public Safety — Shard 1</h1>
+<p id="semantic-label">AREA_LEVEL_PROXY — LSOA/area-level evidence; not a parcel measurement.</p>
+<p id="visible-rows">Görünür / izlenen satır: yükleniyor</p>
+<table><thead><tr><th>Parcel reference</th><th>Area proxy score</th><th>Source geography</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+(async () => {
+  const response = await fetch('./security_public_safety_1_area_level_proxy_300.json', {cache: 'no-store'});
+  if (!response.ok) throw new Error(`proxy_json_http_${response.status}`);
+  const payload = await response.json();
+  const valid = payload.output_semantics === 'AREA_LEVEL_PROXY' && payload.parcel_measurement === false && payload.row_count === 300;
+  document.body.dataset.loadedCount = String(payload.row_count);
+  document.body.dataset.semanticValid = String(valid);
+  document.getElementById('visible-rows').textContent = `Görünür / izlenen satır: ${payload.row_count}`;
+  document.getElementById('rows').innerHTML = payload.rows.slice(0, 20).map(row => `<tr><td>${row.parcel_id}</td><td>${row.security_score_percent}</td><td>${row.source_geography_level}</td></tr>`).join('');
+  if (!valid) throw new Error('area_level_proxy_contract_failed');
+})().catch(error => { document.body.dataset.acceptanceError = String(error); console.error(error); });
+</script></body></html>

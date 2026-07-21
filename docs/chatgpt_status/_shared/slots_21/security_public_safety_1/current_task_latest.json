@@ -1,24 +1,85 @@
 {
-  "schema_version": 3,
+  "state": "PUBLISH_PENDING",
+  "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
+  "schema_version": 2,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_1",
   "base_slot_id": "security_public_safety",
   "shard_index": 1,
+  "attempt_id": "security-public-safety-1-20260720-001",
+  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v1",
+  "status": "pending",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_continue.py",
+  "read_paths": [
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_1"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_1",
+    "england_map_web/data/aays_21_slots/security_public_safety_1"
+  ],
+  "resource_class": [
+    "light_read"
+  ],
+  "requires_browser_acceptance_gate": true,
+  "requires_git_publish_gate": true,
   "parcel_partition": {
     "start": 1,
     "end": 30761,
-    "count": 30761,
-    "canonical_count": 92283
+    "count": 30761
   },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://data.police.uk/",
+      "https://data.police.uk/api/forces"
+    ],
+    "source_snapshot_date": "2026-05",
+    "source_discovery_required": false,
+    "measurement_level": "lsoa",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
+    "confidence_method": "official_source_coverage_plus_spatial_match_not_parcel_measurement",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "source_conflict",
+      "low_confidence",
+      "geometry_mismatch",
+      "missing_area_proxy_disclaimer"
+    ]
+  },
+  "acceptance_contract": {
+    "expected_hydrated_rows": 300,
+    "required_output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_measurement_must_be_false": true,
+    "http_status_required": 200,
+    "sha256_required": true,
+    "dom_visible_rows_required": 300,
+    "console_error_count_required": 0,
+    "actual_headless_browser_required": true,
+    "product_matrix_area_proxy_label_required": true,
+    "remote_commit_push_readback_required": true
+  },
+  "timeout_seconds": 1800,
+  "single_runner_only": true,
+  "child_direct_push_forbidden": true,
   "final_ready": false,
-  "state": "idle",
-  "task_id": null,
-  "owner_page_session_id": null,
-  "allowed_paths": [
-    "docs/chatgpt_status/aays1/shards/security_public_safety_1",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_1",
-    "england_map_web/data/aays_21_slots/security_public_safety_1"
-  ],
-  "direct_push_forbidden": true
+  "updated_at": "2026-07-20T15:58:09.594801Z",
+  "blocker": null,
+  "result": {
+    "state": "PUBLISH_PENDING",
+    "exit_code": 0,
+    "log": "logs\\adaptive_v2\\slots\\security_public_safety_1\\aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720.security-public-safety-1-20260720-001.log",
+    "error": "PUBLISHER_REFRESH_NOT_READY: fatal: Unable to create 'H:/TerraYield_AAYS_Portable/runner_system/adaptive_v2/publisher/.git/index.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue."
+  }
 }
