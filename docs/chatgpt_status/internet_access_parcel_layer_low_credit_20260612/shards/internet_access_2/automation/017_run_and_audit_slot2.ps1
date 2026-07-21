@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $slotId = "internet_access_2"
 $expectedRows = 30761
-$expectedCombinedValidation = 292
+$expectedCombinedValidation = 314
 $automationRoot = Join-Path $RepoRoot "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation"
 $webRoot = Join-Path $RepoRoot "england_map_web/data/aays_18_slots/internet_access_2"
 $effectiveWorkRoot = if ($WorkRoot) { $WorkRoot } else { Join-Path $RepoRoot "outputs/internet_access_2_verified_run" }
@@ -19,6 +19,8 @@ $bundleVerifier = Join-Path $automationRoot "015_verify_published_runner_bundle.
 $bundleVerifierSelftest = Join-Path $automationRoot "016_selftest_verify_published_runner_bundle.py"
 $candidateVerifier = Join-Path $automationRoot "021_verify_candidate_jsonl_integrity.py"
 $candidateVerifierSelftest = Join-Path $automationRoot "022_selftest_verify_candidate_jsonl_integrity.py"
+$postcodeResolutionVerifier = Join-Path $automationRoot "028_validate_candidate_postcode_resolution.py"
+$postcodeResolutionVerifierSelftest = Join-Path $automationRoot "029_selftest_validate_candidate_postcode_resolution.py"
 $provenanceVerifier = Join-Path $automationRoot "019_verify_single_run_provenance.py"
 $provenanceVerifierSelftest = Join-Path $automationRoot "020_selftest_verify_single_run_provenance.py"
 $consistencyVerifier = Join-Path $automationRoot "024_validate_review_contract_consistency.py"
@@ -27,8 +29,9 @@ $consistencyAuditOutput = Join-Path $webRoot "review_contract_consistency_latest
 $bundleAuditOutput = Join-Path $webRoot "runner_bundle_audit_latest.json"
 $provenanceAuditOutput = Join-Path $webRoot "runner_provenance_audit_latest.json"
 $candidateAuditOutput = Join-Path $webRoot "candidate_jsonl_integrity_latest.json"
+$postcodeResolutionAuditOutput = Join-Path $webRoot "candidate_postcode_resolution_latest.json"
 
-foreach ($required in @($innerRunner,$bundleVerifier,$bundleVerifierSelftest,$candidateVerifier,$candidateVerifierSelftest,$provenanceVerifier,$provenanceVerifierSelftest,$consistencyVerifier,$consistencyVerifierSelftest)) {
+foreach ($required in @($innerRunner,$bundleVerifier,$bundleVerifierSelftest,$candidateVerifier,$candidateVerifierSelftest,$postcodeResolutionVerifier,$postcodeResolutionVerifierSelftest,$provenanceVerifier,$provenanceVerifierSelftest,$consistencyVerifier,$consistencyVerifierSelftest)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required file missing: $required" }
 }
 
@@ -70,12 +73,29 @@ if ($candidateSelftest.status -ne "PASS" -or $candidateSelftest.tests_passed -ne
     throw "Candidate JSONL integrity self-test contract mismatch"
 }
 
+$postcodeResolutionSelftestRaw = & $PythonExe $postcodeResolutionVerifierSelftest
+if ($LASTEXITCODE -ne 0) { throw "Candidate postcode resolution self-test failed with exit code $LASTEXITCODE" }
+$postcodeResolutionSelftest = $postcodeResolutionSelftestRaw | ConvertFrom-Json
+if ($postcodeResolutionSelftest.status -ne "PASS" -or $postcodeResolutionSelftest.tests_passed -ne 18 -or $postcodeResolutionSelftest.tests_total -ne 18) {
+    throw "Candidate postcode resolution self-test contract mismatch"
+}
+
 $innerArgs = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$innerRunner,"-RepoRoot",$RepoRoot,"-PythonExe",$PythonExe,"-WorkRoot",$effectiveWorkRoot,"-DownloadRetries",$DownloadRetries)
 & powershell @innerArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $candidateRows = Join-Path $effectiveWorkRoot "candidate_outputs/internet_access_2_candidates_latest.jsonl"
 $candidateManifest = Join-Path $effectiveWorkRoot "candidate_outputs/internet_access_2_extraction_manifest_latest.json"
+$postcodeResolutionAuditRaw = & $PythonExe $postcodeResolutionVerifier --rows-jsonl $candidateRows --audit-output $postcodeResolutionAuditOutput
+if ($LASTEXITCODE -ne 0) { throw "Candidate postcode resolution audit failed with exit code $LASTEXITCODE" }
+$postcodeResolutionAudit = $postcodeResolutionAuditRaw | ConvertFrom-Json
+if ($postcodeResolutionAudit.status -ne "PASS_CANDIDATE_POSTCODE_RESOLUTION_AUDITED_REVIEW_ONLY" -or $postcodeResolutionAudit.canonical_rows -ne $expectedRows) {
+    throw "Candidate postcode resolution audit readback mismatch"
+}
+if ($postcodeResolutionAudit.actual_business_data_rows_written -ne 0 -or $postcodeResolutionAudit.scores_written -ne 0 -or $postcodeResolutionAudit.final_ready -ne $false) {
+    throw "Candidate postcode resolution audit violated review-only truth boundary"
+}
+
 $candidateAuditRaw = & $PythonExe $candidateVerifier --rows-jsonl $candidateRows --manifest $candidateManifest --audit-output $candidateAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Candidate JSONL integrity audit failed with exit code $LASTEXITCODE" }
 $candidateAudit = $candidateAuditRaw | ConvertFrom-Json
@@ -107,13 +127,17 @@ if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudi
 }
 
 [ordered]@{
-    schema_version = 5
+    schema_version = 6
     slot_id = $slotId
-    status = "COMPLETE_REAL_RUN_CONSISTENCY_CANDIDATE_BUNDLE_AND_PROVENANCE_AUDITED_REVIEW_ONLY"
+    status = "COMPLETE_REAL_RUN_CONSISTENCY_POSTCODE_RESOLUTION_CANDIDATE_BUNDLE_AND_PROVENANCE_AUDITED_REVIEW_ONLY"
     canonical_rows = $provenanceAudit.canonical_rows
     visible_example_rows = $provenanceAudit.visible_example_rows
     review_contract_consistency_audit = $consistencyAuditOutput
     combined_validation_total = $consistencyAudit.combined_validation_total
+    candidate_postcode_resolution_audit = $postcodeResolutionAuditOutput
+    legacy_fallback_rows = $postcodeResolutionAudit.legacy_fallback_rows
+    canonical_legacy_conflict_rows = $postcodeResolutionAudit.canonical_legacy_conflict_rows
+    invalid_postcode_candidate_rows = $postcodeResolutionAudit.invalid_postcode_candidate_rows
     candidate_jsonl_integrity_audit = $candidateAuditOutput
     candidate_rows_jsonl_sha256 = $candidateAudit.candidate_rows_jsonl_sha256
     runner_bundle_audit = $bundleAuditOutput
