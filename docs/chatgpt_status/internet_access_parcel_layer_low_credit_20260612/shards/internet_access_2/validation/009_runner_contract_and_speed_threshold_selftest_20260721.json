@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_2",
+  "validation_id": "internet_access_2-runner-contract-speed-threshold-and-postcode-level-hardening-20260721",
+  "status": "PASS",
+  "executed_locally": true,
+  "runner_contract": {
+    "passed": 26,
+    "total": 26,
+    "repairs": [
+      "orchestrator now expects validator selftest 43 rather than stale 32",
+      "orchestrator accepts PASS_OFFICIAL_V2_R2_CORRECTION_AND_SEMANTICS_VALIDATED",
+      "orchestrator requires postcode_files_directory_validated",
+      "orchestrator rejects postcode_premise_count_fields_present",
+      "orchestrator requires all_percentage_columns_range_validated",
+      "orchestrator requires coverage_speed_threshold_order_validated",
+      "official listed ZIP metadata remains 32.3 MB but is not treated as byte proof",
+      "diagnostics schema raised to 5"
+    ]
+  },
+  "ofcom_v2_validator": {
+    "passed": 43,
+    "total": 43,
+    "new_guards": [
+      "all corrected all-premises r2 files must be inside postcode_files",
+      "All Premises is prohibited at postcode level",
+      "All Matched Premises is prohibited at postcode level",
+      "all Number of premises fields are prohibited at postcode level",
+      "every percentage column is validated as numeric finite and within 0-100",
+      "UFBB 100 availability cannot exceed SFBB 30 availability",
+      "UFBB 300 availability cannot exceed UFBB 100 availability",
+      "Gigabit availability cannot exceed UFBB 300 availability",
+      "equal nested threshold percentages remain valid"
+    ]
+  },
+  "combined_deterministic_validation": {
+    "extractor": {"passed": 12, "total": 12},
+    "streaming_slicer": {"passed": 12, "total": 12},
+    "publisher": {"passed": 10, "total": 10},
+    "runner_contract": {"passed": 26, "total": 26},
+    "dispatch_readiness": {"passed": 16, "total": 16},
+    "ofcom_v2_validator": {"passed": 43, "total": 43},
+    "passed": 119,
+    "total": 119
+  },
+  "source_semantics": "Ofcom V2 places the 121 all-premises postcode files in postcode_files, excludes premise-count columns at postcode level, publishes percentage fields and defines nested 30+, 100+, 300+ and gigabit-capable thresholds.",
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "executed_at": "2026-07-21T05:55:00Z"
+}
