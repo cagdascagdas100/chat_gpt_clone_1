@@ -9,12 +9,12 @@
 </head>
 <body>
 <h1>Security / Public Safety — Runner Pickup</h1>
-<div class="notice"><code>security_public_safety_1</code> · <code>AREA_LEVEL_PROXY</code> · parsel ölçümü değildir · <code>final_ready=false</code> · <a id="progressLink" href="progress_v10.html">90 satırlık V10 ilerleme sayfası</a></div>
+<div class="notice"><code>security_public_safety_1</code> · <code>AREA_LEVEL_PROXY</code> · parsel ölçümü değildir · <code>final_ready=false</code> · <a id="progressLink" href="progress_v11.html">100 satırlık V11 ilerleme sayfası</a></div>
 <table><thead><tr><th>Alan</th><th>Güncel değer</th></tr></thead><tbody id="rows"><tr><td colspan="2">Yükleniyor…</td></tr></tbody></table>
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 fetch('./runner_pickup_status_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
- document.getElementById('progressLink').href=d.progress_page||'progress_v10.html';
+ document.getElementById('progressLink').href=d.progress_page||'progress_v11.html';
  const rows=[
   ['Durum',d.status],['Attempt',d.attempt_id],['Checkpoint',d.checkpoint_sequence],['İlk doğrulanmamış adım',d.first_unverified_step],
   ['Slot status',d.slot_status],['Current task',d.slot_current_task],['Heartbeat',`${d.slot_heartbeat}; stale=${d.slot_heartbeat_stale}`],
@@ -22,8 +22,10 @@ fetch('./runner_pickup_status_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok
   ['Hazır aday',d.prepared_candidate_count],['Aday doğruluk 4/4',d.prepared_candidate_accuracy_score_4_count],['Benzersiz API',d.prepared_candidate_unique_endpoints],
   ['Resmî kaynak',d.upgraded_official_sources],['Bu tur kaynak kalite yükseltmesi',d.official_source_quality_upgrades_this_turn],['Planlanan canlı ağ kontrolü',d.planned_live_network_checks],
   ['Police API son ay',d.police_api_latest_month],['London LSOA son ay',d.london_lsoa_latest_month],['ONS mevcut yayın',d.ons_current_release_date],['ONS sonraki yayın',d.ons_next_release_date],
-  ['London LSOA kapısı',d.london_lsoa_source_gate_ready],['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],['V10 AST authoring kontrolü',d.authoring_worker_v10_ast_parse_pass],
-  ['Control alias durumu',d.control_alias_state],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],['Alias değiştirildi',d.global_control_alias_overwritten],
+  ['Home Office collection güncellemesi',d.home_office_crime_collection_last_updated],['Home Office teyitli yayın',d.home_office_outcomes_release_confirmed],
+  ['London LSOA kapısı',d.london_lsoa_source_gate_ready],['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],
+  ['V11 AST authoring kontrolü',d.authoring_worker_v11_ast_parse_pass],['V9 recursion regresyonu düzeltildi',d.preflight_recursion_regression_fixed],
+  ['Control klasörü mevcut',d.control_directory_present],['Control alias durumu',d.control_alias_state],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],['Alias değiştirildi',d.global_control_alias_overwritten],
   ['Claim oluşturuldu',d.claim_created],['Acceptance raporu',d.acceptance_report_present],['Blocker',d.blocker],['Sonraki adım',d.next_step]
  ];
  document.getElementById('rows').innerHTML=rows.map(x=>`<tr><th>${esc(x[0])}</th><td>${esc(x[1])}</td></tr>`).join('');
