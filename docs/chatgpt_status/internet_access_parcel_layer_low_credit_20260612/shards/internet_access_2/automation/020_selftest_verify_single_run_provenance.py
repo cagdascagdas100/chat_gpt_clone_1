@@ -60,6 +60,7 @@ with tempfile.TemporaryDirectory() as tmp:
     readback_path = web / "runner_readback_latest.json"
     examples_path = web / "verified_examples_latest.json"
     bundle_path = web / "runner_bundle_audit_latest.json"
+    container_path = work / "internet_access_2_ofcom_zip_container_audit_latest.json"
 
     for path, text in (
         (canonical_source, '{"source":"canonical"}\n'),
@@ -69,6 +70,26 @@ with tempfile.TemporaryDirectory() as tmp:
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+
+    container = {
+        "slot_id": "internet_access_2",
+        "status": "PASS_SAFE_OFFICIAL_ZIP_CONTAINER_REVIEW_ONLY",
+        "zip_sha256": "a" * 64,
+        "zip_bytes": 4,
+        "r1_postcode_file_count": 0,
+        "r2_postcode_file_count": 4,
+        "r2_postcode_area_count": 4,
+        "crc_validation_passed": True,
+        "path_traversal_rejected": True,
+        "duplicate_normalized_paths_rejected": True,
+        "encrypted_entries_rejected": True,
+        "symlink_entries_rejected": True,
+        "unsupported_compression_rejected": True,
+        "actual_business_data_rows_written": 0,
+        "scores_written": 0,
+        "db_write": False, "migration": False, "production_deploy": False, "final_ready": False,
+    }
+    dump(container_path, container)
 
     v2 = {
         "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
@@ -144,10 +165,14 @@ with tempfile.TemporaryDirectory() as tmp:
     diagnostics = {
         "slot_id": "internet_access_2", "state": "COMPLETE_REVIEW_OUTPUT_READY",
         "zip_sha256": "a" * 64, "zip_bytes": 4, "r1_file_count": 0, "r2_file_count": 4,
+        "zip_container_audit": str(container_path),
+        "zip_container_crc_validation_passed": True,
+        "zip_container_path_safety_validated": True,
         "actual_business_data_rows_written": 0, "scores_written": 0,
         "db_write": False, "migration": False, "production_deploy": False, "final_ready": False,
     }
-    dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", diagnostics)
+    diag_path = work / "internet_access_2_network_and_execution_diagnostics_latest.json"
+    dump(diag_path, diagnostics)
 
     output = web / "runner_provenance_audit_latest.json"
     report = module.audit(work, web, output)
@@ -161,11 +186,13 @@ with tempfile.TemporaryDirectory() as tmp:
     check("audit_written", output.is_file())
     check("no_business_write", report["actual_business_data_rows_written"] == 0)
     check("not_final", report["final_ready"] is False)
+    check("artifact_count_12", report["provenance_artifact_count"] == 12)
+    check("container_audit_sha_recorded", len(report["zip_container_audit_sha256"]) == 64)
 
     bad_diag = dict(diagnostics); bad_diag["state"] = "BLOCKED_DNS"
-    dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", bad_diag)
+    dump(diag_path, bad_diag)
     expect_fail("incomplete_diagnostics_rejected", lambda: module.audit(work, web), "not terminal")
-    dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", diagnostics)
+    dump(diag_path, diagnostics)
 
     bad_slice = json.loads(json.dumps(slice_manifest))
     bad_slice["canonical"]["output_sha256"] = "b" * 64
@@ -206,19 +233,29 @@ with tempfile.TemporaryDirectory() as tmp:
     dump(work / "internet_access_2_ofcom_v2_validation_latest.json", v2)
 
     bad_diag = dict(diagnostics); bad_diag["zip_sha256"] = "UPPER"
-    dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", bad_diag)
+    dump(diag_path, bad_diag)
     expect_fail("zip_hash_format_rejected", lambda: module.audit(work, web), "not a lowercase SHA-256")
-    dump(work / "internet_access_2_network_and_execution_diagnostics_latest.json", diagnostics)
+    dump(diag_path, diagnostics)
 
     bad_bundle = dict(bundle); bad_bundle["actual_business_data_rows_written"] = 1
     dump(bundle_path, bad_bundle)
     expect_fail("business_write_rejected", lambda: module.audit(work, web), "business rows")
     dump(bundle_path, bundle)
 
+    bad_container = dict(container); bad_container["zip_sha256"] = "b" * 64
+    dump(container_path, bad_container)
+    expect_fail("container_hash_chain_rejected", lambda: module.audit(work, web), "diagnostics/ZIP container SHA")
+    dump(container_path, container)
+
+    bad_container = dict(container); bad_container["path_traversal_rejected"] = False
+    dump(container_path, bad_container)
+    expect_fail("container_safety_flag_rejected", lambda: module.audit(work, web), "safety flag")
+    dump(container_path, container)
+
 print(json.dumps({
     "status": "PASS",
     "tests_passed": len(passed),
-    "tests_total": 20,
+    "tests_total": 24,
     "test_names": passed,
     "actual_business_data_rows_written": 0,
     "final_ready": False,
