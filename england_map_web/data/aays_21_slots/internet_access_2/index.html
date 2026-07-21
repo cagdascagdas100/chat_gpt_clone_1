@@ -1,15 +1,53 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_2 progress</title><style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}.muted{color:#5d6878}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}.metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}table{border-collapse:collapse;width:100%;font-size:.9rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem}</style></head><body>
-<h1>internet_access_2 — official r2 extraction readiness</h1><p class="muted">Partition 30,762–61,522. Review branch only; authoritative ownership, heartbeat and business data remain unchanged.</p>
-<div class="metrics"><div class="metric"><span>Operations</span><strong>17 / 18</strong><span>94.44% (+2.77)</span></div><div class="metric"><span>Source decisions</span><strong>6</strong><span>4 promoted / 1 held / 1 rejected</span></div><div class="metric"><span>Validation</span><strong>12 / 12</strong><span>local contract PASS</span></div><div class="metric"><span>Business rows</span><strong>0</strong><span>product remains 55%</span></div></div>
-<h2>Line-by-line operations</h2><table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody><tr><td>1</td><td>Read authoritative branch ref after remote advancement</td><td class="ok">DONE</td></tr><tr><td>2</td><td>Read authoritative checkpoint_latest.json</td><td class="ok">DONE</td></tr><tr><td>3</td><td>Read authoritative status_latest.json</td><td class="ok">DONE</td></tr><tr><td>4</td><td>Read authoritative heartbeat_latest.json</td><td class="ok">DONE</td></tr><tr><td>5</td><td>Read authoritative current_task_latest.json</td><td class="ok">DONE</td></tr><tr><td>6</td><td>Read authoritative ownership_latest.json</td><td class="ok">DONE</td></tr><tr><td>7</td><td>Confirm slot range 30762-61522 and sequence 0</td><td class="ok">DONE</td></tr><tr><td>8</td><td>Confirm first unverified step remains unchanged</td><td class="ok">DONE</td></tr><tr><td>9</td><td>Verify Ofcom Spring 2026 publication and January 2026 snapshot</td><td class="ok">DONE</td></tr><tr><td>10</td><td>Verify Ofcom v2 correction: 121 r2 files and 1,741,096 rows</td><td class="ok">DONE</td></tr><tr><td>11</td><td>Resolve exact official Ofcom ZIP URL</td><td class="ok">DONE</td></tr><tr><td>12</td><td>Resolve 92,283-row canonical source to security.geojson</td><td class="ok">DONE</td></tr><tr><td>13</td><td>Resolve 33,785-row legacy postcode evidence to internet.geojson</td><td class="ok">DONE</td></tr><tr><td>14</td><td>Promote ONSPD hosted and OS Code-Point Open postcode QA sources</td><td class="ok">DONE</td></tr><tr><td>15</td><td>Hold ONSPD Live metadata-vintage discrepancy and reject subscription API</td><td class="ok">DONE</td></tr><tr><td>16</td><td>Harden exact-range extractor with r1 rejection, count gates and no-score boundary</td><td class="ok">DONE</td></tr><tr><td>17</td><td>Run deterministic extractor safety self-test 12/12 PASS and publish web/readback contract</td><td class="ok">DONE</td></tr><tr><td>18</td><td>Existing canonical runner downloads, hashes, extracts 30,761 rows and publishes remote readback</td><td class="blocked">PENDING EXISTING RUNNER</td></tr></tbody></table>
-<h2>Official source decisions</h2><table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody>
-<tr><td>1</td><td>Ofcom Spring 2026 fixed broadband ZIP</td><td class="ok">PROMOTED primary bulk source; download/hash pending runner</td><td>100%</td></tr>
-<tr><td>2</td><td>Ofcom v2 schema and postcode correction</td><td class="ok">PROMOTED correction and field gate</td><td>100%</td></tr>
-<tr><td>3</td><td>ONS Postcode Directory May 2026 hosted</td><td class="ok">PROMOTED primary postcode reference</td><td>97%</td></tr>
-<tr><td>4</td><td>OS Code-Point Open</td><td class="ok">PROMOTED fallback postcode QA</td><td>95%</td></tr>
-<tr><td>5</td><td>Online ONSPD Live</td><td class="blocked">HOLD: catalogue/service vintage discrepancy</td><td>90%</td></tr>
-<tr><td>6</td><td>Ofcom Connected Nations API</td><td class="blocked">REJECTED: subscription/API-key gated</td><td>official but disallowed</td></tr></tbody></table>
-<h2>12 validation checks</h2><table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>canonical range and count</td><td class="ok">PASS</td></tr><tr><td>canonical ids unique</td><td class="ok">PASS</td></tr><tr><td>corrected r2 contract</td><td class="ok">PASS</td></tr><tr><td>direct match</td><td class="ok">PASS</td></tr><tr><td>legacy match</td><td class="ok">PASS</td></tr><tr><td>no data</td><td class="ok">PASS</td></tr><tr><td>no score emitted</td><td class="ok">PASS</td></tr><tr><td>negative longitude preserved</td><td class="ok">PASS</td></tr><tr><td>superseded r1 rejected</td><td class="ok">PASS</td></tr><tr><td>out of range percent rejected</td><td class="ok">PASS</td></tr><tr><td>duplicate canonical row rejected</td><td class="ok">PASS</td></tr><tr><td>business rows unchanged</td><td class="ok">PASS</td></tr></tbody></table>
-<h2>Truth boundary</h2><p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code>. Canonical parcel identity comes from <code>security.geojson</code>. Legacy postcode matches require spatial QA; absent matches remain <code>NO_DATA</code>. No parcel score, geometry, migration, DB row or production layer was written.</p>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>internet_access_2 progress</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}
+    .muted{color:#5d6878}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}
+    .metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}
+    table{border-collapse:collapse;width:100%;font-size:.9rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}
+    th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem}
+  </style>
+</head>
+<body>
+  <h1>internet_access_2 — official r2 extraction and readback</h1>
+  <p class="muted">Partition 30,762–61,522. Review branch only; authoritative ownership, heartbeat and business data remain unchanged.</p>
+  <div class="metrics" id="metrics"><div class="metric">Loading progress…</div></div>
+
+  <h2>Line-by-line operations</h2>
+  <table><thead><tr><th>#</th><th>Operation</th><th>Status</th></tr></thead><tbody id="operations"><tr><td colspan="3">Loading…</td></tr></tbody></table>
+
+  <h2>Official source decisions</h2>
+  <table><thead><tr><th>#</th><th>Source</th><th>Decision</th><th>Confidence</th></tr></thead><tbody id="sources"><tr><td colspan="4">Loading…</td></tr></tbody></table>
+
+  <h2>Validated real review examples</h2>
+  <p class="muted">This section stays pending until the existing canonical runner publishes exact r2 readback. At most three examples per status are shown.</p>
+  <table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
+
+  <h2>Truth boundary</h2>
+  <p>Ofcom values remain <code>POSTCODE_LEVEL_ONLY</code>. Canonical parcel identity comes from <code>security.geojson</code>. Legacy postcode matches require spatial QA; absent matches remain <code>NO_DATA</code>. No parcel score, geometry, migration, DB row or production layer is written by this pipeline.</p>
+
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function getJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: ${r.status}`);return r.json()}
+async function render(){
+  const [p,o,s]=await Promise.all([getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('source_candidates_latest.json')]);
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><span>Operations</span><strong>${p.completed_operations} / ${p.total_operations}</strong><span>${p.operational_progress_percent}% (+${p.progress_delta_percent})</span></div>
+    <div class="metric"><span>Source decisions</span><strong>${p.official_source_candidates}</strong><span>${p.promoted_sources} promoted / ${p.held_sources} held / ${p.rejected_sources} rejected</span></div>
+    <div class="metric"><span>Validation</span><strong>${p.combined_validation_passed} / ${p.combined_validation_total}</strong><span>contract tests passed</span></div>
+    <div class="metric"><span>Business rows</span><strong>${p.actual_business_data_rows_written}</strong><span>product ${p.overall_product_progress_percent}%</span></div>`;
+  document.getElementById('operations').innerHTML=o.operations.map(x=>`<tr><td>${x.id}</td><td>${esc(x.operation)}</td><td class="${x.status==='DONE'?'ok':'blocked'}">${esc(x.status)}</td></tr>`).join('');
+  document.getElementById('sources').innerHTML=s.candidates.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.title)}</td><td class="${String(x.decision).startsWith('PROMOTED')?'ok':'blocked'}">${esc(x.decision)}</td><td>${esc(x.confidence_percent)}%</td></tr>`).join('');
+  try{
+    const e=await getJson('verified_examples_latest.json');
+    document.getElementById('examples').innerHTML=e.rows.length?e.rows.map(x=>`<tr><td>${esc(x.canonical_row_no)}</td><td>${esc(x.canonical_program_parcel_id)}</td><td>${esc(x.postcode||'NO_DATA')}</td><td>${esc(x.status)}</td><td>${esc(x.gigabit_available_pct)}</td><td>${esc(x.ufbb_100mbps_available_pct)}</td><td>${esc(x.sfbb_30mbps_available_pct)}</td><td>${esc(x.unable_30mbps_pct)}</td></tr>`).join(''):'<tr><td colspan="8">No review examples published.</td></tr>';
+  }catch(_){document.getElementById('examples').innerHTML='<tr><td colspan="8">PENDING EXISTING RUNNER</td></tr>'}
+}
+render().catch(err=>{document.getElementById('metrics').innerHTML=`<div class="metric"><strong>Readback error</strong><span>${esc(err.message)}</span></div>`});
+</script>
+</body>
+</html>
