@@ -1,0 +1,53 @@
+{
+  "schema_version": 6,
+  "slot_id": "internet_access_1",
+  "parcel_partition": {"start":1,"end":30761,"count":30761,"canonical_count":92283},
+  "generated_at": "2026-07-21T06:42:51+03:00",
+  "status": "ONSPD_MAY_2026_HOSTED_TABLE_PRIMARY_LIVE_LAYER_DIAGNOSTIC_ONLY",
+  "measurement_level": "postcode",
+  "output_semantics": "AREA_LEVEL_PROXY_OR_NO_DATA",
+  "official_source_candidates": 10,
+  "promoted_sources": 7,
+  "source_confidence_ge_90_count": 8,
+  "promoted_confidence_ge_90_count": 6,
+  "promoted_confidence_ge_85_count": 7,
+  "sources": [
+    {"name":"Ofcom Spring 2026 postcode coverage package","role":"PRIMARY_BULK_POSTCODE_COVERAGE","confidence_percent":98,"promoted":true,"state":"runtime_download_blocked"},
+    {"name":"Ofcom Spring 2026 methodology v2","role":"PRIMARY_DATA_CONTRACT","revision_date":"2026-07-07","confidence_percent":99,"promoted":true},
+    {"name":"Ofcom broadband coverage checker","role":"POSTCODE_SPOT_VALIDATION","confidence_percent":93,"promoted":true,"state":"area_prediction_only"},
+    {"name":"ONS Explore Local Statistics broadband indicator","role":"AGGREGATE_CROSSCHECK","confidence_percent":88,"promoted":true,"state":"not_row_level"},
+    {"name":"ONS Postcode Directory May 2026 hosted table","role":"PRIMARY_OFFICIAL_POSTCODE_METADATA_AND_JOIN_CONTRACT","dataset_period":"2026-05","dataset_last_updated":"2026-06-10","data_last_edit":"2026-06-04","confidence_percent":99,"promoted":true,"state":"api_schema_verified_row_query_runtime_blocked"},
+    {"name":"Online ONS Postcode Directory Live","role":"DIAGNOSTIC_POSTCODE_LAYER","catalog_period_claim":"2026-05","service_description_period_claim":"2026-02","confidence_percent":85,"promoted":false,"state":"revision_conflict_fail_closed"},
+    {"name":"NHS England ODS London pcodey56","role":"POSTCODE_EXISTENCE_AND_REGION_FALLBACK_ONLY","confidence_percent":91,"promoted":true,"state":"no_broadband_values"},
+    {"name":"Ofcom developer interface","role":"LOGIN_REQUIRED_ALTERNATIVE_REJECTED","confidence_percent":98,"promoted":false},
+    {"name":"BDUK Project Gigabit address checker","role":"ADDRESS_PLAN_CONTEXT_ONLY","confidence_percent":82,"promoted":false},
+    {"name":"Ordnance Survey AddressBase Premium","role":"RESTRICTED_PREMISE_BASE","confidence_percent":99,"promoted":false}
+  ],
+  "sample_state": {"verified_rows":16,"pending_candidates":1,"unique_postcodes":10,"internet_accuracy_2_of_4_rows":16,"internet_accuracy_upgraded_rows":0},
+  "retrieval_attempts": [
+    {"method":"ofcom_bulk_download","result":"BLOCKED_RUNTIME_NETWORK"},
+    {"method":"ons_live_catalog","result":"PASS_CATALOG_2026_05"},
+    {"method":"ons_live_service_description","result":"PASS_BUT_CONFLICTS_2026_02"},
+    {"method":"onspd_may_2026_hosted_table_schema","result":"PASS"},
+    {"method":"onspd_may_2026_hosted_table_rows","result":"BLOCKED_RUNTIME_NETWORK"},
+    {"method":"hosted_table_verifier_compile_and_fixture","result":"PASS_FIXTURE_ROWS_2_OFFICIAL_ROWS_0"}
+  ],
+  "automation_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/001_refresh_ofcom_r2_postcode.py",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/002_verify_ons_postcode_centroids.py",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/automation/003_verify_onspd_may2026_hosted_table.py"
+  ],
+  "reports": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/postcode_centroid_join_audit_20260721.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/ons_live_catalog_freshness_20260721.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/ons_live_vs_hosted_revision_conflict_20260721.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/reports/onspd_hosted_table_contract_test_20260721.json"
+  ],
+  "verified_business_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "blockers": ["OFFICIAL_ONSPD_HOSTED_TABLE_ROW_QUERY_NOT_EXECUTED_IN_RUNTIME","OFCom_R2_BULK_ZIP_NOT_INGESTED_IN_THIS_RUNTIME","FULL_33785_ROW_R2_REFRESH_NOT_EXECUTED","NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY_NOT_ESTABLISHED"]
+}
