@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $TaskId = 'ready_to_sell_1_automation_167_dom_proof_20260720_01'
 $SlotId = 'ready_to_sell_1'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
-$WorkerPath = Join-Path $RepoRoot 'docs\chatgpt_status\aays1\automation\ready_to_sell_1_automation_167_dom_proof_v7.py'
+$WorkerPath = Join-Path $RepoRoot 'docs\chatgpt_status\aays1\automation\ready_to_sell_1_automation_167_dom_proof_v8.py'
 
 if (-not (Test-Path -LiteralPath $WorkerPath -PathType Leaf)) {
     throw "WORKER_NOT_FOUND:$WorkerPath"
@@ -34,7 +34,7 @@ Push-Location $RepoRoot
 try {
     & $selected.Command @($selected.Arguments) $WorkerPath
     if ($LASTEXITCODE -ne 0) {
-        throw "READY_TO_SELL_1_AUTOMATION_167_V7_FAILED_EXIT_$LASTEXITCODE"
+        throw "READY_TO_SELL_1_AUTOMATION_167_V8_FAILED_EXIT_$LASTEXITCODE"
     }
 }
 finally {
