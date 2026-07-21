@@ -13,6 +13,8 @@ ops=[]
 for name in ("operations_latest.json","scope_operations_latest.json","operations_provenance_latest.json"):
     ops.extend(json.loads((WEB/name).read_text(encoding="utf-8"))["operations"])
 by_id={row["id"]:row for row in ops}
+rendered=[by_id[key] for key in sorted(by_id)]
+blocked=[row for row in rendered if row["status"]!="DONE"]
 checks={
   "candidate_examples_fetch":"candidate_integrity_examples_latest.json" in html,
   "candidate_examples_table":"candidateIntegrityExamples" in html,
@@ -24,7 +26,8 @@ checks={
   "reject_examples":sum(x["decision"]=="REJECT_FAIL_CLOSED" for x in examples["examples"])==2,
   "validation_215":contract["combined_validation"]=={"passed":215,"total":215},
   "candidate_tests_25":contract["candidate_integrity_selftest"]=={"passed":25,"total":25},
-  "operation_ids_unique":len(by_id)==len(ops),
+  "rendered_operations_109":len(rendered)==109 and rendered[0]["id"]==1 and rendered[-1]["id"]==109,
+  "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==109,
   "review_only":progress.get("actual_business_data_rows_written")==0 and progress.get("final_ready") is False and contract.get("final_ready") is False,
 }
 failed=[name for name,ok in checks.items() if not ok]
