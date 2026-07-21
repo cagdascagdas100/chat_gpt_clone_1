@@ -45,10 +45,10 @@ function rowsTable(rows,showChunk=true,showForce=false,showMemory=false){
 function sourcesTable(rows){return `<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Ad</th><th>Yayıncı</th><th>Doğruluk</th><th>Karar</th><th>Kanıt tarihi</th><th>Tazelik</th><th>Kullanım sınırı</th><th>Resmî URL</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.source_id)}</td><td>${esc(r.name)}</td><td>${esc(r.publisher)}</td><td>${esc(r.authority_accuracy)}</td><td>${esc(r.decision)}</td><td>${esc(r.evidence_date)}</td><td>${esc(r.freshness_status)}</td><td>${esc(r.semantic_limit)}</td><td class="url"><a href="${esc(r.official_url)}" target="_blank" rel="noopener">${esc(r.official_url)}</a></td></tr>`).join('')}</tbody></table>`}
 async function main(){
   try{
-    const[p,o,so,lo,smoke,r,s]=await Promise.all([
-      load('security_public_safety_3_progress_latest.json'),load('security_public_safety_3_operations_latest.json'),load('security_public_safety_3_smoke_operations_latest.json'),load('security_public_safety_3_stream_operations_latest.json'),load('security_public_safety_3_smoke_rows_latest.json'),load('security_public_safety_3_rows_latest.json'),load('security_public_safety_3_source_candidates_latest.json')
+    const[p,o,so,lo,qo,smoke,r,s]=await Promise.all([
+      load('security_public_safety_3_progress_latest.json'),load('security_public_safety_3_operations_latest.json'),load('security_public_safety_3_smoke_operations_latest.json'),load('security_public_safety_3_stream_operations_latest.json'),load('security_public_safety_3_quorum_operations_latest.json'),load('security_public_safety_3_smoke_rows_latest.json'),load('security_public_safety_3_rows_latest.json'),load('security_public_safety_3_source_candidates_latest.json')
     ]);
-    const operationByLine=new Map();[...so.rows,...lo.rows].forEach(row=>operationByLine.set(Number(row.line),row));
+    const operationByLine=new Map();[...so.rows,...lo.rows,...qo.rows].forEach(row=>operationByLine.set(Number(row.line),row));
     const effectiveSmokeOperations=[...operationByLine.values()].sort((a,b)=>Number(a.line)-Number(b.line));
     document.getElementById('summary').innerHTML=
       card('Genel ilerleme','%'+p.overall_progress_percent,'ok')+card('Artış','+'+p.progress_delta_percent+'%','ok')+card('İşlemler',p.completed_operations+' / '+p.total_operations)+card('Web işlem satırı',p.visible_operation_rows)+
