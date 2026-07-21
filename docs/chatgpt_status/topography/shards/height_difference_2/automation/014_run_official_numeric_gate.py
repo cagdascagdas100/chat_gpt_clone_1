@@ -36,7 +36,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--wcs-url")
     parser.add_argument("--coverage-id")
     parser.add_argument("--web-base-url", default=os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_WEB_BASE_URL", "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/"))
-    parser.add_argument("--expected-web-operation-rows", type=int, default=int(os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "125")))
+    parser.add_argument("--expected-web-operation-rows", type=int, default=int(os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "305")))
     args = parser.parse_args(argv)
 
     repo_root = args.repo_root.resolve()
@@ -89,16 +89,16 @@ def main(argv: Iterable[str] | None = None) -> int:
                 os_row = terrain_rows[row_no]
                 measured_rows.append({"row_no": row_no, "parcel_id": ea_row["parcel_id"], "hmlr_inspire_id": ea_row["hmlr_inspire_id"], "height_difference_from_sea_level_m": ea_row["median_m_odn"], "ea_dtm1m_q1_m_odn": ea_row["q1_m_odn"], "ea_dtm1m_median_m_odn": ea_row["median_m_odn"], "ea_dtm1m_q3_m_odn": ea_row["q3_m_odn"], "ea_valid_pixel_count": ea_row["valid_pixel_count"], "os_terrain50_median_m_odn": os_row["terrain50_median_m_odn"], "os_terrain50_minus_ea_median_m": os_row["terrain50_minus_ea_median_m"], "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m", "secondary_crosscheck_source": "OS Terrain 50", "measurement_geometry": "exact HMLR INSPIRE polygon", "processing_crs": "EPSG:27700", "vertical_reference": "Ordnance Datum Newlyn", "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review", "final_ready": False})
         status = "THREE_OFFICIAL_NUMERIC_ROWS_READY_PENDING_REVIEW" if success else "BLOCKED_OFFICIAL_NUMERIC_GATE"
-        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": status, "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720", "stage_order": ["THREE_EXACT_HMLR_INSPIRE_POLYGONS", "EA_DTM1M_POLYGON_SAMPLING", "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50", "OS_TERRAIN50_CROSSCHECK", "PORT_8012_WEB_ACCEPTANCE"], "stages": stages, "hmlr_exact_matches_path": str(args.hmlr_exact_matches), "ea_output_path": str(ea_output), "terrain50_output_path": str(terrain_output), "official_numeric_row_count": len(measured_rows), "measured_rows": measured_rows, "automatic_final_promotion": False, "human_crosscheck_review_required": True, "source_urls": {"hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download", "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs", "os_downloads_api": "https://api.os.uk/downloads/v1/products", "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50"}, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": status, "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720", "stage_order": ["THREE_EXACT_HMLR_INSPIRE_POLYGONS", "EA_DTM1M_POLYGON_SAMPLING", "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50", "OS_TERRAIN50_CROSSCHECK", "PORT_8012_WEB_ACCEPTANCE"], "stages": stages, "hmlr_exact_matches_path": str(args.hmlr_exact_matches), "ea_output_path": str(ea_output), "terrain50_output_path": str(terrain_output), "official_numeric_row_count": len(measured_rows), "measured_rows": measured_rows, "automatic_final_promotion": False, "human_crosscheck_review_required": True, "expected_web_operation_rows": args.expected_web_operation_rows, "source_urls": {"hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download", "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs", "os_downloads_api": "https://api.os.uk/downloads/v1/products", "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50"}, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 0 if success else 2
     except Exception as exc:
-        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR", "error": f"{type(exc).__name__}: {exc}", "stages": stages, "official_numeric_row_count": 0, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {"schema_version": 3, "slot_id": "height_difference_2", "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR", "error": f"{type(exc).__name__}: {exc}", "stages": stages, "official_numeric_row_count": 0, "expected_web_operation_rows": args.expected_web_operation_rows, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 2
 
     _write(args.final_output, payload)
     _write(execution_output, payload)
     if args.web_output:
-        _write(args.web_output, {"schema_version": 1, "slot_id": "height_difference_2", "status": payload["status"], "candidate_count": payload.get("official_numeric_row_count", 0), "candidates": payload.get("measured_rows", []), "final_ready": False, "fake_data": False})
+        _write(args.web_output, {"schema_version": 1, "slot_id": "height_difference_2", "status": payload["status"], "candidate_count": payload.get("official_numeric_row_count", 0), "candidates": payload.get("measured_rows", []), "expected_web_operation_rows": args.expected_web_operation_rows, "final_ready": False, "fake_data": False})
     if web_verifier.is_file():
         web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", **_run([sys.executable, str(web_verifier), "--base-url", args.web_base_url, "--expected-operation-rows", str(args.expected_web_operation_rows), "--output", str(web_acceptance_output)], repo_root)}
         stages.append(web_stage)
@@ -108,7 +108,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             payload["web_acceptance"] = _load(web_acceptance_output)
         _write(args.final_output, payload)
         _write(execution_output, payload)
-    print(json.dumps({"ok": code == 0, "status": payload["status"], "rows": payload.get("official_numeric_row_count", 0)}))
+    print(json.dumps({"ok": code == 0, "status": payload["status"], "rows": payload.get("official_numeric_row_count", 0), "expected_web_operation_rows": args.expected_web_operation_rows}))
     return code
 
 
