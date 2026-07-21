@@ -27,6 +27,8 @@ $streamer = Join-Path $automationRoot "007_stream_extract_slot2_inputs.py"
 $streamerSelftest = Join-Path $automationRoot "008_selftest_stream_extract_slot2_inputs.py"
 $v2Validator = Join-Path $automationRoot "013_validate_ofcom_v2_corrections.py"
 $v2ValidatorSelftest = Join-Path $automationRoot "014_selftest_validate_ofcom_v2_corrections.py"
+$zipContainerValidator = Join-Path $automationRoot "026_validate_ofcom_zip_container.py"
+$zipContainerValidatorSelftest = Join-Path $automationRoot "027_selftest_validate_ofcom_zip_container.py"
 
 $stageRoot = Join-Path $WorkRoot "stage"
 $extractRoot = Join-Path $WorkRoot "ofcom_extract"
@@ -35,11 +37,12 @@ $outputRoot = Join-Path $WorkRoot "candidate_outputs"
 $zipPath = Join-Path $stageRoot "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
 $partialZip = "$zipPath.part"
 $diagnosticsPath = Join-Path $WorkRoot "internet_access_2_network_and_execution_diagnostics_latest.json"
+$zipContainerAuditPath = Join-Path $WorkRoot "internet_access_2_ofcom_zip_container_audit_latest.json"
 $v2ValidationPath = Join-Path $WorkRoot "internet_access_2_ofcom_v2_validation_latest.json"
 
 New-Item -ItemType Directory -Force -Path $WorkRoot,$stageRoot,$sliceRoot,$outputRoot,$webRoot | Out-Null
 $diagnostics = [ordered]@{
-    schema_version = 6
+    schema_version = 7
     slot_id = $slotId
     started_at = (Get-Date).ToUniversalTime().ToString("o")
     official_zip_url = $officialZipUrl
@@ -49,7 +52,9 @@ $diagnostics = [ordered]@{
     official_page_display_size_mb_observations = @(32.2,32.3)
     official_page_display_size_consistency = "CONFLICTING_READBACK_METADATA_ONLY"
     official_checksum_published = $false
-    package_integrity_basis = "RUNTIME_BYTE_COUNT_ZIP_SIGNATURE_SHA256_AND_INTERNAL_V2_VALIDATION"
+    package_integrity_basis = "RUNTIME_BYTE_COUNT_ZIP_SIGNATURE_SHA256_PREEXTRACTION_CONTAINER_AUDIT_AND_INTERNAL_V2_VALIDATION"
+    powershell_outfile_passthru_used = $false
+    powershell_outfile_passthru_reason = "Microsoft documentation notes that PassThru with OutFile can leave the file empty; production download keeps OutFile without PassThru."
     canonical_source = $canonicalSource
     legacy_source = $legacySource
     allowed_web_output_root = $webRoot
@@ -58,6 +63,12 @@ $diagnostics = [ordered]@{
     download_attempts = @()
     zip_sha256 = $null
     zip_bytes = 0
+    zip_container_selftest = $null
+    zip_container_audit = $null
+    zip_container_entry_count = 0
+    zip_container_total_uncompressed_bytes = 0
+    zip_container_crc_validation_passed = $false
+    zip_container_path_safety_validated = $false
     r2_file_count = 0
     r1_file_count = 0
     extractor_selftest = $null
@@ -99,7 +110,11 @@ function Run-JsonSelftest([string]$path, [int]$expected) {
 }
 
 try {
-    foreach ($required in @($canonicalSource,$legacySource,$extractor,$extractorSelftest,$publisher,$publisherSelftest,$streamer,$streamerSelftest,$v2Validator,$v2ValidatorSelftest)) {
+    foreach ($required in @(
+        $canonicalSource,$legacySource,$extractor,$extractorSelftest,$publisher,$publisherSelftest,
+        $streamer,$streamerSelftest,$v2Validator,$v2ValidatorSelftest,
+        $zipContainerValidator,$zipContainerValidatorSelftest
+    )) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required file missing: $required" }
     }
 
@@ -107,6 +122,7 @@ try {
     $diagnostics.streamer_selftest = Run-JsonSelftest $streamerSelftest 12
     $diagnostics.publisher_selftest = Run-JsonSelftest $publisherSelftest 10
     $diagnostics.v2_validator_selftest = Run-JsonSelftest $v2ValidatorSelftest 43
+    $diagnostics.zip_container_selftest = Run-JsonSelftest $zipContainerValidatorSelftest 18
 
     try {
         $dns = Resolve-DnsName -Name "www.ofcom.org.uk" -Type A -ErrorAction Stop
@@ -124,7 +140,8 @@ try {
     for ($attempt = 1; $attempt -le $DownloadRetries; $attempt++) {
         $entry = [ordered]@{ attempt=$attempt; started_at=(Get-Date).ToUniversalTime().ToString("o"); state="STARTED" }
         try {
-            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/8"}
+            # Deliberately do not add -PassThru: Microsoft documents an empty-file risk with OutFile + PassThru.
+            Invoke-WebRequest -Uri $officialZipUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 600 -MaximumRedirection 8 -Headers @{"User-Agent"="AAYS-internet_access_2-verifier/9"}
             $length = (Get-Item -LiteralPath $partialZip).Length
             if ($length -lt 30000000) { throw "Downloaded ZIP is unexpectedly small: $length bytes" }
             $stream = [System.IO.File]::OpenRead($partialZip)
@@ -147,6 +164,30 @@ try {
     $diagnostics.download_state = "PASS"
     $diagnostics.zip_bytes = (Get-Item -LiteralPath $zipPath).Length
     $diagnostics.zip_sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
+
+    $zipAuditRaw = & $PythonExe $zipContainerValidator --zip $zipPath --output $zipContainerAuditPath
+    if ($LASTEXITCODE -ne 0) { throw "Official ZIP container safety validation failed with exit code $LASTEXITCODE" }
+    $zipAudit = $zipAuditRaw | ConvertFrom-Json
+    if (
+        $zipAudit.status -ne "PASS_SAFE_OFFICIAL_ZIP_CONTAINER_REVIEW_ONLY" -or
+        $zipAudit.zip_sha256 -ne $diagnostics.zip_sha256 -or
+        $zipAudit.zip_bytes -ne $diagnostics.zip_bytes -or
+        $zipAudit.r1_postcode_file_count -ne 0 -or
+        $zipAudit.r2_postcode_file_count -ne $expectedR2Count -or
+        $zipAudit.r2_postcode_area_count -ne $expectedR2Count -or
+        -not $zipAudit.crc_validation_passed -or
+        -not $zipAudit.path_traversal_rejected -or
+        -not $zipAudit.duplicate_normalized_paths_rejected -or
+        -not $zipAudit.encrypted_entries_rejected -or
+        -not $zipAudit.symlink_entries_rejected
+    ) {
+        throw "Official ZIP container safety readback contract mismatch"
+    }
+    $diagnostics.zip_container_audit = $zipContainerAuditPath
+    $diagnostics.zip_container_entry_count = $zipAudit.entry_count
+    $diagnostics.zip_container_total_uncompressed_bytes = $zipAudit.total_uncompressed_bytes
+    $diagnostics.zip_container_crc_validation_passed = $zipAudit.crc_validation_passed
+    $diagnostics.zip_container_path_safety_validated = $true
 
     if (Test-Path -LiteralPath $extractRoot) { Remove-Item -Recurse -Force -LiteralPath $extractRoot }
     Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
@@ -188,7 +229,10 @@ try {
     $diagnostics.legacy_slice_rows = $sliceManifest.legacy_internet.rows
     if ($diagnostics.canonical_slice_rows -ne $expectedRows) { throw "Canonical bounded slice row count mismatch: $($diagnostics.canonical_slice_rows)" }
 
-    if (Test-Path -LiteralPath $outputRoot) { Remove-Item -Recurse -Force -LiteralPath $outputRoot; New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null }
+    if (Test-Path -LiteralPath $outputRoot) {
+        Remove-Item -Recurse -Force -LiteralPath $outputRoot
+        New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
+    }
     & $PythonExe $extractor --canonical (Join-Path $sliceRoot "internet_access_2_canonical_slice_latest.geojson") --legacy-internet-geojson (Join-Path $sliceRoot "internet_access_2_legacy_slice_latest.geojson") --ofcom-postcode-dir $extractRoot --output-dir $outputRoot
     if ($LASTEXITCODE -ne 0) { throw "Official r2 join failed with exit code $LASTEXITCODE" }
 
@@ -209,7 +253,7 @@ try {
     $diagnostics.legacy_current_r2_matches_pending_spatial_qa = $manifest.legacy_current_r2_matches_pending_spatial_qa
     $diagnostics.no_data_rows = $manifest.no_data_rows
     $diagnostics.visible_example_rows = $publisherResult.visible_example_rows
-    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, runtime SHA-256, internal V2 payload corrections, postcode folder/level schema, percentage ranges, threshold semantics, bounded inputs, exact r2 join and strict web readback completed. The outer r1 ZIP name and conflicting displayed size labels were treated as metadata only. No migration or business write occurred."
+    Save-Diagnostics "COMPLETE_REVIEW_OUTPUT_READY" "Official bytes, runtime SHA-256, pre-extraction ZIP container safety, internal V2 payload corrections, bounded inputs, exact r2 join and strict web readback completed. OutFile was used without PassThru. No migration or business write occurred."
     exit 0
 } catch {
     $diagnostics.error = $_.Exception.Message
