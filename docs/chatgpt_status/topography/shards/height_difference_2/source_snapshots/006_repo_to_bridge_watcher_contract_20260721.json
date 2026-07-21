@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "captured_at": "2026-07-21T06:42:00+03:00",
+  "purpose": "Record the actual repo-to-bridge watcher contract and the verified reason the existing task is not being claimed.",
+  "watcher_contract": {
+    "evidence_commit": "e06d84a4c62830702577ff883fb2a35ca465c6a0",
+    "watch_branch": "main",
+    "watch_repo": "F:\\chatgpt\\aays1_repo_to_bridge_watch_worktree",
+    "queue_glob": "docs/chatgpt_status/aays1/queue/*.task.json",
+    "bridge_pending": "F:\\AAYS_GITHUB_BRIDGE_CLEAN2\\ai-queue\\pending",
+    "poll_seconds": 60,
+    "copies_automation_queue_control_only": true,
+    "starts_existing_portable_queue_runner_when_absent": true
+  },
+  "remote_heartbeat": {
+    "path_on_main": "docs/chatgpt_status/aays1/status/061_repo_to_bridge_watch_heartbeat_latest.txt",
+    "status": "WATCHING",
+    "updated_at_raw": "20260703_225536",
+    "last_heartbeat_commit": "2b82e3783b98c20186ea93fcead1f8bb07eb70e6",
+    "last_heartbeat_commit_date": "2026-07-03T22:55:53+03:00",
+    "fresh_on_2026_07_21": false,
+    "stale": true
+  },
+  "height_difference_2_task_visibility": {
+    "authoritative_source_branch": "codex/aays-single-runner-v5-20260706",
+    "watcher_branch": "main",
+    "source_branch_visible_to_watcher": false,
+    "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+    "automation_present_on_main": false,
+    "safe_to_publish_queue_signal_only_on_main": false,
+    "reason": "The main watcher copies queue, automation and control from main into the active repo. The height_difference_2 entrypoint is absent on main, so a queue-only mirror would be incomplete and could create a false pickup/failure cycle."
+  },
+  "diagnosis": {
+    "primary_blocker": "REPO_TO_BRIDGE_WATCHER_HEARTBEAT_STALE",
+    "secondary_blocker": "TASK_SOURCE_BRANCH_NOT_WATCHER_VISIBLE",
+    "task_schema_mismatch_is_primary_blocker": false,
+    "duplicate_task_required": false,
+    "new_runner_required": false,
+    "safe_next_runtime_action": "Recover the existing watcher and existing portable single runner, then publish or synchronize the complete same-task automation/queue/control contract through the watcher-visible branch under an operator-controlled branch policy."
+  },
+  "real_candidate_rows_written": 0,
+  "official_polygon_measurements_written": 0,
+  "process_started": false,
+  "branch_modified_outside_authoritative_branch": false,
+  "queue_task_created": false,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
