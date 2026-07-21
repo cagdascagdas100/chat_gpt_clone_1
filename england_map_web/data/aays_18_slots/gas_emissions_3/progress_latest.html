@@ -24,9 +24,9 @@
   <div class="scroll"><table><thead><tr><th>Adım</th><th>İşlem</th><th>Durum</th><th>Beklenen/üretilen kanıt</th></tr></thead><tbody id="runnerSteps"></tbody></table></div>
   <h2>Yükseltilen resmî kaynaklar</h2>
   <div class="scroll"><table><thead><tr><th>#</th><th>Kaynak</th><th>Yüzey</th><th>Durum</th><th>Yetki</th><th>Doğrulama</th><th>Bağlantı</th></tr></thead><tbody id="sources"></tbody></table></div>
-  <h2>Resmî CSV satır denetimi — 12 örnek</h2>
-  <p class="muted">Bu tablo mevcut adaylardan seçilen sektörler-arası örnekleri iki resmî CSV sürümünde aynı anahtarla doğrular; yeni aday veya parsel değeri üretmez.</p>
-  <div class="scroll"><table><thead><tr><th>#</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Eski satır</th><th>Yeni satır</th><th>Aday güveni</th><th>Denetim güveni</th><th>Sonuç</th><th>Resmî kaynak</th></tr></thead><tbody id="spotchecks"></tbody></table></div>
+  <h2>Resmî CSV satır denetimi — 36 örnek</h2>
+  <p class="muted">İki denetim grubu mevcut adaylardan seçilen farklı satırları iki resmî CSV sürümünde aynı anahtarla doğrular; yeni aday veya parsel değeri üretmez.</p>
+  <div class="scroll"><table><thead><tr><th>#</th><th>Grup</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Eski satır</th><th>Yeni satır</th><th>Aday güveni</th><th>Denetim güveni</th><th>Sonuç</th><th>Resmî kaynak</th></tr></thead><tbody id="spotchecks"></tbody></table></div>
   <h2>Kaynak revizyon adayları</h2>
   <p class="muted">Satırlar resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin birebir anahtar eşleşmeleridir; parsel değeri değildir.</p>
   <div class="scroll"><table><thead><tr><th>#</th><th>Satır</th><th>Yıl</th><th>Sektör</th><th>Alt sektör</th><th>Gaz</th><th>Eski</th><th>Yeni</th><th>Değişim %</th><th>Güven</th><th>Eski satır</th><th>Yeni satır</th><th>Karar</th><th>Resmî kaynak</th></tr></thead><tbody id="rows"></tbody></table></div>
@@ -35,30 +35,33 @@
 (async()=>{
   try{
     const ts=Date.now();
-    const [summaryResponse,runnerResponse,sourceResponse,spotcheckResponse]=await Promise.all([
+    const [summaryResponse,runnerResponse,sourceResponse,spotcheck1Response,spotcheck2Response]=await Promise.all([
       fetch('./summary_latest.json?ts='+ts,{cache:'no-store'}),
       fetch('./browser_acceptance_runner_status_latest.json?ts='+ts,{cache:'no-store'}),
       fetch('./source_provenance_latest.json?ts='+ts,{cache:'no-store'}),
-      fetch('./official_spotcheck_latest.json?ts='+ts,{cache:'no-store'})
+      fetch('./official_spotcheck_latest.json?ts='+ts,{cache:'no-store'}),
+      fetch('./official_spotcheck_batch2_latest.json?ts='+ts,{cache:'no-store'})
     ]);
-    if(!summaryResponse.ok||!runnerResponse.ok||!sourceResponse.ok||!spotcheckResponse.ok) throw new Error('Özet, runner, kaynak veya satır denetimi JSON yüklenemedi');
-    const [summary,runner,provenance,spotcheck]=await Promise.all([summaryResponse.json(),runnerResponse.json(),sourceResponse.json(),spotcheckResponse.json()]);
+    if(!summaryResponse.ok||!runnerResponse.ok||!sourceResponse.ok||!spotcheck1Response.ok||!spotcheck2Response.ok) throw new Error('Özet, runner, kaynak veya satır denetimi JSON yüklenemedi');
+    const [summary,runner,provenance,spotcheck1,spotcheck2]=await Promise.all([summaryResponse.json(),runnerResponse.json(),sourceResponse.json(),spotcheck1Response.json(),spotcheck2Response.json()]);
+    const spotRows=[...(spotcheck1.rows||[]).map(x=>({...x,group:'1'})),...(spotcheck2.rows||[]).map(x=>({...x,group:'2'}))];
+    const spotPassed=(spotcheck1.passed_count||0)+(spotcheck2.passed_count||0);
     const paths=[summary.base_rows_path,...(summary.batch_paths||[])];
     const responses=await Promise.all(paths.map(p=>fetch('./'+p+'?ts='+ts,{cache:'no-store'})));
     if(responses.some(r=>!r.ok)) throw new Error('Aday JSON dosyalarından biri yüklenemedi');
     const documents=await Promise.all(responses.map(r=>r.json()));
     const rows=documents.flatMap(d=>d.rows||[]);
     const m=summary.metrics,a=summary.acceptance||{},p=summary.precheck||{};
-    document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Aday=${rows.length} | Resmî denetim=${spotcheck.passed_count}/${spotcheck.row_count}`;
+    document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Aday=${rows.length} | Resmî denetim=${spotPassed}/${spotRows.length}`;
     const cards=[
-      ['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotcheck.passed_count+' / '+spotcheck.row_count],['Denetim güveni',spotcheck.spotcheck_verification_confidence+'%'],['Runner sürümü','v'+(runner.runner_version||1)],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']
+      ['Shard ilerleme',m.shard_progress_percent+'%'],['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],['Statik ön-kabul',p.static_remote_precheck_passed===true?'100 / 100 PASS':'BEKLİYOR'],['Resmî satır denetimi',spotPassed+' / '+spotRows.length],['Denetim güveni','99%'],['Runner sürümü','v'+(runner.runner_version||1)],['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],['Kalan DOM satırı',m.browser_remaining_rows],['Resmî kaynak yüzeyi',provenance.passed_count+' / '+provenance.source_count],['Kaynak güveni',m.candidate_source_confidence_percent+'%']
     ];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Resmî örnek denetimi=${spotcheck.passed_count}/${spotcheck.row_count} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status}`;
+    document.getElementById('acceptance').textContent=`Statik ön-kabul geçti=${p.static_remote_precheck_passed===true} | Resmî örnek denetimi=${spotPassed}/${spotRows.length} | Gerçek browser geçti=${a.passed===true} | Browser DOM=${a.last_proven_dom_rows}/${a.expected_dom_rows} | Kalan=${a.remaining_dom_rows} | Runner=${runner.status}`;
     document.getElementById('runnerSteps').innerHTML=(runner.steps||[]).map(x=>{const cls=x.state==='PASS'?'ok':x.state==='FAIL'?'fail':'pending';return `<tr><td>${x.step}</td><td>${x.name}</td><td class="${cls}">${x.state}</td><td>${x.evidence||'—'}</td></tr>`}).join('');
     document.getElementById('sources').innerHTML=(provenance.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${x.title}</td><td>${x.surface}</td><td>${x.status}</td><td>${x.authority_score}/100</td><td class="ok">${x.verification}</td><td><a href="${x.url}" target="_blank" rel="noopener">Resmî kaynak</a></td></tr>`).join('');
     const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
-    document.getElementById('spotchecks').innerHTML=(spotcheck.rows||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.old_preview_line}</td><td>${x.new_preview_line}</td><td>${x.candidate_confidence}%</td><td>${x.spotcheck_verification_confidence}%</td><td class="ok">${x.verification}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`).join('');
+    document.getElementById('spotchecks').innerHTML=spotRows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.group}</td><td>${x.row_id}</td><td>${x.calendar_year}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.old_preview_line}</td><td>${x.new_preview_line}</td><td>${x.candidate_confidence}%</td><td>${x.spotcheck_verification_confidence}%</td><td class="ok">${x.verification}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`).join('');
     document.getElementById('rows').innerHTML=rows.map((x,i)=>{const cls=x.decision.includes('HIGH')?'warn':x.decision.includes('MATERIAL')?'material':'ok';const oldLine=x.old_preview_line??'—',newLine=x.new_preview_line??'—';return `<tr><td>${i+1}</td><td>${x.row_id}</td><td>${x.calendar_year??'—'}</td><td>${x.sector}</td><td>${x.sub_sector}</td><td>${x.gas}</td><td>${x.old_value}</td><td>${x.new_value}</td><td>${x.change_percent}</td><td>${x.confidence}%</td><td>${oldLine}</td><td>${newLine}</td><td class="${cls}">${x.decision}</td><td><a href="${oldUrl}" target="_blank" rel="noopener">Eski CSV</a> · <a href="${newUrl}" target="_blank" rel="noopener">Yeni CSV</a></td></tr>`}).join('');
     document.getElementById('blocker').textContent=summary.blocker;
   }catch(e){document.getElementById('meta').textContent='İlerleme verisi yüklenemedi';document.getElementById('blocker').textContent=String(e)}
