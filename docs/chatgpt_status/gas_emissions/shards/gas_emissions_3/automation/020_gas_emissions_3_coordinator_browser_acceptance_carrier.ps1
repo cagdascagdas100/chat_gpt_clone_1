@@ -147,8 +147,8 @@ try {
     if ([int]$authoritativeCheckpoint.sequence -lt 19) { throw "Authoritative checkpoint sequence regressed: $($authoritativeCheckpoint.sequence)" }
     if (-not $runtimeCheckpointPath) { throw 'AAYS_PORTABLE_ROOT is required to preserve the coordinator runtime checkpoint.' }
     $runtimeCheckpoint = $authoritativeCheckpoint | Select-Object *
-    $runtimeCheckpoint.hydration_state = 'AUTHORITATIVE_REMOTE_SEQUENCE_PRESERVED_FOR_COORDINATOR_PUBLISH'
-    $runtimeCheckpoint.updated_at = [DateTime]::UtcNow.ToString('o')
+    $runtimeCheckpoint | Add-Member -NotePropertyName hydration_state -NotePropertyValue 'AUTHORITATIVE_REMOTE_SEQUENCE_PRESERVED_FOR_COORDINATOR_PUBLISH' -Force
+    $runtimeCheckpoint | Add-Member -NotePropertyName updated_at -NotePropertyValue ([DateTime]::UtcNow.ToString('o')) -Force
     $runtimeCheckpoint | Add-Member -NotePropertyName remote_head -NotePropertyValue $remoteHead -Force
     Write-Json $runtimeCheckpoint $runtimeCheckpointPath
 
@@ -194,7 +194,7 @@ try {
         schema_version=3;slot_id=$slotId;generated_at=$generatedAt;status='COORDINATOR_BROWSER_DOM_AND_SCREENSHOT_PASS_AWAITING_SERIAL_REMOTE_PUBLISH_READBACK';
         runner_policy='EXISTING_CANONICAL_F_SHARED_RUNNER_ONLY';runner_version=6;browser_path=$browser;
         git=[ordered]@{local_head=$localHead;remote_head=$remoteHead;head_match=$true;direct_child_push_forbidden=$true;coordinator_serial_publish_required=$true;remote_publish_readback_passed=$false};
-        http=[ordered]@{endpoint_count=5;all_status_200=$httpPassed;served_row_count=$servedRows;served_unique_row_count=$uniqueRows;matrix_status_row_count=$matrixRows;summary_candidate_count=$candidateRows;served_commit_sha=$matrixStatusHttp.json.served_commit_sha;passed=$servedPassed};
+        http=[ordered]@{endpoint_count=5;all_status_200=$httpPassed;served_row_count=$servedRows;served_unique_row_count=$uniqueRows;matrix_status_row_count=$matrixRows;summary_candidate_count=$candidateRows;served_commit_sha=$matrixStatusHttp.json.served_commit_sha;served_commit_field_role='historical_informational_only_runtime_token_is_authoritative';passed=$servedPassed};
         precheck=[ordered]@{url=$precheckUrl;exit_code=$precheck.exit_code;pass_rows=$precheckPassRows;fail_rows=$precheckFailRows;dom_path=(Repo-Relative $precheck.dom_path);dom_sha256=$precheck.dom_sha256;stderr_path=(Repo-Relative $precheck.stderr_path);stderr_sha256=$precheck.stderr_sha256;passed=$precheckPassed};
         matrix=[ordered]@{url=$matrixUrl;exit_code=$matrix.exit_code;expected_rows=100;hundred_rows_text_present=$matrixHundredRows;page_info_100_present=$matrixPageInfo;required_header_count=$requiredHeaders.Count;missing_headers=$missingHeaders;dom_path=(Repo-Relative $matrix.dom_path);dom_sha256=$matrix.dom_sha256;stderr_path=(Repo-Relative $matrix.stderr_path);stderr_sha256=$matrix.stderr_sha256;passed=$matrixPassed};
         screenshot=$screenshot;browser_script_errors=$scriptErrors;browser_dom_passed=$true;browser_acceptance_passed=$false;coordinator_publish_required=$true;
