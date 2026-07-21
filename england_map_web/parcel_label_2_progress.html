@@ -57,7 +57,8 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const evidenceComplete=candidates.every(c=>String(c.fresh_evidence||'').trim().length>0);
    const officialScopeComplete=candidates.every(c=>String(c.official_scope||'').trim().length>0);
    const conflictComplete=candidates.every(c=>String(c.conflict_status||'').trim().length>0);
-   const manualReviewAll=candidates.every(c=>c.needs_manual_review===true);
+   const manualReviewCount=candidates.filter(c=>c.needs_manual_review===true).length;
+   const manualReviewAll=manualReviewCount===count;
    const allSourcePlaceholders=candidates.every(c=>String(c.parcel_id||'').startsWith('SOURCE_'));
    const uniqueIds=uniqueCount(candidateIds)===Number(manifest.expected_unique_candidate_ids);
    const uniqueRefs=uniqueCount(normalizedRefs)===Number(manifest.expected_unique_normalized_candidate_refs);
@@ -66,13 +67,13 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
    const integrityOk=fileMatch&&rowMatch&&batchMatch&&classBalance&&allHttpsSources&&allHighAccuracy&&scoreRange&&scoreRelation&&evidenceComplete&&officialScopeComplete&&conflictComplete&&manualReviewAll&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
    document.getElementById('integrity').textContent=integrityOk
-    ?`Veri manifesti eşleşti: ${parts.length} aday dosyası, ${activityParts.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım, puan-kapsam-kanit kapıları ve ${activities.length} sıralı işlem satırı.`
+    ?`Veri manifesti eşleşti: ${parts.length} aday dosyası, ${activityParts.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım, puan-kapsam-kanıt kapıları ve ${activities.length} sıralı işlem satırı.`
     :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, sınıf ${classBalance?'OK':'HATA'}, puan ${scoreRange&&scoreRelation?'OK':'HATA'}, kanıt ${evidenceComplete?'OK':'HATA'}, kapsam ${officialScopeComplete?'OK':'HATA'}, inceleme ${manualReviewAll?'OK':'HATA'}, bloker ${conflictComplete?'OK':'HATA'}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
    const classEach=Object.values(manifest.expected_class_counts||{})[0]||0;
    const cards=[
     ['Görünür aday',count],['Araştırma batch',batchCount],['Sınıf kapsamı',manifest.expected_class_coverage],['Sınıf dağılımı',classBalance?classEach+' × 6':'HATA'],
     ['Sınıflandırma doğruluğu','%'+average],['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],['Puan ilişkisi',scoreRange&&scoreRelation?'MATCH':'MISMATCH'],['Kanıt alanları',evidenceComplete?'DOLU':'HATA'],
-    ['Kapsam alanları',officialScopeComplete?'DOLU':'HATA'],['Manuel inceleme',manualReviewAll?'132/132':'HATA'],['Bloker alanları',conflictComplete?'DOLU':'HATA'],['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
+    ['Kapsam alanları',officialScopeComplete?'DOLU':'HATA'],['Manuel inceleme',manualReviewAll?manualReviewCount+'/'+count:'HATA'],['Bloker alanları',conflictComplete?'DOLU':'HATA'],['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
     ['Benzersiz ID',uniqueCount(candidateIds)],['Benzersiz yer',uniqueCount(normalizedRefs)],['Benzersiz kaynak',uniqueCount(sourceUrls)],['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],
     ['Canonical slot satırı',manifest.canonical_verified_slot_rows],['Exact geometri',manifest.exact_geometry_rows],['Canonical blob','bb48164…'],['Carrier sayısı','92.283 exact'],['Kimlik kapısı','parcel_1…92283'],['Satır kapısı','row_no = parcel_n'],
     ['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],['Seçili görev',manifest.selected_runner_task],['Seçili sürüm',manifest.selected_runner_task_version],['Kendi görevimiz',manifest.own_runner_attempt],['İşlem satırı',activities.length]
