@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>parcel_label_1 ilerleme</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45}
+    h1{margin-bottom:6px}.muted{color:#555}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}
+    .card{border:1px solid #bbb;border-radius:8px;padding:12px}table{border-collapse:collapse;width:100%;font-size:14px}
+    th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#fff}
+    .ok{font-weight:700}.warn{font-weight:700}code{white-space:nowrap}
+  </style>
+</head>
+<body>
+  <h1>parcel_label_1</h1>
+  <div class="muted">1–30761 · yalnız resmi kaynak araştırma adayları · canonical geometri bağlaması bekliyor</div>
+  <div class="summary" id="summary"></div>
+  <table>
+    <thead><tr><th>#</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="9">Yükleniyor…</td></tr></tbody>
+  </table>
+<script>
+fetch('data/distance_property_types/parcel_label_1_candidates.json',{cache:'no-store'})
+ .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+ .then(d=>{
+   const cards=[
+    ['Görünür aday',d.candidate_count],
+    ['Sınıflandırma doğruluğu','%'+d.classification_accuracy_average_percent],
+    ['Canonical slot satırı',d.verified_slot_rows],
+    ['Exact geometri',d.exact_geometry_rows]
+   ];
+   document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="ok">${x[1]}</div></div>`).join('');
+   document.getElementById('rows').innerHTML=d.candidates.map((c,i)=>`<tr>
+    <td>${i+1}</td><td><code>${c.parcel_id}</code></td><td>${c.parcel_ref}</td><td>${c.selected_property_type}</td>
+    <td>%${c.accuracy_percent}</td><td><a href="${c.source_url}" target="_blank" rel="noopener">resmi kaynak</a></td>
+    <td>${c.fresh_evidence}</td><td class="warn">${c.geometry_status}</td><td>${c.conflict_status}</td></tr>`).join('');
+ }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="9">${e.message}</td></tr>`});
+</script>
+</body>
+</html>
