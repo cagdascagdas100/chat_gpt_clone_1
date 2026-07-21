@@ -1,5 +1,5 @@
 {
-  "schema_version": 10,
+  "schema_version": 11,
   "slot_id": "security_public_safety_1",
   "research_date": "2026-07-21",
   "status": "EXTERNAL_OFFICIAL_RESEARCH_REFRESH_NOT_RUNNER_ACCEPTANCE",
@@ -15,22 +15,22 @@
       "scope_limit": "Candidate parity remains May 2026; freshness evidence only; not a parcel measurement"
     },
     {
-      "source": "data.police.uk archive",
-      "observed_value": "May 2026 archive contains June 2023 to May 2026 data, remains the latest bulk snapshot and provides MD5 integrity data",
-      "role": "bulk snapshot integrity",
-      "scope_limit": "Archive availability does not prove individual candidate parity"
+      "source": "data.police.uk street-level crime method",
+      "observed_value": "Point queries represent a one-mile area and returned crime locations are approximate and anonymised",
+      "role": "method and accuracy ceiling",
+      "scope_limit": "Supporting AREA_LEVEL_PROXY evidence only; not exact incident or parcel location"
     },
     {
-      "source": "data.police.uk May 2026 changelog",
-      "observed_value": "Crime data was not provided for British Transport Police, Gloucestershire, Greater Manchester and Lincolnshire",
-      "role": "known missing-data control",
-      "scope_limit": "Missing force values are recorded and not inferred; Metropolitan candidate endpoints still require live parity"
+      "source": "data.police.uk archive and changelog",
+      "observed_value": "May 2026 remains the latest bulk snapshot; known missing-force data is recorded rather than inferred",
+      "role": "bulk integrity and missing-data control",
+      "scope_limit": "Archive or changelog presence does not prove candidate live parity"
     },
     {
       "source": "London Datastore MPS Recorded Crime Geographic Breakdown",
-      "observed_value": "Current MPS LSOA file covers July 2024 to June 2026 and the catalogue provides monthly borough, ward and LSOA counts",
+      "observed_value": "Current MPS LSOA file covers July 2024 to June 2026 and supplies monthly borough, ward and LSOA counts",
       "role": "direct official LSOA source quality gate",
-      "scope_limit": "Sexual offences are not supplied at LSOA; CONNECT comparability limits apply; not a parcel measurement"
+      "scope_limit": "Sexual offences are not supplied at LSOA; post-February 2024 CONNECT comparability limits apply; not a parcel measurement"
     },
     {
       "source": "Office for National Statistics Crime in England and Wales year ending March 2026",
@@ -40,7 +40,7 @@
     },
     {
       "source": "Home Office crime outcomes in England and Wales 2025 to 2026 announcement",
-      "observed_value": "Release confirmed for 23 July 2026 at 09:30 UK time",
+      "observed_value": "Release confirmed for 23 July 2026 at 09:30 UK time and not yet used as published evidence",
       "role": "confirmed national release watch",
       "scope_limit": "Future release watch only as of 21 July 2026"
     },
@@ -51,21 +51,22 @@
       "scope_limit": "Operational evidence only; alias was not overwritten and does not validate candidate data"
     },
     {
-      "source": "supplemental candidate endpoint reuse audit",
-      "observed_value": "parcel_131 through parcel_140 map to three endpoints already present in the 130-row acceptance set",
-      "role": "network-load minimisation and display expansion",
-      "scope_limit": "Supplemental stored evidence only; acceptance target remains 130 and live parity remains pending"
+      "source": "supplemental candidate endpoint inventory",
+      "observed_value": "parcel_131 through parcel_160 provide 30 supplemental rows across five endpoints; parcel_151 through parcel_160 reuse only 51.542542,0.171753 and 51.545851,0.171751",
+      "role": "display expansion and network-load minimisation",
+      "scope_limit": "Supplemental stored evidence only; acceptance remains 130 candidates over 16 endpoints and live parity remains pending"
     },
     {
       "source": "worker and queue stability audit",
-      "observed_value": "V14 and attempt 014 remain unchanged while 10 supplemental examples are added",
+      "observed_value": "V14 and attempt 014 remain unchanged while visible examples increase to 160",
       "role": "runtime contract stability and replay prevention",
       "scope_limit": "Authoring control only; canonical runner preflight remains unexecuted"
     }
   ],
-  "candidate_display_target": 140,
+  "candidate_display_target": 160,
   "acceptance_candidate_target": 130,
-  "supplemental_candidate_count": 10,
+  "supplemental_candidate_count": 30,
+  "supplemental_unique_endpoints": 5,
   "candidate_live_unique_endpoints_required": 16,
   "candidate_rows_added_this_turn": 10,
   "candidate_new_unique_endpoints_this_turn": 0,
@@ -79,5 +80,5 @@
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "updated_at": "2026-07-21T09:35:00Z"
+  "observed_at": "2026-07-21T09:03:39+03:00"
 }
