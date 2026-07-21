@@ -10,13 +10,15 @@
     h1{margin-bottom:6px}.muted{color:#666}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:18px 0}
     .card{background:white;border:1px solid #ddd;border-radius:8px;padding:12px}.value{font-size:23px;font-weight:700}
     table{width:100%;border-collapse:collapse;background:white;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left}th{position:sticky;top:0;background:#eee}
-    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.scroll{overflow:auto;max-height:72vh}.error{white-space:pre-wrap;color:#8b0000}a{white-space:nowrap}
+    .ok{font-weight:700}.warn{font-weight:700}.material{font-weight:700}.scroll{overflow:auto;max-height:72vh}.error{white-space:pre-wrap;color:#8b0000}a{white-space:nowrap}.path{font-family:ui-monospace,monospace;overflow-wrap:anywhere;background:#fff;padding:10px;border:1px solid #ddd;border-radius:6px}
   </style>
 </head>
 <body>
   <h1>Gas Emissions — Shard 3</h1>
   <div id="meta" class="muted">Yükleniyor…</div>
   <div id="cards" class="cards"></div>
+  <h2>Browser kabul talebi</h2>
+  <div id="acceptance" class="path">Yükleniyor…</div>
   <h2>Kaynak revizyon adayları</h2>
   <p class="muted">Satırlar resmî DESNZ 2005–2023 ve 2005–2024 sürümlerinin birebir anahtar eşleşmeleridir; parsel değeri değildir.</p>
   <div class="scroll"><table>
@@ -36,18 +38,20 @@
     if(responses.some(r=>!r.ok)) throw new Error('Aday JSON dosyalarından biri yüklenemedi');
     const documents=await Promise.all(responses.map(r=>r.json()));
     const rows=documents.flatMap(d=>d.rows||[]);
-    const m=summary.metrics;
+    const m=summary.metrics,a=summary.acceptance||{};
     document.getElementById('meta').textContent=`SLOT_ID=${summary.slot_id} | Parsel=${summary.parcel_range} | Güncelleme=${summary.updated_at} | Durum=${summary.status} | Satır=${rows.length}`;
     const cards=[
       ['Shard ilerleme',m.shard_progress_percent+'%'],
       ['Tamamlanan işlem',m.operations_completed+' / '+m.operations_total],
       ['Aday kapsamı',rows.length+' / '+m.candidate_target_rows],
       ['Browser kanıtı',m.browser_verified_rows+' / '+m.browser_target_rows],
+      ['Kalan DOM satırı',m.browser_remaining_rows],
       ['Yüksek etkili',m.high_impact_revision_candidates],
       ['Maddi revizyon',m.material_revision_candidates],
       ['Kaynak güveni',m.candidate_source_confidence_percent+'%']
     ];
     document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
+    document.getElementById('acceptance').textContent=`Hazır=${a.request_prepared===true} | Geçti=${a.passed===true} | Beklenen DOM=${a.expected_dom_rows} | Kanıtlanan DOM=${a.last_proven_dom_rows} | Kalan=${a.remaining_dom_rows} | ${a.request_path||''}`;
     const oldUrl=summary.source.old_preview_url,newUrl=summary.source.new_preview_url;
     document.getElementById('rows').innerHTML=rows.map((x,i)=>{
       const cls=x.decision.includes('HIGH')?'warn':x.decision.includes('MATERIAL')?'material':'ok';
