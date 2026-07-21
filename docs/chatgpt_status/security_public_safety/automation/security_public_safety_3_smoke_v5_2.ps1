@@ -10,7 +10,7 @@ $repoRoot = if ($env:AAYS_REPO_ROOT) {
 }
 $pythonScript = Join-Path $repoRoot 'docs\chatgpt_status\security_public_safety\automation\security_public_safety_3_smoke_v5_2.py'
 if (-not (Test-Path -LiteralPath $pythonScript -PathType Leaf)) {
-  throw "V5_2_SMOKE_PYTHON_SCRIPT_MISSING: $pythonScript"
+  throw "V5_2_1_SMOKE_PYTHON_SCRIPT_MISSING: $pythonScript"
 }
 
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -18,8 +18,8 @@ if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
 if (-not $python) { throw 'PYTHON_EXECUTABLE_NOT_FOUND' }
 
 Write-Output 'SLOT_ID=security_public_safety_3'
-Write-Output 'TASK_VERSION=5.2-smoke-powershell-carrier'
-Write-Output 'ATTEMPT_ID=security-public-safety-3-20260721-009'
+Write-Output 'TASK_VERSION=5.2.1-smoke-fail-closed'
+Write-Output 'ATTEMPT_ID=security-public-safety-3-20260721-010'
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "PYTHON_SCRIPT=$pythonScript"
 
