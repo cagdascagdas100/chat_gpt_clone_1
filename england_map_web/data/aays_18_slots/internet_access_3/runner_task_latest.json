@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_3",
-  "updated_at": "2026-07-21T08:10:00+03:00",
-  "task_id": "internet_access_3-ofcom-r2-targeted-bounded-join-20260721",
+  "updated_at": "2026-07-21T08:13:15+03:00",
+  "task_id": "internet_access_3-ofcom-r2-direct-zip-targeted-join-20260721",
   "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
   "single_shared_runner_only": true,
   "create_new_runner": false,
@@ -12,9 +12,20 @@
   "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD",
   "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\015_materialize_exact_blobs_and_run_targeted_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --git-ref HEAD --ofcom-zip F:\\path\\to\\official_ofcom.zip",
   "memory_strategy": "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
+  "disk_strategy": "DIRECT_ZIP_MEMBER_STREAM_NO_CSV_EXTRACTION",
   "exact_blob_sources": [
-    {"role":"canonical","path":"england_map_web/data/program_layer_matrix/security.geojson","git_blob_sha":"8afd1d2bac414cf0f6b9484014e7878a4ceff877","state":"PASS"},
-    {"role":"legacy_internet","path":"england_map_web/data/program_layer_matrix/internet.geojson","git_blob_sha":"9c24fd366e29c3356b1e5178295b903edf8680ff","state":"PASS"}
+    {
+      "role": "canonical",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+      "state": "PASS"
+    },
+    {
+      "role": "legacy_internet",
+      "path": "england_map_web/data/program_layer_matrix/internet.geojson",
+      "git_blob_sha": "9c24fd366e29c3356b1e5178295b903edf8680ff",
+      "state": "PASS"
+    }
   ],
   "stages": [
     {"stage":1,"name":"IDENTITY_EXTRACTOR_SELFTEST","state":"PASS_LOCAL","expected":"9/9 PASS"},
@@ -22,11 +33,12 @@
     {"stage":3,"name":"MULTICLIENT_DOWNLOAD_SELFTEST","state":"PASS_LOCAL","expected":"10/10 PASS"},
     {"stage":4,"name":"EXACT_GIT_BLOB_MATERIALIZER_SELFTEST","state":"PASS_LOCAL","expected":"16/16 PASS"},
     {"stage":5,"name":"TARGETED_POSTCODE_JOIN_SELFTEST","state":"PASS_LOCAL","expected":"12/12 PASS"},
-    {"stage":6,"name":"TARGETED_PIPELINE_WIRING_SELFTEST","state":"PASS_LOCAL","expected":"4/4 PASS"},
-    {"stage":7,"name":"EXACT_BLOB_MATERIALIZATION","state":"WAITING_EXISTING_RUNNER","expected":"HEAD path blob verification and isolated git cat-file materialization"},
-    {"stage":8,"name":"OFFICIAL_ZIP_SELECTION_DOWNLOAD_AND_SHA256","state":"WAITING_EXISTING_RUNNER","expected":"explicit ZIP or cache or urllib/curl/PowerShell; signature, size, CRC and SHA256"},
-    {"stage":9,"name":"EXACT_30761_ROW_SLICE","state":"WAITING_EXISTING_RUNNER","expected":"30,761 unique row_no and parcel_id plus hashes and first rows"},
-    {"stage":10,"name":"TARGETED_REVIEW_ONLY_R2_JOIN","state":"WAITING_EXISTING_RUNNER","expected":"scan exact 1,741,096 rows; retain needed details only; proxy/conflict/postcode-not-found/NO_DATA counts and samples"}
+    {"stage":6,"name":"DIRECT_ZIP_STREAM_JOIN_SELFTEST","state":"PASS_LOCAL","expected":"14/14 PASS"},
+    {"stage":7,"name":"TARGETED_PIPELINE_WIRING_SELFTEST","state":"PASS_LOCAL","expected":"6/6 PASS"},
+    {"stage":8,"name":"EXACT_BLOB_MATERIALIZATION","state":"WAITING_EXISTING_RUNNER","expected":"HEAD path blob verification and isolated git cat-file materialization"},
+    {"stage":9,"name":"OFFICIAL_ZIP_SELECTION_DOWNLOAD_AND_SHA256","state":"WAITING_EXISTING_RUNNER","expected":"explicit ZIP or cache or urllib/curl/PowerShell; signature, size, CRC and SHA256"},
+    {"stage":10,"name":"EXACT_30761_ROW_SLICE","state":"WAITING_EXISTING_RUNNER","expected":"30,761 unique row_no and parcel_id plus hashes and first rows"},
+    {"stage":11,"name":"DIRECT_ZIP_STREAM_TARGETED_R2_JOIN","state":"WAITING_EXISTING_RUNNER","expected":"no CSV extraction; scan 121 members and exact 1,741,096 rows; member SHA256/CRC; proxy/conflict/postcode-not-found/NO_DATA counts and samples"}
   ],
   "actual_business_data_rows_written": 0,
   "migration": false,
