@@ -1,102 +1,444 @@
 {
-  "schema_version": 19,
+  "schema_version": 4,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
-  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
-  "payload_revision": 12,
-  "generated_date": "2026-07-21",
-  "status": "REVISION_12_DIRECT_EA_PIXEL_CENTER_RESAMPLE_READY_QUEUE_DRIVEN_WATCHER_RECOVERY_V5_F_HOST_APPLY_REQUIRED",
-  "execution_status": "direct_official_ea_wcs_resample_source_hashes_pixel_center_provenance_output_integrity_and_queue_driven_recovery_ready_runtime_not_applied",
-  "operations_manifest_path": "england_map_web/data/aays_21_slots/height_difference_1/operations_manifest_latest.json",
-  "operations_increment_path": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_026_revision_12_direct_ea_resample_20260721.json",
-  "diagnostics_path": "england_map_web/data/aays_21_slots/height_difference_1/execution_diagnostics_latest.json",
-  "revision_12_contract_path": "england_map_web/data/aays_21_slots/height_difference_1/revision_12_direct_ea_pixel_center_resample_contract_latest.json",
+  "payload_revision": 3,
+  "generated_at": "2026-07-21T00:29:10.017082Z",
+  "status": "OFFICIAL_EXECUTION_RESULT_PUBLISHED",
+  "execution_status": "completed_no_official_two_source_rows",
   "product_completion_percent": 78,
   "product_percent_increase": 0,
-  "batch_progress": {"planned_operations": 250, "completed_operations": 245, "blocked_operations": 5, "completion_percent": 98.0, "percentage_point_increase_this_run": 0.17},
-  "source_upgrades_count": 39,
-  "source_upgrades_this_run": 0,
-  "methodology_source_upgrades_this_run": 1,
-  "official_source_freshness_revalidations_this_run": 4,
-  "revision_12_direct_sampling_upgrades_this_run": 10,
-  "validation_tests": {
-    "height_difference_metric_gate": "14/14",
-    "revision_9_output_integrity": "23/23",
-    "revision_10_source_contract": "96/96_source_level_runtime_not_applied",
-    "revision_11_pixel_center_sampling": "20/20_source_level_runtime_not_applied",
-    "revision_12_direct_ea_resample": "54/54_source_and_synthetic_raster_runtime_network_not_applied"
+  "batch_progress": {
+    "planned_operations": 36,
+    "completed_operations": 31,
+    "blocked_operations": 5,
+    "completion_percent": 86.11,
+    "percentage_point_increase_this_run": 2.78
   },
+  "source_upgrades_count": 16,
+  "source_upgrades_this_run": 3,
   "candidate_rows_count": 3,
   "measured_candidate_rows_count": 0,
   "real_boundary_match_rows_count": 0,
   "official_numeric_rows_count": 0,
-  "official_height_difference_rows_count": 0,
+  "official_two_source_numeric_rows_count": 0,
   "accuracy": {
     "current_score_4": "2.5/4 fallback",
     "parcel_accuracy_increase": 0,
-    "target_after_real_boundary_and_independent_two_source_validation": "3.5/4 or higher",
-    "acceptance_guard": "Official monthly HMLR polygon with digest, authority, identifier, EPSG:27700 and candidate point-in-polygon; direct resampling from the persistent EA DTM 1m WCS with hashed GetCapabilities, DescribeCoverage and GeoTIFF responses; at least 3 valid pixel centres inside the parcel using all_touched=false; deterministic sampling-mask and selected-centre SHA-256 values; height difference equals maximum minus minimum; centroid fallback forbidden; OS Terrain 50 independently crosschecks absolute elevation and ODN; EA/OS difference over 8m or unresolved conflict is not promoted; runner, web and snapshot identities and hashes must agree."
+    "acceptance_guard": "Real HMLR polygon plus EA numeric DTM plus independent OS Terrain 50 numeric evidence required."
   },
-  "metric_contract": {
-    "layer_key": "height_difference",
-    "metric_name": "parcel_ground_height_difference",
-    "definition": "maximum minus minimum directly resampled EA DTM 1m pixel-center elevations inside the official HMLR parcel polygon",
-    "unit": "metre",
-    "minimum_valid_ea_pixels": 3,
-    "maximum_ea_os_absolute_difference_m": 8.0,
-    "direct_ea_wcs_resample_required": true,
-    "persistent_wcs_endpoint_required": true,
-    "wcs_capabilities_and_describe_sha256_required": true,
-    "geotiff_sha256_required": true,
-    "pixel_inclusion_policy": "pixel_center_inside_official_hmlr_polygon",
-    "all_touched": false,
-    "sampling_mask_sha256_required": true,
-    "selected_pixel_centers_sha256_required": true,
-    "centroid_fallback_forbidden": true,
-    "primary_numeric_source": "Environment Agency LIDAR Composite DTM 1m persistent WCS",
-    "independent_source": "OS Terrain 50",
-    "independent_source_role": "absolute elevation and Ordnance Datum Newlyn crosscheck, not parcel-range measurement",
-    "ea_source_vertical_rmse_m": 0.15,
-    "indicative_range_endpoint_rss_rmse_m": 0.212,
-    "horizontal_crs": "EPSG:27700",
-    "vertical_crs": "EPSG:5701",
-    "vertical_reference": "Ordnance Datum Newlyn"
-  },
-  "official_source_contracts": [
-    {"source_id": "hmlr_inspire_20260705", "provider": "HM Land Registry", "publication_date": "2026-07-05", "authorities": ["London Borough of Barnet", "London Borough of Enfield"], "role": "official parcel geometry", "source_quality_score_4": 4, "freshness_revalidated": true},
-    {"source_id": "ea_lidar_dtm_1m_persistent_wcs", "provider": "Environment Agency", "service": "WCS 2.0.1", "resolution_m": 1, "vertical_accuracy_rmse_m": 0.15, "role": "direct official parcel height-difference resampling using polygon pixel-centre maximum minus minimum", "source_quality_score_4": 4, "freshness_revalidated": true},
-    {"source_id": "os_terrain50_202607", "provider": "Ordnance Survey", "version_date": "2026-07", "tile": "TQ29", "grid_cells": [200, 200], "cellsize_m": 50, "role": "independent absolute-elevation and vertical-datum crosscheck only", "parcel_range_measurement": false, "source_quality_score_4": 3, "freshness_revalidated": true},
-    {"source_id": "rasterio_mask_pixel_center", "provider": "Rasterio official documentation", "role": "sampling methodology provenance: all_touched=false uses pixel-center inclusion", "methodology_only": true, "freshness_revalidated": true}
+  "official_sources": [
+    {
+      "source_id": "hmlr_inspire_20260705",
+      "provider": "HM Land Registry",
+      "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "publication_date": "2026-07-05",
+      "data_type": "monthly local-authority GML",
+      "crs": "EPSG:27700",
+      "source_quality_score_4": 4,
+      "status": "verified_barnet_enfield_listed"
+    },
+    {
+      "source_id": "hmlr_inspire_wfs",
+      "provider": "HM Land Registry",
+      "source_url": "https://inspire.landregistry.gov.uk/inspire/ows",
+      "data_type": "WFS geometry",
+      "query_bbox_m": 50,
+      "source_quality_score_4": 4,
+      "status": "payload_revision_3_ready"
+    },
+    {
+      "source_id": "ea_lidar_dtm_1m",
+      "provider": "Environment Agency",
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "resolution_m": 1,
+      "coverage_description": "approximately 99 percent of England",
+      "vertical_accuracy_rmse_m": 0.15,
+      "source_quality_score_4": 4,
+      "status": "coverage_id_discovery_and_axis_variants_ready"
+    },
+    {
+      "source_id": "ea_lidar_dtm_2m",
+      "provider": "Environment Agency",
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
+      "resolution_m": 2,
+      "independent_second_source": false,
+      "source_quality_score_4": 4,
+      "status": "same_provider_cross_resolution_ready"
+    },
+    {
+      "source_id": "ea_lidar_dtm_10m",
+      "provider": "Environment Agency",
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-10m/wcs",
+      "resolution_m": 10,
+      "independent_second_source": false,
+      "source_quality_score_4": 3.5,
+      "status": "tertiary_resolution_check_ready"
+    },
+    {
+      "source_id": "ea_lidar_5km_geotiff_delivery",
+      "provider": "Environment Agency / National Data Library",
+      "source_url": "https://www.data.gov.uk/collections/environment/lidar",
+      "data_type": "5km GeoTIFF tiles aligned to OS National Grid",
+      "source_quality_score_4": 4,
+      "status": "official_archive_fallback_verified"
+    },
+    {
+      "source_id": "os_terrain50_202607",
+      "provider": "Ordnance Survey",
+      "source_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "version_date": "2026-07",
+      "resolution_m": 50,
+      "rmse_m": 4,
+      "tile": "TQ29",
+      "independent_second_source": true,
+      "source_quality_score_4": 3,
+      "status": "direct_api_archive_budget_and_ascii_sampler_ready"
+    }
   ],
   "candidates": [
-    {"parcel_id": "parcel_2759", "parcel_ref": "52040420", "centroid_wgs84": {"lat": 51.6169525, "lon": -0.1430858}, "centroid_epsg27700": {"easting": 528658.656, "northing": 192535.809}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_12_queue_driven_recovery_f_host_apply_pending", "numeric_status": "revision_12_direct_ea_runner_not_claimed", "metric_definition": "direct_EA_DTM_1m_pixel_center_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
-    {"parcel_id": "parcel_2758", "parcel_ref": "52213916", "centroid_wgs84": {"lat": 51.6168592, "lon": -0.1417993}, "centroid_epsg27700": {"easting": 528747.982, "northing": 192527.698}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_12_queue_driven_recovery_f_host_apply_pending", "numeric_status": "revision_12_direct_ea_runner_not_claimed", "metric_definition": "direct_EA_DTM_1m_pixel_center_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
-    {"parcel_id": "parcel_2757", "parcel_ref": "52213412", "centroid_wgs84": {"lat": 51.6167362, "lon": -0.1421556}, "centroid_epsg27700": {"easting": 528723.664, "northing": 192513.392}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_12_queue_driven_recovery_f_host_apply_pending", "numeric_status": "revision_12_direct_ea_runner_not_claimed", "metric_definition": "direct_EA_DTM_1m_pixel_center_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"}
+    {
+      "parcel_id": "parcel_2759",
+      "parcel_ref": "52040420",
+      "centroid_wgs84": {
+        "lat": 51.6169525,
+        "lon": -0.1430858
+      },
+      "centroid_epsg27700": {
+        "easting": 528658.656,
+        "northing": 192535.809
+      },
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_geometry_query": "WFS_50M_BBOX_PLUS_OFFICIAL_MONTHLY_GML_LINK_DISCOVERY",
+      "ea_query_windows": [
+        "1m_24m_window",
+        "2m_24m_window",
+        "10m_24m_window"
+      ],
+      "boundary_status": "payload_revision_3_pending_remote_result",
+      "numeric_status": "payload_revision_3_pending_remote_result",
+      "output_semantics": "NO_DATA_NOT_INFERRED",
+      "accuracy_score_4": "2.5/4 fallback"
+    },
+    {
+      "parcel_id": "parcel_2758",
+      "parcel_ref": "52213916",
+      "centroid_wgs84": {
+        "lat": 51.6168592,
+        "lon": -0.1417993
+      },
+      "centroid_epsg27700": {
+        "easting": 528747.982,
+        "northing": 192527.698
+      },
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_geometry_query": "WFS_50M_BBOX_PLUS_OFFICIAL_MONTHLY_GML_LINK_DISCOVERY",
+      "ea_query_windows": [
+        "1m_24m_window",
+        "2m_24m_window",
+        "10m_24m_window"
+      ],
+      "boundary_status": "payload_revision_3_pending_remote_result",
+      "numeric_status": "payload_revision_3_pending_remote_result",
+      "output_semantics": "NO_DATA_NOT_INFERRED",
+      "accuracy_score_4": "2.5/4 fallback"
+    },
+    {
+      "parcel_id": "parcel_2757",
+      "parcel_ref": "52213412",
+      "centroid_wgs84": {
+        "lat": 51.6167362,
+        "lon": -0.1421556
+      },
+      "centroid_epsg27700": {
+        "easting": 528723.664,
+        "northing": 192513.392
+      },
+      "bng_tile_1km": "TQ2892",
+      "os_terrain50_tile_10km": "TQ29",
+      "hmlr_geometry_query": "WFS_50M_BBOX_PLUS_OFFICIAL_MONTHLY_GML_LINK_DISCOVERY",
+      "ea_query_windows": [
+        "1m_24m_window",
+        "2m_24m_window",
+        "10m_24m_window"
+      ],
+      "boundary_status": "payload_revision_3_pending_remote_result",
+      "numeric_status": "payload_revision_3_pending_remote_result",
+      "output_semantics": "NO_DATA_NOT_INFERRED",
+      "accuracy_score_4": "2.5/4 fallback"
+    }
   ],
-  "execution_assets": {
-    "metric_script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/035_height_difference_1_revision_12_direct_ea_pixel_center_resample_20260721.py",
-    "metric_script_blob_sha": "70c11dd3648a29240bba94c22ddb09298b3db217",
-    "expected_runner_output": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/014_revision_12_direct_ea_pixel_center_resample_latest.json",
-    "output_integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/036_validate_revision_12_output_integrity_20260721.py",
-    "queue_driven_recovery": "docs/chatgpt_status/topography/shards/height_difference_1/automation/029_recover_existing_watcher_queue_driven_v5_20260721.ps1",
-    "post_apply_verifier": "docs/chatgpt_status/topography/shards/height_difference_1/automation/030_verify_existing_watcher_queue_driven_v5_20260721.ps1",
-    "guarded_command": "docs/chatgpt_status/topography/shards/height_difference_1/automation/037_run_queue_driven_recovery_v5_and_revision_12_integrity_20260721.cmd",
-    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/019_revision_12_direct_ea_pixel_center_resample_selftest_20260721.json",
-    "report": "docs/chatgpt_status/topography/shards/height_difference_1/reports/025_height_difference_1_revision_12_direct_ea_pixel_center_resample_20260721.md",
-    "expected_integrity_readback": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/023_revision_12_output_integrity_readback_latest.json"
-  },
-  "blockers": ["QUEUE_DRIVEN_WATCHER_RECOVERY_V5_NOT_RUNTIME_APPLIED_ON_F_HOST", "HEIGHT_DIFFERENCE_1_HEARTBEAT_UNCLAIMED", "REVISION_12_RUNNER_OUTPUT_NOT_PRESENT", "REVISION_12_OUTPUT_INTEGRITY_READBACK_NOT_PRESENT"],
-  "first_unverified_step": "RUN_QUEUE_DRIVEN_WATCHER_RECOVERY_V5_ON_F_HOST_THEN_VERIFY_EXACT_REVISION_12_DIRECT_EA_RESAMPLE_AND_INTEGRITY",
-  "active_shared_control_task": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
-  "active_shared_control_overridden": false,
+  "operations": [
+    {
+      "operation_no": 1,
+      "name": "remote_head_readback",
+      "status": "completed"
+    },
+    {
+      "operation_no": 2,
+      "name": "slot_state_readback",
+      "status": "completed"
+    },
+    {
+      "operation_no": 3,
+      "name": "hydrate_terminal_159",
+      "status": "completed"
+    },
+    {
+      "operation_no": 4,
+      "name": "hydrate_terminal_164",
+      "status": "completed"
+    },
+    {
+      "operation_no": 5,
+      "name": "hydrate_terminal_165",
+      "status": "completed"
+    },
+    {
+      "operation_no": 6,
+      "name": "discover_current_hmlr_inspire_download",
+      "status": "completed"
+    },
+    {
+      "operation_no": 7,
+      "name": "identify_barnet_gml_search_scope",
+      "status": "completed"
+    },
+    {
+      "operation_no": 8,
+      "name": "identify_enfield_gml_search_scope",
+      "status": "completed"
+    },
+    {
+      "operation_no": 9,
+      "name": "identify_ea_lidar_1m_wcs",
+      "status": "completed"
+    },
+    {
+      "operation_no": 10,
+      "name": "identify_ea_lidar_2m_wcs",
+      "status": "completed"
+    },
+    {
+      "operation_no": 11,
+      "name": "identify_os_terrain50_secondary",
+      "status": "completed"
+    },
+    {
+      "operation_no": 12,
+      "name": "transform_three_centroids_to_epsg27700",
+      "status": "completed"
+    },
+    {
+      "operation_no": 13,
+      "name": "publish_web_candidate_rows",
+      "status": "completed"
+    },
+    {
+      "operation_no": 14,
+      "name": "fetch_hmlr_geometry_bytes",
+      "status": "blocked",
+      "blocker": "single_coordinator_result_not_yet_present"
+    },
+    {
+      "operation_no": 15,
+      "name": "match_hmlr_polygons_to_candidate_points",
+      "status": "blocked",
+      "blocker": "real_geometry_response_required"
+    },
+    {
+      "operation_no": 16,
+      "name": "sample_ea_lidar_1m_numeric_pixels",
+      "status": "blocked",
+      "blocker": "single_coordinator_result_not_yet_present"
+    },
+    {
+      "operation_no": 17,
+      "name": "sample_os_terrain50_numeric_values",
+      "status": "blocked",
+      "blocker": "single_coordinator_result_not_yet_present"
+    },
+    {
+      "operation_no": 18,
+      "name": "two_source_numeric_validation",
+      "status": "blocked",
+      "blocker": "official_numeric_rows_missing"
+    },
+    {
+      "operation_no": 19,
+      "name": "build_official_point_query_manifest",
+      "status": "completed"
+    },
+    {
+      "operation_no": 20,
+      "name": "verify_current_hmlr_monthly_gml_contract",
+      "status": "completed"
+    },
+    {
+      "operation_no": 21,
+      "name": "verify_ea_wcs_execution_contract",
+      "status": "completed"
+    },
+    {
+      "operation_no": 22,
+      "name": "build_real_geometry_and_numeric_sampling_payload",
+      "status": "completed"
+    },
+    {
+      "operation_no": 23,
+      "name": "build_shard_isolated_runner_wrapper",
+      "status": "completed"
+    },
+    {
+      "operation_no": 24,
+      "name": "queue_existing_single_coordinator_v3_task",
+      "status": "completed"
+    },
+    {
+      "operation_no": 25,
+      "name": "verify_hmlr_15m_transformation_tolerance",
+      "status": "completed"
+    },
+    {
+      "operation_no": 26,
+      "name": "add_hmlr_wfs_bbox_point_in_polygon",
+      "status": "completed"
+    },
+    {
+      "operation_no": 27,
+      "name": "add_hmlr_3x3_wms_tolerance_grid",
+      "status": "completed"
+    },
+    {
+      "operation_no": 28,
+      "name": "add_ea_multi_axis_1m_2m_wcs_sampling",
+      "status": "completed"
+    },
+    {
+      "operation_no": 29,
+      "name": "add_os_direct_download_api_and_tq29_selector",
+      "status": "completed"
+    },
+    {
+      "operation_no": 30,
+      "name": "publish_payload_revision_2_to_existing_queue_task",
+      "status": "completed",
+      "result_status": "pending_remote_observation"
+    },
+    {
+      "operation_no": 31,
+      "name": "recheck_remote_queue_pending_and_slot_idle",
+      "status": "completed"
+    },
+    {
+      "operation_no": 32,
+      "name": "verify_hmlr_20260705_monthly_release_and_local_authority_files",
+      "status": "completed"
+    },
+    {
+      "operation_no": 33,
+      "name": "verify_national_data_library_2026_lidar_collection_and_5km_geotiff_delivery",
+      "status": "completed"
+    },
+    {
+      "operation_no": 34,
+      "name": "add_ea_dtm_10m_tertiary_resolution_check",
+      "status": "completed"
+    },
+    {
+      "operation_no": 35,
+      "name": "add_hmlr_html_download_link_discovery_and_gml_sha256_ring_evidence",
+      "status": "completed"
+    },
+    {
+      "operation_no": 36,
+      "name": "publish_payload_revision_3_to_existing_single_coordinator_queue",
+      "status": "completed",
+      "result_status": "pending_remote_observation"
+    }
+  ],
+  "blockers": [
+    "SINGLE_COORDINATOR_REMOTE_RESULT_NOT_YET_PRESENT",
+    "REAL_BOUNDARY_MATCH_ROWS_0",
+    "EA_LIDAR_OFFICIAL_NUMERIC_ROWS_0",
+    "OS_TERRAIN50_INDEPENDENT_NUMERIC_ROWS_0",
+    "OFFICIAL_TWO_SOURCE_NUMERIC_VALIDATION_ROWS_0"
+  ],
+  "runner_output_expected": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/005_official_boundary_numeric_samples_result_latest.json",
   "parallel_runner_created": false,
-  "new_logical_task_created": false,
   "single_coordinator_only": true,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false
+  "production_deploy": false,
+  "candidate_results": [
+    {
+      "parcel_id": "parcel_2759",
+      "parcel_ref": "52040420",
+      "lat": 51.6169525,
+      "lon": -0.1430858,
+      "e": 528658.656,
+      "n": 192535.809,
+      "hmlr_boundary_validated": false,
+      "hmlr_ring_count": 0,
+      "hmlr_match_count": 0,
+      "ea_lidar_1m_m": null,
+      "ea_lidar_2m_m": null,
+      "ea_lidar_10m_m": null,
+      "os_terrain50_m": null,
+      "ea_vs_os_difference_m": null,
+      "accepted_official_two_source_row": false,
+      "accuracy_score_4": "2.5/4 fallback",
+      "output_semantics": "NO_DATA_NOT_INFERRED"
+    },
+    {
+      "parcel_id": "parcel_2758",
+      "parcel_ref": "52213916",
+      "lat": 51.6168592,
+      "lon": -0.1417993,
+      "e": 528747.982,
+      "n": 192527.698,
+      "hmlr_boundary_validated": false,
+      "hmlr_ring_count": 0,
+      "hmlr_match_count": 0,
+      "ea_lidar_1m_m": null,
+      "ea_lidar_2m_m": null,
+      "ea_lidar_10m_m": null,
+      "os_terrain50_m": null,
+      "ea_vs_os_difference_m": null,
+      "accepted_official_two_source_row": false,
+      "accuracy_score_4": "2.5/4 fallback",
+      "output_semantics": "NO_DATA_NOT_INFERRED"
+    },
+    {
+      "parcel_id": "parcel_2757",
+      "parcel_ref": "52213412",
+      "lat": 51.6167362,
+      "lon": -0.1421556,
+      "e": 528723.664,
+      "n": 192513.392,
+      "hmlr_boundary_validated": false,
+      "hmlr_ring_count": 0,
+      "hmlr_match_count": 0,
+      "ea_lidar_1m_m": null,
+      "ea_lidar_2m_m": null,
+      "ea_lidar_10m_m": null,
+      "os_terrain50_m": null,
+      "ea_vs_os_difference_m": null,
+      "accepted_official_two_source_row": false,
+      "accuracy_score_4": "2.5/4 fallback",
+      "output_semantics": "NO_DATA_NOT_INFERRED"
+    }
+  ],
+  "runner_result_path": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/005_official_boundary_numeric_samples_result_latest.json"
 }

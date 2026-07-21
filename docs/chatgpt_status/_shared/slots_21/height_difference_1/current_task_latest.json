@@ -1,26 +1,99 @@
 {
-  "schema_version": 3,
+  "state": "PUBLISH_PENDING",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "schema_version": 2,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "base_slot_id": "height_difference",
   "shard_index": 1,
-  "parcel_partition": {
-    "start": 1,
-    "end": 30761,
-    "count": 30761,
-    "canonical_count": 92283
-  },
-  "final_ready": false,
-  "state": "idle",
-  "task_id": null,
-  "owner_page_session_id": null,
-  "allowed_paths": [
+  "attempt_id": "official-source-batch-004",
+  "idempotency_key": "height_difference_1-004-20260720",
+  "payload_revision": 3,
+  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/004_official_boundary_numeric_samples_runner_20260720.py",
+  "read_paths": [
     "docs/chatgpt_status/topography/shards/height_difference_1",
     "docs/chatgpt_status/_shared/slots_21/height_difference_1",
     "england_map_web/data/aays_21_slots/height_difference_1"
   ],
-  "path_contract_correction": "slots_18_to_slots_21",
-  "claim_required_before_execution": true,
-  "direct_push_forbidden": true
+  "exact_write_paths": [
+    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs",
+    "docs/chatgpt_status/topography/shards/height_difference_1/reports",
+    "england_map_web/data/aays_21_slots/height_difference_1"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "geometry",
+    "raster_heavy"
+  ],
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "https://inspire.landregistry.gov.uk/inspire/ows",
+      "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
+      "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-10m/wcs",
+      "https://api.os.uk/downloads/v1/products/Terrain50/downloads?area=GB&format=ASCII%20Grid%20and%20GML%20(Grid)&redirect",
+      "https://www.data.gov.uk/collections/environment/lidar"
+    ],
+    "source_snapshot_date": "2026-07-20",
+    "source_discovery_required": false,
+    "measurement_level": "parcel",
+    "output_semantics": "MIXED_WITH_ROW_LABELS",
+    "parcel_binding_method": "HMLR_MONTHLY_GML_DISCOVERY_PLUS_WFS_POINT_IN_POLYGON",
+    "confidence_method": "REAL_HMLR_GEOMETRY_PLUS_EA_1M_NUMERIC_PLUS_EA_2M_10M_RESOLUTION_CHECK_PLUS_INDEPENDENT_OS_TERRAIN50_TQ29",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "source_conflict",
+      "low_confidence",
+      "geometry_mismatch",
+      "independent_second_source_missing",
+      "ea_vs_os_difference_over_8m",
+      "official_archive_over_120mb"
+    ]
+  },
+  "execution_protocols": {
+    "hmlr": [
+      "DISCOVER_BARNET_ENFIELD_MONTHLY_GML_LINKS_FROM_OFFICIAL_HTML",
+      "WFS_1_1_0_50M_BBOX_POINT_IN_POLYGON",
+      "PERSIST_GML_SHA256_AND_RING_COUNTS"
+    ],
+    "ea": [
+      "WCS_2_0_1_CAPABILITIES",
+      "PARSE_COVERAGE_IDS",
+      "GETCOVERAGE_E_N_EASTING_NORTHING_X_Y_AXIS_VARIANTS",
+      "SAMPLE_1M_2M_10M_GEOTIFF_WINDOWS"
+    ],
+    "os": [
+      "DOWNLOADS_V1_TERRAIN50_ASCII_GRID_GB",
+      "MAX_ARCHIVE_BUDGET_120MB",
+      "SELECT_TQ29_ASCII_TILE",
+      "SAMPLE_50M_GRID_CELL"
+    ]
+  },
+  "timeout_seconds": 7200,
+  "requires_git_publish_gate": true,
+  "status": "pending",
+  "final_ready": false,
+  "updated_at": "2026-07-21T00:29:37.959094Z",
+  "blocker": null,
+  "result": {
+    "state": "PUBLISH_PENDING",
+    "exit_code": 0,
+    "log": "logs\\adaptive_v2\\slots\\height_difference_1\\height-difference-1-official-boundary-elevation-samples-20260720.official-source-batch-004.log",
+    "error": "PUBLISHER_PUSH_FAILED: fatal: Cannot prompt because user interactivity has been disabled.\nfatal: could not read Username for 'https://github.com': terminal prompts disabled"
+  }
 }
