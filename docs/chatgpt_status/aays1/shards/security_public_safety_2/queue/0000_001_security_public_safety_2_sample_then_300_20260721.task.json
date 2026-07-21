@@ -1,0 +1,45 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_18_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "page_key": "aays1",
+  "task_id": "security-public-safety-2-sample-then-300-hydrate-20260721",
+  "status": "PENDING_SHARED_RUNNER_AFTER_CURRENT_TASK",
+  "priority": 96,
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "sample_parcels": ["parcel_30762", "parcel_30763", "parcel_30764"],
+  "hydrate_partition": {"start": 30762, "end": 31061, "count": 300},
+  "single_shared_runner_only": true,
+  "do_not_start_new_runner": true,
+  "do_not_replace_global_current_task": true,
+  "preflight_guard": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_path_contract_guard.ps1",
+  "sample_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_sample_hydrate.py",
+  "batch_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_batch_hydrate.py",
+  "acceptance_command": "python docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_acceptance.py --html-url http://127.0.0.1:8012/england_map_web/data/aays_18_slots/security_public_safety_2/progress.html --json-url http://127.0.0.1:8012/england_map_web/data/aays_18_slots/security_public_safety_2/hydrated_300_latest.json --browser --output docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/security_public_safety_2_acceptance_latest.json",
+  "acceptance_criteria": [
+    "3 canonical IDs resolved without order inference",
+    "Police.uk latest month and three point responses HTTP 200 with SHA256",
+    "IoD25 corrected v2 LSOA join present before 4/4",
+    "exactly 300 real rows in JSON CSV and GeoJSON",
+    "HTTP 200 plus SHA256 plus DOM row count 300 plus zero console/page errors",
+    "remote commit/push/readback proof"
+  ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2",
+    "docs/chatgpt_status/_shared/slots_18/security_public_safety_2",
+    "england_map_web/data/aays_18_slots/security_public_safety_2"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "ddl": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
