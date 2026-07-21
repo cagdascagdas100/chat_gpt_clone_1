@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Run the exact slot-3 Ofcom review pipeline with targeted postcode retention.
+"""Run exact slot-3 review directly against the validated official Ofcom ZIP.
 
-This orchestrator reuses the validated ZIP/download primitives from automation 008,
-then runs the bounded canonical slicer and automation 012. The latter scans every
-corrected Ofcom postcode row but retains detailed values only for postcodes needed
-by identity-matched slot-3 legacy evidence.
+The orchestrator reuses validated ZIP/download primitives, streams the canonical
+slot slice, and scans all corrected postcode CSV members without extracting them
+to disk. Detailed values are retained only for identity-matched slot postcodes.
 """
 from __future__ import annotations
 
@@ -30,6 +29,9 @@ REQUIRED_AUTOMATION = (
     "008_download_validate_run_slot3.py",
     "012_extract_slot3_ofcom_needed_postcodes.py",
     "013_selftest_targeted_postcode_join.py",
+    "016_selftest_targeted_pipeline_wiring.py",
+    "017_stream_ofcom_zip_needed_postcodes.py",
+    "018_selftest_direct_zip_stream_join.py",
 )
 
 
@@ -53,16 +55,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_targeted_command(automation_root: Path, slice_root: Path, extract_root: Path, output_root: Path) -> list[str]:
+def build_targeted_command(
+    automation_root: Path,
+    slice_root: Path,
+    zip_path: Path,
+    output_root: Path,
+) -> list[str]:
     return [
         sys.executable,
-        str(automation_root / "012_extract_slot3_ofcom_needed_postcodes.py"),
+        str(automation_root / "017_stream_ofcom_zip_needed_postcodes.py"),
         "--canonical",
         str(slice_root / "internet_access_3_canonical_slice_latest.geojson"),
         "--legacy-internet-geojson",
         str(slice_root / "internet_access_3_legacy_slice_latest.geojson"),
-        "--ofcom-postcode-dir",
-        str(extract_root),
+        "--ofcom-zip",
+        str(zip_path),
         "--output-dir",
         str(output_root),
     ]
@@ -77,7 +84,6 @@ def main() -> int:
     legacy_source = repo_root / "england_map_web/data/program_layer_matrix/internet.geojson"
     stage_root = work_root / "stage"
     cache_zip = stage_root / "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
-    extract_root = work_root / "ofcom_extract/postcode_files"
     slice_root = work_root / "slot_inputs"
     output_root = work_root / "candidate_outputs"
     diagnostics_path = work_root / "internet_access_3_network_and_execution_diagnostics_latest.json"
@@ -86,8 +92,10 @@ def main() -> int:
     ofcom_url = args.ofcom_url or base.OFFICIAL_ZIP_URL
     diagnostics = base.initial_diagnostics(repo_root, work_root, ofcom_url)
     diagnostics["pipeline_entrypoint"] = Path(__file__).name
-    diagnostics["join_strategy"] = "SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES"
+    diagnostics["join_strategy"] = "DIRECT_ZIP_STREAM_SCAN_ALL_R2_ROWS_RETAIN_ONLY_NEEDED_SLOT3_POSTCODES"
     diagnostics["memory_strategy"] = "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY"
+    diagnostics["csv_extraction_mode"] = "NONE_DIRECT_ZIP_STREAM"
+    diagnostics["ofcom_csv_extracted_to_disk"] = False
     stage_root.mkdir(parents=True, exist_ok=True)
     slice_root.mkdir(parents=True, exist_ok=True)
     output_root.mkdir(parents=True, exist_ok=True)
@@ -128,14 +136,15 @@ def main() -> int:
                 "zip_sha256": zip_metadata["sha256"],
                 "r1_file_count": zip_metadata["r1_file_count"],
                 "r2_file_count": zip_metadata["r2_file_count"],
+                "extracted_r2_files": 0,
             }
         )
-        extracted = base.extract_r2_files(zip_path, extract_root)
-        diagnostics["extracted_r2_files"] = len(extracted)
 
         base.run_checked([sys.executable, str(automation_root / "003_selftest_slot3_extractor.py")], diagnostics, "IDENTITY_EXTRACTOR_SELFTEST")
         base.run_checked([sys.executable, str(automation_root / "006_selftest_stream_extract_slot3_inputs.py")], diagnostics, "STREAMING_SLICER_SELFTEST")
         base.run_checked([sys.executable, str(automation_root / "013_selftest_targeted_postcode_join.py")], diagnostics, "TARGETED_POSTCODE_JOIN_SELFTEST")
+        base.run_checked([sys.executable, str(automation_root / "018_selftest_direct_zip_stream_join.py")], diagnostics, "DIRECT_ZIP_STREAM_JOIN_SELFTEST")
+        base.run_checked([sys.executable, str(automation_root / "016_selftest_targeted_pipeline_wiring.py")], diagnostics, "TARGETED_PIPELINE_WIRING_SELFTEST")
         base.run_checked(
             [
                 sys.executable,
@@ -162,7 +171,11 @@ def main() -> int:
         diagnostics["legacy_slice_sha256"] = slice_manifest["legacy_internet"]["output_sha256"]
         diagnostics["canonical_first_rows"] = slice_manifest["canonical"]["first_rows"]
 
-        base.run_checked(build_targeted_command(automation_root, slice_root, extract_root, output_root), diagnostics, "TARGETED_REVIEW_ONLY_R2_JOIN")
+        base.run_checked(
+            build_targeted_command(automation_root, slice_root, zip_path, output_root),
+            diagnostics,
+            "DIRECT_ZIP_STREAM_TARGETED_REVIEW_ONLY_R2_JOIN",
+        )
         candidate_manifest_path = output_root / "internet_access_3_candidate_manifest_latest.json"
         candidate_manifest = json.loads(candidate_manifest_path.read_text(encoding="utf-8"))
         if int(candidate_manifest["canonical_rows"]) != EXPECTED_CANONICAL_ROWS:
@@ -172,7 +185,13 @@ def main() -> int:
         if matched + no_data != EXPECTED_CANONICAL_ROWS:
             raise base.GateError(f"Candidate partition mismatch: matched={matched}, no_data={no_data}")
         if int(candidate_manifest.get("ofcom_postcodes_scanned", -1)) != base.EXPECTED_OFCOM_POSTCODE_ROWS:
-            raise base.GateError("Targeted join did not scan the exact Ofcom postcode row count")
+            raise base.GateError("Direct ZIP join did not scan the exact Ofcom postcode row count")
+        if candidate_manifest.get("ofcom_source_mode") != "DIRECT_ZIP_STREAM_NO_CSV_EXTRACTION":
+            raise base.GateError("Candidate manifest did not report direct ZIP streaming")
+        if candidate_manifest.get("ofcom_csv_extracted_to_disk") is not False:
+            raise base.GateError("Candidate manifest reported CSV extraction to disk")
+        if candidate_manifest.get("ofcom_zip_sha256") != zip_metadata["sha256"]:
+            raise base.GateError("Candidate manifest ZIP SHA256 does not match validated source")
         if int(candidate_manifest.get("actual_business_data_rows_written", -1)) != 0:
             raise base.GateError("Review-only extractor reported business writes")
 
@@ -184,12 +203,13 @@ def main() -> int:
         diagnostics["no_data_rows"] = no_data
         diagnostics["needed_postcodes"] = int(candidate_manifest["needed_postcodes"])
         diagnostics["ofcom_postcodes_retained"] = int(candidate_manifest["ofcom_postcodes_retained"])
+        diagnostics["zip_member_stream_sha256_count"] = int(candidate_manifest["zip_member_stream_sha256_count"])
         diagnostics["samples"] = candidate_manifest.get("samples", [])
         base.save_diagnostics(
             diagnostics_path,
             diagnostics,
-            "COMPLETE_TARGETED_REVIEW_OUTPUT_READY",
-            "Official ZIP, exact hashes, bounded slice and targeted review-only counts completed. No migration or business write occurred.",
+            "COMPLETE_DIRECT_ZIP_TARGETED_REVIEW_OUTPUT_READY",
+            "Official ZIP, exact hashes, bounded slice and direct-stream targeted counts completed. No CSV extraction, migration or business write occurred.",
         )
         print(json.dumps({k: v for k, v in diagnostics.items() if k not in {"download_attempts", "stages", "samples"}}, sort_keys=True))
         return 0
@@ -198,8 +218,8 @@ def main() -> int:
         base.save_diagnostics(
             diagnostics_path,
             diagnostics,
-            "BLOCKED_TARGETED_EXECUTION",
-            "Targeted execution stopped at a verified gate. No migration or business write occurred.",
+            "BLOCKED_DIRECT_ZIP_TARGETED_EXECUTION",
+            "Direct ZIP targeted execution stopped at a verified gate. No migration or business write occurred.",
         )
         print(diagnostics["error"], file=sys.stderr)
         return 2
