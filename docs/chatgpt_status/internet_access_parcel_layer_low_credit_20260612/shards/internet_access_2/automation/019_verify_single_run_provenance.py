@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Cross-file provenance audit for a completed internet_access_2 runner run.
 
-Fail-closed and review-only. This validates that diagnostics, official V2
-validation, bounded slice manifests, extraction outputs and published web
-artifacts all belong to one coherent run by recomputing and chaining SHA-256
-values. It never writes parcel/business data or marks the slot final.
+Fail-closed and review-only. This validates that diagnostics, ZIP container
+safety, official V2 validation, bounded slice manifests, extraction outputs
+and published web artifacts all belong to one coherent run by recomputing and
+chaining SHA-256 values. It never writes parcel/business data or marks final.
 """
 from __future__ import annotations
 
@@ -61,6 +61,7 @@ def require_review_only(payload: dict[str, Any], label: str) -> None:
 
 def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> dict[str, Any]:
     diagnostics_path = work_root / "internet_access_2_network_and_execution_diagnostics_latest.json"
+    zip_container_path = work_root / "internet_access_2_ofcom_zip_container_audit_latest.json"
     v2_path = work_root / "internet_access_2_ofcom_v2_validation_latest.json"
     slice_manifest_path = work_root / "slot_inputs/internet_access_2_stream_slice_manifest_latest.json"
     extraction_manifest_path = work_root / "candidate_outputs/internet_access_2_extraction_manifest_latest.json"
@@ -70,6 +71,7 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     bundle_audit_path = web_root / "runner_bundle_audit_latest.json"
 
     diagnostics = load_json(diagnostics_path)
+    zip_container = load_json(zip_container_path)
     v2 = load_json(v2_path)
     slice_manifest = load_json(slice_manifest_path)
     extraction = load_json(extraction_manifest_path)
@@ -79,6 +81,7 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
 
     for label, payload in (
         ("diagnostics", diagnostics),
+        ("ZIP container audit", zip_container),
         ("slice manifest", slice_manifest),
         ("extraction manifest", extraction),
         ("runner readback", readback),
@@ -93,10 +96,36 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     if diagnostics.get("state") != "COMPLETE_REVIEW_OUTPUT_READY":
         raise ValueError("diagnostics is not terminal review-output complete")
     zip_sha = require_hex64(diagnostics.get("zip_sha256"), "diagnostics zip_sha256")
-    if int(diagnostics.get("zip_bytes", -1)) < MIN_ZIP_BYTES:
+    zip_bytes = int(diagnostics.get("zip_bytes", -1))
+    if zip_bytes < MIN_ZIP_BYTES:
         raise ValueError("diagnostics ZIP byte count below minimum")
     if int(diagnostics.get("r1_file_count", -1)) != 0 or int(diagnostics.get("r2_file_count", -1)) != EXPECTED_OFcom_FILES:
         raise ValueError("diagnostics r1/r2 file count mismatch")
+    if Path(str(diagnostics.get("zip_container_audit") or "")).name != zip_container_path.name:
+        raise ValueError("diagnostics ZIP container audit path mismatch")
+    if diagnostics.get("zip_container_crc_validation_passed") is not True or diagnostics.get("zip_container_path_safety_validated") is not True:
+        raise ValueError("diagnostics ZIP container safety flags mismatch")
+
+    if zip_container.get("status") != "PASS_SAFE_OFFICIAL_ZIP_CONTAINER_REVIEW_ONLY":
+        raise ValueError("ZIP container audit status mismatch")
+    if require_hex64(zip_container.get("zip_sha256"), "ZIP container zip_sha256") != zip_sha:
+        raise ValueError("diagnostics/ZIP container SHA chain mismatch")
+    if int(zip_container.get("zip_bytes", -1)) != zip_bytes:
+        raise ValueError("diagnostics/ZIP container byte count mismatch")
+    if int(zip_container.get("r1_postcode_file_count", -1)) != 0:
+        raise ValueError("ZIP container reports internal r1 postcode files")
+    if int(zip_container.get("r2_postcode_file_count", -1)) != EXPECTED_OFcom_FILES or int(zip_container.get("r2_postcode_area_count", -1)) != EXPECTED_OFcom_FILES:
+        raise ValueError("ZIP container corrected r2 count mismatch")
+    for key in (
+        "crc_validation_passed",
+        "path_traversal_rejected",
+        "duplicate_normalized_paths_rejected",
+        "encrypted_entries_rejected",
+        "symlink_entries_rejected",
+        "unsupported_compression_rejected",
+    ):
+        if zip_container.get(key) is not True:
+            raise ValueError(f"ZIP container safety flag mismatch: {key}")
 
     if (
         v2.get("source") != "Ofcom Connected Nations Spring 2026 fixed broadband coverage"
@@ -172,8 +201,10 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     if not isinstance(rows, list) or len(rows) != visible or int(bundle_audit.get("visible_example_rows", -1)) != visible:
         raise ValueError("examples/readback/bundle-audit visible count mismatch")
 
+    zip_container_sha = sha256_file(zip_container_path)
     chain_inputs = [
         zip_sha,
+        zip_container_sha,
         sha256_file(v2_path),
         require_hex64(canonical.get("source_sha256"), "canonical source SHA"),
         canonical_slice_sha,
@@ -188,15 +219,17 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     chain_id = hashlib.sha256("\n".join(chain_inputs).encode("ascii")).hexdigest()
 
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "status": "PASS_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY",
+        "provenance_artifact_count": len(chain_inputs),
         "canonical_rows": EXPECTED_ROWS,
         "ofcom_r2_file_count": EXPECTED_OFcom_FILES,
         "ofcom_postcode_rows": EXPECTED_OFcom_ROWS,
         "status_counts": expected_counts,
         "visible_example_rows": visible,
         "zip_sha256": zip_sha,
+        "zip_container_audit_sha256": zip_container_sha,
         "canonical_slice_sha256": canonical_slice_sha,
         "legacy_slice_sha256": legacy_slice_sha,
         "extraction_manifest_sha256": extraction_manifest_sha,
