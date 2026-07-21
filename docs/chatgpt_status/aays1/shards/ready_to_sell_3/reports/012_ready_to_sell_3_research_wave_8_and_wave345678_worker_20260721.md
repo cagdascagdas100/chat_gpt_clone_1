@@ -1,0 +1,25 @@
+# ReadyToSell 3 — Wave 8 and wave 3–8 worker expansion
+
+- Slot: `ready_to_sell_3`
+- Parcel partition: `61523-92283`
+- New candidates: 8
+- New manually preverified source confidence >=90: 6
+- New planning/market cross-checks: 5
+- New marketing/date/price revalidation rows: 2
+- Visible research rows after publish: 56
+- Planned research targets including initial five: 61
+- Existing secondary worker coverage: 48 candidates, wave 3 through wave 8
+- Concurrent request limit: 3
+- Queue count: unchanged at 2
+- New runner: false
+- Parallel runner: false
+- Promoted rows: 0
+- Source SHA256 rows: 0 pending canonical execution
+- Parcel matches: 0
+- Geometry matches: 0
+- Blocker: no active canonical coordinator; ownership unclaimed; heartbeat absent/stale; both tasks pending
+- final_ready: false
+- fake_data: false
+- db_write: false
+- migration: false
+- production_deploy: false
