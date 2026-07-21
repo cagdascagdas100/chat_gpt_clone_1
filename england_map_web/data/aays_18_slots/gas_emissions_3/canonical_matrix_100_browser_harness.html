@@ -16,7 +16,7 @@
 <body>
   <h1>Gas Emissions — Canonical Matrix 100 Satır Browser Harness</h1>
   <div class="muted">Canonical TerraYield matrix sayfası aynı origin içinde açılır; Gas Emissions seçilir, dört 25-satırlık sayfa gerçek DOM üzerinden gezilir ve 100 satır burada birleştirilir.</div>
-  <div id="status" class="status">CANONICAL_MATRIX_HARNESS_RUNNING</div>
+  <div id="status" class="status" data-acceptance-state="RUNNING">CANONICAL_MATRIX_HARNESS_RUNNING</div>
   <div id="cards" class="cards"></div>
   <div class="scroll"><table id="aggregate"><thead></thead><tbody id="aggregateRows"></tbody></table></div>
   <iframe id="canonicalFrame" title="Canonical TerraYield matrix"></iframe>
@@ -26,7 +26,7 @@ const REQUIRED_HEADERS=['Durum','Satır','Yıl','Sektör','Alt sektör','Sera ga
 const CANONICAL='/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?acceptance=gas_emissions_3_100';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFor(test,label,timeout=45000){const end=Date.now()+timeout;let lastError=null;while(Date.now()<end){try{const value=test();if(value)return value}catch(e){lastError=e}await sleep(150)}throw new Error(`WAIT_TIMEOUT ${label}${lastError?': '+lastError.message:''}`)}
-function setStatus(text,passed){const box=document.getElementById('status');box.textContent=text;box.className='status '+(passed?'pass':'fail')}
+function setStatus(text,passed){const box=document.getElementById('status');box.textContent=text;box.className='status '+(passed?'pass':'fail');box.setAttribute('data-acceptance-state',passed?'PASS':'FAIL')}
 function card(name,value){return `<div class="card"><div class="muted">${name}</div><div class="value">${value}</div></div>`}
 async function run(){
   const frame=document.getElementById('canonicalFrame');
@@ -48,6 +48,7 @@ async function run(){
   const missing=REQUIRED_HEADERS.filter(x=>!headers.includes(x));
   if(headers.length!==28||missing.length)throw new Error(`HEADER_GATE expected=28 actual=${headers.length} missing=${missing.join('|')}`);
   document.querySelector('#aggregate thead').innerHTML=doc.querySelector('#table thead').innerHTML;
+  document.querySelectorAll('#aggregate thead th').forEach((cell,index)=>{cell.setAttribute('data-acceptance-header','true');cell.setAttribute('data-header-index',String(index+1))});
 
   const collected=[];
   const rowIds=new Set();
@@ -68,6 +69,7 @@ async function run(){
       if(!rowId)throw new Error(`EMPTY_ROW_ID page=${page} index=${index+1}`);
       if(rowIds.has(rowId))throw new Error(`DUPLICATE_ROW_ID ${rowId}`);
       rowIds.add(rowId);
+      clone.setAttribute('data-row-id',rowId);
       collected.push(clone);
     });
     if(page<4){
@@ -79,6 +81,13 @@ async function run(){
   if(collected.length!==100||rowIds.size!==100||pageCounts.some(x=>x!==25))throw new Error(`ROW_GATE rows=${collected.length} unique=${rowIds.size} pages=${pageCounts.join(',')}`);
   const body=document.getElementById('aggregateRows');
   collected.forEach(row=>body.appendChild(row));
+  const aggregate=document.getElementById('aggregate');
+  aggregate.setAttribute('data-acceptance-complete','true');
+  aggregate.setAttribute('data-canonical-pages','4');
+  aggregate.setAttribute('data-page-row-count','25');
+  aggregate.setAttribute('data-aggregated-rows','100');
+  aggregate.setAttribute('data-unique-rows','100');
+  aggregate.setAttribute('data-header-count','28');
   const result={
     slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS',canonical_url:CANONICAL,
     header_count:headers.length,required_header_count:REQUIRED_HEADERS.length,missing_headers:missing,
@@ -92,6 +101,7 @@ async function run(){
 }
 run().catch(error=>{
   window.__gasEmissions3CanonicalMatrixBrowserAcceptance={slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_FAIL',error:String(error),browser_passed:false,parcel_binding_gate_passed:false,final_ready:false};
+  document.getElementById('aggregate').setAttribute('data-acceptance-complete','false');
   setStatus('CANONICAL_MATRIX_AGGREGATED_BROWSER_FAIL | '+String(error),false);
 });
 </script>
