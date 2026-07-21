@@ -128,7 +128,7 @@ def diagnose(repo: Path, now: datetime | None = None) -> dict[str, Any]:
             "slot_heartbeat_at": slot_hb.get("heartbeat_at"),
             "slot_current_task_id": slot_hb.get("current_task_id"),
             "slot_claimed_for_expected_task": slot_claimed,
-            "revision_9_output_present": output_present
+            "revision_9_output_present": output_present,
         },
         "blockers": blockers,
         "required_operator_action": "Recover the existing repo-to-bridge watcher and existing single runner, then expose the complete same-task queue plus automation under the operator-approved watcher branch policy. Do not mirror queue only.",
@@ -138,20 +138,20 @@ def diagnose(repo: Path, now: datetime | None = None) -> dict[str, Any]:
             "new runner creation",
             "parallel runner creation",
             "fabricated heartbeat",
-            "fabricated official measurement output"
+            "fabricated official measurement output",
         ],
-        "process_started": false,
-        "branch_modified_outside_authoritative_branch": false,
-        "new_task_created": false,
-        "new_runner": false,
-        "parallel_runner": false,
+        "process_started": False,
+        "branch_modified_outside_authoritative_branch": False,
+        "new_task_created": False,
+        "new_runner": False,
+        "parallel_runner": False,
         "official_height_difference_rows_written": 0,
-        "final_ready": false,
-        "product_final_ready": false,
-        "fake_data": false,
-        "db_write": false,
-        "migration": false,
-        "production_deploy": false
+        "final_ready": False,
+        "product_final_ready": False,
+        "fake_data": False,
+        "db_write": False,
+        "migration": False,
+        "production_deploy": False,
     }
 
 
@@ -160,7 +160,7 @@ def main() -> int:
     result = diagnose(repo)
     outputs = [
         repo / "docs/chatgpt_status/topography/shards/height_difference_1/diagnostics/012_watcher_visibility_health_latest.json",
-        repo / "england_map_web/data/aays_21_slots/height_difference_1/watcher_visibility_health_latest.json"
+        repo / "england_map_web/data/aays_21_slots/height_difference_1/watcher_visibility_health_latest.json",
     ]
     text = json.dumps(result, ensure_ascii=False, indent=2)
     for path in outputs:
