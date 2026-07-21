@@ -11,6 +11,8 @@
 - Wave point-only geometry validation: `8/8 PASS`.
 - Site-plan reference conflict guard: `8/8 PASS`.
 - Provider endpoint error/no-uplift guard: `8/8 PASS`.
-- Remote official evidence/API/HMLR audit: `14/14 PASS`.
+- New executed controls this wave: `36/36 PASS`; cumulative executed tests: `262/262 PASS`.
+- Remote official evidence/API/HMLR audit: `14/14 PASS`; cumulative remote checks: `128/128 PASS`.
+- Website branch view now contains `148` operation rows, `89` candidate rows and `11` source-contract records.
 - Direct `period=current` responses, actual HMLR downloads, exact intersections, real shard exports, product parcel matches and product scores remain `0`.
 - `final_ready=false`.
