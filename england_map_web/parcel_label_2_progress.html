@@ -15,7 +15,7 @@
 <body>
   <h1>parcel_label_2</h1>
   <div class="muted">30762–61522 · yalnız resmi kaynak adayları · canonical parsel ve exact geometri bağlaması bekliyor</div>
-  <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Attempt-010 gerçek shared-runner queue branch'inde V5.1 PowerShell taşıyıcıyla geçerlidir ancak seçili görev şu anda priority 1 height_difference_2 attempt-017 ve canonical runner restart requested durumundadır. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
+  <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Attempt-010 gerçek shared-runner queue branch'inde geçerlidir ancak seçili görev priority 1 height_difference_2 attempt-019'dur. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
   <div class="note" id="integrity">Veri manifesti yükleniyor…</div>
   <div class="summary" id="summary"></div>
   <h2>İşlem günlüğü</h2>
@@ -30,68 +30,52 @@
   </table>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const files=[
- 'data/distance_property_types/parcel_label_2_candidates.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch3.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch4.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch5.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch6.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch7.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch8.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch9.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch10.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch11.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch12.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch13.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch14.json'
-];
-const activityFiles=[
- 'data/distance_property_types/parcel_label_2_activity_latest.json',
- 'data/distance_property_types/parcel_label_2_activity_batch8_postmerge.json',
- 'data/distance_property_types/parcel_label_2_activity_batch9.json',
- 'data/distance_property_types/parcel_label_2_activity_batch9_postmerge.json',
- 'data/distance_property_types/parcel_label_2_activity_batch10.json',
- 'data/distance_property_types/parcel_label_2_activity_batch10_postmerge.json',
- 'data/distance_property_types/parcel_label_2_activity_batch11.json',
- 'data/distance_property_types/parcel_label_2_activity_batch12.json',
- 'data/distance_property_types/parcel_label_2_activity_batch13.json',
- 'data/distance_property_types/parcel_label_2_activity_batch13_postmerge.json',
- 'data/distance_property_types/parcel_label_2_activity_batch14.json',
- 'data/distance_property_types/parcel_label_2_activity_batch14_postmerge.json'
-];
+const dataRoot='data/distance_property_types/';
 const fetchJson=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()});
-const candidatePromise=Promise.all(files.map(fetchJson));
-const activityPromise=Promise.all(activityFiles.map(fetchJson));
-const manifestPromise=fetchJson('data/distance_property_types/parcel_label_2_web_data_manifest_latest.json');
-Promise.all([candidatePromise,activityPromise,manifestPromise])
- .then(([parts,activityParts,manifest])=>{
+fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
+ .then(manifest=>{
+   const candidateFiles=(manifest.candidate_files||[]).map(n=>dataRoot+n);
+   const activityFiles=(manifest.activity_files||[]).map(n=>dataRoot+n);
+   return Promise.all([
+     Promise.all(candidateFiles.map(fetchJson)),
+     Promise.all(activityFiles.map(fetchJson))
+   ]).then(([parts,activityParts])=>({manifest,candidateFiles,activityFiles,parts,activityParts}));
+ })
+ .then(({manifest,candidateFiles,activityFiles,parts,activityParts})=>{
    const candidates=parts.flatMap(d=>d.candidates||[]);
    const activities=activityParts.flatMap(d=>d.activities||[]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
    const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
    const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
    const average=count?Math.round(weighted/count*100)/100:0;
+   const batchCount=new Set(candidates.map(c=>Number(c.research_batch)).filter(Number.isFinite)).size;
+   const candidateFileMatch=candidateFiles.length===Number(manifest.expected_candidate_files);
+   const activityFileMatch=activityFiles.length===Number(manifest.expected_activity_files);
    const candidateMatch=count===Number(manifest.expected_candidate_rows);
    const activityMatch=activities.length===Number(manifest.expected_activity_rows);
-   const integrityOk=candidateMatch&&activityMatch;
+   const batchMatch=batchCount===Number(manifest.expected_research_batches);
+   const allHttpsSources=candidates.every(c=>String(c.source_url||'').startsWith('https://'));
+   const allHighAccuracy=candidates.every(c=>Number(c.accuracy_percent)>=97);
+   const allSourcePlaceholders=candidates.every(c=>String(c.parcel_id||'').startsWith('SOURCE_'));
+   const integrityOk=candidateFileMatch&&activityFileMatch&&candidateMatch&&activityMatch&&batchMatch&&allHttpsSources&&allHighAccuracy&&allSourcePlaceholders;
    document.getElementById('integrity').textContent=integrityOk
-     ?`Veri manifesti eşleşti: ${count} aday ve ${activities.length} işlem satırı.`
-     :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}.`;
+     ?`Veri manifesti eşleşti: ${candidateFiles.length} aday dosyası, ${activityFiles.length} işlem dosyası, ${count} aday ve ${activities.length} işlem satırı.`
+     :`Veri manifesti uyuşmazlığı: dosya ${candidateFiles.length}/${manifest.expected_candidate_files}, işlem dosyası ${activityFiles.length}/${manifest.expected_activity_files}, aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}.`;
    const cards=[
     ['Görünür aday',count],
-    ['Araştırma batch','14'],
-    ['Sınıf kapsamı','6_of_6_each_class_14'],
+    ['Araştırma batch',batchCount],
+    ['Sınıf kapsamı',manifest.expected_class_coverage],
     ['Sınıflandırma doğruluğu','%'+average],
-    ['Doğruluk ≥%97',manifest.expected_accuracy_ge_97_rows],
+    ['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],
     ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
-    ['Canonical slot satırı',0],
-    ['Exact geometri',0],
+    ['Canonical slot satırı',manifest.canonical_verified_slot_rows],
+    ['Exact geometri',manifest.exact_geometry_rows],
     ['Canonical blob','bb48164…'],
     ['Carrier sayısı','92.283 exact'],
     ['Kimlik kapısı','parcel_1…92283'],
     ['Satır kapısı','row_no = parcel_n'],
     ['Runner','V5.1 QUEUED / STALE'],
-    ['Seçili görev','height_difference_2 attempt-017'],
-    ['Seçili öncelik','1'],
+    ['Seçili görev','height_difference_2 attempt-019'],
+    ['Kendi görevimiz','parcel_label_2 attempt-010'],
     ['Queue branch','aays-single-runner-v5'],
     ['İşlem satırı',activities.length]
    ];
