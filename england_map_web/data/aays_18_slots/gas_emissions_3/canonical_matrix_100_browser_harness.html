@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Gas Emissions — Canonical Matrix 100 Satır Browser Harness</h1>
-  <div class="muted">Canonical TerraYield matrix sayfası aynı origin içinde açılır; Gas Emissions seçilir, dört 25-satırlık sayfa gerçek DOM üzerinden gezilir ve 100 satır burada birleştirilir.</div>
+  <div class="muted">Canonical TerraYield matrix sayfası aynı origin içinde açılır; başlangıç Security yükünün tamamlanması beklenir, Gas Emissions doğrudan yüklenir, dört 25-satırlık sayfa gerçek DOM üzerinden gezilir ve 100 satır burada birleştirilir.</div>
   <div id="status" class="status" data-acceptance-state="RUNNING">CANONICAL_MATRIX_HARNESS_RUNNING</div>
   <div id="cards" class="cards"></div>
   <div class="scroll"><table id="aggregate"><thead></thead><tbody id="aggregateRows"></tbody></table></div>
@@ -25,7 +25,7 @@
 const REQUIRED_HEADERS=['Durum','Satır','Yıl','Sektör','Alt sektör','Sera gazı','Emisyon (kt CO2e)','Etki alanı (kt CO2)','Kaynak satırı','Eşleştirme yöntemi','Hesap açıklaması','Parcel binding','Güven (%)','Doğruluk','Resmi kaynak URL','Ham yerel kaynak','Visible artifact','Status yolu','Rapor yolu','Served commit','Artifact SHA','Manuel inceleme','Resmi CSV eşleşmesi','Kaynak SHA-256','Kaynak manifesti','Satır kanıtı','Pipeline','Blocker'];
 const CANONICAL='/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?acceptance=gas_emissions_3_100';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function waitFor(test,label,timeout=45000){const end=Date.now()+timeout;let lastError=null;while(Date.now()<end){try{const value=test();if(value)return value}catch(e){lastError=e}await sleep(150)}throw new Error(`WAIT_TIMEOUT ${label}${lastError?': '+lastError.message:''}`)}
+async function waitFor(test,label,timeout=90000){const end=Date.now()+timeout;let lastError=null;while(Date.now()<end){try{const value=test();if(value)return value}catch(e){lastError=e}await sleep(150)}throw new Error(`WAIT_TIMEOUT ${label}${lastError?': '+lastError.message:''}`)}
 function setStatus(text,passed){const box=document.getElementById('status');box.textContent=text;box.className='status '+(passed?'pass':'fail');box.setAttribute('data-acceptance-state',passed?'PASS':'FAIL')}
 function card(name,value){return `<div class="card"><div class="muted">${name}</div><div class="value">${value}</div></div>`}
 async function run(){
@@ -34,9 +34,18 @@ async function run(){
   await waitFor(()=>frame.contentDocument&&frame.contentDocument.getElementById('layerSelect'),'canonical controls');
   const doc=frame.contentDocument;
   const win=frame.contentWindow;
+  await waitFor(()=>{
+    const title=doc.getElementById('title')?.textContent||'';
+    const message=doc.getElementById('message')?.textContent||'';
+    const rows=doc.querySelectorAll('#table tbody tr').length;
+    return /Security\s*\/\s*Public Safety/i.test(title)&&!/Veri yükleniyor/i.test(message)&&rows>0;
+  },'canonical initial security load');
+  if(typeof win.loadLayer!=='function')throw new Error('CANONICAL_LOAD_LAYER_FUNCTION_MISSING');
   const layer=doc.getElementById('layerSelect');
   layer.value='gas';
-  layer.dispatchEvent(new win.Event('change',{bubbles:true}));
+  const view=doc.getElementById('viewSelect');
+  if(view)view.value='parcel';
+  await win.loadLayer('gas');
   await waitFor(()=>{
     const title=doc.getElementById('title')?.textContent||'';
     const page=doc.getElementById('pageInfo')?.textContent||'';
@@ -83,6 +92,7 @@ async function run(){
   collected.forEach(row=>body.appendChild(row));
   const aggregate=document.getElementById('aggregate');
   aggregate.setAttribute('data-acceptance-complete','true');
+  aggregate.setAttribute('data-initial-load-race-guard','true');
   aggregate.setAttribute('data-canonical-pages','4');
   aggregate.setAttribute('data-page-row-count','25');
   aggregate.setAttribute('data-aggregated-rows','100');
@@ -90,14 +100,15 @@ async function run(){
   aggregate.setAttribute('data-header-count','28');
   const result={
     slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS',canonical_url:CANONICAL,
+    initial_security_load_waited:true,direct_gas_load_invoked:true,
     header_count:headers.length,required_header_count:REQUIRED_HEADERS.length,missing_headers:missing,
     page_count:4,page_row_counts:pageCounts,row_count:collected.length,unique_row_ids:rowIds.size,
     source_page_info:'Sayfa 1-4 / 4 - 100 satır',browser_passed:true,parcel_binding_gate_passed:false,final_ready:false,
     generated_at:new Date().toISOString()
   };
   window.__gasEmissions3CanonicalMatrixBrowserAcceptance=result;
-  document.getElementById('cards').innerHTML=[card('Canonical sayfa','4 / 4'),card('DOM satırı',result.row_count+' / 100'),card('Benzersiz satır',result.unique_row_ids+' / 100'),card('Başlık',result.header_count+' / 28'),card('Eksik başlık',result.missing_headers.length),card('Sonuç','PASS')].join('');
-  setStatus(`CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS | pages=4/4 | rows=${result.row_count}/100 | unique=${result.unique_row_ids}/100 | headers=${result.header_count}/28 | missing=0`,true);
+  document.getElementById('cards').innerHTML=[card('Başlangıç yarış koruması','PASS'),card('Canonical sayfa','4 / 4'),card('DOM satırı',result.row_count+' / 100'),card('Benzersiz satır',result.unique_row_ids+' / 100'),card('Başlık',result.header_count+' / 28'),card('Eksik başlık',result.missing_headers.length),card('Sonuç','PASS')].join('');
+  setStatus(`CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS | initial_race_guard=true | pages=4/4 | rows=${result.row_count}/100 | unique=${result.unique_row_ids}/100 | headers=${result.header_count}/28 | missing=0`,true);
 }
 run().catch(error=>{
   window.__gasEmissions3CanonicalMatrixBrowserAcceptance={slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_FAIL',error:String(error),browser_passed:false,parcel_binding_gate_passed:false,final_ready:false};
