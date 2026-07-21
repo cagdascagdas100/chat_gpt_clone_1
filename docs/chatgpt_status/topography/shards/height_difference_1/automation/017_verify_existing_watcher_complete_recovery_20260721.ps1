@@ -59,8 +59,10 @@ function Snapshot {
   $hbAge = if ($hbTime) { [math]::Max(0,[int]((Get-Date) - $hbTime).TotalSeconds) } else { $null }
   $required = [ordered]@{}
   foreach ($rel in $RequiredFiles) { $required[$rel] = Test-Path -LiteralPath (Join-Path $RepoRoot ($rel -replace '/','\')) }
-  $slot = @{}
-  if (Test-Path -LiteralPath $SlotHeartbeat) { try { $slot = Get-Content -LiteralPath $SlotHeartbeat -Raw | ConvertFrom-Json -AsHashtable } catch { $slot = @{} } }
+  $slotObject = $null
+  if (Test-Path -LiteralPath $SlotHeartbeat) { try { $slotObject = Get-Content -LiteralPath $SlotHeartbeat -Raw | ConvertFrom-Json } catch { $slotObject = $null } }
+  $slotState = if ($slotObject) { [string]$slotObject.state } else { $null }
+  $slotTask = if ($slotObject) { [string]$slotObject.current_task_id } else { $null }
   $markers = @(Find-TaskMarkers $TaskId)
   $allRequired = -not ($required.Values -contains $false)
   $watcherFresh = ($hbAge -ne $null -and $hbAge -le 180 -and [string]$hb['status'] -eq 'WATCHING')
@@ -68,7 +70,7 @@ function Snapshot {
   $singleWatcher = ($watchers.Count -eq 1)
   $singleRunner = ($runners.Count -eq 1)
   $taskVisible = ($markers.Count -gt 0)
-  $slotClaimed = ([string]$slot['current_task_id'] -eq $TaskId -and [string]$slot['state'] -in @('claimed','running'))
+  $slotClaimed = ($slotTask -eq $TaskId -and $slotState -in @('claimed','running'))
   $resultPresent = Test-Path -LiteralPath $ExpectedOutput
   $status = if ($resultPresent) { 'OFFICIAL_RESULT_AVAILABLE' } elseif ($slotClaimed) { 'SINGLE_RUNNER_CLAIM_OBSERVED' } elseif ($singleWatcher -and $singleRunner -and $watcherFresh -and $sourceMatches -and $allRequired -and $taskVisible) { 'COMPLETE_RECOVERY_VERIFIED_TASK_VISIBLE' } else { 'RECOVERY_VERIFICATION_PENDING_OR_BLOCKED' }
   return [ordered]@{
@@ -92,8 +94,8 @@ function Snapshot {
     bridge_task_markers = $markers
     bridge_task_visible = $taskVisible
     slot_heartbeat_path = $SlotHeartbeat
-    slot_state = $slot['state']
-    slot_current_task_id = $slot['current_task_id']
+    slot_state = $slotState
+    slot_current_task_id = $slotTask
     slot_claimed_for_expected_task = $slotClaimed
     expected_output_path = $ExpectedOutput
     expected_output_present = $resultPresent
