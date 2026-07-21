@@ -11,10 +11,10 @@ SLOT_ID = "internet_access_2"
 EXPECTED_ROWS = 30761
 EXPECTED_START = 30762
 EXPECTED_END = 61522
-EXPECTED_COMPLETED = 134
-EXPECTED_TOTAL = 135
-EXPECTED_COMBINED = 314
-EXPECTED_SCOPE_FILES = 79
+EXPECTED_COMPLETED = 144
+EXPECTED_TOTAL = 145
+EXPECTED_COMBINED = 404
+EXPECTED_SCOPE_FILES = 89
 EXPECTED_HISTORICAL_OVERRIDE_IDS = {55, 90}
 
 SHARD = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2")
@@ -71,7 +71,11 @@ def main() -> int:
         "candidate_jsonl": (25, 25),
         "candidate_postcode_resolution": (18, 18),
         "single_run_provenance": (24, 24),
-        "run_and_audit_wrapper": (40, 40),
+        "coverage_aware_extractor": (20, 20),
+        "coverage_aware_postcode_resolution": (24, 24),
+        "extended_single_run_provenance": (20, 20),
+        "coverage_aware_inner_carrier": (16, 16),
+        "run_and_audit_wrapper": (50, 50),
         "candidate_web_contract": (20, 20),
         "review_contract_consistency": (14, 14),
     }
@@ -85,12 +89,12 @@ def main() -> int:
         "single_current_blocker": done == EXPECTED_COMPLETED and len(blocked) == 1 and int(blocked[0]["id"]) == EXPECTED_TOTAL,
         "progress_operation_counts_match": progress.get("completed_operations") == EXPECTED_COMPLETED and progress.get("total_operations") == EXPECTED_TOTAL and progress.get("visible_operation_rows") == EXPECTED_TOTAL,
         "source_decision_totals_match": progress.get("official_source_candidates") == 8 and progress.get("promoted_sources", 0) + progress.get("held_sources", 0) + progress.get("rejected_sources", 0) == 8,
-        "suite_definition_total_314": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
+        "suite_definition_total_404": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
         "progress_validation_total_match": progress.get("combined_validation_passed") == EXPECTED_COMBINED and progress.get("combined_validation_total") == EXPECTED_COMBINED,
-        "provenance_validation_total_match": pair(provenance.get("combined_validation")) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
+        "provenance_validation_total_match": pair(provenance.get("combined_validation")) == (EXPECTED_COMBINED, EXPECTED_COMBINED) and len(provenance.get("required_chain") or []) == 16,
         "primary_task_validation_total_match": pair(task1["preflight_validation"]["combined"]) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
         "extension_task_validation_total_match": pair(task2["required_preflight"]["combined_all_suites"]) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
-        "readiness_validation_total_match": readiness["official_v2_semantic_preflight"].get("combined_tests_passed") == EXPECTED_COMBINED and readiness["official_v2_semantic_preflight"].get("combined_tests_total") == EXPECTED_COMBINED,
+        "readiness_validation_total_match": readiness["official_v2_semantic_preflight"].get("combined_tests_passed") == EXPECTED_COMBINED and readiness["official_v2_semantic_preflight"].get("combined_tests_total") == EXPECTED_COMBINED and readiness["official_v2_semantic_preflight"].get("provenance_chain_artifact_count") == 16,
         "scope_is_exact_and_authorized": scope.get("review_scope_file_count") == EXPECTED_SCOPE_FILES and scope.get("other_slot_path_count") == 0 and scope.get("shared_state_path_count") == 0 and scope.get("queue_path_count") == 0 and scope.get("disallowed_path_count") == 0,
         "truth_boundary_preserved": all(payload.get("actual_business_data_rows_written", payload.get("business_rows_written", 0)) == 0 and payload.get("final_ready") is False for payload in (progress, provenance, readiness, scope, task2)) and task1["write_policy"] == {"fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "direct_push": False, "final_ready": False},
     }
@@ -100,7 +104,7 @@ def main() -> int:
         raise ValueError("Review contract consistency failed: " + ", ".join(failed))
 
     result = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": SLOT_ID,
         "status": "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY",
         "tests_passed": len(checks),
@@ -112,6 +116,7 @@ def main() -> int:
         "combined_validation_passed": EXPECTED_COMBINED,
         "combined_validation_total": EXPECTED_COMBINED,
         "review_scope_file_count": EXPECTED_SCOPE_FILES,
+        "provenance_chain_artifact_count": 16,
         "actual_business_data_rows_written": 0,
         "final_ready": False,
     }
