@@ -14,13 +14,22 @@
     {"gate_id":"SLOT_HEARTBEAT","title":"Slot heartbeat is unclaimed/stale","state":"PASS","evidence":"state=unclaimed; stale=True","blocker":null},
     {"gate_id":"SLOT_TASK","title":"Slot current task is idle","state":"PASS","evidence":"state=idle; task_id=None","blocker":null},
     {"gate_id":"ALLOWED_PATH","title":"Authorized aays_18 web path is present","state":"PASS","evidence":"england_map_web/data/aays_18_slots/internet_access_2","blocker":null},
-    {"gate_id":"WATCHER_FRESH","title":"Repo-to-bridge watcher heartbeat is fresh","state":"BLOCKED","evidence":"watcher_updated_at=20260703_225536; age_seconds=1487345; threshold=900","blocker":"repo-to-bridge watcher heartbeat is stale"},
-    {"gate_id":"RUNNER_FRESH","title":"Existing shared runner heartbeat is fresh","state":"BLOCKED","evidence":"runner_last_heartbeat_at=2026-07-16T13:45:53.0433295Z; fresh=False","blocker":"shared runner heartbeat is stale"},
-    {"gate_id":"QUEUE_HEAD_FREE","title":"No other watcher-visible task is pending or active","state":"BLOCKED","evidence":"slot_id=security_public_safety_3; task_id=security-public-safety-3-sample-hydrate-v4-20260721; status=PICKUP_REQUESTED_ON_WATCHER_VISIBLE_MAIN_EXISTING_WATCHER_AND_RUNNER_RECOVERY_REQUIRED","blocker":"another task is already pending at the watcher-visible queue head"},
+    {"gate_id":"WATCHER_FRESH","title":"Repo-to-bridge watcher heartbeat is fresh","state":"BLOCKED","evidence":"watcher_updated_at=20260703_225536; threshold=900 seconds","blocker":"repo-to-bridge watcher heartbeat is stale"},
+    {"gate_id":"RUNNER_FRESH","title":"Existing shared runner heartbeat is fresh","state":"BLOCKED","evidence":"parcel_label_2 heartbeat observed_at=2026-07-21T07:34:00+03:00; runner_state=PICKUP_REQUESTED_NOT_YET_OBSERVED; runner_heartbeat_fresh=false","blocker":"shared runner pickup/heartbeat is still not observed"},
+    {"gate_id":"QUEUE_HEAD_FREE","title":"No other watcher-visible task is pending or active","state":"BLOCKED","evidence":"slot_id=parcel_label_3; task_id=parcel-label-3-exact-points-and-historical-audit-v1-20260721; attempt_id=parcel-label-3-20260721-001; priority=90; status=pickup_requested; execution_claimed=false","blocker":"another task is already pending at the watcher-visible queue head"},
     {"gate_id":"REVIEW_MERGED","title":"Slot implementation is merged to watcher-visible branch","state":"BLOCKED","evidence":"pr=61; state=open; merged=False; base=codex/aays-single-runner-v5-20260706","blocker":"slot implementation is not merged to main"},
     {"gate_id":"PR_MERGEABLE","title":"Review branch is mergeable before integration","state":"BLOCKED","evidence":"pr=61; mergeable=False; draft=True","blocker":"review PR is not currently mergeable"},
     {"gate_id":"NO_DIRECT_PUSH","title":"Direct-push prohibition remains enforced","state":"PASS","evidence":"direct_push_forbidden=True","blocker":null}
   ],
+  "current_queue_head": {
+    "slot_id": "parcel_label_3",
+    "task_id": "parcel-label-3-exact-points-and-historical-audit-v1-20260721",
+    "attempt_id": "parcel-label-3-20260721-001",
+    "priority": 90,
+    "status": "pickup_requested",
+    "execution_claimed": false,
+    "queue_path": "docs/chatgpt_status/aays1/queue/0000_020_parcel_label_3_exact_points_and_audit_v1_20260721.task.json"
+  },
   "next_step": "WAIT_FOR_CURRENT_QUEUE_HEAD_TERMINAL_AND_RECOVER_WATCHER_RUNNER_HEARTBEATS_THEN_MERGE_TO_MAIN_AND_RECHECK",
   "single_shared_runner_only": true,
   "new_runner_started": false,
@@ -32,5 +41,5 @@
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "evaluated_at": "2026-07-21T04:04:41.792151Z"
+  "evaluated_at": "2026-07-21T04:08:00Z"
 }
