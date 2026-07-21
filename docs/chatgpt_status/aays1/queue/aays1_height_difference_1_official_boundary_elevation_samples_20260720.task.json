@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "page_key": "aays1",
@@ -8,7 +8,7 @@
   "base_slot_id": "height_difference",
   "shard_index": 1,
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
-  "attempt_id": "official-source-batch-004-revision-12-direct-ea-pixel-center-resample",
+  "attempt_id": "official-source-batch-004-revision-13-direct-os-terrain50-crosscheck",
   "idempotency_key": "height_difference_1-004-20260720",
   "logical_task_alias": true,
   "source_queue_path": "docs/chatgpt_status/topography/queue/height_difference_1_004_official_boundary_numeric_samples_20260720.v3.task.json",
@@ -17,16 +17,13 @@
   "priority": 6700,
   "queued_at": "2026-07-20T20:00:00Z",
   "bridge_published_date": "2026-07-21",
-  "pickup_contract_revision": 12,
-  "payload_revision": 12,
-  "runner_contract_modes": [
-    "aays21_v3_json",
-    "legacy_plain_text"
-  ],
-  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/035_height_difference_1_revision_12_direct_ea_pixel_center_resample_20260721.py",
-  "script_blob_sha": "70c11dd3648a29240bba94c22ddb09298b3db217",
-  "validation_path": "docs/chatgpt_status/topography/shards/height_difference_1/validation/019_revision_12_direct_ea_pixel_center_resample_selftest_20260721.json",
-  "output_integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/036_validate_revision_12_output_integrity_20260721.py",
+  "pickup_contract_revision": 13,
+  "payload_revision": 13,
+  "runner_contract_modes": ["aays21_v3_json", "legacy_plain_text"],
+  "script_path": "docs/chatgpt_status/topography/shards/height_difference_1/automation/038_height_difference_1_revision_13_direct_os_terrain50_crosscheck_20260721.py",
+  "script_blob_sha": "7b8b8c3da6eb4aba8014085ff6f8e047bda0b38f",
+  "validation_path": "docs/chatgpt_status/topography/shards/height_difference_1/validation/020_revision_13_direct_os_terrain50_selftest_20260721.json",
+  "output_integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/039_validate_revision_13_output_integrity_20260721.py",
   "legacy_queue_path": "docs/chatgpt_status/aays1/queue/aays1-height-difference-1-official-boundary-elevation-samples-20260720.queue.txt",
   "legacy_current_task_path": "docs/chatgpt_status/aays1/current-task/aays1-height-difference-1-official-boundary-elevation-samples-20260720.current.txt",
   "active_shared_control_task_at_publish": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
@@ -34,47 +31,28 @@
   "do_not_replace_active_shared_control": true,
   "claimable": true,
   "ready_for_claim": true,
-  "read_paths": [
-    "docs/chatgpt_status/topography/shards/height_difference_1",
-    "docs/chatgpt_status/_shared/slots_21/height_difference_1",
-    "england_map_web/data/aays_21_slots/height_difference_1"
-  ],
-  "exact_write_paths": [
-    "docs/chatgpt_status/topography/shards/height_difference_1",
-    "docs/chatgpt_status/_shared/slots_21/height_difference_1",
-    "england_map_web/data/aays_21_slots/height_difference_1"
-  ],
+  "read_paths": ["docs/chatgpt_status/topography/shards/height_difference_1", "docs/chatgpt_status/_shared/slots_21/height_difference_1", "england_map_web/data/aays_21_slots/height_difference_1"],
+  "exact_write_paths": ["docs/chatgpt_status/topography/shards/height_difference_1", "docs/chatgpt_status/_shared/slots_21/height_difference_1", "england_map_web/data/aays_21_slots/height_difference_1"],
   "expected_outputs": [
-    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/014_revision_12_direct_ea_pixel_center_resample_latest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/014_revision_12_direct_ea_pixel_center_resample_manifest_latest.json",
-    "england_map_web/data/aays_21_slots/height_difference_1/revision_12_direct_ea_pixel_center_resample_latest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/023_revision_12_output_integrity_readback_latest.json"
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/015_revision_13_direct_os_terrain50_crosscheck_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/015_revision_13_direct_os_terrain50_crosscheck_manifest_latest.json",
+    "england_map_web/data/aays_21_slots/height_difference_1/revision_13_direct_os_terrain50_crosscheck_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/024_revision_13_output_integrity_readback_latest.json"
   ],
   "metric_contract": {
     "name": "parcel_ground_height_difference",
     "definition": "direct_EA_DTM_1m_pixel_center_polygon_max_minus_min",
-    "os_role": "independent_absolute_elevation_and_datum_crosscheck_not_parcel_range",
+    "os_role": "direct_OS_Terrain50_absolute_elevation_and_ODN_crosscheck_not_parcel_range",
     "minimum_valid_ea_pixels": 3,
     "maximum_ea_os_absolute_difference_m": 8.0,
     "direct_ea_wcs_resample_required": true,
-    "pixel_inclusion_policy": "pixel_center_inside_official_hmlr_polygon",
-    "all_touched": false,
-    "sampling_mask_sha256_required": true,
-    "selected_pixel_centers_sha256_required": true,
-    "centroid_fallback_forbidden": true
+    "direct_os_downloads_api_crosscheck_required": true,
+    "os_grid_200_by_200_required": true,
+    "os_cellsize_50m_required": true,
+    "os_archive_grid_vertical_metadata_sha256_required": true
   },
-  "resource_class": [
-    "network_fetch",
-    "geometry",
-    "raster_heavy",
-    "streaming_disk_bounded"
-  ],
-  "parcel_partition": {
-    "start": 1,
-    "end": 30761,
-    "count": 30761,
-    "canonical_count": 92283
-  },
+  "resource_class": ["network_fetch", "geometry", "raster_heavy", "streaming_disk_bounded"],
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
   "requires_git_publish_gate": true,
   "timeout_seconds": 7200,
   "single_runner_only": true,
