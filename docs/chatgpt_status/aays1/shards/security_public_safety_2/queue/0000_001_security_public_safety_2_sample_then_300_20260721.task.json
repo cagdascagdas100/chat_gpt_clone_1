@@ -1,12 +1,12 @@
 {
-  "schema_version": 8,
+  "schema_version": 9,
   "architecture_version": 3,
   "workstream_id": "AAYS_18_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_2",
   "page_key": "aays1",
   "task_id": "security-public-safety-2-sample-then-300-hydrate-20260721",
-  "attempt_id": "security-public-safety-2-20260721-006-powershell-carrier",
-  "task_version": "5.1-powershell-carrier",
+  "attempt_id": "security-public-safety-2-20260721-007-resume-safe-v2",
+  "task_version": "5.2-resume-safe-powershell-carrier",
   "status": "PENDING_SHARED_RUNNER_HEARTBEAT_RECOVERY_THEN_PICKUP",
   "priority": 96,
   "target_branch": "codex/aays-single-runner-v5-20260706",
@@ -16,11 +16,13 @@
   "single_shared_runner_only": true,
   "do_not_start_new_runner": true,
   "do_not_replace_global_current_task": true,
-  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline_v1.ps1",
-  "powershell_carrier": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline_v1.ps1",
-  "python_pipeline": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline.py",
-  "powershell_carrier_selftest": "docs/chatgpt_status/aays1/shards/security_public_safety_2/validation/security_public_safety_2_powershell_carrier_selftest_latest.json",
-  "runner_contract_audit": "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/security_public_safety_2_runner_contract_v5_1_20260721.json",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline_v2.ps1",
+  "powershell_carrier": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline_v2.ps1",
+  "python_pipeline": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_runner_pipeline_v2_resume.py",
+  "sample_worker": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_sample_hydrate_v2_guarded.py",
+  "sample_v2_selftest": "docs/chatgpt_status/aays1/shards/security_public_safety_2/validation/security_public_safety_2_sample_v2_selftest_latest.json",
+  "pipeline_v2_selftest": "docs/chatgpt_status/aays1/shards/security_public_safety_2/validation/security_public_safety_2_pipeline_v2_selftest_latest.json",
+  "carrier_v2_selftest": "docs/chatgpt_status/aays1/shards/security_public_safety_2/validation/security_public_safety_2_carrier_v2_selftest_latest.json",
   "runner_health_diagnostic": "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/security_public_safety_2_runner_health_diagnostic_latest.json",
   "pipeline_receipt": "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/security_public_safety_2_pipeline_receipt_latest.json",
   "canonical_source": {
@@ -30,12 +32,17 @@
     "feature_count": 92283,
     "guard_rule": "fail closed and write zero business rows unless git hash-object equals required_git_blob_sha"
   },
+  "resume_policy": {
+    "sample": "reuse only after exact blob + exact IDs + Police.uk HTTP/SHA validation",
+    "hydration": "reuse only after 300 contiguous IDs + exact blob + parity + API evidence validation",
+    "acceptance": "reuse only after current HTML/JSON SHA256 + browser rows + console zero validation"
+  },
   "optional_input_env": {
     "AAYS_IOD25_V2_CSV": "Corrected English Indices of Deprivation 2025 v2 LSOA crime-domain CSV",
     "AAYS_MPS_LSOA_CSV": "Latest Metropolitan Police LSOA Level Crime CSV"
   },
   "acceptance_criteria": [
-    "exact canonical Git blob verified before hydration",
+    "exact canonical Git blob verified before sample and hydration",
     "3 canonical IDs and three Police.uk HTTP 200 plus SHA256 responses",
     "exactly 300 unique contiguous canonical rows parcel_30762 through parcel_31061",
     "JSON CSV GeoJSON parity",
