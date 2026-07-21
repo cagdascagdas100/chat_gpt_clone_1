@@ -13,21 +13,25 @@ ops=[]
 for name in ("operations_latest.json","scope_operations_latest.json","operations_provenance_latest.json"):
     ops.extend(json.loads((WEB/name).read_text(encoding="utf-8"))["operations"])
 by_id={row["id"]:row for row in ops}
-rendered=[by_id[key] for key in sorted(by_id)]
-blocked=[row for row in rendered if row["status"]!="DONE"]
+blocked=[row for row in by_id.values() if row["status"]!="DONE"]
 checks={
   "candidate_examples_fetch":"candidate_integrity_examples_latest.json" in html,
   "candidate_examples_table":"candidateIntegrityExamples" in html,
   "candidate_audit_table":"candidateAudit" in html,
   "candidate_audit_fetch":"candidate_jsonl_integrity_latest.json" in html,
+  "consistency_table":"reviewConsistency" in html,
+  "consistency_audit_fetch":"review_contract_consistency_latest.json" in html,
   "six_examples":len(examples.get("examples",[]))==6,
   "examples_not_real":examples.get("real_parcel_rows")==0 and examples.get("actual_business_data_rows_written")==0,
   "no_data_methods":{x["required_method"] for x in examples["examples"] if x["candidate_class"]=="NO_DATA"}=={"NO_POSTCODE","POSTCODE_NOT_IN_CURRENT_R2"},
   "reject_examples":sum(x["decision"]=="REJECT_FAIL_CLOSED" for x in examples["examples"])==2,
-  "validation_228":contract["combined_validation"]=={"passed":228,"total":228},
+  "validation_260":contract["combined_validation"]=={"passed":260,"total":260},
   "candidate_tests_25":contract["candidate_integrity_selftest"]=={"passed":25,"total":25},
-  "rendered_operations_109":len(rendered)==109 and rendered[0]["id"]==1 and rendered[-1]["id"]==109,
-  "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==109,
+  "consistency_tests_14":contract["review_contract_consistency_selftest"]=={"passed":14,"total":14},
+  "wrapper_tests_36":contract["run_and_audit_wrapper_contract"]=={"passed":36,"total":36},
+  "operation_ids_unique":len(by_id)==len(ops),
+  "operation_range_121":sorted(by_id)==list(range(1,122)),
+  "single_current_blocker":len(blocked)==1 and blocked[0]["id"]==121,
   "review_only":progress.get("actual_business_data_rows_written")==0 and progress.get("final_ready") is False and contract.get("final_ready") is False,
 }
 failed=[name for name,ok in checks.items() if not ok]
