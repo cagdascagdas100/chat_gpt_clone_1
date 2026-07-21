@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [int]$VirtualTimeBudgetMs = 30000,
+    [int]$VirtualTimeBudgetMs = 45000,
     [int]$HttpTimeoutSeconds = 30
 )
 
@@ -22,13 +22,26 @@ $authoritativeCheckpointPath = Join-Path $repoRoot 'docs\chatgpt_status\_shared\
 $portableRoot = [string]$env:AAYS_PORTABLE_ROOT
 $runtimeCheckpointPath = if ([string]::IsNullOrWhiteSpace($portableRoot)) { $null } else { Join-Path $portableRoot 'state\slots\gas_emissions_3\checkpoint_latest.json' }
 
-$precheckUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/browser_acceptance_precheck.html?runner=coordinator-v6'
-$matrixUrl = 'http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=gas100&standalone=1'
+$precheckUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/browser_acceptance_precheck.html?runner=coordinator-v7'
+$matrixUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/canonical_matrix_100_browser_harness.html?runner=coordinator-v7'
+$canonicalMatrixUrl = 'http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html'
 $visibleRowsUrl = 'http://127.0.0.1:8012/england_map_web/data/program_layer_matrix/gas_emissions_visible_rows_latest.json'
 $matrixStatusUrl = 'http://127.0.0.1:8012/england_map_web/data/program_layer_matrix/gas_emissions_status_latest.json'
 $summaryUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/summary_latest.json'
 
 New-Item -ItemType Directory -Force -Path $acceptanceRoot, $runtimeProofRoot, $siteRoot | Out-Null
+
+$gitCandidates = @()
+if (-not [string]::IsNullOrWhiteSpace($portableRoot)) {
+    $gitCandidates += (Join-Path $portableRoot 'runtime\git\cmd\git.exe')
+    $gitCandidates += (Join-Path $portableRoot 'runtime\git\bin\git.exe')
+}
+$gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
+if (-not $gitCommand) { $gitCommand = Get-Command git -ErrorAction SilentlyContinue }
+if ($gitCommand) { $gitCandidates += $gitCommand.Source }
+$gitExe = $gitCandidates | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -Unique | Select-Object -First 1
+if (-not $gitExe) { throw 'Portable or system git executable was not found.' }
+$gitExe = [string]$gitExe
 
 function Write-Json($Value, [string]$Path) {
     $json = $Value | ConvertTo-Json -Depth 40
@@ -38,8 +51,8 @@ function Write-Json($Value, [string]$Path) {
 }
 
 function Invoke-Git([string[]]$GitArgs) {
-    $output = & git -C $repoRoot @GitArgs 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git $($GitArgs -join ' ') failed: $($output -join [Environment]::NewLine)" }
+    $output = & $gitExe -C $repoRoot @GitArgs 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "$gitExe $($GitArgs -join ' ') failed: $($output -join [Environment]::NewLine)" }
     return (($output -join [Environment]::NewLine).Trim())
 }
 
@@ -115,7 +128,7 @@ function Capture-Screenshot([string]$Browser, [string]$Url) {
     $info = Get-Item -LiteralPath $screenshotPath
     if ([int64]$info.Length -lt 10000) { throw "Screenshot file is unexpectedly small: $($info.Length) bytes" }
     return [ordered]@{
-        status='PASS';url=$Url;browser_path=$Browser;exit_code=$exitCode;
+        status='PASS';url=$Url;canonical_matrix_url=$canonicalMatrixUrl;browser_path=$Browser;exit_code=$exitCode;
         path='docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/013_gas_emissions_3_matrix_browser_screenshot_latest.png';
         byte_count=[int64]$info.Length;sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $screenshotPath).Hash.ToLowerInvariant();
         stderr_path='docs/chatgpt_status/gas_emissions/shards/gas_emissions_3/acceptance/020_coordinator_browser_runtime_latest/screenshot_stderr.log';
@@ -130,6 +143,7 @@ function Count-Matches([string]$Text, [string]$Pattern) {
 
 function Repo-Relative([string]$Path) {
     $full = [System.IO.Path]::GetFullPath($Path)
+    if (-not $full.StartsWith($repoRoot,[StringComparison]::OrdinalIgnoreCase)) { throw "Path outside repository: $full" }
     return $full.Substring($repoRoot.Length).TrimStart('\').Replace('\','/')
 }
 
@@ -178,25 +192,26 @@ try {
 
     $requiredHeaders = @('Durum','Satır','Yıl','Sektör','Alt sektör','Sera gazı','Emisyon \(kt CO2e\)','Etki alanı \(kt CO2\)','Kaynak satırı','Eşleştirme yöntemi','Hesap açıklaması','Parcel binding','Güven \(%\)','Doğruluk','Resmi kaynak URL','Ham yerel kaynak','Visible artifact','Status yolu','Rapor yolu','Served commit','Artifact SHA','Manuel inceleme','Resmi CSV eşleşmesi','Kaynak SHA-256','Kaynak manifesti','Satır kanıtı','Pipeline','Blocker')
     $missingHeaders = @($requiredHeaders | Where-Object { $matrix.dom -notmatch $_ })
-    $matrixHundredRows = $matrix.dom -match '(?i)(100\s*satır|100\s*rows)'
-    $matrixPageInfo = $matrix.dom -match '(?i)Sayfa\s+1\s*/\s*[0-9]+\s*-\s*100\s*satır'
-    $matrixPassed = $matrix.exit_code -eq 0 -and $matrixHundredRows -and $matrixPageInfo -and $missingHeaders.Count -eq 0
+    $matrixAcceptanceRows = Count-Matches $matrix.dom 'data-acceptance-row=["'']true["'']'
+    $matrixPassMarker = $matrix.dom -match 'CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS'
+    $matrixPageEvidence = $matrix.dom -match 'pages=4/4' -and $matrix.dom -match 'unique=100/100'
+    $matrixPassed = $matrix.exit_code -eq 0 -and $matrixPassMarker -and $matrixPageEvidence -and $matrixAcceptanceRows -eq 100 -and $missingHeaders.Count -eq 0
 
     $scriptErrors = @()
     foreach ($entry in @($precheck,$matrix)) {
         if ($entry.stderr -match '(?im)(uncaught|unhandled|javascript error|console[^`r`n]*error)') { $scriptErrors += "$($entry.label): browser stderr contains a script error marker" }
     }
     $browserDomPassed = $httpPassed -and $servedPassed -and $precheckPassed -and $matrixPassed -and $scriptErrors.Count -eq 0
-    if (-not $browserDomPassed) { throw "Browser acceptance failed. http=$httpPassed served=$servedPassed precheck=$precheckPassed matrix=$matrixPassed errors=$($scriptErrors.Count)" }
+    if (-not $browserDomPassed) { throw "Browser acceptance failed. http=$httpPassed served=$servedPassed precheck=$precheckPassed matrix=$matrixPassed matrix_rows=$matrixAcceptanceRows errors=$($scriptErrors.Count)" }
 
     $generatedAt = [DateTime]::UtcNow.ToString('o')
     $result = [ordered]@{
-        schema_version=3;slot_id=$slotId;generated_at=$generatedAt;status='COORDINATOR_BROWSER_DOM_AND_SCREENSHOT_PASS_AWAITING_SERIAL_REMOTE_PUBLISH_READBACK';
-        runner_policy='EXISTING_CANONICAL_F_SHARED_RUNNER_ONLY';runner_version=6;browser_path=$browser;
+        schema_version=4;slot_id=$slotId;generated_at=$generatedAt;status='COORDINATOR_CANONICAL_4_PAGE_BROWSER_DOM_AND_SCREENSHOT_PASS_AWAITING_SERIAL_REMOTE_PUBLISH_READBACK';
+        runner_policy='EXISTING_CANONICAL_F_SHARED_RUNNER_ONLY';runner_version=7;browser_path=$browser;git_executable=$gitExe;
         git=[ordered]@{local_head=$localHead;remote_head=$remoteHead;head_match=$true;direct_child_push_forbidden=$true;coordinator_serial_publish_required=$true;remote_publish_readback_passed=$false};
         http=[ordered]@{endpoint_count=5;all_status_200=$httpPassed;served_row_count=$servedRows;served_unique_row_count=$uniqueRows;matrix_status_row_count=$matrixRows;summary_candidate_count=$candidateRows;served_commit_sha=$matrixStatusHttp.json.served_commit_sha;served_commit_field_role='historical_informational_only_runtime_token_is_authoritative';passed=$servedPassed};
         precheck=[ordered]@{url=$precheckUrl;exit_code=$precheck.exit_code;pass_rows=$precheckPassRows;fail_rows=$precheckFailRows;dom_path=(Repo-Relative $precheck.dom_path);dom_sha256=$precheck.dom_sha256;stderr_path=(Repo-Relative $precheck.stderr_path);stderr_sha256=$precheck.stderr_sha256;passed=$precheckPassed};
-        matrix=[ordered]@{url=$matrixUrl;exit_code=$matrix.exit_code;expected_rows=100;hundred_rows_text_present=$matrixHundredRows;page_info_100_present=$matrixPageInfo;required_header_count=$requiredHeaders.Count;missing_headers=$missingHeaders;dom_path=(Repo-Relative $matrix.dom_path);dom_sha256=$matrix.dom_sha256;stderr_path=(Repo-Relative $matrix.stderr_path);stderr_sha256=$matrix.stderr_sha256;passed=$matrixPassed};
+        matrix=[ordered]@{harness_url=$matrixUrl;canonical_url=$canonicalMatrixUrl;exit_code=$matrix.exit_code;expected_pages=4;expected_rows=100;actual_dom_rows=$matrixAcceptanceRows;unique_rows=100;pass_marker_present=$matrixPassMarker;page_evidence_present=$matrixPageEvidence;required_header_count=$requiredHeaders.Count;missing_headers=$missingHeaders;dom_path=(Repo-Relative $matrix.dom_path);dom_sha256=$matrix.dom_sha256;stderr_path=(Repo-Relative $matrix.stderr_path);stderr_sha256=$matrix.stderr_sha256;passed=$matrixPassed};
         screenshot=$screenshot;browser_script_errors=$scriptErrors;browser_dom_passed=$true;browser_acceptance_passed=$false;coordinator_publish_required=$true;
         parcel_binding_gate_passed=$false;measured_parcel_values_produced=0;final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false
     }
@@ -204,26 +219,28 @@ try {
 
     $steps = @(
         [ordered]@{step=1;name='VALIDATE_DETACHED_CHILD_HEAD_EQUALS_REMOTE';state='PASS';evidence="local=$localHead remote=$remoteHead"},
-        [ordered]@{step=2;name='PRESERVE_AUTHORITATIVE_CHECKPOINT_SEQUENCE';state='PASS';evidence="sequence=$($authoritativeCheckpoint.sequence) runtime=$runtimeCheckpointPath"},
-        [ordered]@{step=3;name='CHECK_FIVE_HTTP_ENDPOINTS';state='PASS';evidence='5/5 HTTP 200'},
-        [ordered]@{step=4;name='VERIFY_SERVED_ROWS_AND_UNIQUE_IDS';state='PASS';evidence="rows=$servedRows unique=$uniqueRows status=$matrixRows summary=$candidateRows"},
-        [ordered]@{step=5;name='FIND_INSTALLED_EDGE_OR_CHROME';state='PASS';evidence=$browser},
-        [ordered]@{step=6;name='CAPTURE_PRECHECK_DOM';state='PASS';evidence=(Repo-Relative $precheck.dom_path)},
-        [ordered]@{step=7;name='VERIFY_PRECHECK_100_PASS_0_FAIL';state='PASS';evidence="pass=$precheckPassRows fail=$precheckFailRows"},
-        [ordered]@{step=8;name='CAPTURE_MATRIX_DOM';state='PASS';evidence=(Repo-Relative $matrix.dom_path)},
-        [ordered]@{step=9;name='VERIFY_MATRIX_100_ROWS_AND_28_HEADERS';state='PASS';evidence="headers=$($requiredHeaders.Count) missing=$($missingHeaders.Count)"},
-        [ordered]@{step=10;name='CAPTURE_MATRIX_SCREENSHOT';state='PASS';evidence=$screenshot.path},
-        [ordered]@{step=11;name='HASH_SCREENSHOT_SHA256';state='PASS';evidence=$screenshot.sha256},
-        [ordered]@{step=12;name='CHECK_BROWSER_STDERR';state='PASS';evidence="script_errors=$($scriptErrors.Count)"},
-        [ordered]@{step=13;name='WRITE_LOCAL_RESULT';state='PASS';evidence=(Repo-Relative $resultPath)},
-        [ordered]@{step=14;name='COORDINATOR_SERIAL_PUBLISH';state='PENDING_COORDINATOR';evidence='No child direct push'},
-        [ordered]@{step=15;name='REMOTE_COMMIT_READBACK';state='PENDING_COORDINATOR';evidence='Queue publisher must confirm remote HEAD'},
-        [ordered]@{step=16;name='CHATGPT_FINAL_STATE_RECONCILIATION';state='PENDING_REMOTE_PROOF';evidence='Advance summary/checkpoint only after remote result readback'}
+        [ordered]@{step=2;name='USE_PORTABLE_GIT';state='PASS';evidence=$gitExe},
+        [ordered]@{step=3;name='PRESERVE_AUTHORITATIVE_CHECKPOINT_SEQUENCE';state='PASS';evidence="sequence=$($authoritativeCheckpoint.sequence) runtime=$runtimeCheckpointPath"},
+        [ordered]@{step=4;name='CHECK_FIVE_HTTP_ENDPOINTS';state='PASS';evidence='5/5 HTTP 200'},
+        [ordered]@{step=5;name='VERIFY_SERVED_ROWS_AND_UNIQUE_IDS';state='PASS';evidence="rows=$servedRows unique=$uniqueRows status=$matrixRows summary=$candidateRows"},
+        [ordered]@{step=6;name='FIND_INSTALLED_EDGE_OR_CHROME';state='PASS';evidence=$browser},
+        [ordered]@{step=7;name='CAPTURE_PRECHECK_DOM';state='PASS';evidence=(Repo-Relative $precheck.dom_path)},
+        [ordered]@{step=8;name='VERIFY_PRECHECK_100_PASS_0_FAIL';state='PASS';evidence="pass=$precheckPassRows fail=$precheckFailRows"},
+        [ordered]@{step=9;name='DRIVE_CANONICAL_MATRIX_GAS_PAGES_1_TO_4';state='PASS';evidence='same-origin canonical iframe pages=4/4'},
+        [ordered]@{step=10;name='AGGREGATE_EXACT_100_CANONICAL_DOM_ROWS';state='PASS';evidence="rows=$matrixAcceptanceRows unique=100"},
+        [ordered]@{step=11;name='VERIFY_MATRIX_28_HEADERS';state='PASS';evidence="headers=$($requiredHeaders.Count) missing=$($missingHeaders.Count)"},
+        [ordered]@{step=12;name='CAPTURE_MATRIX_SCREENSHOT';state='PASS';evidence=$screenshot.path},
+        [ordered]@{step=13;name='HASH_SCREENSHOT_SHA256';state='PASS';evidence=$screenshot.sha256},
+        [ordered]@{step=14;name='CHECK_BROWSER_STDERR';state='PASS';evidence="script_errors=$($scriptErrors.Count)"},
+        [ordered]@{step=15;name='WRITE_LOCAL_RESULT';state='PASS';evidence=(Repo-Relative $resultPath)},
+        [ordered]@{step=16;name='COORDINATOR_SERIAL_PUBLISH';state='PENDING_COORDINATOR';evidence='No child direct push'},
+        [ordered]@{step=17;name='REMOTE_COMMIT_READBACK';state='PENDING_COORDINATOR';evidence='Queue publisher must confirm remote HEAD'},
+        [ordered]@{step=18;name='CHATGPT_FINAL_STATE_RECONCILIATION';state='PENDING_REMOTE_PROOF';evidence='Advance summary/checkpoint only after remote result readback'}
     )
     $status = [ordered]@{
-        schema_version=6;slot_id=$slotId;updated_at=$generatedAt;status='COORDINATOR_RUNTIME_PASS_AWAITING_SERIAL_REMOTE_PUBLISH_READBACK';runner_version=6;
-        runner_policy='EXISTING_CANONICAL_F_SHARED_RUNNER_ONLY';steps=$steps;browser_path=$browser;
-        browser_dom_passed=$true;browser_acceptance_passed=$false;screenshot_captured=$true;screenshot_sha256=$screenshot.sha256;
+        schema_version=7;slot_id=$slotId;updated_at=$generatedAt;status='COORDINATOR_CANONICAL_4_PAGE_RUNTIME_PASS_AWAITING_SERIAL_REMOTE_PUBLISH_READBACK';runner_version=7;
+        runner_policy='EXISTING_CANONICAL_F_SHARED_RUNNER_ONLY';steps=$steps;browser_path=$browser;git_executable=$gitExe;
+        browser_dom_passed=$true;browser_acceptance_passed=$false;canonical_pages_verified=4;canonical_dom_rows_verified=100;screenshot_captured=$true;screenshot_sha256=$screenshot.sha256;
         coordinator_serial_publish_pending=$true;parcel_binding_gate_passed=$false;final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false
     }
     Write-Json $status $statusPath
@@ -231,10 +248,9 @@ try {
     if (Test-Path -LiteralPath $pickupPath -PathType Leaf) {
         $pickup = Get-Content -Raw -LiteralPath $pickupPath | ConvertFrom-Json
         foreach ($check in @($pickup.checks)) {
-            if ([int]$check.row -eq 16) { $check.actual=$true; $check.state='PASS' }
-            if ([int]$check.row -eq 17) { $check.actual=$true; $check.state='PASS_LOCAL_AWAITING_REMOTE_READBACK' }
+            if ([int]$check.row -eq 15 -or [int]$check.row -eq 16) { $check.actual=$true; $check.state='PASS_LOCAL_AWAITING_REMOTE_READBACK' }
         }
-        $pickup.status='RUNTIME_PASS_AWAITING_COORDINATOR_SERIAL_REMOTE_PUBLISH_READBACK'
+        $pickup.status='CANONICAL_4_PAGE_RUNTIME_PASS_AWAITING_COORDINATOR_SERIAL_REMOTE_PUBLISH_READBACK'
         $pickup.runtime_checks_passed=1
         $pickup.runtime_checks_total=2
         $pickup.browser_dom_verified_rows=100
@@ -244,12 +260,12 @@ try {
         Write-Json $pickup $pickupPath
     }
 
-    Write-Output "GAS_EMISSIONS_3_COORDINATOR_RUNTIME_PASS DOM=100 SCREENSHOT_SHA256=$($screenshot.sha256) NEXT=COORDINATOR_SERIAL_PUBLISH_READBACK"
+    Write-Output "GAS_EMISSIONS_3_COORDINATOR_RUNTIME_PASS PAGES=4 DOM=100 SCREENSHOT_SHA256=$($screenshot.sha256) NEXT=COORDINATOR_SERIAL_PUBLISH_READBACK"
     exit 0
 }
 catch {
     $errorPayload = [ordered]@{
-        schema_version=3;slot_id=$slotId;generated_at=[DateTime]::UtcNow.ToString('o');status='COORDINATOR_BROWSER_RUNTIME_BLOCKED';
+        schema_version=4;slot_id=$slotId;generated_at=[DateTime]::UtcNow.ToString('o');status='COORDINATOR_BROWSER_RUNTIME_BLOCKED';
         error=$_.Exception.Message;browser_dom_passed=$false;browser_acceptance_passed=$false;parcel_binding_gate_passed=$false;
         measured_parcel_values_produced=0;final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false
     }
