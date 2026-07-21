@@ -8,38 +8,25 @@
   "parallel_runner_allowed": false,
   "queue_submission": false,
   "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
-  "parcel_partition": {
-    "start": 61523,
-    "end": 92283,
-    "count": 30761
-  },
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
   "canonical_source": "england_map_web/data/program_layer_matrix/security.geojson",
   "legacy_postcode_source": "england_map_web/data/program_layer_matrix/internet.geojson",
   "official_source": "Ofcom Connected Nations Spring 2026 fixed broadband ZIP",
   "execution_order": [
-    {
-      "stage": 1,
-      "script": "automation/003_selftest_slot3_extractor.py",
-      "purpose": "reconfirm identity-safe extractor contract"
-    },
-    {
-      "stage": 2,
-      "script": "automation/006_selftest_stream_extract_slot3_inputs.py",
-      "purpose": "reconfirm bounded low-memory slicing contract"
-    },
-    {
-      "stage": 3,
-      "script": "automation/007_probe_download_and_run_slot3.ps1",
-      "purpose": "download and hash official ZIP, reject superseded r1 postcode files, slice exact shard and produce review-only join counts"
-    }
+    {"stage": 1, "script": "automation/003_selftest_slot3_extractor.py", "purpose": "reconfirm identity-safe extractor contract"},
+    {"stage": 2, "script": "automation/006_selftest_stream_extract_slot3_inputs.py", "purpose": "reconfirm bounded low-memory slicing contract"},
+    {"stage": 3, "script": "automation/009_selftest_download_orchestrator.py", "purpose": "reconfirm ZIP selection, r1/r2 and truth gates"},
+    {"stage": 4, "script": "automation/008_download_validate_run_slot3.py", "purpose": "use explicit ZIP, validated cache or proxy-aware urllib/curl/PowerShell; hash official ZIP; slice exact shard; produce review-only counts"}
   ],
-  "expected_command": "powershell -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\007_probe_download_and_run_slot3.ps1 -RepoRoot F:\\chatgpt\\chat_gpt_clone_1_main",
+  "expected_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\008_download_validate_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main",
+  "optional_official_zip_command": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_3\\automation\\008_download_validate_run_slot3.py --repo-root F:\\chatgpt\\chat_gpt_clone_1_main --ofcom-zip F:\\path\\to\\official_ofcom.zip",
   "acceptance": [
     "authoritative slot has no live lease before execution",
+    "download orchestrator selftest 10/10 PASS",
     "exact canonical rows 61523-92283 count 30761",
     "unique row_no and parcel_id",
     "same-row parcel_id and compatible HMLR INSPIRE ID",
-    "official ZIP signature, byte count and SHA256",
+    "official ZIP signature, minimum size, CRC, byte count and SHA256",
     "zero all-premises r1 postcode files",
     "exactly 121 corrected all-premises r2 postcode files",
     "exactly 1741096 Ofcom postcode rows",
@@ -55,7 +42,7 @@
   },
   "current_blockers": [
     "EXISTING_SINGLE_RUNNER_MUST_EXECUTE_ON_CANONICAL_F_WORKSPACE",
-    "OFFICIAL_OFCOM_ZIP_DOWNLOAD_AND_SHA256_REQUIRED",
+    "OFFICIAL_OFCOM_ZIP_BYTES_OR_VALIDATED_LOCAL_COPY_REQUIRED",
     "REAL_30761_ROW_JOIN_COUNTS_REQUIRED"
   ],
   "final_ready": false,
