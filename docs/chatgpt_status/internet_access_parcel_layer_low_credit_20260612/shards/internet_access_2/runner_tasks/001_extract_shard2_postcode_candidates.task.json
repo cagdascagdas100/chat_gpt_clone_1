@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "slot_id": "internet_access_2",
-  "task_id": "internet-access-2-official-r2-download-validate-extract-20260721",
+  "task_id": "internet-access-2-official-r2-download-validate-extract-publish-20260721",
   "dispatch_state": "PREPARED_NOT_QUEUED",
   "single_shared_runner_only": true,
   "do_not_start_new_runner": true,
@@ -19,20 +19,29 @@
     "expected_ofcom_files": 121,
     "expected_ofcom_postcode_rows": 1741096
   },
-  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/004_download_validate_extract_slot2.ps1 -RepoRoot <REPO_ROOT> -PythonExe <PYTHON_EXE>",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/004_download_validate_extract_slot2.ps1 -RepoRoot <REPO_ROOT> -PythonExe <PYTHON_EXE>",
+    "<PYTHON_EXE> docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006_selftest_publish_slot2_readback.py",
+    "<PYTHON_EXE> docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/005_publish_slot2_readback.py --manifest <RUNTIME_OUTPUT>/internet_access_2_extraction_manifest_latest.json --rows-jsonl <RUNTIME_OUTPUT>/internet_access_2_candidates_latest.jsonl --output-root england_map_web/data/aays_21_slots/internet_access_2"
+  ],
   "outputs": [
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/download_and_extract_proof_latest.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/candidate_output/internet_access_2_extraction_manifest_latest.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/candidate_output/internet_access_2_candidates_latest.jsonl"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/candidate_output/internet_access_2_candidates_latest.jsonl",
+    "england_map_web/data/aays_21_slots/internet_access_2/runner_readback_latest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/verified_examples_latest.json"
   ],
   "acceptance": [
     "Extractor self-test passes 12/12 before network work",
+    "Publisher self-test passes 10/10 before web publication",
     "Canonical source yields exactly 30,761 unique rows and parcel IDs for 30762-61522",
     "All-premises postcode input contains exactly 121 corrected r2 files and 1,741,096 rows",
     "Any all-premises r1 file is rejected",
     "Coverage percentages outside 0-100 are rejected",
     "Direct + legacy-pending-spatial-QA + NO_DATA counts sum to 30,761",
-    "No score, DB write, migration, production deploy or authoritative direct push occurs",
+    "Manifest and JSONL SHA-256 hashes are published",
+    "Only review examples are published; score and business-row fields remain empty/false",
+    "No DB write, migration, production deploy or authoritative direct push occurs",
     "Remote readback is published only through the existing serial publisher"
   ],
   "write_policy": {
