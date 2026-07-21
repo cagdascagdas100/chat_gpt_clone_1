@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
-$attemptId = 'height-difference-2-20260721-018'
+$attemptId = 'height-difference-2-20260721-019'
 $portableRoot = 'F:\TerraYield_AAYS_Portable'
 $repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $launcher = 'F:\TerraYield_AAYS_Portable\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd'
@@ -16,6 +16,7 @@ function Write-Result(
   [bool]$Started,
   [int]$ProcessCountBefore,
   [int]$ProcessCountAfter,
+  [int]$DaemonCountAfter,
   [string]$LaunchMode,
   [string]$Detail
 ) {
@@ -23,7 +24,7 @@ function Write-Result(
   $parent = Split-Path -Parent $output
   if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
   [ordered]@{
-    schema_version = 2
+    schema_version = 3
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -37,6 +38,7 @@ function Write-Result(
     start_attempted = $StartAttempted
     existing_canonical_process_count_before = $ProcessCountBefore
     existing_canonical_process_count_after = $ProcessCountAfter
+    persistent_daemon_count_after = $DaemonCountAfter
     canonical_runner_started = $Started
     existing_single_runner_architecture_reused = $true
     new_runner_architecture_created = $false
@@ -56,35 +58,54 @@ if (-not (Test-Path -LiteralPath $repoRoot -PathType Container)) {
   throw "CANONICAL_F_REPO_ROOT_MISSING=$repoRoot"
 }
 if (-not (Test-Path -LiteralPath $repoEntry -PathType Leaf)) {
-  Write-Result 'BLOCKED_CANONICAL_REPO_ENTRY_MISSING' $false $false 0 0 'none' $repoEntry
+  Write-Result 'BLOCKED_CANONICAL_REPO_ENTRY_MISSING' $false $false 0 0 0 'none' $repoEntry
   exit 2
 }
 
-$patterns = @(
+$canonicalPatterns = @(
   [regex]::Escape($launcher),
   [regex]::Escape($repoEntry),
   'RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK',
+  'RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709',
   'RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707',
   'RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707'
 )
-function Get-CanonicalProcesses {
+$daemonPattern = 'RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707'
+
+function Get-MatchingProcesses([string[]]$Patterns) {
   @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     $commandLine = [string]$_.CommandLine
     if (-not $commandLine) { return $false }
-    foreach ($pattern in $patterns) {
+    foreach ($pattern in $Patterns) {
       if ($commandLine -match $pattern) { return $true }
     }
     return $false
   })
 }
+function Get-CanonicalProcesses { @(Get-MatchingProcesses $canonicalPatterns) }
+function Get-PersistentDaemons { @(Get-MatchingProcesses @($daemonPattern)) }
+function Wait-ForDaemon([int]$Seconds) {
+  $deadline = (Get-Date).AddSeconds($Seconds)
+  do {
+    $daemons = @(Get-PersistentDaemons)
+    if ($daemons.Count -gt 0) { return $daemons }
+    Start-Sleep -Seconds 2
+  } while ((Get-Date) -lt $deadline)
+  return @(Get-PersistentDaemons)
+}
 
 $before = @(Get-CanonicalProcesses)
-if ($before.Count -gt 1) {
-  Write-Result 'BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES' $false $false $before.Count $before.Count 'none' 'Fail closed; no process started.'
+$beforeDaemons = @(Get-PersistentDaemons)
+if ($beforeDaemons.Count -gt 1 -or $before.Count -gt 1) {
+  Write-Result 'BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES' $false $false $before.Count $before.Count $beforeDaemons.Count 'none' 'Fail closed; no process started.'
   exit 3
 }
+if ($beforeDaemons.Count -eq 1) {
+  Write-Result 'CANONICAL_PERSISTENT_DAEMON_ALREADY_ACTIVE_NO_NEW_PROCESS' $false $false $before.Count $before.Count 1 'existing_persistent_daemon' 'Existing canonical persistent daemon preserved.'
+  exit 0
+}
 if ($before.Count -eq 1) {
-  Write-Result 'CANONICAL_RUNNER_ALREADY_ACTIVE_NO_NEW_PROCESS' $false $false 1 1 'existing_process' 'Existing canonical process preserved.'
+  Write-Result 'CANONICAL_TRANSIENT_OR_LEGACY_PROCESS_ALREADY_ACTIVE_NO_NEW_PROCESS' $false $false 1 1 0 'existing_non_daemon_process' 'Fail closed; existing canonical process preserved and no second process started.'
   exit 0
 }
 
@@ -93,25 +114,29 @@ $detail = ''
 if (Test-Path -LiteralPath $launcher -PathType Leaf) {
   $process = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', ('"' + $launcher + '"')) -WorkingDirectory $portableRoot -PassThru -WindowStyle Normal
   $detail = "canonical_cmd_pid=$($process.Id)"
-  Start-Sleep -Seconds 8
 } else {
   $launchMode = 'repo_devam_fallback'
 }
 
+$daemons = @(Wait-ForDaemon 30)
 $after = @(Get-CanonicalProcesses)
-if ($after.Count -eq 0) {
+if ($daemons.Count -eq 0 -and $after.Count -eq 0) {
   $launchMode = 'repo_devam_fallback'
   $process = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $repoEntry + '"')) -WorkingDirectory $repoRoot -PassThru -WindowStyle Normal
   $detail = ($detail + ';repo_devam_pid=' + $process.Id).TrimStart(';')
-  Start-Sleep -Seconds 8
+  $daemons = @(Wait-ForDaemon 30)
   $after = @(Get-CanonicalProcesses)
 }
 
-if ($after.Count -gt 1) {
-  Write-Result 'BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES_AFTER_START' $true $false 0 $after.Count $launchMode $detail
+if ($daemons.Count -gt 1) {
+  Write-Result 'BLOCKED_MULTIPLE_PERSISTENT_DAEMONS_AFTER_START' $true $false 0 $after.Count $daemons.Count $launchMode $detail
   exit 3
 }
-$started = $after.Count -eq 1
-$status = if ($started) { 'EXISTING_CANONICAL_RUNNER_RESTARTED_SINGLE_PROCESS' } else { 'BLOCKED_CANONICAL_RUNNER_START_NOT_OBSERVED' }
-Write-Result $status $true $started 0 $after.Count $launchMode $detail
-exit $(if ($started) { 0 } else { 4 })
+if ($daemons.Count -eq 0) {
+  $status = if ($after.Count -gt 0) { 'BLOCKED_NON_DAEMON_CANONICAL_PROCESS_REMAINS' } else { 'BLOCKED_CANONICAL_RUNNER_START_NOT_OBSERVED' }
+  Write-Result $status $true $false 0 $after.Count 0 $launchMode $detail
+  exit 4
+}
+
+Write-Result 'EXISTING_CANONICAL_PERSISTENT_DAEMON_RESTARTED' $true $true 0 $after.Count 1 $launchMode $detail
+exit 0
