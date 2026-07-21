@@ -1,35 +1,46 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "slot_id": "internet_access_2",
-  "task_id": "internet-access-2-extract-postcode-candidates-20260721",
+  "task_id": "internet-access-2-official-r2-download-validate-extract-20260721",
   "dispatch_state": "PREPARED_NOT_QUEUED",
   "single_shared_runner_only": true,
   "do_not_start_new_runner": true,
   "requires_fresh_remote_claim_before_dispatch": true,
   "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
   "inputs": {
-    "matrix_geojson": "england_map_web/data/program_layer_matrix/internet.geojson",
-    "ofcom_postcode_directory": "runtime-resolved path containing 202601_fixed_postcode_coverage_r2_XX.csv files",
+    "canonical_geojson": "england_map_web/data/program_layer_matrix/security.geojson",
+    "legacy_internet_geojson": "england_map_web/data/program_layer_matrix/internet.geojson",
+    "official_zip_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    "required_r2_pattern": "202601_fixed_postcode_coverage_r2_*.csv",
+    "rejected_r1_pattern": "202601_fixed_postcode_coverage_r1_*.csv",
     "row_start": 30762,
-    "row_end": 61522
+    "row_end": 61522,
+    "expected_rows": 30761,
+    "expected_ofcom_files": 121,
+    "expected_ofcom_postcode_rows": 1741096
   },
-  "command": "python docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/001_extract_shard2_postcode_candidates.py --repo-root <REPO_ROOT> --ofcom-dir <OFCOM_POSTCODE_FILES_DIR> --limit 12",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/004_download_validate_extract_slot2.ps1 -RepoRoot <REPO_ROOT> -PythonExe <PYTHON_EXE>",
   "outputs": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runner_outputs/001_shard2_postcode_candidates_latest.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runner_outputs/001_shard2_postcode_candidates_latest.csv"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/download_and_extract_proof_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/candidate_output/internet_access_2_extraction_manifest_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/runtime/ofcom_202601_r2/candidate_output/internet_access_2_candidates_latest.jsonl"
   ],
   "acceptance": [
-    "Every output row has row_no between 30762 and 61522",
-    "Every value is traceable to existing matrix and, when supplied, exact Ofcom r2 postcode row",
-    "Data level remains POSTCODE_LEVEL_ONLY",
-    "Canonical parcel geometry is not created or altered",
-    "Missing exact postcode source row is NO_DATA/pending, never imputed",
-    "actual_business_data_rows_written remains zero until reviewed migration"
+    "Extractor self-test passes 12/12 before network work",
+    "Canonical source yields exactly 30,761 unique rows and parcel IDs for 30762-61522",
+    "All-premises postcode input contains exactly 121 corrected r2 files and 1,741,096 rows",
+    "Any all-premises r1 file is rejected",
+    "Coverage percentages outside 0-100 are rejected",
+    "Direct + legacy-pending-spatial-QA + NO_DATA counts sum to 30,761",
+    "No score, DB write, migration, production deploy or authoritative direct push occurs",
+    "Remote readback is published only through the existing serial publisher"
   ],
   "write_policy": {
+    "fake_data": false,
     "db_write": false,
     "migration": false,
     "production_deploy": false,
-    "fake_data": false
+    "direct_push": false,
+    "final_ready": false
   }
 }
