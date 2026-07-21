@@ -9,12 +9,13 @@
     h1{margin-bottom:6px}.muted{color:#555}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}
     .card{border:1px solid #bbb;border-radius:8px;padding:12px}table{border-collapse:collapse;width:100%;font-size:14px}
     th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#fff}
-    .ok{font-weight:700}.warn{font-weight:700}code{white-space:nowrap}
+    .ok{font-weight:700}.warn{font-weight:700}code{white-space:nowrap}.audit-link{margin:12px 0 18px}
   </style>
 </head>
 <body>
   <h1>parcel_label_3</h1>
   <div class="muted">61523–92283 · yalnız resmi kaynak adayları · canonical geometri bağlaması bekliyor</div>
+  <div class="audit-link"><a href="parcel_label_3_historical_audit.html">198 satırlık tarihsel artifact audit tablosunu aç</a></div>
   <div class="summary" id="summary"></div>
   <table>
     <thead><tr><th>#</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead>
@@ -23,8 +24,10 @@
 <script>
 const files=[
   'data/distance_property_types/parcel_label_3_candidates.json',
-  'data/distance_property_types/parcel_label_3_candidates_batch_3.json'
+  'data/distance_property_types/parcel_label_3_candidates_batch_3.json',
+  'data/distance_property_types/parcel_label_3_candidates_batch_4.json'
 ];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 Promise.all(files.map(path=>fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()})))
  .then(batches=>{
    const candidates=batches.flatMap(d=>d.candidates||[]);
@@ -38,12 +41,12 @@ Promise.all(files.map(path=>fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)thr
     ['Canonical slot satırı',verified],
     ['Exact geometri',exact]
    ];
-   document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="ok">${x[1]}</div></div>`).join('');
+   document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
    document.getElementById('rows').innerHTML=candidates.map((c,i)=>`<tr>
-    <td>${i+1}</td><td><code>${c.parcel_id}</code></td><td>${c.parcel_ref}</td><td>${c.selected_property_type}</td>
-    <td>%${c.accuracy_percent}</td><td><a href="${c.source_url}" target="_blank" rel="noopener">resmi kaynak</a></td>
-    <td>${c.fresh_evidence}</td><td class="warn">${c.geometry_status}</td><td>${c.conflict_status}</td></tr>`).join('');
- }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="9">${e.message}</td></tr>`});
+    <td>${i+1}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td>
+    <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener">resmi kaynak</a></td>
+    <td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
+ }).catch(e=>{document.getElementById('rows').innerHTML=`<tr><td colspan="9">${esc(e.message)}</td></tr>`});
 </script>
 </body>
 </html>
