@@ -8,9 +8,9 @@ $repoRoot = if ($env:AAYS_REPO_ROOT) {
 } else {
   [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 }
-$pythonScript = Join-Path $repoRoot 'docs\chatgpt_status\security_public_safety\automation\security_public_safety_3_smoke_v5_2_5.py'
+$pythonScript = Join-Path $repoRoot 'docs\chatgpt_status\security_public_safety\automation\security_public_safety_3_smoke_v5_2_6.py'
 if (-not (Test-Path -LiteralPath $pythonScript -PathType Leaf)) {
-  throw "V5_2_5_SMOKE_PYTHON_SCRIPT_MISSING: $pythonScript"
+  throw "V5_2_6_SMOKE_PYTHON_SCRIPT_MISSING: $pythonScript"
 }
 
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -18,8 +18,8 @@ if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
 if (-not $python) { throw 'PYTHON_EXECUTABLE_NOT_FOUND' }
 
 Write-Output 'SLOT_ID=security_public_safety_3'
-Write-Output 'TASK_VERSION=5.2.5-memory-safe-canonical-sha256'
-Write-Output 'ATTEMPT_ID=security-public-safety-3-20260721-014'
+Write-Output 'TASK_VERSION=5.2.6-row-bound-memory-evidence'
+Write-Output 'ATTEMPT_ID=security-public-safety-3-20260721-015'
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "PYTHON_SCRIPT=$pythonScript"
 
