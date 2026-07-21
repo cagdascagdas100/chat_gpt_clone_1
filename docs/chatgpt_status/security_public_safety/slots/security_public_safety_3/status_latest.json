@@ -3,11 +3,10 @@
   "slot_id": "security_public_safety_3",
   "base_slot_id": "security_public_safety",
   "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
-  "updated_at": "2026-07-21T05:06:00+03:00",
-  "state": "SIX_ROW_CANONICAL_API_IOD25_V2_VERIFICATION_QUEUED",
-  "remote_head_verified_before_status_update": "1e03f4358fb51447dd174af729e66fb2c0a20dd4",
+  "updated_at": "2026-07-21T05:18:00+03:00",
+  "state": "CANONICAL_RUNNER_BRANCH_AND_QUEUE_CORRECTED_OUTPUT_PENDING",
   "kickoff_head": "bc8efc47fa670815264049d961659efbe9221abf",
-  "first_unverified_step": "SHARED_RUNNER_EXECUTES_SIX_ROW_V2_SAMPLE_THEN_EXPAND_TO_300",
+  "first_unverified_step": "EXISTING_SHARED_RUNNER_HEARTBEAT_RECOVERS_AND_EXECUTES_CORRECTLY_ROUTED_SIX_ROW_TASK",
   "audit": {
     "main_manifest_claimed_rows": 150,
     "main_csv_actual_rows": 9,
@@ -15,8 +14,20 @@
     "main_geojson_unknown_parcel_ids": 9,
     "main_geojson_null_geometries": 9,
     "main_claim_consistent": false,
-    "verified_rows_inside_slot": 0,
-    "rejected_existing_rows": 9
+    "rejected_existing_rows": 9,
+    "verified_rows_inside_slot": 0
+  },
+  "canonical_historical_evidence": {
+    "branch": "codex/aays-single-runner-v5-20260706",
+    "source_path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "source_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "source_feature_count": 92283,
+    "verified_csv_path": "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "verified_csv_blob_sha": "fa8fc3fd63cd89f744da9023220641f2a10e0e99",
+    "verified_csv_rows": 300,
+    "verified_csv_max_parcel_id": "parcel_300",
+    "verified_csv_rows_inside_slot": 0,
+    "reuse_rule": "Use the 92283-feature spatial source to resolve this slot; do not claim the parcel_1-parcel_300 verified sample as slot data."
   },
   "official_sources": {
     "candidate_count": 6,
@@ -29,8 +40,23 @@
     "iod25_lsoa_count": 33755,
     "home_office_latest_update": "2026-04-23",
     "ons_latest_release": "2026-04-23",
-    "ons_next_release": "2026-07-23",
-    "source_refresh_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_official_source_refresh_v2_20260721.json"
+    "ons_next_release": "2026-07-23"
+  },
+  "runner_routing": {
+    "runner_branch": "codex/aays-single-runner-v5-20260706",
+    "last_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
+    "runner_heartbeat_fresh": false,
+    "runner_execution_claimed": false,
+    "registry_queue_dir": "docs/chatgpt_status/aays1/queue",
+    "previous_wrong_queue_dir": "docs/chatgpt_status/security_public_safety/queue",
+    "queue_root_cause_resolved": true,
+    "mirrored_script_commit": "9e74dcad6a4f1a2b4c243aa54cb02e869f216b99",
+    "canonical_queue_commit": "bb78eabd2d841b5f4a0786fffd68e255d4780cd8",
+    "pickup_marker_commit": "5be6d2099e7128645ec6c650609ed3f0f1bc72fd",
+    "queue_task": "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_3_sample_hydrate_v2_20260721.task.json",
+    "pickup_marker": "docs/chatgpt_status/aays1/queue/0000_000_SECURITY_PUBLIC_SAFETY_3_PICKUP_NOW_20260721_0518.txt",
+    "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
+    "expected_output_exists": false
   },
   "sample_work": {
     "target_rows": 6,
@@ -42,35 +68,33 @@
       "parcel_61527",
       "parcel_61528"
     ],
-    "queue_status": "pickup_requested_waiting_for_shared_runner_output",
-    "queue_task": "docs/chatgpt_status/security_public_safety/queue/0000_000_security_public_safety_3_sample_hydrate_v2_20260721.task.json",
-    "pickup_marker": "docs/chatgpt_status/security_public_safety/queue/0000_000_SECURITY_PUBLIC_SAFETY_3_PICKUP_NOW_20260721_0506.txt",
-    "runner_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
-    "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
-    "website_rows": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json",
+    "queue_status": "pickup_requested_on_canonical_runner_branch",
     "verified_sample_rows": 0,
-    "pending_sample_rows": 6
+    "pending_sample_rows": 6,
+    "website_rows": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json"
   },
   "progress": {
-    "completed_operations": 16,
-    "total_operations": 22,
-    "overall_percent": 35,
-    "percent_delta": 9,
+    "completed_operations": 24,
+    "total_operations": 31,
+    "overall_percent": 46,
+    "percent_delta": 11,
     "actual_slot_rows_written": 0,
     "verified_slot_rows": 0,
     "accuracy_score_4_rows": 0,
     "visible_candidate_rows": 6
   },
   "remaining_operations": [
-    "Shared runner executes the six-row canonical geometry, explicit-month police API and IoD25 v2 verifier",
-    "Reconcile generated counts and accept only accuracy 4/4 rows",
+    "Existing shared runner produces a fresh heartbeat and picks up the correctly routed task",
+    "Execute and reconcile the six-row canonical geometry, explicit-month police API and IoD25 v2 verifier",
+    "Accept only accuracy 4/4 rows",
     "Expand the accepted method to 300 verified rows inside parcel_61523-parcel_92283",
-    "Replace or isolate the unusable 9-row unknown/null canonical output",
+    "Replace or isolate the unusable 9-row unknown/null main output",
     "Run HTTP, hash, DOM, console and browser acceptance",
     "Keep final_ready false until all acceptance evidence exists"
   ],
   "blockers": [
-    "Shared runner has not yet produced security_public_safety_3_sample_candidates_v2_latest.json",
+    "The existing shared runner heartbeat is stale since 2026-07-16 and no new runner may be started",
+    "The correctly routed expected six-row output has not yet been produced",
     "The active main verified CSV/GeoJSON still contain 9 unusable unknown/null records while the manifest claims 150"
   ],
   "fake_data": false,
