@@ -1,68 +1,70 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
-  "payload_revision": 8,
+  "payload_revision": 9,
   "generated_date": "2026-07-21",
-  "status": "REVISION_8_GEOMETRY_DATUM_QUALITY_GATE_READY_SEQUENTIAL_CLAIM_PENDING",
-  "execution_status": "active_shared_control_height_difference_2_attempt_009_pending_height_difference_1_watched_alias_queued_after_current",
+  "status": "REVISION_9_HEIGHT_DIFFERENCE_METRIC_READY_SEQUENTIAL_CLAIM_PENDING",
+  "execution_status": "active_shared_control_height_difference_2_attempt_011_pending_height_difference_1_watched_alias_queued_after_current",
   "operations_manifest_path": "england_map_web/data/aays_21_slots/height_difference_1/operations_manifest_latest.json",
-  "operations_increment_path": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_016_revision_8_20260721.json",
+  "operations_increment_path": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_017_revision_9_20260721.json",
   "diagnostics_path": "england_map_web/data/aays_21_slots/height_difference_1/execution_diagnostics_latest.json",
   "product_completion_percent": 78,
   "product_percent_increase": 0,
-  "batch_progress": {"planned_operations": 102, "completed_operations": 97, "blocked_operations": 5, "completion_percent": 95.10, "percentage_point_increase_this_run": 0.66},
-  "source_upgrades_count": 36,
-  "source_upgrades_this_run": 4,
+  "batch_progress": {"planned_operations": 114, "completed_operations": 109, "blocked_operations": 5, "completion_percent": 95.61, "percentage_point_increase_this_run": 0.51},
+  "source_upgrades_count": 39,
+  "source_upgrades_this_run": 3,
   "runner_contract_upgrades_this_run": 4,
   "validation_tests": "14/14",
   "candidate_rows_count": 3,
   "measured_candidate_rows_count": 0,
   "real_boundary_match_rows_count": 0,
   "official_numeric_rows_count": 0,
-  "official_three_source_numeric_rows_count": 0,
+  "official_height_difference_rows_count": 0,
   "accuracy": {
     "current_score_4": "2.5/4 fallback",
     "parcel_accuracy_increase": 0,
     "target_after_real_boundary_and_independent_two_source_validation": "3.5/4 or higher",
-    "acceptance_guard": "HMLR monthly bulk-GML match=true, valid SHA-256, Barnet/Enfield authority, INSPIRE identifier and candidate-inside-polygon evidence; EA EPSG:27700 1m-class polygon statistics; OS TQ29 200x200 50m non-NoData grid with MD5 when supplied; EA and OS EPSG:5701 Ordnance Datum Newlyn; EA/OS difference at or below 8m."
+    "acceptance_guard": "Official HMLR polygon; at least 3 valid EA DTM 1m pixels inside polygon; parcel height difference equals maximum minus minimum EA 1m elevation; OS Terrain 50 independently crosschecks absolute elevation and Ordnance Datum Newlyn but is not treated as a parcel-range measurement; unresolved conflicts are not promoted."
   },
-  "height_reference_contract": {
-    "hmlr_horizontal_crs": "EPSG:27700 British National Grid",
-    "ea_horizontal_crs": "EPSG:27700 British National Grid",
-    "ea_vertical_crs": "EPSG:5701 Ordnance Datum Newlyn",
-    "os_horizontal_crs": "EPSG:27700 British National Grid",
-    "os_vertical_crs": "EPSG:5701 Ordnance Datum Newlyn",
-    "datum_alignment_required": true
+  "metric_contract": {
+    "layer_key": "height_difference",
+    "metric_name": "parcel_ground_height_difference",
+    "definition": "maximum minus minimum valid EA DTM 1m elevation pixels inside the official HMLR parcel polygon",
+    "unit": "metre",
+    "minimum_valid_ea_pixels": 3,
+    "primary_numeric_source": "Environment Agency LIDAR Composite DTM 1m",
+    "primary_source_role": "parcel_range_measurement",
+    "independent_source": "OS Terrain 50",
+    "independent_source_role": "absolute elevation and shared Ordnance Datum Newlyn crosscheck, not parcel range measurement",
+    "same_provider_checks": ["EA DTM 2m", "EA DTM 10m"],
+    "same_provider_checks_role": "resolution consistency only, not independent sources",
+    "ea_source_vertical_rmse_m": 0.15,
+    "indicative_range_endpoint_rss_rmse_m": 0.212,
+    "horizontal_crs": "EPSG:27700",
+    "vertical_reference": "Ordnance Datum Newlyn"
   },
   "official_source_contracts": [
     {
       "source_id": "hmlr_inspire_20260705",
       "provider": "HM Land Registry",
       "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-      "technical_guidance_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
       "publication_date": "2026-07-05",
       "authorities": ["London Borough of Barnet", "London Borough of Enfield"],
-      "horizontal_crs": "EPSG:27700",
-      "source_quality_score_4": 4,
-      "revision_8_upgrade": "match flag, SHA-256, authority, INSPIRE ID, non-zero polygon and candidate point-in-polygon all required"
+      "role": "official parcel geometry",
+      "source_quality_score_4": 4
     },
     {
-      "source_id": "ea_lidar_dtm",
+      "source_id": "ea_lidar_dtm_1m",
       "provider": "Environment Agency",
-      "source_urls": [
-        "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
-        "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs",
-        "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-10m/wcs"
-      ],
-      "horizontal_crs": "EPSG:27700",
-      "vertical_crs": "EPSG:5701",
-      "vertical_datum": "Ordnance Datum Newlyn",
-      "fallback_tile": "TQ29SE",
-      "source_quality_score_4": 4,
-      "revision_8_upgrade": "1m-class resolution, positive pixel count and consistent median/min/max/IQR required"
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "resolution_m": 1,
+      "coverage": "approximately 99 percent of England",
+      "vertical_accuracy_rmse_m": 0.15,
+      "role": "official parcel height-difference measurement using polygon max minus min",
+      "source_quality_score_4": 4
     },
     {
       "source_id": "os_terrain50_202607",
@@ -72,37 +74,33 @@
       "tile": "TQ29",
       "grid_cells": [200, 200],
       "cellsize_m": 50,
-      "horizontal_crs": "EPSG:27700",
-      "vertical_crs": "EPSG:5701",
-      "vertical_datum": "Ordnance Datum Newlyn",
-      "independent_second_source": true,
-      "source_quality_score_4": 3,
-      "revision_8_upgrade": "header, row/column, NoData and official MD5-when-supplied gates required"
+      "height_rmse_m": 4,
+      "role": "independent absolute-elevation and vertical-datum crosscheck only",
+      "parcel_range_measurement": false,
+      "source_quality_score_4": 3
     }
   ],
   "candidates": [
-    {"parcel_id": "parcel_2759", "parcel_ref": "52040420", "centroid_wgs84": {"lat": 51.6169525, "lon": -0.1430858}, "centroid_epsg27700": {"easting": 528658.656, "northing": 192535.809}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_8_sequential_claim_pending", "numeric_status": "revision_8_sequential_claim_pending", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
-    {"parcel_id": "parcel_2758", "parcel_ref": "52213916", "centroid_wgs84": {"lat": 51.6168592, "lon": -0.1417993}, "centroid_epsg27700": {"easting": 528747.982, "northing": 192527.698}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_8_sequential_claim_pending", "numeric_status": "revision_8_sequential_claim_pending", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
-    {"parcel_id": "parcel_2757", "parcel_ref": "52213412", "centroid_wgs84": {"lat": 51.6167362, "lon": -0.1421556}, "centroid_epsg27700": {"easting": 528723.664, "northing": 192513.392}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_8_sequential_claim_pending", "numeric_status": "revision_8_sequential_claim_pending", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"}
+    {"parcel_id": "parcel_2759", "parcel_ref": "52040420", "centroid_wgs84": {"lat": 51.6169525, "lon": -0.1430858}, "centroid_epsg27700": {"easting": 528658.656, "northing": 192535.809}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_9_sequential_claim_pending", "numeric_status": "revision_9_height_difference_metric_pending", "metric_definition": "EA_DTM_1m_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
+    {"parcel_id": "parcel_2758", "parcel_ref": "52213916", "centroid_wgs84": {"lat": 51.6168592, "lon": -0.1417993}, "centroid_epsg27700": {"easting": 528747.982, "northing": 192527.698}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_9_sequential_claim_pending", "numeric_status": "revision_9_height_difference_metric_pending", "metric_definition": "EA_DTM_1m_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"},
+    {"parcel_id": "parcel_2757", "parcel_ref": "52213412", "centroid_wgs84": {"lat": 51.6167362, "lon": -0.1421556}, "centroid_epsg27700": {"easting": 528723.664, "northing": 192513.392}, "bng_tile_1km": "TQ2892", "ea_lidar_tile_5km": "TQ29SE", "os_terrain50_tile_10km": "TQ29", "boundary_status": "revision_9_sequential_claim_pending", "numeric_status": "revision_9_height_difference_metric_pending", "metric_definition": "EA_DTM_1m_polygon_max_minus_min", "output_semantics": "NO_DATA_NOT_INFERRED", "accuracy_score_4": "2.5/4 fallback"}
   ],
   "execution_assets": {
-    "entry": "docs/chatgpt_status/topography/shards/height_difference_1/automation/012_height_difference_1_revision_8_entry_20260721.py",
-    "payload": "docs/chatgpt_status/topography/shards/height_difference_1/automation/011_height_difference_1_revision_8_geometry_datum_quality_gate_20260721.py.gz.b64",
-    "script_sha256": "bef25ff727e9894eb14fd81a149954a61a510b53ddf98b712851ff17f47ab544",
-    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/009_geometry_datum_quality_gate_selftest_20260721.json",
+    "script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/013_height_difference_1_revision_9_height_difference_metric_20260721.py",
+    "script_sha256": "3c66dc0f807562d6060b1cfb234925660c9b18155e57a5b3129f3f1c4e4c26f9",
+    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/010_height_difference_metric_gate_selftest_20260721.json",
     "validation_tests": "14/14",
-    "report": "docs/chatgpt_status/topography/shards/height_difference_1/reports/015_height_difference_1_revision_8_geometry_datum_quality_gate_20260721.md",
-    "expected_runner_output": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/010_geometry_datum_quality_gate_latest.json",
-    "expected_snapshot": "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/010_geometry_datum_quality_gate_manifest_latest.json",
-    "expected_web_output": "england_map_web/data/aays_21_slots/height_difference_1/geometry_datum_quality_gate_latest.json"
+    "report": "docs/chatgpt_status/topography/shards/height_difference_1/reports/016_height_difference_1_revision_9_height_difference_metric_20260721.md",
+    "expected_runner_output": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/011_height_difference_metric_gate_latest.json",
+    "expected_snapshot": "docs/chatgpt_status/topography/shards/height_difference_1/source_snapshots/011_height_difference_metric_gate_manifest_latest.json",
+    "expected_web_output": "england_map_web/data/aays_21_slots/height_difference_1/height_difference_metric_gate_latest.json"
   },
   "blockers": [
-    "ACTIVE_SHARED_CONTROL_HEIGHT_DIFFERENCE_2_ATTEMPT_009_PENDING_RUNNER_CLAIM_AND_NOT_OVERRIDDEN",
+    "ACTIVE_SHARED_CONTROL_HEIGHT_DIFFERENCE_2_ATTEMPT_011_PENDING_RUNNER_CLAIM_AND_NOT_OVERRIDDEN",
     "HEIGHT_DIFFERENCE_1_HEARTBEAT_UNCLAIMED_AND_STALE",
-    "REVISION_8_RUNNER_OUTPUT_NOT_PRESENT",
-    "OFFICIAL_QUALITY_GATED_HMLR_BOUNDARY_ROWS_0",
-    "EA_1M_QUALITY_NUMERIC_ROWS_0",
-    "OS_TERRAIN50_QUALITY_NUMERIC_ROWS_0"
+    "REVISION_9_RUNNER_OUTPUT_NOT_PRESENT",
+    "OFFICIAL_HMLR_BOUNDARY_ROWS_0",
+    "OFFICIAL_EA_1M_HEIGHT_DIFFERENCE_ROWS_0"
   ],
   "parallel_runner_created": false,
   "new_logical_task_created": false,
