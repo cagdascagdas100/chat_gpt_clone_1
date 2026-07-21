@@ -16,6 +16,7 @@
   <h1>parcel_label_2</h1>
   <div class="muted">30762–61522 · yalnız resmi kaynak adayları · canonical parsel ve exact geometri bağlaması bekliyor</div>
   <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Attempt-010 gerçek shared-runner queue branch'inde V5.1 PowerShell taşıyıcıyla geçerlidir ancak seçili görev şu anda priority 1 height_difference_2 attempt-017 ve canonical runner restart requested durumundadır. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
+  <div class="note" id="integrity">Veri manifesti yükleniyor…</div>
   <div class="summary" id="summary"></div>
   <h2>İşlem günlüğü</h2>
   <table>
@@ -41,7 +42,8 @@ const files=[
  'data/distance_property_types/parcel_label_2_candidates_batch10.json',
  'data/distance_property_types/parcel_label_2_candidates_batch11.json',
  'data/distance_property_types/parcel_label_2_candidates_batch12.json',
- 'data/distance_property_types/parcel_label_2_candidates_batch13.json'
+ 'data/distance_property_types/parcel_label_2_candidates_batch13.json',
+ 'data/distance_property_types/parcel_label_2_candidates_batch14.json'
 ];
 const activityFiles=[
  'data/distance_property_types/parcel_label_2_activity_latest.json',
@@ -53,22 +55,33 @@ const activityFiles=[
  'data/distance_property_types/parcel_label_2_activity_batch11.json',
  'data/distance_property_types/parcel_label_2_activity_batch12.json',
  'data/distance_property_types/parcel_label_2_activity_batch13.json',
- 'data/distance_property_types/parcel_label_2_activity_batch13_postmerge.json'
+ 'data/distance_property_types/parcel_label_2_activity_batch13_postmerge.json',
+ 'data/distance_property_types/parcel_label_2_activity_batch14.json'
 ];
-const candidatePromise=Promise.all(files.map(u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()})));
-const activityPromise=Promise.all(activityFiles.map(u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()})));
-Promise.all([candidatePromise,activityPromise])
- .then(([parts,activityParts])=>{
+const fetchJson=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(u+' HTTP '+r.status);return r.json()});
+const candidatePromise=Promise.all(files.map(fetchJson));
+const activityPromise=Promise.all(activityFiles.map(fetchJson));
+const manifestPromise=fetchJson('data/distance_property_types/parcel_label_2_web_data_manifest_latest.json');
+Promise.all([candidatePromise,activityPromise,manifestPromise])
+ .then(([parts,activityParts,manifest])=>{
    const candidates=parts.flatMap(d=>d.candidates||[]);
    const activities=activityParts.flatMap(d=>d.activities||[]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
    const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
    const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
    const average=count?Math.round(weighted/count*100)/100:0;
+   const candidateMatch=count===Number(manifest.expected_candidate_rows);
+   const activityMatch=activities.length===Number(manifest.expected_activity_rows);
+   const integrityOk=candidateMatch&&activityMatch;
+   document.getElementById('integrity').textContent=integrityOk
+     ?`Veri manifesti eşleşti: ${count} aday ve ${activities.length} işlem satırı.`
+     :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}.`;
    const cards=[
     ['Görünür aday',count],
-    ['Araştırma batch','13'],
-    ['Sınıf kapsamı','6_of_6_each_class_13'],
+    ['Araştırma batch','14'],
+    ['Sınıf kapsamı','6_of_6_each_class_14'],
     ['Sınıflandırma doğruluğu','%'+average],
+    ['Doğruluk ≥%97',manifest.expected_accuracy_ge_97_rows],
+    ['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
     ['Canonical slot satırı',0],
     ['Exact geometri',0],
     ['Canonical blob','bb48164…'],
@@ -88,6 +101,7 @@ Promise.all([candidatePromise,activityPromise])
     <td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmi kaynak</a></td>
     <td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`).join('');
  }).catch(e=>{
+   document.getElementById('integrity').textContent=e.message;
    document.getElementById('activity').innerHTML=`<tr><td colspan="4">${esc(e.message)}</td></tr>`;
    document.getElementById('rows').innerHTML=`<tr><td colspan="10">${esc(e.message)}</td></tr>`;
  });
