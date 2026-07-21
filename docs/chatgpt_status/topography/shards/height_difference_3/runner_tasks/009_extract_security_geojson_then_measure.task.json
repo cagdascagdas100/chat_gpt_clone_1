@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-extract-security-geojson-then-measure-20260721",
+  "status": "READY_FOR_EXISTING_SINGLE_RUNNER_WHEN_NO_LIVE_LEASE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "queue_submission": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "resolved_inputs": {
+    "canonical_geojson": "england_map_web/data/program_layer_matrix/security.geojson",
+    "canonical_manifest": "england_map_web/data/program_layer_matrix/manifest.json",
+    "canonical_validation": "docs/chatgpt_status/_shared/imports/program_layer_matrix_validation_20260704.json",
+    "canonical_geojson_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+    "canonical_expected_features": 92283
+  },
+  "execution_order": [
+    {
+      "stage": 1,
+      "script": "automation/019_extract_canonical_shard_from_security_geojson.py",
+      "purpose": "validate the complete explicit canonical registry and export rows 61523-92283"
+    },
+    {
+      "stage": 2,
+      "script": "automation/004_prepare_three_real_sample_queries.py",
+      "purpose": "select the first three explicit unresolved rows and query official EA tile inventory"
+    },
+    {
+      "stage": 3,
+      "script": "automation/015_execute_auto_source_and_measurement_pipeline.py",
+      "purpose": "download/match HMLR, obtain EA DTM, validate Terrain50 and publish verified examples"
+    }
+  ],
+  "command_template": [
+    "python",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/019_extract_canonical_shard_from_security_geojson.py",
+    "--source-geojson",
+    "england_map_web/data/program_layer_matrix/security.geojson",
+    "--source-manifest",
+    "england_map_web/data/program_layer_matrix/manifest.json",
+    "--output-dir",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/009_canonical_security_export"
+  ],
+  "expected_stage_one_outputs": [
+    "runner_outputs/009_canonical_security_export/canonical_shard_61523_92283.jsonl",
+    "runner_outputs/009_canonical_security_export/canonical_export_manifest.json",
+    "runner_outputs/009_canonical_security_export/first_three_queries/starter_three_query_manifest.json",
+    "runner_outputs/009_canonical_security_export/first_three_queries/operation_summary.json"
+  ],
+  "acceptance": [
+    "source contains exactly 92283 features",
+    "row registry is exactly explicit values 1 through 92283",
+    "parcel_id and HMLR INSPIRE ID are non-empty and unique",
+    "Point geometry agrees with HMLR coordinate fields",
+    "exactly 30761 rows 61523 through 92283 are exported",
+    "first three candidates are selected from explicit sorted row_no values",
+    "no measured value is published before HMLR, EA DTM and Terrain50 gates pass"
+  ],
+  "current_blockers": [
+    "F_RUNNER_MUST_EXECUTE_019_AGAINST_COMMITTED_SECURITY_GEOJSON",
+    "OS_TERRAIN50_LIVE_DOWNLOAD_URL_OR_ARCHIVE_REQUIRED",
+    "OFFICIAL_CROSSCHECKED_REAL_ROWS_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
