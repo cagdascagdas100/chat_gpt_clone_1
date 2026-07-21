@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import re
 import sys
@@ -63,14 +64,15 @@ def _load_matches(path: Path) -> list[dict[str, Any]]:
 
 def _header(path: Path) -> dict[str, float]:
     result: dict[str, float] = {}
+    recognized = {"ncols", "nrows", "xllcorner", "xllcenter", "yllcorner", "yllcenter", "cellsize", "nodata_value"}
     with path.open("r", encoding="utf-8-sig", errors="strict") as handle:
-        for _ in range(6):
+        for _ in range(8):
             line = handle.readline()
             if not line:
-                raise ValueError(f"incomplete ASCII grid header: {path}")
+                break
             parts = line.split()
-            if len(parts) < 2:
-                raise ValueError(f"invalid ASCII grid header line: {line!r}")
+            if len(parts) < 2 or parts[0].casefold() not in recognized:
+                break
             result[parts[0].casefold()] = float(parts[1])
     return result
 
@@ -111,17 +113,39 @@ def _candidate_files(sources: list[Path], key: str, temp_root: Path) -> list[Pat
         elif source.is_file() and zipfile.is_zipfile(source):
             with zipfile.ZipFile(source) as archive:
                 for info in archive.infolist():
-                    if info.is_dir() or Path(info.filename).suffix.casefold() != ".asc":
+                    if info.is_dir():
                         continue
-                    if not pattern.search(Path(info.filename).stem.casefold()):
+                    suffix = Path(info.filename).suffix.casefold()
+                    if suffix == ".asc" and pattern.search(Path(info.filename).stem.casefold()):
+                        target_dir = temp_root / hashlib.sha256(str(source).encode()).hexdigest()[:12]
+                        target_dir.mkdir(parents=True, exist_ok=True)
+                        target = target_dir / Path(info.filename).name
+                        with archive.open(info) as input_handle, target.open("wb") as output_handle:
+                            while chunk := input_handle.read(1024 * 1024):
+                                output_handle.write(chunk)
+                        found.append(target)
                         continue
-                    target_dir = temp_root / hashlib.sha256(str(source).encode()).hexdigest()[:12]
-                    target_dir.mkdir(parents=True, exist_ok=True)
-                    target = target_dir / Path(info.filename).name
-                    with archive.open(info) as input_handle, target.open("wb") as output_handle:
-                        while chunk := input_handle.read(1024 * 1024):
-                            output_handle.write(chunk)
-                    found.append(target)
+                    if suffix != ".zip" or not pattern.search(Path(info.filename).stem.casefold()):
+                        continue
+                    # Official GB Terrain50 is an outer ZIP of per-tile ZIPs.
+                    # Open only the exact deterministic BNG tile candidate.
+                    with archive.open(info) as nested_handle:
+                        nested_payload = nested_handle.read()
+                    with zipfile.ZipFile(io.BytesIO(nested_payload)) as nested:
+                        for nested_info in nested.infolist():
+                            if nested_info.is_dir() or Path(nested_info.filename).suffix.casefold() != ".asc":
+                                continue
+                            if not pattern.search(Path(nested_info.filename).stem.casefold()):
+                                continue
+                            target_dir = temp_root / hashlib.sha256(
+                                f"{source}!{info.filename}".encode()
+                            ).hexdigest()[:12]
+                            target_dir.mkdir(parents=True, exist_ok=True)
+                            target = target_dir / Path(nested_info.filename).name
+                            with nested.open(nested_info) as input_handle, target.open("wb") as output_handle:
+                                while chunk := input_handle.read(1024 * 1024):
+                                    output_handle.write(chunk)
+                            found.append(target)
         else:
             raise FileNotFoundError(source)
     unique: list[Path] = []
@@ -215,3 +239,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}), file=sys.stderr)
         raise
+
