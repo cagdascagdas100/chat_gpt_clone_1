@@ -9,6 +9,7 @@ from pathlib import Path
 SLOT_ID = "parcel_label_2"
 TARGET_IDS = ["parcel_30762", "parcel_30763", "parcel_30764"]
 CANONICAL_FEATURE_COUNT = 92283
+REQUIRED_TARGET_SCHEMA_KEYS = {"row_no", "hmlr_inspire_id", "hmlr_lon", "hmlr_lat"}
 REPO = Path(os.environ.get("AAYS_REPO_ROOT", r"F:\chatgpt\chat_gpt_clone_1_main"))
 DATA_ROOT = REPO / "england_map_web" / "data"
 SLOT_ROOT = REPO / "docs" / "chatgpt_status" / "parcel_label" / "slots" / SLOT_ID
@@ -44,7 +45,69 @@ def candidate_carrier_paths() -> list[Path]:
     return priority + fallback
 
 
-def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, list[dict]]:
+def parcel_index(parcel_id: object) -> int | None:
+    if not isinstance(parcel_id, str) or not parcel_id.startswith("parcel_"):
+        return None
+    suffix = parcel_id.removeprefix("parcel_")
+    if not suffix.isdigit():
+        return None
+    return int(suffix)
+
+
+def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str, dict], dict]:
+    seen_ids: set[str] = set()
+    found: dict[str, dict] = {}
+    minimum_index: int | None = None
+    maximum_index: int | None = None
+
+    for feature in features:
+        if not isinstance(feature, dict):
+            return False, "FEATURE_NOT_OBJECT", {}, {}
+        props = feature.get("properties") or {}
+        if not isinstance(props, dict):
+            return False, "PROPERTIES_NOT_OBJECT", {}, {}
+        parcel_id = props.get("parcel_id") or props.get("security_parcel_id")
+        index = parcel_index(parcel_id)
+        if index is None:
+            return False, "NON_CANONICAL_PARCEL_ID_FORMAT", {}, {"parcel_id": parcel_id}
+        if index < 1 or index > CANONICAL_FEATURE_COUNT:
+            return False, "PARCEL_ID_OUTSIDE_CANONICAL_RANGE", {}, {"parcel_id": parcel_id}
+        if parcel_id in seen_ids:
+            return False, "DUPLICATE_CANONICAL_PARCEL_ID", {}, {"parcel_id": parcel_id}
+        seen_ids.add(parcel_id)
+        minimum_index = index if minimum_index is None else min(minimum_index, index)
+        maximum_index = index if maximum_index is None else max(maximum_index, index)
+        if parcel_id in TARGET_IDS:
+            found[parcel_id] = feature
+
+    identity_summary = {
+        "unique_parcel_id_count": len(seen_ids),
+        "minimum_parcel_index": minimum_index,
+        "maximum_parcel_index": maximum_index,
+        "target_ids_found": sorted(found),
+    }
+    if len(seen_ids) != CANONICAL_FEATURE_COUNT:
+        return False, "UNIQUE_PARCEL_ID_COUNT_MISMATCH", {}, identity_summary
+    if minimum_index != 1 or maximum_index != CANONICAL_FEATURE_COUNT:
+        return False, "CANONICAL_PARCEL_ID_RANGE_MISMATCH", {}, identity_summary
+    if set(found) != set(TARGET_IDS):
+        return False, "TARGET_CANONICAL_IDS_MISSING", {}, identity_summary
+
+    schema_missing: dict[str, list[str]] = {}
+    for parcel_id, feature in found.items():
+        props = feature.get("properties") or {}
+        missing = sorted(key for key in REQUIRED_TARGET_SCHEMA_KEYS if key not in props)
+        if missing:
+            schema_missing[parcel_id] = missing
+    if schema_missing:
+        identity_summary["target_schema_missing"] = schema_missing
+        return False, "TARGET_HMLR_SCHEMA_SIGNATURE_MISMATCH", {}, identity_summary
+
+    identity_summary["target_schema_signature_passed"] = True
+    return True, "ACCEPTED", found, identity_summary
+
+
+def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, list[dict], dict]:
     scanned_files = 0
     rejected_carriers: list[dict] = []
     for path in candidate_carrier_paths():
@@ -76,17 +139,21 @@ def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, lis
                 )
             continue
 
-        found: dict[str, dict] = {}
-        for feature in features:
-            props = feature.get("properties") or {}
-            parcel_id = props.get("parcel_id") or props.get("security_parcel_id")
-            if parcel_id in TARGET_IDS:
-                found[parcel_id] = feature
+        accepted, reason, found, identity_summary = validate_identity_carrier(features)
+        if not accepted:
+            if len(rejected_carriers) < 25:
+                rejected_carriers.append(
+                    {
+                        "path": str(path),
+                        "reason": reason,
+                        "feature_count": feature_count,
+                        "identity_summary": identity_summary,
+                    }
+                )
+            continue
+        return path, found, scanned_files, feature_count, rejected_carriers, identity_summary
 
-        if found:
-            return path, found, scanned_files, feature_count, rejected_carriers
-
-    return None, {}, scanned_files, None, rejected_carriers
+    return None, {}, scanned_files, None, rejected_carriers, {}
 
 
 def compact_properties(props: dict) -> dict:
@@ -112,7 +179,7 @@ def compact_properties(props: dict) -> dict:
 def main() -> int:
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     WEB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    source_path, features, scanned_files, source_feature_count, rejected_carriers = locate_targets()
+    source_path, features, scanned_files, source_feature_count, rejected_carriers, identity_summary = locate_targets()
     rows = []
     polygon_rows = 0
     carrier_rows = 0
@@ -123,7 +190,7 @@ def main() -> int:
             rows.append(
                 {
                     "parcel_id": parcel_id,
-                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND_IN_EXACT_92283_FEATURE_CARRIER",
+                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND_IN_IDENTITY_PROVEN_92283_FEATURE_CARRIER",
                     "accuracy_score_4": 0,
                     "needs_manual_review": True,
                     "next_gate": "restore or expose an identity-proven canonical 92,283-feature carrier",
@@ -141,9 +208,9 @@ def main() -> int:
             {
                 "parcel_id": parcel_id,
                 "candidate_status": (
-                    "CANONICAL_POLYGON_CARRIER_FOUND_SOURCE_BINDING_PENDING"
+                    "IDENTITY_PROVEN_CANONICAL_POLYGON_CARRIER_FOUND_SOURCE_BINDING_PENDING"
                     if is_polygon
-                    else "CANONICAL_POINT_CARRIER_FOUND_EXACT_GEOMETRY_PENDING"
+                    else "IDENTITY_PROVEN_CANONICAL_POINT_CARRIER_FOUND_EXACT_GEOMETRY_PENDING"
                 ),
                 "source_file": str(source_path) if source_path else None,
                 "source_feature_count": source_feature_count,
@@ -157,6 +224,7 @@ def main() -> int:
         )
 
     exact_count_gate_passed = source_feature_count == CANONICAL_FEATURE_COUNT
+    identity_range_gate_passed = bool(identity_summary.get("target_schema_signature_passed"))
     output = {
         "schema_version": 4,
         "slot_id": SLOT_ID,
@@ -164,7 +232,10 @@ def main() -> int:
         "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
         "target_ids": TARGET_IDS,
         "required_canonical_feature_count": CANONICAL_FEATURE_COUNT,
+        "required_target_schema_keys": sorted(REQUIRED_TARGET_SCHEMA_KEYS),
         "exact_feature_count_gate_passed": exact_count_gate_passed,
+        "identity_range_and_schema_gate_passed": identity_range_gate_passed,
+        "identity_summary": identity_summary,
         "priority_carriers": [str(path) for path in PRIORITY_CARRIERS],
         "scanned_file_count": scanned_files,
         "rejected_carrier_sample": rejected_carriers,
@@ -192,11 +263,12 @@ def main() -> int:
     print(f"SOURCE_FILE={source_path}")
     print(f"SOURCE_FEATURE_COUNT={source_feature_count}")
     print(f"EXACT_FEATURE_COUNT_GATE_PASSED={str(exact_count_gate_passed).lower()}")
+    print(f"IDENTITY_RANGE_AND_SCHEMA_GATE_PASSED={str(identity_range_gate_passed).lower()}")
     print(f"CANONICAL_CARRIER_ROWS_FOUND={carrier_rows}")
     print(f"POLYGON_ROWS_FOUND={polygon_rows}")
     print("ACTUAL_VERIFIED_SLOT_ROWS_WRITTEN=0")
     print("FINAL_READY=false")
-    return 0 if carrier_rows and exact_count_gate_passed else 2
+    return 0 if carrier_rows and exact_count_gate_passed and identity_range_gate_passed else 2
 
 
 if __name__ == "__main__":
