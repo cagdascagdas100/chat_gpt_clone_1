@@ -11,14 +11,15 @@ SLOT_ID = "internet_access_2"
 EXPECTED_ROWS = 30761
 EXPECTED_START = 30762
 EXPECTED_END = 61522
-EXPECTED_COMPLETED = 120
-EXPECTED_TOTAL = 121
-EXPECTED_COMBINED = 260
-EXPECTED_SCOPE_FILES = 71
+EXPECTED_COMPLETED = 128
+EXPECTED_TOTAL = 129
+EXPECTED_COMBINED = 292
+EXPECTED_SCOPE_FILES = 75
 EXPECTED_HISTORICAL_OVERRIDE_IDS = {55, 90}
 
 SHARD = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2")
 WEB = Path("england_map_web/data/aays_18_slots/internet_access_2")
+
 
 def load(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8-sig") as handle:
@@ -27,10 +28,12 @@ def load(path: Path) -> dict[str, Any]:
         raise ValueError(f"Expected JSON object: {path}")
     return value
 
+
 def pair(value: Any) -> tuple[int, int]:
     if not isinstance(value, dict):
         raise ValueError(f"Expected pass/total object, got {type(value).__name__}")
     return int(value["passed"]), int(value["total"])
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -60,14 +63,15 @@ def main() -> int:
         "extractor": (12, 12),
         "publisher": (10, 10),
         "streaming_slicer": (12, 12),
-        "inner_runner_contract": (31, 31),
+        "inner_runner_contract": (39, 39),
         "dispatch_readiness": (16, 16),
         "ofcom_v2_validator": (43, 43),
+        "zip_container_safety": (18, 18),
         "published_bundle": (23, 23),
         "candidate_jsonl": (25, 25),
-        "single_run_provenance": (20, 20),
+        "single_run_provenance": (24, 24),
         "run_and_audit_wrapper": (36, 36),
-        "candidate_web_contract": (18, 18),
+        "candidate_web_contract": (20, 20),
         "review_contract_consistency": (14, 14),
     }
     suite_total = sum(total for _, total in suites.values())
@@ -80,7 +84,7 @@ def main() -> int:
         "single_current_blocker": done == EXPECTED_COMPLETED and len(blocked) == 1 and int(blocked[0]["id"]) == EXPECTED_TOTAL,
         "progress_operation_counts_match": progress.get("completed_operations") == EXPECTED_COMPLETED and progress.get("total_operations") == EXPECTED_TOTAL and progress.get("visible_operation_rows") == EXPECTED_TOTAL,
         "source_decision_totals_match": progress.get("official_source_candidates") == 8 and progress.get("promoted_sources", 0) + progress.get("held_sources", 0) + progress.get("rejected_sources", 0) == 8,
-        "suite_definition_total_260": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
+        "suite_definition_total_292": suite_passed == EXPECTED_COMBINED and suite_total == EXPECTED_COMBINED,
         "progress_validation_total_match": progress.get("combined_validation_passed") == EXPECTED_COMBINED and progress.get("combined_validation_total") == EXPECTED_COMBINED,
         "provenance_validation_total_match": pair(provenance.get("combined_validation")) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
         "primary_task_validation_total_match": pair(task1["preflight_validation"]["combined"]) == (EXPECTED_COMBINED, EXPECTED_COMBINED),
@@ -95,7 +99,7 @@ def main() -> int:
         raise ValueError("Review contract consistency failed: " + ", ".join(failed))
 
     result = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "status": "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY",
         "tests_passed": len(checks),
@@ -115,6 +119,7 @@ def main() -> int:
         args.audit_output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, sort_keys=True))
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
