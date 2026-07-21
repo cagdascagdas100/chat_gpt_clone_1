@@ -7,7 +7,7 @@
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;line-height:1.45;color:#172033}.muted{color:#5d6878}
     .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1.25rem 0}.metric{border:1px solid #d7dde6;border-radius:.6rem;padding:.8rem}.metric strong{display:block;font-size:1.35rem}
-    table{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem}
+    table{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:1.5rem}th,td{border:1px solid #d7dde6;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f6f9}.ok{font-weight:700}.blocked{font-weight:700}code{background:#f4f6f9;padding:.1rem .25rem;border-radius:.25rem;word-break:break-all}
   </style>
 </head>
 <body>
@@ -36,6 +36,10 @@
   <p class="muted">After the real run, the readback and examples must agree on 30,761 rows, status totals, SHA-256 evidence, example quotas and review-only truth boundaries.</p>
   <table><thead><tr><th>Status</th><th>Rows</th><th>Examples</th><th>Readback SHA-256</th><th>Examples SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="bundleAudit"><tr><td colspan="7">PENDING EXISTING RUNNER</td></tr></tbody></table>
 
+  <h2>Single-run provenance chain</h2>
+  <p class="muted">Diagnostics, official V2 validation, bounded slices, extraction outputs and published web files must form one recomputed eleven-artifact SHA-256 chain. Mixed or stale run artifacts fail closed.</p>
+  <table><thead><tr><th>Status</th><th>Artifacts</th><th>Verifier</th><th>Wrapper</th><th>Rows</th><th>Chain SHA-256</th><th>Business rows</th><th>Final</th></tr></thead><tbody id="provenanceAudit"><tr><td colspan="8">Loading provenance contract…</td></tr></tbody></table>
+
   <h2>Validated real review examples</h2>
   <p class="muted">This section remains pending until the existing canonical runner publishes exact current-r2 readback. At most three examples per status are displayed.</p>
   <table><thead><tr><th>Row</th><th>Parcel</th><th>Postcode</th><th>Status</th><th>Gigabit</th><th>UFBB100</th><th>SFBB30</th><th>Unable30</th></tr></thead><tbody id="examples"><tr><td colspan="8">PENDING EXISTING RUNNER</td></tr></tbody></table>
@@ -48,9 +52,9 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const cls=v=>String(v).startsWith('PASS')||v==='DONE'?'ok':'blocked';
 async function getJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: ${r.status}`);return r.json()}
 async function render(){
-  const [p,o,so,s,n,x,r]=await Promise.all([
+  const [p,o,so,s,n,x,r,pc]=await Promise.all([
     getJson('progress_latest.json'),getJson('operations_latest.json'),getJson('scope_operations_latest.json'),getJson('source_candidates_latest.json'),
-    getJson('network_attempts_latest.json'),getJson('source_examples_latest.json'),getJson('runner_readiness_latest.json')
+    getJson('network_attempts_latest.json'),getJson('source_examples_latest.json'),getJson('runner_readiness_latest.json'),getJson('provenance_contract_latest.json')
   ]);
   const operations=[...o.operations,...so.operations].sort((a,b)=>a.id-b.id);
   document.getElementById('metrics').innerHTML=`
@@ -69,6 +73,11 @@ async function render(){
     const a=await getJson('runner_bundle_audit_latest.json');
     document.getElementById('bundleAudit').innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${esc(a.canonical_rows)}</td><td>${esc(a.visible_example_rows)}</td><td><code>${esc(a.runner_readback_file_sha256)}</code></td><td><code>${esc(a.verified_examples_file_sha256)}</code></td><td>${esc(a.actual_business_data_rows_written)}</td><td>${esc(a.final_ready)}</td></tr>`;
   }catch(_){document.getElementById('bundleAudit').innerHTML='<tr><td colspan="7">PENDING EXISTING RUNNER</td></tr>'}
+  document.getElementById('provenanceAudit').innerHTML=`<tr><td class="blocked">${esc(pc.status)}</td><td>${esc(pc.required_chain.length)}</td><td>${esc(pc.provenance_selftest.passed)} / ${esc(pc.provenance_selftest.total)}</td><td>${esc(pc.run_and_audit_wrapper_contract.passed)} / ${esc(pc.run_and_audit_wrapper_contract.total)}</td><td>${esc(pc.real_source_rows_extracted)}</td><td>PENDING REAL RUN</td><td>${esc(pc.actual_business_data_rows_written)}</td><td>${esc(pc.final_ready)}</td></tr>`;
+  try{
+    const a=await getJson('runner_provenance_audit_latest.json');
+    document.getElementById('provenanceAudit').innerHTML=`<tr><td class="${cls(a.status)}">${esc(a.status)}</td><td>${esc(pc.required_chain.length)}</td><td>${esc(pc.provenance_selftest.passed)} / ${esc(pc.provenance_selftest.total)}</td><td>${esc(pc.run_and_audit_wrapper_contract.passed)} / ${esc(pc.run_and_audit_wrapper_contract.total)}</td><td>${esc(a.canonical_rows)}</td><td><code>${esc(a.provenance_chain_sha256)}</code></td><td>${esc(a.actual_business_data_rows_written)}</td><td>${esc(a.final_ready)}</td></tr>`;
+  }catch(_){}
   try{
     const e=await getJson('verified_examples_latest.json');
     document.getElementById('examples').innerHTML=e.rows.length?e.rows.map(v=>`<tr><td>${esc(v.canonical_row_no)}</td><td>${esc(v.canonical_program_parcel_id)}</td><td>${esc(v.postcode||'NO_DATA')}</td><td>${esc(v.status)}</td><td>${esc(v.gigabit_available_pct)}</td><td>${esc(v.ufbb_100mbps_available_pct)}</td><td>${esc(v.sfbb_30mbps_available_pct)}</td><td>${esc(v.unable_30mbps_pct)}</td></tr>`).join(''):'<tr><td colspan="8">No review examples published.</td></tr>';
