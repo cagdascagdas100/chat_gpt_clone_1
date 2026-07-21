@@ -13,6 +13,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import urllib.parse
 import urllib.request
 import zipfile
@@ -229,6 +230,7 @@ def main() -> int:
     parser.add_argument("--api-key", default=os.environ.get("OS_DATA_HUB_API_KEY"))
     parser.add_argument("--archive", type=Path, help="Validate an already downloaded official archive instead of downloading.")
     parser.add_argument("--min-ascii-tiles", type=int, default=MIN_ASC_TILES)
+    parser.add_argument("--max-cache-age-hours", type=float, default=24.0)
     args = parser.parse_args()
 
     out = args.output_dir.resolve()
@@ -237,7 +239,18 @@ def main() -> int:
     catalog = None
     selected = None
     response_headers: dict[str, str] = {}
-    if not args.archive:
+    cache_reused = (
+        not args.archive
+        and archive.is_file()
+        and args.max_cache_age_hours > 0
+        and time.time() - archive.stat().st_mtime <= args.max_cache_age_hours * 3600
+    )
+    if cache_reused:
+        previous = out / "terrain50_official_api_provenance.json"
+        previous_manifest = json.loads(previous.read_text(encoding="utf-8")) if previous.is_file() else {}
+        selected = {"cache_reused": True, "max_cache_age_hours": args.max_cache_age_hours}
+        final_url = str(previous_manifest.get("resolved_download_url") or archive)
+    elif not args.archive:
         with request(catalog_url(args.api_key), args.timeout, args.api_key) as response:
             catalog = json.load(response)
         selected = choose_candidate(flatten_downloads(catalog))
@@ -258,6 +271,7 @@ def main() -> int:
         "selected_download_metadata": selected,
         "resolved_download_url": final_url,
         "response_headers": response_headers,
+        "cache_reused": cache_reused,
         "archive_path": str(archive),
         "archive_size_bytes": archive.stat().st_size,
         "archive_sha256": sha256_file(archive),
