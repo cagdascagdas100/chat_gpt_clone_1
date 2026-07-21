@@ -15,8 +15,8 @@ $harnessRelative = 'england_map_web/data/aays_18_slots/gas_emissions_3/canonical
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
 $runtimeProofRoot = Join-Path $repoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_3\acceptance\020_coordinator_browser_runtime_latest'
 $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/runner_runtime_token_latest.json'
-$expectedTokenId = 'gas_emissions_3_v10_queue_20260721_001'
-$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v10_20260721_01'
+$expectedTokenId = 'gas_emissions_3_v11_queue_20260721_001'
+$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v11_20260721_01'
 $virtualTimeBudgetMs = 180000
 $httpTimeoutSeconds = 45
 $remoteTrackingRef = "refs/remotes/origin/$branch"
@@ -55,7 +55,7 @@ function Sync-RemoteTrackingHead {
     [void](Invoke-Git $fetchArgs)
     return Invoke-Git @('rev-parse',$remoteTrackingRef)
 }
-function Assert-RemoteBlobParity([string]$Path, [string]$LocalRef, [string]$RemoteRef) {
+function Assert-RemoteBlobParity([string]$Path,[string]$LocalRef,[string]$RemoteRef) {
     $localBlob = Invoke-Git @('rev-parse',"$LocalRef`:$Path")
     $remoteBlob = Invoke-Git @('rev-parse',"$RemoteRef`:$Path")
     if ($localBlob -ne $remoteBlob) { throw "Remote blob changed for $Path. local=$localBlob remote=$remoteBlob" }
@@ -93,9 +93,10 @@ if ($token.wrapper_path -ne $wrapperRelative -or $token.wrapper_blob_sha -ne $wr
 if ($token.carrier_path -ne $carrierRelative -or $token.carrier_blob_sha -ne $carrierBlob) { throw 'Served runtime token carrier contract mismatch.' }
 if ($token.harness_path -ne $harnessRelative -or $token.harness_blob_sha -ne $harnessBlob) { throw 'Served runtime token harness contract mismatch.' }
 if ([int]$token.virtual_time_budget_ms -ne $virtualTimeBudgetMs -or [int]$token.http_timeout_seconds -ne $httpTimeoutSeconds) { throw 'Runtime token time budget contract mismatch.' }
+if ($token.two_phase_remote_parity_required -ne $true -or $token.png_signature_required -ne $true -or [int]$token.screenshot_width -ne 1920 -or [int]$token.screenshot_height -ne 1080) { throw 'Runtime token v11 parity or PNG contract mismatch.' }
 if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) { throw 'Runtime token safety flags are invalid.' }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId task=$expectedTaskId local=$localHead remote=$remoteHead remote_ahead=$remoteAheadCount wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId task=$expectedTaskId local=$localHead remote=$remoteHead remote_ahead=$remoteAheadCount wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob two_phase_remote_parity=true png=1920x1080"
 $carrierExitCode = 1
 $oldValues = @{}
 foreach ($name in @('AAYS_SLOT_ID','AAYS_CHILD_DIRECT_PUSH_FORBIDDEN','AAYS_PORTABLE_ROOT','AAYS_VALIDATED_LOCAL_HEAD','AAYS_VALIDATED_REMOTE_HEAD','AAYS_REMOTE_HEAD_RELATION','AAYS_REMOTE_BLOB_PARITY')) { $oldValues[$name] = [Environment]::GetEnvironmentVariable($name,'Process') }
