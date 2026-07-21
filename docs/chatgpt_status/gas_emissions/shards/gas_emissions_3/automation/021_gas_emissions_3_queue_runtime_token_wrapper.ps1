@@ -14,8 +14,10 @@ $harnessRelative = 'england_map_web/data/aays_18_slots/gas_emissions_3/canonical
 $carrierPath = Join-Path $repoRoot ($carrierRelative.Replace('/','\'))
 $runtimeProofRoot = Join-Path $repoRoot 'docs\chatgpt_status\gas_emissions\shards\gas_emissions_3\acceptance\020_coordinator_browser_runtime_latest'
 $tokenUrl = 'http://127.0.0.1:8012/england_map_web/data/aays_18_slots/gas_emissions_3/runner_runtime_token_latest.json'
-$expectedTokenId = 'gas_emissions_3_v7_queue_20260721_001'
-$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v7_20260721_01'
+$expectedTokenId = 'gas_emissions_3_v8_queue_20260721_001'
+$expectedTaskId = 'gas_emissions_3_coordinator_browser_acceptance_v8_20260721_01'
+$virtualTimeBudgetMs = 180000
+$httpTimeoutSeconds = 45
 
 $gitCandidates = @()
 if (-not [string]::IsNullOrWhiteSpace($portableRoot)) {
@@ -71,14 +73,16 @@ if ($token.carrier_path -ne $carrierRelative) { throw "Runtime token carrier pat
 if ($token.carrier_blob_sha -ne $carrierBlob) { throw "Served runtime token carrier SHA mismatch. token=$($token.carrier_blob_sha) local=$carrierBlob" }
 if ($token.harness_path -ne $harnessRelative) { throw "Runtime token harness path mismatch: $($token.harness_path)" }
 if ($token.harness_blob_sha -ne $harnessBlob) { throw "Served runtime token harness SHA mismatch. token=$($token.harness_blob_sha) local=$harnessBlob" }
+if ([int]$token.virtual_time_budget_ms -ne $virtualTimeBudgetMs) { throw "Runtime token virtual time budget mismatch. token=$($token.virtual_time_budget_ms) local=$virtualTimeBudgetMs" }
+if ([int]$token.http_timeout_seconds -ne $httpTimeoutSeconds) { throw "Runtime token HTTP timeout mismatch. token=$($token.http_timeout_seconds) local=$httpTimeoutSeconds" }
 if ($token.final_ready -ne $false -or $token.fake_data -ne $false -or $token.db_write -ne $false -or $token.migration -ne $false -or $token.production_deploy -ne $false) {
     throw 'Runtime token safety flags are invalid.'
 }
 
-Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob"
+Write-Output "GAS_EMISSIONS_3_RUNTIME_TOKEN_PASS token=$expectedTokenId local=$localHead remote=$remoteHead git=$gitExe wrapper=$wrapperBlob carrier=$carrierBlob harness=$harnessBlob virtual_time_ms=$virtualTimeBudgetMs"
 $carrierExitCode = 1
 try {
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $carrierPath -VirtualTimeBudgetMs $virtualTimeBudgetMs -HttpTimeoutSeconds $httpTimeoutSeconds
     $carrierExitCode = $LASTEXITCODE
 }
 finally {
