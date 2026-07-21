@@ -15,10 +15,13 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 fetch('./runner_pickup_status_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
  const rows=[
-  ['Durum',d.status],['Checkpoint',d.checkpoint_sequence],['İlk doğrulanmamış adım',d.first_unverified_step],
+  ['Durum',d.status],['Attempt',d.attempt_id],['Checkpoint',d.checkpoint_sequence],['İlk doğrulanmamış adım',d.first_unverified_step],
   ['Slot status',d.slot_status],['Current task',d.slot_current_task],['Heartbeat',`${d.slot_heartbeat}; stale=${d.slot_heartbeat_stale}`],
-  ['JSON queue',`${d.json_queue_status}; consumed=${d.json_queue_consumed_by_existing_runner}`],['Legacy bridge',d.legacy_bridge_ready],
-  ['Global control alias',d.global_control_alias],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],
+  ['JSON queue',`${d.json_queue_status}; consumed=${d.json_queue_consumed_by_existing_runner}`],['Legacy bridge',`ready=${d.legacy_bridge_ready}; worker=v${d.legacy_bridge_worker_version}`],
+  ['Hazır aday',d.prepared_candidate_count],['Aday doğruluk 4/4',d.prepared_candidate_accuracy_score_4_count],['Benzersiz API',d.prepared_candidate_unique_endpoints],
+  ['Resmî kaynak',d.upgraded_official_sources],['Bu tur kaynak kalite yükseltmesi',d.official_source_quality_upgrades_this_turn],['Planlanan canlı ağ kontrolü',d.planned_live_network_checks],
+  ['London LSOA kapısı',d.london_lsoa_source_gate_ready],['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],
+  ['Global control alias',d.global_control_alias],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],['Alias değiştirildi',d.global_control_alias_overwritten],
   ['Claim oluşturuldu',d.claim_created],['Acceptance raporu',d.acceptance_report_present],['Blocker',d.blocker],['Sonraki adım',d.next_step]
  ];
  document.getElementById('rows').innerHTML=rows.map(x=>`<tr><th>${esc(x[0])}</th><td>${esc(x[1])}</td></tr>`).join('');
