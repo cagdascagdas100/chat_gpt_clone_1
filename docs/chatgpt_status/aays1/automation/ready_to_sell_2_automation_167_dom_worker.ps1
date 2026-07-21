@@ -18,11 +18,11 @@ $outputRoot = Join-Path $repoRoot $outputRootRelative
 $statusRelative = "$slotRootRelative/status/automation_167_dom_proof_latest.json"
 $reportRelative = "$slotRootRelative/reports/automation_167_dom_proof_latest.md"
 $webProgressRelative = "$webRootRelative/progress_latest.json"
-$candidateRelative = "$webRootRelative/candidate_examples_latest.json"
+$candidateBaseRelative = "$webRootRelative/candidate_examples_latest.json"
 $statusPath = Join-Path $repoRoot $statusRelative
 $reportPath = Join-Path $repoRoot $reportRelative
 $webProgressPath = Join-Path $repoRoot $webProgressRelative
-$candidatePath = Join-Path $repoRoot $candidateRelative
+$candidateBasePath = Join-Path $repoRoot $candidateBaseRelative
 $domRelative = "$outputRootRelative/browser_dom.html"
 $stderrRelative = "$outputRootRelative/browser_stderr.txt"
 $businessSnapshotRelative = "$outputRootRelative/remote_business_state_snapshot.json"
@@ -54,7 +54,29 @@ function Read-IntAttribute([string]$Html,[string]$Name) {
     if ($match.Success) { return [int]$match.Groups[1].Value }
     return 0
 }
+function Get-LatestCandidateWaveFile([string]$Root) {
+    $ranked = @()
+    foreach ($file in @(Get-ChildItem -LiteralPath $Root -Filter 'candidate_wave_*_latest.json' -File -ErrorAction SilentlyContinue)) {
+        $wave = 0
+        if ($file.Name -match '^candidate_wave_([0-9]+)_latest\.json$') { $wave = [int]$Matches[1] }
+        $ranked += [pscustomobject]@{ file = $file; wave = $wave }
+    }
+    $latest = $ranked | Sort-Object wave -Descending | Select-Object -First 1
+    if ($latest) { return $latest.file }
+    return $null
+}
+function To-RepoRelative([string]$Path,[string]$Root) {
+    if (-not $Path) { return $null }
+    $rootPrefix = $Root.TrimEnd('\\','/') + [IO.Path]::DirectorySeparatorChar
+    if ($Path.StartsWith($rootPrefix,[System.StringComparison]::OrdinalIgnoreCase)) {
+        return $Path.Substring($rootPrefix.Length).Replace('\\','/')
+    }
+    return $Path.Replace('\\','/')
+}
 
+$latestCandidateWaveFile = Get-LatestCandidateWaveFile -Root $webRoot
+$candidatePath = if ($latestCandidateWaveFile) { $latestCandidateWaveFile.FullName } else { $candidateBasePath }
+$candidateRelative = To-RepoRelative -Path $candidatePath -Root $repoRoot
 $startedAt = [DateTimeOffset]::UtcNow.ToString('o')
 $blockers = [System.Collections.Generic.List[string]]::new()
 $pageUrl = 'http://127.0.0.1:8012/england_map_web/geometry_review_3of4_columns_1264.html'
@@ -66,6 +88,23 @@ $terminal155Verified = $terminal155 -and [string]$terminal155.status -eq 'SECOND
 if (-not $terminal155Verified) { $blockers.Add('REMOTE_BUSINESS_STATE_155_NOT_TERMINAL_VERIFIED') }
 $requiredLiveSources = if ($terminal155Verified -and [int]$terminal155.live_source_verified_rows -gt 0) { [int]$terminal155.live_source_verified_rows } else { 655 }
 $requiredVisibleRows = [Math]::Max(655,$requiredLiveSources)
+
+$existingWeb = Read-JsonSafe $webProgressPath
+$candidateData = Read-JsonSafe $candidatePath
+$baselineCompletedOperations = if ($existingWeb -and $null -ne $existingWeb.completed_operations) { [int]$existingWeb.completed_operations } else { 0 }
+$baselineTotalOperations = if ($existingWeb -and $null -ne $existingWeb.total_operations) { [int]$existingWeb.total_operations } else { [Math]::Max(1,$baselineCompletedOperations + 1) }
+$baselineBatchProgress = if ($existingWeb -and $null -ne $existingWeb.batch_progress_percent) { [double]$existingWeb.batch_progress_percent } else { [Math]::Round(($baselineCompletedOperations / [Math]::Max(1,$baselineTotalOperations)) * 100,2) }
+$baselineOverallCompleted = if ($existingWeb -and $null -ne $existingWeb.overall_completed_evidence_events) { [int]$existingWeb.overall_completed_evidence_events } else { $baselineCompletedOperations }
+$baselineOverallTotal = if ($existingWeb -and $null -ne $existingWeb.overall_total_evidence_events) { [int]$existingWeb.overall_total_evidence_events } else { $baselineTotalOperations }
+$baselineOverallProgress = if ($existingWeb -and $null -ne $existingWeb.overall_progress_percent) { [double]$existingWeb.overall_progress_percent } else { [Math]::Round(($baselineOverallCompleted / [Math]::Max(1,$baselineOverallTotal)) * 100,2) }
+
+$aggregateCandidateCount = if ($candidateData -and [int]$candidateData.aggregate_candidate_count -gt 0) { [int]$candidateData.aggregate_candidate_count } elseif ($candidateData) { [int]$candidateData.candidate_count } else { 0 }
+$aggregateHighConfidence = if ($candidateData -and [int]$candidateData.aggregate_high_source_confidence_count -gt 0) { [int]$candidateData.aggregate_high_source_confidence_count } elseif ($candidateData) { [int]$candidateData.high_source_confidence_count } else { 0 }
+$aggregateCurrentCount = if ($candidateData -and [int]$candidateData.aggregate_current_upcoming_or_available_count -gt 0) { [int]$candidateData.aggregate_current_upcoming_or_available_count } else { 0 }
+$aggregateAverageConfidence = if ($candidateData -and [double]$candidateData.aggregate_average_source_confidence -gt 0) { [double]$candidateData.aggregate_average_source_confidence } elseif ($candidateData) { [double]$candidateData.average_source_confidence } else { 0 }
+$latestCandidateCount = if ($candidateData) { [int]$candidateData.candidate_count } else { 0 }
+$latestAverageConfidence = if ($candidateData) { [double]$candidateData.average_source_confidence } else { 0 }
+$promotedCount = if ($candidateData) { [int]$candidateData.promoted_row_count } else { 0 }
 
 $businessSnapshot = [ordered]@{
     task_id = $taskId
@@ -83,6 +122,15 @@ $businessSnapshot = [ordered]@{
     terminal_155_evidence_ready_rows = if ($terminal155) { [int]$terminal155.rows_evidence_ready } else { 0 }
     required_visible_rows = $requiredVisibleRows
     required_live_source_count = $requiredLiveSources
+    progress_baseline_path = $webProgressRelative
+    progress_baseline_sha256 = Get-HashSafe $webProgressPath
+    candidate_baseline_path = $candidateRelative
+    candidate_baseline_sha256 = Get-HashSafe $candidatePath
+    baseline_completed_operations = $baselineCompletedOperations
+    baseline_total_operations = $baselineTotalOperations
+    baseline_overall_completed_events = $baselineOverallCompleted
+    baseline_overall_total_events = $baselineOverallTotal
+    aggregate_research_candidates = $aggregateCandidateCount
     final_ready = $false
 }
 Write-JsonNoBom -Path $businessSnapshotPath -Value $businessSnapshot
@@ -171,6 +219,11 @@ $status = [ordered]@{
     browser_dom_rendered_evidence_rows = $evidenceRows
     browser_dom_rendered_progress_events = $progressEvents
     browser_dom_rendered_research_candidates = $researchCandidates
+    aggregate_research_candidates_preserved = $aggregateCandidateCount
+    progress_regression_guard = $true
+    progress_baseline_completed_operations = $baselineCompletedOperations
+    progress_baseline_total_operations = $baselineTotalOperations
+    candidate_baseline_path = $candidateRelative
     blockers = $uniqueBlockers
     started_at = $startedAt
     finished_at = [DateTimeOffset]::UtcNow.ToString('o')
@@ -186,18 +239,20 @@ $status = [ordered]@{
 }
 Write-JsonNoBom -Path $statusPath -Value $status
 
-$existingWeb = Read-JsonSafe $webProgressPath
-$candidateData = Read-JsonSafe $candidatePath
 $events = if ($existingWeb -and $existingWeb.events) { @($existingWeb.events | Where-Object { [string]$_.event -ne 'canonical_runner_dom_execution_and_remote_readback' }) } else { @() }
 $events += [ordered]@{
     sequence = $events.Count + 1
     event = 'canonical_runner_dom_execution_and_remote_readback'
     result = if ($acceptancePass) { 'pass' } else { 'blocked' }
-    detail = "status=$statusName health=$healthStatus page=$pageHttpStatus visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents candidates=$researchCandidates blockers=$($uniqueBlockers -join ';')"
+    detail = "status=$statusName health=$healthStatus page=$pageHttpStatus visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents candidates=$researchCandidates aggregate_preserved=$aggregateCandidateCount blockers=$($uniqueBlockers -join ';')"
     accuracy_score = 100
 }
-$completedOperations = @($events | Where-Object { $_.result -eq 'pass' }).Count
-$totalOperations = $events.Count
+$completedOperations = if ($acceptancePass) { [Math]::Min($baselineTotalOperations,$baselineCompletedOperations + 1) } else { $baselineCompletedOperations }
+$totalOperations = $baselineTotalOperations
+$batchProgress = [Math]::Round(($completedOperations / [Math]::Max(1,$totalOperations)) * 100,2)
+$overallCompleted = if ($acceptancePass) { [Math]::Min($baselineOverallTotal,$baselineOverallCompleted + 1) } else { $baselineOverallCompleted }
+$overallTotal = $baselineOverallTotal
+$overallProgress = [Math]::Round(($overallCompleted / [Math]::Max(1,$overallTotal)) * 100,2)
 $webOut = [ordered]@{
     schema_version = 1
     slot_id = $slotId
@@ -208,15 +263,20 @@ $webOut = [ordered]@{
     events = $events
     completed_operations = $completedOperations
     total_operations = $totalOperations
-    batch_progress_percent = [Math]::Round(($completedOperations / [Math]::Max(1,$totalOperations)) * 100,2)
-    overall_completed_evidence_events = if ($acceptancePass) { 23 } else { 22 }
-    overall_total_evidence_events = 23
-    overall_progress_percent = if ($acceptancePass) { 100.0 } else { 95.65 }
-    overall_progress_percent_increase = if ($acceptancePass) { 5.26 } else { 0.91 }
+    batch_progress_percent = $batchProgress
+    previous_batch_progress_percent = $baselineBatchProgress
+    batch_progress_percent_increase = [Math]::Round(($batchProgress - $baselineBatchProgress),2)
+    overall_completed_evidence_events = $overallCompleted
+    overall_total_evidence_events = $overallTotal
+    overall_progress_percent = $overallProgress
+    previous_overall_progress_percent = $baselineOverallProgress
+    overall_progress_percent_increase = [Math]::Round(($overallProgress - $baselineOverallProgress),2)
     terminal_business_counts = [ordered]@{ live_sources = $requiredLiveSources; photos = [int]$businessSnapshot.terminal_155_photo_rows; polygons = [int]$businessSnapshot.terminal_155_polygon_rows; evidence_ready = [int]$businessSnapshot.terminal_155_evidence_ready_rows; real_vision_scores = 0 }
-    candidate_summary = [ordered]@{ researched_in_this_batch = if ($candidateData) { [int]$candidateData.candidate_count } else { 0 }; high_source_confidence = if ($candidateData) { [int]$candidateData.high_source_confidence_count } else { 0 }; promoted = 0; average_source_confidence = if ($candidateData) { [double]$candidateData.average_source_confidence } else { 0 } }
+    candidate_summary = [ordered]@{ researched_total = $aggregateCandidateCount; new_in_latest_batch = $latestCandidateCount; source_upgraded_in_latest_batch = 0; high_source_confidence = $aggregateHighConfidence; current_upcoming_or_available_count = $aggregateCurrentCount; promoted = $promotedCount; average_source_confidence = $aggregateAverageConfidence; latest_batch_average_source_confidence = $latestAverageConfidence }
     automation_167_status_path = $statusRelative
     automation_167_report_path = $reportRelative
+    progress_regression_guard = $true
+    candidate_baseline_path = $candidateRelative
     blockers = $uniqueBlockers
     single_runner_only = $true
     new_runner = $false
@@ -239,7 +299,9 @@ $reportLines = @(
     "- Required/observed live sources: ``$requiredLiveSources / $liveSources``",
     "- HTTP health/page: ``$healthStatus / $pageHttpStatus``",
     "- DOM ready/mode: ``$loadReady / $loadMode``",
-    "- Evidence/progress/candidates: ``$evidenceRows / $progressEvents / $researchCandidates``",
+    "- Evidence/progress/DOM candidates: ``$evidenceRows / $progressEvents / $researchCandidates``",
+    "- Preserved aggregate candidates: ``$aggregateCandidateCount``",
+    "- Preserved progress baseline: ``$baselineCompletedOperations / $baselineTotalOperations``",
     "- Blockers: ``$($uniqueBlockers -join '; ')``",
     '',
     '`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.'
