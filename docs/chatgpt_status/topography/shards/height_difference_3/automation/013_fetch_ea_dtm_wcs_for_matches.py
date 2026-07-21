@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -78,9 +79,32 @@ def _select_coverage(ids: list[str]) -> str:
         raise ValueError("WCS GetCapabilities exposed no coverage identifier")
     if len(ids) == 1:
         return ids[0]
-    preferred = [value for value in ids if "dtm" in value.casefold() and ("1m" in value.casefold() or "1_m" in value.casefold())]
+    def tokens(value: str) -> set[str]:
+        return set(filter(None, re.split(r"[^a-z0-9]+", value.casefold())))
+
+    # The EA endpoint currently exposes both the numeric elevation raster and a
+    # cartographic hillshade with otherwise almost identical DTM/1m names.
+    # Hillshade pixel values are illumination, not metres, so never select it
+    # as a height source.
+    preferred = [
+        value
+        for value in ids
+        if "dtm" in tokens(value)
+        and ({"1m", "1"} & tokens(value))
+        and "elevation" in tokens(value)
+        and "hillshade" not in tokens(value)
+    ]
     if len(preferred) == 1:
         return preferred[0]
+    non_hillshade_dtm = [
+        value
+        for value in ids
+        if "dtm" in tokens(value)
+        and ({"1m", "1"} & tokens(value))
+        and "hillshade" not in tokens(value)
+    ]
+    if len(non_hillshade_dtm) == 1:
+        return non_hillshade_dtm[0]
     raise ValueError(f"WCS coverage identifier is ambiguous: {ids}")
 
 
