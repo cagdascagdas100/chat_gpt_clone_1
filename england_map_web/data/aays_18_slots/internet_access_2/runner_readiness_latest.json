@@ -1,11 +1,12 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "internet_access_2",
   "status": "BLOCKED_FAIL_CLOSED",
   "dispatch_permitted": false,
   "gate_count": 13,
-  "passed_gate_count": 9,
+  "passed_gate_count": 8,
   "blocked_gate_count": 4,
+  "deferred_fresh_readback_gate_count": 1,
   "gates": [
     {"gate_id":"SLOT_ID","title":"All authoritative slot files target internet_access_2","state":"PASS","evidence":"checkpoint/status/heartbeat/current-task/ownership slot IDs checked","blocker":null},
     {"gate_id":"CHECKPOINT","title":"Checkpoint remains non-terminal sequence 0","state":"PASS","evidence":"sequence=0; final_ready=False","blocker":null},
@@ -15,28 +16,37 @@
     {"gate_id":"SLOT_TASK","title":"Slot current task is idle","state":"PASS","evidence":"state=idle; task_id=None","blocker":null},
     {"gate_id":"ALLOWED_PATH","title":"Authorized aays_18 web path is present","state":"PASS","evidence":"england_map_web/data/aays_18_slots/internet_access_2","blocker":null},
     {"gate_id":"WATCHER_FRESH","title":"Repo-to-bridge watcher heartbeat is fresh","state":"BLOCKED","evidence":"watcher_updated_at=20260703_225536; threshold=900 seconds","blocker":"repo-to-bridge watcher heartbeat is stale"},
-    {"gate_id":"RUNNER_FRESH","title":"Existing shared runner heartbeat is fresh","state":"BLOCKED","evidence":"latest watcher-visible records still report runner pickup not observed and runner_heartbeat_fresh=false","blocker":"shared runner pickup/heartbeat is still not observed"},
-    {"gate_id":"QUEUE_HEAD_FREE","title":"No other watcher-visible task is pending or active","state":"BLOCKED","evidence":"slot_id=security_public_safety_3; task_id=security-public-safety-3-sample-hydrate-v5-20260721; attempt_id=security-public-safety-3-20260721-007; priority=100; status=pickup_requested; sample_rows=48","blocker":"another higher-priority task is pending at the watcher-visible queue head"},
+    {"gate_id":"RUNNER_FRESH","title":"Existing shared runner heartbeat is fresh","state":"BLOCKED","evidence":"watcher-visible records still show pickup requested and no fresh runner execution heartbeat","blocker":"shared runner pickup/heartbeat is still not observed"},
+    {"gate_id":"QUEUE_HEAD_FREE","title":"No other watcher-visible task is pending or active","state":"BLOCKED","evidence":"slot_id=security_public_safety_3; task_id=security-public-safety-3-sample-hydrate-v5-20260721; attempt_id=security-public-safety-3-20260721-008; task_version=5.1-powershell-carrier; priority=1; status=pickup_requested; sample_rows=48","blocker":"another task is pending at the watcher-visible queue head"},
     {"gate_id":"REVIEW_MERGED","title":"Slot implementation is merged to watcher-visible main","state":"BLOCKED","evidence":"pr=82; state=open; merged=False; base=codex/aays-single-runner-v5-20260706","blocker":"slot implementation is not merged to watcher-visible main"},
-    {"gate_id":"PR_MERGEABLE","title":"Review branch is mergeable before integration","state":"PASS","evidence":"pr=82; mergeable=True; draft=True","blocker":null},
+    {"gate_id":"PR_MERGEABLE","title":"Review branch is mergeable immediately before integration","state":"DEFERRED_FRESH_READBACK_REQUIRED","evidence":"PR head changed during semantic hardening; final mergeability must be re-read after current-head squash/rebase","blocker":null},
     {"gate_id":"NO_DIRECT_PUSH","title":"Direct-push prohibition remains enforced","state":"PASS","evidence":"direct_push_forbidden=True","blocker":null}
   ],
   "current_queue_head": {
     "slot_id": "security_public_safety_3",
     "task_id": "security-public-safety-3-sample-hydrate-v5-20260721",
-    "attempt_id": "security-public-safety-3-20260721-007",
-    "priority": 100,
+    "attempt_id": "security-public-safety-3-20260721-008",
+    "task_version": "5.1-powershell-carrier",
+    "priority": 1,
     "status": "pickup_requested",
     "sample_start": 61523,
     "sample_end": 61570,
     "sample_count": 48,
     "chunk_count": 4,
+    "source_branch": "codex/aays-single-runner-v5-20260706",
     "queue_path": "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_3_sample_hydrate_v5_20260721.task.json"
   },
+  "official_v2_semantic_preflight": {
+    "tests_passed": 26,
+    "tests_total": 26,
+    "postcode_space_exact_single_separator": true,
+    "duplicate_normalized_headers_rejected": true,
+    "empty_postcode_area_files_rejected": true,
+    "postcode_full_fibre_fields_rejected": true,
+    "metric_denominators_recorded": true
+  },
   "review_pr_number": 82,
-  "transplant_pr_number": 81,
-  "transplant_squash_sha": "fbcc9cd774a9134a9d8ca62983918c37a7c0eb33",
-  "next_step": "WAIT_FOR_CURRENT_QUEUE_HEAD_TERMINAL_AND_RECOVER_WATCHER_RUNNER_HEARTBEATS_THEN_INTEGRATE_TO_MAIN_AND_RECHECK",
+  "next_step": "CURRENT_HEAD_REBASE_THEN_FRESH_MERGEABILITY_READBACK_THEN_WAIT_FOR_QUEUE_HEAD_TERMINAL_AND_RECOVER_WATCHER_RUNNER_HEARTBEATS",
   "single_shared_runner_only": true,
   "new_runner_started": false,
   "ownership_claimed": false,
@@ -47,5 +57,5 @@
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
-  "evaluated_at": "2026-07-21T04:32:00Z"
+  "evaluated_at": "2026-07-21T04:43:00Z"
 }
