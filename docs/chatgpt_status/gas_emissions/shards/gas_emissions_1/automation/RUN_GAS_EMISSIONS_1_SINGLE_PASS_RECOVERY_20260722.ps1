@@ -115,8 +115,13 @@ try {
   }
   else {
     try {
+      $powershell = Get-Command powershell.exe -ErrorAction SilentlyContinue
+      if (-not $powershell) { $powershell = Get-Command powershell -ErrorAction SilentlyContinue }
+      if (-not $powershell) { throw 'POWERSHELL_CHILD_RUNTIME_NOT_FOUND' }
       Push-Location $RepoRoot
-      & $browserScript -RepoRoot $RepoRoot -BaseUrl $baseUrl 2>&1 | Out-File -LiteralPath $browserLog -Encoding utf8
+      # Run the browser verifier in a child process because its explicit exit code
+      # must never terminate this parent orchestration before independent stages.
+      & $powershell.Source -NoProfile -ExecutionPolicy Bypass -File $browserScript -RepoRoot $RepoRoot -BaseUrl $baseUrl 2>&1 | Out-File -LiteralPath $browserLog -Encoding utf8
       $browserCode = $LASTEXITCODE
       $stages += [pscustomobject]@{ name='browser_dump_dom'; status=$(if ($browserCode -eq 0) {'PASS'} else {'BLOCKED_STAGE_REPORTED'}); exit_code=$browserCode; started_at=$browserStarted; ended_at=(UtcNow); script=$paths.browser; blocker=$(if ($browserCode -eq 0) {$null} else {'NONZERO_EXIT'}); log_tail=(Tail-Text $browserLog) }
     }
@@ -152,6 +157,7 @@ $payload = [ordered]@{
   runner_execution_observed = $true
   local_http_server_started_here = $serverStartedHere
   local_http_server_error = $serverError
+  browser_child_process_isolated = $true
   stage_count = $stages.Count
   passed_stage_count = $passedCount
   blocked_stage_count = $blockedCount
