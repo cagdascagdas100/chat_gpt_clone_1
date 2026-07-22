@@ -492,7 +492,7 @@ class AaysPanel(tk.Tk):
         if any(marker in upper for marker in ("CHECKOUT_TIMEOUT", "FETCH_TIMEOUT", "SPARSE_EXPANSION_TIMEOUT", "SPARSE_LIST_TIMEOUT")):
             return "Takılı Git sürecini doğrulayın; aktif işlem yoksa yalnız boş ve eski lock dosyasını kaldırın, sonra Runner'ı Yeniden Başlatın."
         if any(marker in upper for marker in ("SOURCE_NOT_FOUND", "SOURCE_READ_FAILED", "NOT_FOUND_IN_REMOTE_REPOSITORY")):
-            return "Belirtilen resmi kaynak dosyasını/URL'sini doğrulayın ve erişilebilir kanonik konuma ekleyin; sahte veri üretmeyin."
+            return "Kullanıcı işlemi gerekmez: runner yerel dosyaları ve ücretsiz, üyelik/e-posta istemeyen açık kaynakları tarar; bulunamazsa kanıtlı NO_DATA ile devam eder."
         if any(marker in upper for marker in ("DATABASE_HEALTH_DEGRADED", "NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY")):
             return "Kanonik veri tabanı/ulusal parsel envanteri sağlığını düzeltin; health kanıtı PASS olmadan görevi sürdürmeyin."
         if any(marker in upper for marker in ("FEATURE_COUNT_ZERO", "EXPORT_NOT_STARTED", "OUTPUT_NOT_PRESENT", "NOT_PARCEL_MATCHED")):
@@ -549,7 +549,8 @@ class AaysPanel(tk.Tk):
                     reason_parts.append(text)
             reason = " | ".join(reason_parts)
             upper = reason.upper()
-            truly_manual = any(marker in upper for marker in data_markers) or any(
+            automatic_source_discovery = any(marker in upper for marker in data_markers)
+            truly_manual = not automatic_source_discovery and any(
                 marker in upper
                 for marker in ("NO_SAFE_AUTOMATIC_REPAIR", "AUTOMATIC_RETRY_DID_NOT_CLEAR_BLOCKER")
             )
@@ -990,7 +991,7 @@ class AaysPanel(tk.Tk):
                 f"aktif bakım işçisi {info.get('recovery_worker_count', 0)}, "
                 f"bakım kuyruğu {info.get('recovery_pending_count', 0)}, "
                 f"düzeltilen {info.get('recovery_succeeded', 0)}, "
-                f"gerçek veri/elle müdahale bekleyen {info.get('recovery_parked', 0)}. "
+                f"teknik/elle müdahale bekleyen {info.get('recovery_parked', 0)}. "
                 f"Git eşitleme: {info.get('remote_sync_state', 'BILINMIYOR')}. "
                 f"Aktif görev: {info.get('current_task_id') or '-'}. "
                 f"Kaynak: {info.get('scheduling_pause_reason') or info.get('adaptive_capacity_reason') or 'tam kapasite'}"

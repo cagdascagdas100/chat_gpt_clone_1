@@ -2045,6 +2045,24 @@ class Coordinator:
                         "AAYS_SLOT_ID": slot_id,
                         "AAYS_TASK_ID": str(task["task_id"]),
                         "AAYS_CHILD_DIRECT_PUSH_FORBIDDEN": "true",
+                        "AAYS_SOURCE_DISCOVERY_POLICY": str(
+                            task.get("source_discovery_policy") or "DECLARED_SOURCES_ONLY"
+                        ),
+                        "AAYS_ALLOW_FREE_PUBLIC_SOURCE_DISCOVERY": str(
+                            bool(task.get("allow_free_public_source_discovery"))
+                        ).lower(),
+                        "AAYS_FORBID_USER_SOURCE_REQUEST": str(
+                            bool(task.get("forbid_user_source_request"))
+                        ).lower(),
+                        "AAYS_FORBID_EMAIL_OR_ACCOUNT_SOURCES": str(
+                            bool(task.get("forbid_email_or_account_sources"))
+                        ).lower(),
+                        "AAYS_ALLOW_EVIDENCE_BACKED_NO_DATA": str(
+                            bool(task.get("allow_evidence_backed_no_data"))
+                        ).lower(),
+                        "AAYS_CONTINUE_AFTER_NO_DATA": str(
+                            bool(task.get("continue_after_no_data"))
+                        ).lower(),
                     }
                 )
                 log = self.logs / "slots" / slot_id / f"{task['task_id']}.{task['attempt_id']}.log"
@@ -2191,6 +2209,13 @@ class Coordinator:
                             continue
                         if task_id in self.seen_task_ids or task_id in self.scheduled_task_ids:
                             continue
+                        slot_status = read_json(self.slot_dir(slot_id) / "status_latest.json", {})
+                        if (
+                            str(slot_status.get("state") or "").upper() == "NO_DATA_CONTINUE"
+                            and str(slot_status.get("task_id") or "") == task_id
+                        ):
+                            self.seen_task_ids.add(task_id)
+                            continue
                         recovery_future = recovery_futures.get(task_id)
                         if recovery_future is not None:
                             if not recovery_future.done():
@@ -2207,7 +2232,26 @@ class Coordinator:
                             recovery_futures.pop(task_id, None)
                             self.recovery_pending_count = len(recovery_futures)
                             self.recovery_active_count = min(1, self.recovery_pending_count)
-                            if recovery.get("decision") != "ALLOW":
+                            recovery_decision = str(recovery.get("decision") or "BLOCK")
+                            if recovery_decision == "NO_DATA_CONTINUE":
+                                self.seen_task_ids.add(task_id)
+                                no_data_result = {
+                                    "state": "NO_DATA_CONTINUE",
+                                    "source_discovery_policy": "LOCAL_FILES_THEN_FREE_PUBLIC_NO_AUTH",
+                                    "user_source_required": False,
+                                    "email_or_account_source_used": False,
+                                    "fake_data": False,
+                                    "reason": recovery.get("reason") or "EVIDENCE_BACKED_NO_DATA_CONTINUE",
+                                }
+                                self.write_slot_runtime_state(
+                                    slot_id, task, "NO_DATA_CONTINUE", result=no_data_result,
+                                )
+                                self.append_event(
+                                    slot_id,
+                                    {"transition": "NO_DATA_CONTINUE", "task_id": task_id, **no_data_result},
+                                )
+                                continue
+                            if recovery_decision != "ALLOW":
                                 continue
                             task = dict(recovery.get("task") or task)
                         else:

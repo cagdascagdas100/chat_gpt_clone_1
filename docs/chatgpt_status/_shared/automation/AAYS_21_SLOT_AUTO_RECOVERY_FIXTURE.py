@@ -190,6 +190,15 @@ def main() -> int:
         data_supervisor.wait_seconds = 0
         data_first = data_supervisor.gate(data_source, data_task)
         data_second = data_supervisor.gate(data_source, data_task)
+        time.sleep(0.02)
+        write_json(data_state / "status_latest.json", {
+            "slot_id": data_slot,
+            "state": "BLOCKED_NO_DECLARED_OUTPUT",
+            "task_id": data_task["task_id"],
+            "blocker": "BLOCKED_NO_DECLARED_OUTPUT",
+            "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        })
+        data_third = data_supervisor.gate(data_source, data_task)
 
         report = {
             "status": "PASS" if (
@@ -204,7 +213,13 @@ def main() -> int:
                 and isolated_path.is_dir()
                 and original_dirty_preserved
                 and data_first["decision"] == "WAIT"
-                and data_second["decision"] == "BLOCK"
+                and data_second["decision"] == "ALLOW"
+                and data_second["task"].get("source_discovery_policy")
+                    == "LOCAL_FILES_THEN_FREE_PUBLIC_NO_AUTH"
+                and data_second["task"].get("forbid_user_source_request") is True
+                and data_second["task"].get("forbid_email_or_account_sources") is True
+                and data_second["task"].get("continue_after_no_data") is True
+                and data_third["decision"] == "NO_DATA_CONTINUE"
             ) else "FAIL",
             "logical_slot_count": len(SLOTS),
             "first_decision": first,
@@ -219,6 +234,7 @@ def main() -> int:
             "original_dirty_progress_preserved": original_dirty_preserved,
             "data_first_decision": data_first,
             "data_second_decision": data_second,
+            "data_third_decision": data_third,
             "fake_data_written": False,
             "destructive_reset_used": False,
         }

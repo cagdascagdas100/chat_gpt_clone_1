@@ -63,9 +63,19 @@ Normal işten önce aşağıdaki kapı uygulanır:
 - Aktif Git işlemi yoksa yalnız boş ve yaşlanmış `index.lock`, `sparse-checkout.lock` veya `shallow.lock` kaldırılabilir.
 - Temiz yerel HEAD doğrulanırsa timeout için yalnız bir güvenli tekrar yapılabilir.
 - Kirli worktree korunur; gerekirse izole recovery worktree kullanılır. Kullanıcı verisi silinmez, `reset --hard` yapılmaz.
-- Gerçek kaynak/çıktı yoksa veri uydurma; otomatik tekrar yerine manuel eylem kaydı üret.
+- Gerçek kaynak/çıktı yoksa veri uydurma ve kullanıcıdan kaynak isteme; Bölüm 6.1'deki otomatik kaynak keşfi/kanıtlı `NO_DATA_CONTINUE` yolunu uygula.
 - Aynı onarım bir kez başarısız olursa sonsuz döngü yapma; `RECOVERY_PARKED` ve gerçek nedeni yaz.
 - Problem çözülmeden normal business adımına dönme. Çözülünce aynı `continuation_key` ile checkpoint’ten devam et.
+
+### 6.1. Gerçek veri ve ücretsiz kaynak politikası
+
+- Kullanıcı AAYS görevleri için dosya, e-posta, hesap, ücretli abonelik, FOI/bilgi edinme başvurusu veya manuel kaynak sağlamayacaktır; bunları isteme ve kullanıcı eylemi olarak kaydetme.
+- Kaynak sırası zorunludur: önce repo/taşınabilir disk/önceki kanıt ve indirilen dosyalar, sonra kimlik doğrulama istemeyen ücretsiz ve herkese açık internet kaynakları. Mümkün olduğunda resmî kamu/veri sağlayıcı kaynağını tercih et; URL, erişim zamanı, lisans/atıf ve hash kanıtını yaz.
+- Üyelik, ödeme, e-posta doğrulaması, CAPTCHA veya kişisel bilgi isteyen kaynak atlanır; bu durum slotu bloklamaz.
+- Kaynak keşfi sınırlı ve idempotent yapılır. Aynı URL/hata sonsuza kadar denenmez; erişim ve sonuç kanıtı checkpoint'e yazılır.
+- Uygun gerçek veri bulunursa normal doğrulama ve üretim adımına devam et. Bulunamazsa değer uydurma veya çıkarım yapma; ilgili kapsamı kanıtlı `NO_DATA` olarak kaydet, görev durumunu `NO_DATA_CONTINUE` yap ve aynı slotun sonraki ilk doğrulanmamış işine geç.
+- `SOURCE_NOT_FOUND`, `SOURCE_READ_FAILED`, `EXPORT_NOT_STARTED`, `FEATURE_COUNT_ZERO`, `NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY` ve benzeri veri-yokluğu durumları tek başına `RECOVERY_PARKED` veya manuel kullanıcı eylemi değildir.
+- Teknik bir problem (Git yetkisi, bozuk dosya, disk hatası, çalışmayan resmi URL istemcisi) kaynak keşfinin kendisini engelliyorsa yalnız teknik problem kurtarma kapısına alınır; kullanıcıdan veri istenmez.
 
 ## 7. Manuel eylem kayıt sözleşmesi
 
@@ -92,6 +102,7 @@ Zorunlu alanlar:
 ```
 
 - Otomatik kurtarma sürüyorsa bu kayıt oluşturulmaz.
+- Yalnız kaynak/veri eksikliği için manuel kayıt oluşturulmaz; Bölüm 6.1 uygulanır.
 - Kullanıcı işlemi gerçekten gerekliyse kayıt görünür ve Python panelindeki `Çözülmemiş Kullanıcı İşlemleri` tablosuna yansır.
 - Sorun doğrulanarak çözülünce `state` değeri `RESOLVED`, `requires_user_action` değeri `false` yapılır. Panel sonraki yenilemede satırı otomatik kaldırır.
 - Sadece güncel çözülmemiş işlem tutulur; eski veya çözülmüş hata tekrar gösterilmez.

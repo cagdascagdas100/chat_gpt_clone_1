@@ -37,6 +37,7 @@ DATA_BLOCKER_MARKERS = (
     "NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY",
     "NO_DATA",
 )
+SOURCE_DISCOVERY_POLICY = "LOCAL_FILES_THEN_FREE_PUBLIC_NO_AUTH"
 
 
 def utc_now() -> str:
@@ -254,7 +255,11 @@ class SlotRecoverySupervisor:
         if any(marker in upper for marker in SAFE_TIMEOUT_MARKERS):
             steps.append({"order": 4, "action": "RETRY_ON_VERIFIED_CLEAN_LOCAL_HEAD_ONCE", "safe": True})
         if any(marker in upper for marker in DATA_BLOCKER_MARKERS):
-            steps.append({"order": 5, "action": "PARK_UNTIL_REAL_SOURCE_OR_OUTPUT_EXISTS", "safe": True})
+            steps.append({
+                "order": 5,
+                "action": "DISCOVER_LOCAL_THEN_FREE_PUBLIC_NO_AUTH_SOURCE_OR_WRITE_EVIDENCE_BACKED_NO_DATA",
+                "safe": True,
+            })
         steps.append({"order": 6, "action": "RESUME_ORIGINAL_CONTINUATION_TASK", "safe": True})
         return steps
 
@@ -483,22 +488,29 @@ class SlotRecoverySupervisor:
         proactive_eligible = bool(
             status_age is not None
             and status_age >= self.proactive_after_seconds
-            and safe_transient
-            and not real_data_blocker
+            and (safe_transient or real_data_blocker)
         )
         if not plan and not continuation_is_new and not proactive_eligible:
             return {
                 "decision": "BLOCK",
-                "reason": (
-                    "REAL_SOURCE_OR_OUTPUT_REQUIRED_NO_AUTOMATIC_FABRICATION"
-                    if real_data_blocker
-                    else "WAITING_FOR_NEW_CONTINUATION_OR_PROACTIVE_THRESHOLD"
-                ),
+                "reason": "WAITING_FOR_NEW_CONTINUATION_OR_PROACTIVE_THRESHOLD",
                 "task": task,
             }
         if plan.get("state") == "RECOVERY_SUCCEEDED":
             applied_at = parse_time(plan.get("applied_at"))
             if applied_at and status_updated and status_updated > applied_at:
+                if plan.get("source_discovery_policy") == SOURCE_DISCOVERY_POLICY:
+                    plan.update({
+                        "state": "RECOVERY_NO_DATA_CONTINUE",
+                        "repair_reason": "EVIDENCE_BACKED_NO_DATA_CONTINUE",
+                        "no_data_continued_at": utc_now(),
+                    })
+                    self._record(slot_id, trigger_key, plan)
+                    return {
+                        "decision": "NO_DATA_CONTINUE",
+                        "reason": "EVIDENCE_BACKED_NO_DATA_CONTINUE",
+                        "task": task,
+                    }
                 plan.update({
                     "state": "RECOVERY_PARKED",
                     "repair_reason": "AUTOMATIC_RETRY_DID_NOT_CLEAR_BLOCKER",
@@ -515,17 +527,22 @@ class SlotRecoverySupervisor:
                 "reason": "AUTOMATIC_RETRY_ALREADY_RELEASED_WAITING_FOR_RESULT",
                 "task": task,
             }
+        if plan.get("state") == "RECOVERY_NO_DATA_CONTINUE":
+            return {
+                "decision": "NO_DATA_CONTINUE",
+                "reason": "EVIDENCE_BACKED_NO_DATA_CONTINUE",
+                "task": task,
+            }
         if plan.get("state") == "RECOVERY_PARKED":
             if (
-                int(plan.get("policy_version") or 1) < 6
-                and safe_transient
-                and not real_data_blocker
+                int(plan.get("policy_version") or 1) < 7
+                and (safe_transient or real_data_blocker)
             ):
                 plan.update({
-                    "policy_version": 6,
+                    "policy_version": 7,
                     "state": "RECOVERY_WAITING",
                     "wait_until": utc_now(),
-                    "repair_reason": "POLICY_V6_GENERIC_BLOCKER_RECOVERY_REOPENED",
+                    "repair_reason": "POLICY_V7_SOURCE_DISCOVERY_OR_GENERIC_RECOVERY_REOPENED",
                     "reopened_at": utc_now(),
                 })
                 self._record(slot_id, trigger_key, plan)
@@ -538,7 +555,7 @@ class SlotRecoverySupervisor:
             wait_until = now + timedelta(seconds=self.wait_seconds)
             plan = {
                 "schema_version": 1,
-                "policy_version": 6,
+                "policy_version": 7,
                 "workstream_id": WORKSTREAM_ID,
                 "slot_id": slot_id,
                 "state": "RECOVERY_WAITING",
@@ -582,8 +599,7 @@ class SlotRecoverySupervisor:
         isolated_error: str | None = None
         if (
             not diagnostics_after.get("clean")
-            and safe_transient
-            and not real_data_blocker
+            and (safe_transient or real_data_blocker)
         ):
             isolated_worktree, isolated_error = self._provision_isolated_worktree(
                 slot_id, trigger_key, task, worktree,
@@ -604,8 +620,21 @@ class SlotRecoverySupervisor:
                 safe_to_retry = True
                 reason = "BLOCKED_WITHOUT_DIAGNOSTIC_SINGLE_RETRY_ENABLED"
         if any(marker in upper for marker in DATA_BLOCKER_MARKERS):
-            safe_to_retry = False
-            reason = "REAL_SOURCE_OR_OUTPUT_REQUIRED_NO_AUTOMATIC_FABRICATION"
+            safe_to_retry = bool(diagnostics_after.get("clean") and diagnostics_after.get("head"))
+            reason = (
+                "FREE_PUBLIC_SOURCE_DISCOVERY_RETRY_ENABLED"
+                if safe_to_retry
+                else "SOURCE_DISCOVERY_REQUIRES_CLEAN_OR_ISOLATED_WORKTREE"
+            )
+            if safe_to_retry:
+                flags.update({
+                    "source_discovery_policy": SOURCE_DISCOVERY_POLICY,
+                    "allow_free_public_source_discovery": True,
+                    "forbid_user_source_request": True,
+                    "forbid_email_or_account_sources": True,
+                    "allow_evidence_backed_no_data": True,
+                    "continue_after_no_data": True,
+                })
 
         plan.update({
             "state": "RECOVERY_SUCCEEDED" if safe_to_retry else "RECOVERY_PARKED",
@@ -617,6 +646,7 @@ class SlotRecoverySupervisor:
             "isolated_recovery_error": isolated_error,
             "diagnostics_after": diagnostics_after,
             "task_recovery_flags": flags if safe_to_retry else {},
+            "source_discovery_policy": SOURCE_DISCOVERY_POLICY if real_data_blocker else None,
             "applied_at": utc_now(),
         })
         self._record(slot_id, trigger_key, plan)
