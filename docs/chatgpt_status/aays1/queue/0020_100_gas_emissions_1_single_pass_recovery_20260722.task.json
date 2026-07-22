@@ -1,17 +1,17 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "task_id": "gas-emissions-1-single-pass-recovery-20260722",
-  "task_version": "2.4-schema9-v6-json-safety-watchdog-parser17-classifier5-gate15",
+  "task_version": "2.5-schema10-v6-json-safety-watchdog-parser17-classifier5-gate15-retry-reconciled",
   "attempt_id": "gas-emissions-1-recovery-20260722-002",
   "supersedes_attempt_id": "gas-emissions-1-recovery-20260722-001",
-  "idempotency_key": "gas-emissions-1-single-pass-recovery-v10-schema9-v6-json-safety-parser17-classifier5-gate15",
+  "idempotency_key": "gas-emissions-1-single-pass-recovery-v11-schema10-v6-json-safety-parser17-classifier5-gate15-retry",
   "page_key": "aays1",
   "layer_page_key": "gas_emissions",
   "slot_id": "gas_emissions_1",
   "status": "pickup_requested",
   "priority": 2,
   "created_at": "2026-07-22T09:48:00Z",
-  "updated_at": "2026-07-22T13:56:00Z",
+  "updated_at": "2026-07-22T13:58:00Z",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "target_branch": "main",
   "source_branch": "codex/aays-single-runner-v5-20260706",
@@ -30,7 +30,8 @@
     "hmlr_proximity_v2_sha": "12ef61ecd32c11527d5c4e7171ca30de3049d496",
     "binary_parser_v17_sha": "08a30bf3507d8777e2992da11350d7228574af60",
     "classifier_v5_sha": "caca618745689df20ee6b5285a2167c0fa9875b8",
-    "semantic_gate_v15_sha": "d59d8ecc8d2ca6c847f00da04cf16d160e51b610"
+    "semantic_gate_v15_sha": "d59d8ecc8d2ca6c847f00da04cf16d160e51b610",
+    "retry_reconciler_sha": "e516b77fdb8f4de9a77ad9a38ea69cba688e634a"
   },
   "execution_watchdog": {
     "browser_dump_dom_timeout_seconds": 180,
@@ -58,6 +59,18 @@
     "queue_control_returns_after_bounded_report_write": true,
     "stdout_stderr_bounded_chars": 4000
   },
+  "retry_reconciliation": {
+    "template_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/recovery/gas_emissions_1_priority2_task_template_latest.json",
+    "state_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/recovery/gas_emissions_1_retry_state_latest.json",
+    "max_requeues": 3,
+    "stale_running_minutes": 120,
+    "recovery_task_ids": [
+      "gas-emissions-1-retry-reconciler-01-20260722",
+      "gas-emissions-1-retry-reconciler-02-20260722",
+      "gas-emissions-1-retry-reconciler-03-20260722"
+    ],
+    "reconciler_sha": "e516b77fdb8f4de9a77ad9a38ea69cba688e634a"
+  },
   "expected_outputs": [
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_single_pass_recovery_latest.json",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_single_pass_recovery_latest.json",
@@ -79,6 +92,10 @@
   ],
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/0020_100_gas_emissions_1_single_pass_recovery_20260722.task.json",
+    "docs/chatgpt_status/aays1/queue/0006_911_gas_emissions_1_retry_reconciler_01_20260722.task.json",
+    "docs/chatgpt_status/aays1/queue/0006_912_gas_emissions_1_retry_reconciler_02_20260722.task.json",
+    "docs/chatgpt_status/aays1/queue/0006_913_gas_emissions_1_retry_reconciler_03_20260722.task.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/recovery/",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/",
     "england_map_web/data/aays_21_slots/gas_emissions_1/"
@@ -95,6 +112,8 @@
     "Require final_ready false and fake_data db_write migration production_deploy false",
     "Require exactly five unique runtime stage names in the recovery report",
     "Write validation report status and web JSON atomically without overwriting stage outputs",
+    "Allow slot-only retry reconciliation when the shared runner records false done, loses output or leaves stale running",
+    "Limit retry reconciliation to three canonical requeues and disable remaining retry tasks after a valid checkpoint or exhaustion",
     "Run corrected freehold-only HMLR proximity extraction and never assign leasehold title TGL419520 or a parcel",
     "Run Parser V17 and Classifier V5 with the same exact 323-alias set",
     "Run Semantic Gate V15 with explicit official annual-air-mass gates and non-emission context exclusions",
@@ -108,8 +127,11 @@
     "execution_host": "powershell.exe -File script_path",
     "actual_selection_order": ["priority", "page_key", "task_id"],
     "lower_numeric_priority_runs_first": true,
-    "max_tasks_per_runner_pass": 1
+    "max_tasks_per_runner_pass": 1,
+    "v4_false_done_risk": true,
+    "retry_reconciler_required": true
   },
+  "retry_reconciliation_count": 0,
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
   "single_runner_only": true,
@@ -124,7 +146,7 @@
   "migration": false,
   "production_deploy": false,
   "actual_business_data_rows_written": 0,
-  "output_semantics": "SCHEMA9_V6_JSON_SAFETY_WATCHDOG_WRAPPING_V5_THEN_INDEPENDENT_HMLR_PARSER_V17_CLASSIFIER_V5_GATE_V15_NO_PARCEL_VALUE",
+  "output_semantics": "SCHEMA10_V6_JSON_SAFETY_WATCHDOG_WITH_SLOT_ONLY_RETRY_RECONCILIATION_THEN_HMLR_PARSER_V17_CLASSIFIER_V5_GATE_V15_NO_PARCEL_VALUE",
   "final_ready": false,
   "max_runtime_seconds": 2820,
   "max_minutes": 47
