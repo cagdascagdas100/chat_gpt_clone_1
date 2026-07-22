@@ -1,0 +1,104 @@
+name: height_difference_2 HMLR download redirect diagnostic 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_download_redirect_diag_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_redirect_diag_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4
+      - name: Capture redirect and cookie chains
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
+
+          variants=[
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download/',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download?cookies_preferences_set=true',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download?accept_cookies=true',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download?source=direct',
+          ]
+          headers_variants=[
+            {'User-Agent':'AAYS-height-difference-2-redirect-diagnostic/1.0','Accept':'text/html,*/*'},
+            {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'},
+          ]
+          results=[]
+          successful=[]
+          for start in variants:
+            for hi,headers in enumerate(headers_variants):
+              s=requests.Session()
+              url=start
+              chain=[]
+              seen=[]
+              body=b''
+              for hop in range(12):
+                try:
+                  r=s.get(url,headers=headers,allow_redirects=False,timeout=60)
+                  body=r.content
+                  item={'hop':hop,'url':url,'status':r.status_code,'location':r.headers.get('Location'),'content_type':r.headers.get('Content-Type'),'set_cookie':r.headers.get('Set-Cookie'),'cookies':s.cookies.get_dict(),'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest() if body else None,'snippet':body[:300].decode('utf-8','replace')}
+                  chain.append(item)
+                  key=(url,r.status_code,r.headers.get('Location'),tuple(sorted(s.cookies.get_dict().items())))
+                  if key in seen:
+                    chain.append({'loop_detected':True,'at_hop':hop,'key':str(key)})
+                    break
+                  seen.append(key)
+                  if r.is_redirect or r.is_permanent_redirect:
+                    loc=r.headers.get('Location')
+                    if not loc: break
+                    url=urljoin(url,loc)
+                    continue
+                  if r.status_code==200 and len(body)>1000:
+                    soup=BeautifulSoup(body,'html.parser')
+                    links=[]
+                    for a in soup.find_all('a',href=True):
+                      text=' '.join(a.get_text(' ',strip=True).split())
+                      href=urljoin(url,a['href'])
+                      if '.gml' in href.lower() or 'download' in text.lower():
+                        links.append({'text':text,'href':href})
+                    successful.append({'start':start,'header_variant':hi,'final_url':url,'page_sha256':hashlib.sha256(body).hexdigest(),'links':links})
+                  break
+                except Exception as e:
+                  chain.append({'hop':hop,'url':url,'error':f'{type(e).__name__}:{e}'})
+                  break
+              results.append({'start':start,'header_variant':hi,'headers':headers,'chain':chain})
+
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'results':results,'successful_pages':successful,'successful_page_count':len(successful),'discovered_gml_link_count':sum(len(x['links']) for x in successful),'fake_data':False,'final_ready':False}
+          out=Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_download_redirect_diagnostic.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit redirect diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_download_redirect_diagnostic.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record HMLR download redirect diagnostic 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
