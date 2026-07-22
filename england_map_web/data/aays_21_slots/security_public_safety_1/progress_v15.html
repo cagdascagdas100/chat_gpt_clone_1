@@ -12,7 +12,7 @@
 </head>
 <body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
   <h1>Security / Public Safety — Shard 1</h1>
-  <div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY — LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Kanonik kabul kanıtı olmadan kalan kapılar PASS yapılmaz. Eksik kuvvet verileri ve CONNECT karşılaştırma sınırları açıkça korunur.</div>
+  <div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY — LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Kanonik kabul kanıtı olmadan kalan kapılar PASS yapılmaz. v17 mevcut 300 satırı yeniden üretmez; yalnız eksik canlı parity ve tarayıcı kapılarını çalıştırır.</div>
   <div class="cards">
     <div class="card">Genel ilerleme<br><strong id="percent">yükleniyor</strong></div>
     <div class="card">Tamamlanan kapı<br><strong id="gates">yükleniyor</strong></div>
@@ -21,10 +21,14 @@
     <div class="card">Resmî kaynak<br><strong id="sources">yükleniyor</strong></div>
     <div class="card">Örnek aday<br><strong id="samples">yükleniyor</strong></div>
     <div class="card">Örnek endpoint<br><strong id="sampleEndpoints">yükleniyor</strong></div>
+    <div class="card">No-replay<br><strong id="noReplay">yükleniyor</strong></div>
+    <div class="card">Endpoint worker<br><strong id="endpointWorkers">yükleniyor</strong></div>
     <div class="card">Kanonik parity<br><strong id="parity">PENDING</strong></div>
   </div>
   <h2>İşlem akışı</h2>
   <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
+  <h2>v17 yürütme optimizasyonu</h2>
+  <table><thead><tr><th>#</th><th>Kural</th><th>Değer</th><th>Etki</th></tr></thead><tbody id="optimizationBody"></tbody></table>
   <h2>Resmî kaynak yükseltmeleri</h2>
   <table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Güncel değer / kalite sınırı</th><th>URL</th></tr></thead><tbody id="sourceBody"></tbody></table>
   <h2>Örnek adaylar</h2>
@@ -41,7 +45,7 @@ const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
 (async()=>{
   const [progress,visible]=await Promise.all([get('official_web_refresh_20260722.json'),get('../../program_layer_matrix/security_public_safety_visible_rows.json')]);
-  const cp=progress.canonical_progress||{},prep=progress.preparation_progress||{},audit=progress.endpoint_sample_audit||{};
+  const cp=progress.canonical_progress||{},prep=progress.preparation_progress||{},audit=progress.endpoint_sample_audit||{},opt=progress.execution_optimization||{};
   percent.textContent=`${cp.overall_percent??0}% (Δ ${Number(cp.percent_change??0)>=0?'+':''}${cp.percent_change??0})`;
   gates.textContent=`${cp.completed_units??0}/${cp.total_units??0}`;
   const dataRows=Array.isArray(visible.rows)?visible.rows:[];
@@ -51,19 +55,31 @@ const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'
   sources.textContent=`${progress.official_web_checks_passed}/${progress.official_web_checks_total}`;
   samples.textContent=`${(progress.sample_candidates||[]).length} gösteriliyor`;
   sampleEndpoints.textContent=`${audit.unique_endpoints||0} / 6`;
+  noReplay.textContent=opt.hydration_replay_forbidden?'AKTİF':'KAPALI';
+  endpointWorkers.textContent=`${opt.parallel_endpoint_workers_max||0} eşzamanlı`;
   parity.textContent=`0/130 PENDING — 16 uç nokta`;
   const eventRows=[
     ['PASS','REMOTE_HEAD_SLOT_READBACK','Güncel branch HEAD ve yalnız security_public_safety_1 slot dosyaları doğrulandı.'],
-    ['PASS','HYDRATE_300_ROWS',`${dataRows.length} doğrulanmış LSOA proxy satırı remote artefakta bağlandı.`],
-    ['PASS','HTTP_200_AND_SHA256_PROOF','Önceki gerçek HTTP 200 ve SHA256 kanıtları korundu; hidrasyon tekrarlanmadı.'],
-    ['PASS','OFFICIAL_WEB_REFRESH_V2',`${progress.official_web_checks_passed}/${progress.official_web_checks_total} resmî kaynak okundu; ${prep.quality_limits_recorded||0} kalite sınırı açıkça kaydedildi.`],
+    ['PASS','REUSE_REMOTE_300_ROWS_NO_REPLAY',`${dataRows.length} doğrulanmış LSOA proxy satırı blob ${progress.remote_hydration_artifact?.blob_sha||'missing'} üzerinden yeniden kullanılacak; hydration çalıştırılmayacak.`],
+    ['PASS','HTTP_200_AND_SHA256_PROOF','Önceki gerçek HTTP 200 ve SHA256 kanıtları korundu; git-blob eşliği v17 içinde yeniden denetlenecek.'],
+    ['PASS','OFFICIAL_WEB_REFRESH_V3',`${progress.official_web_checks_passed}/${progress.official_web_checks_total} resmî kaynak okundu; ${prep.quality_limits_recorded||0} kalite sınırı kaydedildi.`],
     ['PASS','STATIC_ENDPOINT_SAMPLE_AUDIT',`${audit.rows_checked||0} satır, ${audit.unique_endpoints||0} endpoint, ${audit.accuracy_score_4_rows||0} doğruluk-4 ve ${audit.stored_http_200_rows||0} saklı HTTP-200; kabul kanıtı değildir.`],
-    ['PASS','WEB_LINE_ITEM_AND_REMOTE_ARTIFACT',`${dataRows.length} satır görünür; remote blob ${progress.remote_hydration_artifact?.blob_sha||'missing'}.`],
-    ['PENDING','CANONICAL_130_CANDIDATE_16_ENDPOINT_PARITY','V16 tek shared runner görevi 130 adayın count ve SHA parity kontrolünü 16 benzersiz resmî uç noktada çalıştıracak.'],
+    ['PASS','V17_WORKER_AND_QUEUE_READBACK','No-replay worker, JSON queue ve legacy queue remote HEAD üzerinden okundu.'],
+    ['PENDING','CANONICAL_130_CANDIDATE_16_ENDPOINT_PARITY',`v17, 16 benzersiz endpoint'i en fazla ${opt.parallel_endpoint_workers_max||0} worker ile birer kez çağıracak; ${opt.duplicate_live_requests_avoided_expected||0} tekrar istek önlenecek.`],
     ['PENDING','HEADLESS_BROWSER_DOM_CONSOLE_ACCEPTANCE','Gerçek tarayıcı, 300 DOM satırı, ürün matrisi LSOA proxy etiketi ve sıfır console error gerekli.'],
     ['PENDING','COMMIT_PUSH_REMOTE_READBACK','Kabul sonucu single publisher tarafından commit/push/readback yapılmalı.']
   ];
   events.innerHTML=eventRows.map((x,i)=>`<tr><td>${i+1}</td><td class="${x[0]}">${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
+  const optimizationRows=[
+    ['Mevcut satır yeniden kullanımı',`${opt.existing_remote_rows_reused||0}/300`,'Tamamlanmış hydration tekrarlanmaz'],
+    ['Hydration replay',String(opt.hydration_replay_forbidden),'CPU/disk ve sahte ilerleme önlenir'],
+    ['Kanonik aday',opt.canonical_candidates,'İlk 130 kaynaklı aday'],
+    ['Benzersiz canlı endpoint',opt.unique_live_endpoints,'Her URL yalnız bir kez çağrılır'],
+    ['Endpoint worker',opt.parallel_endpoint_workers_max,'Bağımsız istekler eşzamanlı yürür'],
+    ['Önlenen tekrar istek',opt.duplicate_live_requests_avoided_expected,'130 aday için 16 gerçek çağrı'],
+    ['Kaynak worker',opt.official_source_parallel_workers_max,'Resmî kaynak kontrolleri eşzamanlı yürür']
+  ];
+  optimizationBody.innerHTML=optimizationRows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
   sourceBody.innerHTML=(progress.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.value)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></td></tr>`).join('');
   candidateBody.innerHTML=(progress.sample_candidates||[]).map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.confidence_score)}%</td><td>${esc(x.stored_crime_count)}</td><td class="mono">${esc(x.stored_sha256)}</td><td><a href="${esc(x.official_api_url)}" target="_blank" rel="noopener">${esc(x.official_api_url)}</a></td><td class="PENDING">${esc(x.live_parity_status)}</td></tr>`).join('');
   endpointBody.innerHTML=(audit.distribution||[]).map((x,i)=>`<tr><td>${i+1}</td><td class="mono">${esc(x.endpoint)}</td><td>${esc(x.row_count)}</td><td class="PASS">STATIC PASS / LIVE PENDING</td></tr>`).join('');
@@ -71,6 +87,8 @@ const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'
   document.body.dataset.loadedCount=String(dataRows.length);
   document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300&&progress.parcel_measurement===false);
   document.body.dataset.sampleEndpoints=String(audit.unique_endpoints||0);
+  document.body.dataset.hydrationReplay=String(!opt.hydration_replay_forbidden);
+  document.body.dataset.v17Ready=String(progress.v17?.status==='READY_FOR_EXISTING_SINGLE_RUNNER');
 })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
 </script>
 </body>
