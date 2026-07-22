@@ -1,0 +1,40 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_2",
+  "generated_at": "2026-07-22T04:31:00Z",
+  "state": "WAVE1_RETRY2_RECOVERY_PUBLISHED_RUNNER_PICKUP_PENDING",
+  "operations_completed": 10,
+  "operations_total": 12,
+  "operations": [
+    {"row": 1, "operation": "project_structure_context_read", "state": "PASS", "evidence": "uploaded project structure treated as historical context; remote slot checkpoint remains authoritative"},
+    {"row": 2, "operation": "fresh_remote_head_readback", "state": "PASS", "evidence": "codex/aays-single-runner-v5-20260706"},
+    {"row": 3, "operation": "wave1_output_readback", "state": "PASS", "evidence": "output absent; no completion claimed"},
+    {"row": 4, "operation": "ownership_readback", "state": "PASS", "evidence": "ownership_latest state=unclaimed"},
+    {"row": 5, "operation": "stale_lease_expiry_reconciled", "state": "PASS", "evidence": "previous lease expired 2026-07-22T04:29:01.059876Z"},
+    {"row": 6, "operation": "old_wave1_attempt_superseded", "state": "PASS", "evidence": "attempt-001 superseded by attempt-002"},
+    {"row": 7, "operation": "dependent_96row_task_gated", "state": "PASS", "evidence": "waiting_dependency on wave1 output"},
+    {"row": 8, "operation": "wave1_retry2_priority_queue_published", "state": "PASS", "evidence": "pickup_requested priority=100; 8 source probes + 2 dataset downloads + 6 row checks"},
+    {"row": 9, "operation": "shared_current_task_and_heartbeat_reconciled", "state": "PASS", "evidence": "ready_for_claim; stale lease cleared; final_ready=false"},
+    {"row": 10, "operation": "hmlr_redirect_loop_route_replaced", "state": "PASS", "evidence": "official INSPIRE dataset page used by retry wrapper"},
+    {"row": 11, "operation": "existing_single_shared_runner_claim", "state": "PENDING", "evidence": "queue remains pickup_requested"},
+    {"row": 12, "operation": "twelve_row_official_join_output", "state": "PENDING", "evidence": "geometry_lsoa_police_sample_wave1_latest.json absent"}
+  ],
+  "active_candidate_rows": 12,
+  "prepared_candidate_rows": 96,
+  "officially_joined_candidate_rows": 0,
+  "promoted_candidate_rows": 0,
+  "business_rows_written": 0,
+  "parallelism": {"official_source_probes": 8, "dataset_downloads": 2, "row_checks": 6},
+  "hmlr_route": {
+    "official_dataset_page": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+    "current_publication_date": "2026-07-05",
+    "update_schedule": "first Sunday of each month",
+    "usage_limit": "indicative registered freehold extent; not definitive title boundary"
+  },
+  "blocker": "The existing single shared runner has not claimed retry-002 yet; no official parcel join or score is claimed.",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
