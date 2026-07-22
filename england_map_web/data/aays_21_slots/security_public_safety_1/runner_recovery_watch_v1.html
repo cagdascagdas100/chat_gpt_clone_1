@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security 1 — Shared Runner Recovery Watch</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:160px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.PASS,.STATIC_CONTRACT_PASS{font-weight:700}.PENDING,.RUNTIME_REQUIRED,.BLOCKED,.BLOCKED_DNS_TEMPORARY_FAILURE{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.muted{color:#52606d}</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>Shared Runner Recovery Watch</h1>
+<div class="note">Bu görünüm başka bir runner başlatmaz ve global aliası değiştirmez. Yalnız mevcut F-host tek shared runner recovery zincirini, eksik çıktıları ve fail-closed güvenlik kapılarını satır satır gösterir.</div>
+<div class="cards">
+<div class="card">Bağımlılık<br><strong id="depStatus">yükleniyor</strong></div>
+<div class="card">Alias görevi<br><strong id="aliasTask">yükleniyor</strong></div>
+<div class="card">Heartbeat<br><strong id="heartbeat">yükleniyor</strong></div>
+<div class="card">Queue<br><strong id="queue">yükleniyor</strong></div>
+<div class="card">Recovery preflight<br><strong id="preflight">yükleniyor</strong></div>
+<div class="card">Runner claim<br><strong id="claim">yükleniyor</strong></div>
+<div class="card">Security ilerleme<br><strong id="progress">yükleniyor</strong></div>
+</div>
+<h2>Recovery akışı</h2>
+<table><thead><tr><th>#</th><th>Durum</th><th>Adım</th><th>Kanıt / beklenen çıktı</th></tr></thead><tbody id="flow"></tbody></table>
+<h2>Fail-closed güvenlik kapıları</h2>
+<table><thead><tr><th>#</th><th>Kapı</th><th>Durum</th><th>Beklenen / hata durumu</th></tr></thead><tbody id="gates"></tbody></table>
+<h2>Bağımsız canlı örnek denemesi</h2>
+<table><thead><tr><th>Ortam</th><th>Deneme</th><th>HTTP sonucu</th><th>Durum</th><th>Kanonik etkisi</th></tr></thead><tbody id="probe"></tbody></table>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const cls=s=>String(s||'PENDING').replace(/[^A-Z0-9_]/g,'_');
+(async()=>{
+ const d=await get('shared_runner_dependency_latest.json');
+ const h=d.holder_readback||{},r=d.recovery_request||{},s=d.security_slot||{},p=d.external_sample_probe||{};
+ depStatus.textContent=d.status||'PENDING';aliasTask.textContent=d.global_control_alias?.holder_slot||'unknown';heartbeat.textContent=h.heartbeat_stale?'STALE':'CURRENT';queue.textContent=`P${h.queue_priority??'n/a'} ${h.queue_status||'unknown'}`;preflight.textContent=r.expected_preflight_output_present?'PASS':'PENDING';claim.textContent=r.runner_claim_observed?'PASS':'PENDING';progress.textContent=`${s.canonical_progress?.completed_units||0}/${s.canonical_progress?.total_units||8} — ${s.canonical_progress?.overall_percent||0}%`;
+ const rows=[
+  [h.heartbeat_stale?'BLOCKED':'PASS','READ_EXISTING_DAEMON_HEARTBEAT',h.last_observed_runner_heartbeat_at||'not_available'],
+  [r.queue_refresh_status?.startsWith('requested')?'PENDING':'PASS','QUEUE_REFRESH_REQUEST',r.queue_refresh_path],
+  [r.restart_request_status?.startsWith('waiting')?'PENDING':'PASS','GUARDED_RESTART_REQUEST',r.restart_request_path],
+  [r.expected_preflight_output_present?'PASS':'PENDING','OPERATOR_RECOVERY_PREFLIGHT',r.expected_preflight_output],
+  [r.runner_restart_observed?'PASS':'PENDING','EXISTING_PERSISTENT_DAEMON_RESTART',r.expected_restart_output],
+  [r.runner_claim_observed?'PASS':'PENDING','PRIORITY_1_TASK_CLAIM','height_difference_2 attempt 020'],
+  [r.runner_claim_observed?'PENDING':'BLOCKED','SECURITY_SLOT_CLAIM',s.first_unverified_step]
+ ];
+ flow.innerHTML=rows.map((x,i)=>`<tr><td>${i+1}</td><td class="${cls(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');
+ gates.innerHTML=(d.verified_fail_closed_gates||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.gate)}</td><td class="${cls(x.status)}">${esc(x.status)}</td><td>${esc(x.expected||x.expected_blob_sha||x.failure_status||'fail-closed')}</td></tr>`).join('');
+ probe.innerHTML=`<tr><td>${esc(p.environment)}</td><td>${esc(p.attempted_endpoints)}</td><td>${esc(p.http_results_obtained)}</td><td class="${cls(p.status)}">${esc(p.status)}</td><td>${p.canonical_acceptance_evidence===true?'ACCEPTED':'NONE — stored/live values unchanged'}</td></tr>`;
+ document.body.dataset.preflightPresent=String(Boolean(r.expected_preflight_output_present));document.body.dataset.runnerClaimObserved=String(Boolean(r.runner_claim_observed));document.body.dataset.failClosedGateCount=String((d.verified_fail_closed_gates||[]).length);document.body.dataset.externalProbeStatus=String(p.status||'unknown');document.body.dataset.semanticValid=String(d.acceptance_evidence===false&&d.final_ready===false&&d.global_control_alias?.overwrite_performed===false);
+})().catch(e=>{flow.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body></html>
