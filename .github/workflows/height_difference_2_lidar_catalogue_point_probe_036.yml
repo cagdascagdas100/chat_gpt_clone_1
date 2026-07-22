@@ -1,0 +1,66 @@
+name: height_difference_2 lidar catalogue point probe 036
+on:
+  push:
+    branches: [agent/hd2-lidar-catalogue-probe-036-20260722]
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_probe_trigger.json'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Query official EA catalogue services
+        run: |
+          python - <<'PY'
+          import json, requests, datetime, hashlib, pathlib
+          points = [
+            {"row_no":30762,"parcel_id":"parcel_30762","e":535564.995,"n":199388.108},
+            {"row_no":46142,"parcel_id":"parcel_46142","e":551991.914,"n":190529.339},
+            {"row_no":61522,"parcel_id":"parcel_61522","e":529493.381,"n":170122.189},
+          ]
+          roots = {
+            "time_stamped":"https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer",
+            "composite":"https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Composite_Catalogues/FeatureServer",
+          }
+          s=requests.Session(); s.headers.update({'User-Agent':'hd2-official-catalogue-probe/1.0'})
+          def getj(url, params=None):
+            r=s.get(url,params=params,timeout=60); r.raise_for_status(); return r.json(),r
+          out={"schema_version":1,"slot_id":"height_difference_2","generated_at":datetime.datetime.now(datetime.timezone.utc).isoformat(),"services":{},"rows":[]}
+          layer_sets={}
+          for role,base in roots.items():
+            meta,r=getj(base,{'f':'pjson'})
+            layers=meta.get('layers',[])
+            layer_sets[role]=layers
+            out['services'][role]={"url":base,"status":r.status_code,"response_sha256":hashlib.sha256(r.content).hexdigest(),"spatial_reference":meta.get('spatialReference'),"layers":layers}
+          for p in points:
+            row={**p,"time_stamped_layers":[],"composite_layers":[]}
+            for role,base in roots.items():
+              for layer in layer_sets[role]:
+                name=(layer.get('name') or '')
+                if 'DTM' not in name.upper(): continue
+                url=f"{base}/{layer['id']}/query"
+                params={'where':'1=1','geometry':f"{p['e']},{p['n']}",'geometryType':'esriGeometryPoint','inSR':'27700','spatialRel':'esriSpatialRelIntersects','outFields':'*','returnGeometry':'false','f':'pjson'}
+                data,r=getj(url,params)
+                feats=[x.get('attributes',{}) for x in data.get('features',[])]
+                key='time_stamped_layers' if role=='time_stamped' else 'composite_layers'
+                row[key].append({"layer_id":layer['id'],"layer_name":name,"status":r.status_code,"query_url":r.url,"response_sha256":hashlib.sha256(r.content).hexdigest(),"feature_count":len(feats),"features":feats})
+            out['rows'].append(row)
+          out['all_rows_have_time_stamped_dtm']=all(sum(x['feature_count'] for x in r['time_stamped_layers'])>0 for r in out['rows'])
+          out['all_rows_have_composite_dtm_lineage']=all(sum(x['feature_count'] for x in r['composite_layers'])>0 for r in out['rows'])
+          out['official_numeric_rows_written']=3; out['business_rows_written']=0; out['fake_data']=False; out['final_ready']=False
+          path=pathlib.Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_point_queries.json')
+          path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(out,indent=2,sort_keys=True),encoding='utf-8')
+          PY
+      - name: Commit receipt
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_point_queries.json
+          git commit -m 'height_difference_2: record EA lidar catalogue point queries 036' || exit 0
+          git push
