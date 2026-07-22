@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "internet_access_2",
   "parcel_partition": {
     "start": 30762,
@@ -7,26 +7,32 @@
     "count": 30761,
     "canonical_count": 92283
   },
-  "updated_at": "2026-07-22T04:20:00Z",
-  "state": "FULL_11013_ONSPD_IDENTITY_ACCEPTED_STRICT_OFCom_JOIN_QUEUED_PUBLISHER_RETRY_BLOCKED",
+  "updated_at": "2026-07-22T05:10:00Z",
+  "state": "FULL_11013_ONSPD_ACCEPTED_COORDINATOR_FIX_PUBLISHED_RUNTIME_RESTART_PENDING",
   "progress": {
     "current_identity_wave_completed_operations": 54,
     "current_identity_wave_total_operations": 55,
     "current_identity_wave_percent": 98.18,
-    "current_identity_wave_increase_percentage_points": 1.51,
+    "current_identity_wave_increase_this_turn_percentage_points": 0.0,
+    "current_identity_wave_cumulative_increase_percentage_points": 1.51,
     "expanded_task_set_completed": 3,
     "expanded_task_set_superseded": 1,
     "expanded_task_set_queued": 1,
     "expanded_task_set_total": 5,
     "expanded_task_set_completed_percent": 60.0,
+    "infrastructure_repair_completed": 4,
+    "infrastructure_repair_total": 5,
+    "infrastructure_repair_percent": 80.0,
+    "infrastructure_repair_increase_this_turn_percentage_points": 80.0,
     "product_plan_completed": 1,
     "product_plan_total": 9,
     "product_plan_percent": 11.11,
-    "product_plan_increase_percentage_points": 0.0
+    "product_plan_increase_this_turn_percentage_points": 0.0
   },
   "candidates": {
     "verified_postcode_identity_rows": 11013,
-    "verified_postcode_identity_increase": 10989,
+    "verified_postcode_identity_increase_this_turn": 0,
+    "verified_postcode_identity_cumulative_increase": 10989,
     "verified_live_postcodes": 11011,
     "verified_terminated_postcodes_review_required": 2,
     "verified_missing_postcodes": 0,
@@ -61,7 +67,10 @@
     {
       "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
       "authority": "Ofcom",
-      "state": "OFFICIAL_R2_ZIP_NOT_PRESENT_IN_PORTABLE_CACHE",
+      "publication_date": "2026-05-13",
+      "snapshot_date": "2026-01",
+      "official_zip_size_mb": 32.2,
+      "state": "OFFICIAL_ZIP_LINK_VERIFIED_BINARY_FETCH_BLOCKED",
       "expected_r2_postcode_files": 121,
       "api_subscription_key_required": true
     }
@@ -98,10 +107,10 @@
     }
   ],
   "web_visibility": {
-    "visible_operation_rows": 59,
+    "visible_operation_rows": 75,
     "visible_verified_candidate_rows": 11013,
     "featured_sample_rows": 6,
-    "total_primary_visible_rows": 11072,
+    "total_primary_visible_rows": 11088,
     "candidate_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json",
     "candidate_chunk_size": 500,
     "candidate_chunks": 23,
@@ -109,20 +118,27 @@
     "operation_files": [
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_parallel_source_research.jsonl",
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/009_task_contract_repairs.jsonl",
-      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/010_row_level_web_and_publisher_audit.jsonl"
+      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/010_row_level_web_and_publisher_audit.jsonl",
+      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/011_coordinator_readback_and_ofcom_route.jsonl"
     ]
   },
   "publisher": {
-    "state": "PUBLISH_PENDING",
-    "error": "PUBLISH_REMOTE_READBACK_MISMATCH",
-    "root_cause": "exact remote head equality is fragile on an active shared branch",
-    "safe_fix_prepared": "accept local publish commit when it is an ancestor of remote head",
+    "persistent_fix_state": "PUBLISHED_REMOTE_READBACK_PASS",
+    "persistent_fix_commit": "5281ee42568b00a79e705a961ef853af974d810d",
+    "wrapper_blob": "e20b527e34e8f465899f82c93746ad220269498d",
+    "original_blob": "4860709c4c09c1ca1231d935990cf8f22b824399",
+    "fix_semantics": "accept exact equality or proven local-publish-commit ancestry in remote HEAD",
+    "force_push_used": false,
+    "concurrent_commits_lost": 0,
+    "current_runtime_state": "PUBLISH_PENDING_OLD_CODE_IN_MEMORY",
+    "current_runtime_error": "PUBLISH_REMOTE_READBACK_MISMATCH",
+    "next_required_runtime_action": "RESTART_EXISTING_CANONICAL_COORDINATOR_TO_LOAD_WRAPPER",
     "shared_slot_proofs_edited": false
   },
   "blockers": [
-    "OFFICIAL_OFCom_R2_ZIP_NOT_PRESENT_OR_SCHEMA_NOT_ACCEPTED",
-    "EXACT_OFCom_JOIN_PENDING_COORDINATOR_PICKUP",
-    "PUBLISH_REMOTE_READBACK_MISMATCH"
+    "EXISTING_CANONICAL_COORDINATOR_RESTART_REQUIRED_TO_LOAD_PERSISTENT_FIX",
+    "OFFICIAL_OFCom_R2_ZIP_BINARY_FETCH_BLOCKED",
+    "EXACT_OFCom_JOIN_PENDING_COORDINATOR_PICKUP"
   ],
   "final_ready": false,
   "fake_data": false,
