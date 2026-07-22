@@ -26,9 +26,10 @@
 </main>
 <script>
 async function load(){
-  const [progress,feed]=await Promise.all([
+  const [progress,baseFeed,revision6Feed]=await Promise.all([
     fetch('./progress_latest.json',{cache:'no-store'}).then(r=>r.json()),
-    fetch('./operation_feed_latest.json',{cache:'no-store'}).then(r=>r.json())
+    fetch('./operation_feed_latest.json',{cache:'no-store'}).then(r=>r.json()),
+    fetch('./operation_feed_revision6_latest.json',{cache:'no-store'}).then(r=>r.json())
   ]);
   const accuracy=progress.source_accuracy_scores||{};
   const cards=[
@@ -37,18 +38,22 @@ async function load(){
     ['İşlem',progress.completed_operations+'/'+progress.total_operations],
     ['Aday',progress.candidate_rows_revalidated+'/'+progress.candidate_rows_prepared],
     ['Test',progress.worker_contract_tests_executed+'/'+progress.worker_contract_tests_prepared],
+    ['Kaynak preflight',progress.official_source_preflights_executed+'/'+progress.official_source_preflights_prepared],
+    ['Kalite kapısı',String(progress.quality_gates_prepared)],
     ['Kaynak kaydı',String(progress.source_registry_entries)],
     ['Ofcom doğruluğu',(accuracy.ofcom??'-')+'/100'],
     ['ONSPD doğruluğu',(accuracy.onspd??'-')+'/100'],
     ['HMLR doğruluğu',(accuracy.hmlr_inspire??'-')+'/100'],
+    ['HMLR kabul eşiği',Math.round((progress.hmlr_minimum_match_ratio||0)*100)+'%'],
     ['Parsel eşleşmesi',progress.parcel_match_accuracy_score+'/100'],
     ['Yazılan gerçek satır',String(progress.actual_business_data_rows_written)],
     ['Runner pickup',progress.runner_pickup_observed?'EVET':'HAYIR']
   ];
+  const operations=[...(baseFeed.operations||[]),...(revision6Feed.operations||[])].sort((a,b)=>a.sequence-b.sequence);
   document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
   document.getElementById('blocker').textContent='Blocker: '+progress.current_blocker+' · Sonraki adım: '+progress.next_step;
-  document.getElementById('ops').innerHTML=feed.operations.map(o=>`<tr><td>${o.sequence}</td><td class="${o.status}">${o.status}</td><td>${o.operation}</td><td>${o.detail}</td></tr>`).join('');
-  document.getElementById('updated').textContent='Güncelleme: '+progress.updated_at+' · final_ready='+progress.final_ready+' · kapsam='+progress.progress_scope;
+  document.getElementById('ops').innerHTML=operations.map(o=>`<tr><td>${o.sequence}</td><td class="${o.status}">${o.status}</td><td>${o.operation}</td><td>${o.detail}</td></tr>`).join('');
+  document.getElementById('updated').textContent='Güncelleme: '+progress.updated_at+' · işlem satırı='+operations.length+' · final_ready='+progress.final_ready+' · kapsam='+progress.progress_scope;
 }
 load().catch(err=>{document.getElementById('updated').textContent='Veri yüklenemedi: '+err.message});
 setInterval(load,30000);
