@@ -10,55 +10,54 @@
     "end": 61522,
     "count": 30761
   },
-  "task_id": "internet-access-2-expand-onspd-identity-existing-11013-v2-20260722T034500Z",
-  "attempt_id": "cab1f70be13442cba0ce19118dd6a07a",
-  "idempotency_key": "e5d9209ca8e9f8ca3f4a769cb32ddd49d60320ce71e723f36d218dd82893b0fc",
+  "task_id": "internet-access-2-ofcom-zip-schema-preflight-v2-20260722T034700Z",
+  "attempt_id": "e502af804cf7471e8554d48f1155cc20",
+  "idempotency_key": "64d00bf28b41451685df47c13c58d10b85df8b627e14806abfed692304203387",
   "status": "queued",
   "priority": "P0",
   "dependency_state": "SATISFIED_BY_REMOTE_VALIDATION",
   "dependency_evidence": {
-    "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
     "validation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/004_24_sample_validation.json",
     "sample_rows": 24,
     "postcode_identity_confirmed": 24,
     "postcode_live": 24,
     "postcode_not_confirmed": 0
   },
-  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/005b_expand_onspd_identity_to_existing_11013.py",
-  "read_paths": [
-    "england_map_web/data/program_layer_matrix/internet.geojson",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/004_24_sample_validation.json"
-  ],
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/008_ofcom_zip_schema_preflight.py",
+  "read_paths": [],
   "exact_write_paths": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/008_ofcom_zip_schema_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/008_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/008_ofcom_zip_schema_preflight_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/reports/008_ofcom_zip_schema_preflight.md"
   ],
   "resource_class": [
-    "light_read",
-    "network_fetch"
+    "light_read"
   ],
   "requires_git_publish_gate": false,
   "requires_runtime_sync_gate": false,
   "requires_browser_acceptance_gate": false,
   "requires_shared_publish_gate": false,
-  "timeout_seconds": 7200,
+  "timeout_seconds": 900,
   "data_quality_contract": {
     "source_urls": [
-      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONS_Postcode_Directory_%28May_2026%29_for_the_United_Kingdom_%28Hosted_Table%29/FeatureServer/0",
-      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0",
-      "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026"
+      "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data---fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf"
     ],
-    "source_snapshot_date": "ONSPD 2026-05; Ofcom 2026-01",
+    "source_snapshot_date": "Ofcom 2026-01; v2 correction 2026-07-07",
     "source_discovery_required": false,
-    "measurement_level": "postcode",
-    "output_semantics": "AREA_LEVEL_PROXY",
-    "parcel_binding_method": "retain canonical row_no parcel_id and HMLR identity; normalize postcode to PCDS; exact official postcode lookup in 100-row batches; preserve every input row",
-    "confidence_method": "exact live ONSPD match confirms postcode identity at 2/4 only; no coverage score without exact Ofcom r2 row",
+    "measurement_level": "document",
+    "output_semantics": "NO_DATA",
+    "parcel_binding_method": "none; validate only the official cached ZIP, exactly 121 r2 postcode files, a non-empty sample file and all required core columns",
+    "confidence_method": "no candidate accuracy is written by this task",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only",
     "human_review_required_when": [
-      "official postcode lookup is incomplete after two official services",
-      "postcode is terminated",
-      "Ofcom coverage row is unavailable"
+      "ZIP is absent or invalid",
+      "r2 postcode file count is not exactly 121",
+      "a sample postcode file is empty",
+      "required postcode gigabit UFBB100 SFBB or unable30 columns are absent"
     ]
   },
   "safety_flags": {
@@ -68,13 +67,13 @@
     "production_deploy": false
   },
   "final_ready": false,
-  "requested_at": "2026-07-22T03:45:00Z",
-  "correction": "NEW_TASK_ID_AFTER_COORDINATOR_SEEN_SET_AND_REMOTE_DEPENDENCY_ACCEPTANCE",
+  "requested_at": "2026-07-22T03:47:00Z",
+  "correction": "VALID_COORDINATOR_ENUMS_AND_NEW_TASK_ID_AFTER_SEEN_SET",
   "legacy_queue_status": "queued",
   "compatibility_migrated": false,
-  "compatibility_source_queue": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_expand_onspd_identity_existing_11013_005.v3.task.json",
+  "compatibility_source_queue": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_zip_schema_preflight_008.v3.task.json",
   "state": "PUBLISHING",
-  "updated_at": "2026-07-22T03:59:54.669261Z",
+  "updated_at": "2026-07-22T04:03:44.425040Z",
   "blocker": null,
   "result": null
 }
