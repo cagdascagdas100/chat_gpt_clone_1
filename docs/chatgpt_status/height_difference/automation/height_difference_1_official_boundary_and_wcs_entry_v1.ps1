@@ -12,8 +12,9 @@ $repoRoot = if ($env:AAYS_REPO_ROOT) {
 $guardPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_ea_raster_guard_v1.py'
 $injectorPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_runtime_guard_injector_v1.py'
 $identityInjectorPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_measurement_identity_injector_v1.py'
+$boundaryInjectorPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_boundary_binding_injector_v1.py'
 $carrierPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_official_boundary_and_wcs_v1.ps1'
-foreach ($required in @($guardPath, $injectorPath, $identityInjectorPath, $carrierPath)) {
+foreach ($required in @($guardPath, $injectorPath, $identityInjectorPath, $boundaryInjectorPath, $carrierPath)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "HEIGHT_DIFFERENCE_1_ENTRY_FILE_MISSING: $required" }
 }
 
@@ -68,6 +69,8 @@ $guardedCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and
 $guardInjectorReceiptPath = Join-Path $tempRoot 'height_difference_1_runtime_guard_injector_receipt.json'
 $identityBoundCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_identity_bound.ps1'
 $identityInjectorReceiptPath = Join-Path $tempRoot 'height_difference_1_measurement_identity_injector_receipt.json'
+$strictBoundaryCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_strict_interior.ps1'
+$boundaryInjectorReceiptPath = Join-Path $tempRoot 'height_difference_1_boundary_binding_injector_receipt.json'
 
 try {
   $guardRun = Invoke-PythonEntry -Arguments @($guardPath, '--self-test')
@@ -130,6 +133,30 @@ try {
   Assert-PathSizeHashReceipt -Receipt $identityReceipt -ExpectedSource $guardedCarrier -ExpectedOutput $identityBoundCarrier -Label 'MEASUREMENT_IDENTITY'
   if (([string]$identityReceipt.source_sha256).ToLowerInvariant() -ne ([string]$injectorReceipt.output_sha256).ToLowerInvariant()) { throw 'TWO_STAGE_INJECTOR_HASH_CHAIN_MISMATCH' }
 
+  $boundarySelfTest = Invoke-PythonEntry -Arguments @($boundaryInjectorPath, '--self-test')
+  if ($boundarySelfTest.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $boundarySelfTest.Code }
+  $boundarySelfReceipt = Get-LastJsonReceipt -Lines $boundarySelfTest.Lines -MissingLabel 'BOUNDARY_BINDING_INJECTOR_SELF_TEST_JSON_MISSING'
+  if ($boundarySelfReceipt.slot_id -ne 'height_difference_1' -or $boundarySelfReceipt.state -ne 'PASS') { throw 'BOUNDARY_BINDING_INJECTOR_SELF_TEST_INVALID' }
+  if ([string]$boundarySelfReceipt.script_version -ne '1.0-strict-interior-boundary-touch-rejection-injector') { throw 'BOUNDARY_BINDING_INJECTOR_SELF_TEST_VERSION_INVALID' }
+  if ([int]$boundarySelfReceipt.checks -ne 10) { throw "BOUNDARY_BINDING_INJECTOR_CHECK_COUNT_INVALID: $($boundarySelfReceipt.checks)" }
+
+  $boundaryRun = Invoke-PythonEntry -Arguments @($boundaryInjectorPath, '--carrier', $identityBoundCarrier, '--output', $strictBoundaryCarrier, '--receipt', $boundaryInjectorReceiptPath)
+  if ($boundaryRun.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $boundaryRun.Code }
+  foreach ($requiredOutput in @($strictBoundaryCarrier, $boundaryInjectorReceiptPath)) {
+    if (-not (Test-Path -LiteralPath $requiredOutput -PathType Leaf)) { throw "BOUNDARY_BINDING_INJECTOR_OUTPUT_MISSING: $requiredOutput" }
+  }
+  $boundaryReceipt = Get-Content -LiteralPath $boundaryInjectorReceiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  if ($boundaryReceipt.slot_id -ne 'height_difference_1' -or $boundaryReceipt.state -ne 'COMPLETED_STRICT_INTERIOR_BOUNDARY_GUARD_INJECTED') { throw 'BOUNDARY_BINDING_INJECTOR_RECEIPT_INVALID' }
+  if ([string]$boundaryReceipt.script_version -ne '1.0-strict-interior-boundary-touch-rejection-injector') { throw 'BOUNDARY_BINDING_INJECTOR_VERSION_INVALID' }
+  if ([int]$boundaryReceipt.runtime_patch_count -ne 2) { throw 'BOUNDARY_BINDING_PATCH_COUNT_INVALID' }
+  foreach ($label in @('STRICT_INTERIOR_POLYGON_MATCHER','BOUNDARY_TOUCH_REJECTION_GATE')) {
+    if (@($boundaryReceipt.runtime_patch_labels) -notcontains $label) { throw "BOUNDARY_BINDING_PATCH_LABEL_MISSING: $label" }
+  }
+  if ([string]$boundaryReceipt.binding_semantics -ne 'strict_polygon_interior_only') { throw 'BOUNDARY_BINDING_SEMANTICS_INVALID' }
+  if ([string]$boundaryReceipt.boundary_touch_policy -ne 'reject_canonical_binding') { throw 'BOUNDARY_TOUCH_POLICY_INVALID' }
+  Assert-PathSizeHashReceipt -Receipt $boundaryReceipt -ExpectedSource $identityBoundCarrier -ExpectedOutput $strictBoundaryCarrier -Label 'BOUNDARY_BINDING'
+  if (([string]$boundaryReceipt.source_sha256).ToLowerInvariant() -ne ([string]$identityReceipt.output_sha256).ToLowerInvariant()) { throw 'THREE_STAGE_INJECTOR_HASH_CHAIN_MISMATCH' }
+
   Write-Output 'EA_RASTER_GUARD_PREFLIGHT=PASS'
   Write-Output 'EA_RASTER_GUARD_CHECKS=8'
   Write-Output 'RUNTIME_GUARD_INJECTOR_SELF_TEST=PASS'
@@ -138,7 +165,12 @@ try {
   Write-Output 'MEASUREMENT_IDENTITY_INJECTOR_SELF_TEST=PASS'
   Write-Output 'MEASUREMENT_IDENTITY_INJECTOR_CHECKS=13'
   Write-Output 'MEASUREMENT_IDENTITY_PATCH_COUNT=4'
-  Write-Output 'TWO_STAGE_INJECTOR_HASH_CHAIN=VERIFIED'
+  Write-Output 'BOUNDARY_BINDING_INJECTOR_SELF_TEST=PASS'
+  Write-Output 'BOUNDARY_BINDING_INJECTOR_CHECKS=10'
+  Write-Output 'BOUNDARY_BINDING_PATCH_COUNT=2'
+  Write-Output 'THREE_STAGE_INJECTOR_HASH_CHAIN=VERIFIED'
+  Write-Output 'STRICT_POLYGON_INTERIOR_ONLY=ENABLED'
+  Write-Output 'BOUNDARY_TOUCH_CANONICAL_BINDING=REJECTED'
   Write-Output 'PROBE_RASTER_CONTENT_GATE=ENABLED'
   Write-Output 'HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE=ENABLED'
   Write-Output 'HMLR_MEASUREMENT_IDENTIFIER_BINDING_GATE=ENABLED'
@@ -147,7 +179,7 @@ try {
   $shell = Get-Command powershell -ErrorAction SilentlyContinue
   if (-not $shell) { $shell = Get-Command pwsh -ErrorAction SilentlyContinue }
   if (-not $shell) { throw 'POWERSHELL_CHILD_EXECUTABLE_NOT_FOUND' }
-  $carrierLines = & $shell.Source -NoProfile -ExecutionPolicy Bypass -File $identityBoundCarrier 2>&1
+  $carrierLines = & $shell.Source -NoProfile -ExecutionPolicy Bypass -File $strictBoundaryCarrier 2>&1
   $carrierExit = $LASTEXITCODE
   foreach ($line in @($carrierLines)) { [Console]::Out.WriteLine([string]$line) }
   if ($null -eq $carrierExit) { $carrierExit = 1 }
@@ -157,4 +189,6 @@ try {
   Remove-Item -LiteralPath $guardInjectorReceiptPath -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $identityBoundCarrier -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $identityInjectorReceiptPath -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $strictBoundaryCarrier -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $boundaryInjectorReceiptPath -Force -ErrorAction SilentlyContinue
 }
