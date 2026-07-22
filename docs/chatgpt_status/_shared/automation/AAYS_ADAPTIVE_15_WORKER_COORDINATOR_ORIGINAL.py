@@ -2078,14 +2078,40 @@ class Coordinator:
                         check=False,
                     )
                 if completed.returncode != 0:
-                    state = "BLOCKED"
-                    result = {"state": state, "exit_code": completed.returncode, "log": str(log.relative_to(self.root))}
+                    if task.get("continue_after_no_data"):
+                        state = "NO_DATA_CONTINUE"
+                        result = {
+                            "state": state,
+                            "exit_code": completed.returncode,
+                            "log": str(log.relative_to(self.root)),
+                            "source_discovery_policy": task.get("source_discovery_policy"),
+                            "user_source_required": False,
+                            "email_or_account_source_used": False,
+                            "fake_data": False,
+                            "reason": "SOURCE_DISCOVERY_EXECUTED_WITHOUT_USABLE_DATA",
+                        }
+                    else:
+                        state = "BLOCKED"
+                        result = {"state": state, "exit_code": completed.returncode, "log": str(log.relative_to(self.root))}
                 else:
                     self.write_slot_runtime_state(slot_id, task, "RESULT_READY_FOR_SERIAL_PUBLISH")
                     item_path = self.prepare_publish_item(source, task, worktree, base_head)
                     if item_path is None:
-                        state = "BLOCKED_NO_DECLARED_OUTPUT"
-                        result = {"state": state, "exit_code": 0, "log": str(log.relative_to(self.root))}
+                        if task.get("continue_after_no_data"):
+                            state = "NO_DATA_CONTINUE"
+                            result = {
+                                "state": state,
+                                "exit_code": 0,
+                                "log": str(log.relative_to(self.root)),
+                                "source_discovery_policy": task.get("source_discovery_policy"),
+                                "user_source_required": False,
+                                "email_or_account_source_used": False,
+                                "fake_data": False,
+                                "reason": "SOURCE_DISCOVERY_COMPLETED_WITHOUT_DECLARED_OUTPUT",
+                            }
+                        else:
+                            state = "BLOCKED_NO_DECLARED_OUTPUT"
+                            result = {"state": state, "exit_code": 0, "log": str(log.relative_to(self.root))}
                     else:
                         self.write_slot_runtime_state(slot_id, task, "PUBLISHING")
                         publish_result = self.publish_item(item_path)
