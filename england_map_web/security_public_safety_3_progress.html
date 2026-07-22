@@ -50,17 +50,18 @@ function manifestTable(m){const hashes=m.final_artifact_sha256||{};const rows=Ob
 function sourcesTable(rows){return `<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Ad</th><th>Yayıncı</th><th>Doğruluk</th><th>Karar</th><th>Kanıt tarihi</th><th>Tazelik</th><th>Kullanım sınırı</th><th>Resmî URL</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.source_id)}</td><td>${esc(r.name)}</td><td>${esc(r.publisher)}</td><td>${esc(r.authority_accuracy)}</td><td>${esc(r.decision)}</td><td>${esc(r.evidence_date)}</td><td>${esc(r.freshness_status)}</td><td>${esc(r.semantic_limit)}</td><td class="url"><a href="${esc(r.official_url)}" target="_blank" rel="noopener">${esc(r.official_url)}</a></td></tr>`).join('')}</tbody></table>`}
 async function main(){
   try{
-    const[p,o,so,lo,qo,xo,io,po,fo,manifest,smoke,r,s]=await Promise.all([
-      load('security_public_safety_3_progress_latest.json'),load('security_public_safety_3_operations_latest.json'),load('security_public_safety_3_smoke_operations_latest.json'),load('security_public_safety_3_stream_operations_latest.json'),load('security_public_safety_3_quorum_operations_latest.json'),load('security_public_safety_3_lineage_operations_latest.json'),load('security_public_safety_3_immutable_operations_latest.json'),load('security_public_safety_3_publication_operations_latest.json'),load('security_public_safety_3_final_manifest_operations_latest.json'),load('security_public_safety_3_publication_manifest_latest.json'),load('security_public_safety_3_smoke_rows_latest.json'),load('security_public_safety_3_rows_latest.json'),load('security_public_safety_3_source_candidates_latest.json')
+    const[p,o,so,lo,qo,xo,io,po,fo,manifest,smoke,r,s,s5]=await Promise.all([
+      load('security_public_safety_3_progress_latest.json'),load('security_public_safety_3_operations_latest.json'),load('security_public_safety_3_smoke_operations_latest.json'),load('security_public_safety_3_stream_operations_latest.json'),load('security_public_safety_3_quorum_operations_latest.json'),load('security_public_safety_3_lineage_operations_latest.json'),load('security_public_safety_3_immutable_operations_latest.json'),load('security_public_safety_3_publication_operations_latest.json'),load('security_public_safety_3_final_manifest_operations_latest.json'),load('security_public_safety_3_publication_manifest_latest.json'),load('security_public_safety_3_smoke_rows_latest.json'),load('security_public_safety_3_rows_latest.json'),load('security_public_safety_3_source_candidates_latest.json'),load('security_public_safety_3_source_candidates_batch5_latest.json')
     ]);
     const operationByLine=new Map();[...so.rows,...lo.rows,...qo.rows,...xo.rows,...io.rows,...po.rows,...fo.rows].forEach(row=>operationByLine.set(Number(row.line),row));
     const effectiveSmokeOperations=[...operationByLine.values()].sort((a,b)=>Number(a.line)-Number(b.line));
+    const sourceRows=[...(s.rows||[]),...(s5.rows||[])].sort((a,b)=>Number(a.line)-Number(b.line));
     const finalHashCount=Object.keys(manifest.final_artifact_sha256||{}).length;
-    const sourceCandidateCount=s.rows.length;
-    const promotedSourceCount=s.rows.filter(x=>String(x.decision||'').startsWith('promoted')).length;
-    const heldSourceCount=s.rows.filter(x=>String(x.decision||'').startsWith('held')).length;
-    const accuracy90Count=s.rows.filter(x=>Number(x.authority_accuracy)>=90).length;
-    const accuracy95Count=s.rows.filter(x=>Number(x.authority_accuracy)>=95).length;
+    const sourceCandidateCount=sourceRows.length;
+    const promotedSourceCount=sourceRows.filter(x=>String(x.decision||'').startsWith('promoted')).length;
+    const heldSourceCount=sourceRows.filter(x=>String(x.decision||'').startsWith('held')).length;
+    const accuracy90Count=sourceRows.filter(x=>Number(x.authority_accuracy)>=90).length;
+    const accuracy95Count=sourceRows.filter(x=>Number(x.authority_accuracy)>=95).length;
     const visibleOperationRows=o.rows.length+effectiveSmokeOperations.length;
     document.getElementById('summary').innerHTML=
       card('Genel ilerleme','%'+p.overall_progress_percent,'ok')+card('Artış','+'+p.progress_delta_percent+'%','ok')+card('İşlemler',p.completed_operations+' / '+p.total_operations)+card('Web işlem satırı',visibleOperationRows)+
@@ -73,7 +74,7 @@ async function main(){
       card('Canonical queue',p.smoke_queue_visible?'hazır':'bekliyor',p.smoke_queue_visible?'ok':'warn')+card('Runner heartbeat',p.runner_heartbeat_fresh?'taze':'eski',p.runner_heartbeat_fresh?'ok':'bad');
     const caveats=(p.data_police_quality_caveats||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
     document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><b>Resmî veri kalite uyarıları</b><ul>'+caveats+'</ul><div class="muted">Smoke başarı kuralı: '+esc(p.smoke_success_rule)+'</div><div class="muted">Final manifest denetimi: '+esc(p.final_artifact_manifest_audit||'')+'</div><div class="muted">Final manifest veri yolu: '+esc(p.final_publication_manifest||'')+'</div><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
-    document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,manifest,false,true,true);document.getElementById('smokeOperations').innerHTML=operationsTable(effectiveSmokeOperations);document.getElementById('manifest').innerHTML=manifestTable(manifest);document.getElementById('operations').innerHTML=operationsTable(o.rows);document.getElementById('rows').innerHTML=rowsTable(r.rows,manifest,true,false,false);document.getElementById('sources').innerHTML=sourcesTable(s.rows);
+    document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,manifest,false,true,true);document.getElementById('smokeOperations').innerHTML=operationsTable(effectiveSmokeOperations);document.getElementById('manifest').innerHTML=manifestTable(manifest);document.getElementById('operations').innerHTML=operationsTable(o.rows);document.getElementById('rows').innerHTML=rowsTable(r.rows,manifest,true,false,false);document.getElementById('sources').innerHTML=sourcesTable(sourceRows);
   }catch(e){document.body.insertAdjacentHTML('beforeend','<div class="error">'+esc(e.stack||e)+'</div>')}
 }
 main();setInterval(main,60000);
