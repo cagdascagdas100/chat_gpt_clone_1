@@ -5,66 +5,62 @@
   "slot_id": "gas_emissions_1",
   "base_slot_id": "gas_emissions",
   "shard_index": 1,
-  "task_id": "gas_emissions_1_registry_geometry_preflight_20260720_01",
-  "attempt_id": "gas-emissions-1-registry-preflight-a1",
-  "idempotency_key": "gas_emissions_1:2eb5e2437c11772c98b7faefcc15d2f68d4a4682:registry_geometry_preflight",
+  "task_id": "gas_emissions_1_registry_geometry_preflight_v2_20260722_01",
+  "attempt_id": "gas-emissions-1-registry-preflight-v2-a1",
+  "idempotency_key": "gas_emissions_1:registry_geometry_preflight_v2_20260722_01:security_parcel_id_mmap",
   "status": "queued",
+  "state": "QUEUED_AWAITING_EXISTING_SINGLE_SHARED_RUNNER",
   "target_branch": "codex/aays-single-runner-v5-20260706",
-  "remote_head_basis": "2eb5e2437c11772c98b7faefcc15d2f68d4a4682",
-  "first_unverified_step": "VERIFY_CANONICAL_92283_PARCEL_ID_AND_GEOMETRY_BEFORE_SAMPLE_BINDING",
-  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/AUDIT_CANONICAL_PARCEL_REGISTRY_AND_GEOMETRY_20260720.py",
+  "completed_task_not_replayed": "gas_emissions_1_registry_geometry_preflight_20260720_01",
+  "previous_result": "BLOCKED_NO_VERIFIED_92283_GEOMETRY_REGISTRY_DUE_TO_UNRECOGNISED_SECURITY_PARCEL_ID_AND_50MB_LIMIT",
+  "first_unverified_step": "EXECUTE_V2_MMAP_AUDIT_VERIFY_92283_CONTINUOUS_SECURITY_PARCEL_IDS_AND_POINT_GEOMETRIES",
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/AUDIT_CANONICAL_PARCEL_REGISTRY_AND_GEOMETRY_20260722_V2.py",
   "read_paths": [
-    "docs/chatgpt_status",
-    "england_map_web",
-    "outputs"
+    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1",
+    "england_map_web/data/aays_21_slots/gas_emissions_1"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_registry_geometry_preflight_latest.json",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_registry_geometry_preflight_latest.json"
   ],
-  "resource_class": "light_read",
-  "parcel_partition": {
-    "start": 1,
-    "end": 30761,
-    "count": 30761,
-    "canonical_count": 92283
-  },
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
-  },
+  "published_evidence_paths": [
+    "england_map_web/data/aays_21_slots/gas_emissions_1/registry_permit_proximity_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/registry_permit_proximity.html"
+  ],
+  "resource_class": ["large_single_line_geojson", "mmap_read", "light_cpu"],
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
+  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
   "data_quality_contract": {
-    "source_urls": [],
-    "source_snapshot_date": "",
-    "source_discovery_required": true,
-    "measurement_level": "unknown_pending_source",
-    "output_semantics": "NO_DATA",
-    "parcel_binding_method": "NOT_RUN_UNTIL_92283_UNIQUE_IDS_AND_GEOMETRY_VERIFIED",
-    "confidence_method": "BOUNDED_TRACKED_FILE_SCAN_AND_EXACT_ROW_ID_GEOMETRY_COUNTS",
+    "source_snapshot_date": "2026-07-22",
+    "measurement_level": "canonical_point_geometry_identity_and_effective_permit_proximity_candidate",
+    "output_semantics": "REGISTRY_AND_PROXIMITY_EVIDENCE_ONLY_NO_EMISSION_VALUE",
+    "parcel_binding_method": "NO_EMISSION_BINDING_UNTIL_92283_ID_GEOMETRY_CONTINUITY_AND_OFFICIAL_EMISSION_SCHEMA_VERIFIED",
+    "confidence_method": "FULL_MMAP_ID_GEOMETRY_COUNT_PLUS_CURRENT_EFFECTIVE_EA_PERMIT_GRID_REFERENCE",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "not_used",
-    "human_review_required_when": [
-      "source_conflict",
-      "low_confidence",
-      "geometry_mismatch",
-      "duplicate_parcel_id",
-      "canonical_count_mismatch"
+    "required_checks": [
+      "92283 Feature rows",
+      "92283 unique security_parcel_id values",
+      "continuous parcel_1 through parcel_92283",
+      "zero duplicate IDs",
+      "92283 Point geometries",
+      "security scores ignored and not copied"
     ]
   },
+  "prepared_evidence": {"sample_parcel_points": 11, "effective_permit_sources": 3, "proximity_candidate_rows": 11, "candidate_confidence_ge_99": 11, "measured_emission_rows": 0},
   "single_runner_only": true,
   "new_runner": false,
   "parallel_runner": false,
-  "timeout_seconds": 900,
+  "timeout_seconds": 1200,
+  "updated_at": "2026-07-22T02:20:34Z",
+  "blocker": "WAITING_FOR_EXISTING_SINGLE_SHARED_RUNNER_TO_EXECUTE_V2_MMAP_AUDIT",
+  "runner_pickup_observed": false,
+  "runner_execution_claimed": false,
+  "result": null,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false,
-  "state": "PUBLISHING",
-  "updated_at": "2026-07-22T01:16:35.153011Z",
-  "blocker": null,
-  "result": null
+  "production_deploy": false
 }
