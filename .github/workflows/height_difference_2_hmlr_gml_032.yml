@@ -1,0 +1,194 @@
+name: height_difference_2 HMLR GML acquisition 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+
+permissions:
+  contents: write
+
+jobs:
+  hmlr-gml:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - name: Resolve, download and hash three official HMLR GML files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import html.parser
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          from urllib.request import Request, urlopen
+
+          context_path = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_ons_context_runtime_032.json')
+          output_path = Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_gml_acquisition_runtime_032.json')
+          receipt_path = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/030_hmlr_gml_acquisition_runtime_032.json')
+          download_page = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          user_agent = 'AAYS-height-difference-2-hmlr/1.0'
+          max_bytes = 700_000_000
+
+          class TableRows(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_row = False
+                  self.text = []
+                  self.links = []
+                  self.rows = []
+              def handle_starttag(self, tag, attrs):
+                  tag = tag.lower()
+                  if tag == 'tr':
+                      self.in_row = True
+                      self.text = []
+                      self.links = []
+                  elif self.in_row and tag == 'a':
+                      href = dict(attrs).get('href')
+                      if href:
+                          self.links.append(href)
+              def handle_data(self, data):
+                  if self.in_row and data.strip():
+                      self.text.append(data.strip())
+              def handle_endtag(self, tag):
+                  if tag.lower() == 'tr' and self.in_row:
+                      self.rows.append({'text': ' '.join(self.text), 'links': list(self.links)})
+                      self.in_row = False
+
+          def get_bytes(url, accept='*/*', max_size=max_bytes):
+              request = Request(url, headers={'User-Agent': user_agent, 'Accept': accept})
+              with urlopen(request, timeout=300) as response:
+                  status = getattr(response, 'status', 200)
+                  if status != 200:
+                      raise RuntimeError(f'HTTP_{status}:{url}')
+                  final_url = response.geturl()
+                  headers = {key.lower(): value for key, value in response.headers.items()}
+                  declared = headers.get('content-length')
+                  if declared and int(declared) > max_size:
+                      raise RuntimeError(f'DECLARED_TOO_LARGE:{declared}')
+                  chunks = []
+                  total = 0
+                  while True:
+                      chunk = response.read(1024 * 1024)
+                      if not chunk:
+                          break
+                      total += len(chunk)
+                      if total > max_size:
+                          raise RuntimeError(f'RESPONSE_TOO_LARGE:{total}')
+                      chunks.append(chunk)
+              data = b''.join(chunks)
+              if not data:
+                  raise RuntimeError(f'EMPTY_RESPONSE:{url}')
+              return data, headers, final_url
+
+          context = json.loads(context_path.read_text(encoding='utf-8'))
+          rows = context.get('rows') or []
+          if [row.get('row_no') for row in rows] != [30762, 46142, 61522]:
+              raise RuntimeError('EXACT_CONTEXT_SEQUENCE_MISMATCH')
+          page_bytes, page_headers, page_final_url = get_bytes(download_page, 'text/html', 20_000_000)
+          parser = TableRows()
+          parser.feed(page_bytes.decode('utf-8', errors='replace'))
+
+          acquisitions = []
+          for row in rows:
+              authority = f"London Borough of {row['ons_lad25_name']}"
+              matches = [item for item in parser.rows if authority.lower() in item['text'].lower()]
+              if len(matches) != 1:
+                  raise RuntimeError(f'HMLR_ROW_NOT_UNIQUE:{authority}:{len(matches)}')
+              candidate_urls = []
+              for href in matches[0]['links']:
+                  full = urljoin(page_final_url, href)
+                  if urlparse(full).scheme == 'https':
+                      candidate_urls.append(full)
+              candidate_urls = sorted(set(candidate_urls))
+              if len(candidate_urls) != 1:
+                  raise RuntimeError(f'HMLR_LINK_NOT_UNIQUE:{authority}:{len(candidate_urls)}')
+              data, headers, final_url = get_bytes(candidate_urls[0], 'application/gml+xml,application/xml,text/xml,*/*')
+              prefix = data[:2048].lstrip().lower()
+              if prefix.startswith(b'<html') or b'<!doctype html' in prefix:
+                  raise RuntimeError(f'HMLR_HTML_NOT_GML:{authority}')
+              if not (prefix.startswith(b'<?xml') or prefix.startswith(b'<')):
+                  raise RuntimeError(f'HMLR_NOT_XML:{authority}')
+              if b'gml' not in prefix and b'featurecollection' not in prefix:
+                  # Some GML namespace declarations occur after 2 KB; preserve warning but do not accept HTML.
+                  xml_identity = 'XML_PREFIX_GML_NAMESPACE_NOT_IN_FIRST_2KB'
+              else:
+                  xml_identity = 'GML_OR_FEATURE_COLLECTION_PREFIX_CONFIRMED'
+              acquisitions.append({
+                  'row_no': row['row_no'],
+                  'parcel_id': row['parcel_id'],
+                  'ons_lad25_code': row['ons_lad25_code'],
+                  'ons_lad25_name': row['ons_lad25_name'],
+                  'hmlr_authority_label': authority,
+                  'hmlr_source_link': candidate_urls[0],
+                  'hmlr_final_url': final_url,
+                  'content_type': headers.get('content-type'),
+                  'content_length_header': int(headers['content-length']) if headers.get('content-length') else None,
+                  'downloaded_bytes': len(data),
+                  'sha256': hashlib.sha256(data).hexdigest(),
+                  'xml_identity': xml_identity,
+                  'state': 'OFFICIAL_HMLR_GML_DOWNLOADED_AND_HASHED',
+                  'hmlr_inspire_id': None,
+                  'height_difference_m': None,
+                  'business_row': False,
+              })
+
+          generated_at = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00', 'Z')
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'generated_at': generated_at,
+              'download_page': download_page,
+              'download_page_final_url': page_final_url,
+              'download_page_sha256': hashlib.sha256(page_bytes).hexdigest(),
+              'published_dataset_date_expected': '2026-07-05',
+              'rows': acquisitions,
+              'official_gml_rows_acquired': len(acquisitions),
+              'official_numeric_rows_written': 0,
+              'actual_business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }
+          output_path.parent.mkdir(parents=True, exist_ok=True)
+          output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          receipt_path.parent.mkdir(parents=True, exist_ok=True)
+          receipt_path.write_text(json.dumps({
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'validated_at': generated_at,
+              'state': 'PASS',
+              'official_gml_rows_acquired': len(acquisitions),
+              'unique_hmlr_urls': len({row['hmlr_final_url'] for row in acquisitions}),
+              'unique_sha256': len({row['sha256'] for row in acquisitions}),
+              'all_downloads_nonempty': all(row['downloaded_bytes'] > 0 for row in acquisitions),
+              'all_height_values_null': all(row['height_difference_m'] is None for row in acquisitions),
+              'output_path': str(output_path),
+              'output_sha256': hashlib.sha256(output_path.read_bytes()).hexdigest(),
+              'official_numeric_rows_written': 0,
+              'business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Commit HMLR GML evidence receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/height_difference_2/hmlr_gml_acquisition_runtime_032.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/030_hmlr_gml_acquisition_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Acquire and hash three official height_difference_2 HMLR GML files'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
