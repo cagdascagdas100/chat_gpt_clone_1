@@ -111,7 +111,7 @@ $tempPage = Join-Path ([System.IO.Path]::GetTempPath()) 'height_difference_1_hml
 $tempGml = Join-Path ([System.IO.Path]::GetTempPath()) 'height_difference_1_barking_dagenham_current.gml'
 
 Write-Output 'SLOT_ID=height_difference_1'
-Write-Output 'TASK_VERSION=1.5-hmlr-zip-verified-handoff'
+Write-Output 'TASK_VERSION=1.6-hmlr-redirect-host-double-check'
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "MAIN_SCRIPT=$mainScript"
 Write-Output "PATCHED_MAIN_SCRIPT=$patchedMainScript"
@@ -152,12 +152,20 @@ try {
   if ($hmlrDocument.slot_id -ne 'height_difference_1' -or $hmlrDocument.state -ne 'COMPLETED_ZIP_AND_GML_VERIFIED') {
     throw 'HMLR_ZIP_RECEIPT_INVALID'
   }
+  $allowedZipHosts = @('use-land-property-data.service.gov.uk','datapub-prd-s3-bucket.s3.amazonaws.com')
+  $zipFinalHost = [string]$hmlrDocument.artifacts.hmlr_zip.final_host
+  if ($hmlrDocument.artifacts.hmlr_zip.final_host_allowlisted -ne $true -or $allowedZipHosts -notcontains $zipFinalHost) {
+    throw "HMLR_ZIP_FINAL_HOST_HANDOFF_INVALID: $zipFinalHost"
+  }
+  $pageFinalHost = [string]$hmlrDocument.artifacts.download_page.final_host
+  if ($pageFinalHost -ne 'use-land-property-data.service.gov.uk') { throw "HMLR_PAGE_FINAL_HOST_HANDOFF_INVALID: $pageFinalHost" }
   $pageHash = (Get-FileHash -LiteralPath $tempPage -Algorithm SHA256).Hash.ToLowerInvariant()
   $gmlHash = (Get-FileHash -LiteralPath $tempGml -Algorithm SHA256).Hash.ToLowerInvariant()
   if ($pageHash -ne ([string]$hmlrDocument.artifacts.download_page.sha256).ToLowerInvariant()) { throw 'HMLR_PAGE_HASH_HANDOFF_MISMATCH' }
   if ($gmlHash -ne ([string]$hmlrDocument.artifacts.hmlr_gml.sha256).ToLowerInvariant()) { throw 'HMLR_GML_HASH_HANDOFF_MISMATCH' }
   if ((Get-Item -LiteralPath $tempPage).Length -ne [int64]$hmlrDocument.artifacts.download_page.bytes) { throw 'HMLR_PAGE_SIZE_HANDOFF_MISMATCH' }
   if ((Get-Item -LiteralPath $tempGml).Length -ne [int64]$hmlrDocument.artifacts.hmlr_gml.bytes) { throw 'HMLR_GML_SIZE_HANDOFF_MISMATCH' }
+  Write-Output "HMLR_ZIP_FINAL_HOST=$zipFinalHost"
   Write-Output "HMLR_ZIP_SHA256=$($hmlrDocument.artifacts.hmlr_zip.sha256)"
   Write-Output "HMLR_GML_SHA256=$gmlHash"
 
