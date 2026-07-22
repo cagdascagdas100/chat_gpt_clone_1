@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security 1 — Aday Kalite Güvence Matrisi</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:0 0 10px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS,.HIGH_CONFIDENCE_AREA_LEVEL_PROXY_WITH_DECLARED_LIMITS{font-weight:700}.PENDING,.LIMIT,.REVIEW_REQUIRED,.BLOCKED{font-weight:700}.scroll{max-height:760px;overflow:auto;border:1px solid #cbd5df}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.muted{color:#52606d}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>İlk 130 Aday — Kalite Güvence Matrisi</h1>
+<div class="note"><strong>Doğruluk sınırı:</strong> Bu görünüm satırları yeniden puanlamaz. Resmî kaynak güncelliğini, LSOA eşleşmesini, HTTP/SHA kanıtını ve açıklanmış proxy sınırlarını kontrol eder. Police API nokta sorgusu tam LSOA veya parsel ölçümü değildir; force alanı saklanmıyorsa Mayıs 2026 eksik-kuvvet kontrolü uydurulmaz ve “değerlendirilemedi” yazılır.</div>
+<div class="cards">
+<div class="card">Kanonik aday<br><strong id="candidateCount">yükleniyor</strong></div>
+<div class="card">Doğruluk 4/4<br><strong id="accuracyCount">yükleniyor</strong></div>
+<div class="card">Statik çekirdek PASS<br><strong id="staticPassCount">yükleniyor</strong></div>
+<div class="card">Force mapping bilinmiyor<br><strong id="forceUnknownCount">yükleniyor</strong></div>
+<div class="card">Manuel inceleme<br><strong id="manualReviewCount">yükleniyor</strong></div>
+<div class="card">Canlı parity PASS<br><strong id="livePassCount">PENDING</strong></div>
+<div class="card">Yeni örnek<br><strong id="exampleCount">yükleniyor</strong></div>
+<div class="card">Kaynak kontrolü<br><strong id="sourceChecks">yükleniyor</strong></div>
+</div>
+<h2>Resmî kalite sözleşmesi</h2>
+<table><thead><tr><th>#</th><th>Kapı</th><th>Alan</th><th>Geçiş koşulu</th><th>Eksik/başarısız durum</th></tr></thead><tbody id="ruleBody"></tbody></table>
+<h2>20 yeni örnek — farklı güvence boyutları</h2>
+<p class="muted">Düşük güven, yüksek aylık ağırlık, yeni batch ve yüksek saklı count gruplarından benzersiz satırlar; eksik kalırsa kanonik sıradan tamamlanır.</p>
+<table><thead><tr><th>Grup</th><th>Parsel</th><th>Skor</th><th>Doğruluk</th><th>Güven</th><th>Aylık ağırlık</th><th>Saklı count</th><th>Spatial</th><th>HTTP</th><th>SHA</th><th>Güncellik</th><th>Proxy sınırı</th><th>Force kapsamı</th><th>Canlı parity</th><th>Genel</th></tr></thead><tbody id="exampleBody"></tbody></table>
+<h2>İlk 130 aday — satır satır</h2>
+<div class="scroll"><table><thead><tr><th>#</th><th>Parsel</th><th>Skor</th><th>Seviye</th><th>Doğruluk</th><th>Güven</th><th>Spatial</th><th>HTTP</th><th>SHA</th><th>Ay</th><th>Proxy sınırı</th><th>Force mapping</th><th>Manuel</th><th>Assurance</th><th>Count parity</th><th>SHA parity</th><th>Genel</th><th>İnceleme nedeni</th></tr></thead><tbody id="rowBody"></tbody></table></div>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+const cls=s=>String(s||'PENDING').startsWith('PASS')?'PASS':String(s).startsWith('LIMIT')?'LIMIT':String(s).includes('REVIEW')?'REVIEW_REQUIRED':String(s).startsWith('HIGH_')?'HIGH_CONFIDENCE_AREA_LEVEL_PROXY_WITH_DECLARED_LIMITS':'PENDING';
+const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'n/a';
+const shaOk=v=>/^[0-9a-f]{64}$/.test(String(v||''));
+(async()=>{
+ const [visible,contract,acceptance]=await Promise.all([get('../../program_layer_matrix/security_public_safety_visible_rows.json'),get('official_quality_contract_v1_20260722.json'),optional('canonical_acceptance_v17_latest.json')]);
+ const rows=(Array.isArray(visible.rows)?visible.rows:[]).slice(0,130);
+ const liveRows=Array.isArray(acceptance?.canonical_live_parity?.candidates)?acceptance.canonical_live_parity.candidates:[];
+ const liveById=new Map(liveRows.map(x=>[x.parcel_id,x]));
+ const evaluate=r=>{
+  const accuracy=Number(r.accuracy_score_4)===4;
+  const spatial=r.source_geography_level==='LSOA'&&r.matching_method==='parcel_centroid_inside_lsoa_polygon';
+  const http=r.official_api_validation_status==='HTTP_200';
+  const sha=shaOk(r.official_api_sample_sha256);
+  const fresh=r.official_api_latest_month==='2026-05';
+  const proxy=String(r.official_api_validation_method||'').includes('supporting_evidence_not_exact_lsoa_count');
+  const force=String(r.police_force_name||r.police_force_code||'').trim();
+  const forceStatus=force?(contract.facts.may_2026_missing_crime_forces||[]).includes(force)?'REVIEW_FORCE_OMISSION':'PASS_EXPLICIT_FORCE':'LIMIT_FORCE_MAPPING_NOT_STORED';
+  const manual=r.needs_manual_review===false;
+  const assurance=r.ai_assurance_result==='strict_spatial_source_verified_no_fake_data';
+  const live=liveById.get(r.parcel_id)||{},checks=live.checks||{};
+  const countParity=checks.count_parity===true?'PASS':checks.count_parity===false?'BLOCKED':'PENDING';
+  const shaParity=checks.sha256_parity===true?'PASS':checks.sha256_parity===false?'BLOCKED':'PENDING';
+  const reasons=[];
+  if(!accuracy)reasons.push('accuracy_not_4');if(!spatial)reasons.push('spatial_contract');if(!http)reasons.push('api_http');if(!sha)reasons.push('api_sha');if(!fresh)reasons.push('source_month');if(!proxy)reasons.push('proxy_limit_missing');if(!manual)reasons.push('manual_review');if(!assurance)reasons.push('assurance_contract');if(forceStatus==='REVIEW_FORCE_OMISSION')reasons.push('may_2026_force_omission');
+  const staticPass=reasons.length===0;
+  const overall=!staticPass?'REVIEW_REQUIRED':countParity==='PASS'&&shaParity==='PASS'?'HIGH_CONFIDENCE_AREA_LEVEL_PROXY_WITH_DECLARED_LIMITS':'STATIC_PASS_RUNTIME_PARITY_PENDING';
+  return {accuracy,spatial,http,sha,fresh,proxy,forceStatus,manual,assurance,countParity,shaParity,staticPass,overall,reasons};
+ };
+ const evaluated=rows.map(r=>({r,q:evaluate(r)}));
+ candidateCount.textContent=`${rows.length}/130`;accuracyCount.textContent=`${evaluated.filter(x=>x.q.accuracy).length}/130`;staticPassCount.textContent=`${evaluated.filter(x=>x.q.staticPass).length}/130`;forceUnknownCount.textContent=`${evaluated.filter(x=>x.q.forceStatus==='LIMIT_FORCE_MAPPING_NOT_STORED').length}/130`;manualReviewCount.textContent=String(evaluated.filter(x=>!x.q.manual).length);livePassCount.textContent=acceptance?`${evaluated.filter(x=>x.q.countParity==='PASS'&&x.q.shaParity==='PASS').length}/130`:'0/130 PENDING';sourceChecks.textContent=`${contract.official_checks?.passed||0}/${contract.official_checks?.total||0}`;
+ ruleBody.innerHTML=(contract.row_quality_rules||[]).map(x=>`<tr><td>${esc(x.order)}</td><td>${esc(x.gate)}</td><td class="mono">${esc(x.field||(x.fields||[]).join(', ')||x.source)}</td><td>${esc(x.pass_condition||x.required_marker||x.pass_status)}</td><td>${esc(x.failure_status||x.unknown_status||x.pending_status)}</td></tr>`).join('');
+ const chosen=[],seen=new Set();
+ const add=(group,list,limit=5)=>{let n=0;for(const item of list){if(n>=limit)break;if(seen.has(item.r.parcel_id))continue;seen.add(item.r.parcel_id);chosen.push({group,...item});n++;}};
+ add('En düşük güven',[...evaluated].sort((a,b)=>Number(a.r.confidence_score)-Number(b.r.confidence_score)||String(a.r.parcel_id).localeCompare(String(b.r.parcel_id))));
+ add('En yüksek aylık ağırlık',[...evaluated].sort((a,b)=>Number(b.r.weighted_monthly_avg)-Number(a.r.weighted_monthly_avg)));
+ const newest=evaluated.filter(x=>x.r.is_new_in_latest_batch===true||x.r.changed_in_latest_run===true);add('Yeni/değişen batch',newest.length?newest:[...evaluated].reverse());
+ add('En yüksek saklı count',[...evaluated].sort((a,b)=>Number(b.r.official_api_sample_crime_count)-Number(a.r.official_api_sample_crime_count)));
+ add('Kanonik tamamlayıcı',evaluated,20-chosen.length);
+ exampleCount.textContent=String(chosen.length);
+ const cell=s=>`<td class="${cls(s)}">${esc(s)}</td>`;
+ exampleBody.innerHTML=chosen.map(x=>{const r=x.r,q=x.q;return `<tr><td>${esc(x.group)}</td><td>${esc(r.parcel_id)}</td><td>${fmt(r.security_score_percent)}</td><td>${esc(r.accuracy_score_4)}/4</td><td>${fmt(r.confidence_score)}%</td><td>${fmt(r.weighted_monthly_avg)}</td><td>${esc(r.official_api_sample_crime_count)}</td>${cell(q.spatial?'PASS':'REVIEW')}${cell(q.http?'PASS':'REVIEW')}${cell(q.sha?'PASS':'REVIEW')}${cell(q.fresh?'PASS':'REVIEW')}${cell(q.proxy?'LIMIT_RECORDED':'REVIEW')}${cell(q.forceStatus)}${cell(q.countParity+'/'+q.shaParity)}${cell(q.overall)}</tr>`}).join('');
+ rowBody.innerHTML=evaluated.map((x,i)=>{const r=x.r,q=x.q;return `<tr><td>${i+1}</td><td>${esc(r.parcel_id)}</td><td>${fmt(r.security_score_percent)}</td><td>${esc(r.security_level)}</td><td>${esc(r.accuracy_score_4)}/4</td><td>${fmt(r.confidence_score)}%</td>${cell(q.spatial?'PASS':'REVIEW')}${cell(q.http?'PASS':'REVIEW')}${cell(q.sha?'PASS':'REVIEW')}<td>${esc(r.official_api_latest_month)}</td>${cell(q.proxy?'LIMIT_RECORDED':'REVIEW')}${cell(q.forceStatus)}${cell(q.manual?'PASS':'REVIEW')}${cell(q.assurance?'PASS':'REVIEW')}${cell(q.countParity)}${cell(q.shaParity)}${cell(q.overall)}<td>${esc(q.reasons.join(', ')||'none; declared proxy/force limits remain')}</td></tr>`}).join('');
+ document.body.dataset.canonicalCandidateCount=String(rows.length);document.body.dataset.accuracy4Count=String(evaluated.filter(x=>x.q.accuracy).length);document.body.dataset.staticPassCount=String(evaluated.filter(x=>x.q.staticPass).length);document.body.dataset.forceMappingUnknownCount=String(evaluated.filter(x=>x.q.forceStatus==='LIMIT_FORCE_MAPPING_NOT_STORED').length);document.body.dataset.exampleCount=String(chosen.length);document.body.dataset.qualityRuleCount=String((contract.row_quality_rules||[]).length);document.body.dataset.acceptanceReportPresent=String(Boolean(acceptance));document.body.dataset.semanticValid=String(rows.length===130&&contract.parcel_measurement===false&&contract.final_ready===false&&visible.final_ready===false);
+})().catch(e=>{rowBody.innerHTML=`<tr><td colspan="18" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body></html>
