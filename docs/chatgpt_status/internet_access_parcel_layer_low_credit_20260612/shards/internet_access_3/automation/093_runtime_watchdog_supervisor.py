@@ -35,11 +35,12 @@ def path_state(p):
    s=p.stat();return {"path":str(p),"exists":True,"kind":"file","bytes":s.st_size,"mtime_ns":s.st_mtime_ns}
   if p.is_dir():
    total=count=0;newest=p.stat().st_mtime_ns
-   for x in p.rglob("*"):
+   for x in p.iterdir():
     try:
      if x.is_file():s=x.stat();total+=s.st_size;count+=1;newest=max(newest,s.st_mtime_ns)
+     elif x.is_dir():newest=max(newest,x.stat().st_mtime_ns)
     except (OSError,PermissionError):pass
-   return {"path":str(p),"exists":True,"kind":"directory","bytes":total,"files":count,"mtime_ns":newest}
+   return {"path":str(p),"exists":True,"kind":"directory_shallow","bytes":total,"files":count,"mtime_ns":newest}
  except (OSError,PermissionError):pass
  return {"path":str(p),"exists":False,"kind":"missing","bytes":0,"mtime_ns":0}
 def snapshot(ps:Iterable[Path]):return [path_state(p) for p in ps]
@@ -70,7 +71,7 @@ def terminate_tree(p,grace_seconds=10):
  return {"already_exited":False,"actions":a,"returncode":p.returncode}
 def _payload(name,cmd,pid,state,start,sm,last,lm,hard,stall,seen,index,total):
  n=time.monotonic()
- return {"schema_version":1,"slot_id":SLOT_ID,"state":state,"updated_at":utc_now(),"step_name":name,"step_index":index,"step_total":total,"pid":pid,"command":cmd,"started_at":start,"elapsed_seconds":round(n-sm,3),"last_progress_at":last,"seconds_since_progress":round(n-lm,3),"hard_timeout_seconds":hard,"stall_timeout_seconds":stall,"observed_paths":seen,"single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":1,"slot_id":SLOT_ID,"state":state,"updated_at":utc_now(),"step_name":name,"step_index":index,"step_total":total,"pid":pid,"command":cmd,"started_at":start,"elapsed_seconds":round(n-sm,3),"last_progress_at":last,"seconds_since_progress":round(n-lm,3),"hard_timeout_seconds":hard,"stall_timeout_seconds":stall,"observed_paths":seen,"progress_semantics":"WATCHED_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_LOG_GROWTH_DOES_NOT_RESET_STALL","single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def supervise(*,command,cwd,step_name,hard_timeout_seconds,stall_timeout_seconds,watch_paths,heartbeat_paths,poll_seconds=5.,heartbeat_seconds=30.,step_index=None,step_total=None,environment=None):
  if not command or not all(isinstance(x,str) and x for x in command):raise ValueError("command")
  if hard_timeout_seconds<=0 or stall_timeout_seconds<=0:raise ValueError("timeout")
@@ -82,12 +83,12 @@ def supervise(*,command,cwd,step_name,hard_timeout_seconds,stall_timeout_seconds
  else:kw["start_new_session"]=True
  start=utc_now();sm=lm=time.monotonic();last=start;kind=term=None
  with out.open("wb") as oh,err.open("wb") as eh:
-  p=subprocess.Popen(command,stdout=oh,stderr=eh,**kw);paths=[*watch_paths,out,err];prev=snapshot(paths);beat=sm
+  p=subprocess.Popen(command,stdout=oh,stderr=eh,**kw);progress_paths=list(watch_paths);report_paths=[*watch_paths,out,err];prev=snapshot(progress_paths);beat=sm
   while True:
-   now=time.monotonic();cur=snapshot(paths)
+   now=time.monotonic();cur=snapshot(progress_paths)
    if cur!=prev:prev=cur;lm=now;last=utc_now()
    if now>=beat:
-    x=_payload(step_name,command,p.pid,"running",start,sm,last,lm,hard_timeout_seconds,stall_timeout_seconds,cur,step_index,step_total)
+    x=_payload(step_name,command,p.pid,"running",start,sm,last,lm,hard_timeout_seconds,stall_timeout_seconds,snapshot(report_paths),step_index,step_total)
     for hp in heartbeat_paths:atomic_json(hp,x)
     beat=now+max(1.,heartbeat_seconds)
    if p.poll() is not None:break
@@ -95,7 +96,7 @@ def supervise(*,command,cwd,step_name,hard_timeout_seconds,stall_timeout_seconds
    if now-lm>stall_timeout_seconds:kind="stall_timeout";term=terminate_tree(p);break
    time.sleep(max(.05,poll_seconds))
  end=utc_now();code=p.returncode if p.returncode is not None else -999;state="passed" if kind is None and code==0 else "blocked"
- r={"schema_version":1,"slot_id":SLOT_ID,"state":state,"step_name":step_name,"step_index":step_index,"step_total":step_total,"command":command,"pid":p.pid,"started_at":start,"ended_at":end,"elapsed_seconds":round(time.monotonic()-sm,3),"exit_code":code,"timeout_kind":kind,"hard_timeout_seconds":hard_timeout_seconds,"stall_timeout_seconds":stall_timeout_seconds,"last_progress_at":last,"seconds_since_progress_at_end":round(time.monotonic()-lm,3),"termination":term,"observed_paths":snapshot([*watch_paths,out,err]),"stdout_tail":tail_text(out),"stderr_tail":tail_text(err),"single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ r={"schema_version":1,"slot_id":SLOT_ID,"state":state,"step_name":step_name,"step_index":step_index,"step_total":step_total,"command":command,"pid":p.pid,"started_at":start,"ended_at":end,"elapsed_seconds":round(time.monotonic()-sm,3),"exit_code":code,"timeout_kind":kind,"hard_timeout_seconds":hard_timeout_seconds,"stall_timeout_seconds":stall_timeout_seconds,"last_progress_at":last,"seconds_since_progress_at_end":round(time.monotonic()-lm,3),"termination":term,"observed_paths":snapshot(report_paths),"progress_semantics":"WATCHED_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_LOG_GROWTH_DOES_NOT_RESET_STALL","stdout_tail":tail_text(out),"stderr_tail":tail_text(err),"single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
  for hp in heartbeat_paths:atomic_json(hp,r)
  return r
 def parse_args():
