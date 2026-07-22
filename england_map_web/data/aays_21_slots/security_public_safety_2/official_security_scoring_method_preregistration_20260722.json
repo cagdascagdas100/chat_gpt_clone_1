@@ -2,9 +2,9 @@
   "schema_version": 3,
   "slot_id": "security_public_safety_2",
   "snapshot_date": "2026-07-22",
-  "state": "OFFICIAL_IOD25_RELATIVE_CRIME_METHOD_PREREGISTERED_NO_SCORE",
-  "method_version": "iod25-crime-rank-relative-safety-v1",
-  "candidate_semantics": "RELATIVE_LSOA_CONTEXT_CANDIDATE_NOT_PARCEL_INCIDENT_RISK",
+  "state": "OFFICIAL_IOD25_RELATIVE_CRIME_ORDINAL_METHOD_PREREGISTERED_NO_SCORE",
+  "method_version": "iod25-crime-rank-less-deprived-ordinal-position-v2",
+  "candidate_semantics": "RELATIVE_LSOA_CRIME_DOMAIN_ORDINAL_POSITION_CANDIDATE_NOT_CARDINAL_SAFETY_SCORE",
   "target_rows": 12,
   "target_parcels": ["parcel_30762","parcel_30763","parcel_30764","parcel_30765","parcel_30766","parcel_30767","parcel_30768","parcel_30769","parcel_30770","parcel_30771","parcel_30772","parcel_30773"],
   "official_sources": [
@@ -13,7 +13,7 @@
       "publisher": "Ministry of Housing, Communities and Local Government",
       "name": "English indices of deprivation 2025",
       "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
-      "role": "official_lsoa_relative_deprivation_release",
+      "role": "official_lsoa_relative_deprivation_release_and_current_v2_file_route",
       "confidence_percent": 99
     },
     {
@@ -29,7 +29,7 @@
       "publisher": "Ministry of Housing, Communities and Local Government",
       "name": "English indices of deprivation 2025 frequently asked questions",
       "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
-      "role": "official_lsoa_universe_and_relative_interpretation_guard",
+      "role": "official_lsoa_universe_rank_direction_and_relative_interpretation_guard",
       "confidence_percent": 99
     },
     {
@@ -68,11 +68,12 @@
   "primary_method": {
     "join_key": "ONS LSOA21 code from exact canonical point to official ONS LSOA intersection",
     "official_field": "Crime Rank (where 1 is most deprived)",
+    "source_edition_rule": "Use only the current corrected v2 IoD25 LSOA file reached from the official release page updated 17 November 2025; record download hash and edition evidence.",
     "universe_rule": "Read the exact number of unique LSOA21 rows from the hashed IoD25 File 7; expected official universe is 33,755 LSOAs.",
-    "candidate_formula": "relative_safety_percentile = round(100 * (crime_rank - 1) / (lsoa_universe_count - 1), 1)",
-    "direction": "Crime rank 1 maps to 0.0; the least deprived crime-domain rank maps to 100.0.",
+    "candidate_formula": "less_deprived_ordinal_position_percent = round(100 * (crime_rank - 1) / (lsoa_universe_count - 1), 1)",
+    "direction": "Crime rank 1 maps to ordinal position 0.0; crime rank 33,755 maps to ordinal position 100.0.",
     "official_decile_rule": "Publish the official Crime Decile unchanged; do not recompute deciles.",
-    "interpretation": "Relative position in the IoD25 Crime Domain at LSOA level; not a current monthly crime rate, exact incident probability, title-boundary condition or personal safety guarantee.",
+    "interpretation": "Ordinal relative position in the IoD25 Crime Domain at LSOA level. It supports ordering only: a value twice as large does not mean twice as safe or half as deprived. It is not a current monthly crime rate, exact incident probability, title-boundary condition or personal safety guarantee.",
     "promotion_state": "CANDIDATE_ONLY_UNTIL_EXACT_JOIN_HASH_AND_BROWSER_GATES_PASS"
   },
   "police_api_method_guard": {
@@ -81,7 +82,7 @@
     "forbidden_calculation": "Do not divide a one-mile point-query crime count by an LSOA population denominator.",
     "reason": "The numerator geography and denominator geography are not aligned and nearby point-query results may overlap across parcels.",
     "allowed_current_role": "Explicit-month response availability, response SHA256, category distribution and evidence-integrity cross-check only.",
-    "future_rate_option": "A separate exact LSOA polygon query may be evaluated only with polygon hash, explicit month, deduplication, disclosure/anonymisation caveat and matching LSOA population edition; it remains secondary to the official IoD25 Crime Rank candidate."
+    "future_rate_option": "A separate exact LSOA polygon query may be evaluated only with polygon hash, explicit month, deduplication, disclosure/anonymisation caveat and matching LSOA population edition; it remains secondary and must not be blended into the ordinal IoD25 candidate without a separately reviewed method."
   },
   "confidence_gate": {
     "confidence_is_evidence_integrity_not_safety_probability": true,
@@ -90,45 +91,46 @@
       "canonical feature count equals 92283",
       "exact target parcel ID is unique",
       "exactly one ONS LSOA21 match",
-      "exactly one IoD25 File 7 row for the LSOA21 code",
+      "exactly one current-v2 IoD25 File 7 row for the LSOA21 code",
       "IoD25 File 7 download hash and schema recorded",
       "crime rank and official crime decile are non-null and in range",
-      "method version and source editions are visible on the website"
+      "method version, ordinal interpretation and source editions are visible on the website"
     ],
     "automatic_score_blockers": [
       "missing or duplicate target parcel",
       "zero or multiple ONS LSOA matches",
       "missing or duplicate IoD25 LSOA row",
       "rank outside official file universe",
-      "source hash or edition missing",
+      "current corrected v2 source edition or hash missing",
+      "cardinal or proportional interpretation of rank differences",
       "attempt to normalise one-mile point-query counts with LSOA population",
       "served HTTP or DOM acceptance failure"
     ]
   },
   "row_manifest": [
-    {"row":1,"parcel_id":"parcel_30762","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":2,"parcel_id":"parcel_30763","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":3,"parcel_id":"parcel_30764","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":4,"parcel_id":"parcel_30765","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":5,"parcel_id":"parcel_30766","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":6,"parcel_id":"parcel_30767","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":7,"parcel_id":"parcel_30768","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":8,"parcel_id":"parcel_30769","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":9,"parcel_id":"parcel_30770","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":10,"parcel_id":"parcel_30771","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":11,"parcel_id":"parcel_30772","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
-    {"row":12,"parcel_id":"parcel_30773","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null}
+    {"row":1,"parcel_id":"parcel_30762","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":2,"parcel_id":"parcel_30763","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":3,"parcel_id":"parcel_30764","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":4,"parcel_id":"parcel_30765","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":5,"parcel_id":"parcel_30766","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":6,"parcel_id":"parcel_30767","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":7,"parcel_id":"parcel_30768","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":8,"parcel_id":"parcel_30769","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":9,"parcel_id":"parcel_30770","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":10,"parcel_id":"parcel_30771","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":11,"parcel_id":"parcel_30772","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":12,"parcel_id":"parcel_30773","method_status":"WAITING_EXACT_LSOA_CURRENT_V2_IOD25_JOIN","candidate_value":null,"business_score":null}
   ],
   "operations": [
-    {"row":1,"operation":"official_iod25_release_and_technical_method_roles_reviewed","state":"PASS"},
+    {"row":1,"operation":"official_iod25_release_faq_and_current_v2_file_route_reviewed","state":"PASS"},
     {"row":2,"operation":"official_file7_crime_rank_score_decile_schema_recorded","state":"PASS"},
     {"row":3,"operation":"official_33755_lsoa_universe_expectation_recorded","state":"PASS"},
-    {"row":4,"operation":"rank_one_most_deprived_direction_guard_encoded","state":"PASS"},
+    {"row":4,"operation":"rank_one_most_deprived_and_noncardinal_interpretation_guards_encoded","state":"PASS"},
     {"row":5,"operation":"one_mile_point_query_lsoa_population_mismatch_detected_and_blocked","state":"PASS"},
     {"row":6,"operation":"police_location_anonymisation_and_recording_limits_encoded","state":"PASS"},
-    {"row":7,"operation":"relative_safety_percentile_formula_preregistered","state":"PASS"},
+    {"row":7,"operation":"less_deprived_ordinal_position_formula_preregistered","state":"PASS"},
     {"row":8,"operation":"twelve_target_rows_published_with_null_candidate_and_business_values","state":"PASS"},
-    {"row":9,"operation":"exact_twelve_row_lsoa_iod25_join","state":"PENDING"},
+    {"row":9,"operation":"exact_twelve_row_lsoa_current_v2_iod25_join","state":"PENDING"},
     {"row":10,"operation":"served_http_dom_console_browser_acceptance","state":"PENDING"}
   ],
   "operations_completed": 8,
