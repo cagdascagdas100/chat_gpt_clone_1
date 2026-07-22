@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bind the measurement polygon identifier to the HMLR INSPIRE receipt."""
+"""Bind measurement to the verified HMLR INSPIRE identity and native BNG CRS receipt."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,7 @@ import tempfile
 from typing import Any
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.0-measurement-inspire-identity-binding-injector"
+SCRIPT_VERSION = "1.1-measurement-inspire-identity-and-native-bng-binding-injector"
 
 EXPECTED_MAIN_INSERTION_MARKER = """  $patched = Replace-ExactlyOnce -Text $patched -Old $oldProbeRasterValidation -New $newProbeRasterValidation -Label 'PROBE_RASTER_CONTENT_GATE'
 
@@ -27,6 +27,21 @@ EXPECTED_CLEANUP_MARKER = """  Remove-Item Env:HMLR_VERIFIED_ZIP_SHA256 -ErrorAc
 """
 
 INJECTED_MAIN_BLOCK = r"""  $patched = Replace-ExactlyOnce -Text $patched -Old $oldProbeRasterValidation -New $newProbeRasterValidation -Label 'PROBE_RASTER_CONTENT_GATE'
+
+  $oldMeasurementNativeCrs = @'
+        source_crs = str(gdf.crs)
+        if gdf.crs.to_epsg() != 27700:
+            gdf = gdf.to_crs(epsg=27700)
+        id_column = choose_polygon_id_column(gdf.columns)
+'@
+  $newMeasurementNativeCrs = @'
+        source_crs = str(gdf.crs)
+        source_epsg = gdf.crs.to_epsg()
+        if source_epsg != 27700:
+            raise EvidenceError(f"HMLR_MEASUREMENT_GML_NOT_NATIVE_EPSG27700:{source_epsg}:{source_crs}")
+        id_column = choose_polygon_id_column(gdf.columns)
+'@
+  $patched = Replace-ExactlyOnce -Text $patched -Old $oldMeasurementNativeCrs -New $newMeasurementNativeCrs -Label 'MEASUREMENT_NATIVE_BNG_CRS_GATE'
 
   $oldChoosePolygonIdColumn = @'
 def choose_polygon_id_column(columns: Iterable[str]) -> str:
@@ -98,8 +113,9 @@ def choose_polygon_id_column(columns: Iterable[str]) -> str:
                     char not in "0123456789abcdef" for char in identifier_set_digest
                 ):
                     raise EvidenceError("HMLR_IDENTIFIER_SET_SHA256_REQUIRED_FOR_BUSINESS_ROW")
-                if not polygon_id.strip():
-                    raise EvidenceError("HMLR_BOUND_POLYGON_IDENTIFIER_EMPTY")
+                normalized_polygon_id = polygon_id.strip()
+                if normalized_polygon_id.lower() in {"", "nan", "none", "null", "<na>", "nat"}:
+                    raise EvidenceError(f"HMLR_BOUND_POLYGON_IDENTIFIER_NULL_LIKE:{polygon_id}")
                 try:
                     metadata = validate_survey_metadata_entry(parcel_id, survey_metadata.get(parcel_id))
 '@
@@ -144,6 +160,8 @@ def patch_carrier_text(text: str) -> str:
     patched = replace_once(patched, EXPECTED_HMLR_HANDOFF_MARKER, INJECTED_HMLR_HANDOFF, "MEASUREMENT_IDENTITY_HMLR_HANDOFF_MARKER")
     patched = replace_once(patched, EXPECTED_CLEANUP_MARKER, INJECTED_CLEANUP, "MEASUREMENT_IDENTITY_CLEANUP_MARKER")
     required = (
+        "MEASUREMENT_NATIVE_BNG_CRS_GATE",
+        "HMLR_MEASUREMENT_GML_NOT_NATIVE_EPSG27700",
         "MEASUREMENT_INSPIRE_COLUMN_BINDING_GATE",
         "CANDIDATE_INSPIRE_IDENTITY_PROVENANCE",
         "BUSINESS_ROW_INSPIRE_IDENTITY_PROVENANCE_GATE",
@@ -151,7 +169,7 @@ def patch_carrier_text(text: str) -> str:
         "HMLR_VERIFIED_IDENTIFIER_SET_SHA256",
         "HMLR_MEASUREMENT_IDENTIFIER_COLUMN_RECEIPT_MISMATCH",
         "HMLR_IDENTIFIER_SET_SHA256_REQUIRED_FOR_BUSINESS_ROW",
-        "HMLR_BOUND_POLYGON_IDENTIFIER_EMPTY",
+        "HMLR_BOUND_POLYGON_IDENTIFIER_NULL_LIKE",
     )
     missing = [token for token in required if token not in patched]
     if missing:
@@ -178,17 +196,20 @@ def atomic_write(path: Path, data: bytes) -> None:
 def run_self_test() -> dict[str, Any]:
     fixture = "header\n" + EXPECTED_MAIN_INSERTION_MARKER + "\n" + EXPECTED_HMLR_HANDOFF_MARKER + "\n" + EXPECTED_CLEANUP_MARKER + "\nfooter\n"
     patched = patch_carrier_text(fixture)
+    injected_main = patched.split("$oldMeasurementNativeCrs", 1)[1]
     checks = {
         "main_marker_replaced": EXPECTED_MAIN_INSERTION_MARKER not in patched,
         "handoff_marker_replaced": EXPECTED_HMLR_HANDOFF_MARKER not in patched,
         "cleanup_marker_replaced": EXPECTED_CLEANUP_MARKER not in patched,
+        "native_bng_crs_gate_present": "MEASUREMENT_NATIVE_BNG_CRS_GATE" in patched,
+        "silent_reprojection_removed_from_new_block": "gdf = gdf.to_crs(epsg=27700)" not in injected_main.split("$oldChoosePolygonIdColumn", 1)[0].split("$newMeasurementNativeCrs", 1)[1],
         "measurement_column_binding_present": "MEASUREMENT_INSPIRE_COLUMN_BINDING_GATE" in patched,
         "candidate_identity_provenance_present": "CANDIDATE_INSPIRE_IDENTITY_PROVENANCE" in patched,
         "business_identity_gate_present": "BUSINESS_ROW_INSPIRE_IDENTITY_PROVENANCE_GATE" in patched,
         "identifier_column_env_present": "HMLR_VERIFIED_IDENTIFIER_COLUMN" in patched,
         "identifier_hash_env_present": "HMLR_VERIFIED_IDENTIFIER_SET_SHA256" in patched,
         "generic_fallback_removed_from_new_function": 'for key in ("inspireid"' not in patched.split("$newChoosePolygonIdColumn", 1)[1],
-        "empty_polygon_id_gate_present": "HMLR_BOUND_POLYGON_IDENTIFIER_EMPTY" in patched,
+        "null_like_polygon_identifier_gate_present": "HMLR_BOUND_POLYGON_IDENTIFIER_NULL_LIKE" in patched,
     }
     duplicate_main_rejected = duplicate_handoff_rejected = duplicate_cleanup_rejected = False
     for label, duplicate in (("main", EXPECTED_MAIN_INSERTION_MARKER + fixture), ("handoff", EXPECTED_HMLR_HANDOFF_MARKER + fixture), ("cleanup", EXPECTED_CLEANUP_MARKER + fixture)):
@@ -201,7 +222,11 @@ def run_self_test() -> dict[str, Any]:
                 duplicate_handoff_rejected = True
             else:
                 duplicate_cleanup_rejected = True
-    checks.update({"duplicate_main_rejected": duplicate_main_rejected, "duplicate_handoff_rejected": duplicate_handoff_rejected, "duplicate_cleanup_rejected": duplicate_cleanup_rejected})
+    checks.update({
+        "duplicate_main_rejected": duplicate_main_rejected,
+        "duplicate_handoff_rejected": duplicate_handoff_rejected,
+        "duplicate_cleanup_rejected": duplicate_cleanup_rejected,
+    })
     if not all(checks.values()):
         raise InjectionError(f"SELF_TEST_FAILED:{checks}")
     return {"slot_id": SLOT_ID, "state": "PASS", "script_version": SCRIPT_VERSION, "checks": len(checks), "check_results": checks}
@@ -226,8 +251,14 @@ def main() -> int:
         "slot_id": SLOT_ID,
         "state": "COMPLETED_MEASUREMENT_IDENTITY_BINDING_INJECTED",
         "script_version": SCRIPT_VERSION,
-        "runtime_patch_count": 4,
-        "runtime_patch_labels": ["HMLR_IDENTIFIER_ENV_HANDOFF", "MEASUREMENT_INSPIRE_COLUMN_BINDING_GATE", "CANDIDATE_INSPIRE_IDENTITY_PROVENANCE", "BUSINESS_ROW_INSPIRE_IDENTITY_PROVENANCE_GATE"],
+        "runtime_patch_count": 5,
+        "runtime_patch_labels": [
+            "HMLR_IDENTIFIER_ENV_HANDOFF",
+            "MEASUREMENT_NATIVE_BNG_CRS_GATE",
+            "MEASUREMENT_INSPIRE_COLUMN_BINDING_GATE",
+            "CANDIDATE_INSPIRE_IDENTITY_PROVENANCE",
+            "BUSINESS_ROW_INSPIRE_IDENTITY_PROVENANCE_GATE",
+        ],
         "source_path": str(args.carrier.resolve()),
         "output_path": str(args.output.resolve()),
         "source_bytes": len(source),
@@ -236,6 +267,8 @@ def main() -> int:
         "output_sha256": sha256_bytes(patched),
         "identifier_column_env": "HMLR_VERIFIED_IDENTIFIER_COLUMN",
         "identifier_set_hash_env": "HMLR_VERIFIED_IDENTIFIER_SET_SHA256",
+        "native_crs_required": "EPSG:27700",
+        "null_like_polygon_identifiers_rejected": ["", "nan", "none", "null", "<na>", "nat"],
     }
     atomic_write(args.receipt, (json.dumps(receipt, indent=2) + "\n").encode("utf-8"))
     print(json.dumps(receipt, sort_keys=True))
