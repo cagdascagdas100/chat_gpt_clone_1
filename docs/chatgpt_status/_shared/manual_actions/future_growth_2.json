@@ -6,7 +6,10 @@
   "status": "OPEN",
   "action_type": "RESTART_EXISTING_SINGLE_RUNNER_AND_VERIFY_FRESH_HEARTBEAT",
   "detected_at": "2026-07-22T17:27:28Z",
-  "reason": "The canonical single-runner heartbeat is stale since 2026-07-16 and the active claim is terminal, while the global current task remains pickup_requested for height_difference_2.",
+  "last_checked_at": "2026-07-22T17:51:00Z",
+  "reason": "The canonical single-runner heartbeat remains stale since 2026-07-16 and the active claim is terminal, while the global current task remains pickup_requested for height_difference_2.",
+  "prepared_continuation_artifact": "docs/chatgpt_status/aays1/shards/future_growth_2/automation/001_exact_official_gis_point_query.py",
+  "prepared_query_count": 31,
   "safety_constraints": {
     "create_new_runner": false,
     "create_duplicate_task": false,
@@ -17,13 +20,15 @@
     "Run the existing F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd launcher on the canonical host.",
     "Verify stable_runner_daemon_heartbeat_latest.json receives a new heartbeat timestamp and the PID is alive.",
     "Verify single_runner_active_claim.json moves from the terminal 2026-07-16 claim to the existing height_difference_2 task without creating a second runner.",
-    "After height_difference_2 completes or releases, permit future_growth_2 exact GIS bulk snapshot and point-in-polygon work to enter the same single-runner queue."
+    "After height_difference_2 completes or releases, execute the prepared future_growth_2 official GIS point-query script through the same single-runner chain.",
+    "Publish the script output and keep scores null unless official polygon intersections and required cross-checks pass."
   ],
   "resolution_checks": [
     "heartbeat_age_seconds <= 900",
     "single_runner_count == 1",
     "active_claim_state in [claimed,running,done]",
-    "no_duplicate_task_id == true"
+    "no_duplicate_task_id == true",
+    "official_gis_query_output_exists == true"
   ],
   "resolved_at": null,
   "final_ready": false,

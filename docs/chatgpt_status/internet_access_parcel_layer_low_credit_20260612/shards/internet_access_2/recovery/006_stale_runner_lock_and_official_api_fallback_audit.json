@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_2",
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "task_id": "internet-access-2-ofcom-r2-provision-full-archive-validation-v1-20260722T165500Z",
+  "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
+  "checked_at": "2026-07-22T17:56:21Z",
+  "state": "HOST_SIDE_SINGLE_RUNNER_RECOVERY_REQUIRED",
+  "runner_diagnosis": {
+    "slot_current_task": "stale_008_publish_pending",
+    "slot_heartbeat_at": "2026-07-22T04:07:01.067696Z",
+    "global_daemon_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
+    "global_claim_state": "done",
+    "global_claim_release_reason": "completed",
+    "global_lock_updated_at": "2026-07-09T21:25:46.3071327Z",
+    "remote_conclusion": "No live task claim is recorded. Host-side PID and command-line validation is still required before moving the stale lock."
+  },
+  "safe_recovery": {
+    "preferred_launcher": "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+    "guardian_command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\_shared\\automation\\AAYS_PORTABLE_RESUME_GUARDIAN.ps1 -Once",
+    "guardrails": [
+      "verify the lock PID and canonical daemon command line",
+      "block a second instance when a valid live owner exists",
+      "quarantine the lock only when its owner process is dead",
+      "start only the existing canonical single runner",
+      "verify a new lock and heartbeat before reporting success"
+    ]
+  },
+  "official_api_fallback": {
+    "availability": "AVAILABLE_AFTER_OFCom_DEVELOPER_PORTAL_SIGNUP_AND_SUBSCRIPTION_KEY",
+    "api_name": "Ofcom Connected Nations Broadband API",
+    "allowed_role": "temporary cross-check for the 24 prepared postcode samples only",
+    "not_allowed_role": "replacement for the official bulk archive or creation of a partial/full cached dataset",
+    "basic_rate_limit_per_minute": 100,
+    "basic_quota_per_28_days": 50000,
+    "maximum_performance_cache_period": "one month",
+    "candidate_values_written": 0,
+    "accuracy_written": 0
+  },
+  "archive_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
+  "required_archive_contract": {
+    "outer_filename_revision": "r1",
+    "inner_postcode_revision": "r2",
+    "inner_postcode_files": 121,
+    "inner_postcode_rows": 1741096
+  },
+  "evidence_paths": [
+    "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
+    "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json",
+    "docs/chatgpt_status/_shared/control/single_runner_active_claim.json",
+    "docs/chatgpt_status/_shared/locks/single_runner.lock",
+    "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1",
+    "docs/chatgpt_status/_shared/automation/AAYS_PORTABLE_RESUME_GUARDIAN.ps1"
+  ],
+  "duplicate_task_created": false,
+  "second_runner_started": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
