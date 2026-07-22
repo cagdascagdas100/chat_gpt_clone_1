@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -119,7 +120,7 @@ def run_preflight() -> dict[str, Any]:
 
     status = "PASS" if checks and all(checks.values()) else "BLOCKED"
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -131,6 +132,7 @@ def run_preflight() -> dict[str, Any]:
         "hydration_replayed": False,
         "retry_policy": {"max_attempts": MAX_ATTEMPTS, "delays_seconds": list(RETRY_DELAYS_SECONDS), "retry_only_transient": True},
         "publisher_candidate_required": True,
+        "failure_receipts_required": True,
         "publisher_candidate_paths": [str(PUBLISHER_CANDIDATE_REPORT.relative_to(ROOT)), str(PUBLISHER_CANDIDATE_WEB.relative_to(ROOT))],
         "output_semantics": "AREA_LEVEL_PROXY",
         "parcel_measurement": False,
@@ -162,19 +164,62 @@ def make_retry_fetch(original_fetch: Callable[..., dict[str, Any]]) -> Callable[
     return retry_fetch
 
 
+def blocked_core_result(first_unverified_step: str, blocker: str, detail: Any = None) -> dict[str, Any]:
+    blockers = [blocker]
+    if detail not in (None, "", [], {}):
+        blockers.append(f"DETAIL:{detail}")
+    return {
+        "schema_version": 3,
+        "slot_id": SLOT_ID,
+        "task_id": TASK_ID,
+        "attempt_id": ATTEMPT_ID,
+        "status": "BLOCKED",
+        "acceptance_pass": False,
+        "canonical_live_parity": {
+            "status": "BLOCKED",
+            "candidate_count": None,
+            "candidate_passed": None,
+            "unique_endpoint_count": None,
+            "unique_endpoint_http_json_passed": None,
+            "network_requests_performed": 0,
+        },
+        "browser_acceptance": {"status": "BLOCKED"},
+        "first_unverified_step": first_unverified_step,
+        "blockers": blockers,
+        "failure_receipt_generated": True,
+        "hydration_replayed": False,
+        "output_semantics": "AREA_LEVEL_PROXY",
+        "measurement_level": "lsoa",
+        "parcel_measurement": False,
+        "single_runner_only": True,
+        "fake_data": False,
+        "db_write": False,
+        "migration": False,
+        "production_deploy": False,
+        "final_ready": False,
+        "generated_at": now(),
+    }
+
+
+def persist_core_result(payload: dict[str, Any]) -> None:
+    write_json(CORE_REPORT, payload)
+    write_json(CORE_WEB_REPORT, payload)
+
+
 def build_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> dict[str, Any]:
     parity = dict(core_result.get("canonical_live_parity") or {})
     browser = dict(core_result.get("browser_acceptance") or {})
     acceptance_pass = core_result.get("acceptance_pass") is True
     completed_units = 7 if acceptance_pass else 5
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
         "status": "READY_FOR_SINGLE_PUBLISHER_COMMIT_PUSH_READBACK" if acceptance_pass else "BLOCKED_RUNTIME_ACCEPTANCE",
         "acceptance_pass": acceptance_pass,
         "core_exit_code": exit_code,
+        "failure_receipt_generated": core_result.get("failure_receipt_generated") is True,
         "canonical_progress_candidate": {
             "completed_units": completed_units,
             "total_units": 8,
@@ -212,30 +257,62 @@ def build_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> di
     }
 
 
+def persist_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> None:
+    publisher_candidate = build_publisher_candidate(core_result, exit_code)
+    write_json(PUBLISHER_CANDIDATE_REPORT, publisher_candidate)
+    write_json(PUBLISHER_CANDIDATE_WEB, publisher_candidate)
+
+
 def main() -> int:
     preflight = run_preflight()
     write_json(PREFLIGHT_REPORT, preflight)
     write_json(PREFLIGHT_WEB, preflight)
+
     if preflight["status"] != "PASS":
+        core_result = blocked_core_result(
+            "RUNTIME_PREFLIGHT_BLOCKED",
+            "RUNTIME_PREFLIGHT_BLOCKED",
+            {"errors": preflight.get("errors"), "failed_checks": [name for name, passed in preflight.get("checks", {}).items() if not passed]},
+        )
+        persist_core_result(core_result)
+        persist_publisher_candidate(core_result, 3)
         return 3
-    core = load_module(CORE, "security_public_safety_1_canonical_acceptance_v17_core")
-    core.fetch = make_retry_fetch(core.fetch)
-    exit_code = int(core.main() or 0)
-    if CORE_REPORT.is_file():
-        try:
-            core_result = json.loads(CORE_REPORT.read_text(encoding="utf-8-sig"))
-        except Exception as exc:
-            core_result = {"slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "acceptance_pass": False, "first_unverified_step": "READ_CORE_ACCEPTANCE_REPORT", "blockers": [f"{type(exc).__name__}: {exc}"]}
-    else:
-        core_result = {"slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "acceptance_pass": False, "first_unverified_step": "CORE_ACCEPTANCE_REPORT_MISSING", "blockers": ["CORE_ACCEPTANCE_REPORT_MISSING"]}
+
+    exit_code = 4
+    try:
+        core = load_module(CORE, "security_public_safety_1_canonical_acceptance_v17_core")
+        core.fetch = make_retry_fetch(core.fetch)
+        exit_code = int(core.main() or 0)
+        if CORE_REPORT.is_file():
+            try:
+                core_result = json.loads(CORE_REPORT.read_text(encoding="utf-8-sig"))
+            except Exception as exc:
+                core_result = blocked_core_result("READ_CORE_ACCEPTANCE_REPORT", "CORE_ACCEPTANCE_REPORT_UNREADABLE", f"{type(exc).__name__}: {exc}")
+                persist_core_result(core_result)
+        else:
+            core_result = blocked_core_result("CORE_ACCEPTANCE_REPORT_MISSING", "CORE_ACCEPTANCE_REPORT_MISSING")
+            persist_core_result(core_result)
+    except Exception as exc:
+        core_result = blocked_core_result(
+            "CORE_RUNTIME_EXCEPTION",
+            f"CORE_RUNTIME_EXCEPTION:{type(exc).__name__}:{exc}",
+            traceback.format_exc(limit=20),
+        )
+        persist_core_result(core_result)
+        exit_code = 4
+
     identity_ok = core_result.get("slot_id") == SLOT_ID and core_result.get("task_id") == TASK_ID and core_result.get("attempt_id") == ATTEMPT_ID
     if not identity_ok:
         core_result["acceptance_pass"] = False
+        core_result["status"] = "BLOCKED"
         core_result["first_unverified_step"] = "CORE_RESULT_IDENTITY_MISMATCH"
         core_result["blockers"] = list(core_result.get("blockers") or []) + ["CORE_RESULT_IDENTITY_MISMATCH"]
-    publisher_candidate = build_publisher_candidate(core_result, exit_code)
-    write_json(PUBLISHER_CANDIDATE_REPORT, publisher_candidate)
-    write_json(PUBLISHER_CANDIDATE_WEB, publisher_candidate)
+        core_result["failure_receipt_generated"] = True
+        core_result["final_ready"] = False
+        persist_core_result(core_result)
+        exit_code = 4 if exit_code == 0 else exit_code
+
+    persist_publisher_candidate(core_result, exit_code)
     return exit_code
 
 
