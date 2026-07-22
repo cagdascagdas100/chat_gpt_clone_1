@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "slot_id": "height_difference_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "verified_on": "2026-07-22",
@@ -58,8 +58,15 @@
       "page_allowed_final_host": "use-land-property-data.service.gov.uk",
       "zip_allowed_final_hosts": ["use-land-property-data.service.gov.uk", "datapub-prd-s3-bucket.s3.amazonaws.com"],
       "object_host_evidence_state": "PUBLIC_REQUEST_TRACE_AND_2026_CLIENT_IMPLEMENTATION_CROSSCHECK_ONLY",
+      "resolver_version": "1.3-native-bng-polygon-id-preflight",
+      "required_geometry_types": ["Polygon", "MultiPolygon"],
+      "required_polygon_identifier": "Land Registry-INSPIRE identifier",
+      "identifier_uniqueness_required": true,
+      "identifier_set_sha256_required": true,
+      "native_gml_structure_preflight_prepared": true,
       "zip_bytes_acquired": false,
-      "gml_bytes_extracted": false
+      "gml_bytes_extracted": false,
+      "gml_structure_receipt_acquired": false
     },
     "ea_dtm_1m": {
       "grid_resolution_m": 1,
@@ -97,9 +104,9 @@
     "reprojection_fallback": "15m search may produce candidates only; no automatic canonical binding",
     "primary_numeric_result": "polygon DTM maximum minus polygon DTM minimum",
     "dsm_usage": "surface and object QA only",
-    "required_hmlr_archive_checks": ["official authority row", "stable ZIP route", "HTTPS final URL", "final-host allowlist", "ZIP magic", "safe member paths", "no encryption", "no symlinks", "bounded expansion", "exactly one GML member"],
-    "required_raster_checks": ["HTTP 200", "TIFF magic", "SHA-256", "EPSG:27700", "approximately 1m grid", "finite non-nodata pixels"],
-    "required_provenance": ["HMLR page SHA-256", "HMLR ZIP SHA-256", "HMLR GML SHA-256", "HMLR ZIP final host", "exact polygon WKB SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
+    "required_hmlr_archive_checks": ["official authority row", "stable ZIP route", "HTTPS final URL", "final-host allowlist", "ZIP magic", "safe member paths", "no encryption", "no symlinks", "bounded expansion", "exactly one GML member", "native EPSG:27700", "Polygon or MultiPolygon only", "valid non-empty positive-area geometry", "plausible BNG bounds", "unique non-empty INSPIRE identifier", "identifier-set SHA-256"],
+    "required_raster_checks": ["HTTP 200", "classic TIFF magic", "successful rasterio open", "SHA-256", "EPSG:27700", "approximately 1m grid", "finite non-nodata pixels"],
+    "required_provenance": ["HMLR page SHA-256", "HMLR ZIP SHA-256", "HMLR GML SHA-256", "HMLR ZIP final host", "HMLR identifier-set SHA-256", "exact polygon WKB SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
   },
   "implementation_cross_validation": [
     {"evidence_id":"HD1-IMPL-001","repository":"data-desk-eco/gdn-gis","path":"scripts/fetch-lidar.py","observed":"DTM endpoint, exact DTM coverageId, image/tiff and E/N subset syntax","evidence_state":"CROSS_VALIDATED"},
@@ -108,7 +115,7 @@
     {"evidence_id":"HD1-IMPL-004","repository":"andras/perfect-postcode","path":"pipeline/download/inspire.py","observed":"HMLR INSPIRE page .zip scraping, cookie-aware client, redirect following and ZIP download semantics","evidence_state":"HELD_IMPLEMENTATION_CROSSCHECK"}
   ],
   "local_behavior_tests": {
-    "redirect_and_zip_security": {"state": "PASS", "checks": 6, "scope": ["HMLR origin host", "HMLR S3 object host", "HTTP rejection", "unknown-host rejection", "valid one-GML ZIP", "traversal rejection"]},
+    "hmlr_resolver_preflight": {"state": "PASS", "checks": 10, "scope": ["authority ZIP discovery", "HMLR page host", "HMLR S3 object host", "unknown-host rejection", "HTTP rejection", "valid one-GML ZIP", "traversal rejection", "valid native EPSG:27700 polygon structure", "wrong-CRS rejection", "duplicate-INSPIRE-ID rejection"], "execution_note": "Equivalent local deterministic logic executed successfully; full remote resolver runtime remains NOT_RUN."},
     "metadata_resolver": {"state": "PASS", "checks": 6, "scope": ["BNG exact match", "explicit CRS URL", "date parsing", "calendar-year parsing", "ArcGIS QA parsing", "BNG geometry plausibility"]}
   },
   "direct_execution_attempts": {
@@ -119,7 +126,7 @@
     "states": ["BLOCKED_CONNECTOR_BINARY", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS", "BLOCKED_CONNECTOR_READ", "BLOCKED_CONNECTOR_READ", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS"]
   },
   "next_evidence_gate": [
-    "Acquire and SHA-256 hash the current Barking and Dagenham HMLR ZIP from an allowlisted final host, then safely extract and hash exactly one GML member.",
+    "Acquire and SHA-256 hash the current Barking and Dagenham HMLR ZIP from an allowlisted final host, safely extract exactly one GML member, and obtain a native-BNG polygon/identifier structure receipt.",
     "Execute the 22 official survey-metadata requests and require unique exact EPSG:27700 spatial resolution.",
     "Execute the 22 published 10m EPSG:27700 GetCoverage URLs and hash each GeoTIFF response.",
     "Execute fail-closed point-in-polygon for parcel_1 through parcel_11.",
