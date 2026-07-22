@@ -1,0 +1,71 @@
+name: height_difference_2 HMLR redirect diagnostic 033
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-hmlr-redirect-diagnostic-033-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_redirect_diagnostic_033.yml
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-hmlr-redirect-diagnostic-033-20260722
+          fetch-depth: 1
+      - name: Record manual redirect and cookie chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import traceback
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests
+
+          out=Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_redirect_diagnostic_runtime_033.json')
+          start='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          result={'schema_version':1,'slot_id':'height_difference_2','generated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),'start_url':start,'state':'STARTED','steps':[],'error':None,'fake_data':False,'final_ready':False}
+          session=requests.Session()
+          session.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36','Accept':'text/html,application/xhtml+xml','Accept-Language':'en-GB,en;q=0.9'})
+          try:
+              url=start
+              seen=[]
+              for i in range(12):
+                  response=session.get(url,allow_redirects=False,timeout=60)
+                  location=response.headers.get('location')
+                  step={'index':i+1,'request_url':url,'status_code':response.status_code,'location':location,'set_cookie':response.headers.get('set-cookie'),'cookies_after':session.cookies.get_dict(),'content_type':response.headers.get('content-type'),'body_prefix':response.text[:500]}
+                  result['steps'].append(step)
+                  signature=(url,response.status_code,location,tuple(sorted(session.cookies.get_dict().items())))
+                  if signature in seen:
+                      result['state']='LOOP_CONFIRMED'; break
+                  seen.append(signature)
+                  if response.status_code not in (301,302,303,307,308) or not location:
+                      result['state']='TERMINAL_RESPONSE'; break
+                  url=urljoin(url,location)
+              else:
+                  result['state']='MAX_STEPS_REACHED'
+          except Exception as exc:
+              result['state']='FAIL'; result['error']=f'{type(exc).__name__}: {exc}'; result['traceback']=traceback.format_exc()
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit diagnostic receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/hmlr_redirect_diagnostic_runtime_033.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 HMLR redirect chain'
+          git push origin HEAD:agent/height-difference-2-hmlr-redirect-diagnostic-033-20260722
