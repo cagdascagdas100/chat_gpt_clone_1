@@ -29,6 +29,7 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h
 <div class="card">Canlı aday parity<br><strong id="parity">PENDING</strong></div>
 <div class="card">Tarayıcı kabulü<br><strong id="browserGate">PENDING</strong></div>
 <div class="card">Shared runner<br><strong id="runnerDependency">yükleniyor</strong></div>
+<div class="card">Publisher adayı<br><strong id="publisherGate">PENDING</strong></div>
 </div>
 <h2>İşlem akışı</h2>
 <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
@@ -48,13 +49,14 @@ const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'
 const optional=async p=>{try{return await get(p)}catch(_){return null}};
 const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
 (async()=>{
- const [progress,visible,manifest,hardening,dependency,acceptance]=await Promise.all([
+ const [progress,visible,manifest,hardening,dependency,acceptance,publisher]=await Promise.all([
   get('official_web_refresh_20260722.json'),
   get('../../program_layer_matrix/security_public_safety_visible_rows.json'),
   get('canonical_130_endpoint_manifest_20260722.json'),
   get('runtime_hardening_v17_20260722.json'),
   get('shared_runner_dependency_latest.json'),
-  optional('canonical_acceptance_v17_latest.json')
+  optional('canonical_acceptance_v17_latest.json'),
+  optional('publisher_candidate_v17_latest.json')
  ]);
  const cp=progress.canonical_progress||{},prep=progress.preparation_progress||{},opt=progress.execution_optimization||{},retry=hardening.retry_policy||{};
  const dataRows=Array.isArray(visible.rows)?visible.rows:[],endpointRows=Array.isArray(manifest.endpoints)?manifest.endpoints:[];
@@ -65,9 +67,13 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  const accuracy4=dataRows.filter(x=>Number(x.accuracy_score_4)===4).length;
  const endpointPassed=Number(live.unique_endpoint_http_json_passed||0),candidatePassed=Number(live.candidate_passed||0);
  const acceptancePresent=Boolean(acceptance);
+ const acceptancePass=acceptance?.acceptance_pass===true;
  const browserStatus=browser.status||'PENDING';
- percent.textContent=`${cp.overall_percent??0}% (Δ ${Number(cp.percent_change??0)>=0?'+':''}${cp.percent_change??0})`;
- gates.textContent=`${cp.completed_units??0}/${cp.total_units??0}`;
+ const displayCompleted=acceptancePass?7:Number(cp.completed_units||0);
+ const displayPercent=acceptancePass?87.5:Number(cp.overall_percent||0);
+ const displayDelta=acceptancePass?25.0:Number(cp.percent_change||0);
+ percent.textContent=`${displayPercent}% (Δ ${displayDelta>=0?'+':''}${displayDelta})`;
+ gates.textContent=`${displayCompleted}/${cp.total_units??8}`;
  rows.textContent=`${dataRows.length}/300`;accuracy.textContent=`${accuracy4}/${dataRows.length}`;
  sources.textContent=`${progress.official_web_checks_passed}/${progress.official_web_checks_total}`;
  staticCandidates.textContent=`${manifest.candidate_rows||0}/130`;manifestEndpoints.textContent=`${manifest.unique_endpoints||0}/16`;
@@ -79,6 +85,7 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  parity.textContent=acceptancePresent?`${candidatePassed}/130 ${live.status||'BLOCKED'}`:'0/130 PENDING';
  browserGate.textContent=browserStatus;
  runnerDependency.textContent=dependency.holder_readback?.heartbeat_stale?'STALE PRIORITY 1':'HAZIR';
+ publisherGate.textContent=publisher?.status||'PENDING';
  const parityState=acceptancePresent?(live.status||'BLOCKED'):'PENDING';
  const eventRows=[
   ['PASS','REMOTE_HEAD_SLOT_READBACK','Güncel branch HEAD ve yalnız security_public_safety_1 slot dosyaları doğrulandı.'],
@@ -89,7 +96,8 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
   ['BLOCKED','SHARED_RUNNER_DEPENDENCY',`Global alias ${dependency.global_control_alias?.holder_slot||'unknown'} görevinde; lease ${dependency.holder_readback?.ownership_state||'unknown'}, heartbeat ${dependency.holder_readback?.heartbeat_state||'unknown'}, queue priority ${dependency.holder_readback?.queue_priority??'n/a'}. Alias değiştirilmedi.`],
   [parityState,'CANONICAL_130_CANDIDATE_16_ENDPOINT_LIVE_PARITY',acceptancePresent?`${candidatePassed}/130 aday ve ${endpointPassed}/16 endpoint geçti; ağ isteği ${live.network_requests_performed??'n/a'}.`:`Kabul raporu henüz yok; runner bekleniyor.`],
   [browserStatus,'HEADLESS_BROWSER_DOM_CONSOLE_ACCEPTANCE',acceptancePresent?`Tarayıcı durumu ${browserStatus}; progress console ${browser.progress_browser?.console_error_count??'n/a'}, matrix console ${browser.product_matrix_browser?.console_error_count??'n/a'}.`:'Gerçek Chromium çıktısı henüz yok.'],
-  [acceptance?.acceptance_pass===true?'PASS':'PENDING','COMMIT_PUSH_REMOTE_READBACK',acceptance?.acceptance_pass===true?'Runtime kabulü PASS; publisher readback doğrulanmalı.':'Runtime PASS oluşmadan publisher kapısı bekler.']
+  [acceptancePass?'PASS':'PENDING','RUNTIME_ACCEPTANCE_PROMOTION',acceptancePass?'Runtime kabulü PASS; kanonik görünüm 7/8 ve %87,5 ile sınırlı.':'Runtime PASS oluşmadan 5/8 korunur.'],
+  [publisher?.status==='READY_FOR_SINGLE_PUBLISHER_COMMIT_PUSH_READBACK'?'PASS':'PENDING','COMMIT_PUSH_REMOTE_READBACK',publisher?.status==='READY_FOR_SINGLE_PUBLISHER_COMMIT_PUSH_READBACK'?'Publisher adayı hazır; gerçek commit/push/readback sonrası 8/8 değerlendirilebilir.':'Publisher adayı ve remote readback bekleniyor.']
  ];
  events.innerHTML=eventRows.map((x,i)=>`<tr><td>${i+1}</td><td class="${stateClass(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
  canonicalEndpointBody.innerHTML=endpointRows.map((x,i)=>{
@@ -110,6 +118,9 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  document.body.dataset.liveEndpointPassed=String(endpointPassed);
  document.body.dataset.browserStatus=String(browserStatus);
  document.body.dataset.acceptanceReportPresent=String(acceptancePresent);
+ document.body.dataset.publisherCandidatePresent=String(Boolean(publisher));
+ document.body.dataset.displayCompletedUnits=String(displayCompleted);
+ document.body.dataset.displayPercent=String(displayPercent);
  document.body.dataset.sharedRunnerDependency=String(dependency.status||'unknown');
  document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300&&manifest.candidate_rows===130&&manifest.unique_endpoints===16&&progress.parcel_measurement===false);
  document.body.dataset.runtimeHardened=String(hardening.wrapper_compile==='PASS'&&hardening.wrapper_remote_readback==='PASS');
