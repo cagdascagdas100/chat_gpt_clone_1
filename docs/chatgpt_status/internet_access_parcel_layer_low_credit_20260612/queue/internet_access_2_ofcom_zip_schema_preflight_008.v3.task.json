@@ -12,8 +12,8 @@
     "canonical_count": 92283
   },
   "task_id": "internet-access-2-ofcom-zip-schema-preflight-20260722T033000Z",
-  "attempt_id": "43c6b17b56a34927af6d86574e54d74b",
-  "idempotency_key": "fdcec1137b948dafc1d0b6d8b38d8cefef93fc622e42af7cd8473f5bb81374a5",
+  "attempt_id": "c547b0d3f53e46bcba09e8d5fef2f32d",
+  "idempotency_key": "b07f060460b4c97722c6d16c5283b1b6eced6acc4c31ba781304435cf3f725eb",
   "status": "queued",
   "priority": "P0",
   "sequential_after_task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
@@ -41,13 +41,14 @@
     "source_discovery_required": false,
     "measurement_level": "source package schema",
     "output_semantics": "SOURCE_ACCEPTANCE_ONLY",
-    "parcel_binding_method": "none; this task validates only the official cached ZIP, r2 postcode file naming and required core columns",
+    "parcel_binding_method": "none; validate only the official cached ZIP, exactly 121 r2 postcode files, a non-empty sample file and all required core columns",
     "confidence_method": "no candidate accuracy is written by this task",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only",
     "human_review_required_when": [
       "ZIP is absent or invalid",
-      "r2 postcode files are absent",
+      "r2 postcode file count is not exactly 121",
+      "a sample postcode file is empty",
       "required postcode gigabit UFBB100 SFBB or unable30 columns are absent"
     ]
   },
@@ -58,5 +59,7 @@
     "production_deploy": false
   },
   "final_ready": false,
-  "requested_at": "2026-07-22T03:30:00Z"
+  "requested_at": "2026-07-22T03:30:00Z",
+  "corrected_at": "2026-07-22T03:34:00Z",
+  "correction": "REQUIRE_EXACTLY_121_R2_POSTCODE_FILES"
 }
