@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "slot_id": "height_difference_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "verified_on": "2026-07-22",
@@ -30,11 +30,11 @@
     "exact_polygon_rows": 0
   },
   "internet_research_counts": {
-    "sources_researched": 9,
+    "sources_researched": 10,
     "promoted_sources": 8,
-    "held_sources": 1,
+    "held_sources": 2,
     "official_accuracy_guidance_pages_verified": 2,
-    "public_client_implementations_cross_validated": 3,
+    "public_client_implementations_cross_validated": 4,
     "prepared_parcel_examples": 11,
     "prepared_survey_metadata_requests": 22,
     "prepared_wcs_probe_requests": 22,
@@ -54,7 +54,10 @@
       "native_crs": "EPSG:27700",
       "technical_guidance_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
       "reprojection_warning_m": 15,
-      "download_semantics": "Stable authority ZIP route may redirect to a short-lived official object URL; signed query URL is not persisted.",
+      "download_semantics": "Stable authority ZIP route may redirect to a short-lived object URL; signed query URL is not persisted.",
+      "page_allowed_final_host": "use-land-property-data.service.gov.uk",
+      "zip_allowed_final_hosts": ["use-land-property-data.service.gov.uk", "datapub-prd-s3-bucket.s3.amazonaws.com"],
+      "object_host_evidence_state": "PUBLIC_REQUEST_TRACE_AND_2026_CLIENT_IMPLEMENTATION_CROSSCHECK_ONLY",
       "zip_bytes_acquired": false,
       "gml_bytes_extracted": false
     },
@@ -94,25 +97,30 @@
     "reprojection_fallback": "15m search may produce candidates only; no automatic canonical binding",
     "primary_numeric_result": "polygon DTM maximum minus polygon DTM minimum",
     "dsm_usage": "surface and object QA only",
-    "required_hmlr_archive_checks": ["official authority row", "stable ZIP route", "ZIP magic", "safe member paths", "no encryption", "no symlinks", "bounded expansion", "exactly one GML member"],
+    "required_hmlr_archive_checks": ["official authority row", "stable ZIP route", "HTTPS final URL", "final-host allowlist", "ZIP magic", "safe member paths", "no encryption", "no symlinks", "bounded expansion", "exactly one GML member"],
     "required_raster_checks": ["HTTP 200", "TIFF magic", "SHA-256", "EPSG:27700", "approximately 1m grid", "finite non-nodata pixels"],
-    "required_provenance": ["HMLR page SHA-256", "HMLR ZIP SHA-256", "HMLR GML SHA-256", "exact polygon WKB SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
+    "required_provenance": ["HMLR page SHA-256", "HMLR ZIP SHA-256", "HMLR GML SHA-256", "HMLR ZIP final host", "exact polygon WKB SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
   },
   "implementation_cross_validation": [
     {"evidence_id":"HD1-IMPL-001","repository":"data-desk-eco/gdn-gis","path":"scripts/fetch-lidar.py","observed":"DTM endpoint, exact DTM coverageId, image/tiff and E/N subset syntax","evidence_state":"CROSS_VALIDATED"},
     {"evidence_id":"HD1-IMPL-002","repository":"MatthewJWhittle/shefflied-bats","path":"sdm/data/terrain/core.py","observed":"Exact DTM and DSM coverage IDs plus DescribeCoverage-driven axis handling","evidence_state":"CROSS_VALIDATED"},
-    {"evidence_id":"HD1-IMPL-003","repository":"Harrishayy/NeMo-Ray","path":"agent/nemoray_modelling/lidar.py","observed":"Exact DTM and DSM coverage IDs, EPSG:27700, E/N axes and GeoTIFF GetCoverage request","evidence_state":"CROSS_VALIDATED"}
+    {"evidence_id":"HD1-IMPL-003","repository":"Harrishayy/NeMo-Ray","path":"agent/nemoray_modelling/lidar.py","observed":"Exact DTM and DSM coverage IDs, EPSG:27700, E/N axes and GeoTIFF GetCoverage request","evidence_state":"CROSS_VALIDATED"},
+    {"evidence_id":"HD1-IMPL-004","repository":"andras/perfect-postcode","path":"pipeline/download/inspire.py","observed":"HMLR INSPIRE page .zip scraping, cookie-aware client, redirect following and ZIP download semantics","evidence_state":"HELD_IMPLEMENTATION_CROSSCHECK"}
   ],
+  "local_behavior_tests": {
+    "redirect_and_zip_security": {"state": "PASS", "checks": 6, "scope": ["HMLR origin host", "HMLR S3 object host", "HTTP rejection", "unknown-host rejection", "valid one-GML ZIP", "traversal rejection"]},
+    "metadata_resolver": {"state": "PASS", "checks": 6, "scope": ["BNG exact match", "explicit CRS URL", "date parsing", "calendar-year parsing", "ArcGIS QA parsing", "BNG geometry plausibility"]}
+  },
   "direct_execution_attempts": {
-    "live_byte_attempts": 5,
-    "web_connector_attempts": 3,
-    "container_attempts": 2,
+    "live_byte_attempts": 9,
+    "web_connector_attempts": 6,
+    "container_attempts": 3,
     "response_bytes_acquired": 0,
-    "states": ["BLOCKED_CONNECTOR_BINARY", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS"]
+    "states": ["BLOCKED_CONNECTOR_BINARY", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS", "BLOCKED_CONNECTOR_READ", "BLOCKED_CONNECTOR_READ", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS"]
   },
   "next_evidence_gate": [
-    "Acquire and SHA-256 hash the current Barking and Dagenham HMLR ZIP, then safely extract and hash exactly one GML member.",
-    "Execute the 22 official survey-metadata requests and require unique exact spatial resolution.",
+    "Acquire and SHA-256 hash the current Barking and Dagenham HMLR ZIP from an allowlisted final host, then safely extract and hash exactly one GML member.",
+    "Execute the 22 official survey-metadata requests and require unique exact EPSG:27700 spatial resolution.",
     "Execute the 22 published 10m EPSG:27700 GetCoverage URLs and hash each GeoTIFF response.",
     "Execute fail-closed point-in-polygon for parcel_1 through parcel_11.",
     "Sample polygon-wide DTM elevation and compute min, max and max-minus-min only after all joins and raster gates pass."
