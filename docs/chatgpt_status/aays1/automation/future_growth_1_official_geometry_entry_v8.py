@@ -2,8 +2,10 @@
 """Revision-8 slot-local combined runner for future_growth_1.
 
 Fixes the revision-7 canonical identity bug by validating the 40-character Git
-blob SHA-1 separately from the 64-character raw file SHA-256. It extracts exact
-rows 20-24, runs official geometry with the slot-local HMLR resolver, then
+blob SHA-1 separately from the 64-character raw file SHA-256. Before any
+canonical scan or network request, it validates the exact revision-8 queue and
+16-source/10-example official request-readiness contract. It then extracts exact
+rows 20-24, runs official geometry with the slot-local HMLR resolver, and
 executes and validates 19 Planning Data requests. Fail closed; no scoring.
 """
 from __future__ import annotations
@@ -31,6 +33,11 @@ EXTRACTOR_SELFTEST = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/au
 RELATION_PAIR_VALIDATOR = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/024_validate_relation_pair_contract_v1.py"
 RELATION_PAIR_SELFTEST = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/025_selftest_relation_pair_contract_v1.py"
 RELATION_PAIR_MANIFEST = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/validation/032_revision8_relation_pair_contract_20260722.json"
+QUEUE_REQUEST_VALIDATOR = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/026_validate_revision8_queue_request_contract_v1.py"
+QUEUE_REQUEST_SELFTEST = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/027_selftest_revision8_queue_request_contract_v1.py"
+QUEUE_MANIFEST = REPO / "docs/chatgpt_status/aays1/queue/aays1_future_growth_1_official_geometry_pipeline_v8_20260722.task.json"
+SOURCE_READINESS = REPO / "england_map_web/data/aays_21_slots/future_growth_1/source_execution_readiness_wave_15_latest.json"
+QUEUE_REQUEST_VALIDATION = REPO / "england_map_web/data/aays_21_slots/future_growth_1/revision8_queue_request_input_validation_latest.json"
 QUERY_EXECUTOR = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/009_execute_planning_constraint_queries_v1.py"
 QUERY_VALIDATOR = REPO / "docs/chatgpt_status/aays1/shards/future_growth_1/automation/008_validate_planning_constraint_query_output_v1.py"
 CANONICAL = REPO / "england_map_web/data/program_layer_matrix/security.geojson"
@@ -100,13 +107,30 @@ def validate_rows(payload: dict[str, Any]) -> dict[str, bool]:
 
 
 def main() -> int:
-    result: dict[str, Any] = {"schema_version": 8, "architecture_version": 3, "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1", "slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "contract_revision": CONTRACT_REVISION, "started_at_epoch": time.time(), "state": "RUNNING", "status": "RUNNING_REVISION8_CORRECTED_CANONICAL_GEOMETRY_AND_19_QUERY_SAMPLE", "revision7_bug_fixed": "RAW_SHA256_WAS_COMPARED_TO_GIT_BLOB_SHA1", "source_steps": {}, "actual_business_data_rows_written": 0, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+    result: dict[str, Any] = {"schema_version": 8, "architecture_version": 3, "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1", "slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "contract_revision": CONTRACT_REVISION, "started_at_epoch": time.time(), "state": "RUNNING", "status": "RUNNING_REVISION8_QUEUE_REQUEST_PREFLIGHT_CORRECTED_CANONICAL_GEOMETRY_AND_19_QUERY_SAMPLE", "revision7_bug_fixed": "RAW_SHA256_WAS_COMPARED_TO_GIT_BLOB_SHA1", "source_steps": {}, "actual_business_data_rows_written": 0, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
     publish(result)
-    required = [GEOMETRY_ENTRY, EXTRACTOR, EXTRACTOR_SELFTEST, RELATION_PAIR_VALIDATOR, RELATION_PAIR_SELFTEST, RELATION_PAIR_MANIFEST, CANDIDATE_SOURCE, QUERY_EXECUTOR, QUERY_VALIDATOR, CANONICAL, QUERY_MANIFEST]
+    required = [GEOMETRY_ENTRY, EXTRACTOR, EXTRACTOR_SELFTEST, RELATION_PAIR_VALIDATOR, RELATION_PAIR_SELFTEST, RELATION_PAIR_MANIFEST, QUEUE_REQUEST_VALIDATOR, QUEUE_REQUEST_SELFTEST, QUEUE_MANIFEST, SOURCE_READINESS, CANDIDATE_SOURCE, QUERY_EXECUTOR, QUERY_VALIDATOR, CANONICAL, QUERY_MANIFEST]
     missing = [str(path) for path in required if not path.is_file()]
     if missing:
         result["missing_paths"] = missing
         return blocked(result, "BLOCKED_MISSING_REVISION8_FILE", "REQUIRED_REVISION8_FILES_MISSING")
+
+    queue_selftest_run = run([sys.executable, str(QUEUE_REQUEST_SELFTEST)])
+    queue_selftest = last_json_line(queue_selftest_run["stdout"])
+    result["source_steps"]["queue_request_contract_selftest"] = queue_selftest_run
+    result["queue_request_contract_selftest"] = queue_selftest
+    publish(result)
+    if queue_selftest_run["exit_code"] != 0 or not isinstance(queue_selftest, dict) or queue_selftest.get("result") != "10/10 PASS":
+        return blocked(result, "BLOCKED_QUEUE_REQUEST_SELFTEST", "QUEUE_REQUEST_SELFTEST_DID_NOT_PASS_10_OF_10")
+
+    queue_validation_run = run([sys.executable, str(QUEUE_REQUEST_VALIDATOR), str(QUEUE_MANIFEST), str(SOURCE_READINESS), "--output", str(QUEUE_REQUEST_VALIDATION)])
+    queue_validation = read_json(QUEUE_REQUEST_VALIDATION)
+    result["source_steps"]["queue_request_contract_validation"] = queue_validation_run
+    result["queue_request_contract_validation"] = queue_validation
+    publish(result)
+    if queue_validation_run["exit_code"] != 0 or not isinstance(queue_validation, dict) or queue_validation.get("result") != "PASS" or queue_validation.get("checks_passed") != 22 or queue_validation.get("source_rows_validated") != 16 or queue_validation.get("example_rows_validated") != 10:
+        return blocked(result, "BLOCKED_QUEUE_REQUEST_CONTRACT", "QUEUE_REQUEST_CONTRACT_DID_NOT_PASS_22_GATES_16_SOURCES_10_EXAMPLES")
+
     selftest_run = run([sys.executable, str(EXTRACTOR_SELFTEST)])
     selftest = last_json_line(selftest_run["stdout"])
     result["source_steps"]["rows_20_24_extractor_selftest"] = selftest_run
@@ -164,8 +188,8 @@ def main() -> int:
     result["planning_query_acceptance"] = query_acceptance
     if validation_run["exit_code"] != 0 or not all(query_acceptance.values()):
         return blocked(result, "BLOCKED_PLANNING_QUERY_ACCEPTANCE", "PLANNING_QUERY_ACCEPTANCE_GATES_FAILED")
-    result["source_sha256"] = {"entry_v8": sha256(Path(__file__)), "geometry_entry": sha256(GEOMETRY_ENTRY), "extractor_v2": sha256(EXTRACTOR), "extractor_v2_selftest": sha256(EXTRACTOR_SELFTEST), "relation_pair_contract_validator": sha256(RELATION_PAIR_VALIDATOR), "relation_pair_contract_selftest": sha256(RELATION_PAIR_SELFTEST), "relation_pair_contract_manifest": sha256(RELATION_PAIR_MANIFEST), "relation_pair_contract_validation": sha256(RELATION_PAIR_VALIDATION), "query_executor": sha256(QUERY_EXECUTOR), "query_validator": sha256(QUERY_VALIDATOR), "rows_output": sha256(ROWS_OUTPUT), "relation_output": sha256(RELATION_OUTPUT), "query_evidence": sha256(QUERY_OUTPUT / "execution_evidence_manifest.json"), "query_validation": sha256(QUERY_VALIDATION)}
-    result.update(state="COMPLETED_SLOT_LOCAL_GEOMETRY_AND_PLANNING_QUERY_SAMPLE", status="COMPLETED_REVISION8_CORRECTED_EXACT_ROWS_GEOMETRY_AND_19_QUERIES_NO_SCORE", canonical_rows_20_24_extracted=5, official_site_polygons_downloaded=4, exact_hmlr_parcel_polygons=6, verified_polygon_relations=14, planning_query_requests_executed=19, planning_query_rows_validated=19, source_wave_parcel_rows_promoted=0, scored_business_rows=0, actual_business_data_rows_written=0, next_unverified_step="BUILD_ROWS_20_24_CANDIDATES_AND_FULL_30761_FACTOR_MATRIX", completed_at_epoch=time.time())
+    result["source_sha256"] = {"entry_v8": sha256(Path(__file__)), "geometry_entry": sha256(GEOMETRY_ENTRY), "queue_request_contract_validator": sha256(QUEUE_REQUEST_VALIDATOR), "queue_request_contract_selftest": sha256(QUEUE_REQUEST_SELFTEST), "queue_manifest": sha256(QUEUE_MANIFEST), "source_readiness": sha256(SOURCE_READINESS), "queue_request_validation": sha256(QUEUE_REQUEST_VALIDATION), "extractor_v2": sha256(EXTRACTOR), "extractor_v2_selftest": sha256(EXTRACTOR_SELFTEST), "relation_pair_contract_validator": sha256(RELATION_PAIR_VALIDATOR), "relation_pair_contract_selftest": sha256(RELATION_PAIR_SELFTEST), "relation_pair_contract_manifest": sha256(RELATION_PAIR_MANIFEST), "relation_pair_contract_validation": sha256(RELATION_PAIR_VALIDATION), "query_executor": sha256(QUERY_EXECUTOR), "query_validator": sha256(QUERY_VALIDATOR), "rows_output": sha256(ROWS_OUTPUT), "relation_output": sha256(RELATION_OUTPUT), "query_evidence": sha256(QUERY_OUTPUT / "execution_evidence_manifest.json"), "query_validation": sha256(QUERY_VALIDATION)}
+    result.update(state="COMPLETED_SLOT_LOCAL_GEOMETRY_AND_PLANNING_QUERY_SAMPLE", status="COMPLETED_REVISION8_QUEUE_REQUEST_PREFLIGHT_CORRECTED_EXACT_ROWS_GEOMETRY_AND_19_QUERIES_NO_SCORE", canonical_rows_20_24_extracted=5, official_site_polygons_downloaded=4, exact_hmlr_parcel_polygons=6, verified_polygon_relations=14, planning_query_requests_executed=19, planning_query_rows_validated=19, source_wave_parcel_rows_promoted=0, scored_business_rows=0, actual_business_data_rows_written=0, next_unverified_step="BUILD_ROWS_20_24_CANDIDATES_AND_FULL_30761_FACTOR_MATRIX", completed_at_epoch=time.time())
     publish(result)
     return 0
 
