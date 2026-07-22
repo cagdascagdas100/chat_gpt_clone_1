@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param()
+param(
+  [int]$GitTimeoutSeconds = 300,
+  [int]$HelperTimeoutSeconds = 180
+)
 
 $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
@@ -9,23 +12,63 @@ $repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALT
 $helperRel = 'docs\chatgpt_status\topography\shards\height_difference_2\automation\026_restart_existing_canonical_f_runner_if_stale.ps1'
 $expectedHelperBlob = 'b3a18bcdb1b7158d18aab33b42d5797342d23cd1'
 $outputRel = 'docs\chatgpt_status\topography\shards\height_difference_2\runner_outputs\015_operator_recovery_preflight_latest.json'
+$snapshotRel = 'docs\chatgpt_status\topography\shards\height_difference_2\runner_outputs\016_operator_git_snapshot_latest.json'
 
-function Write-Receipt(
-  [string]$Status,
-  [bool]$FetchAttempted,
-  [bool]$ResetApplied,
-  [bool]$HelperInvoked,
-  [int]$HelperExitCode,
-  [string]$LocalHeadBefore,
-  [string]$RemoteHead,
-  [string]$LocalHeadAfter,
-  [string]$Detail
-) {
-  $output = Join-Path $repoRoot $outputRel
-  $parent = Split-Path -Parent $output
+function Invoke-GitBounded {
+  param(
+    [Parameter(Mandatory=$true)][string[]]$Arguments,
+    [Parameter(Mandatory=$true)][int]$TimeoutSeconds
+  )
+  $stdout = [System.IO.Path]::GetTempFileName()
+  $stderr = [System.IO.Path]::GetTempFileName()
+  try {
+    $process = Start-Process -FilePath 'git.exe' -ArgumentList $Arguments -WorkingDirectory $repoRoot -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    try {
+      Wait-Process -Id $process.Id -Timeout $TimeoutSeconds -ErrorAction Stop
+    } catch {
+      Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+      throw "GIT_TIMEOUT arguments=$($Arguments -join ' ') timeout_seconds=$TimeoutSeconds"
+    }
+    $process.Refresh()
+    $outText = if (Test-Path -LiteralPath $stdout) { Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue } else { '' }
+    $errText = if (Test-Path -LiteralPath $stderr) { Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue } else { '' }
+    [pscustomobject]@{
+      ExitCode = [int]$process.ExitCode
+      StdOut = [string]$outText
+      StdErr = [string]$errText
+    }
+  } finally {
+    Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Write-JsonFile {
+  param([string]$RelativePath, [hashtable]$Payload)
+  $path = Join-Path $repoRoot $RelativePath
+  $parent = Split-Path -Parent $path
   if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-  [ordered]@{
-    schema_version = 1
+  $Payload | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $path -Encoding UTF8
+}
+
+function Write-Receipt {
+  param(
+    [string]$Status,
+    [bool]$DirtyBefore,
+    [bool]$SnapshotWritten,
+    [bool]$StashCreated,
+    [string]$StashRef,
+    [bool]$FetchAttempted,
+    [bool]$ResetApplied,
+    [bool]$HelperInvoked,
+    [bool]$HelperTimedOut,
+    [int]$HelperExitCode,
+    [string]$LocalHeadBefore,
+    [string]$RemoteHead,
+    [string]$LocalHeadAfter,
+    [string]$Detail
+  )
+  Write-JsonFile $outputRel ([ordered]@{
+    schema_version = 2
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -35,13 +78,21 @@ function Write-Receipt(
     branch = $branch
     helper_path = $helperRel
     expected_helper_blob_sha = $expectedHelperBlob
+    dirty_before = $DirtyBefore
+    snapshot_written = $SnapshotWritten
+    stash_created = $StashCreated
+    stash_ref = $StashRef
+    stash_auto_restore_attempted = $false
     fetch_attempted = $FetchAttempted
     reset_applied = $ResetApplied
     helper_invoked = $HelperInvoked
+    helper_timed_out = $HelperTimedOut
     helper_exit_code = $HelperExitCode
     local_head_before = $LocalHeadBefore
     remote_head = $RemoteHead
     local_head_after = $LocalHeadAfter
+    git_timeout_seconds = $GitTimeoutSeconds
+    helper_timeout_seconds = $HelperTimeoutSeconds
     exact_target_rows = @(30762,46142,61522)
     nearest_row_fallback_allowed = $false
     existing_single_runner_architecture_only = $true
@@ -53,70 +104,138 @@ function Write-Receipt(
     migration = $false
     production_deploy = $false
     detail = $Detail
-  } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $output -Encoding UTF8
+  })
 }
 
 if (-not (Test-Path -LiteralPath $repoRoot -PathType Container)) {
   throw "CANONICAL_F_REPO_ROOT_MISSING=$repoRoot"
 }
-$git = Get-Command git -ErrorAction SilentlyContinue
+$git = Get-Command git.exe -ErrorAction SilentlyContinue
+if (-not $git) { $git = Get-Command git -ErrorAction SilentlyContinue }
 if (-not $git) { throw 'GIT_EXECUTABLE_NOT_FOUND' }
 
-$dirty = @(& $git.Source -C $repoRoot status --porcelain 2>&1)
-if ($LASTEXITCODE -ne 0) { throw 'CANONICAL_F_REPO_STATUS_FAILED' }
-if ($dirty.Count -gt 0) {
-  Write-Receipt 'BLOCKED_CANONICAL_F_REPO_DIRTY' $false $false $false -1 '' '' '' ($dirty -join ';')
-  exit 2
-}
-
-$activeBranch = (& $git.Source -C $repoRoot rev-parse --abbrev-ref HEAD 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0 -or $activeBranch -ne $branch) {
-  Write-Receipt 'BLOCKED_CANONICAL_BRANCH_MISMATCH' $false $false $false -1 '' '' '' "active_branch=$activeBranch"
+$activeBranchResult = Invoke-GitBounded @('-C',$repoRoot,'rev-parse','--abbrev-ref','HEAD') $GitTimeoutSeconds
+if ($activeBranchResult.ExitCode -ne 0) { throw "CANONICAL_BRANCH_READ_FAILED=$($activeBranchResult.StdErr)" }
+$activeBranch = $activeBranchResult.StdOut.Trim()
+if ($activeBranch -ne $branch) {
+  Write-Receipt 'BLOCKED_CANONICAL_BRANCH_MISMATCH' $false $false $false '' $false $false $false $false -1 '' '' '' "active_branch=$activeBranch"
   exit 3
 }
-$localBefore = (& $git.Source -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0) { throw 'CANONICAL_LOCAL_HEAD_READ_FAILED' }
 
-& $git.Source -C $repoRoot fetch origin $branch --prune
-if ($LASTEXITCODE -ne 0) {
-  Write-Receipt 'BLOCKED_CANONICAL_FETCH_FAILED' $true $false $false -1 $localBefore '' $localBefore 'git fetch failed'
+$localBeforeResult = Invoke-GitBounded @('-C',$repoRoot,'rev-parse','HEAD') $GitTimeoutSeconds
+if ($localBeforeResult.ExitCode -ne 0) { throw 'CANONICAL_LOCAL_HEAD_READ_FAILED' }
+$localBefore = $localBeforeResult.StdOut.Trim()
+
+$statusResult = Invoke-GitBounded @('-C',$repoRoot,'status','--porcelain=v1','-uall') $GitTimeoutSeconds
+if ($statusResult.ExitCode -ne 0) { throw "CANONICAL_F_REPO_STATUS_FAILED=$($statusResult.StdErr)" }
+$dirtyLines = @($statusResult.StdOut -split "`r?`n" | Where-Object { $_ })
+$dirtyBefore = $dirtyLines.Count -gt 0
+$snapshotWritten = $false
+$stashCreated = $false
+$stashRef = ''
+
+if ($dirtyBefore) {
+  Write-JsonFile $snapshotRel ([ordered]@{
+    schema_version = 1
+    slot_id = 'height_difference_2'
+    task_id = $taskId
+    attempt_id = $attemptId
+    captured_at = (Get-Date).ToUniversalTime().ToString('o')
+    repo_root = $repoRoot
+    branch = $branch
+    local_head_before = $localBefore
+    dirty_entry_count = $dirtyLines.Count
+    dirty_entries = $dirtyLines
+    recovery_policy = 'stash_include_untracked_no_auto_pop'
+    final_ready = $false
+  })
+  $snapshotWritten = $true
+
+  $stashMessage = "height_difference_2 attempt020 guarded recovery $((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))"
+  $stashResult = Invoke-GitBounded @('-C',$repoRoot,'stash','push','--include-untracked','--message',$stashMessage) $GitTimeoutSeconds
+  if ($stashResult.ExitCode -ne 0) {
+    Write-Receipt 'BLOCKED_CANONICAL_STASH_FAILED' $true $snapshotWritten $false '' $false $false $false $false -1 $localBefore '' $localBefore ($stashResult.StdErr.Trim())
+    exit 2
+  }
+  $stashVerify = Invoke-GitBounded @('-C',$repoRoot,'rev-parse','--verify','refs/stash') $GitTimeoutSeconds
+  if ($stashVerify.ExitCode -ne 0 -or -not $stashVerify.StdOut.Trim()) {
+    Write-Receipt 'BLOCKED_CANONICAL_STASH_REF_MISSING' $true $snapshotWritten $false '' $false $false $false $false -1 $localBefore '' $localBefore 'refs/stash unavailable after stash push'
+    exit 2
+  }
+  $stashRef = $stashVerify.StdOut.Trim()
+  $stashCreated = $true
+
+  $cleanVerify = Invoke-GitBounded @('-C',$repoRoot,'status','--porcelain=v1','-uall') $GitTimeoutSeconds
+  if ($cleanVerify.ExitCode -ne 0 -or $cleanVerify.StdOut.Trim()) {
+    Write-Receipt 'BLOCKED_CANONICAL_REPO_NOT_CLEAN_AFTER_STASH' $true $snapshotWritten $stashCreated $stashRef $false $false $false $false -1 $localBefore '' $localBefore ($cleanVerify.StdOut.Trim())
+    exit 2
+  }
+}
+
+$fetch = Invoke-GitBounded @('-C',$repoRoot,'fetch','--atomic','origin',$branch,'--prune') $GitTimeoutSeconds
+if ($fetch.ExitCode -ne 0) {
+  Write-Receipt 'BLOCKED_CANONICAL_FETCH_FAILED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore '' $localBefore ($fetch.StdErr.Trim())
   exit 4
 }
-$remoteHead = (& $git.Source -C $repoRoot rev-parse "origin/$branch" 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0 -or -not $remoteHead) {
-  Write-Receipt 'BLOCKED_REMOTE_HEAD_READ_FAILED' $true $false $false -1 $localBefore '' $localBefore 'origin branch head unavailable'
+$remoteHeadResult = Invoke-GitBounded @('-C',$repoRoot,'rev-parse',"origin/$branch") $GitTimeoutSeconds
+if ($remoteHeadResult.ExitCode -ne 0 -or -not $remoteHeadResult.StdOut.Trim()) {
+  Write-Receipt 'BLOCKED_REMOTE_HEAD_READ_FAILED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore '' $localBefore 'origin branch head unavailable'
   exit 5
 }
+$remoteHead = $remoteHeadResult.StdOut.Trim()
 
 $resetApplied = $false
-if ($localBefore -ne $remoteHead) {
-  & $git.Source -C $repoRoot reset --hard "origin/$branch"
-  if ($LASTEXITCODE -ne 0) {
-    Write-Receipt 'BLOCKED_CANONICAL_RESET_FAILED' $true $false $false -1 $localBefore $remoteHead $localBefore 'git reset failed'
+if ($localBefore -ne $remoteHead -or $dirtyBefore) {
+  $reset = Invoke-GitBounded @('-C',$repoRoot,'reset','--hard',"origin/$branch") $GitTimeoutSeconds
+  if ($reset.ExitCode -ne 0) {
+    Write-Receipt 'BLOCKED_CANONICAL_RESET_FAILED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localBefore ($reset.StdErr.Trim())
     exit 6
   }
   $resetApplied = $true
 }
-$localAfter = (& $git.Source -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0 -or $localAfter -ne $remoteHead) {
-  Write-Receipt 'BLOCKED_REMOTE_HEAD_NOT_APPLIED' $true $resetApplied $false -1 $localBefore $remoteHead $localAfter 'local head does not match remote head'
+
+$localAfterResult = Invoke-GitBounded @('-C',$repoRoot,'rev-parse','HEAD') $GitTimeoutSeconds
+$localAfter = $localAfterResult.StdOut.Trim()
+if ($localAfterResult.ExitCode -ne 0 -or $localAfter -ne $remoteHead) {
+  Write-Receipt 'BLOCKED_REMOTE_HEAD_NOT_APPLIED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter 'local head does not match remote head'
+  exit 7
+}
+$postResetStatus = Invoke-GitBounded @('-C',$repoRoot,'status','--porcelain=v1','-uall') $GitTimeoutSeconds
+if ($postResetStatus.ExitCode -ne 0 -or $postResetStatus.StdOut.Trim()) {
+  Write-Receipt 'BLOCKED_CANONICAL_REPO_DIRTY_AFTER_RESET' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter ($postResetStatus.StdOut.Trim())
   exit 7
 }
 
 $helper = Join-Path $repoRoot $helperRel
 if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) {
-  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_MISSING' $true $resetApplied $false -1 $localBefore $remoteHead $localAfter $helper
+  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_MISSING' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter $helper
   exit 8
 }
-$helperBlob = (& $git.Source -C $repoRoot hash-object -- $helper 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0 -or $helperBlob -ne $expectedHelperBlob) {
-  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH' $true $resetApplied $false -1 $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"
+$helperBlobResult = Invoke-GitBounded @('-C',$repoRoot,'hash-object','--',$helper) $GitTimeoutSeconds
+$helperBlob = $helperBlobResult.StdOut.Trim()
+if ($helperBlobResult.ExitCode -ne 0 -or $helperBlob -ne $expectedHelperBlob) {
+  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"
   exit 9
 }
 
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $helper
-$helperExit = $LASTEXITCODE
-if ($null -eq $helperExit) { $helperExit = 1 }
-$status = if ($helperExit -eq 0) { 'ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_INVOKED' } else { 'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_FAILED' }
-Write-Receipt $status $true $resetApplied $true $helperExit $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"
+$helperProcess = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $helper + '"')) -WorkingDirectory $repoRoot -PassThru -WindowStyle Hidden
+$helperTimedOut = $false
+try {
+  Wait-Process -Id $helperProcess.Id -Timeout $HelperTimeoutSeconds -ErrorAction Stop
+} catch {
+  $helperTimedOut = $true
+  Stop-Process -Id $helperProcess.Id -Force -ErrorAction SilentlyContinue
+}
+$helperProcess.Refresh()
+$helperExit = if ($helperTimedOut) { 124 } elseif ($null -eq $helperProcess.ExitCode) { 1 } else { [int]$helperProcess.ExitCode }
+$status = if ($helperTimedOut) {
+  'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_TIMEOUT'
+} elseif ($helperExit -eq 0) {
+  'ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_INVOKED'
+} else {
+  'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_FAILED'
+}
+$detail = "helper_blob=$helperBlob"
+if ($stashCreated) { $detail += ";stash_ref=$stashRef;stash_restore=manual_only" }
+Write-Receipt $status $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $true $helperTimedOut $helperExit $localBefore $remoteHead $localAfter $detail
 exit $helperExit
