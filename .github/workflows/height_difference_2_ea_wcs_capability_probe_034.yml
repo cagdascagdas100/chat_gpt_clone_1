@@ -1,0 +1,74 @@
+name: height_difference_2 EA WCS capability probe 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - .github/workflows/height_difference_2_ea_wcs_capability_probe_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_ea_wcs_probe_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check requests lxml
+      - name: Resolve official WCS coverage contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          from pathlib import Path
+          from urllib.parse import urlencode
+          import requests
+          from lxml import etree
+
+          BASE='https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs'
+          UA='AAYS-height-difference-2-ea-wcs-probe/1.0'
+          s=requests.Session()
+          def get(params):
+            r=s.get(BASE,params=params,headers={'User-Agent':UA,'Accept':'application/xml,text/xml,*/*'},timeout=180)
+            r.raise_for_status()
+            return r
+          caps=get({'service':'WCS','version':'2.0.1','request':'GetCapabilities'})
+          root=etree.fromstring(caps.content)
+          coverage_ids=sorted(set(x.strip() for x in root.xpath('//*[local-name()="CoverageId"]/text()') if x.strip()))
+          describes=[]
+          for cid in coverage_ids:
+            r=get({'service':'WCS','version':'2.0.1','request':'DescribeCoverage','coverageId':cid})
+            doc=etree.fromstring(r.content)
+            axis_labels=sorted(set(x.strip() for x in doc.xpath('//@axisLabels') if x.strip()))
+            srs_names=sorted(set(x.strip() for x in doc.xpath('//@srsName') if x.strip()))
+            lower=doc.xpath('//*[local-name()="lowerCorner"]/text()')
+            upper=doc.xpath('//*[local-name()="upperCorner"]/text()')
+            nil_values=sorted(set(x.strip() for x in doc.xpath('//*[local-name()="nilValue"]/text()') if x.strip()))
+            formats=sorted(set(x.strip() for x in doc.xpath('//*[local-name()="formatSupported"]/text()') if x.strip()))
+            describes.append({'coverage_id':cid,'status':r.status_code,'content_type':r.headers.get('Content-Type'),'bytes':len(r.content),'sha256':hashlib.sha256(r.content).hexdigest(),'axis_labels':axis_labels,'srs_names':srs_names,'lower_corners':lower,'upper_corners':upper,'nil_values':nil_values,'formats':formats,'snippet':r.text[:500]})
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'publisher':'Environment Agency','wcs_base':BASE,'version':'2.0.1','capabilities_status':caps.status_code,'capabilities_content_type':caps.headers.get('Content-Type'),'capabilities_bytes':len(caps.content),'capabilities_sha256':hashlib.sha256(caps.content).hexdigest(),'coverage_ids':coverage_ids,'coverage_count':len(coverage_ids),'descriptions':describes,'expected_crs':'EPSG:27700','documented_nodata':'-3.4028235e+38','official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          out=Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_ea_wcs_capability_probe.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit WCS capability receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_ea_wcs_capability_probe.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record EA DTM WCS capability probe 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
