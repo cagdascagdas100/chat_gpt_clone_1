@@ -1,0 +1,146 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_2",
+  "snapshot_date": "2026-07-22",
+  "state": "OFFICIAL_IOD25_RELATIVE_CRIME_METHOD_PREREGISTERED_NO_SCORE",
+  "method_version": "iod25-crime-rank-relative-safety-v1",
+  "candidate_semantics": "RELATIVE_LSOA_CONTEXT_CANDIDATE_NOT_PARCEL_INCIDENT_RISK",
+  "target_rows": 12,
+  "target_parcels": ["parcel_30762","parcel_30763","parcel_30764","parcel_30765","parcel_30766","parcel_30767","parcel_30768","parcel_30769","parcel_30770","parcel_30771","parcel_30772","parcel_30773"],
+  "official_sources": [
+    {
+      "source_id": "iod25_release",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "role": "official_lsoa_relative_deprivation_release",
+      "confidence_percent": 99
+    },
+    {
+      "source_id": "iod25_file7",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "File 7 all ranks scores deciles and population denominators",
+      "url": "https://www.gov.uk/csv-preview/691494fbb49cc44345161692/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+      "role": "official_lsoa21_crime_rank_score_decile_join",
+      "confidence_percent": 99
+    },
+    {
+      "source_id": "iod25_faq",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 frequently asked questions",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
+      "role": "official_lsoa_universe_and_relative_interpretation_guard",
+      "confidence_percent": 99
+    },
+    {
+      "source_id": "police_street_api",
+      "publisher": "Police.uk / Home Office",
+      "name": "Street-level crimes API contract",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "role": "monthly_nearby_event_context_only",
+      "confidence_percent": 98
+    },
+    {
+      "source_id": "police_about",
+      "publisher": "Police.uk / Home Office",
+      "name": "Police.uk data provenance privacy anonymisation and quality",
+      "url": "https://data.police.uk/about/",
+      "role": "anonymisation_and_data_quality_guard",
+      "confidence_percent": 98
+    },
+    {
+      "source_id": "ons_lsoa_population",
+      "publisher": "Office for National Statistics",
+      "name": "Lower layer Super Output Area population estimates mid-2022 revised to mid-2024",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
+      "role": "optional_exact_lsoa_population_denominator",
+      "confidence_percent": 99
+    },
+    {
+      "source_id": "home_office_prc_user_guide",
+      "publisher": "Home Office",
+      "name": "Police recorded crime and outcomes open data tables user guide",
+      "url": "https://www.gov.uk/government/statistics/police-recorded-crime-open-data-tables/police-recorded-crime-and-outcomes-open-data-tables-user-guide",
+      "role": "recording_policy_comparability_and_rate_interpretation_guard",
+      "confidence_percent": 99
+    }
+  ],
+  "primary_method": {
+    "join_key": "ONS LSOA21 code from exact canonical point to official ONS LSOA intersection",
+    "official_field": "Crime Rank (where 1 is most deprived)",
+    "universe_rule": "Read the exact number of unique LSOA21 rows from the hashed IoD25 File 7; expected official universe is 33,755 LSOAs.",
+    "candidate_formula": "relative_safety_percentile = round(100 * (crime_rank - 1) / (lsoa_universe_count - 1), 1)",
+    "direction": "Crime rank 1 maps to 0.0; the least deprived crime-domain rank maps to 100.0.",
+    "official_decile_rule": "Publish the official Crime Decile unchanged; do not recompute deciles.",
+    "interpretation": "Relative position in the IoD25 Crime Domain at LSOA level; not a current monthly crime rate, exact incident probability, title-boundary condition or personal safety guarantee.",
+    "promotion_state": "CANDIDATE_ONLY_UNTIL_EXACT_JOIN_HASH_AND_BROWSER_GATES_PASS"
+  },
+  "police_api_method_guard": {
+    "point_query_radius": "1 mile",
+    "location_semantics": "approximate and anonymised, not exact crime locations",
+    "forbidden_calculation": "Do not divide a one-mile point-query crime count by an LSOA population denominator.",
+    "reason": "The numerator geography and denominator geography are not aligned and nearby point-query results may overlap across parcels.",
+    "allowed_current_role": "Explicit-month response availability, response SHA256, category distribution and evidence-integrity cross-check only.",
+    "future_rate_option": "A separate exact LSOA polygon query may be evaluated only with polygon hash, explicit month, deduplication, disclosure/anonymisation caveat and matching LSOA population edition; it remains secondary to the official IoD25 Crime Rank candidate."
+  },
+  "confidence_gate": {
+    "confidence_is_evidence_integrity_not_safety_probability": true,
+    "required_for_95_plus": [
+      "canonical point source blob matches bb48164e7a0af78df875f30421a6a3068c43edb8",
+      "canonical feature count equals 92283",
+      "exact target parcel ID is unique",
+      "exactly one ONS LSOA21 match",
+      "exactly one IoD25 File 7 row for the LSOA21 code",
+      "IoD25 File 7 download hash and schema recorded",
+      "crime rank and official crime decile are non-null and in range",
+      "method version and source editions are visible on the website"
+    ],
+    "automatic_score_blockers": [
+      "missing or duplicate target parcel",
+      "zero or multiple ONS LSOA matches",
+      "missing or duplicate IoD25 LSOA row",
+      "rank outside official file universe",
+      "source hash or edition missing",
+      "attempt to normalise one-mile point-query counts with LSOA population",
+      "served HTTP or DOM acceptance failure"
+    ]
+  },
+  "row_manifest": [
+    {"row":1,"parcel_id":"parcel_30762","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":2,"parcel_id":"parcel_30763","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":3,"parcel_id":"parcel_30764","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":4,"parcel_id":"parcel_30765","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":5,"parcel_id":"parcel_30766","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":6,"parcel_id":"parcel_30767","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":7,"parcel_id":"parcel_30768","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":8,"parcel_id":"parcel_30769","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":9,"parcel_id":"parcel_30770","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":10,"parcel_id":"parcel_30771","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":11,"parcel_id":"parcel_30772","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null},
+    {"row":12,"parcel_id":"parcel_30773","method_status":"WAITING_EXACT_LSOA_IOD25_JOIN","candidate_value":null,"business_score":null}
+  ],
+  "operations": [
+    {"row":1,"operation":"official_iod25_release_and_technical_method_roles_reviewed","state":"PASS"},
+    {"row":2,"operation":"official_file7_crime_rank_score_decile_schema_recorded","state":"PASS"},
+    {"row":3,"operation":"official_33755_lsoa_universe_expectation_recorded","state":"PASS"},
+    {"row":4,"operation":"rank_one_most_deprived_direction_guard_encoded","state":"PASS"},
+    {"row":5,"operation":"one_mile_point_query_lsoa_population_mismatch_detected_and_blocked","state":"PASS"},
+    {"row":6,"operation":"police_location_anonymisation_and_recording_limits_encoded","state":"PASS"},
+    {"row":7,"operation":"relative_safety_percentile_formula_preregistered","state":"PASS"},
+    {"row":8,"operation":"twelve_target_rows_published_with_null_candidate_and_business_values","state":"PASS"},
+    {"row":9,"operation":"exact_twelve_row_lsoa_iod25_join","state":"PENDING"},
+    {"row":10,"operation":"served_http_dom_console_browser_acceptance","state":"PENDING"}
+  ],
+  "operations_completed": 8,
+  "operations_total": 10,
+  "confidence_ge_95_method_source_rows": 7,
+  "joined_candidate_rows": 0,
+  "confidence_ge_95_candidate_rows": 0,
+  "business_rows_written": 0,
+  "parcel_score_promotion_allowed": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
