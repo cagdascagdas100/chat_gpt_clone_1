@@ -79,6 +79,7 @@ $stderrPath = Join-Path $tempRoot 'watchdog_child_stderr.log'
 Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
 
 $process = $null
+$watchdogExitCode = 2
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $lastActivitySeconds = 0.0
 $lastStdoutBytes = 0L
@@ -112,6 +113,7 @@ try {
       Write-Output "WATCHDOG_TERMINATED=true"
       Write-Output "WATCHDOG_TERMINATION_REASON=$decision"
       Write-Output 'FINAL_READY=false'
+      $watchdogExitCode = 124
       throw "WATCHDOG_$decision"
     }
     if ($elapsedSeconds -ge $nextHeartbeatSeconds) {
@@ -133,7 +135,7 @@ try {
 } catch {
   [Console]::Error.WriteLine([string]$_)
   Write-Output 'FINAL_READY=false'
-  exit 124
+  exit [int]$watchdogExitCode
 } finally {
   if ($process -and -not $process.HasExited) { Stop-ProcessTree -ProcessId $process.Id }
   Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
