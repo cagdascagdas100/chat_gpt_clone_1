@@ -1,9 +1,9 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 21,
-  "complete_count": 21,
+  "operation_count": 28,
+  "complete_count": 28,
   "operations": [
     {"operation_id":"HD1-OP-057","label":"EA Composite survey-index OGC collection discovered","state":"COMPLETE","evidence":"LIDAR_Composite_1m_DTM_2022_extents; official Environment Agency OGC Features service"},
     {"operation_id":"HD1-OP-058","label":"Composite survey metadata fields verified","state":"COMPLETE","evidence":"filename, tilename, polygon_id, resolution, year, sd_flown and ed_flown are queryable"},
@@ -25,7 +25,14 @@
     {"operation_id":"HD1-OP-074","label":"HMLR archive safety gates prepared","state":"COMPLETE","evidence":"ZIP magic, member count, traversal, encryption, symlink, decompression size and compression-ratio guards"},
     {"operation_id":"HD1-OP-075","label":"Separate HMLR page ZIP and GML hashes specified","state":"COMPLETE","evidence":"Official page, downloaded archive and extracted GML each receive independent SHA-256 and byte counts"},
     {"operation_id":"HD1-OP-076","label":"Verified page and GML handoff prepared","state":"COMPLETE","evidence":"PowerShell rechecks receipt hashes and sizes before the measurement runner can consume persisted bytes"},
-    {"operation_id":"HD1-OP-077","label":"Single-runner task upgraded to three-stage execution","state":"COMPLETE","evidence":"HMLR ZIP/GML verification, EA survey metadata resolution, then exact polygon DTM/DSM measurement; four exact outputs"}
+    {"operation_id":"HD1-OP-077","label":"Single-runner task upgraded to three-stage execution","state":"COMPLETE","evidence":"HMLR ZIP/GML verification, EA survey metadata resolution, then exact polygon DTM/DSM measurement; four exact outputs"},
+    {"operation_id":"HD1-OP-078","label":"Official EA OGC service and collection contract revalidated","state":"COMPLETE","evidence":"Official landing, collection, queryables and conformance endpoints were checked again"},
+    {"operation_id":"HD1-OP-079","label":"EA Composite collection storage CRS verified","state":"COMPLETE","evidence":"LIDAR_Composite_1m_DTM_2022_extents declares http://www.opengis.net/def/crs/EPSG/0/27700"},
+    {"operation_id":"HD1-OP-080","label":"OGC API Features Part 2 CRS support verified","state":"COMPLETE","evidence":"Official conformance includes CRS-by-reference support required for bbox-crs and response crs"},
+    {"operation_id":"HD1-OP-081","label":"Metadata query CRS ambiguity detected","state":"COMPLETE","evidence":"Previous primary request used longitude/latitude bbox without bbox-crs while local matching assumed EPSG:27700"},
+    {"operation_id":"HD1-OP-082","label":"Explicit BNG metadata queries implemented","state":"COMPLETE","evidence":"All 11 primary queries now use canonical BNG points, 5m bbox, explicit bbox-crs and response crs EPSG:27700"},
+    {"operation_id":"HD1-OP-083","label":"Four-digit ArcGIS survey-year parsing fixed","state":"COMPLETE","evidence":"Calendar years such as 2020 are validated separately and can no longer be interpreted as Unix timestamps"},
+    {"operation_id":"HD1-OP-084","label":"Hardened metadata resolver self-test completed","state":"COMPLETE","evidence":"Local compile plus 6 deterministic checks passed: BNG match, CRS URL, dates, years and ArcGIS QA parsing"}
   ],
   "fake_data": false,
   "final_ready": false
