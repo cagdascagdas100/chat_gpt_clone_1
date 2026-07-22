@@ -1,0 +1,133 @@
+name: height_difference_2 exact point extraction 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+
+      - name: Verify canonical blob and extract three points
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import math
+          import subprocess
+          from pathlib import Path
+
+          source = Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          output = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json')
+          expected_blob = 'bb48164e7a0af78df875f30421a6a3068c43edb8'
+          expected_count = 92283
+          targets = (30762, 46142, 61522)
+
+          observed_blob = subprocess.check_output(['git', 'hash-object', str(source)], text=True).strip()
+          if observed_blob != expected_blob:
+              raise SystemExit(f'blob mismatch: {observed_blob}')
+
+          doc = json.loads(source.read_text(encoding='utf-8'))
+          features = doc.get('features')
+          if doc.get('type') != 'FeatureCollection' or not isinstance(features, list):
+              raise SystemExit('invalid FeatureCollection')
+          if len(features) != expected_count:
+              raise SystemExit(f'feature count mismatch: {len(features)}')
+
+          rows = []
+          for row_no in targets:
+              feature = features[row_no - 1]
+              expected_id = f'parcel_{row_no}'
+              props = feature.get('properties') or {}
+              geom = feature.get('geometry') or {}
+              coords = geom.get('coordinates')
+              if props.get('security_parcel_id') != expected_id:
+                  raise SystemExit(f'ordinal/id mismatch at {row_no}')
+              if geom.get('type') != 'Point' or not isinstance(coords, list) or len(coords) != 2:
+                  raise SystemExit(f'point geometry required for {expected_id}')
+              lon, lat = float(coords[0]), float(coords[1])
+              if not (math.isfinite(lon) and math.isfinite(lat)):
+                  raise SystemExit(f'non-finite coordinate for {expected_id}')
+              if not (-9.0 <= lon <= 3.0 and 49.0 <= lat <= 61.0):
+                  raise SystemExit(f'coordinate outside plausible GB range for {expected_id}')
+              rows.append({
+                  'row_no': row_no,
+                  'parcel_id': expected_id,
+                  'longitude': lon,
+                  'latitude': lat,
+                  'source_geometry_type': 'Point',
+                  'hmlr_inspire_id': None,
+                  'height_min_m': None,
+                  'height_max_m': None,
+                  'height_difference_m': None,
+                  'result_confidence_percent': None,
+                  'business_row': False,
+              })
+
+          generated_at = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00', 'Z')
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'generated_at': generated_at,
+              'source_path': str(source),
+              'source_git_blob_sha': observed_blob,
+              'source_feature_count': len(features),
+              'target_rows': list(targets),
+              'rows': rows,
+              'exact_point_rows_written': len(rows),
+              'official_numeric_rows_written': 0,
+              'actual_business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          output_sha256 = hashlib.sha256(output.read_bytes()).hexdigest()
+          receipt_payload = {
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'validated_at': generated_at,
+              'state': 'PASS',
+              'source_git_blob_sha': observed_blob,
+              'source_feature_count': len(features),
+              'target_rows': list(targets),
+              'exact_point_rows': len(rows),
+              'output_path': str(output),
+              'output_sha256': output_sha256,
+              'official_numeric_rows_written': 0,
+              'business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }
+          receipt.parent.mkdir(parents=True, exist_ok=True)
+          receipt.write_text(json.dumps(receipt_payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit verified point output to extraction branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Extract three exact height_difference_2 canonical points'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
