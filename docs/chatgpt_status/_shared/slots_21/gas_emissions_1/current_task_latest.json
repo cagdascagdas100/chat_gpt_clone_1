@@ -5,30 +5,24 @@
   "slot_id": "gas_emissions_1",
   "base_slot_id": "gas_emissions",
   "shard_index": 1,
-  "task_id": "gas_emissions_1_official_source_candidates_web_20260720_01",
-  "attempt_id": "gas-emissions-1-source-web-a1",
-  "idempotency_key": "gas_emissions_1:45a26e6bfc288e089542e18df03c094c11e785d7:official_source_candidates_web",
+  "task_id": "gas_emissions_1_registry_geometry_preflight_20260720_01",
+  "attempt_id": "gas-emissions-1-registry-preflight-a1",
+  "idempotency_key": "gas_emissions_1:2eb5e2437c11772c98b7faefcc15d2f68d4a4682:registry_geometry_preflight",
   "status": "queued",
   "target_branch": "codex/aays-single-runner-v5-20260706",
-  "remote_head_basis": "45a26e6bfc288e089542e18df03c094c11e785d7",
-  "first_unverified_step": "OFFICIAL_GRID_AND_POINT_SOURCE_CANDIDATE_DISCOVERY_WITH_LINE_BY_LINE_WEB_VISIBILITY",
-  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/BUILD_OFFICIAL_SOURCE_CANDIDATES_AND_WEB_TABLE_20260720.py",
+  "remote_head_basis": "2eb5e2437c11772c98b7faefcc15d2f68d4a4682",
+  "first_unverified_step": "VERIFY_CANONICAL_92283_PARCEL_ID_AND_GEOMETRY_BEFORE_SAMPLE_BINDING",
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/AUDIT_CANONICAL_PARCEL_REGISTRY_AND_GEOMETRY_20260720.py",
   "read_paths": [
-    "docs/chatgpt_status/gas_emissions",
-    "docs/chatgpt_status/_shared/slots_21/gas_emissions_1",
-    "england_map_web/data/aays_21_slots/gas_emissions_1"
+    "docs/chatgpt_status",
+    "england_map_web",
+    "outputs"
   ],
   "exact_write_paths": [
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_official_source_candidates_latest.json",
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_official_source_candidates_latest.json",
-    "england_map_web/data/aays_21_slots/gas_emissions_1/official_source_candidates_latest.json",
-    "england_map_web/data/aays_21_slots/gas_emissions_1/official_source_candidates.html"
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_registry_geometry_preflight_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_registry_geometry_preflight_latest.json"
   ],
-  "resource_class": [
-    "network_fetch",
-    "light_read"
-  ],
-  "requires_shared_publish_gate": true,
+  "resource_class": "light_read",
   "parcel_partition": {
     "start": 1,
     "end": 30761,
@@ -42,35 +36,27 @@
     "production_deploy": false
   },
   "data_quality_contract": {
-    "source_urls": [
-      "https://www.gov.uk/government/statistics/uk-local-authority-and-regional-greenhouse-gas-emissions-statistics-2005-to-2024",
-      "https://naei.energysecurity.gov.uk/data/maps/download-gridded-emissions",
-      "https://naei.energysecurity.gov.uk/data/maps/emissions-point-sources",
-      "https://naei.energysecurity.gov.uk/emissionsapp/",
-      "https://naei.energysecurity.gov.uk/reports/uk-spatial-emissions-methodology-report-national-atmospheric-emissions-inventory-2023"
-    ],
-    "source_snapshot_date": "2026-07-20",
-    "source_discovery_required": false,
-    "measurement_level": "document",
-    "output_semantics": "CANDIDATE",
-    "parcel_binding_method": "SOURCE_CANDIDATE_RUBRIC_NO_PARCEL_VALUE",
-    "confidence_method": "OFFICIAL_AUTHORITY_FRESHNESS_SPATIAL_BINDING_REPRODUCIBILITY_RUBRIC",
+    "source_urls": [],
+    "source_snapshot_date": "",
+    "source_discovery_required": true,
+    "measurement_level": "unknown_pending_source",
+    "output_semantics": "NO_DATA",
+    "parcel_binding_method": "NOT_RUN_UNTIL_92283_UNIQUE_IDS_AND_GEOMETRY_VERIFIED",
+    "confidence_method": "BOUNDED_TRACKED_FILE_SCAN_AND_EXACT_ROW_ID_GEOMETRY_COUNTS",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "evidence_assist_only",
+    "ai_role": "not_used",
     "human_review_required_when": [
       "source_conflict",
       "low_confidence",
       "geometry_mismatch",
-      "official_url_unreachable",
-      "grid_schema_not_verified"
+      "duplicate_parcel_id",
+      "canonical_count_mismatch"
     ]
   },
-  "candidate_target_count": 5,
-  "measured_parcel_rows_target": 0,
   "single_runner_only": true,
   "new_runner": false,
   "parallel_runner": false,
-  "timeout_seconds": 600,
+  "timeout_seconds": 900,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
@@ -78,7 +64,7 @@
   "migration": false,
   "production_deploy": false,
   "state": "PUBLISHING",
-  "updated_at": "2026-07-22T01:08:11.295976Z",
+  "updated_at": "2026-07-22T01:16:35.153011Z",
   "blocker": null,
   "result": null
 }
