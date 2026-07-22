@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_2",
+  "continuation_key": "5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462",
+  "status": "OPEN",
+  "action_type": "RESTART_EXISTING_SINGLE_RUNNER_AND_VERIFY_FRESH_HEARTBEAT",
+  "detected_at": "2026-07-22T17:27:28Z",
+  "reason": "The canonical single-runner heartbeat is stale since 2026-07-16 and the active claim is terminal, while the global current task remains pickup_requested for height_difference_2.",
+  "safety_constraints": {
+    "create_new_runner": false,
+    "create_duplicate_task": false,
+    "replace_global_current_task": false,
+    "auto_restore_stash": false
+  },
+  "manual_steps": [
+    "Run the existing F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd launcher on the canonical host.",
+    "Verify stable_runner_daemon_heartbeat_latest.json receives a new heartbeat timestamp and the PID is alive.",
+    "Verify single_runner_active_claim.json moves from the terminal 2026-07-16 claim to the existing height_difference_2 task without creating a second runner.",
+    "After height_difference_2 completes or releases, permit future_growth_2 exact GIS bulk snapshot and point-in-polygon work to enter the same single-runner queue."
+  ],
+  "resolution_checks": [
+    "heartbeat_age_seconds <= 900",
+    "single_runner_count == 1",
+    "active_claim_state in [claimed,running,done]",
+    "no_duplicate_task_id == true"
+  ],
+  "resolved_at": null,
+  "final_ready": false,
+  "fake_data": false
+}
