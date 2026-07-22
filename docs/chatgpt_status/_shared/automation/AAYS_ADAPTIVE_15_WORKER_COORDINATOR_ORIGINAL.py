@@ -1435,6 +1435,13 @@ class Coordinator:
             atomic_write_json(
                 self.state / "recovery" / "problem_solver_requests" / f"{target_slot}.json", request,
             )
+            # A previously parked recovery task may already be present in the
+            # scheduler's in-memory seen set. Re-open only an inactive target;
+            # an active slot keeps its ownership and cannot be duplicated.
+            target_task_id = str(target_task.get("task_id") or "")
+            if target_task_id and target_slot not in self.scheduled_slot_ids:
+                self.seen_task_ids.discard(target_task_id)
+                self.scheduled_task_ids.discard(target_task_id)
             solver_state = {
                 "state": "RECOVERY_REQUESTED", "target_slot_id": target_slot,
                 "target_task_id": target_task.get("task_id"), "target_reason": target_reason,
