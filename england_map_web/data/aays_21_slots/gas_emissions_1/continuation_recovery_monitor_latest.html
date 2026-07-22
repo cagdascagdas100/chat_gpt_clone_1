@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gas_emissions_1 — kurtarma izleme</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin-bottom:8px}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.bad{color:#a61b1b;font-weight:700}.ok{color:#176b2c;font-weight:700}.pending{color:#8a5a00;font-weight:700}table{border-collapse:collapse;width:100%;background:#fff;margin:12px 0;font-size:13px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1}code{word-break:break-all}small{color:#566573}
+</style>
+</head>
+<body>
+<h1>gas_emissions_1 — devam ve kurtarma izleme</h1>
+<p><small>Üretim: 2026-07-22T16:47:36Z · Branch başlangıç HEAD: <code>6f98166f8c533cc13227414e8f8708d4d1085fcf</code></small></p>
+<div class="warn"><b>Durum:</b> Mevcut Schema-10 Priority-2 görev 169 dakikadan uzun süredir <code>pickup_requested</code>. Canlı slot owner yok; fakat canlı merkezi runner heartbeat’i de yok. İkinci runner başlatılmadı.</div>
+<div class="summary">
+<div class="card">Genel ilerleme<br><b>66.7%</b></div>
+<div class="card">Bu tur artış<br><b>+0.0 puan</b></div>
+<div class="card">Tamamlanan işlem<br><b>3 / 6</b></div>
+<div class="card">İleri kısmi işlem<br><b>1</b></div>
+<div class="card">Kaynak adayları<br><b>9</b></div>
+<div class="card">Canlı resmî kaynak<br><b>8</b></div>
+<div class="card">Yüksek güven aday<br><b>22</b></div>
+<div class="card">Bölgesel tesis aday<br><b>23</b></div>
+</div>
+<h2>Kurtarma kontrolleri</h2>
+<table><thead><tr><th>#</th><th>Kontrol</th><th>Sonuç</th><th>Kanıt / açıklama</th></tr></thead><tbody>
+<tr><td>1</td><td>Kanonik branch HEAD readback</td><td class="ok">PASS</td><td><code>6f98166f8c533cc13227414e8f8708d4d1085fcf</code></td></tr>
+<tr><td>2</td><td>Slot ownership</td><td class="ok">PASS — çakışma yok</td><td><code>state=unclaimed</code>, lease ve owner boş.</td></tr>
+<tr><td>3</td><td>Slot heartbeat</td><td class="bad">BLOCKED</td><td><code>heartbeat_at=null</code>, pickup ve execution gözlenmedi.</td></tr>
+<tr><td>4</td><td>Merkezi runner heartbeat tazeliği</td><td class="bad">STALE</td><td>Son kayıt <code>2026-07-16T13:45:53Z</code>; bugünkü canlılık kanıtı değildir.</td></tr>
+<tr><td>5</td><td>Merkezi aktif claim</td><td class="ok">TERMINAL</td><td>Eski claim <code>done/completed</code>; canlı owner sayılmadı.</td></tr>
+<tr><td>6</td><td>Kanonik görev manifesti</td><td class="ok">PASS</td><td>Schema 10, Priority 2, slot <code>gas_emissions_1</code>.</td></tr>
+<tr><td>7</td><td>Görev bekleme süresi</td><td class="bad">LONG_PENDING</td><td><code>updated_at=2026-07-22T13:58:00Z</code>; 15 dakika eşiği aşıldı.</td></tr>
+<tr><td>8</td><td>Queue–retry template bütünlüğü</td><td class="ok">PASS</td><td>Her ikisinin Git blob SHA değeri <code>0386194db1b97ba6824a0358b8b9def86fe199c3</code>.</td></tr>
+<tr><td>9</td><td>V6 carrier blob doğrulaması</td><td class="ok">PASS</td><td><code>dd20f6193519fc59698f5a610df55b68e37d785f</code></td></tr>
+<tr><td>10</td><td>Retry reconciler blob doğrulaması</td><td class="ok">PASS</td><td><code>e516b77fdb8f4de9a77ad9a38ea69cba688e634a</code></td></tr>
+<tr><td>11</td><td>Retry state çıktısı</td><td class="bad">MISSING</td><td><code>gas_emissions_1_retry_state_latest.json</code> henüz yok.</td></tr>
+<tr><td>12</td><td>V6 recovery çıktısı</td><td class="bad">MISSING</td><td>Runner execution gözlenmeden çıktı oluşturulmadı.</td></tr>
+<tr><td>13</td><td>V6 validation çıktısı</td><td class="bad">MISSING</td><td>Beş benzersiz stage doğrulaması henüz çalışmadı.</td></tr>
+<tr><td>14</td><td>Paralel runner güvenliği</td><td class="ok">PASS</td><td>Yeni veya ikinci runner oluşturulmadı.</td></tr>
+</tbody></table>
+<h2>Mevcut doğruluk ve aday özeti</h2>
+<table><tbody>
+<tr><th>Resmî kanıt satırı</th><td>160</td></tr>
+<tr><th>Güven ≥99</th><td>160</td></tr>
+<tr><th>Güven 100</th><td>151</td></tr>
+<tr><th>Ortalama güven</th><td>99.94</td></tr>
+<tr><th>Webde görünen toplam satır</th><td>1795</td></tr>
+<tr><th>Web tablo sayısı</th><td>44</td></tr>
+<tr><th>Ölçülmüş tesis emisyon satırı</th><td>0</td></tr>
+<tr><th>Ölçülmüş parsel emisyon satırı</th><td>0</td></tr>
+<tr><th>Doğrulanmış parsel bağlama</th><td>0</td></tr>
+</tbody></table>
+<h2>İlk doğrulanmamış adım</h2>
+<p><code>EXISTING_SINGLE_SHARED_RUNNER_PICKUP_AND_EXECUTE_SCHEMA10_V6_RECOVERY</code></p>
+<p><b>Gerekli işlem:</b> Yalnız mevcut portable Windows hostundaki tek shared runner doğrulanmalı veya yeniden başlatılmalı. İkinci runner açılmamalı. Canlı heartbeat, pickup ve taze V6 recovery/validation çıktıları görülmeden aday araştırması business verisine veya parsel değerine dönüştürülmeyecektir.</p>
+<p><small>Continuation key: <code>5345f564b184a0bdebe1f2233159ac30077add6d920970263ba528f1c5231e2c</code> · final_ready=false · fake_data=false</small></p>
+</body>
+</html>
