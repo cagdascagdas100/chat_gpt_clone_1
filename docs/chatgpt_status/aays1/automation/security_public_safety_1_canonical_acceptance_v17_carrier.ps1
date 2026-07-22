@@ -33,6 +33,18 @@ function Stop-ProcessTree([int]$ProcessId) {
   Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+function Stop-OrphanedBrowserProbes {
+  $matches = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+    $commandLine = [string]$_.CommandLine
+    $commandLine -and $commandLine -match '--headless' -and $commandLine -match 'aays_security_browser_'
+  })
+  foreach ($item in $matches) {
+    Write-Output "ORPHAN_BROWSER_CLEANUP_PID=$($item.ProcessId)"
+    Stop-ProcessTree ([int]$item.ProcessId)
+  }
+  return $matches.Count
+}
+
 $repoRoot = Resolve-RepoRoot
 if ($repoRoot.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "SECURITY_PUBLIC_SAFETY_1_NON_CANONICAL_C_ROOT=$repoRoot"
@@ -68,6 +80,7 @@ Write-Output "PYTHON_WRAPPER=$wrapper"
 Write-Output 'EXECUTION_HOST=POWERSHELL_CARRIER_TO_PYTHON'
 Write-Output "INTERNAL_TIMEOUT_SECONDS=$internalTimeoutSeconds"
 Write-Output 'PROCESS_TREE_KILL_ON_TIMEOUT=true'
+Write-Output 'ORPHAN_BROWSER_PROFILE_CLEANUP=true'
 Write-Output 'NEW_RUNNER=false'
 Write-Output 'PARALLEL_RUNNER=false'
 Write-Output 'FINAL_READY=false'
@@ -100,6 +113,8 @@ try {
     try { $process.WaitForExit(10000) | Out-Null } catch {}
     $process.Refresh()
   }
+  $orphanCleanupCount = Stop-OrphanedBrowserProbes
+  Write-Output "ORPHAN_BROWSER_CLEANUP_COUNT=$orphanCleanupCount"
   $stdout = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw } else { '' }
   $stderr = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw } else { '' }
   if ($stdout) { Write-Output $stdout }
@@ -114,5 +129,6 @@ try {
   exit $exitCode
 } finally {
   if ($process -and -not $process.HasExited) { Stop-ProcessTree $process.Id }
+  Stop-OrphanedBrowserProbes | Out-Null
   Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
 }
