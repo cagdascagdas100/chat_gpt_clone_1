@@ -560,12 +560,22 @@ class Coordinator:
         )
         app_project = self.root / "AAYS" / "terrayield_land_intelligence"
         dependency_probe = subprocess.run(
-            [str(resolved_python), "-c", "import tkinter, fastapi, uvicorn, sqlalchemy, psycopg"],
+            [
+                str(resolved_python),
+                "-c",
+                (
+                    "import importlib.util; "
+                    "names=('tkinter','fastapi','uvicorn','sqlalchemy','psycopg'); "
+                    "missing=[name for name in names if importlib.util.find_spec(name) is None]; "
+                    "raise SystemExit(1 if missing else 0)"
+                ),
+            ],
             cwd=app_project if app_project.is_dir() else self.root,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             check=False,
+            timeout=30,
         )
         port_8012_state = "FREE"
         port_8012_compatible = True
