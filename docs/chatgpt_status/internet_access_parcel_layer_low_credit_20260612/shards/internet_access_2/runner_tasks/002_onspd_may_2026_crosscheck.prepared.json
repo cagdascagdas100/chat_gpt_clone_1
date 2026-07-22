@@ -1,0 +1,45 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
+  "task_id": "internet-access-2-onspd-may-2026-crosscheck-wave2",
+  "attempt_id": "TO_BE_ASSIGNED_AFTER_WAVE1_REMOTE_READBACK",
+  "idempotency_key": "TO_BE_ASSIGNED_AFTER_WAVE1_REMOTE_READBACK",
+  "status": "prepared_not_queued",
+  "dependency": {
+    "task_id": "internet-access-2-ofcom-2026-schema-and-sample-wave1-20260722T003722Z",
+    "required_output": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/001_existing_shard2_sample_candidates.jsonl",
+    "required_remote_state": "PUBLISHED_BY_SINGLE_COORDINATOR"
+  },
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/002_onspd_may_2026_crosscheck.py",
+  "read_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/001_existing_shard2_sample_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/evidence/official_source_registry_20260722.json"
+  ],
+  "exact_write_paths": ["docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"],
+  "resource_class": ["network_fetch", "heavy_disk_io", "light_read"],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 7200,
+  "data_quality_contract": {
+    "source_urls": ["https://www.arcgis.com/home/item.html?id=6fff67d204fd4f339591ed667a6e3642"],
+    "source_snapshot_date": "2026-05",
+    "source_discovery_required": false,
+    "measurement_level": "postcode",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "exact normalized postcode cross-check against ONSPD; existing HMLR identity retained; no inferred parcel speed",
+    "confidence_method": "Ofcom r2 exact postcode plus ONSPD live/unterminated confirmation retains maximum 0.75; terminated or absent postcode requires review/NO_DATA",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": ["ONSPD postcode terminated", "ONSPD postcode absent", "postcode coordinate materially conflicts with parcel location"]
+  },
+  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
+  "final_ready": false,
+  "prepared_at": "2026-07-22T01:07:00Z"
+}
