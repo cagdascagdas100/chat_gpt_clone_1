@@ -14,17 +14,37 @@ from typing import Any, Iterable
 SLOT_ID = "internet_access_2"
 PARTITION_START = 30762
 PARTITION_END = 61522
+EXPECTED_ROWS = 11013
 SOURCE_SNAPSHOT = "2026-05"
-BATCH_SIZE = 180
+BATCH_SIZE = 120
+MIN_SPLIT_SIZE = 20
 WEB_CHUNK_SIZE = 500
-LAYER_URL = (
-    "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/"
-    "ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0/query"
-)
+MAX_RETRIES = 3
 MATRIX_REL = "england_map_web/data/program_layer_matrix/internet.geojson"
 SHARD_REL = (
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/"
     "shards/internet_access_2"
+)
+SERVICES = (
+    {
+        "name": "ONSPD_MAY_2026_HOSTED_TABLE",
+        "url": (
+            "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/"
+            "ONS_Postcode_Directory_May_2026_for_the_United_Kingdom_Hosted_Table/"
+            "FeatureServer/0/query"
+        ),
+        "field": "pcds",
+        "out_fields": "pcd7,pcds,dointr,doterm,lat,long,lad25cd,ctry25cd",
+    },
+    {
+        "name": "ONSPD_ONLINE_LATEST_POSTCODE_CENTROIDS",
+        "url": (
+            "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/"
+            "ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0/query"
+        ),
+        "field": "PCDS",
+        "out_fields": "PCD7,PCDS,DOINTR,DOTERM,LAT,LONG,LAD25CD,CTRY25CD",
+    },
 )
 
 
@@ -101,37 +121,86 @@ def attr(attributes: dict[str, Any], *names: str) -> Any:
     return None
 
 
-def query_batch(spaced_values: list[str]) -> tuple[dict[str, dict[str, Any]], str | None]:
+def post_query(service: dict[str, str], spaced_values: list[str]) -> dict[str, dict[str, Any]]:
     quoted = ",".join("'" + value.replace("'", "''") + "'" for value in spaced_values)
-    params = {
-        "where": f"PCDS IN ({quoted})",
-        "outFields": "PCD7,PCDS,DOINTR,DOTERM,LAT,LONG,LAD25CD,CTRY25CD",
+    body = urllib.parse.urlencode({
+        "where": f"{service['field']} IN ({quoted})",
+        "outFields": service["out_fields"],
         "returnGeometry": "false",
         "f": "json",
-    }
-    url = LAYER_URL + "?" + urllib.parse.urlencode(params)
+    }).encode("utf-8")
     request = urllib.request.Request(
-        url,
+        service["url"],
+        data=body,
+        method="POST",
         headers={
             "User-Agent": "Mozilla/5.0 AAYS-TerraYield official-postcode-validation",
             "Accept": "application/json,text/plain,*/*",
+            "Content-Type": "application/x-www-form-urlencoded",
             "Referer": "https://www.arcgis.com/",
         },
     )
-    try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-        if payload.get("error"):
-            raise RuntimeError(json.dumps(payload["error"], ensure_ascii=False))
-        found: dict[str, dict[str, Any]] = {}
-        for feature in payload.get("features") or []:
-            attributes = feature.get("attributes") or {}
-            postcode = norm_postcode(attr(attributes, "PCDS", "PCD7"))
-            if postcode:
-                found[postcode] = attributes
-        return found, None
-    except Exception as exc:
-        return {}, f"ONSPD_BATCH_QUERY_BLOCKED: {type(exc).__name__}: {exc}"
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("error"):
+        raise RuntimeError(json.dumps(payload["error"], ensure_ascii=False))
+    found: dict[str, dict[str, Any]] = {}
+    for feature in payload.get("features") or []:
+        attributes = feature.get("attributes") or {}
+        postcode = norm_postcode(attr(attributes, "pcds", "pcd7"))
+        if postcode:
+            found[postcode] = attributes
+    return found
+
+
+def query_resilient(
+    service: dict[str, str],
+    spaced_values: list[str],
+    records: list[dict[str, Any]],
+    depth: int = 0,
+) -> dict[str, dict[str, Any]]:
+    last_error: str | None = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            found = post_query(service, spaced_values)
+            records.append({
+                "service": service["name"],
+                "requested": len(spaced_values),
+                "returned": len(found),
+                "attempt": attempt,
+                "depth": depth,
+                "state": "PASS",
+                "error": None,
+            })
+            return found
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            records.append({
+                "service": service["name"],
+                "requested": len(spaced_values),
+                "returned": 0,
+                "attempt": attempt,
+                "depth": depth,
+                "state": "RETRY",
+                "error": last_error,
+            })
+            if attempt < MAX_RETRIES:
+                time.sleep(2 ** (attempt - 1))
+    if len(spaced_values) > MIN_SPLIT_SIZE:
+        midpoint = len(spaced_values) // 2
+        left = query_resilient(service, spaced_values[:midpoint], records, depth + 1)
+        right = query_resilient(service, spaced_values[midpoint:], records, depth + 1)
+        return {**left, **right}
+    records.append({
+        "service": service["name"],
+        "requested": len(spaced_values),
+        "returned": 0,
+        "attempt": MAX_RETRIES,
+        "depth": depth,
+        "state": "BLOCKED",
+        "error": last_error,
+    })
+    return {}
 
 
 def main() -> int:
@@ -142,7 +211,8 @@ def main() -> int:
     progress_path = shard / "progress/005_progress.jsonl"
     progress_path.parent.mkdir(parents=True, exist_ok=True)
     progress_path.write_text("", encoding="utf-8")
-    append_progress(progress_path, 1, "slot_partition_guard", "PASS",
+    step = 1
+    append_progress(progress_path, step, "slot_partition_guard", "PASS",
                     partition=[PARTITION_START, PARTITION_END])
 
     matrix = json.loads((root / MATRIX_REL).read_text(encoding="utf-8-sig"))
@@ -153,9 +223,10 @@ def main() -> int:
         ],
         key=lambda feature: int((feature.get("properties") or {}).get("row_no") or 0),
     )
-    if len(features) != 11013:
-        raise RuntimeError(f"EXPECTED_11013_EXISTING_SHARD2_ROWS_GOT_{len(features)}")
-    append_progress(progress_path, 2, "existing_shard2_matrix_filter", "PASS", rows=len(features))
+    if len(features) != EXPECTED_ROWS:
+        raise RuntimeError(f"EXPECTED_{EXPECTED_ROWS}_EXISTING_SHARD2_ROWS_GOT_{len(features)}")
+    step += 1
+    append_progress(progress_path, step, "existing_shard2_matrix_filter", "PASS", rows=len(features))
 
     candidates: list[dict[str, Any]] = []
     for feature in features:
@@ -171,35 +242,48 @@ def main() -> int:
             "legacy_metrics": legacy,
         })
     postcodes = sorted({row["postcode"] for row in candidates if row.get("postcode")})
-    append_progress(progress_path, 3, "canonical_postcode_extraction", "PASS",
+    step += 1
+    append_progress(progress_path, step, "canonical_postcode_extraction", "PASS",
                     rows=len(candidates), distinct_postcodes=len(postcodes))
 
     official: dict[str, dict[str, Any]] = {}
-    batch_errors: list[dict[str, Any]] = []
-    batch_count = 0
-    spaced_values = [spaced_postcode(value) for value in postcodes]
-    for batch_count, batch in enumerate(chunks(spaced_values, BATCH_SIZE), start=1):
-        found, blocker = query_batch(batch)
-        official.update(found)
-        if blocker:
-            batch_errors.append({"batch": batch_count, "blocker": blocker, "requested": len(batch)})
-        append_progress(progress_path, 3 + batch_count, "official_onspd_batch",
-                        "PASS" if not blocker else "BLOCKED",
-                        batch=batch_count, requested=len(batch), returned=len(found), blocker=blocker)
-        time.sleep(0.1)
+    source_used: dict[str, str] = {}
+    request_records: list[dict[str, Any]] = []
+    for service in SERVICES:
+        missing = [postcode for postcode in postcodes if postcode not in official]
+        if not missing:
+            break
+        for batch in chunks([spaced_postcode(value) for value in missing], BATCH_SIZE):
+            found = query_resilient(service, batch, request_records)
+            for postcode, attributes in found.items():
+                if postcode not in official:
+                    official[postcode] = attributes
+                    source_used[postcode] = service["name"]
+            step += 1
+            append_progress(
+                progress_path,
+                step,
+                "official_onspd_batch",
+                "PASS" if found else "PARTIAL",
+                service=service["name"],
+                requested=len(batch),
+                returned=len(found),
+                cumulative_returned=len(official),
+            )
+            time.sleep(0.1)
 
     rows: list[dict[str, Any]] = []
-    confirmed = live = terminated = missing = 0
+    confirmed = live = terminated = missing_count = 0
     for line_no, candidate in enumerate(candidates, start=1):
         postcode = candidate.get("postcode")
         attributes = official.get(postcode)
         if attributes is None:
-            status = "ONSPD_NOT_CONFIRMED"
+            status = "ONSPD_NOT_CONFIRMED_AFTER_TWO_OFFICIAL_SERVICES"
             accuracy = "0/4"
-            missing += 1
+            missing_count += 1
         else:
             confirmed += 1
-            termination = str(attr(attributes, "DOTERM") or "").strip()
+            termination = str(attr(attributes, "doterm") or "").strip()
             if termination:
                 status = "ONSPD_TERMINATED_REVIEW_REQUIRED"
                 accuracy = "1/4"
@@ -212,6 +296,7 @@ def main() -> int:
             "line": line_no,
             **candidate,
             "onspd_snapshot_date": SOURCE_SNAPSHOT,
+            "onspd_source": source_used.get(postcode),
             "onspd": attributes,
             "onspd_status": status,
             "candidate_status": status,
@@ -247,10 +332,11 @@ def main() -> int:
             "count": len(chunk_rows),
         })
 
+    hard_failures = [record for record in request_records if record["state"] == "BLOCKED"]
     blockers = ["OFCom_2026_DOWNLOAD_BLOCKED_AFTER_BROWSER_AND_CURL_FALLBACKS"]
-    if batch_errors:
-        blockers.append("ONSPD_BATCH_QUERY_PARTIAL")
-    if missing:
+    if hard_failures:
+        blockers.append("ONSPD_BATCH_QUERY_PARTIAL_AFTER_RETRY_AND_SPLIT")
+    if missing_count:
         blockers.append("ONSPD_POSTCODE_IDENTITY_INCOMPLETE")
 
     validation = {
@@ -261,13 +347,13 @@ def main() -> int:
         "postcode_identity_confirmed": confirmed,
         "postcode_live": live,
         "postcode_terminated_review_required": terminated,
-        "postcode_not_confirmed": missing,
+        "postcode_not_confirmed": missing_count,
         "official_coverage_verified_candidates": 0,
         "maximum_accuracy_without_ofcom_coverage": "2/4_POSTCODE_IDENTITY_ONLY",
         "maximum_accuracy_with_exact_ofcom_r2": "3/4_POSTCODE_PROXY",
         "parcel_measured_values_written": 0,
-        "batch_count": batch_count,
-        "batch_errors": batch_errors,
+        "request_attempt_records": len(request_records),
+        "hard_failed_request_groups": len(hard_failures),
         "blockers": blockers,
         "fake_data": False,
         "db_write": False,
@@ -292,32 +378,36 @@ def main() -> int:
             "confirmed": confirmed,
             "live": live,
             "terminated": terminated,
-            "missing": missing,
+            "missing": missing_count,
             "official_coverage_verified": 0,
         },
         "final_ready": False,
     })
     write_json(source_path, {
         "slot_id": SLOT_ID,
-        "source": "ONS Postcode Directory May 2026 online postcode centroids",
-        "layer_url": LAYER_URL.rsplit("/query", 1)[0],
-        "snapshot": SOURCE_SNAPSHOT,
+        "source_snapshot": SOURCE_SNAPSHOT,
+        "services": [{"name": service["name"], "url": service["url"].rsplit("/query", 1)[0]} for service in SERVICES],
+        "method": "POST_EXACT_PCDS_WITH_RETRY_SPLIT_AND_SECOND_SERVICE_FALLBACK",
         "batch_size": BATCH_SIZE,
-        "batch_count": batch_count,
-        "batch_errors": batch_errors,
+        "max_retries": MAX_RETRIES,
+        "request_records": request_records,
         "official_rows_returned": len(official),
         "final_ready": False,
     })
+    identity_complete = missing_count == 0 and not hard_failures
     write_json(status_path, {
         "slot_id": SLOT_ID,
         "task_id": os.environ.get("AAYS_TASK_ID"),
-        "state": "EXISTING_SHARD2_POSTCODE_IDENTITY_COMPLETE_COVERAGE_PENDING" if not missing and not batch_errors
-                 else "EXISTING_SHARD2_POSTCODE_IDENTITY_PARTIAL_COVERAGE_PENDING",
-        "completed_operations": 4 + batch_count,
-        "total_operations": 5 + batch_count,
-        "progress_percent": round(100 * (4 + batch_count) / (5 + batch_count), 2),
+        "state": (
+            "EXISTING_SHARD2_POSTCODE_IDENTITY_COMPLETE_COVERAGE_PENDING"
+            if identity_complete
+            else "EXISTING_SHARD2_POSTCODE_IDENTITY_PARTIAL_COVERAGE_PENDING"
+        ),
+        "completed_operations": step + 1,
+        "total_operations": step + 1,
+        "identity_wave_progress_percent": 100.0,
         **validation,
-        "next_step": "RESOLVE_OFFICIAL_OFCom_R2_BINARY_ACCESS_THEN_JOIN_EXACT_COVERAGE_FOR_11013_ROWS",
+        "next_step": "RESOLVE_OFFICIAL_OFCom_R2_BINARY_OR_API_ACCESS_THEN_JOIN_EXACT_COVERAGE_FOR_11013_ROWS",
         "updated_at": utc_now(),
     })
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -328,18 +418,29 @@ def main() -> int:
         f"- Identity confirmed: {confirmed}\n"
         f"- Live: {live}\n"
         f"- Terminated/review: {terminated}\n"
-        f"- Not confirmed: {missing}\n"
-        "- Official Ofcom coverage verified: 0\n"
+        f"- Not confirmed: {missing_count}\n"
+        f"- Hard failed request groups: {len(hard_failures)}\n"
         f"- Web chunks: {len(manifest_chunks)}\n"
-        "- Accuracy: at most 2/4 until exact Ofcom r2 postcode coverage row is present\n"
+        "- Official Ofcom coverage verified: 0\n"
+        "- Accuracy: at most 2/4 until exact Ofcom r2 postcode coverage is present\n"
         "- Parcel-measured values written: 0\n"
         "- final_ready: false\n",
         encoding="utf-8",
     )
-    append_progress(progress_path, 4 + batch_count, "web_chunk_manifest_and_outputs_written", "PASS",
-                    rows=len(rows), chunks=len(manifest_chunks), confirmed=confirmed,
-                    missing=missing, files=[str(path.relative_to(root)).replace("\\", "/") for path in
-                    (data_path, validation_path, status_path, manifest_path, source_path, report_path)])
+    step += 1
+    append_progress(
+        progress_path,
+        step,
+        "web_chunk_manifest_and_outputs_written",
+        "PASS",
+        rows=len(rows),
+        chunks=len(manifest_chunks),
+        confirmed=confirmed,
+        missing=missing_count,
+        hard_failed_request_groups=len(hard_failures),
+        files=[str(path.relative_to(root)).replace("\\", "/") for path in
+               (data_path, validation_path, status_path, manifest_path, source_path, report_path)],
+    )
     return 0
 
 
