@@ -1,0 +1,92 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 2,
+  "task_id": "security_public_safety_2_iod25_relative_method_wave2_20260722",
+  "attempt_id": "attempt-001",
+  "idempotency_key": "9fb2c75e6990a10c54f6d5c51f065842cf352eb743c28af252b2b37fc452fe93",
+  "status": "pending",
+  "page_key": "aays1",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_iod25_relative_method_wave2_20260722.py",
+  "read_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/geometry_lsoa_police_sample_wave1_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2",
+    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "docs/chatgpt_status/security_public_safety/ENGLAND_PARCEL_CONTINUATION_20260717.md",
+    "docs/chatgpt_status/_shared/contracts/AAYS_ENGLAND_PARCEL_COVERAGE_AND_POLYGON_CLICK_CONTRACT_20260717.md"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/iod25_relative_method_wave2_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/progress_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html"
+  ],
+  "resource_class": [
+    "heavy_disk_io",
+    "network_fetch",
+    "browser_research",
+    "cpu_heavy"
+  ],
+  "requires_git_publish_gate": true,
+  "requires_shared_publish_gate": true,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
+      "https://www.gov.uk/government/publications/english-indices-of-deprivation-2025-technical-report",
+      "https://www.gov.uk/csv-preview/691494fbb49cc44345161692/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+      "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
+      "https://data.police.uk/docs/method/crime-last-updated/",
+      "https://data.police.uk/docs/method/crime-street/",
+      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "https://www.gov.uk/government/statistics/police-recorded-crime-open-data-tables/police-recorded-crime-and-outcomes-open-data-tables-user-guide",
+      "https://www.data.gov.uk/dataset/0e26ee1b-26b7-406e-a3b1-f3481b324977/local-police-recorded-crime-data"
+    ],
+    "source_snapshot_date": "2026-07-22",
+    "source_discovery_required": false,
+    "measurement_level": "lsoa",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "exact_internal_security_parcel_id_to_point_then_ons_lsoa21_intersection_then_iod25_lsoa_code_join",
+    "confidence_method": "six_gate_official_evidence_integrity_rubric_no_business_promotion",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "canonical_point_missing",
+      "multiple_or_zero_lsoa_matches",
+      "historical_lsoa_code_mismatch",
+      "police_response_unavailable",
+      "iod_lsoa_join_missing",
+      "relative_method_calibration_pending",
+      "browser_acceptance_failure"
+    ]
+  },
+  "targets": {
+    "sample_parcel_start": 30774,
+    "sample_parcel_end": 30797,
+    "sample_candidate_rows": 24,
+    "parallel_official_source_probes": 10,
+    "parallel_row_checks": 6,
+    "business_rows_to_write": 0,
+    "website_line_by_line": true
+  },
+  "timeout_seconds": 3600,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
