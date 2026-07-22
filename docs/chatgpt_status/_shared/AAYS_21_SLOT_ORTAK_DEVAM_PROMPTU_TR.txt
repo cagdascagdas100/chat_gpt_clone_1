@@ -1,0 +1,74 @@
+AAYS 21 SLOT — ORTAK DEVAM İSTEMİ (DOSYA EKLEMEDEN)
+
+KULLANIM
+Bu metnin tamamını yeni ChatGPT sayfasına yapıştır. En son satırdaki <SLOT_ID> yerine yalnızca çalıştıracağın kesin slot kimliğini yaz. Başka dosya ekleme.
+
+ORTAK İSTEM
+
+TerraYield AAYS çalışmasına aşağıdaki tek slot için kaldığı yerden devam et. Kaynak gerçekliği, görev izolasyonu ve GitHub kayıtları kanıtlanmadan tamamlandı deme.
+
+KANONİK KAYNAK
+- GitHub deposu: https://github.com/cagdascagdas100/chat_gpt_clone_1
+- Kanonik dal: codex/aays-single-runner-v5-20260706
+- İş akışı: AAYS_21_SLOT_SAFE_PARALLEL_V1
+- Ortak sözleşmeler: docs/chatgpt_status/_shared/slots_21/
+- Ortak otomasyon: docs/chatgpt_status/_shared/automation/
+- Otomatik kurtarma politikası: docs/chatgpt_status/_shared/slots_21/auto_recovery_policy_v1.json
+- Devam/kuyruk aracı: docs/chatgpt_status/_shared/automation/AAYS_21_SLOT_CONTINUATION_KICKOFF.py
+
+UYGULAMA KURALLARI
+1. Önce depoyu ve kanonik dalı aç; uzak dalın en güncel commit kimliğini doğrula. Varsa mevcut yerel kopyayı güvenli biçimde fetch/rebase et. Başka slotun değişikliklerini silme, üzerine yazma veya geri alma.
+2. Yalnızca bu istemin sonundaki ÇALIŞACAK SLOT kimliği üzerinde çalış. Slot kimliğini tahmin etme ve başka slota görev yazma.
+3. Şunları depodan okuyup mevcut durumu çıkar:
+   - ilgili slotun docs/chatgpt_status/_shared/slots_21/<SLOT_ID>/ altındaki checkpoint, status ve heartbeat kayıtları;
+   - ilgili iş alanındaki queue, status, report ve runner_outputs kayıtları;
+   - varsa aynı slotun açık .v3.task.json görevi ve son gerçek çıktı commit’i.
+4. Önce gerçek sağlık kontrolü yap: görev RUNNING mi, heartbeat güncel mi, çıktı dosyaları gerçekten değişiyor mu, aynı task_id daha önce tamamlandı mı, publish bekliyor mu, Git lock/checkout/sparse-checkout sorunu var mı?
+5. Görev sağlıklı çalışıyorsa aynı işi ikinci kez oluşturma. Kaldığı gerçek adımdan devam et ve doğrulanabilir yeni çıktı üret.
+6. Görev BLOCKED veya STALE ise önce nedeni kanıtla, yapıyı bozmayan kısa bir kurtarma planı oluştur ve uygula. Yalnızca güvenli onarımlar kullan: eski boş Git lock dosyasını canlı Git süreci olmadığı kanıtlanınca kaldırma, temiz mevcut HEAD ile tek kontrollü yeniden deneme, doğru slot worktree’sini kullanma ve kuyruk sözleşmesini düzeltme. git reset --hard, başka slot dosyalarını silme, sahte veri veya sahte başarı yasaktır.
+7. Gerçek kaynak/veri/kimlik doğrulaması eksikse bunu atlama. Engeli açıkça raporla; uydurma satır, yapay başarı sayacı veya temsili çıktı üretme.
+8. Yeni görev gerekiyorsa yalnızca AAYS v3 sözleşmesine uygun .v3.task.json oluştur/güncelle. slot_id, base_slot_id, shard_index, parcel_partition, task_id, attempt_id, idempotency_key, read_paths, exact_write_paths, resource_classes, script_path/command ve doğrulama ölçütleri açık ve doğru olsun. Yazma yolları yalnızca bu slota ait kanonik köklerde olsun.
+9. Gerçek işlem ve testleri çalıştır. Sonuç dosyalarının varlığını, içerik bütünlüğünü, satır/adet ölçülerini ve ilgili HTTP/DOM/şema kontrollerini uygun olduğu ölçüde doğrula.
+10. Yalnızca ilgili slotun dosyalarını seçerek stage et. git add -A kullanma. Anlamlı bir commit oluştur ve kanonik dala push et. Uzak dal ilerlediyse başka slot işlerini koruyarak yeniden eşitle; çatışmayı ilgili dosyalarla sınırlı çöz.
+11. GitHub’a gerçekten push edilmediyse “push edildi” deme. Commit SHA, dal ve uzak adres kanıtını rapora yaz.
+12. Yanıtının sonunda şu makbuzu eksiksiz ver:
+    - SLOT_ID
+    - önceki durum
+    - uygulanan kurtarma/iş adımları
+    - gerçekten değişen dosyalar
+    - çalışan testler ve sonuçları
+    - yeni durum: RUNNING / COMPLETED / BLOCKED / PUBLISH_PENDING
+    - gerçek ilerleme ölçüsü
+    - kalan gerçek engel
+    - commit SHA ve push sonucu
+    - bir sonraki kesin adım
+13. İş tamamlanmadıysa durumu COMPLETED yapma. Yeni sayfadaki bu “devam” mesajı, yalnızca belirtilen slot için sağlık kontrolü + güvenli kurtarma + gerçek işin devamı anlamına gelir.
+
+ÇALIŞACAK SLOT: <SLOT_ID>
+
+21 KESİN SLOT KİMLİĞİ
+ready_to_sell_1
+ready_to_sell_2
+ready_to_sell_3
+gas_emissions_1
+gas_emissions_2
+gas_emissions_3
+height_difference_1
+height_difference_2
+height_difference_3
+security_public_safety_1
+security_public_safety_2
+security_public_safety_3
+parcel_label_1
+parcel_label_2
+parcel_label_3
+internet_access_1
+internet_access_2
+internet_access_3
+future_growth_1
+future_growth_2
+future_growth_3
+
+ÖRNEK SON SATIR
+ÇALIŞACAK SLOT: parcel_label_2
+

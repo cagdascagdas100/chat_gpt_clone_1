@@ -9,12 +9,14 @@ $ErrorActionPreference = "Stop"
 $root = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
 $identityPath = Join-Path $root ".aays_portable_identity.json"
 $coordinator = Join-Path $root "AAYS_ADAPTIVE_15_WORKER_COORDINATOR.py"
+$recoverySupervisor = Join-Path $root "AAYS_21_SLOT_RECOVERY_SUPERVISOR.py"
 $logRoot = Join-Path $root "logs\adaptive_v3"
 $stdout = Join-Path $logRoot "coordinator.out.log"
 $stderr = Join-Path $logRoot "coordinator.err.log"
 
 if (-not (Test-Path -LiteralPath $identityPath -PathType Leaf)) { throw "PORTABLE_IDENTITY_MISSING: $identityPath" }
 if (-not (Test-Path -LiteralPath $coordinator -PathType Leaf)) { throw "COORDINATOR_SCRIPT_MISSING: $coordinator" }
+if (-not (Test-Path -LiteralPath $recoverySupervisor -PathType Leaf)) { throw "RECOVERY_SUPERVISOR_MISSING: $recoverySupervisor" }
 $identity = Get-Content -LiteralPath $identityPath -Raw | ConvertFrom-Json
 if ($identity.portable_product -ne "AAYS_TerraYield" -or $identity.schema_version -ne 2) { throw "PORTABLE_IDENTITY_INVALID" }
 if ([int]$identity.architecture_version -ne 3) { throw "PORTABLE_IDENTITY_ARCHITECTURE_MUST_BE_3" }
@@ -24,6 +26,8 @@ New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 $publisherRepo = Join-Path $root ([string]$identity.relative_repo_path)
 $worktreeRoot = Join-Path $root ([string]$identity.relative_worktree_root)
 $portableGit = Join-Path $root "runtime\git\cmd\git.exe"
+$systemGit = Join-Path $env:ProgramFiles "Git\mingw64\bin\git.exe"
+if (Test-Path -LiteralPath $systemGit -PathType Leaf) { $portableGit = $systemGit }
 $portableGitConfig = Join-Path $root "runtime\gitconfig.aays.portable"
 $stateRoot = Join-Path $root "state"
 $manualStopPath = Join-Path $stateRoot "manual_stop.requested.json"
@@ -71,23 +75,89 @@ $env:GCM_INTERACTIVE = "Never"
 $env:GIT_HTTP_LOW_SPEED_LIMIT = "1"
 $env:GIT_HTTP_LOW_SPEED_TIME = "30"
 
-# Store Git ownership and long-path settings on the portable disk. Rebuild the
-# entries on every launch so a changed drive letter cannot leave stale paths.
-& $portableGit config --file $portableGitConfig core.longpaths true | Out-Null
-& $portableGit config --file $portableGitConfig user.name "AAYS Portable Runner" | Out-Null
-& $portableGit config --file $portableGitConfig user.email "aays-portable-runner@local.invalid" | Out-Null
-& $portableGit config --file $portableGitConfig --unset-all safe.directory 2>$null
-$safeRepos = @($publisherRepo)
-$slotRoot = Join-Path $worktreeRoot "slots"
-if (Test-Path -LiteralPath $slotRoot -PathType Container) {
-  $safeRepos += Get-ChildItem -LiteralPath $slotRoot -Directory | ForEach-Object { $_.FullName }
+# Store Git ownership and long-path settings on the portable disk. Multiple
+# keepalive/manual launches can overlap, so serialize one atomic replacement;
+# never let Git's own config writer contend on a shared *.lock file.
+$gitConfigMutex = [Threading.Mutex]::new($false, "Local\AAYSPortableGitConfigV3")
+$gitConfigLockTaken = $false
+$configTemporary = $null
+try {
+  try { $gitConfigLockTaken = $gitConfigMutex.WaitOne([TimeSpan]::FromSeconds(30)) }
+  catch [Threading.AbandonedMutexException] { $gitConfigLockTaken = $true }
+  if (-not $gitConfigLockTaken) { throw "PORTABLE_GIT_CONFIG_MUTEX_TIMEOUT" }
+
+  $safeRepos = @($publisherRepo)
+  $slotRoot = Join-Path $worktreeRoot "slots"
+  if (Test-Path -LiteralPath $slotRoot -PathType Container) {
+    $safeRepos += Get-ChildItem -LiteralPath $slotRoot -Directory | ForEach-Object { $_.FullName }
+  }
+  $overridePath = Join-Path $stateRoot "worktree_overrides.json"
+  if (Test-Path -LiteralPath $overridePath -PathType Leaf) {
+    try {
+      $overrides = Get-Content -LiteralPath $overridePath -Raw | ConvertFrom-Json -ErrorAction Stop
+      foreach ($property in $overrides.PSObject.Properties) {
+        $candidate = [System.IO.Path]::GetFullPath((Join-Path $root ([string]$property.Value)))
+        $worktreePrefix = [System.IO.Path]::GetFullPath($worktreeRoot).TrimEnd("\") + "\"
+        if ($candidate.StartsWith($worktreePrefix, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $candidate -PathType Container)) { $safeRepos += $candidate }
+      }
+    } catch {
+      Write-Warning "WORKTREE_OVERRIDES_IGNORED: $($_.Exception.Message)"
+    }
+  }
+  $configLines = [System.Collections.Generic.List[string]]::new()
+  $configLines.Add("[core]"); $configLines.Add("`tlongpaths = true")
+  $configLines.Add("[user]"); $configLines.Add("`tname = AAYS Portable Runner"); $configLines.Add("`temail = aays-portable-runner@local.invalid")
+  $configLines.Add("[safe]")
+  foreach ($safeRepo in ($safeRepos | Sort-Object -Unique)) { $configLines.Add("`tdirectory = " + ([System.IO.Path]::GetFullPath($safeRepo)).Replace("\", "/")) }
+  $configText = ($configLines -join "`n") + "`n"
+  $currentConfigText = $null
+  if (Test-Path -LiteralPath $portableGitConfig -PathType Leaf) {
+    try { $currentConfigText = [System.IO.File]::ReadAllText($portableGitConfig, [System.Text.Encoding]::UTF8) } catch { $currentConfigText = $null }
+  }
+  if ($currentConfigText -ne $configText) {
+    $configTemporary = $portableGitConfig + ".atomic." + [guid]::NewGuid().ToString("N")
+    [System.IO.File]::WriteAllText($configTemporary, $configText, (New-Object System.Text.UTF8Encoding($false)))
+    Move-Item -LiteralPath $configTemporary -Destination $portableGitConfig -Force
+    $configTemporary = $null
+  }
+} finally {
+  if ($configTemporary -and (Test-Path -LiteralPath $configTemporary -PathType Leaf)) { Remove-Item -LiteralPath $configTemporary -Force -ErrorAction SilentlyContinue }
+  if ($gitConfigLockTaken) { $gitConfigMutex.ReleaseMutex() }
+  $gitConfigMutex.Dispose()
 }
-foreach ($safeRepo in $safeRepos) {
-  & $portableGit config --file $portableGitConfig --add safe.directory ([System.IO.Path]::GetFullPath($safeRepo)) | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "PORTABLE_GIT_SAFE_DIRECTORY_FAILED: $safeRepo" }
+function Test-PublisherGitReady {
+  param([string]$GitPath, [string]$RepositoryPath, [int]$TimeoutMilliseconds = 10000)
+  $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+  $startInfo.FileName = $GitPath
+  $startInfo.UseShellExecute = $false
+  $startInfo.CreateNoWindow = $true
+  $startInfo.RedirectStandardOutput = $true
+  $startInfo.RedirectStandardError = $true
+  [void]$startInfo.ArgumentList.Add("-C")
+  [void]$startInfo.ArgumentList.Add($RepositoryPath)
+  [void]$startInfo.ArgumentList.Add("rev-parse")
+  [void]$startInfo.ArgumentList.Add("--is-inside-work-tree")
+  $process = [System.Diagnostics.Process]::new()
+  $process.StartInfo = $startInfo
+  try {
+    if (-not $process.Start()) { return $false }
+    if (-not $process.WaitForExit($TimeoutMilliseconds)) {
+      try { $process.Kill($true) } catch { }
+      try { $process.WaitForExit() } catch { }
+      return $false
+    }
+    return $process.ExitCode -eq 0
+  } finally {
+    $process.Dispose()
+  }
 }
-& $portableGit -C $publisherRepo rev-parse --is-inside-work-tree *> $null
-if ($LASTEXITCODE -ne 0) { throw "PUBLISHER_REPO_GIT_CHECK_FAILED" }
+
+$publisherGitReady = $false
+for ($gitCheckAttempt = 1; $gitCheckAttempt -le 5; $gitCheckAttempt++) {
+  if (Test-PublisherGitReady -GitPath $portableGit -RepositoryPath $publisherRepo) { $publisherGitReady = $true; break }
+  Start-Sleep -Milliseconds (250 * $gitCheckAttempt)
+}
+if (-not $publisherGitReady) { throw "PUBLISHER_REPO_GIT_CHECK_FAILED_AFTER_RETRY" }
 
 $pythonCandidates = @(
   (Join-Path $root "runtime\python312\python.exe"),
