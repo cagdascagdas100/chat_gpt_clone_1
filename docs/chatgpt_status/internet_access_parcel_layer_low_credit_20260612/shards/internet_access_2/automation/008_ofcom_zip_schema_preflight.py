@@ -17,6 +17,7 @@ SHARD_REL = (
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/"
     "shards/internet_access_2"
 )
+EXPECTED_R2_POSTCODE_FILE_COUNT = 121
 EXPECTED_PATTERN = re.compile(r"202601_fixed_postcode_coverage_r2_[A-Z0-9]+\.csv$", re.I)
 CORE_ALIASES = {
     "postcode": ["postcode", "postcode_space"],
@@ -81,32 +82,46 @@ def inspect_zip(path: Path) -> dict[str, Any]:
         return {"path": str(path), "state": "INVALID_ZIP", "bytes": path.stat().st_size}
     with zipfile.ZipFile(path, "r") as archive:
         members = [name.replace("\\", "/") for name in archive.namelist()]
-        r2_members = [name for name in members if EXPECTED_PATTERN.search(name)]
+        r2_members = sorted(name for name in members if EXPECTED_PATTERN.search(name))
         if not r2_members:
             return {
                 "path": str(path),
                 "state": "NO_R2_POSTCODE_FILES",
                 "bytes": path.stat().st_size,
                 "member_count": len(members),
+                "expected_r2_postcode_file_count": EXPECTED_R2_POSTCODE_FILE_COUNT,
+                "r2_postcode_file_count": 0,
             }
-        sample_member = sorted(r2_members)[0]
+        sample_member = r2_members[0]
         with archive.open(sample_member, "r") as raw:
             reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", errors="replace", newline=""))
             fieldnames = list(reader.fieldnames or [])
             first_row = next(reader, None)
         matched = {key: header_match(fieldnames, aliases) for key, aliases in CORE_ALIASES.items()}
         missing = [key for key, value in matched.items() if value is None]
+        file_count_ok = len(r2_members) == EXPECTED_R2_POSTCODE_FILE_COUNT
+        sample_row_ok = first_row is not None
+        if not file_count_ok:
+            state = "R2_POSTCODE_FILE_COUNT_MISMATCH"
+        elif missing:
+            state = "CORE_COLUMNS_MISSING"
+        elif not sample_row_ok:
+            state = "SAMPLE_POSTCODE_FILE_EMPTY"
+        else:
+            state = "PASS"
         return {
             "path": str(path),
-            "state": "PASS" if not missing else "CORE_COLUMNS_MISSING",
+            "state": state,
             "bytes": path.stat().st_size,
             "member_count": len(members),
+            "expected_r2_postcode_file_count": EXPECTED_R2_POSTCODE_FILE_COUNT,
             "r2_postcode_file_count": len(r2_members),
+            "r2_postcode_file_count_ok": file_count_ok,
             "sample_member": sample_member,
             "fieldnames": fieldnames,
             "matched_core_columns": matched,
             "missing_core_columns": missing,
-            "sample_row_present": first_row is not None,
+            "sample_row_present": sample_row_ok,
         }
 
 
@@ -122,6 +137,7 @@ def main() -> int:
     validation = {
         "slot_id": SLOT_ID,
         "state": state,
+        "expected_r2_postcode_file_count": EXPECTED_R2_POSTCODE_FILE_COUNT,
         "accepted_path": accepted.get("path") if accepted else None,
         "inspections": inspections,
         "official_coverage_verified_candidates": 0,
@@ -153,6 +169,7 @@ def main() -> int:
         "generated_at": now(),
         "state": state,
         "accepted": accepted is not None,
+        "expected_r2_postcode_file_count": EXPECTED_R2_POSTCODE_FILE_COUNT,
         "r2_postcode_file_count": accepted.get("r2_postcode_file_count") if accepted else 0,
         "matched_core_columns": accepted.get("matched_core_columns") if accepted else {},
         "official_coverage_verified_candidates": 0,
@@ -164,7 +181,8 @@ def main() -> int:
         "# internet_access_2 — Ofcom r2 ZIP schema preflight\n\n"
         f"- State: {state}\n"
         f"- Accepted path: {accepted.get('path') if accepted else 'none'}\n"
-        f"- r2 postcode files: {accepted.get('r2_postcode_file_count') if accepted else 0}\n"
+        f"- Expected r2 postcode files: {EXPECTED_R2_POSTCODE_FILE_COUNT}\n"
+        f"- Accepted r2 postcode files: {accepted.get('r2_postcode_file_count') if accepted else 0}\n"
         f"- Blocker: {blocker or 'none'}\n"
         "- Candidate accuracy written: 0\n"
         "- final_ready: false\n",
