@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_2",
   "parcel_partition": {
     "start": 30762,
@@ -7,83 +7,106 @@
     "count": 30761,
     "canonical_count": 92283
   },
-  "updated_at": "2026-07-22T03:56:00Z",
-  "state": "WAVE004_ACCEPTED_PUBLISHER_ARCHIVE_REPLAY_TRIGGERED_THREE_P0_TASKS_READY",
+  "updated_at": "2026-07-22T04:10:30Z",
+  "state": "FULL_11013_ONSPD_IDENTITY_ACCEPTED_STRICT_OFCom_JOIN_QUEUED",
   "progress": {
-    "operational_completed": 23,
-    "operational_total": 24,
-    "operational_percent": 95.83,
-    "operational_increase_percentage_points": 0.0,
+    "current_identity_wave_completed_operations": 54,
+    "current_identity_wave_total_operations": 55,
+    "current_identity_wave_percent": 98.18,
+    "current_identity_wave_increase_percentage_points": 1.51,
+    "expanded_task_set_completed": 3,
+    "expanded_task_set_superseded": 1,
+    "expanded_task_set_queued": 1,
+    "expanded_task_set_total": 5,
+    "expanded_task_set_completed_percent": 60.0,
     "product_plan_completed": 1,
     "product_plan_total": 9,
     "product_plan_percent": 11.11,
-    "product_plan_increase_percentage_points": 0.0,
-    "expanded_task_set": {
-      "completed": 1,
-      "ready_p0": 3,
-      "waiting_dependency": 1,
-      "total": 5
-    }
+    "product_plan_increase_percentage_points": 0.0
   },
   "candidates": {
-    "verified_postcode_identity_rows": 24,
-    "verified_live_postcodes": 24,
-    "verified_terminated_postcodes": 0,
+    "verified_postcode_identity_rows": 11013,
+    "verified_postcode_identity_increase": 10989,
+    "verified_live_postcodes": 11011,
+    "verified_terminated_postcodes_review_required": 2,
+    "verified_missing_postcodes": 0,
+    "distinct_postcodes": 5044,
     "verified_3_of_4_coverage_rows": 0,
-    "parcel_measured_rows": 0,
-    "additional_sample_target_rows_not_yet_counted": 48,
-    "full_identity_expansion_target_rows_not_yet_counted": 11013
+    "parcel_measured_rows": 0
   },
   "accuracy": {
     "verified_identity_accuracy": "2/4",
     "coverage_accuracy_requires_exact_ofcom_r2": "3/4",
     "strict_ofcom_preflight_requires_r2_postcode_files": 121,
     "required_ofcom_core_fields": ["postcode", "gigabit", "ufbb100", "sfbb", "unable30"],
-    "unverified_targets_are_not_counted_as_candidates": true
+    "official_coverage_not_inferred_when_zip_absent": true,
+    "terminated_postcodes_require_review": true
   },
+  "sources": [
+    {
+      "source": "ONS Postcode Directory May 2026 hosted table",
+      "authority": "Office for National Statistics",
+      "state": "11013_EXACT_IDENTITIES_ACCEPTED",
+      "batch_attempts": 51,
+      "retry_errors": 0
+    },
+    {
+      "source": "ONSPD latest postcode centroids",
+      "authority": "Office for National Statistics",
+      "state": "OFFICIAL_FALLBACK_AVAILABLE"
+    },
+    {
+      "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+      "authority": "Ofcom",
+      "state": "OFFICIAL_R2_ZIP_NOT_PRESENT_IN_PORTABLE_CACHE",
+      "expected_r2_postcode_files": 121
+    }
+  ],
   "tasks": [
     {
       "task": "wave004_24_row_onspd",
-      "state": "REMOTE_ACCEPTED_PUBLISHER_ARCHIVE_REPLAY_TRIGGERED",
+      "state": "REMOTE_ACCEPTED",
       "verified_rows": 24
     },
     {
       "task": "wave005_11013_row_onspd_identity_v2",
-      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
-      "target_rows": 11013
-    },
-    {
-      "task": "wave007_additional_48_onspd_v2",
-      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
-      "target_rows": 48
+      "state": "REMOTE_ACCEPTED",
+      "verified_rows": 11013,
+      "live_rows": 11011,
+      "terminated_review_rows": 2,
+      "missing_rows": 0
     },
     {
       "task": "wave008_ofcom_zip_schema_preflight_v2",
-      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
-      "expected_r2_postcode_files": 121
+      "state": "REMOTE_ACCEPTED_SOURCE_BLOCKED",
+      "accepted_zip": false
     },
     {
-      "task": "wave006_strict_ofcom_exact_join",
-      "state": "WAITING_11013_IDENTITY_OUTPUT",
+      "task": "wave007_additional_48_onspd_v2",
+      "state": "SUPERSEDED_BY_FULL_11013_EXPANSION",
+      "redundant_rows_avoided": 48
+    },
+    {
+      "task": "wave006_strict_ofcom_exact_join_v2",
+      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
       "target_rows": 11013
     }
   ],
   "web_visibility": {
-    "visible_operation_rows": 43,
-    "visible_verified_candidate_rows": 24,
-    "total_visible_rows": 67,
+    "visible_operation_rows": 49,
+    "visible_verified_candidate_rows": 11013,
+    "total_visible_rows": 11062,
+    "candidate_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json",
+    "candidate_chunk_size": 500,
+    "candidate_chunks": 23,
     "operation_files": [
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_parallel_source_research.jsonl",
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/009_task_contract_repairs.jsonl"
-    ],
-    "candidate_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/004_24_sample_rows_latest.json",
-    "pending_candidate_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/007_additional_48_rows_latest.json",
-    "pending_full_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json"
+    ]
   },
   "blockers": [
-    "STALE_RUNTIME_PUBLISH_ITEM_AWAITING_ARCHIVE_REPLAY",
-    "OFCom_2026_OFFICIAL_ZIP_BINARY_ACCESS_BLOCKED",
-    "COORDINATOR_PICKUP_NOT_YET_VISIBLE"
+    "OFFICIAL_OFCom_R2_ZIP_NOT_PRESENT_OR_SCHEMA_NOT_ACCEPTED",
+    "EXACT_OFCom_JOIN_PENDING_COORDINATOR_PICKUP"
   ],
   "final_ready": false,
   "fake_data": false,
