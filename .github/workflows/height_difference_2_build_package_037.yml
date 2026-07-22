@@ -1,6 +1,8 @@
 name: height_difference_2 build package 037
 on:
-  pull_request:
+  push:
+    branches:
+      - agent/hd2-distribution-gradient-037-20260722
     paths:
       - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/037_build_package_trigger.json'
 permissions:
@@ -59,7 +61,7 @@ jobs:
             path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
           progress=json.loads((slot/'progress_increment_037.json').read_text()); progress['live_http_browser_state']='PASS_FINAL_708_62_42_CHROMIUM_NO_CONSOLE_OR_PAGE_ERRORS'; progress['updated_at']=receipt['validated_at']; (slot/'progress_increment_037.json').write_text(json.dumps(progress,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
           manifest=json.loads((slot/'operations_manifest.json').read_text()); manifest['pending_runtime_evidence_files']=[]; manifest['updated_at']=receipt['validated_at']; (slot/'operations_manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
-          vp=doc/'validation/041_distribution_gradient_web_package_20260722.json'; val=json.loads(vp.read_text());
+          vp=doc/'validation/041_distribution_gradient_web_package_20260722.json'; val=json.loads(vp.read_text())
           for c in val['checks']:
             if c['check']=='final_037_live_http_browser_acceptance': c.update({'state':'PASS','observed':'HTTP_200_DOM_708_62_42_NO_CONSOLE_OR_PAGE_ERRORS'})
           val.update({'pass_count':21,'not_run_count':1,'fail_count':0,'validated_at':receipt['validated_at']}); vp.write_text(json.dumps(val,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
