@@ -43,11 +43,16 @@ def validate(queue,readiness):
     result=BASE_VALIDATE(queue,readiness)
     outputs=queue.get("expected_outputs")
     result["checks"]["expected_outputs_complete"]=isinstance(outputs,list) and len(outputs)==len(EXPECTED_OUTPUTS) and set(outputs)==EXPECTED_OUTPUTS
+    result["checks"]["single_shared_runner_only"]=(
+      result["checks"].get("single_shared_runner_only") is True
+      and queue.get("sequential_after_task_id")==PREDECESSOR_TASK_ID
+      and queue.get("predecessor_status_path")==PREDECESSOR_STATUS_PATH
+    )
     serialized=json.dumps({"queue":queue,"readiness":readiness},ensure_ascii=False,sort_keys=True)
     normalized=serialized.replace(PREDECESSOR_TASK_ID,"").replace(PREDECESSOR_STATUS_PATH,"")
     result["checks"]["no_cross_slot_tokens"]=("height_difference_2" not in normalized and "future_growth_2" not in normalized and "future_growth_3" not in normalized)
     failed=[k for k,v in result["checks"].items() if not v]
-    result.update(schema_version=3,validation_kind="REVISION8_QUEUE_REQUEST_DEPENDENCY_AND_NINE_OUTPUT_FAIL_CLOSED",result="PASS" if not failed else "FAIL",checks_passed=sum(result["checks"].values()),checks_total=len(result["checks"]),failed_checks=failed,runner_output_validator_selftest_expected="18/18 PASS",expected_output_count=9)
+    result.update(schema_version=3,validation_kind="REVISION8_QUEUE_REQUEST_DEPENDENCY_AND_NINE_OUTPUT_FAIL_CLOSED",result="PASS" if not failed else "FAIL",checks_passed=sum(result["checks"].values()),checks_total=len(result["checks"]),failed_checks=failed,runner_output_validator_selftest_expected="18/18 PASS",expected_output_count=9,predecessor_task_id=PREDECESSOR_TASK_ID,predecessor_status_path=PREDECESSOR_STATUS_PATH)
     return result
 
 def main()->int:
