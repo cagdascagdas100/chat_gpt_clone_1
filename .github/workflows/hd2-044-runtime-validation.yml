@@ -77,9 +77,18 @@ jobs:
           cat > /tmp/hd2_acceptance.py <<'PY'
           import json
           from datetime import datetime, timezone
+          from pathlib import Path
           from playwright.sync_api import sync_playwright
 
           url = 'http://127.0.0.1:8012/index.html'
+          evidence = json.loads(Path('england_map_web/data/aays_21_slots/height_difference_2/examples_increment_043.json').read_text(encoding='utf-8'))
+          evidence_rows = evidence.get('examples', [])
+          task_v6_evidence = len(evidence_rows) == 3 and all(
+              row.get('reconciled_task_version') == '6.0-fhost-contract-reconciled-exact-chain'
+              and row.get('fresh_hmlr_gml_revalidation_required') is True
+              and row.get('final_ready') is False
+              for row in evidence_rows
+          )
           console_errors = []
           page_errors = []
           with sync_playwright() as p:
@@ -102,7 +111,7 @@ jobs:
                   'example_rows_60': example_rows == 60,
                   'manifest_message_success': 'Yükleme hatası' not in message,
                   'three_fhost_examples_visible': all(x in body for x in ('HD2-FHOST-034','HD2-FHOST-035','HD2-FHOST-036')),
-                  'task_v6_visible': '6.0-fhost-contract-reconciled-exact-chain' in body,
+                  'task_v6_evidence_file_pass': task_v6_evidence,
                   'three_parcels_visible': all(x in body for x in ('parcel_30762','parcel_46142','parcel_61522')),
                   'no_console_errors': len(console_errors) == 0,
                   'no_page_errors': len(page_errors) == 0,
