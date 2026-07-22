@@ -601,9 +601,14 @@ class AaysPanel(tk.Tk):
         remote_error = str(runner_info.get("remote_sync_error") or "")
         if remote_state in {
             "WAITING_FOR_NETWORK_OR_GIT_AUTH",
+            "WAITING_GIT_CLEAN_PUBLISHER",
             "WAITING_DIRTY_PUBLISHER_REMOTE_DIVERGED",
         }:
-            add("system:remote_sync", "SİSTEM", f"{remote_state}: {remote_error}")
+            remote_reason = f"{remote_state}: {remote_error}"
+            if remote_state == "WAITING_GIT_CLEAN_PUBLISHER":
+                changed_count = len([line for line in remote_error.splitlines() if line.strip()])
+                remote_reason = f"{remote_state}: {changed_count} izlenen dosyada yayımlanmamış değişiklik"
+            add("system:remote_sync", "SİSTEM", remote_reason)
         if runner_info.get("status") in {"FAILED", "STALE"} and not runner_info.get("pid_alive"):
             add("system:runner_down", "SİSTEM", "Runner kapalı ve keepalive tarafından açılamadı")
 
