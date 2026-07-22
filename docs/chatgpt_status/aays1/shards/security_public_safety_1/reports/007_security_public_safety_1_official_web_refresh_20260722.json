@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
+  "report_id": "security-public-safety-1-official-web-refresh-20260722-001",
+  "checked_at": "2026-07-22T03:39:15+03:00",
+  "status": "SOURCE_REFRESH_PASS_CANDIDATE_LIVE_PARITY_PENDING_SINGLE_RUNNER",
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "measurement_level": "lsoa",
+  "parcel_measurement": false,
+  "display_disclaimer": "LSOA/area-level proxy; not a parcel measurement",
+  "official_web_checks": [
+    {
+      "name": "data.police.uk crime-last-updated",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "status": "PASS",
+      "observed_value": "2026-05-01",
+      "role": "official monthly API freshness",
+      "accuracy_limit": "Freshness evidence only; not a parcel measurement"
+    },
+    {
+      "name": "data.police.uk street-level crime method",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "status": "PASS",
+      "observed_value": "specific-point queries cover a one-mile radius; returned locations are approximate and anonymised",
+      "role": "method and interpretation contract",
+      "accuracy_limit": "Candidate values remain AREA_LEVEL_PROXY"
+    },
+    {
+      "name": "data.police.uk archive",
+      "url": "https://data.police.uk/data/archive/",
+      "status": "PASS",
+      "observed_value": "latest listed archive month May 2026; contains June 2023 through May 2026",
+      "role": "monthly bulk snapshot and integrity context",
+      "accuracy_limit": "Archive availability is not row-level count/SHA parity"
+    },
+    {
+      "name": "Metropolitan Police Service identity API",
+      "url": "https://data.police.uk/api/forces/metropolitan",
+      "status": "PASS",
+      "observed_value": "id=metropolitan; name=Metropolitan Police Service",
+      "role": "official force provenance",
+      "accuracy_limit": "Force identity is contextual only"
+    },
+    {
+      "name": "MPS Recorded Crime Geographic Breakdown",
+      "url": "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/",
+      "status": "PASS",
+      "observed_value": "current LSOA file covers July 2024 through June 2026",
+      "role": "official monthly London LSOA cross-check",
+      "accuracy_limit": "Sexual offences are not provided at LSOA level; CONNECT comparability limits preserved"
+    }
+  ],
+  "official_web_checks_passed": 5,
+  "official_web_checks_total": 5,
+  "sample_candidate_targets": [
+    {
+      "parcel_id": "parcel_1",
+      "security_score_percent": 12.13,
+      "accuracy_score_4": 4,
+      "confidence_score": 82.97,
+      "source_geography_level": "LSOA",
+      "official_api_url": "https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.528344&lng=0.161569",
+      "stored_crime_count": 346,
+      "stored_sha256": "8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4",
+      "live_parity_status": "PENDING_EXISTING_SINGLE_RUNNER"
+    },
+    {
+      "parcel_id": "parcel_3",
+      "security_score_percent": 51.31,
+      "accuracy_score_4": 4,
+      "confidence_score": 82.97,
+      "source_geography_level": "LSOA",
+      "official_api_url": "https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.545517&lng=0.115885",
+      "stored_crime_count": 499,
+      "stored_sha256": "08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961",
+      "live_parity_status": "PENDING_EXISTING_SINGLE_RUNNER"
+    },
+    {
+      "parcel_id": "parcel_7",
+      "security_score_percent": 2.53,
+      "accuracy_score_4": 4,
+      "confidence_score": 82.97,
+      "source_geography_level": "LSOA",
+      "official_api_url": "https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.530872&lng=0.130900",
+      "stored_crime_count": 383,
+      "stored_sha256": "4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7",
+      "live_parity_status": "PENDING_EXISTING_SINGLE_RUNNER"
+    }
+  ],
+  "sample_candidates_prepared": 3,
+  "sample_candidates_live_parity_passed": 0,
+  "remote_hydration_artifact_readback": {
+    "web_blob_sha": "083f6f7f0559437f96842b74e929e13ca42e8431",
+    "shard_blob_sha": "083f6f7f0559437f96842b74e929e13ca42e8431",
+    "decoded_content_state": "EMPTY",
+    "status": "BLOCKED",
+    "blocker": "LOCAL_300_ROW_HASH_PROOF_EXISTS_BUT_REMOTE_HYDRATION_ARTIFACT_CONTENT_IS_EMPTY"
+  },
+  "acceptance_state": {
+    "canonical_completed_units": 4,
+    "canonical_total_units": 8,
+    "canonical_overall_percent": 50.0,
+    "canonical_percent_change": 0.0,
+    "completed_preparation_operations_this_turn": 4,
+    "operations_this_turn": [
+      "remote branch HEAD and slot state readback",
+      "remote hydration artifact content readback",
+      "official source freshness refresh",
+      "three candidate live-parity targets prepared"
+    ],
+    "first_unverified_step": "PUBLISH_NONEMPTY_300_ROW_REMOTE_ARTIFACT_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE"
+  },
+  "blockers": [
+    "REMOTE_HYDRATION_ARTIFACT_EMPTY",
+    "CANDIDATE_LIVE_COUNT_SHA_PARITY_NOT_EXECUTED_BY_EXISTING_SINGLE_RUNNER",
+    "BROWSER_ACCEPTANCE_NOT_REPROVEN_AFTER_CURRENT_MATRIX_CHANGES",
+    "COMMIT_PUSH_REMOTE_READBACK_GATE_NOT_COMPLETE"
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
