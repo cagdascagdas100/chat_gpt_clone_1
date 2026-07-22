@@ -16,6 +16,13 @@
 - Cross-wave kaynak ailesi benzersizliği için kanonik kümülatif registry bulunmadığından kaynak ailesi sayısı artırılmadı.
 - Sahte veri, canonical parsel ataması ve future-growth skoru: 0.
 
+## İnternet readback
+
+- Sekiz entity bağlantısının tamamı `planning.data.gov.uk` üzerindeki resmî kayıt sayfalarından doğrudan veya resmî alan arama readback'i ile yeniden doğrulandı.
+- POINT, saha adresi, kapasite, izin türü/durumu ve mevcut tarih alanları satır dosyalarıyla eşleşti.
+- İki eksik izin tarihi, bir eksik hektar, bir expired durum ve bir tarih-sonlu kayıt gerçekten eksik/tarihsel olarak doğrulandı; değer üretilmedi.
+- Kanıt: `england_map_web/data/aays_21_slots/future_growth_3/source_url_readback_wave_39_20260722.json`.
+
 ## Canonical recovery
 
 Kanonik branch HEAD `6d5b1d8a1710430c54d09b47399aa514da49e4b1` üzerinde üç yeni repository sorgusu ve bildirilen JSONL kaynak yolu yeniden kontrol edildi. `61.523–92.283` shard export, stable parcel ID, row-count receipt ve CRS manifesti bulunamadı. Continuation key: `61383520c6a16ecbb0bd2f3d65f26f06ed73185e4b2d7845f096dbcd3a985d91`.
