@@ -1,17 +1,18 @@
 {
-  "schema_version": 10,
+  "schema_version": 11,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "base_slot_id": "height_difference",
   "shard_index": 1,
   "parcel_partition": {"start":1,"end":30761,"count":30761,"canonical_count":92283},
-  "state": "recovery_parked_manual_auth_apply_required",
+  "state": "recovery_parked_manual_auth_apply_required_source_quality_expanded",
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
   "attempt_id": "official-source-batch-004-revision-14-direct-hmlr-monthly-gml-refresh",
   "idempotency_key": "height_difference_1-004-20260720",
   "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
   "continuation_source_head": "fc10e5d16ba21ae529960615a7dd9f9340acc0cc",
+  "latest_observed_head": "31f811ba7013552384410a312dcdc0975be03a86",
   "payload_revision": 14,
   "queue_status": "pending",
   "first_unverified_step": "APPLY_NONINTERACTIVE_PUBLISH_AUTH_PREFLIGHT_ON_EXISTING_F_HOST_THEN_RERUN_EXACT_REVISION_14_AND_VERIFY_REMOTE_OUTPUT_INTEGRITY",
@@ -40,71 +41,61 @@
     "recovery_parked": true,
     "manual_action_state": "OPEN",
     "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
-    "recovery_record_path": "docs/chatgpt_status/_shared/slots_21/height_difference_1/recovery_latest.json"
+    "safe_retry_performed": false
   },
   "publisher_auth_recovery": {
     "script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/046_prepare_existing_f_runner_noninteractive_github_publish_auth_20260721.ps1",
-    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/022_noninteractive_publish_auth_preflight_selftest_20260721.json",
     "validation_result": "24/24_source_level_f_host_not_applied",
-    "default_mode": "dry_run",
     "apply_required": true,
-    "existing_git_auth_accepted_without_gh": true,
-    "gh_used_only_as_fallback": true,
     "post_setup_git_ls_remote_required": true,
-    "token_or_secret_output_forbidden": true,
-    "windows_powershell_5_1_compatible": true,
     "starts_runner": false,
-    "stops_runner": false,
     "creates_runner": false,
     "pushes_results": false
   },
-  "revision_14_assets": {
-    "entry": "docs/chatgpt_status/topography/shards/height_difference_1/automation/042_height_difference_1_revision_14_entry_20260721.py",
-    "entry_blob_sha": "87ed0e04220c365565601a86f3b28de787ab9731",
-    "payload": "docs/chatgpt_status/topography/shards/height_difference_1/automation/041_height_difference_1_revision_14_direct_hmlr_monthly_gml_refresh_20260721.py.gz.b64",
-    "integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/044_validate_revision_14_output_integrity_entry_20260721.py",
-    "guarded_wrapper": "docs/chatgpt_status/topography/shards/height_difference_1/automation/045_run_queue_driven_recovery_v5_and_revision_14_integrity_20260721.cmd",
-    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/021_revision_14_direct_hmlr_monthly_gml_selftest_20260721.json",
-    "expected_runner_output": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/016_revision_14_direct_hmlr_monthly_gml_refresh_latest.json",
-    "expected_integrity_readback": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/025_revision_14_output_integrity_readback_latest.json"
-  },
-  "direct_source_contract": {
-    "hmlr_monthly_gml_publication_date": "2026-07-05",
-    "hmlr_authorities": ["London Borough of Barnet","London Borough of Enfield"],
-    "exact_inspire_id_and_candidate_point_inside_required": true,
-    "fresh_geometry_equals_direct_ea_os_sampling_geometry_required": true,
-    "ea_dtm1m_persistent_wcs_required": true,
-    "os_terrain50_direct_downloads_api_required": true,
-    "maximum_ea_os_absolute_difference_m": 8.0
+  "source_quality_gate": {
+    "path": "england_map_web/data/aays_21_slots/height_difference_1/official_source_quality_gate_latest.json",
+    "hmlr_monthly_publication_verified": true,
+    "hmlr_indicative_extent_guard_added": true,
+    "ea_dtm1m_bare_earth_and_provenance_verified": true,
+    "os_terrain50_pixel_centre_and_4m_rmse_verified": true,
+    "os_opendata_current_release_discovery_verified": true,
+    "source_checks_passed": 9,
+    "source_checks_total": 9
   },
   "continuation_evidence": {
-    "operation_increment": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_030_recovery_source_validation_20260722.json",
+    "operation_increment": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_031_official_quality_gates_20260722.json",
     "line_item_page": "england_map_web/data/aays_21_slots/height_difference_1/continuation_recovery_source_validation_v1_20260722.html",
-    "official_source_checks_passed": 5,
-    "official_source_checks_total": 5,
-    "web_operation_rows_added": 12
+    "visible_operation_range": "301-326",
+    "visible_operation_rows": 26,
+    "web_operation_rows_added_this_run": 14
   },
-  "batch_progress": {"planned_operations":312,"completed_operations":307,"blocked_operations":5,"completion_percent":98.40,"percentage_point_increase_this_run":0.07},
+  "commit_proofs": {
+    "operations_313_326": "c5cd11b1ace8b68569a35b0a324ce1cc22015c95",
+    "official_source_quality_gate": "3482481d6a4453a2bafd2d5736fcc7a9b93c0d17",
+    "line_item_page_through_326": "e15851e65a107a0c1557ca17dcd6bc5149cc2b89",
+    "operations_manifest_through_326": "1004945fee911fdda0d603207c8072886e531c48"
+  },
+  "batch_progress": {"planned_operations":326,"completed_operations":321,"blocked_operations":5,"completion_percent":98.47,"percentage_point_increase_this_run":0.07},
   "product_completion_percent": 78,
   "product_percent_increase": 0,
   "candidate_rows_count": 3,
   "real_boundary_match_rows_count": 0,
   "official_measured_rows_count": 0,
   "official_height_difference_rows_count": 0,
-  "source_upgrades_count": 43,
-  "source_upgrades_this_run": 4,
-  "methodology_source_upgrades_this_run": 1,
-  "official_source_freshness_revalidations_this_run": 4,
-  "revision_14_direct_hmlr_upgrades_total": 10,
-  "publisher_auth_recovery_upgrades_total": 6,
+  "source_upgrades_count": 51,
+  "source_upgrades_this_run": 8,
+  "methodology_source_upgrades_this_run": 2,
+  "official_source_freshness_revalidations_this_run": 9,
   "validation_tests": {
     "revision_12_direct_ea_resample":"54/54",
     "revision_13_direct_os_terrain50":"24/24",
     "revision_14_direct_hmlr_monthly_gml":"84/84_source_and_synthetic_runtime_network_not_applied",
     "noninteractive_publish_auth_preflight":"24/24_source_level_f_host_not_applied",
-    "continuation_official_source_checks":"5/5"
+    "continuation_official_source_checks_previous":"5/5",
+    "official_quality_gate_checks":"9/9"
   },
   "accuracy_score_4": "2.5/4 fallback",
+  "output_semantics": "NO_DATA_NOT_INFERRED",
   "active_shared_control_task": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
   "active_shared_control_overridden": false,
   "new_logical_task_created": false,
@@ -116,5 +107,5 @@
   "db_write": false,
   "migration": false,
   "production_deploy": false,
-  "updated_at": "2026-07-22T16:51:42Z"
+  "updated_at": "2026-07-22T17:14:53Z"
 }
