@@ -26,14 +26,14 @@ import http.cookiejar
 import zipfile
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.0-hmlr-zip-fail-closed"
+SCRIPT_VERSION = "1.1-hmlr-zip-page-handoff-fail-closed"
 HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 HMLR_AUTHORITY = "London Borough of Barking and Dagenham"
 HMLR_ZIP_URL = (
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download/"
     "London_Borough_of_Barking_and_Dagenham.zip"
 )
-USER_AGENT = "AAYS-height-difference-hmlr-zip/1.0"
+USER_AGENT = "AAYS-height-difference-hmlr-zip/1.1"
 MAX_PAGE_BYTES = 20_000_000
 MAX_ZIP_BYTES = 1_000_000_000
 MAX_GML_BYTES = 1_000_000_000
@@ -245,6 +245,7 @@ def run_self_test() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--page-output", type=Path, required=False)
     parser.add_argument("--gml-output", type=Path, required=False)
     parser.add_argument("--receipt-output", type=Path, required=False)
     parser.add_argument("--self-test", action="store_true")
@@ -254,11 +255,11 @@ def main() -> int:
         print(json.dumps(run_self_test(), sort_keys=True))
         return 0
 
-    if args.gml_output is None or args.receipt_output is None:
-        raise SystemExit("--gml-output and --receipt-output are required")
+    if args.page_output is None or args.gml_output is None or args.receipt_output is None:
+        raise SystemExit("--page-output, --gml-output and --receipt-output are required")
 
     result: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "script_version": SCRIPT_VERSION,
         "started_at": utc_now(),
@@ -284,9 +285,11 @@ def main() -> int:
             opener, discovered_url, timeout=300, retries=3, max_bytes=MAX_ZIP_BYTES
         )
         gml_bytes, archive_receipt = extract_single_gml(zip_bytes)
+        atomic_bytes(args.page_output, page_bytes)
         atomic_bytes(args.gml_output, gml_bytes)
         result["artifacts"] = {
             "download_page": {
+                "output_path": str(args.page_output),
                 "sha256": sha256_bytes(page_bytes),
                 "bytes": len(page_bytes),
                 "content_type": page_headers.get("content-type"),
@@ -311,6 +314,8 @@ def main() -> int:
         result["state"] = "BLOCKED_FAIL_CLOSED"
         result["errors"].append(str(exc))
         with contextlib.suppress(FileNotFoundError):
+            args.page_output.unlink()
+        with contextlib.suppress(FileNotFoundError):
             args.gml_output.unlink()
     finally:
         result["finished_at"] = utc_now()
@@ -319,6 +324,7 @@ def main() -> int:
     print(f"SLOT_ID={SLOT_ID}")
     print(f"SCRIPT_VERSION={SCRIPT_VERSION}")
     print(f"STATE={result['state']}")
+    print(f"PAGE_OUTPUT={args.page_output}")
     print(f"GML_OUTPUT={args.gml_output}")
     print("FINAL_READY=false")
     return 0 if result["state"] == "COMPLETED_ZIP_AND_GML_VERIFIED" else 2
