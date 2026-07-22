@@ -1,0 +1,204 @@
+name: height_difference_2 official measurement runtime 033
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-measure-runtime-033-20260722
+    paths:
+      - .github/workflows/height_difference_2_measure_runtime_033.yml
+
+permissions:
+  contents: write
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-measure-runtime-033-20260722
+          fetch-depth: 1
+      - name: Install geospatial runtime
+        shell: bash
+        run: python3 -m pip install --disable-pip-version-check requests pyproj shapely rasterio geopandas pyogrio
+      - name: Download HMLR GML, resolve polygon and sample EA DTM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import html.parser
+          import json
+          import math
+          import tempfile
+          import traceback
+          from pathlib import Path
+          from urllib.parse import urlencode, urljoin, urlparse
+
+          import geopandas as gpd
+          import numpy as np
+          import rasterio
+          import requests
+          from pyproj import Transformer
+          from rasterio.io import MemoryFile
+          from rasterio.mask import mask
+          from shapely.geometry import Point, mapping
+
+          point_path=Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          output_path=Path('england_map_web/data/aays_21_slots/height_difference_2/official_measurements_runtime_033.json')
+          receipt_path=Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/031_official_measurements_runtime_033.json')
+          hmlr_page='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          dtm_endpoint='https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs'
+          dtm_coverage='13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m'
+          expected_blob='bb48164e7a0af78df875f30421a6a3068c43edb8'
+          expected_targets=[30762,46142,61522]
+          max_gml_bytes=300_000_000
+          max_tiff_bytes=100_000_000
+
+          class Rows(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.active=False; self.text=[]; self.links=[]; self.rows=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()=='tr': self.active=True; self.text=[]; self.links=[]
+                  elif self.active and tag.lower()=='a':
+                      href=dict(attrs).get('href')
+                      if href: self.links.append(href)
+              def handle_data(self,data):
+                  if self.active and data.strip(): self.text.append(data.strip())
+              def handle_endtag(self,tag):
+                  if tag.lower()=='tr' and self.active:
+                      self.rows.append({'text':' '.join(self.text),'links':list(self.links)}); self.active=False
+
+          def utc_now(): return dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+
+          def read_limited(response,limit):
+              chunks=[]; total=0
+              for chunk in response.iter_content(1024*1024):
+                  if not chunk: continue
+                  total+=len(chunk)
+                  if total>limit: raise RuntimeError(f'response too large: {total}>{limit}')
+                  chunks.append(chunk)
+              data=b''.join(chunks)
+              if not data: raise RuntimeError('empty response')
+              return data
+
+          def establish_hmlr_session():
+              session=requests.Session()
+              session.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36','Accept-Language':'en-GB,en;q=0.9'})
+              first=session.get(hmlr_page,allow_redirects=False,timeout=60)
+              if first.status_code not in (200,301,302,303,307,308): raise RuntimeError(f'HMLR initial HTTP {first.status_code}')
+              second=session.get(hmlr_page,allow_redirects=False,timeout=60)
+              if second.status_code!=200: raise RuntimeError(f'HMLR terminal HTTP {second.status_code}, location={second.headers.get("location")}')
+              return session,second.content
+
+          def authority_row(parser,name):
+              expected='London Borough of '+name
+              matches=[r for r in parser.rows if expected.lower() in r['text'].lower()]
+              if len(matches)!=1: raise RuntimeError(f'HMLR authority row not unique for {expected}: {len(matches)}')
+              links=[]
+              for href in matches[0]['links']:
+                  full=urljoin(hmlr_page,href)
+                  if urlparse(full).scheme=='https': links.append(full)
+              links=sorted(set(links))
+              if len(links)!=1: raise RuntimeError(f'HMLR download link not unique for {expected}: {links}')
+              return expected,links[0],matches[0]['text']
+
+          def choose_id_column(columns):
+              lower={str(c).lower():str(c) for c in columns}
+              for key in ('inspireid','inspire_id','landregistry-inspire-id','nationalcadastralreference','gml_id','gml:id','id'):
+                  if key in lower: return lower[key]
+              return None
+
+          result={'schema_version':1,'slot_id':'height_difference_2','generated_at':utc_now(),'state':'STARTED','source_git_blob_sha':None,'rows':[],'official_numeric_rows_written':0,'actual_business_rows_written':0,'fake_data':False,'final_ready':False,'error':None}
+          try:
+              point_doc=json.loads(point_path.read_text(encoding='utf-8'))
+              if point_doc.get('source_git_blob_sha')!=expected_blob: raise RuntimeError('canonical point blob mismatch')
+              points=point_doc.get('rows') or []
+              if [r.get('row_no') for r in points]!=expected_targets: raise RuntimeError('canonical point row order mismatch')
+              result['source_git_blob_sha']=expected_blob
+              session,page_bytes=establish_hmlr_session()
+              parser=Rows(); parser.feed(page_bytes.decode('utf-8',errors='replace'))
+              transformer=Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True,only_best=True)
+              successful=0
+              with tempfile.TemporaryDirectory(prefix='height_difference_2_') as tempdir:
+                  temp=Path(tempdir)
+                  for point_row in points:
+                      row={'row_no':point_row['row_no'],'parcel_id':point_row['parcel_id'],'longitude':point_row['longitude'],'latitude':point_row['latitude'],'authority':point_row['ons_lad25_name'],'state':'STARTED','hmlr':{},'polygon':{},'dtm':{},'height_min_m':None,'height_max_m':None,'height_difference_m':None,'result_confidence_percent':None,'business_row':False,'error':None}
+                      try:
+                          authority,download_url,row_text=authority_row(parser,point_row['ons_lad25_name'])
+                          row['hmlr']['authority_name']=authority; row['hmlr']['catalogue_row_text']=row_text; row['hmlr']['download_url']=download_url
+                          response=session.get(download_url,stream=True,allow_redirects=True,timeout=180)
+                          if response.status_code!=200: raise RuntimeError(f'GML HTTP {response.status_code}: {response.url}')
+                          gml_bytes=read_limited(response,max_gml_bytes)
+                          prefix=gml_bytes[:1024].lstrip().lower()
+                          if prefix.startswith(b'<html') or b'<!doctype html' in prefix: raise RuntimeError('GML response is HTML')
+                          gml_sha=hashlib.sha256(gml_bytes).hexdigest()
+                          gml_file=temp/(point_row['parcel_id']+'.gml'); gml_file.write_bytes(gml_bytes)
+                          row['hmlr'].update({'resolved_download_url':response.url,'content_type':response.headers.get('content-type'),'byte_count':len(gml_bytes),'sha256':gml_sha})
+                          gdf=gpd.read_file(gml_file,engine='pyogrio')
+                          if gdf.empty: raise RuntimeError('empty HMLR GML layer')
+                          if gdf.crs is None: raise RuntimeError('HMLR CRS missing')
+                          epsg=gdf.crs.to_epsg()
+                          if epsg!=27700: gdf=gdf.to_crs(27700)
+                          e,n=transformer.transform(float(point_row['longitude']),float(point_row['latitude']))
+                          native_point=Point(e,n)
+                          try:
+                              indices=list(gdf.sindex.query(native_point,predicate='intersects'))
+                          except Exception:
+                              indices=list(np.flatnonzero(gdf.geometry.intersects(native_point).to_numpy()))
+                          near=[]
+                          if len(indices)!=1:
+                              try: near=list(gdf.sindex.query(native_point.buffer(15),predicate='intersects'))
+                              except Exception: near=list(np.flatnonzero(gdf.geometry.intersects(native_point.buffer(15)).to_numpy()))
+                              raise RuntimeError(f'UNIQUE_NATIVE_POLYGON_REQUIRED exact={len(indices)} nearby15m={len(near)}')
+                          polygon=gdf.geometry.iloc[int(indices[0])]
+                          if polygon is None or polygon.is_empty or not polygon.is_valid: raise RuntimeError('invalid matched polygon')
+                          id_col=choose_id_column(gdf.columns)
+                          inspire_id=None if id_col is None else str(gdf.iloc[int(indices[0])][id_col])
+                          minx,miny,maxx,maxy=map(float,polygon.bounds)
+                          row['polygon']={'crs':'EPSG:27700','point_easting_m':round(e,3),'point_northing_m':round(n,3),'match_count':1,'row_index':int(indices[0]),'id_column':id_col,'hmlr_inspire_id':inspire_id,'geometry_type':polygon.geom_type,'area_m2':round(float(polygon.area),3),'bounds':[minx,miny,maxx,maxy],'geometry_wkb_sha256':hashlib.sha256(polygon.wkb).hexdigest()}
+                          margin=1.0
+                          params=[('service','WCS'),('version','2.0.1'),('request','GetCoverage'),('coverageId',dtm_coverage),('format','image/tiff'),('subset',f'E({minx-margin:.3f},{maxx+margin:.3f})'),('subset',f'N({miny-margin:.3f},{maxy+margin:.3f})')]
+                          wcs_url=dtm_endpoint+'?'+urlencode(params)
+                          dtm_response=requests.get(wcs_url,stream=True,timeout=180,headers={'User-Agent':'AAYS-height-difference-2-measure/1.0','Accept':'image/tiff,application/octet-stream'})
+                          if dtm_response.status_code!=200: raise RuntimeError(f'DTM WCS HTTP {dtm_response.status_code}: {dtm_response.text[:500]}')
+                          tiff_bytes=read_limited(dtm_response,max_tiff_bytes)
+                          if len(tiff_bytes)<8 or tiff_bytes[:2] not in (b'II',b'MM'): raise RuntimeError('DTM response is not TIFF')
+                          with MemoryFile(tiff_bytes) as mem:
+                              with mem.open() as ds:
+                                  if ds.crs is None: raise RuntimeError('DTM CRS missing')
+                                  shapes=[mapping(polygon)]
+                                  band,_=mask(ds,shapes,crop=True,all_touched=False,filled=False,indexes=1)
+                                  values=band.compressed().astype('float64')
+                                  values=values[np.isfinite(values)]
+                                  if values.size<1: raise RuntimeError('no valid DTM pixel centres inside polygon')
+                                  hmin=float(values.min()); hmax=float(values.max()); hdiff=hmax-hmin
+                                  row['dtm']={'endpoint':dtm_endpoint,'coverage_id':dtm_coverage,'request_url':wcs_url,'resolved_url':dtm_response.url,'content_type':dtm_response.headers.get('content-type'),'byte_count':len(tiff_bytes),'sha256':hashlib.sha256(tiff_bytes).hexdigest(),'crs':str(ds.crs),'resolution_m':[abs(float(ds.transform.a)),abs(float(ds.transform.e))],'nodata':ds.nodata,'valid_pixel_count':int(values.size),'sampling_policy':'PIXEL_CENTRE_INSIDE_POLYGON_ALL_TOUCHED_FALSE'}
+                          row['height_min_m']=round(hmin,3); row['height_max_m']=round(hmax,3); row['height_difference_m']=round(hdiff,3); row['state']='OFFICIAL_PRIMARY_MEASUREMENT_COMPLETE_SECONDARY_QA_PENDING'; successful+=1
+                      except Exception as exc:
+                          row['state']='FAIL_CLOSED'; row['error']=f'{type(exc).__name__}: {exc}'; row['traceback']=traceback.format_exc()
+                      result['rows'].append(row)
+              result['official_numeric_rows_written']=successful
+              result['state']='PASS' if successful==3 else ('PARTIAL' if successful else 'FAIL_CLOSED')
+          except Exception as exc:
+              result['state']='FAIL_CLOSED'; result['error']=f'{type(exc).__name__}: {exc}'; result['traceback']=traceback.format_exc()
+          output_path.parent.mkdir(parents=True,exist_ok=True)
+          output_path.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          checks={'target_rows':len(result.get('rows') or []),'successful_numeric_rows':result.get('official_numeric_rows_written',0),'business_rows':0,'fake_data':False,'final_ready':False}
+          receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':utc_now(),'runtime_state':result.get('state'),'checks':checks,'output_path':str(output_path),'output_sha256':hashlib.sha256(output_path.read_bytes()).hexdigest(),'rows':[{'parcel_id':r.get('parcel_id'),'state':r.get('state'),'height_difference_m':r.get('height_difference_m'),'error':r.get('error')} for r in result.get('rows',[])],'business_rows_written':0,'fake_data':False,'final_ready':False}
+          receipt_path.parent.mkdir(parents=True,exist_ok=True)
+          receipt_path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit measurement receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/official_measurements_runtime_033.json docs/chatgpt_status/topography/shards/height_difference_2/validation/031_official_measurements_runtime_033.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 official measurement runtime'
+          git push origin HEAD:agent/height-difference-2-measure-runtime-033-20260722
