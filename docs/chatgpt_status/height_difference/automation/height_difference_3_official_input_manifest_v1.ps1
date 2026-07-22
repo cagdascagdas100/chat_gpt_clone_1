@@ -9,10 +9,13 @@ param(
   [string]$WorkDir='docs/chatgpt_status/height_difference/runner_work/height_difference_3_official_input_manifest'
 )
 $ErrorActionPreference='Stop'
-$root=[System.IO.Path]::GetFullPath([string]$env:AAYS_REPO_ROOT)
-if(-not $root){throw 'AAYS_REPO_ROOT_REQUIRED'}
-$script=Join-Path $root 'docs\chatgpt_status\height_difference\automation\height_difference_3_official_input_manifest_v1.py'
-if(-not(Test-Path -LiteralPath $script)){throw 'HEIGHT_DIFFERENCE_3_OFFICIAL_INPUT_MANIFEST_SCRIPT_NOT_FOUND'}
+$rawRoot=[string]$env:AAYS_REPO_ROOT
+if([string]::IsNullOrWhiteSpace($rawRoot)){throw 'AAYS_REPO_ROOT_REQUIRED'}
+$root=[System.IO.Path]::GetFullPath($rawRoot)
+$script=Join-Path $root 'docs\chatgpt_status\height_difference\automation\height_difference_3_official_input_manifest_hardened_v1.py'
+$baseScript=Join-Path $root 'docs\chatgpt_status\height_difference\automation\height_difference_3_official_input_manifest_v1.py'
+if(-not(Test-Path -LiteralPath $script -PathType Leaf)){throw 'HEIGHT_DIFFERENCE_3_HARDENED_MANIFEST_SCRIPT_NOT_FOUND'}
+if(-not(Test-Path -LiteralPath $baseScript -PathType Leaf)){throw 'HEIGHT_DIFFERENCE_3_BASE_MANIFEST_SCRIPT_NOT_FOUND'}
 $python=$null;$prefix=@()
 $c=Get-Command python -ErrorAction SilentlyContinue;if($c){$python=$c.Source}
 if(-not $python){$c=Get-Command py -ErrorAction SilentlyContinue;if($c){$python=$c.Source;$prefix=@('-3')}}
