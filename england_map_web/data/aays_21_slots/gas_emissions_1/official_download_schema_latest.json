@@ -1,29 +1,64 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "gas_emissions_1",
   "task_id": "gas_emissions_1_official_download_schema_verify_20260722_01",
-  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
-  "status": "PARTIAL_OFFICIAL_WEB_EVIDENCE_PUBLISHED_BINARY_SCHEMA_PENDING",
-  "generated_at": "2026-07-22T00:44:27Z",
-  "progress": {"completed_operations": 3, "total_operations": 6, "percent": 50.0, "increase_percentage_points": 16.7},
-  "counts": {
-    "prior_candidates": 9,
-    "prior_live_candidates": 8,
-    "official_source_rows": 5,
-    "official_web_verified": 5,
-    "direct_file_urls_resolved": 3,
-    "binary_schemas_verified": 0,
-    "measured_parcel_rows": 0
+  "attempt_id": "gas-emissions-1-schema-a1",
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761,
+    "canonical_count": 92283
   },
-  "rows": [
+  "status": "DOCUMENTED_SCHEMA_CONTRACTS_AND_EXAMPLES_PUBLISHED_BINARY_SCHEMA_PENDING",
+  "state": "WEB_DOCUMENTED_CONTRACTS_PUBLISHED_AWAITING_EXISTING_SINGLE_SHARED_RUNNER_BINARY_INSPECTION",
+  "generated_at": "2026-07-22T01:02:45Z",
+  "progress": {
+    "operation_total": 6,
+    "operation_fully_completed": 3,
+    "operation_advanced_partial": 1,
+    "operation_pending": 2,
+    "weighted_equivalent_completed": 3.8,
+    "evidence_gated_percent": 63.3,
+    "increase_percentage_points_this_pass": 13.3,
+    "weight_note": "Operation 4 is credited 0.8: official documented contracts 5/5, direct files 3/5, validation examples 5/5; binary parse remains excluded."
+  },
+  "accuracy_counts": {
+    "candidate_sources_total": 9,
+    "candidate_sources_live_reachable": 8,
+    "official_source_families": 5,
+    "official_pages_or_package_contracts_verified": 5,
+    "documented_field_or_geometry_contracts_verified": 5,
+    "direct_official_file_urls_resolved": 3,
+    "validation_example_rows_published": 5,
+    "binary_schemas_verified": 0,
+    "verified_parcel_bindings": 0,
+    "measured_parcel_rows": 0,
+    "document_contract_confidence_average": 97.6
+  },
+  "upgraded_sources": {
+    "direct_official_file_level": 3,
+    "official_listing_or_package_contract_level": 2,
+    "documented_schema_or_geometry_contract_level": 5,
+    "binary_schema_level": 0
+  },
+  "sources": [
     {
       "line": 1,
       "source_id": "naei_point_sources_2023",
       "authority": "NAEI",
       "artifact": "NAEIPointsSources_2023.xlsx",
       "evidence_grade": "HIGH_DIRECT_OFFICIAL_FILE",
+      "confidence_score": 95,
       "official_web_verified": true,
       "direct_file_url_resolved": true,
+      "documented_contract": [
+        "individual point source",
+        "known location",
+        "grid reference",
+        "directly mappable"
+      ],
       "binary_schema": "PENDING_XLSX_HEADER_PARSE",
       "parcel_binding": "BLOCKED"
     },
@@ -33,8 +68,18 @@
       "authority": "UK Government / UK PRTR",
       "artifact": "2024 UK PRTR XML",
       "evidence_grade": "HIGH_DIRECT_OFFICIAL_FILE",
+      "confidence_score": 99,
       "official_web_verified": true,
       "direct_file_url_resolved": true,
+      "documented_contract": [
+        "facility and parent company",
+        "geographical location and river basin",
+        "activity",
+        "pollutant or waste",
+        "environmental medium",
+        "off-site transfers",
+        "method code"
+      ],
       "binary_schema": "PENDING_XML_TAG_PARSE",
       "parcel_binding": "BLOCKED"
     },
@@ -44,8 +89,18 @@
       "authority": "Environment Agency",
       "artifact": "2024 Pollution Inventory Dataset.zip",
       "evidence_grade": "HIGH_DIRECT_OFFICIAL_FILE",
+      "confidence_score": 97,
       "official_web_verified": true,
       "direct_file_url_resolved": true,
+      "documented_contract": [
+        "annual mass release",
+        "air",
+        "controlled waters",
+        "sewers",
+        "off-site waste transfer",
+        "point and fugitive sources",
+        "EPSG:27700 metadata"
+      ],
       "binary_schema": "PENDING_ZIP_MEMBER_AND_COLUMN_PARSE",
       "parcel_binding": "BLOCKED"
     },
@@ -54,9 +109,17 @@
       "source_id": "hmlr_inspire_20260705",
       "authority": "HM Land Registry",
       "artifact": "July 2026 INSPIRE Index Polygon GML",
-      "evidence_grade": "HIGH_OFFICIAL_LISTING_CONTRACT",
+      "evidence_grade": "HIGH_OFFICIAL_GEOMETRY_CONTRACT",
+      "confidence_score": 99,
       "official_web_verified": true,
       "direct_file_url_resolved": false,
+      "documented_contract": [
+        "local-authority GML",
+        "freehold registered property polygon",
+        "Land Registry-INSPIRE ID",
+        "British National Grid X/Y",
+        "EPSG:27700"
+      ],
       "binary_schema": "PENDING_GML_SELECTION_AND_POLYGON_PARSE",
       "parcel_binding": "BLOCKED"
     },
@@ -66,19 +129,35 @@
       "authority": "NAEI",
       "artifact": "Pollutant/year 1x1 km grid ZIP",
       "evidence_grade": "HIGH_OFFICIAL_PACKAGE_CONTRACT",
+      "confidence_score": 98,
       "official_web_verified": true,
       "direct_file_url_resolved": false,
+      "documented_contract": [
+        "1x1km annual grid",
+        "ASCII Grid",
+        "GeoTIFF",
+        "SNAP sector grids",
+        "point source SHP and CSV with coordinates",
+        "map PNG",
+        "licence text"
+      ],
       "binary_schema": "PENDING_DYNAMIC_ENDPOINT_AND_GRID_PARSE",
       "parcel_binding": "BLOCKED"
     }
   ],
   "blockers": [
+    "EXECUTION_ENVIRONMENT_DNS_CANNOT_RESOLVE_OFFICIAL_BINARY_HOSTS",
     "EXISTING_SINGLE_SHARED_RUNNER_BINARY_DOWNLOAD_AND_SCHEMA_EXECUTION_NOT_OBSERVED",
     "NAEI_GRID_DYNAMIC_DIRECT_DOWNLOAD_ENDPOINT_NOT_RESOLVED",
     "HMLR_SAMPLE_GML_NOT_PARSED",
     "NO_VERIFIED_PARCEL_BINDING"
   ],
   "actual_business_data_rows_written": 0,
+  "output_semantics": "DOCUMENTED_SOURCE_SCHEMA_AND_VALIDATION_EXAMPLES_ONLY_NO_PARCEL_VALUE",
   "final_ready": false,
-  "fake_data": false
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
 }
