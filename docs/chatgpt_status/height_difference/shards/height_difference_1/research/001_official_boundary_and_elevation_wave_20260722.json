@@ -1,0 +1,115 @@
+{
+  "schema_version": 4,
+  "slot_id": "height_difference_1",
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
+  "verified_on": "2026-07-22",
+  "remote_basis": {
+    "repository": "cagdascagdas100/chat_gpt_clone_1",
+    "authoritative_branch": "codex/aays-single-runner-v5-20260706",
+    "task_branch": "agent/height-difference-1-wcs-readiness-r2-20260722",
+    "fresh_remote_revalidation_performed": true
+  },
+  "historical_chain_audit": {
+    "script_commit": "a37a15d91ab9319d1ce6f78c8a202bb0237a04fa",
+    "runner_result_commit": "03c1b6f57f7e82811fa4e16d1d1bcf7edb80cb17",
+    "accepted_as_numeric_elevation_evidence": false,
+    "reasons": [
+      "The script only enumerated filenames matching parcel/boundary/DEM terms.",
+      "The script explicitly recorded elevation_sampled=false.",
+      "The runner receipt contains TIMEOUT after 1200 seconds despite a wrapper exit=0 line."
+    ]
+  },
+  "canonical_example_source": {
+    "path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "geometry_type": "Point",
+    "feature_count": 92283,
+    "prepared_point_count": 11,
+    "exact_polygon_rows": 0
+  },
+  "internet_research_counts": {
+    "official_sources_researched": 7,
+    "promoted_sources": 6,
+    "held_sources": 1,
+    "official_accuracy_guidance_pages_verified": 2,
+    "public_client_implementations_cross_validated": 3,
+    "prepared_parcel_examples": 11,
+    "prepared_wcs_probe_requests": 22,
+    "full_getcoverage_urls": 22,
+    "acceptance_gates": 12,
+    "verified_numeric_height_results": 0,
+    "business_rows_written": 0
+  },
+  "verified_service_contracts": {
+    "hmlr_inspire": {
+      "published": "2026-07-05",
+      "local_authority_listing": "London Borough of Barking and Dagenham",
+      "refresh_contract": "first Sunday of each month",
+      "format": "GML",
+      "native_crs": "EPSG:27700",
+      "technical_guidance_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "reprojection_warning_m": 15,
+      "bytes_acquired": false
+    },
+    "ea_dtm_1m": {
+      "grid_resolution_m": 1,
+      "tile_size_km": 5,
+      "crs": "EPSG:27700",
+      "axis_labels": ["E", "N"],
+      "vertical_reference": "Ordnance Survey Newlyn",
+      "reported_input_survey_rmse_m": 0.15,
+      "composite_contributing_survey_period": {"from": "2000-06-06", "to": "2022-04-02"},
+      "persistent_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?",
+      "coverage_id": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m",
+      "wcs_version": "2.0.1"
+    },
+    "ea_dsm_lz_1m": {
+      "grid_resolution_m": 1,
+      "includes_surface_objects": true,
+      "crs": "EPSG:27700",
+      "axis_labels": ["E", "N"],
+      "persistent_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs?",
+      "coverage_id": "9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m",
+      "wcs_version": "2.0.1"
+    },
+    "wcs_semantics": {
+      "raw_pixel_data_including_elevation": true,
+      "wms_role": "summarised display",
+      "coverage_id_state": "CROSS_VALIDATED_BY_PUBLIC_CLIENT_IMPLEMENTATIONS",
+      "axis_label_state": "CROSS_VALIDATED_AS_E_N",
+      "full_request_url_state": "MATERIALISED_22_OF_22",
+      "direct_capabilities_xml_acquired": false,
+      "getcoverage_geotiff_bytes_acquired": false
+    }
+  },
+  "accuracy_governance": {
+    "primary_boundary_join": "unique direct point-in-polygon in EPSG:27700",
+    "reprojection_fallback": "15m search may produce candidates only; no automatic canonical binding",
+    "primary_numeric_result": "polygon DTM maximum minus polygon DTM minimum",
+    "dsm_usage": "surface and object QA only",
+    "required_raster_checks": ["HTTP 200", "TIFF magic", "SHA-256", "EPSG:27700", "approximately 1m grid", "finite non-nodata pixels"],
+    "required_provenance": ["HMLR GML SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
+  },
+  "implementation_cross_validation": [
+    {"evidence_id":"HD1-IMPL-001","repository":"data-desk-eco/gdn-gis","path":"scripts/fetch-lidar.py","observed":"DTM endpoint, exact DTM coverageId, image/tiff and E/N subset syntax","evidence_state":"CROSS_VALIDATED"},
+    {"evidence_id":"HD1-IMPL-002","repository":"MatthewJWhittle/shefflied-bats","path":"sdm/data/terrain/core.py","observed":"Exact DTM and DSM coverage IDs plus DescribeCoverage-driven axis handling","evidence_state":"CROSS_VALIDATED"},
+    {"evidence_id":"HD1-IMPL-003","repository":"Harrishayy/NeMo-Ray","path":"agent/nemoray_modelling/lidar.py","observed":"Exact DTM and DSM coverage IDs, EPSG:27700, E/N axes and GeoTIFF GetCoverage request","evidence_state":"CROSS_VALIDATED"}
+  ],
+  "direct_execution_attempts": {
+    "web_binary_fetches_attempted": 2,
+    "container_official_fetches_attempted": 1,
+    "response_bytes_acquired": 0,
+    "states": ["BLOCKED_CONNECTOR_BINARY", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS"]
+  },
+  "next_evidence_gate": [
+    "Acquire and SHA-256 hash the July 2026 Barking and Dagenham HMLR GML.",
+    "Execute the 22 published 10m EPSG:27700 GetCoverage URLs and hash each GeoTIFF response.",
+    "Execute fail-closed point-in-polygon for parcel_1 through parcel_11.",
+    "Sample polygon-wide DTM elevation and compute min, max and max-minus-min only after all joins and raster gates pass."
+  ],
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
