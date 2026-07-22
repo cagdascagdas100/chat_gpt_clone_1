@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReadyToSell 2 — Automation 167 Acceptance</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#f4f7fa;color:#152033}header,section{padding:14px 18px;background:#fff;border-bottom:1px solid #c3ced9}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{border:1px solid #bdc8d5;padding:8px;margin:6px 0;background:#fbfcfd}.small{font-size:12px;color:#536176}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-load-state="loading" data-load-mode="unknown" data-visible-row-count="0" data-live-source-count="0" data-research-candidate-count="0">
+<header><h1>ReadyToSell 2 — Automation 167 DOM Acceptance</h1><div>Gerçek geometry/AI kanıtı, güncel shard ilerlemesi ve son aday manifesti aynı DOM içinde doğrulanır.</div></header>
+<section id="metrics">Yükleniyor...</section>
+<section class="grid"><div><h2>Kanıt satırları</h2><div id="evidence"></div></div><div><h2>İşlem satırları</h2><div id="events"></div></div></section>
+<section><h2>Araştırma adayları</h2><div id="candidates"></div></section>
+<script>
+'use strict';
+const PATHS={
+ geometry:'data/geometry_review_3of4/all_1264_real_geometry_3of4.geojson',
+ ai:'data/geometry_review_3of4/photo_ai_boundary_review_results.json',
+ progress:'data/aays_21_slots/ready_to_sell_2/progress_latest.json',
+ manifest:'data/aays_21_slots/ready_to_sell_2/candidate_wave_45_latest.json'
+};
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function j(path,required=false){try{const r=await fetch(path+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){if(required)throw new Error(path+': '+e.message);return null}}
+async function load(){
+ document.body.dataset.loadState='loading';
+ try{
+  const [geometry,ai,progress,manifest]=await Promise.all([j(PATHS.geometry),j(PATHS.ai,true),j(PATHS.progress,true),j(PATHS.manifest,true)]);
+  if(!Array.isArray(ai.results))throw new Error('AI results dizisi yok');
+  const parts=(manifest.candidate_part_files||[]);
+  const partDocs=(await Promise.all(parts.map(p=>j('data/aays_21_slots/ready_to_sell_2/'+p,true))));
+  const candidates=partDocs.flatMap(p=>p.candidates||[]);
+  const rows=ai.results;
+  const live=rows.filter(x=>x.source_verification_status==='verified_live_listing_page').length;
+  const mode=geometry&&Array.isArray(geometry.features)&&geometry.features.length?'canonical_geometry':'ai_evidence_fallback';
+  document.body.dataset.loadMode=mode;
+  document.body.dataset.visibleRowCount=String(rows.length);
+  document.body.dataset.liveSourceCount=String(live);
+  document.body.dataset.researchCandidateCount=String(candidates.length);
+  document.getElementById('metrics').innerHTML=`mode=<b>${esc(mode)}</b> | visible=<b>${rows.length}</b> | live=<b>${live}</b> | events=<b>${(progress.events||[]).length}</b> | candidates=<b>${candidates.length}</b>`;
+  document.getElementById('evidence').innerHTML=rows.slice(0,50).map((x,i)=>`<div class="card" data-evidence-row="${esc(x.row_id??i+1)}"><b>${esc(x.row_id??i+1)}</b> — ${esc(x.source_verification_status)}<div class="small">${esc(x.listing_url)}</div></div>`).join('');
+  document.getElementById('events').innerHTML=(progress.events||[]).map(e=>`<div class="card" data-progress-sequence="${esc(e.sequence)}"><b>${esc(e.sequence)}. ${esc(e.event)}</b> — ${esc(e.result)}<div class="small">${esc(e.detail)}</div></div>`).join('');
+  document.getElementById('candidates').innerHTML=candidates.map(c=>`<div class="card" data-research-candidate="${esc(c.candidate_id)}"><b>${esc(c.title)}</b> — ${esc(c.marketing_status)}<div>${esc(c.location)} | ${esc(c.price)}</div><div class="small">confidence=${esc(c.source_confidence_score)}/100 | promotion_allowed=${esc(c.promotion_allowed)}</div></div>`).join('');
+  document.body.dataset.loadState='ready';
+ }catch(e){document.body.dataset.loadState='error';document.getElementById('metrics').textContent='Yükleme hatası: '+e.message}
+}
+load();
+</script>
+</body>
+</html>
