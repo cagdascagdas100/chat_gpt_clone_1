@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security 1 — F-Host Operator Recovery Handoff</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS{font-weight:700}.PENDING,.BLOCKED,.FORBIDDEN{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.command{padding:12px;background:#101820;color:#f7f7f7;font-family:Consolas,monospace;overflow-wrap:anywhere}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>F-Host Guarded Recovery — Operatör Handoff</h1>
+<div class="note"><strong>Kanonik kaynak:</strong> GitHub remote branch ve slot kontrol dosyalarıdır. Yüklenen yerel nottaki 046/child talimatı remote üzerinde bulunmadığı ve tek-runner sözleşmesiyle çeliştiği için yürütülmez. Bu sayfa runner başlatmaz; mevcut guarded recovery komutunu ve çıktıları gösterir.</div>
+<div class="cards">
+<div class="card">Remote kaynak<br><strong id="truth">yükleniyor</strong></div>
+<div class="card">Alias holder<br><strong id="holder">yükleniyor</strong></div>
+<div class="card">Operator receipt<br><strong id="operatorReceipt">PENDING</strong></div>
+<div class="card">Restart receipt<br><strong id="restartReceipt">PENDING</strong></div>
+<div class="card">Security kabul<br><strong id="acceptance">PENDING — 5/8</strong></div>
+<div class="card">Güvenlik<br><strong id="safety">yükleniyor</strong></div>
+</div>
+<h2>Mevcut F-host üzerinde çalıştırılacak tek komut</h2>
+<div class="command" id="command">yükleniyor</div>
+<h2>Kaynak-of-truth uzlaştırması</h2>
+<table><thead><tr><th>#</th><th>Kaynak</th><th>İddia</th><th>Remote sonucu</th><th>Karar</th></tr></thead><tbody id="truthBody"></tbody></table>
+<h2>Preflight — satır satır</h2>
+<table><thead><tr><th>#</th><th>Kapı</th><th>Beklenen</th><th>Başarısızlık kodu</th><th>Canlı durum</th></tr></thead><tbody id="preflightBody"></tbody></table>
+<h2>Beklenen çıktılar</h2>
+<table><thead><tr><th>#</th><th>Dosya</th><th>Beklenen başarı</th><th>Canlı durum</th></tr></thead><tbody id="outputBody"></tbody></table>
+<h2>Recovery sonrası sıra</h2>
+<table><thead><tr><th>#</th><th>Adım</th><th>Durum</th></tr></thead><tbody id="afterBody"></tbody></table>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+const cls=s=>String(s||'PENDING').replace(/[^A-Z0-9_]/g,'_');
+(async()=>{
+ const [h,d,op,restart,acceptance]=await Promise.all([
+   get('operator_recovery_handoff_v1.json'),
+   get('shared_runner_dependency_latest.json'),
+   optional('../../../../docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/015_operator_recovery_preflight_latest.json'),
+   optional('../../../../docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/014_existing_canonical_runner_restart_latest.json'),
+   optional('canonical_acceptance_v17_latest.json')
+ ]);
+ truth.textContent=h.source_of_truth?.resolution||'unknown';holder.textContent=d.global_control_alias?.holder_slot||h.source_of_truth?.holder_slot||'unknown';
+ operatorReceipt.textContent=op?.status||'PENDING / NO_RECEIPT';operatorReceipt.className=op?'PASS':'PENDING';
+ restartReceipt.textContent=restart?.status||'PENDING / NO_RECEIPT';restartReceipt.className=restart?'PASS':'PENDING';
+ const acceptancePass=acceptance?.acceptance_pass===true;acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';acceptance.className=acceptancePass?'PASS':'PENDING';
+ safety.textContent=h.safety?.single_runner_only&&h.safety?.new_runner_forbidden&&h.safety?.parallel_runner_forbidden?'TEK RUNNER / FAIL-CLOSED':'BLOCKED';safety.className='PASS';command.textContent=h.operator_handoff?.exact_command||'not_available';
+ const truthRows=[
+  ['Yüklenen yerel not',h.source_of_truth?.uploaded_note_task,'Remote aramada bulunmadı',h.source_of_truth?.uploaded_note_task_found_on_remote===true?'PASS':'STALE / NON-CANONICAL'],
+  ['GitHub global alias',h.source_of_truth?.global_alias_task,d.global_control_alias?.task_id||'not_available','CANONICAL'],
+  ['Security slot',`${h.source_of_truth?.security_task}; ${h.source_of_truth?.security_progress?.completed_units}/${h.source_of_truth?.security_progress?.total_units}`,`${d.security_slot?.task_id||'not_available'}; ${d.security_slot?.canonical_progress?.completed_units||0}/${d.security_slot?.canonical_progress?.total_units||8}`,'CANONICAL'],
+  ['Child/paralel talimat','Yüklenen notta mevcut',h.source_of_truth?.child_or_parallel_start_from_uploaded_note_forbidden?'FORBIDDEN':'UNKNOWN','YÜRÜTME']
+ ];
+ truthBody.innerHTML=truthRows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x[0])}</td><td class="mono">${esc(x[1])}</td><td>${esc(x[2])}</td><td class="${cls(x[3])}">${esc(x[3])}</td></tr>`).join('');
+ preflightBody.innerHTML=(h.preflight_contract||[]).map(x=>`<tr><td>${esc(x.order)}</td><td>${esc(x.gate)}</td><td>${esc(x.expected||'fail-closed')}</td><td class="mono">${esc(x.failure)}</td><td class="PENDING">RUNTIME_REQUIRED</td></tr>`).join('');
+ const liveByPath=new Map([[h.expected_outputs?.[0]?.path,op],[h.expected_outputs?.[1]?.path,restart],[h.expected_outputs?.[5]?.path,acceptance]]);
+ outputBody.innerHTML=(h.expected_outputs||[]).map(x=>{const live=liveByPath.get(x.path);const present=Boolean(live)||(x.present===true&&x.current_state);const status=live?.status||(present?x.current_state:'PENDING / ABSENT');return `<tr><td>${esc(x.order)}</td><td class="mono">${esc(x.path)}</td><td>${esc(x.success_status||x.success_condition||(x.success_statuses||[]).join(' OR '))}</td><td class="${present?'PASS':'PENDING'}">${esc(status)}</td></tr>`}).join('');
+ afterBody.innerHTML=(h.after_recovery||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x)}</td><td class="PENDING">BEKLENİYOR</td></tr>`).join('');
+ document.body.dataset.operatorReceiptPresent=String(Boolean(op));document.body.dataset.restartReceiptPresent=String(Boolean(restart));document.body.dataset.acceptancePresent=String(Boolean(acceptance));document.body.dataset.preflightGateCount=String((h.preflight_contract||[]).length);document.body.dataset.expectedOutputCount=String((h.expected_outputs||[]).length);document.body.dataset.semanticValid=String(h.acceptance_evidence===false&&h.safety?.single_runner_only===true&&h.safety?.final_ready===false&&h.source_of_truth?.resolution==='REMOTE_BRANCH_AND_SLOT_CONTROL_FILES_ARE_CANONICAL');
+})().catch(e=>{truthBody.innerHTML=`<tr><td colspan="5" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body></html>
