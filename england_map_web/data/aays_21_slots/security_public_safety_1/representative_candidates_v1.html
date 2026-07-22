@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<meta http-equiv="refresh" content="30">
+<title>Security 1 — 16 Endpoint Temsilcisi</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:0 0 10px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS{font-weight:700}.PENDING,.BLOCKED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.muted{color:#52606d}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>Security / Public Safety 1 — 16 Endpoint Temsilcisi</h1>
+<div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY — LSOA/alan düzeyi destekleyici göstergedir; parsel ölçümü değildir. Her satır ilk 130 aday içindeki bir benzersiz Police API endpoint’inin ilk yüksek-doğruluk temsilcisidir.</div>
+<div class="cards">
+<div class="card">Temsilci<br><strong id="count">yükleniyor</strong></div>
+<div class="card">Doğruluk 4/4<br><strong id="accuracy">yükleniyor</strong></div>
+<div class="card">Saklı HTTP 200<br><strong id="http">yükleniyor</strong></div>
+<div class="card">Saklı SHA256<br><strong id="sha">yükleniyor</strong></div>
+<div class="card">Güven<br><strong id="confidence">yükleniyor</strong></div>
+<div class="card">Canlı parity<br><strong id="live">PENDING</strong></div>
+</div>
+<h2>Endpoint başına bir temsilci — satır satır</h2>
+<p class="muted">Canlı v17 raporu oluştuğunda count ve SHA parity sütunları otomatik güncellenir.</p>
+<table><thead><tr><th>#</th><th>Endpoint ID</th><th>Parsel</th><th>CSV satırı</th><th>Skor</th><th>Seviye</th><th>Doğruluk</th><th>Güven</th><th>Koordinat</th><th>Saklı count</th><th>Canlı count</th><th>Count parity</th><th>SHA parity</th><th>Durum</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+const cls=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
+(async()=>{
+ const [doc,acceptance]=await Promise.all([get('canonical_16_representative_candidates_20260722.json'),optional('canonical_acceptance_v17_latest.json')]);
+ const reps=Array.isArray(doc.representatives)?doc.representatives:[];
+ const liveCandidates=Array.isArray(acceptance?.canonical_live_parity?.candidates)?acceptance.canonical_live_parity.candidates:[];
+ const liveById=new Map(liveCandidates.map(x=>[x.parcel_id,x]));
+ const passed=liveCandidates.filter(x=>x.status==='PASS').length;
+ count.textContent=`${reps.length}/16`;
+ accuracy.textContent=`${reps.filter(x=>Number(x.accuracy_score_4)===4).length}/16`;
+ http.textContent=`${reps.filter(x=>Number(x.stored_http_status)===200).length}/16`;
+ sha.textContent=`${reps.filter(x=>/^[0-9a-f]{64}$/i.test(String(x.stored_sha256||''))).length}/16`;
+ confidence.textContent=`${doc.confidence_score??'n/a'}%`;
+ live.textContent=acceptance?`${passed}/16`:'0/16 PENDING';
+ rows.innerHTML=reps.map((x,i)=>{
+  const l=liveById.get(x.parcel_id)||{},checks=l.checks||{},status=l.status||'PENDING';
+  const countParity=checks.count_parity===true?'PASS':checks.count_parity===false?'BLOCKED':'PENDING';
+  const shaParity=checks.sha256_parity===true?'PASS':checks.sha256_parity===false?'BLOCKED':'PENDING';
+  return `<tr><td>${i+1}</td><td>${esc(x.endpoint_id)}</td><td>${esc(x.parcel_id)}</td><td>${esc(x.source_csv_line)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.security_level)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.confidence_score)}%</td><td class="mono">${esc(x.lat)}, ${esc(x.lng)}</td><td>${esc(x.stored_crime_count)}</td><td>${esc(l.live_count)}</td><td class="${cls(countParity)}">${countParity}</td><td class="${cls(shaParity)}">${shaParity}</td><td class="${cls(status)}">${esc(status)}</td></tr>`;
+ }).join('');
+ document.body.dataset.representativeCount=String(reps.length);
+ document.body.dataset.accuracy4Count=String(reps.filter(x=>Number(x.accuracy_score_4)===4).length);
+ document.body.dataset.livePassed=String(passed);
+ document.body.dataset.acceptanceReportPresent=String(Boolean(acceptance));
+ document.body.dataset.semanticValid=String(reps.length===16&&doc.parcel_measurement===false&&doc.output_semantics==='AREA_LEVEL_PROXY');
+})().catch(e=>{rows.innerHTML=`<tr><td colspan="14" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
+</script>
+</body>
+</html>
