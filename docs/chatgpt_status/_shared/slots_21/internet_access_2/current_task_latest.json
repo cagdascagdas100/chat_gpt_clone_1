@@ -11,19 +11,63 @@
     "count": 30761,
     "canonical_count": 92283
   },
-  "final_ready": false,
-  "state": "queued_for_existing_coordinator",
   "task_id": "internet-access-2-ofcom-2026-schema-and-sample-wave1-20260722T003722Z",
   "attempt_id": "d1eef74740654d5a93b1d1d0d337dcfd",
-  "owner_page_session_id": "chatgpt-internet-access-2-effb0514818c",
-  "queue_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_2026_postcode_sample_wave_001.v3.task.json",
-  "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
-  "current_wave": "OFCom_2026_R2_SCHEMA_AND_12_ROW_EXACT_POSTCODE_SAMPLE",
-  "allowed_paths": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2",
-    "docs/chatgpt_status/_shared/slots_21/internet_access_2",
-    "england_map_web/data/aays_21_slots/internet_access_2"
+  "idempotency_key": "4d5a5aceb50bda2acbdbfac8772dfe80491894f82de5e85e45118d3a18b59f38",
+  "status": "queued",
+  "priority": "P0",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/001_ofcom_2026_postcode_sample_wave.py",
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/internet.geojson",
+    "docs/chatgpt_status/_shared/plans/AAYS_INTERNET_ACCESS_3_SLOT_INTEGRATION_PLAN_20260718.md"
   ],
-  "direct_push_forbidden": true,
-  "updated_at": "2026-07-22T00:37:22Z"
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"
+  ],
+  "resource_class": [
+    "light_read",
+    "network_fetch"
+  ],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 7200,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757"
+    ],
+    "source_snapshot_date": "2026-01",
+    "source_discovery_required": false,
+    "measurement_level": "postcode",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "existing canonical row_no and HMLR identity retained; exact normalized postcode join only; no spatial inference in sample wave",
+    "confidence_method": "exact Ofcom r2 postcode with complete core coverage fields=0.75 maximum; partial fields=0.50; missing postcode=0.00 NO_DATA",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "official postcode area file is missing",
+      "Ofcom schema differs from documented v2 fields",
+      "legacy and 2026 metrics differ materially",
+      "postcode is absent or duplicated"
+    ]
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "requested_at": "2026-07-22T00:37:22Z",
+  "state": "PUBLISH_PENDING",
+  "updated_at": "2026-07-22T01:06:57.436286Z",
+  "blocker": null,
+  "result": {
+    "state": "PUBLISH_PENDING",
+    "exit_code": 0,
+    "log": "logs\\adaptive_v2\\slots\\internet_access_2\\internet-access-2-ofcom-2026-schema-and-sample-wave1-20260722T003722Z.d1eef74740654d5a93b1d1d0d337dcfd.log",
+    "error": "PUBLISHER_MERGE_CONFLICT: Auto-merging docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json\nCONFLICT (content): Merge conflict in docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json\nAuto-merging docs/chatgpt_status/_shared/slots_21/internet_access_2/status_latest.json\nCONFLICT (content): Merge conflict in docs/chatgpt_status/_shared/slots_21/internet_access_2/status_latest.json\nAutomatic merge failed; fix conflicts and then commit the result."
+  }
 }
