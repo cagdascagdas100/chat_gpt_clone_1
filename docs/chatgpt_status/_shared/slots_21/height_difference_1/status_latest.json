@@ -1,15 +1,17 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "height_difference_1",
   "base_slot_id": "height_difference",
   "shard_index": 1,
   "parcel_partition": {"start":1,"end":30761,"count":30761,"canonical_count":92283},
-  "state": "blocked_revision_14_ready_noninteractive_publish_auth_apply_pending",
+  "state": "recovery_parked_manual_auth_apply_required",
   "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
   "attempt_id": "official-source-batch-004-revision-14-direct-hmlr-monthly-gml-refresh",
   "idempotency_key": "height_difference_1-004-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "continuation_source_head": "fc10e5d16ba21ae529960615a7dd9f9340acc0cc",
   "payload_revision": 14,
   "queue_status": "pending",
   "first_unverified_step": "APPLY_NONINTERACTIVE_PUBLISH_AUTH_PREFLIGHT_ON_EXISTING_F_HOST_THEN_RERUN_EXACT_REVISION_14_AND_VERIFY_REMOTE_OUTPUT_INTEGRITY",
@@ -29,6 +31,16 @@
     "publisher_error": "PUBLISHER_PUSH_FAILED: noninteractive HTTPS GitHub credentials unavailable",
     "referenced_child_commit": "1ff4c36f7f1fcf831b74e9424db642d425f319aa",
     "referenced_child_commit_present_on_remote": false
+  },
+  "recovery_state": {
+    "owner_state": "unclaimed",
+    "heartbeat_fresh": false,
+    "lease_expired": true,
+    "automatic_recovery_completed": false,
+    "recovery_parked": true,
+    "manual_action_state": "OPEN",
+    "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
+    "recovery_record_path": "docs/chatgpt_status/_shared/slots_21/height_difference_1/recovery_latest.json"
   },
   "publisher_auth_recovery": {
     "script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/046_prepare_existing_f_runner_noninteractive_github_publish_auth_20260721.ps1",
@@ -65,24 +77,32 @@
     "os_terrain50_direct_downloads_api_required": true,
     "maximum_ea_os_absolute_difference_m": 8.0
   },
-  "batch_progress": {"planned_operations":300,"completed_operations":295,"blocked_operations":5,"completion_percent":98.33,"percentage_point_increase_this_run":0.18},
+  "continuation_evidence": {
+    "operation_increment": "england_map_web/data/aays_21_slots/height_difference_1/operations_increment_030_recovery_source_validation_20260722.json",
+    "line_item_page": "england_map_web/data/aays_21_slots/height_difference_1/continuation_recovery_source_validation_v1_20260722.html",
+    "official_source_checks_passed": 5,
+    "official_source_checks_total": 5,
+    "web_operation_rows_added": 12
+  },
+  "batch_progress": {"planned_operations":312,"completed_operations":307,"blocked_operations":5,"completion_percent":98.40,"percentage_point_increase_this_run":0.07},
   "product_completion_percent": 78,
   "product_percent_increase": 0,
   "candidate_rows_count": 3,
   "real_boundary_match_rows_count": 0,
   "official_measured_rows_count": 0,
   "official_height_difference_rows_count": 0,
-  "source_upgrades_count": 39,
-  "source_upgrades_this_run": 0,
-  "methodology_source_upgrades_this_run": 2,
+  "source_upgrades_count": 43,
+  "source_upgrades_this_run": 4,
+  "methodology_source_upgrades_this_run": 1,
   "official_source_freshness_revalidations_this_run": 4,
-  "revision_14_direct_hmlr_upgrades_this_run": 10,
-  "publisher_auth_recovery_upgrades_this_run": 6,
+  "revision_14_direct_hmlr_upgrades_total": 10,
+  "publisher_auth_recovery_upgrades_total": 6,
   "validation_tests": {
     "revision_12_direct_ea_resample":"54/54",
     "revision_13_direct_os_terrain50":"24/24",
     "revision_14_direct_hmlr_monthly_gml":"84/84_source_and_synthetic_runtime_network_not_applied",
-    "noninteractive_publish_auth_preflight":"24/24_source_level_f_host_not_applied"
+    "noninteractive_publish_auth_preflight":"24/24_source_level_f_host_not_applied",
+    "continuation_official_source_checks":"5/5"
   },
   "accuracy_score_4": "2.5/4 fallback",
   "active_shared_control_task": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
@@ -95,5 +115,6 @@
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false
+  "production_deploy": false,
+  "updated_at": "2026-07-22T16:51:42Z"
 }
