@@ -1,75 +1,10 @@
 name: height_difference_2 distribution gradient probe 037
 on:
-  pull_request:
-    paths:
-      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/037_distribution_probe_trigger.json'
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  probe:
+  receipt_already_generated:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/hd2-distribution-gradient-037-20260722
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install requests rasterio shapely numpy
-      - name: Re-download official rasters and compute independent statistics
-        run: |
-          python - <<'PY'
-          import hashlib,json,math,pathlib
-          from datetime import datetime,timezone
-          import numpy as np,requests,rasterio
-          from rasterio.features import geometry_mask
-          from rasterio.io import MemoryFile
-          from rasterio.transform import xy
-          from shapely.geometry import Point,shape
-          slot=pathlib.Path('england_map_web/data/aays_21_slots/height_difference_2')
-          doc=pathlib.Path('docs/chatgpt_status/topography/shards/height_difference_2')
-          polys=json.loads((slot/'hmlr_exact_polygons_runtime_034_v2.json').read_text())
-          prev=json.loads((slot/'ea_dtm_polygon_samples_runtime_034.json').read_text())
-          old_rows={int(r['row_no']):r for r in prev['rows']}
-          sess=requests.Session(); sess.headers.update({'User-Agent':'hd2-distribution-gradient-audit/1.0'})
-          def old_sample(row,role): return next(x for x in row['samples'] if x['role']==role)
-          def rf(v,n=6): return round(float(v),n)
-          def run_one(prow,role):
-            old=old_sample(old_rows[int(prow['row_no'])],role)
-            res=sess.get(old['request_final_url'],timeout=120); res.raise_for_status()
-            sha=hashlib.sha256(res.content).hexdigest(); geom=shape(prow['matches'][0]['geometry_geojson'])
-            with MemoryFile(res.content) as mem:
-              with mem.open() as ds:
-                arr=ds.read(1).astype('float64')
-                ma=geometry_mask([geom.__geo_interface__],transform=ds.transform,invert=True,out_shape=arr.shape,all_touched=False)
-                mb=np.zeros(arr.shape,dtype=bool)
-                for r in range(ds.height):
-                  for c in range(ds.width):
-                    x,y=xy(ds.transform,r,c,offset='center'); mb[r,c]=geom.covers(Point(float(x),float(y)))
-                valid=ma & np.isfinite(arr)
-                if ds.nodata is not None: valid &= arr!=ds.nodata
-                vals=arr[valid]; rr,cc=np.where(valid); xs,ys=xy(ds.transform,rr,cc,offset='center')
-                xs=np.asarray(xs); ys=np.asarray(ys); A=np.column_stack((xs-xs.mean(),ys-ys.mean(),np.ones_like(xs)))
-                coef,*_=np.linalg.lstsq(A,vals,rcond=None); fit=A@coef; resid=vals-fit
-                q10,q25,q50,q75,q90=np.percentile(vals,[10,25,50,75,90]); med=float(np.median(vals))
-                slope=math.hypot(float(coef[0]),float(coef[1])); aspect=(math.degrees(math.atan2(-float(coef[0]),-float(coef[1])))+360)%360
-                stats={'valid_pixel_count':int(vals.size),'min_m':rf(vals.min(),3),'max_m':rf(vals.max(),3),'difference_m':rf(vals.max()-vals.min(),3),'mean_m':rf(vals.mean(),3),'median_m':rf(med,3),'stddev_m':rf(vals.std(),6),'p10_m':rf(q10,3),'p25_m':rf(q25,3),'p50_m':rf(q50,3),'p75_m':rf(q75,3),'p90_m':rf(q90,3),'iqr_m':rf(q75-q25,3),'mad_m':rf(np.median(np.abs(vals-med)),6),'dz_de':rf(coef[0],8),'dz_dn':rf(coef[1],8),'slope_percent':rf(slope*100,4),'slope_degrees':rf(math.degrees(math.atan(slope)),4),'descent_aspect_degrees':rf(aspect,3),'plane_residual_rmse_m':rf(np.sqrt(np.mean(resid**2)),6)}
-                checks={'http_200':res.status_code==200,'sha_matches_034':sha==old['response_sha256'],'crs_epsg27700':str(ds.crs).upper()=='EPSG:27700','mask_counts_equal':int(ma.sum())==int(mb.sum()),'mask_cells_equal':bool(np.array_equal(ma,mb)),'valid_count_matches_034':int(vals.size)==int(old['valid_center_pixel_count']),'min_matches_034':abs(float(vals.min())-float(old['height_min_m']))<=0.0005,'max_matches_034':abs(float(vals.max())-float(old['height_max_m']))<=0.0005,'difference_matches_034':abs(float(vals.max()-vals.min())-float(old['height_difference_m']))<=0.0005}
-                return {'role':role,'request_final_url':old['request_final_url'],'response_bytes':len(res.content),'response_sha256':sha,'crs':str(ds.crs),'width':ds.width,'height':ds.height,'geometry_mask_count':int(ma.sum()),'manual_covers_count':int(mb.sum()),'mask_disagreement_count':int(np.count_nonzero(ma^mb)),'stats':stats,'checks':checks,'state':'PASS' if all(checks.values()) else 'FAIL'}
-          rows=[]
-          for p in polys['rows']:
-            one=run_one(p,'PRIMARY_DTM_1M'); two=run_one(p,'CROSSCHECK_DTM_2M')
-            rows.append({'row_no':int(p['row_no']),'parcel_id':p['parcel_id'],'hmlr_inspire_id':p['hmlr_inspire_id'],'hmlr_feature_sha256':p['matches'][0]['feature_sha256'],'polygon_area_m2':p['matches'][0]['geometry_area_m2'],'primary_1m':one,'crosscheck_2m':two,'state':'PASS' if one['state']==two['state']=='PASS' else 'FAIL'})
-          out={'schema_version':1,'slot_id':'height_difference_2','generated_at':datetime.now(timezone.utc).isoformat(),'method_a':'rasterio.geometry_mask pixel centres','method_b':'manual Shapely Polygon.covers pixel centres','rows':rows,'all_rows_pass':all(r['state']=='PASS' for r in rows),'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False}
-          if not out['all_rows_pass']: raise SystemExit(json.dumps(out,indent=2))
-          for p in [doc/'runtime/037_distribution_gradient_audit.json',slot/'distribution_gradient_runtime_037.json']:
-            p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
-          PY
-      - name: Commit runtime receipt
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/037_distribution_gradient_audit.json england_map_web/data/aays_21_slots/height_difference_2/distribution_gradient_runtime_037.json
-          git commit -m 'height_difference_2: record dual-mask distribution audit 037 [skip ci]' || exit 0
-          git push
+      - run: echo 'The 3-of-3 dual-mask runtime receipt is already generated and SHA-verified.'
