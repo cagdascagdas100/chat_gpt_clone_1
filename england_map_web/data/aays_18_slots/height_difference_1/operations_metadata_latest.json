@@ -1,9 +1,9 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 29,
-  "complete_count": 29,
+  "operation_count": 33,
+  "complete_count": 33,
   "operations": [
     {"operation_id":"HD1-OP-057","label":"EA Composite survey-index OGC collection discovered","state":"COMPLETE","evidence":"LIDAR_Composite_1m_DTM_2022_extents; official Environment Agency OGC Features service"},
     {"operation_id":"HD1-OP-058","label":"Composite survey metadata fields verified","state":"COMPLETE","evidence":"filename, tilename, polygon_id, resolution, year, sd_flown and ed_flown are queryable"},
@@ -33,7 +33,11 @@
     {"operation_id":"HD1-OP-082","label":"Explicit BNG metadata queries implemented","state":"COMPLETE","evidence":"All 11 primary queries now use canonical BNG points, 5m bbox, explicit bbox-crs and response crs EPSG:27700"},
     {"operation_id":"HD1-OP-083","label":"Four-digit ArcGIS survey-year parsing fixed","state":"COMPLETE","evidence":"Calendar years such as 2020 are validated separately and can no longer be interpreted as Unix timestamps"},
     {"operation_id":"HD1-OP-084","label":"Hardened metadata resolver self-test completed","state":"COMPLETE","evidence":"Local compile plus 6 deterministic checks passed: BNG match, CRS URL, dates, years and ArcGIS QA parsing"},
-    {"operation_id":"HD1-OP-085","label":"Shared-runner task contract aligned to metadata fixes","state":"COMPLETE","evidence":"Prepared task v1.4 now requires explicit EPSG:27700 bbox/response CRS, BNG geometry checks and calendar-year consistency across 24 acceptance checks"}
+    {"operation_id":"HD1-OP-085","label":"Shared-runner task contract aligned to metadata fixes","state":"COMPLETE","evidence":"Prepared task v1.4 requires explicit EPSG:27700 bbox/response CRS, BNG geometry checks and calendar-year consistency"},
+    {"operation_id":"HD1-OP-086","label":"HMLR signed object host cross-validated","state":"COMPLETE","evidence":"Public request trace identifies datapub-prd-s3-bucket.s3.amazonaws.com; independent 2026 downloader confirms cookie-aware redirect and ZIP workflow"},
+    {"operation_id":"HD1-OP-087","label":"HMLR redirect host allowlist implemented","state":"COMPLETE","evidence":"Resolver rejects non-HTTPS or non-allowlisted final hosts and records only the final hostname, not the expiring signed URL"},
+    {"operation_id":"HD1-OP-088","label":"Carrier receipt host revalidation implemented","state":"COMPLETE","evidence":"PowerShell independently verifies HMLR page host, ZIP final host and final_host_allowlisted before hash handoff"},
+    {"operation_id":"HD1-OP-089","label":"Redirect host and ZIP path behavior test completed","state":"COMPLETE","evidence":"6/6 independent checks passed: HMLR host, S3 host, HTTP rejection, unknown-host rejection, valid GML ZIP and traversal rejection"}
   ],
   "fake_data": false,
   "final_ready": false
