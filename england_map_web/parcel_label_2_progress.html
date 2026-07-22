@@ -14,13 +14,13 @@
 </head>
 <body>
   <h1>parcel_label_2</h1>
-  <div class="muted">30762–61522 · yalnız resmî kaynak adayları · canonical parsel ve exact geometri bağlaması bekliyor</div>
-  <div class="note">Bu tabloda görünen SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Kendi attempt-010 görevimiz gerçek shared-runner queue branch'inde priority 2 olarak geçerlidir; daha düşük sayısal öncelikli seçili görev manifest kartında gösterilir. Shared runner heartbeat'i eskidir ve parcel_label_2 output'u oluşmamıştır. Carrier yalnız exact Git blob SHA, 92.283 feature, tam parcel_1–parcel_92283 kimlik aralığı, row_no eşleşmesi ve hedef HMLR şema/koordinat/geometri kapıları birlikte geçerse kabul edilir. Public HTTP/DOM deploy rotası henüz kanıtlanmamıştır.</div>
+  <div class="muted">30762–61522 · yalnız resmî internet kaynaklı adaylar · canonical parsel ve exact geometri bağlaması bekliyor</div>
+  <div class="note">SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Aynı mülk, aynı URL veya İngiltere dışı kapsam tespitleri replacement overlay ile tarayıcı bütünlük kontrolünden önce değiştirilir. Kendi attempt-010 görevimiz mevcut tek shared runner kuyruğunda priority 2 olarak bekler; yeni veya paralel runner oluşturulmamıştır.</div>
   <div class="note" id="integrity">Veri manifesti yükleniyor…</div>
   <div class="summary" id="summary"></div>
   <h2>İşlem günlüğü</h2>
   <table><thead><tr><th>#</th><th>İşlem</th><th>Sonuç</th><th>Durum</th></tr></thead><tbody id="activity"><tr><td colspan="4">Yükleniyor…</td></tr></tbody></table>
-  <h2>Aday satırları</h2>
+  <h2>Etkin aday satırları</h2>
   <table><thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Renk kategorisi</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead><tbody id="rows"><tr><td colspan="11">Yükleniyor…</td></tr></tbody></table>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -31,14 +31,31 @@ const fetchJson=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error
 fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
  .then(manifest=>Promise.all([
    Promise.all((manifest.candidate_files||[]).map(n=>fetchJson(dataRoot+n))),
+   Promise.all((manifest.replacement_files||[]).map(n=>fetchJson(dataRoot+n))),
    Promise.all((manifest.activity_files||[]).map(n=>fetchJson(dataRoot+n)))
- ]).then(([parts,activityParts])=>({manifest,parts,activityParts})))
- .then(({manifest,parts,activityParts})=>{
-   const candidates=parts.flatMap(d=>d.candidates||[]);
-   const activities=activityParts.flatMap(d=>d.activities||[]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
-   const weighted=parts.reduce((s,d)=>s+(Number(d.classification_accuracy_average_percent)||0)*(Number(d.candidate_count)||0),0);
-   const count=parts.reduce((s,d)=>s+(Number(d.candidate_count)||0),0);
-   const average=count?Math.round(weighted/count*100)/100:0;
+ ]).then(([parts,replacementParts,activityParts])=>({manifest,parts,replacementParts,activityParts})))
+ .then(({manifest,parts,replacementParts,activityParts})=>{
+   const rawCandidates=parts.flatMap(d=>d.candidates||[]);
+   const replacements=replacementParts.flatMap(d=>d.replacements||[]);
+   const rawIdCount=rawCandidates.reduce((m,c)=>{const k=String(c.parcel_id||'');m[k]=(m[k]||0)+1;return m;},{});
+   const replacementTargets=replacements.map(r=>String(r.replaces_parcel_id||''));
+   const replacementTargetsValid=uniqueCount(replacementTargets)===replacements.length&&replacementTargets.every(id=>Number(rawIdCount[id]||0)===1);
+   const replacementMap=new Map(replacements.map(r=>[String(r.replaces_parcel_id||''),r.candidate]));
+   const candidates=rawCandidates.map(c=>replacementMap.has(String(c.parcel_id||''))?replacementMap.get(String(c.parcel_id||'')):c);
+   const expandEvent=e=>{
+     const s=Number(e.start_sequence), subject=String(e.subject||''), kind=String(e.kind||'');
+     const repair=kind==='REPLACEMENT';
+     return [
+       {sequence:s,operation:`${subject} ${repair?'bütünlük sorunu':'resmî kaynak'} okuması`,result:repair?`${e.replaces_parcel_id}: ${e.reason}`:String(e.evidence||''),state:repair?'FAIL_CLOSED_REPAIR_REQUIRED':'PASS'},
+       {sequence:s+1,operation:`${subject} resmî kaynak doğrulaması`,result:String(e.evidence||''),state:'PASS'},
+       {sequence:s+2,operation:`${subject} sınıf kanıtı`,result:`${e.property_type} sınıfı resmî kaynakla desteklendi`,state:'PASS'},
+       {sequence:s+3,operation:`${subject} doğruluk ve kapsam kapısı`,result:`%${e.accuracy_percent}; canonical parsel ve exact geometri bağlaması bekliyor`,state:'PENDING_CANONICAL_BINDING'},
+       {sequence:s+4,operation:`${subject} web satırı`,result:`${e.parcel_id} canonical dışı aday olarak görünür`,state:'VISIBLE_NOT_CANONICAL'}
+     ];
+   };
+   const activities=activityParts.flatMap(d=>[...(d.activities||[]),...(d.events||[]).flatMap(expandEvent)]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
+   const count=candidates.length;
+   const average=count?Math.round(candidates.reduce((s,c)=>s+Number(c.accuracy_percent||0),0)/count*100)/100:0;
    const batchCount=new Set(candidates.map(c=>Number(c.research_batch)).filter(Number.isFinite)).size;
    const candidateIds=candidates.map(c=>String(c.parcel_id||''));
    const normalizedRefs=candidates.map(c=>norm(c.parcel_ref));
@@ -49,7 +66,8 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const classBalance=Object.entries(manifest.expected_class_counts||{}).every(([k,v])=>Number(classCounts[k]||0)===Number(v));
    const colorMap=manifest.expected_property_type_color_map||{};
    const colorCategoryMatch=candidates.every(c=>String(c.selected_color_category||'')===String(colorMap[String(c.selected_property_type||'')]||''));
-   const fileMatch=parts.length===Number(manifest.expected_candidate_files)&&activityParts.length===Number(manifest.expected_activity_files);
+   const fileMatch=parts.length===Number(manifest.expected_candidate_files)&&replacementParts.length===Number(manifest.expected_replacement_files)&&activityParts.length===Number(manifest.expected_activity_files);
+   const replacementCountMatch=replacements.length===Number(manifest.expected_replacement_rows);
    const rowMatch=count===Number(manifest.expected_candidate_rows)&&activities.length===Number(manifest.expected_activity_rows);
    const batchMatch=batchCount===Number(manifest.expected_research_batches);
    const allHttpsSources=candidates.every(c=>String(c.source_url||'').startsWith('https://'));
@@ -67,18 +85,16 @@ fetchJson(dataRoot+'parcel_label_2_web_data_manifest_latest.json')
    const uniqueUrls=uniqueCount(sourceUrls)===Number(manifest.expected_unique_source_urls);
    const uniqueSequences=uniqueCount(sequences)===sequences.length;
    const contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
-   const integrityOk=fileMatch&&rowMatch&&batchMatch&&classBalance&&colorCategoryMatch&&allHttpsSources&&allHighAccuracy&&scoreRange&&scoreRelation&&evidenceComplete&&officialScopeComplete&&conflictComplete&&manualReviewAll&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
+   const integrityOk=fileMatch&&replacementCountMatch&&replacementTargetsValid&&rowMatch&&batchMatch&&classBalance&&colorCategoryMatch&&allHttpsSources&&allHighAccuracy&&scoreRange&&scoreRelation&&evidenceComplete&&officialScopeComplete&&conflictComplete&&manualReviewAll&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
    document.getElementById('integrity').textContent=integrityOk
-    ?`Veri manifesti eşleşti: ${parts.length} aday dosyası, ${activityParts.length} işlem dosyası, ${count} benzersiz aday, altı sınıfta eşit dağılım, sınıf-renk, puan-kapsam-kanıt kapıları ve ${activities.length} sıralı işlem satırı.`
-    :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, batch ${batchCount}/${manifest.expected_research_batches}, sınıf ${classBalance?'OK':'HATA'}, renk ${colorCategoryMatch?'OK':'HATA'}, puan ${scoreRange&&scoreRelation?'OK':'HATA'}, kanıt ${evidenceComplete?'OK':'HATA'}, kapsam ${officialScopeComplete?'OK':'HATA'}, inceleme ${manualReviewAll?'OK':'HATA'}, bloker ${conflictComplete?'OK':'HATA'}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
+    ?`Veri manifesti eşleşti: ${parts.length} aday dosyası, ${replacementParts.length} replacement dosyası, ${replacements.length} düzeltilmiş satır, ${activityParts.length} işlem dosyası, ${count} etkin benzersiz aday ve ${activities.length} sıralı işlem satırı.`
+    :`Veri manifesti uyuşmazlığı: aday ${count}/${manifest.expected_candidate_rows}, replacement ${replacements.length}/${manifest.expected_replacement_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, hedef ${replacementTargetsValid?'OK':'HATA'}, sınıf ${classBalance?'OK':'HATA'}, ID ${uniqueIds?'OK':'HATA'}, yer ${uniqueRefs?'OK':'HATA'}, kaynak ${uniqueUrls?'OK':'HATA'}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}.`;
    const classEach=Object.values(manifest.expected_class_counts||{})[0]||0;
    const cards=[
-    ['Görünür aday',count],['Araştırma batch',batchCount],['Sınıf kapsamı',manifest.expected_class_coverage],['Sınıf dağılımı',classBalance?classEach+' × 6':'HATA'],
-    ['Sınıf-renk eşleşmesi',colorCategoryMatch?'MATCH':'MISMATCH'],['Sınıflandırma doğruluğu','%'+average],['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],['Puan ilişkisi',scoreRange&&scoreRelation?'MATCH':'MISMATCH'],
-    ['Kanıt alanları',evidenceComplete?'DOLU':'HATA'],['Kapsam alanları',officialScopeComplete?'DOLU':'HATA'],['Manuel inceleme',manualReviewAll?manualReviewCount+'/'+count:'HATA'],['Bloker alanları',conflictComplete?'DOLU':'HATA'],['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
+    ['Görünür aday',count],['Düzeltilen satır',replacements.length],['Araştırma batch',batchCount],['Sınıf dağılımı',classBalance?classEach+' × 6':'HATA'],
+    ['Sınıf-renk eşleşmesi',colorCategoryMatch?'MATCH':'MISMATCH'],['Sınıflandırma doğruluğu','%'+average],['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],['Veri bütünlüğü',integrityOk?'MATCH':'MISMATCH'],
     ['Benzersiz ID',uniqueCount(candidateIds)],['Benzersiz yer',uniqueCount(normalizedRefs)],['Benzersiz kaynak',uniqueCount(sourceUrls)],['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],
-    ['Canonical slot satırı',manifest.canonical_verified_slot_rows],['Exact geometri',manifest.exact_geometry_rows],['Canonical blob','bb48164…'],['Carrier sayısı','92.283 exact'],['Kimlik kapısı','parcel_1…92283'],['Satır kapısı','row_no = parcel_n'],
-    ['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],['Seçili görev',manifest.selected_runner_task],['Seçili sürüm',manifest.selected_runner_task_version],['Kendi görevimiz',manifest.own_runner_attempt],['İşlem satırı',activities.length]
+    ['Canonical slot satırı',manifest.canonical_verified_slot_rows],['Exact geometri',manifest.exact_geometry_rows],['Runner',manifest.runner_heartbeat_fresh?'QUEUED / FRESH':'QUEUED / STALE'],['Kendi görevimiz',manifest.own_runner_attempt],['İşlem satırı',activities.length]
    ];
    document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
    document.getElementById('activity').innerHTML=activities.map(a=>`<tr><td>${esc(a.sequence)}</td><td>${esc(a.operation)}</td><td>${esc(a.result)}</td><td>${esc(a.state)}</td></tr>`).join('');
