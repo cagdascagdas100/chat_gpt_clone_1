@@ -1,11 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "security_public_safety_1",
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
-  "source_head": "8ec8399aaf638906198907482e956072881c5f58",
-  "checked_at": "2026-07-22T16:43:08Z",
-  "state": "PARALLEL_PREPARATION_PUBLISHED_BLOCKER_UNCHANGED",
+  "source_head": "1a0083c2f00baaa1e9736247956ce35c552e6156",
+  "checked_at": "2026-07-22T20:20:00+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_PUBLISHED_BLOCKER_UNCHANGED",
   "canonical_progress": {
     "completed_units": 5,
     "total_units": 8,
@@ -13,14 +13,16 @@
     "percent_change": 0.0
   },
   "increment_metrics": {
-    "official_source_checks_added": 6,
-    "official_source_checks_passed": 6,
-    "source_upgrades_added": 6,
-    "research_examples_added": 6,
+    "official_source_checks_added": 15,
+    "official_source_checks_passed": 15,
+    "source_upgrades_added": 9,
+    "research_examples_added": 15,
     "candidate_rows_added": 0,
     "parcel_values_added": 0,
     "stored_values_modified": false,
-    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY",
+    "web_source_rows": 15,
+    "web_operation_rows": 15
   },
   "sources": [
     {
@@ -29,17 +31,19 @@
       "source": "Police API crime categories",
       "authority": "data.police.uk",
       "url": "https://data.police.uk/docs/method/crime-categories/",
-      "verified_fact": "The API returns valid crime-category identifiers for a requested data-set month.",
-      "quality_effect": "Prevents invalid or silently changed category identifiers from being accepted."
+      "verified_fact": "The API returns crime-category identifiers for the requested data-set month.",
+      "quality_effect": "Prevents invalid or silently changed category identifiers from being accepted.",
+      "candidate_score_input": false
     },
     {
       "row": 2,
       "status": "PASS_LIMIT_RECORDED",
-      "source": "Police API force list",
+      "source": "Police API force-list method",
       "authority": "data.police.uk",
       "url": "https://data.police.uk/docs/method/forces/",
-      "verified_fact": "The force-list method supplies force IDs but excludes British Transport Police from the returned list.",
-      "quality_effect": "BTP must not be treated as a missing force merely because it is absent from this endpoint."
+      "verified_fact": "The force-list method supplies force identifiers; project scope adjustments must be declared separately.",
+      "quality_effect": "Prevents an endpoint membership rule from being mislabelled as full England-and-Wales coverage.",
+      "candidate_score_input": false
     },
     {
       "row": 3,
@@ -47,17 +51,19 @@
       "source": "Police API street-level outcomes",
       "authority": "data.police.uk",
       "url": "https://data.police.uk/docs/method/outcomes-at-location/",
-      "verified_fact": "Street-level outcomes can be queried by location, point or polygon; outcomes are unavailable for the Police Service of Northern Ireland.",
-      "quality_effect": "Outcome coverage limits are recorded instead of inferred as zero."
+      "verified_fact": "Street-level outcomes can be queried by location, representative point or polygon; coverage limits remain explicit.",
+      "quality_effect": "Outcome coverage gaps are recorded instead of inferred as zero.",
+      "candidate_score_input": false
     },
     {
       "row": 4,
       "status": "PASS",
-      "source": "Police API data availability",
+      "source": "Police API data-availability method",
       "authority": "data.police.uk",
       "url": "https://data.police.uk/docs/method/crimes-street-dates/",
-      "verified_fact": "The availability method lists months with street-crime data and the forces supplying stop-and-search data for each month.",
-      "quality_effect": "Month availability can be checked before endpoint execution."
+      "verified_fact": "The method lists months with street-crime data and force-level stop-and-search availability.",
+      "quality_effect": "Month availability can be checked before endpoint execution.",
+      "candidate_score_input": false
     },
     {
       "row": 5,
@@ -65,8 +71,9 @@
       "source": "Home Office police recorded crime and outcomes open data",
       "authority": "GOV.UK / Home Office",
       "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
-      "verified_fact": "The official data-set page was last updated 23 April 2026 and provides Police Force Area, Community Safety Partnership and outcomes tables, including year-ending-March-2026 outcomes data.",
-      "quality_effect": "Adds an official aggregate cross-check source separate from street-level API results."
+      "verified_fact": "The official page provides Police Force Area, Community Safety Partnership and outcomes tables.",
+      "quality_effect": "Adds an official aggregate cross-check separate from street-level API results.",
+      "candidate_score_input": false
     },
     {
       "row": 6,
@@ -74,13 +81,110 @@
       "source": "ONS Police Force Area data tables",
       "authority": "Office for National Statistics",
       "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
-      "verified_fact": "The current Police Force Area data tables were released 23 April 2026; the next release is scheduled for 23 July 2026.",
-      "quality_effect": "Provides area-level trend validation but is not parcel-level evidence."
+      "verified_fact": "Area-level tables support trend validation but are not parcel-level measurements.",
+      "quality_effect": "Preserves AREA_LEVEL_PROXY semantics.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 7,
+      "status": "PASS_LIVE",
+      "source": "Police API last-updated live JSON",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "verified_fact": "The live API reports 2026-05-01 as the latest street-crime data date.",
+      "quality_effect": "Locks the runtime test month to May 2026 and prevents querying a future unavailable month.",
+      "candidate_score_input": true
+    },
+    {
+      "row": 8,
+      "status": "PASS_LIVE_LIMIT_RECORDED",
+      "source": "Police API live street-data availability",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/api/crimes-street-dates",
+      "verified_fact": "May 2026 lists stop-and-search availability for 30 forces; April 2026 lists 34.",
+      "quality_effect": "Four-force month-to-month loss is recorded as missing coverage, never zero activity.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 9,
+      "status": "PASS_LIVE_SCOPE_ADJUSTMENT",
+      "source": "Police API live force list",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/api/forces",
+      "verified_fact": "The live endpoint returns 44 rows including Northern Ireland and excluding British Transport Police.",
+      "quality_effect": "The project denominator remains an explicit scope construction: exclude Northern Ireland and add BTP.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 10,
+      "status": "PASS_UPGRADE_CANDIDATE",
+      "source": "MPS Recorded Crime: Geographic Breakdown",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/",
+      "verified_fact": "The current LSOA file covers Jul 2024-Jun 2026; sexual offences are excluded at LSOA level and post-Feb-2024 data uses CONNECT.",
+      "quality_effect": "Strongest new London LSOA refresh candidate, but only after category and CONNECT comparability guards.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 11,
+      "status": "PASS_CONTEXT_CANDIDATE",
+      "source": "MPS Stop and Search Dashboard Data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-stop-and-search-dashboard-data-e6yjz",
+      "verified_fact": "The current extract covers Jul 2024-Jun 2026 and includes explicit CONNECT comparability warnings.",
+      "quality_effect": "Adds current operational context without being converted into a parcel safety score.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 12,
+      "status": "PASS_AGGREGATE_CROSSCHECK",
+      "source": "MPS Monthly Crime Dashboard Data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-monthly-crime-dashboard-data-e5n6w/",
+      "verified_fact": "Current TNO and Other Crime workbooks cover Jul 2022-Jun 2026; Other Accepted Crime must be excluded from TNO totals.",
+      "quality_effect": "Provides a current aggregate cross-check while preventing incompatible totals.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 13,
+      "status": "PASS_SENSITIVE_CONTEXT_ONLY",
+      "source": "MPS More Thorough Searches (MTIPS)",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-stop-and-search-more-thorough-searches-intimate-parts-expose-emxgp",
+      "verified_fact": "The current workbook covers Jul 2024-Jun 2026 and carries an IT-disruption warning.",
+      "quality_effect": "Retained only as sensitive operational context; excluded from parcel scoring.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 14,
+      "status": "PASS_NOT_YET_PUBLISHED",
+      "source": "ONS Crime in England and Wales: year ending March 2026",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026",
+      "verified_fact": "Release is confirmed for 23 July 2026 at 09:30 UK time and is not yet published.",
+      "quality_effect": "Prevents pre-release figures from being invented or treated as current evidence.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 15,
+      "status": "PASS_CURRENT_BASELINE",
+      "source": "ONS Crime in England and Wales: year ending December 2025",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/bulletins/crimeinenglandandwales/latest",
+      "verified_fact": "The current published bulletin was released 23 April 2026; the next release is 23 July 2026.",
+      "quality_effect": "Keeps the national baseline on the latest published edition until the scheduled release exists.",
+      "candidate_score_input": false
     }
   ],
+  "new_upgrade_candidates": {
+    "count": 4,
+    "rows": [10, 11, 12, 13],
+    "score_input_candidates": 0,
+    "context_or_crosscheck_candidates": 4
+  },
   "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
   "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
-  "manual_action_commit": "6f98166f8c533cc13227414e8f8708d4d1085fcf",
+  "manual_action_state": "OPEN",
   "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
   "output_semantics": "AREA_LEVEL_PROXY",
   "parcel_measurement": false,
