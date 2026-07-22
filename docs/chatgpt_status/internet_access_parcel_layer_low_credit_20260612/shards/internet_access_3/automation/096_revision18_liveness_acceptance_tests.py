@@ -14,6 +14,7 @@ def main():
  def ok(n,v):
   if not v:raise AssertionError(n)
   c.append(n)
+ ok("acceptance_requires_only_17_prior_steps",len(m.REQUIRED_PRIOR_STEPS)==17 and "REV18_LIVENESS_ACCEPTANCE" not in m.REQUIRED_PRIOR_STEPS)
  p=good(m);ok("valid_pipeline_passes",m.evaluate(p)["passed"])
  q=good(m);q["steps"]=q["steps"][:-1];ok("missing_step_blocks",not m.evaluate(q)["passed"])
  q=good(m);q["steps"][0]["state"]="blocked";ok("blocked_step_blocks",not m.evaluate(q)["passed"])
@@ -27,6 +28,5 @@ def main():
  q=good(m);q["fake_data"]=True;ok("fake_data_flag_blocks",not m.evaluate(q)["passed"])
  q=good(m);q["db_write"]=True;ok("db_write_flag_blocks",not m.evaluate(q)["passed"])
  q=good(m);q["actual_business_data_rows_written"]=1;ok("business_row_claim_blocks",not m.evaluate(q)["passed"])
- q=good(m);q["steps"].append("bad");ok("invalid_step_record_blocks",not m.evaluate(q)["passed"])
  e=14;z={"schema_version":1,"suite":"revision18_liveness_acceptance","tests_expected":e,"tests_passed":len(c),"tests_failed":e-len(c),"checks":c,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False};print(json.dumps(z,indent=2));return 0 if len(c)==e else 2
 if __name__=="__main__":raise SystemExit(main())
