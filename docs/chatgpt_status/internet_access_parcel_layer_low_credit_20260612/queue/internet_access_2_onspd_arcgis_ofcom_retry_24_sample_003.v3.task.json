@@ -1,0 +1,68 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "task_id": "internet-access-2-onspd-arcgis-ofcom-retry-24-sample-20260722T013019Z",
+  "attempt_id": "a11db20c1b90420fa4138d2217958d48",
+  "idempotency_key": "aa04cbd7f311bfe174ca8c2ac49a0dfca6b810bd00abf9b6f45adbde43752463",
+  "status": "queued",
+  "priority": "P0",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/003_onspd_arcgis_ofcom_retry_24_sample.py",
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/internet.geojson",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/001_existing_shard2_sample_candidates.jsonl",
+    "docs/chatgpt_status/_shared/plans/AAYS_INTERNET_ACCESS_3_SLOT_INTEGRATION_PLAN_20260718.md"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"
+  ],
+  "resource_class": [
+    "light_read",
+    "network_fetch"
+  ],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 7200,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0"
+    ],
+    "source_snapshot_date": "Ofcom 2026-01; ONSPD 2026-05",
+    "source_discovery_required": false,
+    "measurement_level": "postcode",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "canonical row_no and HMLR identity retained; exact normalized postcode joins only; 12 prior plus 12 additional deterministic shard-2 samples",
+    "confidence_method": "ONSPD exact live postcode confirms identity only; Ofcom r2 exact postcode with complete core coverage fields raises maximum confidence to 0.75 and accuracy to 3/4",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "ONSPD postcode is terminated or missing",
+      "Ofcom r2 postcode row is missing",
+      "Ofcom schema differs from v2 documentation",
+      "legacy and January 2026 metrics differ materially",
+      "official download remains blocked after browser and curl fallbacks"
+    ]
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "requested_at": "2026-07-22T01:30:19Z"
+}
