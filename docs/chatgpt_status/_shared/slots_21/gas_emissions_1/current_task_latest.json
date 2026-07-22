@@ -5,77 +5,56 @@
   "slot_id": "gas_emissions_1",
   "base_slot_id": "gas_emissions",
   "shard_index": 1,
-  "task_id": "gas_emissions_1_reconcile_100_browser_acceptance_20260720_01",
-  "attempt_id": "gas-emissions-1-browser-100-a1",
-  "idempotency_key": "gas_emissions_1:0c3168dc4e28589dcea90ce93d73e591b2d09202:reconcile_100_browser_acceptance",
+  "task_id": "gas_emissions_1_browser_dump_dom_fallback_20260722_01",
+  "attempt_id": "gas-emissions-1-browser-dump-dom-a1",
+  "idempotency_key": "gas_emissions_1:browser_dump_dom_fallback:20260722:100_rows",
   "status": "queued",
+  "state": "QUEUED_AWAITING_EXISTING_SINGLE_SHARED_RUNNER",
   "target_branch": "codex/aays-single-runner-v5-20260706",
-  "remote_head_basis": "0c3168dc4e28589dcea90ce93d73e591b2d09202",
-  "first_unverified_step": "RECONCILE_DONE_VS_BLOCKED_THEN_100_OF_100_BROWSER_ACCEPTANCE",
-  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/reconcile_done_vs_blocked_then_100_browser_acceptance_20260720.ps1",
+  "completed_task_not_replayed": "gas_emissions_1_reconcile_100_browser_acceptance_20260720_01",
+  "previous_result": "BLOCKED_100_OF_100_BROWSER_ACCEPTANCE:SELENIUM_MODULE_NOT_AVAILABLE",
+  "first_unverified_step": "EXECUTE_DEPENDENCY_FREE_CHROME_OR_EDGE_DUMP_DOM_100_OF_100",
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/VERIFY_100_ROWS_BROWSER_DUMP_DOM_20260722.ps1",
   "read_paths": [
-    "docs/chatgpt_status/gas_emissions",
-    "docs/chatgpt_status/_shared/slots_21/gas_emissions_1",
-    "england_map_web/data/program_layer_matrix",
-    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html"
+    "england_map_web/data/aays_21_slots/gas_emissions_1/browser_acceptance_100.html",
+    "england_map_web/data/program_layer_matrix/gas_emissions_visible_rows_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1"
   ],
   "exact_write_paths": [
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_reconcile_100_browser_acceptance_latest.json",
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_browser_acceptance_latest.json"
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_browser_dump_dom_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_browser_dump_dom_latest.json"
   ],
-  "resource_class": [
-    "browser_research"
-  ],
-  "requires_browser_acceptance_gate": true,
-  "parcel_partition": {
-    "start": 1,
-    "end": 30761,
-    "count": 30761
-  },
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
-  },
+  "resource_class": ["browser_research", "installed_browser_dump_dom", "no_external_python_dependency"],
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761, "canonical_count": 92283},
   "data_quality_contract": {
-    "source_urls": [
-      "https://www.gov.uk/csv-preview/68653c7ee6c3cc924228943f/2005-23-uk-local-authority-ghg-emissions-CSV-dataset.csv"
-    ],
     "source_snapshot_date": "2025-08-19",
-    "source_discovery_required": false,
     "measurement_level": "local_authority",
-    "output_semantics": "AREA_LEVEL_PROXY",
+    "output_semantics": "BROWSER_DOM_ACCEPTANCE_OF_SOURCE_ROWS_ONLY_NOT_PARCEL_BINDING",
+    "expected_rows": 100,
+    "expected_unique_row_ids": 100,
     "parcel_binding_method": "NOT_PARCEL_BOUND_BROWSER_EVIDENCE_ONLY",
-    "confidence_method": "OFFICIAL_SOURCE_PLUS_HTTP_DOM_CONSOLE_ACCEPTANCE_SEPARATE_FROM_PARCEL_BINDING",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "not_used",
-    "human_review_required_when": [
-      "source_conflict",
-      "low_confidence",
-      "geometry_mismatch",
-      "http_dom_count_mismatch",
-      "browser_console_error"
+    "success_requirements": [
+      "HTTP JSON contains 100 rows and 100 unique nonempty row_id values",
+      "headless browser exits successfully",
+      "dumped DOM contains 100 data-gas-row rows and 100 unique data-row-id values",
+      "body data-acceptance-status equals PASS",
+      "required table headers are present",
+      "parcel_binding_gate_passed remains false"
     ]
   },
-  "expected_visible_rows": 100,
-  "expected_browser_unique_rows": 100,
-  "parcel_binding_gate_passed": false,
   "single_runner_only": true,
   "new_runner": false,
   "parallel_runner": false,
-  "timeout_seconds": 1800,
+  "runner_pickup_observed": false,
+  "runner_execution_claimed": false,
+  "timeout_seconds": 1200,
+  "blocker": "WAITING_FOR_EXISTING_SINGLE_SHARED_RUNNER_TO_EXECUTE_DUMP_DOM_FALLBACK",
+  "updated_at": "2026-07-22T03:50:28Z",
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
   "db_write": false,
   "migration": false,
-  "production_deploy": false,
-  "legacy_queue_status": "queued",
-  "compatibility_migrated": false,
-  "compatibility_source_queue": "docs/chatgpt_status/gas_emissions/queue/gas_emissions_1_reconcile_100_browser_acceptance_20260720_01.v3.task.json",
-  "state": "PUBLISHING",
-  "updated_at": "2026-07-22T02:44:35.217839Z",
-  "blocker": null,
-  "result": null
+  "production_deploy": false
 }
