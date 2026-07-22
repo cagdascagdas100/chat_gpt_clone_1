@@ -58,7 +58,8 @@ try {
   if ($injectorSelfTest.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $injectorSelfTest.Code }
   $injectorSelfReceipt = Get-LastJsonReceipt -Lines $injectorSelfTest.Lines -MissingLabel 'RUNTIME_GUARD_INJECTOR_SELF_TEST_JSON_MISSING'
   if ($injectorSelfReceipt.slot_id -ne 'height_difference_1' -or $injectorSelfReceipt.state -ne 'PASS') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_INVALID' }
-  if ([int]$injectorSelfReceipt.checks -ne 9) { throw "RUNTIME_GUARD_INJECTOR_CHECK_COUNT_INVALID: $($injectorSelfReceipt.checks)" }
+  if ([string]$injectorSelfReceipt.script_version -ne '1.1-runtime-raster-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_VERSION_INVALID' }
+  if ([int]$injectorSelfReceipt.checks -ne 13) { throw "RUNTIME_GUARD_INJECTOR_CHECK_COUNT_INVALID: $($injectorSelfReceipt.checks)" }
 
   $injectorRun = Invoke-PythonEntry -Arguments @(
     $injectorPath,
@@ -75,12 +76,24 @@ try {
   if ($injectorReceipt.slot_id -ne 'height_difference_1' -or $injectorReceipt.state -ne 'COMPLETED_RUNTIME_GUARDS_INJECTED') {
     throw 'RUNTIME_GUARD_INJECTOR_RECEIPT_INVALID'
   }
-  if ([int]$injectorReceipt.runtime_patch_count -ne 2) { throw 'RUNTIME_GUARD_PATCH_COUNT_INVALID' }
-  $requiredLabels = @('CLASSIC_TIFF_HEADER_VALIDATOR','EA_OFFICIAL_NODATA_RUNTIME_FILTER')
+  if ([string]$injectorReceipt.script_version -ne '1.1-runtime-raster-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_VERSION_INVALID' }
+  if ([int]$injectorReceipt.runtime_patch_count -ne 3) { throw 'RUNTIME_GUARD_PATCH_COUNT_INVALID' }
+  $requiredLabels = @('CLASSIC_TIFF_HEADER_VALIDATOR','EA_OFFICIAL_NODATA_RUNTIME_FILTER','HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE')
   foreach ($label in $requiredLabels) {
     if (@($injectorReceipt.runtime_patch_labels) -notcontains $label) { throw "RUNTIME_GUARD_PATCH_LABEL_MISSING: $label" }
   }
   if ([double]$injectorReceipt.official_nodata_sentinel -ne [double]-3.4028235e38) { throw 'RUNTIME_GUARD_RECEIPT_SENTINEL_INVALID' }
+
+  $receiptSourcePath = [System.IO.Path]::GetFullPath([string]$injectorReceipt.source_path)
+  $receiptOutputPath = [System.IO.Path]::GetFullPath([string]$injectorReceipt.output_path)
+  if ($receiptSourcePath -ne [System.IO.Path]::GetFullPath($carrierPath)) { throw 'RUNTIME_GUARD_SOURCE_PATH_MISMATCH' }
+  if ($receiptOutputPath -ne [System.IO.Path]::GetFullPath($patchedCarrier)) { throw 'RUNTIME_GUARD_OUTPUT_PATH_MISMATCH' }
+
+  $sourceInfo = Get-Item -LiteralPath $carrierPath
+  $outputInfo = Get-Item -LiteralPath $patchedCarrier
+  if ([int64]$injectorReceipt.source_bytes -ne [int64]$sourceInfo.Length) { throw 'RUNTIME_GUARD_SOURCE_SIZE_MISMATCH' }
+  if ([int64]$injectorReceipt.output_bytes -ne [int64]$outputInfo.Length) { throw 'RUNTIME_GUARD_OUTPUT_SIZE_MISMATCH' }
+
   $sourceHash = (Get-FileHash -LiteralPath $carrierPath -Algorithm SHA256).Hash.ToLowerInvariant()
   $outputHash = (Get-FileHash -LiteralPath $patchedCarrier -Algorithm SHA256).Hash.ToLowerInvariant()
   if ($sourceHash -ne ([string]$injectorReceipt.source_sha256).ToLowerInvariant()) { throw 'RUNTIME_GUARD_SOURCE_HASH_MISMATCH' }
@@ -89,8 +102,9 @@ try {
   Write-Output 'EA_RASTER_GUARD_PREFLIGHT=PASS'
   Write-Output 'EA_RASTER_GUARD_CHECKS=8'
   Write-Output 'RUNTIME_GUARD_INJECTOR_SELF_TEST=PASS'
-  Write-Output 'RUNTIME_GUARD_INJECTOR_CHECKS=9'
-  Write-Output 'RUNTIME_RASTER_PATCH_COUNT=2'
+  Write-Output 'RUNTIME_GUARD_INJECTOR_CHECKS=13'
+  Write-Output 'RUNTIME_GUARD_PATCH_COUNT=3'
+  Write-Output 'HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE=ENABLED'
   Write-Output 'EA_WCS_OFFICIAL_NODATA_SENTINEL=-3.4028235e38'
 
   $shell = Get-Command powershell -ErrorAction SilentlyContinue
