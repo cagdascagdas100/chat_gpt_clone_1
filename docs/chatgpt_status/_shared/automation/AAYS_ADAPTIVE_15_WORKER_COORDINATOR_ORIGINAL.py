@@ -2389,7 +2389,10 @@ class Coordinator:
                 if publisher_future is None:
                     if any(self.publish_queue.glob("*.json")):
                         publisher_future = publisher_executor.submit(self.process_publish_queue)
-                    elif time.monotonic() - self.last_remote_refresh >= 60:
+                    elif (
+                        self.recovery_pending_count == 0
+                        and time.monotonic() - self.last_remote_refresh >= 60
+                    ):
                         publisher_future = publisher_executor.submit(self.refresh_publisher)
                 pending_publish_slots = self.pending_publish_slots()
                 if self.can_schedule():

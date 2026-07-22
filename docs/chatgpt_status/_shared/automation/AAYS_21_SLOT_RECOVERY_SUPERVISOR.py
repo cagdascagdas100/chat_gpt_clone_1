@@ -361,7 +361,10 @@ class SlotRecoverySupervisor:
     ) -> tuple[Path | None, str | None]:
         """Preserve a dirty worktree and route one retry to a clean local-HEAD worktree."""
         parent = current_worktree.parent
-        worktree_base = parent.parent if parent.name.casefold() == "slots" else parent
+        worktree_base = next(
+            (ancestor for ancestor in current_worktree.parents if ancestor.name.casefold() == "worktrees"),
+            parent.parent if parent.name.casefold() == "slots" else parent,
+        )
         target: Path | None = None
         provisioned: Path | None = None
         for version in range(6, 13):
