@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "height_difference_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "verified_on": "2026-07-22",
@@ -31,9 +31,12 @@
     "official_sources_researched": 7,
     "promoted_sources": 6,
     "held_sources": 1,
+    "official_accuracy_guidance_pages_verified": 2,
     "public_client_implementations_cross_validated": 3,
     "prepared_parcel_examples": 11,
     "prepared_wcs_probe_requests": 22,
+    "full_getcoverage_urls": 22,
+    "acceptance_gates": 12,
     "verified_numeric_height_results": 0,
     "business_rows_written": 0
   },
@@ -43,6 +46,9 @@
       "local_authority_listing": "London Borough of Barking and Dagenham",
       "refresh_contract": "first Sunday of each month",
       "format": "GML",
+      "native_crs": "EPSG:27700",
+      "technical_guidance_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "reprojection_warning_m": 15,
       "bytes_acquired": false
     },
     "ea_dtm_1m": {
@@ -52,6 +58,7 @@
       "axis_labels": ["E", "N"],
       "vertical_reference": "Ordnance Survey Newlyn",
       "reported_input_survey_rmse_m": 0.15,
+      "composite_contributing_survey_period": {"from": "2000-06-06", "to": "2022-04-02"},
       "persistent_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?",
       "coverage_id": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m",
       "wcs_version": "2.0.1"
@@ -70,20 +77,35 @@
       "wms_role": "summarised display",
       "coverage_id_state": "CROSS_VALIDATED_BY_PUBLIC_CLIENT_IMPLEMENTATIONS",
       "axis_label_state": "CROSS_VALIDATED_AS_E_N",
+      "full_request_url_state": "MATERIALISED_22_OF_22",
       "direct_capabilities_xml_acquired": false,
       "getcoverage_geotiff_bytes_acquired": false
     }
+  },
+  "accuracy_governance": {
+    "primary_boundary_join": "unique direct point-in-polygon in EPSG:27700",
+    "reprojection_fallback": "15m search may produce candidates only; no automatic canonical binding",
+    "primary_numeric_result": "polygon DTM maximum minus polygon DTM minimum",
+    "dsm_usage": "surface and object QA only",
+    "required_raster_checks": ["HTTP 200", "TIFF magic", "SHA-256", "EPSG:27700", "approximately 1m grid", "finite non-nodata pixels"],
+    "required_provenance": ["HMLR GML SHA-256", "EA raster SHA-256", "polygon identifier", "survey date or metadata-index state"]
   },
   "implementation_cross_validation": [
     {"evidence_id":"HD1-IMPL-001","repository":"data-desk-eco/gdn-gis","path":"scripts/fetch-lidar.py","observed":"DTM endpoint, exact DTM coverageId, image/tiff and E/N subset syntax","evidence_state":"CROSS_VALIDATED"},
     {"evidence_id":"HD1-IMPL-002","repository":"MatthewJWhittle/shefflied-bats","path":"sdm/data/terrain/core.py","observed":"Exact DTM and DSM coverage IDs plus DescribeCoverage-driven axis handling","evidence_state":"CROSS_VALIDATED"},
     {"evidence_id":"HD1-IMPL-003","repository":"Harrishayy/NeMo-Ray","path":"agent/nemoray_modelling/lidar.py","observed":"Exact DTM and DSM coverage IDs, EPSG:27700, E/N axes and GeoTIFF GetCoverage request","evidence_state":"CROSS_VALIDATED"}
   ],
+  "direct_execution_attempts": {
+    "web_binary_fetches_attempted": 2,
+    "container_official_fetches_attempted": 1,
+    "response_bytes_acquired": 0,
+    "states": ["BLOCKED_CONNECTOR_BINARY", "BLOCKED_CONNECTOR_BINARY", "BLOCKED_DNS"]
+  },
   "next_evidence_gate": [
     "Acquire and SHA-256 hash the July 2026 Barking and Dagenham HMLR GML.",
-    "Execute the 22 prepared 10m EPSG:27700 GetCoverage requests and hash each GeoTIFF response.",
-    "Execute point-in-polygon for parcel_1 through parcel_11.",
-    "Sample polygon-wide DTM elevation and compute min, max and max-minus-min only after all joins pass."
+    "Execute the 22 published 10m EPSG:27700 GetCoverage URLs and hash each GeoTIFF response.",
+    "Execute fail-closed point-in-polygon for parcel_1 through parcel_11.",
+    "Sample polygon-wide DTM elevation and compute min, max and max-minus-min only after all joins and raster gates pass."
   ],
   "fake_data": false,
   "db_write": false,
