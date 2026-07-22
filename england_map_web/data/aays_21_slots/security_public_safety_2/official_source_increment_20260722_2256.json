@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
+  "source_head_readback": "579d8e33c5eb7ff6ae52e79ecec374c73ed36dec",
+  "researched_at": "2026-07-22T19:56:20Z",
+  "research_mode": "official ONS ArcGIS service and official Esri REST documentation only; query-contract audit; no target parcel result claimed",
+  "row_start": 48,
+  "row_end": 49,
+  "sources_reviewed_increment": 2,
+  "promoted_sources_increment": 2,
+  "source_evidence_confidence_ge_95_increment": 2,
+  "sources": [
+    {
+      "row": 48,
+      "source_id": "esri_feature_service_point_query_contract",
+      "publisher": "Esri",
+      "name": "ArcGIS REST Feature Service point-query contract",
+      "url": "https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service/",
+      "status": "PROMOTED_FOR_POINT_QUERY_CRS_AND_RESPONSE_SHAPE_GATE",
+      "confidence_percent": 99,
+      "verified_claims": [
+        "point filters support geometryType=esriGeometryPoint with comma-separated x,y geometry",
+        "inSR declares the input geometry spatial reference",
+        "esriSpatialRelIntersects is a supported spatial relationship",
+        "returnGeometry=false is supported when only attributes are required"
+      ],
+      "limitations": [
+        "the generic API contract does not prove a particular parcel-to-LSOA result",
+        "each target response still requires hash capture and an exactly-one-feature cardinality check"
+      ]
+    },
+    {
+      "row": 49,
+      "source_id": "ons_lsoa_bgc_v5_layer_exact_schema_20260722",
+      "publisher": "Office for National Statistics Open Geography Portal",
+      "name": "LSOA 2021 BGC V5 layer exact schema and service capabilities",
+      "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0",
+      "status": "PROMOTED_FOR_EXACT_FIELD_LAYER_AND_CRS_GATE",
+      "confidence_percent": 99,
+      "verified_claims": [
+        "layer 0 is LSOA_2021_EW_BGC_V5 and has polygon geometry",
+        "the service spatial reference is EPSG:27700",
+        "LSOA21CD is a nine-character string field and LSOA21NM is a forty-character string field",
+        "the layer supports Query and JSON responses with maximum record count 2000"
+      ],
+      "limitations": [
+        "service metadata alone does not prove target-point containment",
+        "a point touching a boundary must fail closed unless exactly one feature is returned"
+      ]
+    }
+  ],
+  "fake_data": false,
+  "final_ready": false
+}

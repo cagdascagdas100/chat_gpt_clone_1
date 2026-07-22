@@ -1,0 +1,62 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_2",
+  "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
+  "generated_at": "2026-07-22T20:04:21Z",
+  "support_checks_completed": 51,
+  "support_checks_total": 52,
+  "operation_rows": [
+    {
+      "row": 61,
+      "operation": "Bulk API fallback scope correction",
+      "status": "PASS_CORRECTED",
+      "evidence": "The API cannot replace the official ZIP for 11,013-row output; it remains limited to an ephemeral 24-postcode cross-check."
+    },
+    {
+      "row": 62,
+      "operation": "Strict same-task ZIP requeue guard",
+      "status": "PASS_2_OF_2_TESTS",
+      "evidence": "Corrected r2 synthetic archive requeued the existing 006 task; stale inner r1 archive was rejected. Commit 6d5e91579f877e147bcae993b6afe6aa7e4a3ce1."
+    },
+    {
+      "row": 63,
+      "operation": "Current manual recovery action",
+      "status": "PASS_REMOTE_COMMIT",
+      "evidence": "Manual action requires official ZIP strict preflight, same-task requeue, remote readback and the existing safe launcher; no duplicate task or second runner."
+    },
+    {
+      "row": 64,
+      "operation": "Portable Git and remote-HEAD wrapper",
+      "status": "PASS_REMOTE_COMMIT",
+      "evidence": "Wrapper ed1d2a8cbe9b8c04b75d385c39243eb081d59d37 finds portable Git/Python, rejects a dirty or behind checkout, runs strict requeue and optionally invokes the safe launcher."
+    }
+  ],
+  "strict_same_task_retry": {
+    "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py",
+    "script_commit": "6d5e91579f877e147bcae993b6afe6aa7e4a3ce1",
+    "wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
+    "wrapper_commit": "ed1d2a8cbe9b8c04b75d385c39243eb081d59d37",
+    "required_archive_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
+    "required_r2_files": 121,
+    "required_unique_postcode_areas": 121,
+    "required_rows": 1741096,
+    "same_task_id_retained": true,
+    "new_attempt_only_after_strict_pass": true,
+    "local_remote_head_match_required": true,
+    "clean_publisher_required": true,
+    "duplicate_task_created": false,
+    "second_runner_started": false
+  },
+  "corrected_next_step": "PROVISION_OFFICIAL_OFCom_R2_ZIP;_RUN_014_PORTABLE_STRICT_REQUEUE_WRAPPER_WITH_START_RUNNER",
+  "api_bulk_replacement_allowed": false,
+  "api_maximum_ephemeral_sample_postcodes": 24,
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/internet_access_2.json",
+  "manual_action_commit": "4d3e70ca663bd0d6815d7ba34a0d8f69795a4c74",
+  "api_scope_correction_commit": "41d401d9148e0858bde32d8f5d8458eed0f926a2",
+  "status_correction_commit": "3c48a2f83a05a64c18bdcc90d985af9c13cd2791",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 — resmî katman ve plan durumu batch 008</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:155px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:11px}
+th,td{border:1px solid #cfd8dc;padding:5px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
+.ok{color:#176b2c;font-weight:bold}.pending{color:#8a5a00;font-weight:bold}.warn{color:#8b4f00;font-weight:bold}
+.notice{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin-bottom:12px}code,a{word-break:break-all}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}select,input{padding:6px}
+</style></head><body>
+<h1>future_growth_2 — satır satır resmî katman, plan ve güncellik matrisi / batch 008</h1>
+<div class="notice">Katman adı ve servis sorgu kabiliyeti doğrulanır; bunlar parsel kesişimi değildir. Alt katman sayfaları cache engeline takıldığında geometri ayrıntısı uydurulmaz. Kesin resmî kesişim ve birincil çapraz kontrol olmadan skor null, güven 0 ve NO_DATA korunur.</div>
+<div id="cards" class="cards"></div>
+<div class="filters"><select id="lpa"><option value="">Tüm belediyeler</option><option>Enfield</option><option>Havering</option><option>Lambeth</option><option>—</option></select>
+<input id="q" placeholder="Kontrol, katman veya sonuç ara"></div>
+<table><thead><tr><th>İşlem</th><th>Satır</th><th>Parsel</th><th>Belediye</th><th>Kontrol</th><th>Konu</th><th>Kaynak</th><th>Sonuç</th><th>Kanıt sınıfı</th><th>Kaynak doğruluğu</th><th>Kesin bağ</th><th>Skor</th><th>Güven</th><th>Not</th></tr></thead><tbody id="ops"></tbody></table>
+<p id="meta"></p><p id="error"></p>
+<script>
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const canonical='https://github.com/cagdascagdas100/chat_gpt_clone_1/blob/codex/aays-single-runner-v5-20260706/england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json';
+let data, operations=[];
+function add(x){operations.push({source_authority_pct:100,parcel_binding_pct:0,future_growth_score:null,confidence_pct:0,data_status:'NO_DATA',operation_no:operations.length+1,...x});}
+function sourceForFreshness(row,f){
+ const by=Object.fromEntries(row.sources.map(s=>[s.check,s.url]));
+ const map={
+ Enfield:{PLAN_EXAMINATION_DATE:'NEW_LOCAL_PLAN_STATUS',LATEST_MONITORING_PERIOD:'AUTHORITY_MONITORING',INFRASTRUCTURE_EVIDENCE_YEAR:'EVIDENCE_BASE',LAND_AVAILABILITY_EVIDENCE_YEAR:'EVIDENCE_BASE',LATEST_EXAMINATION_NEWS:'EXAMINATION_UPDATE'},
+ Havering:{PLAN_ADOPTION_DATE:'ADOPTED_LOCAL_PLAN',LATEST_MONITORING_PERIOD:'AUTHORITY_MONITORING',LDS_APPROVAL:'LOCAL_DEVELOPMENT_SCHEME',PLAN_UPDATE_STAGE:'LOCAL_PLAN_UPDATE',BROWNFIELD_REVIEW_RULE:'BROWNFIELD_REGISTER'},
+ Lambeth:{PLAN_ADOPTION_DATE:'ADOPTED_LOCAL_PLAN',SADPD_INSPECTOR_REPORT:'SITE_ALLOCATIONS',NEW_PLAN_NOTICE_PUBLICATION:'NEW_PLAN_NOTICE',SCOPING_START:'NEW_PLAN_TIMETABLE',TARGET_ADOPTION:'NEW_PLAN_TIMETABLE'}};
+ return by[map[row.lpa][f.code]]||row.sources[0].url;
+}
+function build(d){
+ operations=[];
+ d.rows.forEach(r=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'CANONICAL_POINT_IDENTITY',subject:`${r.lon},${r.lat}`,source:canonical,result:'VERIFIED_CANONICAL_POINT',evidence_class:'CANONICAL_ROW_POINT',note:'Canonical WGS84 point verified; parcel polygon proof is not asserted.'}));
+ d.rows.forEach(r=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'OFFICIAL_FEATURE_SERVICE_ROOT',subject:r.service_item_id,source:r.service,result:'VERIFIED_OFFICIAL_SERVICE_ROOT',evidence_class:'OFFICIAL_MACHINE_SOURCE',note:'Official service description, item ID, JSON query support, max record count 2000 and EPSG:27700 root metadata verified.'}));
+ d.rows.forEach(r=>r.layers.forEach(z=>{const p=z.token.split('@'),src=p.length>1?p.slice(1).join('@'):r.service,id=p[0];add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'OFFICIAL_LAYER_INVENTORY',subject:`${z.name} (layer ${id})`,source:src,result:'VERIFIED_IN_SERVICE_LAYER_LIST',evidence_class:'OFFICIAL_LAYER_INVENTORY',note:'Layer name and identifier are listed by the official service root; child-layer detail was not inferred.'});}));
+ d.rows.forEach(r=>r.layers.forEach(z=>{const p=z.token.split('@'),src=p.length>1?p.slice(1).join('@'):r.service,id=p[0];add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'INHERITED_QUERY_CONTRACT',subject:`${z.name} (layer ${id})`,source:src,result:'SERVICE_ROOT_QUERY_CONTRACT_VERIFIED',evidence_class:'QUERY_METHOD_PRECONDITION',note:'The service root supports JSON Query and uses EPSG:27700; exact point response remains uncommitted.'});}));
+ d.rows.forEach(r=>r.layers.forEach(z=>{const p=z.token.split('@'),src=p.length>1?p.slice(1).join('@'):r.service,id=p[0];add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'LAYER_ROLE_CLASSIFICATION',subject:`${z.name} (layer ${id})`,source:src,result:z.role,evidence_class:'NAME_BASED_ROLE_CLASSIFICATION_NOT_SPATIAL_MATCH',note:'Role is classified from the official layer title only; it does not prove this point intersects the layer.'});}));
+ d.rows.forEach(r=>r.sources.forEach(s=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:s.check,subject:s.title,source:s.url,result:'VERIFIED_OFFICIAL_SOURCE_PAGE',evidence_class:s.evidence_class,note:s.note})));
+ d.rows.forEach(r=>r.freshness.forEach(f=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'SOURCE_FRESHNESS_STATUS',subject:`${f.code}: ${f.value}`,source:sourceForFreshness(r,f),result:f.result,evidence_class:'OFFICIAL_DATE_OR_STATUS',note:f.note})));
+ d.system_validations.forEach(v=>add({row_no:'SYSTEM',parcel_id:'—',lpa:'—',operation:v.code,subject:'Batch 008 validation',source:d.validator_path,result:v.result,evidence_class:'SYSTEM_VALIDATION',note:v.note}));
+ if(operations.length!==d.batch_operations_total)throw new Error(`İşlem sayısı uyuşmuyor: ${operations.length}/${d.batch_operations_total}`);
+}
+function render(){
+ const l=document.getElementById('lpa').value, q=document.getElementById('q').value.toLowerCase();
+ const rows=operations.filter(x=>(!l||String(x.lpa)===l)&&(!q||JSON.stringify(x).toLowerCase().includes(q)));
+ document.getElementById('ops').innerHTML=rows.map(x=>`<tr><td>${e(x.operation_no)}</td><td>${e(x.row_no)}</td><td>${e(x.parcel_id)}</td><td>${e(x.lpa)}</td>
+ <td>${e(x.operation)}</td><td>${e(x.subject)}</td><td><a href="${e(x.source)}" target="_blank" rel="noopener">${e(x.source)}</a></td>
+ <td class="${String(x.result).includes('CONSTRAINT')||String(x.evidence_class).includes('CLASSIFICATION')?'warn':'ok'}">${e(x.result)}</td>
+ <td>${e(x.evidence_class)}</td><td class="ok">${e(x.source_authority_pct)}%</td><td class="pending">${e(x.parcel_binding_pct)}%</td>
+ <td>${x.future_growth_score===null?'null':e(x.future_growth_score)}</td><td>${e(x.confidence_pct)}%</td><td>${e(x.note)}</td></tr>`).join('');
+}
+fetch('./official_layer_status_matrix_batch_008_20260722.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(async d=>{
+ const partDocs=await Promise.all(d.parts.map(p=>fetch('./'+p.path,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p.path+' HTTP '+r.status);return r.json();})));
+ d.rows=partDocs.map(x=>x.row);
+ data=d;build(d);
+ const c=[['Batch işlem',d.batch_operations_completed+'/'+d.batch_operations_total],['Kümülatif işlem',d.cumulative_operations_completed],['Başarısız',d.failed_validation_operations],
+ ['Aday',d.candidate_rows_cumulative],['Kaynak sayfası',d.cumulative_unique_official_source_pages],['Yeni kaynak',d.new_unique_official_source_pages],
+ ['Servis kökü',d.official_service_roots_verified],['Katman envanteri',d.selected_layer_inventory_rows],['Sorgu sözleşmesi',d.inherited_query_contract_rows],
+ ['Rol sınıflandırması',d.layer_role_classification_rows],['Yerel kanıt',d.local_policy_evidence_rows],['Güncellik satırı',d.source_freshness_status_rows],
+ ['Kesin eşleşen',d.exact_parcel_bound_rows],['Matris ilerlemesi',d.layer_status_matrix_progress_pct+'%'],['Business',d.business_coverage_pct+'%']];
+ document.getElementById('cards').innerHTML=c.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ document.getElementById('meta').innerHTML=`Continuation: <code>${e(d.continuation_key)}</code><br>Gösterilen toplam işlem: ${e(operations.length)}<br>Alt katman detay erişim engeli: ${e(d.blocked_child_layer_detail_fetches)}`;
+ document.getElementById('lpa').addEventListener('change',render); document.getElementById('q').addEventListener('input',render); render();
+}).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
+</script></body></html>

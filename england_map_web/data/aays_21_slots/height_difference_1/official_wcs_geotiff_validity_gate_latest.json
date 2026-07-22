@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T19:01:21Z",
+  "state": "WCS_GEOTIFF_VALIDITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "DEFRA_DSP_OPEN_STANDARDS_AND_PERSISTENT_WCS",
+      "authority": "Department for Environment Food and Rural Affairs / Environment Agency",
+      "url": "https://environment.data.gov.uk/support/announcements/275811447/275811543",
+      "verified": true,
+      "facts": ["persistent_unsuffixed_dtm1m_wcs", "wcs_version_2_0_1", "wcs_provides_elevation_values", "wms_is_summarised_render"],
+      "accepted_role": "PRIMARY_COVERAGE_SERVICE_ENDPOINT_AND_SEMANTICS"
+    },
+    {
+      "source_id": "OGC_WCS_CORE_AND_EXTENSIONS",
+      "authority": "Open Geospatial Consortium",
+      "url": "https://docs.ogc.org/is/17-089r1/17-089r1.html",
+      "verified": true,
+      "facts": ["coverage_service_core", "coverage_identifier_required", "subset_scale_and_interpolation_are_explicit_extensions"],
+      "accepted_role": "COVERAGE_REQUEST_REPRODUCIBILITY_CONTRACT"
+    },
+    {
+      "source_id": "EA_GEOTIFF_TILE_AND_METADATA_INDEX",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/support/faqs/275879146/275879189",
+      "verified": true,
+      "facts": ["geotiff_5km_tiles", "elevations_in_metres", "web_coverage_service_enabled"],
+      "accepted_role": "PRIMARY_RASTER_FORMAT_TILE_AND_UNIT_CONTRACT"
+    },
+    {
+      "source_id": "EA_SPATIAL_TEMPORAL_INDEX_GEOPACKAGE",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/support/faqs/275879146/302908009",
+      "verified": true,
+      "facts": ["zip_contains_geopackage_metadata_index", "index_describes_spatial_location_and_temporal_extent"],
+      "accepted_role": "PRIMARY_RASTER_SPATIAL_TEMPORAL_LINEAGE"
+    },
+    {
+      "source_id": "EA_LIDAR_POINT_DENSITY_LIMITS",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/support/faqs/275879146",
+      "verified": true,
+      "facts": ["point_density_depends_on_surface_resolution", "dtm_ground_returns_under_vegetation_can_be_lower", "density_varies_with_flightline_overlap_and_terrain"],
+      "accepted_role": "GROUND_RETURN_DENSITY_AND_VEGETATION_UNCERTAINTY"
+    },
+    {
+      "source_id": "OGC_GEOTIFF_RASTER_SPACE",
+      "authority": "Open Geospatial Consortium",
+      "url": "https://docs.ogc.org/is/19-008r4/19-008r4.html",
+      "verified": true,
+      "facts": ["pixel_is_area_and_pixel_is_point_are_distinct", "pixel_is_area_references_corner", "pixel_is_point_references_sample_point"],
+      "accepted_role": "HALF_CELL_SHIFT_AND_RASTER_SPACE_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GEOTIFF_NODATA_MASK_AND_SPARSE_BLOCKS",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/drivers/raster/gtiff.html",
+      "verified": true,
+      "facts": ["nodata_may_be_internal_tag_or_auxiliary_metadata", "internal_masks_supported", "sparse_blocks_can_read_as_zero_or_nodata"],
+      "accepted_role": "PIXEL_VALIDITY_AND_IMPLICIT_ZERO_GUARD"
+    },
+    {
+      "source_id": "GDAL_MASK_BAND_SEMANTICS",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/development/rfc/rfc15_nodatabitmask.html",
+      "verified": true,
+      "facts": ["mask_zero_is_invalid", "mask_nonzero_is_valid", "mask_can_be_derived_from_nodata_or_alpha"],
+      "accepted_role": "VALID_PIXEL_SELECTION_CONTRACT"
+    },
+    {
+      "source_id": "GDAL_RESAMPLING_AND_NODATA",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdaladdo.html",
+      "verified": true,
+      "facts": ["invalid_contributors_depend_on_resampling_kernel", "weighted_kernels_zero_masked_weights", "nearest_can_select_one_contributor"],
+      "accepted_role": "RESAMPLING_PROVENANCE_AND_VALID_CONTRIBUTOR_CONTROL"
+    },
+    {
+      "source_id": "GDAL_SLOPE_EDGE_AND_NODATA",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_slope.html",
+      "verified": true,
+      "facts": ["slope_uses_3x3_neighbourhood", "edge_and_nodata_interpolation_is_configurable", "horn_and_zevenbergen_thorne_algorithms_supported"],
+      "accepted_role": "LOCAL_RELIEF_AND_EDGE_SENSITIVITY_CONTROL"
+    },
+    {
+      "source_id": "GDAL_ZONAL_STATISTICS",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_zonal_stats.html",
+      "verified": true,
+      "facts": ["inputs_must_share_crs", "no_reprojection_is_performed", "pixel_inclusion_and_weighting_strategies_change_results", "count_coverage_mean_median_stdev_min_max_supported"],
+      "accepted_role": "PARCEL_STATISTICS_REPRODUCIBILITY"
+    },
+    {
+      "source_id": "GDAL_RASTER_FOOTPRINT",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_footprint.html",
+      "verified": true,
+      "facts": ["footprint_uses_nodata_or_mask", "valid_pixel_regions_can_be_vectorised"],
+      "accepted_role": "INDEPENDENT_VALID_COVERAGE_CHECK"
+    },
+    {
+      "source_id": "GDAL_MOSAIC_UNCOVERED_ZERO_RISK",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_mosaic.html",
+      "verified": true,
+      "facts": ["uncovered_output_can_be_valid_zero", "output_nodata_or_alpha_must_be_set_to_preserve_invalid_coverage"],
+      "accepted_role": "FALSE_ZERO_ELEVATION_PREVENTION"
+    },
+    {
+      "source_id": "GDAL_TARGET_ALIGNED_PIXELS",
+      "authority": "GDAL Project",
+      "url": "https://gdal.org/en/stable/programs/gdalwarp.html",
+      "verified": true,
+      "facts": ["target_aligned_pixels_align_extent_to_resolution", "output_extent_and_resolution_determine_grid", "source_pixels_contribute_to_each_output_pixel_by_resampling"],
+      "accepted_role": "DETERMINISTIC_REPROJECTION_GRID"
+    }
+  ],
+  "acceptance_rules": {
+    "wcs_request": [
+      "EA_PERSISTENT_DTM1M_WCS_ENDPOINT_REQUIRED",
+      "GETCAPABILITIES_VERSION_AND_COVERAGE_ID_READBACK_REQUIRED",
+      "WCS_ELEVATION_COVERAGE_REQUIRED_WMS_RENDER_REJECTED",
+      "SUBSET_CRS_FORMAT_SCALE_AND_INTERPOLATION_PARAMETERS_RECORDED",
+      "RESPONSE_CONTENT_TYPE_DIMENSIONS_CRS_GEOTRANSFORM_AND_HASH_RECORDED"
+    ],
+    "geotiff_raster_space": [
+      "PIXEL_IS_AREA_OR_PIXEL_IS_POINT_SEMANTICS_VERIFIED",
+      "AREA_OR_POINT_MODEL_TIEPOINT_AND_GEOTRANSFORM_CONSISTENT",
+      "NO_HALF_CELL_SHIFT_ALLOWED",
+      "EXPECTED_5KM_TILE_AND_METRE_UNITS_VERIFIED"
+    ],
+    "pixel_validity": [
+      "NODATA_VALUE_AND_MASK_FLAGS_READ",
+      "MASK_ZERO_PIXELS_EXCLUDED",
+      "SPARSE_ZERO_NOT_ACCEPTED_WITHOUT_VALIDITY_PROOF",
+      "MOSAIC_UNCOVERED_AREA_REQUIRES_NODATA_OR_ALPHA",
+      "VALID_PERCENT_AND_FOOTPRINT_COVERAGE_RECORDED"
+    ],
+    "sampling_and_statistics": [
+      "RESAMPLING_ALGORITHM_AND_VALID_CONTRIBUTOR_COUNT_RECORDED",
+      "POLYGON_AND_RASTER_MUST_SHARE_CRS",
+      "PIXEL_INCLUSION_AND_WEIGHTING_STRATEGY_RECORDED",
+      "VALID_COUNT_COVERAGE_MEAN_MEDIAN_STDEV_MIN_MAX_RECORDED",
+      "SLOPE_ROUGHNESS_EDGE_DISTANCE_AND_NODATA_NEIGHBOUR_FLAGS_RECORDED"
+    ],
+    "provenance": [
+      "GEOPACKAGE_SPATIAL_TEMPORAL_INDEX_BOUND_TO_RASTER",
+      "SURVEY_POINT_DENSITY_VEGETATION_AND_FLIGHTLINE_OVERLAP_FLAGS_RECORDED",
+      "OUTPUT_GRID_EXTENT_RESOLUTION_AND_ALIGNMENT_RECORDED",
+      "SOURCE_AND_OUTPUT_FILE_HASHES_RECORDED"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 20,
+  "source_checks_total": 20,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

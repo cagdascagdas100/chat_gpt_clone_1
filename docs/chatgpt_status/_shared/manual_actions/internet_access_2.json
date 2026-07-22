@@ -1,58 +1,102 @@
 {
-  "schema_version": 3,
+  "schema_version": 7,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing canonical single-runner proofs remain stale and the last claim is terminal/released. The official Ofcom ZIP and API hosts cannot be resolved from the current execution environment. The optional API cross-check tool is ready but requires an Ofcom subscription key and a host with working DNS.",
+  "reason": "The existing 006 task is technically published and the stale PUBLISH_PENDING proofs are reconciled. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 review rows. The only remaining business blocker is official Ofcom ZIP access; zero official coverage candidates and zero 3/4 accuracy values have been written.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-22T18:19:00Z",
-  "primary_solution": "On the canonical portable host run RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. The launcher validates the persisted PID and command line, blocks a second instance when a valid owner is alive, and quarantines the lock only when the recorded owner is dead.",
-  "guardian_solution": "When the guardian is installed and its ProgramData config exists, run: powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\_shared\\automation\\AAYS_PORTABLE_RESUME_GUARDIAN.ps1 -Once",
-  "archive_fallback": "If the canonical host cannot download Ofcom's official outer r1 ZIP, place it at ${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip. The existing 009 task must validate exactly 121 inner r2 postcode CSV files, 121 unique postcode areas and 1,741,096 rows.",
-  "optional_api_crosscheck": {
-    "purpose": "temporary cross-check for the existing 24 prepared postcode samples only",
-    "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/010_ofcom_api_24_sample_ephemeral_crosscheck.py",
-    "required_environment": [
-      "AAYS_OFCom_API_KEY",
-      "AAYS_OFCom_POSTCODES_PATH"
-    ],
-    "api_endpoint_template": "https://api-proxy.ofcom.org.uk/broadband/coverage/{PostCode}",
-    "restrictions": [
-      "do not commit or log the subscription key",
-      "do not persist raw API responses or coverage values",
-      "do not aggregate API output into a partial or full dataset",
-      "do not treat the API as a replacement for the official bulk archive"
-    ],
-    "script_commit": "4451fb5444de89e6567d5df3f0d57a056eb808e5",
+  "updated_at": "2026-07-22T20:04:21Z",
+  "current_progress": {
+    "completed_operations": 5,
+    "total_operations": 6,
+    "progress_percent": 83.33,
+    "percent_change": 16.66,
+    "existing_rows": 11013,
+    "distinct_postcodes": 5044,
+    "postcode_live": 11011,
+    "postcode_review": 2,
+    "official_coverage_verified_candidates": 0,
+    "accuracy_written": 0,
+    "visible_rows": 11013,
+    "visible_chunks": 23
+  },
+  "technical_publish_reconciliation": {
+    "state": "RESOLVED_PUBLISHED",
+    "current_task_state": "PUBLISHED",
+    "slot_heartbeat_state": "PUBLISHED",
+    "business_blocker_preserved": true,
+    "reconciliation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/009_006_publish_pending_remote_artifact_reconciliation.json"
+  },
+  "required_archive": {
+    "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
+    "outer_filename_may_be_r1": true,
+    "required_inner_revision": "r2",
+    "required_r2_files": 121,
+    "required_unique_postcode_areas": 121,
+    "required_rows": 1741096,
+    "zip_crc_required": true,
+    "stale_inner_r1_allowed": false,
+    "all_files_nonempty_and_core_columns_required": true
+  },
+  "primary_host_action": {
+    "wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
+    "wrapper_commit": "ed1d2a8cbe9b8c04b75d385c39243eb081d59d37",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
+    "behavior": [
+      "find portable Git and Python",
+      "require clean publisher worktree",
+      "require local HEAD to equal remote canonical branch HEAD",
+      "run strict ZIP validation",
+      "requeue the same 006 task with a new attempt only after strict pass",
+      "stage only the existing queue file and one recovery record",
+      "push and verify remote readback",
+      "invoke the existing safe single-runner launcher"
+    ]
+  },
+  "strict_requeue_guard": {
+    "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py",
+    "script_commit": "6d5e91579f877e147bcae993b6afe6aa7e4a3ce1",
+    "same_task_id_retained": true,
+    "duplicate_task_created": false,
+    "new_attempt_only_after_strict_pass": true,
     "tests": {
       "python_compile": "PASS",
-      "no_key_safe_stop": "PASS",
-      "no_raw_postcode_output": "PASS"
+      "synthetic_corrected_r2_archive_requeue": "PASS",
+      "synthetic_stale_inner_r1_archive_rejection": "PASS"
     }
   },
+  "api_scope": {
+    "bulk_11013_row_replacement_allowed": false,
+    "maximum_ephemeral_sample_postcodes": 24,
+    "api_key_must_not_be_logged": true,
+    "raw_api_payload_must_not_be_persisted": true,
+    "api_output_must_not_be_aggregated_into_dataset": true,
+    "correction_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/010_006_api_bulk_scope_correction.json"
+  },
   "do_not": [
-    "do not start a second runner",
     "do not create another task",
+    "do not start a second runner directly",
+    "do not requeue before strict archive validation passes",
     "do not accept inner r1 postcode files",
-    "do not write candidate accuracy before official coverage evidence is read back"
+    "do not use the API as a bulk archive replacement",
+    "do not write 3/4 accuracy before exact official r2 coverage readback"
   ],
   "evidence_paths": [
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
-    "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json",
-    "docs/chatgpt_status/_shared/control/single_runner_active_claim.json",
-    "docs/chatgpt_status/_shared/locks/single_runner.lock",
-    "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.ps1",
-    "docs/chatgpt_status/_shared/automation/AAYS_PORTABLE_RESUME_GUARDIAN.ps1",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/006_stale_runner_lock_and_official_api_fallback_audit.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/010_ofcom_api_24_sample_ephemeral_crosscheck.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/009_status.json",
-    "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line_latest.json"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/006_existing_11013_coverage_validation.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_progress_latest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
-  "strict_validator_commit": "8833b20bb5a1289090a9206eaeaece2f596c9d8b",
-  "queue_revision_commit": "106d6522a3c0cb88e27af28d57beff0a59c28533",
-  "runner_recovery_audit_commit": "c3800dd0b783bae65fa7d9a8e4f98bfffdfe3106",
-  "api_tool_commit": "4451fb5444de89e6567d5df3f0d57a056eb808e5",
+  "second_runner_started": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
   "final_ready": false
 }

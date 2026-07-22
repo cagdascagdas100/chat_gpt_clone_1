@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T19:44:00Z",
+  "state": "HMLR_GML_INGESTION_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "HMLR_CURRENT_INSPIRE_RELEASE",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "verified": true,
+      "facts": ["published_5_july_2026", "local_authority_gml_downloads", "files_replaced_on_next_monthly_release"],
+      "accepted_role": "CURRENT_SOURCE_RELEASE_LOCK"
+    },
+    {
+      "source_id": "HMLR_INSPIRE_IDENTITY_AND_SCOPE",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "verified": true,
+      "facts": ["unique_inspire_id_per_polygon", "one_title_can_have_multiple_polygons", "absence_is_ambiguous", "indicative_extent_only", "title_plan_required_for_registered_extent"],
+      "accepted_role": "POLYGON_IDENTITY_AND_LEGAL_SCOPE_CONTROL"
+    },
+    {
+      "source_id": "HMLR_LOCAL_AUTHORITY_DUPLICATION",
+      "authority": "HM Land Registry / data.gov.uk",
+      "url": "https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data",
+      "verified": true,
+      "facts": ["separate_file_per_local_authority", "boundary_polygon_can_appear_in_both_authority_files", "monthly_dataset"],
+      "accepted_role": "CROSS_AUTHORITY_DEDUPLICATION_CONTROL"
+    },
+    {
+      "source_id": "HMLR_GML_AND_BNG_GUIDANCE",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "verified": true,
+      "facts": ["gml_open_standard", "source_crs_british_national_grid_epsg_27700", "reprojection_to_wgs84_can_shift_features_up_to_15m"],
+      "accepted_role": "SOURCE_FORMAT_AND_CRS_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GML_PARSER_SCHEMA_AND_AXIS",
+      "authority": "GDAL/OGR",
+      "url": "https://gdal.org/en/stable/drivers/vector/gml.html",
+      "verified": true,
+      "facts": ["xml_validation_disabled_by_default", "parser_can_be_expat_or_xerces", "schema_autodiscovery_without_xsd_is_error_prone", "gfs_cache_can_control_layout", "axis_swapping_is_configurable", "corrupted_features_fail_by_default"],
+      "accepted_role": "DETERMINISTIC_GML_PARSE_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GML_GEOMETRY_ID_AND_XLINK",
+      "authority": "GDAL/OGR",
+      "url": "https://gdal.org/en/stable/drivers/vector/gml.html",
+      "verified": true,
+      "facts": ["last_recognized_geometry_is_default_when_multiple_exist", "geometry_element_is_preferred_for_inspire", "gml_id_can_be_exposed", "xlink_resolution_can_access_local_or_web_resources", "xlink_resolution_is_skipped_by_default"],
+      "accepted_role": "FEATURE_GEOMETRY_AND_DOCUMENT_ID_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GMLAS_SCHEMA_VALIDATION",
+      "authority": "GDAL/OGR",
+      "url": "https://gdal.org/en/stable/drivers/vector/gmlas.html",
+      "verified": true,
+      "facts": ["schema_driven_reader_requires_valid_schemas", "document_validation_disabled_by_default", "validation_errors_do_not_fail_by_default", "validate_and_fail_if_validation_error_options_available", "remote_schema_cache_is_configurable"],
+      "accepted_role": "FAIL_CLOSED_SCHEMA_VALIDATION_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "release_provenance": [
+      "HMLR_PUBLICATION_DATE_AND_REPRESENTED_MONTH_RECORDED",
+      "LOCAL_AUTHORITY_NAME_DOWNLOAD_URL_DOWNLOAD_TIMESTAMP_AND_CONTENT_TYPE_RECORDED",
+      "GML_SHA256_AND_BYTE_LENGTH_RECORDED",
+      "MONTHLY_SNAPSHOT_IMMUTABLE_AFTER_INGESTION",
+      "SOURCE_RELEASE_MUST_MATCH_REVISION_14_EXPECTED_MONTH"
+    ],
+    "identity_and_deduplication": [
+      "GML_ID_AND_HMLR_INSPIRE_ID_STORED_SEPARATELY",
+      "INSPIRE_ID_NONEMPTY_AND_UNIQUE_WITHIN_CANONICAL_SNAPSHOT",
+      "GML_ID_UNIQUE_WITHIN_DOCUMENT",
+      "ONE_TITLE_MULTIPLE_POLYGON_IDENTITIES_NOT_COLLAPSED",
+      "CROSS_AUTHORITY_DUPLICATES_REMOVED_BY_INSPIRE_ID_AND_NORMALIZED_GEOMETRY_HASH",
+      "ABSENT_INSPIRE_ID_NOT_INTERPRETED_AS_UNREGISTERED"
+    ],
+    "parser_and_schema": [
+      "GDAL_VERSION_PARSER_NAME_AND_PARSER_LIBRARY_VERSION_RECORDED",
+      "EXPLICIT_LOCAL_XSD_OR_PINNED_GFS_TEMPLATE_REQUIRED",
+      "XSD_GFS_AND_CONFIGURATION_HASHES_RECORDED",
+      "STALE_GFS_REMOVED_WHEN_GML_HASH_TIMESTAMP_OR_OPTIONS_CHANGE",
+      "GMLAS_VALIDATE_YES_AND_FAIL_IF_VALIDATION_ERROR_YES_REQUIRED",
+      "REMOTE_SCHEMA_DOWNLOAD_DISABLED_DURING_PRODUCTION_PARSE",
+      "XML_ENCODING_DECLARATION_AND_UTF8_NORMALIZATION_VALIDATED"
+    ],
+    "crs_and_geometry": [
+      "SOURCE_CRS_EPSG_27700_REQUIRED",
+      "SRSNAME_PRESENT_AND_CONSISTENT_FOR_ALL_FEATURE_GEOMETRIES",
+      "SWAP_COORDINATES_INVERT_AXIS_ORDER_AND_CONSIDER_EPSG_AS_URN_OPTIONS_PINNED",
+      "INSPIRE_GEOMETRY_ELEMENT_PATH_EXPLICIT",
+      "BOUNDEDBY_ENVELOPE_NOT_USED_AS_FEATURE_GEOMETRY",
+      "MULTIPLE_GEOMETRY_OCCURRENCES_CAUSE_REVIEW_UNLESS_SCHEMA_MAPS_THEM_EXPLICITLY"
+    ],
+    "feature_integrity": [
+      "SKIP_CORRUPTED_FEATURES_DISABLED",
+      "EXTERNAL_XLINK_RESOLUTION_DISABLED",
+      "FEATURE_COUNT_GEOMETRY_TYPE_EMPTY_GEOMETRY_NULL_ID_AND_DUPLICATE_ID_COUNTS_RECORDED",
+      "GML_AND_GMLAS_PARSE_COUNTS_AND_BOUNDS_COMPARED",
+      "PARSE_DIFFERENCE_OR_SCHEMA_ERROR_BLOCKS_PROMOTION"
+    ],
+    "publication": [
+      "INSPIRE_GEOMETRY_CLASSIFIED_AS_INDICATIVE_CANDIDATE_ONLY",
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 22,
+  "source_checks_total": 22,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}
