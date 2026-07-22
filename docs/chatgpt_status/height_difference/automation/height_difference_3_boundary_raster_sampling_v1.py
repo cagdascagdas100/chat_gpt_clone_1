@@ -134,7 +134,9 @@ def run(a):
 def main():
     q=argparse.ArgumentParser()
     for k in ["canonical-points","official-discovery","boundary-manifest","raster-manifest","output","website-output"]: q.add_argument("--"+k,required=True)
+    q.add_argument("--expected-blob-sha",default=BLOB)
     a=q.parse_args()
+    if a.expected_blob_sha!=BLOB: raise SystemExit("EXPECTED_BLOB_SHA_MISMATCH")
     try: x=run(a); code=0
     except Exception as e:
         x={"schema_version":1,"slot_id":"height_difference_3","task_id":"height-difference-3-boundary-raster-sampling-v1-20260722","generated_at":now(),
