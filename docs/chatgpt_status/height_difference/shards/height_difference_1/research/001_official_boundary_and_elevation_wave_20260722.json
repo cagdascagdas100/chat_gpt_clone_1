@@ -1,5 +1,5 @@
 {
-  "schema_version": 16,
+  "schema_version": 17,
   "slot_id": "height_difference_1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "verified_on": "2026-07-22",
@@ -8,42 +8,35 @@
   "canonical_example_source": {"path":"england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson","blob_sha":"bb48164e7a0af78df875f30421a6a3068c43edb8","geometry_type":"Point","feature_count":92283,"prepared_point_count":11,"next_candidate_observed":"parcel_12","next_candidate_partial_properties":{"security_lsoa_name":"Barking and Dagenham 020B","security_lsoa_code":"E01000087"},"next_candidate_promoted":false,"next_candidate_hold_reason":"connector output truncated before coordinate pair","next_candidate_hold_visible_on_website":true,"exact_polygon_rows":0},
   "internet_research_counts": {"sources_researched":11,"promoted_sources":8,"held_sources":3,"official_accuracy_guidance_pages_verified":4,"public_client_implementations_cross_validated":4,"public_delivery_traces_cross_validated":1,"prepared_parcel_examples":11,"prepared_survey_metadata_requests":22,"prepared_wcs_probe_requests":22,"full_getcoverage_urls":22,"acceptance_gates":12,"verified_numeric_height_results":0,"business_rows_written":0},
   "verified_service_contracts": {
-    "hmlr_inspire": {"published":"2026-07-05","catalogue_last_updated":"2026-07-08","current_official_page_revalidated":true,"local_authority_listing":"London Borough of Barking and Dagenham","refresh_contract":"first Sunday of each month","stable_download_route":"https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip","transport_format":"ZIP","required_archive_member_format":"GML","native_crs":"EPSG:27700","reprojection_warning_m":15,"required_polygon_identifier":"Land Registry-INSPIRE identifier","identifier_column_semantics":"column name must contain INSPIRE and ID","unique_identifier_count_must_equal_feature_count":true,"identifier_set_sha256_required":true,"zip_bytes_acquired":false,"gml_bytes_extracted":false,"gml_structure_receipt_acquired":false},
-    "ea_dtm_1m": {"grid_resolution_m":1,"tile_size_km":5,"crs":"EPSG:27700","axis_labels":["E","N"],"vertical_reference":"Ordnance Survey Newlyn","composite_contributing_survey_period":{"from":"2000-06-06","to":"2022-04-02"},"persistent_wcs":"https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?","coverage_id":"13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m","wcs_version":"2.0.1","official_nodata_sentinel":-3.4028235e38},
-    "ea_dsm_lz_1m": {"grid_resolution_m":1,"includes_surface_objects":true,"crs":"EPSG:27700","axis_labels":["E","N"],"persistent_wcs":"https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs?","coverage_id":"9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m","wcs_version":"2.0.1"},
-    "ea_time_stamped_arcgis": {"service_state":"CURRENTLY_DISCOVERABLE","spatial_reference":"EPSG:27700","supported_query_formats":["JSON","GeoJSON"],"point_response_acquired":false},
-    "wcs_semantics": {"raw_pixel_data_including_elevation":true,"wms_role":"summarised display","full_request_url_state":"MATERIALISED_22_OF_22","getcoverage_geotiff_bytes_acquired":false,"official_nodata_guidance_verified":true}
+    "hmlr_inspire": {"published":"2026-07-05","catalogue_last_updated":"2026-07-08","current_official_page_revalidated":true,"local_authority_listing":"London Borough of Barking and Dagenham","refresh_contract":"first Sunday of each month","stable_download_route":"https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip","transport_format":"ZIP","required_archive_member_format":"GML","native_crs":"EPSG:27700","reprojection_warning_m":15,"required_polygon_identifier":"Land Registry-INSPIRE identifier","identifier_column_semantics":"column name must contain INSPIRE and ID","zip_bytes_acquired":false,"gml_bytes_extracted":false,"gml_structure_receipt_acquired":false},
+    "ea_lidar_catalogue": {"service_state":"CURRENTLY_DISCOVERABLE","spatial_reference":"EPSG:27700","supported_query_formats":["JSON","GeoJSON"],"layers":["LIDAR DTM Time Stamped Extents","LIDAR DSM Time Stamped Extents"],"point_response_acquired":false},
+    "ea_dtm_1m": {"grid_resolution_m":1,"crs":"EPSG:27700","axis_labels":["E","N"],"vertical_reference":"Ordnance Survey Newlyn","coverage_id":"13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m","wcs_version":"2.0.1","official_nodata_sentinel":-3.4028235e38},
+    "ea_dsm_lz_1m": {"grid_resolution_m":1,"includes_surface_objects":true,"crs":"EPSG:27700","coverage_id":"9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m","wcs_version":"2.0.1"}
   },
   "accuracy_governance": {
+    "measurement_crs_policy":"loaded HMLR GML must already be EPSG:27700; silent reprojection is prohibited",
     "primary_boundary_join":"exactly one geometry.contains(canonical EPSG:27700 point); intersects is preliminary only",
     "boundary_touch_policy":"any geometry.touches(point) candidate rejects canonical binding",
-    "boundary_telemetry":["interior_polygon_candidate_count","boundary_touch_candidate_count","within_15m_candidate_count"],
+    "identifier_null_policy":"empty, nan, none, null, <na> and nat are rejected",
     "reprojection_fallback":"15m search may produce candidates only; no automatic canonical binding",
     "primary_numeric_result":"polygon DTM maximum minus polygon DTM minimum",
     "dsm_usage":"surface and object QA only",
-    "measurement_identifier_binding":"measurement polygon_id column must exactly equal resolver receipt identifier column and digest",
-    "required_provenance":["HMLR page SHA-256","HMLR ZIP SHA-256","HMLR GML SHA-256","HMLR final host/path","HMLR identifier column and set hash","strict-interior count=1","boundary-touch count=0","polygon WKB SHA-256","EA probe receipt","EA raster SHA-256","survey metadata"]
+    "required_provenance":["HMLR page SHA-256","HMLR ZIP SHA-256","HMLR GML SHA-256","native EPSG:27700 measurement receipt","HMLR identifier column and set hash","strict-interior count=1","boundary-touch count=0","polygon WKB SHA-256","EA probe receipt","EA raster SHA-256","survey metadata"]
   },
-  "implementation_cross_validation": [
-    {"evidence_id":"HD1-IMPL-001","repository":"data-desk-eco/gdn-gis","path":"scripts/fetch-lidar.py","evidence_state":"CROSS_VALIDATED"},
-    {"evidence_id":"HD1-IMPL-002","repository":"MatthewJWhittle/shefflied-bats","path":"sdm/data/terrain/core.py","evidence_state":"CROSS_VALIDATED"},
-    {"evidence_id":"HD1-IMPL-003","repository":"Harrishayy/NeMo-Ray","path":"agent/nemoray_modelling/lidar.py","evidence_state":"CROSS_VALIDATED"},
-    {"evidence_id":"HD1-IMPL-004","repository":"andras/perfect-postcode","path":"pipeline/download/inspire.py","evidence_state":"HELD_IMPLEMENTATION_CROSSCHECK"}
-  ],
-  "delivery_trace_cross_validation": [{"evidence_id":"HD1-TRACE-001","publisher":"Safe Software Community user trace","evidence_state":"HELD_DELIVERY_TRACE_ONLY","usage":"object-path hardening only"}],
   "local_behavior_tests": {
     "hmlr_resolver_v1_4":{"state":"PASS","checks":10,"compile_state":"PASS"},
     "metadata_resolver":{"state":"PASS","checks":6},
     "ea_raster_guard":{"state":"PASS","checks":8},
     "runtime_guard_injector_v1_2":{"state":"PASS_LOCAL_EXECUTION","checks":17,"compile_state":"PASS"},
-    "measurement_identity_injector_v1_0":{"state":"PASS_LOCAL_EXECUTION","checks":13,"compile_state":"PASS","tested_git_blob_sha":"01ff6dbb5d633e65879ffff1d6938deab3c1f855","tested_blob_matches_committed_blob":true},
+    "measurement_identity_injector_v1_1":{"state":"PASS_LOCAL_EXECUTION","checks":15,"compile_state":"PASS","tested_git_blob_sha":"bf21893682ad9ac17e52128cbdf57702967afa6a","committed_git_blob_sha":"bf21893682ad9ac17e52128cbdf57702967afa6a","tested_blob_matches_committed_blob":true,"native_crs_required":"EPSG:27700","silent_reprojection_rejected":true,"null_like_identifier_count":6},
     "boundary_binding_injector_v1_0":{"state":"PASS_LOCAL_EXECUTION","checks":10,"compile_state":"PASS","tested_git_blob_sha":"854f946291ac0eeee8cdd23dc9eb24a21f762fe4","tested_blob_matches_committed_blob":true},
-    "entry_wrapper_static_contract":{"state":"PASS","checks":24,"runtime_state":"NOT_RUN_NO_POWERSHELL_IN_LOCAL_CONTAINER"}
+    "entry_wrapper_static_contract":{"state":"PASS","checks":28,"runtime_state":"NOT_RUN_NO_POWERSHELL_IN_LOCAL_CONTAINER"},
+    "dtm_dsm_runtime_semantics_audit":{"state":"PASS_STATIC_READBACK","checks":4,"dtm_probe_required":true,"dsm_probe_optional":true,"full_dtm_required":true,"full_dsm_optional":true}
   },
-  "prepared_execution": {"entry_wrapper":"docs/chatgpt_status/height_difference/automation/height_difference_1_official_boundary_and_wcs_entry_v1.ps1","task_version":"1.15-three-stage-strict-interior-binding","acceptance_checks":72,"first_stage_runtime_patch_count":4,"measurement_identity_patch_count":4,"boundary_binding_patch_count":2,"total_injector_patch_labels":10,"main_python_source_patches_exact_once":14,"three_stage_injector_hash_chain_required":true,"strict_polygon_interior_required":true,"runner_execution_claimed":false},
-  "ci_repository_audit": {"workflow_run_id":29907366038,"workflow_head_sha":"40f3b4610d71cfa92f3b48235c10f9ce0a3904cc","conclusion":"success","artifact_id":8524386157,"artifact_digest":"sha256:a2f3a1d5cdeca850d27a55e4e5691a30055b59347e40af76f9ad801e0df5d57d","downloaded_zip_digest_verified":true,"artifact_inner_json_sha256":"eab3340c0d8fd772e615c523395f09c27adb4a1697c16d76f1c6a932a2029323","artifact_scope":"repository_only","artifact_result_file_count":0,"accepted_as_measurement_execution":false},
+  "prepared_execution": {"entry_wrapper":"docs/chatgpt_status/height_difference/automation/height_difference_1_official_boundary_and_wcs_entry_v1.ps1","task_version":"1.16-native-bng-and-null-identifier-hardening","acceptance_checks":80,"first_stage_runtime_patch_count":4,"measurement_identity_patch_count":5,"boundary_binding_patch_count":2,"total_injector_patch_labels":11,"main_python_source_patches_exact_once":15,"three_stage_injector_hash_chain_required":true,"strict_polygon_interior_required":true,"native_measurement_crs_required":"EPSG:27700","runner_execution_claimed":false},
+  "ci_repository_audit": {"workflow_run_id":29907878611,"workflow_head_sha":"2a3ca38723903a46da679d1f2ba701e6bc544a33","conclusion":"success","artifact_id":8524594880,"artifact_digest":"sha256:5e73004b6b32f761c38b1a509d361e246222cbcb4853e6cbc637e723c5cca2e8","downloaded_zip_digest_verified":true,"artifact_scope":"repository_only","artifact_result_file_count":0,"accepted_as_measurement_execution":false},
   "direct_execution_attempts": {"unique_live_byte_attempts":18,"response_bytes_acquired":0,"duplicate_attempts_not_counted":true},
-  "next_evidence_gate": ["Execute v1.15 three-stage wrapper on existing shared runner.","Acquire current HMLR ZIP/GML bytes and native-BNG identity receipt.","Execute 22 official metadata requests and 22 WCS requests.","Require exactly one strict-interior polygon and zero boundary-touch candidates.","Measure full-polygon DTM for parcel_1 through parcel_11."],
+  "next_evidence_gate": ["Execute v1.16 three-stage wrapper on existing shared runner.","Acquire current HMLR ZIP/GML bytes and native-BNG identity receipt.","Execute 22 official metadata requests and 22 WCS requests.","Require native EPSG:27700 measurement, exactly one strict-interior polygon and zero boundary-touch candidates.","Measure full-polygon DTM for parcel_1 through parcel_11."],
   "fake_data": false,
   "db_write": false,
   "migration": false,
