@@ -73,7 +73,7 @@ function expandEvent(e){
 async function renderBatched(tbody,items,mapper,batch=RENDER_BATCH_ROWS){
  tbody.innerHTML='';
  for(let i=0;i<items.length;i+=batch){
-  tbody.insertAdjacentHTML('beforeend',items.slice(i,i+batch).map(mapper).join(''));
+  tbody.insertAdjacentHTML('beforeend',items.slice(i,i+batch).map((item,j)=>mapper(item,i+j)).join(''));
   await new Promise(requestAnimationFrame);
  }
  if(!items.length)tbody.innerHTML='<tr><td colspan="11">Görünür satır yok.</td></tr>';
