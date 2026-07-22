@@ -1,75 +1,11 @@
 name: height_difference_2 datum adjustment probe 038
 on:
-  pull_request:
-    paths:
-      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/038_datum_probe_trigger.json'
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  probe:
+  archived_probe:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/hd2-datum-adjustment-038-clean-20260722
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install requests rasterio numpy
-      - name: Download official adjustment grid and requery survey metadata
-        run: |
-          python - <<'PY'
-          import hashlib, io, json, pathlib, zipfile
-          from datetime import datetime, timezone
-          import numpy as np, requests
-          from rasterio.io import MemoryFile
-
-          repo=pathlib.Path('.')
-          slot=repo/'england_map_web/data/aays_21_slots/height_difference_2'
-          doc=repo/'docs/chatgpt_status/topography/shards/height_difference_2'
-          url='https://environment.data.gov.uk/api/file/download?fileDataSetId=a3754840-badc-4e6f-be55-4c584fd57626&fileName=OSGM02_to_OSGM15_Adjustment_Grid.zip'
-          points=[
-            {'row_no':30762,'parcel_id':'parcel_30762','e':535564.995,'n':199388.108},
-            {'row_no':46142,'parcel_id':'parcel_46142','e':551991.914,'n':190529.339},
-            {'row_no':61522,'parcel_id':'parcel_61522','e':529493.381,'n':170122.189},
-          ]
-          sess=requests.Session(); sess.headers.update({'User-Agent':'height-difference-2-datum-audit/1.0'})
-          res=sess.get(url,timeout=120); res.raise_for_status(); raw=res.content
-          zip_sha=hashlib.sha256(raw).hexdigest(); z=zipfile.ZipFile(io.BytesIO(raw)); names=z.namelist()
-          text_files=[]; raster_files=[]; samples=[]; readme_snippets=[]
-          for name in names:
-            low=name.lower(); data=z.read(name)
-            if low.endswith(('.txt','.csv','.md','.xml','.prj','.aux.xml')):
-              text_files.append({'name':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
-              readme_snippets.append({'name':name,'snippet':data.decode('utf-8','replace')[:8000]})
-            if low.endswith(('.tif','.tiff','.asc','.grd')):
-              raster_files.append({'name':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
-              try:
-                with MemoryFile(data) as mem:
-                  with mem.open() as ds:
-                    meta={'name':name,'driver':ds.driver,'crs':str(ds.crs),'width':ds.width,'height':ds.height,'count':ds.count,'dtype':str(ds.dtypes[0]),'nodata':ds.nodata,'transform':list(ds.transform)[:6],'bounds':list(ds.bounds),'res':list(ds.res),'point_samples':[]}
-                    for p in points:
-                      val=next(ds.sample([(p['e'],p['n'])],indexes=1,masked=True))[0]
-                      meta['point_samples'].append({'row_no':p['row_no'],'value':None if np.ma.is_masked(val) else float(val)})
-                    samples.append(meta)
-              except Exception as e:
-                samples.append({'name':name,'open_error':str(e)})
-          layer='https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/0/query'
-          queries=[]
-          for p in points:
-            params={'f':'json','where':'1=1','geometry':f"{p['e']},{p['n']}",'geometryType':'esriGeometryPoint','inSR':'27700','spatialRel':'esriSpatialRelIntersects','outFields':'*','returnGeometry':'false'}
-            rr=sess.get(layer,params=params,timeout=120); rr.raise_for_status(); body=rr.content; js=rr.json()
-            attrs=[f.get('attributes',{}) for f in js.get('features',[])]
-            queries.append({'row_no':p['row_no'],'request_final_url':rr.url,'response_sha256':hashlib.sha256(body).hexdigest(),'feature_count':len(attrs),'attributes':attrs})
-          out={'schema_version':1,'slot_id':'height_difference_2','generated_at':datetime.now(timezone.utc).isoformat(),'adjustment_grid_url':url,'http_status':res.status_code,'response_bytes':len(raw),'zip_sha256':zip_sha,'zip_members':names,'text_files':text_files,'raster_files':raster_files,'raster_metadata_and_samples':samples,'readme_snippets':readme_snippets,'time_stamped_catalogue_queries':queries,'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False}
-          for path in [doc/'runtime/038_osgm02_osgm15_adjustment_probe.json',slot/'osgm02_osgm15_adjustment_runtime_038.json']:
-            path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
-          PY
-      - name: Commit runtime receipt
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/038_osgm02_osgm15_adjustment_probe.json england_map_web/data/aays_21_slots/height_difference_2/osgm02_osgm15_adjustment_runtime_038.json
-          git commit -m 'height_difference_2: record datum adjustment probe 038 [skip ci]' || exit 0
-          git push
+      - run: echo 'Probe completed and archived; runtime receipt already exists.'
