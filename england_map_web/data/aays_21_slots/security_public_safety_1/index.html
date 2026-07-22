@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
 <title>Security / Public Safety 1</title>
-<style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:12px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0}th,td{border:1px solid #cbd5df;padding:8px;text-align:left}th{background:#eaf0f5}.PASS,.PENDING,.BLOCKED{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:12px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0}th,td{border:1px solid #cbd5df;padding:8px;text-align:left}th{background:#eaf0f5}.PASS,.PENDING,.BLOCKED,.FORBIDDEN{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style>
 </head>
 <body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
 <h1>Security / Public Safety — Shard 1</h1>
@@ -19,6 +19,7 @@
 <div class="card">Kaynak v5<br><strong>8/8</strong></div>
 <div class="card">Recovery kapısı<br><strong id="recoveryGate">yükleniyor</strong></div>
 <div class="card">Recovery dekoder<br><strong>20 status / 10 kapı</strong></div>
+<div class="card">Operatör handoff<br><strong id="handoffCard">yükleniyor</strong></div>
 <div class="card">Canlı kabul<br><strong id="acceptance">PENDING</strong></div>
 <div class="card">Shared runner<br><strong id="runner">yükleniyor</strong></div>
 </div>
@@ -27,6 +28,7 @@
 <tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint, browser ve publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr>
 <tr><td>Shared runner recovery</td><td>Priority-1 blocker, recovery request, eksik preflight, fail-closed süreç kapıları ve bağımsız probe durumu</td><td><a href="runner_recovery_watch_v1.html">runner_recovery_watch_v1.html</a></td></tr>
 <tr><td>Recovery sonuç dekoderi</td><td>11 operator + 9 restart statusu, 10 promotion kapısı ve canlı receipt yorumlama</td><td><a href="recovery_result_decoder_v1.html">recovery_result_decoder_v1.html</a></td></tr>
+<tr><td>F-host operatör handoff</td><td>Tek komut, 12 preflight kapısı, 6 beklenen çıktı ve remote-vs-stale kaynak uzlaştırması</td><td><a href="operator_recovery_handoff_v1.html">operator_recovery_handoff_v1.html</a></td></tr>
 <tr><td>İlk 130 skor dağılımı</td><td>Seviye sayıları, minimum–medyan–ortalama–maksimum, 15 örnek ve 130 canlı parity satırı</td><td><a href="candidate_score_bands_v1.html">candidate_score_bands_v1.html</a></td></tr>
 <tr><td>16 endpoint temsilcisi</td><td>Endpoint başına ilk 4/4 doğruluk temsilcisi; canlı count/SHA mapping</td><td><a href="representative_candidates_v1.html">representative_candidates_v1.html</a></td></tr>
 <tr><td>Resmî kaynak doğrulaması v5</td><td>8/8 resmî kontrol, 4 kalite sınırı ve 22 Temmuz kaynak durumu</td><td><a href="official_source_revalidation_v5_20260722.json">official_source_revalidation_v5_20260722.json</a></td></tr>
@@ -40,14 +42,24 @@ const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
 const optional=async p=>{try{return await get(p)}catch(_){return null}};
 (async()=>{
- const [source,manifest,reps,dependency,acceptanceDoc,decoder]=await Promise.all([get('official_web_refresh_20260722.json'),get('canonical_130_endpoint_manifest_20260722.json'),get('canonical_16_representative_candidates_20260722.json'),get('shared_runner_dependency_latest.json'),optional('canonical_acceptance_v17_latest.json'),get('recovery_result_decoder_v1.json')]);
+ const [source,manifest,reps,dependency,acceptanceDoc,decoder,handoff]=await Promise.all([
+  get('official_web_refresh_20260722.json'),
+  get('canonical_130_endpoint_manifest_20260722.json'),
+  get('canonical_16_representative_candidates_20260722.json'),
+  get('shared_runner_dependency_latest.json'),
+  optional('canonical_acceptance_v17_latest.json'),
+  get('recovery_result_decoder_v1.json'),
+  get('operator_recovery_handoff_v1.json')
+ ]);
  const cp=source.canonical_progress||{},acceptancePass=acceptanceDoc?.acceptance_pass===true,recovery=dependency.recovery_request||{};
  const done=acceptancePass?7:Number(cp.completed_units||0),pct=acceptancePass?87.5:Number(cp.overall_percent||0),delta=acceptancePass?25:Number(cp.percent_change||0);
  progress.textContent=`${done}/${cp.total_units||8} — ${pct}% (Δ ${delta>=0?'+':''}${delta})`;
  rows.textContent=`${source.verified_rows||0}/300`;accuracy.textContent=`${source.accuracy_score_4_rows||0}/300`;
  candidates.textContent=`${manifest.candidate_rows||0}/130`;endpoints.textContent=`${manifest.unique_endpoints||0}/16`;
  representatives.textContent=`${reps.representative_count||0}/16`;acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';
- runner.textContent=dependency.holder_readback?.heartbeat_stale?'STALE PRIORITY 1':'HAZIR';recoveryGate.textContent=recovery.expected_preflight_output_present?'PASS':'PENDING PREFLIGHT';
+ runner.textContent=dependency.holder_readback?.heartbeat_stale?'STALE PRIORITY 1':'HAZIR';
+ recoveryGate.textContent=recovery.expected_preflight_output_present?'PASS':'PENDING PREFLIGHT';
+ handoffCard.textContent=handoff.source_of_truth?.resolution==='REMOTE_BRANCH_AND_SLOT_CONTROL_FILES_ARE_CANONICAL'?'REMOTE CANONICAL':'BLOCKED';
  const live=acceptanceDoc?.canonical_live_parity||{},browser=acceptanceDoc?.browser_acceptance||{};
  const items=[
  ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows||0}/300 satır; doğruluk ${source.accuracy_score_4_rows||0}/300.`],
@@ -56,6 +68,8 @@ const optional=async p=>{try{return await get(p)}catch(_){return null}};
  ['PASS','SCORE_BAND_LINE_ITEMS','İlk 130 aday için seviye dağılımı, 15 örnek ve 130 parity satırı yayınlandı.'],
  ['PASS','REPRESENTATIVE_16',`${reps.representative_count||0}/16 temsilci; doğruluk ${reps.accuracy_score_4_count||0}/16; saklı HTTP ${reps.stored_http_200_count||0}/16; SHA ${reps.stored_sha256_count||0}/16.`],
  ['PASS','RECOVERY_RESULT_DECODER',`${(decoder.operator_statuses||[]).length} operator, ${(decoder.restart_statuses||[]).length} restart statusu ve ${(decoder.promotion_chain||[]).length} promotion kapısı.`],
+ ['PASS','OPERATOR_RECOVERY_HANDOFF',`${(handoff.preflight_contract||[]).length} preflight kapısı, ${(handoff.expected_outputs||[]).length} çıktı; tek komut mevcut F-host içindir.`],
+ [handoff.source_of_truth?.uploaded_note_task_found_on_remote===false?'PASS':'BLOCKED','SOURCE_OF_TRUTH_RECONCILIATION',`Yerel 046 görevi remote üzerinde bulunmadı; ${handoff.source_of_truth?.resolution||'unknown'}; child/paralel talimat ${handoff.source_of_truth?.child_or_parallel_start_from_uploaded_note_forbidden?'FORBIDDEN':'UNKNOWN'}.`],
  [dependency.holder_readback?.heartbeat_stale?'BLOCKED':'PASS','SHARED_RUNNER',`Alias ${dependency.global_control_alias?.holder_slot||'unknown'}; heartbeat ${dependency.holder_readback?.heartbeat_state||'unknown'}; priority ${dependency.holder_readback?.queue_priority??'n/a'}.`],
  [recovery.expected_preflight_output_present?'PASS':'PENDING','GUARDED_OPERATOR_RECOVERY',recovery.expected_preflight_output_present?'Recovery preflight üretildi.':`Eksik çıktı: ${recovery.expected_preflight_output||'not_available'}; güvenlik kapısı ${(dependency.verified_fail_closed_gates||[]).length} satır.`],
  [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptanceDoc?`${live.candidate_passed||0}/130 aday, ${live.unique_endpoint_http_json_passed||0}/16 endpoint.`:'v17 kabul raporu henüz yok.'],
@@ -63,7 +77,20 @@ const optional=async p=>{try{return await get(p)}catch(_){return null}};
  ['PENDING','PUBLISHER_READBACK',acceptancePass?'Runtime PASS; publisher commit/push/readback bekleniyor.':'Runtime PASS öncesi publisher kapısı bekler.']
  ];
  events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
- document.body.dataset.representativeCount=String(reps.representative_count||0);document.body.dataset.scoreBandView='candidate_score_bands_v1.html';document.body.dataset.scoreBandExampleCount='15';document.body.dataset.officialSourceRevalidation='official_source_revalidation_v5_20260722.json';document.body.dataset.runnerRecoveryView='runner_recovery_watch_v1.html';document.body.dataset.recoveryDecoderView='recovery_result_decoder_v1.html';document.body.dataset.recoveryDecoderStatusCount=String((decoder.operator_statuses||[]).length+(decoder.restart_statuses||[]).length);document.body.dataset.recoveryPreflightPresent=String(Boolean(recovery.expected_preflight_output_present));document.body.dataset.displayCompletedUnits=String(done);document.body.dataset.displayPercent=String(pct);document.body.dataset.acceptanceReportPresent=String(Boolean(acceptanceDoc));document.body.dataset.semanticValid=String(source.parcel_measurement===false&&manifest.unique_endpoints===16&&reps.representative_count===16&&dependency.global_control_alias?.overwrite_performed===false&&decoder.safety?.final_ready===false);
+ document.body.dataset.representativeCount=String(reps.representative_count||0);
+ document.body.dataset.scoreBandView='candidate_score_bands_v1.html';
+ document.body.dataset.scoreBandExampleCount='15';
+ document.body.dataset.officialSourceRevalidation='official_source_revalidation_v5_20260722.json';
+ document.body.dataset.runnerRecoveryView='runner_recovery_watch_v1.html';
+ document.body.dataset.recoveryDecoderView='recovery_result_decoder_v1.html';
+ document.body.dataset.operatorHandoffView='operator_recovery_handoff_v1.html';
+ document.body.dataset.operatorHandoffGateCount=String((handoff.preflight_contract||[]).length);
+ document.body.dataset.recoveryDecoderStatusCount=String((decoder.operator_statuses||[]).length+(decoder.restart_statuses||[]).length);
+ document.body.dataset.recoveryPreflightPresent=String(Boolean(recovery.expected_preflight_output_present));
+ document.body.dataset.displayCompletedUnits=String(done);
+ document.body.dataset.displayPercent=String(pct);
+ document.body.dataset.acceptanceReportPresent=String(Boolean(acceptanceDoc));
+ document.body.dataset.semanticValid=String(source.parcel_measurement===false&&manifest.unique_endpoints===16&&reps.representative_count===16&&dependency.global_control_alias?.overwrite_performed===false&&decoder.safety?.final_ready===false&&handoff.safety?.single_runner_only===true&&handoff.source_of_truth?.resolution==='REMOTE_BRANCH_AND_SLOT_CONTROL_FILES_ARE_CANONICAL');
 })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
 </script>
 </body></html>
