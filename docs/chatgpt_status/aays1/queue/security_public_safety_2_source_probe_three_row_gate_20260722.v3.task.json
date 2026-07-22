@@ -1,0 +1,80 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 2,
+  "task_id": "security_public_safety_2_source_probe_three_row_gate_20260722",
+  "attempt_id": "attempt-001",
+  "idempotency_key": "1b89a5be16505cd37a063f0433246f2c54582108211acb4923cfcb9a1b60bc85",
+  "status": "pending",
+  "page_key": "aays1",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_source_probe_three_row_gate_20260722.py",
+  "read_paths": [
+    "docs/chatgpt_status/aays1",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2",
+    "docs/chatgpt_status/security_public_safety/ENGLAND_PARCEL_CONTINUATION_20260717.md",
+    "docs/chatgpt_status/_shared/contracts/AAYS_ENGLAND_PARCEL_COVERAGE_AND_POLYGON_CLICK_CONTRACT_20260717.md"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/source_and_sample_gate_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/progress_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "browser_research"
+  ],
+  "requires_git_publish_gate": true,
+  "requires_shared_publish_gate": true,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "data_quality_contract": {
+    "source_urls": [
+      "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0",
+      "https://data.police.uk/api/crime-last-updated",
+      "https://data.police.uk/docs/method/crime-street/",
+      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables"
+    ],
+    "source_snapshot_date": "2026-07-22",
+    "source_discovery_required": false,
+    "measurement_level": "lsoa",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "pending_exact_hmlr_or_parcel_centroid_containment_in_ons_lsoa21",
+    "confidence_method": "official_publisher_freshness_role_limit_rubric_v1",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "canonical_geometry_missing",
+      "multiple_lsoa_matches",
+      "hmlr_id_mismatch",
+      "police_api_month_missing",
+      "source_hash_change",
+      "browser_acceptance_failure"
+    ]
+  },
+  "targets": {
+    "initial_candidate_rows": 3,
+    "verified_rows_before_expansion": 3,
+    "verified_rows_after_gate": 300,
+    "website_line_by_line": true
+  },
+  "timeout_seconds": 1800,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
