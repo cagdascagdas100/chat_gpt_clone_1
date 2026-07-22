@@ -1,0 +1,165 @@
+name: height_difference_2 HMLR ZIP polygon match 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_zip_polygon_match_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_zip_match_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  match:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml shapely
+      - name: Download official GML and prove native polygons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import io
+          import json
+          import tempfile
+          import zipfile
+          from pathlib import Path
+          import requests
+          from bs4 import BeautifulSoup
+          from lxml import etree
+          from shapely.geometry import Point, Polygon, mapping
+          from shapely.ops import unary_union
+          from shapely.validation import make_valid
+
+          CATALOG='https://use-land-property-data.service.gov.uk/datasets/inspire/download?source=direct'
+          TARGETS=[
+            {'row_no':30762,'parcel_id':'parcel_30762','authority':'London Borough of Enfield','zip_name':'London_Borough_of_Enfield.zip','e':535564.995,'n':199388.108},
+            {'row_no':46142,'parcel_id':'parcel_46142','authority':'London Borough of Havering','zip_name':'London_Borough_of_Havering.zip','e':551991.914,'n':190529.339},
+            {'row_no':61522,'parcel_id':'parcel_61522','authority':'London Borough of Lambeth','zip_name':'London_Borough_of_Lambeth.zip','e':529493.381,'n':170122.189},
+          ]
+          UA='AAYS-height-difference-2-hmlr-zip-match/1.0'
+          session=requests.Session()
+          headers={'User-Agent':UA,'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
+          page=session.get(CATALOG,headers=headers,timeout=120)
+          page.raise_for_status()
+          if len(page.content)<100000: raise RuntimeError(f'catalogue too small: {len(page.content)}')
+          soup=BeautifulSoup(page.content,'html.parser')
+          links={a.get('href','').split('/')[-1]:requests.compat.urljoin(page.url,a.get('href')) for a in soup.find_all('a',href=True) if a.get('href','').lower().endswith('.zip')}
+
+          def lname(el): return etree.QName(el).localname
+          def text_by_names(feature,names):
+            wanted={x.lower() for x in names}
+            for el in feature.iter():
+              if lname(el).lower() in wanted and el.text and el.text.strip():
+                return el.text.strip()
+            return None
+          def rings_from_polygon(poly_el):
+            ex=[]; holes=[]
+            for ext in poly_el.xpath('.//*[local-name()="exterior"]'):
+              texts=ext.xpath('.//*[local-name()="posList"]/text()')
+              if texts:
+                vals=[float(x) for x in texts[0].split()]
+                if len(vals)>=8 and len(vals)%2==0: ex=list(zip(vals[0::2],vals[1::2]))
+            for inter in poly_el.xpath('.//*[local-name()="interior"]'):
+              texts=inter.xpath('.//*[local-name()="posList"]/text()')
+              if texts:
+                vals=[float(x) for x in texts[0].split()]
+                if len(vals)>=8 and len(vals)%2==0: holes.append(list(zip(vals[0::2],vals[1::2])))
+            if not ex:
+              texts=poly_el.xpath('.//*[local-name()="posList"]/text()')
+              if texts:
+                vals=[float(x) for x in texts[0].split()]
+                if len(vals)>=8 and len(vals)%2==0: ex=list(zip(vals[0::2],vals[1::2]))
+            return ex,holes
+
+          rows=[]; receipts=[]
+          for target in TARGETS:
+            href=links.get(target['zip_name'])
+            if not href: raise RuntimeError(f'missing catalogue link: {target["zip_name"]}')
+            response=session.get(href,headers={'User-Agent':UA,'Accept':'application/zip,application/octet-stream,*/*','Referer':page.url},timeout=240)
+            response.raise_for_status()
+            data=response.content
+            if len(data)<1000 or data[:2]!=b'PK': raise RuntimeError(f'invalid ZIP for {target["authority"]}: {len(data)} bytes {data[:20]!r}')
+            zip_sha=hashlib.sha256(data).hexdigest()
+            zf=zipfile.ZipFile(io.BytesIO(data))
+            names=[n for n in zf.namelist() if n.lower().endswith(('.gml','.xml')) and not n.startswith('/') and '..' not in Path(n).parts]
+            if not names: raise RuntimeError(f'no GML in {target["zip_name"]}')
+            point=Point(target['e'],target['n'])
+            candidate_matches=[]
+            gml_receipts=[]
+            for name in names:
+              gml=zf.read(name)
+              gml_sha=hashlib.sha256(gml).hexdigest()
+              root=etree.fromstring(gml)
+              srs_values=sorted(set(x for x in root.xpath('//@srsName') if x))
+              feature_count=0
+              for feature in root.xpath('//*[local-name()="CadastralParcel"]'):
+                feature_count+=1
+                geoms=[]
+                for poly_el in feature.xpath('.//*[local-name()="Polygon"]'):
+                  shell,holes=rings_from_polygon(poly_el)
+                  if not shell: continue
+                  try:
+                    geom=make_valid(Polygon(shell,holes))
+                    if not geom.is_empty: geoms.append(geom)
+                  except Exception: pass
+                if not geoms: continue
+                geom=make_valid(unary_union(geoms))
+                if geom.is_empty or not geom.covers(point): continue
+                feature_bytes=etree.tostring(feature,encoding='utf-8')
+                gml_id=feature.get('{http://www.opengis.net/gml/3.2}id') or feature.get('{http://www.opengis.net/gml}id') or feature.get('id')
+                candidate_matches.append({
+                  'gml_member_id':gml_id,
+                  'inspire_id':text_by_names(feature,['localId','inspireId','INSPIREID']),
+                  'namespace':text_by_names(feature,['namespace']),
+                  'national_cadastral_reference':text_by_names(feature,['nationalCadastralReference','NATIONALCADASTRALREFERENCE']),
+                  'label':text_by_names(feature,['label','LABEL']),
+                  'valid_from':text_by_names(feature,['validFrom','VALIDFROM']),
+                  'begin_lifespan_version':text_by_names(feature,['beginLifespanVersion','BEGINLIFESPANVERSION']),
+                  'geometry_type':geom.geom_type,
+                  'geometry_area_m2':round(float(geom.area),3),
+                  'geometry_bounds':[round(float(x),3) for x in geom.bounds],
+                  'geometry_geojson':mapping(geom),
+                  'point_in_polygon':True,
+                  'feature_sha256':hashlib.sha256(feature_bytes).hexdigest(),
+                  'gml_file_name':name,
+                  'gml_sha256':gml_sha,
+                })
+              gml_receipts.append({'file_name':name,'bytes':len(gml),'sha256':gml_sha,'srs_names':srs_values,'cadastral_feature_count':feature_count})
+            unique_by_hash={m['feature_sha256']:m for m in candidate_matches}
+            matches=list(unique_by_hash.values())
+            row={**target,'catalogue_url':page.url,'download_url':href,'download_final_url':response.url,'zip_bytes':len(data),'zip_sha256':zip_sha,'gml_files':gml_receipts,'match_count':len(matches),'matches':matches,'unique_native_polygon_match':len(matches)==1,'height_min_m':None,'height_max_m':None,'height_difference_m':None,'result_confidence_percent':None,'business_row':False}
+            rows.append(row)
+            receipts.append({'row_no':target['row_no'],'authority':target['authority'],'zip_bytes':len(data),'zip_sha256':zip_sha,'gml_file_count':len(gml_receipts),'total_cadastral_features':sum(x['cadastral_feature_count'] for x in gml_receipts),'native_point_in_polygon_match_count':len(matches),'unique_native_polygon_match':len(matches)==1})
+
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          exact=sum(1 for r in rows if r['unique_native_polygon_match'])
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'source_publisher':'HM Land Registry','catalogue_url':page.url,'catalogue_bytes':len(page.content),'catalogue_sha256':hashlib.sha256(page.content).hexdigest(),'rows':rows,'unique_native_polygon_rows':exact,'official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          out=Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_exact_polygons_runtime_034.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          rec={'schema_version':1,'slot_id':'height_difference_2','validated_at':generated,'state':'PASS' if exact==3 else 'FAIL_CLOSED','rows':receipts,'unique_native_polygon_rows':exact,'all_three_unique':exact==3,'output_path':str(out),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          rec_path=Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/032_hmlr_exact_polygon_runtime_034.json')
+          rec_path.parent.mkdir(parents=True,exist_ok=True)
+          rec_path.write_text(json.dumps(rec,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit exact polygon evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/hmlr_exact_polygons_runtime_034.json docs/chatgpt_status/topography/shards/height_difference_2/validation/032_hmlr_exact_polygon_runtime_034.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record three HMLR native polygon matches 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
