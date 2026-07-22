@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T18:40:33Z",
+  "state": "UNCERTAINTY_REPRODUCIBILITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "NIST_MEASUREMENT_UNCERTAINTY_STATEMENT",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-c-nist-technical-communications-program",
+      "verified": true,
+      "facts": ["measurement_result_complete_only_with_quantitative_uncertainty", "uniform_reporting_approach_required"],
+      "accepted_role": "RESULT_UNCERTAINTY_REPORTING_STANDARD"
+    },
+    {
+      "source_id": "NIST_COMBINED_STANDARD_UNCERTAINTY",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-5-combined-standard-uncertainty",
+      "verified": true,
+      "facts": ["rss_combination_of_standard_uncertainties", "covariance_included_when_appropriate", "systematic_effects_identified_and_corrected_or_accounted_for"],
+      "accepted_role": "HEIGHT_DIFFERENCE_UNCERTAINTY_PROPAGATION_MODEL"
+    },
+    {
+      "source_id": "NIST_LAW_OF_PROPAGATION",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
+      "verified": true,
+      "facts": ["measurement_model_contains_all_significant_input_quantities", "sensitivity_coefficients_and_covariances_are_part_of_combined_uncertainty"],
+      "accepted_role": "DERIVED_HEIGHT_DIFFERENCE_MODEL_CONTROL"
+    },
+    {
+      "source_id": "OS_TERRAIN50_ACCURACY_AND_RESOLUTION",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview",
+      "verified": true,
+      "facts": ["grid_vertical_accuracy_4m_rmse", "lower_resolution_landscape_scale_product", "integrated_3_to_5_year_flying_programme"],
+      "accepted_role": "SECONDARY_SOURCE_ACCURACY_AND_SCALE_CLASS"
+    },
+    {
+      "source_id": "OS_TERRAIN50_ASCII_GRID_CONTRACT",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "verified": true,
+      "facts": ["200_by_200_cells", "50m_cellsize", "pixel_centre_values", "nearest_0_1m_encoding", "declared_ascii_origin"],
+      "accepted_role": "SECONDARY_GRID_HEADER_AND_PRECISION_VALIDATION"
+    },
+    {
+      "source_id": "OS_TERRAIN50_TILE_EDGE_STRUCTURE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/data-structure",
+      "verified": true,
+      "facts": ["no_common_edge_values_between_tiles", "pixel_centres_define_sample_positions", "coastal_mean_water_values_are_tile_averages"],
+      "accepted_role": "TILE_EDGE_AND_COASTAL_SAMPLE_GUARD"
+    },
+    {
+      "source_id": "OS_TERRAIN50_PER_TILE_METADATA",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/metadata",
+      "verified": true,
+      "facts": ["per_tile_gemini_metadata", "tile_reference_crs_and_flying_information", "asc_aux_statistics_same_for_every_tile_and_intended_for_styling"],
+      "accepted_role": "SECONDARY_TILE_LINEAGE_AND_FALSE_STATISTICS_GUARD"
+    },
+    {
+      "source_id": "OS_TERRAIN50_SHARED_GRID_CONTOUR_LINEAGE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification",
+      "verified": true,
+      "facts": ["grid_and_contour_products_share_source_data", "grid_is_50m", "contours_are_10m_interval"],
+      "accepted_role": "SOURCE_INDEPENDENCE_CONTROL"
+    },
+    {
+      "source_id": "EA_TIME_STAMPED_SOURCE_ACCURACY_AND_METADATA",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "verified": true,
+      "facts": ["source_survey_plus_minus_15cm_rmse", "survey_specific_date_resolution_transformation_and_geoid", "multiple_source_resolutions"],
+      "accepted_role": "PRIMARY_SOURCE_UNCERTAINTY_AND_LINEAGE_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "measurement_uncertainty": [
+      "EVERY_PUBLISHED_HEIGHT_AND_HEIGHT_DIFFERENCE_HAS_QUANTITATIVE_UNCERTAINTY",
+      "HEIGHT_DIFFERENCE_MODEL_INCLUDES_BOTH_ENDPOINT_UNCERTAINTIES",
+      "KNOWN_COVARIANCE_OR_SHARED_SOURCE_DEPENDENCE_IS_RECORDED",
+      "SYSTEMATIC_DATUM_TRANSFORMATION_INTERPOLATION_AND_SOURCE_AGE_EFFECTS_ARE_INCLUDED_OR_FLAGGED",
+      "UNCERTAINTY_METHOD_ASSUMPTIONS_AND_COVERAGE_LEVEL_ARE_PUBLISHED"
+    ],
+    "precision_and_accuracy": [
+      "OS_0_1M_ENCODING_IS_NOT_TREATED_AS_0_1M_ACCURACY",
+      "OS_4M_RMSE_IS_RECORDED_AS_SECONDARY_SOURCE_ACCURACY_CLASS",
+      "EA_SOURCE_SURVEY_0_15M_RMSE_IS_NOT_UNIVERSALLY_ASSIGNED_TO_RESAMPLED_COMPOSITE_OUTPUT",
+      "ROUNDING_DECIMALS_NEVER_INCREASE_ACCURACY_SCORE"
+    ],
+    "raster_reproducibility": [
+      "OS_HEADER_NCOLS_NROWS_CELLSIZE_AND_ORIGIN_VALIDATED",
+      "OS_TILE_REFERENCE_AND_METADATA_FILE_HASH_RECORDED",
+      "FLYING_DATE_RECORDED_SEPARATELY_FROM_PUBLICATION_DATE",
+      "ADJACENT_TILE_SAMPLE_OWNERSHIP_IS_COORDINATE_BASED",
+      "ASC_AUX_STYLING_STATISTICS_NOT_USED_AS_TILE_SPECIFIC_QA",
+      "LOCAL_VALID_CELL_COUNT_NODATA_RATIO_MIN_MAX_MEDIAN_AND_IQR_COMPUTED_FROM_ACTUAL_VALUES"
+    ],
+    "source_independence": [
+      "EA_DTM_IS_PRIMARY_LINEAGE",
+      "OS_TERRAIN50_GRID_AND_CONTOUR_COUNT_AS_ONE_SHARED_SECONDARY_LINEAGE",
+      "AGREEMENT_BETWEEN_DEPENDENT_OS_PRODUCTS_IS_NOT_COUNTED_AS_INDEPENDENT_CONFIRMATION"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 14,
+  "source_checks_total": 14,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

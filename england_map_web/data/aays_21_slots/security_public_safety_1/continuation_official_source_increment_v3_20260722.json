@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "source_head": "9e949840e91ea66b376191d96bbed66ee79707e3",
+  "checked_at": "2026-07-22T21:05:00+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_V3_PUBLISHED_BLOCKER_UNCHANGED",
+  "increment_metrics": {
+    "official_source_checks_added": 5,
+    "official_source_checks_passed": 5,
+    "source_upgrades_added": 5,
+    "research_examples_added": 5,
+    "candidate_rows_added": 0,
+    "parcel_values_added": 0,
+    "stored_values_modified": false,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+  },
+  "cumulative_metrics": {
+    "official_source_checks": 25,
+    "official_source_checks_passed": 25,
+    "source_upgrades": 19,
+    "context_or_crosscheck_candidates": 14,
+    "web_source_rows": 25,
+    "web_operation_rows": 25
+  },
+  "sources": [
+    {
+      "row": 21,
+      "status": "PASS_OFFICIAL_SEVERITY_BENCHMARK",
+      "source": "ONS Crime Severity Score: year ending March 2025",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/crimeseverityscoreexperimentalstatistics",
+      "verified_fact": "Released 9 December 2025, the official CSS dataset provides severity scores for police-force and community-safety-partnership areas.",
+      "quality_effect": "Adds the correct official severity benchmark while forbidding the project security score from being relabelled as ONS CSS.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 22,
+      "status": "PASS_OUTCOME_CROSSCHECK",
+      "source": "Crime outcomes year to December 2025: data tables",
+      "authority": "GOV.UK / Home Office",
+      "url": "https://www.gov.uk/government/statistics/crime-outcomes-year-to-december-2025-data-tables",
+      "verified_fact": "Published 23 April 2026, the official tables report outcomes assigned to recorded offences by outcome and offence type through December 2025.",
+      "quality_effect": "Adds an official outcome-distribution cross-check; outcomes are not interpreted as incident severity or parcel safety.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 23,
+      "status": "PASS_COMPARABILITY_LIMIT_RECORDED",
+      "source": "Hate crime, England and Wales, year ending March 2025",
+      "authority": "GOV.UK / Home Office",
+      "url": "https://www.gov.uk/government/statistics/hate-crime-england-and-wales-year-ending-march-2025",
+      "verified_fact": "Published 9 October 2025, the release records five centrally monitored hate-crime strands and states that MPS trend data is not directly comparable across its February 2024 system change.",
+      "quality_effect": "Adds protected-characteristic safety context while preserving the explicit MPS comparability break and excluding individual inference.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 24,
+      "status": "PASS_BOROUGH_CONTEXT_LIMIT_RECORDED",
+      "source": "MPS Homicide dashboard data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-homicide-dashboard-data-2l1w8",
+      "verified_fact": "The current victim workbook covers January 2003 to December 2025 at borough level; the dataset is quarterly-lagged and excludes homicides recorded under City of London Police or British Transport Police jurisdiction.",
+      "quality_effect": "Adds high-severity borough context with jurisdiction and update-lag guards; it is not a parcel-level rate.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 25,
+      "status": "PASS_OPERATIONAL_CONTEXT_LIMIT_RECORDED",
+      "source": "MPS AntiSocialBehaviour",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-antisocialbehaviour-2k533/",
+      "verified_fact": "The current file covers May 2025 to April 2026 and classifies ASB calls under personal, nuisance and environmental qualifiers using 13 headings.",
+      "quality_effect": "Adds current call-based ASB context; calls and response fields are not treated as confirmed crimes, complete LSOA totals or parcel measurements.",
+      "candidate_score_input": false
+    }
+  ],
+  "quality_guards": [
+    "AREA_LEVEL_PROXY only; no parcel measurement claim.",
+    "Project security_score_percent must not be labelled as ONS Crime Severity Score.",
+    "Outcome distributions are not crime severity values.",
+    "MPS hate-crime trends cross a February 2024 recording-system comparability break.",
+    "MPS homicide data is borough-level, quarterly-lagged and excludes COLP/BTP jurisdiction records.",
+    "ASB calls are operational reports, not confirmed crimes or complete area totals.",
+    "No existing candidate score or stored parcel value was modified."
+  ],
+  "canonical_progress": {
+    "completed_units": 5,
+    "total_units": 8,
+    "overall_percent": 62.5,
+    "percent_change": 0.0
+  },
+  "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
+  "manual_action_state": "OPEN",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "parcel_measurement": false,
+  "acceptance_evidence": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

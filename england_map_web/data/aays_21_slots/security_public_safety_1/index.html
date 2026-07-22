@@ -7,64 +7,60 @@
   <link rel="icon" href="data:,">
   <title>Security / Public Safety 1</title>
   <style>
-    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}
-    .cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:165px}
-    table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}
-    .BLOCKED,.PENDING,.LIMIT,[class^="PASS"]{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:165px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.BLOCKED,.PENDING,.LIMIT,[class^="PASS"]{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}
   </style>
 </head>
 <body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
   <h1>Security / Public Safety — Shard 1</h1>
-  <div class="note"><strong>AREA_LEVEL_PROXY:</strong> LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Security hazırlığı ilerliyor; priority‑1 holder recovery/claim doğrulanmadan canlı kabul ve publisher aşaması ilerletilmez.</div>
+  <div class="note"><strong>AREA_LEVEL_PROXY:</strong> LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Priority‑1 holder recovery/claim doğrulanmadan canlı kabul ve publisher aşaması ilerletilmez.</div>
   <div class="cards">
     <div class="card">Genel ilerleme<br><strong id="progress">yükleniyor</strong></div>
     <div class="card">Kaynak satırı<br><strong id="rowsCount">yükleniyor</strong></div>
     <div class="card">Doğruluk 4/4<br><strong id="accuracy">yükleniyor</strong></div>
     <div class="card">Aday / endpoint<br><strong id="candidates">yükleniyor</strong></div>
-    <div class="card">Yeni resmî kaynak<br><strong id="sourceIncrement">yükleniyor</strong></div>
+    <div class="card">Resmî kaynak kontrolü<br><strong id="sourceIncrement">yükleniyor</strong></div>
     <div class="card">Kaynak yükseltmesi<br><strong id="upgrades">yükleniyor</strong></div>
     <div class="card">Heartbeat yaşı<br><strong id="heartbeatAge">yükleniyor</strong></div>
     <div class="card">Dependency kusuru<br><strong id="depDefects">yükleniyor</strong></div>
     <div class="card">Manuel eylem<br><strong id="manual">yükleniyor</strong></div>
     <div class="card">Canlı kabul<br><strong id="acceptance">yükleniyor</strong></div>
   </div>
-
   <h2>Web görünümleri</h2>
   <table><thead><tr><th>Görünüm</th><th>Kapsam</th><th>Bağlantı</th></tr></thead><tbody>
     <tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint ve browser/publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr>
-    <tr><td>Yeni resmî kaynak artışı</td><td>15/15 resmî kaynak doğrulaması; 9 yükseltme ve 4 yeni bağlam/cross-check adayı</td><td><a href="continuation_official_source_increment_v1.html">continuation_official_source_increment_v1.html</a></td></tr>
+    <tr><td>Resmî kaynak artışı V1-V2</td><td>20/20 resmî kaynak doğrulaması</td><td><a href="continuation_official_source_increment_v1.html">continuation_official_source_increment_v1.html</a></td></tr>
+    <tr><td>Resmî kaynak artışı V3</td><td>5/5 yeni doğrulama; kümülatif 25/25 kaynak ve 19 yükseltme</td><td><a href="continuation_official_source_increment_v3.html">continuation_official_source_increment_v3.html</a></td></tr>
     <tr><td>Runtime denetimi</td><td>Carrier, watchdog ve receipt yolları</td><td><a href="runtime_code_audit_v17.html">runtime_code_audit_v17.html</a></td></tr>
     <tr><td>Queue parser</td><td>Priority, branch, allowed paths ve safety</td><td><a href="queue_parser_contract_v1.html">queue_parser_contract_v1.html</a></td></tr>
     <tr><td>Holder CI paket</td><td>CI paket kapsamı; F-host recovery kanıtı değildir</td><td><a href="holder_ci_package_validation_v1.html">holder_ci_package_validation_v1.html</a></td></tr>
     <tr><td>Stale-daemon watchdog</td><td>Heartbeat yaşı ve 6 false-success yolu</td><td><a href="holder_stale_daemon_watchdog_audit_v1.html">holder_stale_daemon_watchdog_audit_v1.html</a></td></tr>
   </tbody></table>
-
   <h2>İşlemler — satır satır</h2>
   <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
-
-  <h2>Yeni resmî kaynaklar — satır satır</h2>
+  <h2>Resmî kaynaklar — satır satır</h2>
   <table><thead><tr><th>#</th><th>Durum</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kalite etkisi</th></tr></thead><tbody id="sourceRows"></tbody></table>
-
   <script>
     'use strict';
     const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
     const optional=async p=>{try{return await get(p)}catch(_){return null}};
     (async()=>{
-      const [source,manifest,watch,increment,acceptanceDoc]=await Promise.all([
+      const [source,manifest,watch,increment,incrementV3,acceptanceDoc]=await Promise.all([
         get('official_web_refresh_20260722.json'),
         get('canonical_130_endpoint_manifest_20260722.json'),
         get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),
         get('continuation_official_source_increment_v1_20260722.json'),
+        get('continuation_official_source_increment_v3_20260722.json'),
         optional('canonical_acceptance_v17_latest.json')
       ]);
-      const cp=source.canonical_progress||{},m=increment.increment_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
+      const cp=source.canonical_progress||{},cm=incrementV3.cumulative_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
+      const allSources=[...(increment.sources||[]),...(incrementV3.sources||[])];
       progress.textContent=`${cp.completed_units}/${cp.total_units} — ${cp.overall_percent}% (Δ ${cp.percent_change>=0?'+':''}${cp.percent_change})`;
       rowsCount.textContent=`${source.verified_rows}/300`;
       accuracy.textContent=`${source.accuracy_score_4_rows}/300`;
       candidates.textContent=`${manifest.candidate_rows}/130 · ${manifest.unique_endpoints}/16`;
-      sourceIncrement.textContent=`${m.official_source_checks_passed}/${m.official_source_checks_added}`;
-      upgrades.textContent=String(m.source_upgrades_added);
+      sourceIncrement.textContent=`${cm.official_source_checks_passed}/${cm.official_source_checks}`;
+      upgrades.textContent=String(cm.source_upgrades);
       heartbeatAge.textContent=`${watch.heartbeat.age_minutes_at_check} dk`;
       depDefects.textContent=String(wd.dependency_defects_found);
       manual.textContent='OPEN — F-host';
@@ -72,26 +68,36 @@
       const items=[
         ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows}/300; doğruluk ${source.accuracy_score_4_rows}/300`],
         ['PASS','STATIC_CANDIDATES',`${manifest.candidate_rows}/130 aday; ${manifest.unique_endpoints}/16 endpoint`],
-        ['PASS','PARALLEL_OFFICIAL_SOURCE_RESEARCH',`${m.official_source_checks_passed}/${m.official_source_checks_added} resmî kaynak; ${m.source_upgrades_added} yükseltme`],
+        ['PASS','PARALLEL_OFFICIAL_SOURCE_RESEARCH',`${cm.official_source_checks_passed}/${cm.official_source_checks} resmî kaynak; ${cm.source_upgrades} yükseltme`],
         ['PASS','LIVE_POLICE_API_FRESHNESS','latest=2026-05-01; May stop-search=30; April=34'],
         ['PASS','MPS_LSOA_UPGRADE_CANDIDATE','Jul 2024-Jun 2026; LSOA; sexual offences excluded; CONNECT guard'],
+        ['PASS','ONS_APPENDIX_CURRENT_BASELINE','year ending Dec 2025; national aggregate cross-check'],
+        ['PASS','LFB_INCIDENT_CONTEXT','Jan 2024-Apr 2026; coordinates; not crime score'],
+        ['PASS','LFB_MOBILISATION_CONTEXT','Jan 2025-Jun 2026; not guaranteed response'],
+        ['PASS','POLICE_WORKFORCE_2026_CONTEXT','published 22 Jul 2026; not local risk'],
+        ['PASS','MPS_VAWG_AGGREGATE_CONTEXT','ward/borough/BCU; disclosure guard'],
+        ['PASS','ONS_CSS_OFFICIAL_BENCHMARK','year ending Mar 2025; project score is not CSS'],
+        ['PASS','HOME_OFFICE_OUTCOME_CROSSCHECK','year to Dec 2025; outcomes are not severity'],
+        ['PASS','HATE_CRIME_COMPARABILITY_GUARD','MPS February 2024 system-change break recorded'],
+        ['PASS','MPS_HOMICIDE_BOROUGH_CONTEXT','victims through Dec 2025; COLP/BTP jurisdiction excluded'],
+        ['PASS','MPS_ASB_OPERATIONAL_CONTEXT','May 2025-Apr 2026; calls are not confirmed crimes'],
         ['PENDING','ONS_MARCH_2026_RELEASE','23 Temmuz 2026 09:30 UK; kontrol anında yayımlanmamış'],
-        ['PASS','NO_FAKE_PARCEL_VALUES',`${m.parcel_values_added} yeni parsel değeri; stored_values_modified=${m.stored_values_modified}`],
+        ['PASS','NO_FAKE_PARCEL_VALUES','0 yeni parsel değeri; stored_values_modified=false'],
         ['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],
         ['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu`],
         ['PENDING','PRIORITY_1_CLAIM','height_difference_2 existing single shared runner'],
-        ['PENDING','SECURITY_PRIORITY_2_CLAIM',increment.first_unverified_step],
+        ['PENDING','SECURITY_PRIORITY_2_CLAIM',incrementV3.first_unverified_step],
         [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptancePass?'runtime report present':'single-runner acceptance pending'],
         [acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptancePass?'runtime report present':'browser gate pending'],
         ['PENDING','PUBLISHER_READBACK','runtime acceptance required first'],
-        ['BLOCKED','MANUAL_ACTION',increment.manual_action_path]
+        ['BLOCKED','MANUAL_ACTION',incrementV3.manual_action_path]
       ];
       events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');
-      sourceRows.innerHTML=(increment.sources||[]).map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br>${esc(x.authority)}</td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
+      sourceRows.innerHTML=allSources.map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br>${esc(x.authority)}</td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
       document.body.dataset.operationRows=String(items.length);
-      document.body.dataset.sourceResearchRows=String((increment.sources||[]).length);
-      document.body.dataset.continuationKey=increment.continuation_key;
-      document.body.dataset.blocker=increment.blocker;
+      document.body.dataset.sourceResearchRows=String(allSources.length);
+      document.body.dataset.continuationKey=incrementV3.continuation_key;
+      document.body.dataset.blocker=incrementV3.blocker;
       document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));
     })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
   </script>
