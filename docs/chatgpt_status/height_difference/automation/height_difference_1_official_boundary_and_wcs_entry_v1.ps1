@@ -144,17 +144,17 @@ try {
   $stageTestRun = Invoke-PythonEntry -Arguments @($stageInjectorPath,'--self-test')
   if ($stageTestRun.Code -ne 0) { throw "PYTHON_STAGE_WATCHDOG_SELF_TEST_EXIT_$($stageTestRun.Code)" }
   $stageTest = Get-LastJsonReceipt -Lines $stageTestRun.Lines -MissingLabel 'PYTHON_STAGE_WATCHDOG_SELF_TEST_JSON_MISSING'
-  if ($stageTest.slot_id -ne 'height_difference_1' -or $stageTest.state -ne 'PASS' -or [int]$stageTest.checks -ne 12) { throw 'PYTHON_STAGE_WATCHDOG_SELF_TEST_INVALID' }
-  if ([string]$stageTest.script_version -ne '1.0-carrier-python-stage-watchdog-injector') { throw 'PYTHON_STAGE_WATCHDOG_SELF_TEST_VERSION_INVALID' }
+  if ($stageTest.slot_id -ne 'height_difference_1' -or $stageTest.state -ne 'PASS' -or [int]$stageTest.checks -ne 15) { throw 'PYTHON_STAGE_WATCHDOG_SELF_TEST_INVALID' }
+  if ([string]$stageTest.script_version -ne '1.1-carrier-python-stage-total-and-no-output-watchdog-injector') { throw 'PYTHON_STAGE_WATCHDOG_SELF_TEST_VERSION_INVALID' }
 
   $stageRun = Invoke-PythonEntry -Arguments @($stageInjectorPath,'--carrier',$strictCarrier,'--output',$stageCarrier,'--receipt',$stageReceiptPath)
   if ($stageRun.Code -ne 0) { throw "PYTHON_STAGE_WATCHDOG_INJECTOR_EXIT_$($stageRun.Code)" }
   $stage = Get-Content -LiteralPath $stageReceiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
   if ($stage.state -ne 'COMPLETED_PYTHON_STAGE_WATCHDOG_INJECTED' -or [int]$stage.runtime_patch_count -ne 1) { throw 'PYTHON_STAGE_WATCHDOG_RECEIPT_INVALID' }
-  if ([string]$stage.script_version -ne '1.0-carrier-python-stage-watchdog-injector') { throw 'PYTHON_STAGE_WATCHDOG_VERSION_INVALID' }
+  if ([string]$stage.script_version -ne '1.1-carrier-python-stage-total-and-no-output-watchdog-injector') { throw 'PYTHON_STAGE_WATCHDOG_VERSION_INVALID' }
   Assert-Labels -Receipt $stage -Prefix 'PYTHON_STAGE_WATCHDOG' -Labels @('PYTHON_STAGE_REALTIME_WATCHDOG')
-  if ([int]$stage.stage_max_seconds -ne 1650 -or [int]$stage.stage_heartbeat_seconds -ne 30 -or [int]$stage.stage_poll_seconds -ne 5) { throw 'PYTHON_STAGE_WATCHDOG_LIMITS_INVALID' }
-  if ($stage.realtime_stdout_stderr -ne $true -or $stage.independent_output_offsets -ne $true -or $stage.process_tree_cleanup -ne $true) { throw 'PYTHON_STAGE_WATCHDOG_SEMANTICS_INVALID' }
+  if ([int]$stage.stage_max_seconds -ne 1650 -or [int]$stage.stage_no_output_seconds -ne 900 -or [int]$stage.stage_heartbeat_seconds -ne 30 -or [int]$stage.stage_poll_seconds -ne 5) { throw 'PYTHON_STAGE_WATCHDOG_LIMITS_INVALID' }
+  if ($stage.realtime_stdout_stderr -ne $true -or $stage.independent_output_offsets -ne $true -or $stage.child_output_inactivity_timeout -ne $true -or $stage.process_tree_cleanup -ne $true) { throw 'PYTHON_STAGE_WATCHDOG_SEMANTICS_INVALID' }
   Assert-PathSizeHashReceipt -Receipt $stage -ExpectedSource $strictCarrier -ExpectedOutput $stageCarrier -Label 'PYTHON_STAGE_WATCHDOG'
   if (([string]$stage.source_sha256).ToLowerInvariant() -ne ([string]$boundary.output_sha256).ToLowerInvariant()) { throw 'FOUR_STAGE_INJECTOR_HASH_CHAIN_MISMATCH' }
 
@@ -165,10 +165,11 @@ try {
   Write-Output 'MEASUREMENT_IDENTITY_PATCH_COUNT=5'
   Write-Output 'BOUNDARY_BINDING_INJECTOR_CHECKS=10'
   Write-Output 'BOUNDARY_BINDING_PATCH_COUNT=2'
-  Write-Output 'PYTHON_STAGE_WATCHDOG_INJECTOR_CHECKS=12'
+  Write-Output 'PYTHON_STAGE_WATCHDOG_INJECTOR_CHECKS=15'
   Write-Output 'PYTHON_STAGE_WATCHDOG_PATCH_COUNT=1'
   Write-Output 'FOUR_STAGE_INJECTOR_HASH_CHAIN=VERIFIED'
   Write-Output 'PYTHON_STAGE_REALTIME_OUTPUT=ENABLED'
+  Write-Output 'PYTHON_STAGE_NO_OUTPUT_SECONDS=900'
   Write-Output 'PYTHON_STAGE_MAX_SECONDS=1650'
   Write-Output 'STRICT_POLYGON_INTERIOR_ONLY=ENABLED'
   Write-Output 'FINAL_READY=false'
