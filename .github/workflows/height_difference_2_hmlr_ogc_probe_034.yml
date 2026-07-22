@@ -1,0 +1,208 @@
+name: height_difference_2 HMLR OGC probe 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_ogc_probe_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_ogc_probe_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - name: Install geometry parser
+        run: python3 -m pip install --disable-pip-version-check lxml shapely
+      - name: Probe WMS and WFS fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import re
+          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, build_opener, HTTPRedirectHandler
+          from urllib.error import HTTPError, URLError
+          from lxml import etree
+          from shapely.geometry import Point, Polygon, mapping
+          from shapely.validation import make_valid
+
+          BASES = [
+              'https://inspire.landregistry.gov.uk/inspire/ows',
+              'https://inspire.landregistry.gov.uk/inspire/wms',
+              'https://inspire.landregistry.gov.uk/geoserver/inspire/ows',
+          ]
+          POINTS = [
+              {'row_no':30762,'parcel_id':'parcel_30762','e':535564.995,'n':199388.108},
+              {'row_no':46142,'parcel_id':'parcel_46142','e':551991.914,'n':190529.339},
+              {'row_no':61522,'parcel_id':'parcel_61522','e':529493.381,'n':170122.189},
+          ]
+          OUT = Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_ogc_probe.json')
+          POLY = Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_ogc_polygon_candidates_runtime_034.json')
+          UA = 'AAYS-height-difference-2-hmlr-ogc-probe/1.0'
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = build_opener()
+          no_redirect = build_opener(NoRedirect())
+
+          def get(url, accept='*/*', follow=True, timeout=90):
+              req = Request(url, headers={'User-Agent':UA,'Accept':accept})
+              client = opener if follow else no_redirect
+              try:
+                  with client.open(req, timeout=timeout) as r:
+                      data = r.read()
+                      return {'ok':True,'status':getattr(r,'status',200),'final_url':r.geturl(),'content_type':r.headers.get('Content-Type'),'location':r.headers.get('Location'),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'data':data}
+              except HTTPError as e:
+                  data = e.read() if hasattr(e,'read') else b''
+                  return {'ok':False,'status':e.code,'final_url':getattr(e,'url',url),'content_type':e.headers.get('Content-Type') if e.headers else None,'location':e.headers.get('Location') if e.headers else None,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest() if data else None,'data':data,'error':f'HTTPError:{e}'}
+              except Exception as e:
+                  return {'ok':False,'status':None,'final_url':None,'content_type':None,'location':None,'bytes':0,'sha256':None,'data':b'','error':f'{type(e).__name__}:{e}'}
+
+          def public_receipt(r):
+              text = r.get('data',b'')[:500].decode('utf-8','replace')
+              return {k:v for k,v in r.items() if k!='data'} | {'snippet':text}
+
+          probes=[]
+          capabilities=[]
+          for base in BASES:
+              for service, version in [('WMS','1.3.0'),('WMS','1.1.1'),('WFS','2.0.0'),('WFS','1.1.0')]:
+                  params={'SERVICE':service,'REQUEST':'GetCapabilities','VERSION':version}
+                  url=base+'?'+urlencode(params)
+                  r=get(url,'application/xml,text/xml,*/*')
+                  probes.append({'base':base,'service':service,'version':version,**public_receipt(r)})
+                  if r['ok'] and r['bytes']>100:
+                      try:
+                          root=etree.fromstring(r['data'])
+                          names=[(x.text or '').strip() for x in root.xpath('//*[local-name()="Name"]') if (x.text or '').strip()]
+                          feature_types=[(x.text or '').strip() for x in root.xpath('//*[local-name()="FeatureType"]/*[local-name()="Name"]') if (x.text or '').strip()]
+                          layers=[(x.text or '').strip() for x in root.xpath('//*[local-name()="Layer"]/*[local-name()="Name"]') if (x.text or '').strip()]
+                          capabilities.append({'base':base,'service':service,'version':version,'names':sorted(set(names))[:200],'feature_types':sorted(set(feature_types))[:100],'layers':sorted(set(layers))[:100],'sha256':r['sha256']})
+                      except Exception as e:
+                          capabilities.append({'base':base,'service':service,'version':version,'parse_error':f'{type(e).__name__}:{e}','sha256':r['sha256']})
+
+          wfs_candidates=[]
+          for c in capabilities:
+              if c.get('service')=='WFS':
+                  for name in c.get('feature_types',[]):
+                      if 'cadastral' in name.lower() or 'parcel' in name.lower():
+                          wfs_candidates.append((c['base'],c['version'],name))
+          if not wfs_candidates:
+              for base in BASES:
+                  for ver in ('2.0.0','1.1.0'):
+                      wfs_candidates.append((base,ver,'inspire:CP.CadastralParcel'))
+
+          matches=[]
+          wfs_receipts=[]
+          seen=set()
+          for base,ver,type_name in wfs_candidates:
+              key=(base,ver,type_name)
+              if key in seen: continue
+              seen.add(key)
+              for p in POINTS:
+                  bbox=f"{p['e']-5},{p['n']-5},{p['e']+5},{p['n']+5},EPSG:27700"
+                  params={'SERVICE':'WFS','VERSION':ver,'REQUEST':'GetFeature','SRSNAME':'EPSG:27700','BBOX':bbox}
+                  if ver.startswith('2'):
+                      params.update({'TYPENAMES':type_name,'COUNT':'20'})
+                  else:
+                      params.update({'TYPENAME':type_name,'MAXFEATURES':'20'})
+                  url=base+'?'+urlencode(params)
+                  r=get(url,'application/gml+xml,application/xml,text/xml,*/*')
+                  rec={'base':base,'version':ver,'type_name':type_name,'row_no':p['row_no'],**public_receipt(r)}
+                  wfs_receipts.append(rec)
+                  if not (r['ok'] and r['bytes']>100): continue
+                  try:
+                      root=etree.fromstring(r['data'])
+                  except Exception: continue
+                  point=Point(p['e'],p['n'])
+                  for feature in root.xpath('//*[local-name()="CadastralParcel"]'):
+                      poslists=feature.xpath('.//*[local-name()="posList"]/text()')
+                      polygons=[]
+                      for text in poslists:
+                          vals=[float(x) for x in text.split()]
+                          if len(vals)>=8 and len(vals)%2==0:
+                              coords=list(zip(vals[0::2],vals[1::2]))
+                              try:
+                                  geom=make_valid(Polygon(coords))
+                                  if not geom.is_empty: polygons.append(geom)
+                              except Exception: pass
+                      if not polygons: continue
+                      covering=[g for g in polygons if g.covers(point)]
+                      if not covering: continue
+                      geom=max(covering,key=lambda g:g.area)
+                      fields={}
+                      for el in feature.iter():
+                          if len(el)==0 and el.text and el.text.strip():
+                              fields[etree.QName(el).localname]=el.text.strip()
+                      gml_id=feature.get('{http://www.opengis.net/gml/3.2}id') or feature.get('{http://www.opengis.net/gml}id') or feature.get('id')
+                      feature_xml=etree.tostring(feature,encoding='utf-8')
+                      matches.append({'row_no':p['row_no'],'parcel_id':p['parcel_id'],'service_base':base,'wfs_version':ver,'feature_type':type_name,'gml_id':gml_id,'inspire_id':fields.get('localId') or fields.get('inspireId') or fields.get('INSPIREID'),'national_cadastral_reference':fields.get('nationalCadastralReference') or fields.get('NATIONALCADASTRALREFERENCE'),'label':fields.get('label') or fields.get('LABEL'),'geometry_type':geom.geom_type,'geometry_area_m2':round(float(geom.area),3),'geometry_bounds':[round(float(x),3) for x in geom.bounds],'geometry_geojson':mapping(geom),'feature_sha256':hashlib.sha256(feature_xml).hexdigest(),'point_in_polygon':True})
+
+          wms_layers=[]
+          for c in capabilities:
+              if c.get('service')=='WMS':
+                  for name in c.get('layers',[]):
+                      if 'cadastral' in name.lower() or 'parcel' in name.lower():
+                          wms_layers.append((c['base'],c['version'],name))
+          if not wms_layers:
+              for base in BASES:
+                  wms_layers.append((base,'1.3.0','inspire:CP.CadastralParcel'))
+
+          feature_info=[]
+          seen=set()
+          for base,ver,layer in wms_layers:
+              if (base,ver,layer) in seen: continue
+              seen.add((base,ver,layer))
+              for p in POINTS:
+                  bbox=f"{p['e']-10},{p['n']-10},{p['e']+10},{p['n']+10}"
+                  for info in ('application/json','application/vnd.ogc.gml','text/xml','text/plain','text/html'):
+                      params={'SERVICE':'WMS','VERSION':ver,'REQUEST':'GetFeatureInfo','LAYERS':layer,'QUERY_LAYERS':layer,'STYLES':'','BBOX':bbox,'WIDTH':'101','HEIGHT':'101','FORMAT':'image/png','INFO_FORMAT':info,'FEATURE_COUNT':'10'}
+                      if ver=='1.3.0': params.update({'CRS':'EPSG:27700','I':'50','J':'50'})
+                      else: params.update({'SRS':'EPSG:27700','X':'50','Y':'50'})
+                      r=get(base+'?'+urlencode(params),'*/*')
+                      body=r.get('data',b'')
+                      text=body[:2000].decode('utf-8','replace')
+                      ids=sorted(set(re.findall(r'(?i)(?:INSPIREID|localId|gml:id|nationalCadastralReference)[^A-Za-z0-9_.:-]{0,20}([A-Za-z0-9_.:-]{3,100})',text)))
+                      feature_info.append({'base':base,'version':ver,'layer':layer,'row_no':p['row_no'],'info_format':info,**{k:v for k,v in public_receipt(r).items() if k!='snippet'},'candidate_ids':ids,'snippet':text[:500]})
+                      if r['ok'] and r['bytes']>0 and ids: break
+
+          unique_matches=[]
+          dedup=set()
+          for m in matches:
+              key=(m['row_no'],m.get('feature_sha256'))
+              if key not in dedup:
+                  dedup.add(key); unique_matches.append(m)
+
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'official_registry':'HM Land Registry','data_gov_dataset':'INSPIRE Index Polygons spatial data','probes':probes,'capabilities':capabilities,'wfs_receipts':wfs_receipts,'wms_feature_info_receipts':feature_info,'exact_polygon_matches':unique_matches,'exact_polygon_match_count':len(unique_matches),'rows_with_unique_match':sorted(set(m['row_no'] for m in unique_matches)),'official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          OUT.parent.mkdir(parents=True,exist_ok=True)
+          OUT.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          poly={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'source':'HMLR OGC runtime probe','rows':unique_matches,'exact_polygon_match_count':len(unique_matches),'official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          POLY.parent.mkdir(parents=True,exist_ok=True)
+          POLY.write_text(json.dumps(poly,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit fail-closed receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_ogc_probe.json england_map_web/data/aays_21_slots/height_difference_2/hmlr_ogc_polygon_candidates_runtime_034.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 HMLR OGC probe 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
