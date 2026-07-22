@@ -1,63 +1,8 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 import json
 from pathlib import Path
-script = Path(__file__).with_name("017_run_and_audit_slot2.ps1").read_text(encoding="utf-8")
-checks = {
-"slot_scope":"internet_access_2" in script and "internet_access_3" not in script,
-"inner_carrier":"036_run_coverage_aware_inner_carrier.ps1" in script,
-"carrier_selftest":"037_selftest_run_coverage_aware_inner_carrier_contract.py" in script,
-"carrier_selftest_16":'Run-JsonSelftest $innerRunnerSelftest 16' in script,
-"coverage_extractor_selftest":"031_selftest_extract_slot2_coverage_aware_candidates.py" in script,
-"coverage_extractor_selftest_20":'Run-JsonSelftest $coverageExtractorSelftest 20' in script,
-"base_postcode_selftest":"029_selftest_validate_candidate_postcode_resolution.py" in script,
-"base_postcode_selftest_18":'Run-JsonSelftest $basePostcodeResolutionSelftest 18' in script,
-"coverage_resolution_verifier":"032_validate_coverage_aware_postcode_resolution.py" in script,
-"coverage_resolution_selftest":"033_selftest_validate_coverage_aware_postcode_resolution.py" in script,
-"coverage_resolution_selftest_24":'Run-JsonSelftest $coverageResolutionSelftest 24' in script,
-"coverage_resolution_status":"PASS_COVERAGE_AWARE_POSTCODE_RESOLUTION_AUDITED_REVIEW_ONLY" in script,
-"coverage_resolution_before_candidate":script.index("$postcodeResolutionAuditRaw")<script.index("$candidateAuditRaw"),
-"bundle_verifier":"015_verify_published_runner_bundle.py" in script,
-"bundle_selftest":"016_selftest_verify_published_runner_bundle.py" in script,
-"bundle_selftest_23":'Run-JsonSelftest $bundleVerifierSelftest 23' in script,
-"candidate_verifier":"021_verify_candidate_jsonl_integrity.py" in script,
-"candidate_selftest":"022_selftest_verify_candidate_jsonl_integrity.py" in script,
-"candidate_selftest_25":'Run-JsonSelftest $candidateVerifierSelftest 25' in script,
-"candidate_audit_output":"candidate_jsonl_integrity_latest.json" in script,
-"candidate_audit_status":"PASS_COMPLETE_CANDIDATE_JSONL_INTEGRITY_REVIEW_ONLY" in script,
-"candidate_sha_output":"candidate_rows_jsonl_sha256" in script,
-"base_provenance_selftest":"020_selftest_verify_single_run_provenance.py" in script,
-"base_provenance_selftest_24":'Run-JsonSelftest $baseProvenanceSelftest 24' in script,
-"extended_provenance_verifier":"034_verify_extended_single_run_provenance.py" in script,
-"extended_provenance_selftest":"035_selftest_verify_extended_single_run_provenance.py" in script,
-"extended_provenance_selftest_24":'Run-JsonSelftest $extendedProvenanceSelftest 24' in script,
-"extended_provenance_status":"PASS_EXTENDED_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY" in script,
-"provenance_artifact_20":"provenance_artifact_count -ne 20" in script,
-"execution_code_artifact_4":"execution_code_artifact_count -ne 4" in script,
-"runtime_exact_substitution_gate":"runtime_exact_extractor_substitution_verified -ne $true" in script,
-"consistency_verifier":"024_validate_review_contract_consistency.py" in script,
-"consistency_selftest":"025_selftest_validate_review_contract_consistency.py" in script,
-"consistency_selftest_15":'Run-JsonSelftest $consistencyVerifierSelftest 15' in script,
-"consistency_audit_output":"review_contract_consistency_latest.json" in script,
-"consistency_audit_status":"PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" in script,
-"combined_validation_415":"$expectedCombinedValidation = 415" in script and "combined_validation_total" in script,
-"consistency_before_network":script.index("$consistencyAuditRaw")<script.index("$innerArgs"),
-"effective_work_root":"outputs/internet_access_2_verified_run" in script and "$effectiveWorkRoot" in script,
-"carrier_output":"internet_access_2_coverage_aware_carrier_latest.json" in script,
-"bundle_audit_output":"runner_bundle_audit_latest.json" in script,
-"provenance_audit_output":"runner_provenance_audit_latest.json" in script,
-"base_runner_code_output":"base_runner_code_sha256" in script,
-"all_code_hash_outputs":"runtime_runner_code_sha256" in script and "coverage_aware_extractor_code_sha256" in script and "coverage_aware_carrier_code_sha256" in script,
-"exact_rows":"$expectedRows = 30761" in script,
-"inner_failure_propagated":"exit $LASTEXITCODE" in script,
-"candidate_before_bundle":script.index("$candidateAuditRaw")<script.index("$bundleAuditRaw"),
-"bundle_before_provenance":script.index("$bundleAuditRaw")<script.index("$provenanceAuditRaw"),
-"no_business_write":"actual_business_data_rows_written = 0" in script,
-"no_scores":"scores_written = 0" in script,
-"no_db_migration":"db_write = $false" in script and "migration = $false" in script,
-"no_deploy":"production_deploy = $false" in script,
-"not_final":"final_ready = $false" in script,
-"schema_v8":"schema_version = 8" in script}
-failed=[name for name,ok in checks.items() if not ok]
-if failed: raise AssertionError(f"failed: {failed}")
-print(json.dumps({"status":"PASS","tests_passed":len(checks),"tests_total":len(checks),"test_names":list(checks),"actual_business_data_rows_written":0,"final_ready":False},sort_keys=True))
+s=Path(__file__).with_name('017_run_and_audit_slot2.ps1').read_text()
+checks={'slot_scope':'internet_access_2' in s and 'internet_access_3' not in s,'dispatch_root_param':'DispatchEvidenceRoot' in s,'expected_head_param':'ExpectedReviewHeadSha' in s,'freshness_param':'DispatchFreshnessSeconds = 300' in s,'dispatch_verifier':'038_enforce_fresh_dispatch_execution_gate.py' in s,'dispatch_selftest':'039_selftest_enforce_fresh_dispatch_execution_gate.py' in s,'dispatch_selftest_20':'Run-JsonSelftest $dispatchVerifierSelftest 20' in s,'dispatch_status':'PASS_FRESH_13_OF_13_DISPATCH_EXECUTION_GATE' in s,'dispatch_13':'$dispatchAudit.gate_count -ne 13' in s and '$dispatchAudit.passed_gate_count -ne 13' in s,'dispatch_zero_blocked':'$dispatchAudit.blocked_gate_count -ne 0' in s,'dispatch_evidence_8':'$dispatchAudit.evidence_file_count -ne 8' in s,'dispatch_head_bound':'$dispatchAudit.review_pr_head_sha -ne $ExpectedReviewHeadSha' in s,'dispatch_before_consistency':s.index('$dispatchAuditRaw')<s.index('$consistencyAuditRaw'),'dispatch_before_network':s.index('$dispatchAuditRaw')<s.index('$innerArgs'),'consistency_before_network':s.index('$consistencyAuditRaw')<s.index('$innerArgs'),'dispatch_bound_verifier':'040_verify_dispatch_bound_single_run_provenance.py' in s,'dispatch_bound_selftest':'041_selftest_verify_dispatch_bound_single_run_provenance.py' in s,'dispatch_bound_selftest_18':'Run-JsonSelftest $dispatchBoundProvenanceSelftest 18' in s,'dispatch_bound_status':'PASS_DISPATCH_BOUND_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY' in s,'provenance_21':'provenance_artifact_count -ne 21' in s,'dispatch_artifact_1':'dispatch_execution_gate_artifact_count -ne 1' in s,'combined_475':'$expectedCombinedValidation = 475' in s,'consistency_19':'Run-JsonSelftest $consistencyVerifierSelftest 19' in s,'extended_24':'Run-JsonSelftest $extendedProvenanceSelftest 24' in s,'carrier_16':'Run-JsonSelftest $innerRunnerSelftest 16' in s,'coverage_extractor_20':'Run-JsonSelftest $coverageExtractorSelftest 20' in s,'coverage_resolution_24':'Run-JsonSelftest $coverageResolutionSelftest 24' in s,'base_postcode_18':'Run-JsonSelftest $basePostcodeResolutionSelftest 18' in s,'bundle_23':'Run-JsonSelftest $bundleVerifierSelftest 23' in s,'candidate_25':'Run-JsonSelftest $candidateVerifierSelftest 25' in s,'base_prov_24':'Run-JsonSelftest $baseProvenanceSelftest 24' in s,'inner_carrier':'036_run_coverage_aware_inner_carrier.ps1' in s,'coverage_resolution_verifier':'032_validate_coverage_aware_postcode_resolution.py' in s,'bundle_verifier':'015_verify_published_runner_bundle.py' in s,'candidate_verifier':'021_verify_candidate_jsonl_integrity.py' in s,'candidate_before_bundle':s.index('$candidateAuditRaw')<s.index('$bundleAuditRaw'),'bundle_before_final_provenance':s.index('$bundleAuditRaw')<s.index('$provenanceAuditRaw'),'gate_output':'dispatch_execution_gate_latest.json' in s,'gate_chain_output':'dispatch_evidence_chain_sha256' in s,'gate_sha_output':'dispatch_execution_gate_sha256' in s,'final_head_output':'dispatch_review_pr_head_sha' in s,'execution_code_4':'execution_code_artifact_count -ne 4' in s,'exact_substitution':'runtime_exact_extractor_substitution_verified -ne $true' in s,'all_code_hashes':all(x in s for x in ('base_runner_code_sha256','runtime_runner_code_sha256','coverage_aware_extractor_code_sha256','coverage_aware_carrier_code_sha256')),'exact_rows':'$expectedRows = 30761' in s,'work_root':'outputs/internet_access_2_verified_run' in s,'inner_failure':'exit $LASTEXITCODE' in s,'schema_v9':'schema_version = 9' in s,'final_status':'COMPLETE_REAL_RUN_FRESH_13_OF_13_DISPATCH' in s,'no_business':'actual_business_data_rows_written = 0' in s,'no_scores':'scores_written = 0' in s,'no_db':'db_write = $false' in s,'no_migration':'migration = $false' in s,'no_deploy':'production_deploy = $false' in s,'not_final':'final_ready = $false' in s,'head_passed_to_gate':'--expected-review-head-sha $ExpectedReviewHeadSha' in s,'head_passed_to_provenance':'$dispatchBoundProvenanceVerifier --work-root $effectiveWorkRoot --web-root $webRoot --expected-review-head-sha $ExpectedReviewHeadSha' in s,'freshness_passed':'--freshness-seconds $DispatchFreshnessSeconds' in s,'dispatch_root_required':'Test-Path -LiteralPath $DispatchEvidenceRoot -PathType Container' in s,'required_files_loop':'foreach ($required in @(' in s,'required_outputs':'foreach ($requiredOutput in @(' in s,'review_only_gate':'Fresh dispatch execution gate violated review-only boundary' in s,'consistency_status':'PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY' in s,'candidate_status':'PASS_COMPLETE_CANDIDATE_JSONL_INTEGRITY_REVIEW_ONLY' in s,'bundle_status':'PASS_REAL_RUN_WEB_BUNDLE_AUDITED_REVIEW_ONLY' in s,'coverage_status':'PASS_COVERAGE_AWARE_POSTCODE_RESOLUTION_AUDITED_REVIEW_ONLY' in s,'provenance_head_check':'$provenanceAudit.dispatch_review_pr_head_sha -ne $ExpectedReviewHeadSha' in s,'single_canonical_runner':'$innerRunner = Join-Path $automationRoot "036_run_coverage_aware_inner_carrier.ps1"' in s}
+assert len(checks)==68,len(checks);failed=[k for k,v in checks.items() if not v]
+if failed:raise AssertionError(failed)
+print(json.dumps({'status':'PASS','tests_passed':68,'tests_total':68,'test_names':list(checks),'actual_business_data_rows_written':0,'final_ready':False},sort_keys=True))
