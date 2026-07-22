@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateRange(30,1440)][int]$StaleRunningMinutes = 120,
+  [ValidateRange(0,1440)][int]$StaleRunningMinutes = 0,
   [ValidateRange(1,5)][int]$MaxRequeues = 3
 )
 
@@ -154,8 +154,11 @@ if ($checkpointValid) {
   Disable-RemainingRecoveryTasks 'VALID_CANONICAL_PROBE_WATCHDOG_CHAIN_CHECKPOINT'
 } else {
   if ($queueStatus -eq 'done') { $retryReason += 'QUEUE_DONE_WITHOUT_VALID_CHECKPOINT' }
-  if ($queueStatus -eq 'running' -and (($startedAgeMinutes -ne $null -and $startedAgeMinutes -ge $StaleRunningMinutes) -or ($queueAgeMinutes -ne $null -and $queueAgeMinutes -ge $StaleRunningMinutes))) {
-    $retryReason += 'QUEUE_RUNNING_STALE'
+  if ($queueStatus -eq 'running') {
+    # The reconciler itself is running under the single shared-runner lock.
+    # Therefore the canonical task cannot still be active in the same runner pass;
+    # a remaining canonical `running` queue record is orphaned and retryable.
+    $retryReason += 'QUEUE_RUNNING_ORPHANED_WHEN_RECONCILER_SELECTED'
   }
   if ($automationExitCode -ne $null -and $automationExitCode -ne 0) { $retryReason += ('AUTOMATION_EXIT_NONZERO_' + $automationExitCode) }
   if ($completedBlockers -contains 'AUTOMATION_EXIT_NONZERO') { $retryReason += 'COMPLETED_BLOCKER_AUTOMATION_EXIT_NONZERO' }
@@ -179,8 +182,6 @@ if ($checkpointValid) {
   } elseif ($retryReason.Count -gt 0 -and $requeueCount -ge $MaxRequeues) {
     $decision = 'MAX_REQUEUES_EXHAUSTED'
     Disable-RemainingRecoveryTasks 'MAX_REQUEUES_EXHAUSTED'
-  } elseif ($queueStatus -eq 'running') {
-    $decision = 'RUNNING_NOT_STALE_NO_REQUEUE'
   } elseif ($queueStatus -in @('pickup_requested','queued','ready','pending','pending_repo_queue','queued_for_single_shared_runner')) {
     $decision = 'CANONICAL_TASK_ALREADY_SELECTABLE'
   } else {
