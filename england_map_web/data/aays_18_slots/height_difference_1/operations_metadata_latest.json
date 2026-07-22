@@ -1,9 +1,9 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 44,
-  "complete_count": 44,
+  "operation_count": 47,
+  "complete_count": 47,
   "operations": [
     {"operation_id":"HD1-OP-057","label":"EA Composite survey-index OGC collection discovered","state":"COMPLETE","evidence":"LIDAR_Composite_1m_DTM_2022_extents; official Environment Agency OGC Features service"},
     {"operation_id":"HD1-OP-058","label":"Composite survey metadata fields verified","state":"COMPLETE","evidence":"filename, tilename, polygon_id, resolution, year, sd_flown and ed_flown are queryable"},
@@ -48,7 +48,10 @@
     {"operation_id":"HD1-OP-097","label":"Signed S3 object path pattern cross-validated","state":"COMPLETE","evidence":"External delivery trace shows /inspire/<authority>.zip and a 60-second X-Amz signed redirect; retained as held delivery evidence only"},
     {"operation_id":"HD1-OP-098","label":"Exact Barking and Dagenham S3 object path allowlist implemented","state":"COMPLETE","evidence":"Resolver accepts only /inspire/London_Borough_of_Barking_and_Dagenham.zip on the S3 host; host-only validation is no longer sufficient"},
     {"operation_id":"HD1-OP-099","label":"Wrong-authority S3 object rejection implemented","state":"COMPLETE","evidence":"A different authority ZIP on the correct S3 host now fails closed before bytes can enter the evidence chain"},
-    {"operation_id":"HD1-OP-100","label":"HMLR resolver v1.4 local verification completed","state":"COMPLETE","evidence":"Python compilation and 10/10 deterministic URL, object-path and ZIP safety checks passed locally"}
+    {"operation_id":"HD1-OP-100","label":"HMLR resolver v1.4 local verification completed","state":"COMPLETE","evidence":"Python compilation and 10/10 deterministic URL, object-path and ZIP safety checks passed locally"},
+    {"operation_id":"HD1-OP-101","label":"Official EA WCS NoData sentinel verified","state":"COMPLETE","evidence":"Environment Agency WCS guidance states GeoTIFF NoData Value=-3.4028235e+38"},
+    {"operation_id":"HD1-OP-102","label":"Classic TIFF header and NoData guard implemented","state":"COMPLETE","evidence":"Independent guard requires II 42 or MM 42 classic TIFF headers and filters metadata NoData plus the official EA sentinel before statistics"},
+    {"operation_id":"HD1-OP-103","label":"EA raster guard deterministic test completed","state":"COMPLETE","evidence":"Local Python compilation and 8/8 tests passed: endian headers, malformed/BigTIFF rejection, sentinel filtering, metadata NoData filtering and empty-result rejection"}
   ],
   "fake_data": false,
   "final_ready": false
