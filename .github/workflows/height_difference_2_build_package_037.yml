@@ -1,0 +1,73 @@
+name: height_difference_2 build package 037
+on:
+  pull_request:
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/037_build_package_trigger.json'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-distribution-gradient-037-20260722
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build increment 037 package
+        run: python docs/chatgpt_status/topography/shards/height_difference_2/automation/037_build_distribution_package.py
+      - name: Install Chromium
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Final HTTP DOM acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          SLOT='england_map_web/data/aays_21_slots/height_difference_2'
+          python -m http.server 8012 --directory "$SLOT" >/tmp/hd2_http_037.log 2>&1 &
+          PID=$!; trap 'kill $PID || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8012/index.html >/dev/null && break; sleep 1; done
+          python - <<'PY'
+          import hashlib,json,pathlib
+          from datetime import datetime,timezone
+          from playwright.sync_api import sync_playwright
+          slot=pathlib.Path('england_map_web/data/aays_21_slots/height_difference_2')
+          doc=pathlib.Path('docs/chatgpt_status/topography/shards/height_difference_2')
+          url='http://127.0.0.1:8012/index.html'; console=[]; pageerrs=[]
+          expected={'parcel_30762':['HD2-DIST-016','0.070028','0.6412'],'parcel_46142':['HD2-DIST-017','0.204889','1.9963'],'parcel_61522':['HD2-DIST-018','0.129234','1.2915']}
+          with sync_playwright() as p:
+            b=p.chromium.launch(headless=True); page=b.new_page(viewport={'width':1920,'height':1080})
+            page.on('console',lambda m: console.append(m.text) if m.type=='error' else None); page.on('pageerror',lambda e: pageerrs.append(str(e)))
+            response=page.goto(url,wait_until='networkidle',timeout=120000)
+            page.wait_for_function("document.querySelector('#message') && !document.querySelector('#message').textContent.includes('Yükleniyor')",timeout=120000)
+            message=page.locator('#message').inner_text(); metrics=page.locator('#metrics').inner_text()
+            operation_rows=page.locator('#rows tr').count(); source_rows=page.locator('#sources tr').count(); example_rows=page.locator('#examples tr').count()
+            snaps={}
+            for parcel,vals in expected.items():
+              rows=page.locator('#examples tr',has_text=parcel); texts=[rows.nth(i).inner_text() for i in range(rows.count())]
+              snaps[parcel]={'count':rows.count(),'distribution_rows':[t for t in texts if vals[0] in t],'expected_values':vals}
+            shot=pathlib.Path('/tmp/hd2_037.png'); page.screenshot(path=str(shot),full_page=True)
+            status=response.status if response else None; version=b.version; b.close()
+          checks={'http_200':status==200,'message_success':'Yükleme hatası' not in message and '708' in message and '62' in message and '42' in message,'operation_rows_708':operation_rows==708,'source_rows_62':source_rows==62,'example_rows_42':example_rows==42,'numeric_metric_3':'Sayısal sonuç: 3' in metrics,'distribution_metric_pass':'Dağılım/gradient: PASS_DUAL_MASK_AND_SHA_REPLAY_3_OF_3' in metrics,'three_distribution_rows_visible':all(len(v['distribution_rows'])==1 and all(x in v['distribution_rows'][0] for x in v['expected_values']) for v in snaps.values()),'no_console_errors':not console,'no_page_errors':not pageerrs}
+          state='PASS' if all(checks.values()) else 'FAIL'
+          receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':datetime.now(timezone.utc).isoformat(),'state':state,'url':url,'http_status':status,'browser':'Chromium','browser_version':version,'message':message,'operation_rows':operation_rows,'source_rows':source_rows,'example_rows':example_rows,'checks':checks,'row_snapshots':snaps,'console_errors':console,'page_errors':pageerrs,'screenshot_sha256':hashlib.sha256(shot.read_bytes()).hexdigest(),'fake_data':False,'final_ready':False}
+          if state!='PASS': raise SystemExit(json.dumps(receipt,ensure_ascii=False,indent=2))
+          for path in [doc/'validation/042_final_live_http_dom_acceptance_037.json',slot/'port_8012_web_acceptance.json',slot/'port_8012_web_acceptance_final_037.json']:
+            path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
+          progress=json.loads((slot/'progress_increment_037.json').read_text()); progress['live_http_browser_state']='PASS_FINAL_708_62_42_CHROMIUM_NO_CONSOLE_OR_PAGE_ERRORS'; progress['updated_at']=receipt['validated_at']; (slot/'progress_increment_037.json').write_text(json.dumps(progress,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+          manifest=json.loads((slot/'operations_manifest.json').read_text()); manifest['pending_runtime_evidence_files']=[]; manifest['updated_at']=receipt['validated_at']; (slot/'operations_manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+          vp=doc/'validation/041_distribution_gradient_web_package_20260722.json'; val=json.loads(vp.read_text());
+          for c in val['checks']:
+            if c['check']=='final_037_live_http_browser_acceptance': c.update({'state':'PASS','observed':'HTTP_200_DOM_708_62_42_NO_CONSOLE_OR_PAGE_ERRORS'})
+          val.update({'pass_count':21,'not_run_count':1,'fail_count':0,'validated_at':receipt['validated_at']}); vp.write_text(json.dumps(val,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Commit generated result package
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/chatgpt_status/topography/shards/height_difference_2 england_map_web/data/aays_21_slots/height_difference_2
+          git commit -m 'height_difference_2: build distribution gradient increment 037 [skip ci]' || exit 0
+          git push
