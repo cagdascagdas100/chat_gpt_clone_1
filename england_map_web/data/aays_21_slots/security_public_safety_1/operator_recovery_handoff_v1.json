@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "checked_on": "2026-07-22",
+  "status": "READY_EXISTING_F_HOST_GUARDED_RECOVERY_HANDOFF_RUNTIME_NOT_EXECUTED",
+  "acceptance_evidence": false,
+  "source_of_truth": {
+    "repo": "cagdascagdas100/chat_gpt_clone_1",
+    "branch": "codex/aays-single-runner-v5-20260706",
+    "remote_head_observed_before_handoff": "829f7e8e39bd83e8588d53bddef7f5e703e1a516",
+    "global_alias_task": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+    "holder_slot": "height_difference_2",
+    "holder_attempt": "height-difference-2-20260721-020",
+    "holder_priority": 1,
+    "holder_state": "unclaimed_stale",
+    "security_task": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+    "security_attempt": "security-public-safety-1-20260722-017",
+    "security_progress": {"completed_units":5,"total_units":8,"overall_percent":62.5},
+    "uploaded_note_task": "terrayield-046-runner-sync-recovery-then-accuracy-expansion",
+    "uploaded_note_task_found_on_remote": false,
+    "resolution": "REMOTE_BRANCH_AND_SLOT_CONTROL_FILES_ARE_CANONICAL",
+    "child_or_parallel_start_from_uploaded_note_forbidden": true
+  },
+  "operator_handoff": {
+    "canonical_repo_root": "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707",
+    "required_branch": "codex/aays-single-runner-v5-20260706",
+    "operator_recovery_script": "docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1",
+    "operator_recovery_blob_sha": "1632d6d7467c21d0ba0bfdd880a137afb2f905f3",
+    "restart_helper_script": "docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1",
+    "restart_helper_blob_sha": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1",
+    "exact_command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\automation\\030_apply_attempt_020_existing_f_runner_recovery.ps1\"",
+    "run_location": "EXISTING_CANONICAL_F_HOST_ONLY",
+    "new_runner": false,
+    "parallel_runner": false,
+    "global_alias_overwrite": false
+  },
+  "preflight_contract": [
+    {"order":1,"gate":"canonical_f_repo_root_exists","failure":"CANONICAL_F_REPO_ROOT_MISSING"},
+    {"order":2,"gate":"git_executable_exists","failure":"GIT_EXECUTABLE_NOT_FOUND"},
+    {"order":3,"gate":"canonical_repo_clean","failure":"BLOCKED_CANONICAL_F_REPO_DIRTY"},
+    {"order":4,"gate":"active_branch_exact","expected":"codex/aays-single-runner-v5-20260706","failure":"BLOCKED_CANONICAL_BRANCH_MISMATCH"},
+    {"order":5,"gate":"fetch_origin_branch","failure":"BLOCKED_CANONICAL_FETCH_FAILED"},
+    {"order":6,"gate":"read_remote_head","failure":"BLOCKED_REMOTE_HEAD_READ_FAILED"},
+    {"order":7,"gate":"align_clean_local_to_remote","failure":"BLOCKED_CANONICAL_RESET_FAILED"},
+    {"order":8,"gate":"remote_head_exactly_applied","failure":"BLOCKED_REMOTE_HEAD_NOT_APPLIED"},
+    {"order":9,"gate":"restart_helper_exists","failure":"BLOCKED_ATTEMPT_020_HELPER_MISSING"},
+    {"order":10,"gate":"restart_helper_blob_exact","expected":"b3a18bcdb1b7158d18aab33b42d5797342d23cd1","failure":"BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH"},
+    {"order":11,"gate":"single_process_only","failure":"BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES"},
+    {"order":12,"gate":"existing_daemon_preserved_or_zero_process_start","failure":"BLOCKED_MULTIPLE_PERSISTENT_DAEMONS_AFTER_START"}
+  ],
+  "expected_outputs": [
+    {"order":1,"path":"docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/015_operator_recovery_preflight_latest.json","present":false,"success_status":"ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_INVOKED"},
+    {"order":2,"path":"docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/014_existing_canonical_runner_restart_latest.json","present":false,"success_statuses":["CANONICAL_PERSISTENT_DAEMON_ALREADY_ACTIVE_NO_NEW_PROCESS","EXISTING_CANONICAL_PERSISTENT_DAEMON_RESTARTED"]},
+    {"order":3,"path":"docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json","present":"RUNTIME_UNKNOWN","success_condition":"fresh_non_stale_heartbeat"},
+    {"order":4,"path":"docs/chatgpt_status/_shared/slots_21/height_difference_2/heartbeat_latest.json","present":true,"current_state":"unclaimed_stale","success_condition":"priority_1_claim_then_complete_or_release"},
+    {"order":5,"path":"docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/012_security_public_safety_1_v17_runtime_preflight_latest.json","present":false,"success_condition":"preflight_pass"},
+    {"order":6,"path":"england_map_web/data/aays_21_slots/security_public_safety_1/canonical_acceptance_v17_latest.json","present":false,"success_condition":"acceptance_pass_130_of_130_16_of_16_browser_zero_console"}
+  ],
+  "after_recovery": [
+    "Wait for fresh persistent-daemon heartbeat.",
+    "Allow priority-1 height_difference_2 to be claimed and completed or released.",
+    "Do not overwrite the global control alias.",
+    "Existing runner may then claim security_public_safety_1 v17.",
+    "Runtime acceptance PASS may promote display only to 7/8 and 87.5%.",
+    "Single publisher commit, push and remote readback are required before 8/8 evaluation."
+  ],
+  "safety": {
+    "single_runner_only": true,
+    "new_runner_forbidden": true,
+    "parallel_runner_forbidden": true,
+    "child_accuracy_expansion_forbidden_in_this_slot": true,
+    "global_alias_overwrite_forbidden": true,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}
