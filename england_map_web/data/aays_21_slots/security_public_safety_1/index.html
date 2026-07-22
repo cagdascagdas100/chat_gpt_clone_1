@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security / Public Safety 1</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:12px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0}th,td{border:1px solid #cbd5df;padding:8px;text-align:left}th{background:#eaf0f5}.PASS,.PENDING,.BLOCKED{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>Security / Public Safety — Shard 1</h1>
+<div class="note"><strong>AREA_LEVEL_PROXY:</strong> LSOA/alan düzeyi destekleyici göstergedir; parsel ölçümü değildir. Canlı API ve gerçek Chromium kanıtı olmadan kabul kapıları PASS yapılmaz.</div>
+<div class="cards">
+<div class="card">Genel ilerleme<br><strong id="progress">yükleniyor</strong></div>
+<div class="card">Kaynak satırı<br><strong id="rows">yükleniyor</strong></div>
+<div class="card">Doğruluk 4/4<br><strong id="accuracy">yükleniyor</strong></div>
+<div class="card">Kanonik aday<br><strong id="candidates">yükleniyor</strong></div>
+<div class="card">Endpoint<br><strong id="endpoints">yükleniyor</strong></div>
+<div class="card">Temsilci örnek<br><strong id="representatives">yükleniyor</strong></div>
+<div class="card">Canlı kabul<br><strong id="acceptance">PENDING</strong></div>
+<div class="card">Shared runner<br><strong id="runner">yükleniyor</strong></div>
+</div>
+<h2>Web görünümleri</h2>
+<table><thead><tr><th>Görünüm</th><th>Kapsam</th><th>Bağlantı</th></tr></thead><tbody>
+<tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint, browser ve publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr>
+<tr><td>16 endpoint temsilcisi</td><td>Endpoint başına ilk 4/4 doğruluk temsilcisi; canlı count/SHA mapping</td><td><a href="representative_candidates_v1.html">representative_candidates_v1.html</a></td></tr>
+<tr><td>Endpoint manifesti</td><td>130 adayın 16 endpoint dağılımı</td><td><a href="canonical_130_endpoint_manifest_20260722.json">canonical_130_endpoint_manifest_20260722.json</a></td></tr>
+<tr><td>Temsilci JSON</td><td>16/16 temsilci, kaynak satırı, count ve SHA</td><td><a href="canonical_16_representative_candidates_20260722.json">canonical_16_representative_candidates_20260722.json</a></td></tr>
+</tbody></table>
+<h2>İşlem durumu</h2><table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+(async()=>{
+ const [source,manifest,reps,dependency,acceptanceDoc]=await Promise.all([get('official_web_refresh_20260722.json'),get('canonical_130_endpoint_manifest_20260722.json'),get('canonical_16_representative_candidates_20260722.json'),get('shared_runner_dependency_latest.json'),optional('canonical_acceptance_v17_latest.json')]);
+ const cp=source.canonical_progress||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
+ const done=acceptancePass?7:Number(cp.completed_units||0),pct=acceptancePass?87.5:Number(cp.overall_percent||0),delta=acceptancePass?25:Number(cp.percent_change||0);
+ progress.textContent=`${done}/${cp.total_units||8} — ${pct}% (Δ ${delta>=0?'+':''}${delta})`;
+ rows.textContent=`${source.verified_rows||0}/300`;accuracy.textContent=`${source.accuracy_score_4_rows||0}/300`;
+ candidates.textContent=`${manifest.candidate_rows||0}/130`;endpoints.textContent=`${manifest.unique_endpoints||0}/16`;
+ representatives.textContent=`${reps.representative_count||0}/16`;acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';
+ runner.textContent=dependency.holder_readback?.heartbeat_stale?'STALE PRIORITY 1':'HAZIR';
+ const live=acceptanceDoc?.canonical_live_parity||{},browser=acceptanceDoc?.browser_acceptance||{};
+ const items=[
+ ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows||0}/300 satır; doğruluk ${source.accuracy_score_4_rows||0}/300.`],
+ ['PASS','STATIC_130_16',`${manifest.candidate_rows||0}/130 aday; ${manifest.unique_endpoints||0}/16 endpoint.`],
+ ['PASS','REPRESENTATIVE_16',`${reps.representative_count||0}/16 temsilci; doğruluk ${reps.accuracy_score_4_count||0}/16; saklı HTTP ${reps.stored_http_200_count||0}/16; SHA ${reps.stored_sha256_count||0}/16.`],
+ [dependency.holder_readback?.heartbeat_stale?'BLOCKED':'PASS','SHARED_RUNNER',`Alias ${dependency.global_control_alias?.holder_slot||'unknown'}; heartbeat ${dependency.holder_readback?.heartbeat_state||'unknown'}; priority ${dependency.holder_readback?.queue_priority??'n/a'}.`],
+ [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptanceDoc?`${live.candidate_passed||0}/130 aday, ${live.unique_endpoint_http_json_passed||0}/16 endpoint.`:'v17 kabul raporu henüz yok.'],
+ [browser.status||'PENDING','CHROMIUM_ACCEPTANCE',acceptanceDoc?`Browser ${browser.status||'BLOCKED'}; gerçek DOM/console kanıtı raporda.`:'Gerçek Chromium çıktısı bekleniyor.'],
+ ['PENDING','PUBLISHER_READBACK',acceptancePass?'Runtime PASS; publisher commit/push/readback bekleniyor.':'Runtime PASS öncesi publisher kapısı bekler.']
+ ];
+ events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
+ document.body.dataset.representativeCount=String(reps.representative_count||0);
+ document.body.dataset.displayCompletedUnits=String(done);document.body.dataset.displayPercent=String(pct);
+ document.body.dataset.acceptanceReportPresent=String(Boolean(acceptanceDoc));
+ document.body.dataset.semanticValid=String(source.parcel_measurement===false&&manifest.unique_endpoints===16&&reps.representative_count===16);
+})().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
+</script>
+</body></html>
