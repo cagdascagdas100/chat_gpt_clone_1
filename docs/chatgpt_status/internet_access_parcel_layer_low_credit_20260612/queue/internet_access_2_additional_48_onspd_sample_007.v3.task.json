@@ -1,0 +1,67 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "task_id": "internet-access-2-additional-48-onspd-sample-20260722T032500Z",
+  "attempt_id": "f2b9956f6de04e13a3024c2c86d0f1f9",
+  "idempotency_key": "ecfb40940be1b88785823903f2c4b9e9818c98be5b4c1540d47096a0234be5dc",
+  "status": "queued",
+  "priority": "P0",
+  "sequential_after_task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/007_onspd_additional_48_sample.py",
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/internet.geojson",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/004_24_sample_postcode_normalized_candidates.jsonl"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/007_additional_48_onspd_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/007_additional_48_rows_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/007_additional_48_validation.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/007_onspd_additional_sample_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/007_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/reports/007_additional_48_onspd_sample.md",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/007_progress.jsonl"
+  ],
+  "resource_class": ["light_read", "network_fetch"],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 3600,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONS_Postcode_Directory_%28May_2026%29_for_the_United_Kingdom_%28Hosted_Table%29/FeatureServer/0",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0"
+    ],
+    "source_snapshot_date": "ONSPD 2026-05",
+    "source_discovery_required": false,
+    "measurement_level": "postcode identity",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "retain canonical row_no parcel_id and HMLR identity; exclude the accepted 24-row sample; choose 48 deterministic evenly distributed existing shard rows; exact normalized PCDS join only",
+    "confidence_method": "exact live ONSPD postcode confirms identity at 2/4 only; no coverage score without an exact Ofcom r2 row",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "postcode is absent after two official ONSPD services",
+      "postcode is terminated",
+      "official service schema differs"
+    ]
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "requested_at": "2026-07-22T03:25:00Z"
+}
