@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """Fail-closed HMLR boundary + EA WCS evidence runner for height_difference_1.
 
-This script never invents geometry or elevation. It writes a business row only when
-all required official-byte, CRS, unique polygon-binding, raster, finite-pixel and
-provenance gates pass. The 10 m requests are service/point QA only; the terrain
-height difference is computed from a second DTM request covering the full bound
-polygon.
+No geometry, elevation, confidence percentage or successful execution is invented.
+The 10 m requests are per-parcel service QA. The terrain result is calculated only
+from a second DTM request covering the complete uniquely bound HMLR polygon.
 """
 from __future__ import annotations
 
 import argparse
 import concurrent.futures
 import contextlib
-import dataclasses
 import datetime as dt
 import hashlib
 import html.parser
@@ -20,24 +17,30 @@ import json
 import math
 import os
 from pathlib import Path
-import re
 import shutil
 import sys
 import tempfile
 import time
 from typing import Any, Iterable
-from urllib.parse import urlencode, urljoin
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 SLOT_ID = "height_difference_1"
+SCRIPT_VERSION = "1.1-hardened-fail-closed"
 PARTITION = {"start": 1, "end": 30761, "count": 30761}
+EXPECTED_SOURCE_BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
+EXPECTED_SOURCE_FEATURE_COUNT = 92283
+EXPECTED_PARCELS = [f"parcel_{i}" for i in range(1, 12)]
 HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 HMLR_AUTHORITY = "London Borough of Barking and Dagenham"
 DTM_ENDPOINT = "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs"
 DSM_ENDPOINT = "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs"
 DTM_COVERAGE = "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
 DSM_COVERAGE = "9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m"
-USER_AGENT = "AAYS-height-difference-evidence/1.0 (+https://github.com/cagdascagdas100/chat_gpt_clone_1)"
+USER_AGENT = "AAYS-height-difference-evidence/1.1 (+https://github.com/cagdascagdas100/chat_gpt_clone_1)"
+MAX_GML_BYTES = 1_000_000_000
+MAX_TIFF_BYTES = 250_000_000
+MAX_FULL_POLYGON_CELLS = 4_000_000
 
 
 class EvidenceError(RuntimeError):
@@ -45,7 +48,7 @@ class EvidenceError(RuntimeError):
 
 
 class TableLinkParser(html.parser.HTMLParser):
-    """Capture row text and links without requiring BeautifulSoup."""
+    """Capture table-row text and links without third-party HTML dependencies."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -64,10 +67,8 @@ class TableLinkParser(html.parser.HTMLParser):
                 self._links.append(href)
 
     def handle_data(self, data: str) -> None:
-        if self.in_row:
-            text = data.strip()
-            if text:
-                self._text.append(text)
+        if self.in_row and data.strip():
+            self._text.append(data.strip())
 
     def handle_endtag(self, tag: str) -> None:
         if tag.lower() == "tr" and self.in_row:
@@ -83,6 +84,11 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def sha256_json(value: Any) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256_bytes(encoded)
+
+
 def atomic_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -90,7 +96,13 @@ def atomic_json(path: Path, payload: dict[str, Any]) -> None:
     os.replace(tmp, path)
 
 
-def fetch_bytes(url: str, *, timeout: int = 180, retries: int = 3) -> tuple[bytes, dict[str, str]]:
+def fetch_bytes(
+    url: str,
+    *,
+    timeout: int = 180,
+    retries: int = 3,
+    max_bytes: int,
+) -> tuple[bytes, dict[str, str]]:
     last: Exception | None = None
     for attempt in range(1, retries + 1):
         try:
@@ -98,41 +110,61 @@ def fetch_bytes(url: str, *, timeout: int = 180, retries: int = 3) -> tuple[byte
             with contextlib.closing(urlopen(req, timeout=timeout)) as response:
                 status = getattr(response, "status", 200)
                 if status != 200:
-                    raise EvidenceError(f"HTTP_{status}: {url}")
-                data = response.read()
+                    raise EvidenceError(f"HTTP_{status}:{url}")
                 headers = {k.lower(): v for k, v in response.headers.items()}
+                declared = headers.get("content-length")
+                if declared and int(declared) > max_bytes:
+                    raise EvidenceError(f"DECLARED_RESPONSE_TOO_LARGE:{declared}>{max_bytes}")
+                chunks: list[bytes] = []
+                total = 0
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise EvidenceError(f"RESPONSE_TOO_LARGE:{total}>{max_bytes}")
+                    chunks.append(chunk)
+                data = b"".join(chunks)
             if not data:
-                raise EvidenceError(f"EMPTY_RESPONSE: {url}")
+                raise EvidenceError(f"EMPTY_RESPONSE:{url}")
             return data, headers
-        except Exception as exc:  # factual retry record is emitted by caller
+        except Exception as exc:
             last = exc
             if attempt < retries:
                 time.sleep(attempt * 3)
-    raise EvidenceError(f"DOWNLOAD_FAILED: {url}: {last}")
+    raise EvidenceError(f"DOWNLOAD_FAILED:{url}:{last}")
 
 
 def discover_hmlr_gml_url(page_bytes: bytes) -> str:
     parser = TableLinkParser()
     parser.feed(page_bytes.decode("utf-8", errors="replace"))
-    for row in parser.rows:
-        if HMLR_AUTHORITY.lower() not in row["text"].lower():
-            continue
-        for href in row["links"]:
-            full = urljoin(HMLR_DOWNLOAD_PAGE, href)
-            if ".gml" in full.lower() or "inspire" in full.lower():
-                return full
-    # Fail closed: do not guess an opaque download URL.
-    raise EvidenceError("HMLR_BARKING_DAGENHAM_GML_LINK_NOT_DISCOVERED")
+    matching_rows = [row for row in parser.rows if HMLR_AUTHORITY.lower() in row["text"].lower()]
+    if len(matching_rows) != 1:
+        raise EvidenceError(f"HMLR_AUTHORITY_ROW_NOT_UNIQUE:found={len(matching_rows)}")
+    row = matching_rows[0]
+    if "download" not in row["text"].lower() or ".gml" not in row["text"].lower():
+        raise EvidenceError("HMLR_AUTHORITY_ROW_NOT_GML_DOWNLOAD")
+    https_links = []
+    for href in row["links"]:
+        full = urljoin(HMLR_DOWNLOAD_PAGE, href)
+        if urlparse(full).scheme == "https":
+            https_links.append(full)
+    if len(https_links) != 1:
+        raise EvidenceError(f"HMLR_GML_LINK_NOT_UNIQUE:found={len(https_links)}")
+    return https_links[0]
 
 
 def validate_xml_bytes(data: bytes) -> None:
-    prefix = data[:256].lstrip().lower()
-    if not (prefix.startswith(b"<?xml") or b"<" in prefix):
+    prefix = data[:1024].lstrip().lower()
+    if prefix.startswith(b"<html") or b"<!doctype html" in prefix:
+        raise EvidenceError("HMLR_RESPONSE_IS_HTML_NOT_GML")
+    if not (prefix.startswith(b"<?xml") or prefix.startswith(b"<")):
         raise EvidenceError("HMLR_RESPONSE_NOT_XML_OR_GML")
 
 
 def validate_tiff_bytes(data: bytes, content_type: str | None) -> None:
-    if data[:2] not in (b"II", b"MM"):
+    if len(data) < 8 or data[:2] not in (b"II", b"MM"):
         raise EvidenceError("WCS_RESPONSE_NOT_TIFF_MAGIC")
     if content_type and "tiff" not in content_type.lower() and "octet-stream" not in content_type.lower():
         raise EvidenceError(f"UNEXPECTED_WCS_CONTENT_TYPE:{content_type}")
@@ -164,6 +196,58 @@ def required_geo_modules() -> tuple[Any, Any, Any, Any, Any]:
     return gpd, np, rasterio, mask, (Point, mapping)
 
 
+def validate_examples_doc(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    if doc.get("slot_id") != SLOT_ID:
+        raise EvidenceError("EXAMPLES_SLOT_ID_MISMATCH")
+    if doc.get("source_feature_collection_blob_sha") != EXPECTED_SOURCE_BLOB_SHA:
+        raise EvidenceError("CANONICAL_SOURCE_BLOB_SHA_MISMATCH")
+    if doc.get("source_feature_collection_count") != EXPECTED_SOURCE_FEATURE_COUNT:
+        raise EvidenceError("CANONICAL_SOURCE_FEATURE_COUNT_MISMATCH")
+    examples = doc.get("examples")
+    if not isinstance(examples, list) or [x.get("parcel_id") for x in examples] != EXPECTED_PARCELS:
+        raise EvidenceError("EXPECTED_ORDERED_PARCEL_1_TO_11")
+    for row in examples:
+        easting = float(row["bng_easting_m"])
+        northing = float(row["bng_northing_m"])
+        if not (math.isfinite(easting) and math.isfinite(northing)):
+            raise EvidenceError(f"NON_FINITE_BNG:{row['parcel_id']}")
+        if not (0 <= easting <= 700_000 and 0 <= northing <= 1_300_000):
+            raise EvidenceError(f"BNG_OUTSIDE_PLAUSIBLE_RANGE:{row['parcel_id']}")
+        if row.get("height_difference_m") is not None or row.get("business_row") is not False:
+            raise EvidenceError(f"PREPARED_EXAMPLE_MUST_BE_UNMEASURED:{row['parcel_id']}")
+    return examples
+
+
+def validate_probe_urls_doc(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    requests = doc.get("requests")
+    if doc.get("slot_id") != SLOT_ID or doc.get("url_count") != 22 or not isinstance(requests, list):
+        raise EvidenceError("EXPECTED_22_SLOT_SCOPED_WCS_URLS")
+    expected_ids = [f"HD1-WCS-{i:03d}" for i in range(1, 23)]
+    if [row.get("probe_id") for row in requests] != expected_ids:
+        raise EvidenceError("WCS_PROBE_ID_SEQUENCE_MISMATCH")
+    pairs: dict[str, set[str]] = {parcel: set() for parcel in EXPECTED_PARCELS}
+    for row in requests:
+        parcel = row.get("parcel_id")
+        product = row.get("product")
+        if parcel not in pairs or product not in {"DTM_1M", "DSM_LZ_1M"}:
+            raise EvidenceError(f"WCS_PARCEL_OR_PRODUCT_INVALID:{parcel}:{product}")
+        pairs[parcel].add(product)
+        parsed = urlparse(str(row.get("getcoverage_url", "")))
+        if parsed.scheme != "https" or parsed.netloc != "environment.data.gov.uk":
+            raise EvidenceError(f"WCS_URL_HOST_INVALID:{row.get('probe_id')}")
+        query = parse_qs(parsed.query)
+        expected_coverage = DTM_COVERAGE if product == "DTM_1M" else DSM_COVERAGE
+        if query.get("coverageId") != [expected_coverage]:
+            raise EvidenceError(f"WCS_COVERAGE_ID_MISMATCH:{row.get('probe_id')}")
+        if query.get("service") != ["WCS"] or query.get("request") != ["GetCoverage"]:
+            raise EvidenceError(f"WCS_REQUEST_SEMANTICS_INVALID:{row.get('probe_id')}")
+        if len(query.get("subset", [])) != 2:
+            raise EvidenceError(f"WCS_SUBSET_COUNT_INVALID:{row.get('probe_id')}")
+    if any(products != {"DTM_1M", "DSM_LZ_1M"} for products in pairs.values()):
+        raise EvidenceError("WCS_DTM_DSM_PAIR_MISSING")
+    return requests
+
+
 def choose_polygon_id_column(columns: Iterable[str]) -> str:
     lowered = {str(c).lower(): str(c) for c in columns}
     for key in ("inspireid", "inspire_id", "landregistry-inspire-id", "gml_id", "gml:id", "id"):
@@ -172,18 +256,49 @@ def choose_polygon_id_column(columns: Iterable[str]) -> str:
     raise EvidenceError("HMLR_POLYGON_ID_COLUMN_NOT_RESOLVED")
 
 
-def exact_polygon_match(gdf: Any, point: Any) -> tuple[list[int], list[int]]:
+def exact_polygon_match_positions(gdf: Any, point: Any) -> tuple[list[int], list[int]]:
     try:
-        exact_idx = list(gdf.sindex.query(point, predicate="intersects"))
-        near_idx = list(gdf.sindex.query(point.buffer(15.0), predicate="intersects"))
+        exact = [int(i) for i in gdf.sindex.query(point, predicate="intersects")]
+        nearby = [int(i) for i in gdf.sindex.query(point.buffer(15.0), predicate="intersects")]
     except Exception:
-        exact_idx = list(gdf.index[gdf.geometry.intersects(point)])
-        near_idx = list(gdf.index[gdf.geometry.intersects(point.buffer(15.0))])
-    return [int(i) for i in exact_idx], [int(i) for i in near_idx]
+        exact_mask = gdf.geometry.intersects(point).to_numpy()
+        nearby_mask = gdf.geometry.intersects(point.buffer(15.0)).to_numpy()
+        exact = [int(i) for i, value in enumerate(exact_mask) if bool(value)]
+        nearby = [int(i) for i, value in enumerate(nearby_mask) if bool(value)]
+    return exact, nearby
+
+
+def validate_survey_metadata_entry(parcel_id: str, entry: Any) -> dict[str, Any]:
+    if not isinstance(entry, dict):
+        raise EvidenceError(f"SURVEY_METADATA_MISSING:{parcel_id}")
+    source_url = str(entry.get("source_url", ""))
+    parsed = urlparse(source_url)
+    if parsed.scheme != "https" or parsed.netloc != "environment.data.gov.uk":
+        raise EvidenceError(f"SURVEY_METADATA_SOURCE_NOT_OFFICIAL_EA:{parcel_id}")
+    survey_date = entry.get("survey_date")
+    survey_year = entry.get("survey_year")
+    if survey_date:
+        try:
+            parsed_date = dt.date.fromisoformat(str(survey_date))
+        except ValueError as exc:
+            raise EvidenceError(f"SURVEY_DATE_NOT_ISO:{parcel_id}") from exc
+        if not (2000 <= parsed_date.year <= dt.date.today().year):
+            raise EvidenceError(f"SURVEY_DATE_OUT_OF_RANGE:{parcel_id}")
+    elif survey_year is not None:
+        year = int(survey_year)
+        if not (2000 <= year <= dt.date.today().year):
+            raise EvidenceError(f"SURVEY_YEAR_OUT_OF_RANGE:{parcel_id}")
+    else:
+        raise EvidenceError(f"SURVEY_DATE_OR_YEAR_REQUIRED:{parcel_id}")
+    if str(entry.get("resolution_state", "")).upper() not in {"RESOLVED", "OFFICIAL_METADATA_RESOLVED"}:
+        raise EvidenceError(f"SURVEY_METADATA_NOT_RESOLVED:{parcel_id}")
+    return dict(entry)
 
 
 def raster_measurement(tiff_path: Path, polygon: Any, rasterio: Any, np: Any, mask: Any, mapping: Any) -> dict[str, Any]:
     with rasterio.open(tiff_path) as src:
+        if src.count != 1:
+            raise EvidenceError(f"RASTER_BAND_COUNT_NOT_ONE:{src.count}")
         crs_epsg = src.crs.to_epsg() if src.crs else None
         if crs_epsg != 27700:
             raise EvidenceError(f"RASTER_CRS_NOT_EPSG27700:{crs_epsg}")
@@ -191,10 +306,10 @@ def raster_measurement(tiff_path: Path, polygon: Any, rasterio: Any, np: Any, ma
         if not (0.75 <= res_x <= 1.25 and 0.75 <= res_y <= 1.25):
             raise EvidenceError(f"RASTER_RESOLUTION_NOT_APPROX_1M:{res_x},{res_y}")
         pminx, pminy, pmaxx, pmaxy = polygon.bounds
-        b = src.bounds
-        if pminx < b.left or pminy < b.bottom or pmaxx > b.right or pmaxy > b.top:
+        bounds = src.bounds
+        if pminx < bounds.left or pminy < bounds.bottom or pmaxx > bounds.right or pmaxy > bounds.top:
             raise EvidenceError("POLYGON_NOT_FULLY_COVERED_BY_RASTER")
-        clipped, _ = mask(src, [mapping(polygon)], crop=True, filled=False)
+        clipped, _ = mask(src, [mapping(polygon)], crop=True, filled=False, all_touched=False)
         band = clipped[0]
         values = band.compressed() if hasattr(band, "compressed") else band[np.isfinite(band)]
         values = values[np.isfinite(values)]
@@ -202,10 +317,10 @@ def raster_measurement(tiff_path: Path, polygon: Any, rasterio: Any, np: Any, ma
             values = values[values != src.nodata]
         if values.size < 1:
             raise EvidenceError("NO_FINITE_RASTER_PIXELS_INSIDE_POLYGON")
-        vmin = float(values.min())
-        vmax = float(values.max())
+        vmin, vmax = float(values.min()), float(values.max())
         if not (math.isfinite(vmin) and math.isfinite(vmax) and vmax >= vmin):
             raise EvidenceError("INVALID_RASTER_MIN_MAX")
+        p05, median, p95 = [float(x) for x in np.percentile(values, [5, 50, 95])]
         return {
             "crs_epsg": crs_epsg,
             "resolution_m": [res_x, res_y],
@@ -213,6 +328,10 @@ def raster_measurement(tiff_path: Path, polygon: Any, rasterio: Any, np: Any, ma
             "min_m_aod": round(vmin, 3),
             "max_m_aod": round(vmax, 3),
             "height_difference_m": round(vmax - vmin, 3),
+            "p05_m_aod": round(p05, 3),
+            "median_m_aod": round(median, 3),
+            "p95_m_aod": round(p95, 3),
+            "robust_p95_minus_p05_m": round(p95 - p05, 3),
         }
 
 
@@ -225,6 +344,22 @@ def load_survey_metadata(path: Path | None) -> dict[str, Any]:
     return data
 
 
+def run_self_test() -> dict[str, Any]:
+    sample_html = (
+        '<table><tr><td>London Borough of Barking and Dagenham</td>'
+        '<td><a href="/official/file.gml">Download .gml</a></td></tr></table>'
+    ).encode()
+    discovered = discover_hmlr_gml_url(sample_html)
+    generated = wcs_url(DTM_ENDPOINT, DTM_COVERAGE, (1.0, 2.0, 11.0, 12.0))
+    validate_tiff_bytes(b"II*\x00\x00\x00\x00\x00", "image/tiff")
+    validate_xml_bytes(b'<?xml version="1.0"?><gml/>')
+    if discovered != "https://use-land-property-data.service.gov.uk/official/file.gml":
+        raise EvidenceError("SELF_TEST_HMLR_DISCOVERY_FAILED")
+    if "coverageId=" not in generated or generated.count("subset=") != 2:
+        raise EvidenceError("SELF_TEST_WCS_URL_FAILED")
+    return {"state": "PASS", "checks": 4, "script_version": SCRIPT_VERSION}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, default=Path(os.environ.get("AAYS_REPO_ROOT", Path.cwd())))
@@ -235,7 +370,12 @@ def main() -> int:
     parser.add_argument("--runner-output", type=Path)
     parser.add_argument("--website-output", type=Path)
     parser.add_argument("--max-workers", type=int, default=4)
+    parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
+
+    if args.self_test:
+        print(json.dumps(run_self_test(), sort_keys=True))
+        return 0
 
     repo = args.repo_root.resolve()
     examples_path = args.examples_json or repo / "england_map_web/data/aays_18_slots/height_difference_1/examples_latest.json"
@@ -244,8 +384,9 @@ def main() -> int:
     website_output = args.website_output or repo / "england_map_web/data/aays_18_slots/height_difference_1/verified_results_latest.json"
 
     result: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
+        "script_version": SCRIPT_VERSION,
         "parcel_partition": PARTITION,
         "started_at": utc_now(),
         "state": "STARTED_FAIL_CLOSED",
@@ -263,17 +404,22 @@ def main() -> int:
 
     workdir = Path(tempfile.mkdtemp(prefix="height_difference_1_"))
     try:
-        examples_doc = json.loads(examples_path.read_text(encoding="utf-8"))
-        urls_doc = json.loads(urls_path.read_text(encoding="utf-8"))
-        examples = examples_doc.get("examples", [])
-        if len(examples) != 11 or any(not str(x.get("parcel_id", "")).startswith("parcel_") for x in examples):
-            raise EvidenceError("EXPECTED_EXACTLY_11_PINNED_EXAMPLES")
-        if urls_doc.get("url_count") != 22:
-            raise EvidenceError("EXPECTED_22_PREPARED_WCS_URLS")
+        examples_bytes = examples_path.read_bytes()
+        urls_bytes = urls_path.read_bytes()
+        examples_doc = json.loads(examples_bytes)
+        urls_doc = json.loads(urls_bytes)
+        examples = validate_examples_doc(examples_doc)
+        probe_requests = validate_probe_urls_doc(urls_doc)
+        result["artifacts"]["input_examples"] = {"sha256": sha256_bytes(examples_bytes), "rows": len(examples)}
+        result["artifacts"]["input_probe_urls"] = {"sha256": sha256_bytes(urls_bytes), "rows": len(probe_requests)}
 
-        page_bytes, page_headers = fetch_bytes(HMLR_DOWNLOAD_PAGE)
+        page_bytes, page_headers = fetch_bytes(
+            HMLR_DOWNLOAD_PAGE, timeout=180, retries=3, max_bytes=20_000_000
+        )
         gml_url = args.hmlr_gml_url or discover_hmlr_gml_url(page_bytes)
-        gml_bytes, gml_headers = fetch_bytes(gml_url, timeout=300)
+        gml_bytes, gml_headers = fetch_bytes(
+            gml_url, timeout=300, retries=3, max_bytes=MAX_GML_BYTES
+        )
         validate_xml_bytes(gml_bytes)
         gml_path = workdir / "barking_and_dagenham_current.gml"
         gml_path.write_bytes(gml_bytes)
@@ -304,38 +450,54 @@ def main() -> int:
             "polygon_id_column": id_column,
         })
 
-        # The 22 fixed 10 m requests are service/point QA. Download in parallel and hash every response.
-        probe_requests = urls_doc["requests"]
         def get_probe(row: dict[str, Any]) -> dict[str, Any]:
-            data, headers = fetch_bytes(row["getcoverage_url"], timeout=240)
-            validate_tiff_bytes(data, headers.get("content-type"))
-            path = workdir / f"{row['probe_id']}.tif"
-            path.write_bytes(data)
-            return {
+            receipt = {
                 "probe_id": row["probe_id"],
                 "parcel_id": row["parcel_id"],
                 "product": row["product"],
                 "url": row["getcoverage_url"],
-                "path": str(path),
-                "sha256": sha256_bytes(data),
-                "bytes": len(data),
-                "content_type": headers.get("content-type"),
-                "state": "TIFF_BYTES_VERIFIED",
+                "state": "BLOCKED_FAIL_CLOSED",
+                "sha256": None,
+                "bytes": 0,
+                "content_type": None,
+                "error": None,
             }
+            try:
+                data, headers = fetch_bytes(
+                    row["getcoverage_url"], timeout=240, retries=3, max_bytes=MAX_TIFF_BYTES
+                )
+                validate_tiff_bytes(data, headers.get("content-type"))
+                path = workdir / f"{row['probe_id']}.tif"
+                path.write_bytes(data)
+                with rasterio.open(path) as src:
+                    if src.crs is None or src.crs.to_epsg() != 27700:
+                        raise EvidenceError("PROBE_RASTER_CRS_NOT_EPSG27700")
+                    if src.count != 1:
+                        raise EvidenceError("PROBE_RASTER_BAND_COUNT_NOT_ONE")
+                receipt.update({
+                    "state": "TIFF_BYTES_AND_CRS_VERIFIED",
+                    "sha256": sha256_bytes(data),
+                    "bytes": len(data),
+                    "content_type": headers.get("content-type"),
+                })
+            except Exception as exc:
+                receipt["error"] = str(exc)
+            return receipt
 
-        probe_receipts: list[dict[str, Any]] = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, min(args.max_workers, 4))) as pool:
-            futures = [pool.submit(get_probe, row) for row in probe_requests]
-            for future in concurrent.futures.as_completed(futures):
-                probe_receipts.append(future.result())
-        probe_receipts.sort(key=lambda x: x["probe_id"])
+        workers = max(1, min(args.max_workers, 4))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            probe_receipts = list(pool.map(get_probe, probe_requests))
         result["probe_receipts"] = probe_receipts
-
+        probe_by_parcel_product = {
+            (row["parcel_id"], row["product"]): row for row in probe_receipts
+        }
         survey_metadata = load_survey_metadata(args.survey_metadata_json)
-        for ex in examples:
+
+        def process_example(ex: dict[str, Any]) -> dict[str, Any]:
             parcel_id = ex["parcel_id"]
             item: dict[str, Any] = {
                 "parcel_id": parcel_id,
+                "slot_ordinal": int(ex["slot_ordinal"]),
                 "point_bng": [ex["bng_easting_m"], ex["bng_northing_m"]],
                 "boundary_state": "PENDING",
                 "measurement_state": "NOT_RUN",
@@ -343,44 +505,59 @@ def main() -> int:
                 "errors": [],
             }
             try:
+                qa_pair = [
+                    probe_by_parcel_product[(parcel_id, "DTM_1M")],
+                    probe_by_parcel_product[(parcel_id, "DSM_LZ_1M")],
+                ]
+                item["probe_qa_states"] = [row["state"] for row in qa_pair]
+                if any(row["state"] != "TIFF_BYTES_AND_CRS_VERIFIED" for row in qa_pair):
+                    raise EvidenceError("PARCEL_DTM_DSM_10M_QA_PAIR_NOT_VERIFIED")
+
                 point = Point(float(ex["bng_easting_m"]), float(ex["bng_northing_m"]))
-                exact_idx, near_idx = exact_polygon_match(gdf, point)
-                item["exact_polygon_candidate_count"] = len(exact_idx)
-                item["within_15m_candidate_count"] = len(near_idx)
-                if len(exact_idx) != 1:
-                    raise EvidenceError(f"UNIQUE_EXACT_POLYGON_REQUIRED:found={len(exact_idx)}")
-                row = gdf.loc[exact_idx[0]]
+                exact_positions, near_positions = exact_polygon_match_positions(gdf, point)
+                item["exact_polygon_candidate_count"] = len(exact_positions)
+                item["within_15m_candidate_count"] = len(near_positions)
+                if len(exact_positions) != 1:
+                    raise EvidenceError(f"UNIQUE_EXACT_POLYGON_REQUIRED:found={len(exact_positions)}")
+                row = gdf.iloc[exact_positions[0]]
                 polygon = row.geometry
                 if polygon is None or polygon.is_empty or not polygon.is_valid:
                     raise EvidenceError("BOUND_POLYGON_INVALID_OR_EMPTY")
                 polygon_id = str(row[id_column])
+                polygon_wkb_sha256 = sha256_bytes(bytes(polygon.wkb))
                 item.update({
                     "boundary_state": "UNIQUE_EXACT_POINT_IN_POLYGON",
                     "polygon_id": polygon_id,
+                    "polygon_wkb_sha256": polygon_wkb_sha256,
                     "polygon_bounds_bng": [round(float(v), 3) for v in polygon.bounds],
                     "polygon_area_m2": round(float(polygon.area), 3),
                 })
 
                 minx, miny, maxx, maxy = polygon.bounds
                 bbox = (minx - 1.0, miny - 1.0, maxx + 1.0, maxy + 1.0)
-                full_requests = {
-                    "DTM_1M": (DTM_ENDPOINT, DTM_COVERAGE),
-                    "DSM_LZ_1M": (DSM_ENDPOINT, DSM_COVERAGE),
-                }
+                width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                estimated_cells = int(math.ceil(width) * math.ceil(height))
+                item["full_polygon_request_estimated_cells"] = estimated_cells
+                if estimated_cells < 1 or estimated_cells > MAX_FULL_POLYGON_CELLS:
+                    raise EvidenceError(f"FULL_POLYGON_REQUEST_CELL_GUARD:{estimated_cells}")
+
                 full_receipts: dict[str, Any] = {}
-                for product, (endpoint, coverage) in full_requests.items():
+                for product, endpoint, coverage in (
+                    ("DTM_1M", DTM_ENDPOINT, DTM_COVERAGE),
+                    ("DSM_LZ_1M", DSM_ENDPOINT, DSM_COVERAGE),
+                ):
                     url = wcs_url(endpoint, coverage, bbox)
-                    data, headers = fetch_bytes(url, timeout=300)
+                    data, headers = fetch_bytes(url, timeout=300, retries=3, max_bytes=MAX_TIFF_BYTES)
                     validate_tiff_bytes(data, headers.get("content-type"))
                     tif = workdir / f"{parcel_id}_{product}.tif"
                     tif.write_bytes(data)
-                    measure = raster_measurement(tif, polygon, rasterio, np, mask, mapping)
+                    measurement = raster_measurement(tif, polygon, rasterio, np, mask, mapping)
                     full_receipts[product] = {
                         "url": url,
                         "sha256": sha256_bytes(data),
                         "bytes": len(data),
                         "content_type": headers.get("content-type"),
-                        "measurement": measure,
+                        "measurement": measurement,
                     }
                 item["full_polygon_rasters"] = full_receipts
                 dtm = full_receipts["DTM_1M"]["measurement"]
@@ -388,35 +565,53 @@ def main() -> int:
                 item["measurement_state"] = "OFFICIAL_BYTES_AND_GEOMETRY_MEASURED"
                 item["candidate_height_difference_m"] = dtm["height_difference_m"]
                 item["dsm_qa_height_range_m"] = dsm["height_difference_m"]
-                item["survey_metadata"] = survey_metadata.get(parcel_id)
 
                 candidate = {
                     "parcel_id": parcel_id,
                     "polygon_id": polygon_id,
-                    "polygon_hash_basis": result["artifacts"]["hmlr_gml"]["sha256"],
+                    "polygon_wkb_sha256": polygon_wkb_sha256,
+                    "hmlr_gml_sha256": result["artifacts"]["hmlr_gml"]["sha256"],
                     "dtm_sha256": full_receipts["DTM_1M"]["sha256"],
                     "dsm_sha256": full_receipts["DSM_LZ_1M"]["sha256"],
                     "dtm_min_m_aod": dtm["min_m_aod"],
                     "dtm_max_m_aod": dtm["max_m_aod"],
                     "height_difference_m": dtm["height_difference_m"],
+                    "dtm_robust_p95_minus_p05_m": dtm["robust_p95_minus_p05_m"],
                     "valid_dtm_pixel_count": dtm["valid_pixel_count"],
-                    "survey_metadata": item["survey_metadata"],
-                    "evidence_state": "MEASURED_OFFICIAL_BYTES",
+                    "evidence_state": "MEASURED_OFFICIAL_BYTES_BUSINESS_ROW_WITHHELD",
+                    "business_row": False,
                 }
-                result["candidate_measurements"].append(candidate)
-                if item["survey_metadata"]:
-                    business = dict(candidate)
-                    business["business_row"] = True
-                    business["evidence_state"] = "VERIFIED_ALL_REQUIRED_GATES"
-                    result["business_rows"].append(business)
+                item["candidate"] = candidate
+                try:
+                    metadata = validate_survey_metadata_entry(parcel_id, survey_metadata.get(parcel_id))
+                    candidate["survey_metadata"] = metadata
+                    candidate["survey_metadata_sha256"] = sha256_json(metadata)
+                    candidate["evidence_state"] = "VERIFIED_ALL_REQUIRED_GATES"
+                    candidate["business_row"] = True
                     item["business_row"] = True
-                else:
-                    item["errors"].append("SURVEY_METADATA_NOT_RESOLVED_BUSINESS_ROW_WITHHELD")
+                except Exception as metadata_exc:
+                    item["errors"].append(str(metadata_exc))
             except Exception as exc:
                 item["errors"].append(str(exc))
-            result["examples"].append(item)
+            return item
 
-        result["state"] = "COMPLETED_FAIL_CLOSED"
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            processed = list(pool.map(process_example, examples))
+        processed.sort(key=lambda row: row["slot_ordinal"])
+        result["examples"] = processed
+        for item in processed:
+            candidate = item.get("candidate")
+            if candidate:
+                result["candidate_measurements"].append(candidate)
+                if candidate.get("business_row") is True:
+                    result["business_rows"].append(candidate)
+
+        if result["business_rows"]:
+            result["state"] = "COMPLETED_VERIFIED_ROWS_AVAILABLE"
+        elif result["candidate_measurements"]:
+            result["state"] = "COMPLETED_MEASUREMENTS_WITHHELD"
+        else:
+            result["state"] = "COMPLETED_NO_VERIFIED_MEASUREMENTS"
     except Exception as exc:
         result["state"] = "BLOCKED_FAIL_CLOSED"
         result["errors"].append(str(exc))
@@ -425,8 +620,14 @@ def main() -> int:
         result["counts"] = {
             "prepared_examples": 11,
             "prepared_probe_requests": 22,
-            "verified_probe_tiff_receipts": len(result.get("probe_receipts", [])),
-            "unique_boundary_bindings": sum(1 for x in result["examples"] if x.get("boundary_state") == "UNIQUE_EXACT_POINT_IN_POLYGON"),
+            "verified_probe_tiff_receipts": sum(
+                1 for row in result.get("probe_receipts", [])
+                if row.get("state") == "TIFF_BYTES_AND_CRS_VERIFIED"
+            ),
+            "unique_boundary_bindings": sum(
+                1 for row in result["examples"]
+                if row.get("boundary_state") == "UNIQUE_EXACT_POINT_IN_POLYGON"
+            ),
             "candidate_measurements": len(result["candidate_measurements"]),
             "business_rows_written": len(result["business_rows"]),
         }
@@ -435,10 +636,11 @@ def main() -> int:
         shutil.rmtree(workdir, ignore_errors=True)
 
     print(f"SLOT_ID={SLOT_ID}")
+    print(f"SCRIPT_VERSION={SCRIPT_VERSION}")
     print(f"STATE={result['state']}")
     print(f"BUSINESS_ROWS_WRITTEN={len(result['business_rows'])}")
     print("FINAL_READY=false")
-    return 0 if result["state"] == "COMPLETED_FAIL_CLOSED" else 2
+    return 2 if result["state"] == "BLOCKED_FAIL_CLOSED" else 0
 
 
 if __name__ == "__main__":
