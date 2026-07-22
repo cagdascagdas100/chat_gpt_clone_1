@@ -1443,13 +1443,19 @@ class Coordinator:
         )
         for omitted in portable_sparse_omissions:
             if not (worktree / Path(omitted)).exists():
-                subprocess.run(
-                    self.git_command("-C", str(worktree), "update-index", "--skip-worktree", "--", omitted),
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=False,
-                    timeout=30,
-                )
+                try:
+                    subprocess.run(
+                        self.git_command("-C", str(worktree), "update-index", "--skip-worktree", "--", omitted),
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        check=False,
+                        timeout=30,
+                    )
+                except subprocess.TimeoutExpired:
+                    # This is only a portable-stat-cache optimisation for an
+                    # unrelated legacy gas path. Never block another slot when
+                    # the optional index hint is slow on the portable disk.
+                    pass
         stat_cache_only = False
         try:
             status = subprocess.run(

@@ -21,6 +21,7 @@ SAFE_TIMEOUT_MARKERS = (
     "CHILD_REMOTE_FETCH_TIMEOUT",
     "SPARSE_EXPANSION_TIMEOUT",
     "SPARSE_LIST_TIMEOUT",
+    "TIMED OUT AFTER",
 )
 LOCK_MARKERS = ("INDEX.LOCK", "SPARSE-CHECKOUT.LOCK", "SHALLOW.LOCK", "ANOTHER GIT PROCESS")
 DATA_BLOCKER_MARKERS = (
@@ -618,14 +619,14 @@ class SlotRecoverySupervisor:
         if plan.get("state") == "RECOVERY_PARKED":
             if (
                 (
-                    int(plan.get("policy_version") or 1) < 8
+                    int(plan.get("policy_version") or 1) < 9
                     or continuation_is_new
                     or local_host_recovered
                 )
                 and (safe_transient or real_data_blocker)
             ):
                 plan.update({
-                    "policy_version": 8,
+                    "policy_version": 9,
                     "state": "RECOVERY_WAITING",
                     "wait_until": utc_now(),
                     "repair_reason": "POLICY_V7_SOURCE_DISCOVERY_OR_GENERIC_RECOVERY_REOPENED",
