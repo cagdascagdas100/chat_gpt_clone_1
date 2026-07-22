@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 SLOT_ID = "internet_access_3"
-TASK_ID = "aays1-internet-access-3-migrate-ofcom-onspd-validation-20260722"
-SAMPLE_SIZE = 96
+TASK_ID = "aays1-internet-access-3-migrate-ofcom-onspd-hmlr-validation-20260722"
+SAMPLE_SIZE = 192
 
 
 def find_repo_root() -> Path:
@@ -41,12 +41,14 @@ def run_step(repo_root: Path, script: Path, name: str, extra_args: list[str] | N
 
 def blocked_summary(state: str, steps: list[dict[str, object]], exit_code: int, next_step: str) -> int:
     summary = {
-        "schema_version": 3,
+        "schema_version": 4,
         "task_id": TASK_ID,
         "slot_id": SLOT_ID,
         "state": state,
         "steps": steps,
         "sample_size_target": SAMPLE_SIZE,
+        "parcel_relations_promoted": 0,
+        "confidence_uplifts": 0,
         "final_ready": False,
         "fake_data": False,
         "db_write": False,
@@ -84,9 +86,16 @@ def main() -> int:
     required_steps = [
         (
             "007_worker_contract_tests.py",
-            "WORKER_CONTRACT_TESTS",
+            "BASE_WORKER_CONTRACT_TESTS",
             "worker_contract_tests_blocked",
-            "REPAIR_WORKER_CONTRACT_TEST_FAILURES",
+            "REPAIR_BASE_WORKER_CONTRACT_TEST_FAILURES",
+            None,
+        ),
+        (
+            "009_hmlr_geometry_contract_tests.py",
+            "HMLR_GEOMETRY_AND_NO_PROMOTION_CONTRACT_TESTS",
+            "hmlr_geometry_contract_tests_blocked",
+            "REPAIR_HMLR_GEOMETRY_OR_NO_PROMOTION_TEST_FAILURES",
             None,
         ),
         (
@@ -112,16 +121,23 @@ def main() -> int:
         ),
         (
             "002_ofcom_2026_sample_revalidation.py",
-            "OFcom_2026_EXACT_POSTCODE_96_ROW_SAMPLE_REVALIDATION",
+            "OFcom_2026_EXACT_POSTCODE_192_ROW_SAMPLE_REVALIDATION",
             "sample_revalidation_blocked",
             "REPAIR_OFFICIAL_SOURCE_DOWNLOAD_OR_SAMPLE_SCHEMA_BLOCKER",
             ["--sample-size", str(SAMPLE_SIZE)],
         ),
         (
             "005_onspd_2026_centroid_crosscheck.py",
-            "ONSPD_MAY_2026_EXACT_POSTCODE_AND_CENTROID_96_ROW_CROSSCHECK",
+            "ONSPD_MAY_2026_EXACT_POSTCODE_AND_CENTROID_192_ROW_CROSSCHECK",
             "onspd_centroid_crosscheck_blocked",
             "REPAIR_ONSPD_SERVICE_SCHEMA_OR_QUERY_BLOCKER",
+            ["--sample-size", str(SAMPLE_SIZE)],
+        ),
+        (
+            "008_hmlr_inspire_postcode_centroid_polygon_audit.py",
+            "HMLR_JULY_2026_INSPIRE_POLYGON_AND_POSTCODE_CENTROID_192_ROW_AUDIT",
+            "hmlr_polygon_crosscheck_blocked",
+            "HYDRATE_OR_REPAIR_HMLR_LOCAL_AUTHORITY_GML_LINKS_THEN_RETRY",
             ["--sample-size", str(SAMPLE_SIZE)],
         ),
     ]
@@ -134,7 +150,7 @@ def main() -> int:
             return blocked
 
     summary = {
-        "schema_version": 3,
+        "schema_version": 4,
         "task_id": TASK_ID,
         "slot_id": SLOT_ID,
         "state": "pipeline_passed",
@@ -143,6 +159,7 @@ def main() -> int:
         "official_postcode_member_count_target": 121,
         "official_postcode_total_rows_target": 1_741_096,
         "onspd_snapshot": "2026-05",
+        "hmlr_inspire_publication": "2026-07-05",
         "parcel_relations_promoted": 0,
         "confidence_uplifts": 0,
         "final_ready": False,
@@ -152,7 +169,7 @@ def main() -> int:
         "migration": False,
         "production_deploy": False,
         "first_unverified_step_after_run": (
-            "ESTABLISH_INDEPENDENT_PARCEL_TO_UPRN_OR_ADDRESS_RELATION_OR_RETAIN_POSTCODE_PROXY"
+            "HYDRATE_OS_OPEN_UPRN_AND_CURRENT_ONSUD_THEN_TEST_EXACT_UPRN_POSTCODE_RELATIONS"
         ),
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
