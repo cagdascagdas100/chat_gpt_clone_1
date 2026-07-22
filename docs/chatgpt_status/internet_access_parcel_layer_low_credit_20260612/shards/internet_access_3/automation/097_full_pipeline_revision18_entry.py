@@ -28,7 +28,7 @@ def watchdog():
  if not s or not s.loader:raise ImportError(p)
  m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 def payload(state,steps,plan,current,events):
- return {"schema_version":2,"slot_id":SLOT_ID,"task_id":TASK_ID,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":len(steps),"effective_pipeline_steps":73,"contract_tests_target":534,"official_source_checks_target":74,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":2,"slot_id":SLOT_ID,"task_id":TASK_ID,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":len(steps),"effective_pipeline_steps":73,"contract_tests_target":537,"official_source_checks_target":76,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def main():
  r=root();a=Path(__file__).resolve().parent;wd=watchdog();tmp=Path(tempfile.gettempdir());ro=r/(BASE+"runner_outputs");web=r/"england_map_web/data/aays_21_slots/internet_access_3";cache=tmp/"aays_internet_access_3_release_cache";db=tmp/"aays_internet_access_3_uprn_join_revision17.sqlite"
  plan=[
