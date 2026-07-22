@@ -1,0 +1,157 @@
+name: height_difference_2 official point context 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+    paths:
+      - .github/workflows/height_difference_2_context_032.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/032_context_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check pyproj
+      - name: Resolve ONS authority, HMLR GML and EA tile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import html.parser
+          import json
+          import math
+          from pathlib import Path
+          from urllib.parse import urlencode, urljoin, urlparse
+          from urllib.request import Request, urlopen
+          import pyproj
+          from pyproj import Transformer
+
+          src = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          out = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_context_runtime_032.json')
+          receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_context_runtime_032.json')
+          ons = 'https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/Local_Authority_Districts_DEC_2025_Boundaries_UK_BFE/FeatureServer/0/query'
+          hmlr = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          ua = 'AAYS-height-difference-2-context/1.0'
+
+          class Rows(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.active=False; self.text=[]; self.links=[]; self.rows=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == 'tr':
+                      self.active=True; self.text=[]; self.links=[]
+                  elif self.active and tag.lower() == 'a':
+                      href=dict(attrs).get('href')
+                      if href: self.links.append(href)
+              def handle_data(self, data):
+                  if self.active and data.strip(): self.text.append(data.strip())
+              def handle_endtag(self, tag):
+                  if tag.lower() == 'tr' and self.active:
+                      self.rows.append({'text':' '.join(self.text),'links':list(self.links)}); self.active=False
+
+          def fetch(url, accept='*/*'):
+              req=Request(url, headers={'User-Agent':ua,'Accept':accept})
+              with urlopen(req, timeout=120) as response:
+                  if getattr(response,'status',200) != 200: raise RuntimeError(f'HTTP failure: {url}')
+                  data=response.read()
+              if not data: raise RuntimeError(f'empty response: {url}')
+              return data
+
+          def letters(e,n):
+              e100=int(e)//100000; n100=int(n)//100000
+              l1=(19-n100)-(19-n100)%5+(e100+10)//5
+              l2=((19-n100)*5)%25+e100%5
+              if l1>7: l1+=1
+              if l2>7: l2+=1
+              return chr(l1+65)+chr(l2+65)
+
+          def tile(e,n):
+              q=('N' if n%10000>=5000 else 'S')+('E' if e%10000>=5000 else 'W')
+              return f'{letters(e,n)}{int(e%100000)//10000}{int(n%100000)//10000}{q}'
+
+          point_doc=json.loads(src.read_text(encoding='utf-8'))
+          if point_doc.get('source_git_blob_sha') != 'bb48164e7a0af78df875f30421a6a3068c43edb8': raise RuntimeError('point source blob mismatch')
+          rows=point_doc.get('rows') or []
+          if [r.get('row_no') for r in rows] != [30762,46142,61522]: raise RuntimeError('point row sequence mismatch')
+          transformer=Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True,only_best=True)
+          hmlr_bytes=fetch(hmlr,'text/html')
+          parser=Rows(); parser.feed(hmlr_bytes.decode('utf-8',errors='replace'))
+          contexts=[]
+          for row in rows:
+              lon=float(row['longitude']); lat=float(row['latitude'])
+              e,n=transformer.transform(lon,lat)
+              if not all(map(math.isfinite,(e,n))): raise RuntimeError('non-finite BNG')
+              params={
+                  'f':'json','where':'1=1',
+                  'geometry':json.dumps({'x':lon,'y':lat,'spatialReference':{'wkid':4326}},separators=(',',':')),
+                  'geometryType':'esriGeometryPoint','inSR':'4326','spatialRel':'esriSpatialRelIntersects',
+                  'outFields':'LAD25CD,LAD25NM','returnGeometry':'false'
+              }
+              ons_bytes=fetch(ons+'?'+urlencode(params),'application/json')
+              ons_doc=json.loads(ons_bytes.decode('utf-8'))
+              features=ons_doc.get('features') or []
+              if len(features)!=1: raise RuntimeError(f'ONS LAD not unique for {row["parcel_id"]}: {len(features)}')
+              attrs=features[0].get('attributes') or {}
+              code=attrs.get('LAD25CD'); name=attrs.get('LAD25NM')
+              if not code or not name: raise RuntimeError('missing LAD fields')
+              matches=[r for r in parser.rows if str(name).lower() in r['text'].lower()]
+              urls=[]
+              for match in matches:
+                  for href in match['links']:
+                      full=urljoin(hmlr,href)
+                      if urlparse(full).scheme=='https' and '.gml' in full.lower(): urls.append(full)
+              urls=sorted(set(urls))
+              if len(urls)!=1: raise RuntimeError(f'HMLR GML not unique for {name}: {len(urls)}')
+              contexts.append({
+                  **row,
+                  'bng_easting_m':round(e,3),'bng_northing_m':round(n,3),
+                  'ons_lad25_code':code,'ons_lad25_name':name,
+                  'ons_boundary_service':ons,
+                  'ons_query_sha256':hashlib.sha256(ons_bytes).hexdigest(),
+                  'hmlr_download_page':hmlr,'hmlr_gml_url':urls[0],
+                  'ea_os_grid_5km_tile':tile(e,n),
+                  'context_state':'EXACT_POINT_OFFICIAL_AUTHORITY_AND_TILE_RESOLVED'
+              })
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={
+              'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,
+              'source_git_blob_sha':point_doc['source_git_blob_sha'],
+              'transform':{'source_crs':'EPSG:4326','target_crs':'EPSG:27700','pyproj_version':pyproj.__version__,'proj_version':pyproj.proj_version_str,'description':transformer.description,'declared_accuracy_m':transformer.accuracy},
+              'ons_dataset':'Local Authority Districts December 2025 UK BFE','ons_layer_url':ons,
+              'hmlr_download_page_sha256':hashlib.sha256(hmlr_bytes).hexdigest(),
+              'rows':contexts,'exact_context_rows_written':len(contexts),
+              'official_numeric_rows_written':0,'actual_business_rows_written':0,'fake_data':False,'final_ready':False
+          }
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          receipt.parent.mkdir(parents=True,exist_ok=True)
+          receipt.write_text(json.dumps({
+              'schema_version':1,'slot_id':'height_difference_2','validated_at':generated,'state':'PASS',
+              'exact_point_rows':len(contexts),'unique_ons_lad_rows':len({r['ons_lad25_code'] for r in contexts}),
+              'unique_hmlr_gml_urls':len({r['hmlr_gml_url'] for r in contexts}),
+              'unique_ea_5km_tiles':len({r['ea_os_grid_5km_tile'] for r in contexts}),
+              'all_height_values_null':all(r['height_difference_m'] is None for r in contexts),
+              'output_path':str(out),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+              'official_numeric_rows_written':0,'business_rows_written':0,'fake_data':False,'final_ready':False
+          },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit official context output
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/canonical_points_context_runtime_032.json docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_context_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Resolve exact height_difference_2 official point context'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
