@@ -1,0 +1,158 @@
+name: height_difference_2 HMLR WMS feature info 034
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_wms_featureinfo_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_wms_probe_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - name: Query official HMLR INSPIRE WMS at three exact BNG points
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import re
+          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+
+          source = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          output = Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_wms_featureinfo_runtime_034.json')
+          receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/032_hmlr_wms_featureinfo_runtime_034.json')
+          endpoint = 'https://inspire.landregistry.gov.uk/inspire/ows'
+          layer = 'inspire:CP.CadastralParcel'
+          info_formats = ['application/json', 'application/vnd.ogc.gml', 'text/xml', 'text/html']
+          ua = 'AAYS-height-difference-2-hmlr-wms/1.0'
+
+          def request_bytes(params):
+              url = endpoint + '?' + urlencode(params)
+              req = Request(url, headers={'User-Agent': ua, 'Accept': params.get('INFO_FORMAT', '*/*')})
+              try:
+                  with urlopen(req, timeout=120) as response:
+                      data = response.read(20_000_000)
+                      return {
+                          'ok': getattr(response, 'status', 200) == 200 and bool(data),
+                          'url': url,
+                          'status': getattr(response, 'status', 200),
+                          'content_type': response.headers.get('content-type'),
+                          'final_url': response.geturl(),
+                          'bytes': len(data),
+                          'sha256': hashlib.sha256(data).hexdigest() if data else None,
+                          'body': data,
+                          'error': None,
+                      }
+              except Exception as exc:
+                  return {'ok': False, 'url': url, 'status': None, 'content_type': None, 'final_url': None, 'bytes': 0, 'sha256': None, 'body': b'', 'error': f'{type(exc).__name__}:{exc}'}
+
+          def extract_ids(data):
+              text = data.decode('utf-8', errors='replace')
+              patterns = [
+                  r'(?i)INSPIRE[_-]?ID[^A-Za-z0-9]+([A-Za-z0-9._:-]{4,80})',
+                  r'(?i)<[^>]*(?:localId|inspireId)[^>]*>\s*([^<\s]{4,80})',
+                  r'(?i)"(?:INSPIRE_ID|localId|inspireId)"\s*:\s*"([^"]{4,80})"',
+              ]
+              ids = []
+              for pattern in patterns:
+                  ids.extend(re.findall(pattern, text))
+              return sorted({value.strip() for value in ids if value.strip()})
+
+          doc = json.loads(source.read_text(encoding='utf-8'))
+          if doc.get('source_git_blob_sha') != 'bb48164e7a0af78df875f30421a6a3068c43edb8':
+              raise RuntimeError('CANONICAL_POINT_BLOB_MISMATCH')
+          rows = doc.get('rows') or []
+          if [row.get('row_no') for row in rows] != [30762, 46142, 61522]:
+              raise RuntimeError('TARGET_SEQUENCE_MISMATCH')
+
+          capabilities = request_bytes({'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetCapabilities'})
+          cap_body = capabilities.pop('body')
+          capabilities['layer_name_present'] = layer.encode() in cap_body
+          capabilities['body_prefix'] = cap_body[:1000].decode('utf-8', errors='replace')
+
+          results = []
+          for row in rows:
+              e = float(row['bng_easting_m'])
+              n = float(row['bng_northing_m'])
+              attempts = []
+              found_ids = set()
+              for info_format in info_formats:
+                  params = {
+                      'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetFeatureInfo',
+                      'LAYERS':layer,'QUERY_LAYERS':layer,'STYLES':'',
+                      'CRS':'EPSG:27700','BBOX':f'{e-40:.3f},{n-40:.3f},{e+40:.3f},{n+40:.3f}',
+                      'WIDTH':'401','HEIGHT':'401','I':'200','J':'200',
+                      'FEATURE_COUNT':'20','INFO_FORMAT':info_format,
+                  }
+                  attempt = request_bytes(params)
+                  body = attempt.pop('body')
+                  ids = extract_ids(body) if body else []
+                  found_ids.update(ids)
+                  attempt['info_format'] = info_format
+                  attempt['candidate_ids'] = ids
+                  attempt['body_prefix'] = body[:1500].decode('utf-8', errors='replace')
+                  attempts.append(attempt)
+              results.append({
+                  'row_no': row['row_no'],
+                  'parcel_id': row['parcel_id'],
+                  'bng_easting_m': e,
+                  'bng_northing_m': n,
+                  'wms_layer': layer,
+                  'attempts': attempts,
+                  'candidate_inspire_ids': sorted(found_ids),
+                  'candidate_state': 'UNIQUE_WMS_CANDIDATE' if len(found_ids) == 1 else ('MULTIPLE_WMS_CANDIDATES' if found_ids else 'NO_WMS_CANDIDATE'),
+                  'hmlr_inspire_id': None,
+                  'height_difference_m': None,
+                  'business_row': False,
+              })
+
+          generated = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload = {
+              'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,
+              'endpoint':endpoint,'layer':layer,'capabilities':capabilities,'rows':results,
+              'unique_candidate_rows':sum(row['candidate_state']=='UNIQUE_WMS_CANDIDATE' for row in results),
+              'official_polygon_rows_written':0,'official_numeric_rows_written':0,'actual_business_rows_written':0,
+              'fake_data':False,'final_ready':False,
+          }
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(json.dumps(payload, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          receipt.parent.mkdir(parents=True, exist_ok=True)
+          receipt.write_text(json.dumps({
+              'schema_version':1,'slot_id':'height_difference_2','validated_at':generated,'state':'PASS',
+              'capabilities_ok':capabilities['ok'],'capabilities_layer_present':capabilities['layer_name_present'],
+              'point_rows':len(results),'unique_candidate_rows':payload['unique_candidate_rows'],
+              'all_final_ids_null':all(row['hmlr_inspire_id'] is None for row in results),
+              'all_heights_null':all(row['height_difference_m'] is None for row in results),
+              'output_path':str(output),'output_sha256':hashlib.sha256(output.read_bytes()).hexdigest(),
+              'official_polygon_rows_written':0,'official_numeric_rows_written':0,'business_rows_written':0,
+              'fake_data':False,'final_ready':False,
+          }, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          PY
+      - name: Commit WMS probe receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/height_difference_2/hmlr_wms_featureinfo_runtime_034.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/032_hmlr_wms_featureinfo_runtime_034.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Probe HMLR WMS feature info for height_difference_2 [skip ci]'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
