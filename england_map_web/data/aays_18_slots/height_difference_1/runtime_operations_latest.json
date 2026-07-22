@@ -1,16 +1,16 @@
 {
-  "schema_version": 7,
+  "schema_version": 8,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 28,
-  "complete_count": 28,
+  "operation_count": 35,
+  "complete_count": 35,
   "operations": [
     {"operation_id":"HD1-OP-106","label":"Runtime raster-filter integration gap detected","state":"COMPLETE","evidence":"The standalone raster guard passed preflight tests, but the downloaded TIFF value array was not yet guaranteed to use the official EA NoData sentinel filter at measurement runtime."},
     {"operation_id":"HD1-OP-107","label":"Fail-closed runtime guard injector implemented","state":"COMPLETE","evidence":"A slot-scoped Python injector adds guarded carrier patches for classic TIFF header validation and official EA NoData filtering on the real raster value array."},
     {"operation_id":"HD1-OP-108","label":"Runtime guard injector deterministic test completed","state":"COMPLETE","evidence":"Local deterministic checks covered duplicate markers, both TIFF endiannesses, sentinel insertion and task-version upgrade."},
     {"operation_id":"HD1-OP-109","label":"Hash-bound runtime carrier handoff implemented","state":"COMPLETE","evidence":"The entry wrapper verifies injector state, patch labels, source/output identity and SHA-256 before executing the patched carrier."},
     {"operation_id":"HD1-OP-110","label":"Historical shared-runner queue branch rechecked","state":"COMPLETE","evidence":"Remote branch search again returned no codex/aays-single-runner-v5-20260706 reference; task remains prepared_not_enqueued and no queue mutation was made."},
-    {"operation_id":"HD1-OP-111","label":"Current HMLR identity and projection contract revalidated","state":"COMPLETE","evidence":"Official HMLR pages still define a unique Land Registry-INSPIRE ID per polygon, native British National Grid data and an up-to-15m BNG-to-WGS84 reprojection warning; July 2026 publication remains current."},
+    {"operation_id":"HD1-OP-111","label":"Current HMLR identity and projection contract revalidated","state":"COMPLETE","evidence":"Official HMLR pages still define native British National Grid data and an up-to-15m BNG-to-WGS84 reprojection warning; July 2026 publication remains current."},
     {"operation_id":"HD1-OP-112","label":"Generic polygon identifier fallback risk detected","state":"COMPLETE","evidence":"The resolver could select a generic id or gml_id column when an INSPIRE-semantic field was absent."},
     {"operation_id":"HD1-OP-113","label":"INSPIRE-semantic identifier receipt gate implemented","state":"COMPLETE","evidence":"The runtime carrier requires the HMLR receipt identifier-column name to contain both INSPIRE and ID semantics."},
     {"operation_id":"HD1-OP-114","label":"HMLR identifier count and digest gates implemented","state":"COMPLETE","evidence":"PowerShell independently requires positive feature_count, unique_identifier_count equal to feature_count and a 64-character identifier-set SHA-256."},
@@ -31,8 +31,15 @@
     {"operation_id":"HD1-OP-129","label":"Boundary-only canonical binding risk detected","state":"COMPLETE","evidence":"The measurement matcher used intersects; a point touching only a polygon boundary could be accepted when exactly one intersecting polygon was returned."},
     {"operation_id":"HD1-OP-130","label":"Strict polygon-interior injector implemented","state":"COMPLETE","evidence":"A third slot-scoped injector filters spatial-index intersections with geometry.contains(point) and separately records geometry.touches(point)."},
     {"operation_id":"HD1-OP-131","label":"Boundary binding injector deterministic verification completed","state":"COMPLETE","evidence":"The committed injector compiled and passed 10/10 local tests; the tested Git blob SHA matches the branch blob 854f946291ac0eeee8cdd23dc9eb24a21f762fe4."},
-    {"operation_id":"HD1-OP-132","label":"Three-stage carrier hash chain implemented","state":"COMPLETE","evidence":"The wrapper validates all three path/size/SHA receipts and requires the third-stage source digest to equal the identity-stage output digest before executing only the strict-interior carrier."},
-    {"operation_id":"HD1-OP-133","label":"Task v1.15 strict-interior contract aligned","state":"COMPLETE","evidence":"Prepared task v1.15 contains 72 fail-closed checks, fourteen exact-once source replacements and explicit boundary-touch rejection."}
+    {"operation_id":"HD1-OP-132","label":"Three-stage carrier hash chain implemented","state":"COMPLETE","evidence":"The wrapper validates all three path/size/SHA receipts and executes only the strict-interior carrier."},
+    {"operation_id":"HD1-OP-133","label":"Task v1.15 strict-interior contract aligned","state":"COMPLETE","evidence":"Prepared task v1.15 contains 72 fail-closed checks and explicit boundary-touch rejection."},
+    {"operation_id":"HD1-OP-134","label":"Official HMLR and EA service contracts refreshed","state":"COMPLETE","evidence":"Current official HMLR pages still publish the July 2026 INSPIRE data in British National Grid; the EA LIDAR catalogue remains EPSG:27700 with JSON query support."},
+    {"operation_id":"HD1-OP-135","label":"Silent HMLR CRS reprojection risk detected","state":"COMPLETE","evidence":"Measurement Python could silently transform a non-EPSG:27700 GML even though native BNG is required for fail-closed canonical binding."},
+    {"operation_id":"HD1-OP-136","label":"Null-like polygon identifier risk detected","state":"COMPLETE","evidence":"A string conversion could turn missing identifiers into values such as nan or none that pass a whitespace-only emptiness check."},
+    {"operation_id":"HD1-OP-137","label":"Measurement identity injector v1.1 implemented","state":"COMPLETE","evidence":"The identity stage now rejects non-native GML CRS, removes silent reprojection and rejects six null-like polygon identifier forms."},
+    {"operation_id":"HD1-OP-138","label":"Identity injector v1.1 deterministic verification completed","state":"COMPLETE","evidence":"The v1.1 injector compiled and passed 15/15 self-tests; the tested Git blob SHA equals committed blob bf21893682ad9ac17e52128cbdf57702967afa6a."},
+    {"operation_id":"HD1-OP-139","label":"Native-BNG identity receipt bound to entry wrapper","state":"COMPLETE","evidence":"The wrapper requires identity version 1.1, fifteen tests, five patches, native_crs_required=EPSG:27700 and the complete null-like rejection list before stage three."},
+    {"operation_id":"HD1-OP-140","label":"DTM-required and DSM-optional runtime paths re-audited","state":"COMPLETE","evidence":"Both 10m probe and full-polygon carrier patches require DTM while retaining DSM only as optional surface QA; no additional patch was needed."}
   ],
   "fake_data": false,
   "final_ready": false
