@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_2",
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "generated_at": "2026-07-22T03:12:00Z",
+  "state": "WAVE004_24_OF_24_ONSPD_LIVE_ACCEPTED_WAVE005_AND_WAVE006_QUEUED",
+  "progress": {
+    "operational_completed": 23,
+    "operational_total": 24,
+    "operational_percent": 95.83,
+    "operational_increase_percentage_points": 4.16,
+    "wave004_completed_operations": 29,
+    "wave004_total_operations": 30,
+    "wave004_percent": 96.67,
+    "task_chain_completed": 1,
+    "task_chain_total": 3,
+    "task_chain_percent": 33.33,
+    "product_plan_completed_steps": 1,
+    "product_plan_total_steps": 9,
+    "product_plan_percent": 11.11,
+    "product_plan_increase_percentage_points": 0.0
+  },
+  "counts": {
+    "existing_canonical_internet_rows": 33785,
+    "existing_shard2_internet_rows": 11013,
+    "sample_rows": 24,
+    "postcode_identity_confirmed": 24,
+    "postcode_identity_increase": 20,
+    "postcode_live": 24,
+    "postcode_terminated_review_required": 0,
+    "postcode_not_confirmed": 0,
+    "official_coverage_verified_3_of_4": 0,
+    "parcel_measured_values_written": 0,
+    "queued_followup_tasks": 2,
+    "visible_operation_lines": 26,
+    "visible_candidate_rows": 24,
+    "total_visible_rows": 50
+  },
+  "accuracy": {
+    "current_confirmed_rows": "24_AT_2_OF_4_POSTCODE_IDENTITY_ONLY",
+    "maximum_with_exact_ofcom_r2": "3/4_POSTCODE_PROXY",
+    "verified_3_of_4_rows": 0,
+    "parcel_measured_claim_allowed": false,
+    "strict_3_of_4_requirements": [
+      "exact live ONSPD postcode identity",
+      "exact Ofcom Spring 2026 r2 postcode row",
+      "complete gigabit UFBB100 SFBB and unable30 fields",
+      "all official percentages within 0 to 100"
+    ],
+    "false_completion_guard": "Ofcom join cannot report 100 percent before material-delta and no-data review"
+  },
+  "sources": [
+    {
+      "source": "ONS Postcode Directory May 2026",
+      "authority": "Office for National Statistics",
+      "result": "24_OF_24_EXACT_LIVE_POSTCODE_IDENTITIES",
+      "maximum_accuracy": "2/4_POSTCODE_IDENTITY_ONLY"
+    },
+    {
+      "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+      "authority": "Ofcom",
+      "snapshot": "2026-01",
+      "publication_date": "2026-05-13",
+      "official_zip_size_mb": 32.2,
+      "result": "OFFICIAL_LINK_CONFIRMED_BINARY_ACCESS_BLOCKED",
+      "maximum_accuracy": "3/4_POSTCODE_PROXY"
+    }
+  ],
+  "tasks": [
+    {
+      "sequence": 1,
+      "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+      "target_rows": 24,
+      "state": "RESULT_READY_FOR_REMOTE_ACCEPTANCE",
+      "result": "24_OF_24_LIVE",
+      "accuracy": "2/4"
+    },
+    {
+      "sequence": 2,
+      "task_id": "internet-access-2-expand-onspd-identity-existing-11013-20260722T021000Z",
+      "target_rows": 11013,
+      "state": "QUEUED_AFTER_SEQUENCE_1",
+      "script": "005b_expand_onspd_identity_to_existing_11013.py",
+      "web_chunk_size": 500
+    },
+    {
+      "sequence": 3,
+      "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-20260722T022500Z",
+      "target_rows": 11013,
+      "state": "QUEUED_AFTER_SEQUENCE_2",
+      "script": "006b_ofcom_dynamic_zip_join_strict_guard.py",
+      "maximum_pre_review_progress_percent": 83.33,
+      "material_delta_threshold_pp": 10.0
+    }
+  ],
+  "web_visibility": {
+    "operation_lines_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_parallel_source_research.jsonl",
+    "candidate_rows_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/004_24_sample_rows_latest.json",
+    "next_identity_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json",
+    "next_coverage_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json"
+  },
+  "blockers": [
+    "OFCom_2026_OFFICIAL_ZIP_BINARY_ACCESS_BLOCKED",
+    "WAVE005_COORDINATOR_PICKUP_PENDING"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
