@@ -1,11 +1,11 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "slot_id": "security_public_safety_1",
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
-  "source_head": "1a0083c2f00baaa1e9736247956ce35c552e6156",
-  "checked_at": "2026-07-22T20:20:00+03:00",
-  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_PUBLISHED_BLOCKER_UNCHANGED",
+  "source_head": "590b2665f7c3d506a36dee5dfb90c1b8035c03cc",
+  "checked_at": "2026-07-22T20:35:00+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_V2_PUBLISHED_BLOCKER_UNCHANGED",
   "canonical_progress": {
     "completed_units": 5,
     "total_units": 8,
@@ -13,16 +13,16 @@
     "percent_change": 0.0
   },
   "increment_metrics": {
-    "official_source_checks_added": 15,
-    "official_source_checks_passed": 15,
-    "source_upgrades_added": 9,
-    "research_examples_added": 15,
+    "official_source_checks_added": 20,
+    "official_source_checks_passed": 20,
+    "source_upgrades_added": 14,
+    "research_examples_added": 20,
     "candidate_rows_added": 0,
     "parcel_values_added": 0,
     "stored_values_modified": false,
     "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY",
-    "web_source_rows": 15,
-    "web_operation_rows": 15
+    "web_source_rows": 20,
+    "web_operation_rows": 20
   },
   "sources": [
     {
@@ -174,13 +174,63 @@
       "verified_fact": "The current published bulletin was released 23 April 2026; the next release is 23 July 2026.",
       "quality_effect": "Keeps the national baseline on the latest published edition until the scheduled release exists.",
       "candidate_score_input": false
+    },
+    {
+      "row": 16,
+      "status": "PASS_CURRENT_AGGREGATE_BASELINE",
+      "source": "ONS Crime in England and Wales: Appendix tables",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/crimeinenglandandwalesappendixtables",
+      "verified_fact": "The current year-ending-December-2025 edition was released 23 April 2026 and includes offence-type detail for violence, fraud and anti-social behaviour.",
+      "quality_effect": "Adds offence-type national cross-checks without converting national totals into parcel evidence.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 17,
+      "status": "PASS_EMERGENCY_CONTEXT_CANDIDATE",
+      "source": "London Fire Brigade Incident Records",
+      "authority": "London Fire Brigade / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/london-fire-brigade-incident-records-em8xy",
+      "verified_fact": "The current 2024-onwards incident file covers Jan 2024-Apr 2026 and includes incident location coordinates and incident type.",
+      "quality_effect": "Adds coordinate-level emergency-incident context; it remains separate from crime and parcel safety scoring.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 18,
+      "status": "PASS_RESPONSE_CONTEXT_CANDIDATE",
+      "source": "London Fire Brigade Mobilisation Records",
+      "authority": "London Fire Brigade / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/london-fire-brigade-mobilisation-records-24r65",
+      "verified_fact": "The current mobilisation file covers Jan 2025-Jun 2026 and records deployed appliance and arrival-time fields.",
+      "quality_effect": "Adds emergency-response context while forbidding interpretation as crime incidence or guaranteed parcel response time.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 19,
+      "status": "PASS_CAPACITY_CONTEXT_CANDIDATE",
+      "source": "Police workforce, England and Wales: 31 March 2026",
+      "authority": "GOV.UK / Home Office",
+      "url": "https://www.gov.uk/government/statistics/police-workforce-england-and-wales-31-march-2026",
+      "verified_fact": "Published 22 July 2026, the accredited release covers workforce in 43 territorial forces and British Transport Police, including neighbourhood-policing tables.",
+      "quality_effect": "Adds current force-capacity context; workforce totals are not treated as local crime risk or parcel safety.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 20,
+      "status": "PASS_SENSITIVE_AGGREGATE_CONTEXT",
+      "source": "MPS Violence Against Women and Girls dashboard data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-violence-against-women-and-girls-dashboard-data-2yod5/",
+      "verified_fact": "Aggregated offence and victim files cover Jan 2014-Apr 2026, with location outputs by BCU, borough and ward to protect confidentiality.",
+      "quality_effect": "Adds sensitive ward-level context with disclosure controls; excluded from parcel scoring and individual inference.",
+      "candidate_score_input": false
     }
   ],
   "new_upgrade_candidates": {
-    "count": 4,
-    "rows": [10, 11, 12, 13],
+    "count": 9,
+    "rows": [10, 11, 12, 13, 16, 17, 18, 19, 20],
     "score_input_candidates": 0,
-    "context_or_crosscheck_candidates": 4
+    "context_or_crosscheck_candidates": 9
   },
   "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
   "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
