@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_3",
+  "generated_at": "2026-07-22T06:17:00+03:00",
+  "audit_scope": "44 official source candidates and two scheduled official releases",
+  "source_inventory": {
+    "candidate_count": 44,
+    "promoted_count": 35,
+    "held_count": 9,
+    "accuracy_ge_90_count": 44,
+    "accuracy_ge_95_count": 42,
+    "semantic_limit_present_count": 44,
+    "direct_parcel_scoring_permitted_count": 0,
+    "unique_official_url_count": 42,
+    "intentional_shared_url_groups": 2,
+    "person_level_data_retained": false
+  },
+  "audit_rows": [
+    {"line":1,"check":"official publisher or official public-data domain","status":"PASS","observed":"44/44","evidence":"gov.uk, ons.gov.uk, statistics.gov.uk, data.gov.uk, data.police.uk, HMICFRS and OSR official sources only"},
+    {"line":2,"check":"authority accuracy floor","status":"PASS","observed":"44/44 >=90; 42/44 >=95","evidence":"source inventory authority_accuracy fields"},
+    {"line":3,"check":"explicit semantic use limit","status":"PASS","observed":"44/44","evidence":"every source row states geography, aggregation, methodology, sensitivity or operational limits"},
+    {"line":4,"check":"direct parcel attribution prohibited","status":"PASS","observed":"0/44 permitted","evidence":"all sources are area, aggregate, methodology, geometry, operational or QA evidence; none proves exact parcel incidents"},
+    {"line":5,"check":"held-source quarantine","status":"PASS","observed":"9 held","evidence":"fire, roads, stop-search, misconduct, justice, courts, performance, hate-crime and unstructured priorities remain outside parcel scoring"},
+    {"line":6,"check":"person-level data quarantine","status":"PASS","observed":"0 retained","evidence":"stop-search and protected-characteristic context are not ingested into parcel scoring"},
+    {"line":7,"check":"shared URL role separation","status":"PASS","observed":"2 groups / 4 rows","evidence":"recorded-crime page separates aggregate tables from geography mapping; population page separates denominator from density QA"},
+    {"line":8,"check":"police API request pacing","status":"PASS_GUARD_READY","observed":"15 requests/second average, burst 30, HTTP 429 required","evidence":"https://data.police.uk/docs/api-call-limits/"},
+    {"line":9,"check":"police workforce scheduled release","status":"PENDING_FUTURE_RELEASE","observed":"2026-07-22 11:30 Europe/Istanbul","evidence":"https://www.gov.uk/government/statistics/announcements/police-workforce-england-and-wales-31-march-2026"},
+    {"line":10,"check":"ONS crime scheduled release","status":"PENDING_FUTURE_RELEASE","observed":"2026-07-23 11:30 Europe/Istanbul","evidence":"https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026"},
+    {"line":11,"check":"runtime output and reconciliation","status":"BLOCKED","observed":"0/2 branches output; 0/2 branches reconciliation","evidence":"attempt security-public-safety-3-20260721-020 files absent on main and canonical"},
+    {"line":12,"check":"detached final artifact manifest","status":"BLOCKED","observed":"passed=false; final SHA256 0/3; published score rows 0","evidence":"manifest blob c30d18f1a1f040a446b8ff5424ad655a2820d0b7 identical on main and canonical"}
+  ],
+  "verified_parcel_rows": 0,
+  "actual_slot_rows_written": 0,
+  "published_score_rows": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}
