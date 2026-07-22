@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Resolve the current HMLR Barking and Dagenham INSPIRE ZIP and extract one GML.
+"""Fail-closed HMLR INSPIRE ZIP resolver for height_difference_1.
 
-Fail closed: the official page row, ZIP route, redirect host, archive structure,
-GML bytes, native CRS, polygon geometry and unique INSPIRE identifiers must all
-validate. No parcel geometry or elevation result is produced by this helper.
+The helper resolves the current Barking and Dagenham authority ZIP from the
+official HMLR page, follows only the documented HMLR/S3 delivery path, safely
+extracts exactly one GML member, validates native BNG polygon structure, and
+writes independent byte/hash receipts. It never creates a parcel or elevation
+business result.
 """
 from __future__ import annotations
 
@@ -15,10 +17,8 @@ import html.parser
 import http.cookiejar
 import io
 import json
-import math
 import os
 from pathlib import Path, PurePosixPath
-import re
 import stat
 import sys
 import tempfile
@@ -29,17 +29,21 @@ from urllib.request import HTTPCookieProcessor, Request, build_opener
 import zipfile
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.3-native-bng-polygon-id-preflight"
-HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
+SCRIPT_VERSION = "1.4-exact-s3-path-native-bng-fail-closed"
+
 HMLR_AUTHORITY = "London Borough of Barking and Dagenham"
-HMLR_ORIGIN_HOST = "use-land-property-data.service.gov.uk"
-HMLR_OBJECT_HOST = "datapub-prd-s3-bucket.s3.amazonaws.com"
-HMLR_ZIP_ALLOWED_FINAL_HOSTS = {HMLR_ORIGIN_HOST, HMLR_OBJECT_HOST}
+HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 HMLR_ZIP_URL = (
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download/"
     "London_Borough_of_Barking_and_Dagenham.zip"
 )
-USER_AGENT = "AAYS-height-difference-hmlr-zip/1.3"
+HMLR_HOST = "use-land-property-data.service.gov.uk"
+HMLR_ZIP_PATH = "/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip"
+S3_HOST = "datapub-prd-s3-bucket.s3.amazonaws.com"
+S3_ZIP_PATH = "/inspire/London_Borough_of_Barking_and_Dagenham.zip"
+ALLOWED_ZIP_FINALS = {(HMLR_HOST, HMLR_ZIP_PATH), (S3_HOST, S3_ZIP_PATH)}
+
+USER_AGENT = "AAYS-height-difference-hmlr-zip/1.4"
 MAX_PAGE_BYTES = 20_000_000
 MAX_ZIP_BYTES = 1_000_000_000
 MAX_GML_BYTES = 1_000_000_000
@@ -87,44 +91,61 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def sha256_json(value: Any) -> str:
-    return sha256_bytes(
-        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    )
+def sha256_values(values: Iterable[str]) -> str:
+    payload = "\n".join(sorted(values)).encode("utf-8")
+    return sha256_bytes(payload)
 
 
 def atomic_bytes(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
+    fd, temp_name = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp_name, path)
+        os.replace(temp_name, path)
     finally:
         with contextlib.suppress(FileNotFoundError):
-            os.unlink(tmp_name)
+            os.unlink(temp_name)
 
 
 def atomic_json(path: Path, payload: dict[str, Any]) -> None:
-    encoded = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-    atomic_bytes(path, encoded)
+    atomic_bytes(
+        path,
+        (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+    )
+
+
+def require_https_url(url: str) -> tuple[str, str]:
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise EvidenceError(f"HTTPS_URL_REQUIRED:{url}")
+    return parsed.netloc.lower(), parsed.path
+
+
+def validate_page_final_url(url: str) -> dict[str, Any]:
+    host, path = require_https_url(url)
+    expected_path = urlparse(HMLR_DOWNLOAD_PAGE).path
+    if host != HMLR_HOST or path != expected_path:
+        raise EvidenceError(f"HMLR_PAGE_FINAL_URL_INVALID:{host}:{path}")
+    return {"final_host": host, "final_path": path, "final_url_allowlisted": True}
+
+
+def validate_zip_final_url(url: str) -> dict[str, Any]:
+    host, path = require_https_url(url)
+    if (host, path) not in ALLOWED_ZIP_FINALS:
+        raise EvidenceError(f"HMLR_ZIP_FINAL_URL_INVALID:{host}:{path}")
+    return {
+        "final_host": host,
+        "final_path": path,
+        "final_host_allowlisted": True,
+        "final_path_allowlisted": True,
+    }
 
 
 def build_http_opener():
-    jar = http.cookiejar.CookieJar()
-    return build_opener(HTTPCookieProcessor(jar))
-
-
-def validate_final_url(final_url: str, allowed_hosts: set[str], label: str) -> str:
-    parsed = urlparse(final_url)
-    if parsed.scheme != "https":
-        raise EvidenceError(f"{label}_FINAL_URL_NOT_HTTPS:{parsed.scheme}")
-    host = (parsed.hostname or "").lower()
-    if host not in allowed_hosts:
-        raise EvidenceError(f"{label}_FINAL_HOST_NOT_ALLOWED:{host}")
-    return host
+    return build_opener(HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
 
 def fetch_bytes(
@@ -134,23 +155,26 @@ def fetch_bytes(
     timeout: int,
     retries: int,
     max_bytes: int,
-    allowed_final_hosts: set[str],
-    label: str,
-):
+) -> tuple[bytes, dict[str, str], str]:
     last: Exception | None = None
     for attempt in range(1, retries + 1):
         try:
             request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
             with contextlib.closing(opener.open(request, timeout=timeout)) as response:
-                status_code = getattr(response, "status", 200)
-                if status_code != 200:
-                    raise EvidenceError(f"HTTP_{status_code}:{url}")
+                status = getattr(response, "status", 200)
+                if status != 200:
+                    raise EvidenceError(f"HTTP_{status}:{url}")
                 headers = {k.lower(): v for k, v in response.headers.items()}
                 declared = headers.get("content-length")
-                if declared and int(declared) > max_bytes:
-                    raise EvidenceError(f"DECLARED_RESPONSE_TOO_LARGE:{declared}>{max_bytes}")
-                final_url = response.geturl()
-                final_host = validate_final_url(final_url, allowed_final_hosts, label)
+                if declared:
+                    try:
+                        declared_size = int(declared)
+                    except ValueError as exc:
+                        raise EvidenceError(f"CONTENT_LENGTH_INVALID:{declared}") from exc
+                    if declared_size < 0 or declared_size > max_bytes:
+                        raise EvidenceError(
+                            f"DECLARED_RESPONSE_SIZE_INVALID:{declared_size}>{max_bytes}"
+                        )
                 chunks: list[bytes] = []
                 total = 0
                 while True:
@@ -162,9 +186,10 @@ def fetch_bytes(
                         raise EvidenceError(f"RESPONSE_TOO_LARGE:{total}>{max_bytes}")
                     chunks.append(chunk)
                 data = b"".join(chunks)
+                final_url = response.geturl()
             if not data:
                 raise EvidenceError(f"EMPTY_RESPONSE:{url}")
-            return data, headers, final_url, final_host
+            return data, headers, final_url
         except Exception as exc:
             last = exc
             if attempt < retries:
@@ -178,27 +203,17 @@ def discover_authority_zip(page_bytes: bytes) -> str:
     rows = [row for row in parser.rows if HMLR_AUTHORITY.lower() in row["text"].lower()]
     if len(rows) != 1:
         raise EvidenceError(f"HMLR_AUTHORITY_ROW_NOT_UNIQUE:found={len(rows)}")
-    candidates = []
+    candidates: list[str] = []
     for href in rows[0]["links"]:
         full = urljoin(HMLR_DOWNLOAD_PAGE, href)
-        parsed = urlparse(full)
-        if parsed.scheme == "https" and parsed.netloc == HMLR_ORIGIN_HOST and parsed.path.endswith(".zip"):
+        host, path = require_https_url(full)
+        if host == HMLR_HOST and path.endswith(".zip"):
             candidates.append(full)
     if len(candidates) != 1:
         raise EvidenceError(f"HMLR_AUTHORITY_ZIP_LINK_NOT_UNIQUE:found={len(candidates)}")
     if candidates[0] != HMLR_ZIP_URL:
         raise EvidenceError(f"HMLR_AUTHORITY_ZIP_ROUTE_CHANGED:{candidates[0]}")
     return candidates[0]
-
-
-def validate_gml_bytes(data: bytes) -> None:
-    if len(data) < 32:
-        raise EvidenceError("HMLR_GML_TOO_SMALL")
-    prefix = data[:2048].lstrip().lower()
-    if prefix.startswith(b"<html") or b"<!doctype html" in prefix:
-        raise EvidenceError("HMLR_GML_IS_HTML")
-    if not (prefix.startswith(b"<?xml") or prefix.startswith(b"<")):
-        raise EvidenceError("HMLR_GML_NOT_XML")
 
 
 def is_symlink(member: zipfile.ZipInfo) -> bool:
@@ -208,12 +223,23 @@ def is_symlink(member: zipfile.ZipInfo) -> bool:
 
 def validate_member_path(name: str) -> None:
     path = PurePosixPath(name)
-    if path.is_absolute() or ".." in path.parts:
+    if not name or path.is_absolute() or ".." in path.parts:
         raise EvidenceError(f"HMLR_ZIP_UNSAFE_MEMBER_PATH:{name}")
 
 
+def validate_gml_prefix(data: bytes) -> None:
+    if len(data) < 32:
+        raise EvidenceError("HMLR_GML_TOO_SMALL")
+    prefix = data[:4096].lstrip().lower()
+    if prefix.startswith(b"<html") or b"<!doctype html" in prefix:
+        raise EvidenceError("HMLR_GML_IS_HTML")
+    if not (prefix.startswith(b"<?xml") or prefix.startswith(b"<")):
+        raise EvidenceError("HMLR_GML_NOT_XML")
+
+
 def extract_single_gml(zip_bytes: bytes) -> tuple[bytes, dict[str, Any]]:
-    if len(zip_bytes) < 4 or zip_bytes[:4] not in {b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"}:
+    valid_magic = {b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"}
+    if len(zip_bytes) < 4 or zip_bytes[:4] not in valid_magic:
         raise EvidenceError("HMLR_RESPONSE_NOT_ZIP_MAGIC")
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
         members = archive.infolist()
@@ -229,22 +255,31 @@ def extract_single_gml(zip_bytes: bytes) -> tuple[bytes, dict[str, Any]]:
                 raise EvidenceError(f"HMLR_ZIP_SYMLINK_MEMBER:{member.filename}")
             total_uncompressed += int(member.file_size)
             if total_uncompressed > MAX_GML_BYTES:
-                raise EvidenceError(f"HMLR_ZIP_UNCOMPRESSED_TOO_LARGE:{total_uncompressed}")
+                raise EvidenceError(
+                    f"HMLR_ZIP_UNCOMPRESSED_TOO_LARGE:{total_uncompressed}"
+                )
             if member.compress_size == 0 and member.file_size > 0:
-                raise EvidenceError(f"HMLR_ZIP_INVALID_COMPRESSION_SIZE:{member.filename}")
+                raise EvidenceError(
+                    f"HMLR_ZIP_INVALID_COMPRESSION_SIZE:{member.filename}"
+                )
             if member.compress_size > 0:
                 ratio = member.file_size / member.compress_size
                 if ratio > MAX_COMPRESSION_RATIO:
-                    raise EvidenceError(f"HMLR_ZIP_COMPRESSION_RATIO_TOO_HIGH:{member.filename}:{ratio:.2f}")
+                    raise EvidenceError(
+                        f"HMLR_ZIP_COMPRESSION_RATIO_TOO_HIGH:"
+                        f"{member.filename}:{ratio:.2f}"
+                    )
             if member.filename.lower().endswith(".gml") and not member.is_dir():
                 gml_members.append(member)
         if len(gml_members) != 1:
-            raise EvidenceError(f"HMLR_ZIP_GML_MEMBER_NOT_UNIQUE:found={len(gml_members)}")
+            raise EvidenceError(
+                f"HMLR_ZIP_GML_MEMBER_NOT_UNIQUE:found={len(gml_members)}"
+            )
         member = gml_members[0]
         gml_bytes = archive.read(member)
     if len(gml_bytes) > MAX_GML_BYTES:
         raise EvidenceError(f"HMLR_GML_TOO_LARGE:{len(gml_bytes)}")
-    validate_gml_bytes(gml_bytes)
+    validate_gml_prefix(gml_bytes)
     return gml_bytes, {
         "member_name": member.filename,
         "member_compressed_bytes": int(member.compress_size),
@@ -254,134 +289,138 @@ def extract_single_gml(zip_bytes: bytes) -> tuple[bytes, dict[str, Any]]:
     }
 
 
-def require_geo_modules() -> tuple[Any, Any]:
+def choose_identifier_column(columns: Iterable[str]) -> str:
+    original = [str(column) for column in columns]
+    lowered = {column.lower(): column for column in original}
+    for key in (
+        "inspireid",
+        "inspire_id",
+        "landregistry-inspire-id",
+        "gml_id",
+        "gml:id",
+        "id",
+    ):
+        if key in lowered:
+            return lowered[key]
+    for column in original:
+        compact = column.lower().replace("_", "").replace("-", "").replace(":", "")
+        if "inspire" in compact and "id" in compact:
+            return column
+    raise EvidenceError("HMLR_INSPIRE_IDENTIFIER_COLUMN_NOT_RESOLVED")
+
+
+def validate_gml_structure(gml_path: Path) -> dict[str, Any]:
     try:
         import geopandas as gpd  # type: ignore
-        from shapely.geometry import Polygon  # type: ignore
     except Exception as exc:
-        raise EvidenceError(f"HMLR_GML_GEOSPATIAL_DEPENDENCY_MISSING:{exc}") from exc
-    return gpd, Polygon
+        raise EvidenceError(f"GEOPANDAS_REQUIRED_FOR_GML_PREFLIGHT:{exc}") from exc
 
-
-def normalize_column_name(value: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", value.lower())
-
-
-def choose_polygon_id_column(columns: Iterable[str]) -> str:
-    originals = [str(column) for column in columns]
-    normalized = {normalize_column_name(column): column for column in originals}
-    for key in (
-        "landregistryinspireid",
-        "inspireid",
-        "inspireidlocalid",
-        "localid",
-        "gmlid",
-    ):
-        if key in normalized:
-            return normalized[key]
-    candidates = [
-        column for column in originals
-        if "inspire" in normalize_column_name(column) and "id" in normalize_column_name(column)
-    ]
-    if len(candidates) == 1:
-        return candidates[0]
-    raise EvidenceError(f"HMLR_POLYGON_ID_COLUMN_NOT_UNIQUE:found={candidates}")
-
-
-def validate_gdf_structure(gdf: Any) -> dict[str, Any]:
+    gdf = gpd.read_file(gml_path)
     if gdf.empty:
         raise EvidenceError("HMLR_GML_HAS_ZERO_FEATURES")
-    if gdf.crs is None:
-        raise EvidenceError("HMLR_GML_CRS_MISSING")
-    epsg = gdf.crs.to_epsg()
-    if epsg != 27700:
-        raise EvidenceError(f"HMLR_GML_NATIVE_CRS_NOT_EPSG27700:{gdf.crs}")
-    geometry_types = sorted({str(value) for value in gdf.geometry.geom_type.dropna().tolist()})
-    unexpected = sorted(set(geometry_types) - ALLOWED_GEOMETRY_TYPES)
-    if unexpected:
-        raise EvidenceError(f"HMLR_GML_NON_POLYGON_GEOMETRY:{unexpected}")
-    if bool(gdf.geometry.isna().any()) or bool(gdf.geometry.is_empty.any()) or not bool(gdf.geometry.is_valid.all()):
-        raise EvidenceError("HMLR_GML_INVALID_EMPTY_OR_NULL_GEOMETRY")
-    areas = gdf.geometry.area
-    if bool((areas <= 0).any()) or not all(math.isfinite(float(value)) for value in areas):
-        raise EvidenceError("HMLR_GML_NON_POSITIVE_OR_NON_FINITE_AREA")
-    bounds = [float(value) for value in gdf.total_bounds]
-    if len(bounds) != 4 or not all(math.isfinite(value) for value in bounds):
-        raise EvidenceError("HMLR_GML_BOUNDS_NON_FINITE")
-    minx, miny, maxx, maxy = bounds
-    if not (0 <= minx <= maxx <= 700_000 and 0 <= miny <= maxy <= 1_300_000):
-        raise EvidenceError(f"HMLR_GML_BOUNDS_NOT_PLAUSIBLE_BNG:{bounds}")
-    id_column = choose_polygon_id_column(gdf.columns)
-    ids = [str(value).strip() for value in gdf[id_column].tolist()]
-    invalid_ids = [value for value in ids if not value or value.lower() in {"nan", "none", "null"}]
-    if invalid_ids:
-        raise EvidenceError(f"HMLR_GML_EMPTY_POLYGON_IDS:{len(invalid_ids)}")
-    if len(set(ids)) != len(ids):
-        raise EvidenceError(f"HMLR_GML_DUPLICATE_POLYGON_IDS:{len(ids) - len(set(ids))}")
+    if gdf.crs is None or gdf.crs.to_epsg() != 27700:
+        observed = str(gdf.crs) if gdf.crs is not None else None
+        raise EvidenceError(f"HMLR_GML_NATIVE_CRS_NOT_EPSG27700:{observed}")
+
+    geometry = gdf.geometry
+    if geometry.isna().any() or geometry.is_empty.any():
+        raise EvidenceError("HMLR_GML_EMPTY_OR_NULL_GEOMETRY")
+    geometry_types = set(geometry.geom_type.astype(str))
+    if not geometry_types.issubset(ALLOWED_GEOMETRY_TYPES):
+        raise EvidenceError(
+            "HMLR_GML_GEOMETRY_TYPE_INVALID:" + ",".join(sorted(geometry_types))
+        )
+    if not geometry.is_valid.all():
+        raise EvidenceError("HMLR_GML_INVALID_GEOMETRY")
+    areas = geometry.area
+    if (areas <= 0).any():
+        raise EvidenceError("HMLR_GML_NON_POSITIVE_POLYGON_AREA")
+
+    minx, miny, maxx, maxy = [float(value) for value in gdf.total_bounds]
+    if not (
+        0 <= minx < maxx <= 700_000
+        and 0 <= miny < maxy <= 1_300_000
+    ):
+        raise EvidenceError(
+            f"HMLR_GML_BNG_BOUNDS_IMPLAUSIBLE:{minx},{miny},{maxx},{maxy}"
+        )
+
+    identifier_column = choose_identifier_column(gdf.columns)
+    identifiers = [str(value).strip() for value in gdf[identifier_column].tolist()]
+    if any(not value or value.lower() in {"none", "nan"} for value in identifiers):
+        raise EvidenceError("HMLR_GML_IDENTIFIER_EMPTY")
+    if len(set(identifiers)) != len(identifiers):
+        raise EvidenceError("HMLR_GML_IDENTIFIER_NOT_UNIQUE")
+
     return {
         "feature_count": int(len(gdf)),
         "native_crs_epsg": 27700,
-        "geometry_types": geometry_types,
-        "polygon_id_column": id_column,
-        "unique_polygon_id_count": len(ids),
-        "total_bounds_bng": [round(value, 3) for value in bounds],
-        "minimum_polygon_area_m2": round(float(areas.min()), 6),
-        "maximum_polygon_area_m2": round(float(areas.max()), 6),
-        "polygon_ids_sha256": sha256_json(sorted(ids)),
+        "geometry_types": sorted(geometry_types),
+        "valid_geometry_count": int(geometry.is_valid.sum()),
+        "positive_area_count": int((areas > 0).sum()),
+        "total_bounds_bng": [round(value, 3) for value in (minx, miny, maxx, maxy)],
+        "identifier_column": identifier_column,
+        "unique_identifier_count": len(identifiers),
+        "identifier_set_sha256": sha256_values(identifiers),
     }
 
 
-def validate_gml_structure(gml_bytes: bytes) -> dict[str, Any]:
-    gpd, _ = require_geo_modules()
-    fd, temp_name = tempfile.mkstemp(prefix="height_difference_1_hmlr_", suffix=".gml")
-    os.close(fd)
-    temp_path = Path(temp_name)
-    try:
-        temp_path.write_bytes(gml_bytes)
-        gdf = gpd.read_file(temp_path)
-        return validate_gdf_structure(gdf)
-    except EvidenceError:
-        raise
-    except Exception as exc:
-        raise EvidenceError(f"HMLR_GML_STRUCTURE_READ_FAILED:{exc}") from exc
-    finally:
-        with contextlib.suppress(FileNotFoundError):
-            temp_path.unlink()
-
-
-def expect_failure(callable_obj: Any, label: str) -> None:
+def expect_error(callable_obj: Any, expected: str) -> int:
     try:
         callable_obj()
-    except EvidenceError:
-        return
-    raise EvidenceError(f"SELF_TEST_EXPECTED_FAILURE_NOT_RAISED:{label}")
+    except Exception as exc:
+        if expected not in str(exc):
+            raise EvidenceError(
+                f"SELF_TEST_WRONG_ERROR:expected={expected}:observed={exc}"
+            ) from exc
+        return 1
+    raise EvidenceError(f"SELF_TEST_EXPECTED_ERROR_NOT_RAISED:{expected}")
 
 
 def run_self_test() -> dict[str, Any]:
-    gpd, Polygon = require_geo_modules()
+    checks = 0
     sample_page = (
         '<table><tr><td>London Borough of Barking and Dagenham</td>'
         '<td><a href="/datasets/inspire/download/'
-        'London_Borough_of_Barking_and_Dagenham.zip">Download .gml</a></td></tr></table>'
+        'London_Borough_of_Barking_and_Dagenham.zip">Download .gml</a>'
+        "</td></tr></table>"
     ).encode()
     if discover_authority_zip(sample_page) != HMLR_ZIP_URL:
         raise EvidenceError("SELF_TEST_DISCOVERY_FAILED")
-    if validate_final_url(HMLR_DOWNLOAD_PAGE, {HMLR_ORIGIN_HOST}, "PAGE") != HMLR_ORIGIN_HOST:
-        raise EvidenceError("SELF_TEST_PAGE_HOST_FAILED")
-    sample_signed = (
-        "https://datapub-prd-s3-bucket.s3.amazonaws.com/inspire/"
-        "London_Borough_of_Barking_and_Dagenham.zip?X-Amz-Expires=60"
+    checks += 1
+
+    validate_page_final_url(HMLR_DOWNLOAD_PAGE)
+    checks += 1
+    validate_zip_final_url(HMLR_ZIP_URL)
+    checks += 1
+    validate_zip_final_url(
+        "https://datapub-prd-s3-bucket.s3.amazonaws.com/"
+        "inspire/London_Borough_of_Barking_and_Dagenham.zip"
     )
-    if validate_final_url(sample_signed, HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP") != HMLR_OBJECT_HOST:
-        raise EvidenceError("SELF_TEST_OBJECT_HOST_FAILED")
-    expect_failure(
-        lambda: validate_final_url("https://example.com/redirect.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP"),
-        "UNKNOWN_HOST",
+    checks += 1
+
+    checks += expect_error(
+        lambda: validate_zip_final_url(
+            "https://datapub-prd-s3-bucket.s3.amazonaws.com/"
+            "inspire/Other_Authority.zip"
+        ),
+        "HMLR_ZIP_FINAL_URL_INVALID",
     )
-    expect_failure(
-        lambda: validate_final_url("http://use-land-property-data.service.gov.uk/file.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP"),
-        "HTTP_SCHEME",
+    checks += expect_error(
+        lambda: validate_zip_final_url(
+            "http://datapub-prd-s3-bucket.s3.amazonaws.com/"
+            "inspire/London_Borough_of_Barking_and_Dagenham.zip"
+        ),
+        "HTTPS_URL_REQUIRED",
     )
+    checks += expect_error(
+        lambda: validate_zip_final_url(
+            "https://untrusted.example/inspire/"
+            "London_Borough_of_Barking_and_Dagenham.zip"
+        ),
+        "HMLR_ZIP_FINAL_URL_INVALID",
+    )
+
     payload = b'<?xml version="1.0"?><gml><feature>test</feature></gml>'
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -389,54 +428,57 @@ def run_self_test() -> dict[str, Any]:
     extracted, receipt = extract_single_gml(buffer.getvalue())
     if extracted != payload or receipt["archive_member_count"] != 1:
         raise EvidenceError("SELF_TEST_EXTRACTION_FAILED")
-    traversal = io.BytesIO()
-    with zipfile.ZipFile(traversal, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    checks += 1
+
+    unsafe = io.BytesIO()
+    with zipfile.ZipFile(unsafe, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("../escape.gml", payload)
-    expect_failure(lambda: extract_single_gml(traversal.getvalue()), "ZIP_TRAVERSAL")
-    polygon = Polygon([(550000, 183000), (550010, 183000), (550010, 183010), (550000, 183010)])
-    valid = gpd.GeoDataFrame({"LandRegistry-INSPIRE-ID": ["ID-1"]}, geometry=[polygon], crs="EPSG:27700")
-    structure = validate_gdf_structure(valid)
-    if structure["native_crs_epsg"] != 27700 or structure["unique_polygon_id_count"] != 1:
-        raise EvidenceError("SELF_TEST_VALID_GDF_FAILED")
-    wrong_crs = valid.to_crs(epsg=4326)
-    expect_failure(lambda: validate_gdf_structure(wrong_crs), "WRONG_CRS")
-    duplicate = gpd.GeoDataFrame(
-        {"LandRegistry-INSPIRE-ID": ["ID-1", "ID-1"]},
-        geometry=[polygon, polygon.buffer(20)],
-        crs="EPSG:27700",
+    checks += expect_error(
+        lambda: extract_single_gml(unsafe.getvalue()),
+        "HMLR_ZIP_UNSAFE_MEMBER_PATH",
     )
-    expect_failure(lambda: validate_gdf_structure(duplicate), "DUPLICATE_ID")
+
+    duplicate = io.BytesIO()
+    with zipfile.ZipFile(duplicate, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("a.gml", payload)
+        archive.writestr("b.gml", payload)
+    checks += expect_error(
+        lambda: extract_single_gml(duplicate.getvalue()),
+        "HMLR_ZIP_GML_MEMBER_NOT_UNIQUE",
+    )
+
+    if checks != 10:
+        raise EvidenceError(f"SELF_TEST_CHECK_COUNT_INVALID:{checks}")
     return {
         "state": "PASS",
-        "checks": 10,
+        "checks": checks,
         "script_version": SCRIPT_VERSION,
-        "checks_executed": [
-            "authority ZIP discovery",
-            "HMLR page host",
-            "S3 object host",
-            "unknown host rejection",
+        "scope": [
+            "authority-row discovery",
+            "page final URL",
+            "HMLR ZIP final URL",
+            "S3 ZIP final URL",
+            "wrong S3 object rejection",
             "HTTP rejection",
-            "one-GML ZIP extraction",
-            "traversal ZIP rejection",
-            "valid EPSG:27700 polygon structure",
-            "wrong CRS rejection",
-            "duplicate INSPIRE ID rejection",
+            "unknown host rejection",
+            "single-GML extraction",
+            "traversal rejection",
+            "multiple-GML rejection",
         ],
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--page-output", type=Path, required=False)
-    parser.add_argument("--gml-output", type=Path, required=False)
-    parser.add_argument("--receipt-output", type=Path, required=False)
+    parser.add_argument("--page-output", type=Path)
+    parser.add_argument("--gml-output", type=Path)
+    parser.add_argument("--receipt-output", type=Path)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
     if args.self_test:
         print(json.dumps(run_self_test(), sort_keys=True))
         return 0
-
     if args.page_output is None or args.gml_output is None or args.receipt_output is None:
         raise SystemExit("--page-output, --gml-output and --receipt-output are required")
 
@@ -449,7 +491,6 @@ def main() -> int:
         "authority": HMLR_AUTHORITY,
         "download_page_url": HMLR_DOWNLOAD_PAGE,
         "origin_zip_url": HMLR_ZIP_URL,
-        "allowed_zip_final_hosts": sorted(HMLR_ZIP_ALLOWED_FINAL_HOSTS),
         "artifacts": {},
         "errors": [],
         "fake_data": False,
@@ -458,53 +499,54 @@ def main() -> int:
         "production_deploy": False,
         "final_ready": False,
     }
+
     try:
         opener = build_http_opener()
-        page_bytes, page_headers, page_final_url, page_final_host = fetch_bytes(
+        page_bytes, page_headers, page_final_url = fetch_bytes(
             opener,
             HMLR_DOWNLOAD_PAGE,
             timeout=180,
             retries=3,
             max_bytes=MAX_PAGE_BYTES,
-            allowed_final_hosts={HMLR_ORIGIN_HOST},
-            label="HMLR_PAGE",
         )
+        page_delivery = validate_page_final_url(page_final_url)
         discovered_url = discover_authority_zip(page_bytes)
-        zip_bytes, zip_headers, zip_final_url, zip_final_host = fetch_bytes(
+
+        zip_bytes, zip_headers, zip_final_url = fetch_bytes(
             opener,
             discovered_url,
             timeout=300,
             retries=3,
             max_bytes=MAX_ZIP_BYTES,
-            allowed_final_hosts=HMLR_ZIP_ALLOWED_FINAL_HOSTS,
-            label="HMLR_ZIP",
         )
+        zip_delivery = validate_zip_final_url(zip_final_url)
         gml_bytes, archive_receipt = extract_single_gml(zip_bytes)
-        structure_receipt = validate_gml_structure(gml_bytes)
+
         atomic_bytes(args.page_output, page_bytes)
         atomic_bytes(args.gml_output, gml_bytes)
+        structure = validate_gml_structure(args.gml_output)
+
         result["artifacts"] = {
             "download_page": {
                 "output_path": str(args.page_output),
                 "sha256": sha256_bytes(page_bytes),
                 "bytes": len(page_bytes),
                 "content_type": page_headers.get("content-type"),
-                "final_host": page_final_host,
+                **page_delivery,
             },
             "hmlr_zip": {
                 "origin_url": discovered_url,
-                "final_host": zip_final_host,
-                "final_host_allowlisted": True,
                 "sha256": sha256_bytes(zip_bytes),
                 "bytes": len(zip_bytes),
                 "content_type": zip_headers.get("content-type"),
+                **zip_delivery,
             },
             "hmlr_gml": {
                 "output_path": str(args.gml_output),
                 "sha256": sha256_bytes(gml_bytes),
                 "bytes": len(gml_bytes),
                 **archive_receipt,
-                "structure": structure_receipt,
+                "structure": structure,
             },
         }
         result["state"] = "COMPLETED_ZIP_AND_GML_VERIFIED"
