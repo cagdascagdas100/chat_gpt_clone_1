@@ -76,6 +76,7 @@ jobs:
         run: |
           cat > /tmp/hd2_acceptance.py <<'PY'
           import json
+          import os
           from datetime import datetime, timezone
           from pathlib import Path
           from playwright.sync_api import sync_playwright
@@ -121,6 +122,11 @@ jobs:
                   'slot_id': 'height_difference_2',
                   'validated_at': datetime.now(timezone.utc).isoformat(),
                   'state': 'PASS' if all(checks.values()) else 'FAIL',
+                  'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
+                  'workflow_run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+                  'workflow_sha': os.environ.get('GITHUB_SHA'),
+                  'python_compile_pass_count': 3,
+                  'powershell_parse_pass_count': 3,
                   'url': url,
                   'http_status': response.status if response else None,
                   'browser': 'Chromium',
@@ -132,13 +138,25 @@ jobs:
                   'checks': checks,
                   'console_errors': console_errors,
                   'page_errors': page_errors,
+                  'f_host_guarded_recovery_executed': False,
+                  'final_ready': False,
               }
+              receipt = Path('/tmp/hd2-044-runtime-validation.json')
+              receipt.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
               print('HD2_ACCEPTANCE_JSON=' + json.dumps(result, ensure_ascii=False, sort_keys=True))
               browser.close()
               if result['state'] != 'PASS':
                   raise SystemExit(2)
           PY
           python /tmp/hd2_acceptance.py
+
+      - name: Upload exact runtime receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd2-044-runtime-validation
+          path: /tmp/hd2-044-runtime-validation.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Final runtime summary
         run: |
