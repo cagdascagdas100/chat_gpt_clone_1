@@ -3,21 +3,20 @@
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The official Ofcom r1/r2 revision-contract mismatch has been repaired and locally tested, but the canonical P0 task remains unclaimed because the existing single-runner heartbeat is stale. The official archive bytes are still unavailable to the current execution environment.",
+  "reason": "The current official Ofcom package uses an outer ZIP whose filename ends in r1, but the corrected all-premises postcode files inside it must all be r2. This strict v2 rule is now implemented and tested. The existing P0 task remains unclaimed because the canonical single-runner heartbeat is stale, and the official ZIP bytes cannot be downloaded in the current execution environment.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-22T17:18:44Z",
-  "solution": "On the canonical portable host, start the existing single runner from RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. If the official Ofcom download still fails there, place the official ZIP at ${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip and let the existing queued 009 task rerun. Do not start a second runner and do not create another task.",
+  "updated_at": "2026-07-22T17:33:00Z",
+  "solution": "On the canonical portable host, start the existing single runner from RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. If the official Ofcom download still fails there, place the official outer ZIP at ${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip and let the existing queued 009 task run. The validator must find exactly 121 inner 202601_fixed_postcode_coverage_r2_XX.csv files and 1,741,096 rows. Do not start a second runner and do not create another task.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/0000_009_internet_access_2_ofcom_r2_provision_full_archive_validation_20260722.v3.task.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/009_provision_official_ofcom_revision_aware_and_validate.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/005_ofcom_r2_provision_recovery.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/009_provision_official_ofcom_v2_strict_and_validate.py",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/009_status.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line_latest.json"
   ],
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
-  "revision_contract_repair_commit": "633caec0c6f10c98512fa61a886cc9b712aaab85",
-  "queue_revision_commit": "75851ba7a12a9c9e136409df95f0b2c683ae1e8d",
+  "strict_validator_commit": "8833b20bb5a1289090a9206eaeaece2f596c9d8b",
+  "queue_revision_commit": "106d6522a3c0cb88e27af28d57beff0a59c28533",
   "final_ready": false
 }
