@@ -11,27 +11,32 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
 table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}
 th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}
 th{background:#eceff1}.pass{color:#087f23;font-weight:bold}.blocked{color:#b71c1c;font-weight:bold}
-code,a{word-break:break-all}
+code,a{word-break:break-all}.note{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}
 </style>
 </head>
 <body>
 <h1>internet_access_2 — satır satır ilerleme</h1>
 <div id="cards" class="cards"></div>
+<p id="blocker" class="note"></p>
 <h2>İşlem satırları</h2>
 <table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
-<h2>Resmî kaynaklar</h2>
+<h2>Hazır örnek adaylar</h2>
+<table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Geometri</th><th>İnternet</th><th>ONSPD</th><th>Legacy gigabit</th><th>Legacy SFBB</th><th>Resmî coverage</th></tr></thead><tbody id="examples"></tbody></table>
+<h2>11.013 satırın parça dizini</h2>
+<table><thead><tr><th>Parça</th><th>Başlangıç</th><th>Bitiş</th><th>Satır</th></tr></thead><tbody id="chunks"></tbody></table>
+<h2>Resmî kaynak kontrolleri</h2>
 <table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="sources"></tbody></table>
-<h2>Ofcom r2 dosyaları</h2>
-<table><thead><tr><th>#</th><th>Dosya</th><th>Alan</th><th>Veri satırı</th><th>Sütun</th><th>Durum</th></tr></thead><tbody id="files"></tbody></table>
 <p id="error"></p>
 <script>
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-fetch('./ofcom_r2_line_by_line_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
- const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['İşlem',d.completed_operations+'/'+d.total_operations],['Hazır örnek',d.prepared_postcode_samples??0],['Postcode doğrulama',(d.postcode_identity_confirmed??0)+'/'+(d.prepared_postcode_samples??0)],['Yükseltilen kaynak',d.source_upgrades??(d.source_checks||[]).length],['Kapsama adayı',d.official_coverage_verified_candidates??0],['Doğruluk yazıldı',d.accuracy_written??0],['r2 dosya',(d.r2_postcode_file_count??0)+'/'+(d.expected_r2_postcode_file_count??121)],['r2 satır',(d.total_r2_postcode_rows??0)+'/'+(d.expected_r2_postcode_rows??1741096)]];
+fetch('./006_existing_11013_progress_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['Ana işlem',d.completed_operations+'/'+d.total_operations],['Destek kontrolü',d.support_checks_completed+'/'+d.support_checks_total],['Hazır satır',d.existing_shard2_rows],['Postcode',d.distinct_postcodes],['Canlı kimlik',d.postcode_live],['İnceleme',d.postcode_terminated_review_required],['Kapsama adayı',d.official_coverage_verified_candidates],['Doğruluk yazıldı',d.accuracy_written],['Görünür satır',d.visible_candidate_rows],['Parça',d.candidate_chunk_count],['Kaynak',d.source_upgrades]];
  document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ document.getElementById('blocker').innerHTML='<b>Engel:</b> '+e(d.blocker)+'<br><b>Not:</b> Legacy yüzdeler karşılaştırma bağlamıdır; resmî Ocak 2026 Ofcom r2 coverage doğrulanmadan 3/4 doğruluk yazılmaz.';
  document.getElementById('operations').innerHTML=(d.operation_rows||[]).map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.operation)}</td><td>${e(x.status)}</td><td><code>${e(x.evidence)}</code></td></tr>`).join('');
- document.getElementById('sources').innerHTML=(d.source_checks||[]).map(x=>`<tr><td>${e(x.row)}</td><td><a href="${e(x.url)}">${e(x.source)}</a></td><td>${e(x.status)}</td><td>${e(x.evidence)}</td></tr>`).join('');
- document.getElementById('files').innerHTML=(d.file_rows||[]).map(x=>`<tr><td>${e(x.row)}</td><td><code>${e(x.file)}</code></td><td>${e(x.postcode_area)}</td><td>${e(x.data_rows)}</td><td>${e((x.missing_core_columns||[]).length?'Eksik: '+x.missing_core_columns.join(', '):'Tam')}</td><td>${e(x.status)}</td></tr>`).join('');
+ document.getElementById('examples').innerHTML=(d.candidate_examples||[]).map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.hmlr_geometry_accuracy)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd_status)}</td><td>${e(x.legacy_gigabit_available_pct)}%</td><td>${e(x.legacy_superfast_30mbps_available_pct)}%</td><td>${x.official_coverage_verified?'PASS':'BEKLİYOR'}</td></tr>`).join('');
+ document.getElementById('chunks').innerHTML=(d.candidate_chunks||[]).map(x=>`<tr><td>${e(x.chunk)}</td><td>${e(x.row_start)}</td><td>${e(x.row_end)}</td><td>${e(x.count)}</td></tr>`).join('');
+ document.getElementById('sources').innerHTML=(d.source_checks||[]).map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.source)}</td><td>${e(x.status)}</td><td>${e(x.evidence)}</td></tr>`).join('');
 }).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
 </script>
 </body>
