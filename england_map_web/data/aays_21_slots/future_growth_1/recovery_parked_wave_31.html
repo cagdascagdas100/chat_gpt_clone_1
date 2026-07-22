@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_1 kurtarma durumu</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}h1{margin-bottom:6px}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:145px}.big{font-size:22px;font-weight:700}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1}.PASS{font-weight:700;color:#1b5e20}.STALE,.BLOCKED,.BLOCKED_EXTERNAL_HOST{font-weight:700;color:#b71c1c}.TERMINAL_RELEASED{font-weight:700;color:#6a1b9a}.muted{color:#546e7a}a{color:#0b57d0}</style>
+</head>
+<body>
+<h1>future_growth_1 — kurtarma ve işlem defteri</h1>
+<div class="notice">Mevcut tek paylaşılan runner korunmuştur. İkinci runner başlatılmadı, predecessor atlanmadı ve business satırı yazılmadı. İş, dış F-host kurtarması yapılana kadar RECOVERY_PARKED durumundadır.</div>
+<p><a href="index.html">Ana ilerleme sayfası</a> · <a href="operations_wave_38.html">Önceki 1225–1288 işlemleri</a> · <a href="recovery_parked_wave_31_latest.json">Ham kurtarma JSON</a></p>
+<div class="cards">
+<div class="card"><div>Hazırlık işlemleri</div><div class="big" id="ops">-</div></div>
+<div class="card"><div>Hazırlık yüzdesi</div><div class="big" id="pct">-</div></div>
+<div class="card"><div>Resmî kaynak</div><div class="big" id="sources">-</div></div>
+<div class="card"><div>Aday denetimi</div><div class="big" id="audit">-</div></div>
+<div class="card"><div>Güncel aday</div><div class="big" id="candidates">-</div></div>
+<div class="card"><div>Business doğrulama</div><div class="big" id="business">-</div></div>
+</div>
+<h2>Satır satır kurtarma kontrolleri</h2>
+<table><thead><tr><th>Satır</th><th>Kontrol</th><th>Sonuç</th><th>Kanıt</th></tr></thead><tbody id="rows"></tbody></table>
+<h2>Sonraki zorunlu adım</h2><p id="next"></p><p class="muted" id="meta"></p>
+<script>
+fetch('recovery_parked_wave_31_latest.json',{cache:'no-store'}).then(r=>r.json()).then(p=>{
+ops.textContent=`${p.overall_operations_completed}/${p.overall_operations_total}`;
+pct.textContent=p.overall_operations_percent+'%';
+sources.textContent=`${p.official_sources_verified}/${p.official_sources_total}`;
+audit.textContent=`${p.candidate_audit_passed}/${p.candidate_audit_total}`;
+candidates.textContent=`${p.current_candidates} (+${p.rejected_stale_or_completed} ret)`;
+business.textContent=p.verified_business_percent+'%';
+rows.innerHTML=p.rows.map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td class="${x.result}">${x.result}</td><td>${x.evidence}</td></tr>`).join('');
+next.textContent=p.next_required_step;
+meta.textContent=`Durum: ${p.state} | continuation_key=${p.continuation_key} | üretim=${p.generated_at} | business_rows=${p.actual_business_data_rows_written}`;
+}).catch(e=>{document.body.insertAdjacentHTML('beforeend','<p>JSON okunamadı: '+e+'</p>')});
+</script>
+</body>
+</html>
