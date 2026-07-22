@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>internet_access_3 ilerleme</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f8fa;color:#111827}
+    main{max-width:1100px;margin:auto}
+    h1{margin-bottom:6px}.muted{color:#6b7280}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}
+    .card,table{background:white;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .card{padding:14px}.value{font-size:24px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;overflow:hidden}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb;vertical-align:top}th{background:#f3f4f6}.PASS{color:#047857}.QUEUED,.PREPARED{color:#a16207}.BLOCKED_PENDING_RUNTIME{color:#b91c1c}
+  </style>
+</head>
+<body>
+<main>
+  <h1>internet_access_3</h1>
+  <div class="muted">Parsel aralığı 61523–92283 · posta kodu kapsama proxy / NO_DATA</div>
+  <div class="cards" id="cards"></div>
+  <h2>Satır satır işlemler</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Açıklama</th></tr></thead><tbody id="ops"></tbody></table>
+  <p class="muted" id="updated"></p>
+</main>
+<script>
+async function load(){
+  const [progress,feed]=await Promise.all([
+    fetch('./progress_latest.json',{cache:'no-store'}).then(r=>r.json()),
+    fetch('./operation_feed_latest.json',{cache:'no-store'}).then(r=>r.json())
+  ]);
+  const cards=[
+    ['Genel ilerleme',progress.overall_progress_percent+'%'],
+    ['Yüzde artışı','+'+progress.progress_delta_percent+' puan'],
+    ['İşlem',progress.completed_operations+'/'+progress.total_operations],
+    ['Aday',progress.candidate_rows_revalidated+'/'+progress.candidate_rows_prepared],
+    ['Kaynak doğruluğu',progress.source_accuracy_score+'/100'],
+    ['Parsel eşleşmesi',progress.parcel_match_accuracy_score+'/100']
+  ];
+  document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
+  document.getElementById('ops').innerHTML=feed.operations.map(o=>`<tr><td>${o.sequence}</td><td class="${o.status}">${o.status}</td><td>${o.operation}</td><td>${o.detail}</td></tr>`).join('');
+  document.getElementById('updated').textContent='Güncelleme: '+progress.updated_at+' · final_ready='+progress.final_ready;
+}
+load().catch(err=>{document.getElementById('updated').textContent='Veri yüklenemedi: '+err.message});
+setInterval(load,30000);
+</script>
+</body>
+</html>
