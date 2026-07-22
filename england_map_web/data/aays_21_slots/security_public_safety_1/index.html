@@ -15,12 +15,14 @@
 <div class="card">Kanonik aday<br><strong id="candidates">yükleniyor</strong></div>
 <div class="card">Endpoint<br><strong id="endpoints">yükleniyor</strong></div>
 <div class="card">Temsilci örnek<br><strong id="representatives">yükleniyor</strong></div>
+<div class="card">Skor örnek kümesi<br><strong>15 satır</strong></div>
 <div class="card">Canlı kabul<br><strong id="acceptance">PENDING</strong></div>
 <div class="card">Shared runner<br><strong id="runner">yükleniyor</strong></div>
 </div>
 <h2>Web görünümleri</h2>
 <table><thead><tr><th>Görünüm</th><th>Kapsam</th><th>Bağlantı</th></tr></thead><tbody>
 <tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint, browser ve publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr>
+<tr><td>İlk 130 skor dağılımı</td><td>Seviye sayıları, minimum–medyan–ortalama–maksimum, 15 örnek ve 130 canlı parity satırı</td><td><a href="candidate_score_bands_v1.html">candidate_score_bands_v1.html</a></td></tr>
 <tr><td>16 endpoint temsilcisi</td><td>Endpoint başına ilk 4/4 doğruluk temsilcisi; canlı count/SHA mapping</td><td><a href="representative_candidates_v1.html">representative_candidates_v1.html</a></td></tr>
 <tr><td>Endpoint manifesti</td><td>130 adayın 16 endpoint dağılımı</td><td><a href="canonical_130_endpoint_manifest_20260722.json">canonical_130_endpoint_manifest_20260722.json</a></td></tr>
 <tr><td>Temsilci JSON</td><td>16/16 temsilci, kaynak satırı, count ve SHA</td><td><a href="canonical_16_representative_candidates_20260722.json">canonical_16_representative_candidates_20260722.json</a></td></tr>
@@ -44,6 +46,7 @@ const optional=async p=>{try{return await get(p)}catch(_){return null}};
  const items=[
  ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows||0}/300 satır; doğruluk ${source.accuracy_score_4_rows||0}/300.`],
  ['PASS','STATIC_130_16',`${manifest.candidate_rows||0}/130 aday; ${manifest.unique_endpoints||0}/16 endpoint.`],
+ ['PASS','SCORE_BAND_LINE_ITEMS','İlk 130 aday için seviye dağılımı, 15 örnek ve 130 parity satırı yayınlandı.'],
  ['PASS','REPRESENTATIVE_16',`${reps.representative_count||0}/16 temsilci; doğruluk ${reps.accuracy_score_4_count||0}/16; saklı HTTP ${reps.stored_http_200_count||0}/16; SHA ${reps.stored_sha256_count||0}/16.`],
  [dependency.holder_readback?.heartbeat_stale?'BLOCKED':'PASS','SHARED_RUNNER',`Alias ${dependency.global_control_alias?.holder_slot||'unknown'}; heartbeat ${dependency.holder_readback?.heartbeat_state||'unknown'}; priority ${dependency.holder_readback?.queue_priority??'n/a'}.`],
  [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptanceDoc?`${live.candidate_passed||0}/130 aday, ${live.unique_endpoint_http_json_passed||0}/16 endpoint.`:'v17 kabul raporu henüz yok.'],
@@ -52,6 +55,8 @@ const optional=async p=>{try{return await get(p)}catch(_){return null}};
  ];
  events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
  document.body.dataset.representativeCount=String(reps.representative_count||0);
+ document.body.dataset.scoreBandView='candidate_score_bands_v1.html';
+ document.body.dataset.scoreBandExampleCount='15';
  document.body.dataset.displayCompletedUnits=String(done);document.body.dataset.displayPercent=String(pct);
  document.body.dataset.acceptanceReportPresent=String(Boolean(acceptanceDoc));
  document.body.dataset.semanticValid=String(source.parcel_measurement===false&&manifest.unique_endpoints===16&&reps.representative_count===16);
