@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Revision 18.4 serial pipeline with watchdog supervision and exact test accounting."""
+"""Revision 18.5 serial pipeline with watchdog supervision and content-shape validation."""
 from __future__ import annotations
 import importlib.util,json,os,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
-SLOT="internet_access_3";TASK="aays1-internet-access-3-revision18-4-hydration-repair-20260722";BASE="docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/";RO=BASE+"runner_outputs/059_revision18_watchdog_pipeline_latest.json";WO="england_map_web/data/aays_21_slots/internet_access_3/revision18_watchdog_pipeline_latest.json";RH=BASE+"runner_outputs/058_runtime_watchdog_latest.json";WH="england_map_web/data/aays_21_slots/internet_access_3/runtime_watchdog_latest.json";FEED="england_map_web/data/aays_21_slots/internet_access_3/operation_feed_revision18_runtime_latest.json"
+SLOT="internet_access_3";TASK="aays1-internet-access-3-revision18-5-ons-content-shape-20260722";BASE="docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/";RO=BASE+"runner_outputs/059_revision18_watchdog_pipeline_latest.json";WO="england_map_web/data/aays_21_slots/internet_access_3/revision18_watchdog_pipeline_latest.json";RH=BASE+"runner_outputs/058_runtime_watchdog_latest.json";WH="england_map_web/data/aays_21_slots/internet_access_3/runtime_watchdog_latest.json";FEED="england_map_web/data/aays_21_slots/internet_access_3/operation_feed_revision18_runtime_latest.json"
 def now():return datetime.now(timezone.utc).isoformat()
 def root():
  for p in [Path.cwd(),*Path(__file__).resolve().parents]:
@@ -25,7 +25,7 @@ def watchdog():
  m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 def payload(state,steps,plan,current,events):
  cycles=sum(int(x.get("heartbeat_cycles_succeeded") or 0) for x in steps);errors=sum(len(x.get("heartbeat_write_errors") or []) for x in steps)
- return {"schema_version":4,"slot_id":SLOT,"task_id":TASK,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":cycles,"heartbeat_write_errors":errors,"effective_pipeline_steps":74,"contract_tests_target":562,"official_source_checks_target":78,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":5,"slot_id":SLOT,"task_id":TASK,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":cycles,"heartbeat_write_errors":errors,"effective_pipeline_steps":74,"contract_tests_target":569,"official_source_checks_target":80,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def main():
  r=root();a=Path(__file__).resolve().parent;wd=watchdog();tmp=Path(tempfile.gettempdir());ro=r/(BASE+"runner_outputs");web=r/"england_map_web/data/aays_21_slots/internet_access_3";cache=tmp/"aays_internet_access_3_release_cache";db=tmp/"aays_internet_access_3_uprn_join_revision17.sqlite"
  plan=[
@@ -50,7 +50,7 @@ def main():
   {"file":"095_revision18_liveness_acceptance.py","name":"REV18_LIVENESS_ACCEPTANCE","hard":1200,"stall":600,"watch":[ro/"060_revision18_liveness_acceptance_latest.json",web/"revision18_liveness_acceptance_latest.json"]}]
  steps=[];events=[];pr=r/RO;pw=r/WO;feed=r/FEED;hearts=[r/RH,r/WH]
  def publish(state,current):
-  z=payload(state,steps,plan,current,events);write(pr,z);write(pw,z);write(feed,{"schema_version":4,"slot_id":SLOT,"contract_revision":18,"updated_at":now(),"display_mode":"line_by_line_runtime","operations":events,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False})
+  z=payload(state,steps,plan,current,events);write(pr,z);write(pw,z);write(feed,{"schema_version":5,"slot_id":SLOT,"contract_revision":18,"updated_at":now(),"display_mode":"line_by_line_runtime","operations":events,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False})
  publish("running",None);total=len(plan)
  for i,x in enumerate(plan,1):
   n=x["name"];events.append({"sequence":1000+i*2-1,"status":"RUNNING","operation":n,"detail":f"Sequential watchdog-supervised step {i}/{total} started.","updated_at":now()});publish("running",n)
