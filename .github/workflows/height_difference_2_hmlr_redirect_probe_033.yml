@@ -1,0 +1,89 @@
+name: height_difference_2 HMLR redirect probe 033
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - name: Probe HMLR redirect variants without following
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import http.client
+          import json
+          import ssl
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          variants = [
+              'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
+              'https://use-land-property-data.service.gov.uk/datasets/inspire/download/',
+              'https://use-land-property-data.service.gov.uk/datasets/inspire/download?probe=1',
+              'https://use-land-property-data.service.gov.uk/datasets/inspire/download/?probe=1',
+          ]
+          header_sets = [
+              {'User-Agent':'AAYS-height-difference-2/1.0','Accept':'text/html'},
+              {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-GB,en;q=0.9'},
+              {'User-Agent':'curl/8.5.0','Accept':'*/*'},
+          ]
+
+          def request_once(url, headers):
+              parsed=urlsplit(url)
+              path=parsed.path or '/'
+              if parsed.query: path += '?' + parsed.query
+              conn=http.client.HTTPSConnection(parsed.hostname, parsed.port or 443, timeout=60, context=ssl.create_default_context())
+              try:
+                  conn.request('GET', path, headers=headers)
+                  response=conn.getresponse()
+                  body=response.read(2048)
+                  return {
+                      'url':url,'request_path':path,'status':response.status,'reason':response.reason,
+                      'location':response.getheader('location'),'set_cookie':response.getheader('set-cookie'),
+                      'content_type':response.getheader('content-type'),'content_length':response.getheader('content-length'),
+                      'body_prefix':body.decode('utf-8',errors='replace'),
+                  }
+              except Exception as exc:
+                  return {'url':url,'request_path':path,'error':f'{type(exc).__name__}:{exc}'}
+              finally:
+                  conn.close()
+
+          results=[]
+          for url in variants:
+              for index,headers in enumerate(header_sets,1):
+                  row=request_once(url,headers)
+                  row['header_profile']=index
+                  results.append(row)
+
+          output=Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/033_hmlr_redirect_probe.json')
+          output.parent.mkdir(parents=True,exist_ok=True)
+          output.write_text(json.dumps({
+              'schema_version':1,'slot_id':'height_difference_2',
+              'generated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),
+              'results':results,'fake_data':False,'final_ready':False,
+          },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit redirect probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/033_hmlr_redirect_probe.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Probe HMLR redirect variants for height_difference_2'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
