@@ -1,0 +1,53 @@
+name: height_difference_2 fix increment 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_fix_increment_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - name: Deduplicate manifest and JavaScript helper
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('england_map_web/data/aays_21_slots/height_difference_2')
+          p=root/'operations_manifest.json'
+          m=json.loads(p.read_text())
+          for key in ('operation_files','source_candidate_files','example_files'):
+            seen=[]
+            for value in m.get(key,[]):
+              if value not in seen: seen.append(value)
+            m[key]=seen
+          assert m['operation_files'].count('operations_increment_034.json')==1
+          assert m['source_candidate_files'].count('source_candidates_increment_034.json')==1
+          assert m['example_files'].count('examples_increment_034.json')==1
+          p.write_text(json.dumps(m,ensure_ascii=False,separators=(',',':'))+'\n')
+          h=root/'index.html'
+          text=h.read_text()
+          duplicate="const sh=v=>v?String(v).slice(0,16)+'…':'null';const sh=v=>v?String(v).slice(0,16)+'…':'null';"
+          single="const sh=v=>v?String(v).slice(0,16)+'…':'null';"
+          text=text.replace(duplicate,single)
+          assert text.count('const sh=v=>')==1
+          h.write_text(text)
+          PY
+      - name: Commit fixed package
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json england_map_web/data/aays_21_slots/height_difference_2/index.html
+          git commit -m 'Fix height_difference_2 increment 034 package [skip ci]'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
