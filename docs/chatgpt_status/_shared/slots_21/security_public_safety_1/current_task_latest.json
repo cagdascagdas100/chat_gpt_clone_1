@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_1",
@@ -10,10 +10,12 @@
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "attempt_id": "security-public-safety-1-20260722-017",
   "idempotency_key": "security-public-safety-1-canonical-acceptance-v17-no-replay",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+  "core_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
   "queue_path": "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v17_20260722.task.json",
   "legacy_queue_path": "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v17_20260722.queue.txt",
   "canonical_endpoint_manifest": "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json",
+  "runtime_hardening_web": "england_map_web/data/aays_21_slots/security_public_safety_1/runtime_hardening_v17_20260722.json",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "completed_without_replay": {
     "hydrated_rows": 300,
@@ -28,16 +30,24 @@
     "canonical_static_stored_http_200_rows": 130,
     "canonical_static_stored_sha256_rows": 130,
     "canonical_static_unique_endpoints": 16,
-    "canonical_static_distribution_sum": 130
+    "canonical_static_distribution_sum": 130,
+    "wrapper_compile_pass": true,
+    "wrapper_remote_readback": true,
+    "json_queue_remote_readback": true,
+    "legacy_queue_remote_readback": true
   },
   "execution_plan": {
     "hydration_replay_forbidden": true,
+    "runtime_static_preflight_required": true,
     "unique_endpoint_request_once": true,
     "parallel_endpoint_workers_max": 8,
     "parallel_source_workers_max": 5,
-    "duplicate_live_requests_avoided_expected": 114
+    "duplicate_live_requests_avoided_expected": 114,
+    "transient_retry_max_attempts": 3,
+    "transient_retry_delays_seconds": [1, 2],
+    "permanent_non_429_4xx_retry_forbidden": true
   },
-  "first_unverified_step": "RUN_16_UNIQUE_ENDPOINT_LIVE_HTTP_COUNT_SHA_THEN_MAP_TO_130_CANDIDATES",
+  "first_unverified_step": "EXISTING_SINGLE_RUNNER_EXECUTES_HARDENED_V17_LIVE_16_ENDPOINT_PARITY",
   "acceptance_contract": {
     "canonical_candidate_count_required": 130,
     "canonical_unique_api_endpoints_required": 16,
@@ -54,7 +64,7 @@
   "child_direct_push_forbidden": true,
   "global_control_alias_overwrite_forbidden": true,
   "blocker": "WAITING_EXISTING_SINGLE_RUNNER_CLAIM; GLOBAL_CONTROL_ALIAS_OWNED_BY_HEIGHT_DIFFERENCE_2",
-  "updated_at": "2026-07-22T05:50:00+03:00",
+  "updated_at": "2026-07-22T06:30:00+03:00",
   "fake_data": false,
   "db_write": false,
   "migration": false,
