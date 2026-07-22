@@ -1,16 +1,18 @@
 {
-  "schema_version": 7,
+  "schema_version": 8,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and the stale PUBLISH_PENDING proofs are reconciled. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 review rows. The only remaining business blocker is official Ofcom ZIP access; zero official coverage candidates and zero 3/4 accuracy values have been written.",
+  "reason": "The existing 006 task is technically published and the stale PUBLISH_PENDING proofs are reconciled. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 review rows. English and Welsh Ofcom pages point to the same ZIP object, and both managed download attempts returned no archive bytes. The only remaining business blocker is provisioning the official ZIP on the canonical host; zero official coverage candidates and zero 3/4 accuracy values have been written.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-22T20:04:21Z",
+  "updated_at": "2026-07-22T20:22:00Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
     "percent_change": 16.66,
+    "support_checks_completed": 55,
+    "support_checks_total": 56,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -18,7 +20,8 @@
     "official_coverage_verified_candidates": 0,
     "accuracy_written": 0,
     "visible_rows": 11013,
-    "visible_chunks": 23
+    "visible_chunks": 23,
+    "visible_examples": 12
   },
   "technical_publish_reconciliation": {
     "state": "RESOLVED_PUBLISHED",
@@ -26,6 +29,15 @@
     "slot_heartbeat_state": "PUBLISHED",
     "business_blocker_preserved": true,
     "reconciliation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/009_006_publish_pending_remote_artifact_reconciliation.json"
+  },
+  "official_download_route_audit": {
+    "english_display_size": "32.2 MB",
+    "welsh_display_size": "32.3 MB",
+    "same_download_object": true,
+    "english_binary_fetch": "FAILED_400_OK_NO_BYTES",
+    "welsh_binary_fetch": "FAILED_400_OK_NO_BYTES",
+    "alternate_official_route_found": false,
+    "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/012_bilingual_download_and_distributed_examples_audit.json"
   },
   "required_archive": {
     "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
@@ -79,6 +91,8 @@
     "do not requeue before strict archive validation passes",
     "do not accept inner r1 postcode files",
     "do not use the API as a bulk archive replacement",
+    "do not treat the Welsh page as an alternate ZIP object",
+    "do not repeat the same English or Welsh managed binary fetch without a changed access condition",
     "do not write 3/4 accuracy before exact official r2 coverage readback"
   ],
   "evidence_paths": [
@@ -88,8 +102,10 @@
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/006_existing_11013_coverage_validation.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/012_bilingual_download_and_distributed_examples_audit.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_progress_latest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave2.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
