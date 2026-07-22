@@ -33,6 +33,7 @@
     <tr><td>Resmî kaynak artışı V4</td><td>5/5 yeni doğrulama; kümülatif 30/30 kaynak ve 24 yükseltme</td><td><a href="continuation_official_source_increment_v4.html">continuation_official_source_increment_v4.html</a></td></tr>
     <tr><td>Resmî kaynak artışı V5</td><td>5/5 yeni doğrulama; kümülatif 35/35 kaynak ve 29 yükseltme</td><td><a href="continuation_official_source_increment_v5.html">continuation_official_source_increment_v5.html</a></td></tr>
     <tr><td>Resmî kaynak artışı V6</td><td>5/5 yeni doğrulama; kümülatif 40/40 kaynak ve 34 yükseltme</td><td><a href="continuation_official_source_increment_v6.html">continuation_official_source_increment_v6.html</a></td></tr>
+    <tr><td>Resmî kaynak artışı V7</td><td>5/5 yeni doğrulama; kümülatif 45/45 kaynak ve 39 yükseltme</td><td><a href="continuation_official_source_increment_v7.html">continuation_official_source_increment_v7.html</a></td></tr>
     <tr><td>Runtime denetimi</td><td>Carrier, watchdog ve receipt yolları</td><td><a href="runtime_code_audit_v17.html">runtime_code_audit_v17.html</a></td></tr>
     <tr><td>Queue parser</td><td>Priority, branch, allowed paths ve safety</td><td><a href="queue_parser_contract_v1.html">queue_parser_contract_v1.html</a></td></tr>
     <tr><td>Holder CI paket</td><td>CI paket kapsamı; F-host recovery kanıtı değildir</td><td><a href="holder_ci_package_validation_v1.html">holder_ci_package_validation_v1.html</a></td></tr>
@@ -48,7 +49,7 @@
     const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
     const optional=async p=>{try{return await get(p)}catch(_){return null}};
     (async()=>{
-      const [source,manifest,watch,v1,v3,v4,v5,v6,acceptanceDoc]=await Promise.all([
+      const [source,manifest,watch,v1,v3,v4,v5,v6,v7,acceptanceDoc]=await Promise.all([
         get('official_web_refresh_20260722.json'),
         get('canonical_130_endpoint_manifest_20260722.json'),
         get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),
@@ -57,10 +58,11 @@
         get('continuation_official_source_increment_v4_20260722.json'),
         get('continuation_official_source_increment_v5_20260722.json'),
         get('continuation_official_source_increment_v6_20260722.json'),
+        get('continuation_official_source_increment_v7_20260722.json'),
         optional('canonical_acceptance_v17_latest.json')
       ]);
-      const cp=source.canonical_progress||{},cm=v6.cumulative_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
-      const allSources=[...(v1.sources||[]),...(v3.sources||[]),...(v4.sources||[]),...(v5.sources||[]),...(v6.sources||[])];
+      const cp=source.canonical_progress||{},cm=v7.cumulative_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
+      const allSources=[...(v1.sources||[]),...(v3.sources||[]),...(v4.sources||[]),...(v5.sources||[]),...(v6.sources||[]),...(v7.sources||[])];
       progress.textContent=`${cp.completed_units}/${cp.total_units} — ${cp.overall_percent}% (Δ ${cp.percent_change>=0?'+':''}${cp.percent_change})`;
       rowsCount.textContent=`${source.verified_rows}/300`;
       accuracy.textContent=`${source.accuracy_score_4_rows}/300`;
@@ -102,23 +104,28 @@
         ['PASS','PFA_COMPARISON_CORRECTION_GUARD','corrected 7 Jan 2026 City of London comparison fault'],
         ['PASS','VAWG_SUBCODE_CROSSCHECK','YE Mar 2021-Dec 2025; sensitive aggregate only'],
         ['PENDING','VIOLENT_CRIME_OCT_2026_RELEASE','22 Oct 2026 provisional; unpublished at check'],
+        ['PASS','SEXUAL_OFFENCES_HALF_SAMPLE_GUARD','YE Mar 2025; half sample; police trends unreliable'],
+        ['PASS','STALKING_CSEW_CONTEXT','YE Mar 2025; national survey context only'],
+        ['PASS','FRAUD_CORRECTED_VERSION_GUARD','corrected 10 Apr 2026; use corrected release'],
+        ['PASS','POLICE_POWERS_COVERAGE_GUARD','YE Mar 2025; force coverage and recording limits'],
+        ['PASS','CJS_QUARTERLY_DEC_2025_CONTEXT','updated 29 Jun 2026; justice activity is not prevalence'],
         ['PENDING','ONS_MARCH_2026_RELEASE','23 Temmuz 2026 09:30 UK; kontrol anında yayımlanmamış'],
         ['PASS','NO_FAKE_PARCEL_VALUES','0 yeni parsel değeri; stored_values_modified=false'],
         ['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],
         ['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu`],
         ['PENDING','PRIORITY_1_CLAIM','height_difference_2 existing single shared runner'],
-        ['PENDING','SECURITY_PRIORITY_2_CLAIM',v6.first_unverified_step],
+        ['PENDING','SECURITY_PRIORITY_2_CLAIM',v7.first_unverified_step],
         [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptancePass?'runtime report present':'single-runner acceptance pending'],
         [acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptancePass?'runtime report present':'browser gate pending'],
         ['PENDING','PUBLISHER_READBACK','runtime acceptance required first'],
-        ['BLOCKED','MANUAL_ACTION',v6.manual_action_path]
+        ['BLOCKED','MANUAL_ACTION',v7.manual_action_path]
       ];
       events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');
       sourceRows.innerHTML=allSources.map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br>${esc(x.authority)}</td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
       document.body.dataset.operationRows=String(items.length);
       document.body.dataset.sourceResearchRows=String(allSources.length);
-      document.body.dataset.continuationKey=v6.continuation_key;
-      document.body.dataset.blocker=v6.blocker;
+      document.body.dataset.continuationKey=v7.continuation_key;
+      document.body.dataset.blocker=v7.blocker;
       document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));
     })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
   </script>
