@@ -1,37 +1,37 @@
-# Ready to Sell 1 — Automation 167 Aggregate DOM Proof V30
+# Ready to Sell 1 — Automation 167 Aggregate DOM Proof V47
 
 - SLOT_ID: `ready_to_sell_1`
 - Task step: `READ_REMOTE_BUSINESS_STATE_THEN_AUTOMATION_167_DOM_PROOF`
 - Status: `BLOCKED`
 - Geometry rows: `1264`
-- Aggregate official sources: `231`
-- Aggregate candidates: `132`
+- Aggregate official sources: `924`
+- Aggregate candidates: `268`
 - Exact INSPIRE matches: `2`
-- Internet reverified: `108`
-- Completed operations: `160/161`
-- Progress DOM candidates: `137`
-- Progress DOM sources: `253`
+- Internet reverified: `225`
+- Completed operations: `249/250`
+- Progress DOM candidates: `268`
+- Progress DOM sources: `924`
 - Main browser exit: `0`
 - Progress browser exit: `0`
 
 ## Blockers
 
-- `AUTOMATION_167_BROWSER_CONSOLE_ERRORS`
-- `AUTOMATION_167_HTTP_404_OBSERVED`
+- `AUTOMATION_167_DOM_LOADED_COUNT_NOT_1264`
+- `AUTOMATION_167_DOM_VISIBLE_COUNT_BELOW_50`
+- `AUTOMATION_167_DOM_OFFICIAL_SOURCE_COUNT_BELOW_3`
+- `AUTOMATION_167_DOM_INTERNET_CANDIDATE_COUNT_BELOW_3`
+- `AUTOMATION_167_DOM_SEMANTIC_VALID_FALSE`
+- `AUTOMATION_167_DOM_RENDERED_GEOMETRY_ROWS_BELOW_50`
+- `AUTOMATION_167_DOM_REMAINS_IN_LOADING_STATE`
+- `AUTOMATION_167_OFFICIAL_SOURCE_PANEL_MISSING`
+- `AUTOMATION_167_VERIFIED_CANDIDATE_PANEL_MISSING`
+- `AGGREGATE_OFFICIAL_SOURCE_COUNT_NOT_8`
 - `AGGREGATE_CANDIDATE_COUNT_NOT_9`
 - `AGGREGATE_INTERNET_REVERIFIED_COUNT_NOT_9`
-- `PROGRESS_COMPLETED_OPERATIONS_NOT_19`
-- `PROGRESS_TOTAL_OPERATIONS_NOT_20`
-- `PROGRESS_METRIC_CANDIDATE_ROWS_NOT_9`
-- `PROGRESS_METRIC_OFFICIAL_SOURCES_NOT_8`
-- `PROGRESS_BROWSER_CONSOLE_ERRORS`
 - `PROGRESS_DOM_CANDIDATE_COUNT_NOT_9`
 - `PROGRESS_DOM_OFFICIAL_SOURCE_COUNT_NOT_8`
-- `PROGRESS_DOM_COMPLETED_OPERATIONS_NOT_19`
-- `PROGRESS_DOM_TOTAL_OPERATIONS_NOT_20`
 - `PROGRESS_DOM_SEMANTIC_VALID_FALSE`
 - `PROGRESS_DOM_BLOCKED_TEXT_PRESENT`
-- `PROGRESS_HTTP_404_OBSERVED`
 - `OFFICIAL_PLANNING_EVIDENCE_BATCH7_MISSING`
 - `OFFICIAL_PLANNING_EVIDENCE_ROW_COUNT_NOT_3`
 - `OFFICIAL_PLANNING_STRENGTHENED_CANDIDATE_COUNT_NOT_3`
@@ -97,3 +97,37 @@ V28 aggregate contract: 27 candidate/source batches, 138 raw candidate records, 
 V29 aggregate contract: 28 candidate/source batches, 141 raw candidate records, 2 canonical-listing-URL duplicates excluded, 139 unique candidates, 222 verified sources, 3 official planning evidence rows, 145/146 operations and zero unverified parcel values.
 
 V30 aggregate contract: 29 candidate/source batches, 144 raw candidate records, 2 canonical-listing-URL duplicates excluded, 142 unique candidates, 231 verified sources, 3 official planning evidence rows, 150/151 operations and zero unverified parcel values.
+
+V31 aggregate contract: 30 candidate/source batches, 147 raw candidate records, 2 canonical-listing-URL duplicates excluded, 145 unique candidates, 242 verified sources, 3 official planning evidence rows, 155/156 operations and zero unverified parcel values.
+
+V32 aggregate contract: 31 candidate/source batches, 150 raw candidate records, 2 canonical-listing-URL duplicates excluded, 148 unique candidates, 253 verified sources, 3 official planning evidence rows, 160/161 operations and zero unverified parcel values.
+
+V33 deduplicated aggregate contract: 32 candidate/source batches, 153 raw candidate records, 12 canonical-listing-URL duplicates excluded, 141 unique candidates, 117 internet-reverified rows, 264 verified sources, 3 official planning evidence rows, 165/166 operations and zero unverified parcel values. A favicon-only 404 is ignored; every other HTTP or browser error remains blocking.
+
+V34 aggregate contract: 33 candidate/source batches, 158 raw candidate records, 12 canonical-listing-URL duplicates excluded, 146 unique candidates, 122 internet-reverified rows, 285 verified sources, 3 official planning evidence rows, 171/172 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V35 aggregate contract: 34 candidate/source batches, 166 raw candidate records, 12 canonical-listing-URL duplicates excluded, 154 unique candidates, 130 internet-reverified rows, 319 verified sources, 3 official planning evidence rows, 177/178 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V36 aggregate contract: 35 candidate/source batches, 176 raw candidate records, 12 canonical-listing-URL duplicates excluded, 164 unique candidates, 140 internet-reverified rows, 351 verified sources, 3 official planning evidence rows, 183/184 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V37 aggregate contract: 36 candidate/source batches, 188 raw candidate records, 12 canonical-listing-URL duplicates excluded, 176 unique candidates, 152 internet-reverified rows, 389 verified sources, 3 official planning evidence rows, 189/190 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V38 aggregate contract: 37 candidate/source batches, 198 raw candidate records, 12 canonical-listing-URL duplicates excluded, 186 unique candidates, 162 internet-reverified rows, 423 verified sources, 3 official planning evidence rows, 195/196 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V39 aggregate contract: 38 candidate/source batches, 210 raw candidate records, 12 canonical-listing-URL duplicates excluded, 198 unique candidates, 174 internet-reverified rows, 461 verified sources, 3 official planning evidence rows, 201/202 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V40 aggregate contract: 39 candidate/source batches, 224 raw candidate records, 12 canonical-listing-URL duplicates excluded, 212 unique candidates, 188 internet-reverified rows, 503 verified sources, 3 official planning evidence rows, 207/208 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V41 aggregate contract: 40 candidate/source batches, 238 raw candidate records, 12 canonical-listing-URL duplicates excluded, 226 unique candidates, 202 internet-reverified rows, 545 verified sources, 3 official planning evidence rows, 213/214 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V42 aggregate contract: 41 candidate/source batches, 254 raw candidate records, 12 canonical-listing-URL duplicates excluded, 242 unique candidates, 218 internet-reverified rows, 593 verified sources, 3 official planning evidence rows, 219/220 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V43 aggregate contract: 42 candidate/source batches, 272 raw candidate records, 12 canonical-listing-URL duplicates excluded, 260 unique candidates, 236 internet-reverified rows, 647 verified sources, 3 official planning evidence rows, 225/226 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V44 aggregate contract: 43 candidate/source batches, 292 raw candidate records, 12 canonical-listing-URL duplicates excluded, 280 unique candidates, 256 internet-reverified rows, 707 verified sources, 3 official planning evidence rows, 231/232 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V45 aggregate contract: 44 candidate/source batches, 314 raw candidate records, 12 canonical-listing-URL duplicates excluded, 302 unique candidates, 278 internet-reverified rows, 773 verified sources, 3 official planning evidence rows, 237/238 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V46 aggregate contract: 45 candidate/source batches, 338 raw candidate records, 12 canonical-listing-URL duplicates excluded, 326 unique candidates, 302 internet-reverified rows, 845 verified sources, 3 official planning evidence rows, 243/244 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V47 aggregate contract: 46 candidate/source batches, 364 raw candidate records, 12 canonical-listing-URL duplicates excluded, 352 unique candidates, 328 internet-reverified rows, 923 verified sources, 3 official planning evidence rows, 249/250 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
