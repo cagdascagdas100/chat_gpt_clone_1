@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import hashlib
 import html
 import json
@@ -58,11 +59,11 @@ source_specs = [
     {"source_id": "ons_lsoa_2021_feature_count", "name": "LSOA 2021 Feature Count", "publisher": "Office for National Statistics", "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json", "role": "boundary_completeness_probe", "measurement_level": "lsoa", "accuracy_percent": 95, "promotion_rule": "Source-integrity check only; not a parcel row count.", "parse_json": True},
     {"source_id": "police_api_last_updated", "name": "Police.uk Crime Last Updated", "publisher": "Home Office / Police.uk", "url": "https://data.police.uk/api/crime-last-updated", "role": "explicit_month_selector", "measurement_level": "document", "accuracy_percent": 95, "promotion_rule": "Pin every request to returned YYYY-MM and retain response hash.", "parse_json": True},
     {"source_id": "police_api_street_contract", "name": "Police.uk Street-level Crime API Contract", "publisher": "Home Office / Police.uk", "url": "https://data.police.uk/docs/method/crime-street/", "role": "official_crime_event_source_contract", "measurement_level": "candidate_point", "accuracy_percent": 90, "promotion_rule": "Locations are anonymised approximations; aggregate within verified LSOA, never exact parcel crime.", "parse_json": False},
-    {"source_id": "home_office_recorded_crime_tables", "name": "Police Recorded Crime and Outcomes Open Data Tables", "publisher": "Home Office", "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables", "role": "official_area_level_benchmark", "measurement_level": "local_authority", "accuracy_percent": 90, "promotion_rule": "Benchmark only; never publish PFA/CSP as parcel measurement.", "parse_json": False},
+    {"source_id": "home_office_recorded_crime_tables", "name": "Police Recorded Crime and Outcomes Open Data Tables", "publisher": "Home Office", "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables", "role": "official_area_level_benchmark", "measurement_level": "local_authority", "accuracy_percent": 90, "promotion_rule": "Benchmark only; never publish PFA/CSP as parcel measurement.", "parse_json": False}
 ]
 
-sources: list[dict[str, Any]] = []
-for spec in source_specs:
+
+def probe_source(spec: dict[str, Any]) -> dict[str, Any]:
     probe = fetch(spec["url"], parse_json=bool(spec["parse_json"]))
     parsed = probe.pop("json", None)
     row = {key: value for key, value in spec.items() if key != "parse_json"}
@@ -73,7 +74,11 @@ for spec in source_specs:
         row["official_feature_count"] = parsed.get("count")
     if spec["source_id"] == "ons_lsoa_2021_bgc_v5" and isinstance(parsed, dict):
         row.update({"layer_name": parsed.get("name"), "object_id_field": parsed.get("objectIdField"), "geometry_type": parsed.get("geometryType"), "max_record_count": parsed.get("maxRecordCount")})
-    sources.append(row)
+    return row
+
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=6, thread_name_prefix="security-source") as executor:
+    sources = list(executor.map(probe_source, source_specs))
 
 promoted = [item for item in sources if item["status"] == "PROMOTED_FOR_ROLE"]
 held = [item for item in sources if item["status"] != "PROMOTED_FOR_ROLE"]
@@ -94,7 +99,7 @@ gates = [
     {"gate": "three_row_geometry_and_lsoa_hydration", "state": "PENDING"},
     {"gate": "three_row_explicit_month_api_hashes", "state": "PENDING"},
     {"gate": "expand_to_300_verified_rows", "state": "PENDING"},
-    {"gate": "http_hash_dom_console_browser_acceptance", "state": "PENDING"},
+    {"gate": "http_hash_dom_console_browser_acceptance", "state": "PENDING"}
 ]
 completed_operations = sum(item["state"] == "PASS" for item in gates)
 total_operations = len(gates)
