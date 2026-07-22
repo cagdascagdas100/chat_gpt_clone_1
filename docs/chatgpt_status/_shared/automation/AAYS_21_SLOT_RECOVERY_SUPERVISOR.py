@@ -36,6 +36,11 @@ DATA_BLOCKER_MARKERS = (
     "DATABASE_HEALTH_DEGRADED",
     "NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY",
     "NO_DATA",
+    "NOT_DOWNLOADED",
+    "PAYLOAD_NOT_CAPTURED",
+    "SOURCE_LOADER_EVIDENCE_NOT_EXECUTED",
+    "CANONICAL_PARCEL_QUERIES_NOT_EXECUTED",
+    "ROW_FACTOR_MATRIX_NOT_BUILT",
 )
 SOURCE_DISCOVERY_POLICY = "LOCAL_FILES_THEN_FREE_PUBLIC_NO_AUTH"
 
@@ -150,10 +155,28 @@ class SlotRecoverySupervisor:
 
     def _slot_documents(self, slot_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
         directory = self.root / "state" / "slots" / slot_id
-        return (
-            read_json(directory / "status_latest.json", {}) or {},
-            read_json(directory / "heartbeat_latest.json", {}) or {},
-        )
+        status = read_json(directory / "status_latest.json", {}) or {}
+        heartbeat = read_json(directory / "heartbeat_latest.json", {}) or {}
+        remote_status = read_json(
+            self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_21"
+            / slot_id / "status_latest.json",
+            {},
+        ) or {}
+        remote_parts: list[str] = []
+        remote_blocker = str(remote_status.get("blocker") or "").strip()
+        if remote_blocker:
+            remote_parts.append(remote_blocker)
+        remote_blockers = remote_status.get("blockers")
+        if isinstance(remote_blockers, list):
+            remote_parts.extend(str(value).strip() for value in remote_blockers if str(value).strip())
+        if remote_parts:
+            merged = dict(status)
+            local_blocker = self._blocker_text(status)
+            merged["blocker"] = " | ".join(dict.fromkeys(
+                [value for value in (local_blocker, *remote_parts) if value]
+            ))
+            status = merged
+        return status, heartbeat
 
     @staticmethod
     def _blocker_text(status: dict[str, Any]) -> str:
@@ -509,6 +532,24 @@ class SlotRecoverySupervisor:
                     return {
                         "decision": "NO_DATA_CONTINUE",
                         "reason": "EVIDENCE_BACKED_NO_DATA_CONTINUE",
+                        "task": task,
+                    }
+                if real_data_blocker:
+                    plan.update({
+                        "policy_version": 7,
+                        "state": "RECOVERY_WAITING",
+                        "blocker": health.get("blocker") or health.get("state"),
+                        "plan_steps": self._plan_steps(str(health.get("blocker") or ""), {}),
+                        "wait_until": utc_now(),
+                        "automatic_retry_count": 0,
+                        "repair_reason": "DATA_BLOCKER_DISCOVERED_AFTER_GENERIC_RETRY",
+                        "source_discovery_policy": SOURCE_DISCOVERY_POLICY,
+                        "source_discovery_reopened_at": utc_now(),
+                    })
+                    self._record(slot_id, trigger_key, plan)
+                    return {
+                        "decision": "WAIT",
+                        "reason": "SOURCE_DISCOVERY_PLAN_REOPENED",
                         "task": task,
                     }
                 plan.update({
