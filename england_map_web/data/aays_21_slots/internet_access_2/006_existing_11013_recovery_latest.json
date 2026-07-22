@@ -2,58 +2,18 @@
   "schema_version": 3,
   "slot_id": "internet_access_2",
   "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
-  "generated_at": "2026-07-22T20:22:00Z",
+  "generated_at": "2026-07-22T20:24:00Z",
   "support_checks_completed": 55,
   "support_checks_total": 56,
   "operation_rows": [
-    {
-      "row": 61,
-      "operation": "Bulk API fallback scope correction",
-      "status": "PASS_CORRECTED",
-      "evidence": "The API cannot replace the official ZIP for 11,013-row output; it remains limited to an ephemeral 24-postcode cross-check."
-    },
-    {
-      "row": 62,
-      "operation": "Strict same-task ZIP requeue guard",
-      "status": "PASS_2_OF_2_TESTS",
-      "evidence": "Corrected r2 synthetic archive requeued the existing 006 task; stale inner r1 archive was rejected. Commit 6d5e91579f877e147bcae993b6afe6aa7e4a3ce1."
-    },
-    {
-      "row": 63,
-      "operation": "Current manual recovery action",
-      "status": "PASS_REMOTE_COMMIT",
-      "evidence": "Manual action requires official ZIP strict preflight, same-task requeue, remote readback and the existing safe launcher; no duplicate task or second runner."
-    },
-    {
-      "row": 64,
-      "operation": "Portable Git and remote-HEAD wrapper",
-      "status": "PASS_REMOTE_COMMIT",
-      "evidence": "Wrapper ed1d2a8cbe9b8c04b75d385c39243eb081d59d37 finds portable Git/Python, rejects a dirty or behind checkout, runs strict requeue and optionally invokes the safe launcher."
-    },
-    {
-      "row": 65,
-      "operation": "English and Welsh official download-object comparison",
-      "status": "PASS_SAME_OBJECT",
-      "evidence": "Both Ofcom language pages resolve to the same official ZIP object; 32.2 MB versus 32.3 MB is a display metadata difference, not an alternate route."
-    },
-    {
-      "row": 66,
-      "operation": "Bilingual official binary fetch retry",
-      "status": "BLOCKED_2_OF_2",
-      "evidence": "Both official language-page download clicks returned (400) OK without archive bytes; no ZIP was accepted."
-    },
-    {
-      "row": 67,
-      "operation": "Distributed chunk candidate readback",
-      "status": "PASS_6_OF_6",
-      "evidence": "Lines 2,001, 4,001, 6,001, 8,001, 10,001 and 11,001 were read from chunks 5, 9, 13, 17, 21 and 23."
-    },
-    {
-      "row": 68,
-      "operation": "Distributed example accuracy guard and publish",
-      "status": "PASS_NO_FALSE_UPGRADE",
-      "evidence": "Six additional candidates published with HMLR 4/4 and ONSPD live identity; internet remains 2/4 and official coverage remains unverified."
-    }
+    {"row":61,"operation":"Bulk API fallback scope correction","status":"PASS_CORRECTED","evidence":"The API cannot replace the official ZIP for 11,013-row output; it remains limited to an ephemeral 24-postcode cross-check."},
+    {"row":62,"operation":"Strict same-task ZIP requeue guard","status":"PASS_2_OF_2_TESTS","evidence":"Corrected r2 synthetic archive requeued the existing 006 task; stale inner r1 archive was rejected. Commit 6d5e91579f877e147bcae993b6afe6aa7e4a3ce1."},
+    {"row":63,"operation":"Current manual recovery action","status":"PASS_REMOTE_COMMIT","evidence":"Manual action requires official ZIP strict preflight, same-task requeue, remote readback and the existing safe launcher; no duplicate task or second runner."},
+    {"row":64,"operation":"Portable Git and remote-HEAD wrapper","status":"PASS_REMOTE_COMMIT","evidence":"Wrapper ed1d2a8cbe9b8c04b75d385c39243eb081d59d37 finds portable Git/Python, rejects a dirty or behind checkout, runs strict requeue and optionally invokes the safe launcher."},
+    {"row":65,"operation":"English and Welsh official download-object comparison","status":"PASS_SAME_OBJECT","evidence":"Both Ofcom language pages resolve to the same official ZIP object; 32.2 MB versus 32.3 MB is a display metadata difference, not an alternate route."},
+    {"row":66,"operation":"Bilingual official binary fetch retry","status":"BLOCKED_2_OF_2","evidence":"Both official language-page download clicks returned (400) OK without archive bytes; no ZIP was accepted."},
+    {"row":67,"operation":"Distributed chunk candidate readback","status":"PASS_6_OF_6","evidence":"Lines 2,001, 4,001, 6,001, 8,001, 10,001 and 11,001 were read from chunks 5, 9, 13, 17, 21 and 23."},
+    {"row":68,"operation":"Distributed example accuracy guard and publish","status":"PASS_NO_FALSE_UPGRADE","evidence":"Six additional candidates published with HMLR 4/4 and ONSPD live identity; internet remains 2/4 and official coverage remains unverified."}
   ],
   "strict_same_task_retry": {
     "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py",
@@ -77,8 +37,8 @@
     "commit": "3dea16e1d9b5c74d55eb9a578f7ee051f1a73bd0",
     "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/012_bilingual_download_and_distributed_examples_audit.json",
     "audit_commit": "5d08e10c890ea29a7acba902ac50d5a6255e62b2",
-    "sampled_chunks": [5, 9, 13, 17, 21, 23],
-    "sampled_lines": [2001, 4001, 6001, 8001, 10001, 11001],
+    "sampled_chunks": [5,9,13,17,21,23],
+    "sampled_lines": [2001,4001,6001,8001,10001,11001],
     "official_coverage_verified": 0,
     "false_accuracy_upgrade": 0
   },
@@ -86,9 +46,9 @@
   "api_bulk_replacement_allowed": false,
   "api_maximum_ephemeral_sample_postcodes": 24,
   "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/internet_access_2.json",
-  "manual_action_commit": "4d3e70ca663bd0d6815d7ba34a0d8f69795a4c74",
+  "manual_action_commit": "00733a04f5e3b811d87f7c59dc20166d451f4515",
   "api_scope_correction_commit": "41d401d9148e0858bde32d8f5d8458eed0f926a2",
-  "status_correction_commit": "3c48a2f83a05a64c18bdcc90d985af9c13cd2791",
+  "status_correction_commit": "a739b2ca55774d4e47a75d0ac01fe132adc7cbe2",
   "fake_data": false,
   "db_write": false,
   "migration": false,
