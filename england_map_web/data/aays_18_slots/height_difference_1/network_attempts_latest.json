@@ -1,9 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "attempt_count": 2,
-  "semantics": "Additional factual network attempts for the exact current HMLR authority ZIP route. No response bytes, hash or successful execution is claimed.",
+  "attempt_count": 6,
+  "semantics": "Additional factual network attempts for exact HMLR, EA metadata, EA WCS and repository-script targets. No response bytes, hash or successful remote execution is claimed.",
   "attempts": [
     {
       "attempt_id": "HD1-NET-011",
@@ -20,6 +20,42 @@
       "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip",
       "state": "BLOCKED_DNS",
       "evidence": "The execution container could not resolve the official HMLR host; no redirect, archive bytes or success was claimed.",
+      "bytes_acquired": false,
+      "sha256": null
+    },
+    {
+      "attempt_id": "HD1-NET-013",
+      "target": "Parcel 1 explicit EPSG:27700 EA Composite metadata OGC query",
+      "url": "https://environment.data.gov.uk/geoservices/datasets/9f0fa3fc-a860-4729-adc9-47fe53f658d0/ogc/features/v1/collections/LIDAR_Composite_1m_DTM_2022_extents/items",
+      "state": "BLOCKED_CONNECTOR_READ",
+      "evidence": "The exact BNG bbox, bbox-crs and response crs request was submitted; the connector safe-URL layer did not expose the dynamic GeoJSON body.",
+      "bytes_acquired": false,
+      "sha256": null
+    },
+    {
+      "attempt_id": "HD1-NET-014",
+      "target": "Parcel 1 EA time-stamped DTM ArcGIS point query",
+      "url": "https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/0/query",
+      "state": "BLOCKED_CONNECTOR_READ",
+      "evidence": "The exact EPSG:27700 point query was submitted; the connector safe-URL layer did not expose the JSON response body.",
+      "bytes_acquired": false,
+      "sha256": null
+    },
+    {
+      "attempt_id": "HD1-NET-015",
+      "target": "Parcel 1 official EA DTM WCS GetCoverage GeoTIFF",
+      "url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+      "state": "BLOCKED_CONNECTOR_BINARY",
+      "evidence": "The exact 10m EPSG:27700 GetCoverage request was submitted; the connector did not expose GeoTIFF bytes.",
+      "bytes_acquired": false,
+      "sha256": null
+    },
+    {
+      "attempt_id": "HD1-NET-016",
+      "target": "Current task-branch Python scripts via raw GitHub execution-container download",
+      "url": "https://raw.githubusercontent.com/cagdascagdas100/chat_gpt_clone_1/agent/height-difference-1-main-clean-r4-20260722/",
+      "state": "BLOCKED_DNS",
+      "evidence": "The execution container could not resolve raw.githubusercontent.com; no remote-script runtime claim was made.",
       "bytes_acquired": false,
       "sha256": null
     }
