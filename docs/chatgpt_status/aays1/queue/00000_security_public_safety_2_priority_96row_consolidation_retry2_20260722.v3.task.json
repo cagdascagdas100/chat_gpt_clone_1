@@ -8,84 +8,26 @@
   "task_id": "security_public_safety_2_priority_96row_consolidation_retry2_20260722",
   "attempt_id": "attempt-002",
   "idempotency_key": "4ffbfa559605eedeb292855f7dfb035b2eb4e39990281caf3b668a276e2ffe80",
-  "status": "pending",
+  "status": "waiting_dependency",
+  "dependency": "docs/chatgpt_status/aays1/shards/security_public_safety_2/geometry_lsoa_police_sample_wave1_latest.json",
   "page_key": "aays1",
   "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_96row_consolidation_20260722.py",
   "read_paths": [
     "docs/chatgpt_status/aays1/automation/security_public_safety_2_iod25_relative_method_wave2_20260722.py",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/source_and_sample_gate_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2",
-    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
-    "docs/chatgpt_status/security_public_safety/ENGLAND_PARCEL_CONTINUATION_20260717.md",
-    "docs/chatgpt_status/_shared/contracts/AAYS_ENGLAND_PARCEL_COVERAGE_AND_POLYGON_CLICK_CONTRACT_20260717.md"
+    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_96row_consolidation_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_96row_consolidation_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_96row_consolidation.html"
   ],
-  "resource_class": [
-    "heavy_disk_io",
-    "network_fetch",
-    "browser_research",
-    "cpu_heavy"
-  ],
+  "resource_class": ["heavy_disk_io", "network_fetch", "browser_research", "cpu_heavy"],
   "requires_git_publish_gate": true,
   "requires_shared_publish_gate": true,
-  "parcel_partition": {
-    "start": 30762,
-    "end": 61522,
-    "count": 30761,
-    "canonical_count": 92283
-  },
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
-  },
-  "data_quality_contract": {
-    "source_urls": [
-      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
-      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
-      "https://www.gov.uk/government/publications/english-indices-of-deprivation-2025-technical-report",
-      "https://www.gov.uk/csv-preview/691494fbb49cc44345161692/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
-      "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
-      "https://data.police.uk/api/crime-last-updated",
-      "https://data.police.uk/docs/method/crime-street/",
-      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
-      "https://www.gov.uk/government/statistics/police-recorded-crime-open-data-tables/police-recorded-crime-and-outcomes-open-data-tables-user-guide",
-      "https://www.data.gov.uk/dataset/0e26ee1b-26b7-406e-a3b1-f3481b324977/local-police-recorded-crime-data"
-    ],
-    "source_snapshot_date": "2026-07-22",
-    "source_discovery_required": false,
-    "measurement_level": "lsoa",
-    "output_semantics": "CANDIDATE",
-    "parcel_binding_method": "exact_internal_security_parcel_id_to_point_then_ons_lsoa21_intersection_then_iod25_lsoa_code_join",
-    "confidence_method": "six_gate_official_evidence_integrity_rubric_no_business_promotion",
-    "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "not_used",
-    "human_review_required_when": [
-      "canonical_point_missing",
-      "multiple_or_zero_lsoa_matches",
-      "historical_lsoa_code_mismatch",
-      "police_response_unavailable",
-      "iod_lsoa_join_missing",
-      "relative_method_calibration_pending",
-      "browser_acceptance_failure"
-    ]
-  },
-  "targets": {
-    "sample_parcel_start": 30762,
-    "sample_parcel_end": 30857,
-    "sample_candidate_rows": 96,
-    "parallel_official_source_probes": 10,
-    "parallel_row_checks": 10,
-    "business_rows_to_write": 0,
-    "website_line_by_line": true,
-    "priority_queue_prefix": "00000"
-  },
-  "timeout_seconds": 7200,
+  "parcel_partition": {"start":30762,"end":61522,"count":30761,"canonical_count":92283},
+  "targets": {"sample_parcel_start":30762,"sample_parcel_end":30857,"sample_candidate_rows":96,"parallel_official_source_probes":10,"parallel_row_checks":10,"business_rows_to_write":0,"website_line_by_line":true},
   "fake_data": false,
   "db_write": false,
   "migration": false,
