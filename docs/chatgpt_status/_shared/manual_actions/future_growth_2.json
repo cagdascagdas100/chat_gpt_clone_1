@@ -4,31 +4,34 @@
   "slot_id": "future_growth_2",
   "continuation_key": "5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462",
   "status": "OPEN",
-  "action_type": "RESTART_EXISTING_SINGLE_RUNNER_AND_VERIFY_FRESH_HEARTBEAT",
+  "action_type": "EXECUTE_EXISTING_SINGLE_RUNNER_OR_BROWSER_LIVE_QUERY_AND_VERIFY_RESULTS",
   "detected_at": "2026-07-22T17:27:28Z",
-  "last_checked_at": "2026-07-22T17:51:00Z",
-  "reason": "The canonical single-runner heartbeat remains stale since 2026-07-16 and the active claim is terminal, while the global current task remains pickup_requested for height_difference_2.",
+  "last_checked_at": "2026-07-22T18:08:00Z",
+  "reason": "The canonical single-runner heartbeat remains stale since 2026-07-16. Batch 005 provides a no-second-runner browser path for 55 official queries, but exported results are not yet committed and read back.",
   "prepared_continuation_artifact": "docs/chatgpt_status/aays1/shards/future_growth_2/automation/001_exact_official_gis_point_query.py",
-  "prepared_query_count": 31,
+  "prepared_browser_page": "england_map_web/data/aays_21_slots/future_growth_2/official_browser_live_query_batch_005_20260722.html",
+  "prepared_query_count": 55,
   "safety_constraints": {
     "create_new_runner": false,
     "create_duplicate_task": false,
     "replace_global_current_task": false,
-    "auto_restore_stash": false
+    "auto_restore_stash": false,
+    "score_without_verified_intersection": false
   },
   "manual_steps": [
-    "Run the existing F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd launcher on the canonical host.",
-    "Verify stable_runner_daemon_heartbeat_latest.json receives a new heartbeat timestamp and the PID is alive.",
-    "Verify single_runner_active_claim.json moves from the terminal 2026-07-16 claim to the existing height_difference_2 task without creating a second runner.",
-    "After height_difference_2 completes or releases, execute the prepared future_growth_2 official GIS point-query script through the same single-runner chain.",
-    "Publish the script output and keep scores null unless official polygon intersections and required cross-checks pass."
+    "Preferred host route: run the existing F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd launcher and verify a fresh single-runner heartbeat.",
+    "Browser fallback: open the published batch 005 HTML page through the existing local web server and allow all 55 official queries to finish.",
+    "Use the page's JSON export button and commit the exported result under the future_growth_2 permitted roots.",
+    "Read back the committed results, cross-check every INTERSECTION_FOUND against its official endpoint, and preserve layer-specific zero-result caution.",
+    "Resolve this action only when heartbeat or browser result evidence is current, single-runner count remains one, and no duplicate task exists."
   ],
   "resolution_checks": [
-    "heartbeat_age_seconds <= 900",
-    "single_runner_count == 1",
-    "active_claim_state in [claimed,running,done]",
+    "heartbeat_age_seconds <= 900 OR browser_live_query_completed == 55",
+    "single_runner_count <= 1",
     "no_duplicate_task_id == true",
-    "official_gis_query_output_exists == true"
+    "official_query_result_export_exists == true",
+    "official_query_result_github_readback == true",
+    "score_guard_preserved == true"
   ],
   "resolved_at": null,
   "final_ready": false,
