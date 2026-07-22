@@ -1,0 +1,86 @@
+name: height_difference_2 HMLR GML schema diagnostic 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_gml_schema_diag_034.yml
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_gml_schema_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Inspect official GML schema safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import io
+          import json
+          import zipfile
+          from pathlib import Path
+          import requests
+          from bs4 import BeautifulSoup
+          from lxml import etree
+
+          page_url='https://use-land-property-data.service.gov.uk/datasets/inspire/download?source=direct'
+          zip_name='London_Borough_of_Lambeth.zip'
+          s=requests.Session(); ua='AAYS-height-difference-2-gml-schema/1.0'
+          page=s.get(page_url,headers={'User-Agent':ua,'Accept':'text/html,*/*'},timeout=120); page.raise_for_status()
+          soup=BeautifulSoup(page.content,'html.parser')
+          href=None
+          for a in soup.find_all('a',href=True):
+            if a['href'].split('/')[-1]==zip_name:
+              href=requests.compat.urljoin(page.url,a['href']); break
+          if not href: raise RuntimeError('Lambeth ZIP link missing')
+          r=s.get(href,headers={'User-Agent':ua,'Referer':page.url,'Accept':'application/zip,*/*'},timeout=240); r.raise_for_status()
+          if r.content[:2]!=b'PK': raise RuntimeError('invalid zip')
+          z=zipfile.ZipFile(io.BytesIO(r.content))
+          gml_name=next(n for n in z.namelist() if n.lower().endswith('.gml'))
+          gml=z.read(gml_name)
+          root=etree.fromstring(gml)
+          counts=collections.Counter(etree.QName(el).localname for el in root.iter())
+          namespaces=collections.Counter(etree.QName(el).namespace for el in root.iter())
+          member_children=[]
+          for member in root.xpath('//*[local-name()="featureMember" or local-name()="member"]')[:10]:
+            for child in member:
+              member_children.append({'tag':child.tag,'local_name':etree.QName(child).localname,'attributes':dict(child.attrib),'snippet':etree.tostring(child,encoding='unicode')[:1500]})
+          field_samples=[]
+          for wanted in ('INSPIREID','LABEL','NATIONALCADASTRALREFERENCE','VALIDFROM','BEGINLIFESPANVERSION','localId','nationalCadastralReference'):
+            nodes=root.xpath(f'//*[local-name()="{wanted}"]')[:3]
+            for node in nodes:
+              parent=node.getparent()
+              field_samples.append({'field':wanted,'value':(node.text or '').strip(),'parent_tag':parent.tag if parent is not None else None,'parent_local_name':etree.QName(parent).localname if parent is not None else None,'ancestor_chain':[etree.QName(a).localname for a in node.iterancestors()][0:6]})
+          polygon_parents=[]
+          for poly in root.xpath('//*[local-name()="Polygon"]')[:5]:
+            polygon_parents.append({'srs_name':poly.get('srsName'),'ancestor_chain':[etree.QName(a).localname for a in poly.iterancestors()][0:8],'ancestor_tags':[a.tag for a in poly.iterancestors()][0:5]})
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),'zip_name':zip_name,'zip_bytes':len(r.content),'zip_sha256':hashlib.sha256(r.content).hexdigest(),'gml_name':gml_name,'gml_bytes':len(gml),'gml_sha256':hashlib.sha256(gml).hexdigest(),'root_tag':root.tag,'root_nsmap':{str(k):v for k,v in root.nsmap.items()},'top_local_names':counts.most_common(100),'top_namespaces':namespaces.most_common(30),'member_children':member_children,'field_samples':field_samples,'polygon_parents':polygon_parents,'fake_data':False,'final_ready':False}
+          out=Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_gml_schema_diagnostic.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit schema diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_hmlr_gml_schema_diagnostic.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record HMLR GML schema diagnostic 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
