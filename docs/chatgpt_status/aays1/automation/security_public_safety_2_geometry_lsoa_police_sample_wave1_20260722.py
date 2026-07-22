@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import concurrent.futures
+import csv
 import hashlib
 import html
 import json
 import os
+import tempfile
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
+import xml.etree.ElementTree as ET
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +31,8 @@ SNAPSHOT_DATE = datetime.now(timezone.utc).date().isoformat()
 USER_AGENT = "AAYS-TerraYield-security-public-safety-evidence-wave/2.0"
 TARGET_IDS = [f"parcel_{value}" for value in range(30762, 30774)]
 ONS_LAYER = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0"
+IOD_FILE7_URL = "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv"
+ONS_POPULATION_XLSX_URL = "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
 
 if os.environ.get("AAYS_SLOT_ID") not in (None, "", SLOT_ID):
     raise SystemExit(f"WRONG_SLOT: {os.environ.get('AAYS_SLOT_ID')}")
@@ -75,6 +81,100 @@ def fetch(url: str, *, parse_json: bool = False, attempts: int = 3, timeout: flo
         "sha256": None,
         "attempts": attempts,
         "error": last_error,
+    }
+
+
+def download_to_temp(url: str, suffix: str) -> dict[str, Any]:
+    last_error = None
+    for attempt in range(1, 4):
+        temp_path = None
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": USER_AGENT, "Accept": "text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,*/*"},
+            )
+            with urllib.request.urlopen(request, timeout=90.0) as response:
+                with tempfile.NamedTemporaryFile(prefix="aays_security_", suffix=suffix, delete=False) as handle:
+                    temp_path = Path(handle.name)
+                    digest = hashlib.sha256()
+                    total = 0
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        handle.write(chunk)
+                        digest.update(chunk)
+                        total += len(chunk)
+                return {
+                    "reachable": 200 <= int(response.status) < 400,
+                    "http_status": int(response.status),
+                    "final_url": response.geturl(),
+                    "content_type": response.headers.get("Content-Type", ""),
+                    "bytes": total,
+                    "sha256": digest.hexdigest(),
+                    "retrieved_at": utc_now(),
+                    "attempts": attempt,
+                    "temp_path": str(temp_path),
+                }
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            if temp_path:
+                temp_path.unlink(missing_ok=True)
+            if attempt < 3:
+                time.sleep(min(attempt * 2, 5))
+    return {"reachable": False, "error": last_error, "attempts": 3, "temp_path": None}
+
+
+def inspect_iod_csv(path: Path) -> dict[str, Any]:
+    row_count = 0
+    unique_lsoa: set[str] = set()
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        headers = next(reader)
+        lowered = [value.strip().casefold() for value in headers]
+        lsoa_indexes = [index for index, value in enumerate(lowered) if "lsoa" in value and ("code" in value or value.endswith("lsoa"))]
+        crime_columns = [headers[index] for index, value in enumerate(lowered) if "crime" in value]
+        population_columns = [headers[index] for index, value in enumerate(lowered) if "population" in value]
+        rank_columns = [headers[index] for index, value in enumerate(lowered) if "rank" in value and "crime" in value]
+        score_columns = [headers[index] for index, value in enumerate(lowered) if "score" in value and "crime" in value]
+        for row in reader:
+            row_count += 1
+            if lsoa_indexes and lsoa_indexes[0] < len(row):
+                value = row[lsoa_indexes[0]].strip()
+                if value:
+                    unique_lsoa.add(value)
+    return {
+        "headers": headers,
+        "row_count": row_count,
+        "unique_lsoa_count": len(unique_lsoa),
+        "lsoa_columns": [headers[index] for index in lsoa_indexes],
+        "crime_columns": crime_columns,
+        "crime_rank_columns": rank_columns,
+        "crime_score_columns": score_columns,
+        "population_columns": population_columns,
+        "schema_gate_pass": bool(lsoa_indexes and crime_columns and population_columns),
+    }
+
+
+def xlsx_sheet_names(path: Path) -> list[str]:
+    namespace = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("xl/workbook.xml"))
+        return [sheet.attrib.get("name", "") for sheet in root.findall("m:sheets/m:sheet", namespace)]
+
+
+def inspect_ons_xlsx(path: Path) -> dict[str, Any]:
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        worksheet_count = sum(name.startswith("xl/worksheets/sheet") and name.endswith(".xml") for name in names)
+        shared_strings_present = "xl/sharedStrings.xml" in names
+    sheets = xlsx_sheet_names(path)
+    return {
+        "sheet_names": sheets,
+        "worksheet_count": worksheet_count,
+        "shared_strings_present": shared_strings_present,
+        "mid_2024_sheet_candidates": [name for name in sheets if "2024" in name],
+        "schema_gate_pass": bool(sheets and worksheet_count),
     }
 
 
@@ -312,6 +412,25 @@ def probe_source(spec: dict[str, Any]) -> dict[str, Any]:
 with concurrent.futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="security-source") as executor:
     sources = list(executor.map(probe_source, source_specs))
 
+with concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="security-dataset") as executor:
+    iod_future = executor.submit(download_to_temp, IOD_FILE7_URL, ".csv")
+    ons_population_future = executor.submit(download_to_temp, ONS_POPULATION_XLSX_URL, ".xlsx")
+    iod_download = iod_future.result()
+    ons_population_download = ons_population_future.result()
+
+iod_schema: dict[str, Any] = {"schema_gate_pass": False}
+ons_population_schema: dict[str, Any] = {"schema_gate_pass": False}
+try:
+    if iod_download.get("reachable") and iod_download.get("temp_path"):
+        iod_schema = inspect_iod_csv(Path(str(iod_download["temp_path"])))
+    if ons_population_download.get("reachable") and ons_population_download.get("temp_path"):
+        ons_population_schema = inspect_ons_xlsx(Path(str(ons_population_download["temp_path"])))
+finally:
+    for item in (iod_download, ons_population_download):
+        if item.get("temp_path"):
+            Path(str(item["temp_path"])).unlink(missing_ok=True)
+            item["temp_path"] = None
+
 police_date = next(
     (item.get("latest_available_month") for item in sources if item["source_id"] == "police_api_last_updated"),
     None,
@@ -433,17 +552,22 @@ gates = [
     {"gate": "police_explicit_month_selected", "state": "PASS" if police_month else "BLOCKED", "evidence": police_month},
     {"gate": "police_response_hash_12_rows", "state": "PASS" if police_hashed_rows == 12 else "PARTIAL", "evidence": police_hashed_rows},
     {"gate": "hmlr_download_route_reachable", "state": "PASS" if sources[0]["status"] == "PROMOTED_FOR_ROLE" else "BLOCKED"},
-    {"gate": "imd_2025_source_reachable", "state": "PASS" if sources[6]["status"] == "PROMOTED_FOR_ROLE" else "BLOCKED"},
-    {"gate": "ons_population_denominator_source_reachable", "state": "PASS" if sources[7]["status"] == "PROMOTED_FOR_ROLE" else "BLOCKED"},
+    {"gate": "imd_2025_source_page_reachable", "state": "PASS" if sources[6]["status"] == "PROMOTED_FOR_ROLE" else "BLOCKED"},
+    {"gate": "ons_population_source_page_reachable", "state": "PASS" if sources[7]["status"] == "PROMOTED_FOR_ROLE" else "BLOCKED"},
+    {"gate": "iod_2025_file7_download_hash", "state": "PASS" if iod_download.get("reachable") and iod_download.get("sha256") else "BLOCKED", "evidence": iod_download.get("bytes")},
+    {"gate": "iod_2025_lsoa_crime_population_schema", "state": "PASS" if iod_schema.get("schema_gate_pass") else "BLOCKED", "evidence": iod_schema.get("row_count")},
+    {"gate": "ons_population_2024_xlsx_download_hash", "state": "PASS" if ons_population_download.get("reachable") and ons_population_download.get("sha256") else "BLOCKED", "evidence": ons_population_download.get("bytes")},
+    {"gate": "ons_population_2024_workbook_schema", "state": "PASS" if ons_population_schema.get("schema_gate_pass") else "BLOCKED", "evidence": ons_population_schema.get("worksheet_count")},
     {"gate": "row_by_row_web_artifact_generated", "state": "PASS"},
     {"gate": "documented_security_rate_and_score_method", "state": "PENDING"},
+    {"gate": "join_i_2025_and_population_to_12_rows", "state": "PENDING"},
     {"gate": "expand_to_300_verified_business_rows", "state": "PENDING"},
     {"gate": "served_http_and_json_hash_acceptance", "state": "PENDING"},
     {"gate": "dom_console_browser_acceptance", "state": "PENDING"},
 ]
 completed_operations = sum(item["state"] == "PASS" for item in gates)
 total_operations = len(gates)
-overall_progress = round((completed_operations / total_operations) * 55, 1)
+overall_progress = round((completed_operations / total_operations) * 65, 1)
 
 previous = {}
 if PREVIOUS_PATH.is_file():
@@ -461,8 +585,8 @@ payload = {
     "base_slot_id": "security_public_safety",
     "shard_index": 2,
     "parcel_partition": PARTITION,
-    "state": "TWELVE_POINT_LSOA_POLICE_EVIDENCE_ROWS_PREPARED_SCORE_METHOD_PENDING",
-    "first_unverified_step": "DOCUMENT_SECURITY_RATE_METHOD_THEN_EXPAND_300_AND_HTTP_DOM_CONSOLE_BROWSER_ACCEPTANCE",
+    "state": "TWELVE_POINT_LSOA_POLICE_ROWS_AND_OFFICIAL_METHOD_DATA_SCHEMAS_PREPARED",
+    "first_unverified_step": "JOIN_IOD2025_AND_POPULATION_TO_12_ROWS_THEN_DOCUMENT_RATE_METHOD",
     "source_snapshot_date": SNAPSHOT_DATE,
     "canonical_point_source": {
         "path": SOURCE_REL,
@@ -477,6 +601,8 @@ payload = {
         "parcel_id_property": "security_parcel_id",
         "security_values_reused": False,
     },
+    "dataset_downloads": {"iod_2025_file7": iod_download, "ons_lsoa_population_2024": ons_population_download},
+    "dataset_schemas": {"iod_2025_file7": iod_schema, "ons_lsoa_population_2024": ons_population_schema},
     "sources_reviewed": len(sources),
     "promoted_sources": len(source_promoted),
     "held_sources": len(sources) - len(source_promoted),
@@ -496,7 +622,7 @@ payload = {
     "overall_progress_percent": overall_progress,
     "progress_delta_percent": round(overall_progress - previous_progress, 1),
     "business_row_progress_percent": 0,
-    "progress_formula": "PASS evidence/preparation gates divided by 16, capped at 55 percent until a documented rate/score method and verified business rows exist.",
+    "progress_formula": "PASS evidence/preparation gates divided by 21, capped at 65 percent until a documented rate/score method and verified business rows exist.",
     "blockers": [
         "The 92,283-feature file supplies canonical program points, not definitive title polygons.",
         "Police.uk street locations are anonymised approximations and nearby point queries may overlap.",
@@ -504,7 +630,7 @@ payload = {
         "HMLR INSPIRE is indicative freehold geometry and cannot be treated as definitive title extent.",
         "Served HTTP, JSON hash, DOM, console and browser acceptance remain pending.",
     ],
-    "next_required_action": "Join the current ONS LSOA population denominator and IoD 2025 crime domain to the verified LSOA codes, document the score formula, validate 12 rows, then expand to 300 only after acceptance.",
+    "next_required_action": "Join the downloaded IoD 2025 crime-domain and ONS mid-2024 population fields to the 12 verified LSOA codes, document a rate/score formula, then expand to 300 only after acceptance.",
     "fake_data": False,
     "db_write": False,
     "migration": False,
@@ -523,6 +649,12 @@ source_rows = "".join(
     f"<td>{item['probe'].get('http_status') or '-'}</td><td><code>{html.escape(str(item['probe'].get('sha256') or '-'))}</code></td>"
     f"<td>{html.escape(item['role'])}</td><td>{html.escape(item['limit'])}</td></tr>"
     for index, item in enumerate(sources, 1)
+)
+dataset_rows = "".join(
+    f"<tr><td>{html.escape(name)}</td><td>{html.escape(str(item.get('http_status') or '-'))}</td>"
+    f"<td>{html.escape(str(item.get('bytes') or 0))}</td><td><code>{html.escape(str(item.get('sha256') or '-'))}</code></td>"
+    f"<td>{html.escape(str((iod_schema if name == 'IoD 2025 File 7 CSV' else ons_population_schema).get('schema_gate_pass')))}</td></tr>"
+    for name, item in (("IoD 2025 File 7 CSV", iod_download), ("ONS LSOA population 2024 XLSX", ons_population_download))
 )
 row_rows = "".join(
     f"<tr><td>{html.escape(str(item.get('parcel_id')))}</td>"
@@ -557,6 +689,7 @@ th,td{{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}}
 <div class='card'>Kanıtı geçen satır<br><b>{verified_evidence_rows}</b></div><div class='card'>≥95 satır kanıtı<br><b>{accuracy_ge_95_rows}</b></div>
 <div class='card'>Doğrulanmış business satırı<br><b>0</b></div></div>
 <h2>Resmî kaynaklar</h2><table><thead><tr><th>#</th><th>Kaynak</th><th>Yayıncı</th><th>Doğruluk</th><th>Durum</th><th>HTTP</th><th>SHA256</th><th>Rol</th><th>Sınır</th></tr></thead><tbody>{source_rows}</tbody></table>
+<h2>Resmî veri dosyaları</h2><table><thead><tr><th>Dosya</th><th>HTTP</th><th>Bayt</th><th>SHA256</th><th>Şema</th></tr></thead><tbody>{dataset_rows}</tbody></table>
 <h2>12 örnek parsel</h2><table><thead><tr><th>Parsel</th><th>Lon</th><th>Lat</th><th>Eski LSOA</th><th>ONS LSOA</th><th>Kod</th><th>Ay</th><th>Suç kaydı</th><th>Yanıt SHA256</th><th>Kanıt bütünlüğü</th><th>Durum</th><th>Skor</th></tr></thead><tbody>{row_rows}</tbody></table>
 <h2>Kabul kapıları</h2><table><thead><tr><th>#</th><th>Kapı</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody>{gate_rows}</tbody></table>
 <p><b>Sonraki adım:</b> {html.escape(payload['next_required_action'])}</p><p><b>final_ready:</b> false</p></body></html>"""
