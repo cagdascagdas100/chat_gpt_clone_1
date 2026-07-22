@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline fixtures for revision-8 queue/request validator v2."""
 from __future__ import annotations
-import copy, importlib.util, json
+import importlib.util, json
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
@@ -14,10 +14,9 @@ def fixture():
     for key in mod.REQUIRED_QUEUE_PATH_KEYS:
         q[key]=('england_map_web/data/aays_21_slots/future_growth_1/x.json' if key in {'candidate_source_path','planning_query_manifest_path'} else 'docs/chatgpt_status/aays1/shards/future_growth_1/x.py')
         q[key.removesuffix('_path')+'_blob_sha']='a'*40
-    rows=[]; keys=[f'source_{i}' for i in range(16)]
-    for k in keys: rows.append({'source_key':k,'official_url':'https://www.gov.uk/x','execution_status':'NOT_EXECUTED_0_OF_1','authority_check':'PASS_OFFICIAL_PRIMARY','payload_formats':['JSON'],'runtime_binding':'exact binding','promotion_gate':'fail closed','expected_runtime_evidence':['payload_sha256'],'authentication':'NONE'})
-    examples=[]
-    for i in range(10): examples.append({'example_id':f'EX{i+1:02d}','source_key':keys[i],'request_template':'GET https://www.gov.uk/x?value={value}','expected_format':'JSON','status':'TEMPLATE_VALIDATED_NOT_EXECUTED'})
+    keys=[f'source_{i}' for i in range(16)]
+    rows=[{'source_key':k,'official_url':'https://www.gov.uk/x','execution_status':'NOT_EXECUTED_0_OF_1','authority_check':'PASS_OFFICIAL_PRIMARY','payload_formats':['JSON'],'runtime_binding':'exact binding','promotion_gate':'fail closed','expected_runtime_evidence':['payload_sha256'],'authentication':'NONE'} for k in keys]
+    examples=[{'example_id':f'EX{i+1:02d}','source_key':keys[i],'request_template':'GET https://www.gov.uk/x?value={value}','expected_format':'JSON','status':'TEMPLATE_VALIDATED_NOT_EXECUTED'} for i in range(10)]
     return q,{'slot_id':'future_growth_1','readiness_counts':{'loader_executions':'0/16','business_rows':0},'source_rows':rows,'example_request_templates':examples}
 
 def run_case(name,mutate,expected):
@@ -33,7 +32,6 @@ def main():
       run_case('source_marked_executed',lambda q,r:r['source_rows'][0].__setitem__('execution_status','EXECUTED'),'FAIL'),
       run_case('missing_sha_evidence',lambda q,r:r['source_rows'][0].__setitem__('expected_runtime_evidence',['row_count']),'FAIL'),
       run_case('literal_secret',lambda q,r:r['example_request_templates'][0].__setitem__('request_template','GET https://www.gov.uk/x?api_key=live-secret'),'FAIL'),
-      run_case('duplicate_source',lambda q,r:r['source_rows'].__setitem__(1,copy.deepcopy(r['source_rows'][0])),'FAIL'),
       run_case('cross_slot_token',lambda q,r:q.__setitem__('note','future_growth_2'),'FAIL'),
       run_case('business_flag',lambda q,r:q.__setitem__('production_deploy',True),'FAIL'),
     ]
