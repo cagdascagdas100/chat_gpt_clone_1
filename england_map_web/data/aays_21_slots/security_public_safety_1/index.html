@@ -1,1 +1,96 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="30"><link rel="icon" href="data:,"><title>Security / Public Safety 1</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:165px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.PASS,.BLOCKED,.PENDING,.LIMIT,.PASS_LIMIT_RECORDED{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style></head><body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false"><h1>Security / Public Safety — Shard 1</h1><div class="note"><strong>AREA_LEVEL_PROXY:</strong> LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Security local execution ve queue yolları tamamlandı. Kalan engel priority-1 holder’ın gerçek F-host recovery/claim zinciridir; paket CI başarısı tek başına recovery kanıtı değildir.</div><div class="cards"><div class="card">Genel ilerleme<br><strong id="progress">yükleniyor</strong></div><div class="card">Kaynak satırı<br><strong id="rows">yükleniyor</strong></div><div class="card">Doğruluk 4/4<br><strong id="accuracy">yükleniyor</strong></div><div class="card">Aday / endpoint<br><strong id="candidates">yükleniyor</strong></div><div class="card">Örnek / kanıt<br><strong id="examples">yükleniyor</strong></div><div class="card">Resmî kaynak<br><strong id="sources">yükleniyor</strong></div><div class="card">Security local düzeltme<br><strong id="localFix">yükleniyor</strong></div><div class="card">Queue parser<br><strong id="queue">yükleniyor</strong></div><div class="card">Holder CI<br><strong id="holderCi">yükleniyor</strong></div><div class="card">Heartbeat yaşı<br><strong id="heartbeatAge">yükleniyor</strong></div><div class="card">Dependency kusuru<br><strong id="depDefects">yükleniyor</strong></div><div class="card">F-host recovery<br><strong id="recovery">yükleniyor</strong></div><div class="card">Canlı kabul<br><strong id="acceptance">PENDING</strong></div></div><h2>Web görünümleri</h2><table><thead><tr><th>Görünüm</th><th>Kapsam</th><th>Bağlantı</th></tr></thead><tbody><tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint ve browser/publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr><tr><td>Runtime denetimi</td><td>52 runtime satırı; carrier, watchdog ve receipt yolları</td><td><a href="runtime_code_audit_v17.html">runtime_code_audit_v17.html</a></td></tr><tr><td>Queue parser</td><td>48 satır; priority, branch, allowed paths ve safety</td><td><a href="queue_parser_contract_v1.html">queue_parser_contract_v1.html</a></td></tr><tr><td>Holder CI paket</td><td>10 satır; 980 işlem, 90 kaynak, 63 örnek, Chromium hata 0/0</td><td><a href="holder_ci_package_validation_v1.html">holder_ci_package_validation_v1.html</a></td></tr><tr><td>Stale-daemon watchdog</td><td>24 satır; heartbeat yaşı ve 6 false-success yolu</td><td><a href="holder_stale_daemon_watchdog_audit_v1.html">holder_stale_daemon_watchdog_audit_v1.html</a></td></tr><tr><td>Shared runner recovery</td><td>CI PASS ile F-host recovery/claim blocker’ını ayrı gösterir</td><td><a href="runner_recovery_watch_v1.html">runner_recovery_watch_v1.html</a></td></tr><tr><td>Force kapsamı</td><td>44 force satırı; Mayıs 2026 kapsam ve gap’ler</td><td><a href="official_force_coverage_audit_v1.html">official_force_coverage_audit_v1.html</a></td></tr><tr><td>Skor ve API sözleşmesi</td><td>Yorumlama, alan optionality ve temsilci örnekleri</td><td><a href="score_interpretation_audit_v1.html">score_interpretation_audit_v1.html</a></td></tr><tr><td>Bağımsız endpoint probe</td><td>16 tek-deneme bağlantı sonucu; kanonik acceptance değildir</td><td><a href="independent_endpoint_probe_full_v1.html">independent_endpoint_probe_full_v1.html</a></td></tr></tbody></table><h2>İşlemler — satır satır</h2><table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table><script>'use strict';const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};const optional=async p=>{try{return await get(p)}catch(_){return null}};(async()=>{const [source,manifest,sourceV11,audit,queueAudit,dep,ci,watch,interpretation,coverage,acceptanceDoc]=await Promise.all([get('official_web_refresh_20260722.json'),get('canonical_130_endpoint_manifest_20260722.json'),get('official_source_revalidation_v11_20260722.json'),get('runtime_code_audit_v17_20260722.json'),get('queue_parser_contract_v1_20260722.json'),get('shared_runner_dependency_latest.json'),get('holder_ci_package_validation_v1_20260722.json'),get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),get('score_interpretation_contract_v2_20260722.json'),get('official_force_coverage_audit_v1_20260722.json'),optional('canonical_acceptance_v17_latest.json')]);const cp=source.canonical_progress||{},acceptancePass=acceptanceDoc?.acceptance_pass===true,done=acceptancePass?7:Number(cp.completed_units||0),pct=acceptancePass?87.5:Number(cp.overall_percent||0),delta=acceptancePass?25:Number(cp.percent_change||0),recoveryDoc=dep.recovery_request||{},holder=dep.holder_readback||{},security=dep.security_slot||{},ciP=ci.package_receipt||{},wd=watch.defect_resolution||{};progress.textContent=`${done}/${cp.total_units||8} — ${pct}% (Δ ${delta>=0?'+':''}${delta})`;rows.textContent=`${source.verified_rows}/300`;accuracy.textContent=`${source.accuracy_score_4_rows}/300`;candidates.textContent=`${manifest.candidate_rows}/130 · ${manifest.unique_endpoints}/16`;examples.textContent=`${interpretation.metrics.combined_candidate_example_rows} / ${interpretation.metrics.combined_displayed_evidence_rows+coverage.display_contract.row_count}`;sources.textContent=`${sourceV11.official_checks_passed}/${sourceV11.official_checks_total} · ${sourceV11.quality_limits_recorded} limit`;localFix.textContent=`${security.total_local_defects_fixed||9} düzeltildi / 0 kaldı`;queue.textContent=`${queueAudit.validation.checks_passed}/${queueAudit.validation.checks_total}`;holderCi.textContent=`${ci.checks_pass_or_limit_recorded}/${ci.checks_total} · ${ciP.operation_rows}/${ciP.source_rows}/${ciP.example_rows}`;heartbeatAge.textContent=`${watch.heartbeat.age_minutes_at_check} dk`;depDefects.textContent=String(wd.dependency_defects_found);recovery.textContent=recoveryDoc.operator_recovery_executed?'PASS':'PENDING';acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';const items=[['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows}/300; doğruluk ${source.accuracy_score_4_rows}/300`],['PASS','OFFICIAL_SOURCE_V11',`${sourceV11.official_checks_passed}/${sourceV11.official_checks_total}; ${sourceV11.quality_limits_recorded} limit`],['PASS_LIMIT_RECORDED','FORCE_COVERAGE',`${coverage.availability.may_available_rows}/44 mevcut; ${coverage.availability.may_unavailable_rows}/44 eksik`],['PASS','STATIC_CANDIDATES',`${manifest.candidate_rows}/130 aday; ${manifest.unique_endpoints}/16 endpoint`],['PASS','RUNTIME_LOCAL_HARDENING',`${audit.critical_defects_fixed} runtime kusuru; ${audit.carrier_static_validation.checks_passed}/${audit.carrier_static_validation.checks_total} carrier kapısı`],['PASS','QUEUE_PARSER_HARDENING',`${queueAudit.validation.checks_passed}/${queueAudit.validation.checks_total}; kalan gap ${queueAudit.defect_resolution.queue_contract_gaps_remaining}`],['PASS','HOLDER_PACKAGE_CI',`${ciP.operation_rows} işlem / ${ciP.source_rows} kaynak / ${ciP.example_rows} örnek; browser ${ciP.console_errors}/${ciP.page_errors}`],['LIMIT','HOLDER_CI_SCOPE','CI paket doğrulamasıdır; F-host recovery veya queue claim değildir'],['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu; helper heartbeat freshness okumuyor`],[recoveryDoc.expected_preflight_output_present?'PASS':'PENDING','OPERATOR_RECOVERY_PREFLIGHT',recoveryDoc.expected_preflight_output],[recoveryDoc.expected_restart_output_present?'PASS':'PENDING','RESTART_RECEIPT',recoveryDoc.expected_restart_output],[recoveryDoc.runner_claim_observed?'PASS':'PENDING','PRIORITY_1_CLAIM','height_difference_2 attempt 020'],['PASS','SECURITY_LOCAL_STUCK_PATHS','0'],['BLOCKED','SECURITY_PRIORITY_2_CLAIM',security.first_unverified_step],[acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptanceDoc?'runtime report present':'v17 acceptance report absent'],[acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptanceDoc?'runtime report present':'security Chromium output absent'],['PENDING','PUBLISHER_READBACK',acceptancePass?'runtime PASS; publisher pending':'runtime acceptance required first']];events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');document.body.dataset.operationRows=String(items.length);document.body.dataset.dependencyDefects=String(wd.dependency_defects_found);document.body.dataset.heartbeatAgeMinutes=String(watch.heartbeat.age_minutes_at_check);document.body.dataset.securityLocalStuck=String((security.silent_pending_paths_remaining||0)+(security.execution_host_mismatch_remaining||0)+(security.timeout_orphan_paths_remaining||0)+(security.queue_contract_gaps_remaining||0));document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));document.body.dataset.semanticValid=String(source.parcel_measurement===false&&manifest.candidate_rows===130&&manifest.unique_endpoints===16&&queueAudit.validation.checks_passed===48&&ci.checks_total===10&&watch.checks_recorded===24&&wd.dependency_defects_found===6&&recoveryDoc.operator_recovery_executed===false&&dep.global_control_alias?.overwrite_performed===false&&sourceV11.final_ready===false)})().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});</script></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>Security / Public Safety 1</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}
+    .cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:165px}
+    table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}
+    .PASS,.BLOCKED,.PENDING,.LIMIT,.PASS_LIMIT_RECORDED{font-weight:700}a{color:#0759a5}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}
+  </style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+  <h1>Security / Public Safety — Shard 1</h1>
+  <div class="note"><strong>AREA_LEVEL_PROXY:</strong> LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Security hazırlığı ilerliyor; priority‑1 holder recovery/claim doğrulanmadan canlı kabul ve publisher aşaması ilerletilmez.</div>
+  <div class="cards">
+    <div class="card">Genel ilerleme<br><strong id="progress">yükleniyor</strong></div>
+    <div class="card">Kaynak satırı<br><strong id="rowsCount">yükleniyor</strong></div>
+    <div class="card">Doğruluk 4/4<br><strong id="accuracy">yükleniyor</strong></div>
+    <div class="card">Aday / endpoint<br><strong id="candidates">yükleniyor</strong></div>
+    <div class="card">Yeni resmî kaynak<br><strong id="sourceIncrement">yükleniyor</strong></div>
+    <div class="card">Kaynak yükseltmesi<br><strong id="upgrades">yükleniyor</strong></div>
+    <div class="card">Heartbeat yaşı<br><strong id="heartbeatAge">yükleniyor</strong></div>
+    <div class="card">Dependency kusuru<br><strong id="depDefects">yükleniyor</strong></div>
+    <div class="card">Manuel eylem<br><strong id="manual">yükleniyor</strong></div>
+    <div class="card">Canlı kabul<br><strong id="acceptance">yükleniyor</strong></div>
+  </div>
+
+  <h2>Web görünümleri</h2>
+  <table><thead><tr><th>Görünüm</th><th>Kapsam</th><th>Bağlantı</th></tr></thead><tbody>
+    <tr><td>Canlı ilerleme</td><td>300 satır, 130 aday, 16 endpoint ve browser/publisher kapıları</td><td><a href="progress_v15.html">progress_v15.html</a></td></tr>
+    <tr><td>Yeni resmî kaynak artışı</td><td>6 resmî kaynak doğrulaması; satır satır kalite etkisi</td><td><a href="continuation_official_source_increment_v1.html">continuation_official_source_increment_v1.html</a></td></tr>
+    <tr><td>Runtime denetimi</td><td>Carrier, watchdog ve receipt yolları</td><td><a href="runtime_code_audit_v17.html">runtime_code_audit_v17.html</a></td></tr>
+    <tr><td>Queue parser</td><td>Priority, branch, allowed paths ve safety</td><td><a href="queue_parser_contract_v1.html">queue_parser_contract_v1.html</a></td></tr>
+    <tr><td>Holder CI paket</td><td>CI paket kapsamı; F-host recovery kanıtı değildir</td><td><a href="holder_ci_package_validation_v1.html">holder_ci_package_validation_v1.html</a></td></tr>
+    <tr><td>Stale-daemon watchdog</td><td>Heartbeat yaşı ve 6 false-success yolu</td><td><a href="holder_stale_daemon_watchdog_audit_v1.html">holder_stale_daemon_watchdog_audit_v1.html</a></td></tr>
+  </tbody></table>
+
+  <h2>İşlemler — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
+
+  <h2>Yeni resmî kaynaklar — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kalite etkisi</th></tr></thead><tbody id="sourceRows"></tbody></table>
+
+  <script>
+    'use strict';
+    const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+    const optional=async p=>{try{return await get(p)}catch(_){return null}};
+    (async()=>{
+      const [source,manifest,watch,increment,acceptanceDoc]=await Promise.all([
+        get('official_web_refresh_20260722.json'),
+        get('canonical_130_endpoint_manifest_20260722.json'),
+        get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),
+        get('continuation_official_source_increment_v1_20260722.json'),
+        optional('canonical_acceptance_v17_latest.json')
+      ]);
+      const cp=source.canonical_progress||{},m=increment.increment_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
+      progress.textContent=`${cp.completed_units}/${cp.total_units} — ${cp.overall_percent}% (Δ ${cp.percent_change>=0?'+':''}${cp.percent_change})`;
+      rowsCount.textContent=`${source.verified_rows}/300`;
+      accuracy.textContent=`${source.accuracy_score_4_rows}/300`;
+      candidates.textContent=`${manifest.candidate_rows}/130 · ${manifest.unique_endpoints}/16`;
+      sourceIncrement.textContent=`${m.official_source_checks_passed}/${m.official_source_checks_added}`;
+      upgrades.textContent=String(m.source_upgrades_added);
+      heartbeatAge.textContent=`${watch.heartbeat.age_minutes_at_check} dk`;
+      depDefects.textContent=String(wd.dependency_defects_found);
+      manual.textContent='OPEN — F-host';
+      acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';
+      const items=[
+        ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows}/300; doğruluk ${source.accuracy_score_4_rows}/300`],
+        ['PASS','STATIC_CANDIDATES',`${manifest.candidate_rows}/130 aday; ${manifest.unique_endpoints}/16 endpoint`],
+        ['PASS','PARALLEL_OFFICIAL_SOURCE_RESEARCH',`${m.official_source_checks_passed}/${m.official_source_checks_added} yeni resmî kaynak; ${m.source_upgrades_added} yükseltme`],
+        ['PASS','NO_FAKE_PARCEL_VALUES',`${m.parcel_values_added} yeni parsel değeri; stored_values_modified=${m.stored_values_modified}`],
+        ['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],
+        ['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu`],
+        ['PENDING','PRIORITY_1_CLAIM','height_difference_2 existing single shared runner'],
+        ['PENDING','SECURITY_PRIORITY_2_CLAIM',increment.first_unverified_step],
+        [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptancePass?'runtime report present':'single-runner acceptance pending'],
+        [acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptancePass?'runtime report present':'browser gate pending'],
+        ['PENDING','PUBLISHER_READBACK','runtime acceptance required first'],
+        ['BLOCKED','MANUAL_ACTION',increment.manual_action_path]
+      ];
+      events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');
+      sourceRows.innerHTML=(increment.sources||[]).map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br>${esc(x.authority)}</td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
+      document.body.dataset.operationRows=String(items.length);
+      document.body.dataset.sourceResearchRows=String((increment.sources||[]).length);
+      document.body.dataset.continuationKey=increment.continuation_key;
+      document.body.dataset.blocker=increment.blocker;
+      document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));
+    })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+  </script>
+</body>
+</html>
