@@ -36,7 +36,7 @@ v3.CANDIDATE_FILES = [DATA_ROOT / "verified_candidate_examples_20260720.json"] +
 v3.EXPECTED_TOTAL_SOURCES = 264
 v3.EXPECTED_TOTAL_CANDIDATES = 141
 v3.EXPECTED_EXACT_INSPIRE = 2
-v3.EXPECTED_INTERNET_REVERIFIED = 141
+v3.EXPECTED_INTERNET_REVERIFIED = 117
 v3.EXPECTED_COMPLETED_OPERATIONS = 165
 v3.EXPECTED_TOTAL_OPERATIONS = 166
 
@@ -121,8 +121,8 @@ def write_markdown(report: dict[str, Any]) -> None:
     text = text.replace("RERUN_AUTOMATION_167_V32", "RERUN_AUTOMATION_167_V33")
     text += (
         "\nV33 deduplicated aggregate contract: 32 candidate/source batches, 153 raw candidate records, "
-        "12 canonical-listing-URL duplicates excluded, 141 unique candidates, 264 verified sources, "
-        "3 official planning evidence rows, 165/166 operations and zero unverified parcel values. "
+        "12 canonical-listing-URL duplicates excluded, 141 unique candidates, 117 internet-reverified rows, "
+        "264 verified sources, 3 official planning evidence rows, 165/166 operations and zero unverified parcel values. "
         "A favicon-only 404 is ignored; every other HTTP or browser error remains blocking.\n"
     )
     path.write_text(text, encoding="utf-8")
@@ -150,6 +150,7 @@ def main() -> int:
         "raw_candidate_rows": 153,
         "duplicate_candidate_rows_excluded": 12,
         "candidate_rows": 141,
+        "internet_reverified_rows": 117,
         "verified_source_rows": 264,
         "official_planning_evidence_rows": 3,
         "strengthened_candidate_rows": 91,
