@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""Final read-only semantic gate V2 for gas_emissions_1 facility air releases.
+
+Official UK PRTR and Environment Agency Pollution Inventory records may use
+calculated (C), estimated (E), measured (M) or unspecified (U) determination
+methods. An official estimated annual release is therefore not rejected merely
+because its method is E. Permit limits, design values, avoided emissions and
+other non-release contexts remain rejected. Only annual releases to air can pass
+this gas-emissions gate; parcel binding remains pending verified geometry.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+SLOT_ID = "gas_emissions_1"
+INPUT = Path("england_map_web/data/aays_21_slots/gas_emissions_1/facility_emission_review_latest.json")
+REPORT = Path("docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_facility_emission_semantic_gate_latest.json")
+STATUS = Path("docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_facility_emission_semantic_gate_latest.json")
+WEB = Path("england_map_web/data/aays_21_slots/gas_emissions_1/facility_emission_semantic_gate_latest.json")
+
+REJECT_TERMS = (
+    "permit limit", "emission limit", "elv", "design capacity", "permitted capacity",
+    "avoided emission", "avoided co2", "co2 reduced", "net figure", "surrogate level",
+    "bat appraisal", "application design", "monitoring required", "not measured",
+    "not metered", "gwp credit", "gwp debit", "installation configuration",
+    "planning limit", "reporting form", "potential release", "source description",
+)
+OFFICIAL_SOURCE_TERMS = (
+    "uk prtr", "pollutant release and transfer register", "pollution inventory",
+)
+VALID_METHOD_PREFIXES = ("C", "E", "M", "U")
+NON_MASS_UNIT_TERMS = ("mg/m3", "mg/m³", "ng/m3", "ng/m³", "ppm", "mw", "mwe", "m3/hour", "m³/hour", "metre", "meter", "hours")
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def text_of(row: dict[str, Any]) -> str:
+    return json.dumps(row, ensure_ascii=False, sort_keys=True).casefold()
+
+
+def first(row: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def numeric_value(value: Any) -> float | None:
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    if isinstance(value, str):
+        cleaned = value.strip().replace(",", "")
+        if re.fullmatch(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?", cleaned):
+            return float(cleaned)
+    return None
+
+
+def extract_rows(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    for key in ("accepted_rows", "facility_emission_rows", "rows", "candidates", "reviewed_candidates"):
+        value = doc.get(key)
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+    return []
+
+
+def medium_is_air(value: Any) -> bool:
+    text = str(value or "").strip().casefold()
+    if not text:
+        return False
+    return text in {"air", "atmosphere", "release to air", "releases to air", "air emission", "air emissions"} or text.startswith("air ")
+
+
+def method_class(value: Any) -> str | None:
+    text = str(value or "").strip().upper()
+    if not text:
+        return None
+    token = re.split(r"[^A-Z0-9_]+", text, maxsplit=1)[0]
+    if token.startswith("C"):
+        return "CALCULATED"
+    if token.startswith("E"):
+        return "ESTIMATED"
+    if token.startswith("M"):
+        return "MEASURED"
+    if token.startswith("U"):
+        return "UNSPECIFIED"
+    return "INVALID"
+
+
+def review(row: dict[str, Any]) -> dict[str, Any]:
+    text = text_of(row)
+    source = str(first(row, "source_name", "source", "dataset", "official_source") or "").casefold()
+    facility = first(row, "facility", "facility_name", "site_name", "operator", "operator_name")
+    year = first(row, "reporting_year", "year", "calendar_year")
+    pollutant = first(row, "pollutant", "pollutant_name", "substance")
+    medium = first(row, "medium", "environmental_medium", "release_medium")
+    raw_value = first(row, "value", "release_value", "amount", "quantity")
+    unit = first(row, "unit", "release_unit", "quantity_unit")
+    method = first(row, "method_code", "method", "determination_method", "methodology")
+    method_kind = method_class(method)
+    value = numeric_value(raw_value)
+    reasons: list[str] = []
+
+    if not any(term in source or term in text for term in OFFICIAL_SOURCE_TERMS):
+        reasons.append("SOURCE_NOT_EXPLICITLY_UK_PRTR_OR_EA_POLLUTION_INVENTORY")
+    if any(term in text for term in REJECT_TERMS):
+        reasons.append("LIMIT_DESIGN_AVOIDED_BAT_OR_OTHER_NON_RELEASE_CONTEXT")
+    if not facility:
+        reasons.append("FACILITY_OR_OPERATOR_IDENTITY_MISSING")
+    if not (isinstance(year, int) and 2007 <= year <= 2100 or isinstance(year, str) and re.fullmatch(r"20\d{2}", year.strip())):
+        reasons.append("REPORTING_YEAR_MISSING_OR_INVALID")
+    if not pollutant:
+        reasons.append("POLLUTANT_MISSING")
+    if not medium_is_air(medium):
+        reasons.append("NOT_AN_AIR_RELEASE")
+    if value is None:
+        reasons.append("NUMERIC_RELEASE_VALUE_MISSING")
+    elif value < 0:
+        reasons.append("NEGATIVE_RELEASE_VALUE_INVALID")
+    if not unit:
+        reasons.append("RELEASE_UNIT_MISSING")
+    elif any(term in str(unit).casefold() for term in NON_MASS_UNIT_TERMS):
+        reasons.append("CONCENTRATION_RATE_POWER_OR_DURATION_UNIT_NOT_ANNUAL_MASS")
+    if method_kind == "INVALID":
+        reasons.append("UNKNOWN_PRTR_PI_DETERMINATION_METHOD")
+
+    accepted = not reasons
+    return {
+        "candidate": row,
+        "accepted_as_facility_air_emission": accepted,
+        "reasons": reasons,
+        "determination_method": method,
+        "determination_method_class": method_kind,
+        "estimated_method_is_valid_official_prtr_pi_method": method_kind == "ESTIMATED",
+        "output_semantics": "FACILITY_AIR_EMISSION_ROW_NOT_PARCEL_VALUE" if accepted else "REJECTED_NON_AIR_NON_RELEASE_OR_INCOMPLETE_CANDIDATE",
+        "parcel_binding_status": "PENDING_VERIFIED_GEOMETRY",
+    }
+
+
+def write(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    if os.environ.get("AAYS_SLOT_ID", SLOT_ID) != SLOT_ID:
+        raise RuntimeError("WRONG_SLOT_CONTEXT")
+    if not INPUT.exists():
+        payload = {
+            "schema_version": 2,
+            "architecture_version": 3,
+            "slot_id": SLOT_ID,
+            "generated_at": utc_now(),
+            "status": "BLOCKED_INPUT_FACILITY_REVIEW_NOT_AVAILABLE",
+            "input_path": str(INPUT),
+            "reviewed_candidates": 0,
+            "accepted_facility_air_emission_rows": 0,
+            "measured_parcel_emission_rows": 0,
+            "blocker": "FACILITY_EMISSION_REVIEW_INPUT_MISSING",
+            "final_ready": False,
+            "fake_data": False,
+            "db_write": False,
+            "migration": False,
+            "production_deploy": False,
+        }
+        for path in (REPORT, STATUS, WEB):
+            write(path, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 2
+
+    doc = json.loads(INPUT.read_text(encoding="utf-8-sig"))
+    rows = extract_rows(doc)
+    reviews = [review(row) for row in rows]
+    accepted = [item for item in reviews if item["accepted_as_facility_air_emission"]]
+    payload = {
+        "schema_version": 2,
+        "architecture_version": 3,
+        "slot_id": SLOT_ID,
+        "generated_at": utc_now(),
+        "status": "PASS_AIR_RELEASE_SEMANTIC_GATE_V2" if rows else "BLOCKED_NO_CANDIDATE_ROWS_TO_REVIEW",
+        "input_path": str(INPUT),
+        "reviewed_candidates": len(reviews),
+        "accepted_facility_air_emission_rows": len(accepted),
+        "rejected_candidates": len(reviews) - len(accepted),
+        "reviews": reviews,
+        "valid_determination_method_classes": ["CALCULATED", "ESTIMATED", "MEASURED", "UNSPECIFIED"],
+        "absence_policy": "MISSING_OR_BELOW_THRESHOLD_DATA_IS_NO_DATA_AND_IS_NEVER_INFERRED_AS_ZERO",
+        "measured_parcel_emission_rows": 0,
+        "verified_parcel_bindings": 0,
+        "parcel_binding_gate_passed": False,
+        "quality_contract": "Official UK PRTR or EA Pollution Inventory annual release to air plus facility identity, reporting year, pollutant, non-negative numeric mass and unit. C/E/M/U methods are valid; limits, designs, avoided emissions and transfers are rejected.",
+        "final_ready": False,
+        "product_final_ready": False,
+        "fake_data": False,
+        "db_write": False,
+        "migration": False,
+        "production_deploy": False,
+    }
+    for path in (REPORT, STATUS, WEB):
+        write(path, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0 if rows else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
