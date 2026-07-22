@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security 1 — İlk 130 Aday Saklı Crime Count Dağılımı</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:0 0 10px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:145px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS{font-weight:700}.PENDING,.BLOCKED{font-weight:700}.scroll{max-height:720px;overflow:auto;border:1px solid #cbd5df}.muted{color:#52606d}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>Security / Public Safety 1 — İlk 130 Saklı Crime Count Dağılımı</h1>
+<div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY. Saklı count, resmî Police API nokta sorgusundan alınmış destekleyici bir örnek sayıdır; parsel veya tam LSOA ölçümü değildir. Canlı count/SHA v17 kabul raporu olmadan PASS gösterilmez.</div>
+<div class="cards">
+<div class="card">Kanonik aday<br><strong id="candidateCount">yükleniyor</strong></div>
+<div class="card">Doğruluk 4/4<br><strong id="accuracyCount">yükleniyor</strong></div>
+<div class="card">Minimum count<br><strong id="minimumCount">yükleniyor</strong></div>
+<div class="card">Medyan count<br><strong id="medianCount">yükleniyor</strong></div>
+<div class="card">Ortalama count<br><strong id="averageCount">yükleniyor</strong></div>
+<div class="card">Maksimum count<br><strong id="maximumCount">yükleniyor</strong></div>
+<div class="card">Canlı parity<br><strong id="liveParity">PENDING</strong></div>
+</div>
+<h2>Count bantları</h2>
+<table><thead><tr><th>#</th><th>Bant</th><th>Aralık</th><th>Aday</th><th>Doğruluk 4/4</th><th>Ortalama skor</th><th>Ortalama count</th></tr></thead><tbody id="bandBody"></tbody></table>
+<h2>Yeni örnek kümeleri</h2>
+<p class="muted">En düşük 5, medyan çevresindeki 5 ve en yüksek 5 saklı count satırı.</p>
+<table><thead><tr><th>Küme</th><th>Sıra</th><th>Parsel</th><th>Skor</th><th>Seviye</th><th>Doğruluk</th><th>Güven</th><th>Saklı count</th><th>Canlı count</th><th>Count parity</th><th>SHA parity</th><th>Durum</th></tr></thead><tbody id="exampleBody"></tbody></table>
+<h2>İlk 130 aday — satır satır</h2>
+<div class="scroll"><table><thead><tr><th>#</th><th>Parsel</th><th>Skor</th><th>Seviye</th><th>Doğruluk</th><th>Güven</th><th>Kaynak ayı</th><th>Saklı HTTP</th><th>Saklı count</th><th>Canlı count</th><th>Count parity</th><th>SHA parity</th><th>Durum</th></tr></thead><tbody id="rowBody"></tbody></table></div>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+const cls=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
+const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
+const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'n/a';
+(async()=>{
+ const [visible,acceptance]=await Promise.all([get('../../program_layer_matrix/security_public_safety_visible_rows.json'),optional('canonical_acceptance_v17_latest.json')]);
+ const canonical=(Array.isArray(visible.rows)?visible.rows:[]).slice(0,130);
+ const sorted=[...canonical].sort((a,b)=>Number(a.official_api_sample_crime_count)-Number(b.official_api_sample_crime_count)||String(a.parcel_id).localeCompare(String(b.parcel_id)));
+ const counts=sorted.map(x=>Number(x.official_api_sample_crime_count)).filter(Number.isFinite);
+ const median=counts.length%2?counts[(counts.length-1)/2]:(counts[counts.length/2-1]+counts[counts.length/2])/2;
+ const q1=counts[Math.floor((counts.length-1)*0.25)],q3=counts[Math.floor((counts.length-1)*0.75)];
+ const liveCandidates=Array.isArray(acceptance?.canonical_live_parity?.candidates)?acceptance.canonical_live_parity.candidates:[];
+ const liveById=new Map(liveCandidates.map(x=>[x.parcel_id,x]));
+ const passed=liveCandidates.filter(x=>x.status==='PASS').length;
+ candidateCount.textContent=`${canonical.length}/130`;accuracyCount.textContent=`${canonical.filter(x=>Number(x.accuracy_score_4)===4).length}/130`;minimumCount.textContent=fmt(Math.min(...counts));medianCount.textContent=fmt(median);averageCount.textContent=fmt(mean(counts));maximumCount.textContent=fmt(Math.max(...counts));liveParity.textContent=acceptance?`${passed}/130`:'0/130 PENDING';
+ const bands=[{name:'Alt %25',min:-Infinity,max:q1},{name:'Orta-alt',min:q1,max:median},{name:'Orta-üst',min:median,max:q3},{name:'Üst %25',min:q3,max:Infinity}];
+ bandBody.innerHTML=bands.map((b,i)=>{const rows=canonical.filter(x=>{const n=Number(x.official_api_sample_crime_count);return i===0?n<=b.max:i===bands.length-1?n>b.min:n>b.min&&n<=b.max});const vals=rows.map(x=>Number(x.official_api_sample_crime_count)).filter(Number.isFinite),scores=rows.map(x=>Number(x.security_score_percent)).filter(Number.isFinite);return `<tr><td>${i+1}</td><td>${esc(b.name)}</td><td>${i===0?'≤ '+fmt(b.max):i===bands.length-1?'> '+fmt(b.min):`> ${fmt(b.min)} – ≤ ${fmt(b.max)}`}</td><td>${rows.length}</td><td>${rows.filter(x=>Number(x.accuracy_score_4)===4).length}/${rows.length}</td><td>${fmt(mean(scores))}</td><td>${fmt(mean(vals))}</td></tr>`}).join('');
+ const mid=Math.floor(sorted.length/2);
+ const examples=[...sorted.slice(0,5).map((x,i)=>({group:'En düşük count',rank:i+1,row:x})),...sorted.slice(Math.max(0,mid-2),Math.min(sorted.length,mid+3)).map((x,i)=>({group:'Medyan count',rank:i+1,row:x})),...[...sorted].reverse().slice(0,5).map((x,i)=>({group:'En yüksek count',rank:i+1,row:x}))];
+ const parity=r=>{const live=liveById.get(r.parcel_id)||{},checks=live.checks||{},status=live.status||'PENDING';return {liveCount:live.live_count,count:checks.count_parity===true?'PASS':checks.count_parity===false?'BLOCKED':'PENDING',sha:checks.sha256_parity===true?'PASS':checks.sha256_parity===false?'BLOCKED':'PENDING',status}};
+ exampleBody.innerHTML=examples.map(x=>{const r=x.row,p=parity(r);return `<tr><td>${esc(x.group)}</td><td>${x.rank}</td><td>${esc(r.parcel_id)}</td><td>${fmt(r.security_score_percent)}</td><td>${esc(r.security_level)}</td><td>${esc(r.accuracy_score_4)}/4</td><td>${esc(r.confidence_score)}%</td><td>${esc(r.official_api_sample_crime_count)}</td><td>${esc(p.liveCount)}</td><td class="${cls(p.count)}">${p.count}</td><td class="${cls(p.sha)}">${p.sha}</td><td class="${cls(p.status)}">${esc(p.status)}</td></tr>`}).join('');
+ rowBody.innerHTML=canonical.map((r,i)=>{const p=parity(r);return `<tr><td>${i+1}</td><td>${esc(r.parcel_id)}</td><td>${fmt(r.security_score_percent)}</td><td>${esc(r.security_level)}</td><td>${esc(r.accuracy_score_4)}/4</td><td>${esc(r.confidence_score)}%</td><td>${esc(r.official_api_latest_month)}</td><td>${esc(r.official_api_validation_status)}</td><td>${esc(r.official_api_sample_crime_count)}</td><td>${esc(p.liveCount)}</td><td class="${cls(p.count)}">${p.count}</td><td class="${cls(p.sha)}">${p.sha}</td><td class="${cls(p.status)}">${esc(p.status)}</td></tr>`}).join('');
+ document.body.dataset.canonicalCandidateCount=String(canonical.length);document.body.dataset.accuracy4Count=String(canonical.filter(x=>Number(x.accuracy_score_4)===4).length);document.body.dataset.exampleCount=String(examples.length);document.body.dataset.countBandCount=String(bands.length);document.body.dataset.livePassed=String(passed);document.body.dataset.acceptanceReportPresent=String(Boolean(acceptance));document.body.dataset.semanticValid=String(canonical.length===130&&canonical.every(x=>Number(x.accuracy_score_4)===4)&&counts.length===130&&visible.final_ready===false);
+})().catch(e=>{rowBody.innerHTML=`<tr><td colspan="13" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
+</script>
+</body></html>
