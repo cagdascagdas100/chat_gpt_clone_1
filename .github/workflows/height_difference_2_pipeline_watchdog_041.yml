@@ -1,0 +1,110 @@
+name: height_difference_2 pipeline watchdog 041
+on:
+  pull_request:
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/041_watchdog_trigger.json'
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+concurrency:
+  group: height-difference-2-watchdog-041-${{ github.repository }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-pending-watchdog-041-clean-20260722
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser dependencies
+        timeout-minutes: 6
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Build watchdog package
+        timeout-minutes: 3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python docs/chatgpt_status/topography/shards/height_difference_2/automation/041_build_pipeline_watchdog_package.py
+      - name: Final HTTP DOM acceptance
+        timeout-minutes: 6
+        run: |
+          python -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 >/tmp/hd2-http.log 2>&1 &
+          echo $! >/tmp/hd2-http.pid
+          python - <<'PY'
+          import json,pathlib,hashlib
+          from datetime import datetime,timezone
+          from playwright.sync_api import sync_playwright
+          slot=pathlib.Path('england_map_web/data/aays_21_slots/height_difference_2')
+          doc=pathlib.Path('docs/chatgpt_status/topography/shards/height_difference_2')
+          console=[]; page_errors=[]
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(viewport={'width':1920,'height':1080})
+              page.on('console',lambda m: console.append(m.text) if m.type=='error' else None)
+              page.on('pageerror',lambda e: page_errors.append(str(e)))
+              response=page.goto('http://127.0.0.1:8012/index.html',wait_until='networkidle',timeout=120000)
+              page.wait_for_function("document.querySelectorAll('#rows tr').length===876 && document.querySelectorAll('#sources tr').length===78 && document.querySelectorAll('#examples tr').length===54",timeout=120000)
+              rows=page.locator('#rows tr').count(); sources=page.locator('#sources tr').count(); examples=page.locator('#examples tr').count(); body=page.locator('body').inner_text()
+              checks={
+                'http_200':response.status==200,
+                'operation_rows_876':rows==876,
+                'source_rows_78':sources==78,
+                'example_rows_54':examples==54,
+                'three_watchdog_rows_visible':all(x in body for x in ['HD2-WATCHDOG-028','HD2-WATCHDOG-029','HD2-WATCHDOG-030']),
+                'zero_stale_state_visible':'PASS_ZERO_HD2_RUN_OVER_20_MINUTES' in body,
+                'external_blocker_isolated_visible':'PASS_INTERNAL_PIPELINE_CLEAR_EXTERNAL_F_HOST_REMAINS' in body,
+                'no_console_errors':not console,
+                'no_page_errors':not page_errors,
+              }
+              shot=slot/'port_8012_web_acceptance_final_041.png'
+              page.screenshot(path=str(shot),full_page=True)
+              screenshot_sha=hashlib.sha256(shot.read_bytes()).hexdigest()
+              browser.close()
+          assert all(checks.values()),checks
+          now=datetime.now(timezone.utc).isoformat()
+          receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':now,'state':'PASS','url':'http://127.0.0.1:8012/index.html','http_status':200,'browser':'Chromium','operation_rows':rows,'source_rows':sources,'example_rows':examples,'checks':checks,'console_errors':console,'page_errors':page_errors,'screenshot_sha256':screenshot_sha,'fake_data':False,'final_ready':False}
+          for path in [slot/'port_8012_web_acceptance.json',slot/'port_8012_web_acceptance_final_041.json',doc/'validation/050_final_live_http_dom_acceptance_041.json']:
+              path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
+          progress=json.loads((slot/'progress_increment_041.json').read_text())
+          progress['live_http_browser_state']='PASS_FINAL_876_78_54_CHROMIUM_NO_CONSOLE_OR_PAGE_ERRORS'
+          progress['updated_at']=now
+          (slot/'progress_increment_041.json').write_text(json.dumps(progress,ensure_ascii=False,indent=2)+'\n')
+          vp=doc/'validation/049_pipeline_watchdog_web_package_20260722.json'
+          val=json.loads(vp.read_text())
+          for c in val['checks']:
+              if c['check']=='final_041_live_http_browser_acceptance':
+                  c['state']='PASS'; c['observed']='HTTP_200_DOM_876_78_54_NO_CONSOLE_OR_PAGE_ERRORS'
+          val['pass_count']=sum(c['state']=='PASS' for c in val['checks'])
+          val['fail_count']=sum(c['state']=='FAIL' for c in val['checks'])
+          val['not_run_count']=sum(c['state']=='NOT_RUN' for c in val['checks'])
+          val['validated_at']=now
+          vp.write_text(json.dumps(val,ensure_ascii=False,indent=2)+'\n')
+          PY
+          kill $(cat /tmp/hd2-http.pid)
+      - name: Commit generated result package
+        timeout-minutes: 2
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            docs/chatgpt_status/topography/shards/height_difference_2/research/041_pipeline_stall_pending_and_external_blocker_watchdog_20260722.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/runtime/041_pipeline_watchdog_runtime.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/049_pipeline_watchdog_web_package_20260722.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/050_final_live_http_dom_acceptance_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/examples_increment_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/index.html \
+            england_map_web/data/aays_21_slots/height_difference_2/operations_increment_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json \
+            england_map_web/data/aays_21_slots/height_difference_2/pipeline_watchdog_runtime_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance.json \
+            england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance_final_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/progress_increment_041.json \
+            england_map_web/data/aays_21_slots/height_difference_2/source_candidates_increment_041.json
+          git commit -m 'height_difference_2: build pipeline watchdog package 041 [skip ci]'
+          git push
