@@ -16,7 +16,9 @@ base = v11.v10.v9.v8.v7.v6.v5.v4.v3.v2.base
 
 base.TARGET_TOKENS = tuple(dict.fromkeys(base.TARGET_TOKENS + (
     "britvic soft drinks limited",
+    "britvic soft drinks",
     "beckton soft drinks factory",
+    "beckton soft drinks",
     "epr/bn2832ik",
     "epr/bn2832ik/v006",
     "e6 6lf",
@@ -26,7 +28,9 @@ base.TARGET_TOKENS = tuple(dict.fromkeys(base.TARGET_TOKENS + (
     "canada dry (u.k) limited",
     "britannia soft drinks limited",
     "recycled material supplies limited",
+    "recycled material supplies",
     "perry road recycling facility",
+    "perry road recycling",
     "epr/db3502tz",
     "epr/db3502tz/v005",
     "perry road",
