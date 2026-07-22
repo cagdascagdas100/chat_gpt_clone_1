@@ -2,16 +2,18 @@
   "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
-  "task_id": "gas_emissions_1_extract_tgl419520_hmlr_gml_20260722",
+  "task_id": "gas_emissions_1_extract_hmlr_inspire_proximity_20260722",
   "slot_id": "gas_emissions_1",
   "base_slot_id": "gas_emissions",
   "status": "queued",
-  "state": "QUEUED_AFTER_BROWSER_DUMP_DOM_FALLBACK_BEFORE_BINARY_HYDRATION",
+  "state": "QUEUED_CORRECTED_AFTER_BROWSER_DUMP_DOM_FALLBACK_BEFORE_BINARY_HYDRATION",
   "priority": 25,
   "created_at": "2026-07-22T05:22:00Z",
+  "corrected_at": "2026-07-22T05:46:00Z",
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "command": "python docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/EXTRACT_TGL419520_HMLR_GML_20260722.py",
   "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/EXTRACT_TGL419520_HMLR_GML_20260722.py",
+  "correction_reason": "HM Land Registry INSPIRE polygons cover registered freehold property and expose INSPIRE polygon identifiers. Official company charge descriptions identify TGL419520 as leasehold, so exact title text is not required or expected in the INSPIRE GML.",
   "runner_policy": "existing_single_shared_runner_only_after_browser_dump_dom_fallback_completion",
   "single_runner_only": true,
   "new_runner_allowed": false,
@@ -24,25 +26,33 @@
   "official_source": {
     "publisher": "HM Land Registry",
     "dataset": "INSPIRE Index Polygons",
+    "dataset_scope": "REGISTERED_FREEHOLD_PROPERTY_ONLY",
     "authority": "London Borough of Barking and Dagenham",
     "snapshot": "2026-07-05",
-    "index_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
+    "index_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "primary_crs": "EPSG:27700"
   },
-  "target_title": "TGL419520",
+  "target_context": {
+    "leasehold_title": "TGL419520",
+    "current_permit_point_bng": {"easting": 548335, "northing": 182947},
+    "search_radius_metres": 300,
+    "exact_title_occurrence_required": false
+  },
   "exact_write_paths": [
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_tgl419520_hmlr_geometry_latest.json",
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_tgl419520_hmlr_geometry_latest.json",
-    "england_map_web/data/aays_21_slots/gas_emissions_1/tgl419520_hmlr_geometry_latest.json"
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_hmlr_inspire_proximity_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_hmlr_inspire_proximity_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/hmlr_inspire_proximity_latest.json"
   ],
   "success_requirements": [
-    "official Barking and Dagenham GML URL resolved from current HMLR index",
+    "official Barking and Dagenham GML URL resolved from the current HMLR index",
     "download size and SHA-256 persisted",
-    "exact title TGL419520 occurrence found",
-    "feature window contains CRS and coordinate data",
-    "geometry candidate remains separate from parcel intersection",
+    "freehold INSPIRE polygon candidates within 300 metres of the current permit point extracted",
+    "INSPIRE identifiers CRS bbox and point distance persisted",
+    "no nearby freehold polygon is labelled as leasehold title TGL419520",
+    "MapSearch Search of the Index Map or title-plan evidence remains required for leasehold title identity",
     "measured parcel emission rows and verified parcel bindings remain zero"
   ],
-  "output_semantics": "HMLR_TITLE_GEOMETRY_CANDIDATE_NOT_PARCEL_INTERSECTION",
+  "output_semantics": "HMLR_INSPIRE_FREEHOLD_PROXIMITY_CANDIDATE_REQUIRES_LEASEHOLD_TITLE_LOOKUP",
   "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
   "final_ready": false,
   "product_final_ready": false
