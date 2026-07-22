@@ -1,0 +1,103 @@
+{
+  "schema_version": 3,
+  "slot_id": "height_difference_3",
+  "base_slot_id": "height_difference",
+  "batch_id": "height_difference_3_source_candidates_batch_1_20260722",
+  "updated_at": "2026-07-22T03:54:00+03:00",
+  "output_semantics": "SOURCE_CANDIDATES_ONLY",
+  "score_kind": "SOURCE_CHAIN_READINESS_NOT_NUMERIC_ELEVATION_ACCURACY",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "official_sources": [
+    {
+      "source_id": "HMLR_INSPIRE_INDEX_POLYGONS",
+      "role": "INDICATIVE_REGISTERED_FREEHOLD_BOUNDARY",
+      "authority": "HM Land Registry",
+      "jurisdiction": "England and Wales",
+      "format": "GML",
+      "update_cycle": "MONTHLY",
+      "source_readiness_score": 98.5,
+      "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "verified_fact": "Freehold registered-property polygons with Land Registry INSPIRE IDs; extents are indicative rather than exact legal boundaries.",
+      "limitation": "FREEHOLD_SUBSET_AND_INDICATIVE_EXTENT"
+    },
+    {
+      "source_id": "EA_LIDAR_COMPOSITE_DTM_1M",
+      "role": "PRIMARY_BARE_EARTH_ELEVATION",
+      "authority": "Environment Agency / Defra",
+      "jurisdiction": "England",
+      "resolution_m": 1,
+      "coverage_claim": "APPROX_99_PERCENT_ENGLAND",
+      "source_readiness_score": 99.0,
+      "source_url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "verified_fact": "Composite bare-earth DTM at 1 metre spatial resolution; surface objects are removed.",
+      "limitation": "SURVEY_VINTAGE_VARIES_BY_TILE_AND_COVERAGE_IS_NOT_100_PERCENT"
+    },
+    {
+      "source_id": "OS_TERRAIN_50",
+      "role": "NATIONAL_FALLBACK_AND_CROSS_CHECK",
+      "authority": "Ordnance Survey",
+      "jurisdiction": "Great Britain",
+      "resolution_m": 50,
+      "coverage_claim": "FULL_GREAT_BRITAIN",
+      "source_readiness_score": 94.0,
+      "source_url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview",
+      "verified_fact": "Open bare-earth DTM with full Great Britain coverage, grid and contour formats, updated annually.",
+      "limitation": "50_METRE_POST_SPACING_IS_NOT_PARCEL_GRADE_FOR_SMALL_PARCELS"
+    },
+    {
+      "source_id": "COPERNICUS_DEM_GLO30",
+      "role": "GLOBAL_GAP_FILL_AND_SANITY_CHECK",
+      "authority": "Copernicus Data Space Ecosystem",
+      "jurisdiction": "Worldwide",
+      "resolution_m": 30,
+      "coverage_claim": "WORLDWIDE_WHERE_PUBLIC_GLO30_AVAILABLE",
+      "source_readiness_score": 91.5,
+      "source_url": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM.html",
+      "verified_fact": "Worldwide COPERNICUS_30 DEM instance uses public GLO-30 where available and GLO-90 elsewhere.",
+      "limitation": "COARSER_THAN_EA_LIDAR_AND_NOT_ACCEPTED_AS_PRIMARY_PARCEL_GRADE_SOURCE"
+    }
+  ],
+  "source_chain_candidates": [
+    {
+      "candidate_id": "HD3_CHAIN_001",
+      "boundary_source": "HMLR_INSPIRE_INDEX_POLYGONS",
+      "elevation_source": "EA_LIDAR_COMPOSITE_DTM_1M",
+      "fallback_source": "OS_TERRAIN_50",
+      "readiness_score": 98.8,
+      "status": "PREFERRED_SOURCE_CHAIN_UNBOUND",
+      "numeric_elevation_obtained": false,
+      "canonical_parcel_bound": false,
+      "acceptance_gate": "REQUIRES_CANONICAL_PARCEL_ID_BOUNDARY_INTERSECTION_TILE_METADATA_AND_EDGE_INTERIOR_SAMPLING"
+    },
+    {
+      "candidate_id": "HD3_CHAIN_002",
+      "boundary_source": "HMLR_INSPIRE_INDEX_POLYGONS",
+      "elevation_source": "OS_TERRAIN_50",
+      "fallback_source": "COPERNICUS_DEM_GLO30",
+      "readiness_score": 93.5,
+      "status": "FALLBACK_SOURCE_CHAIN_UNBOUND",
+      "numeric_elevation_obtained": false,
+      "canonical_parcel_bound": false,
+      "acceptance_gate": "USE_ONLY_WHEN_EA_LIDAR_TILE_IS_UNAVAILABLE_AND_RECORD_RESOLUTION_LIMIT"
+    },
+    {
+      "candidate_id": "HD3_CHAIN_003",
+      "boundary_source": "HMLR_INSPIRE_INDEX_POLYGONS",
+      "elevation_source": "COPERNICUS_DEM_GLO30",
+      "fallback_source": "OS_TERRAIN_50",
+      "readiness_score": 91.5,
+      "status": "GLOBAL_SANITY_CHECK_CHAIN_UNBOUND",
+      "numeric_elevation_obtained": false,
+      "canonical_parcel_bound": false,
+      "acceptance_gate": "SANITY_CHECK_ONLY_NOT_PRIMARY_PARCEL_HEIGHT_DIFFERENCE"
+    }
+  ],
+  "candidate_count": 3,
+  "official_source_count": 4,
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
