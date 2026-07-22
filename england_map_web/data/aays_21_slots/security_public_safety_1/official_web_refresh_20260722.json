@@ -1,8 +1,8 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "slot_id": "security_public_safety_1",
-  "checked_at": "2026-07-22T04:21:27+03:00",
-  "status": "REMOTE_HYDRATION_PASS_CANONICAL_ACCEPTANCE_V16_READY",
+  "checked_at": "2026-07-22T04:46:00+03:00",
+  "status": "REMOTE_HYDRATION_PASS_SOURCE_REFRESH_V2_CANONICAL_ACCEPTANCE_V16_READY",
   "output_semantics": "AREA_LEVEL_PROXY",
   "measurement_level": "lsoa",
   "parcel_measurement": false,
@@ -11,24 +11,55 @@
     "completed_units": 5,
     "total_units": 8,
     "overall_percent": 62.5,
-    "percent_change": 12.5
+    "percent_change": 0.0
+  },
+  "preparation_progress": {
+    "official_sources_checked": 8,
+    "quality_limits_recorded": 3,
+    "sample_candidates_displayed": 6,
+    "sample_unique_endpoints": 6,
+    "first_21_rows_checked": 21,
+    "first_21_rows_accuracy_score_4": 21,
+    "first_21_rows_stored_http_200": 21
   },
   "verified_rows": 300,
   "accuracy_score_4_rows": 300,
-  "official_web_checks_passed": 5,
-  "official_web_checks_total": 5,
+  "official_web_checks_passed": 8,
+  "official_web_checks_total": 8,
   "sources": [
-    {"name":"Police API freshness","url":"https://data.police.uk/api/crime-last-updated","status":"PASS","value":"2026-05-01"},
-    {"name":"Police street-crime method","url":"https://data.police.uk/docs/method/crime-street/","status":"PASS","value":"one-mile radius; approximate and anonymised locations"},
-    {"name":"Police bulk archive","url":"https://data.police.uk/data/archive/","status":"PASS","value":"May 2026 archive"},
-    {"name":"Metropolitan force identity","url":"https://data.police.uk/api/forces/metropolitan","status":"PASS","value":"Metropolitan Police Service"},
-    {"name":"London MPS LSOA catalogue","url":"https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/","status":"PASS","value":"July 2024-June 2026"}
+    {"name":"Police API freshness","url":"https://data.police.uk/api/crime-last-updated","status":"PASS","value":"2026-05-01; latest API month"},
+    {"name":"Police API month availability","url":"https://data.police.uk/api/crimes-street-dates","status":"PASS","value":"May 2026 available"},
+    {"name":"Police street-crime method","url":"https://data.police.uk/docs/method/crime-street/","status":"PASS_LIMIT_RECORDED","value":"one-mile radius; approximate and anonymised locations"},
+    {"name":"Police bulk archive","url":"https://data.police.uk/data/archive/","status":"PASS","value":"May 2026 archive; Jun 2023-May 2026"},
+    {"name":"Police changelog","url":"https://data.police.uk/changelog/","status":"PASS_LIMIT_RECORDED","value":"May 2026 crime data absent for BTP, Gloucestershire, Greater Manchester and Lincolnshire; no inference"},
+    {"name":"Metropolitan force identity","url":"https://data.police.uk/api/forces/metropolitan","status":"PASS","value":"id=metropolitan; Metropolitan Police Service"},
+    {"name":"London MPS LSOA catalogue","url":"https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/","status":"PASS_LIMIT_RECORDED","value":"Jul 2024-Jun 2026; sexual offences omitted at LSOA; CONNECT comparison limit"},
+    {"name":"ONS release watch","url":"https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026","status":"PASS_NOT_YET_PUBLISHED","value":"scheduled 23 July 2026 09:30 UK; not published on 22 July"}
   ],
   "sample_candidates": [
-    {"parcel_id":"parcel_1","security_score_percent":12.13,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":346,"stored_sha256":"8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
-    {"parcel_id":"parcel_3","security_score_percent":51.31,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":499,"stored_sha256":"08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
-    {"parcel_id":"parcel_7","security_score_percent":2.53,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":383,"stored_sha256":"4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7","live_parity_status":"PENDING_V16_SINGLE_RUNNER"}
+    {"parcel_id":"parcel_1","security_score_percent":12.13,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":346,"stored_sha256":"8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.528344&lng=0.161569","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
+    {"parcel_id":"parcel_3","security_score_percent":51.31,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":499,"stored_sha256":"08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.545517&lng=0.115885","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
+    {"parcel_id":"parcel_7","security_score_percent":2.53,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":383,"stored_sha256":"4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.530872&lng=0.130900","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
+    {"parcel_id":"parcel_12","security_score_percent":13.15,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":312,"stored_sha256":"4137a53e9fefadbeaf532dcc8d8d787a9147a1c2597d0f62a9cf7e452d43023f","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.525789&lng=0.147935","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
+    {"parcel_id":"parcel_16","security_score_percent":72.03,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":318,"stored_sha256":"7ccf655a0407bdf7a072b8b6144b0cfab5a7e093e2db97ac97a37cf3e06e4f1e","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.559786&lng=0.182697","live_parity_status":"PENDING_V16_SINGLE_RUNNER"},
+    {"parcel_id":"parcel_17","security_score_percent":66.95,"accuracy_score_4":4,"confidence_score":82.97,"stored_crime_count":524,"stored_sha256":"71bd3971c9ffb1cbf229344606cca9793a6f1a68ed7ec683df809c99e77bcc94","official_api_url":"https://data.police.uk/api/crimes-street/all-crime?date=2026-05&lat=51.564284&lng=0.183579","live_parity_status":"PENDING_V16_SINGLE_RUNNER"}
   ],
+  "endpoint_sample_audit": {
+    "status": "PASS_PREPARATION_ONLY",
+    "rows_checked": 21,
+    "accuracy_score_4_rows": 21,
+    "stored_http_200_rows": 21,
+    "unique_endpoints": 6,
+    "distribution": [
+      {"endpoint":"51.528344,0.161569","row_count":12},
+      {"endpoint":"51.545517,0.115885","row_count":1},
+      {"endpoint":"51.530872,0.130900","row_count":1},
+      {"endpoint":"51.525789,0.147935","row_count":1},
+      {"endpoint":"51.559786,0.182697","row_count":4},
+      {"endpoint":"51.564284,0.183579","row_count":2}
+    ],
+    "acceptance_evidence": false
+  },
   "remote_hydration_artifact": {
     "status": "PASS_NONEMPTY_REMOTE_CONTENT",
     "blob_sha": "ab876129928ec0370d482ca491f31a5dd1216aab",
