@@ -1,0 +1,95 @@
+name: height_difference_2 HMLR link diagnostic 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - name: Capture exact HMLR row links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import html.parser
+          import json
+          from pathlib import Path
+          from urllib.parse import urljoin
+          from urllib.request import Request, urlopen
+
+          page = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          output = Path('docs/chatgpt_status/topography/shards/height_difference_2/runtime/032_hmlr_link_diagnostic.json')
+          authorities = ['London Borough of Enfield', 'London Borough of Havering', 'London Borough of Lambeth']
+
+          class Parser(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.in_row=False; self.text=[]; self.links=[]; self.rows=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == 'tr':
+                      self.in_row=True; self.text=[]; self.links=[]
+                  elif self.in_row and tag.lower() == 'a':
+                      href=dict(attrs).get('href')
+                      if href: self.links.append(href)
+              def handle_data(self, data):
+                  if self.in_row and data.strip(): self.text.append(data.strip())
+              def handle_endtag(self, tag):
+                  if tag.lower() == 'tr' and self.in_row:
+                      self.rows.append({'text':' '.join(self.text),'links':list(self.links)}); self.in_row=False
+
+          state='PASS'
+          error=None
+          page_bytes=b''
+          final_url=None
+          status=None
+          content_type=None
+          diagnostics=[]
+          try:
+              request=Request(page, headers={'User-Agent':'AAYS-height-difference-2-hmlr-diagnostic/1.0','Accept':'text/html'})
+              with urlopen(request, timeout=120) as response:
+                  status=getattr(response,'status',200); final_url=response.geturl(); content_type=response.headers.get('content-type'); page_bytes=response.read()
+              parser=Parser(); parser.feed(page_bytes.decode('utf-8',errors='replace'))
+              for authority in authorities:
+                  matches=[row for row in parser.rows if authority.lower() in row['text'].lower()]
+                  diagnostics.append({
+                      'authority':authority,
+                      'match_count':len(matches),
+                      'matches':[{'text':row['text'],'links':[urljoin(final_url or page,href) for href in row['links']]} for row in matches],
+                  })
+              if not all(row['match_count']==1 for row in diagnostics): state='FAIL'
+          except Exception as exc:
+              state='FAIL'; error=f'{type(exc).__name__}:{exc}'
+
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={
+              'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'state':state,
+              'download_page':page,'final_url':final_url,'http_status':status,'content_type':content_type,
+              'page_bytes':len(page_bytes),'page_sha256':hashlib.sha256(page_bytes).hexdigest() if page_bytes else None,
+              'diagnostics':diagnostics,'error':error,'fake_data':False,'final_ready':False,
+          }
+          output.parent.mkdir(parents=True,exist_ok=True)
+          output.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit HMLR link diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/032_hmlr_link_diagnostic.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 HMLR link diagnostic'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
