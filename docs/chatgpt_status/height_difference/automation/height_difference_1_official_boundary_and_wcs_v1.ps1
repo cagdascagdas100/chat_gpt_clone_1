@@ -9,39 +9,55 @@ $repoRoot = if ($env:AAYS_REPO_ROOT) {
   [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 }
 
-$pythonRepoPath = 'docs/chatgpt_status/height_difference/automation/height_difference_1_official_boundary_and_wcs_v1.py'
-$pythonScript = Join-Path $repoRoot ($pythonRepoPath -replace '/', '\')
-$tempScript = $null
-
-if (-not (Test-Path -LiteralPath $pythonScript -PathType Leaf)) {
+function Resolve-RepoScript {
+  param([string]$RepoPath, [string]$TempName)
+  $local = Join-Path $repoRoot ($RepoPath -replace '/', '\')
+  if (Test-Path -LiteralPath $local -PathType Leaf) { return $local }
   $git = Get-Command git -ErrorAction SilentlyContinue
-  if (-not $git) { throw 'GIT_EXECUTABLE_NOT_FOUND_FOR_PYTHON_FALLBACK' }
+  if (-not $git) { throw "GIT_EXECUTABLE_NOT_FOUND_FOR_SCRIPT_FALLBACK: $RepoPath" }
   $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'aays_height_difference_1'
   New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
-  $tempScript = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_v1.py'
-  $resolved = $false
+  $temp = Join-Path $tempRoot $TempName
   foreach ($ref in @('origin/agent/height-difference-1-executable-evidence-r3-20260722','origin/main','main')) {
-    & $git.Source -C $repoRoot show "$ref`:$pythonRepoPath" 2>$null | Set-Content -LiteralPath $tempScript -Encoding UTF8
-    if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $tempScript -PathType Leaf) -and ((Get-Item -LiteralPath $tempScript).Length -gt 0)) {
-      $pythonScript = $tempScript
-      $resolved = $true
-      break
+    & $git.Source -C $repoRoot show "$ref`:$RepoPath" 2>$null | Set-Content -LiteralPath $temp -Encoding UTF8
+    if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $temp -PathType Leaf) -and ((Get-Item -LiteralPath $temp).Length -gt 0)) {
+      return $temp
     }
   }
-  if (-not $resolved) { throw "HEIGHT_DIFFERENCE_1_PYTHON_SCRIPT_MISSING: $pythonRepoPath" }
+  throw "REPOSITORY_SCRIPT_MISSING: $RepoPath"
 }
+
+$mainRepoPath = 'docs/chatgpt_status/height_difference/automation/height_difference_1_official_boundary_and_wcs_v1.py'
+$metadataRepoPath = 'docs/chatgpt_status/height_difference/automation/height_difference_1_ea_survey_metadata_v1.py'
+$mainScript = Resolve-RepoScript -RepoPath $mainRepoPath -TempName 'height_difference_1_official_boundary_and_wcs_v1.py'
+$metadataScript = Resolve-RepoScript -RepoPath $metadataRepoPath -TempName 'height_difference_1_ea_survey_metadata_v1.py'
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
 if (-not $python) { throw 'PYTHON_EXECUTABLE_NOT_FOUND' }
 
+function Invoke-Python {
+  param([string[]]$Arguments)
+  if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
+    & $python.Source -3 @Arguments
+  } else {
+    & $python.Source @Arguments
+  }
+  $code = $LASTEXITCODE
+  if ($null -eq $code) { $code = 1 }
+  return $code
+}
+
 $runnerOutput = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\shards\height_difference_1\runner_outputs\official_boundary_and_wcs_latest.json'
+$metadataOutput = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\shards\height_difference_1\runner_outputs\official_survey_metadata_latest.json'
 $websiteOutput = Join-Path $repoRoot 'england_map_web\data\aays_18_slots\height_difference_1\verified_results_latest.json'
+$tempMetadataMap = Join-Path ([System.IO.Path]::GetTempPath()) 'height_difference_1_official_survey_metadata_map.json'
 
 Write-Output 'SLOT_ID=height_difference_1'
-Write-Output 'TASK_VERSION=1.1-hardened-fail-closed'
+Write-Output 'TASK_VERSION=1.2-official-metadata-two-stage'
 Write-Output "REPO_ROOT=$repoRoot"
-Write-Output "PYTHON_SCRIPT=$pythonScript"
+Write-Output "MAIN_SCRIPT=$mainScript"
+Write-Output "METADATA_SCRIPT=$metadataScript"
 Write-Output 'SINGLE_SHARED_RUNNER_ONLY=true'
 Write-Output 'NEW_RUNNER_ALLOWED=false'
 Write-Output 'RUNNER_EXECUTION_CLAIMED=true'
@@ -49,40 +65,46 @@ Write-Output 'DB_WRITE=false'
 Write-Output 'MIGRATION=false'
 Write-Output 'PRODUCTION_DEPLOY=false'
 
-if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
-  & $python.Source -3 $pythonScript --self-test
-} else {
-  & $python.Source $pythonScript --self-test
-}
-$selfTestExitCode = $LASTEXITCODE
-if ($null -eq $selfTestExitCode) { $selfTestExitCode = 1 }
-Write-Output "SELF_TEST_EXIT_CODE=$selfTestExitCode"
-if ($selfTestExitCode -ne 0) {
-  Write-Output 'FINAL_READY=false'
-  exit $selfTestExitCode
-}
+$metadataSelfTest = Invoke-Python -Arguments @($metadataScript, '--self-test')
+Write-Output "METADATA_SELF_TEST_EXIT_CODE=$metadataSelfTest"
+if ($metadataSelfTest -ne 0) { Write-Output 'FINAL_READY=false'; exit $metadataSelfTest }
+$mainSelfTest = Invoke-Python -Arguments @($mainScript, '--self-test')
+Write-Output "MAIN_SELF_TEST_EXIT_CODE=$mainSelfTest"
+if ($mainSelfTest -ne 0) { Write-Output 'FINAL_READY=false'; exit $mainSelfTest }
 
-$arguments = @(
-  $pythonScript,
+$metadataExit = Invoke-Python -Arguments @(
+  $metadataScript,
+  '--repo-root', $repoRoot,
+  '--output', $metadataOutput,
+  '--max-workers', '4'
+)
+Write-Output "METADATA_PYTHON_EXIT_CODE=$metadataExit"
+if ($metadataExit -eq 2) { Write-Output 'FINAL_READY=false'; exit $metadataExit }
+if (-not (Test-Path -LiteralPath $metadataOutput -PathType Leaf)) {
+  throw 'OFFICIAL_SURVEY_METADATA_OUTPUT_MISSING'
+}
+$metadataDocument = Get-Content -LiteralPath $metadataOutput -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($metadataDocument.slot_id -ne 'height_difference_1' -or $null -eq $metadataDocument.metadata) {
+  throw 'OFFICIAL_SURVEY_METADATA_OUTPUT_INVALID'
+}
+$metadataDocument.metadata | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $tempMetadataMap -Encoding UTF8
+$resolvedRows = @($metadataDocument.metadata.PSObject.Properties).Count
+Write-Output "SURVEY_METADATA_RESOLVED_ROWS=$resolvedRows"
+
+$mainArguments = @(
+  $mainScript,
   '--repo-root', $repoRoot,
   '--runner-output', $runnerOutput,
   '--website-output', $websiteOutput,
+  '--survey-metadata-json', $tempMetadataMap,
   '--max-workers', '4'
 )
 if ($env:HMLR_BARKING_DAGENHAM_GML_URL) {
-  $arguments += @('--hmlr-gml-url', $env:HMLR_BARKING_DAGENHAM_GML_URL)
-}
-if ($env:HEIGHT_DIFFERENCE_1_SURVEY_METADATA_JSON) {
-  $arguments += @('--survey-metadata-json', $env:HEIGHT_DIFFERENCE_1_SURVEY_METADATA_JSON)
+  $mainArguments += @('--hmlr-gml-url', $env:HMLR_BARKING_DAGENHAM_GML_URL)
 }
 
-if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
-  & $python.Source -3 @arguments
-} else {
-  & $python.Source @arguments
-}
-$exitCode = $LASTEXITCODE
-if ($null -eq $exitCode) { $exitCode = 1 }
-Write-Output "PYTHON_EXIT_CODE=$exitCode"
+$mainExit = Invoke-Python -Arguments $mainArguments
+Remove-Item -LiteralPath $tempMetadataMap -Force -ErrorAction SilentlyContinue
+Write-Output "MAIN_PYTHON_EXIT_CODE=$mainExit"
 Write-Output 'FINAL_READY=false'
-exit $exitCode
+exit $mainExit
