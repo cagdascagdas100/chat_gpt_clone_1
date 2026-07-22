@@ -58,8 +58,8 @@ try {
   if ($injectorSelfTest.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $injectorSelfTest.Code }
   $injectorSelfReceipt = Get-LastJsonReceipt -Lines $injectorSelfTest.Lines -MissingLabel 'RUNTIME_GUARD_INJECTOR_SELF_TEST_JSON_MISSING'
   if ($injectorSelfReceipt.slot_id -ne 'height_difference_1' -or $injectorSelfReceipt.state -ne 'PASS') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_INVALID' }
-  if ([string]$injectorSelfReceipt.script_version -ne '1.1-runtime-raster-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_VERSION_INVALID' }
-  if ([int]$injectorSelfReceipt.checks -ne 13) { throw "RUNTIME_GUARD_INJECTOR_CHECK_COUNT_INVALID: $($injectorSelfReceipt.checks)" }
+  if ([string]$injectorSelfReceipt.script_version -ne '1.2-runtime-raster-probe-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_VERSION_INVALID' }
+  if ([int]$injectorSelfReceipt.checks -ne 17) { throw "RUNTIME_GUARD_INJECTOR_CHECK_COUNT_INVALID: $($injectorSelfReceipt.checks)" }
 
   $injectorRun = Invoke-PythonEntry -Arguments @(
     $injectorPath,
@@ -76,11 +76,15 @@ try {
   if ($injectorReceipt.slot_id -ne 'height_difference_1' -or $injectorReceipt.state -ne 'COMPLETED_RUNTIME_GUARDS_INJECTED') {
     throw 'RUNTIME_GUARD_INJECTOR_RECEIPT_INVALID'
   }
-  if ([string]$injectorReceipt.script_version -ne '1.1-runtime-raster-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_VERSION_INVALID' }
-  if ([int]$injectorReceipt.runtime_patch_count -ne 3) { throw 'RUNTIME_GUARD_PATCH_COUNT_INVALID' }
-  $requiredLabels = @('CLASSIC_TIFF_HEADER_VALIDATOR','EA_OFFICIAL_NODATA_RUNTIME_FILTER','HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE')
+  if ([string]$injectorReceipt.script_version -ne '1.2-runtime-raster-probe-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_VERSION_INVALID' }
+  if ([int]$injectorReceipt.runtime_patch_count -ne 4) { throw 'RUNTIME_GUARD_PATCH_COUNT_INVALID' }
+  $requiredLabels = @('CLASSIC_TIFF_HEADER_VALIDATOR','EA_OFFICIAL_NODATA_RUNTIME_FILTER','PROBE_RASTER_CONTENT_GATE','HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE')
   foreach ($label in $requiredLabels) {
     if (@($injectorReceipt.runtime_patch_labels) -notcontains $label) { throw "RUNTIME_GUARD_PATCH_LABEL_MISSING: $label" }
+  }
+  $requiredProbeRequirements = @('EPSG:27700','single_band','approximately_1m_resolution','E_and_N_subset_ranges','requested_bbox_covered','finite_non_nodata_pixels')
+  foreach ($requirement in $requiredProbeRequirements) {
+    if (@($injectorReceipt.probe_runtime_requirements) -notcontains $requirement) { throw "PROBE_RUNTIME_REQUIREMENT_MISSING: $requirement" }
   }
   if ([double]$injectorReceipt.official_nodata_sentinel -ne [double]-3.4028235e38) { throw 'RUNTIME_GUARD_RECEIPT_SENTINEL_INVALID' }
 
@@ -102,8 +106,9 @@ try {
   Write-Output 'EA_RASTER_GUARD_PREFLIGHT=PASS'
   Write-Output 'EA_RASTER_GUARD_CHECKS=8'
   Write-Output 'RUNTIME_GUARD_INJECTOR_SELF_TEST=PASS'
-  Write-Output 'RUNTIME_GUARD_INJECTOR_CHECKS=13'
-  Write-Output 'RUNTIME_GUARD_PATCH_COUNT=3'
+  Write-Output 'RUNTIME_GUARD_INJECTOR_CHECKS=17'
+  Write-Output 'RUNTIME_GUARD_PATCH_COUNT=4'
+  Write-Output 'PROBE_RASTER_CONTENT_GATE=ENABLED'
   Write-Output 'HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE=ENABLED'
   Write-Output 'EA_WCS_OFFICIAL_NODATA_SENTINEL=-3.4028235e38'
 
