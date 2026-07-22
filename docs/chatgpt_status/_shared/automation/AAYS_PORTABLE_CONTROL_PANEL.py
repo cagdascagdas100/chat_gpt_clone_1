@@ -487,7 +487,7 @@ class AaysPanel(tk.Tk):
         upper = reason.upper()
         if any(marker in upper for marker in ("LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB")):
             return "Problemi Kopyala düğmesine basıp metni ChatGPT'ye gönderin; dosyayı silmeden 48 MiB parçalara bölme/manifest hatasını düzeltsin."
-        if any(marker in upper for marker in ("AUTH", "CREDENTIAL", "LOGIN", "GITHUB")):
+        if any(marker in upper for marker in ("AUTH", "CREDENTIAL", "LOGIN", "TWO-FACTOR", "2FA")):
             return "GitHub hesabında gh auth login ile oturum açın; sonra Runner'ı Yeniden Başlatın."
         if any(marker in upper for marker in ("DIRTY_PUBLISHER", "GIT_CLEAN_PUBLISHER", "REMOTE_DIVERGED")):
             return "Slot çıktısını kendi dalında commit/push edin veya temiz seri publisher üzerinden yayımlayın; başka slot dosyalarını silmeyin."
@@ -590,6 +590,15 @@ class AaysPanel(tk.Tk):
                     )
 
         if REMOTE_MANUAL_ACTION_ROOT.is_dir():
+            remote_sync_healthy = str(runner_info.get("remote_sync_state") or "").upper() in {
+                "PASS", "READY", "HEALTHY",
+            }
+            strict_user_markers = (
+                "NO_SAFE_AUTOMATIC_REPAIR", "AUTOMATIC_RETRY_DID_NOT_CLEAR_BLOCKER",
+                "AUTH", "CREDENTIAL", "LOGIN", "TWO-FACTOR", "2FA",
+                "PERMISSION DENIED", "ACCESS DENIED", "DISK FULL", "NO SPACE LEFT",
+                "LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB",
+            )
             for action_path in sorted(REMOTE_MANUAL_ACTION_ROOT.glob("*.json")):
                 remote_action = read_json(action_path)
                 state = str(remote_action.get("state") or "OPEN").upper()
@@ -599,6 +608,21 @@ class AaysPanel(tk.Tk):
                     continue
                 slot_id = str(remote_action.get("slot_id") or "SİSTEM")
                 reason = str(remote_action.get("reason") or remote_action.get("blocker") or "Manuel işlem gerekli")
+                reason_upper = reason.upper()
+                # Old ChatGPT pages left open action files for stale runners,
+                # leases, browser proofs and missing free data. Those are now
+                # coordinator/recovery work, not user work. Keep the panel
+                # limited to problems where a person (or a copied Codex
+                # prompt) can actually change the outcome.
+                if any(marker in reason_upper for marker in data_markers):
+                    continue
+                if not any(marker in reason_upper for marker in strict_user_markers):
+                    continue
+                if remote_sync_healthy and any(
+                    marker in reason_upper
+                    for marker in ("AUTH", "CREDENTIAL", "LOGIN", "TWO-FACTOR", "2FA")
+                ):
+                    continue
                 add(
                     f"remote:{action_path.stem}",
                     slot_id,
