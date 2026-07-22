@@ -1,0 +1,75 @@
+name: height_difference_2 ONS authority runtime r3 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-ons-runtime-032-r3-20260722
+    paths:
+      - .github/workflows/height_difference_2_ons_runtime_r3_032.yml
+
+permissions:
+  contents: write
+
+jobs:
+  ons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-ons-runtime-032-r3-20260722
+          fetch-depth: 1
+      - name: Query ONS LAD service and always write receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import traceback
+          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+
+          src=Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          out=Path('england_map_web/data/aays_21_slots/height_difference_2/ons_authority_runtime_032.json')
+          service='https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/Local_Authority_Districts_DEC_2025_Boundaries_UK_BFE/FeatureServer/0/query'
+          result={'schema_version':1,'slot_id':'height_difference_2','generated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),'service':service,'state':'STARTED','rows':[],'error':None,'fake_data':False,'final_ready':False}
+          try:
+              doc=json.loads(src.read_text(encoding='utf-8'))
+              if doc.get('source_git_blob_sha')!='bb48164e7a0af78df875f30421a6a3068c43edb8': raise RuntimeError('point source blob mismatch')
+              rows=doc.get('rows') or []
+              if [r.get('row_no') for r in rows]!=[30762,46142,61522]: raise RuntimeError('point row sequence mismatch')
+              for row in rows:
+                  lon=float(row['longitude']); lat=float(row['latitude'])
+                  params={'f':'json','where':'1=1','geometry':json.dumps({'x':lon,'y':lat,'spatialReference':{'wkid':4326}},separators=(',',':')),'geometryType':'esriGeometryPoint','inSR':'4326','spatialRel':'esriSpatialRelIntersects','outFields':'LAD25CD,LAD25NM','returnGeometry':'false'}
+                  url=service+'?'+urlencode(params)
+                  req=Request(url,headers={'User-Agent':'AAYS-height-difference-2-ons/1.0','Accept':'application/json'})
+                  with urlopen(req,timeout=120) as response:
+                      data=response.read()
+                  payload=json.loads(data.decode('utf-8'))
+                  features=payload.get('features') or []
+                  if len(features)!=1: raise RuntimeError(f'ONS result count {len(features)} for {row["parcel_id"]}: {payload}')
+                  attrs=features[0].get('attributes') or {}
+                  result['rows'].append({'row_no':row['row_no'],'parcel_id':row['parcel_id'],'longitude':lon,'latitude':lat,'ons_lad25_code':attrs.get('LAD25CD'),'ons_lad25_name':attrs.get('LAD25NM'),'response_sha256':hashlib.sha256(data).hexdigest()})
+              if any(not r['ons_lad25_code'] or not r['ons_lad25_name'] for r in result['rows']): raise RuntimeError('missing ONS attributes')
+              result['state']='PASS'
+          except Exception as exc:
+              result['state']='FAIL'
+              result['error']=f'{type(exc).__name__}: {exc}'
+              result['traceback']=traceback.format_exc()
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit ONS receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/ons_authority_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 ONS authority runtime result'
+          git push origin HEAD:agent/height-difference-2-ons-runtime-032-r3-20260722
