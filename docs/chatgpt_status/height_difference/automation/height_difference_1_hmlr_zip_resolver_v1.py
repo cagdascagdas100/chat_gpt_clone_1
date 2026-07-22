@@ -507,7 +507,7 @@ def main() -> int:
                 "structure": structure_receipt,
             },
         }
-        result["state"] = "COMPLETED_ZIP_GML_AND_STRUCTURE_VERIFIED"
+        result["state"] = "COMPLETED_ZIP_AND_GML_VERIFIED"
     except Exception as exc:
         result["state"] = "BLOCKED_FAIL_CLOSED"
         result["errors"].append(str(exc))
@@ -525,7 +525,7 @@ def main() -> int:
     print(f"PAGE_OUTPUT={args.page_output}")
     print(f"GML_OUTPUT={args.gml_output}")
     print("FINAL_READY=false")
-    return 0 if result["state"] == "COMPLETED_ZIP_GML_AND_STRUCTURE_VERIFIED" else 2
+    return 0 if result["state"] == "COMPLETED_ZIP_AND_GML_VERIFIED" else 2
 
 
 if __name__ == "__main__":
