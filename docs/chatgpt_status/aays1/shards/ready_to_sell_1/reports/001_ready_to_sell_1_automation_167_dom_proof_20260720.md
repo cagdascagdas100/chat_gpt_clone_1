@@ -1,16 +1,16 @@
-# Ready to Sell 1 — Automation 167 Aggregate DOM Proof V47
+# Ready to Sell 1 — Automation 167 Aggregate DOM Proof V53
 
 - SLOT_ID: `ready_to_sell_1`
 - Task step: `READ_REMOTE_BUSINESS_STATE_THEN_AUTOMATION_167_DOM_PROOF`
 - Status: `BLOCKED`
 - Geometry rows: `1264`
-- Aggregate official sources: `924`
-- Aggregate candidates: `268`
+- Aggregate official sources: `1389`
+- Aggregate candidates: `423`
 - Exact INSPIRE matches: `2`
-- Internet reverified: `225`
-- Completed operations: `249/250`
-- Progress DOM candidates: `268`
-- Progress DOM sources: `924`
+- Internet reverified: `380`
+- Completed operations: `290/291`
+- Progress DOM candidates: `423`
+- Progress DOM sources: `1389`
 - Main browser exit: `0`
 - Progress browser exit: `0`
 
@@ -131,3 +131,15 @@ V45 aggregate contract: 44 candidate/source batches, 314 raw candidate records, 
 V46 aggregate contract: 45 candidate/source batches, 338 raw candidate records, 12 canonical-listing-URL duplicates excluded, 326 unique candidates, 302 internet-reverified rows, 845 verified sources, 3 official planning evidence rows, 243/244 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
 
 V47 aggregate contract: 46 candidate/source batches, 364 raw candidate records, 12 canonical-listing-URL duplicates excluded, 352 unique candidates, 328 internet-reverified rows, 923 verified sources, 3 official planning evidence rows, 249/250 operations and zero unverified parcel values. Favicon-only noise remains ignored; every other HTTP, DOM or browser error remains blocking.
+
+V48 aggregate contract: 47 candidate/source batches, 392 raw candidate records, 12 canonical-listing-URL duplicates excluded, 380 unique candidates, 356 internet-reverified rows, 1007 verified sources, 3 official planning evidence rows, 257/258 operations and zero unverified parcel values. The progress page uses an eight-second AbortController timeout and one bounded retry. Only exact /favicon.ico HTTP or console noise is ignored; every other HTTP, DOM, browser or unknown console error remains blocking.
+
+V49 aggregate contract: 48 candidate/source batches, 422 raw candidate records, 12 canonical-listing-URL duplicates excluded, 410 unique candidates, 386 internet-reverified rows, 1097 verified sources, 3 official planning evidence rows, 264/265 operations and zero unverified parcel values. The progress page retains its eight-second AbortController timeout and one bounded retry. Only exact /favicon.ico HTTP or console noise is ignored. After 1800 seconds without a heartbeat the task remains claimable for the existing single coordinator and records a pickup-timeout blocker; no new or parallel runner is permitted.
+
+V50 aggregate contract: 49 candidate/source batches, 454 raw candidate records, 12 canonical-listing-URL duplicates excluded, 442 unique candidates, 418 internet-reverified rows, 1193 verified sources, 3 official planning evidence rows, 271/272 operations and zero unverified parcel values. The progress page retains an eight-second timeout and one bounded retry. Only exact /favicon.ico noise is ignored. The queue publishes status=queued, queue_status=queued_for_shared_coordinator_browser_acceptance, current_task=idle, claimable=true and ready_for_claim=true for backward-compatible pickup. The same task, attempt, idempotency key and existing single coordinator are mandatory.
+
+V51 aggregate contract: 50 candidate/source batches, 488 raw candidate records, 12 canonical-listing-URL duplicates excluded, 476 unique candidates, 452 internet-reverified rows, 1295 verified sources, 3 official planning evidence rows, 278/279 operations and zero unverified parcel values. Scotland, Aberdeen and the known Tottenham physical-property replay were excluded before publication. The progress page retains an eight-second timeout and one bounded retry. Only exact /favicon.ico noise is ignored. The same task, attempt, idempotency key and existing single coordinator remain mandatory.
+
+V52 aggregate contract: 51 candidate/source batches, 519 raw candidate records, 12 canonical-listing-URL duplicates excluded, 507 unique candidates, 483 internet-reverified rows, 1365 verified sources, 3 official planning evidence rows, 285/286 operations and zero unverified parcel values. Batch 51 contributes 31 live primary Acuitus pages, 31 official council-planning routes and 8 national due-diligence routes. Generic operator pages are not used to inflate the source count. Historical sold, sold-prior, sold-post, withdrawn and archive states are preserved without inferring current availability or legal completion. The progress page retains an eight-second timeout and one bounded retry. Only exact /favicon.ico noise is ignored. The same task, attempt, idempotency key and existing single coordinator remain mandatory.
+
+V53 aggregate contract: 51 candidate/source batches, 519 raw candidate records, 12 canonical-listing-URL duplicates excluded, 507 unique candidates, 483 internet-reverified rows, 1388 verified sources, 3 official planning evidence rows, 290/291 operations and zero unverified parcel values. Batch 51 contains 31 live primary Acuitus pages, 31 official council-planning routes, 23 operator/company identity routes and 8 national due-diligence routes, for 93 sources with a 99.67 average source-verification score. Source verification remains separate from parcel binding. Historical auction results are not promoted to legal completion or current availability. The same task, attempt, idempotency key and existing single coordinator remain mandatory.
