@@ -1,9 +1,9 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 41,
-  "complete_count": 41,
+  "operation_count": 45,
+  "complete_count": 45,
   "operations": [
     {"operation_id":"HD1-OP-106","label":"Runtime raster-filter integration gap detected","state":"COMPLETE","evidence":"The standalone raster guard passed preflight tests, but the downloaded TIFF value array was not yet guaranteed to use the official EA NoData sentinel filter at measurement runtime."},
     {"operation_id":"HD1-OP-107","label":"Fail-closed runtime guard injector implemented","state":"COMPLETE","evidence":"A slot-scoped Python injector adds guarded carrier patches for classic TIFF header validation and official EA NoData filtering on the real raster value array."},
@@ -45,7 +45,11 @@
     {"operation_id":"HD1-OP-143","label":"Total and no-output timeout controls implemented","state":"COMPLETE","evidence":"The child process is terminated after 5400 total seconds or 1200 seconds without stdout/stderr growth."},
     {"operation_id":"HD1-OP-144","label":"Heartbeat and process-tree cleanup implemented","state":"COMPLETE","evidence":"The watchdog emits 60-second heartbeats, terminates the child process tree on timeout and removes redirected log files in finally."},
     {"operation_id":"HD1-OP-145","label":"Watchdog static contract and committed blob verified","state":"COMPLETE","evidence":"Twelve local static checks passed and the tested Git blob SHA equals committed blob 92464921ad7a328a6c2fddbef51d3c37d672a687."},
-    {"operation_id":"HD1-OP-146","label":"Task v1.17 watchdog execution route aligned","state":"COMPLETE","evidence":"The prepared task now executes the watchdog entry, inherits all 80 v1.16 checks and adds 10 pending-state controls for 90 total checks."}
+    {"operation_id":"HD1-OP-146","label":"Task v1.17 watchdog execution route aligned","state":"COMPLETE","evidence":"The prepared task executes the watchdog entry, inherits all 80 v1.16 checks and adds 10 pending-state controls for 90 total checks."},
+    {"operation_id":"HD1-OP-147","label":"Buffered child-output visibility gap detected","state":"COMPLETE","evidence":"The watchdog detected log growth but forwarded child stdout and stderr only after process completion, which could look stuck despite active work."},
+    {"operation_id":"HD1-OP-148","label":"Realtime child stdout and stderr passthrough implemented","state":"COMPLETE","evidence":"Watchdog v1.1 forwards newly written child log bytes every five seconds while preserving the total and no-output timeout gates."},
+    {"operation_id":"HD1-OP-149","label":"Offset-bound duplicate log prevention verified","state":"COMPLETE","evidence":"Independent stdout and stderr byte offsets prevent replay; local static contract passed 14/14 and tested Git blob equals committed 055630ffefbe793c0da7e46575b4e916844a8f00."},
+    {"operation_id":"HD1-OP-150","label":"Task v1.18 realtime watchdog contract aligned","state":"COMPLETE","evidence":"Prepared task v1.18 requires ten watchdog self-tests, five-second log polling, realtime passthrough and 92 total fail-closed checks."}
   ],
   "fake_data": false,
   "final_ready": false
