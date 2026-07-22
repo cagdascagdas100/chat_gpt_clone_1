@@ -19,9 +19,12 @@ function Resolve-RepoScript {
   New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
   $temp = Join-Path $tempRoot $TempName
   foreach ($ref in @('origin/agent/height-difference-1-executable-evidence-r3-20260722','origin/main','main')) {
-    & $git.Source -C $repoRoot show "$ref`:$RepoPath" 2>$null | Set-Content -LiteralPath $temp -Encoding UTF8
-    if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $temp -PathType Leaf) -and ((Get-Item -LiteralPath $temp).Length -gt 0)) {
-      return $temp
+    $scriptText = & $git.Source -C $repoRoot show "$ref`:$RepoPath" 2>$null
+    if ($LASTEXITCODE -eq 0 -and $null -ne $scriptText) {
+      [System.IO.File]::WriteAllText($temp, (($scriptText -join [Environment]::NewLine) + [Environment]::NewLine), [System.Text.UTF8Encoding]::new($false))
+      if ((Test-Path -LiteralPath $temp -PathType Leaf) -and ((Get-Item -LiteralPath $temp).Length -gt 0)) {
+        return $temp
+      }
     }
   }
   throw "REPOSITORY_SCRIPT_MISSING: $RepoPath"
@@ -38,14 +41,17 @@ if (-not $python) { throw 'PYTHON_EXECUTABLE_NOT_FOUND' }
 
 function Invoke-Python {
   param([string[]]$Arguments)
-  if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
-    & $python.Source -3 @Arguments
+  $lines = if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
+    & $python.Source -3 @Arguments 2>&1
   } else {
-    & $python.Source @Arguments
+    & $python.Source @Arguments 2>&1
   }
   $code = $LASTEXITCODE
   if ($null -eq $code) { $code = 1 }
-  return $code
+  foreach ($line in @($lines)) {
+    [Console]::Out.WriteLine([string]$line)
+  }
+  return [int]$code
 }
 
 $runnerOutput = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\shards\height_difference_1\runner_outputs\official_boundary_and_wcs_latest.json'
@@ -54,7 +60,7 @@ $websiteOutput = Join-Path $repoRoot 'england_map_web\data\aays_18_slots\height_
 $tempMetadataMap = Join-Path ([System.IO.Path]::GetTempPath()) 'height_difference_1_official_survey_metadata_map.json'
 
 Write-Output 'SLOT_ID=height_difference_1'
-Write-Output 'TASK_VERSION=1.2-official-metadata-two-stage'
+Write-Output 'TASK_VERSION=1.3-powershell-handoff-fixed'
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "MAIN_SCRIPT=$mainScript"
 Write-Output "METADATA_SCRIPT=$metadataScript"
@@ -87,7 +93,8 @@ $metadataDocument = Get-Content -LiteralPath $metadataOutput -Raw -Encoding UTF8
 if ($metadataDocument.slot_id -ne 'height_difference_1' -or $null -eq $metadataDocument.metadata) {
   throw 'OFFICIAL_SURVEY_METADATA_OUTPUT_INVALID'
 }
-$metadataDocument.metadata | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $tempMetadataMap -Encoding UTF8
+$metadataJson = $metadataDocument.metadata | ConvertTo-Json -Depth 20
+[System.IO.File]::WriteAllText($tempMetadataMap, ($metadataJson + [Environment]::NewLine), [System.Text.UTF8Encoding]::new($false))
 $resolvedRows = @($metadataDocument.metadata.PSObject.Properties).Count
 Write-Output "SURVEY_METADATA_RESOLVED_ROWS=$resolvedRows"
 
