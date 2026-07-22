@@ -1,9 +1,9 @@
 {
-  "schema_version": 7,
+  "schema_version": 8,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
-  "operation_count": 37,
-  "complete_count": 37,
+  "operation_count": 40,
+  "complete_count": 40,
   "operations": [
     {"operation_id":"HD1-OP-057","label":"EA Composite survey-index OGC collection discovered","state":"COMPLETE","evidence":"LIDAR_Composite_1m_DTM_2022_extents; official Environment Agency OGC Features service"},
     {"operation_id":"HD1-OP-058","label":"Composite survey metadata fields verified","state":"COMPLETE","evidence":"filename, tilename, polygon_id, resolution, year, sd_flown and ed_flown are queryable"},
@@ -37,11 +37,14 @@
     {"operation_id":"HD1-OP-086","label":"HMLR signed object host cross-validated","state":"COMPLETE","evidence":"Public request trace identifies datapub-prd-s3-bucket.s3.amazonaws.com; independent 2026 downloader confirms cookie-aware redirect and ZIP workflow"},
     {"operation_id":"HD1-OP-087","label":"HMLR redirect host allowlist implemented","state":"COMPLETE","evidence":"Resolver rejects non-HTTPS or non-allowlisted final hosts and records only the final hostname, not the expiring signed URL"},
     {"operation_id":"HD1-OP-088","label":"Carrier receipt host revalidation implemented","state":"COMPLETE","evidence":"PowerShell independently verifies HMLR page host, ZIP final host and final_host_allowlisted before hash handoff"},
-    {"operation_id":"HD1-OP-089","label":"Redirect host and ZIP path behavior test completed","state":"COMPLETE","evidence":"6/6 independent checks passed: HMLR host, S3 host, HTTP rejection, unknown-host rejection, valid GML ZIP and traversal rejection"},
+    {"operation_id":"HD1-OP-089","label":"Redirect host and ZIP path behavior test completed","state":"COMPLETE","evidence":"Basic redirect and ZIP behavior checks were completed; later audit expanded the resolver test coverage to 10 explicit checks"},
     {"operation_id":"HD1-OP-090","label":"DSM blocking defect detected in measurement flow","state":"COMPLETE","evidence":"DSM is QA-only but both the 10m DSM probe and full-polygon DSM download could previously suppress a valid DTM terrain measurement"},
     {"operation_id":"HD1-OP-091","label":"DTM-required DSM-optional measurement patch prepared","state":"COMPLETE","evidence":"DTM probe and full-polygon DTM remain mandatory; DSM failures are recorded as optional QA errors without erasing DTM evidence"},
     {"operation_id":"HD1-OP-092","label":"Strict survey metadata provenance validator prepared","state":"COMPLETE","evidence":"Business metadata now requires official collection, EPSG:27700 CRS fields, two SHA-256 hashes, required identifiers, valid resolution and date/year consistency"},
-    {"operation_id":"HD1-OP-093","label":"HMLR ZIP provenance added to business-row gate","state":"COMPLETE","evidence":"Candidate must carry a valid HMLR ZIP SHA-256 and allowlisted final host in addition to GML, polygon and DTM hashes"}
+    {"operation_id":"HD1-OP-093","label":"HMLR ZIP provenance added to business-row gate","state":"COMPLETE","evidence":"Candidate must carry a valid HMLR ZIP SHA-256 and allowlisted final host in addition to GML, polygon and DTM hashes"},
+    {"operation_id":"HD1-OP-094","label":"HMLR resolver self-test coverage gap detected","state":"COMPLETE","evidence":"Script-level coverage did not separately exercise HTTP rejection, traversal ZIP rejection, native CRS, polygon structure and duplicate identifier rejection"},
+    {"operation_id":"HD1-OP-095","label":"Native BNG GML structural preflight implemented","state":"COMPLETE","evidence":"Resolver now requires native EPSG:27700, valid positive-area Polygon or MultiPolygon geometry, plausible BNG bounds and unique non-empty INSPIRE identifiers"},
+    {"operation_id":"HD1-OP-096","label":"Expanded HMLR resolver behavior test completed","state":"COMPLETE","evidence":"10/10 equivalent local deterministic checks passed, including HTTP, unknown-host, traversal, wrong-CRS and duplicate-ID rejection"}
   ],
   "fake_data": false,
   "final_ready": false
