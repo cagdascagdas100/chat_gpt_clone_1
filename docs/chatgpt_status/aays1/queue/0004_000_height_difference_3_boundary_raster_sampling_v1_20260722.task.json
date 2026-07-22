@@ -1,14 +1,14 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "task_id": "height-difference-3-boundary-raster-sampling-v1-20260722",
-  "task_version": "1.0-dependent-hmlr-boundary-official-raster-sampling-fail-closed",
+  "task_version": "1.1-runner-v4-compatible-dependent-hmlr-boundary-official-raster-sampling-fail-closed",
   "attempt_id": "height-difference-3-20260722-004",
   "idempotency_key": "height-difference-3-boundary-raster-sampling-attempt-004",
   "page_key": "aays1",
   "layer_page_key": "height_difference",
   "slot_id": "height_difference_3",
-  "status": "pickup_requested_dependent",
-  "priority": 4,
+  "status": "pickup_requested",
+  "priority": 5,
   "created_at": "2026-07-22T10:28:00+03:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "target_branch": "main",
@@ -16,8 +16,8 @@
   "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
   "sample_range": {"start": 61523, "end": 61525, "count": 3},
   "sample_parcels": ["parcel_61523", "parcel_61524", "parcel_61525"],
-  "depends_on_task_id": "height-difference-3-post-point-official-discovery-v1-20260722",
-  "depends_on_output": "docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_official_discovery_latest.json",
+  "depends_on_task_id": "height-difference-3-official-input-manifest-v1-20260722",
+  "depends_on_output": "docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_official_input_manifest_latest.json",
   "required_inputs": [
     "docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_canonical_points_latest.json",
     "docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_official_discovery_latest.json",
@@ -44,7 +44,7 @@
     "england_map_web/data/height_difference/height_difference_3_boundary_raster_sampling_latest.json"
   ],
   "acceptance_checks": [
-    "Require accepted priority-2 canonical Point and priority-3 official discovery outputs",
+    "Require accepted priority-2 canonical Point, priority-3 discovery and priority-4 official manifest outputs",
     "Require exactly three ordered parcel rows and exact canonical blob SHA",
     "Require current HMLR release manifest native EPSG:27700 geometry INSPIRE ID and geometry checksum",
     "Deduplicate cross-authority copies and reject conflicting geometry for one INSPIRE ID",
@@ -57,7 +57,18 @@
     "Use matched DSM only for contamination diagnostics and never as ground elevation",
     "Publish non-final evidence only and write no database production or another slot"
   ],
-  "runner_contract": {"queue_branch": "codex/aays-single-runner-v5-20260706", "target_branch": "main", "execution_host": "powershell.exe -File script_path", "selection_order": ["priority", "created_at", "page_key", "task_id"], "lower_numeric_priority_runs_first": true},
+  "runner_contract": {
+    "runner_version": "V4_20260706",
+    "queue_branch": "codex/aays-single-runner-v5-20260706",
+    "target_branch": "main",
+    "execution_host": "powershell.exe -File script_path",
+    "selection_order": ["priority", "page_key", "task_id"],
+    "eligible_status": "pickup_requested",
+    "lower_numeric_priority_runs_first": true,
+    "dependency_enforced_by_script": true
+  },
+  "must_run_after_task_id": "height-difference-3-official-input-manifest-v1-20260722",
+  "runner_compatibility_fix": "REPLACED_UNSUPPORTED_PICKUP_REQUESTED_DEPENDENT_STATUS_AND_RAISED_PRIORITY_AFTER_MANIFEST",
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
   "single_runner_only": true,
