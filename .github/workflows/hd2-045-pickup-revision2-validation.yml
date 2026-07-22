@@ -1,0 +1,172 @@
+name: hd2-045-pickup-revision2-validation
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+  workflow_dispatch:
+
+concurrency:
+  group: hd2-045-pickup-revision2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate pickup JSON mirrors and carrier blob
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+
+          task_id = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
+          attempt_id = 'height-difference-2-20260721-020'
+          expected_carrier = 'bfae6899e18cd06499b98329055ba83ec4651b52'
+          expected_runtime_digest = '4953c003d5a2720ab4bd3ae6c38a0a8c640dfaab21b14ca0def6e159497aef0d'
+          files = {
+              'main': Path('docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json'),
+              'current': Path('docs/chatgpt_status/aays1/queue/current.task.json'),
+              'portable': Path('ai-tasks/current-task.json'),
+              'refresh': Path('docs/chatgpt_status/_shared/control/request_queue_refresh.json'),
+              'reboot': Path('docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json'),
+          }
+          docs = {name: json.loads(path.read_text(encoding='utf-8-sig')) for name, path in files.items()}
+          for name, doc in docs.items():
+              assert doc['task_id'] == task_id, (name, doc.get('task_id'))
+              assert doc['attempt_id'] == attempt_id, (name, doc.get('attempt_id'))
+              revision = doc.get('pickup_request_revision', doc.get('request_revision', doc.get('required_pickup_request_revision')))
+              assert revision == 2, (name, revision)
+              assert int(doc['expected_web_operation_rows']) == 980, (name, doc.get('expected_web_operation_rows'))
+              carrier = doc.get('script_blob_sha', doc.get('required_powershell_carrier_blob_sha', doc.get('required_carrier_blob_sha')))
+              assert carrier == expected_carrier, (name, carrier)
+              digest = doc.get('runtime_validation_artifact_digest_sha256')
+              assert digest == expected_runtime_digest, (name, digest)
+              assert doc.get('new_runner') is False, (name, doc.get('new_runner'))
+              assert doc.get('parallel_runner') is False, (name, doc.get('parallel_runner'))
+              assert doc.get('final_ready') is False, (name, doc.get('final_ready'))
+          carrier_path = 'docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1'
+          actual = subprocess.check_output(['git','hash-object','--',carrier_path], text=True).strip()
+          assert actual == expected_carrier, actual
+          print('JSON_MIRROR_PASS=5')
+          print('CARRIER_BLOB_PASS=' + actual)
+          PY
+
+      - name: Compile reconciled Python chain
+        run: |
+          python -m py_compile \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_extract_reconciled_exact_candidates.py \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_prepare_hmlr_sources_and_match.py \
+            docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py
+
+      - name: Parse PowerShell recovery chain
+        shell: pwsh
+        run: |
+          $paths = @(
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1'
+          )
+          $allErrors = @()
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) { $allErrors += $errors | ForEach-Object { "$path :: $($_.Message)" } }
+          }
+          if ($allErrors.Count -gt 0) { $allErrors | Write-Error; exit 1 }
+          Write-Output 'POWERSHELL_PARSE_PASS=3'
+
+      - name: Install Chromium runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.54.0
+          python -m playwright install --with-deps chromium
+
+      - name: Start slot HTTP server
+        run: |
+          python -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 > /tmp/hd2-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8012/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/hd2-http.log
+          exit 1
+
+      - name: Chromium final pickup package acceptance
+        run: |
+          cat > /tmp/hd2_pickup_acceptance.py <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          evidence = json.loads(Path('england_map_web/data/aays_21_slots/height_difference_2/examples_increment_045.json').read_text(encoding='utf-8'))
+          evidence_rows = evidence.get('examples', [])
+          evidence_pass = len(evidence_rows) == 3 and all(
+              row.get('pickup_request_revision') == 2
+              and row.get('carrier_blob_sha') == 'bfae6899e18cd06499b98329055ba83ec4651b52'
+              and row.get('f_host_guarded_recovery_executed') is False
+              and row.get('final_ready') is False
+              for row in evidence_rows
+          )
+          console_errors, page_errors = [], []
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page(viewport={"width":1600,"height":1000})
+              page.on('console', lambda msg: console_errors.append(msg.text) if msg.type == 'error' else None)
+              page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+              response = page.goto('http://127.0.0.1:8012/index.html', wait_until='networkidle', timeout=120000)
+              page.wait_for_function("document.querySelector('#message') && !document.querySelector('#message').textContent.includes('Yükleniyor')", timeout=120000)
+              operation_rows = page.locator('#rows tr').count()
+              source_rows = page.locator('#sources tr').count()
+              example_rows = page.locator('#examples tr').count()
+              message = page.locator('#message').inner_text()
+              body = page.locator('body').inner_text()
+              checks = {
+                  'http_200': bool(response and response.status == 200),
+                  'operation_rows_1004': operation_rows == 1004,
+                  'source_rows_94': source_rows == 94,
+                  'example_rows_66': example_rows == 66,
+                  'manifest_message_success': 'Yükleme hatası' not in message,
+                  'three_pickup_examples_visible': all(x in body for x in ('HD2-PICKUP-040','HD2-PICKUP-041','HD2-PICKUP-042')),
+                  'pickup_evidence_file_pass': evidence_pass,
+                  'three_parcels_visible': all(x in body for x in ('parcel_30762','parcel_46142','parcel_61522')),
+                  'no_console_errors': not console_errors,
+                  'no_page_errors': not page_errors,
+              }
+              result = {
+                  'schema_version':1,'slot_id':'height_difference_2','validated_at':datetime.now(timezone.utc).isoformat(),
+                  'state':'PASS' if all(checks.values()) else 'FAIL','workflow_run_id':os.environ.get('GITHUB_RUN_ID'),
+                  'workflow_sha':os.environ.get('GITHUB_SHA'),'json_mirror_pass_count':5,'python_compile_pass_count':3,
+                  'powershell_parse_pass_count':3,'pickup_request_revision':2,'carrier_blob_sha':'bfae6899e18cd06499b98329055ba83ec4651b52',
+                  'url':'http://127.0.0.1:8012/index.html','http_status':response.status if response else None,
+                  'browser':'Chromium','browser_version':browser.version,'operation_rows':operation_rows,'source_rows':source_rows,
+                  'example_rows':example_rows,'message':message,'checks':checks,'console_errors':console_errors,'page_errors':page_errors,
+                  'f_host_guarded_recovery_executed':False,'final_ready':False
+              }
+              Path('/tmp/hd2-045-pickup-revision2.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+              print('HD2_PICKUP_ACCEPTANCE_JSON='+json.dumps(result,ensure_ascii=False,sort_keys=True))
+              browser.close()
+              if result['state'] != 'PASS': raise SystemExit(2)
+          PY
+          python /tmp/hd2_pickup_acceptance.py
+
+      - name: Upload pickup revision receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd2-045-pickup-revision2
+          path: /tmp/hd2-045-pickup-revision2.json
+          if-no-files-found: error
+          retention-days: 7
