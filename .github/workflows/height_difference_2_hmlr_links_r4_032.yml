@@ -1,0 +1,93 @@
+name: height_difference_2 HMLR link runtime r4 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-hmlr-links-032-r4-20260722
+    paths:
+      - .github/workflows/height_difference_2_hmlr_links_r4_032.yml
+
+permissions:
+  contents: write
+
+jobs:
+  hmlr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-hmlr-links-032-r4-20260722
+          fetch-depth: 1
+      - name: Parse HMLR authority rows and always write receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import html.parser
+          import json
+          import traceback
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          from urllib.request import Request, urlopen
+
+          ons_file=Path('england_map_web/data/aays_21_slots/height_difference_2/ons_authority_runtime_032.json')
+          out=Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_authority_links_runtime_032.json')
+          page='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          result={'schema_version':1,'slot_id':'height_difference_2','generated_at':dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z'),'page':page,'state':'STARTED','rows':[],'error':None,'fake_data':False,'final_ready':False}
+
+          class Parser(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.active=False; self.text=[]; self.links=[]; self.rows=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()=='tr': self.active=True; self.text=[]; self.links=[]
+                  elif self.active and tag.lower()=='a':
+                      href=dict(attrs).get('href')
+                      if href: self.links.append(href)
+              def handle_data(self,data):
+                  if self.active and data.strip(): self.text.append(data.strip())
+              def handle_endtag(self,tag):
+                  if tag.lower()=='tr' and self.active:
+                      self.rows.append({'text':' '.join(self.text),'links':list(self.links)}); self.active=False
+
+          try:
+              ons=json.loads(ons_file.read_text(encoding='utf-8'))
+              if ons.get('state')!='PASS': raise RuntimeError('ONS receipt not PASS')
+              req=Request(page,headers={'User-Agent':'AAYS-height-difference-2-hmlr/1.0','Accept':'text/html'})
+              with urlopen(req,timeout=120) as response:
+                  data=response.read()
+              if not data: raise RuntimeError('empty HMLR page')
+              parser=Parser(); parser.feed(data.decode('utf-8',errors='replace'))
+              result['page_sha256']=hashlib.sha256(data).hexdigest()
+              result['parsed_row_count']=len(parser.rows)
+              for row in ons['rows']:
+                  name=row['ons_lad25_name']
+                  matches=[r for r in parser.rows if str(name).lower() in r['text'].lower()]
+                  resolved=[]
+                  for match in matches:
+                      links=[]
+                      for href in match['links']:
+                          full=urljoin(page,href)
+                          if urlparse(full).scheme=='https': links.append(full)
+                      resolved.append({'row_text':match['text'],'https_links':sorted(set(links))})
+                  result['rows'].append({'parcel_id':row['parcel_id'],'ons_lad25_code':row['ons_lad25_code'],'ons_lad25_name':name,'match_count':len(matches),'matches':resolved})
+              if any(r['match_count']<1 for r in result['rows']): raise RuntimeError('one or more HMLR authority rows missing')
+              result['state']='PASS'
+          except Exception as exc:
+              result['state']='FAIL'; result['error']=f'{type(exc).__name__}: {exc}'; result['traceback']=traceback.format_exc()
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit HMLR link receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/hmlr_authority_links_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record height_difference_2 HMLR authority links'
+          git push origin HEAD:agent/height-difference-2-hmlr-links-032-r4-20260722
