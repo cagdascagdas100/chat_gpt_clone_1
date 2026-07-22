@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "verified_on": "2026-07-22",
+  "output_semantics": "OFFICIAL_INTERNET_SOURCE_IDENTITY_ACCESS_VERSION_AND_LIMITATION_READBACK_ONLY_NOT_LOADER_EXECUTION_NOT_PARCEL_CANDIDATE_NOT_POLYGON_RELATION_NOT_SCORE",
+  "summary": {
+    "source_registry_total": 16,
+    "official_origin_or_service_pass": 16,
+    "explicit_release_or_version_metadata_pass": 9,
+    "runtime_credential_scenario_or_geometry_binding_required": 7,
+    "parcel_candidates_created": 0,
+    "polygon_relations_verified": 0,
+    "scores_emitted": 0,
+    "business_rows_written": 0
+  },
+  "sources": [
+    {
+      "source_key": "hmlr_price_paid",
+      "publisher": "HM Land Registry",
+      "official_url": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",
+      "internet_readback": "May 2026 release; page updated 2026-06-26; monthly update cycle; recent months incomplete warning retained",
+      "verification_state": "PASS_OFFICIAL_RELEASE_AND_LIMITATION",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "download payload, SHA256, exact address/postcode binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "planning_data_api",
+      "publisher": "Planning Data",
+      "official_url": "https://www.planning.data.gov.uk/docs",
+      "internet_readback": "Official API documents coordinate intersection queries across planning and housing datasets",
+      "verification_state": "PASS_OFFICIAL_API_ACCESS_ONLY",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "19 coordinate requests, raw response SHA256 and exact parcel geometry relation",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "planning_brownfield",
+      "publisher": "Planning Data",
+      "official_url": "https://www.planning.data.gov.uk/dataset/brownfield-land",
+      "internet_readback": "37,666 records; 354 providers; collector 2026-07-20; new data 2026-07-16",
+      "verification_state": "PASS_OFFICIAL_CURRENTNESS",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "current site polygon payload and exact HMLR polygon intersection",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "planning_conservation",
+      "publisher": "Planning Data",
+      "official_url": "https://www.planning.data.gov.uk/dataset/conservation-area",
+      "internet_readback": "10,958 records; 157 providers; collector and new-data readback 2026-07-20; dataset warns incomplete and duplicate records",
+      "verification_state": "PASS_CURRENTNESS_WITH_COMPLETENESS_LIMITATION",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "provider-aware current polygon relation; absence cannot be negative proof",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "planning_listed_building",
+      "publisher": "Planning Data / Historic England",
+      "official_url": "https://www.planning.data.gov.uk/dataset/listed-building",
+      "internet_readback": "382,250 records; collector and new-data readback 2026-07-21; official page states geometry is a point and not affected extent",
+      "verification_state": "PASS_CURRENTNESS_POINT_ONLY_PROMOTION_FORBIDDEN",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "independent outline or curtilage evidence; point alone cannot promote",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "planning_green_belt",
+      "publisher": "Planning Data",
+      "official_url": "https://www.planning.data.gov.uk/dataset/green-belt",
+      "internet_readback": "190 records; collector 2026-07-20; new data 2026-05-10; annual snapshot limitation retained",
+      "verification_state": "PASS_CURRENTNESS_WITH_SNAPSHOT_LIMITATION",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "snapshot date and exact parcel polygon overlay",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "ons_snpp",
+      "publisher": "Office for National Statistics",
+      "official_url": "https://www.ons.gov.uk/releases/subnationalpopulationprojections2022based",
+      "internet_readback": "2022-based SNPP released 2025-06-24; 25-year local-authority projections; correction notice retained",
+      "verification_state": "PASS_OFFICIAL_RELEASE_WITH_CORRECTION_GUARD",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "corrected variant, release identifier and explicit local-authority binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "ons_internal_migration",
+      "publisher": "Office for National Statistics",
+      "official_url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/internalmigrationinenglandandwales",
+      "internet_readback": "Detailed internal migration estimates 2024 edition; release date 2025-07-30",
+      "verification_state": "PASS_OFFICIAL_RELEASE",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "edition, boundary vintage and exact local-authority code binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "naptan",
+      "publisher": "Department for Transport",
+      "official_url": "https://naptan.api.dft.gov.uk/",
+      "internet_readback": "Official API supports ATCO-area and national downloads; local-authority CSV/XML downloads available",
+      "verification_state": "PASS_OFFICIAL_SERVICE_ACCESS_ONLY",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "current stop status, coordinates, payload SHA256 and exact parcel distance",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "bods",
+      "publisher": "Department for Transport",
+      "official_url": "https://analyse.bus-data.dft.gov.uk/",
+      "internet_readback": "Official Analyse Bus Open Data service is active but authenticated analysis access is required",
+      "verification_state": "PASS_OFFICIAL_SERVICE_IDENTITY_ACCESS_GATED",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "credentials plus TransXChange/SIRI/NeTEx parse and exact stop binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "national_rail_darwin",
+      "publisher": "Rail Data Marketplace",
+      "official_url": "https://raildata.org.uk/",
+      "internet_readback": "Official Rail Data Marketplace service reachable; product/feed entitlement and authentication remain required",
+      "verification_state": "PASS_OFFICIAL_SERVICE_IDENTITY_ACCESS_GATED",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "marketplace entitlement, feed parse and exact station binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "tfl_ptal",
+      "publisher": "Transport for London",
+      "official_url": "https://tfl.gov.uk/info-for/open-data-users/our-open-data",
+      "internet_readback": "Official PTAL grid downloads and WebCAT are available; TfL states scenario/year and uncertainty limitations and that building-level use is unsuitable",
+      "verification_state": "PASS_OFFICIAL_SERVICE_WITH_SCENARIO_AND_SCALE_LIMITATION",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "explicit base/future scenario, grid/site relation and no building-level overclaim",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "gias_schools",
+      "publisher": "Department for Education",
+      "official_url": "https://get-information-schools.service.gov.uk/",
+      "internet_readback": "Official GIAS service exposes URN, establishment status, address, local authority and downloadable establishment records",
+      "verification_state": "PASS_OFFICIAL_SERVICE_AND_STATUS_FIELDS",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "open/current establishment filter and official coordinate/address binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "nhs_ods_ord",
+      "publisher": "NHS England Digital",
+      "official_url": "https://digital.nhs.uk/developer/api-catalogue/organisation-data-service-ord",
+      "internet_readback": "Official ORD API exposes health and social-care organisation reference data; DSE replaces legacy CSV workflows",
+      "verification_state": "PASS_OFFICIAL_API_AND_MIGRATION_NOTICE",
+      "explicit_version_or_date": false,
+      "runtime_requirement": "organisation role/status plus official address or geometry binding",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "os_open_greenspace",
+      "publisher": "Ordnance Survey",
+      "official_url": "https://osdatahub.os.uk/downloads/open/OpenGreenspace",
+      "internet_readback": "Version date April 2026; Great Britain vector coverage; Shapefile, GML, GeoPackage and vector-tile supply",
+      "verification_state": "PASS_OFFICIAL_VERSION_AND_FORMATS",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "versioned polygon payload, SHA256 and exact distance or intersection",
+      "candidate_rows": 0,
+      "score": null
+    },
+    {
+      "source_key": "ea_flood_zones_cc",
+      "publisher": "Environment Agency",
+      "official_url": "https://environment.data.gov.uk/dataset/04532375-a198-476e-985e-0579a0a11b47",
+      "internet_readback": "Dataset revision 2026-05-20; polygon geometry; EPSG:27700; feature service available",
+      "verification_state": "PASS_OFFICIAL_VERSION_AND_SERVICE",
+      "explicit_version_or_date": true,
+      "runtime_requirement": "versioned flood polygon payload and exact parcel polygon overlay",
+      "candidate_rows": 0,
+      "score": null
+    }
+  ],
+  "quality_guards": {
+    "official_source_identity_required": true,
+    "payload_sha256_required_for_execution": true,
+    "exact_hmlr_polygon_required": true,
+    "verified_polygon_relation_required": true,
+    "nearest_assignment_forbidden": true,
+    "point_only_promotion_forbidden": true,
+    "zero_result_negative_proof_forbidden": true,
+    "source_readback_is_not_loader_execution": true
+  },
+  "first_unverified_step": "RUN_REVISION6_NETWORKED_PIPELINE_THEN_ATTACH_PAYLOAD_SHA256_AND_EXACT_PARCEL_GEOMETRY_RELATIONS",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
