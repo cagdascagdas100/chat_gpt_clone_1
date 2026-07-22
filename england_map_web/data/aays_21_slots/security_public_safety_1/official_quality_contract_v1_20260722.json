@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "checked_on": "2026-07-22",
+  "status": "PASS_OFFICIAL_QUALITY_CONTRACT_RUNTIME_PARITY_PENDING",
+  "acceptance_evidence": false,
+  "official_checks": {
+    "passed": 8,
+    "total": 8,
+    "quality_limits": 4
+  },
+  "facts": {
+    "police_api_update_frequency": "monthly",
+    "police_api_latest_date": "2026-05-01",
+    "police_archive_latest_month": "May 2026",
+    "police_archive_window": "Jun 2023-May 2026",
+    "may_2026_missing_crime_forces": [
+      "British Transport Police",
+      "Gloucestershire Constabulary",
+      "Greater Manchester Police",
+      "Lincolnshire Police"
+    ],
+    "london_mps_lsoa_window": "Jul 2024-Jun 2026",
+    "london_lsoa_sexual_offences_omitted": true,
+    "london_connect_comparability_limit": true,
+    "ons_latest_published_release": "Crime in England and Wales: year ending December 2025; released 23 April 2026",
+    "ons_march_2026_release": "Confirmed 23 July 2026 09:30 UK; not published on 22 July 2026"
+  },
+  "row_quality_rules": [
+    {
+      "order": 1,
+      "gate": "accuracy_score_4",
+      "field": "accuracy_score_4",
+      "pass_condition": "value=4",
+      "failure_status": "REVIEW_ACCURACY_NOT_4"
+    },
+    {
+      "order": 2,
+      "gate": "lsoa_spatial_source",
+      "fields": ["source_geography_level","matching_method"],
+      "pass_condition": "source_geography_level=LSOA and matching_method=parcel_centroid_inside_lsoa_polygon",
+      "failure_status": "REVIEW_SPATIAL_CONTRACT"
+    },
+    {
+      "order": 3,
+      "gate": "official_api_http",
+      "field": "official_api_validation_status",
+      "pass_condition": "value=HTTP_200",
+      "failure_status": "REVIEW_API_HTTP"
+    },
+    {
+      "order": 4,
+      "gate": "official_api_sha256",
+      "field": "official_api_sample_sha256",
+      "pass_condition": "64 lowercase hexadecimal characters",
+      "failure_status": "REVIEW_API_SHA256"
+    },
+    {
+      "order": 5,
+      "gate": "source_month_freshness",
+      "field": "official_api_latest_month",
+      "pass_condition": "value=2026-05",
+      "failure_status": "REVIEW_SOURCE_MONTH"
+    },
+    {
+      "order": 6,
+      "gate": "point_query_proxy_limit",
+      "field": "official_api_validation_method",
+      "required_marker": "supporting_evidence_not_exact_lsoa_count",
+      "pass_status": "LIMIT_RECORDED_NOT_EXACT_LSOA_OR_PARCEL",
+      "failure_status": "REVIEW_PROXY_LIMIT_NOT_RECORDED"
+    },
+    {
+      "order": 7,
+      "gate": "force_omission_mapping",
+      "field": "police_force_name_or_code",
+      "pass_condition": "explicit force mapping exists and is not one of the four May-2026 omission forces",
+      "unknown_status": "LIMIT_FORCE_MAPPING_NOT_STORED_DO_NOT_INFER",
+      "failure_status": "REVIEW_MAY_2026_FORCE_OMISSION"
+    },
+    {
+      "order": 8,
+      "gate": "manual_review_flag",
+      "field": "needs_manual_review",
+      "pass_condition": "value=false",
+      "failure_status": "REVIEW_MANUAL_FLAG"
+    },
+    {
+      "order": 9,
+      "gate": "fake_data_guard",
+      "field": "ai_assurance_result",
+      "pass_condition": "value=strict_spatial_source_verified_no_fake_data",
+      "failure_status": "REVIEW_ASSURANCE_CONTRACT"
+    },
+    {
+      "order": 10,
+      "gate": "live_count_sha_parity",
+      "source": "canonical_acceptance_v17_latest.json",
+      "pass_condition": "candidate count_parity=true and sha256_parity=true",
+      "pending_status": "PENDING_RUNTIME_V17"
+    }
+  ],
+  "classification": {
+    "all_static_gates_pass": "HIGH_CONFIDENCE_AREA_LEVEL_PROXY_WITH_DECLARED_LIMITS",
+    "static_gate_failure": "REVIEW_REQUIRED",
+    "runtime_missing": "STATIC_PASS_RUNTIME_PARITY_PENDING",
+    "force_mapping_missing": "LIMIT_NOT_EVALUABLE_DO_NOT_INFER"
+  },
+  "sources": [
+    "https://data.police.uk/docs/method/crime-last-updated/",
+    "https://data.police.uk/data/archive/",
+    "https://data.police.uk/changelog/",
+    "https://data.police.uk/docs/method/crime-street/",
+    "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/",
+    "https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026",
+    "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/bulletins/crimeinenglandandwales/latest",
+    "https://www.ons.gov.uk/releasecalendar"
+  ],
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "measurement_level": "lsoa",
+  "parcel_measurement": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
