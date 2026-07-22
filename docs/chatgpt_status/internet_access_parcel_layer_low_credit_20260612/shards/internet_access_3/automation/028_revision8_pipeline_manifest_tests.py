@@ -13,12 +13,12 @@ EXPECTED_SCRIPTS = [
     "007_worker_contract_tests.py", "009_hmlr_geometry_contract_tests.py", "011_revision6_contract_tests.py",
     "015_corrected_migration_contract_tests.py", "019_revision7_pipeline_manifest_tests.py",
     "021_ons_uprn_arcgis_release_discovery_tests.py", "023_stratified_candidate_sampler_tests.py",
-    "026_exact_manifest_binding_tests.py", "012_official_source_access_preflight.py",
-    "016_official_uprn_relation_preflight.py", "020_ons_uprn_arcgis_release_discovery.py",
-    "014_migrate_existing_semantics_corrected.py", "022_stratified_candidate_sampler.py",
-    "018_prepared_candidate_preview.py", "006_normalize_legacy_unable30_semantics.py",
-    "004_ofcom_2026_full_schema_audit.py", "024_stratified_ofcom_onspd_adapter.py",
-    "025_hmlr_exact_stratified_manifest_audit.py"
+    "026_exact_manifest_binding_tests.py", "028_revision8_pipeline_manifest_tests.py",
+    "012_official_source_access_preflight.py", "016_official_uprn_relation_preflight.py",
+    "020_ons_uprn_arcgis_release_discovery.py", "014_migrate_existing_semantics_corrected.py",
+    "022_stratified_candidate_sampler.py", "018_prepared_candidate_preview.py",
+    "006_normalize_legacy_unable30_semantics.py", "004_ofcom_2026_full_schema_audit.py",
+    "024_stratified_ofcom_onspd_adapter.py", "025_hmlr_exact_stratified_manifest_audit.py"
 ]
 
 
@@ -69,7 +69,7 @@ def main() -> int:
     check("ALL_WORKER_REFERENCES_PRESENT", not missing_refs, repr(missing_refs))
     check("ALL_WORKER_FILES_EXIST", not missing_files, repr(missing_files))
     check("SAMPLE_SIZE_384", "SAMPLE_SIZE = 384" in source, "sample target")
-    check("TEST_TARGET_74_BEFORE_SELF_TEST", "CONTRACT_TESTS = 74" in source, "declared test count")
+    check("TEST_TARGET_84", "CONTRACT_TESTS = 84" in source, "declared test count")
     check("SOURCE_CHECK_TARGET_13", "SOURCE_CHECKS = 13" in source, "source checks")
     check("OFcom_ONSPD_95_PERCENT_GATES", source.count('"--minimum-match-ratio", "0.95"') == 2, "two 95 percent gates")
     check("HMLR_90_PERCENT_GATE", '"--minimum-match-ratio", "0.90"' in source, "HMLR gate")
@@ -77,21 +77,7 @@ def main() -> int:
     check("EXACT_STRATIFIED_ADAPTERS_USED", source.count("024_stratified_ofcom_onspd_adapter.py") == 2 and "025_hmlr_exact_stratified_manifest_audit.py" in source, "exact manifest adapters")
     check("SAFETY_FLAGS_PRESENT", all(token in source for token in ['"fake_data": False', '"db_write": False', '"migration": False', '"production_deploy": False', '"final_ready": False']), "safety flags")
     failures = [item for item in tests if not item["passed"]]
-    summary = {
-        "schema_version": 1,
-        "slot_id": SLOT_ID,
-        "state": "passed" if not failures else "failed",
-        "tests_expected": 10,
-        "tests_executed": len(tests),
-        "tests_passed": len(tests) - len(failures),
-        "tests_failed": len(failures),
-        "tests": tests,
-        "final_ready": False,
-        "fake_data": False,
-        "db_write": False,
-        "migration": False,
-        "production_deploy": False,
-    }
+    summary = {"schema_version": 1, "slot_id": SLOT_ID, "state": "passed" if not failures else "failed", "tests_expected": 10, "tests_executed": len(tests), "tests_passed": len(tests) - len(failures), "tests_failed": len(failures), "tests": tests, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
     atomic_json(repo / args.runner_output, summary)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 0 if not failures else 2
