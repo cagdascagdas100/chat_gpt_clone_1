@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nineteen-step single-runner pipeline for internet_access_3 revision 8."""
+"""Twenty-step single-runner pipeline for internet_access_3 revision 8."""
 from __future__ import annotations
 
 import json
@@ -10,7 +10,7 @@ from pathlib import Path
 SLOT_ID = "internet_access_3"
 TASK_ID = "aays1-internet-access-3-revision8-exact-stratified-release-discovery-20260722"
 SAMPLE_SIZE = 384
-CONTRACT_TESTS = 74
+CONTRACT_TESTS = 84
 SOURCE_CHECKS = 13
 
 
@@ -24,34 +24,12 @@ def root() -> Path:
 def run(repo: Path, script: Path, name: str, extra: list[str] | None = None) -> dict:
     command = [sys.executable, str(script), "--repo-root", str(repo), *(extra or [])]
     completed = subprocess.run(command, cwd=repo, text=True, capture_output=True, check=False)
-    return {
-        "name": name,
-        "script": str(script.relative_to(repo)),
-        "command": command,
-        "exit_code": completed.returncode,
-        "stdout_tail": completed.stdout[-12000:],
-        "stderr_tail": completed.stderr[-12000:],
-    }
+    return {"name": name, "script": str(script.relative_to(repo)), "command": command, "exit_code": completed.returncode, "stdout_tail": completed.stdout[-12000:], "stderr_tail": completed.stderr[-12000:]}
 
 
 def blocked(state: str, steps: list[dict], next_step: str) -> int:
     exit_code = int(steps[-1]["exit_code"])
-    print(json.dumps({
-        "schema_version": 4,
-        "task_id": TASK_ID,
-        "slot_id": SLOT_ID,
-        "state": state,
-        "steps": steps,
-        "sample_size_target": SAMPLE_SIZE,
-        "contract_tests_target": CONTRACT_TESTS,
-        "official_source_checks_target": SOURCE_CHECKS,
-        "final_ready": False,
-        "fake_data": False,
-        "db_write": False,
-        "migration": False,
-        "production_deploy": False,
-        "first_unverified_step_after_run": next_step,
-    }, ensure_ascii=False, indent=2))
+    print(json.dumps({"schema_version": 4, "task_id": TASK_ID, "slot_id": SLOT_ID, "state": state, "steps": steps, "sample_size_target": SAMPLE_SIZE, "contract_tests_target": CONTRACT_TESTS, "official_source_checks_target": SOURCE_CHECKS, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "first_unverified_step_after_run": next_step}, ensure_ascii=False, indent=2))
     return exit_code
 
 
@@ -67,6 +45,7 @@ def main() -> int:
         ("021_ons_uprn_arcgis_release_discovery_tests.py", "ONS_UPRN_RELEASE_DISCOVERY_TESTS_10", [], "release_discovery_tests_blocked", "REPAIR_RELEASE_DISCOVERY_SCORING_OR_BLOCKERS"),
         ("023_stratified_candidate_sampler_tests.py", "STRATIFIED_SAMPLER_TESTS_10", [], "stratified_sampler_tests_blocked", "REPAIR_STRATIFIED_SAMPLE_SELECTION"),
         ("026_exact_manifest_binding_tests.py", "EXACT_MANIFEST_BINDING_TESTS_12", [], "exact_manifest_tests_blocked", "REPAIR_EXACT_ROW_BINDING_OR_GML_RING_POLICY"),
+        ("028_revision8_pipeline_manifest_tests.py", "REVISION8_PIPELINE_MANIFEST_TESTS_10", [], "revision8_manifest_tests_blocked", "REPAIR_REVISION8_PIPELINE_MANIFEST"),
         ("012_official_source_access_preflight.py", "BASE_OFFICIAL_SOURCE_ACCESS_PREFLIGHT_5", [], "base_source_preflight_blocked", "REPAIR_BASE_OFFICIAL_SOURCE_ACCESS"),
         ("016_official_uprn_relation_preflight.py", "OFFICIAL_UPRN_RELATION_PREFLIGHT_6", [], "uprn_relation_preflight_blocked", "REPAIR_UPRN_PRODUCT_PORTAL_LICENCE_OR_HMLR_ACCESS"),
         ("020_ons_uprn_arcgis_release_discovery.py", "OFFICIAL_NSUL_ONSUD_RELEASE_DISCOVERY_2", [], "release_discovery_blocked", "REPAIR_NSUL_OR_ONSUD_ITEM_DISCOVERY_AMBIGUITY"),
@@ -85,32 +64,7 @@ def main() -> int:
         steps.append(result)
         if int(result["exit_code"]) != 0:
             return blocked(state, steps, next_step)
-    summary = {
-        "schema_version": 4,
-        "task_id": TASK_ID,
-        "slot_id": SLOT_ID,
-        "state": "pipeline_passed",
-        "steps": steps,
-        "sample_size_target": SAMPLE_SIZE,
-        "prepared_candidate_preview_target": 24,
-        "transparent_target_rows_published": 24,
-        "contract_tests_target": CONTRACT_TESTS,
-        "official_source_checks_target": SOURCE_CHECKS,
-        "ofcom_member_count_target": 121,
-        "ofcom_total_rows_target": 1741096,
-        "ofcom_minimum_match_ratio": 0.95,
-        "onspd_minimum_match_ratio": 0.95,
-        "hmlr_minimum_match_ratio": 0.90,
-        "parcel_relations_promoted": 0,
-        "confidence_uplifts": 0,
-        "final_ready": False,
-        "product_final_ready": False,
-        "fake_data": False,
-        "db_write": False,
-        "migration": False,
-        "production_deploy": False,
-        "first_unverified_step_after_run": "HYDRATE_SELECTED_NSUL_ONSUD_AND_OS_OPEN_UPRN_BYTES_THEN_REQUIRE_EXACT_UPRN_POSTCODE_RELATION",
-    }
+    summary = {"schema_version": 4, "task_id": TASK_ID, "slot_id": SLOT_ID, "state": "pipeline_passed", "steps": steps, "sample_size_target": SAMPLE_SIZE, "prepared_candidate_preview_target": 24, "transparent_target_rows_published": 24, "contract_tests_target": CONTRACT_TESTS, "official_source_checks_target": SOURCE_CHECKS, "ofcom_member_count_target": 121, "ofcom_total_rows_target": 1741096, "ofcom_minimum_match_ratio": 0.95, "onspd_minimum_match_ratio": 0.95, "hmlr_minimum_match_ratio": 0.90, "parcel_relations_promoted": 0, "confidence_uplifts": 0, "final_ready": False, "product_final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False, "first_unverified_step_after_run": "HYDRATE_SELECTED_NSUL_ONSUD_AND_OS_OPEN_UPRN_BYTES_THEN_REQUIRE_EXACT_UPRN_POSTCODE_RELATION"}
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 0
 
