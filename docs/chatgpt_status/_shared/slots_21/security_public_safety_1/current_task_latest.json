@@ -1,85 +1,53 @@
 {
-  "state": "PUBLISH_PENDING",
-  "task_id": "aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720",
-  "schema_version": 2,
+  "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_1",
   "base_slot_id": "security_public_safety",
   "shard_index": 1,
-  "attempt_id": "security-public-safety-1-20260720-001",
-  "idempotency_key": "security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-v1",
-  "status": "pending",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_continue.py",
-  "read_paths": [
-    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
-    "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
-    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
-    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_1"
-  ],
-  "exact_write_paths": [
-    "docs/chatgpt_status/aays1/shards/security_public_safety_1",
-    "england_map_web/data/aays_21_slots/security_public_safety_1"
-  ],
-  "resource_class": [
-    "light_read"
-  ],
-  "requires_browser_acceptance_gate": true,
-  "requires_git_publish_gate": true,
+  "state": "READY_FOR_CLAIM",
+  "status": "ready",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v16-20260722",
+  "attempt_id": "security-public-safety-1-20260722-016",
+  "idempotency_key": "security-public-safety-1-canonical-acceptance-v16",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v16.py",
+  "queue_path": "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v16_20260722.task.json",
+  "legacy_queue_path": "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v16_20260722.queue.txt",
   "parcel_partition": {
     "start": 1,
     "end": 30761,
     "count": 30761
   },
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
+  "completed_without_replay": {
+    "hydrated_rows": 300,
+    "remote_hydrated_blob_sha": "ab876129928ec0370d482ca491f31a5dd1216aab",
+    "http_200_proof": true,
+    "sha256_proof": true,
+    "official_source_refresh_passed": 5,
+    "web_visible_rows": 300,
+    "accuracy_score_4_rows": 300
   },
-  "data_quality_contract": {
-    "source_urls": [
-      "https://data.police.uk/",
-      "https://data.police.uk/api/forces"
-    ],
-    "source_snapshot_date": "2026-05",
-    "source_discovery_required": false,
-    "measurement_level": "lsoa",
-    "output_semantics": "AREA_LEVEL_PROXY",
-    "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
-    "confidence_method": "official_source_coverage_plus_spatial_match_not_parcel_measurement",
-    "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "not_used",
-    "human_review_required_when": [
-      "source_conflict",
-      "low_confidence",
-      "geometry_mismatch",
-      "missing_area_proxy_disclaimer"
-    ]
-  },
+  "first_unverified_step": "RUN_CANONICAL_130_CANDIDATE_16_ENDPOINT_PARITY_THEN_BROWSER_ACCEPTANCE_AND_REMOTE_READBACK",
   "acceptance_contract": {
-    "expected_hydrated_rows": 300,
-    "required_output_semantics": "AREA_LEVEL_PROXY",
-    "parcel_measurement_must_be_false": true,
-    "http_status_required": 200,
-    "sha256_required": true,
+    "canonical_candidate_count_required": 130,
+    "canonical_unique_api_endpoints_required": 16,
+    "canonical_endpoint_http_json_pass_required": 16,
+    "candidate_live_count_parity_required": 130,
+    "candidate_live_sha256_parity_required": 130,
+    "actual_headless_browser_required": true,
     "dom_visible_rows_required": 300,
     "console_error_count_required": 0,
-    "actual_headless_browser_required": true,
-    "product_matrix_area_proxy_label_required": true,
+    "product_matrix_lsoa_proxy_contract_required": true,
     "remote_commit_push_readback_required": true
   },
-  "timeout_seconds": 1800,
   "single_runner_only": true,
   "child_direct_push_forbidden": true,
-  "final_ready": false,
-  "updated_at": "2026-07-20T15:58:09.594801Z",
-  "blocker": null,
-  "result": {
-    "state": "PUBLISH_PENDING",
-    "exit_code": 0,
-    "log": "logs\\adaptive_v2\\slots\\security_public_safety_1\\aays1-security-public-safety-1-hydrate-300-http-hash-dom-console-browser-acceptance-20260720.security-public-safety-1-20260720-001.log",
-    "error": "PUBLISHER_REFRESH_NOT_READY: fatal: Unable to create 'H:/TerraYield_AAYS_Portable/runner_system/adaptive_v2/publisher/.git/index.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue."
-  }
+  "global_control_alias_overwrite_forbidden": true,
+  "blocker": "WAITING_EXISTING_SINGLE_RUNNER_CLAIM",
+  "updated_at": "2026-07-22T04:21:27+03:00",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
 }
