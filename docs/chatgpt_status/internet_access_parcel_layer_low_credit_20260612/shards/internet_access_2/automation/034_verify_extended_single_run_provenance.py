@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extend the base twelve-artifact runner provenance chain to sixteen artifacts."""
+"""Extend the base twelve-artifact provenance chain with audits and execution-code identity."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-BASE_SCRIPT = Path(__file__).with_name("019_verify_single_run_provenance.py")
+AUTOMATION_ROOT = Path(__file__).resolve().parent
+BASE_SCRIPT = AUTOMATION_ROOT / "019_verify_single_run_provenance.py"
 spec = importlib.util.spec_from_file_location("internet_access_2_base_provenance", BASE_SCRIPT)
 if spec is None or spec.loader is None:
     raise RuntimeError(f"Cannot import base provenance verifier: {BASE_SCRIPT}")
@@ -20,9 +21,17 @@ spec.loader.exec_module(base)
 SLOT_ID = "internet_access_2"
 EXPECTED_ROWS = 30761
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+BASE_RUNNER_NAME = "009_probe_download_slice_join_publish_slot2.ps1"
+COVERAGE_EXTRACTOR_NAME = "030_extract_slot2_coverage_aware_candidates.py"
+CARRIER_SCRIPT_NAME = "036_run_coverage_aware_inner_carrier.ps1"
+RUNTIME_SCRIPT_NAME = "internet_access_2_coverage_aware_inner_runtime.ps1"
+BASE_EXTRACTOR_LINE = '$extractor = Join-Path $automationRoot "002_extract_slot2_ofcom_2026_candidates.py"'
+COVERAGE_EXTRACTOR_LINE = '$extractor = Join-Path $automationRoot "030_extract_slot2_coverage_aware_candidates.py"'
 
 
 def sha256_file(path: Path) -> str:
+    if not path.is_file():
+        raise ValueError(f"Required provenance artifact missing: {path.name}")
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -60,7 +69,22 @@ def require_review_only(payload: dict[str, Any], label: str) -> None:
         raise ValueError(f"{label} final_ready must be false")
 
 
-def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> dict[str, Any]:
+def normalized_script(path: Path) -> str:
+    text = path.read_text(encoding="utf-8-sig")
+    return text.replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
+
+
+def recorded_name(value: Any) -> str:
+    return str(value or "").replace("\\", "/").rstrip("/").split("/")[-1]
+
+
+def audit(
+    work_root: Path,
+    web_root: Path,
+    audit_output: Path | None = None,
+    automation_root: Path | None = None,
+) -> dict[str, Any]:
+    code_root = (automation_root or AUTOMATION_ROOT).resolve()
     base_report = base.audit(work_root, web_root, None)
     if base_report.get("status") != "PASS_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY":
         raise ValueError("base provenance status mismatch")
@@ -76,6 +100,10 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     candidate_path = web_root / "candidate_jsonl_integrity_latest.json"
     rows_path = work_root / "candidate_outputs/internet_access_2_candidates_latest.jsonl"
     manifest_path = work_root / "candidate_outputs/internet_access_2_extraction_manifest_latest.json"
+    base_runner_path = code_root / BASE_RUNNER_NAME
+    extractor_path = code_root / COVERAGE_EXTRACTOR_NAME
+    carrier_script_path = code_root / CARRIER_SCRIPT_NAME
+    runtime_script_path = work_root / RUNTIME_SCRIPT_NAME
 
     carrier = load_json(carrier_path, "coverage-aware inner carrier")
     consistency = load_json(consistency_path, "review consistency")
@@ -93,10 +121,29 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
         raise ValueError("coverage-aware inner carrier status mismatch")
     if int(carrier.get("extractor_replacement_count", -1)) != 1:
         raise ValueError("coverage-aware inner carrier replacement count mismatch")
-    require_hex64(carrier.get("base_runner_sha256"), "carrier base runner SHA")
-    require_hex64(carrier.get("runtime_carrier_sha256"), "carrier runtime SHA")
     if int(carrier.get("inner_exit_code", -1)) != 0:
         raise ValueError("coverage-aware inner carrier exit code mismatch")
+    if recorded_name(carrier.get("coverage_aware_extractor")) != COVERAGE_EXTRACTOR_NAME:
+        raise ValueError("coverage-aware inner carrier extractor path mismatch")
+
+    base_runner_sha = sha256_file(base_runner_path)
+    runtime_script_sha = sha256_file(runtime_script_path)
+    coverage_extractor_sha = sha256_file(extractor_path)
+    carrier_script_sha = sha256_file(carrier_script_path)
+    if require_hex64(carrier.get("base_runner_sha256"), "carrier base runner SHA") != base_runner_sha:
+        raise ValueError("carrier base runner SHA does not match actual code")
+    if require_hex64(carrier.get("runtime_carrier_sha256"), "carrier runtime SHA") != runtime_script_sha:
+        raise ValueError("carrier runtime SHA does not match actual runtime script")
+
+    base_text = normalized_script(base_runner_path)
+    runtime_text = normalized_script(runtime_script_path)
+    if base_text.count(BASE_EXTRACTOR_LINE) != 1:
+        raise ValueError("base runner exact extractor line count mismatch")
+    expected_runtime = base_text.replace(BASE_EXTRACTOR_LINE, COVERAGE_EXTRACTOR_LINE)
+    if runtime_text != expected_runtime:
+        raise ValueError("runtime script contains changes beyond exact extractor substitution")
+    if runtime_text.count(COVERAGE_EXTRACTOR_LINE) != 1 or BASE_EXTRACTOR_LINE in runtime_text:
+        raise ValueError("runtime script exact extractor substitution mismatch")
 
     if consistency.get("status") != "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY":
         raise ValueError("review consistency status mismatch")
@@ -132,21 +179,38 @@ def audit(work_root: Path, web_root: Path, audit_output: Path | None = None) -> 
     consistency_sha = sha256_file(consistency_path)
     resolution_sha = sha256_file(resolution_path)
     candidate_audit_sha = sha256_file(candidate_path)
-    chain_inputs = [base_chain, carrier_sha, consistency_sha, resolution_sha, candidate_audit_sha]
+    chain_inputs = [
+        base_chain,
+        carrier_sha,
+        consistency_sha,
+        resolution_sha,
+        candidate_audit_sha,
+        base_runner_sha,
+        runtime_script_sha,
+        coverage_extractor_sha,
+        carrier_script_sha,
+    ]
     extended_chain = hashlib.sha256("\n".join(chain_inputs).encode("ascii")).hexdigest()
 
     result = dict(base_report)
     result.update({
-        "schema_version": 4,
+        "schema_version": 5,
         "status": "PASS_EXTENDED_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY",
         "base_provenance_artifact_count": 12,
         "extended_audit_artifact_count": 4,
-        "provenance_artifact_count": 16,
+        "execution_code_artifact_count": 4,
+        "provenance_artifact_count": 20,
         "base_provenance_chain_sha256": base_chain,
         "coverage_aware_inner_carrier_sha256": carrier_sha,
         "review_contract_consistency_audit_sha256": consistency_sha,
         "candidate_postcode_resolution_audit_sha256": resolution_sha,
         "candidate_jsonl_integrity_audit_sha256": candidate_audit_sha,
+        "base_runner_code_sha256": base_runner_sha,
+        "runtime_runner_code_sha256": runtime_script_sha,
+        "coverage_aware_extractor_code_sha256": coverage_extractor_sha,
+        "coverage_aware_carrier_code_sha256": carrier_script_sha,
+        "runtime_exact_extractor_substitution_verified": True,
+        "runtime_extractor_replacement_count": 1,
         "provenance_chain_sha256": extended_chain,
         "combined_validation_passed": passed,
         "combined_validation_total": total,

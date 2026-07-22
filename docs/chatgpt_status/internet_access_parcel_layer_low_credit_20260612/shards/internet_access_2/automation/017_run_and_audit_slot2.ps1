@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $slotId = "internet_access_2"
 $expectedRows = 30761
-$expectedCombinedValidation = 404
+$expectedCombinedValidation = 415
 $automationRoot = Join-Path $RepoRoot "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation"
 $webRoot = Join-Path $RepoRoot "england_map_web/data/aays_18_slots/internet_access_2"
 $effectiveWorkRoot = if ($WorkRoot) { $WorkRoot } else { Join-Path $RepoRoot "outputs/internet_access_2_verified_run" }
@@ -56,11 +56,11 @@ function Run-JsonSelftest([string]$Path, [int]$Expected, [string]$Label) {
     return $result
 }
 
-$consistencySelftest = Run-JsonSelftest $consistencyVerifierSelftest 14 "Review contract consistency"
+$consistencySelftest = Run-JsonSelftest $consistencyVerifierSelftest 15 "Review contract consistency"
 $consistencyAuditRaw = & $PythonExe $consistencyVerifier --repo-root $RepoRoot --audit-output $consistencyAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Review contract consistency audit failed with exit code $LASTEXITCODE" }
 $consistencyAudit = $consistencyAuditRaw | ConvertFrom-Json
-if ($consistencyAudit.status -ne "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" -or $consistencyAudit.combined_validation_total -ne $expectedCombinedValidation) {
+if ($consistencyAudit.status -ne "PASS_REVIEW_CONTRACT_CONSISTENCY_AUDITED_REVIEW_ONLY" -or $consistencyAudit.combined_validation_total -ne $expectedCombinedValidation -or $consistencyAudit.provenance_chain_artifact_count -ne 20) {
     throw "Review contract consistency audit readback mismatch"
 }
 if ($consistencyAudit.actual_business_data_rows_written -ne 0 -or $consistencyAudit.final_ready -ne $false) {
@@ -73,7 +73,7 @@ $basePostcodeResolutionSelftestResult = Run-JsonSelftest $basePostcodeResolution
 $coverageExtractorSelftestResult = Run-JsonSelftest $coverageExtractorSelftest 20 "Coverage-aware extractor"
 $coverageResolutionSelftestResult = Run-JsonSelftest $coverageResolutionSelftest 24 "Coverage-aware postcode resolution"
 $baseProvenanceSelftestResult = Run-JsonSelftest $baseProvenanceSelftest 24 "Base single-run provenance"
-$extendedProvenanceSelftestResult = Run-JsonSelftest $extendedProvenanceSelftest 20 "Extended single-run provenance"
+$extendedProvenanceSelftestResult = Run-JsonSelftest $extendedProvenanceSelftest 24 "Extended single-run provenance and execution-code identity"
 $innerRunnerSelftestResult = Run-JsonSelftest $innerRunnerSelftest 16 "Coverage-aware inner carrier"
 
 $innerArgs = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$innerRunner,"-RepoRoot",$RepoRoot,"-PythonExe",$PythonExe,"-WorkRoot",$effectiveWorkRoot,"-DownloadRetries",$DownloadRetries)
@@ -90,32 +90,20 @@ foreach ($requiredOutput in @($candidateRows,$candidateManifest,$carrierOutput))
 $postcodeResolutionAuditRaw = & $PythonExe $coverageResolutionVerifier --rows-jsonl $candidateRows --audit-output $postcodeResolutionAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Coverage-aware postcode resolution audit failed with exit code $LASTEXITCODE" }
 $postcodeResolutionAudit = $postcodeResolutionAuditRaw | ConvertFrom-Json
-if ($postcodeResolutionAudit.status -ne "PASS_COVERAGE_AWARE_POSTCODE_RESOLUTION_AUDITED_REVIEW_ONLY" -or $postcodeResolutionAudit.canonical_rows -ne $expectedRows) {
-    throw "Coverage-aware postcode resolution audit readback mismatch"
-}
-if ($postcodeResolutionAudit.actual_business_data_rows_written -ne 0 -or $postcodeResolutionAudit.scores_written -ne 0 -or $postcodeResolutionAudit.final_ready -ne $false) {
-    throw "Coverage-aware postcode resolution audit violated review-only truth boundary"
-}
+if ($postcodeResolutionAudit.status -ne "PASS_COVERAGE_AWARE_POSTCODE_RESOLUTION_AUDITED_REVIEW_ONLY" -or $postcodeResolutionAudit.canonical_rows -ne $expectedRows) { throw "Coverage-aware postcode resolution audit readback mismatch" }
+if ($postcodeResolutionAudit.actual_business_data_rows_written -ne 0 -or $postcodeResolutionAudit.scores_written -ne 0 -or $postcodeResolutionAudit.final_ready -ne $false) { throw "Coverage-aware postcode resolution audit violated review-only truth boundary" }
 
 $candidateAuditRaw = & $PythonExe $candidateVerifier --rows-jsonl $candidateRows --manifest $candidateManifest --audit-output $candidateAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Candidate JSONL integrity audit failed with exit code $LASTEXITCODE" }
 $candidateAudit = $candidateAuditRaw | ConvertFrom-Json
-if ($candidateAudit.status -ne "PASS_COMPLETE_CANDIDATE_JSONL_INTEGRITY_REVIEW_ONLY" -or $candidateAudit.canonical_rows -ne $expectedRows) {
-    throw "Candidate JSONL integrity audit readback mismatch"
-}
-if ($candidateAudit.actual_business_data_rows_written -ne 0 -or $candidateAudit.scores_written -ne 0 -or $candidateAudit.final_ready -ne $false) {
-    throw "Candidate JSONL integrity audit violated review-only truth boundary"
-}
+if ($candidateAudit.status -ne "PASS_COMPLETE_CANDIDATE_JSONL_INTEGRITY_REVIEW_ONLY" -or $candidateAudit.canonical_rows -ne $expectedRows) { throw "Candidate JSONL integrity audit readback mismatch" }
+if ($candidateAudit.actual_business_data_rows_written -ne 0 -or $candidateAudit.scores_written -ne 0 -or $candidateAudit.final_ready -ne $false) { throw "Candidate JSONL integrity audit violated review-only truth boundary" }
 
 $bundleAuditRaw = & $PythonExe $bundleVerifier --output-root $webRoot --audit-output $bundleAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Published runner bundle audit failed with exit code $LASTEXITCODE" }
 $bundleAudit = $bundleAuditRaw | ConvertFrom-Json
-if ($bundleAudit.status -ne "PASS_REAL_RUN_WEB_BUNDLE_AUDITED_REVIEW_ONLY" -or $bundleAudit.canonical_rows -ne $expectedRows) {
-    throw "Published runner bundle audit readback mismatch"
-}
-if ($bundleAudit.actual_business_data_rows_written -ne 0 -or $bundleAudit.scores_written -ne 0 -or $bundleAudit.final_ready -ne $false) {
-    throw "Published runner bundle audit violated review-only truth boundary"
-}
+if ($bundleAudit.status -ne "PASS_REAL_RUN_WEB_BUNDLE_AUDITED_REVIEW_ONLY" -or $bundleAudit.canonical_rows -ne $expectedRows) { throw "Published runner bundle audit readback mismatch" }
+if ($bundleAudit.actual_business_data_rows_written -ne 0 -or $bundleAudit.scores_written -ne 0 -or $bundleAudit.final_ready -ne $false) { throw "Published runner bundle audit violated review-only truth boundary" }
 
 $provenanceAuditRaw = & $PythonExe $extendedProvenanceVerifier --work-root $effectiveWorkRoot --web-root $webRoot --audit-output $provenanceAuditOutput
 if ($LASTEXITCODE -ne 0) { throw "Extended single-run provenance audit failed with exit code $LASTEXITCODE" }
@@ -123,19 +111,17 @@ $provenanceAudit = $provenanceAuditRaw | ConvertFrom-Json
 if (
     $provenanceAudit.status -ne "PASS_EXTENDED_SINGLE_RUN_PROVENANCE_CHAIN_AUDITED_REVIEW_ONLY" -or
     $provenanceAudit.canonical_rows -ne $expectedRows -or
-    $provenanceAudit.provenance_artifact_count -ne 16 -or
+    $provenanceAudit.provenance_artifact_count -ne 20 -or
+    $provenanceAudit.execution_code_artifact_count -ne 4 -or
+    $provenanceAudit.runtime_exact_extractor_substitution_verified -ne $true -or
     $provenanceAudit.combined_validation_total -ne $expectedCombinedValidation
-) {
-    throw "Extended single-run provenance audit readback mismatch"
-}
-if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudit.scores_written -ne 0 -or $provenanceAudit.final_ready -ne $false) {
-    throw "Extended single-run provenance audit violated review-only truth boundary"
-}
+) { throw "Extended single-run provenance audit readback mismatch" }
+if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudit.scores_written -ne 0 -or $provenanceAudit.final_ready -ne $false) { throw "Extended single-run provenance audit violated review-only truth boundary" }
 
 [ordered]@{
-    schema_version = 7
+    schema_version = 8
     slot_id = $slotId
-    status = "COMPLETE_REAL_RUN_COVERAGE_AWARE_POSTCODE_CANDIDATE_BUNDLE_AND_EXTENDED_PROVENANCE_AUDITED_REVIEW_ONLY"
+    status = "COMPLETE_REAL_RUN_COVERAGE_AWARE_POSTCODE_CANDIDATE_BUNDLE_EXECUTION_CODE_AND_EXTENDED_PROVENANCE_AUDITED_REVIEW_ONLY"
     canonical_rows = $provenanceAudit.canonical_rows
     visible_example_rows = $provenanceAudit.visible_example_rows
     review_contract_consistency_audit = $consistencyAuditOutput
@@ -152,6 +138,12 @@ if ($provenanceAudit.actual_business_data_rows_written -ne 0 -or $provenanceAudi
     runner_bundle_audit = $bundleAuditOutput
     runner_provenance_audit = $provenanceAuditOutput
     provenance_artifact_count = $provenanceAudit.provenance_artifact_count
+    execution_code_artifact_count = $provenanceAudit.execution_code_artifact_count
+    base_runner_code_sha256 = $provenanceAudit.base_runner_code_sha256
+    runtime_runner_code_sha256 = $provenanceAudit.runtime_runner_code_sha256
+    coverage_aware_extractor_code_sha256 = $provenanceAudit.coverage_aware_extractor_code_sha256
+    coverage_aware_carrier_code_sha256 = $provenanceAudit.coverage_aware_carrier_code_sha256
+    runtime_exact_extractor_substitution_verified = $provenanceAudit.runtime_exact_extractor_substitution_verified
     zip_container_audit_sha256 = $provenanceAudit.zip_container_audit_sha256
     provenance_chain_sha256 = $provenanceAudit.provenance_chain_sha256
     actual_business_data_rows_written = 0
