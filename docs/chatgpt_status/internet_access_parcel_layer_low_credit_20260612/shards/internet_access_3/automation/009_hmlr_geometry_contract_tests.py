@@ -57,6 +57,7 @@ def main() -> int:
     args = parse_args()
     root = find_root(args.repo_root)
     worker_path = Path(__file__).resolve().parent / "008_hmlr_inspire_postcode_centroid_polygon_audit.py"
+    worker_source = worker_path.read_text(encoding="utf-8")
     worker = load_module(worker_path)
     ring = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0), (0.0, 0.0)]
     tests = []
@@ -72,7 +73,11 @@ def main() -> int:
     check("OUTSIDE_DISTANCE_EXACT", round(worker.distance_to_ring(15.0, 5.0, ring), 6) == 5.0, "outside distance must be five")
     check("POSTCODE_NORMALIZATION", worker.postcode("sw1a 1aa") == "SW1A1AA", "postcode normalization")
     check("INVALID_POSTCODE_REJECTED", worker.postcode("not-a-postcode") is None, "invalid postcode must be rejected")
-    check("NO_PROMOTION_POLICY_CONSTANT", "confidence_not_raised" in worker.update_feed.__code__.co_consts, "feed must expose no confidence uplift")
+    check(
+        "NO_PROMOTION_POLICY_PRESENT",
+        '"parcel_relation_promoted": False' in worker_source and '"confidence_raised": False' in worker_source,
+        "worker must retain explicit no-promotion and no-confidence-uplift flags",
+    )
 
     failures = [item for item in tests if not item["passed"]]
     summary = {
