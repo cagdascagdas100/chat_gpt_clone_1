@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_1",
@@ -9,14 +9,17 @@
   "attempt_id": "security-public-safety-1-20260722-017",
   "idempotency_key": "security-public-safety-1-canonical-acceptance-v17-no-replay",
   "status": "READY",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+  "core_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "read_paths": [
     "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v15.html",
     "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
-    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py"
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/aays1/shards/security_public_safety_1",
@@ -33,7 +36,11 @@
     "parallel_endpoint_fetch_workers_max": 8,
     "unique_endpoint_request_once": true,
     "duplicate_live_requests_avoided_expected": 114,
-    "official_source_parallel_fetch_workers_max": 5
+    "official_source_parallel_fetch_workers_max": 5,
+    "runtime_static_preflight_required": true,
+    "transient_retry_max_attempts": 3,
+    "transient_retry_delays_seconds": [1, 2],
+    "permanent_non_429_4xx_retry_forbidden": true
   },
   "acceptance_contract": {
     "remote_hydrated_rows_required": 300,
@@ -61,7 +68,8 @@
     "quality_limits": [
       "street-level results cover one mile and locations are approximate/anonymised",
       "May 2026 has four known force-level crime-data omissions",
-      "London LSOA excludes sexual offences and has CONNECT comparability limits"
+      "London LSOA excludes sexual offences and has CONNECT comparability limits",
+      "ONS year-ending-March-2026 release is scheduled for 23 July 2026 and is not yet published on 22 July 2026"
     ],
     "ai_role": "not_used"
   },
@@ -78,5 +86,6 @@
   },
   "timeout_seconds": 1800,
   "final_ready": false,
-  "created_at": "2026-07-22T05:10:00+03:00"
+  "created_at": "2026-07-22T05:10:00+03:00",
+  "hardened_at": "2026-07-22T06:20:00+03:00"
 }
