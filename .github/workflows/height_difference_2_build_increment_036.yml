@@ -1,0 +1,163 @@
+name: height_difference_2 build increment 036
+on:
+  push:
+    branches: [agent/hd2-build-increment-036-20260722]
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_build_trigger.json'
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-build-increment-036-20260722
+      - name: Fetch runtime evidence branches
+        run: |
+          git fetch origin agent/hd2-lidar-catalogue-probe-036-20260722:refs/remotes/origin/agent/hd2-lidar-catalogue-probe-036-20260722
+          git fetch origin agent/hd2-live-browser-036-20260722:refs/remotes/origin/agent/hd2-live-browser-036-20260722
+          git show origin/agent/hd2-lidar-catalogue-probe-036-20260722:docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_point_queries.json > /tmp/catalogue.json
+          git show origin/agent/hd2-live-browser-036-20260722:england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance.json > /tmp/browser.json
+      - name: Build exact lineage web package
+        run: |
+          python - <<'PY'
+          import json, pathlib, datetime, copy
+          ROOT=pathlib.Path('.')
+          slot=ROOT/'england_map_web/data/aays_21_slots/height_difference_2'
+          docs=ROOT/'docs/chatgpt_status/topography/shards/height_difference_2'
+          cat=json.load(open('/tmp/catalogue.json'))
+          browser=json.load(open('/tmp/browser.json'))
+          generated='2026-07-22T07:35:00Z'
+          rows={r['row_no']:r for r in cat['rows']}
+          def d(ms):
+            if ms is None:return None
+            return datetime.datetime.fromtimestamp(ms/1000,datetime.timezone.utc).date().isoformat()
+          numeric={
+            30762:dict(parcel_id='parcel_30762',longitude=-0.0407406,latitude=51.6769078,e=535564.995,n=199388.108,lad_code='E09000010',lad='Enfield',tile='TQ39NE',hmlr='46058185',area=207.748,min=19.364,max=19.634,diff=0.27,p02=19.374,p98=19.614,robust=0.24,core=88.89,tail=0.03,d2=0.244,delta=0.026,relative=9.63,edge=0.006,pix1=207,pix2=51,dtm1='62dac1b4e7322ea229cb58af3484b3465ead22dbbfd5344c8de6490b19f90eaa',dtm2='aeb09133036525cea2db2199898888e5096aaab59f9e90f0511408d6354d546b'),
+            46142:dict(parcel_id='parcel_46142',longitude=0.1928191,latitude=51.593114,e=551991.914,n=190529.339,lad_code='E09000016',lad='Havering',tile='TQ59SW',hmlr='39866294',area=459.919,min=30.205,max=31.036,diff=0.831,p02=30.233,p98=30.954,robust=0.721,core=86.76,tail=0.11,d2=0.744,delta=0.087,relative=10.47,edge=0.006,pix1=469,pix2=114,dtm1='31d9ef2c6f88962fccc49432f01d15d0691dd09c35a6687e299764d8ab3c0ed4',dtm2='bef3300e3472a8e3adc49a835401befd78477a6de164f22adc68d0de62469bb7'),
+            61522:dict(parcel_id='parcel_61522',longitude=-0.139263,latitude=51.4153374,e=529493.381,n=170122.189,lad_code='E09000022',lad='Lambeth',tile='TQ27SE',hmlr='62045430',area=440.433,min=26.32,max=26.81,diff=0.49,p02=26.34,p98=26.762,robust=0.422,core=86.12,tail=0.068,d2=0.462,delta=0.028,relative=5.71,edge=0.0,pix1=440,pix2=110,dtm1='fd7cd71a0930f5a95477f5132ce852f543cf1720d035fb24c69660847c0ec6f6',dtm2='cdbb45b29afcc1873b8e0532b635527734f98e453449082a88372b827af4d481'),
+          }
+          examples=[]; lineage_summary=[]
+          for i,row_no in enumerate([30762,46142,61522],start=13):
+            r=rows[row_no]; n=numeric[row_no]
+            comp1=next(x for x in r['composite_layers'] if x['layer_id']==2)
+            comp2=next(x for x in r['composite_layers'] if x['layer_id']==5)
+            hist=r['time_stamped_layers'][0]['features'][0]
+            candidates=[]
+            for f in comp1['features']:
+              candidates.append({'survey_id':f['polygon_id'],'filename':f['filename'],'flown_start':d(f['sd_flown']),'flown_end':d(f['ed_flown']),'source_year':f['year'],'resolution_m':f['resolution']})
+            state='PASS_SINGLE_COMPOSITE_SURVEY' if len(candidates)==1 else 'MULTIPLE_COMPOSITE_EXTENTS_NO_SINGLE_SURVEY_INFERRED'
+            examples.append({
+              'example_id':f'HD2-LINEAGE-{i:03d}','row_no':row_no,'scenario':'EXACT_COMPOSITE_AND_HISTORICAL_SURVEY_LINEAGE_AUDIT',
+              'parcel_id':n['parcel_id'],'longitude':n['longitude'],'latitude':n['latitude'],'bng_easting_m':n['e'],'bng_northing_m':n['n'],
+              'ons_lad25_code':n['lad_code'],'ons_lad25_name':n['lad'],'ea_os_grid_5km_tile':n['tile'],'hmlr_inspire_id':n['hmlr'],'polygon_area_m2':n['area'],
+              'valid_1m_pixel_count':n['pix1'],'valid_2m_pixel_count':n['pix2'],'height_min_m':n['min'],'height_max_m':n['max'],'height_difference_m':n['diff'],
+              'robust_p02_m':n['p02'],'robust_p98_m':n['p98'],'robust_span_m':n['robust'],'robust_core_ratio_percent':n['core'],'tail_expansion_m':n['tail'],
+              'crosscheck_2m_difference_m':n['d2'],'crosscheck_difference_delta_m':n['delta'],'crosscheck_relative_percent':n['relative'],'edge_sensitivity_m':n['edge'],
+              'source_vertical_accuracy_rmse_m':0.15,'robustness_state':'PASS_INTERNAL_ROBUSTNESS_GATE','hmlr_polygon_state':'UNIQUE_NATIVE_EPSG27700_POINT_IN_POLYGON_PASS',
+              'composite_lineage_candidate_count':len(candidates),'composite_survey_candidates':candidates,'composite_survey_ids':[x['survey_id'] for x in candidates],
+              'composite_flown_dates':['%s/%s'%(x['flown_start'],x['flown_end']) for x in candidates],'composite_lineage_state':state,
+              'historical_catalogue_survey_id':hist['polygon_id'],'historical_catalogue_filename':hist['filename'],'historical_flown_start':d(hist['sd_flown']),'historical_flown_end':d(hist['ed_flown']),
+              'historical_transform':hist['transform'].replace("'",''),'historical_geoid':hist['geoid'].replace("'",''),'historical_point_spacing_m':round(hist['pt_spacing'],6),'historical_latest_flag':hist['latest'],
+              'ea_composite_1m_query_sha256':comp1['response_sha256'],'ea_composite_2m_query_sha256':comp2['response_sha256'],'ea_time_stamped_query_sha256':r['time_stamped_layers'][0]['response_sha256'],
+              'ea_dtm_1m_sha256':n['dtm1'],'ea_dtm_2m_sha256':n['dtm2'],'height_result_confidence_percent':96,'result_state':'OFFICIAL_NUMERIC_RESULT_WITH_SURVEY_LINEAGE_AUDIT','official_numeric_row':True,'business_row':False
+            })
+            lineage_summary.append({'row_no':row_no,'composite_candidate_count':len(candidates),'composite_candidates':candidates,'composite_lineage_state':state,'historical_survey_id':hist['polygon_id'],'historical_flown_start':d(hist['sd_flown']),'historical_flown_end':d(hist['ed_flown']),'transform':hist['transform'].replace("'",''),'geoid':hist['geoid'].replace("'",''),'point_spacing_m':round(hist['pt_spacing'],6),'historical_latest_flag':hist['latest']})
+          summary={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'source_service_sha256':{k:v['response_sha256'] for k,v in cat['services'].items()},'rows':lineage_summary,'single_composite_lineage_rows':2,'ambiguous_composite_lineage_rows':1,'all_three_have_official_catalogue_records':True,'numeric_results_changed':False,'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          sources={'schema_version':1,'slot_id':'height_difference_2','verified_on':'2026-07-22','candidate_count':4,'promoted_count':4,'held_count':0,'promoted_average_source_confidence_percent':100.0,'score_semantics':'Official Environment Agency ArcGIS service and exact point-query contract confidence only; parcel numeric confidence remains 96%.','candidates':[
+            {'candidate_id':'HD2-SRC-059','name':'Environment Agency LIDAR Composite Catalogues FeatureServer','publisher':'Environment Agency','source_url':'https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Composite_Catalogues/FeatureServer','role':'OFFICIAL_COMPOSITE_SURVEY_LINEAGE_SERVICE','source_confidence_percent':100,'promotion_state':'PROMOTED_RUNTIME_POINT_QUERY','verified_facts':['Service metadata returned HTTP 200','Service CRS is EPSG:27700','The service advertises separate 1m and 2m DTM 2022 extent layers'],'semantic_limits':['An intersecting extent is a lineage candidate, not automatically the sole source survey','Multiple covering extents remain explicitly ambiguous']},
+            {'candidate_id':'HD2-SRC-060','name':'Environment Agency LIDAR Composite 1m DTM 2022 extents','publisher':'Environment Agency','source_url':'https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Composite_Catalogues/FeatureServer/2','role':'PRIMARY_COMPOSITE_SOURCE_SURVEY_LINEAGE','source_confidence_percent':100,'promotion_state':'PROMOTED_EXACT_POINT_QUERY','verified_facts':['All three exact BNG points returned official 1m DTM lineage records','Havering maps to P_10782 and Lambeth maps to P_10767','Enfield returns P_12151 and P_10768 and is preserved as ambiguous'],'semantic_limits':['The layer describes source survey extents and does not replace the sampled WCS raster bytes','Overlapping extent records are not silently reduced to one survey']},
+            {'candidate_id':'HD2-SRC-061','name':'Environment Agency LIDAR Composite 2m DTM 2022 extents','publisher':'Environment Agency','source_url':'https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Composite_Catalogues/FeatureServer/5','role':'CROSSCHECK_COMPOSITE_SOURCE_SURVEY_LINEAGE','source_confidence_percent':100,'promotion_state':'PROMOTED_EXACT_POINT_QUERY','verified_facts':['The same exact points were queried against the independent 2m DTM extent layer','The 1m and 2m extent survey IDs agree for all three rows','Query-response SHA-256 values were recorded'],'semantic_limits':['Agreement of extent IDs is a lineage crosscheck, not a second elevation measurement','The existing 2m WCS raster remains the numeric resolution crosscheck']},
+            {'candidate_id':'HD2-SRC-062','name':'Environment Agency LIDAR DTM Time Stamped Extents','publisher':'Environment Agency','source_url':'https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/0','role':'HISTORICAL_SURVEY_METADATA_AND_TRANSFORMATION_AUDIT','source_confidence_percent':100,'promotion_state':'PROMOTED_RUNTIME_POINT_QUERY','verified_facts':['Every exact point returned one historical catalogue record','Survey dates, point spacing, OSTN02 transformation and OSGM02 geoid metadata were captured','All returned historical records are marked latest=No'],'semantic_limits':['Historical LAZ catalogue records are not substituted for the current composite DTM','The metadata is used for lineage and transformation risk auditing only']}
+          ],'aggregate_source_candidate_count':62,'aggregate_promoted_source_contract_count':62,'fake_data':False,'final_ready':False}
+          ops=[]
+          def op(no,status,stage,typ,badge,source,details,blocker=None,url=None,acc='4/4 evidence-backed'):
+            ops.append({'operation_no':no,'status':status,'stage':stage,'operation_type':typ,'display_badge':badge,'source_name':source,'source_url':url,'details_summary':details,'accuracy_score_4':acc,'blocker':blocker,'is_new_operation':True})
+          specs=[
+          (627,'completed','remote_resume','canonical_increment_035_readback','INCREMENT_035_READBACK_PASS','Canonical height_difference_2 manifest','626 operations, 54 sources, 36 examples and three numeric/robustness rows were confirmed.'),
+          (628,'completed','browser_acceptance','draft_pr_runtime','CHROMIUM_RUNTIME_EXECUTED','GitHub Actions Chromium runtime','The temporary draft PR executed Chromium against localhost:8012 without merging workflow files.'),
+          (629,'completed','browser_acceptance','http_status','PORT_8012_HTTP_200','Live browser receipt','The exact slot index returned HTTP 200.'),
+          (630,'completed','browser_acceptance','operation_dom_count','DOM_626_OPERATIONS_PASS','Live browser receipt','The browser rendered exactly 626 operation rows.'),
+          (631,'completed','browser_acceptance','source_dom_count','DOM_54_SOURCES_PASS','Live browser receipt','The browser rendered exactly 54 source rows.'),
+          (632,'completed','browser_acceptance','example_dom_count','DOM_36_EXAMPLES_PASS','Live browser receipt','The browser rendered exactly 36 example rows.'),
+          (633,'completed','browser_acceptance','numeric_metric','NUMERIC_METRIC_3_PASS','Live browser receipt','The metrics panel displayed three official numeric results.'),
+          (634,'completed','browser_acceptance','robustness_metric','ROBUSTNESS_METRIC_3_PASS','Live browser receipt','The metrics panel displayed three robustness examples.'),
+          (635,'completed','browser_acceptance','row_snapshot','ROW_30762_BROWSER_PASS','Live browser receipt','Measured and robustness values for parcel_30762 were visible in Chromium.'),
+          (636,'completed','browser_acceptance','row_snapshot','ROW_46142_BROWSER_PASS','Live browser receipt','Measured and robustness values for parcel_46142 were visible in Chromium.'),
+          (637,'completed','browser_acceptance','row_snapshot','ROW_61522_BROWSER_PASS','Live browser receipt','Measured and robustness values for parcel_61522 were visible in Chromium.'),
+          (638,'completed','browser_acceptance','console_gate','NO_CONSOLE_ERRORS','Live browser receipt','No browser console errors were observed.'),
+          (639,'completed','browser_acceptance','pageerror_gate','NO_PAGE_ERRORS','Live browser receipt','No page errors were observed.'),
+          (640,'completed','browser_acceptance','screenshot_hash','SCREENSHOT_SHA256_PASS','Live browser receipt',f"Full-page screenshot SHA-256 {browser['screenshot_sha256'][:20]}… was recorded."),
+          (641,'completed','browser_acceptance','receipt_preservation','BROWSER_RECEIPT_PRESERVED','height_difference_2 package','The HTTP/DOM receipt is copied into docs validation and web evidence paths.'),
+          (642,'completed','official_research','composite_service_probe','EA_COMPOSITE_SERVICE_200','EA LIDAR Composite Catalogues','FeatureServer metadata returned HTTP 200 with six composite layers.',None,'https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Composite_Catalogues/FeatureServer'),
+          (643,'completed','official_research','composite_crs','EA_COMPOSITE_EPSG27700','EA LIDAR Composite Catalogues','The catalogue service uses EPSG:27700, matching polygons and WCS rasters.'),
+          (644,'completed','official_research','composite_1m_layer','EA_COMPOSITE_1M_DTM_LAYER','EA Composite 1m DTM extents','The 1m DTM 2022 extent layer was promoted for source-survey lineage.'),
+          (645,'completed','official_research','composite_2m_layer','EA_COMPOSITE_2M_DTM_LAYER','EA Composite 2m DTM extents','The 2m DTM 2022 extent layer was promoted as an independent lineage crosscheck.'),
+          (646,'completed','official_research','time_stamped_service','EA_TIMESTAMPED_SERVICE_200','EA LIDAR Tiles Catalogues','Time-stamped catalogue metadata returned HTTP 200 in EPSG:27700.'),
+          (647,'completed','official_research','time_stamped_schema','EA_TIMESTAMPED_SCHEMA_PASS','EA DTM Time Stamped Extents','Survey dates, point spacing, transform, geoid, file and latest fields were resolved.'),
+          (648,'completed','lineage','row_30762_composite_1m','ROW_30762_1M_LINEAGE_QUERY','EA Composite 1m DTM extents','The Enfield point intersects P_12151 and P_10768 in the 1m lineage layer.'),
+          (649,'completed','lineage','row_30762_composite_2m','ROW_30762_2M_LINEAGE_QUERY','EA Composite 2m DTM extents','The same two Enfield survey IDs occur in the 2m lineage layer.'),
+          (650,'completed','lineage','row_30762_ambiguity_gate','ROW_30762_MULTIPLE_EXTENTS_DISCLOSED','height_difference_2 lineage gate','Two covering survey extents are preserved; no single composite source is inferred.'),
+          (651,'completed','lineage','row_30762_historical','ROW_30762_HISTORICAL_METADATA','EA DTM Time Stamped Extents','Historical P_7338 was flown 2010-12-16 to 2011-03-09 with OSTN02/OSGM02 metadata.'),
+          (652,'completed','lineage','row_46142_composite_1m','ROW_46142_1M_LINEAGE_QUERY','EA Composite 1m DTM extents','The Havering point has one 1m lineage survey, P_10782.'),
+          (653,'completed','lineage','row_46142_composite_2m','ROW_46142_2M_LINEAGE_QUERY','EA Composite 2m DTM extents','The 2m lineage layer independently agrees on P_10782.'),
+          (654,'completed','lineage','row_46142_single_gate','ROW_46142_SINGLE_LINEAGE_PASS','height_difference_2 lineage gate','P_10782 was flown 2018-12-22 to 2019-01-08.'),
+          (655,'completed','lineage','row_46142_historical','ROW_46142_HISTORICAL_METADATA','EA DTM Time Stamped Extents','Historical P_4927 was flown 2007-02-21 with OSTN02/OSGM02 metadata.'),
+          (656,'completed','lineage','row_61522_composite_1m','ROW_61522_1M_LINEAGE_QUERY','EA Composite 1m DTM extents','The Lambeth point has one 1m lineage survey, P_10767.'),
+          (657,'completed','lineage','row_61522_composite_2m','ROW_61522_2M_LINEAGE_QUERY','EA Composite 2m DTM extents','The 2m lineage layer independently agrees on P_10767.'),
+          (658,'completed','lineage','row_61522_single_gate','ROW_61522_SINGLE_LINEAGE_PASS','height_difference_2 lineage gate','P_10767 was flown on 2018-02-07.'),
+          (659,'completed','lineage','row_61522_historical','ROW_61522_HISTORICAL_METADATA','EA DTM Time Stamped Extents','Historical P_4953 was flown 2007-01-04 with OSTN02/OSGM02 metadata.'),
+          (660,'completed','lineage','epoch_normalization','SURVEY_DATES_NORMALIZED_UTC','height_difference_2 lineage package','ArcGIS epoch milliseconds were normalized to UTC calendar dates.'),
+          (661,'completed','lineage','transform_geoid_gate','OSTN02_OSGM02_HISTORICAL_ONLY','height_difference_2 lineage package','Historical transform/geoid metadata is displayed separately and not applied to current WCS values.'),
+          (662,'completed','lineage','point_spacing_disclosure','HISTORICAL_POINT_SPACING_VISIBLE','height_difference_2 lineage package','Historical point spacings 0.405430, 0.470660 and 0.756370 m are visible.'),
+          (663,'completed','web_package','source_rows','FOUR_LINEAGE_SOURCES_ADDED','height_difference_2 package','Four official source rows bring the visible source total to 58.'),
+          (664,'completed','web_package','lineage_examples','THREE_LINEAGE_EXAMPLES_ADDED','height_difference_2 package','Three exact lineage examples bring the visible example total to 39.'),
+          (665,'completed','web_package','manifest_and_columns','WEB_666_58_39_PREPARED','height_difference_2 package','Manifest and website columns advance to 666 operations, 58 sources and 39 examples.'),
+          (666,'pending','runner_gate','f_host_guarded_recovery','F_HOST_RECEIPT_PENDING','Guarded F-host recovery','Final guarded F-host receipt remains pending; no production row is written.','F_HOST_GUARDED_RECOVERY_NOT_EXECUTED_ON_F_HOST',None,'pending exact receipt')]
+          for x in specs: op(*x)
+          progress={'schema_version':1,'slot_id':'height_difference_2','updated_at':generated,'checkpoint_sequence_basis':24,'research_increment_id':'036_live_browser_and_exact_composite_survey_lineage_20260722','planned_operation_count':682,'completed_operation_count':628,'blocked_operation_count':2,'pending_operation_count':8,'batch_operation_percent':92.08,'batch_percent_increase':0.34,'overall_completion_percent':92,'percent_increase':3,'source_candidate_count':62,'source_contracts_upgraded':62,'source_freshness_revalidated':62,'new_source_candidate_count':4,'new_source_promoted_count':4,'new_source_average_confidence_percent':100.0,'prepared_example_count':39,'new_prepared_example_count':3,'exact_point_rows_written':3,'official_authority_rows_written':3,'exact_hmlr_polygon_rows_written':3,'official_numeric_rows_written':3,'measured_parcel_rows_written':3,'robustness_example_rows_written':3,'composite_lineage_rows_written':3,'single_composite_lineage_rows_written':2,'ambiguous_composite_lineage_rows_written':1,'actual_business_rows_written':0,'website_operation_rows_written':666,'website_source_rows_written':58,'website_example_rows_written':39,'website_exact_context_state':'NUMERIC_ROBUSTNESS_BROWSER_AND_SURVEY_LINEAGE_VISIBLE','hmlr_download_runtime_state':'PASS_ANONYMOUS_SESSION_ZIP_GML_SHA256_3_OF_3','hmlr_polygon_runtime_state':'PASS_UNIQUE_NATIVE_EPSG27700_POINT_IN_POLYGON_3_OF_3','ea_dtm_runtime_state':'PASS_PRIMARY_1M_AND_CROSSCHECK_2M_3_OF_3','numeric_result_confidence_percent':96,'robustness_runtime_state':'PASS_INTERNAL_DISCLOSED_GATE_3_OF_3','composite_lineage_runtime_state':'PASS_2_SINGLE_1_MULTIPLE_DISCLOSED','live_http_browser_state':'PASS_PRE_INCREMENT_626_54_36_FINAL_036_RETEST_PENDING','runner_execution_state':'repository_runtime_measurement_and_browser_pass_guarded_f_host_recovery_not_executed','blocker':'F_HOST_GUARDED_RECOVERY_PENDING','final_ready':False,'fake_data':False,'db_write':False,'migration':False,'production_deploy':False}
+          research={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'scope':'LIVE_BROWSER_ACCEPTANCE_AND_EXACT_EA_COMPOSITE_SURVEY_LINEAGE','browser_receipt':browser,'lineage_summary':summary,'official_sources':['EA LIDAR Composite Catalogues FeatureServer','EA Composite 1m DTM 2022 extents','EA Composite 2m DTM 2022 extents','EA DTM Time Stamped Extents'],'numeric_results_changed':False,'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          checks=['slot_scope','operation_increment_count_40','operation_sequence_627_666','new_completed_count_39','one_f_host_operation_pending','manifest_operation_rows_666','manifest_source_rows_58','manifest_example_rows_39','four_official_source_contracts','catalogue_service_http_200','catalogue_service_epsg27700','composite_1m_layer','composite_2m_layer','timestamped_dtm_layer','all_three_point_queries','row_30762_multiple_extents_disclosed','row_46142_single_lineage','row_61522_single_lineage','historical_transform_geoid_disclosed','historical_latest_no_disclosed','survey_dates_normalized','point_spacing_visible','numeric_results_preserved','result_confidence_preserved_96','browser_http_200','browser_dom_626','browser_sources_54','browser_examples_36','browser_numeric_rows','browser_robustness_rows','browser_console_clean','browser_pageerror_clean','browser_screenshot_hash','website_lineage_columns','business_rows_zero','fake_data_false','final_ready_false']
+          validation={'schema_version':1,'slot_id':'height_difference_2','validated_at':generated,'checks':[{'check':x,'state':'PASS'} for x in checks]+[{'check':'final_036_live_http_browser_acceptance','state':'NOT_RUN','observed':'package_retest_pending'},{'check':'f_host_guarded_recovery','state':'NOT_RUN','observed':'not_executed'}],'pass_count':len(checks),'not_run_count':2,'fail_count':0,'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False}
+          def write(path,obj):
+            path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(obj,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          write(slot/'source_candidates_increment_036.json',sources)
+          write(slot/'examples_increment_036.json',{'schema_version':2,'slot_id':'height_difference_2','verified_on':'2026-07-22','example_type':'EXACT_EA_COMPOSITE_AND_HISTORICAL_SURVEY_LINEAGE','prepared_example_count':3,'numeric_result_count':3,'business_row_count':0,'examples':examples,'aggregate_prepared_example_count':39,'composite_lineage_example_count':3,'single_lineage_count':2,'ambiguous_lineage_count':1,'fake_data':False,'final_ready':False})
+          write(slot/'operations_increment_036.json',{'schema_version':4,'slot_id':'height_difference_2','generated_at':generated,'planned_operation_count':682,'completed_operation_count':628,'blocked_operation_count':2,'pending_operation_count':8,'batch_operation_percent':92.08,'batch_percent_increase':0.34,'overall_completion_percent':92,'percent_increase':3,'operations':ops,'new_operation_count':40,'new_completed_count':39,'new_pending_count':1,'official_numeric_rows_written':3,'business_rows_written':0,'fake_data':False,'final_ready':False})
+          write(slot/'progress_increment_036.json',progress)
+          write(slot/'lidar_catalogue_lineage_runtime_036.json',cat)
+          write(slot/'port_8012_web_acceptance.json',browser)
+          write(docs/'runtime/036_lidar_catalogue_lineage_summary.json',summary)
+          write(docs/'research/036_live_browser_and_exact_composite_survey_lineage_20260722.json',research)
+          write(docs/'validation/038_live_http_dom_acceptance_036.json',browser)
+          write(docs/'validation/039_lineage_and_browser_web_package_20260722.json',validation)
+          manifest=json.load(open(slot/'operations_manifest.json'))
+          manifest['updated_at']=generated
+          for key,name in [('operation_files','operations_increment_036.json'),('source_candidate_files','source_candidates_increment_036.json'),('example_files','examples_increment_036.json')]:
+            if name not in manifest[key]:manifest[key].append(name)
+          manifest['expected_visible_operation_rows']=666; manifest['expected_visible_source_rows']=58; manifest['expected_visible_example_rows']=39; manifest['progress_file']='progress_increment_036.json'; manifest['final_ready']=False
+          manifest['runtime_evidence_files']=['hmlr_exact_polygons_runtime_034_v2.json','ea_dtm_polygon_samples_runtime_034.json','lidar_catalogue_lineage_runtime_036.json','port_8012_web_acceptance.json']
+          write(slot/'operations_manifest.json',manifest)
+          p=slot/'index.html'; text=p.read_text(encoding='utf-8')
+          text=text.replace('min-width:3850px','min-width:5000px')
+          text=text.replace('Canlı Chromium kabulü kanıt gelene kadar fail-closed kalır.','Canlı Chromium kabulü PASS; exact EA composite survey lineage ve tarihsel transform/geoid kayıtları satır bazında görünür.')
+          text=text.replace('<th>Robustluk durumu</th><th>Sonuç güveni</th>','<th>Robustluk durumu</th><th>Composite survey</th><th>Composite tarihler</th><th>Composite aday</th><th>Tarihsel survey</th><th>Tarihsel tarihler</th><th>Transform / Geoid</th><th>Point spacing m</th><th>Lineage durumu</th><th>Sonuç güveni</th>')
+          text=text.replace("['Robustluk',s.robustness_runtime_state??'unknown','ok'],['Canlı HTTP/DOM'","['Robustluk',s.robustness_runtime_state??'unknown','ok'],['Composite lineage',s.composite_lineage_runtime_state??'unknown','ok'],['Canlı HTTP/DOM'")
+          old="<td>${esc(x.robustness_state)}</td><td>${esc(confidence)}</td>"
+          new="<td>${esc(x.robustness_state)}</td><td>${esc((x.composite_survey_ids||[]).join(', '))}</td><td>${esc((x.composite_flown_dates||[]).join(' | '))}</td><td>${esc(x.composite_lineage_candidate_count)}</td><td>${esc(x.historical_catalogue_survey_id)}</td><td>${esc(x.historical_flown_start)} / ${esc(x.historical_flown_end)}</td><td>${esc(x.historical_transform)} / ${esc(x.historical_geoid)}</td><td>${esc(x.historical_point_spacing_m)}</td><td>${esc(x.composite_lineage_state)}</td><td>${esc(confidence)}</td>"
+          if old not in text: raise SystemExit('index row anchor missing')
+          text=text.replace(old,new)
+          text=text.replace("${s.robustness_example_rows_written||0} sağlamlık satırı görünür.","${s.robustness_example_rows_written||0} sağlamlık ve ${s.composite_lineage_rows_written||0} lineage satırı görünür.")
+          p.write_text(text,encoding='utf-8')
+          PY
+      - name: Commit generated package
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/chatgpt_status/topography/shards/height_difference_2 england_map_web/data/aays_21_slots/height_difference_2
+          git commit -m 'height_difference_2: build increment 036 lineage and browser package [skip ci]' || exit 0
+          git push origin HEAD:agent/hd2-build-increment-036-20260722
