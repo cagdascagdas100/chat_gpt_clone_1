@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "verified_at": "2026-07-22T08:28:00+03:00",
+  "purpose": "OFFICIAL_OS_DATAHUB_PAGE_AND_DOWNLOADS_API_RELEASE_CONSISTENCY",
+  "sources": {
+    "open_uprn": {
+      "authority": "Ordnance Survey",
+      "official_page": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+      "version_date": "June 2026",
+      "coverage": "All of Great Britain",
+      "formats": ["CSV", "GeoPackage"],
+      "semantics": "UPRN addressable-location points with BNG and latitude/longitude geometries"
+    },
+    "open_linked_identifiers": {
+      "authority": "Ordnance Survey",
+      "official_page": "https://osdatahub.os.uk/downloads/open/LIDS",
+      "version_date": "June 2026",
+      "coverage": "All of Great Britain",
+      "formats": ["CSV"],
+      "required_download_label_token": "BLPU UPRN TopographicArea TOID",
+      "reported_gb_download_size_mb": 842.2
+    },
+    "downloads_api": {
+      "authority": "Ordnance Survey",
+      "official_documentation": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification",
+      "opendata_authentication_required": false,
+      "previous_opendata_releases_available": false,
+      "download_endpoint_template": "https://api.os.uk/downloads/v1/products/{productId}/downloads"
+    }
+  },
+  "acceptance": {
+    "runtime_api_version_must_match_page_version": true,
+    "coverage_must_be_gb": true,
+    "open_uprn_csv_unique": true,
+    "lids_uprn_topographicarea_unique": true,
+    "valid_md5_required": true,
+    "positive_size_required": true,
+    "parcel_relation_promotion_forbidden": true
+  },
+  "accuracy": {
+    "source_accuracy_score": 97,
+    "target_after_runtime_consistency": 98,
+    "parcel_match_accuracy_ceiling": 50
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
