@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nine-step single-runner pipeline for internet_access_3 revision 6."""
+"""Ten-step single-runner pipeline for internet_access_3 revision 6."""
 from __future__ import annotations
 
 import json
@@ -35,12 +35,13 @@ def run(repo: Path, script: Path, name: str, extra: list[str] | None = None) -> 
 def blocked(state: str, steps: list[dict], next_step: str) -> int:
     exit_code = int(steps[-1]["exit_code"])
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "task_id": TASK_ID,
         "slot_id": SLOT_ID,
         "state": state,
         "steps": steps,
         "sample_size_target": SAMPLE_SIZE,
+        "contract_tests_target": 26,
         "final_ready": False,
         "fake_data": False,
         "db_write": False,
@@ -56,9 +57,10 @@ def main() -> int:
     repo = root()
     automation = Path(__file__).resolve().parent
     plan = [
-        ("007_worker_contract_tests.py", "BASE_WORKER_CONTRACT_TESTS", [], "base_tests_blocked", "REPAIR_BASE_WORKER_TESTS"),
-        ("011_revision6_contract_tests.py", "REVISION6_GUARD_CONTRACT_TESTS", [], "revision6_tests_blocked", "REPAIR_REVISION6_GUARDS"),
-        ("012_official_source_access_preflight.py", "OFFICIAL_SOURCE_ACCESS_PREFLIGHT", [], "source_preflight_blocked", "REPAIR_OFFICIAL_SOURCE_ACCESS_OR_SIGNATURES"),
+        ("007_worker_contract_tests.py", "BASE_WORKER_CONTRACT_TESTS_6", [], "base_tests_blocked", "REPAIR_BASE_WORKER_TESTS"),
+        ("009_hmlr_geometry_contract_tests.py", "HMLR_GEOMETRY_CONTRACT_TESTS_8", [], "hmlr_geometry_tests_blocked", "REPAIR_HMLR_GEOMETRY_TESTS"),
+        ("011_revision6_contract_tests.py", "REVISION6_GUARD_CONTRACT_TESTS_12", [], "revision6_tests_blocked", "REPAIR_REVISION6_GUARDS"),
+        ("012_official_source_access_preflight.py", "OFFICIAL_SOURCE_ACCESS_PREFLIGHT_5", [], "source_preflight_blocked", "REPAIR_OFFICIAL_SOURCE_ACCESS_OR_SIGNATURES"),
         ("001_migrate_existing_and_close_no_data.py", "MIGRATE_EXISTING_ROWS_AND_CLOSE_NO_DATA", [], "migration_blocked", "REPAIR_MIGRATION_VALIDATION"),
         ("006_normalize_legacy_unable30_semantics.py", "NORMALIZE_LEGACY_UNABLE30_SEMANTICS", [], "semantic_blocked", "REPAIR_UNABLE30_SEMANTICS"),
         ("004_ofcom_2026_full_schema_audit.py", "OFcom_ALL_121_FILES_FULL_AUDIT", [], "ofcom_full_audit_blocked", "REPAIR_OFcom_ARCHIVE_SCHEMA_OR_ROW_COUNT"),
@@ -73,7 +75,7 @@ def main() -> int:
         if int(result["exit_code"]) != 0:
             return blocked(state, steps, next_step)
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "task_id": TASK_ID,
         "slot_id": SLOT_ID,
         "state": "pipeline_passed",
