@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 ilerleme</title>
+<style>body{font-family:system-ui;margin:24px;background:#f6f7f9;color:#17191c}h1{margin-bottom:4px}.meta{margin:0 0 18px;color:#555}.cards{display:flex;gap:12px;flex-wrap:wrap}.card{background:white;border:1px solid #ddd;border-radius:10px;padding:12px 16px}.warn{background:#fff7df;border-color:#e6c45c}table{width:100%;border-collapse:collapse;background:white;margin-top:18px;font-size:14px}th,td{padding:10px;border-bottom:1px solid #e5e5e5;text-align:left}th{position:sticky;top:0;background:#222;color:white}a{color:#075ccf}.pending{font-weight:700;color:#8a5a00}</style>
+</head><body>
+<h1>future_growth_2 — satır bazlı kanıt</h1>
+<p class="meta">Parsel aralığı 30.762–61.522. Bu tablo doğrulanmış resmî aday kanıtlarını gösterir; parsel eşleşmesi değildir.</p>
+<div class="cards"><div class="card" id="count">Yükleniyor…</div><div class="card" id="avg"></div><div class="card warn">FINAL_READY: false</div></div>
+<table><thead><tr><th>#</th><th>Aday</th><th>Otorite</th><th>Alan</th><th>Konut</th><th>İzin</th><th>Kanıt doğruluğu</th><th>Parsel eşleşmesi</th><th>Kaynak</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+fetch('data/program_layer_matrix/future_growth_2_candidate_evidence.json').then(r=>r.json()).then(d=>{
+ const rows=d.rows||[]; document.querySelector('#count').textContent=`Doğrulanmış aday satırı: ${rows.length}`;
+ const avg=rows.reduce((s,r)=>s+r.evidence_confidence,0)/(rows.length||1); document.querySelector('#avg').textContent=`Ortalama kanıt doğruluğu: ${avg.toFixed(1)}/100`;
+ document.querySelector('#rows').innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.site_name}</td><td>${r.authority}</td><td>${r.hectares??'—'} ha</td><td>${r.maximum_net_dwellings??'—'}</td><td>${r.planning_permission_status}</td><td>${r.evidence_confidence}/100</td><td class="pending">${r.parcel_match_status}</td><td><a target="_blank" rel="noopener" href="${r.source_url}">resmî kayıt</a></td></tr>`).join('');
+}).catch(e=>{document.querySelector('#count').textContent='Veri yüklenemedi'; console.error(e)});
+</script></body></html>
