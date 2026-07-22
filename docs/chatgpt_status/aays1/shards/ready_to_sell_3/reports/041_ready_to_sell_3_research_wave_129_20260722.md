@@ -16,13 +16,14 @@
 - Product/parcel rows promoted: **0**
 - Visible research rows after publication: **839**
 - Visible operations after publication: **791 / 793 (99.75%)**
+- Corrections after fresh official-page readback: **1**
 
 ## Candidate summary
 
 1. 241 Burncross Road, S35 1RZ — guide £950,000+; auction 24 August 2026; auctioneer states outline planning for up to 14 dwellings subject to Section 106.
 2. Former High Well School, S72 9DF — guide £90,000–£100,000; auction 26 August 2026; 12.7-acre redevelopment opportunity expressly subject to planning.
 3. 9 Hungerton Street, NG7 1HL — guide £185,000+; auction 26 August 2026; five-bed HMO and 2026/27 tenancy claim requiring licence and contract verification.
-4. Woolley Hall, WF4 2JR — guide £1,300,000+; auction 24 August 2026; Grade II* property and listed stables, with redevelopment subject to planning and listed-building consent.
+4. Woolley Hall, WF4 2JR — guide **£1,200,000+**; auction 24 August 2026; Grade II* property and listed stables, with redevelopment subject to planning and listed-building consent. The earlier £1,300,000+ value was corrected after a fresh official-page readback on 22 July 2026.
 5. The White Horse, BL4 8NG — guide £250,000+; auction 26 August 2026; private-members-club occupation and stepped FRI lease income requiring lease, lawful-use and licensing verification.
 6. Richards House, DL6 1AE — guide £380,000; auction 11 August 2026; former nursery with an auctioneer-stated residential reversion route. The description also uses “Brambly Hedge”, so identity is unresolved.
 
