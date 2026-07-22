@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "internet_access_2",
   "generated_at": "2026-07-22T02:19:06Z",
-  "updated_at": "2026-07-22T02:25:00Z",
+  "updated_at": "2026-07-22T03:07:00Z",
   "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
   "sources": [
     {
@@ -35,13 +35,21 @@
       "authority": "Office for National Statistics",
       "snapshot_date": "2026-05",
       "measurement_level": "postcode identity, lifecycle and centroid",
+      "official_service_item_id": "d1317f804688417287de8f8224ecc942",
+      "table_id": 0,
+      "max_record_count": 1000,
+      "data_last_edit": "2026-06-04",
+      "verified_fields": ["pcd7", "pcds", "dointr", "doterm", "lat", "long", "lad25cd", "ctry25cd"],
       "access_routes": [
         {
           "route": "May 2026 hosted table FeatureServer",
-          "state": "QUEUED_EXACT_PCDS_VALIDATION"
+          "state": "QUEUED_EXACT_PCDS_VALIDATION_WITH_CORRECTED_SERVICE_PATH",
+          "script": "004b_onspd_pcds_normalization_24_sample.py"
         },
         {
           "route": "latest postcode centroids FeatureServer fallback",
+          "service_item_id": "84787e80aca04bb388caad29f89946b0",
+          "max_record_count": 2000,
           "state": "QUEUED_FALLBACK_FOR_UNRESOLVED_POSTCODES"
         }
       ],
@@ -52,13 +60,20 @@
     {
       "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
       "sample_rows": 24,
-      "state": "queued"
+      "state": "queued_corrected",
+      "script": "004b_onspd_pcds_normalization_24_sample.py",
+      "script_commit": "458276bede2fe3622089bb4acf7bf9c5b88203e7",
+      "queue_commit": "918d5bc4b641d86a8477c334cb9367886ce74620"
     },
     {
       "task_id": "internet-access-2-expand-onspd-identity-existing-11013-20260722T021000Z",
       "target_rows": 11013,
-      "state": "queued_after_24_row_normalization",
+      "state": "queued_after_24_row_normalization_corrected",
+      "script": "005b_expand_onspd_identity_to_existing_11013.py",
+      "script_commit": "fae501e4efb0bd8eacdb7fb0211734cd90d1e33b",
+      "queue_commit": "5509caea57ee32905928464b2c6077d5576d58ec",
       "query_method": "POST_EXACT_PCDS_WITH_3_RETRIES_RECURSIVE_SPLIT_AND_SECOND_SERVICE_FALLBACK",
+      "batch_size": 100,
       "web_chunk_size": 500
     },
     {
