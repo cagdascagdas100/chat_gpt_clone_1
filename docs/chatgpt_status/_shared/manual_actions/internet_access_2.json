@@ -1,20 +1,33 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The canonical single-runner proofs remain stale and the last claim is terminal/released. The official Ofcom ZIP cannot be fetched from the current execution environment. The 009-to-011 integration is repaired, but 011 also requires a file containing the exact 24 prepared postcode values; the committed 004 validation file contains counts only and is not that manifest.",
+  "reason": "The canonical single-runner proofs remain stale and the last claim is terminal/released. The official Ofcom ZIP cannot be fetched from the current execution environment. The exact 24-postcode values are not present in the committed counts-only 004 validation artifact, but a fail-closed runtime resolver is now available to recover one consistent exact-24 set from canonical host logs/state without committing raw postcodes.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-22T19:12:00Z",
+  "updated_at": "2026-07-22T19:29:29Z",
   "primary_solution": "On the canonical portable host run RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. The launcher validates the persisted PID and command line, blocks a second instance when a valid owner is alive, and quarantines the lock only when the recorded owner is dead.",
   "guardian_solution": "When the guardian is installed and its ProgramData config exists, run: powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\_shared\\automation\\AAYS_PORTABLE_RESUME_GUARDIAN.ps1 -Once",
   "archive_fallback": "If the canonical host cannot download Ofcom's official outer r1 ZIP, place it at ${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip. The existing 009 task must validate exactly 121 inner r2 postcode CSV files, 121 unique postcode areas and 1,741,096 rows.",
-  "sample_manifest_requirement": {
-    "purpose": "exact 24-postcode input for 010 API cross-check and 011 strict archive join",
-    "required_environment": "AAYS_OFCom_POSTCODES_PATH",
-    "alternative_argument": "--samples <path>",
-    "contract": "The JSON must contain exactly 24 explicit UK postcode strings. Counts-only summaries are rejected and no postcode is inferred.",
-    "known_non_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/004_24_sample_validation.json"
+  "runtime_manifest_recovery": {
+    "purpose": "recover one exact 24-postcode set from existing canonical runtime evidence without inferring values",
+    "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/012_resolve_exact_24_postcode_manifest_from_runtime_evidence.py",
+    "required_search_roots": [
+      "${AAYS_PORTABLE_ROOT}/state",
+      "${AAYS_PORTABLE_ROOT}/runner_system/AAYS_WT/AAYS_RUNNER_HEALTHY_20260707/logs"
+    ],
+    "private_output": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/internet_access_2_exact_24_postcodes.private.json",
+    "hash_only_summary_output": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/internet_access_2_exact_24_postcodes.summary.json",
+    "command_template": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\012_resolve_exact_24_postcode_manifest_from_runtime_evidence.py --search-root %AAYS_PORTABLE_ROOT%\\state --search-root %AAYS_PORTABLE_ROOT%\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707\\logs --output %AAYS_PORTABLE_ROOT%\\state\\source_cache\\ofcom_spring_2026\\internet_access_2_exact_24_postcodes.private.json --summary-output %AAYS_PORTABLE_ROOT%\\state\\source_cache\\ofcom_spring_2026\\internet_access_2_exact_24_postcodes.summary.json",
+    "environment_after_success": "AAYS_OFCom_POSTCODES_PATH=%AAYS_PORTABLE_ROOT%\\state\\source_cache\\ofcom_spring_2026\\internet_access_2_exact_24_postcodes.private.json",
+    "safety": [
+      "counts-only files are rejected",
+      "conflicting exact-24 sets are rejected",
+      "raw postcode manifest cannot be written under docs, england_map_web or .git",
+      "summary contains hashes only"
+    ],
+    "script_commit": "b2ad28feba279befa26a2ba38f6300c90f29035c",
+    "audit_commit": "286de21c32849d98224f26d612f6091be3f6b4ce"
   },
   "optional_api_crosscheck": {
     "purpose": "temporary cross-check for the existing 24 prepared postcode samples only",
@@ -42,7 +55,8 @@
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/004_24_sample_validation.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/009_provision_official_ofcom_v2_strict_and_validate.py",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/011_strict_exact_postcode_join_24_samples.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/007_009_to_011_integration_contract_audit.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/012_resolve_exact_24_postcode_manifest_from_runtime_evidence.py",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/008_exact_24_postcode_runtime_manifest_resolver_audit.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/009_status.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line_latest.json"
   ],
@@ -50,6 +64,7 @@
   "strict_validator_commit": "8833b20bb5a1289090a9206eaeaece2f596c9d8b",
   "queue_revision_commit": "106d6522a3c0cb88e27af28d57beff0a59c28533",
   "join_tool_commit": "1541510f448ba1e1d05c261bdd87484f6e2bd333",
-  "integration_audit_commit": "66c9bc2f70b93870cd4ba93a6988818d3be04b60",
+  "manifest_resolver_commit": "b2ad28feba279befa26a2ba38f6300c90f29035c",
+  "manifest_resolver_audit_commit": "286de21c32849d98224f26d612f6091be3f6b4ce",
   "final_ready": false
 }
