@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "security_public_safety_1",
   "checked_on": "2026-07-22",
   "status": "BLOCKED_BY_STALE_HIGHER_PRIORITY_SHARED_RUNNER_TASK",
@@ -21,21 +21,61 @@
     "ready_for_claim": true,
     "operator_recovery_executed": false,
     "persistent_daemon_required": true,
-    "current_task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720"
+    "current_task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+    "attempt_id": "height-difference-2-20260721-020",
+    "checkpoint_sequence": 22,
+    "completed_operation_count": 340,
+    "planned_operation_count": 381,
+    "batch_operation_percent": 89.24
+  },
+  "recovery_request": {
+    "queue_refresh_path": "docs/chatgpt_status/_shared/control/request_queue_refresh.json",
+    "queue_refresh_status": "requested_waiting_guarded_operator_recovery_or_existing_persistent_daemon_scan",
+    "restart_request_path": "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json",
+    "restart_request_status": "waiting_for_guarded_operator_recovery_or_existing_persistent_daemon_restart",
+    "operator_recovery_script": "docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1",
+    "operator_recovery_blob_sha": "1632d6d7467c21d0ba0bfdd880a137afb2f905f3",
+    "restart_helper_script": "docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1",
+    "restart_helper_blob_sha": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1",
+    "expected_preflight_output": "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/015_operator_recovery_preflight_latest.json",
+    "expected_preflight_output_present": false,
+    "expected_restart_output": "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/014_existing_canonical_runner_restart_latest.json",
+    "operator_recovery_executed": false,
+    "runner_restart_observed": false,
+    "runner_claim_observed": false
+  },
+  "verified_fail_closed_gates": [
+    {"gate":"canonical_f_repo_root_exists","status":"RUNTIME_REQUIRED"},
+    {"gate":"git_executable_exists","status":"RUNTIME_REQUIRED"},
+    {"gate":"canonical_repo_clean","status":"RUNTIME_REQUIRED","failure_status":"BLOCKED_CANONICAL_F_REPO_DIRTY"},
+    {"gate":"active_branch_exact","status":"RUNTIME_REQUIRED","expected":"codex/aays-single-runner-v5-20260706","failure_status":"BLOCKED_CANONICAL_BRANCH_MISMATCH"},
+    {"gate":"remote_head_fetch_and_exact_apply","status":"RUNTIME_REQUIRED","failure_status":"BLOCKED_REMOTE_HEAD_NOT_APPLIED"},
+    {"gate":"restart_helper_blob_exact","status":"STATIC_CONTRACT_PASS","expected_blob_sha":"b3a18bcdb1b7158d18aab33b42d5797342d23cd1","failure_status":"BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH"},
+    {"gate":"multiple_canonical_processes_forbidden","status":"STATIC_CONTRACT_PASS","failure_status":"BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES"},
+    {"gate":"existing_persistent_daemon_preserved","status":"STATIC_CONTRACT_PASS"},
+    {"gate":"existing_transient_process_preserved_no_second_start","status":"STATIC_CONTRACT_PASS"},
+    {"gate":"start_only_when_zero_matching_processes","status":"STATIC_CONTRACT_PASS"},
+    {"gate":"multiple_daemons_after_start_forbidden","status":"STATIC_CONTRACT_PASS","failure_status":"BLOCKED_MULTIPLE_PERSISTENT_DAEMONS_AFTER_START"}
+  ],
+  "external_sample_probe": {
+    "environment": "chat_tool_runtime_not_canonical_runner",
+    "attempted_endpoints": 4,
+    "http_results_obtained": 0,
+    "status": "BLOCKED_DNS_TEMPORARY_FAILURE",
+    "error": "Temporary failure in name resolution",
+    "canonical_acceptance_evidence": false,
+    "stored_values_modified": false,
+    "live_values_claimed": false
   },
   "security_slot": {
     "state": "UNCLAIMED_READY",
     "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
     "attempt_id": "security-public-safety-1-20260722-017",
     "queue_ready": true,
-    "canonical_progress": {
-      "completed_units": 5,
-      "total_units": 8,
-      "overall_percent": 62.5
-    },
+    "canonical_progress": {"completed_units":5,"total_units":8,"overall_percent":62.5},
     "first_unverified_step": "EXISTING_SINGLE_RUNNER_EXECUTES_HARDENED_V17_LIVE_16_ENDPOINT_PARITY"
   },
-  "required_reconciliation": "Existing canonical F-host runner must recover and process/release the priority-1 height_difference_2 task before this slot may be claimed. This page does not overwrite the global alias or start another runner.",
+  "required_reconciliation": "Existing canonical F-host runner must execute the already-published guarded operator recovery, process or release priority-1 height_difference_2, then claim this slot. This page does not overwrite the global alias or start another runner.",
   "fake_data": false,
   "db_write": false,
   "migration": false,
