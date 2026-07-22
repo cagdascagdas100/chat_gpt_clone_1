@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 ilerleme</title>
+<style>
+:root{color-scheme:light}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f4f6f8;color:#17191c}
+main{max-width:1600px;margin:auto;padding:22px}
+h1{margin:0 0 4px}.meta{margin:0 0 16px;color:#555}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
+.card{background:#fff;border:1px solid #d9dde2;border-radius:10px;padding:12px}
+.card b{display:block;font-size:20px;margin-top:4px}.warn{background:#fff7df;border-color:#dfbd55}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+input,select{padding:9px 10px;border:1px solid #bbc1c8;border-radius:7px;background:#fff}
+.table-wrap{overflow:auto;background:#fff;border:1px solid #d9dde2;border-radius:10px;margin:12px 0 22px}
+table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+th,td{padding:9px;border-bottom:1px solid #e7e9ec;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#222;color:#fff;z-index:1}
+a{color:#075ccf}.pending{font-weight:700;color:#8a5a00}.complete{font-weight:700;color:#176b32}.blocked{font-weight:700;color:#9a3412}
+.small{font-size:12px;color:#666}.section-title{margin:22px 0 8px}
+code{font-size:12px}
+</style>
+</head>
+<body><main>
+<h1>future_growth_2 — satır bazlı ilerleme</h1>
+<p class="meta">Parsel aralığı 30.762–61.522. Aşağıdaki adaylar resmî kaynak kanıtıdır; kanonik parsel eşleşmesi ve iş skoru değildir.</p>
+
+<div class="cards">
+  <div class="card">Genel ilerleme<b id="progress">—</b></div>
+  <div class="card">Tamamlanan işlem<b id="ops">—</b></div>
+  <div class="card">Aday satırı<b id="count">—</b></div>
+  <div class="card">Resmî kaynak<b id="sources">—</b></div>
+  <div class="card">Ortalama kanıt güveni<b id="avg">—</b></div>
+  <div class="card">Parsel eşleşen<b id="matched">0</b></div>
+  <div class="card warn">FINAL_READY<b>false</b></div>
+</div>
+
+<div class="controls">
+  <input id="q" type="search" placeholder="Aday, otorite veya kimlik ara">
+  <select id="permission">
+    <option value="">Tüm izin durumları</option>
+    <option value="permissioned">permissioned</option>
+    <option value="not-permissioned">not-permissioned</option>
+  </select>
+  <select id="confidence">
+    <option value="0">Tüm güven seviyeleri</option>
+    <option value="95">95 ve üzeri</option>
+    <option value="98">98 ve üzeri</option>
+  </select>
+</div>
+
+<h2 class="section-title">Doğrulanmış aday kanıt satırları</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>#</th><th>Aday kimliği</th><th>Saha</th><th>Otorite</th><th>Koordinat</th><th>Alan</th><th>Konut</th><th>İzin</th><th>Teslim edilebilir</th><th>Kayıt tarihi</th><th>Kanıt güveni</th><th>Parsel eşleşmesi</th><th>Kaynak</th>
+</tr></thead>
+<tbody id="candidateRows"></tbody>
+</table>
+</div>
+
+<h2 class="section-title">İşlem satırları</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>No</th><th>İşlem</th><th>Durum</th><th>Sonuç</th><th>Kanıt</th></tr></thead>
+<tbody id="operationRows"></tbody>
+</table>
+</div>
+
+<p class="small">Kanıt güveni, resmî kaynağın ve alanların doluluk/uyum düzeyini ölçer. Gelecek büyüme olasılığı veya parsel eşleşme doğruluğu olarak yorumlanmamalıdır.</p>
+
+<script>
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+let evidence, operations;
+
+function renderCandidates(){
+  const query=document.querySelector("#q").value.trim().toLowerCase();
+  const permission=document.querySelector("#permission").value;
+  const minConfidence=Number(document.querySelector("#confidence").value);
+  const filtered=(evidence.rows||[]).filter(r=>{
+    const hay=[r.candidate_id,r.site_name,r.authority].join(" ").toLowerCase();
+    return (!query||hay.includes(query)) &&
+      (!permission||r.planning_permission_status===permission) &&
+      Number(r.evidence_confidence)>=minConfidence;
+  });
+  document.querySelector("#candidateRows").innerHTML=filtered.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><code>${esc(r.candidate_id)}</code></td>
+      <td>${esc(r.site_name)}</td>
+      <td>${esc(r.authority)}</td>
+      <td>${esc(r.latitude)}, ${esc(r.longitude)}</td>
+      <td>${esc(r.hectares)} ha</td>
+      <td>${esc(r.maximum_net_dwellings)}</td>
+      <td>${esc(r.planning_permission_status)}</td>
+      <td>${r.deliverable===true?"yes":r.deliverable===false?"no":"—"}</td>
+      <td>${esc(r.entry_date)}</td>
+      <td><b>${esc(r.evidence_confidence)}/100</b></td>
+      <td class="pending">${esc(r.parcel_match_status)}</td>
+      <td><a target="_blank" rel="noopener" href="${esc(r.source_url)}">resmî kayıt</a></td>
+    </tr>`).join("");
+}
+
+function renderOperations(){
+  document.querySelector("#operationRows").innerHTML=(operations.rows||[]).map(r=>{
+    const cls=r.status==="COMPLETE"?"complete":r.status==="BLOCKED"?"blocked":"pending";
+    const ev=String(r.evidence||"");
+    const evidenceCell=ev.startsWith("http")?`<a target="_blank" rel="noopener" href="${esc(ev)}">kaynak</a>`:esc(ev);
+    return `<tr><td>${esc(r.operation_no)}</td><td><code>${esc(r.operation)}</code></td><td class="${cls}">${esc(r.status)}</td><td>${esc(r.result)}</td><td>${evidenceCell}</td></tr>`;
+  }).join("");
+}
+
+Promise.all([
+  fetch("data/program_layer_matrix/future_growth_2_candidate_evidence.json").then(r=>{if(!r.ok)throw new Error("candidate "+r.status);return r.json()}),
+  fetch("data/program_layer_matrix/future_growth_2_operation_log.json").then(r=>{if(!r.ok)throw new Error("operations "+r.status);return r.json()})
+]).then(([e,o])=>{
+  evidence=e; operations=o;
+  document.querySelector("#progress").textContent=`${o.progress_percent}% (+${o.progress_delta_percent})`;
+  document.querySelector("#ops").textContent=`${o.completed_operations}/${o.total_operations}`;
+  document.querySelector("#count").textContent=e.counts.candidate_evidence_rows;
+  document.querySelector("#sources").textContent=e.counts.total_official_sources_verified;
+  document.querySelector("#avg").textContent=`${e.summary.average_evidence_confidence}/100`;
+  document.querySelector("#matched").textContent=e.counts.parcel_matched_rows;
+  renderCandidates(); renderOperations();
+  ["q","permission","confidence"].forEach(id=>document.querySelector("#"+id).addEventListener("input",renderCandidates));
+}).catch(err=>{
+  document.querySelector("#count").textContent="Veri yüklenemedi";
+  console.error(err);
+});
+</script>
+</main></body></html>
