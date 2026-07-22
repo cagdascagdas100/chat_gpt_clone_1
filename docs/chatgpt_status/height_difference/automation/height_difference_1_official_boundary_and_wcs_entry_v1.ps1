@@ -11,8 +11,9 @@ $repoRoot = if ($env:AAYS_REPO_ROOT) {
 
 $guardPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_ea_raster_guard_v1.py'
 $injectorPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_runtime_guard_injector_v1.py'
+$identityInjectorPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_measurement_identity_injector_v1.py'
 $carrierPath = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\automation\height_difference_1_official_boundary_and_wcs_v1.ps1'
-foreach ($required in @($guardPath, $injectorPath, $carrierPath)) {
+foreach ($required in @($guardPath, $injectorPath, $identityInjectorPath, $carrierPath)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "HEIGHT_DIFFERENCE_1_ENTRY_FILE_MISSING: $required" }
 }
 
@@ -40,10 +41,33 @@ function Get-LastJsonReceipt {
   return (([string]$jsonLine) | ConvertFrom-Json)
 }
 
+function Assert-PathSizeHashReceipt {
+  param(
+    [object]$Receipt,
+    [string]$ExpectedSource,
+    [string]$ExpectedOutput,
+    [string]$Label
+  )
+  $receiptSourcePath = [System.IO.Path]::GetFullPath([string]$Receipt.source_path)
+  $receiptOutputPath = [System.IO.Path]::GetFullPath([string]$Receipt.output_path)
+  if ($receiptSourcePath -ne [System.IO.Path]::GetFullPath($ExpectedSource)) { throw "${Label}_SOURCE_PATH_MISMATCH" }
+  if ($receiptOutputPath -ne [System.IO.Path]::GetFullPath($ExpectedOutput)) { throw "${Label}_OUTPUT_PATH_MISMATCH" }
+  $sourceInfo = Get-Item -LiteralPath $ExpectedSource
+  $outputInfo = Get-Item -LiteralPath $ExpectedOutput
+  if ([int64]$Receipt.source_bytes -ne [int64]$sourceInfo.Length) { throw "${Label}_SOURCE_SIZE_MISMATCH" }
+  if ([int64]$Receipt.output_bytes -ne [int64]$outputInfo.Length) { throw "${Label}_OUTPUT_SIZE_MISMATCH" }
+  $sourceHash = (Get-FileHash -LiteralPath $ExpectedSource -Algorithm SHA256).Hash.ToLowerInvariant()
+  $outputHash = (Get-FileHash -LiteralPath $ExpectedOutput -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($sourceHash -ne ([string]$Receipt.source_sha256).ToLowerInvariant()) { throw "${Label}_SOURCE_HASH_MISMATCH" }
+  if ($outputHash -ne ([string]$Receipt.output_sha256).ToLowerInvariant()) { throw "${Label}_OUTPUT_HASH_MISMATCH" }
+}
+
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'aays_height_difference_1_entry'
 New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
-$patchedCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_runtime_guarded.ps1'
-$injectorReceiptPath = Join-Path $tempRoot 'height_difference_1_runtime_guard_injector_receipt.json'
+$guardedCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_runtime_guarded.ps1'
+$guardInjectorReceiptPath = Join-Path $tempRoot 'height_difference_1_runtime_guard_injector_receipt.json'
+$identityBoundCarrier = Join-Path $tempRoot 'height_difference_1_official_boundary_and_wcs_identity_bound.ps1'
+$identityInjectorReceiptPath = Join-Path $tempRoot 'height_difference_1_measurement_identity_injector_receipt.json'
 
 try {
   $guardRun = Invoke-PythonEntry -Arguments @($guardPath, '--self-test')
@@ -61,21 +85,13 @@ try {
   if ([string]$injectorSelfReceipt.script_version -ne '1.2-runtime-raster-probe-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_SELF_TEST_VERSION_INVALID' }
   if ([int]$injectorSelfReceipt.checks -ne 17) { throw "RUNTIME_GUARD_INJECTOR_CHECK_COUNT_INVALID: $($injectorSelfReceipt.checks)" }
 
-  $injectorRun = Invoke-PythonEntry -Arguments @(
-    $injectorPath,
-    '--carrier', $carrierPath,
-    '--output', $patchedCarrier,
-    '--receipt', $injectorReceiptPath
-  )
+  $injectorRun = Invoke-PythonEntry -Arguments @($injectorPath, '--carrier', $carrierPath, '--output', $guardedCarrier, '--receipt', $guardInjectorReceiptPath)
   if ($injectorRun.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $injectorRun.Code }
-  foreach ($requiredOutput in @($patchedCarrier, $injectorReceiptPath)) {
+  foreach ($requiredOutput in @($guardedCarrier, $guardInjectorReceiptPath)) {
     if (-not (Test-Path -LiteralPath $requiredOutput -PathType Leaf)) { throw "RUNTIME_GUARD_INJECTOR_OUTPUT_MISSING: $requiredOutput" }
   }
-
-  $injectorReceipt = Get-Content -LiteralPath $injectorReceiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
-  if ($injectorReceipt.slot_id -ne 'height_difference_1' -or $injectorReceipt.state -ne 'COMPLETED_RUNTIME_GUARDS_INJECTED') {
-    throw 'RUNTIME_GUARD_INJECTOR_RECEIPT_INVALID'
-  }
+  $injectorReceipt = Get-Content -LiteralPath $guardInjectorReceiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  if ($injectorReceipt.slot_id -ne 'height_difference_1' -or $injectorReceipt.state -ne 'COMPLETED_RUNTIME_GUARDS_INJECTED') { throw 'RUNTIME_GUARD_INJECTOR_RECEIPT_INVALID' }
   if ([string]$injectorReceipt.script_version -ne '1.2-runtime-raster-probe-and-hmlr-id-guard-injector') { throw 'RUNTIME_GUARD_INJECTOR_VERSION_INVALID' }
   if ([int]$injectorReceipt.runtime_patch_count -ne 4) { throw 'RUNTIME_GUARD_PATCH_COUNT_INVALID' }
   $requiredLabels = @('CLASSIC_TIFF_HEADER_VALIDATOR','EA_OFFICIAL_NODATA_RUNTIME_FILTER','PROBE_RASTER_CONTENT_GATE','HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE')
@@ -87,41 +103,58 @@ try {
     if (@($injectorReceipt.probe_runtime_requirements) -notcontains $requirement) { throw "PROBE_RUNTIME_REQUIREMENT_MISSING: $requirement" }
   }
   if ([double]$injectorReceipt.official_nodata_sentinel -ne [double]-3.4028235e38) { throw 'RUNTIME_GUARD_RECEIPT_SENTINEL_INVALID' }
+  Assert-PathSizeHashReceipt -Receipt $injectorReceipt -ExpectedSource $carrierPath -ExpectedOutput $guardedCarrier -Label 'RUNTIME_GUARD'
 
-  $receiptSourcePath = [System.IO.Path]::GetFullPath([string]$injectorReceipt.source_path)
-  $receiptOutputPath = [System.IO.Path]::GetFullPath([string]$injectorReceipt.output_path)
-  if ($receiptSourcePath -ne [System.IO.Path]::GetFullPath($carrierPath)) { throw 'RUNTIME_GUARD_SOURCE_PATH_MISMATCH' }
-  if ($receiptOutputPath -ne [System.IO.Path]::GetFullPath($patchedCarrier)) { throw 'RUNTIME_GUARD_OUTPUT_PATH_MISMATCH' }
+  $identitySelfTest = Invoke-PythonEntry -Arguments @($identityInjectorPath, '--self-test')
+  if ($identitySelfTest.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $identitySelfTest.Code }
+  $identitySelfReceipt = Get-LastJsonReceipt -Lines $identitySelfTest.Lines -MissingLabel 'MEASUREMENT_IDENTITY_INJECTOR_SELF_TEST_JSON_MISSING'
+  if ($identitySelfReceipt.slot_id -ne 'height_difference_1' -or $identitySelfReceipt.state -ne 'PASS') { throw 'MEASUREMENT_IDENTITY_INJECTOR_SELF_TEST_INVALID' }
+  if ([string]$identitySelfReceipt.script_version -ne '1.0-measurement-inspire-identity-binding-injector') { throw 'MEASUREMENT_IDENTITY_INJECTOR_SELF_TEST_VERSION_INVALID' }
+  if ([int]$identitySelfReceipt.checks -ne 13) { throw "MEASUREMENT_IDENTITY_INJECTOR_CHECK_COUNT_INVALID: $($identitySelfReceipt.checks)" }
 
-  $sourceInfo = Get-Item -LiteralPath $carrierPath
-  $outputInfo = Get-Item -LiteralPath $patchedCarrier
-  if ([int64]$injectorReceipt.source_bytes -ne [int64]$sourceInfo.Length) { throw 'RUNTIME_GUARD_SOURCE_SIZE_MISMATCH' }
-  if ([int64]$injectorReceipt.output_bytes -ne [int64]$outputInfo.Length) { throw 'RUNTIME_GUARD_OUTPUT_SIZE_MISMATCH' }
-
-  $sourceHash = (Get-FileHash -LiteralPath $carrierPath -Algorithm SHA256).Hash.ToLowerInvariant()
-  $outputHash = (Get-FileHash -LiteralPath $patchedCarrier -Algorithm SHA256).Hash.ToLowerInvariant()
-  if ($sourceHash -ne ([string]$injectorReceipt.source_sha256).ToLowerInvariant()) { throw 'RUNTIME_GUARD_SOURCE_HASH_MISMATCH' }
-  if ($outputHash -ne ([string]$injectorReceipt.output_sha256).ToLowerInvariant()) { throw 'RUNTIME_GUARD_OUTPUT_HASH_MISMATCH' }
+  $identityRun = Invoke-PythonEntry -Arguments @($identityInjectorPath, '--carrier', $guardedCarrier, '--output', $identityBoundCarrier, '--receipt', $identityInjectorReceiptPath)
+  if ($identityRun.Code -ne 0) { Write-Output 'FINAL_READY=false'; exit $identityRun.Code }
+  foreach ($requiredOutput in @($identityBoundCarrier, $identityInjectorReceiptPath)) {
+    if (-not (Test-Path -LiteralPath $requiredOutput -PathType Leaf)) { throw "MEASUREMENT_IDENTITY_INJECTOR_OUTPUT_MISSING: $requiredOutput" }
+  }
+  $identityReceipt = Get-Content -LiteralPath $identityInjectorReceiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  if ($identityReceipt.slot_id -ne 'height_difference_1' -or $identityReceipt.state -ne 'COMPLETED_MEASUREMENT_IDENTITY_BINDING_INJECTED') { throw 'MEASUREMENT_IDENTITY_INJECTOR_RECEIPT_INVALID' }
+  if ([string]$identityReceipt.script_version -ne '1.0-measurement-inspire-identity-binding-injector') { throw 'MEASUREMENT_IDENTITY_INJECTOR_VERSION_INVALID' }
+  if ([int]$identityReceipt.runtime_patch_count -ne 4) { throw 'MEASUREMENT_IDENTITY_PATCH_COUNT_INVALID' }
+  $requiredIdentityLabels = @('HMLR_IDENTIFIER_ENV_HANDOFF','MEASUREMENT_INSPIRE_COLUMN_BINDING_GATE','CANDIDATE_INSPIRE_IDENTITY_PROVENANCE','BUSINESS_ROW_INSPIRE_IDENTITY_PROVENANCE_GATE')
+  foreach ($label in $requiredIdentityLabels) {
+    if (@($identityReceipt.runtime_patch_labels) -notcontains $label) { throw "MEASUREMENT_IDENTITY_PATCH_LABEL_MISSING: $label" }
+  }
+  if ([string]$identityReceipt.identifier_column_env -ne 'HMLR_VERIFIED_IDENTIFIER_COLUMN') { throw 'MEASUREMENT_IDENTITY_COLUMN_ENV_INVALID' }
+  if ([string]$identityReceipt.identifier_set_hash_env -ne 'HMLR_VERIFIED_IDENTIFIER_SET_SHA256') { throw 'MEASUREMENT_IDENTITY_HASH_ENV_INVALID' }
+  Assert-PathSizeHashReceipt -Receipt $identityReceipt -ExpectedSource $guardedCarrier -ExpectedOutput $identityBoundCarrier -Label 'MEASUREMENT_IDENTITY'
+  if (([string]$identityReceipt.source_sha256).ToLowerInvariant() -ne ([string]$injectorReceipt.output_sha256).ToLowerInvariant()) { throw 'TWO_STAGE_INJECTOR_HASH_CHAIN_MISMATCH' }
 
   Write-Output 'EA_RASTER_GUARD_PREFLIGHT=PASS'
   Write-Output 'EA_RASTER_GUARD_CHECKS=8'
   Write-Output 'RUNTIME_GUARD_INJECTOR_SELF_TEST=PASS'
   Write-Output 'RUNTIME_GUARD_INJECTOR_CHECKS=17'
   Write-Output 'RUNTIME_GUARD_PATCH_COUNT=4'
+  Write-Output 'MEASUREMENT_IDENTITY_INJECTOR_SELF_TEST=PASS'
+  Write-Output 'MEASUREMENT_IDENTITY_INJECTOR_CHECKS=13'
+  Write-Output 'MEASUREMENT_IDENTITY_PATCH_COUNT=4'
+  Write-Output 'TWO_STAGE_INJECTOR_HASH_CHAIN=VERIFIED'
   Write-Output 'PROBE_RASTER_CONTENT_GATE=ENABLED'
   Write-Output 'HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE=ENABLED'
+  Write-Output 'HMLR_MEASUREMENT_IDENTIFIER_BINDING_GATE=ENABLED'
   Write-Output 'EA_WCS_OFFICIAL_NODATA_SENTINEL=-3.4028235e38'
 
   $shell = Get-Command powershell -ErrorAction SilentlyContinue
   if (-not $shell) { $shell = Get-Command pwsh -ErrorAction SilentlyContinue }
   if (-not $shell) { throw 'POWERSHELL_CHILD_EXECUTABLE_NOT_FOUND' }
-
-  $carrierLines = & $shell.Source -NoProfile -ExecutionPolicy Bypass -File $patchedCarrier 2>&1
+  $carrierLines = & $shell.Source -NoProfile -ExecutionPolicy Bypass -File $identityBoundCarrier 2>&1
   $carrierExit = $LASTEXITCODE
   foreach ($line in @($carrierLines)) { [Console]::Out.WriteLine([string]$line) }
   if ($null -eq $carrierExit) { $carrierExit = 1 }
   exit [int]$carrierExit
 } finally {
-  Remove-Item -LiteralPath $patchedCarrier -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $injectorReceiptPath -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $guardedCarrier -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $guardInjectorReceiptPath -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $identityBoundCarrier -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $identityInjectorReceiptPath -Force -ErrorAction SilentlyContinue
 }
