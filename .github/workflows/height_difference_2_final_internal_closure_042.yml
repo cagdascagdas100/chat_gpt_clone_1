@@ -1,0 +1,100 @@
+name: height_difference_2 final internal closure 042
+on:
+  pull_request:
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/042_closure_trigger.json'
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+concurrency:
+  group: height-difference-2-final-internal-closure-042
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: agent/hd2-final-internal-closure-042-20260722
+      - name: Install Chromium dependencies
+        timeout-minutes: 7
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Build final internal closure package
+        timeout-minutes: 4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python docs/chatgpt_status/topography/shards/height_difference_2/automation/042_build_final_internal_closure.py
+      - name: Final HTTP DOM acceptance
+        timeout-minutes: 5
+        run: |
+          python -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 >/tmp/hd2-http.log 2>&1 &
+          echo $! >/tmp/hd2-http.pid
+          python - <<'PY'
+          import hashlib,json,pathlib
+          from datetime import datetime,timezone
+          from playwright.sync_api import sync_playwright
+          slot=pathlib.Path('england_map_web/data/aays_21_slots/height_difference_2')
+          doc=pathlib.Path('docs/chatgpt_status/topography/shards/height_difference_2')
+          console=[]; page_errors=[]
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(viewport={'width':1920,'height':1080})
+              page.on('console',lambda m: console.append(m.text) if m.type=='error' else None)
+              page.on('pageerror',lambda e: page_errors.append(str(e)))
+              response=page.goto('http://127.0.0.1:8012/index.html',wait_until='networkidle',timeout=120000)
+              page.wait_for_function("document.querySelectorAll('#rows tr').length===934 && document.querySelectorAll('#sources tr').length===82 && document.querySelectorAll('#examples tr').length===57",timeout=120000)
+              rows=page.locator('#rows tr').count(); sources=page.locator('#sources tr').count(); examples=page.locator('#examples tr').count(); body=page.locator('body').inner_text()
+              checks={
+                'http_200':response.status==200,
+                'operation_rows_934':rows==934,
+                'source_rows_82':sources==82,
+                'example_rows_57':examples==57,
+                'three_handoff_rows_visible':all(x in body for x in ['HD2-HANDOFF-031','HD2-HANDOFF-032','HD2-HANDOFF-033']),
+                'internal_complete_visible':'PASS_891_OF_892_ONLY_EXTERNAL_F_HOST_BLOCKED' in body,
+                'external_blocker_visible':'F_HOST_GUARDED_RECOVERY_PENDING' in body,
+                'no_console_errors':not console,
+                'no_page_errors':not page_errors,
+              }
+              shot=slot/'port_8012_web_acceptance_final_042.png'
+              page.screenshot(path=str(shot),full_page=True)
+              screenshot_sha=hashlib.sha256(shot.read_bytes()).hexdigest()
+              browser.close()
+          assert all(checks.values()),checks
+          now=datetime.now(timezone.utc).isoformat()
+          receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':now,'state':'PASS','url':'http://127.0.0.1:8012/index.html','http_status':200,'browser':'Chromium','operation_rows':rows,'source_rows':sources,'example_rows':examples,'checks':checks,'console_errors':console,'page_errors':page_errors,'screenshot_sha256':screenshot_sha,'fake_data':False,'final_ready':False}
+          for path in [slot/'port_8012_web_acceptance.json',slot/'port_8012_web_acceptance_final_042.json',doc/'validation/052_final_live_http_dom_acceptance_042.json']:
+              path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
+          progress_path=slot/'progress_increment_042.json'; progress=json.loads(progress_path.read_text()); progress['live_http_browser_state']='PASS_FINAL_934_82_57_CHROMIUM_NO_CONSOLE_OR_PAGE_ERRORS'; progress['updated_at']=now; progress_path.write_text(json.dumps(progress,ensure_ascii=False,indent=2)+'\n')
+          validation_path=doc/'validation/051_final_internal_closure_web_package_20260722.json'; validation=json.loads(validation_path.read_text())
+          for check in validation['checks']:
+              if check['check']=='final_042_live_http_browser_acceptance':
+                  check['state']='PASS'; check['observed']='HTTP_200_DOM_934_82_57_NO_CONSOLE_OR_PAGE_ERRORS'
+          validation['pass_count']=sum(c['state']=='PASS' for c in validation['checks']); validation['not_run_count']=sum(c['state']=='NOT_RUN' for c in validation['checks']); validation['validated_at']=now
+          validation_path.write_text(json.dumps(validation,ensure_ascii=False,indent=2)+'\n')
+          PY
+          kill $(cat /tmp/hd2-http.pid)
+      - name: Commit generated result package
+        timeout-minutes: 2
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            docs/chatgpt_status/topography/shards/height_difference_2/research/042_final_internal_closure_and_immutable_handoff_20260722.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/runtime/042_internal_handoff_runtime.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/051_final_internal_closure_web_package_20260722.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/052_final_live_http_dom_acceptance_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/source_candidates_increment_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/examples_increment_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/operations_increment_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/progress_increment_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/internal_handoff_runtime_042.json \
+            england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json \
+            england_map_web/data/aays_21_slots/height_difference_2/index.html \
+            england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance.json \
+            england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance_final_042.json
+          git commit -m 'height_difference_2: build final internal closure 042 [skip ci]'
+          git push
