@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "height_difference_1",
   "verified_on": "2026-07-22",
   "query_count": 22,
@@ -10,10 +10,26 @@
     "role": "COMPOSITE_SURVEY_PROVENANCE_BINDING",
     "endpoint": "https://environment.data.gov.uk/geoservices/datasets/9f0fa3fc-a860-4729-adc9-47fe53f658d0/ogc/features/v1/collections/LIDAR_Composite_1m_DTM_2022_extents/items",
     "collection": "LIDAR_Composite_1m_DTM_2022_extents",
-    "bbox_delta_degrees": 0.00005,
+    "storage_crs": "http://www.opengis.net/def/crs/EPSG/0/27700",
+    "bbox_crs": "http://www.opengis.net/def/crs/EPSG/0/27700",
+    "response_crs": "http://www.opengis.net/def/crs/EPSG/0/27700",
+    "bbox_delta_m": 5.0,
+    "format": "application/geo+json",
     "limit": 100,
+    "official_conformance": [
+      "OGC API Features Part 1 Core",
+      "OGC API Features Part 2 CRS",
+      "CQL2 spatial operators"
+    ],
     "required_properties": ["filename", "tilename", "polygon_id", "resolution", "year", "sd_flown", "ed_flown"],
-    "exact_match_rule": "Server bbox candidates are filtered locally; exactly one geometry must intersect the canonical point.",
+    "exact_match_rule": "Server BNG bbox candidates are filtered locally in EPSG:27700; exactly one valid geometry must intersect the canonical BNG point.",
+    "response_checks": [
+      "HTTPS final host remains environment.data.gov.uk",
+      "JSON or GeoJSON content type",
+      "geometry bounds are plausible EPSG:27700 coordinates",
+      "Content-Crs, when present, equals EPSG:27700",
+      "response and selected feature bytes/properties are SHA-256 hashed"
+    ],
     "state": "READY_NOT_EXECUTED"
   },
   "secondary": {
@@ -25,10 +41,11 @@
     "geometry_type": "esriGeometryPoint",
     "spatial_relationship": "esriSpatialRelIntersects",
     "out_fields": ["filename", "os_ref", "sd_flown", "ed_flown", "year", "polygon_id", "pt_spacing", "transform", "geoid", "latest"],
+    "year_rule": "Four-digit years are parsed as calendar years and never as Unix timestamps.",
     "semantic_limit": "May return multiple historical surveys and cannot replace the Composite survey-index binding.",
     "state": "READY_NOT_EXECUTED"
   },
-  "result_semantics": "No survey date or resolved metadata row is claimed until official JSON responses are downloaded, hashed and exact spatial matching passes.",
+  "result_semantics": "No survey date or resolved metadata row is claimed until official JSON responses are downloaded, hashed, explicit CRS checks pass and exact local EPSG:27700 matching succeeds.",
   "resolved_metadata_rows": 0,
   "business_rows_written": 0,
   "fake_data": false,
