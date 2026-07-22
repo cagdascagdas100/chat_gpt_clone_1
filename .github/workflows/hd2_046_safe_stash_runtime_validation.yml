@@ -1,0 +1,83 @@
+name: hd2-046-safe-stash-runtime-validation
+on:
+  push:
+    branches:
+      - agent/hd2-046-safe-stash-recovery-20260722
+concurrency:
+  group: hd2-046-safe-stash-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows-contract:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell and validate JSON mirrors
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $psFiles=@(
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1'
+          )
+          foreach($path in $psFiles){
+            $tokens=$null;$errors=$null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path),[ref]$tokens,[ref]$errors)|Out-Null
+            if($errors.Count -ne 0){throw "POWERSHELL_PARSE_FAIL $path :: $($errors -join '; ')"}
+          }
+          $jsonPaths=@(
+            'ai-tasks/current-task.json',
+            'docs/chatgpt_status/aays1/queue/current.task.json',
+            'docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json',
+            'docs/chatgpt_status/_shared/control/request_queue_refresh.json',
+            'docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json',
+            'england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json',
+            'england_map_web/data/aays_21_slots/height_difference_2/progress_increment_046.json',
+            'england_map_web/data/aays_21_slots/height_difference_2/operations_increment_046.json',
+            'england_map_web/data/aays_21_slots/height_difference_2/source_candidates_increment_046.json',
+            'england_map_web/data/aays_21_slots/height_difference_2/examples_increment_046.json'
+          )
+          $docs=@{}
+          foreach($path in $jsonPaths){$docs[$path]=Get-Content -Raw $path|ConvertFrom-Json}
+          $ai=$docs['ai-tasks/current-task.json'];$current=$docs['docs/chatgpt_status/aays1/queue/current.task.json'];$main=$docs['docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json'];$refresh=$docs['docs/chatgpt_status/_shared/control/request_queue_refresh.json'];$reboot=$docs['docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json'];$manifest=$docs['england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json'];$progress=$docs['england_map_web/data/aays_21_slots/height_difference_2/progress_increment_046.json']
+          $task='aays1-height-difference-2-canonical-export-official-sampling-20260720';$attempt='height-difference-2-20260721-020';$blob='6c9b60be881b37f450a965f41578317de024f1fb'
+          foreach($d in @($ai,$current,$main,$refresh,$reboot)){if($d.task_id-ne$task-or$d.attempt_id-ne$attempt){throw 'IDENTITY_MISMATCH'}}
+          if($ai.pickup_request_revision-ne3-or$current.pickup_request_revision-ne3-or$main.pickup_request_revision-ne3-or$refresh.request_revision-ne3-or$reboot.request_revision-ne3){throw 'REVISION_MISMATCH'}
+          if($ai.operator_recovery_blob_sha-ne$blob-or$current.operator_recovery_blob_sha-ne$blob-or$main.operator_recovery_blob_sha-ne$blob-or$refresh.required_operator_recovery_blob_sha-ne$blob-or$reboot.required_operator_recovery_blob_sha-ne$blob){throw 'OPERATOR_BLOB_MISMATCH'}
+          if($manifest.expected_visible_operation_rows-ne1036-or$manifest.expected_visible_source_rows-ne98-or$manifest.expected_visible_example_rows-ne69){throw 'MANIFEST_COUNT_MISMATCH'}
+          if($progress.completed_operation_count-ne992-or$progress.planned_operation_count-ne993-or$progress.pending_operation_count-ne0){throw 'PROGRESS_MISMATCH'}
+          $script=Get-Content -Raw $psFiles[0]
+          foreach($needle in @('stash','--include-untracked','--atomic','TimeoutSeconds','stash_auto_restore_attempted = $false','016_operator_git_snapshot_latest.json')){if(-not$script.Contains($needle)){throw "SCRIPT_CONTRACT_MISSING=$needle"}}
+          New-Item -ItemType Directory -Force -Path runtime046|Out-Null
+          [ordered]@{schema_version=1;slot_id='height_difference_2';state='PASS';validated_at=(Get-Date).ToUniversalTime().ToString('o');json_mirror_pass_count=10;powershell_parse_pass_count=3;pickup_request_revision=3;pickup_contract_revision=26;operator_recovery_blob_sha=$blob;manifest_operation_rows=1036;manifest_source_rows=98;manifest_example_rows=69;stash_include_untracked=$true;stash_auto_restore=$false;atomic_fetch=$true;git_timeout_seconds=300;helper_timeout_seconds=180;f_host_guarded_recovery_executed=$false;final_ready=$false}|ConvertTo-Json -Depth 10|Set-Content runtime046/windows.json -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hd2-046-windows-contract
+          path: runtime046/windows.json
+  chromium-dom:
+    needs: windows-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.54.1 >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Serve and validate DOM
+        run: |
+          python3 -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 >/tmp/hd2-046-http.log 2>&1 &
+          echo $! >/tmp/hd2-046-http.pid
+          node <<'NODE'
+          const fs=require('fs');const {chromium}=require('playwright');
+          (async()=>{const errors=[];const browser=await chromium.launch({headless:true});const page=await browser.newPage();page.on('console',m=>{if(m.type()==='error')errors.push('console:'+m.text())});page.on('pageerror',e=>errors.push('page:'+e.message));const response=await page.goto('http://127.0.0.1:8012/index.html',{waitUntil:'networkidle'});await page.waitForFunction(()=>document.querySelectorAll('#rows tr').length===1036,{timeout:60000});await page.waitForFunction(()=>document.querySelectorAll('#sources tr').length===98,{timeout:60000});await page.waitForFunction(()=>document.querySelectorAll('#examples tr').length===69,{timeout:60000});const counts=await page.evaluate(()=>({operations:document.querySelectorAll('#rows tr').length,sources:document.querySelectorAll('#sources tr').length,examples:document.querySelectorAll('#examples tr').length,text:document.body.innerText}));for(const id of ['HD2-PICKUP-043','HD2-PICKUP-044','HD2-PICKUP-045'])if(!counts.text.includes(id))throw new Error('MISSING_EXAMPLE '+id);if(errors.length)throw new Error(errors.join('\n'));fs.mkdirSync('runtime046',{recursive:true});fs.writeFileSync('runtime046/browser.json',JSON.stringify({schema_version:1,slot_id:'height_difference_2',state:'PASS',validated_at:new Date().toISOString(),url:'http://127.0.0.1:8012/index.html',http_status:response.status(),browser:'Chromium',operation_rows:counts.operations,source_rows:counts.sources,example_rows:counts.examples,console_errors:[],page_errors:[],f_host_guarded_recovery_executed:false,final_ready:false},null,2));await page.screenshot({path:'runtime046/hd2-046.png',fullPage:true});await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hd2-046-chromium-dom
+          path: runtime046/
