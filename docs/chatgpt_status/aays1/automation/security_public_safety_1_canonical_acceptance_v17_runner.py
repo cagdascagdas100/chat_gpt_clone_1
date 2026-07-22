@@ -18,6 +18,10 @@ LEGACY_QUEUE = ROOT / "docs" / "chatgpt_status" / "aays1" / "queue" / "security_
 MANIFEST = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "canonical_130_endpoint_manifest_20260722.json"
 PREFLIGHT_REPORT = ROOT / "docs" / "chatgpt_status" / "aays1" / "shards" / SLOT_ID / "reports" / "012_security_public_safety_1_v17_runtime_preflight_latest.json"
 PREFLIGHT_WEB = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "runtime_preflight_v17_latest.json"
+CORE_REPORT = ROOT / "docs" / "chatgpt_status" / "aays1" / "shards" / SLOT_ID / "reports" / "011_security_public_safety_1_canonical_acceptance_v17_latest.json"
+CORE_WEB_REPORT = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "canonical_acceptance_v17_latest.json"
+PUBLISHER_CANDIDATE_REPORT = ROOT / "docs" / "chatgpt_status" / "aays1" / "shards" / SLOT_ID / "reports" / "015_security_public_safety_1_publisher_candidate_v17_latest.json"
+PUBLISHER_CANDIDATE_WEB = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "publisher_candidate_v17_latest.json"
 WRAPPER_NAME = Path(__file__).name
 MAX_ATTEMPTS = 3
 RETRY_DELAYS_SECONDS = (1.0, 2.0)
@@ -115,7 +119,7 @@ def run_preflight() -> dict[str, Any]:
 
     status = "PASS" if checks and all(checks.values()) else "BLOCKED"
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -125,11 +129,9 @@ def run_preflight() -> dict[str, Any]:
         "errors": errors,
         "network_requests_performed": 0,
         "hydration_replayed": False,
-        "retry_policy": {
-            "max_attempts": MAX_ATTEMPTS,
-            "delays_seconds": list(RETRY_DELAYS_SECONDS),
-            "retry_only_transient": True,
-        },
+        "retry_policy": {"max_attempts": MAX_ATTEMPTS, "delays_seconds": list(RETRY_DELAYS_SECONDS), "retry_only_transient": True},
+        "publisher_candidate_required": True,
+        "publisher_candidate_paths": [str(PUBLISHER_CANDIDATE_REPORT.relative_to(ROOT)), str(PUBLISHER_CANDIDATE_WEB.relative_to(ROOT))],
         "output_semantics": "AREA_LEVEL_PROXY",
         "parcel_measurement": False,
         "checked_at": now(),
@@ -157,8 +159,57 @@ def make_retry_fetch(original_fetch: Callable[..., dict[str, Any]]) -> Callable[
                 return result
             time.sleep(RETRY_DELAYS_SECONDS[attempt - 1])
         return result
-
     return retry_fetch
+
+
+def build_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> dict[str, Any]:
+    parity = dict(core_result.get("canonical_live_parity") or {})
+    browser = dict(core_result.get("browser_acceptance") or {})
+    acceptance_pass = core_result.get("acceptance_pass") is True
+    completed_units = 7 if acceptance_pass else 5
+    return {
+        "schema_version": 1,
+        "slot_id": SLOT_ID,
+        "task_id": TASK_ID,
+        "attempt_id": ATTEMPT_ID,
+        "status": "READY_FOR_SINGLE_PUBLISHER_COMMIT_PUSH_READBACK" if acceptance_pass else "BLOCKED_RUNTIME_ACCEPTANCE",
+        "acceptance_pass": acceptance_pass,
+        "core_exit_code": exit_code,
+        "canonical_progress_candidate": {
+            "completed_units": completed_units,
+            "total_units": 8,
+            "overall_percent": 87.5 if acceptance_pass else 62.5,
+            "percent_change_from_published_62_5": 25.0 if acceptance_pass else 0.0,
+            "publisher_readback_still_required": True,
+            "may_publish_8_of_8": False,
+        },
+        "runtime_evidence": {
+            "candidate_count": parity.get("candidate_count"),
+            "candidate_passed": parity.get("candidate_passed"),
+            "unique_endpoint_count": parity.get("unique_endpoint_count"),
+            "unique_endpoint_http_json_passed": parity.get("unique_endpoint_http_json_passed"),
+            "network_requests_performed": parity.get("network_requests_performed"),
+            "duplicate_live_requests_avoided": parity.get("duplicate_live_requests_avoided"),
+            "browser_status": browser.get("status"),
+            "progress_console_errors": (browser.get("progress_browser") or {}).get("console_error_count"),
+            "product_matrix_console_errors": (browser.get("product_matrix_browser") or {}).get("console_error_count"),
+        },
+        "source_reports": {"core_report": str(CORE_REPORT.relative_to(ROOT)), "core_web_report": str(CORE_WEB_REPORT.relative_to(ROOT))},
+        "first_unverified_step": "SINGLE_PUBLISHER_COMMIT_PUSH_REMOTE_READBACK" if acceptance_pass else core_result.get("first_unverified_step"),
+        "blockers": [] if acceptance_pass else list(core_result.get("blockers") or []),
+        "output_semantics": "AREA_LEVEL_PROXY",
+        "measurement_level": "lsoa",
+        "parcel_measurement": False,
+        "hydration_replayed": False,
+        "single_runner_only": True,
+        "child_direct_push_forbidden": True,
+        "fake_data": False,
+        "db_write": False,
+        "migration": False,
+        "production_deploy": False,
+        "final_ready": False,
+        "generated_at": now(),
+    }
 
 
 def main() -> int:
@@ -167,10 +218,25 @@ def main() -> int:
     write_json(PREFLIGHT_WEB, preflight)
     if preflight["status"] != "PASS":
         return 3
-
     core = load_module(CORE, "security_public_safety_1_canonical_acceptance_v17_core")
     core.fetch = make_retry_fetch(core.fetch)
-    return int(core.main() or 0)
+    exit_code = int(core.main() or 0)
+    if CORE_REPORT.is_file():
+        try:
+            core_result = json.loads(CORE_REPORT.read_text(encoding="utf-8-sig"))
+        except Exception as exc:
+            core_result = {"slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "acceptance_pass": False, "first_unverified_step": "READ_CORE_ACCEPTANCE_REPORT", "blockers": [f"{type(exc).__name__}: {exc}"]}
+    else:
+        core_result = {"slot_id": SLOT_ID, "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "acceptance_pass": False, "first_unverified_step": "CORE_ACCEPTANCE_REPORT_MISSING", "blockers": ["CORE_ACCEPTANCE_REPORT_MISSING"]}
+    identity_ok = core_result.get("slot_id") == SLOT_ID and core_result.get("task_id") == TASK_ID and core_result.get("attempt_id") == ATTEMPT_ID
+    if not identity_ok:
+        core_result["acceptance_pass"] = False
+        core_result["first_unverified_step"] = "CORE_RESULT_IDENTITY_MISMATCH"
+        core_result["blockers"] = list(core_result.get("blockers") or []) + ["CORE_RESULT_IDENTITY_MISMATCH"]
+    publisher_candidate = build_publisher_candidate(core_result, exit_code)
+    write_json(PUBLISHER_CANDIDATE_REPORT, publisher_candidate)
+    write_json(PUBLISHER_CANDIDATE_WEB, publisher_candidate)
+    return exit_code
 
 
 if __name__ == "__main__":
