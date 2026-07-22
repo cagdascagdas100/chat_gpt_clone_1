@@ -1,0 +1,140 @@
+name: hd2-044-runtime-validation
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+  workflow_dispatch:
+
+concurrency:
+  group: hd2-044-runtime-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile reconciled Python chain
+        run: |
+          python -m py_compile \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_extract_reconciled_exact_candidates.py \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_prepare_hmlr_sources_and_match.py \
+            docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py
+
+      - name: Parse PowerShell chain
+        shell: pwsh
+        run: |
+          $paths = @(
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1'
+          )
+          $allErrors = @()
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $allErrors += $errors | ForEach-Object { "$path :: $($_.Message)" }
+            }
+          }
+          if ($allErrors.Count -gt 0) {
+            $allErrors | Write-Error
+            exit 1
+          }
+          Write-Output 'POWERSHELL_PARSE_PASS=3'
+
+      - name: Install Chromium runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.54.0
+          python -m playwright install --with-deps chromium
+
+      - name: Start slot HTTP server
+        run: |
+          python -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 > /tmp/hd2-http.log 2>&1 &
+          echo $! > /tmp/hd2-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8012/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/hd2-http.log
+          exit 1
+
+      - name: Chromium DOM acceptance
+        run: |
+          cat > /tmp/hd2_acceptance.py <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from playwright.sync_api import sync_playwright
+
+          url = 'http://127.0.0.1:8012/index.html'
+          console_errors = []
+          page_errors = []
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page(viewport={"width": 1600, "height": 1000})
+              page.on('console', lambda msg: console_errors.append(msg.text) if msg.type == 'error' else None)
+              page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+              response = page.goto(url, wait_until='networkidle', timeout=120000)
+              page.wait_for_function("document.querySelector('#message') && !document.querySelector('#message').textContent.includes('Yükleniyor')", timeout=120000)
+              operation_rows = page.locator('#rows tr').count()
+              source_rows = page.locator('#sources tr').count()
+              example_rows = page.locator('#examples tr').count()
+              message = page.locator('#message').inner_text()
+              body = page.locator('body').inner_text()
+              browser_version = browser.version
+              checks = {
+                  'http_200': bool(response and response.status == 200),
+                  'operation_rows_960': operation_rows == 960,
+                  'source_rows_86': source_rows == 86,
+                  'example_rows_60': example_rows == 60,
+                  'manifest_message_success': 'Yükleme hatası' not in message,
+                  'three_fhost_examples_visible': all(x in body for x in ('HD2-FHOST-034','HD2-FHOST-035','HD2-FHOST-036')),
+                  'task_v6_visible': '6.0-fhost-contract-reconciled-exact-chain' in body,
+                  'three_parcels_visible': all(x in body for x in ('parcel_30762','parcel_46142','parcel_61522')),
+                  'no_console_errors': len(console_errors) == 0,
+                  'no_page_errors': len(page_errors) == 0,
+              }
+              result = {
+                  'schema_version': 1,
+                  'slot_id': 'height_difference_2',
+                  'validated_at': datetime.now(timezone.utc).isoformat(),
+                  'state': 'PASS' if all(checks.values()) else 'FAIL',
+                  'url': url,
+                  'http_status': response.status if response else None,
+                  'browser': 'Chromium',
+                  'browser_version': browser_version,
+                  'operation_rows': operation_rows,
+                  'source_rows': source_rows,
+                  'example_rows': example_rows,
+                  'message': message,
+                  'checks': checks,
+                  'console_errors': console_errors,
+                  'page_errors': page_errors,
+              }
+              print('HD2_ACCEPTANCE_JSON=' + json.dumps(result, ensure_ascii=False, sort_keys=True))
+              browser.close()
+              if result['state'] != 'PASS':
+                  raise SystemExit(2)
+          PY
+          python /tmp/hd2_acceptance.py
+
+      - name: Final runtime summary
+        run: |
+          echo 'HD2_PYTHON_COMPILE_PASS=3'
+          echo 'HD2_POWERSHELL_PARSE_PASS=3'
+          echo 'HD2_EXPECTED_OPERATION_ROWS=960'
+          echo 'HD2_EXPECTED_SOURCE_ROWS=86'
+          echo 'HD2_EXPECTED_EXAMPLE_ROWS=60'
