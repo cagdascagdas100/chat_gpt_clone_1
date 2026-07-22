@@ -17,10 +17,10 @@ CONTRACT_REVISION = 8
 COMPLETED_STATE = "COMPLETED_SLOT_LOCAL_GEOMETRY_AND_PLANNING_QUERY_SAMPLE"
 COMPLETED_STATUS = "COMPLETED_REVISION8_CORRECTED_EXACT_ROWS_GEOMETRY_AND_19_QUERIES_NO_SCORE"
 BUG_FIX_MARKER = "RAW_SHA256_WAS_COMPARED_TO_GIT_BLOB_SHA1"
-EXPECTED_SOURCE_SHA_KEYS = {"entry_v8", "geometry_entry", "extractor_v2", "extractor_v2_selftest", "query_executor", "query_validator", "rows_output", "relation_output", "query_evidence", "query_validation"}
+EXPECTED_SOURCE_SHA_KEYS = {"entry_v8", "geometry_entry", "extractor_v2", "extractor_v2_selftest", "relation_pair_contract_validator", "relation_pair_contract_selftest", "relation_pair_contract_manifest", "relation_pair_contract_validation", "query_executor", "query_validator", "rows_output", "relation_output", "query_evidence", "query_validation"}
 EXPECTED_ROW_ACCEPTANCE_KEYS = {"schema_revision", "semantics", "canonical_git_blob_sha1", "canonical_sha256", "five_rows", "row_numbers", "parcel_ids", "unique_hmlr_ids", "positive_areas", "no_nearest", "business_zero"}
 EXPECTED_QUERY_ACCEPTANCE_KEYS = {"requests", "rows", "evidence_rows", "promotion_zero", "scores_zero", "validation_pass", "validated_rows", "polygon_claim_false"}
-REQUIRED_SOURCE_STEPS = {"rows_20_24_extractor_selftest", "rows_20_24_extraction", "slot_local_geometry", "planning_query_execution", "planning_query_validation"}
+REQUIRED_SOURCE_STEPS = {"rows_20_24_extractor_selftest", "rows_20_24_extraction", "relation_pair_contract_selftest", "relation_pair_contract_validation", "slot_local_geometry", "planning_query_execution", "planning_query_validation"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 FORBIDDEN_CROSS_SLOT_TOKENS = ("height_difference_2", "future_growth_2", "future_growth_3")
 
@@ -43,6 +43,8 @@ def validate(payload: dict[str, Any]) -> dict[str, Any]:
     query_validation = payload.get("planning_query_validation")
     source_sha = payload.get("source_sha256")
     selftest = payload.get("rows_20_24_extractor_selftest")
+    relation_selftest = payload.get("relation_pair_contract_selftest")
+    relation_validation = payload.get("relation_pair_contract_validation")
     serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True)
     checks: dict[str, bool] = {
         "slot_id_exact": payload.get("slot_id") == SLOT_ID,
@@ -55,6 +57,8 @@ def validate(payload: dict[str, Any]) -> dict[str, Any]:
         "completed_status_exact": payload.get("status") == COMPLETED_STATUS,
         "no_blocker_on_completed_output": not payload.get("blocker"),
         "extractor_selftest_pass_6_of_6": isinstance(selftest, dict) and selftest.get("result") == "PASS" and selftest.get("passed") == 6 and selftest.get("total") == 6,
+        "relation_pair_selftest_pass_7_of_7": isinstance(relation_selftest, dict) and relation_selftest.get("result") == "PASS" and relation_selftest.get("passed") == 7 and relation_selftest.get("total") == 7,
+        "relation_pair_validation_pass_15": isinstance(relation_validation, dict) and relation_validation.get("result") == "PASS" and relation_validation.get("pair_rows_validated") == 15 and relation_validation.get("current_pairs") == 14 and relation_validation.get("stale_pairs") == 1 and relation_validation.get("polygon_relation_claimed") is False,
         "row_acceptance_exact_all_true": all_true_exact(payload.get("rows_20_24_acceptance"), EXPECTED_ROW_ACCEPTANCE_KEYS),
         "source_steps_exact": isinstance(source_steps, dict) and set(source_steps) == REQUIRED_SOURCE_STEPS,
         "source_steps_exit_zero": isinstance(source_steps, dict) and all(isinstance(source_steps.get(key), dict) and source_steps[key].get("exit_code") == 0 for key in REQUIRED_SOURCE_STEPS),
