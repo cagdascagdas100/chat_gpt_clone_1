@@ -20,8 +20,9 @@ def main():
   j=r/"j";w.atomic_json(j,{"ok":True});ok("atomic_json_roundtrip",json.loads(j.read_text())["ok"])
   fast=w.supervise(command=[sys.executable,"-c","print('ok')"],cwd=r,step_name="fast",hard_timeout_seconds=30,stall_timeout_seconds=30,watch_paths=[],heartbeat_paths=[h1,h2],poll_seconds=.05,heartbeat_seconds=.05)
   ok("fast_process_passes",fast["state"]=="passed" and fast["exit_code"]==0);ok("heartbeat_written_twice",h1.exists() and h2.exists());ok("heartbeat_safety_flags",json.loads(h1.read_text())["final_ready"] is False);ok("stdout_tail_captured","ok" in fast["stdout_tail"])
-  hard=w.supervise(command=[sys.executable,"-c","import time;time.sleep(5)"],cwd=r,step_name="hard",hard_timeout_seconds=1,stall_timeout_seconds=1,watch_paths=[],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
-  ok("hard_or_stall_timeout_blocks",hard["state"]=="blocked" and hard["timeout_kind"] in {"hard_timeout","stall_timeout"});ok("timeout_has_termination",isinstance(hard["termination"],dict))
+  spam="import time\nend=time.time()+5\nwhile time.time()<end:\n print('spam',flush=True);time.sleep(.05)\n"
+  hard=w.supervise(command=[sys.executable,"-c",spam],cwd=r,step_name="log_spam",hard_timeout_seconds=5,stall_timeout_seconds=1,watch_paths=[],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
+  ok("log_spam_does_not_mask_stall",hard["state"]=="blocked" and hard["timeout_kind"]=="stall_timeout");ok("timeout_has_termination",isinstance(hard["termination"],dict))
   progress=r/"p";code=f"import pathlib,time\np=pathlib.Path({str(progress)!r})\nfor i in range(5):\n p.write_text(str(i));time.sleep(.2)\n"
   moving=w.supervise(command=[sys.executable,"-c",code],cwd=r,step_name="moving",hard_timeout_seconds=30,stall_timeout_seconds=15,watch_paths=[progress],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
   ok("watched_progress_prevents_stall",moving["state"]=="passed");ok("observed_path_reported",any(x["path"]==str(progress) for x in moving["observed_paths"]))
