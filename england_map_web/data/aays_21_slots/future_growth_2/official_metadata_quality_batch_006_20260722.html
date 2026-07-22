@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 — resmî metaveri ve kaynak kalitesi batch 006</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:160px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:11px}
+th,td{border:1px solid #cfd8dc;padding:5px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
+.ok{color:#176b2c;font-weight:bold}.pending{color:#8a5a00;font-weight:bold}.warn{color:#8b4f00;font-weight:bold}
+.notice{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin-bottom:12px}code,a{word-break:break-all}
+</style></head><body>
+<h1>future_growth_2 — satır satır resmî metaveri ve kaynak kalitesi / batch 006</h1>
+<div class="notice">Resmî kaynak sayfası doğruluğu, dataset otoritesi ve parsel uygulanabilirliği ayrı tutulur. Canlı koordinat sonucu GitHub'a kaydedilmeden kesin eşleşme, skor veya güven üretilmez.</div>
+<div id="cards" class="cards"></div>
+<table><thead><tr><th>İşlem</th><th>Satır</th><th>Parsel</th><th>Belediye</th><th>Kontrol</th><th>Konu</th><th>Kaynak</th><th>Sonuç</th><th>Kanıt sınıfı</th><th>Kaynak sayfası</th><th>Kesin bağ</th><th>Skor</th><th>Güven</th><th>Not</th></tr></thead><tbody id="ops"></tbody></table>
+<p id="meta"></p><p id="error"></p>
+<script>
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('./official_metadata_quality_batch_006_20260722.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const c=[['Batch işlem',d.batch_operations_completed+'/'+d.batch_operations_total],['Kümülatif işlem',d.cumulative_operations_completed],
+ ['Başarısız',d.failed_operations],['Aday',d.candidate_rows_cumulative],['Kaynak yeniden doğrulama',d.official_source_pages_revalidated],
+ ['Yeni resmî kaynak',d.new_unique_official_source_pages],['Toplam resmî kaynak',d.cumulative_unique_official_source_pages],
+ ['Polygon katmanı',d.official_polygon_layers_revalidated],['Koordinat şablonu',d.planning_data_coordinate_templates_revalidated],
+ ['Authoritative dataset',d.dataset_quality_counts.authoritative_or_authoritative_indicator],
+ ['Çapraz kontrol gerekli',d.dataset_quality_counts.mixed_or_incomplete_crosscheck_required],
+ ['Kesin eşleşen',d.exact_parcel_bound_rows],['Metadata kalite',d.metadata_quality_progress_pct+'%'],['Business',d.business_coverage_pct+'%']];
+ document.getElementById('cards').innerHTML=c.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ document.getElementById('ops').innerHTML=d.operations.map(x=>`<tr><td>${e(x.operation_no)}</td><td>${e(x.row_no)}</td><td>${e(x.parcel_id)}</td><td>${e(x.lpa)}</td>
+ <td>${e(x.operation)}</td><td>${e(x.subject)}</td><td><a href="${e(x.source)}" target="_blank" rel="noopener">${e(x.source)}</a></td>
+ <td class="ok">${e(x.result)}</td><td class="${String(x.evidence_class).includes('MIXED')||String(x.evidence_class).includes('MHCLG')||String(x.evidence_class).includes('POINT_ONLY')?'warn':'ok'}">${e(x.evidence_class)}</td>
+ <td class="ok">${e(x.source_authority_pct)}%</td><td class="pending">${e(x.exact_binding_pct)}%</td><td>${x.future_growth_score===null?'null':e(x.future_growth_score)}</td><td>${e(x.confidence_pct)}%</td><td>${e(x.note)}</td></tr>`).join('');
+ document.getElementById('meta').innerHTML=`Continuation: <code>${e(d.continuation_key)}</code><br>Üretim: ${e(d.generated_at)}<br>Gösterilen işlem: ${d.operations.length}<br>Manual action: <code>${e(d.manual_action_path)}</code>`;
+}).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
+</script></body></html>
