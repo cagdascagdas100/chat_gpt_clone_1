@@ -5,21 +5,30 @@
   "slot_id": "internet_access_2",
   "base_slot_id": "internet_access",
   "shard_index": 2,
-  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
   "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-20260722T022500Z",
-  "attempt_id": "70e25d510d1541b4bf0681ecd26ff09e",
-  "idempotency_key": "d9dfbd902d700a460a8bed94aaf9e03cc545ebfe60899fbb320e01b0d3ee2bcc",
+  "attempt_id": "d9cfc1afc66448aea13cf848f9325b2a",
+  "idempotency_key": "8786d05ea5ae44c241d24751caa45e02d4f4131bf12a06d6b1b8d400f8cb2492",
   "status": "queued",
   "priority": "P1",
   "sequential_after_task_id": "internet-access-2-expand-onspd-identity-existing-11013-20260722T021000Z",
-  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006_ofcom_dynamic_zip_join_existing_11013.py",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006b_ofcom_dynamic_zip_join_strict_guard.py",
   "read_paths": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/005_existing_11013_postcode_identity_candidates.jsonl"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/005_existing_11013_postcode_identity_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006_ofcom_dynamic_zip_join_existing_11013.py"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"
   ],
-  "resource_class": ["light_read", "network_fetch"],
+  "resource_class": [
+    "light_read",
+    "network_fetch"
+  ],
   "requires_git_publish_gate": false,
   "requires_runtime_sync_gate": false,
   "requires_browser_acceptance_gate": false,
@@ -34,18 +43,28 @@
     "source_discovery_required": false,
     "measurement_level": "postcode",
     "output_semantics": "AREA_LEVEL_PROXY",
-    "parcel_binding_method": "retain canonical row_no parcel_id HMLR identity and ONSPD exact postcode identity; dynamically discover the official Ofcom ZIP link; exact r2 postcode join only",
-    "confidence_method": "exact live ONSPD postcode plus exact Ofcom r2 row with complete core fields gives maximum 0.75 confidence and 3/4 postcode-proxy accuracy",
+    "parcel_binding_method": "retain canonical row_no parcel_id HMLR identity and exact live ONSPD postcode identity; dynamically discover the official Ofcom ZIP; exact r2 postcode join only",
+    "confidence_method": "3/4 and confidence 0.75 require exact live ONSPD identity, exact Ofcom r2 postcode row, complete core fields and all official percentages within 0 to 100",
+    "completion_guard": "never report 100 percent from one or more verified candidates; task remains 5 of 6 and 83.33 percent until material-delta and no-data review is complete",
+    "source_level_guard": "POSTCODE_PROXY only when official_coverage_verified is true; otherwise POSTCODE_IDENTITY_ONLY",
+    "material_delta_threshold_pp": 10.0,
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only",
     "human_review_required_when": [
       "official ZIP remains inaccessible",
       "r2 postcode area file is missing",
-      "official core coverage fields are incomplete",
-      "legacy and January 2026 metrics differ materially"
+      "official core coverage fields are incomplete or outside 0 to 100",
+      "legacy and January 2026 metrics differ by at least 10 percentage points",
+      "postcode identity is terminated or unresolved"
     ]
   },
-  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
   "final_ready": false,
-  "requested_at": "2026-07-22T02:25:00Z"
+  "requested_at": "2026-07-22T02:25:00Z",
+  "updated_at": "2026-07-22T03:15:00Z"
 }
