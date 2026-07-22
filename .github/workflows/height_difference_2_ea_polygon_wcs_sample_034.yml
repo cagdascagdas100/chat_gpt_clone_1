@@ -1,0 +1,130 @@
+name: height_difference_2 EA polygon WCS sample 034
+
+on:
+  push:
+    branches:
+      - agent/hd2-hmlr-ogc-probe-034-20260722
+    paths:
+      - docs/chatgpt_status/topography/shards/height_difference_2/runtime/034_ea_polygon_sample_trigger.json
+
+permissions:
+  contents: write
+
+jobs:
+  sample:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-hmlr-ogc-probe-034-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check requests lxml numpy shapely rasterio
+      - name: Sample official DTM inside exact HMLR polygons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import math
+          from pathlib import Path
+          from urllib.parse import urlencode
+          import numpy as np
+          import requests
+          from lxml import etree
+          from rasterio.io import MemoryFile
+          from rasterio.features import geometry_mask
+          from rasterio.transform import xy
+          from shapely.geometry import shape, mapping
+
+          SOURCE=Path('england_map_web/data/aays_21_slots/height_difference_2/hmlr_exact_polygons_runtime_034_v2.json')
+          doc=json.loads(SOURCE.read_text(encoding='utf-8'))
+          if doc.get('unique_native_polygon_rows')!=3: raise RuntimeError('three unique HMLR polygons required')
+          UA='AAYS-height-difference-2-ea-polygon-sampler/1.0'
+          session=requests.Session()
+          services=[
+            {'role':'PRIMARY_DTM_1M','resolution_m':1,'base':'https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs'},
+            {'role':'CROSSCHECK_DTM_2M','resolution_m':2,'base':'https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs'},
+          ]
+
+          def coverage_contract(service):
+            r=session.get(service['base'],params={'service':'WCS','version':'2.0.1','request':'GetCapabilities'},headers={'User-Agent':UA,'Accept':'application/xml,*/*'},timeout=180); r.raise_for_status()
+            root=etree.fromstring(r.content)
+            ids=sorted(set(x.strip() for x in root.xpath('//*[local-name()="CoverageId"]/text()') if x.strip()))
+            elev=[x for x in ids if 'elevation' in x.lower()]
+            if len(elev)!=1: raise RuntimeError(f'unique elevation coverage required for {service["base"]}: {ids}')
+            return elev[0],{'capabilities_bytes':len(r.content),'capabilities_sha256':hashlib.sha256(r.content).hexdigest(),'coverage_ids':ids}
+
+          for s in services:
+            s['coverage_id'],s['contract']=coverage_contract(s)
+
+          def fetch_coverage(service,bounds):
+            minx,miny,maxx,maxy=bounds
+            pad=max(2.0,float(service['resolution_m'])*2.0)
+            pairs=[('service','WCS'),('version','2.0.1'),('request','GetCoverage'),('coverageId',service['coverage_id']),('format','image/tiff'),('subset',f'E({minx-pad},{maxx+pad})'),('subset',f'N({miny-pad},{maxy+pad})')]
+            r=session.get(service['base'],params=pairs,headers={'User-Agent':UA,'Accept':'image/tiff,application/octet-stream,*/*'},timeout=300)
+            r.raise_for_status()
+            if len(r.content)<500 or r.content[:4] not in (b'II*\x00',b'MM\x00*'):
+              raise RuntimeError(f'GeoTIFF required: {service["role"]} {r.status_code} {r.headers.get("Content-Type")} {r.text[:300]}')
+            return r
+
+          def summarize_tiff(content,geom):
+            with MemoryFile(content) as mem:
+              with mem.open() as ds:
+                band=ds.read(1,masked=True)
+                arr=np.asarray(band.filled(np.nan),dtype='float64')
+                nodata=ds.nodata
+                valid=np.isfinite(arr)
+                if nodata is not None: valid &= ~np.isclose(arr,float(nodata),rtol=0,atol=max(1e-6,abs(float(nodata))*1e-12))
+                center=geometry_mask([mapping(geom)],out_shape=(ds.height,ds.width),transform=ds.transform,all_touched=False,invert=True)
+                touched=geometry_mask([mapping(geom)],out_shape=(ds.height,ds.width),transform=ds.transform,all_touched=True,invert=True)
+                center_valid=center & valid
+                touched_valid=touched & valid
+                vals=arr[center_valid]
+                if vals.size<1: raise RuntimeError('no valid center pixels in polygon')
+                minv=float(np.min(vals)); maxv=float(np.max(vals))
+                positions=np.argwhere(center_valid)
+                minpos=positions[int(np.argmin(vals))]; maxpos=positions[int(np.argmax(vals))]
+                minx,miny=xy(ds.transform,int(minpos[0]),int(minpos[1]),offset='center')
+                maxx,maxy=xy(ds.transform,int(maxpos[0]),int(maxpos[1]),offset='center')
+                touch_vals=arr[touched_valid]
+                return {'crs':str(ds.crs),'width':ds.width,'height':ds.height,'resolution_m':[abs(float(ds.transform.a)),abs(float(ds.transform.e))],'transform':[float(x) for x in ds.transform[:6]],'nodata':float(nodata) if nodata is not None else None,'polygon_center_pixel_count':int(center.sum()),'valid_center_pixel_count':int(vals.size),'nodata_or_invalid_center_pixel_count':int(center.sum()-vals.size),'all_touched_valid_pixel_count':int(touch_vals.size),'height_min_m':round(minv,3),'height_max_m':round(maxv,3),'height_difference_m':round(maxv-minv,3),'height_mean_m':round(float(np.mean(vals)),3),'height_median_m':round(float(np.median(vals)),3),'height_p02_m':round(float(np.quantile(vals,0.02)),3),'height_p98_m':round(float(np.quantile(vals,0.98)),3),'min_pixel_center_bng':[round(float(minx),3),round(float(miny),3)],'max_pixel_center_bng':[round(float(maxx),3),round(float(maxy),3)],'all_touched_min_m':round(float(np.min(touch_vals)),3) if touch_vals.size else None,'all_touched_max_m':round(float(np.max(touch_vals)),3) if touch_vals.size else None,'all_touched_difference_m':round(float(np.max(touch_vals)-np.min(touch_vals)),3) if touch_vals.size else None}
+
+          output_rows=[]
+          for row in doc['rows']:
+            if not row.get('unique_native_polygon_match') or len(row.get('matches',[]))!=1: raise RuntimeError(f'unique match missing: {row.get("row_no")}')
+            match=row['matches'][0]; geom=shape(match['geometry_geojson'])
+            samples=[]
+            for service in services:
+              resp=fetch_coverage(service,geom.bounds)
+              sample=summarize_tiff(resp.content,geom)
+              if sample['crs'] not in ('EPSG:27700','PROJCS["OSGB 1936 / British National Grid"') and '27700' not in sample['crs']:
+                raise RuntimeError(f'WCS CRS mismatch: {sample["crs"]}')
+              samples.append({'role':service['role'],'resolution_contract_m':service['resolution_m'],'wcs_base':service['base'],'coverage_id':service['coverage_id'],'request_final_url':resp.url,'response_content_type':resp.headers.get('Content-Type'),'response_bytes':len(resp.content),'response_sha256':hashlib.sha256(resp.content).hexdigest(),**sample})
+            primary=next(x for x in samples if x['role']=='PRIMARY_DTM_1M'); cross=next(x for x in samples if x['role']=='CROSSCHECK_DTM_2M')
+            cross_delta={'min_delta_m':round(primary['height_min_m']-cross['height_min_m'],3),'max_delta_m':round(primary['height_max_m']-cross['height_max_m'],3),'difference_delta_m':round(primary['height_difference_m']-cross['height_difference_m'],3)}
+            output_rows.append({'row_no':row['row_no'],'parcel_id':row['parcel_id'],'authority':row['authority'],'hmlr_inspire_id':row['hmlr_inspire_id'],'hmlr_feature_sha256':match['feature_sha256'],'hmlr_gml_sha256':row['gml_sha256'],'hmlr_zip_sha256':row['zip_sha256'],'polygon_area_m2':match['geometry_area_m2'],'sampling_policy':'PIXEL_CENTER_WITHIN_EXACT_NATIVE_EPSG27700_HMLR_POLYGON','samples':samples,'crosscheck_deltas':cross_delta,'height_min_m':primary['height_min_m'],'height_max_m':primary['height_max_m'],'height_difference_m':primary['height_difference_m'],'official_numeric_row':True,'business_row':False,'result_confidence_percent':96})
+
+          generated=dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          payload={'schema_version':1,'slot_id':'height_difference_2','generated_at':generated,'source_publisher':'Environment Agency','source_polygon_publisher':'HM Land Registry','source_polygon_file':str(SOURCE),'source_polygon_sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'service_contracts':services,'rows':output_rows,'official_numeric_rows_written':len(output_rows),'business_rows_written':0,'fake_data':False,'final_ready':False}
+          out=Path('england_map_web/data/aays_21_slots/height_difference_2/ea_dtm_polygon_samples_runtime_034.json'); out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          checks=[]
+          for row in output_rows:
+            p=row['samples'][0]; c=row['samples'][1]
+            checks.append({'row_no':row['row_no'],'hmlr_inspire_id':row['hmlr_inspire_id'],'valid_1m_pixels':p['valid_center_pixel_count'],'valid_2m_pixels':c['valid_center_pixel_count'],'height_difference_1m_m':p['height_difference_m'],'height_difference_2m_m':c['height_difference_m'],'difference_delta_m':row['crosscheck_deltas']['difference_delta_m'],'edge_sensitivity_m':round(p['all_touched_difference_m']-p['height_difference_m'],3) if p['all_touched_difference_m'] is not None else None,'wcs_1m_sha256':p['response_sha256'],'wcs_2m_sha256':c['response_sha256']})
+          rec={'schema_version':1,'slot_id':'height_difference_2','validated_at':generated,'state':'PASS' if len(output_rows)==3 else 'FAIL','checks':checks,'official_numeric_rows_written':len(output_rows),'business_rows_written':0,'fake_data':False,'final_ready':False,'output_path':str(out),'output_sha256':hashlib.sha256(out.read_bytes()).hexdigest()}
+          recp=Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/034_ea_dtm_polygon_samples_runtime_034.json'); recp.parent.mkdir(parents=True,exist_ok=True); recp.write_text(json.dumps(rec,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit official numeric sample evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/aays_21_slots/height_difference_2/ea_dtm_polygon_samples_runtime_034.json docs/chatgpt_status/topography/shards/height_difference_2/validation/034_ea_dtm_polygon_samples_runtime_034.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record official EA DTM polygon samples 034'
+          git push origin HEAD:agent/hd2-hmlr-ogc-probe-034-20260722
