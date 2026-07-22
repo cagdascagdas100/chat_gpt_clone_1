@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Fail-closed acceptance for the revision 18 watchdog-supervised serial pipeline."""
+"""Fail-closed acceptance for the 17 prior watchdog-supervised steps.
+
+This acceptance is the 18th pipeline step, so it validates only the 17 steps that
+must complete before it. Requiring itself would create a permanent circular block.
+"""
 from __future__ import annotations
 import argparse,json,os,tempfile
 from pathlib import Path
@@ -29,6 +33,7 @@ def evaluate(pipeline:dict[str,Any]):
  b=[];steps=pipeline.get("steps") or [];names={str(x.get("step_name") or x.get("name") or "") for x in steps if isinstance(x,dict)};missing=sorted(REQUIRED_PRIOR_STEPS-names)
  if missing:b.append("MISSING_REQUIRED_PRIOR_STEPS:"+",".join(missing))
  if len(steps)!=len(REQUIRED_PRIOR_STEPS):b.append(f"PRIOR_STEP_COUNT_MISMATCH:{len(steps)}!={len(REQUIRED_PRIOR_STEPS)}")
+ if "REV18_LIVENESS_ACCEPTANCE" in names:b.append("CIRCULAR_SELF_STEP_PRESENT_BEFORE_ACCEPTANCE")
  for x in steps:
   if not isinstance(x,dict):b.append("INVALID_STEP_RECORD");continue
   n=str(x.get("step_name") or x.get("name") or "UNKNOWN")
@@ -42,7 +47,7 @@ def evaluate(pipeline:dict[str,Any]):
  for f in ("fake_data","db_write","migration","production_deploy"):
   if pipeline.get(f) is not False:b.append(f.upper()+"_SAFETY_FLAG")
  if int(pipeline.get("actual_business_data_rows_written") or 0)!=0:b.append("WATCHDOG_PIPELINE_MUST_NOT_CLAIM_BUSINESS_ROWS")
- return {"passed":not b,"blockers":b,"prior_steps_observed":len(steps),"required_prior_steps":len(REQUIRED_PRIOR_STEPS),"timeout_steps":[str(x.get("step_name")) for x in steps if isinstance(x,dict) and x.get("timeout_kind")],"failed_steps":[str(x.get("step_name")) for x in steps if isinstance(x,dict) and x.get("state")!="passed"]}
+ return {"passed":not b,"blockers":b,"prior_steps_observed":len(steps),"required_prior_steps":len(REQUIRED_PRIOR_STEPS),"self_dependency_forbidden":True,"timeout_steps":[str(x.get("step_name")) for x in steps if isinstance(x,dict) and x.get("timeout_kind")],"failed_steps":[str(x.get("step_name")) for x in steps if isinstance(x,dict) and x.get("state")!="passed"]}
 def main():
  o=args();r=root(o.repo_root);result=evaluate(load(r/o.pipeline));now=__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat();s={"schema_version":1,"slot_id":SLOT_ID,"task_id":"aays1-internet-access-3-revision18-liveness-acceptance-20260722","state":"runtime_validation_passed" if result["passed"] else "blocked","updated_at":now,"result":result,"source_checks_executed":4,"actual_business_data_rows_written":0,"parcel_relations_promoted":0,"confidence_uplifts":0,"single_shared_runner_only":True,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False};write(r/o.runner_output,s);write(r/o.web_output,s);print(json.dumps(s,ensure_ascii=False,indent=2));return 0 if result["passed"] else 2
 if __name__=="__main__":raise SystemExit(main())
