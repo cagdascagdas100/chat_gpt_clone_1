@@ -1,0 +1,53 @@
+name: hd2-046-pr-validation
+on:
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+concurrency:
+  group: hd2-046-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell and mirrors
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $ps=@('docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1','docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1','docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1')
+          foreach($p in $ps){$t=$null;$e=$null;[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $p),[ref]$t,[ref]$e)|Out-Null;if($e.Count){throw "PARSE $p $($e -join ';')"}}
+          $paths=@('ai-tasks/current-task.json','docs/chatgpt_status/aays1/queue/current.task.json','docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json','docs/chatgpt_status/_shared/control/request_queue_refresh.json','docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json')
+          $d=@($paths|%{Get-Content -Raw $_|ConvertFrom-Json});$task='aays1-height-difference-2-canonical-export-official-sampling-20260720';$attempt='height-difference-2-20260721-020';$blob='6c9b60be881b37f450a965f41578317de024f1fb'
+          foreach($x in $d){if($x.task_id-ne$task-or$x.attempt_id-ne$attempt){throw 'IDENTITY'}}
+          if($d[0].pickup_request_revision-ne3-or$d[1].pickup_request_revision-ne3-or$d[2].pickup_request_revision-ne3-or$d[3].request_revision-ne3-or$d[4].request_revision-ne3){throw 'REVISION'}
+          if($d[0].operator_recovery_blob_sha-ne$blob-or$d[1].operator_recovery_blob_sha-ne$blob-or$d[2].operator_recovery_blob_sha-ne$blob-or$d[3].required_operator_recovery_blob_sha-ne$blob-or$d[4].required_operator_recovery_blob_sha-ne$blob){throw 'BLOB'}
+          $m=Get-Content -Raw england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json|ConvertFrom-Json;$p=Get-Content -Raw england_map_web/data/aays_21_slots/height_difference_2/progress_increment_046.json|ConvertFrom-Json
+          if($m.expected_visible_operation_rows-ne1036-or$m.expected_visible_source_rows-ne98-or$m.expected_visible_example_rows-ne69){throw 'MANIFEST'}
+          if($p.completed_operation_count-ne992-or$p.planned_operation_count-ne993-or$p.pending_operation_count-ne0){throw 'PROGRESS'}
+          $s=Get-Content -Raw $ps[0];foreach($n in @('--include-untracked','--atomic','stash_auto_restore_attempted = $false','016_operator_git_snapshot_latest.json','Wait-Process')){if(-not$s.Contains($n)){throw "MISSING $n"}}
+          New-Item -ItemType Directory -Force runtime046|Out-Null
+          @{state='PASS';json_mirror_pass_count=10;powershell_parse_pass_count=3;revision=3;operation_rows=1036;source_rows=98;example_rows=69;operator_blob=$blob;f_host_executed=$false;final_ready=$false}|ConvertTo-Json|Set-Content runtime046/contract.json -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hd2-046-contract
+          path: runtime046/contract.json
+  browser:
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: npm init -y >/dev/null 2>&1 && npm install playwright@1.54.1 >/dev/null && npx playwright install --with-deps chromium
+      - name: Chromium acceptance
+        run: |
+          python3 -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 >/tmp/http.log 2>&1 &
+          node <<'NODE'
+          const fs=require('fs'),{chromium}=require('playwright');(async()=>{let errs=[];let b=await chromium.launch({headless:true}),p=await b.newPage();p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});p.on('pageerror',e=>errs.push(e.message));let r=await p.goto('http://127.0.0.1:8012/index.html',{waitUntil:'networkidle'});await p.waitForFunction(()=>document.querySelectorAll('#rows tr').length===1036,{timeout:60000});await p.waitForFunction(()=>document.querySelectorAll('#sources tr').length===98,{timeout:60000});await p.waitForFunction(()=>document.querySelectorAll('#examples tr').length===69,{timeout:60000});let x=await p.evaluate(()=>({o:document.querySelectorAll('#rows tr').length,s:document.querySelectorAll('#sources tr').length,e:document.querySelectorAll('#examples tr').length,t:document.body.innerText}));for(let id of ['HD2-PICKUP-043','HD2-PICKUP-044','HD2-PICKUP-045'])if(!x.t.includes(id))throw Error('MISSING '+id);if(errs.length)throw Error(errs.join('\n'));fs.mkdirSync('runtime046',{recursive:true});fs.writeFileSync('runtime046/browser.json',JSON.stringify({state:'PASS',http_status:r.status(),browser:'Chromium',operation_rows:x.o,source_rows:x.s,example_rows:x.e,console_errors:[],page_errors:[],f_host_executed:false,final_ready:false},null,2));await p.screenshot({path:'runtime046/screenshot.png',fullPage:true});await b.close()})().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hd2-046-browser
+          path: runtime046/
