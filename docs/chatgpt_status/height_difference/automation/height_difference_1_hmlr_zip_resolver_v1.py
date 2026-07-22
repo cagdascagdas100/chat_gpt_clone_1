@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Resolve the current HMLR Barking and Dagenham INSPIRE ZIP and extract one GML.
 
-Fail closed: the official page row, ZIP route, archive structure, GML bytes and hashes
-must all validate. No parcel geometry or elevation result is produced by this helper.
+Fail closed: the official page row, ZIP route, redirect host, archive structure,
+GML bytes and hashes must all validate. No parcel geometry or elevation result is
+produced by this helper.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import contextlib
 import datetime as dt
 import hashlib
 import html.parser
+import http.cookiejar
 import io
 import json
 import os
@@ -22,18 +24,20 @@ import time
 from typing import Any
 from urllib.parse import urljoin, urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener
-import http.cookiejar
 import zipfile
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.1-hmlr-zip-page-handoff-fail-closed"
+SCRIPT_VERSION = "1.2-hmlr-zip-redirect-host-fail-closed"
 HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 HMLR_AUTHORITY = "London Borough of Barking and Dagenham"
+HMLR_ORIGIN_HOST = "use-land-property-data.service.gov.uk"
+HMLR_OBJECT_HOST = "datapub-prd-s3-bucket.s3.amazonaws.com"
+HMLR_ZIP_ALLOWED_FINAL_HOSTS = {HMLR_ORIGIN_HOST, HMLR_OBJECT_HOST}
 HMLR_ZIP_URL = (
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download/"
     "London_Borough_of_Barking_and_Dagenham.zip"
 )
-USER_AGENT = "AAYS-height-difference-hmlr-zip/1.1"
+USER_AGENT = "AAYS-height-difference-hmlr-zip/1.2"
 MAX_PAGE_BYTES = 20_000_000
 MAX_ZIP_BYTES = 1_000_000_000
 MAX_GML_BYTES = 1_000_000_000
@@ -104,7 +108,26 @@ def build_http_opener():
     return build_opener(HTTPCookieProcessor(jar))
 
 
-def fetch_bytes(opener: Any, url: str, *, timeout: int, retries: int, max_bytes: int):
+def validate_final_url(final_url: str, allowed_hosts: set[str], label: str) -> str:
+    parsed = urlparse(final_url)
+    if parsed.scheme != "https":
+        raise EvidenceError(f"{label}_FINAL_URL_NOT_HTTPS:{parsed.scheme}")
+    host = (parsed.hostname or "").lower()
+    if host not in allowed_hosts:
+        raise EvidenceError(f"{label}_FINAL_HOST_NOT_ALLOWED:{host}")
+    return host
+
+
+def fetch_bytes(
+    opener: Any,
+    url: str,
+    *,
+    timeout: int,
+    retries: int,
+    max_bytes: int,
+    allowed_final_hosts: set[str],
+    label: str,
+):
     last: Exception | None = None
     for attempt in range(1, retries + 1):
         try:
@@ -117,6 +140,8 @@ def fetch_bytes(opener: Any, url: str, *, timeout: int, retries: int, max_bytes:
                 declared = headers.get("content-length")
                 if declared and int(declared) > max_bytes:
                     raise EvidenceError(f"DECLARED_RESPONSE_TOO_LARGE:{declared}>{max_bytes}")
+                final_url = response.geturl()
+                final_host = validate_final_url(final_url, allowed_final_hosts, label)
                 chunks: list[bytes] = []
                 total = 0
                 while True:
@@ -128,10 +153,9 @@ def fetch_bytes(opener: Any, url: str, *, timeout: int, retries: int, max_bytes:
                         raise EvidenceError(f"RESPONSE_TOO_LARGE:{total}>{max_bytes}")
                     chunks.append(chunk)
                 data = b"".join(chunks)
-                final_url = response.geturl()
             if not data:
                 raise EvidenceError(f"EMPTY_RESPONSE:{url}")
-            return data, headers, final_url
+            return data, headers, final_url, final_host
         except Exception as exc:
             last = exc
             if attempt < retries:
@@ -151,7 +175,7 @@ def discover_authority_zip(page_bytes: bytes) -> str:
         parsed = urlparse(full)
         if (
             parsed.scheme == "https"
-            and parsed.netloc == "use-land-property-data.service.gov.uk"
+            and parsed.netloc == HMLR_ORIGIN_HOST
             and parsed.path.endswith(".zip")
         ):
             candidates.append(full)
@@ -233,6 +257,20 @@ def run_self_test() -> dict[str, Any]:
     ).encode()
     if discover_authority_zip(sample_page) != HMLR_ZIP_URL:
         raise EvidenceError("SELF_TEST_DISCOVERY_FAILED")
+    if validate_final_url(HMLR_DOWNLOAD_PAGE, {HMLR_ORIGIN_HOST}, "PAGE") != HMLR_ORIGIN_HOST:
+        raise EvidenceError("SELF_TEST_PAGE_HOST_FAILED")
+    sample_signed = (
+        "https://datapub-prd-s3-bucket.s3.amazonaws.com/inspire/"
+        "London_Borough_of_Barking_and_Dagenham.zip?X-Amz-Expires=60"
+    )
+    if validate_final_url(sample_signed, HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP") != HMLR_OBJECT_HOST:
+        raise EvidenceError("SELF_TEST_OBJECT_HOST_FAILED")
+    try:
+        validate_final_url("https://example.com/redirect.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP")
+    except EvidenceError:
+        pass
+    else:
+        raise EvidenceError("SELF_TEST_UNKNOWN_HOST_NOT_REJECTED")
     payload = b'<?xml version="1.0"?><gml><feature>test</feature></gml>'
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -240,7 +278,7 @@ def run_self_test() -> dict[str, Any]:
     extracted, receipt = extract_single_gml(buffer.getvalue())
     if extracted != payload or receipt["archive_member_count"] != 1:
         raise EvidenceError("SELF_TEST_EXTRACTION_FAILED")
-    return {"state": "PASS", "checks": 2, "script_version": SCRIPT_VERSION}
+    return {"state": "PASS", "checks": 6, "script_version": SCRIPT_VERSION}
 
 
 def main() -> int:
@@ -259,7 +297,7 @@ def main() -> int:
         raise SystemExit("--page-output, --gml-output and --receipt-output are required")
 
     result: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "script_version": SCRIPT_VERSION,
         "started_at": utc_now(),
@@ -267,6 +305,7 @@ def main() -> int:
         "authority": HMLR_AUTHORITY,
         "download_page_url": HMLR_DOWNLOAD_PAGE,
         "origin_zip_url": HMLR_ZIP_URL,
+        "allowed_zip_final_hosts": sorted(HMLR_ZIP_ALLOWED_FINAL_HOSTS),
         "artifacts": {},
         "errors": [],
         "fake_data": False,
@@ -277,12 +316,24 @@ def main() -> int:
     }
     try:
         opener = build_http_opener()
-        page_bytes, page_headers, page_final_url = fetch_bytes(
-            opener, HMLR_DOWNLOAD_PAGE, timeout=180, retries=3, max_bytes=MAX_PAGE_BYTES
+        page_bytes, page_headers, page_final_url, page_final_host = fetch_bytes(
+            opener,
+            HMLR_DOWNLOAD_PAGE,
+            timeout=180,
+            retries=3,
+            max_bytes=MAX_PAGE_BYTES,
+            allowed_final_hosts={HMLR_ORIGIN_HOST},
+            label="HMLR_PAGE",
         )
         discovered_url = discover_authority_zip(page_bytes)
-        zip_bytes, zip_headers, zip_final_url = fetch_bytes(
-            opener, discovered_url, timeout=300, retries=3, max_bytes=MAX_ZIP_BYTES
+        zip_bytes, zip_headers, zip_final_url, zip_final_host = fetch_bytes(
+            opener,
+            discovered_url,
+            timeout=300,
+            retries=3,
+            max_bytes=MAX_ZIP_BYTES,
+            allowed_final_hosts=HMLR_ZIP_ALLOWED_FINAL_HOSTS,
+            label="HMLR_ZIP",
         )
         gml_bytes, archive_receipt = extract_single_gml(zip_bytes)
         atomic_bytes(args.page_output, page_bytes)
@@ -293,11 +344,12 @@ def main() -> int:
                 "sha256": sha256_bytes(page_bytes),
                 "bytes": len(page_bytes),
                 "content_type": page_headers.get("content-type"),
-                "final_host": urlparse(page_final_url).netloc,
+                "final_host": page_final_host,
             },
             "hmlr_zip": {
                 "origin_url": discovered_url,
-                "final_host": urlparse(zip_final_url).netloc,
+                "final_host": zip_final_host,
+                "final_host_allowlisted": True,
                 "sha256": sha256_bytes(zip_bytes),
                 "bytes": len(zip_bytes),
                 "content_type": zip_headers.get("content-type"),
