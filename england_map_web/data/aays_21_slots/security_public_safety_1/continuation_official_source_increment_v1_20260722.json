@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "source_head": "8ec8399aaf638906198907482e956072881c5f58",
+  "checked_at": "2026-07-22T16:43:08Z",
+  "state": "PARALLEL_PREPARATION_PUBLISHED_BLOCKER_UNCHANGED",
+  "canonical_progress": {
+    "completed_units": 5,
+    "total_units": 8,
+    "overall_percent": 62.5,
+    "percent_change": 0.0
+  },
+  "increment_metrics": {
+    "official_source_checks_added": 6,
+    "official_source_checks_passed": 6,
+    "source_upgrades_added": 6,
+    "research_examples_added": 6,
+    "candidate_rows_added": 0,
+    "parcel_values_added": 0,
+    "stored_values_modified": false,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+  },
+  "sources": [
+    {
+      "row": 1,
+      "status": "PASS",
+      "source": "Police API crime categories",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/docs/method/crime-categories/",
+      "verified_fact": "The API returns valid crime-category identifiers for a requested data-set month.",
+      "quality_effect": "Prevents invalid or silently changed category identifiers from being accepted."
+    },
+    {
+      "row": 2,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Police API force list",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/docs/method/forces/",
+      "verified_fact": "The force-list method supplies force IDs but excludes British Transport Police from the returned list.",
+      "quality_effect": "BTP must not be treated as a missing force merely because it is absent from this endpoint."
+    },
+    {
+      "row": 3,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Police API street-level outcomes",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/docs/method/outcomes-at-location/",
+      "verified_fact": "Street-level outcomes can be queried by location, point or polygon; outcomes are unavailable for the Police Service of Northern Ireland.",
+      "quality_effect": "Outcome coverage limits are recorded instead of inferred as zero."
+    },
+    {
+      "row": 4,
+      "status": "PASS",
+      "source": "Police API data availability",
+      "authority": "data.police.uk",
+      "url": "https://data.police.uk/docs/method/crimes-street-dates/",
+      "verified_fact": "The availability method lists months with street-crime data and the forces supplying stop-and-search data for each month.",
+      "quality_effect": "Month availability can be checked before endpoint execution."
+    },
+    {
+      "row": 5,
+      "status": "PASS",
+      "source": "Home Office police recorded crime and outcomes open data",
+      "authority": "GOV.UK / Home Office",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "verified_fact": "The official data-set page was last updated 23 April 2026 and provides Police Force Area, Community Safety Partnership and outcomes tables, including year-ending-March-2026 outcomes data.",
+      "quality_effect": "Adds an official aggregate cross-check source separate from street-level API results."
+    },
+    {
+      "row": 6,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "ONS Police Force Area data tables",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "verified_fact": "The current Police Force Area data tables were released 23 April 2026; the next release is scheduled for 23 July 2026.",
+      "quality_effect": "Provides area-level trend validation but is not parcel-level evidence."
+    }
+  ],
+  "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
+  "manual_action_commit": "6f98166f8c533cc13227414e8f8708d4d1085fcf",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "parcel_measurement": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

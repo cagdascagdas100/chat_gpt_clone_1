@@ -1548,6 +1548,140 @@ class Coordinator:
         normalized = normalize_repo_path(path)
         return any(normalized == allowed or normalized.startswith(allowed + "/") for allowed in allowed_paths)
 
+    @staticmethod
+    def publisher_conflict_timestamp(value: Any) -> datetime | None:
+        if not isinstance(value, str):
+            return None
+        candidate = value.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(candidate)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    @classmethod
+    def publisher_conflict_json_signature(cls, value: Any) -> Any:
+        """Remove only volatile timestamps before comparing generated proofs."""
+        volatile = {
+            "updated_at", "last_updated", "generated_at", "heartbeat_at",
+            "last_attempt_at", "runner_published_at", "published_at",
+        }
+        if isinstance(value, dict):
+            return {
+                key: cls.publisher_conflict_json_signature(child)
+                for key, child in value.items()
+                if str(key).casefold() not in volatile
+            }
+        if isinstance(value, list):
+            return [cls.publisher_conflict_json_signature(child) for child in value]
+        return value
+
+    @classmethod
+    def publisher_conflict_json_latest(cls, value: Any) -> datetime:
+        latest = datetime.min.replace(tzinfo=timezone.utc)
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if str(key).casefold() in {
+                    "updated_at", "last_updated", "generated_at", "heartbeat_at",
+                    "last_attempt_at", "runner_published_at", "published_at",
+                }:
+                    parsed = cls.publisher_conflict_timestamp(child)
+                    if parsed and parsed > latest:
+                        latest = parsed
+                nested = cls.publisher_conflict_json_latest(child)
+                if nested > latest:
+                    latest = nested
+        elif isinstance(value, list):
+            for child in value:
+                nested = cls.publisher_conflict_json_latest(child)
+                if nested > latest:
+                    latest = nested
+        return latest
+
+    @classmethod
+    def generated_conflict_side(cls, relative: str, ours: str, theirs: str) -> str | None:
+        """Resolve only equivalent generated records; never guess through code."""
+        suffix = Path(relative).suffix.casefold()
+        generated_path = any(
+            marker in f"/{normalize_repo_path(relative).casefold()}"
+            for marker in (
+                "/reports/", "/status/", "/runner_outputs/", "/outputs/",
+                "/_shared/slots_21/", "/_shared/manual_actions/",
+            )
+        )
+        if not generated_path or suffix not in {".json", ".txt", ".md"}:
+            return None
+        if ours == theirs:
+            return "ours"
+        if suffix == ".json":
+            try:
+                ours_json = json.loads(ours)
+                theirs_json = json.loads(theirs)
+            except json.JSONDecodeError:
+                return None
+            if cls.publisher_conflict_json_signature(ours_json) != cls.publisher_conflict_json_signature(theirs_json):
+                return None
+            ours_time = cls.publisher_conflict_json_latest(ours_json)
+            theirs_time = cls.publisher_conflict_json_latest(theirs_json)
+            return "theirs" if theirs_time > ours_time else "ours"
+        iso_pattern = re.compile(r"20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})")
+        if iso_pattern.sub("<TIMESTAMP>", ours) != iso_pattern.sub("<TIMESTAMP>", theirs):
+            return None
+        ours_times = [cls.publisher_conflict_timestamp(match.group(0)) for match in iso_pattern.finditer(ours)]
+        theirs_times = [cls.publisher_conflict_timestamp(match.group(0)) for match in iso_pattern.finditer(theirs)]
+        ours_latest = max((value for value in ours_times if value), default=datetime.min.replace(tzinfo=timezone.utc))
+        theirs_latest = max((value for value in theirs_times if value), default=datetime.min.replace(tzinfo=timezone.utc))
+        return "theirs" if theirs_latest > ours_latest else "ours"
+
+    def auto_resolve_publisher_conflicts(self, stage_paths: list[str]) -> dict[str, Any]:
+        conflicts = self.git_path_list(
+            self.repo, "diff", "--name-only", "--diff-filter=U", "-z", "--"
+        )
+        allowed = {normalize_repo_path(path) for path in stage_paths}
+        if not conflicts:
+            return {"state": "PASS", "resolved": []}
+        foreign = [path for path in conflicts if normalize_repo_path(path) not in allowed]
+        if foreign:
+            return {"state": "FOREIGN_CONFLICT", "paths": foreign}
+        resolved: list[dict[str, str]] = []
+        for relative in conflicts:
+            versions: dict[str, str] = {}
+            for side, stage in (("ours", 2), ("theirs", 3)):
+                shown = subprocess.run(
+                    self.git_command("-C", str(self.repo), "show", f":{stage}:{relative}"),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=60,
+                )
+                if shown.returncode != 0:
+                    return {"state": "CONFLICT_STAGE_MISSING", "path": relative}
+                try:
+                    versions[side] = shown.stdout.decode("utf-8")
+                except UnicodeDecodeError:
+                    return {"state": "BINARY_CONFLICT_REQUIRES_OWNER", "path": relative}
+            selected = self.generated_conflict_side(relative, versions["ours"], versions["theirs"])
+            if not selected:
+                return {"state": "SEMANTIC_CONFLICT_REQUIRES_SLOT_OWNER", "path": relative}
+            checkout = subprocess.run(
+                self.git_command("-C", str(self.repo), "checkout", f"--{selected}", "--", relative),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=60,
+            )
+            if checkout.returncode != 0:
+                return {"state": "CONFLICT_CHECKOUT_FAILED", "path": relative, "error": checkout.stderr.strip()}
+            staged = subprocess.run(
+                self.git_command("-C", str(self.repo), "add", "--sparse", "--", relative),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=60,
+            )
+            if staged.returncode != 0:
+                return {"state": "CONFLICT_STAGE_FAILED", "path": relative, "error": staged.stderr.strip()}
+            resolved.append({"path": relative, "selected": selected})
+        remaining = self.git_path_list(
+            self.repo, "diff", "--name-only", "--diff-filter=U", "-z", "--"
+        )
+        if remaining:
+            return {"state": "CONFLICTS_REMAIN", "paths": remaining, "resolved": resolved}
+        return {"state": "PASS", "resolved": resolved}
+
     def prepare_publish_item(self, source: Path, task: dict[str, Any], worktree: Path, base_head: str) -> Path | None:
         working = set(self.git_path_list(worktree, "diff", "--name-only", "-z", "--"))
         working.update(self.git_path_list(worktree, "diff", "--cached", "--name-only", "-z", "--"))
@@ -1680,7 +1814,7 @@ class Coordinator:
                 proof_paths = self.copy_slot_proofs(str(item["slot_id"]))
                 stage_paths = sorted(set([*changed_paths, queue_relative, *proof_paths]))
                 stage = subprocess.run(
-                    self.git_command("-C", str(self.repo), "add", "-A", "--", *stage_paths),
+                    self.git_command("-C", str(self.repo), "add", "--sparse", "-A", "--", *stage_paths),
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
                 )
                 if stage.returncode != 0:
@@ -1732,8 +1866,24 @@ class Coordinator:
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=300,
                     )
                     if merge.returncode != 0:
-                        subprocess.run(self.git_command("-C", str(self.repo), "merge", "--abort"), check=False)
-                        raise RuntimeError(f"PUBLISHER_MERGE_CONFLICT: {merge.stderr.strip() or merge.stdout.strip()}")
+                        resolution = self.auto_resolve_publisher_conflicts(stage_paths)
+                        if resolution.get("state") != "PASS":
+                            subprocess.run(self.git_command("-C", str(self.repo), "merge", "--abort"), check=False)
+                            raise RuntimeError(
+                                "PUBLISHER_MERGE_CONFLICT: "
+                                f"{resolution.get('state')} {resolution.get('path') or resolution.get('paths') or ''}; "
+                                f"{merge.stderr.strip() or merge.stdout.strip()}"
+                            )
+                        finish_merge = subprocess.run(
+                            self.git_command("-C", str(self.repo), "commit", "--no-edit"),
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
+                        )
+                        if finish_merge.returncode != 0:
+                            subprocess.run(self.git_command("-C", str(self.repo), "merge", "--abort"), check=False)
+                            raise RuntimeError(
+                                "PUBLISHER_AUTO_RESOLVE_COMMIT_FAILED: "
+                                f"{finish_merge.stderr.strip() or finish_merge.stdout.strip()}"
+                            )
                 if push_error:
                     raise RuntimeError(f"PUBLISHER_PUSH_FAILED: {push_error}")
                 local_head = subprocess.run(
@@ -1771,7 +1921,7 @@ class Coordinator:
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=60,
                     )
                     subprocess.run(
-                        self.git_command("-C", str(self.repo), "add", "-A", "--", *stage_paths),
+                        self.git_command("-C", str(self.repo), "add", "--sparse", "-A", "--", *stage_paths),
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=120,
                     )
                     subprocess.run(

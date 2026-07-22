@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "source_head": "c6dfb272f8b0d0fc32a9db0dcc8a2ea98acb39d1",
+  "generated_at": "2026-07-22T16:55:54Z",
+  "stage": "OFFICIAL_SOURCE_DISCOVERY_AND_SCHEMA_PREFLIGHT_QUEUED",
+  "general_program_progress_percent": 11.1,
+  "general_program_completed_steps": 1,
+  "general_program_total_steps": 9,
+  "turn_control_progress_percent": 90.0,
+  "turn_control_completed_operations": 9,
+  "turn_control_total_operations": 10,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "slot_partition_start": 1,
+  "slot_partition_end": 30761,
+  "new_parcel_rows_written_this_turn": 0,
+  "source_selection_confidence_percent": 99,
+  "parcel_output_accuracy": "NOT_SCORED_UNTIL_ARCHIVE_AND_BINDING_VALIDATION",
+  "source_candidates": [
+    {
+      "candidate_id": "ofcom_connected_nations_spring_2026_fixed_coverage_zip",
+      "authority": "Ofcom",
+      "role": "PRIMARY_CURRENT_COVERAGE_SOURCE",
+      "decision": "ACCEPTED_PENDING_RUNTIME_ARCHIVE_VALIDATION",
+      "source_snapshot_date": "2026-01",
+      "publication_date": "2026-05-13",
+      "correction_version": "v2-2026-07-07",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+      "notes": "The archive name remains r1, but the official v2 documentation requires 121 corrected all-premises postcode files named 202601_fixed_postcode_coverage_r2_XX.csv."
+    },
+    {
+      "candidate_id": "ofcom_connected_nations_spring_2026_fixed_coverage_metadata_v2",
+      "authority": "Ofcom",
+      "role": "PRIMARY_SCHEMA_AND_CORRECTION_EVIDENCE",
+      "decision": "ACCEPTED",
+      "source_snapshot_date": "2026-01",
+      "publication_date": "2026-07-07",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
+      "verified_facts": {
+        "all_premises_postcode_files": 121,
+        "all_premises_postcode_rows": 1741096,
+        "all_premises_postcode_uncompressed_size_mb": 165,
+        "postcode_file_pattern": "202601_fixed_postcode_coverage_r2_XX.csv",
+        "postcode_full_fibre_field_available": false,
+        "postcode_gigabit_field_available": true
+      }
+    },
+    {
+      "candidate_id": "ofcom_connected_nations_spring_2026_page",
+      "authority": "Ofcom",
+      "role": "CURRENT_SNAPSHOT_CONTEXT",
+      "decision": "ACCEPTED",
+      "source_snapshot_date": "2026-01",
+      "publication_date": "2026-05-13",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026"
+    },
+    {
+      "candidate_id": "ons_postcode_products",
+      "authority": "Office for National Statistics",
+      "role": "POSTCODE_REFERENCE_AND_SPATIAL_PROXY_SUPPORT_ONLY",
+      "decision": "ACCEPTED_AS_REFERENCE_NOT_AS_BROADBAND_MEASUREMENT",
+      "confidence_percent": 95,
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts",
+      "notes": "ONSPD and NSPL are quarterly postcode geography products; they support postcode location and geography linkage but do not provide broadband coverage."
+    },
+    {
+      "candidate_id": "ofcom_planned_network_deployments_2026",
+      "authority": "Ofcom",
+      "role": "FUTURE_NETWORK_PLANS",
+      "decision": "EXCLUDED_FROM_CURRENT_INTERNET_AVAILABILITY_SCORE",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-planned-network-deployment/connected-nations-planned-network-deployments-2026",
+      "notes": "Forward-looking deployment plans are not current availability evidence."
+    }
+  ],
+  "operations": [
+    {"line": 1, "operation": "canonical_branch_head_readback", "state": "PASS", "evidence": "c6dfb272f8b0d0fc32a9db0dcc8a2ea98acb39d1"},
+    {"line": 2, "operation": "slot_owner_and_lease_check", "state": "PASS", "evidence": "unclaimed; owner and lease absent"},
+    {"line": 3, "operation": "current_task_and_continuation_deduplication", "state": "PASS", "evidence": "idle before queue; deterministic queue path absent"},
+    {"line": 4, "operation": "ofcom_current_snapshot_discovery", "state": "PASS", "evidence": "January 2026 snapshot"},
+    {"line": 5, "operation": "ofcom_methodology_pdf_visual_and_text_check", "state": "PASS", "evidence": "official v2 PDF checked"},
+    {"line": 6, "operation": "postcode_r2_correction_gate", "state": "PASS", "evidence": "CW and MK duplicate corrections; r2 naming required"},
+    {"line": 7, "operation": "ons_postcode_reference_role_check", "state": "PASS", "evidence": "reference/join only"},
+    {"line": 8, "operation": "fail_closed_schema_audit_script_publish", "state": "PASS", "evidence": "4926fcf409e43b12f18c28b60c78820e0ce10e8c and 97050ab71d8f2184edc982856fe2bec9f26973bf"},
+    {"line": 9, "operation": "single_coordinator_task_queue", "state": "PASS", "evidence": "3b797c8b4059080e1aaa160a3ea4488205645727"},
+    {"line": 10, "operation": "portable_host_archive_download_and_1741096_row_validation", "state": "PENDING", "evidence": null}
+  ],
+  "next_verified_action": "EXISTING_SINGLE_COORDINATOR_EXECUTE_OFCom_2026_SCHEMA_AUDIT_THEN_MIGRATE_SLOT_ROWS",
+  "fake_data": false,
+  "final_ready": false
+}

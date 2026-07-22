@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>internet_access_2 ilerleme</title>
 <style>
-:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;margin:22px;line-height:1.42;background:#f4f6f8;color:#171717}main{max-width:1800px;margin:auto}h1{margin-bottom:4px}.sub{margin-top:0;color:#555}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}.card,section{background:#fff;border:1px solid #d7dbe0;border-radius:10px;padding:14px;margin:12px 0}.card strong{display:block;font-size:1.3rem}.scroll{overflow:auto;max-height:720px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#eef1f4}.PASS,.FIXED,.PASS_2_OF_4_ONSPD_LIVE,.PASS_40_OF_40,.PASS_4_OF_4,.PASS_FAIL_CLOSED,.PASS_AUTH_REQUIRED{font-weight:700}.BLOCKED,.BLOCKED_STALE,.BLOCKED_EXPIRED,.BLOCKED_PUBLISH_PENDING,.BLOCKED_EXTERNAL_RESTART,.BLOCKED_NOT_FOUND,.BLOCKED_ABSENT,.BLOCKED_NO_BINARY,.NOT_FOUND{font-weight:700}.error{border-left:5px solid #a00;padding-left:10px}.ok{border-left:5px solid #087;padding-left:10px}@media(prefers-color-scheme:dark){body{background:#111;color:#eee}.card,section{background:#1b1b1b;border-color:#444}.sub{color:#bbb}th{background:#292929}th,td{border-color:#444}}
+:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;margin:22px;line-height:1.42;background:#f4f6f8;color:#171717}main{max-width:1800px;margin:auto}h1{margin-bottom:4px}.sub{margin-top:0;color:#555}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}.card,section{background:#fff;border:1px solid #d7dbe0;border-radius:10px;padding:14px;margin:12px 0}.card strong{display:block;font-size:1.3rem}.scroll{overflow:auto;max-height:720px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#eef1f4}.PASS,.FIXED,[class*="PASS_"]{font-weight:700}.BLOCKED,.NOT_FOUND,[class*="BLOCKED_"]{font-weight:700}.error{border-left:5px solid #a00;padding-left:10px}.ok{border-left:5px solid #087;padding-left:10px}@media(prefers-color-scheme:dark){body{background:#111;color:#eee}.card,section{background:#1b1b1b;border-color:#444}.sub{color:#bbb}th{background:#292929}th,td{border-color:#444}}
 </style>
 </head>
 <body>
@@ -20,7 +20,7 @@
 <script>
 const errors=[];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function fetchJson(path,{critical=false}={}){
+async function fetchResource(path,{critical=false,json=true}={}){
   let last;
   for(let attempt=1;attempt<=2;attempt++){
     const ctl=new AbortController();
@@ -28,7 +28,7 @@ async function fetchJson(path,{critical=false}={}){
     try{
       const res=await fetch(path,{cache:'no-store',signal:ctl.signal});
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      return json?await res.json():await res.text();
     }catch(e){last=e;if(attempt<2) await new Promise(r=>setTimeout(r,250));}
     finally{clearTimeout(timer);}
   }
@@ -36,30 +36,47 @@ async function fetchJson(path,{critical=false}={}){
   if(critical) throw last;
   return null;
 }
+const fetchJson=(path,opts={})=>fetchResource(path,{...opts,json:true});
+const fetchText=(path,opts={})=>fetchResource(path,{...opts,json:false});
 function table(title,heads,rows){
   return `<section><h2>${esc(title)}</h2><div class="scroll"><table><thead><tr>${heads.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td class="${esc(v)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
 function metric(label,value){return `<div class="card"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;}
+function asObjects(payload){
+  if(!payload?.rows) return [];
+  if(!Array.isArray(payload.rows[0])) return payload.rows;
+  const cols=payload.columns||[];
+  return payload.rows.map(row=>Object.fromEntries(cols.map((c,i)=>[c,row[i]])));
+}
+function sampleObjects(payload){
+  const rows=payload?.new_rows||payload?.rows||[];
+  if(!rows.length||!Array.isArray(rows[0])) return rows;
+  const cols=payload.columns||[];
+  return rows.map(row=>Object.fromEntries(cols.map((c,i)=>[c,row[i]])));
+}
 (async()=>{
   try{
     const progress=await fetchJson('progress_latest.json',{critical:true});
-    const [operations,samples,sources,runtime]=await Promise.all([
+    const [operationManifest,samples,sources,runtime]=await Promise.all([
       fetchJson('operations_latest.json'),
-      fetchJson('sample_rows_extended_206.json'),
+      fetchJson('sample_rows_latest.json'),
       fetchJson('official_sources_latest.json'),
       fetchJson('runtime_pending_health_latest.json')
     ]);
-    const p=progress.progress||{}, c=progress.candidates||{}, w=progress.web_visibility||{};
+    let operationRows=asObjects(operationManifest);
+    if(operationManifest?.operation_log){
+      const raw=await fetchText(operationManifest.operation_log);
+      if(raw) operationRows=raw.split(/\r?\n/).filter(Boolean).map((line,i)=>{try{return JSON.parse(line)}catch(e){return {no:i+1,operation:'jsonl_parse',state:'OPTIONAL_FAILED',detail:String(e)}}});
+    }
+    const sampleRows=sampleObjects(samples);
+    const p=progress.progress||{},c=progress.candidates||{},w=progress.web_visibility||{};
     document.getElementById('metrics').innerHTML=[
       metric('Kimlik aşaması',`${p.current_identity_wave_completed_operations}/${p.current_identity_wave_total_operations} · %${p.current_identity_wave_percent}`),
       metric('Görev seti',`${p.expanded_task_set_completed}/${p.expanded_task_set_total} · %${p.expanded_task_set_completed_percent}`),
       metric('Altyapı',`${p.infrastructure_repair_completed}/${p.infrastructure_repair_total} · %${p.infrastructure_repair_percent}`),
       metric('Web runtime',`${p.web_runtime_health_completed}/${p.web_runtime_health_total} · %${p.web_runtime_health_percent}`),
       metric('Ürün planı',`${p.product_plan_completed}/${p.product_plan_total} · %${p.product_plan_percent}`),
-      metric('Kimlik adayı',c.verified_postcode_identity_rows),
-      metric('Canlı postcode',c.verified_live_postcodes),
-      metric('Örnek',c.featured_verified_sample_rows),
-      metric('Görünür işlem',w.visible_operation_rows)
+      metric('Kimlik adayı',c.verified_postcode_identity_rows),metric('Canlı postcode',c.verified_live_postcodes),metric('Örnek',c.featured_verified_sample_rows),metric('Görünür işlem',w.visible_operation_rows)
     ].join('');
     let html='';
     html+=table('Görev ve blocker durumu',['Öğe','Durum','Detay'],[
@@ -67,17 +84,16 @@ function metric(label,value){return `<div class="card"><span>${esc(label)}</span
       ['Publisher',progress.publisher?.current_runtime_error,'Eski süreç bellekte; persistent wrapper remote’da mevcut'],
       ['Exact Ofcom join',progress.accuracy?.strict_exact_join_output_state,'P0 çıktı oluşmadı'],
       ['Ofcom r2 binary',progress.blockers?.includes('OFFICIAL_OFCom_R2_ZIP_BINARY_FETCH_BLOCKED')?'BLOCKED':'PASS','3/4 kapısı kapalı'],
-      ['Web continuation',progress.web_runtime?.web_continuation_blocked?'BLOCKED':'PASS','Örnek ve kaynak QA devam edebilir'],
-      ['final_ready',progress.final_ready,'Güvenlik gereği false']
+      ['Web continuation',progress.web_runtime?.web_continuation_blocked?'BLOCKED':'PASS','Örnek ve kaynak QA devam edebilir'],['final_ready',progress.final_ready,'Güvenlik gereği false']
     ]);
-    if(operations) html+=table(`Satır satır işlemler (${operations.rows.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],operations.rows.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
+    if(operationRows.length) html+=table(`Satır satır işlemler (${operationRows.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],operationRows.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
     if(runtime) html+=table('Runtime sağlık ve takılma kayıtları',['No','Alan','Durum','Detay'],runtime.rows.map(r=>[r.no,r.area,r.state,r.detail]));
-    if(samples) html+=table(`Doğrulanmış yeni örnekler (${samples.new_rows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],samples.new_rows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
+    if(sampleRows.length) html+=table(`Doğrulanmış yeni örnekler (${sampleRows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],sampleRows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
     if(sources) html+=table('Resmî kaynak rotaları',['Kurum','Kaynak','Rol','Durum / sınır'],sources.sources.map(s=>[s.authority,s.source,s.role,s.route_state||JSON.stringify(s.route_states||{})]));
     if(errors.length) html+=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(e=>[e.file,e.state,e.detail]));
     document.getElementById('content').innerHTML=html;
     document.getElementById('message').className='ok';
-    document.getElementById('message').textContent=`Yüklendi. ${errors.length} optional hata; kritik ilerleme dosyası başarılı.`;
+    document.getElementById('message').textContent=`Yüklendi. ${operationRows.length} işlem, ${sampleRows.length} yeni örnek, ${errors.length} optional hata.`;
     document.getElementById('updated').textContent=`Güncelleme: ${progress.updated_at||''}`;
   }catch(e){
     document.getElementById('message').className='error';

@@ -1,0 +1,112 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_2",
+  "snapshot_date": "2026-07-22",
+  "state": "WAVE1_RETRY5_PRECLAIM_HARDENED_SAME_ATTEMPT_NO_OUTPUT_YET",
+  "task_id": "security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_20260722",
+  "attempt_id": "attempt-005",
+  "target_rows": 12,
+  "target_start": "parcel_30762",
+  "target_end": "parcel_30773",
+  "implementation": {
+    "base_source_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_20260722.py",
+    "base_source_blob_sha": "d29c33ea894878f063fc930692cc684176fb291a",
+    "hardened_entry_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py",
+    "hardened_entry_blob_sha": "cdb20cb578be5de1789e7821d2a435c1a9f77d58",
+    "bridge_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1",
+    "bridge_blob_sha": "8f4b09b9713a56d78a9c624202f83028afd77b7a",
+    "queue_path": "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json",
+    "queue_blob_sha": "43ba5691e3b4a3c345d2f8fd3303185b3f214d21",
+    "canonical_point_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8"
+  },
+  "official_contract_basis": [
+    {
+      "row": 1,
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "source": "English indices of deprivation 2025",
+      "role": "current corrected v2 File 7 route and official LSOA ranks, scores and deciles",
+      "confidence_percent": 99,
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025"
+    },
+    {
+      "row": 2,
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "source": "File 7 CSV preview",
+      "role": "Crime Rank, Crime Score, Crime Decile and population denominator schema",
+      "confidence_percent": 99,
+      "url": "https://www.gov.uk/csv-preview/691494fbb49cc44345161692/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv"
+    },
+    {
+      "row": 3,
+      "publisher": "Police.uk / Home Office",
+      "source": "Street-level crimes API contract",
+      "role": "one-mile point query and approximate location limitations",
+      "confidence_percent": 98,
+      "url": "https://data.police.uk/docs/method/crime-street/"
+    },
+    {
+      "row": 4,
+      "publisher": "Police.uk / Home Office",
+      "source": "Police.uk About data",
+      "role": "location anonymisation and data-quality limitations",
+      "confidence_percent": 98,
+      "url": "https://data.police.uk/about/"
+    },
+    {
+      "row": 5,
+      "publisher": "Office for National Statistics",
+      "source": "LSOA population estimates mid-2022 revised to mid-2024",
+      "role": "official workbook edition and LSOA population schema",
+      "confidence_percent": 99,
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics"
+    }
+  ],
+  "hardening_findings": [
+    {"row":1,"finding":"target_uniqueness_was_set_equality_only","previous_risk":"duplicate target features could overwrite in a dictionary and still satisfy set equality","correction":"any duplicate requested parcel ID raises a fatal error before output","state":"CORRECTED"},
+    {"row":2,"finding":"point_geometry_type_was_not_required","previous_risk":"a non-Point geometry with a numeric coordinate pair could pass a broad WGS84 check","correction":"geometry type must be Point and coordinates must be exactly two numeric values","state":"CORRECTED"},
+    {"row":3,"finding":"iod_schema_gate_was_header_presence_only","previous_risk":"wrong edition, duplicate LSOAs or broken ranks could pass","correction":"33,755 rows, 33,755 unique LSOAs, no duplicates, rank 1–33,755 with 33,755 unique ranks and valid deciles are required","state":"CORRECTED"},
+    {"row":4,"finding":"ons_population_workbook_gate_was_zip_presence_only","previous_risk":"an unrelated or incomplete workbook could pass","correction":"worksheet, LSOA, population and 2024 markers are required","state":"CORRECTED"},
+    {"row":5,"finding":"historical_lsoa_match_increased_integrity_score","previous_risk":"historical internal geography could inflate official evidence confidence","correction":"historical match remains a displayed cross-check but contributes zero confidence points","state":"CORRECTED"},
+    {"row":6,"finding":"rate_normalisation_language_conflicted_with_one_mile_police_query","previous_risk":"one-mile approximate numerator could be divided by an LSOA denominator","correction":"Police.uk remains response-integrity context; IoD25 ordinal method is bound separately","state":"CORRECTED"},
+    {"row":7,"finding":"hmlr_download_redirect_loop_route","previous_risk":"known redirect loop could block an otherwise non-critical source role","correction":"official dataset access page is used; HMLR remains geometry context only","state":"CORRECTED"}
+  ],
+  "integrity_rubric": {
+    "unique_exact_internal_parcel_id": 25,
+    "valid_point_wgs84_geometry": 20,
+    "single_official_ons_lsoa_match": 30,
+    "official_police_response_hash": 20,
+    "explicit_police_month": 5,
+    "historical_lsoa_crosscheck_points": 0,
+    "maximum": 100,
+    "confidence_is_evidence_integrity_not_safety_probability": true
+  },
+  "operations": [
+    {"row":1,"operation":"fresh_remote_wave1_base_source_readback","state":"PASS"},
+    {"row":2,"operation":"duplicate_target_overwrite_risk_detected","state":"PASS"},
+    {"row":3,"operation":"iod25_header_only_schema_risk_detected","state":"PASS"},
+    {"row":4,"operation":"ons_workbook_presence_only_schema_risk_detected","state":"PASS"},
+    {"row":5,"operation":"historical_lsoa_confidence_inflation_detected","state":"PASS"},
+    {"row":6,"operation":"official_current_v2_and_police_one_mile_contract_verified","state":"PASS"},
+    {"row":7,"operation":"exact_base_blob_hardened_python_entry_published","state":"PASS"},
+    {"row":8,"operation":"duplicate_target_and_exact_point_fail_closed_guards_published","state":"PASS"},
+    {"row":9,"operation":"iod25_33755_unique_lsoa_unique_rank_and_decile_guards_published","state":"PASS"},
+    {"row":10,"operation":"ons_population_workbook_content_markers_published","state":"PASS"},
+    {"row":11,"operation":"bridge_bound_to_exact_hardened_entry_blob","state":"PASS"},
+    {"row":12,"operation":"same_retry5_queue_contract_revised_without_new_attempt_or_runner","state":"PASS"},
+    {"row":13,"operation":"existing_canonical_runner_execute_hardened_retry5_and_publish_twelve_rows","state":"PENDING"},
+    {"row":14,"operation":"served_http_json_hash_dom_console_browser_acceptance","state":"PENDING"}
+  ],
+  "operations_completed": 12,
+  "operations_total": 14,
+  "joined_candidate_rows": 0,
+  "confidence_ge_95_candidate_rows": 0,
+  "business_rows_written": 0,
+  "new_attempt_created": false,
+  "new_runner_created": false,
+  "parallel_runner_created": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

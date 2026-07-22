@@ -110,9 +110,15 @@ Zorunlu alanlar:
 ## 8. GitHub ve yayın güvenliği
 
 - Başlamadan `gh auth status` veya eşdeğer uzak erişim doğrulaması yap.
+- Her çalışma ve her push denemesinden önce uzak branch'i `fetch` et; yalnız güncel uzak HEAD üzerine ilerle.
 - Başka slotların değişikliklerini stage/commit etme.
 - Karışık worktree’de `git add -A` kullanma; yalnız bu slotun doğrulanmış yollarını stage et.
-- Non-fast-forward durumunda uzak branch’i getir, çakışmayı dosya sahipliği kurallarına göre çöz; başka slotun çıktısını silme.
+- Non-fast-forward durumunda en fazla 5 sınırlı `fetch -> merge -> test -> push` denemesi yap; `force push`, `reset --hard` ve geçmiş silme kullanma.
+- Bir çatışmayı otomatik çözebilmek için çatışan bütün yollar bu görevin `exact_write_paths`/slot kanıt yolları içinde olmalıdır. Başka slota ait tek bir yol varsa merge'i iptal et, ilgili owner'ın yayınını bekle ve yeniden dene; başka slotun çıktısını silme.
+- Aynı üretilmiş JSON/TXT/MD kaydı yalnız zaman damgasında ayrılıyorsa içerikleri zaman damgaları çıkarılmış halde eşitlik kontrolünden geçir ve en yeni geçerli kaydı seç. İçerik de farklıysa körlemesine `ours/theirs` seçme.
+- Kod, şema veya farklı iş kanıtları aynı satırlarda değişmişse seçili slot owner'ı iki tarafın işlevini birleştirir; conflict marker taraması, sözdizimi ve ilgili testler geçmeden commit/push yapmaz.
+- Ortak koordinatör/publisher dosyalarını yalnız seri publisher çözer. Child sayfa ortak branch'e doğrudan merge/push yapmaz.
+- Aynı çatışma yeniden görülürse slot, yol ve üç Git nesnesinden kararlı bir çatışma anahtarı üret; aynı çözümü/testi idempotent uygula ve ikinci bir görev/commit üretme.
 - Push sonrası uzak branch SHA readback ile yerel SHA eşleşmeden `PUBLISHED` yazma.
 - Ayrıntılı sözleşme değişikliği ayrı branch ve taslak PR ile yayımlanır.
 
