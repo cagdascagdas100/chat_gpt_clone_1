@@ -1,0 +1,88 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 2,
+  "task_id": "security_public_safety_2_geometry_lsoa_police_sample_wave1_retry4_20260722",
+  "attempt_id": "attempt-004",
+  "idempotency_key": "security-public-safety-2-wave1-parcel-30762-30773-v3-retry4-contract-valid-20260722",
+  "status": "pending",
+  "page_key": "aays1",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry2_20260722.py",
+  "read_paths": [
+    "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/source_and_sample_gate_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_20260722.py"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/geometry_lsoa_police_sample_wave1_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/progress_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html"
+  ],
+  "resource_class": ["heavy_disk_io", "network_fetch", "browser_research", "cpu_heavy"],
+  "requires_git_publish_gate": true,
+  "requires_shared_publish_gate": true,
+  "parcel_partition": {"start":30762,"end":61522,"count":30761,"canonical_count":92283},
+  "safety_flags": {"fake_data":false,"db_write":false,"migration":false,"production_deploy":false},
+  "data_quality_contract": {
+    "source_urls": [
+      "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0?f=json",
+      "https://data.police.uk/api/crime-last-updated",
+      "https://data.police.uk/docs/method/crime-street/",
+      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+      "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
+      "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
+    ],
+    "source_snapshot_date": "2026-07-22",
+    "source_discovery_required": false,
+    "measurement_level": "lsoa",
+    "output_semantics": "CANDIDATE",
+    "parcel_binding_method": "exact_internal_security_parcel_id_to_point_then_ons_lsoa21_point_intersection",
+    "confidence_method": "deterministic_evidence_integrity_rubric_v1_no_business_score",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "not_used",
+    "human_review_required_when": [
+      "point_source_blob_mismatch",
+      "canonical_point_missing",
+      "multiple_or_zero_lsoa_matches",
+      "historical_lsoa_code_mismatch",
+      "police_api_month_missing",
+      "police_response_unavailable",
+      "crime_rate_method_not_documented",
+      "browser_acceptance_failure"
+    ]
+  },
+  "targets": {
+    "sample_parcel_start": 30762,
+    "sample_parcel_end": 30773,
+    "sample_candidate_rows": 12,
+    "verified_evidence_rows_target": 12,
+    "parallel_official_source_probes": 8,
+    "parallel_dataset_downloads": 2,
+    "parallel_row_checks": 6,
+    "business_rows_to_write": 0,
+    "website_line_by_line": true,
+    "priority_queue_prefix": "000000"
+  },
+  "supersedes_attempt": "attempt-003",
+  "supersedes_queue_path": "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry3_20260722.v3.task.json",
+  "contract_repair": {
+    "added_required_fields": ["source_urls", "source_discovery_required", "ai_role"],
+    "new_task_id_required_to_avoid_stale_scheduled_task_id_memory": true,
+    "shared_coordinator_code_modified": false,
+    "new_runner_created": false
+  },
+  "timeout_seconds": 3600,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
