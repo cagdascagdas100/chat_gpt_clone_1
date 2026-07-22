@@ -5,7 +5,7 @@ import importlib.util,json,os,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
 from typing import Any
-SLOT_ID="internet_access_3";TASK_ID="aays1-internet-access-3-revision18-watchdog-liveness-20260722"
+SLOT_ID="internet_access_3";TASK_ID="aays1-internet-access-3-revision18-2-watchdog-failsafe-20260722"
 BASE="docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/"
 RUNNER_OUTPUT=BASE+"runner_outputs/059_revision18_watchdog_pipeline_latest.json";WEB_OUTPUT="england_map_web/data/aays_21_slots/internet_access_3/revision18_watchdog_pipeline_latest.json"
 RUNNER_HEARTBEAT=BASE+"runner_outputs/058_runtime_watchdog_latest.json";WEB_HEARTBEAT="england_map_web/data/aays_21_slots/internet_access_3/runtime_watchdog_latest.json";RUNTIME_FEED="england_map_web/data/aays_21_slots/internet_access_3/operation_feed_revision18_runtime_latest.json"
@@ -28,7 +28,7 @@ def watchdog():
  if not s or not s.loader:raise ImportError(p)
  m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 def payload(state,steps,plan,current,events):
- return {"schema_version":1,"slot_id":SLOT_ID,"task_id":TASK_ID,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":len(steps),"effective_pipeline_steps":73,"contract_tests_target":530,"official_source_checks_target":74,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":2,"slot_id":SLOT_ID,"task_id":TASK_ID,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":len(steps),"effective_pipeline_steps":73,"contract_tests_target":534,"official_source_checks_target":74,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def main():
  r=root();a=Path(__file__).resolve().parent;wd=watchdog();tmp=Path(tempfile.gettempdir());ro=r/(BASE+"runner_outputs");web=r/"england_map_web/data/aays_21_slots/internet_access_3";cache=tmp/"aays_internet_access_3_release_cache";db=tmp/"aays_internet_access_3_uprn_join_revision17.sqlite"
  plan=[
@@ -52,7 +52,7 @@ def main():
   {"file":"095_revision18_liveness_acceptance.py","name":"REV18_LIVENESS_ACCEPTANCE","hard":1200,"stall":600,"watch":[ro/"060_revision18_liveness_acceptance_latest.json",web/"revision18_liveness_acceptance_latest.json"]}]
  steps=[];events=[];pr=r/RUNNER_OUTPUT;pw=r/WEB_OUTPUT;feed=r/RUNTIME_FEED;hearts=[r/RUNNER_HEARTBEAT,r/WEB_HEARTBEAT]
  def publish(state,current):
-  z=payload(state,steps,plan,current,events);write(pr,z);write(pw,z);write(feed,{"schema_version":1,"slot_id":SLOT_ID,"contract_revision":18,"updated_at":now(),"display_mode":"line_by_line_runtime","operations":events,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False})
+  z=payload(state,steps,plan,current,events);write(pr,z);write(pw,z);write(feed,{"schema_version":2,"slot_id":SLOT_ID,"contract_revision":18,"updated_at":now(),"display_mode":"line_by_line_runtime","operations":events,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False})
  publish("running",None);total=len(plan)
  for i,x in enumerate(plan,1):
   n=x["name"];events.append({"sequence":1000+i*2-1,"status":"RUNNING","operation":n,"detail":f"Sequential watchdog-supervised step {i}/{total} started.","updated_at":now()});publish("running",n)
