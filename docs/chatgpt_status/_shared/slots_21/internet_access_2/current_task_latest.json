@@ -1,5 +1,7 @@
 {
-  "schema_version": 3,
+  "state": "PUBLISHING",
+  "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+  "schema_version": 2,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "internet_access_2",
@@ -8,19 +10,16 @@
   "parcel_partition": {
     "start": 30762,
     "end": 61522,
-    "count": 30761,
-    "canonical_count": 92283
+    "count": 30761
   },
-  "task_id": "internet-access-2-onspd-arcgis-ofcom-retry-24-sample-20260722T013019Z",
-  "attempt_id": "a11db20c1b90420fa4138d2217958d48",
-  "idempotency_key": "aa04cbd7f311bfe174ca8c2ac49a0dfca6b810bd00abf9b6f45adbde43752463",
+  "attempt_id": "63b6c783316a41c8b4826161cc94e2f4",
+  "idempotency_key": "f73a68696a0b7e3c34a129a550e6a12cc4157f503f8cba901f1354cb5cba74ee",
   "status": "queued",
   "priority": "P0",
-  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/003_onspd_arcgis_ofcom_retry_24_sample.py",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/004_onspd_pcds_normalization_24_sample.py",
   "read_paths": [
-    "england_map_web/data/program_layer_matrix/internet.geojson",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/001_existing_shard2_sample_candidates.jsonl",
-    "docs/chatgpt_status/_shared/plans/AAYS_INTERNET_ACCESS_3_SLOT_INTEGRATION_PLAN_20260718.md"
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/003_24_sample_identity_and_coverage_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/003_24_sample_validation.json"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2"
@@ -33,28 +32,27 @@
   "requires_runtime_sync_gate": false,
   "requires_browser_acceptance_gate": false,
   "requires_shared_publish_gate": false,
-  "timeout_seconds": 7200,
+  "timeout_seconds": 3600,
   "data_quality_contract": {
     "source_urls": [
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONS_Postcode_Directory_May_2026_for_the_United_Kingdom_Hosted_Table/FeatureServer/0",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0",
       "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
-      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
-      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
-      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0"
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757"
     ],
-    "source_snapshot_date": "Ofcom 2026-01; ONSPD 2026-05",
+    "source_snapshot_date": "ONSPD 2026-05; Ofcom 2026-01",
     "source_discovery_required": false,
     "measurement_level": "postcode",
     "output_semantics": "AREA_LEVEL_PROXY",
-    "parcel_binding_method": "canonical row_no and HMLR identity retained; exact normalized postcode joins only; 12 prior plus 12 additional deterministic shard-2 samples",
-    "confidence_method": "ONSPD exact live postcode confirms identity only; Ofcom r2 exact postcode with complete core coverage fields raises maximum confidence to 0.75 and accuracy to 3/4",
+    "parcel_binding_method": "retain canonical row_no, parcel_id and HMLR identity; normalize compact postcode to official PCDS with one space before final three characters; exact official postcode join only",
+    "confidence_method": "ONSPD exact live postcode confirms identity only at 2/4; only an exact Ofcom r2 postcode row with complete core fields may raise to 3/4 and confidence 0.75",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "evidence_assist_only",
     "human_review_required_when": [
-      "ONSPD postcode is terminated or missing",
-      "Ofcom r2 postcode row is missing",
-      "Ofcom schema differs from v2 documentation",
-      "legacy and January 2026 metrics differ materially",
-      "official download remains blocked after browser and curl fallbacks"
+      "postcode remains absent after both official ONSPD services",
+      "postcode is terminated",
+      "official service schema differs",
+      "Ofcom exact coverage row remains unavailable"
     ]
   },
   "safety_flags": {
@@ -64,9 +62,8 @@
     "production_deploy": false
   },
   "final_ready": false,
-  "requested_at": "2026-07-22T01:30:19Z",
-  "state": "PUBLISHING",
-  "updated_at": "2026-07-22T01:33:29.523041Z",
+  "requested_at": "2026-07-22T02:00:00Z",
+  "updated_at": "2026-07-22T02:00:14.320662Z",
   "blocker": null,
   "result": null
 }
