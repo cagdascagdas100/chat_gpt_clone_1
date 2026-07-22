@@ -107,6 +107,7 @@ class SlotRecoverySupervisor:
         )
         self.state_root = self.root / "state" / "recovery"
         self.slot_root = self.state_root / "slots"
+        self.problem_solver_request_root = self.state_root / "problem_solver_requests"
         self.summary_path = self.state_root / "summary_latest.json"
         self._summary_lock = None
 
@@ -519,6 +520,15 @@ class SlotRecoverySupervisor:
         trigger_key = self._trigger_key(task)
         plan_path = self.slot_root / slot_id / f"{trigger_key}.json"
         plan = read_json(plan_path, {}) or {}
+        problem_solver_request = read_json(
+            self.problem_solver_request_root / f"{slot_id}.json", {}
+        ) or {}
+        problem_solver_requested_at = parse_time(problem_solver_request.get("requested_at"))
+        plan_updated_at = parse_time(plan.get("updated_at"))
+        problem_solver_is_new = bool(
+            problem_solver_requested_at
+            and (plan_updated_at is None or problem_solver_requested_at > plan_updated_at)
+        )
         status_updated = parse_time(health.get("status_updated_at"))
         now = datetime.now(timezone.utc)
         try:
@@ -532,7 +542,7 @@ class SlotRecoverySupervisor:
         )
         continuation_is_new = bool(
             source_updated and (status_updated is None or source_updated > status_updated)
-        )
+        ) or problem_solver_is_new
         current_host_healthy = self._current_coordinator_healthy()
         stale_host_claim = any(
             marker in blocker_upper
@@ -561,6 +571,19 @@ class SlotRecoverySupervisor:
                 "reason": "WAITING_FOR_NEW_CONTINUATION_OR_PROACTIVE_THRESHOLD",
                 "task": task,
             }
+        if plan and problem_solver_is_new:
+            plan.update({
+                "policy_version": max(10, int(plan.get("policy_version") or 1)),
+                "state": "RECOVERY_WAITING",
+                "wait_until": utc_now(),
+                "automatic_retry_count": 0,
+                "repair_reason": "PROBLEM_SOLVER_SLOT_REOPENED",
+                "trigger_mode": "PROBLEM_SOLVER_SLOT",
+                "problem_solver_request_id": problem_solver_request.get("request_id"),
+                "problem_solver_requested_at": problem_solver_request.get("requested_at"),
+                "reopened_at": utc_now(),
+            })
+            self._record(slot_id, trigger_key, plan)
         if plan.get("state") == "RECOVERY_SUCCEEDED":
             applied_at = parse_time(plan.get("applied_at"))
             if applied_at and status_updated and status_updated > applied_at:
@@ -649,7 +672,12 @@ class SlotRecoverySupervisor:
                 "trigger_task_id": task.get("task_id"),
                 "trigger_attempt_id": task.get("attempt_id"),
                 "source_queue_path": str(source),
-                "trigger_mode": "CONTINUATION" if continuation_is_new else "PROACTIVE_STALE_BLOCK",
+                "trigger_mode": (
+                    "PROBLEM_SOLVER_SLOT"
+                    if problem_solver_is_new
+                    else ("CONTINUATION" if continuation_is_new else "PROACTIVE_STALE_BLOCK")
+                ),
+                "problem_solver_request_id": problem_solver_request.get("request_id"),
                 "source_updated_at": source_updated.isoformat().replace("+00:00", "Z") if source_updated else None,
                 "blocked_status_updated_at": health.get("status_updated_at"),
                 "blocker": health.get("blocker") or health.get("state"),

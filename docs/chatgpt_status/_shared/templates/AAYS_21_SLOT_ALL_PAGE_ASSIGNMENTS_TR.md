@@ -1,4 +1,4 @@
-# AAYS 21 Slot Sayfa Atamaları
+# AAYS 22 Slot Sayfa Atamaları
 
 Her ChatGPT sayfasına `AAYS_21_SLOT_CHATGPT_CONTINUE_PROMPT_TR.txt` verilir ve yalnız bir `SLOT_ID` yazılır.
 
@@ -9,6 +9,7 @@ Her ChatGPT sayfasına `AAYS_21_SLOT_CHATGPT_CONTINUE_PROMPT_TR.txt` verilir ve 
 - Parcel Label: `parcel_label_1`, `parcel_label_2`, `parcel_label_3`
 - Internet Access: `internet_access_1`, `internet_access_2`, `internet_access_3`
 - Future Growth: `future_growth_1`, `future_growth_2`, `future_growth_3`
+- Sistem Problem Çözücü: `problem_solver_1` (shard işi üretmez; 21 slotun recovery planlarını önceliklendirir)
 
 Aralıklar her projede aynıdır: 1 = `1-30761`, 2 = `30762-61522`, 3 = `61523-92283`.
 İki ChatGPT hesabı kullanılabilir; aynı slot iki açık sayfaya verilmez. GitHub branch HEAD ve `slots_21` checkpointleri authoritative kaynaktır.

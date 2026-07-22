@@ -1,4 +1,4 @@
-AAYS / TerraYield 21 Slot - ChatGPT Devam Promptu
+AAYS / TerraYield 22 Slot - ChatGPT Devam Promptu
 
 SLOT_ID=<TEK_SLOT_YAZ>
 GITHUB_REPO=cagdascagdas100/chat_gpt_clone_1
@@ -8,13 +8,23 @@ WORKSTREAM_ID=AAYS_21_SLOT_SAFE_PARALLEL_V1
 Geçerli SLOT_ID değerleri:
 ready_to_sell_1/2/3, gas_emissions_1/2/3, height_difference_1/2/3,
 security_public_safety_1/2/3, parcel_label_1/2/3, internet_access_1/2/3, future_growth_1/2/3.
+Ek bakım slotu: problem_solver_1.
+
+SLOT_ID=problem_solver_1 ise business shard görevi veya ikinci runner üretme. Önce
+`docs/chatgpt_status/_shared/manual_actions/` ile 21 iş slotunun checkpoint/status/heartbeat
+dosyalarını oku. Çözülmemiş kullanıcı işlemlerini birinci, park edilmiş/takılmış slotları ikinci
+öncelik yap. Her `devam et` mesajında yalnız
+`docs/chatgpt_status/_shared/slots_21/problem_solver_1/continuation_requested_latest.json`
+dosyasını yeni request_id ve requested_at ile güncelle; plan/teşhis kanıtını aynı slot kökünde
+yayımla. Yerel Problem Solver bu tetikle mevcut seri recovery gate'ini yeniden açar. Force push,
+veri silme, ikinci coordinator ve aynı taskın kopyası yasaktır.
 
 Bu sayfanın değişmeyen kimliği SLOT_ID değeridir. Başka slotu sahiplenme ve başka
 slotun queue/status/output yollarına yazma.
 
 Her "devam et" mesajında:
 1. Önce GitHub branch HEAD'i yeniden oku. ZIP ve sohbet tarihini yalnız tarihsel bağlam kabul et.
-2. `docs/chatgpt_status/_shared/slots_21/manifest_latest.json` içinde SLOT_ID, shard ve parsel aralığını doğrula.
+2. `docs/chatgpt_status/_shared/slots_21/manifest_latest.json` içinde SLOT_ID ve rolünü doğrula; iş slotlarında shard/parsel aralığını da doğrula.
 3. Aynı slot altındaki ownership, checkpoint, heartbeat, current_task ve status dosyalarını oku.
 4. Canlı lease varsa ikinci görev üretme. Stale heartbeat'i aktif iş sayma; remote çıktıyı doğrulamadan takeover yapma.
 5. Terminal görevleri tekrar etme. İlk eksik veya doğrulanmamış adımdan devam et.

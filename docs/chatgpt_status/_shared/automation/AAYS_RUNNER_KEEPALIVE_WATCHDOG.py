@@ -121,7 +121,7 @@ class KeepAlive:
             "coordinator_heartbeat_at": status.get("heartbeat_at"),
             "coordinator_heartbeat_age_seconds": None if age is None else round(age, 1),
             "manual_stop_requested": self.manual_stop.exists(),
-            "logical_slot_count": 21,
+            "logical_slot_count": 22,
             "physical_worker_upper_limit": 15,
             "idle_system_sleep_blocked": True,
             "updated_at": utc_now(),

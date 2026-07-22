@@ -102,6 +102,9 @@ for base_slot_id, base_spec in BASE_SLOT_SPECS.items():
             "parcel_partition": parcel_partition,
             "markers": (*base_spec["markers"], slot_id),
         }
+PROBLEM_SOLVER_SLOT_ID = "problem_solver_1"
+DATA_SLOT_COUNT = len(SLOT_SPECS)
+LOGICAL_SLOT_COUNT = DATA_SLOT_COUNT + 1
 DEFAULT_LIMITS = {
     "light_read": 5,
     "network_fetch": 3,
@@ -439,6 +442,10 @@ class Coordinator:
         self.preflight_path = self.state / "portable_preflight_latest.json"
         self.publish_queue = self.state / "publish_queue"
         self.publish_archive = self.state / "publish_archive"
+        self.problem_solver_root = self.state / "problem_solver"
+        self.problem_solver_state_path = self.problem_solver_root / "state_latest.json"
+        self.mobile_notification_config_path = self.state / "mobile_notification_config.json"
+        self.mobile_notification_state_path = self.problem_solver_root / "mobile_notification_latest.json"
         self.stop_event = threading.Event()
         self.instance_id = uuid.uuid4().hex
         self.process_mutex_handle: int | None = None
@@ -472,6 +479,7 @@ class Coordinator:
         self.remote_sync: dict[str, Any] = {"state": "NOT_RUN", "head": None, "error": None}
         self.queue_compatibility_count = 0
         self.queue_rejected: dict[str, str] = {}
+        self.last_problem_solver_cycle = 0.0
 
     def git_command(self, *args: str) -> list[str]:
         if self.git_executable is None:
@@ -615,7 +623,8 @@ class Coordinator:
             "portable_git": self.git_executable is not None and self.git_executable.is_file(),
             "publisher_repo": self.repo.is_dir() and (self.repo / ".git").is_dir(),
             "worktree_root": self.worktrees.is_dir(),
-            "twenty_one_slot_contract": len(SLOT_SPECS) == 21 and len(set(SLOT_SPECS)) == 21,
+            "twenty_one_slot_contract": DATA_SLOT_COUNT == 21 and len(set(SLOT_SPECS)) == 21,
+            "problem_solver_slot_contract": PROBLEM_SOLVER_SLOT_ID not in SLOT_SPECS,
             "slot_worktrees": all(path.is_dir() for path in slot_worktrees),
             # Recovery overrides are standard linked Git worktrees (`.git` is
             # a pointer file). They remain portable because the resolved
@@ -678,7 +687,8 @@ class Coordinator:
             "portable_dependency_error": dependency_probe.stderr.strip() or None,
             "max_child_workers": self.max_workers,
             "heavy_jobs_serialized": True,
-            "slot_count": len(SLOT_SPECS),
+            "slot_count": LOGICAL_SLOT_COUNT,
+            "data_slot_count": DATA_SLOT_COUNT,
             "parcel_count": 92283,
             "parcel_scope": "LONDON_CANONICAL_MATRIX",
             "national_england_canonical_inventory_ready": False,
@@ -694,7 +704,10 @@ class Coordinator:
         return self.state / "slots" / slot_id
 
     def initialize_state(self, remote_head: str | None = None) -> None:
-        for directory in (self.state, self.runtime, self.logs, self.recovery, self.publish_queue, self.publish_archive):
+        for directory in (
+            self.state, self.runtime, self.logs, self.recovery, self.publish_queue,
+            self.publish_archive, self.problem_solver_root,
+        ):
             directory.mkdir(parents=True, exist_ok=True)
         for slot_id, spec in SLOT_SPECS.items():
             directory = self.slot_dir(slot_id)
@@ -745,6 +758,36 @@ class Coordinator:
                 if existing and all(existing.get(key) == value for key, value in required_metadata.items()):
                     continue
                 atomic_write_json(path, {**payload, **existing, **required_metadata})
+        solver_dir = self.slot_dir(PROBLEM_SOLVER_SLOT_ID)
+        solver_dir.mkdir(parents=True, exist_ok=True)
+        solver_metadata = {
+            "schema_version": 1,
+            "architecture_version": ARCHITECTURE_VERSION,
+            "workstream_id": WORKSTREAM_ID,
+            "slot_id": PROBLEM_SOLVER_SLOT_ID,
+            "base_slot_id": "system_recovery",
+            "role": "PRIORITY_MANUAL_ACTION_AND_21_SLOT_RECOVERY_COORDINATOR",
+            "data_worker_capacity_consumed": 0,
+            "final_ready": False,
+        }
+        for name, payload in {
+            "checkpoint_latest.json": {"state": "READY", "first_unverified_step": "SOLVE_MANUAL_ACTIONS_THEN_STALLED_SLOTS"},
+            "status_latest.json": {"state": "IDLE", "target_slot_id": None},
+            "heartbeat_latest.json": {"state": "IDLE", "heartbeat_at": None},
+            "current_task_latest.json": {"state": "IDLE", "task_id": None},
+        }.items():
+            path = solver_dir / name
+            if not path.exists():
+                atomic_write_json(path, {**payload, **solver_metadata, "updated_at": utc_now()})
+        if not self.mobile_notification_config_path.exists():
+            atomic_write_json(self.mobile_notification_config_path, {
+                "schema_version": 1,
+                "enabled": False,
+                "endpoint_url": "",
+                "authorization_bearer_token": "",
+                "instructions": "Android bildirim servisi/ntfy tam HTTPS konu URL'sini endpoint_url alanına yazın.",
+                "final_ready": False,
+            })
 
     def hydrate_checkpoints(self) -> dict[str, Any]:
         completed = subprocess.run(
@@ -1235,6 +1278,203 @@ class Coordinator:
             },
         )
 
+    def _notify_mobile_problem_state(self, manual_actions: list[dict[str, Any]], all_clear: bool) -> dict[str, Any]:
+        config = read_json(self.mobile_notification_config_path, {})
+        action_ids = sorted(str(item.get("id") or item.get("slot_id") or "") for item in manual_actions)
+        fingerprint = sha256_bytes(json.dumps({"all_clear": all_clear, "ids": action_ids}, sort_keys=True).encode("utf-8"))
+        previous = read_json(self.mobile_notification_state_path, {})
+        if previous.get("fingerprint") == fingerprint and previous.get("state") == "SENT":
+            return previous
+        endpoint = str(config.get("endpoint_url") or "").strip()
+        enabled = config.get("enabled") is True
+        if not enabled or not endpoint:
+            result = {
+                "state": "WAITING_FOR_USER_ENDPOINT",
+                "reason": "MOBILE_NOTIFICATION_TARGET_MISSING",
+                "config_path": str(self.mobile_notification_config_path),
+                "pending_manual_action_count": len(manual_actions),
+                "all_clear": all_clear,
+                "fingerprint": fingerprint,
+                "updated_at": utc_now(),
+                "final_ready": False,
+            }
+            atomic_write_json(self.mobile_notification_state_path, result)
+            return result
+        if not endpoint.casefold().startswith("https://"):
+            result = {
+                "state": "WAITING_FOR_USER_ENDPOINT",
+                "reason": "MOBILE_NOTIFICATION_ENDPOINT_MUST_BE_HTTPS",
+                "config_path": str(self.mobile_notification_config_path),
+                "fingerprint": fingerprint,
+                "updated_at": utc_now(),
+                "final_ready": False,
+            }
+            atomic_write_json(self.mobile_notification_state_path, result)
+            return result
+        title = "AAYS: problemler temiz" if all_clear else f"AAYS: {len(manual_actions)} kesin manuel işlem"
+        message = (
+            "Çözülmemiş kullanıcı işlemi kalmadı; 22. problem çözme slotu diğer slotları izlemeye devam ediyor."
+            if all_clear
+            else " | ".join(
+                f"{item.get('slot_id') or 'SİSTEM'}: {str(item.get('reason') or '-')[:180]}"
+                for item in manual_actions[:8]
+            )
+        )
+        payload = json.dumps({
+            "title": title,
+            "message": message,
+            "priority": 4 if manual_actions else 2,
+            "tags": ["warning"] if manual_actions else ["white_check_mark"],
+        }, ensure_ascii=False).encode("utf-8")
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        token = str(config.get("authorization_bearer_token") or "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            request = urllib.request.Request(endpoint, data=payload, headers=headers, method="POST")
+            with urllib.request.urlopen(request, timeout=15) as response:
+                status_code = int(getattr(response, "status", 200))
+            if status_code < 200 or status_code >= 300:
+                raise RuntimeError(f"MOBILE_NOTIFICATION_HTTP_{status_code}")
+            result = {
+                "state": "SENT", "fingerprint": fingerprint, "sent_at": utc_now(),
+                "pending_manual_action_count": len(manual_actions), "all_clear": all_clear,
+                "final_ready": False,
+            }
+        except Exception as exc:
+            result = {
+                "state": "SEND_FAILED", "reason": f"{type(exc).__name__}:{exc}",
+                "fingerprint": fingerprint, "updated_at": utc_now(), "final_ready": False,
+            }
+        atomic_write_json(self.mobile_notification_state_path, result)
+        return result
+
+    def problem_solver_cycle(self) -> dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        manual_report = read_json(self.state / "manual_actions_latest.json", {})
+        manual_actions = [item for item in manual_report.get("actions", []) if isinstance(item, dict)]
+        tasks = self.scan_tasks()
+        task_by_slot: dict[str, tuple[Path, dict[str, Any]]] = {}
+        for source, task in tasks:
+            slot_id = str(task.get("slot_id") or "")
+            if slot_id in SLOT_SPECS and slot_id not in task_by_slot:
+                task_by_slot[slot_id] = (source, task)
+        manual_slots: list[str] = []
+        for item in manual_actions:
+            slot_id = str(item.get("slot_id") or "")
+            if slot_id in SLOT_SPECS and slot_id not in manual_slots:
+                manual_slots.append(slot_id)
+        stalled_slots: list[str] = []
+        health_by_slot: dict[str, dict[str, Any]] = {}
+        for slot_id in SLOT_SPECS:
+            health = self.recovery_supervisor._health(slot_id)
+            health_by_slot[slot_id] = health
+            if health.get("needs_recovery") and slot_id not in manual_slots:
+                stalled_slots.append(slot_id)
+        remote_trigger_path = (
+            self.repo / "docs" / "chatgpt_status" / "_shared" / "slots_21"
+            / PROBLEM_SOLVER_SLOT_ID / "continuation_requested_latest.json"
+        )
+        remote_trigger = read_json(remote_trigger_path, {})
+        trigger_id = str(remote_trigger.get("request_id") or remote_trigger.get("requested_at") or "")
+        state = read_json(self.problem_solver_state_path, {})
+        explicit_continuation = bool(trigger_id and trigger_id != state.get("last_remote_trigger_id"))
+        attempts = state.get("attempts_by_fingerprint") if isinstance(state.get("attempts_by_fingerprint"), dict) else {}
+        target_slot: str | None = None
+        target_source: Path | None = None
+        target_task: dict[str, Any] | None = None
+        target_reason = ""
+        target_fingerprint = ""
+        for slot_id in [*manual_slots, *stalled_slots]:
+            pair = task_by_slot.get(slot_id)
+            if pair is None:
+                continue
+            health = health_by_slot.get(slot_id, {})
+            target_reason = str(health.get("blocker") or health.get("state") or "STALLED_SLOT")
+            target_fingerprint = sha256_bytes(f"{slot_id}|{target_reason}".encode("utf-8"))[:20]
+            record = attempts.get(target_fingerprint, {}) if isinstance(attempts.get(target_fingerprint), dict) else {}
+            last_attempt = None
+            try:
+                last_attempt = datetime.fromisoformat(str(record.get("last_attempt_at") or "").replace("Z", "+00:00"))
+            except ValueError:
+                pass
+            due = last_attempt is None or (now - last_attempt).total_seconds() >= 300
+            if explicit_continuation or (int(record.get("count") or 0) < 3 and due):
+                target_slot = slot_id
+                target_source, target_task = pair
+                break
+        all_clear = not manual_actions and not stalled_slots
+        notification = self._notify_mobile_problem_state(manual_actions, all_clear)
+        solver_dir = self.slot_dir(PROBLEM_SOLVER_SLOT_ID)
+        if target_slot and target_task and target_source:
+            plan_steps = [
+                "READ_CURRENT_MANUAL_ACTION_AND_SLOT_HEALTH",
+                "CAPTURE_BLOCKER_AND_NON_DESTRUCTIVE_DIAGNOSTICS",
+                "REQUEST_SERIAL_RECOVERY_GATE_REOPEN",
+                "VERIFY_ORPHAN_LOCK_OR_TIMEOUT_OR_FREE_SOURCE_REPAIR",
+                "RESUME_ORIGINAL_TASK_WITHOUT_DUPLICATE_RUNNER",
+                "VERIFY_STATUS_PROGRESS_AND_SELECT_NEXT_PROBLEM",
+            ]
+            count = int((attempts.get(target_fingerprint) or {}).get("count") or 0) + 1
+            attempts[target_fingerprint] = {"count": count, "last_attempt_at": utc_now(), "slot_id": target_slot}
+            request = {
+                "schema_version": 1,
+                "workstream_id": WORKSTREAM_ID,
+                "requested_by_slot": PROBLEM_SOLVER_SLOT_ID,
+                "target_slot_id": target_slot,
+                "target_task_id": target_task.get("task_id"),
+                "reason": target_reason,
+                "plan_steps": plan_steps,
+                "priority": "MANUAL_ACTION_FIRST" if target_slot in manual_slots else "STALLED_SLOT_SECOND",
+                "request_id": uuid.uuid4().hex,
+                "requested_at": utc_now(),
+                "destructive_actions_allowed": False,
+                "force_push_allowed": False,
+                "final_ready": False,
+            }
+            atomic_write_json(
+                self.state / "recovery" / "problem_solver_requests" / f"{target_slot}.json", request,
+            )
+            solver_state = {
+                "state": "RECOVERY_REQUESTED", "target_slot_id": target_slot,
+                "target_task_id": target_task.get("task_id"), "target_reason": target_reason,
+                "plan_steps": plan_steps, "attempt": count,
+                "manual_action_count": len(manual_actions), "stalled_slot_count": len(stalled_slots),
+                "available_worker_capacity": self.available_worker_capacity,
+                "max_child_workers": self.max_workers, "data_worker_capacity_consumed": 0,
+                "notification": notification, "attempts_by_fingerprint": attempts,
+                "last_remote_trigger_id": trigger_id or state.get("last_remote_trigger_id"),
+                "updated_at": utc_now(), "final_ready": False,
+            }
+        else:
+            solver_state = {
+                "state": "ALL_CLEAR_MONITORING" if all_clear else "WAITING_FOR_ELIGIBLE_RECOVERY_TASK",
+                "target_slot_id": None, "manual_action_count": len(manual_actions),
+                "stalled_slot_count": len(stalled_slots),
+                "slots_without_ready_task": sorted(set([*manual_slots, *stalled_slots]) - set(task_by_slot)),
+                "available_worker_capacity": self.available_worker_capacity,
+                "max_child_workers": self.max_workers, "data_worker_capacity_consumed": 0,
+                "notification": notification, "attempts_by_fingerprint": attempts,
+                "last_remote_trigger_id": trigger_id or state.get("last_remote_trigger_id"),
+                "updated_at": utc_now(), "final_ready": False,
+            }
+        atomic_write_json(self.problem_solver_state_path, solver_state)
+        common = {
+            "schema_version": 1, "architecture_version": ARCHITECTURE_VERSION,
+            "workstream_id": WORKSTREAM_ID, "slot_id": PROBLEM_SOLVER_SLOT_ID,
+            "base_slot_id": "system_recovery", "updated_at": utc_now(), "final_ready": False,
+        }
+        atomic_write_json(solver_dir / "status_latest.json", {**solver_state, **common})
+        atomic_write_json(solver_dir / "current_task_latest.json", {**solver_state, **common})
+        atomic_write_json(solver_dir / "heartbeat_latest.json", {
+            **common, "state": "RUNNING_MONITOR", "heartbeat_at": utc_now(), "stale_after_seconds": 90,
+        })
+        self.append_event(PROBLEM_SOLVER_SLOT_ID, {
+            "transition": solver_state["state"], "target_slot_id": solver_state.get("target_slot_id"),
+            "manual_action_count": len(manual_actions), "stalled_slot_count": len(stalled_slots),
+        })
+        return solver_state
+
     def write_global_status(self, state: str) -> None:
         with self.active_lock:
             active = {slot: value.get("task_id") for slot, value in self.active_tasks.items()}
@@ -1265,7 +1505,9 @@ class Coordinator:
                 "max_child_workers": self.max_workers,
                 "available_worker_capacity": self.available_worker_capacity,
                 "adaptive_capacity_reason": self.adaptive_capacity_reason,
-                "logical_slot_count": len(SLOT_SPECS),
+                "logical_slot_count": LOGICAL_SLOT_COUNT,
+                "data_slot_count": DATA_SLOT_COUNT,
+                "problem_solver": read_json(self.problem_solver_state_path, {}),
                 "parcel_scope": "LONDON_CANONICAL_MATRIX",
                 "national_england_canonical_inventory_ready": False,
                 "resource_profile": self.resource_profile,
@@ -1312,7 +1554,7 @@ class Coordinator:
                 "boot_id": boot_id(),
                 "heartbeat_at": now,
                 "stale_after_seconds": 45,
-                "logical_slot_count": len(SLOT_SPECS),
+                "logical_slot_count": LOGICAL_SLOT_COUNT,
                 "final_ready": False,
             },
         )
@@ -2462,7 +2704,11 @@ class Coordinator:
         recovery_executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=1, thread_name_prefix="aays-recovery"
         )
+        problem_solver_executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="aays-problem-solver"
+        )
         publisher_future: concurrent.futures.Future | None = None
+        problem_solver_future: concurrent.futures.Future | None = None
         recovery_futures: dict[str, concurrent.futures.Future] = {}
         futures: set[concurrent.futures.Future] = set()
         try:
@@ -2476,6 +2722,23 @@ class Coordinator:
                     self.stop_event.set()
                     break
                 self.heartbeat()
+                if problem_solver_future is not None and problem_solver_future.done():
+                    try:
+                        problem_solver_future.result()
+                    except Exception as exc:
+                        atomic_write_json(self.problem_solver_state_path, {
+                            "state": "PROBLEM_SOLVER_ERROR",
+                            "error": f"{type(exc).__name__}:{exc}",
+                            "updated_at": utc_now(),
+                            "final_ready": False,
+                        })
+                    problem_solver_future = None
+                if (
+                    problem_solver_future is None
+                    and time.monotonic() - self.last_problem_solver_cycle >= 15
+                ):
+                    self.last_problem_solver_cycle = time.monotonic()
+                    problem_solver_future = problem_solver_executor.submit(self.problem_solver_cycle)
                 if publisher_future is not None and publisher_future.done():
                     try:
                         publisher_future.result()
@@ -2592,6 +2855,7 @@ class Coordinator:
         finally:
             executor.shutdown(wait=True, cancel_futures=False)
             recovery_executor.shutdown(wait=True, cancel_futures=False)
+            problem_solver_executor.shutdown(wait=True, cancel_futures=False)
             publisher_executor.shutdown(wait=True, cancel_futures=False)
             self.release_lock()
 

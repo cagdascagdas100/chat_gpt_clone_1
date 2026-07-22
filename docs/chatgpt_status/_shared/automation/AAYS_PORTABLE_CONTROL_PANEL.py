@@ -12,7 +12,7 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 
 PORTABLE_ROOT = Path(__file__).resolve().parent
 BASE_URL = "http://127.0.0.1:8012"
@@ -64,6 +64,7 @@ SLOT_IDS = (
     ("future_growth_1", "Future Growth 1"),
     ("future_growth_2", "Future Growth 2"),
     ("future_growth_3", "Future Growth 3"),
+    ("problem_solver_1", "Problem Solver 1"),
 )
 V2_LAUNCHER = PORTABLE_ROOT / "RUN_AAYS_ADAPTIVE_21_SLOT.ps1"
 if not V2_LAUNCHER.is_file():
@@ -81,6 +82,8 @@ V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 V2_RECOVERY_ROOT = V2_STATE_ROOT / "recovery"
 V2_PUBLISH_QUEUE = V2_STATE_ROOT / "publish_queue"
 MANUAL_ACTIONS_STATUS = V2_STATE_ROOT / "manual_actions_latest.json"
+MOBILE_NOTIFICATION_CONFIG = V2_STATE_ROOT / "mobile_notification_config.json"
+MOBILE_NOTIFICATION_STATUS = V2_STATE_ROOT / "problem_solver" / "mobile_notification_latest.json"
 MANUAL_PENDING_SECONDS = 900
 PUBLISHER_REPO = PORTABLE_ROOT / "runner_system" / "adaptive_v2" / "publisher"
 PUBLISHER_SHARED = PUBLISHER_REPO / "docs" / "chatgpt_status" / "_shared"
@@ -244,11 +247,11 @@ class AaysPanel(tk.Tk):
         grid = ttk.Frame(actions)
         grid.pack(fill="x")
         buttons = [
-            ("Uygulama + 21 Slot Başlat", self.start_all),
+            ("Uygulama + 22 Slot Başlat", self.start_all),
             ("Yeni PC Ön Kontrol", self.run_preflight),
             ("Uygulamayı Aç", self.start_app_and_open),
             ("Uygulamayı Başlat", self.start_app_only),
-            ("21 Slot Runner Başlat", self.start_runner),
+            ("22 Slot Runner Başlat", self.start_runner),
             ("Runner'ı Durdur", self.stop_runner),
             ("Runner'ı Yeniden Başlat", self.restart_runner),
             ("Uzaktan Erişim Kontrol", self.check_remote_access),
@@ -286,7 +289,7 @@ class AaysPanel(tk.Tk):
             label.pack(fill="x", anchor="w", pady=(0 if index == 0 else 6, 0))
             self.wrap_labels.append(label)
 
-        tests = ttk.LabelFrame(root, text="Son 21 Slot + AI/Fotoğraf Testleri", padding=12)
+        tests = ttk.LabelFrame(root, text="Son 21 İş Slotu + Problem Solver Testleri", padding=12)
         tests.pack(fill="x", pady=(12, 0))
         for variable in (
             self.continue_test_var,
@@ -299,7 +302,7 @@ class AaysPanel(tk.Tk):
             label.pack(fill="x", anchor="w", pady=2)
             self.wrap_labels.append(label)
 
-        slots = ttk.LabelFrame(root, text="21 Slot Canlı Durumu", padding=12)
+        slots = ttk.LabelFrame(root, text="22 Slot Canlı Durumu", padding=12)
         slots.pack(fill="x", pady=(12, 0))
         for slot_id, _label in SLOT_IDS:
             label = ttk.Label(
@@ -315,8 +318,8 @@ class AaysPanel(tk.Tk):
         text_box.pack(fill="x", pady=(12, 0))
         note = (
             "Bu panel taşınabilir diskteki kendi kökünden çalışır. Bu bilgisayardaki masaüstü kısayolu yalnızca bu paneli açar. "
-            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 21 Slot Başlat düğmesini kullanın. "
-            "Uygulama URL'si sabittir: 127.0.0.1:8012. 21 Slot Runner Başlat düğmesi tek koordinatörü çalıştırır; RAM'e göre sınırlı sayıda görevi aynı anda yürütür ve ikinci koordinatör açmaz."
+            "Başka bir Windows bilgisayarda diski takınca AAYS_PORTABLE_CONTROL_PANEL.cmd dosyasını taşınabilir kökten çalıştırın. Önce Yeni PC Ön Kontrol, sonra Uygulama + 22 Slot Başlat düğmesini kullanın. "
+            "Uygulama URL'si sabittir: 127.0.0.1:8012. 22 Slot Runner Başlat düğmesi 21 iş slotu ile bir Problem Solver slotunu çalıştırır; RAM'e göre sınırlı sayıda görevi aynı anda yürütür ve ikinci koordinatör açmaz."
         )
         note_label = ttk.Label(text_box, text=note, style="Body.TLabel", justify="left")
         note_label.pack(fill="x", anchor="w")
@@ -378,7 +381,7 @@ class AaysPanel(tk.Tk):
             self.set_status(f"Eksik rehber: {REMOTE_GUIDE}")
 
     def start_all(self) -> None:
-        self.set_status("Uygulama ve tek koordinatör içindeki 21 slot başlatılıyor")
+        self.set_status("Uygulama ve tek koordinatör içindeki 21 iş slotu + Problem Solver başlatılıyor")
         self.run_powershell(APP_SCRIPT, list(APP_START_ARGS))
         launcher = KEEPALIVE_LAUNCHER if KEEPALIVE_LAUNCHER.is_file() else V2_LAUNCHER
         args = [] if launcher == KEEPALIVE_LAUNCHER else ["-Action", "Start"]
@@ -485,6 +488,8 @@ class AaysPanel(tk.Tk):
     @staticmethod
     def _manual_solution(reason: str) -> str:
         upper = reason.upper()
+        if "MOBILE_NOTIFICATION" in upper:
+            return "Telefon Bildirim Ayarı düğmesine basıp Android bildirim/ntfy HTTPS konu URL'sini kaydedin."
         if any(marker in upper for marker in ("LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB")):
             return "Problemi Kopyala düğmesine basıp metni ChatGPT'ye gönderin; dosyayı silmeden 48 MiB parçalara bölme/manifest hatasını düzeltsin."
         if any(marker in upper for marker in ("AUTH", "CREDENTIAL", "LOGIN", "TWO-FACTOR", "2FA")):
@@ -631,6 +636,16 @@ class AaysPanel(tk.Tk):
                     str(remote_action.get("solution") or "") or None,
                 )
 
+        mobile_notification = read_json(MOBILE_NOTIFICATION_STATUS)
+        if str(mobile_notification.get("state") or "").upper() in {
+            "WAITING_FOR_USER_ENDPOINT", "SEND_FAILED",
+        }:
+            reason = str(mobile_notification.get("reason") or "MOBILE_NOTIFICATION_TARGET_MISSING")
+            add(
+                "system:mobile_notification", "problem_solver_1", reason,
+                mobile_notification.get("updated_at"),
+            )
+
         remote_state = str(runner_info.get("remote_sync_state") or "").upper()
         remote_error = str(runner_info.get("remote_sync_error") or "")
         if remote_state in {
@@ -712,6 +727,7 @@ class AaysPanel(tk.Tk):
         buttons = ttk.Frame(window)
         buttons.pack(fill="x", padx=12, pady=(4, 12))
         ttk.Button(buttons, text="Problemi Kopyala", command=self.copy_selected_manual_action).pack(side="left")
+        ttk.Button(buttons, text="Telefon Bildirim Ayarı", command=self.configure_mobile_notification).pack(side="left", padx=(8, 0))
         ttk.Button(buttons, text="Şimdi Yenile", command=self.refresh_status).pack(side="right")
         tree.bind("<Double-1>", lambda _event: self.copy_selected_manual_action())
         self._refresh_manual_actions_window()
@@ -740,6 +756,33 @@ class AaysPanel(tk.Tk):
         self.clipboard_append(prompt)
         self.update_idletasks()
         self.manual_actions_dialog_var.set("Seçili problem ChatGPT'ye yapıştırılmak üzere panoya kopyalandı.")
+
+    def configure_mobile_notification(self) -> None:
+        current = read_json(MOBILE_NOTIFICATION_CONFIG)
+        endpoint = simpledialog.askstring(
+            "Telefon Bildirim Ayarı",
+            "Android bildirim servisi veya ntfy tam HTTPS konu URL'si:",
+            initialvalue=str(current.get("endpoint_url") or ""),
+            parent=self.manual_actions_window or self,
+        )
+        if endpoint is None:
+            return
+        endpoint = endpoint.strip()
+        if endpoint and not endpoint.casefold().startswith("https://"):
+            messagebox.showerror("Geçersiz adres", "Bildirim adresi HTTPS ile başlamalıdır.", parent=self)
+            return
+        atomic_write_json(MOBILE_NOTIFICATION_CONFIG, {
+            "schema_version": 1,
+            "enabled": bool(endpoint),
+            "endpoint_url": endpoint,
+            "authorization_bearer_token": str(current.get("authorization_bearer_token") or ""),
+            "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "final_ready": False,
+        })
+        self.manual_actions_dialog_var.set(
+            "Telefon bildirim hedefi kaydedildi; Problem Solver bir sonraki çevrimde test edecek."
+            if endpoint else "Telefon bildirimi devre dışı bırakıldı."
+        )
 
     def _close_manual_actions_window(self) -> None:
         if self.manual_actions_window is not None:
@@ -1012,7 +1055,7 @@ class AaysPanel(tk.Tk):
             self.machine_var.set(
                 f"Bilgisayar profili: {preflight.get('resource_profile', 'bilinmiyor')} - "
                 f"RAM {preflight.get('total_memory_gb', '?')} GB - CPU {preflight.get('logical_cpus', '?')} izlek - "
-                f"{preflight.get('slot_count', 21)} mantıksal slot / aynı anda en fazla {preflight.get('max_child_workers', '?')} - "
+                f"{preflight.get('slot_count', 22)} mantıksal slot / aynı anda en fazla {preflight.get('max_child_workers', '?')} işçi - "
                 f"Git {'HAZIR' if preflight.get('checks', {}).get('git_executes') else 'EKSIK'}"
             )
             national_ready = bool(preflight.get("national_england_canonical_inventory_ready"))
@@ -1044,7 +1087,7 @@ class AaysPanel(tk.Tk):
                 f"Çalışan gerçek görev işçisi: {active_workers}/"
                 f"{info.get('available_worker_capacity', info.get('max_child_workers', 15))} "
                 f"(donanım üst sınırı {info.get('max_child_workers', 15)}); durum: {worker_explanation}. "
-                f"Mantıksal slot: {info.get('logical_slot_count', 21)}. "
+                f"Mantıksal slot: {info.get('logical_slot_count', 22)} (21 iş + 1 problem çözücü). "
                 f"Yerel kuyruk: hazır {ready_tasks}, taranan {info.get('queue_scan_count')}. "
                 f"ChatGPT/GitHub çıktısı: son 15 dk güncel {info.get('remote_recent_count', 0)}/21; "
                 f"en yeni uzak kayıt yaşı {remote_age_text}; eski bekleme kaydı {info.get('remote_waiting_count', 0)}. "

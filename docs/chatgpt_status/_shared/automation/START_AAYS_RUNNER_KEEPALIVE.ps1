@@ -44,7 +44,7 @@ do {
           watchdog_launcher_pid = $watchdogProcess.Id
           watchdog_state = $payload.state
           coordinator_pid = $payload.coordinator_pid
-          logical_slots = 21
+          logical_slots = 22
           physical_worker_upper_limit = 15
           final_ready = $false
         } | ConvertTo-Json -Depth 6
