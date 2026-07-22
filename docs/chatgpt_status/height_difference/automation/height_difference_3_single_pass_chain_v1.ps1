@@ -4,12 +4,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$root = [System.IO.Path]::GetFullPath([string]$env:AAYS_REPO_ROOT)
-if ([string]::IsNullOrWhiteSpace($root)) { throw 'AAYS_REPO_ROOT_REQUIRED' }
+$rawRoot = [string]$env:AAYS_REPO_ROOT
+if ([string]::IsNullOrWhiteSpace($rawRoot)) { throw 'AAYS_REPO_ROOT_REQUIRED' }
+$root = [System.IO.Path]::GetFullPath($rawRoot)
 
 $sourceBranch = 'codex/aays-single-runner-v5-20260706'
 $expectedBlob = 'bb48164e7a0af78df875f30421a6a3068c43edb8'
 $epochEvidenceRel = 'docs/chatgpt_status/height_difference/runner_inputs/height_difference_3_epoch_policy_latest.json'
+$epochProbeRel = 'docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_epoch_provenance_probe_latest.json'
 $chainReportRel = 'docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_chain_orchestration_latest.json'
 $websiteReportRel = 'england_map_web/data/height_difference/height_difference_3_chain_orchestration_latest.json'
 $canonicalRel = 'docs/chatgpt_status/height_difference/runner_outputs/height_difference_3_canonical_points_latest.json'
@@ -81,6 +83,10 @@ try {
   $canonical = Read-Json $canonicalRel
   Assert-Canonical $canonical
 
+  $probe = Invoke-Step 'epoch_provenance_probe' 'docs/chatgpt_status/height_difference/automation/height_difference_3_epoch_provenance_probe_v1.ps1'
+  $steps += $probe
+  if (-not $probe.passed -or -not (Test-Path -LiteralPath (Resolve-RepoPath $epochProbeRel))) { throw 'EPOCH_PROVENANCE_PROBE_FAILED' }
+
   $epochEvidence = Accepted-EpochEvidence $EpochPolicy
   if ($null -eq $epochEvidence) {
     $state = 'BLOCKED_EPOCH_PROVENANCE'
@@ -105,9 +111,9 @@ try {
 }
 
 $report = [ordered]@{
-  schema_version = 1
+  schema_version = 2
   slot_id = 'height_difference_3'
-  task_id = 'height-difference-3-single-pass-chain-v1-20260722'
+  task_id = 'height-difference-3-single-pass-chain-v1-1-20260722'
   started_at = $startedAt
   completed_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
   state = $state
@@ -115,13 +121,15 @@ $report = [ordered]@{
   expected_blob_sha = $expectedBlob
   epoch_policy_requested = $EpochPolicy
   epoch_evidence_path = $epochEvidenceRel
+  epoch_provenance_probe_path = $epochProbeRel
   steps = @($steps)
   blockers = @($blockers | Select-Object -Unique)
   canonical_point_output_exists = (Test-Path -LiteralPath (Resolve-RepoPath $canonicalRel))
+  epoch_provenance_probe_output_exists = (Test-Path -LiteralPath (Resolve-RepoPath $epochProbeRel))
   official_discovery_output_exists = (Test-Path -LiteralPath (Resolve-RepoPath $discoveryRel))
   official_input_manifest_output_exists = (Test-Path -LiteralPath (Resolve-RepoPath $manifestRel))
   boundary_raster_sampling_output_exists = (Test-Path -LiteralPath (Resolve-RepoPath $samplingRel))
-  output_semantics = 'SINGLE_SHARED_RUNNER_SEQUENTIAL_CHAIN_FAIL_CLOSED_NONFINAL'
+  output_semantics = 'SINGLE_SHARED_RUNNER_SEQUENTIAL_CHAIN_WITH_EPOCH_PROVENANCE_DIAGNOSTIC_FAIL_CLOSED_NONFINAL'
   actual_business_data_rows_written = 0
   fake_data = $false
   db_write = $false
