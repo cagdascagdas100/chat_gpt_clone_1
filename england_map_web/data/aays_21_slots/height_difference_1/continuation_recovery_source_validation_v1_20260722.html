@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>Height Difference 1 — Kurtarma ve Kaynak Doğrulama</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
+    .cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}
+    .note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}
+    table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}th,td{border:1px solid #cbd5df;padding:7px;text-align:left;vertical-align:top}th{background:#eaf0f5}
+    .completed{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}a{color:#0759a5}
+  </style>
+</head>
+<body data-slot-id="height_difference_1" data-final-ready="false">
+  <h1>Height Difference 1 — Kurtarma ve Resmî Kaynak Doğrulama</h1>
+  <div class="note"><strong>Durum:</strong> Canlı owner yok. Eski heartbeat ve GitHub yayın kimlik doğrulama hatası nedeniyle kurtarma kapısı açık. Bu sayfa gerçek ölçüm üretmez; doğrulanmamış parsel yüksekliği yayınlamaz.</div>
+  <div class="cards">
+    <div class="card">İşlem ilerlemesi<br><strong id="progress">yükleniyor</strong></div>
+    <div class="card">Yeni satır<br><strong id="rowsAdded">yükleniyor</strong></div>
+    <div class="card">Resmî kaynak kontrolü<br><strong id="checks">yükleniyor</strong></div>
+    <div class="card">Yeni ölçülen satır<br><strong id="measured">yükleniyor</strong></div>
+    <div class="card">Manuel eylem<br><strong id="manual">OPEN</strong></div>
+  </div>
+  <h2>Yapılan işlemler — satır satır</h2>
+  <table>
+    <thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt</th><th>Doğruluk etkisi</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="mono" id="blocker"></p>
+  <script>
+    'use strict';
+    const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const linkify=v=>{const s=String(v??'');return /^https:\/\//.test(s)?`<a href="${esc(s)}" target="_blank" rel="noopener">${esc(s)}</a>`:esc(s)};
+    (async()=>{
+      const r=await fetch(`operations_increment_030_recovery_source_validation_20260722.json?v=${Date.now()}`,{cache:'no-store'});
+      if(!r.ok)throw Error(`HTTP ${r.status}`);
+      const d=await r.json(),p=d.canonical_progress||{},m=d.increment_metrics||{};
+      progress.textContent=`${p.completed_operations}/${p.planned_operations} — ${Number(p.overall_percent).toFixed(2)}% (Δ +${Number(p.percent_change).toFixed(2)})`;
+      rowsAdded.textContent=String(m.operation_rows_added||0);
+      checks.textContent=`${m.official_source_checks_passed||0}/${m.official_source_checks_added||0}`;
+      measured.textContent=String(m.official_measured_rows_added||0);
+      blocker.textContent=`Engel: ${d.blocker} | Continuation: ${d.continuation_key} | Manuel kayıt: ${d.manual_action_path}`;
+      rows.innerHTML=(d.operations||[]).map(x=>`<tr><td>${esc(x.operation_no)}</td><td class="${esc(x.state)}">${esc(x.state)}</td><td>${esc(x.operation)}</td><td class="mono">${linkify(x.evidence)}</td><td>${esc(x.accuracy_effect)}</td></tr>`).join('');
+      document.body.dataset.operationRows=String((d.operations||[]).length);
+      document.body.dataset.continuationKey=d.continuation_key;
+      document.body.dataset.blocker=d.blocker;
+    })().catch(e=>{rows.innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+  </script>
+</body>
+</html>
