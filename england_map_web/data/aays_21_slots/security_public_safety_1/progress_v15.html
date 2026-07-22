@@ -12,62 +12,55 @@
 </head>
 <body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
   <h1>Security / Public Safety — Shard 1</h1>
-  <div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY — LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Kanonik kabul kanıtı olmadan yüzde artırılmaz.</div>
+  <div class="note"><strong>Semantik:</strong> AREA_LEVEL_PROXY — LSOA/alan düzeyi göstergedir; parsel ölçümü değildir. Kanonik kabul kanıtı olmadan kalan kapılar PASS yapılmaz.</div>
   <div class="cards">
     <div class="card">Genel ilerleme<br><strong id="percent">yükleniyor</strong></div>
     <div class="card">Tamamlanan kapı<br><strong id="gates">yükleniyor</strong></div>
     <div class="card">Görünür satır<br><strong id="rows">yükleniyor</strong></div>
     <div class="card">Doğruluk 4<br><strong id="accuracy">yükleniyor</strong></div>
     <div class="card">Resmî kaynak<br><strong id="sources">yükleniyor</strong></div>
-    <div class="card">Canlı parity<br><strong id="parity">PENDING</strong></div>
+    <div class="card">Kanonik parity<br><strong id="parity">PENDING</strong></div>
   </div>
-
   <h2>İşlem akışı</h2>
   <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="events"></tbody></table>
-
   <h2>Resmî kaynak yükseltmeleri</h2>
   <table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Güncel değer</th><th>URL</th></tr></thead><tbody id="sourceBody"></tbody></table>
-
   <h2>Örnek adaylar</h2>
   <table><thead><tr><th>Parsel</th><th>Alan proxy skoru</th><th>Doğruluk</th><th>Güven</th><th>Saklı count</th><th>Saklı SHA256</th><th>Canlı parity</th></tr></thead><tbody id="candidateBody"></tbody></table>
-
   <h2>300 kaynaklı satır — satır satır</h2>
-  <p class="muted">Bu tablo mevcut kaynaklı görünür satırları gösterir. Canlı API count/SHA parity tamamlanmadan parsel ölçümü veya yeni başarı iddiası değildir.</p>
+  <p class="muted">Bu tablo mevcut kaynaklı görünür satırları gösterir. 130 aday/16 uç nokta canlı count-SHA parity tamamlanmadan parsel ölçümü veya final başarı iddiası değildir.</p>
   <div class="scroll"><table><thead><tr><th>#</th><th>Parsel</th><th>Skor</th><th>Seviye</th><th>Doğruluk</th><th>Güven</th><th>Coğrafya</th><th>HTTP</th><th>Ay</th><th>Kaynak</th></tr></thead><tbody id="rowBody"></tbody></table></div>
-
 <script>
 'use strict';
 const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
 (async()=>{
-  const [progress,visible]=await Promise.all([
-    get('official_web_refresh_20260722.json'),
-    get('../../program_layer_matrix/security_public_safety_visible_rows.json')
-  ]);
+  const [progress,visible]=await Promise.all([get('official_web_refresh_20260722.json'),get('../../program_layer_matrix/security_public_safety_visible_rows.json')]);
   const cp=progress.canonical_progress||{};
-  percent.textContent=`${cp.overall_percent??0}% (Δ ${cp.percent_change??0})`;
+  percent.textContent=`${cp.overall_percent??0}% (Δ +${cp.percent_change??0})`;
   gates.textContent=`${cp.completed_units??0}/${cp.total_units??0}`;
   const dataRows=Array.isArray(visible.rows)?visible.rows:[];
   rows.textContent=`${dataRows.length}/300`;
   const accuracy4=dataRows.filter(x=>Number(x.accuracy_score_4)===4).length;
   accuracy.textContent=`${accuracy4}/${dataRows.length}`;
   sources.textContent=`${progress.official_web_checks_passed}/${progress.official_web_checks_total}`;
-  parity.textContent=`0/${(progress.sample_candidates||[]).length} PENDING`;
+  parity.textContent=`0/130 PENDING — 16 uç nokta`;
   const eventRows=[
     ['PASS','REMOTE_HEAD_SLOT_READBACK','Güncel branch HEAD ve yalnız security_public_safety_1 slot dosyaları doğrulandı.'],
+    ['PASS','HYDRATE_300_ROWS',`${dataRows.length} doğrulanmış LSOA proxy satırı remote artefakta bağlandı.`],
+    ['PASS','HTTP_200_AND_SHA256_PROOF','Önceki gerçek HTTP 200 ve SHA256 kanıtları korundu; hidrasyon tekrarlanmadı.'],
     ['PASS','OFFICIAL_WEB_REFRESH',`${progress.official_web_checks_passed}/${progress.official_web_checks_total} resmî kaynak kontrolü geçti.`],
-    ['PASS','VISIBLE_SOURCE_ROWS_READBACK',`${dataRows.length} görünür kaynak satırı; ${accuracy4} satır doğruluk 4.`],
-    ['BLOCKED','REMOTE_HYDRATION_ARTIFACT',progress.remote_hydration_artifact?.status||'BLOCKED'],
-    ['PENDING','SAMPLE_LIVE_COUNT_SHA_PARITY','Mevcut tek shared runner üç örneği ve ardından 130/16 kanonik parity setini çalıştırmalı.'],
-    ['PENDING','HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE','Non-empty remote artefakt, 300 DOM satırı, SHA ve sıfır console error gerekli.'],
-    ['PENDING','COMMIT_PUSH_REMOTE_READBACK','Gerçek publisher commit ve remote readback gerekli.']
+    ['PASS','WEB_LINE_ITEM_AND_REMOTE_ARTIFACT',`${dataRows.length} satır görünür; remote blob ${progress.remote_hydration_artifact?.blob_sha||'missing'}.`],
+    ['PENDING','CANONICAL_130_CANDIDATE_16_ENDPOINT_PARITY','V16 tek shared runner görevi 130 adayın count ve SHA parity kontrolünü 16 benzersiz resmî uç noktada çalıştıracak.'],
+    ['PENDING','HEADLESS_BROWSER_DOM_CONSOLE_ACCEPTANCE','Gerçek tarayıcı, 300 DOM satırı, ürün matrisi LSOA proxy etiketi ve sıfır console error gerekli.'],
+    ['PENDING','COMMIT_PUSH_REMOTE_READBACK','Kabul sonucu single publisher tarafından commit/push/readback yapılmalı.']
   ];
   events.innerHTML=eventRows.map((x,i)=>`<tr><td>${i+1}</td><td class="${x[0]}">${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
   sourceBody.innerHTML=(progress.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.value)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></td></tr>`).join('');
   candidateBody.innerHTML=(progress.sample_candidates||[]).map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.confidence_score)}%</td><td>${esc(x.stored_crime_count)}</td><td class="mono">${esc(x.stored_sha256)}</td><td class="PENDING">${esc(x.live_parity_status)}</td></tr>`).join('');
   rowBody.innerHTML=dataRows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.security_level)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.confidence_score)}%</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.official_api_validation_status)}</td><td>${esc(x.official_api_latest_month)}</td><td><a href="${esc(x.source_url)}" target="_blank" rel="noopener">${esc(x.source_url)}</a></td></tr>`).join('');
   document.body.dataset.loadedCount=String(dataRows.length);
-  document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300);
+  document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300&&progress.parcel_measurement===false);
 })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
 </script>
 </body>
