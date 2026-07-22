@@ -1,0 +1,168 @@
+name: height_difference_2 ONS point context 032
+
+on:
+  push:
+    branches:
+      - agent/height-difference-2-runtime-extract-032-20260722
+
+permissions:
+  contents: write
+
+jobs:
+  ons-context:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/height-difference-2-runtime-extract-032-20260722
+          fetch-depth: 1
+      - run: python3 -m pip install --disable-pip-version-check pyproj
+      - name: Resolve exact BNG, ONS LAD and EA 5 km tiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import math
+          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+          import pyproj
+          from pyproj import Transformer
+
+          source = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          output = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_ons_context_runtime_032.json')
+          receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_ons_context_runtime_032.json')
+          endpoint = 'https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/Local_Authority_Districts_DEC_2025_Boundaries_UK_BFE/FeatureServer/0/query'
+          user_agent = 'AAYS-height-difference-2-ons-context/1.0'
+
+          def fetch_json(url):
+              request = Request(url, headers={'User-Agent': user_agent, 'Accept': 'application/json'})
+              with urlopen(request, timeout=120) as response:
+                  if getattr(response, 'status', 200) != 200:
+                      raise RuntimeError(f'HTTP_{getattr(response, "status", "unknown")}')
+                  data = response.read()
+              if not data:
+                  raise RuntimeError('EMPTY_ONS_RESPONSE')
+              return data, json.loads(data.decode('utf-8'))
+
+          def grid_letters(easting, northing):
+              e100 = int(easting) // 100000
+              n100 = int(northing) // 100000
+              l1 = (19 - n100) - (19 - n100) % 5 + (e100 + 10) // 5
+              l2 = ((19 - n100) * 5) % 25 + e100 % 5
+              if l1 > 7: l1 += 1
+              if l2 > 7: l2 += 1
+              return chr(l1 + 65) + chr(l2 + 65)
+
+          def tile_5km(easting, northing):
+              quadrant = ('N' if northing % 10000 >= 5000 else 'S') + ('E' if easting % 10000 >= 5000 else 'W')
+              return f'{grid_letters(easting, northing)}{int(easting % 100000) // 10000}{int(northing % 100000) // 10000}{quadrant}'
+
+          doc = json.loads(source.read_text(encoding='utf-8'))
+          if doc.get('source_git_blob_sha') != 'bb48164e7a0af78df875f30421a6a3068c43edb8':
+              raise RuntimeError('CANONICAL_BLOB_MISMATCH')
+          rows = doc.get('rows') or []
+          if [row.get('row_no') for row in rows] != [30762, 46142, 61522]:
+              raise RuntimeError('TARGET_ROW_SEQUENCE_MISMATCH')
+
+          transformer = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True, only_best=True)
+          resolved = []
+          for row in rows:
+              longitude = float(row['longitude'])
+              latitude = float(row['latitude'])
+              easting, northing = transformer.transform(longitude, latitude)
+              if not all(math.isfinite(value) for value in (easting, northing)):
+                  raise RuntimeError(f'NON_FINITE_BNG:{row["parcel_id"]}')
+              params = {
+                  'f': 'json',
+                  'where': '1=1',
+                  'geometry': f'{easting:.3f},{northing:.3f}',
+                  'geometryType': 'esriGeometryPoint',
+                  'inSR': '27700',
+                  'spatialRel': 'esriSpatialRelIntersects',
+                  'outFields': 'LAD25CD,LAD25NM',
+                  'returnGeometry': 'false',
+              }
+              response_bytes, response_doc = fetch_json(endpoint + '?' + urlencode(params))
+              if response_doc.get('error'):
+                  raise RuntimeError(f'ONS_ERROR:{response_doc["error"]}')
+              features = response_doc.get('features') or []
+              if len(features) != 1:
+                  raise RuntimeError(f'ONS_NOT_UNIQUE:{row["parcel_id"]}:{len(features)}')
+              attributes = features[0].get('attributes') or {}
+              code = attributes.get('LAD25CD')
+              name = attributes.get('LAD25NM')
+              if not code or not name:
+                  raise RuntimeError(f'ONS_FIELDS_MISSING:{row["parcel_id"]}')
+              resolved.append({
+                  **row,
+                  'bng_easting_m': round(easting, 3),
+                  'bng_northing_m': round(northing, 3),
+                  'ons_lad25_code': code,
+                  'ons_lad25_name': name,
+                  'ons_boundary_endpoint': endpoint,
+                  'ons_response_sha256': hashlib.sha256(response_bytes).hexdigest(),
+                  'ea_os_grid_5km_tile': tile_5km(easting, northing),
+                  'context_state': 'EXACT_POINT_BNG_ONS_LAD_AND_EA_TILE_RESOLVED',
+              })
+
+          generated_at = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00', 'Z')
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'generated_at': generated_at,
+              'source_git_blob_sha': doc['source_git_blob_sha'],
+              'source_feature_count': doc['source_feature_count'],
+              'transform': {
+                  'source_crs': 'EPSG:4326',
+                  'target_crs': 'EPSG:27700',
+                  'pyproj_version': pyproj.__version__,
+                  'proj_version': pyproj.proj_version_str,
+                  'description': transformer.description,
+                  'declared_accuracy_m': transformer.accuracy,
+              },
+              'ons_dataset': 'Local Authority Districts December 2025 UK BFE',
+              'rows': resolved,
+              'exact_context_rows_written': len(resolved),
+              'official_numeric_rows_written': 0,
+              'actual_business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          receipt.parent.mkdir(parents=True, exist_ok=True)
+          receipt.write_text(json.dumps({
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'validated_at': generated_at,
+              'state': 'PASS',
+              'exact_context_rows': len(resolved),
+              'unique_lad_codes': len({row['ons_lad25_code'] for row in resolved}),
+              'unique_ea_5km_tiles': len({row['ea_os_grid_5km_tile'] for row in resolved}),
+              'all_height_values_null': all(row['height_difference_m'] is None for row in resolved),
+              'output_path': str(output),
+              'output_sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
+              'official_numeric_rows_written': 0,
+              'business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Commit verified ONS point context
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/height_difference_2/canonical_points_ons_context_runtime_032.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_ons_context_runtime_032.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Resolve exact height_difference_2 ONS point context'
+          git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
