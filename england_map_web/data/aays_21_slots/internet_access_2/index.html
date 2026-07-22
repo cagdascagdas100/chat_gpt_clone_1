@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>internet_access_2 ilerleme</title>
+<style>
+:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;margin:22px;line-height:1.42;background:#f4f6f8;color:#171717}main{max-width:1800px;margin:auto}h1{margin-bottom:4px}.sub{margin-top:0;color:#555}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}.card,section{background:#fff;border:1px solid #d7dbe0;border-radius:10px;padding:14px;margin:12px 0}.card strong{display:block;font-size:1.3rem}.scroll{overflow:auto;max-height:720px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#eef1f4}.PASS,.FIXED,.PASS_20_OF_20,.PASS_4_OF_4,.PASS_FAIL_CLOSED,.PASS_AUTH_REQUIRED{font-weight:700}.BLOCKED,.BLOCKED_STALE,.BLOCKED_EXPIRED,.BLOCKED_PUBLISH_PENDING,.BLOCKED_EXTERNAL_RESTART,.BLOCKED_NOT_FOUND,.BLOCKED_ABSENT{font-weight:700}.error{border-left:5px solid #a00;padding-left:10px}.ok{border-left:5px solid #087;padding-left:10px}@media(prefers-color-scheme:dark){body{background:#111;color:#eee}.card,section{background:#1b1b1b;border-color:#444}.sub{color:#bbb}th{background:#292929}th,td{border-color:#444}}
+</style>
+</head>
+<body>
+<main>
+<h1>internet_access_2</h1>
+<p class="sub">Satır bazlı doğrulama, kaynak ve runtime sağlık görünümü</p>
+<p id="message">Yükleniyor…</p>
+<div id="metrics" class="grid"></div>
+<div id="content"></div>
+<section><h2>Doğruluk sınırı</h2><p>Postcode kimliği ONSPD ile 2/4’tür. Exact canlı ONSPD postcode, düzeltilmiş Ofcom r2 satırı ve postcode/gigabit/ufbb100/sfbb/unable30 alanlarının tamamı 0–100 aralığında doğrulanmadan 3/4 yazılmaz. Legacy yüzdeler tek parsel ölçümü değildir.</p><small id="updated"></small></section>
+</main>
+<script>
+const errors=[];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function fetchJson(path,{critical=false}={}){
+  let last;
+  for(let attempt=1;attempt<=2;attempt++){
+    const ctl=new AbortController();
+    const timer=setTimeout(()=>ctl.abort(),7000);
+    try{
+      const res=await fetch(path,{cache:'no-store',signal:ctl.signal});
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    }catch(e){last=e;if(attempt<2) await new Promise(r=>setTimeout(r,250));}
+    finally{clearTimeout(timer);}
+  }
+  errors.push({file:path,state:critical?'CRITICAL_FAILED':'OPTIONAL_FAILED',detail:String(last)});
+  if(critical) throw last;
+  return null;
+}
+function table(title,heads,rows){
+  return `<section><h2>${esc(title)}</h2><div class="scroll"><table><thead><tr>${heads.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+}
+function metric(label,value){return `<div class="card"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;}
+(async()=>{
+  try{
+    const progress=await fetchJson('progress_latest.json',{critical:true});
+    const [samples,sources,runtime]=await Promise.all([
+      fetchJson('sample_rows_extended_166.json'),
+      fetchJson('official_sources_latest.json'),
+      fetchJson('runtime_pending_health_latest.json')
+    ]);
+    const p=progress.progress||{}, c=progress.candidates||{}, w=progress.web_visibility||{};
+    document.getElementById('metrics').innerHTML=[
+      metric('Kimlik aşaması',`${p.current_identity_wave_completed_operations}/${p.current_identity_wave_total_operations} · %${p.current_identity_wave_percent}`),
+      metric('Görev seti',`${p.expanded_task_set_completed}/${p.expanded_task_set_total} · %${p.expanded_task_set_completed_percent}`),
+      metric('Altyapı',`${p.infrastructure_repair_completed}/${p.infrastructure_repair_total} · %${p.infrastructure_repair_percent}`),
+      metric('Ürün planı',`${p.product_plan_completed}/${p.product_plan_total} · %${p.product_plan_percent}`),
+      metric('Kimlik adayı',c.verified_postcode_identity_rows),
+      metric('Canlı postcode',c.verified_live_postcodes),
+      metric('Örnek',c.featured_verified_sample_rows),
+      metric('Görünür işlem',w.visible_operation_rows)
+    ].join('');
+    let html='';
+    html+=table('Görev ve blocker durumu',['Öğe','Durum','Detay'],[
+      ['Coordinator',progress.publisher?.current_runtime_state,progress.publisher?.next_required_runtime_action],
+      ['Publisher',progress.publisher?.current_runtime_error,'Eski süreç bellekte; persistent wrapper remote’da mevcut'],
+      ['Exact Ofcom join',progress.accuracy?.strict_exact_join_output_state,'P0 çıktı oluşmadı'],
+      ['Ofcom r2 binary',progress.blockers?.includes('OFFICIAL_OFCom_R2_ZIP_BINARY_FETCH_BLOCKED')?'BLOCKED':'PASS','3/4 kapısı kapalı'],
+      ['final_ready',progress.final_ready,'Güvenlik gereği false']
+    ]);
+    if(runtime) html+=table('Runtime sağlık ve takılma kayıtları',['No','Alan','Durum','Detay'],runtime.rows.map(r=>[r.no,r.area,r.state,r.detail]));
+    if(samples) html+=table(`Doğrulanmış yeni örnekler (${samples.new_rows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],samples.new_rows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
+    if(sources) html+=table('Resmî kaynak rotaları',['Kurum','Kaynak','Rol','Durum / sınır'],sources.sources.map(s=>[s.authority,s.source,s.role,s.route_state||JSON.stringify(s.route_states||{})]));
+    if(errors.length) html+=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(e=>[e.file,e.state,e.detail]));
+    document.getElementById('content').innerHTML=html;
+    document.getElementById('message').className='ok';
+    document.getElementById('message').textContent=`Yüklendi. ${errors.length} optional hata; kritik ilerleme dosyası başarılı.`;
+    document.getElementById('updated').textContent=`Güncelleme: ${progress.updated_at||''}`;
+  }catch(e){
+    document.getElementById('message').className='error';
+    document.getElementById('message').textContent=`Kritik progress_latest.json yüklenemedi: ${e}`;
+    document.getElementById('content').innerHTML=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(x=>[x.file,x.state,x.detail]));
+  }
+})();
+</script>
+</body>
+</html>
