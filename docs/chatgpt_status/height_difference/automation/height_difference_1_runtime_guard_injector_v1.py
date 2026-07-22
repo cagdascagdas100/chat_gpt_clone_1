@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inject fail-closed EA raster and HMLR identifier runtime guards into the slot carrier."""
+"""Inject fail-closed EA raster/probe and HMLR identifier runtime guards."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,7 @@ import tempfile
 from typing import Any
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.1-runtime-raster-and-hmlr-id-guard-injector"
+SCRIPT_VERSION = "1.2-runtime-raster-probe-and-hmlr-id-guard-injector"
 EXPECTED_MAIN_MARKER = """  $patched = Replace-ExactlyOnce -Text $patched -Old $oldMetadataStart -New $newMetadataStart -Label 'BUSINESS_ROW_PROVENANCE_GATE'
 
   $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'aays_height_difference_1'
@@ -22,7 +22,7 @@ EXPECTED_HMLR_RECEIPT_MARKER = """  if ($hmlrDocument.slot_id -ne 'height_differ
   $allowedZipHosts = @('use-land-property-data.service.gov.uk','datapub-prd-s3-bucket.s3.amazonaws.com')
 """
 EXPECTED_OLD_TASK_VERSION = "Write-Output 'TASK_VERSION=1.7-dtm-required-dsm-optional-provenance-strict'"
-NEW_TASK_VERSION = "Write-Output 'TASK_VERSION=1.12-runtime-raster-and-hmlr-id-guard-integrated'"
+NEW_TASK_VERSION = "Write-Output 'TASK_VERSION=1.13-probe-content-runtime-gate-integrated'"
 
 INJECTED_MAIN_BLOCK = r"""  $patched = Replace-ExactlyOnce -Text $patched -Old $oldMetadataStart -New $newMetadataStart -Label 'BUSINESS_ROW_PROVENANCE_GATE'
 
@@ -65,6 +65,83 @@ def validate_tiff_bytes(data: bytes, content_type: str | None) -> None:
 '@
   $patched = Replace-ExactlyOnce -Text $patched -Old $oldRasterValues -New $newRasterValues -Label 'EA_OFFICIAL_NODATA_RUNTIME_FILTER'
 
+  $oldProbeRasterValidation = @'
+                with rasterio.open(path) as src:
+                    if src.crs is None or src.crs.to_epsg() != 27700:
+                        raise EvidenceError("PROBE_RASTER_CRS_NOT_EPSG27700")
+                    if src.count != 1:
+                        raise EvidenceError("PROBE_RASTER_BAND_COUNT_NOT_ONE")
+'@
+  $newProbeRasterValidation = @'
+                with rasterio.open(path) as src:
+                    if src.crs is None or src.crs.to_epsg() != 27700:
+                        raise EvidenceError("PROBE_RASTER_CRS_NOT_EPSG27700")
+                    if src.count != 1:
+                        raise EvidenceError("PROBE_RASTER_BAND_COUNT_NOT_ONE")
+                    res_x, res_y = abs(float(src.res[0])), abs(float(src.res[1]))
+                    if not (0.75 <= res_x <= 1.25 and 0.75 <= res_y <= 1.25):
+                        raise EvidenceError(f"PROBE_RASTER_RESOLUTION_NOT_APPROX_1M:{res_x},{res_y}")
+                    subset_values = parse_qs(urlparse(row["getcoverage_url"]).query).get("subset", [])
+                    requested: dict[str, tuple[float, float]] = {}
+                    for token in subset_values:
+                        if "(" not in token or not token.endswith(")"):
+                            raise EvidenceError(f"PROBE_SUBSET_SYNTAX_INVALID:{token}")
+                        axis, payload = token.split("(", 1)
+                        if axis not in {"E", "N"} or axis in requested:
+                            raise EvidenceError(f"PROBE_SUBSET_AXIS_INVALID:{axis}")
+                        parts = payload[:-1].split(",")
+                        if len(parts) != 2:
+                            raise EvidenceError(f"PROBE_SUBSET_RANGE_INVALID:{token}")
+                        lower, upper = float(parts[0]), float(parts[1])
+                        if not (math.isfinite(lower) and math.isfinite(upper) and upper > lower):
+                            raise EvidenceError(f"PROBE_SUBSET_BOUNDS_INVALID:{token}")
+                        requested[axis] = (lower, upper)
+                    if set(requested) != {"E", "N"}:
+                        raise EvidenceError(f"PROBE_SUBSET_AXES_INCOMPLETE:{sorted(requested)}")
+                    req_minx, req_maxx = requested["E"]
+                    req_miny, req_maxy = requested["N"]
+                    tolerance = max(res_x, res_y) * 1.5
+                    bounds = src.bounds
+                    if (
+                        bounds.left > req_minx + tolerance
+                        or bounds.bottom > req_miny + tolerance
+                        or bounds.right < req_maxx - tolerance
+                        or bounds.top < req_maxy - tolerance
+                    ):
+                        raise EvidenceError(
+                            "PROBE_RASTER_NOT_COVERING_REQUEST_BBOX:"
+                            f"requested={req_minx},{req_miny},{req_maxx},{req_maxy}:"
+                            f"observed={bounds.left},{bounds.bottom},{bounds.right},{bounds.top}"
+                        )
+                    probe_band = src.read(1, masked=True)
+                    probe_values = (
+                        probe_band.compressed()
+                        if hasattr(probe_band, "compressed")
+                        else probe_band[np.isfinite(probe_band)]
+                    )
+                    probe_values = probe_values[np.isfinite(probe_values)]
+                    if src.nodata is not None:
+                        probe_values = probe_values[probe_values != src.nodata]
+                    probe_values = probe_values[
+                        ~np.isclose(probe_values, -3.4028235e38, rtol=1e-6, atol=0.0)
+                    ]
+                    if probe_values.size < 1:
+                        raise EvidenceError("PROBE_NO_FINITE_NON_NODATA_PIXELS")
+                    receipt["probe_validation"] = {
+                        "crs_epsg": 27700,
+                        "resolution_m": [res_x, res_y],
+                        "requested_bbox_bng": [req_minx, req_miny, req_maxx, req_maxy],
+                        "raster_bounds_bng": [
+                            float(bounds.left),
+                            float(bounds.bottom),
+                            float(bounds.right),
+                            float(bounds.top),
+                        ],
+                        "valid_non_nodata_pixel_count": int(probe_values.size),
+                    }
+'@
+  $patched = Replace-ExactlyOnce -Text $patched -Old $oldProbeRasterValidation -New $newProbeRasterValidation -Label 'PROBE_RASTER_CONTENT_GATE'
+
   $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'aays_height_difference_1'
 """
 
@@ -72,7 +149,7 @@ INJECTED_HMLR_RECEIPT_BLOCK = """  if ($hmlrDocument.slot_id -ne 'height_differe
     throw 'HMLR_ZIP_RECEIPT_INVALID'
   }
   $identifierColumn = [string]$hmlrDocument.artifacts.hmlr_gml.structure.identifier_column
-  $identifierColumnCompact = (($identifierColumn.ToLowerInvariant()) -replace '[_:\-]', '')
+  $identifierColumnCompact = (($identifierColumn.ToLowerInvariant()) -replace '[_:\\-]', '')
   if ([string]::IsNullOrWhiteSpace($identifierColumn) -or $identifierColumnCompact -notmatch 'inspire' -or $identifierColumnCompact -notmatch 'id') {
     throw "HMLR_INSPIRE_IDENTIFIER_COLUMN_REQUIRED: $identifierColumn"
   }
@@ -128,12 +205,15 @@ def patch_carrier_text(text: str) -> str:
     required_tokens = (
         "CLASSIC_TIFF_HEADER_VALIDATOR",
         "EA_OFFICIAL_NODATA_RUNTIME_FILTER",
+        "PROBE_RASTER_CONTENT_GATE",
+        "PROBE_RASTER_RESOLUTION_NOT_APPROX_1M",
+        "PROBE_RASTER_NOT_COVERING_REQUEST_BBOX",
+        "PROBE_NO_FINITE_NON_NODATA_PIXELS",
         "HMLR_INSPIRE_IDENTIFIER_COLUMN_REQUIRED",
         "HMLR_INSPIRE_IDENTIFIER_COUNT_MISMATCH",
         "HMLR_INSPIRE_IDENTIFIER_SET_HASH_INVALID",
         'data[:4] not in (b"II*\\x00", b"MM\\x00*")',
-        "np.isclose(values, -3.4028235e38",
-        "NO_FINITE_NON_NODATA_RASTER_PIXELS_INSIDE_POLYGON",
+        "np.isclose(probe_values, -3.4028235e38",
         NEW_TASK_VERSION,
     )
     missing = [token for token in required_tokens if token not in patched]
@@ -156,11 +236,15 @@ def run_self_test() -> dict[str, Any]:
     checks = {
         "main_marker_replaced_once": patched.count("CLASSIC_TIFF_HEADER_VALIDATOR") == 1,
         "nodata_patch_once": patched.count("EA_OFFICIAL_NODATA_RUNTIME_FILTER") == 1,
+        "probe_content_gate_once": patched.count("PROBE_RASTER_CONTENT_GATE") == 1,
         "hmlr_identifier_gate_once": patched.count("HMLR_INSPIRE_IDENTIFIER_COLUMN_REQUIRED") == 1,
         "little_endian_header_present": 'b"II*\\x00"' in patched,
         "big_endian_header_present": 'b"MM\\x00*"' in patched,
         "official_sentinel_present": "-3.4028235e38" in patched,
         "empty_after_filter_error_present": "NO_FINITE_NON_NODATA_RASTER_PIXELS_INSIDE_POLYGON" in patched,
+        "probe_resolution_gate_present": "PROBE_RASTER_RESOLUTION_NOT_APPROX_1M" in patched,
+        "probe_bbox_gate_present": "PROBE_RASTER_NOT_COVERING_REQUEST_BBOX" in patched,
+        "probe_valid_pixel_gate_present": "PROBE_NO_FINITE_NON_NODATA_PIXELS" in patched,
         "identifier_count_gate_present": "HMLR_INSPIRE_IDENTIFIER_COUNT_MISMATCH" in patched,
         "identifier_hash_gate_present": "HMLR_INSPIRE_IDENTIFIER_SET_HASH_INVALID" in patched,
         "task_version_upgraded": NEW_TASK_VERSION in patched,
@@ -191,11 +275,11 @@ def run_self_test() -> dict[str, Any]:
         raise InjectionError("SELF_TEST_DUPLICATE_RECEIPT_MARKER_NOT_REJECTED")
 
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "script_version": SCRIPT_VERSION,
         "state": "PASS",
-        "checks": 13,
+        "checks": 17,
         "details": checks
         | {
             "duplicate_main_marker_rejected": duplicate_main_rejected,
@@ -205,6 +289,7 @@ def run_self_test() -> dict[str, Any]:
         "runtime_patch_labels": [
             "CLASSIC_TIFF_HEADER_VALIDATOR",
             "EA_OFFICIAL_NODATA_RUNTIME_FILTER",
+            "PROBE_RASTER_CONTENT_GATE",
             "HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE",
         ],
     }
@@ -229,7 +314,7 @@ def main() -> int:
     patched_bytes = patched_text.encode("utf-8")
     atomic_write(args.output, patched_bytes)
     receipt = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "script_version": SCRIPT_VERSION,
         "state": "COMPLETED_RUNTIME_GUARDS_INJECTED",
@@ -239,13 +324,22 @@ def main() -> int:
         "output_sha256": sha256_bytes(patched_bytes),
         "source_bytes": len(source),
         "output_bytes": len(patched_bytes),
-        "runtime_patch_count": 3,
+        "runtime_patch_count": 4,
         "runtime_patch_labels": [
             "CLASSIC_TIFF_HEADER_VALIDATOR",
             "EA_OFFICIAL_NODATA_RUNTIME_FILTER",
+            "PROBE_RASTER_CONTENT_GATE",
             "HMLR_INSPIRE_IDENTIFIER_RECEIPT_GATE",
         ],
         "official_nodata_sentinel": -3.4028235e38,
+        "probe_runtime_requirements": [
+            "EPSG:27700",
+            "single_band",
+            "approximately_1m_resolution",
+            "E_and_N_subset_ranges",
+            "requested_bbox_covered",
+            "finite_non_nodata_pixels",
+        ],
         "hmlr_identifier_column_semantics": "column name must contain INSPIRE and ID",
         "hmlr_identifier_count_must_equal_feature_count": True,
         "hmlr_identifier_set_sha256_required": True,
