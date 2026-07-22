@@ -1722,6 +1722,16 @@ class Coordinator:
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
         ).stdout.strip()
         changed = sorted(set(self.git_path_list(worktree, "diff", "--name-only", "-z", base_head, child_commit, "--")))
+        github_blob_limit = 95 * 1024 * 1024
+        local_only_large_paths: list[str] = []
+        publishable_paths: list[str] = []
+        for relative in changed:
+            candidate = worktree / Path(relative)
+            if candidate.is_file() and candidate.stat().st_size > github_blob_limit:
+                local_only_large_paths.append(relative)
+            else:
+                publishable_paths.append(relative)
+        changed = publishable_paths
         task_key = sha256_bytes(str(task["task_id"]).encode("utf-8"))[:20]
         item_path = self.publish_queue / f"{task_key}.json"
         atomic_write_json(
@@ -1736,6 +1746,7 @@ class Coordinator:
                 "worktree": str(worktree),
                 "child_commit": child_commit,
                 "changed_paths": changed,
+                "local_only_large_paths": local_only_large_paths,
                 "exact_write_paths": task["exact_write_paths"],
                 "attempts": 0,
                 "state": "PUBLISH_PENDING",
@@ -1799,20 +1810,28 @@ class Coordinator:
                 queue_relative = str(item["source_queue_path"])
                 queue_path = self.repo / Path(queue_relative)
                 queue_task = read_json(queue_path, {})
-                if not queue_task:
-                    raise RuntimeError("SOURCE_QUEUE_TASK_MISSING_DURING_PUBLISH")
-                queue_task.update(
-                    {
-                        "status": "result_ready_for_remote_acceptance",
-                        "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
-                        "runner_child_commit": item["child_commit"],
-                        "runner_published_at": utc_now(),
-                        "final_ready": False,
-                    }
-                )
-                atomic_write_json(queue_path, queue_task)
+                queue_stage_paths: list[str] = []
+                if queue_task:
+                    queue_task.update(
+                        {
+                            "status": "result_ready_for_remote_acceptance",
+                            "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
+                            "runner_child_commit": item["child_commit"],
+                            "runner_published_at": utc_now(),
+                            "final_ready": False,
+                        }
+                    )
+                    atomic_write_json(queue_path, queue_task)
+                    queue_stage_paths.append(queue_relative)
+                else:
+                    # Another slot/page may have superseded or removed the
+                    # source task while this result was waiting to publish.
+                    # The child commit and slot proofs are still authoritative;
+                    # publish them instead of retrying the orphan forever.
+                    item["source_queue_missing_at_publish"] = True
+                    atomic_write_json(item_path, item)
                 proof_paths = self.copy_slot_proofs(str(item["slot_id"]))
-                stage_paths = sorted(set([*changed_paths, queue_relative, *proof_paths]))
+                stage_paths = sorted(set([*changed_paths, *queue_stage_paths, *proof_paths]))
                 stage = subprocess.run(
                     self.git_command("-C", str(self.repo), "add", "--sparse", "-A", "--", *stage_paths),
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120,
