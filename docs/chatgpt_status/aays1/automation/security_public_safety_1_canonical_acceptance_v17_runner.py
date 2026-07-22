@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import time
@@ -14,6 +15,7 @@ ATTEMPT_ID = "security-public-safety-1-20260722-017"
 ROOT = Path(__file__).resolve().parents[4]
 HERE = Path(__file__).resolve().parent
 CORE = HERE / "security_public_safety_1_canonical_acceptance_v17.py"
+CARRIER = HERE / "security_public_safety_1_canonical_acceptance_v17_carrier.ps1"
 QUEUE_JSON = ROOT / "docs" / "chatgpt_status" / "aays1" / "queue" / "security_public_safety_1_canonical_acceptance_v17_20260722.task.json"
 LEGACY_QUEUE = ROOT / "docs" / "chatgpt_status" / "aays1" / "queue" / "security_public_safety_1_canonical_acceptance_v17_20260722.queue.txt"
 MANIFEST = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "canonical_130_endpoint_manifest_20260722.json"
@@ -24,6 +26,8 @@ CORE_WEB_REPORT = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID 
 PUBLISHER_CANDIDATE_REPORT = ROOT / "docs" / "chatgpt_status" / "aays1" / "shards" / SLOT_ID / "reports" / "015_security_public_safety_1_publisher_candidate_v17_latest.json"
 PUBLISHER_CANDIDATE_WEB = ROOT / "england_map_web" / "data" / "aays_21_slots" / SLOT_ID / "publisher_candidate_v17_latest.json"
 WRAPPER_NAME = Path(__file__).name
+CARRIER_NAME = CARRIER.name
+EXPECTED_CARRIER_BLOB_SHA = "df406756c58e91bd2cbae1181e509eb15040cd19"
 MAX_ATTEMPTS = 3
 RETRY_DELAYS_SECONDS = (1.0, 2.0)
 
@@ -35,6 +39,11 @@ def now() -> str:
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def git_blob_sha(path: Path) -> str:
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
 
 
 def parse_legacy(path: Path) -> dict[str, str]:
@@ -57,7 +66,7 @@ def load_module(path: Path, name: str):
 
 
 def run_preflight() -> dict[str, Any]:
-    required = [CORE, QUEUE_JSON, LEGACY_QUEUE, MANIFEST]
+    required = [CORE, CARRIER, QUEUE_JSON, LEGACY_QUEUE, MANIFEST]
     file_checks = {str(path.relative_to(ROOT)): path.is_file() for path in required}
     errors: list[str] = []
     checks: dict[str, bool] = {"required_files_present": all(file_checks.values())}
@@ -68,6 +77,15 @@ def run_preflight() -> dict[str, Any]:
     except Exception as exc:
         checks["core_python_compile"] = False
         errors.append(f"CORE_COMPILE:{type(exc).__name__}:{exc}")
+
+    try:
+        checks["carrier_blob_exact"] = git_blob_sha(CARRIER) == EXPECTED_CARRIER_BLOB_SHA
+        carrier_text = CARRIER.read_text(encoding="utf-8-sig")
+        checks["carrier_invokes_python_wrapper"] = WRAPPER_NAME in carrier_text and "POWERSHELL_CARRIER_TO_PYTHON" in carrier_text
+        checks["carrier_safety_contract"] = all(token in carrier_text for token in ("NEW_RUNNER=false", "PARALLEL_RUNNER=false", "FINAL_READY=false"))
+    except Exception as exc:
+        checks["carrier_readable"] = False
+        errors.append(f"CARRIER:{type(exc).__name__}:{exc}")
 
     try:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8-sig"))
@@ -91,7 +109,10 @@ def run_preflight() -> dict[str, Any]:
         checks.update({
             "queue_task_matches": queue.get("task_id") == TASK_ID,
             "queue_attempt_matches": queue.get("attempt_id") == ATTEMPT_ID,
-            "queue_wrapper_path": str(queue.get("script_path") or "").endswith(WRAPPER_NAME),
+            "queue_carrier_path": str(queue.get("script_path") or "").endswith(CARRIER_NAME),
+            "queue_python_wrapper_path": str(queue.get("python_wrapper_path") or "").endswith(WRAPPER_NAME),
+            "queue_carrier_blob": queue.get("carrier_blob_sha") == EXPECTED_CARRIER_BLOB_SHA,
+            "queue_execution_host": contract.get("execution_host") == "powershell_carrier_to_python",
             "queue_no_replay": contract.get("hydration_replay_forbidden") is True,
             "queue_candidates_130": contract.get("canonical_candidate_count") == 130,
             "queue_endpoints_16": contract.get("canonical_unique_endpoints") == 16,
@@ -107,7 +128,10 @@ def run_preflight() -> dict[str, Any]:
         checks.update({
             "legacy_task_matches": legacy.get("TASK_ID") == TASK_ID,
             "legacy_attempt_matches": legacy.get("ATTEMPT_ID") == ATTEMPT_ID,
-            "legacy_wrapper_path": str(legacy.get("WORKER_PATH") or "").endswith(WRAPPER_NAME),
+            "legacy_carrier_path": str(legacy.get("WORKER_PATH") or "").endswith(CARRIER_NAME),
+            "legacy_python_wrapper_path": str(legacy.get("PYTHON_WORKER_PATH") or "").endswith(WRAPPER_NAME),
+            "legacy_carrier_blob": legacy.get("CARRIER_BLOB_SHA") == EXPECTED_CARRIER_BLOB_SHA,
+            "legacy_execution_host": legacy.get("EXECUTION_HOST") == "powershell_carrier_to_python",
             "legacy_no_replay": legacy.get("HYDRATION_REPLAY_FORBIDDEN") == "true",
             "legacy_candidates_130": legacy.get("CANDIDATE_COUNT_REQUIRED") == "130",
             "legacy_endpoints_16": legacy.get("CANDIDATE_UNIQUE_ENDPOINTS_REQUIRED") == "16",
@@ -120,7 +144,7 @@ def run_preflight() -> dict[str, Any]:
 
     status = "PASS" if checks and all(checks.values()) else "BLOCKED"
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -130,6 +154,10 @@ def run_preflight() -> dict[str, Any]:
         "errors": errors,
         "network_requests_performed": 0,
         "hydration_replayed": False,
+        "execution_host": "powershell_carrier_to_python",
+        "carrier_path": str(CARRIER.relative_to(ROOT)),
+        "carrier_blob_sha": EXPECTED_CARRIER_BLOB_SHA,
+        "python_wrapper_path": str(Path(__file__).resolve().relative_to(ROOT)),
         "retry_policy": {"max_attempts": MAX_ATTEMPTS, "delays_seconds": list(RETRY_DELAYS_SECONDS), "retry_only_transient": True},
         "publisher_candidate_required": True,
         "failure_receipts_required": True,
@@ -153,8 +181,7 @@ def make_retry_fetch(original_fetch: Callable[..., dict[str, Any]]) -> Callable[
             result["attempt"] = attempt
             error = str(result.get("error") or "")
             status = result.get("http_status")
-            success = status == 200 and not error
-            if success:
+            if status == 200 and not error:
                 return result
             permanent_4xx = "HTTP Error 4" in error and "HTTP Error 429" not in error
             if permanent_4xx or attempt >= MAX_ATTEMPTS:
@@ -169,7 +196,7 @@ def blocked_core_result(first_unverified_step: str, blocker: str, detail: Any = 
     if detail not in (None, "", [], {}):
         blockers.append(f"DETAIL:{detail}")
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -188,6 +215,7 @@ def blocked_core_result(first_unverified_step: str, blocker: str, detail: Any = 
         "blockers": blockers,
         "failure_receipt_generated": True,
         "hydration_replayed": False,
+        "execution_host": "powershell_carrier_to_python",
         "output_semantics": "AREA_LEVEL_PROXY",
         "measurement_level": "lsoa",
         "parcel_measurement": False,
@@ -212,7 +240,7 @@ def build_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> di
     acceptance_pass = core_result.get("acceptance_pass") is True
     completed_units = 7 if acceptance_pass else 5
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -220,6 +248,7 @@ def build_publisher_candidate(core_result: dict[str, Any], exit_code: int) -> di
         "acceptance_pass": acceptance_pass,
         "core_exit_code": exit_code,
         "failure_receipt_generated": core_result.get("failure_receipt_generated") is True,
+        "execution_host": "powershell_carrier_to_python",
         "canonical_progress_candidate": {
             "completed_units": completed_units,
             "total_units": 8,
