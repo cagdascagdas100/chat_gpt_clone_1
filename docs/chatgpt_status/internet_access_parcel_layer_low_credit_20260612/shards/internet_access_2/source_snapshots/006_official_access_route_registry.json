@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_2",
+  "generated_at": "2026-07-22T02:19:06Z",
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
+  "sources": [
+    {
+      "name": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+      "authority": "Ofcom",
+      "snapshot_date": "2026-01",
+      "publication_date": "2026-05-13",
+      "measurement_level": "postcode coverage availability",
+      "official_download_size_mb": 32.2,
+      "access_routes": [
+        {
+          "route": "official_zip",
+          "state": "RUNNER_HTTP_403_AFTER_BROWSER_AND_CURL_FALLBACKS",
+          "may_write_accuracy": false
+        },
+        {
+          "route": "Ofcom Connected Nations Broadband API",
+          "state": "ACCOUNT_AND_SUBSCRIPTION_KEY_REQUIRED",
+          "basic_limit": "100 calls/minute; 50000 requests/month",
+          "premium_limit": "500 calls/minute; 150000 requests/month",
+          "key_available_in_runner": false,
+          "may_write_accuracy": false
+        }
+      ],
+      "maximum_accuracy_when_exact_r2_row_is_available": "3/4_POSTCODE_PROXY"
+    },
+    {
+      "name": "ONS Postcode Directory May 2026",
+      "authority": "Office for National Statistics",
+      "snapshot_date": "2026-05",
+      "measurement_level": "postcode identity, lifecycle and centroid",
+      "access_routes": [
+        {
+          "route": "May 2026 hosted table FeatureServer",
+          "state": "QUEUED_EXACT_PCDS_VALIDATION"
+        },
+        {
+          "route": "latest postcode centroids FeatureServer fallback",
+          "state": "QUEUED_FALLBACK_FOR_UNRESOLVED_POSTCODES"
+        }
+      ],
+      "maximum_accuracy_without_ofcom_coverage": "2/4_POSTCODE_IDENTITY_ONLY"
+    }
+  ],
+  "prepared_tasks": [
+    {
+      "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+      "sample_rows": 24,
+      "state": "queued"
+    },
+    {
+      "task_id": "internet-access-2-expand-onspd-identity-existing-11013-20260722T021000Z",
+      "target_rows": 11013,
+      "state": "queued_after_24_row_normalization",
+      "query_method": "POST_EXACT_PCDS_WITH_3_RETRIES_RECURSIVE_SPLIT_AND_SECOND_SERVICE_FALLBACK",
+      "web_chunk_size": 500
+    }
+  ],
+  "official_coverage_verified_candidates": 0,
+  "parcel_measured_values_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
