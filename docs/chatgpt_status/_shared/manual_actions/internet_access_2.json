@@ -1,15 +1,16 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and its stale PUBLISH_PENDING proofs are reconciled. It prepared 11,013 rows across 5,044 postcodes, including 11,011 live ONSPD identities and 2 review rows. The remaining blocker is official Ofcom ZIP access; no official coverage candidate or 3/4 accuracy may be written until the corrected inner-r2 archive passes strict validation.",
+  "reason": "The existing 006 task is technically published and the stale PUBLISH_PENDING proofs are reconciled. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 review rows. The only remaining business blocker is official Ofcom ZIP access; zero official coverage candidates and zero 3/4 accuracy values have been written.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-22T20:00:46Z",
+  "updated_at": "2026-07-22T20:04:21Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
+    "percent_change": 16.66,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -21,14 +22,14 @@
   },
   "technical_publish_reconciliation": {
     "state": "RESOLVED_PUBLISHED",
-    "reconciliation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/009_006_publish_pending_remote_artifact_reconciliation.json",
     "current_task_state": "PUBLISHED",
     "slot_heartbeat_state": "PUBLISHED",
-    "business_blocker_preserved": true
+    "business_blocker_preserved": true,
+    "reconciliation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/009_006_publish_pending_remote_artifact_reconciliation.json"
   },
   "required_archive": {
-    "official_outer_filename": "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip",
     "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
+    "outer_filename_may_be_r1": true,
     "required_inner_revision": "r2",
     "required_r2_files": 121,
     "required_unique_postcode_areas": 121,
@@ -37,20 +38,27 @@
     "stale_inner_r1_allowed": false,
     "all_files_nonempty_and_core_columns_required": true
   },
-  "strict_same_task_retry": {
-    "purpose": "requeue the existing 006 task only after the official ZIP passes every strict gate",
+  "primary_host_action": {
+    "wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
+    "wrapper_commit": "ed1d2a8cbe9b8c04b75d385c39243eb081d59d37",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
+    "behavior": [
+      "find portable Git and Python",
+      "require clean publisher worktree",
+      "require local HEAD to equal remote canonical branch HEAD",
+      "run strict ZIP validation",
+      "requeue the same 006 task with a new attempt only after strict pass",
+      "stage only the existing queue file and one recovery record",
+      "push and verify remote readback",
+      "invoke the existing safe single-runner launcher"
+    ]
+  },
+  "strict_requeue_guard": {
     "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py",
     "script_commit": "6d5e91579f877e147bcae993b6afe6aa7e4a3ce1",
-    "command_template": "python docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\013_requeue_existing_006_after_strict_ofcom_zip.py --repo %AAYS_REPO_ROOT% --archive %AAYS_PORTABLE_ROOT%\\state\\source_cache\\ofcom_spring_2026\\ofcom_fixed_coverage_202601_v2.zip --publish",
-    "then_run": "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
-    "safety": [
-      "same task_id is retained; no duplicate task is created",
-      "a new attempt_id is generated only after strict ZIP acceptance",
-      "active slot or global lease blocks requeue",
-      "dirty publisher worktree blocks requeue",
-      "only the existing queue file and one recovery record may be staged",
-      "push must pass remote readback"
-    ],
+    "same_task_id_retained": true,
+    "duplicate_task_created": false,
+    "new_attempt_only_after_strict_pass": true,
     "tests": {
       "python_compile": "PASS",
       "synthetic_corrected_r2_archive_requeue": "PASS",
@@ -67,7 +75,7 @@
   },
   "do_not": [
     "do not create another task",
-    "do not start a second runner",
+    "do not start a second runner directly",
     "do not requeue before strict archive validation passes",
     "do not accept inner r1 postcode files",
     "do not use the API as a bulk archive replacement",
@@ -81,10 +89,10 @@
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_progress_latest.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
-  "duplicate_task_created": false,
   "second_runner_started": false,
   "fake_data": false,
   "db_write": false,
