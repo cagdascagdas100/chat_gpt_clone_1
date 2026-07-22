@@ -26,7 +26,9 @@ $files = @(
   @{ Source = "AAYS_RUNNER_KEEPALIVE_WATCHDOG.py"; Destination = "AAYS_RUNNER_KEEPALIVE_WATCHDOG.py" },
   @{ Source = "START_AAYS_RUNNER_KEEPALIVE.ps1"; Destination = "START_AAYS_RUNNER_KEEPALIVE.ps1" },
   @{ Source = "AAYS_PORTABLE_CONTROL_PANEL.py"; Destination = "AAYS_PORTABLE_CONTROL_PANEL.py" },
-  @{ Source = "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"; Destination = "RUN_AAYS_ADAPTIVE_15_WORKER.ps1" }
+  @{ Source = "RUN_AAYS_ADAPTIVE_15_WORKER.ps1"; Destination = "RUN_AAYS_ADAPTIVE_15_WORKER.ps1" },
+  @{ Source = "..\AAYS_TEK_PARAGRAF_DEVAM_PROMPTU_TR.txt"; Destination = "AAYS_TEK_PARAGRAF_DEVAM_PROMPTU_TR.txt" },
+  @{ Source = "..\AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md"; Destination = "AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md" }
 )
 $backupRoot = Join-Path $PortableRoot ("runtime\adaptive_v2\auto_recovery_backup_" + [DateTime]::UtcNow.ToString("yyyyMMdd_HHmmss"))
 New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null

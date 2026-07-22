@@ -79,6 +79,9 @@ REMOTE_GUIDE = PORTABLE_ROOT / "AAYS_REMOTE_ACCESS_SETUP_TR.md"
 REMOTE_STATUS = V2_STATE_ROOT / "remote_access_preflight_latest.json"
 V2_SLOT_ROOT = V2_STATE_ROOT / "slots"
 V2_RECOVERY_ROOT = V2_STATE_ROOT / "recovery"
+V2_PUBLISH_QUEUE = V2_STATE_ROOT / "publish_queue"
+MANUAL_ACTIONS_STATUS = V2_STATE_ROOT / "manual_actions_latest.json"
+MANUAL_PENDING_SECONDS = 900
 PUBLISHER_REPO = PORTABLE_ROOT / "runner_system" / "adaptive_v2" / "publisher"
 PUBLISHER_SHARED = PUBLISHER_REPO / "docs" / "chatgpt_status" / "_shared"
 CONTINUE_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_21_PAGE_CONTINUE_DRY_RUN_latest.json"
@@ -89,6 +92,7 @@ COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_21_PAGE_CONTINUE_AND_
 if not COMBINED_TEST_STATUS.is_file():
     COMBINED_TEST_STATUS = PUBLISHER_SHARED / "status" / "AAYS_18_PAGE_CONTINUE_AND_AI_PHOTO_TEST_latest.json"
 REMOTE_SLOT_ROOT = PUBLISHER_SHARED / "slots_21"
+REMOTE_MANUAL_ACTION_ROOT = PUBLISHER_SHARED / "manual_actions"
 LOG_DIR = PORTABLE_ROOT / "logs"
 LOG_FILE = LOG_DIR / "aays_portable_control_panel.log"
 POWERSHELL = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
@@ -149,6 +153,22 @@ def read_json(path: Path) -> dict:
         return {}
 
 
+def atomic_write_json(path: Path, payload: dict) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f"{path.name}.tmp.{os.getpid()}.{time.time_ns()}")
+        temporary.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+    except Exception:
+        try:
+            temporary.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
 def utc_age_seconds(value: object) -> float | None:
     try:
         stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
@@ -185,6 +205,11 @@ class AaysPanel(tk.Tk):
             for slot_id, label in SLOT_IDS
         }
         self.wrap_labels: list[ttk.Label] = []
+        self.manual_actions: list[dict] = []
+        self.manual_actions_window: tk.Toplevel | None = None
+        self.manual_actions_tree: ttk.Treeview | None = None
+        self.manual_actions_dialog_var = tk.StringVar(value="Henüz kontrol edilmedi")
+        self.manual_actions_button: ttk.Button | None = None
         self.last_control_sync = 0.0
         self._build_ui()
         self.refresh_status()
@@ -228,10 +253,14 @@ class AaysPanel(tk.Tk):
             ("Runner'ı Yeniden Başlat", self.restart_runner),
             ("Uzaktan Erişim Kontrol", self.check_remote_access),
             ("Uzaktan Erişim Rehberi", self.open_remote_guide),
+            ("Çözülmemiş Kullanıcı İşlemleri (0)", self.show_manual_actions),
             ("Durumu Yenile", self.refresh_status),
         ]
         for idx, (label, command) in enumerate(buttons):
-            ttk.Button(grid, text=label, command=command).grid(row=idx // 3, column=idx % 3, padx=4, pady=4, sticky="ew")
+            button = ttk.Button(grid, text=label, command=command)
+            button.grid(row=idx // 3, column=idx % 3, padx=4, pady=4, sticky="ew")
+            if command == self.show_manual_actions:
+                self.manual_actions_button = button
             grid.columnconfigure(idx % 3, weight=1)
 
         links = ttk.LabelFrame(root, text="Sabit Linkler", padding=12)
@@ -452,6 +481,224 @@ class AaysPanel(tk.Tk):
             "recovery_reason": recovery.get("repair_reason") or recovery.get("blocker"),
             "recovery_wait_until": recovery.get("wait_until"),
         }
+
+    @staticmethod
+    def _manual_solution(reason: str) -> str:
+        upper = reason.upper()
+        if any(marker in upper for marker in ("AUTH", "CREDENTIAL", "LOGIN", "GITHUB")):
+            return "GitHub hesabında gh auth login ile oturum açın; sonra Runner'ı Yeniden Başlatın."
+        if any(marker in upper for marker in ("DIRTY_PUBLISHER", "GIT_CLEAN_PUBLISHER", "REMOTE_DIVERGED")):
+            return "Slot çıktısını kendi dalında commit/push edin veya temiz seri publisher üzerinden yayımlayın; başka slot dosyalarını silmeyin."
+        if any(marker in upper for marker in ("CHECKOUT_TIMEOUT", "FETCH_TIMEOUT", "SPARSE_EXPANSION_TIMEOUT", "SPARSE_LIST_TIMEOUT")):
+            return "Takılı Git sürecini doğrulayın; aktif işlem yoksa yalnız boş ve eski lock dosyasını kaldırın, sonra Runner'ı Yeniden Başlatın."
+        if any(marker in upper for marker in ("SOURCE_NOT_FOUND", "SOURCE_READ_FAILED", "NOT_FOUND_IN_REMOTE_REPOSITORY")):
+            return "Belirtilen resmi kaynak dosyasını/URL'sini doğrulayın ve erişilebilir kanonik konuma ekleyin; sahte veri üretmeyin."
+        if any(marker in upper for marker in ("DATABASE_HEALTH_DEGRADED", "NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY")):
+            return "Kanonik veri tabanı/ulusal parsel envanteri sağlığını düzeltin; health kanıtı PASS olmadan görevi sürdürmeyin."
+        if any(marker in upper for marker in ("FEATURE_COUNT_ZERO", "EXPORT_NOT_STARTED", "OUTPUT_NOT_PRESENT", "NOT_PARCEL_MATCHED")):
+            return "Eksik gerçek çıktıyı üreten önceki resmi veri adımını çalıştırın ve kanıt dosyasını doğrulayın."
+        if "LOW_AVAILABLE_MEMORY" in upper:
+            return "Chrome sekmelerini azaltın veya belleği boşaltın; runner güvenli kapasiteyi otomatik yeniden yükseltir."
+        return "Ayrıntılı hata kaydını ve slot checkpoint'ini doğrulayın; veri silmeden güvenli düzeltmeyi uygulayıp Durumu Yenile'ye basın."
+
+    def collect_manual_actions(self, runner_info: dict) -> list[dict]:
+        previous = read_json(MANUAL_ACTIONS_STATUS)
+        previous_by_id = {
+            str(item.get("id")): item
+            for item in previous.get("actions", [])
+            if isinstance(item, dict) and item.get("id")
+        }
+        actions: list[dict] = []
+        now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+        def add(
+            action_id: str,
+            slot_id: str,
+            reason: str,
+            detected_at: object = None,
+            solution: str | None = None,
+        ) -> None:
+            old = previous_by_id.get(action_id, {})
+            actions.append({
+                "id": action_id,
+                "slot_id": slot_id,
+                "reason": reason,
+                "detected_at": old.get("detected_at") or detected_at or now_utc,
+                "solution": solution or self._manual_solution(reason),
+            })
+
+        data_markers = (
+            "OUTPUT_NOT_PRESENT", "SOURCE_NOT_FOUND", "SOURCE_READ_FAILED",
+            "NOT_FOUND_IN_REMOTE_REPOSITORY", "FEATURE_COUNT_ZERO", "EXPORT_NOT_STARTED",
+            "NOT_PARCEL_MATCHED", "INFERENCE_NOT_EXECUTED", "DATABASE_HEALTH_DEGRADED",
+            "NO_NATIONAL_ENGLAND_CANONICAL_PARCEL_INVENTORY", "NO_DATA",
+        )
+        for slot_id, _label in SLOT_IDS:
+            status = read_json(V2_SLOT_ROOT / slot_id / "status_latest.json")
+            recovery = read_json(V2_RECOVERY_ROOT / "slots" / slot_id / "latest.json")
+            state = str(status.get("state") or "").upper()
+            recovery_state = str(recovery.get("state") or "").upper()
+            reason_parts: list[str] = []
+            for value in (
+                recovery.get("repair_reason"),
+                recovery.get("blocker"),
+                status.get("blocker"),
+            ):
+                text = str(value or "").strip()
+                if text and text not in reason_parts:
+                    reason_parts.append(text)
+            reason = " | ".join(reason_parts)
+            upper = reason.upper()
+            truly_manual = any(marker in upper for marker in data_markers) or any(
+                marker in upper
+                for marker in ("NO_SAFE_AUTOMATIC_REPAIR", "AUTOMATIC_RETRY_DID_NOT_CLEAR_BLOCKER")
+            )
+            if recovery_state == "RECOVERY_PARKED" and truly_manual:
+                add(f"slot:{slot_id}:{reason[:80]}", slot_id, reason or state, status.get("updated_at"))
+
+        if V2_PUBLISH_QUEUE.is_dir():
+            for item_path in sorted(V2_PUBLISH_QUEUE.glob("*.json")):
+                item = read_json(item_path)
+                slot_id = str(item.get("slot_id") or "PAYLAŞILAN")
+                age = utc_age_seconds(item.get("created_at"))
+                attempts = int(item.get("attempts") or 0)
+                last_error = str(item.get("last_error") or "")
+                upper = last_error.upper()
+                needs_user = any(
+                    marker in upper
+                    for marker in (
+                        "AUTH", "CREDENTIAL", "LOGIN", "GIT_CLEAN_PUBLISHER",
+                        "DIRTY_PUBLISHER", "REMOTE_DIVERGED", "PERMISSION DENIED",
+                    )
+                )
+                if age is not None and age >= MANUAL_PENDING_SECONDS and attempts >= 3 and needs_user:
+                    add(
+                        f"publish:{item_path.stem}",
+                        slot_id,
+                        f"PUBLISH_PENDING {int(age // 60)} dk / {attempts} deneme: {last_error}",
+                        item.get("created_at"),
+                    )
+
+        if REMOTE_MANUAL_ACTION_ROOT.is_dir():
+            for action_path in sorted(REMOTE_MANUAL_ACTION_ROOT.glob("*.json")):
+                remote_action = read_json(action_path)
+                state = str(remote_action.get("state") or "OPEN").upper()
+                if state in {"RESOLVED", "CLOSED", "DONE", "PASS"}:
+                    continue
+                if remote_action.get("requires_user_action") is not True:
+                    continue
+                slot_id = str(remote_action.get("slot_id") or "SİSTEM")
+                reason = str(remote_action.get("reason") or remote_action.get("blocker") or "Manuel işlem gerekli")
+                add(
+                    f"remote:{action_path.stem}",
+                    slot_id,
+                    reason,
+                    remote_action.get("detected_at") or remote_action.get("updated_at"),
+                    str(remote_action.get("solution") or "") or None,
+                )
+
+        remote_state = str(runner_info.get("remote_sync_state") or "").upper()
+        remote_error = str(runner_info.get("remote_sync_error") or "")
+        if remote_state in {
+            "WAITING_FOR_NETWORK_OR_GIT_AUTH",
+            "WAITING_DIRTY_PUBLISHER_REMOTE_DIVERGED",
+        }:
+            add("system:remote_sync", "SİSTEM", f"{remote_state}: {remote_error}")
+        if runner_info.get("status") in {"FAILED", "STALE"} and not runner_info.get("pid_alive"):
+            add("system:runner_down", "SİSTEM", "Runner kapalı ve keepalive tarafından açılamadı")
+
+        preflight = read_json(V2_PREFLIGHT)
+        if preflight and not preflight.get("ready"):
+            failed = [name for name, ok in (preflight.get("checks") or {}).items() if ok is not True]
+            if failed:
+                add("system:preflight", "SİSTEM", "Ön kontrol başarısız: " + ", ".join(failed), preflight.get("checked_at"))
+
+        actions.sort(key=lambda item: (item["slot_id"], item["detected_at"], item["id"]))
+        atomic_write_json(MANUAL_ACTIONS_STATUS, {
+            "schema_version": 1,
+            "updated_at": now_utc,
+            "action_count": len(actions),
+            "actions": actions,
+            "resolved_actions_are_removed_automatically": True,
+            "final_ready": len(actions) == 0,
+        })
+        return actions
+
+    def update_manual_actions(self, runner_info: dict) -> None:
+        self.manual_actions = self.collect_manual_actions(runner_info)
+        count = len(self.manual_actions)
+        if self.manual_actions_button is not None:
+            self.manual_actions_button.configure(text=f"Çözülmemiş Kullanıcı İşlemleri ({count})")
+        if self.manual_actions_window is not None and self.manual_actions_window.winfo_exists():
+            self._refresh_manual_actions_window()
+
+    def show_manual_actions(self) -> None:
+        self.manual_actions = self.collect_manual_actions(self.read_runner_info())
+        if self.manual_actions_window is not None and self.manual_actions_window.winfo_exists():
+            self.manual_actions_window.lift()
+            self._refresh_manual_actions_window()
+            return
+        window = tk.Toplevel(self)
+        self.manual_actions_window = window
+        window.title("AAYS Çözülmemiş Kullanıcı İşlemleri")
+        window.geometry("1180x480")
+        window.minsize(850, 360)
+        window.protocol("WM_DELETE_WINDOW", self._close_manual_actions_window)
+        ttk.Label(
+            window,
+            text="Yalnızca otomatik çözülemeyen güncel işlemler gösterilir; sorun çözülünce satır otomatik kaldırılır.",
+        ).pack(fill="x", padx=12, pady=(12, 6))
+        ttk.Label(window, textvariable=self.manual_actions_dialog_var).pack(fill="x", padx=12, pady=(0, 6))
+        frame = ttk.Frame(window)
+        frame.pack(fill="both", expand=True, padx=12, pady=6)
+        columns = ("slot", "reason", "detected", "solution")
+        tree = ttk.Treeview(frame, columns=columns, show="headings")
+        self.manual_actions_tree = tree
+        tree.heading("slot", text="Slot")
+        tree.heading("reason", text="Problem nedeni")
+        tree.heading("detected", text="İlk tespit zamanı")
+        tree.heading("solution", text="Çözüm yolu")
+        tree.column("slot", width=155, minwidth=130)
+        tree.column("reason", width=380, minwidth=250)
+        tree.column("detected", width=165, minwidth=150)
+        tree.column("solution", width=430, minwidth=300)
+        y_scroll = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        x_scroll = ttk.Scrollbar(frame, orient="horizontal", command=tree.xview)
+        tree.configure(yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        y_scroll.grid(row=0, column=1, sticky="ns")
+        x_scroll.grid(row=1, column=0, sticky="ew")
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+        ttk.Button(window, text="Şimdi Yenile", command=self.refresh_status).pack(pady=(4, 12))
+        self._refresh_manual_actions_window()
+
+    def _close_manual_actions_window(self) -> None:
+        if self.manual_actions_window is not None:
+            self.manual_actions_window.destroy()
+        self.manual_actions_window = None
+        self.manual_actions_tree = None
+
+    def _refresh_manual_actions_window(self) -> None:
+        tree = self.manual_actions_tree
+        if tree is None or not tree.winfo_exists():
+            return
+        for row in tree.get_children():
+            tree.delete(row)
+        for action in self.manual_actions:
+            detected = str(action.get("detected_at") or "-").replace("T", " ").replace("Z", "")
+            tree.insert("", "end", values=(
+                action.get("slot_id") or "-",
+                action.get("reason") or "-",
+                detected,
+                action.get("solution") or "-",
+            ))
+        count = len(self.manual_actions)
+        self.manual_actions_dialog_var.set(
+            "Çözülmemiş kullanıcı işlemi yok."
+            if count == 0
+            else f"Güncel çözülmemiş işlem: {count}"
+        )
 
     def refresh_slot_status(self) -> None:
         for slot_id, label in SLOT_IDS:
@@ -756,6 +1003,7 @@ class AaysPanel(tk.Tk):
             )
         else:
             self.runner_var.set(f"Runner: FAILED/KAPALI - {info.get('blocker') or info.get('status')}")
+        self.update_manual_actions(info)
         if info.get("coordinator_state") == "STOPPED_CLEAN" and not info.get("pid_alive"):
             self.safe_remove_var.set("Güvenli disk çıkarma: EVET")
         else:
