@@ -1,6 +1,6 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gas Emissions 2 — Resmî Kanıt Merkezi</title><style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:20px;background:#f7f7f8;color:#171717}.note{background:#fff4ce;border:1px solid #e6c75a;padding:12px;border-radius:8px}.summary,.filters,.counts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #ddd;border-radius:7px;padding:9px 12px}input,select{padding:7px}table{width:100%;border-collapse:collapse;background:#fff;font-size:12px}th,td{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#eee}.footer{font-size:12px;margin-top:10px}</style></head><body>
 <h1>Gas Emissions 2 — DESNZ Resmî Kanıt Merkezi</h1>
-<div class="note">570 resmî satır birleştirildi: önceki 433 satır + 49 employment-energy yöntem satırı + 88 SIC 2007 sektör eşlemesi. Bunlar parsel ölçümü değildir; aday toplamına veya browser kabulüne eklenmez. Çekirdek runtime kapısı 66/100 seviyesinde kalır.</div>
+<div class="note">658 resmî satır birleştirildi: önceki 570 satır + 40 yol haritalama yöntemi + 24 EV/revizyon + 24 revizyon/belirsizlik satırı. Bunlar parsel ölçümü değildir; aday toplamına veya browser kabulüne eklenmez. Çekirdek runtime kapısı 66/100 seviyesinde kalır.</div>
 <div class="summary"><div class="card">Toplam: <b id="total">—</b></div><div class="card">Görünen: <b id="visible">—</b></div><div class="card">Kaynak türü: <b id="sourceTypes">—</b></div><div class="card">Doğruluk: <b>100%</b></div><div class="card">Parsel bağlı: <b id="bound">—</b></div></div>
 <div class="counts" id="counts"></div>
 <div class="filters"><select id="sourceFilter"><option value="">Tüm kaynak türleri</option></select><select id="tableFilter"><option value="">Tüm tablo/belgeler</option></select><select id="yearFilter"><option value="">Tüm yıllar</option></select><input id="search" placeholder="Varlık, kategori, metrik veya ID ara"></div>
@@ -25,7 +25,10 @@ const sources=[
 ['LULUCF_ANNEX1_MAPPING','LULUCF Annex 1 eşlemeleri','official_lulucf_annex1_spatial_mapping_evidence_40.json'],
 ['LULUCF_ANNEX2_TES','LULUCF Annex 2 TES tanımları','official_lulucf_annex2_tes_evidence_34.json'],
 ['EMPLOYMENT_ENERGY_METHOD','Employment-energy yöntemi','official_employment_energy_mapping_method_evidence_49.json'],
-['EMPLOYMENT_SIC_MAPPING','Employment SIC eşlemeleri','official_employment_sic_mapping_evidence_88.json']
+['EMPLOYMENT_SIC_MAPPING','Employment SIC eşlemeleri','official_employment_sic_mapping_evidence_88.json'],
+['ROAD_TRANSPORT_MAPPING_METHOD','Yol ulaştırma haritalama yöntemi','official_road_transport_mapping_method_evidence_40.json'],
+['ROAD_TRANSPORT_EV_REVISION','Yol ulaştırma EV ve revizyon','official_road_transport_ev_revision_evidence_24.json'],
+['ROAD_TRANSPORT_UNCERTAINTY','Yol ulaştırma revizyon ve belirsizlik','official_road_transport_revision_uncertainty_evidence_24.json']
 ];
 try{
 const data=await Promise.all(sources.map(async s=>{const r=await fetch('./'+s[2],{cache:'no-store'});if(!r.ok)throw new Error(s[2]+' HTTP '+r.status);return [s,await r.json()]}));
@@ -39,6 +42,6 @@ const labels=new Map(sources.map(s=>[s[0],s[1]]));[...new Set(all.map(x=>x.sourc
 const counts={};all.forEach(x=>counts[x.source_type]=(counts[x.source_type]||0)+1);$('counts').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="card">'+(labels.get(k)||k)+': <b>'+v+'</b></div>').join('');
 const render=()=>{const n=q.value.toLowerCase(),f=all.filter(x=>(!sf.value||x.source_type===sf.value)&&(!tf.value||x.table===tf.value)&&(!yf.value||String(x.year)===yf.value)&&(!n||JSON.stringify(x).toLowerCase().includes(n)));$('rows').innerHTML='';f.forEach((x,i)=>{const tr=document.createElement('tr');[i+1,x.label,x.id,x.table,x.category,x.entity,x.year,JSON.stringify(x.value),x.line,x.accuracy+'%',x.parcel].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});$('rows').appendChild(tr)});$('visible').textContent=f.length};
 sf.onchange=tf.onchange=yf.onchange=q.oninput=render;$('total').textContent=all.length;$('sourceTypes').textContent=Object.keys(counts).length;$('bound').textContent=all.filter(x=>x.parcel!=='NOT_BOUND').length;render();
-$('footer').textContent='570 resmî satır · aktarım doğruluğu 100% · candidate_total değişimi 0 · browser kabul değişimi 0 · runtime 66/100 · final_ready=false.';
+$('footer').textContent='658 resmî satır · aktarım doğruluğu 100% · candidate_total değişimi 0 · browser kabul değişimi 0 · runtime 66/100 · final_ready=false.';
 }catch(e){$('rows').innerHTML='<tr><td colspan="11">'+String(e)+'</td></tr>'}})();
 </script></body></html>
