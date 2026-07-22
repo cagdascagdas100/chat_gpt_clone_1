@@ -8,7 +8,7 @@ $attemptId = 'attempt-005'
 $branch = 'codex/aays-single-runner-v5-20260706'
 $repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $helperRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\automation\001_restart_existing_canonical_f_runner_for_retry5.ps1'
-$expectedHelperBlob = '7dd0ae43307bcbb6bbc100238afabecf3aec5aa8'
+$expectedHelperBlob = 'ae8f31d71d681d74bc5c845fccd0f081d6597876'
 $outputRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\runner_outputs\002_retry5_operator_recovery_preflight_latest.json'
 
 function Write-Receipt([string]$Status,[bool]$FetchAttempted,[bool]$ResetApplied,[bool]$HelperInvoked,[int]$HelperExitCode,[string]$LocalHeadBefore,[string]$RemoteHead,[string]$LocalHeadAfter,[string]$Detail) {
@@ -16,7 +16,7 @@ function Write-Receipt([string]$Status,[bool]$FetchAttempted,[bool]$ResetApplied
   $parent = Split-Path -Parent $output
   if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
   [ordered]@{
-    schema_version = 5
+    schema_version = 6
     slot_id = $slotId
     task_id = $taskId
     attempt_id = $attemptId
@@ -34,6 +34,8 @@ function Write-Receipt([string]$Status,[bool]$FetchAttempted,[bool]$ResetApplied
     remote_head = $RemoteHead
     local_head_after = $LocalHeadAfter
     exact_target_rows = @(30762..30773)
+    stale_daemon_recovery_enabled = $true
+    stale_minutes_threshold = 20
     existing_single_runner_architecture_only = $true
     new_runner_architecture_created = $false
     parallel_runner_started = $false
@@ -71,7 +73,7 @@ $helper = Join-Path $repoRoot $helperRel
 if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) { Write-Receipt 'BLOCKED_RETRY5_HELPER_MISSING' $true $resetApplied $false -1 $localBefore $remoteHead $localAfter $helper; exit 8 }
 $helperBlob = (& $git.Source -C $repoRoot hash-object -- $helper 2>&1 | Select-Object -Last 1).ToString().Trim()
 if ($helperBlob -ne $expectedHelperBlob) { Write-Receipt 'BLOCKED_RETRY5_HELPER_BLOB_MISMATCH' $true $resetApplied $false -1 $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"; exit 9 }
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $helper
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $helper -StaleMinutes 20
 $helperExit = $LASTEXITCODE
 if ($null -eq $helperExit) { $helperExit = 1 }
 $status = if ($helperExit -eq 0) { 'RETRY5_EXISTING_F_RUNNER_RECOVERY_INVOKED' } else { 'BLOCKED_RETRY5_EXISTING_F_RUNNER_RECOVERY_FAILED' }
