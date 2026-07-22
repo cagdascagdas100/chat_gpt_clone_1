@@ -4,6 +4,9 @@ on:
     branches: [agent/hd2-lidar-catalogue-probe-036-20260722]
     paths:
       - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_probe_trigger.json'
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    types: [opened, synchronize, reopened]
 permissions:
   contents: write
 jobs:
@@ -11,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-lidar-catalogue-probe-036-20260722
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -63,4 +68,4 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_lidar_catalogue_point_queries.json
           git commit -m 'height_difference_2: record EA lidar catalogue point queries 036' || exit 0
-          git push
+          git push origin HEAD:agent/hd2-lidar-catalogue-probe-036-20260722
