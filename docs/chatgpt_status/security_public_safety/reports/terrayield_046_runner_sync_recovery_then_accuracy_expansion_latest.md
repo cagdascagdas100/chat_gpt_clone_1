@@ -1,57 +1,52 @@
 # TerraYield 046 Runner Sync Recovery Then Accuracy Expansion
 
-page_key=security_public_safety
-task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion
-layer=Safety / Security
-program_output=Security Level percent
-status=QUEUED_FOR_SHARED_RUNNER
-created_at=2026-07-03T14:20:00+03:00
+page_key=security_public_safety  
+task_id=terrayield-046-runner-sync-recovery-then-accuracy-expansion  
+status=SUPERSEDED_LEGACY_PENDING_CLOSED_EXTERNAL_RUNNER_BLOCKED  
+updated_at=2026-07-22T23:59:40+03:00  
 final_ready=false
-fake_data=false
-db_write=false
-ddl=false
-migration_apply=false
-prod_deploy=false
-individual_person_data=false
 
-## Source handoff accepted in this page
+## Stale pending diagnosis
 
-The uploaded handoff states that task `terrayield-046-runner-sync-recovery-then-accuracy-expansion` should perform runner/Git sync recovery, preflight checks, endpoint health probe, project red-flag quickscan, and 044 comprehensive accuracy expansion child launch. Initial scores from the handoff were:
+The legacy 046 current-task and status files remained in a July 3 pickup/queued state. Later repository evidence advanced through a real visible test, 150 verified rows, and the shard-safe `security_public_safety_3` attempt 020 workflow. The legacy record is therefore not a running task. It is closed as `superseded_external_runner_blocked` and points to the modern shard task.
 
-- Source Accuracy Score: 45/100
-- Parcel Matching Accuracy Score: 27/100
-- Operational Health Score: 0/100
-- Overall Confidence Score: 32/100
+No new runner was started. The shared runner owner was not overwritten.
 
-## What was done from this ChatGPT page
+## Batch6 official-source expansion
 
-- `docs/chatgpt_status/security_public_safety/current-task.json` was written.
-- `docs/chatgpt_status/security_public_safety/queue/terrayield-046-runner-sync-recovery-then-accuracy-expansion.task.json` was written.
-- This report was written for the repo.
-- No synthetic parcel scores were produced.
-- `final_ready=false` is preserved.
+- 13 current official source identities were added as SRC-45 through SRC-57.
+- All 13 have authority accuracy at or above 95.
+- Average authority accuracy: 97.69/100.
+- 3 sources were promoted for aggregate/context QA.
+- 10 sources remain separate, sensitive, downstream, forecast, or future-release context.
+- Parcel/product promotions: 0.
+- Future releases dated 30 July 2026 remain held and no figures were inferred.
 
-## Runner execution contract
+## Web-visible rows
 
-The single shared runner on the F bridge should pick up the queue task and perform these read-only checks:
+- Source rows page: `england_map_web/security_public_safety_3_source_candidates_batch6.html`
+- Operation rows page: `england_map_web/security_public_safety_3_operations_batch6_046_recovery.html`
+- Progress page: `england_map_web/security_public_safety_3_progress_batch6_046_recovery.html`
+- Added source rows: 13.
+- Added operation rows: 20, lines 284–303.
 
-1. Synchronize local F repo with GitHub `main` and record commit evidence.
-2. Check shared runner state, current task, pending queue, lock files, and heartbeat without starting another runner.
-3. Probe the local program endpoint and matrix page endpoint.
-4. Run Security/Public Safety consistency checks.
-5. Queue or block the 044 accuracy-expansion child with an explicit reason.
-6. Update `outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json` with real runner results.
+## Updated programme state
 
-## Current blockers
+- Official source candidates: 57.
+- Promoted context sources: 38.
+- Held sources: 19.
+- Completed operations: 856 / 870.
+- Precise progress: 98.39%; displayed programme progress remains 99%.
+- Visible source rows: 57.
+- Visible operation rows: 303.
+- Visible total line rows: 775.
 
-- This ChatGPT connector can write GitHub files, but it cannot directly run the Windows F repo / F bridge runner.
-- No real runner result has been returned yet for this 046 task.
-- No browser smoke evidence exists yet for the matrix page.
-- Verified parcel outputs are still required before any final state:
-  - `england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson`
-  - `england_map_web/data/security_public_safety/parcel_security_scores_verified.csv`
-  - `england_map_web/data/security_public_safety/security_evidence_manifest.json`
+## Remaining blockers
 
-## Required final gate
+- Shared runner heartbeat remains stale.
+- Attempt 020 output and reconciliation are absent.
+- Browser runtime acceptance is absent.
+- Detached final manifest remains 0 of 3 SHA256 values.
+- No parcel score rows were promoted.
 
-Do not set `final_ready=true` until there is real evidence for parcel layer rendering, popup/right-panel fields, latest_changes panel rendering, official/open aggregate source evidence, and browser smoke verification.
+`final_ready=false`, `fake_data=false`, `db_write=false`, `migration=false`, and `production_deploy=false` remain preserved.
