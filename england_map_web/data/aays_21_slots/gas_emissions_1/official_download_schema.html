@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gas_emissions_1 resmî kaynak ve şema ilerlemesi</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45;color:#17202a}h1{margin-bottom:4px}.muted{color:#5d6d7e}.cards{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.card{border:1px solid #ccd1d1;border-radius:8px;padding:10px 14px;min-width:150px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #ccd1d1;padding:8px;vertical-align:top;text-align:left}th{background:#f4f6f7}.warn{border-left:4px solid #7f8c8d;padding:10px;background:#f8f9f9}
+</style>
+</head>
+<body>
+<h1>gas_emissions_1</h1>
+<div class="muted">Parsel 1–30761 · 22 Temmuz 2026 kanıt görünümü · sahte veri yok</div>
+<div class="cards">
+<div class="card"><strong>Genel ilerleme</strong><br>3/6 · %50,0<br><small>Bu geçiş +16,7 puan</small></div>
+<div class="card"><strong>Resmî kanıt</strong><br>5/5 kaynak ailesi</div>
+<div class="card"><strong>Doğrudan dosya</strong><br>3/5 çözüldü</div>
+<div class="card"><strong>İkili şema</strong><br>0/5 · runner bekliyor</div>
+<div class="card"><strong>Web aday satırı</strong><br>5</div>
+<div class="card"><strong>Parsel ölçümü</strong><br>0</div>
+</div>
+<p class="warn"><strong>Kanıt sınırı:</strong> Aşağıdaki satırlar resmî web sayfası ve paket sözleşmesi kanıtıdır. Dosya içi XLSX/XML/ZIP/GML/grid şeması mevcut tek shared runner tarafından okunmadan parsel emisyon değeri değildir.</p>
+<table>
+<thead><tr><th>#</th><th>Kaynak</th><th>Artefakt</th><th>Kanıt seviyesi</th><th>Doğrudan dosya</th><th>İkili şema</th><th>Parsel bağlama</th><th>Resmî web kanıtı</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>naei_point_sources_2023</strong><br><small>NAEI</small></td><td>NAEIPointsSources_2023.xlsx</td><td>HIGH_DIRECT_OFFICIAL_FILE</td><td>Evet</td><td>PENDING_XLSX_HEADER_PARSE</td><td>Konum alanları ayrıştırılana kadar engelli</td><td>2023 nokta kaynakları bilinen konum ve grid referanslarıyla sunuluyor; resmî 96,44 MB XLSX mevcut.</td></tr>
+<tr><td>2</td><td><strong>uk_prtr_2024</strong><br><small>UK Government / UK PRTR</small></td><td>2024 UK PRTR XML</td><td>HIGH_DIRECT_OFFICIAL_FILE</td><td>Evet</td><td>PENDING_XML_TAG_PARSE</td><td>Coğrafi konum etiketleri ayrıştırılana kadar engelli</td><td>30 Haziran 2026 resmî yayını; tesis, coğrafi konum, faaliyet, kirletici ve çevresel ortam alanları belgelenmiş.</td></tr>
+<tr><td>3</td><td><strong>ea_pollution_inventory_2024</strong><br><small>Environment Agency</small></td><td>2024 Pollution Inventory Dataset.zip</td><td>HIGH_DIRECT_OFFICIAL_FILE</td><td>Evet</td><td>PENDING_ZIP_MEMBER_AND_COLUMN_PARSE</td><td>Koordinat ve salım alanları ayrıştırılana kadar engelli</td><td>2024 ZIP, 17 Nisan 2026 güncellemesi ve EPSG:27700 uzamsal referansı resmî kayıtta doğrulandı.</td></tr>
+<tr><td>4</td><td><strong>hmlr_inspire_20260705</strong><br><small>HM Land Registry</small></td><td>Temmuz 2026 INSPIRE Index Polygon GML</td><td>HIGH_OFFICIAL_LISTING_CONTRACT</td><td>Hayır — yerel yönetim seçimi gerekli</td><td>PENDING_GML_SELECTION_AND_POLYGON_PARSE</td><td>Örnek GML geometrisi doğrulanana kadar engelli</td><td>5 Temmuz 2026 resmî liste, yerel yönetim bazlı GML indeks poligonlarını OGL koşullarıyla sunuyor.</td></tr>
+<tr><td>5</td><td><strong>naei_gridded_emissions_2023</strong><br><small>NAEI</small></td><td>Kirletici/yıl 1x1 km grid ZIP</td><td>HIGH_OFFICIAL_PACKAGE_CONTRACT</td><td>Hayır — dinamik endpoint</td><td>PENDING_DYNAMIC_ENDPOINT_AND_GRID_PARSE</td><td>Grid hücresi kapsaması doğrulanana kadar engelli</td><td>Resmî seçici; ASCII grid, GeoTIFF, SNAP sektör gridleri, nokta kaynak SHP/CSV, PNG ve lisans metni içeren yıllık 1x1 km paketini belgeliyor.</td></tr>
+</tbody>
+</table>
+<h2>İşlem durumu</h2>
+<ol>
+<li>Tamamlandı — remote checkpoint/status/heartbeat/ownership yeniden doğrulandı.</li>
+<li>Tamamlandı — 9 aday / 8 canlı kaynak keşfi tekrar çalıştırılmadan uzlaştırıldı.</li>
+<li>Tamamlandı — 5 resmî kaynak ailesinin web ve paket sözleşmesi doğrulandı.</li>
+<li>Kısmi — 5 hedeften 3 doğrudan resmî dosya adresi çözüldü.</li>
+<li>Bekliyor — ikili dosya şeması ve örnek satır ayrıştırması.</li>
+<li>Bekliyor — doğrulanmış grid containment veya point-in-polygon parsel bağlama.</li>
+</ol>
+<p><strong>Durum:</strong> PARTIAL_OFFICIAL_WEB_EVIDENCE_PUBLISHED_BINARY_SCHEMA_PENDING</p>
+<p><strong>Sonraki doğrulanmamış adım:</strong> DOWNLOAD_AND_SCHEMA_VERIFY_NAEI_POINT_PRTR_EA_HMLR_AND_RESOLVE_NAEI_GRID_FORM</p>
+<p><strong>Gerçek veri satırı:</strong> 0 · <strong>final_ready:</strong> false</p>
+</body>
+</html>
