@@ -14,7 +14,7 @@ $paths = [ordered]@{
   hmlr = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/EXTRACT_HMLR_INSPIRE_PROXIMITY_20260722_V2.py'
   binary = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/HYDRATE_TARGET_PARSE_PRTR_PI_HMLR_20260722_V14.py'
   classifier = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/CLASSIFY_PRTR_PI_TARGET_RECORDS_20260722_V2.py'
-  semantic = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/VALIDATE_FACILITY_EMISSION_SEMANTICS_20260722_V11.py'
+  semantic = 'docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/VALIDATE_FACILITY_EMISSION_SEMANTICS_20260722_V12.py'
 }
 $timeouts = [ordered]@{
   browser_dump_dom = 180
@@ -200,6 +200,7 @@ $payload = [ordered]@{
   sequencing_policy = 'BROWSER_OR_TIMEOUT_FAILURE_DOES_NOT_FREEZE_OR_BLOCK_INDEPENDENT_HMLR_OR_PRTR_PI_STAGES'
   hmlr_policy = 'DEDICATED_FREEHOLD_PROXIMITY_ONLY_NO_TITLE_OR_PARCEL_ASSIGNMENT'
   classifier_policy = 'V2_USES_EXACT_PARSER_V14_ALIAS_SET_WITH_BASE_QUALITY_GATES'
+  semantic_gate_policy = 'V12_REJECTS_SURRENDER_HISTORIC_PERMIT_AND_INSTALLATION_NAME_CONTINUITY_CONTEXT'
   measured_facility_emission_rows_claimed_by_orchestrator = 0
   measured_parcel_emission_rows_claimed_by_orchestrator = 0
   verified_parcel_bindings_claimed_by_orchestrator = 0
