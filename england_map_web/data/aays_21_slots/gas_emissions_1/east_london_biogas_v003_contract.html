@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>East London Biogas V003 permit ve izleme sözleşmesi</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;color:#17202a;line-height:1.45}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #ccd1d1;padding:8px;vertical-align:top}
+th{background:#f4f6f7;position:sticky;top:0}.ok{border-left:4px solid #1e8449;padding:10px;background:#eafaf1}
+.warn{border-left:4px solid #b9770e;padding:10px;background:#fef9e7}code{white-space:nowrap}
+</style></head>
+<body data-acceptance-status="PENDING">
+<h1>East London Biogas V003 permit ve izleme sözleşmesi</h1><p>40 resmî satır · permit geçmişi, throughput, konsantrasyon limitleri, izleme ve performans verileri yıllık salımdan ayrılır.</p>
+<div id="summary" class="warn">JSON yükleniyor…</div>
+<table><thead><tr><th>Satır</th><th>Tesis</th><th>Grup</th><th>Alan</th><th>Değer</th><th>Doğruluk</th><th>Semantik</th><th>Kaynak</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+fetch('east_london_biogas_v003_contract_latest.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const tbody=document.getElementById('rows');
+ for(const x of d.rows){
+  const tr=document.createElement('tr');tr.dataset.evidenceRow='true';tr.dataset.rowId=String(x.line);
+  for(const v of [x.line,x.facility||x.entity||'',x.group||'',x.field||'',x.value||x.finding||'',x.confidence,x.semantics||'',x.source_id||x.source||'']){
+   const td=document.createElement('td');td.textContent=String(v??'');tr.appendChild(td)
+  }tbody.appendChild(tr)
+ }
+ const ids=[...tbody.querySelectorAll('tr[data-evidence-row="true"]')].map(r=>r.dataset.rowId);
+ const pass=d.rows.length===40 && new Set(ids).size===40 && d.rows.every(x=>Number(x.confidence)>=99);
+ document.body.dataset.acceptanceStatus=pass?'PASS':'FAIL';
+ const s=document.getElementById('summary');s.className=pass?'ok':'warn';
+ s.textContent=`${d.rows.length} satır · ≥99: ${d.counts.confidence_ge_99} · 100: ${d.counts.confidence_100} · ortalama: ${d.counts.confidence_average} · kabul: ${pass?'PASS':'FAIL'}`;
+}).catch(e=>{document.body.dataset.acceptanceStatus='FAIL';document.getElementById('summary').textContent='Hata: '+e.message});
+</script></body></html>
