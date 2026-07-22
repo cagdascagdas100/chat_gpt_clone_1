@@ -7,7 +7,7 @@
 <meta http-equiv="refresh" content="30">
 <title>Security / Public Safety 1 — Canlı İlerleme</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:0 0 10px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS{font-weight:700}.PENDING,.BLOCKED,.PASS_LIMIT_RECORDED,.PASS_NOT_YET_PUBLISHED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.scroll{max-height:650px;overflow:auto;border:1px solid #cbd5df}.muted{color:#52606d}
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:0 0 10px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}.PASS{font-weight:700}.PENDING,.BLOCKED,.PASS_LIMIT_RECORDED,.PASS_NOT_YET_PUBLISHED,.LIMIT{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.scroll{max-height:650px;overflow:auto;border:1px solid #cbd5df}.muted{color:#52606d}
 </style>
 </head>
 <body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
@@ -19,6 +19,7 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h
 <div class="card">Görünür satır<br><strong id="rows">yükleniyor</strong></div>
 <div class="card">Doğruluk 4<br><strong id="accuracy">yükleniyor</strong></div>
 <div class="card">Resmî kaynak<br><strong id="sources">yükleniyor</strong></div>
+<div class="card">Kalite güvencesi<br><strong id="qualityGate">yükleniyor</strong></div>
 <div class="card">Statik aday<br><strong id="staticCandidates">yükleniyor</strong></div>
 <div class="card">Endpoint manifest<br><strong id="manifestEndpoints">yükleniyor</strong></div>
 <div class="card">No-replay<br><strong id="noReplay">yükleniyor</strong></div>
@@ -47,14 +48,15 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h
 const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
 const optional=async p=>{try{return await get(p)}catch(_){return null}};
-const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
+const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':String(s||'').startsWith('LIMIT')?'LIMIT':'PENDING';
 (async()=>{
- const [progress,visible,manifest,hardening,dependency,acceptance,publisher]=await Promise.all([
+ const [progress,visible,manifest,hardening,dependency,quality,acceptance,publisher]=await Promise.all([
   get('official_web_refresh_20260722.json'),
   get('../../program_layer_matrix/security_public_safety_visible_rows.json'),
   get('canonical_130_endpoint_manifest_20260722.json'),
   get('runtime_hardening_v17_20260722.json'),
   get('shared_runner_dependency_latest.json'),
+  get('official_quality_contract_v1_20260722.json'),
   optional('canonical_acceptance_v17_latest.json'),
   optional('publisher_candidate_v17_latest.json')
  ]);
@@ -75,7 +77,8 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  percent.textContent=`${displayPercent}% (Δ ${displayDelta>=0?'+':''}${displayDelta})`;
  gates.textContent=`${displayCompleted}/${cp.total_units??8}`;
  rows.textContent=`${dataRows.length}/300`;accuracy.textContent=`${accuracy4}/${dataRows.length}`;
- sources.textContent=`${progress.official_web_checks_passed}/${progress.official_web_checks_total}`;
+ sources.textContent=`${quality.official_checks?.passed||0}/${quality.official_checks?.total||0}`;
+ qualityGate.textContent=`${(quality.row_quality_rules||[]).length} kural / 20 örnek`;
  staticCandidates.textContent=`${manifest.candidate_rows||0}/130`;manifestEndpoints.textContent=`${manifest.unique_endpoints||0}/16`;
  noReplay.textContent=opt.hydration_replay_forbidden?'AKTİF':'KAPALI';
  endpointWorkers.textContent=`${opt.parallel_endpoint_workers_max||0} eşzamanlı`;
@@ -90,7 +93,8 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  const eventRows=[
   ['PASS','REMOTE_HEAD_SLOT_READBACK','Güncel branch HEAD ve yalnız security_public_safety_1 slot dosyaları doğrulandı.'],
   ['PASS','REUSE_REMOTE_300_ROWS_NO_REPLAY',`${dataRows.length} doğrulanmış LSOA proxy satırı yeniden kullanılacak; hydration çalıştırılmayacak.`],
-  ['PASS','OFFICIAL_WEB_REFRESH',`${progress.official_web_checks_passed}/${progress.official_web_checks_total} resmî kaynak; ${prep.quality_limits_recorded||0} kalite sınırı.`],
+  ['PASS','OFFICIAL_WEB_REFRESH',`${quality.official_checks?.passed||0}/${quality.official_checks?.total||0} resmî kaynak; ${quality.official_checks?.quality_limits||0} kalite sınırı.`],
+  ['PASS','QUALITY_ASSURANCE_MATRIX',`${(quality.row_quality_rules||[]).length} kalite kuralı, 20 yeni örnek ve 130 satır; force mapping eksikliği LIMIT olarak gösterilir.`],
   ['PASS','CANONICAL_STATIC_CONTRACT',`${manifest.candidate_rows||0}/130 aday, ${manifest.unique_endpoints||0}/16 endpoint, doğruluk ${manifest.accuracy_score_4_rows||0}/130.`],
   ['PASS','V17_RUNTIME_PREFLIGHT_AND_RETRY',`Wrapper/queue hazır; en çok ${retry.max_attempts||0} deneme, ${String(retry.delays_seconds||[])} sn aralık.`],
   ['BLOCKED','SHARED_RUNNER_DEPENDENCY',`Global alias ${dependency.global_control_alias?.holder_slot||'unknown'} görevinde; lease ${dependency.holder_readback?.ownership_state||'unknown'}, heartbeat ${dependency.holder_readback?.heartbeat_state||'unknown'}, queue priority ${dependency.holder_readback?.queue_priority??'n/a'}. Alias değiştirilmedi.`],
@@ -111,9 +115,11 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  }).join('');
  sourceBody.innerHTML=(progress.sources||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td class="${stateClass(x.status)}">${esc(x.status)}</td><td>${esc(x.value)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></td></tr>`).join('');
  rowBody.innerHTML=dataRows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.security_level)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.confidence_score)}%</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.official_api_validation_status)}</td><td>${esc(x.official_api_latest_month)}</td><td><a href="${esc(x.source_url)}" target="_blank" rel="noopener">${esc(x.source_url)}</a></td></tr>`).join('');
- document.body.dataset.loadedCount=String(dataRows.length);
  document.body.dataset.staticCandidateCount=String(manifest.candidate_rows||0);
  document.body.dataset.canonicalEndpointCount=String(manifest.unique_endpoints||0);
+ document.body.dataset.qualityRuleCount=String((quality.row_quality_rules||[]).length);
+ document.body.dataset.qualityExampleCount='20';
+ document.body.dataset.qualityAssuranceView='candidate_quality_assurance_v1.html';
  document.body.dataset.liveCandidatePassed=String(candidatePassed);
  document.body.dataset.liveEndpointPassed=String(endpointPassed);
  document.body.dataset.browserStatus=String(browserStatus);
@@ -122,7 +128,7 @@ const stateClass=s=>s==='PASS'?'PASS':s==='BLOCKED'?'BLOCKED':'PENDING';
  document.body.dataset.displayCompletedUnits=String(displayCompleted);
  document.body.dataset.displayPercent=String(displayPercent);
  document.body.dataset.sharedRunnerDependency=String(dependency.status||'unknown');
- document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300&&manifest.candidate_rows===130&&manifest.unique_endpoints===16&&progress.parcel_measurement===false);
+ document.body.dataset.semanticValid=String(dataRows.length===300&&accuracy4===300&&manifest.candidate_rows===130&&manifest.unique_endpoints===16&&progress.parcel_measurement===false&&quality.parcel_measurement===false&&quality.final_ready===false);
  document.body.dataset.runtimeHardened=String(hardening.wrapper_compile==='PASS'&&hardening.wrapper_remote_readback==='PASS');
 })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.acceptanceError=e.message});
 </script>
