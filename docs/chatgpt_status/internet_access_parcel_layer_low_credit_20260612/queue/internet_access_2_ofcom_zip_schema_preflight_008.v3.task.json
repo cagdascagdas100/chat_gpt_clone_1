@@ -1,0 +1,62 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "task_id": "internet-access-2-ofcom-zip-schema-preflight-20260722T033000Z",
+  "attempt_id": "43c6b17b56a34927af6d86574e54d74b",
+  "idempotency_key": "fdcec1137b948dafc1d0b6d8b38d8cefef93fc622e42af7cd8473f5bb81374a5",
+  "status": "queued",
+  "priority": "P0",
+  "sequential_after_task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/008_ofcom_zip_schema_preflight.py",
+  "read_paths": [],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/008_ofcom_zip_schema_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/008_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/008_ofcom_zip_schema_preflight_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/reports/008_ofcom_zip_schema_preflight.md"
+  ],
+  "resource_class": ["light_read"],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 900,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data---fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf"
+    ],
+    "source_snapshot_date": "Ofcom 2026-01; v2 correction 2026-07-07",
+    "source_discovery_required": false,
+    "measurement_level": "source package schema",
+    "output_semantics": "SOURCE_ACCEPTANCE_ONLY",
+    "parcel_binding_method": "none; this task validates only the official cached ZIP, r2 postcode file naming and required core columns",
+    "confidence_method": "no candidate accuracy is written by this task",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "ZIP is absent or invalid",
+      "r2 postcode files are absent",
+      "required postcode gigabit UFBB100 SFBB or unable30 columns are absent"
+    ]
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "requested_at": "2026-07-22T03:30:00Z"
+}
