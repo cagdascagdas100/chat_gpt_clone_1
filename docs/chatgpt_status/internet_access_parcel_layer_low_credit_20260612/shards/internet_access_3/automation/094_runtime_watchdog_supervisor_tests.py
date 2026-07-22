@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse,importlib.util,json,sys,tempfile
+from pathlib import Path
+def args():p=argparse.ArgumentParser();p.add_argument("--repo-root",type=Path);return p.parse_args()
+def mod():
+ p=Path(__file__).resolve().parent/"093_runtime_watchdog_supervisor.py";s=importlib.util.spec_from_file_location("wd",p)
+ if not s or not s.loader:raise ImportError(p)
+ m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+def main():
+ w=mod();c=[]
+ def ok(n,v):
+  if not v:raise AssertionError(n)
+  c.append(n)
+ with tempfile.TemporaryDirectory() as td:
+  r=Path(td);(r/"docs").mkdir();(r/"england_map_web").mkdir();h1=r/"docs/h.json";h2=r/"england_map_web/h.json"
+  ok("utc_now_iso","+" in w.utc_now() or w.utc_now().endswith("Z"));ok("repo_root_explicit",w.repo_root(r)==r.resolve());ok("path_state_missing",not w.path_state(r/"x")["exists"])
+  f=r/"a";f.write_bytes(b"abc");ok("path_state_file_size",w.path_state(f)["bytes"]==3)
+  d=r/"d";d.mkdir();(d/"a").write_bytes(b"12");(d/"b").write_bytes(b"345");ok("path_state_directory_size",w.path_state(d)["bytes"]==5)
+  j=r/"j";w.atomic_json(j,{"ok":True});ok("atomic_json_roundtrip",json.loads(j.read_text())["ok"])
+  fast=w.supervise(command=[sys.executable,"-c","print('ok')"],cwd=r,step_name="fast",hard_timeout_seconds=30,stall_timeout_seconds=30,watch_paths=[],heartbeat_paths=[h1,h2],poll_seconds=.05,heartbeat_seconds=.05)
+  ok("fast_process_passes",fast["state"]=="passed" and fast["exit_code"]==0);ok("heartbeat_written_twice",h1.exists() and h2.exists());ok("heartbeat_safety_flags",json.loads(h1.read_text())["final_ready"] is False);ok("stdout_tail_captured","ok" in fast["stdout_tail"])
+  hard=w.supervise(command=[sys.executable,"-c","import time;time.sleep(5)"],cwd=r,step_name="hard",hard_timeout_seconds=1,stall_timeout_seconds=1,watch_paths=[],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
+  ok("hard_or_stall_timeout_blocks",hard["state"]=="blocked" and hard["timeout_kind"] in {"hard_timeout","stall_timeout"});ok("timeout_has_termination",isinstance(hard["termination"],dict))
+  progress=r/"p";code=f"import pathlib,time\np=pathlib.Path({str(progress)!r})\nfor i in range(5):\n p.write_text(str(i));time.sleep(.2)\n"
+  moving=w.supervise(command=[sys.executable,"-c",code],cwd=r,step_name="moving",hard_timeout_seconds=30,stall_timeout_seconds=15,watch_paths=[progress],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
+  ok("watched_progress_prevents_stall",moving["state"]=="passed");ok("observed_path_reported",any(x["path"]==str(progress) for x in moving["observed_paths"]))
+  bad=w.supervise(command=[sys.executable,"-c","raise SystemExit(7)"],cwd=r,step_name="bad",hard_timeout_seconds=30,stall_timeout_seconds=30,watch_paths=[],heartbeat_paths=[h1],poll_seconds=.05,heartbeat_seconds=.05)
+  ok("nonzero_exit_blocks",bad["state"]=="blocked" and bad["exit_code"]==7);ok("single_child_only_flag",bad["single_child_only"] and bad["parallel_runner"] is False)
+  try:w.supervise(command=[],cwd=r,step_name="empty",hard_timeout_seconds=1,stall_timeout_seconds=1,watch_paths=[],heartbeat_paths=[h1])
+  except ValueError:c.append("empty_command_rejected")
+  else:raise AssertionError("empty")
+  try:w.supervise(command=[sys.executable,"-c","pass"],cwd=r,step_name="timeout",hard_timeout_seconds=0,stall_timeout_seconds=1,watch_paths=[],heartbeat_paths=[h1])
+  except ValueError:c.append("nonpositive_timeout_rejected")
+  else:raise AssertionError("timeout")
+ e=18;z={"schema_version":1,"suite":"runtime_watchdog_supervisor","tests_expected":e,"tests_passed":len(c),"tests_failed":e-len(c),"checks":c,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False};print(json.dumps(z,indent=2));return 0 if len(c)==e else 2
+if __name__=="__main__":raise SystemExit(main())
