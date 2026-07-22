@@ -636,16 +636,6 @@ class AaysPanel(tk.Tk):
                     str(remote_action.get("solution") or "") or None,
                 )
 
-        mobile_notification = read_json(MOBILE_NOTIFICATION_STATUS)
-        if str(mobile_notification.get("state") or "").upper() in {
-            "WAITING_FOR_USER_ENDPOINT", "SEND_FAILED",
-        }:
-            reason = str(mobile_notification.get("reason") or "MOBILE_NOTIFICATION_TARGET_MISSING")
-            add(
-                "system:mobile_notification", "problem_solver_1", reason,
-                mobile_notification.get("updated_at"),
-            )
-
         remote_state = str(runner_info.get("remote_sync_state") or "").upper()
         remote_error = str(runner_info.get("remote_sync_error") or "")
         if remote_state in {
@@ -727,7 +717,7 @@ class AaysPanel(tk.Tk):
         buttons = ttk.Frame(window)
         buttons.pack(fill="x", padx=12, pady=(4, 12))
         ttk.Button(buttons, text="Problemi Kopyala", command=self.copy_selected_manual_action).pack(side="left")
-        ttk.Button(buttons, text="Telefon Bildirim Ayarı", command=self.configure_mobile_notification).pack(side="left", padx=(8, 0))
+        ttk.Button(buttons, text="ChatGPT Bildirimi: Aktif", command=self.configure_mobile_notification).pack(side="left", padx=(8, 0))
         ttk.Button(buttons, text="Şimdi Yenile", command=self.refresh_status).pack(side="right")
         tree.bind("<Double-1>", lambda _event: self.copy_selected_manual_action())
         self._refresh_manual_actions_window()
@@ -758,30 +748,10 @@ class AaysPanel(tk.Tk):
         self.manual_actions_dialog_var.set("Seçili problem ChatGPT'ye yapıştırılmak üzere panoya kopyalandı.")
 
     def configure_mobile_notification(self) -> None:
-        current = read_json(MOBILE_NOTIFICATION_CONFIG)
-        endpoint = simpledialog.askstring(
-            "Telefon Bildirim Ayarı",
-            "Android bildirim servisi veya ntfy tam HTTPS konu URL'si:",
-            initialvalue=str(current.get("endpoint_url") or ""),
+        messagebox.showinfo(
+            "ChatGPT Uygulama Bildirimi",
+            "Bildirimler bu konuşmaya bağlı 'AAYS Problem Çözücü Bildirimleri' ChatGPT/Codex görevi üzerinden gönderilir. Harici URL gerekmez. Android'de ChatGPT bildirim iznini açık tutun.",
             parent=self.manual_actions_window or self,
-        )
-        if endpoint is None:
-            return
-        endpoint = endpoint.strip()
-        if endpoint and not endpoint.casefold().startswith("https://"):
-            messagebox.showerror("Geçersiz adres", "Bildirim adresi HTTPS ile başlamalıdır.", parent=self)
-            return
-        atomic_write_json(MOBILE_NOTIFICATION_CONFIG, {
-            "schema_version": 1,
-            "enabled": bool(endpoint),
-            "endpoint_url": endpoint,
-            "authorization_bearer_token": str(current.get("authorization_bearer_token") or ""),
-            "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-            "final_ready": False,
-        })
-        self.manual_actions_dialog_var.set(
-            "Telefon bildirim hedefi kaydedildi; Problem Solver bir sonraki çevrimde test edecek."
-            if endpoint else "Telefon bildirimi devre dışı bırakıldı."
         )
 
     def _close_manual_actions_window(self) -> None:

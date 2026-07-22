@@ -1279,73 +1279,18 @@ class Coordinator:
         )
 
     def _notify_mobile_problem_state(self, manual_actions: list[dict[str, Any]], all_clear: bool) -> dict[str, Any]:
-        config = read_json(self.mobile_notification_config_path, {})
         action_ids = sorted(str(item.get("id") or item.get("slot_id") or "") for item in manual_actions)
         fingerprint = sha256_bytes(json.dumps({"all_clear": all_clear, "ids": action_ids}, sort_keys=True).encode("utf-8"))
-        previous = read_json(self.mobile_notification_state_path, {})
-        if previous.get("fingerprint") == fingerprint and previous.get("state") == "SENT":
-            return previous
-        endpoint = str(config.get("endpoint_url") or "").strip()
-        enabled = config.get("enabled") is True
-        if not enabled or not endpoint:
-            result = {
-                "state": "WAITING_FOR_USER_ENDPOINT",
-                "reason": "MOBILE_NOTIFICATION_TARGET_MISSING",
-                "config_path": str(self.mobile_notification_config_path),
-                "pending_manual_action_count": len(manual_actions),
-                "all_clear": all_clear,
-                "fingerprint": fingerprint,
-                "updated_at": utc_now(),
-                "final_ready": False,
-            }
-            atomic_write_json(self.mobile_notification_state_path, result)
-            return result
-        if not endpoint.casefold().startswith("https://"):
-            result = {
-                "state": "WAITING_FOR_USER_ENDPOINT",
-                "reason": "MOBILE_NOTIFICATION_ENDPOINT_MUST_BE_HTTPS",
-                "config_path": str(self.mobile_notification_config_path),
-                "fingerprint": fingerprint,
-                "updated_at": utc_now(),
-                "final_ready": False,
-            }
-            atomic_write_json(self.mobile_notification_state_path, result)
-            return result
-        title = "AAYS: problemler temiz" if all_clear else f"AAYS: {len(manual_actions)} kesin manuel işlem"
-        message = (
-            "Çözülmemiş kullanıcı işlemi kalmadı; 22. problem çözme slotu diğer slotları izlemeye devam ediyor."
-            if all_clear
-            else " | ".join(
-                f"{item.get('slot_id') or 'SİSTEM'}: {str(item.get('reason') or '-')[:180]}"
-                for item in manual_actions[:8]
-            )
-        )
-        payload = json.dumps({
-            "title": title,
-            "message": message,
-            "priority": 4 if manual_actions else 2,
-            "tags": ["warning"] if manual_actions else ["white_check_mark"],
-        }, ensure_ascii=False).encode("utf-8")
-        headers = {"Content-Type": "application/json; charset=utf-8"}
-        token = str(config.get("authorization_bearer_token") or "").strip()
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        try:
-            request = urllib.request.Request(endpoint, data=payload, headers=headers, method="POST")
-            with urllib.request.urlopen(request, timeout=15) as response:
-                status_code = int(getattr(response, "status", 200))
-            if status_code < 200 or status_code >= 300:
-                raise RuntimeError(f"MOBILE_NOTIFICATION_HTTP_{status_code}")
-            result = {
-                "state": "SENT", "fingerprint": fingerprint, "sent_at": utc_now(),
-                "pending_manual_action_count": len(manual_actions), "all_clear": all_clear,
-                "final_ready": False,
-            }
-        except Exception as exc:
-            result = {
-                "state": "SEND_FAILED", "reason": f"{type(exc).__name__}:{exc}",
-                "fingerprint": fingerprint, "updated_at": utc_now(), "final_ready": False,
-            }
+        result = {
+            "state": "CHATGPT_APP_AUTOMATION_ACTIVE",
+            "delivery": "CHATGPT_CODEX_TASK_NOTIFICATION",
+            "automation_id": "aays-problem-z-c-bildirimleri",
+            "pending_manual_action_count": len(manual_actions),
+            "all_clear": all_clear,
+            "fingerprint": fingerprint,
+            "updated_at": utc_now(),
+            "final_ready": False,
+        }
         atomic_write_json(self.mobile_notification_state_path, result)
         return result
 
