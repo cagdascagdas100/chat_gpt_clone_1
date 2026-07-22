@@ -199,6 +199,15 @@ class SlotRecoverySupervisor:
             return None
         return max(0.0, (datetime.now(timezone.utc) - stamp).total_seconds())
 
+    def _current_coordinator_healthy(self) -> bool:
+        heartbeat = read_json(self.root / "state" / "coordinator_heartbeat_latest.json", {}) or {}
+        age = self._heartbeat_age(heartbeat)
+        if age is None or age > 45:
+            return False
+        return str(heartbeat.get("state") or "").upper() in {
+            "RUNNING", "RECOVERY_GIT_ACTIVE", "STARTING_REMOTE_SYNC", "INITIALIZING_STATE",
+        }
+
     def _health(self, slot_id: str) -> dict[str, Any]:
         status, heartbeat = self._slot_documents(slot_id)
         state = str(status.get("state") or "IDLE").upper()
@@ -353,14 +362,21 @@ class SlotRecoverySupervisor:
         """Preserve a dirty worktree and route one retry to a clean local-HEAD worktree."""
         parent = current_worktree.parent
         worktree_base = parent.parent if parent.name.casefold() == "slots" else parent
-        target = worktree_base / "recovery" / slot_id / f"{trigger_key}-v6"
-        if target.is_dir():
-            diagnostics = self._diagnostics(target)
+        target: Path | None = None
+        provisioned: Path | None = None
+        for version in range(6, 13):
+            candidate = worktree_base / "recovery" / slot_id / f"{trigger_key}-v{version}"
+            if not candidate.is_dir():
+                target = candidate
+                break
+            diagnostics = self._diagnostics(candidate)
             if diagnostics.get("clean") and diagnostics.get("head"):
-                provisioned = target
-            else:
-                return None, "EXISTING_ISOLATED_WORKTREE_NOT_CLEAN"
-        else:
+                target = candidate
+                provisioned = candidate
+                break
+        if target is None:
+            return None, "ALL_VERSIONED_ISOLATED_WORKTREES_NOT_CLEAN"
+        if provisioned is None:
             target.parent.mkdir(parents=True, exist_ok=True)
             try:
                 add = self._git(
@@ -392,6 +408,18 @@ class SlotRecoverySupervisor:
                 sparse_root = str(repo_path.parent) if repo_path.suffix else normalized
                 if sparse_root not in ("", "."):
                     sparse_directories.add(sparse_root)
+            # Some legacy contracts declare both a very broad directory and
+            # the slot-specific descendant. Materialising the ancestor defeats
+            # sparse checkout and can stall a portable disk for minutes. Keep
+            # the narrow descendants when both are present.
+            sparse_directories = {
+                candidate
+                for candidate in sparse_directories
+                if not any(
+                    other != candidate and other.startswith(candidate.rstrip("/") + "/")
+                    for other in sparse_directories
+                )
+            }
             if sparse_directories:
                 try:
                     sparse = self._git(
@@ -501,11 +529,21 @@ class SlotRecoverySupervisor:
         continuation_is_new = bool(
             source_updated and (status_updated is None or source_updated > status_updated)
         )
+        current_host_healthy = self._current_coordinator_healthy()
+        stale_host_claim = any(
+            marker in blocker_upper
+            for marker in (
+                "HEARTBEAT_STALE", "CANONICAL F HOST", "CANONICAL F: HOST", "F_HOST",
+                "EXTERNAL_CANONICAL_F", "EXISTING_SHARED_RUNNER", "SHARED_RUNNER_GLOBAL",
+            )
+        )
+        local_host_recovered = current_host_healthy and stale_host_claim
         safe_transient = (
             not blocker_text
             or any(marker in blocker_upper for marker in SAFE_TIMEOUT_MARKERS)
             or any(marker in blocker_upper for marker in LOCK_MARKERS)
             or bool(health.get("stale_active"))
+            or local_host_recovered
         )
         real_data_blocker = any(marker in blocker_upper for marker in DATA_BLOCKER_MARKERS)
         proactive_eligible = bool(
@@ -576,11 +614,15 @@ class SlotRecoverySupervisor:
             }
         if plan.get("state") == "RECOVERY_PARKED":
             if (
-                int(plan.get("policy_version") or 1) < 7
+                (
+                    int(plan.get("policy_version") or 1) < 8
+                    or continuation_is_new
+                    or local_host_recovered
+                )
                 and (safe_transient or real_data_blocker)
             ):
                 plan.update({
-                    "policy_version": 7,
+                    "policy_version": 8,
                     "state": "RECOVERY_WAITING",
                     "wait_until": utc_now(),
                     "repair_reason": "POLICY_V7_SOURCE_DISCOVERY_OR_GENERIC_RECOVERY_REOPENED",
@@ -657,6 +699,9 @@ class SlotRecoverySupervisor:
                 flags["allow_verified_local_head_fallback"] = True
                 flags["allow_existing_sparse_paths_after_timeout"] = True
                 reason = "VERIFIED_LOCAL_HEAD_RETRY_ENABLED"
+            elif local_host_recovered:
+                safe_to_retry = True
+                reason = "CURRENT_LOCAL_HOST_LIVENESS_RETRY_ENABLED"
             elif not blocker or blocker_is_generic_state:
                 safe_to_retry = True
                 reason = "BLOCKED_WITHOUT_DIAGNOSTIC_SINGLE_RETRY_ENABLED"
