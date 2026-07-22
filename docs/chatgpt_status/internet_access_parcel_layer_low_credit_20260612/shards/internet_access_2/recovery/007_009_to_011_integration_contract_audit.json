@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_2",
+  "task_id": "internet-access-2-ofcom-r2-provision-full-archive-validation-v1-20260722T165500Z",
+  "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
+  "checked_at": "2026-07-22T19:12:00Z",
+  "state": "FOLLOW_ON_JOIN_INTEGRATION_REPAIRED_SAMPLE_MANIFEST_STILL_REQUIRED",
+  "detected_defects": [
+    {
+      "id": "JOIN_STATE_FIELD_MISMATCH",
+      "before": "011 expected OFCom_POSTCODE_ZIP_SCHEMA_ACCEPTED and legacy field names",
+      "actual_009": "009 emits OFCom_V2_R2_POSTCODE_ARCHIVE_ACCEPTED, required_inner_postcode_revision and observed_r2_postcode_file_count",
+      "resolution": "011 now accepts the actual strict 009 state and field contract"
+    },
+    {
+      "id": "SAMPLE_SUMMARY_NOT_MANIFEST",
+      "evidence_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/004_24_sample_validation.json",
+      "finding": "The file contains counts only and no raw postcode values.",
+      "resolution": "011 requires an explicit --samples path or AAYS_OFCom_POSTCODES_PATH and refuses to infer postcodes."
+    }
+  ],
+  "strict_gate_requirements": [
+    "accepted 009 state",
+    "accepted=true",
+    "inner revision r2",
+    "121 r2 files",
+    "1741096 rows",
+    "ZIP CRC pass",
+    "121 unique postcode areas",
+    "no stale inner r1 postcode files",
+    "all r2 files nonempty with core columns",
+    "archive SHA256 equals 009 readback"
+  ],
+  "tests": {
+    "python_compile": "PASS",
+    "actual_009_field_contract_24_exact_matches": "PASS",
+    "sha_mismatch_rejection": "PASS",
+    "missing_sample_manifest_safe_stop": "PASS"
+  },
+  "join_tool_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/011_strict_exact_postcode_join_24_samples.py",
+  "join_tool_commit": "1541510f448ba1e1d05c261bdd87484f6e2bd333",
+  "official_archive_bytes_observed": 0,
+  "official_coverage_verified_candidates": 0,
+  "accuracy_written": 0,
+  "duplicate_task_created": false,
+  "second_runner_started": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
