@@ -29,26 +29,40 @@ def atomic_json(p,o):
 def tail_text(p,n=12000):
  if not p.exists():return ""
  with p.open("rb") as h:s=h.seek(0,2);h.seek(max(0,s-n));return h.read().decode("utf-8",errors="replace")
-def path_state(p):
+def _resolved_set(paths):
+ out=set()
+ for x in paths:
+  try:out.add(Path(x).resolve())
+  except (OSError,RuntimeError):out.add(Path(x).absolute())
+ return out
+def path_state(p,ignore_paths=()):
+ ignored=_resolved_set(ignore_paths)
  try:
+  rp=p.resolve()
+  if rp in ignored:return {"path":str(p),"exists":p.exists(),"kind":"ignored","bytes":0,"mtime_ns":0}
   if p.is_file():
    s=p.stat();return {"path":str(p),"exists":True,"kind":"file","bytes":s.st_size,"mtime_ns":s.st_mtime_ns}
   if p.is_dir():
    total=count=0;newest=p.stat().st_mtime_ns
    for x in p.iterdir():
     try:
+     if x.resolve() in ignored:continue
      if x.is_file():s=x.stat();total+=s.st_size;count+=1;newest=max(newest,s.st_mtime_ns)
      elif x.is_dir():newest=max(newest,x.stat().st_mtime_ns)
-    except (OSError,PermissionError):pass
+    except (OSError,PermissionError,RuntimeError):pass
    return {"path":str(p),"exists":True,"kind":"directory_shallow","bytes":total,"files":count,"mtime_ns":newest}
- except (OSError,PermissionError):pass
+ except (OSError,PermissionError,RuntimeError):pass
  return {"path":str(p),"exists":False,"kind":"missing","bytes":0,"mtime_ns":0}
-def snapshot(ps:Iterable[Path]):return [path_state(p) for p in ps]
+def snapshot(ps:Iterable[Path],ignore_paths=()):return [path_state(p,ignore_paths) for p in ps]
 def terminate_tree(p,grace_seconds=10):
  a=[]
  if p.poll() is not None:return {"already_exited":True,"actions":a,"returncode":p.returncode}
  if os.name=="nt":
-  try:r=subprocess.run(["taskkill","/PID",str(p.pid),"/T","/F"],capture_output=True,text=True,timeout=30,check=False);a.append("taskkill:"+str(r.returncode))
+  try:
+   r=subprocess.run(["taskkill","/PID",str(p.pid),"/T","/F"],capture_output=True,text=True,timeout=30,check=False);a.append("taskkill:"+str(r.returncode))
+   if r.returncode!=0 and p.poll() is None:
+    try:p.kill();a.append("process_kill_after_taskkill_nonzero")
+    except Exception as k:a.append("kill_error:"+type(k).__name__)
   except Exception as e:
    a.append("taskkill_error:"+type(e).__name__)
    try:p.kill();a.append("process_kill")
@@ -71,7 +85,7 @@ def terminate_tree(p,grace_seconds=10):
  return {"already_exited":False,"actions":a,"returncode":p.returncode}
 def _payload(name,cmd,pid,state,start,sm,last,lm,hard,stall,seen,index,total):
  n=time.monotonic()
- return {"schema_version":1,"slot_id":SLOT_ID,"state":state,"updated_at":utc_now(),"step_name":name,"step_index":index,"step_total":total,"pid":pid,"command":cmd,"started_at":start,"elapsed_seconds":round(n-sm,3),"last_progress_at":last,"seconds_since_progress":round(n-lm,3),"hard_timeout_seconds":hard,"stall_timeout_seconds":stall,"observed_paths":seen,"progress_semantics":"WATCHED_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_LOG_GROWTH_DOES_NOT_RESET_STALL","single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":2,"slot_id":SLOT_ID,"state":state,"updated_at":utc_now(),"step_name":name,"step_index":index,"step_total":total,"pid":pid,"command":cmd,"started_at":start,"elapsed_seconds":round(n-sm,3),"last_progress_at":last,"seconds_since_progress":round(n-lm,3),"hard_timeout_seconds":hard,"stall_timeout_seconds":stall,"observed_paths":seen,"progress_semantics":"WATCHED_CHILD_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_HEARTBEAT_AND_LOG_GROWTH_DO_NOT_RESET_STALL","single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def supervise(*,command,cwd,step_name,hard_timeout_seconds,stall_timeout_seconds,watch_paths,heartbeat_paths,poll_seconds=5.,heartbeat_seconds=30.,step_index=None,step_total=None,environment=None):
  if not command or not all(isinstance(x,str) and x for x in command):raise ValueError("command")
  if hard_timeout_seconds<=0 or stall_timeout_seconds<=0:raise ValueError("timeout")
@@ -81,23 +95,31 @@ def supervise(*,command,cwd,step_name,hard_timeout_seconds,stall_timeout_seconds
  kw={"cwd":cwd,"stdin":subprocess.DEVNULL,"text":False,"env":environment or os.environ.copy()}
  if os.name=="nt":kw["creationflags"]=getattr(subprocess,"CREATE_NEW_PROCESS_GROUP",0)
  else:kw["start_new_session"]=True
- start=utc_now();sm=lm=time.monotonic();last=start;kind=term=None
+ start=utc_now();sm=lm=time.monotonic();last=start;kind=term=None;heartbeat_errors=[]
  with out.open("wb") as oh,err.open("wb") as eh:
-  p=subprocess.Popen(command,stdout=oh,stderr=eh,**kw);progress_paths=list(watch_paths);report_paths=[*watch_paths,out,err];prev=snapshot(progress_paths);beat=sm
+  p=subprocess.Popen(command,stdout=oh,stderr=eh,**kw);progress_paths=list(watch_paths);ignored=_resolved_set(heartbeat_paths);report_paths=[*watch_paths,out,err];prev=snapshot(progress_paths,ignored);beat=sm
   while True:
-   now=time.monotonic();cur=snapshot(progress_paths)
+   now=time.monotonic();cur=snapshot(progress_paths,ignored)
    if cur!=prev:prev=cur;lm=now;last=utc_now()
    if now>=beat:
     x=_payload(step_name,command,p.pid,"running",start,sm,last,lm,hard_timeout_seconds,stall_timeout_seconds,snapshot(report_paths),step_index,step_total)
-    for hp in heartbeat_paths:atomic_json(hp,x)
+    try:
+     for hp in heartbeat_paths:atomic_json(hp,x)
+    except Exception as e:
+     heartbeat_errors.append({"phase":"running","error_type":type(e).__name__,"error":str(e)})
+     kind="heartbeat_write_error";term=terminate_tree(p);break
     beat=now+max(1.,heartbeat_seconds)
    if p.poll() is not None:break
-   if now-sm>hard_timeout_seconds:kind="hard_timeout";term=terminate_tree(p);break
-   if now-lm>stall_timeout_seconds:kind="stall_timeout";term=terminate_tree(p);break
+   if now-sm>=hard_timeout_seconds:kind="hard_timeout";term=terminate_tree(p);break
+   if now-lm>=stall_timeout_seconds:kind="stall_timeout";term=terminate_tree(p);break
    time.sleep(max(.05,poll_seconds))
  end=utc_now();code=p.returncode if p.returncode is not None else -999;state="passed" if kind is None and code==0 else "blocked"
- r={"schema_version":1,"slot_id":SLOT_ID,"state":state,"step_name":step_name,"step_index":step_index,"step_total":step_total,"command":command,"pid":p.pid,"started_at":start,"ended_at":end,"elapsed_seconds":round(time.monotonic()-sm,3),"exit_code":code,"timeout_kind":kind,"hard_timeout_seconds":hard_timeout_seconds,"stall_timeout_seconds":stall_timeout_seconds,"last_progress_at":last,"seconds_since_progress_at_end":round(time.monotonic()-lm,3),"termination":term,"observed_paths":snapshot(report_paths),"progress_semantics":"WATCHED_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_LOG_GROWTH_DOES_NOT_RESET_STALL","stdout_tail":tail_text(out),"stderr_tail":tail_text(err),"single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
- for hp in heartbeat_paths:atomic_json(hp,r)
+ r={"schema_version":2,"slot_id":SLOT_ID,"state":state,"step_name":step_name,"step_index":step_index,"step_total":step_total,"command":command,"pid":p.pid,"started_at":start,"ended_at":end,"elapsed_seconds":round(time.monotonic()-sm,3),"exit_code":code,"timeout_kind":kind,"hard_timeout_seconds":hard_timeout_seconds,"stall_timeout_seconds":stall_timeout_seconds,"last_progress_at":last,"seconds_since_progress_at_end":round(time.monotonic()-lm,3),"termination":term,"heartbeat_write_errors":heartbeat_errors,"observed_paths":snapshot(report_paths),"progress_semantics":"WATCHED_CHILD_OUTPUT_CACHE_OR_DATABASE_CHANGE_ONLY_HEARTBEAT_AND_LOG_GROWTH_DO_NOT_RESET_STALL","stdout_tail":tail_text(out),"stderr_tail":tail_text(err),"single_child_only":True,"new_runner":False,"parallel_runner":False,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ for hp in heartbeat_paths:
+  try:atomic_json(hp,r)
+  except Exception as e:heartbeat_errors.append({"phase":"final","path":str(hp),"error_type":type(e).__name__,"error":str(e)})
+ if heartbeat_errors and state=="passed":
+  state="blocked";kind=kind or "final_heartbeat_write_error";r["state"]=state;r["timeout_kind"]=kind;r["heartbeat_write_errors"]=heartbeat_errors
  return r
 def parse_args():
  p=argparse.ArgumentParser();p.add_argument("--repo-root",type=Path);p.add_argument("--step-name",required=True);p.add_argument("--hard-timeout-seconds",type=int,required=True);p.add_argument("--stall-timeout-seconds",type=int,required=True);p.add_argument("--watch-path",action="append",default=[]);p.add_argument("--runner-output",default=DEFAULT_RUNNER_OUTPUT);p.add_argument("--web-output",default=DEFAULT_WEB_OUTPUT);p.add_argument("command",nargs=argparse.REMAINDER);return p.parse_args()
