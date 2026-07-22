@@ -5,28 +5,31 @@
   "slot_id": "gas_emissions_1",
   "base_slot_id": "gas_emissions",
   "shard_index": 1,
-  "task_id": "gas_emissions_1_official_source_candidates_web_20260720_01",
-  "attempt_id": "gas-emissions-1-source-web-a2",
-  "idempotency_key": "gas_emissions_1:292a06c847a3a13720959d1e842889d47d6eb4bd:official_source_candidates_web_9",
+  "task_id": "gas_emissions_1_official_download_schema_verify_20260722_01",
+  "attempt_id": "gas-emissions-1-schema-a1",
+  "idempotency_key": "gas_emissions_1:f96a5b1dd5f11b8afe9b2b9d2e5aa1a16f9af7e3:official_download_schema_verify_v1",
   "status": "queued",
+  "state": "QUEUED_AWAITING_EXISTING_SINGLE_SHARED_RUNNER",
   "target_branch": "codex/aays-single-runner-v5-20260706",
-  "remote_head_basis": "292a06c847a3a13720959d1e842889d47d6eb4bd",
-  "first_unverified_step": "OFFICIAL_GRID_POINT_FACILITY_GEOMETRY_CANDIDATE_DISCOVERY_WITH_LINE_BY_LINE_WEB_VISIBILITY",
-  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/BUILD_OFFICIAL_SOURCE_CANDIDATES_AND_WEB_TABLE_20260720.py",
+  "remote_head_basis": "f96a5b1dd5f11b8afe9b2b9d2e5aa1a16f9af7e3",
+  "completed_task_not_replayed": "gas_emissions_1_official_source_candidates_web_20260720_01",
+  "first_unverified_step": "DOWNLOAD_AND_SCHEMA_VERIFY_NAEI_POINT_PRTR_EA_HMLR_AND_RESOLVE_NAEI_GRID_FORM",
+  "script_path": "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/VERIFY_OFFICIAL_DOWNLOAD_SCHEMAS_20260722.py",
   "read_paths": [
-    "docs/chatgpt_status/gas_emissions",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1",
     "docs/chatgpt_status/_shared/slots_21/gas_emissions_1",
     "england_map_web/data/aays_21_slots/gas_emissions_1"
   ],
   "exact_write_paths": [
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_official_source_candidates_latest.json",
-    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_official_source_candidates_latest.json",
-    "england_map_web/data/aays_21_slots/gas_emissions_1/official_source_candidates_latest.json",
-    "england_map_web/data/aays_21_slots/gas_emissions_1/official_source_candidates.html"
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_official_download_schema_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/status/gas_emissions_1_official_download_schema_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/official_download_schema_latest.json",
+    "england_map_web/data/aays_21_slots/gas_emissions_1/official_download_schema.html"
   ],
   "resource_class": [
     "network_fetch",
-    "light_read"
+    "heavy_read",
+    "temporary_large_files"
   ],
   "requires_shared_publish_gate": true,
   "parcel_partition": {
@@ -43,49 +46,38 @@
   },
   "data_quality_contract": {
     "source_urls": [
-      "https://www.gov.uk/government/statistics/uk-local-authority-and-regional-greenhouse-gas-emissions-statistics-2005-to-2024",
       "https://naei.energysecurity.gov.uk/data/maps/download-gridded-emissions",
-      "https://naei.energysecurity.gov.uk/data/maps/emissions-point-sources",
-      "https://naei.energysecurity.gov.uk/emissionsapp/",
-      "https://naei.energysecurity.gov.uk/reports/uk-spatial-emissions-methodology-report-national-atmospheric-emissions-inventory-2023",
-      "https://www.data.gov.uk/dataset/cfd94301-a2f2-48a2-9915-e477ca6d8b7e/pollution-inventory",
-      "https://www.gov.uk/government/publications/download-industrial-emissions-and-waste-transfer-uk-prtr-data",
-      "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-      "https://get-air-pollution-data.service.gov.uk/"
+      "https://naei.energysecurity.gov.uk/sites/default/files/2025-09/NAEIPointsSources_2023.xlsx",
+      "https://assets.publishing.service.gov.uk/media/6a3d096c4c7605ab56723a63/uk_prtr_dataset_2024.xml",
+      "https://environment.data.gov.uk/api/file/download?fileDataSetId=4faa4a52-7df2-4047-bc3f-877dd04222d8&fileName=2024+Pollution+Inventory+Dataset.zip",
+      "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
     ],
-    "source_snapshot_date": "2026-07-20",
-    "source_discovery_required": false,
-    "measurement_level": "document",
-    "output_semantics": "CANDIDATE",
-    "parcel_binding_method": "SOURCE_AND_GEOMETRY_CANDIDATE_RUBRIC_NO_PARCEL_VALUE",
-    "confidence_method": "OFFICIAL_AUTHORITY_FRESHNESS_SPATIAL_BINDING_REPRODUCIBILITY_RUBRIC_PLUS_LIVE_HTTP_PROBE",
+    "source_snapshot_date": "2026-07-22",
+    "measurement_level": "official_file_schema",
+    "output_semantics": "SOURCE_SCHEMA_EVIDENCE_ONLY_NO_PARCEL_VALUE",
+    "parcel_binding_method": "NO_BINDING_UNTIL_OFFICIAL_FILE_SCHEMA_AND_GEOMETRY_VERIFIED",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "ai_role": "evidence_assist_only",
-    "human_review_required_when": [
-      "source_conflict",
-      "low_confidence",
-      "geometry_mismatch",
-      "official_url_unreachable",
-      "grid_schema_not_verified",
-      "facility_coordinate_schema_not_verified",
-      "licence_constraint"
+    "required_checks": [
+      "NAEI point-source XLSX workbook and location-header evidence",
+      "UK PRTR 2024 XML facility, geographical-location and pollutant-release tags",
+      "Environment Agency 2024 ZIP member/schema evidence and licence preservation",
+      "HMLR July 2026 local-authority GML link and sample polygon XML evidence",
+      "NAEI 2023 1x1km package contract and dynamic download endpoint discovery"
     ]
   },
-  "candidate_target_count": 9,
-  "minimum_live_reachable_count": 5,
   "measured_parcel_rows_target": 0,
+  "actual_business_data_rows_written": 0,
   "single_runner_only": true,
   "new_runner": false,
   "parallel_runner": false,
-  "timeout_seconds": 600,
+  "timeout_seconds": 1800,
   "final_ready": false,
   "product_final_ready": false,
   "fake_data": false,
   "db_write": false,
   "migration": false,
   "production_deploy": false,
-  "state": "PUBLISHING",
-  "updated_at": "2026-07-21T09:02:40.996402Z",
-  "blocker": null,
+  "updated_at": "2026-07-21T23:59:59Z",
+  "blocker": "WAITING_FOR_EXISTING_SINGLE_SHARED_RUNNER_NETWORK_DOWNLOAD_AND_SCHEMA_INSPECTION",
   "result": null
 }
