@@ -1,0 +1,82 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 1,
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "attempt_id": "security-public-safety-1-20260722-017",
+  "idempotency_key": "security-public-safety-1-canonical-acceptance-v17-no-replay",
+  "status": "READY",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
+  "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v15.html",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_1",
+    "england_map_web/data/aays_21_slots/security_public_safety_1"
+  ],
+  "resource_class": ["network_fetch", "headless_browser", "light_read"],
+  "execution_contract": {
+    "reuse_existing_remote_artifact": true,
+    "hydration_replay_forbidden": true,
+    "remote_hydrated_rows": 300,
+    "remote_hydrated_blob_sha": "ab876129928ec0370d482ca491f31a5dd1216aab",
+    "canonical_candidate_count": 130,
+    "canonical_unique_endpoints": 16,
+    "parallel_endpoint_fetch_workers_max": 8,
+    "unique_endpoint_request_once": true,
+    "duplicate_live_requests_avoided_expected": 114,
+    "official_source_parallel_fetch_workers_max": 5
+  },
+  "acceptance_contract": {
+    "remote_hydrated_rows_required": 300,
+    "remote_hydrated_blob_sha": "ab876129928ec0370d482ca491f31a5dd1216aab",
+    "accuracy_score_4_rows_required": 300,
+    "canonical_candidate_count_required": 130,
+    "canonical_candidate_accuracy_score_4_required": 130,
+    "canonical_unique_api_endpoints_required": 16,
+    "canonical_endpoint_http_json_pass_required": 16,
+    "candidate_live_count_parity_required": 130,
+    "candidate_live_sha256_parity_required": 130,
+    "actual_headless_browser_required": true,
+    "dom_visible_rows_required": 300,
+    "console_error_count_required": 0,
+    "product_matrix_lsoa_proxy_contract_required": true,
+    "remote_commit_push_readback_required": true
+  },
+  "data_quality_contract": {
+    "source_snapshot_date": "2026-05",
+    "measurement_level": "lsoa",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_measurement": false,
+    "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "quality_limits": [
+      "street-level results cover one mile and locations are approximate/anonymised",
+      "May 2026 has four known force-level crime-data omissions",
+      "London LSOA excludes sexual offences and has CONNECT comparability limits"
+    ],
+    "ai_role": "not_used"
+  },
+  "single_runner_only": true,
+  "child_direct_push_forbidden": true,
+  "global_control_alias_overwrite_forbidden": true,
+  "requires_browser_acceptance_gate": true,
+  "requires_git_publish_gate": true,
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "timeout_seconds": 1800,
+  "final_ready": false,
+  "created_at": "2026-07-22T05:10:00+03:00"
+}
