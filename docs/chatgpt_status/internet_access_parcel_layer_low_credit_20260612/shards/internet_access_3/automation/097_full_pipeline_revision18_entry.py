@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Revision 18.5 serial pipeline with watchdog supervision and content-shape validation."""
+"""Revision 18.6 serial pipeline with watchdog supervision and exact checkpoint integrity."""
 from __future__ import annotations
 import importlib.util,json,os,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
-SLOT="internet_access_3";TASK="aays1-internet-access-3-revision18-5-ons-content-shape-20260722";BASE="docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/";RO=BASE+"runner_outputs/059_revision18_watchdog_pipeline_latest.json";WO="england_map_web/data/aays_21_slots/internet_access_3/revision18_watchdog_pipeline_latest.json";RH=BASE+"runner_outputs/058_runtime_watchdog_latest.json";WH="england_map_web/data/aays_21_slots/internet_access_3/runtime_watchdog_latest.json";FEED="england_map_web/data/aays_21_slots/internet_access_3/operation_feed_revision18_runtime_latest.json"
+SLOT="internet_access_3";TASK="aays1-internet-access-3-revision18-6-checkpoint-fingerprint-20260722";BASE="docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/";RO=BASE+"runner_outputs/059_revision18_watchdog_pipeline_latest.json";WO="england_map_web/data/aays_21_slots/internet_access_3/revision18_watchdog_pipeline_latest.json";RH=BASE+"runner_outputs/058_runtime_watchdog_latest.json";WH="england_map_web/data/aays_21_slots/internet_access_3/runtime_watchdog_latest.json";FEED="england_map_web/data/aays_21_slots/internet_access_3/operation_feed_revision18_runtime_latest.json"
 def now():return datetime.now(timezone.utc).isoformat()
 def root():
  for p in [Path.cwd(),*Path(__file__).resolve().parents]:
@@ -25,7 +25,7 @@ def watchdog():
  m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 def payload(state,steps,plan,current,events):
  cycles=sum(int(x.get("heartbeat_cycles_succeeded") or 0) for x in steps);errors=sum(len(x.get("heartbeat_write_errors") or []) for x in steps)
- return {"schema_version":5,"slot_id":SLOT,"task_id":TASK,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":cycles,"heartbeat_write_errors":errors,"effective_pipeline_steps":74,"contract_tests_target":569,"official_source_checks_target":80,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
+ return {"schema_version":5,"slot_id":SLOT,"task_id":TASK,"state":state,"updated_at":now(),"current_step":current,"steps_completed":len(steps),"steps_total":len(plan),"steps":steps,"max_active_children":1,"heartbeat_writes":cycles,"heartbeat_write_errors":errors,"effective_pipeline_steps":74,"contract_tests_target":594,"official_source_checks_target":82,"events_count":len(events),"single_shared_runner_only":True,"new_runner":False,"parallel_runner":False,"parcel_relations_promoted":0,"confidence_uplifts":0,"actual_business_data_rows_written":0,"final_ready":False,"fake_data":False,"db_write":False,"migration":False,"production_deploy":False}
 def main():
  r=root();a=Path(__file__).resolve().parent;wd=watchdog();tmp=Path(tempfile.gettempdir());ro=r/(BASE+"runner_outputs");web=r/"england_map_web/data/aays_21_slots/internet_access_3";cache=tmp/"aays_internet_access_3_release_cache";db=tmp/"aays_internet_access_3_uprn_join_revision17.sqlite"
  plan=[
@@ -34,7 +34,7 @@ def main():
   {"file":"096_revision18_liveness_acceptance_tests.py","name":"REV18_LIVENESS_ACCEPTANCE_TESTS","hard":900,"stall":900,"watch":[]},
   {"file":"092_revision17_pipeline_manifest_tests.py","name":"REV17_MANIFEST_TESTS","hard":900,"stall":900,"watch":[]},
   {"file":"086_release_cache_identity_ledger_tests.py","name":"CACHE_IDENTITY_TESTS","hard":900,"stall":900,"watch":[]},
-  {"file":"088_exact_uprn_postcode_join_revision17_tests.py","name":"CHECKPOINT_JOIN_TESTS","hard":1200,"stall":1200,"watch":[]},
+  {"file":"088_exact_uprn_postcode_join_revision17_tests.py","name":"CHECKPOINT_JOIN_TESTS","hard":1800,"stall":1800,"watch":[]},
   {"file":"090_revision17_runtime_acceptance_tests.py","name":"REV17_ACCEPTANCE_TESTS","hard":900,"stall":900,"watch":[]},
   {"file":"078_runtime_resource_download_preflight_tests.py","name":"REV16_RESOURCE_TESTS","hard":900,"stall":900,"watch":[]},
   {"file":"080_exact_uprn_postcode_join_revision16_tests.py","name":"REV16_JOIN_TESTS","hard":1200,"stall":1200,"watch":[]},
