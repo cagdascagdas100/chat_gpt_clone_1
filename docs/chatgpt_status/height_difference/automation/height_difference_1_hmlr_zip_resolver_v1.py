@@ -2,8 +2,8 @@
 """Resolve the current HMLR Barking and Dagenham INSPIRE ZIP and extract one GML.
 
 Fail closed: the official page row, ZIP route, redirect host, archive structure,
-GML bytes and hashes must all validate. No parcel geometry or elevation result is
-produced by this helper.
+GML bytes, native CRS, polygon geometry and unique INSPIRE identifiers must all
+validate. No parcel geometry or elevation result is produced by this helper.
 """
 from __future__ import annotations
 
@@ -15,19 +15,21 @@ import html.parser
 import http.cookiejar
 import io
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import sys
 import tempfile
 import time
-from typing import Any
+from typing import Any, Iterable
 from urllib.parse import urljoin, urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 import zipfile
 
 SLOT_ID = "height_difference_1"
-SCRIPT_VERSION = "1.2-hmlr-zip-redirect-host-fail-closed"
+SCRIPT_VERSION = "1.3-native-bng-polygon-id-preflight"
 HMLR_DOWNLOAD_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 HMLR_AUTHORITY = "London Borough of Barking and Dagenham"
 HMLR_ORIGIN_HOST = "use-land-property-data.service.gov.uk"
@@ -37,12 +39,13 @@ HMLR_ZIP_URL = (
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download/"
     "London_Borough_of_Barking_and_Dagenham.zip"
 )
-USER_AGENT = "AAYS-height-difference-hmlr-zip/1.2"
+USER_AGENT = "AAYS-height-difference-hmlr-zip/1.3"
 MAX_PAGE_BYTES = 20_000_000
 MAX_ZIP_BYTES = 1_000_000_000
 MAX_GML_BYTES = 1_000_000_000
 MAX_MEMBERS = 100
 MAX_COMPRESSION_RATIO = 250.0
+ALLOWED_GEOMETRY_TYPES = {"Polygon", "MultiPolygon"}
 
 
 class EvidenceError(RuntimeError):
@@ -82,6 +85,12 @@ def utc_now() -> str:
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def sha256_json(value: Any) -> str:
+    return sha256_bytes(
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
 
 
 def atomic_bytes(path: Path, data: bytes) -> None:
@@ -173,11 +182,7 @@ def discover_authority_zip(page_bytes: bytes) -> str:
     for href in rows[0]["links"]:
         full = urljoin(HMLR_DOWNLOAD_PAGE, href)
         parsed = urlparse(full)
-        if (
-            parsed.scheme == "https"
-            and parsed.netloc == HMLR_ORIGIN_HOST
-            and parsed.path.endswith(".zip")
-        ):
+        if parsed.scheme == "https" and parsed.netloc == HMLR_ORIGIN_HOST and parsed.path.endswith(".zip"):
             candidates.append(full)
     if len(candidates) != 1:
         raise EvidenceError(f"HMLR_AUTHORITY_ZIP_LINK_NOT_UNIQUE:found={len(candidates)}")
@@ -249,7 +254,111 @@ def extract_single_gml(zip_bytes: bytes) -> tuple[bytes, dict[str, Any]]:
     }
 
 
+def require_geo_modules() -> tuple[Any, Any]:
+    try:
+        import geopandas as gpd  # type: ignore
+        from shapely.geometry import Polygon  # type: ignore
+    except Exception as exc:
+        raise EvidenceError(f"HMLR_GML_GEOSPATIAL_DEPENDENCY_MISSING:{exc}") from exc
+    return gpd, Polygon
+
+
+def normalize_column_name(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def choose_polygon_id_column(columns: Iterable[str]) -> str:
+    originals = [str(column) for column in columns]
+    normalized = {normalize_column_name(column): column for column in originals}
+    for key in (
+        "landregistryinspireid",
+        "inspireid",
+        "inspireidlocalid",
+        "localid",
+        "gmlid",
+    ):
+        if key in normalized:
+            return normalized[key]
+    candidates = [
+        column for column in originals
+        if "inspire" in normalize_column_name(column) and "id" in normalize_column_name(column)
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    raise EvidenceError(f"HMLR_POLYGON_ID_COLUMN_NOT_UNIQUE:found={candidates}")
+
+
+def validate_gdf_structure(gdf: Any) -> dict[str, Any]:
+    if gdf.empty:
+        raise EvidenceError("HMLR_GML_HAS_ZERO_FEATURES")
+    if gdf.crs is None:
+        raise EvidenceError("HMLR_GML_CRS_MISSING")
+    epsg = gdf.crs.to_epsg()
+    if epsg != 27700:
+        raise EvidenceError(f"HMLR_GML_NATIVE_CRS_NOT_EPSG27700:{gdf.crs}")
+    geometry_types = sorted({str(value) for value in gdf.geometry.geom_type.dropna().tolist()})
+    unexpected = sorted(set(geometry_types) - ALLOWED_GEOMETRY_TYPES)
+    if unexpected:
+        raise EvidenceError(f"HMLR_GML_NON_POLYGON_GEOMETRY:{unexpected}")
+    if bool(gdf.geometry.isna().any()) or bool(gdf.geometry.is_empty.any()) or not bool(gdf.geometry.is_valid.all()):
+        raise EvidenceError("HMLR_GML_INVALID_EMPTY_OR_NULL_GEOMETRY")
+    areas = gdf.geometry.area
+    if bool((areas <= 0).any()) or not all(math.isfinite(float(value)) for value in areas):
+        raise EvidenceError("HMLR_GML_NON_POSITIVE_OR_NON_FINITE_AREA")
+    bounds = [float(value) for value in gdf.total_bounds]
+    if len(bounds) != 4 or not all(math.isfinite(value) for value in bounds):
+        raise EvidenceError("HMLR_GML_BOUNDS_NON_FINITE")
+    minx, miny, maxx, maxy = bounds
+    if not (0 <= minx <= maxx <= 700_000 and 0 <= miny <= maxy <= 1_300_000):
+        raise EvidenceError(f"HMLR_GML_BOUNDS_NOT_PLAUSIBLE_BNG:{bounds}")
+    id_column = choose_polygon_id_column(gdf.columns)
+    ids = [str(value).strip() for value in gdf[id_column].tolist()]
+    invalid_ids = [value for value in ids if not value or value.lower() in {"nan", "none", "null"}]
+    if invalid_ids:
+        raise EvidenceError(f"HMLR_GML_EMPTY_POLYGON_IDS:{len(invalid_ids)}")
+    if len(set(ids)) != len(ids):
+        raise EvidenceError(f"HMLR_GML_DUPLICATE_POLYGON_IDS:{len(ids) - len(set(ids))}")
+    return {
+        "feature_count": int(len(gdf)),
+        "native_crs_epsg": 27700,
+        "geometry_types": geometry_types,
+        "polygon_id_column": id_column,
+        "unique_polygon_id_count": len(ids),
+        "total_bounds_bng": [round(value, 3) for value in bounds],
+        "minimum_polygon_area_m2": round(float(areas.min()), 6),
+        "maximum_polygon_area_m2": round(float(areas.max()), 6),
+        "polygon_ids_sha256": sha256_json(sorted(ids)),
+    }
+
+
+def validate_gml_structure(gml_bytes: bytes) -> dict[str, Any]:
+    gpd, _ = require_geo_modules()
+    fd, temp_name = tempfile.mkstemp(prefix="height_difference_1_hmlr_", suffix=".gml")
+    os.close(fd)
+    temp_path = Path(temp_name)
+    try:
+        temp_path.write_bytes(gml_bytes)
+        gdf = gpd.read_file(temp_path)
+        return validate_gdf_structure(gdf)
+    except EvidenceError:
+        raise
+    except Exception as exc:
+        raise EvidenceError(f"HMLR_GML_STRUCTURE_READ_FAILED:{exc}") from exc
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            temp_path.unlink()
+
+
+def expect_failure(callable_obj: Any, label: str) -> None:
+    try:
+        callable_obj()
+    except EvidenceError:
+        return
+    raise EvidenceError(f"SELF_TEST_EXPECTED_FAILURE_NOT_RAISED:{label}")
+
+
 def run_self_test() -> dict[str, Any]:
+    gpd, Polygon = require_geo_modules()
     sample_page = (
         '<table><tr><td>London Borough of Barking and Dagenham</td>'
         '<td><a href="/datasets/inspire/download/'
@@ -265,12 +374,14 @@ def run_self_test() -> dict[str, Any]:
     )
     if validate_final_url(sample_signed, HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP") != HMLR_OBJECT_HOST:
         raise EvidenceError("SELF_TEST_OBJECT_HOST_FAILED")
-    try:
-        validate_final_url("https://example.com/redirect.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP")
-    except EvidenceError:
-        pass
-    else:
-        raise EvidenceError("SELF_TEST_UNKNOWN_HOST_NOT_REJECTED")
+    expect_failure(
+        lambda: validate_final_url("https://example.com/redirect.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP"),
+        "UNKNOWN_HOST",
+    )
+    expect_failure(
+        lambda: validate_final_url("http://use-land-property-data.service.gov.uk/file.zip", HMLR_ZIP_ALLOWED_FINAL_HOSTS, "ZIP"),
+        "HTTP_SCHEME",
+    )
     payload = b'<?xml version="1.0"?><gml><feature>test</feature></gml>'
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -278,7 +389,40 @@ def run_self_test() -> dict[str, Any]:
     extracted, receipt = extract_single_gml(buffer.getvalue())
     if extracted != payload or receipt["archive_member_count"] != 1:
         raise EvidenceError("SELF_TEST_EXTRACTION_FAILED")
-    return {"state": "PASS", "checks": 6, "script_version": SCRIPT_VERSION}
+    traversal = io.BytesIO()
+    with zipfile.ZipFile(traversal, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("../escape.gml", payload)
+    expect_failure(lambda: extract_single_gml(traversal.getvalue()), "ZIP_TRAVERSAL")
+    polygon = Polygon([(550000, 183000), (550010, 183000), (550010, 183010), (550000, 183010)])
+    valid = gpd.GeoDataFrame({"LandRegistry-INSPIRE-ID": ["ID-1"]}, geometry=[polygon], crs="EPSG:27700")
+    structure = validate_gdf_structure(valid)
+    if structure["native_crs_epsg"] != 27700 or structure["unique_polygon_id_count"] != 1:
+        raise EvidenceError("SELF_TEST_VALID_GDF_FAILED")
+    wrong_crs = valid.to_crs(epsg=4326)
+    expect_failure(lambda: validate_gdf_structure(wrong_crs), "WRONG_CRS")
+    duplicate = gpd.GeoDataFrame(
+        {"LandRegistry-INSPIRE-ID": ["ID-1", "ID-1"]},
+        geometry=[polygon, polygon.buffer(20)],
+        crs="EPSG:27700",
+    )
+    expect_failure(lambda: validate_gdf_structure(duplicate), "DUPLICATE_ID")
+    return {
+        "state": "PASS",
+        "checks": 10,
+        "script_version": SCRIPT_VERSION,
+        "checks_executed": [
+            "authority ZIP discovery",
+            "HMLR page host",
+            "S3 object host",
+            "unknown host rejection",
+            "HTTP rejection",
+            "one-GML ZIP extraction",
+            "traversal ZIP rejection",
+            "valid EPSG:27700 polygon structure",
+            "wrong CRS rejection",
+            "duplicate INSPIRE ID rejection",
+        ],
+    }
 
 
 def main() -> int:
@@ -297,7 +441,7 @@ def main() -> int:
         raise SystemExit("--page-output, --gml-output and --receipt-output are required")
 
     result: dict[str, Any] = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": SLOT_ID,
         "script_version": SCRIPT_VERSION,
         "started_at": utc_now(),
@@ -336,6 +480,7 @@ def main() -> int:
             label="HMLR_ZIP",
         )
         gml_bytes, archive_receipt = extract_single_gml(zip_bytes)
+        structure_receipt = validate_gml_structure(gml_bytes)
         atomic_bytes(args.page_output, page_bytes)
         atomic_bytes(args.gml_output, gml_bytes)
         result["artifacts"] = {
@@ -359,9 +504,10 @@ def main() -> int:
                 "sha256": sha256_bytes(gml_bytes),
                 "bytes": len(gml_bytes),
                 **archive_receipt,
+                "structure": structure_receipt,
             },
         }
-        result["state"] = "COMPLETED_ZIP_AND_GML_VERIFIED"
+        result["state"] = "COMPLETED_ZIP_GML_AND_STRUCTURE_VERIFIED"
     except Exception as exc:
         result["state"] = "BLOCKED_FAIL_CLOSED"
         result["errors"].append(str(exc))
@@ -379,7 +525,7 @@ def main() -> int:
     print(f"PAGE_OUTPUT={args.page_output}")
     print(f"GML_OUTPUT={args.gml_output}")
     print("FINAL_READY=false")
-    return 0 if result["state"] == "COMPLETED_ZIP_AND_GML_VERIFIED" else 2
+    return 0 if result["state"] == "COMPLETED_ZIP_GML_AND_STRUCTURE_VERIFIED" else 2
 
 
 if __name__ == "__main__":
