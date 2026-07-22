@@ -1688,6 +1688,81 @@ class Coordinator:
             return {"state": "CONFLICTS_REMAIN", "paths": remaining, "resolved": resolved}
         return {"state": "PASS", "resolved": resolved}
 
+    def chunk_large_publish_file(
+        self,
+        worktree: Path,
+        relative: str,
+        chunk_size: int = 48 * 1024 * 1024,
+    ) -> dict[str, Any]:
+        source = worktree / Path(relative)
+        if not source.is_file():
+            raise FileNotFoundError(relative)
+        file_size = source.stat().st_size
+        source_hash = hashlib.sha256()
+        with source.open("rb") as stream:
+            while block := stream.read(4 * 1024 * 1024):
+                source_hash.update(block)
+        digest = source_hash.hexdigest()
+        part_count = max(1, (file_size + chunk_size - 1) // chunk_size)
+        # Keep the generated path short on Windows. The original filename can
+        # already be close to MAX_PATH; the content hash is collision-safe for
+        # this adjacent chunk store and is also recorded in the manifest.
+        chunk_root = source.parent / ".aays_chunks" / digest[:16]
+        chunk_root.mkdir(parents=True, exist_ok=True)
+        parts: list[dict[str, Any]] = []
+        with source.open("rb") as stream:
+            for index in range(1, part_count + 1):
+                part = chunk_root / f"part-{index:04d}-of-{part_count:04d}.bin"
+                temporary = part.with_name(f"{part.name}.tmp.{uuid.uuid4().hex}")
+                part_hash = hashlib.sha256()
+                written = 0
+                with temporary.open("wb") as output:
+                    while written < chunk_size:
+                        block = stream.read(min(4 * 1024 * 1024, chunk_size - written))
+                        if not block:
+                            break
+                        output.write(block)
+                        part_hash.update(block)
+                        written += len(block)
+                os.replace(temporary, part)
+                part_relative = part.relative_to(worktree).as_posix()
+                parts.append({
+                    "index": index,
+                    "path": part_relative,
+                    "size_bytes": written,
+                    "sha256": part_hash.hexdigest(),
+                })
+        if sum(int(part["size_bytes"]) for part in parts) != file_size:
+            raise RuntimeError("CHUNK_SIZE_SUM_MISMATCH")
+        manifest_path = source.with_name(f"{source.name}.aays-chunks.json")
+        manifest = {
+            "schema_version": 1,
+            "format": "AAYS_GITHUB_CHUNKED_BLOB_V1",
+            "original_path": normalize_repo_path(relative),
+            "original_size_bytes": file_size,
+            "original_sha256": digest,
+            "chunk_size_bytes": chunk_size,
+            "part_count": part_count,
+            "parts": parts,
+            "reassembly": {
+                "algorithm": "concatenate parts in ascending index order",
+                "verification": "result size and SHA-256 must equal original_size_bytes and original_sha256",
+                "user_source_required": False,
+            },
+            "created_at": utc_now(),
+            "final_ready": True,
+        }
+        atomic_write_json(manifest_path, manifest)
+        return {
+            "original_path": normalize_repo_path(relative),
+            "original_size_bytes": file_size,
+            "original_sha256": digest,
+            "manifest_path": manifest_path.relative_to(worktree).as_posix(),
+            "part_paths": [str(part["path"]) for part in parts],
+            "part_count": part_count,
+            "chunk_size_bytes": chunk_size,
+        }
+
     def prepare_publish_item(self, source: Path, task: dict[str, Any], worktree: Path, base_head: str) -> Path | None:
         working = set(self.git_path_list(worktree, "diff", "--name-only", "-z", "--"))
         working.update(self.git_path_list(worktree, "diff", "--cached", "--name-only", "-z", "--"))
@@ -1730,14 +1805,22 @@ class Coordinator:
         changed = sorted(set(self.git_path_list(worktree, "diff", "--name-only", "-z", base_head, child_commit, "--")))
         github_blob_limit = 95 * 1024 * 1024
         local_only_large_paths: list[str] = []
+        chunked_large_files: list[dict[str, Any]] = []
         publishable_paths: list[str] = []
         for relative in changed:
             candidate = worktree / Path(relative)
             if candidate.is_file() and candidate.stat().st_size > github_blob_limit:
                 local_only_large_paths.append(relative)
+                try:
+                    chunked = self.chunk_large_publish_file(worktree, relative)
+                except Exception as exc:
+                    raise RuntimeError(f"LARGE_FILE_CHUNK_FAILED:{relative}:{type(exc).__name__}:{exc}") from exc
+                chunked_large_files.append(chunked)
+                publishable_paths.append(str(chunked["manifest_path"]))
+                publishable_paths.extend(str(value) for value in chunked["part_paths"])
             else:
                 publishable_paths.append(relative)
-        changed = publishable_paths
+        changed = sorted(set(publishable_paths))
         task_key = sha256_bytes(str(task["task_id"]).encode("utf-8"))[:20]
         item_path = self.publish_queue / f"{task_key}.json"
         atomic_write_json(
@@ -1753,6 +1836,7 @@ class Coordinator:
                 "child_commit": child_commit,
                 "changed_paths": changed,
                 "local_only_large_paths": local_only_large_paths,
+                "chunked_large_files": chunked_large_files,
                 "exact_write_paths": task["exact_write_paths"],
                 "attempts": 0,
                 "state": "PUBLISH_PENDING",

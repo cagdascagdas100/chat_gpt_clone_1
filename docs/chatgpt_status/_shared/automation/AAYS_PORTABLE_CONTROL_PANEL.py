@@ -485,6 +485,8 @@ class AaysPanel(tk.Tk):
     @staticmethod
     def _manual_solution(reason: str) -> str:
         upper = reason.upper()
+        if any(marker in upper for marker in ("LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB")):
+            return "Problemi Kopyala düğmesine basıp metni ChatGPT'ye gönderin; dosyayı silmeden 48 MiB parçalara bölme/manifest hatasını düzeltsin."
         if any(marker in upper for marker in ("AUTH", "CREDENTIAL", "LOGIN", "GITHUB")):
             return "GitHub hesabında gh auth login ile oturum açın; sonra Runner'ı Yeniden Başlatın."
         if any(marker in upper for marker in ("DIRTY_PUBLISHER", "GIT_CLEAN_PUBLISHER", "REMOTE_DIVERGED")):
@@ -552,10 +554,14 @@ class AaysPanel(tk.Tk):
             reason = " | ".join(reason_parts)
             upper = reason.upper()
             automatic_source_discovery = any(marker in upper for marker in data_markers)
-            truly_manual = not automatic_source_discovery and any(
+            chunk_failure = any(
+                marker in upper
+                for marker in ("LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB")
+            )
+            truly_manual = chunk_failure or (not automatic_source_discovery and any(
                 marker in upper
                 for marker in ("NO_SAFE_AUTOMATIC_REPAIR", "AUTOMATIC_RETRY_DID_NOT_CLEAR_BLOCKER")
-            )
+            ))
             if recovery_state == "RECOVERY_PARKED" and truly_manual:
                 add(f"slot:{slot_id}:{reason[:80]}", slot_id, reason or state, status.get("updated_at"))
 
@@ -572,6 +578,7 @@ class AaysPanel(tk.Tk):
                     for marker in (
                         "AUTH", "CREDENTIAL", "LOGIN", "GIT_CLEAN_PUBLISHER",
                         "DIRTY_PUBLISHER", "REMOTE_DIVERGED", "PERMISSION DENIED",
+                        "LARGE_FILE_CHUNK", "GH001", "FILE SIZE LIMIT", "EXCEEDS GITHUB",
                     )
                 )
                 if age is not None and age >= MANUAL_PENDING_SECONDS and attempts >= 3 and needs_user:
@@ -678,8 +685,37 @@ class AaysPanel(tk.Tk):
         x_scroll.grid(row=1, column=0, sticky="ew")
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(0, weight=1)
-        ttk.Button(window, text="Şimdi Yenile", command=self.refresh_status).pack(pady=(4, 12))
+        buttons = ttk.Frame(window)
+        buttons.pack(fill="x", padx=12, pady=(4, 12))
+        ttk.Button(buttons, text="Problemi Kopyala", command=self.copy_selected_manual_action).pack(side="left")
+        ttk.Button(buttons, text="Şimdi Yenile", command=self.refresh_status).pack(side="right")
+        tree.bind("<Double-1>", lambda _event: self.copy_selected_manual_action())
         self._refresh_manual_actions_window()
+
+    def copy_selected_manual_action(self) -> None:
+        tree = self.manual_actions_tree
+        if tree is None or not tree.winfo_exists() or not self.manual_actions:
+            self.manual_actions_dialog_var.set("Kopyalanacak çözülmemiş işlem yok.")
+            return
+        selected = tree.selection()
+        item_id = selected[0] if selected else tree.get_children()[0]
+        try:
+            action = self.manual_actions[int(item_id)]
+        except (ValueError, IndexError):
+            self.manual_actions_dialog_var.set("Önce bir problem satırı seçin.")
+            return
+        prompt = (
+            "AAYS TerraYield otomatik recovery problemi. Önce veri silmeden ve force push kullanmadan "
+            "problemi kendin çöz; yalnız gerçekten kullanıcı müdahalesi gerekiyorsa en kısa güvenli adımları yaz. "
+            f"Slot: {action.get('slot_id') or 'SİSTEM'}. "
+            f"Problem: {action.get('reason') or '-'}. "
+            f"Önerilen çözüm: {action.get('solution') or '-'}. "
+            "Runner tek kopya kalmalı; büyük dosyalar 48 MiB alt parçalara, SHA-256 manifestiyle ayrılmalı."
+        )
+        self.clipboard_clear()
+        self.clipboard_append(prompt)
+        self.update_idletasks()
+        self.manual_actions_dialog_var.set("Seçili problem ChatGPT'ye yapıştırılmak üzere panoya kopyalandı.")
 
     def _close_manual_actions_window(self) -> None:
         if self.manual_actions_window is not None:
@@ -693,9 +729,9 @@ class AaysPanel(tk.Tk):
             return
         for row in tree.get_children():
             tree.delete(row)
-        for action in self.manual_actions:
+        for index, action in enumerate(self.manual_actions):
             detected = str(action.get("detected_at") or "-").replace("T", " ").replace("Z", "")
-            tree.insert("", "end", values=(
+            tree.insert("", "end", iid=str(index), values=(
                 action.get("slot_id") or "-",
                 action.get("reason") or "-",
                 detected,
