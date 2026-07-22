@@ -1,4 +1,4 @@
-name: height_difference_2 exact point extraction 032
+name: height_difference_2 exact point and official context extraction 032
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
   extract:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout exact branch
         uses: actions/checkout@v4
@@ -20,37 +20,108 @@ jobs:
           ref: agent/height-difference-2-runtime-extract-032-20260722
           fetch-depth: 1
 
-      - name: Verify canonical blob and extract three points
+      - name: Install coordinate transformer
+        shell: bash
+        run: python3 -m pip install --disable-pip-version-check pyproj
+
+      - name: Verify canonical blob, extract points, and resolve official context
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import datetime as dt
           import hashlib
+          import html.parser
           import json
           import math
           import subprocess
           from pathlib import Path
+          from urllib.parse import urlencode, urljoin, urlparse
+          from urllib.request import Request, urlopen
+
+          import pyproj
+          from pyproj import Transformer
 
           source = Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
-          output = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
-          receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json')
+          point_output = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json')
+          point_receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json')
+          context_output = Path('england_map_web/data/aays_21_slots/height_difference_2/canonical_points_context_runtime_032.json')
+          context_receipt = Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_context_runtime_032.json')
           expected_blob = 'bb48164e7a0af78df875f30421a6a3068c43edb8'
           expected_count = 92283
           targets = (30762, 46142, 61522)
+          user_agent = 'AAYS-height-difference-2-runtime/1.0'
+          hmlr_page = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          ons_layer = 'https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/Local_Authority_Districts_DEC_2025_Boundaries_UK_BFE/FeatureServer/0/query'
+
+          class RowParser(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_row = False
+                  self.text = []
+                  self.links = []
+                  self.rows = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == 'tr':
+                      self.in_row = True
+                      self.text = []
+                      self.links = []
+                  elif self.in_row and tag.lower() == 'a':
+                      href = dict(attrs).get('href')
+                      if href:
+                          self.links.append(href)
+              def handle_data(self, data):
+                  if self.in_row and data.strip():
+                      self.text.append(data.strip())
+              def handle_endtag(self, tag):
+                  if tag.lower() == 'tr' and self.in_row:
+                      self.rows.append({'text': ' '.join(self.text), 'links': list(self.links)})
+                      self.in_row = False
+
+          def get_bytes(url, accept='*/*', timeout=120):
+              req = Request(url, headers={'User-Agent': user_agent, 'Accept': accept})
+              with urlopen(req, timeout=timeout) as response:
+                  if getattr(response, 'status', 200) != 200:
+                      raise SystemExit(f'HTTP failure for {url}')
+                  data = response.read()
+              if not data:
+                  raise SystemExit(f'empty response for {url}')
+              return data
+
+          def grid_letters(easting, northing):
+              e100k = int(easting) // 100000
+              n100k = int(northing) // 100000
+              l1 = (19 - n100k) - (19 - n100k) % 5 + (e100k + 10) // 5
+              l2 = ((19 - n100k) * 5) % 25 + e100k % 5
+              if l1 > 7:
+                  l1 += 1
+              if l2 > 7:
+                  l2 += 1
+              return chr(l1 + 65) + chr(l2 + 65)
+
+          def tile_5km(easting, northing):
+              letters = grid_letters(easting, northing)
+              e10 = int(easting % 100000) // 10000
+              n10 = int(northing % 100000) // 10000
+              quadrant = ('N' if northing % 10000 >= 5000 else 'S') + ('E' if easting % 10000 >= 5000 else 'W')
+              return f'{letters}{e10}{n10}{quadrant}'
 
           observed_blob = subprocess.check_output(['git', 'hash-object', str(source)], text=True).strip()
           if observed_blob != expected_blob:
               raise SystemExit(f'blob mismatch: {observed_blob}')
-
           doc = json.loads(source.read_text(encoding='utf-8'))
           features = doc.get('features')
-          if doc.get('type') != 'FeatureCollection' or not isinstance(features, list):
-              raise SystemExit('invalid FeatureCollection')
-          if len(features) != expected_count:
-              raise SystemExit(f'feature count mismatch: {len(features)}')
+          if doc.get('type') != 'FeatureCollection' or not isinstance(features, list) or len(features) != expected_count:
+              raise SystemExit('canonical FeatureCollection contract failed')
+
+          transformer = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True, only_best=True)
+          hmlr_html = get_bytes(hmlr_page, 'text/html')
+          parser = RowParser()
+          parser.feed(hmlr_html.decode('utf-8', errors='replace'))
 
           rows = []
+          contexts = []
+          ons_receipts = []
           for row_no in targets:
               feature = features[row_no - 1]
               expected_id = f'parcel_{row_no}'
@@ -62,15 +133,52 @@ jobs:
               if geom.get('type') != 'Point' or not isinstance(coords, list) or len(coords) != 2:
                   raise SystemExit(f'point geometry required for {expected_id}')
               lon, lat = float(coords[0]), float(coords[1])
-              if not (math.isfinite(lon) and math.isfinite(lat)):
-                  raise SystemExit(f'non-finite coordinate for {expected_id}')
-              if not (-9.0 <= lon <= 3.0 and 49.0 <= lat <= 61.0):
-                  raise SystemExit(f'coordinate outside plausible GB range for {expected_id}')
-              rows.append({
+              if not (math.isfinite(lon) and math.isfinite(lat) and -9 <= lon <= 3 and 49 <= lat <= 61):
+                  raise SystemExit(f'invalid coordinate for {expected_id}')
+              easting, northing = transformer.transform(lon, lat)
+              if not (math.isfinite(easting) and math.isfinite(northing)):
+                  raise SystemExit(f'invalid BNG coordinate for {expected_id}')
+
+              query = urlencode({
+                  'f': 'json',
+                  'where': '1=1',
+                  'geometry': json.dumps({'x': lon, 'y': lat, 'spatialReference': {'wkid': 4326}}, separators=(',', ':')),
+                  'geometryType': 'esriGeometryPoint',
+                  'inSR': '4326',
+                  'spatialRel': 'esriSpatialRelIntersects',
+                  'outFields': 'LAD25CD,LAD25NM',
+                  'returnGeometry': 'false',
+              })
+              ons_url = ons_layer + '?' + query
+              ons_bytes = get_bytes(ons_url, 'application/json')
+              ons_doc = json.loads(ons_bytes.decode('utf-8'))
+              ons_features = ons_doc.get('features') or []
+              if len(ons_features) != 1:
+                  raise SystemExit(f'ONS LAD not unique for {expected_id}: {len(ons_features)}')
+              attrs = ons_features[0].get('attributes') or {}
+              lad_code = attrs.get('LAD25CD')
+              lad_name = attrs.get('LAD25NM')
+              if not lad_code or not lad_name:
+                  raise SystemExit(f'ONS LAD fields missing for {expected_id}')
+
+              matching_rows = [r for r in parser.rows if str(lad_name).lower() in r['text'].lower()]
+              gml_urls = []
+              for matched in matching_rows:
+                  for href in matched['links']:
+                      full = urljoin(hmlr_page, href)
+                      if urlparse(full).scheme == 'https' and '.gml' in full.lower():
+                          gml_urls.append(full)
+              gml_urls = sorted(set(gml_urls))
+              if len(gml_urls) != 1:
+                  raise SystemExit(f'HMLR GML link not unique for {expected_id}/{lad_name}: {len(gml_urls)}')
+
+              point_row = {
                   'row_no': row_no,
                   'parcel_id': expected_id,
                   'longitude': lon,
                   'latitude': lat,
+                  'bng_easting_m': round(easting, 3),
+                  'bng_northing_m': round(northing, 3),
                   'source_geometry_type': 'Point',
                   'hmlr_inspire_id': None,
                   'height_min_m': None,
@@ -78,17 +186,38 @@ jobs:
                   'height_difference_m': None,
                   'result_confidence_percent': None,
                   'business_row': False,
+              }
+              rows.append(point_row)
+              contexts.append({
+                  **point_row,
+                  'ons_lad25_code': lad_code,
+                  'ons_lad25_name': lad_name,
+                  'ons_boundary_service': ons_layer,
+                  'ons_query_sha256': hashlib.sha256(ons_bytes).hexdigest(),
+                  'hmlr_download_page': hmlr_page,
+                  'hmlr_gml_url': gml_urls[0],
+                  'ea_os_grid_5km_tile': tile_5km(easting, northing),
+                  'context_state': 'EXACT_POINT_OFFICIAL_AUTHORITY_AND_TILE_RESOLVED',
               })
+              ons_receipts.append({'parcel_id': expected_id, 'lad25_code': lad_code, 'lad25_name': lad_name})
 
           generated_at = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00', 'Z')
-          payload = {
-              'schema_version': 1,
+          point_payload = {
+              'schema_version': 2,
               'slot_id': 'height_difference_2',
               'generated_at': generated_at,
               'source_path': str(source),
               'source_git_blob_sha': observed_blob,
               'source_feature_count': len(features),
               'target_rows': list(targets),
+              'transform': {
+                  'source_crs': 'EPSG:4326',
+                  'target_crs': 'EPSG:27700',
+                  'pyproj_version': pyproj.__version__,
+                  'proj_version': pyproj.proj_version_str,
+                  'description': transformer.description,
+                  'declared_accuracy_m': transformer.accuracy,
+              },
               'rows': rows,
               'exact_point_rows_written': len(rows),
               'official_numeric_rows_written': 0,
@@ -96,11 +225,12 @@ jobs:
               'fake_data': False,
               'final_ready': False,
           }
-          output.parent.mkdir(parents=True, exist_ok=True)
-          output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          output_sha256 = hashlib.sha256(output.read_bytes()).hexdigest()
-          receipt_payload = {
-              'schema_version': 1,
+          point_output.parent.mkdir(parents=True, exist_ok=True)
+          point_output.write_text(json.dumps(point_payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          point_sha = hashlib.sha256(point_output.read_bytes()).hexdigest()
+          point_receipt.parent.mkdir(parents=True, exist_ok=True)
+          point_receipt.write_text(json.dumps({
+              'schema_version': 2,
               'slot_id': 'height_difference_2',
               'validated_at': generated_at,
               'state': 'PASS',
@@ -108,18 +238,55 @@ jobs:
               'source_feature_count': len(features),
               'target_rows': list(targets),
               'exact_point_rows': len(rows),
-              'output_path': str(output),
-              'output_sha256': output_sha256,
+              'output_path': str(point_output),
+              'output_sha256': point_sha,
               'official_numeric_rows_written': 0,
               'business_rows_written': 0,
               'fake_data': False,
               'final_ready': False,
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          context_payload = {
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'generated_at': generated_at,
+              'source_git_blob_sha': observed_blob,
+              'ons_dataset': 'Local Authority Districts December 2025 UK BFE',
+              'ons_layer_url': ons_layer,
+              'hmlr_download_page_sha256': hashlib.sha256(hmlr_html).hexdigest(),
+              'rows': contexts,
+              'exact_context_rows_written': len(contexts),
+              'official_numeric_rows_written': 0,
+              'actual_business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
           }
-          receipt.parent.mkdir(parents=True, exist_ok=True)
-          receipt.write_text(json.dumps(receipt_payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          context_output.write_text(json.dumps(context_payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          context_sha = hashlib.sha256(context_output.read_bytes()).hexdigest()
+          context_receipt.parent.mkdir(parents=True, exist_ok=True)
+          context_receipt.write_text(json.dumps({
+              'schema_version': 1,
+              'slot_id': 'height_difference_2',
+              'validated_at': generated_at,
+              'state': 'PASS',
+              'checks': {
+                  'exact_point_rows': len(rows),
+                  'unique_ons_lad_rows': len(ons_receipts),
+                  'unique_hmlr_gml_urls': len({r['hmlr_gml_url'] for r in contexts}),
+                  'unique_ea_5km_tiles': len({r['ea_os_grid_5km_tile'] for r in contexts}),
+                  'all_height_values_null': all(r['height_difference_m'] is None for r in contexts),
+              },
+              'rows': ons_receipts,
+              'output_path': str(context_output),
+              'output_sha256': context_sha,
+              'official_numeric_rows_written': 0,
+              'business_rows_written': 0,
+              'fake_data': False,
+              'final_ready': False,
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
-      - name: Commit verified point output to extraction branch
+      - name: Commit verified runtime outputs to extraction branch
         shell: bash
         run: |
           set -euo pipefail
@@ -127,7 +294,9 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
             england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json \
-            docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json
+            england_map_web/data/aays_21_slots/height_difference_2/canonical_points_context_runtime_032.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/028_exact_point_runtime_032.json \
+            docs/chatgpt_status/topography/shards/height_difference_2/validation/029_exact_point_context_runtime_032.json
           git diff --cached --quiet && exit 0
-          git commit -m 'Extract three exact height_difference_2 canonical points'
+          git commit -m 'Resolve exact height_difference_2 point context'
           git push origin HEAD:agent/height-difference-2-runtime-extract-032-20260722
