@@ -1,0 +1,106 @@
+name: hd2-047-runtime-validation
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+concurrency:
+  group: hd2-047-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate JSON mirrors and increment
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('.')
+          paths=[
+            'ai-tasks/current-task.json',
+            'docs/chatgpt_status/aays1/queue/current.task.json',
+            'docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json',
+            'docs/chatgpt_status/_shared/control/request_queue_refresh.json',
+            'docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json',
+          ]
+          docs=[json.loads((root/p).read_text(encoding='utf-8')) for p in paths]
+          task='aays1-height-difference-2-canonical-export-official-sampling-20260720';attempt='height-difference-2-20260721-020';blob='6c9b60be881b37f450a965f41578317de024f1fb'
+          assert all(d['task_id']==task and d['attempt_id']==attempt for d in docs)
+          assert [docs[0]['pickup_request_revision'],docs[1]['pickup_request_revision'],docs[2]['pickup_request_revision'],docs[3]['request_revision'],docs[4]['request_revision']]==[4,4,4,4,4]
+          assert [docs[0]['operator_recovery_blob_sha'],docs[1]['operator_recovery_blob_sha'],docs[2]['operator_recovery_blob_sha'],docs[3]['required_operator_recovery_blob_sha'],docs[4]['required_operator_recovery_blob_sha']]==[blob]*5
+          manifest=json.loads((root/'england_map_web/data/aays_21_slots/height_difference_2/operations_manifest.json').read_text())
+          progress=json.loads((root/'england_map_web/data/aays_21_slots/height_difference_2/progress_increment_047.json').read_text())
+          ops=json.loads((root/'england_map_web/data/aays_21_slots/height_difference_2/operations_increment_047.json').read_text())['operations']
+          sources=json.loads((root/'england_map_web/data/aays_21_slots/height_difference_2/source_candidates_increment_047.json').read_text())['candidates']
+          examples=json.loads((root/'england_map_web/data/aays_21_slots/height_difference_2/examples_increment_047.json').read_text())['examples']
+          assert (manifest['expected_visible_operation_rows'],manifest['expected_visible_source_rows'],manifest['expected_visible_example_rows'])==(1068,103,72)
+          assert (progress['completed_operation_count'],progress['planned_operation_count'],progress['pending_operation_count'])==(1024,1025,0)
+          assert [o['operation_no'] for o in ops]==list(range(1037,1069))
+          assert [s['candidate_id'] for s in sources]==['HD2-SRC-104','HD2-SRC-105','HD2-SRC-106','HD2-SRC-107']
+          assert [e['row_no'] for e in examples]==[30762,46142,61522]
+          assert all(e['result_confidence_percent']==96 for e in examples)
+          PY
+      - name: Compile reconciled Python chain
+        run: |
+          python -m py_compile \
+            docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_extract_reconciled_exact_candidates.py \
+            docs/chatgpt_status/topography/shards/height_difference_2/automation/043_prepare_hmlr_sources_and_match.py
+      - name: Parse PowerShell recovery chain
+        shell: pwsh
+        run: |
+          $paths=@(
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1',
+            'docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1'
+          )
+          foreach($path in $paths){$tokens=$null;$errors=$null;[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path),[ref]$tokens,[ref]$errors)|Out-Null;if($errors.Count){throw "$path :: $($errors -join '; ')"}}
+          $s=Get-Content -Raw $paths[0]
+          foreach($needle in @('--include-untracked','--atomic','stash_auto_restore_attempted = $false','016_operator_git_snapshot_latest.json','Wait-Process')){if(-not $s.Contains($needle)){throw "missing=$needle"}}
+      - name: Install Chromium runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.54.0
+          python -m playwright install --with-deps chromium
+      - name: Start slot HTTP server
+        run: |
+          python -m http.server 8012 --directory england_map_web/data/aays_21_slots/height_difference_2 >/tmp/hd2_047_http.log 2>&1 &
+          echo $! > /tmp/hd2_047_http.pid
+      - name: Chromium final safe-stash package acceptance
+        run: |
+          python - <<'PY'
+          import asyncio,json,pathlib
+          from datetime import datetime,timezone
+          from playwright.async_api import async_playwright
+          async def main():
+            console=[];page_errors=[]
+            async with async_playwright() as p:
+              browser=await p.chromium.launch(headless=True)
+              page=await browser.new_page()
+              page.on('console',lambda m: console.append(m.text) if m.type=='error' else None)
+              page.on('pageerror',lambda e: page_errors.append(str(e)))
+              response=await page.goto('http://127.0.0.1:8012/index.html',wait_until='networkidle')
+              await page.wait_for_function("document.querySelectorAll('#rows tr').length === 1068",timeout=60000)
+              await page.wait_for_function("document.querySelectorAll('#sources tr').length === 103",timeout=60000)
+              await page.wait_for_function("document.querySelectorAll('#examples tr').length === 72",timeout=60000)
+              counts=await page.evaluate("() => ({operations:document.querySelectorAll('#rows tr').length,sources:document.querySelectorAll('#sources tr').length,examples:document.querySelectorAll('#examples tr').length,text:document.body.innerText})")
+              for item in ['HD2-PICKUP-046','HD2-PICKUP-047','HD2-PICKUP-048']:
+                assert item in counts['text'],item
+              assert not console,console;assert not page_errors,page_errors
+              out=pathlib.Path('runtime047');out.mkdir(exist_ok=True)
+              receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':datetime.now(timezone.utc).isoformat(),'state':'PASS','http_status':response.status,'browser':'Chromium','operation_rows':counts['operations'],'source_rows':counts['sources'],'example_rows':counts['examples'],'json_mirror_pass_count':5,'python_compile_pass_count':3,'powershell_parse_pass_count':3,'pickup_request_revision':4,'pickup_contract_revision':27,'operator_recovery_blob_sha':'6c9b60be881b37f450a965f41578317de024f1fb','console_errors':console,'page_errors':page_errors,'f_host_guarded_recovery_executed':False,'final_ready':False}
+              (out/'safe_stash_recovery_runtime_047.json').write_text(json.dumps(receipt,indent=2),encoding='utf-8')
+              await page.screenshot(path=str(out/'safe_stash_recovery_047.png'),full_page=True)
+              await browser.close()
+          asyncio.run(main())
+          PY
+      - name: Upload safe-stash revision receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: height-difference-2-safe-stash-runtime-047
+          path: runtime047/
