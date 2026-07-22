@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "slot_id": "internet_access_2",
   "parcel_partition": {
     "start": 30762,
@@ -7,8 +7,8 @@
     "count": 30761,
     "canonical_count": 92283
   },
-  "updated_at": "2026-07-22T05:21:50Z",
-  "state": "FULL_11013_ONSPD_ACCEPTED_DISTRIBUTED_SAMPLE_16_COORDINATOR_RESTART_REQUIRED",
+  "updated_at": "2026-07-22T05:42:42Z",
+  "state": "FULL_11013_ONSPD_ACCEPTED_ALL_23_CHUNKS_SAMPLED_COORDINATOR_RESTART_REQUIRED",
   "progress": {
     "current_identity_wave_completed_operations": 54,
     "current_identity_wave_total_operations": 55,
@@ -28,7 +28,7 @@
     "product_plan_total": 9,
     "product_plan_percent": 11.11,
     "product_plan_increase_this_turn_percentage_points": 0.0,
-    "this_turn_audit_operations_written": 23
+    "this_turn_audit_operations_written": 24
   },
   "candidates": {
     "verified_postcode_identity_rows": 11013,
@@ -40,7 +40,7 @@
     "distinct_postcodes": 5044,
     "verified_3_of_4_coverage_rows": 0,
     "parcel_measured_rows": 0,
-    "featured_verified_sample_rows": 16,
+    "featured_verified_sample_rows": 26,
     "featured_verified_sample_increase_this_turn": 10
   },
   "accuracy": {
@@ -50,10 +50,10 @@
     "required_ofcom_core_fields": ["postcode", "gigabit", "ufbb100", "sfbb", "unable30"],
     "official_coverage_not_inferred_when_zip_absent": true,
     "terminated_postcodes_require_review": true,
-    "first_middle_last_chunk_audit": "PASS",
-    "distributed_chunk_sample_audit": "PASS_10_NEW_SAMPLES",
-    "all_16_featured_samples_onspd_live": true,
-    "all_16_featured_samples_accuracy": "2/4",
+    "all_candidate_chunks_sampled": "PASS_23_OF_23",
+    "all_26_featured_samples_onspd_live": true,
+    "all_26_featured_samples_accuracy": "2/4",
+    "strict_exact_join_output_state": "NOT_FOUND",
     "parcel_measurement_claim_allowed": false
   },
   "sources": [
@@ -61,6 +61,7 @@
       "source": "ONS Postcode Directory May 2026 hosted table",
       "authority": "Office for National Statistics",
       "state": "11013_EXACT_IDENTITIES_ACCEPTED",
+      "official_release_cycle": "quarterly February May August November",
       "batch_attempts": 51,
       "retry_errors": 0
     },
@@ -74,12 +75,12 @@
       "authority": "Ofcom",
       "publication_date": "2026-05-13",
       "snapshot_date": "2026-01",
-      "official_zip_size_mb": 32.2,
+      "official_download_label": "Fixed_broadband_coverage_and_full_fibre_take-up",
+      "official_zip_size_mb": 32.3,
       "v2_correction_date": "2026-07-07",
       "expected_r2_postcode_files": 121,
       "expected_postcode_rows": 1741096,
-      "state": "OFFICIAL_ZIP_LINK_AND_V2_SCHEMA_VERIFIED_BINARY_FETCH_BLOCKED",
-      "web_fetch_state": "HTTP_LAYER_400_OK_NO_BINARY",
+      "state": "OFFICIAL_DOWNLOAD_AND_V2_SCHEMA_VERIFIED_BINARY_FETCH_BLOCKED",
       "direct_environment_fetch_state": "DNS_NAME_RESOLUTION_FAILED",
       "api_subscription_key_required": true
     }
@@ -111,27 +112,33 @@
     },
     {
       "task": "wave006_strict_ofcom_exact_join_v2",
-      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
-      "target_rows": 11013
+      "state": "QUEUED_P0_DEPENDENCY_SATISFIED_OUTPUT_NOT_FOUND",
+      "target_rows": 11013,
+      "verified_3_of_4_rows": 0
     }
   ],
   "web_visibility": {
-    "visible_operation_rows": 98,
+    "visible_operation_rows": 122,
     "visible_verified_candidate_rows": 11013,
-    "featured_sample_rows": 16,
+    "featured_sample_rows": 26,
     "featured_sample_increase_this_turn": 10,
-    "total_primary_visible_rows": 11111,
+    "sampled_candidate_chunks": 23,
+    "candidate_chunks_total": 23,
+    "sampled_candidate_chunks_percent": 100.0,
+    "total_primary_visible_rows": 11135,
     "candidate_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json",
     "candidate_chunk_size": 500,
     "candidate_chunks": 23,
     "featured_samples": "england_map_web/data/aays_21_slots/internet_access_2/sample_rows_latest.json",
+    "official_sources": "england_map_web/data/aays_21_slots/internet_access_2/official_sources_latest.json",
     "restart_manifest": "england_map_web/data/aays_21_slots/internet_access_2/coordinator_restart_required_latest.json",
     "operation_files": [
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_parallel_source_research.jsonl",
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/009_task_contract_repairs.jsonl",
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/010_row_level_web_and_publisher_audit.jsonl",
       "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/011_coordinator_readback_and_ofcom_route.jsonl",
-      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/012_distributed_sample_and_restart_gate.jsonl"
+      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/012_distributed_sample_and_restart_gate.jsonl",
+      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/013_full_chunk_sample_and_official_source_routes.jsonl"
     ]
   },
   "publisher": {
