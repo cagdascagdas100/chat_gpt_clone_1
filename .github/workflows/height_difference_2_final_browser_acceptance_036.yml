@@ -1,0 +1,89 @@
+name: height_difference_2 final browser acceptance 036
+on:
+  push:
+    branches: [agent/hd2-final-browser-036-20260722]
+    paths:
+      - 'docs/chatgpt_status/topography/shards/height_difference_2/runtime/036_final_browser_trigger.json'
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+jobs:
+  browser_acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/hd2-final-browser-036-20260722
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Serve final package and validate DOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          SLOT='england_map_web/data/aays_21_slots/height_difference_2'
+          python -m http.server 8012 --directory "$SLOT" >/tmp/hd2_http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8012/index.html >/dev/null && break; sleep 1; done
+          python - <<'PY'
+          import json, hashlib
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          url='http://127.0.0.1:8012/index.html'; console_errors=[]; page_errors=[]
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              page=browser.new_page(viewport={'width':1920,'height':1080})
+              page.on('console',lambda m: console_errors.append(m.text) if m.type=='error' else None)
+              page.on('pageerror',lambda e: page_errors.append(str(e)))
+              response=page.goto(url,wait_until='networkidle',timeout=120000)
+              page.wait_for_function("document.querySelector('#message') && !document.querySelector('#message').textContent.includes('Yükleniyor')",timeout=120000)
+              message=page.locator('#message').inner_text(); metrics=page.locator('#metrics').inner_text(); body=page.locator('body').inner_text()
+              operation_rows=page.locator('#rows tr').count(); source_rows=page.locator('#sources tr').count(); example_rows=page.locator('#examples tr').count()
+              snapshots={}
+              expected={
+                'parcel_30762':['0.27','0.24','P_12151','P_10768','MULTIPLE_COMPOSITE_EXTENTS_NO_SINGLE_SURVEY_INFERRED','P_7338','OSTN02 / OSGM02'],
+                'parcel_46142':['0.831','0.721','P_10782','PASS_SINGLE_COMPOSITE_SURVEY','P_4927','OSTN02 / OSGM02'],
+                'parcel_61522':['0.49','0.422','P_10767','PASS_SINGLE_COMPOSITE_SURVEY','P_4953','OSTN02 / OSGM02'],
+              }
+              for parcel,vals in expected.items():
+                  rows=page.locator('#examples tr',has_text=parcel)
+                  texts=[rows.nth(i).inner_text() for i in range(rows.count())]
+                  snapshots[parcel]={'count':rows.count(),'texts':texts,'expected_values':vals}
+              screenshot=Path('/tmp/hd2_final_acceptance_036.png'); page.screenshot(path=str(screenshot),full_page=True)
+              status=response.status if response else None; browser_version=browser.version; browser.close()
+          checks={
+              'http_200':status==200,
+              'message_success':'Yükleme hatası' not in message and '628/682' in message and '58 kaynak satırı' in message and '39 örnek' in message and '3 lineage satırı' in message,
+              'operation_rows_666':operation_rows==666,
+              'source_rows_58':source_rows==58,
+              'example_rows_39':example_rows==39,
+              'numeric_metric_3':'Sayısal sonuç: 3' in metrics,
+              'robustness_metric_3':'Robustluk örneği: 3' in metrics,
+              'lineage_metric_pass':'Composite lineage: PASS_2_SINGLE_1_MULTIPLE_DISCLOSED' in metrics,
+              'live_http_metric_pass':'Canlı HTTP/DOM: PASS_PRE_INCREMENT_626_54_36_FINAL_036_RETEST_PENDING' in metrics,
+              'three_lineage_rows_visible':all(v['count']>=6 and all(any(val in t for t in v['texts']) for val in v['expected_values']) for v in snapshots.values()),
+              'no_console_errors':not console_errors,
+              'no_page_errors':not page_errors,
+          }
+          state='PASS' if all(checks.values()) else 'FAIL'
+          receipt={'schema_version':1,'slot_id':'height_difference_2','validated_at':datetime.now(timezone.utc).isoformat(),'state':state,'url':url,'http_status':status,'browser':'Chromium','browser_version':browser_version,'message':message,'operation_rows':operation_rows,'source_rows':source_rows,'example_rows':example_rows,'checks':checks,'row_snapshots':snapshots,'console_errors':console_errors,'page_errors':page_errors,'screenshot_sha256':hashlib.sha256(screenshot.read_bytes()).hexdigest(),'fake_data':False,'final_ready':False}
+          if state!='PASS': raise SystemExit(json.dumps(receipt,ensure_ascii=False,indent=2))
+          for path in [Path('docs/chatgpt_status/topography/shards/height_difference_2/validation/040_final_live_http_dom_acceptance_036.json'),Path('england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance_final_036.json')]:
+              path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit final acceptance receipt
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/chatgpt_status/topography/shards/height_difference_2/validation/040_final_live_http_dom_acceptance_036.json england_map_web/data/aays_21_slots/height_difference_2/port_8012_web_acceptance_final_036.json
+          git commit -m 'test(height_difference_2): record final 666/58/39 HTTP DOM acceptance 036 [skip ci]' || exit 0
+          git push origin HEAD:agent/hd2-final-browser-036-20260722
