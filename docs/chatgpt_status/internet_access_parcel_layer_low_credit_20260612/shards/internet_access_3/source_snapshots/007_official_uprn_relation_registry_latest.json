@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "verified_at": "2026-07-22T05:35:08+03:00",
+  "purpose": "OFFICIAL_UPRN_COORDINATE_TO_POSTCODE_RELATION_PATH",
+  "sources": [
+    {
+      "id": "os_open_uprn_product",
+      "authority": "Ordnance Survey",
+      "dataset": "OS Open UPRN",
+      "url": "https://www.ordnancesurvey.co.uk/products/os-open-uprn",
+      "documentation_url": "https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn",
+      "coverage": "Great Britain",
+      "update_frequency": "every_six_weeks",
+      "formats": ["CSV", "GeoPackage"],
+      "role": "AUTHORITATIVE_UPRN_COORDINATES_FOR_ADDRESSABLE_LOCATIONS",
+      "source_accuracy_score": 97,
+      "access": "FREE_OS_DATA_HUB_DOWNLOAD",
+      "facts": {
+        "approximately_addressable_locations": 40000000,
+        "uprn_persistent_and_never_reused": true,
+        "primarily_allocated_by_local_authorities": true
+      }
+    },
+    {
+      "id": "ons_nsul",
+      "authority": "Office for National Statistics",
+      "dataset": "National Statistics UPRN Lookup",
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts",
+      "portal_url": "https://geoportal.statistics.gov.uk/",
+      "coverage": "Great Britain",
+      "update_frequency": "every_six_weeks",
+      "format": "CSV",
+      "role": "UPRN_TO_OUTPUT_AREA_AND_HIGHER_GEOGRAPHY_LOOKUP",
+      "source_accuracy_score": 96,
+      "method": "UPRN_POINT_IN_POLYGON_TO_OUTPUT_AREA_THEN_BEST_FIT_HIGHER_GEOGRAPHIES"
+    },
+    {
+      "id": "ons_onsud",
+      "authority": "Office for National Statistics",
+      "dataset": "ONS UPRN Directory",
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts",
+      "portal_url": "https://geoportal.statistics.gov.uk/",
+      "coverage": "Great Britain",
+      "update_frequency": "every_six_weeks",
+      "format": "CSV",
+      "role": "UPRN_TO_ADMINISTRATIVE_HEALTH_AND_OTHER_GEOGRAPHIES",
+      "source_accuracy_score": 96,
+      "method": "UPRN_GRID_REFERENCE_POINT_IN_POLYGON"
+    },
+    {
+      "id": "ons_uprn_licence",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/methodology/geography/licences",
+      "role": "LICENCE_AND_ATTRIBUTION_GATE",
+      "licence": "Open Government Licence",
+      "required_attribution": [
+        "Contains OS data © Crown copyright and database right 2026",
+        "Contains Royal Mail data © Royal Mail copyright and Database right 2026",
+        "Contains GeoPlace data © Local Government Information House Limited copyright and database right 2026",
+        "Source: Office for National Statistics licensed under the Open Government Licence v.3.0"
+      ]
+    }
+  ],
+  "promotion_contract": {
+    "nearest_uprn_is_not_sufficient": true,
+    "postcode_centroid_is_not_sufficient": true,
+    "hmlr_indicative_polygon_is_not_legal_boundary": true,
+    "minimum_evidence_for_high_confidence_candidate": [
+      "CURRENT_OS_OPEN_UPRN_POINT_INSIDE_MATCHED_HMLR_INSPIRE_POLYGON",
+      "EXACT_CURRENT_UPRN_RECORD_IN_ONSUD_OR_NSUL",
+      "EXACT_CURRENT_UPRN_TO_POSTCODE_RELATION",
+      "ALL_SOURCE_VERSIONS_AND_ATTRIBUTIONS_RECORDED"
+    ],
+    "automatic_parcel_measurement_promotion_allowed": false,
+    "confidence_uplift_before_runtime_allowed": false,
+    "parcel_match_accuracy_ceiling_before_exact_uprn_relation": 50
+  },
+  "current_blockers": [
+    "OS_DATA_HUB_CURRENT_RELEASE_BYTES_NOT_HYDRATED",
+    "CURRENT_ONSUD_OR_NSUL_RELEASE_ITEM_NOT_RESOLVED",
+    "EXACT_UPRN_POSTCODE_RELATIONS_NOT_EXECUTED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
