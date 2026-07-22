@@ -39,7 +39,7 @@ $runnerOutput = Join-Path $repoRoot 'docs\chatgpt_status\height_difference\shard
 $websiteOutput = Join-Path $repoRoot 'england_map_web\data\aays_18_slots\height_difference_1\verified_results_latest.json'
 
 Write-Output 'SLOT_ID=height_difference_1'
-Write-Output 'TASK_VERSION=1.0-fail-closed-official-bytes'
+Write-Output 'TASK_VERSION=1.1-hardened-fail-closed'
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "PYTHON_SCRIPT=$pythonScript"
 Write-Output 'SINGLE_SHARED_RUNNER_ONLY=true'
@@ -48,6 +48,19 @@ Write-Output 'RUNNER_EXECUTION_CLAIMED=true'
 Write-Output 'DB_WRITE=false'
 Write-Output 'MIGRATION=false'
 Write-Output 'PRODUCTION_DEPLOY=false'
+
+if ($python.Name -eq 'py.exe' -or $python.Name -eq 'py') {
+  & $python.Source -3 $pythonScript --self-test
+} else {
+  & $python.Source $pythonScript --self-test
+}
+$selfTestExitCode = $LASTEXITCODE
+if ($null -eq $selfTestExitCode) { $selfTestExitCode = 1 }
+Write-Output "SELF_TEST_EXIT_CODE=$selfTestExitCode"
+if ($selfTestExitCode -ne 0) {
+  Write-Output 'FINAL_READY=false'
+  exit $selfTestExitCode
+}
 
 $arguments = @(
   $pythonScript,
