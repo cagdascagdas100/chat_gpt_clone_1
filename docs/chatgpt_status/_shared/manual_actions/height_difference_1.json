@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_1",
+  "state": "OPEN",
+  "requires_user_action": true,
+  "reason": "Existing F-host single runner completed the prior local automation with exit code 0, but the noninteractive HTTPS push to GitHub failed because no usable credential helper was available. Revision 14 has not been executed and published with remote output-integrity readback, so official height-difference rows remain 0.",
+  "detected_at": "2026-07-22T16:51:42Z",
+  "updated_at": "2026-07-22T16:51:42Z",
+  "solution": "On the existing F-host only, confirm `gh auth status --active --hostname github.com`; authenticate if needed, then run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\topography\\shards\\height_difference_1\\automation\\046_prepare_existing_f_runner_noninteractive_github_publish_auth_20260721.ps1 -Apply` from the canonical repo root. Require the generated preflight status to be NONINTERACTIVE_GITHUB_PUBLISH_AUTH_READY or GIT_ALREADY_NONINTERACTIVE_AUTHENTICATED and require `git ls-remote --exit-code origin refs/heads/codex/aays-single-runner-v5-20260706` to pass. Then resume the existing single runner; do not create a second runner.",
+  "evidence_paths": [
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1/checkpoint_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1/heartbeat_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1/current_task_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/height_difference_1/ownership_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/automation/046_prepare_existing_f_runner_noninteractive_github_publish_auth_20260721.ps1",
+    "england_map_web/data/aays_21_slots/height_difference_1/noninteractive_publish_auth_recovery_contract_latest.json"
+  ],
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "source_head": "fc10e5d16ba21ae529960615a7dd9f9340acc0cc",
+  "first_unverified_step": "APPLY_NONINTERACTIVE_PUBLISH_AUTH_PREFLIGHT_ON_EXISTING_F_HOST_THEN_RERUN_EXACT_REVISION_14_AND_VERIFY_REMOTE_OUTPUT_INTEGRITY",
+  "owner_state": "unclaimed",
+  "heartbeat_state": "stale_publish_pending",
+  "final_ready": false
+}
