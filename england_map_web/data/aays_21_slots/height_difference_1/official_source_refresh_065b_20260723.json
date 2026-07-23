@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-23T15:12:00Z",
+  "research_mode": "OFFICIAL_PUBLIC_WEB_VERTICAL_DATUM_AND_NEGATIVE_CONTROL_VALIDATION",
+  "runtime_measurement_allowed": false,
+  "source_candidate_rows": 8,
+  "official_source_checks_passed": 64,
+  "official_source_checks_total": 64,
+  "source_upgrades_added": 24,
+  "methodology_upgrades_added": 20,
+  "parcel_candidate_rows_added": 0,
+  "official_measured_rows_added": 0,
+  "height_difference_rows_added": 0,
+  "sources": [
+    {
+      "id": "EA_DTM_1M_VERTICAL_AND_LINEAGE",
+      "publisher": "Environment Agency",
+      "url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "confidence": 100,
+      "role": "primary_bare_earth_terrain_guard",
+      "facts": ["approximately 99 percent England coverage", "1m raster resolution", "surface objects removed", "survey-specific lineage catalogue required", "vertical accuracy plus or minus 15cm RMSE", "EPSG 27700 horizontal CRS", "repeat surveys prefer newest best resolution", "resampling uses bilinear interpolation"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_FIRST_RETURN_DSM_1M_NEGATIVE_CONTROL",
+      "publisher": "Environment Agency",
+      "url": "https://environment.data.gov.uk/dataset/df4e3ec3-315e-48aa-aaaf-b5ae74d7b2bb",
+      "confidence": 100,
+      "role": "reject_surface_object_contaminated_height_as_ground",
+      "facts": ["first-return DSM", "approximately 99 percent England coverage", "1m resolution", "includes vehicles", "includes buildings", "includes vegetation", "terrain only where first return is ground", "must not substitute for bare-earth DTM in parcel ground-height calculation"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_DTM_10M_DEPENDENCY_NEGATIVE_CONTROL",
+      "publisher": "Environment Agency",
+      "url": "https://environment.data.gov.uk/dataset/ce8fe7e7-bed0-4889-8825-19b042e128d2",
+      "confidence": 100,
+      "role": "reject_false_independent_corroboration",
+      "facts": ["10m DTM", "approximately 99 percent England coverage", "bare-earth semantics", "resampled from 2m composite", "bilinear interpolation", "same composite survey lineage", "not independent from 1m and 2m composite family", "usable only as scale sensitivity check"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_WCS_PERSISTENT_OPEN_STANDARD",
+      "publisher": "Defra Data Services Platform",
+      "url": "https://environment.data.gov.uk/support/announcements/275811447/275811543",
+      "confidence": 100,
+      "role": "runtime_raw_pixel_access_contract",
+      "facts": ["WCS replaces proprietary image service", "WCS 2.0.1", "persistent DTM 1m endpoint documented", "raw pixel elevation access", "DTM and DSM endpoints separated", "endpoint naming removes year suffix for persistent updates", "extent can be requested", "current runner still needs fresh execution proof"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_LIDAR_POINT_DENSITY_CAVEAT",
+      "publisher": "Defra Data Services Platform",
+      "url": "https://environment.data.gov.uk/support/faqs/275879146/275879160",
+      "confidence": 98,
+      "role": "avoid_resolution_equals_point_density_error",
+      "facts": ["1m DSM target commonly at least 1 point per square metre", "DTM under vegetation may have lower contributing point density", "point cloud is irregular", "density varies across scan", "flight-line overlap changes density", "terrain changes affect density", "point density is not raster resolution", "density must not be converted directly into parcel height confidence"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_OSGM15_VERTICAL_TRANSFORMATION",
+      "publisher": "Ordnance Survey",
+      "url": "https://docs.os.uk/more-than-maps/deep-dive/a-guide-to-coordinate-systems-in-great-britain/from-one-coordinate-system-to-another-geodetic-transformations/national-geoid-model-osgm15-etrs89-orthometric-height",
+      "confidence": 100,
+      "role": "vertical_datum_transformation_guard",
+      "facts": ["ETRS89 ellipsoid height to orthometric height transformation", "mainland Britain maps to ODN", "1km geoid grid", "bilinear interpolation", "nominal 8mm rms mainland geoid-model accuracy", "islands can use local vertical datums", "offshore ODN quality differs", "GNSS ellipsoid height must not be compared directly to ODN terrain height"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_OSTN15_HORIZONTAL_TRANSFORMATION",
+      "publisher": "Ordnance Survey",
+      "url": "https://docs.os.uk/more-than-maps/a-guide-to-coordinate-systems-in-great-britain/from-one-coordinate-system-to-another-geodetic-transformations/national-grid-transformation-ostn15-etrs89-osgb36",
+      "confidence": 100,
+      "role": "horizontal_transformation_guard",
+      "facts": ["definitive ETRS89 to OSGB36 transformation", "1km transformation grid", "bilinear interpolation", "accounts for OSGB36 distortions", "simple Helmert is only roughly metre-level", "National Grid positions should use OSTN15", "horizontal and vertical transformations are distinct", "transformation provenance must be recorded before point-in-polygon sampling"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_TERRAIN50_SOURCE_DATUM_AND_BARE_EARTH",
+      "publisher": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/height-and-imagery/os-terrain-50/os-terrain-50-overview/source-data",
+      "confidence": 100,
+      "role": "independent_bare_earth_datum_crosscheck",
+      "facts": ["bare-earth surface", "OSGB36 eastings and northings", "height in metres", "most mainland heights relative to Newlyn Datum", "some offshore islands use local datum", "buildings excluded", "vegetation excluded", "permanent terrain structures can remain when part of ground surface model"],
+      "checks_passed": 8
+    }
+  ],
+  "decision": "VERTICAL_DATUM_AND_NEGATIVE_USE_GUARDS_ADVANCED_RUNTIME_MEASUREMENT_STILL_BLOCKED",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "new_runner_created": false,
+  "new_logical_task_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
