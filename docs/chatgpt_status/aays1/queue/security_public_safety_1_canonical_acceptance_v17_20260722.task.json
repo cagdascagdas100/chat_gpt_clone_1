@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 6,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_1",
@@ -9,21 +9,43 @@
   "attempt_id": "security-public-safety-1-20260722-017",
   "idempotency_key": "security-public-safety-1-canonical-acceptance-v17-no-replay",
   "status": "READY",
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_carrier.ps1",
+  "carrier_blob_sha": "6b30a4ddb71d985195075d21e0209d407b8cccb4",
+  "python_wrapper_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+  "core_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "read_paths": [
     "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v15.html",
     "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
-    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py"
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_carrier.ps1",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/aays1/shards/security_public_safety_1",
     "england_map_web/data/aays_21_slots/security_public_safety_1"
   ],
+  "runtime_output_paths": {
+    "runtime_preflight_report": "docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/012_security_public_safety_1_v17_runtime_preflight_latest.json",
+    "runtime_preflight_web": "england_map_web/data/aays_21_slots/security_public_safety_1/runtime_preflight_v17_latest.json",
+    "acceptance_report": "docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/011_security_public_safety_1_canonical_acceptance_v17_latest.json",
+    "acceptance_web": "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_acceptance_v17_latest.json",
+    "publisher_candidate_report": "docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/015_security_public_safety_1_publisher_candidate_v17_latest.json",
+    "publisher_candidate_web": "england_map_web/data/aays_21_slots/security_public_safety_1/publisher_candidate_v17_latest.json"
+  },
   "resource_class": ["network_fetch", "headless_browser", "light_read"],
   "execution_contract": {
+    "execution_host": "powershell_carrier_to_python",
+    "shared_runner_powershell_file_compatible": true,
+    "carrier_required": true,
+    "internal_watchdog_seconds": 1500,
+    "outer_runner_timeout_seconds": 1800,
+    "process_tree_kill_on_internal_timeout": true,
+    "orphan_browser_profile_cleanup": true,
     "reuse_existing_remote_artifact": true,
     "hydration_replay_forbidden": true,
     "remote_hydrated_rows": 300,
@@ -33,7 +55,17 @@
     "parallel_endpoint_fetch_workers_max": 8,
     "unique_endpoint_request_once": true,
     "duplicate_live_requests_avoided_expected": 114,
-    "official_source_parallel_fetch_workers_max": 5
+    "official_source_parallel_fetch_workers_max": 5,
+    "runtime_static_preflight_required": true,
+    "transient_retry_max_attempts": 3,
+    "transient_retry_delays_seconds": [1, 2],
+    "permanent_non_429_4xx_retry_forbidden": true,
+    "publisher_candidate_generation_required": true,
+    "failure_receipts_required_on_all_exits": true,
+    "runtime_pass_completed_units": 7,
+    "runtime_pass_overall_percent": 87.5,
+    "runtime_pass_percent_increase": 25.0,
+    "publisher_readback_required_for_8_of_8": true
   },
   "acceptance_contract": {
     "remote_hydrated_rows_required": 300,
@@ -61,7 +93,8 @@
     "quality_limits": [
       "street-level results cover one mile and locations are approximate/anonymised",
       "May 2026 has four known force-level crime-data omissions",
-      "London LSOA excludes sexual offences and has CONNECT comparability limits"
+      "London LSOA excludes sexual offences and has CONNECT comparability limits",
+      "ONS year-ending-March-2026 release is scheduled for 23 July 2026 and is not yet published on 22 July 2026"
     ],
     "ai_role": "not_used"
   },
@@ -77,6 +110,12 @@
     "production_deploy": false
   },
   "timeout_seconds": 1800,
+  "max_runtime_seconds": 1800,
   "final_ready": false,
-  "created_at": "2026-07-22T05:10:00+03:00"
+  "created_at": "2026-07-22T05:10:00+03:00",
+  "hardened_at": "2026-07-22T06:20:00+03:00",
+  "publisher_candidate_bound_at": "2026-07-22T07:10:00+03:00",
+  "execution_host_fixed_at": "2026-07-22T17:10:00+03:00",
+  "process_tree_watchdog_fixed_at": "2026-07-22T17:18:00+03:00",
+  "orphan_browser_cleanup_fixed_at": "2026-07-22T17:24:00+03:00"
 }
