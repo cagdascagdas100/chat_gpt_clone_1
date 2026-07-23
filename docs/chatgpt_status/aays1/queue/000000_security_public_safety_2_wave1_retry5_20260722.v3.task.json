@@ -1,7 +1,7 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "architecture_version": 3,
-  "task_version": "5.3-dual-compatible-current-v2-iod25-candidate-join",
+  "task_version": "5.4-current-v2-url-confidence-and-truthful-gate",
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "task_id": "security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_20260722",
   "attempt_id": "attempt-005",
@@ -12,11 +12,11 @@
   "base_slot_id": "security_public_safety",
   "shard_index": 2,
   "status": "pickup_requested",
-  "state": "pickup_requested_current_v2_iod25_candidate_join_preclaim",
+  "state": "pickup_requested_current_v2_iod25_candidate_truthful_gate_preclaim",
   "priority": -100,
   "created_at": "2026-07-22T09:12:00Z",
   "queued_at": "2026-07-22T09:12:00Z",
-  "revised_at": "2026-07-23T06:50:00Z",
+  "revised_at": "2026-07-23T07:36:22Z",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "source_branch": "codex/aays-single-runner-v5-20260706",
   "target_branch": "codex/aays-single-runner-v5-20260706",
@@ -34,16 +34,21 @@
     "duplicate_target_fail_closed",
     "current_v2_iod25_strong_schema",
     "current_v2_iod25_exact_candidate_join",
+    "current_v2_final_url_pin",
+    "candidate_confidence_requires_completed_join",
+    "truthful_candidate_gate",
     "candidate_only_until_browser_acceptance",
+    "browser_acceptance_fail_closed",
     "website_line_by_line"
   ],
-  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1",
-  "automation_script": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1",
-  "python_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_20260723.py",
-  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_gate_bridge_v2_20260723.ps1",
+  "automation_script": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_gate_bridge_v2_20260723.ps1",
+  "python_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_v2_20260723.py",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_gate_bridge_v2_20260723.ps1",
   "implementation_integrity": {
-    "bridge_blob_sha": "5aaa5cb698cee82227c0e5e5e9b2da638964e134",
-    "hardened_python_entry_blob_sha": "3e9a4d57754e13d68429cedfb0a0b271fda822eb",
+    "bridge_blob_sha": "f8cf21fa2c75f5bf3402c1e0ded6dcf90bd702c5",
+    "candidate_v2_entry_blob_sha": "d45ef0ad3dfccfc8ac0883f335c726c1a05fcdc3",
+    "candidate_v1_entry_blob_sha": "3e9a4d57754e13d68429cedfb0a0b271fda822eb",
     "underlying_hardened_patch_blob_sha": "cdb20cb578be5de1789e7821d2a435c1a9f77d58",
     "base_wave1_source_blob_sha": "d29c33ea894878f063fc930692cc684176fb291a",
     "canonical_point_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8"
@@ -60,7 +65,8 @@
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2",
     "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_20260722.py",
     "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py",
-    "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_20260723.py"
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_20260723.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_v2_20260723.py"
   ],
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json",
@@ -78,12 +84,23 @@
   "expected_outputs": [
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/geometry_lsoa_police_sample_wave1_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/progress_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html"
+    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_gate_latest.json"
   ],
-  "resource_class": ["heavy_disk_io", "network_fetch", "browser_research", "cpu_heavy"],
+  "resource_class": [
+    "heavy_disk_io",
+    "network_fetch",
+    "browser_research",
+    "cpu_heavy"
+  ],
   "requires_git_publish_gate": true,
   "requires_shared_publish_gate": true,
-  "parcel_partition": {"start":30762,"end":61522,"count":30761,"canonical_count":92283},
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
   "sample_rows": [30762,30763,30764,30765,30766,30767,30768,30769,30770,30771,30772,30773],
   "targets": {
     "sample_parcel_start": 30762,
@@ -91,6 +108,7 @@
     "sample_candidate_rows": 12,
     "verified_evidence_rows_target": 12,
     "iod25_joined_candidate_rows_target": 12,
+    "accuracy_ge_95_candidate_rows_target": 12,
     "parallel_official_source_probes": 8,
     "parallel_dataset_downloads": 2,
     "parallel_row_checks": 6,
@@ -108,14 +126,14 @@
       "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
       "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
       "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
-      "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
+      "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
     ],
     "source_snapshot_date": "2026-07-23",
     "source_discovery_required": false,
     "measurement_level": "lsoa",
     "output_semantics": "CANDIDATE",
     "parcel_binding_method": "unique_exact_internal_security_parcel_id_to_point_then_single_official_ons_lsoa21_point_intersection",
-    "confidence_method": "deterministic_candidate_evidence_integrity_v3_no_business_score",
+    "confidence_method": "deterministic_candidate_evidence_integrity_v4_requires_canonical_blob_count_current_v2_url_and_completed_join",
     "candidate_method": "official_iod25_crime_rank_less_deprived_ordinal_position_v2_not_cardinal_safety",
     "candidate_formula": "round(100 * (crime_rank - 1) / (33755 - 1), 1)",
     "police_point_query_role": "one_mile_approximate_anonymised_context_and_response_integrity_only",
@@ -130,8 +148,10 @@
       "police_api_month_missing",
       "police_response_unavailable",
       "iod25_not_current_corrected_v2",
+      "iod25_final_url_mismatch",
       "iod25_row_unique_lsoa_or_rank_validation_failure",
       "candidate_rank_or_decile_out_of_range",
+      "candidate_confidence_without_completed_join",
       "ons_population_workbook_lsoa_population_2024_schema_failure",
       "attempt_to_normalise_one_mile_point_query_with_lsoa_population",
       "browser_acceptance_failure"
@@ -153,7 +173,7 @@
   },
   "supersedes_attempt": "attempt-004",
   "supersedes_queue_path": "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry4_20260722.v3.task.json",
-  "repair_reason": "Retry-005 remains the same attempt. The existing hardened entry prepared official schemas but left the exact current-v2 IoD25 join pending. The candidate-join wrapper reuses the same File 7 download, performs an exact LSOA join, publishes ordinal candidate values only, and keeps business scores null until served browser acceptance.",
+  "repair_reason": "Retry-005 remains the same attempt. Candidate v2 pins the official current-v2 File 7 final URL, requires the canonical point blob and exact 92,283 feature count for high-confidence rows, counts confidence only for completed joins, and writes an explicit gate that keeps served HTTP and DOM/console browser acceptance false until tested.",
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
   "single_runner_only": true,
