@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-23T15:02:10Z",
+  "research_mode": "OFFICIAL_PUBLIC_WEB_SOURCE_VALIDATION_ONLY",
+  "runtime_measurement_allowed": false,
+  "source_candidate_rows": 11,
+  "official_source_checks_passed": 88,
+  "official_source_checks_total": 88,
+  "source_upgrades_added": 32,
+  "methodology_upgrades_added": 24,
+  "parcel_candidate_rows_added": 0,
+  "official_measured_rows_added": 0,
+  "height_difference_rows_added": 0,
+  "source_confidence_scope": "SOURCE_IDENTITY_PROVENANCE_AND_METHOD_FIT_ONLY_NOT_PARCEL_HEIGHT_ACCURACY",
+  "sources": [
+    {
+      "id": "HMLR_INSPIRE_DATASET",
+      "publisher": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "confidence": 100,
+      "role": "primary_parcel_geometry_discovery",
+      "facts": ["freehold registered property indicative extent", "unique Land Registry-INSPIRE ID", "local-authority files", "cross-authority duplicates possible", "monthly first-Sunday refresh", "GML delivery", "Open Government Licence context", "indicative-not-legal-boundary constraint"],
+      "checks_passed": 8
+    },
+    {
+      "id": "HMLR_INSPIRE_DOWNLOAD_20260705",
+      "publisher": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "confidence": 100,
+      "role": "current_monthly_gml_acquisition_index",
+      "facts": ["published 5 July 2026", "current monthly publication", "local-authority GML list", "London Borough of Barnet listed", "London Borough of Enfield listed", "first-Sunday update cadence", "OGL download condition", "GIS-required delivery format"],
+      "checks_passed": 8
+    },
+    {
+      "id": "HMLR_GML_TECH_GUIDANCE",
+      "publisher": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "confidence": 100,
+      "role": "gml_parser_and_projection_guard",
+      "facts": ["GML open format", "INSPIRE-oriented structure", "GIS/CAD interoperability", "conversion may be required", "projection must remain appropriate", "QGIS supported workflow", "format conversion is not semantic enrichment", "projection handling required before map integration"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_LIDAR_COMPOSITE_DTM_1M",
+      "publisher": "Environment Agency",
+      "url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "confidence": 100,
+      "role": "primary_high_resolution_terrain_source",
+      "facts": ["approximately 99 percent England coverage", "1m spatial resolution", "bare-earth DTM", "surface objects removed", "2022 composite", "survey lineage combines time-stamped archive and National LIDAR Programme", "newest best-resolution survey preferred where repeated", "survey-vintage metadata catalogue required for location-specific provenance"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_LIDAR_COMPOSITE_DTM_2M",
+      "publisher": "Environment Agency",
+      "url": "https://www.data.gov.uk/dataset/e529ca2f-b4ce-403e-8cef-ab821061c4f3/lidar-composite-digital-terrain-model-dtm-2m",
+      "confidence": 100,
+      "role": "resolution_crosscheck",
+      "facts": ["approximately 99 percent England coverage", "2m spatial resolution", "bare-earth DTM", "2022 composite", "survey dates 2000-06-06 through 2022-04-02", "repeat surveys use newest best resolution", "bilinear resampling may occur", "must not be treated as independent survey when derived from same composite lineage"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_LIDAR_DTM_TIMESTAMPED",
+      "publisher": "Environment Agency",
+      "url": "https://www.data.gov.uk/dataset/8275e71e-1516-42a1-bb0c-4fa73807fe2b/lidar-dtm-time-stamped-tiles",
+      "confidence": 100,
+      "role": "survey_epoch_and_vertical_accuracy_reference",
+      "facts": ["time-stamped archive", "25cm 50cm 1m and 2m resolutions", "5km GeoTIFF zip tiles", "metres", "Ordnance Survey Newlyn vertical reference", "OS Grid alignment", "plus or minus 15cm RMSE stated", "survey-specific transformation and geoidal model metadata available"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_LIDAR_GROUND_TRUTH",
+      "publisher": "Environment Agency",
+      "url": "https://www.data.gov.uk/dataset/123fd228-9033-4cac-afc4-4084977dd30a/lidar-ground-truth-surveys",
+      "confidence": 100,
+      "role": "independent_accuracy_validation_reference",
+      "facts": ["independently surveyed elevation points", "flat unambiguous surfaces", "GPS-based", "point accuracy plus or minus 3cm RMSE", "survey date attribute", "surface type attribute", "survey method attribute", "used to assess lidar RMSE standard deviation and random error"],
+      "checks_passed": 8
+    },
+    {
+      "id": "EA_WCS_SUPPORT_GUIDANCE",
+      "publisher": "Defra Data Services Platform",
+      "url": "https://environment.data.gov.uk/support/announcements/275811447/275811543",
+      "confidence": 100,
+      "role": "wcs_endpoint_execution_reference",
+      "facts": ["1m DTM WCS endpoint documented", "WCS URL form documented", "ArcGIS Pro Make WCS Layer workflow", "coverage input discovered after endpoint entry", "extent can be constrained", "service is intended for direct coverage access", "endpoint evidence supports runner protocol", "runtime success still requires fresh execution proof"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_TERRAIN50_OVERVIEW",
+      "publisher": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview",
+      "confidence": 100,
+      "role": "independent_lower_resolution_height_crosscheck",
+      "facts": ["bare-earth DTM", "50m grid post spacing", "full Great Britain coverage", "annual July update", "Open Data", "4m RMSE grid verification", "INSPIRE-ready design", "appropriate as coarse independent reasonableness check not parcel-scale primary measurement"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_TERRAIN50_GRID_SPEC",
+      "publisher": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "confidence": 100,
+      "role": "terrain50_numeric_sampling_guard",
+      "facts": ["ASCII grid plus GML metadata", "10km by 10km tiles", "200 by 200 pixels", "50m by 50m cells", "pixel-centre height semantics", "height values nearest 0.1m", "spatial reference supplied", "must not imply sub-cell parcel precision"],
+      "checks_passed": 8
+    },
+    {
+      "id": "OS_TERRAIN50_DOWNLOAD_202607",
+      "publisher": "Ordnance Survey",
+      "url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "confidence": 100,
+      "role": "current_independent_download_channel",
+      "facts": ["version date July 2026", "all Great Britain", "free OpenData", "OGL", "ASCII Grid available", "GML Grid available", "current official download channel", "independent source role constrained by 50m resolution"],
+      "checks_passed": 8
+    }
+  ],
+  "decision": "SOURCE_PREPARATION_ADVANCED_RUNTIME_MEASUREMENT_STILL_BLOCKED",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "missing_remote_outputs": [
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/027_noninteractive_publish_auth_preflight_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/016_revision_14_direct_hmlr_monthly_gml_refresh_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/025_revision_14_output_integrity_readback_latest.json"
+  ],
+  "new_runner_created": false,
+  "new_logical_task_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
