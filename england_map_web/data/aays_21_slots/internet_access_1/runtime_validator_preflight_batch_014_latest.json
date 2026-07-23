@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "stage": "CANONICAL_VALIDATOR_CODE_PREFLIGHT",
+  "general_program_progress_percent": 11.1,
+  "control_progress_percent": 94.7,
+  "research_prevalidation_completed": 118,
+  "research_prevalidation_total": 118,
+  "source_guard_candidates": 87,
+  "high_confidence_candidates_ge_98": 87,
+  "source_selection_confidence_percent": 99,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written": 0,
+  "guards": [
+    {"line":83,"guard":"download_retry_and_minimum_size","confidence_percent":100,"fact":"Canonical validator retries download up to 3 times and rejects archive files smaller than 1,000,000 bytes."},
+    {"line":84,"guard":"corrected_r2_only_and_stale_r1_absent","confidence_percent":100,"fact":"Validator selects corrected r2 postcode CSVs under postcode_files and requires stale r1 all-premises postcode files to be absent."},
+    {"line":85,"guard":"postcode_area_uniqueness","confidence_percent":100,"fact":"Validator requires postcode area identifiers derived from r2 filenames to be unique."},
+    {"line":86,"guard":"required_columns_every_file","confidence_percent":100,"fact":"Required alias mapping must succeed for postcode, postcode_space, SFBB, UFBB100, Gigabit, and decent-broadband-unavailable columns in every r2 postcode file."},
+    {"line":87,"guard":"all_checks_fail_closed","confidence_percent":100,"fact":"Status is PASS only when all checks pass; otherwise BLOCKED with explicit blocker keys and non-zero exit status."}
+  ],
+  "operations": [
+    {"line":145,"operation":"canonical_validator_source_readback","state":"PASS"},
+    {"line":146,"operation":"three_attempt_download_retry_gate","state":"PASS"},
+    {"line":147,"operation":"minimum_1mb_archive_gate","state":"PASS"},
+    {"line":148,"operation":"r2_only_stale_r1_absence_gate","state":"PASS"},
+    {"line":149,"operation":"postcode_area_uniqueness_gate","state":"PASS"},
+    {"line":150,"operation":"required_columns_every_file_gate","state":"PASS"},
+    {"line":151,"operation":"exact_1741096_row_gate","state":"PASS"},
+    {"line":152,"operation":"atomic_json_and_nonzero_failure_exit_gate","state":"PASS"},
+    {"line":153,"operation":"runtime_execution_state","state":"PENDING_COORDINATOR_PICKUP","evidence":"Preflight proves validator design only; canonical output file remains absent."}
+  ],
+  "blocker":"PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data":false,
+  "final_ready":false
+}
