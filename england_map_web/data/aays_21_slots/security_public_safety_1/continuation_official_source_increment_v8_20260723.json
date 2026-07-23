@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "source_head": "661068d6a198ff2251edf8e5f00ce2fb40b4f923",
+  "checked_at": "2026-07-23T04:05:00+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_V8_PUBLISHED_BLOCKER_UNCHANGED",
+  "increment_metrics": {
+    "official_source_checks_added": 5,
+    "official_source_checks_passed": 5,
+    "source_upgrades_added": 5,
+    "research_examples_added": 5,
+    "candidate_rows_added": 0,
+    "parcel_values_added": 0,
+    "stored_values_modified": false,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+  },
+  "cumulative_metrics": {
+    "official_source_checks": 50,
+    "official_source_checks_passed": 50,
+    "source_upgrades": 44,
+    "context_or_crosscheck_candidates": 39,
+    "web_source_rows": 50,
+    "web_operation_rows": 50
+  },
+  "sources": [
+    {
+      "row": 46,
+      "status": "PASS_CSEW_PFA_CONFIDENCE_INTERVAL_GUARD",
+      "source": "CSEW police force area estimates, year ending December 2025",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/adhocs/3379crimesurveyforenglandandwalescsewestimatesofpersonalandhouseholdcrimeantisocialbehaviourandpublicperceptionsbypoliceforceareayearendingdecember2025",
+      "verified_fact": "Released 23 April 2026, the file provides police-force-area estimates with confidence intervals for local-police perceptions, confidence in police and councils, personal and household crime risk, and anti-social-behaviour experience.",
+      "quality_effect": "Adds subnational survey context while requiring confidence-interval interpretation and forbidding police-force-area estimates from being converted into parcel probabilities.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 47,
+      "status": "PASS_DRUG_MISUSE_SURVEY_CONTEXT_LIMIT_RECORDED",
+      "source": "Drug misuse in England and Wales: year ending March 2025",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/articles/drugmisuseinenglandandwales/yearendingmarch2025",
+      "verified_fact": "Released 11 December 2025, the latest accredited release reports CSEW estimates on illicit-drug prevalence, frequency, characteristics and access; estimates for year ending March 2021 and March 2022 are unavailable because of the pandemic.",
+      "quality_effect": "Adds national survey context with a pandemic-series gap; prevalence and characteristics are not local incidents, parcel probabilities or individual inference.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 48,
+      "status": "PASS_CRIME_METHOD_INTERPRETATION_GATE",
+      "source": "User guide to crime statistics for England and Wales: March 2025",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/methodologies/userguidetocrimestatisticsforenglandandwales",
+      "verified_fact": "The official guide documents CSEW and police-recorded-crime interpretation, changing survey samples and question wording, including new local-policing attitude questions introduced in April 2024 on half the survey sample.",
+      "quality_effect": "Adds a mandatory method and denominator gate before combining survey, perception and police-recorded evidence across periods.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 49,
+      "status": "PASS_OUTCOMES_MARCH_2026_VERSION_GUARD",
+      "source": "Police recorded crime and outcomes open data tables",
+      "authority": "Home Office / GOV.UK",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "verified_fact": "The page was updated 23 April 2026 and includes outcomes open data for year ending March 2026 alongside revised offence, outcome, VAWG, transferred-or-cancelled and Community Safety Partnership tables.",
+      "quality_effect": "Adds a current outcome-table version guard while keeping outcomes, transferred records and offence totals separate from incident severity and parcel safety.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 50,
+      "status": "PASS_STREET_DATA_DISTRIBUTION_AND_LICENCE_GUARD",
+      "source": "Street level crime (police.uk data)",
+      "authority": "Home Office / National Data Library",
+      "url": "https://www.data.gov.uk/dataset/bb2c3b16-6719-4e00-ae75-48dd462cb915/england-national-crime-mapping",
+      "verified_fact": "The official distribution record was updated 8 July 2026, is licensed under the Open Government Licence and supplies street-level crime and neighbourhood-policing data from forces in England and Wales.",
+      "quality_effect": "Adds distribution, licensing and provenance evidence for the existing Police.uk input without double-counting the same underlying street records as a second score source.",
+      "candidate_score_input": false
+    }
+  ],
+  "quality_guards": [
+    "AREA_LEVEL_PROXY only; no parcel measurement claim.",
+    "CSEW police-force-area estimates require confidence intervals and are not parcel probabilities.",
+    "Drug-misuse CSEW estimates include a pandemic-series gap and are not local incident counts.",
+    "Survey question, sample and denominator changes must be checked through the ONS user guide.",
+    "Outcomes, transferred records and offence totals remain separate evidence classes.",
+    "Street-level distribution metadata supplies provenance and licensing, not a second independent score input.",
+    "No existing candidate score or stored parcel value was modified."
+  ],
+  "release_gate": {
+    "source": "Crime in England and Wales: year ending March 2026",
+    "scheduled_release": "2026-07-23T09:30:00+01:00",
+    "checked_before_release": true,
+    "figures_ingested": false,
+    "reason": "The Istanbul check occurred before the scheduled UK publication time."
+  },
+  "canonical_progress": {
+    "completed_units": 5,
+    "total_units": 8,
+    "overall_percent": 62.5,
+    "percent_change": 0.0
+  },
+  "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
+  "manual_action_state": "OPEN",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "parcel_measurement": false,
+  "acceptance_evidence": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
