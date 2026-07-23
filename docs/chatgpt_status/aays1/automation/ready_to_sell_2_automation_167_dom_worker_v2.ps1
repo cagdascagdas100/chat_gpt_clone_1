@@ -30,6 +30,7 @@ function Write-JsonNoBom([string]$Path,$Value){Write-Utf8NoBom $Path (($Value|Co
 function Read-JsonSafe([string]$Path){if(-not(Test-Path -LiteralPath $Path)){return $null};try{$raw=Get-Content -LiteralPath $Path -Raw -Encoding UTF8;if($raw.Length -gt 0 -and [int]$raw[0]-eq 65279){$raw=$raw.Substring(1)};return($raw|ConvertFrom-Json)}catch{return $null}}
 function Read-IntAttribute([string]$Html,[string]$Name){$m=[regex]::Match($Html,($Name+'=["'']([0-9]+)["'']'),'IgnoreCase');if($m.Success){return[int]$m.Groups[1].Value};return 0}
 function Set-Prop($Object,[string]$Name,$Value){if($null -eq $Object){return};$Object|Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force}
+function Get-MaxEventSequence($Events){$max=0;foreach($event in @($Events)){try{$sequence=[int]$event.sequence;if($sequence -gt $max){$max=$sequence}}catch{}};return $max}
 
 $startedAt=[DateTimeOffset]::UtcNow.ToString('o')
 $blockers=[Collections.Generic.List[string]]::new()
@@ -44,17 +45,31 @@ $requiredVisibleRows=[Math]::Max(655,$requiredLiveSources)
 $existing=Read-JsonSafe $progressPath
 if(-not $existing){$blockers.Add('PROGRESS_BASELINE_UNAVAILABLE')}
 
-$healthStatus=0;$pageHttpStatus=0
-try{$r=Invoke-WebRequest -UseBasicParsing -Uri $healthUrl -TimeoutSec 10;$healthStatus=[int]$r.StatusCode}catch{$blockers.Add('PORT_8012_HEALTH_UNAVAILABLE:'+ $_.Exception.Message)}
-try{$r=Invoke-WebRequest -UseBasicParsing -Uri $pageUrl -TimeoutSec 20;$pageHttpStatus=[int]$r.StatusCode}catch{$blockers.Add('AUTOMATION_167_PAGE_HTTP_UNAVAILABLE:'+ $_.Exception.Message)}
+$healthStatus=0;$pageHttpStatus=0;$httpAttempts=0
+for($attempt=1;$attempt -le 18;$attempt++){
+ $httpAttempts=$attempt
+ try{$r=Invoke-WebRequest -UseBasicParsing -Uri $healthUrl -TimeoutSec 10;$healthStatus=[int]$r.StatusCode}catch{$healthStatus=0}
+ try{$r=Invoke-WebRequest -UseBasicParsing -Uri $pageUrl -TimeoutSec 20;$pageHttpStatus=[int]$r.StatusCode}catch{$pageHttpStatus=0}
+ if($healthStatus -eq 200 -and $pageHttpStatus -eq 200){break}
+ if($attempt -lt 18){Start-Sleep -Seconds 10}
+}
+if($healthStatus -ne 200){$blockers.Add('PORT_8012_HEALTH_UNAVAILABLE_AFTER_RETRY:'+ $healthStatus)}
+if($pageHttpStatus -ne 200){$blockers.Add('AUTOMATION_167_PAGE_HTTP_UNAVAILABLE_AFTER_RETRY:'+ $pageHttpStatus)}
+
+$portableRoot=if($env:AAYS_PORTABLE_ROOT){[string]$env:AAYS_PORTABLE_ROOT}else{$null}
+if(-not $portableRoot){
+ $cursor=$repoRoot
+ while($cursor -and (Split-Path -Leaf $cursor) -ne 'runner_system'){$parent=Split-Path -Parent $cursor;if(-not $parent -or $parent -eq $cursor){break};$cursor=$parent}
+ if($cursor -and (Split-Path -Leaf $cursor) -eq 'runner_system'){$portableRoot=Split-Path -Parent $cursor}
+}
 
 $browserPaths=[Collections.Generic.List[string]]::new()
-if($env:AAYS_PORTABLE_ROOT){foreach($rel in @('runtime/browser/chrome.exe','runtime/chrome/chrome.exe','runtime/chromium/chrome.exe','runtime/msedge/msedge.exe')){$browserPaths.Add((Join-Path $env:AAYS_PORTABLE_ROOT $rel))}}
+if($portableRoot){foreach($rel in @('runtime/browser/chrome.exe','runtime/chrome/chrome.exe','runtime/chromium/chrome.exe','runtime/msedge/msedge.exe')){$browserPaths.Add((Join-Path $portableRoot $rel))}}
 if(${env:ProgramFiles(x86)}){$browserPaths.Add((Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe'));$browserPaths.Add((Join-Path ${env:ProgramFiles(x86)} 'Google/Chrome/Application/chrome.exe'))}
 if($env:ProgramFiles){$browserPaths.Add((Join-Path $env:ProgramFiles 'Microsoft/Edge/Application/msedge.exe'));$browserPaths.Add((Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'))}
 $browser=@($browserPaths|Where-Object{$_ -and(Test-Path -LiteralPath $_)}|Select-Object -Unique)|Select-Object -First 1
 $browserExitCode=$null;$dom=''
-if(-not $browser){$blockers.Add('HEADLESS_BROWSER_NOT_FOUND')}else{try{& $browser '--headless=new' '--disable-gpu' '--disable-extensions' '--no-first-run' '--no-default-browser-check' '--virtual-time-budget=30000' '--dump-dom' $pageUrl 2> $stderrPath | Set-Content -LiteralPath $domPath -Encoding UTF8;$browserExitCode=$LASTEXITCODE;if($null -eq $browserExitCode){$browserExitCode=0};if(Test-Path -LiteralPath $domPath){$dom=Get-Content -LiteralPath $domPath -Raw -Encoding UTF8}}catch{$blockers.Add('BROWSER_DOM_EXECUTION_EXCEPTION:'+ $_.Exception.Message)}}
+if(-not $browser){$blockers.Add('HEADLESS_BROWSER_NOT_FOUND')}elseif($healthStatus -eq 200 -and $pageHttpStatus -eq 200){try{& $browser '--headless=new' '--disable-gpu' '--disable-extensions' '--no-first-run' '--no-default-browser-check' '--virtual-time-budget=30000' '--dump-dom' $pageUrl 2> $stderrPath | Set-Content -LiteralPath $domPath -Encoding UTF8;$browserExitCode=$LASTEXITCODE;if($null -eq $browserExitCode){$browserExitCode=0};if(Test-Path -LiteralPath $domPath){$dom=Get-Content -LiteralPath $domPath -Raw -Encoding UTF8}}catch{$blockers.Add('BROWSER_DOM_EXECUTION_EXCEPTION:'+ $_.Exception.Message)}}
 
 $loadReady=$dom -match 'data-load-state=["'']ready["'']'
 $modeMatch=[regex]::Match($dom,'data-load-mode=["''](canonical_geometry|ai_evidence_fallback)["'']','IgnoreCase')
@@ -78,21 +93,37 @@ $unique=@($blockers|Select-Object -Unique)
 $pass=$terminal155Verified -and $healthStatus-eq 200 -and $pageHttpStatus-eq 200 -and $browser -and $browserExitCode-eq 0 -and $loadReady -and $loadMode -and $visibleRows-ge $requiredVisibleRows -and $liveSources-eq $requiredLiveSources -and $evidenceRows-gt 0 -and $progressEvents-ge 5 -and $researchCandidates-ge 30 -and $unique.Count-eq 0
 $statusName=if($pass){'AUTOMATION_167_DOM_PROOF_VERIFIED'}else{'AUTOMATION_167_DOM_PROOF_BLOCKED'}
 
-$status=[ordered]@{schema_version=3;architecture_version=3;workstream_id='AAYS_21_SLOT_SAFE_PARALLEL_V1';task_id=$taskId;slot_id=$slotId;status=$statusName;acceptance_pass=[bool]$pass;first_unverified_step=if($pass){$null}else{'AUTOMATION_167_DOM_PROOF'};required_visible_rows=$requiredVisibleRows;required_live_source_count=$requiredLiveSources;health_http_status=$healthStatus;page_http_status=$pageHttpStatus;browser_path=$browser;browser_exit_code=$browserExitCode;browser_dom_path=$domRelative;browser_stderr_path=$stderrRelative;browser_dom_load_ready=[bool]$loadReady;browser_dom_load_mode=$loadMode;browser_dom_visible_row_count=$visibleRows;browser_dom_live_source_count=$liveSources;browser_dom_rendered_evidence_rows=$evidenceRows;browser_dom_rendered_progress_events=$progressEvents;browser_dom_rendered_research_candidates=$researchCandidates;blockers=$unique;started_at=$startedAt;finished_at=[DateTimeOffset]::UtcNow.ToString('o');single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+$status=[ordered]@{schema_version=3;architecture_version=3;workstream_id='AAYS_21_SLOT_SAFE_PARALLEL_V1';task_id=$taskId;slot_id=$slotId;status=$statusName;acceptance_pass=[bool]$pass;first_unverified_step=if($pass){$null}else{'AUTOMATION_167_DOM_PROOF'};required_visible_rows=$requiredVisibleRows;required_live_source_count=$requiredLiveSources;health_http_status=$healthStatus;page_http_status=$pageHttpStatus;http_retry_attempts=$httpAttempts;portable_root=$portableRoot;browser_path=$browser;browser_exit_code=$browserExitCode;browser_dom_path=$domRelative;browser_stderr_path=$stderrRelative;browser_dom_load_ready=[bool]$loadReady;browser_dom_load_mode=$loadMode;browser_dom_visible_row_count=$visibleRows;browser_dom_live_source_count=$liveSources;browser_dom_rendered_evidence_rows=$evidenceRows;browser_dom_rendered_progress_events=$progressEvents;browser_dom_rendered_research_candidates=$researchCandidates;blockers=$unique;started_at=$startedAt;finished_at=[DateTimeOffset]::UtcNow.ToString('o');single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
 Write-JsonNoBom $statusPath $status
 
 if($existing){
+ $priorBatch=[double]$existing.batch_progress_percent
+ $priorOverall=[double]$existing.overall_progress_percent
+ $priorDomEvent=@($existing.events|Where-Object{[string]$_.event-eq'canonical_runner_dom_execution_and_remote_readback'}|Select-Object -First 1)
+ $eventSequence=if($priorDomEvent -and $priorDomEvent.sequence){[int]$priorDomEvent.sequence}else{(Get-MaxEventSequence $existing.events)+1}
  $events=@($existing.events|Where-Object{[string]$_.event-ne'canonical_runner_dom_execution_and_remote_readback'})
- $events+=[ordered]@{sequence=$events.Count+1;event='canonical_runner_dom_execution_and_remote_readback';result=if($pass){'pass'}else{'blocked'};detail="status=$statusName health=$healthStatus page=$pageHttpStatus visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents candidates=$researchCandidates blockers=$($unique -join ';')";accuracy_score=100}
+ $events+=[ordered]@{sequence=$eventSequence;event='canonical_runner_dom_execution_and_remote_readback';result=if($pass){'pass'}else{'blocked'};detail="status=$statusName health=$healthStatus page=$pageHttpStatus retries=$httpAttempts visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents candidates=$researchCandidates blockers=$($unique -join ';')";accuracy_score=100}
+ $events=@($events|Sort-Object sequence)
  $completed=[int]$existing.completed_operations;$total=[int]$existing.total_operations
  if($pass){$completed=[Math]::Min($total,$completed+1)}
  $batch=[Math]::Round(($completed/[Math]::Max(1,$total))*100,2)
  $overallCompleted=[int]$existing.overall_completed_evidence_events;$overallTotal=[int]$existing.overall_total_evidence_events
  if($pass){$overallCompleted=[Math]::Min($overallTotal,$overallCompleted+1)}
  $overall=[Math]::Round(($overallCompleted/[Math]::Max(1,$overallTotal))*100,2)
- Set-Prop $existing 'status' $statusName;Set-Prop $existing 'updated_at' ([DateTimeOffset]::UtcNow.ToString('o'));Set-Prop $existing 'events' $events;Set-Prop $existing 'completed_operations' $completed;Set-Prop $existing 'batch_progress_percent' $batch;Set-Prop $existing 'batch_progress_percent_increase' ([Math]::Round($batch-[double]$existing.batch_progress_percent,2));Set-Prop $existing 'overall_completed_evidence_events' $overallCompleted;Set-Prop $existing 'overall_progress_percent' $overall;Set-Prop $existing 'overall_progress_percent_increase' ([Math]::Round($overall-[double]$existing.overall_progress_percent,2));Set-Prop $existing 'automation_167_status_path' $statusRelative;Set-Prop $existing 'automation_167_report_path' $reportRelative;Set-Prop $existing 'blockers' $unique
+ Set-Prop $existing 'status' $statusName
+ Set-Prop $existing 'updated_at' ([DateTimeOffset]::UtcNow.ToString('o'))
+ Set-Prop $existing 'events' $events
+ Set-Prop $existing 'completed_operations' $completed
+ Set-Prop $existing 'batch_progress_percent' $batch
+ Set-Prop $existing 'batch_progress_percent_increase' ([Math]::Round($batch-$priorBatch,2))
+ Set-Prop $existing 'overall_completed_evidence_events' $overallCompleted
+ Set-Prop $existing 'overall_progress_percent' $overall
+ Set-Prop $existing 'overall_progress_percent_increase' ([Math]::Round($overall-$priorOverall,2))
+ Set-Prop $existing 'automation_167_status_path' $statusRelative
+ Set-Prop $existing 'automation_167_report_path' $reportRelative
+ Set-Prop $existing 'blockers' $unique
  Write-JsonNoBom $progressPath $existing
 }
-$report=@('# ReadyToSell Shard 2 — Automation 167 DOM Proof v2','',"- Status: ``$statusName``","- Acceptance pass: ``$pass``","- Visible rows: ``$visibleRows / $requiredVisibleRows``","- Live sources: ``$liveSources / $requiredLiveSources``","- Evidence/progress/candidates: ``$evidenceRows / $progressEvents / $researchCandidates``","- Blockers: ``$($unique -join '; ')``",'','`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
+$report=@('# ReadyToSell Shard 2 — Automation 167 DOM Proof v2','',"- Status: ``$statusName``","- Acceptance pass: ``$pass``","- HTTP retry attempts: ``$httpAttempts``","- Visible rows: ``$visibleRows / $requiredVisibleRows``","- Live sources: ``$liveSources / $requiredLiveSources``","- Evidence/progress/candidates: ``$evidenceRows / $progressEvents / $researchCandidates``","- Blockers: ``$($unique -join '; ')``",'','`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 Write-Utf8NoBom $reportPath (($report-join"`n")+"`n")
-exit 0
+if($pass){exit 0}else{exit 3}
