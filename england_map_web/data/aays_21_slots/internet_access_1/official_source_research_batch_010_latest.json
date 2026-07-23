@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23",
+  "runner_state": "RECOVERY_PARKED",
+  "aggregate_research_operations_completed": 92,
+  "aggregate_research_operations_total": 92,
+  "aggregate_source_guard_candidates": 70,
+  "aggregate_high_confidence_ge_98": 70,
+  "source_selection_confidence_percent": 99,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {"line":65,"candidate_id":"bduk_ofcom_premises_base_exact_match_limit","authority":"Building Digital UK","role":"CROSS_SOURCE_DENOMINATOR_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"BDUK says it cannot exactly report how many delivered premises form part of Ofcom's premises base because older voucher and RFS records have UPRN-level gaps.","use_rule":"Never force exact BDUK-to-Ofcom denominator equality where UPRN-level evidence is incomplete."},
+    {"line":66,"candidate_id":"bduk_premises_passed_orderability_definition","authority":"Building Digital UK","role":"ORDERABILITY_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"A premises is passed only when gigabit-capable service can be ordered at the supplier's standard price and connected in the supplier's standard timescale.","use_rule":"A build/contract record alone is not current service availability unless orderability criteria are satisfied."},
+    {"line":67,"candidate_id":"bduk_overbuild_existing_commercial_coverage_guard","authority":"Building Digital UK","role":"OVERBUILD_SEMANTICS_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"Overbuild means another commercial supplier already had approved gigabit-capable coverage when the subsidised supplier built.","use_rule":"An overbuild removal must not be interpreted as no coverage; it can mean coverage already existed commercially."},
+    {"line":68,"candidate_id":"bduk_current_gigabit_ofcom_gap_guard","authority":"Building Digital UK","role":"CURRENT_CROSSCHECK_LIMIT","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"current_gigabit can miss premises connected after the January 2026 OMR and not all suppliers respond to the OMR, so BDUK can differ from Ofcom.","use_rule":"BDUK FALSE cannot override positive current Ofcom evidence and cannot alone create NO_SERVICE."},
+    {"line":69,"candidate_id":"bduk_future_gigabit_pnd_noncomparability_guard","authority":"Building Digital UK","role":"FUTURE_CROSS_SOURCE_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"BDUK future_gigabit and Ofcom PND are not directly comparable because premise bases, supplier response sets, evaluation methods and reference dates differ.","use_rule":"Future-state disagreement is retained as source disagreement, not converted into a current parcel value."},
+    {"line":70,"candidate_id":"bduk_reporting_revision_timeliness_guard","authority":"Building Digital UK","role":"REPORTING_LAG_AND_REVISION_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"BDUK reports supplier/statistical production lag and revises historical counts when improved or late supplier data arrives.","use_rule":"Missing or later-revised BDUK rows remain NO_DATA/uncertain unless independently resolved by current authoritative coverage evidence."}
+  ],
+  "operations": [
+    {"line":107,"operation":"bduk_ofcom_premises_base_exact_match_limit_gate","state":"PASS"},
+    {"line":108,"operation":"bduk_premises_passed_orderability_gate","state":"PASS"},
+    {"line":109,"operation":"bduk_overbuild_existing_coverage_semantics_gate","state":"PASS"},
+    {"line":110,"operation":"bduk_current_gigabit_ofcom_gap_gate","state":"PASS"},
+    {"line":111,"operation":"bduk_future_gigabit_vs_pnd_noncomparability_gate","state":"PASS"},
+    {"line":112,"operation":"bduk_reporting_lag_revision_no_data_gate","state":"PASS"},
+    {"line":113,"operation":"ofcom_schema_audit_output_recheck","state":"PASS","evidence":"output still absent on canonical branch"},
+    {"line":114,"operation":"canonical_publish_gate","state":"PENDING","evidence":"direct_push_forbidden=true; coordinator heartbeat stale; child branch only"}
+  ],
+  "blocker":"PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data":false,
+  "final_ready":false
+}
