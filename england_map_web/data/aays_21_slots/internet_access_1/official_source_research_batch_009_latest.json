@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23",
+  "runner_state": "RECOVERY_PARKED",
+  "aggregate_research_operations_completed": 84,
+  "aggregate_research_operations_total": 84,
+  "aggregate_source_guard_candidates": 64,
+  "aggregate_high_confidence_ge_98": 64,
+  "source_selection_confidence_percent": 99,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {"line":59,"candidate_id":"ofcom_unmatched_premises_unclassified_guard","authority":"Ofcom","role":"NO_DATA_SEMANTICS_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"All Matched Premises counts premises matched to at least one fixed-provider record with a non-zero predicted download speed; unmatched premises are unclassified.","use_rule":"Never convert an unmatched Ofcom premise into NO_SERVICE; keep it unclassified/NO_DATA until another authoritative current source resolves it."},
+    {"line":60,"candidate_id":"ofcom_postcode_full_fibre_confidentiality_guard","authority":"Ofcom","role":"POSTCODE_SCHEMA_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"For postcode and census output area Ofcom reports gigabit-capable coverage but does not report full-fibre coverage because of commercial confidentiality.","use_rule":"Do not infer postcode full-fibre from gigabit-capable coverage."},
+    {"line":61,"candidate_id":"ofcom_fixed_line_fwa_field_separation","authority":"Ofcom","role":"TECHNOLOGY_SEMANTICS_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"Coverage fields refer to fixed-line broadband except where FWA is explicitly identified.","use_rule":"Never merge generic fixed-line coverage with FWA fields unless the schema explicitly identifies FWA."},
+    {"line":62,"candidate_id":"ofcom_postcode_dual_format_parser_guard","authority":"Ofcom","role":"POSTCODE_JOIN_NORMALIZATION","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"Ofcom metadata defines postcode without spaces and postcode_space with a single space.","use_rule":"Canonicalize postcode spacing before joins and preserve the original representation for audit."},
+    {"line":63,"candidate_id":"ofcom_residential_vs_all_premises_scope_guard","authority":"Ofcom","role":"DENOMINATOR_SCOPE_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"Spring 2026 headline gigabit/full-fibre coverage focuses on residential premises while downloadable data provides all-premises coverage.","use_rule":"Never copy residential headline percentages into mixed residential/commercial parcel rows."},
+    {"line":64,"candidate_id":"ofcom_gigabit_vs_full_fibre_technology_guard","authority":"Ofcom","role":"TECHNOLOGY_CLASS_GUARD","decision":"ACCEPTED","confidence_percent":100,"verified_fact":"Spring 2026 reports 89% residential gigabit-capable availability and 82% residential full-fibre availability, so the classes are not equivalent.","use_rule":"Gigabit-capable must not be relabelled as full fibre."}
+  ],
+  "operations": [
+    {"line":99,"operation":"fresh_canonical_head_owner_heartbeat_recheck","state":"PASS"},
+    {"line":100,"operation":"ofcom_unmatched_unclassified_no_data_gate","state":"PASS"},
+    {"line":101,"operation":"ofcom_postcode_full_fibre_confidentiality_gate","state":"PASS"},
+    {"line":102,"operation":"ofcom_fixed_line_vs_fwa_schema_gate","state":"PASS"},
+    {"line":103,"operation":"ofcom_postcode_spacing_parser_gate","state":"PASS"},
+    {"line":104,"operation":"ofcom_residential_vs_all_premises_denominator_gate","state":"PASS"},
+    {"line":105,"operation":"ofcom_gigabit_vs_full_fibre_class_gate","state":"PASS"},
+    {"line":106,"operation":"canonical_publish_gate","state":"PENDING","evidence":"direct_push_forbidden=true; coordinator heartbeat stale; child branch only"}
+  ],
+  "blocker":"PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data":false,
+  "final_ready":false
+}
