@@ -1,10 +1,13 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "slot_id": "internet_access_2",
   "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
-  "generated_at": "2026-07-22T20:24:00Z",
-  "support_checks_completed": 55,
-  "support_checks_total": 56,
+  "generated_at": "2026-07-23T00:59:00Z",
+  "support_checks_completed": 60,
+  "support_checks_total": 61,
+  "source_upgrades": 14,
+  "official_source_count": 13,
+  "external_technical_corroboration_count": 1,
   "operation_rows": [
     {"row":61,"operation":"Bulk API fallback scope correction","status":"PASS_CORRECTED","evidence":"The API cannot replace the official ZIP for 11,013-row output; it remains limited to an ephemeral 24-postcode cross-check."},
     {"row":62,"operation":"Strict same-task ZIP requeue guard","status":"PASS_2_OF_2_TESTS","evidence":"Corrected r2 synthetic archive requeued the existing 006 task; stale inner r1 archive was rejected. Commit 6d5e91579f877e147bcae993b6afe6aa7e4a3ce1."},
@@ -12,8 +15,13 @@
     {"row":64,"operation":"Portable Git and remote-HEAD wrapper","status":"PASS_REMOTE_COMMIT","evidence":"Wrapper ed1d2a8cbe9b8c04b75d385c39243eb081d59d37 finds portable Git/Python, rejects a dirty or behind checkout, runs strict requeue and optionally invokes the safe launcher."},
     {"row":65,"operation":"English and Welsh official download-object comparison","status":"PASS_SAME_OBJECT","evidence":"Both Ofcom language pages resolve to the same official ZIP object; 32.2 MB versus 32.3 MB is a display metadata difference, not an alternate route."},
     {"row":66,"operation":"Bilingual official binary fetch retry","status":"BLOCKED_2_OF_2","evidence":"Both official language-page download clicks returned (400) OK without archive bytes; no ZIP was accepted."},
-    {"row":67,"operation":"Distributed chunk candidate readback","status":"PASS_6_OF_6","evidence":"Lines 2,001, 4,001, 6,001, 8,001, 10,001 and 11,001 were read from chunks 5, 9, 13, 17, 21 and 23."},
-    {"row":68,"operation":"Distributed example accuracy guard and publish","status":"PASS_NO_FALSE_UPGRADE","evidence":"Six additional candidates published with HMLR 4/4 and ONSPD live identity; internet remains 2/4 and official coverage remains unverified."}
+    {"row":67,"operation":"Distributed chunk candidate readback wave 2","status":"PASS_6_OF_6","evidence":"Lines 2,001, 4,001, 6,001, 8,001, 10,001 and 11,001 were read from chunks 5, 9, 13, 17, 21 and 23."},
+    {"row":68,"operation":"Distributed example accuracy guard and publish wave 2","status":"PASS_NO_FALSE_UPGRADE","evidence":"Six candidates published with HMLR 4/4 and ONSPD live identity; internet remains 2/4 and official coverage remains unverified."},
+    {"row":69,"operation":"Fresh task and terminal lease readback","status":"PASS_UNCHANGED_TERMINAL","evidence":"006 remains PUBLISHED; no live lease, new attempt, duplicate task or second runner was found."},
+    {"row":70,"operation":"National Data Library public mirror audit","status":"PASS_NO_CURRENT_MIRROR","evidence":"The Ofcom catalog record was updated 8 July 2026, but downloadable postcode resources remain historical 2015-2018 items and do not mirror Spring 2026."},
+    {"row":71,"operation":"Exact Spring 2026 ZIP filename search","status":"PASS_CANONICAL_OBJECT_ONLY","evidence":"No alternate public or government mirror for 202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip was found."},
+    {"row":72,"operation":"Distributed chunk candidate readback wave 3","status":"PASS_6_OF_6","evidence":"Lines 1,001, 3,001, 5,001, 7,001, 9,001 and 10,501 were read from chunks 3, 7, 11, 15, 19 and 22 and published without a coverage upgrade."},
+    {"row":73,"operation":"Terminated identity review exporter","status":"PASS_4_OF_4_TOOL_TESTS_HOST_RUN_PENDING","evidence":"Exporter 97f0703cd1eb37d7907df58fea2e5d35f31bc7ed requires exactly 11,013 source rows, exactly two terminated rows, 1/4 accuracy and zero official coverage verification."}
   ],
   "strict_same_task_retry": {
     "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py",
@@ -31,24 +39,48 @@
     "duplicate_task_created": false,
     "second_runner_started": false
   },
-  "distributed_examples": {
-    "state": "PUBLISHED_6_OF_6",
-    "path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave2.json",
-    "commit": "3dea16e1d9b5c74d55eb9a578f7ee051f1a73bd0",
-    "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/012_bilingual_download_and_distributed_examples_audit.json",
-    "audit_commit": "5d08e10c890ea29a7acba902ac50d5a6255e62b2",
-    "sampled_chunks": [5,9,13,17,21,23],
-    "sampled_lines": [2001,4001,6001,8001,10001,11001],
-    "official_coverage_verified": 0,
-    "false_accuracy_upgrade": 0
+  "distributed_examples": [
+    {
+      "wave": 2,
+      "state": "PUBLISHED_6_OF_6",
+      "path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave2.json",
+      "commit": "3dea16e1d9b5c74d55eb9a578f7ee051f1a73bd0",
+      "sampled_chunks": [5,9,13,17,21,23],
+      "sampled_lines": [2001,4001,6001,8001,10001,11001]
+    },
+    {
+      "wave": 3,
+      "state": "PUBLISHED_6_OF_6",
+      "path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave3.json",
+      "commit": "dd6e2c1bc0bc5266012e2132fd6dd36bd001d06f",
+      "sampled_chunks": [3,7,11,15,19,22],
+      "sampled_lines": [1001,3001,5001,7001,9001,10501]
+    }
+  ],
+  "terminated_identity_review_exporter": {
+    "state": "READY_HOST_OR_CHECKOUT_EXECUTION_PENDING",
+    "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/015_export_two_terminated_identity_review_rows.py",
+    "script_commit": "97f0703cd1eb37d7907df58fea2e5d35f31bc7ed",
+    "expected_source_rows": 11013,
+    "expected_review_rows": 2,
+    "accuracy_guard": "1/4_ONLY",
+    "tests_passed": 4,
+    "output_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_identity_review_rows.json"
   },
-  "corrected_next_step": "PROVISION_OFFICIAL_OFCom_R2_ZIP;_RUN_014_PORTABLE_STRICT_REQUEUE_WRAPPER_WITH_START_RUNNER",
+  "public_catalog_audit": {
+    "state": "NO_CURRENT_SPRING_2026_MIRROR",
+    "national_data_library_last_updated": "2026-07-08",
+    "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/013_national_data_library_and_wave3_audit.json",
+    "audit_commit": "08338ed01bd60fd1735dccbdcb0329b98b2d98fd"
+  },
+  "corrected_next_step": "PROVISION_OFFICIAL_OFCom_R2_ZIP;_RUN_014_PORTABLE_STRICT_REQUEUE_WRAPPER_WITH_START_RUNNER;_RUN_015_REVIEW_EXPORTER_ON_CANONICAL_CHECKOUT",
   "api_bulk_replacement_allowed": false,
   "api_maximum_ephemeral_sample_postcodes": 24,
   "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/internet_access_2.json",
   "manual_action_commit": "00733a04f5e3b811d87f7c59dc20166d451f4515",
-  "api_scope_correction_commit": "41d401d9148e0858bde32d8f5d8458eed0f926a2",
   "status_correction_commit": "a739b2ca55774d4e47a75d0ac01fe132adc7cbe2",
+  "official_coverage_verified": 0,
+  "false_accuracy_upgrade": 0,
   "fake_data": false,
   "db_write": false,
   "migration": false,
