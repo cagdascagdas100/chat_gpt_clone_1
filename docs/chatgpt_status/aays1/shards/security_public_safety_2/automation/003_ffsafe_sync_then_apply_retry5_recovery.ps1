@@ -11,8 +11,8 @@ $innerRel = 'docs/chatgpt_status/aays1/shards/security_public_safety_2/automatio
 $outputRel = 'docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/003_retry5_ffsafe_bootstrap_latest.json'
 
 $contract = [ordered]@{
-  inner = [ordered]@{path=$innerRel;blob='e19b54a1f328883fe34e220b89edb18d9cd98bf4'}
-  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='07ecb487806f4fb80aefb35a94a497cd87dd7f08'}
+  inner = [ordered]@{path=$innerRel;blob='28c738ff98a489abe2d9874060533aa922af6deb'}
+  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='f218ac3087edfaebfbaca4f4a7b48c0677174f1b'}
   queue = [ordered]@{path='docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json';blob='43ba5691e3b4a3c345d2f8fd3303185b3f214d21'}
   bridge = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1';blob='8f4b09b9713a56d78a9c624202f83028afd77b7a'}
   hardened_python = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py';blob='cdb20cb578be5de1789e7821d2a435c1a9f77d58'}
@@ -64,7 +64,7 @@ function Atomic-Json([string]$Path,[object]$Value) {
 function Receipt([string]$Status,[string]$Before,[string]$Remote,[string]$After,[bool]$FastForwarded,[bool]$InnerInvoked,[int]$InnerExit,[object]$Dirty,[object]$LocalBlobs,[object]$RemoteBlobs,[string]$Detail) {
   $out = Join-Path $repoRoot ($outputRel -replace '/','\')
   Atomic-Json $out ([ordered]@{
-    schema_version = 3
+    schema_version = 4
     slot_id = $slotId
     task_id = $taskId
     attempt_id = $attemptId
@@ -84,6 +84,8 @@ function Receipt([string]$Status,[string]$Before,[string]$Remote,[string]$After,
     canonical_f_process_identity_required = $true
     foreign_runner_process_fail_closed = $true
     heartbeat_pid_and_repo_root_identity_required = $true
+    heartbeat_repo_root_optional_with_exact_lock_fallback = $true
+    lock_pid_and_repo_root_fallback_required_when_heartbeat_root_absent = $true
     transient_without_fresh_daemon_is_failure = $true
     process_exit_before_kill_is_clean_stop = $true
     inner_preflight_invoked = $InnerInvoked
