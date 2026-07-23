@@ -1,72 +1,46 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>internet_access_2 — satır satır ilerleme</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
-.cards{display:flex;gap:10px;flex-wrap:wrap}
-.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}
-table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}
-th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}
-th{background:#eceff1}.pass{color:#087f23;font-weight:bold}.blocked{color:#b71c1c;font-weight:bold}
-code,a{word-break:break-all}.note{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1}code{word-break:break-all}.note{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}
 </style>
 </head>
 <body>
 <h1>internet_access_2 — satır satır ilerleme</h1>
-<div id="cards" class="cards"></div>
-<p id="blocker" class="note"></p>
-<h2>İşlem satırları</h2>
-<table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
-<h2>Hazır örnek adaylar</h2>
-<table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Geometri</th><th>İnternet</th><th>ONSPD</th><th>Legacy gigabit</th><th>Legacy SFBB</th><th>Resmî coverage</th></tr></thead><tbody id="examples"></tbody></table>
-<h2>Terminated kimlik incelemesi</h2>
-<table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Doğruluk</th><th>Giriş</th><th>Sonlandırma</th><th>Durum</th></tr></thead><tbody id="reviews"><tr><td colspan="8">Kanonik host üzerinde 017 orchestrator çalıştırılınca tam iki inceleme satırı burada görünecek.</td></tr></tbody></table>
-<h2>11.013 satırın parça dizini</h2>
-<table><thead><tr><th>Parça</th><th>Başlangıç</th><th>Bitiş</th><th>Satır</th></tr></thead><tbody id="chunks"></tbody></table>
-<h2>Resmî kaynak kontrolleri</h2>
-<table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="sources"></tbody></table>
-<p id="error"></p>
+<div id="cards" class="cards"></div><p id="blocker" class="note"></p>
+<h2>İşlem satırları</h2><table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
+<h2>Hazır örnek adaylar</h2><table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Geometri</th><th>İnternet</th><th>ONSPD</th><th>Legacy gigabit</th><th>Legacy SFBB</th><th>Resmî coverage</th></tr></thead><tbody id="examples"></tbody></table>
+<h2>Terminated kimlik incelemesi</h2><table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Doğruluk</th><th>Giriş</th><th>Sonlandırma</th><th>Durum</th></tr></thead><tbody id="reviews"><tr><td colspan="8">Kanonik host üzerinde 017 orchestrator çalıştırılınca tam iki inceleme satırı burada görünecek.</td></tr></tbody></table>
+<h2>11.013 satırın parça dizini</h2><table><thead><tr><th>Parça</th><th>Başlangıç</th><th>Bitiş</th><th>Satır</th></tr></thead><tbody id="chunks"></tbody></table>
+<h2>Resmî kaynak kontrolleri</h2><table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="sources"></tbody></table><p id="error"></p>
 <script>
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const load=p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p+' HTTP '+r.status);return r.json()});
 const optional=p=>load(p).catch(()=>null);
+const auditPath='../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/025_wave15_eleventh_rows_and_current_ofcom_recheck_audit.json';
 Promise.all([
- load('./006_existing_11013_progress_latest.json'),
- load('./006_existing_11013_recovery_latest.json'),
- load('./006_existing_11013_examples_wave2.json'),
- load('./006_existing_11013_examples_wave3.json'),
- load('./006_existing_11013_examples_wave4.json'),
- load('./006_existing_11013_examples_wave5.json'),
- load('./006_existing_11013_examples_wave6.json'),
- load('./006_existing_11013_examples_wave7.json'),
- load('./006_existing_11013_examples_wave8.json'),
- load('./006_existing_11013_examples_wave9.json'),
- load('./006_existing_11013_examples_wave10.json'),
- load('./006_existing_11013_examples_wave11.json'),
- load('./006_existing_11013_examples_wave12.json'),
- load('../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/022_wave12_eighth_rows_and_route_recheck_audit.json').catch(()=>load('../../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/022_wave12_eighth_rows_and_route_recheck_audit.json')).catch(()=>null),
+ load('./006_existing_11013_progress_latest.json'),load('./006_existing_11013_recovery_latest.json'),
+ ...Array.from({length:14},(_,i)=>load('./006_existing_11013_examples_wave'+(i+2)+'.json')),
+ load(auditPath).catch(()=>load('../../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/025_wave15_eleventh_rows_and_current_ofcom_recheck_audit.json')).catch(()=>null),
  optional('./006_existing_11013_identity_review_rows.json')
-]).then(([d,r,w2,w3,w4,w5,w6,w7,w8,w9,w10,w11,w12,a12,review])=>{
- const operations=[...(d.operation_rows||[]),...(r.operation_rows||[]),...((a12&&a12.operation_rows)||[])].sort((a,b)=>(a.row||0)-(b.row||0));
- const examples=[...(d.candidate_examples||[]),...(w2.candidate_examples||[]),...(w3.candidate_examples||[]),...(w4.candidate_examples||[]),...(w5.candidate_examples||[]),...(w6.candidate_examples||[]),...(w7.candidate_examples||[]),...(w8.candidate_examples||[]),...(w9.candidate_examples||[]),...(w10.candidate_examples||[]),...(w11.candidate_examples||[]),...(w12.candidate_examples||[])].sort((a,b)=>(a.line||0)-(b.line||0));
+]).then(([d,r,...rest])=>{
+ const review=rest.pop(),a15=rest.pop(),waves=rest;
+ const base=(d.candidate_examples||[]).filter(x=>Number(x.line||0)<=6);
+ const examples=[...base,...waves.flatMap(w=>w.candidate_examples||[])].sort((a,b)=>(a.line||0)-(b.line||0));
+ const operations=[...(d.operation_rows||[]),...(r.operation_rows||[]),...((a15&&a15.operation_rows)||[])].sort((a,b)=>(a.row||0)-(b.row||0));
  const reviews=(review&&review.rows)||[];
- const supportDone=Math.max(Number(d.support_checks_completed||0),Number(r.support_checks_completed||0),Number((a12&&a12.support_checks_completed)||0));
- const supportTotal=Math.max(Number(d.support_checks_total||0),Number(r.support_checks_total||0),Number((a12&&a12.support_checks_total)||0));
- const uniqueCount=(a12&&a12.unique_example_identity_count)||d.unique_example_identity_count||examples.length;
- const duplicateCount=(a12&&a12.duplicate_example_identity_count)||d.duplicate_example_identity_count||0;
- const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['Ana işlem',d.completed_operations+'/'+d.total_operations],['Destek kontrolü',supportDone+'/'+supportTotal],['Hazır satır',d.existing_shard2_rows],['Postcode',d.distinct_postcodes],['Canlı kimlik',d.postcode_live],['İnceleme',d.postcode_terminated_review_required],['Kapsama adayı',d.official_coverage_verified_candidates],['Doğruluk yazıldı',d.accuracy_written],['Görünür satır',d.visible_candidate_rows],['Görünür örnek',examples.length],['Benzersiz örnek',uniqueCount],['Tekrar örnek',duplicateCount],['Örneklenen parça',r.sampled_chunk_count+'/'+d.candidate_chunk_count],['Review çıktısı',reviews.length+'/2'],['Parça',d.candidate_chunk_count],['Kaynak',(a12&&a12.source_upgrades)??r.source_upgrades??d.source_upgrades]];
+ const supportDone=Math.max(Number(d.support_checks_completed||0),Number(r.support_checks_completed||0),Number((a15&&a15.support_checks_completed)||0));
+ const supportTotal=Math.max(Number(d.support_checks_total||0),Number(r.support_checks_total||0),Number((a15&&a15.support_checks_total)||0));
+ const uniqueCount=(a15&&a15.unique_example_identity_count)||examples.length, duplicateCount=(a15&&a15.duplicate_example_identity_count)||0;
+ const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['Ana işlem',d.completed_operations+'/'+d.total_operations],['Destek kontrolü',supportDone+'/'+supportTotal],['Hazır satır',d.existing_shard2_rows],['Postcode',d.distinct_postcodes],['Canlı kimlik',d.postcode_live],['İnceleme',d.postcode_terminated_review_required],['Kapsama adayı',d.official_coverage_verified_candidates],['Doğruluk yazıldı',d.accuracy_written],['Görünür satır',d.visible_candidate_rows],['Görünür örnek',examples.length],['Benzersiz örnek',uniqueCount],['Tekrar örnek',duplicateCount],['Örneklenen parça',r.sampled_chunk_count+'/'+d.candidate_chunk_count],['Review çıktısı',reviews.length+'/2'],['Kaynak',(a15&&a15.source_upgrades)??r.source_upgrades??d.source_upgrades]];
  document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
- document.getElementById('blocker').innerHTML='<b>Engel:</b> '+e(d.blocker)+'<br><b>Sonraki güvenli adım:</b> '+e(r.corrected_next_step)+'<br><b>Not:</b> Ofcom postcode ürünü coverage verisidir; ölçülmüş parsel hızı değildir. Legacy yüzdeler yalnız karşılaştırma bağlamıdır ve exact Ocak 2026 Ofcom r2 satırı olmadan 3/4 yazılmaz.';
+ document.getElementById('blocker').innerHTML='<b>Engel:</b> '+e(d.blocker)+'<br><b>Sonraki güvenli adım:</b> '+e(r.corrected_next_step)+'<br><b>Not:</b> Coverage, ölçülmüş parsel hızı değildir; exact Ocak 2026 Ofcom r2 satırı olmadan 3/4 yazılmaz.';
  document.getElementById('operations').innerHTML=operations.map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.operation)}</td><td>${e(x.status)}</td><td><code>${e(x.evidence)}</code></td></tr>`).join('');
  document.getElementById('examples').innerHTML=examples.map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.hmlr_geometry_accuracy)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd_status)}</td><td>${e(x.legacy_gigabit_available_pct)}%</td><td>${e(x.legacy_superfast_30mbps_available_pct)}%</td><td>${x.official_coverage_verified?'PASS':'BEKLİYOR'}</td></tr>`).join('');
- if(reviews.length){document.getElementById('reviews').innerHTML=reviews.map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd?.dointr)}</td><td>${e(x.onspd?.doterm)}</td><td>${e(x.candidate_status)}</td></tr>`).join('');}
+ if(reviews.length)document.getElementById('reviews').innerHTML=reviews.map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd?.dointr)}</td><td>${e(x.onspd?.doterm)}</td><td>${e(x.candidate_status)}</td></tr>`).join('');
  document.getElementById('chunks').innerHTML=(d.candidate_chunks||[]).map(x=>`<tr><td>${e(x.chunk)}</td><td>${e(x.row_start)}</td><td>${e(x.row_end)}</td><td>${e(x.count)}</td></tr>`).join('');
- const sources=[...(d.source_checks||[]),{row:14,source:'National Data Library — Ofcom Connected Nations catalog',status:'PASS_NO_CURRENT_MIRROR',evidence:'Catalog updated 8 July 2026; downloadable postcode resources remain historical and do not mirror Spring 2026.'},{row:15,source:'Ofcom Connected Nations FAQs',status:'PASS_COVERAGE_NOT_MEASURED_SPEED',evidence:'Fixed broadband coverage accompanies each publication; current postcode performance/speed data is not published. Parcel measured speed remains false.'},{row:16,source:'Ofcom Planned Network Deployments 2026',status:'PASS_JANUARY_2026_SNAPSHOT_CORROBORATED',evidence:'The forward-looking report explicitly describes Spring 2026 as the existing-network coverage snapshot as of January 2026.'},{row:17,source:'GOV.UK BDUK broadband address checker',status:'PASS_NOT_BULK_OFCom_REPLACEMENT',evidence:'The checker uses January 2026 OMR data for address-level programme eligibility; it is not the official 1,741,096-row Ofcom postcode coverage archive.'},{row:18,source:'data.gov.uk / GLA fixed broadband speeds catalog',status:'PASS_HISTORICAL_ONLY',evidence:'The catalogue entry was recently updated, but its downloadable postcode-speed resource is historical 2014 data and cannot validate Spring 2026 coverage.'}];
- document.getElementById('sources').innerHTML=sources.map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.source)}</td><td>${e(x.status)}</td><td>${e(x.evidence)}</td></tr>`).join('');
+ const sources=d.source_checks||[]; document.getElementById('sources').innerHTML=sources.map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.source)}</td><td>${e(x.status)}</td><td>${e(x.evidence)}</td></tr>`).join('');
 }).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
-</script>
-</body>
-</html>
+</script></body></html>
