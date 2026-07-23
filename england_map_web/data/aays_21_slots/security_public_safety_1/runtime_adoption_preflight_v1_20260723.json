@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "source_head": "12a256fdbec3147383f4a2eed3df4d3f691ff298",
+  "checked_at": "2026-07-23T05:13:16+03:00",
+  "state": "PASS_20_OF_20_RUNTIME_ADOPTION_PREFLIGHT_BLOCKER_UNCHANGED",
+  "preflight_summary": {
+    "checks": 20,
+    "passed": 20,
+    "police_api_checks": 10,
+    "mps_lsoa_checks": 10,
+    "runtime_candidates": 2,
+    "accepted_now": 0,
+    "candidate_rows_added": 0,
+    "stored_values_modified": false,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+  },
+  "candidates": [
+    {
+      "source_row": 7,
+      "source": "Police API live runtime month gate",
+      "authority": "data.police.uk",
+      "decision": "ADOPT_WHEN_RUNTIME_ACCEPTED",
+      "accepted_now": false,
+      "checks": [
+        {"operation":1,"status":"PASS","check":"LAST_UPDATED_ENDPOINT_LIVE","evidence":"crime-last-updated returned 2026-05-01 at this check."},
+        {"operation":2,"status":"PASS","check":"MONTH_FORMAT_GUARD","evidence":"The API defines the returned date as the latest crime-data month in ISO format; the day component is not analytically meaningful."},
+        {"operation":3,"status":"PASS","check":"MONTHLY_REFRESH_CONTRACT","evidence":"Official documentation states that crime data is updated once a month."},
+        {"operation":4,"status":"PASS","check":"AVAILABILITY_ENDPOINT_LIVE","evidence":"crimes-street-dates returned May 2026 as the first available month."},
+        {"operation":5,"status":"PASS","check":"MAY_STOP_SEARCH_COVERAGE","evidence":"May 2026 lists 30 force identifiers for stop-and-search coverage."},
+        {"operation":6,"status":"PASS","check":"APRIL_COMPARISON_COVERAGE","evidence":"April 2026 lists 34 force identifiers; the four-force reduction remains explicit missing coverage."},
+        {"operation":7,"status":"PASS","check":"MISSING_NOT_ZERO_GUARD","evidence":"A force absent from a month availability list must not be interpreted as zero activity."},
+        {"operation":8,"status":"PASS","check":"FUTURE_MONTH_BLOCK","evidence":"Runtime must not request a month later than the live last-updated month."},
+        {"operation":9,"status":"PASS","check":"FORCE_SCOPE_SEPARATION","evidence":"Street-crime month freshness and stop-and-search force coverage are separate controls and must not share one denominator."},
+        {"operation":10,"status":"PASS","check":"RUNTIME_ONLY_PROMOTION","evidence":"Promotion remains gated on live 130x16 parity, Chromium acceptance and publisher readback."}
+      ]
+    },
+    {
+      "source_row": 10,
+      "source": "MPS Recorded Crime Geographic Breakdown LSOA refresh",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "decision": "ADOPT_WHEN_RUNTIME_ACCEPTED",
+      "accepted_now": false,
+      "checks": [
+        {"operation":11,"status":"PASS","check":"CURRENT_FILE_PERIOD","evidence":"The current LSOA CSV covers July 2024 to June 2026."},
+        {"operation":12,"status":"PASS","check":"LSOA_GEOGRAPHY_CONFIRMED","evidence":"The dataset supplies monthly crime counts at borough, ward and LSOA levels."},
+        {"operation":13,"status":"PASS","check":"CURRENT_HISTORIC_SPLIT","evidence":"Current files cover the latest 24 months and historic files are supplied separately."},
+        {"operation":14,"status":"PASS","check":"SEXUAL_OFFENCE_DISCLOSURE_GUARD","evidence":"Sexual offences are not supplied at LSOA level and must never be backfilled or inferred."},
+        {"operation":15,"status":"PASS","check":"CONNECT_BOUNDARY_GUARD","evidence":"Data uploaded after February 2024 is sourced from CONNECT and cross-boundary comparisons require caution."},
+        {"operation":16,"status":"PASS","check":"UNKNOWN_VALUE_PRESERVATION","evidence":"Detail that cannot translate between legacy systems and CONNECT can appear as Unknown and must not be converted to zero."},
+        {"operation":17,"status":"PASS","check":"CLASSIFICATION_VERSION_GUARD","evidence":"Updated Home Office crime classifications are used in recent data while older classifications remain in separate historic files."},
+        {"operation":18,"status":"PASS","check":"BURGLARY_BREAK_GUARD","evidence":"The April 2017 burglary classification change must remain explicit in long-period comparisons."},
+        {"operation":19,"status":"PASS","check":"FRAUD_SCOPE_GUARD","evidence":"Fraud transferred from individual forces to National Action Fraud in March 2013 and is not a continuous local-force series."},
+        {"operation":20,"status":"PASS","check":"RUNTIME_ONLY_PROMOTION","evidence":"The LSOA refresh cannot alter stored scores before category parity, CONNECT guards, browser verification and publisher readback pass."}
+      ]
+    }
+  ],
+  "release_gate": {
+    "release": "Crime in England and Wales: year ending March 2026",
+    "scheduled_istanbul_time": "2026-07-23T11:30:00+03:00",
+    "check_was_before_release": true,
+    "figures_ingested": false
+  },
+  "canonical_progress": {"completed_units":5,"total_units":8,"overall_percent":62.5,"percent_change":0.0},
+  "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
+  "manual_action_state": "OPEN",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "acceptance_evidence": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
