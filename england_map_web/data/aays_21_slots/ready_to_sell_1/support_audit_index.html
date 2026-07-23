@@ -19,22 +19,26 @@ const link=(u,t)=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)
 const get=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(u+' HTTP '+r.status);return r.json()});
 get('support_audit_latest.json').then(async m=>{
   const auditDocs=await Promise.all((m.audit_json_paths||[]).map(get));
-  const resolutionPaths=[...(m.resolution_json_paths||[]),EXTRA];
+  const manifestPaths=m.resolution_json_paths||[];
+  const overlayNeeded=!manifestPaths.includes(EXTRA);
+  const resolutionPaths=overlayNeeded?[...manifestPaths,EXTRA]:[...manifestPaths];
   const resolutionDocs=await Promise.all(resolutionPaths.map(get));
-  const delta=resolutionDocs.at(-1)?.summary||{};
+  const extraDoc=resolutionDocs.find(r=>r.resolution_audit_id==='ready_to_sell_1_conflict_resolution_20260723_1508Z');
+  const delta=extraDoc?.summary||{};
   const rows=auditDocs.flatMap(d=>d.rows||[]);
   const changes=resolutionDocs.flatMap(r=>r.rows||[]);
   const latest=new Map;
   changes.forEach(x=>latest.set(Number(x.row_reference),x));
-  const attempted=Number(m.internet_checks_attempted||0)+Number(delta.additional_internet_checks_attempted||0);
-  const verified=Number(m.internet_checks_verified||0)+Number(delta.additional_internet_checks_verified||0);
+  const add=v=>overlayNeeded?Number(v||0):0;
+  const attempted=Number(m.internet_checks_attempted||0)+add(delta.additional_internet_checks_attempted);
+  const verified=Number(m.internet_checks_verified||0)+add(delta.additional_internet_checks_verified);
   const rate=attempted?Math.round(verified*10000/attempted)/100:0;
-  const followRows=Number(m.followup_rows_rechecked||0)+Number(delta.rows_rechecked||0);
-  const followAttempted=Number(m.followup_checks_attempted||0)+Number(delta.additional_internet_checks_attempted||0);
-  const followVerified=Number(m.followup_checks_verified||0)+Number(delta.additional_internet_checks_verified||0);
-  const resolved=Number(m.source_identity_conflicts_resolved||0)+Number(delta.conflicts_resolved||0);
-  const narrowed=Number(m.source_identity_conflicts_narrowed_but_open||0)+Number(delta.conflicts_narrowed_but_open||0);
-  const open=Math.max(0,Number(m.source_identity_conflicts_open||0)-Number(delta.conflicts_resolved||0)+Number(delta.conflicts_narrowed_but_open||0));
+  const followRows=Number(m.followup_rows_rechecked||0)+add(delta.rows_rechecked);
+  const followAttempted=Number(m.followup_checks_attempted||0)+add(delta.additional_internet_checks_attempted);
+  const followVerified=Number(m.followup_checks_verified||0)+add(delta.additional_internet_checks_verified);
+  const resolved=Number(m.source_identity_conflicts_resolved||0)+add(delta.conflicts_resolved);
+  const narrowed=Number(m.source_identity_conflicts_narrowed_but_open||0)+add(delta.conflicts_narrowed_but_open);
+  const open=overlayNeeded?Math.max(0,Number(m.source_identity_conflicts_open||0)-Number(delta.conflicts_resolved||0)+Number(delta.conflicts_narrowed_but_open||0)):Number(m.source_identity_conflicts_open||0);
   const cards=[
     ['Aday kapsamı',m.candidate_examples_checked+'/'+m.batch51_candidate_examples_total],
     ['Kapsam',m.batch51_candidate_audit_coverage_percent+'%'],
