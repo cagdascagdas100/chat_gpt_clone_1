@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23T16:47:00Z",
+  "runner_state": "RECOVERY_PARKED",
+  "aggregate_research_operations_completed": 76,
+  "aggregate_research_operations_total": 76,
+  "aggregate_source_candidates": 58,
+  "aggregate_high_confidence_candidates_ge_98": 58,
+  "source_selection_confidence_percent": 99,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {"line":53,"candidate_id":"bduk_qmi_historical_premise_type_imputation","authority":"Building Digital UK","role":"AGGREGATE_IMPUTATION_NOT_PARCEL_EVIDENCE_GUARD","decision":"EXCLUDED_FROM_DIRECT_PARCEL_CLASSIFICATION","confidence_percent":100,"url":"https://www.gov.uk/government/statistics/bduk-delivery-performance-annual-april-2025-to-march-2026/quality-and-methodology-information-qmi-for-bduk-delivery-performance-annual-april-2025-to-march-2026","verified_fact":"About 9.8% of premises used for one premises-type table could not be matched to the correct AddressBase epoch; BDUK estimates type using postcode-level distribution.","use_rule":"Never use the imputed aggregate type as a definitive type for an individual UPRN/parcel."},
+    {"line":54,"candidate_id":"bduk_qmi_voucher_multiplier_estimation","authority":"Building Digital UK","role":"HISTORICAL_MULTIPLIER_ESTIMATION_GUARD","decision":"EXCLUDED_FROM_DIRECT_CURRENT_PARCEL_AVAILABILITY","confidence_percent":100,"url":"https://www.gov.uk/government/statistics/bduk-delivery-performance-annual-april-2025-to-march-2026/quality-and-methodology-information-qmi-for-bduk-delivery-performance-annual-april-2025-to-march-2026","verified_fact":"For older voucher projects where expected-premises data is unavailable/poor, BDUK uses multipliers with an 18% attrition adjustment; 31% of voucher premises in the referenced methodology are estimated this way.","use_rule":"Multiplier-derived counts are aggregate programme statistics, not observed individual parcel availability."},
+    {"line":55,"candidate_id":"bduk_qmi_superfast_expected_premises_attrition","authority":"Building Digital UK","role":"EXPECTED_BUILD_ATTRITION_GUARD","decision":"EXCLUDED_FROM_DIRECT_CURRENT_PARCEL_AVAILABILITY","confidence_percent":100,"url":"https://www.gov.uk/government/statistics/bduk-delivery-performance-annual-april-2025-to-march-2026/quality-and-methodology-information-qmi-for-bduk-delivery-performance-annual-april-2025-to-march-2026","verified_fact":"For Superfast expected premises passed data, BDUK applies a 5% attrition rate based on Ofcom data to confirm build.","use_rule":"Expected/adjusted counts cannot be converted into parcel-level current service without direct premises evidence."},
+    {"line":56,"candidate_id":"bduk_qmi_monthly_contract_vs_performance_noncomparability","authority":"Building Digital UK","role":"MONTHLY_CONTRACT_REPORT_NONCOMPARABILITY_GUARD","decision":"ACCEPTED_AS_REPORTING_SEMANTICS_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/statistics/bduk-delivery-performance-annual-april-2025-to-march-2026/quality-and-methodology-information-qmi-for-bduk-delivery-performance-annual-april-2025-to-march-2026","verified_fact":"Monthly Project Gigabit contract reports are not directly comparable to BDUK performance statistics: monthly reports reflect contractual delivery and do not remove overbuild or deduplicate across contracts/interventions in the same way.","use_rule":"Keep monthly contract totals out of parcel current scoring and deduplicate before any change count."},
+    {"line":57,"candidate_id":"bduk_qmi_external_reporting_lag","authority":"Building Digital UK","role":"SOURCE_TIMELINESS_LAG_GUARD","decision":"ACCEPTED_AS_STALENESS_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/statistics/bduk-delivery-performance-annual-april-2025-to-march-2026/quality-and-methodology-information-qmi-for-bduk-delivery-performance-annual-april-2025-to-march-2026","verified_fact":"BDUK states external reporting has a time lag due to supplier submissions and statistical production.","use_rule":"Do not interpret absence from BDUK statistical delivery output as proof of current NO_SERVICE."},
+    {"line":58,"candidate_id":"ofcom_spring_2026_satellite_affordable_decent_context","authority":"Ofcom","role":"SATELLITE_USO_CONTEXT_NOT_FIXED_POSTCODE_PRIMARY","decision":"EXCLUDED_FROM_DIRECT_FIXED_PARCEL_SCORE","confidence_percent":100,"url":"https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026","verified_fact":"Ofcom reports only about 4,000 premises without affordable decent broadband after lower-priced satellite availability, while 39,000 remain unable to access decent broadband from fixed line or FWA.","use_rule":"Satellite affordability context must not overwrite fixed-line/FWA postcode coverage or be treated as a verified fixed parcel connection."}
+  ],
+  "operations": [
+    {"line":91,"operation":"bduk_historical_premise_type_imputation_gate_9_8_percent","state":"PASS"},
+    {"line":92,"operation":"bduk_voucher_multiplier_estimation_gate_31_percent_18_attrition","state":"PASS"},
+    {"line":93,"operation":"bduk_superfast_expected_premises_5_percent_attrition_gate","state":"PASS"},
+    {"line":94,"operation":"bduk_monthly_contract_vs_performance_noncomparability_gate","state":"PASS"},
+    {"line":95,"operation":"bduk_external_reporting_lag_no_data_guard","state":"PASS"},
+    {"line":96,"operation":"ofcom_satellite_vs_fixed_fwa_semantics_gate","state":"PASS"},
+    {"line":97,"operation":"fresh_schema_audit_output_recheck","state":"PASS","evidence":"expected ofcom_2026_schema_audit_latest.json still absent on canonical branch"},
+    {"line":98,"operation":"canonical_publish_gate","state":"PENDING","evidence":"direct_push_forbidden=true; portable coordinator heartbeat stale; child branch only"}
+  ],
+  "blocker": "PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data": false,
+  "final_ready": false
+}
