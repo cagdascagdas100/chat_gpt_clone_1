@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23T16:52:00Z",
+  "runner_state": "RECOVERY_PARKED",
+  "publication_state": "CHILD_BRANCH_ONLY_PUBLISH_PENDING",
+  "aggregate_research_operations_completed": 60,
+  "aggregate_research_operations_total": 60,
+  "aggregate_source_candidates": 46,
+  "aggregate_high_confidence_candidates_ge_98": 46,
+  "source_selection_confidence_percent": 99,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {"line":40,"candidate_id":"os_open_uprn_nonpostal_feature_guard","authority":"Ordnance Survey","role":"UPRN_NON_PREMISES_FILTER_GUARD","decision":"ACCEPTED_AS_BINDING_QUALITY_GUARDRAIL","confidence_percent":100,"url":"https://www.ordnancesurvey.co.uk/products/os-open-uprn","verified_fact":"OS Open UPRN includes residential and commercial properties plus addressable non-postal features such as bus shelters and electricity substations.","use_rule":"UPRN existence alone is not sufficient to create a broadband parcel row; require premises eligibility/property binding."},
+    {"line":41,"candidate_id":"bduk_recognised_premises_boolean_filter","authority":"Building Digital UK","role":"PREMISES_ELIGIBILITY_FILTER","decision":"ACCEPTED_AS_CROSSCHECK_FILTER_NOT_PRIMARY_COVERAGE","confidence_percent":100,"url":"https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans","verified_fact":"bduk_recognised_premises explicitly indicates whether a UPRN is in BDUK's premises base where gigabit connectivity would provide benefit.","use_rule":"Use as a BDUK cross-check eligibility signal; do not override the canonical parcel inventory or Ofcom coverage."},
+    {"line":42,"candidate_id":"bduk_struprn_data_integrity_guard","authority":"Building Digital UK","role":"UPRN_SERIALISATION_INTEGRITY_GUARD","decision":"ACCEPTED_AS_DATA_INTEGRITY_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans","verified_fact":"BDUK publishes struprn with a str prefix specifically to help maintain UPRN data integrity when software reads the files.","use_rule":"Prefer struprn or validated integer parsing during joins so UPRNs are never rounded or converted to scientific notation."},
+    {"line":43,"candidate_id":"bduk_january_2026_sample_boolean_schema_readback","authority":"Building Digital UK","role":"CURRENT_FUTURE_BOOLEAN_SCHEMA_READBACK","decision":"ACCEPTED_AS_SCHEMA_SAMPLE_NOT_POPULATION_EVIDENCE","confidence_percent":100,"url":"https://www.gov.uk/csv-preview/6a203e8831d692299df80d17/2026-06-02_202601_BDUK_uprn_release_sample.csv","verified_fact":"The official sample exposes UPRN, struprn, bduk_recognised_premises, postcode, current_gigabit, future_gigabit and intervention fields in one row schema.","use_rule":"Use only for parser/schema tests; never extrapolate sample rows to other parcels."},
+    {"line":44,"candidate_id":"ofcom_availability_vs_takeup_semantics_guard","authority":"Ofcom","role":"AVAILABILITY_TAKEUP_SEPARATION_GUARD","decision":"ACCEPTED_AS_MEASUREMENT_SEMANTICS_GUARDRAIL","confidence_percent":100,"url":"https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026","verified_fact":"Ofcom Spring 2026 reports fixed broadband availability separately from full-fibre take-up/active connection counts.","use_rule":"Never treat availability as an active subscription, and never use take-up as proof that every premises in an area can order service."},
+    {"line":45,"candidate_id":"ons_uprn_products_gb_scope_guard","authority":"Office for National Statistics","role":"GEOGRAPHIC_SCOPE_GUARD","decision":"ACCEPTED_AS_SCOPE_GUARDRAIL","confidence_percent":100,"url":"https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts","verified_fact":"NSUL and ONSUD provide Great Britain coverage and are released every six weeks.","use_rule":"Valid for the England slot; do not silently reuse as Northern Ireland coverage."},
+    {"line":46,"candidate_id":"bduk_release_correction_provenance_guard","authority":"Building Digital UK","role":"LATEST_CORRECTED_RELEASE_PROVENANCE_GUARD","decision":"ACCEPTED_AS_VERSIONING_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/publications/september-2025-omr-and-premises-in-bduk-plans-england-and-wales","verified_fact":"BDUK corrected previously identified supplier-name errors and replaced September 2025 release files on 2 February 2026.","use_rule":"Always prefer the latest corrected release and preserve publication/update date in provenance; never join stale supplier-name versions silently."}
+  ],
+  "operations": [
+    {"line":74,"operation":"fresh_canonical_head_owner_heartbeat_recheck_batch006","state":"PASS","evidence":"same continuation; no live slot owner; no second runner"},
+    {"line":75,"operation":"os_open_uprn_nonpostal_feature_filter_gate","state":"PASS","evidence":"UPRNs include non-postal addressable features; identity alone is not premises eligibility"},
+    {"line":76,"operation":"bduk_recognised_premises_filter_gate","state":"PASS","evidence":"explicit boolean retained as cross-check eligibility field"},
+    {"line":77,"operation":"struprn_serialisation_integrity_gate","state":"PASS","evidence":"BDUK publishes struprn to maintain data integrity in software"},
+    {"line":78,"operation":"bduk_january_2026_sample_parser_schema_gate","state":"PASS","evidence":"official sample confirms current/future gigabit and intervention field schema"},
+    {"line":79,"operation":"ofcom_availability_takeup_semantics_separation_gate","state":"PASS","evidence":"Spring 2026 availability and full-fibre take-up are separate measures"},
+    {"line":80,"operation":"ons_uprn_products_great_britain_scope_gate","state":"PASS","evidence":"NSUL/ONSUD GB scope; England slot supported"},
+    {"line":81,"operation":"bduk_latest_corrected_release_provenance_gate","state":"PASS","evidence":"historic supplier-name correction demonstrates latest-version requirement"},
+    {"line":82,"operation":"canonical_publish_gate_recheck_batch006","state":"PENDING","evidence":"direct_push_forbidden=true; portable coordinator heartbeat stale; child branch only"}
+  ],
+  "next_verified_action": "EXISTING_SINGLE_COORDINATOR_EXECUTE_OFCom_2026_SCHEMA_AUDIT_THEN_MIGRATE_33785_VERIFIED_ROWS_AND_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+  "blocker": "PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data": false,
+  "final_ready": false
+}
