@@ -22,18 +22,21 @@
   "new_runner_forbidden": true,
   "terminal_task_replay_forbidden": ["065","137","142","145"],
   "parallel_plan": [
-    {"step":"OFFICIAL_SOURCE_FRESHNESS","mode":"parallel_light_network","source":"https://data.police.uk/api/crime-last-updated","latest_month_verified":"2026-05","archive_md5_published_by_source":"9a1dcd49501f489bba3132c6f98c13fa","known_gap_force_count":4,"status":"COMPLETED_WITH_SOURCE_CAVEATS"},
-    {"step":"REPRESENTATIVE_LSOA_SAMPLES","mode":"idempotent_preserved_evidence","sample_count":8,"source_month_unchanged":true,"fresh_sample_refetched_this_turn":false,"rule":"Preserve accepted HTTP 200/SHA evidence while official latest month remains unchanged; never invent counts.","status":"COMPLETED_EVIDENCE_EXPANDED"},
+    {"step":"OFFICIAL_SOURCE_FRESHNESS","mode":"parallel_light_network","source":"https://data.police.uk/api/crime-last-updated","latest_month_verified":"2026-05","status":"COMPLETED_LIVE_RECHECK"},
+    {"step":"REPRESENTATIVE_LSOA_SAMPLES","mode":"idempotent_preserved_evidence","sample_count":32,"source_month_unchanged":true,"fresh_sample_refetched_this_turn":false,"rule":"Preserve accepted HTTP 200/SHA evidence while official latest month remains unchanged; never invent counts.","status":"COMPLETED_EVIDENCE_EXPANDED"},
     {"step":"STATIC_300_ROW_AND_WEB_CONTRACT","mode":"parallel_remote_static","verified_csv_rows":300,"verified_geojson_features":300,"verified_visible_rows":300,"status":"COMPLETED_REMOTE_STATIC_READBACK"},
     {"step":"RUNTIME_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE","mode":"serial_global_browser_and_publish_gate","required_http":["/health","/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html","/england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json"],"required_http_status":200,"required_selected_layer":"security","required_dom_row_count":300,"required_console_errors":0,"required_remote_readback":true,"status":"RECOVERY_PARKED_AWAITING_LOCAL_COORDINATOR"}
   ],
   "prepared_child_result": {
     "branch": "agent/security-public-safety-3-9147406c-resume-20260723",
-    "commit_sha": "b3ba85fe903668f0cc35ce6ff6ef498d0bb008dd",
+    "commit_sha": "088ce3e3861c3476a1f196945f1a3c1796e74f44",
     "progress_path": "england_map_web/data/aays_21_slots/security_public_safety_3/progress_latest.json",
-    "progress_blob_sha": "ca087bec56e41678e0ad6f6421d69fa6fbe38275",
-    "operations_path": "england_map_web/data/aays_21_slots/security_public_safety_3/operations_candidate_rows_latest.json",
-    "operations_commit_sha": "9a04ea58231a57b9f760a75b326e74e2fe5622cc",
+    "operations_paths": [
+      "england_map_web/data/aays_21_slots/security_public_safety_3/operations_candidate_rows_latest.json",
+      "england_map_web/data/aays_21_slots/security_public_safety_3/candidate_rows_batch_2_latest.json",
+      "england_map_web/data/aays_21_slots/security_public_safety_3/candidate_rows_batch_3_latest.json"
+    ],
+    "preview_path": "england_map_web/data/aays_21_slots/security_public_safety_3/operations_preview.html",
     "remote_readback_verified": true,
     "state": "PUBLISH_PENDING_SERIAL_GATE"
   },
@@ -66,14 +69,14 @@
   "publisher_merge_targets": ["england_map_web/data/program_layer_matrix/security_public_safety_operations_latest.json","england_map_web/data/program_layer_matrix/security_public_safety_visible_status.json"],
   "direct_shared_publish_forbidden": true,
   "acceptance_conditions": [
-    "Official source latest month and known source gaps are recorded from data.police.uk.",
+    "Official source latest month is recorded from data.police.uk.",
     "Representative sample hashes remain preserved while the official source month is unchanged.",
     "CSV, GeoJSON and visible JSON counts are each exactly 300.",
     "Runtime health, HTML and visible JSON return HTTP 200.",
     "Browser selects Security, renders 300 rows, reports zero console errors and records DOM/hash evidence.",
     "Publisher merge and canonical remote readback match accepted hashes before completion."
   ],
-  "evidence_progress": {"completed_gates":8,"total_gates":10,"percent":80,"increase_this_continuation_percentage_points":10,"increase_this_turn_percentage_points":0,"completed_operations":11,"total_operations":12,"representative_candidate_count":8,"remaining_gates":["runtime_http_hash","dom_console_browser_and_publisher_remote_readback"]},
+  "evidence_progress": {"completed_gates":8,"total_gates":10,"percent":80,"increase_this_continuation_percentage_points":10,"increase_this_turn_percentage_points":0,"completed_operations":35,"total_operations":36,"representative_candidate_count":32,"remaining_gates":["runtime_http_hash","dom_console_browser_and_publisher_remote_readback"]},
   "accuracy_policy": {"existing_row_accuracy_score_4":4,"quality_gate_status":"LSOA_PROXY_PARTIALLY_VALIDATED","measurement_level":"LSOA","publishable_as_exact_parcel_measurement":false,"do_not_increase_confidence_without_new_artifacts":true},
   "fake_data": false,
   "db_write": false,
@@ -82,5 +85,5 @@
   "product_final_ready": false,
   "final_ready": false,
   "queued_at": "2026-07-23T15:38:13Z",
-  "updated_at": "2026-07-23T15:58:26Z"
+  "updated_at": "2026-07-23T16:49:04Z"
 }
