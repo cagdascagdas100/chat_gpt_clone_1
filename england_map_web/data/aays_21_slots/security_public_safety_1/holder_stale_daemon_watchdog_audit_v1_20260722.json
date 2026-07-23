@@ -1,29 +1,45 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "security_public_safety_1",
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
   "dependency_slot": "height_difference_2",
-  "checked_on": "2026-07-22",
-  "checked_at_istanbul": "2026-07-22T19:22:21+03:00",
-  "status": "BLOCKED_DEPENDENCY_STALE_DAEMON_FALSE_SUCCESS_PATHS_FOUND",
+  "checked_on": "2026-07-23",
+  "checked_at_istanbul": "2026-07-23T18:06:44+03:00",
+  "status": "RECOVERY_PARKED_DEPENDENCY_OWNER_AND_EXISTING_F_HOST_ACTION_REQUIRED",
   "acceptance_evidence_for_security": false,
   "heartbeat": {
     "path": "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json",
     "heartbeat_at": "2026-07-16T13:45:53.0433295Z",
-    "age_minutes_at_check": 8796.47,
-    "age_hours_at_check": 146.61,
+    "age_minutes_at_check": 10160.85,
+    "age_hours_at_check": 169.35,
     "configured_stale_minutes": 20,
-    "stale_threshold_exceeded_minutes": 8776.47,
+    "stale_threshold_exceeded_minutes": 10140.85,
     "state_in_stale_receipt": "task_completed",
     "remote_receipt_is_live_process_proof": false
+  },
+  "ownership_and_queue": {
+    "security_ownership_state": "unclaimed",
+    "security_live_owner": false,
+    "security_queue_state": "READY_FOR_CLAIM",
+    "security_queue_priority": 2,
+    "holder_queue_priority": 1,
+    "holder_queue_state": "pickup_requested",
+    "shared_active_claim_state": "done",
+    "shared_active_claim_released_at": "2026-07-16T13:46:07Z",
+    "second_runner_created": false,
+    "second_task_created": false
   },
   "artifacts": {
     "operator_recovery": {
       "path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1",
-      "blob_sha": "1632d6d7467c21d0ba0bfdd880a137afb2f905f3"
+      "current_blob_sha": "6c9b60be881b37f450a965f41578317de024f1fb",
+      "status_record_blob_sha": "1632d6d7467c21d0ba0bfdd880a137afb2f905f3",
+      "blob_drift_detected": true
     },
     "restart_helper": {
       "path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1",
-      "blob_sha": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
+      "current_blob_sha": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
     },
     "holder_queue": {
       "path": "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json",
@@ -32,79 +48,110 @@
     }
   },
   "defect_resolution": {
-    "dependency_defects_found": 6,
+    "dependency_defects_found": 9,
     "dependency_defects_fixed_by_security_slot": 0,
     "dependency_owner_fix_required": true,
     "security_slot_modification_forbidden": true,
+    "automatic_resolution_available_in_this_session": false,
     "defects": [
       {
         "code": "HELPER_DOES_NOT_READ_HEARTBEAT_FRESHNESS",
-        "effect": "A live but hung daemon is indistinguishable from a healthy daemon."
+        "effect": "A visible daemon process can be treated as healthy without proving a fresh matching heartbeat."
       },
       {
         "code": "EXISTING_DAEMON_RETURNS_ZERO_WITHOUT_FRESH_HEARTBEAT",
-        "effect": "The helper can report success while the queue remains unprocessed."
+        "effect": "The helper exits zero at line 109 while the queue may remain unprocessed."
       },
       {
         "code": "POST_START_SUCCESS_CHECKS_PROCESS_COUNT_ONLY",
-        "effect": "A newly visible daemon process is accepted without a fresh heartbeat or queue scan."
+        "effect": "A process is accepted without fresh heartbeat, queue scan or task claim evidence."
       },
       {
         "code": "TASK_CLAIM_IS_NEVER_VERIFIED",
-        "effect": "The helper receipt always writes task_claimed=false and does not wait for priority-1 claim."
+        "effect": "The restart receipt writes task_claimed=false and never promotes it."
       },
       {
         "code": "OPERATOR_MAPS_HELPER_EXIT_ZERO_TO_INVOKED_NOT_RECOVERED",
-        "effect": "Exit code zero proves invocation only, not recovery, heartbeat freshness or claim."
+        "effect": "Helper exit zero is mapped to recovery invoked, not proven recovery."
       },
       {
         "code": "OPERATOR_RECEIPT_HAS_NO_DIRECT_COMMIT_PUSH_READBACK",
-        "effect": "The local preflight receipt can remain absent remotely until a later runner publish succeeds."
+        "effect": "The operator receipt can remain local and cannot prove remote recovery."
+      },
+      {
+        "code": "OPERATOR_STATUS_BLOB_DRIFT",
+        "effect": "Current operator blob differs from the blob recorded in holder and security status evidence."
+      },
+      {
+        "code": "CONTRACT_FORBIDDEN_RESET_HARD",
+        "effect": "Current operator script uses git reset --hard although the continuation contract forbids reset --hard during recovery."
+      },
+      {
+        "code": "EARLY_THROW_RECEIPT_GAPS",
+        "effect": "Missing repo, Git, status or HEAD errors can throw before a recovery receipt is written."
       }
     ],
     "required_holder_owner_changes": [
-      "Read the canonical daemon heartbeat and apply a bounded freshness threshold.",
-      "When a daemon process exists but heartbeat is stale, fail closed or perform the approved single-daemon recovery action.",
-      "After start, require a fresh heartbeat with matching process identity and branch.",
+      "Remove reset --hard from guarded recovery and preserve dirty work safely with snapshot/stash plus an isolated recovery worktree when needed.",
+      "Write a failure receipt on every exit path, including missing repository, Git executable, status and HEAD failures.",
+      "Read the canonical daemon heartbeat and enforce a bounded freshness threshold.",
+      "When a daemon exists but heartbeat is stale, fail closed or execute the approved single-daemon recovery.",
+      "After start, require a fresh heartbeat with matching process identity and canonical branch.",
       "Require priority-1 queue scan or claim evidence before declaring recovery successful.",
       "Publish operator and restart receipts with commit, push and remote readback."
     ]
   },
   "checks": [
-    {"order":1,"status":"PASS","name":"remote_heartbeat_read","evidence":"heartbeat receipt fetched from target branch"},
-    {"order":2,"status":"BLOCKED","name":"heartbeat_freshness","evidence":"8796.47 minutes old; threshold 20"},
-    {"order":3,"status":"PASS","name":"operator_blob_exact","evidence":"1632d6d7467c21d0ba0bfdd880a137afb2f905f3"},
-    {"order":4,"status":"PASS","name":"restart_helper_blob_exact","evidence":"b3a18bcdb1b7158d18aab33b42d5797342d23cd1"},
-    {"order":5,"status":"PASS","name":"holder_queue_revision_current","evidence":"revision 25; blob 0dd6d54114e86eb422dce2cb499f7294e463e4ae"},
-    {"order":6,"status":"PASS","name":"single_daemon_process_guard","evidence":"multiple canonical processes are blocked"},
-    {"order":7,"status":"PASS","name":"start_only_when_zero_processes","evidence":"new process is started only when no canonical process is detected"},
-    {"order":8,"status":"BLOCKED","name":"helper_heartbeat_path_missing","evidence":"restart helper contains no heartbeat file read"},
-    {"order":9,"status":"BLOCKED","name":"helper_stale_minutes_missing","evidence":"restart helper contains no heartbeat age threshold"},
-    {"order":10,"status":"BLOCKED","name":"existing_daemon_false_success_path","evidence":"one persistent daemon returns exit 0 without heartbeat validation"},
-    {"order":11,"status":"BLOCKED","name":"post_start_heartbeat_missing","evidence":"success checks daemon count, not fresh heartbeat"},
-    {"order":12,"status":"BLOCKED","name":"post_start_queue_scan_missing","evidence":"no queue scan timestamp or ready-count check"},
-    {"order":13,"status":"BLOCKED","name":"priority_1_claim_missing","evidence":"task_claimed is written false and never promoted"},
-    {"order":14,"status":"LIMIT","name":"operator_success_semantics","evidence":"helper exit 0 maps to recovery invoked, not recovered"},
-    {"order":15,"status":"BLOCKED","name":"operator_post_helper_heartbeat_missing","evidence":"no fresh heartbeat read after helper"},
-    {"order":16,"status":"BLOCKED","name":"operator_post_helper_claim_missing","evidence":"no holder claim read after helper"},
-    {"order":17,"status":"LIMIT","name":"operator_direct_publish_missing","evidence":"receipt is written locally without direct commit/push/readback"},
-    {"order":18,"status":"PASS","name":"global_alias_unchanged","evidence":"height_difference_2 remains holder"},
-    {"order":19,"status":"PASS","name":"security_priority_preserved","evidence":"security remains priority 2"},
-    {"order":20,"status":"PASS","name":"no_second_runner_created","evidence":"audit only; no runner/task/alias mutation"},
-    {"order":21,"status":"PASS","name":"security_local_stuck_paths_zero","evidence":"security local execution and queue gaps remain zero"},
-    {"order":22,"status":"PASS","name":"security_acceptance_not_promoted","evidence":"canonical progress remains 5/8"},
-    {"order":23,"status":"PASS","name":"final_ready_false","evidence":"final_ready=false"},
-    {"order":24,"status":"PASS","name":"mutation_flags_false","evidence":"fake_data/db_write/migration/production_deploy=false"}
+    {"order": 1, "status": "PASS", "name": "continuation_key_reused", "evidence": "818c4913...c1c7d unchanged"},
+    {"order": 2, "status": "PASS", "name": "security_owner_readback", "evidence": "ownership state unclaimed; no live lease"},
+    {"order": 3, "status": "PASS", "name": "security_queue_identity", "evidence": "existing task reused; priority 2; no duplicate task"},
+    {"order": 4, "status": "PASS", "name": "shared_active_claim_terminal", "evidence": "last claim is done and released"},
+    {"order": 5, "status": "BLOCKED", "name": "daemon_heartbeat_freshness", "evidence": "10160.85 minutes old; threshold 20"},
+    {"order": 6, "status": "PASS", "name": "restart_helper_blob_readback", "evidence": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"},
+    {"order": 7, "status": "LIMIT", "name": "operator_blob_reconciled", "evidence": "remote current 6c9b60be... differs from status evidence 1632d6d7..."},
+    {"order": 8, "status": "PASS", "name": "holder_queue_revision_readback", "evidence": "revision 25; priority 1"},
+    {"order": 9, "status": "PASS", "name": "single_daemon_process_guard", "evidence": "multiple canonical processes are blocked"},
+    {"order": 10, "status": "PASS", "name": "start_only_when_zero_processes", "evidence": "new process start path requires zero matching processes"},
+    {"order": 11, "status": "BLOCKED", "name": "helper_heartbeat_path_missing", "evidence": "restart helper contains no canonical heartbeat read"},
+    {"order": 12, "status": "BLOCKED", "name": "helper_stale_minutes_missing", "evidence": "restart helper contains no heartbeat age threshold"},
+    {"order": 13, "status": "BLOCKED", "name": "existing_daemon_false_success_path", "evidence": "one daemon returns exit 0 without freshness validation"},
+    {"order": 14, "status": "BLOCKED", "name": "post_start_heartbeat_missing", "evidence": "success checks daemon count only"},
+    {"order": 15, "status": "BLOCKED", "name": "post_start_queue_scan_missing", "evidence": "no queue scan timestamp or ready-count proof"},
+    {"order": 16, "status": "BLOCKED", "name": "priority_1_claim_missing", "evidence": "task_claimed remains false"},
+    {"order": 17, "status": "LIMIT", "name": "operator_success_semantics", "evidence": "exit 0 means invoked rather than recovered"},
+    {"order": 18, "status": "BLOCKED", "name": "operator_post_helper_heartbeat_missing", "evidence": "no fresh heartbeat read after helper"},
+    {"order": 19, "status": "BLOCKED", "name": "operator_post_helper_claim_missing", "evidence": "no holder claim read after helper"},
+    {"order": 20, "status": "BLOCKED", "name": "operator_remote_readback_missing", "evidence": "no direct commit/push/readback gate"},
+    {"order": 21, "status": "BLOCKED", "name": "reset_hard_contract_compliance", "evidence": "operator script lines 189-196 invoke git reset --hard"},
+    {"order": 22, "status": "BLOCKED", "name": "all_exit_receipts", "evidence": "several early throw paths precede Write-Receipt"},
+    {"order": 23, "status": "PASS", "name": "global_alias_unchanged", "evidence": "height_difference_2 remains priority-1 holder"},
+    {"order": 24, "status": "PASS", "name": "security_priority_preserved", "evidence": "security remains priority 2"},
+    {"order": 25, "status": "PASS", "name": "no_second_runner_created", "evidence": "remote audit only; no process or alias mutation"},
+    {"order": 26, "status": "PASS", "name": "security_local_stuck_paths_zero", "evidence": "9 local defects fixed; 0 local stuck paths"},
+    {"order": 27, "status": "PASS", "name": "prepared_rows_preserved", "evidence": "300/300 verified rows; 300 accuracy-score-4 rows"},
+    {"order": 28, "status": "PASS", "name": "prepared_candidate_contract_preserved", "evidence": "130/130 candidates; 16/16 endpoints"},
+    {"order": 29, "status": "PASS", "name": "security_acceptance_not_promoted", "evidence": "runtime evidence absent; canonical progress remains 5/8"},
+    {"order": 30, "status": "PASS", "name": "mutation_flags_false", "evidence": "fake_data/db_write/migration/production_deploy=false"}
   ],
-  "checks_recorded": 24,
+  "checks_recorded": 30,
+  "prepared_scope": {
+    "verified_rows": 300,
+    "accuracy_score_4_rows": 300,
+    "canonical_candidates": 130,
+    "unique_endpoints": 16,
+    "official_source_rows_visible": 55,
+    "new_business_rows_added_during_recovery": 0
+  },
   "security_canonical_progress": {
     "completed_units": 5,
     "total_units": 8,
     "overall_percent": 62.5,
     "percent_change": 0.0
   },
-  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
-  "blocker": "HOLDER_RESTART_HELPER_CAN_RETURN_SUCCESS_WITHOUT_FRESH_HEARTBEAT_OR_QUEUE_CLAIM; F_HOST_RECOVERY_RECEIPTS_ABSENT",
+  "first_unverified_step": "HOLDER_OWNER_REMOVES_UNSAFE_RECOVERY_PATHS_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "blocker": "STALE_F_HOST_DAEMON; HELPER_FALSE_SUCCESS_PATHS; OPERATOR_BLOB_DRIFT; RESET_HARD_CONTRACT_VIOLATION; OPERATOR_AND_RESTART_REMOTE_RECEIPTS_ABSENT",
+  "recovery_state": "RECOVERY_PARKED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
   "output_semantics": "AREA_LEVEL_PROXY",
   "measurement_level": "lsoa",
   "parcel_measurement": false,
