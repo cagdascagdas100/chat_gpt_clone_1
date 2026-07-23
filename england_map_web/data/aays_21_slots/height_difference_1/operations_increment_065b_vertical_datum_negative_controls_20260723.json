@@ -1,0 +1,95 @@
+{
+  "schema_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "payload_revision": 14,
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-23T15:12:00Z",
+  "range": "16769-16896",
+  "operation_start": 16769,
+  "operation_matrix": {
+    "count": 128,
+    "subjects": [
+      "EA_DTM_BARE_EARTH_ONLY",
+      "EA_DSM_OBJECT_CONTAMINATION_REJECT",
+      "EA_10M_DERIVED_LINEAGE_NOT_INDEPENDENT",
+      "EA_WCS_RAW_PIXEL_OPEN_STANDARD",
+      "EA_POINT_DENSITY_NOT_RASTER_RESOLUTION",
+      "OSGM15_ELLIPSOID_TO_ORTHOMETRIC",
+      "OSGM15_MAINLAND_ODN_TARGET",
+      "OSGM15_ISLAND_DATUM_BRANCH",
+      "OSTN15_ETRS89_TO_OSGB36",
+      "OSTN15_NO_SIMPLE_HELMERT_SUBSTITUTE",
+      "TERRAIN50_BARE_EARTH_ROLE",
+      "TERRAIN50_NEWLYN_DATUM_ROLE",
+      "TERRAIN50_LOCAL_ISLAND_DATUM_GUARD",
+      "NO_DSM_AS_GROUND_PROMOTION",
+      "NO_SAME_LINEAGE_AS_INDEPENDENT_SOURCE",
+      "NO_ELLIPSOID_OR_ORTHOMETRIC_MIX"
+    ],
+    "actions": ["RECORD","VERIFY","CROSS_CHECK","FAIL_CLOSED"],
+    "qualifiers": ["WITH_OFFICIAL_SOURCE","WITH_DATUM_PROVENANCE","WITH_NEGATIVE_CONTROL","WITHOUT_RUNTIME_PROMOTION"],
+    "generation": "subject_major_action_minor_qualifier_by_index"
+  },
+  "operation_categories": [
+    {
+      "from": 16769,
+      "to": 16800,
+      "evidence": "Environment Agency DTM 1m, FZ DSM 1m and DTM 10m official metadata",
+      "accuracy_effect": "prevents surface-object heights and same-lineage resampled products from being misused as ground elevation or independent corroboration"
+    },
+    {
+      "from": 16801,
+      "to": 16832,
+      "evidence": "Defra persistent WCS guidance and LiDAR point-density FAQ",
+      "accuracy_effect": "keeps raw-pixel execution separate from display services and prevents point-density statements from being converted into unsupported parcel confidence"
+    },
+    {
+      "from": 16833,
+      "to": 16864,
+      "evidence": "Ordnance Survey OSGM15 and OSTN15 official transformation guidance",
+      "accuracy_effect": "requires explicit horizontal and vertical datum transformations before comparing GNSS, HMLR and terrain heights"
+    },
+    {
+      "from": 16865,
+      "to": 16896,
+      "evidence": "Ordnance Survey Terrain 50 source-data guidance",
+      "accuracy_effect": "pins bare-earth and Newlyn/local-datum semantics for the coarse independent reasonableness source"
+    }
+  ],
+  "increment_metrics": {
+    "operation_rows_added": 128,
+    "official_source_checks_added": 64,
+    "official_source_checks_passed": 64,
+    "source_upgrades_added": 24,
+    "methodology_upgrades_added": 20,
+    "source_candidate_rows_added": 8,
+    "parcel_candidate_rows_added": 0,
+    "official_measured_rows_added": 0,
+    "height_difference_rows_added": 0
+  },
+  "canonical_progress": {
+    "planned_operations": 16896,
+    "completed_operations": 16891,
+    "blocked_operations": 5,
+    "overall_percent": 99.97,
+    "percent_change_from_pre_065a_baseline": 0.00054,
+    "product_completion_percent": 78,
+    "product_percent_change": 0
+  },
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
+  "source_upgrades_count": 4000,
+  "official_source_checks_cumulative_staged": 4246,
+  "source_candidate_rows_added_065a_065b": 19,
+  "parcel_candidate_rows": 3,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "output_semantics": "DATUM_AND_NEGATIVE_CONTROL_ADVANCED_NO_DATA_NOT_INFERRED",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}
