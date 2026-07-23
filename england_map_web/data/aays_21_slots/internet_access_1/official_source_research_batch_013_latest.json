@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "stage": "OFCom_V2_METADATA_VISUAL_PREVALIDATION",
+  "general_program_progress_percent": 11.1,
+  "control_progress_percent": 94.7,
+  "research_prevalidation_completed": 110,
+  "research_prevalidation_total": 110,
+  "source_guard_candidates": 82,
+  "high_confidence_candidates_ge_98": 82,
+  "source_selection_confidence_percent": 99,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written": 0,
+  "guards": [
+    {"line":77,"guard":"ofcom_v2_correction_date","confidence_percent":100,"fact":"Metadata PDF is v2 dated 07/07/2026; CW/CV and MK/ME duplicate postcode-file errors were corrected."},
+    {"line":78,"guard":"ofcom_r2_postcode_file_count","confidence_percent":100,"fact":"All-premises postcode layer contains 121 files renamed to 202601_fixed_postcode_coverage_r2_XX.csv."},
+    {"line":79,"guard":"ofcom_all_premises_row_baseline","confidence_percent":100,"fact":"All-premises postcode layer has 1,741,096 data rows; residential postcode layer separately has 1,606,191 rows."},
+    {"line":80,"guard":"postcode_gigabit_not_full_fibre","confidence_percent":100,"fact":"At postcode and output-area level Ofcom reports gigabit-capable coverage but not full-fibre coverage due to commercial confidentiality."},
+    {"line":81,"guard":"unmatched_premises_unclassified","confidence_percent":100,"fact":"Premises not matched to at least one fixed-provider record with non-zero predicted download speed are unclassified, not NO_SERVICE."},
+    {"line":82,"guard":"fixed_line_default_fwa_explicit","confidence_percent":100,"fact":"Coverage fields refer to fixed-line broadband except fields where FWA is explicitly mentioned."}
+  ],
+  "operations": [
+    {"line":136,"operation":"ofcom_v2_pdf_visual_readback_page1","state":"PASS"},
+    {"line":137,"operation":"cw_cv_mk_me_duplicate_correction_gate","state":"PASS"},
+    {"line":138,"operation":"121_r2_postcode_files_visual_baseline","state":"PASS"},
+    {"line":139,"operation":"1741096_all_premises_rows_visual_baseline","state":"PASS"},
+    {"line":140,"operation":"1606191_residential_rows_separation_gate","state":"PASS"},
+    {"line":141,"operation":"postcode_gigabit_vs_full_fibre_confidentiality_gate","state":"PASS"},
+    {"line":142,"operation":"unmatched_premises_unclassified_gate","state":"PASS"},
+    {"line":143,"operation":"fixed_line_default_fwa_explicit_field_gate","state":"PASS"},
+    {"line":144,"operation":"binary_zip_runtime_audit","state":"PENDING_ENVIRONMENT_TRANSPORT","evidence":"Official ZIP listing verified, but binary transfer could not be completed in this environment; no fabricated archive PASS."}
+  ],
+  "blocker":"PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data":false,
+  "final_ready":false
+}
