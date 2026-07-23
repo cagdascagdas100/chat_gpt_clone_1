@@ -63,10 +63,18 @@ if ($LASTEXITCODE -ne 0 -or -not $RemoteLine) { throw "REMOTE_HEAD_READ_FAILED" 
 $RemoteHead = (($RemoteLine | Select-Object -First 1) -split "\s+")[0]
 if ($LocalHead -ne $RemoteHead) { throw "LOCAL_HEAD_NOT_REMOTE_HEAD_BEFORE_REQUEUE:local=$LocalHead remote=$RemoteHead" }
 
+$GitDir = Split-Path -Parent $GitExe
+if ([string]::IsNullOrWhiteSpace($GitDir) -or -not (Test-Path -LiteralPath $GitDir -PathType Container)) {
+    throw "GIT_EXECUTABLE_DIRECTORY_INVALID:$GitExe"
+}
+$env:PATH = "$GitDir;$env:PATH"
 $env:AAYS_GIT_EXE = $GitExe
 $env:AAYS_PORTABLE_ROOT = $PortableRoot
 $env:AAYS_REPO_ROOT = $RepoRoot
 $env:AAYS_SLOT_ID = "internet_access_2"
+
+$ResolvedGit = Get-Command git -ErrorAction SilentlyContinue
+if (-not $ResolvedGit) { throw "GIT_NOT_RESOLVABLE_FOR_PYTHON_GUARD_AFTER_PATH_EXPORT" }
 
 & $PythonExe $GuardPath --repo $RepoRoot --archive $ArchivePath --publish
 if ($LASTEXITCODE -ne 0) { throw "STRICT_REQUEUE_GUARD_FAILED:$LASTEXITCODE" }
@@ -82,6 +90,8 @@ if ($StartRunner) {
     state = "STRICT_006_REQUEUE_WRAPPER_COMPLETE"
     repo_root = $RepoRoot
     archive_path = $ArchivePath
+    portable_git_path_exported = $true
+    python_guard_git_resolvable = $true
     local_remote_head_match = $true
     existing_task_requeued = $true
     runner_start_requested = [bool]$StartRunner
