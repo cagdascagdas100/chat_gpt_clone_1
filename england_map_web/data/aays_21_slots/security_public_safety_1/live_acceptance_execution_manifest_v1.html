@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <title>Security/Public Safety 1 — 85 Satır Canlı Kabul Planı</title>
+  <style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:180px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.READY_NOT_EXECUTED,.BLOCKED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style>
+</head>
+<body>
+  <h1>85 Satır Canlı Kabul Yürütme Planı</h1>
+  <div class="note"><strong>Hazır, çalıştırılmadı:</strong> Bu tablo canlı kabul sonucu değildir. Mevcut tek F-host runner claim olmadan HTTP/count/SHA veya browser PASS üretilmez.</div>
+  <div class="cards">
+    <div class="card">Hazırlanan işlem<br><strong id="prepared">yükleniyor</strong></div>
+    <div class="card">Çalıştırılan işlem<br><strong id="executed">yükleniyor</strong></div>
+    <div class="card">Endpoint<br><strong id="endpoints">yükleniyor</strong></div>
+    <div class="card">Aday eşlemesi<br><strong id="candidates">yükleniyor</strong></div>
+    <div class="card">API sınırı<br><strong id="rate">yükleniyor</strong></div>
+    <div class="card">Manuel eylem<br><strong id="manual">yükleniyor</strong></div>
+  </div>
+  <h2>İşlemler — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Kapsam</th><th>Kapı</th><th>Durum</th><th>Beklenen kanıt</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+'use strict';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch(`live_acceptance_execution_manifest_v1_20260723.json?v=${Date.now()}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json()}).then(d=>{
+  const s=d.execution_summary;
+  prepared.textContent=`${s.prepared_operations}/85`;executed.textContent=`${s.executed_operations}/85`;endpoints.textContent=`${s.unique_endpoints}/16`;candidates.textContent=`${s.candidate_rows}/130`;rate.textContent=`${s.api_rate_limit_requests_per_second}/sn · burst ${s.api_burst_limit}`;manual.textContent=d.manual_action_state;
+  const out=[];
+  d.endpoints.forEach((e,i)=>d.operation_templates.forEach((t,j)=>{
+    const op=i*5+j+1;
+    let expected=t.rule;
+    if(t.gate==='HTTP_200') expected+=` İstek: ${e.request}`;
+    if(t.gate==='LIVE_COUNT_PARITY') expected+=` Beklenen count=${e.stored_crime_count}`;
+    if(t.gate==='CANONICAL_SHA256_PARITY') expected+=` Beklenen SHA=${e.stored_sha256}`;
+    if(t.gate==='MAP_TO_CANDIDATES') expected+=` Beklenen aday=${e.candidate_rows}`;
+    out.push([op,e.endpoint_id,t.gate,e.status,expected]);
+  }));
+  d.global_operations.forEach(g=>out.push([g.operation,'GLOBAL',g.gate,g.status,JSON.stringify(g)]));
+  if(out.length!==85)throw Error(`İşlem satırı uyuşmazlığı: ${out.length}/85`);
+  rows.innerHTML=out.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td><td class="${esc(x[3])}">${esc(x[3])}</td><td class="mono">${esc(x[4])}</td></tr>`).join('');
+  document.body.dataset.operationRows=String(out.length);document.body.dataset.executedOperations=String(s.executed_operations);document.body.dataset.blocker=d.blocker;
+}).catch(e=>{rows.innerHTML=`<tr><td colspan="5" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body>
+</html>
