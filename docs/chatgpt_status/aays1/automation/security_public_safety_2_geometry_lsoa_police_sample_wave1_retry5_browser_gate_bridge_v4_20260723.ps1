@@ -29,6 +29,9 @@ function Read-Json([string]$Path) {
   if(-not(Test-Path -LiteralPath $Path -PathType Leaf)){return$null}
   try{return(Get-Content -LiteralPath $Path -Raw -Encoding UTF8|ConvertFrom-Json)}catch{return$null}
 }
+function Set-Field([object]$Object,[string]$Name,[object]$Value) {
+  Add-Member -InputObject $Object -NotePropertyName $Name -NotePropertyValue $Value -Force
+}
 
 if($env:AAYS_SLOT_ID-and$env:AAYS_SLOT_ID-ne$slotId){throw"WRONG_SLOT=$($env:AAYS_SLOT_ID)"}
 $repoRoot=[IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\')
@@ -83,24 +86,24 @@ $baseBrowserOk=(
 $staticConsoleAcceptanceOk=($executableJsSurfaceAbsent-and$baseBrowserOk)
 $browserPassed=($jsonIdentityOk-and$localExactTableRowsOk-and$staticConsoleAcceptanceOk-and$domIdentityEvidenceOk)
 
-$gate.schema_version=5
-$gate.browser_gate_version='v4-static-no-js-exact-table'
-$gate.v3_exit_code=[int]$v3Exit
-$gate.json_exact_target_identity_passed=$jsonIdentityOk
-$gate.local_html_exact_twelve_table_rows_passed=$localExactTableRowsOk
-$gate.local_html_target_table_ids=@($localTargetCells)
-$gate.executable_javascript_surface=[ordered]@{script_tag_count=$scriptTagCount;inline_event_handler_count=$inlineHandlerCount;javascript_url_count=$javascriptUrlCount;absent=$executableJsSurfaceAbsent}
-$gate.dom_exact_table_rows_from_excerpt_passed=$domExactTableRowsFromExcerptOk
-$gate.dom_target_table_ids_from_excerpt=@($domTargetCells)
-$gate.console_acceptance_basis='served_html_sha256_equals_local_plus_static_no_script_no_inline_handler_no_javascript_url_plus_successful_headless_serialized_dom'
-$gate.console_acceptance_passed=$staticConsoleAcceptanceOk
-$gate.dom_console_browser_acceptance_passed=$browserPassed
-$gate.browser_smoke_passed=$browserPassed
-$gate.manual_review_required=(-not$browserPassed)
-$gate.post_sync_ok=$null
-$gate.post_sync_verification_external_to_automation=$true
-$gate.final_ready=$false
-$gate.fake_data=$false
+Set-Field $gate 'schema_version' 5
+Set-Field $gate 'browser_gate_version' 'v4-static-no-js-exact-table'
+Set-Field $gate 'v3_exit_code' ([int]$v3Exit)
+Set-Field $gate 'json_exact_target_identity_passed' $jsonIdentityOk
+Set-Field $gate 'local_html_exact_twelve_table_rows_passed' $localExactTableRowsOk
+Set-Field $gate 'local_html_target_table_ids' @($localTargetCells)
+Set-Field $gate 'executable_javascript_surface' ([ordered]@{script_tag_count=$scriptTagCount;inline_event_handler_count=$inlineHandlerCount;javascript_url_count=$javascriptUrlCount;absent=$executableJsSurfaceAbsent})
+Set-Field $gate 'dom_exact_table_rows_from_excerpt_passed' $domExactTableRowsFromExcerptOk
+Set-Field $gate 'dom_target_table_ids_from_excerpt' @($domTargetCells)
+Set-Field $gate 'console_acceptance_basis' 'served_html_sha256_equals_local_plus_static_no_script_no_inline_handler_no_javascript_url_plus_successful_headless_serialized_dom'
+Set-Field $gate 'console_acceptance_passed' $staticConsoleAcceptanceOk
+Set-Field $gate 'dom_console_browser_acceptance_passed' $browserPassed
+Set-Field $gate 'browser_smoke_passed' $browserPassed
+Set-Field $gate 'manual_review_required' (-not$browserPassed)
+Set-Field $gate 'post_sync_ok' $null
+Set-Field $gate 'post_sync_verification_external_to_automation' $true
+Set-Field $gate 'final_ready' $false
+Set-Field $gate 'fake_data' $false
 $text=(($gate|ConvertTo-Json -Depth 18)+"`n")
 Write-Utf8Atomic -Path $candidateGatePath -Text $text
 Write-Utf8Atomic -Path $runnerGatePath -Text $text
