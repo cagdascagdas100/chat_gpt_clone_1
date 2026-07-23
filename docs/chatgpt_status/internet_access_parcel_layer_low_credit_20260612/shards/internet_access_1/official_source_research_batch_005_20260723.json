@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23T16:45:00Z",
+  "runner_state": "RECOVERY_PARKED",
+  "publication_state": "CHILD_BRANCH_ONLY_PUBLISH_PENDING",
+  "aggregate_research_operations_completed": 51,
+  "aggregate_research_operations_total": 51,
+  "aggregate_source_candidates": 39,
+  "aggregate_high_confidence_candidates_ge_98": 39,
+  "source_selection_confidence_percent": 99,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {"line":34,"candidate_id":"ons_nsul_six_week_uprn_geography_lookup","authority":"Office for National Statistics","role":"UPRN_TO_STATISTICAL_GEOGRAPHY_BINDING","decision":"ACCEPTED_AS_BINDING_REFERENCE_NOT_BROADBAND_MEASUREMENT","confidence_percent":100,"url":"https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts","verified_fact":"NSUL covers Great Britain, is released every six weeks and links UPRNs to statistical geographies.","use_rule":"Use for UPRN/geography joins only; it contains no broadband availability value."},
+    {"line":35,"candidate_id":"ons_onsud_six_week_administrative_lookup","authority":"Office for National Statistics","role":"UPRN_TO_ADMINISTRATIVE_GEOGRAPHY_BINDING","decision":"ACCEPTED_AS_BINDING_REFERENCE_NOT_BROADBAND_MEASUREMENT","confidence_percent":100,"url":"https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts","verified_fact":"ONSUD covers Great Britain, is released every six weeks and allocates UPRNs to administrative/health/other geographies using UPRN grid references and point-in-polygon methodology.","use_rule":"Use to validate LAD/admin geography joins; never infer broadband from ONSUD."},
+    {"line":36,"candidate_id":"os_open_uprn_six_week_identity_coordinate_reference","authority":"Ordnance Survey","role":"AUTHORITATIVE_UPRN_IDENTITY_COORDINATE_REFERENCE","decision":"ACCEPTED_AS_BINDING_REFERENCE_NOT_BROADBAND_MEASUREMENT","confidence_percent":100,"url":"https://www.ordnancesurvey.co.uk/products/os-open-uprn","verified_fact":"OS Open UPRN provides coordinate references for every addressable location across Great Britain, is updated every six weeks and covers about 40 million addressable locations.","use_rule":"Use for UPRN identity/coordinate validation only; no service or coverage value is implied."},
+    {"line":37,"candidate_id":"bduk_current_gigabit_completeness_guard","authority":"Building Digital UK","role":"CURRENT_GIGABIT_COMPLETENESS_AND_STALENESS_GUARD","decision":"ACCEPTED_AS_QUALITY_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans","verified_fact":"BDUK states current_gigabit can miss premises connected after the January 2026 OMR and gaps exist because not all suppliers return OMR data.","use_rule":"FALSE or absent current_gigabit is not sufficient to declare NO_SERVICE; Ofcom current coverage remains primary."},
+    {"line":38,"candidate_id":"bduk_demolished_newbuild_missing_uprn_guard","authority":"Building Digital UK","role":"MISSING_UPRN_NO_DATA_GUARD","decision":"ACCEPTED_AS_NO_DATA_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans","verified_fact":"BDUK reports around 4,900 GIS contract premises absent because OS now categorises them as demolished; new builds can also be absent from the AddressBase epoch used.","use_rule":"Missing UPRN must remain unresolved/NO_DATA until identity is reconciled; never map missing identity to no broadband service."},
+    {"line":39,"candidate_id":"bduk_contract_change_recency_guard","authority":"Building Digital UK","role":"CONTRACT_FLAG_RECENCY_GUARD","decision":"ACCEPTED_AS_QUALITY_GUARDRAIL","confidence_percent":100,"url":"https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans","verified_fact":"BDUK says contract changes happen rapidly and recent changes might not be captured in a release.","use_rule":"Contract/intervention fields are context and cannot override current Ofcom coverage without date-consistent evidence."}
+  ],
+  "operations": [
+    {"line":64,"operation":"fresh_canonical_head_owner_heartbeat_recheck","state":"PASS","evidence":"same continuation; slot unclaimed; no second runner"},
+    {"line":65,"operation":"ons_nsul_six_week_binding_qualification","state":"PASS","evidence":"GB coverage; six-week release; UPRN-to-statistical-geography reference"},
+    {"line":66,"operation":"ons_onsud_six_week_admin_binding_qualification","state":"PASS","evidence":"GB coverage; six-week release; point-in-polygon administrative geography assignment"},
+    {"line":67,"operation":"os_open_uprn_identity_coordinate_qualification","state":"PASS","evidence":"~40m addressable locations; six-week update; free reference"},
+    {"line":68,"operation":"bduk_current_gigabit_false_not_no_service_guard","state":"PASS","evidence":"post-Jan-2026 connections and non-returning suppliers can create gaps"},
+    {"line":69,"operation":"bduk_missing_uprn_identity_no_data_guard","state":"PASS","evidence":"demolished/derelict and new-build AddressBase epoch differences can remove UPRNs"},
+    {"line":70,"operation":"bduk_4900_demolished_contract_exception_guard","state":"PASS","evidence":"~4,900 GIS contract premises identified as absent after OS demolition categorisation"},
+    {"line":71,"operation":"bduk_contract_change_recency_guard","state":"PASS","evidence":"rapid contract changes may not be captured in current release"},
+    {"line":72,"operation":"ofcom_primary_current_source_precedence_reaffirmed","state":"PASS","evidence":"Ofcom Spring 2026 remains primary current fixed coverage source; BDUK/ONS/OS are cross-check/binding guards"},
+    {"line":73,"operation":"canonical_publish_gate_recheck","state":"PENDING","evidence":"direct_push_forbidden=true; portable coordinator heartbeat stale; child branch only"}
+  ],
+  "next_verified_action": "EXISTING_SINGLE_COORDINATOR_EXECUTE_OFCom_2026_SCHEMA_AUDIT_THEN_MIGRATE_33785_VERIFIED_ROWS_AND_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
+  "blocker": "PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data": false,
+  "final_ready": false
+}
