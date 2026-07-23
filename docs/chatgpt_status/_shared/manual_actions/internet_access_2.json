@@ -1,18 +1,18 @@
 {
-  "schema_version": 10,
+  "schema_version": 11,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. Ofcom still publishes the January 2026 coverage ZIP listing, but the archive bytes are unavailable in current/public catalog routes. Zero official coverage candidates and zero 3/4 accuracy values have been written. The exact two review rows must be exported on the canonical host with the fail-closed publisher wrapper.",
+  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks now have at least one verified identity-only example. Ofcom still publishes the January 2026 coverage ZIP listing, but the archive bytes are unavailable in current/public catalog routes. Zero official coverage candidates and zero 3/4 accuracy values have been written. The exact two review rows must be exported on the canonical host with the fail-closed publisher wrapper.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-23T01:08:25Z",
+  "updated_at": "2026-07-23T01:23:00Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
     "percent_change": 16.66,
-    "support_checks_completed": 66,
-    "support_checks_total": 68,
+    "support_checks_completed": 71,
+    "support_checks_total": 73,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -21,7 +21,8 @@
     "accuracy_written": 0,
     "visible_rows": 11013,
     "visible_chunks": 23,
-    "visible_examples": 24,
+    "sampled_chunks": 23,
+    "visible_examples": 28,
     "visible_review_rows": 0,
     "source_upgrades": 15
   },
@@ -42,6 +43,7 @@
   },
   "required_archive": {
     "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
+    "base_join_reads_exact_cache_path": true,
     "outer_filename_may_be_r1": true,
     "required_inner_revision": "r2",
     "required_r2_files": 121,
@@ -74,10 +76,21 @@
   "archive_retry_action": {
     "state": "WAITING_FOR_OFFICIAL_ZIP_BYTES",
     "wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
-    "wrapper_commit": "ed1d2a8cbe9b8c04b75d385c39243eb081d59d37",
+    "wrapper_commit": "8f1cec3cf71b7cf75464c2667df07cc7e1e233e9",
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
+    "portable_git_path_bridge": true,
+    "python_guard_git_resolution_precheck": true,
     "same_task_id_retained": true,
     "new_attempt_only_after_strict_pass": true
+  },
+  "public_sampling": {
+    "state": "PASS_ALL_23_CHUNKS_SAMPLED",
+    "visible_examples": 28,
+    "sampled_chunks": 23,
+    "wave5_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave5.json",
+    "wave5_commit": "98474ea17b8e9123e5797ad39bddf60fbadf1064",
+    "official_coverage_verified": 0,
+    "false_accuracy_upgrade": 0
   },
   "do_not": [
     "do not create another task",
@@ -94,10 +107,11 @@
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/015_ofcom_faq_wave4_and_review_publisher_audit.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/015_cache_path_portable_git_and_all_chunk_sampling_audit.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/015_export_two_terminated_identity_review_rows.py",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1",
-    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave4.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave5.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
