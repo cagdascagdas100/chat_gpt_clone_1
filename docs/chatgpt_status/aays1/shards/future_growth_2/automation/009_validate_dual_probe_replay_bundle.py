@@ -52,6 +52,7 @@ def main():
     for j in jobs:kinds[j["query_type"]]=kinds.get(j["query_type"],0)+1
     assert kinds=={"ARCGIS_CHILD_METADATA_JSON":30,"ARCGIS_POINT_INTERSECTION_COUNT":30,"ARCGIS_POINT_INTERSECTION_FEATURES":30,"PLANNING_DATA_COORDINATE_QUERY":24,"REGIONAL_INDICATIVE_POINT_QUERY":3,"PRIMARY_COUNCIL_BROWNFIELD_QUERY":3}
     assert len(d["dual_probe_gates"])==30 and len(d["official_sources"])==16 and len(d["standards"])==10
+    assert sum(1 for x in d["official_sources"] if x.get("new"))==d["new_unique_official_source_pages"]==5
     assert sum(len(x["fields"]) for x in d["standards"])==40
     assert len(d["temporal_guards"])==24 and len(d["conflict_gates"])==24 and len(d["system_validations"])==11
     total=3+120+120+30+48+40+24+24+11
@@ -68,7 +69,7 @@ def main():
             c,f=rm[g["count_job_id"]],rm[g["feature_job_id"]]
             if c.get("json_parse_ok") and f.get("json_parse_ok") and not c.get("api_error") and not f.get("api_error") and c.get("record_count") is not None and f.get("record_count") is not None:
                 assert c["record_count"]==f["record_count"],(g["code"],c["record_count"],f["record_count"])
-    print(json.dumps({"validator":"PASS","operations":total,"network_jobs":len(jobs),"results_validated":120 if a.results else 0},separators=(",",":")))
+    print(json.dumps({"validator":"PASS","operations":total,"network_jobs":len(jobs),"new_source_pages":sum(1 for x in d["official_sources"] if x.get("new")),"results_validated":120 if a.results else 0},separators=(",",":")))
 if __name__=="__main__":
     try:main()
     except Exception as exc:
