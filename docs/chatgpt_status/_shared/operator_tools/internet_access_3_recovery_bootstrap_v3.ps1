@@ -101,8 +101,24 @@ if (-not $RepoRoot) { throw 'AAYS_CANONICAL_REPOSITORY_NOT_FOUND' }
 
 $GitCommand=Get-Command git.exe -ErrorAction SilentlyContinue
 if (-not $GitCommand) { $GitCommand=Get-Command git -ErrorAction SilentlyContinue }
-if (-not $GitCommand) { throw 'GIT_EXECUTABLE_NOT_FOUND' }
-$script:GitExe=$GitCommand.Source
+if ($GitCommand) {
+    $script:GitExe=$GitCommand.Source
+} else {
+    $RunnerMarker='\runner_system\'
+    $MarkerIndex=$RepoRoot.IndexOf($RunnerMarker,[StringComparison]::OrdinalIgnoreCase)
+    if ($MarkerIndex -lt 0) { throw 'PORTABLE_ROOT_NOT_RESOLVED' }
+    $PortableRoot=$RepoRoot.Substring(0,$MarkerIndex)
+    $PortableGitCandidates=@(
+        (Join-Path $PortableRoot 'runtime\git\cmd\git.exe'),
+        (Join-Path $PortableRoot 'runtime\PortableGit\cmd\git.exe'),
+        (Join-Path $PortableRoot 'runtime\git\bin\git.exe')
+    )
+    $script:GitExe=$null
+    foreach ($CandidateGit in $PortableGitCandidates) {
+        if (Test-Path -LiteralPath $CandidateGit -PathType Leaf) { $script:GitExe=$CandidateGit; break }
+    }
+    if (-not $script:GitExe) { throw 'GIT_EXECUTABLE_NOT_FOUND' }
+}
 
 $ProbeExitCode=127
 $ProbeOutput=''
@@ -148,6 +164,7 @@ $Payload=[ordered]@{
     run_id=$RunId
     slot_id='internet_access_3'
     repo_root=$RepoRoot
+    git_executable=$script:GitExe
     probe_branch=$ProbeBranch
     probe_started_at=$ProbeStartedAt
     probe_exit_code=$ProbeExitCode
