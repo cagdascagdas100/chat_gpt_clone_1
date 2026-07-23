@@ -3,8 +3,8 @@
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_3",
   "continuation_key": "9147406c4a5fb6fbd06910dddf2b38c200878a801d5bb0907aaf395f6170d1da",
-  "generated_at": "2026-07-23T15:43:18Z",
-  "state": "CHILD_EVIDENCE_READY_PUBLISH_PENDING",
+  "generated_at": "2026-07-23T15:58:26Z",
+  "state": "CHILD_EVIDENCE_EXPANDED_RECOVERY_PARKED_RUNTIME_GATE",
   "canonical_scope": "LONDON_CANONICAL_MATRIX_NOT_ALL_ENGLAND",
   "parcel_partition": {
     "start": 61523,
@@ -16,10 +16,12 @@
     "completed_gates": 8,
     "total_gates": 10,
     "percent": 80,
-    "increase_this_run_percentage_points": 10,
-    "completed_this_run": [
-      "official_source_freshness_and_known_issue_refresh",
-      "deterministic_continuation_queue_remote_readback"
+    "increase_this_continuation_percentage_points": 10,
+    "increase_this_turn_percentage_points": 0,
+    "completed_this_turn": [
+      "stale_pending_recovery_diagnosis",
+      "five_additional_candidate_evidence_rows_prepared",
+      "line_by_line_operations_child_artifact_created"
     ],
     "remaining_gates": [
       "runtime_http_hash_readback",
@@ -28,7 +30,7 @@
   },
   "source_freshness": {
     "source_name": "data.police.uk official API and monthly archive",
-    "checked_at": "2026-07-23T15:43:18Z",
+    "checked_at": "2026-07-23T15:58:26Z",
     "latest_api_month": "2026-05",
     "latest_api_date": "2026-05-01",
     "archive_label": "May 2026",
@@ -38,8 +40,8 @@
     "official_api_last_updated_url": "https://data.police.uk/api/crime-last-updated",
     "official_archive_url": "https://data.police.uk/data/archive/",
     "official_changelog_url": "https://data.police.uk/changelog/",
-    "home_office_catalog_updated_at": "2026-07-08",
-    "home_office_catalog_license": "Open Government Licence",
+    "official_method_url": "https://data.police.uk/docs/method/crime-street/",
+    "official_license": "Open Government Licence v3.0",
     "freshness_result": "PASS_WITH_SOURCE_CAVEATS",
     "known_may_2026_crime_data_gaps": [
       "British Transport Police",
@@ -47,7 +49,7 @@
       "Greater Manchester Police",
       "Lincolnshire Police"
     ],
-    "scope_effect": "The current London sample evidence is preserved; source gaps prohibit interpreting the dataset as nationally complete."
+    "scope_effect": "The London evidence is preserved; the data cannot be described as nationally complete or as exact parcel incident locations."
   },
   "static_acceptance": {
     "verified_csv_rows": 300,
@@ -57,70 +59,21 @@
     "latest_batch_rows": 150,
     "static_html_security_layer_present": true,
     "static_html_row_level_columns_present": true,
-    "required_columns_verified": [
-      "parcel_id",
-      "security_score_percent",
-      "security_level",
-      "accuracy_score_4",
-      "confidence_score",
-      "last_verified_at",
-      "source_url",
-      "official_source_evidence",
-      "source_path",
-      "evidence_path",
-      "source_manifest_path",
-      "report_path",
-      "candidate_status",
-      "needs_manual_review"
-    ],
     "runtime_http_verified_this_run": false,
     "browser_dom_verified_this_run": false,
     "console_error_count": null,
     "status": "STATIC_PASS_RUNTIME_BROWSER_PENDING"
   },
+  "representative_candidate_count": 8,
   "representative_candidates": [
-    {
-      "parcel_id": "parcel_1",
-      "lsoa_code": "E01000090",
-      "security_score_percent": 12.13,
-      "security_level": "Cok Dusuk",
-      "accuracy_score_4": 4,
-      "confidence_score": 82.97,
-      "preserved_official_api_month": "2026-05",
-      "preserved_official_api_http_status": 200,
-      "preserved_official_api_crime_count": 346,
-      "preserved_official_api_response_sha256": "8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4",
-      "fresh_sample_refetched_this_run": false,
-      "candidate_status": "PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"
-    },
-    {
-      "parcel_id": "parcel_3",
-      "lsoa_code": "E01000073",
-      "security_score_percent": 51.31,
-      "security_level": "Orta",
-      "accuracy_score_4": 4,
-      "confidence_score": 82.97,
-      "preserved_official_api_month": "2026-05",
-      "preserved_official_api_http_status": 200,
-      "preserved_official_api_crime_count": 499,
-      "preserved_official_api_response_sha256": "08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961",
-      "fresh_sample_refetched_this_run": false,
-      "candidate_status": "PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"
-    },
-    {
-      "parcel_id": "parcel_7",
-      "lsoa_code": "E01000095",
-      "security_score_percent": null,
-      "security_level": null,
-      "accuracy_score_4": 4,
-      "confidence_score": null,
-      "preserved_official_api_month": "2026-05",
-      "preserved_official_api_http_status": 200,
-      "preserved_official_api_crime_count": 383,
-      "preserved_official_api_response_sha256": "4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7",
-      "fresh_sample_refetched_this_run": false,
-      "candidate_status": "PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"
-    }
+    {"parcel_id":"parcel_1","lsoa_code":"E01000090","security_score_percent":12.13,"security_level":"Cok Dusuk","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":346,"preserved_official_api_response_sha256":"8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_3","lsoa_code":"E01000073","security_score_percent":51.31,"security_level":"Orta","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":499,"preserved_official_api_response_sha256":"08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_7","lsoa_code":"E01000095","security_score_percent":null,"security_level":null,"accuracy_score_4":4,"confidence_score":null,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":383,"preserved_official_api_response_sha256":"4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_12","lsoa_code":"E01000087","security_score_percent":13.15,"security_level":"Cok Dusuk","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":312,"preserved_official_api_response_sha256":"4137a53e9fefadbeaf532dcc8d8d787a9147a1c2597d0f62a9cf7e452d43023f","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_16","lsoa_code":"E01000039","security_score_percent":72.03,"security_level":"Iyi","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":318,"preserved_official_api_response_sha256":"7ccf655a0407bdf7a072b8b6144b0cfab5a7e093e2db97ac97a37cf3e06e4f1e","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_17","lsoa_code":"E01000037","security_score_percent":66.95,"security_level":"Iyi","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":524,"preserved_official_api_response_sha256":"71bd3971c9ffb1cbf229344606cca9793a6f1a68ed7ec683df809c99e77bcc94","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_31","lsoa_code":"E01033788","security_score_percent":46.72,"security_level":"Orta","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":539,"preserved_official_api_response_sha256":"73a9b188011c7124ecbca3156da16daa380e3e1728af00e4220ee01968705746","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"},
+    {"parcel_id":"parcel_34","lsoa_code":"E01000034","security_score_percent":56.21,"security_level":"Orta","accuracy_score_4":4,"confidence_score":82.97,"preserved_official_api_month":"2026-05","preserved_official_api_http_status":200,"preserved_official_api_crime_count":300,"preserved_official_api_response_sha256":"22a4f5447714a178753e413fa517c045efce63658da073f1f46cef67eae23927","fresh_sample_refetched_this_run":false,"candidate_status":"PRESERVED_REMOTE_EVIDENCE_FRESHNESS_CONFIRMED"}
   ],
   "accuracy": {
     "row_evidence_score": "4/4",
@@ -129,14 +82,28 @@
     "publishable_as_exact_parcel_measurement": false,
     "official_lsoa_validated_count": 26,
     "official_api_total_sample_crime_records_preserved": 10826,
-    "evidence_digest_sha256": "05decb8ccd7a542ca69c7fbef35aa946f8ade4edf05e8028a5d3963c769b32c9"
+    "confidence_increase_this_turn": 0
   },
   "website_visibility": {
     "shared_matrix_static_contract_ready": true,
     "row_by_row_data_ready": true,
+    "child_operations_path": "england_map_web/data/aays_21_slots/security_public_safety_3/operations_candidate_rows_latest.json",
+    "child_operations_count": 12,
     "shared_operations_document_still_reports_150_rows": true,
-    "required_publisher_update": "Raise operations baseline/provenance row_count from 150 to 300 after runtime/browser acceptance, without changing shared HTML directly from this child branch.",
+    "required_publisher_update": "After runtime/browser acceptance, merge the child operation rows and raise shared baseline/provenance counts from 150 to 300.",
     "shared_publish_performed": false
+  },
+  "recovery": {
+    "pending_threshold_seconds": 900,
+    "stale_pending_detected": true,
+    "conflicting_live_owner": false,
+    "safe_retry_attempted": true,
+    "safe_retry_result": "RUNTIME_BROWSER_CAPABILITY_UNAVAILABLE_IN_CURRENT_EXECUTION_CONTEXT",
+    "state": "RECOVERY_PARKED",
+    "requires_user_action": false,
+    "data_deleted": false,
+    "force_push_used": false,
+    "reset_hard_used": false
   },
   "safety": {
     "single_coordinator_only": true,
@@ -150,9 +117,8 @@
     "product_final_ready": false,
     "final_ready": false
   },
-  "blockers": [],
+  "blockers": ["RUNTIME_BROWSER_ACCEPTANCE_REQUIRES_LOCAL_COORDINATOR"],
   "pending_requirements": [
-    "Local coordinator must pick up the deterministic queue entry.",
     "Runtime /health, matrix HTML and Security JSON must each return HTTP 200 with matching hashes.",
     "A real browser must select Security, expose 300 rows, record zero console errors and produce DOM evidence.",
     "The serial publisher must merge accepted operation/status fragments and verify canonical remote readback."
