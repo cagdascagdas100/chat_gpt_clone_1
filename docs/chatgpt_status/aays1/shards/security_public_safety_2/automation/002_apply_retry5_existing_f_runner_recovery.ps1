@@ -11,7 +11,7 @@ $externalLauncher = 'F:\TerraYield_AAYS_Portable\RUN_AAYS_STABLE_RUNNER_FROM_THI
 $outputRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\runner_outputs\002_retry5_operator_recovery_preflight_latest.json'
 
 $remoteContract = [ordered]@{
-  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='cd31277d3271d2c80d2db8030cd28de2a1ea7395'}
+  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='07ecb487806f4fb80aefb35a94a497cd87dd7f08'}
   queue = [ordered]@{path='docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json';blob='43ba5691e3b4a3c345d2f8fd3303185b3f214d21'}
   bridge = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1';blob='8f4b09b9713a56d78a9c624202f83028afd77b7a'}
   hardened_python = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py';blob='cdb20cb578be5de1789e7821d2a435c1a9f77d58'}
@@ -73,7 +73,7 @@ function Write-Receipt([string]$Status,[bool]$FetchAttempted,[bool]$RuntimeDirty
   $parent = Split-Path -Parent $output
   if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
   [ordered]@{
-    schema_version = 9
+    schema_version = 10
     slot_id = $slotId
     task_id = $taskId
     attempt_id = $attemptId
@@ -99,6 +99,8 @@ function Write-Receipt([string]$Status,[bool]$FetchAttempted,[bool]$RuntimeDirty
     canonical_f_process_identity_required = $true
     foreign_runner_process_fail_closed = $true
     heartbeat_pid_and_repo_root_identity_required = $true
+    transient_without_fresh_daemon_is_failure = $true
+    process_exit_before_kill_is_clean_stop = $true
     stale_daemon_recovery_enabled = $true
     stale_minutes_threshold = 20
     existing_single_runner_architecture_only = $true
