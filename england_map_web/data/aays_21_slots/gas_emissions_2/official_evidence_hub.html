@@ -18,138 +18,62 @@ th{position:sticky;top:0;background:#eee}
 </head>
 <body>
 <h1>Gas Emissions 2 — Resmî Kanıt Merkezi</h1>
-<div class="note">986 resmî satır birleştirildi: önceki 900 satır + 44 adet 2025 geçici emisyon sonucu + 42 adet geçici tahmin metodolojisi ve güvenilirlik satırı. Bunlar parsel ölçümü değildir; aday toplamına veya browser kabulüne eklenmez. Çekirdek runtime kapısı 66/100 seviyesinde kalır.</div>
+<div class="note">1.084 resmî satır birleştirildi: önceki 986 satır + 44 DESNZ 2026 yöntem değişikliği etkisi + 54 CCC 2026 karbon bütçesi ve sektör ilerleme satırı. Bunlar parsel ölçümü değildir; aday toplamına veya browser kabulüne eklenmez. Çekirdek runtime kapısı 66/100 seviyesinde kalır.</div>
 <div class="summary">
-<div class="card">Toplam: <b id="total">—</b></div>
-<div class="card">Görünen: <b id="visible">—</b></div>
-<div class="card">Kaynak türü: <b id="sourceTypes">—</b></div>
-<div class="card">Doğruluk: <b>100%</b></div>
+<div class="card">Toplam: <b id="total">—</b></div><div class="card">Görünen: <b id="visible">—</b></div>
+<div class="card">Kaynak türü: <b id="sourceTypes">—</b></div><div class="card">Doğruluk: <b>100%</b></div>
 <div class="card">Parsel bağlı: <b id="bound">—</b></div>
 </div>
 <div class="counts" id="counts"></div>
-<div class="filters">
-<select id="sourceFilter"><option value="">Tüm kaynak türleri</option></select>
-<select id="tableFilter"><option value="">Tüm tablo/belgeler</option></select>
-<select id="yearFilter"><option value="">Tüm yıllar</option></select>
-<input id="search" placeholder="Varlık, kategori, metrik veya ID ara">
-</div>
-<table><thead><tr><th>#</th><th>Kaynak türü</th><th>Kanıt ID</th><th>Tablo/Belge</th><th>Kategori</th><th>Varlık</th><th>Yıl</th><th>Değer/Metrik</th><th>Kaynak satırı</th><th>Doğruluk</th><th>Parsel</th></tr></thead>
-<tbody id="rows"><tr><td colspan="11">Yükleniyor…</td></tr></tbody></table>
+<div class="filters"><select id="sourceFilter"><option value="">Tüm kaynak türleri</option></select><select id="tableFilter"><option value="">Tüm tablo/belgeler</option></select><select id="yearFilter"><option value="">Tüm yıllar</option></select><input id="search" placeholder="Varlık, kategori, metrik veya ID ara"></div>
+<table><thead><tr><th>#</th><th>Kaynak türü</th><th>Kanıt ID</th><th>Tablo/Belge</th><th>Kategori</th><th>Varlık</th><th>Yıl</th><th>Değer/Metrik</th><th>Kaynak satırı</th><th>Doğruluk</th><th>Parsel</th></tr></thead><tbody id="rows"><tr><td colspan="11">Yükleniyor…</td></tr></tbody></table>
 <div class="footer" id="footer"></div>
 <script>
 (async () => {
   const $ = (id) => document.getElementById(id);
-  const sources = [["STATISTICAL_RELEASE","İstatistik yayını","official_release_evidence_47.json"],["TECHNICAL_REPORT","Teknik tablo","official_technical_evidence_63.json"],["SUPPLEMENTARY_METHOD","Tamamlayıcı yöntem","official_supplementary_method_evidence_14.json"],["ALLOCATION_ENERGY_METHOD","Tahsis ve enerji yöntemi","official_allocation_and_energy_method_evidence_21.json"],["SECTOR_MAPPING_UNCERTAINTY","Sektör haritalama ve belirsizlik","official_sector_mapping_and_uncertainty_evidence_26.json"],["ENERGY_POINT_AREA_METHOD","Enerji, nokta ve alan yöntemi","official_energy_point_area_method_evidence_40.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_point_source_scope_evidence_10.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_point_source_gapfill_steelworks_evidence_10.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_industrial_uncertainty_evidence_7.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_agriculture_domestic_method_evidence_10.json"],["TRANSPORT_LANDFILL_METHOD","Taşıma ve landfill yöntemi","official_transport_landfill_method_evidence_27.json"],["LULUCF_SPATIAL_METHOD","LULUCF mekânsal yöntemi","official_lulucf_spatial_method_evidence_25.json"],["LUCT_BIOENERGY_UNCERTAINTY","LUC-T, biyoenerji ve belirsizlik","official_luct_settlement_method_evidence_30.json"],["LUCT_BIOENERGY_UNCERTAINTY","LUC-T, biyoenerji ve belirsizlik","official_bioenergy_other_uncertainty_evidence_29.json"],["LULUCF_ANNEX1_MAPPING","LULUCF Annex 1 eşlemeleri","official_lulucf_annex1_spatial_mapping_evidence_40.json"],["LULUCF_ANNEX2_TES","LULUCF Annex 2 TES tanımları","official_lulucf_annex2_tes_evidence_34.json"],["EMPLOYMENT_ENERGY_METHOD","Employment-energy yöntemi","official_employment_energy_mapping_method_evidence_49.json"],["EMPLOYMENT_SIC_MAPPING","Employment SIC eşlemeleri","official_employment_sic_mapping_evidence_88.json"],["ROAD_TRANSPORT_MAPPING_METHOD","Yol ulaştırma haritalama yöntemi","official_road_transport_mapping_method_evidence_40.json"],["ROAD_TRANSPORT_EV_REVISION","Yol ulaştırma EV ve revizyon","official_road_transport_ev_revision_evidence_24.json"],["ROAD_TRANSPORT_UNCERTAINTY","Yol ulaştırma revizyon ve belirsizlik","official_road_transport_revision_uncertainty_evidence_24.json"],["GEOGRAPHICAL_UNCERTAINTY_METHOD","DESNZ coğrafi belirsizlik yöntemi","official_geographical_uncertainty_method_evidence_29.json"],["ONS_MEASUREMENT_BASIS_CONTEXT","ONS ölçüm-bazı bağlamı","official_ons_measurement_basis_context_evidence_28.json"],["NAEI_INVENTORY_METHOD_QA","NAEI envanter metodolojisi ve QA/QC","official_naei_inventory_method_qa_evidence_44.json"],["CONVERSION_FACTOR_QUALITY","DESNZ dönüşüm faktörü kalite yönetişimi","official_conversion_factor_quality_evidence_40.json"],["CONVERSION_FACTOR_METHOD_CONTEXT","2026 dönüşüm faktörü metodoloji bağlamı","official_conversion_factor_methodology_context_evidence_40.json"],["CONVERSION_FACTOR_MAJOR_CHANGES","2026 dönüşüm faktörü büyük değişiklikleri","official_conversion_factor_major_changes_evidence_61.json"],["PROVISIONAL_2025_RELEASE","2025 geçici emisyon sonuçları","official_2025_provisional_release_evidence_44.json"],["PROVISIONAL_2025_METHOD","2025 geçici tahmin yöntemi","official_2025_provisional_method_evidence_42.json"];
-
-  function pushGeneric(all, source, doc) {
-    for (const row of doc.rows) {
-      all.push({
-        source_type: source[0],
-        label: source[1],
-        id: row.evidence_id || '',
-        table: row.table || row.document || doc.document || '',
-        category: row.category || '',
-        entity: row.entity || '',
-        year: row.year || '',
-        value: row.values ?? row.metrics ?? row.metric ?? '',
-        line: row.source_line_range || '',
-        accuracy: row.transcription_accuracy_percent ?? doc.transcription_accuracy_percent ?? '',
-        parcel: row.parcel_binding_status || 'NOT_BOUND'
-      });
-    }
+  const sources = [["STATISTICAL_RELEASE","İstatistik yayını","official_release_evidence_47.json"],["TECHNICAL_REPORT","Teknik tablo","official_technical_evidence_63.json"],["SUPPLEMENTARY_METHOD","Tamamlayıcı yöntem","official_supplementary_method_evidence_14.json"],["ALLOCATION_ENERGY_METHOD","Tahsis ve enerji yöntemi","official_allocation_and_energy_method_evidence_21.json"],["SECTOR_MAPPING_UNCERTAINTY","Sektör haritalama ve belirsizlik","official_sector_mapping_and_uncertainty_evidence_26.json"],["ENERGY_POINT_AREA_METHOD","Enerji, nokta ve alan yöntemi","official_energy_point_area_method_evidence_40.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_point_source_scope_evidence_10.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_point_source_gapfill_steelworks_evidence_10.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_industrial_uncertainty_evidence_7.json"],["POINT_DOMESTIC_METHOD","Nokta kaynak ve domestik yöntem","official_agriculture_domestic_method_evidence_10.json"],["TRANSPORT_LANDFILL_METHOD","Taşıma ve landfill yöntemi","official_transport_landfill_method_evidence_27.json"],["LULUCF_SPATIAL_METHOD","LULUCF mekânsal yöntemi","official_lulucf_spatial_method_evidence_25.json"],["LUCT_BIOENERGY_UNCERTAINTY","LUC-T, biyoenerji ve belirsizlik","official_luct_settlement_method_evidence_30.json"],["LUCT_BIOENERGY_UNCERTAINTY","LUC-T, biyoenerji ve belirsizlik","official_bioenergy_other_uncertainty_evidence_29.json"],["LULUCF_ANNEX1_MAPPING","LULUCF Annex 1 eşlemeleri","official_lulucf_annex1_spatial_mapping_evidence_40.json"],["LULUCF_ANNEX2_TES","LULUCF Annex 2 TES tanımları","official_lulucf_annex2_tes_evidence_34.json"],["EMPLOYMENT_ENERGY_METHOD","Employment-energy yöntemi","official_employment_energy_mapping_method_evidence_49.json"],["EMPLOYMENT_SIC_MAPPING","Employment SIC eşlemeleri","official_employment_sic_mapping_evidence_88.json"],["ROAD_TRANSPORT_MAPPING_METHOD","Yol ulaştırma haritalama yöntemi","official_road_transport_mapping_method_evidence_40.json"],["ROAD_TRANSPORT_EV_REVISION","Yol ulaştırma EV ve revizyon","official_road_transport_ev_revision_evidence_24.json"],["ROAD_TRANSPORT_UNCERTAINTY","Yol ulaştırma revizyon ve belirsizlik","official_road_transport_revision_uncertainty_evidence_24.json"],["GEOGRAPHICAL_UNCERTAINTY_METHOD","DESNZ coğrafi belirsizlik yöntemi","official_geographical_uncertainty_method_evidence_29.json"],["ONS_MEASUREMENT_BASIS_CONTEXT","ONS ölçüm-bazı bağlamı","official_ons_measurement_basis_context_evidence_28.json"],["NAEI_INVENTORY_METHOD_QA","NAEI envanter metodolojisi ve QA/QC","official_naei_inventory_method_qa_evidence_44.json"],["CONVERSION_FACTOR_QUALITY","DESNZ dönüşüm faktörü kalite yönetişimi","official_conversion_factor_quality_evidence_40.json"],["CONVERSION_FACTOR_METHOD_CONTEXT","2026 dönüşüm faktörü metodoloji bağlamı","official_conversion_factor_methodology_context_evidence_40.json"],["CONVERSION_FACTOR_MAJOR_CHANGES","2026 dönüşüm faktörü büyük değişiklikleri","official_conversion_factor_major_changes_evidence_61.json"],["PROVISIONAL_2025_RELEASE","2025 geçici emisyon sonuçları","official_2025_provisional_release_evidence_44.json"],["PROVISIONAL_2025_METHOD","2025 geçici tahmin yöntemi","official_2025_provisional_method_evidence_42.json"],["METHOD_CHANGE_2026","2026 yöntem değişikliği etkileri","official_2026_method_change_impact_evidence_44.json"],["CCC_PROGRESS_2026","CCC 2026 karbon bütçesi ilerlemesi","official_ccc_2026_progress_evidence_54.json"]];
+  const arrayGeneric = new Set(['METHOD_CHANGE_2026','CCC_PROGRESS_2026']);
+  function add(all,source,id,table,category,entity,year,value,line,accuracy,parcel='NOT_BOUND') {
+    all.push({source_type:source[0],label:source[1],id,table,category,entity,year,value,line,accuracy,parcel});
   }
-
-  function appendRows(all, source, doc) {
+  function appendRows(all,source,doc) {
     if (source[0] === 'LULUCF_ANNEX2_TES') {
-      for (const row of doc.rows) {
-        all.push({source_type:source[0],label:source[1],id:row[0],table:doc.document,category:'ANNEX2_TES_DESCRIPTION',entity:row[1],year:'',value:{metric:row[2],raw_table_row:row[3]},line:row[4],accuracy:doc.transcription_accuracy_percent,parcel:'NOT_BOUND'});
-      }
+      for (const r of doc.rows) add(all,source,r[0],doc.document,'ANNEX2_TES_DESCRIPTION',r[1],'',{metric:r[2],raw_table_row:r[3]},r[4],doc.transcription_accuracy_percent);
       return;
     }
     if (source[0] === 'EMPLOYMENT_SIC_MAPPING') {
-      for (const row of doc.rows) {
-        all.push({source_type:source[0],label:source[1],id:row[0],table:doc.document,category:'SIC2007_SECTOR_MAPPING',entity:row[2],year:'',value:{sic2007_code:row[1],sector:row[3],raw_table_row:row[4]},line:row[5],accuracy:doc.transcription_accuracy_percent,parcel:'NOT_BOUND'});
-      }
+      for (const r of doc.rows) add(all,source,r[0],doc.document,'SIC2007_SECTOR_MAPPING',r[2],'',{sic2007_code:r[1],sector:r[3],raw_table_row:r[4]},r[5],doc.transcription_accuracy_percent);
       return;
     }
     if (source[0] === 'CONVERSION_FACTOR_METHOD_CONTEXT') {
-      for (const row of doc.rows) {
-        all.push({source_type:source[0],label:source[1],id:row[0],table:doc.document,category:row[1],entity:row[2],year:2026,value:{metric:row[3],values:row[4]},line:row[5],accuracy:doc.transcription_accuracy_percent,parcel:'NOT_BOUND'});
-      }
+      for (const r of doc.rows) add(all,source,r[0],doc.document,r[1],r[2],2026,{metric:r[3],values:r[4]},r[5],doc.transcription_accuracy_percent);
       return;
     }
     if (source[0] === 'CONVERSION_FACTOR_MAJOR_CHANGES') {
-      for (const row of doc.rows) {
-        all.push({source_type:source[0],label:source[1],id:row[0],table:doc.document,category:'REF_'+row[1],entity:row[2],year:2026,value:{ghg:row[3],unit:row[4],magnitude:row[5],reason:row[6],section:row[7]},line:row[8],accuracy:doc.transcription_accuracy_percent,parcel:'NOT_BOUND'});
-      }
+      for (const r of doc.rows) add(all,source,r[0],doc.document,'REF_'+r[1],r[2],2026,{ghg:r[3],unit:r[4],magnitude:r[5],reason:r[6],section:r[7]},r[8],doc.transcription_accuracy_percent);
       return;
     }
-    pushGeneric(all, source, doc);
+    if (arrayGeneric.has(source[0])) {
+      for (const r of doc.rows) add(all,source,r[0],doc.document,r[1],r[2],2026,{metric:r[3],values:r[4]},r[5],doc.transcription_accuracy_percent);
+      return;
+    }
+    for (const r of doc.rows) add(all,source,r.evidence_id||'',r.table||r.document||doc.document||'',r.category||'',r.entity||'',r.year||'',r.values??r.metrics??r.metric??'',r.source_line_range||'',r.transcription_accuracy_percent??doc.transcription_accuracy_percent??'',r.parcel_binding_status||'NOT_BOUND');
   }
-
   try {
-    const loaded = await Promise.all(sources.map(async (source) => {
-      const response = await fetch('./' + source[2], {cache:'no-store'});
-      if (!response.ok) throw new Error(source[2] + ' HTTP ' + response.status);
-      return [source, await response.json()];
-    }));
-
-    const all = [];
-    for (const [source, doc] of loaded) appendRows(all, source, doc);
-
-    const sourceFilter = $('sourceFilter');
-    const tableFilter = $('tableFilter');
-    const yearFilter = $('yearFilter');
-    const search = $('search');
-    const labels = new Map(sources.map((source) => [source[0], source[1]]));
-
-    for (const value of new Set(all.map((row) => row.source_type))) {
-      sourceFilter.add(new Option(labels.get(value) || value, value));
-    }
-    for (const value of [...new Set(all.map((row) => row.table))].sort()) {
-      tableFilter.add(new Option(value, value));
-    }
-    for (const value of [...new Set(all.map((row) => row.year).filter(Boolean))].sort((a,b) => a-b)) {
-      yearFilter.add(new Option(value, value));
-    }
-
-    const counts = {};
-    for (const row of all) counts[row.source_type] = (counts[row.source_type] || 0) + 1;
-    $('counts').innerHTML = Object.entries(counts).map(([key,value]) => '<div class="card">'+(labels.get(key)||key)+': <b>'+value+'</b></div>').join('');
-
-    const render = () => {
-      const needle = search.value.toLowerCase();
-      const filtered = all.filter((row) =>
-        (!sourceFilter.value || row.source_type === sourceFilter.value) &&
-        (!tableFilter.value || row.table === tableFilter.value) &&
-        (!yearFilter.value || String(row.year) === yearFilter.value) &&
-        (!needle || JSON.stringify(row).toLowerCase().includes(needle))
-      );
-      $('rows').innerHTML = '';
-      filtered.forEach((row,index) => {
-        const tr = document.createElement('tr');
-        [index+1,row.label,row.id,row.table,row.category,row.entity,row.year,JSON.stringify(row.value),row.line,row.accuracy+'%',row.parcel].forEach((value) => {
-          const td = document.createElement('td');
-          td.textContent = value;
-          tr.appendChild(td);
-        });
-        $('rows').appendChild(tr);
-      });
-      $('visible').textContent = filtered.length;
-    };
-
-    sourceFilter.onchange = render;
-    tableFilter.onchange = render;
-    yearFilter.onchange = render;
-    search.oninput = render;
-    $('total').textContent = all.length;
-    $('sourceTypes').textContent = Object.keys(counts).length;
-    $('bound').textContent = all.filter((row) => row.parcel !== 'NOT_BOUND').length;
-    render();
-    $('footer').textContent = '986 resmî satır · aktarım doğruluğu 100% · candidate_total değişimi 0 · browser kabul değişimi 0 · runtime 66/100 · final_ready=false.';
-  } catch (error) {
-    $('rows').innerHTML = '<tr><td colspan="11">'+String(error)+'</td></tr>';
-  }
+    const loaded=await Promise.all(sources.map(async(source)=>{const response=await fetch('./'+source[2],{cache:'no-store'});if(!response.ok)throw new Error(source[2]+' HTTP '+response.status);return [source,await response.json()];}));
+    const all=[]; for (const [source,doc] of loaded) appendRows(all,source,doc);
+    const sf=$('sourceFilter'),tf=$('tableFilter'),yf=$('yearFilter'),q=$('search');
+    const labels=new Map(sources.map((s)=>[s[0],s[1]]));
+    for (const v of new Set(all.map((r)=>r.source_type))) sf.add(new Option(labels.get(v)||v,v));
+    for (const v of [...new Set(all.map((r)=>r.table))].sort()) tf.add(new Option(v,v));
+    for (const v of [...new Set(all.map((r)=>r.year).filter(Boolean))].sort((a,b)=>a-b)) yf.add(new Option(v,v));
+    const counts={}; for (const r of all) counts[r.source_type]=(counts[r.source_type]||0)+1;
+    $('counts').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="card">'+(labels.get(k)||k)+': <b>'+v+'</b></div>').join('');
+    const render=()=>{const n=q.value.toLowerCase();const f=all.filter((r)=>(!sf.value||r.source_type===sf.value)&&(!tf.value||r.table===tf.value)&&(!yf.value||String(r.year)===yf.value)&&(!n||JSON.stringify(r).toLowerCase().includes(n)));$('rows').innerHTML='';f.forEach((r,i)=>{const tr=document.createElement('tr');[i+1,r.label,r.id,r.table,r.category,r.entity,r.year,JSON.stringify(r.value),r.line,r.accuracy+'%',r.parcel].forEach((v)=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});$('rows').appendChild(tr);});$('visible').textContent=f.length;};
+    sf.onchange=tf.onchange=yf.onchange=q.oninput=render;
+    $('total').textContent=all.length;$('sourceTypes').textContent=Object.keys(counts).length;$('bound').textContent=all.filter((r)=>r.parcel!=='NOT_BOUND').length;render();
+    $('footer').textContent='1.084 resmî satır · aktarım doğruluğu 100% · candidate_total değişimi 0 · browser kabul değişimi 0 · runtime 66/100 · final_ready=false.';
+  } catch (error) { $('rows').innerHTML='<tr><td colspan="11">'+String(error)+'</td></tr>'; }
 })();
 </script>
 </body>
