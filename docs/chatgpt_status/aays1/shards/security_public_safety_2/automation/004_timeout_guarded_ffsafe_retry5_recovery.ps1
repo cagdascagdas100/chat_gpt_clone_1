@@ -30,6 +30,8 @@ function GitBlob([string]$Path) {
   $sha=[Security.Cryptography.SHA1]::Create();try{[void]$sha.TransformBlock($prefix,0,$prefix.Length,$prefix,0);[void]$sha.TransformFinalBlock($bytes,0,$bytes.Length);return([BitConverter]::ToString($sha.Hash)).Replace('-','').ToLowerInvariant()}finally{$sha.Dispose()}
 }
 function Norm([string]$Value) { if($null-eq$Value){return''};return(($Value-replace'/','\').ToLowerInvariant()) }
+function ProcessIdentityKey([object]$Process) { return ('{0}|{1}' -f ([int]$Process.ProcessId),([string]$Process.CreationDate)) }
+function ProcessEvidence([object]$Process) { return [ordered]@{process_id=[int]$Process.ProcessId;creation_date=[string]$Process.CreationDate;identity_key=(ProcessIdentityKey $Process);command_line=[string]$Process.CommandLine} }
 function CanonicalRunnerProcesses {
   $all=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.CommandLine) })
   $matched=@()
@@ -62,7 +64,7 @@ function StopProcessTree([int]$ProcessId) {
 }
 function Receipt([string]$Status,[int]$ExitCode,[bool]$TimedOut,[string]$ResolvedInner,[object]$OwnerSnapshot,[string]$RemoteHead,[bool]$TreeKillAttempted,[int]$TreeKillExit,[object]$TrackedPids,[object]$RemainingPids,[string]$Detail) {
   $path=Join-Path $repoRoot $outputRel;$parent=Split-Path -Parent $path;if(-not(Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Force -Path $parent|Out-Null}
-  $o=[ordered]@{schema_version=9;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;remote_head=$RemoteHead;ownership_rechecked=$true;ownership_snapshot=$OwnerSnapshot;canonical_f_process_identity_required=$true;foreign_runner_process_fail_closed=$true;direct_heartbeat_requires_repo_root_branch_and_process_start=$true;heartbeat_repo_root_optional_with_bound_lock_fallback=$true;lock_fallback_requires_pid_repo_root_instance_start_freshness_scope_branch=$true;transient_without_fresh_daemon_is_failure=$true;process_exit_before_kill_is_clean_stop=$true;process_tree_kill_attempted=$TreeKillAttempted;process_tree_kill_exit_code=$TreeKillExit;tracked_process_ids=@($TrackedPids);remaining_tracked_process_ids=@($RemainingPids);baseline_canonical_process_ids=@($baselineCanonical|ForEach-Object{[int]$_.ProcessId});timeout_spawned_canonical_process_ids=@($timeoutSpawnedCanonical|ForEach-Object{[int]$_.ProcessId});spawned_canonical_cleanup=@($spawnedCanonicalCleanup);remaining_timeout_spawned_canonical_process_ids=@($remainingTimeoutSpawnedCanonical|ForEach-Object{[int]$_.ProcessId});timeout_cleanup_reenumerates_exact_canonical_f_processes=$true;preexisting_canonical_processes_preserved=$true;same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false}
+  $o=[ordered]@{schema_version=10;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;remote_head=$RemoteHead;ownership_rechecked=$true;ownership_snapshot=$OwnerSnapshot;canonical_f_process_identity_required=$true;foreign_runner_process_fail_closed=$true;direct_heartbeat_requires_repo_root_branch_and_process_start=$true;heartbeat_repo_root_optional_with_bound_lock_fallback=$true;lock_fallback_requires_pid_repo_root_instance_start_freshness_scope_branch=$true;transient_without_fresh_daemon_is_failure=$true;process_exit_before_kill_is_clean_stop=$true;process_tree_kill_attempted=$TreeKillAttempted;process_tree_kill_exit_code=$TreeKillExit;tracked_process_ids=@($TrackedPids);remaining_tracked_process_ids=@($RemainingPids);baseline_canonical_processes=@($baselineCanonical|ForEach-Object{ProcessEvidence $_});timeout_spawned_canonical_processes=@($timeoutSpawnedCanonical|ForEach-Object{ProcessEvidence $_});spawned_canonical_cleanup=@($spawnedCanonicalCleanup);remaining_timeout_spawned_canonical_processes=@($remainingTimeoutSpawnedCanonical|ForEach-Object{ProcessEvidence $_});timeout_cleanup_reenumerates_exact_canonical_f_processes=$true;timeout_baseline_uses_pid_and_creation_date=$true;preexisting_canonical_process_generations_preserved=$true;same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false}
   $tmp="$path.tmp.$PID";[IO.File]::WriteAllText($tmp,(($o|ConvertTo-Json -Depth 14)+"`n"),[Text.UTF8Encoding]::new($false));Move-Item -LiteralPath $tmp -Destination $path -Force
 }
 
@@ -90,16 +92,16 @@ if(-not $p.WaitForExit($TimeoutSeconds*1000)){
   $killExit=StopProcessTree ([int]$p.Id)
   Start-Sleep -Seconds 2
   $remaining=@($tracked | Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
-  $baselineIds=@($baselineCanonical | ForEach-Object { [int]$_.ProcessId })
-  $timeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineIds -notcontains ([int]$_.ProcessId) })
+  $baselineKeys=@($baselineCanonical | ForEach-Object { ProcessIdentityKey $_ })
+  $timeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineKeys -notcontains (ProcessIdentityKey $_) })
   $cleanup=@()
   foreach($proc in $timeoutSpawnedCanonical){
     $cleanupExit=StopProcessTree ([int]$proc.ProcessId)
-    $cleanup+=[ordered]@{process_id=[int]$proc.ProcessId;exit_code=$cleanupExit;command_line=[string]$proc.CommandLine}
+    $cleanup+=[ordered]@{process_id=[int]$proc.ProcessId;creation_date=[string]$proc.CreationDate;identity_key=(ProcessIdentityKey $proc);exit_code=$cleanupExit;command_line=[string]$proc.CommandLine}
   }
   $spawnedCanonicalCleanup=@($cleanup)
   if($timeoutSpawnedCanonical.Count -gt 0){Start-Sleep -Seconds 2}
-  $remainingTimeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineIds -notcontains ([int]$_.ProcessId) })
+  $remainingTimeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineKeys -notcontains (ProcessIdentityKey $_) })
   $allGone=($remaining.Count -eq 0 -and $remainingTimeoutSpawnedCanonical.Count -eq 0)
   $status=if($allGone){'BLOCKED_RETRY5_RECOVERY_TIMEOUT_ALL_ATTEMPT_PROCESSES_TERMINATED'}else{'BLOCKED_RETRY5_RECOVERY_TIMEOUT_PROCESS_REMAINS'}
   Receipt $status 124 $true $inner $ownerSnapshot $remoteHead $true $killExit $tracked $remaining "wrapper_pid=$($p.Id);spawned_canonical=$($timeoutSpawnedCanonical.Count);remaining_spawned_canonical=$($remainingTimeoutSpawnedCanonical.Count)"
