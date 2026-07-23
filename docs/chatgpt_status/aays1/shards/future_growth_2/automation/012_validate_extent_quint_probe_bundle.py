@@ -35,17 +35,17 @@ def jobs(m):
    add({"job_id":f"{pref}_{r['row_no']}","row_no":r["row_no"],"parcel_id":r["parcel_id"],"lpa":r["lpa"],"query_type":"REGIONAL_OR_PRIMARY_GEOMETRY_QUERY","url":root+"/query?"+params(r,{"outFields":"*","returnGeometry":"true","outSR":"4326"})})
  return a
 def main():
- ap=argparse.ArgumentParser();ap.add_argument("--data",type=Path,required=True);ap.add_argument("--results",type=Path);z=ap.parse_args();d=load(z.data);m=d;jj=jobs(m)
+ ap=argparse.ArgumentParser();ap.add_argument("--data",type=Path,required=True);ap.add_argument("--results",type=Path);z=ap.parse_args();d=load(z.data);parts={q["name"]:load(z.data.parent/q["path"]) for q in d["parts"]};m=parts["manifest"];jj=jobs(m)
  assert d["continuation_key"]==CONT and [r["row_no"] for r in m["rows"]]==[30762,46142,61522]
  assert len(jj)==210 and len({x["job_id"] for x in jj})==210 and [x["job_no"] for x in jj]==list(range(1,211))
  assert all(urlparse(x["url"]).scheme=="https" and urlparse(x["url"]).hostname in ALLOWED for x in jj)
  kinds={}
  for x in jj:kinds[x["query_type"]]=kinds.get(x["query_type"],0)+1
  assert kinds=={"ARCGIS_CHILD_METADATA_JSON":30,"ARCGIS_POINT_INTERSECTION_COUNT":30,"ARCGIS_POINT_INTERSECTION_OBJECT_IDS":30,"ARCGIS_POINT_INTERSECTION_ATTRIBUTES":30,"ARCGIS_POINT_INTERSECTION_GEOMETRY":30,"ARCGIS_POINT_INTERSECTION_EXTENT":30,"PLANNING_DATA_COORDINATE_QUERY":24,"REGIONAL_OR_PRIMARY_GEOMETRY_QUERY":6}
- assert len(d["quint_probe_gates"])==30 and len(d["geometry_verification_gates"])==30 and len(d["extent_verification_gates"])==30 and len(d["replay_integrity_gates"])==30
- assert len(d["official_sources"])==16 and sum(x.get("new",False) for x in d["official_sources"])==d["new_unique_official_source_pages"]==5
- assert len(d["standards"])==10 and sum(len(x["fields"]) for x in d["standards"])==40
- g=d;assert len(g["temporal_guards"])==24 and len(g["conflict_gates"])==24 and len(g["system_validations"])==11
+ assert len(parts["quint_consistency"]["quint_probe_gates"])==30 and len(parts["geometry_gates"]["geometry_verification_gates"])==30 and len(parts["extent_gates"]["extent_verification_gates"])==30 and len(parts["replay_gates"]["replay_integrity_gates"])==30
+ assert len(parts["sources"]["official_sources"])==16 and sum(x.get("new",False) for x in parts["sources"]["official_sources"])==d["new_unique_official_source_pages"]==5
+ assert len(parts["standards"]["standards"])==10 and sum(len(x["fields"]) for x in parts["standards"]["standards"])==40
+ g=parts["guards"];assert len(g["temporal_guards"])==24 and len(g["conflict_gates"])==24 and len(g["system_validations"])==11
  total=3+210+210+30+30+30+30+48+40+24+24+11;assert total==690==d["batch_operations_total"]
  assert d["exact_parcel_bound_rows"]==0 and d["scored_business_rows"]==0 and d["business_coverage_pct"]==0
  if z.results:
@@ -54,12 +54,12 @@ def main():
   for x in rr:
    j=jm[x["job_id"]];assert x["request_url"]==j["url"] and x["request_url_sha256"]==sha(x["request_url"]) and x["raw_sha256"]==sha(x.get("raw_body",""));dt(x["fetched_at_utc"]);assert x.get("future_growth_score") is None and x.get("confidence_pct")==0 and x.get("data_status")=="NO_DATA"
   pieces="\n".join("|".join([x["job_id"],x["request_url_sha256"],x["raw_sha256"],x["fetched_at_utc"]]) for x in sorted(rr,key=lambda y:y["job_id"]));assert r["result_chain_sha256"]==sha(pieces)
-  for q in d["quint_probe_gates"]:
+  for q in parts["quint_consistency"]["quint_probe_gates"]:
    vals=[rm[q[k]].get("record_count") for k in ("count_job_id","ids_job_id","attributes_job_id","geometry_job_id","extent_job_id")];assert all(v is not None for v in vals) and len(set(vals))==1
    meta=rm[q["metadata_job_id"]];assert meta.get("supports_returning_query_extent") is True
-  for q in d["geometry_verification_gates"]:
+  for q in parts["geometry_gates"]["geometry_verification_gates"]:
    x=rm[q["geometry_job_id"]];assert x.get("record_count",0)==0 or x.get("geometry_feature_count")==x["record_count"]
-  for q in d["extent_verification_gates"]:
+  for q in parts["extent_gates"]["extent_verification_gates"]:
    x=rm[q["extent_job_id"]];assert x.get("record_count",0)==0 or (x.get("extent_present") is True and x.get("point_within_extent") is True)
  print(json.dumps({"validator":"PASS","operations":690,"network_jobs":210,"new_source_pages":5,"results_validated":210 if z.results else 0},separators=(",",":")))
 if __name__=="__main__":
