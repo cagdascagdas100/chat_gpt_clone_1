@@ -248,7 +248,7 @@ def main() -> int:
         "material_delta_review_rows": material_delta_rows,
         "strict_accuracy_guard": "PASS",
         "blocker": blocker,
-        "next_step": "REVIEW_MATERIAL_DELTAS_AND_NO_DATA_ROWS_THEN_PUBLISH_CANONICAL_SHARD2_CANDIDATES" if source_scan_complete else "PROVISION_OFFICIAL_OFCom_ZIP_OR_SUBSCRIPTION_KEY_THEN_RETRY_EXACT_COVERAGE_JOIN",
+        "next_step": "REVIEW_MATERIAL_DELTAS_AND_NO_DATA_ROWS_THEN_PUBLISH_CANONICAL_SHARD2_CANDIDATES" if source_scan_complete else "PROVISION_OFFICIAL_OFCom_R2_ZIP_THEN_RUN_STRICT_SAME_TASK_RETRY",
         "final_ready": False,
         "fake_data": False,
         "db_write": False,
