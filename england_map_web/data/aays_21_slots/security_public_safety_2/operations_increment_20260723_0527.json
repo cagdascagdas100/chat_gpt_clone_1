@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
+  "published_at": "2026-07-23T02:27:00Z",
+  "operation_rows": [
+    {"operation":97,"status":"DONE","confidence":100,"summary":"Fresh contract, canonical HEAD, ownership and five expected runtime outputs read back","evidence":"contract blob 303287f8; HEAD 00f6b4a2; ownership unclaimed; outputs 004/003/002/001/business all absent"},
+    {"operation":98,"status":"DONE","confidence":100,"summary":"Local PowerShell parser availability checked before claiming syntax execution","evidence":"No pwsh, powershell or System.Management.Automation runtime available; no false parser-pass claim made"},
+    {"operation":99,"status":"DONE","confidence":99,"summary":"Transient launcher control-flow false-success path identified","evidence":"Previous helper returned exit 0 when one canonical transient process failed to produce a fresh daemon after its wait window"},
+    {"operation":100,"status":"DONE","confidence":99,"summary":"Stale-daemon process-exit race identified","evidence":"Previous helper could block on nonzero taskkill status even when the exact canonical process set was already empty"},
+    {"operation":101,"status":"DONE","confidence":99,"summary":"Transient process without fresh daemon changed to fail-closed","evidence":"Helper now waits 45 seconds, preserves the process, starts no second process and exits 4 with BLOCKED_CANONICAL_TRANSIENT_PROCESS_DID_NOT_PRODUCE_FRESH_DAEMON"},
+    {"operation":102,"status":"DONE","confidence":99,"summary":"Process-exit-before-kill race changed to clean-stop semantics","evidence":"Restart proceeds when exact canonical process readback is empty; taskkill exit remains recorded for evidence"},
+    {"operation":103,"status":"DONE","confidence":100,"summary":"Recovery helper and preflight repinned","evidence":"001 blob 07ecb487806f4fb80aefb35a94a497cd87dd7f08; 002 blob e19b54a1f328883fe34e220b89edb18d9cd98bf4"},
+    {"operation":104,"status":"DONE","confidence":100,"summary":"FF-only bootstrap repinned to updated preflight and helper","evidence":"003 blob fb7c2383a6066490cc5f1ebf1a82898843af103d verifies 002=e19b54a1 and 001=07ecb487"},
+    {"operation":105,"status":"DONE","confidence":100,"summary":"Timeout watchdog repinned to updated bootstrap","evidence":"004 blob 46ed459f127c56e04b8a3f22810d558a15c65c8f verifies 003=fb7c2383 before execution"},
+    {"operation":106,"status":"DONE","confidence":100,"summary":"Complete 001 to 004 remote hash chain read back","evidence":"07ecb487 -> e19b54a1 -> fb7c2383 -> 46ed459f; same attempt-005, no second runner"}
+  ],
+  "fake_data": false,
+  "final_ready": false
+}
