@@ -10,44 +10,30 @@ body{font-family:Arial,sans-serif;margin:20px;background:#f8fafc;color:#0f172a}.
 </head>
 <body>
 <h1>ready_to_sell_1 — Satır Satır İnternet Denetimi</h1>
-<div class="muted">31/31 Batch‑51 adayı · 24 doğrulama/çatışma geçişi · güncel resmî ve ilk-taraf kaynaklar · stale V53 sonucu reddedildi</div>
+<div class="muted">31/31 Batch‑51 adayı · 25 doğrulama/çatışma geçişi · güncel resmî ve ilk-taraf kaynaklar · V53 aynı görev olarak claimable</div>
 <div id="app">Veriler yükleniyor…</div>
 <script>
-const EXTRA='support_resolution_20260723_1508Z.json';
+const LATEST='support_resolution_20260723_1524Z.json';
 const esc=v=>String(v??'NO_DATA').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const link=(u,t)=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`:'—';
 const get=u=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(u+' HTTP '+r.status);return r.json()});
 get('support_audit_latest.json').then(async m=>{
   const auditDocs=await Promise.all((m.audit_json_paths||[]).map(get));
-  const manifestPaths=m.resolution_json_paths||[];
-  const overlayNeeded=!manifestPaths.includes(EXTRA);
-  const resolutionPaths=overlayNeeded?[...manifestPaths,EXTRA]:[...manifestPaths];
-  const resolutionDocs=await Promise.all(resolutionPaths.map(get));
-  const extraDoc=resolutionDocs.find(r=>r.resolution_audit_id==='ready_to_sell_1_conflict_resolution_20260723_1508Z');
-  const delta=extraDoc?.summary||{};
+  const resolutionDocs=await Promise.all((m.resolution_json_paths||[]).map(get));
+  const latestDoc=resolutionDocs.find(r=>r.resolution_audit_id==='ready_to_sell_1_conflict_resolution_20260723_1524Z');
+  const delta=latestDoc?.summary||{};
   const rows=auditDocs.flatMap(d=>d.rows||[]);
   const changes=resolutionDocs.flatMap(r=>r.rows||[]);
   const latest=new Map;
   changes.forEach(x=>latest.set(Number(x.row_reference),x));
-  const add=v=>overlayNeeded?Number(v||0):0;
-  const attempted=Number(m.internet_checks_attempted||0)+add(delta.additional_internet_checks_attempted);
-  const verified=Number(m.internet_checks_verified||0)+add(delta.additional_internet_checks_verified);
-  const rate=attempted?Math.round(verified*10000/attempted)/100:0;
-  const followRows=Number(m.followup_rows_rechecked||0)+add(delta.rows_rechecked);
-  const followAttempted=Number(m.followup_checks_attempted||0)+add(delta.additional_internet_checks_attempted);
-  const followVerified=Number(m.followup_checks_verified||0)+add(delta.additional_internet_checks_verified);
-  const resolved=Number(m.source_identity_conflicts_resolved||0)+add(delta.conflicts_resolved);
-  const narrowed=Number(m.source_identity_conflicts_narrowed_but_open||0)+add(delta.conflicts_narrowed_but_open);
-  const open=overlayNeeded?Math.max(0,Number(m.source_identity_conflicts_open||0)-Number(delta.conflicts_resolved||0)+Number(delta.conflicts_narrowed_but_open||0)):Number(m.source_identity_conflicts_open||0);
   const cards=[
     ['Aday kapsamı',m.candidate_examples_checked+'/'+m.batch51_candidate_examples_total],
     ['Kapsam',m.batch51_candidate_audit_coverage_percent+'%'],
-    ['Toplam kontrol',attempted],['Doğrulanan',verified],['Doğrulama oranı',rate+'%'],
-    ['Takip',followRows+' satır'],['Takip kontrolleri',followVerified+'/'+followAttempted],
-    ['Çözülen çatışma',resolved],['Daraltılan açık',narrowed],['Açık çatışma',open],
-    ['24. geçiş satır',delta.rows_rechecked||0],
-    ['24. geçiş kontrol',(delta.additional_internet_checks_verified||0)+'/'+(delta.additional_internet_checks_attempted||0)],
-    ['Ortalama kimlik güveni',(delta.adjusted_average_candidate_current_identity_confidence??m.average_candidate_current_identity_confidence)+'/100'],
+    ['Toplam kontrol',m.internet_checks_attempted],['Doğrulanan',m.internet_checks_verified],['Doğrulama oranı',m.internet_verification_rate_percent+'%'],
+    ['Takip',m.followup_rows_rechecked+' satır'],['Takip kontrolleri',m.followup_checks_verified+'/'+m.followup_checks_attempted],
+    ['Çözülen çatışma',m.source_identity_conflicts_resolved],['Daraltılan açık',m.source_identity_conflicts_narrowed_but_open],['Açık çatışma',m.source_identity_conflicts_open],
+    ['25. geçiş satır',delta.rows_rechecked||0],['25. geçiş kontrol',(delta.additional_internet_checks_verified||0)+'/'+(delta.additional_internet_checks_attempted||0)],
+    ['Ortalama kimlik güveni',m.average_candidate_current_identity_confidence+'/100'],
     ['Exact parsel',m.examples_promoted_to_exact_parcel],['Parsel değeri',m.published_parcel_value_rows],
     ['Ana işlem',m.main_operations_completed+'/'+m.main_operations_total],['Ana ilerleme',m.main_completion_percent+'%'],
     ['Ana artış','+'+Number(m.main_completion_delta_percent||0).toFixed(2)+'%'],
@@ -60,7 +46,7 @@ get('support_audit_latest.json').then(async m=>{
     const facts=r?[r.resolved_fact,...(x.verified_facts||[])]:x.verified_facts||[];
     const blockers=r?.remaining_blockers||x.blockers||[];
     const sources=r?.sources||[x.primary_url,x.operator_url,x.planning_url].filter(Boolean);
-    const cls=status.includes('RESOLVED_')||status.startsWith('CURRENT_')?'resolved':status.includes('MATERIAL_CORRECTION')?'bad':status.includes('CONFLICT')||status.includes('NARROWED')||status.includes('DEGRADED')||status.includes('UNRESOLVED')?'warn':'ok';
+    const cls=status.includes('RESOLVED_')||status.startsWith('CURRENT_')?'resolved':status.includes('MATERIAL_CORRECTION')?'bad':status.includes('CONFLICT')||status.includes('NARROWED')||status.includes('DEGRADED')||status.includes('UNRESOLVED')||status.includes('MANUAL')?'warn':'ok';
     return `<tr class="${cls}"><td>${esc(x.row_reference)}</td><td>${esc(x.listing_id)}</td><td>${esc(r?.address||x.address)}</td><td>${esc(confidence)}/100</td><td>${esc(x.parcel_binding_confidence)}/100</td><td>${esc(status)}</td><td>${facts.map(v=>`<div>• ${esc(v)}</div>`).join('')}</td><td>${blockers.map(v=>`<span class="pill">${esc(v)}</span>`).join('')}</td><td>${sources.map((u,i)=>link(u,'kaynak '+(i+1))).join(' · ')}</td></tr>`;
   }).join('');
   const changeHtml=changes.map(r=>`<tr><td>${esc(r.row_reference)}</td><td>${esc(r.listing_id)}</td><td>${esc(r.address)}</td><td>${esc(r.previous_status)}</td><td>${esc(r.resolution_status)}</td><td>${esc(r.previous_confidence)} → ${esc(r.revised_confidence)}</td><td>${esc(r.resolved_fact)}</td></tr>`).join('');
@@ -68,9 +54,9 @@ get('support_audit_latest.json').then(async m=>{
     <div class="cards">${cards.map(x=>`<div class="card"><div>${esc(x[0])}</div><div class="value">${esc(x[1])}</div></div>`).join('')}</div>
     <section><h2>Birleşik aday satırları</h2><div class="scroll"><table><thead><tr><th>Satır</th><th>İlan</th><th>Adres</th><th>Kimlik güveni</th><th>Parsel bağlama</th><th>Güncel durum</th><th>Kanıt</th><th>Blocker</th><th>Kaynaklar</th></tr></thead><tbody>${rowHtml}</tbody></table></div></section>
     <section><h2>Takip değişiklikleri</h2><div class="scroll"><table><thead><tr><th>Satır</th><th>İlan</th><th>Adres</th><th>Önceki durum</th><th>Yeni durum</th><th>Güven</th><th>Sonuç</th></tr></thead><tbody>${changeHtml}</tbody></table></div></section>
-    <section class="warn"><b>Ana engel:</b> Stale yerel-data V53 raporu reddedildi. Temiz remote-HEAD V53 tarayıcı kabulü pickup watchdog süresini aştı; aynı görev claimable tutuldu ve ikinci runner açılmadı. 24. geçişte dört satır canlı kaynaklarla yeniden kontrol edildi; exact parsel veya parsel değeri çıkarılmadı.</section>`;
-  const semanticValid=rows.length===31&&attempted===552&&verified===513&&changes.length===131;
-  Object.assign(document.body.dataset,{candidateCount:rows.length,internetChecksAttempted:attempted,internetChecksVerified:verified,resolutionRows:changes.length,resolvedConflicts:resolved,openConflicts:open,pickupWatchdogExpired:String(Boolean(m.pickup_watchdog_expired)),semanticValid:String(semanticValid),latestResolution:EXTRA});
+    <section class="warn"><b>Ana engel:</b> Temiz güncel branch-tip V53 tarayıcı kabulü pickup watchdog süresini aştı. Aynı görev ve attempt claimable tutuldu; ikinci runner açılmadı. 25. geçişte dört yüksek-riskli satır 29 internet kontrolüyle işlendi, 26 kontrol doğrulandı; exact parsel veya parsel değeri çıkarılmadı.</section>`;
+  const semanticValid=rows.length===31&&m.internet_checks_attempted===581&&m.internet_checks_verified===539&&changes.length===135&&Boolean(latestDoc);
+  Object.assign(document.body.dataset,{candidateCount:rows.length,internetChecksAttempted:m.internet_checks_attempted,internetChecksVerified:m.internet_checks_verified,resolutionRows:changes.length,resolvedConflicts:m.source_identity_conflicts_resolved,openConflicts:m.source_identity_conflicts_open,pickupWatchdogExpired:String(Boolean(m.pickup_watchdog_expired)),semanticValid:String(semanticValid),latestResolution:LATEST});
 }).catch(e=>{document.getElementById('app').innerHTML=`<section class="bad">BLOCKED: ${esc(e)}</section>`;document.body.dataset.semanticValid='false'});
 </script>
 </body>
