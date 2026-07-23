@@ -20,6 +20,7 @@
     <div class="card">Aday / endpoint<br><strong id="candidates">yükleniyor</strong></div>
     <div class="card">Resmî kaynak kontrolü<br><strong id="sourceIncrement">yükleniyor</strong></div>
     <div class="card">Kaynak yükseltmesi<br><strong id="upgrades">yükleniyor</strong></div>
+    <div class="card">Karar matrisi<br><strong id="decisionRows">yükleniyor</strong></div>
     <div class="card">Heartbeat yaşı<br><strong id="heartbeatAge">yükleniyor</strong></div>
     <div class="card">Dependency kusuru<br><strong id="depDefects">yükleniyor</strong></div>
     <div class="card">Manuel eylem<br><strong id="manual">yükleniyor</strong></div>
@@ -36,6 +37,7 @@
     <tr><td>Resmî kaynak artışı V7</td><td>5/5 yeni doğrulama; kümülatif 45/45 kaynak ve 39 yükseltme</td><td><a href="continuation_official_source_increment_v7.html">continuation_official_source_increment_v7.html</a></td></tr>
     <tr><td>Resmî kaynak artışı V8</td><td>5/5 yeni doğrulama; kümülatif 50/50 kaynak ve 44 yükseltme</td><td><a href="continuation_official_source_increment_v8.html">continuation_official_source_increment_v8.html</a></td></tr>
     <tr><td>Resmî kaynak artışı V9</td><td>5/5 yeni doğrulama; kümülatif 55/55 kaynak ve 49 yükseltme</td><td><a href="continuation_official_source_increment_v9.html">continuation_official_source_increment_v9.html</a></td></tr>
+    <tr><td>Kaynak benimseme matrisi</td><td>55 karar: 2 runtime-adayı, 11 çapraz kontrol, 18 bağlam, 24 kalite koruması</td><td><a href="official_source_adoption_matrix_v1.html">official_source_adoption_matrix_v1.html</a></td></tr>
     <tr><td>Runtime denetimi</td><td>Carrier, watchdog ve receipt yolları</td><td><a href="runtime_code_audit_v17.html">runtime_code_audit_v17.html</a></td></tr>
     <tr><td>Queue parser</td><td>Priority, branch, allowed paths ve safety</td><td><a href="queue_parser_contract_v1.html">queue_parser_contract_v1.html</a></td></tr>
     <tr><td>Holder CI paket</td><td>CI paket kapsamı; F-host recovery kanıtı değildir</td><td><a href="holder_ci_package_validation_v1.html">holder_ci_package_validation_v1.html</a></td></tr>
@@ -51,96 +53,26 @@
     const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
     const optional=async p=>{try{return await get(p)}catch(_){return null}};
     (async()=>{
-      const [source,manifest,watch,v1,v3,v4,v5,v6,v7,v8,v9,acceptanceDoc]=await Promise.all([
-        get('official_web_refresh_20260722.json'),
-        get('canonical_130_endpoint_manifest_20260722.json'),
-        get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),
-        get('continuation_official_source_increment_v1_20260722.json'),
-        get('continuation_official_source_increment_v3_20260722.json'),
-        get('continuation_official_source_increment_v4_20260722.json'),
-        get('continuation_official_source_increment_v5_20260722.json'),
-        get('continuation_official_source_increment_v6_20260722.json'),
-        get('continuation_official_source_increment_v7_20260722.json'),
-        get('continuation_official_source_increment_v8_20260723.json'),
-        get('continuation_official_source_increment_v9_20260723.json'),
-        optional('canonical_acceptance_v17_latest.json')
+      const [source,manifest,watch,v1,v3,v4,v5,v6,v7,v8,v9,matrix,acceptanceDoc]=await Promise.all([
+        get('official_web_refresh_20260722.json'),get('canonical_130_endpoint_manifest_20260722.json'),get('holder_stale_daemon_watchdog_audit_v1_20260722.json'),
+        get('continuation_official_source_increment_v1_20260722.json'),get('continuation_official_source_increment_v3_20260722.json'),get('continuation_official_source_increment_v4_20260722.json'),get('continuation_official_source_increment_v5_20260722.json'),get('continuation_official_source_increment_v6_20260722.json'),get('continuation_official_source_increment_v7_20260722.json'),get('continuation_official_source_increment_v8_20260723.json'),get('continuation_official_source_increment_v9_20260723.json'),get('official_source_adoption_matrix_v1_20260723.json'),optional('canonical_acceptance_v17_latest.json')
       ]);
       const cp=source.canonical_progress||{},cm=v9.cumulative_metrics||{},wd=watch.defect_resolution||{},acceptancePass=acceptanceDoc?.acceptance_pass===true;
       const allSources=[...(v1.sources||[]),...(v3.sources||[]),...(v4.sources||[]),...(v5.sources||[]),...(v6.sources||[]),...(v7.sources||[]),...(v8.sources||[]),...(v9.sources||[])];
+      if(allSources.length!==55)throw Error(`Kaynak satırı uyuşmazlığı: ${allSources.length}/55`);
       progress.textContent=`${cp.completed_units}/${cp.total_units} — ${cp.overall_percent}% (Δ ${cp.percent_change>=0?'+':''}${cp.percent_change})`;
-      rowsCount.textContent=`${source.verified_rows}/300`;
-      accuracy.textContent=`${source.accuracy_score_4_rows}/300`;
-      candidates.textContent=`${manifest.candidate_rows}/130 · ${manifest.unique_endpoints}/16`;
-      sourceIncrement.textContent=`${cm.official_source_checks_passed}/${cm.official_source_checks}`;
-      upgrades.textContent=String(cm.source_upgrades);
-      heartbeatAge.textContent=`${watch.heartbeat.age_minutes_at_check} dk`;
-      depDefects.textContent=String(wd.dependency_defects_found);
-      manual.textContent='OPEN — F-host';
-      acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';
+      rowsCount.textContent=`${source.verified_rows}/300`;accuracy.textContent=`${source.accuracy_score_4_rows}/300`;candidates.textContent=`${manifest.candidate_rows}/130 · ${manifest.unique_endpoints}/16`;
+      sourceIncrement.textContent=`${cm.official_source_checks_passed}/${cm.official_source_checks}`;upgrades.textContent=String(cm.source_upgrades);decisionRows.textContent=`${matrix.decision_summary.decision_rows}/55`;
+      heartbeatAge.textContent=`${watch.heartbeat.age_minutes_at_check} dk`;depDefects.textContent=String(wd.dependency_defects_found);manual.textContent='OPEN — F-host';acceptance.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';
       const items=[
-        ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows}/300; doğruluk ${source.accuracy_score_4_rows}/300`],
-        ['PASS','STATIC_CANDIDATES',`${manifest.candidate_rows}/130 aday; ${manifest.unique_endpoints}/16 endpoint`],
-        ['PASS','PARALLEL_OFFICIAL_SOURCE_RESEARCH',`${cm.official_source_checks_passed}/${cm.official_source_checks} resmî kaynak; ${cm.source_upgrades} yükseltme`],
-        ['PASS','LIVE_POLICE_API_FRESHNESS','latest=2026-05-01; May stop-search=30; April=34'],
-        ['PASS','MPS_LSOA_UPGRADE_CANDIDATE','Jul 2024-Jun 2026; LSOA; sexual offences excluded; CONNECT guard'],
-        ['PASS','ONS_APPENDIX_CURRENT_BASELINE','year ending Dec 2025; national aggregate cross-check'],
-        ['PASS','LFB_INCIDENT_CONTEXT','Jan 2024-Apr 2026; coordinates; not crime score'],
-        ['PASS','LFB_MOBILISATION_CONTEXT','Jan 2025-Jun 2026; not guaranteed response'],
-        ['PASS','POLICE_WORKFORCE_2026_CONTEXT','published 22 Jul 2026; not local risk'],
-        ['PASS','MPS_VAWG_AGGREGATE_CONTEXT','ward/borough/BCU; disclosure guard'],
-        ['PASS','ONS_CSS_OFFICIAL_BENCHMARK','year ending Mar 2025; project score is not CSS'],
-        ['PASS','HOME_OFFICE_OUTCOME_CROSSCHECK','year to Dec 2025; outcomes are not severity'],
-        ['PASS','HATE_CRIME_COMPARABILITY_GUARD','MPS February 2024 system-change break recorded'],
-        ['PASS','MPS_HOMICIDE_BOROUGH_CONTEXT','victims through Dec 2025; COLP/BTP jurisdiction excluded'],
-        ['PASS','MPS_ASB_OPERATIONAL_CONTEXT','May 2025-Apr 2026; calls are not confirmed crimes'],
-        ['PASS','MPS_BUSINESS_CRIME_CONTEXT','Jun 2024-May 2026; CONNECT and Oct 2025 classification guards'],
-        ['PASS','MOJ_KNIFE_SENTENCING_CONTEXT','published 21 May 2026; CJS disposals are not incident prevalence'],
-        ['PASS','HOME_OFFICE_KNIFE_OPEN_DATA','offences since YE Mar 2009; separate outcomes dataset'],
-        ['PASS','HOME_OFFICE_FIREARMS_OPEN_DATA','offences since YE Mar 2009; separate outcomes dataset'],
-        ['PASS','TRANSFERRED_CANCELLED_QUALITY_GUARD','YE Dec 2025; recording-quality control'],
-        ['PASS','CSEW_PERSONAL_PREVALENCE_CONTEXT','released 23 Apr 2026; survey context, not local counts'],
-        ['PASS','CSEW_HOUSEHOLD_PREVALENCE_CONTEXT','released 23 Apr 2026; not parcel probability'],
-        ['PASS','CSEW_INCIDENCE_METHOD_GUARD','December 2018 method change; old/current rates not comparable'],
-        ['PASS','CJS_PERCEPTION_CONTEXT_ONLY','public perceptions are not crime incidence'],
-        ['PASS','LOCAL_RECORDED_CRIME_CROSSCHECK','updated 8 Jul 2026; CSP/quarter/offence; area-level only'],
-        ['PASS','DOMESTIC_ABUSE_PREVALENCE_CONTEXT','YE Mar 2025; CSEW and police aggregates; no individual inference'],
-        ['PASS','DOMESTIC_ABUSE_CJS_CONTEXT','Nov 2025; responses/outcomes are not prevalence'],
-        ['PASS','PFA_COMPARISON_CORRECTION_GUARD','corrected 7 Jan 2026 City of London comparison fault'],
-        ['PASS','VAWG_SUBCODE_CROSSCHECK','YE Mar 2021-Dec 2025; sensitive aggregate only'],
-        ['PENDING','VIOLENT_CRIME_OCT_2026_RELEASE','22 Oct 2026 provisional; unpublished at check'],
-        ['PASS','SEXUAL_OFFENCES_HALF_SAMPLE_GUARD','YE Mar 2025; half sample; police trends unreliable'],
-        ['PASS','STALKING_CSEW_CONTEXT','YE Mar 2025; national survey context only'],
-        ['PASS','FRAUD_CORRECTED_VERSION_GUARD','corrected 10 Apr 2026; use corrected release'],
-        ['PASS','POLICE_POWERS_COVERAGE_GUARD','YE Mar 2025; force coverage and recording limits'],
-        ['PASS','CJS_QUARTERLY_DEC_2025_CONTEXT','updated 29 Jun 2026; justice activity is not prevalence'],
-        ['PASS','CSEW_PFA_CONFIDENCE_INTERVAL_GUARD','YE Dec 2025 PFA estimates; confidence intervals required'],
-        ['PASS','DRUG_MISUSE_SURVEY_CONTEXT','YE Mar 2025; pandemic gap; not local incidents'],
-        ['PASS','CRIME_METHOD_INTERPRETATION_GATE','survey sample/question/denominator changes recorded'],
-        ['PASS','OUTCOMES_MARCH_2026_VERSION_GUARD','updated 23 Apr 2026; outcomes are not severity'],
-        ['PASS','STREET_DATA_DISTRIBUTION_LICENCE_GUARD','updated 8 Jul 2026; OGL provenance; no double count'],
-        ['PASS','USE_OF_FORCE_COUNTING_GUARD','Apr 2026; officer-subject rows are not incidents'],
-        ['PASS','CUSTODY_RECORD_NOT_PERSON_GUARD','Jan 2022-Jun 2026; records are not unique people'],
-        ['PASS','STOP_SEARCH_CONNECT_VERSION_GUARD','Jul 2024-Jun 2026; CONNECT and V2 correction'],
-        ['PASS','MOPAC_SURVEY_SAMPLE_CONTEXT','Q4 2025-26; perception and experience only'],
-        ['PASS','MTIPS_DOUBLE_COUNT_DISRUPTION_GUARD','Jul 2024-Jun 2026; custody overlap and IT warning'],
-        ['PENDING','ONS_MARCH_2026_RELEASE','23 Temmuz 2026 09:30 UK; kontrol anında yayımlanmamış'],
-        ['PASS','NO_FAKE_PARCEL_VALUES','0 yeni parsel değeri; stored_values_modified=false'],
-        ['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],
-        ['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu`],
-        ['PENDING','PRIORITY_1_CLAIM','height_difference_2 existing single shared runner'],
-        ['PENDING','SECURITY_PRIORITY_2_CLAIM',v9.first_unverified_step],
-        [acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptancePass?'runtime report present':'single-runner acceptance pending'],
-        [acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptancePass?'runtime report present':'browser gate pending'],
-        ['PENDING','PUBLISHER_READBACK','runtime acceptance required first'],
-        ['BLOCKED','MANUAL_ACTION',v9.manual_action_path]
+        ['PASS','REMOTE_SOURCE_ROWS',`${source.verified_rows}/300; doğruluk ${source.accuracy_score_4_rows}/300`],['PASS','STATIC_CANDIDATES',`${manifest.candidate_rows}/130 aday; ${manifest.unique_endpoints}/16 endpoint`],['PASS','PARALLEL_OFFICIAL_SOURCE_RESEARCH',`${cm.official_source_checks_passed}/${cm.official_source_checks} resmî kaynak; ${cm.source_upgrades} yükseltme`],
+        ['PASS','SOURCE_ADOPTION_MATRIX',`${matrix.decision_summary.decision_rows}/55 karar; 2 runtime-adayı; 11 çapraz kontrol; 18 bağlam; 24 kalite koruması`],
+        ['PASS','LIVE_POLICE_API_FRESHNESS','latest=2026-05-01; May stop-search=30; April=34'],['PASS','MPS_LSOA_UPGRADE_CANDIDATE','Jul 2024-Jun 2026; LSOA; sexual offences excluded; CONNECT guard'],['PASS','ONS_APPENDIX_CURRENT_BASELINE','year ending Dec 2025; national aggregate cross-check'],['PASS','LFB_INCIDENT_CONTEXT','Jan 2024-Apr 2026; coordinates; not crime score'],['PASS','LFB_MOBILISATION_CONTEXT','Jan 2025-Jun 2026; not guaranteed response'],['PASS','POLICE_WORKFORCE_2026_CONTEXT','published 22 Jul 2026; not local risk'],['PASS','MPS_VAWG_AGGREGATE_CONTEXT','ward/borough/BCU; disclosure guard'],['PASS','ONS_CSS_OFFICIAL_BENCHMARK','year ending Mar 2025; project score is not CSS'],['PASS','HOME_OFFICE_OUTCOME_CROSSCHECK','year to Dec 2025; outcomes are not severity'],['PASS','HATE_CRIME_COMPARABILITY_GUARD','MPS February 2024 system-change break recorded'],['PASS','MPS_HOMICIDE_BOROUGH_CONTEXT','victims through Dec 2025; COLP/BTP jurisdiction excluded'],['PASS','MPS_ASB_OPERATIONAL_CONTEXT','May 2025-Apr 2026; calls are not confirmed crimes'],['PASS','MPS_BUSINESS_CRIME_CONTEXT','Jun 2024-May 2026; CONNECT and Oct 2025 classification guards'],['PASS','MOJ_KNIFE_SENTENCING_CONTEXT','published 21 May 2026; CJS disposals are not incident prevalence'],['PASS','HOME_OFFICE_KNIFE_OPEN_DATA','offences since YE Mar 2009; separate outcomes dataset'],['PASS','HOME_OFFICE_FIREARMS_OPEN_DATA','offences since YE Mar 2009; separate outcomes dataset'],['PASS','TRANSFERRED_CANCELLED_QUALITY_GUARD','YE Dec 2025; recording-quality control'],['PASS','CSEW_PERSONAL_PREVALENCE_CONTEXT','released 23 Apr 2026; survey context, not local counts'],['PASS','CSEW_HOUSEHOLD_PREVALENCE_CONTEXT','released 23 Apr 2026; not parcel probability'],['PASS','CSEW_INCIDENCE_METHOD_GUARD','December 2018 method change; old/current rates not comparable'],['PASS','CJS_PERCEPTION_CONTEXT_ONLY','public perceptions are not crime incidence'],['PASS','LOCAL_RECORDED_CRIME_CROSSCHECK','updated 8 Jul 2026; CSP/quarter/offence; area-level only'],['PASS','DOMESTIC_ABUSE_PREVALENCE_CONTEXT','YE Mar 2025; CSEW and police aggregates; no individual inference'],['PASS','DOMESTIC_ABUSE_CJS_CONTEXT','Nov 2025; responses/outcomes are not prevalence'],['PASS','PFA_COMPARISON_CORRECTION_GUARD','corrected 7 Jan 2026 City of London comparison fault'],['PASS','VAWG_SUBCODE_CROSSCHECK','YE Mar 2021-Dec 2025; sensitive aggregate only'],['PENDING','VIOLENT_CRIME_OCT_2026_RELEASE','22 Oct 2026 provisional; unpublished at check'],['PASS','SEXUAL_OFFENCES_HALF_SAMPLE_GUARD','YE Mar 2025; half sample; police trends unreliable'],['PASS','STALKING_CSEW_CONTEXT','YE Mar 2025; national survey context only'],['PASS','FRAUD_CORRECTED_VERSION_GUARD','corrected 10 Apr 2026; use corrected release'],['PASS','POLICE_POWERS_COVERAGE_GUARD','YE Mar 2025; force coverage and recording limits'],['PASS','CJS_QUARTERLY_DEC_2025_CONTEXT','updated 29 Jun 2026; justice activity is not prevalence'],['PASS','CSEW_PFA_CONFIDENCE_INTERVAL_GUARD','YE Dec 2025 PFA estimates; confidence intervals required'],['PASS','DRUG_MISUSE_SURVEY_CONTEXT','YE Mar 2025; pandemic gap; not local incidents'],['PASS','CRIME_METHOD_INTERPRETATION_GATE','survey sample/question/denominator changes recorded'],['PASS','OUTCOMES_MARCH_2026_VERSION_GUARD','updated 23 Apr 2026; outcomes are not severity'],['PASS','STREET_DATA_DISTRIBUTION_LICENCE_GUARD','updated 8 Jul 2026; OGL provenance; no double count'],['PASS','USE_OF_FORCE_COUNTING_GUARD','Apr 2026; officer-subject rows are not incidents'],['PASS','CUSTODY_RECORD_NOT_PERSON_GUARD','Jan 2022-Jun 2026; records are not unique people'],['PASS','STOP_SEARCH_CONNECT_VERSION_GUARD','Jul 2024-Jun 2026; CONNECT and V2 correction'],['PASS','MOPAC_SURVEY_SAMPLE_CONTEXT','Q4 2025-26; perception and experience only'],['PASS','MTIPS_DOUBLE_COUNT_DISRUPTION_GUARD','Jul 2024-Jun 2026; custody overlap and IT warning'],
+        ['PENDING','ONS_MARCH_2026_RELEASE','23 Temmuz 2026 09:30 UK; kontrol anında yayımlanmamış'],['PASS','NO_FAKE_PARCEL_VALUES','0 yeni parsel değeri; stored_values_modified=false'],['BLOCKED','HOLDER_HEARTBEAT_FRESHNESS',`${watch.heartbeat.age_minutes_at_check} dk > ${watch.heartbeat.configured_stale_minutes} dk`],['BLOCKED','HOLDER_STALE_DAEMON_WATCHDOG',`${wd.dependency_defects_found} false-success yolu`],['PENDING','PRIORITY_1_CLAIM','height_difference_2 existing single shared runner'],['PENDING','SECURITY_PRIORITY_2_CLAIM',matrix.first_unverified_step],[acceptancePass?'PASS':'PENDING','LIVE_130_16_PARITY',acceptancePass?'runtime report present':'single-runner acceptance pending'],[acceptancePass?'PASS':'PENDING','CHROMIUM_SECURITY_ACCEPTANCE',acceptancePass?'runtime report present':'browser gate pending'],['PENDING','PUBLISHER_READBACK','runtime acceptance required first'],['BLOCKED','MANUAL_ACTION',matrix.manual_action_path]
       ];
       events.innerHTML=items.map((x,i)=>`<tr><td>${i+1}</td><td class="${esc(x[0])}">${esc(x[0])}</td><td>${esc(x[1])}</td><td class="mono">${esc(x[2])}</td></tr>`).join('');
       sourceRows.innerHTML=allSources.map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br>${esc(x.authority)}</td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
-      document.body.dataset.operationRows=String(items.length);
-      document.body.dataset.sourceResearchRows=String(allSources.length);
-      document.body.dataset.continuationKey=v9.continuation_key;
-      document.body.dataset.blocker=v9.blocker;
-      document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));
+      document.body.dataset.operationRows=String(items.length);document.body.dataset.sourceResearchRows=String(allSources.length);document.body.dataset.decisionRows=String(matrix.decision_summary.decision_rows);document.body.dataset.continuationKey=matrix.continuation_key;document.body.dataset.blocker=matrix.blocker;document.body.dataset.acceptancePresent=String(Boolean(acceptanceDoc));
     })().catch(e=>{events.innerHTML=`<tr><td colspan="4" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
   </script>
 </body>
