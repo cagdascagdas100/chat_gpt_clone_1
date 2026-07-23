@@ -9,7 +9,7 @@ $branch = 'codex/aays-single-runner-v5-20260706'
 $repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
 $ownershipRel = 'docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json'
 $innerRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\automation\003_ffsafe_sync_then_apply_retry5_recovery.ps1'
-$innerBlob = '18b9de800d0988cab5cb7432f6af3b2cce475671'
+$innerBlob = 'fb7c2383a6066490cc5f1ebf1a82898843af103d'
 $outputRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\runner_outputs\004_retry5_timeout_guard_latest.json'
 
 function GitBlob([string]$Path) {
@@ -33,7 +33,7 @@ function DescendantPids([int]$RootPid) {
 }
 function Receipt([string]$Status,[int]$ExitCode,[bool]$TimedOut,[string]$ResolvedInner,[object]$OwnerSnapshot,[string]$RemoteHead,[bool]$TreeKillAttempted,[int]$TreeKillExit,[object]$TrackedPids,[object]$RemainingPids,[string]$Detail) {
   $path=Join-Path $repoRoot $outputRel;$parent=Split-Path -Parent $path;if(-not(Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Force -Path $parent|Out-Null}
-  $o=[ordered]@{schema_version=4;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;remote_head=$RemoteHead;ownership_rechecked=$true;ownership_snapshot=$OwnerSnapshot;canonical_f_process_identity_required=$true;foreign_runner_process_fail_closed=$true;heartbeat_pid_and_repo_root_identity_required=$true;process_tree_kill_attempted=$TreeKillAttempted;process_tree_kill_exit_code=$TreeKillExit;tracked_process_ids=@($TrackedPids);remaining_tracked_process_ids=@($RemainingPids);same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false}
+  $o=[ordered]@{schema_version=5;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;remote_head=$RemoteHead;ownership_rechecked=$true;ownership_snapshot=$OwnerSnapshot;canonical_f_process_identity_required=$true;foreign_runner_process_fail_closed=$true;heartbeat_pid_and_repo_root_identity_required=$true;transient_without_fresh_daemon_is_failure=$true;process_exit_before_kill_is_clean_stop=$true;process_tree_kill_attempted=$TreeKillAttempted;process_tree_kill_exit_code=$TreeKillExit;tracked_process_ids=@($TrackedPids);remaining_tracked_process_ids=@($RemainingPids);same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false}
   $tmp="$path.tmp.$PID";[IO.File]::WriteAllText($tmp,(($o|ConvertTo-Json -Depth 12)+"`n"),[Text.UTF8Encoding]::new($false));Move-Item -LiteralPath $tmp -Destination $path -Force
 }
 
