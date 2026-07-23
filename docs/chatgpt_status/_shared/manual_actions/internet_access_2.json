@@ -1,18 +1,18 @@
 {
-  "schema_version": 15,
+  "schema_version": 16,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 52 verified identity-only examples are visible. Eighteen source-route checks are recorded, including 17 official/public sources. The BDUK address checker is not a bulk Ofcom replacement, and the recently updated data.gov.uk catalogue exposes historical 2014 postcode-speed data only. Ofcom still lists the January 2026 coverage ZIP, but archive bytes remain unavailable in current/public routes. Zero official coverage candidates and zero 3/4 accuracy values have been written. The combined fail-closed host orchestrator can publish the exact two review rows and, only when a valid official ZIP exists, strict-requeue the same 006 task.",
+  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 58 verified identity-only examples are visible; all 58 published example identities are unique. Eighteen source-route checks are recorded, including 17 official/public sources. Ofcom still identifies Spring 2026 as a January 2026 fixed-broadband coverage snapshot and states that postcode performance data is no longer published. Archive bytes remain unavailable in current/public routes. Zero official coverage candidates, zero measured parcel-speed values and zero 3/4 accuracy values have been written. The combined fail-closed host orchestrator can publish the exact two review rows and, only when a valid official ZIP exists, strict-requeue the same 006 task.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-23T03:30:00Z",
+  "updated_at": "2026-07-23T03:55:00Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
     "percent_change": 16.66,
-    "support_checks_completed": 96,
-    "support_checks_total": 98,
+    "support_checks_completed": 105,
+    "support_checks_total": 107,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -22,7 +22,9 @@
     "visible_rows": 11013,
     "visible_chunks": 23,
     "sampled_chunks": 23,
-    "visible_examples": 52,
+    "visible_examples": 58,
+    "unique_example_identities": 58,
+    "duplicate_example_identities": 0,
     "visible_review_rows": 0,
     "source_upgrades": 18,
     "official_source_count": 17
@@ -43,6 +45,7 @@
     "exact_r2_required_for_3_of_4": true,
     "faq_verification": "PASS",
     "planned_network_deployments_2026_snapshot_corroboration": "PASS",
+    "fresh_2026_07_23_recheck": "PASS",
     "bduk_checker_bulk_archive_replacement": false,
     "data_gov_current_spring_2026_resource": false
   },
@@ -82,12 +85,16 @@
     "strict_requeue_guard": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py"
   },
   "public_sampling": {
-    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_FIFTH_ROW_WAVE",
-    "visible_examples": 52,
+    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_SIXTH_ROW_WAVE",
+    "visible_examples": 58,
+    "unique_example_identities": 58,
+    "duplicate_example_identities": 0,
     "sampled_chunks": 23,
-    "wave9_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave9.json",
-    "wave9_commit": "047a04fe6b48728ab54b8f90a19a3d012f68bcf9",
-    "panel_commit": "d3c8601fce1ae6eb7e8f2b57eea20c117be40b13",
+    "wave10_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave10.json",
+    "wave10_commit": "ee84253fb1f9394bddabe214c8bfbf25a438c57c",
+    "panel_commit": "8cf7ebf9407380b79d2b4911d8e07d36fe993d97",
+    "dedup_audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/020_wave10_sixth_rows_dedup_and_official_recheck_audit.json",
+    "dedup_audit_commit": "abf00a3584c3ccf6936551f9a8254bb652492d86",
     "official_coverage_verified": 0,
     "false_accuracy_upgrade": 0
   },
@@ -100,6 +107,8 @@
     "canonical_host_requirement_preserved": true
   },
   "public_route_audit": {
+    "ofcom_spring_page_state": "CURRENT_JANUARY_2026_COVERAGE_SNAPSHOT",
+    "ofcom_faq_state": "NO_CURRENT_POSTCODE_PERFORMANCE_FILE",
     "bduk_checker_state": "CURRENT_JANUARY_2026_OMR_NOT_BULK_OFCom_ARCHIVE",
     "data_gov_catalog_state": "RECENT_UPDATE_HISTORICAL_2014_RESOURCE_ONLY",
     "alternate_current_ofcom_archive_found": false
@@ -119,10 +128,10 @@
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/019_wave9_public_route_and_review_recovery_audit.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/020_wave10_sixth_rows_dedup_and_official_recheck_audit.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/005b_expand_onspd_identity_to_existing_11013.py",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1",
-    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave9.json",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave10.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
