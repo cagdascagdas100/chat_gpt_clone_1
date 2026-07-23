@@ -1,18 +1,18 @@
 {
-  "schema_version": 13,
+  "schema_version": 14,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 40 verified identity-only examples are visible. Ofcom still lists the January 2026 coverage ZIP, but archive bytes remain unavailable in current/public routes. Zero official coverage candidates and zero 3/4 accuracy values have been written. The exact two review rows still require canonical-host execution of the fail-closed publisher.",
+  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 46 verified identity-only examples are visible. Sixteen sources are recorded, including 15 official sources. Ofcom still lists the January 2026 coverage ZIP, but archive bytes remain unavailable in current/public routes. Zero official coverage candidates and zero 3/4 accuracy values have been written. The combined fail-closed host orchestrator can publish the exact two review rows and, only when a valid official ZIP exists, strict-requeue the same 006 task.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-23T02:00:00Z",
+  "updated_at": "2026-07-23T02:26:00Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
     "percent_change": 16.66,
-    "support_checks_completed": 82,
-    "support_checks_total": 84,
+    "support_checks_completed": 89,
+    "support_checks_total": 91,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -22,14 +22,16 @@
     "visible_rows": 11013,
     "visible_chunks": 23,
     "sampled_chunks": 23,
-    "visible_examples": 40,
+    "visible_examples": 46,
     "visible_review_rows": 0,
-    "source_upgrades": 15
+    "source_upgrades": 16,
+    "official_source_count": 15
   },
   "technical_publish_reconciliation": {
     "state": "RESOLVED_PUBLISHED",
     "current_task_state": "PUBLISHED",
     "slot_heartbeat_state": "PUBLISHED",
+    "attempt_id": "4f6b7402838f4af7b29de102991a1e70",
     "live_owner_found": false,
     "new_attempt_found": false,
     "business_blocker_preserved": true
@@ -39,7 +41,8 @@
     "postcode_performance_file_currently_published": false,
     "parcel_measured_speed": false,
     "exact_r2_required_for_3_of_4": true,
-    "faq_verification": "PASS"
+    "faq_verification": "PASS",
+    "planned_network_deployments_2026_snapshot_corroboration": "PASS"
   },
   "required_archive": {
     "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
@@ -53,53 +56,45 @@
     "stale_inner_r1_allowed": false,
     "all_files_nonempty_and_core_columns_required": true
   },
-  "terminated_identity_review_action": {
+  "combined_host_action": {
     "state": "READY_CANONICAL_HOST_EXECUTION_PENDING",
-    "exporter_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/015_export_two_terminated_identity_review_rows.py",
-    "exporter_commit": "97f0703cd1eb37d7907df58fea2e5d35f31bc7ed",
-    "publisher_wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1",
-    "publisher_wrapper_commit": "a619bb4b23a08f6991690868111085aabd36ba3e",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT",
+    "orchestrator_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1",
+    "orchestrator_commit": "24531e2a0e56641caf73e7604299b7df8ceff6df",
+    "command_without_runner": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT",
+    "command_with_runner_when_zip_exists": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
     "expected_source_rows": 11013,
     "expected_review_rows": 2,
-    "accuracy_guard": "1/4_ONLY",
-    "official_coverage_verified": 0,
-    "behavior": [
-      "require clean publisher worktree",
-      "require local HEAD to equal remote canonical branch HEAD",
-      "run the exact-two fail-closed exporter",
-      "validate two 1/4 terminated rows and zero official coverage",
-      "stage only the public review output and its audit",
-      "push and verify remote branch readback"
-    ]
-  },
-  "archive_retry_action": {
-    "state": "WAITING_FOR_OFFICIAL_ZIP_BYTES",
-    "wrapper_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
-    "wrapper_commit": "8f1cec3cf71b7cf75464c2667df07cc7e1e233e9",
-    "strict_guard_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006b_ofcom_dynamic_zip_join_strict_guard.py",
-    "strict_guard_commit": "f9b566792553904a122c5b779e52bc4256e1bf57",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
-    "portable_git_path_bridge": true,
-    "python_guard_git_resolution_precheck": true,
-    "bulk_api_guidance_removed": true,
+    "review_accuracy_guard": "1/4_ONLY",
+    "review_idempotent": true,
+    "invalid_or_partial_review_output_fails_closed": true,
+    "zip_absent_behavior": "PUBLISH_OR_VALIDATE_REVIEW_THEN_STOP_WITHOUT_RUNNER",
+    "zip_present_behavior": "DELEGATE_TO_014_STRICT_ARCHIVE_PREFLIGHT_AND_SAME_TASK_REQUEUE",
     "same_task_id_retained": true,
-    "new_attempt_only_after_strict_pass": true
+    "duplicate_task_created": false,
+    "second_runner_started": false
+  },
+  "component_paths": {
+    "review_exporter": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/015_export_two_terminated_identity_review_rows.py",
+    "review_publisher": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1",
+    "strict_requeue_wrapper": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
+    "strict_requeue_guard": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/013_requeue_existing_006_after_strict_ofcom_zip.py"
   },
   "public_sampling": {
-    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_THIRD_ROW_WAVE",
-    "visible_examples": 40,
+    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_FOURTH_ROW_WAVE",
+    "visible_examples": 46,
     "sampled_chunks": 23,
-    "wave7_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave7.json",
-    "wave7_commit": "26473eeabc0b7e116e313537e7620efc27060e1a",
-    "panel_commit": "59e558c441f9d413d48ae57e07cc63a39ab2cd81",
+    "wave8_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave8.json",
+    "wave8_commit": "056b7a2381222165c83b4921a9a6ed52f6a22fcc",
+    "panel_commit": "036d261ad65237e1b43b385dbe0e65bb5da025d4",
     "official_coverage_verified": 0,
     "false_accuracy_upgrade": 0
   },
-  "schema_alias_audit": {
-    "state": "PASS_CORE_JOIN_ALIASES_ALIGNED",
-    "unsafe_alias_gap_found": false,
-    "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/017_wave7_api_guidance_and_schema_alias_audit.json"
+  "canonical_blob_recovery": {
+    "source_blob_sha": "6f5ec3073824b0caa2eec737aca69f4eb5673440",
+    "source_rows_confirmed": 11013,
+    "direct_download_state": "BLOCKED_DNS_OR_CONNECTOR_LARGE_BLOB_TRANSPORT",
+    "review_rows_fabricated": false,
+    "canonical_host_requirement_preserved": true
   },
   "do_not": [
     "do not create another task",
@@ -116,12 +111,9 @@
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/017_wave7_api_guidance_and_schema_alias_audit.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006b_ofcom_dynamic_zip_join_strict_guard.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/015_export_two_terminated_identity_review_rows.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1",
-    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave7.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/018_wave8_orchestrator_and_snapshot_source_audit.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1",
+    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave8.json",
     "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_recovery_latest.json",
     "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
