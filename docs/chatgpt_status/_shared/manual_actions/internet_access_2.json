@@ -1,18 +1,18 @@
 {
-  "schema_version": 19,
+  "schema_version": 20,
   "slot_id": "internet_access_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 76 verified identity-only examples are visible; all 76 published example identities are unique. Eighteen source-route checks are recorded, including 17 official/public sources. Ofcom still identifies Spring 2026 as a January 2026 fixed-broadband availability snapshot and states that since 2024 there is no Fixed Performance Postcode file. Archive bytes remain unavailable in current/public routes. Zero official coverage candidates, zero measured parcel-speed values and zero 3/4 accuracy values have been written. The combined fail-closed host orchestrator can publish the exact two review rows and, only when a valid official ZIP exists, strict-requeue the same 006 task.",
+  "reason": "The existing 006 task is technically published and terminal. It prepared 11,013 rows across 5,044 postcodes: 11,011 live ONSPD identities and 2 terminated identity review rows. All 23 public chunks are sampled and 82 verified identity-only examples are visible; all 82 published example identities are unique. Eighteen source-route checks are recorded, including 17 official/public sources. Ofcom still identifies Spring 2026 as a January 2026 fixed-broadband availability snapshot and states that since 2024 there is no Fixed Performance Postcode file. The data.gov.uk catalog was updated 8 July 2026 but does not expose the current Spring 2026 archive. Archive bytes remain unavailable in current/public routes. Zero official coverage candidates, zero measured parcel-speed values and zero 3/4 accuracy values have been written. The combined fail-closed host orchestrator can publish the exact two review rows and, only when a valid official ZIP exists, strict-requeue the same 006 task.",
   "detected_at": "2026-07-22T17:11:31Z",
-  "updated_at": "2026-07-23T05:15:00Z",
+  "updated_at": "2026-07-23T05:35:00Z",
   "current_progress": {
     "completed_operations": 5,
     "total_operations": 6,
     "progress_percent": 83.33,
     "percent_change": 16.66,
-    "support_checks_completed": 132,
-    "support_checks_total": 134,
+    "support_checks_completed": 141,
+    "support_checks_total": 143,
     "existing_rows": 11013,
     "distinct_postcodes": 5044,
     "postcode_live": 11011,
@@ -22,8 +22,8 @@
     "visible_rows": 11013,
     "visible_chunks": 23,
     "sampled_chunks": 23,
-    "visible_examples": 76,
-    "unique_example_identities": 76,
+    "visible_examples": 82,
+    "unique_example_identities": 82,
     "duplicate_example_identities": 0,
     "visible_review_rows": 0,
     "source_upgrades": 18,
@@ -46,7 +46,8 @@
     "exact_r2_required_for_3_of_4": true,
     "faq_verification": "PASS",
     "planned_network_deployments_2026_snapshot_corroboration": "PASS",
-    "fresh_2026_07_23_recheck": "PASS"
+    "fresh_2026_07_23_recheck": "PASS",
+    "data_gov_current_spring_2026_mirror": false
   },
   "required_archive": {
     "portable_cache_path": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
@@ -64,7 +65,6 @@
     "state": "READY_CANONICAL_HOST_EXECUTION_PENDING",
     "orchestrator_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1",
     "orchestrator_commit": "24531e2a0e56641caf73e7604299b7df8ceff6df",
-    "command_without_runner": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT",
     "command_with_runner_when_zip_exists": "powershell -NoProfile -ExecutionPolicy Bypass -File docs\\chatgpt_status\\internet_access_parcel_layer_low_credit_20260612\\shards\\internet_access_2\\automation\\017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1 -PortableRoot $env:AAYS_PORTABLE_ROOT -RepoRoot $env:AAYS_REPO_ROOT -StartRunner",
     "expected_source_rows": 11013,
     "expected_review_rows": 2,
@@ -78,26 +78,16 @@
     "second_runner_started": false
   },
   "public_sampling": {
-    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_NINTH_ROW_WAVE",
-    "visible_examples": 76,
-    "unique_example_identities": 76,
+    "state": "PASS_ALL_23_CHUNKS_SAMPLED_WITH_TENTH_ROW_WAVE",
+    "visible_examples": 82,
+    "unique_example_identities": 82,
     "duplicate_example_identities": 0,
     "sampled_chunks": 23,
-    "wave13_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave13.json",
-    "wave13_commit": "3a9c29f3d554e41b601853f5da4666ac2ef92399",
-    "progress_panel_commit": "06b282ab66349769a452d308611de8a97da9837c",
-    "audit_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/023_wave13_ninth_rows_and_current_ofcom_recheck_audit.json",
-    "audit_commit": "89f2c547807defdb7e22472ceb9c5c32b383dc91",
+    "wave14_path": "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave14.json",
+    "wave14_commit": "c33471f4b77a4420c7191f214b0b1a1bcd32a644",
+    "progress_panel_commit": "2c5321de4b85daa769b6116a7ab16b1b92a59026",
     "official_coverage_verified": 0,
     "false_accuracy_upgrade": 0
-  },
-  "canonical_blob_recovery": {
-    "source_blob_sha": "6f5ec3073824b0caa2eec737aca69f4eb5673440",
-    "source_rows_confirmed": 11013,
-    "direct_download_state": "BLOCKED_DNS_OR_CONNECTOR_LARGE_BLOB_TRANSPORT",
-    "classification_contract": "NONEMPTY_DOTERM_EQUALS_ONSPD_TERMINATED_REVIEW_REQUIRED_AT_1_OF_4",
-    "review_rows_fabricated": false,
-    "canonical_host_requirement_preserved": true
   },
   "do_not": [
     "do not create another task",
@@ -109,16 +99,6 @@
     "do not invent the two review rows when the canonical publisher has not run",
     "do not treat coverage percentages as measured parcel speed",
     "do not write 3/4 accuracy before exact official r2 coverage readback"
-  ],
-  "evidence_paths": [
-    "docs/chatgpt_status/_shared/slots_21/internet_access_2/current_task_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/internet_access_2/heartbeat_latest.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/023_wave13_ninth_rows_and_current_ofcom_recheck_audit.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/017_RUN_REVIEW_THEN_OPTIONAL_STRICT_REQUEUE.ps1",
-    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_examples_wave13.json",
-    "england_map_web/data/aays_21_slots/internet_access_2/006_existing_11013_progress_latest.json",
-    "england_map_web/data/aays_21_slots/internet_access_2/ofcom_r2_line_by_line.html"
   ],
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
   "duplicate_task_created": false,
