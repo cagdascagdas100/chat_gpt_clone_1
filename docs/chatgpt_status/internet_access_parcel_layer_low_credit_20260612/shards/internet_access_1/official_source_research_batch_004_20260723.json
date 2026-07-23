@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "generated_at": "2026-07-23T16:16:56Z",
+  "canonical_head_at_recheck": "31cd40ca3e5f4729ef4dc7454d8fe120b6bf88f9",
+  "runner_state": "RECOVERY_PARKED",
+  "aggregate_research_operations_completed": 41,
+  "aggregate_research_operations_total": 41,
+  "aggregate_source_candidates": 33,
+  "aggregate_high_confidence_candidates_ge_98": 33,
+  "source_selection_confidence_percent": 99,
+  "new_parcel_rows_written": 0,
+  "candidates": [
+    {
+      "line": 30,
+      "candidate_id": "bduk_wgbu_subsidy_classification_semantics",
+      "authority": "Building Digital UK",
+      "role": "CURRENT_VS_PLANNED_CLASSIFICATION_GUARDRAIL",
+      "decision": "ACCEPTED_AS_SEMANTIC_GUARDRAIL_NOT_CURRENT_SERVICE_EVIDENCE",
+      "confidence_percent": 100,
+      "url": "https://www.gov.uk/government/consultations/project-gigabit-national-rolling-open-market-review-january-2026/outcome/closure-of-the-january-2026-national-rolling-open-market-review",
+      "verified_fact": "White, Grey, Black and Under Review classifications can incorporate both current infrastructure and credible build expected within the next three years.",
+      "use_rule": "Never convert Grey/Black/Under Review directly into a current-service parcel value without a separate current-only field or Ofcom current coverage evidence."
+    },
+    {
+      "line": 31,
+      "candidate_id": "ons_current_names_codes_lookups",
+      "authority": "Office for National Statistics",
+      "role": "LAD_AND_GEOGRAPHY_CODE_NORMALIZATION_REFERENCE",
+      "decision": "ACCEPTED_AS_GEOGRAPHY_REFERENCE_NOT_BROADBAND_MEASUREMENT",
+      "confidence_percent": 100,
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/namescodesandlookups",
+      "verified_fact": "ONS provides definitive current names, codes and lookups for UK administrative and statistical geographies via the Open Geography portal.",
+      "use_rule": "Normalize LAD/region codes against current ONS references before joining BDUK regional/LAD files; do not derive broadband values from the lookup."
+    },
+    {
+      "line": 32,
+      "candidate_id": "bduk_vs_ofcom_premise_base_comparability",
+      "authority": "Building Digital UK",
+      "role": "CROSS_SOURCE_PREMISE_BASE_MISMATCH_GUARDRAIL",
+      "decision": "ACCEPTED_AS_COMPARABILITY_GUARDRAIL",
+      "confidence_percent": 100,
+      "url": "https://www.gov.uk/government/publications/january-2026-omr-and-premises-in-bduk-plans-england-and-wales/uprn-level-release-user-guide-and-technical-note-for-premises-in-bduk-plans",
+      "verified_fact": "BDUK states its premises base differs from Ofcom's, including treatment of child premises such as apartments in houses of multiple occupation; suppliers and reference dates can also differ.",
+      "use_rule": "A BDUK/Ofcom mismatch is not automatically a data error; compare only after premise-base, supplier-response and reference-date normalization."
+    },
+    {
+      "line": 33,
+      "candidate_id": "ofcom_pnd_2026_premise_base_future_comparability",
+      "authority": "Ofcom",
+      "role": "FUTURE_ONLY_PREMISE_BASE_COMPARABILITY_GUARDRAIL",
+      "decision": "EXCLUDED_FROM_CURRENT_SCORE_ACCEPTED_FOR_FUTURE_COMPARISON",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-planned-network-deployment/connected-nations-planned-network-deployments-2026",
+      "verified_fact": "PND 2026 uses the same premise base as Spring 2026 for coverage percentages, but its results describe planned deployments through January 2029 and headline results are residential-focused.",
+      "use_rule": "Use only for future-growth/change context; never overwrite January 2026 current parcel availability."
+    }
+  ],
+  "operations": [
+    {"line":59,"operation":"bduk_wgbu_current_vs_planned_semantics_gate","state":"PASS","evidence":"Grey/Black can mean available OR planned within three years; Under Review can include unverified current or risky planned claims."},
+    {"line":60,"operation":"bduk_ofcom_premise_base_comparability_gate","state":"PASS","evidence":"BDUK and Ofcom premise bases, supplier response sets and reference dates can differ; mismatch requires normalization."},
+    {"line":61,"operation":"ons_current_lad_code_normalization_gate","state":"PASS","evidence":"ONS definitive current names/codes/lookups retained for LAD and regional joins."},
+    {"line":62,"operation":"ofcom_pnd_future_only_same_premise_base_gate","state":"PASS","evidence":"PND shares Spring 2026 premise base but is forward-looking to 2029; excluded from current score."},
+    {"line":63,"operation":"canonical_publish_gate_recheck","state":"PENDING","evidence":"direct_push_forbidden=true; portable coordinator heartbeat stale; child branch only"}
+  ],
+  "blocker": "PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data": false,
+  "final_ready": false
+}
