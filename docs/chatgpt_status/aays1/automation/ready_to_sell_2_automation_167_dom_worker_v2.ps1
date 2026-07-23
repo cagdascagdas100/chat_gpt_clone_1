@@ -16,9 +16,11 @@ $outputRoot = Join-Path $repoRoot $outputRootRelative
 $statusRelative = "$slotRootRelative/status/automation_167_dom_proof_latest.json"
 $reportRelative = "$slotRootRelative/reports/automation_167_dom_proof_latest.md"
 $progressRelative = "$webRootRelative/progress_latest.json"
+$fullProgressRelative = "$webRootRelative/progress_wave_47_latest.json"
 $statusPath = Join-Path $repoRoot $statusRelative
 $reportPath = Join-Path $repoRoot $reportRelative
 $progressPath = Join-Path $repoRoot $progressRelative
+$fullProgressPath = Join-Path $repoRoot $fullProgressRelative
 $domRelative = "$outputRootRelative/browser_dom.html"
 $stderrRelative = "$outputRootRelative/browser_stderr.txt"
 $domPath = Join-Path $repoRoot $domRelative
@@ -32,6 +34,11 @@ function Read-JsonSafe([string]$Path){if(-not(Test-Path -LiteralPath $Path)){ret
 function Read-IntAttribute([string]$Html,[string]$Name){$m=[regex]::Match($Html,($Name+'=["'']([0-9]+)["'']'),'IgnoreCase');if($m.Success){return[int]$m.Groups[1].Value};return 0}
 function Set-Prop($Object,[string]$Name,$Value){if($null -eq $Object){return};$Object|Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force}
 function Get-MaxEventSequence($Events){$max=0;foreach($event in @($Events)){try{$sequence=[int]$event.sequence;if($sequence -gt $max){$max=$sequence}}catch{}};return $max}
+function Get-UniqueEventSequenceCount($PrimaryEvents,$SecondaryEvents){
+ $seen=@{};$all=@();$all+=@($PrimaryEvents);$all+=@($SecondaryEvents)
+ foreach($event in $all){$sequence=$null;try{$sequence=[string]$event.sequence}catch{};if(-not ([string]::IsNullOrWhiteSpace($sequence))){$seen[$sequence]=$true}}
+ return $seen.Count
+}
 function Test-Automation167ProgressBlocker([string]$Code){
  if([string]::IsNullOrWhiteSpace($Code)){return $false}
  return ($Code -eq 'SAFE_F_HOST_SINGLE_RUNNER_NOT_CURRENTLY_HEARTBEATING' -or $Code -eq 'AUTOMATION_167_CANONICAL_PORT_8012_HEADLESS_DOM_EXECUTION_PENDING' -or $Code -match '^(AUTOMATION_167_|PORT_8012_|HEALTH_HTTP_STATUS_|PAGE_HTTP_STATUS_|BROWSER_|HEADLESS_BROWSER_|PROGRESS_BASELINE_|REMOTE_BUSINESS_STATE_155_)')
@@ -48,7 +55,11 @@ if(-not $terminal155Verified){$blockers.Add('REMOTE_BUSINESS_STATE_155_NOT_TERMI
 $requiredLiveSources=if($terminal155Verified -and [int]$terminal155.live_source_verified_rows -gt 0){[int]$terminal155.live_source_verified_rows}else{655}
 $requiredVisibleRows=[Math]::Max(655,$requiredLiveSources)
 $existing=Read-JsonSafe $progressPath
+$fullProgress=Read-JsonSafe $fullProgressPath
 if(-not $existing){$blockers.Add('PROGRESS_BASELINE_UNAVAILABLE')}
+if(-not $fullProgress){$blockers.Add('PROGRESS_BASELINE_FULL_FEED_UNAVAILABLE')}
+$expectedProgressEvents=if($existing -and $fullProgress){Get-UniqueEventSequenceCount $fullProgress.events $existing.events}else{0}
+if($expectedProgressEvents-lt 5){$blockers.Add('PROGRESS_BASELINE_UNIQUE_EVENT_COUNT_BELOW_5:'+ $expectedProgressEvents)}
 $preservedProgressBlockers=@()
 if($existing -and $existing.blockers){$preservedProgressBlockers=@($existing.blockers|Where-Object{-not(Test-Automation167ProgressBlocker([string]$_))})}
 
@@ -93,7 +104,8 @@ $loadMode=if($modeMatch.Success){$modeMatch.Groups[1].Value}else{$null}
 $visibleRows=Read-IntAttribute $dom 'data-visible-row-count'
 $liveSources=Read-IntAttribute $dom 'data-live-source-count'
 $evidenceRows=[regex]::Matches($dom,'data-evidence-row=').Count
-$progressEvents=[regex]::Matches($dom,'data-progress-sequence=').Count
+$progressEventCards=[regex]::Matches($dom,'data-progress-sequence=').Count
+$progressEvents=Read-IntAttribute $dom 'data-progress-event-count'
 $researchCandidateCards=[regex]::Matches($dom,'data-research-candidate=').Count
 $researchCandidates=Read-IntAttribute $dom 'data-research-candidate-count'
 $duplicateResearchCandidates=Read-IntAttribute $dom 'data-research-candidate-duplicate-count'
@@ -107,6 +119,8 @@ if($visibleRows-lt $requiredVisibleRows){$blockers.Add('BROWSER_DOM_VISIBLE_ROW_
 if($liveSources-ne $requiredLiveSources){$blockers.Add('BROWSER_DOM_LIVE_SOURCE_COUNT_MISMATCH:'+ $liveSources+'/'+$requiredLiveSources)}
 if($evidenceRows-lt 1){$blockers.Add('BROWSER_DOM_NO_EVIDENCE_ROWS_RENDERED')}
 if($progressEvents-lt 5){$blockers.Add('BROWSER_DOM_PROGRESS_EVENTS_BELOW_5:'+ $progressEvents)}
+if($progressEvents-ne $expectedProgressEvents){$blockers.Add('BROWSER_DOM_PROGRESS_EVENT_COUNT_MISMATCH:'+ $progressEvents+'/'+$expectedProgressEvents)}
+if($progressEventCards-ne $progressEvents){$blockers.Add('BROWSER_DOM_PROGRESS_EVENT_CARD_COUNT_MISMATCH:'+ $progressEventCards+'/'+$progressEvents)}
 if($researchCandidates-lt 30){$blockers.Add('BROWSER_DOM_UNIQUE_RESEARCH_CANDIDATES_BELOW_30:'+ $researchCandidates)}
 if($researchCandidateCards-ne $researchCandidates){$blockers.Add('BROWSER_DOM_RESEARCH_CANDIDATE_CARD_COUNT_MISMATCH:'+ $researchCandidateCards+'/'+$researchCandidates)}
 if($duplicateResearchCandidates-ne 0){$blockers.Add('BROWSER_DOM_DUPLICATE_RESEARCH_CANDIDATES_PRESENT:'+ $duplicateResearchCandidates)}
@@ -114,10 +128,10 @@ if($missingResearchCandidateIds-ne 0){$blockers.Add('BROWSER_DOM_RESEARCH_CANDID
 $unique=@($blockers|Select-Object -Unique)
 $progressBlockers=@($preservedProgressBlockers)
 foreach($code in @($unique)){if($code -and -not($progressBlockers -contains [string]$code)){$progressBlockers+=[string]$code}}
-$pass=$terminal155Verified -and $healthStatus-eq 200 -and $pageHttpStatus-eq 200 -and $browser -and $browserExitCode-eq 0 -and $loadReady -and $loadMode -and $visibleRows-ge $requiredVisibleRows -and $liveSources-eq $requiredLiveSources -and $evidenceRows-gt 0 -and $progressEvents-ge 5 -and $researchCandidates-ge 30 -and $researchCandidateCards-eq $researchCandidates -and $duplicateResearchCandidates-eq 0 -and $missingResearchCandidateIds-eq 0 -and $unique.Count-eq 0
+$pass=$terminal155Verified -and $healthStatus-eq 200 -and $pageHttpStatus-eq 200 -and $browser -and $browserExitCode-eq 0 -and $loadReady -and $loadMode -and $visibleRows-ge $requiredVisibleRows -and $liveSources-eq $requiredLiveSources -and $evidenceRows-gt 0 -and $expectedProgressEvents-ge 5 -and $progressEvents-eq $expectedProgressEvents -and $progressEventCards-eq $progressEvents -and $researchCandidates-ge 30 -and $researchCandidateCards-eq $researchCandidates -and $duplicateResearchCandidates-eq 0 -and $missingResearchCandidateIds-eq 0 -and $unique.Count-eq 0
 $statusName=if($pass){'AUTOMATION_167_DOM_PROOF_VERIFIED'}else{'AUTOMATION_167_DOM_PROOF_BLOCKED'}
 
-$status=[ordered]@{schema_version=3;architecture_version=3;workstream_id='AAYS_21_SLOT_SAFE_PARALLEL_V1';task_id=$taskId;slot_id=$slotId;status=$statusName;acceptance_pass=[bool]$pass;first_unverified_step=if($pass){$null}else{'AUTOMATION_167_DOM_PROOF'};required_visible_rows=$requiredVisibleRows;required_live_source_count=$requiredLiveSources;health_http_status=$healthStatus;page_http_status=$pageHttpStatus;http_retry_attempts=$httpAttempts;http_retry_attempt_limit=$httpAttemptLimit;portable_root=$portableRoot;browser_path=$browser;browser_exit_code=$browserExitCode;browser_profile_isolated=$true;browser_dom_path=$domRelative;browser_stderr_path=$stderrRelative;browser_dom_load_ready=[bool]$loadReady;browser_dom_load_mode=$loadMode;browser_dom_visible_row_count=$visibleRows;browser_dom_live_source_count=$liveSources;browser_dom_rendered_evidence_rows=$evidenceRows;browser_dom_rendered_progress_events=$progressEvents;browser_dom_rendered_research_candidate_cards=$researchCandidateCards;browser_dom_unique_research_candidates=$researchCandidates;browser_dom_duplicate_research_candidates=$duplicateResearchCandidates;browser_dom_missing_research_candidate_ids=$missingResearchCandidateIds;browser_dom_rendered_research_candidates=$researchCandidates;blockers=$unique;preserved_non_automation_blockers=$preservedProgressBlockers;progress_blockers_after_update=$progressBlockers;started_at=$startedAt;finished_at=[DateTimeOffset]::UtcNow.ToString('o');single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
+$status=[ordered]@{schema_version=3;architecture_version=3;workstream_id='AAYS_21_SLOT_SAFE_PARALLEL_V1';task_id=$taskId;slot_id=$slotId;status=$statusName;acceptance_pass=[bool]$pass;first_unverified_step=if($pass){$null}else{'AUTOMATION_167_DOM_PROOF'};required_visible_rows=$requiredVisibleRows;required_live_source_count=$requiredLiveSources;required_progress_event_count=$expectedProgressEvents;health_http_status=$healthStatus;page_http_status=$pageHttpStatus;http_retry_attempts=$httpAttempts;http_retry_attempt_limit=$httpAttemptLimit;portable_root=$portableRoot;browser_path=$browser;browser_exit_code=$browserExitCode;browser_profile_isolated=$true;browser_dom_path=$domRelative;browser_stderr_path=$stderrRelative;browser_dom_load_ready=[bool]$loadReady;browser_dom_load_mode=$loadMode;browser_dom_visible_row_count=$visibleRows;browser_dom_live_source_count=$liveSources;browser_dom_rendered_evidence_rows=$evidenceRows;browser_dom_progress_event_count=$progressEvents;browser_dom_rendered_progress_event_cards=$progressEventCards;browser_dom_rendered_progress_events=$progressEvents;browser_dom_rendered_research_candidate_cards=$researchCandidateCards;browser_dom_unique_research_candidates=$researchCandidates;browser_dom_duplicate_research_candidates=$duplicateResearchCandidates;browser_dom_missing_research_candidate_ids=$missingResearchCandidateIds;browser_dom_rendered_research_candidates=$researchCandidates;blockers=$unique;preserved_non_automation_blockers=$preservedProgressBlockers;progress_blockers_after_update=$progressBlockers;started_at=$startedAt;finished_at=[DateTimeOffset]::UtcNow.ToString('o');single_runner_only=$true;new_runner=$false;parallel_runner=$false;final_ready=$false;product_final_ready=$false;fake_data=$false;db_write=$false;migration=$false;production_deploy=$false}
 Write-JsonNoBom $statusPath $status
 
 if($existing){
@@ -126,7 +140,7 @@ if($existing){
  $priorDomEvent=@($existing.events|Where-Object{[string]$_.event-eq'canonical_runner_dom_execution_and_remote_readback'}|Select-Object -First 1)
  $eventSequence=if($priorDomEvent -and $priorDomEvent.sequence){[int]$priorDomEvent.sequence}else{(Get-MaxEventSequence $existing.events)+1}
  $events=@($existing.events|Where-Object{[string]$_.event-ne'canonical_runner_dom_execution_and_remote_readback'})
- $events+=[ordered]@{sequence=$eventSequence;event='canonical_runner_dom_execution_and_remote_readback';result=if($pass){'pass'}else{'blocked'};detail="status=$statusName health=$healthStatus page=$pageHttpStatus retries=$httpAttempts/$httpAttemptLimit visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents unique_candidates=$researchCandidates cards=$researchCandidateCards duplicates=$duplicateResearchCandidates missing_ids=$missingResearchCandidateIds isolated_profile=true blockers=$($unique -join ';') preserved_non_automation=$($preservedProgressBlockers -join ';')";accuracy_score=100}
+ $events+=[ordered]@{sequence=$eventSequence;event='canonical_runner_dom_execution_and_remote_readback';result=if($pass){'pass'}else{'blocked'};detail="status=$statusName health=$healthStatus page=$pageHttpStatus retries=$httpAttempts/$httpAttemptLimit visible=$visibleRows/$requiredVisibleRows live=$liveSources/$requiredLiveSources evidence=$evidenceRows progress=$progressEvents/$expectedProgressEvents progress_cards=$progressEventCards unique_candidates=$researchCandidates cards=$researchCandidateCards duplicates=$duplicateResearchCandidates missing_ids=$missingResearchCandidateIds isolated_profile=true blockers=$($unique -join ';') preserved_non_automation=$($preservedProgressBlockers -join ';')";accuracy_score=100}
  $events=@($events|Sort-Object sequence)
  $completed=[int]$existing.completed_operations;$total=[int]$existing.total_operations
  if($pass){$completed=[Math]::Min($total,$completed+1)}
@@ -148,6 +162,6 @@ if($existing){
  Set-Prop $existing 'blockers' $progressBlockers
  Write-JsonNoBom $progressPath $existing
 }
-$report=@('# ReadyToSell Shard 2 — Automation 167 DOM Proof v2','',"- Status: ``$statusName``","- Acceptance pass: ``$pass``","- HTTP retry attempts: ``$httpAttempts / $httpAttemptLimit``","- Isolated browser profile: ``true``","- Visible rows: ``$visibleRows / $requiredVisibleRows``","- Live sources: ``$liveSources / $requiredLiveSources``","- Evidence/progress: ``$evidenceRows / $progressEvents``","- Unique candidate IDs: ``$researchCandidates``","- Rendered candidate cards: ``$researchCandidateCards``","- Duplicate candidate IDs: ``$duplicateResearchCandidates``","- Missing candidate IDs: ``$missingResearchCandidateIds``","- Automation blockers: ``$($unique -join '; ')``","- Preserved non-automation blockers: ``$($preservedProgressBlockers -join '; ')``",'','`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
+$report=@('# ReadyToSell Shard 2 — Automation 167 DOM Proof v2','',"- Status: ``$statusName``","- Acceptance pass: ``$pass``","- HTTP retry attempts: ``$httpAttempts / $httpAttemptLimit``","- Isolated browser profile: ``true``","- Visible rows: ``$visibleRows / $requiredVisibleRows``","- Live sources: ``$liveSources / $requiredLiveSources``","- Evidence rows: ``$evidenceRows``","- Progress events/cards: ``$progressEvents / $progressEventCards``","- Required progress events: ``$expectedProgressEvents``","- Unique candidate IDs: ``$researchCandidates``","- Rendered candidate cards: ``$researchCandidateCards``","- Duplicate candidate IDs: ``$duplicateResearchCandidates``","- Missing candidate IDs: ``$missingResearchCandidateIds``","- Automation blockers: ``$($unique -join '; ')``","- Preserved non-automation blockers: ``$($preservedProgressBlockers -join '; ')``",'','`final_ready=false`; `fake_data=false`; `db_write=false`; `migration=false`; `production_deploy=false`.')
 Write-Utf8NoBom $reportPath (($report-join"`n")+"`n")
 if($pass){exit 0}else{exit 3}
