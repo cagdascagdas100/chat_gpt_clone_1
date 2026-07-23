@@ -17,9 +17,9 @@
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
   "source_head": "5a6161b63e2f37138ee05747b66be2a3026c1e28",
   "source_head_verified_at": "2026-07-23T15:38:13Z",
-  "state": "QUEUED",
+  "state": "QUEUED_CHILD_EVIDENCE_READY",
   "priority": "HIGH_ACCURACY_VISIBLE_PROGRESS",
-  "first_unverified_step": "HYDRATE_300_ROWS_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
+  "first_unverified_step": "RUNTIME_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
   "owner_observation": {
     "ownership_state": "unclaimed",
     "current_task_state": "idle",
@@ -38,28 +38,32 @@
       "step": "OFFICIAL_SOURCE_FRESHNESS",
       "mode": "parallel_light_network",
       "source": "https://data.police.uk/api/crime-last-updated",
-      "expected_latest_month": "2026-05",
-      "status": "PENDING_RECHECK"
+      "latest_month_verified": "2026-05",
+      "archive_md5_published_by_source": "9a1dcd49501f489bba3132c6f98c13fa",
+      "known_gap_force_count": 4,
+      "status": "COMPLETED_WITH_SOURCE_CAVEATS"
     },
     {
       "step": "THREE_REPRESENTATIVE_LSOA_SAMPLES",
-      "mode": "parallel_light_network_max_3",
+      "mode": "idempotent_preserved_evidence",
       "samples": [
         {"parcel_id": "parcel_1", "lsoa_code": "E01000090", "lat": 51.528344, "lng": 0.161569, "preserved_verified_count": 346, "preserved_response_sha256": "8582fd0d6f8a818a96fca59bcf20e5cbe9c32ac74d93a68421ffd0081715d7c4"},
         {"parcel_id": "parcel_3", "lsoa_code": "E01000073", "lat": 51.545517, "lng": 0.115885, "preserved_verified_count": 499, "preserved_response_sha256": "08ccc0ccf727a876ee8b2813348f087323f3b2f89170cbb72d6834ba15128961"},
         {"parcel_id": "parcel_7", "lsoa_code": "E01000095", "lat": 51.530872, "lng": 0.130900, "preserved_verified_count": 383, "preserved_response_sha256": "4c0a620bcce385d52fa50c0ff00264e95079e14568c113cbb877cf4afcc0d7b7"}
       ],
-      "rule": "Do not replace preserved counts unless a fresh HTTP 200 response is parsed and SHA-256 evidence is written.",
-      "status": "PENDING_RECHECK"
+      "source_month_unchanged": true,
+      "fresh_sample_refetched_this_run": false,
+      "rule": "Preserve accepted hashes while the official latest month is unchanged; do not invent or silently replace counts.",
+      "status": "COMPLETED_IDEMPOTENT_PRESERVED_REMOTE_EVIDENCE"
     },
     {
       "step": "STATIC_300_ROW_AND_WEB_CONTRACT",
-      "mode": "parallel_local_light",
-      "expected_csv_rows": 300,
-      "expected_geojson_features": 300,
-      "expected_visible_rows": 300,
+      "mode": "parallel_remote_static",
+      "verified_csv_rows": 300,
+      "verified_geojson_features": 300,
+      "verified_visible_rows": 300,
       "required_row_fields": ["parcel_id", "security_score_percent", "accuracy_score_4", "confidence_score", "source_url", "official_source_evidence", "source_path", "evidence_path", "source_manifest_path", "report_path", "candidate_status", "needs_manual_review"],
-      "status": "PENDING_HASH_RECHECK"
+      "status": "COMPLETED_REMOTE_STATIC_READBACK"
     },
     {
       "step": "RUNTIME_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
@@ -70,9 +74,17 @@
       "required_dom_row_count": 300,
       "required_console_errors": 0,
       "required_remote_readback": true,
-      "status": "PENDING"
+      "status": "PENDING_LOCAL_COORDINATOR"
     }
   ],
+  "prepared_child_result": {
+    "branch": "agent/security-public-safety-3-9147406c-resume-20260723",
+    "commit_sha": "0ee9168becfdd5295f54efb81891fb6ac9f7d414",
+    "artifact_path": "england_map_web/data/aays_21_slots/security_public_safety_3/progress_latest.json",
+    "artifact_blob_sha": "7bad3e40303b78bf95096aac335d81297b63ad6f",
+    "state": "PUBLISH_PENDING_SERIAL_GATE",
+    "remote_readback_verified": true
+  },
   "read_paths": [
     "docs/chatgpt_status/_shared/slots_21/manifest_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_3/ownership_latest.json",
@@ -98,19 +110,20 @@
   ],
   "direct_shared_publish_forbidden": true,
   "acceptance_conditions": [
-    "Official source latest month is fetched from data.police.uk and recorded with access time and SHA-256.",
-    "Three representative LSOA requests return HTTP 200 or are recorded as evidence-backed NO_DATA/REQUEST_FAILED without inventing counts.",
-    "CSV, GeoJSON and visible JSON counts are each exactly 300 and hashes are recorded.",
+    "Official source latest month and known source gaps are recorded from data.police.uk.",
+    "Preserved representative sample hashes remain unchanged while the official source month is unchanged.",
+    "CSV, GeoJSON and visible JSON counts are each exactly 300.",
     "Static HTML contract exposes Security/Public Safety row-level source, evidence, accuracy and review columns.",
     "Runtime health, HTML and visible JSON return HTTP 200.",
     "Browser selects the Security layer, renders 300 rows, reports zero console errors and records DOM/hash evidence.",
-    "Publisher merge and remote readback match the accepted hashes before completion."
+    "Publisher merge and canonical remote readback match the accepted hashes before completion."
   ],
   "evidence_progress": {
-    "completed_gates": 7,
+    "completed_gates": 8,
     "total_gates": 10,
-    "percent": 70,
-    "remaining_gates": ["three_sample_live_recheck", "runtime_http_hash", "dom_console_browser_and_remote_readback"]
+    "percent": 80,
+    "increase_this_run_percentage_points": 10,
+    "remaining_gates": ["runtime_http_hash", "dom_console_browser_and_publisher_remote_readback"]
   },
   "accuracy_policy": {
     "existing_row_accuracy_score_4": 4,
@@ -135,5 +148,6 @@
   "production_deploy": false,
   "product_final_ready": false,
   "final_ready": false,
-  "queued_at": "2026-07-23T15:38:13Z"
+  "queued_at": "2026-07-23T15:38:13Z",
+  "updated_at": "2026-07-23T15:43:18Z"
 }
