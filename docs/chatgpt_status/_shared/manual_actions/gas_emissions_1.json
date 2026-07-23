@@ -3,9 +3,9 @@
   "slot_id": "gas_emissions_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing Schema-10 Priority-2 task remains pickup_requested with no slot heartbeat, lease, pickup or execution. The shared runner heartbeat file still says runner_active, but its last heartbeat is 2026-07-16T13:45:53Z and its active claim is terminal done, so it is stale evidence rather than a live runner. The canonical queue and retry template are intact and blob-identical, and the V6/reconciler script blobs match their pinned hashes, but retry-state, recovery and validation outputs are absent.",
+  "reason": "Revalidated on 2026-07-23 against canonical branch head ed92fce08118f4b46eb7ac17c335df95aed86f44. The existing Schema-10 Priority-2 task remains pickup_requested with no slot heartbeat, lease, pickup or execution. The shared runner heartbeat still reports runner_active, but its last heartbeat is 2026-07-16T13:45:53Z and its active claim is terminal done, so it is stale evidence rather than a live runner. The canonical queue remains intact. The retry-state file and V6 recovery output are still absent on remote readback, so automatic continuation cannot be truthfully marked executed from this environment.",
   "detected_at": "2026-07-22T16:42:46.780967Z",
-  "updated_at": "2026-07-22T16:47:36Z",
+  "updated_at": "2026-07-23T08:59:46Z",
   "solution": "On the existing portable Windows host only, verify or restart the single shared runner using the existing launcher. Run process/heartbeat, Git lock and worktree cleanliness, remote HEAD, disk and memory preflight checks. Confirm live pickup of task gas-emissions-1-single-pass-recovery-20260722; do not start a second runner. Resolve this record only after fresh V6 recovery and validation outputs are published and remotely read back.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/slots_21/gas_emissions_1/checkpoint_latest.json",
@@ -18,12 +18,15 @@
     "docs/chatgpt_status/aays1/queue/0020_100_gas_emissions_1_single_pass_recovery_20260722.task.json",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/recovery/gas_emissions_1_priority2_task_template_latest.json",
     "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/recovery/gas_emissions_1_retry_state_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_single_pass_recovery_latest.json",
+    "docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/reports/gas_emissions_1_single_pass_recovery_validation_latest.json",
     "england_map_web/data/aays_21_slots/gas_emissions_1/continuation_recovery_monitor_latest.html"
   ],
   "continuation_key": "5345f564b184a0bdebe1f2233159ac30077add6d920970263ba528f1c5231e2c",
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
   "source_head": "6f98166f8c533cc13227414e8f8708d4d1085fcf",
+  "revalidated_against_head": "ed92fce08118f4b46eb7ac17c335df95aed86f44",
   "first_unverified_step": "EXISTING_SINGLE_SHARED_RUNNER_PICKUP_AND_EXECUTE_SCHEMA10_V6_RECOVERY",
   "task_id": "gas-emissions-1-single-pass-recovery-20260722",
   "diagnosis": {
@@ -34,13 +37,11 @@
     "shared_claim_terminal": true,
     "queue_status": "pickup_requested",
     "queue_long_pending": true,
-    "queue_retry_template_blob_match": true,
-    "v6_blob_match": true,
-    "reconciler_blob_match": true,
     "retry_state_exists": false,
     "recovery_output_exists": false,
     "validation_output_exists": false,
-    "parallel_runner_created": false
+    "parallel_runner_created": false,
+    "automatic_host_recovery_available_from_this_environment": false
   },
   "final_ready": false
 }
