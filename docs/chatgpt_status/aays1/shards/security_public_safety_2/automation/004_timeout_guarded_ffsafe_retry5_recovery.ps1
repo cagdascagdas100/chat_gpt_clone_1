@@ -31,15 +31,15 @@ function GitBlob([string]$Path) {
 }
 function Norm([string]$Value) { if($null-eq$Value){return''};return(($Value-replace'/','\').ToLowerInvariant()) }
 function CanonicalRunnerProcesses {
-  $all=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue|Where-Object{-not[string]::IsNullOrWhiteSpace([string]$_.CommandLine)})
+  $all=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.CommandLine) })
   $matched=@()
   foreach($proc in $all){
     $command=Norm([string]$proc.CommandLine)
     foreach($spec in $runnerSpecs){
-      if($command.Contains((Norm([string]$spec.token)))-and$command.Contains((Norm([string]$spec.root)))){$matched+=$proc;break}
+      if($command.Contains((Norm([string]$spec.token))) -and $command.Contains((Norm([string]$spec.root)))){$matched+=$proc;break}
     }
   }
-  return @($matched|Group-Object ProcessId|ForEach-Object{$_.Group[0]})
+  return @($matched | Group-Object ProcessId | ForEach-Object { $_.Group[0] })
 }
 function DescendantPids([int]$RootPid) {
   $all=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
@@ -48,7 +48,7 @@ function DescendantPids([int]$RootPid) {
   $queue.Enqueue($RootPid)
   while($queue.Count -gt 0){
     $parent=$queue.Dequeue()
-    foreach($proc in @($all|Where-Object{[int]$_.ParentProcessId -eq $parent})){
+    foreach($proc in @($all | Where-Object { [int]$_.ParentProcessId -eq $parent })){
       $id=[int]$proc.ProcessId
       if(-not $result.Contains($id)){$result.Add($id);$queue.Enqueue($id)}
     }
@@ -57,7 +57,7 @@ function DescendantPids([int]$RootPid) {
 }
 function StopProcessTree([int]$ProcessId) {
   $taskkill=Get-Command taskkill.exe -ErrorAction SilentlyContinue
-  if($taskkill){& $taskkill.Source /PID $ProcessId /T /F|Out-Null;return$LASTEXITCODE}
+  if($taskkill){& $taskkill.Source /PID $ProcessId /T /F | Out-Null;return $LASTEXITCODE}
   try{Stop-Process -Id $ProcessId -Force -ErrorAction Stop;return 0}catch{if(-not(Get-Process -Id $ProcessId -ErrorAction SilentlyContinue)){return 0};return 1}
 }
 function Receipt([string]$Status,[int]$ExitCode,[bool]$TimedOut,[string]$ResolvedInner,[object]$OwnerSnapshot,[string]$RemoteHead,[bool]$TreeKillAttempted,[int]$TreeKillExit,[object]$TrackedPids,[object]$RemainingPids,[string]$Detail) {
@@ -89,15 +89,18 @@ if(-not $p.WaitForExit($TimeoutSeconds*1000)){
   $tracked=@([int]$p.Id)+@(DescendantPids ([int]$p.Id))
   $killExit=StopProcessTree ([int]$p.Id)
   Start-Sleep -Seconds 2
-  $remaining=@($tracked|Where-Object{Get-Process -Id $_ -ErrorAction SilentlyContinue})
-  $baselineIds=@($baselineCanonical|ForEach-Object{[int]$_.ProcessId})
-  $timeoutSpawnedCanonical=@(CanonicalRunnerProcesses|Where-Object{$baselineIds-notcontains[int]$_.ProcessId})
+  $remaining=@($tracked | Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
+  $baselineIds=@($baselineCanonical | ForEach-Object { [int]$_.ProcessId })
+  $timeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineIds -notcontains ([int]$_.ProcessId) })
   $cleanup=@()
-  foreach($proc in $timeoutSpawnedCanonical){$cleanup+=[ordered]@{process_id=[int]$proc.ProcessId;exit_code=(StopProcessTree([int]$proc.ProcessId));command_line=[string]$proc.CommandLine}}
+  foreach($proc in $timeoutSpawnedCanonical){
+    $cleanupExit=StopProcessTree ([int]$proc.ProcessId)
+    $cleanup+=[ordered]@{process_id=[int]$proc.ProcessId;exit_code=$cleanupExit;command_line=[string]$proc.CommandLine}
+  }
   $spawnedCanonicalCleanup=@($cleanup)
-  if($timeoutSpawnedCanonical.Count-gt0){Start-Sleep -Seconds 2}
-  $remainingTimeoutSpawnedCanonical=@(CanonicalRunnerProcesses|Where-Object{$baselineIds-notcontains[int]$_.ProcessId})
-  $allGone=($remaining.Count-eq0-and$remainingTimeoutSpawnedCanonical.Count-eq0)
+  if($timeoutSpawnedCanonical.Count -gt 0){Start-Sleep -Seconds 2}
+  $remainingTimeoutSpawnedCanonical=@(CanonicalRunnerProcesses | Where-Object { $baselineIds -notcontains ([int]$_.ProcessId) })
+  $allGone=($remaining.Count -eq 0 -and $remainingTimeoutSpawnedCanonical.Count -eq 0)
   $status=if($allGone){'BLOCKED_RETRY5_RECOVERY_TIMEOUT_ALL_ATTEMPT_PROCESSES_TERMINATED'}else{'BLOCKED_RETRY5_RECOVERY_TIMEOUT_PROCESS_REMAINS'}
   Receipt $status 124 $true $inner $ownerSnapshot $remoteHead $true $killExit $tracked $remaining "wrapper_pid=$($p.Id);spawned_canonical=$($timeoutSpawnedCanonical.Count);remaining_spawned_canonical=$($remainingTimeoutSpawnedCanonical.Count)"
   if($allGone){exit 124}else{exit 125}
