@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 3 - İşlem Önizleme</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1118;--panel:#111b27;--line:#2b3b50;--text:#e8eef6;--muted:#a7b5c6;--ok:#60d394;--warn:#ffca6a;--bad:#ff7b7b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Segoe UI,Arial,sans-serif}header,.toolbar,.summary{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel)}h1{margin:0 0 6px;font-size:22px}p{margin:3px 0;color:var(--muted)}input,button{min-height:38px;border:1px solid #3c4d63;background:#08111b;color:var(--text);padding:7px 10px}.toolbar{display:flex;gap:8px}.toolbar input{flex:1}.summary{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #405168;padding:5px 8px}.pill.ok{border-color:#27734c;color:var(--ok)}.pill.warn{border-color:#8a6422;color:var(--warn)}.table-wrap{overflow:auto;height:calc(100vh - 190px)}table{border-collapse:collapse;min-width:1900px;width:100%;font-size:12px}th,td{border:1px solid #27384b;padding:6px;vertical-align:top;overflow-wrap:anywhere}th{position:sticky;top:0;background:#18263a;text-align:left}tr.pending td{background:#252516}tr.blocked td{background:#301919}a{color:#8cc8ff}.mono{font-family:Consolas,monospace;font-size:11px}.message{padding:10px 16px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><h1>Security / Public Safety 3 — Satır Bazlı İşlemler</h1><p>Child kanıt görünümü. LSOA proxy sonuçları kesin parsel ölçümü değildir; ortak siteye seri publisher kabulünden sonra birleşir.</p></header>
+<section class="toolbar"><input id="search" placeholder="Parsel, LSOA, durum, kaynak veya SHA ara"><button id="refresh">Yenile</button></section>
+<section class="summary" id="summary"></section>
+<div class="message" id="message">Veri yükleniyor…</div>
+<div class="table-wrap"><table><thead><tr><th>Durum</th><th>İşlem</th><th>Aşama</th><th>Parsel</th><th>LSOA</th><th>Security %</th><th>Seviye</th><th>Doğruluk</th><th>Güven %</th><th>API kayıt</th><th>Resmî kaynak</th><th>SHA-256</th><th>Sonuç</th></tr></thead><tbody id="rows"></tbody></table></div>
+<script>
+'use strict';
+const files=['operations_candidate_rows_latest.json','candidate_rows_batch_2_latest.json'];
+let all=[];
+const esc=v=>String(v===null||v===undefined||v===''?'not_available':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pending=o=>/pending|parked/i.test(String(o.status||''));
+const blocked=o=>/blocked|failed/i.test(String(o.status||''));
+function render(){const q=document.getElementById('search').value.trim().toLocaleLowerCase('tr-TR');const data=q?all.filter(x=>JSON.stringify(x).toLocaleLowerCase('tr-TR').includes(q)):all;document.getElementById('rows').innerHTML=data.map(o=>`<tr class="${blocked(o)?'blocked':pending(o)?'pending':''}"><td>${esc(o.status)}</td><td>${esc(o.operation_type)}</td><td>${esc(o.stage)}</td><td>${esc(o.parcel_id)}</td><td>${esc(o.lsoa_code)}</td><td>${esc(o.security_score_percent)}</td><td>${esc(o.security_level)}</td><td>${esc(o.accuracy_score_4)}</td><td>${esc(o.confidence_score)}</td><td>${esc(o.official_api_sample_crime_count)}</td><td>${o.official_api_validation_url?`<a href="${esc(o.official_api_validation_url)}" target="_blank" rel="noopener">API</a>`:o.source_url?`<a href="${esc(o.source_url)}" target="_blank" rel="noopener">Kaynak</a>`:'not_available'}</td><td class="mono">${esc(o.official_api_sample_sha256)}</td><td>${esc(o.result||o.candidate_status)}</td></tr>`).join('')||'<tr><td colspan="13">Eşleşen satır yok.</td></tr>';document.getElementById('message').textContent=`${data.length} / ${all.length} işlem satırı gösteriliyor.`}
+async function load(){document.getElementById('message').textContent='Veri yükleniyor…';try{const docs=await Promise.all(files.map(f=>fetch(`${f}?v=${Date.now()}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`${f}: HTTP ${r.status}`);return r.json()})));all=docs.flatMap(d=>Array.isArray(d.operations)?d.operations:[]);const completed=all.filter(x=>!pending(x)&&!blocked(x)).length,pendingCount=all.filter(pending).length,blockedCount=all.filter(blocked).length,candidates=all.filter(x=>x.operation_type==='candidate_evidence_row').length;document.getElementById('summary').innerHTML=`<span class="pill ok">Toplam işlem: <b>${all.length}</b></span><span class="pill ok">Tamamlanan: <b>${completed}</b></span><span class="pill ${pendingCount?'warn':'ok'}">Pending: <b>${pendingCount}</b></span><span class="pill ${blockedCount?'warn':'ok'}">Blocked: <b>${blockedCount}</b></span><span class="pill ok">Aday satırı: <b>${candidates}</b></span><span class="pill ok">Görünür kaynaklı satır: <b>300</b></span><span class="pill warn">Ölçüm: <b>LSOA proxy</b></span>`;render()}catch(e){all=[];document.getElementById('message').textContent=`Yükleme hatası: ${e.message}`}}
+document.getElementById('search').addEventListener('input',render);document.getElementById('refresh').addEventListener('click',load);load();
+</script>
+</body>
+</html>
