@@ -1,9 +1,9 @@
 # Gas Emissions Progress Latest
 
-updated_at=2026-07-09T16:29:42Z
+updated_at=2026-07-24T00:42:12Z
 final_ready=False
-verification_score_after=1/4
-blocker_count=1
+verification_score_after=2/4
+blocker_count=0
 
 ## Next Action
 Resolve blockers and rerun the same single bridge.
