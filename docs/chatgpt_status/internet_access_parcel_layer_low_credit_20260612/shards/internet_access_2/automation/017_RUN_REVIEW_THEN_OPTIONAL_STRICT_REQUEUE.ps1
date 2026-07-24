@@ -2,6 +2,8 @@ param(
     [string]$PortableRoot = $env:AAYS_PORTABLE_ROOT,
     [string]$RepoRoot = $env:AAYS_REPO_ROOT,
     [string]$ArchivePath = "",
+    [string]$OfficialArchiveUrl = "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    [switch]$SkipDownload,
     [switch]$StartRunner
 )
 
@@ -9,6 +11,7 @@ $ErrorActionPreference = "Stop"
 $SlotId = "internet_access_2"
 $ReviewWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1"
 $ZipWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1"
+$DownloadWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\018_FETCH_OFFICIAL_OFCom_SPRING_2026_ZIP.ps1"
 $ReviewOutputRel = "england_map_web\data\aays_21_slots\internet_access_2\006_existing_11013_identity_review_rows.json"
 $ReviewAuditRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\recovery\014_006_terminated_identity_review_export.json"
 
@@ -26,9 +29,10 @@ $ArchivePath = [System.IO.Path]::GetFullPath($ArchivePath)
 
 $ReviewWrapper = Join-Path $RepoRoot $ReviewWrapperRel
 $ZipWrapper = Join-Path $RepoRoot $ZipWrapperRel
+$DownloadWrapper = Join-Path $RepoRoot $DownloadWrapperRel
 $ReviewOutputPath = Join-Path $RepoRoot $ReviewOutputRel
 $ReviewAuditPath = Join-Path $RepoRoot $ReviewAuditRel
-foreach ($Required in @($ReviewWrapper, $ZipWrapper)) {
+foreach ($Required in @($ReviewWrapper, $ZipWrapper, $DownloadWrapper)) {
     if (-not (Test-Path -LiteralPath $Required -PathType Leaf)) { throw "WRAPPER_NOT_FOUND:$Required" }
 }
 
@@ -65,7 +69,26 @@ if (-not $ReviewWasAlreadyPublished) {
     }
 }
 
+$DownloadAttempted = $false
+$DownloadSucceeded = $false
+$DownloadError = $null
+$DownloadResult = $null
 $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
+if (-not $ArchiveAvailable -and -not $SkipDownload) {
+    $DownloadAttempted = $true
+    try {
+        $DownloadResult = (& $DownloadWrapper -PortableRoot $PortableRoot -ArchivePath $ArchivePath -SourceUrl $OfficialArchiveUrl | Out-String).Trim()
+        $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
+        $DownloadSucceeded = [bool]$ArchiveAvailable
+        if (-not $ArchiveAvailable) { $DownloadError = "DOWNLOAD_WRAPPER_RETURNED_WITHOUT_ARCHIVE" }
+    }
+    catch {
+        $DownloadError = $_.Exception.Message
+        $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
+        $DownloadSucceeded = [bool]$ArchiveAvailable
+    }
+}
+
 if (-not $ArchiveAvailable) {
     [ordered]@{
         state = "TERMINATED_REVIEW_READY_OFFICIAL_ZIP_PENDING"
@@ -76,13 +99,19 @@ if (-not $ArchiveAvailable) {
         official_coverage_verified = 0
         archive_path = $ArchivePath
         archive_available = $false
+        official_archive_url_configured = -not [string]::IsNullOrWhiteSpace($OfficialArchiveUrl)
+        download_skipped = [bool]$SkipDownload
+        download_attempted = [bool]$DownloadAttempted
+        download_succeeded = [bool]$DownloadSucceeded
+        download_error = $DownloadError
+        download_result = $DownloadResult
         existing_task_requeued = $false
         runner_started = $false
         duplicate_task_created = $false
         second_runner_started = $false
         final_ready = $false
-    } | ConvertTo-Json -Depth 5
-    exit 0
+    } | ConvertTo-Json -Depth 7
+    return
 }
 
 if ($StartRunner) {
@@ -100,10 +129,12 @@ if ($LASTEXITCODE -ne 0) { throw "STRICT_REQUEUE_WRAPPER_FAILED:$LASTEXITCODE" }
     review_accuracy = "1/4_ONLY"
     archive_path = $ArchivePath
     archive_available = $true
+    download_attempted = [bool]$DownloadAttempted
+    download_succeeded = [bool]$DownloadSucceeded
     strict_archive_preflight_required = $true
     existing_task_requeued = $true
     runner_start_requested = [bool]$StartRunner
     duplicate_task_created = $false
     second_runner_started = $false
     final_ready = $false
-} | ConvertTo-Json -Depth 5
+} | ConvertTo-Json -Depth 6
