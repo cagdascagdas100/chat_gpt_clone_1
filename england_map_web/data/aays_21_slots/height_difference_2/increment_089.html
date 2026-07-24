@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>HD2 Increment 089</title>
+<style>body{font-family:system-ui,Arial,sans-serif;margin:20px}table{border-collapse:collapse;width:100%;margin:12px 0 26px}th,td{border:1px solid #bbb;padding:5px;vertical-align:top;font-size:12px}th{position:sticky;top:0;background:#eee}pre{white-space:pre-wrap}.bad{font-weight:700}</style></head>
+<body><h1>height_difference_2 — increment 089</h1>
+<p>Repo overlay: line-by-line QA. Business rows: 0. final_ready: false.</p>
+<div id="summary"></div><h2>Operations</h2><table id="ops"></table><h2>Official sources</h2><table id="src"></table><h2>Examples</h2><table id="ex"></table><h2>Integrity</h2><pre id="audit"></pre>
+<script>
+async function j(n){return (await fetch(n)).json()}
+function table(el,heads,rows){el.innerHTML='<thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+String(v??'')+'</td>').join('')+'</tr>').join('')+'</tbody>'}
+Promise.all([j('operations_increment_089.json'),j('source_candidates_increment_089.json'),j('examples_increment_089.json'),j('progress_increment_089.json'),j('integrity_audit_increment_089.json')]).then(([o,s,e,p,a])=>{
+document.getElementById('summary').innerHTML=`<b>Operations:</b> ${p.website_operation_rows_written} | <b>Sources:</b> ${p.website_source_rows_written} | <b>Examples:</b> ${p.website_example_rows_written} | <b>Confidence:</b> ${p.numeric_result_confidence_percent}% | <b>Blocker:</b> ${p.blocker}`;
+table(document.getElementById('ops'),o.columns,o.operations);
+table(document.getElementById('src'),['ID','Publisher','Name','Role','Confidence','Promotion','Limit'],s.candidates.map(x=>[x.candidate_id,x.publisher,x.name,x.role,x.source_confidence_percent,x.promotion_state,x.semantic_limits.join(' ')]));
+const exRows = e.schema_version===2 ? e.examples.map(x=>[x[0],x[1],x[2],x[4],x[6],x[7],x[8],x[10],x[11],x[12]+'/4']) : e.examples.map(x=>[x.example_id,x.scenario,x.parcel,x.hmlr_id,x.primary_dtm1m_height_difference_m,x.secondary_dtm2m_height_difference_m,x.primary_secondary_delta_m,x.parcel_specific_survey_identity,x.qa_rule,x.accuracy_score_4+'/4']);
+table(document.getElementById('ex'),['ID','Scenario','Parcel','HMLR','1m diff','2m diff','Delta','Survey lineage','QA','Score'],exRows);
+document.getElementById('audit').textContent=JSON.stringify(a,null,2);
+}).catch(err=>{document.getElementById('summary').innerHTML='<span class="bad">Overlay load error: '+err+'</span>'});
+</script></body></html>
