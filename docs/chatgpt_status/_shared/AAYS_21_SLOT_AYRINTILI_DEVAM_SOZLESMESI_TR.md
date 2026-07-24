@@ -8,40 +8,49 @@ Bu dosya, eski veya yeni herhangi bir ChatGPT/Codex sayfasından yalnız bir kı
 - Kanonik çalışma branch’i: `codex/aays-single-runner-v5-20260706`
 - Sözleşme/yayın branch’i: `agent/aays-21-slot-recovery-prompt-20260722`
 - Workstream: `AAYS_21_SLOT_SAFE_PARALLEL_V1`
-- Mantıksal slot: 21
-- Donanım üst sınırı: 15 gerçek eşzamanlı görev; güvenli ve yürütülebilir görev sayısı daha azsa sayı uydurulmaz.
+- Business/data slot: 21
+- Maintenance/control slot: 1 (`problem_solver_1`)
+- Toplam mantıksal slot: 22
+- Donanım üst sınırı: 15 gerçek eşzamanlı data görevi; güvenli ve yürütülebilir görev sayısı daha azsa sayı uydurulmaz.
+
+Kanonik çalışma branch’indeki `docs/chatgpt_status/_shared/slots_21/manifest_latest.json` slot mimarisi için otoritedir. Bu sözleşme ile manifest çelişirse business yazımı başlatmadan önce manifest ile sözleşme hizalanır.
 
 Bu sözleşmeye erişilemiyorsa iş yapılmış gibi davranma. `DETAILED_CONTRACT_UNAVAILABLE` bildir ve GitHub erişimini düzeltmeden business dosyası yazma.
 
-## 2. Geçerli slot kimlikleri
+## 2. Geçerli business slot kimlikleri
 
 `ready_to_sell_1`, `ready_to_sell_2`, `ready_to_sell_3`, `gas_emissions_1`, `gas_emissions_2`, `gas_emissions_3`, `height_difference_1`, `height_difference_2`, `height_difference_3`, `security_public_safety_1`, `security_public_safety_2`, `security_public_safety_3`, `parcel_label_1`, `parcel_label_2`, `parcel_label_3`, `internet_access_1`, `internet_access_2`, `internet_access_3`, `future_growth_1`, `future_growth_2`, `future_growth_3`.
 
-Mesajın sonundaki değer bu listede birebir yoksa ve Bölüm 2.1'de tanımlanan özel kontrol kimliği değilse hiçbir slotu tahmin etme ve `INVALID_SLOT_ID` bildir.
+Mesajın sonundaki değer bu listede birebir yoksa ve Bölüm 2.1'de tanımlanan maintenance/control kimliği değilse hiçbir slotu tahmin etme ve `INVALID_SLOT_ID` bildir.
 
-### 2.1. Özel kontrol kimliği: `problem_solver_1`
+### 2.1. Maintenance/control kimliği: `problem_solver_1`
 
-`problem_solver_1` 21 business slotundan biri değildir; business slot sayısını 22'ye çıkarmaz. Yalnız kullanıcı mesajında açıkça `problem_solver_1` verildiğinde çalışan, recovery/koordinasyon amaçlı bir kontrol kimliğidir.
+`problem_solver_1`, kanonik manifestte tanımlı 22. mantıksal slot ve tek maintenance/control slottur. Rolü `PRIORITY_MANUAL_ACTION_AND_21_SLOT_RECOVERY_COORDINATOR` olup data worker kapasitesi tüketmez ve tek recovery gate olarak çalışır.
 
+- Kanonik state root: `docs/chatgpt_status/_shared/slots_21/problem_solver_1`.
+- Kanonik write root yalnız `docs/chatgpt_status/_shared/slots_21/problem_solver_1` köküdür; business data yollarına doğrudan yazamaz.
+- Gerçek kullanıcı eylemi zorunluysa `docs/chatgpt_status/_shared/manual_actions/problem_solver_1.json` kullanılabilir.
 - `problem_solver_1` hiçbir business slotunu isim benzerliğinden, eski PAGE_KEY kaydından, dosya adından veya konuşma geçmişinden tahmin ederek sahiplenemez.
-- Kontrol kimliği tüm 21 slotun yalnız durum/checkpoint/heartbeat/ownership/current-task/queue/recovery kanıtlarını okuyabilir ve güvenli çalışma adaylarını sınıflandırabilir.
-- Öncelik sırası: `BLOCKED/STALE` veya 15 dakikadan uzun ilerlemesiz `PENDING/QUEUED/PUBLISH_PENDING` recovery; sonra canlı owner'ı olmayan ve kanonik kaydında açık `first_unverified_step`, `read_paths`, `exact_write_paths`, `resource_class`, timeout ve kabul koşulları bulunan slotlar.
+- Öncelik sırası manifestteki role göre: çözülmemiş kullanıcı işlemleri; parked/stalled data slotlar; queue/Git recovery; worker kapasite izleme; all-clear izleme.
+- Kontrol kimliği tüm 21 data slotun durum/checkpoint/heartbeat/ownership/current-task/queue/recovery kanıtlarını okuyabilir ve güvenli çalışma adaylarını sınıflandırabilir.
+- `BLOCKED/STALE` veya 15 dakikadan uzun ilerlemesiz `PENDING/QUEUED/PUBLISH_PENDING` data slotlar normal yeni işten önce recovery kapısına alınır.
+- Yeni data işi yalnız canlı owner olmayan ve kanonik kaydında açık `first_unverified_step`, `read_paths`, `exact_write_paths`, `resource_class`, timeout ve kabul koşulları bulunan slotlarda hazırlanabilir.
 - Aynı `continuation_key` queue/current-task içinde varsa ikinci görev üretilemez. Canlı heartbeat/geçerli owner lease bulunan slot için ikinci görev/commit üretilemez.
-- Güvenli eşzamanlı çalışma sayısı `min(15, gerçekten yürütülebilir ve çakışmasız slot sayısı)`dır; sayı uydurulmaz.
-- Kontrol kimliği business çıktı yollarına doğrudan yazamaz. Yalnız koordinasyon/recovery kanıtı ve dispatch planı üretir. Her business yazımı, seçilen geçerli slotun kendi continuation/owner/`exact_write_paths` kuralları altında yapılır.
-- Kontrol kimliğinin kendi yazma kökü `docs/chatgpt_status/_shared/control_slots/problem_solver_1/` ile sınırlıdır. Gerçek kullanıcı eylemi zorunluysa `docs/chatgpt_status/_shared/manual_actions/problem_solver_1.json` kullanılabilir.
-- Eski `aays1`, `terrayield-046` veya benzeri global kayıtlar yalnız yardımcı geçmiş kanıtıdır; güncel bir business slota açıkça bağlanmıyorsa hedef slot sayılmaz ve business yazımı başlatmaz.
+- Güvenli eşzamanlı data işi sayısı `min(15, gerçekten yürütülebilir ve çakışmasız slot sayısı)`dır; sayı uydurulmaz.
+- Kontrol kimliği business çıktı yollarına doğrudan yazamaz. Yalnız kendi state root’unda koordinasyon/recovery kanıtı ve dispatch planı üretir. Her business yazımı, seçilen geçerli data slotun kendi continuation/owner/`exact_write_paths` kuralları altında yapılır.
+- Eski `aays1`, `terrayield-046` veya benzeri global kayıtlar yalnız yardımcı geçmiş kanıtıdır; güncel bir data slota açıkça bağlanmıyorsa hedef slot sayılmaz ve business yazımı başlatmaz.
 - Kontrol kimliği için `continuation_key` aynı formülle hesaplanır; `slot_id` alanına literal `problem_solver_1` yazılır.
-- Kontrol aşaması sonunda en az şu gerçek durumlar raporlanır: taranan 21 slot, canlı-owner sayısı, recovery gereken slot sayısı, güvenli yürütülebilir slot sayısı, oluşturulan dispatch/recovery kayıtları, commit/push/readback ve kalan blocker.
+- Kontrol aşaması sonunda en az şu gerçek durumlar raporlanır: taranan 21 data slot, canlı-owner sayısı, recovery gereken slot sayısı, güvenli yürütülebilir slot sayısı, oluşturulan dispatch/recovery kayıtları, commit/push/readback ve kalan blocker.
 
 ## 3. İlk mesajda zorunlu okuma sırası
 
 1. Bu sözleşmenin GitHub’daki en güncel sürümünü oku.
 2. Kanonik branch’in uzak HEAD değerini al.
-3. Geçerli business `SLOT_ID` için yalnız seçili slota ait `slots_21/<slot_id>` durum, checkpoint, heartbeat, ownership ve current-task kayıtlarını oku. `problem_solver_1` için Bölüm 2.1 gereği 21 slotun koordinasyon kanıtlarını salt-okunur tara.
-4. Seçili slotun queue kayıtlarını ve varsa recovery/manual-action kaydını oku. `problem_solver_1` için yalnız koordinasyon/recovery amaçlı gerekli queue özetlerini oku.
-5. Önceki sayfanın konuşmasına güvenmek yerine GitHub kanıtlarını otorite kabul et.
-6. Yerel dosya varsa yalnız yardımcı kopya olarak kullan; GitHub HEAD ve kanıtlarla uyuşmayan yerel kayıtla devam etme.
+3. Geçerli business `SLOT_ID` için yalnız seçili slota ait `slots_21/<slot_id>` durum, checkpoint, heartbeat, ownership ve current-task kayıtlarını oku.
+4. `problem_solver_1` için önce `manifest_latest.json` ile `slots_21/problem_solver_1/status_latest.json` ve mevcut diğer maintenance kanıtlarını oku; ardından 21 data slotun koordinasyon için gerekli durum/owner/heartbeat/queue özetlerini salt-okunur tara.
+5. Seçili business slotun queue kayıtlarını ve varsa recovery/manual-action kaydını oku. `problem_solver_1` için yalnız koordinasyon/recovery amaçlı gerekli queue özetlerini oku.
+6. Önceki sayfanın konuşmasına güvenmek yerine GitHub kanıtlarını otorite kabul et.
+7. Yerel dosya varsa yalnız yardımcı kopya olarak kullan; GitHub HEAD ve kanıtlarla uyuşmayan yerel kayıtla devam etme.
 
 ## 4. Eski ve yeni sayfaların çakışmadan birleşmesi
 
@@ -59,7 +68,7 @@ Her devam denemesi şu kanonik anahtarı üretir:
 
 ## 5. Devam algoritması
 
-1. `SLOT_ID`, workstream ve branch doğrula. `problem_solver_1` için Bölüm 2.1 kontrol modu uygulanır.
+1. `SLOT_ID`, workstream ve branch doğrula. `problem_solver_1` için Bölüm 2.1 maintenance/control modu uygulanır.
 2. Uzak HEAD’i ve slot kanıtlarını oku.
 3. `DONE/PUBLISHED` ve doğrulanmış kabul kanıtı varsa aynı işi tekrar çalıştırma; sıradaki ilk doğrulanmamış adıma geç.
 4. `CLAIMED/RUNNING` ve heartbeat güncelse çakışan iş başlatma; gerçek ilerlemeyi raporla.
@@ -142,7 +151,7 @@ Zorunlu alanlar:
 İlk cevapta kısa olarak şunları yaz:
 
 - Okunan sözleşme sürümü/branch’i.
-- Seçili slot veya kontrol kimliği ve bulunan `continuation_key`.
+- Seçili slot veya maintenance/control kimliği ve bulunan `continuation_key`.
 - Gerçek durum: aktif, bekliyor, blocked, recovery veya devam edilecek ilk adım.
 - Çakışan canlı owner olup olmadığı.
 
