@@ -3,14 +3,14 @@
 <title>Ready to Sell 2 — Wave 48 preflight</title>
 <style>body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;border:1px solid #ccd6dd;padding:10px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}th,td{border:1px solid #ccd6dd;padding:6px;text-align:left;vertical-align:top}th{background:#edf1f3;position:sticky;top:0}a{word-break:break-all}.notice{background:#fff;border-left:4px solid #b26a00;padding:10px;margin-top:16px}.pass,.held{font-weight:700}.error{color:#9b1c1c}</style></head>
 <body><h1>Ready to Sell 2 — Wave 48 first-party preflight</h1><div id="cards" class="cards"></div>
-<div class="notice"><b>Doğruluk kapısı:</b> 385 ilk-el kaynak adayı ve 1914 satır doğrulama hazırlanmıştır. Repository-geneli duplicate benzersizliği, kanonik parsel eşleşmesi ve gerçek Automation 167 DOM kanıtı tamamlanmadan kanonik aday sayısı artırılmaz.</div>
+<div class="notice"><b>Doğruluk kapısı:</b> 435 ilk-el kaynak adayı ve 2164 satır doğrulama hazırlanmıştır. Repository-geneli duplicate benzersizliği, kanonik parsel eşleşmesi ve gerçek Automation 167 DOM kanıtı tamamlanmadan kanonik aday sayısı artırılmaz.</div>
 <h2>Aday satırları</h2><table><thead><tr><th>#</th><th>Candidate ID</th><th>Aday</th><th>Durum</th><th>Tarih</th><th>Guide</th><th>Fiyat kanıtı</th><th>Tenure</th><th>Gelir durumu</th><th>Mevcut gelir</th><th>Planlama/risk ayrımı</th><th>Kaynak güveni</th><th>Parsel</th><th>Kabul</th><th>Kaynak</th></tr></thead><tbody id="candidateRows"></tbody></table>
 <h2>Satır bazlı işlemler</h2><table><thead><tr><th>Seq</th><th>İşlem</th><th>Aday</th><th>Sonuç</th><th>Doğruluk</th></tr></thead><tbody id="operationRows"></tbody></table>
 <div class="notice"><b>Kalan engel:</b> Windows F-host tek shared scanner polling yapmıyor; gerçek port-8012 Automation 167 DOM kabul kanıtı yok. İkinci runner ve ikinci business task oluşturulmadı.</div>
 <p>Güvenlik: fake_data=false; db_write=false; migration=false; production_deploy=false; canonical_progress_advanced=false; final_ready=false.</p>
 <script>
-const candidateSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17a","17b","18"];
-const progressSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17","18"];
+const candidateSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17a","17b","18","19a","19b"];
+const progressSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17","18","19"];
 const candidateFiles=["candidate_wave_48_preflight_latest.json",...candidateSuffixes.map(s=>`candidate_wave_48_preflight_part_${s}_latest.json`)];
 const progressFiles=["progress_wave_48_preflight_latest.json",...progressSuffixes.map(s=>`progress_wave_48_preflight_part_${s}_latest.json`)];
 const text=v=>v===null||v===undefined?'—':String(v);
