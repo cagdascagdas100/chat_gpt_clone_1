@@ -28,7 +28,7 @@ $requiredFragments = @(
 )
 foreach ($fragment in $requiredFragments) {
     $count = ([regex]::Matches($source,[regex]::Escape($fragment))).Count
-    if ($count -ne 1) { Write-Error "V6_PATCH_FRAGMENT_COUNT_MISMATCH:$count:$fragment"; exit 2 }
+    if ($count -ne 1) { Write-Error "V6_PATCH_FRAGMENT_COUNT_MISMATCH:${count}:$fragment"; exit 2 }
 }
 
 $patched = $source.Replace(
