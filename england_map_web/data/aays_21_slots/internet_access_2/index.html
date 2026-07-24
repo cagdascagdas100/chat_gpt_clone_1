@@ -70,7 +70,9 @@ function sampleObjects(payload){
       if(raw) operationRows=raw.split(/\r?\n/).filter(Boolean).map((line,i)=>{try{return JSON.parse(line)}catch(e){return {no:i+1,operation:'jsonl_parse',state:'OPTIONAL_FAILED',detail:String(e)}}});
     }
     const sampleRows=sampleObjects(samples);
-    const latestRows=latest?.candidate_examples||[];
+    const latestWavePath=latest?.visibility?.latest_wave_path;
+    const latestWave=latestWavePath?await fetchJson(latestWavePath):null;
+    const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:asObjects(latestWave);
     const latestOps=latest?.operation_rows||[];
     const p=progress.progress||{},c=progress.candidates||{},w=progress.web_visibility||{},lp=latest.progress||{},lv=latest.visibility||{};
     document.getElementById('metrics').innerHTML=[
