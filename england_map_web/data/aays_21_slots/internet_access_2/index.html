@@ -54,11 +54,44 @@ function sampleObjects(payload){
   const cols=payload.columns||[];
   return rows.map(row=>Object.fromEntries(cols.map((c,i)=>[c,row[i]])));
 }
+function numberRange(start,end){
+  const a=Number(start),b=Number(end);
+  if(!Number.isFinite(a)||!Number.isFinite(b)||b<a) return [];
+  return Array.from({length:b-a+1},(_,i)=>a+i);
+}
+function manifestWaves(payload){
+  if(payload?.waves?.length) return payload.waves;
+  const f=payload?.wave_formula;
+  if(!f) return [];
+  const start=Number(f.candidate_row_start),end=Number(f.candidate_row_end),waveStart=Number(f.wave_start);
+  const offsets=(f.offsets||[]).map(Number);
+  return numberRange(start,end).map((candidateRow,i)=>({
+    wave:waveStart+i,
+    candidate_row:candidateRow,
+    lines:offsets.map(offset=>offset+candidateRow)
+  }));
+}
+function buildLatestOps(latest){
+  if(latest?.operation_rows?.length) return latest.operation_rows;
+  const f=latest?.operation_formula;
+  if(!f) return [];
+  const start=Number(f.candidate_row_start),end=Number(f.candidate_row_end);
+  const waveStart=Number(f.wave_start),noStart=Number(f.no_start);
+  const offsets=(f.offsets||[]).map(Number);
+  const rows=numberRange(start,end).map((candidateRow,i)=>({
+    no:noStart+i,
+    operation:`wave${waveStart+i}_source_direct_manifest`,
+    line:offsets.map(offset=>offset+candidateRow).join(', '),
+    state:f.wave_state||'PASS_6_SOURCE_LINES'
+  }));
+  return rows.concat(f.tail||[]);
+}
 async function resolveLatestRows(payload){
   if(!payload?.source_selections?.length) return asObjects(payload);
   const batches=await Promise.all(payload.source_selections.map(async selection=>{
     const source=await fetchJson(selection.path,{critical:true});
-    const wanted=new Set((selection.lines||[]).map(Number));
+    const selected=selection.lines?.length?selection.lines:numberRange(selection.line_start,selection.line_end);
+    const wanted=new Set(selected.map(Number));
     return (source?.rows||[]).filter(row=>wanted.has(Number(row.line))).map(row=>({
       ...row,
       source_chunk:selection.chunk,
@@ -69,7 +102,7 @@ async function resolveLatestRows(payload){
   }));
   const byLine=new Map(batches.flat().map(row=>[Number(row.line),row]));
   const ordered=[];
-  for(const wave of payload.waves||[]){
+  for(const wave of manifestWaves(payload)){
     for(const line of wave.lines||[]){
       const row=byLine.get(Number(line));
       if(row) ordered.push({...row,wave:wave.wave,candidate_row:wave.candidate_row});
@@ -97,7 +130,7 @@ async function resolveLatestRows(payload){
     const latestWavePath=latest?.visibility?.latest_wave_path;
     const latestWave=latestWavePath?await fetchJson(latestWavePath):null;
     const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:await resolveLatestRows(latestWave);
-    const latestOps=latest?.operation_rows||[];
+    const latestOps=buildLatestOps(latest);
     const p=progress.progress||{},c=progress.candidates||{},w=progress.web_visibility||{},lp=latest.progress||{},lv=latest.visibility||{};
     document.getElementById('metrics').innerHTML=[
       metric('Ana işlem',`${lp.completed_operations}/${lp.total_operations} · %${lp.progress_percent}`),
