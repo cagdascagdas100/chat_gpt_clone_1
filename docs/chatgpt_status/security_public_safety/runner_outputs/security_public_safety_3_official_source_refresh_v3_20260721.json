@@ -1,0 +1,160 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_3",
+  "verified_online_at": "2026-07-21T05:31:00+03:00",
+  "status": "OFFICIAL_SOURCE_REFRESH_V3_COMPLETE",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "sources": [
+    {
+      "line": 1,
+      "source_id": "SRC-01",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 - corrected File 7 v2",
+      "official_page": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "direct_data_url": "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+      "decision": "PROMOTED_PRIMARY_RELATIVE_CONTEXT",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Relative LSOA crime context only; never convert rank, score or decile directly into an absolute parcel security percentage."
+    },
+    {
+      "line": 2,
+      "source_id": "SRC-02",
+      "publisher": "data.police.uk",
+      "name": "Street-level crimes API and monthly archive",
+      "official_page": "https://data.police.uk/docs/method/crime-street/",
+      "latest_month_endpoint": "https://data.police.uk/api/crime-last-updated",
+      "latest_month": "2026-05",
+      "decision": "PROMOTED_CURRENT_SUPPORTING_EVIDENCE",
+      "accuracy_score_100": 95,
+      "semantic_limit": "Published locations are anonymised; point-radius results are supporting evidence, not exact parcel incident counts."
+    },
+    {
+      "line": 3,
+      "source_id": "SRC-03",
+      "publisher": "Home Office",
+      "name": "Police recorded crime and outcomes open data tables",
+      "official_page": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "last_updated": "2026-04-23",
+      "decision": "PROMOTED_AGGREGATE_CALIBRATION_QA",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Police Force Area and Community Safety Partnership data are too coarse for direct parcel attribution."
+    },
+    {
+      "line": 4,
+      "source_id": "SRC-04",
+      "publisher": "Office for National Statistics",
+      "name": "Crime in England and Wales: Police Force Area data tables",
+      "official_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "release_date": "2026-04-23",
+      "next_release": "2026-07-23",
+      "decision": "PROMOTED_INDEPENDENT_AGGREGATE_QA",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Use only for PFA and CSP reconciliation."
+    },
+    {
+      "line": 5,
+      "source_id": "SRC-05",
+      "publisher": "Office for National Statistics",
+      "name": "Lower layer Super Output Areas December 2021 boundaries EW BGC V5",
+      "official_page": "https://www.data.gov.uk/dataset/40129cd8-4ebd-4a96-9625-869103493b28/lower-layer-super-output-areas-december-2021-boundaries-ew-bgc-v5",
+      "last_updated": "2024-11-24",
+      "decision": "PROMOTED_CANONICAL_LSOA_GEOGRAPHY_JOIN",
+      "accuracy_score_100": 97,
+      "semantic_limit": "Use LSOA21CD and matching 2021 statistical geography vintage; 20 metre generalisation is for area joins, not parcel boundary replacement."
+    },
+    {
+      "line": 6,
+      "source_id": "SRC-06",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "Fire and rescue incident statistics",
+      "official_page": "https://www.gov.uk/government/collections/fire-and-rescue-incident-statistics",
+      "decision": "HELD_OPTIONAL_SEPARATE_COMPONENT",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Do not merge into the crime score without a separately approved and reproducible composite model."
+    },
+    {
+      "line": 7,
+      "source_id": "SRC-07",
+      "publisher": "Office for National Statistics",
+      "name": "Lower layer Super Output Area population estimates, mid-2022 revised to mid-2024",
+      "official_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
+      "release_date": "2025-11-07",
+      "decision": "PROMOTED_RATE_DENOMINATOR",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Use as an LSOA population denominator for rates and QA; never assign the whole LSOA population to one parcel."
+    },
+    {
+      "line": 8,
+      "source_id": "SRC-08",
+      "publisher": "Office for National Statistics",
+      "name": "Lower layer Super Output Area population density",
+      "official_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareapopulationdensity",
+      "release_date": "2025-11-07",
+      "decision": "PROMOTED_DENSITY_NORMALISATION_QA",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Area-level density normalisation and anomaly detection only."
+    },
+    {
+      "line": 9,
+      "source_id": "SRC-09",
+      "publisher": "data.police.uk",
+      "name": "Street-level outcomes API",
+      "official_page": "https://data.police.uk/docs/method/outcomes-at-location/",
+      "decision": "PROMOTED_SECONDARY_OUTCOMES_EVIDENCE",
+      "accuracy_score_100": 94,
+      "semantic_limit": "Approximate one-mile or polygon outcomes; store only aggregate counts and response hashes, never raw person-related fields."
+    },
+    {
+      "line": 10,
+      "source_id": "SRC-10",
+      "publisher": "Office for National Statistics",
+      "name": "Crime Severity Score: year ending March 2025",
+      "official_page": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/crimeseverityscoreexperimentalstatistics",
+      "release_date": "2025-12-09",
+      "decision": "PROMOTED_AGGREGATE_SEVERITY_QA",
+      "accuracy_score_100": 97,
+      "semantic_limit": "PFA and CSP severity calibration only; not a parcel-level score."
+    },
+    {
+      "line": 11,
+      "source_id": "SRC-11",
+      "publisher": "Department for Transport",
+      "name": "Road safety open data",
+      "official_page": "https://www.gov.uk/government/statistical-data-sets/road-safety-open-data",
+      "latest_final_year": 2024,
+      "latest_provisional_period": "2025",
+      "decision": "HELD_OPTIONAL_SEPARATE_PUBLIC_SAFETY_COMPONENT",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Police-reported personal injury road collisions only; keep separate from crime unless an approved composite model exists."
+    },
+    {
+      "line": 12,
+      "source_id": "SRC-12",
+      "publisher": "Home Office",
+      "name": "Recorded crime geographical reference table",
+      "official_page": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "decision": "PROMOTED_CODE_AND_VINTAGE_MAPPING",
+      "accuracy_score_100": 98,
+      "semantic_limit": "Use for official geography codes and table vintage reconciliation, not for direct scoring."
+    }
+  ],
+  "candidate_count": 12,
+  "promoted_count": 10,
+  "held_count": 2,
+  "accuracy_ge_90_count": 12,
+  "accuracy_ge_95_count": 11,
+  "new_verified_metadata": [
+    "ONS LSOA21 BGC V5 boundary service and vintage",
+    "ONS mid-2024 LSOA population denominator release",
+    "ONS LSOA population density release",
+    "data.police.uk outcomes-at-location semantic limits",
+    "ONS Crime Severity Score year ending March 2025",
+    "DfT 2024 final and 2025 provisional road-safety coverage"
+  ],
+  "actual_slot_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

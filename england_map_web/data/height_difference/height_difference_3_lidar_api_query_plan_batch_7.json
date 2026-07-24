@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "slot_id": "height_difference_3",
+  "batch_id": "height_difference_3_lidar_api_query_plan_batch_7_20260722",
+  "updated_at": "2026-07-22T07:05:00+03:00",
+  "service_url": "https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer",
+  "service_spatial_reference": 27700,
+  "service_units": "metres",
+  "service_max_record_count": 1000,
+  "plan_kind": "PREPARED_QUERY_SEQUENCE_NO_REAL_COORDINATE_EXECUTION",
+  "row_count": 12,
+  "rows": [
+    {"step":1,"operation":"READ_CANONICAL_POINT_OUTPUT","request":"Read exactly one validated Point for the target parcel from the v1.1 output.","acceptance":"unique ID, finite coordinates, exact blob and full 92283-feature parse gates pass","status":"PENDING_SHARED_RUNNER"},
+    {"step":2,"operation":"TRANSFORM_TO_EPSG27700","request":"Transform the Point with OSTN15 and record software, grid version, input CRS, output CRS and coordinates.","acceptance":"definitive OSTN15 path; approximate Helmert prohibited","status":"PREPARED"},
+    {"step":3,"operation":"QUERY_DTM_EXTENT_LAYER","request":"POST or GET layer 0 /query with f=json, geometry=<easting,northing>, geometryType=esriGeometryPoint, inSR=27700, outSR=27700, spatialRel=esriSpatialRelIntersects, outFields=*, returnGeometry=true.","acceptance":"HTTP success, valid JSON, no service error and at least one intersecting DTM survey extent","status":"PREPARED"},
+    {"step":4,"operation":"QUERY_DSM_EXTENT_LAYER","request":"Run the same spatial query against layer 1 for matching DSM survey candidates.","acceptance":"DSM candidates retained only for contamination QA and matched by survey metadata","status":"PREPARED"},
+    {"step":5,"operation":"PAGINATE_AND_PRESERVE_RESPONSE","request":"Respect the advertised maximum record count of 1000; use resultOffset/resultRecordCount when transfer-limit flags require pagination and preserve every response page.","acceptance":"all pages collected with request timestamps and response hashes","status":"PREPARED"},
+    {"step":6,"operation":"INSPECT_SCHEMA_BEFORE_FILTERING","request":"Request outFields=* and inspect returned field names before applying any date, resolution, transformation or geoid filters.","acceptance":"no guessed field names; selected attributes are copied verbatim into provenance","status":"PREPARED"},
+    {"step":7,"operation":"RANK_DTM_CANDIDATES","request":"Rank valid native timestamped DTM candidates by complete metadata, accepted datum, resolution preference 0.25m then 0.5m then 1m then 2m, and survey recency within the best acceptable quality class.","acceptance":"ranked table and deterministic selection reason published","status":"PREPARED"},
+    {"step":8,"operation":"DOWNLOAD_SELECTED_DTM_TILE","request":"Use the official survey-data download path and tile identifier; retain source URL, archive checksum, GeoTIFF checksum and extraction manifest.","acceptance":"downloaded raster identity matches catalogue survey, date, resolution and tile extent","status":"PENDING_REAL_TILE"},
+    {"step":9,"operation":"VALIDATE_RASTER_METADATA","request":"Read raster size, affine transform, cell size, EPSG:27700 CRS, units, NoData value, vertical datum, survey transformation and geoidal model.","acceptance":"all mandatory fields available or explicitly reconciled from official survey metadata","status":"PENDING_REAL_TILE"},
+    {"step":10,"operation":"MATCH_DSM_AND_POINT_CLOUD","request":"Select DSM and point-cloud material only when survey identity, date, transformation, geoid and spatial coverage match the primary DTM; otherwise mark diagnostic mismatch.","acceptance":"matching evidence or explicit non-use reason","status":"PREPARED"},
+    {"step":11,"operation":"EXECUTE_NATIVE_CELL_SAMPLING","request":"Apply sampling contract HD3_SC17 through HD3_SC22 and retain every accepted and rejected sample with reason codes.","acceptance":"minimum counts, coverage, native extrema and contamination checks pass","status":"PENDING_BOUNDARY_AND_TILE"},
+    {"step":12,"operation":"PUBLISH_FAIL_CLOSED_RESULT","request":"Calculate max minus min and attach uncertainty budget only after all mandatory identity, boundary, datum, raster and sampling gates pass.","acceptance":"row-level provenance manifest and remote readback pass; otherwise numeric fields remain null","status":"PENDING_ALL_GATES"}
+  ],
+  "query_template": {
+    "layer_0_dtm_url": "https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/0/query",
+    "layer_1_dsm_url": "https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/1/query",
+    "parameters": {
+      "f": "json",
+      "geometry": "<EASTING>,<NORTHING>",
+      "geometryType": "esriGeometryPoint",
+      "inSR": 27700,
+      "outSR": 27700,
+      "spatialRel": "esriSpatialRelIntersects",
+      "outFields": "*",
+      "returnGeometry": true
+    }
+  },
+  "execution_state": "BLOCKED_CANONICAL_POINT_OUTPUT_ABSENT",
+  "canonical_point_rows": 0,
+  "numeric_elevation_rows": 0,
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "final_ready": false
+}

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>parcel_label_2 ilerleme</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45}
+h1{margin-bottom:6px}.muted{color:#555}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}
+.card{border:1px solid #bbb;border-radius:8px;padding:12px}table{border-collapse:collapse;width:100%;font-size:14px;margin-bottom:28px}
+th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#fff}
+.ok{font-weight:700}.warn{font-weight:700}.error{font-weight:700}code{white-space:nowrap}.note{border-left:4px solid #888;padding:8px 12px;margin:12px 0;background:#f7f7f7}
+</style>
+</head>
+<body>
+<h1>parcel_label_2</h1>
+<div class="muted">30762–61522 · yalnız resmî internet kaynaklı adaylar · canonical parsel ve exact geometri bağlaması bekliyor</div>
+<div class="note">SOURCE_* kimlikleri araştırma adaylarıdır; canonical parcel_30762–parcel_61522 satırları değildir. Replacement overlay tarayıcı bütünlük kontrolünden önce uygulanır. Attempt-010 mevcut tek shared runner kuyruğunda bekler; yeni veya paralel runner oluşturulmamıştır.</div>
+<div class="note" id="integrity">Veri manifesti yükleniyor…</div>
+<div class="summary" id="summary"></div>
+<h2>Dosya yükleme sağlığı</h2>
+<table><thead><tr><th>Grup</th><th>Dosya</th><th>Durum</th><th>Deneme</th><th>Süre</th><th>Hata</th></tr></thead><tbody id="fileHealth"><tr><td colspan="6">Yükleniyor…</td></tr></tbody></table>
+<h2>İşlem günlüğü</h2>
+<table><thead><tr><th>#</th><th>İşlem</th><th>Sonuç</th><th>Durum</th></tr></thead><tbody id="activity"><tr><td colspan="4">Yükleniyor…</td></tr></tbody></table>
+<h2>Etkin aday satırları</h2>
+<table><thead><tr><th>#</th><th>Batch</th><th>Aday ID</th><th>Yer</th><th>Sınıf</th><th>Renk kategorisi</th><th>Doğruluk</th><th>Kaynak</th><th>Kanıt özeti</th><th>Geometri</th><th>Bloker</th></tr></thead><tbody id="rows"><tr><td colspan="11">Yükleniyor…</td></tr></tbody></table>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').toLocaleLowerCase('en-GB').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const uniqueCount=values=>new Set(values).size;
+const dataRoot='data/distance_property_types/';
+const REQUEST_TIMEOUT_MS=8000,MAX_ATTEMPTS=2,LOAD_CONCURRENCY=8,RENDER_BATCH_ROWS=120,PAGE_DEADLINE_MS=18000;
+const ledger=[];let pageSettled=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function fetchJsonBounded(url,group){
+ let lastError;
+ for(let attempt=1;attempt<=MAX_ATTEMPTS;attempt++){
+  const started=performance.now(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),REQUEST_TIMEOUT_MS);
+  try{
+   const response=await fetch(url,{cache:'no-store',signal:controller.signal});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   const data=await response.json();
+   ledger.push({group,file:url.split('/').pop(),state:'LOADED',attempt,ms:Math.round(performance.now()-started),error:''});
+   clearTimeout(timer);return data;
+  }catch(error){
+   clearTimeout(timer);lastError=error;
+   if(attempt<MAX_ATTEMPTS)await sleep(250);
+  }
+ }
+ ledger.push({group,file:url.split('/').pop(),state:'ERROR',attempt:MAX_ATTEMPTS,ms:REQUEST_TIMEOUT_MS,error:String(lastError?.message||lastError)});
+ throw lastError;
+}
+async function mapLimit(items,limit,worker){
+ const results=new Array(items.length);let next=0;
+ async function run(){while(true){const i=next++;if(i>=items.length)return;results[i]=await worker(items[i],i);}}
+ await Promise.all(Array.from({length:Math.min(limit,items.length)},run));return results;
+}
+async function loadGroup(names,group){
+ const results=await mapLimit(names||[],LOAD_CONCURRENCY,async name=>{
+  try{return {ok:true,data:await fetchJsonBounded(dataRoot+name,group),name};}
+  catch(error){return {ok:false,error,name};}
+ });
+ return {parts:results.filter(x=>x.ok).map(x=>x.data),errors:results.filter(x=>!x.ok)};
+}
+function expandEvent(e){
+ const s=Number(e.start_sequence),subject=String(e.subject||''),kind=String(e.kind||''),repair=kind==='REPLACEMENT';
+ return [
+ {sequence:s,operation:`${subject} ${repair?'bütünlük sorunu':'resmî kaynak'} okuması`,result:repair?`${e.replaces_parcel_id}: ${e.reason}`:String(e.evidence||''),state:repair?'FAIL_CLOSED_REPAIR_REQUIRED':'PASS'},
+ {sequence:s+1,operation:`${subject} resmî kaynak doğrulaması`,result:String(e.evidence||''),state:'PASS'},
+ {sequence:s+2,operation:`${subject} sınıf kanıtı`,result:`${e.property_type} sınıfı resmî kaynakla desteklendi`,state:'PASS'},
+ {sequence:s+3,operation:`${subject} doğruluk ve kapsam kapısı`,result:`%${e.accuracy_percent}; canonical parsel ve exact geometri bağlaması bekliyor`,state:'PENDING_CANONICAL_BINDING'},
+ {sequence:s+4,operation:`${subject} web satırı`,result:`${e.parcel_id} canonical dışı aday olarak görünür`,state:'VISIBLE_NOT_CANONICAL'}];
+}
+async function renderBatched(tbody,items,mapper,batch=RENDER_BATCH_ROWS){
+ tbody.innerHTML='';
+ for(let i=0;i<items.length;i+=batch){
+  tbody.insertAdjacentHTML('beforeend',items.slice(i,i+batch).map((item,j)=>mapper(item,i+j)).join(''));
+  await new Promise(requestAnimationFrame);
+ }
+ if(!items.length)tbody.innerHTML='<tr><td colspan="11">Görünür satır yok.</td></tr>';
+}
+function renderHealth(){
+ const rows=[...ledger].sort((a,b)=>a.group.localeCompare(b.group)||a.file.localeCompare(b.file));
+ renderBatched(document.getElementById('fileHealth'),rows,r=>`<tr><td>${esc(r.group)}</td><td><code>${esc(r.file)}</code></td><td class="${r.state==='LOADED'?'ok':'error'}">${esc(r.state)}</td><td>${esc(r.attempt)}</td><td>${esc(r.ms)} ms</td><td>${esc(r.error)}</td></tr>`,120);
+}
+setTimeout(()=>{if(!pageSettled)document.getElementById('integrity').textContent=`${PAGE_DEADLINE_MS/1000} saniyelik sayfa deadline aşıldı; yüklenen dosyalar sağlık tablosunda görünür, tamamlanmayan bütünlük kapısı fail-closed kalır.`;},PAGE_DEADLINE_MS);
+(async()=>{
+ const manifest=await fetchJsonBounded(dataRoot+'parcel_label_2_web_data_manifest_latest.json','manifest');
+ const [cg,rg,ag]=await Promise.all([loadGroup(manifest.candidate_files,'candidate'),loadGroup(manifest.replacement_files,'replacement'),loadGroup(manifest.activity_files,'activity')]);
+ const loadErrors=[...cg.errors,...rg.errors,...ag.errors];renderHealth();
+ const rawCandidates=cg.parts.flatMap(d=>(d.candidates||[]).map(c=>({...((d.candidate_defaults)||{}),...c})));
+ const replacements=rg.parts.flatMap(d=>d.replacements||[]);
+ const rawIdCount=rawCandidates.reduce((m,c)=>{const k=String(c.parcel_id||'');m[k]=(m[k]||0)+1;return m;},{});
+ const replacementTargets=replacements.map(r=>String(r.replaces_parcel_id||''));
+ const replacementTargetsValid=uniqueCount(replacementTargets)===replacements.length&&replacementTargets.every(id=>Number(rawIdCount[id]||0)===1);
+ const replacementMap=new Map(replacements.map(r=>[String(r.replaces_parcel_id||''),r.candidate]));
+ const candidates=rawCandidates.map(c=>replacementMap.has(String(c.parcel_id||''))?replacementMap.get(String(c.parcel_id||'')):c);
+ const activities=ag.parts.flatMap(d=>[...(d.activities||[]),...(d.events||[]).flatMap(expandEvent)]).sort((a,b)=>Number(a.sequence)-Number(b.sequence));
+ const count=candidates.length,average=count?Math.round(candidates.reduce((s,c)=>s+Number(c.accuracy_percent||0),0)/count*100)/100:0;
+ const batchCount=new Set(candidates.map(c=>Number(c.research_batch)).filter(Number.isFinite)).size;
+ const candidateIds=candidates.map(c=>String(c.parcel_id||'')),normalizedRefs=candidates.map(c=>norm(c.parcel_ref)),sourceUrls=candidates.map(c=>String(c.source_url||''));
+ const sequences=activities.map(a=>Number(a.sequence)),expectedSequences=Array.from({length:Number(manifest.expected_activity_rows)},(_,i)=>Number(manifest.expected_activity_sequence_start)+i);
+ const classCounts=candidates.reduce((m,c)=>{const k=String(c.selected_property_type||'');m[k]=(m[k]||0)+1;return m;},{});
+ const classBalance=Object.entries(manifest.expected_class_counts||{}).every(([k,v])=>Number(classCounts[k]||0)===Number(v));
+ const colorMap=manifest.expected_property_type_color_map||{},colorCategoryMatch=candidates.every(c=>String(c.selected_color_category||'')===String(colorMap[String(c.selected_property_type||'')]||''));
+ const fileMatch=loadErrors.length===0&&cg.parts.length===Number(manifest.expected_candidate_files)&&rg.parts.length===Number(manifest.expected_replacement_files)&&ag.parts.length===Number(manifest.expected_activity_files);
+ const replacementCountMatch=replacements.length===Number(manifest.expected_replacement_rows);
+ const rowMatch=count===Number(manifest.expected_candidate_rows)&&activities.length===Number(manifest.expected_activity_rows),batchMatch=batchCount===Number(manifest.expected_research_batches);
+ const allHttpsSources=candidates.every(c=>String(c.source_url||'').startsWith('https://')),allHighAccuracy=candidates.every(c=>Number(c.accuracy_percent)>=97);
+ const scoreRange=candidates.every(c=>Number(c.accuracy_score_4)>=0&&Number(c.accuracy_score_4)<=4),scoreRelation=candidates.every(c=>Math.abs(Number(c.accuracy_percent)-Number(c.accuracy_score_4)*25)<0.001);
+ const evidenceComplete=candidates.every(c=>String(c.fresh_evidence||'').trim()),officialScopeComplete=candidates.every(c=>String(c.official_scope||'').trim()),conflictComplete=candidates.every(c=>String(c.conflict_status||'').trim());
+ const manualReviewAll=candidates.every(c=>c.needs_manual_review===true),allSourcePlaceholders=candidates.every(c=>String(c.parcel_id||'').startsWith('SOURCE_'));
+ const uniqueIds=uniqueCount(candidateIds)===Number(manifest.expected_unique_candidate_ids),uniqueRefs=uniqueCount(normalizedRefs)===Number(manifest.expected_unique_normalized_candidate_refs),uniqueUrls=uniqueCount(sourceUrls)===Number(manifest.expected_unique_source_urls);
+ const uniqueSequences=uniqueCount(sequences)===sequences.length,contiguousSequences=sequences.length===expectedSequences.length&&sequences.every((v,i)=>v===expectedSequences[i]);
+ const integrityOk=fileMatch&&replacementCountMatch&&replacementTargetsValid&&rowMatch&&batchMatch&&classBalance&&colorCategoryMatch&&allHttpsSources&&allHighAccuracy&&scoreRange&&scoreRelation&&evidenceComplete&&officialScopeComplete&&conflictComplete&&manualReviewAll&&allSourcePlaceholders&&uniqueIds&&uniqueRefs&&uniqueUrls&&uniqueSequences&&contiguousSequences;
+ document.getElementById('integrity').textContent=integrityOk?`Veri manifesti eşleşti: ${cg.parts.length} aday dosyası, ${rg.parts.length} replacement dosyası, ${replacements.length} düzeltilmiş satır, ${ag.parts.length} işlem dosyası, ${count} etkin benzersiz aday ve ${activities.length} sıralı işlem satırı.`:`Fail-closed bütünlük: dosya hatası ${loadErrors.length}, aday ${count}/${manifest.expected_candidate_rows}, replacement ${replacements.length}/${manifest.expected_replacement_rows}, işlem ${activities.length}/${manifest.expected_activity_rows}, ID ${uniqueIds?'OK':'HATA'}, yer ${uniqueRefs?'OK':'HATA'}, URL ${uniqueUrls?'OK':'HATA'}, sıra ${uniqueSequences&&contiguousSequences?'OK':'HATA'}. Kısmi yüklenen satırlar görünür tutuldu.`;
+ const classEach=Object.values(manifest.expected_class_counts||{})[0]||0;
+ const cards=[['Görünür aday',count],['Düzeltilen satır',replacements.length],['Araştırma batch',batchCount],['Sınıf dağılımı',classBalance?classEach+' × 6':'HATA'],['Sınıflandırma doğruluğu','%'+average],['Doğruluk ≥%97',candidates.filter(c=>Number(c.accuracy_percent)>=97).length],['Dosya hatası',loadErrors.length],['Veri bütünlüğü',integrityOk?'MATCH':'FAIL_CLOSED'],['Benzersiz ID',uniqueCount(candidateIds)],['Benzersiz yer',uniqueCount(normalizedRefs)],['Benzersiz kaynak',uniqueCount(sourceUrls)],['İşlem sırası',uniqueSequences&&contiguousSequences?'1…'+sequences.length:'HATA'],['Canonical slot satırı',manifest.canonical_verified_slot_rows],['Exact geometri',manifest.exact_geometry_rows],['Runner',manifest.runner_heartbeat_fresh?'FRESH':'OUTPUT ABSENT / STALE'],['Kendi görevimiz',manifest.own_runner_attempt],['İşlem satırı',activities.length]];
+ document.getElementById('summary').innerHTML=cards.map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join('');
+ await Promise.all([
+  renderBatched(document.getElementById('activity'),activities,a=>`<tr><td>${esc(a.sequence)}</td><td>${esc(a.operation)}</td><td>${esc(a.result)}</td><td>${esc(a.state)}</td></tr>`),
+  renderBatched(document.getElementById('rows'),candidates,(c,i)=>`<tr><td>${i+1}</td><td>${esc(c.research_batch)}</td><td><code>${esc(c.parcel_id)}</code></td><td>${esc(c.parcel_ref)}</td><td>${esc(c.selected_property_type)}</td><td><code>${esc(c.selected_color_category)}</code></td><td>%${esc(c.accuracy_percent)}</td><td><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">resmî kaynak</a></td><td>${esc(c.fresh_evidence)}</td><td class="warn">${esc(c.geometry_status)}</td><td>${esc(c.conflict_status)}</td></tr>`)
+ ]);
+ pageSettled=true;
+})().catch(error=>{pageSettled=true;renderHealth();document.getElementById('integrity').textContent='Kritik manifest yüklenemedi: '+error.message;document.getElementById('activity').innerHTML=`<tr><td colspan="4">${esc(error.message)}</td></tr>`;document.getElementById('rows').innerHTML=`<tr><td colspan="11">${esc(error.message)}</td></tr>`;});
+</script>
+</body></html>

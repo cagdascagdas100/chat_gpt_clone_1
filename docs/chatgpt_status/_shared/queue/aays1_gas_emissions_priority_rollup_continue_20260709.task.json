@@ -1,0 +1,35 @@
+{
+  "task_id": "aays1-gas-emissions-priority-rollup-continue-20260709",
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_f_portable_runner_only",
+  "priority_order": [
+    "Pull latest main on F portable runner only",
+    "Refresh 127.0.0.1:8020 site so 47 real rows and 2.5/4 status are visible",
+    "Write site_refresh_watchdog_latest.json",
+    "Continue parcel authority binding",
+    "Run full GOV.UK DESNZ extraction for parcel-bound rows",
+    "Increase verified row count and accuracy only with official rows"
+  ],
+  "current_baseline": {
+    "source_row_gate_passed": true,
+    "real_trial_rows": 47,
+    "score": "2.5/4",
+    "site_refresh_watchdog_output_missing": true,
+    "parcel_binding_pending": true,
+    "final_ready": false,
+    "fake_data": false
+  },
+  "skip_rule": "If any step fails, write blocker and continue with the next listed step; do not stall the single runner.",
+  "safety": {
+    "single_runner_only": true,
+    "new_runner_started": false,
+    "parallel_runner_started": false,
+    "fake_data": false,
+    "final_ready": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

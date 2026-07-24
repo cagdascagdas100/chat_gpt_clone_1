@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Security Public Safety Slot 3</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f6f7f9;color:#111}
+    h1{margin:0 0 8px}.muted{color:#666}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:18px 0}
+    .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px}.value{font-size:24px;font-weight:700}
+    .ok{color:#16794b}.warn{color:#a05a00}.bad{color:#b42318}table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 24px}
+    th,td{border:1px solid #ddd;padding:7px;text-align:left;font-size:13px;vertical-align:top}th{background:#eef1f4;position:sticky;top:0}
+    .section{margin-top:26px}.error{white-space:pre-wrap;background:#fee;border:1px solid #f99;padding:12px;border-radius:8px}
+    .scroll{overflow:auto;max-height:70vh}.gate,.status{font-weight:700}.url{max-width:320px;word-break:break-all}.smoke{border-left:5px solid #a05a00}.fp{font-family:ui-monospace,monospace;font-size:12px}
+  </style>
+</head>
+<body>
+  <h1>security_public_safety_3</h1>
+  <div class="muted">Parsel aralığı 61.523–92.283 · exact blob + düşük-bellek akış + mmap SHA256 + değiştirilemez resmî kanıt + yayın karantinası + detached final artefakt manifesti + PowerShell acil karantina · final manifest geçmeden skor gösterilmez · otomatik yenileme 60 saniye</div>
+  <div id="summary" class="grid"></div>
+  <div id="blockers"></div>
+  <section class="section smoke"><h2>Öncelikli 3 satırlık V5.2.11 final artefakt manifest doğrulaması</h2><div id="smoke" class="scroll"></div></section>
+  <section class="section smoke"><h2>V5.2.11 final manifest ve önceki smoke işlemleri</h2><div id="smokeOperations" class="scroll"></div></section>
+  <section class="section"><h2>Final publication manifest readback</h2><div id="manifest" class="scroll"></div></section>
+  <section class="section"><h2>Önceki ve genel işlemler</h2><div id="operations" class="scroll"></div></section>
+  <section class="section"><h2>48 parsel adayı ve dört kabul kapısı</h2><div id="rows" class="scroll"></div></section>
+  <section class="section"><h2>Resmî kaynak adayları, doğrulukları, tarihler ve kullanım sınırları</h2><div id="sources" class="scroll"></div></section>
+<script>
+const base='data/security_public_safety/';
+async function load(name){const r=await fetch(base+name,{cache:'no-store'});if(!r.ok)throw new Error(name+' HTTP '+r.status);return r.json()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function card(l,v,c=''){return `<div class="card"><div class="muted">${esc(l)}</div><div class="value ${c}">${esc(v)}</div></div>`}
+function gate(v){return `<span class="gate ${v?'ok':'warn'}">${v?'GEÇTİ':'BEKLİYOR'}</span>`}
+function fp(v){return v?`<span class="fp" title="${esc(v)}">${esc(String(v).slice(0,16))}…</span>`:'<span class="warn">BEKLİYOR</span>'}
+function operationsTable(rows){return `<table><thead><tr><th>Satır</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.operation)}</td><td class="status">${esc(r.status)}</td><td>${esc(r.evidence)}</td></tr>`).join('')}</tbody></table>`}
+function rowsTable(rows,manifest,showChunk=true,showForce=false,showMemory=false){
+  const memoryHead=showMemory?'<th>Akış</th><th>Tam JSON yok</th><th>mmap SHA</th><th>Heap kopyası yok</th><th>Kaynak bağlı</th><th>Artefakt quorum</th><th>Ham lineage</th><th>Uzlaştırma</th><th>Kapı sayacı</th><th>Üst sayaç</th><th>Resmî kanıt FP</th><th>Yayın karantinası</th><th>Ön-yayın digest</th><th>Skor yayın kapısı</th><th>Final manifest</th><th>Yayın fingerprint</th><th>Manifest fingerprint</th>':'';
+  const forceHead=showForce?'<th>Force lookup</th><th>Crime kapsam</th><th>Outcome kapsam</th>':'';
+  return `<table><thead><tr><th>Satır</th>${showChunk?'<th>Grup</th>':''}<th>Parsel</th><th>Durum</th>${memoryHead}<th>Kanonik</th>${forceHead}<th>Crime API</th><th>Outcomes API</th><th>IoD2025 v2</th><th>Doğruluk /4</th><th>Yayımlanan skor</th><th>İnceleme</th></tr></thead><tbody>${rows.map(r=>{
+    const heapGate=r.full_heap_copy_avoided_gate??r.full_heap_read_avoided_gate;
+    const manifestPassed=manifest.final_artifact_manifest_passed===true;
+    const manifestFp=manifest.manifest_evidence_fingerprint||r.final_artifact_manifest_fingerprint;
+    const memoryCells=showMemory?`<td>${gate(r.stream_extraction_gate)}</td><td>${gate(r.full_json_load_avoided_gate)}</td><td>${gate(r.mmap_sha256_gate)}</td><td>${gate(heapGate)}</td><td>${gate(r.memory_evidence_bound_to_source)}</td><td>${gate(r.artifact_quorum_gate)}</td><td>${gate(r.row_lineage_immutable_gate)}</td><td>${gate(r.reconciliation_consistency_gate)}</td><td>${gate(r.gate_count_consistency_gate)}</td><td>${gate(r.top_level_counter_consistency_gate)}</td><td>${gate(r.official_evidence_fingerprint_gate)}</td><td>${gate(r.publication_quarantine_gate)}</td><td>${gate(r.prepublication_artifact_digest_gate)}</td><td>${gate(r.published_score_release_gate)}</td><td>${gate(manifestPassed)}</td><td>${fp(r.publication_evidence_fingerprint)}</td><td>${fp(manifestFp)}</td>`:'';
+    const forceCells=showForce?`<td>${gate(r.force_lookup_gate)}</td><td>${gate(r.territorial_crime_coverage_gate)}</td><td>${gate(r.territorial_outcomes_coverage_gate)}</td>`:'';
+    const safeScore=r.published_score_release_gate===true&&manifestPassed?r.security_score_percent:null;
+    return `<tr><td>${esc(r.line)}</td>${showChunk?`<td>${esc(r.chunk)}</td>`:''}<td>${esc(r.parcel_id)}</td><td>${esc(r.candidate_status)}</td>${memoryCells}<td>${gate(r.canonical_gate)}</td>${forceCells}<td>${gate(r.crime_api_gate)}</td><td>${gate(r.outcomes_api_gate)}</td><td>${gate(r.iod25_gate)}</td><td>${esc(r.accuracy_score_4)}</td><td>${esc(safeScore)}</td><td>${esc(r.needs_manual_review)}</td></tr>`
+  }).join('')}</tbody></table>`
+}
+function manifestTable(m){const hashes=m.final_artifact_sha256||{};const rows=Object.entries(hashes);return `<table><thead><tr><th>Alan</th><th>Değer</th></tr></thead><tbody><tr><td>Durum</td><td>${gate(m.final_artifact_manifest_passed)}</td></tr><tr><td>Attempt</td><td>${esc(m.attempt_id)}</td></tr><tr><td>Aşama</td><td>${esc(m.phase)}</td></tr><tr><td>Yayımlanan skor satırı</td><td>${esc(m.published_score_row_count||0)}</td></tr><tr><td>Manifest fingerprint</td><td>${fp(m.manifest_evidence_fingerprint)}</td></tr><tr><td>Final hash üyeleri</td><td>${rows.length} / 3</td></tr>${rows.map(([k,v])=>`<tr><td>SHA256 ${esc(k)}</td><td>${fp(v)}</td></tr>`).join('')}<tr><td>Hatalar</td><td>${esc((m.errors||[]).join(' | '))}</td></tr></tbody></table>`}
+function sourcesTable(rows){return `<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Ad</th><th>Yayıncı</th><th>Doğruluk</th><th>Karar</th><th>Kanıt tarihi</th><th>Tazelik</th><th>Kullanım sınırı</th><th>Resmî URL</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.line)}</td><td>${esc(r.source_id)}</td><td>${esc(r.name)}</td><td>${esc(r.publisher)}</td><td>${esc(r.authority_accuracy)}</td><td>${esc(r.decision)}</td><td>${esc(r.evidence_date)}</td><td>${esc(r.freshness_status)}</td><td>${esc(r.semantic_limit)}</td><td class="url"><a href="${esc(r.official_url)}" target="_blank" rel="noopener">${esc(r.official_url)}</a></td></tr>`).join('')}</tbody></table>`}
+async function main(){
+  try{
+    const[p,o,so,lo,qo,xo,io,po,fo,manifest,smoke,r,s,s5]=await Promise.all([
+      load('security_public_safety_3_progress_latest.json'),load('security_public_safety_3_operations_latest.json'),load('security_public_safety_3_smoke_operations_latest.json'),load('security_public_safety_3_stream_operations_latest.json'),load('security_public_safety_3_quorum_operations_latest.json'),load('security_public_safety_3_lineage_operations_latest.json'),load('security_public_safety_3_immutable_operations_latest.json'),load('security_public_safety_3_publication_operations_latest.json'),load('security_public_safety_3_final_manifest_operations_latest.json'),load('security_public_safety_3_publication_manifest_latest.json'),load('security_public_safety_3_smoke_rows_latest.json'),load('security_public_safety_3_rows_latest.json'),load('security_public_safety_3_source_candidates_latest.json'),load('security_public_safety_3_source_candidates_batch5_latest.json')
+    ]);
+    const operationByLine=new Map();[...so.rows,...lo.rows,...qo.rows,...xo.rows,...io.rows,...po.rows,...fo.rows].forEach(row=>operationByLine.set(Number(row.line),row));
+    const effectiveSmokeOperations=[...operationByLine.values()].sort((a,b)=>Number(a.line)-Number(b.line));
+    const sourceRows=[...(s.rows||[]),...(s5.rows||[])].sort((a,b)=>Number(a.line)-Number(b.line));
+    const finalHashCount=Object.keys(manifest.final_artifact_sha256||{}).length;
+    const sourceCandidateCount=sourceRows.length;
+    const promotedSourceCount=sourceRows.filter(x=>String(x.decision||'').startsWith('promoted')).length;
+    const heldSourceCount=sourceRows.filter(x=>String(x.decision||'').startsWith('held')).length;
+    const accuracy90Count=sourceRows.filter(x=>Number(x.authority_accuracy)>=90).length;
+    const accuracy95Count=sourceRows.filter(x=>Number(x.authority_accuracy)>=95).length;
+    const visibleOperationRows=o.rows.length+effectiveSmokeOperations.length;
+    document.getElementById('summary').innerHTML=
+      card('Genel ilerleme','%'+p.overall_progress_percent,'ok')+card('Artış','+'+p.progress_delta_percent+'%','ok')+card('İşlemler',p.completed_operations+' / '+p.total_operations)+card('Web işlem satırı',visibleOperationRows)+
+      card('Smoke sürüm',p.smoke_task_version||'V5.2.11')+card('Hazırlık kontrolü',p.smoke_strict_gate_static_checks_passed||0,'ok')+
+      card('Final manifest',manifest.final_artifact_manifest_passed?'GEÇTİ':'BEKLİYOR',manifest.final_artifact_manifest_passed?'ok':'warn')+card('Final SHA üyeleri',finalHashCount+' / 3',finalHashCount===3?'ok':'warn')+card('Manifest fingerprint',manifest.manifest_evidence_fingerprint?String(manifest.manifest_evidence_fingerprint).slice(0,12)+'…':'BEKLİYOR',manifest.manifest_evidence_fingerprint?'ok':'warn')+
+      card('Çalışma öncesi karantina',p.pre_run_score_quarantine_required?'AÇIK':'EKSİK',p.pre_run_score_quarantine_required?'ok':'bad')+card('PowerShell acil karantina',p.powershell_emergency_quarantine_ready?'AÇIK':'EKSİK',p.powershell_emergency_quarantine_ready?'ok':'bad')+
+      card('Yayın karantinası',p.publication_quarantine_passed?'GEÇTİ':'BEKLİYOR',p.publication_quarantine_passed?'ok':'warn')+card('Ön-yayın digest',p.prepublication_artifact_digest_passed?'GEÇTİ':'BEKLİYOR',p.prepublication_artifact_digest_passed?'ok':'warn')+card('Skor yayın kapısı',p.published_score_release_passed?'GEÇTİ':'BEKLİYOR',p.published_score_release_passed?'ok':'warn')+
+      card('Smoke aday',p.smoke_candidate_rows||3)+card('Toplam parsel',p.visible_parcel_rows)+card('Toplam kapı',p.total_prepared_gate_cells)+card('4/4 doğrulanmış',p.accuracy_score_4_rows,p.accuracy_score_4_rows?'ok':'warn')+card('Gerçek yazılan',p.actual_slot_rows_written||0,p.actual_slot_rows_written?'ok':'warn')+
+      card('Resmî aday kaynak',sourceCandidateCount,'ok')+card('Yükseltilen kaynak',promotedSourceCount,'ok')+card('Ayrı tutulan',heldSourceCount,'warn')+card('Doğruluk ≥90',accuracy90Count,'ok')+card('Doğruluk ≥95',accuracy95Count,'ok')+
+      card('Canonical queue',p.smoke_queue_visible?'hazır':'bekliyor',p.smoke_queue_visible?'ok':'warn')+card('Runner heartbeat',p.runner_heartbeat_fresh?'taze':'eski',p.runner_heartbeat_fresh?'ok':'bad');
+    const caveats=(p.data_police_quality_caveats||[]).map(x=>'<li>'+esc(x)+'</li>').join('');
+    document.getElementById('blockers').innerHTML='<div class="card"><b>Engeller</b><ul>'+p.blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><b>Resmî veri kalite uyarıları</b><ul>'+caveats+'</ul><div class="muted">Smoke başarı kuralı: '+esc(p.smoke_success_rule)+'</div><div class="muted">Final manifest denetimi: '+esc(p.final_artifact_manifest_audit||'')+'</div><div class="muted">Final manifest veri yolu: '+esc(p.final_publication_manifest||'')+'</div><div class="muted">Smoke kuyruk: '+esc(p.smoke_queue_task)+'</div><div class="muted">Smoke çıktı: '+esc(p.smoke_expected_output)+'</div><div class="muted">Bulk çıktı: '+esc(p.expected_output)+'</div></div>';
+    document.getElementById('smoke').innerHTML=rowsTable(smoke.rows,manifest,false,true,true);document.getElementById('smokeOperations').innerHTML=operationsTable(effectiveSmokeOperations);document.getElementById('manifest').innerHTML=manifestTable(manifest);document.getElementById('operations').innerHTML=operationsTable(o.rows);document.getElementById('rows').innerHTML=rowsTable(r.rows,manifest,true,false,false);document.getElementById('sources').innerHTML=sourcesTable(sourceRows);
+  }catch(e){document.body.insertAdjacentHTML('beforeend','<div class="error">'+esc(e.stack||e)+'</div>')}
+}
+main();setInterval(main,60000);
+</script>
+</body>
+</html>
