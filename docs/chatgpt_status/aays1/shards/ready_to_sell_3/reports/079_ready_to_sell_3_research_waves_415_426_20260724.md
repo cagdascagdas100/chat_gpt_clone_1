@@ -11,7 +11,7 @@
 - `Rhyddings Mill` excluded because the current official page marks it `Withdrawn`.
 - `209 Ystrad Road` excluded because this slot’s web scope is England.
 - `86 Windsor Road` excluded because it was already published in a recent ready_to_sell_3 wave.
-- Six representative exact-address repository searches returned no prior match for the selected source slice.
+- Eight representative exact-address repository searches returned no prior match for the selected source slice.
 
 ## Semantics
 - Guide prices are not achieved sale prices.
