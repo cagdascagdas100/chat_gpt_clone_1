@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 — resmî kaynak işlemleri batch 002</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
+.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:155px}
+table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}
+th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
+.ok{color:#176b2c;font-weight:bold}.pending{color:#8a5a00;font-weight:bold}.no{color:#8b1e1e;font-weight:bold}
+code,a{word-break:break-all}.notice{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin-bottom:12px}
+</style></head><body>
+<h1>future_growth_2 — satır satır resmî kaynak işlemleri</h1>
+<div class="notice">Kaynak otoritesi ile parsel eşleşmesi ayrı ölçülür. Kesin resmî poligon kesişimi bulunmadan skor null, güven 0 ve NO_DATA korunur.</div>
+<div id="cards" class="cards"></div>
+<table><thead><tr><th>İşlem</th><th>Satır</th><th>Parsel</th><th>Belediye</th><th>Kontrol</th><th>Kaynak</th><th>Sonuç</th><th>Kaynak doğruluğu</th><th>Parsel eşleşmesi</th><th>Skor</th><th>Güven</th><th>Not</th></tr></thead><tbody id="ops"></tbody></table>
+<p id="meta"></p><p id="error"></p>
+<script>
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('./official_source_operations_batch_002_20260722.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const cards=[
+ ['Batch işlem',d.batch_operations_completed+'/'+d.batch_operations_total],
+ ['Resmî web kontrolü',d.official_web_checks_completed],
+ ['Kanonik satır kontrolü',d.canonical_row_checks_completed],
+ ['Başarısız kontrol',d.failed_checks],
+ ['Aday satır',d.candidate_rows_cumulative],
+ ['Benzersiz resmî kaynak',d.cumulative_unique_official_source_pages],
+ ['Yeni kaynak',d.new_unique_official_source_pages],
+ ['%100 kaynak otoritesi',d.source_authority_100_operation_rows],
+ ['Kesin parsel eşleşen',d.exact_parcel_bound_rows],
+ ['Skorlu business satırı',d.scored_business_rows],
+ ['Aday kapsamı',d.candidate_coverage_pct+'%'],
+ ['Business kapsamı',d.business_coverage_pct+'%'],
+ ['Kaynak araştırması',d.source_research_progress_pct+'%'],
+ ['Kesin eşleşme',d.exact_binding_progress_pct+'%']
+ ];
+ document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ let n=0; const ops=[]; d.rows.forEach(row=>row.sources.forEach(s=>ops.push({operation_no:++n,row_no:row.row_no,parcel_id:row.parcel_id,lpa_name:row.lpa_name,check:s.check,title:s.title,url:s.url,result:s.result,authority_pct:s.authority_pct,parcel_binding_pct:row.parcel_binding_pct,future_growth_score:row.future_growth_score,confidence_pct:row.confidence_pct,note:s.note})));
+ document.getElementById('ops').innerHTML=ops.map(x=>`<tr>
+ <td>${e(x.operation_no)}</td><td>${e(x.row_no)}</td><td>${e(x.parcel_id)}</td><td>${e(x.lpa_name)}</td>
+ <td>${e(x.check)}</td><td><a href="${e(x.url)}" target="_blank" rel="noopener">${e(x.title)}</a></td>
+ <td class="ok">${e(x.result)}</td><td class="ok">${e(x.authority_pct)}%</td>
+ <td class="pending">${e(x.parcel_binding_pct)}%</td><td>${x.future_growth_score===null?'null':e(x.future_growth_score)}</td>
+ <td>${e(x.confidence_pct)}%</td><td>${e(x.note)}</td></tr>`).join('');
+ document.getElementById('meta').innerHTML=`Continuation: <code>${e(d.continuation_key)}</code><br>Üretim: ${e(d.generated_at)}<br>Sonraki doğrulanmış adım: ${e(d.next_verified_step)}`;
+}).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
+</script></body></html>

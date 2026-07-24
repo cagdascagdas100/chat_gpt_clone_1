@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 — birincil geometri ve çapraz kontrol batch 009</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:155px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:11px}
+th,td{border:1px solid #cfd8dc;padding:5px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
+.ok{color:#176b2c;font-weight:bold}.pending{color:#8a5a00;font-weight:bold}.warn{color:#8b4f00;font-weight:bold}
+.notice{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin-bottom:12px}code,a{word-break:break-all}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}select,input{padding:6px}
+</style></head><body>
+<h1>future_growth_2 — satır satır birincil geometri ve kaynak çapraz kontrolü / batch 009</h1>
+<div class="notice">Polygon geometrisi, katmanın sorgulanabilir olduğunu gösterir; örnek noktanın katman içinde olduğunu göstermez. GLA Opportunity Area sınırları resmî kaynakta “indicative” olarak tanımlanır. Kesin nokta-kesişim sonucu ve belediye çapraz kontrolü olmadan skor null, güven 0 ve NO_DATA korunur.</div>
+<div id="cards" class="cards"></div>
+<div class="filters"><select id="lpa"><option value="">Tümü</option><option>Enfield</option><option>Havering</option><option>Lambeth</option><option>—</option></select>
+<input id="q" placeholder="Kontrol, kaynak veya sonuç ara"></div>
+<table><thead><tr><th>İşlem</th><th>Satır</th><th>Parsel</th><th>Belediye</th><th>Kontrol</th><th>Konu</th><th>Kaynak</th><th>Sonuç</th><th>Kanıt sınıfı</th><th>Kaynak doğruluğu</th><th>Kesin bağ</th><th>Skor</th><th>Güven</th><th>Not</th></tr></thead><tbody id="ops"></tbody></table>
+<p id="meta"></p><p id="error"></p>
+<script>
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const canonical='https://github.com/cagdascagdas100/chat_gpt_clone_1/blob/codex/aays-single-runner-v5-20260706/england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json';
+let operations=[];
+function add(x){operations.push({source_authority_pct:100,parcel_binding_pct:0,future_growth_score:null,confidence_pct:0,data_status:'NO_DATA',operation_no:operations.length+1,...x});}
+function build(d){
+ operations=[];
+ d.rows.forEach(r=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'CANONICAL_POINT_IDENTITY',subject:`${r.lon},${r.lat}`,source:canonical,result:'VERIFIED_CANONICAL_POINT',evidence_class:'CANONICAL_ROW_POINT',note:'Canonical WGS84 point verified; parcel polygon is not asserted.'}));
+ d.rows.forEach(r=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'LOCAL_FEATURE_SERVICE_ROOT',subject:r.service_item_id,source:r.service,result:'VERIFIED_OFFICIAL_SERVICE_ROOT',evidence_class:'OFFICIAL_MACHINE_SOURCE',note:'Service identity, JSON query support, EPSG:27700 and selected layer inventory are verified.'}));
+ d.rows.forEach(r=>r.layers.forEach(z=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'SELECTED_LAYER_INVENTORY',subject:`${z[1]} (layer ${z[0]})`,source:r.service,result:'VERIFIED_IN_OFFICIAL_LAYER_LIST',evidence_class:'OFFICIAL_LAYER_INVENTORY',note:'Layer name and ID are listed by the official service root.'})));
+ d.rows.forEach(r=>r.layers.forEach(z=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'EXACT_APPLICABILITY_GATE',subject:`${z[1]} (layer ${z[0]})`,source:r.service,result:'POINT_INTERSECTION_RESULT_REQUIRED',evidence_class:'BINDING_GATE',note:'No applicability, score or confidence before an exact point intersection and primary-source cross-check.'})));
+ const b=d.lambeth_brownfield_layer;
+ [['GEOMETRY_TYPE',b.geometry_type,'Verified polygon geometry.'],['FEATURE_TYPE',b.type,'Verified ArcGIS feature-layer type.'],['DISPLAY_FIELD',b.display_field,'Verified display field.'],['MAX_RECORD_COUNT',b.max_record_count,'Verified maximum record count.'],['QUERY_FORMATS',b.supported_query_formats.join(', '),'Verified supported query formats.'],['ADVANCED_QUERIES',b.supports_advanced_queries,'Advanced queries supported.'],['STATISTICS',b.supports_statistics,'Statistics supported.'],['DATUM_TRANSFORMATION',b.supports_datum_transformation,'Datum transformation supported.'],['SPATIAL_REFERENCE',b.spatial_reference,'British National Grid spatial reference.'],['KEY_FIELDS',b.key_fields.join(', '),'Site reference, address and polygon geometry fields verified.']].forEach(x=>add({row_no:61522,parcel_id:'parcel_61522',lpa:'Lambeth',operation:'BROWNFIELD_LAYER_METADATA',subject:x[0]+': '+x[1],source:b.source,result:'VERIFIED_PRIMARY_LAYER_METADATA',evidence_class:'PRIMARY_POLYGON_LAYER_METADATA',note:x[2]+' Exact sample-point response remains uncommitted.'}));
+ const o=d.gla_opportunity_areas;
+ [['GEOMETRY_TYPE',o.geometry_type,'Verified polygon geometry.'],['MAINTAINER',o.maintainer,'GLA Planning is identified as maintainer.'],['LICENCE',o.licence,'Open Government Licence v3.'],['UPDATE_FREQUENCY',o.update_frequency,'Ad-hoc update frequency.'],['BOUNDARY_STATUS',o.boundary_status,'Relevant borough confirmation is required.'],['DEFINITION','STRATEGIC_BROWNFIELD_CAPACITY','Opportunity Areas are described as strategic brownfield growth areas.'],['SOURCE_LAYER','planning_data_map_02','Official GLA planning data map layer.'],['QUERYABILITY','FEATURE_LAYER','Official feature layer is queryable.'],['PARCEL_CAUTION','NOT_PARCEL_MEASUREMENT','Indicative strategic boundary is not a parcel score.'],['POINT_RESULT','NOT_COMMITTED','No sample-point response is committed.']].forEach(x=>add({row_no:61522,parcel_id:'parcel_61522',lpa:'Lambeth',operation:'GLA_OPPORTUNITY_AREA_METADATA',subject:x[0]+': '+x[1],source:o.exact_layer_source,result:'VERIFIED_GLA_LAYER_METADATA',evidence_class:'REGIONAL_POLYGON_PROXY',note:x[2]}));
+ d.rows.forEach(r=>r.current_sources.forEach(s=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:s[0],subject:s[1],source:s[2],result:'VERIFIED_CURRENT_OFFICIAL_SOURCE',evidence_class:'PRIMARY_OR_CURRENT_OFFICIAL_PAGE',note:s[3]})));
+ d.rows.forEach(r=>r.crosschecks.forEach(s=>add({row_no:r.row_no,parcel_id:r.parcel_id,lpa:r.lpa,operation:'CROSS_SOURCE_CONSISTENCY',subject:s[0]+': '+s[1],source:r.service,result:'PASS_FAIL_CLOSED',evidence_class:'CONSISTENCY_GATE',note:s[2]})));
+ d.system_validations.forEach(v=>add({row_no:'SYSTEM',parcel_id:'—',lpa:'—',operation:v.code,subject:'Batch 009 validation',source:'docs/chatgpt_status/aays1/shards/future_growth_2/automation/004_validate_primary_geometry_crosscheck.py',result:v.result,evidence_class:'SYSTEM_VALIDATION',note:v.note}));
+ if(operations.length!==d.batch_operations_total)throw new Error(`İşlem sayısı uyuşmuyor ${operations.length}/${d.batch_operations_total}`);
+}
+function render(){
+ const l=document.getElementById('lpa').value,q=document.getElementById('q').value.toLowerCase();
+ const rows=operations.filter(x=>(!l||String(x.lpa)===l)&&(!q||JSON.stringify(x).toLowerCase().includes(q)));
+ document.getElementById('ops').innerHTML=rows.map(x=>`<tr><td>${e(x.operation_no)}</td><td>${e(x.row_no)}</td><td>${e(x.parcel_id)}</td><td>${e(x.lpa)}</td><td>${e(x.operation)}</td><td>${e(x.subject)}</td><td><a href="${e(x.source)}" target="_blank" rel="noopener">${e(x.source)}</a></td><td class="${String(x.result).includes('REQUIRED')||String(x.result).includes('NOT_COMMITTED')?'pending':'ok'}">${e(x.result)}</td><td>${e(x.evidence_class)}</td><td class="ok">${e(x.source_authority_pct)}%</td><td class="pending">${e(x.parcel_binding_pct)}%</td><td>${x.future_growth_score===null?'null':e(x.future_growth_score)}</td><td>${e(x.confidence_pct)}%</td><td>${e(x.note)}</td></tr>`).join('');
+}
+fetch('./official_primary_geometry_crosscheck_batch_009_20260722.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ build(d);
+ const c=[['Batch işlem',d.batch_operations_completed+'/'+d.batch_operations_total],['Kümülatif işlem',d.cumulative_operations_completed],['Başarısız',d.failed_validation_operations],['Aday',d.candidate_rows_cumulative],['Toplam resmî kaynak',d.cumulative_unique_official_source_pages],['Yeni kaynak',d.new_unique_official_source_pages],['Yerel servis',d.local_service_roots_verified],['Katman envanteri',d.selected_local_layer_inventory_rows],['Binding gate',d.exact_applicability_gate_rows],['Birincil polygon metadata',d.lambeth_brownfield_metadata_rows],['GLA polygon metadata',d.gla_opportunity_area_metadata_rows],['Güncel yerel kaynak',d.local_current_source_rows],['Çapraz kontrol',d.cross_source_consistency_rows],['Kesin eşleşen',d.exact_parcel_bound_rows],['Matris ilerlemesi',d.primary_geometry_crosscheck_progress_pct+'%'],['Business',d.business_coverage_pct+'%']];
+ document.getElementById('cards').innerHTML=c.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ document.getElementById('meta').innerHTML=`Continuation: <code>${e(d.continuation_key)}</code><br>Gösterilen işlem: ${e(operations.length)}<br>Resmî dış kanıt satırı: ${e(d.official_external_evidence_rows)}`;
+ document.getElementById('lpa').addEventListener('change',render);document.getElementById('q').addEventListener('input',render);render();
+}).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
+</script></body></html>

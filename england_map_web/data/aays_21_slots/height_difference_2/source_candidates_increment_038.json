@@ -1,0 +1,89 @@
+{
+  "aggregate_promoted_source_contract_count": 70,
+  "aggregate_source_candidate_count": 70,
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "candidate_id": "HD2-SRC-067",
+      "name": "LIDAR DTM Time Stamped Tiles",
+      "promotion_state": "PROMOTED_SOURCE_CONTRACT",
+      "publisher": "Environment Agency",
+      "role": "HISTORICAL_DTM_VERTICAL_DATUM_AND_ACCURACY_CONTRACT",
+      "semantic_limits": [
+        "Dataset-level RMSE is not a parcel-specific confidence interval",
+        "Historical records are not substituted for the current composite DTM"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "verified_facts": [
+        "Time-stamped DTM is supplied as 5 km GeoTIFF tiles in metres aligned to the OS Grid",
+        "Heights are referenced to Ordnance Datum Newlyn",
+        "Survey-specific transformation/geoid metadata and +/-15 cm RMSE are disclosed"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-068",
+      "name": "OSGM02 to OSGM15 Adjustment Grid",
+      "promotion_state": "PROMOTED_RUNTIME_DOWNLOAD_AND_SAMPLE",
+      "publisher": "Environment Agency",
+      "role": "OFFICIAL_LOCAL_DATUM_MODEL_DIFFERENCE_GRID",
+      "semantic_limits": [
+        "Grid values are exposed as audit magnitudes only",
+        "No sign convention is inferred from the filename and no silent correction is applied to current parcel results"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/api/file/download?fileDataSetId=a3754840-badc-4e6f-be55-4c584fd57626&fileName=OSGM02_to_OSGM15_Adjustment_Grid.zip",
+      "verified_facts": [
+        "ZIP HTTP 200 with SHA-256 5b2469d3dec74cf79dc8d4549e9ba583d38b786c3aca69386d1c3fdc39e58b03",
+        "GeoTIFF SHA-256 6854c0ae86945f92af445704a8fdf67709756f4cabcb72cdc690b309f3f7d7ed",
+        "Raster CRS EPSG:27700, 100 m grid, float32 and explicit NoData",
+        "Nearest and bilinear values produced for all three exact BNG points"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-069",
+      "name": "LIDAR DTM Time Stamped Extents FeatureServer",
+      "promotion_state": "PROMOTED_EXACT_POINT_QUERY_3_OF_3",
+      "publisher": "Environment Agency",
+      "role": "EXACT_POINT_HISTORICAL_TRANSFORM_GEOID_METADATA",
+      "semantic_limits": [
+        "All returned historical records have latest=No",
+        "Metadata confirms lineage and datum risk but does not replace raster sampling"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/KB6uNVj5ZcJr7jUP/ArcGIS/rest/services/LIDAR_Tiles_Catalogues/FeatureServer/0",
+      "verified_facts": [
+        "Every exact BNG point returned exactly one historical record",
+        "All three records report OSTN02 and OSGM02",
+        "Survey IDs, dates, point spacing, latest flag and response SHA-256 were recorded"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-070",
+      "name": "OSTN15 and OSGM15 coordinate transformation resources",
+      "promotion_state": "PROMOTED_OFFICIAL_TRANSFORMATION_GUIDANCE",
+      "publisher": "Ordnance Survey",
+      "role": "CURRENT_NATIONAL_TRANSFORMATION_MODEL_AND_MIGRATION_GUIDANCE",
+      "semantic_limits": [
+        "A local grid sample alone is not the full coordinate conversion workflow",
+        "The current parcel elevation range remains unchanged"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://www.ordnancesurvey.co.uk/geodesy-positioning/coordinate-transformations/resources",
+      "verified_facts": [
+        "OSTN15/OSGM15 replaced OSTN02/OSGM02 in August 2016",
+        "OSGM15 links GNSS heights to national mean-sea-level datums including ODN",
+        "OS guidance uses back-transformation to ETRS89 and forward transformation for old-model coordinates"
+      ]
+    }
+  ],
+  "fake_data": false,
+  "final_ready": false,
+  "held_count": 0,
+  "promoted_average_source_confidence_percent": 100.0,
+  "promoted_count": 4,
+  "schema_version": 1,
+  "score_semantics": "Official EA time-stamped DTM, adjustment-grid and catalogue contracts plus official OS transformation guidance; parcel numeric confidence remains 96%.",
+  "slot_id": "height_difference_2",
+  "verified_on": "2026-07-22"
+}

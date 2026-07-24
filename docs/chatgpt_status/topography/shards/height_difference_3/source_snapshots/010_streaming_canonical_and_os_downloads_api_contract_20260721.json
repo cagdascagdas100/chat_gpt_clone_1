@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "captured_at": "2026-07-21T04:20:00+03:00",
+  "canonical_source": {
+    "path": "england_map_web/data/program_layer_matrix/security.geojson",
+    "blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+    "validated_feature_count": 92283,
+    "scope": "LONDON_CANONICAL_92283_NOT_ALL_ENGLAND",
+    "identity_fields": ["row_no", "parcel_id", "hmlr_inspire_id"],
+    "location_fields": ["hmlr_lon", "hmlr_lat", "geometry.coordinates"],
+    "target_shard": {"start": 61523, "end": 92283, "count": 30761},
+    "streaming_extractor": "docs/chatgpt_status/topography/shards/height_difference_3/automation/020_stream_extract_security_canonical.py",
+    "live_extraction_status": "PENDING_EXISTING_F_RUNNER"
+  },
+  "os_terrain50": {
+    "product_id": "Terrain50",
+    "version_date": "July 2026",
+    "coverage": "GB",
+    "format": "ASCII Grid and GML (Grid)",
+    "official_product_page": "https://osdatahub.os.uk/downloads/open/Terrain50",
+    "official_api_overview": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api",
+    "official_download_specification": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification/download-an-opendata-product",
+    "official_download_endpoint": "https://api.os.uk/downloads/v1/products/Terrain50/downloads?area=GB&format=ASCII+Grid+and+GML+%28Grid%29&redirect",
+    "official_product_supply": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/product-supply",
+    "official_grid_specification": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+    "supply_contract": {
+      "national_tile_count": 2858,
+      "folder_count": 55,
+      "compressed_size_approx_mb": 157,
+      "tile_size_km": 10,
+      "grid_columns": 200,
+      "grid_rows": 200,
+      "cell_size_m": 50,
+      "update_schedule": "annual_July"
+    },
+    "api_downloader": "docs/chatgpt_status/topography/shards/height_difference_3/automation/021_download_os_terrain50_via_api.py",
+    "live_download_status": "PENDING_EXISTING_F_RUNNER"
+  },
+  "pipeline": {
+    "orchestrator": "docs/chatgpt_status/topography/shards/height_difference_3/automation/022_execute_canonical_api_measurement_pipeline.py",
+    "stage_order": [
+      "STREAM_VALIDATE_AND_EXTRACT_30761_CANONICAL_ROWS",
+      "SELECT_FIRST_THREE_EXPLICIT_SOURCE_BACKED_ROWS",
+      "DOWNLOAD_AND_VALIDATE_OFFICIAL_TERRAIN50_ASCII_PACKAGE",
+      "MATCH_HMLR_BOUNDARIES",
+      "RETRIEVE_EA_DTM_1M",
+      "SAMPLE_AND_CROSSCHECK",
+      "PUBLISH_ONLY_VERIFIED_JSON_AND_GEOJSON"
+    ],
+    "queue_submission": false,
+    "new_runner_created": false,
+    "parallel_runner_used": false
+  },
+  "accuracy": {
+    "canonical_source_resolution_score_4": "4/4",
+    "official_download_contract_score_4": "4/4",
+    "automation_validation_score_4": "4/4",
+    "parcel_measurement_score_4": "0/4_NOT_PRODUCED"
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

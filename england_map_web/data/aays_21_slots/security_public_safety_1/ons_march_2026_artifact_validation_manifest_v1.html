@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>ONS Mart 2026 Artifact Doğrulama Manifesti</title>
+  <style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin-top:12px}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.READY_NOT_EXECUTED,.BLOCKED,.PENDING{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>ONS Mart 2026 — Yayın Sonrası Artifact Doğrulama Manifesti</h1>
+<div class="note">Bu tablo hazırlık planıdır. Resmî yayın gerçekleşmeden hiçbir rakam, kaynak yükseltmesi, skor veya parsel değeri kabul edilmez.</div>
+<div class="cards">
+  <div class="card">Manifest satırı<br><strong id="rows">yükleniyor</strong></div>
+  <div class="card">Artifact<br><strong id="artifacts">yükleniyor</strong></div>
+  <div class="card">Hazır<br><strong id="prepared">yükleniyor</strong></div>
+  <div class="card">Yürütülen<br><strong id="executed">yükleniyor</strong></div>
+  <div class="card">Yayın durumu<br><strong id="release">yükleniyor</strong></div>
+  <div class="card">Manuel eylem<br><strong id="manual">yükleniyor</strong></div>
+</div>
+<table><thead><tr><th>#</th><th>Artifact</th><th>Kontrol</th><th>Durum</th><th>Beklenen kanıt</th></tr></thead><tbody id="body"></tbody></table>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(async()=>{const r=await fetch(`ons_march_2026_artifact_validation_manifest_v1_20260723.json?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`HTTP ${r.status}`);const d=await r.json();if((d.rows||[]).length!==48)throw Error(`Manifest satırı ${(d.rows||[]).length}/48`);if((d.artifact_definitions||[]).length!==6)throw Error(`Artifact ${(d.artifact_definitions||[]).length}/6`);$('rows').textContent='48/48';$('artifacts').textContent='6/6';$('prepared').textContent=`${d.summary.prepared_rows}/48`;$('executed').textContent=`${d.summary.executed_rows}/48`;$('release').textContent=d.release.official_page_state;$('manual').textContent=d.manual_action_state;$('body').innerHTML=d.rows.map(x=>`<tr><td>${x.row}</td><td class="mono">${esc(x.artifact_id)}</td><td>${esc(x.check)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.expected)}</td></tr>`).join('');document.body.dataset.manifestRows='48';document.body.dataset.artifactCount='6';document.body.dataset.executedRows=String(d.summary.executed_rows);document.body.dataset.releaseState=d.release.official_page_state;})().catch(e=>{$('body').innerHTML=`<tr><td colspan="5" class="BLOCKED">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body>
+</html>

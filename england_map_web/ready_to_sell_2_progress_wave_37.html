@@ -1,0 +1,59 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReadyToSell 2 — Dalga 37</title>
+<style>
+body{margin:0;background:#f4f7fa;color:#152033;font-family:Segoe UI,Arial,sans-serif}header,section{background:#fff;border-bottom:1px solid #bdc8d5;padding:16px 20px}h1{margin:0 0 6px;font-size:24px}h2{font-size:18px}.metrics{display:flex;flex-wrap:wrap;gap:8px}.pill,.tag{border:1px solid #8294a8;padding:5px 8px;background:#fff}.tag{display:inline-block;padding:2px 5px;margin:3px 3px 0 0;font-size:11px}.ok{color:#137a43}.warn{color:#9a5b00}.bad{color:#a02727}.latest{border-color:#137a43;color:#137a43}.upgraded{border-color:#075eb5;color:#075eb5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{border:1px solid #bdc8d5;padding:10px;background:#fbfcfd;margin-bottom:8px}.small{font-size:12px;color:#536176}.table-wrap{overflow:auto;max-height:68vh}table{border-collapse:collapse;width:100%;min-width:2250px;font-size:12px}th,td{border:1px solid #c2cedb;padding:7px;vertical-align:top}th{background:#dff7e9;position:sticky;top:0}tr.latest-row td{background:#eefaf2}tr.upgraded-row td{background:#eef5ff}a{color:#075eb5}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style></head><body data-load-state="loading"><header><h1>ReadyToSell Shard 2 — Dalga 37 Satır Görünümü</h1><div>Parsel aralığı 30762-61522. Güncel yatırım, kira, boş mülkiyet, STPP, izin ve ertelenmiş durumları satır bazında ayrılır. Canonical geometri ve Automation 167 DOM kanıtı olmadan ürün yükseltmesi yapılmaz.</div></header>
+<section><div class="metrics" id="metrics">Yükleniyor...</div></section>
+<section class="grid"><div><h2>İşlem akışı</h2><div id="events"></div></div><div><h2>Blockerlar</h2><div id="blockers"></div><h2>Dışlanan kayıtlar</h2><div id="excluded"></div></div></section>
+<section><h2>İnternet kaynaklı benzersiz adaylar</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Aday / batch</th><th>Konum</th><th>Durum</th><th>Fiyat / gelir / alan</th><th>Planlama ref.</th><th>Kanıt özeti</th><th>Kaynak güveni</th><th>Parsel eşleşmesi</th><th>Kaynak</th><th>Blocker</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<script>
+'use strict';
+const base='data/aays_21_slots/ready_to_sell_2/';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const link=(u,l)=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`:'not_available';
+const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+async function j(n){const r=await fetch(base+n+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(n+': HTTP '+r.status);return r.json()}
+async function optional(n){try{return await j(n)}catch{return null}}
+function refIsGeneric(r){const x=norm(r);return !x||/^(none|not stated|not applicable|no development|allocated|section 106|lapsed |recent refused|implemented permission reference|reference not stated|current holiday|extension application|pending application|planning consent reference|2023 pre planning)/.test(x)}
+async function load(){try{
+ const names=['candidate_examples_latest.json',...Array.from({length:34},(_,i)=>`candidate_wave_${i+4}_latest.json`)];
+ const [p,waveResults]=await Promise.all([j('progress_latest.json'),Promise.all(names.map(optional))]);
+ const waves=waveResults.filter(Boolean),latestBatchId='official_candidate_wave_37_20260722';
+ const upgrades=waves.flatMap(w=>w.source_upgrades||[]),upIds=new Set(upgrades.map(x=>x.candidate_id));
+ const raw=waves.flatMap(w=>(w.candidates||[]).map(x=>({...x,latest_batch:w.batch_id===latestBatchId})));
+ const seen=new Map();
+ for(const x of raw){const ref=norm(x.official_planning_reference),key=norm(x.title)+'|'+(refIsGeneric(ref)?norm(x.location):ref);if(!seen.has(key))seen.set(key,x)}
+ const rows=[...seen.values()],excluded=waves.flatMap(w=>w.excluded_records||[]),s=p.candidate_summary;
+ document.getElementById('metrics').innerHTML=[
+ `<span class="pill">İşlem <b>${esc(p.completed_operations)}/${esc(p.total_operations)}</b></span>`,
+ `<span class="pill">Batch <b>${esc(p.batch_progress_percent)}%</b></span>`,
+ `<span class="pill">Artış <b>+${esc(p.batch_progress_percent_increase)} puan</b></span>`,
+ `<span class="pill">Genel <b>${esc(p.overall_progress_percent)}%</b></span>`,
+ `<span class="pill">Genel artış <b>+${esc(p.overall_progress_percent_increase)} puan</b></span>`,
+ `<span class="pill">Benzersiz aday <b>${esc(s.researched_total)}</b></span>`,
+ `<span class="pill">Güncel/açık <b>${esc(s.current_upcoming_or_available_count)}</b></span>`,
+ `<span class="pill">Taranan <b>${esc(s.screened_in_latest_batch)}</b></span>`,
+ `<span class="pill">Yeni <b>${esc(s.new_in_latest_batch)}</b></span>`,
+ `<span class="pill">Kaynak yükseltme <b>${esc(s.cumulative_source_upgrade_rows)}</b></span>`,
+ `<span class="pill">Duplicate engeli <b>${esc(s.cumulative_duplicates_removed)}</b></span>`,
+ `<span class="pill">Ortalama güven <b>${esc(s.average_source_confidence)}/100</b></span>`,
+ `<span class="pill">Son batch <b>${esc(s.latest_batch_average_source_confidence)}/100</b></span>`,
+ `<span class="pill">Yükseltilen ürün <b>${esc(s.promoted)}</b></span>`].join('');
+ document.getElementById('events').innerHTML=(p.events||[]).map(e=>`<div class="card"><b>${esc(e.sequence)}. ${esc(e.event)}</b> — <span class="${e.result==='pass'?'ok':'warn'}">${esc(e.result)}</span><div>${esc(e.detail)}</div><div class="small">Doğruluk ${esc(e.accuracy_score)}/100</div></div>`).join('');
+ document.getElementById('blockers').innerHTML=(p.blockers||[]).map(b=>`<div class="card bad">${esc(b)}</div>`).join('');
+ document.getElementById('excluded').innerHTML=excluded.map(x=>`<div class="card bad"><b>${esc(x.title)}</b><div>${esc(x.location||'')}</div><div>${esc(x.reason)}</div><div>${link(x.source_url,'Doğrudan kaynak')}</div></div>`).join('');
+ document.getElementById('rows').innerHTML=rows.map((x,i)=>{const figures=[
+ x.area_square_metres?`Alan ${esc(x.area_square_metres)} m²`:'',
+ x.area_square_feet?`Alan ${esc(x.area_square_feet)} ft²`:'',
+ x.area_hectares?`Alan ${esc(x.area_hectares)} ha`:'',
+ x.area_acres?`Alan ${esc(x.area_acres)} acre`:'',
+ x.annual_rent_gbp?`Yıllık kira GBP ${esc(x.annual_rent_gbp)}`:'',
+ x.future_annual_rent_gbp?`Tahmini/gelecek GBP ${esc(x.future_annual_rent_gbp)}`:''
+ ].filter(Boolean).join('<br>');const upgraded=upIds.has(x.candidate_id);return `<tr class="${x.latest_batch?'latest-row':upgraded?'upgraded-row':''}"><td>${i+1}</td><td><b>${esc(x.title)}</b><div class="small">${esc(x.candidate_id)}</div>${x.latest_batch?'<span class="tag latest">son batch</span>':''}${upgraded?'<span class="tag upgraded">kaynak yükseltildi</span>':''}</td><td>${esc(x.location)}</td><td>${esc(x.marketing_status)}</td><td>${esc(x.price)}${figures?'<hr>'+figures:''}</td><td>${esc(x.official_planning_reference)}</td><td>${esc(x.planning_signal)}</td><td>${esc(x.source_confidence_score)}/100</td><td>${esc(x.parcel_match_confidence_score)}/100<br>${esc(x.geometry_match_status)}<br>promotion_allowed=${esc(x.promotion_allowed)}</td><td>${link(x.source_url,'Ana kaynak')}</td><td>${esc((x.blockers||[]).join('; '))}</td></tr>`}).join('');
+ document.body.dataset.visibleCandidateRows=String(rows.length);
+ document.body.dataset.sourceUpgradeRows=String(s.cumulative_source_upgrade_rows);
+ document.body.dataset.excludedRows=String(excluded.length);
+ document.body.dataset.loadedCandidateWaveMax='37';
+ document.body.dataset.loadState='ready';
+}catch(e){document.body.dataset.loadState='error';document.getElementById('metrics').innerHTML='<span class="bad">'+esc(e.message)+'</span>'}}
+load();
+</script></body></html>

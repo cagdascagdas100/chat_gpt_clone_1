@@ -1,0 +1,40 @@
+{
+  "schema_version": 4,
+  "slot_id": "internet_access_3",
+  "updated_at": "2026-07-21T09:10:00+03:00",
+  "state": "AREA_PARTITIONED_EXACT_UNIQUENESS_AUTHORITATIVE_PUBLISHED_RUNNER_PENDING",
+  "summary": "121 duzeltilmis Ofcom CSV uyesi diske acilmadan taranir. Normalised postcode alanlari benzersiz olmak zorundadir; exact duplicate kontrolu her alan uyesi icinde yapilarak global dogruluk korunurken tepe bellek yuku sinirlanir. Paket PR #122 ile authoritative branch'e yayinlandi.",
+  "strategy": "DIRECT_ZIP_MEMBER_STREAM_AREA_PARTITIONED_EXACT_UNIQUENESS_NO_CSV_EXTRACTION",
+  "publish_pr": 122,
+  "publish_merge_commit": "23771ebbf7edd38b6e7b6135d29b47a850a6a5ca",
+  "authoritative_python_readback": "5/5 PASS",
+  "gates": [
+    {"gate_no":1,"name":"ZIP_SIGNATURE_AND_VALIDATED_SOURCE","state":"PASS_LOCAL_TEST","detail":"PK imzasi zorunlu; mevcut ZIP secim katmani minimum boyut, CRC, ZIP SHA256 ve r2 sayisini fail-closed dogrular."},
+    {"gate_no":2,"name":"ZERO_R1_EXACT_R2_COUNT","state":"PASS_LOCAL_TEST","detail":"Herhangi bir all-premises r1 uyesi reddedilir; tam 121 benzersiz r2 basename gerekir."},
+    {"gate_no":3,"name":"NO_CSV_EXTRACTION","state":"PASS_LOCAL_TEST","detail":"CSV uyeleri zipfile.open ile dogrudan okunur; 121 CSV icin disk extraction klasoru uretilmez."},
+    {"gate_no":4,"name":"UNIQUE_NORMALISED_POSTCODE_AREAS","state":"PASS_LOCAL_TEST","detail":"Tam 121 r2 uyesinin normalised postcode alanlari benzersizdir; AA/aa gibi case-variant tekrarlar da reddedilir."},
+    {"gate_no":5,"name":"AREA_PARTITIONED_EXACT_UNIQUENESS","state":"PASS_LOCAL_TEST","detail":"Her uye icinde exact postcode seti tutulur; alan/filename/prefix tutarliligi nedeniyle alanlar arasi duplicate bypass mumkun degildir. Tepe set boyutu tum 1.741.096 yerine en buyuk tek alandir."},
+    {"gate_no":6,"name":"STRICT_SCHEMA_AND_PERCENTAGE","state":"PASS_LOCAL_TEST","detail":"Postcode, spaced postcode, area ve alti coverage yuzdesi zorunlu; yuzdeler 0-100 olmalidir."},
+    {"gate_no":7,"name":"POSTCODE_AREA_CONSISTENCY","state":"PASS_LOCAL_TEST","detail":"ZIP uye basename alani, postcode area alani ve postcode harf prefiksi ayni olmalidir."},
+    {"gate_no":8,"name":"MEMBER_SHA256_AND_CRC","state":"PASS_LOCAL_TEST","detail":"Her CSV uyesi tek akista SHA256 ile hashlenir; tam stream okuma ZIP CRC dogrulamasini tetikler."},
+    {"gate_no":9,"name":"TARGETED_DETAIL_RETENTION","state":"PASS_LOCAL_TEST","detail":"Ayrintili coverage yalniz same-row parcel/HMLR kimligi dogrulanmis slot postcode ihtiyaclari icin tutulur."},
+    {"gate_no":10,"name":"FOUR_STATE_PARTITION","state":"PASS_LOCAL_TEST","detail":"Proxy, identity conflict, postcode-not-found ve no-verified-postcode sonuclari ayrik ve tamdir."},
+    {"gate_no":11,"name":"NO_SCORE_NO_WRITE","state":"PASS_LOCAL_TEST","detail":"Nearest postcode, parcel skoru, business yazimi, DB, migration ve deploy yoktur."}
+  ],
+  "validation": {
+    "previous_total": "56/56 PASS",
+    "direct_zip_stream": "18/18 PASS",
+    "updated_wiring": "8/8 PASS",
+    "local_combined": "82/82 PASS",
+    "python_compile": "5/5 PASS",
+    "remote_branch_readback": "5/5 PASS",
+    "authoritative_python_readback": "5/5 PASS",
+    "remote_runner_execution": false
+  },
+  "zip_csv_extracted_to_disk": false,
+  "verified_product_rows": 0,
+  "verified_product_target_rows": 30761,
+  "actual_business_data_rows_written": 0,
+  "final_ready": false,
+  "postcode_uniqueness_strategy": "AREA_PARTITIONED_EXACT_PER_MEMBER_SET"
+}

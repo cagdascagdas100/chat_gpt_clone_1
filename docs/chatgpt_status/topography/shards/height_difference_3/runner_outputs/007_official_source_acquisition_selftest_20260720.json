@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-official-source-acquisition-selftest-20260720",
+  "executed_at": "2026-07-20T22:48:45Z",
+  "script_sha256": {
+    "012_download_hmlr_inspire_sources.py": "dd2b3fb2ff56789356b542c8c21563cb167a71627d934f2961e6e767a47e43a0",
+    "013_fetch_ea_dtm_wcs_for_matches.py": "63faa02e4a405825686f8f556e310df8c738bf11ae94917e2eaebc34a5a85d4e",
+    "014_prepare_os_terrain50_tiles.py": "a1165ac6f4cb05d15ca5aae318775a69c7902aea9a433c80c3b1eabbb017b471",
+    "015_execute_auto_source_and_measurement_pipeline.py": "e3db65f27eabc532a59737f570a7057ba260b94db6c88c6c0eea005990b94184"
+  },
+  "tests": [
+    {"test_id":"python_compile_four_new_scripts","status":"PASS","evidence":"compiled"},
+    {"test_id":"hmlr_three_authority_download","status":"PASS","evidence":"three exact links downloaded and hashed"},
+    {"test_id":"hmlr_ambiguous_link_fail_closed","status":"PASS","evidence":"ambiguous authority links rejected"},
+    {"test_id":"ea_wcs_three_bounded_geotiffs","status":"PASS","evidence":"three EPSG27700 1m bounded rasters prepared"},
+    {"test_id":"ea_wcs_wrong_crs_fail_closed","status":"PASS","evidence":"non-EPSG27700 coverage rejected"},
+    {"test_id":"terrain50_exact_tile_extract_validate","status":"PASS","evidence":"three exact 200x200 50m tiles validated"},
+    {"test_id":"terrain50_wrong_origin_fail_closed","status":"PASS","evidence":"wrong southwest tile origin rejected"},
+    {"test_id":"terrain50_missing_exact_tile_fail_closed","status":"PASS","evidence":"missing tile not replaced by neighbour"},
+    {"test_id":"six_stage_orchestrator_command_graph","status":"PASS","evidence":"six stages ordered without creating a runner"},
+    {"test_id":"orchestrator_first_failure_stops_later_stages","status":"PASS","evidence":"stage three failure stopped sampling and publication"}
+  ],
+  "summary": {
+    "tests_total": 10,
+    "tests_passed": 10,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_parcel_results_produced": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blockers": [
+    "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+    "OS_TERRAIN50_JULY_2026_ASCII_SOURCE_ARCHIVE_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

@@ -1,0 +1,41 @@
+{
+  "task_id": "aays1-135-force-8012-smoke-and-parcel-binding",
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "existing_f_portable_single_runner_only",
+  "site_url": "http://127.0.0.1:8012/england_map_web/index.html",
+  "input_status_path": "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json",
+  "input_marker_path": "england_map_web/data/program_layer_matrix/gas_emissions_status_latest.json",
+  "required_outputs": [
+    "docs/chatgpt_status/aays1/reports/f_portable_site_8012_smoke_latest.json",
+    "docs/chatgpt_status/aays1/status/135_force_8012_smoke_and_parcel_binding_latest.json"
+  ],
+  "acceptance_checks": {
+    "runner_active": true,
+    "pid_alive": true,
+    "lock_valid": true,
+    "source_row_gate_passed": true,
+    "extracted_row_count": 47,
+    "verification_score_after": "2.5/4",
+    "final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "actions": [
+    "Read latest_changes and gas_emissions_status_latest from this branch.",
+    "Refresh the 8012 local site using the current branch data.",
+    "Run a browser smoke check for the Gas Emissions marker on the 8012 site.",
+    "Write f_portable_site_8012_smoke_latest.json with browser_smoke_passed true or false.",
+    "Continue parcel binding review if smoke passes; if it does not pass, write a clear blocker and keep processing the next queued task."
+  ],
+  "do_not_change": {
+    "final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

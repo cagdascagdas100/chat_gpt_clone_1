@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "slot_id": "ready_to_sell_1",
+  "generated_at": "2026-07-21T03:07:00Z",
+  "purpose": "Official disposal, local-land-search and energy-certificate services for batch 10 candidates. No site-specific conclusion is asserted until the candidate address, title or exact geometry is queried.",
+  "sources": [
+    {
+      "source_id": "WARWICKSHIRE_COUNTY_PROPERTY_DISPOSALS",
+      "publisher": "Warwickshire County Council",
+      "url": "https://www.warwickshire.gov.uk/land-property-businesses/land-property-available-buy-let",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "live_disposal_programme_updates",
+      "coverage": "county-owned or county-marketed land and property currently available to buy or let, including 119 Hillcrest Road",
+      "primary_join_keys": ["property address", "disposal name", "selling agent reference"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 65,
+      "binding_limit": "The county page corroborates that the opportunity is in the disposal programme, but does not itself prove the exact title extent, purchaser conditions, sale authority documents or planning status.",
+      "status": "VERIFIED_OFFICIAL_CANDIDATE_SPECIFIC_DISPOSAL_CORROBORATION_ONLY"
+    },
+    {
+      "source_id": "WARWICK_DISTRICT_CON29_AND_LOCAL_LAND_SEARCH",
+      "publisher": "Warwick District Council",
+      "url": "https://www.warwickdc.gov.uk/info/20379/land_searches/542/local_land_searches",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "service_and_fee_updates",
+      "coverage": "CON29 replies covering planning, building regulations, highways, environmental health and related property matters in Warwick district",
+      "primary_join_keys": ["property address", "site location plan", "red-line boundary"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 90,
+      "binding_limit": "Warwick requires a property address and site location plan with the boundary outlined in red. The service supports due diligence but does not establish ownership or title extent.",
+      "status": "VERIFIED_OFFICIAL_CONVEYANCING_SOURCE_REQUIRES_SITE_PLAN"
+    },
+    {
+      "source_id": "NUNEATON_CON29_AND_LOCAL_LAND_SEARCH",
+      "publisher": "Nuneaton and Bedworth Borough Council",
+      "url": "https://www.nuneatonandbedworth.gov.uk/local-land-charges/local-land-searches-charges",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "service_and_fee_updates",
+      "coverage": "CON29 enquiries and local-land-search routes for restrictions and formal purchaser enquiries in Nuneaton and Bedworth",
+      "primary_join_keys": ["full property address", "search plan", "title or site description"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 90,
+      "binding_limit": "The LLC1 register has moved to HM Land Registry while the council continues CON29 replies. A completed property-specific search is required before any Hillcrest Road restriction or planning conclusion is published.",
+      "status": "VERIFIED_OFFICIAL_CONVEYANCING_SOURCE_REQUIRES_CANDIDATE_SEARCH"
+    },
+    {
+      "source_id": "GOVUK_FIND_ENERGY_CERTIFICATE",
+      "publisher": "UK Government",
+      "url": "https://www.gov.uk/find-energy-certificate",
+      "snapshot_date": "2026-07-21",
+      "update_frequency": "live_certificate_register",
+      "coverage": "domestic and non-domestic Energy Performance Certificates for properties in England, Wales and Northern Ireland",
+      "primary_join_keys": ["postcode", "property address", "certificate reference"],
+      "source_verification_score": 100,
+      "parcel_binding_score_ceiling": 80,
+      "binding_limit": "An EPC validates the certificate rating and assessed building address, but does not prove ownership, sale authority, planning use, tenancy, cadastral extent or current physical condition.",
+      "status": "VERIFIED_OFFICIAL_ENERGY_CERTIFICATE_SOURCE_REQUIRES_ADDRESS_QUERY"
+    }
+  ],
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "final_ready": false
+  }
+}

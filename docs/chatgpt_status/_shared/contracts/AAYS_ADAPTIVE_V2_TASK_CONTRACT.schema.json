@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AAYS Adaptive V2 Task Contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "architecture_version",
+    "workstream_id",
+    "slot_id",
+    "task_id",
+    "attempt_id",
+    "idempotency_key",
+    "script_path",
+    "read_paths",
+    "exact_write_paths",
+    "resource_class",
+    "safety_flags"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "architecture_version": { "const": 2 },
+    "workstream_id": { "const": "AAYS_5_SLOT_SAFE_PARALLEL_V1" },
+    "slot_id": {
+      "enum": ["ready_to_sell", "gas_emissions", "height_difference", "security_public_safety", "parcel_label"]
+    },
+    "task_id": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "idempotency_key": { "type": "string", "minLength": 1 },
+    "script_path": { "type": "string", "minLength": 1 },
+    "read_paths": { "type": "array", "items": { "type": "string" } },
+    "exact_write_paths": { "type": "array", "items": { "type": "string" } },
+    "shared_merge_targets": { "type": "array", "items": { "type": "string" } },
+    "resource_class": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      ]
+    },
+    "requires_git_publish_gate": { "type": "boolean" },
+    "requires_runtime_sync_gate": { "type": "boolean" },
+    "requires_browser_acceptance_gate": { "type": "boolean" },
+    "requires_shared_publish_gate": { "type": "boolean" },
+    "lease_seconds": { "type": "integer", "minimum": 30 },
+    "timeout_seconds": { "type": "integer", "minimum": 1 },
+    "safety_flags": {
+      "type": "object",
+      "required": ["fake_data", "db_write", "migration", "production_deploy"],
+      "properties": {
+        "fake_data": { "const": false },
+        "db_write": { "const": false },
+        "migration": { "const": false },
+        "production_deploy": { "const": false }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

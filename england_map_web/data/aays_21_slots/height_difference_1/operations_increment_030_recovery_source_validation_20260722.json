@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "payload_revision": 14,
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "source_head": "fc10e5d16ba21ae529960615a7dd9f9340acc0cc",
+  "range": "301-312",
+  "operations": [
+    {"operation_no":301,"state":"completed","operation":"READ_CANONICAL_BRANCH_HEAD_AND_BIND_RECOVERY_SOURCE_HEAD","evidence":"fc10e5d16ba21ae529960615a7dd9f9340acc0cc","accuracy_effect":"prevents stale-branch continuation"},
+    {"operation_no":302,"state":"completed","operation":"VERIFY_HEIGHT_DIFFERENCE_1_OWNER_IS_UNCLAIMED","evidence":"docs/chatgpt_status/_shared/slots_21/height_difference_1/ownership_latest.json","accuracy_effect":"prevents duplicate owner and second runner"},
+    {"operation_no":303,"state":"completed","operation":"CLASSIFY_HEARTBEAT_AND_LEASE_AS_STALE","evidence":"heartbeat 2026-07-21T00:29:37.959094Z; stale_after_seconds=3600; lease expired","accuracy_effect":"activates recovery gate before business work"},
+    {"operation_no":304,"state":"completed","operation":"VERIFY_CURRENT_TASK_IS_PUBLISH_PENDING_WITH_NONINTERACTIVE_HTTPS_AUTH_FAILURE","evidence":"current_task_latest result exit_code=0 and publisher push failed","accuracy_effect":"separates local execution from unverified remote publication"},
+    {"operation_no":305,"state":"completed","operation":"VERIFY_REVISION_13_CHILD_COMMIT_AND_EXPECTED_OUTPUTS_ARE_NOT_REMOTE_VERIFIED","evidence":"checkpoint_latest prior_runtime_evidence remote_result_verified=false","accuracy_effect":"blocks false measured-row promotion"},
+    {"operation_no":306,"state":"completed","operation":"COMPUTE_CANONICAL_CONTINUATION_KEY_FOR_FIRST_UNVERIFIED_RECOVERY_STEP","evidence":"de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33","accuracy_effect":"idempotent continuation binding"},
+    {"operation_no":307,"state":"completed","operation":"PUBLISH_MANUAL_ACTION_FOR_EXISTING_F_HOST_AUTH_APPLY","evidence":"docs/chatgpt_status/_shared/manual_actions/height_difference_1.json; commit 2615516772b927da8abd4a7286575dec79fb351b","accuracy_effect":"makes the real blocker visible without fabricating completion"},
+    {"operation_no":308,"state":"completed","operation":"REVALIDATE_HMLR_INSPIRE_MONTHLY_GML_PUBLICATION_CONTRACT","evidence":"https://use-land-property-data.service.gov.uk/datasets/inspire","accuracy_effect":"official parcel-boundary source remains current and monthly"},
+    {"operation_no":309,"state":"completed","operation":"REVALIDATE_HMLR_INSPIRE_DATASET_METADATA_FRESHNESS","evidence":"https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data","accuracy_effect":"official metadata reports July 2026 refresh"},
+    {"operation_no":310,"state":"completed","operation":"REVALIDATE_ENVIRONMENT_AGENCY_LIDAR_DTM_1M_WCS_ENDPOINT","evidence":"https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs","accuracy_effect":"official high-resolution elevation endpoint confirmed"},
+    {"operation_no":311,"state":"completed","operation":"REVALIDATE_OS_TERRAIN_50_JULY_2026_PRODUCT_AND_50M_ASCII_GML_SUPPLY","evidence":"https://osdatahub.os.uk/downloads/open/Terrain50","accuracy_effect":"independent official elevation source remains available"},
+    {"operation_no":312,"state":"completed","operation":"REVALIDATE_GITHUB_CLI_HOST_SCOPED_CREDENTIAL_HELPER_RECOVERY","evidence":"https://cli.github.com/manual/gh_auth_setup-git","accuracy_effect":"recovery method matches official noninteractive Git credential-helper behavior"}
+  ],
+  "increment_metrics": {
+    "operation_rows_added": 12,
+    "official_source_checks_added": 5,
+    "official_source_checks_passed": 5,
+    "data_source_freshness_revalidations": 4,
+    "operational_methodology_upgrades": 1,
+    "candidate_rows_added": 0,
+    "official_measured_rows_added": 0,
+    "height_difference_rows_added": 0
+  },
+  "canonical_progress": {
+    "planned_operations": 312,
+    "completed_operations": 307,
+    "blocked_operations": 5,
+    "overall_percent": 98.40,
+    "percent_change": 0.07,
+    "product_completion_percent": 78,
+    "product_percent_change": 0
+  },
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
+  "official_height_difference_rows": 0,
+  "output_semantics": "NO_DATA_NOT_INFERRED",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

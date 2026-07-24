@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_3",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "verified_on": "2026-07-20",
+  "purpose": "Lock the official geometry, primary DTM, independent crosscheck and website publication rules for real shard parcels.",
+  "official_sources": [
+    {
+      "source_name": "HM Land Registry INSPIRE Index Polygons",
+      "role": "official_indicative_freehold_boundary",
+      "dataset_url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "technical_guidance_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "publication_date": "2026-07-05",
+      "update_cycle": "first_Sunday_of_each_month",
+      "delivery": "GML_by_local_authority",
+      "crs": "EPSG:27700",
+      "identifier_rule": "each_polygon_has_a_unique_Land_Registry_INSPIRE_ID_related_to_a_registered_title",
+      "scope_warning": "indicative_extent_only_not_the_legal_title_plan",
+      "reprojection_warning": "BNG_to_WGS84_conversion_may_shift_some_features_by_up_to_15m",
+      "accuracy_role": "calculation_geometry_must_remain_in_EPSG27700"
+    },
+    {
+      "source_name": "Environment Agency LIDAR Composite DTM 1m",
+      "role": "primary_official_numeric_elevation",
+      "dataset_url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "wcs_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "coverage": "approximately_99_percent_of_England",
+      "resolution_m": 1,
+      "tile_size_km": 5,
+      "format": "GeoTIFF",
+      "crs": "EPSG:27700",
+      "vertical_reference": "Ordnance_Datum_Newlyn",
+      "published_input_survey_vertical_accuracy": "+/-0.15m_RMSE",
+      "accuracy_role": "polygon_cells_primary_metric"
+    },
+    {
+      "source_name": "OS Terrain 50",
+      "role": "independent_official_numeric_crosscheck",
+      "documentation_url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50",
+      "technical_specification_url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "download_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "publication_month": "2026-07",
+      "update_cycle": "annual_in_July",
+      "coverage": "Great_Britain",
+      "tile_size_km": 10,
+      "tile_reference": "National_Grid_reference_of_southwest_corner",
+      "grid_columns": 200,
+      "grid_rows": 200,
+      "cell_size_m": 50,
+      "height_precision_m": 0.1,
+      "crs": "EPSG:27700",
+      "published_grid_accuracy": "4m_RMSE",
+      "accuracy_role": "coarse_centroid_elevation_crosscheck"
+    },
+    {
+      "source_name": "OS Open UPRN",
+      "role": "authoritative_coordinate_bridge_only_when_exact_canonical_UPRN_exists",
+      "documentation_url": "https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn",
+      "technical_specification_url": "https://docs.os.uk/os-downloads/identifiers/os-open-uprn/os-open-uprn-technical-specification/feature-type/os-open-uprn",
+      "download_url": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+      "core_fields": ["UPRN", "X_COORDINATE", "Y_COORDINATE", "LATITUDE", "LONGITUDE"],
+      "geometry": "address_record_point",
+      "matching_rule": "exact_UPRN_equality_only",
+      "nearest_or_fuzzy_matching_allowed": false
+    },
+    {
+      "source_name": "Copernicus DEM GLO-30",
+      "role": "diagnostic_only",
+      "resolution_m": 30,
+      "accepted_as_sole_UK_bare_earth_source": false
+    }
+  ],
+  "measurement_contract": {
+    "boundary_priority": [
+      "exact_HMLR_official_identifier",
+      "unique_point_inside_HMLR_polygon"
+    ],
+    "nearest_polygon_fill_allowed": false,
+    "calculation_crs": "EPSG:27700",
+    "website_display_crs": "EPSG:4326_display_only",
+    "primary_statistics": [
+      "EA_DTM_valid_cell_count",
+      "minimum",
+      "maximum",
+      "median",
+      "Q05",
+      "Q25",
+      "Q75",
+      "Q95",
+      "IQR"
+    ],
+    "height_difference_definition": "EA_DTM_polygon_Q95_minus_Q05",
+    "minimum_EA_valid_cells": 4,
+    "OS_crosscheck": "Terrain50_cell_containing_HMLR_polygon_centroid",
+    "maximum_cross_source_absolute_difference_m": 8,
+    "high_confidence_rule": "EA_cells_at_least_16_and_cross_difference_at_most_4m",
+    "medium_high_confidence_rule": "EA_cells_at_least_4_and_cross_difference_at_most_8m",
+    "website_publication_allowed_before_all_gates": false
+  },
+  "automation_paths": [
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/008_match_hmlr_inspire_gml.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/009_sample_ea_dtm_and_os_terrain50.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/010_publish_verified_height_difference_examples.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/011_execute_three_real_parcel_measurements.py"
+  ],
+  "current_real_input_status": {
+    "canonical_shard_rows": 0,
+    "real_candidates": 0,
+    "official_HMLR_files_downloaded": 0,
+    "official_EA_rasters_downloaded": 0,
+    "official_OS_Terrain50_tiles_downloaded": 0,
+    "measured_rows": 0
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T20:26:00Z",
+  "state": "VERTICAL_DATUM_NUMERIC_INTEGRITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "EA_DTM_VERTICAL_REFERENCE_AND_ACCURACY",
+      "authority": "Environment Agency / Defra Data Services Platform",
+      "url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "verified": true,
+      "facts": ["values_in_metres", "referenced_to_ordnance_datum_newlyn", "uses_ostn15", "source_surveys_plus_or_minus_15cm_rmse", "composite_contains_resampled_and_merged_surveys"],
+      "accepted_role": "PRIMARY_VERTICAL_DATUM_AND_SOURCE_ACCURACY_CONTROL"
+    },
+    {
+      "source_id": "EA_TIME_STAMPED_TRANSFORMATION_PERIOD",
+      "authority": "Environment Agency / Defra Data Services Platform",
+      "url": "https://dsp.environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "verified": true,
+      "facts": ["heights_in_metres_referenced_to_newlyn", "aligned_to_os_grid", "transformation_specific_to_survey_period", "survey_resolution_and_date_vary"],
+      "accepted_role": "SURVEY_EPOCH_AND_TRANSFORMATION_GENERATION_CONTROL"
+    },
+    {
+      "source_id": "OS_ODN_OSTN15_OSGM15_REFERENCE_MODEL",
+      "authority": "Ordnance Survey",
+      "url": "https://www.ordnancesurvey.co.uk/geodesy-positioning/coordinate-transformations",
+      "verified": true,
+      "facts": ["gnss_uses_etrs89", "os_mapping_uses_osgb36", "mapping_heights_use_mean_sea_level_datums_such_as_odn", "ostn15_is_horizontal_model", "osgm15_is_height_model"],
+      "accepted_role": "ELLIPSOIDAL_AND_ORTHOMETRIC_HEIGHT_SEPARATION_CONTROL"
+    },
+    {
+      "source_id": "OS_OSGM15_ACCURACY_AND_RELATIVE_ERROR",
+      "authority": "Ordnance Survey",
+      "url": "https://www.ordnancesurvey.co.uk/geodesy-positioning/os-net/faq",
+      "verified": true,
+      "facts": ["osgm15_mainland_absolute_accuracy_8mm_rms_one_standard_error", "relative_error_within_10km_at_most_few_millimetres", "odn_is_orthometric_mean_sea_level_height", "wgs84_height_is_ellipsoidal"],
+      "accepted_role": "GEOID_MODEL_UNCERTAINTY_AND_CORRELATION_CONTROL"
+    },
+    {
+      "source_id": "OS_OSGM15_GRID_RESOURCES",
+      "authority": "Ordnance Survey",
+      "url": "https://www.ordnancesurvey.co.uk/geodesy-positioning/coordinate-transformations/resources",
+      "verified": true,
+      "facts": ["ostn15_and_osgm15_replaced_older_models_in_2016", "developer_pack_contains_grid_and_test_material", "osgm15_gtx_grid_is_available", "lite_grid_has_lower_accuracy"],
+      "accepted_role": "TRANSFORMATION_GRID_VERSION_AND_HASH_CONTROL"
+    },
+    {
+      "source_id": "PROJ_VERTICAL_GRID_SHIFT",
+      "authority": "PROJ",
+      "url": "https://proj.org/en/stable/operations/transformations/vgridshift.html",
+      "verified": true,
+      "facts": ["vertical_input_and_output_are_metres", "at_prefix_marks_grid_optional", "grid_order_is_prioritized", "multiplier_default_is_minus_one", "multiplied_grid_value_must_be_metres"],
+      "accepted_role": "VERTICAL_GRID_PRESENCE_SIGN_AND_UNIT_CONTROL"
+    },
+    {
+      "source_id": "PROJ_GEOID_CRS_PIPELINE_ORDER",
+      "authority": "PROJ",
+      "url": "https://proj.org/en/stable/usage/transformation.html",
+      "verified": true,
+      "facts": ["geoid_crs_resolves_interpolation_crs_ambiguity", "horizontal_and_vertical_operation_order_can_change", "vto_meter_controls_vertical_unit_conversion", "geoid_grid_corrections_can_be chained"],
+      "accepted_role": "VERTICAL_PIPELINE_ORDER_AND_VERSION_CONTROL"
+    },
+    {
+      "source_id": "GDAL_RAW_SCALE_OFFSET_AND_NODATA",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/user/raster_data_model.html",
+      "verified": true,
+      "facts": ["band_can_have_scale_and_offset", "band_can_have_unit_name", "nodata_is_a_raw_marker", "valid_percent_and_statistics_are_metadata", "area_or_point_is_explicit"],
+      "accepted_role": "RAW_TO_PHYSICAL_RASTER_VALUE_CONTROL"
+    },
+    {
+      "source_id": "GDAL_UNSCALE_FORMULA",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_unscale.html",
+      "verified": true,
+      "facts": ["unscaled_value_equals_scaled_raw_value_times_scale_plus_offset", "integer_and_float32_inputs_default_to_float32_output", "float64_input_remains_float64"],
+      "accepted_role": "PHYSICAL_ELEVATION_CONVERSION_CONTROL"
+    },
+    {
+      "source_id": "GDAL_CALCULATOR_DATATYPE_AND_ALIGNMENT",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/programs/gdal_calc.html",
+      "verified": true,
+      "facts": ["projection_check_is_not_default", "intermediate_operations_can_honor_original_operand_datatype", "integer_inputs_can_produce_integer_division", "input_nodata_is_excluded_by_default", "success_can_include_nonblocking_warnings"],
+      "accepted_role": "NUMERIC_OVERFLOW_PRECISION_AND_ALIGNMENT_CONTROL"
+    },
+    {
+      "source_id": "GDAL_TRANSLATE_STRICT_AND_OUTSIDE_EXTENT",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/programs/gdal_translate.html",
+      "verified": true,
+      "facts": ["strict_mode_can_fail_lossy_type_conversion", "outside_source_window_can_be_written_as_zero_without_nodata", "epo_can_fail_partially_outside_windows", "assigning_srs_does_not_reproject", "scale_and_offset_metadata_assignment_does_not_modify_pixels"],
+      "accepted_role": "STRICT_CONVERSION_AND_ZERO_FILL_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "vertical_reference": [
+      "HEIGHT_TYPE_IS_EXPLICITLY_ELLIPSOIDAL_OR_ORTHOMETRIC",
+      "VERTICAL_DATUM_AND_REALIZATION_RECORDED",
+      "ODN_HEIGHTS_NEVER_MIXED_WITH_ELLIPSOIDAL_HEIGHTS",
+      "HORIZONTAL_AND_VERTICAL_CRS_RECORDED_AS_COMPOUND_OR_EXPLICIT_PAIR",
+      "VERTICAL_UNIT_IS_METRES_OR_EXPLICITLY_CONVERTED_TO_METRES"
+    ],
+    "ea_source": [
+      "SOURCE_DATASET_ID_SURVEY_DATE_AND_RESOLUTION_RECORDED",
+      "SURVEY_PERIOD_TRANSFORMATION_GENERATION_RECORDED",
+      "SOURCE_SURVEY_15CM_RMSE_NOT_TREATED_AS_COMPLETE_COMPOSITE_UNCERTAINTY",
+      "COMPOSITE_RESAMPLING_AND_MOSAIC_LINEAGE_RECORDED",
+      "DTM_AND_DSM_SURFACE_CLASSES_NOT_INTERCHANGED"
+    ],
+    "osgm15_proj": [
+      "OSTN15_AND_OSGM15_ROLES_RECORDED_SEPARATELY",
+      "OSGM15_GRID_REQUIRED_AND_NOT_OPTIONAL",
+      "GRID_FILENAME_FORMAT_BYTE_LENGTH_SHA256_AND_COVERAGE_RECORDED",
+      "VERTICAL_GRID_MULTIPLIER_SIGN_EXPLICIT",
+      "GEOID_CRS_AND_PIPELINE_ORDER_EXPLICIT",
+      "MISSING_GRID_BALLPARK_OR_OUTSIDE_AREA_OPERATION_CAUSES_FAILURE",
+      "PROJ_VERSION_AND_FULL_PIPELINE_RECORDED"
+    ],
+    "raster_numeric": [
+      "RAW_PIXEL_NODATA_SCALE_OFFSET_UNIT_AND_PHYSICAL_VALUE_RECORDED",
+      "NODATA_TESTED_BEFORE_SCALE_AND_OFFSET",
+      "VALID_HEIGHTS_CAST_TO_FLOAT64_BEFORE_ARITHMETIC",
+      "INTEGER_DIVISION_AND_INTERMEDIATE_OVERFLOW_FORBIDDEN",
+      "CRS_AND_EXTENT_CHECKS_ENABLED",
+      "LOSSY_DATATYPE_CONVERSION_FAILS_STRICTLY",
+      "OUTSIDE_RASTER_ZERO_FILL_FORBIDDEN"
+    ],
+    "uncertainty": [
+      "EA_SOURCE_RMSE_OSGM15_ABSOLUTE_ERROR_AND_RESAMPLING_TERMS_RECORDED_SEPARATELY",
+      "NEARBY_OSGM15_RELATIVE_ERROR_TREATED_AS_CORRELATED",
+      "HEIGHT_DIFFERENCE_UNCERTAINTY_USES_ENDPOINT_COVARIANCE",
+      "ROUNDING_OCCURS_ONLY_AFTER_UNCERTAINTY_AND_ACCEPTANCE_DECISIONS"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 22,
+  "source_checks_total": 22,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

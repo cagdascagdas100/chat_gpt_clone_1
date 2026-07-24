@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "task_id": "height-difference-2-streaming-candidate-extractor-selftest-20260721",
+  "tested_at": "2026-07-21T04:25:00+03:00",
+  "source_contract": {
+    "canonical_geojson_path": "england_map_web/data/program_layer_matrix/topography.geojson",
+    "canonical_geojson_blob_sha": "ca95400a5644f77a79cbaf47b2c2d611d3777a55",
+    "canonical_feature_count": 77970,
+    "slot_row_start": 30762,
+    "slot_row_end": 61522,
+    "explicit_row_no_only": true
+  },
+  "automation": {
+    "extractor_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/007_extract_three_canonical_candidates.py",
+    "extractor_blob_sha": "00e670a6995e0439cc0792f13090a24c16d5e538",
+    "extractor_sha256": "f09e451aef1607e24347655ceab7793280988f555e50d158c527c1df190a56df",
+    "wrapper_path": "docs/chatgpt_status/aays1/automation/height_difference_2_candidate_then_sampling_entry.py",
+    "wrapper_blob_sha": "f215d919f9b5e47c2bb8d04865547a648606ce29",
+    "wrapper_sha256": "4d551b0265b3dccc22a8b45bd5b59b2ada9901160f2790351377dce7a522b117"
+  },
+  "tests": [
+    {"test_id":"compile_extractor","status":"PASS","evidence":"Python syntax compiled"},
+    {"test_id":"compile_wrapper","status":"PASS","evidence":"Python syntax compiled"},
+    {"test_id":"minified_feature_collection","status":"PASS","evidence":"Three target seeds extracted from one-line GeoJSON"},
+    {"test_id":"pretty_feature_collection","status":"PASS","evidence":"Three seeds extracted from formatted GeoJSON"},
+    {"test_id":"slot_range_gate","status":"PASS","evidence":"Rows outside 30762-61522 ignored"},
+    {"test_id":"hmlr_geometry_accuracy_gate","status":"PASS","evidence":"Rows below 4/4 identity/location accuracy rejected"},
+    {"test_id":"point_coordinate_consistency_gate","status":"PASS","evidence":"Geometry/property coordinate mismatch rejected"},
+    {"test_id":"distinct_hmlr_identity_gate","status":"PASS","evidence":"Selected seeds have distinct row and HMLR INSPIRE IDs"},
+    {"test_id":"legacy_topography_value_non_promotion","status":"PASS","evidence":"Existing 2/4 point elevation values omitted from candidate seeds"},
+    {"test_id":"explicit_row_no_no_order_inference","status":"PASS","evidence":"Selection requires explicit row_no and records inference=false"},
+    {"test_id":"no_measurement_write","status":"PASS","evidence":"Extractor writes zero official polygon measurements"},
+    {"test_id":"source_sha256","status":"PASS","evidence":"Canonical source hash reproduced"},
+    {"test_id":"insufficient_candidates_fail_closed","status":"PASS","evidence":"Fewer than three valid identities returns BLOCKED"},
+    {"test_id":"missing_source_fail_closed","status":"PASS","evidence":"Missing canonical GeoJSON returns exit 2 and BLOCKED"},
+    {"test_id":"wrapper_stage_order","status":"PASS","evidence":"Candidate extraction completed before existing sampling entrypoint"},
+    {"test_id":"wrapper_outputs_and_safety","status":"PASS","evidence":"Runner summary and web candidate seed output written; safety flags false and final_ready false"}
+  ],
+  "summary": {
+    "tests_total": 16,
+    "tests_passed": 16,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_candidate_rows_produced_by_selftest": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

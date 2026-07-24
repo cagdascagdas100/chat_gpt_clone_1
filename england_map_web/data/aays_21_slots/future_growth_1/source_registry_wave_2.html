@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_1 kaynak kayıtları</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}.cards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:12px;min-width:175px}.big{font-size:25px;font-weight:700}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.ok{font-weight:700}.pending{font-weight:700}.muted{color:#546e7a}a{color:#0b57d0}pre{white-space:pre-wrap;margin:0}</style></head><body>
+<h1>future_growth_1 — Resmî kaynak kayıt dalgası 2</h1>
+<div class="notice">16/16 sayacı yalnız resmî endpoint, kapsam ve kullanım sınırı readback’idir. Loader çalışması, parsel eşleşmesi veya Future Growth skoru değildir.</div>
+<p><a href="index.html">Aday özetine dön</a> · <a href="geometry_wave_2.html">Geometri işlemleri</a></p>
+<div class="cards">
+<div class="card"><div>Registry doğrulama</div><div class="big" id="registry">-</div></div>
+<div class="card"><div>Resmî URL</div><div class="big" id="urls">-</div></div>
+<div class="card"><div>Loader</div><div class="big" id="loaders">-</div></div>
+<div class="card"><div>Parsel satırı</div><div class="big" id="rows">-</div></div>
+<div class="card"><div>final_ready</div><div class="big" id="ready">-</div></div>
+</div>
+<h2>Satır satır 16 kaynak</h2>
+<table><thead><tr><th>#</th><th>Anahtar</th><th>Kaynak</th><th>Amaç</th><th>Mod</th><th>Durum</th><th>Resmî URL</th><th>İnternet readback</th><th>Güven sınırı</th></tr></thead><tbody id="body"></tbody></table>
+<p class="muted" id="meta"></p>
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('official_source_registry_wave_2_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+registry.textContent=`${d.registry_sources_validated}/${d.registry_total}`;urls.textContent=d.quality_gates.source_url_present;loaders.textContent=d.quality_gates.loader_execution;rows.textContent=d.quality_gates.parcel_specific_promotion;ready.textContent=d.final_ready;
+body.innerHTML=d.sources.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.source_key)}</td><td>${esc(x.source_name)}</td><td>${esc(x.purpose)}</td><td>${esc(x.mode_contract)}</td><td class="${x.validation_status.includes('PENDING')?'pending':'ok'}">${esc(x.validation_status)}</td><td><a href="${esc(x.source_url)}" target="_blank" rel="noopener">resmî kaynak</a></td><td><pre>${esc(JSON.stringify(x.readback,null,2))}</pre></td><td>${esc(x.confidence_boundary)}</td></tr>`).join('');
+meta.textContent=`Üretim: ${d.generated_at} | ${d.validation_semantics} | loader_executions_completed=${d.loader_executions_completed}`;
+}).catch(()=>{body.innerHTML='<tr><td colspan="9">Kaynak kayıt JSON dosyası okunamadı</td></tr>'});
+</script></body></html>

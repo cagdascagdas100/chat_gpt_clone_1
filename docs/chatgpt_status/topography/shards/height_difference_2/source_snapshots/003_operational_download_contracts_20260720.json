@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
+  "captured_at": "2026-07-20T23:06:00+03:00",
+  "measurement_rows_created": 0,
+  "parcel_candidates_created": 0,
+  "processing_crs": "EPSG:27700",
+  "sources": [
+    {
+      "role": "indicative_boundary",
+      "name": "HM Land Registry INSPIRE Index Polygons",
+      "official_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "release_date": "2026-07-05",
+      "update_cycle": "first_sunday_monthly",
+      "supply_structure": "one_GML_file_per_local_authority",
+      "coverage": "England_and_Wales_registered_freehold_subset",
+      "identifier": "Land_Registry_INSPIRE_ID",
+      "licence": "Open_Government_Licence",
+      "runtime_resolution_rule": "resolve_local_authority_from_canonical_shard_row_then_download_only_required_GML",
+      "accuracy_note": "indicative_extent_not_legal_title_boundary"
+    },
+    {
+      "role": "primary_numeric_elevation",
+      "name": "Environment Agency LIDAR Composite DTM 1m",
+      "official_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "dataset_id": "13787b9a-26a4-4775-8523-806d13af58fc",
+      "service_standard": "OGC_WCS_2.0.1",
+      "coverage": "approximately_99_percent_of_England",
+      "resolution_m": 1,
+      "crs": "EPSG:27700",
+      "vertical_accuracy": "+/-0.15m_RMSE_source_surveys",
+      "raw_pixel_service": true,
+      "geotiff_nodata_value": -3.4028235e+38,
+      "coverage_id": "runtime_GetCapabilities_discovery_required",
+      "statistic": "polygon_median_Q1_Q3_valid_pixels_only",
+      "persistent_endpoint": true
+    },
+    {
+      "role": "secondary_numeric_crosscheck",
+      "name": "OS Terrain 50",
+      "official_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "version_date": "2026-07",
+      "coverage": "Great_Britain",
+      "grid_spacing_m": 50,
+      "supply_formats": ["ASCII_Grid", "GML_Grid", "ESRI_Shapefile", "GML", "GeoPackage", "Vector_Tiles"],
+      "licence": "Open_Government_Licence",
+      "usage_rule": "independent_coarse_crosscheck_only_not_primary_measurement"
+    }
+  ],
+  "publication_gate": {
+    "real_hmlr_geometry_required": true,
+    "ea_dtm_numeric_pixels_required": true,
+    "os_terrain50_crosscheck_required": true,
+    "centroid_fallback_promoted": false,
+    "missing_evidence_policy": "NO_DATA_NOT_INFERRED"
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

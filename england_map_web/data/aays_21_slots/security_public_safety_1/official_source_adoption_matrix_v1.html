@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>Security 1 — Resmî Kaynak Benimseme Matrisi</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px}th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5}.ADOPT_WHEN_RUNTIME_ACCEPTED,.QUALITY_GUARD,.CROSSCHECK_ONLY,.CONTEXT_ONLY{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}a{color:#0759a5}
+  </style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-final-ready="false">
+  <h1>Security / Public Safety 1 — 55 Satırlık Kaynak Benimseme Matrisi</h1>
+  <div class="note"><strong>Karar kapısı:</strong> Bu görünüm kaynak sayısını veya skorları artırmaz. Her resmî kaynağın güvenli kullanım biçimini belirler; runtime, Chromium ve publisher kabulü olmadan hiçbir kaynak doğrudan skora alınmaz.</div>
+  <div class="cards">
+    <div class="card">Karar satırı<br><strong id="decisionRows">yükleniyor</strong></div>
+    <div class="card">Runtime sonrası aday<br><strong id="adoptRows">yükleniyor</strong></div>
+    <div class="card">Çapraz kontrol<br><strong id="crossRows">yükleniyor</strong></div>
+    <div class="card">Bağlam<br><strong id="contextRows">yükleniyor</strong></div>
+    <div class="card">Kalite koruması<br><strong id="guardRows">yükleniyor</strong></div>
+    <div class="card">Genel ilerleme<br><strong id="progress">yükleniyor</strong></div>
+  </div>
+  <h2>Kararlar — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Resmî kaynak</th><th>Kaynak durumu</th><th>Benimseme kararı</th><th>Skor uygunluğu</th><th>Doğrulanan kullanım sınırı</th></tr></thead><tbody id="rows"></tbody></table>
+  <p><a href="index.html">Ana Security 1 görünümüne dön</a></p>
+  <script>
+    'use strict';
+    const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+    (async()=>{
+      const matrix=await get('official_source_adoption_matrix_v1_20260723.json');
+      const docs=await Promise.all(matrix.source_files.map(get));
+      const all=docs.flatMap(d=>d.sources||[]).sort((a,b)=>Number(a.row)-Number(b.row));
+      if(all.length!==matrix.decision_summary.decision_rows)throw Error(`Kaynak/karar satırı uyuşmazlığı: ${all.length}/${matrix.decision_summary.decision_rows}`);
+      const counts={ADOPT_WHEN_RUNTIME_ACCEPTED:0,CROSSCHECK_ONLY:0,CONTEXT_ONLY:0,QUALITY_GUARD:0};
+      rows.innerHTML=all.map(x=>{
+        const decision=matrix.row_decisions[String(x.row)];
+        if(!decision)throw Error(`Karar eksik: row ${x.row}`);
+        counts[decision]=(counts[decision]||0)+1;
+        const eligibility=decision==='ADOPT_WHEN_RUNTIME_ACCEPTED'?'CANDIDATE_RUNTIME_GATED':'NOT_DIRECT_SCORE_INPUT';
+        return `<tr><td>${esc(x.row)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br><span class="mono">${esc(x.authority)}</span></td><td>${esc(x.status)}</td><td class="${esc(decision)}">${esc(decision)}</td><td>${esc(eligibility)}</td><td>${esc(x.quality_effect)}</td></tr>`;
+      }).join('');
+      decisionRows.textContent=String(all.length);
+      adoptRows.textContent=String(counts.ADOPT_WHEN_RUNTIME_ACCEPTED);
+      crossRows.textContent=String(counts.CROSSCHECK_ONLY);
+      contextRows.textContent=String(counts.CONTEXT_ONLY);
+      guardRows.textContent=String(counts.QUALITY_GUARD);
+      const p=matrix.canonical_progress;progress.textContent=`${p.completed_units}/${p.total_units} — ${p.overall_percent}% (Δ ${p.percent_change>=0?'+':''}${p.percent_change})`;
+      document.body.dataset.decisionRows=String(all.length);
+      document.body.dataset.adoptRows=String(counts.ADOPT_WHEN_RUNTIME_ACCEPTED);
+      document.body.dataset.crosscheckRows=String(counts.CROSSCHECK_ONLY);
+      document.body.dataset.contextRows=String(counts.CONTEXT_ONLY);
+      document.body.dataset.qualityGuardRows=String(counts.QUALITY_GUARD);
+      document.body.dataset.continuationKey=matrix.continuation_key;
+      document.body.dataset.blocker=matrix.blocker;
+    })().catch(e=>{rows.innerHTML=`<tr><td colspan="6">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+  </script>
+</body>
+</html>

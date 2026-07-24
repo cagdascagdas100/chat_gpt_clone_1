@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="15">
+<title>Security / Public Safety Shard 1 — V14</title>
+<style>body{font-family:Arial,sans-serif;margin:24px;line-height:1.4;background:#fafafa;color:#171717}.notice,.metric{background:#fff;border:1px solid #ccc;padding:12px}.notice{margin-bottom:16px}.metrics{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.metric{min-width:140px}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0;font-size:13px}th,td{border:1px solid #ccc;padding:7px;text-align:left;vertical-align:top}.url,.hash{word-break:break-all}.PASS,.PENDING,.PENDING_NOT_ACCEPTANCE,.SUPPLEMENTAL_PENDING,.SUPPLEMENTAL_PENDING_NOT_ACCEPTANCE,.BLOCKED{font-weight:bold}code{background:#eee;padding:2px 5px}</style>
+</head><body>
+<h1>Security / Public Safety — Shard 1 / V14</h1>
+<div id="notice" class="notice"><code>AREA_LEVEL_PROXY</code> · LSOA/alan göstergesi · parsel ölçümü değildir · ilerleme verisi yükleniyor.</div>
+<div id="summary">İlerleme verisi yükleniyor…</div>
+<h2>Satır bazlı işlemler</h2><table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Detay</th></tr></thead><tbody id="events"></tbody></table>
+<h2>Canlı kaynak ve preflight kapıları</h2><table><thead><tr><th>Kapı</th><th>Durum</th><th>Rol</th><th>Sınır</th></tr></thead><tbody id="gates"></tbody></table>
+<h2 id="endpointTitle">Endpoint grupları</h2><table><thead><tr><th>#</th><th>Aday</th><th>Saklı suç</th><th>Canlı durum</th><th>API</th><th>SHA256</th></tr></thead><tbody id="groups"></tbody></table>
+<h2>Resmî kaynaklar</h2><table><thead><tr><th>Kaynak</th><th>Rol</th><th>Güncellik</th><th>Sonraki yayın</th><th>Sınır</th></tr></thead><tbody id="sources"></tbody></table>
+<h2>Güncel internet araştırması</h2><table><thead><tr><th>Kaynak</th><th>Gözlem</th><th>Rol</th><th>Sınır</th></tr></thead><tbody id="research"></tbody></table>
+<h2 id="candidateTitle">API kanıtı</h2><table><thead><tr><th>Parsel</th><th>Skor</th><th>Doğruluk</th><th>Coğrafya</th><th>HTTP</th><th>Suç sayısı</th><th>Canlı durum</th><th>API</th><th>SHA256</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const getJson=(u,required=true)=>fetch(u,{cache:'no-store'}).then(r=>{if(!r.ok){if(required)throw new Error(u+' HTTP '+r.status);return null}return r.json()});
+Promise.all([
+ getJson('./progress_latest.json'),getJson('./candidate_live_api_parity_latest.json'),getJson('./supplemental_status_latest.json'),
+ getJson('./metropolitan_force_scope_latest.json',false),getJson('./london_lsoa_source_latest.json',false),getJson('./preflight_latest.json',false),getJson('./official_source_research_20260721.json')
+]).then(([d,c,supp,force,london,preflight,research])=>{
+ const evidenceFiles=[];const lastStart=Math.max(21,Number(supp.visible_candidate_total)-9);for(let s=21;s<=lastStart;s+=10)evidenceFiles.push(`./candidate_stored_evidence_${s}_${s+9}.json`);
+ return Promise.all(evidenceFiles.map(x=>getJson(x))).then(evidence=>({d,c,supp,force,london,preflight,research,evidence}));
+}).then(({d,c,supp,force,london,preflight,research,evidence})=>{
+ const initial=c.candidates||[];const stored=evidence.flatMap(x=>x?.candidates||[]);
+ const acceptanceRows=(Number(c.candidate_count)>=130||initial.length>=130)?initial:initial.concat(stored.filter(x=>Number((x.parcel_id||'').split('_')[1])<=130));
+ const supplementalRows=stored.filter(x=>Number((x.parcel_id||'').split('_')[1])>=131);
+ const visibleRows=acceptanceRows.concat(supplementalRows);
+ const liveStatus=Number(c.candidate_count)>=130?c.status:'PENDING_SINGLE_RUNNER';
+ const preflightStatus=preflight?.status||'PREPARED_PENDING_SINGLE_RUNNER';
+ const changes=d.preparation_changes_this_turn||{};
+ const latest=supp.latest_supplemental_range||{};
+ document.getElementById('notice').innerHTML=`<code>AREA_LEVEL_PROXY</code> · LSOA/alan göstergesi · parsel ölçümü değildir · acceptance ${esc(supp.acceptance_candidate_target)} aday / ${esc(supp.acceptance_unique_endpoints)} endpoint olarak sabittir · ${esc(supp.supplemental_candidate_count)} supplemental örnek ayrı gösterilir · canonical alias başka slottadır.`;
+ document.getElementById('endpointTitle').textContent=`Endpoint grupları — ${visibleRows.length} görünür örnek`;
+ document.getElementById('candidateTitle').textContent=`API kanıtı — ${acceptanceRows.length} acceptance + ${supplementalRows.length} supplemental`;
+ const cards=[['İlerleme',d.overall_percent+'%'],['Yüzde artışı',d.percent_change_this_turn+' puan'],['İşlem',d.completed_units+'/'+d.total_units],['Hazır satır',d.verified_source_rows_available],['Doğruluk 4/4',d.accuracy_score_4_rows_available],['Acceptance',acceptanceRows.length+'/'+supp.acceptance_candidate_target],['Supplemental',supplementalRows.length+'/'+supp.supplemental_candidate_count],['Görünür toplam',visibleRows.length+'/'+supp.visible_candidate_total],['Acceptance API',supp.acceptance_unique_endpoints],['Supplemental API',supp.supplemental_unique_endpoints],['Görünür API',supp.visible_unique_endpoint_total],['Resmî kaynak',supp.official_source_count],['Canlı kontrol',supp.planned_live_network_checks_unchanged]];
+ document.getElementById('summary').innerHTML='<div class="metrics">'+cards.map(x=>`<div class="metric"><b>${esc(x[0])}</b><br>${esc(x[1])}</div>`).join('')+'</div>'+`<p><b>Durum:</b> ${esc(d.status)} · <b>Alias:</b> ${esc(d.global_control_alias)} · <b>Blocker:</b> ${esc(d.blocker)} · <b>final_ready:</b> ${esc(d.final_ready)}</p><p><b>Bu tur:</b> +${esc(changes.supplemental_candidate_examples_added)} supplemental aday, +${esc(changes.latest_supplemental_new_visible_endpoints)} görünür endpoint, +${esc(changes.candidate_network_call_growth)} acceptance ağ çağrısı. Police API ${esc(supp.police_api_latest_month)}, London LSOA ${esc(supp.london_lsoa_latest_month)}, ONS/Home Office ${esc(supp.ons_next_release_date)} henüz yayımlanmış kabul edilmez.</p>`;
+ document.getElementById('events').innerHTML=(d.events||[]).map((x,i)=>`<tr><td>${esc(x.index||i+1)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td>${esc(x.step)}</td><td>${esc(x.detail)}</td></tr>`).join('')+`<tr><td>4A</td><td class="PASS">PASS</td><td>SUPPLEMENTAL_EVIDENCE_131_${esc(latest.end)}</td><td>${esc(supp.supplemental_candidate_count)} supplemental satır ${esc(supp.supplemental_unique_endpoints)} endpoint kullanır; ${esc(supp.supplemental_new_unique_endpoints_vs_acceptance)} endpoint acceptance seti dışındadır. Son aralık ${esc(latest.start)}-${esc(latest.end)}, ${esc(supp.latest_supplemental_unique_endpoints)} endpoint ve ${esc(supp.latest_supplemental_new_endpoints)} yeni görünür endpoint içerir.</td></tr><tr><td>4B</td><td class="PASS">PASS</td><td>ENDPOINT_DEDUP_CONTROL</td><td>${esc(supp.endpoint_inventory_correction)}</td></tr>`;
+ const gates=[['Deterministik preflight',preflightStatus,preflight?.purpose||'No-network hazırlık','Canonical runner çalıştırmadan PASS değildir'],['Worker/queue kararlılığı',supp.worker_version===14&&supp.queue_attempt===14?'PASS':'BLOCKED','V14 ve attempt 014','Runtime acceptance değildir'],['Supplemental kapsam','PASS',`${supp.supplemental_candidate_count} satır / ${supp.supplemental_unique_endpoints} endpoint / ${supp.supplemental_new_unique_endpoints_vs_acceptance} acceptance dışı endpoint`,'Display-only'],['Endpoint deduplikasyonu','PASS',supp.endpoint_inventory_correction,'Canlı parity değildir'],['Aday canlı parity',liveStatus,'130 aday / 16 endpoint count-SHA parity','Supplemental dahil değildir'],['Metropolitan force identity',force?.status||'PENDING_SINGLE_RUNNER','Resmî force kimliği','Kuvvet bağlamı'],['London LSOA',london?.status||'PENDING_SINGLE_RUNNER',london?.source_role||'Exact LSOA source gate',london?.scope_note||'LSOA ve CONNECT sınırları']];
+ document.getElementById('gates').innerHTML=gates.map(x=>`<tr><td>${esc(x[0])}</td><td class="${esc(x[1])}">${esc(x[1])}</td><td>${esc(x[2])}</td><td>${esc(x[3])}</td></tr>`).join('');
+ const groups=new Map();visibleRows.forEach(r=>{const u=r.official_api_url||'';if(!groups.has(u))groups.set(u,{count:0,crime:r.stored_crime_count,sha:r.stored_sha256||r.live_sha256,status:r.live_status||r.status});groups.get(u).count++});
+ document.getElementById('groups').innerHTML=[...groups.entries()].map(([u,g],i)=>`<tr><td>${i+1}</td><td>${g.count}</td><td>${esc(g.crime)}</td><td class="${esc(g.status)}">${esc(g.status)}</td><td class="url">${esc(u)}</td><td class="hash">${esc(g.sha)}</td></tr>`).join('');
+ document.getElementById('sources').innerHTML=(d.official_sources||[]).map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.role)}</td><td>${esc(x.latest_data_month||x.release_date)}</td><td>${esc(x.next_release_date||'—')}</td><td>${esc(x.accuracy_note)}</td></tr>`).join('');
+ document.getElementById('research').innerHTML=(research.official_observations||[]).map(x=>`<tr><td>${esc(x.source)}</td><td>${esc(x.observed_value)}</td><td>${esc(x.role)}</td><td>${esc(x.scope_limit)}</td></tr>`).join('');
+ document.getElementById('rows').innerHTML=visibleRows.map(x=>`<tr><td>${esc(x.parcel_id)}</td><td>${esc(x.security_score_percent)}</td><td>${esc(x.accuracy_score_4)}/4</td><td>${esc(x.source_geography_level)}</td><td>${esc(x.stored_http_status??x.http_status)}</td><td>${esc(x.stored_crime_count)}</td><td class="${esc(x.live_status||x.status)}">${esc(x.live_status||x.status)}</td><td class="url">${esc(x.official_api_url)}</td><td class="hash">${esc(x.stored_sha256||x.live_sha256)}</td></tr>`).join('');
+}).catch(e=>document.getElementById('summary').textContent='İlerleme verisi okunamadı: '+e);
+</script></body></html>

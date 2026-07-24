@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T17:36:10Z",
+  "state": "COORDINATE_DATUM_VINTAGE_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "HMLR_INSPIRE_TECHNICAL_GUIDANCE",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance",
+      "verified": true,
+      "facts": ["source_crs_epsg_27700", "wgs84_reprojection_shift_up_to_15m"],
+      "accepted_role": "BOUNDARY_CRS_AND_REPROJECTION_GUARD"
+    },
+    {
+      "source_id": "HMLR_INSPIRE_IDENTITY_SEMANTICS",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "verified": true,
+      "facts": ["unique_inspire_id_relates_to_registered_title", "polygon_extent_is_indicative"],
+      "accepted_role": "TITLE_IDENTITY_WITH_NONLEGAL_GEOMETRY_SEMANTICS"
+    },
+    {
+      "source_id": "EA_LIDAR_DTM_TIME_STAMPED_TILES",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "verified": true,
+      "facts": ["metres_above_ordnance_datum_newlyn", "epsg_27700", "plus_minus_15cm_rmse", "survey_specific_date_resolution_transformation_geoid_metadata"],
+      "accepted_role": "PRIMARY_ELEVATION_UNITS_DATUM_ACCURACY_AND_VINTAGE"
+    },
+    {
+      "source_id": "EA_PERSISTENT_WCS_AND_OSTN15",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/support/announcements/275811447/275811543",
+      "verified": true,
+      "facts": ["persistent_current_dtm1m_wcs", "current_endpoint_without_annual_url_change"],
+      "accepted_role": "REPEATABLE_PRIMARY_SOURCE_ACCESS"
+    },
+    {
+      "source_id": "OS_TERRAIN50_GML_CRS",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/gml-feature-types",
+      "verified": true,
+      "facts": ["horizontal_crs_epsg_27700", "feature_ids_regenerated_on_whole_tile_refresh"],
+      "accepted_role": "SECONDARY_SOURCE_CRS_AND_RELEASE_IDENTITY_GUARD"
+    },
+    {
+      "source_id": "OS_TERRAIN50_METADATA",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/metadata",
+      "verified": true,
+      "facts": ["vertical_crs_epsg_5701_ordnance_datum_newlyn", "earliest_and_latest_flying_dates_recorded"],
+      "accepted_role": "SECONDARY_SOURCE_VERTICAL_DATUM_AND_VINTAGE"
+    },
+    {
+      "source_id": "OS_TERRAIN50_ASCII_GRID_STRUCTURE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "verified": true,
+      "facts": ["200_by_200_cells", "50m_cellsize", "north_west_row_origin", "pixel_centre_height_values", "nearest_0_1m"],
+      "accepted_role": "SECONDARY_SOURCE_PIXEL_INDEXING_CONTRACT"
+    }
+  ],
+  "acceptance_rules": {
+    "coordinate_reference": [
+      "HMLR_SOURCE_GEOMETRY_EPSG_27700_REQUIRED",
+      "EA_PRIMARY_SAMPLE_EPSG_27700_REQUIRED",
+      "OS_SECONDARY_SAMPLE_EPSG_27700_REQUIRED",
+      "REPROJECTION_METHOD_AND_TOLERANCE_RECORDED",
+      "WEB_MAP_COORDINATE_ALONE_CANNOT_PROVE_CONTAINMENT"
+    ],
+    "vertical_datum": [
+      "EA_PRIMARY_HEIGHT_AODN_REQUIRED",
+      "OS_SECONDARY_HEIGHT_EPSG_5701_OR_EQUIVALENT_AODN_REQUIRED",
+      "NO_HEIGHT_DIFFERENCE_ACROSS_UNVERIFIED_DATUMS"
+    ],
+    "pixel_sampling": [
+      "OS_TILE_AND_ROW_DIRECTION_VALIDATED",
+      "OS_PIXEL_CENTRE_OFFSET_APPLIED",
+      "EA_RASTER_TRANSFORM_AND_NODATA_VALIDATED"
+    ],
+    "survey_vintage": [
+      "EA_LOCATION_SPECIFIC_SURVEY_DATE_REQUIRED",
+      "EA_TRANSFORMATION_AND_GEOID_MODEL_REQUIRED",
+      "OS_TILE_EARLIEST_AND_LATEST_FLYING_DATES_REQUIRED",
+      "SOURCE_RELEASE_IDENTIFIERS_SCOPED_TO_RELEASE"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_OUTPUT_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 11,
+  "source_checks_total": 11,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

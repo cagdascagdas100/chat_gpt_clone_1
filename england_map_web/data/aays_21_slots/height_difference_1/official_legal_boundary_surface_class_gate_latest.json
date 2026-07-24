@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T18:19:04Z",
+  "state": "LEGAL_BOUNDARY_SURFACE_CLASS_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "HMLR_TITLE_PLAN_AND_GENERAL_BOUNDARY_SEMANTICS",
+      "authority": "HM Land Registry",
+      "url": "https://www.gov.uk/government/publications/land-registry-plans-title-plan/land-registry-plans-title-plan-practice-guide-40-supplement-5",
+      "verified": true,
+      "facts": ["title_plan_read_with_register", "general_boundaries_unless_determined", "adjoining_plans_can_use_different_os_map_editions"],
+      "accepted_role": "REGISTER_CONTEXT_AND_GENERAL_BOUNDARY_CLASSIFICATION"
+    },
+    {
+      "source_id": "HMLR_GENERAL_BOUNDARY_PRECISION_LIMIT",
+      "authority": "HM Land Registry",
+      "url": "https://www.gov.uk/government/publications/hm-land-registry-plans-boundaries-pg40s3/land-registry-plans-boundaries-practice-guide-40-supplement-3",
+      "verified": true,
+      "facts": ["no_standard_tolerance_measurement_or_ratio_to_legal_boundary", "general_boundary_does_not_identify_exact_line"],
+      "accepted_role": "NO_LEGAL_PRECISION_OVERCLAIM"
+    },
+    {
+      "source_id": "HMLR_DETERMINED_BOUNDARY_REQUIREMENTS",
+      "authority": "HM Land Registry",
+      "url": "https://www.gov.uk/government/publications/boundary-agreements-and-determined-boundaries-pg40s4/practice-guide-40-land-registry-plans-supplement-4-boundary-agreements-and-determined-boundaries",
+      "verified": true,
+      "facts": ["determined_boundary_records_exact_line", "start_end_and_turning_points_required", "surrounding_detail_orientation_and_stated_scale_required"],
+      "accepted_role": "EXACT_BOUNDARY_DIRECT_EVIDENCE_CLASS"
+    },
+    {
+      "source_id": "HMLR_OS_MAP_CARTOGRAPHIC_LIMIT",
+      "authority": "HM Land Registry",
+      "url": "https://www.gov.uk/government/publications/land-registry-plans-the-basis-of-land-registry-applications/land-registry-plans-the-basis-of-land-registry-plans-practice-guide-40-supplement-1",
+      "verified": true,
+      "facts": ["os_mapping_cannot_replicate_every_physical_feature_exactly", "one_to_2500_line_approximately_0_6m_on_ground"],
+      "accepted_role": "CARTOGRAPHIC_LINE_WIDTH_UNCERTAINTY"
+    },
+    {
+      "source_id": "EA_DTM_DSM_SURFACE_CLASS",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/9ba4d5ac-d596-445a-9056-dae3ddec0178",
+      "verified": true,
+      "facts": ["dtm_is_terrain_surface", "dsm_includes_buildings_vegetation_vehicles_and_surface_objects"],
+      "accepted_role": "PRIMARY_RASTER_SURFACE_CLASS_VALIDATION"
+    },
+    {
+      "source_id": "EA_FILLED_NODATA_AND_LOCATION_LINEAGE",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/2e8d0733-4f43-48b4-9e51-631c25d1b0a9",
+      "verified": true,
+      "facts": ["water_and_other_nodata_areas_can_be_filled", "survey_index_available_per_location", "plus_minus_15cm_rmse_source_accuracy"],
+      "accepted_role": "MODELLED_WATER_FLAG_AND_SURVEY_LINEAGE"
+    },
+    {
+      "source_id": "OS_TERRAIN50_ACQUISITION_AND_SHARED_LINEAGE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview",
+      "verified": true,
+      "facts": ["integrated_3_to_5_year_flying_programme", "annual_publication", "grid_and_contours_share_source_data"],
+      "accepted_role": "SECONDARY_SOURCE_AGE_AND_DEPENDENCE_CONTROL"
+    },
+    {
+      "source_id": "OS_TERRAIN50_TIN_BREAKLINE_AND_TRANSPORT_SMOOTHING",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/height-and-imagery/os-terrain-50/os-terrain-50-overview/source-data",
+      "verified": true,
+      "facts": ["source_tin_uses_mass_points_and_breaklines", "grid_and_contours_interpolated_from_tin", "road_and_rail_surfaces_can_be_smoothed"],
+      "accepted_role": "SECONDARY_INTERPOLATION_AND_ENGINEERED_FEATURE_GUARD"
+    },
+    {
+      "source_id": "OS_TERRAIN50_TILE_AND_CONTOUR_SEMANTICS",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/data-structure",
+      "verified": true,
+      "facts": ["pixel_centre_values", "no_common_edge_values_between_tiles", "contours_have_10m_intervals", "spot_height_z_rounded_to_whole_metres"],
+      "accepted_role": "TILE_EDGE_AND_ROUNDED_VECTOR_EXCLUSION"
+    }
+  ],
+  "acceptance_rules": {
+    "legal_boundary_evidence": [
+      "INSPIRE_AND_TITLE_PLAN_LINES_CLASSIFIED_AS_CANDIDATE_OR_GENERAL_BOUNDARY_ONLY",
+      "TITLE_PLAN_READ_WITH_REGISTER_AND_REFERENCED_DOCUMENTS",
+      "NO_FIXED_METRE_TOLERANCE_LABELLED_AS_LEGAL_BOUNDARY_ACCURACY",
+      "EXACT_BOUNDARY_REQUIRES_DETERMINED_BOUNDARY_OR_EQUIVALENT_DIRECT_LEGAL_EVIDENCE",
+      "ADJOINING_MAP_EDITION_MISMATCH_REVIEW_REQUIRED"
+    ],
+    "surface_class": [
+      "EA_DTM_REQUIRED_FOR_PRIMARY_GROUND_HEIGHT",
+      "EA_DSM_FIRST_RETURN_OR_OBJECT_SURFACE_REJECTED_AS_GROUND_TRUTH",
+      "FILLED_WATER_OR_OTHER_NODATA_VALUES_FLAGGED_AS_MODELLED",
+      "EA_SURVEY_INDEX_AND_VERTICAL_ACCURACY_RECORDED_PER_SAMPLE"
+    ],
+    "secondary_source": [
+      "OS_GRID_AND_CONTOURS_NOT_COUNTED_AS_INDEPENDENT_SOURCES",
+      "OS_ACQUISITION_AGE_RECORDED_SEPARATELY_FROM_PUBLICATION_DATE",
+      "TIN_BREAKLINE_AND_TRANSPORT_SMOOTHING_LINEAGE_RECORDED",
+      "NO_CROSS_TILE_EDGE_EQUALITY_ASSUMPTION",
+      "NO_CONTOUR_OR_ROUNDED_SPOT_HEIGHT_SUBSTITUTION_FOR_RASTER_SAMPLE"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 16,
+  "source_checks_total": 16,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

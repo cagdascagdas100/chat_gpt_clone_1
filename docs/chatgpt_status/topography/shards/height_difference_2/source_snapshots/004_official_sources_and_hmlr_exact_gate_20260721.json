@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "captured_at": "2026-07-21T05:01:00+03:00",
+  "purpose": "Revalidate current official source contracts and bind them to the fail-closed three-parcel workflow.",
+  "sources": [
+    {
+      "source_id": "hmlr_inspire_index_polygons",
+      "publisher": "HM Land Registry",
+      "official_information_url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "official_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "release_window": "July 2026",
+      "metadata_last_updated": "2026-07-08",
+      "update_frequency": "first Sunday monthly; previous-month data",
+      "format": "GML by local authority",
+      "identity_contract": "unique Land Registry INSPIRE ID",
+      "geometry_semantics": "indicative position and extent of registered freehold property; not legal title extent",
+      "operational_gate": "unique normalized authority download link, SHA-256 capture, exact HMLR INSPIRE-ID match, candidate point inside polygon",
+      "nearest_or_fuzzy_authority_match_allowed": false,
+      "point_in_polygon_only_fallback_allowed": false
+    },
+    {
+      "source_id": "environment_agency_lidar_composite_dtm_1m",
+      "publisher": "Environment Agency",
+      "official_dataset_url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "official_wcs_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "coverage": "approximately 99 percent of England",
+      "spatial_resolution": "1 metre",
+      "processing_crs": "EPSG:27700",
+      "vertical_reference": "Ordnance Datum Newlyn",
+      "source_accuracy_metadata": "individual surveys +/-15 cm RMSE",
+      "measurement_contract": "valid pixels inside exact HMLR polygon; median, Q1 and Q3; no centroid promotion"
+    },
+    {
+      "source_id": "os_terrain_50",
+      "publisher": "Ordnance Survey",
+      "official_download_url": "https://osdatahub.os.uk/downloads/open/Terrain50",
+      "version_date": "July 2026",
+      "coverage": "Great Britain",
+      "licence": "Open Government Licence",
+      "formats": ["ASCII Grid", "GML Grid", "Shapefile", "GML", "GeoPackage", "Vector Tiles"],
+      "role": "secondary numeric crosscheck only",
+      "operational_gate": "HTTPS download, archive and ASCII/GML validation, SHA-256 capture"
+    }
+  ],
+  "canonical_identity_source": {
+    "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+    "blob_sha": "ca95400a5644f77a79cbaf47b2c2d611d3777a55",
+    "feature_count": 77970,
+    "slot_range": {"start": 30762, "end": 61522},
+    "candidate_target_rows": [30762, 46142, 61522],
+    "legacy_point_elevation_promotion_forbidden": true
+  },
+  "workflow_order": [
+    "stream_three_explicit_row_candidates",
+    "adapt_lon_lat_to_epsg27700_starter_manifest",
+    "resolve_and_download_current_hmlr_authority_gml",
+    "match_exact_hmlr_inspire_id_and_require_point_inside",
+    "sample_ea_dtm1m_inside_polygon",
+    "crosscheck_os_terrain50",
+    "publish_only_source_backed_rows"
+  ],
+  "real_candidate_rows_written": 0,
+  "official_polygon_measurements_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

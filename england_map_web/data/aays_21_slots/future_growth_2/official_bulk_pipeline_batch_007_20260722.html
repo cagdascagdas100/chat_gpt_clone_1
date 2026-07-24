@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 — resmî bulk pipeline batch 007</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:160px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:11px}
+th,td{border:1px solid #cfd8dc;padding:5px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}
+.ok{color:#176b2c;font-weight:bold}.pending{color:#8a5a00;font-weight:bold}.warn{color:#8b4f00;font-weight:bold}
+.notice{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin-bottom:12px}code,a{word-break:break-all}
+</style></head><body>
+<h1>future_growth_2 — satır satır resmî bulk pipeline / batch 007</h1>
+<div class="notice">Bu görünüm resmî dataset sayfalarını, kesin bulk indirme yollarını ve çalıştırılabilir mekânsal işleri gösterir. Dosya gövdesi indirilip SHA-256 doğrulanmadan ve kesişim birincil kaynakla çapraz kontrol edilmeden skor üretilmez.</div>
+<div id="cards" class="cards"></div>
+<table><thead><tr><th>İşlem</th><th>Satır</th><th>Parsel</th><th>Belediye</th><th>Kontrol</th><th>Konu</th><th>Kaynak</th><th>Sonuç</th><th>Kanıt sınıfı</th><th>Kaynak doğruluğu</th><th>Kesin bağ</th><th>Skor</th><th>Güven</th><th>Not</th></tr></thead><tbody id="ops"></tbody></table>
+<p id="meta"></p><p id="error"></p>
+<script>
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base=(n,row,op,subject,source,result,cls,note)=>({operation_no:n,row_no:row?.row_no??'SYSTEM',parcel_id:row?.parcel_id??'—',lpa:row?.lpa??'England',operation:op,subject,source,result,evidence_class:cls,source_authority_pct:100,exact_binding_pct:0,future_growth_score:null,confidence_pct:0,note});
+function build(d){
+ const a=[];let n=0;
+ d.rows.forEach(r=>a.push(base(++n,r,'CANONICAL_POINT_IDENTITY',`${r.lon},${r.lat}`,'england_map_web/data/aays_21_slots/height_difference_2/canonical_points_runtime_032.json','VERIFIED_CANONICAL_POINT','CANONICAL_ROW_POINT','WGS84 canonical point verified; parcel polygon proof is not asserted.')));
+ d.datasets.forEach(x=>a.push(base(++n,null,'OFFICIAL_DATASET_METADATA',x.title,`https://www.planning.data.gov.uk/dataset/${x.slug}`,'VERIFIED_DATASET_PAGE',x.quality_class,`Total ${x.total}; providers ${x.providers}; collector ${x.collector}; new data ${x.new_data}. ${x.quality_note}`)));
+ d.datasets.forEach(x=>(x.spatial?['csv','json','geojson','parquet']:['csv','json']).forEach(ext=>a.push(base(++n,null,'OFFICIAL_BULK_DOWNLOAD_ENDPOINT',`${x.slug}.${ext}`,`https://files.planning.data.gov.uk/dataset/${x.slug}.${ext}`,'URL_VERIFIED_FROM_OFFICIAL_DOWNLOAD_LINK','OFFICIAL_MACHINE_ENDPOINT','Exact official download URL discovered; current environment DNS prevented body download.'))));
+ d.rows.forEach(r=>d.datasets.filter(x=>x.spatial).forEach(x=>a.push(base(++n,r,'PLANNING_DATA_BULK_SPATIAL_JOB',x.title,`https://files.planning.data.gov.uk/dataset/${x.slug}.geojson`,x.geometry_semantics==='POINT_ONLY'?'POINT_PROXIMITY_TEMPLATE_ONLY':'BULK_POINT_IN_POLYGON_JOB_READY',x.quality_class,x.geometry_semantics==='POINT_ONLY'?'Listed-building data is point-only and cannot establish affected extent.':'Download, hash, spatial-filter and cross-check before any score.'))));
+ d.rows.forEach(r=>r.layers.forEach(layer=>{const p=String(layer[0]).split('@'),id=p[0],svc=p.length>1?p.slice(1).join('@'):r.arcgis_service;a.push(base(++n,r,'ARCGIS_EXACT_INTERSECTION_JOB',`${layer[1]} (layer ${id})`,`${svc}/${id}`,'OFFICIAL_LAYER_QUERY_JOB_READY','OFFICIAL_ARCGIS_POLYGON_LAYER','Use WGS84 point with inSR=4326 and esriSpatialRelIntersects; commit raw JSON before interpretation.'));}));
+ d.system_validation_rows.forEach(v=>a.push(base(++n,null,v.code,'—',d.script_path,v.result,'SYSTEM_VALIDATION',v.note)));
+ if(a.length!==d.operation_generation.expected_total)throw new Error(`İşlem sayısı uyuşmuyor ${a.length}/${d.operation_generation.expected_total}`);
+ return a;
+}
+fetch('./official_bulk_pipeline_batch_007_20260722.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const ops=build(d),c=[['Batch işlem',d.batch_operations_completed+'/'+d.batch_operations_total],['Kümülatif işlem',d.cumulative_operations_completed],
+ ['Başarısız hazırlık',d.failed_preparation_operations],['Aday',d.candidate_rows_cumulative],['Dataset sayfası',d.official_dataset_pages_revalidated],
+ ['Yeni resmî kaynak',d.new_unique_official_source_pages],['Toplam resmî kaynak',d.cumulative_unique_official_source_pages],
+ ['Bulk endpoint',d.exact_bulk_download_endpoints],['Bulk mekânsal iş',d.planning_data_bulk_spatial_jobs],
+ ['ArcGIS iş',d.arcgis_exact_intersection_jobs],['Sistem doğrulama',d.system_validations],
+ ['Hazırlık ilerlemesi',d.bulk_pipeline_readiness_pct+'%'],['Canlı indirme',d.live_bulk_download_pct+'%'],['Kesin eşleşme',d.exact_binding_progress_pct+'%']];
+ document.getElementById('cards').innerHTML=c.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
+ document.getElementById('ops').innerHTML=ops.map(x=>`<tr><td>${e(x.operation_no)}</td><td>${e(x.row_no)}</td><td>${e(x.parcel_id)}</td><td>${e(x.lpa)}</td>
+ <td>${e(x.operation)}</td><td>${e(x.subject)}</td><td><a href="${e(x.source)}" target="_blank" rel="noopener">${e(x.source)}</a></td>
+ <td class="${String(x.result).includes('READY')||String(x.result).includes('URL_')?'pending':'ok'}">${e(x.result)}</td>
+ <td class="${String(x.evidence_class).includes('MIXED')||String(x.evidence_class).includes('MHCLG')||String(x.evidence_class).includes('POINT_ONLY')?'warn':'ok'}">${e(x.evidence_class)}</td>
+ <td class="ok">${e(x.source_authority_pct)}%</td><td class="pending">${e(x.exact_binding_pct)}%</td><td>null</td><td>0%</td><td>${e(x.note)}</td></tr>`).join('');
+ document.getElementById('meta').innerHTML=`Continuation: <code>${e(d.continuation_key)}</code><br>Script: <code>${e(d.script_path)}</code><br>Gösterilen işlem: ${ops.length}<br>Manual action: <code>${e(d.manual_action_path)}</code>`;
+}).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
+</script></body></html>

@@ -1,0 +1,26 @@
+# ReadyToSell 3 — Wave 11 research and worker expansion
+
+- Slot: `ready_to_sell_3`
+- Parcel partition: `61523-92283`
+- Branch read/write target: `codex/aays-single-runner-v5-20260706`
+- New candidate-only rows: 8
+- New high source-confidence rows: 6
+- New cross-check targets: 4
+- New marketing-status revalidation rows: 2
+- New concept/pending-permission rows: 4
+- Existing secondary worker expanded from 64 to 72 candidates
+- Source plus planning HTTP targets expanded from 99 to 111
+- Concurrent request limit remains 3
+- New runner: false
+- New queue: false
+- Promoted rows: 0
+- Source hashes: 0 pending canonical runner
+- Parcel matches: 0
+- Geometry matches: 0
+- Blocker: canonical coordinator inactive; ownership unclaimed; heartbeat absent/stale; two tasks pending
+- final_ready: false
+- product_final_ready: false
+- fake_data: false
+- db_write: false
+- migration: false
+- production_deploy: false

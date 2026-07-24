@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "payload_revision": 14,
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "source_head_observed": "75484efe6669bd382ccc348911f5477d93eb50e2",
+  "generated_at": "2026-07-23T00:50:00Z",
+  "range": "633-685",
+  "operations": [
+    {
+      "operation_no": 633,
+      "state": "completed",
+      "operation": "READ_FRESH_CANONICAL_BRANCH_HEAD_WITHOUT_REBINDING_CONTINUATION_KEY",
+      "evidence": "75484efe6669bd382ccc348911f5477d93eb50e2",
+      "accuracy_effect": "detects shared-branch movement while preserving continuation idempotency"
+    },
+    {
+      "operation_no": 634,
+      "state": "completed",
+      "operation": "REVERIFY_HEIGHT_DIFFERENCE_1_OWNER_REMAINS_UNCLAIMED",
+      "evidence": "docs/chatgpt_status/_shared/slots_21/height_difference_1/ownership_latest.json",
+      "accuracy_effect": "prevents duplicate owner task or runner"
+    },
+    {
+      "operation_no": 635,
+      "state": "completed",
+      "operation": "REVERIFY_MANUAL_ACTION_REMAINS_OPEN",
+      "evidence": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
+      "accuracy_effect": "keeps blocked runtime work fail-closed"
+    },
+    {
+      "operation_no": 636,
+      "state": "completed",
+      "operation": "REVERIFY_F_HOST_AUTH_PREFLIGHT_REMOTE_OUTPUT_REMAINS_ABSENT",
+      "evidence": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/027_noninteractive_publish_auth_preflight_latest.json:404",
+      "accuracy_effect": "keeps retry disabled until actual host proof exists"
+    },
+    {
+      "operation_no": 637,
+      "state": "completed",
+      "operation": "REVERIFY_REVISION_14_RUNTIME_OUTPUT_REMAINS_ABSENT",
+      "evidence": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/016_revision_14_direct_hmlr_monthly_gml_refresh_latest.json:404",
+      "accuracy_effect": "prevents invented boundary or elevation rows"
+    },
+    {
+      "operation_no": 638,
+      "state": "completed",
+      "operation": "REVERIFY_REVISION_14_INTEGRITY_READBACK_REMAINS_ABSENT",
+      "evidence": "docs/chatgpt_status/topography/shards/height_difference_1/runner_outputs/025_revision_14_output_integrity_readback_latest.json:404",
+      "accuracy_effect": "blocks promotion without remote output integrity"
+    },
+    {
+      "operation_no": 639,
+      "state": "completed",
+      "operation": "VERIFY_PROJ_NETWORK_CAPABILITY_IS_DISABLED_BY_DEFAULT_IN_PROJ_INI",
+      "evidence": "https://proj.org/en/stable/resource_files.html",
+      "accuracy_effect": "establishes a deterministic no-network baseline"
+    },
+    {
+      "operation_no": 640,
+      "state": "completed",
+      "operation": "VERIFY_PROJ_NETWORK_CAN_BE_ENABLED_BY_PROJ_INI_ENVIRONMENT_OR_CONTEXT_API",
+      "evidence": "https://proj.org/en/stable/usage/network.html",
+      "accuracy_effect": "identifies every override path that could fetch mutable grids"
+    },
+    {
+      "operation_no": 641,
+      "state": "completed",
+      "operation": "FORCE_PROJ_NETWORK_OFF_IN_PROJ_INI_ENVIRONMENT_AND_CONTEXT",
+      "evidence": "PROJ resource and network configuration contract",
+      "accuracy_effect": "prevents silent remote grid substitution during production transforms"
+    },
+    {
+      "operation_no": 642,
+      "state": "completed",
+      "operation": "RECORD_PROJ_REMOTE_DATA_STATUS_AND_NETWORK_ENDPOINT",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "makes accidental network enablement auditable"
+    },
+    {
+      "operation_no": 643,
+      "state": "completed",
+      "operation": "VERIFY_REMOTE_CDN_FALLBACK_OCCURS_WHEN_A_REQUIRED_GRID_IS_NOT_FOUND_LOCALLY_AND_NETWORK_IS_ENABLED",
+      "evidence": "https://proj.org/en/stable/usage/network.html",
+      "accuracy_effect": "detects a mutable external dependency in coordinate operations"
+    },
+    {
+      "operation_no": 644,
+      "state": "completed",
+      "operation": "FORBID_REMOTE_CDN_FALLBACK_FOR_REFERENCE_AND_PRODUCTION_RUNS",
+      "evidence": "PROJ network fallback semantics",
+      "accuracy_effect": "requires every transformation grid to be locally pinned"
+    },
+    {
+      "operation_no": 645,
+      "state": "completed",
+      "operation": "VERIFY_PROJ_REMOTE_GRID_CHUNKS_USE_A_LOCAL_SQLITE_CACHE_WITH_SIZE_AND_TTL_SETTINGS",
+      "evidence": "https://proj.org/en/stable/usage/network.html",
+      "accuracy_effect": "identifies cached remote state that can outlive a source release"
+    },
+    {
+      "operation_no": 646,
+      "state": "completed",
+      "operation": "DISABLE_OR_ISOLATE_PROJ_GRID_CACHE_AND_REJECT_UNPINNED_CACHED_CHUNKS",
+      "evidence": "https://proj.org/en/stable/development/reference/functions.html",
+      "accuracy_effect": "prevents stale cache contents from changing selected corrections"
+    },
+    {
+      "operation_no": 647,
+      "state": "completed",
+      "operation": "RECORD_PROJ_CACHE_FILENAME_SIZE_TTL_AND_SHA256_WHEN_A_CACHE_IS_INTENTIONALLY_USED",
+      "evidence": "PROJ cache API and proj.ini contract",
+      "accuracy_effect": "makes any accepted cached resource state reproducible"
+    },
+    {
+      "operation_no": 648,
+      "state": "completed",
+      "operation": "VERIFY_PROJ_RESOURCE_LOOKUP_USES_PROJ_DATA_BUILT_IN_PATHS_AND_CURRENT_DIRECTORY",
+      "evidence": "https://proj.org/en/stable/faq.html",
+      "accuracy_effect": "identifies current-directory shadowing of proj.db or grids"
+    },
+    {
+      "operation_no": 649,
+      "state": "completed",
+      "operation": "PIN_PROJ_DATA_TO_ONE_CONTROLLED_READ_ONLY_RESOURCE_DIRECTORY",
+      "evidence": "PROJ resource search-path contract",
+      "accuracy_effect": "prevents host-specific resource resolution"
+    },
+    {
+      "operation_no": 650,
+      "state": "completed",
+      "operation": "FORBID_CURRENT_DIRECTORY_FALLBACK_AND_RECORD_PROJINFO_SEARCHPATHS",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "blocks accidental local-file shadowing"
+    },
+    {
+      "operation_no": 651,
+      "state": "completed",
+      "operation": "HASH_PROJ_DB_PROJ_INI_AND_EVERY_REQUIRED_HORIZONTAL_AND_VERTICAL_GRID",
+      "evidence": "PROJ resource-file model",
+      "accuracy_effect": "pins the exact transformation resource set"
+    },
+    {
+      "operation_no": 652,
+      "state": "completed",
+      "operation": "RECORD_PROJ_RELEASE_PROJ_DATA_RELEASE_AND_DATABASE_STRUCTURE_METADATA",
+      "evidence": "https://proj.org/en/stable/development/reference/functions.html",
+      "accuracy_effect": "supports exact replay against the same software and registry layout"
+    },
+    {
+      "operation_no": 653,
+      "state": "completed",
+      "operation": "USE_EXPLICIT_PROJINFO_MAIN_DB_PATH_AND_REJECT_UNDECLARED_AUXILIARY_DATABASES",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "prevents auxiliary registry entries from changing operation selection"
+    },
+    {
+      "operation_no": 654,
+      "state": "completed",
+      "operation": "RECORD_PROJINFO_OPERATION_NAME_ACCURACY_AND_AREA_OF_USE_SUMMARY",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "makes selected transformation quality visible"
+    },
+    {
+      "operation_no": 655,
+      "state": "completed",
+      "operation": "REQUIRE_PROJINFO_GRID_CHECK_DISCARD_MISSING",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "removes operations whose required grids are unavailable"
+    },
+    {
+      "operation_no": 656,
+      "state": "completed",
+      "operation": "REQUIRE_HIDE_BALLPARK_EXPLICIT_ACCURACY_LIMIT_AND_AREA_OR_BBOX_FILTER",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "prevents low-accuracy or out-of-area fallback operations"
+    },
+    {
+      "operation_no": 657,
+      "state": "completed",
+      "operation": "STORE_PROJJSON_PIPELINE_GRID_LIST_AND_OPERATION_OUTPUT_HASH",
+      "evidence": "https://proj.org/en/stable/apps/projinfo.html",
+      "accuracy_effect": "creates a machine-verifiable transformation identity"
+    },
+    {
+      "operation_no": 658,
+      "state": "completed",
+      "operation": "VERIFY_GDAL_RUNTIME_CONFIGURATION_OPTIONS_CAN_BE_GLOBAL_OR_THREAD_LOCAL",
+      "evidence": "https://gdal.org/en/stable/user/configoptions.html",
+      "accuracy_effect": "identifies thread-scope configuration drift"
+    },
+    {
+      "operation_no": 659,
+      "state": "completed",
+      "operation": "RECORD_EFFECTIVE_GDAL_CONFIGURATION_VALUES_AND_SCOPE_BEFORE_OPENING_DATASETS",
+      "evidence": "GDAL runtime configuration contract",
+      "accuracy_effect": "makes every processing option auditable"
+    },
+    {
+      "operation_no": 660,
+      "state": "completed",
+      "operation": "USE_ONE_HASHED_CONTROLLED_GDAL_CONFIG_AND_IGNORE_UNDECLARED_AMBIENT_OVERRIDES",
+      "evidence": "https://gdal.org/en/stable/user/configoptions.html",
+      "accuracy_effect": "prevents host environment variables from changing processing"
+    },
+    {
+      "operation_no": 661,
+      "state": "completed",
+      "operation": "ENABLE_UNKNOWN_GDAL_CONFIGURATION_OPTION_DIAGNOSTICS_AND_FAIL_ON_MISSPELLED_KEYS",
+      "evidence": "https://gdal.org/en/stable/user/configoptions.html",
+      "accuracy_effect": "prevents silently ignored accuracy-critical options"
+    },
+    {
+      "operation_no": 662,
+      "state": "completed",
+      "operation": "RECORD_GDAL_RUNTIME_VERSION_RELEASE_DATE_RELEASE_NAME_AND_BUILD_INFO",
+      "evidence": "https://gdal.org/en/stable/doxygen/gdal_8h.html",
+      "accuracy_effect": "pins the executable and build-time feature set"
+    },
+    {
+      "operation_no": 663,
+      "state": "completed",
+      "operation": "PIN_GDAL_DATA_DRIVER_PATH_PLUGIN_SET_AND_AVAILABLE_DRIVER_LIST",
+      "evidence": "GDAL runtime and driver configuration contract",
+      "accuracy_effect": "prevents a different plugin or driver from interpreting the same file"
+    },
+    {
+      "operation_no": 664,
+      "state": "completed",
+      "operation": "RECORD_GDAL_NUM_THREADS_GTiff_NUM_THREADS_AND_WARP_NUM_THREADS",
+      "evidence": "https://gdal.org/en/stable/user/configoptions.html",
+      "accuracy_effect": "makes concurrency settings reproducible"
+    },
+    {
+      "operation_no": 665,
+      "state": "completed",
+      "operation": "REQUIRE_SINGLE_THREAD_REFERENCE_RUN_AND_COMPARE_WITH_CONFIGURED_MULTITHREAD_RUN",
+      "evidence": "GDAL threading and warp contracts",
+      "accuracy_effect": "detects thread-dependent numerical or ordering differences"
+    },
+    {
+      "operation_no": 666,
+      "state": "completed",
+      "operation": "VERIFY_GDALWARP_DIVIDES_OUTPUT_INTO_CHUNKS_CONTROLLED_BY_WARP_MEMORY",
+      "evidence": "https://gdal.org/en/stable/programs/gdalwarp.html",
+      "accuracy_effect": "identifies memory-dependent processing partitioning"
+    },
+    {
+      "operation_no": 667,
+      "state": "completed",
+      "operation": "PIN_WARP_MEMORY_LIMIT_AND_RECORD_EFFECTIVE_CHUNK_LAYOUT",
+      "evidence": "https://gdal.org/en/stable/tutorials/warp_tut.html",
+      "accuracy_effect": "prevents memory availability from silently changing processing"
+    },
+    {
+      "operation_no": 668,
+      "state": "completed",
+      "operation": "VERIFY_XSCALE_AND_YSCALE_ARE_COMPUTED_PER_CHUNK_AND_CAN_CHANGE_PIXEL_OUTPUT",
+      "evidence": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "accuracy_effect": "identifies chunk-shape sensitivity in resampling"
+    },
+    {
+      "operation_no": 669,
+      "state": "completed",
+      "operation": "PIN_CONSTANT_XSCALE_AND_YSCALE_WHEN_VALID_OR_USE_AN_EXACT_REFERENCE_TRANSFORM",
+      "evidence": "GDAL warp reproducibility guidance",
+      "accuracy_effect": "stabilizes source-pixel support across runs"
+    },
+    {
+      "operation_no": 670,
+      "state": "completed",
+      "operation": "VERIFY_SRC_COORD_PRECISION_CAN_REDUCE_MEMORY_CHUNK_SENSITIVITY_WHEN_AT_LEAST_TEN_TIMES_ERROR_THRESHOLD",
+      "evidence": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "accuracy_effect": "adds an official reproducibility condition for approximate transforms"
+    },
+    {
+      "operation_no": 671,
+      "state": "completed",
+      "operation": "USE_ERROR_THRESHOLD_ZERO_FOR_REFERENCE_RUN_OR_PIN_ERROR_THRESHOLD_AND_SRC_COORD_PRECISION",
+      "evidence": "https://gdal.org/en/stable/doxygen/gdalwarper_8h.html",
+      "accuracy_effect": "prevents uncontrolled coordinate approximation"
+    },
+    {
+      "operation_no": 672,
+      "state": "completed",
+      "operation": "VERIFY_OPTIMIZE_SIZE_CAN_CHANGE_WARP_CHUNK_SHAPE_AND_PIXEL_OUTPUT",
+      "evidence": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "accuracy_effect": "identifies compression optimization as a numerical setting"
+    },
+    {
+      "operation_no": 673,
+      "state": "completed",
+      "operation": "PIN_OPTIMIZE_SIZE_AND_COMPARE_PIXEL_HASH_AGAINST_THE_REFERENCE_SETTING",
+      "evidence": "GDAL warp option semantics",
+      "accuracy_effect": "prevents automatic version-dependent optimization from changing values"
+    },
+    {
+      "operation_no": 674,
+      "state": "completed",
+      "operation": "PIN_UNIFIED_SRC_NODATA_MODE_EXPLICITLY",
+      "evidence": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "accuracy_effect": "prevents version-dependent multiband validity semantics"
+    },
+    {
+      "operation_no": 675,
+      "state": "completed",
+      "operation": "PIN_INIT_DEST_AND_DISABLE_UNREVIEWED_SKIP_NOSOURCE_AUTOMATION",
+      "evidence": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "accuracy_effect": "prevents uninitialized or stale destination pixels"
+    },
+    {
+      "operation_no": 676,
+      "state": "completed",
+      "operation": "VERIFY_GDALWARP_CAN_USE_SOURCE_OVERVIEWS_CREATED_WITH_A_DIFFERENT_RESAMPLING_METHOD",
+      "evidence": "https://gdal.org/en/stable/programs/gdalwarp.html",
+      "accuracy_effect": "identifies hidden lower-resolution source substitution"
+    },
+    {
+      "operation_no": 677,
+      "state": "completed",
+      "operation": "FORCE_OVERVIEW_LEVEL_NONE_FOR_REFERENCE_ELEVATION_SAMPLING",
+      "evidence": "GDAL source overview selection semantics",
+      "accuracy_effect": "ensures source-of-truth pixels are sampled"
+    },
+    {
+      "operation_no": 678,
+      "state": "completed",
+      "operation": "VERIFY_MULTIPLE_GDALWARP_INPUTS_ARE_PROCESSED_IN_LIST_ORDER_AND_CAN_CREATE_EDGE_EFFECTS",
+      "evidence": "https://gdal.org/en/stable/programs/gdalwarp.html",
+      "accuracy_effect": "identifies order-dependent mosaic values"
+    },
+    {
+      "operation_no": 679,
+      "state": "completed",
+      "operation": "USE_A_HASHED_VRT_OR_FIXED_SORTED_INPUT_ORDER_WITH_OVERLAP_POLICY",
+      "evidence": "GDAL multiple-input guidance",
+      "accuracy_effect": "makes mosaicing order deterministic"
+    },
+    {
+      "operation_no": 680,
+      "state": "completed",
+      "operation": "VERIFY_GTIFF_SPARSE_BLOCKS_CAN_READ_AS_ZERO_OR_NODATA_WITHOUT_ALLOCATED_STORAGE",
+      "evidence": "https://gdal.org/en/stable/drivers/raster/gtiff.html",
+      "accuracy_effect": "detects implicit blocks that can masquerade as elevations"
+    },
+    {
+      "operation_no": 681,
+      "state": "completed",
+      "operation": "SET_SPARSE_OK_FALSE_AND_VALIDATE_TILE_OFFSETS_BYTE_COUNTS_MASK_AND_NODATA",
+      "evidence": "GDAL GeoTIFF sparse-file semantics",
+      "accuracy_effect": "prevents implicit-zero terrain samples"
+    },
+    {
+      "operation_no": 682,
+      "state": "completed",
+      "operation": "KEEP_GTIFF_IGNORE_READ_ERRORS_FALSE_AND_FAIL_ON_LIBTIFF_ERRORS",
+      "evidence": "https://gdal.org/en/stable/drivers/raster/gtiff.html",
+      "accuracy_effect": "prevents partial or corrupted rasters from being silently accepted"
+    },
+    {
+      "operation_no": 683,
+      "state": "completed",
+      "operation": "RUN_THREE_IDENTICAL_REFERENCE_PIPELINES_AND_REQUIRE_EQUAL_FLOAT64_PIXEL_HASHES",
+      "evidence": "deterministic replay methodology derived from pinned PROJ and GDAL state",
+      "accuracy_effect": "detects nondeterministic output under identical inputs"
+    },
+    {
+      "operation_no": 684,
+      "state": "completed",
+      "operation": "COMPARE_SINGLE_AND_MULTI_THREAD_VALID_COUNTS_STATISTICS_AND_FLOAT64_PIXEL_HASHES",
+      "evidence": "GDAL thread configuration and exact-output control",
+      "accuracy_effect": "permits concurrency only after numerical equivalence is proven"
+    },
+    {
+      "operation_no": 685,
+      "state": "completed",
+      "operation": "PUBLISH_SOFTWARE_ENVIRONMENT_DETERMINISM_GATE_AND_EXTEND_WEB_LINE_ITEM_PAGE",
+      "evidence": "england_map_web/data/aays_21_slots/height_difference_1/official_software_environment_determinism_gate_latest.json",
+      "accuracy_effect": "makes software network cache chunk and threading controls visible line by line"
+    }
+  ],
+  "increment_metrics": {
+    "operation_rows_added": 53,
+    "official_source_checks_added": 28,
+    "official_source_checks_passed": 28,
+    "source_upgrades_added": 26,
+    "methodology_upgrades_added": 17,
+    "candidate_rows_added": 0,
+    "official_measured_rows_added": 0,
+    "height_difference_rows_added": 0
+  },
+  "canonical_progress": {
+    "planned_operations": 685,
+    "completed_operations": 680,
+    "blocked_operations": 5,
+    "overall_percent": 99.27,
+    "percent_change": 0.06,
+    "product_completion_percent": 78,
+    "product_percent_change": 0
+  },
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/height_difference_1.json",
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "output_semantics": "NO_DATA_NOT_INFERRED",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

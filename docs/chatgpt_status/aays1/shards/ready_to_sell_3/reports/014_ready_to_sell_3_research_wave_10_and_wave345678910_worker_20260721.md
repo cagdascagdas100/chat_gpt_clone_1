@@ -1,0 +1,26 @@
+# ReadyToSell 3 — Wave 10 research and worker expansion
+
+- Slot: `ready_to_sell_3`
+- Parcel partition: `61523-92283`
+- New candidate-only rows: 8
+- Total visible research rows: 72
+- Total candidate targets including initial five: 77
+- Manually preverified source confidence >=90: 64
+- Cross-checked candidate rows: 35
+- Marketing-status revalidation rows: 6
+- Concept/no-permission rows: 4
+- Existing secondary worker scope: waves 3-10, 64 candidates, 99 source/planning HTTP targets
+- Concurrent request limit: 3
+- Promoted rows: 0
+- Source hashes: 0 (canonical runner pending)
+- Parcel matches: 0
+- Geometry matches: 0
+- Completed operations: 34/37
+- Overall progress: 91.89%
+- Progress increase: +0.71 points
+- Blocker: canonical coordinator inactive; ownership unclaimed; heartbeat absent/stale; two queue tasks pending
+- `final_ready=false`
+- `fake_data=false`
+- `db_write=false`
+- `migration=false`
+- `production_deploy=false`

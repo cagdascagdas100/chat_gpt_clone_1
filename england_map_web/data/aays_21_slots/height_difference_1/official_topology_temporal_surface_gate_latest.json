@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T17:57:52Z",
+  "state": "TOPOLOGY_TEMPORAL_SURFACE_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "HMLR_INSPIRE_ACCESS_AND_IDENTITY",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "verified": true,
+      "facts": ["first_sunday_monthly_release_contains_previous_month", "cross_local_authority_duplicates_possible", "one_title_can_have_multiple_polygons", "absence_of_inspire_id_is_not_absence_of_registration", "hmlr_and_os_attribution_required"],
+      "accepted_role": "BOUNDARY_RELEASE_IDENTITY_DUPLICATE_AND_LICENCE_CONTROL"
+    },
+    {
+      "source_id": "HMLR_NATIONAL_POLYGON_QUALITY_MODEL",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/nps/tech-spec/1",
+      "verified": true,
+      "facts": ["gaps_overlaps_slivers_underlaps_exist", "technical_and_actual_overlaps_have_different_meanings", "zero_coordinate_zero_area_and_duplicate_point_checks", "polygons_below_0_1_square_metres_removed", "previous_versions_not_retained"],
+      "accepted_role": "TOPOLOGY_ANOMALY_AND_IMMUTABLE_SNAPSHOT_CONTROL"
+    },
+    {
+      "source_id": "EA_LIDAR_COMPOSITE_TEMPORAL_LINEAGE",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "verified": true,
+      "facts": ["survey_span_2000_to_2022", "newest_best_resolution_preferred", "metadata_index_required_per_location"],
+      "accepted_role": "PRIMARY_ELEVATION_LOCATION_SPECIFIC_TEMPORAL_PROVENANCE"
+    },
+    {
+      "source_id": "EA_TIME_STAMPED_RESOLUTION_AND_GEOID",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "verified": true,
+      "facts": ["resolutions_25cm_50cm_1m_2m", "survey_specific_transformation_and_geoid", "survey_date_metadata_required"],
+      "accepted_role": "PRIMARY_ELEVATION_RESOLUTION_AND_VERTICAL_RECONCILIATION"
+    },
+    {
+      "source_id": "EA_NATIONAL_LIDAR_REPEAT_POLICY",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/2e8d0733-4f43-48b4-9e51-631c25d1b0a9",
+      "verified": true,
+      "facts": ["repeat_surveys_are_requirement_driven", "no_full_rolling_recapture_commitment"],
+      "accepted_role": "HETEROGENEOUS_DATA_AGE_WARNING"
+    },
+    {
+      "source_id": "OS_TERRAIN50_INTERPOLATION_AND_SCALE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/height-and-imagery/os-terrain-50/os-terrain-50-overview/source-data",
+      "verified": true,
+      "facts": ["source_surface_is_tin", "grid_and_contours_are_interpolated", "terrain50_is_landscape_scale_secondary_data"],
+      "accepted_role": "SECONDARY_ELEVATION_INTERPOLATION_AND_SCALE_LIMIT"
+    },
+    {
+      "source_id": "OS_TERRAIN50_COASTAL_AND_SPOT_HEIGHT_SEMANTICS",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/data-structure",
+      "verified": true,
+      "facts": ["tidal_water_tile_edge_steps_possible", "foreshore_heights_interpolated", "spot_heights_not_guaranteed_summits", "spot_heights_can_be_lower_than_enclosing_contour"],
+      "accepted_role": "COASTAL_ANOMALY_AND_SPOT_HEIGHT_EXCLUSION"
+    }
+  ],
+  "acceptance_rules": {
+    "boundary_topology": [
+      "DEDUPLICATE_IDENTICAL_CROSS_AUTHORITY_GEOMETRY",
+      "GROUP_MULTIPLE_POLYGONS_BY_TITLE_WITHOUT_COLLAPSING_POLYGON_IDENTITIES",
+      "REVIEW_GAPS_OVERLAPS_SLIVERS_AND_UNDERLAPS",
+      "DO_NOT_INFER_LEGAL_CONFLICT_FROM_TECHNICAL_OVERLAP",
+      "DO_NOT_INFER_ABSENT_REGISTRATION_FROM_ABSENT_INSPIRE_ID"
+    ],
+    "release_provenance": [
+      "STORE_PUBLICATION_DATE_AND_REPRESENTED_MONTH",
+      "STORE_SOURCE_FILE_HASH_AND_LOCAL_AUTHORITY_NAME",
+      "STORE_IMMUTABLE_SNAPSHOT_BECAUSE_PREVIOUS_VERSIONS_ARE_NOT_RETAINED",
+      "REQUIRE_HMLR_AND_OS_ATTRIBUTION_ON_WEB_PUBLICATION"
+    ],
+    "elevation_temporal": [
+      "LOOK_UP_EA_SURVEY_ID_DATE_AND_RESOLUTION_PER_SAMPLE",
+      "RECORD_RESAMPLING_AND_COMPOSITE_SELECTION_LINEAGE",
+      "RECONCILE_SURVEY_SPECIFIC_TRANSFORMATION_AND_GEOID",
+      "FLAG_SOURCE_AGE_MISMATCH_BETWEEN_COMPARISON_POINTS"
+    ],
+    "surface_semantics": [
+      "USE_EA_DTM_RASTER_AS_PRIMARY_NOT_OS_SPOT_HEIGHT",
+      "RECORD_OS_TERRAIN50_TIN_INTERPOLATION_LINEAGE",
+      "FLAG_TIDAL_WATER_TILE_EDGE_AND_FORESHORE_INTERPOLATION",
+      "DO_NOT_PROMOTE_50M_SECONDARY_DATA_AS_PARCEL_SCALE_GROUND_TRUTH"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 19,
+  "source_checks_total": 19,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "task_id": "aays1-future-growth-1-official-geometry-pipeline-20260721",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "source_head": "c7a8c119c23984bf19e16f89ffa8b4fc19978497",
+  "checked_at": "2026-07-22T21:27:00+03:00",
+  "state": "PARALLEL_OFFICIAL_HERITAGE_PLANNING_GEOMETRY_PREPARATION_PUBLISHED_BLOCKER_UNCHANGED",
+  "blocker": "EXISTING_SHARED_RUNNER_HEARTBEAT_STALE_GUARDED_OPERATOR_RECOVERY_REQUIRED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/future_growth_1.json",
+  "canonical_progress_unchanged": {
+    "operations_completed": 1285,
+    "operations_total": 1288,
+    "percent": 99.77,
+    "increase_percentage_points": 0.0,
+    "verified_business_percent": 0.0
+  },
+  "research_progress": {
+    "official_source_checks_before_wave": 46,
+    "official_source_checks_added": 8,
+    "official_source_checks_verified": 8,
+    "official_source_checks_cumulative": 54,
+    "operation_checks_completed": 13,
+    "operation_checks_total": 13,
+    "research_examples_added": 3,
+    "research_examples_verified": 3,
+    "candidate_rows_promoted": 0,
+    "parcel_relations_created": 0,
+    "future_growth_scores_created": 0,
+    "actual_business_data_rows_written": 0,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY_WITH_DATA_ORIGIN_FRESHNESS_GEOMETRY_AND_COVERAGE_LIMITS_RECORDED"
+  },
+  "sources": [
+    {
+      "row": 1351,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data national park dataset",
+      "authority": "Office for National Statistics / MHCLG Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/national-park",
+      "verified_fact": "The dataset lists 10 national parks from one provider; the collector last ran on 2026-06-26 and new data was last found on 2025-12-31.",
+      "quality_effect": "The boundaries are administrative/statistical national-park-authority boundaries and contain some MHCLG-created data, so they are an area-level constraint gate rather than an exact parcel decision boundary.",
+      "measurement_level": "ADMINISTRATIVE_PROTECTED_LANDSCAPE_BOUNDARY_WITH_ORIGIN_LIMIT"
+    },
+    {
+      "row": 1352,
+      "status": "PASS",
+      "source": "Planning Data battlefield dataset",
+      "authority": "Historic England",
+      "url": "https://www.planning.data.gov.uk/dataset/battlefield",
+      "verified_fact": "The dataset lists 94 registered battlefields from two providers; the collector last ran on 2026-07-21, new data was last found on 2025-02-12, and the origin is fully authoritative.",
+      "quality_effect": "A registered-battlefield intersection is an authoritative heritage constraint when an exact spatial relation is executed; it is not a positive future-growth signal.",
+      "measurement_level": "AUTHORITATIVE_REGISTERED_BATTLEFIELD_POLYGON_CONSTRAINT"
+    },
+    {
+      "row": 1353,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data historic parks and gardens dataset",
+      "authority": "Historic England / MHCLG Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/park-and-garden",
+      "verified_fact": "The dataset lists 1,723 registered parks and gardens from one provider; the collector last ran on 2026-07-20 and new data was last found on 2026-07-18.",
+      "quality_effect": "Registered geometry and grade support heritage-constraint screening, but the mixed-origin warning requires current Historic England readback before a high-confidence parcel penalty.",
+      "measurement_level": "REGISTERED_HERITAGE_LANDSCAPE_POLYGON_WITH_ORIGIN_LIMIT"
+    },
+    {
+      "row": 1354,
+      "status": "PASS",
+      "source": "Planning Data archaeological priority area dataset",
+      "authority": "Historic England / Greater London Historic Environment Record",
+      "url": "https://www.planning.data.gov.uk/dataset/archaeological-priority-area",
+      "verified_fact": "The London-focused dataset lists 796 archaeological priority areas from one provider; the collector last ran on 2026-07-19, new data was last found on 2026-05-12, and the origin is fully authoritative.",
+      "quality_effect": "The four-tier archaeological-risk framework supports a London area-level constraint, but it does not establish development prohibition or parcel-level impact without exact relation and tier interpretation.",
+      "measurement_level": "AUTHORITATIVE_LONDON_ARCHAEOLOGICAL_RISK_POLYGON"
+    },
+    {
+      "row": 1355,
+      "status": "PASS_EXPERIMENTAL_SOURCE_RECORDED",
+      "source": "Planning Data locally listed building dataset",
+      "authority": "MHCLG experimental aggregation",
+      "url": "https://www.planning.data.gov.uk/dataset/locally-listed-building",
+      "verified_fact": "The experimental dataset lists 448 locally listed buildings from one provider; the collector last ran on 2026-07-18 and new data was last found on 2025-11-22.",
+      "quality_effect": "The service states the data was created by MHCLG and will be replaced by authoritative-source data, so it can only trigger further local-authority verification and cannot support a sole-source parcel score.",
+      "measurement_level": "EXPERIMENTAL_LOCAL_HERITAGE_DISCOVERY_SOURCE"
+    },
+    {
+      "row": 1356,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data listed building dataset",
+      "authority": "Historic England / MHCLG Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/listed-building",
+      "verified_fact": "The dataset lists 382,250 listed-building records from two providers; the collector and new-data dates are 2026-07-21.",
+      "quality_effect": "The dataset explicitly supplies a point within each listed building and does not define the affected extent, so the point cannot be treated as a parcel polygon or curtilage boundary.",
+      "measurement_level": "HERITAGE_ASSET_POINT_WITH_EXTENT_LIMIT"
+    },
+    {
+      "row": 1357,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data building preservation notice dataset",
+      "authority": "Historic England-derived / MHCLG Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/building-preservation-notice",
+      "verified_fact": "The dataset lists nine building preservation notices from one provider; the collector last ran on 2026-07-21 and new data was last found on 2026-07-17.",
+      "quality_effect": "A notice creates immediate temporary listed-building-style protection, but the dataset is MHCLG-created and the notice is time-limited, so current notice status and authoritative documentation must be checked.",
+      "measurement_level": "TEMPORARY_LEGAL_HERITAGE_CONSTRAINT_WITH_STATUS_READBACK"
+    },
+    {
+      "row": 1358,
+      "status": "PASS_EXPERIMENTAL_SOURCE_RECORDED",
+      "source": "Planning Data brownfield site geometry dataset",
+      "authority": "MHCLG experimental aggregation",
+      "url": "https://www.planning.data.gov.uk/dataset/brownfield-site",
+      "verified_fact": "The experimental dataset lists 2,916 brownfield-site geometries from five providers; the collector last ran on 2026-07-20 and new data was last found on 2025-12-19.",
+      "quality_effect": "The polygons can prepare spatial matching, but the service says the dataset is experimental and MHCLG-created; current authoritative brownfield-land records and canonical title parcels remain required before promotion.",
+      "measurement_level": "EXPERIMENTAL_DEVELOPMENT_SITE_POLYGON_PREPARATION_ONLY"
+    }
+  ],
+  "examples": [
+    {
+      "row": 1359,
+      "status": "CONSTRAINT_POLYGON_NO_PARCEL_RELATION",
+      "reference": "park-and-garden:1001398",
+      "entity_url": "https://www.planning.data.gov.uk/entity/11101290",
+      "site": "SOUTH PARK GARDENS",
+      "organisation": "Historic England",
+      "point": "POINT (-0.198582 51.422215)",
+      "entry_date": "2025-12-20",
+      "grade": "II",
+      "quality": "authoritative",
+      "geometry_present": true,
+      "verified_note": "The official entity supplies a multipolygon and Historic England list-entry link.",
+      "promotion_reason": "It is a registered heritage landscape constraint and no spatial relation to a canonical future_growth_1 parcel was executed."
+    },
+    {
+      "row": 1360,
+      "status": "CONSTRAINT_POLYGON_NO_PARCEL_RELATION",
+      "reference": "archaeological-priority-area:77380",
+      "entity_url": "https://www.planning.data.gov.uk/entity/40075",
+      "site": "Crystal Palace Park archaeological priority area",
+      "organisation": "Historic England",
+      "entry_date": "2026-05-12",
+      "quality": "authoritative",
+      "geometry_present": true,
+      "verified_note": "The official entity supplies an authoritative multipolygon for an archaeological priority area covering the registered park and garden context.",
+      "promotion_reason": "It is an archaeological-risk constraint geometry, not a development candidate, and no canonical parcel relation was executed."
+    },
+    {
+      "row": 1361,
+      "status": "EXPERIMENTAL_SITE_POLYGON_NO_PROMOTION",
+      "reference": "brownfield-site:LBBD26",
+      "entity_url": "https://www.planning.data.gov.uk/entity/1800173",
+      "site": "9-10 The Triangle",
+      "organisation": "London Borough of Barking and Dagenham",
+      "point": "POINT (0.077865 51.543617)",
+      "entry_date": "2020-12-22",
+      "quality": "some",
+      "geometry_present": true,
+      "verified_note": "The official entity supplies a small multipolygon but the source is an experimental MHCLG-created brownfield-site layer.",
+      "promotion_reason": "No current authoritative brownfield-land linkage or exact canonical title-parcel relation was produced, so the geometry was not promoted."
+    }
+  ],
+  "operations": [
+    {"row": 1349, "check": "Canonical branch HEAD readback", "result": "PASS", "evidence": "c7a8c119c23984bf19e16f89ffa8b4fc19978497"},
+    {"row": 1350, "check": "Runner, predecessor and manual-action revalidation", "result": "PASS_BLOCKER_UNCHANGED", "evidence": "runner heartbeat remains 2026-07-16; height_difference_2 guarded recovery remains unexecuted; manual action remains OPEN"},
+    {"row": 1351, "check": "National-park source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "10 administrative boundaries; mixed-origin and statistical-boundary limitation retained"},
+    {"row": 1352, "check": "Registered-battlefield source contract", "result": "PASS", "evidence": "94 records; fully authoritative origin"},
+    {"row": 1353, "check": "Historic parks and gardens source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "1,723 records; current Historic England readback requirement retained"},
+    {"row": 1354, "check": "Archaeological-priority-area source contract", "result": "PASS", "evidence": "796 London areas; authoritative four-tier risk framework"},
+    {"row": 1355, "check": "Locally-listed-building source contract", "result": "PASS_EXPERIMENTAL_SOURCE_RECORDED", "evidence": "448 records; MHCLG experimental discovery source only"},
+    {"row": 1356, "check": "Listed-building point source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "382,250 records; point does not define extent or curtilage"},
+    {"row": 1357, "check": "Building-preservation-notice source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "9 temporary notices; current authoritative status required"},
+    {"row": 1358, "check": "Brownfield-site polygon source contract", "result": "PASS_EXPERIMENTAL_SOURCE_RECORDED", "evidence": "2,916 geometries; experimental MHCLG-created preparation layer"},
+    {"row": 1359, "check": "South Park Gardens example validation", "result": "CONSTRAINT_POLYGON_NO_PARCEL_RELATION", "evidence": "authoritative Grade II multipolygon; no canonical parcel relation"},
+    {"row": 1360, "check": "Crystal Palace APA example validation", "result": "CONSTRAINT_POLYGON_NO_PARCEL_RELATION", "evidence": "authoritative archaeological-risk multipolygon; no canonical parcel relation"},
+    {"row": 1361, "check": "LBBD26 brownfield-site example validation", "result": "EXPERIMENTAL_SITE_POLYGON_NO_PROMOTION", "evidence": "experimental 2020 polygon; no current brownfield-land or canonical title relation"}
+  ],
+  "candidate_summary": {
+    "existing_official_candidate_rows": 60,
+    "existing_current_candidates": 59,
+    "existing_rejected_stale_or_completed": 1,
+    "new_research_examples": 3,
+    "new_promoted_candidates": 0
+  },
+  "new_runner_started": false,
+  "predecessor_bypassed": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

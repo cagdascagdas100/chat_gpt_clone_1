@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "slot_id": "gas_emissions_3",
+  "parcel_range": "61523-92283",
+  "generated_at": "2026-07-21T09:20:00Z",
+  "status": "STABLE_RUNNER_NATIVE_V9_QUEUE_PREPARED_NOT_EXECUTED",
+  "official_source_revalidation": {
+    "publisher": "Department for Energy Security and Net Zero",
+    "series": "UK local authority and regional greenhouse gas emissions statistics, 2005 to 2024",
+    "published": "2026-06-25",
+    "last_updated": "2026-06-30",
+    "publication_status": "Accredited Official Statistics",
+    "official_source_surfaces": 8,
+    "official_csv_spotcheck": "100/100 PASS",
+    "verification_confidence_percent": 99
+  },
+  "stable_runner_evidence": {
+    "remote_queue_mirror_pattern": "docs/chatgpt_status/<page>/queue/<file>",
+    "ready_statuses": ["queued","ready","pending","pending_repo_queue","pickup_requested","queued_for_single_shared_runner"],
+    "selection_order": ["priority","created_at","page_key","task_id"],
+    "parent_environment": ["AAYS_REPO_ROOT","AAYS_TASK_ID","AAYS_PAGE_KEY","AAYS_CONTROLLER_REPO_ROOT","AAYS_TARGET_BRANCH"],
+    "reference_valid_queue": "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json"
+  },
+  "issues_found_and_fixed": [
+    {"issue":"Queue omitted created_at used by deterministic FIFO selection.","fix":"Added created_at while retaining original queued_at."},
+    {"issue":"Queue omitted automation_script used by established queue contracts.","fix":"Added automation_script equal to script_path."},
+    {"issue":"Queue omitted allowed_paths required for scoped staging.","fix":"Added queue, shard acceptance and shard site roots only."},
+    {"issue":"Queue did not expose explicit no_fake_final_ready/no_db_write/no_migration/no_production_deploy flags.","fix":"Added all four flags plus final_ready/product_final_ready false."},
+    {"issue":"Wrapper required AAYS_SLOT_ID although stable runner does not set it.","fix":"Wrapper now treats an absent parent slot as valid and propagates the exact slot to the child."},
+    {"issue":"Wrapper required AAYS_CHILD_DIRECT_PUSH_FORBIDDEN although stable runner does not set it.","fix":"Wrapper validates any supplied value, then sets true only for the child carrier and restores the parent environment."},
+    {"issue":"Wrapper did not validate the parent task/page/branch variables that the stable runner actually sets.","fix":"Added AAYS_TASK_ID, AAYS_PAGE_KEY and AAYS_TARGET_BRANCH checks."},
+    {"issue":"Runtime token still identified the v8 task and wrapper blob.","fix":"Published v9 token locked to the new task and wrapper blob."},
+    {"issue":"Site did not expose stable-runner parser compatibility separately from browser preparation.","fix":"Published a 22-row native contract table."}
+  ],
+  "prepared_contract": {
+    "task_id": "gas_emissions_3_coordinator_browser_acceptance_v9_20260721_01",
+    "queue_blob_sha": "86a80e9ee328020eb62992af3718ac35c618147c",
+    "wrapper_blob_sha": "d39a6622966e65ab66df5c4548bb182b8ab395e8",
+    "carrier_blob_sha": "c12ba65e911c7753cb1458c3ea186c89d7f5bc98",
+    "harness_blob_sha": "9fd8ed25c0a997e44691d7f3b579c4a8a61f9566",
+    "native_checks_passed": 22,
+    "native_checks_total": 22,
+    "queue_checks_passed": 25,
+    "queue_checks_total": 25,
+    "runtime_checks_passed": 0,
+    "runtime_checks_total": 2
+  },
+  "global_runner_state": {
+    "single_runner_only": true,
+    "new_runner": false,
+    "parallel_runner": false,
+    "current_priority_one_slot": "height_difference_2",
+    "gas_task_priority": 2,
+    "preemption_performed": false,
+    "queue_task_claimed": false,
+    "runner_heartbeat_stale": true
+  },
+  "metrics": {
+    "operations_completed": 29,
+    "operations_total": 30,
+    "shard_progress_percent": 96.67,
+    "progress_increase_points": 0.12,
+    "revision_candidates": 100,
+    "official_rows_verified": 100,
+    "browser_rows_last_proven": 66,
+    "browser_rows_target": 100,
+    "browser_rows_remaining": 34
+  },
+  "non_claims": {
+    "browser_acceptance_passed": false,
+    "parcel_binding_gate_passed": false,
+    "measured_parcel_values_produced": 0,
+    "final_ready": false,
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

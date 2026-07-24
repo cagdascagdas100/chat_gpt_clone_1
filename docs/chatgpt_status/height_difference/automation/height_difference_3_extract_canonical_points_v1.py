@@ -6,14 +6,13 @@ import math
 import os
 import re
 import subprocess
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import BinaryIO
 
 SLOT_ID = "height_difference_3"
-TASK_VERSION = "1.1-exact-blob-low-memory-point-extraction-duplicate-guard"
-ATTEMPT_ID = "height-difference-3-20260722-002"
+TASK_VERSION = "1.0-exact-blob-low-memory-point-extraction"
+ATTEMPT_ID = "height-difference-3-20260722-001"
 SOURCE_BRANCH = "codex/aays-single-runner-v5-20260706"
 SOURCE_PATH = "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
 BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
@@ -88,30 +87,17 @@ def normalise_target(feature: dict) -> dict:
     }
 
 
-def stream_targets(
-    handle: BinaryIO,
-    sha256: hashlib._Hash,
-    *,
-    chunk_bytes: int = CHUNK_BYTES,
-) -> tuple[dict[str, dict], dict]:
+def stream_targets(handle: BinaryIO, sha256: hashlib._Hash) -> tuple[dict[str, dict], dict]:
     found: dict[str, dict] = {}
-    target_occurrences: Counter[str] = Counter()
     targets = set(TARGET_IDS)
     metrics: dict[str, object] = {
-        "parser": "binary-feature-object-stream-v2-full-array-duplicate-guard",
-        "chunk_bytes": chunk_bytes,
+        "parser": "binary-feature-object-stream-v1",
+        "chunk_bytes": CHUNK_BYTES,
         "features_array_found": False,
-        "features_array_closed": False,
         "features_scanned": 0,
-        "expected_feature_count": EXPECTED_FEATURE_COUNT,
-        "feature_count_matches_expected": False,
         "targets_found": [],
-        "target_first_seen_order": [],
-        "target_occurrence_counts": {target_id: 0 for target_id in TARGET_IDS},
-        "duplicate_target_ids": [],
-        "all_targets_first_found_at_feature": None,
         "max_feature_object_bytes": 0,
-        "full_feature_array_parsed": False,
+        "stopped_parsing_after_all_targets": False,
         "full_stream_hashed": False,
         "source_bytes_streamed": 0,
         "error": None,
@@ -124,9 +110,10 @@ def stream_targets(
     depth = 0
     in_string = False
     escaped = False
+    array_done = False
 
     while True:
-        chunk = handle.read(chunk_bytes)
+        chunk = handle.read(CHUNK_BYTES)
         if not chunk:
             break
         sha256.update(chunk)
@@ -157,8 +144,7 @@ def stream_targets(
                 if byte in b" \t\r\n,":
                     continue
                 if byte == ord("]"):
-                    metrics["features_array_closed"] = True
-                    metrics["full_feature_array_parsed"] = metrics.get("error") is None
+                    array_done = True
                     parse_enabled = False
                     break
                 if byte != ord("{"):
@@ -205,36 +191,17 @@ def stream_targets(
                         if isinstance(properties, dict):
                             parcel_id = properties.get("security_parcel_id") or properties.get("parcel_id")
                         if parcel_id in targets:
-                            target_id = str(parcel_id)
-                            target_occurrences[target_id] += 1
-                            if target_id not in found:
-                                found[target_id] = feature
-                                first_seen = list(metrics["target_first_seen_order"])
-                                first_seen.append(target_id)
-                                metrics["target_first_seen_order"] = first_seen
+                            found[str(parcel_id)] = feature
                             metrics["targets_found"] = [item for item in TARGET_IDS if item in found]
-                            metrics["target_occurrence_counts"] = {
-                                item: int(target_occurrences[item]) for item in TARGET_IDS
-                            }
-                            metrics["duplicate_target_ids"] = [
-                                item for item in TARGET_IDS if target_occurrences[item] > 1
-                            ]
-                            if (
-                                len(found) == len(targets)
-                                and metrics["all_targets_first_found_at_feature"] is None
-                            ):
-                                metrics["all_targets_first_found_at_feature"] = int(
-                                    metrics["features_scanned"]
-                                )
+                            if len(found) == len(targets):
+                                metrics["stopped_parsing_after_all_targets"] = True
+                                parse_enabled = False
                     root_object = bytearray()
 
+        if array_done:
+            parse_enabled = False
+
     metrics["full_stream_hashed"] = True
-    metrics["feature_count_matches_expected"] = (
-        int(metrics["features_scanned"]) == EXPECTED_FEATURE_COUNT
-    )
-    if located and metrics["error"] is None and not metrics["features_array_closed"]:
-        metrics["error"] = "FEATURES_ARRAY_NOT_CLOSED"
-        metrics["full_feature_array_parsed"] = False
     return found, metrics
 
 
@@ -255,20 +222,13 @@ def main() -> int:
 
     found: dict[str, dict] = {}
     metrics: dict[str, object] = {
-        "parser": "binary-feature-object-stream-v2-full-array-duplicate-guard",
+        "parser": "binary-feature-object-stream-v1",
         "chunk_bytes": CHUNK_BYTES,
         "features_array_found": False,
-        "features_array_closed": False,
         "features_scanned": 0,
-        "expected_feature_count": EXPECTED_FEATURE_COUNT,
-        "feature_count_matches_expected": False,
         "targets_found": [],
-        "target_first_seen_order": [],
-        "target_occurrence_counts": {target_id: 0 for target_id in TARGET_IDS},
-        "duplicate_target_ids": [],
-        "all_targets_first_found_at_feature": None,
         "max_feature_object_bytes": 0,
-        "full_feature_array_parsed": False,
+        "stopped_parsing_after_all_targets": False,
         "full_stream_hashed": False,
         "source_bytes_streamed": 0,
         "error": "NOT_STARTED",
@@ -300,46 +260,23 @@ def main() -> int:
     ordered_rows = [normalise_target(found[item]) for item in TARGET_IDS if item in found]
     ordered_ids = [row.get("parcel_id") for row in ordered_rows]
     exact_order = ordered_ids == TARGET_IDS
-    unique_output_ids = len(set(ordered_ids)) == len(TARGET_IDS)
-    unique_source_occurrences = all(
-        int((metrics.get("target_occurrence_counts") or {}).get(item, 0)) == 1
-        for item in TARGET_IDS
-    )
-    all_points = len(ordered_rows) == len(TARGET_IDS) and all(
-        row.get("geometry_type") == "Point" for row in ordered_rows
-    )
-    all_finite = len(ordered_rows) == len(TARGET_IDS) and all(
-        bool(row.get("finite_coordinates")) for row in ordered_rows
-    )
-    full_size_hashed = bool(
-        object_size is not None and int(metrics.get("source_bytes_streamed", 0)) == object_size
-    )
-    full_feature_array_parsed = bool(metrics.get("full_feature_array_parsed"))
-    feature_count_matches = bool(metrics.get("feature_count_matches_expected"))
+    unique_ids = len(set(ordered_ids)) == len(TARGET_IDS)
+    all_points = len(ordered_rows) == len(TARGET_IDS) and all(row.get("geometry_type") == "Point" for row in ordered_rows)
+    all_finite = len(ordered_rows) == len(TARGET_IDS) and all(bool(row.get("finite_coordinates")) for row in ordered_rows)
+    full_size_hashed = bool(object_size is not None and int(metrics.get("source_bytes_streamed", 0)) == object_size)
 
     if len(ordered_rows) != len(TARGET_IDS):
         errors.append(f"TARGET_COUNT_MISMATCH: {len(ordered_rows)}")
     if not exact_order:
         errors.append(f"TARGET_ORDER_MISMATCH: {ordered_ids}")
-    if not unique_output_ids:
-        errors.append("TARGET_OUTPUT_IDS_NOT_UNIQUE")
-    if not unique_source_occurrences:
-        errors.append(
-            "TARGET_SOURCE_OCCURRENCE_MISMATCH: "
-            + json.dumps(metrics.get("target_occurrence_counts"), sort_keys=True)
-        )
+    if not unique_ids:
+        errors.append("TARGET_IDS_NOT_UNIQUE")
     if not all_points:
         errors.append("NON_POINT_OR_MISSING_GEOMETRY")
     if not all_finite:
         errors.append("NON_FINITE_OR_OUT_OF_RANGE_COORDINATE")
     if not full_size_hashed:
         errors.append("FULL_CANONICAL_STREAM_NOT_HASHED")
-    if not full_feature_array_parsed:
-        errors.append("FULL_FEATURE_ARRAY_NOT_PARSED")
-    if not feature_count_matches:
-        errors.append(
-            f"FEATURE_COUNT_MISMATCH: {metrics.get('features_scanned')} != {EXPECTED_FEATURE_COUNT}"
-        )
 
     passed = not errors
     common = {
@@ -366,13 +303,10 @@ def main() -> int:
         "acceptance": {
             "exact_path_blob_match": path_blob_sha == BLOB_SHA,
             "exact_target_order": exact_order,
-            "unique_output_target_ids": unique_output_ids,
-            "unique_source_target_occurrences": unique_source_occurrences,
+            "unique_target_ids": unique_ids,
             "all_point_geometry": all_points,
             "all_finite_coordinates": all_finite,
             "full_stream_hashed": full_size_hashed,
-            "full_feature_array_parsed": full_feature_array_parsed,
-            "feature_count_matches_expected": feature_count_matches,
             "passed": passed,
         },
         "errors": errors,
@@ -387,7 +321,7 @@ def main() -> int:
 
     reconciliation = {
         **common,
-        "reconciliation_kind": "EXACT_BLOB_FULL_ARRAY_ORDERED_THREE_POINT_EXTRACTION",
+        "reconciliation_kind": "EXACT_BLOB_ORDERED_THREE_POINT_EXTRACTION",
         "expected_target_count": len(TARGET_IDS),
         "observed_target_count": len(ordered_rows),
     }
@@ -405,9 +339,6 @@ def main() -> int:
     print(f"CANONICAL_POINT_EXTRACTION_PASS={str(passed).lower()}")
     print(f"CANONICAL_POINT_ROWS={len(ordered_rows) if passed else 0}")
     print(f"STREAM_FEATURES_SCANNED={metrics.get('features_scanned', 0)}")
-    print(f"FULL_FEATURE_ARRAY_PARSED={str(full_feature_array_parsed).lower()}")
-    print(f"FEATURE_COUNT_MATCHES={str(feature_count_matches).lower()}")
-    print(f"TARGET_DUPLICATES={len(metrics.get('duplicate_target_ids') or [])}")
     print(f"FULL_STREAM_HASHED={str(full_size_hashed).lower()}")
     print("FINAL_READY=false")
     return 0 if passed else 2

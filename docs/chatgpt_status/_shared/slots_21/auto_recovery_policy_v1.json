@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "policy_id": "CONTINUATION_OR_STALE_TRIGGERED_CONTRACT_ONLY_ISOLATION_V6",
+  "trigger": "NEW_QUEUE_TASK_OR_SAFE_TRANSIENT_BLOCK_OLDER_THAN_PROACTIVE_THRESHOLD",
+  "wait_seconds": 120,
+  "proactive_after_seconds": 300,
+  "automatic_retry_limit_per_continuation": 1,
+  "flow": [
+    "READ_SLOT_STATUS_HEARTBEAT_AND_CURRENT_TASK",
+    "CLASSIFY_TRANSIENT_VS_REAL_DATA_BLOCKER",
+    "WRITE_RECOVERY_PLAN",
+    "WAIT_FOR_TRANSIENT_RECOVERY_WINDOW",
+    "CAPTURE_WORKTREE_HEAD_CLEANLINESS_AND_LOCKS",
+    "APPLY_ONLY_BOUNDED_SAFE_REPAIR",
+    "RESUME_THE_ORIGINAL_CONTINUATION_TASK",
+    "PARK_IF_REAL_SOURCE_OR_OPERATOR_DECISION_IS_REQUIRED"
+  ],
+  "safe_automatic_actions": [
+    "REMOVE_EMPTY_GIT_LOCK_OLDER_THAN_30_SECONDS",
+    "PRESERVE_DIRTY_WORKTREE_AND_ROUTE_ONE_RETRY_TO_A_CLEAN_ISOLATED_WORKTREE",
+    "MATERIALIZE_ONLY_DECLARED_TASK_DIRECTORIES_IN_A_NEW_DISPOSABLE_WORKTREE",
+    "IGNORE_LEGACY_BROAD_SPARSE_HINTS_DURING_RECOVERY_ISOLATION",
+    "USE_MIXED_INDEX_RESET_ONLY_INSIDE_A_NEW_EMPTY_RECOVERY_WORKTREE",
+    "RETRY_ON_VERIFIED_CLEAN_LOCAL_HEAD_ONCE_AFTER_FETCH_OR_CHECKOUT_TIMEOUT",
+    "REUSE_ALREADY_PRESENT_SPARSE_PATHS_AFTER_TIMEOUT",
+    "RETRY_ONCE_WHEN_BLOCKER_TEXT_IS_MISSING_OR_ONLY_GENERIC_BLOCKED_AND_WORKTREE_IS_CLEAN"
+  ],
+  "forbidden_automatic_actions": [
+    "GIT_RESET_HARD",
+    "DELETE_NONEMPTY_LOCK",
+    "DELETE_USER_OR_BUSINESS_FILES",
+    "DISCARD_DIRTY_WORKTREE",
+    "OVERWRITE_OR_DELETE_PRESERVED_DIRTY_PROGRESS",
+    "FABRICATE_DATA",
+    "DATABASE_WRITE",
+    "MIGRATION",
+    "PRODUCTION_DEPLOY",
+    "DIRECT_CHILD_PUSH"
+  ],
+  "slot_ids": [
+    "ready_to_sell_1",
+    "ready_to_sell_2",
+    "ready_to_sell_3",
+    "gas_emissions_1",
+    "gas_emissions_2",
+    "gas_emissions_3",
+    "height_difference_1",
+    "height_difference_2",
+    "height_difference_3",
+    "security_public_safety_1",
+    "security_public_safety_2",
+    "security_public_safety_3",
+    "parcel_label_1",
+    "parcel_label_2",
+    "parcel_label_3",
+    "internet_access_1",
+    "internet_access_2",
+    "internet_access_3",
+    "future_growth_1",
+    "future_growth_2",
+    "future_growth_3"
+  ],
+  "continuation_contract": {
+    "new_attempt_id_required_after_a_parked_recovery": true,
+    "existing_old_queue_record_can_trigger_one_proactive_retry_for_safe_transient_blockers": true,
+    "real_data_blockers_never_trigger_automatic_fabrication": true,
+    "live_slot_is_never_interrupted": true,
+    "original_task_is_resumed_after_recovery": true
+  },
+  "final_ready": false
+}

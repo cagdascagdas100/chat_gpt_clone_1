@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "task_id": "height-difference-2-os-downloads-api-web-acceptance-validation-20260721",
+  "tested_at": "2026-07-21T06:12:00+03:00",
+  "automation": {
+    "numeric_orchestrator_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/014_run_official_numeric_gate.py",
+    "numeric_orchestrator_blob_sha": "109ebf8e6003a1422b33c889e8064eb051b42d40",
+    "numeric_orchestrator_sha256": "b154a51aca6d22dbe13e3642a0f0876e61d72b01209646e007167b1df17d442b",
+    "terrain50_resolver_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/015_resolve_os_terrain50_downloads.py",
+    "terrain50_resolver_blob_sha": "0ab3068c5182ed9d91cb82324a895579d79ae61f",
+    "terrain50_resolver_sha256": "ed80b71834b6d35a5cd4fbeca1271ca29e01d8af10a8251fcd69340c5b746240",
+    "terrain50_wrapper_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/016_prepare_and_crosscheck_os_terrain50.py",
+    "terrain50_wrapper_blob_sha": "db69f1d3bf45dca0d202390b18fdf63d5d2cbb25",
+    "terrain50_wrapper_sha256": "300cfeaa22dbd3910a9d1c61b8ad22a0c2ed541a9c203428759c0ea5c981ff55",
+    "web_acceptance_path": "docs/chatgpt_status/topography/shards/height_difference_2/automation/017_verify_height_difference_2_web_8012.py",
+    "web_acceptance_blob_sha": "7bcc53fe46158c2863ae0ecb9021c10814aee72b",
+    "web_acceptance_sha256": "94461262d9f89f88905349ac3fa85db83aeaa115469c3d1cbfd3dbc97ec8c042"
+  },
+  "tests": [
+    {"test_id":"required_area_from_exact_polygons","status":"PASS","evidence":"Exact EPSG:27700 polygon bounds produced TQ 100km area."},
+    {"test_id":"required_three_rows_preserved","status":"PASS","evidence":"Rows 30762, 46142 and 61522 remained explicit."},
+    {"test_id":"unique_product_resolution","status":"PASS","evidence":"Only exact OS Terrain 50 product identity accepted."},
+    {"test_id":"unique_ascii_area_download","status":"PASS","evidence":"Unique area-specific ASCII Grid download accepted."},
+    {"test_id":"ambiguous_product_fails_closed","status":"PASS","evidence":"Multiple exact product matches rejected."},
+    {"test_id":"safe_multi_archive_extraction","status":"PASS","evidence":"ASCII member extracted from validated ZIP."},
+    {"test_id":"zip_traversal_fails_closed","status":"PASS","evidence":"Parent-directory archive member rejected."},
+    {"test_id":"resolver_end_to_end_mock_api","status":"PASS","evidence":"Products, downloads and ZIP endpoints completed through local HTTP fixture."},
+    {"test_id":"resolver_archive_hash_written","status":"PASS","evidence":"Downloaded archive SHA-256 captured."},
+    {"test_id":"web_acceptance_end_to_end","status":"PASS","evidence":"Index, manifest, operation rows and candidate payload passed local HTTP acceptance."},
+    {"test_id":"numeric_orchestrator_three_row_join","status":"PASS","evidence":"Three EA and Terrain50 rows joined by identical row_no sets."},
+    {"test_id":"numeric_rows_pending_human_review","status":"PASS","evidence":"Automatic final promotion remained disabled."},
+    {"test_id":"web_acceptance_stage_recorded","status":"PASS","evidence":"Port 8012 acceptance output recorded in numeric execution summary."}
+  ],
+  "summary": {
+    "tests_total": 13,
+    "tests_passed": 13,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_candidate_rows_produced_by_selftest": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

@@ -1,0 +1,26 @@
+AAYS / TerraYield 15 Slot - Yeni veya Mevcut ChatGPT Sayfası Devam Promptu
+
+SLOT_ID=<BURAYA_TEK_SLOT_YAZ>
+GITHUB_REPO=cagdascagdas100/chat_gpt_clone_1
+BRANCH=codex/aays-single-runner-v5-20260706
+GITHUB_ACCESS=CONNECTED
+WORKSTREAM_ID=AAYS_15_SLOT_SAFE_PARALLEL_V1
+
+Bu sayfanın kalıcı ve tek kimliği SLOT_ID değeridir. Başka slotu sahiplenme; başka slotun queue/status/output yollarına yazma. SLOT_ID bu sayfada sonradan değiştirilmez.
+
+Her "devam et" mesajında:
+1. Önce branch HEAD'i yeniden oku. Sohbeti, ZIP'i ve eski rapor tarihini yalnız tarihsel bağlam kabul et.
+2. docs/chatgpt_status/_shared/slots_15/manifest_latest.json içinden SLOT_ID, base_slot_id, shard_index ve parcel_partition değerlerini doğrula. SLOT_ID manifestte yoksa iş üretme; blocker yaz.
+3. docs/chatgpt_status/_shared/slots_15/<SLOT_ID>/ altındaki ownership, checkpoint, heartbeat, current_task ve status dosyalarını oku.
+4. Canlı lease/heartbeat ile RUNNING görev varsa ikinci görev oluşturma. Heartbeat stale ise remote HEAD ve task çıktısını doğrulamadan takeover yapma.
+5. Terminal/no-replay görevleri yeniden çalıştırma. Remote checkpointteki ilk eksik veya doğrulanmamış adımdan devam et.
+6. Gerekliyse yalnız bir *.v3.task.json oluştur. architecture_version=3, timeout_seconds=3600, heartbeat_lease_seconds=3600 ve doğru slot/partition kullan.
+7. exact_write_paths yalnız bu SLOT_ID için ayrılmış izole yollar olsun. Shared/final dosyaya doğrudan yazma; tek publisher gate kullan.
+8. Commit öncesi branch HEAD'i tekrar oku. Non-fast-forward veya çakışma varsa sonucu uydurma; kendi slot dosyalarını güncel HEAD üzerine yeniden uygula.
+9. 20-30 dakikalık görev sırasında sessizliği hata sayma. Kullanıcı tekrar "devam et" dediğinde aynı task_id/lease kanıtını kontrol et; ikinci task üretme.
+10. Gerçek commit, push, remote readback ve gerekli site/browser kanıtı olmadan completed, PASS, yüzde 100 veya final_ready=true yazma.
+11. fake_data=false, db_write=false, migration=false, production_deploy=false ve final_ready=false kurallarını koru.
+12. Canlı chunks/manifest.json içindeki 92.283 kayıt mevcut Londra program matrisidir (london_yes=92283); bunu bütün İngiltere parsel toplamı diye sunma. Önce kendi 92.283-Londra shard'ını kanıtla. İngiltere geneli genişleme ancak ayrı gerçek ulusal parsel envanteri/kontrat/checkpoint varsa oradan devam eder.
+13. Program ve iki kontrol sitesi için üretilen web çıktıları yalnız publisher/senkron sözleşmesindeki yollar üzerinden yayımlansın; sohbet içi sonuçları yayımlanmış sayma.
+
+Yanıtı kısa tut: SLOT_ID, mevcut task, yapılan yeni adım, commit/push/readback, blocker ve sıradaki ilk eksik adım.

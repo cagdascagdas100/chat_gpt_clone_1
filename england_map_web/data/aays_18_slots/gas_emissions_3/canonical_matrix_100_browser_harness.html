@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gas Emissions 3 — Canonical Matrix 100 Browser Harness</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:20px;background:#f6f7f9;color:#171717}
+    h1{margin:0 0 6px}.muted{color:#666}.status{padding:12px;border:1px solid #bbb;background:#fff;margin:14px 0;white-space:pre-wrap}
+    .pass{border-color:#238636;color:#116329}.fail{border-color:#cf222e;color:#a40e26}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:12px 0}.card{background:#fff;border:1px solid #ddd;padding:10px}.value{font-size:21px;font-weight:700}
+    .scroll{overflow:auto;max-height:72vh;border:1px solid #ccc;background:#fff}table{border-collapse:collapse;width:max-content;min-width:100%;font-size:11px}th,td{border:1px solid #ddd;padding:5px;vertical-align:top;max-width:320px;overflow-wrap:anywhere}th{position:sticky;top:0;background:#eee;z-index:2}
+    #canonicalFrame{position:absolute;left:-12000px;top:0;width:1920px;height:1400px;border:0}
+  </style>
+</head>
+<body>
+  <h1>Gas Emissions — Canonical Matrix 100 Satır Browser Harness</h1>
+  <div class="muted">Canonical TerraYield matrix sayfası aynı origin içinde açılır; başlangıç Security yükünün tamamlanması beklenir, Gas Emissions doğrudan yüklenir, dört 25-satırlık sayfa gerçek DOM üzerinden gezilir ve 100 satır burada birleştirilir.</div>
+  <div id="status" class="status" data-acceptance-state="RUNNING">CANONICAL_MATRIX_HARNESS_RUNNING</div>
+  <div id="cards" class="cards"></div>
+  <div class="scroll"><table id="aggregate"><thead></thead><tbody id="aggregateRows"></tbody></table></div>
+  <iframe id="canonicalFrame" title="Canonical TerraYield matrix"></iframe>
+<script>
+'use strict';
+const REQUIRED_HEADERS=['Durum','Satır','Yıl','Sektör','Alt sektör','Sera gazı','Emisyon (kt CO2e)','Etki alanı (kt CO2)','Kaynak satırı','Eşleştirme yöntemi','Hesap açıklaması','Parcel binding','Güven (%)','Doğruluk','Resmi kaynak URL','Ham yerel kaynak','Visible artifact','Status yolu','Rapor yolu','Served commit','Artifact SHA','Manuel inceleme','Resmi CSV eşleşmesi','Kaynak SHA-256','Kaynak manifesti','Satır kanıtı','Pipeline','Blocker'];
+const CANONICAL='/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?acceptance=gas_emissions_3_100';
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function waitFor(test,label,timeout=90000){const end=Date.now()+timeout;let lastError=null;while(Date.now()<end){try{const value=test();if(value)return value}catch(e){lastError=e}await sleep(150)}throw new Error(`WAIT_TIMEOUT ${label}${lastError?': '+lastError.message:''}`)}
+function setStatus(text,passed){const box=document.getElementById('status');box.textContent=text;box.className='status '+(passed?'pass':'fail');box.setAttribute('data-acceptance-state',passed?'PASS':'FAIL')}
+function card(name,value){return `<div class="card"><div class="muted">${name}</div><div class="value">${value}</div></div>`}
+async function run(){
+  const frame=document.getElementById('canonicalFrame');
+  frame.src=CANONICAL+'&ts='+Date.now();
+  await waitFor(()=>frame.contentDocument&&frame.contentDocument.getElementById('layerSelect'),'canonical controls');
+  const doc=frame.contentDocument;
+  const win=frame.contentWindow;
+  await waitFor(()=>{
+    const title=doc.getElementById('title')?.textContent||'';
+    const message=doc.getElementById('message')?.textContent||'';
+    const rows=doc.querySelectorAll('#table tbody tr').length;
+    return /Security\s*\/\s*Public Safety/i.test(title)&&!/Veri yükleniyor/i.test(message)&&rows>0;
+  },'canonical initial security load');
+  if(typeof win.loadLayer!=='function')throw new Error('CANONICAL_LOAD_LAYER_FUNCTION_MISSING');
+  const layer=doc.getElementById('layerSelect');
+  layer.value='gas';
+  const view=doc.getElementById('viewSelect');
+  if(view)view.value='parcel';
+  await win.loadLayer('gas');
+  await waitFor(()=>{
+    const title=doc.getElementById('title')?.textContent||'';
+    const page=doc.getElementById('pageInfo')?.textContent||'';
+    const rows=doc.querySelectorAll('#table tbody tr').length;
+    return /Gas Emissions/i.test(title)&&/Sayfa\s+1\s*\/\s*4\s*-\s*100\s*satır/i.test(page)&&rows===25;
+  },'gas page 1');
+
+  const headers=[...doc.querySelectorAll('#table thead th')].map(x=>x.textContent.trim());
+  const missing=REQUIRED_HEADERS.filter(x=>!headers.includes(x));
+  if(headers.length!==28||missing.length)throw new Error(`HEADER_GATE expected=28 actual=${headers.length} missing=${missing.join('|')}`);
+  document.querySelector('#aggregate thead').innerHTML=doc.querySelector('#table thead').innerHTML;
+  document.querySelectorAll('#aggregate thead th').forEach((cell,index)=>{cell.setAttribute('data-acceptance-header','true');cell.setAttribute('data-header-index',String(index+1))});
+
+  const collected=[];
+  const rowIds=new Set();
+  const pageCounts=[];
+  for(let page=1;page<=4;page++){
+    await waitFor(()=>{
+      const info=doc.getElementById('pageInfo')?.textContent||'';
+      return new RegExp(`Sayfa\\s+${page}\\s*\\/\\s*4\\s*-\\s*100\\s*satır`,'i').test(info)&&doc.querySelectorAll('#table tbody tr').length===25;
+    },`gas page ${page}`);
+    const rows=[...doc.querySelectorAll('#table tbody tr')];
+    pageCounts.push(rows.length);
+    rows.forEach((row,index)=>{
+      const clone=row.cloneNode(true);
+      clone.setAttribute('data-acceptance-row','true');
+      clone.setAttribute('data-source-page',String(page));
+      clone.setAttribute('data-source-index',String(index+1));
+      const rowId=(row.cells[1]?.textContent||'').trim();
+      if(!rowId)throw new Error(`EMPTY_ROW_ID page=${page} index=${index+1}`);
+      if(rowIds.has(rowId))throw new Error(`DUPLICATE_ROW_ID ${rowId}`);
+      rowIds.add(rowId);
+      clone.setAttribute('data-row-id',rowId);
+      collected.push(clone);
+    });
+    if(page<4){
+      const before=doc.getElementById('pageInfo').textContent;
+      doc.getElementById('next').click();
+      await waitFor(()=>doc.getElementById('pageInfo')?.textContent!==before,`next page ${page+1}`);
+    }
+  }
+  if(collected.length!==100||rowIds.size!==100||pageCounts.some(x=>x!==25))throw new Error(`ROW_GATE rows=${collected.length} unique=${rowIds.size} pages=${pageCounts.join(',')}`);
+  const body=document.getElementById('aggregateRows');
+  collected.forEach(row=>body.appendChild(row));
+  const aggregate=document.getElementById('aggregate');
+  aggregate.setAttribute('data-acceptance-complete','true');
+  aggregate.setAttribute('data-initial-load-race-guard','true');
+  aggregate.setAttribute('data-canonical-pages','4');
+  aggregate.setAttribute('data-page-row-count','25');
+  aggregate.setAttribute('data-aggregated-rows','100');
+  aggregate.setAttribute('data-unique-rows','100');
+  aggregate.setAttribute('data-header-count','28');
+  const result={
+    slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS',canonical_url:CANONICAL,
+    initial_security_load_waited:true,direct_gas_load_invoked:true,
+    header_count:headers.length,required_header_count:REQUIRED_HEADERS.length,missing_headers:missing,
+    page_count:4,page_row_counts:pageCounts,row_count:collected.length,unique_row_ids:rowIds.size,
+    source_page_info:'Sayfa 1-4 / 4 - 100 satır',browser_passed:true,parcel_binding_gate_passed:false,final_ready:false,
+    generated_at:new Date().toISOString()
+  };
+  window.__gasEmissions3CanonicalMatrixBrowserAcceptance=result;
+  document.getElementById('cards').innerHTML=[card('Başlangıç yarış koruması','PASS'),card('Canonical sayfa','4 / 4'),card('DOM satırı',result.row_count+' / 100'),card('Benzersiz satır',result.unique_row_ids+' / 100'),card('Başlık',result.header_count+' / 28'),card('Eksik başlık',result.missing_headers.length),card('Sonuç','PASS')].join('');
+  setStatus(`CANONICAL_MATRIX_AGGREGATED_BROWSER_PASS | initial_race_guard=true | pages=4/4 | rows=${result.row_count}/100 | unique=${result.unique_row_ids}/100 | headers=${result.header_count}/28 | missing=0`,true);
+}
+run().catch(error=>{
+  window.__gasEmissions3CanonicalMatrixBrowserAcceptance={slot_id:'gas_emissions_3',status:'CANONICAL_MATRIX_AGGREGATED_BROWSER_FAIL',error:String(error),browser_passed:false,parcel_binding_gate_passed:false,final_ready:false};
+  document.getElementById('aggregate').setAttribute('data-acceptance-complete','false');
+  setStatus('CANONICAL_MATRIX_AGGREGATED_BROWSER_FAIL | '+String(error),false);
+});
+</script>
+</body>
+</html>

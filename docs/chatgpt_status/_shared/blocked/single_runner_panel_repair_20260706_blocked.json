@@ -1,0 +1,34 @@
+{
+  "task_id": "single-runner-panel-repair-20260706",
+  "status": "blocked_after_repair",
+  "checked_at": "2026-07-06T14:30:36Z",
+  "summary": "Canonical runner and panel repair is installed and running, but git object database corruption blocks safe task execution and push.",
+  "runner_pid": 10824,
+  "runner_version": "v5_20260706",
+  "repo_root": "C:\\Users\\cagda\\Documents\\GitHub\\AAYS",
+  "branch": "feature/terrayield-aays-integration",
+  "blockers": [
+    {
+      "code": "git_object_database_corrupt",
+      "evidence": "git status reports fatal: unable to read tree (707fe47d7d3f9ca930649bdc4b2bfc2b87187caf); git fetch origin and git fetch --refetch origin also failed with missing/bad objects"
+    },
+    {
+      "code": "worktree_not_clean",
+      "evidence": "runner refuses task execution while git status is unavailable or dirty"
+    },
+    {
+      "code": "not_on_main_branch",
+      "evidence": "panel index branch is feature/terrayield-aays-integration"
+    },
+    {
+      "code": "real_115_security_batch_join_processor_not_implemented",
+      "evidence": "115_security_batch_join_backoff.ps1 is a safe blocker guard and writes final_ready=false"
+    }
+  ],
+  "final_ready": false,
+  "push_sync_ok": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

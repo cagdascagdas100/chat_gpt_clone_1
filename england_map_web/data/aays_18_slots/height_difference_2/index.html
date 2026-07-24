@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 işlemleri</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1118;--panel:#111b27;--line:#314156;--text:#edf3fa;--muted:#a9b7c8;--ok:#64d79a;--warn:#ffd06f;--bad:#ff8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Segoe UI,Arial,sans-serif}header{padding:18px;background:var(--panel);border-bottom:1px solid var(--line)}h1{margin:0 0 6px;font-size:23px}p{margin:3px 0;color:var(--muted)}#metrics{display:flex;gap:7px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line)}.pill{padding:5px 8px;border:1px solid var(--line);background:#0e1823}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1550px;font-size:12px}th,td{border:1px solid #29394c;padding:7px;vertical-align:top}th{position:sticky;top:0;background:#18273a;text-align:left}tr.completed td{background:#10251d}tr.blocked td{background:#2b1818}a{color:#95cdff}.mono{font-family:Consolas,monospace}#message{padding:10px 18px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+<h1>Height Difference / Topography — SLOT height_difference_2</h1>
+<p>Parsel aralığı 30762-61522. Resmî kaynak yükseltmeleri ve gerçek blockerlar satır bazında gösterilir.</p>
+<p>Kanıt oluşmadan ölçülmüş parsel değeri yayınlanmaz.</p>
+</header>
+<div id="metrics"></div>
+<div id="message">Yükleniyor...</div>
+<div class="wrap"><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Etiket</th><th>Kaynak</th><th>Kaynak URL</th><th>Açıklama</th><th>Doğruluk</th><th>Blocker</th></tr></thead><tbody id="rows"></tbody></table></div>
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function json(path){const r=await fetch(`${path}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`${path}: HTTP ${r.status}`);return r.json()}
+Promise.all([json('operations_latest.json'),json('status_latest.json')]).then(([data,status])=>{
+ const m=[['Tamamlanan işlem',`${status.completed_operation_count}/${status.planned_operation_count}`,'ok'],['Batch',`${status.batch_operation_percent}%`,'ok'],['Genel ilerleme',`${status.overall_completion_percent}%`,'warn'],['Artış',`+${status.percent_increase}%`,status.percent_increase?'ok':'warn'],['Kaynak adayı',status.source_candidate_count,'ok'],['Parsel adayı',status.parcel_candidate_count,status.parcel_candidate_count?'ok':'warn'],['Yükseltilen kaynak',status.source_contracts_upgraded,'ok'],['Kaynak doğruluğu',status.source_contract_accuracy_score_4,'ok'],['Ölçülmüş satır',status.measured_parcel_rows_written,status.measured_parcel_rows_written?'ok':'warn'],['final_ready',String(status.final_ready),status.final_ready?'bad':'ok']];
+ document.getElementById('metrics').innerHTML=m.map(x=>`<span class="pill ${x[2]}">${esc(x[0])}: <strong>${esc(x[1])}</strong></span>`).join('');
+ document.getElementById('rows').innerHTML=data.operations.map(o=>`<tr class="${esc(o.status)}"><td>${esc(o.operation_no)}</td><td>${esc(o.status)}</td><td>${esc(o.stage)}</td><td>${esc(o.operation_type)}</td><td>${esc(o.display_badge)}</td><td>${esc(o.source_name)}</td><td>${o.source_url?`<a href="${esc(o.source_url)}" target="_blank" rel="noopener">${esc(o.source_url)}</a>`:'not_available'}</td><td>${esc(o.details_summary)}</td><td>${esc(o.accuracy_score_4)}</td><td>${esc(o.blocker)}</td></tr>`).join('');
+ document.getElementById('message').textContent=`${data.completed_operation_count}/${data.planned_operation_count} işlem işlendi. ${data.blocked_operation_count} gerçek blocker satırı korunuyor.`;
+}).catch(e=>{document.getElementById('message').className='bad';document.getElementById('message').textContent=`Yükleme hatası: ${e.message}`});
+</script>
+</body>
+</html>

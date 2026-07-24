@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_1",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "continuation_source_head": "c6dfb272f8b0d0fc32a9db0dcc8a2ea98acb39d1",
+  "observed_remote_head_before_publish": "80a278e6957cf107ef4cbe83493469250c28dd1c",
+  "generated_at": "2026-07-22T17:42:15Z",
+  "stage": "OFFICIAL_SOURCE_QUALIFICATION_WHILE_RUNNER_RECOVERY_PARKED",
+  "runner_state": "RECOVERY_PARKED",
+  "second_runner_started": false,
+  "general_program_progress_percent": 11.1,
+  "general_program_progress_delta_points": 0.0,
+  "research_subphase_progress_percent": 100.0,
+  "existing_verified_rows": 33785,
+  "existing_no_data_or_pending_rows": 58498,
+  "new_parcel_rows_written_this_batch": 0,
+  "candidate_count_this_batch": 5,
+  "accepted_current_or_method_sources": 4,
+  "excluded_from_current_score_sources": 1,
+  "source_selection_confidence_percent": 99,
+  "parcel_output_accuracy": "NOT_SCORED_UNTIL_ARCHIVE_AND_POSTCODE_BINDING_VALIDATION",
+  "source_candidates": [
+    {
+      "line": 1,
+      "candidate_id": "ofcom_connected_nations_spring_2026_current_snapshot",
+      "authority": "Ofcom",
+      "role": "PRIMARY_CURRENT_AVAILABILITY_CONTEXT",
+      "decision": "ACCEPTED",
+      "publication_date": "2026-05-13",
+      "source_snapshot_date": "2026-01",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "verified_facts": {
+        "uk_residential_gigabit_availability_percent": 89,
+        "uk_residential_full_fibre_availability_percent": 82,
+        "premises_unable_decent_fixed_or_fwa": 39000
+      },
+      "use_rule": "National context only; do not copy national percentages into parcel rows."
+    },
+    {
+      "line": 2,
+      "candidate_id": "ofcom_spring_2026_fixed_broadband_download",
+      "authority": "Ofcom",
+      "role": "PRIMARY_POSTCODE_COVERAGE_ARCHIVE",
+      "decision": "ACCEPTED_PENDING_RUNTIME_ARCHIVE_AUDIT",
+      "publication_date": "2026-05-13",
+      "source_snapshot_date": "2026-01",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "use_rule": "Only corrected postcode coverage files passing file-count, header and row-count gates may feed matching."
+    },
+    {
+      "line": 3,
+      "candidate_id": "ofcom_connected_nations_faq_postcode_performance_guardrail",
+      "authority": "Ofcom",
+      "role": "MEASUREMENT_SEMANTICS_GUARDRAIL",
+      "decision": "ACCEPTED",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-faqs",
+      "verified_fact": "Since 2024 Ofcom does not publish fixed broadband performance at postcode level.",
+      "use_rule": "Postcode coverage must be labelled availability/proxy, never measured connection speed."
+    },
+    {
+      "line": 4,
+      "candidate_id": "ons_postcode_products_reference",
+      "authority": "Office for National Statistics",
+      "role": "POSTCODE_GEOGRAPHY_REFERENCE_ONLY",
+      "decision": "ACCEPTED_AS_REFERENCE_NOT_MEASUREMENT",
+      "confidence_percent": 95,
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts",
+      "verified_fact": "ONSPD and NSPL link postcodes to coordinates and administrative/statistical geographies and are released quarterly.",
+      "use_rule": "May support postcode location and geography joins; cannot supply broadband values."
+    },
+    {
+      "line": 5,
+      "candidate_id": "ofcom_planned_network_deployments_2026",
+      "authority": "Ofcom",
+      "role": "FUTURE_NETWORK_PLANS",
+      "decision": "EXCLUDED_FROM_CURRENT_AVAILABILITY_SCORE",
+      "publication_date": "2026-05-13",
+      "plan_horizon": "2028-2029",
+      "confidence_percent": 100,
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-planned-network-deployment/connected-nations-planned-network-deployments-2026",
+      "use_rule": "Keep in future-growth evidence only; planned deployment is not current service availability."
+    }
+  ],
+  "operations": [
+    {"line": 11, "operation": "fresh_canonical_head_readback", "state": "PASS", "evidence": "80a278e6957cf107ef4cbe83493469250c28dd1c"},
+    {"line": 12, "operation": "slot_owner_and_heartbeat_recheck", "state": "PASS", "evidence": "unclaimed; heartbeat null; stale=true"},
+    {"line": 13, "operation": "long_pending_recovery_classification", "state": "PASS", "evidence": "RECOVERY_PARKED; no duplicate runner or task"},
+    {"line": 14, "operation": "ofcom_current_snapshot_reverification", "state": "PASS", "evidence": "Published 2026-05-13; January 2026 snapshot"},
+    {"line": 15, "operation": "ofcom_fixed_coverage_download_reverification", "state": "PASS", "evidence": "Fixed broadband coverage download remains listed"},
+    {"line": 16, "operation": "postcode_measured_speed_exclusion_gate", "state": "PASS", "evidence": "No postcode fixed performance publication since 2024"},
+    {"line": 17, "operation": "ons_reference_only_gate", "state": "PASS", "evidence": "Postcode geography reference; not broadband measurement"},
+    {"line": 18, "operation": "future_plan_current_score_exclusion_gate", "state": "PASS", "evidence": "Planned deployments separated from January 2026 current snapshot"}
+  ],
+  "next_verified_action": "EXISTING_SINGLE_COORDINATOR_EXECUTE_OFCom_2026_SCHEMA_AUDIT_THEN_MIGRATE_SLOT_ROWS",
+  "blocker": "PORTABLE_COORDINATOR_HEARTBEAT_STALE_2026-07-16T13:45:53Z",
+  "fake_data": false,
+  "final_ready": false
+}

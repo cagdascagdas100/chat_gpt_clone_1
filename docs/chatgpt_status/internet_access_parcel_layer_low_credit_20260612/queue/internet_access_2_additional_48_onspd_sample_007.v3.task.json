@@ -1,0 +1,67 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
+  "task_id": "internet-access-2-additional-48-onspd-sample-v2-20260722T034600Z",
+  "attempt_id": "f9c02282b37943c9b786b1a3f25c9764",
+  "idempotency_key": "74dc60bbeb5401a11b7823b60d419b90c5d76cf470f2f83a440aeed72178230d",
+  "status": "superseded_by_full_11013_identity_expansion",
+  "priority": "P0",
+  "superseded_by_task_id": "internet-access-2-expand-onspd-identity-existing-11013-v2-20260722T034500Z",
+  "supersession_evidence": {
+    "validation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/005_existing_11013_identity_validation.json",
+    "existing_shard2_rows": 11013,
+    "postcode_identity_confirmed": 11013,
+    "postcode_live": 11011,
+    "postcode_terminated_review_required": 2,
+    "postcode_not_confirmed": 0
+  },
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/007_onspd_additional_48_sample.py",
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/internet.geojson",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/004_24_sample_postcode_normalized_candidates.jsonl"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/007_additional_48_onspd_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/007_additional_48_rows_latest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/007_additional_48_validation.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/007_onspd_additional_sample_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/007_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/reports/007_additional_48_onspd_sample.md",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/007_progress.jsonl"
+  ],
+  "resource_class": ["light_read", "network_fetch"],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 3600,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONS_Postcode_Directory_%28May_2026%29_for_the_United_Kingdom_%28Hosted_Table%29/FeatureServer/0",
+      "https://services1.arcgis.com/ESMARspQHYMw9BZ9/ArcGIS/rest/services/ONSPD_Online_latest_Postcode_Centroids/FeatureServer/0"
+    ],
+    "source_snapshot_date": "ONSPD 2026-05",
+    "source_discovery_required": false,
+    "measurement_level": "postcode",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "retain canonical row_no parcel_id and HMLR identity; exclude the accepted 24-row sample; choose 48 deterministic evenly distributed existing shard rows; exact normalized PCDS join only",
+    "confidence_method": "exact live ONSPD postcode confirms identity at 2/4 only; no coverage score without an exact Ofcom r2 row",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "postcode is absent after two official ONSPD services",
+      "postcode is terminated",
+      "official service schema differs"
+    ]
+  },
+  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
+  "final_ready": false,
+  "requested_at": "2026-07-22T03:46:00Z",
+  "updated_at": "2026-07-22T04:08:00Z",
+  "correction": "SUPERSEDED_AFTER_FULL_11013_EXACT_ONSPD_IDENTITY_COMPLETED"
+}

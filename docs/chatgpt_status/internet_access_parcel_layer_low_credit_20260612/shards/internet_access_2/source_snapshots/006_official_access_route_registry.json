@@ -1,0 +1,123 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_2",
+  "generated_at": "2026-07-22T02:19:06Z",
+  "updated_at": "2026-07-22T04:23:00Z",
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
+  "sources": [
+    {
+      "name": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+      "authority": "Ofcom",
+      "snapshot_date": "2026-01",
+      "publication_date": "2026-05-13",
+      "measurement_level": "postcode coverage availability",
+      "official_landing_download_size_mb": 32.3,
+      "official_v2_document": {
+        "title": "About this data - fixed coverage and full-fibre take-up (v2)",
+        "correction_date": "2026-07-07",
+        "corrections": [
+          "postcode area CW file was a duplicate of CV and was corrected",
+          "postcode area MK file was a duplicate of ME and was corrected",
+          "all 121 all-premises postcode files were renamed from r1 to r2"
+        ],
+        "all_premises_postcode_pattern": "202601_fixed_postcode_coverage_r2_XX.csv",
+        "all_premises_postcode_file_count": 121,
+        "all_premises_postcode_rows": 1741096,
+        "all_premises_uncompressed_size_mb": 165,
+        "required_fields_verified_in_document": [
+          "postcode",
+          "postcode_space",
+          "SFBB availability (% premises)",
+          "UFBB (100Mbit/s) availability (% premises)",
+          "Gigabit availability (% premises)",
+          "% of premises unable to receive 30Mbit/s"
+        ]
+      },
+      "access_routes": [
+        {
+          "route": "official_zip_from_landing_page",
+          "state": "OFFICIAL_LINK_CONFIRMED_BINARY_FETCH_BLOCKED",
+          "browser_tool_result": "HTTP_400_OK_BINARY_FETCH_FAILURE",
+          "portable_cache_state": "NOT_PRESENT",
+          "runner_download_state": "BLOCKED_AFTER_LANDING_COOKIE_AND_CURL_RETRY",
+          "may_write_accuracy": false
+        },
+        {
+          "route": "Ofcom Connected Nations Broadband API",
+          "state": "ACCOUNT_AND_SUBSCRIPTION_KEY_REQUIRED",
+          "basic_limit": "100 calls/minute; 50000 requests/month",
+          "premium_limit": "500 calls/minute; 150000 requests/month",
+          "subscription_key_evidence_in_remote_task_contracts": false,
+          "may_write_accuracy": false
+        }
+      ],
+      "maximum_accuracy_when_exact_r2_row_is_available": "3/4_POSTCODE_PROXY"
+    },
+    {
+      "name": "ONS Postcode Directory May 2026",
+      "authority": "Office for National Statistics",
+      "snapshot_date": "2026-05",
+      "measurement_level": "postcode identity, lifecycle and centroid",
+      "official_service_item_id": "d1317f804688417287de8f8224ecc942",
+      "table_id": 0,
+      "max_record_count": 1000,
+      "data_last_edit": "2026-06-04",
+      "verified_fields": ["pcd7", "pcds", "dointr", "doterm", "lat", "long", "lad25cd", "ctry25cd"],
+      "result": {
+        "existing_shard2_rows": 11013,
+        "distinct_postcodes": 5044,
+        "postcode_identity_confirmed": 11013,
+        "postcode_live": 11011,
+        "postcode_terminated_review_required": 2,
+        "postcode_not_confirmed": 0,
+        "batch_attempts": 51,
+        "retry_errors": 0
+      },
+      "access_routes": [
+        {
+          "route": "May 2026 hosted table FeatureServer",
+          "state": "11013_EXACT_IDENTITIES_ACCEPTED",
+          "script": "005b_expand_onspd_identity_to_existing_11013.py"
+        },
+        {
+          "route": "latest postcode centroids FeatureServer fallback",
+          "service_item_id": "84787e80aca04bb388caad29f89946b0",
+          "max_record_count": 2000,
+          "state": "OFFICIAL_FALLBACK_AVAILABLE"
+        }
+      ],
+      "maximum_accuracy_without_ofcom_coverage": "2/4_POSTCODE_IDENTITY_ONLY"
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+      "state": "REMOTE_ACCEPTED",
+      "verified_rows": 24
+    },
+    {
+      "task_id": "internet-access-2-expand-onspd-identity-existing-11013-v2-20260722T034500Z",
+      "state": "REMOTE_ACCEPTED",
+      "verified_rows": 11013
+    },
+    {
+      "task_id": "internet-access-2-ofcom-zip-schema-preflight-v2-20260722T034700Z",
+      "state": "REMOTE_ACCEPTED_SOURCE_BLOCKED_PUBLISH_RETRY_PENDING",
+      "accepted_zip": false,
+      "publisher_error": "PUBLISH_REMOTE_READBACK_MISMATCH"
+    },
+    {
+      "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
+      "state": "QUEUED_P0_DEPENDENCY_SATISFIED",
+      "target_rows": 11013,
+      "query_method": "OFFICIAL_CACHE_OR_DYNAMIC_LANDING_ZIP_EXACT_R2_JOIN"
+    }
+  ],
+  "official_coverage_verified_candidates": 0,
+  "parcel_measured_values_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

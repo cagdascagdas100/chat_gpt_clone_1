@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "verified_at": "2026-07-22T05:14:16+03:00",
+  "purpose": "LIGHTWEIGHT_OFFICIAL_SOURCE_ACCESS_AND_SIGNATURE_PREFLIGHT",
+  "required_source_ids": [
+    "ofcom_connected_nations_spring_2026",
+    "onspd_may_2026_service",
+    "hmlr_inspire_july_2026_download"
+  ],
+  "sources": [
+    {
+      "id": "ofcom_connected_nations_spring_2026",
+      "authority": "Ofcom",
+      "url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "expected_content_types": ["text/html"],
+      "required_signatures": ["connected nations", "spring 2026"]
+    },
+    {
+      "id": "onspd_may_2026_service",
+      "authority": "Office for National Statistics",
+      "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/ONS_Postcode_Directory_%28May_2026%29_for_the_United_Kingdom_%28Hosted_Table%29/FeatureServer/0?f=pjson",
+      "expected_content_types": ["application/json", "text/plain"],
+      "required_signatures": ["pcd7", "east1m", "north1m"]
+    },
+    {
+      "id": "hmlr_inspire_july_2026_download",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "expected_content_types": ["text/html"],
+      "required_signatures": ["download", "index polygons"]
+    },
+    {
+      "id": "os_open_uprn_product",
+      "authority": "Ordnance Survey",
+      "url": "https://www.ordnancesurvey.co.uk/products/os-open-uprn",
+      "expected_content_types": ["text/html"],
+      "required_signatures": ["uprn", "six weeks"],
+      "optional": true
+    },
+    {
+      "id": "ons_national_statistics_uprn_products",
+      "authority": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts",
+      "expected_content_types": ["text/html"],
+      "required_signatures": ["nsul", "onsud", "six weeks"],
+      "optional": true
+    }
+  ],
+  "semantics": {
+    "access_pass_is_not_business_data_validation": true,
+    "source_page_availability_does_not_prove_parcel_relation": true,
+    "confidence_uplift_allowed": false
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

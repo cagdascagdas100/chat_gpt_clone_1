@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "generated_at": "2026-07-21T03:34:00Z",
+  "purpose": "OFFICIAL_SOURCE_EXPANSION_AND_ACCURACY_GATE_HARDENING",
+  "business_rows_created": 0,
+  "new_sources": [
+    {
+      "id": "police_uk_crime_categories",
+      "url": "https://data.police.uk/docs/method/crime-categories/",
+      "status": "LIVE_VERIFIED",
+      "use": "validate category identifiers for the selected monthly dataset",
+      "parcel_measurement": false
+    },
+    {
+      "id": "police_uk_street_level_method",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "status": "LIVE_VERIFIED",
+      "observed_rule": "point results cover a one-mile radius and locations are anonymised approximations",
+      "use": "lock supporting-evidence semantics and prevent exact-parcel claims",
+      "parcel_measurement": false
+    },
+    {
+      "id": "police_uk_archive_and_lsoa_semantics",
+      "url": "https://data.police.uk/about/",
+      "status": "LIVE_VERIFIED",
+      "observed_rule": "download coordinates are anonymised and LSOA fields reference ONS boundaries",
+      "use": "batch fallback and LSOA semantic crosscheck",
+      "parcel_measurement": false
+    },
+    {
+      "id": "mps_recorded_crime_geographic_breakdown",
+      "url": "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m",
+      "status": "LIVE_VERIFIED",
+      "publisher": "Metropolitan Police Service",
+      "latest_lsoa_period_observed": "2024-07_to_2026-06",
+      "geography": "LSOA",
+      "update_frequency": "monthly",
+      "use": "second official LSOA recorded-crime context join",
+      "output_semantics": "AREA_LEVEL_PROXY",
+      "parcel_measurement": false
+    },
+    {
+      "id": "mps_monthly_crime_dashboard",
+      "url": "https://data.london.gov.uk/dataset/mps-monthly-crime-dashboard-data-e5n6w",
+      "status": "LIVE_VERIFIED",
+      "publisher": "Metropolitan Police Service",
+      "latest_period_observed": "2026-06",
+      "observed_rule": "monthly updates and CONNECT/Home Office classification caveats must be retained",
+      "use": "London-wide and borough/SNT aggregate QA",
+      "parcel_measurement": false
+    }
+  ],
+  "accuracy_gate_change": {
+    "previous_4_of_4_rule": "canonical identity plus Police.uk plus IoD25 corrected v2",
+    "new_4_of_4_rule": "canonical identity plus Police.uk HTTP/SHA plus IoD25 corrected v2 LSOA plus MPS LSOA recorded-crime join",
+    "fail_closed": true,
+    "worker": "docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/security_public_safety_2_batch_hydrate_v2.py",
+    "synthetic_fixture_result": {
+      "canonical_rows": 300,
+      "accuracy_4_rows": 300,
+      "json_csv_geojson_parity": true,
+      "note": "fixture validates code paths only and is not business data"
+    }
+  },
+  "official_sources_live_added": 5,
+  "official_sources_live_cumulative": 12,
+  "actual_business_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

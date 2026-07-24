@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T20:05:30Z",
+  "state": "HTTP_XML_ARCHIVE_INTEGRITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "IETF_HTTP_REPRESENTATION_AND_RANGE_SEMANTICS",
+      "authority": "IETF / RFC Editor",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "verified": true,
+      "facts": ["200_get_is_full_selected_representation", "206_is_one_or_more_partial_representation_parts", "content_range_describes_complete_length", "etag_and_last_modified_are_validators", "304_has_no_new_representation_content"],
+      "accepted_role": "HTTP_TRANSFER_COMPLETENESS_AND_VALIDATOR_CONTROL"
+    },
+    {
+      "source_id": "IETF_HTTP_DIGEST_FIELDS",
+      "authority": "IETF / RFC Editor",
+      "url": "https://www.rfc-editor.org/rfc/rfc9530.html",
+      "verified": true,
+      "facts": ["content_digest_covers_http_message_content", "repr_digest_covers_representation_data", "partial_content_can_have_different_content_and_representation_digests", "digest_fields_do_not_replace_authentication"],
+      "accepted_role": "TRANSFER_AND_REPRESENTATION_INTEGRITY_CONTROL"
+    },
+    {
+      "source_id": "W3C_XML_EXTERNAL_ENTITIES_AND_ENCODING",
+      "authority": "World Wide Web Consortium",
+      "url": "https://www.w3.org/TR/xml/",
+      "verified": true,
+      "facts": ["external_entity_system_identifier_is_a_uri_reference", "retrieval_can_follow_redirects", "utf8_and_utf16_support_required", "external_entities_can_have_text_declarations", "recursive_entity_reference_is_not_well_formed"],
+      "accepted_role": "XML_EXTERNAL_RESOURCE_AND_ENCODING_CONTROL"
+    },
+    {
+      "source_id": "W3C_CANONICAL_XML_1_1",
+      "authority": "World Wide Web Consortium",
+      "url": "https://www.w3.org/TR/xml-c14n/",
+      "verified": true,
+      "facts": ["canonical_form_normalizes_permitted_xml_representation_differences", "canonical_output_is_utf8", "xml_base_processing_is_defined", "comment_mode_is_explicit", "relative_namespace_uris_cause_failure"],
+      "accepted_role": "SEMANTIC_XML_HASH_AND_COMPARISON_CONTROL"
+    },
+    {
+      "source_id": "OGC_GML_AND_AXIS_ORDER",
+      "authority": "Open Geospatial Consortium",
+      "url": "https://www.ogc.org/standards/gml/",
+      "verified": true,
+      "facts": ["gml_is_xml_encoding_for_geographic_information", "gml_instance_is_described_by_schema", "gml_3_2_1_is_an_official_encoding_standard", "coordinate_tuples_follow_coordinate_system_axis_order"],
+      "accepted_role": "GML_DIMENSION_AND_COORDINATE_INTERPRETATION_CONTROL"
+    },
+    {
+      "source_id": "GDAL_VSIZIP_ARCHIVE_ACCESS",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/user/virtual_file_systems.html",
+      "verified": true,
+      "facts": ["vsizip_reads_zip_members_on_the_fly", "member_paths_are_addressed_inside_the_archive", "virtual_file_system_handlers_can_be_chained"],
+      "accepted_role": "ARCHIVE_INSPECTION_BEFORE_EXTRACTION_CONTROL"
+    },
+    {
+      "source_id": "PYTHON_ZIPFILE_EXTRACTION_WARNINGS",
+      "authority": "Python Software Foundation",
+      "url": "https://docs.python.org/3/library/zipfile.html",
+      "verified": true,
+      "facts": ["untrusted_archives_require_prior_inspection", "absolute_and_parent_traversal_names_are_risky", "zip_path_does_not_sanitize_member_names", "member_metadata_supports_integrity_and_size inspection"],
+      "accepted_role": "ARCHIVE_MEMBER_PATH_AND_RESOURCE_LIMIT_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "http_transfer": [
+      "FULL_DOWNLOAD_REQUIRES_200_OR_EXPLICITLY_REASSEMBLED_COMPLETE_206_RANGES",
+      "STATUS_FINAL_URI_REDIRECT_CHAIN_CONTENT_TYPE_AND_CONTENT_ENCODING_RECORDED",
+      "PARTIAL_RESUME_REQUIRES_CONTENT_RANGE_COMPLETE_LENGTH_CONTIGUOUS_COVERAGE_AND_STRONG_VALIDATOR",
+      "304_REUSE_REQUIRES_EXISTING_HASH_VERIFIED_CACHE_ENTRY",
+      "ETAG_LAST_MODIFIED_CONTENT_LENGTH_AND_RECEIVED_BYTE_LENGTH_RECORDED",
+      "RAW_RECEIVED_BYTES_HAVE_LOCAL_SHA256"
+    ],
+    "http_digest": [
+      "CONTENT_DIGEST_VALIDATED_WHEN_PRESENT",
+      "REPR_DIGEST_VALIDATED_WHEN_PRESENT",
+      "CONTENT_AND_REPRESENTATION_DIGESTS_NOT_CONFLATED",
+      "ENCODED_AND_DECODED_HASHES_AND_LENGTHS_RECORDED_SEPARATELY",
+      "SERVER_DIGEST_NEVER_REPLACES_LOCAL_SHA256_OR_SOURCE_AUTHORITY_CHECK"
+    ],
+    "xml_parse_security": [
+      "DOCTYPE_EXTERNAL_SUBSET_AND_EXTERNAL_ENTITY_DECLARATIONS_REJECTED",
+      "PARSER_NETWORK_ACCESS_DISABLED",
+      "ONLY_HASH_PINNED_LOCAL_SCHEMA_CATALOG_ALLOWED",
+      "BOM_XML_DECLARATION_HTTP_CHARSET_AND_DECODED_ENCODING_CONSISTENT",
+      "ENTITY_RECURSION_COUNT_EXPANSION_AND_RESOURCE_LIMITS_ENFORCED"
+    ],
+    "xml_identity": [
+      "RAW_BYTE_SHA256_RETAINED_AS_PRIMARY_EXACT_SOURCE_IDENTITY",
+      "CANONICAL_XML_1_1_SHA256_STORED_SEPARATELY",
+      "CANONICALIZATION_VERSION_COMMENT_MODE_AND_XML_BASE_POLICY_RECORDED",
+      "RELATIVE_NAMESPACE_URI_CAUSES_FAILURE",
+      "CANONICAL_HASH_NEVER_MASKS_RAW_BYTE_CHANGE"
+    ],
+    "gml_coordinates": [
+      "COORDINATE_TUPLES_FOLLOW_DECLARED_CRS_AXIS_ORDER",
+      "SRSNAME_SRSDIMENSION_AXISLABELS_UOMLABELS_AND_TUPLE_WIDTH_CONSISTENT",
+      "COORDINATE_LIST_LENGTH_DIVISIBLE_BY_DECLARED_DIMENSION",
+      "MIXED_TUPLE_WIDTH_REJECTED",
+      "TWO_DIMENSIONAL_GEOMETRY_NEVER_RECEIVES_SYNTHETIC_Z"
+    ],
+    "archive_ingestion": [
+      "ARCHIVE_INSPECTED_BEFORE_EXTRACTION",
+      "ABSOLUTE_PARENT_TRAVERSAL_DRIVE_AND_UNC_MEMBER_PATHS_REJECTED",
+      "MEMBER_ALLOWLIST_COUNT_DUPLICATE_NAME_AND_CASE_COLLISION_CHECKED",
+      "ARCHIVE_CRC_AND_PER_MEMBER_HASH_SIZE_COMPRESSION_METHOD_RECORDED",
+      "TOTAL_SIZE_MEMBER_SIZE_COMPRESSION_RATIO_AND_NESTING_LIMITS_ENFORCED"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 22,
+  "source_checks_total": 22,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

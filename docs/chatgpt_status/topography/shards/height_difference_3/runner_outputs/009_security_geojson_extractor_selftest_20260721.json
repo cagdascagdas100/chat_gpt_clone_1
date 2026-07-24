@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-security-geojson-extractor-selftest-20260721",
+  "executed_at": "2026-07-21T00:57:17Z",
+  "script": {
+    "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/019_extract_canonical_shard_from_security_geojson.py",
+    "sha256": "33afbc7b33c83121dd02005b96781cd4284e26c95f4e550b1e58a9f64f0207b1",
+    "python_lines": 333,
+    "syntax_compile": "PASS"
+  },
+  "tests": [
+    {"test_id": "positive_explicit_shard_extract", "status": "PASS", "evidence": "explicit rows selected and sorted by row_no"},
+    {"test_id": "identity_digest_present", "status": "PASS", "evidence": "order-independent canonical identity SHA256 produced"},
+    {"test_id": "feature_order_not_identity", "status": "PASS", "evidence": "shuffled features produced the same canonical identity digest"},
+    {"test_id": "duplicate_row_fail_closed", "status": "PASS", "evidence": "duplicate explicit row_no rejected"},
+    {"test_id": "canonical_gap_fail_closed", "status": "PASS", "evidence": "non-contiguous canonical registry rejected"},
+    {"test_id": "geometry_coordinate_mismatch_fail_closed", "status": "PASS", "evidence": "Point and HMLR coordinate disagreement rejected"},
+    {"test_id": "missing_hmlr_inspire_id_fail_closed", "status": "PASS", "evidence": "row without official HMLR identifier rejected"},
+    {"test_id": "crosscheck_digest_detects_change", "status": "PASS", "evidence": "changed identity or coordinate produces a different digest"}
+  ],
+  "summary": {
+    "tests_total": 8,
+    "tests_passed": 8,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_security_geojson_extraction_executed": false,
+    "real_canonical_shard_rows_exported": 0,
+    "real_parcel_candidates_selected": 0,
+    "real_measurement_rows_written": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blockers": [
+    "F_RUNNER_MUST_EXECUTE_019_AGAINST_COMMITTED_SECURITY_GEOJSON",
+    "OS_TERRAIN50_LIVE_DOWNLOAD_URL_OR_ARCHIVE_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

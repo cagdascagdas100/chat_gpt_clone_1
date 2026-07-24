@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="15">
+<title>Security Public Safety 1 Runner Pickup</title>
+<style>body{font-family:Arial,sans-serif;margin:24px;line-height:1.45;background:#fafafa;color:#171717}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}code{background:#eee;padding:2px 5px}.notice{padding:12px;border:1px solid #999;background:#fff;margin-bottom:16px}a{font-weight:bold}</style>
+</head>
+<body>
+<h1>Security / Public Safety — Runner Pickup</h1>
+<div class="notice"><code>security_public_safety_1</code> · <code>AREA_LEVEL_PROXY</code> · parsel ölçümü değildir · <code>final_ready=false</code> · <a id="progressLink" href="progress_v14.html">V14 satır bazlı ilerleme sayfası</a></div>
+<table><thead><tr><th>Alan</th><th>Güncel değer</th></tr></thead><tbody id="rows"><tr><td colspan="2">Yükleniyor…</td></tr></tbody></table>
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('./runner_pickup_status_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+ document.getElementById('progressLink').href=d.progress_page||'progress_v14.html';
+ const rows=[
+  ['Durum',d.status],['Attempt',d.attempt_id],['Checkpoint',d.checkpoint_sequence],['İlk doğrulanmamış adım',d.first_unverified_step],
+  ['Slot status',d.slot_status],['Current task',d.slot_current_task],['Heartbeat',`${d.slot_heartbeat}; stale=${d.slot_heartbeat_stale}`],
+  ['JSON queue',`${d.json_queue_status}; consumed=${d.json_queue_consumed_by_existing_runner}`],['Legacy bridge',`ready=${d.legacy_bridge_ready}; worker=v${d.legacy_bridge_worker_version}`],
+  ['Acceptance adayı',d.prepared_candidate_count],['Acceptance doğruluk 4/4',d.prepared_candidate_accuracy_score_4_count],['Acceptance benzersiz API',d.prepared_candidate_unique_endpoints],
+  ['Supplemental aday',d.supplemental_candidate_count],['Supplemental doğruluk 4/4',d.supplemental_candidate_accuracy_score_4_count],['Supplemental HTTP 200',d.supplemental_candidate_stored_http_200_count],
+  ['Supplemental benzersiz API',d.supplemental_candidate_unique_endpoints],['Supplemental yeni API',d.supplemental_candidate_new_endpoints],['Görünür toplam',d.visible_candidate_total],
+  ['Endpoint yeniden kullanım',`${d.candidate_endpoint_reuse_ratio} satır/API`],['Worker/queue değişti',!d.worker_and_queue_unchanged_this_turn],
+  ['Resmî kaynak',d.upgraded_official_sources],['Bu tur kaynak kalite kontrolü',d.official_source_quality_upgrades_this_turn],['Planlanan canlı ağ kontrolü',d.planned_live_network_checks],
+  ['Police API son ay',d.police_api_latest_month],['London LSOA son ay',d.london_lsoa_latest_month],['ONS sonraki yayın',d.ons_next_release_date],['ONS yayımlandı',d.ons_next_release_published],
+  ['Preflight hazır',d.deterministic_preflight_ready],['Preflight çalıştırıldı',d.deterministic_preflight_executed],['V14 AST kontrolü',d.authoring_worker_v14_ast_parse_pass],
+  ['Control alias',d.global_control_alias],['Alias durumu',d.control_alias_state],['Alias bu slota ait',d.global_control_alias_owned_by_this_slot],['Alias değiştirildi',d.global_control_alias_overwritten],
+  ['Claim oluşturuldu',d.claim_created],['Acceptance raporu',d.acceptance_report_present],['Blocker',d.blocker],['Sonraki adım',d.next_step]
+ ];
+ document.getElementById('rows').innerHTML=rows.map(x=>`<tr><th>${esc(x[0])}</th><td>${esc(x[1])}</td></tr>`).join('');
+}).catch(e=>document.getElementById('rows').innerHTML=`<tr><td colspan="2">Okuma hatası: ${esc(e)}</td></tr>`);
+</script>
+</body></html>

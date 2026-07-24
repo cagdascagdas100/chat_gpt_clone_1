@@ -1,193 +1,71 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TerraYield Program Parcel Layer Matrix</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TerraYield Parsel Katman Matrisi</title>
   <style>
-    :root { --bg:#0b1118; --panel:#141b24; --line:#2b3442; --text:#e7edf5; --muted:#9aa7b4; --accent:#ff8a00; }
-    * { box-sizing:border-box; } body { margin:0; font-family:Segoe UI,Arial,sans-serif; color:var(--text); background:var(--bg); }
-    header { position:sticky; top:0; z-index:20; padding:14px 16px; background:#101720; border-bottom:1px solid var(--line); }
-    h1 { margin:0 0 6px; font-size:21px; } .meta { color:var(--muted); font-size:13px; line-height:1.4; }
-    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
-    input,select,button { background:#080d12; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
-    .chips { display:flex; gap:8px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line); background:#0d141d; }
-    .chip { border:1px solid var(--line); border-radius:999px; padding:5px 9px; color:#c7d1dc; font-size:12px; }
-    .layer-update-panel { margin:10px 16px; padding:10px 12px; border:1px solid #36465a; border-radius:12px; background:#101923; color:#d8e3ef; font-size:12px; }
-    .layer-update-panel strong { color:#ffcc8a; }
-    .layer-update-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-    .layer-update-pill { border:1px solid #344155; border-radius:999px; padding:4px 8px; background:#0b1118; }
-    .layer-update-list { margin:8px 0 0; padding-left:18px; color:#b8c4d1; }    .table-wrap { height:calc(100vh - 250px); overflow:auto; }
-    table { border-collapse:separate; border-spacing:0; min-width:7200px; width:max-content; font-size:12px; }
-    th,td { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; max-width:320px; overflow-wrap:anywhere; background:#0f151d; }
-    th { position:sticky; top:0; z-index:4; background:#202a36; color:#f7d49a; text-align:left; } thead tr:nth-child(2) th { top:32px; background:#192331; color:#dfe8f2; }
-    .sticky { position:sticky; left:0; z-index:3; background:#111b26; } th.sticky { z-index:6; background:#263241; }
-    .value { font-weight:600; } .source { color:#aab6c3; } .nodata { color:#ff9d9d; } .acc-0 { color:#ff8a8a; } .acc-1 { color:#ffb86b; } .acc-2 { color:#ffd166; } .acc-3 { color:#8bd17c; } .acc-4 { color:#56d364; }
-    #status { color:#ffd6a0; }
+    :root{color-scheme:dark;--bg:#0b1118;--band:#111b27;--line:#2b3b50;--text:#e8eef6;--muted:#a7b5c6;--ok:#60d394;--warn:#ffca6a;--bad:#ff7b7b;--accent:#ff8a3d}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;font-size:14px;letter-spacing:0}
+    header{padding:16px 18px;background:#0e1722;border-bottom:1px solid var(--line)}h1{font-size:24px;margin:0 0 6px}h2{font-size:17px;margin:0}p{margin:4px 0;color:var(--muted)}
+    .toolbar{display:grid;grid-template-columns:minmax(240px,360px) minmax(220px,1fr) auto auto;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--band)}
+    select,input,button{min-height:38px;border:1px solid #3c4d63;background:#08111b;color:var(--text);padding:7px 10px;font:inherit}button{cursor:pointer}button:hover{border-color:var(--accent)}
+    .summary{padding:12px 18px;border-bottom:1px solid var(--line);display:grid;gap:8px}.summary-line{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #405168;padding:4px 7px;background:#0a141f}.pill.ok{border-color:#27734c;color:var(--ok)}.pill.warn{border-color:#8a6422;color:var(--warn)}.pill.bad{border-color:#8a3434;color:var(--bad)}
+    .paths{font-family:Consolas,monospace;font-size:12px;color:#b8c8da;overflow-wrap:anywhere}.message{padding:10px 18px;border-bottom:1px solid var(--line);color:var(--muted)}.message.error{color:var(--bad)}
+    .table-wrap{overflow:auto;height:calc(100vh - 280px);min-height:360px}table{border-collapse:collapse;min-width:1500px;width:100%;font-size:12px}th,td{border:1px solid #27384b;padding:6px;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere;max-width:320px}th{position:sticky;top:0;background:#18263a;color:#fff;z-index:3;text-align:left}td{background:#0f1926}tr.latest td{background:#18261f}tr.manual td{box-shadow:inset 4px 0 var(--warn)}tr.blocked td{box-shadow:inset 4px 0 var(--bad)}a{color:#8cc8ff}.badge{display:inline-block;padding:2px 5px;border:1px solid #52647b;color:#dbe7f3}.badge.latest{border-color:#2b8a58;color:var(--ok)}.badge.manual{border-color:#a97925;color:var(--warn)}.badge.blocked{border-color:#9d3c3c;color:var(--bad)}
+    .pager{display:flex;gap:8px;align-items:center;padding:8px 18px;border-top:1px solid var(--line);background:var(--band)}.pager span{min-width:170px;color:var(--muted)}
+    @media(max-width:900px){.toolbar{grid-template-columns:1fr 1fr}.table-wrap{height:calc(100vh - 340px)}}
   </style>
 </head>
 <body>
-<header>
-  <h1>TerraYield / AAYS - Program Parsel Katman Matrisi</h1>
-  <div class="meta">Bu sÃ¼rÃ¼m parÃ§alÄ±/chunk veri okur; tablo ilk sayfayÄ± hemen gÃ¶sterir. Ä°lk sÃ¼tun <strong>Parcel ID</strong>. Toplam satÄ±r: <strong>92283</strong>.</div>
-  <div class="controls">
-    <input id="searchBox" placeholder="Mevcut sayfada ara: parcel id, LSOA, parcel ref..." size="42" />
-    <select id="coverageFilter">
-      <option value="all">TÃ¼m kayÄ±tlar (92283)</option>
-      <option value="has_distance">Distance dolu (92283)</option>
-      <option value="has_topography">Topography dolu (77970)</option>
-      <option value="has_gas">Gas dolu (3533)</option>
-      <option value="has_security">Security dolu (92283)</option>
-      <option value="has_future_growth">Future Growth dolu (0)</option>
-      <option value="has_planned">Planned dolu (0)</option>
-      <option value="has_internet">Internet dolu (33785)</option>
-      <option value="missing_any">Eksik alanÄ± olanlar (92283)</option>
-      <option value="london_yes">London Region = Evet (92283)</option>
-      <option value="london_no">London Region = HayÄ±r (0)</option>
-      <option value="missing_distance">Distance eksik (0)</option>
-      <option value="missing_topography">Topography eksik (14313)</option>
-      <option value="missing_gas">Gas Emissions eksik (88750)</option>
-      <option value="missing_security">Security eksik (0)</option>
-      <option value="missing_future_growth">Future Growth eksik (92283)</option>
-      <option value="missing_planned">Planned Developments eksik (92283)</option>
-      <option value="missing_internet">Internet eksik (58498)</option>
+  <header>
+    <h1>TerraYield / AAYS - Parsel Katman Matrisi</h1>
+    <p>Kaynaklı satırlar, kanıt yolları ve gerçek blocker durumları. Ürün final durumu kanıt oluşana kadar false kalır.</p>
+  </header>
+  <section class="toolbar">
+    <select id="layerSelect" aria-label="Katman seçimi">
+      <option value="security">Security / Public Safety</option>
+      <option value="gas">Gas Emissions</option>
+      <option value="distance">Parcel Label / Distance Property Types</option>
+      <option value="topography">Height Difference / Topography</option>
+      <option value="matrix">Tam Program Parsel Matrisi</option>
     </select>
-    <button id="prevBtn">Ã–nceki 100</button><button id="nextBtn">Sonraki 100</button><span id="status"></span>
-  </div>
-</header>
-<div class="chips">
-  <span class="chip">Rows: 92283</span>
-  <span class="chip">Distance: 92283</span>
-  <span class="chip">Topography: 77970</span>
-  <span class="chip">Gas: 3533</span>
-  <span class="chip">Security: 92283</span>
-  <span class="chip">London yes: 92283</span>
-  <span class="chip">London kontrol: 0</span>
-  <span class="chip">Future eksik: 92283</span>
-  <span class="chip">Internet eksik: 58498</span>
-  <span class="chip">Fake data: false</span>
-</div>
-<section class="layer-update-panel" id="securityUpdatePanel">
-  <strong>Security / Public Safety - Guncel Degisiklikler</strong>
-  <div id="securityUpdateSummary">Yukleniyor...</div>
-  <div class="layer-update-grid" id="securityUpdateGrid"></div>
-  <ul class="layer-update-list" id="securityUpdateList"></ul>
-</section>
-<section class="layer-update-panel" id="gasEmissionsUpdatePanel">
-  <strong>Gas Emissions - Guncel Degisiklikler</strong>
-  <div id="gasEmissionsUpdateSummary">Yukleniyor...</div>
-  <div class="layer-update-grid" id="gasEmissionsUpdateGrid"></div>
-  <ul class="layer-update-list" id="gasEmissionsUpdateList"></ul>
-</section>
-<section class="layer-update-panel" id="internetAccessUpdatePanel">
-  <strong>Internet Access - Guncel Degisiklikler</strong>
-  <div id="internetAccessUpdateSummary">Yukleniyor...</div>
-  <div class="layer-update-grid" id="internetAccessUpdateGrid"></div>
-  <ul class="layer-update-list" id="internetAccessUpdateList"></ul>
-</section>
-<div class="table-wrap"><table id="matrixTable"><tbody><tr><td>YÃ¼kleniyor...</td></tr></tbody></table></div>
+    <input id="search" placeholder="Parsel, kaynak, durum veya kanıt ara">
+    <button id="prev" type="button">Önceki</button>
+    <button id="next" type="button">Sonraki</button>
+  </section>
+  <section class="summary">
+    <h2 id="title">Yükleniyor</h2>
+    <div class="summary-line" id="metrics"></div>
+    <div class="paths" id="paths"></div>
+  </section>
+  <div class="message" id="message">Veri yükleniyor...</div>
+  <div class="table-wrap"><table id="table"><thead></thead><tbody></tbody></table></div>
+  <div class="pager"><span id="pageInfo">Sayfa 1</span><button id="refresh" type="button">Veriyi Yenile</button></div>
 <script>
-let manifest = null, filterIndexes = null, currentRows = [], page = 0;
-const pageSize = 100; const chunkCache = new Map();
-const table = document.getElementById('matrixTable'); const statusEl = document.getElementById('status');
-function accClass(acc) { const n = String(acc || '0/4').split('/')[0]; return 'acc-' + (['0','1','2','3','4'].includes(n) ? n : '0'); }
-async function json(path) { const r = await fetch(path); if (!r.ok) throw new Error(path + ' -> ' + r.status); return await r.json(); }
-async function renderSecurityUpdatePanel() {
-  const summaryEl = document.getElementById('securityUpdateSummary');
-  const gridEl = document.getElementById('securityUpdateGrid');
-  const listEl = document.getElementById('securityUpdateList');
-  if (!summaryEl || !gridEl || !listEl) return;
-  try {
-    const data = await json('security_public_safety_updates/latest_changes.json?v=20260703-security-template');
-    const summary = data.summary || {};
-    summaryEl.textContent = `${data.layer || 'Safety / Security'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
-    gridEl.innerHTML = [
-      ['changed', summary.changed_count ?? 0],
-      ['verified', summary.verified_count ?? 0],
-      ['manual review', summary.manual_review_count ?? 0],
-      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
-      ['fake data', data.fake_data === true ? 'true' : 'false']
-    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
-    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
-    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.security_level || 'No Data'} - ${row.accuracy_score_4 ?? '0'}/4 - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman için henüz güncel değişiklik yok.</li>';
-  } catch (e) {
-    summaryEl.textContent = `Safety / Security güncelleme dosyası okunamadı: ${e.message}`;
-    gridEl.innerHTML = '';
-    listEl.innerHTML = '';
-  }
-}
-async function renderGasEmissionsUpdatePanel() {
-  const summaryEl = document.getElementById('gasEmissionsUpdateSummary');
-  const gridEl = document.getElementById('gasEmissionsUpdateGrid');
-  const listEl = document.getElementById('gasEmissionsUpdateList');
-  if (!summaryEl || !gridEl || !listEl) return;
-  try {
-    const data = await json('gas_emissions_updates/latest_changes.json?v=20260703-gas-template');
-    const summary = data.summary || {};
-    summaryEl.textContent = `${data.layer || 'Gas Emissions'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
-    gridEl.innerHTML = [
-      ['changed', summary.changed_count ?? 0],
-      ['verified', summary.verified_count ?? 0],
-      ['manual review', summary.manual_review_count ?? 0],
-      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
-      ['score', data.verification_score_after || data.verification_score || '0/4'],
-      ['runner', data.runner_status || 'waiting'],
-      ['next', data.next_action || 'runner bekleniyor'],
-      ['fake data', data.fake_data === true ? 'true' : 'false']
-    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
-    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
-    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.gas_emission_level || 'No Data'} - ${row.emission_percent ?? 'null'}% - ${row.accuracy_score_4 ?? '0'}/4 - ${row.source_date || 'source date yok'} - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman icin henuz guncel degisiklik yok.</li>';
-  } catch (e) {
-    summaryEl.textContent = `Gas Emissions guncelleme dosyasi okunamadi: ${e.message}`;
-    gridEl.innerHTML = '';
-    listEl.innerHTML = '';
-  }
-}
-async function renderInternetAccessUpdatePanel() {
-  const summaryEl = document.getElementById('internetAccessUpdateSummary');
-  const gridEl = document.getElementById('internetAccessUpdateGrid');
-  const listEl = document.getElementById('internetAccessUpdateList');
-  if (!summaryEl || !gridEl || !listEl) return;
-  try {
-    const data = await json('internet_access_updates/latest_changes.json?v=20260703-internet-template');
-    const summary = data.summary || {};
-    summaryEl.textContent = `${data.layer || 'Internet Access'} - ${data.status || 'unknown'} - final_ready=${summary.final_ready === true}`;
-    gridEl.innerHTML = [
-      ['changed', summary.changed_count ?? 0],
-      ['verified', summary.verified_count ?? 0],
-      ['manual review', summary.manual_review_count ?? 0],
-      ['accuracy >= 3/4', summary.accuracy_ge_3_count ?? 0],
-      ['score', data.verification_score_after || data.verification_score || '0/4'],
-      ['runner', data.runner_status || 'waiting'],
-      ['next', data.next_action || 'runner bekleniyor'],
-      ['fake data', data.fake_data === true ? 'true' : 'false']
-    ].map(([k,v]) => `<span class="layer-update-pill">${k}: <strong>${v}</strong></span>`).join('');
-    const changes = Array.isArray(data.changes) ? data.changes.slice(0, 8) : [];
-    listEl.innerHTML = changes.length ? changes.map((row) => `<li>${row.parcel_id || '-'} - ${row.internet_access_level || 'No Data'} - ${row.internet_access_percent ?? 'null'}% - ${row.accuracy_score_4 ?? '0'}/4 - ${row.source_date || 'source date yok'} - ${row.change_reason || ''}</li>`).join('') : '<li>Bu katman icin henuz guncel degisiklik yok.</li>';
-  } catch (e) {
-    summaryEl.textContent = `Internet Access guncelleme dosyasi okunamadi: ${e.message}`;
-    gridEl.innerHTML = '';
-    listEl.innerHTML = '';
-  }
-}
-async function loadChunk(id) { if (chunkCache.has(id)) return chunkCache.get(id); const data = await json(`chunks/page_${String(id).padStart(6,'0')}.json`); chunkCache.set(id, data); return data; }
-async function rowsForIndices(indices) { const byChunk = new Map(); for (const idx of indices) { const cid = Math.floor(idx / manifest.chunk_size); if (!byChunk.has(cid)) byChunk.set(cid, []); byChunk.get(cid).push(idx); } const out = []; for (const [cid, idxs] of byChunk) { const chunk = await loadChunk(cid); for (const idx of idxs) out.push(chunk[idx % manifest.chunk_size]); } return out; }
-function visibleIndices() { const f = document.getElementById('coverageFilter').value; const list = filterIndexes[f] || filterIndexes.all; return list.slice(page * pageSize, page * pageSize + pageSize); }
-function filteredOnPage(rows) { const q = document.getElementById('searchBox').value.trim().toLowerCase(); if (!q) return rows; return rows.filter(row => [row.canonical_program_parcel_id,row.security_parcel_id,row.distance_parcel_ref,row.distance_parcel_id,row.gas_parcel_ref,row.topography_parcel_id,row.program_matching_ids,row.parcel_location].join(' ').toLowerCase().includes(q)); }
-function isNoData(value) { return value === null || value === undefined || String(value).startsWith('Veri bulunamad'); }
-function renderTable(rows) { const data = filteredOnPage(rows); let h = '<thead><tr>'; h += `<th colspan="${manifest.base_columns.length}" class="sticky">Program Parsel / Konum / ID EÅŸleÅŸtirme</th>`; for (const g of manifest.groups) h += `<th colspan="${g[1].length*3}">${g[0]}</th>`; h += '</tr><tr>'; for (const c of manifest.base_columns) h += `<th class="sticky">${c[0]}</th>`; for (const g of manifest.groups) for (const fld of g[1]) h += `<th>${fld[0]} - Ã‡Ä±ktÄ±</th><th>${fld[0]} - Kaynak/KanÄ±t</th><th>${fld[0]} - DoÄŸruluk</th>`; h += '</tr></thead><tbody>'; for (const row of data) { h += '<tr>'; for (const c of manifest.base_columns) h += `<td class="sticky">${row[c[1]] ?? ''}</td>`; for (const g of manifest.groups) for (const fld of g[1]) { const cell = row.outputs[fld[1]] || {value:'Veri bulunamadÄ±',source:'Eksik',accuracy:'0/4'}; const nd = isNoData(cell.value) ? ' nodata' : ''; h += `<td class="value${nd}">${cell.value}</td><td class="source">${cell.source}</td><td class="${accClass(cell.accuracy)}">${cell.accuracy}</td>`; } h += '</tr>'; } table.innerHTML = h + '</tbody>'; }
-async function render() { const f = document.getElementById('coverageFilter').value; const total = (filterIndexes[f] || []).length; const maxPage = Math.max(0, Math.ceil(total / pageSize) - 1); if (page > maxPage) page = maxPage; statusEl.textContent = 'YÃ¼kleniyor...'; currentRows = await rowsForIndices(visibleIndices()); renderTable(currentRows); statusEl.textContent = `${total} kayÄ±t, sayfa ${page+1} / ${maxPage+1}`; }
-document.getElementById('prevBtn').onclick = () => { if (page > 0) page--; render(); }; document.getElementById('nextBtn').onclick = () => { page++; render(); }; document.getElementById('coverageFilter').onchange = () => { page = 0; render(); }; document.getElementById('searchBox').oninput = () => renderTable(currentRows);
-(async () => { try { await renderSecurityUpdatePanel(); await renderGasEmissionsUpdatePanel(); await renderInternetAccessUpdatePanel(); manifest = await json('chunks/manifest.json'); filterIndexes = await json('chunks/filter_indexes.json'); await render(); } catch(e) { table.innerHTML = `<tbody><tr><td>Tablo yÃ¼klenemedi: ${e.message}. Bu HTML'i 127.0.0.1 lokal server Ã¼zerinden aÃ§Ä±n.</td></tr></tbody>`; } })();
+'use strict';
+const bust=()=>`v=${Date.now()}`;
+const esc=v=>String(v===null||v===undefined||v===''?'not_available':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bool=v=>v===true||String(v).toLowerCase()==='true';
+const configs={
+ security:{title:'Security / Public Safety - Kaynaklı Satırlar',data:'data/program_layer_matrix/security_public_safety_visible_rows.json',status:'data/program_layer_matrix/security_public_safety_visible_status.json',rowsKey:'rows',columns:[['Parsel','parcel_id'],['Security skoru (%)','security_score_percent'],['Security seviyesi','security_level'],['Doğruluk','accuracy_score_4'],['Doğruluk etiketi','accuracy_label_4'],['Güven (%)','confidence_score'],['Kaynak tarihi','source_date'],['Kaynak coğrafya','source_geography_level'],['Resmi kaynak kanıtı','official_source_evidence'],['Yerel kaynak dosyası','$source_csv'],['Eşleştirme notu','change_reason'],['Manuel inceleme','needs_manual_review'],['Son çalışmada değişti','changed_in_latest_run']]},
+ gas:{title:'Gas Emissions - Kaynaklı Son Satırlar',data:'data/program_layer_matrix/gas_emissions_visible_rows_latest.json',status:'data/program_layer_matrix/gas_emissions_status_latest.json',rowsKey:'rows',columns:[['Satır','row_id|row_no'],['Yıl','calendar_year'],['Sektör','sector'],['Alt sektör','sub_sector'],['Sera gazı','greenhouse_gas'],['Emisyon (kt CO2e)','territorial_emissions_kt_co2e'],['Etki alanı (kt CO2)','scope_of_influence_kt_co2'],['Kaynak satırı','source_lines'],['Eşleştirme yöntemi','matching_method'],['Güven (%)','confidence_percent'],['Doğruluk','accuracy_score_4|gas_emission_level_accuracy'],['Kaynak URL','$source_url'],['Yerel kaynak','$source_path'],['Rapor/kanıt','$report_path'],['Manuel inceleme','needs_manual_review'],['Son çalışmada değişti','changed_in_latest_run']]},
+ distance:{title:'Parcel Label / Distance Property Types - Kaynaklı Satırlar',data:'data/program_layer_matrix/distance_property_types_visible_rows_latest.json',status:'data/program_layer_matrix/distance_property_types_status_latest.json',rowsKey:'rows',columns:[['Parsel','parcel_id'],['Seçilen mülk tipi','selected_property_type'],['Renk kategorisi','selected_color_category'],['Seçilen mesafe (m)','selected_match_distance_m'],['Doğruluk','accuracy_score_4'],['Doğruluk etiketi','accuracy_label_4'],['Resmi kaynak','official_source_evidence'],['Web kanıtı','web_source_evidence'],['Harita kanıtı','map_source_evidence'],['Fotoğraf/AI kanıtı','photo_ai_evidence'],['Kaynak tarihi','source_date'],['Yerel kaynak CSV','$source_csv'],['Eşleştirme yöntemi','matching_method'],['Aday durumu','$candidate_status'],['Manuel inceleme','needs_manual_review'],['Son çalışmada değişti','changed_in_latest_run'],['Değişiklik nedeni','change_reason']]},
+ topography:{title:'Height Difference / Topography - Koordinat Handoff',data:'data/program_layer_matrix/topography_coordinate_handoff_latest.json',status:null,rowsKey:'coordinates',columns:[['Parsel','parcel_id'],['Parsel ref','parcel_ref|hmlr_inspire_id'],['Enlem','centroid_lat|hmlr_lat'],['Boylam','centroid_lon|hmlr_lon'],['Koordinat durumu','coordinate_status'],['Koordinat kaynağı','source_file_path|coordinate_source'],['Kaynak satırları','source_lines'],['Yeni height difference','height_difference_m'],['Manuel inceleme','needs_manual_review'],['Blocker','$blockers'],['Son çalışmada değişti','changed_in_latest_run'],['Sahte veri','$fake_data']]}
+};
+let state={layer:'security',rows:[],filtered:[],data:null,status:null,page:0,pageSize:25,matrixManifest:null,matrixFilters:null};
+async function getJson(path){const r=await fetch(`${path}${path.includes('?')?'&':'?'}${bust()}`,{cache:'no-store'});if(!r.ok)throw new Error(`${path} -> HTTP ${r.status}`);return r.json()}
+function valueFor(row,key,data){if(key.startsWith('$')){const clean=key.trim().slice(1);if(clean==='candidate_status'){if(bool(row.needs_manual_review))return 'NEEDS_MANUAL_REVIEW';if(bool(row.changed_in_latest_run))return 'VISIBLE_PILOT_SOURCE_BACKED';return 'VISIBLE_SOURCE_BACKED'}const v=data[clean];return Array.isArray(v)?v.join(', '):(v??'not_available')}for(const candidate of key.split('|')){if(row[candidate]!==undefined&&row[candidate]!==null&&row[candidate]!=='')return row[candidate]}return 'not_available'}
+function rowClass(row){if(row.blocker&&row.blocker!=='none')return 'blocked';if(bool(row.needs_manual_review))return 'manual';if(bool(row.changed_in_latest_run))return 'latest';return ''}
+function statusBadge(row){if(row.blocker&&row.blocker!=='none')return '<span class="badge blocked">BLOCKED</span>';if(bool(row.needs_manual_review))return '<span class="badge manual">MANUEL İNCELEME</span>';if(bool(row.changed_in_latest_run))return '<span class="badge latest">YENİ / LATEST</span>';return '<span class="badge">KAYNAKLI</span>'}
+function renderSummary(){const d=state.data||{},s=state.status||{},cfg=configs[state.layer];document.getElementById('title').textContent=cfg?cfg.title:'Tam Program Parsel Matrisi';const blocker=s.blocker||d.bulk_blocker||d.blocker||(Array.isArray(d.blockers)?d.blockers.join(', '):null)||'none';const count=state.rows.length;const featureCount=d.geojson_feature_count??s.geojson_feature_count??'not_available';const metrics=[['Görünür satır',count,'ok'],['GeoJSON feature',featureCount,''],['Blocker',blocker,blocker==='none'?'ok':'warn'],['final_ready',String(d.final_ready===true||s.final_ready===true),d.final_ready===true||s.final_ready===true?'bad':'ok'],['fake_data',String(d.fake_data===true||s.fake_data===true),d.fake_data===true||s.fake_data===true?'bad':'ok']];document.getElementById('metrics').innerHTML=metrics.map(x=>`<span class="pill ${x[2]}">${esc(x[0])}: <strong>${esc(x[1])}</strong></span>`).join('');const paths=[`data: ${cfg?cfg.data:'chunks/manifest.json'}`,`status: ${cfg&&cfg.status?cfg.status:'same_data_or_not_required'}`,`source_url: ${d.source_url||s.source_url||'not_available'}`,`source_csv: ${d.source_csv||s.csv_path||'not_available'}`,`source_geojson: ${d.source_geojson||s.geojson_path||d.source_path||'not_available'}`,`visible_rows_path: ${s.visible_rows_path||'current_data_path'}`];document.getElementById('paths').innerHTML=paths.map(esc).join('<br>')}
+function applySearch(){const q=document.getElementById('search').value.trim().toLocaleLowerCase('tr-TR');state.filtered=q?state.rows.filter(r=>JSON.stringify(r).toLocaleLowerCase('tr-TR').includes(q)):state.rows.slice();state.page=0;renderRows()}
+function renderRows(){if(state.layer==='matrix'){renderMatrixPage();return}const cfg=configs[state.layer],start=state.page*state.pageSize,rows=state.filtered.slice(start,start+state.pageSize);document.querySelector('#table thead').innerHTML='<tr><th>Durum</th>'+cfg.columns.map(c=>`<th>${esc(c[0])}</th>`).join('')+'</tr>';document.querySelector('#table tbody').innerHTML=rows.map(r=>`<tr class="${rowClass(r)}"><td>${statusBadge(r)}</td>${cfg.columns.map(c=>`<td>${esc(valueFor(r,c[1],state.data))}</td>`).join('')}</tr>`).join('')||'<tr><td colspan="30">Eşleşen satır yok.</td></tr>';const pages=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));document.getElementById('pageInfo').textContent=`Sayfa ${state.page+1} / ${pages} - ${state.filtered.length} satır`;document.getElementById('message').className='message';document.getElementById('message').textContent=`${cfg.title}: veri ve kaynak yolları yüklendi.`}
+async function loadLayer(layer){state.layer=layer;state.page=0;document.getElementById('message').className='message';document.getElementById('message').textContent='Veri yükleniyor...';try{if(layer==='matrix'){await loadMatrix();return}const cfg=configs[layer];const values=await Promise.all([getJson(cfg.data),cfg.status?getJson(cfg.status).catch(e=>({status_fetch_error:e.message})):Promise.resolve({})]);state.data=values[0];state.status=values[1];state.rows=Array.isArray(state.data[cfg.rowsKey])?state.data[cfg.rowsKey]:(Array.isArray(state.data.rows)?state.data.rows:(Array.isArray(state.data.changes)?state.data.changes:[]));state.filtered=state.rows.slice();renderSummary();renderRows()}catch(e){state.rows=[];state.filtered=[];document.getElementById('message').className='message error';document.getElementById('message').textContent=`Yükleme hatası: ${e.message}`;document.querySelector('#table thead').innerHTML='';document.querySelector('#table tbody').innerHTML=''} }
+async function loadMatrix(){state.matrixManifest=await getJson('chunks/manifest.json');state.matrixFilters=await getJson('chunks/filter_indexes.json');const key='all';const pages=state.matrixFilters[key]||[];state.rows=pages;state.filtered=pages;state.data={final_ready:false,fake_data:false};state.status={blocker:'none'};renderSummary();await renderMatrixPage()}
+async function renderMatrixPage(){const pages=state.filtered.length?state.filtered:[0];const idx=Math.min(state.page,pages.length-1);const pageNo=pages[idx]??idx;try{const chunk=await getJson(`chunks/page_${String(pageNo).padStart(6,'0')}.json`),rows=chunk.rows||[];const base=state.matrixManifest.base_columns||[],groups=state.matrixManifest.groups||[];let head='<tr>'+base.map(c=>`<th>${esc(c[0])}</th>`).join('');for(const g of groups)for(const f of g[1])head+=`<th>${esc(f[0])} - Çıktı</th><th>${esc(f[0])} - Kaynak/Kanıt</th><th>${esc(f[0])} - Doğruluk</th>`;head+='</tr>';document.querySelector('#table thead').innerHTML=head;document.querySelector('#table tbody').innerHTML=rows.map(r=>{let cells=base.map(c=>`<td>${esc(r[c[1]])}</td>`).join('');for(const g of groups)for(const f of g[1]){const cell=(r.outputs||{})[f[1]]||{};cells+=`<td>${esc(cell.value)}</td><td>${esc(cell.source)}</td><td>${esc(cell.accuracy)}</td>`}return `<tr>${cells}</tr>`}).join('');document.getElementById('pageInfo').textContent=`Chunk ${pageNo} - ${rows.length} satır`;document.getElementById('message').textContent='Tam parsel matrisi canonical chunk dosyasından yüklendi.'}catch(e){document.getElementById('message').className='message error';document.getElementById('message').textContent=`Matrix chunk hatası: ${e.message}`}}
+document.getElementById('layerSelect').addEventListener('change',e=>loadLayer(e.target.value));document.getElementById('search').addEventListener('input',applySearch);document.getElementById('prev').addEventListener('click',()=>{if(state.page>0){state.page--;renderRows()}});document.getElementById('next').addEventListener('click',()=>{const pages=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.page+1<pages||state.layer==='matrix'&&state.page+1<state.filtered.length){state.page++;renderRows()}});document.getElementById('refresh').addEventListener('click',()=>loadLayer(state.layer));
+loadLayer('security');
 </script>
-<script src="gas_emissions_runtime_patch_20260703.js?refresh=1783120747"></script></body>
+</body>
 </html>
-
-
-
-
-
-
-
-
-

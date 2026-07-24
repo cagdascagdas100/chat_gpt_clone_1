@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T19:21:44Z",
+  "state": "GEOMETRY_TRANSFORM_SAMPLING_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "PROJ_AXIS_ORDER_AND_TRANSFORMATION_SELECTION",
+      "authority": "PROJ",
+      "url": "https://proj.org/en/stable/development/reference/functions.html",
+      "verified": true,
+      "facts": ["authority_crs_uses_official_axis_order_and_units", "ballpark_operations_can_be_disallowed", "only_best_can_fail_when_required_grid_is_unavailable"],
+      "accepted_role": "COORDINATE_OPERATION_FAIL_CLOSED_CONTROL"
+    },
+    {
+      "source_id": "PROJ_OPERATION_METADATA_AND_AREA_OF_USE",
+      "authority": "PROJ",
+      "url": "https://proj.org/en/stable/apps/projinfo.html",
+      "verified": true,
+      "facts": ["operation_summary_includes_accuracy_and_area_of_use", "area_or_bbox_can_restrict_candidates", "missing_grids_can_be_discarded", "ballpark_operations_can_be_hidden"],
+      "accepted_role": "TRANSFORMATION_PROVENANCE_AND_AREA_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GEOMETRY_VALIDITY_LIMITS",
+      "authority": "GDAL/OGR",
+      "url": "https://gdal.org/en/stable/user/geometry_validity.html",
+      "verified": true,
+      "facts": ["invalid_geometry_can_produce_incorrect_spatial_results", "validity_does_not_detect_interfeature_gaps_or_overlaps", "spikes_and_slivers_are_outside_validity_scope", "geos_checks_two_dimensions", "curves_are_linearized_for_validity"],
+      "accepted_role": "PRE_SAMPLING_GEOMETRY_VALIDITY_CONTROL"
+    },
+    {
+      "source_id": "GDAL_MAKE_VALID_SEMANTICS",
+      "authority": "GDAL/OGR",
+      "url": "https://gdal.org/en/stable/programs/gdal_vector_make_valid.html",
+      "verified": true,
+      "facts": ["linework_and_structure_methods_differ", "geometry_type_can_change", "lower_dimension_components_can_be_removed", "structure_method_requires_correct_shell_hole_classification"],
+      "accepted_role": "GEOMETRY_REPAIR_PROVENANCE_CONTROL"
+    },
+    {
+      "source_id": "OGC_SIMPLE_FEATURES_POLYGON_VALIDITY",
+      "authority": "Open Geospatial Consortium",
+      "url": "https://docs.ogc.org/is/06-103r3/06-103r3.pdf",
+      "verified": true,
+      "facts": ["polygon_rings_are_closed_and_simple", "interior_rings_define_holes", "polygon_topology_obeys_simple_features_rules"],
+      "accepted_role": "POLYGON_RING_AND_HOLE_TOPOLOGY_CONTROL"
+    },
+    {
+      "source_id": "GDAL_RASTERIZATION_PIXEL_INCLUSION",
+      "authority": "GDAL",
+      "url": "https://gdal.org/en/stable/programs/gdal_rasterize.html",
+      "verified": true,
+      "facts": ["default_and_all_touched_modes_select_different_pixels", "all_touched_edge_results_can_depend_on_feature_order", "nested_polygon_correctness_requires_geos"],
+      "accepted_role": "POLYGON_TO_PIXEL_INCLUSION_CONTROL"
+    },
+    {
+      "source_id": "GDAL_FRACTIONAL_ZONAL_STATISTICS",
+      "authority": "GDAL",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_zonal_stats.html",
+      "verified": true,
+      "facts": ["fractional_mode_weights_by_pixel_coverage_fraction", "all_touched_uses_equal_weights", "inputs_must_share_spatial_reference", "no_reprojection_is_performed", "coverage_and_count_statistics_are_available"],
+      "accepted_role": "AREA_WEIGHTED_PARCEL_STATISTICS_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "coordinate_operation": [
+      "SOURCE_AND_TARGET_AXIS_ORDER_AND_UNITS_RECORDED",
+      "BALLPARK_TRANSFORMATIONS_DISALLOWED",
+      "ONLY_BEST_OR_EQUIVALENT_MISSING_GRID_FAILURE_REQUIRED",
+      "OPERATION_NAME_ACCURACY_AREA_OF_USE_AND_GRIDS_RECORDED",
+      "PROJ_VERSION_DATA_PATH_NETWORK_MODE_AND_GRID_HASHES_RECORDED",
+      "SAMPLE_LOCATION_MUST_BE_WITHIN_OPERATION_AREA_OF_USE"
+    ],
+    "geometry_validity": [
+      "ORIGINAL_GEOMETRY_HASH_AND_VALIDITY_RESULT_RECORDED",
+      "CLOSED_SIMPLE_RINGS_AND_HOLE_CONTAINMENT_REQUIRED",
+      "INTERFEATURE_GAPS_OVERLAPS_SPIKES_AND_SLIVERS_CHECKED_SEPARATELY",
+      "CURVED_OR_Z_AWARE_GEOMETRY_LIMITATIONS_FLAGGED",
+      "INVALID_GEOMETRY_NOT_USED_DIRECTLY_FOR_INTERSECTION_OR_SAMPLING"
+    ],
+    "geometry_repair": [
+      "ORIGINAL_GEOMETRY_RETAINED",
+      "MAKE_VALID_METHOD_AND_LIBRARY_VERSIONS_RECORDED",
+      "BEFORE_AFTER_TYPE_PART_COUNT_AREA_VERTEX_COUNT_AND_HASH_RECORDED",
+      "EMPTY_OR_LOWER_DIMENSION_RESULTS_REJECTED",
+      "EXCESSIVE_AREA_CHANGE_REQUIRES_MANUAL_REVIEW"
+    ],
+    "pixel_inclusion": [
+      "PIXEL_INCLUSION_MODE_EXPLICIT",
+      "FEATURE_ORDER_STABLE_FOR_ALL_TOUCHED_MODE",
+      "FRACTIONAL_AREA_WEIGHTING_PREFERRED_FOR_SMALL_EDGE_HEAVY_POLYGONS",
+      "CENTER_ALL_TOUCHED_AND_FRACTIONAL_SENSITIVITY_REPORTED",
+      "GDAL_AND_GEOS_VERSIONS_RECORDED"
+    ],
+    "coverage_and_statistics": [
+      "POLYGON_AND_RASTER_SHARE_THE_SAME_CRS",
+      "VALID_RASTER_FOOTPRINT_INTERSECTION_REQUIRED",
+      "VALID_COUNT_COVERAGE_FRACTION_AND_NODATA_RATIO_RECORDED",
+      "MINIMUM_COVERAGE_THRESHOLDS_MET_BEFORE_PROMOTION",
+      "DUPLICATE_GEOMETRIES_DEDUPLICATED_BEFORE_AGGREGATION"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 20,
+  "source_checks_total": 20,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

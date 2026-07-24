@@ -1,0 +1,199 @@
+AAYS / TerraYield - Yeni Windows Bilgisayarda Portable Codex Devam Gorevi
+
+Bu dosyayi yeni bilgisayardaki Codex programina yukledim. Aciklama istemiyorum; asagidaki islemleri yerel diskte uygula, test et ve saglikli sistemi calisir durumda birak.
+
+REPO VE REMOTE
+
+- GitHub repo: cagdascagdas100/chat_gpt_clone_1
+- Branch: codex/aays-single-runner-v5-20260706
+- GitHub branch HEAD ve repo icindeki latest checkpoint/status dosyalari authoritative kaynaktir.
+- ZIP tarihi, eski rapor tarihi veya onceki bilgisayarin disk harfi authoritative degildir.
+
+PORTABLE KOKU BUL
+
+1. C: yolunu canonical kabul etme.
+2. Takili disklerde yalniz `.aays_portable_identity.json` exact filename aramasi yap.
+3. Kimlik dosyasinda su degerleri dogrula:
+   - portable_product=AAYS_TerraYield
+   - architecture_version=3
+   - workstream_id=AAYS_21_SLOT_SAFE_PARALLEL_V1
+4. Bu dosyanin bulundugu klasor aktif `PORTABLE_ROOT` olsun. Disk harfi F:, E:, R: veya baska bir harf olabilir.
+5. Genis bilgisayar taramasi yapma. C: uzerinde yeni repo, runtime, cache, worktree veya AAYS cikti dosyasi olusturma.
+
+MEVCUT YAPIYI KORU
+
+- Yeni runner mimarisi kurma.
+- Yeni guardian, daemon veya paralel coordinator olusturma.
+- Mevcut tek coordinator yapisini kullan.
+- 21 mantiksal slotu koru; ayni bilgisayarda fiziksel worker sayisini RAM/CPU preflight sonucu belirlesin.
+- Ikinci coordinator acma.
+- Ayni slotu iki ChatGPT sayfasina veya iki worker'a ayni anda verme.
+- Terminal tasklari replay etme.
+- Eski/stale heartbeat'i aktif is sayma.
+- Sahte completed, sahte yuzde 100, sahte heartbeat veya sahte `final_ready=true` yazma.
+
+21 SLOT
+
+- ready_to_sell_1, ready_to_sell_2, ready_to_sell_3
+- gas_emissions_1, gas_emissions_2, gas_emissions_3
+- height_difference_1, height_difference_2, height_difference_3
+- security_public_safety_1, security_public_safety_2, security_public_safety_3
+- parcel_label_1, parcel_label_2, parcel_label_3
+- internet_access_1, internet_access_2, internet_access_3
+- future_growth_1, future_growth_2, future_growth_3
+
+ILK ENVANTER
+
+PORTABLE_ROOT altinda su dosyalari kontrol et:
+
+- `.aays_portable_identity.json`
+- `00_BASKA_BILGISAYARDA_ONCE_BUNA_CIFT_TIKLA.cmd`
+- `01_BU_BILGISAYARA_MASAUSTU_KISAYOLLARINI_KUR.cmd`
+- `START_AAYS_ON_ANY_WINDOWS_PC.ps1`
+- `RUN_AAYS_ADAPTIVE_21_SLOT.ps1`
+- `AAYS_ADAPTIVE_15_WORKER_COORDINATOR.py` (dosya adi geriye uyumludur; sozlesme 21 slottur)
+- `AAYS_PORTABLE_CONTROL_PANEL.py`
+- `runtime\python312\python.exe`
+- `runtime\git\cmd\git.exe`
+- `runner_system\adaptive_v2\publisher`
+- `runner_system\adaptive_v2\worktrees`
+
+Eksik dosya varsa yeni mimari uydurma. Once GitHub branch HEAD ve portable publisher kaynagini oku; yalniz eksik portable root kopyasini mevcut canonical kaynaktan geri yukle ve gercek blocker'i kaydet.
+
+GIT GUVENLIGI
+
+1. Publisher repo durumunu oku.
+2. Gercek conflict marker kontrolu yap:
+   `git grep -n -E "^(<<<<<<< .+|=======|>>>>>>> .+)$" -- .`
+3. Dirty dosyalari otomatik silme, resetleme veya genis stash yapma.
+4. Runtime-only dosya ile business/source degisikligini ayir.
+5. Fetch/pull oncesi coordinator publisher'a yaziyorsa cakisma yaratma.
+6. `.git\shallow` bozuksa veya sifir byte/zero-filled ise:
+   - once coordinator'i guvenli durdur,
+   - bozuk metadata dosyasini PORTABLE_ROOT altindaki `recovery\git_metadata` klasorune yedekle,
+   - remote HEAD'i dogrula,
+   - shallow sinirini dogrulanmis Git gecmisinden onar,
+   - `git fsck --connectivity-only --no-dangling` calistir,
+   - proje dosyalarini silme.
+7. Repo temizse branch'i safe fast-forward/fetch ile guncelle. Zorla reset kullanma.
+
+KISAYOLLARI BU BILGISAYARA KUR
+
+Portable diskte su dosyayi calistir:
+
+`01_BU_BILGISAYARA_MASAUSTU_KISAYOLLARINI_KUR.cmd`
+
+Sonra masaustunde su uc kisayolun bu bilgisayardaki guncel disk harfine gittigini dogrula:
+
+- AAYS TerraYield - Uygulama Runner Panel
+- AAYS TerraYield - Kontrol Paneli
+- AAYS TerraYield - Runner Durdur
+
+Eski bilgisayardan kalan sabit F: hedefli `.lnk` dosyasini kullanma. Her yeni bilgisayarda kisayol kurucuyu portable diskten bir kez calistir.
+
+ON KONTROL VE BASLATMA
+
+1. Su komutla preflight yap:
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File "<PORTABLE_ROOT>\RUN_AAYS_ADAPTIVE_21_SLOT.ps1" -Action Preflight`
+
+2. Preflight PASS olmadan runner'i saglikli ilan etme.
+3. Sonra tek-tik bootstrap'i calistir:
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File "<PORTABLE_ROOT>\START_AAYS_ON_ANY_WINDOWS_PC.ps1"`
+
+Alternatif olarak kullanici disk kokundeki su dosyaya cift tiklayabilir:
+
+`00_BASKA_BILGISAYARDA_ONCE_BUNA_CIFT_TIKLA.cmd`
+
+4. Bootstrap mevcut canli coordinator varsa ikinciyi acmamali.
+5. Panel zaten aciksa ikinci panel acmamali.
+6. Islem sonunda uygulama, tek coordinator ve tek panel acik kalmali.
+
+ZORUNLU CALISMA KANITLARI
+
+Su kontrolleri yap:
+
+- `http://127.0.0.1:8012/health` -> HTTP 200 ve TerraYield Land Intelligence
+- `http://127.0.0.1:8012/england_map_web/` -> HTTP 200
+- `http://127.0.0.1:8012/openapi.json` -> HTTP 200
+- coordinator process count = 1
+- panel process count = 1
+- coordinator heartbeat fresh
+- workstream_id=AAYS_21_SLOT_SAFE_PARALLEL_V1
+- logical_slot_count=21
+- remote_sync.state=PASS veya gercek hata metni
+- portable_root bu takili disk uzerinde
+- C: canonical degil
+
+Kaniti su yerel dosyalardan da oku:
+
+- `<PORTABLE_ROOT>\state\portable_any_pc_bootstrap_latest.json`
+- `<PORTABLE_ROOT>\state\portable_preflight_latest.json`
+- `<PORTABLE_ROOT>\state\coordinator_status_latest.json`
+- `<PORTABLE_ROOT>\state\coordinator_heartbeat_latest.json`
+- `<PORTABLE_ROOT>\state\portable_desktop_shortcuts_latest.json`
+
+GITHUB CHECKPOINTTEN DEVAM
+
+- Her slot icin once remote manifest, checkpoint, heartbeat, current-task ve status dosyalarini oku.
+- Oncelikli remote yol: `docs/chatgpt_status/_shared/slots_21/<slot_id>/`.
+- Yalniz kendi slotundaki ilk eksik veya dogrulanmamis adimdan devam et.
+- Baska slotun dosyalarini sahiplenme.
+- Ayni yapilmis isi tekrarlama.
+- Yeni queue task ancak gercek eksik is varsa ve mevcut sozlesme buna izin veriyorsa olustur.
+- ChatGPT sayfalari `devam et` dediginde bu remote checkpointlerden ilerlemeli.
+- Is sonucunu status/report/heartbeat/runner output olarak GitHub'a push etmeyi dene; push basarisizsa sahte pushed yazma.
+
+VERI KAPSAMI VE DOGRULUK
+
+- Mevcut 92.283 satir `LONDON_CANONICAL_MATRIX` kapsamindadir; bunu tum Ingiltere envanteri diye sunma.
+- Ulusal Ingiltere canonical parcel inventory gercek kaynakla kurulmadan `England complete` yazma.
+- Future Growth icin dogrulanmis export yoksa null/NO_DATA ve sifir confidence kullan; yakindaki noktadan kanitsiz skor uretme.
+- AI fotograf karsilastirmasi gercek model inference ve gorsel kanit olmadan tamamlandi sayilmaz.
+- Kaynak, geometri, zaman damgasi ve provenance kaniti olmadan parcelle eslestirme yapma.
+
+GUVENLIK BAYRAKLARI
+
+- fake_data=false
+- db_write=false
+- migration=false
+- production_deploy=false
+- product_final_ready=false
+- final_ready=false; yalniz butun gercek kabul kriterleri kanitla tamamlanirsa degisebilir
+
+KABUL KRITERI
+
+Basarili saymak icin:
+
+1. Portable root disk harfinden bagimsiz bulundu.
+2. Masaustu kisayollari bu bilgisayarin guncel disk harfiyle kuruldu.
+3. Preflight PASS.
+4. Uygulama sabit 8012 URL'sinde calisiyor.
+5. Tek coordinator calisiyor; duplicate yok.
+6. Tek panel acik ve 21 slot gorunuyor.
+7. Heartbeat fresh.
+8. GitHub branch readback ve remote sync gercek durumuyla raporlandi.
+9. Mevcut checkpointler korunuyor; tekrar isleme yok.
+10. Proje/runtime dosyalari portable diskte; C: uzerinde yeni AAYS dosyasi yok.
+
+BITIS CEVABI
+
+Yalniz sunlari raporla:
+
+- STATUS
+- bulunan PORTABLE_ROOT
+- disk harfi
+- preflight sonucu
+- app URL ve HTTP sonucu
+- coordinator process count/PID/heartbeat
+- panel process count
+- 21 slot durumu
+- masaustu kisayol sonucu
+- GitHub branch HEAD/readback
+- remote sync
+- degisen dosyalar
+- gercek blocker listesi
+- final_ready
+
+Bu gorev altyapiyi yeni bilgisayarda kaldigi yerden calistirmak icindir. Business verisini sahte sekilde tamamlamaya calisma.

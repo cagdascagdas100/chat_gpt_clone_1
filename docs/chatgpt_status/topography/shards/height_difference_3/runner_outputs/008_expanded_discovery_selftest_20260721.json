@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-expanded-discovery-selftest-20260721",
+  "executed_at": "2026-07-20T23:58:31Z",
+  "script_sha256": {
+    "016_discover_canonical_via_github_tree.py": "df59245f0795c20f399cdb5b5d06432eb8ea39993bfbb77b02f7afe4ba094fa4",
+    "017_capture_validate_os_terrain50_download.py": "daffa5595c7caf5b4ab083d205d8dcf773ddf56651f48987d4df4e89f55d6842",
+    "018_execute_expanded_discovery.py": "bad169da499f8a364c7d24114e805b4f3a818c7a17e09e490944edb2a5159094"
+  },
+  "tests": [
+    {"test_id":"compile_016","status":"PASS","evidence":"Python syntax compiled"},
+    {"test_id":"compile_017","status":"PASS","evidence":"Python syntax compiled"},
+    {"test_id":"compile_018","status":"PASS","evidence":"Python syntax compiled"},
+    {"test_id":"github_tree_complete_30761_rows","status":"PASS","evidence":"Explicit rows 61523-92283 exported; no order inference"},
+    {"test_id":"github_tree_empty_fail_closed","status":"PASS","evidence":"Empty tree returned canonical-export blocker"},
+    {"test_id":"terrain50_har_url_capture","status":"PASS","evidence":"Official-style HTTPS Terrain50 ASCII ZIP URL captured"},
+    {"test_id":"terrain50_empty_input_fail_closed","status":"PASS","evidence":"No URL or HAR returned explicit blocker"},
+    {"test_id":"terrain50_zip_ascii_validation","status":"PASS","evidence":"ZIP magic and ASC/GML/PRJ inventory validated"},
+    {"test_id":"terrain50_unsafe_path_fail_closed","status":"PASS","evidence":"Path traversal entry rejected"},
+    {"test_id":"expanded_orchestrator_positive","status":"PASS","evidence":"GitHub canonical discovery and Terrain50 capture both ready"},
+    {"test_id":"expanded_orchestrator_canonical_failure","status":"PASS","evidence":"Empty remote tree blocked next pipeline"}
+  ],
+  "summary": {
+    "tests_total": 11,
+    "tests_passed": 11,
+    "tests_failed": 0,
+    "automation_validation_score_4": "4/4",
+    "real_parcel_results_produced": 0,
+    "test_fixtures_committed": false,
+    "test_values_promoted_to_product": false
+  },
+  "real_input_blockers": [
+    "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+    "OS_TERRAIN50_LIVE_DOWNLOAD_URL_OR_ARCHIVE_REQUIRED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

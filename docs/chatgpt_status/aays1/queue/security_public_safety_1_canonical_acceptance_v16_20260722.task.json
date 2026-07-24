@@ -1,0 +1,83 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 1,
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v16-20260722",
+  "attempt_id": "security-public-safety-1-20260722-016",
+  "idempotency_key": "security-public-safety-1-canonical-acceptance-v16",
+  "status": "READY",
+  "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v16.py",
+  "parcel_partition": {
+    "start": 1,
+    "end": 30761,
+    "count": 30761
+  },
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v15.html",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_worker_entry_v14.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_browser_acceptance_retry_v15.py"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/aays1/shards/security_public_safety_1",
+    "england_map_web/data/aays_21_slots/security_public_safety_1"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "headless_browser",
+    "light_read"
+  ],
+  "single_runner_only": true,
+  "child_direct_push_forbidden": true,
+  "global_control_alias_overwrite_forbidden": true,
+  "requires_browser_acceptance_gate": true,
+  "requires_git_publish_gate": true,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://data.police.uk/api/crime-last-updated",
+      "https://data.police.uk/api/crimes-street-dates",
+      "https://data.police.uk/api/forces",
+      "https://data.police.uk/api/forces/metropolitan",
+      "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/"
+    ],
+    "source_snapshot_date": "2026-05",
+    "measurement_level": "lsoa",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "parcel_centroid_inside_lsoa_polygon",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "parcel_measurement": false,
+    "ai_role": "not_used"
+  },
+  "acceptance_contract": {
+    "remote_hydrated_rows_required": 300,
+    "remote_hydrated_blob_sha": "ab876129928ec0370d482ca491f31a5dd1216aab",
+    "accuracy_score_4_rows_required": 300,
+    "canonical_candidate_count_required": 130,
+    "canonical_candidate_accuracy_score_4_required": 130,
+    "canonical_unique_api_endpoints_required": 16,
+    "canonical_endpoint_http_json_pass_required": 16,
+    "candidate_live_count_parity_required": 130,
+    "candidate_live_sha256_parity_required": 130,
+    "sample_candidate_count_sha_parity_required": 3,
+    "official_source_refresh_required": true,
+    "actual_headless_browser_required": true,
+    "dom_visible_rows_required": 300,
+    "console_error_count_required": 0,
+    "product_matrix_lsoa_proxy_contract_required": true,
+    "remote_commit_push_readback_required": true
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "timeout_seconds": 1800,
+  "final_ready": false,
+  "created_at": "2026-07-22T04:21:27+03:00"
+}

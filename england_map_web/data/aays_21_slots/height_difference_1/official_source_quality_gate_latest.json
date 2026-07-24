@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-22T17:14:53Z",
+  "state": "SOURCE_QUALITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "HMLR_INSPIRE_DOWNLOAD_20260705",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "verified": true,
+      "facts": ["published_2026_07_05", "monthly_first_sunday", "local_authority_gml_downloads"],
+      "accepted_role": "PARCEL_CANDIDATE_GEOMETRY_ONLY"
+    },
+    {
+      "source_id": "HMLR_INSPIRE_METADATA_20260708",
+      "authority": "HM Land Registry via data.gov.uk",
+      "url": "https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data",
+      "verified": true,
+      "facts": ["last_updated_2026_07_08", "freehold_subset", "cross_authority_boundary_duplicate_possible"],
+      "accepted_role": "FRESHNESS_AND_DUPLICATE_CONTROL"
+    },
+    {
+      "source_id": "HMLR_INSPIRE_SEMANTICS",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "verified": true,
+      "facts": ["indicative_extent_only", "legal_title_extent_not_established", "title_plan_required_for_legal_extent"],
+      "accepted_role": "BOUNDARY_SEMANTICS_GUARD"
+    },
+    {
+      "source_id": "EA_LIDAR_DTM1M_COMPOSITE",
+      "authority": "Environment Agency / Defra",
+      "url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+      "verified": true,
+      "facts": ["approximately_99_percent_england_coverage", "one_metre_resolution", "bare_earth_surface", "newest_best_resolution_preferred", "bilinear_resampling_possible"],
+      "accepted_role": "PRIMARY_ELEVATION_SOURCE_WITH_SURVEY_VINTAGE_PROVENANCE"
+    },
+    {
+      "source_id": "OS_TERRAIN50_SUPPLY",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview/product-supply",
+      "verified": true,
+      "facts": ["fifty_metre_grid", "ascii_and_gml", "great_britain_coverage", "annual_july_supply"],
+      "accepted_role": "INDEPENDENT_SECONDARY_ELEVATION_SOURCE"
+    },
+    {
+      "source_id": "OS_TERRAIN50_GRID_STRUCTURE",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data",
+      "verified": true,
+      "facts": ["pixel_centre_height_values", "fifty_metre_pixels", "values_to_nearest_0_1m"],
+      "accepted_role": "PIXEL_CENTRE_SAMPLING_CONTRACT"
+    },
+    {
+      "source_id": "OS_TERRAIN50_ACCURACY",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-overview",
+      "verified": true,
+      "facts": ["grid_vertical_accuracy_4m_rmse", "bare_earth_dtm", "annual_july_update"],
+      "accepted_role": "SECONDARY_SOURCE_UNCERTAINTY_FLOOR"
+    },
+    {
+      "source_id": "OS_DOWNLOADS_API_CURRENT_RELEASE_DISCOVERY",
+      "authority": "Ordnance Survey",
+      "url": "https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/technical-specification",
+      "verified": true,
+      "facts": ["opendata_product_discovery", "current_download_links", "opendata_methods_no_api_key"],
+      "accepted_role": "REPEATABLE_RELEASE_DISCOVERY"
+    }
+  ],
+  "acceptance_rules": {
+    "boundary": [
+      "HMLR_INSPIRE_ID_REQUIRED",
+      "CANDIDATE_POINT_INSIDE_FRESH_GML_REQUIRED",
+      "CROSS_AUTHORITY_IDENTICAL_DUPLICATES_DEDUPLICATED",
+      "CONFLICTING_GEOMETRY_REJECTED",
+      "LEGAL_TITLE_EXTENT_NOT_INFERRED_FROM_INSPIRE"
+    ],
+    "elevation": [
+      "EA_DTM1M_PRIMARY_SAMPLE_REQUIRED",
+      "EA_SURVEY_VINTAGE_AND_RESAMPLING_PROVENANCE_REQUIRED",
+      "OS_TERRAIN50_PIXEL_CENTRE_SECONDARY_SAMPLE_REQUIRED",
+      "OS_4M_RMSE_UNCERTAINTY_RECORDED",
+      "EA_OS_ABSOLUTE_DIFFERENCE_OVER_8M_REQUIRES_HUMAN_REVIEW"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PUBLISHED_STATE_WITHOUT_REMOTE_COMMIT_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 9,
+  "source_checks_total": 9,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

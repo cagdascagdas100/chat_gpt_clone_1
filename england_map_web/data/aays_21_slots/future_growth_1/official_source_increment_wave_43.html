@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_1 resmî kaynak wave 43</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}h1{margin-bottom:6px}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}.big{font-size:22px;font-weight:700}table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin-bottom:18px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1}.PASS{font-weight:700;color:#1b5e20}[class^="PASS_"]{font-weight:700;color:#8a5a00}.ARCHAEOLOGICAL_RISK_POLYGON_NO_PARCEL_RELATION,.AONB_CONSTRAINT_GEOMETRY_NO_PARCEL_RELATION,.BATTLEFIELD_CONSTRAINT_GEOMETRY_NO_PARCEL_RELATION,.BROWNFIELD_REGISTER_RECORD_NO_CANONICAL_PARCEL_RELATION,.EXPERIMENTAL_BROWNFIELD_GEOMETRY_NO_PROMOTION,.REGISTERED_PARK_GEOMETRY_NO_PARCEL_RELATION,.LISTED_BUILDING_POINT_NO_LEGAL_EXTENT_RELATION,.LOCAL_HERITAGE_GEOMETRY_NO_PARCEL_RELATION,.NATIONAL_PARK_ADMINISTRATIVE_GEOMETRY_NO_PROMOTION{font-weight:700;color:#6a1b9a}.muted{color:#546e7a}a{color:#0b57d0}
+</style>
+</head>
+<body>
+<h1>future_growth_1 — miras, brownfield, yükümlülük ve politika yönlendirme wave 43</h1>
+<div class="notice">F-host runner ve predecessor engeli sürüyor. İkinci runner başlatılmadı. Bu dalga 21 resmî kaynak sözleşmesini ve 9 örneği doğrular; exact kanonik parsel ilişkisi veya future-growth skoru üretmez.</div>
+<p><a href="index.html">Ana ilerleme</a> · <a href="official_source_increment_wave_42.html">Önceki Wave 42</a> · <a href="recovery_parked_wave_31.html">Kurtarma defteri</a> · <a href="official_source_increment_wave_43_latest.json">Ham JSON</a></p>
+<div class="cards">
+<div class="card"><div>Kanonik teknik görev</div><div class="big" id="canonical">-</div></div>
+<div class="card"><div>Bu dalga kontrolü</div><div class="big" id="wave">-</div></div>
+<div class="card"><div>Yeni kaynak kontrolü</div><div class="big" id="sources">-</div></div>
+<div class="card"><div>Kümülatif kaynak</div><div class="big" id="cumulative">-</div></div>
+<div class="card"><div>Yeni örnek</div><div class="big" id="examples">-</div></div>
+<div class="card"><div>Yükseltilen aday</div><div class="big" id="promoted">-</div></div>
+<div class="card"><div>Business satırı</div><div class="big" id="business">-</div></div>
+</div>
+<h2>Satır satır işlemler</h2>
+<table><thead><tr><th>Satır</th><th>Kontrol</th><th>Sonuç</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
+<h2>Resmî kaynaklar</h2>
+<table><thead><tr><th>Satır</th><th>Kaynak</th><th>Sonuç</th><th>Doğrulanan bilgi</th><th>Sınır / doğruluk etkisi</th></tr></thead><tbody id="sourceRows"></tbody></table>
+<h2>Örnek kayıtlar — yükseltilmedi</h2>
+<table><thead><tr><th>Satır</th><th>Referans</th><th>Yer</th><th>Sonuç</th><th>Neden</th></tr></thead><tbody id="exampleRows"></tbody></table>
+<p class="muted" id="meta"></p>
+<script>
+fetch('official_source_increment_wave_43_latest.json',{cache:'no-store'}).then(r=>r.json()).then(p=>{
+canonical.textContent=`${p.canonical_progress_unchanged.operations_completed}/${p.canonical_progress_unchanged.operations_total} · ${p.canonical_progress_unchanged.percent}%`;
+wave.textContent=`${p.research_progress.operation_checks_completed}/${p.research_progress.operation_checks_total}`;
+sources.textContent=`${p.research_progress.official_source_checks_verified}/${p.research_progress.official_source_checks_added}`;
+cumulative.textContent=p.research_progress.official_source_checks_cumulative;
+examples.textContent=`${p.research_progress.research_examples_verified}/${p.research_progress.research_examples_added}`;
+promoted.textContent=p.research_progress.candidate_rows_promoted;
+business.textContent=p.research_progress.actual_business_data_rows_written;
+operations.innerHTML=p.operations.map(x=>`<tr><td>${x.row}</td><td>${x.check}</td><td class="${x.result}">${x.result}</td><td>${x.evidence}</td></tr>`).join('');
+sourceRows.innerHTML=p.sources.map(x=>`<tr><td>${x.row}</td><td><a href="${x.url}" target="_blank" rel="noopener">${x.source}</a><br><span class="muted">${x.authority}</span></td><td class="${x.status}">${x.status}</td><td>${x.verified_fact}</td><td>${x.quality_effect}</td></tr>`).join('');
+exampleRows.innerHTML=p.examples.map(x=>`<tr><td>${x.row}</td><td><a href="${x.entity_url}" target="_blank" rel="noopener">${x.reference}</a></td><td>${x.site}</td><td class="${x.status}">${x.status}</td><td>${x.promotion_reason}</td></tr>`).join('');
+meta.textContent=`Durum: ${p.state} | continuation_key=${p.continuation_key} | kaynak HEAD=${p.source_head} | kontrol=${p.checked_at} | blocker=${p.blocker}`;
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<p>JSON okunamadı: '+e+'</p>'));
+</script>
+</body>
+</html>

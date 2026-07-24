@@ -1,0 +1,24 @@
+# ReadyToSell 3 — coordinator liveness and web repair
+
+- SLOT_ID: ready_to_sell_3
+- Parcel partition: 61523-92283
+- Primary queue: pending
+- Secondary queue: pending
+- Ownership: unclaimed; lease_version=0
+- Heartbeat: absent; stale=true; current_task_id=null
+- Runner output `wave3456_live_hash_latest.json`: absent
+- Diagnosis: no active coordinator execution is visible on remote HEAD.
+- Web defect found: `index.html` began with a section fragment rather than a complete HTML document.
+- Repair: complete HTML document restored; wave 2-6 candidate rows and 24 line-by-line operations retained.
+- Research rows visible: 40
+- Manual source-confidence >=90: 35
+- Promoted rows: 0
+- Source hashes: 0
+- Parcel matches: 0
+- Geometry matches: 0
+- Remaining gates: coordinator pickup; live HTTP/SHA256; Automation 167 DOM acceptance; serial publisher remote readback.
+- final_ready: false
+- fake_data: false
+- db_write: false
+- migration: false
+- production_deploy: false

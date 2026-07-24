@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse,importlib.util,json
+from pathlib import Path
+def mod(path):
+ s=importlib.util.spec_from_file_location('chain',path)
+ if s is None or s.loader is None:raise ImportError(path)
+ m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--repo-root',type=Path);p.add_argument('--runner-output',default='docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_3/runner_outputs/032_source_provenance_chain_acceptance_tests_latest.json');a=p.parse_args();r=(a.repo_root or Path.cwd()).resolve();script=Path(__file__).parent/'036_source_provenance_chain_acceptance.py';m=mod(script);tests=[]
+ def ck(n,c,d):tests.append({'name':n,'passed':bool(c),'detail':d})
+ sample={'rows':[{'row_no':'61523'},{'x':{'row_no':92283}}],'row_no':'70000'};ck('ROW_IDS_RECURSIVE',m.row_ids(sample)==[61523,92283,70000],m.row_ids(sample));ck('UNSAFE_FINAL',m.unsafe({'final_ready':True}),'detect');ck('UNSAFE_NESTED',m.unsafe({'x':[{'db_write':True}]}),'detect');ck('SAFE_FALSE',not m.unsafe({'final_ready':False,'db_write':False}),'safe');ck('FILES_NINE',len(m.FILES)==9,len(m.FILES));ck('SAMPLE_384',m.SAMPLE==384,m.SAMPLE);source=script.read_text(encoding='utf-8');ck('EXACT_MANIFEST_SET_CHECK','EXACT_MANIFEST_SET' in source,'dynamic');ck('THREE_SOURCE_LOOP',"for n in ('ofcom','onspd','hmlr')" in source,'three');ck('DISTINCT_EQUALS_TARGET','distinct==target' in source,'equality');ck('PROVENANCE_REQUIRED','PROVENANCE_STATE_PASSED' in source,'check');ck('INTEGRITY_REQUIRED','INTEGRITY_ACCEPTANCE_PASSED' in source,'check');ck('OUTPUT_HASHES','output_sha256' in source,'hash');ck('NO_PROMOTION_GUARD',"'parcel_relations_promoted':0" in source,'zero');ck('SAFETY_FLAGS',all(x in source for x in ["'final_ready':False","'fake_data':False","'db_write':False","'migration':False","'production_deploy':False"]),'flags');bad=[x for x in tests if not x['passed']];o={'schema_version':1,'slot_id':'internet_access_3','state':'passed' if not bad else 'failed','tests_expected':14,'tests_executed':len(tests),'tests_passed':len(tests)-len(bad),'tests_failed':len(bad),'tests':tests,'final_ready':False,'fake_data':False,'db_write':False,'migration':False,'production_deploy':False};q=r/a.runner_output;q.parent.mkdir(parents=True,exist_ok=True);q.write_text(json.dumps(o,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8');print(json.dumps(o,ensure_ascii=False,indent=2));return 0 if not bad else 2
+if __name__=='__main__':raise SystemExit(main())

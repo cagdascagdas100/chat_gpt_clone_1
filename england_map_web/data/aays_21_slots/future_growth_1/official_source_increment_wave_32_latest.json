@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "task_id": "aays1-future-growth-1-official-geometry-pipeline-20260721",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "source_head": "04f2cc57a7a88802dcbacb6d44e971244dbd9049",
+  "checked_at": "2026-07-22T20:02:39+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_PREPARATION_PUBLISHED_BLOCKER_UNCHANGED",
+  "blocker": "EXISTING_SHARED_RUNNER_HEARTBEAT_STALE_GUARDED_OPERATOR_RECOVERY_REQUIRED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/future_growth_1.json",
+  "canonical_progress_unchanged": {
+    "operations_completed": 1285,
+    "operations_total": 1288,
+    "percent": 99.77,
+    "increase_percentage_points": 0.0,
+    "verified_business_percent": 0.0
+  },
+  "increment_metrics": {
+    "operation_checks_completed": 12,
+    "operation_checks_total": 12,
+    "official_source_checks_added": 7,
+    "official_source_checks_verified": 7,
+    "research_examples_added": 3,
+    "research_examples_verified": 3,
+    "candidate_rows_promoted": 0,
+    "parcel_relations_created": 0,
+    "future_growth_scores_created": 0,
+    "actual_business_data_rows_written": 0,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY_WITH_EXPLICIT_LIMITS_AND_FAIL_CLOSED_PROMOTION"
+  },
+  "sources": [
+    {
+      "row": 1301,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data brownfield land dataset",
+      "authority": "Ministry of Housing, Communities and Local Government / Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/brownfield-land",
+      "verified_fact": "The production dataset listed 37,666 brownfield-land records from 354 providers; the collector last ran on 2026-07-20 and new data was last found on 2026-07-16.",
+      "quality_effect": "Adds a current official development-potential source while preserving the service warning that coverage may be incomplete and not yet cover all England.",
+      "measurement_level": "SITE_OR_AREA_SOURCE_NOT_CANONICAL_PARCEL_RELATION"
+    },
+    {
+      "row": 1302,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning London Datahub",
+      "authority": "Greater London Authority",
+      "url": "https://www.london.gov.uk/programmes-strategies/planning/digital-planning/planning-london-datahub",
+      "verified_fact": "The Datahub combines planning applications and development proposals from all London Planning Authorities, updates records daily, and tracks permissions, starts and completions.",
+      "quality_effect": "Provides a live London development-pipeline source; records still require borough/GLA quality checks and exact spatial binding before parcel promotion.",
+      "measurement_level": "APPLICATION_OR_DEVELOPMENT_RECORD"
+    },
+    {
+      "row": 1303,
+      "status": "PASS",
+      "source": "London Opportunity Areas definition",
+      "authority": "Greater London Authority",
+      "url": "https://www.london.gov.uk/programmes-strategies/planning/implementing-london-plan/londons-opportunity-areas",
+      "verified_fact": "Opportunity Areas are London Plan growth locations, typically with capacity for at least 2,500 homes or 5,000 jobs, often linked to transport and infrastructure investment.",
+      "quality_effect": "Supports an area-level growth-potential component when an exact adopted boundary relation is documented.",
+      "measurement_level": "AREA_LEVEL_PROXY"
+    },
+    {
+      "row": 1304,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "London Opportunity Area locations and boundary status",
+      "authority": "Greater London Authority",
+      "url": "https://www.london.gov.uk/programmes-strategies/planning/implementing-london-plan/londons-opportunity-areas/oa-locations",
+      "verified_fact": "The official map distinguishes adopted, emerging and boundary-to-be-defined Opportunity Area boundaries; locations without a defined boundary are approximate and subject to change.",
+      "quality_effect": "Prevents approximate or emerging OA locations from being treated as adopted parcel-level polygons.",
+      "measurement_level": "BOUNDARY_STATUS_GATE"
+    },
+    {
+      "row": 1305,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Planning Data public transport access nodes",
+      "authority": "Department for Transport data distributed through Planning Data",
+      "url": "https://www.planning.data.gov.uk/dataset/transport-access-node",
+      "verified_fact": "The dataset listed 363,324 public transport access nodes and was refreshed on 2026-07-21, but the service states the current dataset was created by MHCLG and will be replaced when authoritative-source data is available.",
+      "quality_effect": "Useful for proximity preparation, but its origin limitation blocks use as sole high-confidence transport evidence.",
+      "measurement_level": "POINT_PROXIMITY_SOURCE_WITH_ORIGIN_LIMIT"
+    },
+    {
+      "row": 1306,
+      "status": "PASS",
+      "source": "New local plan examination system guidance",
+      "authority": "Planning Inspectorate / GOV.UK",
+      "url": "https://www.gov.uk/guidance/local-plans-the-examination-process-new-style-local-plan-2026-regulations",
+      "verified_fact": "The Planning Inspectorate published guidance on 2026-06-18 for local plans under the new 2026 regulations, separate from the legacy examination route.",
+      "quality_effect": "Adds a plan-status gate so legacy and new-system plan evidence are not silently mixed.",
+      "measurement_level": "LEGAL_AND_PROCESS_STATUS"
+    },
+    {
+      "row": 1307,
+      "status": "PASS_LIMIT_RECORDED",
+      "source": "Monitoring the London Plan",
+      "authority": "Greater London Authority",
+      "url": "https://www.london.gov.uk/programmes-strategies/planning/implementing-london-plan/monitoring-london-plan",
+      "verified_fact": "The GLA identifies Annual Monitoring Reports as the principal mechanism for assessing London Plan effectiveness and lists AMR 21, published January 2026, for the London Plan 2021.",
+      "quality_effect": "Provides aggregate trend validation, not parcel-level development evidence.",
+      "measurement_level": "LONDON_WIDE_AGGREGATE"
+    }
+  ],
+  "examples": [
+    {
+      "row": 1308,
+      "status": "POINT_ONLY_NO_PROMOTION",
+      "reference": "brownfield-land:BR00248",
+      "entity_url": "https://www.planning.data.gov.uk/entity/1729444",
+      "site": "Former Wembley Youth Centre / Dennis Jackson Centre, London Road",
+      "organisation": "London Borough of Brent",
+      "point": "POINT (-0.28948 51.549285)",
+      "entry_date": "2026-04-10",
+      "hectares": 0.96,
+      "minimum_net_dwellings": 170,
+      "maximum_net_dwellings": 170,
+      "planning_permission_status": "not-permissioned",
+      "verified_note": "Brent Local Plan 2019-2041 site allocation BSWSA17 is referenced.",
+      "promotion_reason": "No exact canonical parcel polygon relation was produced in this environment."
+    },
+    {
+      "row": 1309,
+      "status": "POINT_ONLY_NO_PROMOTION",
+      "reference": "brownfield-land:BR00146",
+      "entity_url": "https://www.planning.data.gov.uk/entity/1721540",
+      "site": "109 Park Avenue North",
+      "organisation": "London Borough of Brent",
+      "point": "POINT (-0.23066 51.554233)",
+      "entry_date": "2026-04-10",
+      "hectares": 0.04,
+      "minimum_net_dwellings": 4,
+      "maximum_net_dwellings": 4,
+      "deliverable": true,
+      "planning_permission_status": "permissioned",
+      "promotion_reason": "The source supplies a point and site record, not a verified relation to a canonical parcel polygon."
+    },
+    {
+      "row": 1310,
+      "status": "POINT_ONLY_NO_PROMOTION",
+      "reference": "brownfield-land:LLDC1",
+      "entity_url": "https://www.planning.data.gov.uk/entity/1712722",
+      "site": "PDZ8.1 Bridgewater Road and PDZ8.4 Warton Road",
+      "organisation": "London Legacy Development Corporation",
+      "point": "POINT (-0.008506 51.534424)",
+      "hectares": 2.9,
+      "deliverable": true,
+      "planning_permission_type": "outline-planning-permission",
+      "planning_permission_status": "permissioned",
+      "verified_note": "The official record describes approximately 300 residential units within a wider mixed-use permission.",
+      "promotion_reason": "No current exact canonical parcel polygon relation or runtime evidence bundle was produced."
+    }
+  ],
+  "operations": [
+    {"row": 1299, "check": "Canonical branch HEAD readback", "result": "PASS", "evidence": "04f2cc57a7a88802dcbacb6d44e971244dbd9049"},
+    {"row": 1300, "check": "Runner, predecessor and manual-action revalidation", "result": "PASS_BLOCKER_UNCHANGED", "evidence": "F-host heartbeat stale; height_difference_2 guarded recovery still not executed"},
+    {"row": 1301, "check": "Brownfield dataset source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "37,666 records; 354 providers; incomplete-coverage warning retained"},
+    {"row": 1302, "check": "Planning London Datahub source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "daily London-wide planning lifecycle data; completeness caveat retained"},
+    {"row": 1303, "check": "Opportunity Area growth definition", "result": "PASS", "evidence": "2,500 homes or 5,000 jobs typical capacity threshold"},
+    {"row": 1304, "check": "Opportunity Area boundary-status gate", "result": "PASS_LIMIT_RECORDED", "evidence": "adopted/emerging/undefined boundaries kept distinct"},
+    {"row": 1305, "check": "Public transport access-node source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "363,324 nodes; current origin limitation recorded"},
+    {"row": 1306, "check": "2026 local-plan process-status gate", "result": "PASS", "evidence": "new-system and legacy evidence must remain distinct"},
+    {"row": 1307, "check": "London Plan monitoring source contract", "result": "PASS_LIMIT_RECORDED", "evidence": "AMR 21 is aggregate monitoring, not parcel evidence"},
+    {"row": 1308, "check": "BR00248 example validation", "result": "POINT_ONLY_NO_PROMOTION", "evidence": "official point/site-allocation record; no canonical polygon relation"},
+    {"row": 1309, "check": "BR00146 example validation", "result": "POINT_ONLY_NO_PROMOTION", "evidence": "official permissioned record; no canonical polygon relation"},
+    {"row": 1310, "check": "LLDC1 example validation", "result": "POINT_ONLY_NO_PROMOTION", "evidence": "official outline-permission record; no current canonical polygon relation"}
+  ],
+  "candidate_summary": {
+    "existing_official_candidate_rows": 60,
+    "existing_current_candidates": 59,
+    "existing_rejected_stale_or_completed": 1,
+    "new_research_examples": 3,
+    "new_promoted_candidates": 0
+  },
+  "new_runner_started": false,
+  "predecessor_bypassed": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "captured_at": "2026-07-21T02:07:16Z",
+  "canonical_scope": "LONDON_CANONICAL_92283_NOT_ALL_ENGLAND",
+  "target_rows": [1, 2, 3],
+  "target_hmlr_inspire_ids": [
+    "39729785",
+    "39724273",
+    "60116682"
+  ],
+  "target_brownfield_references": [
+    "LBBD49/XJ",
+    "LBBD72/ZZ",
+    "LBBD23",
+    "LBBD91/DI"
+  ],
+  "sources": [
+    {
+      "source_key": "planning_brownfield_gla_polygon",
+      "publisher": "Greater London Authority",
+      "official_dataset_url": "https://data.london.gov.uk/dataset/brownfield-register/",
+      "official_layer_url": "https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/MapServer/101",
+      "official_query_url": "https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/MapServer/101/query",
+      "geometry_type": "esriGeometryPolygon",
+      "query_supported": true,
+      "geojson_supported": true,
+      "licence": "Open Government Licence v3",
+      "authority": "official",
+      "status": "SOURCE_CONTRACT_VALIDATED_PAYLOAD_NOT_DOWNLOADED",
+      "accuracy_boundary": "Indicative brownfield site boundary; must be spatially compared against the current HMLR parcel polygon. Point-only proximity cannot be upgraded to intersection."
+    },
+    {
+      "source_key": "hmlr_inspire_polygons",
+      "publisher": "HM Land Registry",
+      "official_download_index": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "published_date_readback": "2026-07-05",
+      "update_frequency": "monthly",
+      "target_authority": "London Borough of Barking and Dagenham",
+      "geometry_role": "current source parcel polygon and exact INSPIRE ID match",
+      "authority": "official",
+      "status": "SOURCE_CONTRACT_VALIDATED_GML_NOT_DOWNLOADED",
+      "accuracy_boundary": "Exact target INSPIRE IDs must exist in the current authority GML. Missing or ambiguous matches fail closed."
+    }
+  ],
+  "relation_contract": [
+    {
+      "relation_type": "INTERSECTS_PARCEL",
+      "distance_m": 0,
+      "weight_hint": 1.0
+    },
+    {
+      "relation_type": "WITHIN_250M",
+      "distance_m_max": 250,
+      "weight_hint": 0.85
+    },
+    {
+      "relation_type": "WITHIN_500M",
+      "distance_m_max": 500,
+      "weight_hint": 0.70
+    },
+    {
+      "relation_type": "WITHIN_1000M",
+      "distance_m_max": 1000,
+      "weight_hint": 0.52
+    },
+    {
+      "relation_type": "WITHIN_2000M",
+      "distance_m_max": 2000,
+      "weight_hint": 0.35
+    }
+  ],
+  "download_results": {
+    "gla_polygon_payload": null,
+    "hmlr_authority_gml": null,
+    "exact_parcel_polygons": 0,
+    "verified_polygon_relations": 0
+  },
+  "first_unverified_step": "EXECUTE_GLA_POLYGON_FETCH_AND_CURRENT_HMLR_GML_EXACT_MATCH",
+  "blockers": [
+    "GLA_BROWNFIELD_POLYGON_PAYLOAD_NOT_EXECUTED_BY_NETWORKED_RUNNER",
+    "CURRENT_HMLR_BARKING_DAGENHAM_GML_NOT_DOWNLOADED"
+  ],
+  "actual_business_data_rows_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

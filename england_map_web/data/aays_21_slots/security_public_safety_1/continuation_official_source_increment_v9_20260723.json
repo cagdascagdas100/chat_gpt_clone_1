@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_1",
+  "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
+  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "source_head": "d932ef7fb14367579960e3d8515b18085aa6b76f",
+  "checked_at": "2026-07-23T04:22:18+03:00",
+  "state": "PARALLEL_OFFICIAL_SOURCE_EXPANSION_V9_PUBLISHED_BLOCKER_UNCHANGED",
+  "increment_metrics": {
+    "official_source_checks_added": 5,
+    "official_source_checks_passed": 5,
+    "source_upgrades_added": 5,
+    "research_examples_added": 5,
+    "candidate_rows_added": 0,
+    "parcel_values_added": 0,
+    "stored_values_modified": false,
+    "accuracy_contract": "OFFICIAL_PRIMARY_SOURCE_ONLY"
+  },
+  "cumulative_metrics": {
+    "official_source_checks": 55,
+    "official_source_checks_passed": 55,
+    "source_upgrades": 49,
+    "context_or_crosscheck_candidates": 44,
+    "web_source_rows": 55,
+    "web_operation_rows": 55
+  },
+  "sources": [
+    {
+      "row": 51,
+      "status": "PASS_USE_OF_FORCE_COUNTING_GUARD",
+      "source": "MPS Use of Force Dataset",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/use-of-force-dataset-vdj3o/",
+      "verified_fact": "The current official files include April 2026 and April 2025 to March 2026. Recording began in April 2017, historical figures may change monthly, and each row represents one officer using force on one subject rather than one incident.",
+      "quality_effect": "Adds borough-level operational context with a mandatory officer-subject counting guard; it is not crime prevalence, incident severity or parcel safety.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 52,
+      "status": "PASS_CUSTODY_RECORD_NOT_PERSON_GUARD",
+      "source": "MPS Custody: arrests, disposals and strip searches",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-custody-arrests-disposals-strip-searches-2r7po",
+      "verified_fact": "The current official workbooks cover January 2022 to June 2026, update monthly with a one-month lag, and count custody records rather than unique people; demographic interpretation is limited to the custody detainee population.",
+      "quality_effect": "Adds custody-process context while preventing repeat detention records or detainee demographics from being treated as unique-person incidence, population risk or parcel evidence.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 53,
+      "status": "PASS_STOP_SEARCH_CONNECT_AND_VERSION_GUARD",
+      "source": "MPS Stop and Search Dashboard Data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-stop-and-search-dashboard-data-e6yjz",
+      "verified_fact": "The latest official extract covers July 2024 to June 2026. Post-February-2024 data comes from CONNECT, some measures changed, and the March 2024 to February 2026 file was republished as V2 on 19 March 2026; the earlier file must not be used.",
+      "quality_effect": "Adds borough operational context with CONNECT, corrected-version and custody double-counting guards; searches are not recorded-crime incidence or parcel risk.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 54,
+      "status": "PASS_MOPAC_SURVEY_SAMPLE_CONTEXT",
+      "source": "MOPAC Surveys and Public Voice results",
+      "authority": "Mayor's Office for Policing and Crime / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mopac-surveys-236kk/",
+      "verified_fact": "The current collection includes the Q4 2025-26 Public Voice results for January to March 2026. MOPAC describes annual samples of about 19,200 residents for the Public Attitude Survey and 9,600 victims for the User Satisfaction Survey, plus the TDIU survey.",
+      "quality_effect": "Adds perception and service-experience context while keeping survey samples, victim satisfaction and operational crime counts as separate evidence classes.",
+      "candidate_score_input": false
+    },
+    {
+      "row": 55,
+      "status": "PASS_MTIP_DOUBLE_COUNT_AND_DISRUPTION_GUARD",
+      "source": "MPS More Thorough Searches Intimate Parts Exposed data",
+      "authority": "Metropolitan Police Service / London Datastore",
+      "url": "https://data.london.gov.uk/dataset/mps-stop-and-search-more-thorough-searches-intimate-parts-expose-emxgp",
+      "verified_fact": "The latest official workbook covers July 2024 to June 2026. MPS records that some historical MTIPS entries were actually custody strip searches and can be double-counted, and that an internal IT deployment may temporarily disrupt the series.",
+      "quality_effect": "Adds a sensitive operational cross-check with explicit double-counting, recording-error and disruption guards; it is not crime prevalence or individual-risk evidence.",
+      "candidate_score_input": false
+    }
+  ],
+  "quality_guards": [
+    "AREA_LEVEL_PROXY only; no parcel measurement claim.",
+    "Use-of-force rows count officer-subject uses, not unique incidents.",
+    "Custody workbooks count custody records, not unique people.",
+    "Stop-and-search evidence crosses CONNECT and corrected-version boundaries.",
+    "MOPAC survey results are perception and experience evidence, not operational incidence.",
+    "MTIPS data carries custody double-counting and temporary-disruption warnings.",
+    "No existing candidate score or stored parcel value was modified."
+  ],
+  "release_gate": {
+    "source": "Crime in England and Wales: year ending March 2026",
+    "scheduled_release": "2026-07-23T09:30:00+01:00",
+    "checked_before_release": true,
+    "figures_ingested": false,
+    "reason": "The Istanbul check at 04:22 occurred before the scheduled 11:30 Istanbul publication time."
+  },
+  "canonical_progress": {
+    "completed_units": 5,
+    "total_units": 8,
+    "overall_percent": 62.5,
+    "percent_change": 0.0
+  },
+  "blocker": "PRIORITY_1_HOLDER_STALE_DAEMON_RECOVERY_AND_CLAIM_NOT_VERIFIED",
+  "manual_action_path": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_1.json",
+  "manual_action_state": "OPEN",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "parcel_measurement": false,
+  "acceptance_evidence": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

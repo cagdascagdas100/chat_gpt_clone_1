@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "verified_at": "2026-07-22T07:55:36+03:00",
+  "purpose": "OFFICIAL_OS_OPENDATA_DOWNLOAD_API_AND_UPRN_SCHEMA_REGISTRY",
+  "official_sources": {
+    "os_downloads_api": {
+      "authority": "Ordnance Survey",
+      "products_endpoint": "https://api.os.uk/downloads/v1/products?expanded=true",
+      "open_uprn_downloads_endpoint": "https://api.os.uk/downloads/v1/products/OpenUPRN/downloads?format=CSV&area=GB",
+      "authentication_required_for_opendata": false,
+      "download_metadata_fields": [
+        "url",
+        "fileName",
+        "size",
+        "md5",
+        "area",
+        "format",
+        "subformat"
+      ],
+      "integrity_field": "md5"
+    },
+    "os_open_uprn": {
+      "product_id": "OpenUPRN",
+      "data_hub_page": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+      "version_observed": "June 2026",
+      "coverage": "Great Britain",
+      "formats": [
+        "CSV",
+        "GeoPackage"
+      ],
+      "update_frequency": "six_weekly",
+      "required_csv_fields": [
+        "UPRN",
+        "X_COORDINATE",
+        "Y_COORDINATE",
+        "LATITUDE",
+        "LONGITUDE"
+      ]
+    },
+    "ons_uprn_products": {
+      "authority": "Office for National Statistics",
+      "nsul_release": "May 2026 Epoch 126",
+      "release_frequency": "six_weekly",
+      "formats": [
+        "CSV"
+      ],
+      "join_key": "UPRN",
+      "postcode_field_aliases": [
+        "PCDS",
+        "PCD",
+        "PCD2",
+        "POSTCODE"
+      ]
+    }
+  },
+  "semantics": {
+    "os_open_uprn_is_address_point_not_parcel_boundary": true,
+    "onsud_nsul_join_does_not_prove_legal_parcel_boundary": true,
+    "download_or_schema_pass_must_not_raise_parcel_confidence": true
+  },
+  "accuracy": {
+    "source_accuracy_score": 97,
+    "target_after_runtime_download_integrity": 98,
+    "parcel_match_accuracy_ceiling": 50
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

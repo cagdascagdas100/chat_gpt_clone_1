@@ -1,0 +1,105 @@
+{
+  "state": "PUBLISHED",
+  "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_2",
+  "base_slot_id": "internet_access",
+  "shard_index": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761
+  },
+  "attempt_id": "4f6b7402838f4af7b29de102991a1e70",
+  "idempotency_key": "b759fb7a6c314b91ac39b57cf8a5efd22f45707f23a7c34c9d043c20e151312e",
+  "status": "result_ready_for_remote_acceptance",
+  "priority": "P0",
+  "dependency_state": "SATISFIED_BY_REMOTE_VALIDATION",
+  "dependency_task_id": "internet-access-2-expand-onspd-identity-existing-11013-v2-20260722T034500Z",
+  "dependency_evidence": {
+    "validation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/005_existing_11013_identity_validation.json",
+    "data_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/005_existing_11013_postcode_identity_candidates.jsonl",
+    "existing_shard2_rows": 11013,
+    "distinct_postcodes": 5044,
+    "postcode_identity_confirmed": 11013,
+    "postcode_live": 11011,
+    "postcode_terminated_review_required": 2,
+    "postcode_not_confirmed": 0
+  },
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006b_ofcom_dynamic_zip_join_strict_guard.py",
+  "read_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/005_existing_11013_postcode_identity_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/006_ofcom_dynamic_zip_join_existing_11013.py",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/data/006_existing_11013_official_coverage_candidates.jsonl",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/006_existing_11013_coverage_validation.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_chunks",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/006_ofcom_binary_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/006_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/reports/006_existing_11013_ofcom_coverage.md",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_progress.jsonl"
+  ],
+  "resource_class": ["light_read", "network_fetch"],
+  "requires_git_publish_gate": false,
+  "requires_runtime_sync_gate": false,
+  "requires_browser_acceptance_gate": false,
+  "requires_shared_publish_gate": false,
+  "timeout_seconds": 7200,
+  "data_quality_contract": {
+    "source_urls": [
+      "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620"
+    ],
+    "source_snapshot_date": "2026-01; v2 correction 2026-07-07",
+    "source_discovery_required": false,
+    "measurement_level": "postcode",
+    "output_semantics": "AREA_LEVEL_PROXY",
+    "parcel_binding_method": "retain canonical row_no parcel_id HMLR identity and exact live ONSPD postcode identity; dynamically discover or use the official cached Ofcom ZIP; exact r2 postcode join only",
+    "confidence_method": "3/4 and confidence 0.75 require exact live ONSPD identity, exact Ofcom r2 postcode row, complete core fields and all official percentages within 0 to 100",
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "ai_role": "evidence_assist_only",
+    "human_review_required_when": [
+      "official ZIP remains inaccessible",
+      "r2 postcode area file is missing",
+      "official core coverage fields are incomplete or outside 0 to 100",
+      "legacy and January 2026 metrics differ by at least 10 percentage points",
+      "postcode identity is terminated or unresolved"
+    ]
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "final_ready": false,
+  "requested_at": "2026-07-22T04:10:00Z",
+  "correction": "DEPENDENCY_SATISFIED_NEW_TASK_ID_AFTER_FULL_11013_ONSPD_ACCEPTANCE",
+  "legacy_queue_status": "queued",
+  "compatibility_migrated": false,
+  "compatibility_source_queue": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
+  "recovery_triggered": true,
+  "recovery_plan_key": "f377cf2c3ccc84329ab2",
+  "updated_at": "2026-07-22T19:52:38Z",
+  "blocker": "OFCom_2026_BINARY_ACCESS_BLOCKED_AFTER_LANDING_COOKIE_AND_CURL_RETRY",
+  "result": {
+    "state": "PUBLISHED",
+    "exit_code": 0,
+    "runner_child_commit": "60eb126156993735489937077110e29a74bc78d5",
+    "runner_published_at": "2026-07-22T19:41:11.361618Z",
+    "remote_readback": true,
+    "business_state": "OFFICIAL_COVERAGE_SOURCE_BLOCKED_OR_PARTIAL",
+    "official_coverage_verified_candidates": 0,
+    "postcode_identity_confirmed_coverage_pending": 11011,
+    "identity_missing_or_review": 2,
+    "web_rows": 11013,
+    "web_chunks": 23,
+    "strict_accuracy_guard": "PASS",
+    "reconciliation_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/009_006_publish_pending_remote_artifact_reconciliation.json"
+  }
+}

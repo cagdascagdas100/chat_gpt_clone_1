@@ -1,0 +1,40 @@
+{
+  "task_id": "topography-143-runner-stale-site-visibility-blocker-20260710",
+  "page_key": "topography",
+  "layer": "Topography / Height Difference",
+  "status": "blocked",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "evidence_from_user_screenshot": {
+    "portable_panel_status": "App active, runner stale_or_closed, last_pid_10108",
+    "portable_root": "F:\\TerraYield_AAYS_Portable",
+    "runner_panel_updated_at": "2026-07-08T10:22:59.2526616Z",
+    "topography_row": "Runner Aktif but 0 percent, remaining 100, final false, stale heartbeat 2026-07-08T10:15:30.8263089Z",
+    "site_url": "http://127.0.0.1:8012/england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=portable"
+  },
+  "root_cause": [
+    "The local web app is active but the single shared runner is stale or closed.",
+    "Runner panel heartbeat is old; queue tasks are not being consumed.",
+    "Topography current-changes panel therefore remains old/empty and row-level outputs are not visible on the 8012 site.",
+    "Coordinate and height-difference exports cannot be trusted until runner output is pushed to the expected GitHub paths."
+  ],
+  "required_local_action": [
+    "Use only the canonical F portable runner.",
+    "In the AAYS TerraYield Portable Control Panel click Tek Runner Baslat, or run F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd.",
+    "Do not start a second or parallel runner.",
+    "After the runner heartbeat updates, it must consume topography queue tasks 140/142/143 and write row-level latest_changes outputs."
+  ],
+  "required_outputs_before_dem_lidar": [
+    "docs/chatgpt_status/topography/handoff/topography_parcel_coordinate_handoff_20260710/topography_parcel_coordinate_export.csv with parcel_2757, parcel_2758, parcel_2759 rows",
+    "docs/chatgpt_status/topography/handoff/topography_parcel_coordinate_handoff_20260710/topography_parcel_coordinate_export.geojson with exported_parcel_count >= 3",
+    "england_map_web/data/program_layer_matrix/topography_coordinate_handoff_latest.json",
+    "docs/chatgpt_status/topography/status/140_site_visibility_matrix_coordinate_fix_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/topography_updates/latest_changes.json with row-level changed_in_latest_run=true records"
+  ],
+  "dem_lidar_next_step": "Only after coordinate visibility proof exists, sample real DEM/LiDAR/terrain sources. Do not invent height-difference values.",
+  "completion_percent": 25,
+  "percent_delta": 0
+}

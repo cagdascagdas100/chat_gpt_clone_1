@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "generated_at": "2026-07-22T09:29:05+03:00",
+  "contract_revision": 8,
+  "validation_kind": "REVISION8_QUEUE_REQUEST_CONTRACT_PREPARATION_AND_OFFLINE_SELFTEST",
+  "output_semantics": "COMPILE_AND_FIXTURE_SELFTEST_NOT_SHARED_RUNNER_NOT_NETWORK_EXECUTION_NOT_LOADER_NOT_POLYGON_NOT_SCORE",
+  "components": [
+    {
+      "role": "queue_request_contract_validator",
+      "path": "docs/chatgpt_status/aays1/shards/future_growth_1/automation/026_validate_revision8_queue_request_contract_v1.py",
+      "git_blob_sha": "069ce44bcfaba1057e7068b58d8fd151238a57a4",
+      "compile": "PASS"
+    },
+    {
+      "role": "queue_request_contract_selftest",
+      "path": "docs/chatgpt_status/aays1/shards/future_growth_1/automation/027_selftest_revision8_queue_request_contract_v1.py",
+      "git_blob_sha": "ec15e77e1013d48a8da7307a8e91757a45b64279",
+      "compile": "PASS"
+    }
+  ],
+  "queue_binding": {
+    "path": "docs/chatgpt_status/aays1/queue/aays1_future_growth_1_official_geometry_pipeline_v8_20260722.task.json",
+    "git_blob_sha": "4114a431098b5278d009ecf7b86785ff05069c0d",
+    "contract_revision": 8,
+    "state": "pending",
+    "claimable": true,
+    "single_runner_only": true,
+    "runner_pickup_observed": false,
+    "runner_execution_claimed": false
+  },
+  "readiness_binding": {
+    "path": "england_map_web/data/aays_21_slots/future_growth_1/source_execution_readiness_wave_15_latest.json",
+    "git_blob_sha": "8286fa7035d85cccfbbc5e929ed54f5e61c73ade",
+    "source_rows": "16/16 PREPARED",
+    "example_templates": "10/10 PREPARED",
+    "loader_executions": "0/16",
+    "business_rows": 0
+  },
+  "compile_checks": "2/2 PASS",
+  "offline_selftest": {
+    "result": "10/10 PASS",
+    "cases": [
+      {"index": 1, "name": "exact", "expected": "PASS", "actual": "PASS"},
+      {"index": 2, "name": "wrong_revision", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 3, "name": "unpinned_blob", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 4, "name": "wrong_official_domain", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 5, "name": "source_marked_executed", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 6, "name": "missing_sha_evidence", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 7, "name": "literal_secret", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 8, "name": "duplicate_source", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 9, "name": "cross_slot_token", "expected": "FAIL", "actual": "FAIL"},
+      {"index": 10, "name": "business_flag", "expected": "FAIL", "actual": "FAIL"}
+    ]
+  },
+  "defined_fail_closed_checks": [
+    "queue_slot_exact",
+    "queue_task_exact",
+    "queue_attempt_exact",
+    "queue_revision_exact",
+    "queue_pending_claimable",
+    "single_shared_runner_only",
+    "revision7_superseded",
+    "hash_bug_marker_exact",
+    "queue_path_blob_pairs",
+    "canonical_path_exact",
+    "canonical_git_blob_sha1_valid",
+    "acceptance_contract_exact",
+    "expected_outputs_complete",
+    "readiness_slot_exact",
+    "source_rows_exact_16_unique",
+    "source_rows_all_fail_closed",
+    "example_rows_exact_10_unique",
+    "examples_all_not_executed_official",
+    "readiness_zero_execution",
+    "no_literal_secrets",
+    "no_cross_slot_tokens",
+    "truth_flags_false"
+  ],
+  "defined_fail_closed_check_count": 22,
+  "official_host_allowlist": [
+    "www.gov.uk",
+    "www.planning.data.gov.uk",
+    "www.ons.gov.uk",
+    "naptan.api.dft.gov.uk",
+    "www.nationalrail.co.uk",
+    "tfl.gov.uk",
+    "www.get-information-schools.service.gov.uk",
+    "digital.nhs.uk",
+    "directory.spineservices.nhs.uk",
+    "www.ordnancesurvey.co.uk",
+    "www.data.gov.uk",
+    "use-land-property-data.service.gov.uk",
+    "data.london.gov.uk",
+    "gis.london.gov.uk"
+  ],
+  "official_host_allowlist_count": 14,
+  "official_contract_rechecks": [
+    {
+      "index": 1,
+      "source": "Planning Data API documentation",
+      "official_url": "https://www.planning.data.gov.uk/docs",
+      "verified_facts": "Coordinate queries use WGS84 latitude/longitude; dataset parameters may repeat; JSON, HTML and GeoJSON entity representations and pagination are documented; no batch endpoint is provided.",
+      "guard": "Zero results are not negative proof because dataset coverage varies.",
+      "result": "PASS"
+    },
+    {
+      "index": 2,
+      "source": "HM Land Registry INSPIRE download",
+      "official_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "verified_facts": "Current page published 5 July 2026; local-authority GML files are published on the first Sunday of each month.",
+      "guard": "Download and raw SHA256 remain runtime requirements.",
+      "result": "PASS"
+    },
+    {
+      "index": 3,
+      "source": "HM Land Registry INSPIRE guidance",
+      "official_url": "https://www.gov.uk/guidance/inspire-index-polygons-spatial-data",
+      "verified_facts": "INSPIRE polygons provide indicative position and extent with unique identifiers; duplicate polygons may occur across authority files; publication reflects the previous month.",
+      "guard": "Indicative polygon is not a legal title-plan boundary.",
+      "result": "PASS"
+    },
+    {
+      "index": 4,
+      "source": "London Datastore Brownfield Sites",
+      "official_url": "https://data.london.gov.uk/dataset/brownfield-sites",
+      "verified_facts": "CSV and GeoPackage distributions are documented with EPSG:27700 geometry.",
+      "guard": "Boundaries are indicative and borough accuracy varies.",
+      "result": "PASS"
+    },
+    {
+      "index": 5,
+      "source": "GLA Planning Data Map service",
+      "official_url": "https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/MapServer",
+      "verified_facts": "The official service declares British National Grid spatial reference and supports queryable map layers.",
+      "guard": "Service metadata alone is not a captured polygon payload.",
+      "result": "PASS"
+    },
+    {
+      "index": 6,
+      "source": "GLA Brownfield Sites Layer 101",
+      "official_url": "https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/MapServer/101",
+      "verified_facts": "Layer 101 is the polygon Brownfield Sites layer; query formats and pagination capabilities are declared by the official ArcGIS service.",
+      "guard": "Exact feature payload and SHA256 are required before polygon relation promotion.",
+      "result": "PASS"
+    }
+  ],
+  "official_contract_rechecks_result": "6/6 PASS",
+  "actual_queue_request_validator_execution": "NOT_EXECUTED_IN_SHARED_RUNNER",
+  "runner_output_expected": "docs/chatgpt_status/aays1/shards/future_growth_1/runner_outputs/006_official_geometry_pipeline_v8_latest.json",
+  "runner_output_present": false,
+  "canonical_rows_20_24_extracted": 0,
+  "planning_query_requests_executed": 0,
+  "source_loader_executions": 0,
+  "official_site_polygons_downloaded": 0,
+  "exact_hmlr_parcel_polygons": 0,
+  "verified_polygon_relations": 0,
+  "scored_business_rows": 0,
+  "actual_business_data_rows_written": 0,
+  "runner_execution_claimed": false,
+  "loader_execution_claimed": false,
+  "polygon_relation_claimed": false,
+  "business_progress_claimed": false,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

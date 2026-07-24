@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
+  "source_head_readback": "2992228279f27da21cf16d4cea67d6291ba83ed4",
+  "researched_at": "2026-07-23T16:44:30Z",
+  "research_mode": "official MHCLG, ONS and Police.uk web sources only; corrected IoD25 files, relative-rank semantics, 2021 LSOA geography, anonymised police locations and unmapped-crime guards; no parcel result or safety probability claimed",
+  "base_source_path": "england_map_web/data/aays_21_slots/security_public_safety_2/official_source_revalidation_20260722_2013.json",
+  "row_start": 75,
+  "row_end": 82,
+  "sources_reviewed_increment": 8,
+  "promoted_sources_increment": 8,
+  "held_sources_increment": 0,
+  "source_evidence_confidence_ge_95_increment": 8,
+  "sources": [
+    {
+      "row": 75,
+      "source_id": "mhclg_iod25_statistics_package_v2_correction_gate",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 official statistics package",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "status": "PROMOTED_FOR_CURRENT_V2_FILE_AND_CORRECTED_LOOKUP_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["published 30 October 2025 and last updated 17 November 2025", "Files 1 to 9 were corrected and users are instructed to use updated v2 workbooks", "the package includes domain ranks, scores, deciles, denominators, underlying indicators and transformed domain scores"],
+      "limitations": ["only corrected v2 artifacts are acceptable for runtime joins", "a package landing page does not itself bind a parcel to an LSOA"]
+    },
+    {
+      "row": 76,
+      "source_id": "mhclg_iod25_statistical_release_relative_crime_domain_gate",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 statistical release",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-statistical-release",
+      "status": "PROMOTED_FOR_RELATIVE_RANK_CRIME_DOMAIN_AND_NON_CARDINAL_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["IoD25 uses 33,755 Census 2021 LSOAs in England", "Crime is one of seven domains and measures risk of personal and material victimisation at local level", "IoD ranks are relative and a rank of 100 is not twice as deprived as rank 200"],
+      "limitations": ["Crime Domain rank is not a probability of crime or a cardinal safety score", "IoD25 cannot quantify absolute deprivation or identify individual people"]
+    },
+    {
+      "row": 77,
+      "source_id": "mhclg_iod25_faq_postcode_lsoa_join_and_rank_gate",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "name": "English indices of deprivation 2025 frequently asked questions",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
+      "status": "PROMOTED_FOR_POSTCODE_TO_LSOA_LOOKUP_JOIN_AND_RANK_DECILE_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["the FAQ describes joining the ONS postcode lookup to IoD25 using the LSOA column", "LSOAs rank from 1 most deprived to 33,755 least deprived", "ranks and deciles are the recommended interpretation for most IoD and domain uses"],
+      "limitations": ["postcode best-fit lookup is not a substitute for exact point-in-polygon parcel assignment", "Crime Domain scores must not be interpreted as population proportions"]
+    },
+    {
+      "row": 78,
+      "source_id": "ons_statistical_geographies_lsoa2021_boundary_version_gate",
+      "publisher": "Office for National Statistics",
+      "name": "Statistical geographies: Lower layer Super Output Areas",
+      "url": "https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies",
+      "status": "PROMOTED_FOR_2021_LSOA_BOUNDARY_NAMES_CODES_AND_VERSION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["2021 LSOAs are built from Output Areas and some 2011 LSOAs were split or merged", "England has 33,755 LSOAs and Wales has 1,917", "official 2021 boundary sets, names, codes and lookup files are supplied through the ONS Open Geography portal"],
+      "limitations": ["2011 and 2021 LSOA codes or boundaries must not be silently mixed", "generalised boundaries require explicit edition and geometry-precision recording"]
+    },
+    {
+      "row": 79,
+      "source_id": "policeuk_about_monthly_provenance_and_lsoa_field_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "data.police.uk provenance and CSV field documentation",
+      "url": "https://data.police.uk/about/",
+      "status": "PROMOTED_FOR_MONTHLY_PROVENANCE_QUALITY_ASSURANCE_AND_LSOA_FIELD_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["police forces provide monthly Crime and ASB and outcome files which undergo quality assurance", "published LSOA code and name refer to the LSOA containing the anonymised point", "published longitude and latitude are anonymised coordinates"],
+      "limitations": ["the published LSOA belongs to an anonymised snap point rather than the exact incident address", "monthly administrative extracts remain subject to later correction or reclassification"]
+    },
+    {
+      "row": 80,
+      "source_id": "policeuk_location_anonymisation_and_geocoding_quality_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "data.police.uk location anonymisation and known quality issues",
+      "url": "https://data.police.uk/about/",
+      "status": "PROMOTED_FOR_APPROXIMATE_SNAP_POINT_GEOCODING_UNCERTAINTY_AND_MUTABLE_SNAPSHOT_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["published crime coordinates always represent approximate rather than exact locations", "exact locations are replaced by privacy-protecting map points with at least eight addresses or none", "the site reports force geocoding accuracy estimates ranging from 60 to 97 percent and describes monthly data as mutable snapshots"],
+      "limitations": ["an anonymised crime point must not be treated as an exact parcel event", "source-level quality assurance does not justify 95 percent confidence for parcel attribution"]
+    },
+    {
+      "row": 81,
+      "source_id": "policeuk_street_crime_api_area_limit_and_approximation_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Street-level crimes API contract",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "status": "PROMOTED_FOR_QUERY_AREA_LIMIT_APPROXIMATE_LOCATION_AND_503_GATE",
+      "confidence_percent": 99,
+      "verified_claims": ["the endpoint supports a one-mile point query or custom polygon and an optional YYYY-MM month", "returned locations are approximations rather than exact crime locations", "custom areas containing more than 10,000 crimes return HTTP 503"],
+      "limitations": ["a one-mile response is not a parcel observation", "503 or oversized responses require bounded subdivision rather than silent omission"]
+    },
+    {
+      "row": 82,
+      "source_id": "policeuk_crimes_without_location_exclusion_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Crimes with no location API contract",
+      "url": "https://data.police.uk/docs/method/crimes-no-location/",
+      "status": "PROMOTED_FOR_UNMAPPED_CRIME_COMPLETENESS_AND_NULL_LOCATION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": ["the endpoint returns crimes that could not be mapped to a location", "these records have null location and location_type fields", "records retain month, category, persistent identifier and available outcome status"],
+      "limitations": ["unmapped crimes cannot be spatially assigned to a parcel or LSOA", "excluding them from spatial counts must be explicitly disclosed as a completeness limitation"]
+    }
+  ],
+  "runtime_executed": false,
+  "candidate_values_published": 0,
+  "business_rows_written": 0,
+  "fake_data": false,
+  "final_ready": false
+}

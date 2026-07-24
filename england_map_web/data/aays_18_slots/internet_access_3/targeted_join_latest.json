@@ -1,0 +1,35 @@
+{
+  "schema_version": 3,
+  "slot_id": "internet_access_3",
+  "updated_at": "2026-07-21T08:20:00+03:00",
+  "state": "AUTHORITATIVE_PUBLISHED_EXISTING_RUNNER_PENDING",
+  "summary": "Tum 1.741.096 duzeltilmis Ofcom postcode satiri taranir; ayrintili degerler yalniz kimligi dogrulanmis slot-3 postcode ihtiyaclari icin bellekte tutulur.",
+  "memory_strategy": "GLOBAL_POSTCODE_UNIQUENESS_SET_PLUS_NEEDED_POSTCODE_ROWS_ONLY",
+  "gates": [
+    {"gate_no":1,"name":"ALL_R2_ROWS_SCANNED","state":"CONTRACT_TESTED","detail":"Gercek calismada tam 1.741.096 satir zorunlu; eksik veya fazla satir fail-closed."},
+    {"gate_no":2,"name":"GLOBAL_POSTCODE_UNIQUENESS","state":"PASS_LOCAL_TEST","detail":"Tum postcode anahtarlari global set ile blank ve duplicate kontrolunden gecer."},
+    {"gate_no":3,"name":"STRICT_SCHEMA","state":"PASS_LOCAL_TEST","detail":"Postcode, spaced postcode, area ve alti zorunlu coverage yuzdesi alanlari gerekir."},
+    {"gate_no":4,"name":"POSTCODE_AREA_CONSISTENCY","state":"PASS_LOCAL_TEST","detail":"Dosya adi, postcode area alani ve postcode harf prefiksi ayni olmalidir."},
+    {"gate_no":5,"name":"PERCENTAGE_RANGE","state":"PASS_LOCAL_TEST","detail":"Zorunlu coverage alanlari sayisal ve 0-100 araliginda olmalidir."},
+    {"gate_no":6,"name":"TARGETED_DETAIL_RETENTION","state":"PASS_LOCAL_TEST","detail":"Ayrintili Ofcom satiri yalniz same-row parcel ve HMLR kimligi dogrulanmis gerekli postcode icin tutulur."},
+    {"gate_no":7,"name":"FOUR_STATE_PARTITION","state":"PASS_LOCAL_TEST","detail":"Proxy, identity conflict, postcode-not-found ve no-verified-postcode durumlari tam ve ayrik partition olusturur."},
+    {"gate_no":8,"name":"NO_SCORE_NO_WRITE","state":"PASS_LOCAL_TEST","detail":"Nearest postcode, parcel skoru, business yazimi, DB, migration ve deploy yoktur."}
+  ],
+  "validation": {
+    "local_combined": "60/60 PASS",
+    "targeted_layer": "16/16 PASS",
+    "authoritative_remote_readback": "8/8 PASS",
+    "critical_extractor_byte_identity": "PASS",
+    "remote_runner_execution": false
+  },
+  "publish": {
+    "pr": 91,
+    "merge_commit": "4091285f187e81dc7c410c38d9a25341098670f7",
+    "readback_head": "332bf513e6bf50dc72419c3a410042513d0e6a28"
+  },
+  "official_aggregate_qa_examples": 3,
+  "verified_product_rows": 0,
+  "verified_product_target_rows": 30761,
+  "actual_business_data_rows_written": 0,
+  "final_ready": false
+}

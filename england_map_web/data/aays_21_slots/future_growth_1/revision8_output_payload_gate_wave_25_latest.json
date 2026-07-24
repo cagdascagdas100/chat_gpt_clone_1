@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "generated_at": "2026-07-22T10:48:00+03:00",
+  "contract_revision": 8,
+  "output_semantics": "REVISION8_OUTPUT_VALIDATOR_DRIFT_FIX_PAYLOAD_LINEAGE_RUNTIME_WRAPPER_AND_OFFICIAL_SOURCE_CONTRACTS_NOT_RUNNER_NOT_POLYGON_NOT_SCORE",
+  "branch": "codex/aays-single-runner-v5-20260706",
+  "critical_fix": {
+    "problem": "CORE_ENTRY_AND_OUTPUT_VALIDATOR_CONTRACT_DRIFT_BEFORE_PICKUP",
+    "prior_validator_expected_status": "COMPLETED_REVISION8_CORRECTED_EXACT_ROWS_GEOMETRY_AND_19_QUERIES_NO_SCORE",
+    "current_entry_status": "COMPLETED_REVISION8_QUEUE_REQUEST_PREFLIGHT_CORRECTED_EXACT_ROWS_GEOMETRY_AND_19_QUERIES_NO_SCORE",
+    "prior_required_source_steps": 7,
+    "current_required_source_steps": 9,
+    "prior_source_sha_keys": 14,
+    "current_source_sha_keys": 19,
+    "fix_applied_before_runner_pickup": true,
+    "false_success_or_false_failure_prevented": true
+  },
+  "runner_output_validator": {
+    "path": "docs/chatgpt_status/aays1/shards/future_growth_1/automation/022_validate_revision8_runner_output_v1.py",
+    "git_blob_sha": "edd40130ea8fd00017cbcda5eaaccfbceec804d0",
+    "compile": "PASS",
+    "checks": "58/58 PASS",
+    "selftest_path": "docs/chatgpt_status/aays1/shards/future_growth_1/automation/023_selftest_revision8_runner_output_validator_v1.py",
+    "selftest_blob_sha": "60b73c2d8f841a35e6bf8fea0fc92ca7d7d56635",
+    "selftest": "18/18 PASS"
+  },
+  "runtime_wrapper": {
+    "path": "docs/chatgpt_status/aays1/automation/future_growth_1_official_geometry_entry_v8_runtime.py",
+    "git_blob_sha": "68dcda592933bfc72b9e6e0ee7c1281e81508d45",
+    "core_entry_path": "docs/chatgpt_status/aays1/automation/future_growth_1_official_geometry_entry_v8.py",
+    "core_entry_blob_sha": "4d38ca24189153f60241551e53817352b36dda3f",
+    "queue_validator_v2_blob_sha": "e48a5feb130e0e2fb5dfb1bf0e9219625e32e98d",
+    "queue_selftest_v2_blob_sha": "c8343aa39a48deb4e286e5cf58145e7b3f83fca4",
+    "static_checks": "9/9 PASS",
+    "selftest": "6/6 PASS"
+  },
+  "payload_gates": [
+    {"gate_id":"PG01","source":"GLA Layer 101","requirement":"Official HTTPS FeatureServer/101 query endpoint","failure_mode":"wrong host or MapServer/FeatureServer conflation","result":"LOCKED"},
+    {"gate_id":"PG02","source":"GLA Layer 101","requirement":"HTTP 200, JSON content, positive byte count and raw SHA256","failure_mode":"metadata-only or empty payload","result":"LOCKED"},
+    {"gate_id":"PG03","source":"GLA Layer 101","requirement":"Four current site references exactly present","failure_mode":"missing current site or unexpected site","result":"LOCKED"},
+    {"gate_id":"PG04","source":"GLA Layer 101","requirement":"Optional LBBD23 separated as stale/completed","failure_mode":"stale site promoted as current","result":"LOCKED"},
+    {"gate_id":"PG05","source":"HMLR INSPIRE","requirement":"Official download and resolved hosts","failure_mode":"mirror or non-official download","result":"LOCKED"},
+    {"gate_id":"PG06","source":"HMLR INSPIRE","requirement":"Non-empty raw file SHA256 and extracted vector SHA256","failure_mode":"HTML, empty file or missing vector lineage","result":"LOCKED"},
+    {"gate_id":"PG07","source":"HMLR INSPIRE","requirement":"One exact authority, no fuzzy authority match","failure_mode":"wrong local-authority source","result":"LOCKED"},
+    {"gate_id":"PG08","source":"Geometry relation","requirement":"6 HMLR polygons, 4 current GLA polygons, 14 relations, 1 stale rejection","failure_mode":"count drift","result":"LOCKED"},
+    {"gate_id":"PG09","source":"Geometry relation","requirement":"No nearest fill and no point-only promotion","failure_mode":"indicative/point evidence promoted","result":"LOCKED"},
+    {"gate_id":"PG10","source":"Planning Data","requirement":"19 ordered official request URLs and 19 response SHA256 values","failure_mode":"missing request or response lineage","result":"LOCKED"},
+    {"gate_id":"PG11","source":"Planning Data","requirement":"Zero result means NO_DATA_COVERAGE_NOT_PROOF","failure_mode":"absence treated as negative proof","result":"LOCKED"},
+    {"gate_id":"PG12","source":"Planning Data","requirement":"No promotion and no score from screening response","failure_mode":"screen-only result promoted","result":"LOCKED"}
+  ],
+  "official_source_contracts": [
+    {"source_id":"OS01","source":"Planning Data documentation","verified":"Coordinate intersection uses WGS84; multiple dataset parameters allowed; no batch endpoint; one request per property; absence is not proof","result":"PASS"},
+    {"source_id":"OS02","source":"HM Land Registry INSPIRE download","verified":"Published 5 July 2026; new files first Sunday monthly; GML by local authority","result":"PASS"},
+    {"source_id":"OS03","source":"HM Land Registry INSPIRE guidance","verified":"Indicative extent; previous-month data; cross-authority duplicate polygon possibility","result":"PASS"},
+    {"source_id":"OS04","source":"GLA Brownfield Register Layer 101","verified":"Polygon feature layer; official service; indicative boundary and borough confirmation caveat","result":"PASS"},
+    {"source_id":"OS05","source":"London Datastore Brownfield Register","verified":"GeoPackage in EPSG:27700 and CSV resource; custom polygons are indicative","result":"PASS"}
+  ],
+  "fixture_summary": {
+    "output_validator": "18/18 PASS",
+    "runtime_wrapper": "6/6 PASS",
+    "queue_request_v2_cases_defined": 10,
+    "rejected_examples": [
+      "old completion status",
+      "missing queue preflight source step",
+      "wrong GLA host",
+      "missing current GLA site",
+      "empty HMLR payload",
+      "wrong HMLR host",
+      "13 instead of 14 relations",
+      "point-only promotion",
+      "wrong Planning Data host",
+      "missing Planning response SHA256",
+      "zero-result semantics missing",
+      "business-row escalation"
+    ]
+  },
+  "queue": {
+    "path": "docs/chatgpt_status/aays1/queue/aays1_future_growth_1_official_geometry_pipeline_v8_20260722.task.json",
+    "git_blob_sha": "84a1cc63b426b6a9bfd4a19786ecbddcc8be933e",
+    "script_path": "docs/chatgpt_status/aays1/automation/future_growth_1_official_geometry_entry_v8_runtime.py",
+    "script_blob_sha": "68dcda592933bfc72b9e6e0ee7c1281e81508d45",
+    "state": "pending",
+    "claimable": true,
+    "single_shared_runner_only": true,
+    "runner_pickup_observed": false,
+    "runner_output_observed": false
+  },
+  "predecessor": {
+    "slot_id": "height_difference_2",
+    "authoritative_state": "pending_guarded_operator_recovery_binary_exact_stream",
+    "dependency_complete": false,
+    "read_only": true,
+    "cross_slot_write_performed": false
+  },
+  "candidate_summary": {
+    "official_point_candidate_rows": 60,
+    "current_candidates": 59,
+    "stale_or_completed_rejections": 1,
+    "new_candidates_this_wave": 0,
+    "independent_candidate_audit": "60/60 PASS",
+    "verified_polygon_relations": 0,
+    "scored_business_rows": 0
+  },
+  "canonical_rows_20_24_extracted": 0,
+  "planning_query_executed_requests": 0,
+  "source_loader_executions": 0,
+  "actual_business_data_rows_written": 0,
+  "overall_verified_business_percent": 0.0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

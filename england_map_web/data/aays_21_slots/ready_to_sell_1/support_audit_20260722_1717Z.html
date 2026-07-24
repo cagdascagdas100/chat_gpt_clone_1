@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ready_to_sell_1 — Paralel İnternet Doğrulama</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f8fafc;color:#0f172a}h1,h2{margin:0 0 12px}.muted{color:#475569}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:16px 0}.card,section{background:#fff;border:1px solid #cbd5e1;border-radius:9px;padding:12px}.value{font-size:24px;font-weight:700}.ok{background:#ecfdf5}.warn{background:#fff7ed}.bad{background:#fef2f2}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;vertical-align:top;text-align:left}th{background:#e2e8f0}a{color:#0369a1;word-break:break-all}code{word-break:break-all}.pill{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:2px 7px;margin:2px;font-size:11px}
+</style>
+</head>
+<body>
+<h1>ready_to_sell_1 — Paralel İnternet Doğrulama</h1>
+<div class="muted">Aynı V53 görevi korunur · ikinci runner yok · işlem 291 ilerletilmedi · final_ready=false</div>
+<div id="app">Veri yükleniyor…</div>
+<script>
+const esc=v=>String(v??'NO_DATA').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const link=(u,t='aç')=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`;
+fetch('./support_audit_20260722_1717Z.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{
+ const s=d.summary;
+ const cards=[['Ana ilerleme',s.main_completion_percent+'%'],['Ana işlem',s.main_operations_completed+'/'+s.main_operations_total],['Destek satırı',s.candidate_examples_checked],['İnternet kontrolü',s.internet_checks_completed],['Birincil sayfa',s.primary_pages_verified],['Operator rota',s.official_operator_routes_verified],['Planlama canlı',s.official_planning_routes_live],['Planlama bozuk',s.official_planning_routes_degraded],['Kimlik çatışması',s.identity_conflicts_found],['Ortalama kimlik güveni',s.average_candidate_current_identity_confidence+'/100'],['Exact parsel',s.examples_promoted_to_exact_parcel],['Yayımlanan parsel değeri',s.published_parcel_value_rows]];
+ const rows=d.rows.map(r=>`<tr class="${r.status.includes('MANUAL')?'bad':(r.status.includes('DEGRADED')?'warn':'ok')}"><td>${esc(r.row_reference)}</td><td>${esc(r.listing_id)}</td><td>${esc(r.address)}</td><td>${r.candidate_current_identity_confidence}/100</td><td>${r.parcel_binding_confidence}/100</td><td>${esc(r.status)}</td><td>${r.verified_facts.map(x=>`<div>• ${esc(x)}</div>`).join('')}</td><td>${r.blockers.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</td><td>${link(r.primary_url,'ilan')} · ${link(r.operator_url,'operator')} · ${link(r.planning_url,'planlama')}</td></tr>`).join('');
+ document.getElementById('app').innerHTML=`<div class="cards">${cards.map(x=>`<div class="card"><div>${esc(x[0])}</div><div class="value">${esc(x[1])}</div></div>`).join('')}</div><section><h2>Satır satır doğrulama</h2><table><thead><tr><th>Satır</th><th>İlan</th><th>Adres</th><th>Kimlik güveni</th><th>Parsel bağlama</th><th>Durum</th><th>Doğrulanan bulgular</th><th>Blockerlar</th><th>Kaynaklar</th></tr></thead><tbody>${rows}</tbody></table></section><section class="warn"><h2>Çalışma durumu</h2><div>Aktif lease: ${esc(d.runtime.active_lease_found)}</div><div>Görev sahiplenildi: ${esc(d.runtime.task_claimed)}</div><div>İlk doğrulanmamış adım: <code>${esc(d.runtime.first_unverified_step)}</code></div><div>Manuel eylem: ${esc(d.runtime.manual_action_state)}</div></section>`;
+ document.body.dataset.semanticValid=String(d.rows.length===5&&s.internet_checks_completed===15&&s.published_parcel_value_rows===0);
+}).catch(e=>{document.getElementById('app').innerHTML=`<section class="bad">BLOCKED: ${esc(e)}</section>`;document.body.dataset.semanticValid='false'});
+</script>
+</body>
+</html>

@@ -1,42 +1,57 @@
-# AAYS Single Shared Runner Page Contract — 2026-07-06
+# AAYS Single Shared Runner Page Contract 20260706
 
-This contract standardizes every ChatGPT page under `docs/chatgpt_status/<PAGE_KEY>/` so the single shared canonical runner can discover, pick up, execute, report, and resume work without page-specific assumptions.
+Repo: cagdascagdas100/chat_gpt_clone_1
+Branch: main
+Runner mode: single_shared_runner
 
-## Required page key rules
+## Non-Negotiable Rules
 
-Each page must have one stable `page_key` value. The canonical page folder is:
+- Do not start a second parallel runner.
+- Do not fabricate completed output.
+- Do not mark `final_ready=true` without real gate evidence.
+- Do not fabricate 100 percent progress.
+- Do not write fake rows, source URLs, source dates, browser proof, or production evidence.
+- Do not perform DB writes, migrations, DDL, or production deploys.
+- Do not commit outside each task's `allowed_paths`.
+- If evidence is missing, write a blocker and keep `final_ready=false`.
+
+## Page Identity
+
+Every page is identified by a directory:
 
 ```text
 docs/chatgpt_status/<PAGE_KEY>/
 ```
 
-The runner must infer page ownership from the queue path and verify it matches the queue payload:
+Queue files live under:
 
 ```text
-queue path: docs/chatgpt_status/<PAGE_KEY>/queue/<TASK_ID>.json
-payload.page_key: <PAGE_KEY>
+docs/chatgpt_status/<PAGE_KEY>/queue/<TASK_ID>.json
 ```
 
-If these do not match, the queue is invalid and must be reported as `PAGE_KEY_PATH_MISMATCH` rather than executed.
+The queue payload `page_key` must match the page key from the path. If it does
+not match, the runner must block the task with `PAGE_KEY_PATH_MISMATCH`.
 
-## Required folder structure per page
+## Required Page Directories
+
+Each page key may have these directories. Creating the directories is only
+structure setup; it is not proof of task completion.
 
 ```text
-docs/chatgpt_status/<PAGE_KEY>/queue/
-docs/chatgpt_status/<PAGE_KEY>/status/
-docs/chatgpt_status/<PAGE_KEY>/reports/
-docs/chatgpt_status/<PAGE_KEY>/heartbeat/
-docs/chatgpt_status/<PAGE_KEY>/completed/
-docs/chatgpt_status/<PAGE_KEY>/runner_outputs/
-docs/chatgpt_status/<PAGE_KEY>/automation/
-docs/chatgpt_status/<PAGE_KEY>/fixtures/
+queue/
+status/
+reports/
+heartbeat/
+completed/
+blocked/
+runner_outputs/
+automation/
+fixtures/
 ```
 
-`completed/` is optional for legacy pages, but every new page must include it. Status mirrors may still be written under `status/` for compatibility.
+## Runnable Queue Contract
 
-## Valid queue JSON contract
-
-Every executable queue file must be JSON and must include:
+Runnable queue JSON must include these fields:
 
 ```json
 {
@@ -50,6 +65,8 @@ Every executable queue file must be JSON and must include:
   "allowed_paths": [
     "docs/chatgpt_status/example_page_key/"
   ],
+  "new_runner_allowed": false,
+  "single_shared_runner_required": true,
   "no_fake_final_ready": true,
   "no_db_write": true,
   "no_migration": true,
@@ -58,11 +75,13 @@ Every executable queue file must be JSON and must include:
 }
 ```
 
-The runner may accept `script_path` or `automation_script`, but new tasks must provide both with the same relative path.
+`script_path` and `automation_script` should both be present and should point to
+the same relative path. Legacy files may contain only one of them; the
+normalizer can produce a non-destructive normalized alias.
 
-## Valid queue statuses
+## Runnable Status Values
 
-Executable:
+The runner may pick up only:
 
 ```text
 queued
@@ -71,46 +90,56 @@ pending
 pending_repo_queue
 pickup_requested
 queued_for_single_shared_runner
+retry_pending
+failed_transient
 ```
 
-Non-executable:
+The runner must not pick up:
 
 ```text
 running
 done
+completed
 done_on_target_branch
 superseded
 superseded_by_force_pickup
 blocked
 failed
+failed_final
+blocked_manual
+archived
 ```
 
-## Required output contract
+## Lifecycle Evidence
 
-For task id `<TASK_ID>`, the runner should write real evidence files:
+For each task, the runner must write task-level evidence under the same page:
 
 ```text
 docs/chatgpt_status/<PAGE_KEY>/status/<TASK_ID>_started.json
 docs/chatgpt_status/<PAGE_KEY>/status/<TASK_ID>_gate.json
 docs/chatgpt_status/<PAGE_KEY>/status/<TASK_ID>_completed.json
+docs/chatgpt_status/<PAGE_KEY>/completed/<TASK_ID>_completed.json
 docs/chatgpt_status/<PAGE_KEY>/reports/<TASK_ID>_runner_output.txt
 docs/chatgpt_status/<PAGE_KEY>/heartbeat/<TASK_ID>_heartbeat.txt
 docs/chatgpt_status/_shared/status/queue_result_mirror_<TASK_ID>.json
 ```
 
-For new pages, also write:
+If the task is blocked, the runner writes blocker evidence instead of claiming
+success:
 
 ```text
-docs/chatgpt_status/<PAGE_KEY>/completed/<TASK_ID>_completed.json
+docs/chatgpt_status/<PAGE_KEY>/blocked/<TASK_ID>_blocked.json
+docs/chatgpt_status/<PAGE_KEY>/reports/<TASK_ID>_runner_output.txt
+docs/chatgpt_status/_shared/status/queue_result_mirror_<TASK_ID>.json
 ```
 
-## Required completed JSON fields
+## Completed JSON Minimum Fields
 
 ```json
 {
-  "task_id": "stable-task-id",
-  "page_key": "example_page_key",
-  "completed_at": "ISO-UTC",
+  "task_id": "<TASK_ID>",
+  "page_key": "<PAGE_KEY>",
+  "completed_at": "<ISO-UTC>",
   "queue_seen": true,
   "queue_started": true,
   "single_runner_lock_acquired": true,
@@ -129,81 +158,23 @@ docs/chatgpt_status/<PAGE_KEY>/completed/<TASK_ID>_completed.json
 }
 ```
 
-## Legacy queue normalization rules
+## Panel Index
 
-For old or broken queue files:
-
-1. If `page_key` is missing, infer it from `docs/chatgpt_status/<PAGE_KEY>/queue/` and create a normalized alias JSON instead of mutating evidence.
-2. If `script_path` is missing but `automation_script` exists, copy it into `script_path`.
-3. If `automation_script` is missing but `script_path` exists, copy it into `automation_script`.
-4. If both script fields are missing, mark the queue invalid with `MISSING_script_path_OR_automation_script`.
-5. If `allowed_paths` is missing, use the page folder only: `docs/chatgpt_status/<PAGE_KEY>/`.
-6. If safety flags are missing, normalized aliases must set:
-   - `no_fake_final_ready=true`
-   - `no_db_write=true`
-   - `no_migration=true`
-   - `no_production_deploy=true`
-7. Never set `final_ready=true` in a normalization pass.
-8. Never fabricate data rows, source URLs, source dates, browser proof, or production readiness evidence.
-
-## Panel status contract
-
-The status panel should read a shared index at:
+The canonical panel index is:
 
 ```text
 docs/chatgpt_status/_shared/panel/page_status_index_latest.json
 ```
 
-Each page entry should contain:
-
-```json
-{
-  "page_key": "example_page_key",
-  "display_name": "Example Page",
-  "latest_queue_status": "queued|running|done|blocked|unknown",
-  "latest_task_id": "stable-task-id",
-  "completion_percent": 0,
-  "remaining_percent": 100,
-  "final_ready": false,
-  "last_heartbeat_at": null,
-  "last_completed_at": null,
-  "blockers": [],
-  "evidence_paths": []
-}
-```
-
-## New ChatGPT page pickup rule
-
-A new ChatGPT page must create exactly one canonical queue JSON under its own page key folder. It must not open a new runner. It must rely on the existing shared runner:
+Compatibility mirrors may also be generated at:
 
 ```text
-docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1
+docs/chatgpt_status/_shared/status/page_panel_index.json
+docs/chatgpt_status/_shared/status/pages_status_dashboard.json
+england_map_web/data/runner_panel/page_status_index.json
 ```
 
-A new page is pickup-ready when:
-
-```text
-page_key exists
-queue JSON is valid
-script_path exists
-allowed_paths are present
-safety flags are true
-status is queued/ready/pending
-```
-
-## Safety invariants
-
-The following are always forbidden:
-
-```text
-new parallel runner
-fake completed
-fake final_ready
-fake percent 100
-fake rows
-fake source_url/source_date
-DB write
-migration
-production deploy
-allowed_paths escape
-```
+Task-level completed/status/heartbeat evidence takes priority over stale shared
+heartbeat files. Missing `script_path`, missing `automation_script`, missing
+`allowed_paths`, and missing safety flags must remain visible in the panel
+index.

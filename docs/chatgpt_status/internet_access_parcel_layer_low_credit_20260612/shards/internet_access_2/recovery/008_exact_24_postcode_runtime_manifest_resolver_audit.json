@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_2",
+  "task_id": "internet-access-2-ofcom-r2-provision-full-archive-validation-v1-20260722T165500Z",
+  "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
+  "checked_at": "2026-07-22T19:29:29Z",
+  "state": "RUNTIME_24_POSTCODE_MANIFEST_RESOLVER_READY_HOST_EVIDENCE_SCAN_PENDING",
+  "finding": "The committed 004 validation artifact contains counts only. Indexed repository searches and known committed output paths did not expose an exact 24-postcode manifest. Raw postcode values are therefore not inferred or reconstructed from counts.",
+  "resolver": {
+    "path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/012_resolve_exact_24_postcode_manifest_from_runtime_evidence.py",
+    "commit": "b2ad28feba279befa26a2ba38f6300c90f29035c",
+    "expected_samples": 24,
+    "allowed_inputs": ["json", "csv", "txt", "log", "md"],
+    "maximum_files": 2000,
+    "maximum_file_bytes": 5000000,
+    "output_policy": "raw postcode manifest must be written outside docs, england_map_web and .git; operational summary contains hashes only",
+    "conflict_policy": "reject when more than one distinct exact-24 postcode set is found",
+    "counts_only_policy": "reject; no postcode inference"
+  },
+  "tests": {
+    "python_compile": "PASS",
+    "counts_only_summary_rejected": "PASS",
+    "exact_24_manifest_accepted": "PASS",
+    "hash_only_summary_no_raw_postcodes": "PASS",
+    "duplicate_sources_same_set_accepted": "PASS",
+    "conflicting_exact_24_sets_rejected": "PASS",
+    "repo_output_path_rejected": "PASS"
+  },
+  "host_execution": {
+    "search_roots_environment": "AAYS_OFCom_SAMPLE_SEARCH_ROOTS",
+    "resolved_manifest_environment": "AAYS_OFCom_POSTCODES_PATH",
+    "recommended_output": "${AAYS_PORTABLE_ROOT}/state/source_cache/ofcom_spring_2026/internet_access_2_exact_24_postcodes.private.json",
+    "next_chain": [
+      "run existing single-runner launcher safely",
+      "run 012 against canonical runtime evidence/log roots",
+      "set AAYS_OFCom_POSTCODES_PATH to the private resolved manifest",
+      "allow existing 009 task to validate the official archive",
+      "run 011 only after every 009 archive gate passes"
+    ]
+  },
+  "official_source_recheck": {
+    "state": "PASS_DOWNLOAD_STILL_LISTED",
+    "publication_date": "2026-05-13",
+    "snapshot": "2026-01",
+    "download_label": "Fixed_broadband_coverage_and_full_fibre_take-up",
+    "download_size_label": "32.2 MB"
+  },
+  "official_archive_bytes_observed": 0,
+  "official_coverage_verified_candidates": 0,
+  "accuracy_written": 0,
+  "duplicate_task_created": false,
+  "second_runner_started": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

@@ -1,0 +1,264 @@
+{
+  "schema_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "base_slot_id": "security_public_safety",
+  "shard_index": 2,
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "state": "SOURCE_CHAIN_VERIFIED_THREE_ROW_GATE_PENDING_GEOMETRY",
+  "first_unverified_step": "HYDRATE_300_ROWS_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE",
+  "source_snapshot_date": "2026-07-22",
+  "sources_reviewed": 6,
+  "promoted_sources": 5,
+  "held_sources": 1,
+  "accuracy_ge_95_source_count": 3,
+  "accuracy_ge_90_source_count": 5,
+  "sample_candidate_count": 3,
+  "verified_slot_rows": 0,
+  "actual_business_rows_written": 0,
+  "candidate_rows": [
+    {
+      "parcel_id": "parcel_30762",
+      "partition_ordinal": 30762,
+      "data_status": "no_data",
+      "candidate_state": "PENDING_CANONICAL_GEOMETRY_AND_LSOA_JOIN",
+      "security_level_percent": null,
+      "confidence": 0,
+      "source_zone_id": null,
+      "source_month": "2026-05-01",
+      "spatial_join_method": "NOT_RUN",
+      "promotion_allowed": false
+    },
+    {
+      "parcel_id": "parcel_30763",
+      "partition_ordinal": 30763,
+      "data_status": "no_data",
+      "candidate_state": "PENDING_CANONICAL_GEOMETRY_AND_LSOA_JOIN",
+      "security_level_percent": null,
+      "confidence": 0,
+      "source_zone_id": null,
+      "source_month": "2026-05-01",
+      "spatial_join_method": "NOT_RUN",
+      "promotion_allowed": false
+    },
+    {
+      "parcel_id": "parcel_30764",
+      "partition_ordinal": 30764,
+      "data_status": "no_data",
+      "candidate_state": "PENDING_CANONICAL_GEOMETRY_AND_LSOA_JOIN",
+      "security_level_percent": null,
+      "confidence": 0,
+      "source_zone_id": null,
+      "source_month": "2026-05-01",
+      "spatial_join_method": "NOT_RUN",
+      "promotion_allowed": false
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "hmlr_inspire_index_polygons",
+      "name": "HM Land Registry INSPIRE Index Polygons",
+      "publisher": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "role": "canonical_freehold_geometry_candidate",
+      "measurement_level": "parcel",
+      "accuracy_percent": 95,
+      "promotion_rule": "Exact INSPIRE ID or documented containment only; retain indicative/freehold limitations.",
+      "probe": {
+        "reachable": false,
+        "http_status": null,
+        "bytes": 0,
+        "sha256": null,
+        "attempts": 3,
+        "error": "HTTPError: HTTP Error 302: The HTTP server returned a redirect error that would lead to an infinite loop.\nThe last 30x error message was:\nFound"
+      },
+      "status": "HELD_UNREACHABLE",
+      "source_snapshot_date": "2026-07-22"
+    },
+    {
+      "source_id": "ons_lsoa_2021_bgc_v5",
+      "name": "LSOA December 2021 Boundaries EW BGC V5",
+      "publisher": "Office for National Statistics",
+      "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0?f=json",
+      "role": "official_public_safety_geography",
+      "measurement_level": "lsoa",
+      "accuracy_percent": 95,
+      "promotion_rule": "Use LSOA21CD and polygon containment/centroid rule; preserve source version.",
+      "probe": {
+        "reachable": true,
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 9674,
+        "sha256": "11d57916f7218c4aa275e5beec38f9db0e90c48bc45239eefcf1e0fd84627726",
+        "retrieved_at": "2026-07-22T00:55:30.941845Z",
+        "attempts": 1
+      },
+      "status": "PROMOTED_FOR_ROLE",
+      "source_snapshot_date": "2026-07-22",
+      "layer_name": "LSOA_2021_EW_BGC_V5",
+      "object_id_field": "FID",
+      "geometry_type": "esriGeometryPolygon",
+      "max_record_count": 2000
+    },
+    {
+      "source_id": "ons_lsoa_2021_feature_count",
+      "name": "LSOA 2021 Feature Count",
+      "publisher": "Office for National Statistics",
+      "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json",
+      "role": "boundary_completeness_probe",
+      "measurement_level": "lsoa",
+      "accuracy_percent": 95,
+      "promotion_rule": "Source-integrity check only; not a parcel row count.",
+      "probe": {
+        "reachable": true,
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 75,
+        "sha256": "97025136e9ff740a7edbac6f11ac4b65c21fe0d97faf397d69f554ea28724a8d",
+        "retrieved_at": "2026-07-22T00:55:30.947846Z",
+        "attempts": 1
+      },
+      "status": "PROMOTED_FOR_ROLE",
+      "source_snapshot_date": "2026-07-22",
+      "official_feature_count": 35672
+    },
+    {
+      "source_id": "police_api_last_updated",
+      "name": "Police.uk Crime Last Updated",
+      "publisher": "Home Office / Police.uk",
+      "url": "https://data.police.uk/api/crime-last-updated",
+      "role": "explicit_month_selector",
+      "measurement_level": "document",
+      "accuracy_percent": 95,
+      "promotion_rule": "Pin every request to returned YYYY-MM and retain response hash.",
+      "probe": {
+        "reachable": true,
+        "http_status": 200,
+        "content_type": "application/json",
+        "bytes": 21,
+        "sha256": "1244eec7f246039441c954ea3b1214ef068ce4cec2d21565be6144ed2cffa8c6",
+        "retrieved_at": "2026-07-22T00:55:30.601047Z",
+        "attempts": 1
+      },
+      "status": "PROMOTED_FOR_ROLE",
+      "source_snapshot_date": "2026-07-22",
+      "latest_available_month": "2026-05-01"
+    },
+    {
+      "source_id": "police_api_street_contract",
+      "name": "Police.uk Street-level Crime API Contract",
+      "publisher": "Home Office / Police.uk",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "role": "official_crime_event_source_contract",
+      "measurement_level": "candidate_point",
+      "accuracy_percent": 90,
+      "promotion_rule": "Locations are anonymised approximations; aggregate within verified LSOA, never exact parcel crime.",
+      "probe": {
+        "reachable": true,
+        "http_status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "bytes": 20092,
+        "sha256": "fc2d8eaca77e649bcd3079143a8f25a78066e952aa13514ba1dc6cf3f5ffa529",
+        "retrieved_at": "2026-07-22T00:55:30.685034Z",
+        "attempts": 1
+      },
+      "status": "PROMOTED_FOR_ROLE",
+      "source_snapshot_date": "2026-07-22"
+    },
+    {
+      "source_id": "home_office_recorded_crime_tables",
+      "name": "Police Recorded Crime and Outcomes Open Data Tables",
+      "publisher": "Home Office",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "role": "official_area_level_benchmark",
+      "measurement_level": "local_authority",
+      "accuracy_percent": 90,
+      "promotion_rule": "Benchmark only; never publish PFA/CSP as parcel measurement.",
+      "probe": {
+        "reachable": true,
+        "http_status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "bytes": 124224,
+        "sha256": "c726930aecdbe948e38be982f0a8723dfc288c5c4afc7788ac14b3a243b4782d",
+        "retrieved_at": "2026-07-22T00:55:30.899301Z",
+        "attempts": 1
+      },
+      "status": "PROMOTED_FOR_ROLE",
+      "source_snapshot_date": "2026-07-22"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "remote_head_and_slot_readback",
+      "state": "PASS",
+      "evidence": "Authoritative sequence 0 was read before queue dispatch."
+    },
+    {
+      "gate": "hmlr_official_source_probe",
+      "state": "BLOCKED"
+    },
+    {
+      "gate": "ons_lsoa_layer_probe",
+      "state": "PASS"
+    },
+    {
+      "gate": "ons_lsoa_count_probe",
+      "state": "PASS"
+    },
+    {
+      "gate": "police_api_month_probe",
+      "state": "PASS"
+    },
+    {
+      "gate": "police_api_contract_probe",
+      "state": "PASS"
+    },
+    {
+      "gate": "home_office_benchmark_probe",
+      "state": "PASS"
+    },
+    {
+      "gate": "three_row_candidate_gate_prepared",
+      "state": "PASS"
+    },
+    {
+      "gate": "three_row_geometry_and_lsoa_hydration",
+      "state": "PENDING"
+    },
+    {
+      "gate": "three_row_explicit_month_api_hashes",
+      "state": "PENDING"
+    },
+    {
+      "gate": "expand_to_300_verified_rows",
+      "state": "PENDING"
+    },
+    {
+      "gate": "http_hash_dom_console_browser_acceptance",
+      "state": "PENDING"
+    }
+  ],
+  "completed_operations": 7,
+  "total_operations": 12,
+  "overall_progress_percent": 23.3,
+  "progress_delta_percent": 23.3,
+  "business_row_progress_percent": 0,
+  "progress_formula": "PASS preparation gates / 12, capped at 40 percent before verified parcel hydration.",
+  "blockers": [
+    "Canonical parcel geometry/centroid records for parcel_30762 through parcel_61522 are required before LSOA assignment.",
+    "No parcel score may be promoted until the first three rows pass exact geometry, explicit-month API hash and provenance checks.",
+    "HTTP, DOM, console and browser acceptance have not run."
+  ],
+  "next_required_action": "Resolve exact geometry for parcel_30762..30764, join ONS LSOA21 polygon, execute Police.uk explicit-month requests, hash responses, then expand only after all three pass.",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false,
+  "generated_at": "2026-07-22T00:55:36.793098Z"
+}

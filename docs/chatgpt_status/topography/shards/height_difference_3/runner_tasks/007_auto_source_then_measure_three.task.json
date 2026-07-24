@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_3",
+  "task_id": "height_difference_3-auto-source-then-measure-three-20260720",
+  "status": "READY_AFTER_CANONICAL_DISCOVERY_AND_TERRAIN50_ARCHIVE",
+  "single_shared_runner_only": true,
+  "create_new_runner": false,
+  "parallel_runner_allowed": false,
+  "canonical_runner": "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "prerequisites": [
+    "005_discover_export_and_prepare_three.py produced three real source-backed rows",
+    "each row has row_no parcel_id local_authority_name and source-backed BNG coordinates or exact UPRN",
+    "OS Terrain50 July 2026 ASCII Grid archive or directory is locally available"
+  ],
+  "command_template": [
+    "python",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/015_execute_auto_source_and_measurement_pipeline.py",
+    "--starter-manifest",
+    "<starter_three_query_manifest.json>",
+    "--terrain50-source",
+    "<OS_Terrain50_July_2026_ASCII_zip_or_directory>",
+    "--output-dir",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/007_auto_source_measurement_pipeline"
+  ],
+  "execution_stages": [
+    "HMLR_SOURCE_PREPARATION",
+    "HMLR_BOUNDARY_MATCH",
+    "EA_DTM_WCS_PREPARATION",
+    "TERRAIN50_SOURCE_PREPARATION",
+    "EA_DTM_AND_TERRAIN50_SAMPLE",
+    "WEBSITE_PUBLICATION"
+  ],
+  "expected_outputs": [
+    "sources/hmlr_source_manifest.json",
+    "hmlr_matches.json",
+    "sources/ea_dtm_source_manifest.json",
+    "sources/terrain50_source_manifest.json",
+    "official_measurements.json",
+    "verified_examples.json",
+    "verified_examples.geojson",
+    "auto_source_pipeline_execution.json"
+  ],
+  "website_copy_targets_after_success": [
+    "england_map_web/data/aays_18_slots/height_difference_3/verified_examples_latest.json",
+    "england_map_web/data/aays_18_slots/height_difference_3/verified_examples_latest.geojson"
+  ],
+  "fail_closed_rules": [
+    "no candidate synthesis",
+    "unique HMLR authority link only",
+    "unique HMLR polygon match only",
+    "WCS EPSG27700 and <=1.1m resolution only",
+    "exact Terrain50 tile key only",
+    "no neighbouring tile substitution",
+    "cross-source difference above 8m rejects publication",
+    "do not publish tests or synthetic values"
+  ],
+  "queue_submission": "NOT_SUBMITTED_EXISTING_SIBLING_TASK_UNCLAIMED_AND_NO_PARALLEL_QUEUE_CREATED",
+  "current_blocker": "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED; OS_TERRAIN50_JULY_2026_ASCII_SOURCE_ARCHIVE_REQUIRED",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

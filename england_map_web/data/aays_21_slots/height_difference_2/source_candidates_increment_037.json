@@ -1,0 +1,82 @@
+{
+  "aggregate_promoted_source_contract_count": 66,
+  "aggregate_source_candidate_count": 66,
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "candidate_id": "HD2-SRC-063",
+      "name": "Environment Agency persistent WCS endpoint migration announcement",
+      "promotion_state": "PROMOTED_RUNTIME_REVALIDATION",
+      "publisher": "Environment Agency",
+      "role": "PERSISTENT_WCS_ENDPOINT_AND_OPEN_STANDARD_CONTRACT",
+      "semantic_limits": [
+        "Endpoint persistence does not imply immutable raster bytes; every audit must record response SHA-256"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/support/announcements/275811447/275811543",
+      "verified_facts": [
+        "EA replaced legacy Esri Image Services with WCS and WMS",
+        "The year suffix was removed from 1m and 2m DTM WCS endpoints for persistent future updates"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-064",
+      "name": "Environment Agency LIDAR Composite DTM 1m WCS GetCoverage",
+      "promotion_state": "PROMOTED_SHA_REPLAY_3_OF_3",
+      "publisher": "Environment Agency",
+      "role": "PRIMARY_EXACT_PIXEL_DISTRIBUTION_AND_GRADIENT_SOURCE",
+      "semantic_limits": [
+        "The fitted plane is a parcel-scale topographic summary, not an engineering survey"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "verified_facts": [
+        "All three exact polygon GetCoverage responses were downloaded again",
+        "Every response SHA-256 matched increment 034",
+        "Every raster reported EPSG:27700"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-065",
+      "name": "Environment Agency LIDAR Composite DTM 2m WCS GetCoverage",
+      "promotion_state": "PROMOTED_SHA_REPLAY_3_OF_3",
+      "publisher": "Environment Agency",
+      "role": "INDEPENDENT_RESOLUTION_DISTRIBUTION_AND_GRADIENT_CROSSCHECK",
+      "semantic_limits": [
+        "The 2m product remains a resolution crosscheck and does not replace the primary 1m result"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-2m/wcs?request=GetCapabilities&service=WCS&version=2.0.1",
+      "verified_facts": [
+        "All three 2m responses were downloaded again",
+        "Every response SHA-256 and prior min/max/difference matched increment 034"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-066",
+      "name": "Environment Agency Survey Data Catalogue GeoTIFF delivery guidance",
+      "promotion_state": "PROMOTED_SOURCE_CONTRACT",
+      "publisher": "Environment Agency",
+      "role": "GEOTIFF_AND_WEB_COVERAGE_DELIVERY_SEMANTICS",
+      "semantic_limits": [
+        "Format guidance does not define polygon inclusion; this package discloses both pixel-centre methods"
+      ],
+      "source_confidence_percent": 100,
+      "source_url": "https://environment.data.gov.uk/support/faqs/275879146/275879189",
+      "verified_facts": [
+        "EA composite products are distributed as GeoTIFF",
+        "GeoTIFF delivery supports WCS access and GIS geoprocessing",
+        "Elevation values are delivered in metres"
+      ]
+    }
+  ],
+  "fake_data": false,
+  "final_ready": false,
+  "held_count": 0,
+  "promoted_average_source_confidence_percent": 100.0,
+  "promoted_count": 4,
+  "schema_version": 1,
+  "score_semantics": "Official EA WCS persistence, GetCoverage and GeoTIFF contracts; parcel numeric confidence remains 96%.",
+  "slot_id": "height_difference_2",
+  "verified_on": "2026-07-22"
+}

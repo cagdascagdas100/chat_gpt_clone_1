@@ -1,0 +1,79 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "internet_access_3",
+  "audit_time": "2026-07-21T05:23:51+03:00",
+  "authoritative_branch": "codex/aays-single-runner-v5-20260706",
+  "authoritative_head_at_branch_creation": "35017dd5eea08eafa2e73244b678f7f4d759d8e8",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761, "canonical_count": 92283},
+  "remote_slot_state": {
+    "checkpoint_sequence": 0,
+    "status": "ready_for_claim",
+    "ownership": "unclaimed",
+    "heartbeat": "stale",
+    "current_task": "idle",
+    "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA"
+  },
+  "path_reconciliation": {
+    "rejected_stale_web_root": "england_map_web/data/aays_18_slots/internet_access_3",
+    "current_web_root": "england_map_web/data/aays_21_slots/internet_access_3",
+    "clean_branch": "chatgpt/internet-access-3-source-schema-v2-20260721"
+  },
+  "matrix_sources": {
+    "canonical": {
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "feature_count": 92283,
+      "git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+      "postcode_field_available": false
+    },
+    "existing_internet_evidence": {
+      "path": "england_map_web/data/program_layer_matrix/internet.geojson",
+      "feature_count": 33785,
+      "git_blob_sha": "9c24fd366e29c3356b1e5178295b903edf8680ff",
+      "data_level": "POSTCODE_PROXY"
+    }
+  },
+  "truthful_join_rule": {
+    "allowed": "Reuse postcode evidence only when row_no, parcel_id and compatible HMLR INSPIRE ID match the canonical row; then attach current Ofcom r2 postcode fields individually.",
+    "forbidden": [
+      "nearest postcode centroid assignment",
+      "synthetic postcode or geometry",
+      "copying a neighboring parcel value",
+      "single parcel score derived from postcode fields before an approved calculation contract"
+    ],
+    "fallback": "NO_DATA"
+  },
+  "official_source_summary": {
+    "candidate_count": 7,
+    "promoted_count": 6,
+    "source_confidence_ge_95_count": 6,
+    "ofcom_snapshot": "January 2026",
+    "ofcom_published": "2026-05-13",
+    "required_r2_files": 121,
+    "required_postcode_rows": 1741096
+  },
+  "extractor_validation": {
+    "status": "PASS",
+    "tests_passed": 9,
+    "tests_total": 9,
+    "coordinates_and_percentages_validated_separately": true,
+    "r1_rejection": true,
+    "score_written": false
+  },
+  "progress": {
+    "completed_operations": 7,
+    "total_operations": 12,
+    "operational_progress_percent": 58.33,
+    "verified_product_rows": 0,
+    "verified_product_target_rows": 30761,
+    "verified_product_progress_percent": 0.0
+  },
+  "next_step": "RUN_004_DOWNLOAD_VALIDATE_EXTRACT_SLOT3_ON_CANONICAL_WORKSPACE",
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

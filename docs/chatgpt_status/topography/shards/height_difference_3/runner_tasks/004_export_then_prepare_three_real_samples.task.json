@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "task_id": "height_difference_3-export-then-prepare-three-real-samples-20260720",
+  "created_at": "2026-07-20T19:24:27Z",
+  "execution_target": "existing_single_shared_runner_only",
+  "new_runner": false,
+  "parallel_runner": false,
+  "internal_read_only_lanes": [
+    "canonical_export_discovery",
+    "EA_OGC_tile_inventory",
+    "EA_WCS_capabilities",
+    "HMLR_local_authority_GML_resolution",
+    "OS_Terrain50_tile_resolution"
+  ],
+  "serialized_write_lanes": [
+    "canonical_export_publish",
+    "starter_candidate_publish",
+    "website_operations_publish",
+    "git_commit_push_readback"
+  ],
+  "preconditions": [
+    "slot_checkpoint_sequence_is_3_or_later",
+    "current_task_is_idle_or_same_task",
+    "no_live_competing_claim_for_height_difference_3",
+    "terminal_tasks_159_164_165_are_not_replayed"
+  ],
+  "step_order": [
+    {
+      "step": 1,
+      "name": "EXPORT_CANONICAL_8012_ROWS_61523_92283",
+      "required_output": "england_map_web/data/aays_18_slots/height_difference_3/canonical_export/manifest.json",
+      "acceptance": "30761 deterministic row records or explicit no_data records; no rows from other shards"
+    },
+    {
+      "step": 2,
+      "name": "RUN_CANONICAL_EXPORT_VALIDATOR_AND_SELECT_FIRST_THREE",
+      "command_template": "python docs/chatgpt_status/topography/shards/height_difference_3/automation/004_prepare_three_real_sample_queries.py --input <canonical_export_file> --output-dir <runner_output_dir>",
+      "acceptance": "three source-backed unresolved rows selected; no row_no-to-parcel_id assumption"
+    },
+    {
+      "step": 3,
+      "name": "QUERY_EA_LIDAR_TILE_INVENTORY",
+      "source_collection": "LIDAR_Composite_1m_DTM_2022_extents",
+      "acceptance": "tile filename, tilename, resolution, year and survey dates recorded for each candidate or explicit no_coverage"
+    },
+    {
+      "step": 4,
+      "name": "MATCH_CURRENT_HMLR_INSPIRE_BOUNDARY",
+      "acceptance": "official ID match first; otherwise documented point-in-polygon; no nearest polygon assignment"
+    },
+    {
+      "step": 5,
+      "name": "SAMPLE_EA_DTM_1M",
+      "acceptance": "polygon median and IQR preferred; documented centroid provisional only when polygon unavailable"
+    },
+    {
+      "step": 6,
+      "name": "CROSSCHECK_OS_TERRAIN50",
+      "acceptance": "independent 50m grid sample from matched 10km tile and source_difference_m recorded"
+    },
+    {
+      "step": 7,
+      "name": "PUBLISH_THREE_WEB_ROWS_AND_REMOTE_READBACK",
+      "acceptance": "website operation rows, commit SHA, push evidence and remote file readback exist"
+    }
+  ],
+  "measurement_gate": {
+    "real_parcel_binding_required": true,
+    "EA_DTM_numeric_required": true,
+    "OS_Terrain50_crosscheck_required": true,
+    "arbitrary_nearest_point_forbidden": true,
+    "publish_measured_before_gate": false
+  },
+  "current_blocker": "CANONICAL_8012_MATRIX_SHARD_EXPORT_REQUIRED",
+  "queue_submission_status": "NOT_SUBMITTED_BY_CHATGPT_DIRECT_PUSH_FORBIDDEN",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

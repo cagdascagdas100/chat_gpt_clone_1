@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "payload_revision": 10,
+  "status": "REVISION_10_READY_QUEUE_DRIVEN_WATCHER_RECOVERY_V5_F_HOST_APPLY_REQUIRED",
+  "runtime_applied": false,
+  "candidate_rows_count": 3,
+  "official_measured_rows_count": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "metric_contract": {
+    "name": "parcel_ground_height_difference",
+    "definition": "maximum minus minimum valid EA DTM 1m elevation pixels inside official HMLR parcel polygon",
+    "minimum_valid_ea_pixels": 3,
+    "primary_source": "Environment Agency LIDAR Composite DTM 1m",
+    "independent_crosscheck": "OS Terrain 50 absolute elevation and Ordnance Datum Newlyn consistency",
+    "maximum_ea_os_absolute_difference_m": 8.0,
+    "over_threshold_policy": "human_review_no_promotion"
+  },
+  "identity_contract": {
+    "task_id_required": true,
+    "payload_revision_required": true,
+    "attempt_id_required": true,
+    "idempotency_key_required": true,
+    "script_path_required": true,
+    "script_blob_sha_required": true,
+    "runtime_script_sha256_required": true
+  },
+  "evidence_contract": {
+    "hmlr_monthly_bulk_gml_required": true,
+    "hmlr_source_sha256_required": true,
+    "hmlr_barnet_or_enfield_authority_required": true,
+    "hmlr_inspire_identifier_required": true,
+    "hmlr_candidate_point_inside_polygon_required": true,
+    "hmlr_epsg27700_required": true,
+    "ea_epsg27700_required": true,
+    "ea_epsg5701_odn_required": true,
+    "ea_one_metre_class_resolution_required": true,
+    "os_200_by_200_grid_required": true,
+    "os_50m_cellsize_required": true,
+    "os_epsg27700_required": true,
+    "os_epsg5701_odn_required": true,
+    "os_nodata_rejected": true,
+    "unresolved_conflict_promotion_forbidden": true
+  },
+  "integrity_contract": {
+    "runner_web_sha256_equality_required": true,
+    "snapshot_output_sha256_required": true,
+    "snapshot_identity_and_count_consistency_required": true,
+    "accepted_rows_revalidated": true,
+    "valid_no_data_terminal_allowed": true,
+    "valid_no_data_measured_forbidden": true
+  },
+  "recovery_contract": {
+    "queue_driven_identity": true,
+    "hardcoded_payload_revision_forbidden": true,
+    "exact_task_only": true,
+    "script_blob_verified_before_and_after_sync": true,
+    "all_queue_glob_copy": false,
+    "shared_control_sync_forbidden": true,
+    "existing_runner_stop_forbidden": true,
+    "existing_runner_restore_opt_in": true,
+    "local_and_remote_heartbeat_identity_required": true,
+    "new_runner": false,
+    "parallel_runner": false
+  },
+  "validation": {
+    "type": "deterministic_source_contract_and_synthetic_fixture_review",
+    "assertions_passed": 96,
+    "assertions_total": 96,
+    "runtime_network_execution_performed": false
+  },
+  "assets": {
+    "metric_script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/027_height_difference_1_revision_10_explicit_identity_evidence_gate_20260721.py",
+    "integrity_validator": "docs/chatgpt_status/topography/shards/height_difference_1/automation/028_validate_revision_10_output_integrity_20260721.py",
+    "queue_driven_recovery": "docs/chatgpt_status/topography/shards/height_difference_1/automation/029_recover_existing_watcher_queue_driven_v5_20260721.ps1",
+    "post_apply_verifier": "docs/chatgpt_status/topography/shards/height_difference_1/automation/030_verify_existing_watcher_queue_driven_v5_20260721.ps1",
+    "one_command_wrapper": "docs/chatgpt_status/topography/shards/height_difference_1/automation/031_run_queue_driven_recovery_v5_and_revision_10_integrity_20260721.cmd",
+    "validation": "docs/chatgpt_status/topography/shards/height_difference_1/validation/017_revision_10_explicit_identity_evidence_selftest_20260721.json",
+    "report": "docs/chatgpt_status/topography/shards/height_difference_1/reports/023_height_difference_1_revision_10_queue_driven_integrity_20260721.md"
+  },
+  "blockers": [
+    "QUEUE_DRIVEN_WATCHER_RECOVERY_V5_NOT_RUNTIME_APPLIED_ON_F_HOST",
+    "HEIGHT_DIFFERENCE_1_HEARTBEAT_UNCLAIMED",
+    "REVISION_10_RUNNER_OUTPUT_NOT_PRESENT",
+    "REVISION_10_OUTPUT_INTEGRITY_READBACK_NOT_PRESENT"
+  ],
+  "first_unverified_step": "RUN_QUEUE_DRIVEN_WATCHER_RECOVERY_V5_ON_F_HOST_THEN_VERIFY_EXACT_REVISION_10_RESULT_AND_INTEGRITY",
+  "final_ready": false,
+  "product_final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

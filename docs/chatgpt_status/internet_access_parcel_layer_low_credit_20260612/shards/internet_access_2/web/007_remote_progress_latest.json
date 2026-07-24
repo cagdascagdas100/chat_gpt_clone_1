@@ -1,0 +1,141 @@
+{
+  "schema_version": 2,
+  "slot_id": "internet_access_2",
+  "parcel_partition": {
+    "start": 30762,
+    "end": 61522,
+    "count": 30761,
+    "canonical_count": 92283
+  },
+  "generated_at": "2026-07-22T03:09:00Z",
+  "state": "THREE_WAVE_CHAIN_QUEUED_STRICT_ACCURACY_GUARDS_READY_WAITING_COORDINATOR_PICKUP",
+  "progress": {
+    "operational_preparation_completed": 22,
+    "operational_preparation_total": 24,
+    "operational_preparation_percent": 91.67,
+    "operational_increase_percentage_points": 13.89,
+    "product_plan_completed_steps": 1,
+    "product_plan_total_steps": 9,
+    "product_plan_percent": 11.11,
+    "product_plan_increase_percentage_points": 0.0,
+    "verified_result_increase_percentage_points": 0.0
+  },
+  "counts": {
+    "existing_canonical_internet_rows": 33785,
+    "existing_shard2_internet_rows": 11013,
+    "sample_rows_remote": 24,
+    "postcode_identity_officially_confirmed": 4,
+    "postcode_live": 4,
+    "postcode_terminated_review_required": 0,
+    "official_postcode_coverage_verified_3_of_4": 0,
+    "parcel_measured_values_written": 0,
+    "queued_tasks": 3,
+    "started_new_tasks": 0,
+    "operation_lines_visible": 23,
+    "candidate_rows_visible": 24,
+    "total_visible_rows": 47
+  },
+  "accuracy": {
+    "identity_only_maximum": "2/4",
+    "exact_ofcom_postcode_proxy_maximum": "3/4",
+    "parcel_measured_claim_allowed": false,
+    "strict_3_of_4_requirements": [
+      "exact live ONSPD postcode identity",
+      "exact Ofcom Spring 2026 r2 postcode row",
+      "complete gigabit UFBB100 SFBB and unable30 fields",
+      "all official percentages within 0 to 100"
+    ],
+    "material_delta_review_threshold_percentage_points": 10.0,
+    "false_completion_guard": "task stays 5 of 6 and 83.33 percent until material-delta and no-data review"
+  },
+  "source_upgrades": [
+    {
+      "source": "ONS ONSPD latest postcode centroids",
+      "authority": "Office for National Statistics",
+      "snapshot": "2026-05",
+      "service_item_id": "84787e80aca04bb388caad29f89946b0",
+      "max_record_count": 2000,
+      "fields_verified": ["PCD7", "PCDS", "DOINTR", "DOTERM", "LAT", "LONG", "LAD25CD", "CTRY25CD"],
+      "state": "OFFICIAL_SCHEMA_CONFIRMED_EXACT_QUERY_QUEUED",
+      "maximum_accuracy": "2/4_POSTCODE_IDENTITY_ONLY"
+    },
+    {
+      "source": "ONS Postcode Directory May 2026 hosted table",
+      "authority": "Office for National Statistics",
+      "snapshot": "2026-05",
+      "state": "WAVE004_AND_WAVE005_OFFICIAL_SERVICE_PATH_CORRECTED",
+      "maximum_accuracy": "2/4_POSTCODE_IDENTITY_ONLY"
+    },
+    {
+      "source": "Ofcom Connected Nations Spring 2026 fixed broadband coverage",
+      "authority": "Ofcom",
+      "snapshot": "2026-01",
+      "publication_date": "2026-05-13",
+      "official_zip_size_mb": 32.2,
+      "state": "OFFICIAL_LINK_CONFIRMED_BINARY_ACCESS_BLOCKED",
+      "download_methods_prepared": ["landing cookie session", "dynamic ZIP link discovery", "curl retry", "portable source cache"],
+      "maximum_accuracy": "3/4_POSTCODE_PROXY"
+    },
+    {
+      "source": "Ofcom Connected Nations Broadband API",
+      "authority": "Ofcom",
+      "state": "SUBSCRIPTION_KEY_REQUIRED_NO_REMOTE_TASK_KEY_EVIDENCE",
+      "may_write_accuracy": false
+    }
+  ],
+  "tasks": [
+    {
+      "sequence": 1,
+      "task_id": "internet-access-2-onspd-pcds-normalization-24-sample-20260722T020000Z",
+      "target_rows": 24,
+      "script": "004b_onspd_pcds_normalization_24_sample.py",
+      "state": "QUEUED"
+    },
+    {
+      "sequence": 2,
+      "task_id": "internet-access-2-expand-onspd-identity-existing-11013-20260722T021000Z",
+      "target_rows": 11013,
+      "script": "005b_expand_onspd_identity_to_existing_11013.py",
+      "state": "QUEUED_AFTER_SEQUENCE_1",
+      "query_guards": {
+        "method": "POST_EXACT_PCDS",
+        "max_retries": 3,
+        "recursive_split": true,
+        "official_service_fallbacks": 2,
+        "web_chunk_size": 500
+      }
+    },
+    {
+      "sequence": 3,
+      "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-20260722T022500Z",
+      "target_rows": 11013,
+      "script": "006b_ofcom_dynamic_zip_join_strict_guard.py",
+      "state": "QUEUED_AFTER_SEQUENCE_2",
+      "strict_guards": {
+        "source_level_requires_verified": true,
+        "live_identity_required": true,
+        "official_metric_range": "0_TO_100",
+        "material_delta_threshold_pp": 10.0,
+        "maximum_operational_percent_before_review": 83.33
+      }
+    }
+  ],
+  "web_visibility": {
+    "operation_lines_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/006_parallel_source_research.jsonl",
+    "sample_rows_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/003_24_sample_rows_latest.json",
+    "future_identity_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/005_existing_11013_rows_manifest.json",
+    "future_coverage_manifest": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/web/006_existing_11013_rows_manifest.json",
+    "future_chunk_size": 500
+  },
+  "blockers": [
+    "STALE_SLOT_PUBLISHING_PROOF_PREVENTS_NEW_COORDINATOR_PICKUP",
+    "PUBLISHER_RECOVERY_REPORT_NOT_PRESENT",
+    "OFCom_2026_OFFICIAL_ZIP_BINARY_ACCESS_BLOCKED"
+  ],
+  "publisher_recovery_script": "docs/chatgpt_status/_shared/automation/REPAIR_INTERNET_ACCESS_2_PUBLISHER_PROOF_CONFLICT_20260722.ps1",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "gas_emissions_1",
+  "generated_at": "2026-07-22T13:36:00Z",
+  "status": "V5_GIT_BLOB_CARRIER_AND_RUNTIME_MARGIN_FIX_PUBLISHED",
+  "rows": [
+    {"line":1,"group":"carrier blocker","field":"v4_hash_algorithm","value":"V4 calculated raw SHA-256 but compared it with a 40-character Git blob SHA, causing deterministic pre-execution mismatch","confidence":100,"semantics":"INVALID_HASH_ALGORITHM_COMPARISON_DETECTED","source_path":"docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/RUN_GAS_EMISSIONS_1_SINGLE_PASS_RECOVERY_20260722_V4.ps1"},
+    {"line":2,"group":"carrier fix","field":"v5_git_blob_verification","value":"V5 computes SHA-1 over Git blob framing: blob, byte length, NUL and file bytes; pinned base and five runtime files are verified","confidence":100,"semantics":"CORRECT_GIT_BLOB_PIN_VERIFICATION","source_path":"docs/chatgpt_status/gas_emissions/shards/gas_emissions_1/automation/RUN_GAS_EMISSIONS_1_SINGLE_PASS_RECOVERY_20260722_V5.ps1"},
+    {"line":3,"group":"runtime blocker","field":"v4_overall_budget_margin","value":"Stage budgets totalled 2340 seconds; 2500-second overall budget left about 130 seconds after the 30-second server bootstrap allowance","confidence":100,"semantics":"INSUFFICIENT_ORCHESTRATION_MARGIN_RISK","source_path":"docs/chatgpt_status/aays1/queue/0020_100_gas_emissions_1_single_pass_recovery_20260722.task.json"},
+    {"line":4,"group":"runtime fix","field":"v5_overall_budget_margin","value":"Overall budget increased to 2700 seconds, leaving at least 330 seconds after local-server bootstrap; carrier precheck failures also write recovery outputs","confidence":100,"semantics":"SAFE_ORCHESTRATION_MARGIN_AND_FAIL_CLOSED_REPORT","source_path":"docs/chatgpt_status/aays1/queue/0020_100_gas_emissions_1_single_pass_recovery_20260722.task.json"}
+  ],
+  "counts": {"diagnostic_rows":4,"confidence_ge_99":4,"confidence_100":4,"confidence_average":100.0,"root_causes_detected":2,"fixes_published":2,"runner_pickup_observed":false,"runner_execution_claimed":false},
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

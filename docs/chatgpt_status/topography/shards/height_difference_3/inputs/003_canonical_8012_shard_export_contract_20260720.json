@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_3",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "task_id": "height_difference_3-canonical-8012-shard-export-contract-20260720",
+  "created_at": "2026-07-20T19:05:46Z",
+  "purpose": "Expose only the canonical rows required to select and measure real parcels in this shard without exporting unrelated shards.",
+  "input_source": "existing_canonical_port_8012_matrix",
+  "required_row_range": {"row_no_start": 61523, "row_no_end": 92283},
+  "required_fields": [
+    "row_no",
+    "parcel_id",
+    "parcel_registry_id",
+    "hmlr_inspire_id",
+    "national_cadastral_reference",
+    "longitude",
+    "latitude",
+    "bng_easting",
+    "bng_northing",
+    "local_authority_name",
+    "local_authority_code",
+    "source_version",
+    "data_status"
+  ],
+  "optional_geometry_fields": [
+    "geometry_wkt_epsg27700",
+    "geometry_geojson_epsg4326",
+    "hmlr_gml_feature_id",
+    "geometry_source_path"
+  ],
+  "output_files": {
+    "manifest": "england_map_web/data/aays_18_slots/height_difference_3/canonical_export/manifest.json",
+    "index": "england_map_web/data/aays_18_slots/height_difference_3/canonical_export/filter_indexes.json",
+    "pages_pattern": "england_map_web/data/aays_18_slots/height_difference_3/canonical_export/pages/page_*.json"
+  },
+  "validation_rules": [
+    "exactly_30761_rows_or_explicit_missing_row_records",
+    "row_no_unique_and_within_61523_92283",
+    "parcel_id_unique_or_duplicate_conflict_recorded",
+    "coordinates_must_be_source_backed_not_inferred",
+    "official_identifier_preferred_over_nearest_point",
+    "geometry_kept_in_EPSG27700_for_matching_and_sampling",
+    "missing_values_preserved_as_no_data",
+    "no_rows_from_other_shards"
+  ],
+  "starter_example_batch": {
+    "size": 3,
+    "selection_rule": "first_three_rows_in_deterministic_row_no_order_with_source_backed_coordinates_and_no_existing_verified_height_value",
+    "do_not_assume_parcel_id_equals_row_no": true,
+    "required_example_outputs": [
+      "HMLR_boundary_match_or_explicit_no_match",
+      "EA_DTM_1m_polygon_median_or_documented_centroid_sample",
+      "OS_Terrain50_independent_crosscheck",
+      "source_difference_m",
+      "method",
+      "confidence",
+      "data_status",
+      "website_operation_row"
+    ]
+  },
+  "sampling_gate": {
+    "minimum_geometry_evidence": "official_id_match_or_point_inside_HMLR_polygon",
+    "minimum_numeric_evidence": "one_EA_DTM_1m_sample",
+    "crosscheck_required": "one_OS_Terrain50_sample",
+    "measured_publication_allowed_before_gate": false
+  },
+  "current_status": "BLOCKED_CANONICAL_8012_EXPORT_NOT_PRESENT",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

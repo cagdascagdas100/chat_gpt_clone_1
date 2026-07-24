@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
+  "source_head_readback": "e359ee36c96c4f0bc1f2c1df289ad606339b7fb6",
+  "researched_at": "2026-07-22T19:08:51Z",
+  "research_mode": "official web sources only; boundary-version, request-limit, deduplication and BTP-scope guards; no parcel result claimed",
+  "row_start": 41,
+  "row_end": 47,
+  "sources_reviewed_increment": 7,
+  "promoted_sources_increment": 7,
+  "source_evidence_confidence_ge_95_increment": 7,
+  "sources": [
+    {"row":41,"source_id":"police_boundary_downloads_checksums","publisher":"Police.uk / Home Office","name":"Force and neighbourhood boundary KML downloads and checksums","url":"https://data.police.uk/data/boundaries/","status":"PROMOTED_FOR_FORCE_AND_MONTHLY_NPT_BOUNDARY_VERSION_GATE","confidence_percent":99,"verified_claims":["force-boundary KML is published with checksum a26ecd7130496617eb7e322353805ad7","NPT boundaries may change monthly","April 2026 NPT boundary checksum is 13bdc0c490f92c936b71e3b03c9d2770"],"limitations":["Police boundaries are crosschecks and not ONS LSOA boundaries","downloaded artifacts still require local checksum verification"]},
+    {"row":42,"source_id":"police_neighbourhood_boundary_api","publisher":"Police.uk / Home Office","name":"Neighbourhood boundary API contract","url":"https://data.police.uk/docs/method/neighbourhood-boundary/","status":"PROMOTED_FOR_TEAM_BOUNDARY_GEOMETRY_CROSSCHECK","confidence_percent":99,"verified_claims":["returns ordered latitude-longitude pairs forming a neighbourhood boundary"],"limitations":["team boundaries may change and do not prove LSOA containment","force and neighbourhood identifiers must be versioned together"]},
+    {"row":43,"source_id":"police_force_catalog_btp_exclusion","publisher":"Police.uk / Home Office","name":"Police-force catalogue BTP exclusion contract","url":"https://data.police.uk/docs/method/forces/","status":"PROMOTED_FOR_FORCE_CATALOG_SCOPE_GUARD","confidence_percent":99,"verified_claims":["force catalogue provides unique territorial-force identifiers","British Transport Police is excluded from this force-list response"],"limitations":["BTP records can still appear in crime responses","absence from the force catalogue must not be treated as absence of BTP crime"]},
+    {"row":44,"source_id":"police_street_polygon_runtime_limits","publisher":"Police.uk / Home Office","name":"Street-crime polygon request limits","url":"https://data.police.uk/docs/method/crime-street/","status":"PROMOTED_FOR_BOUNDED_POLYGON_REQUEST_AND_POST_FALLBACK","confidence_percent":99,"verified_claims":["custom areas above 10000 crimes return HTTP 503","GET requests longer than 4094 characters return HTTP 400","complex polygons should use POST"],"limitations":["request success does not prove geographical completeness","large LSOA polygons may require controlled partitioning"]},
+    {"row":45,"source_id":"police_street_empty_persistent_id_guard","publisher":"Police.uk / Home Office","name":"Street-crime identifier semantics including empty persistent IDs","url":"https://data.police.uk/docs/method/crime-street/","status":"PROMOTED_FOR_FAIL_CLOSED_CRIME_DEDUPLICATION","confidence_percent":99,"verified_claims":["persistent_id is the durable crime identifier when supplied","official example shows anti-social-behaviour with an empty persistent_id","API id is not a police identifier and is not guaranteed stable"],"limitations":["empty persistent_id rows require a documented composite deduplication key","API id alone must not be used for cross-snapshot identity"]},
+    {"row":46,"source_id":"police_street_force_btp_location_type","publisher":"Police.uk / Home Office","name":"Street-crime Force and BTP location-type contract","url":"https://data.police.uk/docs/method/crime-street/","status":"PROMOTED_FOR_FORCE_BTP_SEPARATE_ACCOUNTING","confidence_percent":99,"verified_claims":["location_type distinguishes Force from BTP","BTP locations fall within normal territorial-force boundaries"],"limitations":["BTP and territorial-force records must not be silently merged or double-counted","location_type is not an ONS geography code"]},
+    {"row":47,"source_id":"police_open_data_accuracy_completeness_notice","publisher":"Police.uk / Home Office","name":"Police open-data accuracy and completeness notice","url":"https://data.police.uk/data/open-data/","status":"PROMOTED_FOR_SOURCE_QUALITY_CAVEAT","confidence_percent":98,"verified_claims":["data is published on behalf of the owning police forces","the page disclaims responsibility for accuracy or completeness","listed open-data publications are indicative rather than official statistics"],"limitations":["this notice is a quality caveat and not a parcel-level uncertainty estimate","force-specific validation remains required"]}
+  ],
+  "fake_data": false,
+  "final_ready": false
+}

@@ -1,0 +1,47 @@
+AAYS / TerraYield 22 Slot - ChatGPT Devam Promptu
+
+SLOT_ID=<TEK_SLOT_YAZ>
+GITHUB_REPO=cagdascagdas100/chat_gpt_clone_1
+BRANCH=codex/aays-single-runner-v5-20260706
+WORKSTREAM_ID=AAYS_21_SLOT_SAFE_PARALLEL_V1
+
+Geçerli SLOT_ID değerleri:
+ready_to_sell_1/2/3, gas_emissions_1/2/3, height_difference_1/2/3,
+security_public_safety_1/2/3, parcel_label_1/2/3, internet_access_1/2/3, future_growth_1/2/3.
+Ek bakım slotu: problem_solver_1.
+
+SLOT_ID=problem_solver_1 ise business shard görevi veya ikinci runner üretme. Önce
+`docs/chatgpt_status/_shared/manual_actions/` ile 21 iş slotunun checkpoint/status/heartbeat
+dosyalarını oku. Çözülmemiş kullanıcı işlemlerini birinci, park edilmiş/takılmış slotları ikinci
+öncelik yap. Her `devam et` mesajında yalnız
+`docs/chatgpt_status/_shared/slots_21/problem_solver_1/continuation_requested_latest.json`
+dosyasını yeni request_id ve requested_at ile güncelle; plan/teşhis kanıtını aynı slot kökünde
+yayımla. Yerel Problem Solver bu tetikle mevcut seri recovery gate'ini yeniden açar. Force push,
+veri silme, ikinci coordinator ve aynı taskın kopyası yasaktır.
+
+Bu sayfanın değişmeyen kimliği SLOT_ID değeridir. Başka slotu sahiplenme ve başka
+slotun queue/status/output yollarına yazma.
+
+Her "devam et" mesajında:
+1. Önce GitHub branch HEAD'i yeniden oku. ZIP ve sohbet tarihini yalnız tarihsel bağlam kabul et.
+2. `docs/chatgpt_status/_shared/slots_21/manifest_latest.json` içinde SLOT_ID ve rolünü doğrula; iş slotlarında shard/parsel aralığını da doğrula.
+3. Aynı slot altındaki ownership, checkpoint, heartbeat, current_task ve status dosyalarını oku.
+4. Canlı lease varsa ikinci görev üretme. Stale heartbeat'i aktif iş sayma; remote çıktıyı doğrulamadan takeover yapma.
+5. Terminal görevleri tekrar etme. İlk eksik veya doğrulanmamış adımdan devam et.
+6. Gerekiyorsa yalnız bir `.v3.task.json` oluştur. `architecture_version=3`, doğru slot, doğru shard ve yalnız izole `exact_write_paths` kullan.
+7. Yeni runner/guardian/publisher açma. Tek taşınabilir koordinatör ve tek publisher gate kullanılır.
+8. Gerçek commit, push, remote readback ve gereken tarayıcı kanıtı olmadan PASS, completed, %100 veya `final_ready=true` yazma.
+9. `fake_data=false`, `db_write=false`, `migration=false`, `production_deploy=false`, `final_ready=false` kurallarını koru.
+10. 92.283 kayıt mevcut Londra kanonik matrisidir; bütün İngiltere parsel toplamı değildir. Ulusal kanonik envanter kanıtlanmadan İngiltere geneli tamamlandı deme.
+11. Internet slotlarında doğrulanmış Ofcom/postcode eşleşmesi yoksa puan uydurma; satırı `NO_DATA` ve açık confidence/source alanlarıyla bırak.
+12. Web çıktısını yalnız publisher/senkron sözleşmesi üzerinden yayımla.
+13. Her yeni v3 görevinde `data_quality_contract` doldur. Kaynak araması bitmediyse
+    `source_discovery_required=true`, `output_semantics=NO_DATA` bırak; web verisi yayımlama.
+14. Web verisi ancak kaynak URL'si, kaynak tarihi, ölçüm seviyesi, parsel bağlama yöntemi,
+    güven hesabı ve `NO_DATA_NOT_INFERRED` politikası açıkça yazılmışsa yayımlanabilir.
+15. Postcode/LSOA/local-authority/grid verisini parselde gösterirken `AREA_LEVEL_PROXY`
+    etiketi kullan; bunu ölçülmüş parsel değeri olarak sunma.
+16. AI yalnız kanıt destek aracıdır. Fotoğraf + poligon + gerçek karşılaştırma skoru yoksa
+    `vision compared` veya doğrulandı yazma; uyuşmazlık ve düşük güven insan incelemesine gider.
+
+Kısa cevap ver: SLOT_ID, mevcut task, yeni adım, commit/push/readback, blocker ve sıradaki ilk eksik adım.

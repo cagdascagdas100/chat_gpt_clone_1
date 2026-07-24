@@ -1,0 +1,229 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import io
+import json
+import os
+import tempfile
+import time
+import urllib.request
+import zipfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+DEFAULT_URL = (
+    "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/"
+    "multi-sector/infrastructure-research/connected-nations-spring-2026/"
+    "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620"
+)
+EXPECTED_POSTCODE_FILE_COUNT = 121
+EXPECTED_TOTAL_DATA_ROWS = 1_741_096
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def normalized(value: str) -> str:
+    return "".join(ch.lower() for ch in value if ch.isalnum())
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def atomic_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    fd, temporary_name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, path)
+    finally:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+
+
+def download(url: str, destination: Path, timeout: int) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    last_error: Exception | None = None
+    for attempt in range(1, 4):
+        temporary = destination.with_suffix(destination.suffix + f".part.{attempt}")
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": "AAYS-TerraYield-internet-access-audit/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=timeout) as response, temporary.open("wb") as out:
+                if int(getattr(response, "status", 200)) != 200:
+                    raise RuntimeError(f"HTTP_STATUS_{getattr(response, 'status', 'UNKNOWN')}")
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                out.flush()
+                os.fsync(out.fileno())
+            if temporary.stat().st_size < 1_000_000:
+                raise RuntimeError(f"DOWNLOAD_TOO_SMALL_{temporary.stat().st_size}")
+            os.replace(temporary, destination)
+            return
+        except Exception as exc:
+            last_error = exc
+            temporary.unlink(missing_ok=True)
+            if attempt < 3:
+                time.sleep(attempt * 2)
+    raise RuntimeError(f"DOWNLOAD_FAILED: {last_error}")
+
+
+def choose_column(headers: list[str], aliases: tuple[str, ...]) -> str | None:
+    by_key = {normalized(header): header for header in headers}
+    for alias in aliases:
+        found = by_key.get(normalized(alias))
+        if found:
+            return found
+    return None
+
+
+def audit_zip(zip_path: Path, count_rows: bool) -> dict:
+    required_aliases = {
+        "postcode": ("postcode",),
+        "postcode_space": ("postcode_space", "postcode space"),
+        "sfbb_30mbps_pct": (
+            "SFBB availability (% premises)",
+            "SFBB availability percent premises",
+        ),
+        "ufbb_100mbps_pct": (
+            "UFBB (100Mbit/s) availability (% premises)",
+            "UFBB 100Mbit/s availability percent premises",
+        ),
+        "gigabit_pct": (
+            "Gigabit availability (% premises)",
+            "Gigabit availability percent premises",
+        ),
+        "decent_unavailable_pct": (
+            "% of premises unable to receive decent broadband from fixed or FWA",
+            "percent of premises unable to receive decent broadband from fixed or FWA",
+        ),
+    }
+    with zipfile.ZipFile(zip_path) as archive:
+        names = archive.namelist()
+        r2_files = sorted(
+            name
+            for name in names
+            if "/postcode_files/" in "/" + name.replace("\\", "/")
+            and Path(name).name.startswith("202601_fixed_postcode_coverage_r2_")
+            and name.lower().endswith(".csv")
+        )
+        stale_r1_all_premises = sorted(
+            name
+            for name in names
+            if "/postcode_files/" in "/" + name.replace("\\", "/")
+            and Path(name).name.startswith("202601_fixed_postcode_coverage_r1_")
+            and name.lower().endswith(".csv")
+        )
+        headers_by_file: dict[str, list[str]] = {}
+        mapped_columns: dict[str, dict[str, str | None]] = {}
+        row_count = 0
+        for name in r2_files:
+            with archive.open(name, "r") as raw:
+                text = io.TextIOWrapper(raw, encoding="utf-8-sig", newline="")
+                reader = csv.reader(text)
+                headers = next(reader, [])
+                headers_by_file[Path(name).name] = headers
+                mapped_columns[Path(name).name] = {
+                    key: choose_column(headers, aliases)
+                    for key, aliases in required_aliases.items()
+                }
+                if count_rows:
+                    row_count += sum(1 for _ in reader)
+
+    missing_by_file = {
+        name: [key for key, value in columns.items() if value is None]
+        for name, columns in mapped_columns.items()
+        if any(value is None for value in columns.values())
+    }
+    postcode_areas = sorted(
+        Path(name).stem.removeprefix("202601_fixed_postcode_coverage_r2_")
+        for name in r2_files
+    )
+    checks = {
+        "zip_is_readable": True,
+        "corrected_r2_postcode_files_present": len(r2_files) == EXPECTED_POSTCODE_FILE_COUNT,
+        "stale_r1_all_premises_files_absent": len(stale_r1_all_premises) == 0,
+        "postcode_areas_unique": len(postcode_areas) == len(set(postcode_areas)),
+        "required_columns_present_in_every_file": not missing_by_file and bool(r2_files),
+        "official_row_count_matches": (not count_rows) or row_count == EXPECTED_TOTAL_DATA_ROWS,
+    }
+    return {
+        "checks": checks,
+        "postcode_file_count": len(r2_files),
+        "postcode_areas": postcode_areas,
+        "stale_r1_all_premises_file_count": len(stale_r1_all_premises),
+        "data_row_count": row_count if count_rows else None,
+        "expected_data_row_count": EXPECTED_TOTAL_DATA_ROWS,
+        "missing_columns_by_file": missing_by_file,
+        "sample_headers": next(iter(headers_by_file.values()), []),
+        "sample_column_mapping": next(iter(mapped_columns.values()), {}),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repo-root", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--cache-dir", type=Path)
+    parser.add_argument("--url", default=DEFAULT_URL)
+    parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--count-rows", action="store_true")
+    args = parser.parse_args()
+
+    root = args.repo_root.resolve()
+    output = args.output if args.output.is_absolute() else root / args.output
+    cache_dir = args.cache_dir or root / "runtime" / "internet_access_1" / "source_cache"
+    zip_path = cache_dir / "ofcom_connected_nations_spring_2026_fixed_coverage.zip"
+    started_at = utc_now()
+    report: dict = {
+        "schema_version": 1,
+        "slot_id": "internet_access_1",
+        "stage": "OFCom_2026_POSTCODE_SCHEMA_AUDIT",
+        "source_url": args.url,
+        "source_snapshot_date": "2026-01",
+        "source_correction_version": "v2-2026-07-07",
+        "started_at": started_at,
+        "fake_data": False,
+        "final_ready": False,
+    }
+    try:
+        if not zip_path.exists():
+            download(args.url, zip_path, args.timeout)
+        report["archive_size_bytes"] = zip_path.stat().st_size
+        report["archive_sha256"] = sha256_file(zip_path)
+        report.update(audit_zip(zip_path, args.count_rows))
+        report["status"] = "PASS" if all(report["checks"].values()) else "BLOCKED"
+        report["blockers"] = [key for key, passed in report["checks"].items() if not passed]
+    except Exception as exc:
+        report.update(
+            status="BLOCKED",
+            blockers=["OFCom_SOURCE_DOWNLOAD_OR_SCHEMA_AUDIT_FAILED"],
+            error=str(exc),
+        )
+    report["finished_at"] = utc_now()
+    atomic_json(output, report)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if report["status"] == "PASS" else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

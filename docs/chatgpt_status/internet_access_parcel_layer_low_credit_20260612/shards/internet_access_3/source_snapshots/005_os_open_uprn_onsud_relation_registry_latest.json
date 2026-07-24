@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_3",
+  "verified_at": "2026-07-22T04:52:02+03:00",
+  "relation_path": "HMLR_INSPIRE_POLYGON_TO_OS_OPEN_UPRN_POINT_TO_ONSUD_OR_NSUL_POSTCODE",
+  "sources": [
+    {
+      "authority": "Ordnance Survey",
+      "dataset": "OS Open UPRN",
+      "product_page": "https://www.ordnancesurvey.co.uk/products/os-open-uprn",
+      "coverage": "approximately 40 million addressable locations across Great Britain",
+      "update_frequency": "every_six_weeks",
+      "formats": ["CSV", "GeoPackage"],
+      "role": "authoritative_uprn_coordinate_candidate",
+      "source_accuracy_score": 97,
+      "access_gate": "OS_DATAHUB_DOWNLOAD_OR_DOWNLOAD_API_ACCESS_REQUIRED"
+    },
+    {
+      "authority": "Office for National Statistics",
+      "dataset": "ONS UPRN Directory / National Statistics UPRN Lookup",
+      "product_page": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/nationalstatisticsaddressproducts",
+      "postcode_inclusion_evidence": "https://www.ons.gov.uk/aboutus/transparencyandgovernance/freedomofinformationfoi/inclusionofpostcodesintheonsudandnsulproducts",
+      "update_frequency": "every_six_weeks",
+      "role": "uprn_to_postcode_and_geography_relation",
+      "source_accuracy_score": 96,
+      "postcode_origin": "AddressBase postcode where included in Code-Point Open",
+      "access_gate": "CURRENT_RELEASE_DOWNLOAD_AND_LICENCE_READBACK_REQUIRED"
+    }
+  ],
+  "promotion_policy": {
+    "nearest_uprn_alone_is_not_a_parcel_relation": true,
+    "uprn_inside_indicative_hmlr_polygon_is_candidate_evidence": true,
+    "uprn_to_postcode_relation_must_be_exact_and_current": true,
+    "automatic_parcel_postcode_promotion_allowed": false,
+    "confidence_uplift_requires_polygon_containment_plus_exact_uprn_postcode_relation": true
+  },
+  "current_state": "REGISTERED_FUTURE_HIGH_CONFIDENCE_PATH_NOT_EXECUTED",
+  "blockers": [
+    "OS_OPEN_UPRN_CURRENT_RELEASE_BYTES_NOT_HYDRATED",
+    "CURRENT_ONSUD_OR_NSUL_RELEASE_BYTES_NOT_HYDRATED",
+    "HMLR_POLYGON_CONTAINMENT_NOT_EXECUTED"
+  ],
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

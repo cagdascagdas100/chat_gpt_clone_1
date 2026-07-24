@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "generated_at": "2026-07-21T03:18:00Z",
+  "validation_semantics": "OFFICIAL_ENDPOINT_AND_SCOPE_READBACK_ONLY_NOT_LOADER_NOT_PARCEL_EVIDENCE",
+  "registry_total": 16,
+  "registry_sources_validated": 16,
+  "registry_validation_percent": 100.0,
+  "loader_executions_completed": 0,
+  "parcel_specific_rows_promoted": 0,
+  "sources": [
+    {
+      "source_key": "hmlr_price_paid",
+      "source_name": "HM Land Registry Price Paid Data",
+      "purpose": "market_momentum",
+      "source_url": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_ENDPOINT_VALIDATED_LOADER_PENDING",
+      "readback": {"page_updated": "2026-06-26", "current_month_release": "2026-05", "update_rule": "20th working day monthly"},
+      "confidence_boundary": "transaction/address evidence only after loader and spatial binding"
+    },
+    {
+      "source_key": "planning_data_api",
+      "source_name": "Planning Data API",
+      "purpose": "planning_policy_constraints",
+      "source_url": "https://www.planning.data.gov.uk/docs",
+      "mode_contract": "live",
+      "validation_status": "OFFICIAL_API_CONTRACT_VALIDATED",
+      "readback": {"query_modes": ["coordinate", "UPRN", "geometry", "geometry_entity"], "batch_endpoint": false, "bulk_download_recommended_for_large_portfolios": true},
+      "confidence_boundary": "absence is not proof of no constraint; coverage varies"
+    },
+    {
+      "source_key": "planning_brownfield",
+      "source_name": "Planning Data Brownfield Land",
+      "purpose": "planning_growth",
+      "source_url": "https://www.planning.data.gov.uk/dataset/brownfield-land",
+      "mode_contract": "live",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_GEOMETRY_SAMPLE_PENDING_RUNNER",
+      "readback": {"entities": 37666, "providers": 354, "collector_last_ran": "2026-07-17", "new_data_last_found": "2026-07-16", "origin": "authoritative"},
+      "confidence_boundary": "site polygon plus exact parcel relation required"
+    },
+    {
+      "source_key": "planning_conservation",
+      "source_name": "Planning Data Conservation Area",
+      "purpose": "planning_constraints",
+      "source_url": "https://www.planning.data.gov.uk/dataset/conservation-area",
+      "mode_contract": "live",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_INCOMPLETE_DUPLICATES_CAUTION",
+      "readback": {"entities": 10958, "providers": 157, "collector_last_ran": "2026-07-18", "new_data_last_found": "2026-07-18", "coverage_note": "work in progress, incomplete, duplicates under reconciliation"},
+      "confidence_boundary": "no high confidence without parcel-specific polygon and source-quality check"
+    },
+    {
+      "source_key": "planning_listed_building",
+      "source_name": "Planning Data Listed Building",
+      "purpose": "planning_constraints",
+      "source_url": "https://www.planning.data.gov.uk/dataset/listed-building",
+      "mode_contract": "live",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_POINT_EXTENT_CAUTION",
+      "readback": {"entities": 382250, "providers": 2, "collector_last_ran": "2026-07-17", "new_data_last_found": "2026-07-17", "representation": "point within building, not affected-area extent"},
+      "confidence_boundary": "outline/curtilage check required before parcel penalty"
+    },
+    {
+      "source_key": "planning_green_belt",
+      "source_name": "Planning Data Green Belt",
+      "purpose": "planning_policy",
+      "source_url": "https://www.planning.data.gov.uk/dataset/green-belt",
+      "mode_contract": "live",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_ANNUAL_SNAPSHOT_CAUTION",
+      "readback": {"entities": 190, "providers": 1, "collector_last_ran": "2026-07-17", "new_data_last_found": "2026-05-10", "snapshot_rule": "annual March returns published in autumn"},
+      "confidence_boundary": "snapshot may not reflect later boundary changes"
+    },
+    {
+      "source_key": "ons_snpp",
+      "source_name": "ONS Subnational Population Projections",
+      "purpose": "demographic_demand",
+      "source_url": "https://www.ons.gov.uk/releases/subnationalpopulationprojections2022based",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_RELEASE_VALIDATED_LA_LOADER_PENDING",
+      "readback": {"release_date": "2025-06-24", "basis": "2022-based", "correction_note_retained": true},
+      "confidence_boundary": "local-authority area proxy, never parcel measurement"
+    },
+    {
+      "source_key": "ons_internal_migration",
+      "source_name": "ONS Internal Migration Projections",
+      "purpose": "demographic_demand",
+      "source_url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/internalmigrationz5",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_RELEASE_VALIDATED_CORRECTION_AWARE_LOADER_PENDING",
+      "readback": {"release_date": "2025-06-24", "projection_horizon_years": 25, "basis": "2022-based", "corrections": ["2025-06-24 affected variants", "2025-07-07 supporting-information update"]},
+      "confidence_boundary": "local-authority proxy; selected variant must be explicit"
+    },
+    {
+      "source_key": "naptan",
+      "source_name": "National Public Transport Access Nodes",
+      "purpose": "transport_infra",
+      "source_url": "https://www.data.gov.uk/dataset/ff93ffc1-6656-47d8-9155-85ea0b8f2251/naptan",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_DAILY_LOADER_PENDING",
+      "readback": {"publisher": "Department for Transport", "coverage": "Great Britain public transport access points", "update_frequency": "daily", "formats": ["CSV", "XML", "API"]},
+      "confidence_boundary": "stop proximity requires current coordinates and route/service evidence"
+    },
+    {
+      "source_key": "bods",
+      "source_name": "Bus Open Data Service",
+      "purpose": "transport_infra",
+      "source_url": "https://www.gov.uk/guidance/find-and-use-bus-open-data",
+      "mode_contract": "stub",
+      "validation_status": "OFFICIAL_SERVICE_VALIDATED_API_CREDENTIALS_AND_LOADER_PENDING",
+      "readback": {"coverage": "every local bus service in England", "data": ["timetable", "vehicle location", "fares"], "formats": ["TransXChange", "SIRI-VM", "UK NeTEx"], "api_available": true},
+      "confidence_boundary": "registration/API configuration required; no service-frequency score from stub"
+    },
+    {
+      "source_key": "national_rail_darwin",
+      "source_name": "National Rail Darwin Data Feeds",
+      "purpose": "transport_infra",
+      "source_url": "https://www.nationalrail.co.uk/developers/darwin-data-feeds/",
+      "mode_contract": "stub",
+      "validation_status": "OFFICIAL_FEED_VALIDATED_RAIL_DATA_MARKETPLACE_ACCESS_PENDING",
+      "readback": {"role": "official GB real-time train running information engine", "feed_types": ["JSON API", "push feed"], "sign_up": "Rail Data Marketplace", "licence": "NRE OGL"},
+      "confidence_boundary": "registration and station/service binding required"
+    },
+    {
+      "source_key": "tfl_ptal",
+      "source_name": "TfL WebCAT PTAL",
+      "purpose": "transport_infra",
+      "source_url": "https://tfl.gov.uk/info-for/urban-planning-and-construction/planning-applications/planning-with-webcat?intcmp=25861",
+      "mode_contract": "stub",
+      "validation_status": "OFFICIAL_TOOL_VALIDATED_IMPORT_PATH_PENDING",
+      "readback": {"coverage": "London", "measures": ["PTAL", "TIM"], "network_scenarios": ["current", "future"], "site_level_lookup": true},
+      "confidence_boundary": "grid/site lookup needed; boundary-cell caveat retained"
+    },
+    {
+      "source_key": "gias_schools",
+      "source_name": "Get Information about Schools",
+      "purpose": "social_amenity",
+      "source_url": "https://get-information-schools.service.gov.uk/",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_DAILY_DOWNLOAD_VALIDATED_LOADER_PENDING",
+      "readback": {"publisher": "Department for Education", "public_downloads": true, "update_frequency": "daily", "scope": "establishments and groups"},
+      "confidence_boundary": "current establishment status and coordinate binding required"
+    },
+    {
+      "source_key": "nhs_ods_ord",
+      "source_name": "NHS ODS ORD API",
+      "purpose": "social_amenity",
+      "source_url": "https://digital.nhs.uk/developer/api-catalogue/organisation-data-service-ord",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_API_VALIDATED_CONNECTOR_PENDING",
+      "readback": {"coverage": "health and social care organisations in England and Wales", "supports": ["search", "organisation detail", "recent changes", "synchronisation since date"], "rate_guidance": "below 5 requests per second"},
+      "confidence_boundary": "organisation role/status/address binding required"
+    },
+    {
+      "source_key": "os_open_greenspace",
+      "source_name": "OS Open Greenspace",
+      "purpose": "social_amenity",
+      "source_url": "https://www.ordnancesurvey.co.uk/products/os-open-greenspace",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_PRODUCT_VALIDATED_LOADER_PENDING",
+      "readback": {"update_frequency": "six-monthly", "formats": ["ESRI Shapefile", "GeoPackage", "GML", "Vector Tiles"], "licence_position": "free to use"},
+      "confidence_boundary": "polygon distance/intersection loader required"
+    },
+    {
+      "source_key": "ea_flood_zones_cc",
+      "source_name": "EA Flood Zones plus Climate Change",
+      "purpose": "risk_penalty",
+      "source_url": "https://www.data.gov.uk/dataset/77931470-ee6b-4f8e-8868-82842aed2e5d/flood-map-for-planning-flood-zones-plus-climate-change",
+      "mode_contract": "fixture",
+      "validation_status": "OFFICIAL_DATASET_VALIDATED_SPATIAL_LOADER_PENDING",
+      "readback": {"last_updated": "2026-07-06", "publisher": "Environment Agency", "use": "planning and site-specific flood risk screening"},
+      "confidence_boundary": "parcel polygon overlay and dataset-version date required"
+    }
+  ],
+  "quality_gates": {
+    "source_url_present": "16/16",
+    "official_domain_readback": "16/16",
+    "purpose_present": "16/16",
+    "mode_contract_present": "16/16",
+    "confidence_boundary_present": "16/16",
+    "loader_execution": "0/16",
+    "parcel_specific_promotion": "0/30761"
+  },
+  "first_unverified_step": "WAIT_FOR_SINGLE_SHARED_RUNNER_PICKUP_THEN_EXECUTE_EXACT_OFFICIAL_GEOMETRY_ATTEMPT_3",
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

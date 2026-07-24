@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_1",
+  "checked_on": "2026-07-22",
+  "status": "PASS_OFFICIAL_SOURCE_REVALIDATION_V6_LIVE_ACCEPTANCE_PENDING",
+  "official_checks_passed": 8,
+  "official_checks_total": 8,
+  "quality_limits_recorded": 4,
+  "acceptance_evidence": false,
+  "facts": {
+    "police_api_update_frequency": "monthly",
+    "police_api_latest_date": "2026-05-01",
+    "police_archive_latest_month": "May 2026",
+    "police_archive_window": "Jun 2023-May 2026",
+    "may_2026_missing_crime_forces": ["British Transport Police","Gloucestershire Constabulary","Greater Manchester Police","Lincolnshire Police"],
+    "london_mps_lsoa_window": "Jul 2024-Jun 2026",
+    "london_lsoa_sexual_offences_omitted": true,
+    "london_connect_comparability_limit": true,
+    "ons_latest_published_release": "Crime in England and Wales: year ending December 2025; released 23 April 2026",
+    "ons_march_2026_release": "Confirmed 23 July 2026 09:30 UK; not published on 22 July 2026"
+  },
+  "sources": [
+    {"name":"Police API last updated","url":"https://data.police.uk/docs/method/crime-last-updated/","status":"PASS","evidence":"API crime data updates monthly; latest month represented by 2026-05-01."},
+    {"name":"Police bulk archive","url":"https://data.police.uk/data/archive/","status":"PASS","evidence":"Latest archive is May 2026 and contains Jun 2023-May 2026."},
+    {"name":"Police changelog","url":"https://data.police.uk/changelog/","status":"PASS_LIMIT_RECORDED","evidence":"May 2026 crime data absent for British Transport Police, Gloucestershire, Greater Manchester and Lincolnshire."},
+    {"name":"Police street-level method","url":"https://data.police.uk/docs/method/crime-street/","status":"PASS_LIMIT_RECORDED","evidence":"Point results are supporting approximate/anonymised evidence, not an exact parcel or full LSOA count."},
+    {"name":"London MPS geographic breakdown","url":"https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m/","status":"PASS_LIMIT_RECORDED","evidence":"Current LSOA file covers Jul 2024-Jun 2026; sexual offences omitted at LSOA; CONNECT limits comparability."},
+    {"name":"ONS March 2026 release watch","url":"https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026","status":"PASS_NOT_YET_PUBLISHED","evidence":"Confirmed release time is 23 July 2026 at 09:30 UK; not published on 22 July."},
+    {"name":"ONS latest published bulletin","url":"https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/bulletins/crimeinenglandandwales/latest","status":"PASS","evidence":"Latest published bulletin remains year ending December 2025, released 23 April 2026."},
+    {"name":"ONS release calendar","url":"https://www.ons.gov.uk/releasecalendar","status":"PASS","evidence":"Crime in England and Wales year ending March 2026 is confirmed for 23 July 2026 at 09:30 UK."}
+  ],
+  "quality_limits": [
+    "Police point-query results are approximate/anonymised supporting evidence and are not exact parcel measurements.",
+    "May 2026 has four known force-level crime-data omissions and missing values must not be inferred.",
+    "London LSOA omits sexual offences and post-February-2024 CONNECT data has comparability limitations.",
+    "ONS year-ending-March-2026 publication remains pending on 22 July 2026 and must be rechecked after release."
+  ],
+  "output_semantics": "AREA_LEVEL_PROXY",
+  "measurement_level": "lsoa",
+  "parcel_measurement": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

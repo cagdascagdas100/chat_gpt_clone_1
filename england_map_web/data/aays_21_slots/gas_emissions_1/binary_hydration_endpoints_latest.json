@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "gas_emissions_1",
+  "generated_at": "2026-07-22T03:32:00Z",
+  "status": "OFFICIAL_BINARY_ENDPOINTS_RESOLVED_AND_TARGET_PARSER_QUEUED",
+  "progress": {
+    "operation_total": 6,
+    "operation_fully_completed": 3,
+    "operation_advanced_partial": 1,
+    "operation_pending": 2,
+    "evidence_gated_percent": 66.7,
+    "increase_percentage_points_this_pass": 0.0
+  },
+  "rows": [
+    {"line": 1, "source_id": "UK_PRTR_2024_XML", "finding": "The direct official 2024 UK PRTR XML endpoint was resolved from the GOV.UK publication page.", "detail": "14 MB XML; publication date 30 June 2026.", "confidence": 100, "state": "DIRECT_ENDPOINT_RESOLVED_BINARY_NOT_PARSED"},
+    {"line": 2, "source_id": "UK_PRTR_REGISTRY_ZIP", "finding": "The direct official UK Registry data ZIP endpoint was resolved from the same GOV.UK publication.", "detail": "4.73 MB ZIP; intended for facility registry identity support.", "confidence": 100, "state": "DIRECT_ENDPOINT_RESOLVED_BINARY_NOT_PARSED"},
+    {"line": 3, "source_id": "EA_PI_2024_RESOURCE", "finding": "The official 2024 Pollution Inventory resource UUID and direct Defra download endpoint were resolved.", "detail": "Resource 2c535789-a44c-4ea0-b82a-b44ad5d6ea04; updated 17 April 2026.", "confidence": 100, "state": "DIRECT_ENDPOINT_RESOLVED_BINARY_NOT_PARSED"},
+    {"line": 4, "source_id": "EA_PI_FILE_DATASET_ID", "finding": "The 2024 Pollution Inventory fileDataSetId is 4faa4a52-7df2-4047-bc3f-877dd04222d8.", "detail": "The direct official download points to 2024 Pollution Inventory Dataset.zip.", "confidence": 100, "state": "DOWNLOAD_CONTRACT_RESOLVED"},
+    {"line": 5, "source_id": "EA_PI_MEASUREMENT_SCOPE", "finding": "Pollution Inventory covers annual mass releases to air, controlled waters and sewers plus off-site waste transfers.", "detail": "Whole-permit coverage includes point and fugitive sources.", "confidence": 100, "state": "DOCUMENTED_SCOPE"},
+    {"line": 6, "source_id": "EA_PI_PRIMARY_CRS", "finding": "The official Pollution Inventory metadata specifies EPSG:27700.", "detail": "Primary site and parcel geometry comparison must remain in British National Grid.", "confidence": 100, "state": "GEOMETRY_CONTRACT"},
+    {"line": 7, "source_id": "EA_PI_LICENCE", "finding": "The Pollution Inventory is published under the Environment Agency Conditional Licence.", "detail": "Licence conditions and attribution must be retained with extracted evidence.", "confidence": 100, "state": "LICENCE_GATE"},
+    {"line": 8, "source_id": "HMLR_INSPIRE_SNAPSHOT", "finding": "The current official INSPIRE download snapshot was published 5 July 2026.", "detail": "Files are refreshed on the first Sunday of each month.", "confidence": 100, "state": "CURRENT_GEOMETRY_SNAPSHOT"},
+    {"line": 9, "source_id": "HMLR_BARKING_DAGENHAM_GML", "finding": "London Borough of Barking and Dagenham is present in the official local-authority GML listing.", "detail": "The parser resolves the direct GML link from the official index before download.", "confidence": 100, "state": "GML_INDEX_ENTRY_VERIFIED"},
+    {"line": 10, "source_id": "TARGET_FACILITY_IDENTITY", "finding": "Target extraction includes current and legacy Thames Gateway permit identities, postcode RM9 6LF and title candidate TGL419520.", "detail": "Identity candidates are kept separate until official record reconciliation.", "confidence": 99, "state": "TARGET_MATCH_CONTRACT"},
+    {"line": 11, "source_id": "TARGET_OPERATOR_DEDUP", "finding": "Cory Barking Operations and former McGrath Bros identity tokens are included for multi-site deduplication.", "detail": "Shared operator name does not merge separate permit sites.", "confidence": 99, "state": "DEDUP_CONTRACT"},
+    {"line": 12, "source_id": "NO_DATA_GATE", "finding": "Download or target-match absence remains NO_DATA and is never converted to zero.", "detail": "No parcel emission row is created without explicit pollutant value and verified geometry relation.", "confidence": 100, "state": "QUALITY_GATE"}
+  ],
+  "counts": {
+    "new_evidence_rows": 12,
+    "confidence_ge_99": 12,
+    "confidence_average": 99.83,
+    "official_binary_endpoints_resolved": 3,
+    "official_geometry_index_entries_verified": 1,
+    "target_parser_scripts_ready": 1,
+    "runner_tasks_queued": 1,
+    "binary_files_parsed": 0,
+    "measured_parcel_emission_rows": 0,
+    "verified_parcel_bindings": 0,
+    "tracked_visible_evidence_rows_after": 72
+  },
+  "blockers": [
+    "CURRENT_BROWSER_TASK_LEASE_ACTIVE",
+    "OFFICIAL_BINARY_DOWNLOADS_NOT_YET_EXECUTED_BY_EXISTING_SHARED_RUNNER",
+    "UK_PRTR_AND_PI_TARGET_RECORDS_NOT_YET_EXTRACTED",
+    "HMLR_TGL419520_POLYGON_NOT_YET_PARSED_OR_INTERSECTED"
+  ],
+  "runner_execution_claimed": false,
+  "actual_business_data_rows_written": 0,
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false
+}

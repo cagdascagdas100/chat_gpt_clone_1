@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta http-equiv="refresh" content="30">
+<title>Security 1 — Recovery Result Decoder</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
+.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}
+.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;margin:12px 0}
+th,td{border:1px solid #cbd5df;padding:6px;text-align:left;vertical-align:top}th{background:#eaf0f5;position:sticky;top:0}
+.PASS{font-weight:700}.PENDING,.BLOCKED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}.muted{color:#52606d}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-output-semantics="AREA_LEVEL_PROXY" data-parcel-measurement="false">
+<h1>Recovery Result Decoder</h1>
+<div class="note">Bu sayfa runner başlatmaz ve global aliası değiştirmez. Mevcut F-host recovery çıktıları oluştuğunda sonuç kodunu, fail-closed nedenini ve sıradaki güvenli adımı otomatik çözer. Kanonik kabul yalnız gerçek v17 ve publisher kanıtıyla ilerler.</div>
+<div class="cards">
+<div class="card">Operator receipt<br><strong id="operatorCard">PENDING</strong></div>
+<div class="card">Restart receipt<br><strong id="restartCard">PENDING</strong></div>
+<div class="card">Fresh heartbeat<br><strong id="heartbeatCard">PENDING</strong></div>
+<div class="card">Security preflight<br><strong id="securityPreflightCard">PENDING</strong></div>
+<div class="card">Security acceptance<br><strong id="acceptanceCard">PENDING</strong></div>
+<div class="card">Publisher<br><strong id="publisherCard">PENDING</strong></div>
+<div class="card">Promotion gate<br><strong id="promotionCard">0/10</strong></div>
+</div>
+
+<h2>Canlı çıktı zinciri — satır satır</h2>
+<table><thead><tr><th>#</th><th>Artefakt</th><th>Durum</th><th>Yorum</th><th>Sıradaki adım</th></tr></thead><tbody id="currentBody"></tbody></table>
+
+<h2>Operator preflight sonuç kodları</h2>
+<table><thead><tr><th>#</th><th>Status</th><th>Sınıf</th><th>Anlam</th><th>Sıradaki güvenli adım</th></tr></thead><tbody id="operatorBody"></tbody></table>
+
+<h2>Restart helper sonuç kodları</h2>
+<table><thead><tr><th>#</th><th>Status</th><th>Sınıf</th><th>Anlam</th><th>Sıradaki güvenli adım</th></tr></thead><tbody id="restartBody"></tbody></table>
+
+<h2>5/8 → 8/8 promotion zinciri</h2>
+<table><thead><tr><th>Kapı</th><th>Ad</th><th>Geçiş koşulu</th><th>Canlı durum</th></tr></thead><tbody id="promotionBody"></tbody></table>
+
+<script>
+'use strict';
+const esc=v=>String(v??'not_available').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=async p=>{const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${p}: HTTP ${r.status}`);return r.json()};
+const optional=async p=>{try{return await get(p)}catch(_){return null}};
+const cls=s=>String(s||'PENDING').replace(/[^A-Z0-9_]/g,'_');
+const decode=(rows,status)=>rows.find(x=>x.status===status)||{status,class:'PENDING',meaning:'Unknown or not yet mapped status.',next_action:'Inspect the raw receipt without changing the single-runner architecture.'};
+(async()=>{
+ const [decoder,dependency,operatorReceipt,restartReceipt,securityPreflight,acceptance,publisher]=await Promise.all([
+  get('recovery_result_decoder_v1.json'),
+  get('shared_runner_dependency_latest.json'),
+  optional('../../../../docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/015_operator_recovery_preflight_latest.json'),
+  optional('../../../../docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/014_existing_canonical_runner_restart_latest.json'),
+  optional('../../../../docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/012_security_public_safety_1_v17_runtime_preflight_latest.json'),
+  optional('canonical_acceptance_v17_latest.json'),
+  optional('publisher_candidate_v17_latest.json')
+ ]);
+ const opStatus=operatorReceipt?.status||'NO_RECEIPT',restartStatus=restartReceipt?.status||'NO_RECEIPT';
+ const opDecoded=decode(decoder.operator_statuses||[],opStatus),restartDecoded=decode(decoder.restart_statuses||[],restartStatus);
+ const heartbeatFresh=dependency.holder_readback?.heartbeat_stale===false;
+ const holderResolved=dependency.global_control_alias?.holder_slot!=='height_difference_2'||dependency.holder_readback?.queue_status==='done'||dependency.holder_readback?.queue_status==='released';
+ const securityPreflightPass=securityPreflight?.preflight_pass===true||securityPreflight?.status==='PASS';
+ const acceptancePass=acceptance?.acceptance_pass===true;
+ const publisherReady=publisher?.status==='READY_FOR_SINGLE_PUBLISHER_COMMIT_PUSH_READBACK';
+ const publisherReadback=publisher?.remote_readback_pass===true||publisher?.publisher_readback_pass===true;
+ const singleDaemonReady=['CANONICAL_PERSISTENT_DAEMON_ALREADY_ACTIVE_NO_NEW_PROCESS','EXISTING_CANONICAL_PERSISTENT_DAEMON_RESTARTED'].includes(restartStatus);
+ const gates=[
+  Boolean(operatorReceipt),
+  opStatus==='ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_INVOKED',
+  Boolean(restartReceipt),
+  singleDaemonReady,
+  heartbeatFresh,
+  holderResolved,
+  securityPreflightPass,
+  acceptancePass,
+  publisherReady,
+  publisherReadback
+ ];
+ const passed=gates.filter(Boolean).length;
+ operatorCard.textContent=`${opDecoded.class} — ${opStatus}`;operatorCard.className=cls(opDecoded.class);
+ restartCard.textContent=`${restartDecoded.class} — ${restartStatus}`;restartCard.className=cls(restartDecoded.class);
+ heartbeatCard.textContent=heartbeatFresh?'PASS':'PENDING / STALE';heartbeatCard.className=heartbeatFresh?'PASS':'PENDING';
+ securityPreflightCard.textContent=securityPreflightPass?'PASS':'PENDING';securityPreflightCard.className=securityPreflightPass?'PASS':'PENDING';
+ acceptanceCard.textContent=acceptancePass?'PASS — 7/8':'PENDING — 5/8';acceptanceCard.className=acceptancePass?'PASS':'PENDING';
+ publisherCard.textContent=publisherReadback?'PASS — READBACK':publisherReady?'READY':'PENDING';publisherCard.className=publisherReadback?'PASS':'PENDING';
+ promotionCard.textContent=`${passed}/10`;promotionCard.className=passed===10?'PASS':'PENDING';
+
+ const current=[
+  ['Operator preflight receipt',operatorReceipt?opStatus:'NO_RECEIPT',opDecoded.meaning,opDecoded.next_action],
+  ['Restart helper receipt',restartReceipt?restartStatus:'NO_RECEIPT',restartDecoded.meaning,restartDecoded.next_action],
+  ['Shared daemon heartbeat',heartbeatFresh?'PASS':'PENDING',heartbeatFresh?'Fresh heartbeat observed.':`Last observed ${dependency.holder_readback?.last_observed_runner_heartbeat_at||'not_available'}; stale.`,heartbeatFresh?'Wait for priority-1 queue processing.':'Run only the already-published guarded recovery on the F-host.'],
+  ['Priority-1 holder resolution',holderResolved?'PASS':'PENDING',holderResolved?'height_difference_2 processed or released.':'height_difference_2 remains the global holder.',holderResolved?'Existing runner may claim security_public_safety_1.':'Do not overwrite the global alias.'],
+  ['Security v17 preflight',securityPreflightPass?'PASS':'PENDING',securityPreflight?`status=${securityPreflight.status||'unknown'}`:'Report absent.',securityPreflightPass?'Proceed to v17 live parity and browser acceptance.':'Wait for the existing runner to claim this slot.'],
+  ['Security v17 acceptance',acceptancePass?'PASS':'PENDING',acceptance?`acceptance_pass=${acceptance.acceptance_pass}`:'Report absent.',acceptancePass?'Generate/inspect publisher candidate; cap display at 7/8.':'Do not promote beyond 5/8.'],
+  ['Publisher candidate/readback',publisherReadback?'PASS':publisherReady?'PENDING':'PENDING',publisher?`status=${publisher.status||'unknown'}`:'Candidate absent.',publisherReadback?'8/8 may be evaluated while final_ready stays contract-bound.':'Commit/push/readback is still required.']
+ ];
+ currentBody.innerHTML=current.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x[0])}</td><td class="${cls(x[1])}">${esc(x[1])}</td><td>${esc(x[2])}</td><td>${esc(x[3])}</td></tr>`).join('');
+ operatorBody.innerHTML=(decoder.operator_statuses||[]).map((x,i)=>`<tr><td>${i+1}</td><td class="mono">${esc(x.status)}</td><td class="${cls(x.class)}">${esc(x.class)}</td><td>${esc(x.meaning)}</td><td>${esc(x.next_action)}</td></tr>`).join('');
+ restartBody.innerHTML=(decoder.restart_statuses||[]).map((x,i)=>`<tr><td>${i+1}</td><td class="mono">${esc(x.status)}</td><td class="${cls(x.class)}">${esc(x.class)}</td><td>${esc(x.meaning)}</td><td>${esc(x.next_action)}</td></tr>`).join('');
+ promotionBody.innerHTML=(decoder.promotion_chain||[]).map((x,i)=>`<tr><td>${esc(x.gate)}</td><td>${esc(x.name)}</td><td>${esc(x.pass_condition)}</td><td class="${gates[i]?'PASS':'PENDING'}">${gates[i]?'PASS':'PENDING'}</td></tr>`).join('');
+ document.body.dataset.operatorStatus=opStatus;
+ document.body.dataset.restartStatus=restartStatus;
+ document.body.dataset.promotionPassed=String(passed);
+ document.body.dataset.operatorDecoderRows=String((decoder.operator_statuses||[]).length);
+ document.body.dataset.restartDecoderRows=String((decoder.restart_statuses||[]).length);
+ document.body.dataset.acceptanceReportPresent=String(Boolean(acceptance));
+ document.body.dataset.semanticValid=String(decoder.acceptance_evidence===false&&decoder.safety?.final_ready===false&&decoder.safety?.global_alias_overwrite_forbidden===true);
+})().catch(e=>{currentBody.innerHTML=`<tr><td colspan="5" class="BLOCKED">Yükleme hatası: ${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+</script>
+</body></html>

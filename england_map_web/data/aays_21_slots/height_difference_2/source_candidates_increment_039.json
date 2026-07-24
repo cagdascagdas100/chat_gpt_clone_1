@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "verified_on": "2026-07-22",
+  "candidate_count": 4,
+  "promoted_count": 4,
+  "held_count": 0,
+  "promoted_average_source_confidence_percent": 100.0,
+  "aggregate_source_candidate_count": 74,
+  "aggregate_promoted_source_contract_count": 74,
+  "candidates": [
+    {
+      "candidate_id": "HD2-SRC-071",
+      "publisher": "Environment Agency",
+      "name": "Survey Data Catalogue vertical accuracy of LIDAR data",
+      "role": "ABSOLUTE_AND_RELATIVE_VERTICAL_ERROR_CONTRACT",
+      "source_url": "https://environment.data.gov.uk/support/faqs/275879146/302907800",
+      "source_confidence_percent": 100,
+      "promotion_state": "PROMOTED_OFFICIAL_ERROR_CONTRACT",
+      "verified_facts": [
+        "Absolute height error specification is less than ±15 cm RMSE",
+        "Expected relative height random error is no more than ±5 cm"
+      ],
+      "semantic_limits": [
+        "RMSE limits do not prove that each individual pixel error equals the stated value",
+        "The two-endpoint propagation used here is an internal conservative QA model"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-072",
+      "publisher": "Environment Agency",
+      "name": "LIDAR DTM Time Stamped Tiles",
+      "role": "ODN_GRID_TRANSFORMATION_AND_VERTICAL_ACCURACY_CONTRACT",
+      "source_url": "https://environment.data.gov.uk/dataset/dbadf364-0192-4bcf-a223-f3d403f08682",
+      "source_confidence_percent": 100,
+      "promotion_state": "PROMOTED_SOURCE_CONTRACT",
+      "verified_facts": [
+        "DTM values are metres referenced to Ordnance Datum Newlyn and aligned to the OS Grid",
+        "All LIDAR data has ±15 cm vertical RMSE",
+        "Transformation used is specific to survey period"
+      ],
+      "semantic_limits": [
+        "Time-stamped archive metadata does not identify the current composite source without the separate lineage catalogue"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-073",
+      "publisher": "Ordnance Survey",
+      "name": "Accuracy of OS Net, OSTN15 and OSGM15",
+      "role": "CURRENT_VERTICAL_TRANSFORMATION_STANDARD_ERROR_CONTRACT",
+      "source_url": "https://www.ordnancesurvey.co.uk/geodesy-positioning/os-net/accuracy",
+      "source_confidence_percent": 100,
+      "promotion_state": "PROMOTED_ACCURACY_CONTRACT",
+      "verified_facts": [
+        "OSGM15 Great Britain height standard error is 0.008 m",
+        "The stated OSGM15 error excludes GNSS heighting error"
+      ],
+      "semantic_limits": [
+        "OSGM15 standard error is not added silently to the published parcel range"
+      ]
+    },
+    {
+      "candidate_id": "HD2-SRC-074",
+      "publisher": "EPSG",
+      "name": "ETRS89-GBR to ODN height transformation 7711",
+      "role": "ODN_TRANSFORMATION_IDENTITY_AND_ACCURACY_CONTRACT",
+      "source_url": "https://epsg.org/transformation_7711/ETRS89-to-ODN-height-2.html",
+      "source_confidence_percent": 100,
+      "promotion_state": "PROMOTED_TRANSFORMATION_CONTRACT",
+      "verified_facts": [
+        "Transformation accuracy is 0.008 m",
+        "OSGM15 supersedes OSGM02",
+        "The model targets ODN height"
+      ],
+      "semantic_limits": [
+        "Transformation metadata is a coordinate reference contract, not an independent terrain observation"
+      ]
+    }
+  ],
+  "score_semantics": "Official error and transformation contracts; uncertainty propagation and decision classes are explicitly internal QA.",
+  "fake_data": false,
+  "final_ready": false
+}

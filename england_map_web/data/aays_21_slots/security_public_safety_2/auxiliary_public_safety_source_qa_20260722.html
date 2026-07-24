@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>security_public_safety_2 — yardımcı resmî kaynak QA</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}h1,h2{margin:16px 0 8px}.notice{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin-bottom:14px}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;font-size:11px;margin:14px 0}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.PASS,.PROMOTED_FOR_ROLE{font-weight:700}a{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — 12 yardımcı resmî kaynak QA</h1>
+<div class="notice">Bu sayfa kaynak rolünü, güncelliği, coğrafyayı ve kullanım sınırını gösterir. Hiçbir satır parcel business skoru değildir.</div>
+<div id="cards" class="cards"></div>
+<h2>Kaynak satırları</h2>
+<table><thead><tr><th>#</th><th>Kaynak</th><th>Yayıncı</th><th>Güncellik</th><th>Coğrafya</th><th>Rol</th><th>Kullanım sınırı</th><th>Güven</th><th>Durum</th></tr></thead><tbody id="sources"></tbody></table>
+<h2>İşlem satırları</h2>
+<table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th></tr></thead><tbody id="operations"></tbody></table>
+<p id="error"></p>
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('./auxiliary_public_safety_source_qa_20260722.json',{cache:'no-store'})
+.then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+.then(d=>{
+ const cards=[['Ana ilerleme',d.main_workflow_progress_percent+'%'],['Artış','+'+d.main_workflow_delta_percent+'%'],['Yeni kaynak',d.new_official_source_rows],['Toplam kaynak',d.combined_official_source_rows],['Toplam yükseltilen',d.combined_promoted_for_defined_role],['≥95 güven',d.combined_confidence_ge_95_rows],['QA işlem',d.operations_completed+'/'+d.operations_total],['96 aday','RUNNER PENDING'],['Business satırı',d.business_rows_written]];
+ document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card">${esc(x[0])}<br><b>${esc(x[1])}</b></div>`).join('');
+ document.getElementById('sources').innerHTML=d.sources.map(s=>`<tr><td>${esc(s.row)}</td><td><a href="${esc(s.url)}">${esc(s.name)}</a></td><td>${esc(s.publisher)}</td><td>${esc(s.published_or_current)}</td><td>${esc(s.geography)}</td><td>${esc(s.role)}</td><td>${esc(s.usage_limit)}</td><td>${esc(s.source_role_confidence_percent)}%</td><td class="${esc(s.status)}">${esc(s.status)}</td></tr>`).join('');
+ document.getElementById('operations').innerHTML=d.operations.map(o=>`<tr><td>${esc(o.row)}</td><td>${esc(o.operation)}</td><td class="${esc(o.state)}">${esc(o.state)}</td></tr>`).join('');
+})
+.catch(e=>document.getElementById('error').textContent='Veri yüklenemedi: '+e.message);
+</script>
+</body>
+</html>

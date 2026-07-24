@@ -1,0 +1,144 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_2",
+  "snapshot_date": "2026-07-22",
+  "state": "WAVE2_ORDINAL_METHOD_CORRECTION_WRAPPER_PUBLISHED_NOT_ACTIVATED",
+  "source_script": {
+    "path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_iod25_relative_method_wave2_20260722.py",
+    "git_blob_sha": "ce080f565fc79c99e6a98df0afb9302c6b98343d",
+    "target_start": "parcel_30774",
+    "target_end": "parcel_30797",
+    "target_rows": 24
+  },
+  "corrected_wrapper": {
+    "path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_iod25_relative_method_wave2_corrected_wrapper_20260722.py",
+    "git_blob_sha": "9de3f2015604407dcf114ec119d48756bc4a13e6",
+    "commit": "31202f92b0d8c3bde1923dc88146117d8aa3af5c",
+    "exact_source_blob_required": true,
+    "execution_state": "NOT_EXECUTED",
+    "queue_activation_state": "NOT_CHANGED"
+  },
+  "official_method_basis": [
+    {
+      "row": 1,
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "source": "English indices of deprivation 2025 release",
+      "role": "current corrected v2 file route and relative small-area measure",
+      "confidence_percent": 99
+    },
+    {
+      "row": 2,
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "source": "IoD25 statistical release and FAQ",
+      "role": "rank direction, 33,755 LSOA universe and non-cardinal interpretation",
+      "confidence_percent": 99
+    },
+    {
+      "row": 3,
+      "publisher": "Police.uk / Home Office",
+      "source": "Street-level crimes API contract and anonymisation guidance",
+      "role": "one-mile approximate event context only",
+      "confidence_percent": 98
+    },
+    {
+      "row": 4,
+      "publisher": "Home Office",
+      "source": "Police recorded crime open data user guide",
+      "role": "recording practice and force-comparability guard",
+      "confidence_percent": 99
+    }
+  ],
+  "findings": [
+    {
+      "row": 1,
+      "finding": "legacy_candidate_name_implies_cardinal_security",
+      "previous_behavior": "relative_security_candidate_percent",
+      "corrected_behavior": "less_deprived_ordinal_position_percent",
+      "status": "CORRECTED_IN_WRAPPER"
+    },
+    {
+      "row": 2,
+      "finding": "rank_difference_can_be_misread_as_proportional_safety_difference",
+      "previous_behavior": "0 most deprived and 100 least deprived without explicit non-cardinal guard",
+      "corrected_behavior": "ordinal ordering only; a doubled value does not mean doubled safety",
+      "status": "CORRECTED_IN_WRAPPER"
+    },
+    {
+      "row": 3,
+      "finding": "police_point_query_hash_mixed_into_iod_candidate_confidence",
+      "previous_behavior": "15 confidence points awarded for Police.uk response hash",
+      "corrected_behavior": "Police.uk one-mile approximate context excluded from IoD candidate confidence",
+      "status": "CORRECTED_IN_WRAPPER"
+    },
+    {
+      "row": 4,
+      "finding": "file7_schema_gate_too_weak",
+      "previous_behavior": "header presence only",
+      "corrected_behavior": "33,755 rows, 33,755 unique LSOAs, no duplicates, rank min 1, rank max 33,755, 33,755 unique ranks and valid deciles required",
+      "status": "CORRECTED_IN_WRAPPER"
+    },
+    {
+      "row": 5,
+      "finding": "current_corrected_v2_edition_not_explicitly_gated",
+      "previous_behavior": "fixed asset URL without explicit current-v2 semantic gate",
+      "corrected_behavior": "current corrected v2 route and hash evidence required before candidate generation",
+      "status": "CORRECTED_IN_METHOD_CONTRACT"
+    },
+    {
+      "row": 6,
+      "finding": "legacy_output_field_could_be_consumed_downstream",
+      "previous_behavior": "relative_security_candidate_percent populated",
+      "corrected_behavior": "legacy field forced null and marked deprecated; new ordinal field used",
+      "status": "CORRECTED_IN_WRAPPER"
+    }
+  ],
+  "corrected_method": {
+    "field": "less_deprived_ordinal_position_percent",
+    "formula": "round(100 * (crime_rank - 1) / (33755 - 1), 1)",
+    "semantics": "ordinal relative position within the IoD25 Crime Domain only",
+    "cardinal_interpretation_allowed": false,
+    "parcel_incident_probability": false,
+    "business_score": false,
+    "police_point_query_in_candidate_confidence": false,
+    "promotion_allowed": false
+  },
+  "validation_contract": {
+    "expected_file7_rows": 33755,
+    "expected_unique_lsoa_codes": 33755,
+    "duplicate_lsoa_codes_allowed": 0,
+    "expected_rank_min": 1,
+    "expected_rank_max": 33755,
+    "expected_unique_ranks": 33755,
+    "valid_crime_decile_range": [1, 10],
+    "exact_target_lsoa_join_required": true,
+    "business_values_remain_null": true
+  },
+  "operations": [
+    {"row":1,"operation":"wave2_source_script_exact_blob_readback","state":"PASS"},
+    {"row":2,"operation":"legacy_cardinal_security_naming_detected","state":"PASS"},
+    {"row":3,"operation":"police_context_candidate_confidence_mixing_detected","state":"PASS"},
+    {"row":4,"operation":"weak_file7_header_only_schema_gate_detected","state":"PASS"},
+    {"row":5,"operation":"official_relative_noncardinal_and_current_v2_method_limits_verified","state":"PASS"},
+    {"row":6,"operation":"corrected_wrapper_exact_source_blob_guard_published","state":"PASS"},
+    {"row":7,"operation":"file7_33755_unique_lsoa_unique_rank_and_decile_validation_published","state":"PASS"},
+    {"row":8,"operation":"police_one_mile_context_excluded_from_candidate_confidence","state":"PASS"},
+    {"row":9,"operation":"ordinal_field_and_legacy_null_deprecation_published","state":"PASS"},
+    {"row":10,"operation":"business_score_and_automatic_promotion_fail_closed","state":"PASS"},
+    {"row":11,"operation":"activate_exact_existing_wave2_queue_contract_after_wave1_output","state":"PENDING"},
+    {"row":12,"operation":"execute_corrected_wave2_and_served_browser_acceptance","state":"PENDING"}
+  ],
+  "operations_completed": 10,
+  "operations_total": 12,
+  "target_rows": 24,
+  "joined_candidate_rows": 0,
+  "confidence_ge_95_candidate_rows": 0,
+  "business_rows_written": 0,
+  "new_runner_created": false,
+  "parallel_runner_created": false,
+  "queue_modified": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
