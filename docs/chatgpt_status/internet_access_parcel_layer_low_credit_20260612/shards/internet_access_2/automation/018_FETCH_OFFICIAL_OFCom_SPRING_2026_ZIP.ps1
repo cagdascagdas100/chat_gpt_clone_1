@@ -80,7 +80,7 @@ if ($ExistingValidation) {
         strict_inner_validation_deferred_to_014 = $true
         final_ready = $false
     } | ConvertTo-Json -Depth 5
-    exit 0
+    return
 }
 
 $TempPath = "$ArchivePath.partial.$([guid]::NewGuid().ToString('N'))"
@@ -115,7 +115,7 @@ if (-not $Downloaded) {
 }
 
 if (-not $Downloaded -or -not (Test-Path -LiteralPath $TempPath -PathType Leaf)) {
-    [ordered]@{
+    $Failure = [ordered]@{
         state = "OFFICIAL_ARCHIVE_DOWNLOAD_BLOCKED"
         slot_id = $SlotId
         source_url = $SourceUrl
@@ -128,8 +128,9 @@ if (-not $Downloaded -or -not (Test-Path -LiteralPath $TempPath -PathType Leaf))
         duplicate_task_created = $false
         second_runner_started = $false
         final_ready = $false
-    } | ConvertTo-Json -Depth 6
-    exit 2
+    }
+    $Failure | ConvertTo-Json -Depth 6
+    throw "OFFICIAL_ARCHIVE_DOWNLOAD_BLOCKED:$([string]::Join(' | ', @($DownloadErrors)))"
 }
 
 $Validation = $null
