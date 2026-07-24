@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="refresh" content="30">
   <link rel="icon" href="data:,">
-  <title>Security 1 — Resmî Kaynak Artışı V31</title>
+  <title>Security 1 — Resmî Kaynak Artışı V32</title>
   <style>
     body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:7px;text-align:left;vertical-align:top}th{background:#eaf0f5}[class^="PASS"]{font-weight:700}.BLOCKED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}a{color:#0759a5}
   </style>
 </head>
 <body data-slot-id="security_public_safety_1" data-final-ready="false">
-  <h1>Security / Public Safety 1 — Resmî Kaynak Artışı V31</h1>
-  <div class="note"><strong>Not:</strong> Bu tablo recovery sürerken doğrulanan resmî kaynak adaylarını gösterir. Kaynak doğruluğu 4/4 olsa da kamu finansmanı, savunma ve araştırma yönetişimi, sağlık muhasebe kontrolleri, eğitim, çevre-doğa, kamu kayıtları, kültür, enerji ve konut raporları doğrudan parsel skoru değildir; canlı endpoint parity ve kabul kanıtı ayrıca gereklidir. V31 verileri dört küçük doğrulama parçasından sıra numarasıyla birleştirilir.</div>
+  <h1>Security / Public Safety 1 — Resmî Kaynak Artışı V32</h1>
+  <div class="note"><strong>Not:</strong> Bu tablo recovery sürerken doğrulanan resmî kaynak adaylarını gösterir. Kaynak doğruluğu 4/4 olsa da hukuk ve kamu finansmanı, iş ve emeklilik düzenlemesi, sağlık ve çevre gözetimi, enerji ağları, su düzenlemesi, ulaştırma performansı ve kamu veri altyapısı doğrudan parsel skoru değildir; canlı endpoint parity ve kabul kanıtı ayrıca gereklidir. V32 verileri dört küçük doğrulama parçasından sıra numarasıyla birleştirilir.</div>
   <div class="cards">
     <div class="card">Ana ilerleme<br><strong id="progress">yükleniyor</strong></div>
     <div class="card">Yeni doğrulama<br><strong id="checks">yükleniyor</strong></div>
@@ -36,7 +36,7 @@
     const cls=s=>String(s||'').startsWith('PASS')?'PASS':String(s||'').startsWith('BLOCKED')?'BLOCKED':'';
     const getJson=async file=>{const r=await fetch(`${file}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${file}: HTTP ${r.status}`);return r.json()};
     (async()=>{
-      const d=await getJson('continuation_official_source_increment_v31_20260724.json');
+      const d=await getJson('continuation_official_source_increment_v32_20260724.json');
       const parts=await Promise.all((d.parts||[]).map(x=>getJson(x.file)));
       const sourceData=parts.flatMap(x=>x.sources||[]).sort((a,b)=>Number(a.row)-Number(b.row));
       const operationData=[...(d.operations||[]),...parts.flatMap(x=>x.operations||[])].sort((a,b)=>Number(a.order)-Number(b.order));
