@@ -54,6 +54,30 @@ function sampleObjects(payload){
   const cols=payload.columns||[];
   return rows.map(row=>Object.fromEntries(cols.map((c,i)=>[c,row[i]])));
 }
+async function resolveLatestRows(payload){
+  if(!payload?.source_selections?.length) return asObjects(payload);
+  const batches=await Promise.all(payload.source_selections.map(async selection=>{
+    const source=await fetchJson(selection.path,{critical:true});
+    const wanted=new Set((selection.lines||[]).map(Number));
+    return (source?.rows||[]).filter(row=>wanted.has(Number(row.line))).map(row=>({
+      ...row,
+      source_chunk:selection.chunk,
+      source_blob_sha:selection.blob_sha,
+      legacy_gigabit_available_pct:row.legacy_metrics?.gigabit_available_pct,
+      legacy_superfast_30mbps_available_pct:row.legacy_metrics?.superfast_30mbps_available_pct
+    }));
+  }));
+  const byLine=new Map(batches.flat().map(row=>[Number(row.line),row]));
+  const ordered=[];
+  for(const wave of payload.waves||[]){
+    for(const line of wave.lines||[]){
+      const row=byLine.get(Number(line));
+      if(row) ordered.push({...row,wave:wave.wave,candidate_row:wave.candidate_row});
+      else errors.push({file:payload.state||'latest-wave-manifest',state:'SOURCE_ROW_NOT_FOUND',detail:`line ${line}`});
+    }
+  }
+  return ordered;
+}
 (async()=>{
   try{
     const progress=await fetchJson('progress_latest.json',{critical:true});
@@ -72,7 +96,7 @@ function sampleObjects(payload){
     const sampleRows=sampleObjects(samples);
     const latestWavePath=latest?.visibility?.latest_wave_path;
     const latestWave=latestWavePath?await fetchJson(latestWavePath):null;
-    const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:asObjects(latestWave);
+    const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:await resolveLatestRows(latestWave);
     const latestOps=latest?.operation_rows||[];
     const p=progress.progress||{},c=progress.candidates||{},w=progress.web_visibility||{},lp=latest.progress||{},lv=latest.visibility||{};
     document.getElementById('metrics').innerHTML=[
@@ -98,7 +122,7 @@ function sampleObjects(payload){
       ['final_ready',latest.final_ready,'Güvenlik gereği false']
     ]);
     if(latestOps.length) html+=table(`Son devam işlemleri (${latestOps.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],latestOps.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
-    if(latestRows.length) html+=table(`Wave ${lv.latest_wave_number||''} doğrulanmış adaylar (${latestRows.length})`,['Satır','Parsel','HMLR','Postcode','Legacy gigabit %','Legacy superfast %','ONSPD','Doğruluk','Resmî kapsam','Ölçülmüş hız','Kaynak chunk'],latestRows.map(r=>[r.line,r.parcel_id,r.hmlr_inspire_id,r.postcode,r.legacy_gigabit_available_pct,r.legacy_superfast_30mbps_available_pct,r.onspd_status,r.internet_accuracy,r.official_coverage_verified,r.parcel_measured_speed,r.source_chunk]));
+    if(latestRows.length) html+=table(`Wave ${lv.latest_wave_number||''} doğrulanmış adaylar (${latestRows.length})`,['Wave','Aday','Satır','Parsel','HMLR','Postcode','Legacy gigabit %','Legacy superfast %','ONSPD','Doğruluk','Resmî kapsam','Ölçülmüş hız','Kaynak chunk'],latestRows.map(r=>[r.wave??'',r.candidate_row??'',r.line,r.parcel_id,r.hmlr_inspire_id,r.postcode_space||r.postcode,r.legacy_gigabit_available_pct,r.legacy_superfast_30mbps_available_pct,r.onspd_status,r.internet_accuracy,r.official_coverage_verified,r.parcel_measured_speed,r.source_chunk]));
     if(operationRows.length) html+=table(`Önceki satır satır işlemler (${operationRows.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],operationRows.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
     if(runtime) html+=table('Runtime sağlık ve takılma kayıtları',['No','Alan','Durum','Detay'],runtime.rows.map(r=>[r.no,r.area,r.state,r.detail]));
     if(sampleRows.length) html+=table(`Önceki konsolide örnekler (${sampleRows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],sampleRows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
@@ -106,7 +130,7 @@ function sampleObjects(payload){
     if(errors.length) html+=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(e=>[e.file,e.state,e.detail]));
     document.getElementById('content').innerHTML=html;
     document.getElementById('message').className='ok';
-    document.getElementById('message').textContent=`Yüklendi. Ana işlem ${lp.completed_operations}/${lp.total_operations}, destek ${lp.support_checks_completed}/${lp.support_checks_total}, auditli örnek ${lv.audited_visible_examples}, yeni örnek ${lv.new_examples}.`;
+    document.getElementById('message').textContent=`Yüklendi. Ana işlem ${lp.completed_operations}/${lp.total_operations}, destek ${lp.support_checks_completed}/${lp.support_checks_total}, auditli örnek ${lv.audited_visible_examples}, yeni örnek ${lv.new_examples}, çözülen son aday ${latestRows.length}.`;
     document.getElementById('updated').textContent=`Güncelleme: ${latest.generated_at||progress.updated_at||''}`;
   }catch(e){
     document.getElementById('message').className='error';
