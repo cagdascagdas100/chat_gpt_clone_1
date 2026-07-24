@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>height_difference_2 increment 087</title>
+<style>body{font-family:system-ui,Arial;margin:20px}h1,h2{margin:.5em 0}table{border-collapse:collapse;width:100%;margin:12px 0 28px}th,td{border:1px solid #bbb;padding:6px;vertical-align:top;font-size:12px}th{background:#eee;position:sticky;top:0}.ok{font-weight:700}pre{white-space:pre-wrap;background:#f5f5f5;padding:12px}</style></head>
+<body><h1>height_difference_2 — increment 087</h1><div id="summary"></div>
+<h2>Operations</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Description</th><th>QA</th><th>Status</th></tr></thead><tbody></tbody></table>
+<h2>Official Sources</h2><table id="src"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Confidence</th><th>Limits</th></tr></thead><tbody></tbody></table>
+<h2>Prepared Examples</h2><table id="ex"><thead><tr><th>ID</th><th>Parcel</th><th>Scenario</th><th>1m diff</th><th>2m check</th><th>Confidence</th><th>QA rule</th></tr></thead><tbody></tbody></table>
+<h2>Integrity audit</h2><pre id="audit"></pre>
+<script>
+const load=p=>fetch(p).then(r=>{if(!r.ok)throw Error(p+" "+r.status);return r.json()});
+Promise.all([load("operations_increment_087.json"),load("source_candidates_increment_087.json"),load("examples_increment_087.json"),load("progress_increment_087.json"),load("integrity_audit_increment_087.json")]).then(([o,s,e,p,a])=>{
+document.querySelector("#summary").innerHTML=`<b>Overall:</b> ${p.overall_completion_percent}% | <b>Main:</b> ${p.completed_operation_count}/${p.planned_operation_count} | <b>Overlay rows:</b> ${o.operation_count} ops, ${s.new_candidate_count} sources, ${e.new_prepared_example_count} examples | <b>Business rows:</b> ${p.actual_business_rows_written} | <b>final_ready:</b> ${p.final_ready}`;
+const ot=document.querySelector("#ops tbody");o.operations.forEach(x=>{const [num,type,srcId,desc,qa]=x;ot.insertAdjacentHTML("beforeend",`<tr><td>${num}</td><td>${type}</td><td>${desc}${srcId?` <small>(${srcId})</small>`:""}</td><td>${qa}/4</td><td>COMPLETED</td></tr>`)});
+const st=document.querySelector("#src tbody");s.candidates.forEach(x=>st.insertAdjacentHTML("beforeend",`<tr><td>${x.candidate_id}</td><td>${x.publisher}</td><td>${x.name}</td><td>${x.role}</td><td>${x.source_confidence_percent}%</td><td>${x.semantic_limits.join(" ")}</td></tr>`));
+const et=document.querySelector("#ex tbody");e.examples.forEach(x=>et.insertAdjacentHTML("beforeend",`<tr><td>${x.example_id}</td><td>${x.borough} / ${x.parcel_row}</td><td>${x.scenario}</td><td>${x.primary_ea_dtm_1m_height_difference_m.toFixed(3)} m</td><td>${x.secondary_ea_dtm_2m_height_difference_m.toFixed(3)} m</td><td>${x.numeric_result_confidence_percent}%</td><td>${x.qa_rule}</td></tr>`));
+document.querySelector("#audit").textContent=JSON.stringify(a,null,2);
+}).catch(err=>document.body.insertAdjacentHTML("beforeend",`<pre>${err}</pre>`));
+</script></body></html>
