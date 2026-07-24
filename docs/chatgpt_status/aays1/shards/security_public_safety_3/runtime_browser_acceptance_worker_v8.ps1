@@ -40,6 +40,10 @@ function Write-Utf8NoBom([string]$Path,[string]$Text) {
 function Write-JsonNoBom([string]$Path,$Value) {
     Write-Utf8NoBom $Path (($Value | ConvertTo-Json -Depth 100) + "`n")
 }
+function Get-Sha256([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $null }
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
 function Write-FallbackEvidence([string]$Reason,[Nullable[int]]$InnerExitCode) {
     $finishedAt = [DateTimeOffset]::UtcNow.ToString('o')
     $status = [ordered]@{
@@ -112,6 +116,8 @@ if (-not $enginePath -or -not (Test-Path -LiteralPath $enginePath)) {
     exit 2
 }
 
+$beforeStatusSha = Get-Sha256 $statusPath
+$beforeOperationSha = Get-Sha256 $operationPath
 $innerExitCode = 2
 try {
     & $enginePath -NoProfile -ExecutionPolicy Bypass -File $innerPath
@@ -130,49 +136,75 @@ if (-not (Test-Path -LiteralPath $operationPath)) {
     exit 2
 }
 
+$afterStatusSha = Get-Sha256 $statusPath
+$afterOperationSha = Get-Sha256 $operationPath
+if ($beforeStatusSha -and $beforeStatusSha -eq $afterStatusSha) {
+    Write-FallbackEvidence 'INNER_STATUS_NOT_REFRESHED' $innerExitCode
+    exit 2
+}
+if ($beforeOperationSha -and $beforeOperationSha -eq $afterOperationSha) {
+    Write-FallbackEvidence 'INNER_OPERATION_NOT_REFRESHED' $innerExitCode
+    exit 2
+}
+
 $innerStatus = $null
+$operationDoc = $null
 try {
     $innerStatus = Get-Content -LiteralPath $statusPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $operationDoc = Get-Content -LiteralPath $operationPath -Raw -Encoding UTF8 | ConvertFrom-Json
 } catch {
-    Write-FallbackEvidence ('INNER_STATUS_PARSE_FAILED:' + $_.Exception.Message) $innerExitCode
+    Write-FallbackEvidence ('INNER_ARTIFACT_PARSE_FAILED:' + $_.Exception.Message) $innerExitCode
     exit 2
 }
 
-$acceptancePass = [bool]$innerStatus.acceptance_pass
-if ($acceptancePass) {
-    $passContractValid = (
-        [string]$innerStatus.worker_contract_version -eq 'v7_exact_set_canonical_content_binding' -and
-        [bool]$innerStatus.canonical_content_binding_pass -and
-        [bool]$innerStatus.matrix_canonical_content_match -and
-        [bool]$innerStatus.security_rows_canonical_content_match -and
-        [bool]$innerStatus.browser_exact_parcel_set_match -and
-        @($innerStatus.browser_missing_parcel_ids).Count -eq 0 -and
-        @($innerStatus.browser_unexpected_parcel_ids).Count -eq 0 -and
-        [int]$innerStatus.served_security_row_count -eq 300 -and
-        [string]$innerStatus.selected_layer -eq 'security' -and
-        [int]$innerStatus.browser_dom_security_row_count -eq 300 -and
-        [int]$innerStatus.browser_filtered_security_row_count -eq 300 -and
-        [int]$innerStatus.browser_page_size -eq 25 -and
-        [int]$innerStatus.browser_page_count -eq 12 -and
-        [int]$innerStatus.browser_rendered_across_pages -eq 300 -and
-        [int]$innerStatus.browser_unique_parcel_count -eq 300 -and
-        [int]$innerStatus.console_error_count -eq 0 -and
-        [int]$innerStatus.runtime_exception_count -eq 0 -and
-        [int]$innerStatus.browser_log_error_count -eq 0
-    )
-    if (-not $passContractValid) {
-        Write-FallbackEvidence 'INNER_V7_PASS_CONTRACT_INVALID' $innerExitCode
+try {
+    $operations = @($operationDoc.operations)
+    if ($operations.Count -ne 1) {
+        Write-FallbackEvidence 'INNER_OPERATION_COUNT_MISMATCH' $innerExitCode
         exit 2
     }
-    if ($innerExitCode -ne 0) {
-        Write-FallbackEvidence 'INNER_V7_EXIT_NONZERO_WITH_PASS_STATUS' $innerExitCode
-        exit 2
+    $acceptancePass = [bool]$innerStatus.acceptance_pass
+    if ($acceptancePass) {
+        $operation = $operations[0]
+        $passContractValid = (
+            [string]$innerStatus.worker_contract_version -eq 'v7_exact_set_canonical_content_binding' -and
+            [bool]$innerStatus.canonical_content_binding_pass -and
+            [bool]$innerStatus.matrix_canonical_content_match -and
+            [bool]$innerStatus.security_rows_canonical_content_match -and
+            [bool]$innerStatus.browser_exact_parcel_set_match -and
+            @($innerStatus.browser_missing_parcel_ids).Count -eq 0 -and
+            @($innerStatus.browser_unexpected_parcel_ids).Count -eq 0 -and
+            [int]$innerStatus.served_security_row_count -eq 300 -and
+            [string]$innerStatus.selected_layer -eq 'security' -and
+            [int]$innerStatus.browser_dom_security_row_count -eq 300 -and
+            [int]$innerStatus.browser_filtered_security_row_count -eq 300 -and
+            [int]$innerStatus.browser_page_size -eq 25 -and
+            [int]$innerStatus.browser_page_count -eq 12 -and
+            [int]$innerStatus.browser_rendered_across_pages -eq 300 -and
+            [int]$innerStatus.browser_unique_parcel_count -eq 300 -and
+            [int]$innerStatus.console_error_count -eq 0 -and
+            [int]$innerStatus.runtime_exception_count -eq 0 -and
+            [int]$innerStatus.browser_log_error_count -eq 0 -and
+            [string]$operation.status -eq 'completed' -and
+            [bool]$operation.canonical_content_binding_pass
+        )
+        if (-not $passContractValid) {
+            Write-FallbackEvidence 'INNER_V7_PASS_CONTRACT_INVALID' $innerExitCode
+            exit 2
+        }
+        if ($innerExitCode -ne 0) {
+            Write-FallbackEvidence 'INNER_V7_EXIT_NONZERO_WITH_PASS_STATUS' $innerExitCode
+            exit 2
+        }
+        exit 0
     }
-    exit 0
-}
 
-if ($innerExitCode -eq 0) {
-    Write-FallbackEvidence 'INNER_V7_EXIT_ZERO_WITH_BLOCKED_STATUS' $innerExitCode
+    if ($innerExitCode -eq 0) {
+        Write-FallbackEvidence 'INNER_V7_EXIT_ZERO_WITH_BLOCKED_STATUS' $innerExitCode
+        exit 2
+    }
+    exit 1
+} catch {
+    Write-FallbackEvidence ('INNER_V7_SCHEMA_VALIDATION_EXCEPTION:' + $_.Exception.Message) $innerExitCode
     exit 2
 }
-exit 1
