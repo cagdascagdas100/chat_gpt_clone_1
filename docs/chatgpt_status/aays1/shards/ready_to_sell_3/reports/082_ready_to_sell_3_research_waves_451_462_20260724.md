@@ -2,22 +2,19 @@
 
 ## Published scope
 - 12 waves × 6 rows = 72 research-only candidates.
-- Official source: Auction House London current aggregate page.
-- The current page exposed 614 lots at the research snapshot.
-- Source confidence: 72/72 high-confidence; average 98.3/100.
+- Official source: Auction House London dated 29–30 July 2026 livestream lot page.
+- Source confidence: 72/72 high-confidence; average 99.2/100.
 - Visible research rows: 2,765 → 2,837 (+72).
 - Promotion, parcel match and geometry match: 0 / 0 / 0.
 
 ## Source filtering
-- Eight Withdrawn, Sold Prior or Postponed rows excluded from lots 51–123.
-- Three Scotland or Wales rows excluded from the England web scope.
-- Twenty-six active rows excluded because their regions overlap recent regional research waves.
-- Eight representative exact-address repository searches returned no prior match.
+- Lots 55, 56, 75A, 77, 79A, 83, 84 and 85A excluded as Withdrawn, Sold Prior or Postponed.
+- Lots 80A, 86A and 102 excluded because they are outside England.
+- Nine representative exact-address repository searches returned no prior match.
 
 ## Semantics
 - Guide prices are not achieved sale prices.
-- Address, guide, marketing type and exposed lot numbers remain publisher facts only.
-- Auction date and tenure remain `not_exposed`.
+- Auction date, address, guide, property class and tenure remain publisher facts only.
 - No legal-title, lawful-use, parcel or geometry inference was made.
 - Duplicate checking is bounded; it is not a complete historical title or UPRN scan.
 
