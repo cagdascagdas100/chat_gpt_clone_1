@@ -11,7 +11,7 @@ body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.
 <body>
 <h1>Ready to Sell 2 — Wave 48 first-party preflight</h1>
 <div id="cards" class="cards"></div>
-<div class="notice"><b>Doğruluk kapısı:</b> 85 ilk-el kaynak adayı ve 414 satır doğrulama hazırlanmıştır. Repository-geneli duplicate benzersizliği, kanonik parsel eşleşmesi ve gerçek Automation 167 DOM kanıtı tamamlanmadan kanonik aday sayısı artırılmaz.</div>
+<div class="notice"><b>Doğruluk kapısı:</b> 105 ilk-el kaynak adayı ve 514 satır doğrulama hazırlanmıştır. Repository-geneli duplicate benzersizliği, kanonik parsel eşleşmesi ve gerçek Automation 167 DOM kanıtı tamamlanmadan kanonik aday sayısı artırılmaz.</div>
 <h2>Aday satırları</h2>
 <table><thead><tr><th>#</th><th>Candidate ID</th><th>Aday</th><th>Durum</th><th>Tarih</th><th>Guide</th><th>Fiyat kanıtı</th><th>Tenure</th><th>Gelir durumu</th><th>Mevcut gelir</th><th>Planlama/risk ayrımı</th><th>Kaynak güveni</th><th>Parsel</th><th>Kabul</th><th>Kaynak</th></tr></thead><tbody id="candidateRows"></tbody></table>
 <h2>Satır bazlı işlemler</h2>
@@ -31,22 +31,26 @@ Promise.all([
  get('candidate_wave_48_preflight_part_5_latest.json'),
  get('candidate_wave_48_preflight_part_6_latest.json'),
  get('candidate_wave_48_preflight_part_7_latest.json'),
+ get('candidate_wave_48_preflight_part_8a_latest.json'),
+ get('candidate_wave_48_preflight_part_8b_latest.json'),
  get('progress_wave_48_preflight_latest.json'),
  get('progress_wave_48_preflight_part_2_latest.json'),
  get('progress_wave_48_preflight_part_3_latest.json'),
  get('progress_wave_48_preflight_part_4_latest.json'),
  get('progress_wave_48_preflight_part_5_latest.json'),
  get('progress_wave_48_preflight_part_6_latest.json'),
- get('progress_wave_48_preflight_part_7_latest.json')
-]).then(([m1,m2,m3,m4,m5,m6,m7,p1,p2,p3,p4,p5,p6,p7])=>{
- const candidates=[...m1.candidates,...m2.candidates,...m3.candidates,...m4.candidates,...m5.candidates,...m6.candidates,...m7.candidates];
- const operations=[...p1.operation_rows,...p2.operation_rows,...p2.source_integrity_rows,...p3.operation_rows,...p4.operation_rows,...p5.operation_rows,...p6.operation_rows,...p7.operation_rows].sort((a,b)=>a.sequence-b.sequence);
+ get('progress_wave_48_preflight_part_7_latest.json'),
+ get('progress_wave_48_preflight_part_8a_latest.json'),
+ get('progress_wave_48_preflight_part_8b_latest.json')
+]).then(([m1,m2,m3,m4,m5,m6,m7,m8a,m8b,p1,p2,p3,p4,p5,p6,p7,p8a,p8b])=>{
+ const candidates=[...m1.candidates,...m2.candidates,...m3.candidates,...m4.candidates,...m5.candidates,...m6.candidates,...m7.candidates,...m8a.candidates,...m8b.candidates];
+ const operations=[...p1.operation_rows,...p2.operation_rows,...p2.source_integrity_rows,...p3.operation_rows,...p4.operation_rows,...p5.operation_rows,...p6.operation_rows,...p7.operation_rows,...p8a.operation_rows,...p8b.operation_rows].sort((a,b)=>a.sequence-b.sequence);
  const integrity=new Map(p2.source_integrity_rows.map(x=>[x.candidate_id,x.result]));
- card('Durum',p7.status);card('Continuation',m1.continuation_key.slice(0,12)+'…');card('Kaynak adayı',candidates.length);
- card('Ön kontrol işlemi',p7.aggregate_child_preflight_operations_completed+' / '+p7.aggregate_child_preflight_operations_total);
- card('İlk-el kaynak güveni','%'+p7.aggregate_average_first_party_source_confidence.toFixed(2));card('Fiyat bütünlük kontrolü',p7.source_integrity_repairs_preserved);
- card('Kanonik ilerleme',p7.canonical_completed_operations_preserved+' / '+p7.canonical_total_operations_preserved+' — %'+p7.canonical_progress_percent_preserved);
- card('Kanonik artış','+'+p7.canonical_progress_percent_increase.toFixed(2)+' puan');card('Benzersiz kabul',0);card('Promosyon',0);card('Blocker',p7.blocker);
+ card('Durum',p8b.status);card('Continuation',m1.continuation_key.slice(0,12)+'…');card('Kaynak adayı',candidates.length);
+ card('Ön kontrol işlemi',p8b.aggregate_child_preflight_operations_completed+' / '+p8b.aggregate_child_preflight_operations_total);
+ card('İlk-el kaynak güveni','%'+p8b.aggregate_average_first_party_source_confidence.toFixed(2));card('Fiyat bütünlük kontrolü',p8b.source_integrity_repairs_preserved);
+ card('Kanonik ilerleme',p8b.canonical_completed_operations_preserved+' / '+p8b.canonical_total_operations_preserved+' — %'+p8b.canonical_progress_percent_preserved);
+ card('Kanonik artış','+'+p8b.canonical_progress_percent_increase.toFixed(2)+' puan');card('Benzersiz kabul',0);card('Promosyon',0);card('Blocker',p8b.blocker);
  const cb=document.getElementById('candidateRows');
  candidates.forEach((c,i)=>{const tr=document.createElement('tr');td(tr,i+1);td(tr,c.candidate_id);td(tr,c.title+' — '+c.location);td(tr,c.marketing_status);td(tr,c.auction_date);td(tr,c.price);td(tr,c.price_readback_state||integrity.get(c.candidate_id)||'first_party_readback_recorded');td(tr,c.tenure);td(tr,c.income_state||'not_normalized_in_part_1');const income=c.annual_rent_gbp===null||c.annual_rent_gbp===undefined?(c.historic_annual_rent_gbp?'Tarihsel £'+c.historic_annual_rent_gbp.toLocaleString('en-GB')+'/yıl':'—'):'£'+c.annual_rent_gbp.toLocaleString('en-GB')+'/yıl';td(tr,income);td(tr,c.planning_signal);td(tr,c.source_confidence_score);td(tr,c.parcel_match_confidence_score+' / '+c.geometry_match_status);td(tr,c.promotion_allowed?'ACCEPTED':'HELD');const link=td(tr,'');const a=document.createElement('a');a.href=c.source_url;a.textContent='first-party source';a.target='_blank';a.rel='noopener';link.appendChild(a);cb.appendChild(tr)});
  const ob=document.getElementById('operationRows');
