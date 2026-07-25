@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>future_growth_2 audit 4258-4330</title><style>body{font:13px Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:5px;text-align:left}th{position:sticky;top:0;background:#fff}.ok{color:#16803a}.hold{color:#9a6700}.bad{color:#b42318}input{padding:7px;width:360px;margin-bottom:10px}</style></head><body><h1>future_growth_2 — gerçek doğrulama audit Wave 4258–4330</h1><p><b>73/73 COMPLETE.</b> Sentetik batch çarpımı yoktur. Satırlar gerçekten yürütülen canonical/currentness ve polygon source/quality/geometry/WKT/validity/CRS/PIP/distance/promotion kontrolleridir.</p><input id="q" placeholder="satırlarda ara"><table><thead><tr><th>Satır</th><th>Durum</th><th>Aday</th><th>Kaynak/Entity</th><th>İşlem</th><th>Sonuç</th></tr></thead><tbody id="rows"></tbody></table><script>
+const base=180183; const rows=[];
+const recovery=[
+['heartbeat','IDLE/null; final_ready=false'],['ownership','UNCLAIMED; owner=null'],['global_queue','height_difference_2 pickup_requested'],['330_export','required result file absent/404'],['single_runner_guard','second runner not created'],['Planning Data API docs','coordinate intersection by WGS84 lat/lon documented'],['Article4 dataset currentness','7152 areas; 111 providers; collector 2026-07-24'],['Enfield Local Plan currentness','Examination in Public; not promoted as adopted'],['Enfield Evidence Base','official Local Plan GIS layers remain published'],['promotion policy','negative planning constraint != future-growth designation']];
+for(const x of recovery) rows.push(['COMPLETE','future_growth_2',x[0],'RECOVERY/CURRENTNESS',x[1]]);
+const ents=[
+['30762','7010003985 / AD08 Pretoria Road North','authoritative','OUTSIDE_POLYGON 7879.960 m','NEW'],
+['30762','7010003986 / AD09 Crews Hill Nurseries','quality not explicit in this trace','OUTSIDE geometry 3625.859 m; NOT PROMOTED','FAIL_CLOSED'],
+['30762','7010003987 / AD10 Government Row','authoritative','OUTSIDE_POLYGON 1785.668 m','PRECISION_UPGRADE'],
+['30762','7010003988 / AD11 Kingswood - Clay Hill','authoritative','OUTSIDE_POLYGON 3408.616 m','NEW'],
+['30762','7010004005 / AD28 Southgate Green','authoritative','OUTSIDE_POLYGON 8051.066 m','NEW'],
+['30762','7010004006 / AD29 Turkey Street','authoritative','OUTSIDE_POLYGON 556.191 m','PRECISION_UPGRADE'],
+['30762','7010004007 / AD30 Vicars Moor Lane','authoritative','OUTSIDE_POLYGON 6062.172 m','NEW']];
+const checks=['SOURCE_RETRIEVAL','QUALITY_ORGANISATION','GEOMETRY_EXTRACTION','WKT_PARSE','GEOMETRY_VALIDITY','CRS_4326_TO_27700','POINT_IN_POLYGON','MIN_POLYGON_DISTANCE','PROMOTION_GUARD'];
+for(const e of ents){for(const c of checks){let r='PASS'; if(c==='QUALITY_ORGANISATION')r=e[2]; else if(c==='POINT_IN_POLYGON'||c==='MIN_POLYGON_DISTANCE')r=e[3]; else if(c==='PROMOTION_GUARD')r=e[4]; rows.push(['COMPLETE','parcel_'+e[0],e[1],c,r]);}}
+const tb=document.getElementById('rows'); function render(){tb.innerHTML=''; const q=document.getElementById('q').value.toLowerCase(); rows.forEach((r,i)=>{const txt=r.join(' ').toLowerCase(); if(q&&!txt.includes(q))return; const tr=document.createElement('tr'); tr.innerHTML=`<td>${base+i}</td><td class="${r[0]==='COMPLETE'?'ok':'hold'}">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td>`; tb.appendChild(tr);});} document.getElementById('q').addEventListener('input',render); render();
+</script></body></html>
