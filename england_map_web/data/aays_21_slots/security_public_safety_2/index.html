@@ -21,8 +21,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const getJson=path=>fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()});
 async function load(){
  const p=await getJson('progress_latest.json');
- const sourcePaths=[p.source_revalidation_path,...(p.source_increment_paths||[])];
- const operationPaths=[p.operations_path,...(p.operations_increment_paths||[])];
+ const sourcePaths=[p.source_revalidation_path,...(p.source_increment_paths||p.latest_source_increment_paths||[])].filter(Boolean);
+ const operationPaths=[p.operations_path,...(p.operations_increment_paths||p.latest_operations_increment_paths||[])].filter(Boolean);
  const [sourceDocs,operationDocs]=await Promise.all([
   Promise.all(sourcePaths.map(getJson)),
   Promise.all(operationPaths.map(getJson))
