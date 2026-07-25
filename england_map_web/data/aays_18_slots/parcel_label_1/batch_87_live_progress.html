@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>parcel_label_1 — Batch 87 Resmî Kaynak Ön Doğrulama</title>
+<style>
+body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}
+.cards{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid #ccd6dd;padding:9px;min-width:150px}
+table{border-collapse:collapse;width:100%;background:#fff;margin:12px 0 24px;font-size:12px}
+th,td{border:1px solid #ccd6dd;padding:5px;text-align:left;vertical-align:top}
+th{background:#edf1f3;position:sticky;top:0}
+.DONE,.DONE_NO_BINDING{font-weight:700;color:#1b5e20}
+.BLOCKED,.PENDING_RUNNER_AUDIT{font-weight:700;color:#b71c1c}
+.PREVALIDATED{font-weight:700;color:#0d47a1}
+a{word-break:break-all}
+.notice{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}
+</style>
+</head>
+<body>
+<h1>parcel_label_1 — Batch 87 Resmî Kaynak Ön Doğrulama</h1>
+<div class="notice">Bu 8 satır resmî HMCTS sayfalarından ön doğrulandı. Geçmiş batch duplicate taraması ve tek-runner audit tamamlanmadan kanonik aday veya doğrulanmış parsel satırı sayılmaz.</div>
+<div id="cards" class="cards"></div>
+<h2>Kaynak satırları</h2>
+<table>
+<thead><tr><th>ID</th><th>Kurum</th><th>Ziyaret adresi</th><th>Postcode</th><th>Tür</th><th>Kaynak</th><th>Aktiflik kanıtı</th><th>Kaynak doğruluğu</th><th>Durum</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+<h2>İşlem satırları</h2>
+<table>
+<thead><tr><th>Kapsam</th><th>Satır</th><th>İşlem</th><th>Durum</th><th>Sonuç</th></tr></thead>
+<tbody id="ops"></tbody>
+</table>
+<script>
+fetch('batch_87_official_preflight_latest.json').then(r=>r.json()).then(d=>{
+ const m=d.metrics;
+ cards.innerHTML=[
+  ['Resmî sayfa',m.official_pages_checked],
+  ['Ön doğrulanan kaynak',m.prevalidated_source_rows],
+  ['Yeni kanonik aday',m.new_canonical_candidate_rows],
+  ['Kaynak yükseltmesi',m.official_sources_upgraded],
+  ['Kaynak doğruluğu','%'+m.source_extraction_accuracy_average_percent],
+  ['Batch işlem','%'+m.workflow_percent],
+  ['Global araştırma','%'+m.research_operation_progress_percent_unchanged],
+  ['Continuation',d.continuation_key.slice(0,12)+'…']
+ ].map(x=>`<div class="card"><b>${x[0]}</b><br>${x[1]}</div>`).join('');
+ d.rows.forEach((r,i)=>{
+  rows.insertAdjacentHTML('beforeend',`<tr><td>${r.row_id}</td><td>${r.name}</td><td>${r.visit_address}</td><td>${r.postcode}</td><td>${r.facility_type}</td><td><a href="${r.source_url}">${r.source_url}</a></td><td>${r.active_service_evidence}</td><td>${r.source_extraction_accuracy_percent}%</td><td class="PREVALIDATED">PREVALIDATED</td></tr>`);
+  d.candidate_operation_templates.forEach(t=>{
+   ops.insertAdjacentHTML('beforeend',`<tr><td>ADAY</td><td>${i+1}</td><td>${t.operation}</td><td class="${t.state}">${t.state}</td><td>${t.result}</td></tr>`);
+  });
+ });
+ d.fixed_operations.forEach(x=>{
+  ops.insertAdjacentHTML('beforeend',`<tr><td>GLOBAL</td><td>F${x.id}</td><td>${x.operation}</td><td class="${x.state}">${x.state}</td><td>${x.result}</td></tr>`);
+ });
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<p class="BLOCKED">JSON okunamadı: '+e+'</p>'));
+</script>
+</body>
+</html>
