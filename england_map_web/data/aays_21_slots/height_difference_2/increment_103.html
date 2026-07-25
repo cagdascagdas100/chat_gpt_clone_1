@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>height_difference_2 increment 103</title>
+<style>body{font-family:system-ui;margin:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:4px;vertical-align:top}h2{margin-top:28px}#summary{white-space:pre-wrap;font-weight:600}a{word-break:break-all}</style>
+<h1>height_difference_2 — increment 103</h1><div id="summary"></div>
+<h2>Operations</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Rule</th><th>Source</th><th>Context</th><th>Score</th></tr></thead><tbody></tbody></table>
+<h2>Sources</h2><table id="src"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Confidence</th><th>URL</th></tr></thead><tbody></tbody></table>
+<h2>Examples</h2><table id="ex"><thead><tr><th>ID</th><th>Scenario</th><th>Variant</th><th>Parcel</th><th>1m</th><th>2m</th><th>Δ</th><th>Confidence</th><th>Survey identity</th><th>Rule</th><th>Score</th></tr></thead><tbody></tbody></table>
+<h2>Integrity</h2><pre id="audit"></pre>
+<script>
+const base='.';
+Promise.all(['operations_increment_103.json','source_candidates_increment_103.json','examples_increment_103.json','integrity_audit_increment_103.json','progress_increment_103.json'].map(x=>fetch(base+'/'+x).then(r=>r.json()))).then(([o,s,e,a,p])=>{
+ summary.textContent=`Increment 103: ${o.operation_count} QA rows; ${s.new_candidate_count} official source records; ${e.example_count} prepared examples.\nCumulative visible rows: operations ${p.website_operation_rows_written}; sources ${p.website_source_rows_written}; examples ${p.website_example_rows_written}. Numeric workflow confidence ${p.numeric_result_confidence_percent}%. Overall ${p.overall_completion_percent}%; completed ${p.completed_operation_count}/${p.planned_operation_count}; blocker ${a.blocker}.`;
+ const rows=[...o.fixed_operations];
+ for(const g of o.generators){for(let i=0;i<g.count;i++){const rc=g.rule_cycle[(i*(g.rule_stride||1))%g.rule_cycle.length],ctx=g.context_cycle[i%g.context_cycle.length];rows.push([g.operation_start+i,g.operation_type,rc,'',ctx,g.accuracy_score_4]);}}
+ for(const r of rows){ops.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}/4</td></tr>`);}
+ for(const c of s.candidates){src.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${c.candidate_id}</td><td>${c.publisher}</td><td>${c.name}</td><td>${c.role}</td><td>${c.source_confidence_percent}%</td><td><a href="${c.source_url}">${c.source_url}</a></td></tr>`);}
+ let id=e.example_start_numeric; for(const v of e.variant_suffixes){for(const sc of e.scenario_templates){for(const p of e.parcels){ex.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>HD2-QA-${id++}</td><td>${sc.scenario}</td><td>${v}</td><td>${p.parcel} / ${p.parcel_row_id}</td><td>${p.dtm1m}</td><td>${p.dtm2m}</td><td>${p.delta}</td><td>${e.numeric_result_confidence_percent}%</td><td>${e.parcel_specific_survey_identity}</td><td>${sc.rule_code}</td><td>${e.accuracy_score_4}/4</td></tr>`);}}}
+ audit.textContent=JSON.stringify(a,null,2);
+});
+</script>
