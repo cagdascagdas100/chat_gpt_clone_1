@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>height_difference_2 increment 108</title>
+<style>body{font-family:system-ui;margin:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:4px;vertical-align:top}h2{margin-top:28px}#summary{white-space:pre-wrap;font-weight:600}.warn{padding:10px;border:1px solid #999;margin:12px 0}a{word-break:break-all}</style>
+<h1>height_difference_2 — increment 108</h1><div class="warn"><b>Accounting:</b> canonical task completion and support-QA counters are separate. Repository overlay rendering is not live port 8012 acceptance.</div><div id="summary"></div>
+<h2>Operations</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Rule</th><th>Source</th><th>Context</th><th>Score</th></tr></thead><tbody></tbody></table>
+<h2>Sources</h2><table id="src"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Authority confidence</th><th>URL</th></tr></thead><tbody></tbody></table>
+<h2>Examples</h2><table id="ex"><thead><tr><th>ID</th><th>Scenario</th><th>Variant</th><th>Target row</th><th>Expected decision</th><th>Seed</th><th>HMLR polygon</th><th>EA DTM1m</th><th>OS Terrain50</th><th>Score</th></tr></thead><tbody></tbody></table>
+<h2>Integrity</h2><pre id="audit"></pre>
+<script>
+const base='.';
+Promise.all(['operations_increment_108.json','source_candidates_increment_108.json','examples_increment_108.json','integrity_audit_increment_108.json','progress_increment_108.json'].map(x=>fetch(base+'/'+x).then(r=>r.json()))).then(([o,s,e,a,p])=>{
+ summary.textContent=`Canonical: ${p.canonical.completed_operation_count}/${p.canonical.planned_operation_count} operations; batch ${p.canonical.batch_operation_percent}%; overall ${p.canonical.overall_completion_percent}%; final_ready ${p.canonical.final_ready}.\nSupport QA increment 108: ${o.operation_count} rows; ${s.new_candidate_count} new official source records; ${e.example_count} fail-closed examples.\nCumulative support QA: operations ${p.qa_overlay.qa_operation_rows_written}; source rows ${p.qa_overlay.qa_source_rows_written}; examples ${p.qa_overlay.prepared_example_count}. Official numeric parcel rows: ${p.canonical.official_numeric_rows_written}. Blocker: ${p.controls.blocker}.`;
+ const rows=[...o.fixed_operations];
+ for(const g of o.generators){for(let i=0;i<g.count;i++){const rc=g.rule_cycle[(i*(g.rule_stride||1))%g.rule_cycle.length],ctx=g.context_cycle[i%g.context_cycle.length];rows.push([g.operation_start+i,g.operation_type,rc,'',ctx,g.accuracy_score_4]);}}
+ for(const r of rows){ops.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}/4</td></tr>`);}
+ for(const c of s.candidates){src.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${c.candidate_id}</td><td>${c.publisher}</td><td>${c.name}</td><td>${c.role}</td><td>${c.source_confidence_percent}%</td><td><a href="${c.source_url}">${c.source_url}</a></td></tr>`);}
+ let id=e.example_start_numeric; for(const v of e.variant_suffixes){for(const sc of e.scenario_templates){for(const t of e.targets){ex.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>HD2-QA-${id++}</td><td>${sc.scenario}</td><td>${v}</td><td>${t.target_row}</td><td>${sc.expected}</td><td>${t.candidate_seed_status}</td><td>${t.exact_hmlr_polygon_status}</td><td>${t.ea_dtm1m_sample_status}</td><td>${t.os_terrain50_crosscheck_status}</td><td>${e.accuracy_score_4}/4</td></tr>`);}}}
+ audit.textContent=JSON.stringify(a,null,2);
+});
+</script>
