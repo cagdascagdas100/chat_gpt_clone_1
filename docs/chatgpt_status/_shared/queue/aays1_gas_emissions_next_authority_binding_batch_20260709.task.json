@@ -1,0 +1,28 @@
+{
+  "task_id": "aays1-gas-emissions-next-authority-binding-batch-20260709",
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_f_portable_runner_only",
+  "current_baseline": {
+    "real_rows": 47,
+    "source_row_gate_passed": true,
+    "score": "2.5/4",
+    "site_refresh_pending": true
+  },
+  "goal": "Continue from real trial rows to parcel-bound rows and higher accuracy without blocking the queue.",
+  "required_actions": [
+    "Pull latest main into the existing F portable runner repo only.",
+    "Refresh 127.0.0.1:8020 so current 47-row positive status appears.",
+    "Resolve parcel authority/region for the active Gas Emissions parcel set.",
+    "Extract matching GOV.UK DESNZ rows for that authority from the full CSV.",
+    "Append/replace with parcel-bound verified rows; keep trial rows only as evidence if binding is incomplete.",
+    "If one authority fails, write blocker and continue with next sector/authority batch."
+  ],
+  "do_not_do": [
+    "Do not start a second runner.",
+    "Do not mark final_ready true yet.",
+    "Do not use fake rows.",
+    "Do not apply DB/migration/production deploy."
+  ]
+}

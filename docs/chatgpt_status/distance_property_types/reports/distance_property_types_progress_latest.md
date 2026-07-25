@@ -1,48 +1,28 @@
-# Distance Property Types - Progress Latest
+# Distance Property Types runner progress
 
 page_key=distance_property_types
-task_id=distance_property_types_bootstrap_20260703
-run_started_at=2026-07-10T17:34:09.1956324Z
-run_finished_at=2026-07-10T17:34:09.3427151Z
 layer_name=Distance to Nearby Property Types
-status=BLOCKED_INPUT_REQUIRED
-completion_percent=45
+status=queued_waiting_single_runner
 final_ready=false
 product_final_ready=false
+evidence_rows=0
+verified_csv_rows=0
+input_rows=0
+completion_percent=35
+remaining_percent=65
+blockers=missing_real_evidence_rows;source_candidate_csv_is_header_only;site_integration_not_verified_with_real_features
 
-## Counters
+## Queue
 
-input_rows=6
-processed_rows=6
-verified_rows=6
-manual_review_rows=0
-accuracy_ge_3_rows=6
-accuracy_lt_3_rows=0
+pending_task=docs/chatgpt_status/distance_property_types/queue/distance_property_types_real_evidence_rows_20260708.task.json
+script_path=docs/chatgpt_status/distance_property_types/automation/distance_property_types_batch_runner.ps1
+input_path=docs/chatgpt_status/distance_property_types/inputs/distance_property_types_source_candidates.csv
 
-## Outputs
+## Current site data
 
-geojson_output=F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_dpt_queue_compaction\england_map_web\data\distance_property_types\distance_property_types_verified.geojson
-csv_output=F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_dpt_queue_compaction\england_map_web\data\distance_property_types\distance_property_types_verified.csv
-manifest_output=F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_dpt_queue_compaction\england_map_web\data\distance_property_types\distance_property_types_evidence_manifest.json
-manual_review_output=F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_STABLE_RUNNER_WORKTREES\distance_property_types_dpt_queue_compaction\docs\chatgpt_status\distance_property_types\reports\distance_property_types_manual_review_latest.csv
+verified_csv=header_only
+verified_geojson=empty_feature_collection
 
-## Safety flags
+## Next action
 
-fake_data=false
-db_write=false
-ddl=false
-migration_apply=false
-prod_deploy=false
-
-## Remaining blockers
-
-- geojson_geometry_generation_requires_source_geometry_or_existing_feature_collection
-- site_integration_not_verified_with_real_features
-
-## Next batch
-
-next_batch=Provide or generate a real source batch with parcel_id, geometry/centroid, candidate property type, distance fields, and official/web/map/photo evidence. Rows below 3.0/4 or with conflict must remain in manual review.
-
-## Next single action
-
-next_single_action=Run evidence-backed source batch through this script, then verify GeoJSON rendering and the Guncel degisiklikler filter in the local site.
+Single runner should pick up the pending task. If the input CSV remains header-only, the result must stay blocked with missing_real_evidence_rows.

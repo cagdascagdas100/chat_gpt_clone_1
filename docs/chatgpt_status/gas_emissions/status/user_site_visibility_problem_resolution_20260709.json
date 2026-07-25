@@ -1,0 +1,33 @@
+{
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "SITE_VISIBILITY_PROBLEM_RESOLUTION_APPLIED",
+  "created_at": "2026-07-09T00:00:00+03:00",
+  "user_problem": "User cannot see positive progress on the local 127.0.0.1 site and asks whether the process is actually working or whether internet sources are not being used.",
+  "root_cause": "The official internet source exists and is intended to be used, but the single runner has not yet produced verified source-backed rows and site-readable output files.",
+  "not_the_problem": [
+    "Not a source availability problem",
+    "Not a request to use fake data",
+    "Not a reason to start a second runner"
+  ],
+  "actual_problem": [
+    "Official GOV.UK source must be converted into verified Gas Emissions rows",
+    "Rows must be written into the expected CSV/status output paths",
+    "Only then can latest_changes and the 127.0.0.1 site show positive progress"
+  ],
+  "applied_fix": [
+    "Created recovery plan file",
+    "Queued shared single F-runner recovery task",
+    "Queued AAYS page-specific recovery task",
+    "Added this site-visibility clarification file for runner/site diagnostics"
+  ],
+  "site_rule": "Do not show positive Gas Emissions result until verified_source_backed_rows CSV exists and source_row_gate_passed=true.",
+  "safety": {
+    "single_runner_only": true,
+    "fake_data": false,
+    "final_ready": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

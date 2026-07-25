@@ -5,6 +5,8 @@ import hashlib
 import io
 import json
 import os
+import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -13,18 +15,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SLOT_ID = "security_public_safety_3"
-TASK_VERSION = "4.0"
+TASK_VERSION = "4.1"
 TARGET_IDS = [f"parcel_{value}" for value in range(61523, 61547)]
 REPO = Path(os.environ.get("AAYS_REPO_ROOT", r"F:\chatgpt\chat_gpt_clone_1_main"))
 DATA_ROOT = REPO / "england_map_web" / "data"
 OUT_ROOT = REPO / "docs" / "chatgpt_status" / "security_public_safety" / "runner_outputs"
 WEB_ROOT = REPO / "outputs" / "england_program_parcel_matrix_20260629" / "security_public_safety_updates"
+CACHE_ROOT = Path(tempfile.gettempdir()) / "aays_security_public_safety_slot3"
 
 POLICE_LAST_UPDATED_URL = "https://data.police.uk/api/crime-last-updated"
 IOD25_FILE7_V2_URL = (
     "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/"
     "File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv"
 )
+HISTORICAL_SOURCE_BRANCH = "codex/aays-single-runner-v5-20260706"
+HISTORICAL_SOURCE_REPO_PATH = "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson"
+HISTORICAL_SOURCE_BLOB_SHA = "bb48164e7a0af78df875f30421a6a3068c43edb8"
+HISTORICAL_CACHE_PATH = CACHE_ROOT / "parcel_security_scores_rechecked_0_120m_spatial.geojson"
 PREFERRED_SOURCE_PATHS = [
     DATA_ROOT / "parcel_security_scores_rechecked_0_120m_spatial.geojson",
     DATA_ROOT / "parcel_security_scores_compact.geojson",
@@ -35,6 +42,107 @@ PREFERRED_SOURCE_PATHS = [
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def run_git(args: list[str], timeout: int = 300, stdout_handle=None) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", "-C", str(REPO), *args],
+        check=False,
+        stdout=stdout_handle if stdout_handle is not None else subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=timeout,
+    )
+
+
+def git_blob_sha(path: Path) -> str | None:
+    try:
+        result = run_git(["hash-object", str(path)], timeout=120)
+    except Exception:
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.decode("utf-8", errors="replace").strip() or None
+
+
+def export_git_object(ref: str, destination: Path) -> dict:
+    part = destination.with_suffix(destination.suffix + ".part")
+    part.parent.mkdir(parents=True, exist_ok=True)
+    part.unlink(missing_ok=True)
+    evidence = {
+        "ref": ref,
+        "git_show_returncode": None,
+        "stderr": None,
+        "blob_sha": None,
+        "verified": False,
+    }
+    try:
+        with part.open("wb") as handle:
+            result = run_git(["show", f"{ref}:{HISTORICAL_SOURCE_REPO_PATH}"], stdout_handle=handle)
+        evidence["git_show_returncode"] = result.returncode
+        evidence["stderr"] = result.stderr.decode("utf-8", errors="replace")[-2000:]
+        if result.returncode != 0:
+            part.unlink(missing_ok=True)
+            return evidence
+        evidence["blob_sha"] = git_blob_sha(part)
+        evidence["verified"] = evidence["blob_sha"] == HISTORICAL_SOURCE_BLOB_SHA
+        if not evidence["verified"]:
+            part.unlink(missing_ok=True)
+            return evidence
+        os.replace(part, destination)
+        return evidence
+    except Exception as exc:
+        part.unlink(missing_ok=True)
+        evidence["stderr"] = str(exc)
+        return evidence
+
+
+def materialize_historical_source() -> tuple[Path | None, dict]:
+    CACHE_ROOT.mkdir(parents=True, exist_ok=True)
+    evidence = {
+        "branch": HISTORICAL_SOURCE_BRANCH,
+        "repo_path": HISTORICAL_SOURCE_REPO_PATH,
+        "expected_blob_sha": HISTORICAL_SOURCE_BLOB_SHA,
+        "cache_path": str(HISTORICAL_CACHE_PATH),
+        "cache_hit": False,
+        "fetch_attempted": False,
+        "fetch_returncode": None,
+        "fetch_stderr": None,
+        "attempts": [],
+        "verified": False,
+        "error": None,
+    }
+    if HISTORICAL_CACHE_PATH.is_file():
+        cached_sha = git_blob_sha(HISTORICAL_CACHE_PATH)
+        if cached_sha == HISTORICAL_SOURCE_BLOB_SHA:
+            evidence.update({"cache_hit": True, "cache_blob_sha": cached_sha, "verified": True})
+            return HISTORICAL_CACHE_PATH, evidence
+        HISTORICAL_CACHE_PATH.unlink(missing_ok=True)
+
+    for ref in (f"origin/{HISTORICAL_SOURCE_BRANCH}", HISTORICAL_SOURCE_BRANCH):
+        attempt = export_git_object(ref, HISTORICAL_CACHE_PATH)
+        evidence["attempts"].append(attempt)
+        if attempt["verified"]:
+            evidence.update({"source_ref": ref, "verified": True})
+            return HISTORICAL_CACHE_PATH, evidence
+
+    evidence["fetch_attempted"] = True
+    try:
+        fetch = run_git(["fetch", "origin", HISTORICAL_SOURCE_BRANCH], timeout=600)
+        evidence["fetch_returncode"] = fetch.returncode
+        evidence["fetch_stderr"] = fetch.stderr.decode("utf-8", errors="replace")[-2000:]
+    except Exception as exc:
+        evidence["error"] = str(exc)
+        return None, evidence
+
+    if evidence["fetch_returncode"] == 0:
+        attempt = export_git_object("FETCH_HEAD", HISTORICAL_CACHE_PATH)
+        evidence["attempts"].append(attempt)
+        if attempt["verified"]:
+            evidence.update({"source_ref": "FETCH_HEAD", "verified": True})
+            return HISTORICAL_CACHE_PATH, evidence
+
+    evidence["error"] = "Exact canonical blob could not be materialized and verified."
+    return None, evidence
 
 
 def http_bytes(url: str, timeout: int = 180, attempts: int = 3) -> tuple[int, bytes]:
@@ -85,9 +193,12 @@ def file_contains_targets(path: Path) -> bool:
         return False
 
 
-def source_candidates() -> list[Path]:
+def source_candidates(materialized_path: Path | None) -> list[Path]:
     ordered: list[Path] = []
     seen: set[Path] = set()
+    if materialized_path and materialized_path.is_file():
+        ordered.append(materialized_path)
+        seen.add(materialized_path)
     for path in PREFERRED_SOURCE_PATHS:
         if path.is_file() and path not in seen:
             ordered.append(path)
@@ -108,10 +219,10 @@ def source_candidates() -> list[Path]:
     return ordered
 
 
-def locate_targets() -> tuple[Path | None, dict[str, dict], list[dict]]:
+def locate_targets(materialized_path: Path | None) -> tuple[Path | None, dict[str, dict], list[dict]]:
     found: dict[str, dict] = {}
     audit: list[dict] = []
-    for path in source_candidates():
+    for path in source_candidates(materialized_path):
         try:
             size = path.stat().st_size
         except OSError as exc:
@@ -159,13 +270,7 @@ def load_iod25_rows(lsoa_codes: set[str]) -> tuple[dict[str, dict], dict]:
         return matches, evidence
     try:
         status, body = http_bytes(IOD25_FILE7_V2_URL)
-        evidence.update(
-            {
-                "http_status": status,
-                "response_sha256": hashlib.sha256(body).hexdigest(),
-                "bytes": len(body),
-            }
-        )
+        evidence.update({"http_status": status, "response_sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)})
         reader = csv.DictReader(io.StringIO(body.decode("utf-8-sig")))
         for source_row in reader:
             code = (source_row.get("LSOA code (2021)") or "").strip()
@@ -208,25 +313,21 @@ def request_area_evidence(lat: float, lng: float, month: str, cache: dict[str, d
     }
     try:
         status, body, payload = http_json(crime_url)
-        result.update(
-            {
-                "crime_http_status": status,
-                "crime_response_sha256": hashlib.sha256(body).hexdigest(),
-                "crime_one_mile_supporting_count": len(payload) if isinstance(payload, list) else None,
-            }
-        )
+        result.update({
+            "crime_http_status": status,
+            "crime_response_sha256": hashlib.sha256(body).hexdigest(),
+            "crime_one_mile_supporting_count": len(payload) if isinstance(payload, list) else None,
+        })
     except Exception as exc:
         result["crime_error"] = str(exc)
     time.sleep(0.35)
     try:
         status, body, payload = http_json(outcomes_url)
-        result.update(
-            {
-                "outcomes_http_status": status,
-                "outcomes_response_sha256": hashlib.sha256(body).hexdigest(),
-                "outcomes_one_mile_supporting_count": len(payload) if isinstance(payload, list) else None,
-            }
-        )
+        result.update({
+            "outcomes_http_status": status,
+            "outcomes_response_sha256": hashlib.sha256(body).hexdigest(),
+            "outcomes_one_mile_supporting_count": len(payload) if isinstance(payload, list) else None,
+        })
     except Exception as exc:
         result["outcomes_error"] = str(exc)
     time.sleep(0.35)
@@ -237,24 +338,17 @@ def request_area_evidence(lat: float, lng: float, month: str, cache: dict[str, d
 def main() -> int:
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     WEB_ROOT.mkdir(parents=True, exist_ok=True)
-    source_path, features, source_audit = locate_targets()
+    materialized_path, materialization_evidence = materialize_historical_source()
+    source_path, features, source_audit = locate_targets(materialized_path)
 
-    police_latest = {
-        "url": POLICE_LAST_UPDATED_URL,
-        "http_status": None,
-        "month": None,
-        "response_sha256": None,
-        "error": None,
-    }
+    police_latest = {"url": POLICE_LAST_UPDATED_URL, "http_status": None, "month": None, "response_sha256": None, "error": None}
     try:
         status, body, payload = http_json(POLICE_LAST_UPDATED_URL)
-        police_latest.update(
-            {
-                "http_status": status,
-                "month": str(payload.get("date", ""))[:7],
-                "response_sha256": hashlib.sha256(body).hexdigest(),
-            }
-        )
+        police_latest.update({
+            "http_status": status,
+            "month": str(payload.get("date", ""))[:7],
+            "response_sha256": hashlib.sha256(body).hexdigest(),
+        })
     except Exception as exc:
         police_latest["error"] = str(exc)
 
@@ -270,20 +364,18 @@ def main() -> int:
     for line, parcel_id in enumerate(TARGET_IDS, start=1):
         feature = features.get(parcel_id)
         if not feature:
-            rows.append(
-                {
-                    "line": line,
-                    "parcel_id": parcel_id,
-                    "candidate_status": "CANONICAL_FEATURE_NOT_FOUND",
-                    "canonical_gate": False,
-                    "crime_api_gate": False,
-                    "outcomes_api_gate": False,
-                    "iod25_gate": False,
-                    "accuracy_score_4": 0,
-                    "needs_manual_review": True,
-                    "security_score_percent": None,
-                }
-            )
+            rows.append({
+                "line": line,
+                "parcel_id": parcel_id,
+                "candidate_status": "CANONICAL_FEATURE_NOT_FOUND",
+                "canonical_gate": False,
+                "crime_api_gate": False,
+                "outcomes_api_gate": False,
+                "iod25_gate": False,
+                "accuracy_score_4": 0,
+                "needs_manual_review": True,
+                "security_score_percent": None,
+            })
             continue
 
         props = feature.get("properties") or {}
@@ -301,14 +393,8 @@ def main() -> int:
         if coordinates and police_latest.get("month"):
             lng, lat = coordinates
             area_evidence = request_area_evidence(float(lat), float(lng), str(police_latest["month"]), api_cache)
-            crime_gate = bool(
-                area_evidence.get("crime_http_status") == 200
-                and area_evidence.get("crime_response_sha256")
-            )
-            outcomes_gate = bool(
-                area_evidence.get("outcomes_http_status") == 200
-                and area_evidence.get("outcomes_response_sha256")
-            )
+            crime_gate = bool(area_evidence.get("crime_http_status") == 200 and area_evidence.get("crime_response_sha256"))
+            outcomes_gate = bool(area_evidence.get("outcomes_http_status") == 200 and area_evidence.get("outcomes_response_sha256"))
 
         iod_row = iod_rows.get(str(lsoa_code)) if lsoa_code else None
         iod_gate = bool(iod_row)
@@ -356,13 +442,15 @@ def main() -> int:
         "generated_at": utc_now(),
         "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
         "target_parcels": TARGET_IDS,
+        "historical_source_materialization": materialization_evidence,
         "source_file": str(source_path) if source_path else None,
+        "source_file_git_blob_sha": git_blob_sha(source_path) if source_path else None,
         "source_file_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest() if source_path else None,
         "source_discovery_audit": source_audit,
         "official_api_latest": police_latest,
         "iod25_v2_evidence": iod_evidence,
         "acceptance_gates": [
-            "canonical Point geometry and non-null preexisting score",
+            "exact historical canonical blob SHA and Point geometry plus non-null preexisting score",
             "explicit latest-month street crimes HTTP 200 response SHA256",
             "explicit latest-month outcomes-at-location HTTP 200 response SHA256",
             "corrected IoD2025 File 7 v2 LSOA Crime join",
@@ -387,6 +475,8 @@ def main() -> int:
     sample_path.write_text(text, encoding="utf-8")
     web_path.write_text(text, encoding="utf-8")
     print(f"SLOT_ID={SLOT_ID}")
+    print(f"TASK_VERSION={TASK_VERSION}")
+    print(f"CANONICAL_BLOB_VERIFIED={materialization_evidence.get('verified')}")
     print(f"SOURCE_FILE={source_path}")
     print(f"SAMPLE_COUNT={len(rows)}")
     print(f"ACCURACY_GE_3_COUNT={accuracy_ge_3}")

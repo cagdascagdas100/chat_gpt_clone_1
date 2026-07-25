@@ -1,0 +1,161 @@
+{
+  "schema_version": 3,
+  "slot_id": "security_public_safety_3",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "generated_at": "2026-07-21T05:00:00+03:00",
+  "status": "OFFICIAL_WEB_SOURCES_VERIFIED_SAMPLE_EXTRACTION_QUEUED",
+  "verification": {
+    "verified_on": "2026-07-21",
+    "data_police_latest_available_month": "2026-05",
+    "data_police_rate_limit": "15 requests/second average with burst 30",
+    "home_office_latest_update": "2026-04-23",
+    "ons_pfa_release_date": "2026-04-23",
+    "ons_pfa_next_release": "2026-07-23",
+    "iod25_last_updated": "2025-11-17",
+    "iod25_required_version": "corrected v2 LSOA files"
+  },
+  "scoring_method": {
+    "authority_weight": 0.35,
+    "spatial_fit_weight": 0.25,
+    "freshness_weight": 0.20,
+    "licence_weight": 0.10,
+    "reproducibility_weight": 0.10
+  },
+  "candidates": [
+    {
+      "candidate_id": "SRC-01",
+      "name": "English Indices of Deprivation 2025 - Crime domain",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "geography": "LSOA",
+      "source_accuracy_score": 97,
+      "spatial_fit_score": 94,
+      "freshness_score": 82,
+      "overall_candidate_score": 93,
+      "decision": "PROMOTED_RELATIVE_LSOA_CONTEXT_NOT_DIRECT_PERCENT",
+      "limitations": [
+        "The Crime domain is a relative risk/deprivation measure and cannot be used as an absolute parcel security percentage.",
+        "Use corrected v2 LSOA workbooks and corrected official lookup files.",
+        "Join by verified LSOA code and retain source rank/score semantics."
+      ]
+    },
+    {
+      "candidate_id": "SRC-02",
+      "name": "data.police.uk street-level crimes API and monthly archive",
+      "publisher": "UK Police open data",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "geography": "anonymised street point, one-mile point query or custom polygon",
+      "source_accuracy_score": 95,
+      "spatial_fit_score": 68,
+      "freshness_score": 96,
+      "overall_candidate_score": 86,
+      "decision": "PROMOTED_EXPLICIT_MONTH_SUPPORTING_EVIDENCE",
+      "latest_available_month": "2026-05",
+      "limitations": [
+        "Returned crime locations are approximate and anonymised.",
+        "One-mile point results are supporting area evidence, not exact parcel counts.",
+        "Use explicit month, rate-safe requests, HTTP status and SHA-256 response hash.",
+        "May 2026 changelog reports missing data for British Transport Police and Gloucestershire Constabulary."
+      ]
+    },
+    {
+      "candidate_id": "SRC-03",
+      "name": "Home Office police recorded crime and outcomes open data",
+      "publisher": "Home Office",
+      "url": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
+      "geography": "Police Force Area and Community Safety Partnership",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 72,
+      "freshness_score": 97,
+      "overall_candidate_score": 90,
+      "decision": "PROMOTED_AGGREGATE_CALIBRATION_AND_QA",
+      "latest_update": "2026-04-23",
+      "limitations": [
+        "Too coarse for direct parcel attribution.",
+        "Use for category validation, trend calibration and aggregate reconciliation only."
+      ]
+    },
+    {
+      "candidate_id": "SRC-04",
+      "name": "ONS Crime in England and Wales Police Force Area tables",
+      "publisher": "Office for National Statistics",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables",
+      "geography": "Police Force Area and Community Safety Partnership",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 70,
+      "freshness_score": 97,
+      "overall_candidate_score": 89,
+      "decision": "PROMOTED_INDEPENDENT_AGGREGATE_QA",
+      "current_edition": "year ending December 2025",
+      "release_date": "2026-04-23",
+      "limitations": [
+        "Not suitable as a direct parcel score.",
+        "Use independently from Home Office source for aggregate reconciliation."
+      ]
+    },
+    {
+      "candidate_id": "SRC-05",
+      "name": "Official LSOA and Community Safety Partnership geography",
+      "publisher": "Office for National Statistics",
+      "url": "https://geoportal.statistics.gov.uk/",
+      "geography": "official polygons and lookup tables",
+      "source_accuracy_score": 97,
+      "spatial_fit_score": 96,
+      "freshness_score": 82,
+      "overall_candidate_score": 92,
+      "decision": "PROMOTED_REQUIRED_GEOGRAPHY_JOIN",
+      "limitations": [
+        "Boundary and lookup vintage must match the statistical source vintage.",
+        "Geometry must be canonical and parcel centroid inclusion must be reproducible."
+      ]
+    },
+    {
+      "candidate_id": "SRC-06",
+      "name": "Fire and rescue incident statistics",
+      "publisher": "Ministry of Housing, Communities and Local Government",
+      "url": "https://www.gov.uk/government/collections/fire-and-rescue-incident-statistics",
+      "geography": "England and fire and rescue service area",
+      "source_accuracy_score": 98,
+      "spatial_fit_score": 55,
+      "freshness_score": 94,
+      "overall_candidate_score": 80,
+      "decision": "HOLD_SEPARATE_OPTIONAL_PUBLIC_SAFETY_COMPONENT",
+      "limitations": [
+        "Too coarse for direct parcel attribution.",
+        "Do not combine with crime scoring without a separately validated composite model."
+      ]
+    }
+  ],
+  "promoted_source_count": 5,
+  "held_source_count": 1,
+  "accuracy_ge_90_source_count": 3,
+  "accuracy_ge_85_source_count": 5,
+  "sample_slot_candidates": [
+    {
+      "parcel_id": "parcel_61523",
+      "candidate_status": "QUEUED_CANONICAL_GEOMETRY_AND_EXPLICIT_MONTH_API_CHECK",
+      "security_score_percent": null
+    },
+    {
+      "parcel_id": "parcel_61524",
+      "candidate_status": "QUEUED_CANONICAL_GEOMETRY_AND_EXPLICIT_MONTH_API_CHECK",
+      "security_score_percent": null
+    },
+    {
+      "parcel_id": "parcel_61525",
+      "candidate_status": "QUEUED_CANONICAL_GEOMETRY_AND_EXPLICIT_MONTH_API_CHECK",
+      "security_score_percent": null
+    }
+  ],
+  "queue_task": "docs/chatgpt_status/security_public_safety/queue/0000_000_security_public_safety_3_sample_hydrate_20260721.task.json",
+  "actual_slot_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

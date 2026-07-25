@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "slot_id": "parcel_label_1",
+  "recorded_at": "2026-07-21T08:50:00+03:00",
+  "task_id": "parcel-label-1-historical-198-full-audit-v5-1-20260721",
+  "task_version": "5.1-powershell-carrier",
+  "attempt_id": "parcel-label-1-historical-audit-20260721-003-runner-compatible",
+  "actual_runner_contract": {
+    "daemon_branch": "codex/aays-single-runner-v5-20260706",
+    "queue_source_ref": "refs/remotes/origin/codex/aays-single-runner-v5-20260706",
+    "queue_path_pattern": "docs/chatgpt_status/*/queue/*",
+    "accepted_status": "pickup_requested",
+    "priority_rule": "lower numeric priority runs first",
+    "execution_host": "powershell.exe -File script_path",
+    "allowed_paths_required": true,
+    "single_shared_runner_only": true
+  },
+  "previous_incompatibilities": [
+    "The audit task existed only on main while the stable daemon reads the canonical runner branch",
+    "The audit task status was queued_watcher_visible_runner_output_pending instead of pickup_requested",
+    "The audit script_path pointed directly to a Python file although the runner invokes PowerShell -File",
+    "The task used allowed_write_paths rather than the required explicit allowed_paths contract key",
+    "The quarantine alias was absent on the canonical runner branch"
+  ],
+  "resolved": {
+    "main_python_portable": true,
+    "main_powershell_carrier": true,
+    "main_runner_contract_task": true,
+    "canonical_runner_branch_python": true,
+    "canonical_runner_branch_powershell": true,
+    "canonical_runner_branch_task": true,
+    "priority": 2,
+    "target_branch": "main",
+    "script_path": "docs/chatgpt_status/parcel_label/automation/parcel_label_1_historical_198_full_audit.ps1",
+    "allowed_paths_count": 3,
+    "canonical_queue_readback": true,
+    "canonical_queue_blob_sha": "37a418c4d1307a7a3ae2679371106768ee74c5ef",
+    "powershell_carrier_readback": true,
+    "powershell_carrier_blob_sha": "acab724d091c5d75faf8ebca6d14951818f27a19",
+    "python_readback": true,
+    "python_blob_sha": "f8fa0c8ff63ef51db7301e63937b3097bbed155f",
+    "verified_fallback_source_path": "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "verified_fallback_source_blob_sha": "bda76aee331acc0b9f33cccdf968c4314fe433a9",
+    "repo_to_bridge_watcher_required_for_this_task": false
+  },
+  "runtime_state": {
+    "last_real_shared_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
+    "runner_heartbeat_fresh": false,
+    "runner_execution_claimed_for_this_task": false,
+    "expected_output_exists": false,
+    "historical_counts_persisted": false,
+    "verified_rows": 0,
+    "actual_slot_rows_written": 0
+  },
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}

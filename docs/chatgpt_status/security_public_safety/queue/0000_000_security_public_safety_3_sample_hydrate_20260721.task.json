@@ -1,0 +1,64 @@
+{
+  "schema_version": 3,
+  "task_id": "security-public-safety-3-sample-hydrate-20260721",
+  "slot_id": "security_public_safety_3",
+  "page_key": "security_public_safety",
+  "status": "pending_shared_runner_pickup",
+  "priority": 97,
+  "created_at": "2026-07-21T05:00:00+03:00",
+  "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
+  "branch": "main",
+  "parcel_partition": {
+    "start": 61523,
+    "end": 92283,
+    "count": 30761
+  },
+  "sample_parcels": ["parcel_61523", "parcel_61524", "parcel_61525"],
+  "runner_mode": "single_shared_runner_only",
+  "do_not_start_new_runner": true,
+  "command": "python docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate.py",
+  "parallel_safe_subtasks": [
+    {
+      "subtask_id": "SPS3-A-canonical-source-discovery",
+      "intent": "Find the local 92283-feature canonical security GeoJSON and extract only parcel_61523, parcel_61524 and parcel_61525."
+    },
+    {
+      "subtask_id": "SPS3-B-explicit-month-official-api-check",
+      "intent": "Read crime-last-updated, use explicit latest month, apply rate-safe data.police.uk requests and hash every response."
+    },
+    {
+      "subtask_id": "SPS3-C-contract-reconciliation",
+      "intent": "Keep the existing 9-row unknown/null verified output rejected and report actual sample counts from generated files."
+    },
+    {
+      "subtask_id": "SPS3-D-website-row-feed",
+      "intent": "Write outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json so sample rows are visible line by line."
+    },
+    {
+      "subtask_id": "SPS3-E-next-gate-classification",
+      "intent": "Keep accuracy at 3/4 until corrected IoD25 v2 Crime-domain LSOA join is present; never promote point-radius counts as exact parcel counts."
+    }
+  ],
+  "official_source_rules": {
+    "data_police_latest_month_expected": "2026-05",
+    "api_rate_limit_ceiling_requests_per_second": 15,
+    "script_target_requests_per_second": 3,
+    "street_location_semantics": "anonymised approximate supporting evidence, not exact incident or parcel location",
+    "iod25_rule": "use corrected v2 LSOA files as relative crime-risk context; do not convert rank directly to an absolute security percentage",
+    "home_office_ons_rule": "use Community Safety Partnership and Police Force Area tables for aggregate calibration and QA only"
+  },
+  "expected_outputs": [
+    "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json"
+  ],
+  "write_policy": {
+    "db_write": false,
+    "ddl": false,
+    "migration": false,
+    "production_deploy": false,
+    "fake_data": false,
+    "person_level_data": false,
+    "set_final_ready_true": false
+  },
+  "final_ready": false
+}

@@ -1,0 +1,43 @@
+{
+  "task_id": "gas-emissions-source-rows-recovery-20260708",
+  "page_key": "gas_emissions",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_shared_runner_only",
+  "created_at": "2026-07-08T19:05:00+03:00",
+  "problem_to_solve": "missing_verified_source_backed_rows",
+  "do_not_do": [
+    "do not create fake parcel rows",
+    "do not mark final_ready true before source rows are verified",
+    "do not start a second runner"
+  ],
+  "required_outputs": [
+    "verified source-backed Gas Emissions rows for real parcel ids",
+    "latest_changes.json with changes non-empty if rows are written",
+    "source_row_gate_passed true only after evidence exists",
+    "8020 control site data refreshed after row generation"
+  ],
+  "minimum_row_fields": [
+    "parcel_id",
+    "parcel_ref",
+    "gas_emission_level",
+    "emission_percent",
+    "risk_color",
+    "confidence",
+    "source",
+    "source_url",
+    "source_date",
+    "matching_method",
+    "calculation_explanation",
+    "accuracy_score_4",
+    "changed_in_latest_run"
+  ],
+  "current_confirmed_state": {
+    "ui_token_gate_passed": true,
+    "browser_smoke_passed": true,
+    "verification_score_after": "1/4",
+    "remaining_blocker": "missing_verified_source_backed_rows",
+    "fake_data": false,
+    "final_ready": false
+  }
+}

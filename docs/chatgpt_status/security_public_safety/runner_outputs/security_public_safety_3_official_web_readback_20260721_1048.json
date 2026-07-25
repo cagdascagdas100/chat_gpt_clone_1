@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_3",
+  "checked_at": "2026-07-21T10:48:00+03:00",
+  "internet_readback": [
+    {
+      "source": "data.police.uk last updated",
+      "official_url": "https://data.police.uk/docs/method/crime-last-updated/",
+      "observed_value": "2026-05-01",
+      "normalized_month": "2026-05",
+      "decision": "current API month retained"
+    },
+    {
+      "source": "data.police.uk changelog",
+      "official_url": "https://data.police.uk/changelog/",
+      "observed_value": "May 2026 crime data absent for British Transport Police, Gloucestershire Constabulary, Greater Manchester Police and Lincolnshire Police",
+      "decision": "resolved territorial force must be checked before accepting crime coverage"
+    },
+    {
+      "source": "data.police.uk locate-neighbourhood",
+      "official_url": "https://data.police.uk/docs/method/neighbourhood-locate/",
+      "observed_value": "q=latitude,longitude returns unique force identifier and force-specific neighbourhood identifier",
+      "decision": "promoted as per-coordinate territorial force coverage gate"
+    },
+    {
+      "source": "data.police.uk about and data quality",
+      "official_url": "https://data.police.uk/about/",
+      "observed_value": "published locations are approximate/anonymised; BTP and PSNI do not provide outcome data",
+      "decision": "special-force and outcome undercoverage remains explicit"
+    },
+    {
+      "source": "ONS Police Force Area tables",
+      "official_url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current",
+      "observed_value": "release 2026-04-23; next release 2026-07-23",
+      "decision": "aggregate independent QA retained"
+    },
+    {
+      "source": "English indices of deprivation 2025",
+      "official_url": "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
+      "observed_value": "all LSOA Files 1 to 9 corrected; updated v2 workbooks required",
+      "decision": "corrected File 7 v2 remains mandatory"
+    }
+  ],
+  "change_summary": "Official locate-neighbourhood API promoted as a per-coordinate force coverage gate. Attempt 012 now rejects territorial crime or outcome coverage when the resolved force is known to be unavailable, while retaining BTP and other special-force gaps as explicit limitations.",
+  "source_candidate_count_after_update": 16,
+  "promoted_source_count_after_update": 14,
+  "source_accuracy_ge_90_after_update": 16,
+  "source_accuracy_ge_95_after_update": 15,
+  "parcel_runtime_executed": false,
+  "parcel_scores_generated": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}
