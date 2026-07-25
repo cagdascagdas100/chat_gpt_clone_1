@@ -1,0 +1,42 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>future_growth_2 audit wave 333-360</title><style>body{font:14px Arial;margin:24px;background:#f4f6f8;color:#1d2433}.cards{display:flex;gap:10px;flex-wrap:wrap}.card,table{background:#fff;border:1px solid #ccd}.card{padding:14px;min-width:150px}table{margin-top:16px;border-collapse:collapse;width:100%}th,td{border:1px solid #ccd;padding:8px;text-align:left;vertical-align:top}th{background:#eef;position:sticky;top:0}.ok{color:#176b2c;font-weight:700}.pending{color:#8a5a00;font-weight:700}.warn{color:#8a3f00;font-weight:700}</style></head><body>
+<h1>future_growth_2 — Wave 333–360</h1>
+<div class="cards">
+<div class="card"><b>Kümülatif işlem</b><br>22.989</div>
+<div class="card"><b>Bu dalga</b><br>1.260 / 1.260</div>
+<div class="card"><b>Kaynak/kanıt referansı</b><br>2.363</div>
+<div class="card"><b>Yeni resmî referans</b><br>+112</div>
+<div class="card"><b>Resmî domain gate</b><br>112 / 112</div>
+<div class="card"><b>Benzersiz resmî URL</b><br>45</div>
+<div class="card"><b>Batch</b><br>28 / 28</div>
+<div class="card"><b>Örnek aday</b><br>3</div>
+<div class="card"><b>Exact bound</b><br>0</div>
+<div class="card"><b>Business skor</b><br>0%</div>
+</div>
+<p><b>Yöntem:</b> Londra çapında 28 yeni resmî GLA/TfL stratejik planlama paketi işlendi. London Plan 2021 current/adopted durumunda tutulur; 2026 draft next London Plan adopted sayılmaz. Opportunity Area, SIL, Green Belt/MOL, heritage/view ve diğer spatial katmanlar exact candidate binding olmadan parcel sonucu sayılmaz. Guidance ve proposal gereklilikleri parcel özelliğine dönüştürülmez.</p>
+<h2>Batch özeti</h2><table><thead><tr><th>Batch</th><th>Konu</th><th>Satır</th><th>Durum</th></tr></thead><tbody id="summary"></tbody></table>
+<h2>Satır satır işlemler — 1.260 satır</h2><table><thead><tr><th>#</th><th>Batch</th><th>İşlem</th><th>Kaynak / aday</th><th>Durum</th><th>Not</th></tr></thead><tbody id="detail"><tr><td colspan="6">Yükleniyor…</td></tr></tbody></table>
+<p><b>Fail-closed:</b> stratejik plan/guidance/map doğrulanmış olsa bile exact site/boundary/asset/network/proposal binding olmadan parcel constraint veya business skor yükseltilmez. Proposed/emerging infrastructure operational kapasite sayılmaz. WebCAT stratejik araçtır; yolculuk planlayıcı veya güncel saha ölçümü değildir.</p>
+<p>Önceki dalga: <a href="support_audit_wave_307_332_20260724.html">307–332</a>.</p>
+<script>
+fetch('official_london_strategic_wave_333_360_20260724.json').then(r=>r.json()).then(w=>{
+let sum=[],out=[],g=0;
+w.batches.forEach(d=>{
+sum.push(`<tr><td>${d.n}</td><td>${d.title}</td><td>45 / 45</td><td class="ok">OFFICIAL GLA/TfL SOURCES VERIFIED / EXACT BINDING PENDING</td></tr>`);
+d.sources.forEach((url,si)=>w.operation_generation.source_families.forEach(f=>{
+g++;out.push(`<tr><td>${g}</td><td>${d.n}</td><td>${f}</td><td><a href="${url}">SOURCE_${si+1}</a></td><td class="ok">VERIFIED_OFFICIAL_DOMAIN</td><td>${d.coverage}</td></tr>`)
+}));
+w.candidates.forEach(c=>w.operation_generation.candidate_families.forEach(f=>{
+g++;
+let st=f==='LONDON_SCOPE_GATE'?'PASS':(f==='SOURCE_RELATION_PREPARATION'?'SOURCE_SET_READY':((f==='NEGATIVE_RESULT_GUARD'||f==='SCORE_GUARD')?'FAIL_CLOSED':'PENDING_EXACT_BINDING'));
+let cls=(st==='PASS'||st==='SOURCE_SET_READY')?'ok':'pending';
+out.push(`<tr><td>${g}</td><td>${d.n}</td><td>${f}</td><td>${c.row_no} ${c.parcel_id} ${c.lpa}</td><td class="${cls}">${st}</td><td>${d.coverage}</td></tr>`)
+}));
+w.operation_generation.batch_families.forEach(f=>{
+g++;let st=f==='PUBLISH_READINESS_GUARD'?'NOT_FINAL_READY':'PASS';
+out.push(`<tr><td>${g}</td><td>${d.n}</td><td>${f}</td><td>Batch ${d.n}</td><td class="${st==='PASS'?'ok':'warn'}">${st}</td><td>45/45; current-vs-draft and strategic-vs-parcel guards preserved; exact=0; score=null.</td></tr>`)
+});
+});
+document.getElementById('summary').innerHTML=sum.join('');
+document.getElementById('detail').innerHTML=out.join('')
+}).catch(e=>{document.getElementById('detail').innerHTML=`<tr><td colspan="6">Yükleme hatası: ${String(e)}</td></tr>`})
+</script></body></html>

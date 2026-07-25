@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><title>height_difference_2 increment 090</title><style>
+body{font-family:system-ui,sans-serif;margin:20px;background:#111;color:#eee}.row{padding:6px 8px;border-bottom:1px solid #333;font-family:ui-monospace,monospace;font-size:12px}
+h1,h2{font-weight:600}.summary{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px}.card{background:#1c1c1c;padding:10px;border:1px solid #333}pre{white-space:pre-wrap}</style></head><body>
+<h1>height_difference_2 — increment 090</h1><div id="summary" class="summary"></div><h2>Operations</h2><div id="ops"></div><h2>Sources</h2><div id="src"></div><h2>Examples</h2><div id="ex"></div><h2>Integrity</h2><pre id="audit"></pre>
+<script>async function j(f){return (await fetch(f)).json()} Promise.all([j('operations_increment_090.json'),j('source_candidates_increment_090.json'),j('examples_increment_090.json'),j('progress_increment_090.json'),j('integrity_audit_increment_090.json')]).then(([o,s,e,p,a])=>{
+summary.innerHTML=`<div class=card>Overall ${p.overall_completion_percent}%</div><div class=card>Ops ${p.website_operation_rows_written}</div><div class=card>Sources ${p.website_source_rows_written}</div><div class=card>Examples ${p.website_example_rows_written}</div>`;
+o.operations.forEach(r=>{const t=o.type_legend[r[1]]||r[1],sid=r[2]?`HD2-SRC-${r[2]}`:'-',detail=r[3]||'';ops.insertAdjacentHTML('beforeend',`<div class=row>#${r[0]} | ${t} | ${sid} | ${detail} | QA ${r[4]}/4</div>`)});
+s.candidates.forEach(r=>src.insertAdjacentHTML('beforeend',`<div class=row>${r.candidate_id} | ${r.publisher} | ${r.role} | confidence ${r.source_confidence_percent}% | ${r.name}</div>`));
+e.examples.forEach(r=>ex.insertAdjacentHTML('beforeend',`<div class=row>${r[0]} | ${r[1]} | ${r[2]} | 1m ${r[6]}m | 2m ${r[7]}m | Δ ${r[8]}m | confidence ${r[9]}% | survey ${r[10]} | QA ${r[11]}/4 | business ${r[12]}</div>`));
+audit.textContent=JSON.stringify(a,null,2);});</script></body></html>

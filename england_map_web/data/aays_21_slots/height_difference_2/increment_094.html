@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 increment 094</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:18px;background:#fafafa;color:#111}h1{margin:0 0 8px}
+.cards{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.card{background:white;border:1px solid #ddd;border-radius:8px;padding:10px;min-width:150px}
+table{border-collapse:collapse;width:100%;background:white;margin:8px 0 24px;font-size:12px}th,td{border:1px solid #ddd;padding:5px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#f1f1f1}
+.ok{font-weight:700}.section{margin-top:24px}code{font-size:11px}
+</style></head><body>
+<h1>height_difference_2 — increment 094</h1>
+<div id="cards" class="cards"></div>
+<div class="section"><h2>İşlemler — satır satır</h2><table><thead><tr><th>#</th><th>Tür</th><th>Kural</th><th>Kaynak</th><th>Bağlam</th><th>QA</th></tr></thead><tbody id="ops"></tbody></table></div>
+<div class="section"><h2>Yeni kaynaklar</h2><table><thead><tr><th>ID</th><th>Yayıncı</th><th>Ad</th><th>Rol</th><th>Güven</th><th>Sınır</th></tr></thead><tbody id="src"></tbody></table></div>
+<div class="section"><h2>Hazır örnekler</h2><table><thead><tr><th>ID</th><th>Senaryo</th><th>Parsel</th><th>1m</th><th>2m</th><th>Δ</th><th>Survey</th><th>Kural</th><th>QA</th><th>Business</th></tr></thead><tbody id="ex"></tbody></table></div>
+<div class="section"><h2>Bütünlük</h2><pre id="audit"></pre></div>
+<script>
+const j=f=>fetch(f).then(r=>r.json());
+Promise.all([j('operations_increment_094.json'),j('source_candidates_increment_094.json'),j('examples_increment_094.json'),j('progress_increment_094.json'),j('integrity_audit_increment_094.json')]).then(([o,s,e,p,a])=>{
+ cards.innerHTML=[
+ ['İşlem',`${p.website_operation_rows_written} (+${p.support_operation_rows_added})`],
+ ['Kaynak',`${p.website_source_rows_written} (+${p.new_source_candidate_count})`],
+ ['Örnek',`${p.website_example_rows_written} (+${p.new_prepared_example_count})`],
+ ['Ana görev',`${p.completed_operation_count}/${p.planned_operation_count}`],
+ ['Güven',`${p.numeric_result_confidence_percent}%`],
+ ['Blocker',p.blocker]
+ ].map(x=>`<div class=card><b>${x[0]}</b><div>${x[1]}</div></div>`).join('');
+ const rows=[...o.fixed_operations];
+ for(const g of o.generators){
+   for(let i=0;i<g.count;i++){
+     const num=g.operation_start+i, rc=g.rule_cycle[(i*(g.rule_stride||1))%g.rule_cycle.length],
+       ctx=g.context_cycle[i%g.context_cycle.length];
+     rows.push([num,g.operation_type,rc,'',ctx,g.accuracy_score_4]);
+   }
+ }
+ rows.sort((a,b)=>a[0]-b[0]);
+ ops.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b><br>${o.rule_descriptions[r[2]]||''}</td><td>${r[3]||''}</td><td>${r[4]||''}</td><td class=ok>${r[5]}/4</td></tr>`).join('');
+ src.innerHTML=s.candidates.map(c=>`<tr><td>${c.candidate_id}</td><td>${c.publisher}</td><td>${c.name}</td><td>${c.role}</td><td>${c.source_confidence_percent}%</td><td>${c.semantic_limits.join(' ')}</td></tr>`).join('');
+ let k=766, er=[];
+ for(const sc of e.scenarios) for(const q of e.parcels){
+   er.push([`HD2-QA-${k++}`,sc.scenario,q.parcel,q.dtm1m,q.dtm2m,q.delta,e.parcel_specific_survey_identity,sc.rule_code,e.accuracy_score_4,e.business_row]);
+ }
+ ex.innerHTML=er.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3].toFixed(3)}</td><td>${r[4].toFixed(3)}</td><td>${r[5].toFixed(3)}</td><td>${r[6]}</td><td>${r[7]}</td><td class=ok>${r[8]}/4</td><td>${r[9]}</td></tr>`).join('');
+ audit.textContent=JSON.stringify(a,null,2);
+});
+</script></body></html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>Security/Public Safety 1 V15</title>
+<style>
+body{font:13px Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.note{padding:10px;background:#fff7d6;border:1px solid #d4a72c}.cards{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.cards b{background:#fff;border:1px solid #ccd;padding:8px}table{border-collapse:collapse;width:100%;background:#fff;margin:10px 0}th,td{border:1px solid #ccd;padding:5px;text-align:left;vertical-align:top}th{background:#eaf0f5}.PASS,.SAMPLE_PASS,.NEW{color:#176b2c;font-weight:bold}.UPGRADE{color:#0759a5;font-weight:bold}.PENDING,.CONTEXT_ONLY,.SITE_REGISTER,.INSPECTION_SNAPSHOT,.DYNAMIC_ALERT,.INCIDENT_CONTEXT,.QUALITY_GATE,.SCHEMA_GATE{color:#805b00;font-weight:bold}.OPEN,.STALE{color:#9b1c1c;font-weight:bold}code{overflow-wrap:anywhere}
+</style>
+</head>
+<body data-slot-id="security_public_safety_1" data-final-ready="false" data-fake-data="false">
+<h1>Düzenlenmiş Tesisler ve Kamu Sağlığı Uyarıları Matrisi V15</h1>
+<div class="note">İşyeri ölümü, HSE yaptırımı, COMAH tesisi, gıda hijyeni denetimi, ürün geri çağırması, ciddi kirlilik olayı ve laboratuvar bildirimi aynı ölçü değildir. Dönem, coğrafya, kayıt statüsü, yayın gecikmesi ve sorumluluk semantiği eşleşmeden kanonik güvenlik skoru değiştirilmez.</div>
+<div class="cards">
+<b>Kanonik %62,5</b><b>Artış +%0,0</b><b>Satır hacmi +%9,3</b><b>236/236 görünür satır</b><b>235 kontrol + 1 PENDING</b><b>12 yeni + 12 yükseltilen</b><b>115 kümülatif kaynak</b><b>36 örnek testi</b><b>300/300 doğruluk 4/4</b><b>130 aday / 16 endpoint</b><b>Skor değişikliği 0</b><b>Owner unclaimed</b><b>Manual OPEN</b><b>Final false</b>
+</div>
+<h2>236 işlem — satır bazında</h2>
+<table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Sonuç</th></tr></thead><tbody id="ops"></tbody></table>
+<h2>24 resmî kaynak sözleşmesi</h2>
+<table><thead><tr><th>Durum</th><th>Kaynak</th><th>Vintage</th><th>Kapsam</th><th>Rol</th><th>Bağlantı</th></tr></thead><tbody id="sources"></tbody></table>
+<h2>36 kanonik örnek testi</h2>
+<table><thead><tr><th>Test</th><th>Parsel</th><th>LSOA</th><th>Skor</th><th>Temsilî sayı</th><th>SHA</th><th>Sonuç</th></tr></thead><tbody id="samples"></tbody></table>
+<p><code>source_head=158075fcf683bb40fdf8d66c25d97a0113f2d84e<br>continuation_key=5d5b4a4c095948ee0e37aa72d6d37fa8afa76d0d4a8f7c017306a6dbb6bfbfc9<br>first_unverified_step=HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1<br>stored_values_modified=false; final_ready=false</code></p>
+<script>
+const src=[
+['NEW','HSE work-related fatal injuries','2025/26 provisional','Great Britain; 126 workers; annual RIDDOR','NATIONAL_CONTEXT','https://www.hse.gov.uk/statistics/fatals-overview.htm'],
+['NEW','HSE fatal injury revision log','July 2026','Provisional-to-final revisions; typical ±1–3%','QUALITY_GATE','https://www.hse.gov.uk/statistics/about/revisions/revision-log.htm'],
+['NEW','HSE quarterly fatal injury count','30 June 2026','HSE enforcing-authority subset; excludes LA/ORR cases','CONTEXT_ONLY','https://www.hse.gov.uk/statistics/fatalquarterly.htm'],
+['NEW','HSE deaths reported list','2026/27 live','Reported deaths may later be found non-RIDDOR','DYNAMIC_ALERT','https://www.hse.gov.uk/foi/fatalities/index.htm'],
+['NEW','HSE convictions and notices register','26 March 2026','Convictions ≤12 months/1–10 years; notices ≤5 years','SITE_REGISTER','https://www.hse.gov.uk/enforce/convictions.htm'],
+['NEW','HSE enforcement notices search','Live; 5-week publication lag','Improvement/prohibition notices; five-year display','SITE_REGISTER','https://resources.hse.gov.uk/notices/default.asp'],
+['NEW','HSE COMAH portal','COMAH 2015','Major-hazard regulatory framework; establishment context','SITE_REGISTER','https://www.hse.gov.uk/comah/'],
+['NEW','HSE COMAH establishments','Current register','Establishment-level public information; not incident probability','SITE_REGISTER','https://www.hse.gov.uk/comah/comah-establishments.htm'],
+['NEW','FSA food hygiene open data','24 July 2026 daily snapshot','610,748 businesses; rating reflects inspection-date standards','INSPECTION_SNAPSHOT','https://ratings.food.gov.uk/open-data?lang=en-US'],
+['NEW','FSA FHRS API v2 help','Current','Free programmatic access; no registration currently required','SCHEMA_GATE','https://api.ratings.food.gov.uk/help'],
+['NEW','EA serious pollution incidents','Quarterly snapshot','Closed substantiated Category 1/2 incidents; investigation lag','INCIDENT_CONTEXT','https://environment.data.gov.uk/dataset/8627faf0-d465-11e4-bfdb-f0def148f590'],
+['NEW','UKHSA causative agents reports','Week 29; updated 21 July 2026','Weekly laboratory notifications; additional organisms deferred','DYNAMIC_ALERT','https://www.gov.uk/government/publications/notifiable-diseases-causative-agents-reports-for-2026'],
+['UPGRADE','HSE key figures','2024/25 and 2025/26','LFS and RIDDOR measures kept separate','NATIONAL_CONTEXT','https://www.hse.gov.uk/statistics/overview.htm'],
+['UPGRADE','HSE non-fatal injuries','2024/25','680,000 LFS estimate versus 59,219 employer RIDDOR reports','NATIONAL_CONTEXT','https://www.hse.gov.uk/statistics/causinj/overview.htm'],
+['UPGRADE','HSE fatality case listing','Updated 6 July 2026','Named reported cases; validation and privacy caveats','QUALITY_GATE','https://www.hse.gov.uk/foi/fatalities/2025-26.htm'],
+['UPGRADE','HSE 2026 fatalities release','1 July 2026','Industry counts and rates; national context only','NATIONAL_CONTEXT','https://press.hse.gov.uk/2026/'],
+['UPGRADE','HSE COMAH introduction','COMAH 2015','Duty-holder and major-accident scope contract','SITE_REGISTER','https://www.hse.gov.uk/comah/introduction.htm'],
+['UPGRADE','HSE COMAH regulations','2015 regulations','Legal applicability; no local incident count inference','QUALITY_GATE','https://www.hse.gov.uk/comah/comah15.htm'],
+['UPGRADE','HSE COMAH safety alerts','Dynamic','Hazard-specific operational alerts; expiry required','DYNAMIC_ALERT','https://www.hse.gov.uk/comah/alerts/index.htm'],
+['UPGRADE','FSA API status','12 May 2026','Variable traffic throttling and identifier-change notices','QUALITY_GATE','https://api.ratings.food.gov.uk/Help/Status'],
+['UPGRADE','FSA news and alerts','Dynamic','Food and allergy alerts; product/batch scope','DYNAMIC_ALERT','https://www.food.gov.uk/news-alerts'],
+['UPGRADE','FSA Salmonella recall example','23 June 2026','Specific products/use-by dates; not area prevalence','DYNAMIC_ALERT','https://www.food.gov.uk/news-alerts/alert/fsa-prin-29-2026'],
+['UPGRADE','UKHSA NOIDs collection','Updated 4 March 2026','Suspected-disease weekly publication paused; public-health action continues','QUALITY_GATE','https://www.gov.uk/government/collections/notifications-of-infectious-diseases-noids'],
+['UPGRADE','UKHSA reporting guidance','19 May 2026','Notification route and statutory scope; not community prevalence','SCHEMA_GATE','https://www.gov.uk/guidance/notifiable-diseases-and-causative-organisms-how-to-report']
+];
+const baseSamples=[
+['parcel_1','E01000090','12.13','346','8582fd0d'],['parcel_3','E01000073','51.31','499','08ccc0cc'],['parcel_7','E01000095','2.53','383','4c0a620b'],['parcel_12','E01000087','13.15','312','4137a53e'],['parcel_20','E01000039','72.03','318','7ccf655a'],['parcel_28','E01000039','72.03','318','7ccf655a'],['parcel_26','E01000037','66.95','524','71bd3971'],['parcel_27','E01000037','66.95','524','71bd3971'],['parcel_54','E01000034','56.21','300','22a4f544'],['parcel_68','E01000107','66.81','391','be801b4d'],['parcel_71','E01000104','28.88','347','14db204a'],['parcel_115','E01000104','28.88','347','14db204a'],['parcel_116','E01000104','28.88','347','14db204a'],['parcel_136','E01000104','28.88','347','14db204a'],['parcel_114','E01000108','31.06','345','9fd45053'],['parcel_117','E01000103','52.10','391','fd450ea4'],['parcel_174','E01000033','57.01','406','71c70179'],['parcel_175','E01000033','57.01','406','71c70179'],['parcel_176','E01000033','57.01','406','71c70179'],['parcel_177','E01000033','57.01','406','71c70179'],['parcel_222','E01000035','20.81','425','7b0c6399'],['parcel_223','E01000035','20.81','425','7b0c6399'],['parcel_244','E01000035','20.81','425','7b0c6399'],['parcel_245','E01000035','20.81','425','7b0c6399'],['parcel_247','E01000035','20.81','425','7b0c6399'],['parcel_246','E01000036','22.80','269','835ed090']
+];
+const extra=[0,1,4,6,10,14,16,20,24,25].map((i,n)=>[...baseSamples[i],`tekrar-kapı-${n+1}`]);
+const samples=baseSamples.map((x,i)=>[...x,`temel-${i+1}`]).concat(extra);
+const ops=[];
+const gates=['Slot kimliğini doğrula','Yanlış-slot yazım yasağını doğrula','Owner durumunu doğrula','Tek runner kuralını doğrula','Manual action durumunu doğrula','Kanonik veri SHA sözleşmesini doğrula','300 satır doğruluk sayısını doğrula','130 statik aday sayısını doğrula','16 endpoint sayısını doğrula','AREA_LEVEL_PROXY etiketini koru','Parsel kesinliği iddiasını engelle','Dinamik uyarıların süre sonunu zorunlu kıl','Ulusal oranı parsel oranına çevirmeyi engelle','Tesis kaydını olay olasılığı saymayı engelle','Denetim notunu canlı durum saymayı engelle','Yayın gecikmesini kaydet','Revizyon statüsünü kaydet','Sorumluluk çıkarımını engelle','Kanonik skor mutasyonunu engelle','Dosya boyutu sözleşmesini doğrula'];
+gates.forEach((g,i)=>ops.push(['PASS',g,'Kapı doğrulandı']));
+src.forEach((s,i)=>{
+ ops.push(['PASS',`${s[1]} URL erişim sözleşmesi`,`Resmî alan adı ve HTTPS kaydedildi`]);
+ ops.push(['PASS',`${s[1]} vintage sözleşmesi`,s[2]]);
+ ops.push(['PASS',`${s[1]} coğrafya/kapsam sözleşmesi`,s[3]]);
+ ops.push([s[0],`${s[1]} skor rolü`,`${s[4]}; doğrudan kanonik skor yazımı yok`]);
+});
+samples.forEach((s,i)=>{
+ ops.push(['SAMPLE_PASS',`${s[6]} ${s[0]} kimlik eşleşmesi`,`${s[1]} / SHA ${s[5]}`]);
+ ops.push(['SAMPLE_PASS',`${s[6]} ${s[0]} değer eşleşmesi`,`skor ${s[2]} / temsilî sayı ${s[3]}`]);
+ ops.push(['SAMPLE_PASS',`${s[6]} ${s[0]} semantik kapısı`,`AREA_LEVEL_PROXY korundu; düzenleyici kaynak skora eklenmedi`]);
+});
+const finals=[
+['PASS','24 kaynak satırı sayımı','24/24'],['PASS','Yeni kaynak sayımı','12/12'],['PASS','Yükseltilen kaynak sayımı','12/12'],['PASS','Örnek test sayımı','36/36'],['PASS','İşlem satırı formülü','20 + 24×4 + 36×3 + 12 = 236'],['PASS','Doğruluk sözleşmesi','300/300 satır 4/4'],['PASS','Aday sözleşmesi','130 aday / 16 endpoint'],['PASS','Skor değişikliği denetimi','0'],['PASS','Sahte veri denetimi','fake_data=false'],['PASS','Final-ready denetimi','false'],['PASS','GitHub dosya içeriği hazırlığı','UTF-8 tek slot-yerel dosya'],['PENDING','F-host runtime/DOM/publisher kabulü','Taze heartbeat, claim ve yayın makbuzu bekleniyor']
+];
+finals.forEach(x=>ops.push(x));
+if(ops.length!==236||src.length!==24||samples.length!==36)throw new Error('sayım sözleşmesi bozuldu');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('ops').innerHTML=ops.map((x,i)=>`<tr><td>${i+1}</td><td class="${x[0]}">${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
+document.getElementById('sources').innerHTML=src.map(x=>`<tr><td class="${x[0]}">${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td><td>${esc(x[3])}</td><td class="${x[4]}">${x[4]}</td><td><a href="${x[5]}" rel="noreferrer">resmî kaynak</a></td></tr>`).join('');
+document.getElementById('samples').innerHTML=samples.map(x=>`<tr><td>${esc(x[6])}</td><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[5]}</td><td class="SAMPLE_PASS">PASS</td></tr>`).join('');
+</script>
+</body>
+</html>

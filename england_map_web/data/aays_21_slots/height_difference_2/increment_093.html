@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>height_difference_2 increment 093</title>
+<style>body{font:14px system-ui;margin:20px}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid #ccc;padding:5px;vertical-align:top}th{position:sticky;top:0;background:#fff}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{border:1px solid #bbb;padding:10px}.ok{font-weight:700}</style>
+<h1>height_difference_2 — Increment 093</h1><div id="cards" class="cards"></div>
+<h2>Operations — row by row</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Rule</th><th>Description</th><th>Source</th><th>Context</th><th>QA</th></tr></thead><tbody></tbody></table>
+<h2>Official source candidates</h2><table id="src"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Confidence</th><th>Limits</th></tr></thead><tbody></tbody></table>
+<h2>Prepared examples — row by row</h2><table id="ex"><thead><tr><th>ID</th><th>Scenario</th><th>Parcel</th><th>1m</th><th>2m</th><th>Δ</th><th>Confidence</th><th>Survey</th><th>Rule</th><th>Description</th><th>QA</th><th>Business</th></tr></thead><tbody></tbody></table>
+<h2>Integrity</h2><pre id="audit"></pre>
+<script>
+const j=async f=>(await fetch(f)).json();
+const expandOps=o=>{ const rows=[...o.fixed_operations]; for(const g of o.generators){for(let i=0;i<g.count;i++){const rc=g.rule_cycle[((i*(g.rule_stride||1))%g.rule_cycle.length)];const ctx=g.context_cycle[Math.floor(i/g.rule_cycle.length)%g.context_cycle.length]||g.context_cycle[i%g.context_cycle.length];rows.push([g.operation_start+i,g.operation_type,rc,'',ctx,g.accuracy_score_4])}} return rows; };
+Promise.all([j('operations_increment_093.json'),j('source_candidates_increment_093.json'),j('examples_increment_093.json'),j('progress_increment_093.json'),j('integrity_audit_increment_093.json')]).then(([o,s,e,p,a])=>{
+cards.innerHTML=[['Overall',p.overall_completion_percent+'%'],['Main',p.completed_operation_count+'/'+p.planned_operation_count],['New ops',p.support_operation_rows_added],['New sources',p.new_source_candidate_count],['New examples',p.new_prepared_example_count],['Numeric confidence',p.numeric_result_confidence_percent+'%'],['Blocker',p.blocker]].map(x=>`<div class=card><b>${x[0]}</b><br>${x[1]}</div>`).join('');
+for(const r of expandOps(o)){ops.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${o.rule_descriptions[r[2]]||''}</td><td>${r[3]}</td><td>${r[4]}</td><td class=ok>${r[5]}/4</td></tr>`)}
+for(const r of s.candidates){src.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>${r.candidate_id}</td><td>${r.publisher}</td><td>${r.name}</td><td>${r.role}</td><td>${r.source_confidence_percent}%</td><td>${r.semantic_limits.join(' ')}</td></tr>`)}
+let id=682;for(const sc of e.scenarios){for(const p0 of e.parcels){ex.tBodies[0].insertAdjacentHTML('beforeend',`<tr><td>HD2-QA-${id++}</td><td>${sc.scenario}</td><td>${p0.parcel}</td><td>${p0.dtm1m.toFixed(3)}</td><td>${p0.dtm2m.toFixed(3)}</td><td>${p0.delta.toFixed(3)}</td><td>${e.numeric_result_confidence_percent}%</td><td>${e.parcel_specific_survey_identity}</td><td>${sc.rule_code}</td><td>${e.rule_descriptions[sc.rule_code]||''}</td><td class=ok>${e.accuracy_score_4}/4</td><td>${e.business_row}</td></tr>`)}}
+audit.textContent=JSON.stringify(a,null,2)
+});
+</script>
