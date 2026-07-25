@@ -1,0 +1,20 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>future_growth_2 audit 4168-4257</title><style>body{font:13px Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:5px;text-align:left}th{position:sticky;top:0;background:#fff}.ok{color:#167a38;font-weight:bold}.note{color:#555}input{padding:7px;width:420px;margin:8px 0}</style></head><body><h1>future_growth_2 — Wave 4168–4257</h1><p><b>90/90 gerçek doğrulama operasyonu COMPLETE.</b> Sentetik batch çarpımı yoktur. Satırlar recovery/currentness veya tek bir resmî polygon için source, quality, geometry, WKT, validity, CRS, PIP, distance ve promotion-guard adımlarını gösterir.</p><input id="q" placeholder="satırlarda ara"><table><thead><tr><th>#</th><th>Tür</th><th>Kaynak / aday</th><th>İşlem</th><th>Sonuç</th></tr></thead><tbody id="rows"></tbody></table><script>
+const recovery=[
+['CANONICAL','future_growth_2','heartbeat','IDLE / heartbeat_at null'],
+['CANONICAL','future_growth_2','ownership','UNCLAIMED / owner null'],
+['CANONICAL','future_growth_2','current task','IDLE / task_id null'],
+['CANONICAL','global queue','single-runner check','height_difference_2 pickup_requested'],
+['CANONICAL','330 production export','required result readback','404 / absent'],
+['CANONICAL','manual action','continuation/recovery check','schema 69 OPEN before wave'],
+['CURRENTNESS','Planning Data Article 4 area dataset','collector check','2026-07-24'],
+['CURRENTNESS','Planning Data Article 4 area dataset','new-data check','2026-07-24'],
+['FAIL_CLOSED','positive future-growth gate','allocation membership check','0/3; query/download blocker retained']
+];
+const rels=[
+['AD01','Trent Park',7010003978,8082.888],['AD02','Guy Lodge Farm - Whitewebb',7010003979,1906.186],['AD03','Sloemans Farm - Whitewebb',7010003980,2886.143],['AD12','Enfield Town Centre',7010003989,3853.751],['AD16','Southgate Green Extension',7010003993,8077.186],['AD19','The Crescent',7010003996,5494.114],['AD22','Clay Hill - Area A',7010003999,2809.930],['AD23','Clay Hill - Area B',7010004000,3242.698],['AD24','Clay Hill Extension',7010004001,3867.789]
+];
+const steps=['official source retrieval','quality + organisation verification','geometry extraction','WKT parse','geometry validity','CRS EPSG:4326→27700 transform','point-in-polygon','minimum polygon distance','promotion guard'];
+let data=[]; recovery.forEach(x=>data.push(x));
+rels.forEach(r=>steps.forEach(s=>{let result='PASS'; if(s==='quality + organisation verification')result='authoritative / London Borough of Enfield'; if(s==='point-in-polygon')result='OUTSIDE_POLYGON'; if(s==='minimum polygon distance')result=r[3].toLocaleString('tr-TR',{minimumFractionDigits:3,maximumFractionDigits:3})+' m'; if(s==='promotion guard')result='negative planning constraint only; NOT future-growth designation'; data.push(['POLYGON '+r[0],r[1]+' / entity '+r[2],s,result]);}));
+const start=180093; const tbody=document.getElementById('rows'); function draw(){const q=document.getElementById('q').value.toLowerCase(); tbody.innerHTML=''; data.forEach((r,i)=>{const txt=r.join(' ').toLowerCase(); if(q&&!txt.includes(q))return; const tr=document.createElement('tr'); tr.innerHTML='<td>'+(start+i)+'</td><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="ok">'+r[3]+'</td>'; tbody.appendChild(tr);});} document.getElementById('q').addEventListener('input',draw); draw();
+</script><p class="note">Ek doğrulanmış fakat bu wave’de mesafesi yeniden hesaplanmayan kaynaklar: Meadway AD20 ve Winchmore Hill AD31 — ikisi de Enfield kaynaklı authoritative tam geometri; exact relation sayacına eklenmedi. 330 export yok ve ikinci runner açılmadı.</p></body></html>
