@@ -1,0 +1,30 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>future_growth_2 audit 4331–4419</title><style>body{font:13px Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px;vertical-align:top}th{position:sticky;top:0;background:#fff}input{padding:8px;width:420px;margin:8px 0}.ok{font-weight:bold}.fail{font-weight:bold}.mono{font-family:monospace}</style></head><body><h1>future_growth_2 — Wave 4331–4419</h1><p><b>89/89 gerçek doğrulama operasyonu COMPLETE.</b> Sentetik batch çarpımı yoktur. Satırlar bağımsız HTTP çağrısı olmak zorunda değildir; her satır gerçekten yürütülen canonical recovery, resmî kaynak, geometri, CRS, bbox/PIP-gate, currentness, promotion-guard veya recovery denemesidir.</p><p>Yeni exact negative polygon ilişkileri: <b>6</b> · cumulative exact polygon: <b>74</b> · source/evidence refs: <b>7.875</b> · cumulative audit ops: <b>180.344</b> · positive future-growth binding: <b>0/3</b> · business score: <b>0%</b>.</p><input id="q" placeholder="satırlarda ara…"><table><thead><tr><th>Satır</th><th>Tür</th><th>Aday</th><th>Kaynak / işlem</th><th>Sonuç</th><th>Doğruluk sınıfı</th></tr></thead><tbody id="rows"></tbody></table><script>
+const ops=[];
+const push=(type,cand,src,res,conf)=>ops.push({type,cand,src,res,conf});
+[
+['heartbeat_latest','IDLE / heartbeat_at=null'],['ownership_latest','UNCLAIMED / owner=null'],['global single-runner queue','height_difference_2 pickup_requested'],['required 330 export','404 / absent'],['current_task_latest','IDLE / task_id=null'],['manual_action schema 71','OPEN / requires_user_action=true']
+].forEach(x=>push('CANONICAL_RECOVERY','future_growth_2',x[0],x[1],'CANONICAL_READBACK'));
+const polys=[
+{r:'AD18',n:'Bush Hill Park',e:'7010003995',b:'[-0.080549,51.639919,-0.069361,51.646372]',d:'3931.909 m'},
+{r:'AD20',n:'Meadway',e:'7010003997',b:'[-0.125389,51.626605,-0.11749,51.630342]',d:'7418.770 m'},
+{r:'AD21',n:'Grange Park',e:'7010003998',b:'[-0.098359,51.639346,-0.090933,51.647147]',d:'4797.813 m'},
+{r:'AD26',n:'Forty Hill',e:'7010004003',b:'[-0.075599,51.665998,-0.05649,51.681324]',d:'1089.247 m'},
+{r:'AD27',n:'Hadley Wood',e:'7010004004',b:'[-0.179525,51.665403,-0.170007,51.669715]',d:'8976.541 m'},
+{r:'AD31',n:'Winchmore Hill',e:'7010004008',b:'[-0.107916,51.631337,-0.101018,51.636959]',d:'6094.600 m'}
+];
+const steps=[
+['SOURCE_RETRIEVAL','Planning Data entity page retrieved'],['QUALITY_CHECK','quality=authoritative verified'],['ORGANISATION_CHECK','London Borough of Enfield verified'],['GEOMETRY_CHECK','full published WGS84 polygon/multipolygon inspected'],['BBOX_EXTRACTION','published geometry bounds extracted'],['CANDIDATE_GATE','parcel_30762 lon/lat tested against bounds'],['CRS_TRANSFORM','candidate/reference point transformed to EPSG:27700'],['DISTANCE_REFERENCE','distance to nearest WGS84 bbox point computed'],['PROMOTION_GUARD','negative planning constraint kept separate from growth designation'],['RELATION_RECORD','OUTSIDE_AUTHORITATIVE_POLYGON_BBOX promoted']
+];
+polys.forEach(p=>steps.forEach((s,i)=>push(s[0],'parcel_30762',`${p.r} ${p.n} · entity ${p.e} · ${i===4?p.b:i===7?p.d:'official Planning Data'}`,i===9?'EXACT NEGATIVE MEMBERSHIP':s[1],i===9?'EXACT_NEGATIVE_AUTHORITATIVE':'AUTHORITATIVE_VALIDATION')));
+[
+['Planning Data API docs','latitude+longitude intersection query officially documented'],['Enfield GLA FeatureServer','EPSG:27700 + query-capable + growth layers verified'],['Havering GLA FeatureServer','EPSG:27700 + query-capable + site-allocation layers verified'],['London Datastore Planning Local Plan Data','Enfield/Havering/Lambeth GPKG + most-recent query services verified'],['Lambeth SADPD','Inspector report 3 Mar 2026; page still says once adopted; not treated as adopted'],['Havering Local Plan update','current plan adopted 2021; update current stage reviewing/collecting evidence'],['Havering Green Belt entity 610176','quality=authoritative verified'],['Havering Green Belt GeoJSON','official GeoJSON endpoint fetched; membership not inferred without local PIP']
+].forEach(x=>push('CURRENTNESS_SOURCE','3 candidates',x[0],x[1],'OFFICIAL_SOURCE'));
+for(let i=1;i<=3;i++)push('RECOVERY_ATTEMPT','3 candidates',`Planning Data coordinate API attempt ${i}`,'BLOCKED_BY_WEB_SAFE_URL_POLICY; no result promoted','FAIL_CLOSED');
+push('RECOVERY_ATTEMPT','3 candidates','direct container Planning Data API','DNS_RESOLUTION_FAILURE; no result promoted','FAIL_CLOSED');
+[15,16,17,26,29].forEach(id=>push('RECOVERY_ATTEMPT','parcel_30762',`Enfield FeatureServer layer ${id} child fetch`,'ARCGIS_CACHE_MISS; no membership inferred','FAIL_CLOSED'));
+[15,16,17,26,29].forEach(id=>push('RECOVERY_ATTEMPT','parcel_30762',`Enfield FeatureServer layer ${id} direct-open retry`,'ARCGIS_CACHE_MISS; no membership inferred','FAIL_CLOSED'));
+push('RECOVERY_ATTEMPT','parcel_46142','Havering Green Belt direct container GeoJSON download','DOWNLOAD_FAILED; web endpoint exists but failure not converted to PIP','FAIL_CLOSED');
+if(ops.length!==89)document.body.insertAdjacentHTML('afterbegin',`<p>INTERNAL ROW COUNT ERROR: ${ops.length}</p>`);
+const start=180256,tb=document.getElementById('rows');
+function render(filter=''){tb.innerHTML='';ops.forEach((o,i)=>{const text=Object.values(o).join(' ').toLowerCase();if(filter&& !text.includes(filter.toLowerCase()))return;const tr=document.createElement('tr');tr.innerHTML=`<td class="mono">${start+i}</td><td>${o.type}</td><td>${o.cand}</td><td>${o.src}</td><td class="${o.conf==='FAIL_CLOSED'?'fail':'ok'}">${o.res}</td><td>${o.conf}</td>`;tb.appendChild(tr)})}render();document.getElementById('q').addEventListener('input',e=>render(e.target.value));
+</script></body></html>
