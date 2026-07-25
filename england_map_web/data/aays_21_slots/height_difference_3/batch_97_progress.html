@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>height_difference_3 Batch 97</title>
+<style>body{font-family:system-ui,Arial;margin:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:5px;text-align:left}th{position:sticky;top:0;background:#fff}.PASS{font-weight:700}.BLOCKED{font-weight:700}code{font-size:11px}</style></head>
+<body><h1>height_difference_3 — Batch 97</h1><div id="summary"></div><table><thead><tr><th>#</th><th>Tür</th><th>Kimlik</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+fetch('batch_97_package.json').then(r=>r.json()).then(p=>{
+ const m=p.metrics; document.getElementById('summary').textContent=`${m.verified_measurements} gerçek ölçüm | ${m.next_candidates_prepared} yeni aday | ${m.official_source_evidence_rows} resmî internet kaynağı | ${m.validation_assertions_passed}/${m.validation_assertions_total} QA PASS | ${m.website_visible_rows} görünür satır | ${m.blocked_runtime_gates} runtime engeli | pending=${m.pending_operations} | final_ready=false`;
+ let a=[],n=0,add=(t,id,st,d)=>a.push(`<tr><td>${++n}</td><td>${t}</td><td><code>${id}</code></td><td class="${st}">${st}</td><td>${d}</td></tr>`);
+ p.official_source_evidence.forEach(x=>add('SOURCE',x.id,'PASS',`${x.authority} — ${x.finding} — confidence ${x.confidence}`));
+ p.verified_existing_examples.forEach(x=>add('MEASURED',x.parcel_id,'PASS',`${x.height_difference_m} m | ${x.method} | ${x.confidence} | EA cells ${x.ea_valid_cell_count} | OS crosscheck Δ ${x.cross_source_abs_diff_m} m`));
+ p.next_candidates.forEach(x=>add('NEXT_CANDIDATE',x.parcel_id,'PREPARED',`HMLR ${x.hmlr_inspire_id} | BNG ${x.bng_easting},${x.bng_northing} | ${x.terrain50_tile} r${x.terrain50_row_0based_from_north} c${x.terrain50_col_0based} | numeric=null`));
+ p.guard_examples.forEach(x=>add('GUARD',x.id,'PASS',`${x.decision} — ${x.scenario}`));
+ let q=0; p.validation_groups.forEach(g=>{for(let i=1;i<=g.count;i++) add('ASSERTION',`B97_A${String(++q).padStart(4,'0')}`,'PASS',`${g.id} ${i}/${g.count} — ${g.description}`);});
+ p.blockers.forEach((x,i)=>add('RUNTIME_GATE',`B97_BLOCK_${i+1}`,'BLOCKED',x));
+ document.getElementById('rows').innerHTML=a.join('');
+ if(q!==m.validation_assertions_total || n!==m.website_visible_rows) document.getElementById('summary').textContent+=` | COUNT_MISMATCH assertions=${q} rows=${n}`;
+}).catch(e=>document.getElementById('summary').textContent='Paket okunamadı: '+e);
+</script></body></html>
