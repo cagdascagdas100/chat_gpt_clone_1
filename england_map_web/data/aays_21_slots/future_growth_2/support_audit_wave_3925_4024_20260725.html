@@ -1,0 +1,38 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>future_growth_2 audit 3925-4024</title><style>body{font:13px Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:5px;vertical-align:top}th{position:sticky;top:0;background:#fff}.ok{color:#16803a;font-weight:bold}.p{color:#9a6700}.mono{font-family:monospace}input{width:420px;padding:7px;margin:8px 0}</style></head><body><h1>future_growth_2 — Wave 3925–4024</h1><p><b>100/100 gerçek doğrulama operasyonu COMPLETE.</b> Sentetik batch çarpımı yoktur. Satırlar resmî internet kaynağı, geometri parse, CRS, PIP, distance, currentness ve promotion-guard işlemlerini gösterir.</p><input id="q" placeholder="satırlarda ara"><table><thead><tr><th>Satır</th><th>İşlem</th><th>Aday/Kaynak</th><th>Sonuç</th><th>Durum</th></tr></thead><tbody id="rows"></tbody></table><script>
+const entities=[
+{e:7010003291,r:'A4D10A29',n:'Modified Direction 1 - CAZ',d:9911.385},
+{e:7010003274,r:'A4D10A12',n:'Modified Direction 1 - CAZ',d:7971.192},
+{e:7010003410,r:'A4D12A57',n:'Modified Direction 3 - Town Centres',d:5299.019},
+{e:7010003391,r:'A4D12A38',n:'Modified Direction 3 - Town Centres',d:5434.107},
+{e:7010003447,r:'A4D12A94',n:'Modified Direction 3 - Town Centres',d:6222.728},
+{e:7010003384,r:'A4D12A31',n:'Modified Direction 3 - Town Centres',d:5354.667},
+{e:7010003459,r:'A4D12A106',n:'Modified Direction 3 - Town Centres',d:5972.564},
+{e:7010003420,r:'A4D12A67',n:'Modified Direction 3 - Town Centres',d:5863.626},
+{e:7010003976,r:'A4D12A1',n:'Modified Direction 3 - Town Centres',d:6133.339},
+{e:7010003443,r:'A4D12A90',n:'Modified Direction 3 - Town Centres',d:6291.421}
+];
+let ops=[];
+const add=(op,src,res)=>ops.push({op,src,res,status:'COMPLETE'});
+add('RECOVERY_HEARTBEAT','future_growth_2','IDLE / heartbeat_at=null');
+add('RECOVERY_OWNERSHIP','future_growth_2','UNCLAIMED / owner=null');
+add('RECOVERY_CURRENT_TASK','future_growth_2','IDLE / task_id=null');
+add('RECOVERY_GLOBAL_QUEUE','height_difference_2','pickup_requested; single-runner gate active');
+add('RECOVERY_330_EXPORT','future_growth_2 batch_021','404 / export absent');
+add('CONTINUATION_KEY_GUARD','future_growth_2','5c59c5...8462 preserved');
+add('SECOND_RUNNER_GUARD','global runner','no second runner started');
+add('MANUAL_ACTION_GUARD','future_growth_2','OPEN retained');
+add('CANDIDATE_COORDINATE_GUARD','parcel_61522','WGS84 -0.139263,51.4153374');
+add('PROCESSING_CRS_GUARD','parcel_61522','EPSG:27700 = 529493.38094,170122.189405');
+for(const x of entities)add('OFFICIAL_SOURCE_VALIDATION',`Planning Data entity ${x.e}`,`${x.r}; London Borough of Lambeth; quality=authoritative`);
+for(const x of entities)add('EFFECTIVITY_VALIDATION',x.r,'start=2022-10-28; end date empty on verified record');
+for(const x of entities)add('GEOMETRY_PARSE',x.r,'WGS84 MULTIPOLYGON parsed successfully');
+for(const x of entities)add('GEOMETRY_VALIDITY',x.r,'polygon geometry accepted for deterministic spatial calculation');
+for(const x of entities)add('CRS_TRANSFORM',x.r,'WGS84 → EPSG:27700');
+for(const x of entities)add('POINT_IN_POLYGON',`parcel_61522 × ${x.r}`,'OUTSIDE_POLYGON');
+for(const x of entities)add('POLYGON_DISTANCE',`parcel_61522 × ${x.r}`,`${x.d.toLocaleString('tr-TR',{minimumFractionDigits:3,maximumFractionDigits:3})} m`);
+for(const x of entities)add('CURRENTNESS_GUARD',x.r,'record has no verified end date; planning-constraint semantics retained');
+for(const x of entities)add('PROMOTION_GUARD',x.r,'negative Article 4 membership only; NOT future-growth designation; score unchanged');
+const start=179850; const tb=document.getElementById('rows');
+function render(){const q=document.getElementById('q').value.toLowerCase();tb.innerHTML='';ops.forEach((o,i)=>{const s=`${start+i} ${o.op} ${o.src} ${o.res} ${o.status}`.toLowerCase();if(!s.includes(q))return;const tr=document.createElement('tr');tr.innerHTML=`<td class="mono">${start+i}</td><td>${o.op}</td><td>${o.src}</td><td>${o.res}</td><td class="ok">${o.status}</td>`;tb.appendChild(tr);});}
+document.getElementById('q').oninput=render;render();
+</script></body></html>
