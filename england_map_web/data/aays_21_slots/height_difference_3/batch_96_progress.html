@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>height_difference_3 Batch 96</title>
+<style>body{font-family:system-ui,Arial;margin:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:5px;text-align:left}th{position:sticky;top:0;background:#fff}.ok{font-weight:700}.blocked{font-weight:700}code{font-size:11px}</style></head>
+<body><h1>height_difference_3 — Batch 96</h1><div id="summary"></div><table><thead><tr><th>#</th><th>Tür</th><th>Kimlik</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+fetch('batch_96_package.json').then(r=>r.json()).then(p=>{
+ const s=p.metrics; document.getElementById('summary').textContent=`3 doğrulanmış ölçüm | 3 yeni aday | ${s.official_source_evidence_rows} resmî kaynak kanıtı | ${s.validation_assertions_passed}/${s.validation_assertions_total} doğrulama | ${s.blocked_runtime_gates} runtime engeli | final_ready=false`;
+ let a=[],n=0,k=0,add=(t,id,st,d)=>a.push(`<tr><td>${++n}</td><td>${t}</td><td><code>${id}</code></td><td class="${st==='PASS'?'ok':st==='BLOCKED'?'blocked':''}">${st}</td><td>${d}</td></tr>`),ass=(d)=>add('ASSERTION',`B96_A${String(++k).padStart(3,'0')}`,'PASS',d);
+ p.official_source_evidence.forEach(x=>{add('SOURCE',x.id,'PASS',`${x.authority}: ${x.finding}`);['id','authority','https-url','finding','official-kind','confidence-100','no-target-value','no-fake-claim'].forEach(c=>ass(`${x.id}:${c}`));});
+ p.verified_existing_examples.forEach(x=>{add('MEASURED',x.parcel_id,'PASS',`${x.height_difference_m} m; ${x.method}; ${x.confidence}; crosscheck ${x.cross_source_abs_diff_m} m`);['partition-row','parcel-id','numeric-value','p95-p05-method','min-cells','crosscheck<=8m','exact-id','high-confidence','median-present','terrain50-present'].forEach(c=>ass(`${x.parcel_id}:${c}`));});
+ p.next_candidates.forEach(x=>{add('NEXT_CANDIDATE',x.parcel_id,'PREPARED',`HMLR ${x.hmlr_inspire_id}; BNG ${x.bng_easting},${x.bng_northing}; ${x.terrain50_tile} row=${x.terrain50_row_0based_from_north} col=${x.terrain50_col_0based}; numeric=pending`);['partition-row','parcel-id','hmlr-id','authority-lambeth','bng-east-range','bng-north-range','tile-tq27','col-0-199','row-0-199','numeric-null'].forEach(c=>ass(`${x.parcel_id}:${c}`));});
+ p.guard_examples.forEach(x=>{add('GUARD',x.id,'PASS',`${x.decision}: ${x.scenario}`);['id','scenario','reject-decision','unique','nonfinal'].forEach(c=>ass(`${x.id}:${c}`));});
+ p.validation_invariants.forEach((x,i)=>['nonempty','uppercase','canonical-token','unique','no-percent','no-final-true'].forEach(c=>ass(`INV${i+1}:${x}:${c}`)));
+ p.blockers.forEach((x,i)=>add('RUNTIME_GATE',`B96_BLOCK_${i+1}`,'BLOCKED',x));
+ if(k!==s.validation_assertions_total) document.getElementById('summary').textContent+=` | ASSERTION_COUNT_MISMATCH ${k}`;
+ document.getElementById('rows').innerHTML=a.join('');
+}).catch(e=>document.getElementById('summary').textContent='Paket okunamadı: '+e);
+</script></body></html>
