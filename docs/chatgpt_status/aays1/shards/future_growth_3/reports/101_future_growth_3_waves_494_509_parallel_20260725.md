@@ -6,9 +6,9 @@
 - researched rows: 20
 - eligible: 8
 - excluded: 12
-- direct promotion candidates: 16
-- direct live calls: 22 = 10 PASS / 12 FAIL
-- safe retries: 6
+- direct promotion candidates: 17
+- direct live calls: 24 = 10 PASS / 14 FAIL
+- safe retries: 7
 - eligible confidence: 98.75/100
 - search-only promotions: 0
 - visible operation rows: 140
@@ -17,7 +17,7 @@
 
 Eight rows passed the strict current/direct gate: Medway `MC619`, `MC615`, `530`; Sevenoaks `BFR131`, `BFR162`, `BFR133`, `BFR120`, `BFR135`.
 
-`BFR112` was rejected because the official current record says “Not Carried forward”. `BFR187` was rejected because the official record says “Under Construction”. `MC558`, `MC634` and `MC649` were retained only as out-of-date/temporal controls. Six search-visible candidate pages failed direct retrieval after exactly one safe retry and were not promoted.
+`BFR112` was rejected because the official current record says “Not Carried forward”. `BFR187` was rejected because the official record says “Under Construction”. `MC558`, `MC634` and `MC649` were retained only as out-of-date/temporal controls. Seven search-visible candidate pages failed direct retrieval after exactly one safe retry and were not promoted; Medway ref `663` was included in that fail-closed set after its final direct retry returned a cache miss.
 
 ## Progress
 
