@@ -1,5 +1,5 @@
 {
-  "state": "RUNNING",
+  "state": "BLOCKED",
   "task_id": "height_difference_3-canonical-api-measurement-20260721-01",
   "schema_version": 2,
   "architecture_version": 3,
@@ -19,6 +19,10 @@
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/020_stream_extract_security_canonical.py",
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/021_download_os_terrain50_via_api.py",
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/022_execute_canonical_api_measurement_pipeline.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/028_execute_batch116_strict_proj_and_four_candidate_chain.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/029_run_batch116_strict_four_candidate_chain.ps1",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/059_candidate_manifest_61536_61539_batch_115.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/065_batch118_stable_runner_resume_adapter.json",
     "docs/chatgpt_status/_shared/slots_21/height_difference_3"
   ],
   "exact_write_paths": [
@@ -27,36 +31,22 @@
     "england_map_web/data/aays_21_slots/height_difference_3"
   ],
   "expected_outputs": [
-    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/010_canonical_api_measurement/canonical_api_measurement_execution.json",
-    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/010_canonical_api_measurement/canonical/stream_extraction_manifest.json",
-    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/010_canonical_api_measurement/canonical/canonical_shard_61523_92283.jsonl"
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/012_strict_four_candidate_full_chain_batch_116/batch116_strict_execution.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/012_strict_four_candidate_full_chain_batch_116/01_four_candidate_chain/04_official_measurements.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/012_strict_four_candidate_full_chain_batch_116/01_four_candidate_chain/05_verified_examples.json"
   ],
-  "resource_class": [
-    "local_large_file_scan",
-    "network_fetch",
-    "cpu_heavy",
-    "geometry"
-  ],
+  "resource_class": ["network_fetch","cpu_heavy","geometry"],
   "requires_runtime_sync_gate": true,
   "requires_git_publish_gate": true,
-  "parcel_partition": {
-    "start": 61523,
-    "end": 92283,
-    "count": 30761
-  },
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
-  },
+  "parcel_partition": {"start":61523,"end":92283,"count":30761},
+  "safety_flags": {"fake_data":false,"db_write":false,"migration":false,"production_deploy":false},
   "data_quality_contract": {
     "source_urls": [
       "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
       "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
       "https://osdatahub.os.uk/downloads/open/Terrain50"
     ],
-    "source_snapshot_date": "2026-07-21",
+    "source_snapshot_date": "2026-07-26",
     "source_discovery_required": false,
     "measurement_level": "parcel_polygon",
     "output_semantics": "MEASURED_ONLY_AFTER_THREE_SOURCE_GATE",
@@ -64,13 +54,7 @@
     "confidence_method": "HMLR_BOUNDARY_PLUS_EA_DTM1M_POLYGON_SAMPLE_PLUS_OS_TERRAIN50_CROSSCHECK",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "not_used_for_numeric_measurement",
-    "human_review_required_when": [
-      "canonical_parcel_match_missing",
-      "official_download_or_hash_missing",
-      "hmlr_boundary_missing",
-      "ea_dtm_sample_missing",
-      "terrain50_crosscheck_missing"
-    ]
+    "human_review_required_when": ["canonical_parcel_match_missing","official_download_or_hash_missing","hmlr_boundary_missing","ea_dtm_sample_missing","terrain50_crosscheck_missing"]
   },
   "timeout_seconds": 7200,
   "single_runner_only": true,
@@ -78,10 +62,20 @@
   "new_runner": false,
   "parallel_runner": false,
   "final_ready": false,
-  "legacy_queue_status": "queued",
+  "legacy_queue_status": "result_ready_for_remote_acceptance",
   "compatibility_migrated": false,
   "compatibility_source_queue": "docs/chatgpt_status/topography/queue/height_difference_3_canonical_api_measurement_20260721_01.v3.task.json",
-  "updated_at": "2026-07-22T14:12:16.850957Z",
-  "blocker": null,
+  "recovery_resume": {
+    "adapter_prepared": true,
+    "stable_runner_script_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/029_run_batch116_strict_four_candidate_chain.ps1",
+    "stable_runner_script_blob_sha": "a9979a1eeef2db87f9193b676969faccd24f672d",
+    "resume_input": "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/065_batch118_stable_runner_resume_adapter.json",
+    "same_task_id_required": true,
+    "duplicate_queue_task_forbidden": true,
+    "legacy_queue_mutation_not_performed": true,
+    "legacy_queue_mutation_reason": "outside current task exact_write_paths"
+  },
+  "updated_at": "2026-07-26T03:24:17+03:00",
+  "blocker": "PORTABLE_SHARED_RUNNER_HOST_STALE_AND_STRICT_QUEUE_WIRING_OUTSIDE_SLOT_WRITE_SCOPE",
   "result": null
 }
