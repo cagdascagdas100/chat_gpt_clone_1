@@ -354,6 +354,32 @@ class SlotRecoverySupervisor:
                 retained.append(str(path))
         return removed, retained
 
+    def _materialize_read_paths(self, worktree: Path, task: dict[str, Any]) -> str | None:
+        """Checkout exact declared inputs without expanding broad parent directories."""
+        exact_read_paths: list[str] = []
+        values = task.get("read_paths")
+        if isinstance(values, list):
+            exact_read_paths.extend(str(value) for value in values if value)
+        if task.get("script_path"):
+            exact_read_paths.append(str(task["script_path"]))
+        exact_read_paths = sorted({
+            value.replace("\\", "/").strip("/")
+            for value in exact_read_paths
+            if value and ":" not in value and ".." not in PurePosixPath(value).parts
+        })
+        for offset in range(0, len(exact_read_paths), 50):
+            batch = exact_read_paths[offset:offset + 50]
+            try:
+                materialize = self._git(
+                    worktree, "checkout", "--ignore-skip-worktree-bits",
+                    "HEAD", "--", *batch, timeout=300,
+                )
+            except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                return f"READ_PATH_CHECKOUT_EXCEPTION:{type(exc).__name__}:{exc}"
+            if materialize.returncode != 0:
+                return f"READ_PATH_CHECKOUT_FAILED:{materialize.stderr.strip()}"
+        return None
+
     def _provision_isolated_worktree(
         self,
         slot_id: str,
@@ -362,6 +388,11 @@ class SlotRecoverySupervisor:
         current_worktree: Path,
     ) -> tuple[Path | None, str | None]:
         """Preserve a dirty worktree and route one retry to a clean local-HEAD worktree."""
+        expected_head_result = self._git(self.repo, "rev-parse", "HEAD", timeout=30)
+        expected_head = (
+            expected_head_result.stdout.strip()
+            if expected_head_result.returncode == 0 else None
+        )
         parent = current_worktree.parent
         worktree_base = next(
             (ancestor for ancestor in current_worktree.parents if ancestor.name.casefold() == "worktrees"),
@@ -375,7 +406,11 @@ class SlotRecoverySupervisor:
                 target = candidate
                 break
             diagnostics = self._diagnostics(candidate)
-            if diagnostics.get("clean") and diagnostics.get("head"):
+            if (
+                diagnostics.get("clean")
+                and diagnostics.get("head")
+                and (not expected_head or diagnostics.get("head") == expected_head)
+            ):
                 target = candidate
                 provisioned = candidate
                 break
@@ -494,30 +529,9 @@ class SlotRecoverySupervisor:
                     return None, f"ISOLATED_CHECKOUT_FAILED:{checkout.stderr.strip()}"
             provisioned = target
 
-        # Materialize authoritative input files exactly, without expanding a
-        # broad parent such as england_map_web/data on the portable disk.
-        exact_read_paths: list[str] = []
-        values = task.get("read_paths")
-        if isinstance(values, list):
-            exact_read_paths.extend(str(value) for value in values if value)
-        if task.get("script_path"):
-            exact_read_paths.append(str(task["script_path"]))
-        exact_read_paths = sorted({
-            value.replace("\\", "/").strip("/")
-            for value in exact_read_paths
-            if value and ":" not in value and ".." not in PurePosixPath(value).parts
-        })
-        for offset in range(0, len(exact_read_paths), 50):
-            batch = exact_read_paths[offset:offset + 50]
-            try:
-                materialize = self._git(
-                    provisioned, "checkout", "--ignore-skip-worktree-bits",
-                    "HEAD", "--", *batch, timeout=300,
-                )
-            except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
-                return None, f"ISOLATED_READ_PATH_CHECKOUT_EXCEPTION:{type(exc).__name__}:{exc}"
-            if materialize.returncode != 0:
-                return None, f"ISOLATED_READ_PATH_CHECKOUT_FAILED:{materialize.stderr.strip()}"
+        read_path_error = self._materialize_read_paths(provisioned, task)
+        if read_path_error:
+            return None, f"ISOLATED_{read_path_error}"
 
         diagnostics = self._diagnostics(provisioned)
         if not diagnostics.get("clean") or not diagnostics.get("head"):
@@ -685,7 +699,11 @@ class SlotRecoverySupervisor:
                 return {"decision": "BLOCK", "reason": "NEW_CONTINUATION_REQUIRED_AFTER_PARK", "task": task}
 
         worktree = self.worktree_for_slot(slot_id)
+        read_path_error = self._materialize_read_paths(worktree, task)
         diagnostics = self._diagnostics(worktree)
+        if read_path_error:
+            diagnostics["read_path_materialization_error"] = read_path_error
+            diagnostics["clean"] = False
         if not plan:
             wait_until = now + timedelta(seconds=self.wait_seconds)
             plan = {
