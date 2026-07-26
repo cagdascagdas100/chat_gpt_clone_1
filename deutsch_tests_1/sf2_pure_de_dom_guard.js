@@ -1,0 +1,19 @@
+(function(){
+'use strict';
+var badWords=['Konu anlatımı','Seviye','Genel bakış','Öncelikli kavramlar','Bu bölüm','Bu nedenle','Amaç','Almancada','Türkçedeki','Türkçe','Yazmadan önce','Ezber formülü','doğru kullanım','örnek','uzun anlatım','ayrı dosya','Harf kutucuk','Harf-kutucuk','KAPSAMLI','kapsamlı içerik koruması'];
+function el(id){return document.getElementById(id)}
+function txt(id){var x=el(id);return x?(x.textContent||''):''}
+function visibleLesson(){var x=el('lesson');return !!x&&!/(^|\s)hide(\s|$)/.test(x.className||'')}
+function hasBad(s){s=String(s||'');for(var i=0;i<badWords.length;i++){if(s.indexOf(badWords[i])>-1)return true}return false}
+function isSchreibfehlerArea(s){s=String(s||'');return /Schreibfehler|Schreiben_fehler|Ausdrucksmuster|Sprachfehler, Präpositionen und NVV|Medien, Wirtschaft, Präpositionen|Individualität, soziale Medien, Teamarbeit/.test(s)}
+function blockedNonSf(s){s=String(s||'');return /Künstliche Intelligenz am Arbeitsplatz|Massentourismus|E-Books|Haustiere|Sportunterricht|Freizeit planen|Teamarbeit – Nachteile|Individualität – Nachteile|Lebenslanges Lernen|Werbung|Mindestlohn – Nachteile|Bevor Schreiben|Bewerbungsschreiben/.test(s)}
+function mode(){var t=txt('lessonTitle'),m=txt('lessonMeta'),c=txt('lessonContent'),all=t+' '+m+' '+c;if(blockedNonSf(all))return '';if(!isSchreibfehlerArea(all))return '';if(t.indexOf('Schreibfehler 1')>-1||t.indexOf('Schreibfehler 1')>-1||c.indexOf('Ausdrucksmuster')>-1)return 'sf2_1';if(t.indexOf('Schreibfehler 2')>-1||c.indexOf('Medien, Wirtschaft')>-1)return 'sf2_2';if(t.indexOf('Schreiben_fehler_3')>-1||t.indexOf('Schreibfehler 3')>-1||c.indexOf('Veganismus')>-1||c.indexOf('Selbstvertrauen')>-1)return 'sf2_3';if(t.indexOf('Schreiben_fehler_4')>-1||t.indexOf('Schreibfehler 4')>-1||c.indexOf('Arbeitnehmerrechte')>-1)return 'sf2_4';if(t.indexOf('Schreiben_fehler_5')>-1||t.indexOf('Schreibfehler 5')>-1)return 'sf2_5';return ''}
+function render(k,force){var L=(window.DEUTSCH_LESSONS||{})[k];if(!L||!L.long)return false;var title=el('lessonTitle'),meta=el('lessonMeta'),content=el('lessonContent');if(!content)return false;var all=(title?title.textContent:'')+' '+(meta?meta.textContent:'')+' '+content.textContent;if(!force&&!hasBad(all))return false;if(title){if(k==='sf2_1')title.textContent='Lektion: Schreibfehler 1 · Ausdrucksmuster, Präpositionen und Nomen-Verb-Verbindungen';if(k==='sf2_2')title.textContent='Lektion: Schreibfehler 2 · Medien, Wirtschaft, Präpositionen und Nomen-Verb-Verbindungen';if(k==='sf2_3')title.textContent='Lektion: Schreiben_fehler_3 · Sprachfehler, Präpositionen und NVV';if(k==='sf2_4')title.textContent='Lektion: Schreiben_fehler_4 · Individualität, soziale Medien, Teamarbeit und Arbeitnehmerrechte';if(k==='sf2_5')title.textContent='Lektion: Schreiben_fehler_5 · Mindestlohn, Kosten, Arbeitsmarkt, Inflation und Mehrsprachigkeit'}if(meta)meta.textContent='Niveau: C1/C2 · Deutsch';content.innerHTML=L.long;window.AAYS_SF2_SCOPED_GERMAN_ONLY_DOM_OK=true;return true}
+function apply(){if(!visibleLesson())return;var k=mode();if(!k)return;render(k,false)}
+document.addEventListener('click',function(){setTimeout(apply,40);setTimeout(apply,160);setTimeout(apply,500)},true);
+document.addEventListener('DOMContentLoaded',function(){setTimeout(apply,120);setTimeout(apply,500)});
+try{new MutationObserver(function(){setTimeout(apply,30)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true})}catch(e){}
+setInterval(apply,600);
+if(document.readyState!=='loading'){setTimeout(apply,120)}
+window.AAYS_SF2_DOM_GUARD_SAFE_SCOPED_OK=true;
+})();

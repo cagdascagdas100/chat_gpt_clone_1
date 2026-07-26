@@ -1,0 +1,26 @@
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS=window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS||[];
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG_PARTS[4]=`<h4>C1/C2-Wortschatz und Formulierungen</h4>
+<p><b>Zentrale Wörter:</b> das Sicherheitskonzept, die Schutzmaßnahme, das Sicherheitsgefühl, die Gefahrenstelle, die Aufsichtspflicht, die Prävention, die Hemmschwelle, der Vandalismus, die Sachbeschädigung, das Gemeinschaftseigentum, die Verantwortungskultur, das Schulbudget, die Konfliktklärung, die Entscheidungsgrundlage, die Schuldzuweisung, die Rekonstruktion, die Transparenz, die Nachvollziehbarkeit, die Verhältnismäßigkeit und die Vertrauensbasis.</p>
+<p><b>Starke Verben und Nomen-Verb-Verbindungen:</b> zur Sicherheit beitragen, das Sicherheitsgefühl stärken, Gefahren frühzeitig erkennen, eine Schutzfunktion erfüllen, eine Eskalation verhindern, die Aufsicht unterstützen, Risiken verringern, einen Bereich absichern, Vandalismus vorbeugen, Diebstähle verhindern, gemeinschaftliches Eigentum schützen, eine abschreckende Wirkung haben, eine Signalwirkung entfalten, das Schulbudget entlasten, Ressourcen sinnvoll nutzen, eine Kultur der Verantwortung fördern, einen Vorfall rekonstruieren, einen Konflikt sachlich klären, eine Entscheidungsgrundlage schaffen, Schuldzuweisungen vermeiden, Aussagen überprüfen, für Transparenz sorgen, Lehrkräfte entlasten, pädagogische Maßnahmen ergreifen und Vertrauen in die Schule stärken.</p>
+<p><b>Differenzierte Satzbausteine:</b> Ein wesentlicher Vorteil besteht darin, dass ... · Besonders in unübersichtlichen Bereichen kann dies relevant sein, weil ... · Dabei sollte die Technik nicht als Ersatz, sondern als Ergänzung pädagogischer Aufsicht verstanden werden. · Ein weiterer positiver Aspekt liegt in der vorbeugenden Wirkung. · Dadurch wird nicht nur ..., sondern auch ... · Bei ernsthaften Vorfällen kann eine zusätzliche Entscheidungsgrundlage entstehen. · Langfristig kann dies dazu führen, dass ... · Unter klaren Bedingungen kann die Maßnahme einen Beitrag zu einem sicheren und geordneten Schulalltag leisten.</p>
+
+<h4>Prüfungsnahe Gesamtstruktur nur mit Vorteilen</h4>
+<p>Für die schriftliche Prüfung lassen sich die drei Vorteile klar voneinander trennen. Zuerst wird die Sicherheit behandelt: Kameras machen unübersichtliche Bereiche sichtbarer und ermöglichen schnelleres Reagieren. Danach folgt die Prävention: Weniger Anonymität kann die Hemmschwelle für Vandalismus, Diebstahl und Regelverstöße erhöhen. Schließlich wird die Konfliktklärung erklärt: Aufnahmen können bei ernsthaften Vorfällen eine zusätzliche Grundlage schaffen und damit faire Entscheidungen unterstützen. Diese Reihenfolge ist übersichtlich, weil sie von unmittelbarem Schutz über vorbeugende Wirkung bis zur nachträglichen Aufarbeitung führt.</p>
+<p>Eine vollständige Gesamtformulierung könnte lauten: Videoüberwachung kann in Schulen eine unterstützende Funktion erfüllen. Sie kann sensible Bereiche sichtbarer machen und dadurch das Sicherheitsgefühl stärken. Gleichzeitig kann sie Vandalismus und Diebstahl vorbeugen, weil Fehlverhalten weniger anonym bleibt. Bei ernsthaften Konflikten können relevante Aufnahmen außerdem eine zusätzliche Entscheidungsgrundlage schaffen. Entscheidend ist, dass die Kameras gezielt eingesetzt werden und die abschließende Verantwortung bei Menschen bleibt.</p>
+
+<h4>Typische Fehler vermeiden</h4>
+<ul>
+<li>Nicht schreiben: Kameras lösen alle Probleme. Besser: Kameras können zur Lösung bestimmter Probleme beitragen.</li>
+<li>Nicht Vorteile und Nachteile im selben Modul vermischen.</li>
+<li>Keine technischen Details über Kameramodelle oder Speichersysteme ausführen; für die Prüfung zählt die Argumentation.</li>
+<li>Immer erklären, für wen ein Vorteil entsteht und welche konkrete Folge sichtbar wird.</li>
+<li>Aufnahmen nicht als automatische oder vollständige Wahrheit darstellen; der Kontext muss von Menschen geprüft werden.</li>
+<li>Beispiele aus dem Schulalltag verwenden: Eingang, Flur, Treppenhaus, Pausenhof, Fahrradkeller und Schließfachbereich.</li>
+</ul>
+
+<h4>Prüfungstraining: Vom Gedanken zum Absatz</h4>
+<p><b>Gedanke:</b> Kameras erhöhen Sicherheit. <b>Ausformulierung:</b> Videoüberwachung kann die Sicherheit erhöhen, weil sie Bereiche sichtbar macht, die nicht ständig beaufsichtigt werden können. Wenn auffällige Situationen schneller erkannt werden, kann die Schule gezielter reagieren. Dadurch fühlen sich Lernende besser geschützt, was ein ruhigeres Lernumfeld begünstigt.</p>
+<p><b>Gedanke:</b> Kameras verhindern Vandalismus. <b>Ausformulierung:</b> Eine sichtbare Überwachung kann vorbeugend wirken, weil Fehlverhalten weniger anonym bleibt. Dadurch können Sachbeschädigungen und Diebstähle zurückgehen. Die Schule spart Reparaturkosten und kann finanzielle Mittel stärker für Bildungsangebote nutzen.</p>
+<p><b>Gedanke:</b> Kameras helfen bei Streit. <b>Ausformulierung:</b> Nach einem Konflikt schildern Beteiligte den Ablauf häufig unterschiedlich. Relevante Aufnahmen können eine zusätzliche Grundlage bieten, damit die Situation sachlicher rekonstruiert wird. Dadurch lassen sich falsche Beschuldigungen eher vermeiden und Maßnahmen gerechter begründen.</p>`;
+if(window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD)window.AAYS_VIDEO_SCHULE_VORTEILE_BUILD();
+window.AAYS_VIDEO_SCHULE_VORTEILE_LONG5_TEMPLATE_V4_OK=true;
