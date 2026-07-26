@@ -1,80 +1,66 @@
 #!/usr/bin/env python3
-"""No-argument post-publish origin-readback entrypoint for the same task.
-
-Batch140 reuses exact runtime identities and requires the 039 handoff to prove a
-fresh heartbeat plus TTL/HEAD/current-task-bound runtime preflight. Remote readback
-must bind to the pre-publish HEAD and, when publish was required, the first full
-materialization commit must itself change all seven manifest paths.
-"""
+"""Post-publish readback with remote-history and control-plane receipt seals."""
 from __future__ import annotations
-import json, os, subprocess, sys
+import hashlib,json,os,subprocess,sys
 from pathlib import Path
 from typing import Any
 TASK_ID="height_difference_3-canonical-api-measurement-20260721-01"; CONTINUATION="6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"; EXPECTED_ROWS=list(range(61540,61552))
-def find_repo_root(start:Path)->Path:
-    for c in (start,*start.parents):
-        if (c/"england_map_web").is_dir() and (c/"docs/chatgpt_status").is_dir(): return c
+RECEIPT_REL="docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/047_batch141_coordinator_rewire_receipt/coordinator_runtime_rewire_receipt.json"; VALIDATION_REL="docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/047_batch141_coordinator_rewire_receipt/coordinator_runtime_rewire_receipt_validation.json"
+def root(p:Path)->Path:
+    for c in (p,*p.parents):
+        if (c/"england_map_web").is_dir() and (c/"docs/chatgpt_status").is_dir():return c
     raise RuntimeError("PUBLISHER_REPO_ROOT_NOT_FOUND")
-def load_json(path:Path)->dict[str,Any]:
-    v=json.loads(path.read_text(encoding="utf-8-sig"));
-    if not isinstance(v,dict): raise ValueError(f"expected JSON object: {path}")
+def load(p:Path)->dict[str,Any]:
+    v=json.loads(p.read_text(encoding="utf-8-sig"));
+    if not isinstance(v,dict):raise ValueError(f"expected JSON object:{p}")
     return v
-def run(command:list[str],cwd:Path)->dict[str,Any]:
-    p=subprocess.run(command,cwd=cwd,text=True,capture_output=True,check=False); return {"command":command,"exit_code":p.returncode,"stdout":p.stdout[-16000:],"stderr":p.stderr[-16000:]}
-def write(path:Path,payload:dict[str,Any])->None:
-    path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-def norm_executable(value:str)->str: return os.path.normcase(str(Path(value).resolve()))
+def run(cmd:list[str],cwd:Path)->dict[str,Any]:
+    p=subprocess.run(cmd,cwd=cwd,text=True,capture_output=True,check=False);return {"command":cmd,"exit_code":p.returncode,"stdout":p.stdout[-16000:],"stderr":p.stderr[-16000:]}
+def write(p:Path,v:dict[str,Any])->None:p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(v,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+def norm(v:str)->str:return os.path.normcase(str(Path(v).resolve()))
+def sha(p:Path)->str:
+    h=hashlib.sha256()
+    with p.open("rb") as f:
+        for b in iter(lambda:f.read(1024*1024),b""):h.update(b)
+    return h.hexdigest()
 def main()->int:
-    script_dir=Path(__file__).resolve().parent; repo=find_repo_root(script_dir)
-    current_task=load_json(repo/"docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json")
-    if current_task.get("task_id")!=TASK_ID or current_task.get("continuation_key")!=CONTINUATION: raise ValueError("current task/continuation mismatch")
-    handoff_path=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"; handoff=load_json(handoff_path)
-    if int(handoff.get("schema_version") or 0)<5: raise ValueError("pre-publish handoff lacks Batch140 heartbeat/TTL binding")
-    if handoff.get("status")!="PUBLISH_PENDING_SERIAL_PUBLISHER_REQUIRED": raise ValueError("pre-publish handoff missing or invalid")
-    if [int(v) for v in handoff.get("expected_rows") or []]!=EXPECTED_ROWS: raise ValueError("handoff row set mismatch")
-    if handoff.get("runtime_identity_match_passed") is not True: raise ValueError("runtime identity did not pass before publish")
-    if handoff.get("fresh_host_heartbeat_passed") is not True: raise ValueError("fresh host heartbeat did not pass before publish")
-    if handoff.get("runtime_preflight_freshness_and_head_binding_passed") is not True: raise ValueError("runtime preflight TTL/HEAD/task binding did not pass before publish")
-    pre_publish_origin_head=str(handoff.get("pre_publish_origin_head") or "").strip().lower()
-    if len(pre_publish_origin_head)!=40: raise ValueError("handoff pre-publish origin HEAD missing")
-    if handoff.get("pre_publish_origin_fetch_performed") is not True: raise ValueError("handoff lacks fresh pre-publish origin fetch proof")
-    runtime_python=str(handoff.get("runtime_python_executable") or "").strip(); powershell=str(handoff.get("runtime_powershell_executable") or "").strip(); git_executable=str(handoff.get("runtime_git_executable") or "").strip()
-    if not runtime_python or not Path(runtime_python).is_file(): raise ValueError("handoff runtime Python executable missing")
-    if not powershell or not Path(powershell).is_file(): raise ValueError("handoff runtime PowerShell executable missing")
-    if not git_executable or not Path(git_executable).is_file(): raise ValueError("handoff runtime Git executable missing")
-    if norm_executable(runtime_python)!=norm_executable(sys.executable): raise ValueError(f"post-publish Python identity drift: handoff={runtime_python} current={sys.executable}")
-    powershell=str(Path(powershell).resolve()); git_executable=str(Path(git_executable).resolve()); verifier=script_dir/"038_verify_batch132_origin_remote_readback.ps1"
-    if not verifier.is_file(): raise FileNotFoundError(verifier)
-    result=run([powershell,"-NoProfile","-ExecutionPolicy","Bypass","-File",str(verifier),"-RepoRoot",str(repo),"-GitExe",git_executable],repo)
-    if result["exit_code"]!=0: raise RuntimeError(f"origin remote readback failed: {result['stderr'][-2000:]}")
-    remote_path=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_origin_remote_readback.json"; remote=load_json(remote_path)
-    if int(remote.get("schema_version") or 0)<3: raise ValueError("remote readback lacks Batch140 commit-delta binding")
-    if remote.get("task_id")!=TASK_ID or remote.get("continuation_key")!=CONTINUATION: raise ValueError("remote readback task/continuation mismatch")
-    if [int(v) for v in remote.get("expected_rows") or []]!=EXPECTED_ROWS: raise ValueError("remote readback row set mismatch")
-    if str(remote.get("pre_publish_origin_head") or "").strip().lower()!=pre_publish_origin_head: raise ValueError("remote readback pre-publish origin HEAD mismatch")
-    if remote.get("pre_publish_head_is_ancestor_of_remote_head") is not True: raise ValueError("remote history does not descend from pre-publish HEAD")
-    if remote.get("remote_history_binding_passed") is not True or remote.get("remote_history_and_commit_delta_binding_passed") is not True: raise ValueError("remote history/commit-delta binding did not pass")
-    materialization_commit=str(remote.get("first_full_blob_materialization_commit") or "").strip().lower()
-    if len(materialization_commit)!=40: raise ValueError("remote materialization commit missing")
-    if remote.get("materialization_commit_is_ancestor_of_remote_head") is not True: raise ValueError("materialization commit is not an ancestor of fresh remote HEAD")
-    history_mode=str(remote.get("history_mode") or "")
-    delta_mode=str(remote.get("materialization_commit_delta_gate_mode") or "")
-    publisher_commit_candidate=remote.get("publisher_commit_candidate")
-    if history_mode=="FIRST_FULL_BLOB_MATERIALIZATION_COMMIT_FOUND":
-        if remote.get("materialization_commit_changes_all_manifest_paths") is not True: raise ValueError("materialization commit did not change all seven manifest paths")
-        if str(publisher_commit_candidate or "").strip().lower()!=materialization_commit: raise ValueError("publisher commit candidate mismatch")
-        if delta_mode!="ALL_SEVEN_MANIFEST_PATHS_CHANGED_IN_MATERIALIZATION_COMMIT": raise ValueError("unexpected materialization commit delta gate mode")
-    elif history_mode=="ALREADY_PRESENT_AT_PREPUBLISH_HEAD_NO_REPLAY_REQUIRED":
-        if delta_mode!="ALREADY_PRESENT_NO_REPLAY_DELTA_NOT_REQUIRED": raise ValueError("unexpected idempotent no-replay delta mode")
-    else: raise ValueError(f"unknown remote history mode: {history_mode}")
-    if remote.get("all_remote_blobs_match") is not True: raise ValueError("remote blob parity did not pass")
-    if int(remote.get("file_count") or 0)!=7: raise ValueError("remote readback file count must equal 7")
-    if remote.get("remote_tracking_ref_freshly_updated") is not True: raise ValueError("remote tracking ref was not freshly updated")
-    if remote.get("numeric_publish_acceptance_for_12_rows") is not True: raise ValueError("numeric publish acceptance not granted")
-    output=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json"
-    payload={"schema_version":4,"slot_id":"height_difference_3","task_id":TASK_ID,"continuation_key":CONTINUATION,"status":"REMOTE_HISTORY_DELTA_BOUND_READBACK_ACCEPTED_12_ROWS","runtime_python_executable":str(Path(sys.executable).resolve()),"runtime_powershell_executable":powershell,"runtime_git_executable":git_executable,"runtime_identity_match_passed":True,"fresh_host_heartbeat_passed":True,"runtime_preflight_freshness_and_head_binding_passed":True,"pre_publish_origin_head":pre_publish_origin_head,"remote_head":remote.get("remote_head"),"history_mode":history_mode,"first_full_blob_materialization_commit":materialization_commit,"materialization_commit_delta_gate_mode":delta_mode,"materialization_commit_changes_all_manifest_paths":remote.get("materialization_commit_changes_all_manifest_paths"),"publisher_commit_candidate":publisher_commit_candidate,"remote_history_binding_passed":True,"remote_history_and_commit_delta_binding_passed":True,"expected_rows":EXPECTED_ROWS,"verified_count":12,"remote_file_count":7,"all_remote_blobs_match":True,"numeric_publish_acceptance_for_12_rows":True,"child_direct_push_performed":False,"numeric_values_changed":0,"new_task_created":False,"new_runner_created":False,"parallel_runner_used":False,"overall_product_final_ready":False,"final_ready":False,"fake_data":False,"remote_readback_stage":result}
-    write(output,payload); print(json.dumps({"ok":True,"status":payload["status"],"pre_publish_origin_head":pre_publish_origin_head,"materialization_commit":materialization_commit,"delta_mode":delta_mode,"python":payload["runtime_python_executable"],"powershell":powershell,"git":git_executable,"output":str(output)})); return 0
+    script_dir=Path(__file__).resolve().parent; repo=root(script_dir); task=load(repo/"docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json")
+    if task.get("task_id")!=TASK_ID or task.get("continuation_key")!=CONTINUATION:raise ValueError("current task/continuation mismatch")
+    hp=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"; h=load(hp)
+    if int(h.get("schema_version") or 0)<7 or h.get("status")!="PUBLISH_PENDING_SERIAL_PUBLISHER_REQUIRED" or [int(v) for v in h.get("expected_rows") or []]!=EXPECTED_ROWS:raise ValueError("pre-publish handoff seal/schema mismatch")
+    if h.get("runtime_identity_match_passed") is not True or h.get("fresh_host_heartbeat_passed") is not True or h.get("runtime_preflight_freshness_and_head_binding_passed") is not True or h.get("control_plane_receipt_validation_seal_passed") is not True:raise ValueError("pre-publish runtime/control-plane gates missing")
+    receipt=repo/RECEIPT_REL; validation=repo/VALIDATION_REL
+    if not receipt.is_file() or not validation.is_file():raise FileNotFoundError("receipt/validation missing")
+    expected_receipt=str(h.get("coordinator_receipt_sha256") or ""); expected_validation=str(h.get("coordinator_receipt_validation_sha256") or "")
+    if len(expected_receipt)!=64 or len(expected_validation)!=64:raise ValueError("handoff receipt seal missing")
+    before_receipt=sha(receipt); before_validation=sha(validation)
+    if before_receipt!=expected_receipt or before_validation!=expected_validation:raise RuntimeError("CONTROL_PLANE_SEAL_CHANGED_BEFORE_REMOTE_READBACK")
+    val=load(validation)
+    if val.get("receipt_sha256")!=expected_receipt or val.get("binding_key_sha256")!=h.get("coordinator_receipt_binding_key_sha256") or val.get("coordinator_action_id")!=h.get("coordinator_action_id") or val.get("receipt_nonce")!=h.get("coordinator_receipt_nonce"):raise ValueError("handoff/validation seal identity mismatch")
+    pre=str(h.get("pre_publish_origin_head") or "").strip().lower()
+    if len(pre)!=40 or h.get("pre_publish_origin_fetch_performed") is not True:raise ValueError("pre-publish origin proof missing")
+    py=str(h.get("runtime_python_executable") or "").strip(); ps=str(h.get("runtime_powershell_executable") or "").strip(); gx=str(h.get("runtime_git_executable") or "").strip()
+    for p,name in ((py,"Python"),(ps,"PowerShell"),(gx,"Git")):
+        if not p or not Path(p).is_file():raise ValueError(f"handoff runtime {name} missing")
+    if norm(py)!=norm(sys.executable):raise ValueError("post-publish Python identity drift")
+    ps=str(Path(ps).resolve()); gx=str(Path(gx).resolve()); verifier=script_dir/"038_verify_batch132_origin_remote_readback.ps1"
+    if not verifier.is_file():raise FileNotFoundError(verifier)
+    rr=run([ps,"-NoProfile","-ExecutionPolicy","Bypass","-File",str(verifier),"-RepoRoot",str(repo),"-GitExe",gx],repo)
+    if rr["exit_code"]!=0:raise RuntimeError(f"origin remote readback failed:{rr['stderr'][-2000:]}")
+    if sha(receipt)!=expected_receipt or sha(validation)!=expected_validation:raise RuntimeError("CONTROL_PLANE_SEAL_CHANGED_DURING_REMOTE_READBACK")
+    remote=load(repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_origin_remote_readback.json")
+    if int(remote.get("schema_version") or 0)<3 or remote.get("task_id")!=TASK_ID or remote.get("continuation_key")!=CONTINUATION or [int(v) for v in remote.get("expected_rows") or []]!=EXPECTED_ROWS or str(remote.get("pre_publish_origin_head") or "").strip().lower()!=pre:raise ValueError("remote readback identity/history mismatch")
+    if remote.get("pre_publish_head_is_ancestor_of_remote_head") is not True or remote.get("remote_history_binding_passed") is not True or remote.get("remote_history_and_commit_delta_binding_passed") is not True:raise ValueError("remote history binding failed")
+    material=str(remote.get("first_full_blob_materialization_commit") or "").strip().lower(); history=str(remote.get("history_mode") or ""); delta=str(remote.get("materialization_commit_delta_gate_mode") or ""); candidate=remote.get("publisher_commit_candidate")
+    if len(material)!=40 or remote.get("materialization_commit_is_ancestor_of_remote_head") is not True:raise ValueError("materialization commit invalid")
+    if history=="FIRST_FULL_BLOB_MATERIALIZATION_COMMIT_FOUND":
+        if remote.get("materialization_commit_changes_all_manifest_paths") is not True or str(candidate or "").strip().lower()!=material or delta!="ALL_SEVEN_MANIFEST_PATHS_CHANGED_IN_MATERIALIZATION_COMMIT":raise ValueError("materialization delta gate failed")
+    elif history=="ALREADY_PRESENT_AT_PREPUBLISH_HEAD_NO_REPLAY_REQUIRED":
+        if delta!="ALREADY_PRESENT_NO_REPLAY_DELTA_NOT_REQUIRED":raise ValueError("no-replay delta mode mismatch")
+    else:raise ValueError(f"unknown remote history mode:{history}")
+    if remote.get("all_remote_blobs_match") is not True or int(remote.get("file_count") or 0)!=7 or remote.get("remote_tracking_ref_freshly_updated") is not True or remote.get("numeric_publish_acceptance_for_12_rows") is not True:raise ValueError("remote blob/numeric acceptance failed")
+    out=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json"; payload={"schema_version":5,"slot_id":"height_difference_3","task_id":TASK_ID,"continuation_key":CONTINUATION,"status":"REMOTE_HISTORY_DELTA_AND_CONTROL_PLANE_SEAL_ACCEPTED_12_ROWS","runtime_python_executable":str(Path(sys.executable).resolve()),"runtime_powershell_executable":ps,"runtime_git_executable":gx,"runtime_identity_match_passed":True,"fresh_host_heartbeat_passed":True,"runtime_preflight_freshness_and_head_binding_passed":True,"control_plane_receipt_validation_seal_passed":True,"coordinator_receipt_sha256":expected_receipt,"coordinator_receipt_validation_sha256":expected_validation,"coordinator_receipt_binding_key_sha256":h.get("coordinator_receipt_binding_key_sha256"),"coordinator_action_id":h.get("coordinator_action_id"),"coordinator_receipt_nonce":h.get("coordinator_receipt_nonce"),"pre_publish_origin_head":pre,"remote_head":remote.get("remote_head"),"history_mode":history,"first_full_blob_materialization_commit":material,"materialization_commit_delta_gate_mode":delta,"materialization_commit_changes_all_manifest_paths":remote.get("materialization_commit_changes_all_manifest_paths"),"publisher_commit_candidate":candidate,"remote_history_binding_passed":True,"remote_history_and_commit_delta_binding_passed":True,"expected_rows":EXPECTED_ROWS,"verified_count":12,"remote_file_count":7,"all_remote_blobs_match":True,"numeric_publish_acceptance_for_12_rows":True,"child_direct_push_performed":False,"numeric_values_changed":0,"new_task_created":False,"new_runner_created":False,"parallel_runner_used":False,"overall_product_final_ready":False,"final_ready":False,"fake_data":False,"remote_readback_stage":rr}; write(out,payload);print(json.dumps({"ok":True,"status":payload["status"],"pre_publish_origin_head":pre,"materialization_commit":material,"receipt_sha256":expected_receipt,"validation_sha256":expected_validation,"output":str(out)}));return 0
 if __name__=="__main__":
-    try: raise SystemExit(main())
+    try:raise SystemExit(main())
     except Exception as exc:
-        print(json.dumps({"ok":False,"error":f"{type(exc).__name__}: {exc}"}),file=sys.stderr); raise
+        print(json.dumps({"ok":False,"error":f"{type(exc).__name__}: {exc}"}),file=sys.stderr);raise
