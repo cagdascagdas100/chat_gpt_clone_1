@@ -115,7 +115,7 @@ async function resolveLatestRows(payload){
     const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:await resolveLatestRows(latestWave);
     const incrementParts=latest?.latest_operations?.json_parts||[];
     const incrementPayloads=incrementParts.length?await Promise.all(incrementParts.map(path=>fetchJson(path))):[];
-    const incrementOps=incrementPayloads.flatMap(payload=>payload?.operations||[]);
+    const incrementOps=incrementPayloads.flatMap(payload=>payload?.operations||(payload?.rows?asObjects(payload):[]));
     const latestOps=incrementOps.length?incrementOps:buildLatestOps(latest);
     const p=progress.progress||{},c=progress.candidates||{},lp=latest.progress||{},lv=latest.visibility||{};
     document.getElementById('metrics').innerHTML=[metric('Ana işlem',`${lp.completed_operations}/${lp.total_operations} · %${lp.progress_percent}`),metric('Ana artış',`${Number(lp.percent_change_points||0)>=0?'+':''}${lp.percent_change_points||0} puan`),metric('Destek kontrolü',`${lp.support_checks_completed}/${lp.support_checks_total} · %${lp.support_progress_percent}`),metric('Destek artışı',`${Number(lp.support_percent_change_points||0)>=0?'+':''}${lp.support_percent_change_points||0} puan`),metric('Destek kapsam artışı',`+%${lp.support_scope_growth_percent||0}`),metric('Bu tur eklenen',lp.support_operations_added_this_turn||0),metric('İşlem satırı',lp.supplemental_operation_rows_through||''),metric('Kimlik adayı',c.verified_postcode_identity_rows),metric('Canlı postcode',c.verified_live_postcodes),metric('Auditli örnek',lv.audited_visible_examples),metric('Yeni örnek',lv.new_examples),metric('Kaynak rotası',latest.sources?.source_routes),metric('Resmî/public rota',latest.sources?.official_or_public_routes)].join('');
