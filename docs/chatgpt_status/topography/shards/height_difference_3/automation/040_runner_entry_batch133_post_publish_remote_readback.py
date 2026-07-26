@@ -2,7 +2,9 @@
 """No-argument post-publish origin-readback entrypoint for the same task.
 
 Run only after the existing serial publisher has published the exact Batch132
-manifest. This script performs no push and changes no numeric measurement.
+manifest. Batch138 reuses the exact Python, PowerShell and Git executables carried
+from the validated runtime identity through the 039 handoff. This script performs
+no push and changes no numeric measurement.
 """
 from __future__ import annotations
 
@@ -47,6 +49,10 @@ def write(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def norm_executable(value: str) -> str:
+    return os.path.normcase(str(Path(value).resolve()))
+
+
 def main() -> int:
     script_dir = Path(__file__).resolve().parent
     repo = find_repo_root(script_dir)
@@ -60,8 +66,23 @@ def main() -> int:
         raise ValueError("pre-publish handoff missing or invalid")
     if [int(v) for v in (handoff.get("expected_rows") or [])] != EXPECTED_ROWS:
         raise ValueError("handoff row set mismatch")
+    if handoff.get("runtime_identity_match_passed") is not True:
+        raise ValueError("runtime identity did not pass before publish")
 
-    powershell = os.environ.get("AAYS_POWERSHELL_EXE", "powershell")
+    runtime_python = str(handoff.get("runtime_python_executable") or "").strip()
+    powershell = str(handoff.get("runtime_powershell_executable") or "").strip()
+    git_executable = str(handoff.get("runtime_git_executable") or "").strip()
+    if not runtime_python or not Path(runtime_python).is_file():
+        raise ValueError("handoff runtime Python executable missing")
+    if not powershell or not Path(powershell).is_file():
+        raise ValueError("handoff runtime PowerShell executable missing")
+    if not git_executable or not Path(git_executable).is_file():
+        raise ValueError("handoff runtime Git executable missing")
+    if norm_executable(runtime_python) != norm_executable(sys.executable):
+        raise ValueError(f"post-publish Python identity drift: handoff={runtime_python} current={sys.executable}")
+
+    powershell = str(Path(powershell).resolve())
+    git_executable = str(Path(git_executable).resolve())
     verifier = script_dir / "038_verify_batch132_origin_remote_readback.ps1"
     if not verifier.is_file():
         raise FileNotFoundError(verifier)
@@ -76,7 +97,7 @@ def main() -> int:
             "-RepoRoot",
             str(repo),
             "-GitExe",
-            os.environ.get("AAYS_GIT_EXE", "git"),
+            git_executable,
         ],
         repo,
     )
@@ -100,11 +121,15 @@ def main() -> int:
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json"
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
         "status": "REMOTE_READBACK_ACCEPTED_12_ROWS",
+        "runtime_python_executable": str(Path(sys.executable).resolve()),
+        "runtime_powershell_executable": powershell,
+        "runtime_git_executable": git_executable,
+        "runtime_identity_match_passed": True,
         "expected_rows": EXPECTED_ROWS,
         "verified_count": 12,
         "remote_head": remote.get("remote_head"),
@@ -122,7 +147,7 @@ def main() -> int:
         "remote_readback_stage": result,
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "python": payload["runtime_python_executable"], "powershell": powershell, "git": git_executable, "output": str(output)}))
     return 0
 
 
