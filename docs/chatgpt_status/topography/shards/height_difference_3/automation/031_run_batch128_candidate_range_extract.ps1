@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-  $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..\..")).Path
+  $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..\..\..")).Path
 }
 
 $Source = Join-Path $RepoRoot "england_map_web\data\program_layer_matrix\security.geojson"
