@@ -1,0 +1,34 @@
+{
+  "task_id": "aays1-gas-emissions-fixture-path-wiring-fix-20260709",
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_f_portable_runner_only",
+  "problem": "The single runner completed but reported missing_verified_source_backed_rows because it checked a fixture CSV instead of the already-written verified GOV.UK source-backed rows path.",
+  "evidence": {
+    "runner_latest_status": "BLOCKED_SINGLE_RUNNER_EVIDENCE_INCOMPLETE",
+    "runner_reported_source_row_gate": false,
+    "real_source_status_file": "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/source_rows_extraction_status_latest.json",
+    "real_verified_rows_path": "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/verified_source_backed_rows_govuk_ghg_20260708.csv",
+    "real_extracted_row_count": 47,
+    "real_source_row_gate_passed": true
+  },
+  "required_actions": [
+    "Keep using the existing F portable single runner only.",
+    "Patch the Gas Emissions bridge/fixture lookup to read the verified_rows_path from source_rows_extraction_status_latest.json.",
+    "If a fixture CSV is required by the bridge, generate it from the verified GOV.UK rows path; do not create fake rows.",
+    "Rerun the same single bridge after the path wiring fix.",
+    "Refresh england_map_web/data/program_layer_matrix/gas_emissions.geojson and 127 site output.",
+    "Write browser smoke and parcel-binding blocker/results separately; do not block next extraction batches."
+  ],
+  "safety": {
+    "single_runner_only": true,
+    "new_runner_started": false,
+    "parallel_runner_started": false,
+    "fake_data": false,
+    "final_ready": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

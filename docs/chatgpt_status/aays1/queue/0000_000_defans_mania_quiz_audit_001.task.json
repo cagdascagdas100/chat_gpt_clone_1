@@ -1,0 +1,42 @@
+{
+  "task_id": "defans-mania-quiz-audit-20260714-001",
+  "page_key": "aays1",
+  "layer_page_key": "defans_mania",
+  "status": "pending",
+  "target_branch": "main",
+  "script_path": "docs/chatgpt_status/defans_mania/automation/001_quiz_logic_audit.ps1",
+  "automation_script": "docs/chatgpt_status/defans_mania/automation/001_quiz_logic_audit.ps1",
+  "expected_output": "docs/chatgpt_status/defans_mania/runner_outputs/001_quiz_logic_audit.json",
+  "objective": "Locate the latest Defans Mania desktop quiz source and saved quiz_result files on the connected Windows machine, audit answer correctness, repeat-until-correct accounting, wrong-attempt totals, wrong-question filtering, and missing/every-other-page result pagination without modifying the application source.",
+  "read_only_external_scan": true,
+  "external_markers": [
+    "Quiz Ergebnis",
+    "FALSCHE+OPTION",
+    "ALLE FRAGEN",
+    "quiz_result_",
+    "Falsche Antworten",
+    "Falsche Fragen",
+    "Wortquiz",
+    "Erklaerung: No:"
+  ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "docs/chatgpt_status/defans_mania"
+  ],
+  "acceptance_checks": [
+    "identify source candidates by exact UI/result markers and record SHA256 plus modified time",
+    "audit every discovered quiz_result_*.txt for header wrong-answer total versus summed per-question wrong counts",
+    "audit header wrong-question count versus rendered question blocks",
+    "detect duplicate explanation/question identifiers and possible every-other-page pagination patterns",
+    "write JSON and Markdown evidence reports",
+    "do not modify any Defans Mania source or external file during this audit"
+  ],
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "fake_data": false,
+  "final_ready": false,
+  "created_at": "2026-07-14T00:00:00+03:00",
+  "max_minutes": 20
+}

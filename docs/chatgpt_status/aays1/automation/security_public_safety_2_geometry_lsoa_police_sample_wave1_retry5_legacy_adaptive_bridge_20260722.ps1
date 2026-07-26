@@ -4,8 +4,8 @@ param()
 $ErrorActionPreference = 'Stop'
 $slotId = 'security_public_safety_2'
 $expectedBranch = 'codex/aays-single-runner-v5-20260706'
-$pythonScriptRel = 'docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py'
-$expectedPythonBlob = 'cdb20cb578be5de1789e7821d2a435c1a9f77d58'
+$pythonScriptRel = 'docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_candidate_join_20260723.py'
+$expectedPythonBlob = '3e9a4d57754e13d68429cedfb0a0b271fda822eb'
 
 if ($env:AAYS_SLOT_ID -and $env:AAYS_SLOT_ID -ne $slotId) {
   throw "WRONG_SLOT=$($env:AAYS_SLOT_ID)"
