@@ -699,8 +699,17 @@ class SlotRecoverySupervisor:
         worktree = self.worktree_for_slot(slot_id)
         read_path_error = self._materialize_read_paths(worktree, task)
         diagnostics = self._diagnostics(worktree)
+        expected_head_result = self._git(self.repo, "rev-parse", "HEAD", timeout=30)
+        expected_head = (
+            expected_head_result.stdout.strip()
+            if expected_head_result.returncode == 0 else None
+        )
         if read_path_error:
             diagnostics["read_path_materialization_error"] = read_path_error
+            diagnostics["clean"] = False
+        if expected_head and diagnostics.get("head") != expected_head:
+            diagnostics["expected_head"] = expected_head
+            diagnostics["head_mismatch"] = True
             diagnostics["clean"] = False
         if not plan:
             wait_until = now + timedelta(seconds=self.wait_seconds)
