@@ -34,8 +34,9 @@ replacements = {
     'candidate_rows == 24': 'candidate_rows == 96',
     'IOD25_RELATIVE_SECURITY_METHOD_AND_24_ROW_WAVE2_PREPARED_NOT_PROMOTED':
         'IOD25_RELATIVE_SECURITY_PRIORITY_96_ROWS_PREPARED_NOT_PROMOTED',
-    '24 örnek parsel': '96 örnek parsel',
-    '24 parsel': '96 parsel',
+    '24 satır dalgası': '96 satır dalgası',
+    '{candidate_rows}/24': '{candidate_rows}/96',
+    '24 örnek satır': '96 örnek satır',
 }
 
 for old, new in replacements.items():
