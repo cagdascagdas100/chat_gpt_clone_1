@@ -2,9 +2,10 @@
 """No-argument same-task entrypoint for strict12 local acceptance and publish handoff.
 
 This entrypoint is intended for the existing height_difference_3 task only. It
-runs the already prepared strict/local-acceptance wrapper, creates the exact
-seven-file publish manifest, and stops at PUBLISH_PENDING. It never creates a
-second task/runner and never pushes directly.
+requires the Batch137/138 runtime environment identity record, reuses the exact
+validated Python and PowerShell executables, runs strict/local acceptance,
+creates the exact seven-file publish manifest, and stops at PUBLISH_PENDING.
+It never creates a second task/runner and never pushes directly.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ from typing import Any
 TASK_ID = "height_difference_3-canonical-api-measurement-20260721-01"
 CONTINUATION = "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"
 EXPECTED_ROWS = list(range(61540, 61552))
+ENV_PREFLIGHT_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
 
 
 def find_repo_root(start: Path) -> Path:
@@ -49,6 +51,10 @@ def write(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def norm_executable(value: str) -> str:
+    return os.path.normcase(str(Path(value).resolve()))
+
+
 def main() -> int:
     script_dir = Path(__file__).resolve().parent
     repo = find_repo_root(script_dir)
@@ -61,7 +67,29 @@ def main() -> int:
     if current_task.get("single_runner_only") is not True or current_task.get("new_runner") is not False:
         raise ValueError("single-runner contract mismatch")
 
-    powershell = os.environ.get("AAYS_POWERSHELL_EXE", "powershell")
+    env_preflight_path = repo / ENV_PREFLIGHT_REL
+    if not env_preflight_path.is_file():
+        raise FileNotFoundError(f"runtime environment preflight missing: {env_preflight_path}")
+    env_preflight = load_json(env_preflight_path)
+    if int(env_preflight.get("checks_passed") or -1) != int(env_preflight.get("checks_total") or -2):
+        raise ValueError("runtime environment preflight checks incomplete")
+    if env_preflight.get("bootstrap_042_executed") is not True or int(env_preflight.get("bootstrap_042_exit_code") or -1) != 0:
+        raise ValueError("runtime environment preflight did not complete bootstrap 042")
+    if int(env_preflight.get("numeric_values_written") or 0) != 0:
+        raise ValueError("runtime environment preflight unexpectedly wrote numeric values")
+
+    runtime_identity = env_preflight.get("runtime_identity") or {}
+    validated_python = str(runtime_identity.get("python_executable") or env_preflight.get("python_executable") or "").strip()
+    validated_powershell = str(runtime_identity.get("powershell_executable") or env_preflight.get("powershell_path") or "").strip()
+    if not validated_python or not Path(validated_python).is_file():
+        raise ValueError("validated Python executable missing")
+    if not validated_powershell or not Path(validated_powershell).is_file():
+        raise ValueError("validated PowerShell executable missing")
+    if norm_executable(validated_python) != norm_executable(sys.executable):
+        raise ValueError(f"runtime Python identity drift: preflight={validated_python} current={sys.executable}")
+
+    powershell = str(Path(validated_powershell).resolve())
+    python_executable = str(Path(sys.executable).resolve())
     strict_wrapper = script_dir / "036_run_batch131_strict12_with_local_acceptance.ps1"
     manifest_generator = script_dir / "037_prepare_batch132_publish_manifest.py"
     for path in (strict_wrapper, manifest_generator):
@@ -79,7 +107,9 @@ def main() -> int:
             "-RepoRoot",
             str(repo),
             "-PythonExe",
-            sys.executable,
+            python_executable,
+            "-PowerShellExe",
+            powershell,
         ],
         repo,
     )
@@ -98,7 +128,7 @@ def main() -> int:
     publish_manifest = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_publish_manifest.json"
     manifest_result = run(
         [
-            sys.executable,
+            python_executable,
             str(manifest_generator),
             "--repo-root",
             str(repo),
@@ -122,11 +152,15 @@ def main() -> int:
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
         "status": "PUBLISH_PENDING_SERIAL_PUBLISHER_REQUIRED",
+        "runtime_identity_preflight": ENV_PREFLIGHT_REL,
+        "runtime_python_executable": python_executable,
+        "runtime_powershell_executable": powershell,
+        "runtime_identity_match_passed": True,
         "strict_local_acceptance_passed": True,
         "expected_rows": EXPECTED_ROWS,
         "expected_verified_count": 12,
@@ -148,7 +182,7 @@ def main() -> int:
         },
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "python": python_executable, "powershell": powershell, "output": str(output)}))
     return 0
 
 
