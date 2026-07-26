@@ -49,7 +49,15 @@ $git = Get-Command git -ErrorAction SilentlyContinue
 if (-not $git) { throw 'GIT_EXECUTABLE_NOT_FOUND' }
 $script:git = $git
 $actualBranch = (& $git.Source -C $repoRoot rev-parse --abbrev-ref HEAD 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($LASTEXITCODE -ne 0 -or $actualBranch -ne $expectedBranch) { throw "HEIGHT_DIFFERENCE_2_WRONG_ACTIVE_BRANCH=$actualBranch" }
+$branchReadExitCode = $LASTEXITCODE
+$detachedHead = $actualBranch -eq 'HEAD'
+if ($branchReadExitCode -ne 0 -or (-not $detachedHead -and $actualBranch -ne $expectedBranch)) {
+  throw "HEIGHT_DIFFERENCE_2_WRONG_ACTIVE_BRANCH=$actualBranch"
+}
+$actualCommit = (& $git.Source -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -Last 1).ToString().Trim()
+if ($LASTEXITCODE -ne 0 -or $actualCommit -notmatch '^[0-9a-f]{40}$') {
+  throw "HEIGHT_DIFFERENCE_2_INVALID_ACTIVE_COMMIT=$actualCommit"
+}
 
 $canonicalBlob = Assert-GitBlob $repoRoot $canonicalRel $expectedCanonicalBlob 'HEIGHT_DIFFERENCE_2_CANONICAL_SECURITY_SOURCE'
 $pointEvidenceBlob = Assert-GitBlob $repoRoot $pointEvidenceRel $expectedPointEvidenceBlob 'HEIGHT_DIFFERENCE_2_POINT_EVIDENCE'
@@ -83,6 +91,8 @@ Write-Output "TASK_ID=$taskId"
 Write-Output "ATTEMPT_ID=$attemptId"
 Write-Output "REPO_ROOT=$repoRoot"
 Write-Output "ACTIVE_BRANCH=$actualBranch"
+Write-Output "DETACHED_HEAD=$($detachedHead.ToString().ToLowerInvariant())"
+Write-Output "ACTIVE_COMMIT=$actualCommit"
 Write-Output "CANONICAL_SECURITY_BLOB_SHA=$canonicalBlob"
 Write-Output "POINT_EVIDENCE_BLOB_SHA=$pointEvidenceBlob"
 Write-Output "HMLR_EVIDENCE_BLOB_SHA=$hmlrEvidenceBlob"
