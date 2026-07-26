@@ -1,0 +1,1 @@
+Wave80 publisher recovery uses an isolated child branch plan. Canonical business evidence remains 5600 rows until serial publisher readback. No second runner and no direct canonical business publish.
