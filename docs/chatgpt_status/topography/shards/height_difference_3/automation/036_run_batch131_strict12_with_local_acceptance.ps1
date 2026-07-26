@@ -1,11 +1,13 @@
 param(
   [Parameter(Mandatory=$false)][string]$RepoRoot = $env:AAYS_REPO_ROOT,
-  [Parameter(Mandatory=$false)][string]$PythonExe = "python"
+  [Parameter(Mandatory=$false)][string]$PythonExe = "python",
+  [Parameter(Mandatory=$false)][string]$PowerShellExe = $env:AAYS_POWERSHELL_EXE
 )
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
   $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..\..\..")).Path
 }
+if ([string]::IsNullOrWhiteSpace($PowerShellExe)) { $PowerShellExe = "powershell" }
 
 $StrictAdapter = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\033_run_batch130_prepare12_strict_measurement_chain.ps1"
 $Validator = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\035_validate_batch130_strict12_outputs.py"
@@ -18,7 +20,7 @@ foreach ($P in @($StrictAdapter,$Validator)) {
 }
 New-Item -ItemType Directory -Force -Path $AcceptanceOut | Out-Null
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File $StrictAdapter -RepoRoot $RepoRoot -PythonExe $PythonExe
+& $PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $StrictAdapter -RepoRoot $RepoRoot -PythonExe $PythonExe -PowerShellExe $PowerShellExe
 if ($LASTEXITCODE -ne 0) { throw "Strict12 measurement chain failed with exit code $LASTEXITCODE" }
 
 & $PythonExe $Validator --strict-output-dir $StrictOut --output $Acceptance
@@ -31,10 +33,13 @@ if ([int]$A.numeric_values_changed_by_validator -ne 0) { throw "Validator unexpe
 if (-not [bool]$A.remote_github_readback_required) { throw "Remote GitHub readback gate unexpectedly disabled" }
 
 $Result = @{
-  schema_version = 1
+  schema_version = 2
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   strict12_runtime_chain_completed = $true
+  python_executable = $PythonExe
+  powershell_executable = $PowerShellExe
+  executable_identity_propagated = $true
   candidate_aware_proj_gate_required = $true
   local_acceptance_passed = $true
   local_acceptance_checks = [int]$A.checks_total
