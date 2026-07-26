@@ -2,9 +2,9 @@
 """Fail-closed runtime environment gate for the strict height_difference_3 chain.
 
 Runs only after the exact branch/HEAD gate. It verifies the actual Python,
-PowerShell, geospatial libraries, GDAL drivers, PROJ/OSTN15 operation, official
-source endpoints and minimum free disk needed by the same-task strict chain,
-then invokes Batch135 bootstrap 042 (which invokes 041). It never mutates the
+PowerShell, Git, geospatial libraries, GDAL drivers, PROJ/OSTN15 operation,
+official source endpoints and minimum free disk needed by the same-task strict
+chain, then invokes bootstrap 042 (which invokes 041). It never mutates the
 legacy queue, starts a runner, publishes, or writes numeric parcel values.
 """
 from __future__ import annotations
@@ -68,6 +68,11 @@ def main() -> int:
     checks.append(require("python_version_min_3_10", sys.version_info >= (3, 10), platform.python_version()))
     checks.append(require("python_64_bit", sys.maxsize > 2**32, {"machine": platform.machine(), "maxsize": sys.maxsize}))
 
+    git_executable = resolve_executable(os.environ.get("AAYS_GIT_EXE"), "git")
+    checks.append(require("git_executable_exists", Path(git_executable).is_file(), git_executable))
+    git_version = subprocess.run([git_executable, "--version"], text=True, capture_output=True, check=False)
+    checks.append(require("git_invocation_ok", git_version.returncode == 0 and "git version" in git_version.stdout.casefold(), {"exit": git_version.returncode, "stdout": git_version.stdout.strip(), "stderr": git_version.stderr[-500:]}))
+
     try:
         import fiona
         import numpy as np
@@ -86,6 +91,7 @@ def main() -> int:
     checks.append(require("proj_data_dir_exists", Path(proj_data_dir).is_dir(), proj_data_dir))
     versions = {
         "python": platform.python_version(),
+        "git": git_version.stdout.strip(),
         "numpy": np.__version__,
         "requests": requests.__version__,
         "fiona": fiona.__version__,
@@ -178,7 +184,7 @@ def main() -> int:
     checks.append(require("bootstrap_042_passed", proc.returncode == 0, {"exit": proc.returncode, "stdout": proc.stdout[-2000:], "stderr": proc.stderr[-2000:]}))
 
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
         "purpose": "STRICT_RUNTIME_ENVIRONMENT_AND_EXECUTABLE_IDENTITY_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
@@ -189,6 +195,8 @@ def main() -> int:
             "python_executable": python_executable,
             "powershell_executable": powershell,
             "powershell_version": ps.stdout.strip(),
+            "git_executable": git_executable,
+            "git_version": git_version.stdout.strip(),
             "proj_data_dir": proj_data_dir,
             "versions": versions,
         },
@@ -199,6 +207,8 @@ def main() -> int:
         "best_transformer": best,
         "powershell_path": powershell,
         "powershell_version": ps.stdout.strip(),
+        "git_executable": git_executable,
+        "git_version": git_version.stdout.strip(),
         "python_executable": python_executable,
         "proj_data_dir": proj_data_dir,
         "free_disk_bytes": disk.free,
@@ -214,7 +224,7 @@ def main() -> int:
     }
     out = repo / OUTPUT_REL
     write(out, payload)
-    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "output": str(out)}))
+    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(out)}))
     return 0
 
 
