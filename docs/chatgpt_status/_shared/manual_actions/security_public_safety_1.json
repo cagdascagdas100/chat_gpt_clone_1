@@ -3,10 +3,10 @@
   "slot_id": "security_public_safety_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing priority-1 height_difference_2 holder still blocks the single shared runner. The canonical F-host daemon heartbeat is stale by about 10161 minutes against a 20-minute threshold. The restart helper can return success without a fresh matching heartbeat, queue scan or priority-1 claim. The current operator recovery blob also differs from the blob recorded in status evidence and invokes git reset --hard, which violates the canonical safe-recovery contract. Operator and restart receipts with commit, push and remote readback are absent. This remote session cannot inspect or safely recover the Windows F-host process, Git locks, worktree, disk or memory, and the security slot is forbidden from modifying the holder slot.",
+  "reason": "The selected security slot is unclaimed and ready, but the canonical single shared runner remains blocked by a stale F-host daemon and unsafe holder-recovery behavior. The latest canonical daemon heartbeat is 2026-07-16T13:45:53.0433295Z, the previous active claim is terminal and released, the security queue task is still unclaimed at priority 2, and the holder recovery path can report success without a fresh matching heartbeat or queue claim. This remote session cannot inspect or safely recover the Windows F-host process, Git locks, worktree, disk, or memory, and it must not start a second runner or modify the priority-1 holder slot.",
   "detected_at": "2026-07-22T16:43:08Z",
-  "updated_at": "2026-07-23T15:06:44Z",
-  "solution": "On the existing portable Windows F-host only, do not start a second runner. The height_difference_2 owner must first remove reset --hard and all false-success paths from guarded recovery, preserve dirty work safely, require a fresh matching daemon heartbeat plus a priority-1 queue claim, and publish operator/restart receipts with remote readback. Then run that guarded recovery on the existing F-host. After height_difference_2 completes or releases the queue and security task aays1-security-public-safety-1-canonical-acceptance-v17-20260722 is claimed, verify the security runtime/browser outputs and mark this record RESOLVED.",
+  "updated_at": "2026-07-26T00:02:59.891465Z",
+  "solution": "On the existing portable Windows F-host only, do not start a second runner. The priority-1 holder owner must remove reset --hard and all false-success paths from guarded recovery, preserve any dirty work safely, require a fresh matching daemon heartbeat plus a priority-1 queue claim, and publish operator/restart receipts with commit, push, and remote readback. Then run the guarded recovery on the existing F-host. After the holder task completes or releases the queue and task aays1-security-public-safety-1-canonical-acceptance-v17-20260722 is claimed, verify the security runtime/browser outputs and mark this record RESOLVED.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_1/ownership_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_1/checkpoint_latest.json",
@@ -14,17 +14,16 @@
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_1/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_1/status_latest.json",
     "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v17_20260722.task.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_1/holder_stale_daemon_watchdog_audit_v1_20260722.json",
     "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json",
     "docs/chatgpt_status/_shared/control/single_runner_active_claim.json",
-    "docs/chatgpt_status/topography/shards/height_difference_2/automation/026_restart_existing_canonical_f_runner_if_stale.ps1",
-    "docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1"
+    "england_map_web/data/aays_21_slots/security_public_safety_1/holder_stale_daemon_watchdog_audit_v1_20260722.json",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/050_security_public_safety_1_holder_stale_daemon_watchdog_remote_validation_20260722.json"
   ],
-  "continuation_key": "818c4913dea84c6348e4e6dcd20ee1fe6bc1ba5b901f924e96cae57b4ebc1c7d",
+  "continuation_key": "147382a531308f3cfacf80c7fe05746fbc342e38a3cba09afd14b01c11ab7116",
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
-  "source_head": "2337022fe7335fb88571c630c28963ded324321f",
-  "first_unverified_step": "HOLDER_OWNER_REMOVES_UNSAFE_RECOVERY_PATHS_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
+  "source_head": "8dac8bfae03e3d184525720299cd76f8fe3b3451",
+  "first_unverified_step": "HOLDER_OWNER_HARDENS_STALE_DAEMON_RECOVERY_THEN_EXISTING_F_HOST_RECOVERS_AND_CLAIMS_PRIORITY_1",
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "final_ready": false
 }
