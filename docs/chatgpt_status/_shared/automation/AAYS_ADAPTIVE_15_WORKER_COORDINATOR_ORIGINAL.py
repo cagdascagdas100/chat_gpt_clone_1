@@ -511,8 +511,11 @@ class Coordinator:
         override = overrides.get(slot_id) if isinstance(overrides, dict) else None
         if override:
             candidate = (self.root / Path(str(override))).resolve()
-            worktree_root = self.worktrees.resolve()
-            if candidate.is_relative_to(worktree_root) and candidate.is_dir():
+            allowed_roots = (
+                self.worktrees.resolve(),
+                (self.root / "wt").resolve(),
+            )
+            if any(candidate.is_relative_to(root) for root in allowed_roots) and candidate.is_dir():
                 return candidate
         spec = SLOT_SPECS[slot_id]
         if int(spec["shard_index"]) == 1:
