@@ -494,6 +494,31 @@ class SlotRecoverySupervisor:
                     return None, f"ISOLATED_CHECKOUT_FAILED:{checkout.stderr.strip()}"
             provisioned = target
 
+        # Materialize authoritative input files exactly, without expanding a
+        # broad parent such as england_map_web/data on the portable disk.
+        exact_read_paths: list[str] = []
+        values = task.get("read_paths")
+        if isinstance(values, list):
+            exact_read_paths.extend(str(value) for value in values if value)
+        if task.get("script_path"):
+            exact_read_paths.append(str(task["script_path"]))
+        exact_read_paths = sorted({
+            value.replace("\\", "/").strip("/")
+            for value in exact_read_paths
+            if value and ":" not in value and ".." not in PurePosixPath(value).parts
+        })
+        for offset in range(0, len(exact_read_paths), 50):
+            batch = exact_read_paths[offset:offset + 50]
+            try:
+                materialize = self._git(
+                    provisioned, "checkout", "--ignore-skip-worktree-bits",
+                    "HEAD", "--", *batch, timeout=300,
+                )
+            except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                return None, f"ISOLATED_READ_PATH_CHECKOUT_EXCEPTION:{type(exc).__name__}:{exc}"
+            if materialize.returncode != 0:
+                return None, f"ISOLATED_READ_PATH_CHECKOUT_FAILED:{materialize.stderr.strip()}"
+
         diagnostics = self._diagnostics(provisioned)
         if not diagnostics.get("clean") or not diagnostics.get("head"):
             return None, "ISOLATED_WORKTREE_VERIFICATION_FAILED"
