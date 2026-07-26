@@ -3,9 +3,10 @@
 
 Git blob pins are resolved from Git trees, not raw Windows working-tree bytes.
 A freshly fetched origin remote-tracking ref is required and critical local HEAD
-blobs must equal the fetched origin blobs. Batch137 expands current-task coverage
-to the coordinator preflight chain through 044/075. This script never edits the
-legacy queue, starts a runner, publishes, or changes numeric values.
+blobs must equal the fetched origin blobs. Batch138 validates the complete
+runtime executable-identity chain through 039/036/033/032 and resume input 076.
+This script never edits the legacy queue, starts a runner, publishes, or changes
+numeric values.
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ LEGACY_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/autom
 CANONICAL_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/automation/039_runner_entry_batch133_prepare_publish_handoff.py"
 POST_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py"
 EXPECTED_ROWS = list(range(61540, 61552))
-EXPECTED_READ_PATH_COUNT = 46
+EXPECTED_READ_PATH_COUNT = 48
 EXPECTED_OUTPUT_COUNT = 19
 
 REQUEST_REL = "docs/chatgpt_status/_shared/slots_21/height_difference_3/coordinator_requests/001_same_task_rewire_to_canonical_noarg.json"
@@ -34,6 +35,11 @@ VALIDATOR_REL = "docs/chatgpt_status/topography/shards/height_difference_3/autom
 BOOTSTRAP_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/042_run_batch135_fresh_origin_wiring_preflight.py"
 HEAD_GATE_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/043_run_batch136_exact_branch_head_and_dependency_preflight.py"
 ENV_GATE_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/044_run_batch137_runtime_environment_preflight.py"
+STRICT036_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/036_run_batch131_strict12_with_local_acceptance.ps1"
+STRICT033_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/033_run_batch130_prepare12_strict_measurement_chain.ps1"
+STRICT032_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/032_run_batch129_range_extract_and_prepare12.ps1"
+RESUME076_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/076_batch138_runtime_executable_identity_resume.json"
+ENV_RECORD_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
 
 
 def repo_root(start: Path) -> Path:
@@ -88,6 +94,7 @@ def main() -> int:
         if not passed:
             raise ValueError(f"wiring validation failed: {name}: {detail}")
 
+    check("request_schema_5_plus", int(request.get("schema_version") or 0) >= 5, request.get("schema_version"))
     check("request_task", request.get("task_id") == TASK_ID)
     check("request_attempt", request.get("attempt_id") == ATTEMPT_ID)
     check("request_continuation", request.get("continuation_key") == CONTINUATION)
@@ -107,7 +114,9 @@ def main() -> int:
     check("task_parallel_runner_false", task.get("parallel_runner") is False)
     check("task_child_push_forbidden", task.get("child_direct_push_forbidden") is True)
     check("task_expected_outputs_19", len(task.get("expected_outputs") or []) == EXPECTED_OUTPUT_COUNT)
-    check("task_read_paths_46", len(task.get("read_paths") or []) == EXPECTED_READ_PATH_COUNT)
+    check("task_read_paths_48", len(task.get("read_paths") or []) == EXPECTED_READ_PATH_COUNT)
+    check("task_has_resume_076", RESUME076_REL in (task.get("read_paths") or []))
+    check("task_can_read_runtime_identity_record", ENV_RECORD_REL in (task.get("read_paths") or []))
 
     check("queue_task", queue.get("task_id") == TASK_ID)
     check("queue_attempt", queue.get("attempt_id") == ATTEMPT_ID)
@@ -128,6 +137,12 @@ def main() -> int:
     check("local_head_resolved", len(local_head) == 40, local_head)
 
     pre = request.get("preconditions") or {}
+    check("request_read_path_count_48", int(pre.get("canonical_current_task_read_path_count_required") or 0) == EXPECTED_READ_PATH_COUNT)
+    check("request_output_count_19", int(pre.get("canonical_current_task_expected_output_count_required") or 0) == EXPECTED_OUTPUT_COUNT)
+    check("request_runtime_identity_required", pre.get("runtime_executable_identity_required") is True)
+    check("request_same_python_required", pre.get("preflight_python_must_equal_runtime_python") is True)
+    check("request_same_powershell_required", pre.get("preflight_powershell_must_equal_runtime_powershell") is True)
+
     local_task_blob = tree_blob(repo, "HEAD", TASK_REL)
     local_queue_blob = tree_blob(repo, "HEAD", QUEUE_REL)
     remote_task_blob = tree_blob(repo, remote_head, TASK_REL)
@@ -150,18 +165,39 @@ def main() -> int:
         BOOTSTRAP_REL,
         HEAD_GATE_REL,
         ENV_GATE_REL,
+        STRICT036_REL,
+        STRICT033_REL,
+        STRICT032_REL,
+        RESUME076_REL,
     ]
     critical_blob_rows: list[dict[str, str]] = []
+    remote_blobs: dict[str, str] = {}
     for rel in critical_paths:
         local_blob = tree_blob(repo, "HEAD", rel)
         remote_blob = tree_blob(repo, remote_head, rel)
         check(f"critical_blob_parity:{rel}", local_blob == remote_blob, {"local": local_blob, "remote": remote_blob})
+        remote_blobs[rel] = remote_blob
         critical_blob_rows.append({"path": rel, "local_head_blob": local_blob, "remote_blob": remote_blob})
 
     status = git(repo, "status", "--porcelain", "--untracked-files=no", "--", *critical_paths)
     check("critical_worktree_clean", status == "", status)
 
+    validator_chain = request.get("validator_chain") or {}
+    identity_chain = request.get("runtime_identity_chain") or {}
     override = request.get("coordinator_runtime_override") or {}
+    check("pin_043", str(validator_chain.get("exact_branch_head_gate_expected_blob_sha") or "").lower() == remote_blobs[HEAD_GATE_REL])
+    check("pin_044", str(validator_chain.get("runtime_environment_gate_expected_blob_sha") or "").lower() == remote_blobs[ENV_GATE_REL])
+    check("pin_042", str(validator_chain.get("fresh_origin_bootstrap_expected_blob_sha") or "").lower() == remote_blobs[BOOTSTRAP_REL])
+    check("pin_041", str(validator_chain.get("same_task_validator_expected_blob_sha") or "").lower() == remote_blobs[VALIDATOR_REL])
+    check("pin_039", str(override.get("runtime_script_expected_blob_sha") or "").lower() == remote_blobs[CANONICAL_SCRIPT])
+    check("pin_036", str(identity_chain.get("strict036_expected_blob_sha") or "").lower() == remote_blobs[STRICT036_REL])
+    check("pin_033", str(identity_chain.get("strict033_expected_blob_sha") or "").lower() == remote_blobs[STRICT033_REL])
+    check("pin_032", str(identity_chain.get("strict032_expected_blob_sha") or "").lower() == remote_blobs[STRICT032_REL])
+    check("pin_resume_076", str(identity_chain.get("resume_076_expected_blob_sha") or "").lower() == remote_blobs[RESUME076_REL])
+    check("identity_python_propagation", identity_chain.get("python_executable_propagates_039_036_033_032") is True)
+    check("identity_powershell_propagation", identity_chain.get("powershell_executable_propagates_039_036_033_032") is True)
+    check("identity_039_consumes_preflight", identity_chain.get("runtime_039_consumes_preflight_identity_record") is True)
+
     check("override_uses_existing_queue", override.get("use_existing_queue_record") is True)
     check("override_no_new_queue", override.get("do_not_create_new_queue_record") is True)
     check("override_script_039", override.get("runtime_script_path") == CANONICAL_SCRIPT)
@@ -172,13 +208,16 @@ def main() -> int:
     owner_state = str(ownership.get("state") or "")
     owner_id = ownership.get("owner_page_session_id")
     ownership_safe_for_future_coordinator = owner_state == "UNCLAIMED" or (
-        owner_state == "CLAIMED" and owner_id == "chatgpt-height-difference-3-batch137-20260726"
+        owner_state == "CLAIMED" and owner_id in {
+            "chatgpt-height-difference-3-batch137-20260726",
+            "chatgpt-height-difference-3-batch138-20260726",
+        }
     )
     check("ownership_not_conflicting", ownership_safe_for_future_coordinator, {"state": owner_state, "owner": owner_id})
 
     already_aligned = queue.get("script_path") == CANONICAL_SCRIPT
     payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
@@ -199,6 +238,7 @@ def main() -> int:
         "windows_line_ending_safe_tree_blob_validation": True,
         "expected_read_path_count": EXPECTED_READ_PATH_COUNT,
         "expected_output_count": EXPECTED_OUTPUT_COUNT,
+        "runtime_executable_identity_chain_pinned": True,
         "legacy_queue_script_path": queue.get("script_path"),
         "requested_runtime_script_path": CANONICAL_SCRIPT,
         "requested_post_publish_script_path": POST_SCRIPT,
