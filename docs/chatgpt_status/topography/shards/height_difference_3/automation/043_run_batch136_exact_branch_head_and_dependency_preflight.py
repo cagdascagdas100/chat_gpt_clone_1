@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Fail-closed exact-branch/HEAD preflight before Batch135 fresh-origin wiring gates.
+"""Fail-closed exact-branch/HEAD preflight before the runtime environment gate.
 
 This script does not mutate the legacy queue, start a runner, publish, or write
 numeric measurements. It requires the runner checkout to be on the canonical
 branch, fetches origin with an explicit refspec, requires local HEAD to equal the
 fresh origin HEAD, verifies every canonical current-task read path is tracked and
-clean, then invokes Batch135 bootstrap 042 (which invokes 041).
+clean, then invokes Batch137 environment gate 044 (which invokes 042 -> 041).
 """
 from __future__ import annotations
 
@@ -17,9 +17,10 @@ from typing import Any
 
 BRANCH = "codex/aays-single-runner-v5-20260706"
 TASK_REL = "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"
-BOOTSTRAP_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/042_run_batch135_fresh_origin_wiring_preflight.py"
+ENV_GATE_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/044_run_batch137_runtime_environment_preflight.py"
 EXPECTED_TASK = "height_difference_3-canonical-api-measurement-20260721-01"
 EXPECTED_CONTINUATION = "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"
+EXPECTED_READ_PATH_COUNT = 46
 
 
 def root(start: Path) -> Path:
@@ -65,14 +66,13 @@ def main() -> int:
     if task.get("continuation_key") != EXPECTED_CONTINUATION:
         raise ValueError("current continuation_key mismatch")
     read_paths = [str(v) for v in (task.get("read_paths") or [])]
-    if len(read_paths) != 38:
-        raise ValueError(f"expected 38 current-task read paths, got {len(read_paths)}")
+    if len(read_paths) != EXPECTED_READ_PATH_COUNT:
+        raise ValueError(f"expected {EXPECTED_READ_PATH_COUNT} current-task read paths, got {len(read_paths)}")
     if len(set(read_paths)) != len(read_paths):
         raise ValueError("duplicate current-task read path")
 
     tracked_rows: list[dict[str, str | bool]] = []
     for rel in read_paths:
-        # cat-file accepts blobs and trees, so both file and directory read paths are covered.
         proc = subprocess.run(
             ["git", "-C", str(repo), "cat-file", "-e", f"HEAD:{rel}"],
             text=True,
@@ -87,15 +87,15 @@ def main() -> int:
     if status:
         raise RuntimeError(f"TASK_READ_PATH_WORKTREE_DIRTY:{status[-4000:]}")
 
-    bootstrap = repo / BOOTSTRAP_REL
-    if not bootstrap.is_file():
-        raise FileNotFoundError(bootstrap)
-    proc = subprocess.run([sys.executable, str(bootstrap)], cwd=repo, text=True, capture_output=True, check=False)
+    env_gate = repo / ENV_GATE_REL
+    if not env_gate.is_file():
+        raise FileNotFoundError(env_gate)
+    proc = subprocess.run([sys.executable, str(env_gate)], cwd=repo, text=True, capture_output=True, check=False)
     if proc.returncode != 0:
-        raise RuntimeError(f"BATCH135_BOOTSTRAP_FAILED:{proc.stderr[-2400:]}")
+        raise RuntimeError(f"BATCH137_ENVIRONMENT_GATE_FAILED:{proc.stderr[-3000:]}")
 
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
         "symbolic_branch_verified": True,
@@ -108,9 +108,9 @@ def main() -> int:
         "all_read_paths_tracked_at_head": True,
         "read_path_rows": tracked_rows,
         "task_read_path_worktree_clean": True,
-        "bootstrap_042_executed": True,
-        "bootstrap_042_exit_code": proc.returncode,
-        "bootstrap_042_stdout_tail": proc.stdout[-4000:],
+        "environment_gate_044_executed": True,
+        "environment_gate_044_exit_code": proc.returncode,
+        "environment_gate_044_stdout_tail": proc.stdout[-4000:],
         "coordinator_action_performed": False,
         "queue_mutated": False,
         "runner_started": False,

@@ -43,6 +43,10 @@
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/038_verify_batch132_origin_remote_readback.ps1",
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/039_runner_entry_batch133_prepare_publish_handoff.py",
     "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/041_validate_batch134_coordinator_wiring_request.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/042_run_batch135_fresh_origin_wiring_preflight.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/043_run_batch136_exact_branch_head_and_dependency_preflight.py",
+    "docs/chatgpt_status/topography/shards/height_difference_3/automation/044_run_batch137_runtime_environment_preflight.py",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/059_candidate_manifest_61536_61539_batch_115.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/062_batch116_four_candidate_full_chain.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/065_batch118_stable_runner_resume_adapter.json",
@@ -52,6 +56,10 @@
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/069_batch131_strict12_acceptance_readback_resume.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/070_batch132_remote_origin_readback_resume.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/071_batch133_canonical_noarg_entrypoint_resume.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/072_batch134_coordinator_wiring_request.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/073_batch135_fresh_origin_coordinator_preflight.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/074_batch136_exact_branch_head_coordinator_preflight.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/075_batch137_runtime_environment_coordinator_preflight.json",
     "docs/chatgpt_status/_shared/slots_21/height_difference_3"
   ],
   "exact_write_paths": [
@@ -74,7 +82,11 @@
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_publish_manifest.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_origin_remote_readback.json",
     "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json",
-    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json"
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/035_batch134_coordinator_wiring_qa/coordinator_wiring_request_validation.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/037_batch135_fresh_origin_wiring_qa/fresh_origin_wiring_preflight_runtime.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/039_batch136_exact_head_preflight/exact_branch_head_and_dependency_preflight_runtime.json",
+    "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
   ],
   "resource_class": ["network_fetch", "cpu_heavy", "geometry"],
   "requires_runtime_sync_gate": true,
@@ -85,17 +97,17 @@
     "source_urls": [
       "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
       "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
-      "https://osdatahub.os.uk/downloads/open/Terrain50"
+      "https://api.os.uk/downloads/v1/products/Terrain50/downloads"
     ],
     "source_snapshot_date": "2026-07-26",
     "source_discovery_required": false,
     "measurement_level": "parcel_polygon",
-    "output_semantics": "MEASURED_ONLY_AFTER_THREE_SOURCE_GATE_AND_REMOTE_READBACK",
+    "output_semantics": "MEASURED_ONLY_AFTER_RUNTIME_ENVIRONMENT_THREE_SOURCE_GATE_AND_REMOTE_READBACK",
     "parcel_binding_method": "EXPLICIT_CANONICAL_ROW_TO_HMLR_INSPIRE_POLYGON_WITHOUT_NEAREST_FILL",
     "confidence_method": "HMLR_BOUNDARY_PLUS_EA_DTM1M_POLYGON_SAMPLE_PLUS_OS_TERRAIN50_CROSSCHECK",
     "no_data_policy": "NO_DATA_NOT_INFERRED",
     "ai_role": "not_used_for_numeric_measurement",
-    "human_review_required_when": ["canonical_parcel_match_missing", "official_download_or_hash_missing", "hmlr_boundary_missing", "ea_dtm_sample_missing", "terrain50_crosscheck_missing", "remote_blob_readback_missing"]
+    "human_review_required_when": ["canonical_parcel_match_missing", "official_download_or_hash_missing", "runtime_environment_gate_missing", "hmlr_boundary_missing", "ea_dtm_sample_missing", "terrain50_crosscheck_missing", "remote_blob_readback_missing"]
   },
   "timeout_seconds": 7200,
   "single_runner_only": true,
@@ -110,14 +122,22 @@
     "adapter_prepared": true,
     "canonical_noarg_script_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/039_runner_entry_batch133_prepare_publish_handoff.py",
     "post_publish_noarg_script_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py",
-    "resume_input": "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/071_batch133_canonical_noarg_entrypoint_resume.json",
+    "coordinator_preflight_chain": [
+      "docs/chatgpt_status/topography/shards/height_difference_3/automation/043_run_batch136_exact_branch_head_and_dependency_preflight.py",
+      "docs/chatgpt_status/topography/shards/height_difference_3/automation/044_run_batch137_runtime_environment_preflight.py",
+      "docs/chatgpt_status/topography/shards/height_difference_3/automation/042_run_batch135_fresh_origin_wiring_preflight.py",
+      "docs/chatgpt_status/topography/shards/height_difference_3/automation/041_validate_batch134_coordinator_wiring_request.py"
+    ],
+    "resume_input": "docs/chatgpt_status/topography/shards/height_difference_3/runner_inputs/075_batch137_runtime_environment_coordinator_preflight.json",
     "same_task_id_required": true,
     "duplicate_queue_task_forbidden": true,
     "legacy_queue_mutation_not_performed": true,
     "legacy_queue_script_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/023_runner_entry_canonical_api_measurement.py",
-    "legacy_queue_mutation_reason": "outside current task exact_write_paths; coordinator must wire the existing same task to canonical no-argument entrypoint after fresh host liveness"
+    "legacy_queue_mutation_reason": "outside current task exact_write_paths; coordinator must rewire the existing same task only after 043->044->042->041 all pass",
+    "read_path_count": 46,
+    "expected_output_count": 19
   },
-  "updated_at": "2026-07-26T10:16:00+03:00",
-  "blocker": "PORTABLE_SHARED_RUNNER_HOST_STALE_AND_EXISTING_SAME_TASK_LEGACY_QUEUE_REQUIRES_COORDINATOR_WIRING_TO_CANONICAL_NOARG_ENTRYPOINT",
+  "updated_at": "2026-07-26T11:51:00+03:00",
+  "blocker": "PORTABLE_SHARED_RUNNER_HOST_STALE_AND_EXISTING_SAME_TASK_LEGACY_QUEUE_REQUIRES_RUNTIME_ENVIRONMENT_VALIDATED_COORDINATOR_WIRING",
   "result": null
 }
