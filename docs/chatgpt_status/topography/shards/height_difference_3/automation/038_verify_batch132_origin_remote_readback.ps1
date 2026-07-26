@@ -12,18 +12,33 @@ $OutDir = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_diff
 $ResultPath = Join-Path $OutDir "batch132_origin_remote_readback.json"
 if (-not (Test-Path -LiteralPath $Manifest -PathType Leaf)) { throw "Missing publish manifest: $Manifest" }
 $M = Get-Content -Raw -LiteralPath $Manifest | ConvertFrom-Json
+if ([int]$M.schema_version -lt 2) { throw "Publish manifest lacks Batch139 history binding" }
 if (-not [bool]$M.ready_for_serial_publisher) { throw "Publish manifest is not ready" }
 if ($M.canonical_branch -ne $Branch) { throw "Publish manifest branch mismatch" }
 if ($M.task_id -ne "height_difference_3-canonical-api-measurement-20260721-01") { throw "Publish manifest task mismatch" }
+$PreHead = ([string]$M.pre_publish_origin_head).Trim().ToLowerInvariant()
+if ($PreHead -notmatch '^[0-9a-f]{40}$') { throw "Invalid pre-publish origin HEAD in manifest" }
+
+function Get-BlobAtCommit([string]$Commit, [string]$Rel) {
+  $Spec = "${Commit}:$Rel"
+  $Value = (& $GitExe -C $RepoRoot rev-parse $Spec 2>$null)
+  if ($LASTEXITCODE -ne 0 -or $null -eq $Value) { return $null }
+  return ([string]$Value).Trim().ToLowerInvariant()
+}
 
 $FetchSpec = "refs/heads/${Branch}:refs/remotes/origin/${Branch}"
 & $GitExe -C $RepoRoot fetch --no-tags origin $FetchSpec | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "git fetch explicit remote-tracking ref failed with exit code $LASTEXITCODE" }
 $RemoteRef = "refs/remotes/origin/$Branch"
-$RemoteHead = (& $GitExe -C $RepoRoot rev-parse $RemoteRef).Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RemoteHead)) { throw "Cannot resolve freshly fetched remote branch head" }
+$RemoteHead = (& $GitExe -C $RepoRoot rev-parse $RemoteRef).Trim().ToLowerInvariant()
+if ($LASTEXITCODE -ne 0 -or $RemoteHead -notmatch '^[0-9a-f]{40}$') { throw "Cannot resolve freshly fetched remote branch head" }
+
+& $GitExe -C $RepoRoot merge-base --is-ancestor $PreHead $RemoteHead | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Pre-publish origin HEAD is not an ancestor of fresh remote HEAD" }
 
 $Checks = @()
+$PreHeadChecks = @()
+$PreHeadAllBlobsMatch = $true
 foreach ($F in @($M.files)) {
   $Rel = [string]$F.relative_path
   $Local = Join-Path $RepoRoot ($Rel -replace '/', '\')
@@ -34,10 +49,13 @@ foreach ($F in @($M.files)) {
   if ($LASTEXITCODE -ne 0) { throw "git hash-object failed: $Rel" }
   $ExpectedBlob = ([string]$F.git_blob_sha1).ToLowerInvariant()
   if ($LocalBlob -ne $ExpectedBlob) { throw "Local Git blob mismatch: $Rel" }
-  $Spec = "${RemoteHead}:$Rel"
-  $RemoteBlob = (& $GitExe -C $RepoRoot rev-parse $Spec).Trim().ToLowerInvariant()
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RemoteBlob)) { throw "Remote file missing: $Rel" }
+  $RemoteBlob = Get-BlobAtCommit $RemoteHead $Rel
+  if ([string]::IsNullOrWhiteSpace($RemoteBlob)) { throw "Remote file missing: $Rel" }
   if ($RemoteBlob -ne $ExpectedBlob) { throw "Remote Git blob mismatch: $Rel" }
+  $PreBlob = Get-BlobAtCommit $PreHead $Rel
+  $PreMatches = (-not [string]::IsNullOrWhiteSpace($PreBlob)) -and ($PreBlob -eq $ExpectedBlob)
+  if (-not $PreMatches) { $PreHeadAllBlobsMatch = $false }
+  $PreHeadChecks += [ordered]@{ relative_path = $Rel; expected_git_blob_sha1 = $ExpectedBlob; pre_publish_blob_sha1 = $PreBlob; matched_at_pre_publish_head = $PreMatches }
   $Checks += [ordered]@{
     relative_path = $Rel
     local_sha256 = $LocalSha256
@@ -48,19 +66,63 @@ foreach ($F in @($M.files)) {
   }
 }
 
+$HistoryMode = $null
+$MaterializationCommit = $null
+$HistoryCommitCount = 0
+if ($PreHeadAllBlobsMatch) {
+  $HistoryMode = "ALREADY_PRESENT_AT_PREPUBLISH_HEAD_NO_REPLAY_REQUIRED"
+  $MaterializationCommit = $PreHead
+} else {
+  $HistoryCommits = @(& $GitExe -C $RepoRoot rev-list --reverse "$PreHead..$RemoteHead")
+  if ($LASTEXITCODE -ne 0) { throw "Cannot enumerate remote history after pre-publish HEAD" }
+  $HistoryCommitCount = @($HistoryCommits).Count
+  if ($HistoryCommitCount -lt 1) { throw "Remote HEAD did not advance and accepted blobs were not already present" }
+  foreach ($Commit in $HistoryCommits) {
+    $Candidate = ([string]$Commit).Trim().ToLowerInvariant()
+    if ($Candidate -notmatch '^[0-9a-f]{40}$') { continue }
+    $AllAtCandidate = $true
+    foreach ($F in @($M.files)) {
+      $ExpectedBlob = ([string]$F.git_blob_sha1).ToLowerInvariant()
+      $CandidateBlob = Get-BlobAtCommit $Candidate ([string]$F.relative_path)
+      if ([string]::IsNullOrWhiteSpace($CandidateBlob) -or $CandidateBlob -ne $ExpectedBlob) {
+        $AllAtCandidate = $false
+        break
+      }
+    }
+    if ($AllAtCandidate) {
+      $MaterializationCommit = $Candidate
+      break
+    }
+  }
+  if ([string]::IsNullOrWhiteSpace($MaterializationCommit)) { throw "No descendant commit materializes all seven accepted blobs" }
+  $HistoryMode = "FIRST_FULL_BLOB_MATERIALIZATION_COMMIT_FOUND"
+}
+
+& $GitExe -C $RepoRoot merge-base --is-ancestor $MaterializationCommit $RemoteHead | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Materialization commit is not an ancestor of fresh remote HEAD" }
+
 $ExpectedRows = @(61540..61551)
 $ManifestRows = @($M.expected_rows | ForEach-Object { [int]$_ })
 if (($ManifestRows -join ',') -ne ($ExpectedRows -join ',')) { throw "Manifest row set mismatch" }
 if ([int]$M.expected_verified_count -ne 12) { throw "Manifest verified count mismatch" }
 
 $Result = [ordered]@{
-  schema_version = 1
+  schema_version = 2
   slot_id = "height_difference_3"
   task_id = [string]$M.task_id
   continuation_key = [string]$M.continuation_key
   canonical_branch = $Branch
   explicit_fetch_refspec = $FetchSpec
+  pre_publish_origin_head = $PreHead
   remote_head = $RemoteHead
+  pre_publish_head_is_ancestor_of_remote_head = $true
+  pre_publish_head_all_blobs_match = $PreHeadAllBlobsMatch
+  history_mode = $HistoryMode
+  history_commit_count_after_pre_publish_head = $HistoryCommitCount
+  first_full_blob_materialization_commit = $MaterializationCommit
+  materialization_commit_is_ancestor_of_remote_head = $true
+  remote_history_binding_passed = $true
+  pre_publish_file_checks = $PreHeadChecks
   expected_rows = $ExpectedRows
   file_count = @($Checks).Count
   files = $Checks
@@ -74,5 +136,5 @@ $Result = [ordered]@{
   fake_data = $false
 }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-$Result | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 -LiteralPath $ResultPath
-Write-Output ($Result | ConvertTo-Json -Compress -Depth 10)
+$Result | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 -LiteralPath $ResultPath
+Write-Output ($Result | ConvertTo-Json -Compress -Depth 12)
