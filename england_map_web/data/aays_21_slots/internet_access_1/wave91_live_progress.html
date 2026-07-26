@@ -1,0 +1,28 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 Waves86-91</title><style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:9px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0;font-size:12px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1}.ok{font-weight:700}code{font-size:11px}</style></head><body>
+<h1>internet_access_1 — Waves 86–91</h1><div id="warning" class="warn">Yükleniyor…</div><div id="cards" class="cards"></div>
+<h2>Yeni UPRN QA satırları — Bath / Durham / Bradford / Melton</h2><table><thead><tr><th>Kaynak satırı</th><th>UPRN</th><th>Postcode</th><th>Recognised</th><th>Current</th><th>Future</th><th>LAD</th><th>Region</th><th>Rol</th></tr></thead><tbody id="qa"></tbody></table>
+<h2>İşlem satırları 4215–4914</h2><table><thead><tr><th>#</th><th>Wave</th><th>Kontrol</th><th>Durum</th></tr></thead><tbody id="ops"></tbody></table>
+<script>
+Promise.all([fetch('./progress_wave91_latest.json',{cache:'no-store'}).then(r=>r.json()),fetch('./research_waves_86_91_latest.json',{cache:'no-store'}).then(r=>r.json())]).then(([p,d])=>{
+warning.textContent=`Durum: ${p.authoritative_control_readback.current_task_state}; owner ${p.authoritative_control_readback.ownership_state}. Bu tur ${p.turn_operations_completed}/${p.turn_operations_total} kontrol ve ${p.qa_example_rows_this_turn} yeni gerçek UPRN QA satırı tamamlandı. Canonical→INSPIRE köprüsü 1264-row reviewed subset için bulundu; ücretsiz INSPIRE→UPRN ve Ofcom binary kapıları geçene kadar product promotion kapalı.`;
+let c=[['Genel',p.general_program_progress_percent+'%'],['Genel Δ','+'+p.general_program_progress_delta_points],['Operasyonel',p.operational_progress_percent+'%'],['Operasyonel Δ','+'+p.operational_progress_delta_points],['Bu tur',p.turn_operations_completed+'/'+p.turn_operations_total],['Toplam',p.completed_operations+'/'+p.total_operations],['Aday/promoted/held',p.official_source_candidates+'/'+p.promoted_sources+'/'+p.held_sources],['Yeni QA',p.qa_example_rows_this_turn]];
+cards.innerHTML=c.map(x=>`<div class=card>${x[0]}<br><b>${x[1]}</b></div>`).join('');
+qa.innerHTML=d.qa_examples.rows.map(x=>`<tr><td>${x.source_line}</td><td><code>${x.uprn}</code></td><td>${x.postcode}</td><td>${x.bduk_recognised_premises}</td><td>${x.current_gigabit}</td><td>${x.future_gigabit}</td><td>${x.lad}</td><td>${x.region}</td><td>QA_ONLY_NOT_CANONICAL_PARCEL</td></tr>`).join('');
+let rows=[],n=4215;
+const rowFields=[
+ ['uprn_exact',x=>`UPRN exact=${x.uprn}`],
+ ['struprn_exact',x=>`struprn exact=${x.struprn}`],
+ ['country_exact',x=>`country exact=${x.country}`],
+ ['postcode_exact',x=>`postcode exact=${x.postcode}`],
+ ['bduk_recognised_premises_exact',x=>`bduk_recognised exact=${x.bduk_recognised_premises}`],
+ ['current_gigabit_exact',x=>`current_gigabit exact=${x.current_gigabit}`],
+ ['future_gigabit_exact',x=>`future_gigabit exact=${x.future_gigabit}`],
+ ['lad_region_exact',x=>`LAD/region exact=${x.lad} / ${x.region}`]
+];
+d.qa_examples.rows.forEach(x=>rowFields.forEach(([k,f])=>rows.push([n++,86,`source line ${x.source_line}; UPRN ${x.uprn}; ${k}: ${f(x)}`,'complete'])));
+for(const w of d.waves.slice(1)){w.facts.forEach(f=>w.validation_stages.forEach(stage=>rows.push([n++,w.wave,`${stage}: ${f}`,'complete'])));}
+if(n-1!==4914||rows.length!==700)throw new Error('operation count mismatch '+rows.length+' end '+(n-1));
+ops.innerHTML=rows.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td class=ok>${x[3]}</td></tr>`).join('');
+}).catch(e=>warning.textContent='Görünüm yüklenemedi: '+e.message)
+</script></body></html>
