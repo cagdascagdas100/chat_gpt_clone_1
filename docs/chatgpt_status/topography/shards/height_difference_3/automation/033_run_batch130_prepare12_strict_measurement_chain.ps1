@@ -1,11 +1,13 @@
 param(
   [Parameter(Mandatory=$false)][string]$RepoRoot = $env:AAYS_REPO_ROOT,
-  [Parameter(Mandatory=$false)][string]$PythonExe = "python"
+  [Parameter(Mandatory=$false)][string]$PythonExe = "python",
+  [Parameter(Mandatory=$false)][string]$PowerShellExe = $env:AAYS_POWERSHELL_EXE
 )
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
   $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..\..\..")).Path
 }
+if ([string]::IsNullOrWhiteSpace($PowerShellExe)) { $PowerShellExe = "powershell" }
 
 $Prepare12 = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\032_run_batch129_range_extract_and_prepare12.ps1"
 $ProjGate = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\034_verify_candidate_manifest_proj_ostn15_gate.py"
@@ -23,7 +25,7 @@ foreach ($P in @($Prepare12,$ProjGate,$TerrainDownload,$Pipeline)) {
 }
 New-Item -ItemType Directory -Force -Path $Out,$TerrainOut,$MeasureOut | Out-Null
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File $Prepare12 -RepoRoot $RepoRoot -PythonExe $PythonExe
+& $PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $Prepare12 -RepoRoot $RepoRoot -PythonExe $PythonExe -PowerShellExe $PowerShellExe
 if ($LASTEXITCODE -ne 0) { throw "Prepare12 chain failed with exit code $LASTEXITCODE" }
 if (-not (Test-Path -LiteralPath $Starter -PathType Leaf)) { throw "Missing prepare12 starter manifest" }
 
@@ -78,11 +80,14 @@ foreach ($R in $M.measured_rows) {
 }
 
 $Result = @{
-  schema_version = 2
+  schema_version = 3
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   prepared_and_measured_rows = $Expected
   verified_count = 12
+  python_executable = $PythonExe
+  powershell_executable = $PowerShellExe
+  executable_identity_propagated = $true
   method = "EA_DTM_1M_POLYGON_P95_MINUS_P05"
   minimum_ea_cells = 4
   maximum_crosscheck_difference_m = 8.0
