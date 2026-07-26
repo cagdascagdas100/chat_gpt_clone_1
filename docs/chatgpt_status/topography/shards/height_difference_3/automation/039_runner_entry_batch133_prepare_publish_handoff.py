@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """No-argument same-task entrypoint for strict12 local acceptance and publish handoff.
 
-This entrypoint is intended for the existing height_difference_3 task only. It
-requires the Batch137/138 runtime environment identity record, reuses the exact
-validated Python and PowerShell executables, carries the validated Git executable
-into the publish handoff, runs strict/local acceptance, creates the exact seven-
-file publish manifest, and stops at PUBLISH_PENDING. It never creates a second
-task/runner and never pushes directly.
+This entrypoint reuses the exact runtime Python/PowerShell/Git identities validated
+by the preflight chain, runs strict/local acceptance, freshly fetches the canonical
+origin branch, captures the exact pre-publish origin HEAD, creates the seven-file
+publish manifest bound to that history point, and stops at PUBLISH_PENDING. It
+never creates a second task/runner and never pushes directly.
 """
 from __future__ import annotations
 
@@ -19,6 +18,7 @@ from typing import Any
 
 TASK_ID = "height_difference_3-canonical-api-measurement-20260721-01"
 CONTINUATION = "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"
+BRANCH = "codex/aays-single-runner-v5-20260706"
 EXPECTED_ROWS = list(range(61540, 61552))
 ENV_PREFLIGHT_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
 
@@ -39,12 +39,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def run(command: list[str], cwd: Path) -> dict[str, Any]:
     proc = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
-    return {
-        "command": command,
-        "exit_code": proc.returncode,
-        "stdout": proc.stdout[-16000:],
-        "stderr": proc.stderr[-16000:],
-    }
+    return {"command": command, "exit_code": proc.returncode, "stdout": proc.stdout[-16000:], "stderr": proc.stderr[-16000:]}
 
 
 def write(path: Path, payload: dict[str, Any]) -> None:
@@ -59,8 +54,7 @@ def norm_executable(value: str) -> str:
 def main() -> int:
     script_dir = Path(__file__).resolve().parent
     repo = find_repo_root(script_dir)
-    current_task_path = repo / "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"
-    current_task = load_json(current_task_path)
+    current_task = load_json(repo / "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json")
     if current_task.get("task_id") != TASK_ID:
         raise ValueError("current task_id mismatch")
     if current_task.get("continuation_key") != CONTINUATION:
@@ -103,23 +97,10 @@ def main() -> int:
         if not path.is_file():
             raise FileNotFoundError(path)
 
-    strict_result = run(
-        [
-            powershell,
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(strict_wrapper),
-            "-RepoRoot",
-            str(repo),
-            "-PythonExe",
-            python_executable,
-            "-PowerShellExe",
-            powershell,
-        ],
-        repo,
-    )
+    strict_result = run([
+        powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(strict_wrapper),
+        "-RepoRoot", str(repo), "-PythonExe", python_executable, "-PowerShellExe", powershell,
+    ], repo)
     if strict_result["exit_code"] != 0:
         raise RuntimeError(f"strict/local acceptance failed: {strict_result['stderr'][-2000:]}")
 
@@ -132,22 +113,27 @@ def main() -> int:
     if accepted.get("remote_github_readback_required") is not True:
         raise ValueError("remote readback gate disabled")
 
+    fetch_spec = f"refs/heads/{BRANCH}:refs/remotes/origin/{BRANCH}"
+    fetch_result = run([git_executable, "-C", str(repo), "fetch", "--no-tags", "origin", fetch_spec], repo)
+    if fetch_result["exit_code"] != 0:
+        raise RuntimeError(f"pre-publish origin fetch failed: {fetch_result['stderr'][-2000:]}")
+    remote_ref = f"refs/remotes/origin/{BRANCH}"
+    head_result = run([git_executable, "-C", str(repo), "rev-parse", remote_ref], repo)
+    pre_publish_origin_head = head_result["stdout"].strip().lower()
+    if head_result["exit_code"] != 0 or len(pre_publish_origin_head) != 40:
+        raise RuntimeError("cannot resolve fresh pre-publish origin HEAD")
+
     publish_manifest = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_publish_manifest.json"
-    manifest_result = run(
-        [
-            python_executable,
-            str(manifest_generator),
-            "--repo-root",
-            str(repo),
-            "--output",
-            str(publish_manifest),
-        ],
-        repo,
-    )
+    manifest_result = run([
+        python_executable, str(manifest_generator), "--repo-root", str(repo), "--output", str(publish_manifest),
+        "--pre-publish-origin-head", pre_publish_origin_head,
+    ], repo)
     if manifest_result["exit_code"] != 0:
         raise RuntimeError(f"publish manifest generation failed: {manifest_result['stderr'][-2000:]}")
 
     manifest = load_json(publish_manifest)
+    if int(manifest.get("schema_version") or 0) < 2:
+        raise ValueError("publish manifest lacks pre-publish history binding")
     if manifest.get("ready_for_serial_publisher") is not True:
         raise ValueError("publish manifest not ready")
     if manifest.get("task_id") != TASK_ID or manifest.get("continuation_key") != CONTINUATION:
@@ -156,10 +142,12 @@ def main() -> int:
         raise ValueError("publish manifest row set mismatch")
     if len(manifest.get("files") or []) != 7:
         raise ValueError("publish manifest file count must equal 7")
+    if str(manifest.get("pre_publish_origin_head") or "").lower() != pre_publish_origin_head:
+        raise ValueError("publish manifest pre-publish origin HEAD mismatch")
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
     payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
@@ -170,6 +158,10 @@ def main() -> int:
         "runtime_git_executable": git_executable,
         "runtime_identity_match_passed": True,
         "strict_local_acceptance_passed": True,
+        "canonical_branch": BRANCH,
+        "pre_publish_origin_fetch_refspec": fetch_spec,
+        "pre_publish_origin_fetch_performed": True,
+        "pre_publish_origin_head": pre_publish_origin_head,
         "expected_rows": EXPECTED_ROWS,
         "expected_verified_count": 12,
         "publish_manifest": str(publish_manifest.relative_to(repo)).replace("\\", "/"),
@@ -177,20 +169,17 @@ def main() -> int:
         "serial_publisher_required": True,
         "child_direct_push_performed": False,
         "post_publish_entrypoint": "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py",
-        "numeric_final_acceptance": "PENDING_SERIAL_PUBLISH_AND_REMOTE_READBACK",
+        "numeric_final_acceptance": "PENDING_SERIAL_PUBLISH_AND_REMOTE_HISTORY_BOUND_READBACK",
         "new_task_created": False,
         "new_runner_created": False,
         "parallel_runner_used": False,
         "numeric_values_changed": 0,
         "final_ready": False,
         "fake_data": False,
-        "stages": {
-            "strict_local_acceptance": strict_result,
-            "publish_manifest": manifest_result,
-        },
+        "stages": {"strict_local_acceptance": strict_result, "pre_publish_origin_fetch": fetch_result, "pre_publish_origin_head": head_result, "publish_manifest": manifest_result},
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "pre_publish_origin_head": pre_publish_origin_head, "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(output)}))
     return 0
 
 
