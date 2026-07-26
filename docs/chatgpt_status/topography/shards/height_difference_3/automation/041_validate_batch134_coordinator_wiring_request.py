@@ -4,9 +4,9 @@
 Git blob pins are resolved from Git trees, not raw Windows working-tree bytes.
 A freshly fetched origin remote-tracking ref is required and critical local HEAD
 blobs must equal the fetched origin blobs. Batch138 validates the complete
-runtime executable-identity chain through 039/036/033/032 and resume input 076.
-This script never edits the legacy queue, starts a runner, publishes, or changes
-numeric values.
+runtime executable-identity chain through 039/036/033/032 and post-publish
+040/038 plus resume input 076. This script never edits the legacy queue, starts
+a runner, publishes, or changes numeric values.
 """
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ BRANCH = "codex/aays-single-runner-v5-20260706"
 LEGACY_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/automation/023_runner_entry_canonical_api_measurement.py"
 CANONICAL_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/automation/039_runner_entry_batch133_prepare_publish_handoff.py"
 POST_SCRIPT = "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py"
+REMOTE_READBACK_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/038_verify_batch132_origin_remote_readback.ps1"
 EXPECTED_ROWS = list(range(61540, 61552))
 EXPECTED_READ_PATH_COUNT = 48
 EXPECTED_OUTPUT_COUNT = 19
@@ -142,6 +143,7 @@ def main() -> int:
     check("request_runtime_identity_required", pre.get("runtime_executable_identity_required") is True)
     check("request_same_python_required", pre.get("preflight_python_must_equal_runtime_python") is True)
     check("request_same_powershell_required", pre.get("preflight_powershell_must_equal_runtime_powershell") is True)
+    check("request_same_git_required", pre.get("preflight_git_must_equal_remote_readback_git") is True)
 
     local_task_blob = tree_blob(repo, "HEAD", TASK_REL)
     local_queue_blob = tree_blob(repo, "HEAD", QUEUE_REL)
@@ -156,19 +158,9 @@ def main() -> int:
     check("local_queue_tree_matches_remote", local_queue_blob == remote_queue_blob, {"local": local_queue_blob, "remote": remote_queue_blob})
 
     critical_paths = [
-        REQUEST_REL,
-        TASK_REL,
-        QUEUE_REL,
-        CANONICAL_SCRIPT,
-        POST_SCRIPT,
-        VALIDATOR_REL,
-        BOOTSTRAP_REL,
-        HEAD_GATE_REL,
-        ENV_GATE_REL,
-        STRICT036_REL,
-        STRICT033_REL,
-        STRICT032_REL,
-        RESUME076_REL,
+        REQUEST_REL, TASK_REL, QUEUE_REL, CANONICAL_SCRIPT, POST_SCRIPT,
+        REMOTE_READBACK_REL, VALIDATOR_REL, BOOTSTRAP_REL, HEAD_GATE_REL,
+        ENV_GATE_REL, STRICT036_REL, STRICT033_REL, STRICT032_REL, RESUME076_REL,
     ]
     critical_blob_rows: list[dict[str, str]] = []
     remote_blobs: dict[str, str] = {}
@@ -190,13 +182,17 @@ def main() -> int:
     check("pin_042", str(validator_chain.get("fresh_origin_bootstrap_expected_blob_sha") or "").lower() == remote_blobs[BOOTSTRAP_REL])
     check("pin_041", str(validator_chain.get("same_task_validator_expected_blob_sha") or "").lower() == remote_blobs[VALIDATOR_REL])
     check("pin_039", str(override.get("runtime_script_expected_blob_sha") or "").lower() == remote_blobs[CANONICAL_SCRIPT])
+    check("pin_040", str(override.get("post_publish_script_expected_blob_sha") or "").lower() == remote_blobs[POST_SCRIPT])
+    check("pin_038", str(identity_chain.get("remote_readback_038_expected_blob_sha") or "").lower() == remote_blobs[REMOTE_READBACK_REL])
     check("pin_036", str(identity_chain.get("strict036_expected_blob_sha") or "").lower() == remote_blobs[STRICT036_REL])
     check("pin_033", str(identity_chain.get("strict033_expected_blob_sha") or "").lower() == remote_blobs[STRICT033_REL])
     check("pin_032", str(identity_chain.get("strict032_expected_blob_sha") or "").lower() == remote_blobs[STRICT032_REL])
     check("pin_resume_076", str(identity_chain.get("resume_076_expected_blob_sha") or "").lower() == remote_blobs[RESUME076_REL])
-    check("identity_python_propagation", identity_chain.get("python_executable_propagates_039_036_033_032") is True)
-    check("identity_powershell_propagation", identity_chain.get("powershell_executable_propagates_039_036_033_032") is True)
+    check("identity_python_propagation", identity_chain.get("python_executable_propagates_044_039_036_033_032_and_040") is True)
+    check("identity_powershell_propagation", identity_chain.get("powershell_executable_propagates_044_039_036_033_032_and_040") is True)
+    check("identity_git_propagation", identity_chain.get("git_executable_propagates_044_039_handoff_040_038") is True)
     check("identity_039_consumes_preflight", identity_chain.get("runtime_039_consumes_preflight_identity_record") is True)
+    check("identity_040_consumes_handoff", identity_chain.get("post_publish_040_consumes_039_identity_handoff") is True)
 
     check("override_uses_existing_queue", override.get("use_existing_queue_record") is True)
     check("override_no_new_queue", override.get("do_not_create_new_queue_record") is True)
@@ -217,40 +213,25 @@ def main() -> int:
 
     already_aligned = queue.get("script_path") == CANONICAL_SCRIPT
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
         "status": "ALREADY_ALIGNED" if already_aligned else "SAFE_FOR_COORDINATOR_RUNTIME_REWIRE_AFTER_ALL_PREFLIGHT_GATES",
-        "checks_passed": len(checks),
-        "checks_total": len(checks),
-        "checks": checks,
-        "branch": BRANCH,
-        "explicit_fetch_refspec": fetch_spec,
-        "local_head": local_head,
-        "fresh_remote_head": remote_head,
-        "local_task_tree_blob_sha": local_task_blob,
-        "remote_task_blob_sha": remote_task_blob,
-        "local_queue_tree_blob_sha": local_queue_blob,
-        "remote_queue_blob_sha": remote_queue_blob,
-        "critical_blob_parity": critical_blob_rows,
-        "critical_worktree_clean": True,
+        "checks_passed": len(checks), "checks_total": len(checks), "checks": checks,
+        "branch": BRANCH, "explicit_fetch_refspec": fetch_spec,
+        "local_head": local_head, "fresh_remote_head": remote_head,
+        "local_task_tree_blob_sha": local_task_blob, "remote_task_blob_sha": remote_task_blob,
+        "local_queue_tree_blob_sha": local_queue_blob, "remote_queue_blob_sha": remote_queue_blob,
+        "critical_blob_parity": critical_blob_rows, "critical_worktree_clean": True,
         "windows_line_ending_safe_tree_blob_validation": True,
-        "expected_read_path_count": EXPECTED_READ_PATH_COUNT,
-        "expected_output_count": EXPECTED_OUTPUT_COUNT,
+        "expected_read_path_count": EXPECTED_READ_PATH_COUNT, "expected_output_count": EXPECTED_OUTPUT_COUNT,
         "runtime_executable_identity_chain_pinned": True,
         "legacy_queue_script_path": queue.get("script_path"),
-        "requested_runtime_script_path": CANONICAL_SCRIPT,
-        "requested_post_publish_script_path": POST_SCRIPT,
-        "fresh_host_heartbeat_still_required": True,
-        "coordinator_action_performed": False,
-        "legacy_queue_mutated": False,
-        "new_task_created": False,
-        "new_runner_created": False,
-        "numeric_values_written": 0,
-        "expected_rows": EXPECTED_ROWS,
-        "final_ready": False,
-        "fake_data": False,
+        "requested_runtime_script_path": CANONICAL_SCRIPT, "requested_post_publish_script_path": POST_SCRIPT,
+        "fresh_host_heartbeat_still_required": True, "coordinator_action_performed": False,
+        "legacy_queue_mutated": False, "new_task_created": False, "new_runner_created": False,
+        "numeric_values_written": 0, "expected_rows": EXPECTED_ROWS, "final_ready": False, "fake_data": False,
     }
     write(output_path, payload)
     print(json.dumps({"ok": True, "status": payload["status"], "checks": len(checks), "remote_head": remote_head, "output": str(output_path)}))
