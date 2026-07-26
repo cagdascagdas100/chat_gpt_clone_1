@@ -393,15 +393,13 @@ class SlotRecoverySupervisor:
             expected_head_result.stdout.strip()
             if expected_head_result.returncode == 0 else None
         )
-        parent = current_worktree.parent
-        worktree_base = next(
-            (ancestor for ancestor in current_worktree.parents if ancestor.name.casefold() == "worktrees"),
-            parent.parent if parent.name.casefold() == "slots" else parent,
-        )
+        # Keep new worktrees under a short F: path. This avoids MAX_PATH failures
+        # while preserving every older long-path recovery directory as evidence.
+        worktree_base = self.root / "wt"
         target: Path | None = None
         provisioned: Path | None = None
-        for version in range(6, 13):
-            candidate = worktree_base / "recovery" / slot_id / f"{trigger_key}-v{version}"
+        for version in range(1, 100):
+            candidate = worktree_base / slot_id / f"{trigger_key[:12]}-v{version}"
             if not candidate.is_dir():
                 target = candidate
                 break
