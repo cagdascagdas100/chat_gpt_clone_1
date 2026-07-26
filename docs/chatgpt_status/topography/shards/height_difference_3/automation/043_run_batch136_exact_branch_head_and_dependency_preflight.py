@@ -4,8 +4,8 @@ from __future__ import annotations
 import json, subprocess, sys
 from pathlib import Path
 from typing import Any
-BRANCH="codex/aays-single-runner-v5-20260706"; TASK_REL="docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"; HEARTBEAT_GATE_REL="docs/chatgpt_status/topography/shards/height_difference_3/automation/045_run_batch140_fresh_runner_heartbeat_gate.py"; TASK_ID="height_difference_3-canonical-api-measurement-20260721-01"; CONT="6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"; EXPECTED_READ_PATH_COUNT=52; EXPECTED_OUTPUT_COUNT=20
-DYNAMIC_HEARTBEAT_READS={"docs/chatgpt_status/_shared/slots_21/height_difference_3/heartbeat_latest.json","docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json"}
+BRANCH="codex/aays-single-runner-v5-20260706"; TASK_REL="docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"; HEARTBEAT_GATE_REL="docs/chatgpt_status/topography/shards/height_difference_3/automation/045_run_batch140_fresh_runner_heartbeat_gate.py"; TASK_ID="height_difference_3-canonical-api-measurement-20260721-01"; CONT="6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"; EXPECTED_READ_PATH_COUNT=55; EXPECTED_OUTPUT_COUNT=22
+SNAPSHOT_ONLY_READS={"docs/chatgpt_status/_shared/slots_21/height_difference_3/heartbeat_latest.json","docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json","docs/chatgpt_status/topography/queue"}
 def root(p:Path)->Path:
     for c in (p,*p.parents):
         if (c/"england_map_web").is_dir() and (c/"docs/chatgpt_status").is_dir(): return c
@@ -29,22 +29,22 @@ def main()->int:
     if len(reads)!=EXPECTED_READ_PATH_COUNT: raise ValueError(f"expected {EXPECTED_READ_PATH_COUNT} read paths, got {len(reads)}")
     if len(outs)!=EXPECTED_OUTPUT_COUNT: raise ValueError(f"expected {EXPECTED_OUTPUT_COUNT} outputs, got {len(outs)}")
     if len(set(reads))!=len(reads) or len(set(outs))!=len(outs): raise ValueError("duplicate task path")
-    if not DYNAMIC_HEARTBEAT_READS.issubset(set(reads)): raise ValueError("dynamic heartbeat read paths missing from canonical task")
+    if not SNAPSHOT_ONLY_READS.issubset(set(reads)): raise ValueError("snapshot-only read paths missing from canonical task")
     tracked=[]
     for rel in reads:
         p=subprocess.run(["git","-C",str(repo),"cat-file","-e",f"HEAD:{rel}"],text=True,capture_output=True,check=False)
         if p.returncode: raise RuntimeError(f"UNTRACKED_OR_MISSING_READ_PATH:{rel}:{p.stderr[-600:]}")
-        tracked.append({"path":rel,"tracked_at_head":True,"dynamic_worktree_clean_exempt":rel in DYNAMIC_HEARTBEAT_READS})
-    clean_reads=[rel for rel in reads if rel not in DYNAMIC_HEARTBEAT_READS]
+        tracked.append({"path":rel,"tracked_at_head":True,"snapshot_only_worktree_clean_exempt":rel in SNAPSHOT_ONLY_READS})
+    clean_reads=[rel for rel in reads if rel not in SNAPSHOT_ONLY_READS]
     status=git(repo,"status","--porcelain","--untracked-files=no","--",*clean_reads)
     if status: raise RuntimeError(f"TASK_READ_PATH_WORKTREE_DIRTY:{status[-4000:]}")
     gate=repo/HEARTBEAT_GATE_REL
     if not gate.is_file(): raise FileNotFoundError(gate)
     p=subprocess.run([sys.executable,str(gate)],cwd=repo,text=True,capture_output=True,check=False)
-    if p.returncode: raise RuntimeError(f"BATCH140_FRESH_HEARTBEAT_GATE_FAILED:{p.stderr[-3000:]}")
-    payload={"schema_version":7,"slot_id":"height_difference_3","canonical_branch":BRANCH,"symbolic_branch_verified":True,"explicit_fetch_refspec":spec,"local_head":local,"fresh_remote_head":remote,"exact_head_parity":True,"current_task_read_path_count":len(reads),"current_task_expected_output_count":len(outs),"generated_expected_outputs_not_required_at_head":True,"all_read_paths_tracked_at_head":True,"dynamic_heartbeat_read_paths":sorted(DYNAMIC_HEARTBEAT_READS),"dynamic_heartbeat_worktree_clean_exempt":True,"non_dynamic_read_path_worktree_clean":True,"read_path_rows":tracked,"fresh_heartbeat_gate_045_executed":True,"fresh_heartbeat_gate_045_exit_code":p.returncode,"fresh_heartbeat_gate_045_stdout_tail":p.stdout[-4000:],"environment_gate_044_transitively_required":True,"coordinator_action_performed":False,"queue_mutated":False,"runner_started":False,"numeric_values_written":0,"final_ready":False,"fake_data":False}
+    if p.returncode: raise RuntimeError(f"BATCH141_FRESH_HEARTBEAT_GATE_FAILED:{p.stderr[-3000:]}")
+    payload={"schema_version":8,"slot_id":"height_difference_3","canonical_branch":BRANCH,"symbolic_branch_verified":True,"explicit_fetch_refspec":spec,"local_head":local,"fresh_remote_head":remote,"exact_head_parity":True,"current_task_read_path_count":len(reads),"current_task_expected_output_count":len(outs),"generated_expected_outputs_not_required_at_head":True,"all_read_paths_tracked_at_head":True,"snapshot_only_read_paths":sorted(SNAPSHOT_ONLY_READS),"snapshot_only_worktree_clean_exempt":True,"non_snapshot_read_path_worktree_clean":True,"read_path_rows":tracked,"fresh_heartbeat_gate_045_executed":True,"fresh_heartbeat_gate_045_exit_code":p.returncode,"fresh_heartbeat_gate_045_stdout_tail":p.stdout[-4000:],"environment_gate_044_transitively_required":True,"coordinator_action_performed":False,"queue_mutated":False,"runner_started":False,"numeric_values_written":0,"final_ready":False,"fake_data":False}
     out=repo/"docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/039_batch136_exact_head_preflight/exact_branch_head_and_dependency_preflight_runtime.json"; out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print(json.dumps({"ok":True,"head":local,"read_paths":len(reads),"outputs":len(outs),"dynamic_heartbeat_reads":len(DYNAMIC_HEARTBEAT_READS),"output":str(out)})); return 0
+    print(json.dumps({"ok":True,"head":local,"read_paths":len(reads),"outputs":len(outs),"snapshot_only_reads":len(SNAPSHOT_ONLY_READS),"output":str(out)})); return 0
 if __name__=="__main__":
     try: raise SystemExit(main())
     except Exception as exc:
