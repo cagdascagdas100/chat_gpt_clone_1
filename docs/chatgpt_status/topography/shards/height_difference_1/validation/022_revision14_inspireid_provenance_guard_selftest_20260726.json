@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "payload_revision": 14,
+  "guard_script": "docs/chatgpt_status/topography/shards/height_difference_1/automation/045_validate_revision14_inspireid_provenance_20260726.py",
+  "validation_status": "6_OF_6_PASSED",
+  "tests_passed": 6,
+  "tests_total": 6,
+  "cases": [
+    {"name": "flat_INSPIREID", "expected": "PASS", "actual": "PASS"},
+    {"name": "nested_inspireId_Identifier_localId", "expected": "PASS", "actual": "PASS"},
+    {"name": "normalized_inspire_id_with_explicit_provenance", "expected": "PASS", "actual": "PASS"},
+    {"name": "standalone_nationalCadastralReference", "expected": "BLOCKED", "actual": "BLOCKED"},
+    {"name": "standalone_localId_without_inspireId_parent", "expected": "BLOCKED", "actual": "BLOCKED"},
+    {"name": "inspire_id_equals_parcel_ref_alias_collision", "expected": "BLOCKED", "actual": "BLOCKED"}
+  ],
+  "source_basis": {
+    "planning_data_fields": ["gml_id", "INSPIREID", "LABEL", "NATIONALCADASTRALREFERENCE", "VALIDFROM", "BEGINLIFESPANVERSION"],
+    "inspire_schema_rule": "inspireId is an Identifier; localId is valid only as a component of that Identifier, while nationalCadastralReference and label are separate attributes",
+    "promotion_rule": "Do not promote an identity from standalone localId, label, nationalCadastralReference, gml_id or parcel_ref without explicit inspireId provenance"
+  },
+  "runtime_network_execution_performed": false,
+  "measured_rows_produced": 0,
+  "final_ready": false,
+  "fake_data": false
+}
