@@ -16,11 +16,12 @@ if (-not [bool]$M.ready_for_serial_publisher) { throw "Publish manifest is not r
 if ($M.canonical_branch -ne $Branch) { throw "Publish manifest branch mismatch" }
 if ($M.task_id -ne "height_difference_3-canonical-api-measurement-20260721-01") { throw "Publish manifest task mismatch" }
 
-& $GitExe -C $RepoRoot fetch --no-tags origin $Branch | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "git fetch origin failed with exit code $LASTEXITCODE" }
+$FetchSpec = "refs/heads/${Branch}:refs/remotes/origin/${Branch}"
+& $GitExe -C $RepoRoot fetch --no-tags origin $FetchSpec | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "git fetch explicit remote-tracking ref failed with exit code $LASTEXITCODE" }
 $RemoteRef = "refs/remotes/origin/$Branch"
 $RemoteHead = (& $GitExe -C $RepoRoot rev-parse $RemoteRef).Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RemoteHead)) { throw "Cannot resolve remote branch head" }
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RemoteHead)) { throw "Cannot resolve freshly fetched remote branch head" }
 
 $Checks = @()
 foreach ($F in @($M.files)) {
@@ -58,12 +59,14 @@ $Result = [ordered]@{
   task_id = [string]$M.task_id
   continuation_key = [string]$M.continuation_key
   canonical_branch = $Branch
+  explicit_fetch_refspec = $FetchSpec
   remote_head = $RemoteHead
   expected_rows = $ExpectedRows
   file_count = @($Checks).Count
   files = $Checks
   all_remote_blobs_match = $true
   origin_fetch_performed = $true
+  remote_tracking_ref_freshly_updated = $true
   child_direct_push_performed = $false
   numeric_values_changed = 0
   numeric_publish_acceptance_for_12_rows = $true
