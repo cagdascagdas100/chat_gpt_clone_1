@@ -37,7 +37,11 @@ function Write-JsonAtomic {
   $json = $Value | ConvertTo-Json -Depth 100
   [System.IO.File]::WriteAllText($tempPath, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
   if (Test-Path -LiteralPath $Path -PathType Leaf) {
-    [System.IO.File]::Replace($tempPath, $Path, $null)
+    try {
+      [System.IO.File]::Replace($tempPath, $Path, $null)
+    } catch {
+      Move-Item -LiteralPath $tempPath -Destination $Path -Force
+    }
   } else {
     [System.IO.File]::Move($tempPath, $Path)
   }

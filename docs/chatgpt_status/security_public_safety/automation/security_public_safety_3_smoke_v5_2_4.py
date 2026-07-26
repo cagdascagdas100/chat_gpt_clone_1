@@ -161,7 +161,7 @@ def stream_target_features(
 
 
 def make_low_memory_locator(core):
-    def locate_targets(materialized_path: Path | None):
+    def locate_targets(materialized_path: Path | None = None):
         found: dict[str, dict] = {}
         audit: list[dict] = []
         for path in core.source_candidates(materialized_path):
