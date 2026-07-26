@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""No-argument same-task entrypoint for strict12 local acceptance and publish handoff.
+
+This entrypoint is intended for the existing height_difference_3 task only. It
+runs the already prepared strict/local-acceptance wrapper, creates the exact
+seven-file publish manifest, and stops at PUBLISH_PENDING. It never creates a
+second task/runner and never pushes directly.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+TASK_ID = "height_difference_3-canonical-api-measurement-20260721-01"
+CONTINUATION = "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"
+EXPECTED_ROWS = list(range(61540, 61552))
+
+
+def find_repo_root(start: Path) -> Path:
+    for candidate in (start, *start.parents):
+        if (candidate / "england_map_web").is_dir() and (candidate / "docs" / "chatgpt_status").is_dir():
+            return candidate
+    raise RuntimeError("PUBLISHER_REPO_ROOT_NOT_FOUND")
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(value, dict):
+        raise ValueError(f"expected JSON object: {path}")
+    return value
+
+
+def run(command: list[str], cwd: Path) -> dict[str, Any]:
+    proc = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
+    return {
+        "command": command,
+        "exit_code": proc.returncode,
+        "stdout": proc.stdout[-16000:],
+        "stderr": proc.stderr[-16000:],
+    }
+
+
+def write(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    script_dir = Path(__file__).resolve().parent
+    repo = find_repo_root(script_dir)
+    current_task_path = repo / "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"
+    current_task = load_json(current_task_path)
+    if current_task.get("task_id") != TASK_ID:
+        raise ValueError("current task_id mismatch")
+    if current_task.get("continuation_key") != CONTINUATION:
+        raise ValueError("current continuation_key mismatch")
+    if current_task.get("single_runner_only") is not True or current_task.get("new_runner") is not False:
+        raise ValueError("single-runner contract mismatch")
+
+    powershell = os.environ.get("AAYS_POWERSHELL_EXE", "powershell")
+    strict_wrapper = script_dir / "036_run_batch131_strict12_with_local_acceptance.ps1"
+    manifest_generator = script_dir / "037_prepare_batch132_publish_manifest.py"
+    for path in (strict_wrapper, manifest_generator):
+        if not path.is_file():
+            raise FileNotFoundError(path)
+
+    strict_result = run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(strict_wrapper),
+            "-RepoRoot",
+            str(repo),
+            "-PythonExe",
+            sys.executable,
+        ],
+        repo,
+    )
+    if strict_result["exit_code"] != 0:
+        raise RuntimeError(f"strict/local acceptance failed: {strict_result['stderr'][-2000:]}")
+
+    acceptance = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/029_batch131_strict12_acceptance/batch131_strict12_local_acceptance.json"
+    accepted = load_json(acceptance)
+    if accepted.get("local_acceptance_passed") is not True:
+        raise ValueError("local acceptance did not pass")
+    if [int(v) for v in (accepted.get("expected_rows") or [])] != EXPECTED_ROWS:
+        raise ValueError("local acceptance row set mismatch")
+    if accepted.get("remote_github_readback_required") is not True:
+        raise ValueError("remote readback gate disabled")
+
+    publish_manifest = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_publish_manifest.json"
+    manifest_result = run(
+        [
+            sys.executable,
+            str(manifest_generator),
+            "--repo-root",
+            str(repo),
+            "--output",
+            str(publish_manifest),
+        ],
+        repo,
+    )
+    if manifest_result["exit_code"] != 0:
+        raise RuntimeError(f"publish manifest generation failed: {manifest_result['stderr'][-2000:]}")
+
+    manifest = load_json(publish_manifest)
+    if manifest.get("ready_for_serial_publisher") is not True:
+        raise ValueError("publish manifest not ready")
+    if manifest.get("task_id") != TASK_ID or manifest.get("continuation_key") != CONTINUATION:
+        raise ValueError("publish manifest task/continuation mismatch")
+    if [int(v) for v in (manifest.get("expected_rows") or [])] != EXPECTED_ROWS:
+        raise ValueError("publish manifest row set mismatch")
+    if len(manifest.get("files") or []) != 7:
+        raise ValueError("publish manifest file count must equal 7")
+
+    output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
+    payload = {
+        "schema_version": 1,
+        "slot_id": "height_difference_3",
+        "task_id": TASK_ID,
+        "continuation_key": CONTINUATION,
+        "status": "PUBLISH_PENDING_SERIAL_PUBLISHER_REQUIRED",
+        "strict_local_acceptance_passed": True,
+        "expected_rows": EXPECTED_ROWS,
+        "expected_verified_count": 12,
+        "publish_manifest": str(publish_manifest.relative_to(repo)).replace("\\", "/"),
+        "publish_file_count": 7,
+        "serial_publisher_required": True,
+        "child_direct_push_performed": False,
+        "post_publish_entrypoint": "docs/chatgpt_status/topography/shards/height_difference_3/automation/040_runner_entry_batch133_post_publish_remote_readback.py",
+        "numeric_final_acceptance": "PENDING_SERIAL_PUBLISH_AND_REMOTE_READBACK",
+        "new_task_created": False,
+        "new_runner_created": False,
+        "parallel_runner_used": False,
+        "numeric_values_changed": 0,
+        "final_ready": False,
+        "fake_data": False,
+        "stages": {
+            "strict_local_acceptance": strict_result,
+            "publish_manifest": manifest_result,
+        },
+    }
+    write(output, payload)
+    print(json.dumps({"ok": True, "status": payload["status"], "output": str(output)}))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}), file=sys.stderr)
+        raise
