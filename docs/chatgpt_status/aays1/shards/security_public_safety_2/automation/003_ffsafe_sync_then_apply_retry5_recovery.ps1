@@ -11,8 +11,8 @@ $innerRel = 'docs/chatgpt_status/aays1/shards/security_public_safety_2/automatio
 $outputRel = 'docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/003_retry5_ffsafe_bootstrap_latest.json'
 
 $contract = [ordered]@{
-  inner = [ordered]@{path=$innerRel;blob='7e8550ec96723652efdd00c8bb242ff3fd95a941'}
-  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='ae8f31d71d681d74bc5c845fccd0f081d6597876'}
+  inner = [ordered]@{path=$innerRel;blob='ea0d0da2c137c5e0b31592094e1a80d1ac0b49e1'}
+  helper = [ordered]@{path='docs/chatgpt_status/aays1/shards/security_public_safety_2/automation/001_restart_existing_canonical_f_runner_for_retry5.ps1';blob='ced75abf0eb51712ad8284904655a23a69cbda30'}
   queue = [ordered]@{path='docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json';blob='43ba5691e3b4a3c345d2f8fd3303185b3f214d21'}
   bridge = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_legacy_adaptive_bridge_20260722.ps1';blob='8f4b09b9713a56d78a9c624202f83028afd77b7a'}
   hardened_python = [ordered]@{path='docs/chatgpt_status/aays1/automation/security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_hardened_20260722.py';blob='cdb20cb578be5de1789e7821d2a435c1a9f77d58'}
@@ -64,7 +64,7 @@ function Atomic-Json([string]$Path,[object]$Value) {
 function Receipt([string]$Status,[string]$Before,[string]$Remote,[string]$After,[bool]$FastForwarded,[bool]$InnerInvoked,[int]$InnerExit,[object]$Dirty,[object]$LocalBlobs,[object]$RemoteBlobs,[string]$Detail) {
   $out = Join-Path $repoRoot ($outputRel -replace '/','\')
   Atomic-Json $out ([ordered]@{
-    schema_version = 1
+    schema_version = 5
     slot_id = $slotId
     task_id = $taskId
     attempt_id = $attemptId
@@ -81,6 +81,12 @@ function Receipt([string]$Status,[string]$Before,[string]$Remote,[string]$After,
     local_contract_blobs = $LocalBlobs
     remote_contract_blobs = $RemoteBlobs
     expected_contract = $contract
+    canonical_f_process_identity_required = $true
+    foreign_runner_process_fail_closed = $true
+    heartbeat_repo_root_optional_with_bound_lock_fallback = $true
+    lock_fallback_requires_pid_repo_root_instance_start_freshness_scope_branch = $true
+    transient_without_fresh_daemon_is_failure = $true
+    process_exit_before_kill_is_clean_stop = $true
     inner_preflight_invoked = $InnerInvoked
     inner_preflight_exit_code = $InnerExit
     dirty_paths = $Dirty
