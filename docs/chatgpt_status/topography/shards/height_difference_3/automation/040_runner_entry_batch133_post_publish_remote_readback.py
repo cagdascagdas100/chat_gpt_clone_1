@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """No-argument post-publish origin-readback entrypoint for the same task.
 
-Run only after the existing serial publisher has published the exact Batch132
-manifest. Batch138 reuses the exact Python, PowerShell and Git executables carried
-from the validated runtime identity through the 039 handoff. This script performs
-no push and changes no numeric measurement.
+Run only after the existing serial publisher has handled the exact Batch132
+manifest. Reuse the exact Python, PowerShell and Git identities from the 039
+handoff. Batch139 additionally requires the fresh remote history to descend from
+the exact pre-publish origin HEAD and to contain a commit where all seven accepted
+blobs are simultaneously materialized. No push or numeric mutation occurs here.
 """
 from __future__ import annotations
 
@@ -36,12 +37,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def run(command: list[str], cwd: Path) -> dict[str, Any]:
     proc = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
-    return {
-        "command": command,
-        "exit_code": proc.returncode,
-        "stdout": proc.stdout[-16000:],
-        "stderr": proc.stderr[-16000:],
-    }
+    return {"command": command, "exit_code": proc.returncode, "stdout": proc.stdout[-16000:], "stderr": proc.stderr[-16000:]}
 
 
 def write(path: Path, payload: dict[str, Any]) -> None:
@@ -62,12 +58,19 @@ def main() -> int:
 
     handoff_path = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
     handoff = load_json(handoff_path)
+    if int(handoff.get("schema_version") or 0) < 4:
+        raise ValueError("pre-publish handoff lacks history binding")
     if handoff.get("status") != "PUBLISH_PENDING_SERIAL_PUBLISHER_REQUIRED":
         raise ValueError("pre-publish handoff missing or invalid")
     if [int(v) for v in (handoff.get("expected_rows") or [])] != EXPECTED_ROWS:
         raise ValueError("handoff row set mismatch")
     if handoff.get("runtime_identity_match_passed") is not True:
         raise ValueError("runtime identity did not pass before publish")
+    pre_publish_origin_head = str(handoff.get("pre_publish_origin_head") or "").strip().lower()
+    if len(pre_publish_origin_head) != 40:
+        raise ValueError("handoff pre-publish origin HEAD missing")
+    if handoff.get("pre_publish_origin_fetch_performed") is not True:
+        raise ValueError("handoff lacks fresh pre-publish origin fetch proof")
 
     runtime_python = str(handoff.get("runtime_python_executable") or "").strip()
     powershell = str(handoff.get("runtime_powershell_executable") or "").strip()
@@ -86,30 +89,32 @@ def main() -> int:
     verifier = script_dir / "038_verify_batch132_origin_remote_readback.ps1"
     if not verifier.is_file():
         raise FileNotFoundError(verifier)
-    result = run(
-        [
-            powershell,
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(verifier),
-            "-RepoRoot",
-            str(repo),
-            "-GitExe",
-            git_executable,
-        ],
-        repo,
-    )
+    result = run([
+        powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(verifier),
+        "-RepoRoot", str(repo), "-GitExe", git_executable,
+    ], repo)
     if result["exit_code"] != 0:
         raise RuntimeError(f"origin remote readback failed: {result['stderr'][-2000:]}")
 
     remote_path = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/031_batch132_remote_readback/batch132_origin_remote_readback.json"
     remote = load_json(remote_path)
+    if int(remote.get("schema_version") or 0) < 2:
+        raise ValueError("remote readback lacks history binding")
     if remote.get("task_id") != TASK_ID or remote.get("continuation_key") != CONTINUATION:
         raise ValueError("remote readback task/continuation mismatch")
     if [int(v) for v in (remote.get("expected_rows") or [])] != EXPECTED_ROWS:
         raise ValueError("remote readback row set mismatch")
+    if str(remote.get("pre_publish_origin_head") or "").strip().lower() != pre_publish_origin_head:
+        raise ValueError("remote readback pre-publish origin HEAD mismatch")
+    if remote.get("pre_publish_head_is_ancestor_of_remote_head") is not True:
+        raise ValueError("remote history does not descend from pre-publish HEAD")
+    if remote.get("remote_history_binding_passed") is not True:
+        raise ValueError("remote history binding did not pass")
+    materialization_commit = str(remote.get("first_full_blob_materialization_commit") or "").strip().lower()
+    if len(materialization_commit) != 40:
+        raise ValueError("remote materialization commit missing")
+    if remote.get("materialization_commit_is_ancestor_of_remote_head") is not True:
+        raise ValueError("materialization commit is not an ancestor of fresh remote HEAD")
     if remote.get("all_remote_blobs_match") is not True:
         raise ValueError("remote blob parity did not pass")
     if int(remote.get("file_count") or 0) != 7:
@@ -121,18 +126,22 @@ def main() -> int:
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_post_publish_remote_acceptance.json"
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
-        "status": "REMOTE_READBACK_ACCEPTED_12_ROWS",
+        "status": "REMOTE_HISTORY_BOUND_READBACK_ACCEPTED_12_ROWS",
         "runtime_python_executable": str(Path(sys.executable).resolve()),
         "runtime_powershell_executable": powershell,
         "runtime_git_executable": git_executable,
         "runtime_identity_match_passed": True,
+        "pre_publish_origin_head": pre_publish_origin_head,
+        "remote_head": remote.get("remote_head"),
+        "history_mode": remote.get("history_mode"),
+        "first_full_blob_materialization_commit": materialization_commit,
+        "remote_history_binding_passed": True,
         "expected_rows": EXPECTED_ROWS,
         "verified_count": 12,
-        "remote_head": remote.get("remote_head"),
         "remote_file_count": 7,
         "all_remote_blobs_match": True,
         "numeric_publish_acceptance_for_12_rows": True,
@@ -147,7 +156,7 @@ def main() -> int:
         "remote_readback_stage": result,
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "python": payload["runtime_python_executable"], "powershell": powershell, "git": git_executable, "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "pre_publish_origin_head": pre_publish_origin_head, "materialization_commit": materialization_commit, "python": payload["runtime_python_executable"], "powershell": powershell, "git": git_executable, "output": str(output)}))
     return 0
 
 
