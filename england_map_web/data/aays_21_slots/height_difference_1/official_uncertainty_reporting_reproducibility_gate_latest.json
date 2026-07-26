@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-23T00:28:00Z",
+  "state": "UNCERTAINTY_REPORTING_REPRODUCIBILITY_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "JCGM_VIM_MEASUREMENT_UNCERTAINTY",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.26.html",
+      "verified": true,
+      "facts": ["uncertainty_is_nonnegative_dispersion_parameter", "uncertainty_can_include_systematic_effect_components", "standard_or_expanded_forms_require_clear_definition"],
+      "accepted_role": "UNCERTAINTY_SEMANTICS_CONTROL"
+    },
+    {
+      "source_id": "JCGM_VIM_MEASUREMENT_MODEL",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.48.html",
+      "verified": true,
+      "facts": ["measurement_model_is_mathematical_relation_among_all_known_input_quantities", "output_measurand_is_inferred_from_model_inputs"],
+      "accepted_role": "MEASURAND_AND_MODEL_CONTROL"
+    },
+    {
+      "source_id": "NIST_LAW_OF_PROPAGATION",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
+      "verified": true,
+      "facts": ["model_includes_all_significant_uncertainty_inputs", "combined_variance_uses_sensitivity_coefficients", "covariance_terms_are_included", "first_order_taylor_approximation_is_used"],
+      "accepted_role": "UNCERTAINTY_PROPAGATION_CONTROL"
+    },
+    {
+      "source_id": "JCGM_VIM_TYPE_A_AND_COMBINED_UNCERTAINTY",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.31.html",
+      "verified": true,
+      "facts": ["combined_standard_uncertainty_uses_individual_input_uncertainties", "correlated_inputs_require_covariances", "type_a_is_statistical_under_defined_conditions"],
+      "accepted_role": "COMPONENT_CLASSIFICATION_AND_COVARIANCE_CONTROL"
+    },
+    {
+      "source_id": "JCGM_VIM_UNCERTAINTY_BUDGET",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.33.html",
+      "verified": true,
+      "facts": ["budget_includes_measurement_model", "estimates_and_uncertainties_are_listed", "covariances_distributions_degrees_of_freedom_evaluation_type_and_coverage_factor_are_included"],
+      "accepted_role": "UNCERTAINTY_BUDGET_COMPLETENESS_CONTROL"
+    },
+    {
+      "source_id": "JCGM_VIM_EXPANDED_UNCERTAINTY_AND_COVERAGE",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.35.html",
+      "verified": true,
+      "facts": ["expanded_uncertainty_is_combined_standard_uncertainty_times_coverage_factor", "coverage_factor_and_coverage_probability_are_distinct", "coverage_interval_need_not_be_centered"],
+      "accepted_role": "COVERAGE_AND_REPORTING_CONTROL"
+    },
+    {
+      "source_id": "JCGM_VIM_METROLOGICAL_COMPATIBILITY",
+      "authority": "BIPM / JCGM",
+      "url": "https://jcgm.bipm.org/vim/en/2.47.html",
+      "verified": true,
+      "facts": ["compatibility_uses_uncertainty_of_difference", "correlation_changes_difference_uncertainty", "raw_difference_alone_is_not_a_compatibility_test"],
+      "accepted_role": "INDEPENDENT_SOURCE_COMPATIBILITY_CONTROL"
+    },
+    {
+      "source_id": "NIST_TN1297_REPORTING_FRAMEWORK",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/pml/nist-technical-note-1297",
+      "verified": true,
+      "facts": ["type_a_type_b_combined_and_expanded_uncertainty_are_separate_steps", "reporting_requires_method_and_uncertainty_statement", "coverage_factors_are_documented"],
+      "accepted_role": "RESULT_REPORTING_CONTROL"
+    },
+    {
+      "source_id": "GDAL_RASTER_STATISTICS_METADATA",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/user/raster_data_model.html",
+      "verified": true,
+      "facts": ["statistics_include_mean_minimum_maximum_and_standard_deviation", "statistics_approximate_flag_is_explicit", "statistics_valid_percent_is_explicit"],
+      "accepted_role": "RASTER_STATISTICS_PROVENANCE_CONTROL"
+    },
+    {
+      "source_id": "GDAL_FULL_VERSUS_APPROXIMATE_STATISTICS",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/programs/gdal_raster_info.html",
+      "verified": true,
+      "facts": ["full_stats_and_approx_stats_are_distinct_options", "approx_stats_use_a_subset_of_pixels", "full_stats_can_force_computation"],
+      "accepted_role": "EXACT_ACCEPTANCE_STATISTICS_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "measurement_model": [
+      "MEASURAND_AND_SIGN_CONVENTION_EXPLICIT",
+      "ALL_SIGNIFICANT_INPUTS_CORRECTIONS_PROCESSING_STEPS_AND_EPOCHS_INCLUDED",
+      "ERROR_CORRECTION_AND_UNCERTAINTY_STORED_SEPARATELY",
+      "MODEL_VERSION_AND_INPUT_HASHES_RECORDED"
+    ],
+    "uncertainty_components": [
+      "TYPE_A_AND_TYPE_B_COMPONENTS_CLASSIFIED_WITH_EVIDENCE",
+      "STANDARD_UNCERTAINTY_AND_DISTRIBUTION_RECORDED_PER_COMPONENT",
+      "SENSITIVITY_COEFFICIENT_RECORDED_PER_COMPONENT",
+      "DEGREES_OF_FREEDOM_RECORDED_WHERE_APPLICABLE",
+      "SHARED_COMPONENTS_NOT_DOUBLE_COUNTED"
+    ],
+    "covariance": [
+      "CORRELATED_INPUTS_INCLUDE_COVARIANCE_TERMS",
+      "HEIGHT_DIFFERENCE_VARIANCE_INCLUDES_MINUS_TWO_ENDPOINT_COVARIANCE",
+      "DATUM_GEOID_SOURCE_TILE_AND_PROCESSING_CORRELATIONS_EXPLICIT",
+      "COVARIANCE_MATRIX_OR_CORRELATION_COEFFICIENTS_AND_JUSTIFICATION_RECORDED",
+      "POSITIVE_SEMIDEFINITE_COVARIANCE_VALIDATION_REQUIRED"
+    ],
+    "propagation": [
+      "COMBINED_STANDARD_UNCERTAINTY_CALCULATED_FROM_THE_MEASUREMENT_MODEL",
+      "FIRST_ORDER_APPROXIMATION_IDENTIFIED",
+      "NONLINEAR_OR_THRESHOLD_SENSITIVE_CASES_HAVE_PERTURBATION_OR_MONTE_CARLO_CROSSCHECK",
+      "FULL_FLOAT64_PRECISION_RETAINED_UNTIL_PUBLICATION"
+    ],
+    "coverage_and_reporting": [
+      "EXPANDED_UNCERTAINTY_COVERAGE_FACTOR_AND_COVERAGE_PROBABILITY_RECORDED_SEPARATELY",
+      "COVERAGE_INTERVAL_TERMINOLOGY_USED",
+      "RESULT_REPORTS_VALUE_STANDARD_UNCERTAINTY_EXPANDED_UNCERTAINTY_K_AND_COVERAGE_PROBABILITY",
+      "UNCERTAINTY_BUDGET_HASH_AND_METHOD_VERSION_RECORDED",
+      "ROUNDING_APPLIED_ONLY_AFTER_ACCEPTANCE_DECISIONS"
+    ],
+    "statistics_and_compatibility": [
+      "ACCEPTANCE_USES_FULL_PIXEL_STATISTICS_NOT_APPROXIMATE_STATISTICS",
+      "STATISTICS_APPROXIMATE_FLAG_VALID_PERCENT_MEAN_MIN_MAX_AND_STDDEV_RECORDED",
+      "STATISTICS_RECOMPUTED_AFTER_ANY_INPUT_MASK_RESAMPLE_MOSAIC_OR_GEOMETRY_CHANGE",
+      "CACHED_STATISTICS_REJECTED_ON_SOURCE_OR_CONFIGURATION_HASH_CHANGE",
+      "EA_AND_OS_COMPATIBILITY_TEST_MATCHES_MEASURAND_DATUM_SURFACE_EPOCH_AND_FOOTPRINT",
+      "COMPATIBILITY_USES_STANDARD_UNCERTAINTY_OF_DIFFERENCE_AND_CORRELATION"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 22,
+  "source_checks_total": 22,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

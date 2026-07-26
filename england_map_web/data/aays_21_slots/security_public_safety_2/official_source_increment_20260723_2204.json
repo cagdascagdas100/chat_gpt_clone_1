@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
+  "source_head_readback": "4093f768e845fd6fa2db51845be174429ebb651b",
+  "researched_at": "2026-07-23T19:04:24Z",
+  "research_mode": "official ONS, Home Office, Office for Statistics Regulation and Police.uk web sources only; API throttling and area limits, unmapped-record completeness, location anonymisation, quality assurance, boundary resolution, statistical-geography version and administrative-data assurance guards; no parcel result or safety score claimed",
+  "base_source_path": "england_map_web/data/aays_21_slots/security_public_safety_2/official_source_revalidation_20260722_2013.json",
+  "row_start": 137,
+  "row_end": 152,
+  "sources_reviewed_increment": 16,
+  "promoted_sources_increment": 16,
+  "held_sources_increment": 0,
+  "source_evidence_confidence_ge_95_increment": 16,
+  "sources": [
+    {
+      "row": 137,
+      "source_id": "policeuk_api_rate_limit_leaky_bucket_429_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Police API call limits",
+      "url": "https://data.police.uk/docs/api-call-limits/",
+      "status": "PROMOTED_FOR_RATE_LIMIT_BURST_AND_HTTP_429_RETRY_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "the API uses a leaky-bucket rate controller",
+        "the current limit is 15 requests per second with a burst of 30",
+        "exceeding the rate limit returns HTTP 429 Too Many Requests"
+      ],
+      "limitations": [
+        "rate-limit compliance is an acquisition-control requirement and not evidence quality",
+        "retries must be bounded and must not duplicate or silently omit source months"
+      ]
+    },
+    {
+      "row": 138,
+      "source_id": "policeuk_street_crime_custom_area_10000_http503_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Street-level crimes API contract",
+      "url": "https://data.police.uk/docs/method/crime-street/",
+      "status": "PROMOTED_FOR_ONE_MILE_CUSTOM_POLYGON_10000_CRIME_AND_HTTP_503_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "street-level crime can be requested within one mile of a point or within a custom polygon",
+        "custom areas containing more than 10000 crimes return HTTP 503",
+        "published street-level crime locations are approximate rather than exact"
+      ],
+      "limitations": [
+        "HTTP 503 requires bounded subdivision or explicit failure evidence",
+        "a point or polygon response cannot prove exact parcel incidence"
+      ]
+    },
+    {
+      "row": 139,
+      "source_id": "policeuk_stop_search_area_get_length_post_and_approximation_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Stop and searches by area API contract",
+      "url": "https://data.police.uk/docs/method/stops-street/",
+      "status": "PROMOTED_FOR_CUSTOM_POLYGON_GET_LENGTH_POST_FALLBACK_AND_APPROXIMATION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "stop and searches can be requested within one mile of a point or a custom polygon",
+        "GET requests longer than 4094 characters return HTTP 400 and POST is recommended for complex polygons",
+        "published stop-and-search locations are approximate"
+      ],
+      "limitations": [
+        "polygon transport limits must not cause silent truncation",
+        "stop and search is police-activity context rather than crime incidence"
+      ]
+    },
+    {
+      "row": 140,
+      "source_id": "policeuk_crimes_without_location_completeness_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Crimes with no location API contract",
+      "url": "https://data.police.uk/docs/method/crimes-no-location/",
+      "status": "PROMOTED_FOR_UNMAPPED_CRIME_COMPLETENESS_AND_NULL_LOCATION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "the endpoint returns crimes that could not be mapped to a location",
+        "requests are force, category and optional month scoped",
+        "location and location_type are null while the persistent crime identifier and latest outcome may remain available"
+      ],
+      "limitations": [
+        "unmapped crimes must be counted in completeness diagnostics but cannot be assigned to a parcel or LSOA",
+        "the latest month default must be explicitly pinned"
+      ]
+    },
+    {
+      "row": 141,
+      "source_id": "policeuk_stop_search_without_location_completeness_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Stop and searches with no location API contract",
+      "url": "https://data.police.uk/docs/method/stops-no-location/",
+      "status": "PROMOTED_FOR_UNMAPPED_STOP_SEARCH_FORCE_MONTH_COMPLETENESS_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "the endpoint returns stop and searches that could not be mapped to a location",
+        "requests are force scoped with an optional YYYY-MM month",
+        "some forces provide only dates, which can create a disproportionate number of midnight timestamps"
+      ],
+      "limitations": [
+        "unmapped stop searches cannot be spatially attributed",
+        "timestamp concentration at midnight may reflect source precision rather than operational timing"
+      ]
+    },
+    {
+      "row": 142,
+      "source_id": "policeuk_data_provenance_monthly_upload_qa_and_moj_match_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Police.uk data provenance and flow",
+      "url": "https://data.police.uk/about/",
+      "status": "PROMOTED_FOR_MONTHLY_FORCE_UPLOAD_FORMAT_QA_MOJ_MATCH_AND_ANONYMISATION_CHAIN_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "43 geographic forces, British Transport Police, Police Service of Northern Ireland and the Ministry of Justice provide data used by the site",
+        "forces upload monthly Crime and ASB and Police Outcomes files which undergo quality assurance",
+        "court-result matching is performed with Ministry of Justice data before publication and all published data are anonymised"
+      ],
+      "limitations": [
+        "the data-flow description does not establish that every force-month is complete",
+        "court matching and publication QA do not create exact parcel locations"
+      ]
+    },
+    {
+      "row": 143,
+      "source_id": "policeuk_location_anonymisation_snap_point_privacy_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Police.uk location anonymisation methodology",
+      "url": "https://data.police.uk/about/",
+      "status": "PROMOTED_FOR_NEAREST_ANONYMOUS_MAP_POINT_EIGHT_ADDRESS_AND_20KM_ZEROING_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "published coordinates represent approximate rather than exact crime locations",
+        "exact locations are replaced by the nearest point from a master list whose catchments contain at least eight postal addresses or none",
+        "coordinates are zeroed when the nearest map point is more than 20 kilometres away",
+        "the snap-point list was refreshed in 2022"
+      ],
+      "limitations": [
+        "the anonymised point may fall outside the originating force boundary or target statistical area",
+        "an anonymised coordinate must never be treated as the incident address or target parcel"
+      ]
+    },
+    {
+      "row": 144,
+      "source_id": "policeuk_known_issues_geocoding_matching_mutable_snapshot_gate",
+      "publisher": "Police.uk / Single Online Home National Digital Team",
+      "name": "Police.uk known data-quality issues",
+      "url": "https://data.police.uk/about/",
+      "status": "PROMOTED_FOR_GEOCODING_VARIATION_FUZZY_MATCH_MUTABLE_SNAPSHOT_AND_MISSING_OUTCOME_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "force geocoding accuracy estimates range from 60 to 97 percent",
+        "court-result fuzzy-match success rates range from 19 to 97 percent because no unique cross-system crime identifier exists",
+        "monthly data are snapshots and later source-system reclassification, false-report confirmation or location change may not reach the site without a full refresh",
+        "British Transport Police and Police Service of Northern Ireland do not provide outcome data"
+      ],
+      "limitations": [
+        "these ranges are system-level limitations and not candidate confidence scores",
+        "snapshot mutability and missing outcomes require force-month-specific caveats"
+      ]
+    },
+    {
+      "row": 145,
+      "source_id": "ons_digital_boundary_resolution_extent_and_use_gate",
+      "publisher": "Office for National Statistics",
+      "name": "Digital boundaries",
+      "url": "https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries",
+      "status": "PROMOTED_FOR_FULL_GENERALIZED_CLIPPED_REALM_BOUNDARY_TYPE_AND_USE_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "ONS produces full-resolution and generalised digital boundary sets",
+        "full and generalised products have different coastal extents including clipped coastline and extent of the realm",
+        "BFC, BFE, BGC and BUC products are designed for different analysis or visualisation contexts",
+        "products are available under the Open Government Licence with required attribution"
+      ],
+      "limitations": [
+        "generalised or ultra-generalised boundaries may be unsuitable for exact point-in-polygon joins near edges",
+        "boundary type and edition must be pinned and not silently interchanged"
+      ]
+    },
+    {
+      "row": 146,
+      "source_id": "ons_2021_lsoa_hierarchy_threshold_count_gate",
+      "publisher": "Office for National Statistics",
+      "name": "Statistical geographies",
+      "url": "https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies",
+      "status": "PROMOTED_FOR_2021_LSOA_OA_COMPOSITION_POPULATION_THRESHOLD_AND_ENGLAND_COUNT_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "LSOAs are usually groups of four or five Output Areas",
+        "2021 LSOAs comprise between 400 and 1200 households and between 1000 and 3000 usual residents",
+        "England has 33755 LSOAs and Wales has 1917",
+        "boundary sets, names, codes and lookup files are available from the Open Geography portal"
+      ],
+      "limitations": [
+        "LSOA thresholds describe statistical-area design and not parcel characteristics",
+        "England-only joins must reject Welsh codes and record the 2021 geography edition"
+      ]
+    },
+    {
+      "row": 147,
+      "source_id": "ons_census2021_lsoa_split_merge_version_transition_gate",
+      "publisher": "Office for National Statistics",
+      "name": "Census 2021 geographies",
+      "url": "https://www.ons.gov.uk/methodology/geography/ukgeographies/censusgeographies/census2021geographies",
+      "status": "PROMOTED_FOR_2011_TO_2021_LSOA_SPLIT_MERGE_AND_OUTPUT_EDITION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "some 2011 LSOAs changed after Census 2021 because of population and household changes",
+        "new 2021 LSOAs were created by merging or splitting 2011 LSOAs",
+        "Census 2021 outputs use 2021 LSOAs composed of unchanged and new areas"
+      ],
+      "limitations": [
+        "2011 and 2021 LSOA codes and boundaries are not interchangeable",
+        "cross-edition comparisons require an explicit lookup or are rejected"
+      ]
+    },
+    {
+      "row": 148,
+      "source_id": "osr_qaad_toolkit_current_risk_based_suitability_gate",
+      "publisher": "Office for Statistics Regulation",
+      "name": "Administrative Data Quality Assurance Toolkit",
+      "url": "https://osr.statisticsauthority.gov.uk/publication/administrative-data-quality-assurance-toolkit/",
+      "status": "PROMOTED_FOR_CURRENT_QAAD_RISK_BASED_SUITABILITY_AND_DOCUMENTATION_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "the toolkit was last updated on 21 May 2026",
+        "it supports assessment of administrative-data quality assurance for official statistics",
+        "it requires producers to judge whether administrative data remain suitable and to provide appropriate documentation for users"
+      ],
+      "limitations": [
+        "the toolkit is a regulatory framework and not direct crime evidence",
+        "a QAAD label must not replace source-specific tests or runtime acceptance"
+      ]
+    },
+    {
+      "row": 149,
+      "source_id": "osr_police_recorded_crime_comprehensive_qaad_assurance_gate",
+      "publisher": "Office for Statistics Regulation",
+      "name": "QAAD assurance expectation for police recorded crime",
+      "url": "https://osr.statisticsauthority.gov.uk/publication/the-quality-of-police-recorded-crime-statistics-for-england-and-wales/pages/3/",
+      "status": "PROMOTED_FOR_HIGH_RISK_HIGH_PUBLIC_INTEREST_COMPREHENSIVE_ASSURANCE_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "OSR considers police recorded crime to require comprehensive QAAD assurance because of high quality risk and high public interest",
+        "comprehensive assurance expects investigation of supplier arrangements, independent audit evidence and detailed published documentation",
+        "both Home Office and force-level quality checks are within scope"
+      ],
+      "limitations": [
+        "a comprehensive-assurance requirement does not prove that current assurance is complete",
+        "force and month evidence must remain separately evaluated"
+      ]
+    },
+    {
+      "row": 150,
+      "source_id": "osr_qaad_matrix_four_practice_areas_gate",
+      "publisher": "Office for Statistics Regulation",
+      "name": "Administrative Data Quality Assurance Toolkit QA matrix",
+      "url": "https://osr.statisticsauthority.gov.uk/publication/administrative-data-quality-assurance-toolkit/pages/6/",
+      "status": "PROMOTED_FOR_OPERATIONAL_CONTEXT_SUPPLIER_COMMUNICATION_SUPPLIER_QA_AND_PRODUCER_QA_MATRIX_GATE",
+      "confidence_percent": 100,
+      "verified_claims": [
+        "the QA matrix separates operational context and data collection, communication with suppliers, supplier QA standards and checks, and the producer's own QA investigations",
+        "assurance levels range from no assurance upward and require progressively stronger evidence"
+      ],
+      "limitations": [
+        "matrix completion must be supported by real documentation and tests",
+        "an unverified checklist cannot be promoted as evidence of data accuracy"
+      ]
+    },
+    {
+      "row": 151,
+      "source_id": "ons_police_quality_action_plan_it_system_and_dqa_manual_gate",
+      "publisher": "Office for National Statistics",
+      "name": "Action plan for improving police recorded crime quality",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/methodologies/actionplanforimprovingthequalityofpolicerecordedcrimestatisticsinenglandandwales",
+      "status": "PROMOTED_FOR_FORCE_IT_SYSTEM_VARIATION_DQA_MANUAL_AND_ANNUAL_ASSURANCE_GATE",
+      "confidence_percent": 99,
+      "verified_claims": [
+        "the Home Office planned in-depth work across a representative group of force IT systems to document strengths, limitations and quality implications",
+        "the action plan references a Data Quality Assurance Manual used by force crime registrars for local audits",
+        "the Home Office planned annual collection of information on force compliance with minimum QA standards"
+      ],
+      "limitations": [
+        "planned actions and review dates are not proof of completion",
+        "current implementation status requires separate evidence"
+      ]
+    },
+    {
+      "row": 152,
+      "source_id": "home_office_adr_aggregate_qa_and_ons_publication_gate",
+      "publisher": "Home Office",
+      "name": "Home Office Annual Data Requirement data privacy information notice",
+      "url": "https://www.gov.uk/government/publications/home-office-crime-and-policing-research-and-annual-data-requirement-adr-data-privacy-information-notices/home-office-annual-data-requirement-adr-data-privacy-information-notice",
+      "status": "PROMOTED_FOR_AGGREGATED_DATA_PREPUBLICATION_QA_AND_ONS_SUPPLY_GATE",
+      "confidence_percent": 99,
+      "verified_claims": [
+        "the majority of ADR data received are aggregated",
+        "Home Office quality assures data before publication to prevent identification in outputs",
+        "police recorded crime data are supplied to and published by ONS in aggregate form quarterly and annually"
+      ],
+      "limitations": [
+        "aggregated ADR publication cannot establish street or parcel observations",
+        "privacy QA and statistical QA are distinct and both limitations must remain explicit"
+      ]
+    }
+  ],
+  "runtime_executed": false,
+  "candidate_values_published": 0,
+  "business_rows_written": 0,
+  "fake_data": false,
+  "final_ready": false
+}

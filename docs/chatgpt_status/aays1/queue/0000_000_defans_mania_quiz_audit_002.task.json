@@ -1,0 +1,39 @@
+{
+  "task_id": "defans-mania-quiz-audit-20260714-002",
+  "retry_of": "defans-mania-quiz-audit-20260714-001",
+  "page_key": "aays1",
+  "layer_page_key": "defans_mania",
+  "status": "pending",
+  "priority": 0,
+  "target_branch": "main",
+  "script_path": "docs/chatgpt_status/defans_mania/automation/001_quiz_logic_audit.ps1",
+  "script_content_sha": "c74dd94364d1d1a7787e151c98f210a68ae10cc7",
+  "expected_output": "docs/chatgpt_status/defans_mania/runner_outputs/001_quiz_logic_audit.json",
+  "objective": "Run the repaired read-only Defans Mania source and saved-result audit. Locate the latest desktop source and quiz_result files; verify answer mapping, repeat-until-correct accounting, wrong-attempt totals, wrong-question filtering, and result pagination.",
+  "read_only_external_scan": true,
+  "external_markers": [
+    "Quiz Ergebnis",
+    "FALSCHE+OPTION",
+    "ALLE FRAGEN",
+    "quiz_result_",
+    "Falsche Antworten",
+    "Falsche Fragen",
+    "Wortquiz",
+    "Erklaerung: No:"
+  ],
+  "acceptance_checks": [
+    "source candidate count is at least 1",
+    "every source candidate includes path, modified time, SHA256, marker matches and risk matches",
+    "all discovered quiz_result files are checked against header totals and rendered blocks",
+    "possible page += 2, [::2], range step 2, slice, skip and take patterns are reported",
+    "no external application source is modified"
+  ],
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "fake_data": false,
+  "final_ready": false,
+  "created_at": "2026-07-14T00:30:00+03:00",
+  "max_minutes": 25
+}

@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>height_difference_2 increment 095</title>
+<style>body{font-family:system-ui,Arial;margin:20px}table{border-collapse:collapse;width:100%;font-size:12px;margin-bottom:24px}th,td{border:1px solid #ccc;padding:5px;vertical-align:top}th{position:sticky;top:0;background:#fff}code{font-size:11px}.ok{font-weight:700}</style></head><body>
+<h1>height_difference_2 — Increment 095</h1>
+<p>Repository overlay. This is not live Chromium acceptance. Every compact operation/example definition below is expanded row-by-row in the browser.</p>
+<div id="summary"></div><h2>Operations</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Rule</th><th>Source</th><th>Context</th><th>QA</th><th>Status</th></tr></thead><tbody></tbody></table>
+<h2>Sources</h2><table id="src"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Confidence</th><th>State</th></tr></thead><tbody></tbody></table>
+<h2>Examples</h2><table id="ex"><thead><tr><th>ID</th><th>Scenario</th><th>Parcel</th><th>Row</th><th>HMLR</th><th>1m</th><th>2m</th><th>Δ</th><th>Confidence</th><th>Survey identity</th><th>Rule</th><th>QA</th><th>Business</th></tr></thead><tbody></tbody></table>
+<h2>Integrity audit</h2><pre id="audit"></pre>
+<script>
+const J=n=>fetch(n).then(r=>{if(!r.ok)throw Error(n+': '+r.status);return r.json()});
+Promise.all([J('operations_increment_095.json'),J('source_candidates_increment_095.json'),J('examples_increment_095.json'),J('progress_increment_095.json'),J('integrity_audit_increment_095.json')]).then(([o,s,e,p,a])=>{
+ document.querySelector('#summary').innerHTML=`<b>${p.website_operation_rows_written}</b> combined operation rows · <b>${p.website_source_rows_written}</b> source rows · <b>${p.website_example_rows_written}</b> examples · numeric confidence <b>${p.numeric_result_confidence_percent}%</b> · blocker <code>${p.blocker}</code>`;
+ const rows=[...o.fixed_operations];
+ for(const g of o.generators){for(let i=0;i<g.count;i++){let rule=g.rule_cycle[(i*(g.rule_stride||1))%g.rule_cycle.length],ctx=g.context_cycle[i%g.context_cycle.length];rows.push([g.operation_start+i,g.operation_type,rule,'',ctx,g.accuracy_score_4]);}}
+ rows.sort((x,y)=>x[0]-y[0]); const ot=document.querySelector('#ops tbody');
+ for(const r of rows){let tr=document.createElement('tr'); tr.innerHTML=`<td>${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b><br>${o.rule_descriptions[r[2]]||''}</td><td>${r[3]||''}</td><td>${r[4]||''}</td><td>${r[5]}/4</td><td class="ok">COMPLETED</td>`;ot.appendChild(tr);}
+ const st=document.querySelector('#src tbody'); for(const x of s.candidates){let tr=document.createElement('tr');tr.innerHTML=`<td>${x.candidate_id}</td><td>${x.publisher}</td><td>${x.name}</td><td>${x.role}</td><td>${x.source_confidence_percent}%</td><td>${x.promotion_state}</td>`;st.appendChild(tr);}
+ let num=parseInt(e.example_start.split('-').pop(),10), et=document.querySelector('#ex tbody');
+ for(const sc of e.scenarios){for(const q of e.parcels){let id='HD2-QA-'+num++;let tr=document.createElement('tr');tr.innerHTML=`<td>${id}</td><td>${sc.scenario}</td><td>${q.parcel}</td><td>${q.parcel_row_id}</td><td>${q.hmlr_id}</td><td>${q.dtm1m.toFixed(3)}</td><td>${q.dtm2m.toFixed(3)}</td><td>${q.delta.toFixed(3)}</td><td>${e.numeric_result_confidence_percent}%</td><td>${e.parcel_specific_survey_identity}</td><td><b>${sc.rule_code}</b><br>${e.rule_descriptions[sc.rule_code]||''}</td><td>${e.accuracy_score_4}/4</td><td>${e.business_row}</td>`;et.appendChild(tr);}}
+ document.querySelector('#audit').textContent=JSON.stringify(a,null,2);
+ if(rows.length!==o.operation_count) throw Error('operation row count mismatch '+rows.length);
+ if(num-parseInt(e.example_start.split('-').pop(),10)!==e.example_count) throw Error('example count mismatch');
+}).catch(err=>document.body.insertAdjacentHTML('afterbegin','<pre>'+err.stack+'</pre>'));
+</script></body></html>

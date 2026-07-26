@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "slot_id": "height_difference_3",
+  "batch_id": "height_difference_3_uncertainty_budget_batch_7_20260722",
+  "updated_at": "2026-07-22T07:03:00+03:00",
+  "budget_kind": "ENGINEERING_INFERENCE_FROM_PUBLISHED_RMSE_NOT_CERTIFIED_PARCEL_ACCURACY",
+  "assumptions": [
+    "The selected Environment Agency LIDAR DTM survey carries the published 0.15 m vertical RMSE evidence.",
+    "The parcel lies on mainland Britain when the 0.008 m OSGM15 nominal RMS figure is used.",
+    "LIDAR and geoid errors are treated as independent only for this analytical screening calculation.",
+    "Minimum and maximum elevation errors are treated as independent for the pairwise screening calculation; spatial correlation may invalidate this assumption.",
+    "Boundary uncertainty, raster resolution, surface classification, interpolation and temporal change are separate components and are not hidden inside the numerical RMSE combination."
+  ],
+  "rows": [
+    {"row_id":"HD3_U01","component":"EA_LIDAR_VERTICAL_RMSE","value_m":0.15,"derivation":"Published source value","formula":"given","classification":"OFFICIAL_PUBLISHED","use":"Primary vertical source uncertainty input"},
+    {"row_id":"HD3_U02","component":"OSGM15_MAINLAND_NOMINAL_RMS","value_m":0.008,"derivation":"Published OS mainland nominal accuracy","formula":"given","classification":"OFFICIAL_PUBLISHED","use":"Vertical transformation input where mainland ODN applies"},
+    {"row_id":"HD3_U03","component":"SINGLE_SAMPLE_COMBINED_RMSE","value_m":0.150213,"derivation":"Independent root-sum-square of LIDAR and OSGM15","formula":"sqrt(0.15^2 + 0.008^2)","classification":"ANALYTICAL_INFERENCE","use":"Screening uncertainty for one transformed elevation sample"},
+    {"row_id":"HD3_U04","component":"HEIGHT_DIFFERENCE_PAIRWISE_RMSE","value_m":0.212434,"derivation":"Independent root-sum-square for minimum and maximum samples","formula":"sqrt(2) * 0.1502131818450032","classification":"ANALYTICAL_INFERENCE","use":"Screening RMSE for max minus min"},
+    {"row_id":"HD3_U05","component":"HEIGHT_DIFFERENCE_APPROX_95_PERCENT_ENVELOPE","value_m":0.424867,"derivation":"Two-sigma screening envelope","formula":"2 * 0.21243351901241952","classification":"CONSERVATIVE_ANALYTICAL_INFERENCE","use":"Differences at or below this value are flagged BELOW_CONSERVATIVE_95_ENVELOPE"},
+    {"row_id":"HD3_U06","component":"LIDAR_ONLY_PAIRWISE_95_PERCENT_ENVELOPE","value_m":0.424264,"derivation":"Two-sigma screening using only 0.15 m LIDAR RMSE at both extrema","formula":"2 * sqrt(2) * 0.15","classification":"ANALYTICAL_REFERENCE","use":"Shows OSGM15 contribution is small relative to published LIDAR RMSE"},
+    {"row_id":"HD3_U07","component":"APPROXIMATE_HELMERT_REJECTION_LIMIT_95_PERCENT","value_m":3.5,"derivation":"Published OS approximate transformation error bound","formula":"given","classification":"OFFICIAL_PUBLISHED_REJECTION_THRESHOLD","use":"Any workflow using this approximate transformation is rejected for parcel-grade matching"},
+    {"row_id":"HD3_U08","component":"RASTER_RESOLUTION_AND_EXTREMA_SMOOTHING","value_m":null,"derivation":"Not quantified from the current official metadata","formula":null,"classification":"SEPARATE_UNQUANTIFIED_COMPONENT","use":"Native cells are required; bilinear/resampled products carry a smoothing warning"},
+    {"row_id":"HD3_U09","component":"BOUNDARY_POSITION_AND_SEMANTICS","value_m":null,"derivation":"HMLR general boundaries have no standard positional tolerance","formula":null,"classification":"SEPARATE_UNQUANTIFIED_COMPONENT","use":"Reported independently; no exact-boundary accuracy percentage is invented"},
+    {"row_id":"HD3_U10","component":"PUBLICATION_CLASSIFICATION_RULE","value_m":0.424867,"derivation":"Contract threshold from row HD3_U05","formula":"height_difference_m <= threshold => BELOW_CONSERVATIVE_95_ENVELOPE","classification":"PROJECT_FAIL_CLOSED_RULE","use":"A numeric value may be retained for audit but is not labelled robust unless every mandatory gate passes and the difference exceeds the envelope"}
+  ],
+  "row_count": 10,
+  "published_value_rows": 3,
+  "analytical_inference_rows": 5,
+  "unquantified_separate_component_rows": 2,
+  "reporting_fields": [
+    "minimum_elevation_m_odn",
+    "maximum_elevation_m_odn",
+    "height_difference_m",
+    "vertical_source_rmse_m",
+    "height_difference_screening_rmse_m",
+    "conservative_95_envelope_m",
+    "uncertainty_class",
+    "boundary_semantics",
+    "raster_resolution_m",
+    "survey_date",
+    "transformation",
+    "geoidal_model"
+  ],
+  "canonical_point_rows": 0,
+  "numeric_elevation_rows": 0,
+  "actual_business_data_rows_written": 0,
+  "fake_data": false,
+  "final_ready": false
+}

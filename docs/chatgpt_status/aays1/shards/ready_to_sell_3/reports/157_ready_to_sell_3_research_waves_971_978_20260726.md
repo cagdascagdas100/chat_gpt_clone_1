@@ -1,0 +1,22 @@
+# ReadyToSell 3 — Research Waves 971–978
+
+- Continuation: `6f2f2e66567b0e654a32a3bb26684504438ff4a7085d0170335bdbfe452a687a`
+- Published: 2026-07-26T17:53:28Z
+- Current official auction observed: 29–30 July 2026, 339 lots
+- Screened: 32
+- Readable direct pages: 20
+- Selected: 16
+- Excluded conflicts: 4
+- Bounded direct-page failures: 12
+- Replacement rows: 4
+- Average source confidence: 99.9/100
+- Direct official source upgrades: 16
+- Visible research rows: 4,126
+- Visible operations: 5,642 / 5,644 (99.9646%, +0.0006)
+- Promoted / parcel / geometry: 0 / 0 / 0
+- First unverified step: `AUTOMATION_167_DOM_PROOF`
+- Blocker: `CANONICAL_RUNNER_EXTERNAL_BLOCKED_DOM_PROOF_ABSENT`
+- Owner: unclaimed; stale heartbeat is not treated as live
+- Manual action: OPEN
+- No second task, runner or owner was created.
+- No fake data, DB write, migration or production deployment.

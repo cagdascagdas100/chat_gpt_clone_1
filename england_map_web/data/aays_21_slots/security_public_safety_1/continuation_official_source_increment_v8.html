@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>Security 1 — Resmî Kaynak Artışı V8</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}th,td{border:1px solid #cbd5df;padding:7px;text-align:left;vertical-align:top}th{background:#eaf0f5}[class^="PASS"]{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}a{color:#0759a5}
+  </style>
+</head>
+<body data-slot-id="security_public_safety_1" data-final-ready="false">
+  <h1>Security / Public Safety 1 — Resmî Kaynak Artışı V8</h1>
+  <div class="note"><strong>Not:</strong> Bu tablo yalnız resmî kaynak araştırma ve kalite hazırlığıdır. Yeni parsel değeri veya canlı kabul kanıtı üretmez. 23 Temmuz 2026 ONS yayını, kontrol saati planlanan 09:30 UK saatinden önce olduğu için içeri alınmadı.</div>
+  <div class="cards">
+    <div class="card">Ana ilerleme<br><strong id="progress">yükleniyor</strong></div>
+    <div class="card">Yeni doğrulama<br><strong id="checks">yükleniyor</strong></div>
+    <div class="card">Kümülatif kaynak<br><strong id="total">yükleniyor</strong></div>
+    <div class="card">Kaynak yükseltmesi<br><strong id="upgrades">yükleniyor</strong></div>
+    <div class="card">Yeni parsel değeri<br><strong id="parcelValues">yükleniyor</strong></div>
+  </div>
+  <h2>Doğrulamalar — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>Resmî kaynak</th><th>Doğrulanan bilgi</th><th>Kalite etkisi</th></tr></thead><tbody id="rows"></tbody></table>
+  <p><a href="index.html">Ana Security 1 görünümüne dön</a></p>
+  <script>
+    'use strict';
+    const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    (async()=>{
+      const r=await fetch(`continuation_official_source_increment_v8_20260723.json?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`HTTP ${r.status}`);
+      const d=await r.json(),p=d.canonical_progress||{},m=d.increment_metrics||{},c=d.cumulative_metrics||{};
+      progress.textContent=`${p.completed_units}/${p.total_units} — ${p.overall_percent}% (Δ ${p.percent_change>=0?'+':''}${p.percent_change})`;
+      checks.textContent=`${m.official_source_checks_passed}/${m.official_source_checks_added}`;
+      total.textContent=`${c.official_source_checks_passed}/${c.official_source_checks}`;
+      upgrades.textContent=String(c.source_upgrades);
+      parcelValues.textContent=String(m.parcel_values_added);
+      rows.innerHTML=(d.sources||[]).map(x=>`<tr><td>${esc(x.row)}</td><td class="${esc(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br><span class="mono">${esc(x.authority)}</span></td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td></tr>`).join('');
+      document.body.dataset.operationRows=String((d.sources||[]).length);document.body.dataset.continuationKey=d.continuation_key;document.body.dataset.blocker=d.blocker;
+    })().catch(e=>{rows.innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+  </script>
+</body>
+</html>

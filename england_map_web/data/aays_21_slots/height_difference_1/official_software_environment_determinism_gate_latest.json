@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "height_difference_1",
+  "task_id": "height-difference-1-official-boundary-elevation-samples-20260720",
+  "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
+  "generated_at": "2026-07-23T00:50:00Z",
+  "state": "SOFTWARE_ENVIRONMENT_DETERMINISM_GATE_READY_RUNTIME_MEASUREMENT_BLOCKED",
+  "source_checks": [
+    {
+      "source_id": "PROJ_NETWORK_AND_CACHE",
+      "authority": "PROJ / OSGeo",
+      "url": "https://proj.org/en/stable/usage/network.html",
+      "verified": true,
+      "facts": [
+        "network_requires_explicit_authorization",
+        "missing_local_grids_can_be_fetched_from_configurable_cdn",
+        "remote_chunks_are_cached_in_sqlite_cache_db",
+        "cache_size_and_ttl_are_configurable"
+      ],
+      "accepted_role": "NETWORK_AND_REMOTE_GRID_STATE_CONTROL"
+    },
+    {
+      "source_id": "PROJ_RESOURCE_CONFIGURATION",
+      "authority": "PROJ / OSGeo",
+      "url": "https://proj.org/en/stable/resource_files.html",
+      "verified": true,
+      "facts": [
+        "network_is_off_by_default_in_proj_ini",
+        "cdn_endpoint_is_configurable",
+        "remote_cache_is_enabled_by_default_if_used",
+        "resource_files_include_proj_db_proj_ini_and_grids"
+      ],
+      "accepted_role": "LOCAL_RESOURCE_SET_CONTROL"
+    },
+    {
+      "source_id": "PROJ_SEARCH_PATHS",
+      "authority": "PROJ / OSGeo",
+      "url": "https://proj.org/en/stable/faq.html",
+      "verified": true,
+      "facts": [
+        "proj_data_path_is_checked",
+        "built_in_resource_path_is_checked",
+        "current_directory_can_be_checked",
+        "proj_db_must_be_readable"
+      ],
+      "accepted_role": "RESOURCE_PATH_AND_SHADOWING_CONTROL"
+    },
+    {
+      "source_id": "PROJINFO_OPERATION_SELECTION",
+      "authority": "PROJ / OSGeo",
+      "url": "https://proj.org/en/stable/apps/projinfo.html",
+      "verified": true,
+      "facts": [
+        "searchpaths_and_remote_data_status_can_be_reported",
+        "main_database_path_can_be_explicit",
+        "grid_check_discard_missing_is_available",
+        "ballpark_operations_can_be_hidden",
+        "accuracy_and_area_filters_are_available",
+        "operation_summary_reports_accuracy_and_area"
+      ],
+      "accepted_role": "TRANSFORMATION_IDENTITY_AND_SELECTION_CONTROL"
+    },
+    {
+      "source_id": "PROJ_RUNTIME_AND_DATABASE_METADATA",
+      "authority": "PROJ / OSGeo",
+      "url": "https://proj.org/en/stable/development/reference/functions.html",
+      "verified": true,
+      "facts": [
+        "grid_cache_can_be_disabled_or_redirected",
+        "database_structure_metadata_is_queryable",
+        "coordinate_operation_accuracy_is_queryable",
+        "grid_information_is_queryable"
+      ],
+      "accepted_role": "SOFTWARE_AND_DATABASE_VERSION_CONTROL"
+    },
+    {
+      "source_id": "GDAL_RUNTIME_CONFIGURATION",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/user/configoptions.html",
+      "verified": true,
+      "facts": [
+        "runtime_options_can_be_global_or_thread_local",
+        "gdal_num_threads_controls_supported_operations",
+        "gdal_cachemax_controls_global_block_cache",
+        "unknown_option_names_are_not_warned_by_default"
+      ],
+      "accepted_role": "CONFIGURATION_SCOPE_AND_CACHE_CONTROL"
+    },
+    {
+      "source_id": "GDAL_RUNTIME_VERSION",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/doxygen/gdal_8h.html",
+      "verified": true,
+      "facts": [
+        "runtime_version_number_release_date_and_release_name_are_queryable",
+        "build_info_reports_build_time_options"
+      ],
+      "accepted_role": "RUNTIME_BUILD_IDENTITY_CONTROL"
+    },
+    {
+      "source_id": "GDAL_WARP_CHUNK_AND_APPROXIMATION",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/doxygen/structGDALWarpOptions.html",
+      "verified": true,
+      "facts": [
+        "xscale_and_yscale_are_computed_per_chunk",
+        "constant_scale_can_improve_reproducibility",
+        "optimize_size_can_change_chunk_shape_and_pixel_output",
+        "src_coord_precision_can_reduce_memory_size_sensitivity",
+        "unified_src_nodata_has_version_dependent_semantics",
+        "skip_nosource_can_disable_destination_initialization"
+      ],
+      "accepted_role": "WARP_NUMERICAL_REPRODUCIBILITY_CONTROL"
+    },
+    {
+      "source_id": "GDALWARP_PROCESSING",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/programs/gdalwarp.html",
+      "verified": true,
+      "facts": [
+        "warp_memory_controls_chunking",
+        "source_overviews_are_used_by_default",
+        "source_overview_resampling_can_differ_from_requested_resampling",
+        "multiple_inputs_are_processed_in_list_order_and_can_produce_edge_effects"
+      ],
+      "accepted_role": "SOURCE_SELECTION_CHUNK_AND_ORDER_CONTROL"
+    },
+    {
+      "source_id": "GDAL_GTIFF_SPARSE_AND_ERRORS",
+      "authority": "GDAL / OSGeo",
+      "url": "https://gdal.org/en/stable/drivers/raster/gtiff.html",
+      "verified": true,
+      "facts": [
+        "sparse_blocks_can_read_as_zero_or_nodata",
+        "sparse_ok_controls_omitted_blocks",
+        "num_threads_controls_compression_and_some_decoding",
+        "ignore_read_errors_can_suppress_libtiff_errors"
+      ],
+      "accepted_role": "GEOTIFF_STORAGE_AND_CORRUPTION_CONTROL"
+    }
+  ],
+  "acceptance_rules": {
+    "proj_network_and_cache": [
+      "PROJ_NETWORK_OFF_IN_PROJ_INI_ENVIRONMENT_AND_CONTEXT",
+      "PROJ_REMOTE_DATA_STATUS_AND_ENDPOINT_RECORDED",
+      "REMOTE_CDN_FALLBACK_FORBIDDEN",
+      "PROJ_GRID_CACHE_DISABLED_OR_ISOLATED_AND_HASH_PINNED",
+      "NO_UNPINNED_CACHE_CHUNKS_ACCEPTED"
+    ],
+    "proj_resources_and_operations": [
+      "PROJ_DATA_POINTS_TO_ONE_CONTROLLED_READ_ONLY_DIRECTORY",
+      "CURRENT_DIRECTORY_RESOURCE_FALLBACK_FORBIDDEN",
+      "PROJ_DB_PROJ_INI_AND_REQUIRED_GRID_SHA256_VALUES_RECORDED",
+      "PROJ_RELEASE_PROJ_DATA_RELEASE_AND_DATABASE_LAYOUT_RECORDED",
+      "MAIN_DATABASE_PATH_EXPLICIT_AND_UNDECLARED_AUX_DATABASES_FORBIDDEN",
+      "GRID_CHECK_DISCARD_MISSING_HIDE_BALLPARK_ACCURACY_AND_AREA_FILTERS_REQUIRED",
+      "PROJJSON_PIPELINE_GRID_LIST_AND_OUTPUT_HASH_RECORDED"
+    ],
+    "gdal_environment": [
+      "EFFECTIVE_GDAL_OPTIONS_AND_GLOBAL_OR_THREAD_SCOPE_RECORDED",
+      "ONE_HASHED_CONTROLLED_GDAL_CONFIG_USED",
+      "AMBIENT_UNDECLARED_OVERRIDES_IGNORED",
+      "UNKNOWN_CONFIGURATION_OPTION_DIAGNOSTICS_ENABLED",
+      "GDAL_RUNTIME_VERSION_RELEASE_DATE_BUILD_INFO_DATA_PATH_DRIVER_PATH_AND_DRIVER_LIST_RECORDED",
+      "GDAL_CACHEMAX_AND_ALL_THREAD_COUNTS_RECORDED"
+    ],
+    "warp_reproducibility": [
+      "SINGLE_THREAD_REFERENCE_RUN_REQUIRED",
+      "WARP_MEMORY_LIMIT_AND_CHUNK_LAYOUT_PINNED",
+      "XSCALE_YSCALE_PINNED_WHEN_VALID_OR_EXACT_REFERENCE_TRANSFORM_USED",
+      "ERROR_THRESHOLD_ZERO_FOR_REFERENCE_OR_ERROR_THRESHOLD_AND_SRC_COORD_PRECISION_PINNED",
+      "SRC_COORD_PRECISION_AT_LEAST_TEN_TIMES_ERROR_THRESHOLD_WHEN_USED",
+      "OPTIMIZE_SIZE_PINNED_AND_PIXEL_HASH_COMPARED",
+      "UNIFIED_SRC_NODATA_INIT_DEST_AND_SKIP_NOSOURCE_BEHAVIOUR_EXPLICIT"
+    ],
+    "source_and_storage": [
+      "SOURCE_OVERVIEWS_DISABLED_FOR_REFERENCE_ELEVATION_SAMPLING",
+      "MULTIPLE_INPUT_ORDER_FIXED_OR_HASHED_VRT_WITH_EXPLICIT_OVERLAP_POLICY_USED",
+      "SPARSE_OK_FALSE_FOR_REFERENCE_OUTPUT",
+      "GTIFF_TILE_OFFSETS_BYTE_COUNTS_MASK_AND_NODATA_VALIDATED",
+      "GTIFF_IGNORE_READ_ERRORS_FALSE"
+    ],
+    "repeatability": [
+      "THREE_IDENTICAL_REFERENCE_RUNS_HAVE_EQUAL_FLOAT64_PIXEL_HASHES",
+      "SINGLE_AND_MULTI_THREAD_RUNS_HAVE_EQUAL_VALID_COUNTS_STATISTICS_AND_FLOAT64_PIXEL_HASHES",
+      "ANY_NUMERICAL_DIFFERENCE_BLOCKS_CONCURRENCY_AND_PROMOTION"
+    ],
+    "publication": [
+      "NO_MEASURED_ROW_WITHOUT_RUNTIME_OUTPUT",
+      "NO_PROMOTION_WITHOUT_REMOTE_COMMIT_AND_INTEGRITY_READBACK",
+      "NO_SECOND_RUNNER_WHILE_SINGLE_SHARED_CONTROL_EXISTS"
+    ]
+  },
+  "source_checks_passed": 28,
+  "source_checks_total": 28,
+  "candidate_rows": 3,
+  "official_measured_rows": 0,
+  "official_height_difference_rows": 0,
+  "accuracy_score_4": "2.5/4 fallback",
+  "blocker": "EXISTING_F_HOST_NONINTERACTIVE_GITHUB_PUBLISH_AUTH_NOT_APPLIED",
+  "final_ready": false,
+  "fake_data": false
+}

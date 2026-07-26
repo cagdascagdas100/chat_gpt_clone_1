@@ -1,37 +1,68 @@
 [CmdletBinding()]
-param([int]$TimeoutSeconds = 300,[string]$InnerPath = '')
-
-$ErrorActionPreference = 'Stop'
-$slotId = 'security_public_safety_2'
-$taskId = 'security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_20260722'
-$attemptId = 'attempt-005'
-$repoRoot = 'F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
-$innerRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\automation\003_ffsafe_sync_then_apply_retry5_recovery.ps1'
-$innerBlob = '2a932991d13c0921c97433d0e57bb6a4b55eb972'
-$outputRel = 'docs\chatgpt_status\aays1\shards\security_public_safety_2\runner_outputs\004_retry5_timeout_guard_latest.json'
-
-function GitBlob([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
-  $bytes=[IO.File]::ReadAllBytes($Path);$prefix=[Text.Encoding]::ASCII.GetBytes(('blob {0}' -f $bytes.Length)+[char]0)
-  $sha=[Security.Cryptography.SHA1]::Create();try{[void]$sha.TransformBlock($prefix,0,$prefix.Length,$prefix,0);[void]$sha.TransformFinalBlock($bytes,0,$bytes.Length);return([BitConverter]::ToString($sha.Hash)).Replace('-','').ToLowerInvariant()}finally{$sha.Dispose()}
+param([int]$TimeoutSeconds=300,[string]$InnerPath='')
+$ErrorActionPreference='Stop'
+$slotId='security_public_safety_2'
+$taskId='security_public_safety_2_geometry_lsoa_police_sample_wave1_retry5_20260722'
+$attemptId='attempt-005'
+$branch='codex/aays-single-runner-v5-20260706'
+$portableRoot='F:\TerraYield_AAYS_Portable'
+$repoRoot='F:\TerraYield_AAYS_Portable\runner_system\AAYS_WT\AAYS_RUNNER_HEALTHY_20260707'
+$ownershipRel='docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json'
+$innerRel='docs\chatgpt_status\aays1\shards\security_public_safety_2\automation\003_ffsafe_sync_then_apply_retry5_recovery.ps1'
+$innerBlob='ee42e0d5d993d93c83944caaff43e4ba954a471c'
+$outputRel='docs\chatgpt_status\aays1\shards\security_public_safety_2\runner_outputs\004_retry5_timeout_guard_latest.json'
+$baselineCanonical=@();$trackedAttemptProcesses=@();$remainingTrackedAttemptProcesses=@();$timeoutSpawnedCanonical=@();$remainingTimeoutSpawnedCanonical=@();$spawnedCanonicalCleanup=@();$trackedGenerationCleanup=@();$rootStopEvidence=$null
+$runnerSpecs=@(
+  [ordered]@{token='RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd';root=$portableRoot},
+  [ordered]@{token='RUN_EXISTING_F_PORTABLE_SINGLE_RUNNER_HOTFIX_THEN_CONTINUE_20260709';root=$portableRoot},
+  [ordered]@{token='devam.ps1';root=$repoRoot},
+  [ordered]@{token='RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1';root=$repoRoot},
+  [ordered]@{token='RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1';root=$repoRoot}
+)
+function GitBlob([string]$Path){if(-not(Test-Path -LiteralPath $Path -PathType Leaf)){return$null};$b=[IO.File]::ReadAllBytes($Path);$p=[Text.Encoding]::ASCII.GetBytes(('blob {0}'-f$b.Length)+[char]0);$s=[Security.Cryptography.SHA1]::Create();try{[void]$s.TransformBlock($p,0,$p.Length,$p,0);[void]$s.TransformFinalBlock($b,0,$b.Length);return([BitConverter]::ToString($s.Hash)).Replace('-','').ToLowerInvariant()}finally{$s.Dispose()}}
+function Norm([string]$Value){if($null-eq$Value){return''};return(($Value-replace'/','\').ToLowerInvariant())}
+function IdentityKey([object]$Process){return('{0}|{1}'-f([int]$Process.ProcessId),([string]$Process.CreationDate))}
+function Evidence([object]$Process){return[ordered]@{process_id=[int]$Process.ProcessId;parent_process_id=[int]$Process.ParentProcessId;creation_date=[string]$Process.CreationDate;identity_key=(IdentityKey -Process $Process);command_line=[string]$Process.CommandLine}}
+function AllCimProcesses{@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)}
+function CurrentCimProcess([int]$Id){return@((Get-CimInstance Win32_Process -Filter ("ProcessId={0}"-f$Id) -ErrorAction SilentlyContinue)|Select-Object -First 1)}
+function CanonicalRunnerProcesses([object[]]$Processes=$null){if($null-eq$Processes-or$Processes.Count-eq0){$Processes=@(AllCimProcesses)};$matched=@();foreach($proc in $Processes){if([string]::IsNullOrWhiteSpace([string]$proc.CommandLine)){continue};$command=Norm -Value ([string]$proc.CommandLine);foreach($spec in $runnerSpecs){if($command.Contains((Norm -Value ([string]$spec.token)))-and$command.Contains((Norm -Value ([string]$spec.root)))){$matched+=$proc;break}}};return@($matched|Group-Object ProcessId|ForEach-Object{$_.Group[0]})}
+function ProcessTreeSnapshot([int]$RootPid,[DateTimeOffset]$RootStartedAt){
+  $all=@(AllCimProcesses);$root=@($all|Where-Object{[int]$_.ProcessId-eq$RootPid}|Select-Object -First 1);$result=@();if($root.Count-eq1){$result+=$root[0]}
+  $queue=New-Object 'System.Collections.Generic.Queue[int]';$queue.Enqueue($RootPid);$seen=New-Object 'System.Collections.Generic.HashSet[int]';[void]$seen.Add($RootPid)
+  while($queue.Count-gt0){$parent=$queue.Dequeue();foreach($proc in @($all|Where-Object{[int]$_.ParentProcessId-eq$parent})){if($seen.Contains([int]$proc.ProcessId)){continue};$created=$null;try{$created=[DateTimeOffset]$proc.CreationDate}catch{};if($null-eq$created-or$created-lt$RootStartedAt.AddSeconds(-1)){continue};[void]$seen.Add([int]$proc.ProcessId);$result+=$proc;$queue.Enqueue([int]$proc.ProcessId)}}
+  return@($result)
 }
-function Receipt([string]$Status,[int]$ExitCode,[bool]$TimedOut,[string]$ResolvedInner,[string]$Detail) {
-  $path=Join-Path $repoRoot $outputRel;$parent=Split-Path -Parent $path;if(-not(Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Force -Path $parent|Out-Null}
-  $o=[ordered]@{schema_version=2;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false}
-  $tmp="$path.tmp.$PID";[IO.File]::WriteAllText($tmp,(($o|ConvertTo-Json -Depth 8)+"`n"),[Text.UTF8Encoding]::new($false));Move-Item -LiteralPath $tmp -Destination $path -Force
+function StopVerifiedGeneration([object]$Expected,[bool]$RequireCanonical){
+  $id=[int]$Expected.ProcessId;$expectedKey=IdentityKey -Process $Expected;$current=@(CurrentCimProcess -Id $id)
+  if($current.Count-eq0){return[ordered]@{process_id=$id;expected_identity_key=$expectedKey;current_identity_key=$null;generation_match=$true;canonical_match=$true;bound_process_start_match=$true;stop_attempted=$false;stop_exit_code=0;already_exited=$true;expected_generation_remaining=$false}}
+  $currentKey=IdentityKey -Process $current[0];$same=($currentKey-eq$expectedKey);$canonical=$true;if($RequireCanonical){$canonical=(@(CanonicalRunnerProcesses -Processes @($current[0])).Count-eq1)}
+  $bound=$null;$boundStartMatch=$false;try{$bound=Get-Process -Id $id -ErrorAction Stop;$cimStart=[DateTimeOffset]$current[0].CreationDate;$boundStart=[DateTimeOffset]$bound.StartTime.ToUniversalTime();$boundStartMatch=([math]::Abs(($cimStart-$boundStart).TotalSeconds)-le2)}catch{}
+  if(-not($same-and$canonical-and$boundStartMatch)){return[ordered]@{process_id=$id;expected_identity_key=$expectedKey;current_identity_key=$currentKey;generation_match=$same;canonical_match=$canonical;bound_process_start_match=$boundStartMatch;stop_attempted=$false;stop_exit_code=0;already_exited=(-not$same);expected_generation_remaining=$same}}
+  $stopExit=-1;$stopAttempted=$false;try{$stopAttempted=$true;Stop-Process -InputObject $bound -Force -ErrorAction Stop;$stopExit=0}catch{$stopExit=1}
+  Start-Sleep -Milliseconds 250;$after=@(CurrentCimProcess -Id $id);$remaining=$false;if($after.Count-eq1){$remaining=((IdentityKey -Process $after[0])-eq$expectedKey)}
+  return[ordered]@{process_id=$id;expected_identity_key=$expectedKey;current_identity_key=$currentKey;generation_match=$true;canonical_match=$canonical;bound_process_start_match=$true;stop_attempted=$stopAttempted;stop_exit_code=$stopExit;already_exited=$false;expected_generation_remaining=$remaining}
 }
-
+function WriteReceipt([string]$Status,[int]$ExitCode,[bool]$TimedOut,[string]$ResolvedInner,[object]$Owner,[string]$RemoteHead,[bool]$StopAttempted,[int]$StopExit,[string]$Detail){$path=Join-Path $repoRoot $outputRel;$dir=Split-Path -Parent $path;if(-not(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -Force -Path $dir|Out-Null};$o=[ordered]@{schema_version=20;slot_id=$slotId;task_id=$taskId;attempt_id=$attemptId;status=$Status;checked_at=[DateTimeOffset]::UtcNow.ToString('o');timeout_seconds=$TimeoutSeconds;timed_out=$TimedOut;inner_exit_code=$ExitCode;inner_path=$ResolvedInner;inner_expected_blob=$innerBlob;temporary_inner_allowed=$true;remote_head=$RemoteHead;ownership_rechecked=$true;ownership_snapshot=$Owner;browser_gate_v4_chain=$true;browser_gate_v3_chain=$true;windows_powershell_dynamic_property_write_guard=$true;candidate_evidence_gate_separate=$true;automation_exit_zero_requires_browser_acceptance=$true;localhost_http_byte_hash_required=$true;chromium_headless_dom_required=$true;static_no_executable_javascript_surface_required=$true;exact_twelve_html_table_rows_required=$true;candidate_only_until_browser_acceptance=$true;business_rows_to_write=0;canonical_f_process_identity_required=$true;foreign_runner_process_fail_closed=$true;scan_lock_generation_validation=$true;termination_uses_bound_process_object=$true;termination_uses_individual_verified_process_generations=$true;taskkill_tree_used=$false;process_tree_kill_attempted=$false;individual_generation_stop_attempted=$StopAttempted;root_stop_exit_code=$StopExit;root_stop_evidence=$rootStopEvidence;baseline_canonical_processes=@($baselineCanonical|ForEach-Object{Evidence -Process $_});tracked_attempt_processes=@($trackedAttemptProcesses|ForEach-Object{Evidence -Process $_});tracked_generation_cleanup=@($trackedGenerationCleanup);remaining_tracked_attempt_processes=@($remainingTrackedAttemptProcesses|ForEach-Object{Evidence -Process $_});timeout_spawned_canonical_processes=@($timeoutSpawnedCanonical|ForEach-Object{Evidence -Process $_});spawned_canonical_cleanup=@($spawnedCanonicalCleanup);remaining_timeout_spawned_canonical_processes=@($remainingTimeoutSpawnedCanonical|ForEach-Object{Evidence -Process $_});timeout_tracking_uses_pid_and_creation_date=$true;descendant_snapshot_rejects_processes_older_than_wrapper=$true;remaining_descendant_generations_receive_safe_cleanup=$true;timeout_cleanup_reenumerates_exact_canonical_f_processes=$true;preexisting_process_generations_preserved=$true;same_attempt=$true;new_runner_created=$false;parallel_runner_started=$false;detail=$Detail;final_ready=$false;fake_data=$false};$tmp="$path.tmp.$PID";[IO.File]::WriteAllText($tmp,(($o|ConvertTo-Json -Depth 16)+"`n"),[Text.UTF8Encoding]::new($false));Move-Item -LiteralPath $tmp -Destination $path -Force}
 if(-not(Test-Path -LiteralPath $repoRoot -PathType Container)){throw"CANONICAL_F_REPO_ROOT_MISSING=$repoRoot"}
-$inner=if([string]::IsNullOrWhiteSpace($InnerPath)){Join-Path $repoRoot $innerRel}else{$InnerPath}
-$actual=GitBlob $inner
-if($actual -ne $innerBlob){Receipt 'BLOCKED_003_BLOB_MISMATCH' -1 $false $inner "expected=$innerBlob actual=$actual";exit 21}
-$p=Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$inner) -WorkingDirectory $repoRoot -PassThru -WindowStyle Normal
-if(-not $p.WaitForExit($TimeoutSeconds*1000)){
-  try{Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}catch{}
-  Receipt 'BLOCKED_RETRY5_RECOVERY_TIMEOUT' 124 $true $inner "wrapper_pid=$($p.Id)"
-  exit 124
+$git=Get-Command git.exe -ErrorAction SilentlyContinue;if(-not$git){throw'GIT_EXECUTABLE_NOT_FOUND'}
+& $git.Source -C $repoRoot fetch --no-tags origin $branch;if($LASTEXITCODE-ne0){WriteReceipt 'BLOCKED_FRESH_OWNER_FETCH_FAILED' -1 $false '' @{} '' $false -1 'git fetch failed';exit 20}
+$remoteHead=(& $git.Source -C $repoRoot rev-parse "origin/$branch" 2>&1|Select-Object -Last 1).ToString().Trim();if($remoteHead-notmatch'^[0-9a-f]{40}$'){WriteReceipt 'BLOCKED_REMOTE_HEAD_READ_FAILED' -1 $false '' @{} $remoteHead $false -1 'origin head unavailable';exit 20}
+$ownershipText=(& $git.Source -C $repoRoot show "origin/${branch}:$ownershipRel" 2>&1|Out-String);$showExit=$LASTEXITCODE;if($showExit-ne0-or[string]::IsNullOrWhiteSpace($ownershipText)){WriteReceipt 'BLOCKED_REMOTE_OWNERSHIP_READ_FAILED' -1 $false '' @{} $remoteHead $false -1 "git_show_exit=$showExit";exit 22}
+try{$ownership=$ownershipText|ConvertFrom-Json}catch{WriteReceipt 'BLOCKED_REMOTE_OWNERSHIP_INVALID_JSON' -1 $false '' @{} $remoteHead $false -1 $_.Exception.Message;exit 22}
+$owner=[ordered]@{state=[string]$ownership.state;owner_page_session_id=$ownership.owner_page_session_id;heartbeat_at=$ownership.heartbeat_at;lease_expires_at=$ownership.lease_expires_at};$ownerPresent=(-not[string]::IsNullOrWhiteSpace([string]$ownership.owner_page_session_id))-or(-not[string]::IsNullOrWhiteSpace([string]$ownership.heartbeat_at))-or(-not[string]::IsNullOrWhiteSpace([string]$ownership.lease_expires_at));if([string]$ownership.slot_id-ne$slotId-or[string]$ownership.state-ne'unclaimed'-or$ownerPresent){WriteReceipt 'BLOCKED_LIVE_OR_NON_UNCLAIMED_OWNER_APPEARED' -1 $false '' $owner $remoteHead $false -1 'No recovery process was started.';exit 23}
+$inner=if([string]::IsNullOrWhiteSpace($InnerPath)){Join-Path $repoRoot $innerRel}else{$InnerPath};$actual=GitBlob -Path $inner;if($actual-ne$innerBlob){WriteReceipt 'BLOCKED_003_BLOB_MISMATCH' -1 $false $inner $owner $remoteHead $false -1 "expected=$innerBlob actual=$actual";exit 21}
+$baselineCanonical=@(CanonicalRunnerProcesses)
+$p=Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"'-f$inner)) -WorkingDirectory $repoRoot -PassThru -WindowStyle Normal
+$wrapperGeneration=@(CurrentCimProcess -Id ([int]$p.Id));$wrapperStartedAt=[DateTimeOffset]$p.StartTime.ToUniversalTime()
+if(-not$p.WaitForExit($TimeoutSeconds*1000)){
+  $trackedAttemptProcesses=@(ProcessTreeSnapshot -RootPid ([int]$p.Id) -RootStartedAt $wrapperStartedAt)
+  if($wrapperGeneration.Count-eq1){$rootStopEvidence=StopVerifiedGeneration -Expected $wrapperGeneration[0] -RequireCanonical $false}else{$rootStopEvidence=[ordered]@{process_id=[int]$p.Id;generation_match=$false;stop_attempted=$false;already_exited=$true;detail='wrapper generation unavailable before timeout'}}
+  Start-Sleep -Seconds 1
+  $afterRoot=@(AllCimProcesses);$afterRootKeys=@{};foreach($proc in $afterRoot){$afterRootKeys[(IdentityKey -Process $proc)]=$proc};$remainingTrackedAttemptProcesses=@($trackedAttemptProcesses|Where-Object{$afterRootKeys.ContainsKey((IdentityKey -Process $_))})
+  $trackedCleanup=@();foreach($proc in @($remainingTrackedAttemptProcesses|Sort-Object CreationDate -Descending)){$trackedCleanup+=StopVerifiedGeneration -Expected $proc -RequireCanonical $false};$trackedGenerationCleanup=@($trackedCleanup);if($remainingTrackedAttemptProcesses.Count-gt0){Start-Sleep -Seconds 1}
+  $afterKill=@(AllCimProcesses);$baselineKeys=@($baselineCanonical|ForEach-Object{IdentityKey -Process $_});$timeoutSpawnedCanonical=@(CanonicalRunnerProcesses -Processes $afterKill|Where-Object{$baselineKeys -notcontains (IdentityKey -Process $_)})
+  $cleanup=@();foreach($proc in @($timeoutSpawnedCanonical|Sort-Object CreationDate -Descending)){$cleanup+=StopVerifiedGeneration -Expected $proc -RequireCanonical $true};$spawnedCanonicalCleanup=@($cleanup);if($timeoutSpawnedCanonical.Count-gt0){Start-Sleep -Seconds 1}
+  $finalProcesses=@(AllCimProcesses);$finalKeys=@{};foreach($proc in $finalProcesses){$finalKeys[(IdentityKey -Process $proc)]=$proc};$remainingTrackedAttemptProcesses=@($trackedAttemptProcesses|Where-Object{$finalKeys.ContainsKey((IdentityKey -Process $_))});$remainingTimeoutSpawnedCanonical=@(CanonicalRunnerProcesses -Processes $finalProcesses|Where-Object{$baselineKeys -notcontains (IdentityKey -Process $_)})
+  $allGone=($remainingTrackedAttemptProcesses.Count-eq0-and$remainingTimeoutSpawnedCanonical.Count-eq0);$stopExit=if($null-ne$rootStopEvidence.stop_exit_code){[int]$rootStopEvidence.stop_exit_code}else{0};$status=if($allGone){'BLOCKED_RETRY5_RECOVERY_TIMEOUT_ALL_ATTEMPT_GENERATIONS_TERMINATED'}else{'BLOCKED_RETRY5_RECOVERY_TIMEOUT_PROCESS_GENERATION_REMAINS'};WriteReceipt $status 124 $true $inner $owner $remoteHead $true $stopExit "wrapper_pid=$($p.Id);tracked=$($trackedAttemptProcesses.Count);remaining_tracked=$($remainingTrackedAttemptProcesses.Count);remaining_spawned_canonical=$($remainingTimeoutSpawnedCanonical.Count)";if($allGone){exit 124}else{exit 125}
 }
-$exit=$p.ExitCode
-$status=if($exit -eq 0){'TIMEOUT_GUARDED_FFSAFE_RETRY5_RECOVERY_COMPLETED'}else{'BLOCKED_INNER_FFSAFE_RETRY5_RECOVERY_FAILED'}
-Receipt $status $exit $false $inner "wrapper_pid=$($p.Id)"
-exit $exit
+$exit=$p.ExitCode;$status=if($exit-eq0){'TIMEOUT_GUARDED_FFSAFE_RETRY5_BROWSER_GATE_V4_RECOVERY_COMPLETED'}else{'BLOCKED_INNER_FFSAFE_RETRY5_BROWSER_GATE_V4_RECOVERY_FAILED'};WriteReceipt $status $exit $false $inner $owner $remoteHead $false -1 "wrapper_pid=$($p.Id)";exit $exit

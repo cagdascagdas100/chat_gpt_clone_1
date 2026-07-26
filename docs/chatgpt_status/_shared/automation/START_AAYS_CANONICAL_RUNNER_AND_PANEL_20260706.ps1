@@ -3,10 +3,10 @@ param(
   [string]$RepoRoot = "",
   [string]$RepoFullName = "cagdascagdas100/chat_gpt_clone_1",
   [string]$MainBranch = "codex/aays-single-runner-v5-20260706",
-  [string]$WorkRoot = "C:\AAYS_WT",
+  [string]$WorkRoot = "",
   [int]$IntervalSeconds = 60,
   [int]$MaxTasks = 1,
-  [int]$StaleMinutes = 120,
+  [int]$StaleMinutes = 15,
   [switch]$NoPanel,
   [switch]$NoLoop,
   [switch]$NoPush

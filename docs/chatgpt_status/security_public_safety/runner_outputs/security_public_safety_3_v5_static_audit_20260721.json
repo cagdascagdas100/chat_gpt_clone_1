@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_3",
+  "recorded_at": "2026-07-21T07:48:00+03:00",
+  "script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v5_chunked.py",
+  "script_blob_sha": "3df5a5bbdd8125f0bb0367b5dcfa8a13455d3591",
+  "checks": [
+    {"check": "target_range", "result": "PASS", "evidence": "range(61523,61571) creates exactly 48 ordered parcel IDs"},
+    {"check": "chunk_plan", "result": "PASS", "evidence": "four chunks, each exactly twelve rows"},
+    {"check": "exact_blob_guard", "result": "PASS", "evidence": "canonical gate is forced false unless materialization verified and Git blob SHA equals bb48164e7a0af78df875f30421a6a3068c43edb8"},
+    {"check": "identity_guard", "result": "PASS", "evidence": "requires 48 rows, 48 unique IDs and exact ordered equality to target list"},
+    {"check": "four_gate_accuracy", "result": "PASS", "evidence": "accuracy is recomputed only from canonical, crime API, outcomes API and IoD2025 v2 booleans"},
+    {"check": "unverified_score_suppression", "result": "PASS", "evidence": "security_score_percent is set to null unless accuracy_score_4 equals 4"},
+    {"check": "reconciliation", "result": "PASS", "evidence": "writes expected/actual/unique row counts, 192 expected gate cells and null-score invariant"},
+    {"check": "single_runner", "result": "PASS", "evidence": "one main queue task, four chunks sequential in one process; no parallel runner requested"},
+    {"check": "safety", "result": "PASS", "evidence": "fake_data, db_write, migration and production_deploy remain false"}
+  ],
+  "static_checks_passed": 9,
+  "static_checks_failed": 0,
+  "runtime_execution_claimed": false,
+  "verified_parcel_rows": 0,
+  "fake_data": false,
+  "final_ready": false
+}

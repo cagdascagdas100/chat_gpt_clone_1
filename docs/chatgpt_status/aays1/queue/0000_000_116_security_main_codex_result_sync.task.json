@@ -1,0 +1,47 @@
+{
+  "task_id": "security-main-codex-result-sync-verify-20260708-001",
+  "page_key": "aays1",
+  "layer_page_key": "security_public_safety",
+  "status": "done",
+  "target_branch": "main",
+  "script_path": "docs/chatgpt_status/security_public_safety/automation/116_security_main_codex_result_sync.ps1",
+  "automation_script": "docs/chatgpt_status/security_public_safety/automation/116_security_main_codex_result_sync.ps1",
+  "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/116_security_main_codex_result_sync.json",
+  "objective": "Use the existing single shared runner flow to reconcile stale main Security/Public Safety state with verified batch 115 artifacts already present on codex/aays-single-runner-v5-20260706, without fabricating data and without setting final_ready true.",
+  "source_branch": "codex/aays-single-runner-v5-20260706",
+  "source_evidence": {
+    "runner_output": "docs/chatgpt_status/security_public_safety/runner_outputs/115_security_batch_join_backoff.json",
+    "verified_geojson": "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
+    "verified_csv": "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "manifest": "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "latest_changes": "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
+  },
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1",
+    "docs/chatgpt_status/security_public_safety",
+    "england_map_web/data/security_public_safety",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates",
+    "docs/chatgpt_status/_shared/status",
+    "docs/chatgpt_status/_shared/reports",
+    "docs/chatgpt_status/_shared/heartbeat"
+  ],
+  "acceptance_checks": [
+    "fetch source_branch artifacts from git",
+    "verify source runner output completed with verified_new_rows >= 150 and fake_data=false",
+    "copy only verified text artifacts into main worktree paths",
+    "write runner output/report/status/latest_changes.json",
+    "keep final_ready=false until browser smoke and parcel popup/right-panel proof exist"
+  ],
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "fake_data": false,
+  "final_ready": false,
+  "created_at": "2026-07-07T21:00:00+00:00",
+  "max_minutes": 20,
+  "picked_at": "2026-07-08T16:35:23.3831227+00:00",
+  "completed_at": "2026-07-08T16:35:24.7765564+00:00",
+  "runner_status": "GITHUB_ACTIONS_DONE",
+  "automation_exit_code": 0
+}

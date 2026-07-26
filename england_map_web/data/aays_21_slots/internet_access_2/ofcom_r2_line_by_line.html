@@ -1,50 +1,29 @@
 <!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>internet_access_2 — satır satır ilerleme</title>
-<style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}
-.cards{display:flex;gap:10px;flex-wrap:wrap}
-.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}
-table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}
-th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}
-th{background:#eceff1}.pass{color:#087f23;font-weight:bold}.blocked{color:#b71c1c;font-weight:bold}
-code,a{word-break:break-all}.note{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}
-</style>
-</head>
-<body>
-<h1>internet_access_2 — satır satır ilerleme</h1>
-<div id="cards" class="cards"></div>
-<p id="blocker" class="note"></p>
-<h2>İşlem satırları</h2>
-<table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
-<h2>Hazır örnek adaylar</h2>
-<table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Geometri</th><th>İnternet</th><th>ONSPD</th><th>Legacy gigabit</th><th>Legacy SFBB</th><th>Resmî coverage</th></tr></thead><tbody id="examples"></tbody></table>
-<h2>11.013 satırın parça dizini</h2>
-<table><thead><tr><th>Parça</th><th>Başlangıç</th><th>Bitiş</th><th>Satır</th></tr></thead><tbody id="chunks"></tbody></table>
-<h2>Resmî kaynak kontrolleri</h2>
-<table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="sources"></tbody></table>
-<p id="error"></p>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_2 — satır satır ilerleme</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:150px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1}code{word-break:break-all}.note{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}</style></head><body>
+<h1>internet_access_2 — satır satır ilerleme</h1><div id="cards" class="cards"></div><p id="blocker" class="note"></p>
+<h2>İşlem satırları</h2><table><thead><tr><th>#</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="operations"></tbody></table>
+<h2>Hazır örnek adaylar</h2><table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Geometri</th><th>İnternet</th><th>ONSPD</th><th>Legacy gigabit</th><th>Legacy SFBB</th><th>Resmî coverage</th></tr></thead><tbody id="examples"></tbody></table>
+<h2>Terminated kimlik incelemesi</h2><table><thead><tr><th>Satır</th><th>Parsel</th><th>HMLR</th><th>Postcode</th><th>Doğruluk</th><th>Giriş</th><th>Sonlandırma</th><th>Durum</th></tr></thead><tbody id="reviews"><tr><td colspan="8">Kanonik host üzerinde 017 orchestrator çalıştırılınca tam iki inceleme satırı burada görünecek.</td></tr></tbody></table>
+<h2>11.013 satırın parça dizini</h2><table><thead><tr><th>Parça</th><th>Başlangıç</th><th>Bitiş</th><th>Satır</th></tr></thead><tbody id="chunks"></tbody></table>
+<h2>Resmî kaynak kontrolleri</h2><table><thead><tr><th>#</th><th>Kaynak</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="sources"></tbody></table><p id="error"></p>
 <script>
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const load=p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(p+' HTTP '+r.status);return r.json()});
-Promise.all([
- load('./006_existing_11013_progress_latest.json'),
- load('./006_existing_11013_recovery_latest.json'),
- load('./006_existing_11013_examples_wave2.json')
-]).then(([d,r,w])=>{
- const operations=[...(d.operation_rows||[]),...(r.operation_rows||[])].sort((a,b)=>(a.row||0)-(b.row||0));
- const examples=[...(d.candidate_examples||[]),...(w.candidate_examples||[])].sort((a,b)=>(a.line||0)-(b.line||0));
- const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['Ana işlem',d.completed_operations+'/'+d.total_operations],['Destek kontrolü',(r.support_checks_completed??d.support_checks_completed)+'/'+(r.support_checks_total??d.support_checks_total)],['Hazır satır',d.existing_shard2_rows],['Postcode',d.distinct_postcodes],['Canlı kimlik',d.postcode_live],['İnceleme',d.postcode_terminated_review_required],['Kapsama adayı',d.official_coverage_verified_candidates],['Doğruluk yazıldı',d.accuracy_written],['Görünür satır',d.visible_candidate_rows],['Görünür örnek',examples.length],['Parça',d.candidate_chunk_count],['Kaynak',d.source_upgrades]];
+const optional=p=>load(p).catch(()=>null),root='../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/',fallback='../../../../docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/recovery/';
+const audit=n=>load(root+n).catch(()=>load(fallback+n)).catch(()=>null);
+const audits=["026_wave16_wave17_rows_and_current_ofcom_recheck_audit.json","027_wave18_wave19_rows_and_current_ofcom_recheck_audit.json","028_wave20_wave21_rows_and_current_ofcom_recheck_audit.json","029_wave22_wave23_rows_and_current_ofcom_recheck_audit.json","030_wave24_wave25_rows_and_current_ofcom_recheck_audit.json","031_wave26_wave27_rows_and_current_ofcom_recheck_audit.json","032_wave28_wave29_rows_and_current_ofcom_recheck_audit.json","033_wave30_wave31_rows_and_current_ofcom_data_definition_audit.json","034_wave32_wave33_rows_and_ofcom_open_data_boundary_audit.json","035_wave34_wave35_rows_and_ofcom_open_data_boundary_audit.json","036_wave36_wave37_rows_and_terms_of_use_boundary_audit.json","037_wave38_wave39_rows_and_checker_prediction_boundary_audit.json","038_wave40_wave41_rows_and_address_level_methodology_boundary_audit.json","039_wave42_wave43_rows_and_no_source_inflation_recheck_audit.json","040_wave44_wave45_rows_and_postcode_only_exclusion_recheck_audit.json","041_wave46_wave47_rows_and_fixed_coverage_performance_boundary_audit.json","042_wave48_wave49_rows_and_r2_data_definition_recheck_audit.json","043_wave50_wave51_rows_and_spring_2026_download_recheck_audit.json","044_wave52_wave55_rows_and_pnd_current_vs_future_boundary_audit.json","045_wave56_wave59_rows_and_live_checker_prediction_boundary_audit.json","046_wave60_wave63_rows_and_checker_api_scope_boundary_audit.json","047_wave64_wave67_rows_and_no_source_inflation_recheck_audit.json","048_wave68_wave71_rows_and_spring_faq_recheck_audit.json","049_wave72_wave75_rows_and_about_checker_missing_prediction_boundary_audit.json","050_wave76_wave81_rows_and_current_checker_recheck_audit.json","051_wave82_wave87_rows_and_current_ofcom_recheck_audit.json","052_wave88_wave93_rows_and_current_ofcom_recheck_audit.json","053_wave94_wave101_rows_and_current_ofcom_recheck_audit.json","054_wave102_wave109_rows_and_current_ofcom_recheck_audit.json","055_wave110_wave121_rows_and_current_ofcom_recheck_audit.json"];
+Promise.all([load('./006_existing_11013_progress_latest.json'),load('./006_existing_11013_recovery_latest.json'),...Array.from({length:120},(_,i)=>load('./006_existing_11013_examples_wave'+(i+2)+'.json')),...audits.map(audit),optional('./006_existing_11013_identity_review_rows.json')]).then(([d,r,...rest])=>{
+ const review=rest.pop(),auditData=rest.splice(120),waves=rest,base=(d.candidate_examples||[]).filter(x=>Number(x.line||0)<=6),examples=[...base,...waves.flatMap(w=>w.candidate_examples||[])].sort((a,b)=>(a.line||0)-(b.line||0));
+ const opMap=new Map();[...(d.operation_rows||[]),...(r.operation_rows||[]),...auditData.filter(Boolean).flatMap(x=>x.operation_rows||[])].forEach(x=>opMap.set(Number(x.row||0),x));const operations=[...opMap.values()].sort((a,b)=>(a.row||0)-(b.row||0));
+ const reviews=(review&&review.rows)||[],supportDone=Math.max(Number(d.support_checks_completed||0),Number(r.support_checks_completed||0),...auditData.filter(Boolean).map(x=>Number(x.support_checks_completed||0))),supportTotal=Math.max(Number(d.support_checks_total||0),Number(r.support_checks_total||0),...auditData.filter(Boolean).map(x=>Number(x.support_checks_total||0))),latest=auditData.filter(Boolean).at(-1),uniqueCount=latest?.unique_example_identity_count||examples.length,duplicateCount=latest?.duplicate_example_identity_count||0,supportPct=supportTotal?Math.round((supportDone/supportTotal)*10000)/100:0;
+ const cards=[['Durum',d.state],['Genel ilerleme',d.progress_percent+'%'],['Artış','+'+d.percent_change+'%'],['Ana işlem',d.completed_operations+'/'+d.total_operations],['Destek kontrolü',supportDone+'/'+supportTotal],['Destek yüzdesi',supportPct+'%'],['Hazır satır',d.existing_shard2_rows],['Postcode',d.distinct_postcodes],['Canlı kimlik',d.postcode_live],['İnceleme',d.postcode_terminated_review_required],['Kapsama adayı',d.official_coverage_verified_candidates],['Doğruluk yazıldı',d.accuracy_written],['Görünür satır',d.visible_candidate_rows],['Görünür örnek',examples.length],['Benzersiz örnek',uniqueCount],['Tekrar örnek',duplicateCount],['Örneklenen parça',d.sampled_chunk_count+'/'+d.candidate_chunk_count],['Review çıktısı',reviews.length+'/2'],['Kaynak',latest?.source_upgrades??d.source_upgrades]];
  document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card">${e(x[0])}<br><b>${e(x[1])}</b></div>`).join('');
- document.getElementById('blocker').innerHTML='<b>Engel:</b> '+e(d.blocker)+'<br><b>Sonraki güvenli adım:</b> '+e(r.corrected_next_step)+'<br><b>Not:</b> Legacy yüzdeler yalnız karşılaştırma bağlamıdır; resmî Ocak 2026 Ofcom r2 coverage doğrulanmadan 3/4 doğruluk yazılmaz.';
+ document.getElementById('blocker').innerHTML='<b>Engel:</b> '+e(d.blocker)+'<br><b>Sonraki güvenli adım:</b> '+e(d.next_step||r.corrected_next_step)+'<br><b>Not:</b> Coverage ölçülmüş parsel hızı değildir; exact Ocak 2026 Ofcom r2 satırı olmadan 3/4 yazılmaz. Checker sonuçları operatör tahminidir; gerçek hizmet farklı olabilir.';
  document.getElementById('operations').innerHTML=operations.map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.operation)}</td><td>${e(x.status)}</td><td><code>${e(x.evidence)}</code></td></tr>`).join('');
  document.getElementById('examples').innerHTML=examples.map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.hmlr_geometry_accuracy)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd_status)}</td><td>${e(x.legacy_gigabit_available_pct)}%</td><td>${e(x.legacy_superfast_30mbps_available_pct)}%</td><td>${x.official_coverage_verified?'PASS':'BEKLİYOR'}</td></tr>`).join('');
+ if(reviews.length)document.getElementById('reviews').innerHTML=reviews.map(x=>`<tr><td>${e(x.line)}</td><td>${e(x.parcel_id)}<br>row ${e(x.row_no)}</td><td>${e(x.hmlr_inspire_id)}</td><td>${e(x.postcode)}</td><td>${e(x.internet_accuracy)}</td><td>${e(x.onspd?.dointr)}</td><td>${e(x.onspd?.doterm)}</td><td>${e(x.candidate_status)}</td></tr>`).join('');
  document.getElementById('chunks').innerHTML=(d.candidate_chunks||[]).map(x=>`<tr><td>${e(x.chunk)}</td><td>${e(x.row_start)}</td><td>${e(x.row_end)}</td><td>${e(x.count)}</td></tr>`).join('');
- document.getElementById('sources').innerHTML=(d.source_checks||[]).map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.source)}</td><td>${e(x.status)}</td><td>${e(x.evidence)}</td></tr>`).join('');
+ document.getElementById('sources').innerHTML=(d.source_checks||[]).map(x=>`<tr><td>${e(x.row)}</td><td>${e(x.source)}</td><td>${e(x.status)}</td><td><code>${e(x.evidence)}</code></td></tr>`).join('');
 }).catch(x=>document.getElementById('error').textContent='Veri yüklenemedi: '+x.message);
-</script>
-</body>
-</html>
+</script></body></html>

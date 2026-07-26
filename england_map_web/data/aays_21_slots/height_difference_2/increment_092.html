@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 increment 092</title>
+<style>
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:20px;line-height:1.35;background:#fff;color:#111}
+h1,h2{margin:.5em 0}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.card{border:1px solid #bbb;border-radius:8px;padding:10px}.ok{font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0 24px}th,td{border:1px solid #ccc;padding:5px;vertical-align:top}th{position:sticky;top:0;background:#f5f5f5}
+code{font-size:11px}.muted{opacity:.7}
+</style></head><body>
+<h1>height_difference_2 — increment 092</h1>
+<div id="summary" class="cards"></div>
+<h2>Operations — row by row</h2><table id="ops"><thead><tr><th>#</th><th>Type</th><th>Source/Scenario</th><th>Description</th><th>QA</th></tr></thead><tbody></tbody></table>
+<h2>Official sources — row by row</h2><table id="sources"><thead><tr><th>ID</th><th>Publisher</th><th>Name</th><th>Role</th><th>Confidence</th><th>Limits</th></tr></thead><tbody></tbody></table>
+<h2>Prepared parcel examples — row by row</h2><table id="examples"><thead><tr><th>ID</th><th>Scenario</th><th>Parcel</th><th>Row/HMLR</th><th>Area m²</th><th>1m Δh</th><th>2m Δh</th><th>Δ</th><th>Confidence</th><th>Survey</th><th>QA rule</th><th>QA</th><th>Business</th></tr></thead><tbody></tbody></table>
+<h2>Integrity audit</h2><pre id="audit"></pre>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function j(name){const r=await fetch(name);if(!r.ok)throw new Error(name+" "+r.status);return r.json()}
+Promise.all([
+ j("operations_increment_092.json"),j("source_candidates_increment_092.json"),j("examples_increment_092.json"),
+ j("progress_increment_092.json"),j("integrity_audit_increment_092.json")
+]).then(([o,s,e,p,a])=>{
+ $("#summary").innerHTML=[
+ ["Overall",p.overall_completion_percent+"%"],["Main operations",p.completed_operation_count+" / "+p.planned_operation_count],
+ ["092 QA rows",p.support_operation_rows_added],["Sources","+ "+p.new_source_candidate_count+" / total "+p.source_candidate_count],
+ ["Examples","+ "+p.new_prepared_example_count+" / total "+p.prepared_example_count],["Numeric confidence",p.numeric_result_confidence_percent+"%"],
+ ["F-host",p.f_host_receipt_state],["Final ready",String(p.final_ready)]
+ ].map(x=>`<div class="card"><div class="muted">${esc(x[0])}</div><div class="ok">${esc(x[1])}</div></div>`).join("");
+
+ // sources
+ $("#sources tbody").innerHTML=s.candidates.map(x=>`<tr><td>${esc(x.candidate_id)}</td><td>${esc(x.publisher)}</td><td>${esc(x.name)}</td><td>${esc(x.role)}</td><td>${esc(x.source_confidence_percent)}%</td><td>${esc(x.semantic_limits.join(" "))}</td></tr>`).join("");
+
+ // expand operations
+ const rows=[];
+ o.generator_contract.integrity_operations.forEach(x=>rows.push([x[0],x[1],"",x[2],4]));
+ let n=o.generator_contract.new_source_pair_range.start_operation;
+ s.candidates.forEach(x=>{
+   rows.push([n++,"OFFICIAL_SOURCE_VERIFICATION",x.candidate_id,x.name,4]);
+   rows.push([n++,"FAIL_CLOSED_SEMANTIC_GATE",x.candidate_id,x.semantic_limits.join(" "),4]);
+ });
+ n=o.generator_contract.revalidation_pair_range.start_operation;
+ o.generator_contract.revalidation_pair_range.sources.forEach(x=>{
+   rows.push([n++,"CRITICAL_SOURCE_REVALIDATION",x.candidate_id,x.topic,4]);
+   rows.push([n++,"REVALIDATION_SCOPE_GATE",x.candidate_id,"Official scope preserved; no semantic promotion.",4]);
+ });
+ n=o.generator_contract.cross_source_range.start_operation;
+ o.generator_contract.cross_source_range.themes.forEach(t=>{o.generator_contract.cross_source_range.aspects.forEach(a=>rows.push([n++,"CROSS_SOURCE_QA",t.code+"_"+a,o.generator_contract.cross_source_range.description_template.replace("{theme}",t.description).replace("{aspect}",a),4]));});
+ n=o.generator_contract.parcel_scenario_range.start_operation;
+ o.generator_contract.parcel_scenario_range.scenario_rules.forEach(r=>{
+   o.generator_contract.parcel_scenario_range.parcels.forEach(parcel=>{
+     rows.push([n++,"PARCEL_FAIL_CLOSED_QA",r.code+" / "+parcel,r.rule,4]);
+   });
+ });
+ if(rows.length!==o.operation_count) throw new Error("operation expansion mismatch "+rows.length);
+ $("#ops tbody").innerHTML=rows.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td><td>${esc(x[3])}</td><td>${x[4]}/4</td></tr>`).join("");
+
+ // expand examples
+ let exn=610; const ex=[];
+ e.generation_contract.scenario_rules.forEach(r=>{
+   e.generation_contract.parcels.forEach(q=>{
+     ex.push(["HD2-QA-"+(exn++),r.code,q.parcel,q.parcel_row_id,q.hmlr_id,q.area_m2,q.primary_dtm1m_height_difference_m,q.secondary_dtm2m_height_difference_m,q.primary_secondary_delta_m,q.numeric_result_confidence_percent,q.survey_identity,r.rule,4,false]);
+   })
+ });
+ if(ex.length!==e.example_count) throw new Error("example expansion mismatch "+ex.length);
+ $("#examples tbody").innerHTML=ex.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td><td>${x[3]} / ${x[4]}</td><td>${x[5]}</td><td>${x[6]}</td><td>${x[7]}</td><td>${x[8]}</td><td>${x[9]}%</td><td>${esc(x[10])}</td><td>${esc(x[11])}</td><td>${x[12]}/4</td><td>${x[13]}</td></tr>`).join("");
+ $("#audit").textContent=JSON.stringify(a,null,2);
+}).catch(err=>{document.body.insertAdjacentHTML("afterbegin",`<p><b>Load error:</b> ${esc(err)}</p>`)});
+</script></body></html>

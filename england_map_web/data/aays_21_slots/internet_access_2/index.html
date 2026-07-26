@@ -54,50 +54,101 @@ function sampleObjects(payload){
   const cols=payload.columns||[];
   return rows.map(row=>Object.fromEntries(cols.map((c,i)=>[c,row[i]])));
 }
+function numberRange(start,end){
+  const a=Number(start),b=Number(end);
+  if(!Number.isFinite(a)||!Number.isFinite(b)||b<a) return [];
+  return Array.from({length:b-a+1},(_,i)=>a+i);
+}
+function expandFormula(f){
+  if(!f) return [];
+  const start=Number(f.candidate_row_start),end=Number(f.candidate_row_end),waveStart=Number(f.wave_start);
+  const offsets=(f.offsets||[]).map(Number);
+  return numberRange(start,end).map((candidateRow,i)=>({wave:waveStart+i,candidate_row:candidateRow,lines:offsets.map(offset=>offset+candidateRow)}));
+}
+function manifestWaves(payload){
+  if(payload?.waves?.length) return payload.waves;
+  const formulas=payload?.wave_formulas?.length?payload.wave_formulas:(payload?.wave_formula?[payload.wave_formula]:[]);
+  return formulas.flatMap(expandFormula);
+}
+function buildLatestOps(latest){
+  if(latest?.operation_rows?.length) return latest.operation_rows;
+  const formulas=latest?.operation_formulas?.length?latest.operation_formulas:(latest?.operation_formula?[latest.operation_formula]:[]);
+  const rows=formulas.flatMap(f=>{
+    const start=Number(f.candidate_row_start),end=Number(f.candidate_row_end),waveStart=Number(f.wave_start),noStart=Number(f.no_start);
+    const offsets=(f.offsets||[]).map(Number);
+    return numberRange(start,end).map((candidateRow,i)=>({no:noStart+i,operation:`wave${waveStart+i}_source_direct_manifest`,line:offsets.map(offset=>offset+candidateRow).join(', '),state:f.wave_state||'PASS_SOURCE_LINES'}));
+  });
+  const tail=latest?.operation_tail||formulas.flatMap(f=>f.tail||[]);
+  return rows.concat(tail);
+}
+
+function expandGuardStreams(payload){
+  if(!payload?.guard_streams?.length) return [];
+  let no=Number(payload.row_start)||1;
+  const rows=[];
+  for(const stream of payload.guard_streams){
+    for(const fact of stream.facts||[]){
+      rows.push({no:no++,operation:fact.operation,line:'',parcel_id:'',postcode:'',state:fact.state,detail:fact.detail,source:stream.source,source_url:stream.source_url,kind:'SOURCE_FACT'});
+      rows.push({no:no++,operation:`${fact.operation}_write_boundary_guard`,line:'',parcel_id:'',postcode:'',state:'PASS_NO_PARCEL_OR_ACCURACY_PROMOTION',detail:stream.write_limit,source:stream.source,source_url:stream.source_url,kind:'WRITE_BOUNDARY'});
+    }
+  }
+  return rows;
+}
+
+async function resolveLatestRows(payload){
+  if(!payload?.source_selections?.length) return asObjects(payload);
+  const batches=await Promise.all(payload.source_selections.map(async selection=>{
+    const source=await fetchJson(selection.path,{critical:true});
+    const selected=selection.lines?.length?selection.lines:numberRange(selection.line_start,selection.line_end);
+    const wanted=new Set(selected.map(Number));
+    return (source?.rows||[]).filter(row=>wanted.has(Number(row.line))).map(row=>({...row,source_chunk:selection.chunk,source_blob_sha:selection.blob_sha,legacy_gigabit_available_pct:row.legacy_metrics?.gigabit_available_pct,legacy_superfast_30mbps_available_pct:row.legacy_metrics?.superfast_30mbps_available_pct}));
+  }));
+  const byLine=new Map(batches.flat().map(row=>[Number(row.line),row]));
+  const ordered=[];
+  for(const wave of manifestWaves(payload)){
+    for(const line of wave.lines||[]){
+      const row=byLine.get(Number(line));
+      if(row) ordered.push({...row,wave:wave.wave,candidate_row:wave.candidate_row});
+      else errors.push({file:payload.state||'latest-wave-manifest',state:'SOURCE_ROW_NOT_FOUND',detail:`line ${line}`});
+    }
+  }
+  return ordered;
+}
 (async()=>{
   try{
     const progress=await fetchJson('progress_latest.json',{critical:true});
-    const [operationManifest,samples,sources,runtime]=await Promise.all([
-      fetchJson('operations_latest.json'),
-      fetchJson('sample_rows_latest.json'),
-      fetchJson('official_sources_latest.json'),
-      fetchJson('runtime_pending_health_latest.json')
-    ]);
+    const [operationManifest,samples,sources,runtime,latest]=await Promise.all([fetchJson('operations_latest.json'),fetchJson('sample_rows_latest.json'),fetchJson('official_sources_latest.json'),fetchJson('runtime_pending_health_latest.json'),fetchJson('continuation_latest.json',{critical:true})]);
     let operationRows=asObjects(operationManifest);
     if(operationManifest?.operation_log){
       const raw=await fetchText(operationManifest.operation_log);
       if(raw) operationRows=raw.split(/\r?\n/).filter(Boolean).map((line,i)=>{try{return JSON.parse(line)}catch(e){return {no:i+1,operation:'jsonl_parse',state:'OPTIONAL_FAILED',detail:String(e)}}});
     }
     const sampleRows=sampleObjects(samples);
-    const p=progress.progress||{},c=progress.candidates||{},w=progress.web_visibility||{};
-    document.getElementById('metrics').innerHTML=[
-      metric('Kimlik aşaması',`${p.current_identity_wave_completed_operations}/${p.current_identity_wave_total_operations} · %${p.current_identity_wave_percent}`),
-      metric('Görev seti',`${p.expanded_task_set_completed}/${p.expanded_task_set_total} · %${p.expanded_task_set_completed_percent}`),
-      metric('Altyapı',`${p.infrastructure_repair_completed}/${p.infrastructure_repair_total} · %${p.infrastructure_repair_percent}`),
-      metric('Web runtime',`${p.web_runtime_health_completed}/${p.web_runtime_health_total} · %${p.web_runtime_health_percent}`),
-      metric('Ürün planı',`${p.product_plan_completed}/${p.product_plan_total} · %${p.product_plan_percent}`),
-      metric('Kimlik adayı',c.verified_postcode_identity_rows),metric('Canlı postcode',c.verified_live_postcodes),metric('Örnek',c.featured_verified_sample_rows),metric('Görünür işlem',w.visible_operation_rows)
-    ].join('');
+    const latestWavePath=latest?.visibility?.latest_wave_path;
+    const latestWave=latestWavePath?await fetchJson(latestWavePath):null;
+    const latestRows=latest?.candidate_examples?.length?latest.candidate_examples:await resolveLatestRows(latestWave);
+    const incrementParts=latest?.latest_operations?.json_parts||[];
+    const incrementPayloads=incrementParts.length?await Promise.all(incrementParts.map(path=>fetchJson(path))):[];
+    const incrementOps=incrementPayloads.flatMap(payload=>payload?.operations||(payload?.rows?asObjects(payload):expandGuardStreams(payload)));
+    const latestOps=incrementOps.length?incrementOps:buildLatestOps(latest);
+    const p=progress.progress||{},c=progress.candidates||{},lp=latest.progress||{},lv=latest.visibility||{};
+    document.getElementById('metrics').innerHTML=[metric('Ana işlem',`${lp.completed_operations}/${lp.total_operations} · %${lp.progress_percent}`),metric('Ana artış',`${Number(lp.percent_change_points||0)>=0?'+':''}${lp.percent_change_points||0} puan`),metric('Destek kontrolü',`${lp.support_checks_completed}/${lp.support_checks_total} · %${lp.support_progress_percent}`),metric('Destek artışı',`${Number(lp.support_percent_change_points||0)>=0?'+':''}${lp.support_percent_change_points||0} puan`),metric('Destek kapsam artışı',`+%${lp.support_scope_growth_percent||0}`),metric('Bu tur eklenen',lp.support_operations_added_this_turn||0),metric('İşlem satırı',lp.supplemental_operation_rows_through||''),metric('Kimlik adayı',c.verified_postcode_identity_rows),metric('Canlı postcode',c.verified_live_postcodes),metric('Auditli örnek',lv.audited_visible_examples),metric('Yeni örnek',lv.new_examples),metric('Kaynak rotası',latest.sources?.source_routes),metric('Resmî/public rota',latest.sources?.official_or_public_routes)].join('');
     let html='';
-    html+=table('Görev ve blocker durumu',['Öğe','Durum','Detay'],[
-      ['Coordinator',progress.publisher?.current_runtime_state,progress.publisher?.next_required_runtime_action],
-      ['Publisher',progress.publisher?.current_runtime_error,'Eski süreç bellekte; persistent wrapper remote’da mevcut'],
-      ['Exact Ofcom join',progress.accuracy?.strict_exact_join_output_state,'P0 çıktı oluşmadı'],
-      ['Ofcom r2 binary',progress.blockers?.includes('OFFICIAL_OFCom_R2_ZIP_BINARY_FETCH_BLOCKED')?'BLOCKED':'PASS','3/4 kapısı kapalı'],
-      ['Web continuation',progress.web_runtime?.web_continuation_blocked?'BLOCKED':'PASS','Örnek ve kaynak QA devam edebilir'],['final_ready',progress.final_ready,'Güvenlik gereği false']
-    ]);
-    if(operationRows.length) html+=table(`Satır satır işlemler (${operationRows.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],operationRows.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
+    html+=table('Görev ve blocker durumu',['Öğe','Durum','Detay'],[['Owner',latest.live_owner_found?'BLOCKED_LIVE_OWNER':'PASS_NO_LIVE_OWNER','İkinci görev veya runner başlatılmadı'],['Teknik görev','PUBLISHED','Uzak readback tamamlandı; business blocker korundu'],['Exact Ofcom join',latest.accuracy?.strict_exact_r2_guard,'Exact r2 archive olmadan 3/4 kapalı'],['Ofcom r2 binary',latest.sources?.exact_binary_state,'Arşiv alınamadı/doğrulanamadı'],['Web continuation','PASS','Yeni işlem parçaları satır satır yükleniyor'],['final_ready',latest.final_ready,'Güvenlik gereği false']]);
+    if(latestOps.length) html+=table(`Son devam işlemleri (${latestOps.length})`,['No','İşlem','Satır','Parsel','Postcode','Kaynak','Durum','Detay'],latestOps.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.source??'',r.state,r.detail??'']));
+    if(latestRows.length) html+=table(`Wave ${lv.latest_wave_number||''} doğrulanmış adaylar (${latestRows.length})`,['Wave','Aday','Satır','Parsel','HMLR','Postcode','Legacy gigabit %','Legacy superfast %','ONSPD','Doğruluk','Resmî kapsam','Ölçülmüş hız','Kaynak chunk'],latestRows.map(r=>[r.wave??'',r.candidate_row??'',r.line,r.parcel_id,r.hmlr_inspire_id,r.postcode_space||r.postcode,r.legacy_gigabit_available_pct,r.legacy_superfast_30mbps_available_pct,r.onspd_status,r.internet_accuracy,r.official_coverage_verified,r.parcel_measured_speed,r.source_chunk]));
+    if(operationRows.length) html+=table(`Önceki satır satır işlemler (${operationRows.length})`,['No','İşlem','Satır','Parsel','Postcode','Durum','Detay'],operationRows.map(r=>[r.no,r.operation,r.line??'',r.parcel_id??'',r.postcode??'',r.state,r.detail??'']));
     if(runtime) html+=table('Runtime sağlık ve takılma kayıtları',['No','Alan','Durum','Detay'],runtime.rows.map(r=>[r.no,r.area,r.state,r.detail]));
-    if(sampleRows.length) html+=table(`Doğrulanmış yeni örnekler (${sampleRows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],sampleRows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
+    if(sampleRows.length) html+=table(`Önceki konsolide örnekler (${sampleRows.length})`,['Satır','Parsel','Postcode','Legacy gigabit %','ONSPD','Doğruluk','Resmî kapsam','Koordinat'],sampleRows.map(r=>[r.line,r.parcel_id,r.postcode,r.legacy_gigabit_pct,r.onspd_live?'LIVE':'NO',r.internet_accuracy,r.official_coverage_verified,`${r.lat}, ${r.long}`]));
     if(sources) html+=table('Resmî kaynak rotaları',['Kurum','Kaynak','Rol','Durum / sınır'],sources.sources.map(s=>[s.authority,s.source,s.role,s.route_state||JSON.stringify(s.route_states||{})]));
     if(errors.length) html+=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(e=>[e.file,e.state,e.detail]));
     document.getElementById('content').innerHTML=html;
     document.getElementById('message').className='ok';
-    document.getElementById('message').textContent=`Yüklendi. ${operationRows.length} işlem, ${sampleRows.length} yeni örnek, ${errors.length} optional hata.`;
-    document.getElementById('updated').textContent=`Güncelleme: ${progress.updated_at||''}`;
+    document.getElementById('message').textContent=`Yüklendi. Ana işlem ${lp.completed_operations}/${lp.total_operations}, destek ${lp.support_checks_completed}/${lp.support_checks_total}, bu tur +${lp.support_operations_added_this_turn||0}, auditli örnek ${lv.audited_visible_examples}, yeni örnek ${lv.new_examples}, çözülen son aday ${latestRows.length}.`;
+    document.getElementById('updated').textContent=`Güncelleme: ${latest.generated_at||progress.updated_at||''}`;
   }catch(e){
     document.getElementById('message').className='error';
-    document.getElementById('message').textContent=`Kritik progress_latest.json yüklenemedi: ${e}`;
+    document.getElementById('message').textContent=`Kritik devam kaydı yüklenemedi: ${e}`;
     document.getElementById('content').innerHTML=table('Tarayıcı fetch hata kayıtları',['Dosya','Durum','Detay'],errors.map(x=>[x.file,x.state,x.detail]));
   }
 })();

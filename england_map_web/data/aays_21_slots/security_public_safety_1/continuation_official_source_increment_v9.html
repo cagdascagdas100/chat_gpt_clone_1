@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <link rel="icon" href="data:,">
+  <title>Security 1 — Resmî Kaynak Artışı V35</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:#fff;border:1px solid #cbd5df;padding:10px;min-width:170px}.note{padding:12px;border:1px solid #d4a72c;background:#fff7d6;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:12px 0}th,td{border:1px solid #cbd5df;padding:7px;text-align:left;vertical-align:top}th{background:#eaf0f5}[class^="PASS"]{font-weight:700}.BLOCKED{font-weight:700}.mono{font-family:Consolas,monospace;overflow-wrap:anywhere}a{color:#0759a5}
+  </style>
+</head>
+<body data-slot-id="security_public_safety_1" data-final-ready="false">
+  <h1>Security / Public Safety 1 — Resmî Kaynak Artışı V35</h1>
+  <div class="note"><strong>Not:</strong> Bu tablo recovery sürerken doğrulanan resmî kaynak adaylarını gösterir. Kaynak doğruluğu 4/4 olsa da sağlık ve bakım güvenliği, çevre-su ve gıda denetimi, yol-deniz-havacılık ve enerji ağı güvenliği, bina yetkinliği, siber dayanıklılık ve kamu gözetimi doğrudan parsel skoru değildir; canlı endpoint parity ve kabul kanıtı ayrıca gereklidir. V35 verileri yedi küçük doğrulama parçasından sıra numarasıyla birleştirilir.</div>
+  <div class="cards">
+    <div class="card">Ana ilerleme<br><strong id="progress">yükleniyor</strong></div>
+    <div class="card">Yeni doğrulama<br><strong id="checks">yükleniyor</strong></div>
+    <div class="card">Kümülatif doğrulama<br><strong id="total">yükleniyor</strong></div>
+    <div class="card">Kaynak yükseltmesi<br><strong id="upgrades">yükleniyor</strong></div>
+    <div class="card">Bağlam adayı<br><strong id="contextCandidates">yükleniyor</strong></div>
+    <div class="card">Kaynak satırı<br><strong id="sourceRows">yükleniyor</strong></div>
+    <div class="card">Bu tur işlem<br><strong id="operationCount">yükleniyor</strong></div>
+    <div class="card">Kümülatif işlem<br><strong id="operationTotal">yükleniyor</strong></div>
+    <div class="card">Veri parçası<br><strong id="partCount">yükleniyor</strong></div>
+    <div class="card">Yeni parsel değeri<br><strong id="parcelValues">yükleniyor</strong></div>
+  </div>
+  <h2>Yeni resmî kaynak adayları — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>Resmî kaynak</th><th>Doğrulanan bilgi</th><th>Kalite etkisi</th><th>Doğruluk</th><th>Benimseme</th></tr></thead><tbody id="rows"></tbody></table>
+  <h2>Bu turdaki işlemler — satır satır</h2>
+  <table><thead><tr><th>#</th><th>Durum</th><th>İşlem</th><th>Kanıt / blocker</th></tr></thead><tbody id="operations"></tbody></table>
+  <p><a href="index.html">Ana Security 1 görünümüne dön</a></p>
+  <script>
+    'use strict';
+    const esc=v=>String(v??'n/a').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const cls=s=>String(s||'').startsWith('PASS')?'PASS':String(s||'').startsWith('BLOCKED')?'BLOCKED':'';
+    const getJson=async file=>{const r=await fetch(`${file}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error(`${file}: HTTP ${r.status}`);return r.json()};
+    (async()=>{
+      const d=await getJson('continuation_official_source_increment_v35_20260724.json');
+      const parts=await Promise.all((d.parts||[]).map(x=>getJson(x.file)));
+      const sourceData=parts.flatMap(x=>x.sources||[]).sort((a,b)=>Number(a.row)-Number(b.row));
+      const operationData=[...(d.operations||[]),...parts.flatMap(x=>x.operations||[])].sort((a,b)=>Number(a.order)-Number(b.order));
+      const p=d.canonical_progress||{},m=d.increment_metrics||{},c=d.cumulative_metrics||{};
+      progress.textContent=`${p.completed_units}/${p.total_units} — ${p.overall_percent}% (Δ ${p.percent_change>=0?'+':''}${p.percent_change})`;
+      checks.textContent=`${m.official_source_checks_passed}/${m.official_source_checks_added}`;
+      total.textContent=`${c.official_source_checks_passed}/${c.official_source_checks}`;
+      upgrades.textContent=String(c.source_upgrades);
+      contextCandidates.textContent=String(c.context_or_crosscheck_candidates);
+      sourceRows.textContent=String(c.web_source_rows);
+      operationCount.textContent=String(operationData.length);
+      operationTotal.textContent=String(c.web_operation_rows);
+      partCount.textContent=String((d.parts||[]).length);
+      parcelValues.textContent=String(m.parcel_values_added);
+      rows.innerHTML=sourceData.map(x=>`<tr><td>${esc(x.row)}</td><td class="${cls(x.status)}">${esc(x.status)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a><br><span class="mono">${esc(x.authority)}</span></td><td>${esc(x.verified_fact)}</td><td>${esc(x.quality_effect)}</td><td>${esc(x.source_accuracy_score_4)}/4</td><td>${esc(x.adoption_state)}</td></tr>`).join('');
+      operations.innerHTML=operationData.map(x=>`<tr><td>${esc(x.order)}</td><td class="${cls(x.status)}">${esc(x.status)}</td><td>${esc(x.operation)}</td><td>${esc(x.evidence)}</td></tr>`).join('');
+      document.body.dataset.sourceRows=String(sourceData.length);document.body.dataset.operationRows=String(operationData.length);document.body.dataset.partCount=String(parts.length);document.body.dataset.continuationKey=d.continuation_key;document.body.dataset.blocker=d.blocker;
+    })().catch(e=>{rows.innerHTML=`<tr><td colspan="7">${esc(e.message)}</td></tr>`;document.body.dataset.loadError=e.message});
+  </script>
+</body>
+</html>

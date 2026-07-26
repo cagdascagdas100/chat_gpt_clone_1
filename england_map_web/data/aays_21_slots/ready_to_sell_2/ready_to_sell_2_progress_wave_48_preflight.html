@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ready to Sell 2 — Wave 48 preflight</title>
+<style>body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;border:1px solid #ccd6dd;padding:10px;min-width:170px}table{border-collapse:collapse;width:100%;background:#fff;margin-top:14px;font-size:12px}th,td{border:1px solid #ccd6dd;padding:6px;text-align:left;vertical-align:top}th{background:#edf1f3;position:sticky;top:0}a{word-break:break-all}.notice{background:#fff;border-left:4px solid #b26a00;padding:10px;margin-top:16px}.pass,.held{font-weight:700}.error{color:#9b1c1c}</style></head>
+<body><h1>Ready to Sell 2 — Wave 48 first-party preflight</h1><div id="cards" class="cards"></div>
+<div class="notice"><b>Doğruluk kapısı:</b> 435 ilk-el kaynak adayı ve 2164 satır doğrulama hazırlanmıştır. Repository-geneli duplicate benzersizliği, kanonik parsel eşleşmesi ve gerçek Automation 167 DOM kanıtı tamamlanmadan kanonik aday sayısı artırılmaz.</div>
+<h2>Aday satırları</h2><table><thead><tr><th>#</th><th>Candidate ID</th><th>Aday</th><th>Durum</th><th>Tarih</th><th>Guide</th><th>Fiyat kanıtı</th><th>Tenure</th><th>Gelir durumu</th><th>Mevcut gelir</th><th>Planlama/risk ayrımı</th><th>Kaynak güveni</th><th>Parsel</th><th>Kabul</th><th>Kaynak</th></tr></thead><tbody id="candidateRows"></tbody></table>
+<h2>Satır bazlı işlemler</h2><table><thead><tr><th>Seq</th><th>İşlem</th><th>Aday</th><th>Sonuç</th><th>Doğruluk</th></tr></thead><tbody id="operationRows"></tbody></table>
+<div class="notice"><b>Kalan engel:</b> Windows F-host tek shared scanner polling yapmıyor; gerçek port-8012 Automation 167 DOM kabul kanıtı yok. İkinci runner ve ikinci business task oluşturulmadı.</div>
+<p>Güvenlik: fake_data=false; db_write=false; migration=false; production_deploy=false; canonical_progress_advanced=false; final_ready=false.</p>
+<script>
+const candidateSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17a","17b","18","19a","19b"];
+const progressSuffixes=["2","3","4","5","6","7","8a","8b","9a","9b","10a","10b","11a","11b","12a","12b","13a","13b","14a","14b","14c","15a","15b","15c","16a","16b","16c","16d","17","18","19"];
+const candidateFiles=["candidate_wave_48_preflight_latest.json",...candidateSuffixes.map(s=>`candidate_wave_48_preflight_part_${s}_latest.json`)];
+const progressFiles=["progress_wave_48_preflight_latest.json",...progressSuffixes.map(s=>`progress_wave_48_preflight_part_${s}_latest.json`)];
+const text=v=>v===null||v===undefined?'—':String(v);
+const td=(tr,v)=>{const x=document.createElement('td');x.textContent=text(v);tr.appendChild(x);return x};
+const card=(k,v)=>{const d=document.createElement('div');d.className='card';const b=document.createElement('b');b.textContent=k;d.append(b,document.createElement('br'),document.createTextNode(text(v)));document.getElementById('cards').appendChild(d)};
+const get=f=>fetch(f).then(r=>{if(!r.ok)throw Error(f+' '+r.status);return r.json()});
+const expandCandidates=m=>{const normal=m.candidates||[];if(!m.candidate_rows_compact)return normal;const cols=m.candidate_columns||[];const defs=m.defaults||{};return normal.concat(m.candidate_rows_compact.map(row=>Object.assign({},defs,Object.fromEntries(cols.map((c,i)=>[c,row[i]])))))};
+const expandOperations=p=>{const rows=[...(p.operation_rows||[]),...(p.source_integrity_rows||[])];if(!p.operation_groups)return rows;const template=p.operation_template||[];const match=String(p.status||'').match(/PART_(\d+)/);const prefix='wave_48_part'+(match?match[1]:'compact');p.operation_groups.forEach(g=>{const [first,id,score,ordinal]=g;template.forEach((t,i)=>rows.push({sequence:first+i,event:prefix+'_'+t[0]+'_'+String(ordinal).padStart(2,'0'),candidate_id:id,result:t[1],accuracy_score:t[2]==='candidate_score'?score:t[2]}))});return rows};
+Promise.all([Promise.all(candidateFiles.map(get)),Promise.all(progressFiles.map(get))]).then(([manifests,progress])=>{
+ const candidates=manifests.flatMap(expandCandidates);
+ const operations=progress.flatMap(expandOperations).sort((a,b)=>a.sequence-b.sequence);
+ const latest=progress[progress.length-1];
+ const integrity=new Map(progress.flatMap(p=>p.source_integrity_rows||[]).map(x=>[x.candidate_id,x.result]));
+ card('Durum',latest.status);card('Continuation',manifests[0].continuation_key.slice(0,12)+'…');card('Kaynak adayı',candidates.length);
+ card('Ön kontrol işlemi',latest.aggregate_child_preflight_operations_completed+' / '+latest.aggregate_child_preflight_operations_total);
+ card('İlk-el kaynak güveni','%'+latest.aggregate_average_first_party_source_confidence.toFixed(2));card('Fiyat bütünlük kontrolü',latest.source_integrity_repairs_preserved);
+ card('Kanonik ilerleme',latest.canonical_completed_operations_preserved+' / '+latest.canonical_total_operations_preserved+' — %'+latest.canonical_progress_percent_preserved);
+ card('Kanonik artış','+'+latest.canonical_progress_percent_increase.toFixed(2)+' puan');card('Benzersiz kabul',0);card('Promosyon',0);card('Blocker',latest.blocker);
+ const cb=document.getElementById('candidateRows');
+ candidates.forEach((c,i)=>{const tr=document.createElement('tr');td(tr,i+1);td(tr,c.candidate_id);td(tr,c.title+' — '+c.location);td(tr,c.marketing_status);td(tr,c.auction_date);td(tr,c.price);td(tr,c.price_readback_state||integrity.get(c.candidate_id)||'first_party_readback_recorded');td(tr,c.tenure);td(tr,c.income_state||'not_normalized');const income=c.annual_rent_gbp===null||c.annual_rent_gbp===undefined?(c.historic_annual_rent_gbp?'Tarihsel £'+c.historic_annual_rent_gbp.toLocaleString('en-GB')+'/yıl':'—'):'£'+c.annual_rent_gbp.toLocaleString('en-GB')+'/yıl';td(tr,income);td(tr,c.planning_signal);td(tr,c.source_confidence_score);td(tr,c.parcel_match_confidence_score+' / '+c.geometry_match_status);td(tr,c.promotion_allowed?'ACCEPTED':'HELD');const link=td(tr,'');const a=document.createElement('a');a.href=c.source_url;a.textContent='first-party source';a.target='_blank';a.rel='noopener';link.appendChild(a);cb.appendChild(tr)});
+ const ob=document.getElementById('operationRows');operations.forEach(o=>{const tr=document.createElement('tr');td(tr,o.sequence);td(tr,o.event);td(tr,o.candidate_id);const r=td(tr,o.result);r.className=o.result;td(tr,o.accuracy_score);ob.appendChild(tr)});
+}).catch(e=>{const d=document.createElement('p');d.className='error';d.textContent='Veri yükleme hatası: '+e.message;document.body.prepend(d)});
+</script></body></html>
