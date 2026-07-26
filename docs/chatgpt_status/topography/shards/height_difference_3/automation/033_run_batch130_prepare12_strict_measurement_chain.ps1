@@ -8,7 +8,7 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
 }
 
 $Prepare12 = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\032_run_batch129_range_extract_and_prepare12.ps1"
-$ProjGate = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\027_verify_batch116_proj_ostn15_gate.py"
+$ProjGate = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\034_verify_candidate_manifest_proj_ostn15_gate.py"
 $TerrainDownload = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\021_download_os_terrain50_via_api.py"
 $Pipeline = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\015_execute_auto_source_and_measurement_pipeline.py"
 $QueryOut = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\runner_outputs\025_batch129_prepare12_queries"
@@ -27,8 +27,24 @@ New-Item -ItemType Directory -Force -Path $Out,$TerrainOut,$MeasureOut | Out-Nul
 if ($LASTEXITCODE -ne 0) { throw "Prepare12 chain failed with exit code $LASTEXITCODE" }
 if (-not (Test-Path -LiteralPath $Starter -PathType Leaf)) { throw "Missing prepare12 starter manifest" }
 
-& $PythonExe $ProjGate --output $ProjOut --enable-network
-if ($LASTEXITCODE -ne 0) { throw "PROJ OSTN15 strict gate failed with exit code $LASTEXITCODE" }
+& $PythonExe $ProjGate `
+  --candidate-manifest $Starter `
+  --output $ProjOut `
+  --enable-network `
+  --expected-row-start 61540 `
+  --expected-row-end 61551 `
+  --maximum-display-delta-m 20.0
+if ($LASTEXITCODE -ne 0) { throw "Candidate-aware PROJ OSTN15 strict gate failed with exit code $LASTEXITCODE" }
+if (-not (Test-Path -LiteralPath $ProjOut -PathType Leaf)) { throw "Missing candidate-aware PROJ gate output" }
+$Pj = Get-Content -Raw -LiteralPath $ProjOut | ConvertFrom-Json
+$Expected = 61540..61551
+$ProjRows = @($Pj.candidate_rows | ForEach-Object { [int]$_ })
+if (-not [bool]$Pj.passed) { throw "Candidate-aware PROJ gate did not pass" }
+if (($ProjRows -join ',') -ne ($Expected -join ',')) { throw "PROJ gate candidate rows are not exactly 61540..61551" }
+if (-not [bool]$Pj.best_available) { throw "PROJ best operation unavailable" }
+if ([bool]$Pj.best_transformer.contains_ballpark) { throw "PROJ ballpark transformation is forbidden" }
+if (-not [bool]$Pj.best_transformer.uses_ostn15_grid) { throw "PROJ best transformation does not use OSTN15 grid" }
+if (-not [bool]$Pj.all_display_deltas_within_sanity_limit) { throw "PROJ display coordinate delta exceeds sanity limit" }
 
 & $PythonExe $TerrainDownload --output-dir $TerrainOut --timeout 120 --max-cache-age-hours 24
 if ($LASTEXITCODE -ne 0) { throw "Terrain50 official acquisition failed with exit code $LASTEXITCODE" }
@@ -49,7 +65,6 @@ if (-not (Test-Path -LiteralPath $Measurement -PathType Leaf)) { throw "Missing 
 if (-not (Test-Path -LiteralPath $Verified -PathType Leaf)) { throw "Missing verified examples manifest" }
 $M = Get-Content -Raw -LiteralPath $Measurement | ConvertFrom-Json
 $V = Get-Content -Raw -LiteralPath $Verified | ConvertFrom-Json
-$Expected = 61540..61551
 $MeasuredRows = @($M.measured_rows | ForEach-Object { [int]$_.row_no })
 $PublishedRows = @($V.rows | ForEach-Object { [int]$_.row_no })
 if (($MeasuredRows -join ',') -ne ($Expected -join ',')) { throw "Measured row set is not exactly 61540..61551" }
@@ -63,7 +78,7 @@ foreach ($R in $M.measured_rows) {
 }
 
 $Result = @{
-  schema_version = 1
+  schema_version = 2
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   prepared_and_measured_rows = $Expected
@@ -73,6 +88,9 @@ $Result = @{
   maximum_crosscheck_difference_m = 8.0
   allowed_confidence = @("HIGH","MEDIUM_HIGH")
   proj_ostn15_gate = $true
+  proj_gate_candidate_rows = $ProjRows
+  proj_gate_candidate_aware = $true
+  proj_maximum_display_delta_m = 20.0
   numeric_publish_gate_passed = $true
   remote_readback_required = $true
   final_ready = $false
