@@ -12,7 +12,7 @@ $OutDir = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_diff
 $ResultPath = Join-Path $OutDir "batch132_origin_remote_readback.json"
 if (-not (Test-Path -LiteralPath $Manifest -PathType Leaf)) { throw "Missing publish manifest: $Manifest" }
 $M = Get-Content -Raw -LiteralPath $Manifest | ConvertFrom-Json
-if ([int]$M.schema_version -lt 2) { throw "Publish manifest lacks Batch139 history binding" }
+if ([int]$M.schema_version -lt 2) { throw "Publish manifest lacks pre-publish history binding" }
 if (-not [bool]$M.ready_for_serial_publisher) { throw "Publish manifest is not ready" }
 if ($M.canonical_branch -ne $Branch) { throw "Publish manifest branch mismatch" }
 if ($M.task_id -ne "height_difference_3-canonical-api-measurement-20260721-01") { throw "Publish manifest task mismatch" }
@@ -39,8 +39,10 @@ if ($LASTEXITCODE -ne 0) { throw "Pre-publish origin HEAD is not an ancestor of 
 $Checks = @()
 $PreHeadChecks = @()
 $PreHeadAllBlobsMatch = $true
+$ManifestPaths = @()
 foreach ($F in @($M.files)) {
   $Rel = [string]$F.relative_path
+  $ManifestPaths += $Rel
   $Local = Join-Path $RepoRoot ($Rel -replace '/', '\')
   if (-not (Test-Path -LiteralPath $Local -PathType Leaf)) { throw "Missing local accepted file: $Rel" }
   $LocalSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $Local).Hash.ToLowerInvariant()
@@ -56,15 +58,9 @@ foreach ($F in @($M.files)) {
   $PreMatches = (-not [string]::IsNullOrWhiteSpace($PreBlob)) -and ($PreBlob -eq $ExpectedBlob)
   if (-not $PreMatches) { $PreHeadAllBlobsMatch = $false }
   $PreHeadChecks += [ordered]@{ relative_path = $Rel; expected_git_blob_sha1 = $ExpectedBlob; pre_publish_blob_sha1 = $PreBlob; matched_at_pre_publish_head = $PreMatches }
-  $Checks += [ordered]@{
-    relative_path = $Rel
-    local_sha256 = $LocalSha256
-    expected_git_blob_sha1 = $ExpectedBlob
-    local_git_blob_sha1 = $LocalBlob
-    remote_git_blob_sha1 = $RemoteBlob
-    passed = $true
-  }
+  $Checks += [ordered]@{ relative_path = $Rel; local_sha256 = $LocalSha256; expected_git_blob_sha1 = $ExpectedBlob; local_git_blob_sha1 = $LocalBlob; remote_git_blob_sha1 = $RemoteBlob; passed = $true }
 }
+if (@($ManifestPaths).Count -ne 7) { throw "Expected exactly seven manifest paths" }
 
 $HistoryMode = $null
 $MaterializationCommit = $null
@@ -84,15 +80,9 @@ if ($PreHeadAllBlobsMatch) {
     foreach ($F in @($M.files)) {
       $ExpectedBlob = ([string]$F.git_blob_sha1).ToLowerInvariant()
       $CandidateBlob = Get-BlobAtCommit $Candidate ([string]$F.relative_path)
-      if ([string]::IsNullOrWhiteSpace($CandidateBlob) -or $CandidateBlob -ne $ExpectedBlob) {
-        $AllAtCandidate = $false
-        break
-      }
+      if ([string]::IsNullOrWhiteSpace($CandidateBlob) -or $CandidateBlob -ne $ExpectedBlob) { $AllAtCandidate = $false; break }
     }
-    if ($AllAtCandidate) {
-      $MaterializationCommit = $Candidate
-      break
-    }
+    if ($AllAtCandidate) { $MaterializationCommit = $Candidate; break }
   }
   if ([string]::IsNullOrWhiteSpace($MaterializationCommit)) { throw "No descendant commit materializes all seven accepted blobs" }
   $HistoryMode = "FIRST_FULL_BLOB_MATERIALIZATION_COMMIT_FOUND"
@@ -101,13 +91,39 @@ if ($PreHeadAllBlobsMatch) {
 & $GitExe -C $RepoRoot merge-base --is-ancestor $MaterializationCommit $RemoteHead | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "Materialization commit is not an ancestor of fresh remote HEAD" }
 
+$MaterializationChangedPaths = @()
+$MissingManifestPathsFromCommitDelta = @()
+$MaterializationCommitChangesAllManifestPaths = $true
+$CommitDeltaGateMode = "ALREADY_PRESENT_NO_REPLAY_DELTA_NOT_REQUIRED"
+$PublisherCommitCandidate = $null
+if ($HistoryMode -eq "FIRST_FULL_BLOB_MATERIALIZATION_COMMIT_FOUND") {
+  $MaterializationChangedPaths = @(& $GitExe -C $RepoRoot diff-tree --no-commit-id --name-only -r $MaterializationCommit)
+  if ($LASTEXITCODE -ne 0) { throw "Cannot read materialization commit path delta" }
+  $ChangedLookup = @{}
+  foreach ($P in @($MaterializationChangedPaths)) {
+    $Token = ([string]$P).Trim()
+    if (-not [string]::IsNullOrWhiteSpace($Token)) { $ChangedLookup[$Token] = $true }
+  }
+  foreach ($Rel in @($ManifestPaths)) {
+    if (-not $ChangedLookup.ContainsKey([string]$Rel)) {
+      $MissingManifestPathsFromCommitDelta += [string]$Rel
+    }
+  }
+  if (@($MissingManifestPathsFromCommitDelta).Count -gt 0) {
+    $MaterializationCommitChangesAllManifestPaths = $false
+    throw "First full materialization commit did not change every manifest path: $($MissingManifestPathsFromCommitDelta -join ',')"
+  }
+  $CommitDeltaGateMode = "ALL_SEVEN_MANIFEST_PATHS_CHANGED_IN_MATERIALIZATION_COMMIT"
+  $PublisherCommitCandidate = $MaterializationCommit
+}
+
 $ExpectedRows = @(61540..61551)
 $ManifestRows = @($M.expected_rows | ForEach-Object { [int]$_ })
 if (($ManifestRows -join ',') -ne ($ExpectedRows -join ',')) { throw "Manifest row set mismatch" }
 if ([int]$M.expected_verified_count -ne 12) { throw "Manifest verified count mismatch" }
 
 $Result = [ordered]@{
-  schema_version = 2
+  schema_version = 3
   slot_id = "height_difference_3"
   task_id = [string]$M.task_id
   continuation_key = [string]$M.continuation_key
@@ -121,7 +137,14 @@ $Result = [ordered]@{
   history_commit_count_after_pre_publish_head = $HistoryCommitCount
   first_full_blob_materialization_commit = $MaterializationCommit
   materialization_commit_is_ancestor_of_remote_head = $true
+  materialization_commit_changed_paths = @($MaterializationChangedPaths)
+  materialization_commit_changed_path_count = @($MaterializationChangedPaths).Count
+  materialization_commit_changes_all_manifest_paths = $MaterializationCommitChangesAllManifestPaths
+  missing_manifest_paths_from_materialization_commit_delta = @($MissingManifestPathsFromCommitDelta)
+  materialization_commit_delta_gate_mode = $CommitDeltaGateMode
+  publisher_commit_candidate = $PublisherCommitCandidate
   remote_history_binding_passed = $true
+  remote_history_and_commit_delta_binding_passed = $true
   pre_publish_file_checks = $PreHeadChecks
   expected_rows = $ExpectedRows
   file_count = @($Checks).Count
