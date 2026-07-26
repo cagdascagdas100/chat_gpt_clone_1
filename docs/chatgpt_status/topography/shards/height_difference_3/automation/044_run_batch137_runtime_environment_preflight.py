@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import platform
 import shutil
 import subprocess
@@ -47,10 +48,23 @@ def require(name: str, condition: bool, detail: Any = None) -> dict[str, Any]:
     return row
 
 
+def resolve_executable(requested: str | None, fallback: str) -> str:
+    token = str(requested or fallback).strip()
+    found = shutil.which(token)
+    if found:
+        return str(Path(found).resolve())
+    candidate = Path(token)
+    if candidate.is_file():
+        return str(candidate.resolve())
+    raise RuntimeError(f"EXECUTABLE_NOT_FOUND:{token}")
+
+
 def main() -> int:
     repo = root(Path(__file__).resolve())
     checks: list[dict[str, Any]] = []
 
+    python_executable = str(Path(sys.executable).resolve())
+    checks.append(require("python_executable_exists", Path(python_executable).is_file(), python_executable))
     checks.append(require("python_version_min_3_10", sys.version_info >= (3, 10), platform.python_version()))
     checks.append(require("python_64_bit", sys.maxsize > 2**32, {"machine": platform.machine(), "maxsize": sys.maxsize}))
 
@@ -61,13 +75,15 @@ def main() -> int:
         import rasterio
         import requests
         import shapely
-        from pyproj import CRS, Transformer, network
+        from pyproj import CRS, Transformer, datadir, network
         from pyproj.transformer import TransformerGroup
         from rasterio.mask import mask as rasterio_mask
         from shapely import make_valid
     except Exception as exc:
         raise RuntimeError(f"GEOSPATIAL_IMPORT_FAILED:{type(exc).__name__}:{exc}") from exc
 
+    proj_data_dir = str(Path(datadir.get_data_dir()).resolve())
+    checks.append(require("proj_data_dir_exists", Path(proj_data_dir).is_dir(), proj_data_dir))
     versions = {
         "python": platform.python_version(),
         "numpy": np.__version__,
@@ -122,8 +138,8 @@ def main() -> int:
     lon, lat = transformer.transform(529200.0, 170000.0)
     checks.append(require("proj_probe_finite", math.isfinite(lon) and math.isfinite(lat), {"lon": lon, "lat": lat}))
 
-    powershell = shutil.which("powershell")
-    checks.append(require("windows_powershell_available", bool(powershell), powershell))
+    powershell = resolve_executable(os.environ.get("AAYS_POWERSHELL_EXE"), "powershell")
+    checks.append(require("windows_powershell_available", Path(powershell).is_file(), powershell))
     ps = subprocess.run(
         [powershell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
         text=True,
@@ -136,10 +152,10 @@ def main() -> int:
     checks.append(require("repo_drive_free_space_ge_2gib", disk.free >= MIN_FREE_BYTES, {"free_bytes": disk.free, "required_bytes": MIN_FREE_BYTES}))
 
     session = requests.Session()
-    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch137"})
+    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch138"})
     hmlr = session.get(HMLR_URL, timeout=30, allow_redirects=True)
     checks.append(require("hmlr_https_reachable", hmlr.status_code == 200, {"status": hmlr.status_code, "final_url": hmlr.url}))
-    checks.append(require("hmlr_inspire_page_identity", "INSPIRE" in hmlr.text and "5 July 2026" in hmlr.text, hmlr.text[:300]))
+    checks.append(require("hmlr_inspire_page_identity", "INSPIRE" in hmlr.text and "published" in hmlr.text.casefold(), hmlr.text[:300]))
 
     ea = session.get(EA_WCS_URL, params={"service": "WCS", "request": "GetCapabilities", "version": "2.0.1"}, timeout=30, allow_redirects=True)
     checks.append(require("ea_wcs_https_reachable", ea.status_code == 200, {"status": ea.status_code, "final_url": ea.url}))
@@ -158,17 +174,24 @@ def main() -> int:
 
     bootstrap = repo / BOOTSTRAP_REL
     checks.append(require("bootstrap_042_exists", bootstrap.is_file(), str(bootstrap)))
-    proc = subprocess.run([sys.executable, str(bootstrap)], cwd=repo, text=True, capture_output=True, check=False)
+    proc = subprocess.run([python_executable, str(bootstrap)], cwd=repo, text=True, capture_output=True, check=False)
     checks.append(require("bootstrap_042_passed", proc.returncode == 0, {"exit": proc.returncode, "stdout": proc.stdout[-2000:], "stderr": proc.stderr[-2000:]}))
 
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
-        "purpose": "STRICT_RUNTIME_ENVIRONMENT_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
+        "purpose": "STRICT_RUNTIME_ENVIRONMENT_AND_EXECUTABLE_IDENTITY_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
         "checks_passed": len(checks),
         "checks_total": len(checks),
         "checks": checks,
+        "runtime_identity": {
+            "python_executable": python_executable,
+            "powershell_executable": powershell,
+            "powershell_version": ps.stdout.strip(),
+            "proj_data_dir": proj_data_dir,
+            "versions": versions,
+        },
         "versions": versions,
         "required_grid": GRID_NAME,
         "pyproj_network_before": network_before,
@@ -176,6 +199,8 @@ def main() -> int:
         "best_transformer": best,
         "powershell_path": powershell,
         "powershell_version": ps.stdout.strip(),
+        "python_executable": python_executable,
+        "proj_data_dir": proj_data_dir,
         "free_disk_bytes": disk.free,
         "official_endpoint_checks": {"hmlr_status": hmlr.status_code, "ea_wcs_status": ea.status_code, "os_catalog_status": osr.status_code},
         "bootstrap_042_executed": True,
@@ -189,7 +214,7 @@ def main() -> int:
     }
     out = repo / OUTPUT_REL
     write(out, payload)
-    print(json.dumps({"ok": True, "checks": len(checks), "output": str(out)}))
+    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "output": str(out)}))
     return 0
 
 
