@@ -3,9 +3,10 @@
 
 This entrypoint is intended for the existing height_difference_3 task only. It
 requires the Batch137/138 runtime environment identity record, reuses the exact
-validated Python and PowerShell executables, runs strict/local acceptance,
-creates the exact seven-file publish manifest, and stops at PUBLISH_PENDING.
-It never creates a second task/runner and never pushes directly.
+validated Python and PowerShell executables, carries the validated Git executable
+into the publish handoff, runs strict/local acceptance, creates the exact seven-
+file publish manifest, and stops at PUBLISH_PENDING. It never creates a second
+task/runner and never pushes directly.
 """
 from __future__ import annotations
 
@@ -71,6 +72,8 @@ def main() -> int:
     if not env_preflight_path.is_file():
         raise FileNotFoundError(f"runtime environment preflight missing: {env_preflight_path}")
     env_preflight = load_json(env_preflight_path)
+    if int(env_preflight.get("schema_version") or 0) < 3:
+        raise ValueError("runtime environment preflight schema lacks executable identity")
     if int(env_preflight.get("checks_passed") or -1) != int(env_preflight.get("checks_total") or -2):
         raise ValueError("runtime environment preflight checks incomplete")
     if env_preflight.get("bootstrap_042_executed") is not True or int(env_preflight.get("bootstrap_042_exit_code") or -1) != 0:
@@ -81,14 +84,18 @@ def main() -> int:
     runtime_identity = env_preflight.get("runtime_identity") or {}
     validated_python = str(runtime_identity.get("python_executable") or env_preflight.get("python_executable") or "").strip()
     validated_powershell = str(runtime_identity.get("powershell_executable") or env_preflight.get("powershell_path") or "").strip()
+    validated_git = str(runtime_identity.get("git_executable") or env_preflight.get("git_executable") or "").strip()
     if not validated_python or not Path(validated_python).is_file():
         raise ValueError("validated Python executable missing")
     if not validated_powershell or not Path(validated_powershell).is_file():
         raise ValueError("validated PowerShell executable missing")
+    if not validated_git or not Path(validated_git).is_file():
+        raise ValueError("validated Git executable missing")
     if norm_executable(validated_python) != norm_executable(sys.executable):
         raise ValueError(f"runtime Python identity drift: preflight={validated_python} current={sys.executable}")
 
     powershell = str(Path(validated_powershell).resolve())
+    git_executable = str(Path(validated_git).resolve())
     python_executable = str(Path(sys.executable).resolve())
     strict_wrapper = script_dir / "036_run_batch131_strict12_with_local_acceptance.ps1"
     manifest_generator = script_dir / "037_prepare_batch132_publish_manifest.py"
@@ -152,7 +159,7 @@ def main() -> int:
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
@@ -160,6 +167,7 @@ def main() -> int:
         "runtime_identity_preflight": ENV_PREFLIGHT_REL,
         "runtime_python_executable": python_executable,
         "runtime_powershell_executable": powershell,
+        "runtime_git_executable": git_executable,
         "runtime_identity_match_passed": True,
         "strict_local_acceptance_passed": True,
         "expected_rows": EXPECTED_ROWS,
@@ -182,7 +190,7 @@ def main() -> int:
         },
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "python": python_executable, "powershell": powershell, "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(output)}))
     return 0
 
 
