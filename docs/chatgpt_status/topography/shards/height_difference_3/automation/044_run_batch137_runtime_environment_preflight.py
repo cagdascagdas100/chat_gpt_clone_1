@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Fail-closed runtime environment gate for the strict height_difference_3 chain.
 
-Runs only after the exact branch/HEAD gate. It verifies the actual Python,
-PowerShell, Git, geospatial libraries, GDAL drivers, PROJ/OSTN15 operation,
-official source endpoints and minimum free disk needed by the same-task strict
-chain, then invokes bootstrap 042 (which invokes 041). It never mutates the
-legacy queue, starts a runner, publishes, or writes numeric parcel values.
+Runs only after exact branch/HEAD and fresh-host-heartbeat gates. It verifies the
+actual Python, PowerShell, Git, geospatial libraries, GDAL drivers, PROJ/OSTN15
+operation, official source endpoints and minimum free disk. Batch140 additionally
+binds the completed preflight to a 15-minute TTL, exact local HEAD and canonical
+current-task Git blob before invoking bootstrap 042. It never mutates the legacy
+queue, starts a runner, publishes, or writes numeric parcel values.
 """
 from __future__ import annotations
 
@@ -16,10 +17,12 @@ import platform
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 BRANCH = "codex/aays-single-runner-v5-20260706"
+TASK_REL = "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"
 BOOTSTRAP_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/042_run_batch135_fresh_origin_wiring_preflight.py"
 OUTPUT_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
 GRID_NAME = "uk_os_OSTN15_NTv2_OSGBtoETRS.tif"
@@ -27,6 +30,7 @@ HMLR_URL = "https://use-land-property-data.service.gov.uk/datasets/inspire/downl
 EA_WCS_URL = "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs"
 OS_CATALOG_URL = "https://api.os.uk/downloads/v1/products/Terrain50/downloads"
 MIN_FREE_BYTES = 2 * 1024 * 1024 * 1024
+PREFLIGHT_TTL_SECONDS = 900
 
 
 def root(start: Path) -> Path:
@@ -59,6 +63,13 @@ def resolve_executable(requested: str | None, fallback: str) -> str:
     raise RuntimeError(f"EXECUTABLE_NOT_FOUND:{token}")
 
 
+def git(git_executable: str, repo: Path, *args: str) -> str:
+    proc = subprocess.run([git_executable, "-C", str(repo), *args], text=True, capture_output=True, check=False)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {proc.stderr[-1200:]}")
+    return proc.stdout.strip()
+
+
 def main() -> int:
     repo = root(Path(__file__).resolve())
     checks: list[dict[str, Any]] = []
@@ -72,6 +83,8 @@ def main() -> int:
     checks.append(require("git_executable_exists", Path(git_executable).is_file(), git_executable))
     git_version = subprocess.run([git_executable, "--version"], text=True, capture_output=True, check=False)
     checks.append(require("git_invocation_ok", git_version.returncode == 0 and "git version" in git_version.stdout.casefold(), {"exit": git_version.returncode, "stdout": git_version.stdout.strip(), "stderr": git_version.stderr[-500:]}))
+    symbolic_branch = git(git_executable, repo, "symbolic-ref", "--quiet", "--short", "HEAD")
+    checks.append(require("canonical_symbolic_branch", symbolic_branch == BRANCH, symbolic_branch))
 
     try:
         import fiona
@@ -146,19 +159,14 @@ def main() -> int:
 
     powershell = resolve_executable(os.environ.get("AAYS_POWERSHELL_EXE"), "powershell")
     checks.append(require("windows_powershell_available", Path(powershell).is_file(), powershell))
-    ps = subprocess.run(
-        [powershell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    ps = subprocess.run([powershell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"], text=True, capture_output=True, check=False)
     checks.append(require("powershell_invocation_ok", ps.returncode == 0, {"exit": ps.returncode, "stdout": ps.stdout.strip(), "stderr": ps.stderr[-500:]}))
 
     disk = shutil.disk_usage(repo)
     checks.append(require("repo_drive_free_space_ge_2gib", disk.free >= MIN_FREE_BYTES, {"free_bytes": disk.free, "required_bytes": MIN_FREE_BYTES}))
 
     session = requests.Session()
-    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch138"})
+    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch140"})
     hmlr = session.get(HMLR_URL, timeout=30, allow_redirects=True)
     checks.append(require("hmlr_https_reachable", hmlr.status_code == 200, {"status": hmlr.status_code, "final_url": hmlr.url}))
     checks.append(require("hmlr_inspire_page_identity", "INSPIRE" in hmlr.text and "published" in hmlr.text.casefold(), hmlr.text[:300]))
@@ -183,11 +191,24 @@ def main() -> int:
     proc = subprocess.run([python_executable, str(bootstrap)], cwd=repo, text=True, capture_output=True, check=False)
     checks.append(require("bootstrap_042_passed", proc.returncode == 0, {"exit": proc.returncode, "stdout": proc.stdout[-2000:], "stderr": proc.stderr[-2000:]}))
 
+    completed_at = datetime.now(timezone.utc)
+    valid_until = completed_at + timedelta(seconds=PREFLIGHT_TTL_SECONDS)
+    canonical_head = git(git_executable, repo, "rev-parse", "HEAD")
+    current_task_blob = git(git_executable, repo, "rev-parse", f"HEAD:{TASK_REL}").lower()
+    checks.append(require("canonical_head_sha", len(canonical_head) == 40, canonical_head))
+    checks.append(require("current_task_blob_sha", len(current_task_blob) == 40, current_task_blob))
+
     payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
-        "purpose": "STRICT_RUNTIME_ENVIRONMENT_AND_EXECUTABLE_IDENTITY_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
+        "purpose": "STRICT_RUNTIME_ENVIRONMENT_EXECUTABLE_IDENTITY_AND_TTL_BOUND_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
+        "generated_at_utc": completed_at.isoformat().replace("+00:00", "Z"),
+        "valid_until_utc": valid_until.isoformat().replace("+00:00", "Z"),
+        "preflight_ttl_seconds": PREFLIGHT_TTL_SECONDS,
+        "canonical_head": canonical_head,
+        "canonical_current_task_path": TASK_REL,
+        "canonical_current_task_blob_sha": current_task_blob,
         "checks_passed": len(checks),
         "checks_total": len(checks),
         "checks": checks,
@@ -224,7 +245,7 @@ def main() -> int:
     }
     out = repo / OUTPUT_REL
     write(out, payload)
-    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(out)}))
+    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "git": git_executable, "head": canonical_head, "valid_until_utc": payload["valid_until_utc"], "output": str(out)}))
     return 0
 
 
