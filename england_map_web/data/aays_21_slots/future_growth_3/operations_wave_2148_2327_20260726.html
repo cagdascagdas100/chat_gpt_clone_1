@@ -1,0 +1,16 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>future_growth_3 QA — 2148–2327</title><style>body{font-family:Arial,sans-serif;margin:18px;background:#0f172a;color:#e2e8f0}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #334155;padding:5px;text-align:left}th{position:sticky;top:0;background:#1e293b}.pass{background:#123927}.fail{background:#3f2d12}</style></head><body><h1>future_growth_3 QA — 1.260 işlem satırı</h1><p>Her aday için 7 görünür kalite kapısı.</p><table><thead><tr><th>#</th><th>Referans</th><th>Otorite</th><th>Kapı</th><th>Açıklama</th><th>Sonuç</th></tr></thead><tbody id="ops"></tbody></table><script>
+fetch('quality_wave_2148_2327_parallel_20260726.json').then(r=>r.json()).then(d=>{
+ const tb=document.getElementById('ops');
+ for(const x of d.candidate_outcomes){
+  for(let i=0;i<d.gates.length;i++){
+    const tr=document.createElement('tr');const finalEligible=!!x[3];
+    let pass = i===0 || (finalEligible && i>0);
+    if(!finalEligible && i===1 && (x[5]===1 || x[5]===2)) pass=false;
+    tr.className=pass?'pass':'fail';
+    const vals=[x[0],x[1],d.authorities[x[2]],d.gates[i][0],d.gates[i][1],pass?'PASS':'FAIL-CLOSED'];
+    for(const v of vals){const td=document.createElement('td');td.textContent=String(v);tr.appendChild(td);}
+    tb.appendChild(tr);
+  }
+ }
+}).catch(e=>{const p=document.createElement('p');p.textContent='QA yüklenemedi: '+e;document.body.appendChild(p);});
+</script></body></html>

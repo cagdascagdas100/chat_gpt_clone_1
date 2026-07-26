@@ -1,0 +1,11 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>future_growth_3 — 2328–2527</title><style>body{font-family:Arial,sans-serif;margin:18px;background:#0f172a;color:#e2e8f0}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #334155;padding:5px;text-align:left}th{position:sticky;top:0;background:#1e293b}.ok{background:#123927}.no{background:#3f2d12}a{color:#93c5fd}</style></head><body><h1>future_growth_3 — 2328–2527</h1><p id="summary">Yükleniyor…</p><table><thead><tr><th>Sıra</th><th>Referans</th><th>Otorite</th><th>Karar</th><th>Neden</th><th>Readback</th><th>Min</th><th>Max</th><th>Güven</th><th>Kaynak</th></tr></thead><tbody id="rows"></tbody></table><script>
+fetch("rows_wave_2328_2527_parallel_20260726.json").then(r=>r.json()).then(d=>{
+ const s=d.summary; document.getElementById("summary").textContent=`${s.researched} gerçek resmî satır · ${s.eligible} uygun · ${s.excluded} fail-closed · uygun güven ${s.average_source_confidence}/100`;
+ const tb=document.getElementById("rows");
+ d.rows.forEach(x=>{const tr=document.createElement("tr");tr.className=x[3]?"ok":"no";
+ const vals=[x[0],x[1],d.authorities[x[2]],x[3]?"ELIGIBLE":"EXCLUDED",d.reasons[x[4]],d.readbacks[x[5]],x[8]??"",x[9]??"",x[10]??""];
+ vals.forEach(v=>{const td=document.createElement("td");td.textContent=String(v);tr.appendChild(td)});
+ const td=document.createElement("td"),a=document.createElement("a");a.textContent=x[6]?"direct entity":"official lookup";a.href=x[6]?d.direct_entity_url_template.replace("{entity}",x[6]):d.source_url_template.replace("{reference}",encodeURIComponent(x[1]));a.rel="noopener";td.appendChild(a);tr.appendChild(td);tb.appendChild(tr);
+ });
+}).catch(e=>document.getElementById("summary").textContent="Manifest okunamadı: "+e);
+</script></body></html>
