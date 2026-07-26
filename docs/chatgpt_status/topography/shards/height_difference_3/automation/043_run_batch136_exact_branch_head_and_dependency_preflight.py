@@ -5,7 +5,8 @@ This script does not mutate the legacy queue, start a runner, publish, or write
 numeric measurements. It requires the runner checkout to be on the canonical
 branch, fetches origin with an explicit refspec, requires local HEAD to equal the
 fresh origin HEAD, verifies every canonical current-task read path is tracked and
-clean, then invokes Batch137 environment gate 044 (which invokes 042 -> 041).
+clean, verifies task scope counts, then invokes Batch137/138 environment gate 044
+(which invokes 042 -> 041).
 """
 from __future__ import annotations
 
@@ -20,7 +21,8 @@ TASK_REL = "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_tas
 ENV_GATE_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/044_run_batch137_runtime_environment_preflight.py"
 EXPECTED_TASK = "height_difference_3-canonical-api-measurement-20260721-01"
 EXPECTED_CONTINUATION = "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f"
-EXPECTED_READ_PATH_COUNT = 46
+EXPECTED_READ_PATH_COUNT = 48
+EXPECTED_OUTPUT_COUNT = 19
 
 
 def root(start: Path) -> Path:
@@ -66,10 +68,15 @@ def main() -> int:
     if task.get("continuation_key") != EXPECTED_CONTINUATION:
         raise ValueError("current continuation_key mismatch")
     read_paths = [str(v) for v in (task.get("read_paths") or [])]
+    outputs = [str(v) for v in (task.get("expected_outputs") or [])]
     if len(read_paths) != EXPECTED_READ_PATH_COUNT:
         raise ValueError(f"expected {EXPECTED_READ_PATH_COUNT} current-task read paths, got {len(read_paths)}")
+    if len(outputs) != EXPECTED_OUTPUT_COUNT:
+        raise ValueError(f"expected {EXPECTED_OUTPUT_COUNT} current-task expected outputs, got {len(outputs)}")
     if len(set(read_paths)) != len(read_paths):
         raise ValueError("duplicate current-task read path")
+    if len(set(outputs)) != len(outputs):
+        raise ValueError("duplicate current-task expected output")
 
     tracked_rows: list[dict[str, str | bool]] = []
     for rel in read_paths:
@@ -92,10 +99,10 @@ def main() -> int:
         raise FileNotFoundError(env_gate)
     proc = subprocess.run([sys.executable, str(env_gate)], cwd=repo, text=True, capture_output=True, check=False)
     if proc.returncode != 0:
-        raise RuntimeError(f"BATCH137_ENVIRONMENT_GATE_FAILED:{proc.stderr[-3000:]}")
+        raise RuntimeError(f"BATCH138_ENVIRONMENT_GATE_FAILED:{proc.stderr[-3000:]}")
 
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
         "symbolic_branch_verified": True,
@@ -104,7 +111,9 @@ def main() -> int:
         "fresh_remote_head": remote_head,
         "exact_head_parity": True,
         "current_task_read_path_count": len(read_paths),
+        "current_task_expected_output_count": len(outputs),
         "current_task_read_paths_unique": True,
+        "current_task_expected_outputs_unique": True,
         "all_read_paths_tracked_at_head": True,
         "read_path_rows": tracked_rows,
         "task_read_path_worktree_clean": True,
@@ -121,7 +130,7 @@ def main() -> int:
     out = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/039_batch136_exact_head_preflight/exact_branch_head_and_dependency_preflight_runtime.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"ok": True, "head": local_head, "read_paths": len(read_paths), "output": str(out)}))
+    print(json.dumps({"ok": True, "head": local_head, "read_paths": len(read_paths), "outputs": len(outputs), "output": str(out)}))
     return 0
 
 
