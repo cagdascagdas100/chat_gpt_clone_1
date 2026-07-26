@@ -481,7 +481,7 @@ def main() -> int:
             enforce_failure_quarantine(repo_root, "base-exception", errors)
         except Exception:
             pass
-        print("BASE_EXECUTION_EXCEPTION=true")
+        print(f"BASE_EXECUTION_EXCEPTION={type(exc).__name__}:{exc}")
         print("FINAL_READY=false")
         return 2
 

@@ -164,7 +164,12 @@ def make_low_memory_locator(core):
     def locate_targets(materialized_path: Path | None = None):
         found: dict[str, dict] = {}
         audit: list[dict] = []
-        for path in core.source_candidates(materialized_path):
+        source_paths = (
+            core.source_candidates()
+            if materialized_path is None
+            else core.source_candidates(materialized_path)
+        )
+        for path in source_paths:
             try:
                 size = path.stat().st_size
             except OSError as exc:
