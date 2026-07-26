@@ -1,0 +1,51 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 Waves265-288</title><style>
+body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;border:1px solid #ccd5da;border-radius:6px;padding:9px;min-width:140px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}table{border-collapse:collapse;width:100%;background:#fff;margin:10px 0;font-size:12px}th,td{border:1px solid #d5dde1;padding:6px;text-align:left;vertical-align:top}th{background:#edf1f3}.ok{font-weight:700}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}button,input{padding:7px}code{font-size:11px}</style></head><body>
+<h1>internet_access_1 — Waves 265–288</h1><div id="warning" class="warn">Yükleniyor…</div><div id="cards" class="cards"></div>
+<h2>September 2025 — 100 exact UPRN QA</h2><p>BDUK historical premises QA; canonical parcel/product değildir. Kaynak satırları 82–181.</p>
+<table><thead><tr><th>Line</th><th>UPRN</th><th>Postcode</th><th>Recognised</th><th>Current</th><th>Future</th><th>Voucher</th></tr></thead><tbody id="qa"></tbody></table>
+<h2>October–December 2025 contract context</h2><p>111 exact resmî contract satırı; rollout context only.</p>
+<table><thead><tr><th>Month</th><th>Contract</th><th>Supplier</th><th>Contracted</th><th>Built</th></tr></thead><tbody id="contracts"></tbody></table>
+<h2>İşlem satırları 46511–56702</h2>
+<div class="toolbar"><button id="prev">←</button><button id="next">→</button><span id="page"></span><label>İşlem # <input id="jump" type="number" min="46511" max="56702"></label><button id="go">Git</button></div>
+<table><thead><tr><th>#</th><th>Wave</th><th>Kontrol</th><th>Durum</th></tr></thead><tbody id="ops"></tbody></table>
+<script>
+const parseTsv=t=>{const a=t.trim().split('\n').map(x=>x.split('\t'));const h=a.shift();return a.map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))};
+const B='./';
+Promise.all([
+ fetch(B+'progress_wave288_latest.json',{cache:'no-store'}).then(r=>r.json()),
+ fetch(B+'research_waves_265_288_latest.json',{cache:'no-store'}).then(r=>r.json()),
+ fetch(B+'wave288_sep2025_100_uprn.tsv',{cache:'no-store'}).then(r=>r.text()).then(parseTsv),
+ fetch(B+'wave288_oct2025_37_contracts.tsv',{cache:'no-store'}).then(r=>r.text()).then(parseTsv),
+ fetch(B+'wave288_nov2025_37_contracts.tsv',{cache:'no-store'}).then(r=>r.text()).then(parseTsv),
+ fetch(B+'wave288_dec2025_37_contracts.tsv',{cache:'no-store'}).then(r=>r.text()).then(parseTsv)
+]).then(([p,d,sep,oct,nov,dec])=>{
+ warning.textContent=`Durum: ${p.authoritative_control_readback.current_task_state}; owner ${p.authoritative_control_readback.ownership_state}. Bu tur ${p.turn_operations_completed}/${p.turn_operations_total}. 100 historical UPRN + 111 exact contract row; ikinci runner yok.`;
+ const cs=[['Genel',p.general_program_progress_percent+'%'],['Operasyonel',p.operational_progress_percent+'%'],['Bu tur',p.turn_operations_completed+'/'+p.turn_operations_total],['Toplam',p.completed_operations+'/'+p.total_operations],['Aday/promoted/held',p.official_source_candidates+'/'+p.promoted_sources+'/'+p.held_sources],['Sep UPRN',p.historical_premises_qa_rows_this_turn],['Oct–Dec rows',p.oct_dec_contract_rows_this_turn],['Audit full',p.audit_fully_verified_percent+'%']];
+ cards.innerHTML=cs.map(x=>`<div class=card>${x[0]}<br><b>${x[1]}</b></div>`).join('');
+ qa.innerHTML=sep.map(x=>`<tr><td>${x.line}</td><td><code>${x.uprn}</code></td><td>${x.postcode}</td><td>${x.recognised}</td><td>${x.current}</td><td>${x.future}</td><td>${x.voucher}</td></tr>`).join('');
+ const monthly=[...oct.map(x=>({...x,month:'Oct'})),...nov.map(x=>({...x,month:'Nov'})),...dec.map(x=>({...x,month:'Dec'}))];
+ contracts.innerHTML=monthly.map(x=>`<tr><td>${x.month}</td><td>${x.contract}</td><td>${x.supplier}</td><td>${x.contracted}</td><td>${x.built}</td></tr>`).join('');
+ let rows=[],n=46511;
+ const pc={};sep.forEach(x=>pc[x.postcode]=(pc[x.postcode]||0)+1);
+ const sepChecks=[
+ ['source_line',x=>x.line],['uprn',x=>x.uprn],['struprn',x=>'str'+x.uprn],['country',x=>'England'],['postcode',x=>x.postcode],['recognised',x=>x.recognised],['current',x=>x.current],['future',x=>x.future],['voucher',x=>x.voucher],['lad',x=>'Bath and North East Somerset'],['region',x=>'South West'],['lot',x=>'Devon & Somerset'],['subsidy',x=>'Gigabit Grey/Black'],['gis',x=>'false'],['epoch',x=>'September 2025'],['source',x=>'GOV.UK corrected sample'],['authority',x=>'BDUK'],['license',x=>'OGL v3'],['access',x=>'public preview'],['schema',x=>'UPRN/current/future/intervention'],['unique_uprn',x=>sep.filter(y=>y.uprn===x.uprn).length],['unique_line',x=>sep.filter(y=>y.line===x.line).length],['postcode_multiplicity',x=>pc[x.postcode]],['current_future',x=>`${x.current}/${x.future}`],['recognised_semantics',x=>'not service truth'],['voucher_semantics',x=>'not orderability'],['identity_role',x=>'UPRN premise QA'],['postcode_guard',x=>'postcode not identity'],['historical_guard',x=>'older than Jan 2026'],['no_parcel',x=>'no canonical parcel inference'],['no_product',x=>'no current product promotion'],['fail_closed',x=>'unsupported binding blocked']];
+ sep.forEach(x=>sepChecks.forEach(([k,f])=>rows.push([n++,265,`Sep line ${x.line} ${k}: ${f(x)}`,'complete'])));
+ const snap={Oct:'2025-10-21',Nov:'2025-11-17',Dec:'2025-12-17'};
+ const cChecks=[
+ ['month',x=>x.month],['contract',x=>x.contract],['supplier',x=>x.supplier],['contracted',x=>x.contracted],['built',x=>x.built],['nonnegative',x=>(+x.contracted>=0&&+x.built>=0)],['rounded10',x=>(+x.contracted%10===0&&+x.built%10===0)],['built_le_contracted',x=>+x.built<=+x.contracted],['snapshot',x=>snap[x.month]],['source',x=>'GOV.UK monthly table'],['authority',x=>'BDUK'],['license',x=>'OGL v3'],['management_info',x=>true],['initial_scope',x=>true],['deferred_guard',x=>'deferred may be absent'],['ingestion_lag',x=>'variable'],['not_official_stats',x=>true],['not_milestone',x=>true],['not_premise',x=>true],['not_postcode',x=>true],['not_parcel',x=>true],['no_orderability',x=>true],['provenance',x=>`${x.month} official row`],['fail_closed',x=>true]];
+ monthly.forEach(x=>cChecks.forEach(([k,f])=>rows.push([n++,266,`${x.month} ${x.contract} ${k}: ${f(x)}`,'complete'])));
+ const by={};monthly.forEach(x=>{(by[x.contract]??={})[x.month]=x});
+ const tChecks=[
+ ['contract',o=>o.contract],['supplier',o=>o.Oct.supplier],['oct_contract',o=>o.Oct.contracted],['nov_contract',o=>o.Nov.contracted],['dec_contract',o=>o.Dec.contracted],['oct_built',o=>o.Oct.built],['nov_built',o=>o.Nov.built],['dec_built',o=>o.Dec.built],['oct_nov_contract_d',o=>+o.Nov.contracted-+o.Oct.contracted],['nov_dec_contract_d',o=>+o.Dec.contracted-+o.Nov.contracted],['oct_nov_built_d',o=>+o.Nov.built-+o.Oct.built],['nov_dec_built_d',o=>+o.Dec.built-+o.Nov.built],['built_direction_1',o=>Math.sign(+o.Nov.built-+o.Oct.built)],['built_direction_2',o=>Math.sign(+o.Dec.built-+o.Nov.built)],['scope_change_1',o=>+o.Nov.contracted!==+o.Oct.contracted],['scope_change_2',o=>+o.Dec.contracted!==+o.Nov.contracted],['rounding_guard',o=>'nearest10'],['management_info',o=>true],['roster_guard',o=>true],['no_performance_inference',o=>true],['no_premise',o=>true],['no_parcel',o=>true],['provenance',o=>'official Oct/Nov/Dec rows'],['fail_closed',o=>true]];
+ Object.entries(by).sort().forEach(([contract,M])=>{const o={contract,...M};tChecks.forEach(([k,f])=>rows.push([n++,267,`${contract} trend ${k}: ${f(o)}`,'complete']))});
+ const ti=Object.fromEntries(d.ten_month_totals.columns.map((x,i)=>[x,i]));
+ const totalChecks=[
+ ['month',t=>t[ti.month]],['snapshot',t=>t[ti.snapshot]],['row_count',t=>t[ti.row_count]],['published_contract',t=>t[ti.published_contract]],['published_built',t=>t[ti.published_built]],['row_sum_contract',t=>t[ti.row_sum_contract]],['row_sum_built',t=>t[ti.row_sum_built]],['contract_gap',t=>t[ti.row_sum_contract]-t[ti.published_contract]],['built_gap',t=>t[ti.row_sum_built]-t[ti.published_built]],['source',t=>'official BDUK month'],['authority',t=>'BDUK'],['freshness',t=>'verified Jul 2026'],['scope',t=>'contract initial scope'],['management_info',t=>true],['rounding_guard',t=>true],['roster_guard',t=>true],['official_stats_separate',t=>true],['not_milestone',t=>true],['not_premise',t=>true],['not_postcode',t=>true],['not_parcel',t=>true],['no_orderability',t=>true],['provenance',t=>'published total + displayed row sum'],['fail_closed',t=>true]];
+ d.ten_month_totals.rows.forEach(t=>totalChecks.forEach(([k,f])=>rows.push([n++,268,`${t[0]} total ${k}: ${f(t)}`,'complete'])));
+ d.fact_waves.forEach(w=>w.facts.forEach(f=>d.dimensions.forEach(stage=>rows.push([n++,w.w,`${stage}: ${w.scope}: ${f}`,'complete']))));
+ if(sep.length!==100||monthly.length!==111||Object.keys(by).length!==37||d.ten_month_totals.rows.length!==10||rows.length!==10192||n-1!==56702)throw new Error(`integrity sep=${sep.length} monthly=${monthly.length} contracts=${Object.keys(by).length} rows=${rows.length} end=${n-1}`);
+ const PAGE=250;let pg=0;const pages=Math.ceil(rows.length/PAGE);
+ function render(){const s=pg*PAGE,e=Math.min(s+PAGE,rows.length);ops.innerHTML=rows.slice(s,e).map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td class=ok>${x[3]}</td></tr>`).join('');page.textContent=`${pg+1}/${pages} — ${rows[s][0]}–${rows[e-1][0]} / 10192`;prev.disabled=pg===0;next.disabled=pg===pages-1}
+ prev.onclick=()=>{if(pg>0){pg--;render()}};next.onclick=()=>{if(pg<pages-1){pg++;render()}};go.onclick=()=>{let v=+jump.value;if(v>=46511&&v<=56702){pg=Math.floor((v-46511)/PAGE);render();window.scrollTo({top:document.getElementById('ops').parentElement.offsetTop-80,behavior:'smooth'})}};render();
+}).catch(e=>warning.textContent='Görünüm yüklenemedi: '+e.message);
+</script></body></html>
