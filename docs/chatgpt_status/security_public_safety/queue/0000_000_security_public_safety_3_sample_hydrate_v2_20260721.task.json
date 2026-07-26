@@ -1,0 +1,79 @@
+{
+  "schema_version": 3,
+  "task_id": "security-public-safety-3-sample-hydrate-v2-20260721",
+  "slot_id": "security_public_safety_3",
+  "page_key": "security_public_safety",
+  "status": "pending_shared_runner_pickup",
+  "priority": 98,
+  "created_at": "2026-07-21T05:06:00+03:00",
+  "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
+  "branch": "main",
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761},
+  "sample_parcels": [
+    "parcel_61523",
+    "parcel_61524",
+    "parcel_61525",
+    "parcel_61526",
+    "parcel_61527",
+    "parcel_61528"
+  ],
+  "runner_mode": "single_shared_runner_only",
+  "do_not_start_new_runner": true,
+  "supersedes_for_next_pickup": "security-public-safety-3-sample-hydrate-20260721",
+  "command": "python docs/chatgpt_status/security_public_safety/automation/security_public_safety_3_sample_hydrate_v2.py",
+  "parallel_safe_subtasks": [
+    {
+      "subtask_id": "SPS3-V2-A-canonical-source-resolution",
+      "intent": "Resolve the largest canonical security FeatureCollection and extract only parcel_61523 through parcel_61528 without using the 9-row unknown/null output."
+    },
+    {
+      "subtask_id": "SPS3-V2-B-police-latest-month-hash",
+      "intent": "Read data.police.uk crime-last-updated, require explicit 2026-05 or newer month, and hash the response."
+    },
+    {
+      "subtask_id": "SPS3-V2-C-six-rate-safe-point-checks",
+      "intent": "Run six rate-safe official API checks and store HTTP status, URL, response SHA256 and anonymised one-mile supporting count."
+    },
+    {
+      "subtask_id": "SPS3-V2-D-iod25-v2-download-and-hash",
+      "intent": "Download official IoD25 File 7 v2 CSV, hash it, and join Crime Score, Rank and Decile by 2021 LSOA code."
+    },
+    {
+      "subtask_id": "SPS3-V2-E-semantic-guard",
+      "intent": "Treat IoD Crime fields as relative LSOA context only and never derive a new absolute parcel percentage from rank or decile."
+    },
+    {
+      "subtask_id": "SPS3-V2-F-line-by-line-web-feed",
+      "intent": "Write six evidence rows to the website feed with accuracy_score_4 and explicit score origin."
+    },
+    {
+      "subtask_id": "SPS3-V2-G-next-gate",
+      "intent": "Queue 300-row expansion only when at least one row reaches accuracy 4/4 and all actual file counts reconcile."
+    }
+  ],
+  "official_source_rules": {
+    "iod25_file7_v2_url": "https://assets.publishing.service.gov.uk/media/691ded56d140bbbaa59a2a7d/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
+    "iod25_page_updated": "2025-11-17",
+    "iod25_lsoa_count": 33755,
+    "data_police_latest_month_expected": "2026-05",
+    "data_police_may_2026_archive_md5": "9a1dcd49501f489bba3132c6f98c13fa",
+    "script_target_requests_per_second": 2.5,
+    "street_location_semantics": "anonymised approximate supporting evidence, not exact incident or parcel location",
+    "home_office_latest_update": "2026-04-23",
+    "ons_pfa_latest_release": "2026-04-23"
+  },
+  "expected_outputs": [
+    "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_3_sample_candidates_v2_latest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/security_public_safety_3_rows_latest.json"
+  ],
+  "write_policy": {
+    "db_write": false,
+    "ddl": false,
+    "migration": false,
+    "production_deploy": false,
+    "fake_data": false,
+    "person_level_data": false,
+    "set_final_ready_true": false
+  },
+  "final_ready": false
+}

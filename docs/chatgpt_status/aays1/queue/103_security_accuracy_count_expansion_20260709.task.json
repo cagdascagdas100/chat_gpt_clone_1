@@ -1,0 +1,68 @@
+{
+  "task_id": "aays1-103-security-accuracy-count-expansion-20260709",
+  "page_key": "aays1",
+  "status": "pending",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "priority": "accuracy_and_count_expansion",
+  "script": "docs/chatgpt_status/aays1/automation/103_security_accuracy_count_expansion.ps1",
+  "user_goal": "Continue after real visible test: increase verified Security/Public Safety data count and improve accuracy, without blocking on unresolved site smoke issues.",
+  "layer": "Safety / Security",
+  "program_output": "Security Level percent",
+  "starting_point": {
+    "verified_rows": 150,
+    "accuracy_ge_3_count": 150,
+    "score_4_count": 150,
+    "real_visible_test_written": true,
+    "final_ready": false
+  },
+  "targets": {
+    "next_verified_rows_min": 300,
+    "stretch_verified_rows": 500,
+    "accuracy_score_4_min": 3,
+    "prefer_accuracy_score_4": 4,
+    "manual_review_max_percent": 5
+  },
+  "source_policy": {
+    "official_open_sources_only": true,
+    "primary_source": "data.police.uk",
+    "allowed_methods": [
+      "existing verified batch artifact expansion",
+      "LSOA spatial match reuse with clear evidence",
+      "official API with backoff/retry when needed"
+    ],
+    "forbidden": [
+      "fake rows",
+      "person-level data",
+      "rumour/suspect data",
+      "paid/private datasets"
+    ]
+  },
+  "actions": [
+    "git_fetch_pull_current_branch",
+    "run docs/chatgpt_status/aays1/automation/103_security_accuracy_count_expansion.ps1",
+    "preserve real_visible_test and latest positive site status",
+    "expand verified Security/Public Safety rows from existing source_feature_count pool where source evidence is clear",
+    "if API source is needed use backoff/retry and skip rate-limited parcels instead of stalling",
+    "write updated verified csv and geojson only with real evidence",
+    "update manifest selected_verified_rows and accuracy counts",
+    "update latest_changes with new counts and a small sample of changed parcels",
+    "write docs/chatgpt_status/aays1/runner_outputs/103_security_accuracy_count_expansion.json with real evidence only",
+    "do not set final_ready true unless local browser smoke proof exists"
+  ],
+  "expected_outputs": [
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json",
+    "docs/chatgpt_status/aays1/runner_outputs/103_security_accuracy_count_expansion.json"
+  ],
+  "skip_unresolved_blockers": true,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}

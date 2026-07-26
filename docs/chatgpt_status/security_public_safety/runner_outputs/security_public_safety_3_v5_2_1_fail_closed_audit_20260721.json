@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_3",
+  "task_version": "5.2.1-smoke-fail-closed",
+  "attempt_id": "security-public-safety-3-20260721-010",
+  "audited_at": "2026-07-21T09:26:00+03:00",
+  "reason": "The prior smoke wrapper could return exit code zero after exact blob and identity checks even when no row passed all four gates.",
+  "fix": "Runtime success and exit code zero now require exact blob, exact ordered identity, core return code zero and at least one accuracy_score_4 row.",
+  "published": {
+    "main_python_commit": "60720455c5330c5daaced2db142380f2f951bc6c",
+    "canonical_python_commit": "d8e013454cfa95a2c4461b526cab45ab40a9fe53",
+    "main_powershell_commit": "116a9d50e58125061acde5de5c6c679dd610996e",
+    "canonical_powershell_commit": "0be4730dbf779af8f55bd8f132c12ac8deefa3fc",
+    "main_queue_commit": "e73cc0e6d0fc7eabdbd361b395d15f0c815eb691",
+    "canonical_queue_commit": "8b1eded6331f22b566f4e87f06aa46cc5cf38f9a"
+  },
+  "checks": [
+    {"check":1,"name":"python_py_compile","passed":true},
+    {"check":2,"name":"exact_three_target_ids","passed":true},
+    {"check":3,"name":"exact_blob_sha_guard","passed":true},
+    {"check":4,"name":"ordered_identity_guard","passed":true},
+    {"check":5,"name":"four_gate_score_suppression","passed":true},
+    {"check":6,"name":"runtime_success_requires_accuracy_4_gt_zero","passed":true},
+    {"check":7,"name":"exit_zero_requires_runtime_acceptance","passed":true},
+    {"check":8,"name":"reconciliation_records_success_requirement","passed":true},
+    {"check":9,"name":"unique_task_id_and_attempt_010","passed":true},
+    {"check":10,"name":"main_and_canonical_python_blob_equal","passed":true,"blob_sha":"8fbf2efb1744b3988629019a7430fb6326024a57"},
+    {"check":11,"name":"main_and_canonical_powershell_blob_equal","passed":true,"blob_sha":"03388fa32b76290a95ef0fc14958419d888f0fa4"},
+    {"check":12,"name":"main_and_canonical_queue_blob_equal","passed":true,"blob_sha":"876135c1169059d7bda9afa3bac857ca087dfd65"},
+    {"check":13,"name":"single_shared_runner_only","passed":true},
+    {"check":14,"name":"no_network_runtime_claimed","passed":true},
+    {"check":15,"name":"no_parcel_score_generated","passed":true},
+    {"check":16,"name":"final_ready_false","passed":true}
+  ],
+  "checks_passed": 16,
+  "checks_failed": 0,
+  "network_runtime_executed": false,
+  "canonical_blob_materialized_in_audit_environment": false,
+  "parcel_scores_generated": false,
+  "runner_success_claimed": false,
+  "fake_data": false,
+  "final_ready": false
+}

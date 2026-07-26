@@ -1,0 +1,54 @@
+{
+  "task_id": "gas-emissions-20260703-runner-ui-source-browser-gate",
+  "page_key": "gas_emissions",
+  "layer": "Gas Emissions",
+  "program_output": "Gas Emission Level",
+  "status": "QUEUED_FOR_SINGLE_RUNNER_LOCAL_EXECUTION",
+  "runner_policy": {
+    "single_runner_only": true,
+    "do_not_start_duplicate_runner": true,
+    "local_app_repo_root": "C:/Users/cagda/Documents/GitHub/AAYS",
+    "control_site": "local_8020_matrix_site"
+  },
+  "must_check_first": [
+    "docs/chatgpt_status/gas_emissions/fixtures/gas_emissions_verified_rows_template_20260703.csv",
+    "england_map_web/app.js",
+    "england_map_web/data/parcel_emissions_scores.geojson",
+    "england_map_web/data/parcel_air_quality_scores.geojson",
+    "outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/latest_changes.json"
+  ],
+  "acceptance_criteria": [
+    "air.png/toggle opens the Gas Emissions layer",
+    "parcel polygons are colored green-to-red by emission_percent",
+    "legend is visible for Gas Emissions",
+    "clicked parcel shows emission_percent, level, risk_color, confidence, source, source_date, matching_method, and calculation_explanation",
+    "source-backed rows exist and no placeholder or fake data is used",
+    "runner report and browser smoke proof are written"
+  ],
+  "final_ready": false,
+  "verification_score_after": "0/4",
+  "manual_review_required": true,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "updated_at": "2026-07-03T14:20:00Z",
+  "blockers": [
+    {
+      "code": "missing_verified_source_backed_rows",
+      "severity": "blocking",
+      "detail": "Fixture CSV must be replaced with real source-backed Gas Emissions parcel rows."
+    },
+    {
+      "code": "missing_or_unverified_runtime_ui_binding",
+      "severity": "blocking",
+      "detail": "Runner must verify app.js binds Gas Emissions to air.png/toggle, green-to-red emission_percent styling, legend, and required popup/right-panel fields."
+    },
+    {
+      "code": "missing_local_8020_browser_smoke",
+      "severity": "blocking",
+      "detail": "Browser smoke against the local 8020 matrix site is still required on the user machine."
+    }
+  ],
+  "next_action": "Run the single bridge locally. Keep final_ready=false unless source rows, UI binding, and browser smoke all pass."
+}

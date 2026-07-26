@@ -1,0 +1,38 @@
+{
+  "task_id": "security_public_safety_batch_20260703_0001",
+  "page_key": "security_public_safety",
+  "layer": "Safety / Security",
+  "program_output": "Security Level percent",
+  "script_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\security_public_safety\\automation\\security_public_safety_batch_runner.ps1",
+  "result_path": "F:\\AAYS_GITHUB_BRIDGE_CLEAN2\\ai-results\\security_public_safety_batch_20260703_0001.result.json",
+  "repo_result_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\docs\\chatgpt_status\\security_public_safety\\reports\\security_public_safety_batch_20260703_0001.md",
+  "site_visible_latest_changes_path": "F:\\chatgpt\\chat_gpt_clone_1_main\\outputs\\england_program_parcel_matrix_20260629\\security_public_safety_updates\\latest_changes.json",
+  "status": "pending",
+  "priority": 90,
+  "db_write": false,
+  "ddl": false,
+  "migration": false,
+  "production_deploy": false,
+  "fake_data": false,
+  "created_at": "2026-07-03T14:08:19+03:00",
+  "batch_scope": "bootstrap_validation_no_fake_scores",
+  "instructions": [
+    "Validate presence of real parcel layer and verified public-safety evidence outputs.",
+    "If verified parcel evidence is absent, write a blocked report and keep latest_changes.json with zero changes and final_ready=false.",
+    "When real parcel IDs and official/open aggregate sources exist, generate parcel_security_scores_verified.geojson, parcel_security_scores_verified.csv, security_evidence_manifest.json, and batch report.",
+    "Do not write person-level data or synthetic score rows."
+  ],
+  "required_outputs": [
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.geojson",
+    "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+    "england_map_web/data/security_public_safety/security_evidence_manifest.json",
+    "outputs/england_program_parcel_matrix_20260629/security_public_safety_updates/latest_changes.json"
+  ],
+  "final_ready_gate": [
+    "real official/open aggregate source evidence",
+    "parcel-based thematic layer visible",
+    "popup/right-panel fields visible",
+    "browser smoke evidence for matrix page",
+    "fake_data=false"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "task_id": "aays1-f-runner-consolidated-gate-100-main-mirror",
+  "page_key": "aays1",
+  "status": "pending",
+  "canonical_storage": "F_PORTABLE_ROOT",
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "priority": "site_visibility_recovery",
+  "recovery_plan_applied_by_chatgpt": true,
+  "root_cause_hypothesis": [
+    "main manifest was stale and showed old 429/error_count, while latest_changes and codex manifest had 150 verified rows",
+    "local 127.0.0.1 site needs F runner pickup/git sync and browser smoke proof before final_ready=true"
+  ],
+  "checks": [
+    "latest_changes",
+    "panel_index",
+    "security_csv",
+    "security_geojson",
+    "manifest",
+    "runner_outputs",
+    "local_site_fetch_latest_changes",
+    "browser_smoke_security_button",
+    "popup_right_panel_security_fields"
+  ],
+  "actions": [
+    "git_fetch_pull_current_branch",
+    "validate latest_changes.data_ready true and final_ready false",
+    "validate manifest.selected_verified_rows 150 and error_count absent/zero",
+    "verify parcel_security_scores_verified.geojson feature count >= 150",
+    "verify parcel_security_scores_verified.csv row count >= 150",
+    "probe http://127.0.0.1:8020/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html?refresh=20260630-final if local runner can access it",
+    "write runner output 100_f_runner_consolidated_gate.json with real evidence only"
+  ],
+  "skip_unresolved_blockers": true,
+  "fake_data": false,
+  "final_ready": false
+}

@@ -1,0 +1,50 @@
+name: AAYS Gas Emissions Continue
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/chatgpt_status/gas_emissions/**'
+      - 'outputs/england_program_parcel_matrix_20260629/gas_emissions_updates/**'
+
+permissions:
+  contents: write
+
+jobs:
+  continue-gas-emissions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run repo-side Gas Emissions bridge
+        shell: pwsh
+        run: |
+          $env:AAYS_REPO_ROOT = (Get-Location).Path
+          $script = 'docs/chatgpt_status/gas_emissions/automation/gas_emissions_single_runner_bridge_20260703.ps1'
+          if (Test-Path $script) {
+            pwsh -NoProfile -ExecutionPolicy Bypass -File $script
+          } else {
+            New-Item -ItemType Directory -Force -Path 'docs/chatgpt_status/gas_emissions/status' | Out-Null
+            Set-Content -Path 'docs/chatgpt_status/gas_emissions/status/github_actions_bridge_missing_20260704.txt' -Value 'bridge_missing=true'
+          }
+      - name: Write cloud runner status
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path 'docs/chatgpt_status/gas_emissions/status' | Out-Null
+          Set-Content -Path 'docs/chatgpt_status/gas_emissions/status/github_actions_continue_latest_20260704.txt' -Value @(
+            'github_actions_continue=true',
+            'cloud_runner_executed=true',
+            'local_site_runtime_proven=false',
+            'final_ready_not_forced=true'
+          )
+      - name: Commit status if changed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/chatgpt_status/gas_emissions/status docs/chatgpt_status/gas_emissions/reports outputs/england_program_parcel_matrix_20260629/gas_emissions_updates || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Gas Emissions cloud continue status"
+            git push
+          fi

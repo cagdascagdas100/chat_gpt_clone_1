@@ -1,0 +1,7 @@
+﻿# Security canonical geometry selection
+
+status=CANONICAL_GEOMETRY_SELECTED
+selected_geometry=docs\chatgpt_status\aays1\geometry_review_3of4\all_1264_real_geometry_3of4.geojson
+fake_data=false
+final_ready=false
+

@@ -2,13 +2,15 @@
 
 TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
 PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
-STATUS=PICKUP_REQUESTED_V6
+STATUS=PICKUP_REQUESTED_V6_REFRESHED_20260624
 MODE=single_shared_runner
+REFRESH_REASON=runner_pickup_or_publish_blocked_no_final_evidence
 
 PRIMARY_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z.ps1
 EXPANDED_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v6.ps1
 FALLBACK_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v5.ps1
+EXPECTED_V6_TERMINAL_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_terminal_bridge_report.txt
 EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_final_report.txt
 EXPECTED_STATUS=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/topography_single_runner_contract_recovery_20260623T010000Z_final.status.txt
 
-This file is a pickup alias for the existing Topography task. Keep outputs under this page key and use the existing single-runner flow. v6 records terminal bridge evidence and may publish only this page-key evidence with a normal non-forced Git push.
+This file is a refreshed pickup alias for the existing Topography task. It is not a new product task. Keep outputs under this page key and use the existing single-runner flow. v6 records terminal bridge evidence and may publish only this page-key evidence with a normal non-forced Git push.

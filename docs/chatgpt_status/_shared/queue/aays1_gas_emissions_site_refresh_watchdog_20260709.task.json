@@ -1,0 +1,38 @@
+{
+  "task_id": "aays1-gas-emissions-site-refresh-watchdog-20260709",
+  "page_key": "aays1",
+  "layer": "Gas Emissions",
+  "status": "queued",
+  "runner_policy": "single_f_portable_runner_only",
+  "current_positive_status": {
+    "source_row_gate_passed": true,
+    "extracted_row_count": 47,
+    "verification_score_after": "2.5/4",
+    "browser_smoke_passed": false,
+    "site_refresh_pending": true
+  },
+  "purpose": "Ensure the local 127.0.0.1:8020 site shows the positive Gas Emissions 47-row status after the F runner pulls main.",
+  "required_actions": [
+    "Pull latest main into the existing F portable runner repo only.",
+    "Refresh/rebuild the 127.0.0.1:8020 site data from latest_changes.json and site-readable JSON.",
+    "Run browser smoke for the Gas Emissions card.",
+    "Write smoke result to docs/chatgpt_status/gas_emissions/status/site_refresh_watchdog_latest.json.",
+    "Do not block parcel binding work if browser smoke fails; record blocker and continue next batch."
+  ],
+  "expected_visible_site_values": {
+    "status": "OFFICIAL_TRIAL_SOURCE_ROWS_EXPANDED_SITE_VISIBILITY",
+    "source_row_gate_passed": true,
+    "extracted_row_count": 47,
+    "score": "2.5/4",
+    "final_ready": false,
+    "fake_data": false
+  },
+  "safety": {
+    "single_runner_only": true,
+    "fake_data": false,
+    "final_ready": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  }
+}

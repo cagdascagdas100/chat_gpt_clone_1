@@ -1,0 +1,40 @@
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+TASK=page34-runner-contract-discovery-and-stale-recovery
+TASK_ID=page34_runner_contract_discovery_and_stale_recovery_20260623_002
+SCRIPT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/page34_runner_contract_discovery_and_stale_recovery_20260623_002.ps1
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/page34_runner_contract_discovery_and_stale_recovery_20260623_002_report.md
+OUTPUT_ROOT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT
+NO_SEPARATE_RUNNER=true
+NO_FAKE_DATA=true
+NO_FAKE_FINAL_MARKER=true
+ACCEPTANCE_CRITERIA=runner_contract_identified AND page34_queue_consumption_verified AND runtime_acceptance_probe_report_written
+
+PURPOSE:
+- Do not duplicate task 001.
+- Determine why task 001 has not produced EXPECTED_REPORT.
+- Detect the real shared runner queue/current-task contract for this repo/page-key.
+- Keep all evidence under this same PAGE_KEY.
+
+READ_FIRST:
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_tasks/page34_dpt_runner_contract_runtime_closure_20260623_001.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/current-task/page34_dpt_runner_contract_runtime_closure_20260623_001.current.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/page34_dpt_runner_contract_runtime_closure_20260623_001.txt
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/page34_dpt_runner_contract_runtime_closure_20260623_001_queued_status.json
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/page34_dpt_runner_contract_runtime_closure_20260623_001_bootstrap_report.md
+
+NON_CONFLICTING_WORK_PLAN:
+1. Contract scan: identify which queue/current-task/runner_tasks file pattern the shared runner actually consumes.
+2. Stale bridge scan: check heartbeat/status/runner_outputs under this PAGE_KEY and report whether runner is polling stale work.
+3. Static path audit: verify frontend route hook, backend route and parcel_use6 lookup path exist; no DB writes.
+4. Runtime acceptance probe: only if runner has local access, read health and distance-property-types endpoint and write feature_count evidence.
+5. Final decision: only if DB is healthy and feature_count > 0, write FINAL_READY_CONFIRMED. Otherwise write BLOCKED with exact blocker.
+
+OUTPUTS_REQUIRED:
+- EXPECTED_REPORT above.
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/status/page34_runner_contract_discovery_and_stale_recovery_20260623_002_status.json
+- docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_outputs/page34_runner_contract_discovery_and_stale_recovery_20260623_002_outputs.md
+
+PROGRESS_RULE:
+- If only contract/queue evidence improves, product progress may move at most from 75 to 78.
+- If local runtime report proves healthy DB but feature_count is still zero, max progress is 85.
+- If feature_count > 0 and frontend/backend checks pass, write 100 only with proof.

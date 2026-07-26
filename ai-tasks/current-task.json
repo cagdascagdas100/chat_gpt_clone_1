@@ -1,0 +1,44 @@
+{
+  "id": "terrayield-046-runner-sync-recovery-then-accuracy-expansion-r2",
+  "task_id": "terrayield-046-runner-sync-recovery-then-accuracy-expansion-r2",
+  "title": "Recover runner Git sync and continue 044 accuracy expansion",
+  "status": "recovery_parked",
+  "action": "script",
+  "progress": 99,
+  "working_directory": ".",
+  "timeout_seconds": 2700,
+  "created_by": "ChatGPT",
+  "updated_at": "2026-07-24T16:15:00+03:00",
+  "recovery_retry_count": 1,
+  "recovery_reason": "RECOVERY_PARKED_AFTER_SINGLE_SAFE_REFRESH_NO_RUNTIME_OUTPUT",
+  "script_path": "ai-task-scripts/terrayield_046_runner_sync_recovery.ps1",
+  "automation_script": "ai-task-scripts/terrayield_046_runner_sync_recovery.ps1",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ai-task-scripts/terrayield_046_runner_sync_recovery.ps1",
+  "required_checks": [
+    "bridge_git_snapshot",
+    "bridge_git_stabilizer_stash_fetch_ff_only_pull",
+    "runner_stuck_detector",
+    "watchdog_check",
+    "endpoint_health_probe",
+    "project_red_flag_quickscan",
+    "restore_verified_044_child_blob",
+    "start_044_child_and_check_exit_code",
+    "write_json_text_and_row_by_row_html"
+  ],
+  "expected_outputs": [
+    "docs/chatgpt_status/runner_outputs/terrayield-046-runner-sync-recovery-latest.json",
+    "docs/chatgpt_status/runner_outputs/terrayield-046-runner-sync-recovery-latest.txt",
+    "docs/chatgpt_status/runner_outputs/latest_output.json",
+    "england_map_web/data/terrayield/terrayield_046_live_progress.html"
+  ],
+  "safety": {
+    "db_write": false,
+    "deploy": false,
+    "migration": false,
+    "fake_data": false,
+    "force_push": false,
+    "second_runner": false,
+    "stash_drop": false
+  },
+  "note": "Single permitted safe refresh did not produce any expected runtime output. Runtime recovery is parked to avoid an infinite retry loop. No second task or runner was created. Research-support batches may continue independently and fail-closed."
+}

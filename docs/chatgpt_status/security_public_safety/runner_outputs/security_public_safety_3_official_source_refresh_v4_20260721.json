@@ -1,0 +1,44 @@
+{
+  "schema_version": 4,
+  "slot_id": "security_public_safety_3",
+  "verified_online_at": "2026-07-21T06:15:00+03:00",
+  "status": "OFFICIAL_SOURCE_REFRESH_V4_COMPLETE",
+  "verification_summary": {
+    "candidate_count": 12,
+    "promoted_count": 10,
+    "held_count": 2,
+    "accuracy_ge_90_count": 12,
+    "accuracy_ge_95_count": 11,
+    "freshness_reverified_count": 6,
+    "freshness_reverified_primary_count": 4
+  },
+  "current_primary_readbacks": {
+    "data_police_latest_month": "2026-05",
+    "home_office_last_updated": "2026-04-23",
+    "ons_pfa_release_date": "2026-04-23",
+    "ons_pfa_next_release": "2026-07-23",
+    "iod2025_last_updated": "2025-11-17",
+    "iod2025_version_rule": "Use corrected v2 LSOA files; File 7 Crime fields are relative context only."
+  },
+  "sources": [
+    {"source_id":"SRC-01","publisher":"MHCLG","name":"IoD2025 corrected File 7 v2","official_url":"https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025","evidence_date":"2025-11-17","authority_accuracy":98,"decision":"PROMOTED_RELATIVE_CONTEXT","semantic_limit":"Relative LSOA context only; not an absolute parcel security percentage."},
+    {"source_id":"SRC-02","publisher":"data.police.uk","name":"Street-level crimes API","official_url":"https://data.police.uk/docs/method/crime-last-updated/","evidence_date":"2026-05","authority_accuracy":95,"decision":"PROMOTED_CURRENT_SUPPORT","semantic_limit":"Anonymised approximate locations; area support only, not exact parcel incidents."},
+    {"source_id":"SRC-03","publisher":"Home Office","name":"Police recorded crime and outcomes open data tables","official_url":"https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables","evidence_date":"2026-04-23","authority_accuracy":98,"decision":"PROMOTED_AGGREGATE_QA","semantic_limit":"PFA and CSP aggregate calibration only; too coarse for direct parcel attribution."},
+    {"source_id":"SRC-04","publisher":"ONS","name":"Crime in England and Wales PFA data tables","official_url":"https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables/current","evidence_date":"2026-04-23","next_release":"2026-07-23","authority_accuracy":98,"decision":"PROMOTED_INDEPENDENT_QA","semantic_limit":"Independent aggregate reconciliation only."},
+    {"source_id":"SRC-05","publisher":"ONS","name":"LSOA21 BGC V5 boundaries","official_url":"https://geoportal.statistics.gov.uk/","evidence_date":"LSOA21","authority_accuracy":97,"decision":"PROMOTED_GEOGRAPHY_JOIN","semantic_limit":"Boundary vintage must match the 2021 LSOA statistical join."},
+    {"source_id":"SRC-06","publisher":"MHCLG","name":"Fire and rescue incident statistics","official_url":"https://www.gov.uk/government/collections/fire-and-rescue-incident-statistics","evidence_date":"current_collection","authority_accuracy":98,"decision":"HELD_SEPARATE_COMPONENT","semantic_limit":"Do not merge into crime score without a separately approved model."},
+    {"source_id":"SRC-07","publisher":"ONS","name":"LSOA mid-2024 population estimates","official_url":"https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates","evidence_date":"mid-2024","authority_accuracy":98,"decision":"PROMOTED_RATE_DENOMINATOR","semantic_limit":"Rate denominator and QA only; not direct safety evidence."},
+    {"source_id":"SRC-08","publisher":"ONS","name":"LSOA population density","official_url":"https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates","evidence_date":"2021_geography","authority_accuracy":98,"decision":"PROMOTED_DENSITY_QA","semantic_limit":"Exposure-density QA only; not an incident count."},
+    {"source_id":"SRC-09","publisher":"data.police.uk","name":"Street outcomes API","official_url":"https://data.police.uk/docs/method/crime-street/","evidence_date":"2026-05","authority_accuracy":94,"decision":"PROMOTED_SECONDARY_OUTCOMES","semantic_limit":"Approximate location outcomes support only; no person-level fields retained."},
+    {"source_id":"SRC-10","publisher":"ONS","name":"Crime Severity Score methodology","official_url":"https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/articles/researchoutputsdevelopingacrimeseverityscoreforenglandandwalesusingdataoncrimesrecordedbythepolice/latest","evidence_date":"method_reference","authority_accuracy":97,"decision":"PROMOTED_SEVERITY_QA","semantic_limit":"Severity calibration QA only; not directly converted to a parcel score."},
+    {"source_id":"SRC-11","publisher":"Department for Transport","name":"Road safety open data","official_url":"https://www.gov.uk/government/statistical-data-sets/road-accidents-and-safety-statistics-data-tables","evidence_date":"current_collection","authority_accuracy":98,"decision":"HELD_SEPARATE_COMPONENT","semantic_limit":"Road-collision safety is separate from crime/public-safety score."},
+    {"source_id":"SRC-12","publisher":"Home Office","name":"Recorded crime geographical reference table","official_url":"https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables","evidence_date":"2026-04-23","authority_accuracy":98,"decision":"PROMOTED_CODE_MAPPING","semantic_limit":"Code mapping only; not a parcel-level evidence source."}
+  ],
+  "actual_slot_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}

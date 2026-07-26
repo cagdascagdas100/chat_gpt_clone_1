@@ -5,12 +5,25 @@
   "status": "queued",
   "priority": "P0",
   "runner_contract": "single_shared_runner_only",
+  "shared_runner_script": "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER.ps1",
   "automation_script": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet-access-parcel-gap-closure.ps1",
+  "runner_command_task": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/runner_tasks/run-existing-automation-open-runner-20260623-rerun-2.json",
   "must_not_start_new_runner": true,
   "write_outputs_under_page_key_only": true,
+  "policy_report": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/data-source-guardrails-20260623.md",
+  "pickup_revision": "20260624Tshared-runner-script-added-rerun-3",
+  "runner_trigger_reason": "shared_runner_script_added_at_expected_github_path_and_queue_repointed_for_open_runner_pickup",
+  "expected_outputs": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/*runner-status*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/*heartbeat*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/*runner-output*.md",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/shared-runner-status-*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/shared-runner-heartbeat-*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/shared-runner-output-*.md"
+  ],
   "safe_parallel_groups": ["read_only_inventory", "factor_contract_validation", "endpoint_smoke_read_only"],
   "serialized_groups": ["heavy_dataset_build", "db_import_if_gate_open", "browser_smoke"],
   "acceptance_gates": ["real_parcel_geometry_present", "parcel_level_scores_csv_present", "factor_breakdown_contract_complete", "manifest_present", "endpoint_returns_non_empty_features", "browser_smoke_confirms_colored_parcels_and_panel"],
-  "known_blockers": ["P0_geometry_missing", "P0_postcode_level_only", "P1_factor_breakdown_schema_partial", "P1_endpoint_empty_or_unproven", "P1_browser_smoke_missing"],
+  "known_blockers": ["P0_geometry_missing", "P0_postcode_level_only", "P1_factor_breakdown_schema_partial", "P1_endpoint_empty_or_unproven", "P1_browser_smoke_missing", "RUNNER_PICKUP_NOT_PROVEN"],
   "next_single_command": "devam et"
 }

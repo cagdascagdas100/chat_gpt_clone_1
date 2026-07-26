@@ -1,0 +1,8 @@
+﻿# status reconcile 050 github proof
+
+runner_pickup=proven
+runner_push=proven
+completion_percent=92
+final_ready=false
+remaining_blockers=canonical_polygon_evidence_missing;canonical_contract_evidence_missing;acceptance_gate_blocker
+

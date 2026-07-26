@@ -1,0 +1,16 @@
+# Pickup ping
+
+TASK_ID=topography_single_runner_contract_recovery_20260623T010000Z
+PAGE_KEY=AAYS_REAL_TOPOGRAPHY_PRODUCT
+BRANCH=main
+PING_STATUS=ACTIVE_TASK_REPICKUP_REQUESTED
+PING_REFRESH_UTC=2026-06-24T00:00:00Z
+
+AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z.ps1
+EXPANDED_AUTOMATION=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/automation/topography_single_runner_contract_recovery_20260623T010000Z_v6.ps1
+ACTIVE_QUEUE=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/queue/_ACTIVE_TASK.md
+
+EXPECTED_REPORT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/reports/topography_single_runner_contract_recovery_20260623T010000Z_v6_terminal_bridge_report.txt
+EXPECTED_OUTPUT=docs/chatgpt_status/AAYS_REAL_TOPOGRAPHY_PRODUCT/runner_output/topography_single_runner_contract_recovery_20260623T010000Z_v6_runner_output.txt
+
+NOTE=Do not create fake final evidence. Existing single runner should pick up the active queue and publish real report/status evidence only.

@@ -1,0 +1,31 @@
+{
+  "schema_version": "aays_runner_command_v1",
+  "page_key": "internet_access_parcel_layer_low_credit_20260612",
+  "task_name": "internet-access-parcel-gap-closure",
+  "status": "ready_for_open_runner_pickup",
+  "priority": "P0",
+  "runner_contract": "single_shared_runner_only",
+  "must_not_start_new_runner": true,
+  "git_required_first": ["git checkout main", "git pull --ff-only origin main"],
+  "automation_script": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet-access-parcel-gap-closure.ps1",
+  "run_command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet-access-parcel-gap-closure.ps1",
+  "write_outputs_under": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612",
+  "expected_outputs": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/*runner-status*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/*heartbeat*.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/*runner-output*.md"
+  ],
+  "parallel_plan": {
+    "safe_parallel_groups": ["read_only_inventory", "factor_contract_validation", "endpoint_smoke_read_only"],
+    "serialized_groups": ["heavy_dataset_build", "db_import_if_gate_open", "browser_smoke"]
+  },
+  "acceptance_gates": [
+    "real_parcel_geometry_present",
+    "parcel_level_scores_csv_present",
+    "factor_breakdown_contract_complete",
+    "manifest_present",
+    "endpoint_returns_non_empty_features",
+    "browser_smoke_confirms_colored_parcels_and_panel"
+  ],
+  "blocker_to_close_first": "RUNNER_PICKUP_NOT_PROVEN"
+}

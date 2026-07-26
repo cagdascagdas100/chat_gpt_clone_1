@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Topography latest changes schema",
+  "type": "object",
+  "required": ["layer", "program_output", "final_ready", "summary", "changes"],
+  "properties": {
+    "layer": {"const": "Topography"},
+    "program_output": {"type": "string"},
+    "final_ready": {"type": "boolean"},
+    "summary": {
+      "type": "object",
+      "properties": {
+        "completion_percent": {"type": "number"},
+        "remaining_percent": {"type": "number"},
+        "filled_parcel_count": {"type": "integer"},
+        "verified_parcel_count": {"type": "integer"},
+        "accuracy_score_4": {"type": "string"},
+        "program_integration_percent": {"type": "number"},
+        "website_update_percent": {"type": "number"}
+      }
+    },
+    "changes": {"type": "array", "items": {"type": "object"}}
+  }
+}
