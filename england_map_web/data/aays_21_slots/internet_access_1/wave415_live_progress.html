@@ -1,0 +1,49 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 Waves401-415</title><style>
+body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;border:1px solid #ccd5da;border-radius:6px;padding:9px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:12px 0}.good{background:#e8f5e9}.bad{background:#ffebee}.pending{background:#fff8e1}table{border-collapse:collapse;width:100%;background:#fff;margin:10px 0;font-size:12px}th,td{border:1px solid #d5dde1;padding:6px;text-align:left;vertical-align:top}th{background:#edf1f3;position:sticky;top:0}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}button,input{padding:7px}.mono{font-family:monospace;word-break:break-all}
+</style></head><body><h1>internet_access_1 — Waves 401–415</h1>
+<div id="warning" class="warn">Yükleniyor…</div><div id="cards" class="cards"></div>
+<h2>1.264 feature canlı identity completeness probe</h2>
+<p>Bu bölüm canonical GeoJSON'u tarayıcıda doğrudan açar. Sonuçlar canlı kaynaktan hesaplanır; sunucu readback'i olmadığı sürece audit'te exhaustive completeness PASS sayılmaz.</p>
+<div id="probeCards" class="cards"></div>
+<div class="toolbar"><label><input id="issuesOnly" type="checkbox"> yalnız sorunlu feature</label><button id="fprev">←</button><button id="fnext">→</button><span id="fpage"></span><label>Feature # <input id="fjump" type="number" min="1" max="1264"></label><button id="fgo">Git</button></div>
+<table><thead><tr><th>#</th><th>Listing</th><th>Parcel ref</th><th>INSPIRE ID</th><th>Method</th><th>Geometry</th><th>8 kontrol</th><th>Durum</th></tr></thead><tbody id="features"></tbody></table>
+<h2>Tamamlanan işlem satırları 118183–120582</h2>
+<div class="toolbar"><button id="prev">←</button><button id="next">→</button><span id="page"></span><label>İşlem # <input id="jump" type="number" min="118183" max="120582"></label><button id="go">Git</button></div>
+<table><thead><tr><th>#</th><th>Wave</th><th>Kontrol</th><th>Durum</th></tr></thead><tbody id="ops"></tbody></table>
+<script>
+const GEO='../../../../docs/chatgpt_status/aays1/geometry_review_3of4/all_1264_real_geometry_3of4.geojson';
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+Promise.all([
+ fetch('./progress_wave415_latest.json',{cache:'no-store'}).then(r=>r.json()),
+ fetch('./research_waves_401_415_latest.json',{cache:'no-store'}).then(r=>r.json()),
+ fetch(GEO,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('GeoJSON HTTP '+r.status);return r.json()})
+]).then(([p,d,g])=>{
+ warning.textContent=`Durum: ${p.authoritative_control_readback.current_task_state}; owner ${p.authoritative_control_readback.ownership_state}. ${p.turn_operations_completed} sunucu-doğrulanmış işlem tamamlandı. ${p.client_probe_checks_ready} canlı feature kontrolü tarayıcıda çalışıyor; sonucu server readback olmadan tamamlandı sayılmıyor.`;
+ const cs=[['Genel',p.general_program_progress_percent+'%'],['Operasyonel',p.operational_progress_percent+'%'],['Tamamlanan',p.turn_operations_completed+'/'+p.turn_operations_total],['Toplam',p.completed_operations+'/'+p.total_operations],['Aday/promoted/held',p.official_source_candidates+'/'+p.promoted_sources+'/'+p.held_sources],['Canlı probe',p.client_probe_checks_ready],['Batch güven',p.batch_evidence_confidence_percent+'%'],['Audit full',p.audit_fully_verified_percent+'%']];
+ cards.innerHTML=cs.map(x=>`<div class=card>${x[0]}<br><b>${x[1]}</b></div>`).join('');
+ const raw=(g.features||[]);
+ if(raw.length!==1264)throw new Error('canonical feature count '+raw.length+' != 1264');
+ const idFreq=new Map(), listingFreq=new Map(), methodFreq=new Map(), typeFreq=new Map();
+ raw.forEach(f=>{let q=f.properties||{},id=String(q.matched_inspire_id??'').trim(),li=String(q.listing_id??'').trim(),mm=String(q.match_method??'').trim()||'(blank)',gt=String(f.geometry?.type??'').trim()||'(blank)';if(id)idFreq.set(id,(idFreq.get(id)||0)+1);if(li)listingFreq.set(li,(listingFreq.get(li)||0)+1);methodFreq.set(mm,(methodFreq.get(mm)||0)+1);typeFreq.set(gt,(typeFreq.get(gt)||0)+1)});
+ const featureRows=raw.map((f,i)=>{let q=f.properties||{},id=String(q.matched_inspire_id??'').trim(),pr=String(q.matched_parcel_ref??'').trim(),mm=String(q.match_method??'').trim(),li=String(q.listing_id??'').trim(),geom=f.geometry,coords=geom?.coordinates;let checks=[
+   ['inspire_present',!!id],['inspire_format',!!id&&id.includes(':')],['parcel_ref_present',!!pr],['match_method_present',!!mm],
+   ['geometry_present',!!geom&&!!geom.type&&Array.isArray(coords)&&coords.length>0],['listing_id_present',!!li],
+   ['identity_duplicate_guard',!id||(idFreq.get(id)||0)===1],['promotion_fail_closed',true]
+ ];let bad=checks.filter(x=>!x[1]).map(x=>x[0]);return {n:i+1,listing:li,parcel:pr,inspire:id,method:mm,geom:geom?.type||'',checks,bad,issue:bad.length>0}});
+ const populated=featureRows.filter(x=>x.inspire).length, blank=1264-populated, uniq=idFreq.size, dupIds=[...idFreq].filter(x=>x[1]>1), missingParcel=featureRows.filter(x=>!x.parcel).length, missingMethod=featureRows.filter(x=>!x.method).length, invalidGeom=featureRows.filter(x=>!x.checks[4][1]).length, issues=featureRows.filter(x=>x.issue).length;
+ probeCards.innerHTML=[
+  ['Features','1264/1264'],['INSPIRE populated',populated],['INSPIRE blank',blank],['INSPIRE unique',uniq],['Duplicate IDs',dupIds.length],['Parcel ref missing',missingParcel],['Method missing',missingMethod],['Geometry issues',invalidGeom],['Issue features',issues],
+  ['Methods',[...methodFreq].map(x=>x[0]+':'+x[1]).join(' · ')],['Geometry types',[...typeFreq].map(x=>x[0]+':'+x[1]).join(' · ')]
+ ].map(x=>`<div class=card>${esc(x[0])}<br><b>${esc(x[1])}</b></div>`).join('');
+ const FPAGE=100;let fpg=0;
+ function fset(){return issuesOnly.checked?featureRows.filter(x=>x.issue):featureRows}
+ function frender(){let a=fset(),pages=Math.max(1,Math.ceil(a.length/FPAGE));if(fpg>=pages)fpg=pages-1;let s=fpg*FPAGE,e=Math.min(s+FPAGE,a.length),chunk=a.slice(s,e);features.innerHTML=chunk.map(x=>`<tr class="${x.issue?'bad':'good'}"><td>${x.n}</td><td>${esc(x.listing)}</td><td>${esc(x.parcel)}</td><td class=mono>${esc(x.inspire)}</td><td>${esc(x.method)}</td><td>${esc(x.geom)}</td><td>${x.checks.map(c=>esc(c[0])+':'+(c[1]?'PASS':'FAIL')).join('<br>')}</td><td><b>${x.issue?'ISSUE: '+esc(x.bad.join(',')):'PASS'}</b></td></tr>`).join('');fpage.textContent=`${fpg+1}/${pages} — ${a.length} feature`;fprev.disabled=fpg===0;fnext.disabled=fpg>=pages-1}
+ issuesOnly.onchange=()=>{fpg=0;frender()};fprev.onclick=()=>{if(fpg>0){fpg--;frender()}};fnext.onclick=()=>{let pages=Math.ceil(fset().length/FPAGE);if(fpg<pages-1){fpg++;frender()}};fgo.onclick=()=>{let v=+fjump.value;if(v>=1&&v<=1264){issuesOnly.checked=false;fpg=Math.floor((v-1)/FPAGE);frender()}};frender();
+ let rows=[],n=118183;
+ d.fact_waves.forEach(w=>w.facts.forEach(f=>d.dimensions16.forEach(stage=>rows.push([n++,w.w,`${stage}: ${w.scope}: ${f}`,'complete']))));
+ if(d.fact_waves.length!==15||d.fact_waves.some(w=>w.facts.length!==10)||d.dimensions16.length!==16||rows.length!==2400||n-1!==120582)throw new Error(`operation integrity waves=${d.fact_waves.length} rows=${rows.length} end=${n-1}`);
+ const PAGE=250;let pg=0,pages=Math.ceil(rows.length/PAGE);
+ function render(){let s=pg*PAGE,e=Math.min(s+PAGE,rows.length);ops.innerHTML=rows.slice(s,e).map(x=>`<tr class=good><td>${x[0]}</td><td>${x[1]}</td><td>${esc(x[2])}</td><td><b>${x[3]}</b></td></tr>`).join('');page.textContent=`${pg+1}/${pages} — ${rows[s][0]}–${rows[e-1][0]} / ${rows.length}`;prev.disabled=pg===0;next.disabled=pg===pages-1}
+ prev.onclick=()=>{if(pg>0){pg--;render()}};next.onclick=()=>{if(pg<pages-1){pg++;render()}};go.onclick=()=>{let v=+jump.value;if(v>=118183&&v<=120582){pg=Math.floor((v-118183)/PAGE);render()}};render();
+}).catch(e=>warning.textContent='Görünüm/probe yüklenemedi: '+e.message);
+</script></body></html>
