@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """No-argument same-task entrypoint for strict12 local acceptance and publish handoff.
 
-Batch140 requires a completed fresh-host heartbeat receipt and a runtime environment
-preflight that is no older than 15 minutes and bound to the exact current local HEAD
-and canonical current-task Git blob. The exact validated Python/PowerShell/Git
-identities are reused through strict measurement and publish/history handoff.
+Batch141 requires the Batch140 fresh-heartbeat/runtime-environment receipts plus a
+fresh coordinator runtime-rewire receipt. Immediately before strict measurement it
+runs 046, which performs a fresh origin fetch, proves local HEAD still equals origin,
+proves exactly one matching queue record exists, and binds request/current-task/queue
+Git blobs plus all preflight outputs to the effective 039/040 wiring. The validated
+Python/PowerShell/Git identities are then reused through strict measurement and the
+serial-publisher handoff. No second task/runner is created and this script never pushes.
 """
 from __future__ import annotations
 
@@ -23,6 +26,8 @@ EXPECTED_ROWS = list(range(61540, 61552))
 TASK_REL = "docs/chatgpt_status/_shared/slots_21/height_difference_3/current_task_latest.json"
 HEARTBEAT_PREFLIGHT_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/045_batch140_fresh_heartbeat_preflight/fresh_runner_heartbeat_preflight.json"
 ENV_PREFLIGHT_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/041_batch137_runtime_environment_preflight/runtime_environment_preflight.json"
+RECEIPT_VALIDATOR_REL = "docs/chatgpt_status/topography/shards/height_difference_3/automation/046_validate_batch141_coordinator_rewire_receipt.py"
+RECEIPT_VALIDATION_REL = "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/047_batch141_coordinator_rewire_receipt/coordinator_runtime_rewire_receipt_validation.json"
 PREFLIGHT_TTL_SECONDS = 900
 
 
@@ -40,8 +45,8 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def run(command: list[str], cwd: Path) -> dict[str, Any]:
-    proc = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
+def run(command: list[str], cwd: Path, env: dict[str, str] | None = None) -> dict[str, Any]:
+    proc = subprocess.run(command, cwd=cwd, env=env, text=True, capture_output=True, check=False)
     return {"command": command, "exit_code": proc.returncode, "stdout": proc.stdout[-16000:], "stderr": proc.stderr[-16000:]}
 
 
@@ -71,11 +76,9 @@ def main() -> int:
     repo = find_repo_root(script_dir)
     current_task_path = repo / TASK_REL
     current_task = load_json(current_task_path)
-    if current_task.get("task_id") != TASK_ID:
-        raise ValueError("current task_id mismatch")
-    if current_task.get("continuation_key") != CONTINUATION:
-        raise ValueError("current continuation_key mismatch")
-    if current_task.get("single_runner_only") is not True or current_task.get("new_runner") is not False:
+    if current_task.get("task_id") != TASK_ID or current_task.get("continuation_key") != CONTINUATION:
+        raise ValueError("current task identity mismatch")
+    if current_task.get("single_runner_only") is not True or current_task.get("new_runner") is not False or current_task.get("parallel_runner") is not False:
         raise ValueError("single-runner contract mismatch")
 
     heartbeat_preflight_path = repo / HEARTBEAT_PREFLIGHT_REL
@@ -90,8 +93,8 @@ def main() -> int:
         raise ValueError("fresh host heartbeat did not pass")
     if heartbeat_preflight.get("environment_gate_044_executed") is not True or int(heartbeat_preflight.get("environment_gate_044_exit_code") or -1) != 0:
         raise ValueError("heartbeat chain did not complete environment gate 044")
-    if float(heartbeat_preflight.get("global_heartbeat_age_seconds") or 1e18) > float(heartbeat_preflight.get("slot_stale_after_seconds") or 0):
-        raise ValueError("heartbeat receipt records stale global runner")
+    if float(heartbeat_preflight.get("global_heartbeat_age_seconds") or 1e18) > float(heartbeat_preflight.get("entry_max_global_heartbeat_age_seconds") or 0):
+        raise ValueError("heartbeat receipt exceeds reserved entry freshness budget")
 
     env_preflight_path = repo / ENV_PREFLIGHT_REL
     if not env_preflight_path.is_file():
@@ -103,10 +106,8 @@ def main() -> int:
         raise ValueError("runtime environment preflight checks incomplete")
     if env_preflight.get("bootstrap_042_executed") is not True or int(env_preflight.get("bootstrap_042_exit_code") or -1) != 0:
         raise ValueError("runtime environment preflight did not complete bootstrap 042")
-    if int(env_preflight.get("numeric_values_written") or 0) != 0:
-        raise ValueError("runtime environment preflight unexpectedly wrote numeric values")
-    if env_preflight.get("canonical_branch") != BRANCH:
-        raise ValueError("runtime environment preflight branch mismatch")
+    if int(env_preflight.get("numeric_values_written") or 0) != 0 or env_preflight.get("canonical_branch") != BRANCH:
+        raise ValueError("runtime environment preflight contract mismatch")
 
     now = datetime.now(timezone.utc)
     hb_checked = parse_utc(heartbeat_preflight.get("checked_at_utc"))
@@ -153,6 +154,31 @@ def main() -> int:
     if current_task_blob != str(env_preflight.get("canonical_current_task_blob_sha") or "").lower():
         raise ValueError(f"runtime current-task blob drift: preflight={env_preflight.get('canonical_current_task_blob_sha')} current={current_task_blob}")
 
+    receipt_validator = repo / RECEIPT_VALIDATOR_REL
+    if not receipt_validator.is_file():
+        raise FileNotFoundError(receipt_validator)
+    receipt_env = os.environ.copy()
+    receipt_env["AAYS_GIT_EXE"] = git_executable
+    receipt_stage = run([python_executable, str(receipt_validator)], repo, env=receipt_env)
+    if receipt_stage["exit_code"] != 0:
+        raise RuntimeError(f"coordinator rewire receipt validation failed: {receipt_stage['stderr'][-2400:]}")
+    receipt_validation_path = repo / RECEIPT_VALIDATION_REL
+    if not receipt_validation_path.is_file():
+        raise FileNotFoundError(receipt_validation_path)
+    receipt_validation = load_json(receipt_validation_path)
+    if receipt_validation.get("status") != "COORDINATOR_REWIRE_RECEIPT_VALIDATED":
+        raise ValueError("coordinator rewire receipt did not validate")
+    if receipt_validation.get("task_id") != TASK_ID or receipt_validation.get("continuation_key") != CONTINUATION:
+        raise ValueError("coordinator receipt validation task mismatch")
+    if int(receipt_validation.get("matching_queue_record_count") or 0) != 1:
+        raise ValueError("coordinator receipt duplicate queue census failed")
+    if receipt_validation.get("local_head") != local_head or receipt_validation.get("fresh_origin_head") != local_head:
+        raise ValueError("coordinator receipt entry fresh-origin binding drift")
+    if receipt_validation.get("current_task_blob_sha") != current_task_blob:
+        raise ValueError("coordinator receipt current-task blob drift")
+    if receipt_validation.get("runtime_override_applied") is not True:
+        raise ValueError("coordinator runtime override not proven")
+
     strict_wrapper = script_dir / "036_run_batch131_strict12_with_local_acceptance.ps1"
     manifest_generator = script_dir / "037_prepare_batch132_publish_manifest.py"
     for path in (strict_wrapper, manifest_generator):
@@ -194,22 +220,18 @@ def main() -> int:
         raise RuntimeError(f"publish manifest generation failed: {manifest_result['stderr'][-2000:]}")
 
     manifest = load_json(publish_manifest)
-    if int(manifest.get("schema_version") or 0) < 2:
-        raise ValueError("publish manifest lacks pre-publish history binding")
-    if manifest.get("ready_for_serial_publisher") is not True:
-        raise ValueError("publish manifest not ready")
+    if int(manifest.get("schema_version") or 0) < 2 or manifest.get("ready_for_serial_publisher") is not True:
+        raise ValueError("publish manifest history/readiness contract mismatch")
     if manifest.get("task_id") != TASK_ID or manifest.get("continuation_key") != CONTINUATION:
         raise ValueError("publish manifest task/continuation mismatch")
-    if [int(v) for v in (manifest.get("expected_rows") or [])] != EXPECTED_ROWS:
-        raise ValueError("publish manifest row set mismatch")
-    if len(manifest.get("files") or []) != 7:
-        raise ValueError("publish manifest file count must equal 7")
+    if [int(v) for v in (manifest.get("expected_rows") or [])] != EXPECTED_ROWS or len(manifest.get("files") or []) != 7:
+        raise ValueError("publish manifest row/file set mismatch")
     if str(manifest.get("pre_publish_origin_head") or "").lower() != pre_publish_origin_head:
         raise ValueError("publish manifest pre-publish origin HEAD mismatch")
 
     output = repo / "docs/chatgpt_status/topography/shards/height_difference_3/runner_outputs/033_batch133_coordinator_handoff/batch133_prepare_publish_handoff.json"
     payload = {
-        "schema_version": 5,
+        "schema_version": 6,
         "slot_id": "height_difference_3",
         "task_id": TASK_ID,
         "continuation_key": CONTINUATION,
@@ -222,6 +244,11 @@ def main() -> int:
         "runtime_preflight_ttl_seconds": PREFLIGHT_TTL_SECONDS,
         "runtime_preflight_head": local_head,
         "runtime_preflight_current_task_blob_sha": current_task_blob,
+        "coordinator_rewire_receipt_validation": RECEIPT_VALIDATION_REL,
+        "coordinator_rewire_receipt_validated": True,
+        "coordinator_receipt_binding_key_sha256": receipt_validation.get("binding_key_sha256"),
+        "coordinator_receipt_matching_queue_record_count": 1,
+        "runtime_entry_fresh_origin_head": receipt_validation.get("fresh_origin_head"),
         "runtime_python_executable": python_executable,
         "runtime_powershell_executable": powershell,
         "runtime_git_executable": git_executable,
@@ -246,10 +273,16 @@ def main() -> int:
         "numeric_values_changed": 0,
         "final_ready": False,
         "fake_data": False,
-        "stages": {"strict_local_acceptance": strict_result, "pre_publish_origin_fetch": fetch_result, "pre_publish_origin_head": head_result, "publish_manifest": manifest_result},
+        "stages": {
+            "coordinator_rewire_receipt_validation": receipt_stage,
+            "strict_local_acceptance": strict_result,
+            "pre_publish_origin_fetch": fetch_result,
+            "pre_publish_origin_head": head_result,
+            "publish_manifest": manifest_result,
+        },
     }
     write(output, payload)
-    print(json.dumps({"ok": True, "status": payload["status"], "pre_publish_origin_head": pre_publish_origin_head, "runtime_preflight_valid_until_utc": env_preflight.get("valid_until_utc"), "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(output)}))
+    print(json.dumps({"ok": True, "status": payload["status"], "entry_fresh_origin_head": receipt_validation.get("fresh_origin_head"), "pre_publish_origin_head": pre_publish_origin_head, "coordinator_binding_key": receipt_validation.get("binding_key_sha256"), "python": python_executable, "powershell": powershell, "git": git_executable, "output": str(output)}))
     return 0
 
 
