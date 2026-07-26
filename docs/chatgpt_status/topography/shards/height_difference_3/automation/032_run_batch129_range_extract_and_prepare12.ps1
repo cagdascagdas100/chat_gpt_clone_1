@@ -1,11 +1,13 @@
 param(
   [Parameter(Mandatory=$false)][string]$RepoRoot = $env:AAYS_REPO_ROOT,
-  [Parameter(Mandatory=$false)][string]$PythonExe = "python"
+  [Parameter(Mandatory=$false)][string]$PythonExe = "python",
+  [Parameter(Mandatory=$false)][string]$PowerShellExe = $env:AAYS_POWERSHELL_EXE
 )
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
   $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..\..\..")).Path
 }
+if ([string]::IsNullOrWhiteSpace($PowerShellExe)) { $PowerShellExe = "powershell" }
 $RangeAdapter = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\031_run_batch128_candidate_range_extract.ps1"
 $QueryPreparer = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\automation\004_prepare_three_real_sample_queries.py"
 $RangeOut = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_difference_3\runner_outputs\024_batch128_candidate_range_extract"
@@ -15,7 +17,7 @@ $QueryOut = Join-Path $RepoRoot "docs\chatgpt_status\topography\shards\height_di
 if (-not (Test-Path -LiteralPath $RangeAdapter -PathType Leaf)) { throw "Missing range adapter: $RangeAdapter" }
 if (-not (Test-Path -LiteralPath $QueryPreparer -PathType Leaf)) { throw "Missing query preparer: $QueryPreparer" }
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File $RangeAdapter -RepoRoot $RepoRoot -PythonExe $PythonExe
+& $PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $RangeAdapter -RepoRoot $RepoRoot -PythonExe $PythonExe
 if ($LASTEXITCODE -ne 0) { throw "Range extraction adapter failed with exit code $LASTEXITCODE" }
 if (-not (Test-Path -LiteralPath $RangeJsonl -PathType Leaf)) { throw "Missing extracted range JSONL" }
 New-Item -ItemType Directory -Force -Path $QueryOut | Out-Null
@@ -49,6 +51,9 @@ if ($S.numeric_samples_written -ne 0) { throw "Numeric samples unexpectedly writ
 Write-Output (ConvertTo-Json -Compress @{
   ok = $true
   same_task_resume_only = $true
+  python_executable = $PythonExe
+  powershell_executable = $PowerShellExe
+  executable_identity_propagated = $true
   range_rows = 240
   prepared_candidate_rows = $Actual
   prepared_candidate_count = 12
