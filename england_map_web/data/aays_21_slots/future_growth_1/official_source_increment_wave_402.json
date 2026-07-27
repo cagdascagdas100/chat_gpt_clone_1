@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 402,
+  "topic": "EPC_UPRN_ADDRESS_ENERGY_CERTIFICATE_RECENCY_QUALITY_AND_EXCLUSION_GATES",
+  "generated_at": "2026-07-27T19:34:50+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_EPC_ADDRESS_AND_UPRN_LINKAGE_VALIDATION_NOT_BUILDING_OWNERSHIP_NOT_PLANNING_USE_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.7,
+  "sources": [
+    {"key":"epc_data_service","url":"https://get-energy-performance-data.communities.gov.uk/","fact":"MHCLG's official service provides domestic EPC, non-domestic EPC and DEC bulk CSV/API data for England and Wales; records from 2012 may include expired or replaced certificates."},
+    {"key":"epc_guidance","url":"https://get-energy-performance-data.communities.gov.uk/guidance","fact":"Official guidance separates data dictionary, production method, methodology changes, limitations, licensing and API documentation."},
+    {"key":"epc_dictionary","url":"https://get-energy-performance-data.communities.gov.uk/guidance/data-dictionary","fact":"Domestic, non-domestic and display-certificate CSV data dictionaries document variables, source and caveats."},
+    {"key":"epc_limit_multi","url":"https://get-energy-performance-data.communities.gov.uk/guidance/data-limitations","fact":"The data can contain multiple EPCs/DECs for one building, including expired or replaced certificates."},
+    {"key":"epc_limit_coverage","url":"https://get-energy-performance-data.communities.gov.uk/guidance/data-limitations","fact":"The register does not contain every domestic/non-domestic/public building and must not be treated as a complete representation of building stock."},
+    {"key":"epc_limit_quality","url":"https://get-energy-performance-data.communities.gov.uk/guidance/data-limitations","fact":"Official limitations identify invalid/no-data/not-recorded/null/extreme-value anomalies and place individual-building robustness responsibility on the assessor/accreditation scheme."},
+    {"key":"epc_exclusions","url":"https://get-energy-performance-data.communities.gov.uk/guidance/data-limitations","fact":"Excluded public data can include national-security cases, cancelled/not-for-issue certificates, opted-out buildings and specified Green Deal cases."},
+    {"key":"epc_uprn","url":"https://www.gov.uk/government/statistics/energy-performance-of-building-certificates-in-england-and-wales-january-to-march-2026/energy-performance-of-buildings-certificates-statistical-release-january-to-march-2026-england-and-wales","fact":"MHCLG states open address-level EPC data are updated monthly and, where possible, include UPRNs since November 2021."},
+    {"key":"epc_find","url":"https://www.gov.uk/find-energy-certificate","fact":"The official register search supports postcode, street/town or certificate-number lookup for homes, business properties and public buildings."},
+    {"key":"epc_validity","url":"https://www.gov.uk/selling-a-home/energy-performance-certificates","fact":"A domestic EPC gives an A-G efficiency rating and is generally valid for 10 years; validity does not establish ownership or planning status."},
+    {"key":"epc_optout","url":"https://www.gov.uk/guidance/energy-performance-certificates-opt-out-of-public-disclosure","fact":"Owners/occupiers may opt an EPC out of public disclosure; absence from public results is therefore not proof that no certificate exists."},
+    {"key":"epc_mees","url":"https://www.gov.uk/guidance/view-private-rented-sector-energy-standards-exemptions","fact":"The current private-rented-sector exemption register, published 5 May 2026, supports postcode/street/town searches for MEES exemptions and penalties; exemption status is distinct from planning viability."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"Where several EPCs exist, no arbitrary certificate is treated as current; validity/replacement chronology must be resolved."},
+    {"id":"EX02","result":"UPRN is used as an addressable-location join key where present, not as a legal title or parcel polygon."},
+    {"id":"EX03","result":"Missing EPC/open-data row is not treated as no-building/no-certificate because coverage and opt-out exclusions exist."},
+    {"id":"EX04","result":"An EPC rating does not prove current occupancy, planning use class, redevelopment capacity or ownership."},
+    {"id":"EX05","result":"NULL/invalid/not-recorded values remain missing/quality flags and are not imputed from nearby properties."},
+    {"id":"EX06","result":"Non-domestic EPC floor/energy attributes are not converted into site area or residual land value."},
+    {"id":"EX07","result":"MEES exemption/penalty records are regulatory evidence only and not a development-probability score."},
+    {"id":"EX08","result":"No candidate promotion occurs from EPC/UPRN matching without exact HMLR title relation and current site-specific planning evidence."}
+  ],
+  "fail_closed_rules": ["multiple_epcs_require_chronology","expired_epc_not_current","uprn_not_title_number","uprn_not_legal_polygon","missing_epc_not_no_building","optout_retained","invalid_values_not_imputed","null_address_not_nearest_fill","epc_rating_not_planning_use","epc_rating_not_redevelopment_capacity","floor_area_not_site_area","mees_exemption_not_viability","certificate_not_ownership","address_search_not_title_binding","no_neighbor_energy_fill","promotion_requires_exact_title_and_current_site_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"epc_uprn_examples_revalidated":8,"current_certificate_chains_resolved_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
