@@ -146,7 +146,7 @@ def main() -> int:
                 "--output-dir", str(numeric_output_dir),
                 "--final-output", str(final_output),
                 "--web-output", str(web_output),
-                "--expected-web-operation-rows", os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "934"),
+                "--expected-web-operation-rows", os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"),
             ]
             if os.environ.get("AAYS_EA_DTM1M_COVERAGE_ID"):
                 command.extend(["--coverage-id", os.environ["AAYS_EA_DTM1M_COVERAGE_ID"]])
@@ -166,7 +166,7 @@ def main() -> int:
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
-        "task_version": "6.0-fhost-contract-reconciled-exact-chain",
+        "task_version": "6.2-fhost-safe-ffonly-terrain50-webfloor",
         "status": "THREE_SOURCE_OFFICIAL_NUMERIC_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
         "target_rows": TARGET_ROWS,
         "stage_order": [
