@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 393,
+  "topic": "NPPF_HOUSING_SUPPLY_DELIVERY_PRESUMPTION_AND_DELIVERABILITY_GATES",
+  "generated_at": "2026-07-27T18:49:10+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_HOUSING_SUPPLY_AND_PRESUMPTION_VALIDATION_NOT_SITE_DELIVERABILITY_PROOF_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.5,
+  "score_basis": "Non-statistical internal evidence-quality score based on current GOV.UK NPPF/Planning Inspectorate readback, explicit effective-date handling and separation of authority-wide supply tests from parcel deliverability.",
+  "sources": [
+    {"key":"nppf_presumption","label":"NPPF Section 2","url":"https://www.gov.uk/guidance/national-planning-policy-framework/2-achieving-sustainable-development","fact":"Paragraphs 10-12 retain the presumption in favour of sustainable development while the statutory development plan remains the starting point for decisions."},
+    {"key":"nppf_land","label":"NPPF Section 5 land supply","url":"https://www.gov.uk/guidance/national-planning-policy-framework/5-delivering-a-sufficient-supply-of-homes","fact":"Plans should identify specific deliverable sites for years 1-5 and developable sites/broad locations for later years."},
+    {"key":"nppf_five_year","label":"NPPF five-year supply","url":"https://www.gov.uk/guidance/national-planning-policy-framework/5-delivering-a-sufficient-supply-of-homes","fact":"Authorities should update annually a minimum five-year supply of deliverable sites against the applicable requirement/local housing need."},
+    {"key":"nppf_buffer_2026","label":"NPPF 1 July 2026 buffer","url":"https://www.gov.uk/guidance/national-planning-policy-framework/5-delivering-a-sufficient-supply-of-homes","fact":"From 1 July 2026 a 20% decision-making buffer applies in the specified adopted-requirement/80%-of-current-LHN circumstances."},
+    {"key":"hdt_consequences","label":"NPPF Housing Delivery Test consequences","url":"https://www.gov.uk/guidance/national-planning-policy-framework/5-delivering-a-sufficient-supply-of-homes","fact":"HDT consequences escalate at below 95%, 85% and 75%; the below-75% threshold engages the presumption in addition to action-plan/buffer consequences."},
+    {"key":"hdt_latest_published","label":"Housing Delivery Test 2023 measurement","url":"https://www.gov.uk/government/publications/housing-delivery-test-2023-measurement","fact":"Published 12 December 2024; GOV.UK notes a delayed publication timetable and that previously published results remain relevant until superseded."},
+    {"key":"pins_supply_collection","label":"Planning Inspectorate housing land supply evidence","url":"https://www.gov.uk/government/collections/local-plans-housing-land-supply-evidence","fact":"Published 1 June 2026; provides legacy-system templates and stresses version-specific transitional NPPF evidence."},
+    {"key":"pins_deliverable","label":"Planning Inspectorate deliverable-site evidence","url":"https://www.gov.uk/guidance/local-plans-housing-land-supply-evidence-july-2021-framework-as-amended-in-september-2023","fact":"Outline/allocated/brownfield-register major sites require clear evidence that completions will begin within five years to be treated as deliverable under that framework version."},
+    {"key":"london_plan_current","label":"Current London Plan status","url":"https://www.london.gov.uk/programmes-strategies/planning/london-plan","fact":"London Plan 2021 remains the current adopted spatial development strategy while the next plan is prepared."},
+    {"key":"london_housing","label":"London Plan 2021 Chapter 4","url":"https://www.london.gov.uk/programmes-strategies/planning/london-plan/the-london-plan-2021-online/chapter-4-housing","fact":"Adopted housing policies provide strategic context but do not themselves prove a candidate parcel is deliverable within five years."},
+    {"key":"lbbd_local_plan","label":"LBBD Local Plan 2037","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"Adopted 18 September 2024; parcel delivery still requires current permission, implementation and site-specific evidence."},
+    {"key":"draft_london_plan","label":"Draft London Plan 2026 homes chapter","url":"https://www.london.gov.uk/programmes-strategies/planning/london-plan/next-london-plan/draft-london-plan-consultation/draft-london-plan-consultation-resources/draft-london-plan/3-delivering-homes-and-neighbourhoods-londoners-need","fact":"Published as Draft in July 2026 and therefore not silently substituted for the adopted 2021 plan in current parcel scoring."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"Authority-wide five-year supply is not converted into parcel-level delivery probability."},
+    {"id":"EX02","result":"The 1 July 2026 NPPF buffer is applied only where its specific authority-level criteria are evidenced."},
+    {"id":"EX03","result":"Below-75% HDT consequence is not inferred without the applicable published/recalculated authority result."},
+    {"id":"EX04","result":"Brownfield-register or allocation status alone is not treated as five-year deliverability for major sites."},
+    {"id":"EX05","result":"Outline permission requires clear delivery evidence before a major site is counted as deliverable."},
+    {"id":"EX06","result":"The presumption does not erase the statutory starting point of the development plan."},
+    {"id":"EX07","result":"Draft London Plan 2026 housing provisions remain DRAFT and are not substituted for adopted policy."},
+    {"id":"EX08","result":"No candidate promotion occurs without exact parcel relation plus current deliverability/permission evidence."}
+  ],
+  "fail_closed_rules": ["five_year_supply_not_parcel_probability","presumption_requires_policy_trigger","development_plan_starting_point_retained","hdt_requires_current_authority_result","hdt_delayed_publication_not_guessed","buffer_2026_requires_exact_criteria","deliverable_requires_clear_evidence","outline_permission_not_auto_deliverable","allocation_not_auto_deliverable","brownfield_register_not_auto_deliverable","permission_not_completion_proof","trajectory_not_site_guarantee","draft_plan_not_current_policy","no_generic_delivery_rate_fill","no_authority_result_transfer","promotion_requires_exact_parcel_and_delivery_evidence"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","SCOPE","SUPPLY","DELIVERY","HDT","POLICY","PERMISSION","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"housing_supply_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
