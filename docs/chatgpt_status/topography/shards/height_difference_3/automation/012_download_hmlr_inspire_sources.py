@@ -2,8 +2,9 @@
 """Download current HMLR INSPIRE files for validated starter candidates.
 
 Only a unique normalized local-authority match is accepted. Downloads are
-hashed and inspected; ambiguous links, HTML error pages and unsafe archives
-fail closed. No parcel measurement is produced here.
+restricted to the official HMLR host, hashed and inspected; ambiguous links,
+HTML error pages and unsafe archives fail closed. No parcel measurement is
+produced here.
 """
 from __future__ import annotations
 
@@ -16,11 +17,12 @@ import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 
 DEFAULT_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
+OFFICIAL_HOST = "use-land-property-data.service.gov.uk"
 MAX_DOWNLOAD_BYTES = 1_500_000_000
 MAX_EXTRACTED_BYTES = 2_000_000_000
 
@@ -76,11 +78,57 @@ class AnchorParser(HTMLParser):
 
 def _normal_authority(value: Any) -> str:
     text = re.sub(r"[^a-z0-9]+", " ", str(value or "").casefold()).strip()
-    prefixes = ("the ", "city of ")
-    for prefix in prefixes:
-        if text.startswith(prefix):
-            text = text[len(prefix):]
     return " ".join(text.split())
+
+
+def _authority_key(value: Any) -> str:
+    text = _normal_authority(value)
+    prefixes = (
+        "the ",
+        "city of ",
+        "london borough of ",
+        "royal borough of ",
+        "metropolitan borough of ",
+    )
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes:
+            if text.startswith(prefix):
+                text = text[len(prefix):].strip()
+                changed = True
+                break
+    suffixes = (
+        " metropolitan borough council",
+        " london borough council",
+        " borough council",
+        " district council",
+        " city council",
+        " county council",
+        " council",
+    )
+    changed = True
+    while changed:
+        changed = False
+        for suffix in suffixes:
+            if text.endswith(suffix):
+                text = text[: -len(suffix)].strip()
+                changed = True
+                break
+    return text
+
+
+def _context_authority_key(context: str, anchor_text: str) -> str:
+    context_norm = _normal_authority(context)
+    anchor_norm = _normal_authority(anchor_text)
+    if anchor_norm and context_norm.endswith(anchor_norm):
+        context_norm = context_norm[: -len(anchor_norm)].strip()
+    return _authority_key(context_norm)
+
+
+def _official(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and parsed.hostname == OFFICIAL_HOST
 
 
 def _slug(value: str) -> str:
@@ -113,9 +161,13 @@ def _load_candidates(path: Path) -> list[dict[str, Any]]:
 
 
 def _stream_download(session: requests.Session, url: str, output: Path, timeout: int) -> dict[str, Any]:
+    if not _official(url):
+        raise ValueError("HMLR download URL is not the pinned official host")
     output.parent.mkdir(parents=True, exist_ok=True)
     with session.get(url, timeout=timeout, stream=True, allow_redirects=True) as response:
         response.raise_for_status()
+        if not _official(response.url):
+            raise ValueError(f"HMLR download redirected off official host: {response.url}")
         content_type = response.headers.get("content-type", "")
         total = 0
         with output.open("wb") as handle:
@@ -167,12 +219,17 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--user-agent", default="TerraYield-AAYS/height_difference_3")
     args = parser.parse_args(argv)
 
+    if not _official(args.download_page):
+        raise ValueError("HMLR download page is not the pinned official host")
+
     candidates = _load_candidates(args.starter_manifest)
     authorities = sorted({str(row["local_authority_name"]).strip() for row in candidates})
     session = requests.Session()
     session.headers.update({"User-Agent": args.user_agent})
     page_response = session.get(args.download_page, timeout=args.timeout, allow_redirects=True)
     page_response.raise_for_status()
+    if not _official(page_response.url):
+        raise ValueError(f"HMLR download page redirected off official host: {page_response.url}")
     page_body = page_response.content
     parser_html = AnchorParser()
     parser_html.feed(page_body.decode("utf-8", errors="replace"))
@@ -181,23 +238,32 @@ def main(argv: Iterable[str] | None = None) -> int:
     vector_paths: list[str] = []
     blocked = []
     for authority in authorities:
-        target = _normal_authority(authority)
+        target_key = _authority_key(authority)
+        if not target_key:
+            raise ValueError(f"authority normalizes to empty key: {authority!r}")
         matches = []
         for context, href, anchor_text in parser_html.links:
             if not href:
                 continue
-            combined = _normal_authority(context)
-            href_name = _normal_authority(Path(href.split("?", 1)[0]).stem)
-            if (
-                target in {combined, href_name}
-                or (target and target in href_name)
-                or (target and target in combined and "download" in combined)
-            ):
-                matches.append({"context": context, "anchor_text": anchor_text, "url": urljoin(page_response.url, href)})
+            resolved = urljoin(page_response.url, href)
+            if not _official(resolved):
+                continue
+            context_key = _context_authority_key(context, anchor_text)
+            href_key = _authority_key(Path(urlparse(resolved).path).stem)
+            if target_key in {context_key, href_key}:
+                matches.append({
+                    "context": context,
+                    "anchor_text": anchor_text,
+                    "url": resolved,
+                    "target_authority_key": target_key,
+                    "context_authority_key": context_key,
+                    "href_authority_key": href_key,
+                    "match_method": "EXACT_NORMALIZED_AUTHORITY_CONTEXT_OR_HREF",
+                })
         unique = {item["url"]: item for item in matches}
         matches = list(unique.values())
         if len(matches) != 1:
-            blocked.append({"authority": authority, "status": "NO_UNIQUE_EXACT_DOWNLOAD_LINK", "matches": matches})
+            blocked.append({"authority": authority, "status": "NO_UNIQUE_EXACT_DOWNLOAD_LINK", "target_authority_key": target_key, "matches": matches})
             continue
 
         match = matches[0]
@@ -212,7 +278,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             vectors = _safe_extract_gml(raw_path, authority_dir / "extracted")
             container_type = "zip"
         else:
-            suffix = Path(match["url"].split("?", 1)[0]).suffix.lower()
+            suffix = Path(urlparse(match["url"]).path).suffix.lower()
             final_path = authority_dir / ("source.gml" if suffix not in {".gml", ".xml"} else f"source{suffix}")
             raw_path.replace(final_path)
             vectors = [final_path]
@@ -226,7 +292,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         records.append(
             {
                 "authority": authority,
-                "normalized_authority": target,
+                "normalized_authority_key": target_key,
+                "authority_match_method": match["match_method"],
                 "download_link": match,
                 "resolved_url": meta["resolved_url"],
                 "content_type": meta["content_type"],
@@ -237,18 +304,21 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     status = "READY" if len(records) == len(authorities) and not blocked else "BLOCKED_HMLR_SOURCE_PREPARATION"
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "status": status,
         "download_page": args.download_page,
         "download_page_resolved_url": page_response.url,
         "download_page_sha256": hashlib.sha256(page_body).hexdigest(),
+        "official_host": OFFICIAL_HOST,
+        "official_host_only": True,
         "candidate_count": len(candidates),
         "authority_count": len(authorities),
         "prepared_authority_count": len(records),
         "records": records,
         "blocked": blocked,
         "vector_paths": vector_paths,
+        "authority_match_policy": "EXACT_NORMALIZED_AUTHORITY_CONTEXT_OR_HREF_ONLY",
         "nearest_or_fuzzy_authority_match_used": False,
         "measurement_values_written": 0,
         "final_ready": False,
