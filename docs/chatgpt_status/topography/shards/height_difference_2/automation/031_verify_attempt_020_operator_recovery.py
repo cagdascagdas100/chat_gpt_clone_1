@@ -10,15 +10,20 @@ from typing import Any
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 ATTEMPT_ID = "height-difference-2-20260721-020"
 BRANCH = "codex/aays-single-runner-v5-20260706"
-TASK_VERSION = "6.3-fhost-safe-ffonly-terrain50-webacceptance"
-PICKUP_REVISION = 11
-HELPER_BLOB = "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
-OPERATOR_BLOB = "4565641e078f7058d7946a29c3da411f87be5572"
-CARRIER_BLOB = "c3d25055ae182590c382327df09040ab65b8223a"
-ENTRYPOINT_BLOB = "ff6656beb3e8db7d658e03e8373185cc6e500b3b"
-NUMERIC_GATE_BLOB = "c2633df7a1a0ed7cebdf27331ca44b8bcd0872b1"
-WEB_VERIFIER_BLOB = "f4fd5ecdcee6fed79b2cdd42452eb8f8398abae1"
+TASK_VERSION = "6.4-terrain50-accuracy-screening-web-integrity"
+PICKUP_REVISION = 12
 TARGET_ROWS = [30762, 46142, 61522]
+EXPECTED = {
+    "helper": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1",
+    "operator": "4565641e078f7058d7946a29c3da411f87be5572",
+    "carrier": "69e09b9e06dc82615a79ca832bd522cf8185e399",
+    "entrypoint": "842ec93f6218025d583ee720cd56bce6ef2fb462",
+    "numeric_gate": "c2633df7a1a0ed7cebdf27331ca44b8bcd0872b1",
+    "terrain_resolver": "90e87710cba7a63df01ab058b335d5bc570dc9f6",
+    "terrain_crosschecker": "9f4a652392017c74c5dd2f8cec899e114ccdc2d6",
+    "terrain_wrapper": "8ce81728c2eca74f8b14f3b3675c09ec393e06a5",
+    "web_verifier": "f4fd5ecdcee6fed79b2cdd42452eb8f8398abae1",
+}
 
 
 def git_blob_sha(path: Path) -> str:
@@ -33,75 +38,56 @@ def main() -> int:
     args = parser.parse_args()
     root = args.repo_root.resolve()
     automation = root / "docs/chatgpt_status/topography/shards/height_difference_2/automation"
-    helper_path = automation / "026_restart_existing_canonical_f_runner_if_stale.ps1"
-    operator_path = automation / "030_apply_attempt_020_existing_f_runner_recovery.ps1"
-    carrier_path = automation / "043_height_difference_2_shared_runner_carrier.ps1"
-    numeric_gate_path = automation / "014_run_official_numeric_gate.py"
-    web_verifier_path = automation / "017_verify_height_difference_2_web_8012.py"
-    entrypoint_path = root / "docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py"
-    queue_path = root / "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json"
-    request_path = root / "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json"
-
-    helper = helper_path.read_text(encoding="utf-8-sig")
-    operator = operator_path.read_text(encoding="utf-8-sig")
-    carrier = carrier_path.read_text(encoding="utf-8-sig")
-    entrypoint = entrypoint_path.read_text(encoding="utf-8-sig")
-    numeric_gate = numeric_gate_path.read_text(encoding="utf-8-sig")
-    web_verifier = web_verifier_path.read_text(encoding="utf-8-sig")
-    actual = {
-        "helper": git_blob_sha(helper_path),
-        "operator": git_blob_sha(operator_path),
-        "carrier": git_blob_sha(carrier_path),
-        "entrypoint": git_blob_sha(entrypoint_path),
-        "numeric_gate": git_blob_sha(numeric_gate_path),
-        "web_verifier": git_blob_sha(web_verifier_path),
+    paths = {
+        "helper": automation / "026_restart_existing_canonical_f_runner_if_stale.ps1",
+        "operator": automation / "030_apply_attempt_020_existing_f_runner_recovery.ps1",
+        "carrier": automation / "043_height_difference_2_shared_runner_carrier.ps1",
+        "entrypoint": root / "docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py",
+        "numeric_gate": automation / "014_run_official_numeric_gate.py",
+        "terrain_resolver": automation / "015_resolve_os_terrain50_downloads.py",
+        "terrain_crosschecker": automation / "013_crosscheck_os_terrain50.py",
+        "terrain_wrapper": automation / "016_prepare_and_crosscheck_os_terrain50.py",
+        "web_verifier": automation / "017_verify_height_difference_2_web_8012.py",
     }
-    queue: dict[str, Any] = json.loads(queue_path.read_text(encoding="utf-8-sig"))
-    request: dict[str, Any] = json.loads(request_path.read_text(encoding="utf-8-sig"))
+    text = {name: path.read_text(encoding="utf-8-sig") for name, path in paths.items()}
+    actual = {name: git_blob_sha(path) for name, path in paths.items()}
+    queue: dict[str, Any] = json.loads((root / "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json").read_text(encoding="utf-8-sig"))
+    request: dict[str, Any] = json.loads((root / "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json").read_text(encoding="utf-8-sig"))
 
     checks: list[dict[str, Any]] = []
     def check(name: str, passed: bool, detail: str) -> None:
         checks.append({"name": name, "passed": bool(passed), "detail": detail})
 
-    expected_blobs = {
-        "helper": HELPER_BLOB,
-        "operator": OPERATOR_BLOB,
-        "carrier": CARRIER_BLOB,
-        "entrypoint": ENTRYPOINT_BLOB,
-        "numeric_gate": NUMERIC_GATE_BLOB,
-        "web_verifier": WEB_VERIFIER_BLOB,
-    }
-    for name, expected in expected_blobs.items():
+    for name, expected in EXPECTED.items():
         check(f"{name}_blob_actual", actual[name] == expected, f"actual={actual[name]}")
 
-    check("helper_attempt_020", ATTEMPT_ID in helper and "height-difference-2-20260721-019" not in helper, "Helper is bound only to attempt 020.")
-    check("helper_single_runner_fail_closed", all(token in helper for token in ["existing_single_runner_architecture_reused = $true", "new_runner_architecture_created = $false", "parallel_runner_started = $false", "BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES", "CANONICAL_PERSISTENT_DAEMON_ALREADY_ACTIVE_NO_NEW_PROCESS"]), "Helper preserves the existing single runner and fails closed on ambiguity.")
-    check("operator_exact_root_and_branch", BRANCH in operator and "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707" in operator and "BLOCKED_CANONICAL_BRANCH_MISMATCH" in operator, "Operator is pinned to the canonical F repo and branch.")
-    check("operator_snapshot_race_safe", all(token in operator for token in ["snapshot_capture_phase = 'memory_before_stash_fetch_sync'", "snapshot_publication_phase = 'receipt_exit_after_sync_or_on_blocked_exit'", "function Publish-Snapshot", "Publish-Snapshot", "snapshot_required_for_clean_and_dirty = $true"]), "Git state is captured before synchronization but 016 is published only on receipt exit.")
-    check("operator_dirty_state_preserved", "stash','push','--include-untracked'" in operator and "stash_auto_restore_attempted = $false" in operator, "Dirty/untracked state is stashed with no auto-pop.")
-    check("operator_ff_only_no_reset", "fetch','--atomic','origin',$branch,'--prune'" in operator and "merge-base','--is-ancestor'" in operator and "merge','--ff-only'" in operator and "reset --hard" not in operator and "hard_reset_used = $false" in operator, "Synchronization is atomic-fetch + ancestry-gated ff-only; hard reset is forbidden.")
-    check("operator_remote_exact_head", "BLOCKED_REMOTE_HEAD_NOT_APPLIED" in operator and "$localAfter -ne $remoteHead" in operator, "Local HEAD must equal remote after synchronization.")
-    check("operator_receipts", "015_operator_recovery_preflight_latest.json" in operator and "016_operator_git_snapshot_latest.json" in operator, "015 and deterministic 016 receipts are bound.")
-    check("carrier_revision_and_web_floor", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and "$expectedWebRows = 1036" in carrier and ENTRYPOINT_BLOB in carrier and "PORT_8012_ACCEPTANCE_REQUIRED=true" in carrier and "PORT_8012_CURRENT_CANDIDATE_SHA256_REQUIRED=true" in carrier and "PORT_8012_OPERATION_FILE_PATH_GUARD_REQUIRED=true" in carrier, "Carrier revision and current web-byte guards are aligned.")
-    check("entrypoint_requires_web_pass", TASK_VERSION in entrypoint and 'numeric_payload.get("web_acceptance_passed") is True' in entrypoint and "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW" in entrypoint, "Entrypoint cannot succeed on numeric rows alone.")
-    check("numeric_gate_current_candidate_sha", '"--expected-candidates-sha256"' in numeric_gate and "preacceptance_candidates_sha256" in numeric_gate and 'web_payload.get("candidate_http_sha256") == expected_candidates_sha256' in numeric_gate and 'web_payload.get("current_candidate_bytes_verified") is True' in numeric_gate, "Numeric orchestrator binds the HTTP candidate bytes to the exact preacceptance file SHA256.")
-    check("numeric_gate_exact_rows", "official numeric exact row set mismatch" in numeric_gate and "[30762, 46142, 61522]" in numeric_gate, "Numeric gate itself rejects a non-exact three-row set.")
-    check("web_verifier_current_candidate_sha", "expected-candidates-sha256" in web_verifier and "candidate HTTP SHA256 mismatch" in web_verifier and "current_candidate_bytes_verified" in web_verifier and TASK_ID in web_verifier and ATTEMPT_ID in web_verifier, "Port8012 verifier requires current candidate bytes and exact task/attempt binding.")
-    check("web_verifier_operation_path_guard", "_safe_operation_file_name" in web_verifier and "operation file escapes slot root" in web_verifier and "operation_file_path_guard_verified" in web_verifier and "duplicate file names" in web_verifier, "Operation files are constrained to unique slot-local JSON basenames.")
-    check("web_verifier_exact_rows", "TARGET_ROWS = [30762, 46142, 61522]" in web_verifier and "candidate exact row set mismatch" in web_verifier and "exact_target_rows_verified" in web_verifier, "Port8012 verifier binds exact target rows.")
+    helper = text["helper"]
+    operator = text["operator"]
+    carrier = text["carrier"]
+    entrypoint = text["entrypoint"]
+    numeric_gate = text["numeric_gate"]
+    wrapper = text["terrain_wrapper"]
+    web_verifier = text["web_verifier"]
 
-    check("queue_identity", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("task_version") == TASK_VERSION and queue.get("pickup_request_revision") == PICKUP_REVISION, "Queue identity and pickup revision match.")
-    check("queue_blobs", queue.get("restart_helper_blob_sha") == HELPER_BLOB and queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB and queue.get("script_blob_sha") == CARRIER_BLOB and queue.get("python_script_blob_sha") == ENTRYPOINT_BLOB and queue.get("official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and queue.get("web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Queue pins the exact recovery/runtime blob set.")
-    check("queue_recovery_policy", queue.get("git_snapshot_always_required") is True and queue.get("snapshot_capture_before_sync_required") is True and queue.get("snapshot_publication_after_sync_or_blocked_exit_required") is True and queue.get("hard_reset_forbidden") is True and queue.get("fast_forward_only_required") is True, "Queue pins race-safe snapshot and ff-only/no-reset recovery.")
-    check("queue_exact_data_and_web", queue.get("sample_rows") == TARGET_ROWS and queue.get("web_exact_target_rows_required") == TARGET_ROWS and int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and queue.get("web_current_candidate_sha256_required") is True and queue.get("web_operation_file_path_guard_required") is True, "Queue binds exact targets, current candidate SHA and safe operation paths.")
+    check("single_runner", all(token in helper for token in ["existing_single_runner_architecture_reused = $true", "new_runner_architecture_created = $false", "parallel_runner_started = $false", "BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES"]), "Existing single-runner architecture is preserved.")
+    check("operator_safe_sync", BRANCH in operator and "snapshot_capture_phase = 'memory_before_stash_fetch_sync'" in operator and "stash','push','--include-untracked'" in operator and "merge','--ff-only'" in operator and "reset --hard" not in operator, "Recovery preserves state and uses ff-only without hard reset.")
+    check("carrier_v64", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and EXPECTED["entrypoint"] in carrier and EXPECTED["terrain_resolver"] in carrier and EXPECTED["terrain_crosschecker"] in carrier and EXPECTED["terrain_wrapper"] in carrier, "Carrier pins v6.4 entrypoint and complete Terrain50 chain.")
+    check("carrier_accuracy_contract", all(token in carrier for token in ["TERRAIN50_OS_GRID_RMSE_M=4.0", "EA_DTM1M_RMSE_M=0.15", "TERRAIN50_CONSERVATIVE_ONE_RMSE_SUM_M=4.15", "TERRAIN50_CONSERVATIVE_TWO_RMSE_SUM_M=8.30", "TERRAIN50_TWO_RMSE_SCREENING_IS_NOT_CONFIDENCE_INTERVAL=true"]), "Carrier publishes the evidence-based conservative screening contract.")
+    check("wrapper_accuracy_contract", all(token in wrapper for token in ["OS_TERRAIN50_GRID_RMSE_M = 4.0", "EA_LIDAR_DTM_RMSE_M = 0.15", "CONSERVATIVE_ONE_RMSE_SUM_M", "CONSERVATIVE_TWO_RMSE_SUM_M", "OUTSIDE_CONSERVATIVE_TWO_RMSE_SUM_BLOCK", "confidence_interval_claimed\": False"]), "Terrain50 wrapper blocks deltas outside the conservative two-RMSE-sum screen without claiming a confidence interval.")
+    check("entrypoint_accuracy_gate", TASK_VERSION in entrypoint and 'terrain_payload.get("accuracy_screening_passed") is True' in entrypoint and "THREE_SOURCE_OFFICIAL_NUMERIC_ACCURACY_AND_WEB_GATE_EXECUTED" in entrypoint, "Entrypoint requires Terrain50 accuracy screening plus numeric and web gates.")
+    check("numeric_current_web_bytes", '"--expected-candidates-sha256"' in numeric_gate and "preacceptance_candidates_sha256" in numeric_gate and 'web_payload.get("current_candidate_bytes_verified") is True' in numeric_gate, "Numeric gate binds HTTP candidates to the bytes it just wrote.")
+    check("web_path_and_identity_guard", "_safe_operation_file_name" in web_verifier and "candidate payload slot/task/attempt binding mismatch" in web_verifier and "candidate HTTP SHA256 mismatch" in web_verifier and "operation_file_path_guard_verified" in web_verifier, "Web acceptance verifies current candidate bytes, identity and slot-local operation paths.")
 
-    check("request_identity", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("request_revision") == PICKUP_REVISION and request.get("required_pickup_request_revision") == PICKUP_REVISION, "Restart request identity/revision match queue and carrier.")
-    check("request_blobs", request.get("required_restart_helper_blob_sha") == HELPER_BLOB and request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB and request.get("required_carrier_blob_sha") == CARRIER_BLOB and request.get("required_entrypoint_blob_sha") == ENTRYPOINT_BLOB and request.get("required_official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and request.get("required_web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Restart request pins the exact runtime blob set.")
-    check("request_recovery_and_web", request.get("snapshot_capture_before_sync_required") is True and request.get("snapshot_publication_after_sync_or_blocked_exit_required") is True and request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and request.get("web_exact_target_rows_required") == TARGET_ROWS and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and request.get("web_current_candidate_sha256_required") is True and request.get("web_operation_file_path_guard_required") is True, "Restart request matches race-safe recovery and current-byte exact-row web acceptance.")
+    check("queue_identity", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("task_version") == TASK_VERSION and queue.get("pickup_request_revision") == PICKUP_REVISION, "Queue identity/version/revision match.")
+    check("queue_runtime_blobs", queue.get("restart_helper_blob_sha") == EXPECTED["helper"] and queue.get("operator_recovery_blob_sha") == EXPECTED["operator"] and queue.get("script_blob_sha") == EXPECTED["carrier"] and queue.get("python_script_blob_sha") == EXPECTED["entrypoint"] and queue.get("official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and queue.get("terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and queue.get("terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and queue.get("terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and queue.get("web_verifier_blob_sha") == EXPECTED["web_verifier"], "Queue pins the complete runtime blob set.")
+    check("queue_accuracy_web_contract", queue.get("sample_rows") == TARGET_ROWS and queue.get("terrain50_accuracy_screening_required") is True and float(queue.get("terrain50_conservative_two_rmse_sum_m", 0)) == 8.3 and queue.get("terrain50_two_rmse_screening_is_confidence_interval") is False and queue.get("web_current_candidate_sha256_required") is True and queue.get("web_operation_file_path_guard_required") is True and int(queue.get("expected_web_operation_rows", 0)) >= 1036, "Queue requires exact targets, accuracy screening and current-byte web acceptance.")
+    check("request_identity", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("request_revision") == PICKUP_REVISION and request.get("required_pickup_request_revision") == PICKUP_REVISION, "Restart request revision matches queue/carrier.")
+    check("request_runtime_blobs", request.get("required_carrier_blob_sha") == EXPECTED["carrier"] and request.get("required_entrypoint_blob_sha") == EXPECTED["entrypoint"] and request.get("required_official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and request.get("required_terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and request.get("required_terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and request.get("required_terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and request.get("required_web_verifier_blob_sha") == EXPECTED["web_verifier"] and request.get("required_operator_recovery_blob_sha") == EXPECTED["operator"], "Restart request pins the same runtime chain.")
+    check("request_accuracy_web_contract", request.get("terrain50_accuracy_screening_required") is True and float(request.get("terrain50_conservative_two_rmse_sum_m", 0)) == 8.3 and request.get("terrain50_two_rmse_screening_is_confidence_interval") is False and request.get("web_current_candidate_sha256_required") is True and request.get("web_operation_file_path_guard_required") is True, "Restart request matches accuracy and web-integrity safeguards.")
 
     passed = sum(1 for item in checks if item["passed"])
     payload = {
-        "schema_version": 8,
+        "schema_version": 9,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -116,7 +102,6 @@ def main() -> int:
         "runner_restart_observed": False,
         "product_rows_promoted": 0,
         "static_contract_only": True,
-        "shared_global_queue_refresh_control_not_pinned": True,
         "final_ready": False,
         "fake_data": False,
         "db_write": False,
