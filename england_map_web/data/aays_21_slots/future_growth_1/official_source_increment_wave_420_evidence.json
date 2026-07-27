@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":420,
+  "topic":"CANDIDATE_ZO_CAMBRIDGE_HOUSE_NAME_COLLISION_HISTORIC_APPLICATION_ADJACENCY_AND_NOT_PERMISSIONED_GATES",
+  "generated_at":"2026-07-27T21:18:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_ZO_IDENTITY_AND_HISTORIC_CASE_RECONCILIATION_NOT_NAME_BASED_BINDING_NOT_EXACT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.8,
+  "sources":[
+    {"key":"zo_brownfield","url":"https://www.planning.data.gov.uk/entity/1739885","fact":"LBBD90/ZO Cambridge House is 0.26ha, 117 net dwellings and planning-permission-status not-permissioned."},
+    {"key":"zo_point","url":"https://www.planning.data.gov.uk/entity/1739885","fact":"ZO supplies POINT (0.079574 51.538747) and blank geometry; the point is not a site red-line or legal title boundary."},
+    {"key":"zo_owner_status","url":"https://www.planning.data.gov.uk/entity/1739885","fact":"Ownership-status is not-owned-by-a-public-authority; this does not identify the legal owner or title number."},
+    {"key":"zo_name_only","url":"https://www.planning.data.gov.uk/entity/1739885","fact":"The Brownfield site-address field is Cambridge House without a full street address, so name-only application matching is unsafe."},
+    {"key":"historic_cambridge_case","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=8194","fact":"A 2015 LBBD Planning Committee record lists application 15/00288/FUL at Cambridge House, 3-9 Cambridge Road, Barking for first-floor office-to-residential conversion; it was refused under delegated powers."},
+    {"key":"historic_case_scope","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=8194","fact":"The 2015 case concerned creation of four flats on the first floor and is historical; it is not treated as a current permission for the 117-home ZO allocation."},
+    {"key":"crown_house_adjacent","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=78125","fact":"The 2019 Crown House and Linton Road Car Park committee minutes record objections from tenants/applicants at Cambridge House, confirming local adjacency/context but not a ZO redevelopment permission."},
+    {"key":"crown_house_scope","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=78125","fact":"18/01972/FUL is a separate Crown House/Linton Road scheme for 396 homes; its permission cannot be transferred to Cambridge House."},
+    {"key":"local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"LBBD Local Plan 2037 was adopted 18 September 2024; allocation status remains policy evidence rather than planning permission."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states all Brownfield Register sites require planning permission."},
+    {"key":"cambridge_name_collision_1","url":"https://www.planning.data.gov.uk/entity/31776937","fact":"Planning Data contains another CAMBRIDGE HOUSE listed-building entity at a different coordinate outside Barking, demonstrating name collision risk."},
+    {"key":"cambridge_name_collision_2","url":"https://www.planning.data.gov.uk/entity/31488805","fact":"Planning Data contains a second unrelated CAMBRIDGE HOUSE listed-building entity at another location, reinforcing that name alone cannot bind a planning/title record."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"ZO remains not-permissioned at 117 net dwellings."},
+    {"id":"EX02","result":"The 2015 four-flat Cambridge House application is retained as historical evidence, not current ZO permission."},
+    {"id":"EX03","result":"Crown House 18/01972/FUL is an adjacent separate case and is never transferred to ZO."},
+    {"id":"EX04","result":"Cambridge House name collisions across official datasets block name-only matching."},
+    {"id":"EX05","result":"The ZO point is not converted into a site polygon."},
+    {"id":"EX06","result":"Non-public ownership status is not owner/title identification."},
+    {"id":"EX07","result":"117 is allocation/Brownfield capacity, not consented units."},
+    {"id":"EX08","result":"Promotion remains zero until exact current ZO application/address/title relation and statutory overlays are verified."}
+  ],
+  "fail_closed_rules":["not_permissioned_preserved","historic_application_not_current_permission","four_flat_case_not_117_unit_consent","adjacent_crown_house_not_transferable","name_collision_blocks_name_only_match","name_only_not_application_binding","point_not_polygon","blank_geometry_no_buffer","ownership_status_not_owner_name","allocation_capacity_not_consented_units","no_fuzzy_address_binding","no_nearest_case_binding","exact_current_case_required","exact_address_title_relation_required","no_allocation_only_promotion","promotion_requires_exact_zo_case_title_and_overlay"],
+  "dimensions":["STATUS","EVIDENCE","TEMPORAL","IDENTITY","APPLICATION","ADJACENCY","ALLOCATION","GEOMETRY","OWNERSHIP","TITLE","NO_DATA","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD90/ZO Cambridge House","net_dwellings":117,"planning_permission_status":"not-permissioned","historic_barking_cambridge_house_application_observed":"15/00288/FUL","historic_case_bound_as_current_zo_permission":false,"exact_current_planning_application_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
