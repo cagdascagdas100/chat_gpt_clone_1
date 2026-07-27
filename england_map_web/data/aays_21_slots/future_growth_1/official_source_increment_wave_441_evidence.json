@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":441,
+  "topic":"CANDIDATE_BZ_174_176_RIPPLE_ROAD_PERMISSION_S106_HISTORIC_POLYGON_AND_TITLE_GATES",
+  "generated_at":"2026-07-27T23:35:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_BZ_PERMISSION_AND_REGISTER_GEOMETRY_RECONCILIATION_NOT_CURRENT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.9,
+  "sources":[
+    {"key":"bz_brownfield","url":"https://www.planning.data.gov.uk/entity/1739833","fact":"LBBD15/BZ at 174-176 Ripple Road is 0.04ha, 9 minimum/maximum net dwellings and planning-permission-status permissioned."},
+    {"key":"bz_permission_date","url":"https://www.planning.data.gov.uk/entity/1739833","fact":"The current Brownfield entry records full planning permission dated 21 December 2016 and planning-history id 14046."},
+    {"key":"bz_point","url":"https://www.planning.data.gov.uk/entity/1739833","fact":"The current Brownfield entry has a point and blank geometry; this is not treated as an application red-line or legal title polygon."},
+    {"key":"bz_owner_category","url":"https://www.planning.data.gov.uk/entity/1739833","fact":"Ownership status not-owned-by-a-public-authority does not identify a proprietor or HMLR title."},
+    {"key":"bz_committee","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=62448","fact":"Planning Committee application 15/00427/FUL sought a 3/4/5-storey building with ground-floor retail and 9 flats at 174-176 Ripple Road."},
+    {"key":"bz_s106","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=62448","fact":"The Board granted planning permission subject to completion of a Section 106 agreement and conditions; committee grant is kept distinct from legal title evidence."},
+    {"key":"bz_unit_mix","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=62448","fact":"The committee record describes 1 studio, 4 one-bedroom, 3 two-bedroom and 1 three-bedroom unit, totalling 9 flats."},
+    {"key":"bz_historic_site_polygon","url":"https://www.planning.data.gov.uk/entity/1800678","fact":"Planning Data's older brownfield-site dataset contains an LBBD15 multipolygon for 174-176 Ripple Road; this is historical register geometry, not an HMLR title polygon."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states all sites on its Brownfield Land Register require planning permission."},
+    {"key":"local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"LBBD's Local Plan 2037 was adopted on 18 September 2024 and is policy evidence, not parcel-title evidence."},
+    {"key":"development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"The Development Plan is used when assessing planning applications and does not replace case-specific or title evidence."},
+    {"key":"planning_guidance","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies","fact":"LBBD separates planning policy, Brownfield Register information and planning-application decision making; these are not collapsed into an ownership/title conclusion."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"BZ remains a 9-home permissioned Brownfield candidate."},
+    {"id":"EX02","result":"15/00427/FUL is exact committee evidence for 9 flats at 174-176 Ripple Road."},
+    {"id":"EX03","result":"Committee grant subject to S106 is not converted into title ownership evidence."},
+    {"id":"EX04","result":"The historic LBBD15 brownfield polygon is not treated as an HMLR title polygon."},
+    {"id":"EX05","result":"Current Brownfield point/blank geometry is not buffered into a synthetic site boundary."},
+    {"id":"EX06","result":"Non-public ownership category is not proprietor identification."},
+    {"id":"EX07","result":"The 9-unit mix reconciles exactly to the committee total without adding neighbouring schemes."},
+    {"id":"EX08","result":"Promotion remains zero until exact current parcel/title relation and statutory overlays are verified."}
+  ],
+  "fail_closed_rules":["nine_unit_scope_preserved","s106_committee_grant_not_title","historic_brownfield_polygon_not_hmlr","point_not_polygon","ownership_category_not_owner","no_neighbour_scheme_merge","no_synthetic_redline","current_case_identity_preserved","exact_hmlr_required","executed_overlay_required","brownfield_not_title","policy_not_permission_substitute","no_permission_only_promotion","no_historic_polygon_only_promotion","no_fuzzy_title_binding","promotion_requires_exact_bz_title_and_overlays"],
+  "dimensions":["STATUS","PERMISSION","S106","UNITS","GEOMETRY","HISTORIC_GEOMETRY","OWNERSHIP","TITLE","POLICY","NO_DATA","OVERLAY","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD15/BZ 174-176 Ripple Road","net_dwellings":9,"planning_permission_status":"permissioned","main_application":"15/00427/FUL","historic_register_polygon_observed":true,"historic_register_polygon_bound_as_hmlr_title":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
