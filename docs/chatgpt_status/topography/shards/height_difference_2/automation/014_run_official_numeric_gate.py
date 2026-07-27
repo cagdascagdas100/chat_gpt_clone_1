@@ -38,7 +38,7 @@ def _load(path: Path) -> dict[str, Any]:
 
 def _web_candidate_payload(payload: dict[str, Any], expected_rows: int) -> dict[str, Any]:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -63,7 +63,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--terrain50-root", type=Path)
     parser.add_argument("--wcs-url")
     parser.add_argument("--coverage-id")
-    parser.add_argument("--web-base-url", default=os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_WEB_BASE_URL", "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/"))
+    parser.add_argument("--web-base-url", default=os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_WEB_BASE_URL", "http://127.0.0.1:8012/"))
     parser.add_argument("--expected-web-operation-rows", type=int, default=int(os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036")))
     args = parser.parse_args(argv)
 
@@ -75,6 +75,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ea_output = args.output_dir / "ea_dtm1m_polygon_samples.json"
     terrain_output = args.output_dir / "os_terrain50_crosschecks.json"
     web_acceptance_output = args.output_dir / "port_8012_web_acceptance.json"
+    candidate_preacceptance_output = args.output_dir / "candidates_preacceptance.json"
     execution_output = args.output_dir / "official_numeric_gate_execution.json"
     stages: list[dict[str, Any]] = []
 
@@ -117,46 +118,134 @@ def main(argv: Iterable[str] | None = None) -> int:
             for row_no in sorted(ea_rows):
                 ea_row = ea_rows[row_no]
                 os_row = terrain_rows[row_no]
-                measured_rows.append({"row_no": row_no, "parcel_id": ea_row["parcel_id"], "hmlr_inspire_id": ea_row["hmlr_inspire_id"], "height_difference_from_sea_level_m": ea_row["median_m_odn"], "ea_dtm1m_q1_m_odn": ea_row["q1_m_odn"], "ea_dtm1m_median_m_odn": ea_row["median_m_odn"], "ea_dtm1m_q3_m_odn": ea_row["q3_m_odn"], "ea_valid_pixel_count": ea_row["valid_pixel_count"], "os_terrain50_median_m_odn": os_row["terrain50_median_m_odn"], "os_terrain50_minus_ea_median_m": os_row["terrain50_minus_ea_median_m"], "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m", "secondary_crosscheck_source": "OS Terrain 50", "measurement_geometry": "exact HMLR INSPIRE polygon", "processing_crs": "EPSG:27700", "vertical_reference": "Ordnance Datum Newlyn", "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review", "final_ready": False, "fake_data": False})
+                measured_rows.append({
+                    "row_no": row_no,
+                    "parcel_id": ea_row["parcel_id"],
+                    "hmlr_inspire_id": ea_row["hmlr_inspire_id"],
+                    "height_difference_from_sea_level_m": ea_row["median_m_odn"],
+                    "ea_dtm1m_q1_m_odn": ea_row["q1_m_odn"],
+                    "ea_dtm1m_median_m_odn": ea_row["median_m_odn"],
+                    "ea_dtm1m_q3_m_odn": ea_row["q3_m_odn"],
+                    "ea_valid_pixel_count": ea_row["valid_pixel_count"],
+                    "os_terrain50_median_m_odn": os_row["terrain50_median_m_odn"],
+                    "os_terrain50_minus_ea_median_m": os_row["terrain50_minus_ea_median_m"],
+                    "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
+                    "secondary_crosscheck_source": "OS Terrain 50",
+                    "measurement_geometry": "exact HMLR INSPIRE polygon",
+                    "processing_crs": "EPSG:27700",
+                    "vertical_reference": "Ordnance Datum Newlyn",
+                    "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review",
+                    "final_ready": False,
+                    "fake_data": False,
+                })
 
         status = "THREE_OFFICIAL_NUMERIC_ROWS_READY_PENDING_WEB_ACCEPTANCE" if numeric_success else "BLOCKED_OFFICIAL_NUMERIC_GATE"
-        payload = {"schema_version": 5, "slot_id": "height_difference_2", "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "status": status, "stage_order": ["THREE_EXACT_HMLR_INSPIRE_POLYGONS", "EA_DTM1M_POLYGON_SAMPLING", "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50", "OS_TERRAIN50_CROSSCHECK", "PORT_8012_WEB_ACCEPTANCE"], "stages": stages, "hmlr_exact_matches_path": str(args.hmlr_exact_matches), "ea_output_path": str(ea_output), "terrain50_output_path": str(terrain_output), "official_numeric_row_count": len(measured_rows), "measured_rows": measured_rows, "numeric_gate_ready": numeric_success, "web_acceptance_required": True, "web_acceptance_passed": False, "current_candidate_bytes_required": True, "operation_file_path_guard_required": True, "automatic_final_promotion": False, "human_crosscheck_review_required": True, "expected_web_operation_rows": args.expected_web_operation_rows, "source_urls": {"hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download", "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs", "os_downloads_api": "https://api.os.uk/downloads/v1/products", "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50"}, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {
+            "schema_version": 6,
+            "slot_id": "height_difference_2",
+            "task_id": TASK_ID,
+            "attempt_id": ATTEMPT_ID,
+            "status": status,
+            "stage_order": ["THREE_EXACT_HMLR_INSPIRE_POLYGONS", "EA_DTM1M_POLYGON_SAMPLING", "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50", "OS_TERRAIN50_CROSSCHECK", "CURRENT_WORKTREE_CANDIDATE_BINDING", "PORT_8012_WEB_ACCEPTANCE"],
+            "stages": stages,
+            "hmlr_exact_matches_path": str(args.hmlr_exact_matches),
+            "ea_output_path": str(ea_output),
+            "terrain50_output_path": str(terrain_output),
+            "official_numeric_row_count": len(measured_rows),
+            "measured_rows": measured_rows,
+            "numeric_gate_ready": numeric_success,
+            "web_acceptance_required": True,
+            "web_acceptance_passed": False,
+            "current_candidate_bytes_required": True,
+            "current_candidate_transport": "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE",
+            "operation_file_path_guard_required": True,
+            "example_file_path_guard_required": True,
+            "web_base_autoprobe_required": True,
+            "automatic_final_promotion": False,
+            "human_crosscheck_review_required": True,
+            "expected_web_operation_rows": args.expected_web_operation_rows,
+            "source_urls": {
+                "hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+                "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+                "os_downloads_api": "https://api.os.uk/downloads/v1/products",
+                "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50",
+            },
+            "final_ready": False,
+            "fake_data": False,
+            "db_write": False,
+            "migration": False,
+            "production_deploy": False,
+        }
         code = 2
     except Exception as exc:
-        payload = {"schema_version": 5, "slot_id": "height_difference_2", "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR", "error": f"{type(exc).__name__}: {exc}", "stages": stages, "official_numeric_row_count": 0, "numeric_gate_ready": False, "web_acceptance_required": True, "web_acceptance_passed": False, "current_candidate_bytes_required": True, "operation_file_path_guard_required": True, "expected_web_operation_rows": args.expected_web_operation_rows, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {
+            "schema_version": 6,
+            "slot_id": "height_difference_2",
+            "task_id": TASK_ID,
+            "attempt_id": ATTEMPT_ID,
+            "status": "BLOCKED_OFFICIAL_NUMERIC_GATE_ORCHESTRATOR",
+            "error": f"{type(exc).__name__}: {exc}",
+            "stages": stages,
+            "official_numeric_row_count": 0,
+            "numeric_gate_ready": False,
+            "web_acceptance_required": True,
+            "web_acceptance_passed": False,
+            "current_candidate_bytes_required": True,
+            "current_candidate_transport": "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE",
+            "operation_file_path_guard_required": True,
+            "example_file_path_guard_required": True,
+            "web_base_autoprobe_required": True,
+            "expected_web_operation_rows": args.expected_web_operation_rows,
+            "final_ready": False,
+            "fake_data": False,
+            "db_write": False,
+            "migration": False,
+            "production_deploy": False,
+        }
         code = 2
 
     _write(args.final_output, payload)
     _write(execution_output, payload)
-    expected_candidates_sha256 = None
+
+    preacceptance_payload = _web_candidate_payload(payload, args.expected_web_operation_rows)
+    _write(candidate_preacceptance_output, preacceptance_payload)
+    expected_candidates_sha256 = _sha256(candidate_preacceptance_output)
+    payload["preacceptance_candidates_path"] = str(candidate_preacceptance_output)
+    payload["preacceptance_candidates_sha256"] = expected_candidates_sha256
     if args.web_output:
-        _write(args.web_output, _web_candidate_payload(payload, args.expected_web_operation_rows))
-        expected_candidates_sha256 = _sha256(args.web_output)
-        payload["preacceptance_candidates_sha256"] = expected_candidates_sha256
-        _write(args.final_output, payload)
-        _write(execution_output, payload)
+        _write(args.web_output, preacceptance_payload)
+    _write(args.final_output, payload)
+    _write(execution_output, payload)
 
     if payload.get("numeric_gate_ready") is True:
-        if not args.web_output or not expected_candidates_sha256:
-            web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", "exit_code": 2, "status": "BLOCKED_WEB_CANDIDATE_OUTPUT_MISSING"}
-            stages.append(web_stage)
-            payload["status"] = "BLOCKED_PORT_8012_WEB_ACCEPTANCE_CANDIDATE_OUTPUT_MISSING"
-        elif not web_verifier.is_file():
+        if not web_verifier.is_file():
             web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", "exit_code": 2, "status": "BLOCKED_WEB_VERIFIER_MISSING", "path": str(web_verifier)}
             stages.append(web_stage)
             payload["status"] = "BLOCKED_PORT_8012_WEB_ACCEPTANCE_VERIFIER_MISSING"
         else:
-            web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", **_run([sys.executable, str(web_verifier), "--base-url", args.web_base_url, "--expected-operation-rows", str(args.expected_web_operation_rows), "--expected-candidates-sha256", expected_candidates_sha256, "--output", str(web_acceptance_output)], repo_root)}
+            web_command = [
+                sys.executable,
+                str(web_verifier),
+                "--base-url", args.web_base_url,
+                "--expected-operation-rows", str(args.expected_web_operation_rows),
+                "--candidate-payload", str(candidate_preacceptance_output),
+                "--expected-candidates-sha256", expected_candidates_sha256,
+                "--output", str(web_acceptance_output),
+            ]
+            web_stage = {"stage": "PORT_8012_WEB_ACCEPTANCE", **_run(web_command, repo_root)}
             stages.append(web_stage)
             web_payload = _load(web_acceptance_output) if web_acceptance_output.is_file() else {}
             web_passed = (
                 web_stage["exit_code"] == 0
                 and web_payload.get("status") == "PORT_8012_WEB_ACCEPTANCE_PASSED"
                 and int(web_payload.get("visible_operation_rows", 0)) >= args.expected_web_operation_rows
-                and web_payload.get("candidate_http_sha256") == expected_candidates_sha256
+                and web_payload.get("candidate_local_sha256") == expected_candidates_sha256
+                and web_payload.get("candidate_payload_transport") == "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE"
                 and web_payload.get("current_candidate_bytes_verified") is True
                 and web_payload.get("operation_file_path_guard_verified") is True
+                and web_payload.get("example_file_path_guard_verified") is True
                 and sorted(web_payload.get("candidate_rows", [])) == [30762, 46142, 61522]
+                and sorted(web_payload.get("site_measured_candidate_rows", [])) == [30762, 46142, 61522]
             )
             payload["web_acceptance_passed"] = web_passed
             payload["web_acceptance_output_path"] = str(web_acceptance_output)
@@ -173,7 +262,14 @@ def main(argv: Iterable[str] | None = None) -> int:
         if args.web_output:
             _write(args.web_output, _web_candidate_payload(payload, args.expected_web_operation_rows))
 
-    print(json.dumps({"ok": code == 0, "status": payload["status"], "rows": payload.get("official_numeric_row_count", 0), "web_acceptance_passed": payload.get("web_acceptance_passed", False), "expected_web_operation_rows": args.expected_web_operation_rows, "preacceptance_candidates_sha256": payload.get("preacceptance_candidates_sha256")}))
+    print(json.dumps({
+        "ok": code == 0,
+        "status": payload["status"],
+        "rows": payload.get("official_numeric_row_count", 0),
+        "web_acceptance_passed": payload.get("web_acceptance_passed", False),
+        "expected_web_operation_rows": args.expected_web_operation_rows,
+        "preacceptance_candidates_sha256": payload.get("preacceptance_candidates_sha256"),
+    }))
     return code
 
 
