@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "recovery_step": 102,
+  "recorded_at": "2026-07-27T09:10:41Z",
+  "continuation_key": "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f",
+  "task_id": "height_difference_3-canonical-api-measurement-20260721-01",
+  "attempt_id": "height-difference-3-20260721-011",
+  "state": "BLOCKED_HOST_LIVENESS_STRICT_IDENTITY_AND_EA_ROW_BINDING_HARDENED",
+  "supersedes_recovery_step": 101,
+  "ownership": {"state":"UNCLAIMED","lease_version":102,"runner_or_business_write_forbidden":true},
+  "heartbeat": {"global_heartbeat_at":"2026-07-16T13:45:53.0433295Z","global_heartbeat_age_hours":259.4133,"slot_heartbeat_at":"2026-07-22T14:12:55.853052Z","slot_heartbeat_age_hours":114.9625,"fresh_execution_host_liveness":false},
+  "runtime": {"expected_outputs_total":22,"materialized_outputs":0,"critical_sentinels_materialized":0,"critical_sentinels_total":3,"pending_operations":0,"pending_over_15_minutes":false},
+  "new_accuracy_hardening": [
+    {
+      "issue": "GENERIC_EXACT_OFFICIAL_ID_COULD_BE_SATISFIED_BY_A_DIFFERENT_CANDIDATE_IDENTIFIER",
+      "finding": "The general matcher can compare several candidate identifier classes. Strict12 contract specifically requires the candidate HMLR INSPIRE ID.",
+      "fix_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/015_execute_auto_source_and_measurement_pipeline.py",
+      "fix_blob_sha": "f403ad6f223ced5c9e574f90950afe0ee0ee3433",
+      "fix_commit": "85466ae9a57291a0c000b4a99e7a1a5a8a077e1e",
+      "fix": "Strict mode now requires a non-empty candidate hmlr_inspire_id and requires that exact normalized value to appear in the chosen HMLR match matched_identifier_values before any EA or Terrain50 sampling can run.",
+      "numeric_rows_affected_before_fix": 0
+    },
+    {
+      "issue": "EA_SAMPLER_CAN_DISCOVER_MULTIPLE_INTERSECTING_ROW_RASTERS",
+      "finding": "The general sampler can combine intersecting EA rasters. Strict12 must not allow an adjacent candidate raster to alter a parcel percentile.",
+      "fix_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/033_run_batch130_prepare12_strict_measurement_chain.ps1",
+      "fix_blob_sha": "b17e3480beae9cf91864e2d3faffed7649df9d68",
+      "fix_commit": "37b523a692315f4f920be18f254b73c9bf12d830",
+      "fix": "Strict source manifest must contain exactly rows 61540..61551, each EA source path must be row_<row_no>_ea_dtm_1m.tif with SHA256, and every measurement result must report exactly one EA source raster with that exact row-bound filename.",
+      "numeric_rows_affected_before_fix": 0
+    },
+    {
+      "issue": "STRICT_ORCHESTRATION_NEEDED_TO_CARRY_NEW_IDENTITY_AND_EA_BINDING_GATES",
+      "fix_path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/036_run_batch131_strict12_with_local_acceptance.ps1",
+      "fix_blob_sha": "4bbfd833118c62f5ce7b78273296b4cc530c7750",
+      "fix_commit": "b9b52576ee4a54378c0350b50bd859b0cbcb21e8",
+      "fix": "Orchestration requires candidate_hmlr_inspire_id_value_required and ea_row_bound_single_raster_gate before local acceptance can complete."
+    }
+  ],
+  "starter_contract_readback": {
+    "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/032_run_batch129_range_extract_and_prepare12.ps1",
+    "blob_sha": "69ad94db2c26e72817f0f9b80da26ef820a73b93",
+    "exact_rows_required": [61540,61541,61542,61543,61544,61545,61546,61547,61548,61549,61550,61551],
+    "hmlr_inspire_id_required_for_every_candidate": true,
+    "numeric_promotion_forbidden_during_prepare": true
+  },
+  "coordinator_repin": {
+    "request_path":"docs/chatgpt_status/_shared/slots_21/height_difference_3/coordinator_requests/001_same_task_rewire_to_canonical_noarg.json",
+    "request_blob_sha":"27796bab6c167d886af0bda31dc6eb44f9d6e594",
+    "commit":"f19f514d520e0937d69debb5c17fb5ea732c6b95",
+    "strict033_expected_blob_sha":"b17e3480beae9cf91864e2d3faffed7649df9d68",
+    "strict036_expected_blob_sha":"4bbfd833118c62f5ce7b78273296b4cc530c7750",
+    "same_task_preserved":true,
+    "same_continuation_preserved":true,
+    "legacy_queue_mutated_by_slot":false,
+    "new_task_created":false,
+    "new_runner_created":false
+  },
+  "official_source_refresh": {
+    "providers_checked":3,
+    "providers_passed":3,
+    "hmlr":{"release":"2026-07-05","lambeth_listed":true,"unique_land_registry_inspire_id_semantics_verified":true},
+    "environment_agency":{"dataset":"LIDAR Composite DTM 1m","crs":"EPSG:27700","vertical_accuracy_rmse_cm":15,"wcs_available":true},
+    "ordnance_survey":{"dataset":"OS Terrain 50","version":"July 2026","coverage":"Great Britain","open_data":true}
+  },
+  "candidate_state": {"verified_measurements":3,"hardened_candidates":4,"prepared_extraction_targets":240,"strict12_planned":12,"strict12_exact_ids_extracted":0,"numeric_rows_added":0},
+  "business_metrics": {"validation_assertions_passed":224,"validation_assertions_total":224,"cumulative_preparation_operations_completed":157490,"cumulative_preparation_operations_total":157884,"cumulative_preparation_percent":99.750450,"business_percent_delta_this_step":0.0,"website_business_rows_cumulative":45606,"website_business_rows_added":0},
+  "parallel_support": {"operations_completed":24664,"operations_total":24664,"official_research_checks_completed":1353,"candidate_records_reviewed_total":854,"source_upgrade_rows_prepared":1047,"website_visible_line_rows":24664,"average_confidence_percent":99.15,"new_increment_detected":false},
+  "support_row_view": {"path":"england_map_web/data/aays_21_slots/height_difference_3/recovery_support_102_20260727.html","support_only":true,"business_rows_written":0,"numeric_rows_written":0},
+  "active_blockers":["PORTABLE_SHARED_RUNNER_EXECUTION_HOST_LIVENESS_UNCONFIRMED","EXISTING_SAME_CURRENT_TASK_LEGACY_QUEUE_REQUIRES_RECONCILED_CONTROL_AND_DATA_PLANE_SEALED_COORDINATOR_REWIRE_AND_RUNTIME"],
+  "safety":{"owner_claimed":false,"business_write_gate_bypassed":false,"unsafe_reset_hard_used":false,"fake_data":false,"final_ready":false}
+}
