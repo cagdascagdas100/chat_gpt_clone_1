@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -38,21 +39,51 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _exact_hmlr_matches_only(path: Path) -> tuple[bool, list[dict[str, Any]]]:
+def _clean_id(value: Any) -> str:
+    return re.sub(r"\s+", "", str(value or "").strip()).casefold()
+
+
+def _starter_by_row(path: Path) -> dict[int, dict[str, Any]]:
     payload = _load_json(path)
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise ValueError("starter manifest has no candidates")
+    result: dict[int, dict[str, Any]] = {}
+    for raw in candidates:
+        if not isinstance(raw, dict):
+            raise ValueError("starter candidate is not an object")
+        row_no = int(raw["row_no"])
+        if row_no in result:
+            raise ValueError(f"duplicate starter row: {row_no}")
+        result[row_no] = dict(raw)
+    return result
+
+
+def _exact_hmlr_matches_only(matches_path: Path, starter_path: Path) -> tuple[bool, list[dict[str, Any]]]:
+    payload = _load_json(matches_path)
     results = payload.get("results")
     if not isinstance(results, list) or not results:
         raise ValueError("HMLR match manifest has no results")
+    candidates = _starter_by_row(starter_path)
     failures: list[dict[str, Any]] = []
     for row in results:
+        row_no = int(row.get("row_no"))
         method = str(row.get("match_method") or "")
         status = str(row.get("status") or "")
-        if status != "MATCHED" or not method.startswith("EXACT_OFFICIAL_ID"):
+        candidate = candidates.get(row_no)
+        expected_inspire_id = _clean_id((candidate or {}).get("hmlr_inspire_id"))
+        match = row.get("match") if isinstance(row.get("match"), dict) else {}
+        matched_values = {_clean_id(value) for value in (match.get("matched_identifier_values") or []) if _clean_id(value)}
+        inspire_id_value_matched = bool(expected_inspire_id) and expected_inspire_id in matched_values
+        if status != "MATCHED" or not method.startswith("EXACT_OFFICIAL_ID") or not inspire_id_value_matched:
             failures.append({
-                "row_no": row.get("row_no"),
+                "row_no": row_no,
                 "parcel_id": row.get("parcel_id"),
                 "status": status,
                 "match_method": method or None,
+                "expected_hmlr_inspire_id": expected_inspire_id or None,
+                "matched_identifier_values": sorted(matched_values),
+                "candidate_hmlr_inspire_id_matched": inspire_id_value_matched,
             })
     return not failures, failures
 
@@ -143,6 +174,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "required": bool(args.require_exact_official_id),
         "checked": False,
         "passed": None,
+        "candidate_hmlr_inspire_id_value_required": bool(args.require_exact_official_id),
         "failures": [],
     }
     for name, command in commands:
@@ -154,17 +186,17 @@ def main(argv: Iterable[str] | None = None) -> int:
             break
         if name == "HMLR_BOUNDARY_MATCH" and args.require_exact_official_id:
             exact_hmlr_gate["checked"] = True
-            passed, failures = _exact_hmlr_matches_only(matches)
+            passed, failures = _exact_hmlr_matches_only(matches, args.starter_manifest)
             exact_hmlr_gate["passed"] = passed
             exact_hmlr_gate["failures"] = failures
             if not passed:
-                status = "BLOCKED_HMLR_EXACT_OFFICIAL_ID_REQUIRED"
+                status = "BLOCKED_HMLR_EXACT_INSPIRE_ID_VALUE_REQUIRED"
                 break
     else:
         status = "THREE_REAL_PARCELS_OFFICIAL_SOURCES_PREPARED_MEASURED_AND_PUBLISHED"
 
     execution = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "single_shared_runner_only": True,
         "new_runner_created": False,
