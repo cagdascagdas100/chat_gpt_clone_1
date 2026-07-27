@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 387,
+  "topic": "GROUND_STABILITY_GEOSURE_MINERALS_COAL_AND_SUBSURFACE_HAZARD_GATES",
+  "generated_at": "2026-07-27T18:01:44+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_GROUND_HAZARD_AND_MINERAL_VALIDATION_NOT_SITE_INVESTIGATION_NOT_FOUNDATION_DESIGN_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.2,
+  "score_basis": "Non-statistical internal evidence-quality score based on BGS/UKRI and government mining/minerals guidance, with susceptibility mapping explicitly separated from site investigation, geotechnical design and parcel-specific ground conditions.",
+  "sources": [
+    {"key":"geosure","label":"BGS GeoSure","url":"https://www.bgs.ac.uk/datasets/geosure/","fact":"National 1:50,000 susceptibility datasets cover six natural ground-movement themes and support planning decisions; they are hazard susceptibility, not site-specific risk certification."},
+    {"key":"shrink_swell","label":"BGS GeoSure shrink-swell","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-shrink-swell/","fact":"1:50,000 shrink-swell susceptibility is derived from geological and engineering information; detailed local investigation may still be required."},
+    {"key":"shrink_swell_3d","label":"BGS GeoSure shrink-swell 3D London and Thames Valley","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-shrink-swell-3d-for-london-and-thames-valley/","fact":"London/Thames Valley product maps A-E shrink-swell susceptibility in 3D down to 20m intervals; it remains regional hazard evidence."},
+    {"key":"geoclimate","label":"BGS GeoClimate Shrink-Swell","url":"https://www.bgs.ac.uk/datasets/geoclimate-shrink-swell/","fact":"2026 BGS product combines GeoSure geology with climate projections to model future shrink-swell susceptibility; projections are not parcel foundation design."},
+    {"key":"compressible","label":"BGS GeoSure compressible ground","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-compressible-ground/","fact":"Maps potential compressible-ground hazard from superficial/bedrock deposits; loading and groundwater change can affect settlement."},
+    {"key":"collapsible","label":"BGS GeoSure collapsible deposits","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-collapsible-deposits/","fact":"Maps potential collapsible-deposit hazard at 1:50,000; specialist advice may be needed where susceptibility is material."},
+    {"key":"running_sand","label":"BGS GeoSure running sand","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-running-sand/","fact":"Maps potential running-sand hazard; water flow can fluidise loose sandy layers and affect support."},
+    {"key":"soluble_rocks","label":"BGS GeoSure soluble rocks","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-soluble-rocks/","fact":"Maps dissolution/subsidence susceptibility where soluble rocks can form cavities; site-specific assessment remains necessary."},
+    {"key":"landslides","label":"BGS GeoSure landslides","url":"https://www.bgs.ac.uk/datasets/bgs-geosure-landslides/","fact":"Susceptibility mapping combines geology, slope and landslide evidence; BGS explicitly states it does not show risk or timing."},
+    {"key":"nld","label":"BGS National Landslide Database","url":"https://www.bgs.ac.uk/datasets/national-landslide-database/","fact":"Contains more than 17,000 reported landslide records across Great Britain; event records are not a parcel geotechnical investigation."},
+    {"key":"coal_risk","label":"Mining Remediation Authority Coal Mining Risk Assessment guidance","url":"https://www.gov.uk/guidance/planning-applications-coal-mining-risk-assessments","fact":"Development High Risk Area proposals generally require a Coal Mining Risk Assessment; mine-entry locations may require intrusive investigation."},
+    {"key":"minerals","label":"GOV.UK Minerals planning guidance","url":"https://www.gov.uk/guidance/minerals","fact":"Mineral Safeguarding Areas protect resources from unnecessary sterilisation but do not create a presumption that minerals will be worked."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"GeoSure susceptibility class is not converted to predicted foundation cost or parcel viability."},
+    {"id":"EX02","result":"London shrink-swell 3D evidence is regional/local hazard context and not a borehole or laboratory result."},
+    {"id":"EX03","result":"GeoClimate projection is future susceptibility evidence, not current observed ground movement."},
+    {"id":"EX04","result":"Landslide susceptibility is not probability/timing; BGS explicitly separates susceptibility from risk."},
+    {"id":"EX05","result":"Coal Development High Risk Area status triggers assessment requirements but does not prove a mine feature beneath a parcel."},
+    {"id":"EX06","result":"Low-risk coalfield status is not negative proof of all subsurface hazards."},
+    {"id":"EX07","result":"Mineral Safeguarding Area designation is not a presumption of extraction or development refusal."},
+    {"id":"EX08","result":"No ground/mineral promotion occurs without exact site geometry plus current geotechnical/mining evidence where relevant."}
+  ],
+  "fail_closed_rules": ["geosure_susceptibility_not_risk","hazard_class_not_foundation_cost","regional_map_not_site_investigation","shrink_swell_requires_site_context","geoclimate_not_current_movement","compressible_map_not_settlement_amount","collapsible_map_not_failure_prediction","running_sand_map_not_excavation_design","soluble_rock_map_not_cavity_proof","landslide_susceptibility_not_timing","coal_high_risk_not_mine_entry_proof","coal_low_risk_not_no_hazard","mineral_safeguard_not_extraction_presumption","no_borehole_data_fill","no_geotechnical_score_from_map_only","promotion_requires_exact_geometry_and_site_investigation"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","SCOPE","GEOLOGY","STABILITY","MINING","MINERALS","INVESTIGATION","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"ground_hazard_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
