@@ -2,8 +2,9 @@
 """Fetch bounded EA DTM 1m GeoTIFF coverages for HMLR-matched parcels.
 
 The WCS coverage identifier and axis labels are discovered at runtime. Each
-response is checked with Rasterio for CRS, finite dimensions, resolution and
-intersection with the matched parcel. HTML/error responses fail closed.
+response is restricted to the official Environment Agency host and checked with
+Rasterio for CRS, finite dimensions, resolution and intersection with the
+matched parcel. Missing axis metadata and HTML/error responses fail closed.
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlparse
 
 import requests
 import rasterio
@@ -24,12 +26,18 @@ from shapely import wkt
 from shapely.geometry import box
 
 DEFAULT_WCS = "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs"
+EA_HOST = "environment.data.gov.uk"
 TARGET_CRS = CRS.from_epsg(27700)
 MAX_RESPONSE_BYTES = 500_000_000
 
 
 def _local(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
+
+
+def _official_ea(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and parsed.hostname == EA_HOST
 
 
 def _sha256(path: Path) -> str:
@@ -52,8 +60,12 @@ def _load_matches(path: Path) -> list[dict[str, Any]]:
 
 
 def _request_xml(session: requests.Session, base: str, params: list[tuple[str, str]], timeout: int) -> tuple[ET.Element, bytes, str]:
+    if not _official_ea(base):
+        raise ValueError("EA WCS base is not the pinned official host")
     response = session.get(base, params=params, timeout=timeout, allow_redirects=True)
     response.raise_for_status()
+    if not _official_ea(response.url):
+        raise ValueError(f"EA WCS XML request redirected off official host: {response.url}")
     body = response.content
     if not body:
         raise ValueError("WCS XML response is empty")
@@ -79,6 +91,7 @@ def _select_coverage(ids: list[str]) -> str:
         raise ValueError("WCS GetCapabilities exposed no coverage identifier")
     if len(ids) == 1:
         return ids[0]
+
     def tokens(value: str) -> set[str]:
         return set(filter(None, re.split(r"[^a-z0-9]+", value.casefold())))
 
@@ -109,20 +122,36 @@ def _select_coverage(ids: list[str]) -> str:
 
 
 def _axis_labels(root: ET.Element) -> tuple[str, str]:
+    candidates: list[tuple[str, str]] = []
     for element in root.iter():
         if _local(element.tag) in {"Envelope", "RectifiedGrid"}:
             labels = element.attrib.get("axisLabels")
             if labels:
                 parts = labels.split()
                 if len(parts) >= 2:
-                    return parts[0], parts[1]
-    return "E", "N"
+                    pair = (parts[0], parts[1])
+                    if pair not in candidates:
+                        candidates.append(pair)
+    if not candidates:
+        raise ValueError("WCS DescribeCoverage exposed no axisLabels; refusing inferred E/N order")
+    if len(candidates) > 1:
+        normalized = {(a.casefold(), b.casefold()) for a, b in candidates}
+        if len(normalized) > 1:
+            raise ValueError(f"WCS DescribeCoverage exposed ambiguous axisLabels: {candidates}")
+    axis_x, axis_y = candidates[0]
+    if axis_x.casefold() not in {"e", "x", "easting"} or axis_y.casefold() not in {"n", "y", "northing"}:
+        raise ValueError(f"unexpected EA WCS axis labels for EPSG:27700: {(axis_x, axis_y)}")
+    return axis_x, axis_y
 
 
 def _stream_get(session: requests.Session, base: str, params: list[tuple[str, str]], output: Path, timeout: int) -> dict[str, Any]:
+    if not _official_ea(base):
+        raise ValueError("EA WCS base is not the pinned official host")
     output.parent.mkdir(parents=True, exist_ok=True)
     with session.get(base, params=params, timeout=timeout, stream=True, allow_redirects=True) as response:
         response.raise_for_status()
+        if not _official_ea(response.url):
+            raise ValueError(f"EA WCS coverage request redirected off official host: {response.url}")
         content_type = response.headers.get("content-type", "")
         total = 0
         with output.open("wb") as handle:
@@ -133,6 +162,8 @@ def _stream_get(session: requests.Session, base: str, params: list[tuple[str, st
                 if total > MAX_RESPONSE_BYTES:
                     raise ValueError("EA WCS response exceeds safety size limit")
                 handle.write(chunk)
+    if total == 0:
+        raise ValueError("EA WCS coverage response is empty")
     head = output.read_bytes()[:512].lstrip().lower()
     if head.startswith(b"<") and (b"exception" in head or b"html" in head):
         raise ValueError("EA WCS returned XML/HTML exception instead of GeoTIFF")
@@ -155,6 +186,8 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     if args.buffer_m < 0 or not math.isfinite(args.buffer_m):
         raise ValueError("buffer-m must be finite and non-negative")
+    if not _official_ea(args.wcs_base):
+        raise ValueError("EA WCS base is not the pinned official host")
     matches = _load_matches(args.matched_manifest)
     session = requests.Session()
     session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3"})
@@ -194,6 +227,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             if not box(*dataset.bounds).intersects(geometry):
                 raise ValueError("EA raster does not intersect matched parcel geometry")
             resolution = [abs(float(dataset.res[0])), abs(float(dataset.res[1]))]
+            if any(not math.isfinite(value) or value <= 0 for value in resolution):
+                raise ValueError(f"EA raster has invalid resolution: {resolution}")
             if max(resolution) > 1.1:
                 raise ValueError(f"EA raster resolution is coarser than 1.1m: {resolution}")
             record = {
@@ -215,16 +250,19 @@ def main(argv: Iterable[str] | None = None) -> int:
         raster_paths.append(str(output))
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "status": "READY",
         "wcs_base": args.wcs_base,
+        "official_host": EA_HOST,
+        "official_host_only": True,
         "capabilities_url": caps_url,
         "capabilities_sha256": hashlib.sha256(caps_body).hexdigest(),
         "describe_coverage_url": desc_url,
         "describe_coverage_sha256": hashlib.sha256(desc_body).hexdigest(),
         "coverage_id": coverage_id,
         "axis_labels": [axis_x, axis_y],
+        "axis_labels_inferred": False,
         "candidate_count": len(records),
         "records": records,
         "raster_paths": raster_paths,
