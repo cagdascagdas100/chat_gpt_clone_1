@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "recovery_step": 101,
+  "recorded_at": "2026-07-27T09:01:06Z",
+  "continuation_key": "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f",
+  "task_id": "height_difference_3-canonical-api-measurement-20260721-01",
+  "attempt_id": "height-difference-3-20260721-011",
+  "state": "BLOCKED_HOST_LIVENESS_SOURCE_CHAIN_HARDENED_RUNTIME_NOT_STARTED",
+  "ownership": {
+    "state": "UNCLAIMED",
+    "lease_version": 102,
+    "runner_or_business_write_forbidden": true
+  },
+  "heartbeat": {
+    "global_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
+    "global_heartbeat_age_hours": 259.2536,
+    "slot_heartbeat_at": "2026-07-22T14:12:55.853052Z",
+    "slot_heartbeat_age_hours": 114.8028,
+    "fresh_execution_host_liveness": false,
+    "stored_pid_alive_not_current_liveness_proof": true
+  },
+  "pending": {
+    "operations": 0,
+    "pending_over_15_minutes": false
+  },
+  "runtime": {
+    "expected_outputs_total": 22,
+    "materialized_outputs": 0,
+    "critical_sentinels_materialized": 0,
+    "critical_sentinels_total": 3,
+    "fresh_runner_heartbeat_preflight": "404_NOT_MATERIALIZED",
+    "coordinator_runtime_rewire_receipt": "404_NOT_MATERIALIZED",
+    "coordinator_runtime_rewire_receipt_validation": "404_NOT_MATERIALIZED"
+  },
+  "official_source_refresh": {
+    "providers_checked": 3,
+    "providers_passed": 3,
+    "hmlr": {
+      "release": "2026-07-05",
+      "monthly_first_sunday": true,
+      "lambeth_listed": true,
+      "license": "OGL"
+    },
+    "environment_agency": {
+      "dataset": "LIDAR Composite Digital Terrain Model DTM 1m",
+      "crs": "EPSG:27700",
+      "wcs_available": true,
+      "vertical_accuracy_rmse_cm": 15
+    },
+    "ordnance_survey": {
+      "dataset": "OS Terrain 50",
+      "version": "July 2026",
+      "coverage": "Great Britain",
+      "open_data": true
+    }
+  },
+  "hardening_actions": [
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/015_execute_auto_source_and_measurement_pipeline.py",
+      "blob_sha": "f5d87e6cfbd07dba2a2a29ff525c5d55fdf54bf5",
+      "commit": "7d3f63d59e50c76941f7736e41ac3ec19a82d9a8",
+      "result": "strict mode requires every HMLR match to be EXACT_OFFICIAL_ID immediately after boundary matching and stops before elevation sampling otherwise"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/012_download_hmlr_inspire_sources.py",
+      "blob_sha": "9d42297e92ebdff84317ebe985de486187f863c7",
+      "commit": "c9cd0400e897aca9ce9d1f8fa8603095738b12b6",
+      "result": "exact normalized authority only; official HMLR entry host; historical evidence-backed HMLR signed S3 distribution redirect allowed; fuzzy authority and untrusted redirects fail closed"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/013_fetch_ea_dtm_wcs_for_matches.py",
+      "blob_sha": "b465747399688ba6c036092a883cc95bbc0ce982",
+      "commit": "5b32fad409126fa4ca3237622ea1f4d6fc5b1a62",
+      "result": "official EA HTTPS host required; WCS axisLabels must be present and unambiguous; inferred E/N fallback removed; EPSG:27700 and <=1.1m raster resolution remain mandatory"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/021_download_os_terrain50_via_api.py",
+      "blob_sha": "d25bb8ea37b1ed7fc91da391cc1579600ea21f6a",
+      "commit": "c5e9fab948cf58008c9486b6d5ae547db609776c",
+      "result": "recent cache alone is not trusted; reuse requires prior official catalog proof plus exact product/area/format, catalog SHA256, archive SHA256 and archive size"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/033_run_batch130_prepare12_strict_measurement_chain.ps1",
+      "blob_sha": "332810b356cc9d00170f353229ee74b6e07beb0f",
+      "commit": "a99bf91cfe35d36823c4052e74b3e0bcd5dd66e2",
+      "result": "strict12 independently seals Terrain50 catalog/archive hash, HMLR exact authority/trusted redirect, EA official host/axis metadata, exact HMLR IDs and no-neighbour/no-nearest conditions"
+    },
+    {
+      "path": "docs/chatgpt_status/topography/shards/height_difference_3/automation/036_run_batch131_strict12_with_local_acceptance.ps1",
+      "blob_sha": "60a764be4fa7e7cb2edb2accb00a4d72e4cf7f3a",
+      "commit": "88fd5af027a34ab2b402979f750c4c23c1f92ca6",
+      "result": "orchestration independently requires the strict exact-ID and all three official-source provenance gates and carries strict-contract SHA256"
+    }
+  ],
+  "coordinator_repin": {
+    "request_path": "docs/chatgpt_status/_shared/slots_21/height_difference_3/coordinator_requests/001_same_task_rewire_to_canonical_noarg.json",
+    "request_blob_sha": "adc13229b36b7ae5822e263db57c12598cd11fa0",
+    "commit": "728fcd302c99fa757a4e160a2bf2cfa33b8e4c72",
+    "strict033_expected_blob_sha": "332810b356cc9d00170f353229ee74b6e07beb0f",
+    "strict036_expected_blob_sha": "60a764be4fa7e7cb2edb2accb00a4d72e4cf7f3a",
+    "same_task_preserved": true,
+    "same_continuation_preserved": true,
+    "new_queue_record_created": false,
+    "legacy_queue_mutated_by_slot": false
+  },
+  "historical_hmlr_evidence": {
+    "source_manifest_blob_sha": "182c4a27b171d1e472704110ab5fb08040af3be8",
+    "authority": "Lambeth",
+    "signed_distribution_host": "datapub-prd-s3-bucket.s3.amazonaws.com",
+    "gml_sha256": "a736605d1816b1c12bdc16362f6ebb9644d177d94da04ef2e22124168889b4b9",
+    "gml_size_bytes": 48096499,
+    "feature_count": 51539,
+    "verified_exact_rows": [61523, 61524, 61525]
+  },
+  "candidate_state": {
+    "verified_measurements": 3,
+    "verified_rows": [61523, 61524, 61525],
+    "hardened_candidates": 4,
+    "hardened_rows": [61536, 61537, 61538, 61539],
+    "prepared_extraction_targets": 240,
+    "prepared_range": [61540, 61779],
+    "strict12_planned_rows": [61540,61541,61542,61543,61544,61545,61546,61547,61548,61549,61550,61551],
+    "strict12_exact_ids_extracted": 0,
+    "numeric_rows_added": 0
+  },
+  "historical_shard_reuse": {
+    "rows": 30761,
+    "range": [61523, 92283],
+    "source_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933",
+    "current_full_file_sha256_mapping_proven": false,
+    "reuse_policy": "READ_ONLY_RECOVERY_ONLY_UNTIL_FRESH_F_HOST_CLEAN_WORKTREE_SHA256_AND_RUNTIME_SEALS_PASS"
+  },
+  "business_metrics": {
+    "validation_assertions_passed": 224,
+    "validation_assertions_total": 224,
+    "cumulative_preparation_operations_completed": 157490,
+    "cumulative_preparation_operations_total": 157884,
+    "cumulative_preparation_percent": 99.750450,
+    "business_percent_delta_this_step": 0.0,
+    "website_business_rows_cumulative": 45606,
+    "website_business_rows_added": 0
+  },
+  "parallel_support": {
+    "operations_completed": 24664,
+    "operations_total": 24664,
+    "official_research_checks_completed": 1353,
+    "candidate_records_reviewed_total": 854,
+    "source_upgrade_rows_prepared": 1047,
+    "website_visible_line_rows": 24664,
+    "average_confidence_percent": 99.15,
+    "new_increment_detected": false
+  },
+  "support_row_view": {
+    "path": "england_map_web/data/aays_21_slots/height_difference_3/recovery_support_101_20260727.html",
+    "support_only": true,
+    "business_rows_written": 0,
+    "numeric_rows_written": 0
+  },
+  "safety": {
+    "new_task_created": false,
+    "new_runner_created": false,
+    "parallel_runner_created": false,
+    "legacy_queue_mutated": false,
+    "owner_claimed": false,
+    "business_write_gate_bypassed": false,
+    "unsafe_reset_hard_used": false,
+    "fake_data": false,
+    "final_ready": false
+  },
+  "active_blockers": [
+    "PORTABLE_SHARED_RUNNER_EXECUTION_HOST_LIVENESS_UNCONFIRMED",
+    "EXISTING_SAME_CURRENT_TASK_LEGACY_QUEUE_REQUIRES_RECONCILED_CONTROL_AND_DATA_PLANE_SEALED_COORDINATOR_REWIRE_AND_RUNTIME"
+  ],
+  "canonical_next_step": "Fresh F-host heartbeat plus exact current HEAD; existing coordinator only; 043->045->044->042->041; existing queue rewire only; 047->039->046; strict12 exact HMLR and source provenance gates; serial publisher; 040 remote sealed readback."
+}
