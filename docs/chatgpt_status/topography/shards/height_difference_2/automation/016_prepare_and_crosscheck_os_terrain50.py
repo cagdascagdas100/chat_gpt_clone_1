@@ -20,6 +20,10 @@ MAX_SIDECAR_BYTES = 1_000_000
 MAX_NESTED_ARCHIVE_BYTES = 50_000_000
 MAX_EXTRACTED_BYTES = 600_000_000
 MAX_NESTING_DEPTH = 2
+OS_TERRAIN50_GRID_RMSE_M = 4.0
+EA_LIDAR_DTM_RMSE_M = 0.15
+CONSERVATIVE_ONE_RMSE_SUM_M = round(OS_TERRAIN50_GRID_RMSE_M + EA_LIDAR_DTM_RMSE_M, 2)
+CONSERVATIVE_TWO_RMSE_SUM_M = round(2.0 * (OS_TERRAIN50_GRID_RMSE_M + EA_LIDAR_DTM_RMSE_M), 2)
 
 
 def _write(path: Path, payload: Any) -> None:
@@ -129,6 +133,53 @@ def _safe_extract_archives(archives: list[Path], root: Path) -> list[str]:
     return written
 
 
+def _apply_accuracy_screening(payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    crosschecks = payload.get("crosschecks")
+    if payload.get("status") != "THREE_OS_TERRAIN50_CROSSCHECKS_READY" or not isinstance(crosschecks, list) or len(crosschecks) != 3:
+        return payload, False
+    exact_rows = sorted(int(row.get("row_no", -1)) for row in crosschecks)
+    if exact_rows != [30762, 46142, 61522]:
+        raise ValueError(f"Terrain50 crosscheck exact row set mismatch: {exact_rows}")
+
+    outside_two = []
+    for row in crosschecks:
+        delta = float(row["absolute_crosscheck_difference_m"])
+        if delta <= CONSERVATIVE_ONE_RMSE_SUM_M:
+            tier = "WITHIN_CONSERVATIVE_ONE_RMSE_SUM"
+        elif delta <= CONSERVATIVE_TWO_RMSE_SUM_M:
+            tier = "OUTSIDE_ONE_WITHIN_TWO_RMSE_SUM_REVIEW"
+        else:
+            tier = "OUTSIDE_CONSERVATIVE_TWO_RMSE_SUM_BLOCK"
+            outside_two.append(int(row["row_no"]))
+        row["accuracy_screening_tier"] = tier
+        row["os_terrain50_grid_rmse_m"] = OS_TERRAIN50_GRID_RMSE_M
+        row["ea_lidar_dtm_rmse_m"] = EA_LIDAR_DTM_RMSE_M
+        row["conservative_one_rmse_sum_m"] = CONSERVATIVE_ONE_RMSE_SUM_M
+        row["conservative_two_rmse_sum_m"] = CONSERVATIVE_TWO_RMSE_SUM_M
+        row["screening_is_not_confidence_interval"] = True
+
+    payload["accuracy_screening_contract"] = {
+        "os_terrain50_grid_rmse_m": OS_TERRAIN50_GRID_RMSE_M,
+        "ea_lidar_dtm_rmse_m": EA_LIDAR_DTM_RMSE_M,
+        "conservative_one_rmse_sum_m": CONSERVATIVE_ONE_RMSE_SUM_M,
+        "conservative_two_rmse_sum_m": CONSERVATIVE_TWO_RMSE_SUM_M,
+        "method": "linear_sum_of_publisher_RMSE_values_for_conservative_screening",
+        "statistical_independence_assumed": False,
+        "confidence_interval_claimed": False,
+        "automatic_ready_requires_all_rows_within_two_rmse_sum": True,
+        "primary_source_remains_ea_dtm1m": True,
+        "terrain50_is_secondary_coarse_crosscheck": True,
+    }
+    payload["accuracy_screening_outside_two_rmse_rows"] = outside_two
+    payload["accuracy_screening_passed"] = not outside_two
+    payload["human_review_required_for_difference"] = True
+    if outside_two:
+        payload["status"] = "BLOCKED_TERRAIN50_CROSSCHECK_OUTSIDE_CONSERVATIVE_TWO_RMSE_SUM"
+        return payload, False
+    payload["status"] = "THREE_OS_TERRAIN50_CROSSCHECKS_READY"
+    return payload, True
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, required=True)
@@ -180,16 +231,17 @@ def main(argv: Iterable[str] | None = None) -> int:
         if crosscheck_stage["exit_code"] != 0:
             raise RuntimeError("OS Terrain50 polygon crosscheck failed")
         payload = json.loads(args.output.read_text(encoding="utf-8-sig"))
+        payload, screening_passed = _apply_accuracy_screening(payload)
         payload["source_resolution_kind"] = source_kind
         payload["preparation_stages"] = stages
         payload["os_downloads_api_used"] = source_kind == "os_downloads_api_resolved_root"
         _write(args.output, payload)
-        code = 0
+        code = 0 if screening_passed else 2
     except Exception as exc:
-        payload = {"schema_version": 1, "slot_id": "height_difference_2", "status": "BLOCKED_TERRAIN50_PREPARATION_OR_CROSSCHECK", "error": f"{type(exc).__name__}: {exc}", "preparation_stages": stages, "crosscheck_count": 0, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {"schema_version": 2, "slot_id": "height_difference_2", "status": "BLOCKED_TERRAIN50_PREPARATION_OR_CROSSCHECK", "error": f"{type(exc).__name__}: {exc}", "preparation_stages": stages, "crosscheck_count": 0, "accuracy_screening_passed": False, "accuracy_screening_contract": {"os_terrain50_grid_rmse_m": OS_TERRAIN50_GRID_RMSE_M, "ea_lidar_dtm_rmse_m": EA_LIDAR_DTM_RMSE_M, "conservative_one_rmse_sum_m": CONSERVATIVE_ONE_RMSE_SUM_M, "conservative_two_rmse_sum_m": CONSERVATIVE_TWO_RMSE_SUM_M, "statistical_independence_assumed": False, "confidence_interval_claimed": False}, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         _write(args.output, payload)
         code = 2
-    print(json.dumps({"ok": code == 0, "status": payload.get("status"), "crosschecks": payload.get("crosscheck_count", 0)}))
+    print(json.dumps({"ok": code == 0, "status": payload.get("status"), "crosschecks": payload.get("crosscheck_count", 0), "accuracy_screening_passed": payload.get("accuracy_screening_passed", False), "two_rmse_sum_m": CONSERVATIVE_TWO_RMSE_SUM_M}))
     return code
 
 
