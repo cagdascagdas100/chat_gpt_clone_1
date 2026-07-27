@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 408,
+  "topic": "PLANNING_DATA_APPLICATION_REFERENCE_STATUS_DECISION_POINT_GEOMETRY_COVERAGE_AND_PROVENANCE_GATES",
+  "generated_at": "2026-07-27T20:02:09+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_PLANNING_DATA_APPLICATION_API_AND_PROVENANCE_VALIDATION_NOT_AUTHORITATIVE_LBBD_REGISTER_REPLACEMENT_NOT_EXACT_SITE_POLYGON",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.7,
+  "sources": [
+    {"key":"applications","url":"https://www.planning.data.gov.uk/dataset/planning-application","fact":"Planning application dataset currently shows 100,627 applications from 6 providers; collector/new-data dates are September 2025 and origin is MHCLG-created pending authoritative replacement."},
+    {"key":"status","url":"https://www.planning.data.gov.uk/dataset/planning-application-status","fact":"Planning application status reference dataset currently reports 0 entries/providers and is MHCLG-created pending authoritative replacement."},
+    {"key":"decision_type","url":"https://www.planning.data.gov.uk/dataset/planning-decision-type","fact":"Planning decision type reference dataset currently reports 0 entries/providers and is MHCLG-created pending authoritative replacement."},
+    {"key":"application_type","url":"https://www.planning.data.gov.uk/dataset/planning-application-type","fact":"Planning application type has 41 reference types from 1 provider, with latest collection in September 2025; it is not an LPA case register."},
+    {"key":"application_log","url":"https://www.planning.data.gov.uk/dataset/planning-application-log","fact":"Planning application log currently reports 0 records/providers, so absence cannot be used as evidence of no planning-history event."},
+    {"key":"conditions","url":"https://www.planning.data.gov.uk/dataset/planning-application-condition","fact":"Planning application condition dataset has 5,305 conditions from 1 provider; collector ran 26 July 2026 but source origin remains MHCLG-created pending authoritative replacement."},
+    {"key":"lpa","url":"https://www.planning.data.gov.uk/dataset/local-planning-authority","fact":"LPA boundary dataset contains 337 authorities and can help identify responsible authority, but LPA boundary does not identify a specific planning case."},
+    {"key":"api_docs","url":"https://www.planning.data.gov.uk/docs","fact":"Planning Data API accepts WGS84 polygon geometry with intersects relation and recommends bulk spatial intersections for large portfolios."},
+    {"key":"entity_example","url":"https://www.planning.data.gov.uk/entity/10000060678","fact":"Example planning-application entities can contain an exact reference, address, decision/status and a point while geometry is blank."},
+    {"key":"article4","url":"https://www.planning.data.gov.uk/dataset/article-4-direction-area","fact":"Constraint datasets such as Article 4 areas have wider current provider coverage than the experimental planning-application feed and must remain separate from case evidence."},
+    {"key":"local_plan","url":"https://www.planning.data.gov.uk/dataset/local-plan","fact":"Local-plan dataset is useful for plan status/linkage but its current origin also includes MHCLG-created data pending authoritative replacement."},
+    {"key":"withdrawn_example","url":"https://www.planning.data.gov.uk/entity/10000032390","fact":"Application records can carry explicit Withdrawn status/decision values; status semantics must be read from the exact bound record rather than inferred from point proximity."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"Planning Data is used as discovery/API evidence, not as a replacement for LBBD Public Access when exact authoritative case verification is required."},
+    {"id":"EX02","result":"A planning-application point is not treated as the application red-line polygon or HMLR parcel."},
+    {"id":"EX03","result":"Blank geometry does not trigger a synthetic buffer or nearest-parcel snap."},
+    {"id":"EX04","result":"Final Decision or Granted values are accepted only on the exact reference/site record and then cross-checked against the LPA register where available."},
+    {"id":"EX05","result":"Dataset coverage of six providers means absence is not evidence that no application exists in another authority."},
+    {"id":"EX06","result":"Zero-entry status/decision reference datasets are not used to claim exhaustive status vocabularies."},
+    {"id":"EX07","result":"Current constraint polygons can be spatially intersected, but this does not manufacture planning-application geometry."},
+    {"id":"EX08","result":"No candidate promotion occurs without exact application/site/title relation and authoritative current decision evidence."}
+  ],
+  "fail_closed_rules": ["planning_data_not_authoritative_register_replacement","six_provider_coverage_not_national_complete","point_not_redline_polygon","blank_geometry_no_buffer","nearest_point_not_case_binding","exact_reference_required","status_dataset_zero_not_exhaustive","decision_type_dataset_zero_not_exhaustive","application_log_zero_not_no_history","condition_dataset_one_provider_not_complete","collector_recency_not_source_completeness","lpa_boundary_not_case_id","constraint_polygon_not_application_geometry","mhclg_created_origin_retained","no_planning_data_only_promotion","promotion_requires_exact_authoritative_case_and_title_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"planning_data_examples_revalidated":8,"candidate_specific_authoritative_lbbd_cases_bound_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
