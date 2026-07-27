@@ -16,6 +16,7 @@ OPERATOR_BLOB = "2bea2c9861727f54d30c444b6e0b59e57539c840"
 CARRIER_BLOB = "219e83046fb473d101392bbb79d3433ee79355bd"
 ENTRYPOINT_BLOB = "ff6656beb3e8db7d658e03e8373185cc6e500b3b"
 NUMERIC_GATE_BLOB = "6022d2b379a2d5d94bcf1f2ce07aa18ab600bed4"
+WEB_VERIFIER_BLOB = "5fdebfa0bc46cb40151d5a4feee1176541b808e2"
 TARGET_ROWS = [30762, 46142, 61522]
 
 
@@ -35,6 +36,7 @@ def main() -> int:
     carrier_path = root / "docs/chatgpt_status/topography/shards/height_difference_2/automation/043_height_difference_2_shared_runner_carrier.ps1"
     entrypoint_path = root / "docs/chatgpt_status/aays1/automation/height_difference_2_reconciled_candidate_then_sampling_entry.py"
     numeric_gate_path = root / "docs/chatgpt_status/topography/shards/height_difference_2/automation/014_run_official_numeric_gate.py"
+    web_verifier_path = root / "docs/chatgpt_status/topography/shards/height_difference_2/automation/017_verify_height_difference_2_web_8012.py"
     queue_path = root / "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json"
     request_path = root / "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260721_height_difference_2_001.json"
 
@@ -43,11 +45,13 @@ def main() -> int:
     carrier = carrier_path.read_text(encoding="utf-8-sig")
     entrypoint = entrypoint_path.read_text(encoding="utf-8-sig")
     numeric_gate = numeric_gate_path.read_text(encoding="utf-8-sig")
+    web_verifier = web_verifier_path.read_text(encoding="utf-8-sig")
     helper_actual_blob = git_blob_sha(helper_path)
     operator_actual_blob = git_blob_sha(operator_path)
     carrier_actual_blob = git_blob_sha(carrier_path)
     entrypoint_actual_blob = git_blob_sha(entrypoint_path)
     numeric_gate_actual_blob = git_blob_sha(numeric_gate_path)
+    web_verifier_actual_blob = git_blob_sha(web_verifier_path)
     queue: dict[str, Any] = json.loads(queue_path.read_text(encoding="utf-8-sig"))
     request: dict[str, Any] = json.loads(request_path.read_text(encoding="utf-8-sig"))
 
@@ -61,6 +65,7 @@ def main() -> int:
     check("carrier_blob_actual", carrier_actual_blob == CARRIER_BLOB, f"actual={carrier_actual_blob}")
     check("entrypoint_blob_actual", entrypoint_actual_blob == ENTRYPOINT_BLOB, f"actual={entrypoint_actual_blob}")
     check("numeric_gate_blob_actual", numeric_gate_actual_blob == NUMERIC_GATE_BLOB, f"actual={numeric_gate_actual_blob}")
+    check("web_verifier_blob_actual", web_verifier_actual_blob == WEB_VERIFIER_BLOB, f"actual={web_verifier_actual_blob}")
     check("helper_attempt_020", ATTEMPT_ID in helper and "height-difference-2-20260721-019" not in helper, "Restart receipt is bound only to attempt 020.")
     check("helper_single_architecture", "existing_single_runner_architecture_reused = $true" in helper and "new_runner_architecture_created = $false" in helper and "parallel_runner_started = $false" in helper, "Helper preserves the single-runner architecture.")
     check("helper_multiple_process_fail_closed", "BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES" in helper and "BLOCKED_MULTIPLE_PERSISTENT_DAEMONS_AFTER_START" in helper, "Multiple canonical processes fail closed.")
@@ -81,19 +86,21 @@ def main() -> int:
     check("carrier_v63_web_floor", TASK_VERSION in carrier and "$expectedWebRows = 1036" in carrier and ENTRYPOINT_BLOB in carrier and "PORT_8012_ACCEPTANCE_REQUIRED=true" in carrier, "Carrier is aligned to v6.3, the 1036 web floor and exact entrypoint blob.")
     check("entrypoint_v63_web_gate", TASK_VERSION in entrypoint and 'AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"' in entrypoint and 'numeric_payload.get("web_acceptance_passed") is True' in entrypoint and "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW" in entrypoint, "Entrypoint requires both three official numeric rows and accepted port8012 evidence.")
     check("numeric_gate_v63_fail_closed", 'AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"' in numeric_gate and 'web_acceptance_required": True' in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_AFTER_NUMERIC_READY" in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_VERIFIER_MISSING" in numeric_gate and "PORT_8012_WEB_ACCEPTANCE_PASSED" in numeric_gate, "Numeric orchestrator fails closed when web acceptance is missing or fails.")
+    check("web_verifier_exact_rows", "TARGET_ROWS = [30762, 46142, 61522]" in web_verifier and "candidate exact row set mismatch" in web_verifier and "exact_target_rows_verified" in web_verifier, "Port8012 verifier is bound to the exact three target rows.")
+    check("web_verifier_preacceptance_binding", "EXPECTED_PRE_ACCEPTANCE_STATUS" in web_verifier and "candidate payload web-row binding below requested floor" in web_verifier and 'default=1036' in web_verifier, "Port8012 verifier rejects stale candidate status or a row-floor mismatch.")
     check("queue_task_and_helper", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("restart_helper_blob_sha") == HELPER_BLOB, "Queue binds the exact task, attempt and helper blob.")
-    check("queue_v63_pins", queue.get("task_version") == TASK_VERSION and queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB and queue.get("script_blob_sha") == CARRIER_BLOB and queue.get("python_script_blob_sha") == ENTRYPOINT_BLOB and queue.get("official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB, "Queue pins v6.3 operator, carrier, entrypoint and numeric gate blobs.")
+    check("queue_v63_pins", queue.get("task_version") == TASK_VERSION and queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB and queue.get("script_blob_sha") == CARRIER_BLOB and queue.get("python_script_blob_sha") == ENTRYPOINT_BLOB and queue.get("official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and queue.get("web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Queue pins v6.3 operator, carrier, entrypoint, numeric gate and web verifier blobs.")
     check("queue_snapshot_contract", queue.get("git_snapshot_always_required") is True and "safe_git_snapshot_always" in queue.get("runner_contract_modes", []), "Queue requires a 016 git snapshot receipt even when the repo is clean.")
     check("queue_safe_sync", queue.get("hard_reset_forbidden") is True and queue.get("fast_forward_only_required") is True and "atomic_fetch_ff_only_exact_head" in queue.get("runner_contract_modes", []), "Queue requires ff-only exact-head synchronization and forbids hard reset.")
     check("queue_exact_target_gate", queue.get("sample_rows") == TARGET_ROWS and queue.get("measurement_contract", {}).get("nearest_row_fallback_allowed") is False, "Queue requires exact target rows and no nearest fallback.")
-    check("queue_web_gate", int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_required") is True and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Queue requires port8012 web acceptance, not only numeric rows.")
-    check("request_v63_pins", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB and request.get("required_carrier_blob_sha") == CARRIER_BLOB and request.get("required_entrypoint_blob_sha") == ENTRYPOINT_BLOB and request.get("required_official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB, "Slot-specific restart request pins the same v6.3 recovery chain.")
-    check("request_snapshot_contract", request.get("git_snapshot_always_required") is True and request.get("required_pickup_request_revision") == 7, "Restart request requires deterministic 016 snapshot emission at revision 7.")
-    check("request_safe_sync_and_web", request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and int(request.get("expected_web_operation_rows", 0)) >= 1036 and request.get("web_acceptance_required") is True and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Restart request requires ff-only synchronization and fail-closed web acceptance.")
+    check("queue_web_gate", int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_required") is True and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and queue.get("web_exact_target_rows_required") == TARGET_ROWS, "Queue requires port8012 acceptance for the exact three rows, not only numeric rows.")
+    check("request_v63_pins", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB and request.get("required_carrier_blob_sha") == CARRIER_BLOB and request.get("required_entrypoint_blob_sha") == ENTRYPOINT_BLOB and request.get("required_official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and request.get("required_web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Slot-specific restart request pins the same v6.3 recovery and web acceptance chain.")
+    check("request_snapshot_contract", request.get("git_snapshot_always_required") is True and request.get("required_pickup_request_revision") == 8, "Restart request requires deterministic 016 snapshot emission at revision 8.")
+    check("request_safe_sync_and_web", request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and int(request.get("expected_web_operation_rows", 0)) >= 1036 and request.get("web_acceptance_required") is True and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and request.get("web_exact_target_rows_required") == TARGET_ROWS, "Restart request requires ff-only synchronization and exact-row fail-closed web acceptance.")
 
     passed = sum(1 for item in checks if item["passed"])
     payload = {
-        "schema_version": 5,
+        "schema_version": 6,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
@@ -107,6 +114,7 @@ def main() -> int:
         "carrier_actual_blob_sha": carrier_actual_blob,
         "entrypoint_actual_blob_sha": entrypoint_actual_blob,
         "numeric_gate_actual_blob_sha": numeric_gate_actual_blob,
+        "web_verifier_actual_blob_sha": web_verifier_actual_blob,
         "operator_recovery_executed": False,
         "runner_restart_observed": False,
         "product_rows_promoted": 0,
