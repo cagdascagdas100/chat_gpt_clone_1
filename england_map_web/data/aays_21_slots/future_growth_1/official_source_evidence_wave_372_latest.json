@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 372,
+  "topic": "HOUSING_DELIVERY_MONITORING_BROWNFIELD_STATUS_AND_DATA_RECENCY_CONTROLS",
+  "generated_at": "2026-07-27T16:26:52+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_MONITORING_AND_STATUS_VALIDATION_NOT_CURRENT_COMPLETION_INFERENCE_NOT_RUNNER_EXECUTION_NOT_SCORE_PROMOTION",
+  "runtime_gate": {"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false,"reason":"Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"matrix_dimensions":{"dimensions":12,"rules":16,"sources":12},"promotion":0},
+  "source_accuracy_score_100": 98.9,
+  "score_basis": "Non-statistical internal evidence-quality score based on official monitoring pages and current Planning Data metadata, with strict separation of historic HDT results, current dataset recency, permission status and actual completion.",
+  "sources": [
+    {"key":"lbbd_monitoring","label":"LBBD Monitoring and evidence base library","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/monitoring-and","fact":"Council lists Authority Monitoring Report 2023-24 and explains AMRs report policy implementation for the previous financial year and planning-document progress."},
+    {"key":"lbbd_development_plan","label":"LBBD Development Plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Current statutory plan context is London Plan 2021 plus LBBD Local Plan 2037 and Joint Waste Development Plan; LBBD Local Plan adopted 18 September 2024."},
+    {"key":"lbbd_spd","label":"LBBD Supplementary Planning Documents","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/supplementary","fact":"Thames Road SPD adopted 14 May 2025 and Planning Obligations SPD adopted 18 September 2024; adopted and draft SPDs are explicitly distinct."},
+    {"key":"brownfield_land","label":"Planning Data Brownfield land","url":"https://www.planning.data.gov.uk/dataset/brownfield-land","fact":"37,666 records from 354 providers; collector 23 July 2026; new data 22 July 2026; origin all authoritative sources."},
+    {"key":"brownfield_site","label":"Planning Data Brownfield site","url":"https://www.planning.data.gov.uk/dataset/brownfield-site","fact":"Experimental boundary dataset with 2,916 sites from 5 providers; MHCLG-created and expected to be replaced by authoritative data."},
+    {"key":"planning_application","label":"Planning Data Planning application","url":"https://www.planning.data.gov.uk/dataset/planning-application","fact":"100,627 records from 6 providers; collector/new data 17 September 2025; MHCLG-created and not current comprehensive national application truth."},
+    {"key":"permission_status","label":"Planning Data Planning permission status","url":"https://www.planning.data.gov.uk/dataset/planning-permission-status","fact":"Authoritative controlled vocabulary distinguishes permissioned, not-permissioned and pending-decision."},
+    {"key":"permission_type","label":"Planning Data Planning permission type","url":"https://www.planning.data.gov.uk/dataset/planning-permission-type","fact":"Authoritative controlled vocabulary distinguishes full, outline, reserved matters, permission in principle, technical details consent and other permission types."},
+    {"key":"planning_condition","label":"Planning Data Planning application condition","url":"https://www.planning.data.gov.uk/dataset/planning-application-condition","fact":"5,305 condition records; one provider; latest collected 26 July 2026 but source origin is MHCLG-created and not comprehensive national condition coverage."},
+    {"key":"ownership_status","label":"Planning Data Ownership status","url":"https://www.planning.data.gov.uk/dataset/ownership-status","fact":"Authoritative controlled vocabulary includes public, non-public, mixed and unknown ownership; ownership status does not prove development control or deliverability."},
+    {"key":"historic_hdt","label":"LBBD Housing Delivery Test Action Plan 2020","url":"https://www.lbbd.gov.uk/sites/default/files/2023-02/Housing-Delivery-Test-Action-Plan-2020.pdf","fact":"Historical action plan records the 2020 HDT measurement at 57%; it is retained only as historic evidence and must not be treated as the current 2026 delivery rate."},
+    {"key":"planning_datasets","label":"Planning Data datasets index","url":"https://www.planning.data.gov.uk/dataset/","fact":"Dataset catalogue separates geography, legal instrument, document, organisation, policy, metric and timetable data; coverage varies by dataset and provider."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"AMR 2023-24 is the latest AMR visibly listed on the council monitoring page; reporting period retained rather than silently labelled 2026."},
+    {"id":"EX02","result":"Brownfield land dataset freshness revalidated at collector 23 July 2026/new data 22 July 2026; membership remains development-potential evidence, not completion."},
+    {"id":"EX03","result":"Brownfield-site boundaries remain experimental; no exact parcel relation promoted from that layer alone."},
+    {"id":"EX04","result":"Planning application dataset recency is only September 2025 and coverage is six providers; absence is not negative planning proof."},
+    {"id":"EX05","result":"Permissioned/not-permissioned/pending-decision statuses are kept distinct and never converted directly to delivery probability."},
+    {"id":"EX06","result":"Permission type distinctions retained: outline, full and reserved matters are not interchangeable completion states."},
+    {"id":"EX07","result":"Historic HDT 2020 result tagged HISTORIC_ONLY; no use as current 2026 borough delivery score."},
+    {"id":"EX08","result":"Planning-condition dataset is not comprehensive national coverage; missing condition records cannot be interpreted as no conditions."}
+  ],
+  "fail_closed_rules": ["amr_period_must_be_retained","historic_hdt_not_current_rate","brownfield_register_not_completion","experimental_boundary_not_exact_site","planning_application_coverage_gap_not_negative_proof","permission_status_not_delivery","permission_type_not_completion","condition_dataset_gap_not_no_conditions","ownership_status_not_deliverability","dataset_collector_date_not_event_date","provider_count_limits_coverage","adopted_and_draft_spd_separated","no_cross_dataset_negative_inference","no_stale_dataset_as_current_truth","no_point_only_promotion","promotion_requires_exact_current_site_and_parcel_evidence"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","SCOPE","PERMISSION","DELIVERY","MONITORING","COVERAGE","GEOMETRY","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"monitoring_status_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
