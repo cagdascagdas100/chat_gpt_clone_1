@@ -1,0 +1,41 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":426,
+  "topic":"CANDIDATE_CI_THAMES_ROAD_WIDER_CAPACITY_COMPONENT_APPLICATIONS_S106_AND_SCOPE_RECONCILIATION_GATES",
+  "generated_at":"2026-07-27T21:54:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_CI_WIDER_SITE_AND_COMPONENT_CASE_RECONCILIATION_NOT_FULL_SITE_PERMISSION_NOT_EXACT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.9,
+  "sources":[
+    {"key":"ci_brownfield","url":"https://www.planning.data.gov.uk/entity/1739868","fact":"LBBD73/CI Thames Road is 2.6ha, deliverable=yes, mixed ownership, minimum 1,844 and maximum 3,344 net dwellings, with planning-permission-status pending-decision."},
+    {"key":"ci_notes","url":"https://www.planning.data.gov.uk/entity/1739868","fact":"The wider-site record explicitly notes several sites pending decision including 21/01232/FULL and 22/02211/FULL; those references are components within a larger allocation."},
+    {"key":"ci_case_131","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=90611","fact":"21/01232/FULL at 7 Thames Road proposed 131 residential units plus industrial space; Planning Committee delegated authority to grant subject to Mayor direction, S106 completion and conditions."},
+    {"key":"ci_case_131_scope","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=90611","fact":"The committee resolution allowed refusal/extension/referral if the legal agreement was not completed by the stated deadline, so committee resolution is not treated as evidence of final issued permission."},
+    {"key":"ci_case_245","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=95897","fact":"22/02211/FULL at 13-15A Thames Road proposed 245 new residential units plus 2,714 sqm GIA industrial floorspace."},
+    {"key":"ci_case_245_scope","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=95897","fact":"Planning Committee delegated authority to grant 22/02211/FULL subject to Mayor direction, S106 completion and conditions, with a fallback deadline for refusal/extension/referral."},
+    {"key":"ci_committee_2022","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12227","fact":"The 14 March 2022 Planning Committee minutes identify 21/01232/FULL as the 7 Thames Road case and keep it separate from other applications heard that night."},
+    {"key":"ci_committee_2023","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=13039","fact":"The 17 July 2023 Planning Committee agenda identifies 22/02211/FULL as the 13-15A Thames Road case; it is a discrete case, not the complete CI allocation."},
+    {"key":"ci_local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The adopted Local Plan 2037 provides the policy framework for the Thames Road transformation area but does not convert wider allocation capacity into consented units."},
+    {"key":"ci_development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Applications are assessed against the development plan; plan status remains distinct from case-level permission and S106 completion."},
+    {"key":"ci_case_search","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning/applications-and-decisions","fact":"LBBD's application/decision service remains the case-specific route for final status; this wave does not infer final notices from committee recommendations alone."},
+    {"key":"ci_planning_data_docs","url":"https://www.planning.data.gov.uk/docs","fact":"Planning Data supports discovery and spatial filtering but does not make a wider allocation point equivalent to component red-line polygons or HMLR titles."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"131 + 245 = 376 component units, not 1,844–3,344 wider-site consent."},
+    {"id":"EX02","result":"21/01232/FULL remains bound to 7 Thames Road only."},
+    {"id":"EX03","result":"22/02211/FULL remains bound to 13-15A Thames Road only."},
+    {"id":"EX04","result":"Delegated authority to grant subject to S106 is not silently upgraded to a final issued permission."},
+    {"id":"EX05","result":"Mixed ownership is not converted to a single owner or title."},
+    {"id":"EX06","result":"Deliverable=yes does not prove construction or consent across the wider allocation."},
+    {"id":"EX07","result":"Wider-site point/capacity is not substituted for component red-line geometry."},
+    {"id":"EX08","result":"Promotion remains zero until exact current case notices, site/title relations and statutory overlays are verified."}
+  ],
+  "fail_closed_rules":["component_units_not_wider_capacity","committee_resolution_not_final_notice","s106_completion_required","case_131_scope_only","case_245_scope_only","mixed_ownership_not_single_title","deliverable_not_construction","wider_point_not_redline","no_component_polygon_union_without_evidence","exact_final_notice_required","exact_hmlr_required","no_pending_status_upgrade","no_capacity_sum_inference","no_fuzzy_case_binding","executed_overlay_required","promotion_requires_exact_ci_case_title_and_overlays"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD73/CI Thames Road","minimum_net_dwellings":1844,"maximum_net_dwellings":3344,"planning_permission_status":"pending-decision","verified_component_applications":{"21/01232/FULL":131,"22/02211/FULL":245},"verified_component_units_total":376,"component_units_bound_as_wider_site_consent":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
