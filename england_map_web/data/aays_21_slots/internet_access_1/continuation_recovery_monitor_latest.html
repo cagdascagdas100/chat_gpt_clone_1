@@ -1,97 +1,104 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body><h1>internet_access_1 — devam / recovery izleme</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p><div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Slot/portable heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı doğrulanmadı. Research/QA fail-closed devam ediyor.</div><div class="ok"><b>Kaynak bütünlüğü:</b> BDUK Mayıs 2026 RFI aynı güncel sayfada bölüm 3'te 10, Annex A'da 9 UPRN dosyası söylüyor. Dosya sayısı kaynak-içi çelişki olarak işaretlendi ve promotion kararından çıkarıldı. 120 QA satırı resmî CSV satır 424–543 üzerinden doğrulandı; UPRN hash <code>7d98ef9c7bae318f40401450b383822130c94d6a86c2ade4ae92e49b7bc2a905</code>.</div><div class="summary"><div class="card">Genel program<br><b>11.1%</b><br>1 / 9 · Δ 0.0</div><div class="card">Current-task kontrol<br><b>94.7%</b><br>18 / 19</div><div class="card">Bu tur görünür<br><b>197 PASS / 215</b><br>15 PARTIAL · 3 BLOCKED</div><div class="card">Qualified kaynak<br><b>37</b></div><div class="card">≥95 güven<br><b>37 / 37</b></div><div class="card">Ort. kaynak güveni<br><b>99.8%</b></div><div class="card">Yeni accepted kaynak<br><b>+2</b></div><div class="card">Restricted aday<br><b>2</b></div><div class="card">Kaynak çelişkisi<br><b>1</b></div><div class="card">Yeni QA<br><b>+120</b></div><div class="card">Kümülatif QA<br><b>550</b></div><div class="card">Ürün satırı<br><b>0</b></div></div><p><b>Yeni QA:</b> BDUK January 2026 official sample satır 424–543. 120/120 UPRN benzersiz; recognised 112 true / 8 false; current 120 true; future 63 true / 57 false. Dağılım: Bromley 60, Bath and North East Somerset 60.</p><p><b>Yeni kaynak/guard:</b> Planning Data API public/OGL UPRN + geometry/point cross-check sağlar ancak planning/designation geometrisi parcel boundary değildir. National Data Library Addresses otoritatif günlük UPRN lifecycle guard sağlar; tam veri erişimi genel ücretsiz bulk kaynak değildir.</p><p><b>Exact-binding:</b> canonical UPRN veya canonical TopographicArea TOID + geçerli OS Linked Identifiers version/confidence olmadan exact promotion yok. Planning Data, OS Open UPRN point ve HMLR INSPIRE yalnız validation/spatial candidate olarak kalır.</p><h2>Araştırma / recovery işlem satırları</h2><pre>001 PASS contract_version_recheck — contract sha 1a25e0f
-002 PASS canonical_head_initial_readback — b5c21c57109193b9444e0b8ab8e7d4d200c5fb6c
-003 PASS current_task_readback — same continuation; 18/19
-004 PASS slot_status_readback — RECOVERY_PARKED
-005 BLOCKED heartbeat_recovery_gate — slot+portable heartbeat stale; no second runner
-006 PASS ownership_recheck — unclaimed/no lease
-007 PASS checkpoint_recheck — 33785 verified / 58498 pending-or-no-data
-008 PASS queue_continuation_dedup — same pending task
-009 PASS manual_action_recheck — OPEN
-010 BLOCKED canonical_runtime_audit_readback — canonical audit absent
-011 PASS child_source_artifact_fetch
-012 PASS child_audit_artifact_fetch
-013 PASS child_monitor_artifact_fetch
-014 PASS bduk_latest_release_refresh — January 2026 / 4 June 2026
-015 PASS bduk_qa_window_parse — official lines 424-543
-016 PASS qa_uniqueness_check — 120/120
-017 PASS qa_recognised_distribution — 112/8
-018 PASS qa_current_distribution — 120/0
-019 PASS qa_future_distribution — 63/57
-020 PASS qa_bduk_gis_distribution — 0/120
-021 PASS qa_lad_distribution — Bromley60 / B&NES60
-022 PASS qa_region_distribution — London60 / South West60
-023 PASS qa_uprn_hash — 7d98ef9c7bae318f40401450b383822130c94d6a86c2ade4ae92e49b7bc2a905
-024 PASS bduk_technical_note_refresh
-025 PASS bduk_318_lad_guard
-026 PASS bduk_missing_uprn_guard
-027 PASS bduk_rfi_section3_file_count — 10
-028 PASS bduk_rfi_annex_file_count — 9
-029 PASS bduk_official_source_conflict_guard
-030 PASS bduk_file_count_promotion_exclusion
-031 PASS bduk_rfi_epoch_guard — AddressBase Premium Epoch123
-032 PASS bduk_demolished_filter — StateCode4 excluded
-033 PASS bduk_logical_status_filter — 1 approved / 6 provisional
-034 PASS bduk_duplicate_priority_guard
-035 PASS planning_data_api_refresh
-036 PASS planning_data_ogl_guard
-037 PASS planning_data_uprn_query
-038 PASS planning_data_coordinate_query
-039 PASS planning_data_geometry_point
-040 PASS planning_data_bulk_download
-041 PASS planning_data_coverage_guard
-042 PASS planning_data_parcel_identity_guard
-043 PASS ndl_addresses_catalog_refresh
-044 PASS ndl_addresses_authority_guard
-045 PASS ndl_addresses_daily_guard
-046 PASS ndl_addresses_lifecycle_guard
-047 PASS ndl_addresses_sample_guard
-048 PASS ndl_addresses_full_access_guard
-049 PASS os_linked_identifiers_refresh
-050 PASS os_blpu_topographicarea_relation
-051 PASS os_linked_product_structure
-052 PASS os_linked_six_week_cycle
-053 PASS os_linked_version_confidence_guard
-054 PASS os_open_uprn_refresh
-055 PASS os_open_uprn_scale_guard
-056 PASS os_open_uprn_point_identity_guard
-057 PASS ons_nsul_refresh — May2026/Epoch126
-058 PASS ons_nsul_cycle_guard
-059 PASS ons_nsul_measurement_guard
-060 PASS ofcom_current_report_refresh — Spring2026
-061 PASS ofcom_snapshot_guard — January2026
-062 PASS ofcom_zip_listing_guard — 32.2MB
-063 PASS ofcom_planned_refresh
-064 PASS ofcom_current_vs_planned_guard
-065 PARTIAL repo_exact_uprn_probe_10070019052 — 0 indexed hits; not absence proof
-066 PARTIAL repo_exact_uprn_probe_10003621634 — 0 indexed hits; not absence proof
-067 PARTIAL repo_exact_uprn_probe_10023108602 — 0 indexed hits; not absence proof
-068 PARTIAL repo_exact_uprn_probe_100121170047 — 0 indexed hits; not absence proof
-069 PARTIAL repo_exact_uprn_probe_100121170802 — 0 indexed hits; not absence proof
-070 PARTIAL repo_exact_uprn_probe_10001146801 — 0 indexed hits; not absence proof
-071 PARTIAL repo_exact_uprn_probe_100121171650 — 0 indexed hits; not absence proof
-072 PARTIAL repo_exact_uprn_probe_100121171862 — 0 indexed hits; not absence proof
-073 PARTIAL repo_exact_uprn_probe_100020417783 — 0 indexed hits; not absence proof
-074 PARTIAL repo_exact_uprn_probe_10001138522 — 0 indexed hits; not absence proof
-075 PASS repo_zero_hit_absence_guard
-076 PARTIAL repo_parcel_score_artifact_probe — 0 indexed hits
-077 PARTIAL repo_factor_breakdown_probe — 0 indexed hits
-078 PARTIAL repo_real_geometry_probe — 0 indexed hits
-079 PARTIAL repo_linked_relation_probe — 0 indexed hits
-080 PARTIAL planning_data_uprn_index_probe — 0 indexed web hits; not API absence
-081 PASS planning_data_zero_hit_guard
-082 PASS os_ngd_building_access_guard — restricted
-083 PASS os_ngd_access_location_guard — restricted
-084 PASS restricted_source_skip_guard
-085 BLOCKED exact_parcel_to_uprn_binding
-086 PASS product_promotion_gate — 0 promoted
-087 PASS unknown_vs_no_data_guard
-088 PASS synthetic_identity_guard
-089 PASS direct_push_safety_gate
-090 PASS source_artifact_update — 7add5a7fb369e1009791f8dfe043511375b64d6c
-091 PASS source_artifact_remote_readback — b755a78f111cd7788675e0aa18ee06f5e7f9aa2e
-092 PASS audit_artifact_update — 7396649d6208de356951ec9e4c12d9fdaddc39d4
-093 PASS audit_artifact_remote_readback — c4871c437e0ade75c30543f8dde6e51ca06595f5
-094 PASS canonical_head_premonitor_readback — ccf2c10d4ef3ba9266e20b46ac1afad58af22329</pre><h2>QA satırları — resmî BDUK sample</h2><pre>424|10070019052|BR1 2QN|1|1|0|Bromley|London
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body>
+<h1>internet_access_1 — devam / recovery izleme</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
+<div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Slot/portable heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı doğrulanmadı.</div>
+<div class="ok"><b>Kaynak bütünlüğü:</b> BDUK Mayıs 2026 RFI aynı sayfada 10 ve 9 UPRN dosyası ifadeleri içeriyor; bu sayı promotion kararından çıkarıldı. QA satır 424–543 hash: <code>7d98ef9c7bae318f40401450b383822130c94d6a86c2ade4ae92e49b7bc2a905</code>.</div>
+<div class="summary"><div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div><div class="card">Current-task<br><b>94.7%</b><br>18/19</div><div class="card">Görünür işlemler<br><b>197 PASS / 215</b><br>15 PARTIAL · 3 BLOCKED</div><div class="card">Qualified<br><b>37</b></div><div class="card">≥95 güven<br><b>37/37</b></div><div class="card">Ort. güven<br><b>99.8%</b></div><div class="card">Yeni kaynak<br><b>+2</b></div><div class="card">Restricted<br><b>2</b></div><div class="card">Kaynak conflict<br><b>1</b></div><div class="card">Yeni QA<br><b>+120</b></div><div class="card">Kümülatif QA<br><b>550</b></div><div class="card">Ürün satırı<br><b>0</b></div></div>
+<p>QA: Bromley 60 + Bath and North East Somerset 60; recognised 112/8, current 120/0, future 63/57. Planning Data API ve National Data Library Addresses validation/lifecycle guard olarak yükseltildi; parcel boundary olarak kullanılmadı.</p>
+<h2>Araştırma / recovery işlemleri (94)</h2><pre>001|PASS|contract_version_recheck
+002|PASS|canonical_head_initial_readback
+003|PASS|current_task_readback
+004|PASS|slot_status_readback
+005|BLOCKED|heartbeat_recovery_gate
+006|PASS|ownership_recheck
+007|PASS|checkpoint_recheck
+008|PASS|queue_continuation_dedup
+009|PASS|manual_action_recheck
+010|BLOCKED|canonical_runtime_audit_readback
+011|PASS|child_source_artifact_fetch
+012|PASS|child_audit_artifact_fetch
+013|PASS|child_monitor_artifact_fetch
+014|PASS|bduk_latest_release_refresh
+015|PASS|bduk_qa_window_parse
+016|PASS|qa_uniqueness_check
+017|PASS|qa_recognised_distribution
+018|PASS|qa_current_distribution
+019|PASS|qa_future_distribution
+020|PASS|qa_bduk_gis_distribution
+021|PASS|qa_lad_distribution
+022|PASS|qa_region_distribution
+023|PASS|qa_uprn_hash
+024|PASS|bduk_technical_note_refresh
+025|PASS|bduk_318_lad_guard
+026|PASS|bduk_missing_uprn_guard
+027|PASS|bduk_rfi_section3_file_count
+028|PASS|bduk_rfi_annex_file_count
+029|PASS|bduk_official_source_conflict_guard
+030|PASS|bduk_file_count_promotion_exclusion
+031|PASS|bduk_rfi_epoch_guard
+032|PASS|bduk_demolished_filter
+033|PASS|bduk_logical_status_filter
+034|PASS|bduk_duplicate_priority_guard
+035|PASS|planning_data_api_refresh
+036|PASS|planning_data_ogl_guard
+037|PASS|planning_data_uprn_query
+038|PASS|planning_data_coordinate_query
+039|PASS|planning_data_geometry_point
+040|PASS|planning_data_bulk_download
+041|PASS|planning_data_coverage_guard
+042|PASS|planning_data_parcel_identity_guard
+043|PASS|ndl_addresses_catalog_refresh
+044|PASS|ndl_addresses_authority_guard
+045|PASS|ndl_addresses_daily_guard
+046|PASS|ndl_addresses_lifecycle_guard
+047|PASS|ndl_addresses_sample_guard
+048|PASS|ndl_addresses_full_access_guard
+049|PASS|os_linked_identifiers_refresh
+050|PASS|os_blpu_topographicarea_relation
+051|PASS|os_linked_product_structure
+052|PASS|os_linked_six_week_cycle
+053|PASS|os_linked_version_confidence_guard
+054|PASS|os_open_uprn_refresh
+055|PASS|os_open_uprn_scale_guard
+056|PASS|os_open_uprn_point_identity_guard
+057|PASS|ons_nsul_refresh
+058|PASS|ons_nsul_cycle_guard
+059|PASS|ons_nsul_measurement_guard
+060|PASS|ofcom_current_report_refresh
+061|PASS|ofcom_snapshot_guard
+062|PASS|ofcom_zip_listing_guard
+063|PASS|ofcom_planned_refresh
+064|PASS|ofcom_current_vs_planned_guard
+065|PARTIAL|repo_exact_uprn_probe_10070019052
+066|PARTIAL|repo_exact_uprn_probe_10003621634
+067|PARTIAL|repo_exact_uprn_probe_10023108602
+068|PARTIAL|repo_exact_uprn_probe_100121170047
+069|PARTIAL|repo_exact_uprn_probe_100121170802
+070|PARTIAL|repo_exact_uprn_probe_10001146801
+071|PARTIAL|repo_exact_uprn_probe_100121171650
+072|PARTIAL|repo_exact_uprn_probe_100121171862
+073|PARTIAL|repo_exact_uprn_probe_100020417783
+074|PARTIAL|repo_exact_uprn_probe_10001138522
+075|PASS|repo_zero_hit_absence_guard
+076|PARTIAL|repo_parcel_score_artifact_probe
+077|PARTIAL|repo_factor_breakdown_probe
+078|PARTIAL|repo_real_geometry_probe
+079|PARTIAL|repo_linked_relation_probe
+080|PARTIAL|planning_data_uprn_index_probe
+081|PASS|planning_data_zero_hit_guard
+082|PASS|os_ngd_building_access_guard
+083|PASS|os_ngd_access_location_guard
+084|PASS|restricted_source_skip_guard
+085|BLOCKED|exact_parcel_to_uprn_binding
+086|PASS|product_promotion_gate
+087|PASS|unknown_vs_no_data_guard
+088|PASS|synthetic_identity_guard
+089|PASS|direct_push_safety_gate
+090|PASS|source_artifact_update
+091|PASS|source_artifact_remote_readback
+092|PASS|audit_artifact_update
+093|PASS|audit_artifact_remote_readback
+094|PASS|canonical_head_premonitor_readback</pre>
+<h2>QA satırları (120) — line|UPRN|postcode|recognised|current|future|LAD|region</h2><pre>424|10070019052|BR1 2QN|1|1|0|Bromley|London
 425|100020389086|BR1 2QT|1|1|0|Bromley|London
 426|100020417783|BR1 2RJ|1|1|1|Bromley|London
 427|100020404598|BR1 2RN|1|1|0|Bromley|London
@@ -210,4 +217,5 @@
 540|100120022167|BA1 3JR|1|1|1|Bath and North East Somerset|South West
 541|100120020733|BA1 3LT|1|1|0|Bath and North East Somerset|South West
 542|100120021883|BA1 3LX|1|1|1|Bath and North East Somerset|South West
-543|100121171862|BA1 3NS|0|1|0|Bath and North East Somerset|South West</pre><p>215 PASS satırı içinde monitor_artifact_update işlemi bu commit ile tamamlanır; uzak readback ve final branch kontrolleri commit sonrasında ayrıca yapılır.</p></body></html>
+543|100121171862|BA1 3NS|0|1|0|Bath and North East Somerset|South West</pre>
+<p>215 görünür işlem = 94 araştırma/recovery + 120 QA + 1 monitor update. Monitor readback ve final branch kontrolleri bu commit sonrasında ayrıca doğrulanır.</p></body></html>
