@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 404,
+  "topic": "OS_OPEN_UPRN_ADDRESS_POINT_PERSISTENT_IDENTIFIER_LINKED_IDENTIFIER_AND_TITLE_BINDING_GATES",
+  "generated_at": "2026-07-27T19:34:50+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_UPRN_ADDRESS_IDENTIFIER_AND_POINT_GEOMETRY_VALIDATION_NOT_LEGAL_BOUNDARY_NOT_OWNERSHIP_NOT_TITLE_NUMBER",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.8,
+  "sources": [
+    {"key":"open_uprn_docs","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn","fact":"OS Open UPRN is an open dataset for linking and visualising data related to UPRNs and is updated every six weeks with AddressBase epochs."},
+    {"key":"uprn_authority","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn","fact":"UPRNs are authoritative persistent identifiers for addressable locations, primarily allocated by local authorities under their address-maintenance duties."},
+    {"key":"uprn_scope","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn","fact":"UPRNs cover approximately 40 million addressable locations and can include non-building objects such as bus shelters or electricity substations."},
+    {"key":"uprn_point","url":"https://docs.os.uk/os-downloads/identifiers/os-open-uprn/os-open-uprn-technical-specification/feature-type/os-open-uprn","fact":"OS Open UPRN GeoPackage records are point geometries representing the location of the address record, with BNG and latitude/longitude coordinates."},
+    {"key":"uprn_overview","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn/os-open-uprn-overview","fact":"The UPRN persists through address-name, use or demolition-related lifecycle changes and is designed as a dataset-join key."},
+    {"key":"uprn_technical","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/os-open-uprn/os-open-uprn-technical-specification","fact":"OS Open UPRN contains the position and unique identifier for records held in AddressBase Premium and supports GIS/spatial-database linkage."},
+    {"key":"uprn_supply","url":"https://docs.os.uk/os-downloads/identifiers/os-open-uprn/os-open-uprn-overview/product-supply","fact":"OS Open UPRN is supplied as whole-GB CSV and GeoPackage data; supply format does not convert address points into cadastral polygons."},
+    {"key":"linked_ids","url":"https://docs.os.uk/os-downloads/products/buildings-and-infrastructure-portfolio/os-open-linked-identifiers","fact":"OS Open Linked Identifiers provides authoritative relationships among UPRNs, USRNs and TOIDs and is updated every six weeks."},
+    {"key":"addressbase_uprn","url":"https://docs.os.uk/os-downloads/products/addresses-and-names-portfolio/addressbase-fundamentals/unique-property-reference-number-uprn","fact":"UPRN is a persistent reference key for joining related address records across AddressBase products; persistence does not establish legal ownership."},
+    {"key":"ngd_uprn","url":"https://docs.os.uk/osngd/data-structure/address/islands-address/non-addressable-object","fact":"OS NGD address features carry UPRN and lifecycle/version attributes plus address coordinates; identifier linkage remains distinct from HMLR title registration."},
+    {"key":"open_uprn_coords","url":"https://docs.os.uk/os-downloads/identifiers/os-open-uprn/os-open-uprn-technical-specification/feature-type/os-open-uprn","fact":"Coordinates are address-record locations in BNG/ETRS89, not surveyed legal-boundary vertices."},
+    {"key":"linked_ids_semantics","url":"https://docs.os.uk/os-downloads/products/buildings-and-infrastructure-portfolio/os-open-linked-identifiers","fact":"UPRN-to-TOID/USRN relationships improve data connectivity but are not HMLR title-number relationships."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"UPRN point is accepted as an addressable-location join anchor only; no buffer/snap is treated as a legal parcel polygon."},
+    {"id":"EX02","result":"Persistent UPRN does not identify the current owner or title number."},
+    {"id":"EX03","result":"A UPRN-to-TOID relationship is not converted to an HMLR title relation."},
+    {"id":"EX04","result":"One development site may contain several UPRNs; no arbitrary merge is made without exact site/title evidence."},
+    {"id":"EX05","result":"An addressable object may be non-residential or even a non-building object, so UPRN existence is not a dwelling/building-use score."},
+    {"id":"EX06","result":"Six-week update cadence supports recency controls but does not prove a candidate-specific join was executed."},
+    {"id":"EX07","result":"Coordinates are not assumed to be building centroids, entrance points or legal boundary vertices beyond the documented address-record location semantics."},
+    {"id":"EX08","result":"No candidate promotion occurs from UPRN linkage without exact HMLR title/parcel relation plus current planning/statutory evidence."}
+  ],
+  "fail_closed_rules": ["uprn_point_not_legal_polygon","uprn_not_title_number","uprn_not_owner_id","linked_toid_not_title_relation","usrn_not_access_right","multiple_uprns_site_possible","nonbuilding_uprn_possible","point_buffer_not_parcel","nearest_uprn_not_binding","update_frequency_not_query_execution","coordinate_not_boundary_vertex","persistent_id_not_current_use","address_change_not_new_title_inference","no_uprn_only_candidate_score","no_toid_only_site_extent","promotion_requires_exact_hmlr_and_current_site_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"uprn_examples_revalidated":8,"candidate_specific_uprn_title_joins_executed_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
