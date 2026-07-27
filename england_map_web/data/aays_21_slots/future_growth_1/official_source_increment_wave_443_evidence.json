@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":443,
+  "topic":"CANDIDATE_DO_6_8_TOWN_QUAY_LAPSED_9_HOME_RECORD_SIBLING_SITE_AND_TITLE_GATES",
+  "generated_at":"2026-07-27T23:43:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_DO_SUBSITE_LAPSED_RECORD_RECONCILIATION_NOT_CURRENT_PERMISSION_NOT_HQ_MERGE_NOT_EXACT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.8,
+  "sources":[
+    {"key":"do20_brownfield","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"LBBD20/DO Ground to second floors, 6-8 Town Quay, Barking is 0.06ha with 9 minimum/maximum net dwellings."},
+    {"key":"do20_status","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"The current record carries planning-permission-status permissioned but also Notes: Lapsed; the lapsed note is preserved."},
+    {"key":"do20_permission_date","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"The record reports planning-permission date 30 December 2015, permission type other and planning-history id 21870."},
+    {"key":"do20_point","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"The record has a point and blank geometry; neither is an HMLR title polygon or exact application red-line."},
+    {"key":"do20_owner","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"Ownership status not-owned-by-a-public-authority is a category and does not identify a legal proprietor/title."},
+    {"key":"do37_sibling","url":"https://www.planning.data.gov.uk/entity/1739839","fact":"A separate DO-related Brownfield record at Ground to 2nd Floor Units 2,3,4 & 5 Town Quay Wharf carries 15 dwellings and a separate lapsed permission history; the two records are not merged."},
+    {"key":"hq_current","url":"https://www.planning.data.gov.uk/entity/1739878","fact":"LBBD83/HQ Town Quay Wharf is a separate current Brownfield record for 147 dwellings with full planning permission dated 15 February 2022."},
+    {"key":"hq_identity_guard","url":"https://www.planning.data.gov.uk/entity/1739878","fact":"The HQ 147-home record has a distinct entity/reference, capacity and planning-history id; it is not evidence that the DO 6-8 Town Quay lapsed permission became current."},
+    {"key":"hq_delivery","url":"https://befirst.london/riverside-homes-for-working-londoners-at-an-affordable-price/","fact":"Be First describes the separate Town Quay Wharf mixed-use development as 147 apartments, 62 council homes and 85 private-sale apartments; this delivery evidence belongs to HQ, not the DO 6-8 Town Quay subrecord."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states all Brownfield Register sites require planning permission."},
+    {"key":"local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The adopted Local Plan provides policy context but does not revive a lapsed subsite permission."},
+    {"key":"development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Development-plan status is not a substitute for exact current decision/title evidence."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"DO 6-8 Town Quay remains a 9-home lapsed-record candidate, not a verified current 9-home consent."},
+    {"id":"EX02","result":"The permissioned field is not treated as extant because the same record says Lapsed."},
+    {"id":"EX03","result":"DO20 9 homes are not added to the separate DO37 15-home lapsed subrecord without exact allocation/subsite topology."},
+    {"id":"EX04","result":"DO20 is not merged into HQ Town Quay Wharf solely because both names contain Town Quay."},
+    {"id":"EX05","result":"HQ's 147 homes and delivery evidence remain HQ-specific."},
+    {"id":"EX06","result":"Point/blank geometry is not converted into a DO site or title polygon."},
+    {"id":"EX07","result":"Planning-history id 21870 is retained without guessing an unverified exact current decision outcome."},
+    {"id":"EX08","result":"Promotion remains zero until exact current DO subsite case/title relation and overlays are verified."}
+  ],
+  "fail_closed_rules":["lapsed_note_preserved","permissioned_not_extant_when_lapsed","do20_not_do37_merge","do_not_hq_merge","hq_delivery_not_do_delivery","point_not_polygon","owner_category_not_owner","history_id_not_guessed","exact_current_case_required","exact_subsite_topology_required","exact_hmlr_required","executed_overlay_required","no_name_only_binding","no_lapsed_permission_promotion","no_hq_transfer","promotion_requires_exact_do20_case_title_and_overlays"],
+  "dimensions":["STATUS","LAPSE","IDENTITY","SIBLING","PERMISSION","DELIVERY","GEOMETRY","OWNERSHIP","TITLE","NO_DATA","OVERLAY","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD20/DO 6-8 Town Quay","net_dwellings":9,"planning_permission_status_field":"permissioned","register_note":"Lapsed","planning_history_id":21870,"merged_with_do37":false,"merged_with_hq":false,"exact_current_permission_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
