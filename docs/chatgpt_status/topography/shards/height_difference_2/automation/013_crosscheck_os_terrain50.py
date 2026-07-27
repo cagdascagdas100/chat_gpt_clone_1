@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import math
 import re
@@ -18,12 +19,18 @@ from shapely.geometry import shape
 
 GRID_LETTERS = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 ASC_SUFFIXES = {".asc", ".txt"}
+SIDECAR_SUFFIXES = {".prj"}
 MAX_MEMBER_BYTES = 10_000_000
+MAX_SIDECAR_BYTES = 1_000_000
+MAX_NESTED_ARCHIVE_BYTES = 50_000_000
 MAX_EXTRACTED_BYTES = 200_000_000
+MAX_NESTING_DEPTH = 2
+
 
 def _write(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -31,6 +38,7 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
 
 def _grid_100km_letters(easting: float, northing: float) -> str:
     e100k = int(math.floor(easting / 100000))
@@ -43,11 +51,13 @@ def _grid_100km_letters(easting: float, northing: float) -> str:
         raise ValueError("invalid OS grid letter index")
     return GRID_LETTERS[l1] + GRID_LETTERS[l2]
 
+
 def _tile_10km(easting: float, northing: float) -> str:
     letters = _grid_100km_letters(easting, northing)
     e10 = int(math.floor((easting % 100000) / 10000))
     n10 = int(math.floor((northing % 100000) / 10000))
     return f"{letters}{e10}{n10}".lower()
+
 
 def _tiles_for_bounds(bounds: list[float]) -> set[str]:
     minx, miny, maxx, maxy = bounds
@@ -62,6 +72,7 @@ def _tiles_for_bounds(bounds: list[float]) -> set[str]:
         for northing in range(start_n, end_n + 1, 10000):
             tiles.add(_tile_10km(easting + 1, northing + 1))
     return tiles
+
 
 def _load_inputs(hmlr_path: Path, ea_path: Path) -> list[dict[str, Any]]:
     hmlr = json.loads(hmlr_path.read_text(encoding="utf-8-sig"))
@@ -96,35 +107,101 @@ def _load_inputs(hmlr_path: Path, ea_path: Path) -> list[dict[str, Any]]:
         raise ValueError("exactly three joined HMLR/EA rows required")
     return rows
 
+
 def _member_tile(name: str) -> str | None:
     stem = Path(name).stem.casefold()
     matches = re.findall(r"(?<![a-z])([a-z]{2}\d{2})(?!\d)", stem)
     return matches[-1] if matches else None
 
+
+def _safe_member_path(name: str) -> Path:
+    path = Path(name)
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"unsafe Terrain50 archive member: {name}")
+    return path
+
+
+def _extract_needed_zip(
+    zf: zipfile.ZipFile,
+    needed: set[str],
+    output_dir: Path,
+    found: dict[str, list[Path]],
+    *,
+    prefix: str,
+    container_tile: str | None,
+    depth: int,
+    total: list[int],
+) -> None:
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        path = _safe_member_path(info.filename)
+        suffix = path.suffix.casefold()
+        member_tile = _member_tile(path.name) or container_tile
+        if suffix == ".zip":
+            nested_tile = _member_tile(path.name) or container_tile
+            if nested_tile is not None and nested_tile not in needed:
+                continue
+            if depth >= MAX_NESTING_DEPTH:
+                raise ValueError(f"Terrain50 nested archive depth exceeds limit: {info.filename}")
+            if info.file_size <= 0 or info.file_size > MAX_NESTED_ARCHIVE_BYTES:
+                raise ValueError(f"Terrain50 nested archive size invalid: {info.filename}")
+            with zf.open(info) as source:
+                payload = source.read(MAX_NESTED_ARCHIVE_BYTES + 1)
+            if len(payload) != info.file_size or len(payload) > MAX_NESTED_ARCHIVE_BYTES:
+                raise ValueError(f"Terrain50 nested archive read invalid: {info.filename}")
+            try:
+                with zipfile.ZipFile(io.BytesIO(payload)) as nested:
+                    _extract_needed_zip(
+                        nested,
+                        needed,
+                        output_dir,
+                        found,
+                        prefix=f"{prefix}_{path.stem}",
+                        container_tile=nested_tile,
+                        depth=depth + 1,
+                        total=total,
+                    )
+            except zipfile.BadZipFile as exc:
+                raise ValueError(f"Terrain50 nested archive invalid: {info.filename}") from exc
+            continue
+        if suffix not in ASC_SUFFIXES | SIDECAR_SUFFIXES or member_tile not in needed:
+            continue
+        limit = MAX_MEMBER_BYTES if suffix in ASC_SUFFIXES else MAX_SIDECAR_BYTES
+        if info.file_size <= 0 or info.file_size > limit:
+            raise ValueError(f"Terrain50 member size invalid: {info.filename}")
+        total[0] += info.file_size
+        if total[0] > MAX_EXTRACTED_BYTES:
+            raise ValueError("Terrain50 extraction exceeds safety limit")
+        target = output_dir / f"{prefix}_{path.name}"
+        if target.exists():
+            raise ValueError(f"Terrain50 extraction target collision: {target.name}")
+        with zf.open(info) as source, target.open("wb") as destination:
+            shutil.copyfileobj(source, destination, length=1024 * 1024)
+        if suffix in ASC_SUFFIXES:
+            found[member_tile].append(target)
+
+
 def _extract_needed_archive(archive: Path, needed: set[str], output_dir: Path) -> dict[str, list[Path]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     found: dict[str, list[Path]] = {tile: [] for tile in needed}
-    total = 0
+    total = [0]
     with zipfile.ZipFile(archive) as zf:
-        for info in zf.infolist():
-            if info.is_dir() or Path(info.filename).suffix.casefold() not in ASC_SUFFIXES:
-                continue
-            tile = _member_tile(info.filename)
-            if tile not in needed:
-                continue
-            if info.file_size <= 0 or info.file_size > MAX_MEMBER_BYTES:
-                raise ValueError(f"Terrain50 member size invalid: {info.filename}")
-            total += info.file_size
-            if total > MAX_EXTRACTED_BYTES:
-                raise ValueError("Terrain50 extraction exceeds safety limit")
-            target = output_dir / f"{tile}_{Path(info.filename).name}"
-            with zf.open(info) as source, target.open("wb") as destination:
-                shutil.copyfileobj(source, destination, length=1024 * 1024)
-            found[tile].append(target)
+        _extract_needed_zip(
+            zf,
+            needed,
+            output_dir,
+            found,
+            prefix="outer",
+            container_tile=None,
+            depth=0,
+            total=total,
+        )
     missing = sorted(tile for tile, paths in found.items() if not paths)
     if missing:
         raise ValueError(f"Terrain50 archive lacks required 10km tiles: {missing}")
     return found
+
 
 def _discover_needed_root(root: Path, needed: set[str]) -> dict[str, list[Path]]:
     if not root.is_dir():
@@ -140,6 +217,7 @@ def _discover_needed_root(root: Path, needed: set[str]) -> dict[str, list[Path]]
     if missing:
         raise ValueError(f"Terrain50 root lacks required 10km tiles: {missing}")
     return found
+
 
 def _sample_tiles(paths: list[Path], geometry: dict[str, Any]) -> tuple[np.ndarray, list[dict[str, Any]]]:
     values_parts = []
@@ -164,6 +242,7 @@ def _sample_tiles(paths: list[Path], geometry: dict[str, Any]) -> tuple[np.ndarr
     if not values_parts:
         raise ValueError("OS Terrain50 has no all-touched grid values for polygon")
     return np.concatenate(values_parts), files
+
 
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
@@ -232,6 +311,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             "required_10km_tiles": sorted(required_tiles),
             "crosscheck_count": len(results),
             "crosschecks": results,
+            "nested_zip_supported": True,
+            "prj_sidecars_preserved": True,
             "acceptance_threshold_applied": False,
             "human_review_required_for_difference": True,
             "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
@@ -259,6 +340,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     _write(args.output, payload)
     print(json.dumps({"ok": code == 0, "status": payload["status"], "crosschecks": payload.get("crosscheck_count", 0)}))
     return code
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
