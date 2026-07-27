@@ -99,6 +99,14 @@ if ([string]$ES.status -ne "READY" -or [int]$ES.schema_version -lt 2) { throw "E
 if ([string]$ES.official_host -ne "environment.data.gov.uk" -or -not [bool]$ES.official_host_only) { throw "EA DTM official host gate missing" }
 if ([bool]$ES.axis_labels_inferred) { throw "EA WCS axis labels must be discovered, not inferred" }
 if (@($ES.axis_labels).Count -ne 2) { throw "EA WCS axis labels are missing" }
+if ([int]$ES.candidate_count -ne 12 -or @($ES.records).Count -ne 12) { throw "EA DTM source manifest must contain exactly 12 row-bound rasters" }
+$EaRows = @($ES.records | ForEach-Object { [int]$_.row_no })
+if (($EaRows -join ',') -ne ($Expected -join ',')) { throw "EA DTM source rows are not exactly 61540..61551" }
+foreach ($ER in @($ES.records)) {
+  $ExpectedEaLeaf = "row_$([int]$ER.row_no)_ea_dtm_1m.tif"
+  if ((Split-Path -Leaf ([string]$ER.path)) -ne $ExpectedEaLeaf) { throw "EA DTM source path is not row-bound: $($ER.row_no) / $($ER.path)" }
+  if ([string]::IsNullOrWhiteSpace([string]$ER.sha256) -or ([string]$ER.sha256).Length -ne 64) { throw "EA DTM row raster SHA256 missing: $($ER.row_no)" }
+}
 if ([string]$TS.status -ne "READY") { throw "Terrain50 extracted source manifest is not ready" }
 if ([bool]$TS.nearest_or_neighbour_tile_substitution_used) { throw "Terrain50 nearest/neighbour tile substitution is forbidden" }
 if ([int]$TS.candidate_count -ne 12) { throw "Terrain50 source manifest candidate count is not 12" }
@@ -120,6 +128,10 @@ foreach ($R in $ResultRows) {
   $HmlrMethod = [string]$R.hmlr_match_method
   if (-not $HmlrMethod.StartsWith("EXACT_OFFICIAL_ID")) { throw "Strict12 requires exact HMLR official-ID boundary match for row $($R.row_no); got $HmlrMethod" }
   if ([bool]$R.nearest_point_fill_used) { throw "Nearest-point fill is forbidden for row $($R.row_no)" }
+  $EaUses = @($R.ea_dtm.source_rasters)
+  if ($EaUses.Count -ne 1) { throw "Strict12 requires exactly one EA row-bound raster for row $($R.row_no); got $($EaUses.Count)" }
+  $ExpectedEaLeaf = "row_$([int]$R.row_no)_ea_dtm_1m.tif"
+  if ((Split-Path -Leaf ([string]$EaUses[0].path)) -ne $ExpectedEaLeaf) { throw "Strict12 EA measurement raster is not row-bound: $($R.row_no) / $($EaUses[0].path)" }
 }
 foreach ($R in $M.measured_rows) {
   if ($R.height_difference_method -ne "EA_DTM_1M_POLYGON_P95_MINUS_P05") { throw "Unexpected height-difference method" }
@@ -131,7 +143,7 @@ foreach ($R in $M.measured_rows) {
 }
 
 $Result = @{
-  schema_version = 6
+  schema_version = 7
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   prepared_and_measured_rows = $Expected
@@ -149,8 +161,10 @@ $Result = @{
   proj_maximum_display_delta_m = 20.0
   exact_hmlr_official_id_gate = $true
   exact_hmlr_gate_runs_before_elevation_sampling = $true
+  candidate_hmlr_inspire_id_value_required = $true
   hmlr_exact_authority_source_gate = $true
   ea_official_host_and_axis_metadata_gate = $true
+  ea_row_bound_single_raster_gate = $true
   terrain50_official_catalog_archive_hash_gate = $true
   nearest_fill_forbidden = $true
   numeric_publish_gate_passed = $true
