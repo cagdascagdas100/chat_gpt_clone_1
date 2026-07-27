@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $taskId = 'aays1-height-difference-2-canonical-export-official-sampling-20260720'
 $attemptId = 'height-difference-2-20260721-020'
 $taskVersion = '6.3-fhost-safe-ffonly-terrain50-webacceptance'
-$pickupRequestRevision = 10
+$pickupRequestRevision = 11
 $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $expectedPageKey = 'aays1'
 $expectedCanonicalBlob = 'bb48164e7a0af78df875f30421a6a3068c43edb8'
@@ -96,6 +96,8 @@ Write-Output 'EXACT_HMLR_ID_AND_POINT_INSIDE=true'
 Write-Output 'NEAREST_ROW_FALLBACK=false'
 Write-Output 'NEAREST_POLYGON_FILL=false'
 Write-Output 'PORT_8012_ACCEPTANCE_REQUIRED=true'
+Write-Output 'PORT_8012_CURRENT_CANDIDATE_SHA256_REQUIRED=true'
+Write-Output 'PORT_8012_OPERATION_FILE_PATH_GUARD_REQUIRED=true'
 Write-Output "EXPECTED_WEB_OPERATION_ROWS=$expectedWebRows"
 Write-Output "PYTHON_SCRIPT=$entrypoint"
 
