@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 416,
+  "topic": "CANDIDATE_YA_IBIS_BARKING_ALLOCATION_NOT_PERMISSIONED_HRA_AND_GEOMETRY_GATES",
+  "generated_at": "2026-07-27T20:44:00+03:00",
+  "output_semantics": "CANDIDATE_SPECIFIC_YA_ALLOCATION_AND_HRA_RECONCILIATION_NOT_PERMISSION_INFERENCE_NOT_EXACT_SITE_POLYGON",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.9,
+  "sources": [
+    {"key":"ya_brownfield","url":"https://www.planning.data.gov.uk/entity/1739882","fact":"LBBD87/YA IBIS Barking, Highbridge Road is 0.39ha, 136 net dwellings and planning-permission-status not-permissioned."},
+    {"key":"ya_point","url":"https://www.planning.data.gov.uk/entity/1739882","fact":"YA has point POINT (0.072109 51.533986) and blank geometry; point is not allocation/red-line/title polygon."},
+    {"key":"ya_ownership","url":"https://www.planning.data.gov.uk/entity/1739882","fact":"Brownfield ownership-status is not-owned-by-a-public-authority; this is not an HMLR owner/title identification."},
+    {"key":"local_plan_ya","url":"https://www.lbbd.gov.uk/sites/default/files/2024-09/Appendix%202a%20Barking%20and%20Dagenham%202037%20Local%20Plan%20%28as%20amended%29%20-%20Final%20%281%29.pdf","fact":"Adopted Local Plan allocation YA IBIS Barking has indicative net minimum capacity 136."},
+    {"key":"proforma_ya","url":"https://www.lbbd.gov.uk/sites/default/files/2024-09/Appendix%202b%20-%20Barking%20and%20Dagenham%20Local%20Plan%20Appendix%202%20Site%20Allocation%20Proformas%20%28as%20amended%29%20%281%29%201.pdf","fact":"Adopted site-allocation proformas identify YA IBIS Barking, Highbridge Road as a housing-led allocation."},
+    {"key":"sa_ya","url":"https://www.lbbd.gov.uk/sites/default/files/2022-09/LBBD%20Second%20Reg%2019%20SA%20Report%20Non%20Technical%20Summary%20FINAL%20151021.pdf","fact":"Sustainability Appraisal listed YA IBIS Barking at 136 dwellings among sites without planning permission at that stage."},
+    {"key":"hra_ya","url":"https://www.lbbd.gov.uk/sites/default/files/2022-09/Barking%20and%20Dagenham%20LP%20HRA%20final.pdf","fact":"Local Plan HRA identifies YA approximately 5.9km from Epping Forest SAC and subject to in-combination assessment context."},
+    {"key":"hra_semantics","url":"https://www.lbbd.gov.uk/sites/default/files/2022-09/Barking%20and%20Dagenham%20LP%20HRA%20final.pdf","fact":"HRA context is plan-level ecological assessment and does not establish a parcel-specific likely significant effect or permission outcome."},
+    {"key":"local_plan_page","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"LBBD Local Plan 2037 was adopted 18 September 2024 and is the starting point for decision-making; allocation still requires planning permission."},
+    {"key":"development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"The Development Plan includes the adopted LBBD Local Plan and London Plan; plan inclusion does not grant a site-specific consent."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states all Brownfield Register sites require planning permission."},
+    {"key":"current_case_search","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning/applications-and-decisions","fact":"LBBD directs users to planning applications/decisions for case-specific status; this wave did not locate an exact current YA application reference, so none is inferred."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"YA remains not-permissioned despite adopted 136-home allocation."},
+    {"id":"EX02","result":"136 is allocation/Brownfield capacity, not consented units."},
+    {"id":"EX03","result":"Blank geometry is not replaced by the YA point or nearby development polygons."},
+    {"id":"EX04","result":"Private/non-public ownership status is not converted into owner name or HMLR title."},
+    {"id":"EX05","result":"Epping Forest HRA proximity/context is not converted into automatic refusal or parcel impact score."},
+    {"id":"EX06","result":"Plan-level HRA is not a project-specific appropriate assessment."},
+    {"id":"EX07","result":"No exact YA planning application was guessed from neighbouring Highbridge/Barking schemes."},
+    {"id":"EX08","result":"Promotion remains zero until exact current YA planning case, site/title polygon and statutory overlays are verified."}
+  ],
+  "fail_closed_rules": ["allocation_not_permission","not_permissioned_preserved","capacity_not_consented_units","point_not_polygon","blank_geometry_no_buffer","ownership_status_not_owner_name","private_status_not_title","hra_context_not_refusal","hra_plan_level_not_project_assessment","no_neighbour_case_transfer","no_fuzzy_application_binding","no_synthetic_redline","current_case_required","exact_title_required","no_allocation_only_promotion","promotion_requires_exact_ya_case_title_and_overlay"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","ALLOCATION","PERMISSION","HRA","OWNERSHIP","GEOMETRY","TITLE","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD87/YA IBIS Barking Highbridge Road","net_dwellings":136,"planning_permission_status":"not-permissioned","adopted_allocation_verified":true,"epping_forest_hra_context_verified":true,"exact_current_planning_application_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
