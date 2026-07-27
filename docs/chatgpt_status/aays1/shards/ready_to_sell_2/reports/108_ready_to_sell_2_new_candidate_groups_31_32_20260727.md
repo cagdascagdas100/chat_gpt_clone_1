@@ -54,6 +54,14 @@
 - Corrected or fail-closed assertions: 100.00%
 - Weighted average verification confidence: 99.4/100
 
+## Publication readback
+
+- Candidate JSON commit: `6a9b81a7c66f53e79bba62e1421cfc915b694ffc`
+- Row-by-row HTML commit: `97635974f66141bdf6acd792281b7f277eae78dc`
+- Report commit: `e0e133e739dcce4cce9560bd0ece5c8fec41b71c`
+- Validation commit: `3528f965cfab1501d33c33f2c6fa3cc8b8757b9e`
+- Remote JSON, HTML and validation readback passed.
+
 ## Remaining blocker
 
 Automation 167 remains queued for the existing single F-host runner. The canonical slot is unclaimed with a stale heartbeat, so port-8012 headless DOM proof and canonical candidate mutation remain blocked. No second runner or duplicate task was created.
