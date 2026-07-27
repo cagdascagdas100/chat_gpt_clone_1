@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 400,
+  "topic": "OS_NGD_BUILDING_LAND_USE_TRANSPORT_WATER_STRUCTURE_AND_OGC_FEATURE_GEOMETRY_GATES",
+  "generated_at": "2026-07-27T19:10:40+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_OS_NGD_GEOMETRY_AND_FEATURE_ACCESS_VALIDATION_NOT_LEGAL_BOUNDARY_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.6,
+  "sources": [
+    {"key":"ngd_docs","url":"https://docs.os.uk/osngd","fact":"OS NGD is Ordnance Survey's authoritative structured geospatial database with Select+Build and API access routes."},
+    {"key":"api_features","url":"https://docs.os.uk/osngd/getting-started/access-the-os-ngd-api/os-ngd-api-features","fact":"OS NGD API – Features uses OGC API – Features and supports spatial/attribute/time filtering for detailed geometries."},
+    {"key":"api_spec","url":"https://docs.os.uk/osngd/getting-started/access-the-os-ngd-api/os-ngd-api-features/technical-specification","fact":"Features endpoints include collection/schema/queryables/features; CQL includes INTERSECTS spatial filtering."},
+    {"key":"available","url":"https://docs.os.uk/osngd/getting-started/access-the-os-ngd-api/os-ngd-api-features/what-data-is-available","fact":"Feature collections are exposed by theme/collection/feature type through the NGD Features API."},
+    {"key":"buildings","url":"https://docs.os.uk/osngd/data-structure/buildings","fact":"Buildings theme provides permanent roofed construction geometry and embedded height attribution for Building/Building Part features."},
+    {"key":"building_features","url":"https://docs.os.uk/osngd/data-structure/buildings/building-features","fact":"Building Features offers up-to-daily updates and detailed building attribution."},
+    {"key":"land","url":"https://docs.os.uk/osngd/data-structure/land","fact":"Land theme contains point/line/polygon land-cover features and separates building, structure, land-use, transport and water collections."},
+    {"key":"land_use","url":"https://docs.os.uk/osngd/data-structure/land-use/land-use-features","fact":"Land-use site extents describe activity and access, but OS explicitly says they must not be regarded as legal extents or ownership."},
+    {"key":"structures","url":"https://docs.os.uk/osngd/data-structure/structures/structure-features","fact":"Structure Features include point/line/polygon geometries such as bridges, field boundaries, sea walls and other non-building structures."},
+    {"key":"transport","url":"https://docs.os.uk/osngd/data-structure/transport/transport-features","fact":"Transport Features provides detailed physical transport geometries with persistent identifiers and up-to-daily updates."},
+    {"key":"transport_network","url":"https://docs.os.uk/osngd/data-structure/transport/transport-network","fact":"Transport Network provides link/node connectivity for roads, rail, ferry and path networks; it is distinct from legal site access rights."},
+    {"key":"water","url":"https://docs.os.uk/osngd/data-structure/water/water-features","fact":"Water Features includes topographic polygon/point water features, generally in British National Grid, with up-to-daily updates for many feature types."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"OS NGD building geometry is used for physical-footprint context, not ownership/title extent."},
+    {"id":"EX02","result":"Land-use Site extents are never promoted as legal parcel boundaries because OS explicitly distinguishes them from ownership extents."},
+    {"id":"EX03","result":"Building height attribution is not converted into planning height permission or development capacity."},
+    {"id":"EX04","result":"Transport network connectivity is not treated as legal vehicular/pedestrian access to a title."},
+    {"id":"EX05","result":"Field boundary/structure geometry is not assumed to equal a legal boundary."},
+    {"id":"EX06","result":"Water topography is kept distinct from EA statutory flood-risk layers."},
+    {"id":"EX07","result":"OGC INTERSECTS/API availability is acquisition readiness only until candidate-specific queries are executed and archived."},
+    {"id":"EX08","result":"No parcel promotion occurs from OS NGD without exact HMLR title relation and current planning/statutory evidence."}
+  ],
+  "fail_closed_rules": ["building_geometry_not_title_extent","land_use_extent_not_ownership","height_not_planning_permission","transport_connectivity_not_legal_access","field_boundary_not_legal_boundary","water_topography_not_flood_risk","api_available_not_query_executed","cql_intersects_not_title_binding","osid_not_title_number","land_cover_not_land_use_permission","structure_not_constraint_by_itself","update_frequency_not_site_currency_proof","no_geometry_snap_to_title","no_nearest_feature_capacity_fill","no_os_only_parcel_score","promotion_requires_hmlr_and_current_statutory_binding"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"os_ngd_examples_revalidated":8,"candidate_specific_ngd_queries_executed_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
