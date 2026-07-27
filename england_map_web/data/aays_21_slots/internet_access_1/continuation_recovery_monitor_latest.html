@@ -1,144 +1,152 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body>
 <h1>internet_access_1 — devam / recovery izleme</h1>
 <p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
-<div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı doğrulanmadı.</div>
-<div class="ok"><b>Yeni internet kanıtı:</b> Mayıs 2026 NR OMR 1 Haziran'da kapandı; UPRN/postcode çıktıları değerlendirme sonrası yayımlanacak ve şu an production input değildir. BDUK Temmuz contract-progress sayfası 16 Temmuz snapshot'ını yayımlıyor. Ofcom resmî 2026 current coverage indexinde Spring 2026/January snapshot güncel bulunan current release olarak kalıyor; PND 2026 forward-looking.</div>
-<div class="summary"><div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div><div class="card">Current-task<br><b>94.7%</b><br>18/19</div><div class="card">Görünür işlemler<br><b>121 PASS / 132</b><br>8 PARTIAL · 3 BLOCKED</div><div class="card">Qualified<br><b>47</b></div><div class="card">≥95 güven<br><b>47/47</b></div><div class="card">Ort. güven<br><b>99.7%</b></div><div class="card">Yeni kaynak<br><b>+3</b></div><div class="card">Current premise QA<br><b>+0 / 990</b></div><div class="card">Contract QA<br><b>+37</b></div><div class="card">Ürün satırı<br><b>0</b></div></div>
-<p><b>Temmuz contract QA:</b> June total 839,340 contracted / 271,460 built → July total 838,490 / 287,510; published total delta -850 contracted, +16,050 built. 27 contract built arttı, 10 aynı, 0 azaldı. Satır toplamı ile published total arasındaki -10 contracted / -20 built fark, kaynağın nearest-10 rounding uyarısıyla uyumlu.</p>
-<p><b>Binary recovery:</b> BDUK North East 16 MB ve East Midlands 29.1 MB ZIP linkleri doğrulandı; web binary okuyucu ve direct-download yolu başarısız. Ofcom 32.2 MB ZIP endpoint'i mevcut fakat binary hash/CRC/file/row kontrolleri bu runtime'da hâlâ tamamlanamadı; metrikler uydurulmadı.</p>
-<h2>Araştırma / recovery işlemleri (95)</h2><pre>#|STATE|OPERATION|EVIDENCE
-001|PASS|contract_latest_readback|sha 1a25e0f; same canonical rules
+<div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı henüz ürün satırına taşınmadı.</div>
+<div class="ok"><b>Yeni exact-binding kanıtı:</b> OS BLPU_UPRN_TopographicArea_TOID_5 resmî UPRN↔TopographicArea TOID ilişkisi bulundu. Exact aday yalnız confidence = “Version information is correct” olduğunda kabul edilir. BDUK May OMR baseline Epoch123 iken güncel AddressBase yayın takviminde Epoch128 25 Haziran 2026'da yayımlandı; epoch karışımı lifecycle/version doğrulaması olmadan yapılmaz.</div>
+<div class="summary"><div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div><div class="card">Current-task<br><b>94.7%</b><br>18/19</div><div class="card">Görünür işlemler<br><b>131 PASS / 138</b><br>4 PARTIAL · 3 BLOCKED</div><div class="card">Qualified<br><b>50</b></div><div class="card">≥95 güven<br><b>50/50</b></div><div class="card">Ort. güven<br><b>99.7%</b></div><div class="card">Yeni kaynak<br><b>+3</b></div><div class="card">Current premise QA<br><b>+0 / 990</b></div><div class="card">3-ay contract QA<br><b>+37</b></div><div class="card">OS ilişki QA<br><b>+11</b></div><div class="card">Ofcom PND QA<br><b>+8</b></div><div class="card">BDUK stats QA<br><b>+8</b></div><div class="card">Ürün satırı<br><b>0</b></div></div>
+<p><b>3-ay trend:</b> May→June built 24 arttı / 11 aynı / 2 azaldı; June→July 27 arttı / 10 aynı / 0 azaldı; May→July 31 arttı / 5 aynı / 1 azaldı. Published May→July: contracted +1,150; built +30,830. Satır toplamı built +30,820; -10 fark rounding ile uyumlu.</p>
+<p><b>Forward guard:</b> Ofcom PND 2026 yalnız plan verisidir; current availability yerine geçmez. <b>Method guard:</b> BDUK aylık contract raporları official statistics ile doğrudan kıyaslanmaz; official statistics overbuild kaldırır ve dedup uygular.</p>
+<h2>Araştırma / recovery işlemleri (74)</h2><pre>#|STATE|OPERATION|EVIDENCE
+001|PASS|contract_latest_readback|sha 1a25e0f; same rules
 002|PASS|slot_id_validation|internet_access_1 valid
-003|PASS|canonical_head_initial_readback|aa751957...
-004|PASS|current_task_readback|same task/continuation; 18/19
-005|PASS|status_readback|RECOVERY_PARKED
-006|BLOCKED|slot_heartbeat_recheck|stale/unclaimed
-007|PASS|ownership_recheck|no lease/owner
-008|PASS|checkpoint_recheck|33785 verified / 58498 pending
-009|PASS|queue_continuation_dedup|same continuation; pending
-010|PASS|manual_action_recheck|OPEN
-011|BLOCKED|portable_heartbeat_recheck|last 2026-07-16
-012|PASS|second_runner_guard|no second runner
-013|BLOCKED|canonical_runtime_audit_readback|canonical audit absent
-014|PASS|child_source_artifact_fetch|schema13
-015|PASS|child_audit_artifact_fetch|schema12
-016|PASS|child_monitor_artifact_fetch|previous monitor
-017|PASS|bduk_omr_collection_refresh|January 2026 still latest published premise release
-018|PASS|bduk_january_release_refresh|published 2026-06-04
-019|PASS|bduk_regional_zip_inventory|10 regional ZIPs listed
-020|PASS|bduk_north_east_zip_listing|16 MB
-021|PASS|bduk_east_midlands_zip_listing|29.1 MB
-022|PARTIAL|bduk_north_east_zip_web_fetch|cache miss
-023|PARTIAL|bduk_east_midlands_zip_web_fetch|400 OK / unreadable binary
-024|PARTIAL|bduk_binary_direct_download|download failed
-025|PARTIAL|local_runtime_network_fetch|DNS unavailable
-026|PASS|bduk_sample_exhaustion_guard|public preview exhausted at 983
-027|PASS|bduk_full_release_318_file_guard|technical note confirms 318 files
-028|PASS|bduk_may2026_omr_discovery|May 2026 NR OMR exists
-029|PASS|bduk_may2026_omr_closure|closed 2026-06-01 17:00
-030|PASS|bduk_may2026_supplier_collection_guard|existing/planned build collected
-031|PASS|bduk_may2026_output_status|postcode/UPRN outputs pending publication
-032|PASS|bduk_next_omr_guard|next due September 2026
-033|PASS|bduk_may_omr_no_unpublished_values|no unpublished values promoted
-034|PASS|bduk_july_contract_collection_refresh|updated 2026-07-20
-035|PASS|bduk_july_contract_snapshot|data held 2026-07-16
-036|PASS|bduk_june_contract_snapshot|data held 2026-06-17
-037|PASS|bduk_contract_row_count|37 contract rows
-038|PASS|bduk_july_total_contracted|838490
-039|PASS|bduk_july_total_built|287510
-040|PASS|bduk_june_total_contracted|839340
-041|PASS|bduk_june_total_built|271460
-042|PASS|bduk_total_delta_contracted|-850 published total
-043|PASS|bduk_total_delta_built|+16050 published total
-044|PASS|bduk_contract_row_delta_sum|-860 contracted / +16030 built
-045|PASS|bduk_rounding_reconciliation_guard|-10/-20 gap allowed by nearest-10 rounding
-046|PASS|bduk_contract_built_increase_count|27
-047|PASS|bduk_contract_built_same_count|10
-048|PASS|bduk_contract_built_decrease_count|0
-049|PASS|bduk_contract_scope_change_count|3
-050|PASS|bduk_scope_change_co7|+380 contracted
-051|PASS|bduk_scope_change_derbyshire|-410 contracted
-052|PASS|bduk_scope_change_lincolnshire_east_riding|-830 contracted
-053|PASS|bduk_top_built_delta_north_shropshire|+1510
-054|PASS|bduk_top_built_delta_co5|+1380
-055|PASS|bduk_top_built_delta_co3|+1330
-056|PASS|bduk_top_built_delta_lincolnshire_east_riding|+1230
-057|PASS|bduk_top_built_delta_cambridgeshire|+1190
-058|PASS|bduk_top_built_delta_west_north_yorkshire|+1150
-059|PASS|bduk_contract_not_parcel_guard|contract-level only
-060|PASS|bduk_contract_not_official_stats_comparable|source warning retained
-061|PASS|ofcom_spring2026_refresh|published 2026-05-13
-062|PASS|ofcom_current_snapshot_guard|January 2026
-063|PASS|ofcom_infrastructure_index_refresh|2026 current entry remains Spring 2026
-064|PASS|ofcom_planned_release_separation|PND 2026 forward-looking
-065|PASS|ofcom_zip_listing_refresh|32.2 MB
-066|PARTIAL|ofcom_zip_web_fetch|unsupported application/x-zip-compressed
-067|PARTIAL|ofcom_direct_binary_download|download failed
-068|PARTIAL|ofcom_local_runtime_network|DNS unavailable
-069|PASS|ofcom_endpoint_presence_guard|source endpoint exists
-070|PASS|ofcom_runtime_metrics_fail_closed|hash/CRC/counts remain null
-071|PASS|ons_nsul_epoch126_refresh|May 2026 / Epoch126
-072|PASS|ons_nsul_update_date|2026-07-02
-073|PASS|ons_nsul_cycle_guard|six-weekly
-074|PARTIAL|ons_newer_epoch_search|no newer official catalog hit; not absence proof
-075|PASS|os_open_linked_identifiers_refresh|authoritative UPRN/USRN/TOID relationships
-076|PASS|canonical_uprn_binding_rule|direct only after lifecycle validation
-077|PASS|canonical_toid_binding_rule|validate TOID then correct-version linked identifiers
-078|PASS|may_omr_output_binding_rule|unpublished values forbidden
-079|PASS|contract_progress_binding_rule|freshness only
-080|PASS|geometry_binding_rule|spatial candidate only
-081|PASS|postcode_binding_rule|postcode-level only
-082|PASS|unknown_no_data_guard|missing identity != no coverage
-083|PASS|synthetic_data_guard|forbidden
-084|PASS|product_promotion_gate|0 product rows
-085|PASS|source_registry_count|47 qualified
-086|PASS|source_confidence_threshold|47/47 >=95
-087|PASS|source_average_confidence|99.7
-088|PASS|new_source_acceptance_count|+3
-089|PASS|current_premise_qa_cumulative|990 unchanged
-090|PASS|auxiliary_contract_qa_count|+37
-091|PASS|source_artifact_update_readback|commit 93460f38; blob 97ccb154
-092|PASS|canonical_head_pre_audit|ad5f3b45...
-093|PASS|audit_artifact_update_readback|commit 4fcf0d6b; blob 0b86fdb5
-094|PASS|canonical_head_pre_monitor|667c2397c570e434f3e88725011b006c66ee160a
-095|PASS|monitor_update|this commit</pre>
-<h2>BDUK June→July 2026 contract QA (37)</h2><pre>#|STATE|CONTRACT|JUNE|JULY|DELTA
-01|PASS|Bedfordshire, Northamptonshire and Milton Keynes|jun_contract=5890|jun_built=4660|jul_contract=5890|jul_built=4820|Δcontract=+0|Δbuilt=+160
-02|PASS|Bucks, Herts and East of Berks|jun_contract=6090|jun_built=3810|jul_contract=6090|jul_built=4050|Δcontract=+0|Δbuilt=+240
-03|PASS|CO1 Lancashire, West Berkshire, Staffordshire, Surrey, Hertfordshire, Wiltshire and Gloucestershire|jun_contract=60180|jun_built=17170|jul_contract=60180|jul_built=17170|Δcontract=+0|Δbuilt=+0
-04|PASS|CO2 Devon, Mid Wales and South East Wales|jun_contract=41140|jun_built=9810|jul_contract=41140|jul_built=10600|Δcontract=+0|Δbuilt=+790
-05|PASS|CO3 North Herefordshire, North Wales, Shropshire and South West Wales|jun_contract=65120|jun_built=1240|jul_contract=65120|jul_built=2570|Δcontract=+0|Δbuilt=+1330
-06|PASS|CO4 South Devon, Mid Devon and North Somerset|jun_contract=37110|jun_built=3150|jul_contract=37110|jul_built=3840|Δcontract=+0|Δbuilt=+690
-07|PASS|CO5 Essex and North East England|jun_contract=35300|jun_built=880|jul_contract=35300|jul_built=2260|Δcontract=+0|Δbuilt=+1380
-08|PASS|CO6 Rest of Scotland|jun_contract=77640|jun_built=5680|jul_contract=77640|jul_built=5680|Δcontract=+0|Δbuilt=+0
-09|PASS|CO7 Worcestershire|jun_contract=22600|jun_built=170|jul_contract=22980|jul_built=1010|Δcontract=+380|Δbuilt=+840
-10|PASS|CO8 Cheshire|jun_contract=18460|jun_built=0|jul_contract=18460|jul_built=0|Δcontract=+0|Δbuilt=+0
-11|PASS|Cambridgeshire|jun_contract=18230|jun_built=10840|jul_contract=18230|jul_built=12030|Δcontract=+0|Δbuilt=+1190
-12|PASS|Central Cornwall|jun_contract=6940|jun_built=6940|jul_contract=6940|jul_built=6940|Δcontract=+0|Δbuilt=+0
-13|PASS|Cornwall and Isle of Scilly|jun_contract=14430|jun_built=3660|jul_contract=14430|jul_built=4190|Δcontract=+0|Δbuilt=+530
-14|PASS|Cumbria|jun_contract=53540|jun_built=34830|jul_contract=53540|jul_built=35040|Δcontract=+0|Δbuilt=+210
-15|PASS|Derbyshire|jun_contract=13290|jun_built=1200|jul_contract=12880|jul_built=1550|Δcontract=-410|Δbuilt=+350
-16|PASS|Dorset and South Somerset|jun_contract=19560|jun_built=4520|jul_contract=19560|jul_built=5030|Δcontract=+0|Δbuilt=+510
-17|PASS|Durham|jun_contract=4440|jun_built=4440|jul_contract=4440|jul_built=4440|Δcontract=+0|Δbuilt=+0
-18|PASS|East Gloucestershire|jun_contract=3550|jun_built=1800|jul_contract=3550|jul_built=1980|Δcontract=+0|Δbuilt=+180
-19|PASS|East and West Sussex|jun_contract=12760|jun_built=2970|jul_contract=12760|jul_built=3020|Δcontract=+0|Δbuilt=+50
-20|PASS|Hampshire|jun_contract=29420|jun_built=6970|jul_contract=29420|jul_built=7150|Δcontract=+0|Δbuilt=+180
-21|PASS|Kent|jun_contract=8750|jun_built=2530|jul_contract=8750|jul_built=2530|Δcontract=+0|Δbuilt=+0
-22|PASS|Leicestershire and Warwickshire|jun_contract=22480|jun_built=10310|jul_contract=22480|jul_built=10740|Δcontract=+0|Δbuilt=+430
-23|PASS|Lincolnshire and East Riding|jun_contract=47800|jun_built=20610|jul_contract=46970|jul_built=21840|Δcontract=-830|Δbuilt=+1230
-24|PASS|New Forest|jun_contract=12730|jun_built=10390|jul_contract=12730|jul_built=10400|Δcontract=+0|Δbuilt=+10
-25|PASS|Norfolk|jun_contract=32670|jun_built=12770|jul_contract=32670|jul_built=13310|Δcontract=+0|Δbuilt=+540
-26|PASS|North Dorset|jun_contract=6480|jun_built=6170|jul_contract=6480|jul_built=6170|Δcontract=+0|Δbuilt=+0
-27|PASS|North East Staffordshire|jun_contract=5960|jun_built=2410|jul_contract=5960|jul_built=2860|Δcontract=+0|Δbuilt=+450
-28|PASS|North Oxfordshire|jun_contract=4180|jun_built=3750|jul_contract=4180|jul_built=3860|Δcontract=+0|Δbuilt=+110
-29|PASS|North Shropshire|jun_contract=3410|jun_built=1900|jul_contract=3410|jul_built=3410|Δcontract=+0|Δbuilt=+1510
-30|PASS|Northern North Yorkshire|jun_contract=34490|jun_built=10980|jul_contract=34490|jul_built=11880|Δcontract=+0|Δbuilt=+900
-31|PASS|Northumberland|jun_contract=3830|jun_built=3830|jul_contract=3830|jul_built=3830|Δcontract=+0|Δbuilt=+0
-32|PASS|South Oxfordshire|jun_contract=5120|jun_built=3200|jul_contract=5120|jul_built=3200|Δcontract=+0|Δbuilt=+0
-33|PASS|South West Cornwall|jun_contract=6400|jun_built=6400|jul_contract=6400|jul_built=6400|Δcontract=+0|Δbuilt=+0
-34|PASS|South Wiltshire|jun_contract=18790|jun_built=7230|jul_contract=18790|jul_built=7650|Δcontract=+0|Δbuilt=+420
-35|PASS|South Yorkshire|jun_contract=13290|jun_built=9270|jul_contract=13290|jul_built=9320|Δcontract=+0|Δbuilt=+50
-36|PASS|Suffolk|jun_contract=38350|jun_built=17960|jul_contract=38350|jul_built=18560|Δcontract=+0|Δbuilt=+600
-37|PASS|West and Parts of North Yorkshire|jun_contract=28950|jun_built=17050|jul_contract=28950|jul_built=18200|Δcontract=+0|Δbuilt=+1150</pre>
-<p>132 görünür işlem = 95 araştırma/recovery + 37 contract QA. Monitor remote readback ve final branch kontrolleri bu commit sonrasında ayrıca doğrulanır.</p>
-</body></html>
+003|PASS|canonical_head_initial_readback|7927bc2b
+004|PASS|current_task_readback|same task/continuation 18/19
+005|PASS|status_state_guard|RECOVERY_PARKED retained
+006|BLOCKED|slot_heartbeat_recheck|unclaimed/stale >900s
+007|PASS|ownership_recheck|no owner/lease
+008|PASS|checkpoint_guard|33785 verified / 58498 pending
+009|PASS|continuation_dedup|same key; no second task
+010|PASS|manual_action_guard|OPEN retained
+011|BLOCKED|portable_heartbeat_guard|last verified 2026-07-16
+012|PASS|second_runner_guard|false
+013|BLOCKED|canonical_ofcom_runtime_audit|absent
+014|PASS|same_failed_binary_retry_suppression|no repeated identical download retry
+015|PASS|child_source_fetch|schema14 prior
+016|PASS|child_audit_fetch|schema13 prior
+017|PASS|child_monitor_fetch|previous monitor
+018|PASS|bduk_july_contract_refresh|20 Jul / snapshot 16 Jul
+019|PASS|bduk_june_contract_refresh|snapshot 17 Jun
+020|PASS|bduk_may_contract_refresh|snapshot 21 May
+021|PASS|bduk_may_resubmission_note|two administrative corrections guarded
+022|PASS|contract_row_alignment|37 rows across May-Jun-Jul
+023|PASS|may_total_guard|837340/256680
+024|PASS|june_total_guard|839340/271460
+025|PASS|july_total_guard|838490/287510
+026|PASS|may_june_trend_counts|24 up / 11 same / 2 down built
+027|PASS|june_july_trend_counts|27 up / 10 same / 0 down built
+028|PASS|may_july_trend_counts|31 up / 5 same / 1 down built
+029|PASS|may_july_published_delta|contracted +1150 / built +30830
+030|PASS|may_july_row_sum_delta|contracted +1150 / built +30820
+031|PASS|rounding_reconciliation_guard|built gap -10
+032|PASS|contract_series_nonparcel_guard|auxiliary only
+033|PASS|bduk_may_omr_refresh|closed 1 Jun
+034|PARTIAL|bduk_may_omr_output_search|no published May UPRN/postcode outputs found; absence not proof
+035|PASS|bduk_may_omr_epoch_guard|AddressBase Premium Epoch123
+036|PASS|bduk_may_omr_baseline_filter_guard|approved/provisional and non-demolished logic
+037|PASS|addressbase_refresh_schedule|six weekly
+038|PASS|addressbase_epoch128_guard|published 25 Jun; cut 22 May
+039|PASS|identity_epoch_drift_guard|123 vs 128 cannot be silently mixed
+040|PASS|ons_nsul_epoch126_refresh|May 2026 / updated 2 Jul
+041|PARTIAL|ons_newer_epoch_search|no newer verified official catalog hit; not absence proof
+042|PASS|os_linked_product_refresh|authoritative UPRN/USRN/TOID
+043|PASS|os_linked_free_download_guard|free OpenData
+044|PASS|os_linked_update_cycle|six weekly
+045|PASS|os_linked_relationship_count|11
+046|PASS|os_linked_geometry_guard|no geometry in join tables
+047|PASS|blpu_uprn_topographicarea_relationship|relationship 5
+048|PASS|blpu_relationship_source_guard|AddressBase Premium / source 7666MT
+049|PASS|blpu_relationship_scope_guard|live/provisional/historic BLPU
+050|PASS|blpu_correlation_guard|address seed point in polygon
+051|PASS|blpu_confidence_correct_guard|exact candidate allowed
+052|PASS|blpu_confidence_potentially_changed_guard|exact promotion denied
+053|PASS|blpu_confidence_changed_guard|exact promotion denied
+054|PARTIAL|os_linked_api_route|API productVersionInfo requires key; download route remains free
+055|PASS|ofcom_current_index_refresh|Spring 2026 / Jan snapshot
+056|PARTIAL|ofcom_newer_current_release_search|no newer verified 2026 current release; not absence proof
+057|PASS|ofcom_pnd_refresh|13 May 2026
+058|PASS|ofcom_pnd_forward_guard|never current availability
+059|PASS|ofcom_pnd_residential_base_guard|30.5m base
+060|PASS|ofcom_pnd_full_fibre_guard|82% to 92%
+061|PASS|ofcom_pnd_gigabit_guard|89% to 95%
+062|PASS|ofcom_pnd_urban_guard|93% to 97%
+063|PASS|ofcom_pnd_rural_guard|66% to 86%
+064|PASS|ofcom_pnd_multi_network_guard|73% >=2; 36% >=3
+065|PASS|bduk_official_stats_refresh|published 11 Jun
+066|PASS|bduk_official_stats_annual_delivery|192570
+067|PASS|bduk_official_stats_cumulative|1418410
+068|PASS|bduk_qmi_uprn_guard|UPRN persistent identity
+069|PASS|bduk_qmi_overbuild_guard|official stats remove overbuild
+070|PASS|bduk_qmi_dedup_guard|contracts/interventions dedup
+071|PASS|monthly_vs_official_stats_guard|not directly comparable
+072|PASS|source_registry_count|50 qualified
+073|PASS|confidence_threshold|50/50 >=95
+074|PASS|source_average_confidence|99.7</pre>
+<h2>BDUK May→June→July contract trend QA (37)</h2><pre>#|STATE|CONTRACT|MAY contracted/built|JUNE contracted/built|JULY contracted/built|DELTAS
+01|PASS|Bedfordshire, Northamptonshire and Milton Keynes|M=5890/4150|J=5890/4660|JY=5890/4820|M-J=+0/+510|J-JY=+0/+160|M-JY=+0/+670
+02|PASS|Bucks, Herts and East of Berks|M=6090/3640|J=6090/3810|JY=6090/4050|M-J=+0/+170|J-JY=+0/+240|M-JY=+0/+410
+03|PASS|CO1 Lancashire, West Berkshire, Staffordshire, Surrey, Hertfordshire, Wiltshire and Gloucestershire|M=60180/14460|J=60180/17170|JY=60180/17170|M-J=+0/+2710|J-JY=+0/+0|M-JY=+0/+2710
+04|PASS|CO2 Devon, Mid Wales and South East Wales|M=41140/9210|J=41140/9810|JY=41140/10600|M-J=+0/+600|J-JY=+0/+790|M-JY=+0/+1390
+05|PASS|CO3 North Herefordshire, North Wales, Shropshire and South West Wales|M=65120/1240|J=65120/1240|JY=65120/2570|M-J=+0/+0|J-JY=+0/+1330|M-JY=+0/+1330
+06|PASS|CO4 South Devon, Mid Devon and North Somerset|M=37110/3150|J=37110/3150|JY=37110/3840|M-J=+0/+0|J-JY=+0/+690|M-JY=+0/+690
+07|PASS|CO5 Essex and North East England|M=35300/880|J=35300/880|JY=35300/2260|M-J=+0/+0|J-JY=+0/+1380|M-JY=+0/+1380
+08|PASS|CO6 Rest of Scotland|M=77640/3680|J=77640/5680|JY=77640/5680|M-J=+0/+2000|J-JY=+0/+0|M-JY=+0/+2000
+09|PASS|CO7 Worcestershire|M=22600/120|J=22600/170|JY=22980/1010|M-J=+0/+50|J-JY=+380/+840|M-JY=+380/+890
+10|PASS|CO8 Cheshire|M=18460/0|J=18460/0|JY=18460/0|M-J=+0/+0|J-JY=+0/+0|M-JY=+0/+0
+11|PASS|Cambridgeshire|M=18230/10850|J=18230/10840|JY=18230/12030|M-J=+0/-10|J-JY=+0/+1190|M-JY=+0/+1180
+12|PASS|Central Cornwall|M=6940/6940|J=6940/6940|JY=6940/6940|M-J=+0/+0|J-JY=+0/+0|M-JY=+0/+0
+13|PASS|Cornwall and Isle of Scilly|M=14430/3540|J=14430/3660|JY=14430/4190|M-J=+0/+120|J-JY=+0/+530|M-JY=+0/+650
+14|PASS|Cumbria|M=53540/33330|J=53540/34830|JY=53540/35040|M-J=+0/+1500|J-JY=+0/+210|M-JY=+0/+1710
+15|PASS|Derbyshire|M=12050/1200|J=13290/1200|JY=12880/1550|M-J=+1240/+0|J-JY=-410/+350|M-JY=+830/+350
+16|PASS|Dorset and South Somerset|M=19560/3840|J=19560/4520|JY=19560/5030|M-J=+0/+680|J-JY=+0/+510|M-JY=+0/+1190
+17|PASS|Durham|M=4440/4440|J=4440/4440|JY=4440/4440|M-J=+0/+0|J-JY=+0/+0|M-JY=+0/+0
+18|PASS|East Gloucestershire|M=3550/1800|J=3550/1800|JY=3550/1980|M-J=+0/+0|J-JY=+0/+180|M-JY=+0/+180
+19|PASS|East and West Sussex|M=12760/2970|J=12760/2970|JY=12760/3020|M-J=+0/+0|J-JY=+0/+50|M-JY=+0/+50
+20|PASS|Hampshire|M=29420/6770|J=29420/6970|JY=29420/7150|M-J=+0/+200|J-JY=+0/+180|M-JY=+0/+380
+21|PASS|Kent|M=8750/2320|J=8750/2530|JY=8750/2530|M-J=+0/+210|J-JY=+0/+0|M-JY=+0/+210
+22|PASS|Leicestershire and Warwickshire|M=22480/10100|J=22480/10310|JY=22480/10740|M-J=+0/+210|J-JY=+0/+430|M-JY=+0/+640
+23|PASS|Lincolnshire and East Riding|M=47800/19050|J=47800/20610|JY=46970/21840|M-J=+0/+1560|J-JY=-830/+1230|M-JY=-830/+2790
+24|PASS|New Forest|M=12730/10250|J=12730/10390|JY=12730/10400|M-J=+0/+140|J-JY=+0/+10|M-JY=+0/+150
+25|PASS|Norfolk|M=32670/12510|J=32670/12770|JY=32670/13310|M-J=+0/+260|J-JY=+0/+540|M-JY=+0/+800
+26|PASS|North Dorset|M=6480/6480|J=6480/6170|JY=6480/6170|M-J=+0/-310|J-JY=+0/+0|M-JY=+0/-310
+27|PASS|North East Staffordshire|M=5960/2080|J=5960/2410|JY=5960/2860|M-J=+0/+330|J-JY=+0/+450|M-JY=+0/+780
+28|PASS|North Oxfordshire|M=4180/3690|J=4180/3750|JY=4180/3860|M-J=+0/+60|J-JY=+0/+110|M-JY=+0/+170
+29|PASS|North Shropshire|M=3410/1270|J=3410/1900|JY=3410/3410|M-J=+0/+630|J-JY=+0/+1510|M-JY=+0/+2140
+30|PASS|Northern North Yorkshire|M=33810/10240|J=34490/10980|JY=34490/11880|M-J=+680/+740|J-JY=+0/+900|M-JY=+680/+1640
+31|PASS|Northumberland|M=3830/3830|J=3830/3830|JY=3830/3830|M-J=+0/+0|J-JY=+0/+0|M-JY=+0/+0
+32|PASS|South Oxfordshire|M=5030/3140|J=5120/3200|JY=5120/3200|M-J=+90/+60|J-JY=+0/+0|M-JY=+90/+60
+33|PASS|South West Cornwall|M=6400/6400|J=6400/6400|JY=6400/6400|M-J=+0/+0|J-JY=+0/+0|M-JY=+0/+0
+34|PASS|South Wiltshire|M=18790/6390|J=18790/7230|JY=18790/7650|M-J=+0/+840|J-JY=+0/+420|M-JY=+0/+1260
+35|PASS|South Yorkshire|M=13290/9080|J=13290/9270|JY=13290/9320|M-J=+0/+190|J-JY=+0/+50|M-JY=+0/+240
+36|PASS|Suffolk|M=38350/17360|J=38350/17960|JY=38350/18560|M-J=+0/+600|J-JY=+0/+600|M-JY=+0/+1200
+37|PASS|West and Parts of North Yorkshire|M=28950/16310|J=28950/17050|JY=28950/18200|M-J=+0/+740|J-JY=+0/+1150|M-JY=+0/+1890</pre>
+<h2>OS Open Linked Identifiers relationship inventory QA (11)</h2><pre>#|STATE|RELATIONSHIP_ID|RELATION|ROLE
+01|PASS|RoadLink_TOID_TopographicArea_TOID_2|RoadLink↔TopographicArea|AUX
+02|PASS|Road_TOID_TopographicArea_TOID_3|Road↔TopographicArea|AUX
+03|PASS|Street_USRN_TopographicArea_TOID_4|Street↔TopographicArea|AUX
+04|PASS|BLPU_UPRN_TopographicArea_TOID_5|BLPU UPRN↔TopographicArea TOID|EXACT_CANDIDATE_VERSION_CORRECT_ONLY
+05|PASS|RoadLink_TOID_Road_TOID_7|RoadLink↔Road|AUX
+06|PASS|RoadLink_TOID_Street_USRN_8|RoadLink↔Street|AUX
+07|PASS|BLPU_UPRN_RoadLink_TOID_9|BLPU↔RoadLink|AUX
+08|PASS|Road_TOID_Street_USRN_10|Road↔Street|AUX
+09|PASS|BLPU_UPRN_Street_USRN_11|BLPU↔Street|AUX
+10|PASS|ORRoadLink_GUID_RoadLink_TOID_12|OpenRoadLink↔RoadLink|AUX
+11|PASS|ORRoadNode_GUID_RoadLink_TOID_13|OpenRoadNode↔RoadLink|AUX</pre>
+<h2>Ofcom PND 2026 auxiliary QA (8)</h2><pre>#|STATE|METRIC|JAN2026 BASE|JAN2029 PLAN|GUARD
+01|PASS|full_fibre_residential|BASE=24.9m / 82%|PLAN=28.1m / 92%|FORWARD_ONLY
+02|PASS|gigabit_residential|BASE=27.1m / 89%|PLAN=29.0m / 95%|FORWARD_ONLY
+03|PASS|urban_gigabit|BASE=24.2m / 93%|PLAN=25.3m / 97%|FORWARD_ONLY
+04|PASS|rural_gigabit|BASE=2.9m / 66%|PLAN=3.7m / 86%|FORWARD_ONLY
+05|PASS|local_authorities_ge85_gigabit|BASE=current_n/a|PLAN=95% projected|FORWARD_ONLY
+06|PASS|homes_ge2_gigabit_networks|BASE=current_n/a|PLAN=22.2m / 73%|FORWARD_ONLY
+07|PASS|homes_ge3_gigabit_networks|BASE=current_n/a|PLAN=11.1m / 36%|FORWARD_ONLY
+08|PASS|additional_fwa_masts|BASE=current_n/a|PLAN=~6950 planned/upgraded|FORWARD_ONLY</pre>
+<h2>BDUK 2025/26 official-statistics auxiliary QA (8)</h2><pre>#|STATE|METRIC|VALUE|GUARD
+01|PASS|annual_delivered_2025_26|192570|OFFICIAL_STATS_AUX_ONLY
+02|PASS|annual_growth_vs_prior|42280 / 28%|OFFICIAL_STATS_AUX_ONLY
+03|PASS|cumulative_delivered|1418410|OFFICIAL_STATS_AUX_ONLY
+04|PASS|GIS_delivery|139490 / 72%|OFFICIAL_STATS_AUX_ONLY
+05|PASS|rural_delivery|173190 / 90%|OFFICIAL_STATS_AUX_ONLY
+06|PASS|residential_delivery|173270 / 90%|OFFICIAL_STATS_AUX_ONLY
+07|PASS|without_prior_superfast|43880 / 23%|OFFICIAL_STATS_AUX_ONLY
+08|PASS|official_stats_method|overbuild removed + dedup contracts/interventions|OFFICIAL_STATS_AUX_ONLY</pre>
+<p>138 görünür işlem = 74 araştırma/recovery + 37 üç-ay contract QA + 11 OS relation QA + 8 Ofcom PND QA + 8 BDUK official-statistics QA. Monitor remote readback ve final branch kontrolleri commit sonrasında ayrıca doğrulanır.</p></body></html>
