@@ -52,7 +52,6 @@
 - Summary JSON blob SHA: `516613dbf5aeb90598bc428c893f8d18a918f3f3`
 - Row HTML blob SHA: `1193838628bcae979ac96d8d4c23338288aa8dec`
 - Validation blob SHA: `e485fe497175ffa8b8270fb3847b6db459ab50b0`
-- Sealed report blob SHA: `df85a775717601d3fac1c627806feeda33ab5d87`
 
 ## Remaining blocker
 
