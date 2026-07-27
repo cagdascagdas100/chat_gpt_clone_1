@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Attempt-020 reconciled Point -> HMLR -> official numeric entrypoint."""
+"""Attempt-020 reconciled Point -> HMLR -> metric-gated official numeric entrypoint."""
 from __future__ import annotations
 
 import json
@@ -11,7 +11,7 @@ from typing import Any
 
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 ATTEMPT_ID = "height-difference-2-20260721-020"
-TASK_VERSION = "6.5-current-height-metric-pinned-ea-coverage"
+TASK_VERSION = "6.6-preweb-height-metric-gate"
 EXPECTED_BRANCH = "codex/aays-single-runner-v5-20260706"
 EXPECTED_PAGE_KEY = "aays1"
 TARGET_ROWS = [30762, 46142, 61522]
@@ -33,23 +33,9 @@ def _write(path: Path, payload: object) -> None:
 def _run(command: list[str], cwd: Path, stage: str, timeout_seconds: int) -> dict[str, Any]:
     try:
         process = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False, timeout=timeout_seconds)
-        return {
-            "stage": stage,
-            "command": command,
-            "exit_code": process.returncode,
-            "timed_out": False,
-            "stdout": process.stdout[-12000:],
-            "stderr": process.stderr[-12000:],
-        }
+        return {"stage": stage, "command": command, "exit_code": process.returncode, "timed_out": False, "stdout": process.stdout[-12000:], "stderr": process.stderr[-12000:]}
     except subprocess.TimeoutExpired as exc:
-        return {
-            "stage": stage,
-            "command": command,
-            "exit_code": 124,
-            "timed_out": True,
-            "stdout": (exc.stdout or "")[-12000:] if isinstance(exc.stdout, str) else "",
-            "stderr": (exc.stderr or "")[-12000:] if isinstance(exc.stderr, str) else "",
-        }
+        return {"stage": stage, "command": command, "exit_code": 124, "timed_out": True, "stdout": (exc.stdout or "")[-12000:] if isinstance(exc.stdout, str) else "", "stderr": (exc.stderr or "")[-12000:] if isinstance(exc.stderr, str) else ""}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -77,7 +63,6 @@ def main() -> int:
     automation = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/automation"
     runner_outputs = repo_root / "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs"
     web_root = repo_root / "england_map_web/data/aays_21_slots/height_difference_2"
-
     extractor = automation / "043_extract_reconciled_exact_candidates.py"
     hmlr_recovery = automation / "043_prepare_hmlr_sources_and_match.py"
     numeric_gate = automation / "014_run_official_numeric_gate.py"
@@ -91,8 +76,7 @@ def main() -> int:
     hmlr_output_dir = runner_outputs / "007_hmlr_polygon_preparation_latest"
     hmlr_exact = hmlr_output_dir / "hmlr_exact_matches.json"
     numeric_output_dir = runner_outputs / "008_official_numeric_gate_latest"
-    ea_output = numeric_output_dir / "ea_dtm1m_polygon_samples.json"
-    metric_output = runner_outputs / "009_current_height_metric_consistency_latest.json"
+    metric_output = numeric_output_dir / "current_height_metric_consistency.json"
     final_output = runner_outputs / "003_height_difference_2_canonical_export_official_sampling_latest.json"
     web_output = web_root / "candidates_latest.json"
     summary_output = runner_outputs / "006_candidate_seed_and_sampling_entrypoint_latest.json"
@@ -100,130 +84,58 @@ def main() -> int:
     required = [extractor, hmlr_recovery, numeric_gate, metric_guard, source, point_evidence, hmlr_evidence, preserved_metric_evidence]
     missing = [str(path) for path in required if not path.is_file() or path.stat().st_size == 0]
     if missing:
-        payload = {
-            "schema_version": 7,
-            "slot_id": "height_difference_2",
-            "task_id": TASK_ID,
-            "attempt_id": ATTEMPT_ID,
-            "task_version": TASK_VERSION,
-            "status": "BLOCKED_RECONCILED_ENTRYPOINT_INPUT_MISSING",
-            "missing": missing,
-            "target_rows": TARGET_ROWS,
-            "official_numeric_row_count": 0,
-            "ea_coverage_id_required": EXPECTED_EA_COVERAGE_ID,
-            "height_metric_consistency_required": True,
-            "web_acceptance_required": True,
-            "web_acceptance_passed": False,
-            "terrain50_accuracy_screening_required": True,
-            "final_ready": False,
-            "fake_data": False,
-            "db_write": False,
-            "migration": False,
-            "production_deploy": False,
-        }
+        payload = {"schema_version": 8, "slot_id": "height_difference_2", "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "task_version": TASK_VERSION, "status": "BLOCKED_RECONCILED_ENTRYPOINT_INPUT_MISSING", "missing": missing, "target_rows": TARGET_ROWS, "official_numeric_row_count": 0, "ea_coverage_id_required": EXPECTED_EA_COVERAGE_ID, "height_metric_consistency_required": True, "height_metric_must_pass_before_terrain_and_web": True, "web_acceptance_required": True, "web_acceptance_passed": False, "terrain50_accuracy_screening_required": True, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         _write(summary_output, payload)
         return 2
 
     stages: list[dict[str, Any]] = []
-    candidate_stage = _run([
-        sys.executable,
-        str(extractor),
-        "--source", str(source),
-        "--point-evidence", str(point_evidence),
-        "--hmlr-evidence", str(hmlr_evidence),
-        "--output", str(seed_output),
-        "--web-output", str(seed_web_output),
-    ], repo_root, "RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION", 1800)
+    candidate_stage = _run([sys.executable, str(extractor), "--source", str(source), "--point-evidence", str(point_evidence), "--hmlr-evidence", str(hmlr_evidence), "--output", str(seed_output), "--web-output", str(seed_web_output)], repo_root, "RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION", 1800)
     stages.append(candidate_stage)
     candidate_payload = _load(seed_output) if seed_output.is_file() else {}
 
     if candidate_stage["exit_code"] != 0 or candidate_payload.get("candidate_seed_count") != 3:
         hmlr_stage = {"stage": "FRESH_HMLR_GML_REVALIDATION", "exit_code": 2, "status": "SKIPPED_RECONCILED_CANDIDATE_GATE_FAILED"}
         numeric_stage = {"stage": "OFFICIAL_NUMERIC_GATE", "exit_code": 2, "status": "SKIPPED_RECONCILED_CANDIDATE_GATE_FAILED"}
-        metric_stage = {"stage": "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY", "exit_code": 2, "status": "SKIPPED_RECONCILED_CANDIDATE_GATE_FAILED"}
     else:
-        hmlr_stage = _run([
-            sys.executable,
-            str(hmlr_recovery),
-            "--seed-manifest", str(seed_output),
-            "--output-dir", str(hmlr_output_dir),
-            "--timeout", "300",
-            "--matcher-timeout", "1800",
-        ], repo_root, "FRESH_HMLR_GML_REVALIDATION", 3600)
+        hmlr_stage = _run([sys.executable, str(hmlr_recovery), "--seed-manifest", str(seed_output), "--output-dir", str(hmlr_output_dir), "--timeout", "300", "--matcher-timeout", "1800"], repo_root, "FRESH_HMLR_GML_REVALIDATION", 3600)
         hmlr_payload = _load(hmlr_output_dir / "hmlr_polygon_preparation_execution.json") if (hmlr_output_dir / "hmlr_polygon_preparation_execution.json").is_file() else {}
         if hmlr_stage["exit_code"] != 0 or hmlr_payload.get("matched_candidate_count") != 3:
             numeric_stage = {"stage": "OFFICIAL_NUMERIC_GATE", "exit_code": 2, "status": "SKIPPED_FRESH_HMLR_GATE_FAILED"}
-            metric_stage = {"stage": "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY", "exit_code": 2, "status": "SKIPPED_FRESH_HMLR_GATE_FAILED"}
         else:
-            command = [
-                sys.executable,
-                str(numeric_gate),
-                "--repo-root", str(repo_root),
-                "--hmlr-exact-matches", str(hmlr_exact),
-                "--output-dir", str(numeric_output_dir),
-                "--final-output", str(final_output),
-                "--web-output", str(web_output),
-                "--coverage-id", EXPECTED_EA_COVERAGE_ID,
-                "--expected-web-operation-rows", os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"),
-            ]
-            numeric_stage = _run(command, repo_root, "OFFICIAL_NUMERIC_GATE", 3600)
-            ea_payload = _load(ea_output) if ea_output.is_file() else {}
-            if ea_payload.get("status") == "THREE_EA_DTM1M_POLYGON_SAMPLES_READY":
-                metric_stage = _run([
-                    sys.executable,
-                    str(metric_guard),
-                    "--ea-samples", str(ea_output),
-                    "--preserved-evidence", str(preserved_metric_evidence),
-                    "--expected-coverage-id", EXPECTED_EA_COVERAGE_ID,
-                    "--tolerance-m", "0.001",
-                    "--output", str(metric_output),
-                ], repo_root, "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY", 180)
-            else:
-                metric_stage = {"stage": "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY", "exit_code": 2, "status": "SKIPPED_CURRENT_EA_SAMPLE_NOT_READY"}
+            numeric_stage = _run([
+                sys.executable, str(numeric_gate), "--repo-root", str(repo_root), "--hmlr-exact-matches", str(hmlr_exact), "--output-dir", str(numeric_output_dir), "--final-output", str(final_output), "--web-output", str(web_output), "--coverage-id", EXPECTED_EA_COVERAGE_ID, "--preserved-metric-evidence", str(preserved_metric_evidence), "--height-metric-tolerance-m", "0.001", "--expected-web-operation-rows", os.environ.get("AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036")
+            ], repo_root, "OFFICIAL_NUMERIC_GATE", 3600)
 
-    stages.extend([hmlr_stage, numeric_stage, metric_stage])
+    stages.extend([hmlr_stage, numeric_stage])
     numeric_payload = _load(final_output) if final_output.is_file() else {}
     terrain_payload = _load(numeric_output_dir / "os_terrain50_crosschecks.json") if (numeric_output_dir / "os_terrain50_crosschecks.json").is_file() else {}
     metric_payload = _load(metric_output) if metric_output.is_file() else {}
-    metric_passed = (
-        metric_stage.get("exit_code") == 0
-        and metric_payload.get("status") == "THREE_CURRENT_EA_HEIGHT_DIFFERENCES_MATCH_PRESERVED_EXACT_RESULTS"
-        and metric_payload.get("row_count") == 3
-    )
-    success = (
-        candidate_stage["exit_code"] == 0
-        and hmlr_stage.get("exit_code") == 0
-        and numeric_stage.get("exit_code") == 0
-        and metric_passed
-        and candidate_payload.get("candidate_seed_count") == 3
-        and numeric_payload.get("official_numeric_row_count") == 3
-        and numeric_payload.get("web_acceptance_passed") is True
-        and numeric_payload.get("status") == "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW"
-        and terrain_payload.get("accuracy_screening_passed") is True
-    )
+    metric_passed = numeric_payload.get("height_metric_consistency_passed") is True and metric_payload.get("status") == "THREE_CURRENT_EA_HEIGHT_DIFFERENCES_MATCH_PRESERVED_EXACT_RESULTS" and metric_payload.get("row_count") == 3
+    current_rows = numeric_payload.get("measured_rows", [])
+    current_row_set = sorted(int(row["row_no"]) for row in current_rows) if isinstance(current_rows, list) else []
+    current_metric_contract_ok = current_row_set == TARGET_ROWS and all(row.get("height_difference_metric") == "EA_DTM1M_MAX_MINUS_MIN_INSIDE_EXACT_HMLR_POLYGON" and row.get("parcel_elevation_median_is_distinct_metric") is True and row.get("height_difference_m") is not None for row in current_rows)
+    success = candidate_stage["exit_code"] == 0 and hmlr_stage.get("exit_code") == 0 and numeric_stage.get("exit_code") == 0 and candidate_payload.get("candidate_seed_count") == 3 and numeric_payload.get("official_numeric_row_count") == 3 and metric_passed and current_metric_contract_ok and numeric_payload.get("web_acceptance_passed") is True and numeric_payload.get("status") == "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW" and terrain_payload.get("accuracy_screening_passed") is True
+
     payload = {
-        "schema_version": 7,
+        "schema_version": 8,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
         "task_version": TASK_VERSION,
         "status": "THREE_SOURCE_OFFICIAL_NUMERIC_METRIC_ACCURACY_AND_WEB_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
         "target_rows": TARGET_ROWS,
-        "stage_order": [
-            "RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION",
-            "FRESH_HMLR_GML_REVALIDATION",
-            "OFFICIAL_NUMERIC_GATE_WITH_TERRAIN50_ACCURACY_AND_PORT_8012_ACCEPTANCE",
-            "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY",
-        ],
+        "stage_order": ["RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION", "FRESH_HMLR_GML_REVALIDATION", "OFFICIAL_NUMERIC_GATE_WITH_PREWEB_HEIGHT_METRIC_TERRAIN50_AND_PORT_8012_ACCEPTANCE"],
         "stages": stages,
         "candidate_seed_count": candidate_payload.get("candidate_seed_count", 0),
         "official_numeric_row_count": numeric_payload.get("official_numeric_row_count", 0),
         "ea_coverage_id_required": EXPECTED_EA_COVERAGE_ID,
-        "ea_coverage_id_pinned": coverage_id == EXPECTED_EA_COVERAGE_ID,
+        "ea_coverage_id_pinned": coverage_id == EXPECTED_EA_COVERAGE_ID and numeric_payload.get("ea_coverage_id_pinned") is True,
         "height_metric_consistency_required": True,
+        "height_metric_must_pass_before_terrain_and_web": True,
         "height_metric_consistency_passed": metric_passed,
         "height_metric_contract": metric_payload.get("metric_contract"),
         "current_height_difference_rows": metric_payload.get("rows", []),
+        "current_candidate_metric_contract_passed": current_metric_contract_ok,
         "terrain50_accuracy_screening_required": True,
         "terrain50_accuracy_screening_passed": terrain_payload.get("accuracy_screening_passed") is True,
         "terrain50_accuracy_screening_contract": terrain_payload.get("accuracy_screening_contract"),
