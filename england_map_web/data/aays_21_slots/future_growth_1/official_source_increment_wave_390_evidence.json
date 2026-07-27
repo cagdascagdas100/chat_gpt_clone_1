@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 390,
+  "topic": "MAJOR_HAZARDS_HAZARDOUS_SUBSTANCES_COMAH_PIPELINES_AND_HSE_LUP_GATES",
+  "generated_at": "2026-07-27T18:24:36+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_MAJOR_HAZARD_AND_HSE_LUP_VALIDATION_NOT_HSC_DECISION_NOT_HSE_ADVICE_FOR_CANDIDATE_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.5,
+  "score_basis": "Non-statistical internal evidence-quality score based on current HSE/GOV.UK/legislation readback, explicit consultation-zone and development-sensitivity handling, and prevention of proximity to a major hazard being converted into automatic refusal, approval or parcel risk score.",
+  "sources": [
+    {"key":"gov_hazsub","label":"GOV.UK hazardous substances planning guidance","url":"https://www.gov.uk/guidance/hazardous-substances","fact":"Hazardous substances consent controls specified substances at/above controlled quantities and is separate from planning permission and environmental permitting."},
+    {"key":"hse_hsc","label":"HSE hazardous substance consent","url":"https://www.hse.gov.uk/landuseplanning/hazardoussubstances.htm","fact":"HSE is a statutory consultee; consent decisions are made by the hazardous substances authority and HSE risk zones inform later relevant planning consultations."},
+    {"key":"hse_role","label":"HSE land-use planning role","url":"https://www.hse.gov.uk/landuseplanning/what.htm","fact":"Current HSE page confirms consultation distances around major hazard sites and major accident hazard pipelines and HSE advisory role for relevant development."},
+    {"key":"hse_webapp","label":"HSE Planning Advice Web App","url":"https://www.hse.gov.uk/landuseplanning/planning-advice-web-app.htm","fact":"The Web App uses inner/middle/outer consultation zones plus development type, size and intensity to provide advise-against/not-advise-against planning advice."},
+    {"key":"hse_method","label":"HSE land-use planning methodology","url":"https://www.hse.gov.uk/landuseplanning/methodology.htm","fact":"Advice combines consultation zone and development sensitivity level; major accident hazard pipelines can require pipeline-specific reconsideration where protection differs locally."},
+    {"key":"hse_developer","label":"HSE developer planning advice","url":"https://www.hse.gov.uk/landuseplanning/developers.htm","fact":"Developers can check whether a plot lies within a consultation zone and obtain pre-application advice; a zone hit alone is not HSE's final advice for an unmodelled proposal."},
+    {"key":"hse_resources","label":"HSE LUP resources","url":"https://www.hse.gov.uk/landuseplanning/resources.htm","fact":"HSE resources describe statutory consultation around hazardous installations and major accident hazard pipelines and use of the Planning Advice Web App."},
+    {"key":"hse_callin","label":"HSE planning call-in policy","url":"https://www.hse.gov.uk/landuseplanning/advice.htm","fact":"If an authority proposes to grant contrary to HSE advice within a major-hazard consultation zone, HSE may consider requesting call-in; this is case-specific, not automatic."},
+    {"key":"hsc_wizard","label":"HSE hazardous substance consent smart forms","url":"https://hazardousconsent.hse.gov.uk/faq/","fact":"Current HSE smart-form service supports applications/variations/continuation of consent and confirms consent is required above controlled quantities."},
+    {"key":"phs_act","label":"Planning (Hazardous Substances) Act 1990","url":"https://www.legislation.gov.uk/ukpga/1990/10/contents","fact":"Primary legislation provides the hazardous-substances consent framework and powers to prescribe substances and controlled quantities."},
+    {"key":"phs_regs","label":"Planning (Hazardous Substances) Regulations 2015","url":"https://www.legislation.gov.uk/uksi/2015/627/contents/made","fact":"2015 Regulations specify controlled quantities, application/publicity and related procedures; quantity and substance evidence is required."},
+    {"key":"comah","label":"Control of Major Accident Hazards Regulations 2015","url":"https://www.legislation.gov.uk/uksi/2015/483/contents/made","fact":"COMAH safety-management controls are distinct from the land-use planning hazardous-substances consent regime; one regime is not treated as proof of compliance with the other."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"A candidate inside an HSE consultation distance is not automatically rejected; actual zone, development sensitivity and HSE advice are required."},
+    {"id":"EX02","result":"A hazardous-substances consent near a parcel is not itself evidence that the parcel is unsafe or undevelopable."},
+    {"id":"EX03","result":"Absence of a public HSE Web App result is not treated as no major-hazard constraint; exact coordinates and current consultation-zone check are required."},
+    {"id":"EX04","result":"Pipeline proximity is not converted to a fixed exclusion buffer; HSE methodology and pipeline protection can be location-specific."},
+    {"id":"EX05","result":"HSE advise-against/not-advise-against is not inferred without an actual proposal type/size/intensity or authoritative consultation response."},
+    {"id":"EX06","result":"Hazardous substances consent is kept separate from planning permission, COMAH duties and environmental permits."},
+    {"id":"EX07","result":"Call-in is not presumed merely because HSE advice may be adverse; the authority decision and HSE call-in assessment must be evidenced."},
+    {"id":"EX08","result":"No major-hazard promotion/demotion occurs without exact site geometry, current HSE zone/advice and proposal sensitivity binding."}
+  ],
+  "fail_closed_rules": ["consultation_zone_not_refusal","zone_absence_requires_current_check","hsc_not_planning_permission","planning_permission_not_hsc","comah_not_hsc","hsc_not_comah_compliance","pipeline_buffer_not_generic","pipeline_protection_may_be_local","development_sensitivity_required","proposal_size_required","hse_advice_not_inferred","callin_not_automatic","controlled_quantity_requires_evidence","permit_regimes_kept_separate","no_nearest_hazard_score_fill","promotion_requires_exact_site_hse_and_hazard_evidence"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","SCOPE","HAZARD","HSC","COMAH","PIPELINE","CONSULTATION","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"major_hazard_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
