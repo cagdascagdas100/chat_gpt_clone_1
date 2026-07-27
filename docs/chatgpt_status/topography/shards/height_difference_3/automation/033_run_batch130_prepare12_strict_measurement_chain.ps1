@@ -72,15 +72,24 @@ $PublishedRows = @($V.rows | ForEach-Object { [int]$_.row_no })
 if (($MeasuredRows -join ',') -ne ($Expected -join ',')) { throw "Measured row set is not exactly 61540..61551" }
 if (($PublishedRows -join ',') -ne ($Expected -join ',')) { throw "Published row set is not exactly 61540..61551" }
 if ([int]$V.published_example_count -ne 12) { throw "Expected exactly 12 verified examples" }
+$ResultRows = @($M.results)
+if ($ResultRows.Count -ne 12) { throw "Expected exactly 12 measurement result rows" }
+foreach ($R in $ResultRows) {
+  $HmlrMethod = [string]$R.hmlr_match_method
+  if (-not $HmlrMethod.StartsWith("EXACT_OFFICIAL_ID")) { throw "Strict12 requires exact HMLR official-ID boundary match for row $($R.row_no); got $HmlrMethod" }
+  if ([bool]$R.nearest_point_fill_used) { throw "Nearest-point fill is forbidden for row $($R.row_no)" }
+}
 foreach ($R in $M.measured_rows) {
   if ($R.height_difference_method -ne "EA_DTM_1M_POLYGON_P95_MINUS_P05") { throw "Unexpected height-difference method" }
   if (@("HIGH","MEDIUM_HIGH") -notcontains [string]$R.confidence) { throw "Unapproved confidence" }
   if ([int]$R.ea_valid_cell_count -lt 4) { throw "Insufficient EA cell count" }
   if ([double]$R.cross_source_absolute_difference_m -gt 8.0) { throw "Cross-source difference exceeds 8m" }
+  $BoundaryMethod = [string]$R.boundary_match_method
+  if (-not $BoundaryMethod.StartsWith("EXACT_OFFICIAL_ID")) { throw "Measured row lacks exact HMLR official-ID boundary match: $($R.row_no) / $BoundaryMethod" }
 }
 
 $Result = @{
-  schema_version = 3
+  schema_version = 4
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   prepared_and_measured_rows = $Expected
@@ -96,6 +105,8 @@ $Result = @{
   proj_gate_candidate_rows = $ProjRows
   proj_gate_candidate_aware = $true
   proj_maximum_display_delta_m = 20.0
+  exact_hmlr_official_id_gate = $true
+  nearest_fill_forbidden = $true
   numeric_publish_gate_passed = $true
   remote_readback_required = $true
   final_ready = $false
