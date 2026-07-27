@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 398,
+  "topic": "PLANNING_DATA_BROWNFIELD_TITLE_BOUNDARY_APPLICATION_AND_CONSTRAINT_COVERAGE_GATES",
+  "generated_at": "2026-07-27T19:10:40+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_PLANNING_DATA_COVERAGE_AND_GEOMETRY_VALIDATION_NOT_BOROUGH_COMPLETE_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.6,
+  "sources": [
+    {"key":"brownfield","url":"https://www.planning.data.gov.uk/dataset/brownfield-land","fact":"37,666 records from 354 providers; collector 23 July 2026, new data 22 July 2026, all data from authoritative sources."},
+    {"key":"brownfield_site","url":"https://www.planning.data.gov.uk/dataset/brownfield-site","fact":"Experimental boundary dataset has 2,916 records from 5 providers; MHCLG-created and expected to be combined later with brownfield land."},
+    {"key":"title_boundary","url":"https://www.planning.data.gov.uk/dataset/title-boundary","fact":"Title-boundary dataset has 2,595,903 records from one provider; platform says it includes some MHCLG-created data and is not a substitute for current HMLR title evidence."},
+    {"key":"planning_application","url":"https://www.planning.data.gov.uk/dataset/planning-application","fact":"Planning application dataset has 100,627 records from 6 providers; collector/new data date is 17 September 2025 and origin is MHCLG-created pending authoritative replacement."},
+    {"key":"application_condition","url":"https://www.planning.data.gov.uk/dataset/planning-application-condition","fact":"5,305 condition records from one provider; MHCLG-created and not borough-complete."},
+    {"key":"application_status","url":"https://www.planning.data.gov.uk/dataset/planning-application-status","fact":"Planning application status dataset currently has zero records/providers, so absence cannot prove an application state."},
+    {"key":"permission_status","url":"https://www.planning.data.gov.uk/dataset/planning-permission-status","fact":"Controlled brownfield permission values are permissioned, not-permissioned and pending-decision."},
+    {"key":"ownership_status","url":"https://www.planning.data.gov.uk/dataset/ownership-status","fact":"Controlled ownership values include public, non-public, mixed and unknown ownership; unknown is preserved rather than filled."},
+    {"key":"conservation","url":"https://www.planning.data.gov.uk/dataset/conservation-area","fact":"11,007 conservation areas from 158 providers; platform explicitly says the dataset is incomplete and contains duplicates being reconciled."},
+    {"key":"article4","url":"https://www.planning.data.gov.uk/dataset/article-4-direction-area","fact":"7,152 Article 4 direction areas from 111 providers; coverage is growing and mixed-origin."},
+    {"key":"tpo","url":"https://www.planning.data.gov.uk/dataset/tree-preservation-order","fact":"107,674 TPO records from 74 providers; collector/new data 24 July 2026 with mixed-origin caveat."},
+    {"key":"local_plan_boundary","url":"https://www.planning.data.gov.uk/dataset/local-plan-boundary","fact":"364 local-plan boundaries from one provider; MHCLG-created pending authoritative replacement."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"Brownfield point geometry is not converted into a site polygon or exact parcel relation."},
+    {"id":"EX02","result":"Experimental brownfield-site absence is not negative evidence because coverage is only five providers."},
+    {"id":"EX03","result":"Planning-application platform coverage is not treated as a complete borough application register."},
+    {"id":"EX04","result":"Zero-record planning-application-status dataset cannot be used to assign current status."},
+    {"id":"EX05","result":"Conservation-area or Article 4 absence is not treated as no constraint where platform coverage is incomplete."},
+    {"id":"EX06","result":"Controlled permission/ownership categories are retained exactly; unknown values are not imputed."},
+    {"id":"EX07","result":"Title-boundary platform geometry is cross-check evidence only until current HMLR title relation is verified."},
+    {"id":"EX08","result":"No candidate promotion occurs from Planning Data alone without exact site polygon, exact parcel binding and current statutory/application evidence."}
+  ],
+  "fail_closed_rules": ["brownfield_point_not_polygon","experimental_boundary_absence_not_negative","planning_application_not_borough_complete","zero_status_not_status_evidence","constraint_absence_not_clearance","controlled_values_no_imputation","title_boundary_requires_hmlr_crosscheck","mixed_origin_retained","stale_collector_date_retained","duplicate_constraint_records_not_double_counted","site_plan_url_not_parcel_boundary","permissioned_not_completion_proof","deliverable_not_delivery_probability","maximum_dwellings_not_parcel_capacity","no_dataset_join_without_exact_geometry","promotion_requires_exact_site_parcel_and_current_statutory_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"planning_data_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
