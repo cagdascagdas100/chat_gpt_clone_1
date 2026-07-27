@@ -46,6 +46,13 @@
 - Fail-closed normalized assertions: 100.00%
 - Weighted average verification confidence: 99.4/100
 
+## Readback
+
+- Candidate JSON blob SHA: `0fe86edef9263fc6c16fe5aa592e7f33a936150a`
+- Summary JSON blob SHA: `516613dbf5aeb90598bc428c893f8d18a918f3f3`
+- Row HTML blob SHA: `1193838628bcae979ac96d8d4c23338288aa8dec`
+- Validation blob SHA: `e485fe497175ffa8b8270fb3847b6db459ab50b0`
+
 ## Remaining blocker
 
 Automation 167 remains queued for the existing single F-host runner. The canonical slot is unclaimed with a stale heartbeat, so port-8012 headless DOM proof and canonical candidate mutation remain blocked. No second runner or duplicate task was created.
