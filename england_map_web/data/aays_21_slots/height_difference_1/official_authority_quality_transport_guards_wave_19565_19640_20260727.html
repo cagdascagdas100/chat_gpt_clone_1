@@ -1,0 +1,13 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HD1 wave 19565–19640</title><style>body{font-family:Arial,sans-serif;margin:18px;line-height:1.35}.m{display:inline-block;margin-right:14px;font-weight:700}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:5px;vertical-align:top}th{position:sticky;top:0;background:#fff}.pass{background:#eef8ff}.blocked{background:#fff0f0}button,input{margin:5px;padding:6px}</style></head><body>
+<h1>height_difference_1 — 19565–19640</h1>
+<p><span class="m">1.824 satır</span><span class="m">1.368 PASS</span><span class="m">456 BLOCKED</span><span class="m">76 resmî kural</span><span class="m">3 gerçek aday</span></p>
+<p>Satırlar resmî kaynak kuralı × gerçek aday × 8 fail-closed mod kartezyeninden üretilir. Exact candidate-binding ve numeric-promotion gerçek resmî response/value yoksa BLOCKED kalır.</p>
+<div><button id="prev">← Önceki</button><button id="next">Sonraki →</button><input id="jump" type="number" min="446472" max="448295" placeholder="operation"><button id="go">Git</button><span id="page"></span></div>
+<table><thead><tr><th>operation</th><th>wave</th><th>source</th><th>rule</th><th>candidate</th><th>mode</th><th>status</th><th>reason</th><th>official URL</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const PAGE=200;let A=[],p=0;const esc=x=>String(x).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+fetch('official_authority_quality_transport_guards_waves_19565_19640_20260727.json').then(r=>r.json()).then(D=>{let op=446472;for(const rule of D.rules)for(const c of D.candidates)for(const m of D.modes)A.push({op:op++,wave:rule.id,source:rule.source,rule:rule.fact,candidate:c.candidate,mode:m.mode,status:m.status,reason:m.reason,url:rule.url});render()});
+function render(){const s=p*PAGE,e=Math.min(A.length,s+PAGE),b=document.getElementById('rows');b.innerHTML='';for(const x of A.slice(s,e)){const tr=document.createElement('tr');tr.className=x.status==='PASS'?'pass':'blocked';tr.innerHTML=`<td>${x.op}</td><td>${esc(x.wave)}</td><td>${esc(x.source)}</td><td>${esc(x.rule)}</td><td>${esc(x.candidate)}</td><td>${esc(x.mode)}</td><td>${esc(x.status)}</td><td>${esc(x.reason)}</td><td><a href="${esc(x.url)}" target="_blank">source</a></td>`;b.appendChild(tr)}document.getElementById('page').textContent=` ${s+1}–${e} / ${A.length}`}
+prev.onclick=()=>{p=Math.max(0,p-1);render()};next.onclick=()=>{p=Math.min(Math.floor((A.length-1)/PAGE),p+1);render()};go.onclick=()=>{const v=+jump.value;if(v>=446472&&v<=448295){p=Math.floor((v-446472)/PAGE);render()}}
+</script></body></html>
