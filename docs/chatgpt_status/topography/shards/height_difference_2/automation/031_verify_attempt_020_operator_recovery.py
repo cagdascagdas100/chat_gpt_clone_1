@@ -10,8 +10,8 @@ from typing import Any
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 ATTEMPT_ID = "height-difference-2-20260721-020"
 BRANCH = "codex/aays-single-runner-v5-20260706"
-TASK_VERSION = "6.5-current-height-metric-pinned-ea-coverage"
-PICKUP_REVISION = 15
+TASK_VERSION = "6.6-preweb-height-metric-gate"
+PICKUP_REVISION = 16
 TARGET_ROWS = [30762, 46142, 61522]
 EXPECTED_HMLR = {"30762": "46058185", "46142": "39866294", "61522": "62045430"}
 EXPECTED_HEIGHTS = {"30762": 0.27, "46142": 0.831, "61522": 0.49}
@@ -19,14 +19,14 @@ EA_COVERAGE_ID = "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevatio
 EXPECTED = {
     "helper": "b3a18bcdb1b7158d18aab33b42d5797342d23cd1",
     "operator": "4565641e078f7058d7946a29c3da411f87be5572",
-    "carrier": "127fd7479c43b45720130bb0b9317862f63c68ff",
-    "entrypoint": "48c1e99eb5ccb82387beae2aafe70a63039b052e",
-    "numeric_gate": "d1eecd12f7da0bd1342a66cb5956340c4a92672d",
+    "carrier": "72ce15f9c0fe96cc1aa7813d288d1ad4e2f14e19",
+    "entrypoint": "54e301461379b1f0688d7fc651ce633420fca258",
+    "numeric_gate": "5bab5fda5a25dbc67dd1aa219aae961b8acf1368",
     "metric_guard": "f9b70ef7adc1d2d3673501e0b82a992d230efc2f",
     "terrain_resolver": "90e87710cba7a63df01ab058b335d5bc570dc9f6",
     "terrain_crosschecker": "9f4a652392017c74c5dd2f8cec899e114ccdc2d6",
     "terrain_wrapper": "8ce81728c2eca74f8b14f3b3675c09ec393e06a5",
-    "web_verifier": "39465b2cec9d01234bfe4a46fb80a651e9bf8022",
+    "web_verifier": "84a560369b1c589aa1b74965f3c8c2ebc91e3caf",
 }
 
 
@@ -77,48 +77,28 @@ def main() -> int:
 
     check("single_runner", all(token in helper for token in ["existing_single_runner_architecture_reused = $true", "new_runner_architecture_created = $false", "parallel_runner_started = $false", "BLOCKED_MULTIPLE_CANONICAL_RUNNER_PROCESSES"]), "Existing single-runner architecture is preserved.")
     check("operator_safe_sync", BRANCH in operator and "snapshot_capture_phase = 'memory_before_stash_fetch_sync'" in operator and "stash','push','--include-untracked'" in operator and "merge','--ff-only'" in operator and "reset --hard" not in operator, "Recovery preserves state and uses ff-only without hard reset.")
-    check("carrier_v65_rev15", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and EXPECTED["entrypoint"] in carrier and EXPECTED["metric_guard"] in carrier and EXPECTED["numeric_gate"] in carrier and EXPECTED["web_verifier"] in carrier, "Carrier pins revision15 entrypoint, metric guard, numeric and web chain.")
-    check("carrier_ea_coverage_pin", EA_COVERAGE_ID in carrier and "$env:AAYS_EA_DTM1M_COVERAGE_ID = $expectedEaCoverageId" in carrier and "CURRENT_HEIGHT_DIFFERENCE_METRIC_GUARD_REQUIRED=true" in carrier, "Carrier pins exact EA Elevation DTM1m CoverageId and metric guard.")
-    check("entrypoint_metric_gate", all(token in entrypoint for token in [TASK_VERSION, "HEIGHT_DIFFERENCE_2_EA_DTM1M_COVERAGE_ID_NOT_PINNED", "018_verify_current_height_difference_metric.py", "THREE_CURRENT_EA_HEIGHT_DIFFERENCES_MATCH_PRESERVED_EXACT_RESULTS", "height_metric_consistency_passed"]), "Entrypoint requires the exact coverage pin and current max-minus-min metric consistency.")
+    check("carrier_v66_rev16", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and EXPECTED["entrypoint"] in carrier and EXPECTED["metric_guard"] in carrier and EXPECTED["numeric_gate"] in carrier and EXPECTED["web_verifier"] in carrier, "Carrier pins revision16 entrypoint, metric guard, numeric and web chain.")
+    check("carrier_metric_order", all(token in carrier for token in ["CURRENT_HEIGHT_DIFFERENCE_METRIC_MUST_PASS_BEFORE_TERRAIN50_AND_WEB=true", "CURRENT_CANDIDATE_HEIGHT_DIFFERENCE_FIELD=height_difference_m", "CURRENT_CANDIDATE_MEDIAN_ELEVATION_IS_DISTINCT=true", "PORT_8012_CURRENT_CANDIDATE_METRIC_BINDING_REQUIRED=true"]), "Carrier publishes pre-web metric and candidate-binding safeguards.")
+    check("carrier_ea_coverage_pin", EA_COVERAGE_ID in carrier and "$env:AAYS_EA_DTM1M_COVERAGE_ID = $expectedEaCoverageId" in carrier, "Carrier pins exact EA Elevation DTM1m CoverageId.")
+    check("entrypoint_preweb_metric_gate", all(token in entrypoint for token in [TASK_VERSION, "--preserved-metric-evidence", "--height-metric-tolerance-m", "height_metric_must_pass_before_terrain_and_web", "current_candidate_metric_contract_passed"]), "Entrypoint delegates metric consistency into numeric gate before Terrain50/web and checks current candidate metric contract.")
     check("metric_guard_contract", all(token in metric_guard for token in [EA_COVERAGE_ID, "max_m - min_m", "preserved_height_difference_m", "parcel_elevation_median_m_odn", "current EA parcel height-difference drift"]), "Metric guard separates parcel range from median elevation and fails closed on drift.")
+    check("numeric_preweb_metric_order", all(token in numeric_gate for token in ["CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY", "SKIPPED_CURRENT_HEIGHT_METRIC_GATE_FAILED", "height_difference_m", "parcel_elevation_median_m_odn", "height_metric_consistency_passed", "current_candidate_metric_binding_verified"]), "Numeric gate runs metric guard before Terrain50/web and writes explicit range plus distinct median fields.")
+    check("web_current_metric_binding", all(token in web_verifier for token in ["EXPECTED_METRIC", "current candidate metric contract mismatch", "current candidate max-minus-min self-check failed", "current_candidate_metric_binding_verified"]), "Web verifier independently binds current local candidate bytes to exact range metric and confidence.")
     check("carrier_accuracy_contract", all(token in carrier for token in ["TERRAIN50_OS_GRID_RMSE_M=4.0", "EA_DTM1M_RMSE_M=0.15", "TERRAIN50_CONSERVATIVE_ONE_RMSE_SUM_M=4.15", "TERRAIN50_CONSERVATIVE_TWO_RMSE_SUM_M=8.30", "TERRAIN50_TWO_RMSE_SCREENING_IS_NOT_CONFIDENCE_INTERVAL=true"]), "Carrier preserves conservative Terrain50 screening.")
     check("wrapper_accuracy_contract", all(token in wrapper for token in ["OS_TERRAIN50_GRID_RMSE_M = 4.0", "EA_LIDAR_DTM_RMSE_M = 0.15", "CONSERVATIVE_ONE_RMSE_SUM_M", "CONSERVATIVE_TWO_RMSE_SUM_M", "OUTSIDE_CONSERVATIVE_TWO_RMSE_SUM_BLOCK", "confidence_interval_claimed\": False"]), "Terrain50 wrapper blocks outside conservative two-RMSE-sum screen.")
-    check("numeric_local_candidate_gate", all(token in numeric_gate for token in ["candidates_preacceptance.json", '"--candidate-payload"', "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE", "candidate_local_sha256", "example_file_path_guard_verified", "site_measured_candidate_rows"]), "Numeric gate preserves current local candidate and web integrity gates.")
     check("web_fullsite_guard", all(token in web_verifier for token in ["port8012 base host is not loopback", "expected_visible_source_rows", "expected_visible_example_rows", "EXPECTED_SITE_BINDINGS", "site_exact_measurement_binding_verified"]), "Web verifier preserves loopback/full-site exact binding guards.")
 
     check("queue_identity", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("task_version") == TASK_VERSION and queue.get("pickup_request_revision") == PICKUP_REVISION, "Queue identity/version/revision match.")
-    check("queue_runtime_blobs", queue.get("restart_helper_blob_sha") == EXPECTED["helper"] and queue.get("operator_recovery_blob_sha") == EXPECTED["operator"] and queue.get("script_blob_sha") == EXPECTED["carrier"] and queue.get("python_script_blob_sha") == EXPECTED["entrypoint"] and queue.get("official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and queue.get("height_metric_guard_blob_sha") == EXPECTED["metric_guard"] and queue.get("terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and queue.get("terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and queue.get("terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and queue.get("web_verifier_blob_sha") == EXPECTED["web_verifier"], "Queue pins complete revision15 runtime blob set.")
-    check("queue_metric_contract", queue.get("ea_dtm1m_coverage_id") == EA_COVERAGE_ID and queue.get("ea_dtm1m_coverage_id_pin_required") is True and queue.get("height_metric_consistency_required") is True and float(queue.get("height_metric_tolerance_m", -1)) == 0.001 and queue.get("parcel_elevation_median_is_distinct_metric") is True, "Queue requires exact EA coverage and current parcel max-minus-min metric consistency.")
-    check("queue_accuracy_web_contract", queue.get("sample_rows") == TARGET_ROWS and queue.get("terrain50_accuracy_screening_required") is True and float(queue.get("terrain50_conservative_two_rmse_sum_m", 0)) == 8.3 and queue.get("web_loopback_only_required") is True and queue.get("web_exact_hmlr_bindings_required") == EXPECTED_HMLR and queue.get("web_exact_height_difference_bindings_m") == EXPECTED_HEIGHTS and float(queue.get("web_min_result_confidence_percent", 0)) >= 96 and int(queue.get("expected_web_operation_rows", 0)) >= 1036, "Queue retains Terrain50 and full-site web safeguards.")
+    check("queue_runtime_blobs", queue.get("restart_helper_blob_sha") == EXPECTED["helper"] and queue.get("operator_recovery_blob_sha") == EXPECTED["operator"] and queue.get("script_blob_sha") == EXPECTED["carrier"] and queue.get("python_script_blob_sha") == EXPECTED["entrypoint"] and queue.get("official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and queue.get("height_metric_guard_blob_sha") == EXPECTED["metric_guard"] and queue.get("terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and queue.get("terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and queue.get("terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and queue.get("web_verifier_blob_sha") == EXPECTED["web_verifier"], "Queue pins complete revision16 runtime blob set.")
+    check("queue_metric_contract", queue.get("ea_dtm1m_coverage_id") == EA_COVERAGE_ID and queue.get("ea_dtm1m_coverage_id_pin_required") is True and queue.get("height_metric_consistency_required") is True and queue.get("height_metric_must_pass_before_terrain50_and_web") is True and float(queue.get("height_metric_tolerance_m", -1)) == 0.001 and queue.get("parcel_elevation_median_is_distinct_metric") is True and queue.get("current_candidate_height_difference_field") == "height_difference_m" and queue.get("current_candidate_metric_binding_required") is True, "Queue requires exact EA coverage, pre-web max-minus-min metric consistency and exact local candidate metric binding.")
+    check("queue_metric_output_path", "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/008_official_numeric_gate_latest/current_height_metric_consistency.json" in queue.get("expected_outputs", []) and "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/009_current_height_metric_consistency_latest.json" not in queue.get("expected_outputs", []), "Queue expects the metric receipt owned by the numeric gate and no stale 009 receipt.")
+    check("queue_accuracy_web_contract", queue.get("sample_rows") == TARGET_ROWS and queue.get("terrain50_accuracy_screening_required") is True and float(queue.get("terrain50_conservative_two_rmse_sum_m", 0)) == 8.3 and queue.get("web_loopback_only_required") is True and queue.get("web_exact_hmlr_bindings_required") == EXPECTED_HMLR and queue.get("web_exact_height_difference_bindings_m") == EXPECTED_HEIGHTS and queue.get("web_current_candidate_metric_binding_required") is True and float(queue.get("web_min_result_confidence_percent", 0)) >= 96 and int(queue.get("expected_web_operation_rows", 0)) >= 1036, "Queue retains Terrain50 and full-site/current-candidate web safeguards.")
     check("request_identity", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("request_revision") == PICKUP_REVISION and request.get("required_pickup_request_revision") == PICKUP_REVISION, "Restart request revision matches queue/carrier.")
-    check("request_runtime_blobs", request.get("required_carrier_blob_sha") == EXPECTED["carrier"] and request.get("required_entrypoint_blob_sha") == EXPECTED["entrypoint"] and request.get("required_official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and request.get("required_height_metric_guard_blob_sha") == EXPECTED["metric_guard"] and request.get("required_terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and request.get("required_terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and request.get("required_terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and request.get("required_web_verifier_blob_sha") == EXPECTED["web_verifier"] and request.get("required_operator_recovery_blob_sha") == EXPECTED["operator"], "Restart request pins same revision15 runtime chain.")
-    check("request_metric_contract", request.get("ea_dtm1m_coverage_id") == EA_COVERAGE_ID and request.get("ea_dtm1m_coverage_id_pin_required") is True and request.get("height_metric_consistency_required") is True and float(request.get("height_metric_tolerance_m", -1)) == 0.001 and request.get("parcel_elevation_median_is_distinct_metric") is True, "Restart request matches rev15 metric semantics.")
+    check("request_runtime_blobs", request.get("required_carrier_blob_sha") == EXPECTED["carrier"] and request.get("required_entrypoint_blob_sha") == EXPECTED["entrypoint"] and request.get("required_official_numeric_gate_blob_sha") == EXPECTED["numeric_gate"] and request.get("required_height_metric_guard_blob_sha") == EXPECTED["metric_guard"] and request.get("required_terrain50_resolver_blob_sha") == EXPECTED["terrain_resolver"] and request.get("required_terrain50_crosschecker_blob_sha") == EXPECTED["terrain_crosschecker"] and request.get("required_terrain50_wrapper_blob_sha") == EXPECTED["terrain_wrapper"] and request.get("required_web_verifier_blob_sha") == EXPECTED["web_verifier"] and request.get("required_operator_recovery_blob_sha") == EXPECTED["operator"], "Restart request pins same revision16 runtime chain.")
+    check("request_metric_contract", request.get("ea_dtm1m_coverage_id") == EA_COVERAGE_ID and request.get("ea_dtm1m_coverage_id_pin_required") is True and request.get("height_metric_consistency_required") is True and request.get("height_metric_must_pass_before_terrain50_and_web") is True and float(request.get("height_metric_tolerance_m", -1)) == 0.001 and request.get("parcel_elevation_median_is_distinct_metric") is True and request.get("current_candidate_metric_binding_required") is True, "Restart request matches rev16 metric semantics and order.")
 
     passed = sum(1 for item in checks if item["passed"])
-    payload = {
-        "schema_version": 12,
-        "slot_id": "height_difference_2",
-        "task_id": TASK_ID,
-        "attempt_id": ATTEMPT_ID,
-        "task_version": TASK_VERSION,
-        "pickup_request_revision": PICKUP_REVISION,
-        "status": "PASS" if passed == len(checks) else "FAIL",
-        "passed": passed,
-        "total": len(checks),
-        "checks": checks,
-        "actual_blob_sha": actual,
-        "ea_coverage_id_required": EA_COVERAGE_ID,
-        "height_metric_contract": "CURRENT_EA_MAX_MINUS_MIN_EXACT_HMLR_MATCHES_PRESERVED_WITHIN_0_001M",
-        "operator_recovery_executed": False,
-        "runner_restart_observed": False,
-        "product_rows_promoted": 0,
-        "static_contract_only": True,
-        "final_ready": False,
-        "fake_data": False,
-        "db_write": False,
-        "migration": False,
-        "production_deploy": False,
-    }
+    payload = {"schema_version": 13, "slot_id": "height_difference_2", "task_id": TASK_ID, "attempt_id": ATTEMPT_ID, "task_version": TASK_VERSION, "pickup_request_revision": PICKUP_REVISION, "status": "PASS" if passed == len(checks) else "FAIL", "passed": passed, "total": len(checks), "checks": checks, "actual_blob_sha": actual, "ea_coverage_id_required": EA_COVERAGE_ID, "height_metric_contract": "CURRENT_EA_MAX_MINUS_MIN_EXACT_HMLR_MATCHES_PRESERVED_WITHIN_0_001M_BEFORE_TERRAIN_AND_WEB", "current_candidate_metric_binding_required": True, "operator_recovery_executed": False, "runner_restart_observed": False, "product_rows_promoted": 0, "static_contract_only": True, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"ok": passed == len(checks), "passed": passed, "total": len(checks)}))
