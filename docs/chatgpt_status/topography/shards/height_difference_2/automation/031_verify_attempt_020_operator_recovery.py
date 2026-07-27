@@ -11,13 +11,13 @@ TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720
 ATTEMPT_ID = "height-difference-2-20260721-020"
 BRANCH = "codex/aays-single-runner-v5-20260706"
 TASK_VERSION = "6.3-fhost-safe-ffonly-terrain50-webacceptance"
-PICKUP_REVISION = 10
+PICKUP_REVISION = 11
 HELPER_BLOB = "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
 OPERATOR_BLOB = "4565641e078f7058d7946a29c3da411f87be5572"
-CARRIER_BLOB = "91014c72b7f1cc1bd29eba83688e119531d9ea35"
+CARRIER_BLOB = "c3d25055ae182590c382327df09040ab65b8223a"
 ENTRYPOINT_BLOB = "ff6656beb3e8db7d658e03e8373185cc6e500b3b"
-NUMERIC_GATE_BLOB = "6022d2b379a2d5d94bcf1f2ce07aa18ab600bed4"
-WEB_VERIFIER_BLOB = "5fdebfa0bc46cb40151d5a4feee1176541b808e2"
+NUMERIC_GATE_BLOB = "c2633df7a1a0ed7cebdf27331ca44b8bcd0872b1"
+WEB_VERIFIER_BLOB = "f4fd5ecdcee6fed79b2cdd42452eb8f8398abae1"
 TARGET_ROWS = [30762, 46142, 61522]
 
 
@@ -82,23 +82,26 @@ def main() -> int:
     check("operator_ff_only_no_reset", "fetch','--atomic','origin',$branch,'--prune'" in operator and "merge-base','--is-ancestor'" in operator and "merge','--ff-only'" in operator and "reset --hard" not in operator and "hard_reset_used = $false" in operator, "Synchronization is atomic-fetch + ancestry-gated ff-only; hard reset is forbidden.")
     check("operator_remote_exact_head", "BLOCKED_REMOTE_HEAD_NOT_APPLIED" in operator and "$localAfter -ne $remoteHead" in operator, "Local HEAD must equal remote after synchronization.")
     check("operator_receipts", "015_operator_recovery_preflight_latest.json" in operator and "016_operator_git_snapshot_latest.json" in operator, "015 and deterministic 016 receipts are bound.")
-    check("carrier_revision_and_web_floor", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and "$expectedWebRows = 1036" in carrier and ENTRYPOINT_BLOB in carrier and "PORT_8012_ACCEPTANCE_REQUIRED=true" in carrier, "Carrier revision, entrypoint blob and 1036 web gate are aligned.")
+    check("carrier_revision_and_web_floor", TASK_VERSION in carrier and f"$pickupRequestRevision = {PICKUP_REVISION}" in carrier and "$expectedWebRows = 1036" in carrier and ENTRYPOINT_BLOB in carrier and "PORT_8012_ACCEPTANCE_REQUIRED=true" in carrier and "PORT_8012_CURRENT_CANDIDATE_SHA256_REQUIRED=true" in carrier and "PORT_8012_OPERATION_FILE_PATH_GUARD_REQUIRED=true" in carrier, "Carrier revision and current web-byte guards are aligned.")
     check("entrypoint_requires_web_pass", TASK_VERSION in entrypoint and 'numeric_payload.get("web_acceptance_passed") is True' in entrypoint and "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW" in entrypoint, "Entrypoint cannot succeed on numeric rows alone.")
-    check("numeric_gate_fail_closed_web", 'AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"' in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_AFTER_NUMERIC_READY" in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_VERIFIER_MISSING" in numeric_gate and "PORT_8012_WEB_ACCEPTANCE_PASSED" in numeric_gate, "Numeric orchestrator requires real web verifier PASS.")
-    check("web_verifier_exact_rows", "TARGET_ROWS = [30762, 46142, 61522]" in web_verifier and "candidate exact row set mismatch" in web_verifier and "exact_target_rows_verified" in web_verifier and "EXPECTED_PRE_ACCEPTANCE_STATUS" in web_verifier and "default=1036" in web_verifier, "Port8012 verifier binds the exact three rows, candidate phase and 1036 floor.")
+    check("numeric_gate_current_candidate_sha", '"--expected-candidates-sha256"' in numeric_gate and "preacceptance_candidates_sha256" in numeric_gate and 'web_payload.get("candidate_http_sha256") == expected_candidates_sha256' in numeric_gate and 'web_payload.get("current_candidate_bytes_verified") is True' in numeric_gate, "Numeric orchestrator binds the HTTP candidate bytes to the exact preacceptance file SHA256.")
+    check("numeric_gate_exact_rows", "official numeric exact row set mismatch" in numeric_gate and "[30762, 46142, 61522]" in numeric_gate, "Numeric gate itself rejects a non-exact three-row set.")
+    check("web_verifier_current_candidate_sha", "expected-candidates-sha256" in web_verifier and "candidate HTTP SHA256 mismatch" in web_verifier and "current_candidate_bytes_verified" in web_verifier and TASK_ID in web_verifier and ATTEMPT_ID in web_verifier, "Port8012 verifier requires current candidate bytes and exact task/attempt binding.")
+    check("web_verifier_operation_path_guard", "_safe_operation_file_name" in web_verifier and "operation file escapes slot root" in web_verifier and "operation_file_path_guard_verified" in web_verifier and "duplicate file names" in web_verifier, "Operation files are constrained to unique slot-local JSON basenames.")
+    check("web_verifier_exact_rows", "TARGET_ROWS = [30762, 46142, 61522]" in web_verifier and "candidate exact row set mismatch" in web_verifier and "exact_target_rows_verified" in web_verifier, "Port8012 verifier binds exact target rows.")
 
     check("queue_identity", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("task_version") == TASK_VERSION and queue.get("pickup_request_revision") == PICKUP_REVISION, "Queue identity and pickup revision match.")
     check("queue_blobs", queue.get("restart_helper_blob_sha") == HELPER_BLOB and queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB and queue.get("script_blob_sha") == CARRIER_BLOB and queue.get("python_script_blob_sha") == ENTRYPOINT_BLOB and queue.get("official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and queue.get("web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Queue pins the exact recovery/runtime blob set.")
     check("queue_recovery_policy", queue.get("git_snapshot_always_required") is True and queue.get("snapshot_capture_before_sync_required") is True and queue.get("snapshot_publication_after_sync_or_blocked_exit_required") is True and queue.get("hard_reset_forbidden") is True and queue.get("fast_forward_only_required") is True, "Queue pins race-safe snapshot and ff-only/no-reset recovery.")
-    check("queue_exact_data_and_web", queue.get("sample_rows") == TARGET_ROWS and queue.get("web_exact_target_rows_required") == TARGET_ROWS and int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Queue binds exact target rows and current web acceptance.")
+    check("queue_exact_data_and_web", queue.get("sample_rows") == TARGET_ROWS and queue.get("web_exact_target_rows_required") == TARGET_ROWS and int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and queue.get("web_current_candidate_sha256_required") is True and queue.get("web_operation_file_path_guard_required") is True, "Queue binds exact targets, current candidate SHA and safe operation paths.")
 
     check("request_identity", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("request_revision") == PICKUP_REVISION and request.get("required_pickup_request_revision") == PICKUP_REVISION, "Restart request identity/revision match queue and carrier.")
     check("request_blobs", request.get("required_restart_helper_blob_sha") == HELPER_BLOB and request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB and request.get("required_carrier_blob_sha") == CARRIER_BLOB and request.get("required_entrypoint_blob_sha") == ENTRYPOINT_BLOB and request.get("required_official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB and request.get("required_web_verifier_blob_sha") == WEB_VERIFIER_BLOB, "Restart request pins the exact runtime blob set.")
-    check("request_recovery_and_web", request.get("snapshot_capture_before_sync_required") is True and request.get("snapshot_publication_after_sync_or_blocked_exit_required") is True and request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and request.get("web_exact_target_rows_required") == TARGET_ROWS and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Restart request matches race-safe recovery and exact-row web acceptance.")
+    check("request_recovery_and_web", request.get("snapshot_capture_before_sync_required") is True and request.get("snapshot_publication_after_sync_or_blocked_exit_required") is True and request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and request.get("web_exact_target_rows_required") == TARGET_ROWS and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED" and request.get("web_current_candidate_sha256_required") is True and request.get("web_operation_file_path_guard_required") is True, "Restart request matches race-safe recovery and current-byte exact-row web acceptance.")
 
     passed = sum(1 for item in checks if item["passed"])
     payload = {
-        "schema_version": 7,
+        "schema_version": 8,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
