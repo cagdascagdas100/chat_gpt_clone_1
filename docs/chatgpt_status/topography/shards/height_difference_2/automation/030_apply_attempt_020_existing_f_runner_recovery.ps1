@@ -68,7 +68,7 @@ function Write-Receipt {
     [string]$Detail
   )
   Write-JsonFile $outputRel ([ordered]@{
-    schema_version = 2
+    schema_version = 3
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -85,6 +85,8 @@ function Write-Receipt {
     stash_auto_restore_attempted = $false
     fetch_attempted = $FetchAttempted
     reset_applied = $ResetApplied
+    hard_reset_used = $false
+    sync_mode = 'atomic_fetch_ff_only_exact_head_no_hard_reset'
     helper_invoked = $HelperInvoked
     helper_timed_out = $HelperTimedOut
     helper_exit_code = $HelperExitCode
@@ -136,7 +138,7 @@ $stashRef = ''
 
 if ($dirtyBefore) {
   Write-JsonFile $snapshotRel ([ordered]@{
-    schema_version = 1
+    schema_version = 2
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -146,7 +148,8 @@ if ($dirtyBefore) {
     local_head_before = $localBefore
     dirty_entry_count = $dirtyLines.Count
     dirty_entries = $dirtyLines
-    recovery_policy = 'stash_include_untracked_no_auto_pop'
+    recovery_policy = 'stash_include_untracked_no_auto_pop_then_ff_only'
+    hard_reset_forbidden = $true
     final_ready = $false
   })
   $snapshotWritten = $true
@@ -185,36 +188,40 @@ if ($remoteHeadResult.ExitCode -ne 0 -or -not $remoteHeadResult.StdOut.Trim()) {
 $remoteHead = $remoteHeadResult.StdOut.Trim()
 
 $resetApplied = $false
-if ($localBefore -ne $remoteHead -or $dirtyBefore) {
-  $reset = Invoke-GitBounded @('-C',$repoRoot,'reset','--hard',"origin/$branch") $GitTimeoutSeconds
-  if ($reset.ExitCode -ne 0) {
-    Write-Receipt 'BLOCKED_CANONICAL_RESET_FAILED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localBefore ($reset.StdErr.Trim())
+if ($localBefore -ne $remoteHead) {
+  $ancestor = Invoke-GitBounded @('-C',$repoRoot,'merge-base','--is-ancestor',$localBefore,$remoteHead) $GitTimeoutSeconds
+  if ($ancestor.ExitCode -ne 0) {
+    Write-Receipt 'BLOCKED_CANONICAL_NON_FF_DIVERGENCE' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localBefore 'Local canonical branch is not an ancestor of remote; hard reset is forbidden. Preserve state and reconcile separately.'
     exit 6
   }
-  $resetApplied = $true
+  $fastForward = Invoke-GitBounded @('-C',$repoRoot,'merge','--ff-only',"origin/$branch") $GitTimeoutSeconds
+  if ($fastForward.ExitCode -ne 0) {
+    Write-Receipt 'BLOCKED_CANONICAL_FF_ONLY_FAILED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localBefore ($fastForward.StdErr.Trim())
+    exit 6
+  }
 }
 
 $localAfterResult = Invoke-GitBounded @('-C',$repoRoot,'rev-parse','HEAD') $GitTimeoutSeconds
 $localAfter = $localAfterResult.StdOut.Trim()
 if ($localAfterResult.ExitCode -ne 0 -or $localAfter -ne $remoteHead) {
-  Write-Receipt 'BLOCKED_REMOTE_HEAD_NOT_APPLIED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter 'local head does not match remote head'
+  Write-Receipt 'BLOCKED_REMOTE_HEAD_NOT_APPLIED' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localAfter 'local head does not exactly match remote head after ff-only synchronization'
   exit 7
 }
-$postResetStatus = Invoke-GitBounded @('-C',$repoRoot,'status','--porcelain=v1','-uall') $GitTimeoutSeconds
-if ($postResetStatus.ExitCode -ne 0 -or $postResetStatus.StdOut.Trim()) {
-  Write-Receipt 'BLOCKED_CANONICAL_REPO_DIRTY_AFTER_RESET' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter ($postResetStatus.StdOut.Trim())
+$postSyncStatus = Invoke-GitBounded @('-C',$repoRoot,'status','--porcelain=v1','-uall') $GitTimeoutSeconds
+if ($postSyncStatus.ExitCode -ne 0 -or $postSyncStatus.StdOut.Trim()) {
+  Write-Receipt 'BLOCKED_CANONICAL_REPO_DIRTY_AFTER_SYNC' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localAfter ($postSyncStatus.StdOut.Trim())
   exit 7
 }
 
 $helper = Join-Path $repoRoot $helperRel
 if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) {
-  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_MISSING' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter $helper
+  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_MISSING' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localAfter $helper
   exit 8
 }
 $helperBlobResult = Invoke-GitBounded @('-C',$repoRoot,'hash-object','--',$helper) $GitTimeoutSeconds
 $helperBlob = $helperBlobResult.StdOut.Trim()
 if ($helperBlobResult.ExitCode -ne 0 -or $helperBlob -ne $expectedHelperBlob) {
-  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $false $false -1 $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"
+  Write-Receipt 'BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH' $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $false $false -1 $localBefore $remoteHead $localAfter "helper_blob=$helperBlob"
   exit 9
 }
 
@@ -235,7 +242,7 @@ $status = if ($helperTimedOut) {
 } else {
   'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_FAILED'
 }
-$detail = "helper_blob=$helperBlob"
+$detail = "helper_blob=$helperBlob;sync_mode=atomic_fetch_ff_only_exact_head_no_hard_reset"
 if ($stashCreated) { $detail += ";stash_ref=$stashRef;stash_restore=manual_only" }
-Write-Receipt $status $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $resetApplied $true $helperTimedOut $helperExit $localBefore $remoteHead $localAfter $detail
+Write-Receipt $status $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $true $helperTimedOut $helperExit $localBefore $remoteHead $localAfter $detail
 exit $helperExit
