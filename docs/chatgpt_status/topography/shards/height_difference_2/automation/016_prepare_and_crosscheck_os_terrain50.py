@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -11,8 +13,13 @@ import zipfile
 from pathlib import Path
 from typing import Any, Iterable
 
+ASCII_SUFFIXES = {".asc", ".txt"}
+SIDECAR_SUFFIXES = {".prj"}
 MAX_MEMBER_BYTES = 20_000_000
+MAX_SIDECAR_BYTES = 1_000_000
+MAX_NESTED_ARCHIVE_BYTES = 50_000_000
 MAX_EXTRACTED_BYTES = 600_000_000
+MAX_NESTING_DEPTH = 2
 
 
 def _write(path: Path, payload: Any) -> None:
@@ -25,29 +32,98 @@ def _run(command: list[str], cwd: Path) -> dict[str, Any]:
     return {"command": command, "exit_code": process.returncode, "stdout": process.stdout[-8000:], "stderr": process.stderr[-8000:]}
 
 
+def _member_tile(name: str) -> str | None:
+    stem = Path(name).stem.casefold()
+    matches = re.findall(r"(?<![a-z])([a-z]{2}\d{2})(?!\d)", stem)
+    return matches[-1] if matches else None
+
+
+def _safe_member_path(name: str) -> Path:
+    path = Path(name)
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"unsafe Terrain50 archive member: {name}")
+    return path
+
+
+def _safe_extract_zip(
+    zf: zipfile.ZipFile,
+    root: Path,
+    *,
+    prefix: str,
+    depth: int,
+    total: list[int],
+    container_tile: str | None,
+) -> list[str]:
+    written: list[str] = []
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        path = _safe_member_path(info.filename)
+        suffix = path.suffix.casefold()
+        member_tile = _member_tile(path.name) or container_tile
+        if suffix in ASCII_SUFFIXES | SIDECAR_SUFFIXES:
+            if member_tile is None:
+                continue
+            limit = MAX_MEMBER_BYTES if suffix in ASCII_SUFFIXES else MAX_SIDECAR_BYTES
+            if info.file_size <= 0 or info.file_size > limit:
+                raise ValueError(f"Terrain50 member size invalid: {info.filename}")
+            total[0] += info.file_size
+            if total[0] > MAX_EXTRACTED_BYTES:
+                raise ValueError("Terrain50 extracted data exceeds safety limit")
+            target = root / f"{prefix}_{path.name}"
+            if target.exists():
+                raise ValueError(f"Terrain50 extraction target collision: {target.name}")
+            with zf.open(info) as source, target.open("wb") as destination:
+                shutil.copyfileobj(source, destination, length=1024 * 1024)
+            if suffix in ASCII_SUFFIXES:
+                written.append(str(target))
+            continue
+        if suffix != ".zip":
+            continue
+        nested_tile = _member_tile(path.name) or container_tile
+        if depth >= MAX_NESTING_DEPTH:
+            raise ValueError(f"Terrain50 nested archive depth exceeds limit: {info.filename}")
+        if info.file_size <= 0 or info.file_size > MAX_NESTED_ARCHIVE_BYTES:
+            raise ValueError(f"Terrain50 nested archive size invalid: {info.filename}")
+        with zf.open(info) as source:
+            payload = source.read(MAX_NESTED_ARCHIVE_BYTES + 1)
+        if len(payload) != info.file_size or len(payload) > MAX_NESTED_ARCHIVE_BYTES:
+            raise ValueError(f"Terrain50 nested archive read invalid: {info.filename}")
+        try:
+            with zipfile.ZipFile(io.BytesIO(payload)) as nested:
+                written.extend(
+                    _safe_extract_zip(
+                        nested,
+                        root,
+                        prefix=f"{prefix}_{path.stem}",
+                        depth=depth + 1,
+                        total=total,
+                        container_tile=nested_tile,
+                    )
+                )
+        except zipfile.BadZipFile as exc:
+            raise ValueError(f"Terrain50 nested archive invalid: {info.filename}") from exc
+    return written
+
+
 def _safe_extract_archives(archives: list[Path], root: Path) -> list[str]:
     root.mkdir(parents=True, exist_ok=True)
     written: list[str] = []
-    total = 0
+    total = [0]
     for archive_index, archive in enumerate(archives, start=1):
         if not archive.is_file() or not zipfile.is_zipfile(archive):
             raise ValueError(f"Terrain50 archive invalid: {archive}")
         with zipfile.ZipFile(archive) as zf:
-            for info in zf.infolist():
-                if info.is_dir() or Path(info.filename).suffix.casefold() not in {".asc", ".txt"}:
-                    continue
-                path = Path(info.filename)
-                if path.is_absolute() or ".." in path.parts:
-                    raise ValueError(f"unsafe Terrain50 archive member: {info.filename}")
-                if info.file_size <= 0 or info.file_size > MAX_MEMBER_BYTES:
-                    raise ValueError(f"Terrain50 member size invalid: {info.filename}")
-                total += info.file_size
-                if total > MAX_EXTRACTED_BYTES:
-                    raise ValueError("Terrain50 extracted data exceeds safety limit")
-                target = root / f"a{archive_index}_{path.name}"
-                with zf.open(info) as source, target.open("wb") as destination:
-                    shutil.copyfileobj(source, destination, length=1024 * 1024)
-                written.append(str(target))
+            written.extend(
+                _safe_extract_zip(
+                    zf,
+                    root,
+                    prefix=f"a{archive_index}",
+                    depth=0,
+                    total=total,
+                    container_tile=None,
+                )
+            )
     if not written:
         raise ValueError("no Terrain50 ASCII grid files extracted")
     return written
@@ -91,7 +167,7 @@ def main(argv: Iterable[str] | None = None) -> int:
                 raise ValueError("Terrain50 resolver returned no archives")
             extracted_root = args.output_dir / "resolved_ascii_root"
             extracted = _safe_extract_archives(archives, extracted_root)
-            stages.append({"stage": "TERRAIN50_MULTI_ARCHIVE_SAFE_EXTRACTION", "exit_code": 0, "archive_count": len(archives), "ascii_grid_file_count": len(extracted), "root": str(extracted_root)})
+            stages.append({"stage": "TERRAIN50_MULTI_ARCHIVE_SAFE_EXTRACTION", "exit_code": 0, "archive_count": len(archives), "ascii_grid_file_count": len(extracted), "root": str(extracted_root), "nested_zip_supported": True, "prj_sidecars_preserved": True})
             source_kind, source_value = "os_downloads_api_resolved_root", extracted_root
         command = [sys.executable, str(crosschecker), "--hmlr-exact-matches", str(args.hmlr_exact_matches), "--ea-samples", str(args.ea_samples), "--work-dir", str(args.output_dir / "crosscheck_work"), "--output", str(args.output)]
         if source_kind == "configured_archive":
