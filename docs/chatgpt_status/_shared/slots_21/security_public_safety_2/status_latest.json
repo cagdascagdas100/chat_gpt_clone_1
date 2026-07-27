@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_2",
@@ -14,9 +14,9 @@
   "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
   "attempt_id": "attempt-001",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
-  "state": "RECOVERY_REFRESHED_WAITING_SINGLE_RUNNER_CLAIM",
+  "state": "RECOVERY_PARKED_RUNNER_QUEUE_CONSUMER_UNAVAILABLE",
   "queue_status": "pickup_requested",
-  "blocker": null,
+  "blocker": "The canonical queue item remained unclaimed and produced no output for more than 20 minutes after the single permitted idempotent recovery refresh. No live owner, heartbeat, lease or runner result is present, so a second refresh or duplicate runner/task is forbidden.",
   "runtime_live_owner": false,
   "current_candidate_rows": 96,
   "current_accuracy_ge_95_candidate_rows": 93,
@@ -35,18 +35,22 @@
   "recovery": {
     "triggered": true,
     "attempt": 1,
-    "reason": "pickup_requested_unclaimed_for_more_than_15_minutes_and_output_absent",
     "queue_refresh_commit": "470ba9be94405d8aa0577c1a96e612689c9601a2",
     "recovery_evidence_commit": "64fe11c1a877a30f5157002a3be284f6776d46e8",
+    "refresh_requested_at": "2026-07-27T13:47:28Z",
+    "evaluated_at": "2026-07-27T14:08:34Z",
+    "claim_observed": false,
+    "output_observed": false,
     "same_task": true,
     "same_continuation_key": true,
+    "second_refresh_forbidden": true,
     "second_task_created": false,
     "second_runner_created": false,
-    "manual_user_action_required": false
+    "manual_user_action_required": true
   },
-  "next_single_action": "Wait for one canonical runner claim and execute the existing 300-row script; do not create another task. If no claim/output follows this one refresh, set RECOVERY_PARKED with the runner-consumer reason.",
+  "next_single_action": "Restore one healthy canonical queue consumer/runner, confirm ACTIVE with a current heartbeat, then allow it to claim the existing queue item. Do not create or start a second task or runner.",
   "fake_data": false,
-  "updated_at": "2026-07-27T13:47:28Z",
+  "updated_at": "2026-07-27T14:08:34Z",
   "result": null,
   "final_ready": false
 }
