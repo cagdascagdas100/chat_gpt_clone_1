@@ -13,6 +13,8 @@ $helperRel = 'docs\chatgpt_status\topography\shards\height_difference_2\automati
 $expectedHelperBlob = 'b3a18bcdb1b7158d18aab33b42d5797342d23cd1'
 $outputRel = 'docs\chatgpt_status\topography\shards\height_difference_2\runner_outputs\015_operator_recovery_preflight_latest.json'
 $snapshotRel = 'docs\chatgpt_status\topography\shards\height_difference_2\runner_outputs\016_operator_git_snapshot_latest.json'
+$script:snapshotPayload = $null
+$script:snapshotWritten = $false
 
 function Invoke-GitBounded {
   param(
@@ -50,6 +52,12 @@ function Write-JsonFile {
   $Payload | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $path -Encoding UTF8
 }
 
+function Publish-Snapshot {
+  if ($script:snapshotWritten -or $null -eq $script:snapshotPayload) { return }
+  Write-JsonFile $snapshotRel $script:snapshotPayload
+  $script:snapshotWritten = $true
+}
+
 function Write-Receipt {
   param(
     [string]$Status,
@@ -67,8 +75,10 @@ function Write-Receipt {
     [string]$LocalHeadAfter,
     [string]$Detail
   )
+  Publish-Snapshot
+  $SnapshotWritten = $script:snapshotWritten
   Write-JsonFile $outputRel ([ordered]@{
-    schema_version = 4
+    schema_version = 5
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -81,6 +91,7 @@ function Write-Receipt {
     dirty_before = $DirtyBefore
     snapshot_written = $SnapshotWritten
     snapshot_required_for_clean_and_dirty = $true
+    snapshot_publication_phase = 'receipt_exit_after_sync_or_on_blocked_exit'
     stash_created = $StashCreated
     stash_ref = $StashRef
     stash_auto_restore_attempted = $false
@@ -136,9 +147,8 @@ $dirtyBefore = $dirtyLines.Count -gt 0
 $snapshotWritten = $false
 $stashCreated = $false
 $stashRef = ''
-
-Write-JsonFile $snapshotRel ([ordered]@{
-  schema_version = 3
+$script:snapshotPayload = [ordered]@{
+  schema_version = 4
   slot_id = 'height_difference_2'
   task_id = $taskId
   attempt_id = $attemptId
@@ -150,12 +160,13 @@ Write-JsonFile $snapshotRel ([ordered]@{
   dirty_entry_count = $dirtyLines.Count
   dirty_entries = $dirtyLines
   snapshot_kind = 'pre_recovery_git_status_clean_or_dirty'
+  snapshot_capture_phase = 'memory_before_stash_fetch_sync'
+  snapshot_publication_phase = 'receipt_exit_after_sync_or_on_blocked_exit'
   recovery_policy = 'snapshot_always_stash_if_dirty_no_auto_pop_then_ff_only'
   hard_reset_forbidden = $true
   stash_required = $dirtyBefore
   final_ready = $false
-})
-$snapshotWritten = $true
+}
 
 if ($dirtyBefore) {
   $stashMessage = "height_difference_2 attempt020 guarded recovery $((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))"
@@ -246,7 +257,7 @@ $status = if ($helperTimedOut) {
 } else {
   'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_FAILED'
 }
-$detail = "helper_blob=$helperBlob;sync_mode=atomic_fetch_ff_only_exact_head_no_hard_reset;snapshot_always=true"
+$detail = "helper_blob=$helperBlob;sync_mode=atomic_fetch_ff_only_exact_head_no_hard_reset;snapshot_capture=memory;snapshot_publish=receipt_exit"
 if ($stashCreated) { $detail += ";stash_ref=$stashRef;stash_restore=manual_only" }
 Write-Receipt $status $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $true $helperTimedOut $helperExit $localBefore $remoteHead $localAfter $detail
 exit $helperExit
