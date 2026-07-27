@@ -58,7 +58,8 @@ if (-not (Test-Path -LiteralPath $TerrainArchive -PathType Leaf)) { throw "Missi
   --terrain50-source $TerrainArchive `
   --output-dir $MeasureOut `
   --timeout 120 `
-  --maximum-crosscheck-difference-m 8.0
+  --maximum-crosscheck-difference-m 8.0 `
+  --require-exact-official-id
 if ($LASTEXITCODE -ne 0) { throw "Official 12-candidate measurement pipeline failed with exit code $LASTEXITCODE" }
 
 $Measurement = Join-Path $MeasureOut "official_measurements.json"
@@ -89,7 +90,7 @@ foreach ($R in $M.measured_rows) {
 }
 
 $Result = @{
-  schema_version = 4
+  schema_version = 5
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   prepared_and_measured_rows = $Expected
@@ -106,6 +107,7 @@ $Result = @{
   proj_gate_candidate_aware = $true
   proj_maximum_display_delta_m = 20.0
   exact_hmlr_official_id_gate = $true
+  exact_hmlr_gate_runs_before_elevation_sampling = $true
   nearest_fill_forbidden = $true
   numeric_publish_gate_passed = $true
   remote_readback_required = $true
