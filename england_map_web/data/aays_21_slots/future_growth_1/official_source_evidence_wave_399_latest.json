@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 399,
+  "topic": "EA_FLOOD_MAP_FOR_PLANNING_EXACT_LAYER_DOWNLOAD_API_AND_FRA_GATES",
+  "generated_at": "2026-07-27T19:10:40+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_EA_FLOOD_LAYER_ACQUISITION_READINESS_NOT_SITE_FRA_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.7,
+  "sources": [
+    {"key":"fz","url":"https://www.data.gov.uk/dataset/104434b0-5263-4c90-9b1e-e43b1d57c750/flood-map-for-planning-flood-zones1","fact":"Flood Zones dataset last updated 6 July 2026; Flood Zones 2 and 3 are supplied while Zone 1 is the remainder outside those extents."},
+    {"key":"fzcc","url":"https://www.data.gov.uk/dataset/77931470-ee6b-4f8e-8868-82842aed2e5d/flood-map-for-planning-flood-zones-plus-climate-change","fact":"Flood Zones plus climate change updated 6 July 2026 and provides OGC API Features, WFS/WMS and downloadable GeoPackage/GeoJSON/GDB resources."},
+    {"key":"sw_ext_pd","url":"https://www.data.gov.uk/dataset/dfd734fb-cc68-4229-b60d-8c0280398052/flood-map-for-planning-surface-water-spatial-planning-extents-present-day","fact":"Present-day surface-water extents use 0.1%, 1% and 3.3% AEP scenarios and are not suitable for individual-property risk conclusions."},
+    {"key":"sw_ext_cc","url":"https://www.data.gov.uk/dataset/9c081ecf-18c3-4c91-89b5-a3c1d0e5dbef/flood-map-for-planning-surface-water-spatial-planning-extents-climate-change","fact":"Climate-change surface-water extents updated 6 July 2026 use UKCP18 RCP8.5 upper-end 2070s scenario for long-term planning."},
+    {"key":"sw_depth_pd","url":"https://environment.data.gov.uk/dataset/fa3a36ed-121c-424b-b8bf-8108f959b7a9","fact":"Present-day surface-water depth data uses AEP scenarios and depth bands but remains area-level planning evidence."},
+    {"key":"sw_depth_cc","url":"https://www.data.gov.uk/dataset/ff48e392-ab66-49fa-b6dc-3dc72485a6db/flood-map-for-planning-surface-water-spatial-planning-depths-climate-change","fact":"Climate-change depth layers provide bands from up to 150mm through over 2300mm for the modelled AEP scenarios."},
+    {"key":"service","url":"https://flood-map-for-planning.service.gov.uk/","fact":"Official service supports planning flood-risk lookup, printable maps and ordering detailed flood-risk data."},
+    {"key":"fra","url":"https://www.gov.uk/guidance/flood-risk-assessments-applying-for-planning-permission","fact":"Updated 28 May 2026; applicants must determine whether a site-specific FRA and sustainable drainage information are needed."},
+    {"key":"allowances","url":"https://www.gov.uk/guidance/flood-risk-assessments-climate-change-allowances","fact":"Climate-change allowances cover peak river flow, rainfall intensity, sea-level rise and other parameters and must be selected for the relevant assessment."},
+    {"key":"lpa_advice","url":"https://www.gov.uk/guidance/national-flood-risk-standing-advice-for-local-planning-authorities","fact":"Updated 28 May 2026; LPA checks include site research, development class, FRA need, SuDS, sequential/exception tests and consultation routes."},
+    {"key":"applicant_advice","url":"https://www.gov.uk/guidance/preparing-a-flood-risk-assessment-standing-advice","fact":"Applicant standing advice updated 28 May 2026; it does not replace site-specific evidence where a full FRA is required."},
+    {"key":"ppg","url":"https://www.gov.uk/guidance/flood-risk-and-coastal-change","fact":"Planning guidance requires sequential consideration of flood risk and recognises other flood sources beyond mapped river/sea zones."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"Flood-zone polygon intersection is retained as screening evidence, not a complete site-specific FRA."},
+    {"id":"EX02","result":"Flood Zone 1 is not represented by fabricating a polygon; it is derived only under the official zone semantics."},
+    {"id":"EX03","result":"Surface-water datasets explicitly unsuitable for individual-property risk are not converted into parcel probability scores."},
+    {"id":"EX04","result":"Climate-change and present-day layers remain separate and are not mixed into one undocumented risk value."},
+    {"id":"EX05","result":"Defence benefits are not inferred from Flood Zones because the mapped zones ignore defence benefits."},
+    {"id":"EX06","result":"OGC/WFS/GeoJSON availability is an acquisition route, not proof that exact candidate overlay has been executed."},
+    {"id":"EX07","result":"Sequential/exception-test need depends on site and proposal context, not just centroid zone lookup."},
+    {"id":"EX08","result":"No flood promotion occurs until exact parcel overlay, current datasets and site-specific FRA/assessment evidence are bound where required."}
+  ],
+  "fail_closed_rules": ["zone_intersection_not_fra","zone1_no_fabricated_polygon","surface_water_not_property_probability","present_and_cc_separate","defence_benefit_not_inferred","api_available_not_overlay_executed","sequential_test_requires_site_context","exception_test_requires_proposal","aep_not_delivery_score","depth_band_not_damage_prediction","other_flood_sources_required","dataset_revision_retained","no_centroid_only_flood_binding","no_nearest_zone_fill","no_generic_flood_score","promotion_requires_exact_overlay_and_required_fra"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"flood_layer_examples_revalidated":8,"exact_flood_overlays_executed_this_wave":0,"site_specific_fras_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
