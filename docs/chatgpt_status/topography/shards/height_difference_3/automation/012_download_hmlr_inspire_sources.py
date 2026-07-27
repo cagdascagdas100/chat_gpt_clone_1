@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Download current HMLR INSPIRE files for validated starter candidates.
 
-Only a unique normalized local-authority match is accepted. Downloads are
-restricted to the official HMLR host, hashed and inspected; ambiguous links,
+Only a unique normalized local-authority match is accepted. Entry links are
+restricted to the official HMLR host; the known HMLR signed S3 distribution
+redirect is also accepted. Downloads are hashed and inspected; ambiguous links,
 HTML error pages and unsafe archives fail closed. No parcel measurement is
 produced here.
 """
@@ -23,6 +24,8 @@ import requests
 
 DEFAULT_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 OFFICIAL_HOST = "use-land-property-data.service.gov.uk"
+HMLR_SIGNED_DOWNLOAD_HOST = "datapub-prd-s3-bucket.s3.amazonaws.com"
+TRUSTED_DOWNLOAD_HOSTS = {OFFICIAL_HOST, HMLR_SIGNED_DOWNLOAD_HOST}
 MAX_DOWNLOAD_BYTES = 1_500_000_000
 MAX_EXTRACTED_BYTES = 2_000_000_000
 
@@ -126,9 +129,14 @@ def _context_authority_key(context: str, anchor_text: str) -> str:
     return _authority_key(context_norm)
 
 
-def _official(url: str) -> bool:
+def _official_entry(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme == "https" and parsed.hostname == OFFICIAL_HOST
+
+
+def _trusted_download(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and parsed.hostname in TRUSTED_DOWNLOAD_HOSTS
 
 
 def _slug(value: str) -> str:
@@ -161,13 +169,13 @@ def _load_candidates(path: Path) -> list[dict[str, Any]]:
 
 
 def _stream_download(session: requests.Session, url: str, output: Path, timeout: int) -> dict[str, Any]:
-    if not _official(url):
-        raise ValueError("HMLR download URL is not the pinned official host")
+    if not _official_entry(url):
+        raise ValueError("HMLR download URL is not the pinned official entry host")
     output.parent.mkdir(parents=True, exist_ok=True)
     with session.get(url, timeout=timeout, stream=True, allow_redirects=True) as response:
         response.raise_for_status()
-        if not _official(response.url):
-            raise ValueError(f"HMLR download redirected off official host: {response.url}")
+        if not _trusted_download(response.url):
+            raise ValueError(f"HMLR download redirected to untrusted host: {response.url}")
         content_type = response.headers.get("content-type", "")
         total = 0
         with output.open("wb") as handle:
@@ -180,7 +188,13 @@ def _stream_download(session: requests.Session, url: str, output: Path, timeout:
                 handle.write(chunk)
     if total == 0:
         raise ValueError("HMLR download is empty")
-    return {"resolved_url": response.url, "content_type": content_type, "size_bytes": total}
+    return {
+        "resolved_url": response.url,
+        "resolved_host": urlparse(response.url).hostname,
+        "content_type": content_type,
+        "size_bytes": total,
+        "trusted_redirect": True,
+    }
 
 
 def _safe_extract_gml(archive: Path, output_dir: Path) -> list[Path]:
@@ -219,7 +233,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--user-agent", default="TerraYield-AAYS/height_difference_3")
     args = parser.parse_args(argv)
 
-    if not _official(args.download_page):
+    if not _official_entry(args.download_page):
         raise ValueError("HMLR download page is not the pinned official host")
 
     candidates = _load_candidates(args.starter_manifest)
@@ -228,7 +242,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     session.headers.update({"User-Agent": args.user_agent})
     page_response = session.get(args.download_page, timeout=args.timeout, allow_redirects=True)
     page_response.raise_for_status()
-    if not _official(page_response.url):
+    if not _official_entry(page_response.url):
         raise ValueError(f"HMLR download page redirected off official host: {page_response.url}")
     page_body = page_response.content
     parser_html = AnchorParser()
@@ -246,7 +260,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             if not href:
                 continue
             resolved = urljoin(page_response.url, href)
-            if not _official(resolved):
+            if not _official_entry(resolved):
                 continue
             context_key = _context_authority_key(context, anchor_text)
             href_key = _authority_key(Path(urlparse(resolved).path).stem)
@@ -296,6 +310,8 @@ def main(argv: Iterable[str] | None = None) -> int:
                 "authority_match_method": match["match_method"],
                 "download_link": match,
                 "resolved_url": meta["resolved_url"],
+                "resolved_host": meta["resolved_host"],
+                "trusted_redirect": meta["trusted_redirect"],
                 "content_type": meta["content_type"],
                 "container_type": container_type,
                 "vectors": vector_info,
@@ -304,14 +320,14 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     status = "READY" if len(records) == len(authorities) and not blocked else "BLOCKED_HMLR_SOURCE_PREPARATION"
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "status": status,
         "download_page": args.download_page,
         "download_page_resolved_url": page_response.url,
         "download_page_sha256": hashlib.sha256(page_body).hexdigest(),
-        "official_host": OFFICIAL_HOST,
-        "official_host_only": True,
+        "official_entry_host": OFFICIAL_HOST,
+        "trusted_download_hosts": sorted(TRUSTED_DOWNLOAD_HOSTS),
         "candidate_count": len(candidates),
         "authority_count": len(authorities),
         "prepared_authority_count": len(records),
