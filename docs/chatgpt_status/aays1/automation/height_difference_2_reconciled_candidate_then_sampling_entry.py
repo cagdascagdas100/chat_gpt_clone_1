@@ -11,6 +11,7 @@ from typing import Any
 
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 ATTEMPT_ID = "height-difference-2-20260721-020"
+TASK_VERSION = "6.3-fhost-safe-ffonly-terrain50-webacceptance"
 EXPECTED_BRANCH = "codex/aays-single-runner-v5-20260706"
 EXPECTED_PAGE_KEY = "aays1"
 TARGET_ROWS = [30762, 46142, 61522]
@@ -92,14 +93,17 @@ def main() -> int:
     missing = [str(path) for path in required if not path.is_file() or path.stat().st_size == 0]
     if missing:
         payload = {
-            "schema_version": 4,
+            "schema_version": 5,
             "slot_id": "height_difference_2",
             "task_id": TASK_ID,
             "attempt_id": ATTEMPT_ID,
+            "task_version": TASK_VERSION,
             "status": "BLOCKED_RECONCILED_ENTRYPOINT_INPUT_MISSING",
             "missing": missing,
             "target_rows": TARGET_ROWS,
             "official_numeric_row_count": 0,
+            "web_acceptance_required": True,
+            "web_acceptance_passed": False,
             "final_ready": False,
             "fake_data": False,
             "db_write": False,
@@ -160,23 +164,27 @@ def main() -> int:
         and numeric_stage.get("exit_code") == 0
         and candidate_payload.get("candidate_seed_count") == 3
         and numeric_payload.get("official_numeric_row_count") == 3
+        and numeric_payload.get("web_acceptance_passed") is True
+        and numeric_payload.get("status") == "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW"
     )
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
-        "task_version": "6.2-fhost-safe-ffonly-terrain50-webfloor",
-        "status": "THREE_SOURCE_OFFICIAL_NUMERIC_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
+        "task_version": TASK_VERSION,
+        "status": "THREE_SOURCE_OFFICIAL_NUMERIC_AND_WEB_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
         "target_rows": TARGET_ROWS,
         "stage_order": [
             "RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION",
             "FRESH_HMLR_GML_REVALIDATION",
-            "OFFICIAL_NUMERIC_GATE",
+            "OFFICIAL_NUMERIC_GATE_WITH_PORT_8012_ACCEPTANCE",
         ],
         "stages": stages,
         "candidate_seed_count": candidate_payload.get("candidate_seed_count", 0),
         "official_numeric_row_count": numeric_payload.get("official_numeric_row_count", 0),
+        "web_acceptance_required": True,
+        "web_acceptance_passed": numeric_payload.get("web_acceptance_passed") is True,
         "fresh_official_hmlr_revalidation_required": True,
         "nearest_row_fallback_used": False,
         "nearest_polygon_fill_used": False,
