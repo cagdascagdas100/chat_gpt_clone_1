@@ -68,7 +68,7 @@ function Write-Receipt {
     [string]$Detail
   )
   Write-JsonFile $outputRel ([ordered]@{
-    schema_version = 3
+    schema_version = 4
     slot_id = 'height_difference_2'
     task_id = $taskId
     attempt_id = $attemptId
@@ -80,6 +80,7 @@ function Write-Receipt {
     expected_helper_blob_sha = $expectedHelperBlob
     dirty_before = $DirtyBefore
     snapshot_written = $SnapshotWritten
+    snapshot_required_for_clean_and_dirty = $true
     stash_created = $StashCreated
     stash_ref = $StashRef
     stash_auto_restore_attempted = $false
@@ -136,24 +137,27 @@ $snapshotWritten = $false
 $stashCreated = $false
 $stashRef = ''
 
-if ($dirtyBefore) {
-  Write-JsonFile $snapshotRel ([ordered]@{
-    schema_version = 2
-    slot_id = 'height_difference_2'
-    task_id = $taskId
-    attempt_id = $attemptId
-    captured_at = (Get-Date).ToUniversalTime().ToString('o')
-    repo_root = $repoRoot
-    branch = $branch
-    local_head_before = $localBefore
-    dirty_entry_count = $dirtyLines.Count
-    dirty_entries = $dirtyLines
-    recovery_policy = 'stash_include_untracked_no_auto_pop_then_ff_only'
-    hard_reset_forbidden = $true
-    final_ready = $false
-  })
-  $snapshotWritten = $true
+Write-JsonFile $snapshotRel ([ordered]@{
+  schema_version = 3
+  slot_id = 'height_difference_2'
+  task_id = $taskId
+  attempt_id = $attemptId
+  captured_at = (Get-Date).ToUniversalTime().ToString('o')
+  repo_root = $repoRoot
+  branch = $branch
+  local_head_before = $localBefore
+  dirty_before = $dirtyBefore
+  dirty_entry_count = $dirtyLines.Count
+  dirty_entries = $dirtyLines
+  snapshot_kind = 'pre_recovery_git_status_clean_or_dirty'
+  recovery_policy = 'snapshot_always_stash_if_dirty_no_auto_pop_then_ff_only'
+  hard_reset_forbidden = $true
+  stash_required = $dirtyBefore
+  final_ready = $false
+})
+$snapshotWritten = $true
 
+if ($dirtyBefore) {
   $stashMessage = "height_difference_2 attempt020 guarded recovery $((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))"
   $stashResult = Invoke-GitBounded @('-C',$repoRoot,'stash','push','--include-untracked','--message',$stashMessage) $GitTimeoutSeconds
   if ($stashResult.ExitCode -ne 0) {
@@ -242,7 +246,7 @@ $status = if ($helperTimedOut) {
 } else {
   'BLOCKED_ATTEMPT_020_EXISTING_F_RUNNER_RECOVERY_FAILED'
 }
-$detail = "helper_blob=$helperBlob;sync_mode=atomic_fetch_ff_only_exact_head_no_hard_reset"
+$detail = "helper_blob=$helperBlob;sync_mode=atomic_fetch_ff_only_exact_head_no_hard_reset;snapshot_always=true"
 if ($stashCreated) { $detail += ";stash_ref=$stashRef;stash_restore=manual_only" }
 Write-Receipt $status $dirtyBefore $snapshotWritten $stashCreated $stashRef $true $false $true $helperTimedOut $helperExit $localBefore $remoteHead $localAfter $detail
 exit $helperExit
