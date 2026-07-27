@@ -12,7 +12,7 @@ ATTEMPT_ID = "height-difference-2-20260721-020"
 BRANCH = "codex/aays-single-runner-v5-20260706"
 TASK_VERSION = "6.3-fhost-safe-ffonly-terrain50-webacceptance"
 HELPER_BLOB = "b3a18bcdb1b7158d18aab33b42d5797342d23cd1"
-OPERATOR_BLOB = "69d19c82d6a380fdcee7423e21bf978c15406b7d"
+OPERATOR_BLOB = "2bea2c9861727f54d30c444b6e0b59e57539c840"
 CARRIER_BLOB = "219e83046fb473d101392bbb79d3433ee79355bd"
 ENTRYPOINT_BLOB = "ff6656beb3e8db7d658e03e8373185cc6e500b3b"
 NUMERIC_GATE_BLOB = "6022d2b379a2d5d94bcf1f2ce07aa18ab600bed4"
@@ -69,28 +69,31 @@ def main() -> int:
     check("operator_attempt_020", ATTEMPT_ID in operator and TASK_ID in operator, "Operator entry is tied to the same task and attempt.")
     check("operator_exact_f_root", "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707" in operator, "Operator entry is pinned to the canonical F repo.")
     check("operator_branch_exact", BRANCH in operator and "BLOCKED_CANONICAL_BRANCH_MISMATCH" in operator, "Branch mismatch fails closed.")
-    check("operator_dirty_repo_preserved", "stash','push','--include-untracked'" in operator and "stash_auto_restore_attempted = $false" in operator and "BLOCKED_CANONICAL_REPO_NOT_CLEAN_AFTER_STASH" in operator, "Dirty and untracked state is snapshotted/stashed and never auto-popped.")
+    check("operator_snapshot_always", "snapshot_kind = 'pre_recovery_git_status_clean_or_dirty'" in operator and "snapshot_required_for_clean_and_dirty = $true" in operator and "$snapshotWritten = $true" in operator, "016 snapshot receipt is deterministic for clean and dirty repository states.")
+    check("operator_dirty_repo_preserved", "stash','push','--include-untracked'" in operator and "stash_auto_restore_attempted = $false" in operator and "BLOCKED_CANONICAL_REPO_NOT_CLEAN_AFTER_STASH" in operator, "Dirty and untracked state is stashed and never auto-popped.")
     check("operator_atomic_fetch", "fetch','--atomic','origin',$branch,'--prune'" in operator and "rev-parse',\"origin/$branch\"" in operator, "Atomic fetch and exact remote readback are present.")
     check("operator_hard_reset_forbidden", "reset --hard" not in operator and "hard_reset_used = $false" in operator, "Hard reset is absent and explicitly forbidden in the receipt.")
     check("operator_ff_only_gate", "merge-base','--is-ancestor'" in operator and "merge','--ff-only'" in operator and "BLOCKED_CANONICAL_NON_FF_DIVERGENCE" in operator, "Only fast-forward synchronization is allowed; divergence fails closed.")
     check("operator_remote_readback", "BLOCKED_REMOTE_HEAD_NOT_APPLIED" in operator and "$localAfter -ne $remoteHead" in operator, "Local head must exactly match remote head after synchronization.")
     check("operator_helper_blob_gate", HELPER_BLOB in operator and "BLOCKED_ATTEMPT_020_HELPER_BLOB_MISMATCH" in operator, "Exact helper blob is verified before invocation.")
-    check("operator_receipt_path", "015_operator_recovery_preflight_latest.json" in operator and "016_operator_git_snapshot_latest.json" in operator, "Deterministic recovery and dirty-state receipts are present.")
+    check("operator_receipt_path", "015_operator_recovery_preflight_latest.json" in operator and "016_operator_git_snapshot_latest.json" in operator, "Deterministic recovery and git-state receipts are present.")
     check("operator_safety_flags", all(token in operator for token in ["new_runner_architecture_created = $false", "parallel_runner_started = $false", "fake_data = $false", "db_write = $false", "migration = $false", "production_deploy = $false"]), "Safety flags remain false.")
     check("carrier_v63_web_floor", TASK_VERSION in carrier and "$expectedWebRows = 1036" in carrier and ENTRYPOINT_BLOB in carrier and "PORT_8012_ACCEPTANCE_REQUIRED=true" in carrier, "Carrier is aligned to v6.3, the 1036 web floor and exact entrypoint blob.")
     check("entrypoint_v63_web_gate", TASK_VERSION in entrypoint and 'AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"' in entrypoint and 'numeric_payload.get("web_acceptance_passed") is True' in entrypoint and "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW" in entrypoint, "Entrypoint requires both three official numeric rows and accepted port8012 evidence.")
     check("numeric_gate_v63_fail_closed", 'AAYS_HEIGHT_DIFFERENCE_2_EXPECTED_WEB_ROWS", "1036"' in numeric_gate and 'web_acceptance_required": True' in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_AFTER_NUMERIC_READY" in numeric_gate and "BLOCKED_PORT_8012_WEB_ACCEPTANCE_VERIFIER_MISSING" in numeric_gate and "PORT_8012_WEB_ACCEPTANCE_PASSED" in numeric_gate, "Numeric orchestrator fails closed when web acceptance is missing or fails.")
     check("queue_task_and_helper", queue.get("task_id") == TASK_ID and queue.get("attempt_id") == ATTEMPT_ID and queue.get("restart_helper_blob_sha") == HELPER_BLOB, "Queue binds the exact task, attempt and helper blob.")
     check("queue_v63_pins", queue.get("task_version") == TASK_VERSION and queue.get("operator_recovery_blob_sha") == OPERATOR_BLOB and queue.get("script_blob_sha") == CARRIER_BLOB and queue.get("python_script_blob_sha") == ENTRYPOINT_BLOB and queue.get("official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB, "Queue pins v6.3 operator, carrier, entrypoint and numeric gate blobs.")
+    check("queue_snapshot_contract", queue.get("git_snapshot_always_required") is True and "safe_git_snapshot_always" in queue.get("runner_contract_modes", []), "Queue requires a 016 git snapshot receipt even when the repo is clean.")
     check("queue_safe_sync", queue.get("hard_reset_forbidden") is True and queue.get("fast_forward_only_required") is True and "atomic_fetch_ff_only_exact_head" in queue.get("runner_contract_modes", []), "Queue requires ff-only exact-head synchronization and forbids hard reset.")
     check("queue_exact_target_gate", queue.get("sample_rows") == TARGET_ROWS and queue.get("measurement_contract", {}).get("nearest_row_fallback_allowed") is False, "Queue requires exact target rows and no nearest fallback.")
     check("queue_web_gate", int(queue.get("expected_web_operation_rows", 0)) >= 1036 and queue.get("web_acceptance_required") is True and queue.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Queue requires port8012 web acceptance, not only numeric rows.")
     check("request_v63_pins", request.get("task_id") == TASK_ID and request.get("attempt_id") == ATTEMPT_ID and request.get("task_version") == TASK_VERSION and request.get("required_operator_recovery_blob_sha") == OPERATOR_BLOB and request.get("required_carrier_blob_sha") == CARRIER_BLOB and request.get("required_entrypoint_blob_sha") == ENTRYPOINT_BLOB and request.get("required_official_numeric_gate_blob_sha") == NUMERIC_GATE_BLOB, "Slot-specific restart request pins the same v6.3 recovery chain.")
+    check("request_snapshot_contract", request.get("git_snapshot_always_required") is True and request.get("required_pickup_request_revision") == 7, "Restart request requires deterministic 016 snapshot emission at revision 7.")
     check("request_safe_sync_and_web", request.get("hard_reset_forbidden") is True and request.get("fast_forward_only_required") is True and int(request.get("expected_web_operation_rows", 0)) >= 1036 and request.get("web_acceptance_required") is True and request.get("web_acceptance_status_required") == "PORT_8012_WEB_ACCEPTANCE_PASSED", "Restart request requires ff-only synchronization and fail-closed web acceptance.")
 
     passed = sum(1 for item in checks if item["passed"])
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
