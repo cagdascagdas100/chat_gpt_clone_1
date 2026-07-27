@@ -46,6 +46,10 @@ def _rows(values: list[dict[str, Any]]) -> list[int]:
     return [int(item["row_no"]) for item in values]
 
 
+def _exact_hmlr_method(value: Any) -> bool:
+    return str(value or "").startswith("EXACT_OFFICIAL_ID")
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict-output-dir", type=Path, required=True)
@@ -91,6 +95,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     check("strict_rows_exact", strict_rows == EXPECTED_ROWS, strict_rows)
     check("strict_verified_count_12", int(strict.get("verified_count") or 0) == 12)
     check("strict_proj_candidate_aware", strict.get("proj_gate_candidate_aware") is True)
+    check("strict_exact_hmlr_official_id_gate", strict.get("exact_hmlr_official_id_gate") is True)
+    check("strict_nearest_fill_forbidden", strict.get("nearest_fill_forbidden") is True)
     check("strict_numeric_publish_gate", strict.get("numeric_publish_gate_passed") is True)
     check("strict_remote_readback_required", strict.get("remote_readback_required") is True)
 
@@ -114,6 +120,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         check(f"result_{row_no}_parcel_id", bool(parcel_id))
         check(f"result_{row_no}_status", item.get("status") == "MEASURED_AND_CROSSCHECKED")
         check(f"result_{row_no}_promoted", item.get("measured_value_promoted") is True)
+        hmlr_method = str(item.get("hmlr_match_method") or "")
+        check(f"result_{row_no}_exact_hmlr_id", _exact_hmlr_method(hmlr_method), hmlr_method)
+        check(f"result_{row_no}_no_nearest_fill", item.get("nearest_point_fill_used") is False)
         ea = item.get("ea_dtm") or {}
         os_data = item.get("os_terrain50") or {}
         ea_sources = ea.get("source_rasters") or []
@@ -130,6 +139,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         check(f"measured_{row_no}_parcel_id", bool(parcel_id))
         check(f"measured_{row_no}_method", item.get("height_difference_method") == METHOD)
         check(f"measured_{row_no}_confidence", item.get("confidence") in ALLOWED_CONFIDENCE)
+        boundary_method = str(item.get("boundary_match_method") or "")
+        check(f"measured_{row_no}_exact_hmlr_id", _exact_hmlr_method(boundary_method), boundary_method)
+        check(f"measured_{row_no}_data_status", item.get("data_status") == "official_sources_crosschecked")
         check(f"measured_{row_no}_ea_cells", int(item.get("ea_valid_cell_count") or 0) >= 4)
         check(
             f"measured_{row_no}_cross_source",
@@ -156,6 +168,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         measured = measured_by_key[key]
         check(f"verified_{row_no}_method", item.get("height_difference_method") == METHOD)
         check(f"verified_{row_no}_confidence", item.get("confidence") in ALLOWED_CONFIDENCE)
+        check(f"verified_{row_no}_exact_hmlr_id", _exact_hmlr_method(item.get("boundary_match_method")), item.get("boundary_match_method"))
         for field in (
             "height_difference_m",
             "elevation_median_m",
@@ -181,13 +194,14 @@ def main(argv: Iterable[str] | None = None) -> int:
         feature_id = str(feature.get("id") or "")
         check(f"geojson_{row_no}_unique_id", bool(feature_id) and feature_id not in feature_ids)
         feature_ids.add(feature_id)
+        check(f"geojson_{row_no}_exact_hmlr_id", _exact_hmlr_method(properties.get("boundary_match_method")), properties.get("boundary_match_method"))
         geometry = feature.get("geometry") or {}
         check(f"geojson_{row_no}_polygon", geometry.get("type") in {"Polygon", "MultiPolygon"})
     check("geojson_rows_exact", feature_rows == EXPECTED_ROWS, feature_rows)
 
     file_sha256 = {name: _sha256(path) for name, path in paths.items()}
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "purpose": "STRICT12_LOCAL_OUTPUT_ACCEPTANCE_BEFORE_REMOTE_GITHUB_READBACK",
         "expected_rows": EXPECTED_ROWS,
@@ -195,6 +209,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         "checks_total": len(checks),
         "checks": checks,
         "file_sha256": file_sha256,
+        "exact_hmlr_official_id_required": True,
+        "nearest_fill_forbidden": True,
         "local_acceptance_passed": True,
         "remote_github_readback_required": True,
         "numeric_values_changed_by_validator": 0,
