@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 397,
+  "topic": "HMLR_INSPIRE_NATIONAL_POLYGON_TITLE_PLAN_AND_EXACT_BOUNDARY_ACQUISITION_GATES",
+  "generated_at": "2026-07-27T19:10:40+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_HMLR_GEOMETRY_ACQUISITION_READINESS_NOT_EXACT_LEGAL_BOUNDARY_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.7,
+  "sources": [
+    {"key":"pg40s5","url":"https://www.gov.uk/government/publications/land-registry-plans-title-plan/land-registry-plans-title-plan-practice-guide-40-supplement-5","fact":"Updated 13 July 2026; title plans show the general extent and normally general boundaries, and must be read with the register."},
+    {"key":"pg40overview","url":"https://www.gov.uk/government/publications/land-registry-plans-guide-overview/practice-guide-40-guide-overview-of-land-registry-plans","fact":"HMLR guidance separates general boundaries, determined boundaries, title plans and application-plan requirements."},
+    {"key":"inspire_ndl","url":"https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data","fact":"INSPIRE Index Polygons metadata was updated 8 July 2026 and covers registered freehold property only."},
+    {"key":"inspire_guidance","url":"https://www.gov.uk/guidance/inspire-index-polygons-spatial-data","fact":"INSPIRE polygons show indicative position and extent and use a Land Registry INSPIRE ID linked to a registered title."},
+    {"key":"inspire_download","url":"https://use-land-property-data.service.gov.uk/datasets/inspire/download","fact":"Current files were published 5 July 2026; downloads are by local authority and new files are published monthly."},
+    {"key":"use_data","url":"https://use-land-property-data.service.gov.uk/","fact":"HMLR provides bulk geospatial datasets; INSPIRE is free while National Polygon Service is licensed/chargeable."},
+    {"key":"nps","url":"https://use-land-property-data.service.gov.uk/datasets/nps","fact":"National Polygon Service covers freehold and leasehold titles and provides indicative title polygons with title numbers."},
+    {"key":"nps_tech","url":"https://use-land-property-data.service.gov.uk/datasets/nps/tech-spec/1?back=true","fact":"National Polygon geometry is an index to indicative title location; the register/title plan record general boundary position unless determined."},
+    {"key":"index_map","url":"https://www.gov.uk/get-information-about-property-and-land/search-the-index-map","fact":"Search of the index map can identify title numbers where address search is insufficient and can confirm unregistered land."},
+    {"key":"register","url":"https://www.gov.uk/get-information-about-property-and-land/search-the-register","fact":"The title register and title plan are authoritative title documents; rights, tenure and ownership require register-level evidence."},
+    {"key":"finding_info","url":"https://www.gov.uk/guidance/finding-information-held-by-hm-land-registry","fact":"HMLR states the title plan shows general boundaries and unusual parcels may require map-based search."},
+    {"key":"gml_guidance","url":"https://use-land-property-data.service.gov.uk/datasets/inspire/tech-guidance","fact":"INSPIRE is captured in British National Grid; reprojection can introduce positional shifts, with HMLR warning of shifts up to 15 metres in some conversions."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"INSPIRE polygon overlap is treated as candidate-title evidence, never exact legal boundary proof."},
+    {"id":"EX02","result":"Freehold-only INSPIRE absence is not evidence that a leasehold title or unregistered interest is absent."},
+    {"id":"EX03","result":"National Polygon title number linkage is retained, but polygon geometry remains indicative unless boundary determination evidence exists."},
+    {"id":"EX04","result":"Title plan and register are required together before ownership/easement/restriction conclusions are promoted."},
+    {"id":"EX05","result":"Reprojected INSPIRE geometry is not used for centimetre/metre boundary matching without CRS/error controls."},
+    {"id":"EX06","result":"Index-map search is used where address/title discovery is ambiguous instead of nearest-polygon guessing."},
+    {"id":"EX07","result":"Different historical OS mapping editions on adjoining title plans are not silently normalised into one exact boundary."},
+    {"id":"EX08","result":"No parcel promotion occurs without exact title relation plus current title/register evidence required by the scoring gate."}
+  ],
+  "fail_closed_rules": ["inspire_not_exact_boundary","general_boundary_not_determined_boundary","freehold_only_absence_not_negative_proof","nps_polygon_indicative","title_plan_requires_register","reprojection_error_guard","no_nearest_polygon_title_guess","index_map_for_ambiguous_title","historic_os_versions_retained","leasehold_not_inferred_from_inspire","rights_not_inferred_from_polygon","ownership_not_inferred_from_polygon","no_geometry_union_as_legal_extent","no_centroid_title_binding","no_generic_boundary_confidence_fill","promotion_requires_exact_title_relation"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"hmlr_geometry_examples_revalidated":8,"exact_legal_boundaries_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
