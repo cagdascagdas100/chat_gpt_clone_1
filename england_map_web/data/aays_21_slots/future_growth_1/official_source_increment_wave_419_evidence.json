@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":419,
+  "topic":"CANDIDATE_YM_PHOENIX_HOUSE_CURRENT_USE_ALLOCATION_NOT_PERMISSIONED_AND_ADDRESS_BINDING_GATES",
+  "generated_at":"2026-07-27T21:16:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_YM_CURRENT_USE_AND_ALLOCATION_RECONCILIATION_NOT_PERMISSION_INFERENCE_NOT_EXACT_TITLE_BINDING",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.8,
+  "sources":[
+    {"key":"ym_brownfield","url":"https://www.planning.data.gov.uk/entity/1739883","fact":"LBBD88/YM Phoenix House, 12-14 Wakering Road is 0.42ha, 188 net dwellings and planning-permission-status not-permissioned."},
+    {"key":"ym_point","url":"https://www.planning.data.gov.uk/entity/1739883","fact":"YM provides POINT (0.081229 51.540394) with blank geometry; the point is not the allocation or title polygon."},
+    {"key":"ym_owner_status","url":"https://www.planning.data.gov.uk/entity/1739883","fact":"Ownership-status is not-owned-by-a-public-authority; this does not identify the legal owner or title number."},
+    {"key":"ym_current_use","url":"https://www.lbbd.gov.uk/find-your-nearest/barking-job-centre-plus","fact":"LBBD's current directory lists Barking Job Centre Plus at Phoenix House, 12-14 Wakering Road, Barking IG11 8QP."},
+    {"key":"ym_address_match","url":"https://www.lbbd.gov.uk/find-your-nearest/barking-job-centre-plus","fact":"The exact Phoenix House street address matches the Brownfield site address, supporting address-level identity but not a cadastral boundary."},
+    {"key":"ym_reg19","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=82751","fact":"The Regulation 19 Cabinet record lists YM Phoenix House, Wakering Road as a distinct site-allocation document."},
+    {"key":"ym_reg19_decision","url":"https://lbbd.moderngov.co.uk/ieDecisionDetails.aspx?AIId=82751","fact":"Cabinet approved publication/submission steps for the Local Plan; this plan-making decision is not a planning permission for YM."},
+    {"key":"local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The LBBD Local Plan 2037 was adopted 18 September 2024 and is the current starting point for planning decisions."},
+    {"key":"development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"The Development Plan includes the Local Plan and London Plan; allocation remains policy evidence rather than consent."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states every Brownfield Register site still requires planning permission."},
+    {"key":"planning_guidance","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies","fact":"Current borough planning guidance distinguishes site allocations, applications, developer contributions and statutory constraints."},
+    {"key":"ym_no_exact_case","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"No exact current YM planning application reference was verified in this wave; none is inferred from allocation or current occupancy."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"YM remains not-permissioned despite adopted allocation status."},
+    {"id":"EX02","result":"188 is allocation/Brownfield capacity, not consented homes."},
+    {"id":"EX03","result":"Current Job Centre use does not prevent future allocation but also does not prove redevelopment has commenced."},
+    {"id":"EX04","result":"Exact address match is not converted into an HMLR title polygon."},
+    {"id":"EX05","result":"Private/non-public ownership status is not an owner-name or title-number field."},
+    {"id":"EX06","result":"Regulation 19 site-allocation provenance is not an application reference."},
+    {"id":"EX07","result":"Blank geometry is not replaced by the address point or a building footprint."},
+    {"id":"EX08","result":"Promotion remains zero until exact current YM application, title relation and statutory overlays are verified."}
+  ],
+  "fail_closed_rules":["allocation_not_permission","not_permissioned_preserved","capacity_not_consented_units","current_use_not_redevelopment_status","address_match_not_title","ownership_status_not_owner_name","point_not_polygon","blank_geometry_no_buffer","reg19_not_application","no_fuzzy_application_binding","no_building_footprint_as_title","no_current_use_capacity_score","exact_current_case_required","exact_title_required","no_allocation_only_promotion","promotion_requires_exact_ym_case_title_and_overlay"],
+  "dimensions":["STATUS","EVIDENCE","TEMPORAL","PARCEL","ALLOCATION","CURRENT_USE","ADDRESS","OWNERSHIP","GEOMETRY","TITLE","NO_DATA","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD88/YM Phoenix House 12-14 Wakering Road","net_dwellings":188,"planning_permission_status":"not-permissioned","current_directory_use_verified":"Barking Job Centre Plus","exact_current_planning_application_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
