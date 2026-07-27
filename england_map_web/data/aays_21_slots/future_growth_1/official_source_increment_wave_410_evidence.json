@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 410,
+  "topic": "CANDIDATE_ZZ_GSR_GILL_EXACT_APPLICATION_UNIT_AND_REFERENCE_RECONCILIATION",
+  "generated_at": "2026-07-27T20:26:02+03:00",
+  "output_semantics": "CANDIDATE_SPECIFIC_OFFICIAL_WEB_RECONCILIATION_WITH_EXPLICIT_UNIT_AND_REFERENCE_GAPS_NOT_SYNTHETIC_CORRECTION_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.9,
+  "score_basis": "Candidate-specific reconciliation across LBBD Planning Committee, Planning Data and current GOV.UK Heat Networks Planning Database; conflicting unit totals and reference suffixes are preserved rather than silently normalized.",
+  "sources": [
+    {"key":"zz_brownfield","label":"Planning Data LBBD72/ZZ","url":"https://www.planning.data.gov.uk/entity/1739867","fact":"Combined GSR and Gill Sites record is 2.55ha, deliverable, publicly owned, permissioned with full planning permission and minimum/maximum net dwellings both 707; geometry is blank."},
+    {"key":"zz_history","label":"Planning Data ZZ planning history","url":"https://www.planning.data.gov.uk/entity/1739867","fact":"ZZ carries two Be First planning-history identifiers, consistent with more than one constituent planning case; these internal IDs are not substituted for exact public application references."},
+    {"key":"gsr_ref","label":"LBBD GSR Planning Committee","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12222","fact":"LBBD committee record identifies GSR Self Storage, Chequers Lane as application 21/01211/FUL."},
+    {"key":"gsr_units","label":"LBBD GSR dwelling count","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12222","fact":"Committee minutes describe three buildings with maximum heights of 19, 15 and 13 storeys delivering 380 homes, 35% affordable, plus up to 930sqm non-residential space."},
+    {"key":"gsr_relationship","label":"LBBD GSR related works","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12222","fact":"GSR was considered alongside related Dagenham Dock station/public-realm works; related applications are not merged into the GSR residential site boundary."},
+    {"key":"gsr_hnpd","label":"GOV.UK Heat Networks GSR cross-check","url":"https://www.gov.uk/csv-preview/69f9e5a8a96f4d06cda76fec/heat_networks_procurement_pipeline_Q1_2026.csv","fact":"Q1 2026 HNPD lists Chequers Lane - 380 Flats at GSR Self Storage as Planning Permission Granted / Awaiting Construction and records reference 21/01211/FULL."},
+    {"key":"gsr_suffix_gap","label":"GSR reference suffix discrepancy","url":"https://www.gov.uk/csv-preview/69f9e5a8a96f4d06cda76fec/heat_networks_procurement_pipeline_Q1_2026.csv","fact":"HNPD uses 21/01211/FULL while LBBD committee uses 21/01211/FUL; the suffix difference is retained as a cross-source discrepancy and not silently normalized."},
+    {"key":"gill_scope","label":"LBBD Gill Planning Committee","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=92194","fact":"Gill Aggregates application at Former Car Park North sought three buildings, new homes and a primary school; committee condition text fixes the approved development at 337 residential dwellings."},
+    {"key":"gill_resolution","label":"LBBD Gill resolution","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=92194","fact":"The committee resolution was subject to completion of the legal agreement with a delegated fallback if not completed by 12 March 2023; committee resolution semantics are kept distinct from later permission status."},
+    {"key":"gill_hnpd","label":"GOV.UK Heat Networks Gill cross-check","url":"https://www.gov.uk/csv-preview/69f9e5a8a96f4d06cda76fec/heat_networks_procurement_pipeline_Q1_2026.csv","fact":"Q1 2026 HNPD lists Gill Aggregates Holdings Limited, 337 apartments and primary school, reference 22/00416/FULL, status Planning Permission Granted / Awaiting Construction."},
+    {"key":"local_plan","label":"LBBD Local Plan 2037","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The Local Plan 2037 is adopted and current, but allocation/planning-policy status does not resolve the 707-versus-717 candidate unit basis."},
+    {"key":"development_plan","label":"LBBD Development Plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Current Development Plan status is retained separately from exact GSR/Gill application, permission, ownership and parcel geometry evidence."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"380 GSR + 337 Gill = 717 gross application dwellings; ZZ Brownfield says 707 net, leaving a 10-unit reconciliation gap."},
+    {"id":"EX02","result":"The 10-unit gap is not auto-corrected because the combined site boundary/net-basis and application boundaries may differ."},
+    {"id":"EX03","result":"LBBD 21/01211/FUL and HNPD 21/01211/FULL are retained as a reference-suffix discrepancy; LBBD remains the authoritative planning-case source."},
+    {"id":"EX04","result":"Gill 22/00416/FULL and 337 dwellings have an independent current GOV.UK HNPD cross-check."},
+    {"id":"EX05","result":"Planning Permission Granted / Awaiting Construction is not converted into completed or occupied status."},
+    {"id":"EX06","result":"ZZ blank geometry is not replaced by joining two application points or nearest-site buffers."},
+    {"id":"EX07","result":"Two Be First history IDs are provenance clues only and are not treated as title identifiers."},
+    {"id":"EX08","result":"Promotion remains zero until exact constituent site/title polygons and current authoritative case bindings reconcile the combined net basis."}
+  ],
+  "fail_closed_rules": ["gross_net_semantics_preserved","717_not_forced_to_707","ten_unit_gap_explicit","reference_suffix_discrepancy_preserved","lbbd_case_source_priority","hnpd_crosscheck_not_register_replacement","awaiting_construction_not_completion","gill_resolution_not_automatic_completion","two_history_ids_not_title_ids","blank_geometry_no_union","no_point_buffer_union","related_station_works_not_gsr_boundary","public_ownership_field_not_exact_title_owner","combined_brownfield_not_constituent_redlines","no_fuzzy_reference_normalization","promotion_requires_exact_constituent_title_and_case_reconciliation"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","REFERENCE","GROSS_NET","GSR","GILL","DELIVERY","GEOMETRY","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD72/ZZ GSR and Gill Sites","brownfield_net_dwellings":707,"gsr_application_dwellings":380,"gill_application_dwellings":337,"application_gross_sum":717,"unresolved_unit_gap":10,"gill_exact_reference_crosschecked":"22/00416/FULL","gsr_lbbd_reference":"21/01211/FUL","gsr_hnpd_reference":"21/01211/FULL","exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
