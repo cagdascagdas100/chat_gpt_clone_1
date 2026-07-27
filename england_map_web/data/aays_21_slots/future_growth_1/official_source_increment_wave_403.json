@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 403,
+  "topic": "VOA_2026_RATING_LIST_HEREDITAMENT_RATEABLE_VALUE_FLOORSPACE_AND_NON_DOMESTIC_USE_GATES",
+  "generated_at": "2026-07-27T19:34:50+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_NON_DOMESTIC_RATING_AND_PROPERTY_USE_VALIDATION_NOT_TITLE_PARCEL_NOT_MARKET_VALUE_NOT_PLANNING_PERMISSION",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.6,
+  "sources": [
+    {"key":"find_rv","url":"https://www.gov.uk/find-business-rates","fact":"The official GOV.UK service returns rateable value for properties in England and Wales and can show calculation details and comparable properties."},
+    {"key":"reval_help","url":"https://www.gov.uk/guidance/help-with-the-2026-business-rates-revaluation","fact":"2026 rateable values took effect 1 April 2026 and are based on annual rental value at the valuation date 1 April 2024; rateable value is not the rates bill."},
+    {"key":"reval_news","url":"https://www.gov.uk/government/news/valuation-office-new-rateable-values-come-into-effect-for-2026to-2029","fact":"The 2026 rating list took effect 1 April 2026 for more than two million non-domestic properties."},
+    {"key":"compiled_stats","url":"https://www.gov.uk/government/statistics/non-domestic-rating-change-in-rateable-value-of-rating-lists-england-and-wales-2026-revaluation-compiled-list","fact":"Official compiled-list statistics compare 2023 and 2026 rating lists by sector/geography and confirm the 2026 revaluation effective date of 1 April 2026."},
+    {"key":"compiled_background","url":"https://www.gov.uk/government/statistics/non-domestic-rating-change-in-rateable-value-of-rating-lists-england-and-wales-2026-revaluation-compiled-list/background-information","fact":"The compiled statistics represent over two million business and other non-domestic valuations and are aggregate/list evidence rather than title data."},
+    {"key":"compiled_commentary","url":"https://www.gov.uk/government/statistics/non-domestic-rating-change-in-rateable-value-of-rating-lists-england-and-wales-2026-revaluation-compiled-list/statistical-commentary","fact":"Rateable value determined by VOA provides the basis for business-rates bills and reflects rental-market evidence, not property sale value."},
+    {"key":"reval_collection","url":"https://www.gov.uk/government/collections/non-domestic-rating-revaluation","fact":"The official collection distinguishes the 2026 compiled list from earlier draft-list publications."},
+    {"key":"hereditament_definition","url":"https://www.gov.uk/government/statistics/non-domestic-rating-change-in-rateable-value-of-rating-lists-england-and-wales-2026-revaluation-draft-list/non-domestic-rating-reval-2026-draft-list-statistical-commentary","fact":"VOA defines a rateable property/hereditament as a unit of non-domestic property that is or may become liable to non-domestic rating; it is not defined as an HMLR title."},
+    {"key":"property_type","url":"https://www.gov.uk/government/statistics/non-domestic-rating-change-in-rateable-value-of-rating-lists-england-and-wales-2026-revaluation-draft-list/non-domestic-rating-reval-2026-draft-list-statistical-commentary","fact":"Rating-list property type derives from primary descriptions/SCat grouping and describes rating use, not planning permission or legal ownership."},
+    {"key":"office_method","url":"https://www.gov.uk/guidance/how-offices-are-valued-for-business-rates","fact":"VOA commonly values offices using rental comparison and net internal area, with adjustments for lease terms, fit-out and other factors."},
+    {"key":"warehouse_method","url":"https://www.gov.uk/guidance/how-factories-workshops-and-warehouses-are-valued-for-business-rates","fact":"Factories/workshops/warehouses are commonly valued using rental comparison and gross internal area; land/parking/plant may be treated separately."},
+    {"key":"voa_stats","url":"https://www.gov.uk/government/organisations/valuation-office-agency/about/statistics","fact":"VOA publishes official non-domestic rating statistics and business floorspace statistics; these aggregate releases are distinct from exact property title geometry."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"A rating-list hereditament is not assumed to equal one HMLR title or one cadastral parcel."},
+    {"id":"EX02","result":"Rateable value is not treated as sale price, market value, rent actually paid or business-rates bill."},
+    {"id":"EX03","result":"Primary description/property type is not treated as current planning use permission."},
+    {"id":"EX04","result":"NIA/GIA floorspace is building valuation area and is not converted to site/parcel area."},
+    {"id":"EX05","result":"One site may contain multiple hereditaments or one hereditament may not align to legal-title geometry; no automatic spatial dissolve/split is made."},
+    {"id":"EX06","result":"2026 compiled-list evidence supersedes draft-list status for current rating-list context, but does not establish development status."},
+    {"id":"EX07","result":"Comparable-property calculations are valuation evidence only and are not used to infer candidate residual land value."},
+    {"id":"EX08","result":"No candidate promotion occurs from VOA use/value evidence without exact title relation and current planning/application evidence."}
+  ],
+  "fail_closed_rules": ["hereditament_not_title_parcel","rateable_value_not_sale_price","rateable_value_not_actual_rent","rateable_value_not_rates_bill","primary_description_not_planning_use","nia_gia_not_site_area","compiled_list_not_ownership","comparable_property_not_land_value","multiple_hereditaments_possible","title_to_hereditament_not_one_to_one","draft_list_not_current_after_april_2026","aggregate_stats_not_property_detail","no_nearest_hereditament_fill","no_rateable_value_viability_score","no_property_type_capacity_fill","promotion_requires_exact_title_and_current_planning_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"voa_examples_revalidated":8,"exact_hereditament_title_relations_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
