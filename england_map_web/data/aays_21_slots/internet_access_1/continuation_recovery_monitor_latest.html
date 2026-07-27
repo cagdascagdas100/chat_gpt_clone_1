@@ -1,233 +1,144 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body>
-<h1>internet_access_1 — devam / recovery izleme</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
+<h1>internet_access_1 — devam / recovery izleme</h1>
+<p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
 <div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı doğrulanmadı.</div>
-<div class="ok"><b>Current sample sonu:</b> January 2026 BDUK preview 84–983 = 900 veri satırı. Bu tur 944–983 son 40 current satır işlendi; 983 sonrası current satır uydurulmadı. Ofcom ZIP resmî linki mevcut (32.2 MB), binary reader bu ortamda desteklenmiyor.</div>
-<div class="summary"><div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div><div class="card">Current-task<br><b>94.7%</b><br>18/19</div><div class="card">Görünür işlemler<br><b>200 PASS / 222</b><br>19 PARTIAL · 3 BLOCKED</div><div class="card">Qualified<br><b>44</b></div><div class="card">≥95 güven<br><b>44/44</b></div><div class="card">Ort. güven<br><b>99.7%</b></div><div class="card">Yeni guard<br><b>+1</b></div><div class="card">Current QA<br><b>+40</b></div><div class="card">Kümülatif current QA<br><b>990</b></div><div class="card">Historical regression<br><b>80</b></div><div class="card">Ürün satırı<br><b>0</b></div></div>
-<p><b>Current QA:</b> East Midlands 40; recognised 39/1; current 40/0; future 3/37; BDUK GIS 6/34. LAD: Melton 11, Harborough 3, Rutland 4, Charnwood 6, Blaby 7, West Lindsey 3, East Lindsey 6.</p>
-<p><b>Guard:</b> BDUK technical note sample max 1000 satır ve full release 318 LAD dosyası; actual preview 900 satırda bitti. Missing UPRN ≠ no broadband. September 2025 corrected sample 80 satır yalnız schema regression; current'a karıştırılmadı.</p>
-<h2>Araştırma / recovery işlemleri (102)</h2><pre>#|STATE|OPERATION
-001|PASS|contract_fetch_part1
-002|PASS|contract_fetch_part2
-003|PASS|slot_id_validation
-004|PASS|canonical_head_initial_readback
-005|PASS|current_task_readback
-006|PASS|slot_status_readback
-007|BLOCKED|slot_heartbeat_recovery_gate
-008|PASS|ownership_readback
-009|PASS|checkpoint_readback
-010|PASS|queue_continuation_dedup
-011|PASS|manual_action_recheck
-012|BLOCKED|portable_coordinator_heartbeat
-013|PASS|second_runner_guard
-014|BLOCKED|canonical_runtime_audit_readback
-015|PASS|child_source_fetch
-016|PASS|child_audit_fetch
-017|PASS|child_monitor_fetch
-018|PASS|bduk_current_release_refresh
-019|PASS|bduk_current_preview_refresh
-020|PASS|bduk_current_header_check
-021|PASS|bduk_technical_note_refresh
-022|PASS|bduk_full_release_partition_guard
-023|PASS|bduk_sample_maximum_guard
-024|PASS|bduk_actual_preview_row_count
-025|PASS|bduk_preview_end_guard
-026|PASS|bduk_no_post983_synthesis
-027|PASS|bduk_missing_uprn_semantics
-028|PASS|qa_window_944_983_read
-029|PASS|qa_row_count
-030|PASS|qa_line_continuity
-031|PASS|qa_recognised_distribution
-032|PASS|qa_current_distribution
-033|PASS|qa_future_distribution
-034|PASS|qa_bduk_gis_distribution
-035|PASS|qa_lad_distribution
-036|PASS|qa_region_distribution
-037|PASS|qa_edge_944
-038|PASS|qa_edge_968
-039|PASS|qa_edge_977
-040|PASS|qa_edge_978
-041|PASS|qa_edge_980
-042|PASS|qa_edge_982
-043|PASS|qa_edge_983
-044|PARTIAL|bduk_raw_csv_web_fetch
-045|PARTIAL|bduk_raw_csv_container_download
-046|PARTIAL|bduk_raw_csv_local_network
-047|PASS|qa_uniqueness_fail_closed
-048|PASS|qa_cumulative_count
-049|PARTIAL|repo_exact_uprn_probe_1
-050|PARTIAL|repo_exact_uprn_probe_2
-051|PARTIAL|repo_exact_uprn_probe_3
-052|PARTIAL|repo_exact_uprn_probe_4
-053|PARTIAL|repo_exact_uprn_probe_5
-054|PARTIAL|repo_exact_uprn_probe_6
-055|PARTIAL|repo_exact_uprn_probe_7
-056|PARTIAL|repo_exact_uprn_probe_8
-057|PARTIAL|repo_exact_uprn_probe_9
-058|PARTIAL|repo_exact_uprn_probe_10
-059|PASS|repo_zero_hit_absence_guard
-060|PARTIAL|planning_index_uprn_probe_1
-061|PARTIAL|planning_index_uprn_probe_2
-062|PARTIAL|planning_index_uprn_probe_3
-063|PARTIAL|planning_index_uprn_probe_4
-064|PARTIAL|planning_index_uprn_probe_5
-065|PASS|planning_zero_hit_absence_guard
-066|PASS|ofcom_spring2026_page_refresh
-067|PASS|ofcom_snapshot_guard
-068|PASS|ofcom_zip_listing_guard
-069|PARTIAL|ofcom_zip_binary_fetch
-070|PASS|ofcom_endpoint_presence_guard
-071|PASS|ofcom_runtime_fail_closed
-072|PASS|ofcom_current_vs_planned_guard
-073|PASS|os_open_toid_refresh
-074|PASS|os_open_linked_identifiers_refresh
-075|PASS|hmlr_nps_exact_bridge_refresh
-076|PASS|bduk_sample_boundary_guard_accept
-077|PASS|source_registry_count
-078|PASS|source_confidence_threshold
-079|PASS|source_average_confidence
-080|PASS|schema_jan2026_field_count
-081|PASS|schema_sep2025_field_count
-082|PASS|schema_case_variance_uprn
-083|PASS|schema_case_variance_country
-084|PASS|historical_current_separation_guard
-085|PASS|sep2025_sample_refresh
-086|PASS|sep2025_regression_window
-087|PASS|sep2025_regression_row_count
-088|PASS|sep2025_current_promotion_guard
-089|PASS|canonical_uprn_binding_rule
-090|PASS|canonical_toid_binding_rule
-091|PASS|geometry_binding_rule
-092|PASS|postcode_binding_rule
-093|PASS|unknown_no_data_guard
-094|PASS|synthetic_data_guard
-095|PASS|product_promotion_gate
-096|PASS|source_artifact_update
-097|PASS|source_artifact_readback
-098|PASS|canonical_head_pre_audit
-099|PASS|audit_artifact_update
-100|PASS|audit_artifact_readback
-101|PASS|canonical_head_pre_monitor
-102|PASS|monitor_update</pre>
-<h2>Current January 2026 son QA satırları (40)</h2><pre>line|uprn|postcode|recognised|current|future|LAD|region|bduk_gis
-944|100030540391|LE14 2PZ|true|true|false|Melton|East Midlands|false
-945|100030543357|LE14 4AW|true|true|false|Melton|East Midlands|false
-946|100030537112|LE14 4DL|true|true|false|Melton|East Midlands|false
-947|100030537097|LE14 4DL|true|true|false|Melton|East Midlands|false
-948|100030545426|LE14 4DS|true|true|false|Melton|East Midlands|false
-949|100030535475|LE14 4JE|true|true|false|Melton|East Midlands|false
-950|100030535502|LE14 4JE|true|true|false|Melton|East Midlands|false
-951|100030536630|LE14 4JG|true|true|false|Melton|East Midlands|false
-952|100030542313|LE14 4LN|true|true|false|Melton|East Midlands|false
-953|100030494531|LE15 8DH|true|true|false|Harborough|East Midlands|false
-954|100030550732|LE15 8LX|true|true|false|Melton|East Midlands|false
-955|100030550722|LE15 8LX|true|true|false|Melton|East Midlands|false
-956|100030725016|LE15 8RJ|true|true|false|Rutland|East Midlands|false
-957|100032046566|LE15 8RY|true|true|false|Rutland|East Midlands|false
-958|100030722755|LE15 8SD|true|true|false|Rutland|East Midlands|false
-959|100030723339|LE15 8SU|true|true|false|Rutland|East Midlands|false
-960|100030493219|LE16 7RH|true|true|false|Harborough|East Midlands|false
-961|100030488835|LE16 7ST|true|true|false|Harborough|East Midlands|false
-962|100030416831|LE7 4TT|true|true|false|Charnwood|East Midlands|false
-963|100030416827|LE7 4TT|true|true|false|Charnwood|East Midlands|false
-964|100030425003|LE7 4UB|true|true|false|Charnwood|East Midlands|false
-965|10012190534|LE7 4XT|true|true|false|Charnwood|East Midlands|false
-966|100030422217|LE7 4YN|true|true|false|Charnwood|East Midlands|false
-967|100030429397|LE7 4ZA|true|true|false|Charnwood|East Midlands|false
-968|10001233914|LE9 4BD|true|true|true|Blaby|East Midlands|false
-969|100030385864|LE9 7TG|true|true|false|Blaby|East Midlands|false
-970|100030391208|LE9 7TH|true|true|false|Blaby|East Midlands|false
-971|100030391211|LE9 7TH|true|true|false|Blaby|East Midlands|false
-972|100030391201|LE9 7TH|true|true|false|Blaby|East Midlands|false
-973|100030396880|LE9 7TN|true|true|false|Blaby|East Midlands|false
-974|100030397539|LE9 7TQ|true|true|false|Blaby|East Midlands|false
-975|10034687898|LN1 2JP|true|true|false|West Lindsey|East Midlands|false
-976|100032076054|LN1 2JS|true|true|false|West Lindsey|East Midlands|false
-977|10013816068|LN1 2JW|false|true|false|West Lindsey|East Midlands|false
-978|10008516921|LN11 0RU|true|true|false|East Lindsey|East Midlands|true
-979|100032077720|LN11 0RZ|true|true|false|East Lindsey|East Midlands|true
-980|10002101442|LN11 7GB|true|true|true|East Lindsey|East Midlands|true
-981|100030768667|LN11 7LH|true|true|false|East Lindsey|East Midlands|true
-982|100030768953|LN11 7PL|true|true|true|East Lindsey|East Midlands|true
-983|10008519179|LN11 7PZ|true|true|false|East Lindsey|East Midlands|true</pre>
-<h2>Historical September 2025 schema regression satırları (80)</h2><pre>line|STATE|OPERATION
-84|PASS|sep2025_schema_row_presence
-85|PASS|sep2025_schema_row_presence
-86|PASS|sep2025_schema_row_presence
-87|PASS|sep2025_schema_row_presence
-88|PASS|sep2025_schema_row_presence
-89|PASS|sep2025_schema_row_presence
-90|PASS|sep2025_schema_row_presence
-91|PASS|sep2025_schema_row_presence
-92|PASS|sep2025_schema_row_presence
-93|PASS|sep2025_schema_row_presence
-94|PASS|sep2025_schema_row_presence
-95|PASS|sep2025_schema_row_presence
-96|PASS|sep2025_schema_row_presence
-97|PASS|sep2025_schema_row_presence
-98|PASS|sep2025_schema_row_presence
-99|PASS|sep2025_schema_row_presence
-100|PASS|sep2025_schema_row_presence
-101|PASS|sep2025_schema_row_presence
-102|PASS|sep2025_schema_row_presence
-103|PASS|sep2025_schema_row_presence
-104|PASS|sep2025_schema_row_presence
-105|PASS|sep2025_schema_row_presence
-106|PASS|sep2025_schema_row_presence
-107|PASS|sep2025_schema_row_presence
-108|PASS|sep2025_schema_row_presence
-109|PASS|sep2025_schema_row_presence
-110|PASS|sep2025_schema_row_presence
-111|PASS|sep2025_schema_row_presence
-112|PASS|sep2025_schema_row_presence
-113|PASS|sep2025_schema_row_presence
-114|PASS|sep2025_schema_row_presence
-115|PASS|sep2025_schema_row_presence
-116|PASS|sep2025_schema_row_presence
-117|PASS|sep2025_schema_row_presence
-118|PASS|sep2025_schema_row_presence
-119|PASS|sep2025_schema_row_presence
-120|PASS|sep2025_schema_row_presence
-121|PASS|sep2025_schema_row_presence
-122|PASS|sep2025_schema_row_presence
-123|PASS|sep2025_schema_row_presence
-124|PASS|sep2025_schema_row_presence
-125|PASS|sep2025_schema_row_presence
-126|PASS|sep2025_schema_row_presence
-127|PASS|sep2025_schema_row_presence
-128|PASS|sep2025_schema_row_presence
-129|PASS|sep2025_schema_row_presence
-130|PASS|sep2025_schema_row_presence
-131|PASS|sep2025_schema_row_presence
-132|PASS|sep2025_schema_row_presence
-133|PASS|sep2025_schema_row_presence
-134|PASS|sep2025_schema_row_presence
-135|PASS|sep2025_schema_row_presence
-136|PASS|sep2025_schema_row_presence
-137|PASS|sep2025_schema_row_presence
-138|PASS|sep2025_schema_row_presence
-139|PASS|sep2025_schema_row_presence
-140|PASS|sep2025_schema_row_presence
-141|PASS|sep2025_schema_row_presence
-142|PASS|sep2025_schema_row_presence
-143|PASS|sep2025_schema_row_presence
-144|PASS|sep2025_schema_row_presence
-145|PASS|sep2025_schema_row_presence
-146|PASS|sep2025_schema_row_presence
-147|PASS|sep2025_schema_row_presence
-148|PASS|sep2025_schema_row_presence
-149|PASS|sep2025_schema_row_presence
-150|PASS|sep2025_schema_row_presence
-151|PASS|sep2025_schema_row_presence
-152|PASS|sep2025_schema_row_presence
-153|PASS|sep2025_schema_row_presence
-154|PASS|sep2025_schema_row_presence
-155|PASS|sep2025_schema_row_presence
-156|PASS|sep2025_schema_row_presence
-157|PASS|sep2025_schema_row_presence
-158|PASS|sep2025_schema_row_presence
-159|PASS|sep2025_schema_row_presence
-160|PASS|sep2025_schema_row_presence
-161|PASS|sep2025_schema_row_presence
-162|PASS|sep2025_schema_row_presence
-163|PASS|sep2025_schema_row_presence</pre>
-<p>222 görünür işlem = 102 araştırma/recovery + 40 current QA + 80 historical schema regression. Final remote readback/branch kontrolleri ayrıca doğrulanır.</p></body></html>
+<div class="ok"><b>Yeni internet kanıtı:</b> Mayıs 2026 NR OMR 1 Haziran'da kapandı; UPRN/postcode çıktıları değerlendirme sonrası yayımlanacak ve şu an production input değildir. BDUK Temmuz contract-progress sayfası 16 Temmuz snapshot'ını yayımlıyor. Ofcom resmî 2026 current coverage indexinde Spring 2026/January snapshot güncel bulunan current release olarak kalıyor; PND 2026 forward-looking.</div>
+<div class="summary"><div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div><div class="card">Current-task<br><b>94.7%</b><br>18/19</div><div class="card">Görünür işlemler<br><b>121 PASS / 132</b><br>8 PARTIAL · 3 BLOCKED</div><div class="card">Qualified<br><b>47</b></div><div class="card">≥95 güven<br><b>47/47</b></div><div class="card">Ort. güven<br><b>99.7%</b></div><div class="card">Yeni kaynak<br><b>+3</b></div><div class="card">Current premise QA<br><b>+0 / 990</b></div><div class="card">Contract QA<br><b>+37</b></div><div class="card">Ürün satırı<br><b>0</b></div></div>
+<p><b>Temmuz contract QA:</b> June total 839,340 contracted / 271,460 built → July total 838,490 / 287,510; published total delta -850 contracted, +16,050 built. 27 contract built arttı, 10 aynı, 0 azaldı. Satır toplamı ile published total arasındaki -10 contracted / -20 built fark, kaynağın nearest-10 rounding uyarısıyla uyumlu.</p>
+<p><b>Binary recovery:</b> BDUK North East 16 MB ve East Midlands 29.1 MB ZIP linkleri doğrulandı; web binary okuyucu ve direct-download yolu başarısız. Ofcom 32.2 MB ZIP endpoint'i mevcut fakat binary hash/CRC/file/row kontrolleri bu runtime'da hâlâ tamamlanamadı; metrikler uydurulmadı.</p>
+<h2>Araştırma / recovery işlemleri (95)</h2><pre>#|STATE|OPERATION|EVIDENCE
+001|PASS|contract_latest_readback|sha 1a25e0f; same canonical rules
+002|PASS|slot_id_validation|internet_access_1 valid
+003|PASS|canonical_head_initial_readback|aa751957...
+004|PASS|current_task_readback|same task/continuation; 18/19
+005|PASS|status_readback|RECOVERY_PARKED
+006|BLOCKED|slot_heartbeat_recheck|stale/unclaimed
+007|PASS|ownership_recheck|no lease/owner
+008|PASS|checkpoint_recheck|33785 verified / 58498 pending
+009|PASS|queue_continuation_dedup|same continuation; pending
+010|PASS|manual_action_recheck|OPEN
+011|BLOCKED|portable_heartbeat_recheck|last 2026-07-16
+012|PASS|second_runner_guard|no second runner
+013|BLOCKED|canonical_runtime_audit_readback|canonical audit absent
+014|PASS|child_source_artifact_fetch|schema13
+015|PASS|child_audit_artifact_fetch|schema12
+016|PASS|child_monitor_artifact_fetch|previous monitor
+017|PASS|bduk_omr_collection_refresh|January 2026 still latest published premise release
+018|PASS|bduk_january_release_refresh|published 2026-06-04
+019|PASS|bduk_regional_zip_inventory|10 regional ZIPs listed
+020|PASS|bduk_north_east_zip_listing|16 MB
+021|PASS|bduk_east_midlands_zip_listing|29.1 MB
+022|PARTIAL|bduk_north_east_zip_web_fetch|cache miss
+023|PARTIAL|bduk_east_midlands_zip_web_fetch|400 OK / unreadable binary
+024|PARTIAL|bduk_binary_direct_download|download failed
+025|PARTIAL|local_runtime_network_fetch|DNS unavailable
+026|PASS|bduk_sample_exhaustion_guard|public preview exhausted at 983
+027|PASS|bduk_full_release_318_file_guard|technical note confirms 318 files
+028|PASS|bduk_may2026_omr_discovery|May 2026 NR OMR exists
+029|PASS|bduk_may2026_omr_closure|closed 2026-06-01 17:00
+030|PASS|bduk_may2026_supplier_collection_guard|existing/planned build collected
+031|PASS|bduk_may2026_output_status|postcode/UPRN outputs pending publication
+032|PASS|bduk_next_omr_guard|next due September 2026
+033|PASS|bduk_may_omr_no_unpublished_values|no unpublished values promoted
+034|PASS|bduk_july_contract_collection_refresh|updated 2026-07-20
+035|PASS|bduk_july_contract_snapshot|data held 2026-07-16
+036|PASS|bduk_june_contract_snapshot|data held 2026-06-17
+037|PASS|bduk_contract_row_count|37 contract rows
+038|PASS|bduk_july_total_contracted|838490
+039|PASS|bduk_july_total_built|287510
+040|PASS|bduk_june_total_contracted|839340
+041|PASS|bduk_june_total_built|271460
+042|PASS|bduk_total_delta_contracted|-850 published total
+043|PASS|bduk_total_delta_built|+16050 published total
+044|PASS|bduk_contract_row_delta_sum|-860 contracted / +16030 built
+045|PASS|bduk_rounding_reconciliation_guard|-10/-20 gap allowed by nearest-10 rounding
+046|PASS|bduk_contract_built_increase_count|27
+047|PASS|bduk_contract_built_same_count|10
+048|PASS|bduk_contract_built_decrease_count|0
+049|PASS|bduk_contract_scope_change_count|3
+050|PASS|bduk_scope_change_co7|+380 contracted
+051|PASS|bduk_scope_change_derbyshire|-410 contracted
+052|PASS|bduk_scope_change_lincolnshire_east_riding|-830 contracted
+053|PASS|bduk_top_built_delta_north_shropshire|+1510
+054|PASS|bduk_top_built_delta_co5|+1380
+055|PASS|bduk_top_built_delta_co3|+1330
+056|PASS|bduk_top_built_delta_lincolnshire_east_riding|+1230
+057|PASS|bduk_top_built_delta_cambridgeshire|+1190
+058|PASS|bduk_top_built_delta_west_north_yorkshire|+1150
+059|PASS|bduk_contract_not_parcel_guard|contract-level only
+060|PASS|bduk_contract_not_official_stats_comparable|source warning retained
+061|PASS|ofcom_spring2026_refresh|published 2026-05-13
+062|PASS|ofcom_current_snapshot_guard|January 2026
+063|PASS|ofcom_infrastructure_index_refresh|2026 current entry remains Spring 2026
+064|PASS|ofcom_planned_release_separation|PND 2026 forward-looking
+065|PASS|ofcom_zip_listing_refresh|32.2 MB
+066|PARTIAL|ofcom_zip_web_fetch|unsupported application/x-zip-compressed
+067|PARTIAL|ofcom_direct_binary_download|download failed
+068|PARTIAL|ofcom_local_runtime_network|DNS unavailable
+069|PASS|ofcom_endpoint_presence_guard|source endpoint exists
+070|PASS|ofcom_runtime_metrics_fail_closed|hash/CRC/counts remain null
+071|PASS|ons_nsul_epoch126_refresh|May 2026 / Epoch126
+072|PASS|ons_nsul_update_date|2026-07-02
+073|PASS|ons_nsul_cycle_guard|six-weekly
+074|PARTIAL|ons_newer_epoch_search|no newer official catalog hit; not absence proof
+075|PASS|os_open_linked_identifiers_refresh|authoritative UPRN/USRN/TOID relationships
+076|PASS|canonical_uprn_binding_rule|direct only after lifecycle validation
+077|PASS|canonical_toid_binding_rule|validate TOID then correct-version linked identifiers
+078|PASS|may_omr_output_binding_rule|unpublished values forbidden
+079|PASS|contract_progress_binding_rule|freshness only
+080|PASS|geometry_binding_rule|spatial candidate only
+081|PASS|postcode_binding_rule|postcode-level only
+082|PASS|unknown_no_data_guard|missing identity != no coverage
+083|PASS|synthetic_data_guard|forbidden
+084|PASS|product_promotion_gate|0 product rows
+085|PASS|source_registry_count|47 qualified
+086|PASS|source_confidence_threshold|47/47 >=95
+087|PASS|source_average_confidence|99.7
+088|PASS|new_source_acceptance_count|+3
+089|PASS|current_premise_qa_cumulative|990 unchanged
+090|PASS|auxiliary_contract_qa_count|+37
+091|PASS|source_artifact_update_readback|commit 93460f38; blob 97ccb154
+092|PASS|canonical_head_pre_audit|ad5f3b45...
+093|PASS|audit_artifact_update_readback|commit 4fcf0d6b; blob 0b86fdb5
+094|PASS|canonical_head_pre_monitor|667c2397c570e434f3e88725011b006c66ee160a
+095|PASS|monitor_update|this commit</pre>
+<h2>BDUK June→July 2026 contract QA (37)</h2><pre>#|STATE|CONTRACT|JUNE|JULY|DELTA
+01|PASS|Bedfordshire, Northamptonshire and Milton Keynes|jun_contract=5890|jun_built=4660|jul_contract=5890|jul_built=4820|Δcontract=+0|Δbuilt=+160
+02|PASS|Bucks, Herts and East of Berks|jun_contract=6090|jun_built=3810|jul_contract=6090|jul_built=4050|Δcontract=+0|Δbuilt=+240
+03|PASS|CO1 Lancashire, West Berkshire, Staffordshire, Surrey, Hertfordshire, Wiltshire and Gloucestershire|jun_contract=60180|jun_built=17170|jul_contract=60180|jul_built=17170|Δcontract=+0|Δbuilt=+0
+04|PASS|CO2 Devon, Mid Wales and South East Wales|jun_contract=41140|jun_built=9810|jul_contract=41140|jul_built=10600|Δcontract=+0|Δbuilt=+790
+05|PASS|CO3 North Herefordshire, North Wales, Shropshire and South West Wales|jun_contract=65120|jun_built=1240|jul_contract=65120|jul_built=2570|Δcontract=+0|Δbuilt=+1330
+06|PASS|CO4 South Devon, Mid Devon and North Somerset|jun_contract=37110|jun_built=3150|jul_contract=37110|jul_built=3840|Δcontract=+0|Δbuilt=+690
+07|PASS|CO5 Essex and North East England|jun_contract=35300|jun_built=880|jul_contract=35300|jul_built=2260|Δcontract=+0|Δbuilt=+1380
+08|PASS|CO6 Rest of Scotland|jun_contract=77640|jun_built=5680|jul_contract=77640|jul_built=5680|Δcontract=+0|Δbuilt=+0
+09|PASS|CO7 Worcestershire|jun_contract=22600|jun_built=170|jul_contract=22980|jul_built=1010|Δcontract=+380|Δbuilt=+840
+10|PASS|CO8 Cheshire|jun_contract=18460|jun_built=0|jul_contract=18460|jul_built=0|Δcontract=+0|Δbuilt=+0
+11|PASS|Cambridgeshire|jun_contract=18230|jun_built=10840|jul_contract=18230|jul_built=12030|Δcontract=+0|Δbuilt=+1190
+12|PASS|Central Cornwall|jun_contract=6940|jun_built=6940|jul_contract=6940|jul_built=6940|Δcontract=+0|Δbuilt=+0
+13|PASS|Cornwall and Isle of Scilly|jun_contract=14430|jun_built=3660|jul_contract=14430|jul_built=4190|Δcontract=+0|Δbuilt=+530
+14|PASS|Cumbria|jun_contract=53540|jun_built=34830|jul_contract=53540|jul_built=35040|Δcontract=+0|Δbuilt=+210
+15|PASS|Derbyshire|jun_contract=13290|jun_built=1200|jul_contract=12880|jul_built=1550|Δcontract=-410|Δbuilt=+350
+16|PASS|Dorset and South Somerset|jun_contract=19560|jun_built=4520|jul_contract=19560|jul_built=5030|Δcontract=+0|Δbuilt=+510
+17|PASS|Durham|jun_contract=4440|jun_built=4440|jul_contract=4440|jul_built=4440|Δcontract=+0|Δbuilt=+0
+18|PASS|East Gloucestershire|jun_contract=3550|jun_built=1800|jul_contract=3550|jul_built=1980|Δcontract=+0|Δbuilt=+180
+19|PASS|East and West Sussex|jun_contract=12760|jun_built=2970|jul_contract=12760|jul_built=3020|Δcontract=+0|Δbuilt=+50
+20|PASS|Hampshire|jun_contract=29420|jun_built=6970|jul_contract=29420|jul_built=7150|Δcontract=+0|Δbuilt=+180
+21|PASS|Kent|jun_contract=8750|jun_built=2530|jul_contract=8750|jul_built=2530|Δcontract=+0|Δbuilt=+0
+22|PASS|Leicestershire and Warwickshire|jun_contract=22480|jun_built=10310|jul_contract=22480|jul_built=10740|Δcontract=+0|Δbuilt=+430
+23|PASS|Lincolnshire and East Riding|jun_contract=47800|jun_built=20610|jul_contract=46970|jul_built=21840|Δcontract=-830|Δbuilt=+1230
+24|PASS|New Forest|jun_contract=12730|jun_built=10390|jul_contract=12730|jul_built=10400|Δcontract=+0|Δbuilt=+10
+25|PASS|Norfolk|jun_contract=32670|jun_built=12770|jul_contract=32670|jul_built=13310|Δcontract=+0|Δbuilt=+540
+26|PASS|North Dorset|jun_contract=6480|jun_built=6170|jul_contract=6480|jul_built=6170|Δcontract=+0|Δbuilt=+0
+27|PASS|North East Staffordshire|jun_contract=5960|jun_built=2410|jul_contract=5960|jul_built=2860|Δcontract=+0|Δbuilt=+450
+28|PASS|North Oxfordshire|jun_contract=4180|jun_built=3750|jul_contract=4180|jul_built=3860|Δcontract=+0|Δbuilt=+110
+29|PASS|North Shropshire|jun_contract=3410|jun_built=1900|jul_contract=3410|jul_built=3410|Δcontract=+0|Δbuilt=+1510
+30|PASS|Northern North Yorkshire|jun_contract=34490|jun_built=10980|jul_contract=34490|jul_built=11880|Δcontract=+0|Δbuilt=+900
+31|PASS|Northumberland|jun_contract=3830|jun_built=3830|jul_contract=3830|jul_built=3830|Δcontract=+0|Δbuilt=+0
+32|PASS|South Oxfordshire|jun_contract=5120|jun_built=3200|jul_contract=5120|jul_built=3200|Δcontract=+0|Δbuilt=+0
+33|PASS|South West Cornwall|jun_contract=6400|jun_built=6400|jul_contract=6400|jul_built=6400|Δcontract=+0|Δbuilt=+0
+34|PASS|South Wiltshire|jun_contract=18790|jun_built=7230|jul_contract=18790|jul_built=7650|Δcontract=+0|Δbuilt=+420
+35|PASS|South Yorkshire|jun_contract=13290|jun_built=9270|jul_contract=13290|jul_built=9320|Δcontract=+0|Δbuilt=+50
+36|PASS|Suffolk|jun_contract=38350|jun_built=17960|jul_contract=38350|jul_built=18560|Δcontract=+0|Δbuilt=+600
+37|PASS|West and Parts of North Yorkshire|jun_contract=28950|jun_built=17050|jul_contract=28950|jul_built=18200|Δcontract=+0|Δbuilt=+1150</pre>
+<p>132 görünür işlem = 95 araştırma/recovery + 37 contract QA. Monitor remote readback ve final branch kontrolleri bu commit sonrasında ayrıca doğrulanır.</p>
+</body></html>
