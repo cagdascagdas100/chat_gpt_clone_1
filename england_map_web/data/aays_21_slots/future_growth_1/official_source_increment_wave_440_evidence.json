@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":440,
+  "topic":"CANDIDATE_WC_SELINAS_LANE_PERMISSION_STATUS_NOTE_CONFLICT_INDUSTRIAL_CONTEXT_AND_TITLE_GATES",
+  "generated_at":"2026-07-27T23:16:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_WC_REGISTER_CONFLICT_RECONCILIATION_NOT_PERMISSION_FINALITY_INFERENCE_NOT_EXACT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.8,
+  "sources":[
+    {"key":"wc_brownfield","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"LBBD95/WC Selinas Lane is 0.62ha with 150 minimum/maximum net dwelling capacity."},
+    {"key":"wc_status","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"The Brownfield field planning-permission-status is permissioned."},
+    {"key":"wc_note_conflict","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"The same current Brownfield record simultaneously states Notes: No decision taken on planning application."},
+    {"key":"wc_history_link","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"Planning history links to Be First application id 21825; this wave does not infer a final residential permission solely from the conflicting register fields."},
+    {"key":"wc_point","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"WC provides a point and blank geometry; this is not the application red-line or HMLR title polygon."},
+    {"key":"wc_owner_category","url":"https://www.planning.data.gov.uk/entity/1739890","fact":"Ownership status not-owned-by-a-public-authority does not identify current proprietor/title."},
+    {"key":"selinas_industrial_case","url":"https://lbbd.moderngov.co.uk/mgAi.aspx?ID=93347","fact":"22/01424/FULL at Dairy Crest/Chadwell House, Selinas Lane concerns industrial buildings; it is not transferred to the WC residential allocation."},
+    {"key":"selinas_industrial_scope","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12654","fact":"December 2022 committee minutes confirm industrial B2/B8/E(g)(iii) scope at another Selinas Lane site, demonstrating address-area collision risk."},
+    {"key":"selinas_temp_case","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=12227","fact":"21/02059/FULL at former Muller Factory Selinas Lane is a temporary industrial/open-storage/car-dealership use and is not WC residential permission evidence."},
+    {"key":"wc_local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"Local Plan allocation supports housing capacity evidence but does not cure a contradictory planning-permission-status record."},
+    {"key":"wc_planning_register","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning/applications-and-decisions","fact":"Exact case/decision readback is required to resolve the permissioned versus no-decision conflict."},
+    {"key":"wc_brownfield_dataset","url":"https://www.planning.data.gov.uk/dataset/brownfield-land","fact":"Brownfield register fields remain evidence inputs and are not substituted for exact legal title or executed statutory overlays."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"WC capacity remains 150 net dwellings."},
+    {"id":"EX02","result":"The status field says permissioned but the note says no decision taken; conflict is preserved, not silently reconciled."},
+    {"id":"EX03","result":"No final residential permission conclusion is promoted from contradictory fields alone."},
+    {"id":"EX04","result":"Industrial Selinas Lane applications are not transferred to WC."},
+    {"id":"EX05","result":"Be First history id is retained without guessing an exact final decision outcome."},
+    {"id":"EX06","result":"Point/blank geometry is not converted to a site/title polygon."},
+    {"id":"EX07","result":"Non-public ownership category is not legal proprietor identification."},
+    {"id":"EX08","result":"Promotion remains zero until the exact residential case decision, title relation and overlays are verified."}
+  ],
+  "fail_closed_rules":["status_note_conflict_preserved","permissioned_not_final_when_note_conflicts","150_capacity_not_consent","industrial_case_not_wc_residential","temporary_use_not_wc_permission","address_area_collision_guard","history_id_not_guessed_outcome","point_not_polygon","ownership_category_not_owner_name","exact_case_decision_required","exact_hmlr_required","executed_overlay_required","no_conflict_override","no_fuzzy_case_binding","no_register_only_promotion","promotion_requires_exact_wc_decision_title_and_overlays"],
+  "dimensions":["STATUS","CONFLICT","EVIDENCE","CAPACITY","PERMISSION","IDENTITY","GEOMETRY","OWNERSHIP","TITLE","NO_DATA","OVERLAY","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD95/WC Selinas Lane","net_dwellings_capacity":150,"planning_permission_status_field":"permissioned","register_note":"No decision taken on planning application","status_note_conflict":true,"exact_final_residential_decision_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
