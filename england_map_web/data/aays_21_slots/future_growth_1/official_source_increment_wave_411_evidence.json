@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 411,
+  "topic": "CANDIDATE_DI_ROXWELL_EXACT_PERMISSION_GROSS_NET_AND_CURRENT_DELIVERY_BLOCKER_RECONCILIATION",
+  "generated_at": "2026-07-27T20:26:04+03:00",
+  "output_semantics": "CANDIDATE_SPECIFIC_PERMISSION_AND_DELIVERY_RECONCILIATION_WITH_GROSS_NET_ARITHMETIC_NOT_COMPLETION_CLAIM_NOT_EXACT_TITLE_POLYGON",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.9,
+  "score_basis": "Candidate-specific reconciliation across Planning Data, LBBD committee decisions, Be First project records and the current June 2026 Council company update; net capacity is arithmetically reconciled while current delivery delay is preserved.",
+  "sources": [
+    {"key":"di_brownfield","label":"Planning Data LBBD91/DI","url":"https://www.planning.data.gov.uk/entity/1739886","fact":"LBBD91/DI identifies 53-135 Roxwell Road, 0.58ha, publicly owned, deliverable, permissioned with full planning permission and both minimum/maximum net dwellings equal to 46; geometry is blank."},
+    {"key":"di_permission_date","label":"Planning Data DI permission metadata","url":"https://www.planning.data.gov.uk/entity/1739886","fact":"Brownfield record gives planning-permission date 2020-07-10 and one Be First planning-history identifier; these metadata do not provide exact title geometry."},
+    {"key":"roxwell_committee","label":"LBBD Planning Committee 23 March 2020","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MId=10757","fact":"Committee item 49 is 53-135 Roxwell Road and 2-4 Stebbing Way, application 19/01920/FUL, with delegated grant subject to the Unilateral Undertaking and conditions."},
+    {"key":"roxwell_s73","label":"LBBD Section 73 committee 2021","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MId=12221","fact":"September 2021 committee considered a Section 73 application varying conditions of permission 19/01920/FUL and explicitly describes construction of 87 Class C3 residential units."},
+    {"key":"roxwell_be_first","label":"Be First approval summary","url":"https://befirst.london/thumbs-up-for-more-affordable-homes/","fact":"Be First states Roxwell/Stebbing will provide 87 new homes replacing 41 existing homes."},
+    {"key":"roxwell_net","label":"Be First net increase","url":"https://befirst.london/thumbs-up-for-more-affordable-homes/","fact":"The 87-new/41-replaced figures arithmetically imply a net increase of 46, matching the Brownfield register's 46 net dwellings."},
+    {"key":"roxwell_submission","label":"Be First planning submission","url":"https://yourcall.befirst.london/Roxwell-Road/news_feed/planning-application-submitted","fact":"Be First's project consultation page separately states 87 high-quality new homes and an increase of 46 affordable energy-efficient homes."},
+    {"key":"roxwell_delivery_2026","label":"LBBD Cabinet 16 June 2026","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=180&MId=13715","fact":"Current Cabinet minutes record delays after original contractor Jerram Falkus Construction Limited entered administration before completion of the Roxwell Road project."},
+    {"key":"roxwell_recovery","label":"LBBD Cabinet alternative contractor authority","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=180&MId=13715","fact":"Cabinet delegated authority to appoint an alternative contractor and increase budget if required subject to viability, so older planned completion dates are not treated as proof of completion."},
+    {"key":"current_state","label":"Current-delivery state rule","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=180&MId=13715","fact":"The June 2026 Council record is used as the newer delivery-state evidence and supersedes older schedule expectations for completion claims."},
+    {"key":"local_plan","label":"LBBD Local Plan 2037","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The adopted 2037 Local Plan is current policy context but does not alter the exact permission/delivery facts for Roxwell."},
+    {"key":"development_plan","label":"LBBD Development Plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Development Plan status is kept separate from application reference, net capacity and current construction delivery evidence."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"87 gross new homes minus 41 replaced existing homes equals 46 net, exactly reconciling the Brownfield net-dwellings field."},
+    {"id":"EX02","result":"The 46-net reconciliation is accepted as a count reconciliation, not an exact parcel-boundary verification."},
+    {"id":"EX03","result":"19/01920/FUL remains the exact parent permission reference; Section 73 changes are not counted as another 87-home scheme."},
+    {"id":"EX04","result":"Older expected completion dates are not treated as current because the June 2026 Council record reports contractor administration and incomplete works."},
+    {"id":"EX05","result":"Authority to appoint an alternative contractor is a recovery/delivery action, not proof that the project is completed."},
+    {"id":"EX06","result":"Public ownership status in Brownfield data is not converted into an exact HMLR title-owner relation."},
+    {"id":"EX07","result":"Blank Brownfield geometry is not reconstructed from the project address or planning point."},
+    {"id":"EX08","result":"Promotion remains zero until exact title polygon and candidate-specific current statutory overlays are bound."}
+  ],
+  "fail_closed_rules": ["gross_new_minus_replaced_equals_net","net_reconciliation_not_geometry_proof","parent_permission_exact","s73_not_duplicate_scheme","older_completion_schedule_not_current_fact","contractor_administration_blocks_completion_claim","alternative_contractor_authority_not_completion","public_ownership_not_exact_title","blank_geometry_no_address_buffer","project_page_not_title_register","planning_permission_not_delivery_completion","delivery_delay_not_permission_revocation","no_fuzzy_redline","current_source_temporal_priority","no_candidate_score_from_schedule","promotion_requires_exact_title_and_current_statutory_overlay"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","REFERENCE","GROSS_NET","PERMISSION","S73","DELIVERY","GEOMETRY","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD91/DI 53-135 Roxwell Road","exact_parent_permission":"19/01920/FUL","gross_new_dwellings":87,"replaced_existing_dwellings":41,"reconciled_net_dwellings":46,"brownfield_net_dwellings":46,"net_capacity_reconciled":true,"current_delivery_blocker":"original contractor entered administration before project completion","exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
