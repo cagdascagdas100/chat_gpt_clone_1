@@ -5,14 +5,14 @@
   "attempt_mode": "REMOTE_RECOVERY_PREFLIGHT_WITH_OFFICIAL_WEB_EVIDENCE",
   "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
-  "canonical_head_observed": "f05c5b0182a124fab844c6d48aee58ca74eed940",
+  "canonical_head_observed": "b445a90d8bc535f615d930ef936bc1f363586ea8",
   "source_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
   "source_page_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
   "source_metadata_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
   "source_snapshot_date": "2026-01",
   "source_correction_version": "v2-2026-07-07",
   "started_at": "2026-07-27T12:53:22Z",
-  "finished_at": "2026-07-27T13:12:49Z",
+  "finished_at": "2026-07-27T14:02:00Z",
   "fake_data": false,
   "final_ready": false,
   "status": "BLOCKED",
@@ -62,105 +62,28 @@
     "data_row_count": null
   },
   "transport_evidence": [
-    {
-      "method": "official_web_pdf_and_page_readback",
-      "result": "PASS: Ofcom v2 metadata and Spring 2026 page readable; ZIP listing confirmed, binary archive bytes still not exposed through this execution web reader"
-    },
-    {
-      "method": "local_runtime_network_probe",
-      "result": "FAILED",
-      "error": "Temporary failure in name resolution"
-    }
+    {"method":"official_web_page_readback","result":"PASS","evidence":"Ofcom Spring 2026 page lists Fixed_broadband_coverage_and_full_fibre_take-up ZIP at 32.2 MB."},
+    {"method":"official_zip_link_click","result":"BLOCKED","evidence":"Web fetch reached exact Ofcom ZIP URL but runtime rejected application/x-zip-compressed content."},
+    {"method":"direct_binary_download_attempt","result":"BLOCKED","evidence":"Direct binary transfer failed after exact official link validation; no bytes available for integrity checks."},
+    {"method":"prior_local_runtime_network_probe","result":"FAILED","evidence":"Temporary failure in name resolution."}
   ],
+  "methodology_guards": {
+    "ofcom_postcode_coverage_not_measured_speed": true,
+    "ofcom_since_2024_measured_speeds_not_postcode_level": true,
+    "bduk_current_gigabit_semantics_verified": true,
+    "bduk_future_gigabit_semantics_verified": true,
+    "bduk_qmi_uses_most_recent_connected_nations": true,
+    "bduk_supplier_error_and_incomplete_matching_documented": true,
+    "monthly_contract_progress_not_directly_comparable_to_official_statistics": true,
+    "missing_binding_is_unknown_not_no_data": true
+  },
   "supplementary_currentness_evidence": {
     "source": "Building Digital UK January 2026 OMR and premises in BDUK plans",
     "publication_date": "2026-06-04",
     "role": "UPRN_LEVEL_CURRENTNESS_REFERENCE_ONLY_NOT_OFCOM_SCHEMA_SUBSTITUTE",
     "source_confidence_percent": 100,
-    "dataset_guards": {
-      "premises_level": true,
-      "uses_uprn": true,
-      "sample_max_rows": 1000,
-      "release_split_file_count": 318,
-      "current_gigabit_field": true,
-      "future_gigabit_field": true,
-      "premises_base_addressbase_premium": true,
-      "missing_uprn_is_not_proof_of_no_service": true,
-      "contract_changes_can_be_recent_and_not_captured": true
-    },
-    "london_sample_examples": [
-      {
-        "uprn": "100020405816",
-        "postcode": "BR1 1NF",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100023527379",
-        "postcode": "BR1 1QU",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100022886842",
-        "postcode": "BR1 1RE",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "10070015137",
-        "postcode": "BR1 1RJ",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020410491",
-        "postcode": "BR1 2AA",
-        "current_gigabit": true,
-        "future_gigabit": false,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020416827",
-        "postcode": "BR1 2BS",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020415209",
-        "postcode": "BR1 2DA",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020408802",
-        "postcode": "BR1 2DR",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020415536",
-        "postcode": "BR1 2EQ",
-        "current_gigabit": true,
-        "future_gigabit": false,
-        "local_authority": "Bromley"
-      },
-      {
-        "uprn": "100020399846",
-        "postcode": "BR1 2HH",
-        "current_gigabit": true,
-        "future_gigabit": true,
-        "local_authority": "Bromley"
-      }
-    ],
-    "promotion_guard": "Do not promote BDUK sample rows into parcel product rows until exact parcel-to-UPRN identity binding is verified; BDUK and Ofcom premise bases and supplier-response methodologies differ."
+    "qa_examples_cumulative": 30,
+    "promotion_guard": "Do not promote BDUK sample rows into parcel product rows until exact parcel-to-UPRN identity binding is verified."
   },
   "supplementary_contract_progress_evidence": {
     "source": "Building Digital UK July 2026 Project Gigabit contract progress",
@@ -169,17 +92,17 @@
     "role": "AGGREGATE_DELIVERY_PROGRESS_ONLY_NOT_PARCEL_AVAILABILITY",
     "source_confidence_percent": 100,
     "initial_scope_contracted_premises_total": 838490,
-    "built_contracted_premises_total": 287510,
-    "guard": "Rounded contract-level management information is not a parcel-level or orderability measurement and is not promoted into internet_access parcel rows."
+    "built_contracted_premises_total": 287510
   },
   "research_batch": {
-    "batch_id": "remote_recovery_web_batch_20260727_02",
-    "completed_operations": 18,
+    "batch_id": "remote_recovery_web_batch_20260727_03",
+    "completed_operations": 29,
     "partial_operations": 1,
-    "blocked_operations": 1,
-    "total_operations": 20,
-    "new_official_sources_qualified": 2,
-    "new_visible_qa_examples": 10,
+    "blocked_operations": 3,
+    "total_operations": 33,
+    "new_official_sources_qualified_this_turn": 3,
+    "new_visible_qa_examples_this_turn": 20,
+    "cumulative_visible_qa_examples": 30,
     "source_confidence_percent": 100,
     "product_rows_promoted": 0,
     "general_program_progress_percent": 11.1,
