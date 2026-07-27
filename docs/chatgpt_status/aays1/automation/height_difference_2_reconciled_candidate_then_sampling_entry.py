@@ -11,7 +11,7 @@ from typing import Any
 
 TASK_ID = "aays1-height-difference-2-canonical-export-official-sampling-20260720"
 ATTEMPT_ID = "height-difference-2-20260721-020"
-TASK_VERSION = "6.3-fhost-safe-ffonly-terrain50-webacceptance"
+TASK_VERSION = "6.4-terrain50-accuracy-screening-web-integrity"
 EXPECTED_BRANCH = "codex/aays-single-runner-v5-20260706"
 EXPECTED_PAGE_KEY = "aays1"
 TARGET_ROWS = [30762, 46142, 61522]
@@ -93,7 +93,7 @@ def main() -> int:
     missing = [str(path) for path in required if not path.is_file() or path.stat().st_size == 0]
     if missing:
         payload = {
-            "schema_version": 5,
+            "schema_version": 6,
             "slot_id": "height_difference_2",
             "task_id": TASK_ID,
             "attempt_id": ATTEMPT_ID,
@@ -104,6 +104,7 @@ def main() -> int:
             "official_numeric_row_count": 0,
             "web_acceptance_required": True,
             "web_acceptance_passed": False,
+            "terrain50_accuracy_screening_required": True,
             "final_ready": False,
             "fake_data": False,
             "db_write": False,
@@ -158,6 +159,7 @@ def main() -> int:
 
     stages.extend([hmlr_stage, numeric_stage])
     numeric_payload = _load(final_output) if final_output.is_file() else {}
+    terrain_payload = _load(numeric_output_dir / "os_terrain50_crosschecks.json") if (numeric_output_dir / "os_terrain50_crosschecks.json").is_file() else {}
     success = (
         candidate_stage["exit_code"] == 0
         and hmlr_stage.get("exit_code") == 0
@@ -166,23 +168,27 @@ def main() -> int:
         and numeric_payload.get("official_numeric_row_count") == 3
         and numeric_payload.get("web_acceptance_passed") is True
         and numeric_payload.get("status") == "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW"
+        and terrain_payload.get("accuracy_screening_passed") is True
     )
     payload = {
-        "schema_version": 5,
+        "schema_version": 6,
         "slot_id": "height_difference_2",
         "task_id": TASK_ID,
         "attempt_id": ATTEMPT_ID,
         "task_version": TASK_VERSION,
-        "status": "THREE_SOURCE_OFFICIAL_NUMERIC_AND_WEB_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
+        "status": "THREE_SOURCE_OFFICIAL_NUMERIC_ACCURACY_AND_WEB_GATE_EXECUTED" if success else "BLOCKED_FAIL_CLOSED_RECONCILED_STAGE_GATE",
         "target_rows": TARGET_ROWS,
         "stage_order": [
             "RECONCILED_EXACT_CANDIDATE_SEED_EXTRACTION",
             "FRESH_HMLR_GML_REVALIDATION",
-            "OFFICIAL_NUMERIC_GATE_WITH_PORT_8012_ACCEPTANCE",
+            "OFFICIAL_NUMERIC_GATE_WITH_TERRAIN50_ACCURACY_AND_PORT_8012_ACCEPTANCE",
         ],
         "stages": stages,
         "candidate_seed_count": candidate_payload.get("candidate_seed_count", 0),
         "official_numeric_row_count": numeric_payload.get("official_numeric_row_count", 0),
+        "terrain50_accuracy_screening_required": True,
+        "terrain50_accuracy_screening_passed": terrain_payload.get("accuracy_screening_passed") is True,
+        "terrain50_accuracy_screening_contract": terrain_payload.get("accuracy_screening_contract"),
         "web_acceptance_required": True,
         "web_acceptance_passed": numeric_payload.get("web_acceptance_passed") is True,
         "fresh_official_hmlr_revalidation_required": True,
