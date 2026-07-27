@@ -1,175 +1,213 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}.ok{background:#d1e7dd;padding:10px}</style></head><body><h1>internet_access_1 — devam / recovery izleme</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p><div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Slot heartbeat stale; canonical Ofcom binary audit yok; exact parcel→UPRN bağı doğrulanmadı. Research/QA fail-closed devam ediyor.</div><div class="ok"><b>Kalite düzeltmesi:</b> Ara child source JSON'daki genişletilmiş QA listesinde transcription drift yakalandı; ürün satırı yükseltilmeden kaldırıldı. Final source blob yalnız programatik hash/istatistik ve doğrulanmış örnekleri tutuyor. Ürün etkisi: 0.</div><div class="summary"><div class="card">Genel program<br><b>11.1%</b><br>1 / 9 · Δ 0.0</div><div class="card">Current-task kontrol<br><b>94.7%</b><br>18 / 19</div><div class="card">Bu tur görünür<br><b>158 PASS / 174</b><br>13 PARTIAL · 3 BLOCKED</div><div class="card">Qualified kaynak<br><b>35</b></div><div class="card">≥95 güven<br><b>35 / 35</b></div><div class="card">Ort. kaynak güveni<br><b>99.8%</b></div><div class="card">Yeni accepted kaynak<br><b>+2</b></div><div class="card">Restricted aday<br><b>3</b></div><div class="card">Düzeltme<br><b>2</b></div><div class="card">Yeni QA<br><b>+100</b></div><div class="card">Kümülatif QA<br><b>430</b></div><div class="card">Ürün satırı<br><b>0</b></div></div><p><b>Yeni QA:</b> BDUK January 2026 official sample satır 324–423. 100/100 UPRN benzersiz; recognised 100/100 true; current 100/100 true; future 15 true / 85 false. Dağılım: Blackburn with Darwen 55, Hyndburn 5, Bromley 40.</p><p><b>Yeni kaynak/guard:</b> HMLR INSPIRE View Service/WMS ücretsiz resmî geometri görsel doğrulama rotası; GeoPlace FindMyAddress resmî UPRN doğrulama/access guard. OS Linked Identifiers API, OS Places API ve EPC bulk UPRN erişim anahtarı/login nedeniyle production'a alınmadı.</p><p><b>Düzeltme:</b> BDUK May-2026 RFI güncel metni 9 değil 10 ayrı UPRN dosyası söylüyor; dosya erişimi OS Public Sector Contractor Licence + BDUK NDA gerektiriyor. Önceki 9 kaydı düzeltildi.</p><p><b>Exact-binding:</b> canonical UPRN veya canonical TopographicArea TOID + OS Linked Identifiers confidence='Version information is correct' olmadan exact promotion yok. Point/polygon proximity candidate-only.</p><h2>İşlem satırları</h2><pre>#	STATE	OPERATION	EVIDENCE
-001	PASS	contract_version_recheck	contract sha 1a25e0f; continuation/no-duplicate/free-source rules unchanged
-002	PASS	canonical_head_readback	d8dbbe2e2813ec09661fd94c3333b9fb7324e351
-003	PASS	current_task_readback	same task and continuation; 18/19 control
-004	PASS	slot_status_readback	RECOVERY_PARKED; same first unverified step
-005	BLOCKED	slot_heartbeat_recheck	unclaimed; heartbeat absent/stale
-006	PASS	ownership_recheck	unclaimed; no valid lease
-007	PASS	checkpoint_recheck	33785 verified / 58498 pending or no-data
-008	PASS	manual_action_recheck	OPEN; not falsely resolved
-009	PASS	queue_continuation_dedup	same pending .v3 task retained; no second task/runner
-010	BLOCKED	canonical_runtime_audit_readback	ofcom_2026_schema_audit_latest.json absent on canonical
-011	PASS	child_source_artifact_fetch	pre-update blob 5a9d527d378edce67ab9760b493fb96329d4884b
-012	PASS	child_audit_artifact_fetch	pre-update blob ec834b77f549fb78973d4f312dbb87aa6857fca0
-013	PASS	child_monitor_artifact_fetch	pre-update blob 271a6de85ba1a70fc39a4cc43697cb0122a17034
-014	PASS	bduk_sample_window_324_423_read	100 official GOV.UK sample rows
-015	PASS	qa_uniqueness_check	100/100 UPRNs unique
-016	PASS	qa_recognised_distribution	100 true / 0 false
-017	PASS	qa_current_distribution	100 true / 0 false
-018	PASS	qa_future_distribution	15 true / 85 false
-019	PASS	qa_bduk_gis_distribution	0 true / 100 false
-020	PASS	qa_lad_distribution	Blackburn with Darwen 55; Hyndburn 5; Bromley 40
-021	PASS	qa_region_distribution	North West 60; London 40
-022	PASS	bduk_july2026_contract_progress_refresh	updated 20 July 2026; snapshot 16 July
-023	PASS	bduk_july_aggregate_only_guard	contract-level initial-scope/ingestion-lag data not parcel current availability
-024	PASS	bduk_may_rfi_correction	prior 9-file note corrected: current RFI says 10 separate UPRN files
-025	PASS	bduk_may_rfi_uprn_file_count	10 files for response preparation
-026	PASS	bduk_may_rfi_access_guard	UPRN files require OS Public Sector Contractor Licence + BDUK NDA; not free production source
-027	PASS	ons_nsul_epoch126_refresh	May 2026 / AddressBase Epoch126; updated 2 July 2026
-028	PARTIAL	ons_newer_epoch_probe	no official Epoch127/June/July NSUL result found; search zero is not absence proof
-029	PASS	os_open_uprn_refresh	free OpenData; six-weekly; authoritative UPRN point dataset
-030	PASS	os_open_uprn_point_identity_guard	address-record point location; nearest point is not exact parcel identity
-031	PASS	os_open_linked_identifiers_refresh	authoritative UPRN/USRN/TOID relationships; six-weekly
-032	PASS	os_linked_identifier_confidence_guard	exact promotion only when Version information is correct
-033	PASS	os_linked_identifiers_api_candidate	free OpenData-plan identifier relationship lookup candidate
-034	PARTIAL	os_linked_identifiers_api_access	API project/key required; not executed in no-auth workflow
-035	PASS	os_places_api_candidate	UPRN/address lookup with polygon/bbox/radius spatial queries
-036	PASS	os_places_polygon_capability	polygon query can return address/UPRN candidates
-037	PARTIAL	os_places_api_auth_guard	OS Data Hub project/API key required
-038	PARTIAL	os_places_plan_guard	Public Sector/Premium access; not public no-auth production source
-039	PASS	os_places_bulk_query_guard	bulk querying not accepted as free fail-closed production route
-040	PASS	geoplace_findmyaddress_authority	GeoPlace/local-authority official-address UPRN validation route
-041	PASS	geoplace_findmyaddress_uprn_validation	returns UPRN with official address/location for lookup
-042	PARTIAL	geoplace_findmyaddress_terms_guard	personal/non-commercial use restriction
-043	PASS	geoplace_findmyaddress_storage_guard	terms do not permit production download/storage
-044	PASS	geoplace_findmyaddress_rate_guard	daily search limit applies; exact cap not asserted due conflicting snippets
-045	PASS	epc_bulk_uprn_candidate	EPC open-data bulk/API can include UPRN where available
-046	PARTIAL	epc_login_guard	GOV.UK One Login required; skipped under no-auth policy
-047	PASS	hmlr_inspire_wms_candidate	official INSPIRE View Service/WMS for freehold polygon visual validation
-048	PASS	hmlr_inspire_wms_ogl_guard	data.gov.uk metadata current 8 July 2026; OGL
-049	PARTIAL	hmlr_wms_parser_guard	direct XML/WMS response unsupported by web reader; parser limitation only
-050	PASS	hmlr_inspire_exact_uprn_gap	WMS/INSPIRE geometry does not establish exact free Title↔UPRN join
-051	PASS	direct_canonical_uprn_join_guard	exact only after authoritative UPRN identity/lifecycle validation
-052	PASS	topographicarea_toid_join_guard	exact candidate via BLPU_UPRN_TopographicArea_TOID_5 only with correct version confidence
-053	PASS	geometry_only_spatial_guard	OS UPRN point/HMLR polygon proximity remains candidate-only
-054	PASS	postcode_only_guard	postcode evidence remains POSTCODE_LEVEL_ONLY
-055	PASS	unknown_vs_no_data_guard	unbound parcel remains UNKNOWN; not no-service
-056	PASS	restricted_source_skip_policy	login/API-key/paid routes skipped and do not block free-source research
-057	PARTIAL	repo_exact_uprn_probe_100010731309	0 GitHub indexed hits; not absence proof
-058	PARTIAL	repo_exact_uprn_probe_100010763945	0 GitHub indexed hits; not absence proof
-059	PARTIAL	repo_exact_uprn_probe_100010447401	0 GitHub indexed hits; not absence proof
-060	PARTIAL	repo_exact_uprn_probe_10070014531	0 GitHub indexed hits; not absence proof
-061	PARTIAL	repo_exact_uprn_probe_100020402489	0 GitHub indexed hits; not absence proof
-062	PASS	zero_index_hits_absence_guard	zero code-search hits never treated as proof of missing identity
-063	BLOCKED	exact_parcel_to_uprn_binding	canonical parcel UPRN/TOID or exact observable parcel identity still unavailable
-064	PASS	product_promotion_gate	0 unverified parcel rows promoted
-065	PASS	fake_data_guard	no fabricated geometry/UPRN/availability
-066	PASS	second_runner_guard	no second task/runner started
-067	PASS	direct_publisher_guard	canonical/shared publisher not bypassed
-068	PARTIAL	source_initial_update	intermediate expanded QA list had transcription drift; not promoted
-069	PASS	source_transcription_drift_detected	programmatic QA cross-check caught mismatch
-070	PASS	source_fail_closed_repair_update	commit fefb566a7423976af93338a43dcddccff52814b4
-071	PASS	source_repair_remote_readback	blob 3004060981c095cc4bb13e3c53ff5dbd3342c7ae
-072	PASS	audit_artifact_update	commit d386aa081c65e89dcfcdaf348f85719cd06ac703
-073	PASS	audit_artifact_remote_readback	blob d10a833f686e6c2f415ca5d6a072164f12a1bd66
-074	PASS	canonical_head_pre_monitor	a8b84ad58ba02f627302b6f05732a15ba97da424</pre><h2>100 doğrulanmış QA satırı</h2><pre>source_line	UPRN	postcode	recognised	current	future	LAD	region
-324	100010731309	BB1 1UE	true	true	false	Blackburn with Darwen	North West
-325	100010748353	BB1 1UF	true	true	false	Blackburn with Darwen	North West
-326	100010750521	BB1 1UH	true	true	false	Blackburn with Darwen	North West
-327	100010766417	BB1 1UL	true	true	false	Blackburn with Darwen	North West
-328	100010748333	BB1 1UN	true	true	false	Blackburn with Darwen	North West
-329	100010748335	BB1 1UN	true	true	false	Blackburn with Darwen	North West
-330	100010748319	BB1 1UN	true	true	false	Blackburn with Darwen	North West
-331	100010763945	BB1 1XD	true	true	true	Blackburn with Darwen	North West
-332	100010742160	BB1 1XJ	true	true	true	Blackburn with Darwen	North West
-333	10091620419	BB1 2AL	true	true	false	Blackburn with Darwen	North West
-334	100010729875	BB1 2AN	true	true	false	Blackburn with Darwen	North West
-335	100010740112	BB1 2AT	true	true	false	Blackburn with Darwen	North West
-336	100010740087	BB1 2AZ	true	true	false	Blackburn with Darwen	North West
-337	100010750137	BB1 2BA	true	true	false	Blackburn with Darwen	North West
-338	100010758705	BB1 2BN	true	true	false	Blackburn with Darwen	North West
-339	100010739991	BB1 2BS	true	true	false	Blackburn with Darwen	North West
-340	100010739969	BB1 2BS	true	true	false	Blackburn with Darwen	North West
-341	100010447401	BB1 2DD	true	true	false	Hyndburn	North West
-342	100010451449	BB1 2DF	true	true	false	Hyndburn	North West
-343	100010450865	BB1 2DU	true	true	false	Hyndburn	North West
-344	100010730903	BB1 2ET	true	true	false	Blackburn with Darwen	North West
-345	100010762277	BB1 2EW	true	true	false	Blackburn with Darwen	North West
-346	100010741253	BB1 2EY	true	true	false	Blackburn with Darwen	North West
-347	100010731641	BB1 2EZ	true	true	false	Blackburn with Darwen	North West
-348	100010758779	BB1 2HN	true	true	false	Blackburn with Darwen	North West
-349	10010316896	BB1 2HR	true	true	false	Blackburn with Darwen	North West
-350	100010751741	BB1 2HY	true	true	false	Blackburn with Darwen	North West
-351	100010757837	BB1 2HZ	true	true	false	Blackburn with Darwen	North West
-352	100010757803	BB1 2JA	true	true	false	Blackburn with Darwen	North West
-353	200004507162	BB1 2JD	true	true	false	Blackburn with Darwen	North West
-354	100010738949	BB1 2JH	true	true	false	Blackburn with Darwen	North West
-355	100010730195	BB1 2JL	true	true	false	Blackburn with Darwen	North West
-356	100010759583	BB1 2JN	true	true	false	Blackburn with Darwen	North West
-357	100010759581	BB1 2JN	true	true	false	Blackburn with Darwen	North West
-358	100010759574	BB1 2JN	true	true	false	Blackburn with Darwen	North West
-359	100010738894	BB1 2JW	true	true	false	Blackburn with Darwen	North West
-360	100010733041	BB1 2LG	true	true	false	Blackburn with Darwen	North West
-361	100010753601	BB1 2LH	true	true	false	Blackburn with Darwen	North West
-362	100010753593	BB1 2LH	true	true	false	Blackburn with Darwen	North West
-363	100010758333	BB1 2LW	true	true	false	Blackburn with Darwen	North West
-364	100010742633	BB1 2NG	true	true	false	Blackburn with Darwen	North West
-365	10024627832	BB1 2QE	true	true	false	Blackburn with Darwen	North West
-366	200004506305	BB1 2RA	true	true	false	Blackburn with Darwen	North West
-367	200004506249	BB1 2RE	true	true	false	Blackburn with Darwen	North West
-368	10010315238	BB1 2RG	true	true	false	Blackburn with Darwen	North West
-369	10091618268	BB1 2RJ	true	true	false	Blackburn with Darwen	North West
-370	100012533837	BB1 3AN	true	true	false	Blackburn with Darwen	North West
-371	10096073531	BB1 3AZ	true	true	false	Blackburn with Darwen	North West
-372	100012851626	BB1 3BL	true	true	false	Blackburn with Darwen	North West
-373	100012533898	BB1 3BY	true	true	false	Blackburn with Darwen	North West
-374	10010316796	BB1 3EA	true	true	false	Blackburn with Darwen	North West
-375	200004504137	BB1 3EA	true	true	false	Blackburn with Darwen	North West
-376	10091619760	BB1 3EE	true	true	false	Blackburn with Darwen	North West
-377	10091619761	BB1 3EE	true	true	false	Blackburn with Darwen	North West
-378	10010323555	BB1 3HY	true	true	false	Blackburn with Darwen	North West
-379	100010765708	BB1 3JB	true	true	false	Blackburn with Darwen	North West
-380	100010765656	BB1 3JD	true	true	false	Blackburn with Darwen	North West
-381	100010767007	BB1 3LG	true	true	false	Blackburn with Darwen	North West
-382	10009967115	BB1 3LR	true	true	false	Hyndburn	North West
-383	100010451337	BB1 3LU	true	true	false	Hyndburn	North West
-384	10070014531	BR1 1AF	true	true	false	Bromley	London
-385	10070022681	BR1 1AP	true	true	false	Bromley	London
-386	100022887065	BR1 1EA	true	true	false	Bromley	London
-387	10070019418	BR1 1EZ	true	true	true	Bromley	London
-388	10070021653	BR1 1LT	true	true	false	Bromley	London
-389	10070022913	BR1 1LY	true	true	false	Bromley	London
-390	10070022937	BR1 1LY	true	true	false	Bromley	London
-391	100020405816	BR1 1NF	true	true	true	Bromley	London
-392	100023527379	BR1 1QU	true	true	true	Bromley	London
-393	100022886842	BR1 1RE	true	true	true	Bromley	London
-394	10070015137	BR1 1RJ	true	true	true	Bromley	London
-395	100020410491	BR1 2AA	true	true	false	Bromley	London
-396	10070005757	BR1 2AE	true	true	false	Bromley	London
-397	100020396060	BR1 2AG	true	true	false	Bromley	London
-398	100020420889	BR1 2AH	true	true	false	Bromley	London
-399	100020406560	BR1 2AN	true	true	false	Bromley	London
-400	10013152700	BR1 2BG	true	true	false	Bromley	London
-401	100020416827	BR1 2BS	true	true	true	Bromley	London
-402	100020415209	BR1 2DA	true	true	true	Bromley	London
-403	100020408802	BR1 2DR	true	true	true	Bromley	London
-404	100020415536	BR1 2EQ	true	true	false	Bromley	London
-405	100020420952	BR1 2ES	true	true	false	Bromley	London
-406	100020391046	BR1 2EX	true	true	false	Bromley	London
-407	10070005371	BR1 2FF	true	true	false	Bromley	London
-408	10070000197	BR1 2FL	true	true	false	Bromley	London
-409	100020391070	BR1 2HA	true	true	false	Bromley	London
-410	100020399846	BR1 2HH	true	true	true	Bromley	London
-411	100020389632	BR1 2HS	true	true	false	Bromley	London
-412	100020397311	BR1 2JT	true	true	false	Bromley	London
-413	100020416933	BR1 2JY	true	true	false	Bromley	London
-414	100020392792	BR1 2LA	true	true	false	Bromley	London
-415	100020408533	BR1 2LE	true	true	false	Bromley	London
-416	100020415929	BR1 2LZ	true	true	false	Bromley	London
-417	100020394273	BR1 2NJ	true	true	false	Bromley	London
-418	100020414039	BR1 2NQ	true	true	true	Bromley	London
-419	100020417139	BR1 2NU	true	true	false	Bromley	London
-420	100020394254	BR1 2NW	true	true	false	Bromley	London
-421	100020406063	BR1 2PD	true	true	true	Bromley	London
-422	100020419011	BR1 2QB	true	true	true	Bromley	London
-423	100020402489	BR1 2QL	true	true	true	Bromley	London</pre></body></html>
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body><h1>internet_access_1 — devam / recovery izleme</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p><div class="warn">RECOVERY_PARKED — ikinci runner/task açılmadı. Slot/portable heartbeat stale; canonical Ofcom binary runtime audit yok; exact parcel→UPRN/TOID bağı doğrulanmadı. Research/QA fail-closed devam ediyor.</div><div class="ok"><b>Kaynak bütünlüğü:</b> BDUK Mayıs 2026 RFI aynı güncel sayfada bölüm 3'te 10, Annex A'da 9 UPRN dosyası söylüyor. Dosya sayısı kaynak-içi çelişki olarak işaretlendi ve promotion kararından çıkarıldı. 120 QA satırı resmî CSV satır 424–543 üzerinden doğrulandı; UPRN hash <code>7d98ef9c7bae318f40401450b383822130c94d6a86c2ade4ae92e49b7bc2a905</code>.</div><div class="summary"><div class="card">Genel program<br><b>11.1%</b><br>1 / 9 · Δ 0.0</div><div class="card">Current-task kontrol<br><b>94.7%</b><br>18 / 19</div><div class="card">Bu tur görünür<br><b>197 PASS / 215</b><br>15 PARTIAL · 3 BLOCKED</div><div class="card">Qualified kaynak<br><b>37</b></div><div class="card">≥95 güven<br><b>37 / 37</b></div><div class="card">Ort. kaynak güveni<br><b>99.8%</b></div><div class="card">Yeni accepted kaynak<br><b>+2</b></div><div class="card">Restricted aday<br><b>2</b></div><div class="card">Kaynak çelişkisi<br><b>1</b></div><div class="card">Yeni QA<br><b>+120</b></div><div class="card">Kümülatif QA<br><b>550</b></div><div class="card">Ürün satırı<br><b>0</b></div></div><p><b>Yeni QA:</b> BDUK January 2026 official sample satır 424–543. 120/120 UPRN benzersiz; recognised 112 true / 8 false; current 120 true; future 63 true / 57 false. Dağılım: Bromley 60, Bath and North East Somerset 60.</p><p><b>Yeni kaynak/guard:</b> Planning Data API public/OGL UPRN + geometry/point cross-check sağlar ancak planning/designation geometrisi parcel boundary değildir. National Data Library Addresses otoritatif günlük UPRN lifecycle guard sağlar; tam veri erişimi genel ücretsiz bulk kaynak değildir.</p><p><b>Exact-binding:</b> canonical UPRN veya canonical TopographicArea TOID + geçerli OS Linked Identifiers version/confidence olmadan exact promotion yok. Planning Data, OS Open UPRN point ve HMLR INSPIRE yalnız validation/spatial candidate olarak kalır.</p><h2>Araştırma / recovery işlem satırları</h2><pre>001 PASS contract_version_recheck — contract sha 1a25e0f
+002 PASS canonical_head_initial_readback — b5c21c57109193b9444e0b8ab8e7d4d200c5fb6c
+003 PASS current_task_readback — same continuation; 18/19
+004 PASS slot_status_readback — RECOVERY_PARKED
+005 BLOCKED heartbeat_recovery_gate — slot+portable heartbeat stale; no second runner
+006 PASS ownership_recheck — unclaimed/no lease
+007 PASS checkpoint_recheck — 33785 verified / 58498 pending-or-no-data
+008 PASS queue_continuation_dedup — same pending task
+009 PASS manual_action_recheck — OPEN
+010 BLOCKED canonical_runtime_audit_readback — canonical audit absent
+011 PASS child_source_artifact_fetch
+012 PASS child_audit_artifact_fetch
+013 PASS child_monitor_artifact_fetch
+014 PASS bduk_latest_release_refresh — January 2026 / 4 June 2026
+015 PASS bduk_qa_window_parse — official lines 424-543
+016 PASS qa_uniqueness_check — 120/120
+017 PASS qa_recognised_distribution — 112/8
+018 PASS qa_current_distribution — 120/0
+019 PASS qa_future_distribution — 63/57
+020 PASS qa_bduk_gis_distribution — 0/120
+021 PASS qa_lad_distribution — Bromley60 / B&NES60
+022 PASS qa_region_distribution — London60 / South West60
+023 PASS qa_uprn_hash — 7d98ef9c7bae318f40401450b383822130c94d6a86c2ade4ae92e49b7bc2a905
+024 PASS bduk_technical_note_refresh
+025 PASS bduk_318_lad_guard
+026 PASS bduk_missing_uprn_guard
+027 PASS bduk_rfi_section3_file_count — 10
+028 PASS bduk_rfi_annex_file_count — 9
+029 PASS bduk_official_source_conflict_guard
+030 PASS bduk_file_count_promotion_exclusion
+031 PASS bduk_rfi_epoch_guard — AddressBase Premium Epoch123
+032 PASS bduk_demolished_filter — StateCode4 excluded
+033 PASS bduk_logical_status_filter — 1 approved / 6 provisional
+034 PASS bduk_duplicate_priority_guard
+035 PASS planning_data_api_refresh
+036 PASS planning_data_ogl_guard
+037 PASS planning_data_uprn_query
+038 PASS planning_data_coordinate_query
+039 PASS planning_data_geometry_point
+040 PASS planning_data_bulk_download
+041 PASS planning_data_coverage_guard
+042 PASS planning_data_parcel_identity_guard
+043 PASS ndl_addresses_catalog_refresh
+044 PASS ndl_addresses_authority_guard
+045 PASS ndl_addresses_daily_guard
+046 PASS ndl_addresses_lifecycle_guard
+047 PASS ndl_addresses_sample_guard
+048 PASS ndl_addresses_full_access_guard
+049 PASS os_linked_identifiers_refresh
+050 PASS os_blpu_topographicarea_relation
+051 PASS os_linked_product_structure
+052 PASS os_linked_six_week_cycle
+053 PASS os_linked_version_confidence_guard
+054 PASS os_open_uprn_refresh
+055 PASS os_open_uprn_scale_guard
+056 PASS os_open_uprn_point_identity_guard
+057 PASS ons_nsul_refresh — May2026/Epoch126
+058 PASS ons_nsul_cycle_guard
+059 PASS ons_nsul_measurement_guard
+060 PASS ofcom_current_report_refresh — Spring2026
+061 PASS ofcom_snapshot_guard — January2026
+062 PASS ofcom_zip_listing_guard — 32.2MB
+063 PASS ofcom_planned_refresh
+064 PASS ofcom_current_vs_planned_guard
+065 PARTIAL repo_exact_uprn_probe_10070019052 — 0 indexed hits; not absence proof
+066 PARTIAL repo_exact_uprn_probe_10003621634 — 0 indexed hits; not absence proof
+067 PARTIAL repo_exact_uprn_probe_10023108602 — 0 indexed hits; not absence proof
+068 PARTIAL repo_exact_uprn_probe_100121170047 — 0 indexed hits; not absence proof
+069 PARTIAL repo_exact_uprn_probe_100121170802 — 0 indexed hits; not absence proof
+070 PARTIAL repo_exact_uprn_probe_10001146801 — 0 indexed hits; not absence proof
+071 PARTIAL repo_exact_uprn_probe_100121171650 — 0 indexed hits; not absence proof
+072 PARTIAL repo_exact_uprn_probe_100121171862 — 0 indexed hits; not absence proof
+073 PARTIAL repo_exact_uprn_probe_100020417783 — 0 indexed hits; not absence proof
+074 PARTIAL repo_exact_uprn_probe_10001138522 — 0 indexed hits; not absence proof
+075 PASS repo_zero_hit_absence_guard
+076 PARTIAL repo_parcel_score_artifact_probe — 0 indexed hits
+077 PARTIAL repo_factor_breakdown_probe — 0 indexed hits
+078 PARTIAL repo_real_geometry_probe — 0 indexed hits
+079 PARTIAL repo_linked_relation_probe — 0 indexed hits
+080 PARTIAL planning_data_uprn_index_probe — 0 indexed web hits; not API absence
+081 PASS planning_data_zero_hit_guard
+082 PASS os_ngd_building_access_guard — restricted
+083 PASS os_ngd_access_location_guard — restricted
+084 PASS restricted_source_skip_guard
+085 BLOCKED exact_parcel_to_uprn_binding
+086 PASS product_promotion_gate — 0 promoted
+087 PASS unknown_vs_no_data_guard
+088 PASS synthetic_identity_guard
+089 PASS direct_push_safety_gate
+090 PASS source_artifact_update — 7add5a7fb369e1009791f8dfe043511375b64d6c
+091 PASS source_artifact_remote_readback — b755a78f111cd7788675e0aa18ee06f5e7f9aa2e
+092 PASS audit_artifact_update — 7396649d6208de356951ec9e4c12d9fdaddc39d4
+093 PASS audit_artifact_remote_readback — c4871c437e0ade75c30543f8dde6e51ca06595f5
+094 PASS canonical_head_premonitor_readback — ccf2c10d4ef3ba9266e20b46ac1afad58af22329</pre><h2>QA satırları — resmî BDUK sample</h2><pre>424|10070019052|BR1 2QN|1|1|0|Bromley|London
+425|100020389086|BR1 2QT|1|1|0|Bromley|London
+426|100020417783|BR1 2RJ|1|1|1|Bromley|London
+427|100020404598|BR1 2RN|1|1|0|Bromley|London
+428|100020397759|BR1 2RR|1|1|0|Bromley|London
+429|100020407829|BR1 2SA|1|1|1|Bromley|London
+430|100020407889|BR1 2SG|1|1|1|Bromley|London
+431|100020417810|BR1 2SH|1|1|1|Bromley|London
+432|100020393460|BR1 2SJ|1|1|1|Bromley|London
+433|100020404630|BR1 2SR|1|1|1|Bromley|London
+434|100020397786|BR1 2SW|1|1|1|Bromley|London
+435|100020413093|BR1 2TE|1|1|1|Bromley|London
+436|100022887649|BR1 2TL|1|1|0|Bromley|London
+437|100020413043|BR1 2TN|1|1|1|Bromley|London
+438|100020413039|BR1 2TN|1|1|1|Bromley|London
+439|100020408652|BR1 2TT|1|1|0|Bromley|London
+440|100020408666|BR1 2TT|1|1|0|Bromley|London
+441|100020408668|BR1 2TT|1|1|0|Bromley|London
+442|100020396737|BR1 2UA|1|1|1|Bromley|London
+443|100020413973|BR1 2UB|1|1|1|Bromley|London
+444|100020402134|BR1 2WG|1|1|0|Bromley|London
+445|100020402193|BR1 3AJ|1|1|1|Bromley|London
+446|100020398255|BR1 3AQ|1|1|1|Bromley|London
+447|100020420462|BR1 3AX|1|1|0|Bromley|London
+448|100020418503|BR1 3BN|1|1|1|Bromley|London
+449|100020416884|BR1 3DE|1|1|1|Bromley|London
+450|100020416857|BR1 3DF|1|1|1|Bromley|London
+451|100020420208|BR1 3DH|1|1|0|Bromley|London
+452|100020407348|BR1 3DL|1|1|1|Bromley|London
+453|100020412917|BR1 3DN|1|1|1|Bromley|London
+454|100020414753|BR1 3DP|1|1|1|Bromley|London
+455|100020414720|BR1 3DR|1|1|1|Bromley|London
+456|100020409202|BR1 3EP|1|1|1|Bromley|London
+457|100020398052|BR1 3EX|1|1|1|Bromley|London
+458|10003627468|BR1 3HJ|1|1|1|Bromley|London
+459|100020409806|BR1 3HP|1|1|1|Bromley|London
+460|100020400943|BR1 3HX|1|1|1|Bromley|London
+461|10070011179|BR1 3JE|1|1|0|Bromley|London
+462|100020412987|BR1 3JJ|1|1|1|Bromley|London
+463|100020413018|BR1 3JP|1|1|1|Bromley|London
+464|100020409033|BR1 3JT|1|1|1|Bromley|London
+465|100020409089|BR1 3JX|1|1|1|Bromley|London
+466|100020402266|BR1 3LA|1|1|0|Bromley|London
+467|100020420558|BR1 3LJ|1|1|0|Bromley|London
+468|100020416373|BR1 3LP|1|1|1|Bromley|London
+469|100020389475|BR1 3LR|1|1|0|Bromley|London
+470|100020389456|BR1 3LW|1|1|0|Bromley|London
+471|100020389495|BR1 3LW|1|1|0|Bromley|London
+472|100020398779|BR1 3NT|1|1|0|Bromley|London
+473|100020394670|BR1 3PE|1|1|0|Bromley|London
+474|100020394654|BR1 3PE|1|1|0|Bromley|London
+475|10003621634|BR1 3PE|0|1|0|Bromley|London
+476|100020394776|BR1 3PF|1|1|0|Bromley|London
+477|100020388839|BR1 3PH|1|1|0|Bromley|London
+478|100020399382|BR1 3PZ|1|1|0|Bromley|London
+479|100020406976|BR1 3QE|1|1|0|Bromley|London
+480|100020407001|BR1 3QE|1|1|0|Bromley|London
+481|100020402877|BR1 3QJ|1|1|0|Bromley|London
+482|100020402826|BR1 3QJ|1|1|1|Bromley|London
+483|100020405076|BR1 3QY|1|1|0|Bromley|London
+484|10023108602|BA1 1AQ|1|1|1|Bath and North East Somerset|South West
+485|10023108391|BA1 1AU|1|1|1|Bath and North East Somerset|South West
+486|10001131927|BA1 1EN|1|1|0|Bath and North East Somerset|South West
+487|10023107819|BA1 1HX|1|1|0|Bath and North East Somerset|South West
+488|100120045450|BA1 1HZ|1|1|0|Bath and North East Somerset|South West
+489|10094952501|BA1 1JB|1|1|0|Bath and North East Somerset|South West
+490|10023107407|BA1 1JH|1|1|0|Bath and North East Somerset|South West
+491|100121170297|BA1 1JU|1|1|0|Bath and North East Somerset|South West
+492|100121170047|BA1 1NS|0|1|0|Bath and North East Somerset|South West
+493|100120047225|BA1 1QR|1|1|0|Bath and North East Somerset|South West
+494|10001128784|BA1 1TG|1|1|0|Bath and North East Somerset|South West
+495|10001132840|BA1 1UH|1|1|0|Bath and North East Somerset|South West
+496|10001128615|BA1 2AU|1|1|1|Bath and North East Somerset|South West
+497|100121171474|BA1 2AY|1|1|0|Bath and North East Somerset|South West
+498|10001136545|BA1 2AY|1|1|0|Bath and North East Somerset|South West
+499|10001138522|BA1 2BL|1|1|1|Bath and North East Somerset|South West
+500|10001142707|BA1 2BL|1|1|1|Bath and North East Somerset|South West
+501|100120048086|BA1 2BL|1|1|1|Bath and North East Somerset|South West
+502|100120048032|BA1 2BL|1|1|1|Bath and North East Somerset|South West
+503|100120048024|BA1 2BL|1|1|1|Bath and North East Somerset|South West
+504|100121170802|BA1 2BL|0|1|0|Bath and North East Somerset|South West
+505|100121396878|BA1 2BN|0|1|0|Bath and North East Somerset|South West
+506|100120045342|BA1 2BQ|1|1|0|Bath and North East Somerset|South West
+507|10091546057|BA1 2BX|1|1|1|Bath and North East Somerset|South West
+508|100121170504|BA1 2PH|1|1|1|Bath and North East Somerset|South West
+509|100120045107|BA1 2PH|1|1|1|Bath and North East Somerset|South West
+510|10001146801|BA1 2PR|0|1|0|Bath and North East Somerset|South West
+511|10001138991|BA1 2PT|1|1|0|Bath and North East Somerset|South West
+512|100120024685|BA1 2QA|1|1|1|Bath and North East Somerset|South West
+513|100121170707|BA1 2QF|0|1|0|Bath and North East Somerset|South West
+514|10001125692|BA1 2QW|1|1|1|Bath and North East Somerset|South West
+515|10023107640|BA1 2QZ|1|1|0|Bath and North East Somerset|South West
+516|100121171046|BA1 2SS|1|1|1|Bath and North East Somerset|South West
+517|100120022320|BA1 2SZ|1|1|1|Bath and North East Somerset|South West
+518|100120048865|BA1 2TD|1|1|0|Bath and North East Somerset|South West
+519|10001135549|BA1 2XE|1|1|0|Bath and North East Somerset|South West
+520|100120048751|BA1 2XH|1|1|0|Bath and North East Somerset|South West
+521|10001130727|BA1 2XJ|1|1|0|Bath and North East Somerset|South West
+522|10001131557|BA1 2XN|1|1|1|Bath and North East Somerset|South West
+523|100120051461|BA1 2XU|1|1|0|Bath and North East Somerset|South West
+524|100120007359|BA1 2YE|1|1|1|Bath and North East Somerset|South West
+525|10001146093|BA1 3AF|1|1|0|Bath and North East Somerset|South West
+526|100121171752|BA1 3BN|1|1|1|Bath and North East Somerset|South West
+527|100120008946|BA1 3BP|1|1|1|Bath and North East Somerset|South West
+528|100121171779|BA1 3BW|1|1|1|Bath and North East Somerset|South West
+529|10023109637|BA1 3DY|1|1|1|Bath and North East Somerset|South West
+530|100121171650|BA1 3ED|0|1|0|Bath and North East Somerset|South West
+531|100120022287|BA1 3EE|1|1|1|Bath and North East Somerset|South West
+532|10093716016|BA1 3EJ|1|1|1|Bath and North East Somerset|South West
+533|100120047134|BA1 3EQ|1|1|1|Bath and North East Somerset|South West
+534|10093715963|BA1 3ER|1|1|1|Bath and North East Somerset|South West
+535|10001139677|BA1 3HF|1|1|1|Bath and North East Somerset|South West
+536|100120020911|BA1 3HF|1|1|0|Bath and North East Somerset|South West
+537|10023112647|BA1 3HF|1|1|1|Bath and North East Somerset|South West
+538|100120025433|BA1 3JA|1|1|1|Bath and North East Somerset|South West
+539|100120003484|BA1 3JD|1|1|1|Bath and North East Somerset|South West
+540|100120022167|BA1 3JR|1|1|1|Bath and North East Somerset|South West
+541|100120020733|BA1 3LT|1|1|0|Bath and North East Somerset|South West
+542|100120021883|BA1 3LX|1|1|1|Bath and North East Somerset|South West
+543|100121171862|BA1 3NS|0|1|0|Bath and North East Somerset|South West</pre><p>215 PASS satırı içinde monitor_artifact_update işlemi bu commit ile tamamlanır; uzak readback ve final branch kontrolleri commit sonrasında ayrıca yapılır.</p></body></html>
