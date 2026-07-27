@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 401,
+  "topic": "HMLR_PRICE_PAID_TRANSACTION_ADDRESS_TENURE_RECENCY_AND_MARKET_CONTEXT_GATES",
+  "generated_at": "2026-07-27T19:34:50+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_TRANSACTION_AND_ADDRESS_HISTORY_VALIDATION_NOT_CURRENT_OWNERSHIP_NOT_TITLE_BOUNDARY_NOT_PARCEL_VALUATION",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.6,
+  "sources": [
+    {"key":"ppd_current","url":"https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads","fact":"HM Land Registry Price Paid Data was last updated 26 June 2026 and the current published monthly release is May 2026; data is updated monthly."},
+    {"key":"ppd_scope","url":"https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads","fact":"PPD covers property sales in England and Wales sold for value and lodged with HM Land Registry; unlodged or non-value transactions are outside the dataset."},
+    {"key":"ppd_fields","url":"https://www.gov.uk/guidance/about-the-price-paid-data","fact":"Published columns include transaction identifier, price, transfer date, postcode, property type, new/old indicator, tenure code and address fields."},
+    {"key":"ppd_tenure","url":"https://www.gov.uk/guidance/about-the-price-paid-data","fact":"Duration indicates freehold or leasehold, but leases of 7 years or less are not recorded in PPD; this field is not an exact title-register substitute."},
+    {"key":"ppd_category","url":"https://www.gov.uk/guidance/about-the-price-paid-data","fact":"Category A and B identify classes of transaction; Category B aggregates several transaction circumstances and does not separately identify each circumstance."},
+    {"key":"ppd_exclusions","url":"https://www.gov.uk/guidance/about-the-price-paid-data","fact":"Excluded cases include sales not lodged, non-value transfers, gifts, some discounted sales, CPO/court transfers and specified multi-property transmissions/assents."},
+    {"key":"ppd_accuracy","url":"https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads","fact":"HMLR warns public PPD cannot be guaranteed error-free or fit for every purpose and may not reflect the most recent information."},
+    {"key":"ppd_address","url":"https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads","fact":"PPD address data includes postcode, PAON, SAON, street, locality, town/city, district and county; address data has separate third-party usage conditions."},
+    {"key":"hpi_may","url":"https://www.gov.uk/government/statistics/uk-house-price-index-for-may-2026","fact":"The latest published UK HPI report is May 2026, published 22 July 2026; it is aggregate market evidence based on completed transactions."},
+    {"key":"hpi_download","url":"https://www.gov.uk/government/statistical-data-sets/uk-house-price-index-data-downloads-may-2026","fact":"May 2026 UK HPI downloads provide aggregate average-price, sales, property-type, new-build and other attributes and revision tables."},
+    {"key":"hmlr_qa","url":"https://www.gov.uk/government/statistics/quality-assurance-of-administrative-data-in-the-uk-house-price-index/hm-land-registry-data","fact":"HMLR administrative-data documentation confirms PPD address fields and transaction identifiers; property characteristics describe registrations rather than legal geometry."},
+    {"key":"ndl_ppd","url":"https://www.data.gov.uk/collections/land-and-property/property-price-paid","fact":"The National Data Library describes PPD as transaction evidence including sale price/date, property type, tenure and new-build status, suitable for market research rather than current ownership proof."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"A matching PPD address and sale does not prove current ownership; an exact current HMLR title/register is still required."},
+    {"id":"EX02","result":"PPD freehold/leasehold code is not converted into an exact title number or legal parcel polygon."},
+    {"id":"EX03","result":"A missing PPD row is not evidence that no transfer occurred because excluded/unlodged/non-value transactions exist."},
+    {"id":"EX04","result":"Historic postcode/PAON/SAON matching is treated as address evidence only and is not silently joined to a candidate polygon without corroboration."},
+    {"id":"EX05","result":"Category B is not expanded into a guessed transaction subtype."},
+    {"id":"EX06","result":"UK HPI regional or London averages are not used as parcel-specific market value."},
+    {"id":"EX07","result":"Recent PPD incompleteness/registration timing is retained as a recency caveat rather than scored as inactivity."},
+    {"id":"EX08","result":"No candidate promotion occurs from transaction history without exact title/parcel and current planning/statutory binding."}
+  ],
+  "fail_closed_rules": ["transaction_not_current_ownership","tenure_code_not_title_number","address_not_legal_geometry","missing_ppd_not_no_transaction","excluded_transactions_retained","category_b_not_subtype_inference","postcode_not_persistent_property_id","historic_address_requires_corroboration","hpi_not_parcel_value","aggregate_sales_not_candidate_demand","recent_data_not_final_volume","licensing_restrictions_retained","no_nearest_address_sale_fill","no_ppd_only_candidate_score","no_transaction_price_as_land_residual","promotion_requires_exact_title_and_current_site_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"transaction_examples_revalidated":8,"exact_title_registers_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
