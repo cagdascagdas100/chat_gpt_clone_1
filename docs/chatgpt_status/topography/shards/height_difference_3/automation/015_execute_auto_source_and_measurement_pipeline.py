@@ -31,6 +31,32 @@ def _run(command: list[str], cwd: Path) -> dict[str, Any]:
     }
 
 
+def _load_json(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(value, dict):
+        raise ValueError(f"expected JSON object: {path}")
+    return value
+
+
+def _exact_hmlr_matches_only(path: Path) -> tuple[bool, list[dict[str, Any]]]:
+    payload = _load_json(path)
+    results = payload.get("results")
+    if not isinstance(results, list) or not results:
+        raise ValueError("HMLR match manifest has no results")
+    failures: list[dict[str, Any]] = []
+    for row in results:
+        method = str(row.get("match_method") or "")
+        status = str(row.get("status") or "")
+        if status != "MATCHED" or not method.startswith("EXACT_OFFICIAL_ID"):
+            failures.append({
+                "row_no": row.get("row_no"),
+                "parcel_id": row.get("parcel_id"),
+                "status": status,
+                "match_method": method or None,
+            })
+    return not failures, failures
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--starter-manifest", type=Path, required=True)
@@ -40,6 +66,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--ea-wcs-base", default="https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs")
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--maximum-crosscheck-difference-m", type=float, default=8.0)
+    parser.add_argument("--require-exact-official-id", action="store_true")
     args = parser.parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent
@@ -112,6 +139,12 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     stages = []
     status = "BLOCKED"
+    exact_hmlr_gate = {
+        "required": bool(args.require_exact_official_id),
+        "checked": False,
+        "passed": None,
+        "failures": [],
+    }
     for name, command in commands:
         result = _run(command, script_dir)
         result["stage"] = name
@@ -119,11 +152,19 @@ def main(argv: Iterable[str] | None = None) -> int:
         if result["exit_code"] != 0:
             status = f"BLOCKED_{name}"
             break
+        if name == "HMLR_BOUNDARY_MATCH" and args.require_exact_official_id:
+            exact_hmlr_gate["checked"] = True
+            passed, failures = _exact_hmlr_matches_only(matches)
+            exact_hmlr_gate["passed"] = passed
+            exact_hmlr_gate["failures"] = failures
+            if not passed:
+                status = "BLOCKED_HMLR_EXACT_OFFICIAL_ID_REQUIRED"
+                break
     else:
         status = "THREE_REAL_PARCELS_OFFICIAL_SOURCES_PREPARED_MEASURED_AND_PUBLISHED"
 
     execution = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "single_shared_runner_only": True,
         "new_runner_created": False,
@@ -131,6 +172,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "starter_manifest": str(args.starter_manifest),
         "status": status,
         "stages": stages,
+        "exact_hmlr_official_id_gate": exact_hmlr_gate,
         "outputs": {
             "hmlr_source_manifest": str(hmlr_source),
             "hmlr_matches": str(matches),
