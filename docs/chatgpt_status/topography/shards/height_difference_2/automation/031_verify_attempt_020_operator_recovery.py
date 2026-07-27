@@ -65,7 +65,7 @@ def main() -> int:
     check("operator_exact_f_root", "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707" in operator, "Operator entry is pinned to the canonical F repo.")
     check("operator_branch_exact", BRANCH in operator and "BLOCKED_CANONICAL_BRANCH_MISMATCH" in operator, "Branch mismatch fails closed.")
     check("operator_dirty_repo_preserved", "stash','push','--include-untracked'" in operator and "stash_auto_restore_attempted = $false" in operator and "BLOCKED_CANONICAL_REPO_NOT_CLEAN_AFTER_STASH" in operator, "Dirty and untracked state is snapshotted/stashed and never auto-popped.")
-    check("operator_atomic_fetch", "fetch','--atomic','origin',$branch,'--prune'" in operator and 'rev-parse', "Atomic fetch and exact remote readback are present.")
+    check("operator_atomic_fetch", "fetch','--atomic','origin',$branch,'--prune'" in operator and "rev-parse',\"origin/$branch\"" in operator, "Atomic fetch and exact remote readback are present.")
     check("operator_hard_reset_forbidden", "reset --hard" not in operator and "hard_reset_used = $false" in operator, "Hard reset is absent and explicitly forbidden in the receipt.")
     check("operator_ff_only_gate", "merge-base','--is-ancestor'" in operator and "merge','--ff-only'" in operator and "BLOCKED_CANONICAL_NON_FF_DIVERGENCE" in operator, "Only fast-forward synchronization is allowed; divergence fails closed.")
     check("operator_remote_readback", "BLOCKED_REMOTE_HEAD_NOT_APPLIED" in operator and "$localAfter -ne $remoteHead" in operator, "Local head must exactly match remote head after synchronization.")
