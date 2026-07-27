@@ -1,0 +1,64 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>height_difference_3 recovery support 101</title><style>body{font-family:system-ui,Arial,sans-serif;margin:20px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:5px;text-align:left;vertical-align:top}th{background:#eee}.pass{font-weight:700}.block{font-weight:700}.fix{font-weight:700}.support{font-style:italic}</style></head><body><h1>height_difference_3 — recovery support 101</h1><p class="support">Support/recovery only. Business rows added: 0. Numeric height_difference rows added: 0. All candidate measurements remain gated by fresh F-host runtime and remote seals.</p><table><thead><tr><th>#</th><th>Check / row</th><th>State</th><th>Evidence</th></tr></thead><tbody id="rows"></tbody></table><script>
+const rows=[]; const add=(a,b,c)=>rows.push([a,b,c]);
+[
+['Continuation identity','PASS','same task / same continuation preserved'],
+['Owner state','PASS','UNCLAIMED; lease 102'],
+['Business write gate','BLOCKED-SAFE','runner_or_business_write_forbidden=true'],
+['Global heartbeat','STALE','2026-07-16T13:45:53.0433295Z'],
+['Global heartbeat age','STALE','259.25 hours at recovery audit'],
+['Slot heartbeat','STALE','2026-07-22T14:12:55.853052Z'],
+['Long pending','NONE','0 pending operations; no >15 minute pending'],
+['Current task read paths','PASS','57 tracked read paths'],
+['Current expected outputs','PASS','22 expected outputs'],
+['Runtime materialization','NOT STARTED','0/22 current outputs'],
+['Fresh-heartbeat sentinel','MISSING','404'],
+['Coordinator receipt sentinel','MISSING','404'],
+['Coordinator validation sentinel','MISSING','404'],
+['Strict12 exact IDs','BLOCKED','0/12 extracted; no guessing'],
+['Verified measurements','3 HIGH','rows 61523, 61524, 61525'],
+['Hardened candidates','4 READY INPUT','rows 61536-61539; numeric values remain gated'],
+['Prepared extraction targets','240','rows 61540-61779'],
+['Business preparation','UNCHANGED','157490/157884 = 99.750450%'],
+['Business website rows','UNCHANGED','45606 cumulative; +0'],
+['Central support operations','PASS','24664/24664'],
+['Central official checks','PASS','1353'],
+['Central candidate records','PASS','854'],
+['Central source upgrades','PASS','1047'],
+['Central average confidence','PASS','99.15%'],
+['HMLR current release','PASS','5 July 2026; Lambeth listed; monthly first Sunday'],
+['EA DTM1m current endpoint','PASS','official WCS; EPSG:27700; ±15 cm RMSE metadata'],
+['OS Terrain50 current release','PASS','July 2026; Great Britain; OpenData'],
+['Historical shard','READ-ONLY','30761 rows; 61523-92283'],
+['Historical shard source SHA256','PINNED','82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933'],
+['Current full-file SHA256 equivalence','UNPROVEN','fresh F-host full-file hash still required']
+].forEach(x=>add(...x));
+for(let r=61540;r<=61551;r++) add(`Strict12 planned row ${r}`,'WAITING EXACT ID','requires current exact HMLR INSPIRE ID, EA DTM1m polygon sample, Terrain50 crosscheck and sealed readback');
+const historical={61523:'36813904',61524:'36818289',61525:'36802876',61526:'36796463',61527:'36799503',61528:'36779179',61529:'36797156',61530:'54531156',61531:'36793242',61532:'36775333',61533:'36816560',61534:'36791726',61535:'36808106',61536:'36760596',61537:'36758146',61538:'36781190',61539:'36776765'};
+Object.entries(historical).forEach(([r,id])=>add(`Historical canonical candidate ${r}`,'SOURCE-BACKED',`HMLR INSPIRE ID ${id}; Lambeth; recovery/read-only unless current runtime seals pass`));
+[
+['HMLR authority selection','FIXED','substring/fuzzy authority selection removed'],
+['HMLR entry host','FIXED','official HMLR HTTPS entry required'],
+['HMLR signed distribution','PASS','known evidence-backed signed S3 distribution redirect allowed'],
+['HMLR untrusted redirect','FORBIDDEN','other redirect hosts fail closed'],
+['HMLR exact boundary gate','FIXED','EXACT_OFFICIAL_ID required before elevation sampling'],
+['HMLR nearest fill','FORBIDDEN','nearest fill remains false'],
+['EA WCS host','FIXED','official Environment Agency host required'],
+['EA WCS axis order','FIXED','DescribeCoverage axisLabels required; inferred E/N removed'],
+['EA WCS CRS','PASS','EPSG:27700 required'],
+['EA WCS resolution','PASS','finite positive and <=1.1m required'],
+['Terrain50 cache','FIXED','recent timestamp alone no longer sufficient'],
+['Terrain50 catalog provenance','FIXED','official catalog verification required'],
+['Terrain50 archive identity','FIXED','SHA256 and byte size must match provenance'],
+['Terrain50 exact tile','PASS','200x200 / 50m deterministic BNG tile only'],
+['Terrain50 neighbour substitution','FORBIDDEN','no nearest/neighbour tile substitution']
+].forEach(x=>add(...x));
+[
+['015 strict early exact-ID gate','FIXED','commit 7d3f63d59e50c76941f7736e41ac3ec19a82d9a8'],
+['012 HMLR source hardening','FIXED','commit c9cd0400e897aca9ce9d1f8fa8603095738b12b6'],
+['013 EA WCS hardening','FIXED','commit 5b32fad409126fa4ca3237622ea1f4d6fc5b1a62'],
+['021 Terrain50 provenance hardening','FIXED','commit c5e9fab948cf58008c9486b6d5ae547db609776c'],
+['033 strict source seal','FIXED','commit a99bf91cfe35d36823c4052e74b3e0bcd5dd66e2'],
+['036 orchestration source seal','FIXED','commit 88fd5af027a34ab2b402979f750c4c23c1f92ca6']
+].forEach(x=>add(...x));
+const body=document.getElementById('rows'); rows.forEach((r,i)=>{const tr=document.createElement('tr');const cls=/FIXED/.test(r[1])?'fix':/(STALE|MISSING|BLOCKED|WAITING|UNPROVEN)/.test(r[1])?'block':'pass';tr.innerHTML=`<td>${i+1}</td><td>${r[0]}</td><td class="${cls}">${r[1]}</td><td>${r[2]}</td>`;body.appendChild(tr)}); document.body.insertAdjacentHTML('beforeend',`<p>Visible support rows: <strong>${rows.length}</strong>. Business rows: <strong>0</strong>. Numeric rows: <strong>0</strong>.</p>`);
+</script></body></html>
