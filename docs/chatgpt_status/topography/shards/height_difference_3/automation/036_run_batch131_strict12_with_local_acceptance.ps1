@@ -29,11 +29,13 @@ if (-not (Test-Path -LiteralPath $Acceptance -PathType Leaf)) { throw "Missing s
 $A = Get-Content -Raw -LiteralPath $Acceptance | ConvertFrom-Json
 if (-not [bool]$A.local_acceptance_passed) { throw "Local strict12 acceptance is false" }
 if ([int]$A.checks_passed -ne [int]$A.checks_total) { throw "Local strict12 acceptance checks are incomplete" }
+if (-not [bool]$A.exact_hmlr_official_id_required) { throw "Exact HMLR official-ID acceptance gate is missing" }
+if (-not [bool]$A.nearest_fill_forbidden) { throw "Nearest-fill prohibition is missing from local acceptance" }
 if ([int]$A.numeric_values_changed_by_validator -ne 0) { throw "Validator unexpectedly changed numeric values" }
 if (-not [bool]$A.remote_github_readback_required) { throw "Remote GitHub readback gate unexpectedly disabled" }
 
 $Result = @{
-  schema_version = 2
+  schema_version = 3
   slot_id = "height_difference_3"
   same_task_resume_only = $true
   strict12_runtime_chain_completed = $true
@@ -41,6 +43,8 @@ $Result = @{
   powershell_executable = $PowerShellExe
   executable_identity_propagated = $true
   candidate_aware_proj_gate_required = $true
+  exact_hmlr_official_id_required = $true
+  nearest_fill_forbidden = $true
   local_acceptance_passed = $true
   local_acceptance_checks = [int]$A.checks_total
   file_sha256 = $A.file_sha256
