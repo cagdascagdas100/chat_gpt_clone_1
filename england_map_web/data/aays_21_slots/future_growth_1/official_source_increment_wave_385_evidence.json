@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 385,
+  "topic": "EIA_HRA_SEA_PROTECTED_SITE_AND_ENVIRONMENTAL_ASSESSMENT_GATES",
+  "generated_at": "2026-07-27T18:02:00+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_ENVIRONMENTAL_ASSESSMENT_VALIDATION_NOT_SITE_CLEARANCE_NOT_PARCEL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false, "reason": "Existing canonical F-host shared-runner heartbeat remains stale and height_difference_2 guarded operator recovery remains unexecuted."},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "matrix_dimensions": {"dimensions": 12, "rules": 16, "sources": 12}, "promotion": 0},
+  "source_accuracy_score_100": 99.5,
+  "score_basis": "Non-statistical internal evidence-quality score based on current official government, Natural England and Planning Data readbacks, with EIA/HRA/SEA stages and dataset coverage explicitly separated from parcel-level consent or feasibility conclusions.",
+  "sources": [
+    {"key":"eia_ppg","label":"GOV.UK Environmental Impact Assessment","url":"https://www.gov.uk/guidance/environmental-impact-assessment","fact":"Town and country planning EIA in England is governed by the 2017 Regulations; Schedule 1/2 screening and Environmental Statement requirements are project-specific."},
+    {"key":"appropriate_assessment","label":"GOV.UK Appropriate assessment","url":"https://www.gov.uk/guidance/appropriate-assessment","fact":"Plans/projects require HRA screening where habitats-site effects may arise; appropriate assessment is required when likely significant effects cannot be excluded."},
+    {"key":"hra_protect","label":"GOV.UK Habitats regulations assessments","url":"https://www.gov.uk/guidance/habitats-regulations-assessments-protecting-a-european-site","fact":"Competent authorities must assess proposals that could significantly harm designated features before approval/adoption."},
+    {"key":"pins_hra","label":"Planning Inspectorate NSIP HRA advice","url":"https://www.gov.uk/guidance/nationally-significant-infrastructure-projects-advice-on-habitats-regulations-assessments","fact":"Updated 14 July 2026; distinguishes screening, appropriate assessment and derogation stages for NSIPs."},
+    {"key":"env_advice","label":"Natural England/EA environmental planning advice","url":"https://www.gov.uk/guidance/local-planning-authorities-get-environmental-advice","fact":"Natural England and Environment Agency consultation is required for relevant environmental assessments; extra information can be requested even where a formal assessment is not needed."},
+    {"key":"protected_species","label":"Natural England protected species planning advice","url":"https://www.gov.uk/guidance/protected-species-and-development-advice-for-local-planning-authorities","fact":"Protected-species standing advice supports planning decisions and identifies cases requiring Natural England consultation."},
+    {"key":"sea_sa","label":"GOV.UK SEA and sustainability appraisal","url":"https://www.gov.uk/guidance/strategic-environmental-assessment-and-sustainability-appraisal","fact":"SEA/SA are plan-making assessment tools and are distinct from project-level EIA and HRA."},
+    {"key":"sssi","label":"Planning Data SSSI","url":"https://www.planning.data.gov.uk/dataset/site-of-special-scientific-interest","fact":"4,128 SSSI records; collector 23 July 2026; origin caveat includes some MHCLG-created data being replaced by authoritative sources."},
+    {"key":"sac","label":"Planning Data Special Area of Conservation","url":"https://www.planning.data.gov.uk/dataset/special-area-of-conservation","fact":"260 SAC records; collector 26 July 2026; dataset origin caveat retained."},
+    {"key":"spa","label":"Planning Data Special Protection Area","url":"https://www.planning.data.gov.uk/dataset/special-protection-area","fact":"88 SPA records; collector 24 July 2026; dataset origin caveat retained."},
+    {"key":"ramsar","label":"Planning Data Ramsar","url":"https://www.planning.data.gov.uk/dataset/ramsar","fact":"73 Ramsar records; collector 24 July 2026; coverage/origin caveats retained."},
+    {"key":"infrastructure_project","label":"Planning Data Infrastructure project","url":"https://www.planning.data.gov.uk/dataset/infrastructure-project","fact":"233 project boundaries; collector 24 July 2026; boundaries inform EIA consultation and may change, so they are not fixed parcel entitlements."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"EIA screening is not inferred from parcel size alone; Schedule/type/sensitivity and actual proposal evidence are required."},
+    {"id":"EX02","result":"An Environmental Statement is evidence for assessment, not proof that permission will be granted."},
+    {"id":"EX03","result":"HRA screening must consider in-combination effects; dataset proximity alone is not an appropriate assessment."},
+    {"id":"EX04","result":"Where likely significant effects cannot be excluded, appropriate assessment remains a competent-authority task."},
+    {"id":"EX05","result":"SEA/SA plan evidence is not substituted for project EIA or parcel-level environmental clearance."},
+    {"id":"EX06","result":"SSSI/SAC/SPA/Ramsar dataset absence is not negative proof because source/coverage caveats remain."},
+    {"id":"EX07","result":"Infrastructure-project EIA boundaries are explicitly changeable and are not treated as cadastral boundaries."},
+    {"id":"EX08","result":"No environmental-assessment promotion occurs without exact geometry, current proposal and competent-authority evidence."}
+  ],
+  "fail_closed_rules": ["eia_screening_requires_project","schedule_threshold_not_parcel_score","environmental_statement_not_permission","hra_screening_requires_effect_pathway","appropriate_assessment_not_proximity","in_combination_effects_required","sea_not_project_eia","sa_not_site_clearance","sssi_gap_not_negative_proof","sac_gap_not_negative_proof","spa_gap_not_negative_proof","ramsar_gap_not_negative_proof","infrastructure_boundary_may_change","protected_species_requires_site_evidence","no_environmental_clearance_from_dataset_absence","promotion_requires_exact_geometry_and_authority_evidence"],
+  "dimensions": ["STATUS","EVIDENCE","TEMPORAL","PARCEL","SCOPE","EIA","HRA","SEA","NATURE","COVERAGE","NO_DATA","PROMOTION"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"environmental_assessment_examples_revalidated":8,"exact_site_polygons_verified_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
