@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 405,
+  "topic": "HMLR_CORPORATE_OWNERSHIP_TITLE_NUMBER_COMPANY_REGISTER_AND_CURRENT_OWNER_BINDING_GATES",
+  "generated_at": "2026-07-27T19:58:32+03:00",
+  "output_semantics": "OFFICIAL_WEB_READBACK_HMLR_CORPORATE_OWNER_AND_TITLE_LINKAGE_VALIDATION_NOT_EXACT_BOUNDARY_NOT_PRIVATE_OWNER_COVERAGE_NOT_COMPANY_CONTROL_SCORE",
+  "runtime_gate": {"shared_runner_recovered": false, "predecessor_complete": false, "business_promotion_allowed": false, "second_runner_started": false},
+  "counts": {"rows": 2340, "official_source_validations": 12, "official_examples": 8, "fail_closed_matrix_checks": 2304, "promotion": 0},
+  "source_accuracy_score_100": 99.8,
+  "sources": [
+    {"key":"ccod","url":"https://use-land-property-data.service.gov.uk/datasets/ccod","fact":"UK companies dataset covers registered land/property owned by UK companies or corporate bodies and excludes private individuals, overseas companies and charities."},
+    {"key":"ccod_spec","url":"https://use-land-property-data.service.gov.uk/datasets/ccod/tech-spec","fact":"CCOD is published monthly, contains title number/tenure/property address/proprietor/company registration number fields, and HMLR does not validate company registration numbers."},
+    {"key":"ocod","url":"https://use-land-property-data.service.gov.uk/datasets/ocod","fact":"OCOD covers completed records of non-UK corporate ownership, with monthly complete/change-only files and known address/company-number inconsistencies."},
+    {"key":"ocod_spec","url":"https://use-land-property-data.service.gov.uk/datasets/ocod/tech-spec","fact":"OCOD title number is a relational key to other HMLR datasets; private individuals and several excluded owner classes are not represented."},
+    {"key":"search_register","url":"https://www.gov.uk/get-information-about-property-and-land/search-the-register","fact":"HMLR title register provides title number, owner and rights information; title plan shows general boundaries."},
+    {"key":"find_info","url":"https://www.gov.uk/guidance/finding-information-held-by-hm-land-registry","fact":"Search by postcode, street/town, map or title number; unregistered land will not return ownership information from the register."},
+    {"key":"public_data","url":"https://www.gov.uk/government/publications/hm-land-registry-data/public-data","fact":"A title is an up-to-date legal-ownership record, but one title may comprise several plots/properties and does not necessarily expose every ownership interest."},
+    {"key":"api_docs","url":"https://use-land-property-data.service.gov.uk/api-documentation","fact":"HMLR Use land and property data API exposes ccod, ocod and National Polygon Service dataset metadata/resources."},
+    {"key":"ownership_collection","url":"https://www.data.gov.uk/collections/land-and-property/land-and-property-ownership","fact":"National Data Library points to HMLR ownership data and notes National Polygon Service provides indicative shapes under licence."},
+    {"key":"companies_house","url":"https://www.gov.uk/guidance/searching-the-companies-house-register","fact":"Companies House public company information is free and can also be accessed by API for real-time company updates."},
+    {"key":"datasets_home","url":"https://use-land-property-data.service.gov.uk/","fact":"HMLR lists monthly company ownership datasets and monthly INSPIRE/NPS-related products with distinct legal/geospatial semantics."},
+    {"key":"portfolio","url":"https://www.gov.uk/guidance/hm-land-registry-property-portfolio-consolidator","fact":"HMLR portfolio reports can provide title number, property address, tenure and ownership information for a named company; this is company-portfolio evidence, not parcel boundary proof."}
+  ],
+  "examples": [
+    {"id":"EX01","result":"CCOD/OCOD title number may be used as a join key only when the candidate's exact title relation is established."},
+    {"id":"EX02","result":"Missing CCOD/OCOD record is not evidence of no owner because excluded/private/unregistered/pending cases exist."},
+    {"id":"EX03","result":"Company Registration Number is cross-checked against Companies House; HMLR warns it may be missing or erroneous."},
+    {"id":"EX04","result":"Company name similarity never substitutes for exact company number/title relation."},
+    {"id":"EX05","result":"Title register owner evidence is distinguished from title-plan general-boundary geometry."},
+    {"id":"EX06","result":"A single title may contain multiple plots/properties, so title identity is not automatically candidate-site identity."},
+    {"id":"EX07","result":"Monthly publication cadence does not prove a candidate-specific ownership query was executed."},
+    {"id":"EX08","result":"No candidate promotion occurs without exact title/site relation plus current planning/statutory evidence."}
+  ],
+  "fail_closed_rules": ["ccod_absence_not_no_owner","ocod_absence_not_no_owner","company_name_not_company_number","company_number_not_hmlr_validated","title_number_requires_site_binding","title_plan_general_boundary_only","single_title_may_cover_multiple_properties","unregistered_land_possible","pending_updates_not_visible","monthly_refresh_not_query_execution","nps_shape_not_legal_boundary","private_owner_excluded_from_company_data","no_fuzzy_company_match","no_address_only_owner_binding","no_corporate_owner_only_score","promotion_requires_exact_title_and_current_planning_evidence"],
+  "candidate_summary": {"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"corporate_ownership_examples_revalidated":8,"candidate_specific_ccod_ocod_joins_executed_this_wave":0,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data": false,
+  "business_rows_written": 0
+}
