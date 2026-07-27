@@ -1,0 +1,42 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":444,
+  "topic":"CANDIDATE_DO_TOWN_QUAY_WHARF_15_HOME_LAPSED_RECORD_HQ_147_IDENTITY_DELIVERY_AND_TITLE_GATES",
+  "generated_at":"2026-07-27T23:46:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_DO37_LAPSED_SUBRECORD_VS_HQ_CURRENT_SCHEME_RECONCILIATION_NOT_DELIVERY_TRANSFER_NOT_EXACT_TITLE_RELATION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.9,
+  "sources":[
+    {"key":"do37_brownfield","url":"https://www.planning.data.gov.uk/entity/1739839","fact":"LBBD37/DO Ground to 2nd Floor Units 2,3,4 & 5 Town Quay Wharf is 0.06ha with 15 minimum/maximum net dwellings."},
+    {"key":"do37_lapse","url":"https://www.planning.data.gov.uk/entity/1739839","fact":"The current DO37 record carries planning-permission-status permissioned and Notes: Lapsed; the lapse is preserved."},
+    {"key":"do37_permission_date","url":"https://www.planning.data.gov.uk/entity/1739839","fact":"The DO37 record gives full planning permission date 30 June 2017 and a distinct planning-history id 21874."},
+    {"key":"do37_point","url":"https://www.planning.data.gov.uk/entity/1739839","fact":"DO37 supplies a point and blank geometry, neither of which is an HMLR title or exact planning red-line."},
+    {"key":"do20_sibling","url":"https://www.planning.data.gov.uk/entity/1739835","fact":"LBBD20/DO 6-8 Town Quay is a separate 9-home lapsed Brownfield record with planning-history id 21870; DO20 and DO37 are not automatically aggregated."},
+    {"key":"hq_current","url":"https://www.planning.data.gov.uk/entity/1739878","fact":"LBBD83/HQ Town Quay Wharf is a separate current 147-home Brownfield record with full permission dated 15 February 2022."},
+    {"key":"hq_delivery_mix","url":"https://befirst.london/riverside-homes-for-working-londoners-at-an-affordable-price/","fact":"Be First describes the HQ Town Quay Wharf scheme as 147 apartments comprising 62 council homes and 85 private-sale apartments plus commercial space."},
+    {"key":"hq_2023_affordable","url":"https://befirst.london/50m-mixed-use-development-adds-62-more-affordable-homes-to-the-roding-riviera/","fact":"Be First's 2023 update identifies 62 affordable units within the 147-home HQ scheme, including 29 London Affordable Rent and 33 shared ownership."},
+    {"key":"hq_2024_cabinet","url":"https://lbbd.moderngov.co.uk/ieIssueDetails.aspx?IId=95881&Opt=3","fact":"December 2024 Cabinet minutes describe disposal of homes at Town Quay Wharf and Transport House by long leases following practical completion over the coming months."},
+    {"key":"hq_2024_decision","url":"https://lbbd.moderngov.co.uk/ieDecisionDetails.aspx?Id=4337","fact":"The related decision expected Town Quay Wharf and Transport House schemes to be completed in January 2025 and identifies Town Quay Wharf flats 1-62 Mercia Peak; this is HQ delivery/governance evidence, not DO37 evidence."},
+    {"key":"brownfield_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states all Brownfield Register sites require planning permission."},
+    {"key":"local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"Local Plan policy/allocation context does not merge separate planning entities or revive a lapsed DO37 consent."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"DO37 remains a 15-home lapsed-record candidate; its old permission is not treated as extant."},
+    {"id":"EX02","result":"DO37 planning-history id 21874 remains separate from DO20 id 21870."},
+    {"id":"EX03","result":"DO37 15 and DO20 9 are not summed without exact allocation/subsite topology and double-count controls."},
+    {"id":"EX04","result":"HQ 147 is a separate current scheme and is not substituted for DO37."},
+    {"id":"EX05","result":"HQ 62 council + 85 private = 147 remains HQ-specific."},
+    {"id":"EX06","result":"HQ 2024/25 lease and practical-completion evidence is not transferred to the DO37 lapsed subrecord."},
+    {"id":"EX07","result":"DO37 point/blank geometry is not converted into a title polygon."},
+    {"id":"EX08","result":"Promotion remains zero until exact current DO37 decision/title relation and overlays are verified."}
+  ],
+  "fail_closed_rules":["do37_lapse_preserved","permissioned_not_extant_when_lapsed","do37_not_do20_merge","do37_not_hq_merge","hq_mix_not_do37_mix","hq_delivery_not_do37_delivery","hq_lease_not_do37_title","point_not_polygon","history_ids_distinct","no_double_count","exact_current_case_required","exact_hmlr_required","executed_overlay_required","no_name_only_binding","no_lapsed_permission_promotion","promotion_requires_exact_do37_case_title_and_overlays"],
+  "dimensions":["STATUS","LAPSE","IDENTITY","SIBLING","PERMISSION","DELIVERY","TENURE","GEOMETRY","TITLE","NO_DATA","OVERLAY","PROMOTION"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD37/DO Town Quay Wharf subrecord","net_dwellings":15,"planning_permission_status_field":"permissioned","register_note":"Lapsed","planning_history_id":21874,"merged_with_do20":false,"merged_with_hq":false,"hq_current_dwellings":147,"hq_delivery_evidence_transferred_to_do37":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
