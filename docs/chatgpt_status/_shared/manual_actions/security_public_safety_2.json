@@ -1,30 +1,25 @@
 {
-  "schema_version": 28,
+  "schema_version": 29,
   "slot_id": "security_public_safety_2",
-  "state": "RESOLVED",
-  "requires_user_action": false,
-  "reason": "The former H:/F: portable-root mismatch no longer blocks this slot. The 96-row official-source candidate task produced and published its JSON and line-by-line HTML outputs, the slot now reports no blocker, and the next 300-row continuation has been published as a single-runner claimable queue item.",
-  "detected_at": "2026-07-22T16:52:30Z",
-  "updated_at": "2026-07-27T13:33:00Z",
-  "resolved_at": "2026-07-27T13:33:00Z",
-  "solution": "No further user action is required for the old portable-root incident. Continue through the canonical single-runner queue; do not start a second runner.",
+  "state": "OPEN",
+  "requires_user_action": true,
+  "reason": "The existing 300-row task remains pickup_requested with no live owner, lease, heartbeat or output. One idempotent queue recovery refresh was published at 2026-07-27T13:47:28Z, but more than 20 minutes later the canonical runner/queue consumer still had not claimed the task. A second refresh, duplicate task or second runner is forbidden.",
+  "detected_at": "2026-07-27T14:08:34Z",
+  "updated_at": "2026-07-27T14:08:34Z",
+  "solution": "Open the AAYS control panel and verify that the single canonical runner/queue consumer is ACTIVE with a current heartbeat. If it is stopped or stale, restart that existing runner once, refresh the panel, and do not start a second runner. Continue only after the same queued task is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47.",
   "evidence_paths": [
-    "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_96row_consolidation_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_96row_consolidation.html",
-    "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_96row_consolidation_20260722.v3.task.json",
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/checkpoint_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/recovery_300row_queue_consumer_20260727.json"
   ],
-  "previous_continuation_key": "b687f02892911b3faa36c6eb40ded780029bb49e50c1c52aaaa8e3a94157b4ad",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
-  "resolution_evidence": {
-    "priority_96_output_blob_sha": "7ea48aca2ed0af8c863b5d3fe8ec0c49ed4d3d05",
-    "priority_300_script_commit": "3525f3e2b94b2b2aab153d78609da94b75fe88e4",
-    "priority_300_queue_commit": "ebd3bbc5365fbf19e90376a8cb691f5bb9a398dd",
-    "current_blocker": null,
-    "runtime_live_owner": false
-  },
+  "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
+  "recovery_attempts_used": 1,
+  "second_queue_refresh_forbidden": true,
+  "expected_runtime_minutes_after_healthy_claim": 15,
   "fake_data": false,
   "final_ready": false
 }
