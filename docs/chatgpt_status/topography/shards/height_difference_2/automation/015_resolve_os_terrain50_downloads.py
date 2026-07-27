@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import math
 import os
@@ -15,7 +16,10 @@ import requests
 from shapely.geometry import shape
 
 API_BASE = "https://api.os.uk/downloads/v1"
+TERRAIN50_ASCII_FORMAT = "ASCII Grid and GML (Grid)"
 MAX_DOWNLOAD_BYTES = 2_500_000_000
+MAX_NESTED_ARCHIVE_BYTES = 50_000_000
+MAX_NESTING_DEPTH = 2
 PRODUCT_NAME_RE = re.compile(r"\bos\s*terrain\s*50\b", re.I)
 
 
@@ -148,6 +152,35 @@ def _choose_download(downloads: Any, area: str, api_base: str, product_id: str) 
     return next(iter(unique.values()))
 
 
+def _archive_contains_ascii_grid(zf: zipfile.ZipFile, *, depth: int = 0) -> bool:
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        path = Path(info.filename)
+        if path.is_absolute() or ".." in path.parts:
+            raise ValueError("Terrain50 ZIP contains unsafe member path")
+        suffix = path.suffix.casefold()
+        if suffix in {".asc", ".txt"}:
+            return True
+        if suffix != ".zip":
+            continue
+        if depth >= MAX_NESTING_DEPTH:
+            continue
+        if info.file_size <= 0 or info.file_size > MAX_NESTED_ARCHIVE_BYTES:
+            raise ValueError(f"Terrain50 nested archive size invalid: {info.filename}")
+        with zf.open(info) as source:
+            payload = source.read(MAX_NESTED_ARCHIVE_BYTES + 1)
+        if len(payload) != info.file_size or len(payload) > MAX_NESTED_ARCHIVE_BYTES:
+            raise ValueError(f"Terrain50 nested archive read invalid: {info.filename}")
+        try:
+            with zipfile.ZipFile(io.BytesIO(payload)) as nested:
+                if _archive_contains_ascii_grid(nested, depth=depth + 1):
+                    return True
+        except zipfile.BadZipFile as exc:
+            raise ValueError(f"Terrain50 nested archive invalid: {info.filename}") from exc
+    return False
+
+
 def _stream_download(session: requests.Session, url: str, target: Path, timeout: int) -> dict[str, Any]:
     target.parent.mkdir(parents=True, exist_ok=True)
     with session.get(url, params=_params(), headers=_headers(), timeout=timeout, stream=True, allow_redirects=True) as response:
@@ -166,11 +199,8 @@ def _stream_download(session: requests.Session, url: str, target: Path, timeout:
     if total <= 0 or not zipfile.is_zipfile(target):
         raise ValueError("Terrain50 download is empty or not ZIP")
     with zipfile.ZipFile(target) as zf:
-        names = [info.filename for info in zf.infolist() if not info.is_dir()]
-        if not any(Path(name).suffix.casefold() in {".asc", ".txt"} for name in names):
-            raise ValueError("Terrain50 ZIP contains no ASCII grid members")
-        if any(Path(name).is_absolute() or ".." in Path(name).parts for name in names):
-            raise ValueError("Terrain50 ZIP contains unsafe member path")
+        if not _archive_contains_ascii_grid(zf):
+            raise ValueError("Terrain50 ZIP contains no ASCII grid members, directly or in nested tile ZIPs")
     return {"path": str(target), "size_bytes": total, "sha256": _sha256(target), "resolved_url": final_url, "content_type": content_type}
 
 
@@ -191,18 +221,24 @@ def main(argv: Iterable[str] | None = None) -> int:
         product_id = str(product["id"])
         records = []
         for area in areas:
-            downloads = _get_json(session, f"{args.api_base.rstrip('/')}/products/{product_id}/downloads", params={"area": area}, timeout=args.timeout)
+            endpoint = f"{args.api_base.rstrip('/')}/products/{product_id}/downloads"
+            exact_downloads = _get_json(session, endpoint, params={"area": area, "format": TERRAIN50_ASCII_FORMAT}, timeout=args.timeout)
+            query_mode = "area_plus_exact_format"
+            downloads = exact_downloads
+            if isinstance(exact_downloads, list) and not exact_downloads:
+                downloads = _get_json(session, endpoint, params={"area": area}, timeout=args.timeout)
+                query_mode = "area_only_fallback_after_empty_exact_format"
             selected = _choose_download(downloads, area, args.api_base, product_id)
-            record = {"area": area, "selected": selected}
+            record = {"area": area, "query_mode": query_mode, "requested_format": TERRAIN50_ASCII_FORMAT, "selected": selected}
             if not args.no_download:
                 target = args.output_dir / f"os_terrain50_{area.lower()}.zip"
                 record["download"] = _stream_download(session, selected["resolved_request_url"], target, args.timeout)
             records.append(record)
         status = "TERRAIN50_REQUIRED_AREA_ARCHIVES_READY" if not args.no_download else "TERRAIN50_DOWNLOADS_RESOLVED"
-        payload = {"schema_version": 1, "slot_id": "height_difference_2", "status": status, "api_base": args.api_base, "product": product, "required_100km_areas": areas, "candidate_row_numbers": rows, "records": records, "archive_paths": [record["download"]["path"] for record in records if "download" in record], "nearest_or_unverified_download_used": False, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {"schema_version": 2, "slot_id": "height_difference_2", "status": status, "api_base": args.api_base, "product": product, "required_100km_areas": areas, "candidate_row_numbers": rows, "records": records, "archive_paths": [record["download"]["path"] for record in records if "download" in record], "exact_format_requested_first": True, "nested_zip_validation_supported": True, "nearest_or_unverified_download_used": False, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 0
     except Exception as exc:
-        payload = {"schema_version": 1, "slot_id": "height_difference_2", "status": "BLOCKED_TERRAIN50_DOWNLOAD_RESOLUTION", "error": f"{type(exc).__name__}: {exc}", "archive_paths": [], "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
+        payload = {"schema_version": 2, "slot_id": "height_difference_2", "status": "BLOCKED_TERRAIN50_DOWNLOAD_RESOLUTION", "error": f"{type(exc).__name__}: {exc}", "archive_paths": [], "exact_format_requested_first": True, "nested_zip_validation_supported": True, "final_ready": False, "fake_data": False, "db_write": False, "migration": False, "production_deploy": False}
         code = 2
     _write(args.output, payload)
     print(json.dumps({"ok": code == 0, "status": payload["status"], "archives": len(payload.get("archive_paths", []))}))
