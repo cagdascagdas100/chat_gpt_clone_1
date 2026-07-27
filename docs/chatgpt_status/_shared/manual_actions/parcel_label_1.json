@@ -3,10 +3,10 @@
   "slot_id": "parcel_label_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 27 Temmuz 2026 16:36 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2 ve runner_execution_claimed=false. Son stable runner heartbeat 16 Temmuz 2026'da kaldı. PR 475 merge edilerek önceki canonical-churn engeli çözülmüştür; kalan kök neden external F-host scan/daemon döngüsünün çalışmamasıdır. Python audit scripti, PowerShell carrier ve gerekli kaynak blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. İzole tekrar denemesinde bu oturumda GitHub DNS erişimi ve F-host mount bulunmadığından exact çıktılar üretilemedi.",
+  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 27 Temmuz 2026 20:31 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2 ve runner_execution_claimed=false. Son stable runner heartbeat 16 Temmuz 2026'da kaldı. PR 475 merge edilerek önceki canonical-churn engeli çözülmüştür; kalan kök neden external F-host scan/daemon döngüsünün çalışmamasıdır. Python audit scripti, PowerShell carrier ve gerekli kaynak blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. Bu turda public raw fetch cache miss verdi, GitHub connector satır-aralıklı ve base64 büyük-dosya aktarımı içerik döndürmedi, browser-audit aliası doğrulandı fakat çalıştırılmış audit sonucu bulunmadı. F-host mount olmadığı için exact çıktılar üretilemedi.",
   "detected_at": "2026-07-23T14:56:00Z",
-  "updated_at": "2026-07-27T13:36:46Z",
-  "last_verified_at": "2026-07-27T16:36:46+03:00",
+  "updated_at": "2026-07-27T17:31:14Z",
+  "last_verified_at": "2026-07-27T20:31:14+03:00",
   "solution": "F-host depo kökünde yalnız START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd dosyasını çalıştırın. Güvenli starter stale PID/lock doğrulamasını yaptıktan sonra mevcut tek runner'ı başlatmalıdır. Panelde fresh queue selection oluştuğunu ve mevcut parcel-label-1-historical-audit-20260721-003-runner-compatible attempt'inin pickup ile claim aldığını doğrulayın. RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd dosyasını kullanmayın. İki exact output main branch'e yayımlanana kadar tek runner'ı açık tutun.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_002_parcel_label_1_historical_198_full_audit_v5_1_20260721.task.json",
@@ -16,6 +16,8 @@
     "docs/chatgpt_status/parcel_label/automation/parcel_label_1_historical_198_full_audit.ps1",
     "docs/chatgpt_status/parcel_label/automation/parcel_label_1_historical_198_full_audit.py",
     "england_map_web/data/program_layer_matrix/distance_property_types_all_rows_latest.json",
+    "england_map_web/data/distance_property_types/parcel_label_1_historical_198_quarantine.json",
+    "england_map_web/parcel_label_1_historical_audit.html",
     "docs/chatgpt_status/parcel_label/runner_outputs/parcel_label_1_historical_198_full_audit_latest.json",
     "england_map_web/data/distance_property_types/parcel_label_1_historical_198_audit_result_latest.json",
     "docs/chatgpt_status/_shared/slots_21/parcel_label_1/status_latest.json"
@@ -45,13 +47,18 @@
   "automated_recovery_attempts": [
     "fresh_canonical_status_readback_20260727",
     "fresh_runner_heartbeat_readback_20260727",
-    "fresh_main_exact_output_existence_check_20260727",
+    "fresh_main_and_canonical_exact_output_existence_check_20260727_2031_tr",
     "pr_475_merge_readback",
     "powershell_carrier_reverification",
     "python_audit_script_reverification",
     "required_source_blob_sha_reverification",
     "isolated_exact_blob_download_retry_dns_unavailable",
-    "repository_verified_audit_output_search_no_result"
+    "repository_verified_audit_output_search_no_result",
+    "public_raw_github_fetch_cache_miss_20260727",
+    "github_connector_ranged_large_file_fetch_empty_content_20260727",
+    "github_connector_base64_large_file_fetch_empty_content_20260727",
+    "browser_audit_alias_verified_but_no_executed_result_20260727",
+    "public_github_pages_audit_index_search_no_result_20260727"
   ],
   "automated_recovery_result": "EXTERNAL_F_HOST_SINGLE_RUNNER_REQUIRED",
   "new_runner": false,
