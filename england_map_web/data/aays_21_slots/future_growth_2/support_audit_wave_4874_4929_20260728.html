@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 wave 4874–4929</title>
+<style>
+body{font:14px Arial,sans-serif;margin:24px;color:#17202a;background:#f5f7fa}
+.card{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:14px;margin:12px 0}
+.grid{display:flex;gap:10px;flex-wrap:wrap} .metric{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:10px;min-width:155px}
+.big{font-size:22px;font-weight:700} table{border-collapse:collapse;width:100%;background:#fff} th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#e9eef3} .ok{background:#f1fbf4} .warn{background:#fff8e6} code,a{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>future_growth_2 — Wave 4874–4929</h1>
+<div class="card"><strong>continuation_key:</strong> <code>5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462</code> · <strong>başlangıç HEAD:</strong> <code>68f5cc8b64686c15a76750e0167e81db733bb02a</code>. Slot UNCLAIMED/IDLE; ikinci runner veya mükerrer task oluşturulmadı.</div>
+<div class="grid">
+<div class="metric"><div>Bu dalga</div><div class="big">56/56</div><div>%100</div></div>
+<div class="metric"><div>Resmî kaynak</div><div class="big">14</div><div>3 servis + 11 katman</div></div>
+<div class="metric"><div>Aday×katman</div><div class="big">33</div><div>3 aday × 11 katman</div></div>
+<div class="metric"><div>Kesin dışlama</div><div class="big">22</div><div>servis tam extent dışı</div></div>
+<div class="metric"><div>PIP bekleyen</div><div class="big">11</div><div>servis extent içi ≠ üyelik</div></div>
+<div class="metric"><div>Pozitif binding</div><div class="big">0/3</div><div>fail-closed</div></div>
+</div>
+<div class="card"><strong>Doğruluk kapısı:</strong> Bir aday noktası borough servisinin yayımlanmış <em>Full Extent</em> alanının dışındaysa, o servisteki hiçbir katmana üye olamaz; bu sonuç kesin negatif olarak kaydedildi. Full Extent içinde kalmak katman üyeliği değildir ve <code>PIP_PENDING</code> tutuldu. Mesafeler servis extent dikdörtgenine olan Öklid uzaklığıdır; feature veya polygon minimum mesafesi değildir.</div>
+<div class="card"><strong>İşlem muhasebesi:</strong> 7 recovery/state + 3 resmî borough servisi + 11 büyüme/yer tahsisi katmanı + 33 aday×katman ekranı + 1 yürütme kurtarma + 1 scoring gate = <strong>56 gerçek audit satırı</strong>.</div>
+<h2>Satır satır işlemler</h2>
+<table><thead><tr><th>#</th><th>Kategori</th><th>Hedef</th><th>Sonuç</th><th>Kanıt</th><th>Güven</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const continuation='5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462';
+const candidates={
+  30762:{x:535564.9947401143,y:199388.1084759141,borough:'Enfield'},
+  46142:{x:551991.914381677,y:190529.33854737692,borough:'Havering'},
+  61522:{x:529493.3809399875,y:170122.18940480007,borough:'Lambeth'}
+};
+const services={
+ Enfield:{base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_10/FeatureServer',extent:[525674.7749,181870.7203,551133.2259,207208.935000001],item:'ab69f020f7874f61a49f03ddf7c36e18'},
+ Havering:{base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_16/FeatureServer',extent:[548106.7,178410.9,561957.5,194889.300000001],item:'c5dce9022a944a7d805f125ddb7e6e1a'},
+ Lambeth:{base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_22/FeatureServer',extent:[518603.3074,169807.4048,533714.4775,186154.7794],item:'fb7c4ffee4374a2b8ba9500e63e0cabf'}
+};
+const layers=[
+ ['Enfield',15,'Medium Growth Mixed Use'],
+ ['Enfield',16,'Medium Growth Industrial'],
+ ['Enfield',17,'Medium Growth Housing'],
+ ['Enfield',26,'Indicative Location for Housing GB'],
+ ['Enfield',29,'Future SIL Extensions'],
+ ['Havering',20,'Retained Site Specific Allocations'],
+ ['Havering',22,'Romford Site Allocations'],
+ ['Havering',30,'Strategic Development Areas'],
+ ['Lambeth',18,'Key Industrial and Business Area Land with Potential'],
+ ['Lambeth',27,'Opportunity Areas'],
+ ['Lambeth',33,'Site Allocations']
+];
+let n=4874, rows=[];
+const add=(cat,target,result,evidence,confidence,cls='ok')=>rows.push({n:n++,cat,target,result,evidence,confidence,cls});
+add('RECOVERY','Detailed continuation contract','PASS — same workstream/slot/continuation and no-duplicate rules preserved','docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md','PASS');
+add('RECOVERY','Canonical branch HEAD','PASS — remote readback 68f5cc8b64686c15a76750e0167e81db733bb02a','codex/aays-single-runner-v5-20260706','PASS');
+add('RECOVERY','Continuation key','PASS — existing key retained: '+continuation,'status_latest.json','PASS');
+add('RECOVERY','Ownership','PASS — UNCLAIMED; owner=null; lease=null','ownership_latest.json','PASS');
+add('RECOVERY','Heartbeat','PASS — IDLE; heartbeat_at=null','heartbeat_latest.json','PASS');
+add('RECOVERY','Current task','PASS — IDLE; task_id=null','current_task_latest.json','PASS');
+add('RECOVERY','Single-runner/manual gate','PARKED — height_difference_2 pickup_requested; 330 hashed export absent; duplicate runner/task forbidden','queue + manual_actions/future_growth_2.json','FAIL_CLOSED','warn');
+Object.entries(services).forEach(([borough,s])=>add('OFFICIAL_SERVICE',borough+' Planning Local Plan FeatureServer','PASS — current query-capable borough service; EPSG:27700; Full Extent ['+s.extent.join(', ')+']; item '+s.item,s.base,'OFFICIAL_100'));
+layers.forEach(([borough,id,name])=>add('OFFICIAL_LAYER',borough+' × '+name+' ('+id+')','PASS — layer listed by the current official borough FeatureServer',services[borough].base+'/'+id,'OFFICIAL_100'));
+const bboxDistance=(p,e)=>{
+ const dx=Math.max(e[0]-p.x,0,p.x-e[2]);
+ const dy=Math.max(e[1]-p.y,0,p.y-e[3]);
+ return Math.hypot(dx,dy);
+};
+layers.forEach(([borough,id,name])=>{
+ const s=services[borough];
+ Object.entries(candidates).forEach(([row,p])=>{
+   const d=bboxDistance(p,s.extent);
+   if(d>0){
+     add('CANDIDATE_LAYER_SCREEN','row '+row+' × '+borough+' '+name+' ('+id+')','EXACT_NEGATIVE — candidate is outside the complete published '+borough+' service Full Extent; bbox separation '+d.toLocaleString('tr-TR',{minimumFractionDigits:3,maximumFractionDigits:3})+' m',s.base+'/'+id,'OFFICIAL_100','ok');
+   } else {
+     add('CANDIDATE_LAYER_SCREEN','row '+row+' × '+borough+' '+name+' ('+id+')','PIP_PENDING — candidate is inside the borough service Full Extent; service overlap is not layer membership',s.base+'/'+id,'FAIL_CLOSED','warn');
+   }
+ });
+});
+add('EXECUTION_RECOVERY','Layer-level parameterised PIP','PARKED — direct layer geometry response remains unavailable in the current execution client; service-wide exact negatives retained, overlaps not promoted', 'official FeatureServer query transport','FAIL_CLOSED','warn');
+add('SCORING_GATE','future-growth score','PASS — 22 exact negatives and 11 pending checks do not establish a positive borough-confirmed future-growth binding','0/3 positive; 0 scored rows','FAIL_CLOSED','warn');
+if(n!==4930) throw new Error('operation count mismatch '+n);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+document.getElementById('rows').innerHTML=rows.map(r=>`<tr class="${r.cls}"><td>${r.n}</td><td>${esc(r.cat)}</td><td>${esc(r.target)}</td><td>${esc(r.result)}</td><td>${r.evidence.startsWith('http')?`<a href="${esc(r.evidence)}" rel="noreferrer">${esc(r.evidence)}</a>`:`<code>${esc(r.evidence)}</code>`}</td><td>${esc(r.confidence)}</td></tr>`).join('');
+</script>
+<noscript><div class="card">Bu denetim tablosu 56 satırı tarayıcıda JavaScript ile oluşturur.</div></noscript>
+</body></html>
