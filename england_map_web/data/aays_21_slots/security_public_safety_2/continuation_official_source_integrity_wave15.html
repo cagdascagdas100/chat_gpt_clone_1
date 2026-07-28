@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — Resmî Kaynak Bütünlüğü Dalga 15</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#e8f4fd;border-color:#b6d9f2}.warning{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:155px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.PASS{background:#e8f5e9}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}a{color:#0d47a1}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — resmî kaynak bütünlüğü dalga 15</h1>
+<div class="notice">On resmî internet kaynağı satır satır gösterilir. Bu dalga yeni parsel skoru üretmez; kaynak tazeliği, yöntem sınırlamaları ve claim-sonrası sürüm kapısını doğrular.</div>
+<div class="warning"><b>Yeni kapı:</b> IoD25 LSOA dosyaları 1–9 için güncel v2 sürümü kullanılmalıdır. Ana 300-satır çıktı kabul edilmeden önce mevcut canonical runner bu sürüm kontrolünü geçmelidir.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>Resmî internet kontrolleri</h2><div id="sources"></div></section>
+<section class="panel"><h2>Claim-sonrası kaynak sürüm kapısı</h2><div id="gate"></div></section>
+<script>
+'use strict';
+const DATA_URL='continuation_official_source_integrity_wave15_latest.json';
+const el=id=>document.getElementById(id);
+const text=v=>v===null||v===undefined?'—':String(v);
+const pct=v=>v===null||v===undefined?'—':`${v}%`;
+function cell(tr,v){const td=document.createElement('td');td.textContent=text(v);tr.appendChild(td)}
+function linkCell(tr,label,url){const td=document.createElement('td'),a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=label;td.appendChild(a);tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const response=await fetch(DATA_URL,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const d=await response.json();el('status').textContent=`Yüklendi: ${d.official_source_checks_passed}/${d.official_source_checks} resmî kaynak PASS; ana runner claim edilmedi; yeni business satırı yok`;el('status').className='panel ok';[['Kaynak PASS',`${d.official_source_checks_passed}/${d.official_source_checks}`],['Police ayı',d.latest_police_month],['Yeni aday',d.new_high_confidence_candidate_rows],['Görev',d.priority_300row_task_status],['Canlı owner',d.runtime_live_owner?'EVET':'HAYIR'],['Business satır',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('sources').appendChild(table(['#','Kaynak','Yayıncı','Sonuç','Doğruluk','Durum'],body=>(d.sources||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);linkCell(tr,x.source,x.url);cell(tr,x.publisher);cell(tr,x.result);cell(tr,pct(x.accuracy_percent));cell(tr,x.state);body.appendChild(tr)})));const g=d.source_version_gate||{};el('gate').appendChild(table(['Veri seti','Zorunlu sürüm','Neden','Veri değeri değişikliği','Claim-sonrası işlem'],body=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,g.dataset);cell(tr,g.required_version);cell(tr,g.reason);cell(tr,g.data_value_change_reported?'EVET':'HAYIR');cell(tr,g.claim_time_action);body.appendChild(tr)}))}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>
