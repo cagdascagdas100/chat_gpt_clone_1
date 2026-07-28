@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 552,
+  "generated_at": "2026-07-28T22:30:00Z",
+  "output_semantics": "OFFICIAL_OS_NGD_BUILDING_LAND_LAND_USE_TRANSPORT_AND_API_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_LEGAL_TITLE_NOT_ACCESS_RIGHT_NOT_SCORE",
+  "row_range": {"start": 997855, "end": 997884, "count": 30},
+  "topic": {"source_contract": "Ordnance Survey National Geographic Database physical and functional geometry", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "os_ngd", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-ngd", "authority_class": "official_national_mapping_database", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"coverage": "Great Britain", "themes": 9, "access": ["OS Select+Build", "OS NGD API Features", "OS NGD API Tiles"], "update_characteristic": "up to daily", "scope_guard": "OS NGD is authoritative physical and functional mapping, not land-registration title or planning permission."}},
+    {"source_id": "os_ngd_api_features", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-ngd-api-features", "authority_class": "official_national_mapping_ogc_features_api", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"standard": "OGC API Features", "query_types": ["spatial", "attribute", "time"], "update_frequency": "up to daily", "scope_guard": "API filtering capability is not evidence that a candidate query, intersection or area calculation was executed."}},
+    {"source_id": "os_land_features", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-land-features", "authority_class": "official_national_mapping_land_cover_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"content": "topographic land-cover polygons", "examples": ["residential gardens", "construction sites", "saltmarshes"], "update_frequency": "daily", "scope_guard": "Land-cover classification is physical context and not land use permission, ownership or developable area."}},
+    {"source_id": "os_land_use_features", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-land-use-features", "authority_class": "official_national_mapping_functional_land_use_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"content": ["land-use sites", "site access points", "land-use status"], "access_modes": ["pedestrian", "vehicular", "pedestrian and vehicular"], "status_values": ["Active", "Inactive", "Derelict", "Unknown"], "update_frequency": "daily", "scope_guard": "Mapped access points and land-use status do not establish a legal right of access, planning entitlement or redevelopment readiness."}},
+    {"source_id": "os_transport_network", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-transport-network", "authority_class": "official_national_mapping_transport_link_node_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"networks": ["road", "ferry", "rail", "path"], "attributes": ["classification", "function", "surface type", "names", "connectivity"], "update_frequency": "monthly", "scope_guard": "A mapped link-node network is not highway adoption, private easement, title access or guaranteed site access."}}
+  ],
+  "checks": {"total": 30, "passed": 30, "scope_guards": 8, "official_candidate_or_scope_examples": 12, "evidence_quality_score_100": 98.8, "evidence_quality_score_is_statistical_accuracy": false, "ngd_theme_and_access_contract_revalidated": true, "land_cover_and_land_use_separated": true, "transport_network_legal_scope_guarded": true, "candidate_specific_api_execution": false, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "OS NGD is authoritative national mapping data but is not HM Land Registry title evidence.",
+    "Buildings, land cover and structures describe physical features and do not establish planning entitlement.",
+    "Land-cover polygons and land-use sites remain separate semantic layers and are not interchangeable.",
+    "Active, inactive, derelict or unknown mapped status is not evidence of permission, vacancy, contamination or redevelopment commencement.",
+    "Mapped site access points do not establish a private easement, public-highway status or unrestricted legal access.",
+    "Transport link-node connectivity does not prove legal access from a candidate parcel.",
+    "API, download and daily-update capability do not prove an executed candidate-specific spatial query.",
+    "No score or promotion is written without exact candidate geometry, HMLR title relation, executed OS query and current statutory evidence."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}
