@@ -1,10 +1,12 @@
-# ready_to_sell_2 — New Candidate Groups 83–86 (2026-07-27)
+# ready_to_sell_2 — New Candidate Groups 83–86 (status-refreshed 2026-07-28)
 
 ## Scope
 
 - First-party source: Auction House East Anglia 29 July 2026 current auction listing.
-- 40 active records staged: Lots 1–16 excluding no active record, then Lots 18–38 including 4a, 10a and 37a.
-- Lot 17 was excluded as Sold Prior; Lot 39 was excluded as Sold STC.
+- 40 source rows remain visible and auditable.
+- Current active candidates: 38.
+- Lot 17 is Sold Prior; Lot 25 is Withdrawn; Lot 27 is Postponed; Lot 39 is Sold STC.
+- Lot 25 and Lot 27 were detected during a current-source refresh and corrected through an overlay without rewriting the original snapshot.
 - 40 exact-address repository duplicate preflights returned zero matches.
 - Source scope is the first-party event listing snapshot, not individual lot detail pages.
 - No canonical business-row mutation, parcel promotion, second task, or second runner.
@@ -12,14 +14,16 @@
 ## Validation totals
 
 - First-party source rows: 40/40
+- Active candidate rows: 38
+- Corrected prior rows: 2
 - Duplicate preflights: 40/40; matches: 0
 - Checks: 80/80
 - Source-supported fields: 280/280
 - Verified enrichments: 200
-- Raw catalogue agreement: 100.00%
+- Current-source agreement after correction: 100.00%
 - Fail-closed normalized assertions: 100.00%
 - Average verification confidence: 99.00/100
-- Validation: 11 PASS / 0 FAIL
+- Validation: 12 PASS / 0 FAIL
 
 ## High-value source rows
 
@@ -32,6 +36,8 @@
 
 ## Accuracy guards
 
+- Status refreshes are applied as an auditable overlay; original source snapshots remain preserved.
+- Withdrawn, Postponed, Sold Prior and Sold STC rows are not active candidates.
 - A listing snapshot is not an individual lot detail page.
 - Tenure and occupancy are not stated and are not inferred.
 - Guide price is not sale price.
@@ -41,12 +47,12 @@
 - Block-of-apartments unit count is not inferred.
 - Legal pack and individual lot detail review remain pending.
 
-## Cumulative staging
+## Corrected cumulative staging
 
 - Source rows: 1,050
 - Checks: 2,100/2,100
-- New unique candidates: 1,020
-- Source upgrades: 1,020
+- New unique candidates: 1,018
+- Source upgrades: 1,018
 - Verified enrichments: 5,310
 - Audited agreement before normalization: 8,288/8,320 = 99.62%
 - Fail-closed normalized assertions: 100.00%
