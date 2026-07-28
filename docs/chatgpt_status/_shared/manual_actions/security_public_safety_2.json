@@ -1,22 +1,38 @@
 {
-  "schema_version": 30,
+  "schema_version": 31,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 300-row task remains pickup_requested with no live owner, lease, heartbeat or output. The slot-level diagnostic and problem_solver_1 control record identify the common external canonical shared runner/queue consumer as stale or offline. One idempotent recovery refresh was already used; a second refresh, duplicate task or second runner is forbidden.",
-  "diagnosis": "EXTERNAL_CANONICAL_F_SHARED_RUNNER_STALE_OR_OFFLINE",
+  "reason": "The retry5 missing-output sub-blocker is no longer current: all five declared outputs appeared between 2026-07-28T17:45Z and 17:48Z, with 12/12 candidate joins, hashes, DOM and browser gates passing. However status_latest remains stale at BLOCKED_EXPECTED_OUTPUTS_MISSING, ownership remains empty, the canonical 300-row task is still pickup_requested and unclaimed, and the canonical stable-runner heartbeat is stale. A second queue refresh, duplicate task or second runner remains forbidden.",
+  "diagnosis": "STALE_SLOT_STATUS_AFTER_RETRY5_RECOVERY_AND_300ROW_CANONICAL_RUNNER_UNCLAIMED",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-28T00:46:40Z",
-  "solution": "Open the AAYS control panel and verify that the existing single shared canonical runner/queue consumer is ACTIVE with a current heartbeat. If it is stopped or stale, restart that existing runner once, refresh the panel, and do not start a second runner. Continue only after the same queued task is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47.",
+  "updated_at": "2026-07-28T18:05:00Z",
+  "resolved_subissues": [
+    {
+      "code": "RETRY5_EXPECTED_OUTPUTS_MISSING",
+      "state": "RESOLVED_BY_FRESH_REMOTE_READ",
+      "resolved_at": "2026-07-28T17:48:04.9996118Z",
+      "proof": "All five expected output paths exist; 12/12 exact target IDs, candidate join, HTTP hashes, DOM tokens, browser smoke and console gates passed."
+    }
+  ],
+  "active_blockers": [
+    "STATUS_LATEST_STALE_AND_REFERENCES_RESOLVED_MISSING_OUTPUTS",
+    "OWNERSHIP_OWNER_HEARTBEAT_AND_LEASE_EMPTY",
+    "PRIORITY_300ROW_TASK_PICKUP_REQUESTED_UNCLAIMED",
+    "CANONICAL_STABLE_RUNNER_HEARTBEAT_STALE"
+  ],
+  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. After claim, allow exact-query caching and Police.uk rate backpressure to run.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
+    "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/checkpoint_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/recovery_300row_queue_consumer_20260727.json",
-    "docs/chatgpt_status/_shared/slots_21/problem_solver_1/status_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/runner_diagnostic_latest.json"
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/geometry_lsoa_police_sample_wave1_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/progress_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/index.html",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_candidate_gate_latest.json",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_gate_latest.json"
   ],
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
   "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
