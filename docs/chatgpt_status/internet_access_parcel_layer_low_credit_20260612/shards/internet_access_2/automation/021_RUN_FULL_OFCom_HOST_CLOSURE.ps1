@@ -117,6 +117,44 @@ function Sync-RemoteFastForward {
     return $Local
 }
 
+function Sync-RemoteForPoll {
+    $Status = @(Invoke-Git status --porcelain --untracked-files=no)
+    $Local = Get-LocalHead
+    $Remote = Get-RemoteHead
+    if ($Status) {
+        return [ordered]@{
+            synced = $false
+            reason = "WORKTREE_DIRTY_RUNNER_ACTIVITY"
+            local_head = $Local
+            remote_head = $Remote
+            dirty_paths = @($Status)
+        }
+    }
+    if ($Local -ne $Remote) {
+        Invoke-Git fetch origin $Branch | Out-Null
+        Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        $Local = Get-LocalHead
+        $Remote = Get-RemoteHead
+        if ($Local -ne $Remote) {
+            throw "POLL_LOCAL_REMOTE_HEAD_MISMATCH_AFTER_FAST_FORWARD:local=$Local remote=$Remote"
+        }
+        return [ordered]@{
+            synced = $true
+            reason = "FAST_FORWARDED_REMOTE_RUNNER_OUTPUT"
+            local_head = $Local
+            remote_head = $Remote
+            dirty_paths = @()
+        }
+    }
+    return [ordered]@{
+        synced = $true
+        reason = "ALREADY_AT_REMOTE_HEAD"
+        local_head = $Local
+        remote_head = $Remote
+        dirty_paths = @()
+    }
+}
+
 function Test-ExactJoinReady {
     $Queue = Read-JsonObject $QueueRel
     $Current = Read-JsonObject $CurrentRel
@@ -174,9 +212,11 @@ $PollCount = 0
 $Ready = $false
 $LastSignature = $null
 $NoProgressSince = $StartedAt
+$LastPollSync = $null
 
 while ((Get-Date).ToUniversalTime() -lt $Deadline) {
     $PollCount++
+    $LastPollSync = Sync-RemoteForPoll
     $LastState = Test-ExactJoinReady
     if ($LastState.ready) {
         $Ready = $true
@@ -251,6 +291,7 @@ if ($RemoteReadback -ne $PostjoinCommit) {
     poll_seconds = $PollSeconds
     sample_size = $SampleSize
     exact_join_state = $LastState
+    last_poll_sync = $LastPollSync
     recovery_output = $RecoveryOutput
     postjoin_output = $PostjoinOutput
     same_task_retained = $true
