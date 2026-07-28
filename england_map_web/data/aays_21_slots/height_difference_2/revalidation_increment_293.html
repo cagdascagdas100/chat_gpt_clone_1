@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 QA 282–293</title>
+<style>
+:root{color-scheme:dark}body{font:14px Segoe UI,Arial,sans-serif;margin:18px;background:#0b1118;color:#edf3fa}a{color:#9bd2ff}h1{margin:0 0 8px}.m{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.p{border:1px solid #314156;padding:6px 9px;background:#111b27}.wrap{overflow:auto;margin:10px 0 24px}table{border-collapse:collapse;width:100%;min-width:1200px;font-size:12px}th,td{border:1px solid #29394c;padding:6px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#18273a}.ok{color:#64d79a}.warn{color:#ffd06f}
+</style></head><body>
+<h1>height_difference_2 — child QA increments 282–293</h1>
+<p>Publisher-safe QA. Canonical manifest değiştirilmedi. Fresh Terrain50 numeric sonuç iddia edilmez.</p>
+<div id="metrics" class="m"></div>
+<h2>İşlemler — satır satır</h2><div class="wrap"><table><thead><tr><th>No</th><th>Inc</th><th>Durum</th><th>Kontrol</th><th>İşlem</th></tr></thead><tbody id="ops"></tbody></table></div>
+<h2>Kaynak revalidation</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Inc</th><th>Yayıncı</th><th>Kaynak</th><th>Güven</th><th>Doğrulama</th></tr></thead><tbody id="src"></tbody></table></div>
+<h2>Örnekler</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Inc</th><th>Row</th><th>Parcel</th><th>HMLR</th><th>Fark m</th><th>Güven</th><th>Kontrol</th></tr></thead><tbody id="ex"></tbody></table></div>
+<script>
+'use strict';
+const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function j(p){const r=await fetch(`${p}?v=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`${p} HTTP ${r.status}`);return r.json()}
+function expandCompact(d){const out=[];for(const g of d.compact_operation_groups||[]){(g.steps||[]).forEach((s,i)=>out.push({operation_no:Number(g.start_operation_no)+i,increment:g.increment,status:'completed',stage:g.stage,details_summary:s,fake_data:false}))}return out}
+Promise.all([
+ j('operations_increment_282.json'),j('operations_increment_283.json'),j('operations_compact_increments_284_293.json'),
+ j('source_candidates_increment_293.json'),j('examples_increment_293.json'),j('progress_increment_293.json')
+]).then(([a,b,c,s,x,p])=>{
+ const ops=[...(a.operations||[]),...(b.operations||[]),...expandCompact(c)].sort((u,v)=>u.operation_no-v.operation_no);
+ const src=s.candidates||[], ex=x.examples||[];
+ document.getElementById('metrics').innerHTML=[
+ ['Görünür QA',p.child_branch_preview_operation_rows_total],['Bu batch',`+${p.child_branch_preview_operation_rows_increase} (+%${p.child_branch_preview_operation_rows_increase_percent})`],
+ ['Kaynak',`${p.child_branch_preview_source_rows_total} (+${p.child_branch_preview_source_rows_increase})`],['Örnek',`${p.child_branch_preview_example_rows_total} (+${p.child_branch_preview_example_rows_increase})`],
+ ['Child QA',`${p.completed_operation_count}/${p.planned_operation_count} — %${p.overall_completion_percent}`],['Güven',`%${p.numeric_result_confidence_percent}`],['F-host receipt',`${p.f_host_required_receipts_observed}/4`]
+ ].map(v=>`<span class="p">${e(v[0])}: <b>${e(v[1])}</b></span>`).join('');
+ document.getElementById('ops').innerHTML=ops.map(o=>`<tr><td>${e(o.operation_no)}</td><td>${e(o.increment)}</td><td class="ok">${e(o.status)}</td><td>${e(o.stage)}</td><td>${e(o.details_summary)}</td></tr>`).join('');
+ document.getElementById('src').innerHTML=src.map(r=>`<tr><td>${e(r.candidate_id)}</td><td>${e(r.increment)}</td><td>${e(r.publisher)}</td><td><a target="_blank" rel="noopener" href="${e(r.source_url)}">${e(r.source_url)}</a></td><td>${e(r.source_confidence_percent)}%</td><td>${e((r.verified_facts||[]).join(' | '))}</td></tr>`).join('');
+ document.getElementById('ex').innerHTML=ex.map(r=>`<tr><td>${e(r.example_id)}</td><td>${e(r.increment)}</td><td>${e(r.row_no)}</td><td>${e(r.parcel_id)}</td><td>${e(r.hmlr_inspire_id)}</td><td>${e(r.preserved_height_difference_m)}</td><td>${e(r.result_confidence_percent)}%</td><td>${e(r.control)}</td></tr>`).join('');
+ if(ops.length!==336||ops[0]?.operation_no!==7709||ops.at(-1)?.operation_no!==8044) throw new Error('QA operation expansion mismatch');
+}).catch(err=>document.body.insertAdjacentHTML('beforeend',`<p class="warn">${e(err.message)}</p>`));
+</script></body></html>
