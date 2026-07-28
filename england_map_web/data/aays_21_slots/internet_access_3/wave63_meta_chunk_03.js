@@ -1,0 +1,1 @@
+window.W63M=(window.W63M||'')+"nner_created\":false,\"new_logical_task_created\":false,\"manual_action_state\":\"OPEN\",\"canonical_runner_last_remote_heartbeat_at\":\"2026-07-16T13:45:53.0433295Z\"},\"row_schema\":[\"evidence_id\",\"family\",\"record\",\"metric\",\"value\",\"unit\",\"source_locator\",\"confidence_percent\",\"status\",\"parcel_binding_status\"]}";
