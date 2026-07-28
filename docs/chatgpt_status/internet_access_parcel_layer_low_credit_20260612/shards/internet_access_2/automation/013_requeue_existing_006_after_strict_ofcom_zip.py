@@ -90,7 +90,7 @@ def parse_time(value: Any) -> datetime | None:
 
 def lease_active(value: dict[str, Any]) -> bool:
     state = str(value.get("state") or value.get("status") or "").upper()
-    if state in {"DONE", "PUBLISHED", "BLOCKED", "STOPPED", "STOPPED_CLEAN", "FAILED"}:
+    if state in {"DONE", "PUBLISHED", "BLOCKED", "STOPPED", "STOPPED_CLEAN", "FAILED", "CANCELLED"}:
         return False
     lease = parse_time(value.get("lease_expires_at"))
     return bool(lease and lease > datetime.now(timezone.utc))
@@ -150,17 +150,104 @@ def inspect_archive(path: Path, expected_files: int, expected_rows: int) -> dict
         }
 
 
-def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    completed = subprocess.run(
+def git_process(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
         ["git", "-C", str(repo), *args],
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
     )
+
+
+def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    completed = git_process(repo, *args)
     if completed.returncode != 0:
         raise RuntimeError(f"GIT_FAILED:{' '.join(args)}:{completed.stderr.strip() or completed.stdout.strip()}")
     return completed
+
+
+def git_error(completed: subprocess.CompletedProcess[str]) -> str:
+    return completed.stderr.strip() or completed.stdout.strip() or f"exit={completed.returncode}"
+
+
+def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    completed = git_process(repo, "merge-base", "--is-ancestor", ancestor, descendant)
+    if completed.returncode == 0:
+        return True
+    if completed.returncode == 1:
+        return False
+    raise RuntimeError(f"ANCESTRY_CHECK_FAILED:{ancestor}:{descendant}:{git_error(completed)}")
+
+
+def remote_head(repo: Path) -> str:
+    values = git(repo, "ls-remote", "origin", f"refs/heads/{BRANCH}").stdout.split()
+    if not values:
+        raise RuntimeError("REMOTE_HEAD_NOT_FOUND")
+    return values[0]
+
+
+def assert_clean_repo(repo: Path, stage: str) -> None:
+    status = git(repo, "status", "--porcelain", "--untracked-files=no").stdout.strip()
+    if status:
+        raise RuntimeError(f"REPO_NOT_CLEAN_{stage}:{status.replace(chr(10), ' | ')}")
+
+
+def assert_commit_scope(repo: Path, commit: str, allowed: set[str]) -> None:
+    paths = set(git(repo, "diff-tree", "--no-commit-id", "--name-only", "-r", commit).stdout.splitlines())
+    if paths != allowed:
+        raise RuntimeError(f"REQUEUE_COMMIT_SCOPE_MISMATCH:{sorted(paths)}")
+
+
+def publish_with_bounded_recovery(repo: Path, commit: str, allowed: set[str]) -> dict[str, Any]:
+    assert_commit_scope(repo, commit, allowed)
+    first_push = git_process(repo, "push", "origin", f"HEAD:{BRANCH}")
+    git(repo, "fetch", "origin", BRANCH)
+
+    if is_ancestor(repo, commit, f"origin/{BRANCH}"):
+        return {
+            "published_commit": commit,
+            "remote_head": remote_head(repo),
+            "publish_recovery_used": first_push.returncode != 0,
+            "rebase_used": False,
+            "bounded_push_retry_count": 0,
+            "first_push_error": None if first_push.returncode == 0 else git_error(first_push),
+        }
+
+    first_error = git_error(first_push)
+    if first_push.returncode == 0:
+        first_error = "PUSH_RETURNED_SUCCESS_BUT_COMMIT_NOT_CONTAINED_IN_REMOTE"
+
+    assert_clean_repo(repo, "BEFORE_BOUNDED_REQUEUE_REBASE")
+    rebase = git_process(repo, "rebase", f"origin/{BRANCH}")
+    if rebase.returncode != 0:
+        rebase_error = git_error(rebase)
+        git_process(repo, "rebase", "--abort")
+        raise RuntimeError(f"BOUNDED_REQUEUE_REBASE_FAILED:{rebase_error}")
+
+    rebased_commit = git(repo, "rev-parse", "HEAD").stdout.strip()
+    assert_clean_repo(repo, "AFTER_BOUNDED_REQUEUE_REBASE")
+    assert_commit_scope(repo, rebased_commit, allowed)
+
+    retry = git_process(repo, "push", "origin", f"HEAD:{BRANCH}")
+    if retry.returncode != 0:
+        raise RuntimeError(f"BOUNDED_REQUEUE_PUSH_RETRY_FAILED:{git_error(retry)}")
+
+    git(repo, "fetch", "origin", BRANCH)
+    if not is_ancestor(repo, rebased_commit, f"origin/{BRANCH}"):
+        raise RuntimeError(
+            f"REQUEUE_COMMIT_NOT_CONTAINED_IN_REMOTE_AFTER_RECOVERY:"
+            f"commit={rebased_commit} remote={remote_head(repo)}"
+        )
+
+    return {
+        "published_commit": rebased_commit,
+        "remote_head": remote_head(repo),
+        "publish_recovery_used": True,
+        "rebase_used": True,
+        "bounded_push_retry_count": 1,
+        "first_push_error": first_error,
+    }
 
 
 def main() -> int:
@@ -203,9 +290,7 @@ def main() -> int:
         raise RuntimeError("STRICT_ARCHIVE_PREFLIGHT_FAILED:" + json.dumps(inspection["checks"], sort_keys=True))
 
     if args.publish:
-        status = git(repo, "status", "--porcelain", "--untracked-files=no")
-        if status.stdout.strip():
-            raise RuntimeError("REPO_NOT_CLEAN_BEFORE_REQUEUE:" + status.stdout.strip().replace("\n", " | "))
+        assert_clean_repo(repo, "BEFORE_REQUEUE")
 
     prior = {
         "status": queue.get("status"),
@@ -228,13 +313,20 @@ def main() -> int:
         "final_ready": False,
     })
     recovery = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": SLOT_ID,
         "task_id": TASK_ID,
         "state": "EXISTING_006_REQUEUED_AFTER_STRICT_OFFICIAL_ZIP_PREFLIGHT",
         "requeued_at": queue["requeued_at"],
         "new_attempt_id": retry_attempt,
         "archive_preflight": inspection,
+        "publish_guard": {
+            "mode": "BOUNDED_REBASE_AND_SINGLE_PUSH_RETRY",
+            "commit_scope_exact": True,
+            "max_push_retries": 1,
+            "force_push_used": False,
+            "reset_used": False,
+        },
         "duplicate_task_created": False,
         "second_runner_started": False,
         "fake_data": False,
@@ -247,18 +339,19 @@ def main() -> int:
     write_json(recovery_path, recovery)
 
     commit = None
+    publish_result: dict[str, Any] | None = None
     if args.publish:
-        git(repo, "add", "-A", "--", str(QUEUE_REL).replace("\\", "/"), str(RECOVERY_REL).replace("\\", "/"))
+        queue_rel = str(QUEUE_REL).replace("\\", "/")
+        recovery_rel = str(RECOVERY_REL).replace("\\", "/")
+        allowed = {queue_rel, recovery_rel}
+        git(repo, "add", "-A", "--", queue_rel, recovery_rel)
         staged = set(git(repo, "diff", "--cached", "--name-only").stdout.splitlines())
-        allowed = {str(QUEUE_REL).replace("\\", "/"), str(RECOVERY_REL).replace("\\", "/")}
         if staged != allowed:
             raise RuntimeError(f"UNEXPECTED_STAGED_PATHS:{sorted(staged)}")
         git(repo, "commit", "-m", "internet_access_2: requeue existing 006 after strict Ofcom ZIP preflight")
         commit = git(repo, "rev-parse", "HEAD").stdout.strip()
-        git(repo, "push", "origin", f"HEAD:{BRANCH}")
-        remote = git(repo, "ls-remote", "origin", f"refs/heads/{BRANCH}").stdout.split()
-        if not remote or remote[0] != commit:
-            raise RuntimeError("REMOTE_READBACK_MISMATCH")
+        publish_result = publish_with_bounded_recovery(repo, commit, allowed)
+        commit = str(publish_result["published_commit"])
 
     print(json.dumps({
         "state": recovery["state"],
@@ -269,6 +362,13 @@ def main() -> int:
         "observed_unique_areas": inspection["observed_unique_areas"],
         "observed_rows": inspection["observed_rows"],
         "published_commit": commit,
+        "remote_head": None if publish_result is None else publish_result["remote_head"],
+        "publish_recovery_used": False if publish_result is None else publish_result["publish_recovery_used"],
+        "rebase_used": False if publish_result is None else publish_result["rebase_used"],
+        "bounded_push_retry_count": 0 if publish_result is None else publish_result["bounded_push_retry_count"],
+        "first_push_error": None if publish_result is None else publish_result["first_push_error"],
+        "force_push_used": False,
+        "reset_used": False,
         "duplicate_task_created": False,
         "second_runner_started": False,
     }, ensure_ascii=False, indent=2))
