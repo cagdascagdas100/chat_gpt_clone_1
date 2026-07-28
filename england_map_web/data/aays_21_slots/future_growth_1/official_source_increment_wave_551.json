@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 551,
+  "generated_at": "2026-07-28T22:30:00Z",
+  "output_semantics": "OFFICIAL_EA_FLOOD_MAP_FOR_PLANNING_FLOOD_ZONE_CLIMATE_CHANGE_SURFACE_WATER_EXTENT_AND_DEPTH_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_PROPERTY_RISK_NOT_SCORE",
+  "row_range": {"start": 997824, "end": 997854, "count": 31},
+  "topic": {"source_contract": "Environment Agency Flood Map for Planning spatial layers", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "ea_flood_zones", "publisher": "Environment Agency", "url": "https://www.data.gov.uk/dataset/104434b0-5263-4c90-9b1e-e43b1d57c750/flood-map-for-planning-flood-zones1", "authority_class": "official_environment_agency_present_day_flood_zone_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-07-06", "zone_1": "less than 0.1 percent annual probability and not shown", "zone_2_river": "0.1 to 1 percent annual probability", "zone_2_sea": "0.1 to 0.5 percent annual probability", "zone_3_river": "1 percent or greater annual probability", "zone_3_sea": "0.5 percent or greater annual probability", "defence_assumption": "benefits ignored", "scope_guard": "Flood zones are planning-risk extents and not parcel permission, exact property risk or defence-performance evidence."}},
+    {"source_id": "ea_flood_zones_plus_climate_change", "publisher": "Environment Agency", "url": "https://www.data.gov.uk/dataset/77931470-ee6b-4f8e-8868-82842aed2e5d/flood-map-for-planning-flood-zones-plus-climate-change", "authority_class": "official_environment_agency_river_sea_climate_change_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-07-06", "purpose": ["site-specific flood risk assessment screening", "sequential test screening", "strategic flood risk assessment"], "assumptions": ["no benefit from existing defences", "no future defence or land-use changes"], "scope_guard": "The climate-change extent is a composite planning screen and not a prediction of exact future property flooding."}},
+    {"source_id": "ea_surface_water_present_extents", "publisher": "Environment Agency", "url": "https://www.data.gov.uk/dataset/dfd734fb-cc68-4229-b60d-8c0280398052/flood-map-for-planning-surface-water-spatial-planning-extents-present-day", "authority_class": "official_environment_agency_surface_water_present_extent_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-07-06", "aep_scenarios_percent": [0.1, 1.0, 3.3], "scope_guard": "The national planning extents indicate area-level risk and are not suitable for determining whether an individual property will flood."}},
+    {"source_id": "ea_surface_water_climate_extents", "publisher": "Environment Agency", "url": "https://www.data.gov.uk/dataset/9c081ecf-18c3-4c91-89b5-a3c1d0e5dbef/flood-map-for-planning-surface-water-spatial-planning-extents-climate-change", "authority_class": "official_environment_agency_surface_water_climate_extent_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-07-06", "aep_scenarios_percent": [0.1, 1.0, 3.3], "climate_projection": "UKCP18 RCP8.5 upper-end 2070s epoch 2061-2125", "update_frequency": "quarterly", "scope_guard": "Climate-change scenarios are long-term planning indications and not current individual-property probabilities."}},
+    {"source_id": "ea_surface_water_climate_depths", "publisher": "Environment Agency", "url": "https://www.data.gov.uk/dataset/ff48e392-ab66-49fa-b6dc-3dc72485a6db/flood-map-for-planning-surface-water-spatial-planning-depths-climate-change", "authority_class": "official_environment_agency_surface_water_climate_depth_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-07-06", "aep_scenarios_percent": [0.1, 1.0, 3.3], "depth_bands_mm": ["up to 150", "150-300", "300-600", "600-900", "900-1200", "1200-2300", "over 2300"], "scope_guard": "Depth bands are modelled planning evidence and are not measured damage, floor level, viability or safety scores."}}
+  ],
+  "checks": {"total": 31, "passed": 31, "scope_guards": 8, "official_candidate_or_scope_examples": 13, "evidence_quality_score_100": 98.9, "evidence_quality_score_is_statistical_accuracy": false, "present_day_zone_contract_revalidated": true, "climate_change_contract_revalidated": true, "surface_water_probability_and_depth_separated": true, "candidate_specific_overlay_executed": false, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "Flood Zone 1 is the residual area outside the supplied Zone 2 and 3 polygons and is not represented by a separate polygon layer.",
+    "River and sea annual probabilities remain distinct and are not merged into a single parcel probability.",
+    "Flood-zone layers ignore the benefit of defences and therefore do not prove actual defended-site performance.",
+    "Flood Zones plus climate change is a screening layer for FRA and sequential-test needs, not exact future property flooding.",
+    "Surface-water AEP scenarios are area-level model outputs and are not individual-building probabilities.",
+    "Present-day and climate-change layers remain separate; RCP8.5 upper-end 2070s is not presented as current risk.",
+    "Depth bands are not converted into damage, viability, finished-floor or safety scores without site-specific assessment.",
+    "No score or promotion is written without exact candidate geometry, executed overlay, current FRA and planning evidence."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}
