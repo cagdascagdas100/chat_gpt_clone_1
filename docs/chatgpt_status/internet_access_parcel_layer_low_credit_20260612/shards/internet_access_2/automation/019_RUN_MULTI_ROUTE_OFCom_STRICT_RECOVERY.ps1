@@ -28,37 +28,58 @@ if (-not (Test-Path -LiteralPath $RepoRoot -PathType Container)) {
     throw "REPO_ROOT_NOT_FOUND:$RepoRoot"
 }
 
-$SourceCandidates = @(
+$ArchiveUrls = @(
     "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
     "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
 )
+$LandingUrls = @(
+    "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+    "https://www.ofcom.org.uk/cy/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026"
+)
 
-foreach ($Source in $SourceCandidates) {
-    $Uri = $null
-    if (-not [System.Uri]::TryCreate($Source, [System.UriKind]::Absolute, [ref]$Uri)) {
-        throw "OFFICIAL_URL_INVALID:$Source"
+$SourceRoutes = New-Object System.Collections.Generic.List[object]
+foreach ($ArchiveUrl in $ArchiveUrls) {
+    foreach ($LandingUrl in $LandingUrls) {
+        $SourceRoutes.Add([ordered]@{
+            archive_url = $ArchiveUrl
+            landing_url = $LandingUrl
+            landing_language = if ($LandingUrl -match "/cy/") { "cy" } else { "en" }
+        })
     }
-    if ($Uri.Scheme -ne "https" -or $Uri.Host -ne $AllowedHost) {
-        throw "OFFICIAL_URL_SCOPE_VIOLATION:$Source"
+}
+
+foreach ($Route in @($SourceRoutes)) {
+    foreach ($OfficialUrl in @([string]$Route.archive_url, [string]$Route.landing_url)) {
+        $Uri = $null
+        if (-not [System.Uri]::TryCreate($OfficialUrl, [System.UriKind]::Absolute, [ref]$Uri)) {
+            throw "OFFICIAL_URL_INVALID:$OfficialUrl"
+        }
+        if ($Uri.Scheme -ne "https" -or $Uri.Host -ne $AllowedHost) {
+            throw "OFFICIAL_URL_SCOPE_VIOLATION:$OfficialUrl"
+        }
     }
 }
 
 $Attempts = New-Object System.Collections.Generic.List[object]
-$SelectedSource = $null
+$SelectedRoute = $null
 $Completed = $false
 $RunnerRequested = [bool]$StartRunner
 
-foreach ($Source in $SourceCandidates) {
+foreach ($Route in @($SourceRoutes)) {
+    $ArchiveUrl = [string]$Route.archive_url
+    $LandingUrl = [string]$Route.landing_url
     $StartedAt = (Get-Date).ToUniversalTime()
     try {
         if ($StartRunner) {
-            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $Source -StartRunner | Out-String).Trim()
+            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $ArchiveUrl -OfficialLandingUrl $LandingUrl -StartRunner | Out-String).Trim()
         } else {
-            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $Source | Out-String).Trim()
+            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $ArchiveUrl -OfficialLandingUrl $LandingUrl | Out-String).Trim()
         }
         $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
         $Attempts.Add([ordered]@{
-            source_url = $Source
+            archive_url = $ArchiveUrl
+            landing_url = $LandingUrl
+            landing_language = [string]$Route.landing_language
             started_at = $StartedAt.ToString('o')
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = [bool]$ArchiveAvailable
@@ -68,14 +89,16 @@ foreach ($Source in $SourceCandidates) {
             second_runner_started = $false
         })
         if ($ArchiveAvailable) {
-            $SelectedSource = $Source
+            $SelectedRoute = $Route
             $Completed = $true
             break
         }
     }
     catch {
         $Attempts.Add([ordered]@{
-            source_url = $Source
+            archive_url = $ArchiveUrl
+            landing_url = $LandingUrl
+            landing_language = [string]$Route.landing_language
             started_at = $StartedAt.ToString('o')
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = (Test-Path -LiteralPath $ArchivePath -PathType Leaf)
@@ -91,12 +114,16 @@ foreach ($Source in $SourceCandidates) {
 }
 
 $Result = [ordered]@{
-    schema_version = 2
+    schema_version = 3
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     slot_id = $SlotId
     state = if ($Completed) { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STRICT_RECOVERY_COMPLETE" } else { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STILL_BLOCKED" }
-    source_candidates = $SourceCandidates
-    selected_source_url = $SelectedSource
+    archive_urls = $ArchiveUrls
+    landing_urls = $LandingUrls
+    source_routes = @($SourceRoutes)
+    selected_archive_url = if ($SelectedRoute) { [string]$SelectedRoute.archive_url } else { $null }
+    selected_landing_url = if ($SelectedRoute) { [string]$SelectedRoute.landing_url } else { $null }
+    selected_landing_language = if ($SelectedRoute) { [string]$SelectedRoute.landing_language } else { $null }
     archive_path = $ArchivePath
     archive_available = (Test-Path -LiteralPath $ArchivePath -PathType Leaf)
     attempts = @($Attempts)
