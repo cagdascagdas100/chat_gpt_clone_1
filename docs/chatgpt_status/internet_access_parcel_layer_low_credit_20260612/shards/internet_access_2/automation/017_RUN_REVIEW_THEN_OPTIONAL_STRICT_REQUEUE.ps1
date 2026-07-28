@@ -3,12 +3,14 @@ param(
     [string]$RepoRoot = $env:AAYS_REPO_ROOT,
     [string]$ArchivePath = "",
     [string]$OfficialArchiveUrl = "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    [string]$OfficialLandingUrl = "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     [switch]$SkipDownload,
     [switch]$StartRunner
 )
 
 $ErrorActionPreference = "Stop"
 $SlotId = "internet_access_2"
+$AllowedHost = "www.ofcom.org.uk"
 $ReviewWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1"
 $ZipWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1"
 $DownloadWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\018_FETCH_OFFICIAL_OFCom_SPRING_2026_ZIP.ps1"
@@ -26,6 +28,16 @@ if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     $ArchivePath = Join-Path $PortableRoot "state\source_cache\ofcom_spring_2026\ofcom_fixed_coverage_202601_v2.zip"
 }
 $ArchivePath = [System.IO.Path]::GetFullPath($ArchivePath)
+
+foreach ($OfficialUrl in @($OfficialArchiveUrl, $OfficialLandingUrl)) {
+    $OfficialUri = $null
+    if (-not [System.Uri]::TryCreate($OfficialUrl, [System.UriKind]::Absolute, [ref]$OfficialUri)) {
+        throw "OFFICIAL_URL_INVALID:$OfficialUrl"
+    }
+    if ($OfficialUri.Scheme -ne "https" -or $OfficialUri.Host -ne $AllowedHost) {
+        throw "OFFICIAL_URL_SCOPE_VIOLATION:$OfficialUrl"
+    }
+}
 
 $ReviewWrapper = Join-Path $RepoRoot $ReviewWrapperRel
 $ZipWrapper = Join-Path $RepoRoot $ZipWrapperRel
@@ -77,7 +89,7 @@ $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
 if (-not $ArchiveAvailable -and -not $SkipDownload) {
     $DownloadAttempted = $true
     try {
-        $DownloadResult = (& $DownloadWrapper -PortableRoot $PortableRoot -ArchivePath $ArchivePath -SourceUrl $OfficialArchiveUrl | Out-String).Trim()
+        $DownloadResult = (& $DownloadWrapper -PortableRoot $PortableRoot -ArchivePath $ArchivePath -SourceUrl $OfficialArchiveUrl -LandingUrl $OfficialLandingUrl | Out-String).Trim()
         $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
         $DownloadSucceeded = [bool]$ArchiveAvailable
         if (-not $ArchiveAvailable) { $DownloadError = "DOWNLOAD_WRAPPER_RETURNED_WITHOUT_ARCHIVE" }
@@ -100,6 +112,7 @@ if (-not $ArchiveAvailable) {
         archive_path = $ArchivePath
         archive_available = $false
         official_archive_url_configured = -not [string]::IsNullOrWhiteSpace($OfficialArchiveUrl)
+        official_landing_url = $OfficialLandingUrl
         download_skipped = [bool]$SkipDownload
         download_attempted = [bool]$DownloadAttempted
         download_succeeded = [bool]$DownloadSucceeded
@@ -129,6 +142,8 @@ if ($LASTEXITCODE -ne 0) { throw "STRICT_REQUEUE_WRAPPER_FAILED:$LASTEXITCODE" }
     review_accuracy = "1/4_ONLY"
     archive_path = $ArchivePath
     archive_available = $true
+    official_archive_url = $OfficialArchiveUrl
+    official_landing_url = $OfficialLandingUrl
     download_attempted = [bool]$DownloadAttempted
     download_succeeded = [bool]$DownloadSucceeded
     strict_archive_preflight_required = $true
