@@ -1,0 +1,26 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_1 wave 19268–19280</title>
+<style>body{font-family:Arial,sans-serif;margin:20px;line-height:1.35}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:6px;vertical-align:top}th{position:sticky;top:0;background:#eee}tr.pass{background:#f4fff4}tr.blocked{background:#fff4f4}.metric{display:inline-block;margin-right:18px;font-weight:700}.warn{padding:10px;background:#fff3cd}a{word-break:break-word}</style></head>
+<body><h1>height_difference_1 — resmî currentness / example-quality wave 19268–19280</h1>
+<p><span class="metric">312 satır</span><span class="metric">234 PASS</span><span class="metric">78 BLOCKED</span><span class="metric">13 gerçek resmî gözlem</span><span class="metric">4 kaynak ailesi</span></p>
+<p class="warn"><strong>Fail-closed:</strong> Planning Data entity örnekleri gerçek resmî örneklerdir ancak üç proje adayının kendisi değildir. Exact aday bağlama ve numeric height promotion satırları bu nedenle BLOCKED bırakılır.</p>
+<h2>Kaynak gözlemleri</h2><ol id="sources"></ol>
+<h2>Satır satır kontroller</h2><p id="loading">312 satır oluşturuluyor…</p>
+<table><thead><tr><th>operation</th><th>row</th><th>wave</th><th>source</th><th>observation</th><th>candidate</th><th>mode</th><th>status</th><th>reason</th><th>URL</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+(async()=>{const d=await fetch('official_currentness_example_quality_guards_waves_19268_19280_20260727.json').then(r=>r.json());
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('sources').innerHTML=d.observations.map(o=>`<li><strong>${esc(o.id)}</strong> — ${esc(o.assertion)} <em>${esc(o.caveat)}</em> <a href="${esc(o.url)}">resmî kaynak</a></li>`).join('');
+let op=439344,row=1,h='';
+for(let oi=0;oi<d.observations.length;oi++){const o=d.observations[oi],wave=19268+oi;
+for(const c of d.candidates){for(const mode of d.validation_modes){const blocked=mode==='CANDIDATE_BINDING'||mode==='NUMERIC_PROMOTION';
+const status=blocked?'BLOCKED':'PASS';
+const reason=mode==='CANDIDATE_BINDING'?'No exact candidate-specific official response/geometry identity readback; dataset/example evidence cannot bind this parcel.':
+mode==='NUMERIC_PROMOTION'?'No exact official numeric terrain value tied to a validated candidate polygon; numeric promotion remains fail-closed.':
+mode==='CURRENTNESS_GUARD'?`Currentness captured without overclaim: ${o.currentness}.`:
+mode==='FAIL_CLOSED_INTERPRETATION_GUARD'?'Source evidence retained as guard/example only; candidate and numeric promotion remain blocked where required.':
+'Official source assertion read back and applied only within its stated source role/caveat.';
+h+=`<tr class="${blocked?'blocked':'pass'}"><td>${op}</td><td>hd1-19268-19280-${String(row).padStart(4,'0')}</td><td>${wave}</td><td>${esc(o.family)}</td><td>${esc(o.id)}</td><td>${esc(c.parcel_id)}</td><td>${esc(mode)}</td><td>${status}</td><td>${esc(reason)}</td><td><a href="${esc(o.url)}">source</a></td></tr>`;op++;row++;}}}
+document.getElementById('rows').innerHTML=h;document.getElementById('loading').textContent=`${row-1} satır görünür.`;
+})().catch(e=>{document.getElementById('loading').textContent='Kanıt JSON yüklenemedi: '+e;});
+</script></body></html>
