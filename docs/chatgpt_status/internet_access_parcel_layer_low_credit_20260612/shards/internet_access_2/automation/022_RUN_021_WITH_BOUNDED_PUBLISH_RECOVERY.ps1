@@ -85,7 +85,7 @@ function Test-IsAncestor {
     & $GitExe -C $RepoRoot merge-base --is-ancestor $Ancestor $Descendant 2>$null
     if ($LASTEXITCODE -eq 0) { return $true }
     if ($LASTEXITCODE -eq 1) { return $false }
-    throw "ANCESTRY_CHECK_FAILED:$Ancestor:$Descendant"
+    throw "ANCESTRY_CHECK_FAILED:${Ancestor}:${Descendant}"
 }
 
 $env:AAYS_SLOT_ID = $SlotId
