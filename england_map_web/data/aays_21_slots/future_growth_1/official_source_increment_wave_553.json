@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 553,
+  "generated_at": "2026-07-28T22:30:00Z",
+  "output_semantics": "OFFICIAL_EPC_DEC_BULK_API_UPRN_CERTIFICATE_CHRONOLOGY_AND_2026_REVISION_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_TITLE_NOT_PLANNING_USE_NOT_SCORE",
+  "row_range": {"start": 997885, "end": 997913, "count": 29},
+  "topic": {"source_contract": "MHCLG Energy Performance of Buildings certificate data", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "mhclg_epb_bulk_api", "publisher": "Ministry of Housing, Communities and Local Government", "url": "https://get-energy-performance-data.communities.gov.uk/", "authority_class": "official_energy_certificate_bulk_and_api_service", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"coverage": "England and Wales", "certificate_types": ["domestic EPC", "non-domestic EPC", "DEC"], "records_since": 2012, "access": ["CSV bulk download", "developer API"], "scope_guard": "Bulk data can contain expired or replaced certificates and does not by itself identify the current certificate."}},
+    {"source_id": "mhclg_epc_q1_2026_release", "publisher": "Ministry of Housing, Communities and Local Government", "url": "https://www.gov.uk/government/statistics/energy-performance-of-building-certificates-in-england-and-wales-january-to-march-2026/energy-performance-of-buildings-certificates-statistical-release-january-to-march-2026-england-and-wales", "authority_class": "official_energy_certificate_quarterly_statistics", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"coverage_end": "2026-03-31", "open_data_update_frequency": "monthly", "uprn_included_since": "2021-11 when possible", "revision_reason": "local-authority allocation lookup processing error", "scope_guard": "UPRN is a join identifier and the revision demonstrates that local-authority assignments can be corrected without changing certificate meaning."}},
+    {"source_id": "mhclg_epc_live_tables", "publisher": "Ministry of Housing, Communities and Local Government", "url": "https://www.gov.uk/government/statistical-data-sets/live-tables-on-energy-performance-of-buildings-certificates", "authority_class": "official_energy_certificate_live_tables", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"last_updated": "2026-05-19", "revision": "local-authority allocation processing correction", "weekly_domestic_table_unaffected": true, "scope_guard": "Aggregate live tables are statistical context and not an individual property certificate, floor area or current building status."}},
+    {"source_id": "mhclg_epc_notes_definitions", "publisher": "Ministry of Housing, Communities and Local Government", "url": "https://www.gov.uk/guidance/energy-performance-of-buildings-certificates-notes-and-definitions", "authority_class": "official_energy_certificate_methodology_and_definitions", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"valid_lodgement": "certificate lodged by an accredited energy assessor on the EPB Register", "coverage_caveat": "certificate data reflects lodged valid certificates and not all building stock", "scope_guard": "An EPC rating or floor area is not planning use, site area, ownership, title geometry or redevelopment capacity."}}
+  ],
+  "checks": {"total": 29, "passed": 29, "scope_guards": 8, "official_candidate_or_scope_examples": 11, "evidence_quality_score_100": 98.7, "evidence_quality_score_is_statistical_accuracy": false, "bulk_and_api_contract_revalidated": true, "uprn_join_scope_revalidated": true, "certificate_chronology_required": true, "candidate_specific_current_certificate_resolved": false, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "Bulk data contains certificates registered since 2012 and may include expired or replaced records; chronology must be resolved.",
+    "The absence of a public EPC row is not evidence that no building, certificate or energy assessment exists.",
+    "A UPRN is a property-location join key and is not an HMLR title, owner or parcel polygon.",
+    "A certificate address match does not establish ownership or exact candidate-site identity.",
+    "EPC and DEC ratings describe energy performance and are not planning-use classifications or permission evidence.",
+    "Certificate total floor area is building-related and is not candidate-site area or developable land area.",
+    "Aggregate live tables and local-authority revisions are statistical context and not parcel-level evidence.",
+    "No score or promotion is written without current certificate chronology, exact UPRN/title/site binding and planning evidence."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}
