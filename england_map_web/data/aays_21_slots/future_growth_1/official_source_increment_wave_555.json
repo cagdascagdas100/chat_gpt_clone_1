@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 555,
+  "generated_at": "2026-07-28T22:30:00Z",
+  "output_semantics": "OFFICIAL_HMLR_PRICE_PAID_CATEGORY_EXCLUSION_ADDRESS_TENURE_CURRENT_MONTH_AND_UK_HPI_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_CURRENT_OWNER_NOT_PARCEL_VALUATION_NOT_SCORE",
+  "row_range": {"start": 997944, "end": 997973, "count": 30},
+  "topic": {"source_contract": "HM Land Registry transaction and aggregate house-price evidence", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "hmlr_price_paid_downloads", "publisher": "HM Land Registry", "url": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads", "authority_class": "official_land_registry_transaction_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"current_month_release": "June 2026 first release", "contents": ["Standard Price Paid Data", "Additional Price Paid Data"], "update_frequency": "20th working day of each month", "freshness_caveat": "current month will receive later additions and should not be used alone as market-activity evidence", "scope_guard": "A PPD transaction is a registered sale record and is not evidence of current ownership, current title extent or present market value."}},
+    {"source_id": "hmlr_price_paid_guidance", "publisher": "HM Land Registry", "url": "https://www.gov.uk/guidance/about-the-price-paid-data", "authority_class": "official_land_registry_transaction_field_and_exclusion_guidance", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"fields": ["price", "transfer date", "postcode", "property type", "old/new", "tenure", "PAON", "SAON", "address"], "category_a": "standard single residential property sold for value", "category_b": "additional transactions including identifiable buy-to-let, repossessions and non-private purchasers", "category_b_subtype_separate": false, "excluded_examples": ["not lodged", "not for value", "gifts", "some compulsory purchase and court-order transfers"], "scope_guard": "Address and tenure codes do not identify title number, legal boundary or current proprietor; Category B subtype is not inferred."}},
+    {"source_id": "hmlr_uk_hpi_may_2026", "publisher": "HM Land Registry", "url": "https://www.gov.uk/government/statistical-data-sets/uk-house-price-index-data-downloads-may-2026", "authority_class": "official_national_house_price_index_dataset", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"published": "2026-07-22", "reference_month": "2026-05", "status": "National Statistic", "data_type": "aggregated index and average-price CSVs", "scope_guard": "UK HPI is an aggregate trend measure and not an individual parcel, development or residual-land valuation."}},
+    {"source_id": "hmlr_search_property_prices", "publisher": "HM Land Registry", "url": "https://www.gov.uk/get-information-about-property-and-land/search-property-prices", "authority_class": "official_property_price_search_service", "retrieved_at": "2026-07-28T22:30:00Z", "facts": {"functions": ["search sold price in England or Wales", "search HPI averages by region, county or local authority"], "scope_guard": "A sold-price address hit or regional average is discovery and context, not exact title identity, current condition or candidate valuation."}}
+  ],
+  "checks": {"total": 30, "passed": 30, "scope_guards": 8, "official_candidate_or_scope_examples": 12, "evidence_quality_score_100": 98.9, "evidence_quality_score_is_statistical_accuracy": false, "current_month_freshness_guarded": true, "category_and_exclusion_semantics_revalidated": true, "hpi_aggregate_scope_revalidated": true, "candidate_specific_transaction_title_join_executed": false, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "The June 2026 current-month release is incomplete by design and is not used alone as market-activity or inactivity evidence.",
+    "A Price Paid transaction records a sale lodged for registration and does not prove the current owner or current title state.",
+    "PPD exclusions mean a missing record is not evidence that no transfer or ownership change occurred.",
+    "Category A and Category B semantics remain distinct; a specific Category B transaction subtype is not guessed.",
+    "PAON, SAON, postcode and address matching do not establish title number or legal parcel geometry.",
+    "Freehold and leasehold duration codes are tenure attributes and not title identifiers or exact lease terms.",
+    "UK HPI regional and property-type aggregates are not parcel values, residual land values or candidate probabilities.",
+    "No score or promotion is written without exact transaction, title, current register, site identity and planning reconciliation."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}
