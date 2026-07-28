@@ -6,7 +6,7 @@
   "continuation_key": "de3fdcae11ec08e51e5055d36a8e3e70241cc9429f6bcb03a77d08c8dbdadc33",
   "state": "RECOVERY_PARKED",
   "detected_at": "2026-07-28T13:48:42Z",
-  "updated_at": "2026-07-28T13:48:42Z",
+  "updated_at": "2026-07-28T14:14:49Z",
   "trigger": "BLOCKED_OR_STALE_OVER_15_MINUTES",
   "owner_check": {
     "live_owner": false,
@@ -35,18 +35,44 @@
     "official_measured_rows": 0,
     "official_height_difference_rows": 0
   },
+  "supporting_recovery_progress": {
+    "official_source_refresh_performed": true,
+    "visible_recovery_rows_added": 22,
+    "visible_recovery_rows_pass": 10,
+    "visible_recovery_rows_blocked": 12,
+    "source_upgrades_added": 1,
+    "planning_title_boundary_previous_total": 2595903,
+    "planning_title_boundary_current_total": 2792111,
+    "planning_collector_last_ran": "2026-07-28",
+    "planning_new_data_last_found": "2026-07-23",
+    "ea_layer_schema_readback": true,
+    "hmlr_current_release_and_authority_list_readback": true,
+    "os_terrain50_july_2026_product_readback": true,
+    "planning_exact_candidate_readback": false,
+    "ea_exact_tq2892_feature_readback": false,
+    "hmlr_exact_gml_and_inspire_id_readback": false,
+    "os_tq29_binary_and_numeric_readback": false,
+    "web_evidence": "england_map_web/data/aays_21_slots/height_difference_1/recovery_official_source_refresh_20260728.html",
+    "web_index": "england_map_web/data/aays_21_slots/height_difference_1/index.html",
+    "evidence_commits": [
+      "a3026bcb395ad3fe9644066a7ed756696e66ecfd",
+      "e034a3460c6a599ceae429e21d7c070a85ebc164"
+    ]
+  },
   "recovery_findings": [
     "Canonical status, checkpoint and current-task are older than 15 minutes and retain the same continuation_key.",
     "Heartbeat is stale and unclaimed; no live owner lease exists.",
     "The existing task explicitly requires the existing single shared runner and forbids a second runner.",
     "Revision 14 runtime output, remote integrity readback and identity-provenance runtime evidence are absent.",
+    "Official source metadata was refreshed and published line by line without promoting any unverified identity or numeric measurement.",
+    "Planning Data title-boundary inventory increased from 2,595,903 to 2,792,111, but inventory counts do not constitute exact candidate binding.",
     "The blocking F-host/shared-runner recovery cannot be executed from the current connector-only environment.",
     "Business output, official height measurements and source identities must remain fail-closed; no values were fabricated."
   ],
   "automatic_recovery_attempt": {
     "attempted": true,
-    "result": "NOT_EXECUTABLE_IN_CURRENT_ENVIRONMENT",
-    "reason": "GitHub canonical read/write access is available, but the existing shared runner host, its runtime guard, worktree, payload execution environment and output validators are not available in this session. Starting a second logical task or runner is forbidden by the current-task contract."
+    "result": "PARTIAL_SUPPORTING_RECOVERY_ONLY",
+    "reason": "Official public source metadata and web-visible recovery evidence were refreshed, but the existing shared runner host, runtime guard, worktree, payload execution environment and output validators are unavailable in this session. Starting a second logical task or runner remains forbidden."
   },
   "next_safe_step": "Resume this same continuation_key only on the existing single shared runner after F-host recovery; execute exact revision 14, then run remote output-integrity and identity-provenance validators, preserving fail-closed zero official measured rows until verified evidence exists.",
   "requires_user_action": false,
