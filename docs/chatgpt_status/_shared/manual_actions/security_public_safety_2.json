@@ -1,24 +1,28 @@
 {
-  "schema_version": 29,
+  "schema_version": 30,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The existing 300-row task remains pickup_requested with no live owner, lease, heartbeat or output. One idempotent queue recovery refresh was published at 2026-07-27T13:47:28Z, but more than 20 minutes later the canonical runner/queue consumer still had not claimed the task. A second refresh, duplicate task or second runner is forbidden.",
+  "reason": "The existing 300-row task remains pickup_requested with no live owner, lease, heartbeat or output. The slot-level diagnostic and problem_solver_1 control record identify the common external canonical shared runner/queue consumer as stale or offline. One idempotent recovery refresh was already used; a second refresh, duplicate task or second runner is forbidden.",
+  "diagnosis": "EXTERNAL_CANONICAL_F_SHARED_RUNNER_STALE_OR_OFFLINE",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-27T14:08:34Z",
-  "solution": "Open the AAYS control panel and verify that the single canonical runner/queue consumer is ACTIVE with a current heartbeat. If it is stopped or stale, restart that existing runner once, refresh the panel, and do not start a second runner. Continue only after the same queued task is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47.",
+  "updated_at": "2026-07-28T00:46:40Z",
+  "solution": "Open the AAYS control panel and verify that the existing single shared canonical runner/queue consumer is ACTIVE with a current heartbeat. If it is stopped or stale, restart that existing runner once, refresh the panel, and do not start a second runner. Continue only after the same queued task is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/checkpoint_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/recovery_300row_queue_consumer_20260727.json"
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/recovery_300row_queue_consumer_20260727.json",
+    "docs/chatgpt_status/_shared/slots_21/problem_solver_1/status_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/runner_diagnostic_latest.json"
   ],
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
   "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
   "recovery_attempts_used": 1,
   "second_queue_refresh_forbidden": true,
+  "automatic_fix_available_from_business_slot": false,
   "expected_runtime_minutes_after_healthy_claim": 15,
   "fake_data": false,
   "final_ready": false
