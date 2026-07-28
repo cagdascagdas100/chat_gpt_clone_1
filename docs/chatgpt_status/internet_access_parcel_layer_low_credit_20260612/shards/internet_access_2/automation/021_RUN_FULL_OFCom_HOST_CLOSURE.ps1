@@ -88,6 +88,19 @@ function Read-JsonObject {
     }
 }
 
+function Get-HeartbeatProgressToken {
+    param($Heartbeat)
+    if (-not $Heartbeat) { return "NO_HEARTBEAT" }
+    $TimestampCandidates = @(
+        [string]($Heartbeat.heartbeat_at),
+        [string]($Heartbeat.last_heartbeat_at),
+        [string]($Heartbeat.updated_at),
+        [string]($Heartbeat.lease_expires_at)
+    )
+    $Timestamp = $TimestampCandidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
+    return "$([string]($Heartbeat.state))|$Timestamp|$([string]($Heartbeat.attempt_id))"
+}
+
 function Assert-CleanRepo {
     $Status = Invoke-Git status --porcelain --untracked-files=no
     if ($Status) { throw "REPO_NOT_CLEAN:$([string]::Join(' | ', @($Status)))" }
@@ -213,6 +226,7 @@ $Ready = $false
 $LastSignature = $null
 $NoProgressSince = $StartedAt
 $LastPollSync = $null
+$LastHeartbeatProgressToken = "NO_HEARTBEAT"
 
 while ((Get-Date).ToUniversalTime() -lt $Deadline) {
     $PollCount++
@@ -223,22 +237,23 @@ while ((Get-Date).ToUniversalTime() -lt $Deadline) {
         break
     }
 
-    $Signature = "$($LastState.queue_status)|$($LastState.current_state)|$($LastState.business_state)|$($LastState.access_state)|$($LastState.exact_rows)|$($LastState.source_scan_complete)|$($LastState.output_rows)"
+    $Heartbeat = Read-JsonObject $HeartbeatRel
+    if ($Heartbeat) {
+        $HeartbeatState = [string]($Heartbeat.state)
+        if ($HeartbeatState.ToUpperInvariant() -match "FAILED|ERROR|STOPPED") {
+            throw "RUNNER_HEARTBEAT_TERMINAL_FAILURE:$HeartbeatState"
+        }
+    }
+    $LastHeartbeatProgressToken = Get-HeartbeatProgressToken -Heartbeat $Heartbeat
+
+    $Signature = "$($LastState.queue_status)|$($LastState.current_state)|$($LastState.business_state)|$($LastState.access_state)|$($LastState.exact_rows)|$($LastState.source_scan_complete)|$($LastState.output_rows)|$LastHeartbeatProgressToken"
     if ($Signature -ne $LastSignature) {
         $LastSignature = $Signature
         $NoProgressSince = (Get-Date).ToUniversalTime()
     } else {
         $ActiveState = "$($LastState.queue_status)|$($LastState.current_state)"
         if ($ActiveState -match "(?i)queued|pending|claimed|running|processing" -and ((Get-Date).ToUniversalTime() - $NoProgressSince).TotalMinutes -ge 15) {
-            throw "RUNNER_STALLED_WITHOUT_STATE_CHANGE_15_MINUTES:last=$($LastState | ConvertTo-Json -Compress -Depth 5)"
-        }
-    }
-
-    $Heartbeat = Read-JsonObject $HeartbeatRel
-    if ($Heartbeat) {
-        $HeartbeatState = [string]($Heartbeat.state)
-        if ($HeartbeatState.ToUpperInvariant() -match "FAILED|ERROR|STOPPED") {
-            throw "RUNNER_HEARTBEAT_TERMINAL_FAILURE:$HeartbeatState"
+            throw "RUNNER_STALLED_WITHOUT_STATE_OR_HEARTBEAT_CHANGE_15_MINUTES:last=$($LastState | ConvertTo-Json -Compress -Depth 5) heartbeat=$LastHeartbeatProgressToken"
         }
     }
     Start-Sleep -Seconds $PollSeconds
@@ -251,14 +266,25 @@ if (-not $Ready) {
 $RunnerPublishedHead = Sync-RemoteFastForward
 Assert-CleanRepo
 
-$PostjoinOutput = (& $PythonExe $Postjoin --repo $RepoRoot --archive $ArchivePath --sample-size $SampleSize | Out-String).Trim()
-if ($LASTEXITCODE -ne 0) { throw "POSTJOIN_VALIDATOR_FAILED:$LASTEXITCODE" }
-
 $AllowedPublishPaths = @(
     ($ValidationRel -replace "\\", "/"),
     ($StatusRel -replace "\\", "/"),
     ($ProgressRel -replace "\\", "/")
 )
+$BaselineUntracked = @(Invoke-Git ls-files --others --exclude-standard)
+
+$PostjoinOutput = (& $PythonExe $Postjoin --repo $RepoRoot --archive $ArchivePath --sample-size $SampleSize | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) { throw "POSTJOIN_VALIDATOR_FAILED:$LASTEXITCODE" }
+
+$TrackedMutations = @(Invoke-Git diff --name-only)
+$UntrackedAfterValidation = @(Invoke-Git ls-files --others --exclude-standard)
+$NewUntrackedMutations = @($UntrackedAfterValidation | Where-Object { $_ -notin $BaselineUntracked })
+$AllMutations = @($TrackedMutations + $NewUntrackedMutations | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+$UnexpectedMutations = @($AllMutations | Where-Object { $_ -notin $AllowedPublishPaths })
+$MissingMutations = @($AllowedPublishPaths | Where-Object { $_ -notin $AllMutations })
+if ($UnexpectedMutations) { throw "POSTJOIN_VALIDATOR_UNEXPECTED_MUTATIONS:$([string]::Join(',', $UnexpectedMutations))" }
+if ($MissingMutations) { throw "POSTJOIN_VALIDATOR_MISSING_EXPECTED_MUTATIONS:$([string]::Join(',', $MissingMutations))" }
+
 foreach ($Relative in $AllowedPublishPaths) {
     Invoke-Git add -- $Relative | Out-Null
 }
@@ -267,6 +293,11 @@ $Unexpected = @($Staged | Where-Object { $_ -notin $AllowedPublishPaths })
 $Missing = @($AllowedPublishPaths | Where-Object { $_ -notin $Staged })
 if ($Unexpected) { throw "UNEXPECTED_STAGED_PATHS:$([string]::Join(',', $Unexpected))" }
 if ($Missing) { throw "EXPECTED_POSTJOIN_PATHS_NOT_STAGED:$([string]::Join(',', $Missing))" }
+$RemainingTracked = @(Invoke-Git diff --name-only)
+$UntrackedAfterStage = @(Invoke-Git ls-files --others --exclude-standard)
+$RemainingNewUntracked = @($UntrackedAfterStage | Where-Object { $_ -notin $BaselineUntracked })
+if ($RemainingTracked) { throw "POSTJOIN_UNSTAGED_TRACKED_MUTATIONS:$([string]::Join(',', $RemainingTracked))" }
+if ($RemainingNewUntracked) { throw "POSTJOIN_UNSTAGED_NEW_FILES:$([string]::Join(',', $RemainingNewUntracked))" }
 
 Invoke-Git commit -m "internet_access_2: publish exact Ofcom postjoin readback" | Out-Null
 $PostjoinCommit = Get-LocalHead
@@ -292,6 +323,8 @@ if ($RemoteReadback -ne $PostjoinCommit) {
     sample_size = $SampleSize
     exact_join_state = $LastState
     last_poll_sync = $LastPollSync
+    last_heartbeat_progress_token = $LastHeartbeatProgressToken
+    postjoin_mutation_scope_checked = $true
     recovery_output = $RecoveryOutput
     postjoin_output = $PostjoinOutput
     same_task_retained = $true
