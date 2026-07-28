@@ -1,26 +1,120 @@
 {
   "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "internet_access_1",
+  "task_id": "internet_access_1_ofcom_2026_schema_audit_862285f2",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
   "stage": "OFCom_2026_POSTCODE_SCHEMA_AUDIT",
   "source_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+  "official_report_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+  "official_methodology_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
   "source_snapshot_date": "2026-01",
   "source_correction_version": "v2-2026-07-07",
   "started_at": "2026-07-28T14:15:51.585045Z",
+  "updated_at": "2026-07-28T14:37:55.385958Z",
   "fake_data": false,
   "final_ready": false,
   "status": "BLOCKED",
   "blockers": [
-    "OFCom_SOURCE_DOWNLOAD_OR_SCHEMA_AUDIT_FAILED"
+    "OFCom_ARCHIVE_BYTES_UNAVAILABLE_IN_APPROVED_RUNTIME",
+    "ARCHIVE_SHA256_FILE_ENUMERATION_HEADER_AND_ROW_RECOUNT_PENDING"
   ],
-  "error": "DOWNLOAD_FAILED: <urlopen error [Errno -3] Temporary failure in name resolution>",
-  "download_attempts": 3,
-  "recovery_evidence": {
-    "official_page_verified": true,
-    "official_pdf_v2_verified": true,
+  "official_metadata_checks": {
+    "report_published_2026_05_13": true,
+    "snapshot_is_january_2026": true,
+    "methodology_is_v2_dated_2026_07_07": true,
+    "all_premises_postcode_file_count_is_121": true,
+    "all_premises_postcode_row_count_is_1741096": true,
+    "all_premises_filename_pattern_is_r2": true,
+    "postcode_and_postcode_space_fields_documented": true,
+    "required_coverage_fields_documented": true
+  },
+  "official_metadata_pass_count": 8,
+  "official_metadata_check_count": 8,
+  "official_metadata_confidence_percent": 99,
+  "documented_provider_context": {
+    "fixed_network_providers": 52,
+    "fixed_wireless_access_providers": 18,
+    "premise_base": "Ordnance Survey AddressBase Premium and Islands",
+    "premise_base_epoch": 123,
+    "licence": "Open Government Licence"
+  },
+  "expected_archive_contract": {
     "expected_postcode_file_count": 121,
     "expected_total_data_rows": 1741096,
     "expected_all_premises_filename_pattern": "202601_fixed_postcode_coverage_r2_XX.csv",
-    "network_result": "DNS_RESOLUTION_FAILED_IN_EXECUTION_ENVIRONMENT"
+    "stale_r1_all_premises_files_must_be_absent": true,
+    "required_columns": [
+      "postcode",
+      "postcode_space",
+      "SFBB availability (% premises)",
+      "UFBB (100Mbit/s) availability (% premises)",
+      "Gigabit availability (% premises)",
+      "% of premises unable to receive decent broadband from fixed or FWA"
+    ]
   },
-  "finished_at": "2026-07-28T14:15:56.906238Z"
+  "documented_schema_examples": [
+    {
+      "field": "postcode",
+      "documented_example": "SE19HA",
+      "role": "postcode without spaces",
+      "product_row": false
+    },
+    {
+      "field": "postcode_space",
+      "documented_example": "SE1 9HA",
+      "role": "postcode with one space",
+      "product_row": false
+    },
+    {
+      "field": "postcode area",
+      "documented_example": "SE",
+      "role": "postcode area",
+      "product_row": false
+    }
+  ],
+  "runtime_transport_recovery": {
+    "prior_script_download_attempts": 3,
+    "additional_attempts_this_turn": 5,
+    "total_attempts": 8,
+    "attempts": [
+      {
+        "method": "container_download",
+        "result": "FAILED"
+      },
+      {
+        "method": "python_urllib",
+        "result": "DNS_RESOLUTION_FAILED"
+      },
+      {
+        "method": "curl_normal_dns",
+        "result": "DNS_RESOLUTION_FAILED"
+      },
+      {
+        "method": "curl_resolve_104.18.41.253",
+        "result": "DIRECT_CONNECTION_FAILED"
+      },
+      {
+        "method": "curl_resolve_172.64.146.3",
+        "result": "DIRECT_CONNECTION_FAILED"
+      }
+    ],
+    "same_error_retry_stopped": true
+  },
+  "binary_archive_validation": {
+    "archive_downloaded": false,
+    "archive_sha256_verified": false,
+    "zip_readable_verified": false,
+    "postcode_file_count_verified_from_bytes": false,
+    "required_columns_verified_from_csv_headers": false,
+    "data_row_count_recounted": false,
+    "promotion_allowed": false
+  },
+  "rows": {
+    "new_product_rows_written": 0,
+    "new_inferred_rows_written": 0,
+    "new_documented_schema_examples": 3
+  },
+  "next_acceptance_gate": "Approved runtime downloads the official ZIP and records SHA-256, readable ZIP, 121 unique r2 postcode CSV files, zero stale all-premises r1 files, required columns in every file, and exactly 1,741,096 data rows.",
+  "finished_at": "2026-07-28T14:37:55.385958Z"
 }
