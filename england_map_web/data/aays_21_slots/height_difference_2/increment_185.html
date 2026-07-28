@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 — increment 185</title>
+<style>body{font-family:system-ui,Segoe UI,sans-serif;margin:24px;color:#17202a}code{word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:12px 0 24px}th,td{border:1px solid #c9d1d9;padding:7px;text-align:left;vertical-align:top}
+th{background:#f3f6f8;position:sticky;top:0}.ok{background:#edf9f0;border:1px solid #79b989;padding:10px}.warn{background:#fff7df;border:1px solid #d3ae54;padding:10px}</style></head>
+<body><h1>height_difference_2 — QA increment 185</h1>
+<p class="ok"><strong>12/12 QA satırı tamamlandı.</strong> Dört resmî OGC/INSPIRE kaynağı; tüm satırlar 4/4. Yeni business ölçümü yok.</p>
+<p class="warn">Kanonik ilerleme 340/381 (%78, +%0). F-host recovery receipt 0/4; final_ready=false.</p>
+<h2>İşlem satırları</h2><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Kaynak</th><th>Açıklama</th><th>Doğruluk</th></tr></thead><tbody id="ops"></tbody></table>
+<h2>Resmî kaynaklar</h2><table><thead><tr><th>ID</th><th>Yayıncı</th><th>Kaynak</th><th>Rol</th><th>Güven</th><th>Doğrulananlar</th><th>Sınırlar</th></tr></thead><tbody id="sources"></tbody></table>
+<h2>Korunan adaylar</h2><table><thead><tr><th>Satır</th><th>Bölge</th><th>HMLR ID</th><th>Fark</th><th>Güven</th><th>Topoloji/filtre QA</th></tr></thead><tbody id="examples"></tbody></table>
+<script>
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+Promise.all(['operations_increment_185.json','source_refresh_increment_185.json','qa_bundle_increment_185.json'].map(f=>fetch(f,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`${f}: ${r.status}`);return r.json()}))).then(([o,s,b])=>{
+document.getElementById('ops').innerHTML=o.operations.map(x=>`<tr><td>${x.operation_no}</td><td>${esc(x.status)}</td><td>${esc(x.stage)}</td><td><a href="${esc(x.source_url)}">${esc(x.source_name)}</a></td><td>${esc(x.details_summary)}</td><td>${esc(x.accuracy_score_4)}/4</td></tr>`).join('');
+document.getElementById('sources').innerHTML=s.sources.map(x=>`<tr><td><code>${esc(x.source_id)}</code></td><td>${esc(x.publisher)}</td><td><a href="${esc(x.source_url)}">${esc(x.name)}</a></td><td>${esc(x.role)}</td><td>${esc(x.source_confidence_percent)}%</td><td>${esc(x.verified_facts.join(' | '))}</td><td>${esc(x.semantic_limits.join(' | '))}</td></tr>`).join('');
+document.getElementById('examples').innerHTML=b.examples.map(x=>`<tr><td>${x.row_no}</td><td>${esc(x.area)}</td><td>${esc(x.hmlr_inspire_id)}</td><td>${x.height_difference_m} m</td><td>${x.confidence}%</td><td>${esc(x.exact_containment_predicate)} / bbox-only=${x.bbox_prefilter_only} / intersects≠within=${x.intersects_not_within} / DTM=${x.dtm_required_not_dsm} / void-excluded=${x.void_cells_excluded}</td></tr>`).join('');
+}).catch(e=>document.body.insertAdjacentHTML('afterbegin',`<p class="warn">${esc(e.message)}</p>`));
+</script></body></html>
