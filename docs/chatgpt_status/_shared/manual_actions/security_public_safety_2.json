@@ -1,12 +1,12 @@
 {
-  "schema_version": 34,
+  "schema_version": 35,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The retry5 missing-output sub-blocker remains resolved, and the wave8 parcel_30802 HTTP 429 sub-blocker remains resolved by canonical exact-query cache identity. Wave17 audited 58 recovered PASS rows: 57 unique Police exact lat/lng/month keys, 57 unique ONS exact point keys and 9 unique IoD25 LSOA join keys. The audit confirms exact-query caching can safely remove one duplicate Police request and one duplicate ONS request, while LSOA-keyed IoD25 caching removes 49 repeated local joins. The canonical 300-row task is still pickup_requested and unclaimed; ownership owner, heartbeat and lease remain empty and the canonical stable-runner heartbeat is stale. Side-evidence review exhausted the canonical 96-row source at parcel_30857. The private large minified canonical point-layer body is not returned by the connector. IoD25 LSOA files 1-9 must use the updated v2 publication at claim time. A second queue refresh, duplicate task or second runner remains forbidden.",
-  "diagnosis": "STALE_SLOT_STATUS_CANONICAL_RUNNER_UNCLAIMED_CONNECTOR_CANNOT_READ_LARGE_MINIFIED_POINT_BODY_IOD25_V2_AND_CACHE_GATES_REQUIRED",
+  "reason": "The retry5 missing-output sub-blocker remains resolved, and parcel_30802 remains resolved by canonical exact-query cache identity. Waves 18 and 19 completed side review coverage for all 96 canonical candidates and reconciled all three canonical rows below 95 accuracy. Side-effective accuracy is now 94/96 (97.92%): parcel_30802 is resolved, parcel_30768 remains fail-closed because its unique exact Police query ended in HTTP 429 and dynamic refetch is unavailable in this environment, and parcel_30783 remains fail-closed because historical LSOA E01001545 differs from the exact current ONS match E01001548. The canonical 300-row task is still pickup_requested and unclaimed; ownership owner, heartbeat and lease remain empty and the canonical stable-runner heartbeat is stale. The private large minified canonical point-layer body is not returned by the connector. IoD25 LSOA files 1-9 must use the updated v2 publication at claim time. A second queue refresh, duplicate task or second runner remains forbidden.",
+  "diagnosis": "STALE_SLOT_STATUS_CANONICAL_RUNNER_UNCLAIMED_FULL_96_SIDE_COVERAGE_TWO_FAIL_CLOSED_QUALITY_ROWS_CONNECTOR_POINT_BODY_UNAVAILABLE",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-29T00:23:00+03:00",
+  "updated_at": "2026-07-29T02:12:00+03:00",
   "resolved_subissues": [
     {
       "code": "RETRY5_EXPECTED_OUTPUTS_MISSING",
@@ -31,6 +31,30 @@
       "code": "LSOA_KEYED_IOD25_JOIN_CACHE_AUDIT",
       "state": "VERIFIED",
       "proof": "58 PASS rows map to 9 unique LSOA21 codes, permitting 49 repeated local IoD25 joins to reuse the same v2 LSOA record."
+    },
+    {
+      "code": "FULL_CANONICAL_96_ROW_SIDE_REVIEW_COVERAGE",
+      "state": "VERIFIED",
+      "proof": "Wave18 reviewed parcel_30762 through parcel_30767 and reconciled cumulative side coverage to 96/96 canonical candidates. All six rows passed valid point, single ONS, Police SHA256, IoD25 join and >=95 gates."
+    },
+    {
+      "code": "CANONICAL_BELOW_95_LEDGER_RECONCILIATION",
+      "state": "VERIFIED",
+      "proof": "The three below-95 canonical rows are parcel_30768 (85, unique Police 429), parcel_30783 (90, historical/current LSOA mismatch) and parcel_30802 (85, exact-cache resolved). Side-effective >=95 count is 94/96."
+    }
+  ],
+  "open_quality_subissues": [
+    {
+      "code": "PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429",
+      "state": "OPEN_FAIL_CLOSED",
+      "proof": "Exact key 51.6767792|-0.0464555|2026-05 is unique in the 96-row set; no canonical duplicate cache source exists. Dynamic exact refetch was blocked by URL safety and container DNS, so no response was inferred.",
+      "resolution": "After the existing runner claims the task, refetch the exact Police key with rate backpressure and require HTTP 200 plus SHA256 before raising confidence."
+    },
+    {
+      "code": "PARCEL_30783_HISTORICAL_LSOA_MISMATCH",
+      "state": "OPEN_FAIL_CLOSED",
+      "proof": "Historical LSOA E01001545 differs from the exact ONS single match E01001548. Police HTTP 200, 418 records and SHA256 are present; the historical value was not silently overwritten.",
+      "resolution": "Apply an explicit historical-geography correction policy that preserves provenance before changing confidence or canonical output."
     }
   ],
   "active_blockers": [
@@ -38,7 +62,9 @@
     "OWNERSHIP_OWNER_HEARTBEAT_AND_LEASE_EMPTY",
     "PRIORITY_300ROW_TASK_PICKUP_REQUESTED_UNCLAIMED",
     "CANONICAL_STABLE_RUNNER_HEARTBEAT_STALE",
-    "BUSINESS_SLOT_CONNECTOR_CANNOT_READ_PRIVATE_LARGE_MINIFIED_POINT_LAYER_BODY"
+    "BUSINESS_SLOT_CONNECTOR_CANNOT_READ_PRIVATE_LARGE_MINIFIED_POINT_LAYER_BODY",
+    "PARCEL_30768_EXACT_POLICE_REFETCH_PENDING_CANONICAL_RUNNER",
+    "PARCEL_30783_HISTORICAL_GEOGRAPHY_CORRECTION_POLICY_REQUIRED"
   ],
   "claim_time_required_gates": [
     "VERIFY_SAME_TASK_AND_CONTINUATION_KEY",
@@ -49,9 +75,11 @@
     "CACHE_ONS_ONLY_BY_EXACT_LAT_LNG_KEY",
     "CACHE_IOD25_JOIN_BY_EXACT_LSOA21_CODE",
     "FORBID_NEARBY_COORDINATE_CACHE_REUSE",
+    "REFETCH_PARCEL_30768_EXACT_POLICE_KEY_AND_REQUIRE_SHA256",
+    "PRESERVE_PARCEL_30783_HISTORICAL_LSOA_PROVENANCE_UNTIL_EXPLICIT_POLICY",
     "DO_NOT_ACCEPT_300ROW_OUTPUT_WITHOUT_EXACT_COORDINATE_ONS_POLICE_HASH_AND_BROWSER_GATES"
   ],
-  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. The canonical runner can read the local minified point layer. Before accepting the 300-row output, verify the locally consumed IoD25 LSOA source is the updated v2 publication, use exact lat/lng/month Police cache, exact lat/lng ONS cache, exact LSOA21 IoD25 joins and Police.uk rate backpressure. Nearby-coordinate reuse remains forbidden.",
+  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. Before accepting the 300-row output, verify IoD25 v2, use exact caches and Police.uk rate backpressure, refetch parcel_30768's exact Police key, and preserve parcel_30783 historical geography provenance until an explicit correction policy is applied.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json",
@@ -64,9 +92,10 @@
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_official_source_integrity_wave15_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_rate_limit_recovery_wave16_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_exact_query_cache_audit_wave17_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_canonical_coverage_completion_wave18_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_low_confidence_remediation_wave19_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_evidence_rollup_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/continuation_rate_limit_recovery_wave16_receipt_20260729.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/continuation_exact_query_cache_audit_wave17_receipt_20260729.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/continuation_wave18_19_receipt_20260729.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_candidate_gate_latest.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_gate_latest.json"
   ],
