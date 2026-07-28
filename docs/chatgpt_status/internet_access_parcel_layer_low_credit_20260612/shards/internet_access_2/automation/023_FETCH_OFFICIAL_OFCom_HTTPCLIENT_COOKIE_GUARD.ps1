@@ -11,6 +11,11 @@ param(
 $ErrorActionPreference = "Stop"
 $SlotId = "internet_access_2"
 $AllowedHost = "www.ofcom.org.uk"
+$AllowedContentTypes = @(
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/octet-stream"
+)
 $ExpectedOuterFile = "202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
 $RequiredInnerRevision = "r2"
 $LegacyDownloader = Join-Path $PSScriptRoot "018_FETCH_OFFICIAL_OFCom_SPRING_2026_ZIP.ps1"
@@ -94,7 +99,7 @@ function Invoke-HttpClientCookieDownload {
 
         $Client = [System.Net.Http.HttpClient]::new($Handler)
         $Client.Timeout = [TimeSpan]::FromSeconds(300)
-        $Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AAYS-Ofcom-Strict-Fetch/3.0")
+        $Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AAYS-Ofcom-Strict-Fetch/3.1")
         [void]$Client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-GB,en;q=0.9,cy;q=0.7")
 
         $LandingResponse = $Client.GetAsync($ValidatedUris["landing"], [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
@@ -111,7 +116,7 @@ function Invoke-HttpClientCookieDownload {
 
         $DownloadRequest = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $ValidatedUris["source"])
         $DownloadRequest.Headers.Referrer = $ValidatedUris["landing"]
-        [void]$DownloadRequest.Headers.TryAddWithoutValidation("Accept", "application/zip,application/octet-stream,*/*")
+        [void]$DownloadRequest.Headers.TryAddWithoutValidation("Accept", "application/zip,application/x-zip-compressed,application/octet-stream")
         $DownloadResponse = $Client.SendAsync($DownloadRequest, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
         if (-not $DownloadResponse.IsSuccessStatusCode) {
             throw "HTTPCLIENT_DOWNLOAD_STATUS:$([int]$DownloadResponse.StatusCode)"
@@ -119,6 +124,22 @@ function Invoke-HttpClientCookieDownload {
         $DownloadFinalUri = $DownloadResponse.RequestMessage.RequestUri
         if (-not $DownloadFinalUri -or $DownloadFinalUri.Scheme -ne "https" -or $DownloadFinalUri.Host -ne $AllowedHost) {
             throw "HTTPCLIENT_DOWNLOAD_REDIRECT_SCOPE_VIOLATION:$DownloadFinalUri"
+        }
+
+        $ContentType = [string]$DownloadResponse.Content.Headers.ContentType.MediaType
+        $ContentTypeNormalized = $ContentType.ToLowerInvariant()
+        if ([string]::IsNullOrWhiteSpace($ContentType) -or $ContentTypeNormalized -notin $AllowedContentTypes) {
+            throw "HTTPCLIENT_DOWNLOAD_CONTENT_TYPE_REJECTED:$ContentType"
+        }
+        $ContentLength = $DownloadResponse.Content.Headers.ContentLength
+        if ($null -ne $ContentLength) {
+            $ContentLength = [int64]$ContentLength
+            if ($ContentLength -lt $MinimumBytes) { throw "HTTPCLIENT_CONTENT_LENGTH_TOO_SMALL:$ContentLength" }
+            if ($ContentLength -gt $MaximumBytes) { throw "HTTPCLIENT_CONTENT_LENGTH_TOO_LARGE:$ContentLength" }
+        }
+        $ContentDispositionFileName = $null
+        if ($DownloadResponse.Content.Headers.ContentDisposition) {
+            $ContentDispositionFileName = [string]$DownloadResponse.Content.Headers.ContentDisposition.FileName
         }
 
         $FileStream = [System.IO.FileStream]::new($Destination, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
@@ -133,6 +154,9 @@ function Invoke-HttpClientCookieDownload {
             landing_final_uri = [string]$LandingFinalUri
             download_status = [int]$DownloadResponse.StatusCode
             download_final_uri = [string]$DownloadFinalUri
+            content_type = $ContentTypeNormalized
+            content_length_header = if ($null -ne $ContentLength) { [int64]$ContentLength } else { $null }
+            content_disposition_filename = $ContentDispositionFileName
             cookies_observed = @($Handler.CookieContainer.GetCookies($ValidatedUris["landing"])).Count
         }
     }
@@ -184,14 +208,15 @@ if ($HttpResult -and [bool]$HttpResult.succeeded) {
         [System.IO.File]::Move($TempPath, $ArchivePath)
 
         $Audit = [ordered]@{
-            schema_version = 1
+            schema_version = 2
             generated_at = (Get-Date).ToUniversalTime().ToString('o')
-            state = "OFFICIAL_ARCHIVE_HTTPCLIENT_COOKIE_DOWNLOADED_ENVELOPE_PASS_STRICT_INNER_VALIDATION_PENDING"
+            state = "OFFICIAL_ARCHIVE_HTTPCLIENT_COOKIE_DOWNLOADED_METADATA_AND_ENVELOPE_PASS_STRICT_INNER_VALIDATION_PENDING"
             slot_id = $SlotId
             source_url = $SourceUrl
             landing_url = $LandingUrl
             expected_outer_filename = $ExpectedOuterFile
             required_inner_revision = $RequiredInnerRevision
+            allowed_content_types = $AllowedContentTypes
             archive_path = $ArchivePath
             archive_available = $true
             download_transport = "HttpClientCookieSession"
@@ -226,12 +251,13 @@ try {
     if (-not (Test-Path -LiteralPath $ArchivePath -PathType Leaf)) { throw "LEGACY_DOWNLOADER_RETURNED_WITHOUT_ARCHIVE" }
 
     [ordered]@{
-        schema_version = 1
+        schema_version = 2
         generated_at = (Get-Date).ToUniversalTime().ToString('o')
-        state = "HTTPCLIENT_COOKIE_ROUTE_FAILED_LEGACY_OFFICIAL_ROUTE_SUCCEEDED"
+        state = "HTTPCLIENT_COOKIE_METADATA_ROUTE_FAILED_LEGACY_OFFICIAL_ROUTE_SUCCEEDED"
         slot_id = $SlotId
         source_url = $SourceUrl
         landing_url = $LandingUrl
+        allowed_content_types = $AllowedContentTypes
         httpclient_errors = @($Errors)
         legacy_output = $LegacyOutput
         archive_path = $ArchivePath
