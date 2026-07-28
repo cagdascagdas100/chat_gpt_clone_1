@@ -92,7 +92,7 @@ function Invoke-HttpClientCookieDownload {
         $Handler.CookieContainer = New-Object System.Net.CookieContainer
         $Handler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
 
-        $Client = New-Object System.Net.Http.HttpClient($Handler)
+        $Client = [System.Net.Http.HttpClient]::new($Handler)
         $Client.Timeout = [TimeSpan]::FromSeconds(300)
         $Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AAYS-Ofcom-Strict-Fetch/3.0")
         [void]$Client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-GB,en;q=0.9,cy;q=0.7")
@@ -101,6 +101,7 @@ function Invoke-HttpClientCookieDownload {
         if (-not $LandingResponse.IsSuccessStatusCode) {
             throw "HTTPCLIENT_LANDING_STATUS:$([int]$LandingResponse.StatusCode)"
         }
+        $LandingStatus = [int]$LandingResponse.StatusCode
         $LandingFinalUri = $LandingResponse.RequestMessage.RequestUri
         if (-not $LandingFinalUri -or $LandingFinalUri.Scheme -ne "https" -or $LandingFinalUri.Host -ne $AllowedHost) {
             throw "HTTPCLIENT_LANDING_REDIRECT_SCOPE_VIOLATION:$LandingFinalUri"
@@ -108,7 +109,7 @@ function Invoke-HttpClientCookieDownload {
         $LandingResponse.Dispose()
         $LandingResponse = $null
 
-        $DownloadRequest = New-Object System.Net.Http.HttpRequestMessage([System.Net.Http.HttpMethod]::Get, $ValidatedUris["source"])
+        $DownloadRequest = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $ValidatedUris["source"])
         $DownloadRequest.Headers.Referrer = $ValidatedUris["landing"]
         [void]$DownloadRequest.Headers.TryAddWithoutValidation("Accept", "application/zip,application/octet-stream,*/*")
         $DownloadResponse = $Client.SendAsync($DownloadRequest, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
@@ -120,7 +121,7 @@ function Invoke-HttpClientCookieDownload {
             throw "HTTPCLIENT_DOWNLOAD_REDIRECT_SCOPE_VIOLATION:$DownloadFinalUri"
         }
 
-        $FileStream = New-Object System.IO.FileStream($Destination, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+        $FileStream = [System.IO.FileStream]::new($Destination, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
         $DownloadResponse.Content.CopyToAsync($FileStream).GetAwaiter().GetResult()
         $FileStream.Flush($true)
         $FileStream.Dispose()
@@ -128,7 +129,7 @@ function Invoke-HttpClientCookieDownload {
 
         return [ordered]@{
             succeeded = (Test-Path -LiteralPath $Destination -PathType Leaf)
-            landing_status = [int]200
+            landing_status = $LandingStatus
             landing_final_uri = [string]$LandingFinalUri
             download_status = [int]$DownloadResponse.StatusCode
             download_final_uri = [string]$DownloadFinalUri
