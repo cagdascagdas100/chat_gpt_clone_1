@@ -91,13 +91,32 @@ function Read-JsonObject {
 function Get-HeartbeatProgressToken {
     param($Heartbeat)
     if (-not $Heartbeat) { return "NO_HEARTBEAT" }
-    $TimestampCandidates = @(
-        [string]($Heartbeat.heartbeat_at),
-        [string]($Heartbeat.last_heartbeat_at),
-        [string]($Heartbeat.updated_at),
-        [string]($Heartbeat.lease_expires_at)
-    )
-    $Timestamp = $TimestampCandidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
+
+    $TimestampFields = @("heartbeat_at", "last_heartbeat_at", "updated_at", "lease_expires_at")
+    $LatestTimestamp = $null
+    $FallbackTimestamps = New-Object System.Collections.Generic.List[string]
+    foreach ($Field in $TimestampFields) {
+        $RawTimestamp = [string]($Heartbeat.$Field)
+        if ([string]::IsNullOrWhiteSpace($RawTimestamp)) { continue }
+        $FallbackTimestamps.Add($RawTimestamp)
+        $ParsedTimestamp = [datetimeoffset]::MinValue
+        if ([datetimeoffset]::TryParse($RawTimestamp, [ref]$ParsedTimestamp)) {
+            if ($null -eq $LatestTimestamp -or $ParsedTimestamp.UtcTicks -gt $LatestTimestamp.UtcTicks) {
+                $LatestTimestamp = $ParsedTimestamp
+            }
+        }
+    }
+
+    if ($null -ne $LatestTimestamp) {
+        $Timestamp = $LatestTimestamp.ToUniversalTime().ToString("o")
+    }
+    elseif ($FallbackTimestamps.Count -gt 0) {
+        $Timestamp = [string]($FallbackTimestamps | Sort-Object -Descending | Select-Object -First 1)
+    }
+    else {
+        $Timestamp = "NO_TIMESTAMP"
+    }
+
     return "$([string]($Heartbeat.state))|$Timestamp|$([string]($Heartbeat.attempt_id))"
 }
 
