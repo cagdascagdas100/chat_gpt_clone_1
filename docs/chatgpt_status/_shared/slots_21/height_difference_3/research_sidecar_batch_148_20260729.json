@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_3",
+  "batch_id": "height_difference_3_batch_148_wcs_integrity_matrix_20260729",
+  "mode": "OFFICIAL_WCS_INTEGRITY_MATRIX_STATIC_ONLY_NO_RUNTIME_PROMOTION",
+  "task_id": "height_difference_3-canonical-api-measurement-20260721-01",
+  "attempt_id": "height-difference-3-20260721-011",
+  "continuation_key": "6e8e709b6bad7b9807055e2b8b5de98cd4945ee3dee57825e72ba1b824eadd0f",
+  "created_at": "2026-07-29T00:00:00+03:00",
+  "official_sources": [
+    {"code":"HMLR_INSPIRE_DOWNLOAD","authority":"HM Land Registry","url":"https://use-land-property-data.service.gov.uk/datasets/inspire/download","verified":"published 2026-07-05; first Sunday monthly; London Borough of Lambeth GML listed; OGL","role":"authoritative freehold index polygon source; indicative extent only"},
+    {"code":"EA_DTM1M_METADATA","authority":"Environment Agency / Defra","url":"https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc","verified":"DTM 1m; EPSG:27700; WCS resource; vertical accuracy +/-15cm RMSE","role":"authoritative raw ground elevation coverage"},
+    {"code":"OGC_WCS_CORE_201","authority":"Open Geospatial Consortium","url":"https://docs.ogc.org/wp/18-004r1/18-004r1.html","verified":"WCS core corrigendum 2.0.1 identified as OGC 09-110r4","role":"normative coverage request and service metadata guard"},
+    {"code":"OGC_WCS_SUBSETTING","authority":"Open Geospatial Consortium","url":"https://docs.ogc.org/per/16-033r1.html","verified":"GetCoverage dimension subsetting uses trim/slice and evaluates against coverage envelope","role":"axis and subset construction guard"},
+    {"code":"OS_TERRAIN50_SPEC","authority":"Ordnance Survey","url":"https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification","verified":"DTM; 10km tiles; regular 50m post spacing; Open Data","role":"independent coarse terrain cross-check"},
+    {"code":"OS_TERRAIN50_GRID","authority":"Ordnance Survey","url":"https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/grid-data","verified":"200x200 pixels; 50m cells; values nearest 0.1m","role":"tile and raster structure guard"},
+    {"code":"OS_TERRAIN50_METADATA","authority":"Ordnance Survey","url":"https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/os-terrain-50/os-terrain-50-technical-specification/metadata","verified":"British National Grid EPSG:27700 and Ordnance Datum Newlyn EPSG:5701","role":"horizontal and vertical datum guard"}
+  ],
+  "hardened_candidates": [
+    {"row":61536,"hmlr_id":"36760596","lon":-0.1434117,"lat":51.4138507,"terrain50_tile":"TQ26","status":"HARDENED_NO_NUMERIC_PROMOTION"},
+    {"row":61537,"hmlr_id":"36758146","lon":-0.1435312,"lat":51.4151588,"terrain50_tile":"TQ27","status":"HARDENED_SOURCE_ONLY_28.2M_NOT_PUBLISHABLE"},
+    {"row":61538,"hmlr_id":"36781190","lon":-0.1425771,"lat":51.4147003,"terrain50_tile":"TQ27","status":"HARDENED_SOURCE_ONLY_27.5M_NOT_PUBLISHABLE"},
+    {"row":61539,"hmlr_id":"36776765","lon":-0.1421382,"lat":51.4151720,"terrain50_tile":"TQ27","status":"HARDENED_SOURCE_ONLY_27.0M_NOT_PUBLISHABLE"}
+  ],
+  "planned_strict12_rows": [61540,61541,61542,61543,61544,61545,61546,61547,61548,61549,61550,61551],
+  "integrity_gates": [
+    {"code":"I01_SOURCE_SNAPSHOT","rule":"record HMLR publication date, exact Lambeth GML locator, immutable source digest and canonical row binding"},
+    {"code":"I02_COVERAGE_IDENTITY","rule":"capabilities must advertise the exact EA DTM 1m coverage; reject DSM, WMS, WMTS, hillshade or alternate resolution"},
+    {"code":"I03_AXIS_DISCOVERY","rule":"derive subset axis labels and order from service metadata or coverage description; never assume or hardcode"},
+    {"code":"I04_SUBSET_BOUNDS","rule":"derive finite native EPSG:27700 bounds from the exact parcel geometry; require low < high on each axis"},
+    {"code":"I05_RESPONSE_CLASS","rule":"record HTTP status, content type, byte length and digest; reject XML/HTML/service-exception responses"},
+    {"code":"I06_CRS_RESOLUTION","rule":"verify EPSG:27700 and approximately 1m ground cells before sampling; reject coarse or mismatched coverage"},
+    {"code":"I07_NODATA_FINITE","rule":"apply exact polygon mask, honour nodata metadata and require at least four finite in-polygon cells"},
+    {"code":"I08_SEAL_CHAIN","rule":"seal capabilities, request, response, local acceptance, publish manifest and remote readback SHA-256 values"}
+  ],
+  "fail_closed_examples": [
+    {"code":"B148_EX_001","state":"WAIT_FRESH_HEARTBEAT","reason":"portable execution host heartbeat is stale"},
+    {"code":"B148_EX_002","state":"BLOCK_HMLR_SOURCE_SNAPSHOT_DRIFT","reason":"publication date, locator or source digest changed after binding"},
+    {"code":"B148_EX_003","state":"BLOCK_HMLR_ID_MISSING_OR_NONUNIQUE","reason":"official identifier is absent or not exactly unique"},
+    {"code":"B148_EX_004","state":"BLOCK_WCS_COVERAGE_IDENTITY","reason":"selected service resource is not the exact EA DTM 1m coverage"},
+    {"code":"B148_EX_005","state":"BLOCK_WCS_AXIS_UNPROVEN","reason":"axis labels or subset order cannot be proven from service metadata"},
+    {"code":"B148_EX_006","state":"BLOCK_WCS_SUBSET_INVALID","reason":"subset bounds are non-finite, inverted or outside the parcel-derived envelope"},
+    {"code":"B148_EX_007","state":"BLOCK_WCS_EXCEPTION_DOCUMENT","reason":"response is an XML, HTML or OGC exception document"},
+    {"code":"B148_EX_008","state":"BLOCK_WCS_MIME_OR_BYTE_GUARD","reason":"content type, byte count or response digest is missing or unexpected"},
+    {"code":"B148_EX_009","state":"BLOCK_RASTER_CRS_OR_RESOLUTION","reason":"raster is not EPSG:27700 or is materially coarser than 1m"},
+    {"code":"B148_EX_010","state":"BLOCK_RASTER_NODATA_ONLY","reason":"masked parcel contains no finite elevation cells"},
+    {"code":"B148_EX_011","state":"BLOCK_VALID_CELL_COUNT","reason":"fewer than four finite in-polygon cells remain"},
+    {"code":"B148_EX_012","state":"BLOCK_SEAL_DRIFT","reason":"any capabilities, request, response, manifest or remote-readback seal changed"}
+  ],
+  "counts": {"official_source_rows":7,"hardened_rows":4,"planned_rows":12,"matrix_rows":96,"fail_closed_rows":12,"website_visible_rows":131,"static_operations_completed":96,"static_operations_total":96,"numeric_rows_added":0,"promoted_rows":0,"pending_operations":0,"active_runtime_blockers":2},
+  "canonical_snapshot": {"verified_measurements":3,"prepared_count":240,"promoted_rows":0,"cumulative_preparation_operations_completed":157490,"cumulative_preparation_operations_total":157884,"cumulative_preparation_percent":99.750450,"percent_delta_this_batch":0.0,"published_website_rows_cumulative":45606,"final_ready":false},
+  "notes": [
+    "No strict12 identifiers, geometries, coordinates, raster pixels or height differences were fabricated.",
+    "Terrain50 values for 61537-61539 remain source-only centroid context and are not parcel height-difference measurements.",
+    "This batch does not mutate canonical business progress or publish numeric rows."
+  ]
+}
