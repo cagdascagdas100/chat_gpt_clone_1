@@ -44,6 +44,7 @@ foreach ($ArchiveUrl in $ArchiveUrls) {
             archive_url = $ArchiveUrl
             landing_url = $LandingUrl
             landing_language = if ($LandingUrl -match "/cy/") { "cy" } else { "en" }
+            transport_chain = "023_HTTPCLIENT_COOKIE_THEN_018_LEGACY"
         })
     }
 }
@@ -80,6 +81,7 @@ foreach ($Route in @($SourceRoutes)) {
             archive_url = $ArchiveUrl
             landing_url = $LandingUrl
             landing_language = [string]$Route.landing_language
+            transport_chain = [string]$Route.transport_chain
             started_at = $StartedAt.ToString('o')
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = [bool]$ArchiveAvailable
@@ -99,6 +101,7 @@ foreach ($Route in @($SourceRoutes)) {
             archive_url = $ArchiveUrl
             landing_url = $LandingUrl
             landing_language = [string]$Route.landing_language
+            transport_chain = [string]$Route.transport_chain
             started_at = $StartedAt.ToString('o')
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = (Test-Path -LiteralPath $ArchivePath -PathType Leaf)
@@ -114,7 +117,7 @@ foreach ($Route in @($SourceRoutes)) {
 }
 
 $Result = [ordered]@{
-    schema_version = 3
+    schema_version = 4
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     slot_id = $SlotId
     state = if ($Completed) { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STRICT_RECOVERY_COMPLETE" } else { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STILL_BLOCKED" }
@@ -124,6 +127,7 @@ $Result = [ordered]@{
     selected_archive_url = if ($SelectedRoute) { [string]$SelectedRoute.archive_url } else { $null }
     selected_landing_url = if ($SelectedRoute) { [string]$SelectedRoute.landing_url } else { $null }
     selected_landing_language = if ($SelectedRoute) { [string]$SelectedRoute.landing_language } else { $null }
+    selected_transport_chain = if ($SelectedRoute) { [string]$SelectedRoute.transport_chain } else { $null }
     archive_path = $ArchivePath
     archive_available = (Test-Path -LiteralPath $ArchivePath -PathType Leaf)
     attempts = @($Attempts)
@@ -132,7 +136,7 @@ $Result = [ordered]@{
     second_runner_started = $false
     runner_start_requested = $RunnerRequested
     runner_start_guarded_by_014_lease_checks = $true
-    strict_chain = "017_TO_018_TO_014"
+    strict_chain = "017_TO_023_HTTPCLIENT_COOKIE_OR_018_LEGACY_TO_014"
     final_ready = $false
 }
 

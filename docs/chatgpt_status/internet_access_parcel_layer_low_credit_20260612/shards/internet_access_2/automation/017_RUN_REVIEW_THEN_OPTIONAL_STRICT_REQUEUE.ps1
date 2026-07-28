@@ -13,7 +13,7 @@ $SlotId = "internet_access_2"
 $AllowedHost = "www.ofcom.org.uk"
 $ReviewWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\016_RUN_AND_PUBLISH_TERMINATED_IDENTITY_REVIEW.ps1"
 $ZipWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\014_RUN_006_STRICT_REQUEUE_AFTER_OFCom_ZIP.ps1"
-$DownloadWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\018_FETCH_OFFICIAL_OFCom_SPRING_2026_ZIP.ps1"
+$DownloadWrapperRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\automation\023_FETCH_OFFICIAL_OFCom_HTTPCLIENT_COOKIE_GUARD.ps1"
 $ReviewOutputRel = "england_map_web\data\aays_21_slots\internet_access_2\006_existing_11013_identity_review_rows.json"
 $ReviewAuditRel = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\shards\internet_access_2\recovery\014_006_terminated_identity_review_export.json"
 
@@ -113,6 +113,7 @@ if (-not $ArchiveAvailable) {
         archive_available = $false
         official_archive_url_configured = -not [string]::IsNullOrWhiteSpace($OfficialArchiveUrl)
         official_landing_url = $OfficialLandingUrl
+        download_wrapper = $DownloadWrapperRel
         download_skipped = [bool]$SkipDownload
         download_attempted = [bool]$DownloadAttempted
         download_succeeded = [bool]$DownloadSucceeded
@@ -144,6 +145,7 @@ if ($LASTEXITCODE -ne 0) { throw "STRICT_REQUEUE_WRAPPER_FAILED:$LASTEXITCODE" }
     archive_available = $true
     official_archive_url = $OfficialArchiveUrl
     official_landing_url = $OfficialLandingUrl
+    download_wrapper = $DownloadWrapperRel
     download_attempted = [bool]$DownloadAttempted
     download_succeeded = [bool]$DownloadSucceeded
     strict_archive_preflight_required = $true
