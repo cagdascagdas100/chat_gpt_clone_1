@@ -1,22 +1,27 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_2",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
-  "generated_at": "2026-07-29T00:22:00+03:00",
-  "scope": "CONTINUATION_WAVES_8_TO_17",
-  "displayed_waves": 10,
-  "displayed_new_pass_rows": 58,
+  "generated_at": "2026-07-29T02:10:00+03:00",
+  "scope": "CONTINUATION_WAVES_8_TO_19_WITH_FULL_CANONICAL_SIDE_COVERAGE",
+  "displayed_waves": 12,
+  "displayed_new_pass_rows": 64,
   "historical_hold_rows": 13,
   "resolved_hold_rows": 1,
   "displayed_hold_rows": 12,
-  "displayed_acceptance_gate_rows": 24,
+  "active_low_confidence_holds": 2,
+  "displayed_acceptance_gate_rows": 48,
   "displayed_cache_audit_rows": 16,
-  "displayed_official_source_rows": 64,
-  "cumulative_sample_rows_reviewed": 90,
-  "website_visible_rows_cumulative_receipt_estimate": 455,
+  "displayed_official_source_rows": 76,
+  "cumulative_sample_rows_reviewed": 96,
+  "canonical_side_review_coverage_percent": 100,
+  "website_visible_rows_cumulative_receipt_estimate": 500,
   "canonical_candidate_rows": 96,
   "canonical_accuracy_ge_95_rows": 93,
+  "side_effective_accuracy_ge_95_rows": 94,
+  "side_effective_accuracy_ge_95_percent": 97.92,
+  "side_quality_increase_percentage_points": 1.04,
   "canonical_promoted_sources": 10,
   "canonical_sources_reviewed": 10,
   "business_rows_written": 0,
@@ -32,6 +37,13 @@
     "iod25_reused_join_rows": 49,
     "iod25_join_reuse_percent": 84.48
   },
+  "low_confidence_ledger": {
+    "identified_rows": 3,
+    "resolved_rows": 1,
+    "remaining_rows": 2,
+    "resolved_parcel_ids": ["parcel_30802"],
+    "open_parcel_ids": ["parcel_30768","parcel_30783"]
+  },
   "source_version_gates": [
     {"dataset":"IoD25 LSOA files 1-9","required_version":"v2","state":"REQUIRED_AT_CLAIM_TIME","official_notice_verified":true,"reported_data_value_change":false}
   ],
@@ -45,14 +57,18 @@
     {"wave":14,"new_pass_rows":0,"hold_rows":12,"official_source_rows":6,"cumulative_reviewed":90,"html":"continuation_sample_revalidation_wave14.html","json":"continuation_sample_revalidation_wave14_latest.json","state":"HOLD_CANONICAL_POINT_BODY_UNAVAILABLE_RUNNER_UNCLAIMED"},
     {"wave":15,"new_pass_rows":0,"hold_rows":0,"official_source_rows":10,"cumulative_reviewed":90,"html":"continuation_official_source_integrity_wave15.html","json":"continuation_official_source_integrity_wave15_latest.json","state":"OFFICIAL_SOURCE_INTEGRITY_PASS_IOD25_V2_GATE_ADDED"},
     {"wave":16,"new_pass_rows":1,"hold_rows":0,"resolved_hold_rows":1,"official_source_rows":6,"acceptance_gate_rows":12,"cumulative_reviewed":90,"html":"continuation_rate_limit_recovery_wave16.html","json":"continuation_rate_limit_recovery_wave16_latest.json","state":"PASS_ONE_HTTP_429_HOLD_RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE"},
-    {"wave":17,"new_pass_rows":0,"hold_rows":0,"candidate_rows_audited":58,"unique_police_keys":57,"exact_reuse_rows":1,"unique_iod25_lsoa_keys":9,"cache_audit_rows":16,"official_source_rows":6,"acceptance_gate_rows":12,"cumulative_reviewed":90,"html":"continuation_exact_query_cache_audit_wave17.html","json":"continuation_exact_query_cache_audit_wave17_latest.json","state":"PASS_EXACT_QUERY_AND_LSOA_JOIN_CACHE_AUDIT"}
+    {"wave":17,"new_pass_rows":0,"hold_rows":0,"candidate_rows_audited":58,"unique_police_keys":57,"exact_reuse_rows":1,"unique_iod25_lsoa_keys":9,"cache_audit_rows":16,"official_source_rows":6,"acceptance_gate_rows":12,"cumulative_reviewed":90,"html":"continuation_exact_query_cache_audit_wave17.html","json":"continuation_exact_query_cache_audit_wave17_latest.json","state":"PASS_EXACT_QUERY_AND_LSOA_JOIN_CACHE_AUDIT"},
+    {"wave":18,"new_pass_rows":6,"hold_rows":0,"official_source_rows":6,"acceptance_gate_rows":12,"cumulative_reviewed":96,"html":"continuation_canonical_coverage_completion_wave18.html","json":"continuation_canonical_coverage_completion_wave18_latest.json","state":"PASS_FULL_96_ROW_CANONICAL_SIDE_COVERAGE"},
+    {"wave":19,"new_pass_rows":0,"hold_rows":2,"resolved_hold_rows":1,"official_source_rows":6,"acceptance_gate_rows":12,"cumulative_reviewed":96,"html":"continuation_low_confidence_remediation_wave19.html","json":"continuation_low_confidence_remediation_wave19_latest.json","state":"PASS_LOW_CONFIDENCE_LEDGER_ONE_RESOLVED_TWO_FAIL_CLOSED"}
   ],
   "active_blockers": [
     "OWNERSHIP_OWNER_HEARTBEAT_AND_LEASE_EMPTY",
     "PRIORITY_300ROW_TASK_PICKUP_REQUESTED_UNCLAIMED",
     "PRIVATE_LARGE_MINIFIED_POINT_LAYER_BODY_NOT_RETURNED_BY_CONNECTOR",
-    "IOD25_V2_SOURCE_VERSION_MUST_BE_VERIFIED_AT_CLAIM"
+    "IOD25_V2_SOURCE_VERSION_MUST_BE_VERIFIED_AT_CLAIM",
+    "PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_REQUIRES_RUNNER_OR_DIRECT_ENDPOINT_REFETCH",
+    "PARCEL_30783_HISTORICAL_LSOA_MISMATCH_REQUIRES_EXPLICIT_CORRECTION_POLICY"
   ],
-  "next_single_action": "Restore the existing canonical shared runner heartbeat and claim the existing priority -101 task under the same continuation_key. Apply exact-query caching, LSOA-keyed IoD25 v2 joins and Police.uk rate backpressure; do not create a second runner, task or recovery refresh.",
+  "next_single_action": "Restore the existing canonical shared runner heartbeat and claim the existing priority -101 task under the same continuation_key. Apply exact-query caching, LSOA-keyed IoD25 v2 joins and Police.uk rate backpressure; refetch parcel_30768 and preserve parcel_30783 historical mismatch until an explicit correction policy is applied. Do not create a second runner, task or recovery refresh.",
   "fake_data": false
 }
