@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — Exact Query Cache Denetimi Dalga 17</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#e8f5e9;border-color:#a5d6a7}.warning{padding:12px;background:#fff3cd;border:1px solid #ffe69c;margin:12px 0}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:155px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}code{font-size:9px;word-break:break-all}.PASS{background:#e8f5e9}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}a{color:#0d47a1}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — exact-query cache denetimi dalga 17</h1>
+<div class="notice">Kurtarma sonrası 58 yüksek güvenli satır, Police ve ONS exact sorgu anahtarları ile IoD25 LSOA join anahtarları açısından denetlendi. Yalnız birebir aynı koordinat ve ay için cache kullanılır; yakın nokta tahmini yapılmaz.</div>
+<div class="warning">Ana 300-satır dosyası değiştirilmez. Canonical runner claim edilmeden business veya ana aday yazımı yapılmaz.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>Dalga bazında sorgu anahtarları</h2><div id="waves"></div></section>
+<section class="panel"><h2>Exact-query tekrar grupları</h2><div id="duplicates"></div></section>
+<section class="panel"><h2>LSOA → IoD25 join cache grupları</h2><div id="lsoas"></div></section>
+<section class="panel"><h2>12 kabul kapısı</h2><div id="gates"></div></section>
+<section class="panel"><h2>Güncel resmî internet kontrolleri</h2><div id="sources"></div></section>
+<script>
+'use strict';
+const DATA_URL='continuation_exact_query_cache_audit_wave17_latest.json';
+const el=id=>document.getElementById(id);
+const text=v=>v===null||v===undefined?'—':String(v);
+const pct=v=>v===null||v===undefined?'—':`${v}%`;
+function cell(tr,v,code=false){const td=document.createElement('td');if(code){const c=document.createElement('code');c.textContent=text(v);td.appendChild(c)}else{td.textContent=text(v)}tr.appendChild(td)}
+function linkCell(tr,label,url){const td=document.createElement('td'),a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=label;td.appendChild(a);tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const response=await fetch(DATA_URL,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const d=await response.json();el('status').textContent=`Yüklendi: ${d.candidate_rows_audited} PASS satırı, ${d.unique_police_exact_query_keys} benzersiz Police anahtarı, ${d.unique_iod25_lsoa_join_keys} LSOA join anahtarı, ${d.acceptance_gates.length}/12 kapı PASS`;el('status').className='panel ok';[['Denetlenen PASS',d.candidate_rows_audited],['Benzersiz Police',d.unique_police_exact_query_keys],['Police cache tekrar',d.police_exact_query_reuse_rows],['Dış çağrı tasarrufu',d.external_requests_saved],['LSOA join anahtarı',d.unique_iod25_lsoa_join_keys],['IoD join tekrar',d.iod25_reused_join_rows],['Business satır',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('waves').appendChild(table(['#','Dalga','PASS','Police anahtarı','Cache tekrar','Durum'],body=>(d.wave_audit||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);cell(tr,x.wave);cell(tr,x.pass_rows_after_recovery);cell(tr,x.unique_police_keys);cell(tr,x.exact_reuse_rows);cell(tr,x.state);body.appendChild(tr)})));el('duplicates').appendChild(table(['#','Cache anahtarı','Parseller','Kaynak','Yeniden kullanım','LSOA','Police kayıt','SHA256','Doğruluk','Durum'],body=>(d.exact_query_duplicate_groups||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);cell(tr,x.cache_key,true);cell(tr,(x.parcel_ids||[]).join(', '));cell(tr,x.source_parcel_id);cell(tr,x.reused_parcel_id);cell(tr,x.ons_lsoa_code);cell(tr,x.police_record_count);cell(tr,x.police_response_sha256,true);cell(tr,pct(x.accuracy_percent));cell(tr,x.state);body.appendChild(tr)})));el('lsoas').appendChild(table(['#','LSOA','Satır','Crime rank','Decile','Aday %','Join tekrar'],body=>(d.lsoa_join_cache_groups||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);cell(tr,x.lsoa_code);cell(tr,x.row_count);cell(tr,x.iod25_crime_rank);cell(tr,x.iod25_crime_decile);cell(tr,x.candidate_percent);cell(tr,x.join_reuse_count);body.appendChild(tr)})));el('gates').appendChild(table(['#','Kapı','Sonuç','Kanıt'],body=>(d.acceptance_gates||[]).forEach(x=>{const tr=document.createElement('tr');tr.className=x.result==='PASS'?'PASS':'';cell(tr,x.line);cell(tr,x.gate);cell(tr,x.result);cell(tr,x.evidence,true);body.appendChild(tr)})));el('sources').appendChild(table(['#','Kaynak','Sonuç','Doğruluk'],body=>(d.official_sources||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);linkCell(tr,x.source,x.url);cell(tr,x.result);cell(tr,pct(x.accuracy_percent));body.appendChild(tr)})))}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>
