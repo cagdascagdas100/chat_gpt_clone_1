@@ -1,147 +1,150 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 — continuation monitor</title><style>body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f8;color:#17202a}.summary{display:flex;gap:10px;flex-wrap:wrap}.card{background:#fff;border:1px solid #cfd8dc;border-radius:6px;padding:10px;min-width:145px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:12px;margin:14px 0}.ok{background:#d1e7dd;border:1px solid #badbcc;padding:12px;margin:14px 0}pre{white-space:pre-wrap;background:#fff;border:1px solid #cfd8dc;padding:10px;font-size:12px;line-height:1.45}</style></head><body>
-<h1>internet_access_1 — continuation / canonical reconciliation</h1>
+<h1>internet_access_1 — continuation / BDUK kalite ve freshness doğrulaması</h1>
 <p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
-<div class="warn"><b>RECOVERY_PARKED.</b> İkinci runner/task açılmadı. Root blocker: stale portable coordinator, Ofcom binary runtime audit unavailable, exact canonical parcel→UPRN binding unverified.</div>
-<div class="ok"><b>Canonical Wave57 reconciliation:</b> PR #520 canonical branch'e merge edilmiş. Canonical operational prep 2304/2314 = 99.64%; source candidates/promoted/held 211/207/4; promoted ≥95 = 207, ortalama 98.6%; product rows 0/30761. Önceki child 142-operation sayacı artık yalnız supplemental batch olarak yorumlanır.</div>
+<div class="warn"><b>RECOVERY_PARKED.</b> İkinci runner/task açılmadı. Root blocker: stale portable coordinator; Ofcom archive binary runtime audit unavailable; exact canonical parcel→UPRN/TOID binding unverified. Manual action OPEN kalır.</div>
+<div class="ok"><b>Canonical baseline:</b> Wave57 / PR #520 merged. Operational 2304/2314 = 99.64% (Δ +0.01); 211 source candidate / 207 promoted / 4 held; 207/207 promoted ≥95, average 98.6%; product rows 0/30761. Bu child batch canonical sayaçlara otomatik eklenmez.</div>
 <div class="summary">
 <div class="card">Genel<br><b>11.1%</b><br>1/9 · Δ0.0</div>
 <div class="card">Control<br><b>94.7%</b><br>18/19</div>
-<div class="card">Canonical ops<br><b>2304/2314</b><br>99.64%</div>
+<div class="card">Canonical ops<br><b>2304/2314</b><br>99.64% · Δ+0.01</div>
 <div class="card">Canonical source<br><b>211 / 207</b><br>4 held</div>
 <div class="card">Promoted ≥95<br><b>207/207</b></div>
 <div class="card">Ort. güven<br><b>98.6%</b></div>
-<div class="card">Canonical examples<br><b>1238</b></div>
-<div class="card">Method QA<br><b>1222</b></div>
-<div class="card">Network attempts<br><b>805</b></div>
-<div class="card">Bu tur supplemental<br><b>112 PASS / 120</b><br>5 PARTIAL · 3 BLOCKED</div>
-<div class="card">Yeni evidence role<br><b>+5</b><br>5/5 = 100%</div>
-<div class="card">Yeni rule QA<br><b>+60</b></div>
-<div class="card">Current premise QA<br><b>+0 / 990 child</b></div>
+<div class="card">Bu batch<br><b>112 PASS / 120</b><br>5 PARTIAL · 3 BLOCKED</div>
+<div class="card">Yeni evidence role<br><b>+7</b><br>7/7 = 100%</div>
+<div class="card">Yeni rule QA<br><b>+77</b></div>
+<div class="card">Premise QA<br><b>+0 / 990</b></div>
 <div class="card">Ürün satırı<br><b>0 / 30761</b></div></div>
-<p><b>Yeni kurallar:</b> BDUK May-2026 AddressBase Epoch123 UPRN baseline filtreleri; RFS/current-vs-future semantiği; 8 design stage; 17 LOC code; Code-Point Open PQI 10/20/30/40/50/60/90 postcode-only guard; Ofcom Spring-2026 current snapshot ile PND-2026 forward plan kesin ayrımı.</p>
-<p><b>Fail-closed:</b> BDUK baseline dışı kayıt = NO_DATA değildir. Design Stage 5 “In build” = current service değildir. Code-Point PQI hiçbir seviyede parcel identity değildir. PND planned coverage current availability yerine geçmez.</p>
-<h2>Bu tur recovery / reconciliation işlemleri (60)</h2><pre>#|STATE|OPERATION|EVIDENCE
-001|PASS|contract_latest_readback|contract SHA 1a25e0f; same continuation/recovery rules
+<p><b>Yeni yüksek-güven guard'lar:</b> BDUK January-2026 missing-UPRN/no-data ayrımı; current/future freshness gaps; intervention overlap ve geography fallback provenance; ONS NSUL May-2026 Epoch126 geography role; May-2026 evaluated premise output publication gate; BDUK 28-field schema + QA caveats.</p>
+<p><b>Fail-closed:</b> missing UPRN veya current_gigabit=false doğrudan “no broadband” değildir. future_gigabit=false OMR response/reference-date boşluğundan kaynaklanabilir. NSUL/NSPL/ONSUD geography bağı parcel identity değildir. CSV bytes indirilemediği için SHA256 ve full-sample uniqueness iddiası yoktur.</p>
+<h2>Bu batch işlemleri — 120 satır</h2><pre>001|PASS|contract_latest_readback|latest continuation/recovery contract retained; same continuation
 002|PASS|slot_id_validation|internet_access_1 valid business slot
-003|PASS|canonical_head_initial|canonical HEAD refreshed
-004|PASS|current_task_readback|RECOVERY_PARKED; same task and continuation
-005|PASS|continuation_dedup|same continuation; no second task
-006|PASS|checkpoint_readback|33785 verified / 58498 pending-or-no-data
-007|PASS|queue_readback|pending; network_fetch; timeout 7200
-008|PASS|queue_no_data_guard|NO_DATA_NOT_INFERRED
-009|PASS|manual_action_readback|OPEN retained
-010|PASS|ownership_readback|unclaimed; no valid lease
-011|BLOCKED|slot_heartbeat_recheck|heartbeat null/stale >900s
-012|BLOCKED|portable_coordinator_recheck|last verified heartbeat 2026-07-16T13:45:53Z
-013|BLOCKED|canonical_runtime_audit_gate|runtime schema audit absent / archive bytes unavailable
-014|PASS|second_runner_guard|no second runner/task created
-015|PASS|direct_push_guard|canonical direct push forbidden
-016|PASS|child_source_fetch|schema16 prior supplemental source artifact
-017|PASS|child_audit_fetch|schema15 prior supplemental audit
-018|PASS|child_monitor_fetch|prior supplemental monitor read
-019|PASS|internet_access_pr_history_search|canonical wave history discovered
-020|PASS|wave57_pr520_readback|PR520 closed+merged
-021|PASS|wave57_base_branch_guard|base is canonical branch
-022|PASS|wave57_merge_commit_guard|merge commit c25c1a77... recorded
-023|PASS|wave57_same_continuation_guard|same continuation key
-024|PASS|wave57_product_rows_guard|0/30761 product rows
-025|PASS|wave57_operational_readback|2304/2314 = 99.64%
-026|PASS|wave57_progress_blob_readback|canonical progress_wave57 blob 74adb77f...
-027|PASS|wave57_source_registry_readback|211 candidates / 207 promoted / 4 held
-028|PASS|wave57_confidence_readback|207 promoted >=95; average 98.6%
-029|PASS|wave57_examples_readback|1238 visible examples
-030|PASS|wave57_methodology_qa_readback|1222 methodology QA examples
-031|PASS|wave57_network_attempts_readback|805 visible network attempts
-032|PASS|wave57_source_revalidation_blob|canonical blob 48b564f3...
-033|PARTIAL|later_wave_search_guard|PR search found Wave57 as newest internet_access_1 result; not proof no unindexed later artifact
-034|PARTIAL|repo_exact_binding_search|no indexed canonical parcel↔UPRN/TOID hit; zero hit not absence proof
-035|PARTIAL|repo_epoch123_search|no indexed Epoch123 child-binding record; zero hit not absence proof
-036|PARTIAL|repo_codepoint_search|no indexed Code-Point binding record; zero hit not absence proof
-037|PASS|repo_empty_search_absence_guard|empty index search never converted to NO_DATA
-038|PASS|bduk_may_rfi_refresh|official GOV.UK May 2026 RFI read
-039|PASS|bduk_may_closure_refresh|official closure says outputs publish after evaluation
-040|PASS|bduk_epoch123_guard|AddressBase Premium Epoch123, published 27 Nov 2025
-041|PASS|bduk_postal_code_filter_guard|D/C/L accepted; N non-postal excluded
-042|PASS|bduk_language_guard|LanguageCode ENG
-043|PASS|bduk_country_guard|E/W/S/N accepted
-044|PASS|bduk_demolished_guard|BLPU StateCode 4 excluded
-045|PASS|bduk_logical_status_guard|LogicalStatusCode 1 or 6
-046|PASS|bduk_duplicate_priority_guard|approved status1 prioritized over provisional status6
-047|PASS|bduk_baseline_not_no_data_guard|baseline mismatch does not imply no broadband
-048|PASS|bduk_current_technology_guard|Current_Technology only for RFS premises
-049|PASS|bduk_rfs_orderability_guard|RFS requires orderable/provisionable service under stated conditions
-050|PASS|bduk_in_build_guard|Design Stage 5 is not yet service-take-up capable
-051|PASS|bduk_future_date_guard|future coverage requires future planned RFS date
-052|PASS|bduk_future_not_build_start_guard|Date_of_Future_Rollout is RFS date, not build-start date
-053|PASS|ofcom_spring2026_refresh|published 13 May 2026; January 2026 current snapshot
-054|PASS|ofcom_pnd2026_refresh|forward-looking through end-2028
-055|PASS|ofcom_current_vs_planned_guard|planned never substitutes current availability
-056|PASS|ofcom_checker_postcode_guard|checker supports postcode availability view
-057|PARTIAL|ofcom_api_access_guard|API exists; external access path not used as no-auth bulk production input
-058|PASS|code_point_open_refresh|current GB postcode open dataset
-059|PASS|code_point_pqi_guard|PQI semantics read from official OS docs
-060|PASS|product_promotion_gate|no exact canonical identity => 0 product rows</pre>
-<h2>Resmî kural QA satırları (60)</h2><pre>#|STATE|OPERATION|EVIDENCE
-061|PASS|UPRN_BASELINE:AddressBasePostalCode|D/C/L accepted; N excluded as not postal address
-062|PASS|UPRN_BASELINE:LanguageCode|ENG required
-063|PASS|UPRN_BASELINE:CountryCode|E/W/S/N allowed
-064|PASS|UPRN_BASELINE:BLPU_StateCode|4 demolished excluded
-065|PASS|UPRN_BASELINE:LogicalStatusCode|1 approved or 6 provisional
-066|PASS|UPRN_BASELINE:UPRN_dedup_priority|sort status ascending; approved 1 before provisional 6
-067|PASS|CURRENT_FUTURE:strUPRN|STR prefix protects significant digits in spreadsheet tools
-068|PASS|CURRENT_FUTURE:UPRN|unique property reference number
-069|PASS|CURRENT_FUTURE:Postcode|standard postcode field
-070|PASS|CURRENT_FUTURE:Current_Technology|populate for RFS UPRNs only
-071|PASS|CURRENT_FUTURE:Current_Technology_scope|supplier's own broadband infrastructure only
-072|PASS|CURRENT_FUTURE:Current_Max_Download_Speed|positive Mbit/s numeric capability value
-073|PASS|CURRENT_FUTURE:Current_Max_Upload_Speed|positive Mbit/s numeric capability value
-074|PASS|CURRENT_FUTURE:Current_speed_semantics|technology capability, not actual take-up
-075|PASS|CURRENT_FUTURE:Future_Technology|planned connections only
-076|PASS|CURRENT_FUTURE:Future_upgrade_difference|upgrade technology should not match Current_Technology
-077|PASS|CURRENT_FUTURE:Future_Max_Download_Speed|positive Mbit/s intended capability
-078|PASS|CURRENT_FUTURE:Future_Max_Upload_Speed|positive Mbit/s intended capability
-079|PASS|CURRENT_FUTURE:Date_of_Future_Rollout|required for all future coverage premises
-080|PASS|CURRENT_FUTURE:Future_date_semantics|future planned RFS date; not build commencement
-081|PASS|DESIGN_STAGE:0. On hold|Future_Technology; proactively paused, not external blocker
-082|PASS|DESIGN_STAGE:0. On hold - blocked|Future_Technology; completion blocked without solution
-083|PASS|DESIGN_STAGE:1. Awaiting HLD|HLD not completed
-084|PASS|DESIGN_STAGE:2. HLD complete|area plan done; LLD not complete
-085|PASS|DESIGN_STAGE:3. LLD complete|LLD/survey done; build resources not appointed
-086|PASS|DESIGN_STAGE:4. Build team appointed|resources appointed; planning/acquisitions/wayleaves finalised
-087|PASS|DESIGN_STAGE:5. In build|network build in progress; premises not yet able to take up service
-088|PASS|DESIGN_STAGE:6. RFS|network build/testing complete; service orderable under RFS definition
-089|PASS|LOC_CODE:1-JUP|Joint user pole; stage=0. On hold - blocked
-090|PASS|LOC_CODE:2-MDU|MDU; stage=0. On hold - blocked
-091|PASS|LOC_CODE:3-PIA|PIA; stage=0. On hold - blocked
-092|PASS|LOC_CODE:4-SEC58|Section 58; stage=0. On hold - blocked
-093|PASS|LOC_CODE:5-SUR|Survey; stage=0. On hold - blocked
-094|PASS|LOC_CODE:6-WAY|Wayleave; stage=0. On hold - blocked
-095|PASS|LOC_CODE:7-SURF|Surface type reinstatement; stage=0. On hold - blocked
-096|PASS|LOC_CODE:8-CURT|Fibre to curtilage only; stage=0. On hold
-097|PASS|LOC_CODE:9-NEW|New build; stage=0. On hold
-098|PASS|LOC_CODE:10-FILT|Filtered UPRN premises type; stage=0. On hold
-099|PASS|LOC_CODE:11-SED|Special Engineering Difficulty; stage=0. On hold
-100|PASS|LOC_CODE:12-UEC|Uneconomical exceeds cost; stage=0. On hold
-101|PASS|LOC_CODE:13-DIG|Direct In Ground; stage=0. On hold
-102|PASS|LOC_CODE:14-OTHER|Other; stage=0. On hold OR 0. On hold - blocked
-103|PASS|LOC_CODE:15-EXCE|Excess construction charge; stage=6. RFS
-104|PASS|LOC_CODE:16-DEMCOM|Commercial demand not present; stage=0. On hold
-105|PASS|LOC_CODE:17-DEMGBVS|GBVS demand not present; stage=0. On hold
-106|PASS|CODE_POINT_PQI:10|within building of matched address closest to postcode mean; automatic; postcode-level only, never exact parcel
-107|PASS|CODE_POINT_PQI:20|within building; determined by NRS visual inspection; postcode-level only, never exact parcel
-108|PASS|CODE_POINT_PQI:30|approx within 50m; developing site may be within 100m; postcode-level only, never exact parcel
-109|PASS|CODE_POINT_PQI:40|mean of positions of previously matched deleted/recoded addresses; postcode-level only, never exact parcel
-110|PASS|CODE_POINT_PQI:50|estimated from surrounding postcode coordinates; postcode-level only, never exact parcel
-111|PASS|CODE_POINT_PQI:60|postcode sector mean; postcode-level only, never exact parcel
-112|PASS|CODE_POINT_PQI:90|no coordinates available; postcode-level only, never exact parcel
-113|PASS|OFCOM_ROLE:Spring2026_published|13 May 2026
-114|PASS|OFCOM_ROLE:Spring2026_snapshot|January 2026 current coverage snapshot
-115|PASS|OFCOM_ROLE:Spring2026_fixed|fixed broadband availability reported
-116|PASS|OFCOM_ROLE:Spring2026_download|official fixed broadband data download listed
-117|PASS|OFCOM_ROLE:PND2026_published|13 May 2026
-118|PASS|OFCOM_ROLE:PND2026_horizon|anticipated deployments through end of 2028
-119|PASS|OFCOM_ROLE:PND2026_forward_only|operator plans, not current availability
-120|PASS|OFCOM_ROLE:current_vs_planned|PND never substitutes Spring current snapshot</pre>
-<p>120 supplemental görünür işlem = 60 recovery/reconciliation + 60 official-rule QA. Canonical Wave57 sayacı ayrı otoritedir; bu child turn canonical total'e otomatik eklenmez.</p>
-<p>Kaynaklar: GOV.UK BDUK May 2026 NR OMR RFI/closure; Ofcom Connected Nations Spring 2026 + PND 2026; Ordnance Survey Code-Point Open docs; canonical GitHub PR #520/progress/source-revalidation.</p>
+003|PASS|canonical_head_refresh|canonical HEAD refreshed before child write
+004|PASS|current_task_readback|RECOVERY_PARKED; same task/continuation/first_unverified_step
+005|PASS|continuation_dedup|no second task created
+006|PASS|queue_readback|same task pending; network_fetch; timeout 7200
+007|PASS|queue_no_data_guard|NO_DATA_NOT_INFERRED
+008|PASS|ownership_readback|unclaimed; no valid lease
+009|BLOCKED|heartbeat_recheck|heartbeat null/stale &gt;900s
+010|BLOCKED|portable_coordinator_recheck|last verified portable heartbeat 2026-07-16T13:45:53Z
+011|PASS|manual_action_readback|OPEN retained; external Portable F-host action required
+012|PASS|unsafe_wrapper_guard|reset-hard wrapper not used as substitute
+013|PASS|second_runner_guard|no second runner/task created
+014|PASS|direct_push_guard|canonical direct push forbidden; child-only writes
+015|BLOCKED|ofcom_binary_runtime_gate|archive bytes/SHA/CRC/member/row runtime validation unavailable
+016|PASS|same_failed_binary_route_suppressed|identical failed transport recovery not looped
+017|PASS|canonical_wave57_progress|2304/2314 = 99.64%; previous 99.63%
+018|PASS|canonical_source_registry|211 candidates / 207 promoted / 4 held
+019|PASS|canonical_confidence|207/207 promoted &gt;=95; avg 98.6%
+020|PASS|canonical_product_guard|0/30761 product rows
+021|PASS|latest_slot_pr_history|Wave57 PR520 remains latest indexed internet_access_1 canonical PR
+022|PASS|ofcom_latest_current_release|Spring 2026 remains latest current availability release found
+023|PASS|ofcom_pnd_role|planned deployments are forward-looking; never current substitute
+024|PASS|bduk_omr_collection_refresh|latest evaluated premise release found: January 2026
+025|PASS|bduk_may_output_guard|May 2026 evaluated premise output not present in official collection
+026|PASS|bduk_jan_technical_note_refresh|official 4 June 2026 technical note revalidated
+027|PASS|bduk_sample_preview_refresh|official January sample preview available and revalidated
+028|PARTIAL|bduk_direct_csv_fetch|official CSV asset identified; browser text/csv unsupported
+029|PARTIAL|bduk_binary_download|direct binary download failed in this execution environment
+030|PASS|bduk_hash_fail_closed|SHA256 left null; no fabricated content hash
+031|PASS|bduk_uniqueness_fail_closed|full-sample UPRN uniqueness not claimed without CSV bytes
+032|PARTIAL|repo_binding_search_uprn_toid|0 indexed hits; not treated as absence proof
+033|PARTIAL|repo_binding_search_parcel_uprn|0 indexed hits; not treated as absence proof
+034|PASS|repo_empty_search_guard|zero indexed hits never converted to NO_DATA
+035|PASS|source_artifact_write_readback|schema19 child source artifact written and remote readback passed
+036|PASS|BDUK_SCHEMA:uprn|published January-2026 premises technical-note schema field
+037|PASS|BDUK_SCHEMA:struprn|published January-2026 premises technical-note schema field
+038|PASS|BDUK_SCHEMA:bduk_recognised_premises|published January-2026 premises technical-note schema field
+039|PASS|BDUK_SCHEMA:country|published January-2026 premises technical-note schema field
+040|PASS|BDUK_SCHEMA:postcode|published January-2026 premises technical-note schema field
+041|PASS|BDUK_SCHEMA:lot_id|published January-2026 premises technical-note schema field
+042|PASS|BDUK_SCHEMA:lot_name|published January-2026 premises technical-note schema field
+043|PASS|BDUK_SCHEMA:subsidy_control_status|published January-2026 premises technical-note schema field
+044|PASS|BDUK_SCHEMA:current_gigabit|published January-2026 premises technical-note schema field
+045|PASS|BDUK_SCHEMA:future_gigabit|published January-2026 premises technical-note schema field
+046|PASS|BDUK_SCHEMA:local_authority_district_ons_code|published January-2026 premises technical-note schema field
+047|PASS|BDUK_SCHEMA:local_authority_district_ons|published January-2026 premises technical-note schema field
+048|PASS|BDUK_SCHEMA:region_ons_code|published January-2026 premises technical-note schema field
+049|PASS|BDUK_SCHEMA:region_ons|published January-2026 premises technical-note schema field
+050|PASS|BDUK_SCHEMA:bduk_gis|published January-2026 premises technical-note schema field
+051|PASS|BDUK_SCHEMA:bduk_gis_contract_scope|published January-2026 premises technical-note schema field
+052|PASS|BDUK_SCHEMA:bduk_gis_final_coverage_date|published January-2026 premises technical-note schema field
+053|PASS|BDUK_SCHEMA:bduk_gis_contract_name|published January-2026 premises technical-note schema field
+054|PASS|BDUK_SCHEMA:bduk_gis_supplier|published January-2026 premises technical-note schema field
+055|PASS|BDUK_SCHEMA:bduk_vouchers|published January-2026 premises technical-note schema field
+056|PASS|BDUK_SCHEMA:bduk_vouchers_contract_name|published January-2026 premises technical-note schema field
+057|PASS|BDUK_SCHEMA:bduk_vouchers_supplier|published January-2026 premises technical-note schema field
+058|PASS|BDUK_SCHEMA:bduk_superfast|published January-2026 premises technical-note schema field
+059|PASS|BDUK_SCHEMA:bduk_superfast_contract_name|published January-2026 premises technical-note schema field
+060|PASS|BDUK_SCHEMA:bduk_superfast_supplier|published January-2026 premises technical-note schema field
+061|PASS|BDUK_SCHEMA:bduk_hubs|published January-2026 premises technical-note schema field
+062|PASS|BDUK_SCHEMA:bduk_hubs_contract_name|published January-2026 premises technical-note schema field
+063|PASS|BDUK_SCHEMA:bduk_hubs_supplier|published January-2026 premises technical-note schema field
+064|PASS|BDUK_QUALITY:missing_uprn_guard|missing UPRN can reflect demolished/derelict/new-build epoch gap; not broadband absence
+065|PASS|BDUK_QUALITY:premises_base_guard|premises base follows latest AddressBase Premium epoch used by OMR with postal/non-demolished filtering
+066|PASS|BDUK_QUALITY:current_gigabit_semantics|existing gigabit derived from OMR plus BDUK delivery data
+067|PASS|BDUK_QUALITY:current_gigabit_freshness|premises connected since January OMR may still show false
+068|PASS|BDUK_QUALITY:supplier_response_gap|not all suppliers return to OMR; absence/false is not definitive no-service proof
+069|PASS|BDUK_QUALITY:future_gigabit_semantics|future gigabit reflects OMR future plan evidence
+070|PASS|BDUK_QUALITY:future_contract_gap|future contracted premise can be absent if supplier did not respond or contract post-dates OMR reference
+071|PASS|BDUK_QUALITY:bduk_ofcom_noncomparability|BDUK and Ofcom PND differ in premises bases, suppliers/evaluation and dates
+072|PASS|BDUK_QUALITY:gis_incidental_exclusion|GIS incidental premises excluded from intervention indicator
+073|PASS|BDUK_QUALITY:superfast_source|Superfast intervention indicator sourced from SCT
+074|PASS|BDUK_QUALITY:voucher_source|voucher intervention uses expected-premises-passed lists
+075|PASS|BDUK_QUALITY:hubs_source|hub intervention uses internal management information
+076|PASS|BDUK_QUALITY:vouchers_noncontractual|voucher premises are not contractual coverage commitments
+077|PASS|BDUK_QUALITY:hubs_descoping|hub premises may later be descoped
+078|PASS|BDUK_QUALITY:multiple_interventions|a premise can belong to multiple intervention types
+079|PASS|BDUK_QUALITY:intervention_overlap|approximately 3.7% of intervention premises overlap multiple interventions
+080|PASS|BDUK_QUALITY:final_coverage_date_semantics|GIS final coverage date is contract final-payment date, not exact premise delivery date
+081|PASS|BDUK_QUALITY:supplier_name_caveat|supplier naming may be inconsistent across source systems
+082|PASS|BDUK_QUALITY:geography_primary|primary geography assignment: UPRN to NSUL December 2025
+083|PASS|BDUK_QUALITY:geography_fallback_postcode|fallback geography: postcode to NSPL November 2025
+084|PASS|BDUK_QUALITY:geography_fallback_uprn|alternative geography fallback: UPRN to ONSUD November 2025
+085|PASS|BDUK_QUALITY:geography_not_identity|geography assignment never upgrades exact parcel identity or broadband currentness
+086|PASS|BDUK_QUALITY:demolished_gis_gap|around 4,900 GIS premises absent because OS categorises them as demolished
+087|PASS|BDUK_QUALITY:quality_assurance|technical note states automated and manual QA including UPRN validity and technical standards
+088|PASS|IDENTITY_GEOGRAPHY:NSUL_reference|May 2026 NSUL / AddressBase Epoch126
+089|PASS|IDENTITY_GEOGRAPHY:NSUL_updated|National Data Library record updated 2 July 2026
+090|PASS|IDENTITY_GEOGRAPHY:NSUL_cycle|NSUL issued on a six-weekly cycle
+091|PASS|IDENTITY_GEOGRAPHY:NSUL_scope|Great Britain UPRN-to-geography lookup role
+092|PASS|IDENTITY_GEOGRAPHY:NSUL_OA_method|Output Area assignment uses UPRN point-in-polygon
+093|PASS|IDENTITY_GEOGRAPHY:NSUL_higher_geography|higher geographies use best-fit relationships
+094|PASS|IDENTITY_GEOGRAPHY:NSUL_not_broadband|NSUL supplies geography, not broadband currentness
+095|PASS|IDENTITY_GEOGRAPHY:NSUL_not_parcel_boundary|NSUL does not provide parcel boundary identity
+096|PASS|IDENTITY_GEOGRAPHY:OS_Open_UPRN_identity|UPRN is authoritative, persistent and never reused
+097|PASS|IDENTITY_GEOGRAPHY:OS_Open_UPRN_geometry|OS Open UPRN provides point/location, not parcel boundary
+098|PASS|IDENTITY_GEOGRAPHY:OS_Linked_Identifiers|authoritative UPRN/USRN/TOID relationship source
+099|PASS|IDENTITY_GEOGRAPHY:OS_Linked_exact_guard|BLPU_UPRN_TopographicArea_TOID_5 exact candidate only when version information is correct
+100|PASS|OFCOM:Spring2026_published|Connected Nations Spring 2026 published 13 May 2026
+101|PASS|OFCOM:Spring2026_snapshot|current availability snapshot is January 2026
+102|PASS|OFCOM:Spring2026_current_role|fixed broadband/mobile availability is current-state evidence
+103|PASS|OFCOM:Spring2026_latest_guard|no newer current availability release found in this refresh
+104|PASS|OFCOM:PND2026_published|Planned Network Deployments 2026 published 13 May 2026
+105|PASS|OFCOM:PND2026_horizon|anticipated deployments extend through end-2028
+106|PASS|OFCOM:PND2026_forward_only|operator plans are future evidence, not current availability
+107|PASS|OFCOM:current_vs_planned|PND never substitutes Spring current snapshot
+108|PASS|HMLR:title_uprn_relationship|National Polygon Service Title Number and UPRN Lookup provides exact relationship where link can be made
+109|PASS|HMLR:relationship_condition|link depends on AddressBase address-to-title relationship
+110|PASS|HMLR:licensed_access|full National Polygon Service datasets are licensed/chargeable
+111|PASS|HMLR:no_auth_exclusion|paid/account-gated HMLR path excluded from free no-auth production input
+112|PARTIAL|exact_parcel_binding|canonical parcel→UPRN/TOID identity still unverified
+113|PASS|may_collection_guard|official OMR collection still lists January 2026 as latest evaluated premise release
+114|PASS|may_evaluation_guard|May 2026 evaluation/closure does not substitute unpublished evaluated premise data
+115|PASS|current_false_guard|BDUK current_gigabit=false is not strong absence proof because freshness/response gaps exist
+116|PASS|future_false_guard|BDUK future_gigabit=false can reflect supplier/contract reference-date gaps
+117|PASS|product_promotion_gate|no exact canonical identity =&gt; no product row promotion
+118|PASS|row_state_guard|33785 legacy verified / 58498 pending-or-no-data retained
+119|PASS|fake_data_guard|no synthetic identities, geometries, hashes or product rows
+120|PASS|child_only_write_guard|research writes remain on child branch; no canonical direct push</pre>
+<h2>Resmî sample revalidation — 8 örnek</h2><pre>01|10007455554|BH23 7AU|current=true|future=false|GIS=true|New Forest|South East|scope=Initial
+02|10093935305|BH23 7BQ|current=true|future=false|GIS=false|New Forest|South East|scope=-
+03|10007464284|BH24 1AF|current=true|future=true|GIS=false|New Forest|South East|scope=-
+04|10007461596|BH24 1DY|current=true|future=true|GIS=false|New Forest|South East|scope=-
+05|100060494230|BH24 3AS|current=true|future=true|GIS=false|New Forest|South East|scope=-
+06|100060497523|BH24 3PA|current=true|future=true|GIS=false|New Forest|South East|scope=-
+07|10007456950|BH24 3QG|current=true|future=false|GIS=true|New Forest|South East|scope=Initial
+08|200003632193|AL1 1AG|current=true|future=false|GIS=false|St Albans|East of England|scope=-</pre>
+<p>Örnekler January 2026 OMR official sample preview'dan yeniden doğrulandı; yeni ürün satırı değildir. Current premise QA cumulative child = 990.</p>
+<p>Kaynak rolleri: GOV.UK BDUK January-2026 premises technical note/sample/OMR collection; ONS NSUL May-2026 Epoch126; Ofcom Connected Nations Spring-2026 ve PND-2026; OS Open UPRN/Open Linked Identifiers/Open TOID; HMLR National Polygon Service access/relationship guard.</p>
 </body></html>
