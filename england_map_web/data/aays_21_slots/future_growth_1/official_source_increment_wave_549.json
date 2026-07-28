@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 549,
+  "generated_at": "2026-07-28T21:02:00Z",
+  "output_semantics": "OFFICIAL_OS_OPEN_UPRN_LINKED_IDENTIFIERS_API_AND_RELATIONSHIP_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_HMLR_TITLE_NOT_LEGAL_ACCESS_NOT_SCORE",
+  "row_range": {"start": 997764, "end": 997793, "count": 30},
+  "topic": {"source_contract": "Ordnance Survey open location identifiers and relationships", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "os_open_uprn", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-open-uprn", "authority_class": "official_national_mapping_address_identifier_dataset", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"identifier": "UPRN", "coverage": "every addressable location in Great Britain", "approx_locations": 40000000, "includes_non_postal_features": true, "formats": ["CSV", "GeoPackage"], "update_frequency": "six weeks", "scope_guard": "A UPRN coordinate is an addressable-location reference and not a legal parcel, owner or HMLR title polygon."}},
+    {"source_id": "os_open_linked_identifiers", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-open-linked-identifiers", "authority_class": "official_national_mapping_identifier_relationship_dataset", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"relationships": ["UPRN", "USRN", "TOID"], "format": "CSV lookup table", "update_frequency": "six weeks", "scope_guard": "Identifier relationships support data linkage and visualisation but do not establish ownership, legal boundary or planning entitlement."}},
+    {"source_id": "os_linked_identifiers_api", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-linked-identifiers-api", "authority_class": "official_national_mapping_identifier_api", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"api_style": "RESTful OpenAPI 3.0.2", "response_format": "JSON", "feature_relationships": "properties, streets and OS MasterMap identifiers", "scope_guard": "API capability is not evidence that a candidate-specific identifier query or relation was executed."}},
+    {"source_id": "os_open_linked_relationships", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/os-open-linked-identifiers-relationships", "authority_class": "official_national_mapping_relationship_documentation", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"feature_examples": ["TopographicArea TOID", "RoadLink TOID", "Road TOID", "Street USRN", "BLPU UPRN"], "scope_guard": "A TopographicArea or road relationship is mapping context and not a cadastral title, highway right or planning red-line."}},
+    {"source_id": "os_identifier_family", "publisher": "Ordnance Survey", "url": "https://www.ordnancesurvey.co.uk/products/identifiers-product-family", "authority_class": "official_national_mapping_identifier_policy_and_product_context", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"identifier_types": ["UPRN", "USRN", "TOID"], "purpose": "persistent identifiers for linking and tracking real-world locations/features", "scope_guard": "Persistence of an identifier does not prove current use, ownership, permission or legal extent."}}
+  ],
+  "checks": {"total": 30, "passed": 30, "scope_guards": 8, "official_candidate_or_scope_examples": 12, "evidence_quality_score_100": 98.8, "evidence_quality_score_is_statistical_accuracy": false, "uprn_scope_revalidated": true, "linked_identifier_scope_revalidated": true, "api_capability_guarded": true, "title_and_access_separation_revalidated": true, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "A UPRN is a persistent addressable-location identifier and not an HMLR title or legal parcel.",
+    "OS Open UPRN includes non-postal features, so UPRN existence is not proof of a dwelling or building.",
+    "UPRN coordinates are points and not surveyed or registered boundary vertices.",
+    "UPRN, USRN and TOID relationships support joining and visualisation rather than ownership or planning entitlement.",
+    "A TopographicArea TOID is not automatically the candidate site, application red-line or title polygon.",
+    "Road and street relationships do not establish a private right of access or public-highway legal extent.",
+    "Dataset/API availability and six-week updates do not prove execution of a candidate-specific join.",
+    "No score or promotion is written without exact identifier execution, HMLR title relation, current planning case and overlays."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}
