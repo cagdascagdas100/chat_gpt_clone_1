@@ -1,10 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "security_public_safety_2",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
-  "checked_at": "2026-07-28T00:46:40Z",
-  "state": "RUNNER_DIAGNOSTIC_COMPLETE_RECOVERY_PARKED",
-  "diagnostic_rows": 8,
+  "checked_at": "2026-07-28T14:49:42Z",
+  "state": "RUNNER_DIAGNOSTIC_REFRESHED_RECOVERY_PARKED",
+  "diagnostic_rows": 15,
   "rows": [
     {
       "line": 1,
@@ -17,21 +17,21 @@
       "line": 2,
       "check": "SLOT_MANIFEST_AND_CONCURRENCY",
       "state": "PASS",
-      "evidence": "Manifest confirms security_public_safety_2 partition 30762-61522 and allowed slot roots. Current task caps simultaneous workers at 12.",
+      "evidence": "Manifest confirms security_public_safety_2 partition 30762-61522. Existing task retains 10 parallel official-source probes and 12 parallel row checks; no additional runner was created.",
       "source": "docs/chatgpt_status/_shared/slots_21/manifest_latest.json"
     },
     {
       "line": 3,
-      "check": "CANONICAL_SLOT_STATUS",
+      "check": "CANONICAL_SLOT_STATUS_FRESH_READBACK",
       "state": "BLOCKED",
-      "evidence": "State RECOVERY_PARKED_RUNNER_QUEUE_CONSUMER_UNAVAILABLE; queue pickup_requested; live owner false.",
+      "evidence": "Fresh remote readback still reports RECOVERY_PARKED_RUNNER_QUEUE_CONSUMER_UNAVAILABLE; queue pickup_requested; live owner false.",
       "source": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json"
     },
     {
       "line": 4,
-      "check": "OWNERSHIP_HEARTBEAT_LEASE",
+      "check": "OWNERSHIP_HEARTBEAT_LEASE_FRESH_READBACK",
       "state": "BLOCKED",
-      "evidence": "owner_page_session_id, lease_token_hash, heartbeat_at and lease_expires_at are all null; second queue refresh is forbidden.",
+      "evidence": "owner_page_session_id, lease_token_hash, heartbeat_at and lease_expires_at remain null. Claim-time business writing remains forbidden.",
       "source": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
     },
     {
@@ -43,26 +43,77 @@
     },
     {
       "line": 6,
-      "check": "300_ROW_OUTPUT",
+      "check": "CANONICAL_300_ROW_OUTPUT",
       "state": "ABSENT",
-      "evidence": "Canonical 300-row output path returned 404; no candidate or business output was inferred.",
+      "evidence": "Fresh remote readback returned 404 for the canonical 300-row shard JSON. No candidate or business output was inferred.",
       "source": "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json"
     },
     {
       "line": 7,
+      "check": "WEBSITE_300_ROW_JSON",
+      "state": "ABSENT",
+      "evidence": "Fresh remote readback returned 404 for the 300-row website JSON; the existing 96-row line-by-line evidence view remains the latest published dataset.",
+      "source": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion_latest.json"
+    },
+    {
+      "line": 8,
       "check": "MANUAL_ACTION_AND_RECOVERY_BUDGET",
       "state": "OPEN",
       "evidence": "One idempotent recovery attempt was already used. A second refresh, duplicate task or second runner is prohibited.",
       "source": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
     },
     {
-      "line": 8,
+      "line": 9,
       "check": "CONTROL_SLOT_COMMON_BLOCKER",
       "state": "BLOCKED",
-      "evidence": "problem_solver_1 reports EXTERNAL_CANONICAL_F_SHARED_RUNNER_STALE_OR_OFFLINE as the common blocker; no independent business runner may be created from this slot.",
+      "evidence": "problem_solver_1 continues to identify EXTERNAL_CANONICAL_F_SHARED_RUNNER_STALE_OR_OFFLINE as the common blocker; no independent business runner may be created from this slot.",
       "source": "docs/chatgpt_status/_shared/slots_21/problem_solver_1/status_latest.json"
+    },
+    {
+      "line": 10,
+      "check": "POLICE_API_LATEST_MONTH",
+      "state": "PASS",
+      "evidence": "Official Police.uk last-updated endpoint still documents 2026-05-01 as the latest crime-data month. Existing candidate rows therefore retain police_month 2026-05.",
+      "source": "https://data.police.uk/docs/method/crime-last-updated/"
+    },
+    {
+      "line": 11,
+      "check": "POLICE_API_BACKPRESSURE",
+      "state": "PASS_LIMIT",
+      "evidence": "Official limit remains 15 requests per second with burst 30 and HTTP 429 on excess. The claim-time ceiling remains 10 requests per second with cache, retry and jitter.",
+      "source": "https://data.police.uk/docs/api-call-limits/"
+    },
+    {
+      "line": 12,
+      "check": "POLICE_STREET_LOCATION_SEMANTICS",
+      "state": "PASS_LIMIT",
+      "evidence": "Official documentation confirms street-level crime locations are approximations rather than exact incident locations; parcel evidence remains candidate-only and fail-closed.",
+      "source": "https://data.police.uk/docs/method/crime-street/"
+    },
+    {
+      "line": 13,
+      "check": "HOME_OFFICE_OPEN_TABLES_FRESHNESS",
+      "state": "PASS",
+      "evidence": "The official Police recorded crime and outcomes open-data page shows a 2026-07-23 update and current year-ending March 2026 tables. It remains a benchmark source and is not copied into exact parcel incident values.",
+      "source": "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables"
+    },
+    {
+      "line": 14,
+      "check": "IOD25_TECHNICAL_METHOD",
+      "state": "PASS_LIMIT",
+      "evidence": "The official IoD25 technical report continues to define relative deprivation for LSOA small areas. IoD Crime Rank is retained only as a relative LSOA candidate indicator, not a parcel incident rate.",
+      "source": "https://www.gov.uk/government/publications/english-indices-of-deprivation-2025-technical-report"
+    },
+    {
+      "line": 15,
+      "check": "ONS_LSOA21_BOUNDARY_SERVICE",
+      "state": "PASS",
+      "evidence": "The official ONS ArcGIS LSOA December 2021 boundary FeatureServer remains available with JSON query support. Existing single-match LSOA evidence remains the current published join evidence pending canonical runner execution.",
+      "source": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5/FeatureServer"
     }
   ],
+  "official_source_checks_completed": 6,
+  "fresh_remote_state_checks_completed": 7,
   "automatic_fix_available_from_this_slot": false,
   "second_runner_created": false,
   "second_task_created": false,
