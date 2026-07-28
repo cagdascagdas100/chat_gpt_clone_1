@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — 300 Satır Remote Acceptance</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.warning,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#e8f5e9;border-color:#a5d6a7}.warning{padding:12px;background:#fff3cd;border-color:#ffe69c;margin:12px 0}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:150px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1}.PASS{background:#e8f5e9}.PENDING{background:#fff3cd}code{font-size:9px;word-break:break-all}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — 300 satır remote acceptance</h1>
+<div class="notice">Ana 300-satır JSON ve HTML artefaktları branch üzerinde doğrulandı. Shard JSON ile web JSON aynı blob SHA'sını kullanıyor; 300 Police SHA ve 296 adet ≥%95 satır mevcut.</div>
+<div class="warning">Public served HTTP ve gerçek browser runtime bu ortamda DNS/indeks erişimi olmadığı için PENDING tutulur. Tamamlanmış gibi gösterilmez.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>3 exact artefakt</h2><div id="artifacts"></div></section>
+<section class="panel"><h2>15 acceptance kontrolü</h2><div id="checks"></div></section>
+<section class="panel"><h2>3 kalan engel</h2><div id="blockers"></div></section>
+<script>
+'use strict';
+const DATA_URL='priority_300row_remote_acceptance_latest.json';
+const el=id=>document.getElementById(id);
+const text=v=>v===null||v===undefined?'—':String(v);
+function cell(tr,v,code=false){const td=document.createElement('td');if(code){const c=document.createElement('code');c.textContent=text(v);td.appendChild(c)}else td.textContent=text(v);tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const r=await fetch(DATA_URL,{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();el('status').textContent=`Yüklendi: ${d.candidate_rows} aday, ${d.candidate_accuracy_ge_95_rows} ≥95, ${d.police_response_sha256_rows} Police SHA; acceptance ${d.acceptance_summary.checks_passed} PASS / ${d.acceptance_summary.checks_pending} PENDING`;el('status').className='panel ok';[['Aday',d.candidate_rows],['≥95',d.candidate_accuracy_ge_95_rows],['Police SHA',d.police_response_sha256_rows],['Kaynak',`${d.promoted_sources}/${d.sources_reviewed}`],['İşlem',`${d.acceptance_summary.main_completed_operations}/${d.acceptance_summary.main_total_operations}`],['Genel %',`${d.acceptance_summary.main_overall_progress_percent}%`],['Business',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('artifacts').appendChild(table(['#','Yol','Blob SHA','Durum'],body=>(d.artifacts||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);cell(tr,x.path);cell(tr,x.blob_sha,true);cell(tr,x.state);body.appendChild(tr)})));el('checks').appendChild(table(['#','Kontrol','Sonuç','Kanıt'],body=>(d.acceptance_checks||[]).forEach(x=>{const tr=document.createElement('tr');tr.className=x.result;cell(tr,x.line);cell(tr,x.check);cell(tr,x.result);cell(tr,x.evidence,true);body.appendChild(tr)})));el('blockers').appendChild(table(['#','Engel','Durum'],body=>(d.remaining_blockers||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PENDING';cell(tr,x.line);cell(tr,x.blocker);cell(tr,x.state);body.appendChild(tr)})))}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>
