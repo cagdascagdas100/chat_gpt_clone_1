@@ -1,12 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "gas_emissions_2",
   "continuation_key": "f2d3860b264634167c4555ffd2bc809541351e7a5ca52563a4fc89c43feef0ec",
-  "state": "RECOVERY_PARKED",
+  "state": "RESOLVED",
   "detected_at": "2026-07-28T13:43:53Z",
-  "updated_at": "2026-07-28T13:43:53Z",
+  "updated_at": "2026-07-28T14:10:14Z",
   "trigger": "BLOCKED_OR_STALE_OVER_15_MINUTES",
   "owner_check": {
     "live_owner": false,
@@ -21,30 +21,32 @@
     "duplicate_task_created": false,
     "duplicate_commit_for_business_output_created": false
   },
-  "verified_canonical_progress": {
-    "canonical_visible_rows": 8634,
-    "latest_published_wave": 113,
-    "latest_pr": 785,
-    "latest_merge_sha": "a00dce0001f3629388e7cfd9b81945b920d0fd8f",
+  "resolution": {
+    "reason": "Newer canonical publication evidence proves that the same continuation progressed through wave 165 after the stale wave-113 state snapshot.",
+    "latest_verified_wave": 165,
+    "canonical_visible_rows": 12714,
+    "source_packets": 490,
+    "unique_source_types": 486,
+    "latest_wave_rows": 72,
+    "qa_checks_passed": 403,
+    "qa_checks_defined": 403,
+    "transcription_accuracy_percent": 100,
+    "source_row_accuracy_percent": 99,
+    "official_sources_only": true,
+    "all_rows_have_source_locators": true,
+    "html_readback": true,
+    "wave_overlay_path": "england_map_web/data/aays_21_slots/gas_emissions_2/official_evidence_manifest_wave165_overlay.json",
+    "qa_path": "england_map_web/data/aays_21_slots/gas_emissions_2/official_evidence_hub_qa_latest.json"
+  },
+  "remaining_gates": {
     "quality_held_rows": 26,
     "browser_accepted_rows": 66,
     "required_browser_accepted_rows": 100,
-    "parcel_bound_rows": 0
+    "parcel_bound_rows": 0,
+    "final_ready": false
   },
-  "recovery_findings": [
-    "Canonical status and checkpoint are older than 15 minutes and explicitly report stale unclaimed runner state.",
-    "Runtime guard, pipeline and local execution receipts are absent.",
-    "The existing current-task record does not expose a complete executable contract containing explicit read_paths, exact_write_paths, resource_class, timeout and acceptance conditions for this environment.",
-    "No live owner lease exists, but starting a second logical task or fabricating runtime/browser/parcel evidence is forbidden."
-  ],
-  "automatic_recovery_attempt": {
-    "attempted": true,
-    "result": "NOT_EXECUTABLE_IN_CURRENT_ENVIRONMENT",
-    "reason": "No canonical runner runtime or local checkout is available; gh CLI is unavailable and direct container network access to github.com is unavailable. GitHub connector read/write access is healthy and was used only for canonical inspection and this recovery evidence record."
-  },
-  "next_safe_step": "Resume the same continuation_key only when the existing single runner can produce runtime guard/pipeline receipts and the task has an explicit executable contract; then prove 100-of-100 browser acceptance and parcel binding without relaxing the 26 quality holds.",
+  "next_safe_step": "Continue the same continuation_key with deduplicated official-source evidence waves while keeping the 26 held rows fail-closed; browser 100-of-100 and parcel binding remain separate acceptance gates.",
   "requires_user_action": false,
   "manual_action_created": false,
-  "final_ready": false,
   "fake_data": false
 }
