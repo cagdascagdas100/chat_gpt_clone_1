@@ -5,7 +5,7 @@ param(
     [string]$LandingUrl = "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     [int64]$MinimumBytes = 30000000,
     [int64]$MaximumBytes = 100000000,
-    [int]$RetryCount = 2
+    [int]$RetryCount = 3
 )
 
 $ErrorActionPreference = "Stop"
@@ -138,6 +138,10 @@ function Invoke-HttpClientCookieDownload {
     }
     catch {
         $Errors.Add("HttpClientCookie: $($_.Exception.Message)")
+        if ($FileStream) {
+            $FileStream.Dispose()
+            $FileStream = $null
+        }
         if (Test-Path -LiteralPath $Destination -PathType Leaf) {
             Remove-Item -LiteralPath $Destination -Force
         }
