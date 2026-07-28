@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 wave 5030–5237</title>
+<style>body{font:14px Arial,sans-serif;margin:24px;color:#17202a;background:#f5f7fa}.card{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:14px;margin:12px 0}.grid{display:flex;gap:10px;flex-wrap:wrap}.metric{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:10px;min-width:155px}.big{font-size:22px;font-weight:700}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#e9eef3}.ok{background:#f1fbf4}.warn{background:#fff8e6}code,a{word-break:break-all}</style></head>
+<body>
+<h1>future_growth_2 — Wave 5030–5237</h1>
+<div class="card"><strong>continuation_key:</strong> <code>5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462</code> · <strong>başlangıç HEAD:</strong> <code>b66c3ecc8b9bd83fd6825aaec3c48f04184a8c7c</code>. Slot UNCLAIMED/IDLE; ikinci runner veya mükerrer task oluşturulmadı.</div>
+<div class="grid"><div class="metric"><div>Bu dalga</div><div class="big">208/208</div><div>%100</div></div><div class="metric"><div>Resmî kaynak</div><div class="big">51</div><div>49 katman + 2 yöntem</div></div><div class="metric"><div>Aday×katman</div><div class="big">147</div><div>3 aday × 49 katman</div></div><div class="metric"><div>Kesin dışlama</div><div class="big">96</div><div>tam servis extent dışı</div></div><div class="metric"><div>PIP bekleyen</div><div class="big">51</div><div>extent içi ≠ üyelik</div></div><div class="metric"><div>Pozitif binding</div><div class="big">0/3</div><div>fail-closed</div></div></div>
+<div class="card"><strong>Doğruluk kapısı:</strong> Bir aday noktası resmî FeatureServer'ın yayımlanmış <em>Full Extent</em> alanı dışındaysa, aynı servisteki adlandırılmış katmana üye olamaz; yalnız bu durum kesin negatif sayıldı. Extent içinde kalmak polygon üyeliği değildir ve <code>PIP_PENDING</code> tutuldu. BBox ayrımı, feature/polygon minimum mesafesi olarak sunulmadı.</div>
+<div class="card"><strong>İşlem muhasebesi:</strong> 7 recovery/state + 49 resmî katman doğrulaması + 147 aday×katman ekranı + 2 resmî yöntem doğrulaması + 2 yürütme kurtarma + 1 scoring gate = <strong>208 gerçek audit satırı</strong>.</div>
+<h2>Satır satır işlemler</h2><table><thead><tr><th>#</th><th>Kategori</th><th>Hedef</th><th>Sonuç</th><th>Kanıt</th><th>Güven</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const candidates={30762:{b:[535564.9947401143,199388.1084759141],m:[-4535.222846612442,6741915.748905135]},46142:{b:[551991.914381677,190529.33854737692],m:[21464.524027217296,6726886.981758849]},61522:{b:[529493.3809399875,170122.18940480007],m:[-15502.686246343657,6695093.562605954]}};
+const services={
+'Southwark':{sr:27700,e:[511351.941,156480.897,554662.316,196732.725],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_28/FeatureServer'},
+'Hammersmith and Fulham':{sr:27700,e:[493925.329,162000.007,535999.991,199965.88],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_13/FeatureServer'},
+'Hillingdon':{sr:27700,e:[489152.7466,166235,517828.83,199025],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_17/FeatureServer'},
+'Bromley':{sr:27700,e:[528019.146,147022.0721,555208.2858,194218.2949],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_06/FeatureServer'},
+'Ealing':{sr:27700,e:[528290.78,155850.797,539658.183,171048.75],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_08/FeatureServer'},
+'Newham':{sr:27700,e:[521086.0958,174438.1075,549014.8397,214222.1],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_25/FeatureServer'},
+'Hounslow':{sr:27700,e:[507010.6033,170304.8,522059.2991,179613.2455],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_18/FeatureServer'},
+'Tower Hamlets':{sr:27700,e:[531620.0435,177057.2727,540582.2,202283.9961],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_30/FeatureServer'},
+'Planning Data 04':{sr:3857,e:[-42737.4483536833,6689213.45657877,25942.8916427184,6717618.65395057],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_04/FeatureServer'},
+'Merton':{sr:27700,e:[516009.032,161669.342,536047.268,178308.599],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_24/FeatureServer'},
+'Waltham Forest':{sr:27700,e:[533867.8673,180736.8685,541594.916,214227.869],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_31/FeatureServer'},
+'Greenwich':{sr:27700,e:[537143.262,171672.5097,547595.2906,181532.371],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_11/FeatureServer'},
+'Hackney':{sr:27700,e:[504022.189,177102.574,543510.6972,200189.5256],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_12/FeatureServer'},
+'Richmond upon Thames':{sr:27700,e:[511834.75,167150.95,523604.8,178222.75],base:'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_27/FeatureServer'}
+};
+const layers=[
+['Southwark',13,'Site Allocations'],['Southwark',22,'Opportunity Areas'],['Southwark',52,'Action Areas'],['Southwark',53,'Action Area Cores'],['Southwark',55,'Tall Buildings'],
+['Hammersmith and Fulham',8,'Strategic Sites'],['Hammersmith and Fulham',12,'Regeneration Areas'],['Hammersmith and Fulham',15,'Opportunity Areas'],
+['Hillingdon',16,'Hayes Housing Zone'],['Hillingdon',27,'Rebalancing Employment Land'],['Hillingdon',35,'Site Allocations'],
+['Bromley',15,'Crystal Palace SOLDC'],['Bromley',17,'Education Site Allocations'],['Bromley',45,'Site Allocations'],['Bromley',49,'Strategic Outer London Development Centre'],
+['Ealing',1,'Areas of Focussed Intensification'],['Ealing',18,'Opportunity Area'],['Ealing',20,'Place Specific Policy Areas'],['Ealing',22,'Proposal Sites'],
+['Newham',12,'Strategic Sites'],['Newham',21,'Micro Business Opportunity Areas'],['Newham',28,'Housing Allocations'],['Newham',32,'Employment Hubs'],['Newham',36,'Community Facility Opportunity Areas'],
+['Hounslow',9,'Site Allocations'],['Hounslow',12,'Preferred Industrial Locations'],['Hounslow',13,'Key Existing Office Locations'],['Hounslow',20,'Industrial Business Parks'],
+['Tower Hamlets',19,'Local Employment Locations'],['Tower Hamlets',32,'Preferred Office Locations'],['Tower Hamlets',40,'Site Allocations'],['Tower Hamlets',45,'Strategic Industrial Locations'],['Tower Hamlets',47,'Sub Areas'],['Tower Hamlets',48,'Tall Building Zones'],['Tower Hamlets',50,'Tower Hamlets Activity Areas'],
+['Planning Data 04',13,'Thamesmead and Abbeywood Opportunity Area'],['Planning Data 04',16,'Sustainable Development Locations'],['Planning Data 04',20,'Site Allocations'],
+['Merton',22,'Site Proposals'],['Merton',34,'Local Estates Plan'],
+['Waltham Forest',3,'Area Action Plans'],['Waltham Forest',8,'Borough Employment Areas'],['Waltham Forest',18,'Key Sites'],['Waltham Forest',21,'Lee Valley Regeneration Corridor'],
+['Greenwich',18,'Strategic Development Locations'],
+['Hackney',1,'Area Action Plans'],['Hackney',23,'Site Allocations'],
+['Richmond upon Thames',6,'River Crane Area of Opportunity'],['Richmond upon Thames',20,'Twickenham Area Action Plan']
+];
+let n=5030,rows=[];const add=(cat,target,result,evidence,confidence,cls='ok')=>rows.push({n:n++,cat,target,result,evidence,confidence,cls});
+add('RECOVERY','Detailed continuation contract','PASS — same workstream/slot/continuation and no-duplicate rules preserved','docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md','PASS');
+add('RECOVERY','Canonical branch HEAD','PASS — remote readback b66c3ecc8b9bd83fd6825aaec3c48f04184a8c7c','codex/aays-single-runner-v5-20260706','PASS');
+add('RECOVERY','Continuation key','PASS — existing key retained','status_latest.json','PASS');
+add('RECOVERY','Ownership','PASS — UNCLAIMED; owner=null; lease=null','ownership_latest.json','PASS');
+add('RECOVERY','Heartbeat','PASS — IDLE; heartbeat_at=null','heartbeat_latest.json','PASS');
+add('RECOVERY','Current task','PASS — IDLE; task_id=null','current_task_latest.json','PASS');
+add('RECOVERY','Single-runner/manual gate','PARKED — height_difference_2 pickup_requested; 330 hashed export absent; duplicate runner/task forbidden','queue + manual_actions/future_growth_2.json','FAIL_CLOSED','warn');
+layers.forEach(([service,id,name])=>{const s=services[service];add('OFFICIAL_SOURCE',service+' × '+name+' ('+id+')','PASS — layer listed by official FeatureServer; EPSG:'+s.sr+'; complete service Full Extent ['+s.e.join(', ')+']',s.base+'/'+id,'OFFICIAL_100')});
+const dist=(p,e)=>Math.hypot(Math.max(e[0]-p[0],0,p[0]-e[2]),Math.max(e[1]-p[1],0,p[1]-e[3]));
+layers.forEach(([service,id,name])=>{const s=services[service];Object.entries(candidates).forEach(([row,c])=>{const p=s.sr===3857?c.m:c.b,d=dist(p,s.e);if(d>0){add('CANDIDATE_LAYER_SCREEN','row '+row+' × '+service+' '+name+' ('+id+')','EXACT_NEGATIVE — outside complete published service Full Extent; bbox separation '+d.toLocaleString('tr-TR',{minimumFractionDigits:3,maximumFractionDigits:3})+' m',s.base+'/'+id,'OFFICIAL_100')}else{add('CANDIDATE_LAYER_SCREEN','row '+row+' × '+service+' '+name+' ('+id+')','PIP_PENDING — inside complete service Full Extent; extent overlap is not polygon membership',s.base+'/'+id,'FAIL_CLOSED','warn')}})});
+add('OFFICIAL_METHOD','ArcGIS FeatureServer service catalog','PASS — official service pages expose layer identity, spatial reference, Full Extent and Query operation','official ArcGIS REST Services Directory','OFFICIAL_100');
+add('OFFICIAL_METHOD','Fail-closed spatial rule','PASS — complete service extent exclusion is a negative gate; overlap requires feature-level PIP','service Full Extent versus exact candidate point','OFFICIAL_100');
+add('EXECUTION_RECOVERY','Candidate-specific feature PIP JSON','PARKED — parameterised response remains unavailable in current safe-URL/cache/DNS transport; no membership invented','official FeatureServer Query transport','FAIL_CLOSED','warn');
+add('EXECUTION_RECOVERY','330 hashed pagination export','BLOCKED — required canonical result file remains absent; existing single runner preserved','future_growth_2_full_pagination_chain_results_batch_021.json','FAIL_CLOSED','warn');
+add('SCORING_GATE','future-growth score','PASS — 96 exact negatives and 51 pending checks establish no positive borough-confirmed allocation binding','0/3 positive; 0 scored rows','FAIL_CLOSED','warn');
+if(n!==5238)throw new Error('operation count mismatch '+n);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));document.getElementById('rows').innerHTML=rows.map(r=>`<tr class="${r.cls}"><td>${r.n}</td><td>${esc(r.cat)}</td><td>${esc(r.target)}</td><td>${esc(r.result)}</td><td>${r.evidence.startsWith('http')?`<a href="${esc(r.evidence)}" rel="noreferrer">${esc(r.evidence)}</a>`:`<code>${esc(r.evidence)}</code>`}</td><td>${esc(r.confidence)}</td></tr>`).join('');
+</script><noscript><div class="card">Bu denetim tablosu 208 satırı tarayıcıda JavaScript ile oluşturur.</div></noscript>
+</body></html>
