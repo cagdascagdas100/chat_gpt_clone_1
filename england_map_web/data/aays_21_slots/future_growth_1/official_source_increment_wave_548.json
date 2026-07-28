@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "future_growth_1",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave": 548,
+  "generated_at": "2026-07-28T21:02:00Z",
+  "output_semantics": "OFFICIAL_HMLR_UK_OVERSEAS_CORPORATE_TITLE_DATA_API_AND_COMPANIES_HOUSE_IDENTITY_SOURCE_CONTRACT_REVALIDATION_ONLY_NOT_CANDIDATE_NOT_SITE_TITLE_BINDING_NOT_SCORE",
+  "row_range": {"start": 997734, "end": 997763, "count": 30},
+  "topic": {"source_contract": "HMLR corporate title ownership and Companies House identity cross-check", "source_contracts_strengthened": 1, "new_candidate_rows": 0, "promoted_rows": 0},
+  "sources": [
+    {"source_id": "hmlr_uk_company_ownership", "publisher": "HM Land Registry", "url": "https://www.gov.uk/guidance/hm-land-registry-uk-companies-that-own-property-in-england-and-wales", "authority_class": "official_land_registry_corporate_title_dataset", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"former_name": "Commercial and Corporate Ownership Data (CCOD)", "coverage": "freehold and leasehold registered titles where the legal owner is a non-private individual", "scope_guard": "A corporate-title row must be bound to the exact candidate title and site; dataset presence alone is not site identity."}},
+    {"source_id": "hmlr_overseas_company_ownership", "publisher": "HM Land Registry", "url": "https://www.gov.uk/guidance/hm-land-registry-overseas-companies-that-own-property-in-england-and-wales", "authority_class": "official_land_registry_overseas_corporate_title_dataset", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"former_name": "Overseas Companies Ownership Data (OCOD)", "coverage": "freehold and leasehold title registrations owned by overseas companies", "excluded": ["private individuals", "UK companies with an overseas address", "charities"], "scope_guard": "Dataset absence is not evidence that land has no owner or that no title exists."}},
+    {"source_id": "hmlr_use_land_property_api", "publisher": "HM Land Registry", "url": "https://use-land-property-data.service.gov.uk/api-documentation", "authority_class": "official_land_registry_data_api_documentation", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"dataset_names": {"ccod": "UK companies that own property in England and Wales", "ocod": "Overseas companies that own property in England and Wales", "nps": "National Polygon Service"}, "authentication_required": true, "scope_guard": "API availability and dataset naming are not evidence that a candidate join or current title query was executed."}},
+    {"source_id": "companies_house_get_started", "publisher": "Companies House", "url": "https://developer.company-information.service.gov.uk/get-started", "authority_class": "official_company_register_api_guidance", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"public_information_access": "Companies House website and RESTful API", "scope_guard": "A company record identifies a company and is not a property title, proprietor-site binding or legal boundary."}},
+    {"source_id": "companies_house_api_overview", "publisher": "Companies House", "url": "https://developer.company-information.service.gov.uk/overview", "authority_class": "official_company_register_api_documentation", "retrieved_at": "2026-07-28T21:02:00Z", "facts": {"api_type": "REST API", "operations": "read public company data and submit authorised changes", "scope_guard": "Company-name similarity is not used as an ownership join; exact company number and HMLR title relation are required."}}
+  ],
+  "checks": {"total": 30, "passed": 30, "scope_guards": 8, "official_candidate_or_scope_examples": 12, "evidence_quality_score_100": 98.8, "evidence_quality_score_is_statistical_accuracy": false, "ccod_ocod_scope_revalidated": true, "api_dataset_names_revalidated": true, "company_record_title_separation_revalidated": true, "future_growth_score_written": false, "promotion": 0},
+  "scope_guards": [
+    "CCOD and OCOD rows concern registered corporate title ownership and require exact candidate-title binding.",
+    "OCOD exclusions mean dataset absence cannot prove no owner or no registered title.",
+    "A title may cover multiple properties and a property may involve multiple title interests.",
+    "API availability, access rights and dataset naming do not prove that a current candidate query was executed.",
+    "Companies House company records are not HM Land Registry property titles or title polygons.",
+    "Company-name similarity is not accepted as an ownership join.",
+    "Exact company number, exact HMLR title and exact site relation must be reconciled separately.",
+    "No score or promotion is written without current title/register evidence, site binding and executed overlays."
+  ],
+  "safety": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false, "final_ready": false}
+}

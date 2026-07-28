@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — Kümülatif Devam Kanıtı</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#e8f4fd;border-color:#b6d9f2}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:155px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.PASS{background:#e8f5e9}.HOLD{background:#fff3cd}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}a{color:#0d47a1}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — kümülatif devam kanıtı</h1>
+<div class="notice">Dalga 8–14 tek görünümde özetlenir. Her satırdan ilgili satır-satır HTML ve JSON kanıtına gidilebilir. Ana 300-satır çıktısı runner claim edilmeden değiştirilmez.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>Dalga özeti</h2><div id="waves"></div></section>
+<section class="panel"><h2>Aktif engeller</h2><div id="blockers"></div></section>
+<script>
+'use strict';
+const DATA_URL='continuation_evidence_rollup_latest.json';
+const el=id=>document.getElementById(id);
+const text=v=>v===null||v===undefined?'—':String(v);
+function cell(tr,v){const td=document.createElement('td');td.textContent=text(v);tr.appendChild(td)}
+function linkCell(tr,label,url){const td=document.createElement('td'),a=document.createElement('a');a.href=url;a.textContent=label;td.appendChild(a);tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const response=await fetch(DATA_URL,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const d=await response.json();el('status').textContent=`Yüklendi: ${d.displayed_waves} dalga, ${d.displayed_new_pass_rows} PASS, ${d.displayed_hold_rows} HOLD, ${d.cumulative_sample_rows_reviewed} kümülatif incelenen`;el('status').className='panel ok';[['Kanonik aday',d.canonical_candidate_rows],['≥95 aday',d.canonical_accuracy_ge_95_rows],['Kaynak',`${d.canonical_promoted_sources}/${d.canonical_sources_reviewed}`],['Dalga PASS',d.displayed_new_pass_rows],['Dalga HOLD',d.displayed_hold_rows],['Görünür satır tahmini',d.website_visible_rows_cumulative_receipt_estimate],['Business satır',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('waves').appendChild(table(['Dalga','PASS','HOLD','Kaynak','Kümülatif','Durum','HTML','JSON'],body=>(d.waves||[]).forEach(x=>{const tr=document.createElement('tr');tr.className=x.hold_rows?'HOLD':'PASS';cell(tr,x.wave);cell(tr,x.new_pass_rows);cell(tr,x.hold_rows);cell(tr,x.official_source_rows);cell(tr,x.cumulative_reviewed);cell(tr,x.state);linkCell(tr,'Satır görünümü',x.html);linkCell(tr,'JSON kanıtı',x.json);body.appendChild(tr)})));const ul=document.createElement('ul');(d.active_blockers||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li)});const p=document.createElement('p');p.textContent=d.next_single_action;el('blockers').append(ul,p)}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>

@@ -59,23 +59,56 @@ function Get-RemoteHead {
     return (([string]($Remote | Select-Object -First 1)) -split "\s+")[0]
 }
 
-$TrackedStatus = @(Invoke-Git status --porcelain --untracked-files=no)
-if ($TrackedStatus) {
-    throw "BOOTSTRAP_REPO_NOT_CLEAN:$([string]::Join(' | ', $TrackedStatus))"
+function Get-FetchedHead {
+    return ([string](Invoke-Git rev-parse "refs/remotes/origin/$Branch" | Select-Object -First 1)).Trim()
 }
+
+function Assert-TrackedClean {
+    $TrackedStatus = @(Invoke-Git status --porcelain --untracked-files=no)
+    if ($TrackedStatus) {
+        throw "BOOTSTRAP_REPO_NOT_CLEAN:$([string]::Join(' | ', $TrackedStatus))"
+    }
+}
+
+Assert-TrackedClean
 $CurrentBranch = ([string](Invoke-Git rev-parse --abbrev-ref HEAD | Select-Object -First 1)).Trim()
 if ($CurrentBranch -ne $Branch) { throw "BOOTSTRAP_BRANCH_MISMATCH:current=$CurrentBranch expected=$Branch" }
 
 $BeforeHead = Get-LocalHead
 $RemoteBefore = Get-RemoteHead
-Invoke-Git fetch origin $Branch | Out-Null
-if ($BeforeHead -ne $RemoteBefore) {
-    Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+$AfterHead = $BeforeHead
+$RemoteAfter = $RemoteBefore
+$FetchedHead = $null
+$SyncAttempts = 0
+$FastForwardUsed = $false
+$RemoteAdvancedDuringBootstrap = $false
+$HeadMatched = $false
+
+for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
+    $SyncAttempts = $Attempt
+    Assert-TrackedClean
+    Invoke-Git fetch origin $Branch | Out-Null
+    $FetchedHead = Get-FetchedHead
+    $LocalBeforeMerge = Get-LocalHead
+    if ($LocalBeforeMerge -ne $FetchedHead) {
+        Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        $FastForwardUsed = $true
+    }
+    Assert-TrackedClean
+    $AfterHead = Get-LocalHead
+    $RemoteAfter = Get-RemoteHead
+    if ($AfterHead -eq $RemoteAfter) {
+        $HeadMatched = $true
+        break
+    }
+    if ($Attempt -eq 1) {
+        $RemoteAdvancedDuringBootstrap = $true
+        continue
+    }
 }
-$AfterHead = Get-LocalHead
-$RemoteAfter = Get-RemoteHead
-if ($AfterHead -ne $RemoteAfter) {
-    throw "BOOTSTRAP_LOCAL_REMOTE_HEAD_MISMATCH:local=$AfterHead remote=$RemoteAfter"
+
+if (-not $HeadMatched) {
+    throw "BOOTSTRAP_LOCAL_REMOTE_HEAD_MISMATCH_AFTER_BOUNDED_RETRY:local=$AfterHead fetched=$FetchedHead remote=$RemoteAfter"
 }
 
 $Closure = Join-Path $RepoRoot $ClosureRel
@@ -85,17 +118,20 @@ $ClosureOutput = (& $Closure -PortableRoot $PortableRoot -RepoRoot $RepoRoot -Ar
 if ($LASTEXITCODE -ne 0) { throw "CLOSURE_022_NONZERO_EXIT:$LASTEXITCODE" }
 
 [ordered]@{
-    schema_version = 1
+    schema_version = 2
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
-    state = "CANONICAL_FAST_FORWARD_BOOTSTRAP_AND_022_COMPLETE"
+    state = "CANONICAL_BOUNDED_FAST_FORWARD_BOOTSTRAP_AND_022_COMPLETE"
     slot_id = $SlotId
     task_id = $TaskId
     branch = $Branch
     local_head_before = $BeforeHead
     remote_head_before = $RemoteBefore
+    fetched_head = $FetchedHead
     local_head_after = $AfterHead
     remote_head_after = $RemoteAfter
-    fast_forward_used = ($BeforeHead -ne $RemoteBefore)
+    synchronization_attempts = $SyncAttempts
+    remote_advanced_during_bootstrap = $RemoteAdvancedDuringBootstrap
+    fast_forward_used = $FastForwardUsed
     closure_path = $ClosureRel
     closure_output = $ClosureOutput
     same_task_retained = $true
@@ -103,5 +139,6 @@ if ($LASTEXITCODE -ne 0) { throw "CLOSURE_022_NONZERO_EXIT:$LASTEXITCODE" }
     second_runner_started = $false
     force_push_used = $false
     reset_used = $false
+    rebase_used = $false
     final_ready = $false
 } | ConvertTo-Json -Depth 12
