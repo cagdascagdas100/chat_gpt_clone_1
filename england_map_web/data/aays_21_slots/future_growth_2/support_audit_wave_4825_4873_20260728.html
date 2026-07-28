@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>future_growth_2 wave 4825–4873</title>
+<style>body{font:14px Arial,sans-serif;margin:24px;color:#17202a;background:#f5f7fa}.card{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:14px;margin:12px 0}.grid{display:flex;gap:10px;flex-wrap:wrap}.metric{background:#fff;border:1px solid #cfd8dc;border-radius:8px;padding:10px;min-width:150px}.big{font-size:22px;font-weight:700}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#e9eef3}.ok{background:#f1fbf4}.warn{background:#fff8e6}code,a{word-break:break-all}</style>
+</head>
+<body>
+<h1>future_growth_2 — Wave 4825–4873</h1>
+<div class="card"><strong>continuation_key:</strong> <code>5c59c5cee91d859c9e09480645ef8b17efe264568f2a4e312dd49d70e2958462</code> · <strong>başlangıç HEAD:</strong> <code>3f0ce30502001e140c00f72693db21d64d1c1907</code>. Slot UNCLAIMED/IDLE; ikinci runner veya mükerrer task oluşturulmadı.</div>
+<div class="grid"><div class="metric"><div>Bu dalga</div><div class="big">49/49</div><div>%100</div></div><div class="metric"><div>Resmî kaynak</div><div class="big">12</div><div>GLA servis/katalog</div></div><div class="metric"><div>Aday-katman kapısı</div><div class="big">27</div><div>3×9</div></div><div class="metric"><div>Yeni exact ilişki</div><div class="big">0</div><div>fail-closed</div></div><div class="metric"><div>Pozitif binding</div><div class="big">0/3</div><div>değişmedi</div></div></div>
+<div class="card"><strong>Doğruluk kuralı:</strong> Resmî servis kataloğu katmanın varlığını, adını ve hizmet bağlamını doğrular; tek başına adayın katmana üyeliğini doğrulamaz. Bu nedenle 27 aday-katman satırı <code>SOURCE_ONLY_GEOMETRY_PENDING</code> tutuldu. Web araması 503 ve doğrudan sorgu DNS hatası üyelik sonucuna dönüştürülmedi.</div>
+<h2>Satır satır işlemler</h2>
+<table><thead><tr><th>#</th><th>Kategori</th><th>Hedef</th><th>Sonuç</th><th>Kanıt</th><th>Güven</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const service='https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/MapServer';
+const layers=[
+[301,'London Borough'],[302,'Planning Authority'],[303,'Greater London Boundary'],[305,'Central London Boundary'],[308,'Sustainable Access Measure 1A'],[315,'London Context Green and Blue Infrastructure'],[316,'London Context Greenbelt'],[317,'London Context Other Infrastructure'],[324,'London Context Transport Infrastructure']
+];
+const candidates=[30762,46142,61522];
+let n=4825, rows=[];
+const add=(cat,target,result,evidence,confidence,cls='ok')=>rows.push({n:n++,cat,target,result,evidence,confidence,cls});
+add('RECOVERY','Detailed continuation contract','PASS — same workstream, slot and continuation rules preserved','docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md','PASS');
+add('RECOVERY','Canonical branch HEAD','PASS — remote readback 3f0ce30502001e140c00f72693db21d64d1c1907','codex/aays-single-runner-v5-20260706','PASS');
+add('RECOVERY','Continuation key','PASS — existing key retained','docs/chatgpt_status/_shared/slots_21/future_growth_2/status_latest.json','PASS');
+add('RECOVERY','Ownership','PASS — UNCLAIMED; owner=null','ownership_latest.json','PASS');
+add('RECOVERY','Heartbeat','PASS — IDLE; heartbeat_at=null','heartbeat_latest.json','PASS');
+add('RECOVERY','Current task','PASS — IDLE; task_id=null','current_task_latest.json','PASS');
+add('RECOVERY','Single-runner/manual gate','PARKED — height_difference_2 pickup_requested; 330 hashed export absent; duplicate runner forbidden','queue + manual_actions/future_growth_2.json','FAIL_CLOSED','warn');
+add('OFFICIAL_SOURCE','GLA Planning Data Map MapServer','PASS — official map service; EPSG:27700; JSON/GeoJSON/PBF query support',service,'OFFICIAL_100');
+add('OFFICIAL_SOURCE','GLA Planning Data Map FeatureServer','PASS — official feature service; query operation exposed',service.replace('MapServer','FeatureServer'),'OFFICIAL_100');
+add('OFFICIAL_SOURCE','All Layers and Tables catalog','PASS — official layer catalog inspected',service+'/layers','OFFICIAL_100');
+layers.forEach(([id,name])=>add('OFFICIAL_SOURCE',name+' layer '+id,'PASS — layer listed in official GLA Planning Data Map catalog',service+'/'+id,'OFFICIAL_100'));
+candidates.forEach(c=>layers.forEach(([id,name])=>add('CANDIDATE_SOURCE_GATE','row '+c+' × '+name+' ('+id+')','SOURCE_ONLY_GEOMETRY_PENDING — official layer identity verified; exact layer geometry/extent response not retrieved this turn; no membership inference',service+'/'+id,'FAIL_CLOSED','warn')));
+add('EXECUTION_RECOVERY','Official web search','BLOCKED — search backend returned HTTP 503; no source result invented','web search runtime','FAIL_CLOSED','warn');
+add('EXECUTION_RECOVERY','Parameterized FeatureServer point query','BLOCKED — execution-container DNS resolution failed; no PIP result invented',service.replace('MapServer','FeatureServer')+'/102/query','FAIL_CLOSED','warn');
+add('SCORING_GATE','future-growth score','PASS — source-only catalog checks do not authorize positive binding or business score','0/3 positive; 0 scored rows','FAIL_CLOSED','warn');
+if(n!==4874) throw new Error('operation count mismatch '+n);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+document.getElementById('rows').innerHTML=rows.map(r=>`<tr class="${r.cls}"><td>${r.n}</td><td>${esc(r.cat)}</td><td>${esc(r.target)}</td><td>${esc(r.result)}</td><td>${r.evidence.startsWith('http')?`<a href="${esc(r.evidence)}" rel="noreferrer">${esc(r.evidence)}</a>`:`<code>${esc(r.evidence)}</code>`}</td><td>${esc(r.confidence)}</td></tr>`).join('');
+</script>
+<noscript><div class="card">Bu denetim tablosu 49 satırı tarayıcıda JavaScript ile oluşturur.</div></noscript>
+</body></html>
