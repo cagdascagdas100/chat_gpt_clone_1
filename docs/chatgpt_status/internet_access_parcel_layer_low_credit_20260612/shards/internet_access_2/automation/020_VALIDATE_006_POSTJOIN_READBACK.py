@@ -19,6 +19,7 @@ TASK_ID = "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T0
 EXPECTED_OUTPUT_ROWS = 11_013
 EXPECTED_R2_FILES = 121
 EXPECTED_ARCHIVE_ROWS = 1_741_096
+EXPECTED_WEB_CHUNKS = 23
 SHARD_REL = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2")
 QUEUE_REL = Path("docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json")
 DATA_REL = SHARD_REL / "data/006_existing_11013_official_coverage_candidates.jsonl"
@@ -187,6 +188,19 @@ def main() -> int:
 
     if queue.get("task_id") != TASK_ID:
         raise RuntimeError("TASK_ID_MISMATCH")
+    if validation.get("source_scan_complete") is not True:
+        raise RuntimeError("SOURCE_SCAN_COMPLETE_NOT_TRUE_AT_POSTJOIN")
+    if int(validation.get("existing_shard2_rows") or 0) != EXPECTED_OUTPUT_ROWS:
+        raise RuntimeError("VALIDATION_OUTPUT_ROW_COUNT_MISMATCH")
+    if list(validation.get("missing_postcode_areas") or []):
+        raise RuntimeError("VALIDATION_MISSING_POSTCODE_AREAS_NOT_EMPTY")
+    if int(source.get("exact_rows_returned") or 0) <= 0:
+        raise RuntimeError("SOURCE_EXACT_ROWS_NOT_POSITIVE_AT_POSTJOIN")
+    if list(source.get("missing_postcode_areas") or []):
+        raise RuntimeError("SOURCE_MISSING_POSTCODE_AREAS_NOT_EMPTY")
+    status_state = str(status.get("state") or "").upper()
+    if not status_state or any(token in status_state for token in ("FAILED", "ERROR", "BLOCKED", "PARTIAL")):
+        raise RuntimeError(f"BUSINESS_STATUS_NOT_EXACT_AT_POSTJOIN:{status_state}")
     preflight = queue.get("strict_archive_preflight") or {}
     checks = preflight.get("checks") or {}
     if checks.get("all") is not True:
@@ -217,6 +231,50 @@ def main() -> int:
         raise RuntimeError("VALIDATION_REVIEW_COUNT_MISMATCH")
     if int(manifest.get("total_rows") or 0) != EXPECTED_OUTPUT_ROWS:
         raise RuntimeError("WEB_MANIFEST_TOTAL_MISMATCH")
+    chunks = list(manifest.get("chunks") or [])
+    if len(chunks) != EXPECTED_WEB_CHUNKS:
+        raise RuntimeError(f"WEB_MANIFEST_CHUNK_COUNT_MISMATCH:{len(chunks)}")
+    manifest_counts = manifest.get("counts") or {}
+    if int(manifest_counts.get("verified_3_of_4") or 0) != len(verified):
+        raise RuntimeError("WEB_MANIFEST_VERIFIED_COUNT_MISMATCH")
+    if int(manifest_counts.get("identity_2_of_4_coverage_pending") or 0) != len(pending):
+        raise RuntimeError("WEB_MANIFEST_PENDING_COUNT_MISMATCH")
+    if int(manifest_counts.get("identity_missing_or_review") or 0) != len(review):
+        raise RuntimeError("WEB_MANIFEST_REVIEW_COUNT_MISMATCH")
+
+    cursor = 1
+    chunk_rows_checked = 0
+    for expected_chunk, chunk in enumerate(chunks, start=1):
+        observed_chunk = int(chunk.get("chunk") or 0)
+        row_start = int(chunk.get("row_start") or 0)
+        row_end = int(chunk.get("row_end") or 0)
+        count = int(chunk.get("count") or 0)
+        if observed_chunk != expected_chunk:
+            raise RuntimeError(f"WEB_MANIFEST_CHUNK_NUMBER_MISMATCH:{observed_chunk}:{expected_chunk}")
+        if row_start != cursor or count <= 0 or row_end != row_start + count - 1:
+            raise RuntimeError(f"WEB_MANIFEST_CHUNK_RANGE_MISMATCH:{expected_chunk}")
+        relative = str(chunk.get("path") or "")
+        if not relative:
+            raise RuntimeError(f"WEB_MANIFEST_CHUNK_PATH_MISSING:{expected_chunk}")
+        chunk_path = repo / Path(relative)
+        chunk_doc = read_json(chunk_path)
+        chunk_rows = chunk_doc.get("rows")
+        if not isinstance(chunk_rows, list):
+            raise RuntimeError(f"WEB_CHUNK_ROWS_LIST_REQUIRED:{expected_chunk}")
+        if (
+            chunk_doc.get("slot_id") != SLOT_ID
+            or int(chunk_doc.get("chunk") or 0) != expected_chunk
+            or int(chunk_doc.get("row_start") or 0) != row_start
+            or int(chunk_doc.get("row_end") or 0) != row_end
+            or len(chunk_rows) != count
+        ):
+            raise RuntimeError(f"WEB_CHUNK_METADATA_MISMATCH:{expected_chunk}")
+        if chunk_rows != output[row_start - 1:row_end]:
+            raise RuntimeError(f"WEB_CHUNK_OUTPUT_READBACK_MISMATCH:{expected_chunk}")
+        cursor = row_end + 1
+        chunk_rows_checked += count
+    if cursor != EXPECTED_OUTPUT_ROWS + 1 or chunk_rows_checked != EXPECTED_OUTPUT_ROWS:
+        raise RuntimeError("WEB_CHUNK_CONTIGUOUS_ACCOUNTING_FAILED")
 
     half = max(4, args.sample_size // 2)
     verified_sample = deterministic_unique(verified, half)
@@ -280,6 +338,10 @@ def main() -> int:
         "pending_sample_postcodes": [norm_postcode(row.get("postcode")) for row in pending_sample],
         "sample_size_requested": args.sample_size,
         "sample_rows_checked": len(verified_sample) + len(pending_sample),
+        "web_chunks_checked": len(chunks),
+        "web_chunk_rows_checked": chunk_rows_checked,
+        "source_exact_rows_returned": int(source.get("exact_rows_returned") or 0),
+        "source_scan_complete": True,
         "zip_crc_ok": True,
         "candidate_promotion_performed": False,
         "final_ready": False,
