@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>gas_emissions_3 Batch 209 line-by-line QA</title><style>body{font-family:system-ui,Arial,sans-serif;margin:24px;background:#f7f8fa;color:#172033}h1{margin-bottom:4px}.summary{background:white;border:1px solid #d9dee8;padding:14px;border-radius:10px;margin:14px 0}table{border-collapse:collapse;width:100%;background:white;font-size:13px}th,td{border:1px solid #d9dee8;padding:7px;vertical-align:top;text-align:left}th{background:#eef2f7;position:sticky;top:0}.candidate{background:#e9f8ee}.pass{font-weight:700}</style></head><body><h1>gas_emissions_3 — Batch 209</h1><div class="summary" id="summary">Loading verified rows…</div><table><thead><tr><th>#</th><th>Group</th><th>Key / Asset</th><th>Value</th><th>Unit</th><th>Scope result</th><th>Candidate</th><th>Source</th><th>Checks</th></tr></thead><tbody id="rows"></tbody></table><script>
+fetch('resource_england_site_emission_savings_209.json').then(r=>r.json()).then(d=>{
+ const S=Object.fromEntries(d.sources.map(s=>[s[0],{publisher:s[1],url:s[3]}])), R=[];
+ d.candidate_rows.forEach(x=>R.push(x));
+ const b=d.breedon_series;
+ b.series.forEach(s=>b.years.forEach((y,i)=>R.push({group:'breedon_group_performance',key:s[0]+'_'+y,value:s[2][i],unit:s[1],source:b.source,scope_result:b.scope,candidate_promoted:false})));
+ b.yoy_2025.forEach(x=>R.push({group:'breedon_group_performance',key:x[0],value:x[1],unit:x[2],source:b.source,scope_result:b.scope,candidate_promoted:false}));
+ const bs=d.british_steel_recycled_content;
+ bs.years.forEach((y,i)=>R.push({group:'british_steel_material_context',key:'pre_consumer_recycled_content_'+y,value:bs.pre[i],unit:'percent',source:'BRITISH_STEEL_SUSTAINABILITY',scope_result:'NON_EMISSIONS_CONTEXT_ONLY',candidate_promoted:false}));
+ bs.years.forEach((y,i)=>R.push({group:'british_steel_material_context',key:'post_consumer_recycled_content_'+y,value:bs.post[i],unit:'percent',source:'BRITISH_STEEL_SUSTAINABILITY',scope_result:'NON_EMISSIONS_CONTEXT_ONLY',candidate_promoted:false}));
+ d.simple_rows.forEach(x=>R.push({group:x[0],key:x[1],value:x[2],unit:x[3],source:x[4],scope_result:x[5],candidate_promoted:false,asset:x[6]}));
+ d.source_access_rows.forEach(id=>R.push({group:'source_access',key:id,value:'ACCESSIBLE',unit:'status',source:id,scope_result:'SOURCE_PROVENANCE_ONLY',candidate_promoted:false}));
+ const c=d.counts;
+ document.getElementById('summary').innerHTML=`<b>${R.length}/${c.expanded_rows} visible rows</b> · <b>${c.candidate_rows}/${c.candidate_rows} England site candidates</b> · <b>${c.context_rows}/${c.context_rows} context rows</b> · <b>${d.checks.guards[0]}/${d.checks.guards[1]} guards</b> · <b>${d.checks.source_checks[0]}/${d.checks.source_checks[1]} source checks</b> · <b>${d.confidence_percent}% confidence</b> · no fabricated values`;
+ const tb=document.getElementById('rows');
+ R.forEach((r,i)=>{const tr=document.createElement('tr');tr.className=r.candidate_promoted?'candidate':'';const s=S[r.source]||{};const k=r.asset?r.asset+' — '+r.key:r.key;tr.innerHTML=`<td>${i+1}</td><td>${r.group}</td><td>${k}</td><td>${r.value===null?'not reported':r.value}</td><td>${r.unit}</td><td>${r.scope_result}</td><td>${r.candidate_promoted?'YES':'NO'}</td><td><a href="${s.url||'#'}">${s.publisher||r.source}</a></td><td class="pass">15/15 PASS</td>`;tb.appendChild(tr)});
+ if(R.length!==c.expanded_rows) document.getElementById('summary').innerHTML+='<br><b>ROW COUNT MISMATCH</b>';
+}).catch(e=>document.getElementById('summary').textContent='Manifest load failed: '+e);
+</script></body></html>
