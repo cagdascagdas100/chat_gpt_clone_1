@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
+  "checked_at": "2026-07-28T00:46:40Z",
+  "state": "RUNNER_DIAGNOSTIC_COMPLETE_RECOVERY_PARKED",
+  "diagnostic_rows": 8,
+  "rows": [
+    {
+      "line": 1,
+      "check": "DETAILED_CONTINUATION_CONTRACT",
+      "state": "PASS",
+      "evidence": "Current detailed contract was reachable; canonical branch codex/aays-single-runner-v5-20260706 and workstream AAYS_21_SLOT_SAFE_PARALLEL_V1 confirmed.",
+      "source": "docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md"
+    },
+    {
+      "line": 2,
+      "check": "SLOT_MANIFEST_AND_CONCURRENCY",
+      "state": "PASS",
+      "evidence": "Manifest confirms security_public_safety_2 partition 30762-61522 and allowed slot roots. Current task caps simultaneous workers at 12.",
+      "source": "docs/chatgpt_status/_shared/slots_21/manifest_latest.json"
+    },
+    {
+      "line": 3,
+      "check": "CANONICAL_SLOT_STATUS",
+      "state": "BLOCKED",
+      "evidence": "State RECOVERY_PARKED_RUNNER_QUEUE_CONSUMER_UNAVAILABLE; queue pickup_requested; live owner false.",
+      "source": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json"
+    },
+    {
+      "line": 4,
+      "check": "OWNERSHIP_HEARTBEAT_LEASE",
+      "state": "BLOCKED",
+      "evidence": "owner_page_session_id, lease_token_hash, heartbeat_at and lease_expires_at are all null; second queue refresh is forbidden.",
+      "source": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
+    },
+    {
+      "line": 5,
+      "check": "EXISTING_QUEUE_ITEM",
+      "state": "PENDING",
+      "evidence": "The same task and continuation key remain claimable and ready_for_claim; single_runner_only true; 12-worker ceiling retained.",
+      "source": "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json"
+    },
+    {
+      "line": 6,
+      "check": "300_ROW_OUTPUT",
+      "state": "ABSENT",
+      "evidence": "Canonical 300-row output path returned 404; no candidate or business output was inferred.",
+      "source": "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json"
+    },
+    {
+      "line": 7,
+      "check": "MANUAL_ACTION_AND_RECOVERY_BUDGET",
+      "state": "OPEN",
+      "evidence": "One idempotent recovery attempt was already used. A second refresh, duplicate task or second runner is prohibited.",
+      "source": "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+    },
+    {
+      "line": 8,
+      "check": "CONTROL_SLOT_COMMON_BLOCKER",
+      "state": "BLOCKED",
+      "evidence": "problem_solver_1 reports EXTERNAL_CANONICAL_F_SHARED_RUNNER_STALE_OR_OFFLINE as the common blocker; no independent business runner may be created from this slot.",
+      "source": "docs/chatgpt_status/_shared/slots_21/problem_solver_1/status_latest.json"
+    }
+  ],
+  "automatic_fix_available_from_this_slot": false,
+  "second_runner_created": false,
+  "second_task_created": false,
+  "second_recovery_refresh_used": false,
+  "candidate_rows_changed": 0,
+  "business_rows_written": 0,
+  "fake_data": false
+}
