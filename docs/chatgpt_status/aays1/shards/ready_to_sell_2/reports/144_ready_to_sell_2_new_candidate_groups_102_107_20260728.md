@@ -13,13 +13,22 @@
 
 - First-party source rows: 60/60
 - Duplicate preflights: 60/60; matches: 0
-- Checks: 120/120
+- Current-source refresh corrections: 3/3
+- Checks: 123/123
 - Source-supported fields: 420/420
-- Matched before fail-closed normalization: 420/420 = 100.00%
+- Matched after current-source refresh and before fail-closed normalization: 420/420 = 100.00%
 - Verified enrichments: 360
 - Fail-closed normalized assertions: 100.00%
 - Average verification confidence: 99.10/100
-- Validation: 14 PASS / 0 FAIL
+- Validation: 15 PASS / 0 FAIL
+
+## Current-source corrections
+
+1. Prior Wave 50 Lot 4 — guide refreshed from £230,000+ to £250,000+.
+2. Wave 51 Lot 34A — guide corrected from an unsupported £90,000–£160,000 range to £90,000+.
+3. Wave 51 Lot 69 — guide corrected from £600,000+ to £650,000+.
+
+The original values remain available in Git history; current row rendering now uses the verified current-source values.
 
 ## High-value and semantics-sensitive rows
 
@@ -48,7 +57,7 @@
 ## Cumulative staging
 
 - Source rows: 1,261
-- Checks: 2,526/2,526
+- Checks: 2,529/2,529
 - Active unique candidates: 1,229
 - Source upgrades: 1,229
 - Verified enrichments: 6,525
