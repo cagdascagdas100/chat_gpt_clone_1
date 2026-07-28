@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gas_emissions_2 Wave 173 — official evidence rows</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45;color:#161616}
+h1{margin-bottom:.25rem}.meta{color:#555;margin-top:0}.ok,.err{padding:10px 12px;border:1px solid #bbb;border-radius:8px;background:#f7f7f7}
+.err{border-color:#a00}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#fff}
+code{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>gas_emissions_2 — Wave 173</h1>
+<p class="meta">Continuation: <code>f2d3860b264634167c4555ffd2bc809541351e7a5ca52563a4fc89c43feef0ec</code></p>
+<p id="status" class="ok">Loading three official evidence packets…</p>
+<table><thead><tr><th>#</th><th>Evidence ID</th><th>Publisher</th><th>Category</th><th>Year</th><th>Metric</th><th>Value</th><th>Official source</th><th>Source locator</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const files=[
+"official_homes_england_annual_report_2024_25_ghg_evidence_24.json",
+"official_regulator_social_housing_annual_report_2024_25_ghg_evidence_24.json",
+"official_npl_annual_report_2024_ghg_evidence_24.json"
+];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const fmt=v=>typeof v==="number"?v.toLocaleString("en-GB",{maximumFractionDigits:2}):v;
+Promise.all(files.map(f=>fetch(f,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(`${f}: HTTP ${r.status}`);return r.json()})))
+.then(packets=>{
+ const data=packets.flatMap(p=>p.rows.map(r=>({p,r})));
+ const ids=new Set(data.map(x=>x.r[0]));
+ if(data.length!==72||ids.size!==72||packets.some(p=>p.row_count!==24))throw new Error("Wave validation failed");
+ document.getElementById("rows").innerHTML=data.map((x,i)=>{
+  const [id,category,year,metric,value,locator]=x.r;
+  return `<tr><td>${i+1}</td><td>${esc(id)}</td><td>${esc(x.p.publisher)}</td><td>${esc(category)}</td><td>${esc(year)}</td><td>${esc(metric)}</td><td>${esc(fmt(value))}</td><td><a href="${esc(x.p.source_url)}">Official source</a></td><td>${esc(locator)}</td></tr>`;
+ }).join("");
+ document.getElementById("status").innerHTML="<strong>72/72 rows validated.</strong> Three official HTML sources; every row has a source locator. No parcel binding or browser-acceptance promotion is claimed.";
+}).catch(e=>{const s=document.getElementById("status");s.className="err";s.textContent=e.message;});
+</script>
+</body></html>
