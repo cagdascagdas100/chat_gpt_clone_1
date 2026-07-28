@@ -2,6 +2,7 @@ param(
     [string]$PortableRoot = $env:AAYS_PORTABLE_ROOT,
     [string]$ArchivePath = "",
     [string]$SourceUrl = "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    [string]$LandingUrl = "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     [int64]$MinimumBytes = 30000000,
     [int64]$MaximumBytes = 100000000,
     [int]$RetryCount = 3
@@ -50,6 +51,116 @@ function Test-ZipEnvelope {
     }
 }
 
+function Invoke-CurlOfficialDownload {
+    param(
+        [Parameter(Mandatory=$true)][string]$CurlExe,
+        [Parameter(Mandatory=$true)][string]$Destination,
+        [Parameter(Mandatory=$true)][string]$CookiePath,
+        [Parameter(Mandatory=$true)][string]$LandingTempPath,
+        [Parameter(Mandatory=$true)][System.Collections.Generic.List[string]]$Errors
+    )
+
+    $VersionText = ""
+    try { $VersionText = (& $CurlExe -V 2>&1 | Out-String).Trim() } catch { $VersionText = $_.Exception.Message }
+    $UsesSchannel = $VersionText -match '(?i)Schannel'
+    $TlsArgs = @()
+    if ($UsesSchannel) { $TlsArgs += '--ssl-no-revoke' }
+
+    $CommonArgs = @(
+        '--fail',
+        '--location',
+        '--silent',
+        '--show-error',
+        '--http1.1',
+        '--compressed',
+        '--connect-timeout', '30',
+        '--max-time', '300',
+        '--retry', ([string][Math]::Max(1, $RetryCount)),
+        '--retry-delay', '2',
+        '--retry-all-errors',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 AAYS-Ofcom-Strict-Fetch/2.0',
+        '--header', 'Accept: application/zip,application/octet-stream,text/html;q=0.9,*/*;q=0.8'
+    )
+
+    $LandingAttempted = $false
+    $LandingSucceeded = $false
+    if (-not [string]::IsNullOrWhiteSpace($LandingUrl)) {
+        $LandingAttempted = $true
+        try {
+            $LandingArgs = @($CommonArgs + $TlsArgs + @(
+                '--cookie-jar', $CookiePath,
+                '--output', $LandingTempPath,
+                $LandingUrl
+            ))
+            & $CurlExe @LandingArgs
+            if ($LASTEXITCODE -eq 0) {
+                $LandingSucceeded = $true
+            } else {
+                $Errors.Add("curl landing exit $LASTEXITCODE")
+            }
+        }
+        catch {
+            $Errors.Add("curl landing: $($_.Exception.Message)")
+        }
+        finally {
+            if (Test-Path -LiteralPath $LandingTempPath -PathType Leaf) {
+                Remove-Item -LiteralPath $LandingTempPath -Force
+            }
+        }
+    }
+
+    try {
+        $CookieArgs = @('--cookie-jar', $CookiePath)
+        if (Test-Path -LiteralPath $CookiePath -PathType Leaf) {
+            $CookieArgs = @('--cookie', $CookiePath, '--cookie-jar', $CookiePath)
+        }
+        $DownloadArgs = @($CommonArgs + $TlsArgs + $CookieArgs + @(
+            '--referer', $LandingUrl,
+            '--output', $Destination,
+            $SourceUrl
+        ))
+        & $CurlExe @DownloadArgs
+        $ExitCode = $LASTEXITCODE
+        if ($ExitCode -ne 0) {
+            $Errors.Add("curl download exit $ExitCode")
+            if (Test-Path -LiteralPath $Destination -PathType Leaf) {
+                Remove-Item -LiteralPath $Destination -Force
+            }
+            return [ordered]@{
+                succeeded = $false
+                curl_version = $VersionText
+                curl_uses_schannel = [bool]$UsesSchannel
+                ssl_no_revoke_used = [bool]$UsesSchannel
+                landing_attempted = [bool]$LandingAttempted
+                landing_succeeded = [bool]$LandingSucceeded
+            }
+        }
+
+        return [ordered]@{
+            succeeded = Test-Path -LiteralPath $Destination -PathType Leaf
+            curl_version = $VersionText
+            curl_uses_schannel = [bool]$UsesSchannel
+            ssl_no_revoke_used = [bool]$UsesSchannel
+            landing_attempted = [bool]$LandingAttempted
+            landing_succeeded = [bool]$LandingSucceeded
+        }
+    }
+    catch {
+        $Errors.Add("curl download: $($_.Exception.Message)")
+        if (Test-Path -LiteralPath $Destination -PathType Leaf) {
+            Remove-Item -LiteralPath $Destination -Force
+        }
+        return [ordered]@{
+            succeeded = $false
+            curl_version = $VersionText
+            curl_uses_schannel = [bool]$UsesSchannel
+            ssl_no_revoke_used = [bool]$UsesSchannel
+            landing_attempted = [bool]$LandingAttempted
+            landing_succeeded = [bool]$LandingSucceeded
+        }
+    }
+}
+
 $ExistingValidation = $null
 if (Test-Path -LiteralPath $ArchivePath -PathType Leaf) {
     try {
@@ -68,6 +179,7 @@ if ($ExistingValidation) {
         state = "OFFICIAL_ARCHIVE_ALREADY_PRESENT_ENVELOPE_PASS"
         slot_id = $SlotId
         source_url = $SourceUrl
+        landing_url = $LandingUrl
         expected_outer_filename = $ExpectedOuterFile
         archive_path = $ArchivePath
         archive_available = $true
@@ -84,13 +196,22 @@ if ($ExistingValidation) {
 }
 
 $TempPath = "$ArchivePath.partial.$([guid]::NewGuid().ToString('N'))"
+$CookiePath = "$ArchivePath.cookies.$([guid]::NewGuid().ToString('N')).txt"
+$LandingTempPath = "$ArchivePath.landing.$([guid]::NewGuid().ToString('N')).html"
 $DownloadErrors = New-Object System.Collections.Generic.List[string]
 $Downloaded = $false
+$DownloadTransport = $null
+$CurlResult = $null
 
 for ($Attempt = 1; $Attempt -le [Math]::Max(1, $RetryCount); $Attempt++) {
     try {
-        Invoke-WebRequest -Uri $SourceUrl -OutFile $TempPath -UseBasicParsing -TimeoutSec 300 -Headers @{ 'User-Agent' = 'AAYS-Ofcom-Strict-Fetch/1.0' }
+        Invoke-WebRequest -Uri $SourceUrl -OutFile $TempPath -UseBasicParsing -TimeoutSec 300 -Headers @{
+            'User-Agent' = 'AAYS-Ofcom-Strict-Fetch/2.0'
+            'Accept' = 'application/zip,application/octet-stream,*/*'
+            'Referer' = $LandingUrl
+        }
         $Downloaded = $true
+        $DownloadTransport = "Invoke-WebRequest"
         break
     }
     catch {
@@ -106,6 +227,7 @@ if (-not $Downloaded) {
         try {
             Start-BitsTransfer -Source $SourceUrl -Destination $TempPath -TransferType Download -Priority Foreground -ErrorAction Stop
             $Downloaded = $true
+            $DownloadTransport = "BITS"
         }
         catch {
             $DownloadErrors.Add("BITS: $($_.Exception.Message)")
@@ -114,22 +236,43 @@ if (-not $Downloaded) {
     }
 }
 
+if (-not $Downloaded) {
+    $CurlCommand = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($CurlCommand) {
+        $CurlResult = Invoke-CurlOfficialDownload -CurlExe $CurlCommand.Source -Destination $TempPath -CookiePath $CookiePath -LandingTempPath $LandingTempPath -Errors $DownloadErrors
+        $Downloaded = [bool]$CurlResult.succeeded
+        if ($Downloaded) { $DownloadTransport = "curl" }
+    } else {
+        $DownloadErrors.Add("curl.exe not found")
+    }
+}
+
+if (Test-Path -LiteralPath $CookiePath -PathType Leaf) {
+    Remove-Item -LiteralPath $CookiePath -Force
+}
+if (Test-Path -LiteralPath $LandingTempPath -PathType Leaf) {
+    Remove-Item -LiteralPath $LandingTempPath -Force
+}
+
 if (-not $Downloaded -or -not (Test-Path -LiteralPath $TempPath -PathType Leaf)) {
     $Failure = [ordered]@{
         state = "OFFICIAL_ARCHIVE_DOWNLOAD_BLOCKED"
         slot_id = $SlotId
         source_url = $SourceUrl
+        landing_url = $LandingUrl
         expected_outer_filename = $ExpectedOuterFile
         archive_path = $ArchivePath
         archive_available = $false
         download_performed = $false
+        download_transport = $DownloadTransport
         download_errors = @($DownloadErrors)
+        curl = $CurlResult
         required_inner_revision = $RequiredInnerRevision
         duplicate_task_created = $false
         second_runner_started = $false
         final_ready = $false
     }
-    $Failure | ConvertTo-Json -Depth 6
+    $Failure | ConvertTo-Json -Depth 7
     throw "OFFICIAL_ARCHIVE_DOWNLOAD_BLOCKED:$([string]::Join(' | ', @($DownloadErrors)))"
 }
 
@@ -149,15 +292,19 @@ catch {
 
 $AuditPath = "$ArchivePath.download.json"
 $Audit = [ordered]@{
-    schema_version = 1
+    schema_version = 2
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     state = "OFFICIAL_ARCHIVE_DOWNLOADED_ENVELOPE_PASS_STRICT_INNER_VALIDATION_PENDING"
     slot_id = $SlotId
     source_url = $SourceUrl
+    landing_url = $LandingUrl
     expected_outer_filename = $ExpectedOuterFile
     archive_path = $ArchivePath
     archive_available = $true
     download_performed = $true
+    download_transport = $DownloadTransport
+    download_errors = @($DownloadErrors)
+    curl = $CurlResult
     bytes = $Validation.bytes
     entry_count = $Validation.entry_count
     r2_named_entry_count = $Validation.r2_named_entry_count
@@ -168,5 +315,5 @@ $Audit = [ordered]@{
     second_runner_started = $false
     final_ready = $false
 }
-$Audit | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $AuditPath -Encoding UTF8
-$Audit | ConvertTo-Json -Depth 6
+$Audit | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $AuditPath -Encoding UTF8
+$Audit | ConvertTo-Json -Depth 7
