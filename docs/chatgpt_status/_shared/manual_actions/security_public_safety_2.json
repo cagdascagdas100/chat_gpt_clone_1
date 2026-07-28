@@ -1,18 +1,24 @@
 {
-  "schema_version": 32,
+  "schema_version": 33,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The retry5 missing-output sub-blocker remains resolved. The canonical 300-row task is still pickup_requested and unclaimed; ownership owner, heartbeat and lease remain empty and the canonical stable-runner heartbeat is stale. Side-evidence review exhausted the canonical 96-row source at parcel_30857. Attempts to extract post-30857 coordinates through the GitHub connector failed because the private large minified canonical point-layer body is not returned. Current official source revalidation also established that IoD25 LSOA files 1-9 must use the updated v2 publication at claim time. A second queue refresh, duplicate task or second runner remains forbidden.",
+  "reason": "The retry5 missing-output sub-blocker remains resolved. The wave8 parcel_30802 HTTP 429 sub-blocker is also resolved by canonical exact-query cache identity: parcel_30801 and parcel_30802 have identical coordinates, Police month, ONS LSOA and IoD25 join, while parcel_30801 contains the successful HTTP 200 response SHA256 from the same snapshot. The canonical 300-row task is still pickup_requested and unclaimed; ownership owner, heartbeat and lease remain empty and the canonical stable-runner heartbeat is stale. Side-evidence review exhausted the canonical 96-row source at parcel_30857. The private large minified canonical point-layer body is not returned by the connector. IoD25 LSOA files 1-9 must use the updated v2 publication at claim time. A second queue refresh, duplicate task or second runner remains forbidden.",
   "diagnosis": "STALE_SLOT_STATUS_CANONICAL_RUNNER_UNCLAIMED_CONNECTOR_CANNOT_READ_LARGE_MINIFIED_POINT_BODY_IOD25_V2_GATE_REQUIRED",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-28T21:16:00Z",
+  "updated_at": "2026-07-28T22:03:00Z",
   "resolved_subissues": [
     {
       "code": "RETRY5_EXPECTED_OUTPUTS_MISSING",
       "state": "RESOLVED_BY_FRESH_REMOTE_READ",
       "resolved_at": "2026-07-28T17:48:04.9996118Z",
       "proof": "All five expected output paths exist; 12/12 exact target IDs, candidate join, HTTP hashes, DOM tokens, browser smoke and console gates passed."
+    },
+    {
+      "code": "WAVE8_PARCEL_30802_POLICE_HTTP_429",
+      "state": "RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE_IDENTITY",
+      "resolved_at": "2026-07-28T22:00:00Z",
+      "proof": "parcel_30801 and parcel_30802 share exact longitude -0.0422672, latitude 51.6719876, Police month 2026-05, ONS LSOA E01001547 and IoD25 rank 5333. The same-snapshot parcel_30801 query returned HTTP 200, 519 records and SHA256 d62c838a6219d23346a8e98d915c19e5bbf6184e182f1e4ed3f7d7b6ba2a0619. Twelve recovery gates passed; no nearby-point inference was used."
     }
   ],
   "active_blockers": [
@@ -27,9 +33,10 @@
     "VERIFY_NO_COMPETING_LIVE_OWNER",
     "VERIFY_IOD25_LSOA_FILES_1_TO_9_USE_UPDATED_V2_PUBLICATION",
     "RETAIN_POLICE_UK_RATE_BACKPRESSURE_BELOW_OFFICIAL_LIMIT",
+    "REUSE_EXACT_QUERY_CACHE_FOR_DUPLICATE_COORDINATE_AND_MONTH_KEYS",
     "DO_NOT_ACCEPT_300ROW_OUTPUT_WITHOUT_EXACT_COORDINATE_ONS_POLICE_HASH_AND_BROWSER_GATES"
   ],
-  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. The canonical runner can read the local minified point layer. Before accepting the 300-row output, verify the locally consumed IoD25 LSOA source is the updated v2 publication and allow exact-query caching plus Police.uk rate backpressure to run.",
+  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. The canonical runner can read the local minified point layer. Before accepting the 300-row output, verify the locally consumed IoD25 LSOA source is the updated v2 publication, reuse exact-query cache keys and allow Police.uk rate backpressure to run.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/aays1/queue/000000_security_public_safety_2_wave1_retry5_20260722.v3.task.json",
@@ -40,7 +47,9 @@
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_96row_consolidation_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_sample_revalidation_wave14_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_official_source_integrity_wave15_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_rate_limit_recovery_wave16_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_evidence_rollup_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/continuation_rate_limit_recovery_wave16_receipt_20260729.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_candidate_gate_latest.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_gate_latest.json"
   ],
