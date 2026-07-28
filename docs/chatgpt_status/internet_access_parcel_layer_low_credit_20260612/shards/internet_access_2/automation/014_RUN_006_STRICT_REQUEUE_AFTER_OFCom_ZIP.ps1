@@ -56,6 +56,15 @@ $QueueRelative = "docs\chatgpt_status\internet_access_parcel_layer_low_credit_20
 $GuardPath = Join-Path $RepoRoot $GuardRelative
 if (-not (Test-Path -LiteralPath $GuardPath -PathType Leaf)) { throw "STRICT_REQUEUE_GUARD_NOT_FOUND:$GuardPath" }
 
+function Invoke-Git {
+    param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
+    $Output = & $GitExe -C $RepoRoot @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "GIT_FAILED:$([string]::Join(' ', $Arguments)):$([string]::Join(' | ', @($Output)))"
+    }
+    return @($Output)
+}
+
 function Read-JsonObject {
     param([Parameter(Mandatory=$true)][string]$RelativePath)
     $Path = Join-Path $RepoRoot $RelativePath
@@ -93,16 +102,61 @@ function Assert-NoLiveLeaseBeforeRunnerLaunch {
     if (Test-LeaseActive -Value $Claim) { throw "GLOBAL_CLAIM_LEASE_BECAME_ACTIVE_BEFORE_RUNNER_LAUNCH" }
 }
 
-$Status = & $GitExe -C $RepoRoot status --porcelain --untracked-files=no
-if ($LASTEXITCODE -ne 0) { throw "GIT_STATUS_FAILED" }
-if ($Status) { throw "REPO_NOT_CLEAN_BEFORE_REQUEUE:$($Status -join ' | ')" }
+function Assert-CleanRepo {
+    $Status = @(Invoke-Git status --porcelain --untracked-files=no)
+    if ($Status) { throw "REPO_NOT_CLEAN_FOR_STRICT_REQUEUE:$([string]::Join(' | ', $Status))" }
+}
 
-$LocalHead = (& $GitExe -C $RepoRoot rev-parse HEAD).Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($LocalHead)) { throw "LOCAL_HEAD_READ_FAILED" }
-$RemoteLine = & $GitExe -C $RepoRoot ls-remote origin "refs/heads/$Branch"
-if ($LASTEXITCODE -ne 0 -or -not $RemoteLine) { throw "REMOTE_HEAD_READ_FAILED" }
-$RemoteHead = (($RemoteLine | Select-Object -First 1) -split "\s+")[0]
-if ($LocalHead -ne $RemoteHead) { throw "LOCAL_HEAD_NOT_REMOTE_HEAD_BEFORE_REQUEUE:local=$LocalHead remote=$RemoteHead" }
+function Assert-CanonicalBranch {
+    $CurrentBranch = ([string](Invoke-Git rev-parse --abbrev-ref HEAD | Select-Object -First 1)).Trim()
+    if ($CurrentBranch -ne $Branch) { throw "WRONG_BRANCH_FOR_STRICT_REQUEUE:$CurrentBranch" }
+}
+
+function Get-LocalHead {
+    return ([string](Invoke-Git rev-parse HEAD | Select-Object -First 1)).Trim()
+}
+
+function Get-FetchedHead {
+    return ([string](Invoke-Git rev-parse "refs/remotes/origin/$Branch" | Select-Object -First 1)).Trim()
+}
+
+function Get-RemoteHead {
+    $Remote = Invoke-Git ls-remote origin "refs/heads/$Branch"
+    if (-not $Remote) { throw "REMOTE_HEAD_NOT_FOUND" }
+    return (([string]($Remote | Select-Object -First 1)) -split "\s+")[0]
+}
+
+function Sync-CanonicalFastForwardBounded {
+    Assert-CleanRepo
+    Assert-CanonicalBranch
+    $Local = Get-LocalHead
+    $Fetched = $null
+    $Remote = $null
+    for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
+        Assert-CleanRepo
+        Invoke-Git fetch origin $Branch | Out-Null
+        $Fetched = Get-FetchedHead
+        $Local = Get-LocalHead
+        if ($Local -ne $Fetched) {
+            Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        }
+        Assert-CleanRepo
+        $Local = Get-LocalHead
+        $Remote = Get-RemoteHead
+        if ($Local -eq $Remote) {
+            return [ordered]@{
+                head = $Local
+                fetched_head = $Fetched
+                remote_head = $Remote
+                synchronization_attempts = $Attempt
+                remote_advanced_during_sync = ($Attempt -gt 1)
+            }
+        }
+    }
+    throw "LOCAL_REMOTE_HEAD_MISMATCH_AFTER_BOUNDED_STRICT_REQUEUE_SYNC:local=$Local fetched=$Fetched remote=$Remote"
+}
+
+$InitialSync = Sync-CanonicalFastForwardBounded
 
 $GitDir = Split-Path -Parent $GitExe
 if ([string]::IsNullOrWhiteSpace($GitDir) -or -not (Test-Path -LiteralPath $GitDir -PathType Container)) {
@@ -121,28 +175,39 @@ if (-not $ResolvedGit) { throw "GIT_NOT_RESOLVABLE_FOR_PYTHON_GUARD_AFTER_PATH_E
 if ($LASTEXITCODE -ne 0) { throw "STRICT_REQUEUE_GUARD_FAILED:$LASTEXITCODE" }
 
 $PreLaunchLeaseRecheckPassed = $false
+$PreLaunchRemoteSyncPassed = $false
+$PreLaunchSync = $null
 if ($StartRunner) {
-    Assert-NoLiveLeaseBeforeRunnerLaunch
-    $PreLaunchLeaseRecheckPassed = $true
+    $PreLaunchSync = Sync-CanonicalFastForwardBounded
+    $PreLaunchRemoteSyncPassed = $true
     $Launcher = Join-Path $PortableRoot "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd"
     if (-not (Test-Path -LiteralPath $Launcher -PathType Leaf)) { throw "SAFE_RUNNER_LAUNCHER_NOT_FOUND:$Launcher" }
+    Assert-NoLiveLeaseBeforeRunnerLaunch
+    $PreLaunchLeaseRecheckPassed = $true
     & $Launcher
     if ($LASTEXITCODE -ne 0) { throw "SAFE_RUNNER_LAUNCH_FAILED:$LASTEXITCODE" }
 }
 
 [ordered]@{
-    schema_version = 2
+    schema_version = 3
     state = "STRICT_006_REQUEUE_WRAPPER_COMPLETE"
     task_id = $TaskId
     repo_root = $RepoRoot
     archive_path = $ArchivePath
     portable_git_path_exported = $true
     python_guard_git_resolvable = $true
-    local_remote_head_match = $true
+    initial_canonical_sync = $InitialSync
     existing_task_requeued = $true
     runner_start_requested = [bool]$StartRunner
+    prelaunch_remote_sync_passed = [bool]$PreLaunchRemoteSyncPassed
+    prelaunch_sync = $PreLaunchSync
     prelaunch_slot_and_global_lease_recheck_passed = [bool]$PreLaunchLeaseRecheckPassed
+    synchronization_attempt_limit = 2
+    merge_mode = "FF_ONLY"
     duplicate_task_created = $false
     second_runner_forced = $false
+    force_push_used = $false
+    reset_used = $false
+    rebase_used = $false
     final_ready = $false
-} | ConvertTo-Json -Depth 5
+} | ConvertTo-Json -Depth 7
