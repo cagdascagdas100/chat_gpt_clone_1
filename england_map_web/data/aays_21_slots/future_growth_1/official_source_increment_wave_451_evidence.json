@@ -1,0 +1,41 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":451,
+  "topic":"CANDIDATE_DS_RAINHAM_ROAD_SOUTH_43_CAPACITY_PUBLIC_OWNERSHIP_AND_ADDRESS_COLLISION_GATES",
+  "generated_at":"2026-07-28T10:14:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_DS_CURRENT_BROWNFIELD_AND_ADDRESS_COLLISION_RECONCILIATION_NOT_PERMISSION_NOT_TITLE",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.9,
+  "sources":[
+    {"key":"ds_current","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"Current authoritative Brownfield record is LBBD97/DS."},
+    {"key":"ds_address","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"Site address is Rainham Road South."},
+    {"key":"ds_area","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"The Brownfield site area is 0.54ha."},
+    {"key":"ds_capacity","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"Minimum and maximum net dwellings are both 43."},
+    {"key":"ds_status","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"Planning-permission-status is not-permissioned."},
+    {"key":"ds_owner_category","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"Ownership-status is owned-by-a-public-authority; this is not a named proprietor or title reference."},
+    {"key":"ds_point","url":"https://www.planning.data.gov.uk/entity/1739892","fact":"The record supplies POINT (0.16455 51.547456) with blank geometry, so no exact planning/title polygon is inferred."},
+    {"key":"ds_address_collision","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=9477","fact":"LBBD committee records include other Rainham Road South applications, demonstrating that the broad road name alone cannot identify the DS residential allocation."},
+    {"key":"ds_industrial_example","url":"https://lbbd.moderngov.co.uk/ieListDocuments.aspx?CId=176&MID=9477","fact":"17/00480/FUL concerned part of Becon House/Sterling Works on Rainham Road South for a place-of-worship use; it is not DS residential permission evidence."},
+    {"key":"ds_register_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states that Brownfield Register sites require planning permission."},
+    {"key":"ds_local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The adopted 2037 Local Plan is the starting point for decision-making, but does not itself prove an exact current DS permission."},
+    {"key":"ds_development_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/development-plan","fact":"Development Plan status guides application assessment and remains separate from exact title and application evidence."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"DS remains 43 net dwellings in the current Brownfield record."},
+    {"id":"EX02","result":"43 is allocation/register capacity, not consented units."},
+    {"id":"EX03","result":"not-permissioned status is preserved."},
+    {"id":"EX04","result":"Public-authority ownership category is not a named HMLR proprietor/title."},
+    {"id":"EX05","result":"The point is not converted to allocation, red-line or title geometry."},
+    {"id":"EX06","result":"Other Rainham Road South planning cases are blocked from fuzzy transfer into DS."},
+    {"id":"EX07","result":"17/00480/FUL industrial/community use is not DS housing permission evidence."},
+    {"id":"EX08","result":"Promotion remains zero until exact DS case, parcel/title relation and overlays are verified."}
+  ],
+  "fail_closed_rules":["43_capacity_not_consent","not_permissioned_preserved","ownership_category_not_title","point_not_polygon","road_name_not_site_identity","industrial_case_not_ds_housing","no_fuzzy_address_binding","local_plan_not_exact_permission","brownfield_register_not_consent","exact_current_case_required","exact_hmlr_required","executed_overlay_required","no_synthetic_redline","no_address_only_promotion","no_capacity_only_promotion","promotion_requires_exact_ds_case_title_and_overlays"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD97/DS Rainham Road South","net_dwellings":43,"planning_permission_status":"not-permissioned","ownership_status":"owned-by-a-public-authority","address_collision_guard_active":true,"exact_current_residential_application_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
