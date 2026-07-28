@@ -135,18 +135,29 @@ function Get-RemoteHead {
     return (([string]($Remote | Select-Object -First 1)) -split "\s+")[0]
 }
 
+function Get-FetchedHead {
+    return ([string](Invoke-Git rev-parse "refs/remotes/origin/$Branch" | Select-Object -First 1)).Trim()
+}
+
 function Sync-RemoteFastForward {
     Assert-CleanRepo
     $Local = Get-LocalHead
-    $Remote = Get-RemoteHead
-    if ($Local -ne $Remote) {
+    $Fetched = $null
+    $Remote = $null
+    for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
+        Assert-CleanRepo
         Invoke-Git fetch origin $Branch | Out-Null
-        Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        $Fetched = Get-FetchedHead
+        $Local = Get-LocalHead
+        if ($Local -ne $Fetched) {
+            Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        }
+        Assert-CleanRepo
         $Local = Get-LocalHead
         $Remote = Get-RemoteHead
-        if ($Local -ne $Remote) { throw "LOCAL_REMOTE_HEAD_MISMATCH_AFTER_FAST_FORWARD:local=$Local remote=$Remote" }
+        if ($Local -eq $Remote) { return $Local }
     }
-    return $Local
+    throw "LOCAL_REMOTE_HEAD_MISMATCH_AFTER_BOUNDED_FAST_FORWARD:local=$Local fetched=$Fetched remote=$Remote"
 }
 
 function Sync-RemoteForPoll {
@@ -158,33 +169,60 @@ function Sync-RemoteForPoll {
             synced = $false
             reason = "WORKTREE_DIRTY_RUNNER_ACTIVITY"
             local_head = $Local
+            fetched_head = $null
             remote_head = $Remote
+            synchronization_attempts = 0
+            remote_advanced_during_poll = $false
             dirty_paths = @($Status)
         }
     }
-    if ($Local -ne $Remote) {
+
+    $Fetched = $null
+    $FastForwardUsed = $false
+    $RemoteAdvanced = $false
+    for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
         Invoke-Git fetch origin $Branch | Out-Null
-        Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+        $Fetched = Get-FetchedHead
+        $Local = Get-LocalHead
+        if ($Local -ne $Fetched) {
+            Invoke-Git merge --ff-only "origin/$Branch" | Out-Null
+            $FastForwardUsed = $true
+        }
+
+        $StatusAfter = @(Invoke-Git status --porcelain --untracked-files=no)
         $Local = Get-LocalHead
         $Remote = Get-RemoteHead
-        if ($Local -ne $Remote) {
-            throw "POLL_LOCAL_REMOTE_HEAD_MISMATCH_AFTER_FAST_FORWARD:local=$Local remote=$Remote"
+        if ($StatusAfter) {
+            return [ordered]@{
+                synced = $false
+                reason = "WORKTREE_BECAME_DIRTY_DURING_POLL_SYNC"
+                local_head = $Local
+                fetched_head = $Fetched
+                remote_head = $Remote
+                synchronization_attempts = $Attempt
+                remote_advanced_during_poll = $RemoteAdvanced
+                dirty_paths = @($StatusAfter)
+            }
         }
-        return [ordered]@{
-            synced = $true
-            reason = "FAST_FORWARDED_REMOTE_RUNNER_OUTPUT"
-            local_head = $Local
-            remote_head = $Remote
-            dirty_paths = @()
+        if ($Local -eq $Remote) {
+            return [ordered]@{
+                synced = $true
+                reason = $(if ($FastForwardUsed) { "FAST_FORWARDED_REMOTE_RUNNER_OUTPUT" } else { "ALREADY_AT_REMOTE_HEAD" })
+                local_head = $Local
+                fetched_head = $Fetched
+                remote_head = $Remote
+                synchronization_attempts = $Attempt
+                remote_advanced_during_poll = $RemoteAdvanced
+                dirty_paths = @()
+            }
+        }
+        if ($Attempt -eq 1) {
+            $RemoteAdvanced = $true
+            continue
         }
     }
-    return [ordered]@{
-        synced = $true
-        reason = "ALREADY_AT_REMOTE_HEAD"
-        local_head = $Local
-        remote_head = $Remote
-        dirty_paths = @()
-    }
+
+    throw "POLL_LOCAL_REMOTE_HEAD_MISMATCH_AFTER_BOUNDED_RETRY:local=$Local fetched=$Fetched remote=$Remote"
 }
 
 function Test-ExactJoinReady {
@@ -327,7 +365,7 @@ if ($RemoteReadback -ne $PostjoinCommit) {
 }
 
 [ordered]@{
-    schema_version = 1
+    schema_version = 2
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     state = "FULL_HOST_CLOSURE_EXACT_JOIN_AND_POSTJOIN_PUBLISHED"
     slot_id = $SlotId
@@ -349,5 +387,7 @@ if ($RemoteReadback -ne $PostjoinCommit) {
     same_task_retained = $true
     duplicate_task_created = $false
     second_runner_started = $false
+    force_push_used = $false
+    reset_used = $false
     final_ready = $false
 } | ConvertTo-Json -Depth 9
