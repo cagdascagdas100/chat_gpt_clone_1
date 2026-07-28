@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
+  "checked_at": "2026-07-28T01:34:48Z",
+  "state": "PRECLAIM_SCRIPT_PREFLIGHT_COMPLETE_NONBLOCKING_RISKS_IDENTIFIED",
+  "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
+  "diagnostic_rows": 12,
+  "rows": [
+    {
+      "line": 1,
+      "check": "WRAPPER_SCRIPT_PRESENT",
+      "state": "PASS",
+      "evidence": "300-row wrapper exists and is readable.",
+      "detail": "blob 7a5c2165ca8d11fc547be2a4411932dac2ff9186"
+    },
+    {
+      "line": 2,
+      "check": "SOURCE_SCRIPT_PRESENT",
+      "state": "PASS",
+      "evidence": "Underlying IoD25/ONS/Police.uk generator exists and is readable.",
+      "detail": "blob ce080f565fc79c99e6a98df0afb9302c6b98343d"
+    },
+    {
+      "line": 3,
+      "check": "CANONICAL_POINT_SOURCE_PRESENT",
+      "state": "PASS",
+      "evidence": "Canonical 92,283-feature point source exists with the expected blob.",
+      "detail": "blob bb48164e7a0af78df875f30421a6a3068c43edb8"
+    },
+    {
+      "line": 4,
+      "check": "TARGET_RANGE",
+      "state": "PASS",
+      "evidence": "Wrapper changes the inclusive parcel range to parcel_30762 through parcel_31061.",
+      "detail": "300 unique target identifiers"
+    },
+    {
+      "line": 5,
+      "check": "EXACT_OUTPUT_PATHS",
+      "state": "PASS",
+      "evidence": "Wrapper output JSON, web JSON and HTML paths match the queued task exact_write_paths.",
+      "detail": "3 exact output paths"
+    },
+    {
+      "line": 6,
+      "check": "CONCURRENCY_CONTRACT",
+      "state": "PASS_LIMIT",
+      "evidence": "Wrapper uses 12 row workers; source generator uses 10 official-source probes. Task maximum remains 12 simultaneous workers.",
+      "detail": "Do not raise above 12 without a new hardware manifest."
+    },
+    {
+      "line": 7,
+      "check": "POLICE_API_OFFICIAL_RATE_LIMIT",
+      "state": "RISK",
+      "evidence": "Police.uk documents an average limit of 15 requests per second, burst 30, with HTTP 429 after the limit is exceeded.",
+      "detail": "Use a Police-domain limiter with safety margin and honour Retry-After when present.",
+      "source_url": "https://data.police.uk/docs/api-call-limits/"
+    },
+    {
+      "line": 8,
+      "check": "EXACT_QUERY_DEDUPLICATION",
+      "state": "RISK",
+      "evidence": "verify_base calls police_query independently for every row; no cache or per-request-key future is present.",
+      "detail": "Known identical request parcel_30801/parcel_30802 produced one HTTP 200 and one HTTP 429."
+    },
+    {
+      "line": 9,
+      "check": "RETRY_BACKPRESSURE",
+      "state": "RISK",
+      "evidence": "The fetch helper retries three times with fixed short sleeps but has no global token bucket, jitter or Retry-After handling.",
+      "detail": "Recommended: exact-query cache plus <=10 Police requests/second and exponential jitter."
+    },
+    {
+      "line": 10,
+      "check": "IOD_JOIN_GATE_DIMENSION",
+      "state": "LOGIC_BUG",
+      "evidence": "iod_join_rows counts joined candidate rows, while the gate compares it with len(target_lsoa_codes), which counts unique LSOA codes.",
+      "detail": "A fully joined dataset with repeated LSOAs can be reported PARTIAL. Compare joined eligible rows with eligible rows instead."
+    },
+    {
+      "line": 11,
+      "check": "CANDIDATE_ONLY_GUARDS",
+      "state": "PASS",
+      "evidence": "Generated rows retain business_score null, business_confidence 0, promotion_allowed false, db_write false, migration false and production_deploy false.",
+      "detail": "No business promotion is permitted."
+    },
+    {
+      "line": 12,
+      "check": "PATCH_AUTHORITY",
+      "state": "HELD",
+      "evidence": "No live owner/claim exists and the task script is not one of the task exact_write_paths, so the business slot did not patch executable code.",
+      "detail": "Apply deterministic cache/rate-limit/gate corrections only under the healthy canonical runner ownership contract."
+    }
+  ],
+  "recommended_claim_time_controls": {
+    "exact_query_cache_key": "rounded latitude + rounded longitude + police month + category",
+    "police_requests_per_second_ceiling": 10,
+    "honour_retry_after": true,
+    "exponential_jitter": true,
+    "iod_join_gate_fix": "joined eligible candidate rows == eligible candidate rows"
+  },
+  "script_mutated": false,
+  "second_runner_created": false,
+  "second_task_created": false,
+  "second_recovery_refresh_used": false,
+  "candidate_rows_changed": 0,
+  "business_rows_written": 0,
+  "fake_data": false
+}
