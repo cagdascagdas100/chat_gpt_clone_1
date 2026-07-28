@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — Devam Örnek Doğrulaması Dalga 6</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#fff3cd;border-color:#ffe69c}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:155px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}code{font-size:9px;word-break:break-all}.PASS{background:#e8f5e9}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}a{color:#0d47a1}
+</style>
+</head>
+<body>
+<h1>security_public_safety_2 — devam örnek doğrulaması dalga 6</h1>
+<div class="notice">Bu görünüm dört ek mevcut adayın güncel resmî kaynak ve yöntem denetimidir. Yeni business skoru değildir. Kayıtlı HTTP 200, SHA256, tekil ONS LSOA ve IoD25 kanıtları korunmuş; exact koordinat gövdeleri URL güvenlik kapısı nedeniyle yeniden açılamadığından sonuçlar fail-closed tutulmuştur.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>Dört ek yüksek doğruluklu örnek</h2><div id="rows"></div></section>
+<section class="panel"><h2>Güncel resmî internet kontrolleri</h2><div id="sources"></div></section>
+<script>
+'use strict';
+const DATA_URL='continuation_sample_revalidation_wave6_latest.json';
+const el=id=>document.getElementById(id);
+const text=v=>v===null||v===undefined?'—':String(v);
+const pct=v=>v===null||v===undefined?'—':`${v}%`;
+function cell(tr,v,code=false){const td=document.createElement('td');if(code){const c=document.createElement('code');c.textContent=text(v);td.appendChild(c)}else{td.textContent=text(v)}tr.appendChild(td)}
+function linkCell(tr,label,url){const td=document.createElement('td'),a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=label;td.appendChild(a);tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const response=await fetch(DATA_URL,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const d=await response.json();el('status').textContent=`Yüklendi: ${d.new_sample_rows_reviewed} yeni örnek, kümülatif ${d.cumulative_sample_rows_reviewed}, ${d.official_source_checks_passed}/${d.official_source_checks} resmî kaynak kontrolü — business yükseltmesi yok`;el('status').className='panel ok';[['Yeni örnek',d.new_sample_rows_reviewed],['Kümülatif örnek',d.cumulative_sample_rows_reviewed],['≥95 aday',d.new_sample_rows_candidate_accuracy_ge_95],['≥95 denetim',d.new_sample_rows_revalidation_confidence_ge_95],['Kaynak',`${d.official_source_checks_passed}/${d.official_source_checks}`],['Police ayı',d.latest_police_month],['Business satır',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('rows').appendChild(table(['#','Parsel','Lon','Lat','ONS LSOA','LSOA adı','Crime rank','Decile','Aday %','Aday doğruluğu','Denetim güveni','Police ayı','Kayıt','SHA256','Durum','Yükseltme'],body=>(d.rows||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);cell(tr,x.parcel_id);cell(tr,x.longitude);cell(tr,x.latitude);cell(tr,x.ons_lsoa_code);cell(tr,x.ons_lsoa_name);cell(tr,x.iod25_crime_rank);cell(tr,x.iod25_crime_decile);cell(tr,x.relative_security_candidate_percent);cell(tr,pct(x.candidate_accuracy_percent));cell(tr,pct(x.revalidation_confidence_percent));cell(tr,x.police_month);cell(tr,x.police_record_count);cell(tr,x.police_response_sha256,true);cell(tr,x.review_state);cell(tr,x.promotion_allowed?'EVET':'HAYIR');body.appendChild(tr)})));el('sources').appendChild(table(['#','Kaynak','Sonuç','Doğruluk'],body=>(d.official_sources||[]).forEach(x=>{const tr=document.createElement('tr');tr.className='PASS';cell(tr,x.line);linkCell(tr,x.source,x.url);cell(tr,x.result);cell(tr,pct(x.accuracy_percent));body.appendChild(tr)})))}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>

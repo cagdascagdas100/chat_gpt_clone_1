@@ -1,7 +1,8 @@
 param(
     [string]$PortableRoot = $env:AAYS_PORTABLE_ROOT,
     [string]$RepoRoot = $env:AAYS_REPO_ROOT,
-    [string]$ArchivePath = ""
+    [string]$ArchivePath = "",
+    [switch]$StartRunner
 )
 
 $ErrorActionPreference = "Stop"
@@ -45,17 +46,16 @@ foreach ($Source in $SourceCandidates) {
 $Attempts = New-Object System.Collections.Generic.List[object]
 $SelectedSource = $null
 $Completed = $false
+$RunnerRequested = [bool]$StartRunner
 
 foreach ($Source in $SourceCandidates) {
-    if (Test-Path -LiteralPath $ArchivePath -PathType Leaf) {
-        $SelectedSource = $Source
-        $Completed = $true
-        break
-    }
-
     $StartedAt = (Get-Date).ToUniversalTime()
     try {
-        $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $Source | Out-String).Trim()
+        if ($StartRunner) {
+            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $Source -StartRunner | Out-String).Trim()
+        } else {
+            $Output = (& $Orchestrator -PortableRoot $PortableRoot -RepoRoot $RepoRoot -ArchivePath $ArchivePath -OfficialArchiveUrl $Source | Out-String).Trim()
+        }
         $ArchiveAvailable = Test-Path -LiteralPath $ArchivePath -PathType Leaf
         $Attempts.Add([ordered]@{
             source_url = $Source
@@ -63,6 +63,7 @@ foreach ($Source in $SourceCandidates) {
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = [bool]$ArchiveAvailable
             orchestrator_output = $Output
+            runner_start_requested = $RunnerRequested
             duplicate_task_created = $false
             second_runner_started = $false
         })
@@ -79,19 +80,18 @@ foreach ($Source in $SourceCandidates) {
             finished_at = (Get-Date).ToUniversalTime().ToString('o')
             archive_available = (Test-Path -LiteralPath $ArchivePath -PathType Leaf)
             error = $_.Exception.Message
+            runner_start_requested = $RunnerRequested
             duplicate_task_created = $false
             second_runner_started = $false
         })
         if (Test-Path -LiteralPath $ArchivePath -PathType Leaf) {
-            $SelectedSource = $Source
-            $Completed = $true
-            break
+            throw "STRICT_CHAIN_FAILED_WITH_ARCHIVE_PRESENT:$($_.Exception.Message)"
         }
     }
 }
 
 $Result = [ordered]@{
-    schema_version = 1
+    schema_version = 2
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     slot_id = $SlotId
     state = if ($Completed) { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STRICT_RECOVERY_COMPLETE" } else { "MULTI_ROUTE_OFFICIAL_ARCHIVE_STILL_BLOCKED" }
@@ -103,7 +103,8 @@ $Result = [ordered]@{
     same_task_retained = $true
     duplicate_task_created = $false
     second_runner_started = $false
-    runner_started = $false
+    runner_start_requested = $RunnerRequested
+    runner_start_guarded_by_014_lease_checks = $true
     strict_chain = "017_TO_018_TO_014"
     final_ready = $false
 }
