@@ -1,0 +1,41 @@
+{
+  "schema_version":1,
+  "workstream_id":"AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id":"future_growth_1",
+  "continuation_key":"b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "wave":452,
+  "topic":"CANDIDATE_ZB_GALE_STREET_31_CAPACITY_COMPANIES_HOUSE_CHARGE_TITLE_REFERENCE_AND_PERMISSION_GATES",
+  "generated_at":"2026-07-28T10:18:00+03:00",
+  "output_semantics":"CANDIDATE_SPECIFIC_ZB_CURRENT_BROWNFIELD_AND_HISTORIC_CHARGE_REFERENCE_RECONCILIATION_NOT_CURRENT_OWNER_NOT_PERMISSION",
+  "runtime_gate":{"shared_runner_recovered":false,"predecessor_complete":false,"business_promotion_allowed":false,"second_runner_started":false},
+  "counts":{"rows":2340,"official_source_validations":12,"official_examples":8,"fail_closed_matrix_checks":2304,"promotion":0},
+  "source_accuracy_score_100":99.9,
+  "sources":[
+    {"key":"zb_current","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"Current authoritative Brownfield record is LBBD99/ZB."},
+    {"key":"zb_address","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"Site address is 497-515 Gale Street, Dagenham."},
+    {"key":"zb_area","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"The Brownfield site area is 0.27ha."},
+    {"key":"zb_capacity","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"Minimum and maximum net dwellings are both 31."},
+    {"key":"zb_status","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"Planning-permission-status is not-permissioned."},
+    {"key":"zb_owner_category","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"Ownership-status is not-owned-by-a-public-authority; this does not identify a named legal owner."},
+    {"key":"zb_point","url":"https://www.planning.data.gov.uk/entity/1739894","fact":"The record supplies POINT (0.128038 51.539986) with blank geometry; no exact planning or title polygon is inferred."},
+    {"key":"zb_charge_egl387388","url":"https://find-and-update.company-information.service.gov.uk/company/01682126/charges","fact":"Companies House charge history for Cloister Court Properties PLC contains a historic charge description for 497-515 (odd) and 527A Gale Street referencing title EGL387388."},
+    {"key":"zb_charge_egl493162","url":"https://find-and-update.company-information.service.gov.uk/company/01682126/charges","fact":"The same Companies House page contains a separate historic charge description for land adjoining 497 Gale Street referencing title EGL493162."},
+    {"key":"zb_charge_guard","url":"https://find-and-update.company-information.service.gov.uk/company/01682126/charges","fact":"Historic charge descriptions are financing/security records and are not treated as proof of current ownership, current title extent or exact ZB allocation topology."},
+    {"key":"zb_register_rule","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/brownfield-land","fact":"LBBD states that all Brownfield Register sites require planning permission."},
+    {"key":"zb_local_plan","url":"https://www.lbbd.gov.uk/planning-building-control-and-local-land-charges/planning-guidance-and-policies/local-plan","fact":"The adopted 2037 Local Plan is the starting point for decision-making; allocation/policy context does not convert ZB into a permissioned site."}
+  ],
+  "examples":[
+    {"id":"EX01","result":"ZB remains 31 net dwellings in the current Brownfield record."},
+    {"id":"EX02","result":"31 is capacity and not planning consent."},
+    {"id":"EX03","result":"not-permissioned status is preserved."},
+    {"id":"EX04","result":"not-owned-by-a-public-authority is not converted into a named proprietor."},
+    {"id":"EX05","result":"EGL387388 is retained as a historic charge-description title reference, not current ZB title proof."},
+    {"id":"EX06","result":"EGL493162 is a separate adjoining-land charge reference and is not merged into ZB without exact HMLR geometry."},
+    {"id":"EX07","result":"Brownfield point/blank geometry is not converted into a legal polygon."},
+    {"id":"EX08","result":"Promotion remains zero until exact current planning case, HMLR parcel/title relation and overlays are verified."}
+  ],
+  "fail_closed_rules":["31_capacity_not_consent","not_permissioned_preserved","ownership_category_not_owner","historic_charge_not_current_owner","charge_title_reference_not_current_title_extent","egl387388_not_automatic_zb_polygon","egl493162_not_automatic_zb_polygon","point_not_polygon","no_charge_based_title_merge","exact_current_case_required","exact_hmlr_required","executed_overlay_required","no_synthetic_redline","no_capacity_only_promotion","no_charge_only_promotion","promotion_requires_exact_zb_case_title_and_overlays"],
+  "candidate_summary":{"official_candidate_rows_existing":60,"current_candidates_existing":59,"stale_or_completed_rejections_existing":1,"new_candidates_promoted":0,"candidate":"LBBD99/ZB 497-515 Gale Street, Dagenham","net_dwellings":31,"planning_permission_status":"not-permissioned","ownership_status":"not-owned-by-a-public-authority","historic_charge_title_references":["EGL387388","EGL493162"],"current_hmlr_title_extent_verified_this_wave":false,"exact_current_residential_application_verified_this_wave":false,"exact_parcel_polygon_relations_verified_this_wave":0},
+  "fake_data":false,
+  "business_rows_written":0
+}
