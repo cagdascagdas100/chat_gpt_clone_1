@@ -1,0 +1,81 @@
+name: security-public-safety-2-wave28
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave28.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-648bc6c3f3fa1b8d389a98e16497695e2d3e20b4872011a122fd5c7bbb178854
+  cancel-in-progress: false
+
+jobs:
+  generate-accept-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AAYS_SLOT_ID: security_public_safety_2
+      AAYS_CHILD_DIRECT_PUSH_FORBIDDEN: "true"
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Install browser acceptance runtime
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Generate 30 official-source rows and accept 370-row web artifact
+        shell: bash
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave28_runner_20260729.py
+
+      - name: Commit exact slot outputs
+        shell: bash
+        run: |
+          rm -rf docs/chatgpt_status/aays1/automation/__pycache__
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_30row_wave28_latest.json \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_370row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_370row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_370row_evidence_expansion.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_370row_browser_acceptance_wave28_receipt_20260729.json \
+            docs/chatgpt_status/aays1/queue/0003_security_public_safety_2_priority_370row_incremental_evidence_expansion_20260729.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json
+          git diff --cached --check
+          git commit -m "publish security_public_safety_2 370-row evidence wave"
+
+      - name: Rebase and push without force
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              echo "REBASE_CONFLICT"
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              echo "PUSH_OK"
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          echo "PUSH_RETRY_EXHAUSTED"
+          exit 1
