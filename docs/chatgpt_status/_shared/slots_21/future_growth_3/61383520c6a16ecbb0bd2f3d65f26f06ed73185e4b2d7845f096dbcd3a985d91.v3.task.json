@@ -5,40 +5,59 @@
   "slot_id": "future_growth_3",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
   "continuation_key": "61383520c6a16ecbb0bd2f3d65f26f06ed73185e4b2d7845f096dbcd3a985d91",
-  "state": "PENDING_EXECUTION_CONTRACT",
-  "task_type": "IDEMPOTENT_CONTINUATION_RECORD",
+  "state": "RUNNING",
+  "task_type": "BOUNDED_OFFICIAL_SOURCE_RESEARCH_AND_CANONICAL_EXPORT_REVALIDATION",
   "first_unverified_step": "ACQUIRE_CANONICAL_SHARD_61523_92283_EXPORT_THEN_GEOMETRY_INTERSECT",
-  "parcel_partition": {
-    "start": 61523,
-    "end": 92283,
-    "count": 30761,
-    "canonical_count": 92283
+  "parallelism": {
+    "requested_more_work": true,
+    "effective_workers": 2,
+    "work_units": ["OFFICIAL_ENTITY_VALIDATION", "CANONICAL_EXPORT_REPOSITORY_REVALIDATION"],
+    "shared_git_publisher": true
   },
-  "owner_state_at_creation": "UNCLAIMED",
-  "heartbeat_state_at_creation": "IDLE_STALE",
-  "current_task_state_at_creation": "IDLE",
-  "manual_action_state": "RESOLVED",
-  "execution_allowed": false,
-  "execution_blockers": [
-    "READ_PATHS_NOT_DECLARED",
-    "EXACT_WRITE_PATHS_NOT_DECLARED_FOR_NEXT_EXECUTABLE_STEP",
-    "RESOURCE_CLASS_NOT_DECLARED",
-    "TIMEOUT_NOT_DECLARED",
-    "ACCEPTANCE_CONDITIONS_NOT_DECLARED",
-    "CANONICAL_SHARD_61523_92283_EXPORT_NOT_FOUND_IN_REMOTE_REPOSITORY"
-  ],
-  "required_next_action": "Populate a canonical executable task contract for the same continuation_key; then resume from the first unverified step without creating a second owner or duplicate task.",
-  "business_rows_written": 0,
-  "fake_data": false,
-  "final_ready": false,
-  "created_at": "2026-07-29T13:21:00+03:00",
-  "evidence_paths": [
+  "parcel_partition": {"start": 61523, "end": 92283, "count": 30761, "canonical_count": 92283},
+  "read_paths": [
     "docs/chatgpt_status/_shared/slots_21/manifest_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_3/status_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_3/checkpoint_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_3/heartbeat_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_3/ownership_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_3/current_task_latest.json",
-    "docs/chatgpt_status/_shared/manual_actions/future_growth_3.json"
-  ]
+    "england_map_web/data/aays_21_slots/future_growth_3/progress_latest.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/source_geometry_registry_latest.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/canonical_export_search_audit_latest.json",
+    "https://www.planning.data.gov.uk/dataset/brownfield-land",
+    "https://www.planning.data.gov.uk/entity/<entity_id>"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/_shared/slots_21/future_growth_3/61383520c6a16ecbb0bd2f3d65f26f06ed73185e4b2d7845f096dbcd3a985d91.v3.task.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_3/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_3/checkpoint_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_3/heartbeat_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_3/current_task_latest.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/wave_3998_4007_20260729.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/wave_3998_4007_20260729.html",
+    "england_map_web/data/aays_21_slots/future_growth_3/index.html",
+    "england_map_web/data/aays_21_slots/future_growth_3/progress_latest.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/source_geometry_registry_latest.json",
+    "england_map_web/data/aays_21_slots/future_growth_3/canonical_export_search_audit_latest.json",
+    "docs/chatgpt_status/aays1/shards/future_growth_3/reports/170_future_growth_3_wave_3998_4007_20260729.md"
+  ],
+  "resource_class": "NETWORK_LIGHT_CPU_LIGHT_BOUNDED_2_WORK_UNITS",
+  "timeout_seconds": 900,
+  "acceptance_conditions": [
+    "Every promoted row is a direct official planning.data.gov.uk brownfield-land entity.",
+    "End date is blank/current, quality is authoritative, point is present, and minimum/maximum net dwellings are positive.",
+    "Every promoted entity passes an individual repository duplicate search.",
+    "Website panel exposes every row with entity link, capacity, point, gate result, and confidence.",
+    "No canonical parcel assignment or future-growth score is produced without the missing canonical shard export and geometry intersection.",
+    "Status, checkpoint, progress, heartbeat and readback paths agree on wave counts."
+  ],
+  "execution_allowed": true,
+  "execution_blockers": ["CANONICAL_SHARD_61523_92283_EXPORT_NOT_FOUND_IN_REMOTE_REPOSITORY"],
+  "blocker_policy": "NO_DATA_CONTINUE_SOURCE_RESEARCH_ACTIVE",
+  "business_rows_written": 0,
+  "fake_data": false,
+  "final_ready": false,
+  "created_at": "2026-07-29T13:21:00+03:00",
+  "started_at": "2026-07-29T14:16:00+03:00"
 }
