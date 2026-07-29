@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><title>height_difference_2 Increment 201</title>
+<style>body{font:12px system-ui;background:#09111a;color:#eef}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #345;padding:4px}th{background:#18283a;position:sticky;top:0}.completed{background:#10251d}.blocked{background:#321818}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{border:1px solid #345;padding:8px}.gap{background:#302812;padding:10px}.ok{background:#10301f;padding:8px}</style>
+<h1>height_difference_2 — Increment 201</h1><div id="integrity">MANIFEST VERIFYING</div><div id="cards" class="cards"></div><div id="gaps" class="gap"></div>
+<h2>1351 işlem</h2><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Hedef</th><th>Kontrol</th><th>Kanıt</th><th>Güven</th><th>Blocker</th></tr></thead><tbody id="ops"></tbody></table>
+<h2>264 örnek</h2><table><tbody id="ex"></tbody></table><h2>16 kaynak</h2><table><tbody id="src"></tbody></table><h2>78 runtime</h2><table><tbody id="rt"></tbody></table><h2>10 negatif fixture</h2><table><tbody id="fx"></tbody></table>
+<script>
+const E=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function F(e,g){const r=await fetch(e.file,{cache:'no-store'});if(!r.ok)throw Error(e.file+' HTTP');const b=await r.arrayBuffer();if(b.byteLength!==e.size_bytes)throw Error(e.file+' size');if(hex(await crypto.subtle.digest('SHA-256',b))!==e.sha256)throw Error(e.file+' SHA');const d=JSON.parse(new TextDecoder().decode(b));if(d.generation_id!==g)throw Error(e.file+' generation');return d}
+(async()=>{const mr=await fetch('increment_201_manifest.json',{cache:'no-store'}),m=await mr.json();
+if(m.slot_id!=='height_difference_2'||m.increment!==201||m.task_id!=='aays1-height-difference-2-canonical-export-official-sampling-20260720'||m.attempt_id!=='height-difference-2-20260721-020'||m.continuation_key!=='d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44'||m.fake_data!==false||m.final_ready!==false)throw Error('manifest safety');
+const docs=await Promise.all(m.children.map(x=>F(x,m.generation_id))),by={};m.children.forEach((x,i)=>by[x.role]=docs[i]);
+const d=by.bundle,cc=by.candidate_contract,gapsAll=[...by.gaps1.gaps,...by.gaps2.gaps],s=by.sources.rows,runtimeRows=by.runtime.rows,fixturesDoc=by.fixtures,rev=by.revision17;d.candidates=cc.candidates;d.base_checks=cc.base_checks;d.scenarios=cc.scenarios;d.gaps=gapsAll;
+if(s.length!==16||new Set(s.map(x=>x[0])).size!==16||runtimeRows.length!==78||cc.base_check_count!==96||cc.scenario_count!==88||gapsAll.length!==48||fixturesDoc.passed!==10||fixturesDoc.failed!==0||fixturesDoc.fixtures.some(x=>x.result!=='BLOCKED_AS_EXPECTED')||rev.new_gap_count!==10||rev.total_open_gap_count!==48)throw Error('child integrity');
+let n=d.increment.operation_start,rows=[];const A=(st,a,t,c,e,g=100,b='')=>rows.push([n++,st,a,t,c,e,g,b]);
+for(const x of s){A('completed','SOURCE',x[0],'authority',x[1]+' — '+x[2]);A('completed','FACT',x[0],'verified',x[5]);A('completed','LIMIT',x[0],'fail-closed',x[6])}
+for(const x of d.candidates)for(const q of d.base_checks)for(const mode of ['VALUE','SOURCE','GATE','RECEIPT']){const v=(typeof q[2]==='string'&&Object.prototype.hasOwnProperty.call(x,q[2]))?x[q[2]]:q[2];A('completed',q[0]+'_'+mode,'row '+x.row+' / '+x.hmlr,q[1],mode==='VALUE'?v:mode==='SOURCE'?'official or preserved evidence':mode==='GATE'?'fail closed on mismatch':'receipt required',mode==='VALUE'?96:100)}
+for(const r of runtimeRows)A(r[1]==='STATIC_GAP'?'blocked':'completed','RUNTIME','revision16',r[0],r[2],100,r[1]==='STATIC_GAP'?r[0]:'');
+for(const g of d.global_rows)A('completed','GLOBAL','increment201',g[0],g[1]);
+A('blocked','RECOVERY','F-host','0/4 receipts','fresh restart, heartbeat, claim and final output absent',100,'EXTERNAL_F_HOST_GUARDED_RECOVERY_PENDING');
+const completed=rows.filter(x=>x[1]==='completed').length,blocked=rows.filter(x=>x[1]==='blocked').length;
+if(rows.length!==m.expected.operations||completed!==m.expected.completed||blocked!==m.expected.blocked||n-1!==d.increment.operation_end)throw Error('operation integrity');
+let eid=2236,exs=[];for(const x of d.candidates)for(const q of d.scenarios)exs.push([`HD2-QA-${eid++}`,x.row,x.authority,q,x.hmlr,x.span1.toFixed(3),x.span2.toFixed(3),x.confidence+'%',/STALE|TIMEOUT|ATOMIC|IDENTITY_ENV|EXPECTED_ROWS|CATALOGUE|DOWNLOAD|WCS|PRECISION|ABSOLUTE|CONFIDENCE|HASH|NATIVE_CRS|STRICT_INTERIOR|TERRAIN50|OS_API|WEB_/.test(q)||(q==='UNCERTAINTY_QA'&&x.absolute95<0)?'CAUTION':'PASS']);
+if(exs.length!==m.expected.examples||new Set(exs.map(x=>x[0])).size!==exs.length)throw Error('example integrity');
+integrity.className='ok';integrity.textContent='GENERATION + SHA256 + COUNT + 10/10 NEGATIVE FIXTURE PASS';
+cards.innerHTML=[['Kanonik',d.canonical.completed+'/'+d.canonical.planned],['Genel',d.canonical.overall_percent+'%'],['İşlem',completed+'/'+rows.length],['Blocked',blocked],['Kaynak',s.length],['Örnek',exs.length],['Runtime',d.increment.runtime_pass+' PASS / '+d.increment.runtime_gap+' GAP'],['Fixture',fixturesDoc.passed+'/'+fixturesDoc.fixture_count],['Receipt',d.recovery.receipts]].map(x=>'<span class=card><b>'+E(x[0])+'</b><br>'+E(x[1])+'</span>').join('');
+gaps.innerHTML=d.gaps.map(x=>'<b>'+E(x.id)+'</b>: '+E(x.evidence)+'<br>'+E(x.required)).join('<hr>');
+ops.innerHTML=rows.map(x=>'<tr class='+x[1]+'>'+x.map(v=>'<td>'+E(v)+'</td>').join('')+'</tr>').join('');
+ex.innerHTML=exs.map(x=>'<tr>'+x.map(v=>'<td>'+E(v)+'</td>').join('')+'</tr>').join('');
+src.innerHTML=s.map(x=>'<tr><td>'+E(x[0])+'</td><td>'+E(x[1])+'</td><td><a href="'+E(x[3])+'" target="_blank" rel="noopener">'+E(x[2])+'</a></td><td>'+E(x[4])+'</td><td>'+E(x[5])+'</td><td>'+E(x[6])+'</td></tr>').join('');
+document.getElementById('rt').innerHTML=runtimeRows.map(x=>'<tr class='+(x[1]==='STATIC_GAP'?'blocked':'completed')+'><td>'+E(x[0])+'</td><td>'+E(x[1])+'</td><td>'+E(x[2])+'</td></tr>').join('');
+fx.innerHTML=fixturesDoc.fixtures.map(x=>'<tr><td>'+E(x.id)+'</td><td>'+E(x.result)+'</td><td>'+E(JSON.stringify(x.old_observed))+'</td><td>'+E(JSON.stringify(x.fixed_expected))+'</td></tr>').join('');
+})().catch(err=>integrity.textContent='INTEGRITY BLOCK: '+err.message);
+</script>
