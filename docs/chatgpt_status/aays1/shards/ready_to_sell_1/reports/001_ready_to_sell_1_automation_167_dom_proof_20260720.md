@@ -4,7 +4,7 @@
 - Continuation key: `6a91b39620b1c0a5f98eb2831178dff6108c64dce6db205f58296ca657e4e8be`
 - Task: `ready_to_sell_1_automation_167_dom_proof_20260720_01`
 - State: `PUBLISH_PENDING`
-- Updated: `2026-07-29T18:20:00Z`
+- Updated: `2026-07-29T18:37:00Z`
 - Final ready: `false`
 
 ## Aggregate
@@ -39,76 +39,98 @@
 - Batch 34: `8/8` (`100%`)
 - Batch 33: `5/5` (`100%`)
 - Batch 32: `3/3` (`100%`)
-- Combined Batch 32–51: `369/369` (`100%`)
-- Combined recovery coverage: `369/507` (`72.78%`)
+- Batch 31: `3/3` (`100%`)
+- Batch 30: `3/3` (`100%`)
+- Batch 29: `3/3` (`100%`)
+- Batch 28: `3/3` (`100%`)
+- Batch 27: `2/2` (`100%`)
+- Batch 26: `2/2` (`100%`)
+- Combined Batch 26–51: `385/385` (`100%`)
+- Combined recovery coverage: `385/507` (`75.94%`)
 - Recovery increase in this pass: `+3.16 percentage points`
-- Batch 32–34 primary/current Acuitus readbacks: `16`
-- Batch 32–34 official registry entities checked: `17`
-- Verified readbacks promoted in this pass: `33`
-- Batch 32–34 source-contract filenames safely resolved: `0` (no route count invented)
-- Stored-vs-primary fact contradictions in Batch 32–34: `4`
-- Official company-name reconciliations in Batch 32–34: `1`
-- Resolved historical page-state conflicts: `2`
-- New price/historical-status contradictions: `3`
-- New source-internal conflicts: `4`
-- Current-date reconciliation rows: `12`
-- Official registry material risks: `3`
+- Batch 26–31 primary/current market readbacks: `16`
+- Batch 26–31 official registry entities checked: `17`
+- Official heritage entries checked: `1`
+- Verified readbacks promoted in this pass: `34`
+- Source-contract filenames safely resolved: `0` (no route count invented)
+- Stored-vs-primary fact contradictions: `4`
+- New price/historical-status contradictions: `4`
+- New source-internal conflicts: `8`
+- Current-date reconciliation rows: `15`
+- Official registry material risks: `2`
 - Canonical source counter increase: `0` (child evidence awaits coordinator publication)
 - Parcel-bound rows added: `0`
 
-## Batch 34 rows 159–166
+## Batch 31 rows 148–150
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 159 | ACUITUS-5809 | PASS WITH ACTIVE LONG NO BREAK LEASE HISTORIC CVA AND CHARGE LIMITATION | Available; £56,950 rent; 2,987 sq ft freehold restaurant. PizzaExpress (Restaurants) Limited is active under a no-break term to 26 May 2034 with a 27 May 2029 review. Its historic CVA completed in September 2022; current outstanding corporate charges are not treated as property-specific default evidence. | UNBOUND |
-| 160 | ACUITUS-5799 | PASS WITH FIVE TENANTS AND UNCONSENTED UPPER CHANGE OF USE POTENTIAL | Available; £58,500 stated rent across five commercial tenants in a 1,695 sq ft freehold building. Upper-floor change of use remains marketing potential only; individual leases, arrears, deposits, service charge, planning, heritage and title remain unread. | UNBOUND |
-| 161 | ACUITUS-5800 | FAIL PROPERTY PAGE AND RESULTS INDEX PRICE CONFLICT WITH COMPANY RENAME | Available; the live property page shows a £1,800,000 guide while the current results/available index shows Contact Us. £175,000 rent is subject to a 11 Dec 2028 tenant option and a three-month rent-free period if not exercised. Company 03406347 is now Frasers Group Trading Limited; upper residential floors are on a separate 988-year peppercorn lease. | UNBOUND |
-| 162 | ACUITUS-5803 | PASS WITH VACANT FORMER DEALERSHIP DEVELOPMENT AND ENVIRONMENTAL RISK | Available; vacant 12,604 sq ft former showroom/workshop across three buildings on 1.45 acres, VAT-free with EPC D. Development and asset-management claims do not establish permission; contamination, asbestos, drainage, condition, access, title and completion remain unread. | UNBOUND |
-| 163 | ACUITUS-5742 | PASS WITH ACTIVE BOOTS 2029 OPTION AND ONE SQFT SOURCE CONFLICT | Available; £40,000 rent under a renewed five-year Boots lease from 16 Apr 2026 with tenant option on 16 Apr 2029. The headline states 11,886 sq ft while the tenancy table totals 11,887 sq ft; title, rear access, executed lease and EPC remain unread. | UNBOUND |
-| 164 | ACUITUS-5717 | FAIL HEADLINE RENT TOTAL CONTRADICTION AND MIXED RESIDENTIAL STRUCTURE | Available; the tenancy table totals £87,090, not the £87,030 headline. Tesco pays £75,000 with 2029/2034 reviews and an Aug 2034 option; one maisonette produces £12,000 and three further maisonettes are long-lease interests at £30 each. Parking and service-road rights remain market-stated. | UNBOUND |
-| 165 | ACUITUS-5568 | FAIL FULL RENT SEMANTIC AND ONE SQFT AREA CONFLICT DURING CURRENT HALF RENT | Available; £90,790 headline rent, but Zype TV pays half rent until 24 Dec 2026 with seller top-up, so full tenant cash is not current. The description states 5,097 sq ft while the table totals 5,098 sq ft. A 24 Dec 2030 tenant option and a further one-year half-rent incentive apply if the option is not exercised; one corporate charge is outstanding. | UNBOUND |
-| 166 | ACUITUS-5750 | PASS WITH MULTI INTEREST NEAR TERM EXPIRIES NONTRADING TENANT AND ACTIVE CVA | Available; £46,334 across 12 retail units, 27 residential long leases, parking, CCTV and substation interests. Unit 15 ends 31 Oct 2026, Unit 18's term is at expiry and its tenant is not trading, Unit 22a/22b is vacant, and My Space Housing Solutions remains in a CVA. Breaks, deposits, service charge, licences and title require document-level reconciliation. | UNBOUND |
+| 148 | ACUITUS-5802 | PASS WITH ACTIVE TENANT OVERDUE ACCOUNTS AND 2029 OPTION | Available with guide Contact Us; £44,000 rent and 10,410 sq ft. Edinburgh Woollen Mill Properties Limited is active but its accounts remain overdue. The five-year term from 20 May 2026 includes a tenant option on 20 May 2029; title, executed lease, EPC, rates and completion remain unread. | UNBOUND |
+| 149 | ACUITUS-5817 | PASS WITH CURRENT RENT TOPUP COMPANY RENAME OPTION AND TWO SUPERIOR LEASES | Available at £475,000. The marketed £65,535 is effective income from completion, while contractual rent is £61,200 until the fixed increase on 4 Oct 2027 and the seller supplies the difference. Company 04873038 is now Alexander Beard Ltd; the 4 Oct 2030 option, Unit 16 sublease, two superior leases and estate service charge remain document-dependent. | UNBOUND |
+| 150 | ACUITUS-5818 | FAIL STORED GUIDE PRICE CONTRADICTION AND SHORT 2028 REVERSION | Current live page is Available with guide Contact Us, not the stored £850,000. Morris Homes (Midlands) pays £123,050 under a five-year term expiring 31 Jul 2028 with Morris Homes guarantee; guarantee scope, parking rights, title, lease and completion remain unread. | UNBOUND |
 
-## Batch 33 rows 154–158
+## Batch 30 rows 145–147
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 154 | ACUITUS-5780 | FAIL STORED AVAILABLE STATUS WITH IMMINENT NOTICE EXPIRY AND OVERDUE FILINGS | Current live status is Withdrawn Post, not stored Available. Chiro.London Ltd has served notice determining the £30,000 clinic lease on 3 Aug 2026; the company is active but its accounts due 30 Apr 2026 and confirmation statement due 16 Jul 2026 are overdue. Prior approval PA25/0087 does not prove possession or completed conversion. | UNBOUND |
-| 155 | ACUITUS-5783 | PASS WITH ALL PERIODIC TENANCIES AND GROSS PROJECTED INCOME SEPARATION | Available; £264,894 vendor-stated gross income for 2025/26 across 47 units. Every unit is described as periodic, and £271,416 for 2026/27 is projected rather than contracted current income. HMO, fire, management, arrears, tenancy and net-income evidence remain unread. | UNBOUND |
-| 156 | ACUITUS-5769 | PASS WITH ACTIVE BM SHORT 2028 REVERSION AND SUBSTATION INTEREST | Available; £120,000 rent; 19,471 sq ft. B & M Retail is active under a three-year term from Feb 2025 expiring Feb 2028. A separate 99-year electricity substation interest is included; renewal, title, lease and substation documents remain unread. | UNBOUND |
-| 157 | ACUITUS-5770 | PASS WITH GROUND RENT NOT DULUX OCCUPATIONAL RENT AND SEPARATE UPPER INTEREST | Available; £36,570 is ground rent paid by S K Properties & Developments under a 125-year term to 2138, with Dulux only as under-occupier. Rent rises to £44,579 in 2033 and upper offices are separately held for 125 years at peppercorn; parking, headlease, underlease and title remain unread. | UNBOUND |
-| 158 | ACUITUS-5762 | PASS WITH SEPTEMBER 2027 OPTION AND PRIOR APPROVAL CONVERSION RISK | Available at £330,000; £25,000 retail rent with a 29 Sep 2027 tenant option. Vacant upper floors have Mar 2026 prior approval for four flats, but conditions, drawings, building regulations, conversion cost, title and executed lease remain unread. | UNBOUND |
+| 145 | ACUITUS-5830 | PASS WITH DECEMBER 2026 PURPORTED BREAK AND OVERDUE CONFIRMATION | Available at £325,000–£350,000; £42,000 total income. Cumbria Gateway's purported break on 1 Dec 2026 remains validity-dependent and its confirmation statement is overdue. Nationwide's £30,000 term ends in Feb 2027; Grade II, lease, title and conversion evidence remain unread. | UNBOUND |
+| 146 | ACUITUS-5765 | PASS WITH COMPLETION DEPENDENT LEASE AND SEPARATE LONG LEASE FLATS | Available with guide Contact Us; £70,000 headline rent. Lakeland's fifteen-year lease starts only on completion and contains a tenth-anniversary option, so current lease commencement and tenant cash are not proven. Four upper flats are held under a separate 999-year peppercorn interest; title, leases, VAT and EPC remain unread. | UNBOUND |
+| 147 | ACUITUS-5771 | PASS WITH TWO OPTIONS PERSONAL GUARANTEE AND CONSENTED VACANT UPPERS | Available with guide Contact Us; £45,000 total income. Sense has a 30 Jun 2028 option; Modern Arts Dental has an 18 Feb 2029 option and a personal guarantee only to Dec 2028. The vacant upper accommodation has permission for three flats, but decision conditions, drawings, leases, guarantee and title remain unread. | UNBOUND |
 
-## Batch 32 rows 151–153
+## Batch 29 rows 142–144
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 151 | ACUITUS-5761 | PASS WITH CONCURRENT LEASE GROSS INCOME AND ADJACENT 2038 EXPIRIES | Available at £4,500,000; £771,722 gross rent under an Asda no-break occupational term to 9 May 2038. The marketed concurrent lease expires 10 May 2038 at £1, with fixed rent steps to £894,657 in 2028 and £1,037,175 in 2033; superior and occupational interests and net deductions remain unread. | UNBOUND |
-| 152 | ACUITUS-5775 | PASS WITH HEADRENT SUBRENT SEPARATION GUARANTEE AND LONG NO BREAK LEASE | Available; £96,000 investment rent under a 25-year EI Group lease from 16 Jan 2026 with Stonegate guarantee and no breaks. The whole property is reported sublet at £115,000, a separate income layer; theatre, flat, guarantee, sublease, title and completion remain unread. | UNBOUND |
-| 153 | ACUITUS-5810 | PASS WITH CURRENT RELISTING AFTER PRIOR WITHDRAWN HISTORY AND VIRTUAL FREEHOLD | Current listing 5810 is Available with vacant possession for a 1,255 sq ft office held on a 999-year virtual-freehold interest at £200 yearly ground rent. The same physical property appeared in earlier deferred, relisted and Withdrawn Post records; no completed sale is inferred and residential conversion remains subject to consent. | UNBOUND |
+| 142 | ACUITUS-5804 | FAIL STORED CONTACT US PRICE CONTRADICTION WITH CONDITIONAL LISTED VACANCY | Current live page is Available at £750,000, not stored Contact Us. The vacant 10,278 sq ft Grade II former bank has about 16 spaces, but sale remains conditional on seller confirmation and residential conversion requires planning and listed-building consent; title, special conditions and completion remain unread. | UNBOUND |
+| 143 | ACUITUS-5816 | FAIL STORED AVAILABLE STATUS RENEWAL RENT AND AREA CONTRADICTIONS | Current status is Sold Post, not stored Available at £375,000. The tenant remains holding over after the Oct 2022 expiry; £58,000 headline rent is unreconciled to uncompleted renewal heads at £37,500 rising to £41,000 or OMV with a third-year option. The headline states 7,689 sq ft while the table totals 7,688 sq ft. | UNBOUND |
+| 144 | ACUITUS-5792 | PASS WITH CURRENT RENT FREE TOPUP AND COMPLETION DEPENDENT TENURE | Available with guide Contact Us; £18,500 headline rent. Thames Travel's no-break term began 13 May 2026 but remains within a six-month rent-free period on 29 Jul 2026, supported by seller top-up. The 999-year virtual-freehold interest starts on completion; executed lease, top-up covenant, title and completion remain unread. | UNBOUND |
+
+## Batch 28 rows 139–141
+
+| Row | Listing | Result | Live evidence / material limitation | Parcel |
+|---:|---|---|---|---|
+| 139 | ACUITUS-5799 | PASS WITH FIVE TENANTS NEAR TERM 2027 BREAK AND PLANNING RISK | Available with guide Contact Us; £58,500 across five commercial interests in 1,695 sq ft. The third-floor lease has a 5 May 2027 tenant break, while upper-floor change of use is only marketing potential. Individual leases, deposits, arrears, service charge, planning and title remain unread. | UNBOUND |
+| 140 | ACUITUS-5800 | PASS WITH ACTIVE RENAMED TENANT 2028 OPTION AND LONG RESIDENTIAL INTEREST | Available with guide Contact Us; £175,000 rent. Company 03406347 is now Frasers Group Trading Limited and active. The lease has an 11 Dec 2028 tenant option plus three months rent-free if not exercised; upper residential floors are held on a separate 988-year peppercorn lease. | UNBOUND |
+| 141 | ACUITUS-5812 | FAIL PROPERTY PAGE INDEX PRICE CONFLICT AND INCOMPLETE RENT FREE DATES | The live property page shows Available at £175,000+, while the current Acuitus index shows Contact Us. Holland & Barrett pays £18,000 under a term to Feb 2031 with a third-anniversary option. The published three-month rent-free start is incomplete (`??/03/2026`); by 29 Jul 2026 the period should be historical, but exact dates and seller top-up settlement remain unread. | UNBOUND |
+
+## Batch 27 rows 137–138
+
+| Row | Listing | Result | Live evidence / material limitation | Parcel |
+|---:|---|---|---|---|
+| 137 | ACUITUS-5809 | PASS WITH ACTIVE LONG NO BREAK LEASE AND HISTORIC CVA | Available with guide Contact Us; £56,950 rent. PizzaExpress (Restaurants) Limited is active under a no-break term to 26 May 2034 with a 27 May 2029 review. Its 2020 CVA completed in Sep 2022 and is not treated as current property default; title, lease, EPC and rent performance remain unread. | UNBOUND |
+| 138 | ACUITUS-5762 | PASS WITH 2027 OPTION AND PRIOR APPROVAL CONVERSION RISK | Available at £330,000; £25,000 retail rent with a 29 Sep 2027 tenant option. Vacant upper floors have prior approval dated 26 Mar 2026 for four flats, but prior approval is not treated as full unrestricted permission; conditions, drawings, building regulations, lease and title remain unread. | UNBOUND |
+
+## Batch 26 rows 135–136
+
+| Row | Listing | Result | Live evidence / material limitation | Parcel |
+|---:|---|---|---|---|
+| 135 | WARDS-HAREFIELD | FAIL PORTAL TENURE AND AREA CONFLICT DESPITE ACTIVE SALE | Boxpod currently shows Available at £140,000, labels the property Freehold and states 1,591 sq ft, £17,000 rent, two spaces and a no-break lease to 2030. The same page describes a Leasehold Investment Opportunity, while LoopNet states 1,095 sq ft. Superior title, sale tenure, occupational lease and measured area must govern. | UNBOUND |
+| 136 | WARDS-HAUNCHWOOD | PASS WITH ACTIVE POST TENDER LAND AND UNRESOLVED PLANNING BOUNDARY | The land remains marketed for sale: Boxpod shows £875,000 Freehold and 0.880 acre, while PropList shows Available at POA. The ten-dwelling submission is not permission; the Jun 2026 informal-tender deadline has passed without a published outcome. The retained former pub, car-wash occupation, red line, title, contamination, highways and exact area remain unresolved. | UNBOUND |
 
 ## High-impact corrections
 
-1. Row 154: current status is `Withdrawn Post`, not stored `Available`; the clinic notice determines on `3 August 2026`, and Chiro.London has overdue accounts and confirmation statement.
-2. Row 161: the Sports Direct property page shows `£1,800,000`, while the current results/available index shows `Contact Us`; company `03406347` is now Frasers Group Trading Limited.
-3. Row 164: the tenancy table totals `£87,090`, not the `£87,030` headline.
-4. Row 165: full `£90,790` tenant cash is not current because half rent applies until `24 December 2026` with seller top-up; the source also contains a `5,097 / 5,098 sq ft` conflict.
-5. Row 166: My Space Housing Solutions remains in a CVA; the mixed income includes occupational rent, long-lease ground rents, a CCTV licence and substation rent.
-6. Row 151: the Asda interest is a concurrent lease, not freehold; gross rent and net deductions remain separate.
-7. Row 153: current listing `5810` is Available, but the same physical property has earlier deferred, relisted and Withdrawn Post history; no completed sale is inferred.
-8. Row 163: the Boots headline states `11,886 sq ft`, while the tenancy table totals `11,887 sq ft`.
+1. Row 150: Davy Court's current guide is `Contact Us`, not stored `£850,000`; the term ends on `31 July 2028`.
+2. Row 142: Dorchester's current guide is `£750,000`, not stored `Contact Us`; sale remains conditional.
+3. Row 143: TG Jones is `Sold Post`, not Available; the tenant is holding over and headline rent, renewal heads and floor area conflict.
+4. Row 141: Holland & Barrett's property page and index disagree on price, and the rent-free commencement date is incomplete.
+5. Row 149: Rossmore's `£65,535` is effective top-up income, not current contractual rent; the tenant name changed to Alexander Beard Ltd.
+6. Row 144: Thames Travel remains inside the six-month rent-free period as of `29 July 2026`; headline income includes seller top-up.
+7. Row 135: Harefield has simultaneous Freehold/Leasehold and `1,591 / 1,095 sq ft` portal conflicts.
+8. Row 136: the Haunchwood tender deadline has passed, but outcome and planning decision remain unpublished.
 
 ## Official registry readback
 
-Batch 34 checked nine official corporate identities or routes. PizzaExpress, Frasers Group Trading, Boots, Tesco, Zype TV and Northern Powergrid were located through current official records. Frasers required a March 2026 name reconciliation. Zype has one outstanding corporate charge, which is not treated as property-default evidence. My Space Housing Solutions is in a current voluntary arrangement/CVA.
+Batch 31 checked Edinburgh Woollen Mill Properties, Alexander Beard, Morris Homes (Midlands) and Morris Homes. Edinburgh Woollen Mill Properties remains active with overdue accounts. Alexander Beard Ltd is the current name for company `04873038`.
 
-Batch 33 checked five official entities. Chiro.London is active but has overdue accounts and confirmation statement. B & M Retail, S K Properties & Developments, the Dulux group identity and JG Foods were retained as official identity checks without treating corporate status as proof of property-specific lease performance.
+Batch 30 checked Cumbria Gateway, Lakeland, Sense and the Modern Arts Dental identity. Cumbria Gateway remains active but its confirmation statement is overdue.
 
-Batch 32 checked Asda Stores, EI Group and Stonegate. The historic company-address record for Vineyard Path was kept separate and does not establish present occupation, title or sale.
+Batch 29 checked TG Jones Retail Holdings, Thames Travel and Go-Ahead, plus the Historic England Dorchester entry. Corporate and heritage identities do not prove property-specific lease, title, consent or completion.
+
+Batch 28 checked Home Vets London, Toby Holdings, Frasers Group Trading and Holland & Barrett. Frasers required current-name reconciliation. Batch 27 checked PizzaExpress and JG Foods. Batch 26 had no safely promoted official registry identity; portal conflicts were preserved rather than resolved by assumption.
 
 ## Previous evidence retained
 
-Detailed Batch 35–51 rows remain preserved in prior child-branch commits referenced by the JSON report. Repeated physical listings were re-read for their own canonical row references; no parcel, completion or income fact was copied without current evidence.
+Detailed Batch 32–51 rows remain preserved in prior child-branch commits referenced by the JSON report. Repeated physical listings were re-read for their own canonical row references; no parcel, completion or income fact was copied without current evidence.
 
 ## Runtime and website
 
@@ -116,7 +138,7 @@ No live owner or active lease was present. The canonical heartbeat and lease rem
 
 Full `1264`-row geometry and `51`-batch browser-DOM acceptance remains operation `291` and was not falsely completed.
 
-The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 32, Batch 33 and Batch 34 row by row.
+The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 26–31 row by row.
 
 ## Remaining blockers
 
