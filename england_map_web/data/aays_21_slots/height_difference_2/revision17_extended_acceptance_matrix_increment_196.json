@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "audit_id": "revision17_extended_acceptance_matrix_increment_196",
+  "detected_at": "2026-07-29T22:11:00+03:00",
+  "continuation_key": "d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44",
+  "status": "OPEN_SAFE_SCOPE_BLOCKED",
+  "required_revision": "revision17",
+  "existing_open_gap_count": 5,
+  "new_gap_count": 6,
+  "total_open_gap_count": 11,
+  "program_gaps": [
+    {"id":"EA_AXIS_LABEL_FALLBACK_GAP","fixed":false,"evidence":"DescribeCoverage silently substitutes E,N when fewer than two axisLabels are observed.","required":"Require two explicit spatial axes from the selected CoverageDescription; no fallback."},
+    {"id":"EA_INTERPOLATION_PIN_GAP","fixed":false,"evidence":"GetCoverage neither requests nor records an interpolation method.","required":"Discover supported interpolation, request an allowed method and persist it."},
+    {"id":"EA_EXACT_ONE_METRE_RESOLUTION_GAP","fixed":false,"evidence":"Sampler records raster resolution but does not require exactly 1m by 1m before metric extraction.","required":"Require a 1m x 1m affine transform within strict tolerance."},
+    {"id":"EA_VERTICAL_DATUM_OBSERVATION_GAP","fixed":false,"evidence":"Output declares ODN without proving a vertical datum identifier from response metadata.","required":"Observe and validate ODN/EPSG:5701-compatible vertical lineage."},
+    {"id":"EA_DESCRIBE_IDENTITY_DOMAIN_BINDING_GAP","fixed":false,"evidence":"DescribeCoverage parsing does not verify returned CoverageId/domainSet identity and collects axisLabels globally rather than from the selected coverage grid.","required":"Verify returned CoverageId, domainSet, CRS, grid axes and bounds belong to the selected coverage."},
+    {"id":"EA_GETCOVERAGE_EXTENT_ALIGNMENT_GAP","fixed":false,"evidence":"Returned raster bounds, transform alignment, band count and range unit are not fail-closed bound to the requested padded polygon subset.","required":"Verify returned bounds cover the requested subset, grid alignment is correct, one numeric elevation band is present and units are metres."},
+    {"id":"TERRAIN50_BINARY_HEADER_AND_SIDECAR_HASH_GAP","fixed":false,"evidence":"Crosschecker does not enforce 200x200, exact 50m transform, 10km bounds, companion pairing or nested/member hash lineage.","required":"Enforce documented grid/header/tile/companion contracts and persist all archive/member hashes."},
+    {"id":"TERRAIN50_DUPLICATE_TILE_WEIGHTING_GAP","fixed":false,"evidence":"Multiple ASC/TXT files matching one tile are concatenated, so duplicate editions can overweight the Terrain50 median.","required":"Require exactly one canonical ASC grid per required tile and reject duplicate tile hashes/editions."},
+    {"id":"HMLR_CURRENT_CATALOGUE_BINDING_GAP","fixed":false,"evidence":"Fresh catalogue bytes are hashed but seed-provided authority URLs and filenames are not verified as entries in that current catalogue.","required":"Parse the current catalogue and bind each authority name, filename and download URL to the current publication."},
+    {"id":"HMLR_EXTRACTION_BASENAME_COLLISION_GAP","fixed":false,"evidence":"GML/XML members are flattened to basename without a collision check, permitting silent overwrite of duplicate member names.","required":"Preserve safe relative paths or reject duplicate output basenames before extraction."},
+    {"id":"WEB_EXAMPLE_SOURCE_SEMANTIC_UNIQUENESS_GAP","fixed":false,"evidence":"Site examples do not require metric-semantics fields or unique IDs, and source rows require only non-empty publisher/URL rather than unique official HTTPS identities.","required":"Require unique example/source IDs, exact metric-semantics fields and approved official HTTPS source domains."}
+  ],
+  "coordinated_updates_required": [
+    "012_sample_ea_dtm1m_polygons.py: coverage-description identity/domain/axes, interpolation, exact 1m, response extent/band/unit and observed vertical datum",
+    "013_crosscheck_os_terrain50.py: exact single tile grid, 200x200, 50m, 10km, companion pairing and duplicate rejection",
+    "016_prepare_and_crosscheck_os_terrain50.py: outer/nested/member hash manifest and exact tile multiplicity",
+    "043_prepare_hmlr_sources_and_match.py: current-catalogue authority/filename/URL binding and collision-safe extraction",
+    "017_verify_height_difference_2_web_8012.py: unique example/source IDs, metric semantics and approved official HTTPS source identities",
+    "031 verifier, queue task, restart request, current-task, status and checkpoint: coordinated blob pin alignment"
+  ],
+  "automatic_patch_applied": false,
+  "why_not": "Current task does not enumerate exact_write_paths for the pinned core automation and control files; partial changes would invalidate revision16 recovery verification.",
+  "acceptance_requirements": {
+    "wcs": "selected CoverageId/domainSet; explicit axes; pinned interpolation; exact 1m grid; requested extent; one numeric metre-valued band; observed ODN lineage",
+    "terrain50": "one canonical ASC per required tile; 200x200; 50m; 10km alignment; ASC/GML/PRJ/AUX/metadata pairing; outer/nested/member hashes",
+    "hmlr": "current 5 July 2026 catalogue binds exact authority, filename and URL; collision-free member extraction; exact ID and point-inside",
+    "web": "unique operation/example/source identities; exact metric semantics; approved official HTTPS source domains; loopback 8012; current-candidate SHA",
+    "recovery": "4/4 receipts, fresh heartbeat, exact claim and accepted current outputs"
+  },
+  "new_task_created": false,
+  "new_runner_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
