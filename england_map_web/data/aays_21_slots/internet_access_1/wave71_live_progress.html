@@ -1,0 +1,51 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>internet_access_1 Wave71</title>
+<style>body{font-family:Arial,sans-serif;margin:18px;background:#f4f6f8;color:#17202a}.cards{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;border:1px solid #ccd6dd;padding:9px;min-width:150px}.warn{background:#fff3cd;border:1px solid #ffe69c;padding:10px;margin:10px 0}table{border-collapse:collapse;width:100%;background:#fff;margin-top:12px;font-size:12px}th,td{border:1px solid #ccd6dd;padding:6px;text-align:left;vertical-align:top}th{background:#edf1f3;position:sticky;top:0}input,select{padding:7px;margin:6px 4px 6px 0}.COMPLETE,.COMPLETE_FAIL_CLOSED{font-weight:700}.COMPLETE_FAIL_CLOSED{background:#fff3cd}</style></head><body>
+<h1>internet_access_1 — Wave71</h1><p>Continuation: <code>862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22</code></p>
+<div class=warn>RECOVERY_PARKED; heartbeat stale, queue pending, manual action OPEN. BA1 2BL altında altı UPRN doğrulandı. Repo tree ve ham bayt kapıları fail-closed.</div>
+<div class=cards id=cards></div>
+<h2>24 kaynak/rol</h2><table><thead><tr><th>#</th><th>Kaynak</th><th>Yayıncı</th><th>Karar</th><th>Doğruluk</th><th>Kanıt</th></tr></thead><tbody id=sources></tbody></table>
+<h2>64 yeni BDUK örneği</h2><table><thead><tr><th>Satır</th><th>UPRN</th><th>Postcode</th><th>Recognised</th><th>Current</th><th>Future</th><th>Yerel yönetim</th><th>Bölge</th></tr></thead><tbody id=samples></tbody></table>
+<h2>Tekrarlanan postcode grupları</h2><table><thead><tr><th>Postcode</th><th>UPRN sayısı</th></tr></thead><tbody id=dups></tbody></table>
+<h2>Tree, ağ, cardinality ve kaynak kontrolleri</h2><table><thead><tr><th>Kontrol</th><th>Kanıt</th><th>Karar</th></tr></thead><tbody id=controls></tbody></table>
+<h2>Satır satır 496 işlem</h2><input id=q placeholder="İşlem veya kanıt ara"><select id=track><option value="">Tüm hatlar</option></select><select id=state><option value="">Tüm durumlar</option></select><table><thead><tr><th>#</th><th>Hat</th><th>İşlem</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id=ops></tbody></table>
+<script>Promise.all([
+fetch('./progress_wave71_latest.json',{cache:'no-store'}).then(x=>x.json()),
+fetch('./source_registry_wave71_latest.json',{cache:'no-store'}).then(x=>x.json()),
+fetch('./bduk_sample_rows_wave71_latest.json',{cache:'no-store'}).then(x=>x.json()),
+fetch('./tree_network_cardinality_controls_wave71_latest.json',{cache:'no-store'}).then(x=>x.json())
+]).then(([p,g,s,c])=>{
+const cardsData=[['Durum',p.status],['Genel program',p.general_program_progress_percent+'% (+'+p.general_program_progress_delta_points+')'],['Operasyonel',p.operational_progress_percent+'% (+'+p.progress_delta_percent+')'],['İşlemler',p.completed_or_fail_closed_operations+' / '+p.total_operations],['Wave71',p.wave71_operations+' / '+p.wave71_operations],['Aday / promoted',p.official_source_candidates+' / '+p.promoted_sources],['Kaynak doğruluğu',p.source_evidence_accuracy_percent+'% (+'+p.source_evidence_accuracy_delta_points+')'],['Görünür satır',p.visible_example_rows],['Ağ doğrulaması',p.visible_network_attempt_rows],['Ürün satırı',p.verified_product_rows+' / '+p.verified_product_target_rows]];
+cards.innerHTML=cardsData.map(x=>`<div class=card><b>${x[0]}</b><br>${x[1]}</div>`).join('');
+sources.innerHTML=g.sources.map((x,i)=>`<tr><td>${i+1}</td><td>${x.name}</td><td>${x.publisher}</td><td>${x.decision}</td><td>${x.confidence}%</td><td>${x.facts}</td></tr>`).join('');
+samples.innerHTML=s.rows.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[4]}</td><td>${x[5]}</td><td>${x[6]}</td><td>${x[7]}</td></tr>`).join('');
+dups.innerHTML=Object.entries(s.duplicate_postcode_groups).map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('');
+controls.innerHTML=c.controls.map(x=>`<tr><td>${x.control}</td><td>${x.evidence}</td><td>${x.decision}</td></tr>`).join('');
+let O=[],n=5866;function add(t,a,b,e){O.push({no:n++,track:t,name:a,state:b,evidence:e})}
+const F=[
+['control','Wave70 uzak readback','COMPLETE','previous artifacts verified'],['control','Kanonik current task','COMPLETE_FAIL_CLOSED','RECOVERY_PARKED'],
+['control','Heartbeat','COMPLETE_FAIL_CLOSED','unclaimed/stale'],['control','Ownership/lease','COMPLETE','no live owner'],
+['control','Queue','COMPLETE_FAIL_CLOSED','pending same continuation'],['control','Manual action','COMPLETE_FAIL_CLOSED','OPEN'],
+['safety','Continuation guard','COMPLETE','same continuation'],['safety','Duplicate task guard','COMPLETE','no second task'],
+['safety','Second runner guard','COMPLETE','no second runner'],['safety','Canonical push guard','COMPLETE','isolated Wave71 branch'],
+['network','GitHub clone retry','COMPLETE_FAIL_CLOSED','DNS resolve failed'],['network','GitHub tree API','COMPLETE_FAIL_CLOSED','safe URL/cache filter'],
+['network','GitHub contents root','COMPLETE_FAIL_CLOSED','exact file path required'],['network','BDUK CSV curl','COMPLETE_FAIL_CLOSED','DNS/no bytes'],
+['network','Ofcom ZIP curl','COMPLETE_FAIL_CLOSED','DNS/no bytes'],['web_bduk','BDUK publication','COMPLETE','4 June 2026'],
+['web_bduk','BDUK technical note','COMPLETE','28 fields/318 files/max 1000 sample'],['web_bduk','BDUK preview 426-489','COMPLETE','64 exact rows'],
+['web_ofcom','Ofcom Spring 2026','COMPLETE','January 2026 snapshot'],['web_ofcom','Ofcom denominator scope','COMPLETE','residential vs all premises'],
+['web_ons','ONS NSUL role','COMPLETE','UPRN to geography; six weeks'],['web_os','OS Open UPRN role','COMPLETE','UPRN plus coordinates; six weeks'],
+['web_os','OS Linked IDs role','COMPLETE','UPRN-USRN-TOID; six weeks'],['web_os','OS relation package gate','COMPLETE_FAIL_CLOSED','current bytes not captured'],
+['web_hmlr','HMLR GML gate','COMPLETE_FAIL_CLOSED','bytes not captured'],['cardinality','Duplicate postcode scan','COMPLETE','6 groups/17 rows/max 6'],
+['cardinality','BA1 2BL maximum','COMPLETE','6 UPRNs'],['semantics','Recognised false/current true','COMPLETE','rows 457,474,486,487'],
+['semantics','Current summary','COMPLETE','64 true'],['semantics','Future summary','COMPLETE','29 true'],
+['semantics','District/region transition','COMPLETE','BR1 London to BA1 South West'],['semantics','Representativeness guard','COMPLETE_FAIL_CLOSED','not representative'],
+['promotion','Parcel bridge gate','COMPLETE_FAIL_CLOSED','not verified'],['promotion','Byte/hash gate','COMPLETE_FAIL_CLOSED','not verified'],
+['promotion','Geometry/relation gate','COMPLETE_FAIL_CLOSED','not captured'],['promotion','Product gate','COMPLETE_FAIL_CLOSED','0/30,761']];
+F.forEach(x=>add(...x));
+s.rows.forEach(x=>{add('sample_identity','Satır '+x[0]+' kimlik','COMPLETE','UPRN '+x[1]+'; '+x[2]);add('sample_flags','Satır '+x[0]+' flags','COMPLETE','recognised='+x[3]+'; current='+x[4]+'; future='+x[5]);add('sample_geography','Satır '+x[0]+' coğrafya','COMPLETE',x[6]+'; '+x[7]);add('sample_gate','Satır '+x[0]+' promotion','COMPLETE_FAIL_CLOSED','QA row; parcel binding absent')});
+g.sources.forEach(x=>{add('source_qa',x.name+' rol','COMPLETE',x.decision);add('source_qa',x.name+' doğruluk','COMPLETE',x.confidence+'%; '+x.facts)});
+c.controls.forEach(x=>{add('control_qa',x.control+' kanıt','COMPLETE',x.evidence);add('control_qa',x.control+' karar',/^(FAIL|HOLD)/.test(x.decision)?'COMPLETE_FAIL_CLOSED':'COMPLETE',x.decision);add('control_qa',x.control+' veri sınırı','COMPLETE_FAIL_CLOSED','bytes/tree/cardinality required');add('control_qa',x.control+' ürün sınırı','COMPLETE_FAIL_CLOSED','single control cannot promote product')});
+const CN=['64-row count','Recognised true','Recognised false','Current true','Future true','GIS true','Voucher true','Distinct postcodes','Duplicate groups','Rows in duplicate groups','Max UPRNs/postcode','BR1 3LW','BR1 3PE','BR1 3QE','BR1 3QJ','BA1 2AY','BA1 2BL','Local authorities','Regions','Postcode districts','Bromley rows','Bath NE Somerset rows','London rows','South West rows','Tree API URL','Contents root','Repository clone','Repository tree','Code index','BDUK bytes','BDUK SHA256','BDUK physical rows','Ofcom bytes','Ofcom SHA256','Ofcom inventory','OS Open UPRN package','OS Linked package/API','ONS NSUL role','Parcel-UPRN bridge','Parcel-UPRN-TOID cardinality','HMLR GML bytes','Database/production safety'];
+CN.forEach(x=>{const unresolved=/Tree|Contents|clone|index|bytes|SHA256|physical|inventory|package|API|bridge|cardinality|GML/i.test(x);add('closure',x,unresolved?'COMPLETE_FAIL_CLOSED':'COMPLETE',unresolved?'open/fail-closed':'verified or unchanged');add('closure',x+' final gate',x==='Database/production safety'?'COMPLETE':'COMPLETE_FAIL_CLOSED','research-only; product conjunction open')});
+const T=[...new Set(O.map(x=>x.track))],ST=[...new Set(O.map(x=>x.state))];track.innerHTML+=T.map(x=>`<option>${x}</option>`).join('');state.innerHTML+=ST.map(x=>`<option>${x}</option>`).join('');
+function render(){const z=q.value.toLowerCase(),t=track.value,st=state.value;ops.innerHTML=O.filter(x=>(!z||(x.name+' '+x.evidence).toLowerCase().includes(z))&&(!t||x.track===t)&&(!st||x.state===st)).map(x=>`<tr><td>${x.no}</td><td>${x.track}</td><td>${x.name}</td><td class="${x.state}">${x.state}</td><td>${x.evidence}</td></tr>`).join('')}q.oninput=render;track.onchange=render;state.onchange=render;render();if(O.length!==496)document.body.insertAdjacentHTML('afterbegin','<div class=warn>İşlem sayısı uyuşmazlığı: '+O.length+'</div>');
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<pre>'+e+'</pre>'));</script></body></html>
