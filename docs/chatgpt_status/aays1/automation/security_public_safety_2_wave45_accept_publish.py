@@ -22,6 +22,8 @@ replacements = [
     ('"accepted_base_candidate_rows": 520', '"accepted_base_candidate_rows": 2210'),
     ('"incremental_rows_target": 70', '"incremental_rows_target": 200'),
     ('"incremental_rows_completed": 70', '"incremental_rows_completed": 200'),
+    ("priority_2410row_browser_acceptance_wave45_receipt_20260729.json", "priority_2410row_browser_acceptance_wave45_receipt_20260730.json"),
+    ("priority_2410row_targeted_retry_wave45_diagnostic_20260729.json", "priority_2410row_targeted_retry_wave45_diagnostic_20260730.json"),
 ]
 
 for old, new in replacements[:4]:
