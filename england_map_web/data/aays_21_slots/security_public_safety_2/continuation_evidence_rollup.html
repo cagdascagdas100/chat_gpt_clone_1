@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Public Safety 2 — Kümülatif Devam Kanıtı</title>
+<style>:root{font-family:Arial,sans-serif;color:#17202a;background:#f5f7fa}body{margin:20px}.notice,.panel,.card{background:#fff;border:1px solid #cfd8dc}.notice{padding:12px;background:#e8f5e9;border-color:#a5d6a7}.panel{padding:12px;margin:14px 0;overflow:auto}.cards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.card{padding:10px;min-width:155px}.card b{display:block;font-size:20px;margin-top:4px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cfd8dc;padding:7px;text-align:left;vertical-align:top}th{background:#eceff1;position:sticky;top:0}.PASS{background:#e8f5e9}.HOLD{background:#fff3cd}.error{color:#b71c1c;font-weight:700}.ok{font-weight:700}a{color:#0d47a1}</style>
+</head>
+<body>
+<h1>security_public_safety_2 — kümülatif devam kanıtı</h1>
+<div class="notice">Dalga 8–25 tek görünümde özetlenir. Ana 300-satır çıktı, public raw kimlik ve exact kanonik Chromium kabulü tamamlandı. Görev 20/20, final_ready=true ve açık engel yoktur.</div>
+<div id="status" class="panel">JSON yükleniyor…</div>
+<div id="cards" class="cards"></div>
+<section class="panel"><h2>Dalga özeti</h2><div id="waves"></div></section>
+<section class="panel"><h2>Düşük güven özeti</h2><div id="quality"></div></section>
+<section class="panel"><h2>Aktif engeller</h2><div id="blockers"></div></section>
+<script>
+'use strict';
+const DATA_URL='continuation_evidence_rollup_latest.json';
+const el=id=>document.getElementById(id);const text=v=>v===null||v===undefined?'—':String(v);const pct=v=>v===null||v===undefined?'—':`${v}%`;
+function cell(tr,v){const td=document.createElement('td');td.textContent=text(v);tr.appendChild(td)}
+function linkCell(tr,label,url){const td=document.createElement('td');if(url){const a=document.createElement('a');a.href=url;a.textContent=label;td.appendChild(a)}else{td.textContent='—'}tr.appendChild(td)}
+function table(headers,build){const t=document.createElement('table'),h=document.createElement('thead'),r=document.createElement('tr');headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;r.appendChild(th)});h.appendChild(r);t.appendChild(h);const b=document.createElement('tbody');build(b);t.appendChild(b);return t}
+function card(label,value){const d=document.createElement('div');d.className='card';const s=document.createElement('span'),b=document.createElement('b');s.textContent=label;b.textContent=text(value);d.append(s,b);return d}
+async function boot(){try{const response=await fetch(DATA_URL,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const d=await response.json(),p=d.priority_300row||{},r=d.remote_acceptance||{};el('status').textContent=`Yüklendi: ${p.candidate_rows||0}/300 aday; ≥95 ${p.candidate_accuracy_ge_95_rows||0}; ${p.completed_operations||0}/${p.total_operations||20} işlem; ${p.overall_progress_percent||0}% ilerleme; remote kabul ${r.checks_passed||0}/${(r.checks_passed||0)+(r.checks_pending||0)}; ${d.website_visible_rows_cumulative_receipt_estimate} görünür satır`;el('status').className='panel ok';[['Ana aday',`${p.candidate_rows}/300`],['≥95 doğruluk',`${p.candidate_accuracy_ge_95_rows} (${pct(p.candidate_accuracy_ge_95_percent)})`],['Police SHA',`${p.police_response_sha256_rows}/300`],['Kaynak',`${p.sources_promoted}/${p.sources_reviewed}`],['İşlem',`${p.completed_operations}/${p.total_operations}`],['Genel ilerleme',pct(p.overall_progress_percent)],['Son artış',`${p.latest_progress_delta_percentage_points} puan`],['Remote kabul',`${r.checks_passed}/${r.checks_passed+r.checks_pending}`],['Browser DOM',r.candidate_dom_rows],['Browser hata',`${r.console_errors}/${r.page_errors}/${r.request_failures}`],['Görünür satır',d.website_visible_rows_cumulative_receipt_estimate],['Business satır',d.business_rows_written]].forEach(([a,b])=>el('cards').appendChild(card(a,b)));el('waves').appendChild(table(['Dalga','PASS','HOLD','Kapı','Görünür','Durum','HTML','JSON'],body=>(d.waves||[]).forEach(x=>{const tr=document.createElement('tr');tr.className=x.hold_rows?'HOLD':'PASS';cell(tr,x.wave);cell(tr,x.new_pass_rows);cell(tr,x.hold_rows);cell(tr,x.acceptance_gate_rows);cell(tr,x.visible_rows_added);cell(tr,x.state);linkCell(tr,'Satır görünümü',x.html);linkCell(tr,'JSON kanıtı',x.json);body.appendChild(tr)})));const q=d.low_confidence_ledger||{};el('quality').appendChild(table(['Belirlenen','Çözülen','Açık','Çözülen parseller','Açık parseller'],body=>{const tr=document.createElement('tr');tr.className=q.remaining_rows?'HOLD':'PASS';cell(tr,q.identified_rows);cell(tr,q.resolved_rows);cell(tr,q.remaining_rows);cell(tr,(q.resolved_parcel_ids||[]).join(', '));cell(tr,(q.open_parcel_ids||[]).join(', '));body.appendChild(tr)}));const blockers=d.active_blockers||[];if(blockers.length===0){el('blockers').textContent='Açık engel yok. final_ready=true.';el('blockers').className='panel ok'}else{const ul=document.createElement('ul');blockers.forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li)});el('blockers').appendChild(ul)}}catch(e){el('status').textContent=`Yükleme hatası: ${e.message}`;el('status').className='panel error'}}
+boot();
+</script>
+</body>
+</html>
