@@ -1,0 +1,45 @@
+name: Purge RawGithack stable-live cache
+
+on:
+  push:
+    branches:
+      - stable-live
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: purge-rawgithack-stable-live
+  cancel-in-progress: true
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge Deutsch Tests live files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://raw.githack.com/cagdascagdas100/chat_gpt_clone_1/stable-live/deutsch_tests_1"
+          files=(
+            "test.html"
+            "strict_main_menu_five.js"
+            "schlafmangel_runtime_loader_v2.js"
+            "schlafmangel_ursachen_folgen_loesungen_mix.js"
+            "data_bevor_schlafmangel_00_base.js"
+            "data_bevor_schlafmangel_01_questions.js"
+            "data_bevor_schlafmangel_02_questions.js"
+            "data_bevor_schlafmangel_03_questions_lessons.js"
+            "data_bevor_schlafmangel_04_long.js"
+            "data_bevor_schlafmangel_05_long.js"
+            "data_bevor_schlafmangel_06_long.js"
+            "data_bevor_schlafmangel_07_finalize.js"
+          )
+          for file in "${files[@]}"; do
+            url="${base}/${file}"
+            status="$(curl --silent --show-error --output purge-response.txt --write-out '%{http_code}' --request DELETE --get --data-urlencode "url=${url}" https://raw.githack.com/purge)"
+            echo "${file}: HTTP ${status} $(cat purge-response.txt)"
+            test "${status}" -ge 200
+            test "${status}" -lt 300
+          done
