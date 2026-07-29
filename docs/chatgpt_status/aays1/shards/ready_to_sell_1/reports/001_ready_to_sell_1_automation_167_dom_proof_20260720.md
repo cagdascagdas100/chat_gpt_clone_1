@@ -4,7 +4,7 @@
 - Continuation key: `6a91b39620b1c0a5f98eb2831178dff6108c64dce6db205f58296ca657e4e8be`
 - Task: `ready_to_sell_1_automation_167_dom_proof_20260720_01`
 - State: `PUBLISH_PENDING`
-- Updated: `2026-07-29T14:46:00Z`
+- Updated: `2026-07-29T15:16:00Z`
 - Final ready: `false`
 
 ## Aggregate
@@ -26,67 +26,69 @@
 - Batch 47: `28/28` (`100%`)
 - Batch 46: `26/26` (`100%`)
 - Batch 45: `24/24` (`100%`)
-- Combined Batch 45–51: `205/205` (`100%`)
-- Combined recovery coverage: `205/507` (`40.43%`)
-- Recovery increase in this pass: `+4.73 percentage points`
-- Batch 45 official registry entities checked: `19`
-- Stored-vs-primary fact contradictions in Batch 45: `1`
-- Official company-name reconciliations in Batch 45: `1`
+- Batch 44: `22/22` (`100%`)
+- Combined Batch 44–51: `227/227` (`100%`)
+- Combined recovery coverage: `227/507` (`44.77%`)
+- Recovery increase in this pass: `+4.34 percentage points`
+- Batch 44 primary/current Acuitus readbacks: `22`
+- Batch 44 official source routes: `66`
+- Batch 44 official registry entities checked: `13`
+- Stored-vs-primary fact contradictions in Batch 44: `2`
 - New price/historical-status contradictions: `0`
-- New source-internal conflicts: `1`
-- Current-date reconciliation rows: `5`
+- New source-internal conflicts: `0`
+- Current-date reconciliation rows: `9`
+- Official registry material risks: `1`
 - Canonical source counter increase: `0` (child evidence awaits coordinator publication)
 - Parcel-bound rows added: `0`
 
-## Batch 45 rows 315–338
+## Batch 44 rows 293–314
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 315 | ACUITUS-5758 | PASS WITH HEAD RENT LIABILITY AND USE RESTRICTION | Withdrawn Prior; vacant 171,619 sq ft biomanufacturing facility on a 100-year lease. £478,653 is annual RPI-linked head-rent liability, not occupational income; use restriction and equipment ownership remain unread. | UNBOUND |
-| 316 | ACUITUS-5761 | PASS WITH GROSS RENT AND CONCURRENT LEASE RECONCILIATION | Available at £4,500,000; Asda gross rent £771,722 rises in May 2028 and May 2033; no break to May 2038. Offered interest is under a concurrent lease at £1 p.a., so gross occupation rent is not vendor cash flow. | UNBOUND |
-| 317 | ACUITUS-5762 | PASS WITH GRANTED PRIOR APPROVAL AND VACANT UPPER FLOORS | Available at £330,000; £25,000 retail rent and 2,714 sq ft vacant upper floors. Prior approval 26/41761/POTH was granted 26 Mar 2026 for four flats; exact conditions and implementation remain unread. | UNBOUND |
-| 318 | ACUITUS-5763 | PASS WITH VIRTUAL FREEHOLD AND TABLE DATE ANOMALY | Sold Post; £52,440 rent; 999-year interest at £100 ground rent. Mid Kent Electrical has a five-year term from Aug 2025; the table's 07/08/2030 entry is not promoted to a rent review. | UNBOUND |
-| 319 | ACUITUS-5766 | PASS WITH LONG HOTEL LEASE RPI AND UNQUANTIFIED EV UNDERLEASE | Withdrawn Prior; 999-year hotel lease; £69,686.88 annual RPI-linked rent, next review Feb 2027. Tesla EV underlease is disclosed but its rent is not quantified. | UNBOUND |
-| 320 | ACUITUS-5767 | PASS WITH COMPANY RENAME AND NEAR TERM RPI REVIEW | Sold £850,000; £98,305.55 rent; virtual freehold. Tenant 04134829 is now BR Retail Limited, renamed from Beyond Retro Limited on 17 Apr 2026; next annual RPI review is 11 Oct 2026. | UNBOUND |
-| 321 | ACUITUS-5768 | PASS WITH FIXED UPLIFTS RENEWAL OPTION AND COMPLETION TERMS | Sold Prior; £272,928 language-school rent with fixed 2.5% annual increases from Mar 2027. Lease ends Mar 2030 with 15-year renewal option; source states eight-week completion and no VAT. | UNBOUND |
-| 322 | ACUITUS-5769 | PASS WITH SHORT REMAINING RETAIL TERM AND SUBSTATION INTEREST | Available; £120,000 B&M rent; lease ends Feb 2028. Separate 99-year substation interest dates from 1967; renewal and title positions remain unread. | UNBOUND |
-| 323 | ACUITUS-5770 | PASS WITH GROUND RENT AND SEPARATE UPPER LEASE | Available; £36,570 ground-rent income. Trade-counter interest is underlet to Dulux on a 125-year structure with Jan 2033 rent step; upper offices are a separate peppercorn interest. | UNBOUND |
-| 324 | ACUITUS-5771 | PASS WITH GRANTED PLANNING AND TWO OPTION RISKS | Available; £45,000 total rent. Planning permission 25/01957/FUL granted 5 Feb 2026 for three flats; Sense and Modern Arts Dental each have occupational breaks/options requiring executed-document readback. | UNBOUND |
-| 325 | ACUITUS-5772 | PASS WITH COMPLETION DEPENDENT VIRTUAL FREEHOLD AND 2028 EXPIRY | Withdrawn Prior; £28,500 Mountain Warehouse rent to Mar 2028. The 999-year virtual freehold begins from completion; legal ownership and completion remain unproven. | UNBOUND |
-| 326 | ACUITUS-5773 | PASS WITH DEPOSIT AND CONTRACTED OUT LEASE | Sold Post; £20,000 Phoenix Vapers rent to Apr 2029 without break, contracted out with £6,000 deposit. Consideration and completion remain undisclosed. | UNBOUND |
-| 327 | ACUITUS-5774 | PASS WITH COMPLETION DEPENDENT VIRTUAL FREEHOLD AND 2027 EXPIRY | Withdrawn Prior; £22,000 Sportswift/Card Factory rent to Oct 2027. The 999-year virtual freehold begins from completion; adjoining property interests remain separate. | UNBOUND |
-| 328 | ACUITUS-5775 | PASS WITH HEAD RENT SUBLET INCOME AND GUARANTEE RECONCILIATION | Available; freehold pub, theatre and flat. EI Group head rent is £96,000 with Stonegate guarantee; entire property is stated sublet at £115,000. These income layers are not interchangeable. | UNBOUND |
-| 329 | ACUITUS-5777 | PASS WITH POST REVIEW AND STUDENT OPTION RECONCILIATION | Sold Post; £210,241 total income. Intertain's May 2026 review has passed; beer-garden rent is annually RPI-linked; The FutureLets student lease has a Jul 2027 break. | UNBOUND |
-| 330 | ACUITUS-5778 | PASS WITH LONG HOTEL LEASE AND CAPPED RPI REVIEW | Withdrawn Prior; 125-year hotel interest; £73,241.89 New World Crewe rent with next capped RPI review Mar 2028; separate substation rent is peppercorn. | UNBOUND |
-| 331 | ACUITUS-5780 | PASS WITH IMMINENT BREAK AND CONVERSION POSSESSION RISK | Available; £30,000 clinic rent; prior approval for one dwelling. Chiro.London's lease determines 3 Aug 2026 after break notice; stated August works availability is not vacant-possession evidence. | UNBOUND |
-| 332 | ACUITUS-5781 | PASS WITH 2027 BREAK AND UPPER CHANGE USE RISK | Sold £276,000; £26,000 Savers rent with tenant break 14 Aug 2027. Upper-floor change of use remains subject to consent. | UNBOUND |
-| 333 | ACUITUS-5783 | FAIL STORED TENANCY STRUCTURE CONTRADICTION AND VENDOR FORECAST RISK | Available, 47 student units. Live page states periodic tenancies with two months' notice, contradicting stored 51-week-tenancy description; £271,416 for 2026/27 is vendor projection, not current income. | UNBOUND |
-| 334 | ACUITUS-5791 | PASS WITH TWO COMPLETION DEPENDENCIES | Sold £243,000; £23,000 proposed rent. Superior 999-year lease begins from completion and May 2026 occupational renewal is agreed but not yet completed. | UNBOUND |
-| 335 | ACUITUS-5793 | PASS WITH INDIVIDUAL TENANT AND COMPLETION DEPENDENCY | Sold £286,000; £25,500 rent to individual t/a Katies Nails; Mar 2029 review. Superior 999-year lease begins from completion. | UNBOUND |
-| 336 | ACUITUS-5795 | PASS WITH 2027 BREAK AND COMPLETION DEPENDENCY | Sold Post; £15,000 rent to individual t/a Dragon Bubble; Jun 2027 break. Superior 999-year lease is completion-dependent. | UNBOUND |
-| 337 | ACUITUS-5796 | PASS WITH PASSED REVIEW NEAR TERM BREAK AND COMPANY IDENTITY | Sold £370,000; £30,000 stated rent; Your Own Market (YOM) Limited is active at the property. Jun 2026 review has passed and Jun 2027 break is near-term. | UNBOUND |
-| 338 | ACUITUS-5797 | PASS WITH INDIVIDUAL TENANT NO BREAK AND COMPLETION DEPENDENCY | Sold Post; £16,500 rent to individual t/a USA Fried Chicken, no break to Feb 2031. Superior 999-year lease starts from completion. | UNBOUND |
+| 293 | ACUITUS-5815 | PASS WITH NEAR TERM OPTIONS AND NONCONTIGUOUS PARKING RISK | Withdrawn Prior; £261,505 stated rent from two office occupiers. German government option falls 31 Aug 2027 and Alcatel option 17 Oct 2028; 45-space parking includes a non-contiguous area, so leases, option notices and title plan remain unread. | UNBOUND |
+| 294 | ACUITUS-5810 | PASS WITH VACANT VIRTUAL FREEHOLD AND CONVERSION RISK | Available; vacant 1,255 sq ft office/garage/balcony unit. Virtual freehold is 999 years from Mar 1999 at £200 p.a.; residential conversion remains subject to consent and title/headlease completion evidence. | UNBOUND |
+| 295 | ACUITUS-5801 | PASS WITH NONDISCLOSED SOLD PRIOR COMPLETION AND VACANCY RISK | Sold Prior; vacant 12,902 sq ft retail property. Consideration, completion, title, condition and any development permission remain undisclosed or unread. | UNBOUND |
+| 296 | ACUITUS-5825 | PASS WITH GROUND RENT AND SEVEN LEASE INTEREST RECONCILIATION | Sold £61,000; £1,220 ground rent across seven interests plus a 0.20-acre vacant strip. Ground-rent ownership is not vacant industrial ownership; lease reviews, strip access and title boundaries remain unread. | UNBOUND |
+| 297 | ACUITUS-5779 | FAIL STORED AREA SEMANTIC CONTRADICTION AND EXPIRED LICENCE RISK | Sold £625,000; £15,000 annualised licence fee. Stored 549 sq ft is only the ground-floor commercial area; the live total is 1,561 sq ft. The 12-month licence from Dec 2016 expired in 2017, so current residential occupation is unproven. | UNBOUND |
+| 298 | ACUITUS-5794 | PASS WITH PASSED BREAK NOT EXERCISED AND INDIVIDUAL TENANT RISK | Sold Post; £22,000 rent; individual t/a KR Beauty has a term from Jan 2023 to Jan 2028. The 2026 break was stated not exercised, but notice and executed-lease evidence remain unread. | UNBOUND |
+| 299 | ACUITUS-5760 | PASS WITH RECEIVERSHIP AND LAPSED PLANNING RISK | Sold Post; vacant Grade II freehold, 4,268 sq ft, VAT-free. The 2014 residential conversion permission has lapsed; receivers give no warranties and fresh consent, title and completion remain required. | UNBOUND |
+| 300 | ACUITUS-5710 | PASS WITH LONG EXPIRED TERM AND HOLDING OVER RISK | Sold £375,000; £16,000 rent; Woodford Green Funeral Directors' nine-year term from Sep 2011 expired in 2020 and is holding over. Current tenancy/notice position and residential-extension consent remain unread. | UNBOUND |
+| 301 | ACUITUS-5693 | PASS WITH PASSED REVIEW AND UPPER FLOOR RECONCILIATION | Sold £475,000; £59,428 rent; Ann Summers term ends Nov 2028. The Mar 2023 review has passed and the first floor is stated not in use; current reviewed rent and upper-floor condition remain unread. | UNBOUND |
+| 302 | ACUITUS-5743 | PASS WITH PERSONAL GUARANTEES AND SOLD OFF RESIDENTIAL INTEREST | Sold Prior; £28,500 rent; 918 sq ft commercial accommodation let to Emmett & Corps to Feb 2034 with personal guarantees. Residential floors are sold off on a 999-year peppercorn lease; six-week completion remains unverified. | UNBOUND |
+| 303 | ACUITUS-5754 | PASS WITH MULTI LET HOLDING OVER VACANCIES AND FEASIBILITY RISK | Sold Prior; £189,227 gross rent; 23 shops and one flat with four vacancies. At least two units are holding over and 2027 breaks/reviews approach; the 96-flat concept is a feasibility study, not planning permission. | UNBOUND |
+| 304 | ACUITUS-5744 | FAIL STORED TOTAL AREA CONTRADICTION AND AST RECONCILIATION | Sold Post; £61,800 total income. Live accommodation totals 4,605 sq ft, not stored 4,483. One Stop pays £39,000 with a Jan 2032 option; two ASTs began Nov/Dec 2025 at £950 pcm and current occupation/deposits remain unproven. | UNBOUND |
+| 305 | ACUITUS-5738 | PASS WITH VACANT OFFICE AND SUBDIVISION DEVELOPMENT RISK | Sold £605,000; vacant freehold office building of 24,516 sq ft. Flexible subdivision and development are market opportunities only; completion, condition, planning and exact geometry remain unread. | UNBOUND |
+| 306 | ACUITUS-5764 | PASS WITH LONG LEASEHOLD AND 2030 OCCUPATIONAL EXPIRY | Sold Prior; £75,000 rent; Magnet occupies 2,764 sq ft for five years from Sep 2025. The superior interest runs 150 years from Jun 2004; title, parking rights, executed leases and completion remain unread. | UNBOUND |
+| 307 | ACUITUS-5664 | PASS WITH NEAR TERM MARCH 2027 EXPIRY | Sold £261,000; £22,000 rent; The Works term from Mar 2022 ends Mar 2027. Renewal, current occupation, title and completion require fresh evidence. | UNBOUND |
+| 308 | ACUITUS-5663 | PASS WITH STRIKE OFF PROPOSAL AND LOW RENT OCCUPATIONAL RISK | Sold £250,000; £4,000 rent; Grimsby Central Hall Trust term runs from Nov 2005 to Oct 2030. Companies House shows an active proposal to strike off with overdue accounts and confirmation statement; low rent is not vacant possession. | UNBOUND |
+| 309 | ACUITUS-5654 | PASS WITH NEAR TERM JUNE 2027 BREAK | Sold £200,000; £22,000 rent; Top of the Tots term began Jun 2024 with tenant break 24 Jun 2027 on six months' notice. Break notice, operator covenant and alternative-use consent remain unread. | UNBOUND |
+| 310 | ACUITUS-5668 | PASS WITH SOLD OFF INTERESTS AND BREAK EVIDENCE RECONCILIATION | Sold Post; £28,000 retained income. Two of six shops and all three flats are sold off; bakery's Mar 2025 break is stated not exercised. Retained demises, current occupation and title boundaries require reconciliation. | UNBOUND |
+| 311 | ACUITUS-5665 | PASS WITH ACTIVE TENANT GUARANTOR AND TWO BREAK OPTIONS | Sold Post; £17,000 initial rent; Whitecross Dental Care is guaranteed by Integrated Dental Holdings under a 15-year term from Nov 2025. Tenant options and fixed rent changes fall in Nov 2030 and Nov 2035; execution remains unread. | UNBOUND |
+| 312 | ACUITUS-5666 | PASS WITH VACANT LAND ACCESS CONTAMINATION AND PLANNING RISK | Sold Prior; vacant 0.161-acre former garage/workshop land. Development remains subject to consent; completion, access, contamination, drainage and exact title boundary remain unread. | UNBOUND |
+| 313 | ACUITUS-5701 | PASS WITH OUTSTANDING 2018 2023 REVIEWS AND GROUND RENT RISK | Sold Prior; £4,188 ground rent; Valli Forecourts holds to Jun 2058. Reviews dated Jun 2018 and Jun 2023 are outstanding and geared to 12.5% of rack rental value, so current rent and settlement are unresolved. | UNBOUND |
+| 314 | ACUITUS-5765 | PASS WITH COMPLETION DEPENDENT LAKELAND LEASE AND LONG RESIDENTIAL INTEREST | Available; £70,000 proposed rent; Lakeland's 15-year lease begins from completion with a tenth-anniversary option. Four flats are on a 999-year peppercorn lease; executed lease, completion and title remain unread. | UNBOUND |
 
 ## High-impact corrections
 
-1. Row 316: gross Asda occupation rent is not the vendor's cash flow; the offered concurrent lease is stated at `£1 p.a.`.
-2. Row 320: company number `04134829` is now `BR Retail Limited`, renamed from `Beyond Retro Limited` on 17 April 2026; the next RPI review is 11 October 2026.
-3. Row 328: `£96,000` head rent and `£115,000` sublet income are separate layers and must not be combined.
-4. Row 329: the pub rent review dated 18 May 2026 has passed; reviewed rent and payment remain unconfirmed.
-5. Row 331: the clinic lease determines on 3 August 2026; marketing availability for conversion works is not proof of vacant possession.
-6. Row 333: the live source states periodic student tenancies, contradicting the stored 51-week-tenancy description; the 2026/27 income is a vendor forecast.
-7. Row 334: both the superior 999-year interest and the occupational renewal remain completion/execution dependent.
-8. Row 337: the June 2026 rent review has passed and the June 2027 break is near-term; current reviewed rent is unconfirmed.
+1. Row 297: stored `549 sq ft` is only the ground-floor commercial area; the live total is `1,561 sq ft`. The 2016 licence expired in 2017 and current occupation is not proven.
+2. Row 304: the live One Stop accommodation schedule totals `4,605 sq ft`, not stored `4,483 sq ft`; the two residential ASTs require current occupation and deposit checks.
+3. Row 299: the 2014 Mayfair residential-conversion permission has lapsed; receivership marketing does not provide warranties or a current consent.
+4. Row 303: the 96-flat Brislington concept is a feasibility study, not planning permission; two units are already holding over and 2027 breaks/reviews approach.
+5. Row 307: The Works lease ends in March 2027; renewal and current occupation require fresh evidence.
+6. Row 308: Grimsby Central Hall Trust is shown by Companies House as active with an active proposal to strike off and overdue accounts/confirmation statement.
+7. Row 309: the nursery tenant break is 24 June 2027 and requires six months' notice.
+8. Row 313: the 2018 and 2023 ground-rent reviews remain outstanding, so the current Shipley rent is unresolved.
+9. Row 314: the Lakeland occupational lease starts from completion; the proposed rent is not an executed current cash flow.
 
 ## Official registry readback
 
-Nineteen official entities were checked: ASDA Stores, JG Foods, Mid Kent Electrical, Aspect International Language Academies, B&M Retail, Sense, BR Retail, Mountain Warehouse, Phoenix Vapers, Sportswift, EI Group, Stonegate Pub Company, Intertain (Bars), The FutureLets, New World Crewe, Savers Health and Beauty, Chiro.London, Your Own Market (YOM) and Modern Arts Dental.
+Thirteen official entities were checked: Alcatel IP Networks, Ann Summers, One Stop Stores, Magnet, The Works Stores, Top of the Tots, Valli Forecourts, Lakeland, Whitecross Dental Care, Integrated Dental Holdings, Grimsby Central Hall Trust, Emmett & Corps and Woodford Green Funeral Directors.
 
-BR Retail `04134829` is active and changed name from Beyond Retro Limited on 17 April 2026. Exact corporate identities for the Yeoman Preston hotel lessee and the SK Properties ground lessee were not safely resolved, so no status was inferred for those two entities.
+Alcatel, Ann Summers, One Stop Stores, Magnet, The Works Stores, Top of the Tots, Valli Forecourts, Lakeland, Whitecross Dental Care and Integrated Dental Holdings were located as active companies. Grimsby Central Hall Trust is recorded as active with an active proposal to strike off and materially overdue filings. Exact corporate identities for the individual KR Beauty occupier and the German government office occupier were not inferred.
 
 ## Previous evidence retained
 
-Detailed Batch 46–51 rows remain preserved in prior child-branch commits referenced by the JSON report. No prior correction, tenure contradiction or source conflict was silently removed.
+Detailed Batch 45–51 rows remain preserved in prior child-branch commits referenced by the JSON report. No prior correction, tenure contradiction or source conflict was silently removed.
 
 ## Runtime and website
 
@@ -94,7 +96,7 @@ No live owner or active lease was present. The canonical heartbeat and lease rem
 
 Full `1264`-row geometry and `51`-batch browser-DOM acceptance remains operation `291` and was not falsely completed.
 
-The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 45 row by row.
+The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 44 row by row.
 
 ## Remaining blockers
 
