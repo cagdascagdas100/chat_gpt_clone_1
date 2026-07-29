@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 — Increment 178</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1118;--p:#111b27;--l:#314156;--t:#edf3fa;--m:#a9b7c8;--ok:#64d79a;--w:#ffd06f;--b:#ff8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,Arial,sans-serif}header{padding:18px;background:var(--p);border-bottom:1px solid var(--l)}
+h1{margin:0 0 6px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:14px}.card{background:var(--p);border:1px solid var(--l);padding:10px;border-radius:7px}
+h2{margin:20px 14px 8px}.wrap{overflow:auto;padding:0 14px 12px}table{border-collapse:collapse;width:100%;min-width:1100px;font-size:12px}th,td{border:1px solid var(--l);padding:6px;vertical-align:top}th{position:sticky;top:0;background:#18273a;text-align:left}
+.completed td{background:#10251d}.blocked td{background:#2b1818}a{color:#95cdff}.ok{color:var(--ok)}.warn{color:var(--w)}.bad{color:var(--b)}code{white-space:nowrap}
+</style></head><body><header><h1>height_difference_2 — Increment 178</h1><div id="stamp"></div></header>
+<div id="cards" class="cards"></div>
+<h2>İşlemler — satır satır</h2><div class="wrap"><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Hedef</th><th>Kontrol</th><th>Kanıt</th><th>Doğruluk</th><th>Blocker</th></tr></thead><tbody id="ops"></tbody></table></div>
+<h2>3 doğrulanmış aday</h2><div class="wrap"><table><thead><tr><th>Satır</th><th>Parsel</th><th>Otorite</th><th>HMLR</th><th>Alan m²</th><th>EA min</th><th>EA max</th><th>Fark</th><th>DTM2</th><th>Delta</th><th>Güven</th><th>Durum</th></tr></thead><tbody id="cand"></tbody></table></div>
+<h2>Güncellenen resmî kaynaklar</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Yayıncı</th><th>Kaynak</th><th>Rol</th><th>Güven</th><th>Doğrulanan</th><th>Sınır</th></tr></thead><tbody id="src"></tbody></table></div>
+<script>
+'use strict';const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('qa_bundle_increment_178.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()}).then(d=>{
+stamp.textContent=`Doğrulama: ${d.verified_at} · continuation ${d.continuation_key.slice(0,16)}…`;
+const c=d.canonical_progress,i=d.increment_progress;
+cards.innerHTML=[['Kanonik',`${c.completed}/${c.planned}`],['Batch',`${c.batch_percent}%`],['Genel',`${c.overall_percent}%`],['Genel artış',`+${c.percent_increase}%`],['Yeni kontrol',i.operations],['Tamamlanan',i.completed],['Blocked',i.blocked],['Yeni kaynak',i.source_records_added],['Kaynak güveni',`${d.source_accuracy.average_confidence_percent}%`],['Aday',i.examples_revalidated],['Numeric güven',`${d.numeric_accuracy.result_confidence_percent}%`],['Web kabul',`${d.web_runtime.operation_rows} satır PASS`],['F-host receipt',`${d.recovery.receipts_present}/${d.recovery.receipts_required}`],['Yeni runner',String(d.recovery.new_runner_created)]].map(x=>`<div class="card"><b>${E(x[0])}</b><br>${E(x[1])}</div>`).join('');
+ops.innerHTML=d.operations.map(o=>`<tr class="${E(o.status)}"><td>${o.operation_no}</td><td>${E(o.status)}</td><td>${E(o.stage)}</td><td>${E(o.target)}</td><td>${E(o.check)}</td><td>${E(o.evidence)}</td><td>${E(o.accuracy_score_4)}/4</td><td>${E(o.blocker)}</td></tr>`).join('');
+cand.innerHTML=d.candidates.map(x=>`<tr><td>${x.row_no}</td><td>${E(x.parcel_id)}</td><td>${E(x.authority)}</td><td>${E(x.hmlr_inspire_id)}</td><td>${x.polygon_area_m2}</td><td>${x.height_min_m.toFixed(3)}</td><td>${x.height_max_m.toFixed(3)}</td><td><b>${x.height_difference_m.toFixed(3)} m</b></td><td>${x.dtm2_difference_m.toFixed(3)}</td><td>${x.crosscheck_delta_m.toFixed(3)}</td><td>${x.confidence_percent}%</td><td>${E(x.state)}</td></tr>`).join('');
+src.innerHTML=d.sources.map(x=>`<tr><td>${E(x.id)}</td><td>${E(x.publisher)}</td><td><a href="${E(x.url)}" target="_blank" rel="noopener">${E(x.name)}</a></td><td>${E(x.role)}</td><td>${x.confidence_percent}%</td><td>${E(x.verified.join(' | '))}</td><td>${E(x.limit)}</td></tr>`).join('');
+}).catch(e=>document.body.insertAdjacentHTML('afterbegin',`<p class="bad">Yükleme hatası: ${E(e.message)}</p>`));
+</script></body></html>
