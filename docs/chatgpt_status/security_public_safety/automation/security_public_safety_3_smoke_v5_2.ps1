@@ -38,10 +38,24 @@ function Write-JsonAtomic {
   [System.IO.File]::WriteAllText($tempPath, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
   $extendedTempPath = '\\?\' + [System.IO.Path]::GetFullPath($tempPath)
   $extendedPath = '\\?\' + [System.IO.Path]::GetFullPath($Path)
-  if (Test-Path -LiteralPath $Path -PathType Leaf) {
-    [System.IO.File]::Replace($extendedTempPath, $extendedPath, $null)
-  } else {
-    [System.IO.File]::Move($extendedTempPath, $extendedPath)
+  if (-not ('AaysAtomicFileNative' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class AaysAtomicFileNative {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern bool MoveFileEx(
+        string existingName,
+        string newName,
+        int flags
+    );
+}
+'@
+  }
+  if (-not [AaysAtomicFileNative]::MoveFileEx($extendedTempPath, $extendedPath, 0x9)) {
+    $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+    throw [ComponentModel.Win32Exception]::new($errorCode)
   }
 }
 
