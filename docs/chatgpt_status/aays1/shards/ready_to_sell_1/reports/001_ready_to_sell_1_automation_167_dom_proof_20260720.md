@@ -4,7 +4,7 @@
 - Continuation key: `6a91b39620b1c0a5f98eb2831178dff6108c64dce6db205f58296ca657e4e8be`
 - Task: `ready_to_sell_1_automation_167_dom_proof_20260720_01`
 - State: `PUBLISH_PENDING`
-- Updated: `2026-07-29T18:37:00Z`
+- Updated: `2026-07-29T19:03:00Z`
 - Final ready: `false`
 
 ## Aggregate
@@ -19,118 +19,75 @@
 
 ## Recovery coverage
 
-- Batch 51: `31/31` (`100%`)
-- Batch 50: `34/34` (`100%`)
-- Batch 49: `32/32` (`100%`)
-- Batch 48: `30/30` (`100%`)
-- Batch 47: `28/28` (`100%`)
-- Batch 46: `26/26` (`100%`)
-- Batch 45: `24/24` (`100%`)
-- Batch 44: `22/22` (`100%`)
-- Batch 43: `20/20` (`100%`)
-- Batch 42: `18/18` (`100%`)
-- Batch 41: `16/16` (`100%`)
-- Batch 40: `14/14` (`100%`)
-- Batch 39: `14/14` (`100%`)
-- Batch 38: `12/12` (`100%`)
-- Batch 37: `10/10` (`100%`)
-- Batch 36: `12/12` (`100%`)
-- Batch 35: `10/10` (`100%`)
-- Batch 34: `8/8` (`100%`)
-- Batch 33: `5/5` (`100%`)
-- Batch 32: `3/3` (`100%`)
-- Batch 31: `3/3` (`100%`)
-- Batch 30: `3/3` (`100%`)
-- Batch 29: `3/3` (`100%`)
-- Batch 28: `3/3` (`100%`)
-- Batch 27: `2/2` (`100%`)
-- Batch 26: `2/2` (`100%`)
-- Combined Batch 26–51: `385/385` (`100%`)
-- Combined recovery coverage: `385/507` (`75.94%`)
-- Recovery increase in this pass: `+3.16 percentage points`
-- Batch 26–31 primary/current market readbacks: `16`
-- Batch 26–31 official registry entities checked: `17`
-- Official heritage entries checked: `1`
-- Verified readbacks promoted in this pass: `34`
-- Source-contract filenames safely resolved: `0` (no route count invented)
-- Stored-vs-primary fact contradictions: `4`
-- New price/historical-status contradictions: `4`
-- New source-internal conflicts: `8`
-- Current-date reconciliation rows: `15`
-- Official registry material risks: `2`
+- Batch 25: `10/10` (`100%`)
+- Batch 24: `10/10` (`100%`)
+- Combined Batch 24–51: `405/405` (`100%`)
+- Combined recovery coverage: `405/507` (`79.88%`)
+- Recovery increase in this pass: `+3.94 percentage points`
+- Batch 24–25 primary/current market readbacks: `20`
+- Current official registry entities checked: `6`
+- Historical official registry routes checked: `2`
+- Verified readbacks promoted in this pass: `28`
+- Stored-vs-primary fact contradictions: `3`
+- New price/historical-status contradictions: `3`
+- New source-internal conflicts: `12`
+- Current-date reconciliation rows: `18`
+- Official registry material risks: `3`
 - Canonical source counter increase: `0` (child evidence awaits coordinator publication)
 - Parcel-bound rows added: `0`
 
-## Batch 31 rows 148–150
+## Batch 25 rows 125–134
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 148 | ACUITUS-5802 | PASS WITH ACTIVE TENANT OVERDUE ACCOUNTS AND 2029 OPTION | Available with guide Contact Us; £44,000 rent and 10,410 sq ft. Edinburgh Woollen Mill Properties Limited is active but its accounts remain overdue. The five-year term from 20 May 2026 includes a tenant option on 20 May 2029; title, executed lease, EPC, rates and completion remain unread. | UNBOUND |
-| 149 | ACUITUS-5817 | PASS WITH CURRENT RENT TOPUP COMPANY RENAME OPTION AND TWO SUPERIOR LEASES | Available at £475,000. The marketed £65,535 is effective income from completion, while contractual rent is £61,200 until the fixed increase on 4 Oct 2027 and the seller supplies the difference. Company 04873038 is now Alexander Beard Ltd; the 4 Oct 2030 option, Unit 16 sublease, two superior leases and estate service charge remain document-dependent. | UNBOUND |
-| 150 | ACUITUS-5818 | FAIL STORED GUIDE PRICE CONTRADICTION AND SHORT 2028 REVERSION | Current live page is Available with guide Contact Us, not the stored £850,000. Morris Homes (Midlands) pays £123,050 under a five-year term expiring 31 Jul 2028 with Morris Homes guarantee; guarantee scope, parking rights, title, lease and completion remain unread. | UNBOUND |
+| 125 | HOLT-COLLIERY-LANE | FAIL STORED ACTIVE STATUS NOW UNDER OFFER AND PORTAL CONFLICT | Rightmove detail is Under Offer at £1,400,000 while its Exhall index and Zoopla still present an active sale. The 67,082 sq ft/1.54-acre yard remains in haulage use; nine-unit outline consent is subject to conditions, and water, drainage, title, contamination and completion remain unresolved. | UNBOUND |
+| 126 | SBK-MAIN-STREET | FAIL FREEHOLD LEASEHOLD PORTAL CONFLICT AND OVERDUE TENANT FILINGS | Current commercial channels show £825,000, 2,836 sq ft and Freehold, while a separate current Rightmove version labels the mixed-use property Leasehold. Disclosed components total only 2,499 sq ft. Minerva of Hereford Limited is active, but its accounts due 30 Apr 2026 and confirmation statement due 25 Jun 2026 are overdue. | UNBOUND |
+| 127 | TIMCOX-SHAKESPEARE | FAIL AREA SCHEDULE CONFLICT WITH DUAL SALE LET | Active at £800,000 Freehold with vacant possession or £57,500 yearly to let. The detailed schedule totals 3,470 sq ft, but a key-feature version states the first floor as 1,493 sq ft rather than the detailed 1,568 sq ft; exact street number, licence, extraction, fixtures and title remain unread. | UNBOUND |
+| 128 | TIMCOX-UNIT2B | PASS WITH ACTIVE FREEHOLD WAREHOUSE AND MEZZANINE COMPLIANCE RISK | Active at £450,000 Freehold; 3,893 sq ft and six spaces. Warehouse, office and mezzanine components reconcile to the headline, but mezzanine approval, loading rights, building control, title, EPC and vacant-possession completion remain unread. | UNBOUND |
+| 129 | FHP-LONG-STREET | FAIL UNDER OFFER AREA CONFLICT 9202 VS 6171 | FHP remains Under Offer at £1,000,000 with £73,780 passing rent and £99,680 ERV. FHP/PropList state 9,202 sq ft while the current LoopNet portfolio states 6,171 sq ft; commercial leases, residential tenancies, fire compliance, title and completion remain unread. | UNBOUND |
+| 130 | BONDWOLFE-THE-SQUARE | PASS WITH UNSOLD MAKE OFFER AND UPPER LONG LEASES | Bond Wolfe still records Unsold and invites offers after the 26 Mar 2026 auction at £130,000 guide. The 397 sq ft ground-floor unit is subject to residential long leases above; OnTheMarket is no longer active, and no subsequent transaction or title transfer is inferred. | UNBOUND |
+| 131 | FISHER-FUSILIERS | PASS WITH ACTIVE POA ACCESS PERMISSION NOT CENTRE PERMISSION | Active Freehold at POA; approximately 0.63 acre. Current channels differ by 1 sq ft (27,442/27,443). Reference W/24/1528 relates to vehicular access; the proposed neighbourhood centre remains subject to planning and outline/reserved-matters, utilities, drainage, contamination and title evidence. | UNBOUND |
+| 132 | WHITE-ROSE-PARKWAY | FAIL CURRENT LEASE UNDER OFFER NO VERIFIED SALE AND RECEIVER ACTION RISK | The current Rightmove record is Under Offer to lease at POA for 2,331–4,694 sq ft; no current sale offer is safely verified. James Hay Pension Trustees Limited is in Receiver Action. Its historic satisfied charge at the address does not establish current ownership, title extent or sale authority. | UNBOUND |
+| 133 | BROWNCO-STONECROFT | PASS WITH ACTIVE WHOLE OR LOTS AREA ROUNDING | Active at £1,770,000 for the whole, with Lot 1 £1,345,000 and Lot 2 £425,000. Current channels state 58.26 or 58.28 acres; equestrian, visitor-centre and residential uses, lot boundaries, occupation, water, drainage, ecology, title and alternative-use consents remain unresolved. | UNBOUND |
+| 134 | BH-TEMPLE-COURT | FAIL AREA CONFLICT AND TENANT CHARGE LIMITATION | Active at £1,250,000 with £90,000 rent. Zoopla and Novaloca state 7,092 sq ft, while current Rightmove indexes also expose 5,768 sq ft. Kennet Equipment Leasing Limited is active at the site but has six outstanding corporate charges; these are not treated as property-specific default evidence. The Dec 2027 break, leases, title and parking remain unread. | UNBOUND |
 
-## Batch 30 rows 145–147
-
-| Row | Listing | Result | Live evidence / material limitation | Parcel |
-|---:|---|---|---|---|
-| 145 | ACUITUS-5830 | PASS WITH DECEMBER 2026 PURPORTED BREAK AND OVERDUE CONFIRMATION | Available at £325,000–£350,000; £42,000 total income. Cumbria Gateway's purported break on 1 Dec 2026 remains validity-dependent and its confirmation statement is overdue. Nationwide's £30,000 term ends in Feb 2027; Grade II, lease, title and conversion evidence remain unread. | UNBOUND |
-| 146 | ACUITUS-5765 | PASS WITH COMPLETION DEPENDENT LEASE AND SEPARATE LONG LEASE FLATS | Available with guide Contact Us; £70,000 headline rent. Lakeland's fifteen-year lease starts only on completion and contains a tenth-anniversary option, so current lease commencement and tenant cash are not proven. Four upper flats are held under a separate 999-year peppercorn interest; title, leases, VAT and EPC remain unread. | UNBOUND |
-| 147 | ACUITUS-5771 | PASS WITH TWO OPTIONS PERSONAL GUARANTEE AND CONSENTED VACANT UPPERS | Available with guide Contact Us; £45,000 total income. Sense has a 30 Jun 2028 option; Modern Arts Dental has an 18 Feb 2029 option and a personal guarantee only to Dec 2028. The vacant upper accommodation has permission for three flats, but decision conditions, drawings, leases, guarantee and title remain unread. | UNBOUND |
-
-## Batch 29 rows 142–144
-
-| Row | Listing | Result | Live evidence / material limitation | Parcel |
-|---:|---|---|---|---|
-| 142 | ACUITUS-5804 | FAIL STORED CONTACT US PRICE CONTRADICTION WITH CONDITIONAL LISTED VACANCY | Current live page is Available at £750,000, not stored Contact Us. The vacant 10,278 sq ft Grade II former bank has about 16 spaces, but sale remains conditional on seller confirmation and residential conversion requires planning and listed-building consent; title, special conditions and completion remain unread. | UNBOUND |
-| 143 | ACUITUS-5816 | FAIL STORED AVAILABLE STATUS RENEWAL RENT AND AREA CONTRADICTIONS | Current status is Sold Post, not stored Available at £375,000. The tenant remains holding over after the Oct 2022 expiry; £58,000 headline rent is unreconciled to uncompleted renewal heads at £37,500 rising to £41,000 or OMV with a third-year option. The headline states 7,689 sq ft while the table totals 7,688 sq ft. | UNBOUND |
-| 144 | ACUITUS-5792 | PASS WITH CURRENT RENT FREE TOPUP AND COMPLETION DEPENDENT TENURE | Available with guide Contact Us; £18,500 headline rent. Thames Travel's no-break term began 13 May 2026 but remains within a six-month rent-free period on 29 Jul 2026, supported by seller top-up. The 999-year virtual-freehold interest starts on completion; executed lease, top-up covenant, title and completion remain unread. | UNBOUND |
-
-## Batch 28 rows 139–141
+## Batch 24 rows 115–124
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 139 | ACUITUS-5799 | PASS WITH FIVE TENANTS NEAR TERM 2027 BREAK AND PLANNING RISK | Available with guide Contact Us; £58,500 across five commercial interests in 1,695 sq ft. The third-floor lease has a 5 May 2027 tenant break, while upper-floor change of use is only marketing potential. Individual leases, deposits, arrears, service charge, planning and title remain unread. | UNBOUND |
-| 140 | ACUITUS-5800 | PASS WITH ACTIVE RENAMED TENANT 2028 OPTION AND LONG RESIDENTIAL INTEREST | Available with guide Contact Us; £175,000 rent. Company 03406347 is now Frasers Group Trading Limited and active. The lease has an 11 Dec 2028 tenant option plus three months rent-free if not exercised; upper residential floors are held on a separate 988-year peppercorn lease. | UNBOUND |
-| 141 | ACUITUS-5812 | FAIL PROPERTY PAGE INDEX PRICE CONFLICT AND INCOMPLETE RENT FREE DATES | The live property page shows Available at £175,000+, while the current Acuitus index shows Contact Us. Holland & Barrett pays £18,000 under a term to Feb 2031 with a third-anniversary option. The published three-month rent-free start is incomplete (`??/03/2026`); by 29 Jul 2026 the period should be historical, but exact dates and seller top-up settlement remain unread. | UNBOUND |
-
-## Batch 27 rows 137–138
-
-| Row | Listing | Result | Live evidence / material limitation | Parcel |
-|---:|---|---|---|---|
-| 137 | ACUITUS-5809 | PASS WITH ACTIVE LONG NO BREAK LEASE AND HISTORIC CVA | Available with guide Contact Us; £56,950 rent. PizzaExpress (Restaurants) Limited is active under a no-break term to 26 May 2034 with a 27 May 2029 review. Its 2020 CVA completed in Sep 2022 and is not treated as current property default; title, lease, EPC and rent performance remain unread. | UNBOUND |
-| 138 | ACUITUS-5762 | PASS WITH 2027 OPTION AND PRIOR APPROVAL CONVERSION RISK | Available at £330,000; £25,000 retail rent with a 29 Sep 2027 tenant option. Vacant upper floors have prior approval dated 26 Mar 2026 for four flats, but prior approval is not treated as full unrestricted permission; conditions, drawings, building regulations, lease and title remain unread. | UNBOUND |
-
-## Batch 26 rows 135–136
-
-| Row | Listing | Result | Live evidence / material limitation | Parcel |
-|---:|---|---|---|---|
-| 135 | WARDS-HAREFIELD | FAIL PORTAL TENURE AND AREA CONFLICT DESPITE ACTIVE SALE | Boxpod currently shows Available at £140,000, labels the property Freehold and states 1,591 sq ft, £17,000 rent, two spaces and a no-break lease to 2030. The same page describes a Leasehold Investment Opportunity, while LoopNet states 1,095 sq ft. Superior title, sale tenure, occupational lease and measured area must govern. | UNBOUND |
-| 136 | WARDS-HAUNCHWOOD | PASS WITH ACTIVE POST TENDER LAND AND UNRESOLVED PLANNING BOUNDARY | The land remains marketed for sale: Boxpod shows £875,000 Freehold and 0.880 acre, while PropList shows Available at POA. The ten-dwelling submission is not permission; the Jun 2026 informal-tender deadline has passed without a published outcome. The retained former pub, car-wash occupation, red line, title, contamination, highways and exact area remain unresolved. | UNBOUND |
+| 115 | HOLT-SCAR-BANK | PASS WITH CURRENT UNDER OFFER AND RESOLVED AGENT STATUS | Holt's primary page now states Under Offer at £375,000 Freehold for 4,157 sq ft, resolving the earlier available/under-offer conflict toward the primary current status. Storebase Limited is active at the exact address; accounts due 31 Jul 2026 were not yet overdue on 29 Jul 2026. | UNBOUND |
+| 116 | BH-HYPERION | FAIL SALE LISTING NEW LEASE WORDING AND TENURE CONFLICT | Rightmove still markets the 20,180 sq ft, 72-space office at £4,641,400, but the same live description says a new lease is available. Freehold/Leasehold labels also conflict across channels. EPC C58 and approximately 41,500 kWh annual PV output are market-stated; transaction mode, title and generation evidence remain unresolved. | UNBOUND |
+| 117 | BH-PRINCES-DRIVE | PASS WITH ACTIVE 750K FREEHOLD AND MARKET TITLE REFERENCES | Active Freehold at £750,000; 8,065 sq ft, £53,350 rent and 6.75% stated yield. Current particulars disclose titles WK346467 and WK316662. Premium Art Brands Ltd is active at Unit 13C, but title registers, four executed leases, mezzanine approvals and rent performance remain unread. | UNBOUND |
+| 118 | HARRIS-WATERLOO | PASS WITH ACTIVE 650K SALE LEASEBACK WITHOUT LEASE ECONOMICS | Active at £650,000 for 6,790 sq ft. The opportunity remains a sale-and-leaseback, but proposed tenant, rent, term, guarantee, repairs and completion are not published; investment income cannot be treated as secured without the draft and executed lease. | UNBOUND |
+| 119 | FLINT-AVON-MILL | PASS WITH ACTIVE SALE OR MAY LET GROSS NET SITE RECONCILIATION | Active at POA for sale or may let. The 470,448 sq ft portal figure corresponds to the 10.82-acre net usable area, not the 16.73-acre gross site. Salvage-yard permission extent, access widening, licences, contamination, flood, ecology, drainage, title and exact red line remain unread. | UNBOUND |
+| 120 | SBK-WOOD-STREET | PASS WITH ACTIVE BETFRED SHORT 2028 TERM AND WRONG PLANNING AUTHORITY | Active at £770,000; 4,680 sq ft and £47,000 rent to Mar 2028. Done Brothers (Cash Betting) Limited is active. The marketing incorrectly refers planning enquiries to Wychavon for a Stratford property; redevelopment, possession, lease, title, parking and planning must be checked with the correct authority. | UNBOUND |
+| 121 | BH-ALVIS-WORKS | PASS WITH ACTIVE 875K RENT ROLL AND DEVELOPMENT RISK | Current primary marketing confirms £875,000, 10,278 sq ft, eight industrial units plus an office and £40,950 annual rent. Development potential remains marketing only; tenancy schedule, parking leaseback, title WK7276, rent performance, contamination and planning constraints remain unread. | UNBOUND |
+| 122 | SBK-MAIN-STREET-DUPLICATE | FAIL DUPLICATE TIDDINGTON TENURE AND AREA CONFLICT | Independent readback of the duplicated physical property confirms £825,000 and £20,000 commercial income, but current channels still conflict between Freehold and Leasehold. The 2,836 sq ft headline exceeds the disclosed 2,499 sq ft components; break, vacant residential possession, fire separation and title remain unresolved. | UNBOUND |
+| 123 | TIMCOX-SHAKESPEARE-DUPLICATE | FAIL DUPLICATE SHAKESPEARE AREA SCHEDULE CONFLICT | Independent duplicate-row readback confirms active £800,000 Freehold sale or £57,500 annual letting. The detailed schedule totals 3,470 sq ft, while the key-feature first-floor figure conflicts with the detailed table; exact address, licence, fixtures, extraction, fire and title remain unresolved. | UNBOUND |
+| 124 | TIMCOX-MASONS-ROAD | FAIL MAJOR AREA VERSION CONFLICT AND SHORT SUPERIOR LEASES | Active at £750,000 Leasehold with vacant possession. Current sources state 27,977 sq ft, 27,223 sq ft, 23,597–25,789 sq ft and 31,710 sq ft. The two interests expire in 2064 and 2063 at £800 and £440 ground rents; renewal terms, council consent, condition, canal/flood risks, title and exact demise remain unread. | UNBOUND |
 
 ## High-impact corrections
 
-1. Row 150: Davy Court's current guide is `Contact Us`, not stored `£850,000`; the term ends on `31 July 2028`.
-2. Row 142: Dorchester's current guide is `£750,000`, not stored `Contact Us`; sale remains conditional.
-3. Row 143: TG Jones is `Sold Post`, not Available; the tenant is holding over and headline rent, renewal heads and floor area conflict.
-4. Row 141: Holland & Barrett's property page and index disagree on price, and the rent-free commencement date is incomplete.
-5. Row 149: Rossmore's `£65,535` is effective top-up income, not current contractual rent; the tenant name changed to Alexander Beard Ltd.
-6. Row 144: Thames Travel remains inside the six-month rent-free period as of `29 July 2026`; headline income includes seller top-up.
-7. Row 135: Harefield has simultaneous Freehold/Leasehold and `1,591 / 1,095 sq ft` portal conflicts.
-8. Row 136: the Haunchwood tender deadline has passed, but outcome and planning decision remain unpublished.
+1. Row 125 is now `Under Offer` on the current detail page, while portal indexes still show an active sale.
+2. Rows 126 and 122 preserve the current Freehold/Leasehold conflict and the `2,836 / 2,499 sq ft` area gap; Minerva's filings are overdue.
+3. Row 129 preserves the `9,202 / 6,171 sq ft` conflict while the property remains Under Offer.
+4. Row 132 is currently Under Offer to lease, not a safely verified sale; James Hay Pension Trustees is in Receiver Action.
+5. Row 134 preserves the `7,092 / 5,768 sq ft` conflict and six outstanding tenant-company charges without treating them as property default.
+6. Row 116 contains simultaneous sale marketing, new-lease wording and Freehold/Leasehold label conflict.
+7. Row 124 has four current area versions and superior interests expiring in 2064 and 2063.
+8. Row 120 directs planning enquiries to the wrong authority for a Stratford property.
+9. Row 130 remains Unsold/Make Offer; a former portal listing is no longer active and no later sale is inferred.
+10. Row 131 has access permission evidence, not verified permission for the proposed neighbourhood centre.
 
 ## Official registry readback
 
-Batch 31 checked Edinburgh Woollen Mill Properties, Alexander Beard, Morris Homes (Midlands) and Morris Homes. Edinburgh Woollen Mill Properties remains active with overdue accounts. Alexander Beard Ltd is the current name for company `04873038`.
+Batch 25 checked Minerva of Hereford, Kennet Equipment Leasing and James Hay Pension Trustees through current official records. Minerva is active but has overdue accounts and confirmation statement. Kennet is active and has six outstanding corporate charges, which are not treated as property-specific default evidence. James Hay Pension Trustees is in Receiver Action. Historical satisfied-charge routes for James Hay and Gerald M Deeley were retained only as historical address/title clues, not current ownership proof.
 
-Batch 30 checked Cumbria Gateway, Lakeland, Sense and the Modern Arts Dental identity. Cumbria Gateway remains active but its confirmation statement is overdue.
-
-Batch 29 checked TG Jones Retail Holdings, Thames Travel and Go-Ahead, plus the Historic England Dorchester entry. Corporate and heritage identities do not prove property-specific lease, title, consent or completion.
-
-Batch 28 checked Home Vets London, Toby Holdings, Frasers Group Trading and Holland & Barrett. Frasers required current-name reconciliation. Batch 27 checked PizzaExpress and JG Foods. Batch 26 had no safely promoted official registry identity; portal conflicts were preserved rather than resolved by assumption.
+Batch 24 checked Storebase, Premium Art Brands and Done Brothers. Storebase is active at the exact Scar Bank address and its accounts were not yet overdue on 29 July 2026. Premium Art Brands and Done Brothers are active; their company records and charges do not prove current title, lease performance or property default.
 
 ## Previous evidence retained
 
-Detailed Batch 32–51 rows remain preserved in prior child-branch commits referenced by the JSON report. Repeated physical listings were re-read for their own canonical row references; no parcel, completion or income fact was copied without current evidence.
+Detailed Batch 26–51 rows remain preserved in their prior child-branch commits referenced by the JSON report. Repeated physical listings were re-read for their own canonical row references; no parcel, completion or income fact was copied without a current readback.
 
 ## Runtime and website
 
@@ -138,7 +95,7 @@ No live owner or active lease was present. The canonical heartbeat and lease rem
 
 Full `1264`-row geometry and `51`-batch browser-DOM acceptance remains operation `291` and was not falsely completed.
 
-The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 26–31 row by row.
+The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 24 and Batch 25 row by row.
 
 ## Remaining blockers
 
