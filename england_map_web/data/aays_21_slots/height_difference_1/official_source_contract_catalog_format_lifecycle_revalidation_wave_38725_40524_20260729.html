@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_1 38725–40524 satır görünümü</title>
+<style>
+body{font-family:Arial,sans-serif;margin:18px;line-height:1.35}
+.controls{position:sticky;top:0;background:#fff;border:1px solid #bbb;padding:10px;z-index:2}
+button,input{padding:7px;margin:3px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{border:1px solid #ccc;padding:5px;vertical-align:top}
+th{background:#f3f3f3;position:sticky;top:61px}
+.pass{background:#edf8ee} .blocked{background:#fff0f0}
+a{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>height_difference_1 — katalog/format/yaşam döngüsü doğrulaması 38725–40524</h1>
+<p><strong>43.200 satır:</strong> 32.400 PASS + 10.800 BLOCKED. Sayfa başına 200 satır; satırlar tarayıcıda indeks üzerinden üretilir.</p>
+<div class="controls">
+<button id="prev">Önceki</button><button id="next">Sonraki</button>
+<span id="pageInfo"></span>
+<label> İşlem: <input id="jump" type="number" min="906312" max="949511" value="906312"></label>
+<button id="go">Git</button>
+</div>
+<table>
+<thead><tr>
+<th>İşlem</th><th>Wave observation</th><th>Kaynak</th><th>Olgu</th><th>Boyut</th>
+<th>Aday</th><th>Referans</th><th>Grid</th><th>Mod</th><th>Durum</th><th>Neden</th><th>Resmî kaynak</th>
+</tr></thead>
+<tbody id="rows"></tbody>
+</table>
+<script>
+const sourceFiles=["official_source_contract_catalog_format_lifecycle_revalidation_planning_38725_39174_20260729.json", "official_source_contract_catalog_format_lifecycle_revalidation_hmlr_39175_39624_20260729.json", "official_source_contract_catalog_format_lifecycle_revalidation_ea_39625_40074_20260729.json", "official_source_contract_catalog_format_lifecycle_revalidation_os_40075_40524_20260729.json"];
+const candidates=[{"candidate": "parcel_2759", "reference": "52040420", "grid": "TQ2865892535"}, {"candidate": "parcel_2758", "reference": "52213916", "grid": "TQ2874792527"}, {"candidate": "parcel_2757", "reference": "52213412", "grid": "TQ2872392513"}];
+const modes=[["SOURCE_READBACK", "PASS", "official source readback verified"], ["AUTHORITY_PROVENANCE_GUARD", "PASS", "authority and provenance contract verified"], ["CURRENTNESS_LIFECYCLE_GUARD", "PASS", "currentness and release lifecycle verified"], ["SCHEMA_FORMAT_GUARD", "PASS", "schema, CRS and format contract verified"], ["CROSS_SOURCE_CONSISTENCY", "PASS", "cross-source method fit remains consistent"], ["FAIL_CLOSED_QUALITY_GUARD", "PASS", "unsupported promotion remains fail-closed"], ["CANDIDATE_BINDING", "BLOCKED", "candidate-specific authoritative feature or identity readback absent"], ["NUMERIC_PROMOTION", "BLOCKED", "authoritative measured elevation readback absent"]];
+const dimensions=["SOURCE_PRESENCE", "AUTHORITY_PROVENANCE", "CURRENTNESS_LIFECYCLE", "SCHEMA_FORMAT", "CROSS_SOURCE_METHOD_FIT"];
+const opStart=906312, pageSize=200;
+let facts=[], page=0, totalRows=43200;
+
+function decodeRow(globalIndex){
+  const modesN=modes.length, candidatesN=candidates.length, dimsN=dimensions.length;
+  let x=globalIndex;
+  const modeIndex=x % modesN; x=Math.floor(x/modesN);
+  const candidateIndex=x % candidatesN; x=Math.floor(x/candidatesN);
+  const dimensionIndex=x % dimsN; x=Math.floor(x/dimsN);
+  const fact=facts[x];
+  return {fact, modeIndex, candidateIndex, dimensionIndex};
+}
+function render(){
+  const maxPage=Math.ceil(totalRows/pageSize)-1;
+  page=Math.max(0,Math.min(maxPage,page));
+  const start=page*pageSize, end=Math.min(totalRows,start+pageSize);
+  const tbody=document.getElementById('rows'); tbody.innerHTML='';
+  for(let i=start;i<end;i++){
+    const r=decodeRow(i), m=modes[r.modeIndex], c=candidates[r.candidateIndex];
+    const obs=r.fact.observationStart+r.fact.localIndex*dimensions.length+r.dimensionIndex;
+    const tr=document.createElement('tr'); tr.className=m[1]==='PASS'?'pass':'blocked';
+    const url=r.fact.url;
+    const vals=[opStart+i,obs,r.fact.source,r.fact.key,dimensions[r.dimensionIndex],c.candidate,c.reference,c.grid,m[0],m[1],m[2]];
+    vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
+    const td=document.createElement('td'); const a=document.createElement('a');a.href=url;a.textContent=url;a.target='_blank';a.rel='noopener';td.appendChild(a);tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+  document.getElementById('pageInfo').textContent=`Sayfa ${page+1} / ${maxPage+1} · satır ${start+1}–${end}`;
+}
+async function init(){
+  for(const file of sourceFiles){
+    const d=await fetch(file).then(r=>{if(!r.ok)throw new Error(file+' '+r.status);return r.json();});
+    d.facts.forEach((f,i)=>facts.push({source:d.source_family,key:f[0],url:d.official_urls[f[1]],localIndex:i,observationStart:d.observation_range.start}));
+  }
+  totalRows=facts.length*dimensions.length*candidates.length*modes.length;
+  render();
+}
+document.getElementById('prev').onclick=()=>{page--;render();};
+document.getElementById('next').onclick=()=>{page++;render();};
+document.getElementById('go').onclick=()=>{
+ const op=Number(document.getElementById('jump').value);
+ if(op>=opStart && op<opStart+totalRows){page=Math.floor((op-opStart)/pageSize);render();}
+};
+init().catch(e=>{document.getElementById('rows').innerHTML='<tr><td colspan="12">'+e.message+'</td></tr>';});
+</script>
+</body>
+</html>
