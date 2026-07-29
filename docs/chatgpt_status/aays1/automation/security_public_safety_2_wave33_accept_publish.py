@@ -16,6 +16,7 @@ replacements = [
     ("wave32", "wave33"),
     ("590", "670"),
     ("range(30762, 31352)", "range(30762, 31432)"),
+    ("parcel_31351", "parcel_31431"),
     ("MIN_QUALITY = 561", "MIN_QUALITY = 637"),
     ('"progress_delta_percentage_points": 11.86', '"progress_delta_percentage_points": 11.94'),
     ('"accepted_base_candidate_rows": 520', '"accepted_base_candidate_rows": 590'),
@@ -23,7 +24,6 @@ replacements = [
     ('"incremental_rows_completed": 70', '"incremental_rows_completed": 80'),
 ]
 
-# Apply target-row substitutions before base-scope substitutions.
 for old, new in replacements[:4]:
     if old not in text:
         raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {old}")
