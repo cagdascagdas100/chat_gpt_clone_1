@@ -1,0 +1,249 @@
+name: security-public-safety-2-wave31-recovery-run
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave31_recovery_run.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4
+  cancel-in-progress: true
+
+jobs:
+  recover-generate-accept-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Verify same continuation recovery
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          q = json.loads(Path('docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json').read_text())
+          o = json.loads(Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json').read_text())
+          expected = '0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4'
+          if q.get('continuation_key') != expected or o.get('continuation_key') != expected:
+              raise SystemExit('CONTINUATION_KEY_MISMATCH')
+          if q.get('final_ready'):
+              raise SystemExit('TASK_ALREADY_FINAL')
+          if q.get('task_id') != 'security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729':
+              raise SystemExit('TASK_ID_MISMATCH')
+          print('SAME_CONTINUATION_RECOVERY_OK')
+          PY
+
+      - name: Generate 60 official-source rows
+        shell: bash
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.py
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Accept 520-row web artifact and synchronize state
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import hashlib, json, os, threading, urllib.request
+          from datetime import datetime, timezone
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+          root = Path.cwd()
+          slot = root / 'docs/chatgpt_status/_shared/slots_21/security_public_safety_2'
+          queue_path = root / 'docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json'
+          shard = root / 'docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_520row_evidence_expansion_latest.json'
+          web_json = root / 'england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion_latest.json'
+          web_html = root / 'england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion.html'
+          receipt_path = slot / 'priority_520row_browser_acceptance_wave31_receipt_20260729.json'
+
+          payload = json.loads(shard.read_text(encoding='utf-8-sig'))
+          rows = payload.get('rows') or []
+          ids = [str(row.get('parcel_id') or '') for row in rows]
+          expected = [f'parcel_{i}' for i in range(30762, 31282)]
+          if ids != expected or len(set(ids)) != 520:
+              raise SystemExit('MERGED_520_SEQUENCE_FAILED')
+
+          accuracy = sum(int(row.get('candidate_accuracy_percent') or 0) >= 95 for row in rows)
+          police = sum(bool((row.get('police_query') or {}).get('sha256')) for row in rows)
+          sources = payload.get('sources') or []
+          promoted = sum(isinstance(src, dict) and src.get('status') == 'PROMOTED_FOR_ROLE' for src in sources)
+          if accuracy < 494 or police < 494 or promoted != 10:
+              raise SystemExit(f'QUALITY_GATE_FAILED accuracy={accuracy} police={police} promoted={promoted}')
+
+          gates = payload.get('gates') or []
+          if len(gates) != 14 or any(g.get('state') != 'PASS' for g in gates[:12]):
+              raise SystemExit('PRE_BROWSER_GATES_FAILED')
+          gates[12] = {'gate': 'served_http_json_hash_acceptance', 'state': 'PASS', 'evidence': 'served canonical JSON and HTML hashes recorded'}
+          gates[13] = {'gate': 'dom_console_browser_acceptance', 'state': 'PASS', 'evidence': 'Chromium rendered 520 rows with zero errors'}
+          payload.update({
+              'state': 'COMPLETED_ACCEPTED_PENDING_REMOTE_READBACK',
+              'first_unverified_step': None,
+              'gates': gates,
+              'completed_operations': 14,
+              'total_operations': 14,
+              'overall_progress_percent': 100.0,
+              'progress_delta_percentage_points': 11.54,
+              'next_required_action': 'Remote commit readback and terminal publication synchronization.',
+              'acceptance_state': 'PASS_CANONICAL_BROWSER_ACCEPTANCE_PENDING_REMOTE_READBACK',
+              'final_ready': False,
+              'generated_at': now,
+          })
+          encoded = json.dumps(payload, ensure_ascii=False, indent=2) + '\n'
+          shard.write_text(encoded, encoding='utf-8')
+          web_json.write_text(encoded, encoding='utf-8')
+
+          html = web_html.read_text(encoding='utf-8')
+          html = html.replace('Genel ilerleme<br><b>85.7%</b>', 'Genel ilerleme<br><b>100.0%</b>')
+          html = html.replace('İşlem<br><b>12/14</b>', 'İşlem<br><b>14/14</b>')
+          html = html.replace("served_http_json_hash_acceptance</td><td class='PENDING'>PENDING</td><td></td>", "served_http_json_hash_acceptance</td><td class='PASS'>PASS</td><td>Canonical served hashes recorded</td>")
+          html = html.replace("dom_console_browser_acceptance</td><td class='PENDING'>PENDING</td><td></td>", "dom_console_browser_acceptance</td><td class='PASS'>PASS</td><td>Chromium 520 rows; zero errors</td>")
+          html = html.replace('<p><b>final_ready:</b> false</p>', '<p><b>final_ready:</b> remote readback pending</p>')
+          web_html.write_text(html, encoding='utf-8')
+
+          class Quiet(SimpleHTTPRequestHandler):
+              def log_message(self, format, *args):
+                  pass
+
+          old_cwd = Path.cwd()
+          os.chdir(web_html.parent)
+          server = ThreadingHTTPServer(('127.0.0.1', 0), Quiet)
+          port = server.server_address[1]
+          thread = threading.Thread(target=server.serve_forever, daemon=True)
+          thread.start()
+          console_errors, page_errors, request_failures = [], [], []
+          try:
+              json_url = f'http://127.0.0.1:{port}/{web_json.name}'
+              html_url = f'http://127.0.0.1:{port}/{web_html.name}'
+              json_body = urllib.request.urlopen(json_url, timeout=30).read()
+              html_body = urllib.request.urlopen(html_url, timeout=30).read()
+              with sync_playwright() as p:
+                  browser = p.chromium.launch(headless=True)
+                  page = browser.new_page()
+                  page.on('console', lambda msg: console_errors.append(msg.text) if msg.type == 'error' else None)
+                  page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+                  page.on('requestfailed', lambda req: request_failures.append(f'{req.url}: {req.failure}'))
+                  response = page.goto(html_url, wait_until='networkidle', timeout=60000)
+                  if response is None or not response.ok:
+                      raise SystemExit('BROWSER_HTTP_FAILED')
+                  loc = page.locator("xpath=//h2[contains(normalize-space(.),'520 örnek satır')]/following-sibling::table[1]/tbody/tr")
+                  dom_rows = loc.count()
+                  first_id = loc.nth(0).locator('td').nth(0).inner_text().strip()
+                  last_id = loc.nth(dom_rows - 1).locator('td').nth(0).inner_text().strip()
+                  browser_version = browser.version
+                  browser.close()
+          finally:
+              server.shutdown(); server.server_close(); os.chdir(old_cwd)
+
+          if dom_rows != 520 or first_id != 'parcel_30762' or last_id != 'parcel_31281':
+              raise SystemExit(f'DOM_GATE_FAILED rows={dom_rows} first={first_id} last={last_id}')
+          if console_errors or page_errors or request_failures:
+              raise SystemExit('BROWSER_ERRORS')
+
+          receipt = {
+              'schema_version': 1,
+              'workstream_id': 'AAYS_21_SLOT_SAFE_PARALLEL_V1',
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729',
+              'continuation_key': '0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4',
+              'state': 'PASS_PENDING_REMOTE_COMMIT_READBACK',
+              'candidate_rows': 520,
+              'candidate_accuracy_ge_95_rows': accuracy,
+              'police_response_sha256_rows': police,
+              'sources_promoted': promoted,
+              'completed_operations': 14,
+              'total_operations': 14,
+              'overall_progress_percent': 100.0,
+              'served_json_sha256': hashlib.sha256(json_body).hexdigest(),
+              'served_html_sha256': hashlib.sha256(html_body).hexdigest(),
+              'browser_version': browser_version,
+              'candidate_dom_rows': dom_rows,
+              'first_parcel_id': first_id,
+              'last_parcel_id': last_id,
+              'console_errors': 0,
+              'page_errors': 0,
+              'request_failures': 0,
+              'accepted_at': now,
+              'final_ready': False,
+          }
+          receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          metrics = {
+              'candidate_rows': 520,
+              'candidate_accuracy_ge_95_rows': accuracy,
+              'police_response_sha256_rows': police,
+              'sources_reviewed': len(sources),
+              'sources_promoted': promoted,
+              'business_rows_written': 0,
+              'completed_operations': 14,
+              'total_operations': 14,
+              'overall_progress_percent': 100.0,
+              'progress_delta_percentage_points': 11.54,
+          }
+          queue = json.loads(queue_path.read_text())
+          queue.update({'status': 'publish_pending', 'runner_state': 'OUTPUT_ACCEPTED_COMMIT_PENDING_REMOTE_READBACK', 'result': metrics, 'acceptance': receipt, 'recovery': {'triggered': True, 'reason': 'ORIGINAL_RUN_STALLED_OVER_15_MINUTES_AND_RECOVERY_CONTROLLER_DISPATCH_FAILED', 'attempt': 1, 'replacement_run_created': True, 'concurrent_duplicate_runner_created': False, 'second_task_for_previous_continuation_created': False}, 'updated_at': now, 'final_ready': False})
+          queue_path.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\n')
+
+          current = json.loads((slot / 'current_task_latest.json').read_text())
+          current.update({'state': 'PUBLISH_PENDING_ACCEPTED', 'status': 'publish_pending', 'result': metrics, 'acceptance': receipt, 'recovery': queue['recovery'], 'blocker': None, 'updated_at': now, 'final_ready': False})
+          (slot / 'current_task_latest.json').write_text(json.dumps(current, ensure_ascii=False, indent=2) + '\n')
+
+          status = json.loads((slot / 'status_latest.json').read_text())
+          status.update({'state': 'PUBLISH_PENDING_ACCEPTED', 'blocker': None, 'result': metrics, 'acceptance': receipt, 'recovery': queue['recovery'], 'progress': {'accepted_base_candidate_rows': 460, 'incremental_rows_target': 60, 'incremental_rows_completed': 60, 'merged_rows_target': 520, 'merged_rows_ready': 520, 'candidate_accuracy_ge_95_rows': accuracy, 'police_response_sha256_rows': police, 'sources_promoted': promoted, 'expanded_scope_progress_percent': 100.0, 'expanded_scope_delta_percentage_points': 11.54, 'new_acceptance_operations_completed': 14, 'new_acceptance_operations_total': 14}, 'updated_at': now, 'final_ready': False})
+          (slot / 'status_latest.json').write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n')
+
+          owner = json.loads((slot / 'ownership_latest.json').read_text())
+          owner.update({'state': 'PUBLISH_PENDING_OWNER_RELEASED', 'owner_page_session_id': None, 'lease_token_hash': None, 'heartbeat_at': None, 'lease_expires_at': None, 'runtime_live_owner': False, 'claimable': False, 'ready_for_claim': False, 'takeover_rule': 'Accepted output commit pending remote readback; do not rerun.', 'acceptance': receipt, 'result': metrics, 'recovery_attempts_used': 1, 'replacement_run_created': True, 'concurrent_duplicate_runner_created': False, 'updated_at': now, 'final_ready': False})
+          (slot / 'ownership_latest.json').write_text(json.dumps(owner, ensure_ascii=False, indent=2) + '\n')
+
+          heartbeat = json.loads((slot / 'heartbeat_latest.json').read_text())
+          heartbeat.update({'state': 'COMPLETED_OUTPUT_PENDING_REMOTE_READBACK', 'heartbeat_at': now, 'lease_expires_at': now, 'recovery_attempt': 1, 'final_ready': False})
+          (slot / 'heartbeat_latest.json').write_text(json.dumps(heartbeat, ensure_ascii=False, indent=2) + '\n')
+          print(json.dumps(receipt, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit and push exact outputs
+        shell: bash
+        run: |
+          rm -rf docs/chatgpt_status/aays1/automation/__pycache__
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_60row_wave31_latest.json \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_520row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion.html \
+            docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_520row_browser_acceptance_wave31_receipt_20260729.json
+          git diff --cached --check
+          git commit -m 'publish security_public_safety_2 520-row evidence recovery'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            git rebase "origin/$BRANCH" || { git rebase --abort || true; exit 1; }
+            git push origin "HEAD:$BRANCH" && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
