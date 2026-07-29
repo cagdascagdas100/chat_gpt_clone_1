@@ -1,0 +1,98 @@
+name: security-public-safety-2-wave40-terminalize
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave40_terminalize.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave40-terminalize
+  cancel-in-progress: false
+
+jobs:
+  terminalize:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Synchronize terminal records
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          task = 'security_public_safety_2_priority_1510row_incremental_evidence_expansion_20260729'
+          continuation = '21b1f8638e05ea789709fba734926a907073903f7924f0ea457962c38e69d112'
+          queue_path = Path('docs/chatgpt_status/aays1/queue/0015_security_public_safety_2_priority_1510row_incremental_evidence_expansion_20260729.v3.task.json')
+          slot = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2')
+          head = '8dafc74eb1af09a647153a423b5650b976ee386f'
+          now = '2026-07-29T18:46:00Z'
+          json_blob = 'e2de8b9d2536c92ab3109b088d5ee5f9682603a3'
+          html_blob = '447252211d01f96ca43ad73365372874f1cedeb7'
+          receipt = 'docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_1510row_browser_acceptance_wave40_receipt_20260729.json'
+          result = {'candidate_rows':1510,'candidate_accuracy_ge_95_rows':1498,'police_response_sha256_rows':1510,'sources_reviewed':10,'sources_promoted':10,'business_rows_written':0,'completed_operations':14,'total_operations':14,'overall_progress_percent':100.0,'progress_delta_percentage_points':9.93}
+          acceptance = {'state':'PASS_REMOTE_COMMIT_READBACK','candidate_dom_rows':1510,'first_parcel_id':'parcel_30762','last_parcel_id':'parcel_32271','console_errors':0,'page_errors':0,'request_failures':0,'served_json_sha256':'8a86ad489806dd8de7a090e485f71249e4ec9e09d46e2d05a716d8db9592fc27','served_html_sha256':'9d4b2f9b84e5d58346acae96a979b45b6de380b59bbcaa4ac45d7c204e160561','browser_version':'149.0.7827.55','receipt':receipt,'final_ready':True}
+          recovery = {'triggered':True,'reason':'TARGETED_POLICE_RETRY_APPLIED','attempt':1,'targeted_retry_recovered_rows':28,'concurrent_duplicate_runner_created':False,'second_task_created':False}
+
+          def load(path): return json.loads(path.read_text(encoding='utf-8'))
+          def save(path, data): path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          queue = load(queue_path)
+          if queue.get('task_id') != task or queue.get('continuation_key') != continuation:
+              raise SystemExit('QUEUE_IDENTITY_MISMATCH')
+          queue.update({'status':'completed_accepted','owner':None,'first_unverified_step':None,'runner_state':'COMPLETED_ACCEPTED_PUBLISHED','updated_at':now,'final_ready':True,'result':result,'acceptance':acceptance,'recovery':recovery,'output_publish_remote_head':head,'shard_output_blob_sha':json_blob,'website_html_blob_sha':html_blob,'blocker':None})
+          save(queue_path, queue)
+
+          current_path = slot / 'current_task_latest.json'
+          current = load(current_path)
+          current.update({'schema_version':33,'state':'COMPLETED_ACCEPTED_PUBLISHED','status':'completed_accepted','owner':None,'first_unverified_step':None,'result':result,'acceptance':acceptance,'recovery':recovery,'output_publish_remote_head':head,'shard_output_blob_sha':json_blob,'website_html_blob_sha':html_blob,'blocker':None,'updated_at':now,'final_ready':True})
+          save(current_path, current)
+
+          status_path = slot / 'status_latest.json'
+          status = load(status_path)
+          status.update({'schema_version':33,'state':'COMPLETED_ACCEPTED_PUBLISHED','owner':None,'blocker':None,'result':result,'acceptance':acceptance,'recovery':recovery,'output_publish_remote_head':head,'updated_at':now,'final_ready':True})
+          status['progress'] = {'accepted_base_candidate_rows':1360,'incremental_rows_target':150,'incremental_rows_completed':150,'merged_rows_target':1510,'merged_rows_ready':1510,'candidate_accuracy_ge_95_rows':1498,'police_response_sha256_rows':1510,'sources_promoted':10,'expanded_scope_progress_percent':100.0,'expanded_scope_delta_percentage_points':9.93,'new_acceptance_operations_completed':14,'new_acceptance_operations_total':14}
+          status['website_targets'] = {'json':'england_map_web/data/aays_21_slots/security_public_safety_2/priority_1510row_evidence_expansion_latest.json','html':'england_map_web/data/aays_21_slots/security_public_safety_2/priority_1510row_evidence_expansion.html','line_by_line_rows':1510,'json_blob_sha':json_blob,'html_blob_sha':html_blob}
+          save(status_path, status)
+
+          ownership_path = slot / 'ownership_latest.json'
+          ownership = load(ownership_path)
+          ownership.update({'schema_version':37,'state':'COMPLETED_ACCEPTED_OWNER_RELEASED','owner_page_session_id':None,'lease_token_hash':None,'heartbeat_at':None,'lease_expires_at':None,'runtime_live_owner':False,'claimable':False,'ready_for_claim':False,'takeover_rule':'Task is completed, accepted and remotely read back. Do not restart, reclaim, duplicate or create another runner for this continuation key.','runner_write_allowed_only_after_claim':False,'business_write_forbidden':True,'recovery_attempts_used':1,'last_completed_scope':'priority_1510row_incremental_evidence_expansion_full_remote_and_canonical_browser_acceptance','last_evidence_blob_sha':html_blob,'result':result,'acceptance':acceptance,'recovery':recovery,'output_publish_remote_head':head,'generator_rerun':False,'second_runner_created':False,'second_task_created':False,'updated_at':now,'final_ready':True})
+          save(ownership_path, ownership)
+
+          heartbeat_path = slot / 'heartbeat_latest.json'
+          heartbeat = load(heartbeat_path)
+          heartbeat.update({'schema_version':32,'state':'COMPLETED_ACCEPTED_PUBLISHED','heartbeat_at':now,'owner_page_session_id':None,'lease_expires_at':None,'recovery_attempt':1,'output_publish_remote_head':head,'final_ready':True})
+          save(heartbeat_path, heartbeat)
+          PY
+      - name: Commit terminal records
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            docs/chatgpt_status/aays1/queue/0015_security_public_safety_2_priority_1510row_incremental_evidence_expansion_20260729.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json
+          git diff --cached --check
+          git commit -m 'terminalize security_public_safety_2 1510-row wave40'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            git rebase "origin/$BRANCH" && git push origin "HEAD:$BRANCH" && exit 0
+            git rebase --abort || true
+            sleep $((attempt * 3))
+          done
+          exit 1
