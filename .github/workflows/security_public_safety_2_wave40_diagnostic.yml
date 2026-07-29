@@ -23,14 +23,14 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
-      - name: Capture wave40 status
+      - name: Capture wave40 terminal status
         shell: bash
         run: |
           python - <<'PY'
           import json, subprocess
           from datetime import datetime, timezone
           from pathlib import Path
-          command = ['gh','run','list','--workflow','security_public_safety_2_wave40_incremental.yml','--limit','5','--json','databaseId,status,conclusion,createdAt,startedAt,updatedAt,event,headSha,workflowName,url,attempt']
+          command = ['gh','run','list','--workflow','security_public_safety_2_wave40_terminalize.yml','--limit','5','--json','databaseId,status,conclusion,createdAt,startedAt,updatedAt,event,headSha,workflowName,url,attempt']
           completed = subprocess.run(command, text=True, capture_output=True)
           payload = {
             'schema_version': 1,
@@ -42,7 +42,7 @@ jobs:
             'stderr': completed.stderr,
             'runs': json.loads(completed.stdout or '[]') if completed.returncode == 0 else []
           }
-          path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave40_actions_diagnostic_20260729.json')
+          path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave40_terminalize_diagnostic_20260729.json')
           path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - name: Commit diagnostic
@@ -50,8 +50,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave40_actions_diagnostic_20260729.json
-          git commit -m 'capture security_public_safety_2 wave40 actions status'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave40_terminalize_diagnostic_20260729.json
+          git commit -m 'capture security_public_safety_2 wave40 terminal status'
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BRANCH"
             git rebase "origin/$BRANCH" && git push origin "HEAD:$BRANCH" && exit 0
