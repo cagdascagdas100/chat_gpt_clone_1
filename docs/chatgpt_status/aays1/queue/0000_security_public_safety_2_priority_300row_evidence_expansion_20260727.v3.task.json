@@ -9,10 +9,10 @@
   "attempt_id": "attempt-001",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
   "idempotency_key": "7143f45c0c0ff1bf265bcee145857b1ee3329e2cb1798e512b6689857c1a1b46",
-  "status": "result_ready_for_remote_acceptance",
+  "status": "completed_accepted",
   "priority": -101,
-  "claimable": true,
-  "ready_for_claim": true,
+  "claimable": false,
+  "ready_for_claim": false,
   "single_runner_only": true,
   "page_key": "aays1",
   "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_300row_evidence_expansion_20260727.py",
@@ -29,24 +29,14 @@
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html"
   ],
-  "resource_class": [
-    "heavy_disk_io",
-    "network_fetch",
-    "browser_research",
-    "cpu_heavy"
-  ],
+  "resource_class": ["heavy_disk_io", "network_fetch", "browser_research", "cpu_heavy"],
   "concurrency": {
     "parallel_official_source_probes": 10,
     "parallel_row_checks": 12,
     "maximum_simultaneous_workers": 12,
     "hardware_manifest_limit_respected": true
   },
-  "parcel_partition": {
-    "start": 30762,
-    "end": 61522,
-    "count": 30761,
-    "canonical_count": 92283
-  },
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
   "targets": {
     "sample_parcel_start": 30762,
     "sample_parcel_end": 31061,
@@ -57,26 +47,13 @@
     "website_line_by_line": true
   },
   "data_quality_contract": {
-    "source_snapshot_date": "2026-07-27",
-    "source_discovery_required": false,
+    "source_snapshot_date": "2026-07-28",
     "measurement_level": "lsoa",
     "output_semantics": "CANDIDATE",
     "parcel_binding_method": "exact_internal_security_parcel_id_to_point_then_ons_lsoa21_intersection_then_iod25_lsoa_code_join",
     "confidence_method": "six_gate_official_evidence_integrity_rubric_no_business_promotion",
     "method_calibration": "IoD25 Crime Rank is retained only as a relative LSOA candidate indicator; it is not represented as an exact parcel incident rate or business score.",
-    "no_data_policy": "NO_DATA_NOT_INFERRED",
-    "official_source_urls": [
-      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025",
-      "https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025/english-indices-of-deprivation-2025-frequently-asked-questions",
-      "https://www.gov.uk/government/publications/english-indices-of-deprivation-2025-technical-report",
-      "https://www.gov.uk/csv-preview/691494fbb49cc44345161692/File_7_IoD2025_All_Ranks_Scores_Deciles_Population_Denominators.csv",
-      "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimatesnationalstatistics",
-      "https://data.police.uk/api/crime-last-updated",
-      "https://data.police.uk/docs/method/crime-street/",
-      "https://www.gov.uk/government/statistical-data-sets/police-recorded-crime-and-outcomes-open-data-tables",
-      "https://www.gov.uk/government/statistics/police-recorded-crime-open-data-tables/police-recorded-crime-and-outcomes-open-data-tables-user-guide",
-      "https://www.data.gov.uk/dataset/0e26ee1b-26b7-406e-a3b1-f3481b324977/local-police-recorded-crime-data"
-    ]
+    "no_data_policy": "NO_DATA_NOT_INFERRED"
   },
   "acceptance_conditions": [
     "exactly_300_unique_candidate_rows",
@@ -87,14 +64,39 @@
     "ten_official_sources_probed_and_role_promoted_when_reachable",
     "line_by_line_static_html_contains_300_candidate_rows",
     "business_score_and_business_confidence_remain_unpromoted",
-    "served_http_json_hash_and_dom_console_browser_acceptance_remain_next_gate"
+    "served_http_json_hash_and_dom_console_browser_acceptance_passed"
   ],
+  "acceptance": {
+    "state": "PASS_CANONICAL_BROWSER_ACCEPTANCE",
+    "checks_passed": 15,
+    "checks_pending": 0,
+    "canonical_html_blob_sha": "eb5ddcf8cc60356e9ec8ebe65211ecb002f94876",
+    "browser_gates_passed": 9,
+    "browser_gates_total": 9,
+    "candidate_dom_rows": 300,
+    "first_parcel_id": "parcel_30762",
+    "last_parcel_id": "parcel_31061",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "receipt": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_browser_acceptance_wave25_receipt_20260729.json"
+  },
+  "result": {
+    "candidate_rows": 300,
+    "candidate_accuracy_ge_95_rows": 296,
+    "police_response_sha256_rows": 300,
+    "sources_reviewed": 10,
+    "sources_promoted": 10,
+    "business_rows_written": 0,
+    "completed_operations": 20,
+    "total_operations": 20,
+    "overall_progress_percent": 100.0
+  },
   "timeout_seconds": 7200,
   "fake_data": false,
   "db_write": false,
   "migration": false,
   "production_deploy": false,
-  "final_ready": false,
   "created_at": "2026-07-27T13:27:00Z",
   "source_head": "c7f7d5a687b32e47535f1be97a3dcc7ff38346c8",
   "previous_task_id": "security_public_safety_2_priority_96row_consolidation_20260722",
@@ -109,8 +111,11 @@
     "second_runner_created": false,
     "second_task_created": false
   },
-  "updated_at": "2026-07-27T13:47:28Z",
   "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
   "runner_child_commit": "20b6bfc2512a6af28cb5934a51137f63295ebab2",
-  "runner_published_at": "2026-07-28T23:11:00.051741Z"
+  "runner_published_at": "2026-07-28T23:11:00.051741Z",
+  "generator_rerun": false,
+  "second_recovery_refresh_used": false,
+  "updated_at": "2026-07-29T05:03:05+03:00",
+  "final_ready": true
 }
