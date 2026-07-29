@@ -4,7 +4,7 @@
 - Continuation key: `6a91b39620b1c0a5f98eb2831178dff6108c64dce6db205f58296ca657e4e8be`
 - Task: `ready_to_sell_1_automation_167_dom_proof_20260720_01`
 - State: `PUBLISH_PENDING`
-- Updated: `2026-07-29T16:03:00Z`
+- Updated: `2026-07-29T16:29:00Z`
 - Final ready: `false`
 
 ## Aggregate
@@ -29,64 +29,63 @@
 - Batch 44: `22/22` (`100%`)
 - Batch 43: `20/20` (`100%`)
 - Batch 42: `18/18` (`100%`)
-- Combined Batch 42–51: `265/265` (`100%`)
-- Combined recovery coverage: `265/507` (`52.27%`)
-- Recovery increase in this pass: `+3.55 percentage points`
-- Batch 42 primary/current Acuitus readbacks: `18`
-- Batch 42 official registry entities checked: `11`
-- Stored-vs-primary fact contradictions in Batch 42: `2`
-- Official company-name reconciliations in Batch 42: `2`
+- Batch 41: `16/16` (`100%`)
+- Combined Batch 41–51: `281/281` (`100%`)
+- Combined recovery coverage: `281/507` (`55.42%`)
+- Recovery increase in this pass: `+3.16 percentage points`
+- Batch 41 primary/current Acuitus readbacks: `16`
+- Batch 41 official registry entities checked: `14`
+- Stored-vs-primary fact contradictions in Batch 41: `2`
+- Official company-name reconciliations in Batch 41: `1`
+- Resolved historical page-state conflicts: `1`
 - New price/historical-status contradictions: `1`
 - New source-internal conflicts: `2`
-- Current-date reconciliation rows: `11`
-- Official registry material risks: `2`
+- Current-date reconciliation rows: `10`
+- Official registry material risks: `3`
 - Canonical source counter increase: `0` (child evidence awaits coordinator publication)
 - Parcel-bound rows added: `0`
 
-## Batch 42 rows 255–272
+## Batch 41 rows 239–254
 
 | Row | Listing | Result | Live evidence / material limitation | Parcel |
 |---:|---|---|---|---|
-| 255 | ACUITUS-5807 | PASS WITH 2027 REVIEW AND MULTI LONG LEASE RECONCILIATION | Sold £540,000; £33,000 total income; Tesco pays £32,000 to Jul 2032 without break and has a 16 Jul 2027 review. Five flats are separate long-lease interests at £200 each; title, parking and lease schedules remain unread. | UNBOUND |
-| 256 | ACUITUS-5798 | PASS WITH PASSED REVIEW AND PERIODIC RESIDENTIAL TENANCIES | Sold £816,000; £63,020 total income. The health-spa rent review dated 25 Jul 2026 has passed and the reviewed rent is unconfirmed; two flats remain periodic tenancies requiring current occupation, deposit and arrears evidence. | UNBOUND |
-| 257 | ACUITUS-5799 | PASS WITH THREE NEAR TERM EXPIRIES OPTIONS AND CONVERSION RISK | Available; £58,500 from five interests. Two office terms expire Jan/Feb 2027 and a third-floor option falls 5 May 2027; upper-floor conversion remains subject to consent and current occupation must be reconciled lease by lease. | UNBOUND |
-| 258 | ACUITUS-5808 | PASS WITH OFFICIAL COMPANY RENAME AND STALE MARKETING NAME | Sold £750,000; £75,000 rent; 999-year virtual freehold. Company 13150050 is now Brava Trading Limited, renamed from Prezzo Trading Limited on 13 Apr 2026, while the live property page retains the former name; lease reviews fall in 2029 and 2034. | UNBOUND |
-| 259 | ACUITUS-5814 | PASS WITH JUST EXPIRED TERM HOLDING OVER VACANCY AND SOLAR INCOME | Sold £1,895,000; £324,057.27 stated income including solar rent, with 10,363 sq ft vacant. Sanctuary's term expired 23 Jul 2026, Sidel is already holding over and another lease has a Sep 2030 option; current cash income requires unit-level proof. | UNBOUND |
-| 260 | ACUITUS-5829 | PASS WITH OVERDUE CONFIRMATION STATEMENT AND 2030 OPTION | Sold £230,000; £21,000 rent; virtual freehold. Cuppa Chaii is active but its confirmation statement due 16 Jul 2026 is overdue; the occupational lease has a Feb 2030 tenant option. | UNBOUND |
-| 261 | ACUITUS-5828 | PASS WITH INDIVIDUAL TENANT AND VIRTUAL FREEHOLD | Sold £135,000; £12,000 rent; 594 sq ft virtual-freehold unit. An individual trading as Village Reformer holds to Sep 2030; covenant, executed lease and exact demise remain unread. | UNBOUND |
-| 262 | ACUITUS-5826 | PASS WITH RECEIVERSHIP DISPUTE AND JUNE 2027 EXPIRY | Deferred; £42,500 rent; 3,609 sq ft and 15 parking spaces. Joint LPA receivers give no warranties, the legal pack records a landlord-and-tenant dispute and the occupational term expires 30 Jun 2027. | UNBOUND |
-| 263 | ACUITUS-5816 | FAIL STORED STATUS AND TENANT IDENTITY CONTRADICTION | Current live status is Sold Post, contradicting stored Available. The occupier is TG Jones Retail Holdings Limited, not stored T G Jones Limited; it is holding over under statutory continuation and the agreed renewal remains incomplete. Live area table totals 7,688 sq ft versus stored 7,689. | UNBOUND |
-| 264 | ACUITUS-5830 | PASS WITH PURPORTED DECEMBER 2026 BREAK AND OVERDUE STATEMENT | Available at £325,000-£350,000; £42,000 total rent. Cumbria Gateway has purported to break on 1 Dec 2026, validity unconfirmed, and its confirmation statement is overdue; Nationwide's term expires Feb 2027. | UNBOUND |
-| 265 | ACUITUS-5827 | PASS WITH IMMINENT AUGUST 2026 REVIEW | Sold £380,000; £39,000 rent; AI Foods Moseley is active. The restaurant term runs to Aug 2031 and its rent review falls 31 Aug 2026; reviewed rent and execution remain unconfirmed. | UNBOUND |
-| 266 | ACUITUS-5813 | PASS WITH LONG LEASE OPTION GUARANTOR AND EXECUTION RISK | Sold £720,000; £80,000 stated rent; 3,771 sq ft virtual-freehold restaurant. The Hamza Catering term is marketed to Aug 2044 subject to a tenant option and guarantor; exact option, guarantee and executed documents remain unread. | UNBOUND |
-| 267 | ACUITUS-5806 | PASS WITH VACANT BANK CAR PARK AND COMPLETION RISK | Sold £262,000; vacant 4,282 sq ft former bank with ten parking spaces. Completion, title and car-park rights remain unread; alternative use is not treated as granted planning. | UNBOUND |
-| 268 | ACUITUS-5805 | FAIL STORED FULL VACANCY SEMANTIC CONTRADICTION AND CONDITIONAL SALE | Sold £150,000 subject to seller confirmation. The 3,567 sq ft commercial bank accommodation is vacant, but first and second residential floors are held on a long lease; stored whole-property vacancy is therefore unsafe. | UNBOUND |
-| 269 | ACUITUS-5702 | PASS WITH CURRENT AST TERM AND SEPARATE RETAIL LEASE | Sold Prior; £31,300 total income. The salon pays £14,500 to May 2030 with a £6,000 deposit; the four-bedroom maisonette is separately let at £16,800 on an AST from 19 Jan 2026 to 19 Jan 2028. | UNBOUND |
-| 270 | ACUITUS-5729 | PASS WITH MULTI UNIT PASSED DATES VACANCIES AND INCOME RECONCILIATION | Sold £2,605,000; £418,090 stated income across 44 units with six vacancies. A Mar 2026 term and Jun 2026 wall interest have expired, a Jul 2026 break has passed and several Sep-Dec 2026 reviews/options approach; current income requires unit-level reconciliation. | UNBOUND |
-| 271 | ACUITUS-5745 | PASS WITH CONDITIONAL SALE AND CONVERSION RISK | Sold £380,000 subject to seller confirmation; vacant 2,844 sq ft former bank with four-space rear car park. Upper-floor residential conversion remains subject to planning and completion/title evidence. | UNBOUND |
-| 272 | ACUITUS-5737 | PASS WITH HOLDING OVER AST AND SEPARATE RETAIL LEASE | Sold Prior; £63,100 total income. Flight Centre pays £47,500 to Sep 2029 after the 2024 break was not exercised; the separate maisonette AST expired 1 Sep 2024 and is now holding over at £15,600. | UNBOUND |
+| 239 | ACUITUS-5752 | PASS WITH PART VACANT UPPERS AND SEPARATE LONG RESIDENTIAL LEASE | Sold £1,835,000; £100,200 total income. Holland & Barrett pays £100,000 under a five-year term from Feb 2023; 1,369 sq ft at 98a is vacant, while 96a contains two flats on a separate 199-year lease at £200. Change of use remains subject to consent. | UNBOUND |
+| 240 | ACUITUS-5750 | PASS WITH NEAR TERM EXPIRIES NONTRADING TENANT AND MULTI INTEREST RECONCILIATION | Available; £46,334 across 12 retail units, residential ground rents, parking, CCTV and substation interests. Unit 15 ends 31 Oct 2026, Unit 18's six-year term from Dec 2020 approaches expiry and its tenant is not trading; Unit 22a/22b is vacant and several landlord options/deposits require lease-level proof. | UNBOUND |
+| 241 | ACUITUS-5739 | PASS WITH TENANT IN ADMINISTRATION GUARANTOR AND 2028 OPTION | Sold £280,000; £28,313 rent; 9,258 sq ft industrial unit. Endeavour Leisure (UK) Ltd is in administration with overdue accounts and confirmation statement; the lease runs to Jul 2033 but has a 25 Jul 2028 option requiring at least twelve months' notice and is backed by a personal guarantor. | UNBOUND |
+| 242 | ACUITUS-5742 | PASS WITH RENEWED BOOTS LEASE 2029 OPTION AND ONE SQFT CONFLICT | Available; £40,000 rent; Boots UK is active under a renewed five-year lease from 16 Apr 2026 with a tenant option on 16 Apr 2029. The live headline states 11,886 sq ft while the tenancy table totals 11,887 sq ft; rear access and executed documents remain unread. | UNBOUND |
+| 243 | ACUITUS-5696 | PASS WITH CURRENT AST ACTIVE COMPANIES AND LAPSED PLANNING | Available at £465,000; £35,800 total income. SJS Holdings pays £20,500 and the one-bed flat is on a 24-month AST from 20 Sep 2025 at annualised £15,300; SJS Holdings and SKVP (Slough) are active. Planning P/07171/005 for an additional flat has lapsed. | UNBOUND |
+| 244 | ACUITUS-5717 | FAIL STORED RENT TOTAL AND RESIDENTIAL STRUCTURE CONTRADICTION | Available; the live tenancy table totals £87,090, not stored/headline £87,030. Tesco pays £75,000 with 2029/2034 reviews and an Aug 2034 option; one maisonette produces £12,000 and three further maisonettes are separate long-lease interests at £30 each. Tesco Stores is active. | UNBOUND |
+| 245 | ACUITUS-5667 | PASS WITH EXPIRED PEACOCKS TERM NONOCCUPIED BANK AND OVERDUE ACCOUNTS RISK | Available; £137,300 stated rent across four shops. Peacocks' five-year term from Apr 2021 has expired and only an intention to renew is recorded; Lloyds is not in occupation and its term ends Feb 2027. Peacocks Stores Properties is active but its accounts are overdue; Iceland Foods and Hays Travel are active. | UNBOUND |
+| 246 | ACUITUS-5792 | PASS WITH COMPLETION DEPENDENT VIRTUAL FREEHOLD AND CURRENT RENT FREE TOPUP | Available; £18,500 headline rent; 435 sq ft unit. Thames Travel's ten-year lease began 13 May 2026 but includes a six-month rent-free period supported by seller top-up, so tenant cash rent is not yet the full headline amount. The 999-year superior interest begins from completion; Thames Travel is active but its confirmation statement is overdue. | UNBOUND |
+| 247 | ACUITUS-5790 | PASS WITH OUTSTANDING 2025 REVIEW AND ACTIVE TENANT | Sold £63,000; £2,000 ground rent; 0.21-acre interest. Tradeamp Limited is active, but the 1 Apr 2025 review to 5% of open-market rent remains outstanding, so current settled ground rent is unresolved. | UNBOUND |
+| 248 | ACUITUS-5787 | PASS WITH RESULTS PAGE SUPERSEDING STALE AVAILABLE PAGE AND OUTSTANDING REVIEW | Current auction results record Sold £56,000, superseding the stale property-page state Available £40,000. The £1,200 ground rent remains subject to an outstanding 1 Apr 2025 review to 5% of open-market rent; exact trustee status, lease and title remain unread. | UNBOUND |
+| 249 | ACUITUS-5786 | PASS WITH OUTSTANDING 2025 RENTAL VALUE REVIEW | Sold £43,000; £1,300 ground rent; 0.63-acre interest. The 1 Apr 2025 review to 5% of rental value remains outstanding, so the current settled rent and completion evidence remain unconfirmed. | UNBOUND |
+| 250 | ACUITUS-5785 | PASS WITH OUTSTANDING 2025 OPEN MARKET REVIEW | Sold £46,000; £1,150 ground rent; 0.18-acre interest. The 1 Apr 2025 review to 5% of open-market rent remains outstanding; title, lease and current settlement remain unread. | UNBOUND |
+| 251 | ACUITUS-5809 | PASS WITH ACTIVE PIZZAEXPRESS LONG LEASE AND HISTORIC CVA COMPLETION | Available; £56,950 rent; 2,987 sq ft freehold restaurant. PizzaExpress (Restaurants) Limited is active; its historic CVA completed in Sep 2022. The occupational lease runs to May 2034 without breaks with a May 2029 review; title and executed lease remain unread. | UNBOUND |
+| 252 | ACUITUS-5800 | FAIL STORED GUIDE PRICE AND COMPANY NAME RECONCILIATION | Current live guide is £1,800,000, contradicting stored Contact Us. Company 03406347 is now Frasers Group Trading Limited, renamed from Sportsdirect.com Retail Limited on 30 Mar 2026; £175,000 rent is subject to a Dec 2028 option and a three-month rent-free period if not exercised. Upper parts are sold off on a 988-year peppercorn lease. | UNBOUND |
+| 253 | ACUITUS-5803 | PASS WITH VACANT FORMER AUTOMOTIVE SITE AND DEVELOPMENT RISK | Available; vacant 12,604 sq ft former showroom/workshop on 1.45 acres, VAT-free with EPC D. The three-building freehold is marketed for asset management/development, but completion, condition, access, planning and environmental evidence remain unread. | UNBOUND |
+| 254 | ACUITUS-5804 | PASS WITH CONDITIONAL SALE GRADE II VACANCY AND CONVERSION RISK | Available; vacant 10,278 sq ft Grade II former bank with approximately 16 parking spaces, not elected for VAT and EPC D. The sale is expressly conditional on seller confirmation; residential conversion requires planning and listed-building consent. | UNBOUND |
 
 ## High-impact corrections
 
-1. Row 256: the health-spa review dated 25 July 2026 has passed; current reviewed commercial rent is unconfirmed.
-2. Row 258: company `13150050` is now Brava Trading Limited, renamed from Prezzo Trading Limited on 13 April 2026; the property page retains the former name.
-3. Row 259: Sanctuary's occupational term expired on 23 July 2026, while Sidel is already holding over and 10,363 sq ft remains vacant.
-4. Row 263: the current page is `Sold Post`, not stored `Available`; the occupier is TG Jones Retail Holdings Limited and the renewal remains incomplete.
-5. Row 264: Cumbria Gateway has purported to exercise a 1 December 2026 break, validity unconfirmed; Nationwide's term ends in February 2027.
-6. Row 265: AI Foods' rent review falls on 31 August 2026.
-7. Row 268: only the commercial bank accommodation is vacant; residential upper floors are held on a long lease, and the sale is conditional.
-8. Row 270: several terms, breaks and wall interests have passed in March-July 2026, with further reviews/options approaching in September-December 2026.
-9. Row 272: the maisonette AST expired in September 2024 and is holding over; it is separate from the Flight Centre retail lease.
+1. Row 241: Endeavour Leisure (UK) Ltd is in administration with overdue accounts and confirmation statement; the July 2028 option needs at least twelve months' notice.
+2. Row 242: the Boots page contains an `11,886 sq ft` headline versus an `11,887 sq ft` tenancy-table total.
+3. Row 244: the live tenancy table totals `£87,090`, not the stored/headline `£87,030`; the maisonette income and three long-lease ground rents are separate interests.
+4. Row 245: the Peacocks term has expired and only an intention to renew is recorded; Lloyds is not in occupation and its term ends in February 2027.
+5. Row 246: Thames Travel remains within a six-month rent-free period supported by seller top-up, so the tenant is not yet paying the full `£18,500` headline rent; the superior interest begins from completion.
+6. Row 248: the current auction result is `Sold £56,000`, superseding the stale `Available £40,000` property page.
+7. Row 252: the current guide is `£1,800,000`, not stored `Contact Us`; company `03406347` is now Frasers Group Trading Limited.
+8. Row 254: the Dorchester sale is conditional on seller confirmation; vacant marketing does not prove completion, and conversion remains subject to planning and listed-building consent.
 
 ## Official registry readback
 
-Eleven official entities were checked: Tesco Stores, Brava Trading, Cuppa Chaii (Moseley Village Birmingham), TG Jones Retail Holdings, Cumbria Gateway, A I Foods Moseley, Flight Centre (UK), Sidel (UK), The Jubilee House Care Trust, Cardtronics UK and Sugarbird Solarco (UK).
+Fourteen official entities were checked: Holland & Barrett Retail, Endeavour Leisure (UK), Boots UK, SJS Holdings, SKVP (Slough), Tesco Stores, Peacocks Stores Properties, Iceland Foods, Hays Travel, Thames Travel (Wallingford), Tradeamp, PizzaExpress (Restaurants), Frasers Group Trading and Denton & Co. Trustees.
 
-Brava Trading is the current name of company `13150050`. TG Jones Retail Holdings is the current company identity for `00471941`. Cuppa Chaii and Cumbria Gateway are active but their confirmation statements are overdue. Exact corporate identity for the Harlow occupational tenant was not safely resolved, so no status was inferred.
+Frasers Group Trading Limited is the current name of company `03406347`, renamed from Sportsdirect.com Retail Limited on 30 March 2026. Endeavour Leisure is in administration and has overdue filings. Peacocks Stores Properties has overdue accounts, and Thames Travel has an overdue confirmation statement. Exact current status for Denton & Co. Trustees was not safely confirmed, so no unsupported status was inferred.
 
 ## Previous evidence retained
 
-Detailed Batch 43–51 rows remain preserved in prior child-branch commits referenced by the JSON report. No prior correction, tenure contradiction or source conflict was silently removed.
+Detailed Batch 42–51 rows remain preserved in prior child-branch commits referenced by the JSON report. No prior correction, tenure contradiction or source conflict was silently removed.
 
 ## Runtime and website
 
@@ -94,7 +93,7 @@ No live owner or active lease was present. The canonical heartbeat and lease rem
 
 Full `1264`-row geometry and `51`-batch browser-DOM acceptance remains operation `291` and was not falsely completed.
 
-The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 42 row by row.
+The exact-write contract permits only the JSON and Markdown reports. Canonical candidate files and the England map website were not mutated. This child-branch report displays Batch 41 row by row.
 
 ## Remaining blockers
 
