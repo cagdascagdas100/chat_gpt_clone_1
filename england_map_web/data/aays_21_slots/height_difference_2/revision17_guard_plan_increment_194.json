@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "plan_id": "revision17_guard_plan_increment_194",
+  "detected_at": "2026-07-29T21:19:00+03:00",
+  "continuation_key": "d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44",
+  "status": "OPEN_SAFE_SCOPE_BLOCKED",
+  "required_revision": "revision17",
+  "program_gaps": [
+    {
+      "id": "EA_AXIS_LABEL_FALLBACK_GAP",
+      "fixed": false,
+      "evidence": "012_sample_ea_dtm1m_polygons.py lines 106-115 silently replace missing axisLabels with E,N.",
+      "required": "Remove fallback; require two explicit axis labels and record DescribeCoverage hash/labels."
+    },
+    {
+      "id": "EA_INTERPOLATION_PIN_GAP",
+      "fixed": false,
+      "evidence": "012_sample_ea_dtm1m_polygons.py GetCoverage parameters contain no interpolation parameter or observed interpolation metadata.",
+      "required": "Negotiate/pin supported interpolation or fail closed and record the selected method."
+    },
+    {
+      "id": "TERRAIN50_BINARY_HEADER_AND_SIDECAR_HASH_GAP",
+      "fixed": false,
+      "evidence": "013/016 validate CRS and extraction safety but not the complete documented grid/header/sidecar provenance contract.",
+      "required": "Validate 200x200, 50m, 10km tile alignment, companion files and outer/nested/archive hashes."
+    }
+  ],
+  "coordinated_updates_required": [
+    "012_sample_ea_dtm1m_polygons.py: remove E/N axis fallback and add interpolation contract",
+    "013_crosscheck_os_terrain50.py: enforce documented header/transform/tile/sidecar contract",
+    "016_prepare_and_crosscheck_os_terrain50.py: persist outer/nested ZIP and companion-file hashes",
+    "031_verify_attempt_020_operator_recovery.py: pin and verify revised blob set",
+    "queue task, restart request, current-task, status and checkpoint: coordinated pin alignment"
+  ],
+  "automatic_patch_applied": false,
+  "why_not": "Current task does not enumerate exact_write_paths for the pinned core automation and control files. Partial changes would invalidate revision16 recovery verification.",
+  "network_observation": {
+    "os_api_bytes_observed": false,
+    "ea_wcs_getcapabilities_xml_endpoint_observed": true,
+    "ea_wcs_xml_bytes_hashed": false,
+    "container_dns_available": false,
+    "reason": "web endpoint returned application/xml; support container DNS resolution failed"
+  },
+  "new_task_created": false,
+  "new_runner_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
