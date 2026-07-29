@@ -1,105 +1,76 @@
 {
-  "schema_version": 36,
+  "schema_version": 37,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The retry5 missing-output sub-blocker remains resolved, parcel_30802 remains resolved by exact-query cache identity, and parcel_30783 is now resolved by an explicit geography provenance policy: historical LSOA E01001545 is retained separately while the exact current ONS LSOA21 match E01001548 is used for the IoD25 Census 2021 LSOA join. Full side review coverage remains 96/96 and side-effective accuracy is now 95/96 (98.96%). Parcel_30768 remains fail-closed because its unique exact Police query ended in HTTP 429 and no HTTP 200 response SHA256 is available. The canonical 300-row task is still pickup_requested and unclaimed; ownership owner, heartbeat and lease remain empty and the canonical stable-runner heartbeat is stale. The private large minified canonical point-layer body is not returned by the connector. IoD25 LSOA files 1-9 must use updated v2 at claim time. A second queue refresh, duplicate task or second runner remains forbidden.",
-  "diagnosis": "STALE_SLOT_STATUS_CANONICAL_RUNNER_UNCLAIMED_FULL_96_SIDE_COVERAGE_ONE_FAIL_CLOSED_QUALITY_ROW_CONNECTOR_POINT_BODY_UNAVAILABLE",
+  "reason": "The priority 300-row output is now published by the existing single coordinator and remotely readable on the canonical branch. The shard JSON and website JSON share blob SHA dd8169ea2eb745da21409ae0bb3d11ec51521758; the line-by-line HTML exists with blob SHA eb5ddcf8cc60356e9ec8ebe65211ecb002f94876. It contains 300 candidates, 300 Police response hashes, 296 rows at or above 95 accuracy, 10/10 promoted official sources and zero business rows. Parcel_30768 is resolved in the canonical 300-row output with HTTP evidence, 424 Police records and SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa. The old missing-output and unclaimed-production blockers are no longer the active issue. Remaining work is public served HTTP/JSON hash acceptance, real browser runtime/console acceptance, reconciliation of the PARTIAL IoD25 exact-LSOA join gate, and status synchronization from PUBLISHING/final_ready false. A duplicate runner, task or second recovery refresh remains forbidden.",
+  "diagnosis": "PRIORITY_300_OUTPUT_PUBLISHED_REMOTE_REPOSITORY_ACCEPTED_PUBLIC_RUNTIME_AND_FINAL_STATUS_PENDING",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-29T02:47:00+03:00",
+  "updated_at": "2026-07-29T03:30:00+03:00",
   "resolved_subissues": [
-    {
-      "code": "RETRY5_EXPECTED_OUTPUTS_MISSING",
-      "state": "RESOLVED_BY_FRESH_REMOTE_READ",
-      "resolved_at": "2026-07-28T17:48:04.9996118Z",
-      "proof": "All five expected output paths exist; 12/12 exact target IDs, candidate join, HTTP hashes, DOM tokens, browser smoke and console gates passed."
-    },
-    {
-      "code": "WAVE8_PARCEL_30802_POLICE_HTTP_429",
-      "state": "RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE_IDENTITY",
-      "resolved_at": "2026-07-28T22:00:00Z",
-      "proof": "parcel_30801 and parcel_30802 share exact longitude, latitude, Police month, ONS LSOA and IoD25 join. The same-snapshot parcel_30801 query returned HTTP 200, 519 records and SHA256 d62c838a6219d23346a8e98d915c19e5bbf6184e182f1e4ed3f7d7b6ba2a0619."
-    },
-    {
-      "code": "PARCEL_30783_HISTORICAL_LSOA_MISMATCH",
-      "state": "RESOLVED_BY_EXPLICIT_CURRENT_LSOA21_PROVENANCE_POLICY",
-      "resolved_at": "2026-07-29T02:40:00+03:00",
-      "proof": "The exact point has a single current ONS LSOA21 match E01001548; IoD25 officially uses Census 2021 LSOAs; Police HTTP 200, 418 records and SHA256 are present. Historical E01001545 remains preserved as provenance and is not silently overwritten. Side-effective accuracy is 98."
-    }
+    {"code":"RETRY5_EXPECTED_OUTPUTS_MISSING","state":"RESOLVED_BY_FRESH_REMOTE_READ","proof":"All five retry5 outputs exist and their gates passed."},
+    {"code":"WAVE8_PARCEL_30802_POLICE_HTTP_429","state":"RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE_IDENTITY","proof":"Exact coordinate/month cache source has HTTP 200, 519 records and SHA256."},
+    {"code":"PARCEL_30783_HISTORICAL_LSOA_MISMATCH","state":"RESOLVED_BY_EXPLICIT_CURRENT_LSOA21_PROVENANCE_POLICY","proof":"Historical code is retained separately and exact current ONS LSOA21 is used for the IoD25 join."},
+    {"code":"PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429","state":"RESOLVED_IN_CANONICAL_300ROW_OUTPUT","proof":"The published output contains 424 records, candidate accuracy 100 and Police SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa."},
+    {"code":"PRIORITY_300ROW_OUTPUT_ABSENT_UNCLAIMED","state":"RESOLVED_BY_SINGLE_COORDINATOR_PUBLICATION","proof":"Queue status is result_ready_for_remote_acceptance and all three exact output paths exist on the canonical branch."}
   ],
-  "verified_preclaim_optimisations": [
-    {
-      "code": "EXACT_POLICE_AND_ONS_QUERY_CACHE_AUDIT",
-      "state": "VERIFIED",
-      "proof": "58 PASS rows contain 57 exact Police lat/lng/month keys and 57 exact ONS lat/lng keys; only parcel_30801/parcel_30802 is duplicated. Two external calls are avoidable without approximation."
-    },
-    {
-      "code": "LSOA_KEYED_IOD25_JOIN_CACHE_AUDIT",
-      "state": "VERIFIED",
-      "proof": "58 PASS rows map to 9 unique LSOA21 codes, permitting 49 repeated local IoD25 joins to reuse the same v2 LSOA record."
-    },
-    {
-      "code": "FULL_CANONICAL_96_ROW_SIDE_REVIEW_COVERAGE",
-      "state": "VERIFIED",
-      "proof": "Wave18 reconciled cumulative side coverage to 96/96 canonical candidates."
-    },
-    {
-      "code": "CURRENT_LSOA21_PROVENANCE_POLICY",
-      "state": "VERIFIED",
-      "proof": "Historical geography is retained separately; exact current ONS LSOA21 is the operative IoD25 join geography because IoD25 uses Census 2021 LSOAs. Canonical writes remain deferred until claim."
-    }
-  ],
-  "open_quality_subissues": [
-    {
-      "code": "PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429",
-      "state": "OPEN_FAIL_CLOSED",
-      "proof": "Exact key 51.6767792|-0.0464555|2026-05 is unique in the 96-row set; no canonical duplicate cache source exists. No response was inferred.",
-      "resolution": "After the existing runner claims the task, refetch the exact Police key with rate backpressure and require HTTP 200 plus SHA256 before raising confidence."
-    }
-  ],
+  "verified_output": {
+    "queue_status": "result_ready_for_remote_acceptance",
+    "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
+    "candidate_rows": 300,
+    "candidate_accuracy_ge_95_rows": 296,
+    "police_response_sha256_rows": 300,
+    "sources_reviewed": 10,
+    "sources_promoted": 10,
+    "business_rows_written": 0,
+    "completed_operations": 17,
+    "total_operations": 20,
+    "overall_progress_percent": 66.3,
+    "progress_delta_percent": 11.7
+  },
+  "remote_acceptance": {
+    "repository_content_checks_passed": 13,
+    "public_runtime_checks_pending": 2,
+    "acceptance_json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance_latest.json",
+    "acceptance_html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance.html",
+    "receipt": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_remote_acceptance_receipt_20260729.json"
+  },
   "active_blockers": [
-    "STATUS_LATEST_STALE_AND_REFERENCES_RESOLVED_MISSING_OUTPUTS",
-    "OWNERSHIP_OWNER_HEARTBEAT_AND_LEASE_EMPTY",
-    "PRIORITY_300ROW_TASK_PICKUP_REQUESTED_UNCLAIMED",
-    "CANONICAL_STABLE_RUNNER_HEARTBEAT_STALE",
-    "BUSINESS_SLOT_CONNECTOR_CANNOT_READ_PRIVATE_LARGE_MINIFIED_POINT_LAYER_BODY",
-    "PARCEL_30768_EXACT_POLICE_REFETCH_PENDING_CANONICAL_RUNNER"
+    "PUBLIC_SERVED_HTTP_JSON_HASH_NOT_VERIFIED",
+    "PUBLIC_BROWSER_RUNTIME_CONSOLE_NOT_VERIFIED",
+    "IOD25_EXACT_LSOA_JOIN_GATE_REMAINS_PARTIAL",
+    "STATUS_LATEST_AND_CURRENT_TASK_REMAIN_PUBLISHING_FINAL_READY_FALSE",
+    "OWNERSHIP_RECORD_REMAINS_STALE_WITH_EMPTY_OWNER_HEARTBEAT_AND_LEASE"
   ],
-  "claim_time_required_gates": [
-    "VERIFY_SAME_TASK_AND_CONTINUATION_KEY",
-    "VERIFY_NO_COMPETING_LIVE_OWNER",
+  "final_acceptance_required_gates": [
+    "VERIFY_PUBLIC_SERVED_JSON_HTTP_200_AND_BODY_HASH",
+    "VERIFY_PUBLIC_SERVED_HTML_HTTP_200",
+    "RUN_REAL_BROWSER_DOM_AND_CONSOLE_ACCEPTANCE",
+    "RECONCILE_IOD25_EXACT_LSOA_JOIN_PARTIAL_WITH_EXPLICIT_PROVENANCE_POLICY",
     "VERIFY_IOD25_LSOA_FILES_1_TO_9_USE_UPDATED_V2_PUBLICATION",
-    "RETAIN_POLICE_UK_RATE_BACKPRESSURE_BELOW_OFFICIAL_LIMIT",
-    "CACHE_POLICE_ONLY_BY_EXACT_LAT_LNG_AND_MONTH_KEY",
-    "CACHE_ONS_ONLY_BY_EXACT_LAT_LNG_KEY",
-    "CACHE_IOD25_JOIN_BY_EXACT_LSOA21_CODE",
-    "FORBID_NEARBY_COORDINATE_CACHE_REUSE",
-    "PRESERVE_HISTORICAL_LSOA_PROVENANCE_SEPARATELY",
-    "USE_EXACT_CURRENT_ONS_LSOA21_FOR_IOD25_JOIN",
-    "REFETCH_PARCEL_30768_EXACT_POLICE_KEY_AND_REQUIRE_SHA256",
-    "DO_NOT_ACCEPT_300ROW_OUTPUT_WITHOUT_EXACT_COORDINATE_ONS_POLICE_HASH_AND_BROWSER_GATES"
+    "SYNC_QUEUE_CURRENT_TASK_STATUS_AND_FINAL_READY_WITHOUT_RERUNNING_THE_300ROW_GENERATOR"
   ],
-  "solution": "Open the AAYS control panel. Confirm that only the existing single canonical shared runner is enabled; stop or disable any duplicate/adaptive slot executor. Restart the existing canonical runner once if its heartbeat is stale, then verify that the same 300-row queue item is claimed under continuation_key bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47. Do not create another task, runner or queue refresh. Before accepting the 300-row output, verify IoD25 v2, use exact caches and Police.uk rate backpressure, preserve historical geography provenance, use exact current ONS LSOA21 for IoD25 joins, and refetch parcel_30768's exact Police key.",
+  "solution": "Do not restart or duplicate the runner because the exact 300-row outputs already exist. Use the existing published JSON and HTML. Run public served HTTP/JSON hash verification and a real browser DOM/console check, reconcile the PARTIAL IoD25 exact-LSOA join gate using the explicit historical/current geography provenance policy, then synchronize current_task/status/final_ready. Do not create another task, runner or recovery refresh.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
-    "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_96row_consolidation_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_rate_limit_recovery_wave16_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_exact_query_cache_audit_wave17_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_canonical_coverage_completion_wave18_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_low_confidence_remediation_wave19_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_geography_provenance_policy_wave20_latest.json",
+    "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_evidence_rollup_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/continuation_geography_provenance_policy_wave20_receipt_20260729.json",
-    "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_candidate_gate_latest.json",
-    "docs/chatgpt_status/aays1/shards/security_public_safety_2/runner_outputs/retry5_gate_latest.json"
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_remote_acceptance_receipt_20260729.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
   ],
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
   "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
   "recovery_attempts_used": 1,
   "second_queue_refresh_forbidden": true,
   "automatic_fix_available_from_business_slot": false,
-  "expected_runtime_minutes_after_healthy_claim": 15,
+  "production_generation_wait_minutes": 0,
+  "remaining_acceptance_runtime_minutes_estimate": null,
   "fake_data": false,
   "final_ready": false
 }
