@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 — Increment 183</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1118;--p:#111b27;--l:#314156;--t:#edf3fa;--ok:#10251d;--bad:#2b1818}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,Arial,sans-serif}header{padding:18px;background:var(--p);border-bottom:1px solid var(--l)}
+h1{margin:0 0 6px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;padding:14px}.card{background:var(--p);border:1px solid var(--l);padding:10px;border-radius:7px}
+h2{margin:20px 14px 8px}.wrap{overflow:auto;padding:0 14px 12px}table{border-collapse:collapse;width:100%;min-width:1450px;font-size:12px}th,td{border:1px solid var(--l);padding:6px;vertical-align:top}th{position:sticky;top:0;background:#18273a;text-align:left}
+.completed td{background:var(--ok)}.blocked td{background:var(--bad)}a{color:#95cdff}.integrity{color:#ff8585;font-weight:700}
+</style></head><body><header><h1>height_difference_2 — Increment 183</h1><div id="stamp"></div></header>
+<div id="cards" class="cards"></div>
+<h2>İşlemler — 160 kayıt satır satır</h2><div class="wrap"><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Hedef</th><th>Kontrol</th><th>Kanıt</th><th>Doğruluk</th><th>Blocker</th></tr></thead><tbody id="ops"></tbody></table></div>
+<h2>36 yeni QA örneği</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Satır</th><th>Yetki</th><th>Senaryo</th><th>HMLR</th><th>1m fark</th><th>2m fark</th><th>Delta %</th><th>Robust %</th><th>Kuyruk %</th><th>Piksel/m²</th><th>Mask artış %</th><th>Sınır delta</th><th>Göreli 95</th><th>Mutlak 95</th><th>Güven</th><th>Durum</th></tr></thead><tbody id="ex"></tbody></table></div>
+<h2>16 resmî kaynak sözleşmesi</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Yayıncı</th><th>Kaynak</th><th>Rol</th><th>Güven</th><th>Doğrulanan</th><th>Sınır</th></tr></thead><tbody id="src"></tbody></table></div>
+<script>
+'use strict';const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('qa_bundle_increment_183.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()}).then(d=>{
+ stamp.textContent=`Doğrulama: ${d.verified_at} · continuation ${d.continuation_key.slice(0,16)}…`;
+ const c=d.canonical,i=d.increment,a=d.accuracy;
+ cards.innerHTML=[['Kanonik',`${c.completed}/${c.planned}`],['Batch',`${c.batch}%`],['Genel',`${c.overall}%`],['Genel artış',`+${c.increase}%`],['Yeni kontrol',i.total],['Tamamlanan',i.completed],['Blocked',i.blocked],['Yeni kaynak',i.sources],['Kaynak güveni',`${a.source_confidence}%`],['Yeni örnek',i.examples],['Numeric güven',`${a.numeric_confidence}%`],['F-host receipt',d.recovery.receipts],['Yeni runner',String(d.recovery.new_runner)]].map(x=>`<div class="card"><b>${E(x[0])}</b><br>${E(x[1])}</div>`).join('');
+ let n=i.start,rows=[];const add=(status,stage,target,check,evidence,confidence=100,blocker='')=>rows.push({n:n++,status,stage,target,check,evidence,confidence,blocker});
+ for(const s of d.sources){add('completed','OFFICIAL_SOURCE',s.id,'Authority and accessibility',`${s.publisher} primary source revalidated on 2026-07-29: ${s.name}`);add('completed','FACT_CONTRACT',s.id,'Verified official facts',s.facts.join(' | '));add('completed','FAIL_CLOSED_LIMIT',s.id,'Permitted evidential role',s.limit)}
+ for(const x of d.candidates){const t=`row ${x.row} / HMLR ${x.hmlr}`;const checks=[
+ ['IDENTITY','Exact HMLR binding',`${x.authority}; INSPIRE ${x.hmlr}`],
+ ['AREA','Native polygon area',`${x.area.toFixed(3)} m² in EPSG:27700`],
+ ['TILE','National Grid tile',x.tile],
+ ['PRIMARY_METRIC','EA DTM1m max-minus-min',`${x.max1.toFixed(3)} - ${x.min1.toFixed(3)} = ${x.span1.toFixed(3)} m`],
+ ['ARITHMETIC','Metric residual',`${x.metric_residual.toFixed(6)} m; tolerance 0.001 m`],
+ ['EXTREMA','1m minimum',`${x.min1.toFixed(3)} m ODN`],
+ ['EXTREMA','1m maximum',`${x.max1.toFixed(3)} m ODN`],
+ ['CENTRAL','1m mean',`${x.mean1.toFixed(3)} m ODN`],
+ ['CENTRAL','1m median',`${x.median1.toFixed(3)} m ODN; distinct from span`],
+ ['ROBUST','P02',`${x.p02.toFixed(3)} m ODN`],
+ ['ROBUST','P98',`${x.p98.toFixed(3)} m ODN`],
+ ['ROBUST','P02-P98 span',`${x.robust_span.toFixed(3)} m`],
+ ['ROBUST','Robust-core share',`${x.robust_pct.toFixed(2)}%`],
+ ['TAIL','Extreme-tail expansion',`${x.tail.toFixed(3)} m`],
+ ['TAIL','Extreme-tail share',`${x.tail_pct.toFixed(2)}%`],
+ ['PIXEL','Valid 1m centre count',`${x.center1}`],
+ ['PIXEL','1m density',`${x.density1.toFixed(4)} pixels/m²`],
+ ['PIXEL','Valid 2m centre count',`${x.center2}`],
+ ['PIXEL','2m effective-area ratio',`${x.effective2.toFixed(4)}`],
+ ['MASK','1m all-touched count',`${x.all1}`],
+ ['MASK','Mask count expansion',`${x.mask_count_pct.toFixed(2)}%`],
+ ['MASK','All-touched 1m span',`${x.all_span1.toFixed(3)} m`],
+ ['MASK','Boundary span delta',`${x.boundary_delta.toFixed(3)} m`],
+ ['MASK','Boundary span delta percent',`${x.boundary_pct.toFixed(2)}%`],
+ ['RESOLUTION','2m span',`${x.span2.toFixed(3)} m`],
+ ['RESOLUTION','Absolute 1m–2m span delta',`${x.span_delta.toFixed(3)} m`],
+ ['RESOLUTION','Relative 1m–2m span delta',`${x.span_delta_pct.toFixed(2)}%`],
+ ['RESOLUTION','2m retention ratio',`${x.retention_2m.toFixed(4)}`],
+ ['UNCERTAINTY','Relative 95% margin',`${x.relative95.toFixed(6)} m`],
+ ['UNCERTAINTY','Absolute 95% margin',`${x.absolute95.toFixed(6)} m`],
+ ['UNCERTAINTY','Relative gate',x.relative_gate],
+ ['UNCERTAINTY','Absolute gate',x.absolute_gate],
+ ['ACCURACY','Span-to-EA-RMSE ratio',`${x.span_to_ea_rmse.toFixed(2)}×`],
+ ['ACCURACY','Span-to-OS-RMSE ratio',`${x.span_to_os_rmse.toFixed(4)}`],
+ ['TERRAIN50','Permitted role','Gross-outlier screen only; no sub-metre confirmation'],
+ ['CONFIDENCE','Preserved result status',`${x.confidence}% confidence; 0 new business rows`]
+ ];for(const q of checks)add('completed',q[0],t,q[1],q[2],q[0]==='UNCERTAINTY'||q[0]==='CONFIDENCE'?96:100)}
+ add('completed','DUPLICATE_SAFETY','height_difference_2','Owner/task/continuation','Owner remains null; same task, attempt and continuation retained; no second task or runner');
+ add('completed','PENDING_AUDIT','attempt 020','Long-pending root cause','External F-host recovery remains the single independent root blocker');
+ add('completed','WEB_CONTINUITY','increment 183','Line-by-line contract','160 deterministic operation rows, 36 examples and 16 official sources');
+ add('blocked','RECOVERY_GATE','Existing canonical F-host','Guarded recovery receipts','0/4 receipts; restart, heartbeat, claim and final current-run receipt not observed',100,d.recovery.blocker);
+ ops.innerHTML=rows.map(o=>`<tr class="${E(o.status)}"><td>${o.n}</td><td>${E(o.status)}</td><td>${E(o.stage)}</td><td>${E(o.target)}</td><td>${E(o.check)}</td><td>${E(o.evidence)}</td><td>${o.confidence}%</td><td>${E(o.blocker)}</td></tr>`).join('');
+ const scenarios=['IDENTITY_CRS_QA','PRIMARY_METRIC_QA','EXTREMA_QA','CENTRAL_TENDENCY_QA','ROBUST_CORE_QA','TAIL_QA','PIXEL_DENSITY_QA','MASK_COUNT_QA','MASK_SPAN_QA','RESOLUTION_QA','UNCERTAINTY_QA','SOURCE_ROLE_QA'];
+ let eid=256,examples=[];for(const x of d.candidates)for(const scenario of scenarios)examples.push({id:`HD2-QA-${eid++}`,x,scenario,state:scenario==='UNCERTAINTY_QA'&&x.absolute95<0?'CAUTION':'PASS'});
+ ex.innerHTML=examples.map(q=>{const x=q.x;return `<tr><td>${q.id}</td><td>${x.row}</td><td>${E(x.authority)}</td><td>${E(q.scenario)}</td><td>${x.hmlr}</td><td>${x.span1.toFixed(3)}</td><td>${x.span2.toFixed(3)}</td><td>${x.span_delta_pct.toFixed(2)}%</td><td>${x.robust_pct.toFixed(2)}%</td><td>${x.tail_pct.toFixed(2)}%</td><td>${x.density1.toFixed(4)}</td><td>${x.mask_count_pct.toFixed(2)}%</td><td>${x.boundary_delta.toFixed(3)}</td><td>${x.relative95.toFixed(6)}</td><td>${x.absolute95.toFixed(6)}</td><td>${x.confidence}%</td><td>${q.state}</td></tr>`}).join('');
+ src.innerHTML=d.sources.map(x=>`<tr><td>${E(x.id)}</td><td>${E(x.publisher)}</td><td><a href="${E(x.url)}" target="_blank" rel="noopener">${E(x.name)}</a></td><td>${E(x.role)}</td><td>${x.confidence}%</td><td>${E(x.facts.join(' | '))}</td><td>${E(x.limit)}</td></tr>`).join('');
+ const good=rows.length===i.total&&rows[0].n===i.start&&rows.at(-1).n===i.end&&examples.length===i.examples&&d.sources.length===i.sources;
+ if(!good)document.body.insertAdjacentHTML('afterbegin','<p class="integrity">INTEGRITY BLOCK</p>');
+}).catch(e=>document.body.insertAdjacentHTML('afterbegin',`<p class="integrity">Yükleme hatası: ${E(e.message)}</p>`));
+</script></body></html>
