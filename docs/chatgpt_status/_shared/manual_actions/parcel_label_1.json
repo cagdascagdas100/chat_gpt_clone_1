@@ -3,10 +3,10 @@
   "slot_id": "parcel_label_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 29 Temmuz 2026 14:28 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2, runner_execution_claimed=false ve aynı idempotency/continuation zinciri korunuyor. Stable runner kaydı runner_active/pid_alive alanlarını taşısa da son heartbeat 16 Temmuz 2026 13:45:53Z'de kaldığı için host liveness doğrulanmış sayılamaz. Python audit scripti, PowerShell carrier, güvenli canonical starter, satır-satır web görünümü ve gerekli kaynak Git blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. Kaynak blob 198 parcel_id satırı içeriyor. Beş örnek aday resmî internet kaynaklarından yeniden doğrulandı; bu doğrulama yalnız kullanım sınıfı/adres kapsamındadır ve exact geometry veya canonical parcel binding üretmez. İki exact output hem canonical branch hem main üzerinde yok. Aynı continuation key'e bağlı canonical_shared_runner_restart_request 28 Temmuz 2026 20:38 +03'te yayımlandı; yeni runner veya ikinci görev oluşturulmadı. İstek henüz taze heartbeat, queue selection, claim veya exact output üretmedi. Kök neden external F-host tek-runner scan/daemon döngüsünün çalışmamasıdır.",
+  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 29 Temmuz 2026 14:53 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2, runner_execution_claimed=false ve aynı idempotency/continuation zinciri korunuyor. Stable runner kaydı runner_active/pid_alive alanlarını taşısa da son heartbeat 16 Temmuz 2026 13:45:53Z'de kaldığı için host liveness doğrulanmış sayılamaz. Python audit scripti, PowerShell carrier, güvenli canonical starter, satır-satır web görünümü ve gerekli kaynak Git blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. Kaynak blob 198 parcel_id satırı içeriyor. Toplam on üç örnek aday resmî internet kaynaklarından yeniden doğrulandı; sekiz yeni kontrolden yedisinde kullanım sınıfı güçlendi, Red House satırında heritage-house ile üretim Detached Home taksonomisi arasındaki çakışma teyit edildi. Bu doğrulamalar kullanım sınıfı/adres/tesis kimliği kapsamındadır ve exact geometry veya canonical parcel binding üretmez. İki exact output hem canonical branch hem main üzerinde yok. Aynı continuation key'e bağlı canonical_shared_runner_restart_request 28 Temmuz 2026 20:38 +03'te yayımlandı; yeni runner veya ikinci görev oluşturulmadı. İstek henüz taze heartbeat, queue selection, claim veya exact output üretmedi. Kök neden external F-host tek-runner scan/daemon döngüsünün çalışmamasıdır.",
   "detected_at": "2026-07-23T14:56:00Z",
-  "updated_at": "2026-07-29T11:28:00Z",
-  "last_verified_at": "2026-07-29T14:28:00+03:00",
+  "updated_at": "2026-07-29T11:53:00Z",
+  "last_verified_at": "2026-07-29T14:53:00+03:00",
   "solution": "Yayımlanan canonical restart request'in external F-host tarafından yalnız mevcut START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd starter'ı ile acknowledge edilmesi gerekir. Otomatik acknowledge oluşmazsa F-host depo kökünde yalnız START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd dosyasını çalıştırın. Güvenli starter stale PID/lock doğrulamasını yaptıktan sonra mevcut tek runner'ı başlatmalıdır. Panelde fresh queue selection oluştuğunu ve mevcut parcel-label-1-historical-audit-20260721-003-runner-compatible attempt'inin pickup ile claim aldığını doğrulayın. RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd dosyasını kullanmayın. İki exact output main branch'e yayımlanana kadar tek runner'ı açık tutun.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260728_2038_parcel_label_1.json",
@@ -51,9 +51,9 @@
   "line_by_line_web_view_path": "england_map_web/parcel_label_1_historical_audit.html",
   "line_by_line_web_view_source_path": "england_map_web/data/distance_property_types/parcel_label_1_historical_198_quarantine.json",
   "line_by_line_web_view_source_blob_sha": "bda76aee331acc0b9f33cccdf968c4314fe433a9",
-  "official_web_spot_check_scope": "classification_and_published_address_only_no_exact_geometry_or_canonical_binding",
-  "official_web_spot_check_count": 5,
-  "official_web_spot_check_accuracy_average_percent": 99.0,
+  "official_web_spot_check_scope": "classification_address_and_facility_identity_only_no_exact_geometry_or_canonical_binding",
+  "official_web_spot_check_count": 13,
+  "official_web_spot_check_accuracy_average_percent": 99.15,
   "official_web_spot_checks": [
     {
       "parcel_id": "SOURCE_WESTFIELD_LONDON_RETAIL_001",
@@ -100,9 +100,85 @@
       "evidence": "Official GLP page identifies Magna Park Lutterworth as a dedicated logistics and distribution park with warehouse buildings.",
       "confidence_percent": 99.0,
       "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_THE_GHERKIN_011",
+      "parcel_ref": "The Gherkin / 30 St Mary Axe",
+      "classification": "Office Building",
+      "official_url": "https://thegherkin.com/",
+      "evidence": "Official building site describes The Gherkin as a workplace and a City of London address for businesses.",
+      "confidence_percent": 99.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_ONE_PARK_DRIVE_012",
+      "parcel_ref": "One Park Drive",
+      "classification": "Apartment Building",
+      "official_url": "https://residential.canarywharf.com/one-park-drive/",
+      "evidence": "Official Canary Wharf residential material lists One Park Drive among its apartment buildings and penthouse offering.",
+      "confidence_percent": 98.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_TELEVISION_CENTRE_016",
+      "parcel_ref": "Television Centre, White City",
+      "classification": "Mixed Building",
+      "official_url": "https://televisioncentre.com/",
+      "evidence": "Official development site lists homes, offices, studios, retail, food, entertainment and wellness uses.",
+      "confidence_percent": 99.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_WARDIAN_LONDON_017",
+      "parcel_ref": "Wardian London",
+      "classification": "Apartment Building",
+      "official_url": "https://www.ballymoregroup.com/project/wardian",
+      "evidence": "Official developer page states Wardian comprises two residential towers with 767 homes, apartments and penthouses.",
+      "confidence_percent": 99.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_EAST_MIDLANDS_GATEWAY_018",
+      "parcel_ref": "SEGRO Logistics Park East Midlands Gateway",
+      "classification": "Industrial/Logistics Estate; specific Industrial Unit pending",
+      "official_url": "https://slp-emg.com/",
+      "evidence": "Official scheme site identifies a 700-acre logistics park with millions of square feet of logistics accommodation and multiple warehouse premises; the estate must not be bound as one unit.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_SELFRIDGES_OXFORD_ST_019",
+      "parcel_ref": "Selfridges London",
+      "classification": "Retail Property",
+      "official_url": "https://www.selfridges.com/GB/en/stores/london/",
+      "evidence": "Official Selfridges store page identifies Selfridges London as its London shop and retail destination.",
+      "confidence_percent": 99.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_LEADENHALL_BUILDING_020",
+      "parcel_ref": "The Leadenhall Building",
+      "classification": "Office Building",
+      "official_url": "https://theleadenhallbuilding.com/",
+      "evidence": "Official building site provides workplace services and the registered address at 122 Leadenhall Street.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_RED_HOUSE_015",
+      "parcel_ref": "Red House, Bexleyheath",
+      "classification": "Heritage House / Detached Home taxonomy conflict",
+      "official_url": "https://www.nationaltrust.org.uk/visit/london/red-house",
+      "evidence": "National Trust identifies Red House as William and Jane Morris's historic former home and a visitor heritage property; production Detached Home classification requires taxonomy review.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false,
+      "classification_confirmed": false,
+      "taxonomy_review_required": true
     }
   ],
-  "freshly_revalidated_official_sources": 5,
+  "freshly_revalidated_official_sources": 13,
+  "new_official_classification_confirmations_this_pass": 7,
+  "new_taxonomy_conflicts_confirmed_this_pass": 1,
   "new_business_rows_written": 0,
   "runner_output_exists": false,
   "website_output_exists": false,
@@ -142,7 +218,11 @@
     "fresh_owner_heartbeat_and_output_readback_20260729_1428_tr",
     "required_source_alias_exact_blob_sha_readback_20260729_1428_tr",
     "line_by_line_web_view_main_and_canonical_readback_20260729_1428_tr",
-    "official_primary_source_spot_check_5_candidates_20260729_1428_tr"
+    "official_primary_source_spot_check_5_candidates_20260729_1428_tr",
+    "fresh_runner_queue_and_exact_output_readback_20260729_1453_tr",
+    "official_primary_source_spot_check_8_additional_candidates_20260729_1453_tr",
+    "official_source_upgrade_wardian_from_secondary_to_ballymore_20260729_1453_tr",
+    "taxonomy_conflict_revalidation_red_house_20260729_1453_tr"
   ],
   "automated_recovery_result": "CANONICAL_RESTART_REQUEST_PUBLISHED_EXTERNAL_HOST_ACK_PENDING",
   "new_runner": false,
