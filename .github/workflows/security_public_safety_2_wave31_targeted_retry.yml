@@ -1,0 +1,347 @@
+name: security-public-safety-2-wave31-targeted-retry
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave31_targeted_retry.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4
+  cancel-in-progress: true
+
+jobs:
+  targeted-retry-accept-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Verify same task and continuation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          queue = json.loads(Path('docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json').read_text())
+          expected = '0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4'
+          if queue.get('continuation_key') != expected:
+              raise SystemExit('CONTINUATION_KEY_MISMATCH')
+          if queue.get('task_id') != 'security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729':
+              raise SystemExit('TASK_ID_MISMATCH')
+          if queue.get('final_ready'):
+              raise SystemExit('TASK_ALREADY_FINAL')
+          print('TARGETED_RECOVERY_CLAIM_OK')
+          PY
+
+      - name: Regenerate 520-row official-source artifact
+        shell: bash
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.py
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Retry missing Police evidence and accept browser artifact
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import concurrent.futures
+          import hashlib
+          import html
+          import json
+          import os
+          import threading
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from collections import Counter
+          from datetime import datetime, timezone
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+
+          ROOT = Path.cwd()
+          SLOT = ROOT / 'docs/chatgpt_status/_shared/slots_21/security_public_safety_2'
+          QUEUE = ROOT / 'docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json'
+          SHARD = ROOT / 'docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_520row_evidence_expansion_latest.json'
+          WEB_JSON = ROOT / 'england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion_latest.json'
+          WEB_HTML = ROOT / 'england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion.html'
+          RECEIPT = SLOT / 'priority_520row_browser_acceptance_wave31_receipt_20260729.json'
+          DIAG = SLOT / 'priority_520row_targeted_retry_wave31_diagnostic_20260729.json'
+          USER_AGENT = 'AAYS-TerraYield-security-public-safety-targeted-retry/1.0'
+          now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+          payload = json.loads(SHARD.read_text(encoding='utf-8-sig'))
+          rows = payload.get('rows') or []
+          expected_ids = [f'parcel_{i}' for i in range(30762, 31282)]
+          if [str(r.get('parcel_id') or '') for r in rows] != expected_ids:
+              raise SystemExit('MERGED_520_SEQUENCE_FAILED')
+          month = str(payload.get('police_month') or '')
+          if not month:
+              raise SystemExit('POLICE_MONTH_MISSING')
+
+          before_accuracy = sum(int(r.get('candidate_accuracy_percent') or 0) >= 95 for r in rows)
+          before_police = sum(bool((r.get('police_query') or {}).get('sha256')) for r in rows)
+          retry_indexes = [i for i, row in enumerate(rows) if not (row.get('police_query') or {}).get('sha256')]
+
+          def retry_police(index: int):
+              row = rows[index]
+              lat = float(row['latitude'])
+              lng = float(row['longitude'])
+              params = urllib.parse.urlencode({'lat': f'{lat:.7f}', 'lng': f'{lng:.7f}', 'date': month})
+              url = f'https://data.police.uk/api/crimes-street/all-crime?{params}'
+              last_error = None
+              for attempt in range(1, 7):
+                  try:
+                      req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT, 'Accept': 'application/json'})
+                      with urllib.request.urlopen(req, timeout=60) as response:
+                          body = response.read()
+                          parsed = json.loads(body.decode('utf-8-sig'))
+                          if not isinstance(parsed, list):
+                              raise ValueError('POLICE_RESPONSE_NOT_LIST')
+                          categories = Counter(str(item.get('category') or 'unknown') for item in parsed)
+                          result = {
+                              'reachable': True,
+                              'http_status': int(response.status),
+                              'final_url': response.geturl(),
+                              'content_type': response.headers.get('Content-Type', ''),
+                              'bytes': len(body),
+                              'sha256': hashlib.sha256(body).hexdigest(),
+                              'retrieved_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+                              'attempts': attempt,
+                              'crime_record_count': len(parsed),
+                              'category_counts': dict(sorted(categories.items())),
+                              'unique_persistent_ids': len({str(item.get('persistent_id')) for item in parsed if item.get('persistent_id')}),
+                              'targeted_retry': True,
+                          }
+                          return index, result, None
+                  except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+                      last_error = f'{type(exc).__name__}: {exc}'
+                      if attempt < 6:
+                          time.sleep(min(2 * attempt, 10))
+              return index, None, last_error
+
+          retry_errors = {}
+          recovered = []
+          with concurrent.futures.ThreadPoolExecutor(max_workers=10, thread_name_prefix='police-retry') as pool:
+              futures = [pool.submit(retry_police, index) for index in retry_indexes]
+              for future in concurrent.futures.as_completed(futures):
+                  index, result, error = future.result()
+                  if result:
+                      rows[index]['police_query'] = result
+                      recovered.append(rows[index]['parcel_id'])
+                  else:
+                      retry_errors[rows[index]['parcel_id']] = error
+
+          expected_set = set(expected_ids)
+          for row in rows:
+              integrity = 0
+              integrity += 25 if row.get('parcel_id') in expected_set else 0
+              integrity += 15 if row.get('longitude') is not None else 0
+              integrity += 20 if (row.get('ons_query') or {}).get('feature_count') == 1 else 0
+              integrity += 10 if row.get('historical_lsoa_code_matches_ons') else 0
+              integrity += 15 if (row.get('police_query') or {}).get('reachable') and (row.get('police_query') or {}).get('sha256') else 0
+              integrity += 15 if row.get('iod_2025') else 0
+              row['candidate_accuracy_percent'] = integrity
+
+          accuracy = sum(int(r.get('candidate_accuracy_percent') or 0) >= 95 for r in rows)
+          police = sum(bool((r.get('police_query') or {}).get('sha256')) for r in rows)
+          sources = payload.get('sources') or []
+          promoted = sum(isinstance(src, dict) and src.get('status') == 'PROMOTED_FOR_ROLE' for src in sources)
+          diagnostic = {
+              'schema_version': 1,
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729',
+              'continuation_key': '0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4',
+              'before_accuracy_ge_95_rows': before_accuracy,
+              'before_police_sha_rows': before_police,
+              'retry_target_rows': len(retry_indexes),
+              'recovered_police_rows': len(recovered),
+              'recovered_parcel_ids': sorted(recovered),
+              'retry_errors': retry_errors,
+              'after_accuracy_ge_95_rows': accuracy,
+              'after_police_sha_rows': police,
+              'sources_promoted': promoted,
+              'quality_pass': accuracy >= 494 and police >= 494 and promoted == 10,
+              'generated_at': now,
+          }
+          DIAG.write_text(json.dumps(diagnostic, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          if not diagnostic['quality_pass']:
+              raise SystemExit(f"TARGETED_RETRY_QUALITY_FAILED accuracy={accuracy} police={police} promoted={promoted}")
+
+          gates = payload.get('gates') or []
+          if len(gates) != 14:
+              raise SystemExit('GATE_COUNT_NOT_14')
+          for gate in gates:
+              name = str(gate.get('gate') or '')
+              if name == 'police_response_hashes_ge_95pct':
+                  gate.update({'state': 'PASS', 'evidence': police})
+              elif name.startswith('candidate_accuracy_ge_95_rows_ge_'):
+                  gate.update({'state': 'PASS', 'evidence': accuracy})
+          gates[12] = {'gate': 'served_http_json_hash_acceptance', 'state': 'PASS', 'evidence': 'canonical served hashes recorded'}
+          gates[13] = {'gate': 'dom_console_browser_acceptance', 'state': 'PASS', 'evidence': 'Chromium 520-row DOM and zero error gates passed'}
+
+          payload.update({
+              'state': 'COMPLETED_ACCEPTED_PENDING_REMOTE_READBACK',
+              'first_unverified_step': None,
+              'rows': rows,
+              'gates': gates,
+              'accuracy_ge_95_candidate_rows': accuracy,
+              'completed_operations': 14,
+              'total_operations': 14,
+              'overall_progress_percent': 100.0,
+              'progress_delta_percentage_points': 11.54,
+              'acceptance_state': 'PASS_CANONICAL_BROWSER_ACCEPTANCE_PENDING_REMOTE_READBACK',
+              'next_required_action': 'Remote commit readback and terminal publication synchronization.',
+              'targeted_retry': diagnostic,
+              'final_ready': False,
+              'generated_at': now,
+          })
+          encoded = json.dumps(payload, ensure_ascii=False, indent=2) + '\n'
+          SHARD.write_text(encoded, encoding='utf-8')
+          WEB_JSON.write_text(encoded, encoding='utf-8')
+
+          source_rows = ''.join(
+              f"<tr><td>{i}</td><td>{html.escape(str(src.get('name') or '-'))}</td><td>{html.escape(str(src.get('publisher') or '-'))}</td><td>{html.escape(str(src.get('accuracy_percent') or 0))}%</td><td>{html.escape(str(src.get('status') or '-'))}</td><td>{html.escape(str((src.get('probe') or {}).get('http_status') or '-'))}</td><td><code>{html.escape(str((src.get('probe') or {}).get('sha256') or '-'))}</code></td><td>{html.escape(str(src.get('limit') or '-'))}</td></tr>"
+              for i, src in enumerate(sources, 1) if isinstance(src, dict)
+          )
+          row_rows = ''.join(
+              f"<tr><td>{html.escape(str(row.get('parcel_id') or '-'))}</td><td>{html.escape(str(row.get('longitude', '-')))}</td><td>{html.escape(str(row.get('latitude', '-')))}</td><td>{html.escape(str(row.get('ons_lsoa_code') or '-'))}</td><td>{html.escape(str((row.get('iod_2025') or {}).get('crime_rank') or '-'))}</td><td>{html.escape(str((row.get('iod_2025') or {}).get('crime_decile') or '-'))}</td><td>{html.escape(str(row.get('relative_security_candidate_percent')))}</td><td>{html.escape(str(row.get('candidate_accuracy_percent') or 0))}%</td><td>{html.escape(str((row.get('police_query') or {}).get('crime_record_count')))}</td><td><code>{html.escape(str((row.get('police_query') or {}).get('sha256') or '-'))}</code></td><td>null</td></tr>"
+              for row in rows if isinstance(row, dict)
+          )
+          gate_rows = ''.join(
+              f"<tr><td>{i}</td><td>{html.escape(str(g.get('gate') or '-'))}</td><td class='{html.escape(str(g.get('state') or ''))}'>{html.escape(str(g.get('state') or '-'))}</td><td>{html.escape(str(g.get('evidence', '')))}</td></tr>"
+              for i, g in enumerate(gates, 1)
+          )
+          document = f"""<!doctype html><html lang='tr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>security_public_safety_2 — 520 satır</title><style>body{{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}}.cards{{display:flex;gap:10px;flex-wrap:wrap}}.card{{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:145px}}table{{border-collapse:collapse;width:100%;background:#fff;font-size:11px;margin:14px 0}}th,td{{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top}}th{{background:#eceff1;position:sticky;top:0}}code{{font-size:9px;word-break:break-all}}.PASS{{font-weight:700}}.notice{{padding:12px;background:#fff3cd;border:1px solid #ffe69c}}</style></head><body><h1>security_public_safety_2 — 520 satır aday kanıtı</h1><div class='notice'>Her satır resmî ONS, IoD 2025 ve Police.uk kanıt zinciriyle gösterilir. Değerler adaydır; business skoru yükseltilmemiştir.</div><div class='cards'><div class='card'>Genel ilerleme<br><b>100.0%</b></div><div class='card'>İşlem<br><b>14/14</b></div><div class='card'>Kaynak<br><b>{promoted}/{len(sources)}</b></div><div class='card'>Aday satır<br><b>520/520</b></div><div class='card'>≥95 satır kanıtı<br><b>{accuracy}</b></div><div class='card'>Police SHA256<br><b>{police}</b></div><div class='card'>Targeted retry<br><b>{len(recovered)}</b></div><div class='card'>Business satır<br><b>0</b></div></div><h2>Resmî kaynaklar</h2><table><thead><tr><th>#</th><th>Kaynak</th><th>Yayıncı</th><th>Doğruluk</th><th>Durum</th><th>HTTP</th><th>SHA256</th><th>Sınır</th></tr></thead><tbody>{source_rows}</tbody></table><h2>520 örnek satır</h2><table><thead><tr><th>Parsel</th><th>Lon</th><th>Lat</th><th>ONS LSOA</th><th>Crime Rank</th><th>Decile</th><th>Göreli aday %</th><th>Kanıt doğruluğu</th><th>Police kayıt</th><th>Police SHA256</th><th>Business skor</th></tr></thead><tbody>{row_rows}</tbody></table><h2>Kabul kapıları</h2><table><thead><tr><th>#</th><th>Kapı</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody>{gate_rows}</tbody></table><p><b>final_ready:</b> remote readback pending</p></body></html>"""
+          WEB_HTML.write_text(document, encoding='utf-8')
+
+          class Quiet(SimpleHTTPRequestHandler):
+              def log_message(self, format, *args):
+                  pass
+          old_cwd = Path.cwd()
+          os.chdir(WEB_HTML.parent)
+          server = ThreadingHTTPServer(('127.0.0.1', 0), Quiet)
+          port = server.server_address[1]
+          thread = threading.Thread(target=server.serve_forever, daemon=True)
+          thread.start()
+          console_errors, page_errors, request_failures = [], [], []
+          try:
+              json_url = f'http://127.0.0.1:{port}/{WEB_JSON.name}'
+              html_url = f'http://127.0.0.1:{port}/{WEB_HTML.name}'
+              json_body = urllib.request.urlopen(json_url, timeout=30).read()
+              html_body = urllib.request.urlopen(html_url, timeout=30).read()
+              with sync_playwright() as p:
+                  browser = p.chromium.launch(headless=True)
+                  page = browser.new_page()
+                  page.on('console', lambda msg: console_errors.append(msg.text) if msg.type == 'error' else None)
+                  page.on('pageerror', lambda exc: page_errors.append(str(exc)))
+                  page.on('requestfailed', lambda req: request_failures.append(f'{req.url}: {req.failure}'))
+                  response = page.goto(html_url, wait_until='networkidle', timeout=60000)
+                  if response is None or not response.ok:
+                      raise SystemExit('BROWSER_HTTP_FAILED')
+                  loc = page.locator("xpath=//h2[contains(normalize-space(.),'520 örnek satır')]/following-sibling::table[1]/tbody/tr")
+                  dom_rows = loc.count()
+                  first_id = loc.nth(0).locator('td').nth(0).inner_text().strip()
+                  last_id = loc.nth(dom_rows - 1).locator('td').nth(0).inner_text().strip()
+                  browser_version = browser.version
+                  browser.close()
+          finally:
+              server.shutdown(); server.server_close(); os.chdir(old_cwd)
+          if dom_rows != 520 or first_id != 'parcel_30762' or last_id != 'parcel_31281':
+              raise SystemExit(f'DOM_GATE_FAILED rows={dom_rows} first={first_id} last={last_id}')
+          if console_errors or page_errors or request_failures:
+              raise SystemExit('BROWSER_ERRORS')
+
+          receipt = {
+              'schema_version': 1,
+              'workstream_id': 'AAYS_21_SLOT_SAFE_PARALLEL_V1',
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729',
+              'continuation_key': '0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4',
+              'state': 'PASS_PENDING_REMOTE_COMMIT_READBACK',
+              'candidate_rows': 520,
+              'candidate_accuracy_ge_95_rows': accuracy,
+              'police_response_sha256_rows': police,
+              'sources_promoted': promoted,
+              'completed_operations': 14,
+              'total_operations': 14,
+              'overall_progress_percent': 100.0,
+              'served_json_sha256': hashlib.sha256(json_body).hexdigest(),
+              'served_html_sha256': hashlib.sha256(html_body).hexdigest(),
+              'browser_version': browser_version,
+              'candidate_dom_rows': dom_rows,
+              'first_parcel_id': first_id,
+              'last_parcel_id': last_id,
+              'console_errors': 0,
+              'page_errors': 0,
+              'request_failures': 0,
+              'accepted_at': now,
+              'targeted_retry_recovered_rows': len(recovered),
+              'final_ready': False,
+          }
+          RECEIPT.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          metrics = {'candidate_rows': 520, 'candidate_accuracy_ge_95_rows': accuracy, 'police_response_sha256_rows': police, 'sources_reviewed': len(sources), 'sources_promoted': promoted, 'business_rows_written': 0, 'completed_operations': 14, 'total_operations': 14, 'overall_progress_percent': 100.0, 'progress_delta_percentage_points': 11.54}
+          recovery = {'triggered': True, 'reason': 'INITIAL_520_RUN_ACCURACY_GATE_492_BELOW_494_TARGET; TARGETED_POLICE_RETRY_APPLIED', 'attempt': 2, 'replacement_run_created': True, 'concurrent_duplicate_runner_created': False, 'second_task_created': False}
+          queue = json.loads(QUEUE.read_text())
+          queue.update({'status': 'publish_pending', 'runner_state': 'OUTPUT_ACCEPTED_COMMIT_PENDING_REMOTE_READBACK', 'result': metrics, 'acceptance': receipt, 'recovery': recovery, 'updated_at': now, 'final_ready': False})
+          QUEUE.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + '\n')
+          current = json.loads((SLOT / 'current_task_latest.json').read_text())
+          current.update({'state': 'PUBLISH_PENDING_ACCEPTED', 'status': 'publish_pending', 'result': metrics, 'acceptance': receipt, 'recovery': recovery, 'blocker': None, 'updated_at': now, 'final_ready': False})
+          (SLOT / 'current_task_latest.json').write_text(json.dumps(current, ensure_ascii=False, indent=2) + '\n')
+          status = json.loads((SLOT / 'status_latest.json').read_text())
+          status.update({'state': 'PUBLISH_PENDING_ACCEPTED', 'blocker': None, 'result': metrics, 'acceptance': receipt, 'recovery': recovery, 'progress': {'accepted_base_candidate_rows': 460, 'incremental_rows_target': 60, 'incremental_rows_completed': 60, 'merged_rows_target': 520, 'merged_rows_ready': 520, 'candidate_accuracy_ge_95_rows': accuracy, 'police_response_sha256_rows': police, 'sources_promoted': promoted, 'expanded_scope_progress_percent': 100.0, 'expanded_scope_delta_percentage_points': 11.54, 'new_acceptance_operations_completed': 14, 'new_acceptance_operations_total': 14}, 'updated_at': now, 'final_ready': False})
+          (SLOT / 'status_latest.json').write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n')
+          owner = json.loads((SLOT / 'ownership_latest.json').read_text())
+          owner.update({'state': 'PUBLISH_PENDING_OWNER_RELEASED', 'owner_page_session_id': None, 'lease_token_hash': None, 'heartbeat_at': None, 'lease_expires_at': None, 'runtime_live_owner': False, 'claimable': False, 'ready_for_claim': False, 'takeover_rule': 'Accepted output commit pending remote readback; do not rerun.', 'acceptance': receipt, 'result': metrics, 'recovery_attempts_used': 2, 'replacement_run_created': True, 'concurrent_duplicate_runner_created': False, 'updated_at': now, 'final_ready': False})
+          (SLOT / 'ownership_latest.json').write_text(json.dumps(owner, ensure_ascii=False, indent=2) + '\n')
+          heartbeat = json.loads((SLOT / 'heartbeat_latest.json').read_text())
+          heartbeat.update({'state': 'COMPLETED_OUTPUT_PENDING_REMOTE_READBACK', 'heartbeat_at': now, 'lease_expires_at': now, 'recovery_attempt': 2, 'final_ready': False})
+          (SLOT / 'heartbeat_latest.json').write_text(json.dumps(heartbeat, ensure_ascii=False, indent=2) + '\n')
+          print(json.dumps({'diagnostic': diagnostic, 'receipt': receipt}, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          rm -rf docs/chatgpt_status/aays1/automation/__pycache__
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_60row_wave31_latest.json \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_520row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_520row_evidence_expansion.html \
+            docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_520row_browser_acceptance_wave31_receipt_20260729.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_520row_targeted_retry_wave31_diagnostic_20260729.json
+          git diff --cached --check
+          git commit -m 'publish security_public_safety_2 520-row targeted retry evidence'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            git rebase "origin/$BRANCH" || { git rebase --abort || true; exit 1; }
+            git push origin "HEAD:$BRANCH" && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
