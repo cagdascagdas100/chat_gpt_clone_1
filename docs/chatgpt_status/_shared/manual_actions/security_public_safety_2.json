@@ -1,12 +1,12 @@
 {
-  "schema_version": 39,
+  "schema_version": 40,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The priority 300-row output is published and remotely readable. It contains 300 candidates, 300 Police response hashes, 296 rows at or above 95 accuracy, 10/10 promoted official sources and zero business rows. The IoD25 exact-LSOA join gate is reconciled as PASS_WITH_PROVENANCE for all four historical/current geography differences. Public GitHub raw content fetch now succeeds for both the JSON and HTML, and their canonical blob identities match the accepted repository files; the public served HTTP/body-identity gate is therefore resolved. Workstream acceptance is 19/20 and 74.1%. The only substantive acceptance operation still open is a real browser DOM/runtime/console check. Status synchronization and final_ready remain dependent on that browser gate. Do not rerun or duplicate the 300-row generator.",
-  "diagnosis": "PRIORITY_300_OUTPUT_PROVENANCE_AND_PUBLIC_RAW_ACCEPTED_REAL_BROWSER_RUNTIME_PENDING",
+  "reason": "The priority 300-row output is published and remotely readable. It contains 300 candidates, 300 Police response hashes, 296 rows at or above 95 accuracy, 10/10 promoted official sources and zero business rows. IoD25 exact-LSOA provenance and public GitHub raw body identity have passed. Chromium 144 and Playwright are available, and the browser engine passed a clearly synthetic 300-row set_content preflight with zero console, page and request errors. This preflight is not canonical acceptance. Direct file and localhost navigation are blocked by administrator policy, and the canonical HTML body has not yet been supplied to the browser with verified Git blob SHA eb5ddcf8cc60356e9ec8ebe65211ecb002f94876. A fail-closed acceptance utility is now published and will accept only the exact canonical blob, 300 parcel DOM rows, parcel_30762 through parcel_31061, and zero console/page/request errors. Workstream acceptance remains 19/20 and 74.1%; status synchronization and final_ready remain dependent on that exact canonical browser run. Do not rerun or duplicate the 300-row generator.",
+  "diagnosis": "BROWSER_ENGINE_HEALTHY_CANONICAL_HTML_BODY_TRANSFER_BLOCKED_FINAL_ACCEPTANCE_PENDING",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-29T03:46:00+03:00",
+  "updated_at": "2026-07-29T04:16:00+03:00",
   "resolved_subissues": [
     {"code":"RETRY5_EXPECTED_OUTPUTS_MISSING","state":"RESOLVED_BY_FRESH_REMOTE_READ","proof":"All five retry5 outputs exist and their gates passed."},
     {"code":"WAVE8_PARCEL_30802_POLICE_HTTP_429","state":"RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE_IDENTITY","proof":"Exact coordinate/month cache source has HTTP 200, 519 records and SHA256."},
@@ -14,7 +14,8 @@
     {"code":"PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429","state":"RESOLVED_IN_CANONICAL_300ROW_OUTPUT","proof":"Published output contains 424 records, candidate accuracy 100 and Police SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa."},
     {"code":"PRIORITY_300ROW_OUTPUT_ABSENT_UNCLAIMED","state":"RESOLVED_BY_SINGLE_COORDINATOR_PUBLICATION","proof":"Queue status is result_ready_for_remote_acceptance and all three exact output paths exist."},
     {"code":"IOD25_EXACT_LSOA_JOIN_GATE_PARTIAL","state":"RESOLVED_AS_PASS_WITH_PROVENANCE","proof":"Four mismatch rows each have one exact current ONS LSOA21 match; IoD25 joins the current code; historical codes remain separate; ONS and Police hashes are present."},
-    {"code":"PUBLIC_SERVED_HTTP_JSON_HASH_NOT_VERIFIED","state":"RESOLVED_BY_PUBLIC_GITHUB_RAW_CONTENT_AND_CANONICAL_BLOB_IDENTITY","proof":"Public raw JSON and HTML fetch returned content; canonical blobs are dd8169ea2eb745da21409ae0bb3d11ec51521758 and eb5ddcf8cc60356e9ec8ebe65211ecb002f94876."}
+    {"code":"PUBLIC_SERVED_HTTP_JSON_HASH_NOT_VERIFIED","state":"RESOLVED_BY_PUBLIC_GITHUB_RAW_CONTENT_AND_CANONICAL_BLOB_IDENTITY","proof":"Public raw JSON and HTML fetch returned content; canonical blobs are dd8169ea2eb745da21409ae0bb3d11ec51521758 and eb5ddcf8cc60356e9ec8ebe65211ecb002f94876."},
+    {"code":"BROWSER_RUNTIME_TOOL_UNAVAILABLE","state":"RESOLVED_BROWSER_ENGINE_PRESENT","proof":"Chromium 144 and Playwright are installed; set_content preflight parsed 300 synthetic rows with zero console/page/request errors."}
   ],
   "verified_output": {
     "queue_status": "result_ready_for_remote_acceptance",
@@ -28,7 +29,7 @@
     "completed_operations": 19,
     "total_operations": 20,
     "overall_progress_percent": 74.1,
-    "progress_delta_percent": 3.9
+    "progress_delta_percent": 0.0
   },
   "provenance_reconciliation": {
     "state": "PASS_WITH_PROVENANCE",
@@ -45,30 +46,46 @@
     "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_latest.json",
     "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23.html"
   },
+  "browser_preflight": {
+    "state": "PASS_ENGINE_ONLY_NOT_CANONICAL",
+    "chromium_version": "Chromium 144.0.7559.96 built on Debian GNU/Linux 13 (trixie)",
+    "synthetic_fixture_rows": 300,
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "file_navigation": "BLOCKED_BY_ADMINISTRATOR",
+    "localhost_navigation": "BLOCKED_BY_ADMINISTRATOR",
+    "canonical_html_expected_blob_sha": "eb5ddcf8cc60356e9ec8ebe65211ecb002f94876",
+    "utility": "docs/chatgpt_status/aays1/automation/security_public_safety_2_browser_acceptance_utility_20260729.py",
+    "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_preflight_wave24_latest.json",
+    "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_preflight_wave24.html",
+    "receipt": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_browser_preflight_wave24_receipt_20260729.json"
+  },
   "active_blockers": [
-    "REAL_BROWSER_RUNTIME_CONSOLE_NOT_VERIFIED",
+    "CANONICAL_HTML_BODY_NOT_AVAILABLE_TO_LOCAL_BROWSER_WITH_VERIFIED_BLOB_IDENTITY",
+    "REAL_CANONICAL_BROWSER_DOM_CONSOLE_ACCEPTANCE_NOT_RUN",
     "STATUS_LATEST_AND_CURRENT_TASK_REMAIN_PUBLISHING_FINAL_READY_FALSE_PENDING_BROWSER_GATE",
     "OWNERSHIP_RECORD_REMAINS_STALE_WITH_EMPTY_OWNER_HEARTBEAT_AND_LEASE_DO_NOT_USE_TO_RERUN"
   ],
   "final_acceptance_required_gates": [
-    "RUN_REAL_BROWSER_DOM_AND_CONSOLE_ACCEPTANCE",
+    "TRANSFER_EXACT_CANONICAL_HTML_BODY_WITH_GIT_BLOB_SHA_EB5DDCF8CC60356E9EC8EBE65211ECB002F94876",
+    "RUN_FAIL_CLOSED_BROWSER_UTILITY_AND_VERIFY_300_DOM_ROWS_FIRST_LAST_MARKERS_AND_ZERO_ERRORS",
     "SYNC_QUEUE_CURRENT_TASK_STATUS_AND_FINAL_READY_WITHOUT_RERUNNING_THE_300ROW_GENERATOR"
   ],
-  "solution": "Do not restart or duplicate the runner because the exact 300-row outputs already exist. Use the existing published HTML in a real browser-capable environment, verify the DOM contains the 300 candidate rows and that the console has no errors, then synchronize current_task/status/final_ready. Do not create another task, runner or recovery refresh.",
+  "solution": "Do not restart or duplicate the generator. Supply the existing canonical HTML body to the published fail-closed utility. The utility must first reproduce Git blob SHA eb5ddcf8cc60356e9ec8ebe65211ecb002f94876, then verify 300 parcel DOM rows, parcel_30762 and parcel_31061 boundaries, and zero console, page and request errors. Only after that synchronize current_task/status/final_ready. Do not create another task, runner or recovery refresh.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_preflight_wave24_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_preflight_wave24.html",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_browser_acceptance_utility_20260729.py",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_evidence_rollup_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_receipt_20260729.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_receipt_20260729.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_browser_preflight_wave24_receipt_20260729.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
