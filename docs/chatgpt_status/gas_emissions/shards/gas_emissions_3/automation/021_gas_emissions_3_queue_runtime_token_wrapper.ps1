@@ -51,7 +51,10 @@ function Invoke-Git([string[]]$GitArgs) {
     return (($output -join [Environment]::NewLine).Trim())
 }
 function Sync-RemoteTrackingHead {
-    $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=64','origin',("+refs/heads/$branch`:$remoteTrackingRef"))
+    # The portable partial clone can be shallower than the last valid local
+    # task commit. Keep the ancestry gate, but hydrate enough commit history
+    # for merge-base instead of treating a shallow boundary as divergence.
+    $fetchArgs = @('-c','pack.windowMemory=8m','-c','pack.packSizeLimit=20m','-c','pack.threads=1','-c','core.compression=0','fetch','--no-tags','--depth=4096','origin',("+refs/heads/$branch`:$remoteTrackingRef"))
     [void](Invoke-Git $fetchArgs)
     return Invoke-Git @('rev-parse',$remoteTrackingRef)
 }

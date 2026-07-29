@@ -62,11 +62,42 @@ def port_preflight(host: str, port: int) -> dict[str, Any]:
         else:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
         sock.bind((host, port))
-        return {"pass": True, "host": host, "port": port, "error": None}
+        return {
+            "pass": True,
+            "host": host,
+            "port": port,
+            "requested_port": port,
+            "fallback_port": False,
+            "error": None,
+        }
     except OSError as exc:
-        return {"pass": False, "host": host, "port": port, "error": f"{type(exc).__name__}:{exc}"}
+        bind_error = f"{type(exc).__name__}:{exc}"
     finally:
         sock.close()
+    fallback = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        fallback.bind((host, 0))
+        fallback_port = int(fallback.getsockname()[1])
+        return {
+            "pass": True,
+            "host": host,
+            "port": fallback_port,
+            "requested_port": port,
+            "fallback_port": True,
+            "error": None,
+            "preferred_port_bind_error": bind_error,
+        }
+    except OSError as exc:
+        return {
+            "pass": False,
+            "host": host,
+            "port": port,
+            "requested_port": port,
+            "fallback_port": False,
+            "error": f"{bind_error};FALLBACK:{type(exc).__name__}:{exc}",
+        }
+    finally:
+        fallback.close()
 
 
 def resolve_browser_executable(playwright: Any) -> dict[str, Any]:
@@ -323,6 +354,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         receipt.update({"state": "BLOCKED_PORT_ALREADY_IN_USE", "blocker": port.get("error"), "exit_code": 21})
         write_guard_receipt(repo, receipt)
         return receipt
+    args.port = int(port["port"])
 
     base = load_base_pipeline()
     base.browser_capture = guarded_browser_capture
