@@ -1,0 +1,69 @@
+name: security-public-safety-2-wave38-actions-diagnostic
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave38_actions_diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Capture wave38 state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          command = [
+              'gh','run','list','--workflow','security_public_safety_2_wave38_incremental.yml',
+              '--branch','codex/aays-single-runner-v5-20260706','--limit','5',
+              '--json','databaseId,status,conclusion,createdAt,startedAt,updatedAt,event,headSha,workflowName,url,attempt'
+          ]
+          result = subprocess.run(command, text=True, capture_output=True)
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_1220row_incremental_evidence_expansion_20260729',
+              'continuation_key': 'acc6352a90e0a76931373c20dcbd5cc34fd289533db17a5d7ec084aadbc814c0',
+              'captured_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+              'returncode': result.returncode,
+              'stderr': result.stderr,
+              'runs': json.loads(result.stdout or '[]') if result.returncode == 0 else []
+          }
+          path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_1220row_wave38_actions_diagnostic_20260729.json')
+          path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Publish diagnostic
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_1220row_wave38_actions_diagnostic_20260729.json
+          git commit -m 'capture security_public_safety_2 wave38 actions state'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git rebase origin/codex/aays-single-runner-v5-20260706; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
