@@ -36,10 +36,12 @@ function Write-JsonAtomic {
   $tempPath = Join-Path $directory ('.aays-' + [guid]::NewGuid().ToString('N') + '.tmp')
   $json = $Value | ConvertTo-Json -Depth 100
   [System.IO.File]::WriteAllText($tempPath, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
+  $extendedTempPath = '\\?\' + [System.IO.Path]::GetFullPath($tempPath)
+  $extendedPath = '\\?\' + [System.IO.Path]::GetFullPath($Path)
   if (Test-Path -LiteralPath $Path -PathType Leaf) {
-    [System.IO.File]::Replace($tempPath, $Path, $null)
+    [System.IO.File]::Replace($extendedTempPath, $extendedPath, $null)
   } else {
-    [System.IO.File]::Move($tempPath, $Path)
+    [System.IO.File]::Move($extendedTempPath, $extendedPath)
   }
 }
 
