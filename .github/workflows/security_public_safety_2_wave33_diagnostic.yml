@@ -15,6 +15,8 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
+    env:
+      DIAGNOSTIC_ATTEMPT: '2'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +34,7 @@ jobs:
           proc = subprocess.run(cmd, text=True, capture_output=True)
           runs = json.loads(proc.stdout or '[]') if proc.returncode == 0 else []
           payload = {
-            'schema_version': 1,
+            'schema_version': 2,
             'slot_id': 'security_public_safety_2',
             'task_id': 'security_public_safety_2_priority_670row_incremental_evidence_expansion_20260729',
             'continuation_key': 'c08dea96cbbf1bac2cc47fc5442ba9c6e8a62844bd718b1fa41b5c04bffdc9bf',
@@ -49,7 +51,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave33_workflow_diagnostic_20260729.json
-          git commit -m 'security_public_safety_2: record wave33 workflow diagnostic'
+          git commit -m 'security_public_safety_2: refresh wave33 workflow diagnostic'
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git rebase origin/codex/aays-single-runner-v5-20260706; then
