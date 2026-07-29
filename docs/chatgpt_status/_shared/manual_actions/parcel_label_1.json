@@ -3,10 +3,10 @@
   "slot_id": "parcel_label_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 28 Temmuz 2026 20:38 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2, runner_execution_claimed=false ve aynı idempotency/continuation zinciri korunuyor. Stable runner kaydı runner_active/pid_alive alanlarını taşısa da son heartbeat 16 Temmuz 2026 13:45:53Z'de kaldığı için host liveness doğrulanmış sayılamaz. Python audit scripti, PowerShell carrier, güvenli canonical starter ve gerekli kaynak Git blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. İki exact output hem canonical branch hem main üzerinde yok. Aynı continuation key'e bağlı canonical_shared_runner_restart_request 28 Temmuz 2026 20:38 +03'te yayımlandı; yeni runner veya ikinci görev oluşturulmadı. İstek henüz taze heartbeat, queue selection, claim veya exact output üretmedi. Kök neden external F-host tek-runner scan/daemon döngüsünün çalışmamasıdır.",
+  "reason": "Kanonik 198 satırlık audit görevi 21 Temmuz 2026'dan beri pickup_requested durumda ve iki exact output hâlâ yok. 29 Temmuz 2026 14:28 +03 taze doğrulamasında canlı slot owner bulunmadı; queue görevi geçerli, priority=2, runner_execution_claimed=false ve aynı idempotency/continuation zinciri korunuyor. Stable runner kaydı runner_active/pid_alive alanlarını taşısa da son heartbeat 16 Temmuz 2026 13:45:53Z'de kaldığı için host liveness doğrulanmış sayılamaz. Python audit scripti, PowerShell carrier, güvenli canonical starter, satır-satır web görünümü ve gerekli kaynak Git blob SHA bda76aee331acc0b9f33cccdf968c4314fe433a9 doğrulandı. Kaynak blob 198 parcel_id satırı içeriyor. Beş örnek aday resmî internet kaynaklarından yeniden doğrulandı; bu doğrulama yalnız kullanım sınıfı/adres kapsamındadır ve exact geometry veya canonical parcel binding üretmez. İki exact output hem canonical branch hem main üzerinde yok. Aynı continuation key'e bağlı canonical_shared_runner_restart_request 28 Temmuz 2026 20:38 +03'te yayımlandı; yeni runner veya ikinci görev oluşturulmadı. İstek henüz taze heartbeat, queue selection, claim veya exact output üretmedi. Kök neden external F-host tek-runner scan/daemon döngüsünün çalışmamasıdır.",
   "detected_at": "2026-07-23T14:56:00Z",
-  "updated_at": "2026-07-28T17:41:00Z",
-  "last_verified_at": "2026-07-28T20:41:00+03:00",
+  "updated_at": "2026-07-29T11:28:00Z",
+  "last_verified_at": "2026-07-29T14:28:00+03:00",
   "solution": "Yayımlanan canonical restart request'in external F-host tarafından yalnız mevcut START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd starter'ı ile acknowledge edilmesi gerekir. Otomatik acknowledge oluşmazsa F-host depo kökünde yalnız START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd dosyasını çalıştırın. Güvenli starter stale PID/lock doğrulamasını yaptıktan sonra mevcut tek runner'ı başlatmalıdır. Panelde fresh queue selection oluştuğunu ve mevcut parcel-label-1-historical-audit-20260721-003-runner-compatible attempt'inin pickup ile claim aldığını doğrulayın. RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd dosyasını kullanmayın. İki exact output main branch'e yayımlanana kadar tek runner'ı açık tutun.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260728_2038_parcel_label_1.json",
@@ -45,7 +45,65 @@
   "safe_single_runner_starter_verified": true,
   "required_source_blob_sha": "bda76aee331acc0b9f33cccdf968c4314fe433a9",
   "required_source_blob_verified": true,
+  "required_source_parcel_id_match_count": 198,
   "github_connector_blob_fetch_succeeded": true,
+  "line_by_line_web_view_verified": true,
+  "line_by_line_web_view_path": "england_map_web/parcel_label_1_historical_audit.html",
+  "line_by_line_web_view_source_path": "england_map_web/data/distance_property_types/parcel_label_1_historical_198_quarantine.json",
+  "line_by_line_web_view_source_blob_sha": "bda76aee331acc0b9f33cccdf968c4314fe433a9",
+  "official_web_spot_check_scope": "classification_and_published_address_only_no_exact_geometry_or_canonical_binding",
+  "official_web_spot_check_count": 5,
+  "official_web_spot_check_accuracy_average_percent": 99.0,
+  "official_web_spot_checks": [
+    {
+      "parcel_id": "SOURCE_WESTFIELD_LONDON_RETAIL_001",
+      "parcel_ref": "Westfield London",
+      "classification": "Retail Property",
+      "official_url": "https://www.westfield.com/en/united-kingdom/london/opening",
+      "evidence": "Official Westfield page identifies the centre and publishes Ariel Way, Shepherd's Bush, London W12 7SL.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "SOURCE_NEWS_BUILDING_OFFICE_001",
+      "parcel_ref": "The News Building",
+      "classification": "Office Building",
+      "official_url": "https://www.news.co.uk/",
+      "supporting_official_url": "https://www.the-shard.com/shard-quarter",
+      "evidence": "News UK publishes its address as 1 London Bridge Street, London SE1 9GF; Shard Quarter identifies The News Building as News UK's headquarters and a 17-storey office building.",
+      "confidence_percent": 98.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "SOURCE_THE_SHARD_MIXED_001",
+      "parcel_ref": "The Shard",
+      "classification": "Mixed Building",
+      "official_url": "https://www.the-shard.com/about/",
+      "evidence": "Official building page identifies offices, restaurants, hotel, residences and a viewing gallery at 32 London Bridge Street.",
+      "confidence_percent": 99.5,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_TRAFFORD_CENTRE_013",
+      "parcel_ref": "Trafford Centre",
+      "classification": "Retail Property",
+      "official_url": "https://traffordcentre.co.uk/plan-my-visit",
+      "evidence": "Official centre page identifies Trafford Centre as a shopping destination and publishes Manchester M17 8AA.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false
+    },
+    {
+      "parcel_id": "DPT_WEB_VERIFIED_MAGNA_PARK_LUTTERWORTH_014",
+      "parcel_ref": "Magna Park Lutterworth",
+      "classification": "Industrial Unit",
+      "official_url": "https://eu.glp.com/cs/press-release/glp-completes-record-leasing-announces-new-round-of-spec-development-at-magna-park-lutterworth/",
+      "evidence": "Official GLP page identifies Magna Park Lutterworth as a dedicated logistics and distribution park with warehouse buildings.",
+      "confidence_percent": 99.0,
+      "exact_geometry_verified": false
+    }
+  ],
+  "freshly_revalidated_official_sources": 5,
+  "new_business_rows_written": 0,
   "runner_output_exists": false,
   "website_output_exists": false,
   "existing_queue_refresh_signal_preserved": true,
@@ -80,7 +138,11 @@
     "canonical_restart_protocol_history_verified_20260728_2038_tr",
     "canonical_shared_runner_restart_request_published_20260728_2038_tr",
     "existing_global_queue_refresh_signal_preserved_without_overwrite_20260728_2039_tr",
-    "post_request_heartbeat_and_exact_output_readback_no_ack_20260728_2040_tr"
+    "post_request_heartbeat_and_exact_output_readback_no_ack_20260728_2040_tr",
+    "fresh_owner_heartbeat_and_output_readback_20260729_1428_tr",
+    "required_source_alias_exact_blob_sha_readback_20260729_1428_tr",
+    "line_by_line_web_view_main_and_canonical_readback_20260729_1428_tr",
+    "official_primary_source_spot_check_5_candidates_20260729_1428_tr"
   ],
   "automated_recovery_result": "CANONICAL_RESTART_REQUEST_PUBLISHED_EXTERNAL_HOST_ACK_PENDING",
   "new_runner": false,
