@@ -1,0 +1,64 @@
+name: security-public-safety-2-wave36-diagnostic
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave36_diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Capture wave36 workflow status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          cmd = ['gh','run','list','--workflow','security_public_safety_2_wave36_incremental.yml','--limit','5','--json','databaseId,status,conclusion,event,headSha,createdAt,startedAt,updatedAt,url,workflowName,attempt']
+          proc = subprocess.run(cmd, text=True, capture_output=True)
+          runs = json.loads(proc.stdout or '[]') if proc.returncode == 0 else []
+          payload = {
+            'schema_version': 1,
+            'slot_id': 'security_public_safety_2',
+            'task_id': 'security_public_safety_2_priority_970row_incremental_evidence_expansion_20260729',
+            'continuation_key': '4c304088b6137ba2aee067c4baaea9ce4a3c5af78a288d983e20f6006fc7eb22',
+            'captured_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+            'returncode': proc.returncode,
+            'stderr': proc.stderr,
+            'runs': runs,
+          }
+          out = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave36_workflow_diagnostic_20260729.json')
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
+          PY
+      - name: Commit diagnostic
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave36_workflow_diagnostic_20260729.json
+          git commit -m 'security_public_safety_2: record wave36 workflow diagnostic'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git rebase origin/codex/aays-single-runner-v5-20260706; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
