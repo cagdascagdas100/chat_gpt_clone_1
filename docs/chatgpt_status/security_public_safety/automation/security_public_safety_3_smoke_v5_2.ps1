@@ -33,7 +33,7 @@ function Write-JsonAtomic {
   if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
   }
-  $tempPath = Join-Path $directory ((Split-Path -Leaf $Path) + '.' + [guid]::NewGuid().ToString('N') + '.tmp')
+  $tempPath = Join-Path $directory ('.aays-' + [guid]::NewGuid().ToString('N') + '.tmp')
   $json = $Value | ConvertTo-Json -Depth 100
   [System.IO.File]::WriteAllText($tempPath, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
   if (Test-Path -LiteralPath $Path -PathType Leaf) {

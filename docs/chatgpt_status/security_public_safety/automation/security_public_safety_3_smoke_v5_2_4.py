@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import os
 import re
@@ -161,10 +162,18 @@ def stream_target_features(
 
 
 def make_low_memory_locator(core):
-    def locate_targets(materialized_path: Path | None):
+    def locate_targets(materialized_path: Path | None = None):
         found: dict[str, dict] = {}
         audit: list[dict] = []
-        for path in core.source_candidates(materialized_path):
+        source_candidate_parameters = inspect.signature(core.source_candidates).parameters
+        candidates = list(
+            core.source_candidates(materialized_path)
+            if source_candidate_parameters
+            else core.source_candidates()
+        )
+        if materialized_path is not None and materialized_path not in candidates:
+            candidates.insert(0, materialized_path)
+        for path in candidates:
             try:
                 size = path.stat().st_size
             except OSError as exc:

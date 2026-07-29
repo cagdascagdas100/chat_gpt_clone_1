@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "slot_id": "problem_solver_1",
+  "updated_at": "2026-07-30T00:28:15+03:00",
+  "purpose": "Single continuation record for unresolved source and parcel-binding work",
+  "resolved": [
+    {
+      "task": "security_public_safety_3",
+      "state": "RUNTIME_ACCEPTANCE_PASSED",
+      "evidence": {
+        "canonical_blob_verified": true,
+        "artifact_quorum": "3/3",
+        "published_score_rows": 3,
+        "row_lineage_immutable": true,
+        "official_evidence_fingerprint": true,
+        "publication_quarantine": true
+      },
+      "next_action": "Continue remaining rows without replaying the three accepted sample rows"
+    },
+    {
+      "task": "parcel_label_2_canonical_carrier",
+      "state": "RESOLVED",
+      "evidence": {
+        "carrier": "england_map_web/data/program_layer_matrix/security.geojson",
+        "feature_count": 92283,
+        "target_rows_found": 3,
+        "row_no_identity_gate": true,
+        "hmlr_schema_coordinate_gate": true,
+        "geometry_type": "Point"
+      },
+      "next_action": "Use the verified Point carrier for identity; keep exact polygon binding pending"
+    }
+  ],
+  "blocked": [
+    {
+      "task": "internet_access_1",
+      "state": "BLOCKED_EXTERNAL_SOURCE_CHALLENGE",
+      "reason": "The official Ofcom ZIP endpoint returns HTTP 403 Cloudflare challenge to unattended clients",
+      "source_page": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+      "artifact_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+      "methodology_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data---fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=417688",
+      "required_cache_path": "F:/TerraYield_AAYS_Portable/runtime/internet_access_1/source_cache/ofcom_connected_nations_spring_2026_fixed_coverage.zip",
+      "next_action": "Acquire the official ZIP once through an interactive browser, then run file-count, row-count, schema and SHA-256 gates from the persistent runtime cache",
+      "estimated_work_after_archive_available": "1-3 hours"
+    },
+    {
+      "task": "parcel_label_2_exact_geometry",
+      "state": "BLOCKED_MISSING_EXACT_POLYGON_BINDING",
+      "reason": "The verified carrier supplies canonical identity and Point coordinates, not exact parcel polygons",
+      "next_action": "Bind HMLR INSPIRE polygon evidence by exact inspire_id; do not infer a polygon from the Point",
+      "estimated_work": "1-3 days"
+    }
+  ],
+  "source_updates": [
+    {
+      "source": "ONS Crime in England and Wales: year ending March 2026",
+      "released": "2026-07-23",
+      "url": "https://www.ons.gov.uk/releases/crimeinenglandandwalesyearendingmarch2026",
+      "role": "Aggregate QA evidence only; not direct parcel scoring"
+    },
+    {
+      "source": "Home Office Police workforce, England and Wales: 31 March 2026",
+      "released": "2026-07-22",
+      "url": "https://www.gov.uk/government/statistics/police-workforce-england-and-wales-31-march-2026",
+      "role": "Force-area and national context only; not direct parcel scoring"
+    }
+  ],
+  "continuation_rules": {
+    "skip_resolved_sample_replay": true,
+    "skip_unchanged_negative_inventory": true,
+    "no_data_policy": "NO_DATA_NOT_INFERRED",
+    "raw_archives": "RUNTIME_CACHE_ONLY",
+    "git_storage": "DERIVED_ROWS_AND_EVIDENCE_MANIFEST_ONLY",
+    "temporary_files": "DELETE_AFTER_ATOMIC_WRITE"
+  },
+  "fake_data": false,
+  "final_ready": false
+}
