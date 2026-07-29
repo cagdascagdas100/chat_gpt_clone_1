@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "plan_id": "revision17_acceptance_matrix_increment_195",
+  "detected_at": "2026-07-29T21:45:00+03:00",
+  "continuation_key": "d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44",
+  "status": "OPEN_SAFE_SCOPE_BLOCKED",
+  "required_revision": "revision17",
+  "program_gaps": [
+    {
+      "id": "EA_AXIS_LABEL_FALLBACK_GAP",
+      "fixed": false,
+      "evidence": "012_sample_ea_dtm1m_polygons.py substitutes E,N when axisLabels are missing.",
+      "required": "Fail closed unless DescribeCoverage supplies two explicit spatial axes; record response hash and labels."
+    },
+    {
+      "id": "EA_INTERPOLATION_PIN_GAP",
+      "fixed": false,
+      "evidence": "GetCoverage request has no interpolation parameter and output records no selected method.",
+      "required": "Discover supported interpolation, pin an allowed method or fail closed, and persist the method."
+    },
+    {
+      "id": "EA_EXACT_ONE_METRE_RESOLUTION_GAP",
+      "fixed": false,
+      "evidence": "Sampler records raster_resolution_m but numeric acceptance does not require [1.0,1.0].",
+      "required": "Require exact 1m x 1m transform within a strict tolerance before metric extraction."
+    },
+    {
+      "id": "EA_VERTICAL_DATUM_OBSERVATION_GAP",
+      "fixed": false,
+      "evidence": "Payload writes vertical_reference=ODN without reading a vertical CRS/datum identifier from response metadata.",
+      "required": "Observe and validate ODN/EPSG:5701-compatible vertical lineage from service or raster metadata."
+    },
+    {
+      "id": "TERRAIN50_BINARY_HEADER_AND_SIDECAR_HASH_GAP",
+      "fixed": false,
+      "evidence": "Terrain50 chain lacks complete 200x200/50m/10km/ASC-PRJ/nested hash validation.",
+      "required": "Coordinate a revision17 patch across sampler, crosschecker, wrapper, verifier, queue, request and slot pins."
+    }
+  ],
+  "coordinated_updates_required": [
+    "012_sample_ea_dtm1m_polygons.py: explicit axes, interpolation, exact 1m resolution and observed vertical datum",
+    "013_crosscheck_os_terrain50.py: enforce 200x200, 50m, 10km and companion-file contracts",
+    "016_prepare_and_crosscheck_os_terrain50.py: persist outer, nested and member hashes",
+    "031_verify_attempt_020_operator_recovery.py: pin revised blob set and new binary/WCS checks",
+    "queue task, restart request, current-task, status and checkpoint: coordinated revision17 pin alignment"
+  ],
+  "automatic_patch_applied": false,
+  "why_not": "Current task has no exact_write_paths authorising coordinated writes to the pinned core automation and control files; a partial patch would invalidate revision16 verification.",
+  "acceptance_requirements": {
+    "wcs_axes": "two explicit DescribeCoverage spatial axis labels; no fallback",
+    "wcs_interpolation": "supported method explicitly requested and recorded",
+    "wcs_resolution_m": [1.0, 1.0],
+    "wcs_vertical_lineage": "ODN or EPSG:5701-compatible identifier observed",
+    "terrain50_grid": {
+      "ncols": 200,
+      "nrows": 200,
+      "cellsize_m": 50,
+      "tile_extent_m": [10000, 10000]
+    },
+    "terrain50_provenance": "outer ZIP, nested ZIP, ASC, PRJ, GML and metadata hashes",
+    "recovery_receipts": "4/4 plus fresh heartbeat and exact claim",
+    "web_acceptance": "loopback port8012 and at least 1036 exact-bound operation rows"
+  },
+  "new_task_created": false,
+  "new_runner_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
