@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "slot_id": "height_difference_2",
+  "audit_id": "revision17_provenance_format_guard_matrix_increment_197",
+  "detected_at": "2026-07-29T22:37:00+03:00",
+  "continuation_key": "d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44",
+  "status": "OPEN_SAFE_SCOPE_BLOCKED",
+  "required_revision": "revision17",
+  "existing_open_gap_count": 11,
+  "new_gap_count": 4,
+  "total_open_gap_count": 15,
+  "program_gaps": [
+    {"id":"EA_AXIS_LABEL_FALLBACK_GAP","fixed":false,"evidence":"DescribeCoverage silently substitutes E,N when fewer than two axisLabels are observed.","required":"Require two explicit spatial axes from the selected CoverageDescription; no fallback."},
+    {"id":"EA_INTERPOLATION_PIN_GAP","fixed":false,"evidence":"GetCoverage neither requests nor records an interpolation method.","required":"Discover supported interpolation, request an allowed method and persist it."},
+    {"id":"EA_EXACT_ONE_METRE_RESOLUTION_GAP","fixed":false,"evidence":"Sampler records raster resolution but does not require exactly 1m by 1m.","required":"Require a 1m x 1m affine transform within strict tolerance."},
+    {"id":"EA_VERTICAL_DATUM_OBSERVATION_GAP","fixed":false,"evidence":"Output declares ODN without proving a vertical datum identifier from response metadata.","required":"Observe and validate ODN/EPSG:5701-compatible vertical lineage."},
+    {"id":"EA_DESCRIBE_IDENTITY_DOMAIN_BINDING_GAP","fixed":false,"evidence":"DescribeCoverage does not bind returned CoverageId/domainSet/axes to the selected coverage.","required":"Verify returned CoverageId, domainSet, CRS, grid axes and bounds together."},
+    {"id":"EA_GETCOVERAGE_EXTENT_ALIGNMENT_GAP","fixed":false,"evidence":"Returned bounds, transform, band count and range unit are not bound to the requested subset.","required":"Verify requested extent, grid alignment, one numeric band and metre units."},
+    {"id":"TERRAIN50_BINARY_HEADER_AND_SIDECAR_HASH_GAP","fixed":false,"evidence":"Crosschecker does not enforce 200x200, exact 50m, 10km bounds, companions or member hashes.","required":"Enforce grid/header/tile/companion contracts and persist all hashes."},
+    {"id":"TERRAIN50_DUPLICATE_TILE_WEIGHTING_GAP","fixed":false,"evidence":"Multiple ASC/TXT files for one tile are concatenated and can overweight the median.","required":"Require exactly one canonical ASC per tile and reject duplicate editions."},
+    {"id":"HMLR_CURRENT_CATALOGUE_BINDING_GAP","fixed":false,"evidence":"Seed URLs and filenames are not verified against the current catalogue.","required":"Bind authority, filename and URL to the fetched current publication."},
+    {"id":"HMLR_EXTRACTION_BASENAME_COLLISION_GAP","fixed":false,"evidence":"GML/XML members are flattened to basename without collision rejection.","required":"Preserve safe relative paths or reject duplicate output basenames."},
+    {"id":"WEB_EXAMPLE_SOURCE_SEMANTIC_UNIQUENESS_GAP","fixed":false,"evidence":"Examples and sources lack full semantic and identity uniqueness checks.","required":"Require unique IDs, exact metric semantics and approved official HTTPS domains."},
+    {"id":"OS_DOWNLOAD_REDIRECT_HOST_ALLOWLIST_GAP","fixed":false,"evidence":"Resolver accepts direct download URLs and redirects without an approved final-host allowlist.","required":"Require HTTPS and approved OS/object-storage hosts for requested and final URLs."},
+    {"id":"OS_EXACT_FORMAT_FALLBACK_GAP","fixed":false,"evidence":"After an empty exact-format query, area-only fallback can accept a generic ZIP without exact format/subformat proof.","required":"Require explicit ASCII Grid and GML format/subformat in the selected record; otherwise block."},
+    {"id":"TERRAIN50_CONFIGURED_SOURCE_PROVENANCE_BYPASS_GAP","fixed":false,"evidence":"Configured archive/root paths can pass crosscheck without current OS API/version/source provenance.","required":"Require a current official download manifest, archive SHA and version receipt even for configured sources."},
+    {"id":"OS_API_JSON_RESPONSE_CONTRACT_GAP","fixed":false,"evidence":"Products/download JSON requests follow redirects without final-host, content-type or response-size checks.","required":"Require trusted final host, JSON content type, bounded bytes and response hash before parsing."}
+  ],
+  "coordinated_updates_required": [
+    "012_sample_ea_dtm1m_polygons.py: selected coverage/domain/axes, interpolation, exact 1m, extent/band/unit and observed vertical datum",
+    "015_resolve_os_terrain50_downloads.py: trusted JSON/download hosts, bounded response contracts and exact format/subformat selection",
+    "013_crosscheck_os_terrain50.py: one canonical tile, 200x200, 50m, 10km, companions and duplicate rejection",
+    "016_prepare_and_crosscheck_os_terrain50.py: official manifest required for configured inputs and full archive/member hashes",
+    "043_prepare_hmlr_sources_and_match.py: current-catalogue binding and collision-safe extraction",
+    "017_verify_height_difference_2_web_8012.py: unique semantic example/source identities and approved HTTPS domains",
+    "014 numeric gate, 031 verifier, queue, restart request and slot state: coordinated revision17 blob-pin alignment"
+  ],
+  "automatic_patch_applied": false,
+  "why_not": "Current task has no exact_write_paths authorising coordinated writes to pinned runtime and control files; a partial patch would invalidate revision16 verification.",
+  "acceptance_requirements": {
+    "ea_wcs": "selected CoverageId/domain; explicit axes; pinned interpolation; exact 1m grid; extent/band/metre units; observed ODN lineage",
+    "os_api": "bounded JSON; trusted HTTPS requested/final hosts; exact product, area, format and subformat; response and archive hashes",
+    "terrain50": "current official manifest even for configured inputs; one ASC per tile; documented grid and companion hashes",
+    "hmlr": "current catalogue binds authority, filename and URL; collision-free extraction; exact ID and point-inside",
+    "web": "unique operation/example/source IDs; exact metric semantics; approved HTTPS source domains; loopback 8012 and current-candidate SHA",
+    "recovery": "4/4 receipts, fresh heartbeat, exact claim and accepted outputs"
+  },
+  "new_task_created": false,
+  "new_runner_created": false,
+  "fake_data": false,
+  "final_ready": false
+}
