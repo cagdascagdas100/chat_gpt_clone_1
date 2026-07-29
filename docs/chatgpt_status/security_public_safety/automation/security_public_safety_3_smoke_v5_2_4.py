@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import os
 import re
@@ -164,7 +165,12 @@ def make_low_memory_locator(core):
     def locate_targets(materialized_path: Path | None = None):
         found: dict[str, dict] = {}
         audit: list[dict] = []
-        candidates = list(core.source_candidates())
+        source_candidate_parameters = inspect.signature(core.source_candidates).parameters
+        candidates = list(
+            core.source_candidates(materialized_path)
+            if source_candidate_parameters
+            else core.source_candidates()
+        )
         if materialized_path is not None and materialized_path not in candidates:
             candidates.insert(0, materialized_path)
         for path in candidates:

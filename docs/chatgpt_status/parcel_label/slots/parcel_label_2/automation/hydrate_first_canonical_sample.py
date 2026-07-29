@@ -20,6 +20,7 @@ OUT_ROOT = SLOT_ROOT / "runner_outputs"
 WEB_OUTPUT = DATA_ROOT / "distance_property_types" / "parcel_label_2_canonical_sample_latest.json"
 CANDIDATE_PATH = DATA_ROOT / "distance_property_types" / "parcel_label_2_candidates.json"
 PRIORITY_CARRIERS = [
+    DATA_ROOT / "program_layer_matrix" / "security.geojson",
     DATA_ROOT / "security.geojson",
     DATA_ROOT / "parcel_security_scores_rechecked_0_120m_spatial.geojson",
 ]
@@ -27,6 +28,14 @@ PRIORITY_CARRIERS = [
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def candidate_carrier_paths() -> list[Path]:
@@ -46,6 +55,31 @@ def candidate_carrier_paths() -> list[Path]:
         reverse=True,
     )
     return priority + fallback
+
+
+def candidate_inventory_fingerprint(paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for path in paths:
+        stat = path.stat()
+        try:
+            relative = path.relative_to(DATA_ROOT).as_posix()
+        except ValueError:
+            relative = f"runtime-cache/{path.name}"
+        digest.update(f"{relative}\0{stat.st_size}\0{stat.st_mtime_ns}\n".encode("utf-8"))
+    return digest.hexdigest()
+
+
+def unchanged_negative_inventory(fingerprint: str) -> bool:
+    result_path = OUT_ROOT / "parcel_label_2_canonical_sample_latest.json"
+    try:
+        previous = json.loads(result_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    return (
+        isinstance(previous, dict)
+        and previous.get("source_file") is None
+        and previous.get("candidate_inventory_fingerprint") == fingerprint
+    )
 
 
 def parcel_index(parcel_id: object) -> int | None:
@@ -205,10 +239,35 @@ def validate_identity_carrier(features: list[dict]) -> tuple[bool, str, dict[str
     return True, "ACCEPTED", found, identity_summary
 
 
-def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, list[dict], dict]:
+def locate_targets() -> tuple[
+    Path | None,
+    dict[str, dict],
+    int,
+    int | None,
+    list[dict],
+    dict,
+    str,
+    int,
+    bool,
+]:
+    candidate_paths = candidate_carrier_paths()
+    inventory_fingerprint = candidate_inventory_fingerprint(candidate_paths)
+    if unchanged_negative_inventory(inventory_fingerprint):
+        return (
+            None,
+            {},
+            0,
+            None,
+            [],
+            {},
+            inventory_fingerprint,
+            len(candidate_paths),
+            True,
+        )
+
     scanned_files = 0
     rejected_carriers: list[dict] = []
-    for path in candidate_carrier_paths():
+    for path in candidate_paths:
         scanned_files += 1
         try:
             with path.open("r", encoding="utf-8-sig") as handle:
@@ -249,9 +308,29 @@ def locate_targets() -> tuple[Path | None, dict[str, dict], int, int | None, lis
                     }
                 )
             continue
-        return path, found, scanned_files, feature_count, rejected_carriers, identity_summary
+        return (
+            path,
+            found,
+            scanned_files,
+            feature_count,
+            rejected_carriers,
+            identity_summary,
+            inventory_fingerprint,
+            len(candidate_paths),
+            False,
+        )
 
-    return None, {}, scanned_files, None, rejected_carriers, {}
+    return (
+        None,
+        {},
+        scanned_files,
+        None,
+        rejected_carriers,
+        {},
+        inventory_fingerprint,
+        len(candidate_paths),
+        False,
+    )
 
 
 def compact_properties(props: dict) -> dict:
@@ -277,7 +356,17 @@ def compact_properties(props: dict) -> dict:
 def main() -> int:
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     WEB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    source_path, features, scanned_files, source_feature_count, rejected_carriers, identity_summary = locate_targets()
+    (
+        source_path,
+        features,
+        scanned_files,
+        source_feature_count,
+        rejected_carriers,
+        identity_summary,
+        inventory_fingerprint,
+        candidate_inventory_count,
+        negative_inventory_cache_hit,
+    ) = locate_targets()
     rows = []
     polygon_rows = 0
     carrier_rows = 0
@@ -341,11 +430,14 @@ def main() -> int:
         "strict_identity_schema_coordinate_gate_passed": strict_identity_gate_passed,
         "identity_summary": identity_summary,
         "priority_carriers": [str(path) for path in PRIORITY_CARRIERS],
+        "candidate_inventory_count": candidate_inventory_count,
+        "candidate_inventory_fingerprint": inventory_fingerprint,
+        "negative_inventory_cache_hit": negative_inventory_cache_hit,
         "scanned_file_count": scanned_files,
         "rejected_carrier_sample": rejected_carriers,
         "source_file": str(source_path) if source_path else None,
         "source_feature_count": source_feature_count,
-        "source_file_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest() if source_path else None,
+        "source_file_sha256": file_sha256(source_path) if source_path else None,
         "canonical_carrier_rows_found": carrier_rows,
         "polygon_or_multipolygon_rows_found": polygon_rows,
         "source_research_candidates_available": CANDIDATE_PATH.exists(),
@@ -364,6 +456,8 @@ def main() -> int:
     WEB_OUTPUT.write_text(text, encoding="utf-8")
     print(f"SLOT_ID={SLOT_ID}")
     print(f"SCANNED_FILE_COUNT={scanned_files}")
+    print(f"CANDIDATE_INVENTORY_COUNT={candidate_inventory_count}")
+    print(f"NEGATIVE_INVENTORY_CACHE_HIT={str(negative_inventory_cache_hit).lower()}")
     print(f"SOURCE_FILE={source_path}")
     print(f"SOURCE_FEATURE_COUNT={source_feature_count}")
     print(f"EXACT_FEATURE_COUNT_GATE_PASSED={str(exact_count_gate_passed).lower()}")
