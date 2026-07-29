@@ -1,0 +1,60 @@
+name: security-public-safety-2-wave31-recovery-controller
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave31_recovery_controller.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: security-public-safety-2-0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4
+  cancel-in-progress: true
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+
+      - name: Verify recovery is still required
+        id: verify
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          queue = json.loads(Path("docs/chatgpt_status/aays1/queue/0006_security_public_safety_2_priority_520row_incremental_evidence_expansion_20260729.v3.task.json").read_text())
+          owner = json.loads(Path("docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json").read_text())
+          expected = "0457103ca48101726eaad2b9a6707c165198cbd0f5c8b3c71942106179041bf4"
+          required = (
+              queue.get("continuation_key") == expected
+              and queue.get("status") == "running"
+              and owner.get("continuation_key") == expected
+              and owner.get("runtime_live_owner") is True
+              and owner.get("owner_page_session_id") == "github-actions-security-public-safety-2-wave31"
+          )
+          with open("/tmp/recovery_required", "w", encoding="utf-8") as handle:
+              handle.write("true" if required else "false")
+          print({"recovery_required": required, "queue_status": queue.get("status"), "owner_live": owner.get("runtime_live_owner")})
+          PY
+          echo "required=$(cat /tmp/recovery_required)" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch same-continuation replacement run
+        if: steps.verify.outputs.required == 'true'
+        shell: bash
+        run: |
+          gh workflow run security_public_safety_2_wave31_incremental.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
