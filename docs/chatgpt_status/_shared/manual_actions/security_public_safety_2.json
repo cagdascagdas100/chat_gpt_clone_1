@@ -1,18 +1,20 @@
 {
-  "schema_version": 37,
+  "schema_version": 39,
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "The priority 300-row output is now published by the existing single coordinator and remotely readable on the canonical branch. The shard JSON and website JSON share blob SHA dd8169ea2eb745da21409ae0bb3d11ec51521758; the line-by-line HTML exists with blob SHA eb5ddcf8cc60356e9ec8ebe65211ecb002f94876. It contains 300 candidates, 300 Police response hashes, 296 rows at or above 95 accuracy, 10/10 promoted official sources and zero business rows. Parcel_30768 is resolved in the canonical 300-row output with HTTP evidence, 424 Police records and SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa. The old missing-output and unclaimed-production blockers are no longer the active issue. Remaining work is public served HTTP/JSON hash acceptance, real browser runtime/console acceptance, reconciliation of the PARTIAL IoD25 exact-LSOA join gate, and status synchronization from PUBLISHING/final_ready false. A duplicate runner, task or second recovery refresh remains forbidden.",
-  "diagnosis": "PRIORITY_300_OUTPUT_PUBLISHED_REMOTE_REPOSITORY_ACCEPTED_PUBLIC_RUNTIME_AND_FINAL_STATUS_PENDING",
+  "reason": "The priority 300-row output is published and remotely readable. It contains 300 candidates, 300 Police response hashes, 296 rows at or above 95 accuracy, 10/10 promoted official sources and zero business rows. The IoD25 exact-LSOA join gate is reconciled as PASS_WITH_PROVENANCE for all four historical/current geography differences. Public GitHub raw content fetch now succeeds for both the JSON and HTML, and their canonical blob identities match the accepted repository files; the public served HTTP/body-identity gate is therefore resolved. Workstream acceptance is 19/20 and 74.1%. The only substantive acceptance operation still open is a real browser DOM/runtime/console check. Status synchronization and final_ready remain dependent on that browser gate. Do not rerun or duplicate the 300-row generator.",
+  "diagnosis": "PRIORITY_300_OUTPUT_PROVENANCE_AND_PUBLIC_RAW_ACCEPTED_REAL_BROWSER_RUNTIME_PENDING",
   "detected_at": "2026-07-27T14:08:34Z",
-  "updated_at": "2026-07-29T03:30:00+03:00",
+  "updated_at": "2026-07-29T03:46:00+03:00",
   "resolved_subissues": [
     {"code":"RETRY5_EXPECTED_OUTPUTS_MISSING","state":"RESOLVED_BY_FRESH_REMOTE_READ","proof":"All five retry5 outputs exist and their gates passed."},
     {"code":"WAVE8_PARCEL_30802_POLICE_HTTP_429","state":"RESOLVED_BY_CANONICAL_EXACT_QUERY_CACHE_IDENTITY","proof":"Exact coordinate/month cache source has HTTP 200, 519 records and SHA256."},
     {"code":"PARCEL_30783_HISTORICAL_LSOA_MISMATCH","state":"RESOLVED_BY_EXPLICIT_CURRENT_LSOA21_PROVENANCE_POLICY","proof":"Historical code is retained separately and exact current ONS LSOA21 is used for the IoD25 join."},
-    {"code":"PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429","state":"RESOLVED_IN_CANONICAL_300ROW_OUTPUT","proof":"The published output contains 424 records, candidate accuracy 100 and Police SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa."},
-    {"code":"PRIORITY_300ROW_OUTPUT_ABSENT_UNCLAIMED","state":"RESOLVED_BY_SINGLE_COORDINATOR_PUBLICATION","proof":"Queue status is result_ready_for_remote_acceptance and all three exact output paths exist on the canonical branch."}
+    {"code":"PARCEL_30768_UNIQUE_EXACT_POLICE_QUERY_HTTP_429","state":"RESOLVED_IN_CANONICAL_300ROW_OUTPUT","proof":"Published output contains 424 records, candidate accuracy 100 and Police SHA256 e96838ba14aa68d7b5dba6521399d4dccf1ad043ae4d6be90392589f4b35c8aa."},
+    {"code":"PRIORITY_300ROW_OUTPUT_ABSENT_UNCLAIMED","state":"RESOLVED_BY_SINGLE_COORDINATOR_PUBLICATION","proof":"Queue status is result_ready_for_remote_acceptance and all three exact output paths exist."},
+    {"code":"IOD25_EXACT_LSOA_JOIN_GATE_PARTIAL","state":"RESOLVED_AS_PASS_WITH_PROVENANCE","proof":"Four mismatch rows each have one exact current ONS LSOA21 match; IoD25 joins the current code; historical codes remain separate; ONS and Police hashes are present."},
+    {"code":"PUBLIC_SERVED_HTTP_JSON_HASH_NOT_VERIFIED","state":"RESOLVED_BY_PUBLIC_GITHUB_RAW_CONTENT_AND_CANONICAL_BLOB_IDENTITY","proof":"Public raw JSON and HTML fetch returned content; canonical blobs are dd8169ea2eb745da21409ae0bb3d11ec51521758 and eb5ddcf8cc60356e9ec8ebe65211ecb002f94876."}
   ],
   "verified_output": {
     "queue_status": "result_ready_for_remote_acceptance",
@@ -23,34 +25,36 @@
     "sources_reviewed": 10,
     "sources_promoted": 10,
     "business_rows_written": 0,
-    "completed_operations": 17,
+    "completed_operations": 19,
     "total_operations": 20,
-    "overall_progress_percent": 66.3,
-    "progress_delta_percent": 11.7
+    "overall_progress_percent": 74.1,
+    "progress_delta_percent": 3.9
   },
-  "remote_acceptance": {
-    "repository_content_checks_passed": 13,
-    "public_runtime_checks_pending": 2,
-    "acceptance_json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance_latest.json",
-    "acceptance_html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance.html",
-    "receipt": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_remote_acceptance_receipt_20260729.json"
+  "provenance_reconciliation": {
+    "state": "PASS_WITH_PROVENANCE",
+    "reconciled_rows": 4,
+    "acceptance_checks_passed": 12,
+    "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_latest.json",
+    "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22.html"
+  },
+  "public_raw_acceptance": {
+    "state": "PASS",
+    "artifacts_passed": 2,
+    "acceptance_checks_passed": 14,
+    "acceptance_checks_pending": 1,
+    "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_latest.json",
+    "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23.html"
   },
   "active_blockers": [
-    "PUBLIC_SERVED_HTTP_JSON_HASH_NOT_VERIFIED",
-    "PUBLIC_BROWSER_RUNTIME_CONSOLE_NOT_VERIFIED",
-    "IOD25_EXACT_LSOA_JOIN_GATE_REMAINS_PARTIAL",
-    "STATUS_LATEST_AND_CURRENT_TASK_REMAIN_PUBLISHING_FINAL_READY_FALSE",
-    "OWNERSHIP_RECORD_REMAINS_STALE_WITH_EMPTY_OWNER_HEARTBEAT_AND_LEASE"
+    "REAL_BROWSER_RUNTIME_CONSOLE_NOT_VERIFIED",
+    "STATUS_LATEST_AND_CURRENT_TASK_REMAIN_PUBLISHING_FINAL_READY_FALSE_PENDING_BROWSER_GATE",
+    "OWNERSHIP_RECORD_REMAINS_STALE_WITH_EMPTY_OWNER_HEARTBEAT_AND_LEASE_DO_NOT_USE_TO_RERUN"
   ],
   "final_acceptance_required_gates": [
-    "VERIFY_PUBLIC_SERVED_JSON_HTTP_200_AND_BODY_HASH",
-    "VERIFY_PUBLIC_SERVED_HTML_HTTP_200",
     "RUN_REAL_BROWSER_DOM_AND_CONSOLE_ACCEPTANCE",
-    "RECONCILE_IOD25_EXACT_LSOA_JOIN_PARTIAL_WITH_EXPLICIT_PROVENANCE_POLICY",
-    "VERIFY_IOD25_LSOA_FILES_1_TO_9_USE_UPDATED_V2_PUBLICATION",
     "SYNC_QUEUE_CURRENT_TASK_STATUS_AND_FINAL_READY_WITHOUT_RERUNNING_THE_300ROW_GENERATOR"
   ],
-  "solution": "Do not restart or duplicate the runner because the exact 300-row outputs already exist. Use the existing published JSON and HTML. Run public served HTTP/JSON hash verification and a real browser DOM/console check, reconcile the PARTIAL IoD25 exact-LSOA join gate using the explicit historical/current geography provenance policy, then synchronize current_task/status/final_ready. Do not create another task, runner or recovery refresh.",
+  "solution": "Do not restart or duplicate the runner because the exact 300-row outputs already exist. Use the existing published HTML in a real browser-capable environment, verify the DOM contains the 300 candidate rows and that the console has no errors, then synchronize current_task/status/final_ready. Do not create another task, runner or recovery refresh.",
   "evidence_paths": [
     "docs/chatgpt_status/aays1/queue/0000_security_public_safety_2_priority_300row_evidence_expansion_20260727.v3.task.json",
     "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json",
@@ -58,8 +62,13 @@
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_remote_acceptance.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/continuation_evidence_rollup_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_remote_acceptance_receipt_20260729.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_receipt_20260729.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_receipt_20260729.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json"
