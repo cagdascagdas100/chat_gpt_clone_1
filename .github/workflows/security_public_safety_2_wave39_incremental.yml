@@ -1,0 +1,100 @@
+name: security-public-safety-2-wave39-incremental
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave39_incremental.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-fb0a0130b93f3d4a7f54d3e6efd6bbe57e1abdef9d919896cf9070c373d57cf6
+  cancel-in-progress: false
+
+jobs:
+  generate-accept-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Verify single live owner
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          queue = json.loads(Path('docs/chatgpt_status/aays1/queue/0014_security_public_safety_2_priority_1360row_incremental_evidence_expansion_20260729.v3.task.json').read_text())
+          owner = json.loads(Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json').read_text())
+          expected = 'fb0a0130b93f3d4a7f54d3e6efd6bbe57e1abdef9d919896cf9070c373d57cf6'
+          if queue.get('continuation_key') != expected or owner.get('continuation_key') != expected:
+              raise SystemExit('CONTINUATION_KEY_MISMATCH')
+          if queue.get('status') != 'running':
+              raise SystemExit(f"QUEUE_NOT_RUNNING: {queue.get('status')}")
+          if owner.get('owner_page_session_id') != 'github-actions-security-public-safety-2-wave39' or not owner.get('runtime_live_owner'):
+              raise SystemExit('OWNER_CLAIM_MISMATCH')
+          print('CLAIM_OK')
+          PY
+
+      - name: Generate 140 official-source rows and merge to 1360
+        shell: bash
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_1360row_incremental_evidence_expansion_20260729.py
+
+      - name: Install browser runtime
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Targeted evidence retry and browser acceptance
+        shell: bash
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave39_accept_publish.py
+
+      - name: Commit exact slot paths
+        shell: bash
+        run: |
+          rm -rf docs/chatgpt_status/aays1/automation/__pycache__
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_140row_wave39_latest.json \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_1360row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_1360row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_1360row_evidence_expansion.html \
+            docs/chatgpt_status/aays1/queue/0014_security_public_safety_2_priority_1360row_incremental_evidence_expansion_20260729.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_1360row_browser_acceptance_wave39_receipt_20260729.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_1360row_targeted_retry_wave39_diagnostic_20260729.json
+          git diff --cached --check
+          git commit -m 'publish security_public_safety_2 1360-row evidence'
+
+      - name: Rebase and push without force
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
