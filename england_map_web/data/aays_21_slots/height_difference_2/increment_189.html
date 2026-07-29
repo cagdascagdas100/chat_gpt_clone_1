@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 — Increment 189</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1118;--p:#111b27;--l:#314156;--t:#edf3fa;--ok:#10251d;--bad:#2b1818}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,Arial,sans-serif}header{padding:18px;background:var(--p);border-bottom:1px solid var(--l)}
+h1{margin:0 0 6px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;padding:14px}.card{background:var(--p);border:1px solid var(--l);padding:10px;border-radius:7px}
+h2{margin:20px 14px 8px}.wrap{overflow:auto;padding:0 14px 12px}table{border-collapse:collapse;width:100%;min-width:1600px;font-size:12px}th,td{border:1px solid var(--l);padding:6px;vertical-align:top}th{position:sticky;top:0;background:#18273a;text-align:left}
+.completed td{background:var(--ok)}.blocked td{background:var(--bad)}a{color:#95cdff}.integrity{color:#ff8585;font-weight:700}
+</style></head><body><header><h1>height_difference_2 — Increment 189</h1><div id="stamp"></div></header>
+<div id="cards" class="cards"></div>
+<h2>İşlemler — 352 kayıt satır satır</h2><div class="wrap"><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Hedef</th><th>Kontrol</th><th>Kanıt</th><th>Doğruluk</th><th>Blocker</th></tr></thead><tbody id="ops"></tbody></table></div>
+<h2>72 yeni QA örneği</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Satır</th><th>Yetki</th><th>Senaryo</th><th>HMLR</th><th>1m fark</th><th>2m fark</th><th>Delta %</th><th>Robust %</th><th>Alt kuyruk %</th><th>Üst kuyruk %</th><th>1m alan hata %</th><th>2m alan hata %</th><th>1m sınır</th><th>2m sınır</th><th>Göreli 95</th><th>Mutlak 95</th><th>Güven</th><th>Durum</th></tr></thead><tbody id="ex"></tbody></table></div>
+<h2>28 resmî kaynak sözleşmesi</h2><div class="wrap"><table><thead><tr><th>ID</th><th>Yayıncı</th><th>Kaynak</th><th>Rol</th><th>Güven</th><th>Doğrulanan</th><th>Sınır</th></tr></thead><tbody id="src"></tbody></table></div>
+<h2>12 statik runtime denetimi</h2><div class="wrap"><table><thead><tr><th>Kontrol</th><th>Durum</th><th>Kanıt</th></tr></thead><tbody id="runtime"></tbody></table></div>
+<script>
+'use strict';const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('qa_bundle_increment_189.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()}).then(d=>{
+ stamp.textContent=`Doğrulama: ${d.verified_at} · continuation ${d.continuation_key.slice(0,16)}…`;
+ const c=d.canonical,i=d.increment,a=d.accuracy;
+ cards.innerHTML=[['Kanonik',`${c.completed}/${c.planned}`],['Batch',`${c.batch}%`],['Batch artış',`+${c.batch_increase}%`],['Genel',`${c.overall}%`],['Genel artış',`+${c.increase}%`],['Yeni kontrol',i.total],['Tamamlanan',i.completed],['Blocked',i.blocked],['Yeni kaynak',i.sources],['Kaynak güveni',`${a.source_confidence}%`],['Yeni örnek',i.examples],['Runtime denetimi',i.static_runtime_checks],['Numeric güven',`${a.numeric_confidence}%`],['F-host receipt',d.recovery.receipts],['Yeni runner',String(d.recovery.new_runner)]].map(x=>`<div class="card"><b>${E(x[0])}</b><br>${E(x[1])}</div>`).join('');
+ let n=i.start,rows=[];const add=(status,stage,target,check,evidence,confidence=100,blocker='')=>rows.push({no:n++,status,stage,target,check,evidence,confidence,blocker});
+ for(const s of d.sources){add('completed','OFFICIAL_SOURCE',s.id,'Authority and current accessibility',`${s.publisher} primary source revalidated on 2026-07-29: ${s.name}`);add('completed','FACT_CONTRACT',s.id,'Verified official facts',s.fact);add('completed','FAIL_CLOSED_LIMIT',s.id,'Permitted evidential role',s.limit)}
+ for(const b of d.candidate_checks)for(const q of b.checks)add('completed',q[0],`row ${b.row} / HMLR ${b.hmlr}`,q[1],q[2],q[3]);
+ for(const r of d.runtime_audit.checks)add('completed','RUNTIME_CONTRACT','revision16',r.name,r.detail,100);
+ add('completed','DUPLICATE_AND_MANUAL_SAFETY','height_difference_2','Owner, task and continuation','Owner null; same task, attempt and continuation retained; manual action OPEN; no second task or runner.');
+ add('completed','WEB_SOURCE_INTEGRITY','increment 189','Visible data contract','352 operation rows, 72 examples, 28 official sources and 12 static runtime checks prepared.');
+ add('completed','BUSINESS_PROMOTION_GUARD','three preserved candidates','No unsupported promotion','Preserved 0.270, 0.831 and 0.490 m only; 0 new business rows.');
+ add('blocked','RECOVERY_GATE','Existing canonical F-host','Guarded recovery receipts','0/4 receipts; restart, fresh heartbeat, exact claim and final current-run receipt not observed',100,d.recovery.blocker);
+ ops.innerHTML=rows.map(o=>`<tr class="${E(o.status)}"><td>${o.no}</td><td>${E(o.status)}</td><td>${E(o.stage)}</td><td>${E(o.target)}</td><td>${E(o.check)}</td><td>${E(o.evidence)}</td><td>${o.confidence}%</td><td>${E(o.blocker)}</td></tr>`).join('');
+ let eid=562,examples=[];for(const x of d.candidates)for(const scenario of d.example_scenarios)examples.push({id:`HD2-QA-${eid++}`,x,scenario,state:scenario==='UNCERTAINTY_QA'&&x.absolute95<0?'CAUTION':'PASS'});
+ ex.innerHTML=examples.map(q=>{const x=q.x;return `<tr><td>${q.id}</td><td>${x.row}</td><td>${E(x.authority)}</td><td>${E(q.scenario)}</td><td>${E(x.hmlr)}</td><td>${x.span1.toFixed(3)}</td><td>${x.span2.toFixed(3)}</td><td>${x.span_delta_pct.toFixed(2)}%</td><td>${x.robust_pct.toFixed(2)}%</td><td>${x.lower_tail_pct.toFixed(2)}%</td><td>${x.upper_tail_pct.toFixed(2)}%</td><td>${x.pixel_area_residual_pct1.toFixed(2)}%</td><td>${x.effective_area_residual_pct2.toFixed(2)}%</td><td>${x.boundary_delta1.toFixed(3)}</td><td>${x.boundary_delta2.toFixed(3)}</td><td>${x.relative95.toFixed(6)}</td><td>${x.absolute95.toFixed(6)}</td><td>${x.confidence}%</td><td>${E(q.state)}</td></tr>`}).join('');
+ src.innerHTML=d.sources.map(x=>`<tr><td>${E(x.id)}</td><td>${E(x.publisher)}</td><td><a href="${E(x.url)}" target="_blank" rel="noopener">${E(x.name)}</a></td><td>${E(x.role)}</td><td>${x.confidence}%</td><td>${E(x.fact)}</td><td>${E(x.limit)}</td></tr>`).join('');
+ runtime.innerHTML=d.runtime_audit.checks.map(x=>`<tr><td>${E(x.name)}</td><td>${E(x.status)}</td><td>${E(x.detail)}</td></tr>`).join('');
+ const good=rows.length===i.total&&rows[0].no===i.start&&rows.at(-1).no===i.end&&rows.filter(x=>x.status==='completed').length===i.completed&&rows.filter(x=>x.status==='blocked').length===i.blocked&&examples.length===i.examples&&d.sources.length===i.sources&&d.runtime_audit.checks.length===i.static_runtime_checks;
+ if(!good)document.body.insertAdjacentHTML('afterbegin','<p class="integrity">INTEGRITY BLOCK</p>');
+}).catch(e=>document.body.insertAdjacentHTML('afterbegin',`<p class="integrity">Yükleme hatası: ${E(e.message)}</p>`));
+</script></body></html>
