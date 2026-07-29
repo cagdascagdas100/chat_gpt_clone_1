@@ -13,9 +13,9 @@ var files=[
 'data_bevor_schlafmangel_06_long.js',
 'data_bevor_schlafmangel_07_finalize.js'
 ];
-var running=false;
+var running=false,active=false;
 function ready(){var t=(window.DEUTSCH_TESTS||{})[KEY],l=(window.DEUTSCH_LESSONS||{})[KEY];return !!(t&&t.title&&t.fill&&t.mc&&t.tf&&t.wordMatch&&t.phraseMatch&&t.prep&&t.hang&&l&&l.short&&l.medium&&l.long)}
-function redraw(){if(typeof window.renderTests==='function'){try{window.renderTests('Bevor Schreiben')}catch(e){console.error(e)}}}
+function redraw(){if(!active)return;if(typeof window.renderTests==='function'){try{window.renderTests('Bevor Schreiben')}catch(e){console.error(e)}}}
 function loadAt(i){
  if(i>=files.length){running=false;window.AAYS_SCHLAFMANGEL_RUNTIME_DATA_READY=ready();redraw();return}
  var src=files[i],existing=document.querySelector('script[data-sleep-runtime="'+src+'"]');
@@ -26,8 +26,8 @@ function loadAt(i){
  (document.head||document.documentElement).appendChild(s);
 }
 function ensure(){if(ready()){window.AAYS_SCHLAFMANGEL_RUNTIME_DATA_READY=true;redraw();return}if(running)return;running=true;loadAt(0)}
-document.addEventListener('click',function(e){var n=e.target;while(n&&n!==document){if(n.id==='catBefore'){setTimeout(ensure,0);setTimeout(ensure,300);break}n=n.parentNode}},true);
+document.addEventListener('click',function(e){var n=e.target;while(n&&n!==document){if(n.id==='catBefore'){active=true;setTimeout(ensure,0);setTimeout(ensure,300);break}n=n.parentNode}},true);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(ensure,50)});else setTimeout(ensure,50);
 setTimeout(ensure,500);setTimeout(ensure,1500);
-window.AAYS_ENSURE_SCHLAFMANGEL=ensure;
+window.AAYS_ENSURE_SCHLAFMANGEL=function(show){if(show)active=true;ensure()};
 })();
