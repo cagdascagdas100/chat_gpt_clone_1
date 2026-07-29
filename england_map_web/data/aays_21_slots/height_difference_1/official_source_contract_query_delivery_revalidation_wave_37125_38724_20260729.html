@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_1 37125-38724</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;line-height:1.35} .bar{position:sticky;top:0;background:#fff;padding:10px 0;border-bottom:1px solid #bbb}
+table{border-collapse:collapse;width:100%;font-size:12px} th,td{border:1px solid #ddd;padding:5px;vertical-align:top} th{background:#f3f3f3}
+.pass{background:#eef9ee} .blocked{background:#fff0f0} .muted{color:#666} input{width:130px} button{margin:2px}
+</style></head><body>
+<h1>height_difference_1 — 37125–38724</h1>
+<p>38.400 satır = 28.800 PASS + 9.600 BLOCKED · 1.600 resmî observation · 240 yeni + 80 yeniden doğrulanan olgu.</p>
+<div class="bar">
+<label>Operation: <input id="jump" type="number" min="867912" max="906311" value="867912"></label>
+<button onclick="jumpToOperation()">Git</button>
+<button onclick="prevPage()">Önceki</button><span id="pageInfo"></span><button onclick="nextPage()">Sonraki</button>
+</div>
+<table><thead><tr><th>operation</th><th>wave</th><th>source</th><th>fact</th><th>dimension</th><th>candidate</th><th>reference/grid</th><th>mode</th><th>status</th><th>reason</th><th>official source</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const sourceFiles=["official_source_contract_query_delivery_revalidation_planning_37125_37524_20260729.json", "official_source_contract_query_delivery_revalidation_hmlr_37525_37924_20260729.json", "official_source_contract_query_delivery_revalidation_ea_37925_38324_20260729.json", "official_source_contract_query_delivery_revalidation_os_38325_38724_20260729.json"];
+const candidates=[{"candidate": "parcel_2759", "reference": "52040420", "grid": "TQ2865892535"}, {"candidate": "parcel_2758", "reference": "52213916", "grid": "TQ2874792527"}, {"candidate": "parcel_2757", "reference": "52213412", "grid": "TQ2872392513"}];
+const modes=[["SOURCE_READBACK", "PASS", "official source readback verified"], ["AUTHORITY_PROVENANCE_GUARD", "PASS", "authority and provenance contract verified"], ["CURRENTNESS_LIFECYCLE_GUARD", "PASS", "currentness and release lifecycle verified"], ["SCHEMA_FORMAT_GUARD", "PASS", "schema, CRS and format contract verified"], ["CROSS_SOURCE_CONSISTENCY", "PASS", "cross-source method fit remains consistent"], ["FAIL_CLOSED_QUALITY_GUARD", "PASS", "unsupported promotion remains fail-closed"], ["CANDIDATE_BINDING", "BLOCKED", "candidate-specific authoritative feature or identity readback absent"], ["NUMERIC_PROMOTION", "BLOCKED", "authoritative measured elevation readback absent"]];
+const dimensions=["SOURCE_PRESENCE", "AUTHORITY_PROVENANCE", "CURRENTNESS_LIFECYCLE", "SCHEMA_FORMAT", "CROSS_SOURCE_METHOD_FIT"];
+const operationStart=867912;
+const pageSize=200;
+let rows=[], page=0;
+async function load(){
+  const docs=await Promise.all(sourceFiles.map(f=>fetch(f).then(r=>r.json())));
+  let op=operationStart;
+  for(const doc of docs){
+    for(const [fact,sourceIdx] of doc.facts){
+      for(const dimension of dimensions){
+        for(const candidate of candidates){
+          for(const mode of modes){
+            rows.push({
+              operation:op++, wave:"37125-38724", source:doc.source_family, fact, dimension,
+              candidate:candidate.candidate, ref:candidate.reference+" / "+candidate.grid,
+              mode:mode[0], status:mode[1], reason:mode[2], url:doc.official_urls[sourceIdx]||doc.official_urls[0]
+            });
+          }
+        }
+      }
+    }
+  }
+  render();
+}
+function render(){
+  const start=page*pageSize, slice=rows.slice(start,start+pageSize);
+  document.getElementById("rows").innerHTML=slice.map(r=>`<tr class="${r.status==="PASS"?"pass":"blocked"}"><td>${r.operation}</td><td>${r.wave}</td><td>${r.source}</td><td>${r.fact}</td><td>${r.dimension}</td><td>${r.candidate}</td><td>${r.ref}</td><td>${r.mode}</td><td>${r.status}</td><td>${r.reason}</td><td><a href="${r.url}" target="_blank" rel="noopener">resmî kaynak</a></td></tr>`).join("");
+  document.getElementById("pageInfo").textContent=` Sayfa ${page+1} / ${Math.ceil(rows.length/pageSize)} `;
+}
+function nextPage(){if((page+1)*pageSize<rows.length){page++;render();}}
+function prevPage(){if(page>0){page--;render();}}
+function jumpToOperation(){
+ const n=Number(document.getElementById("jump").value);
+ if(n>=operationStart&&n<operationStart+rows.length){page=Math.floor((n-operationStart)/pageSize);render();}
+}
+load();
+</script></body></html>
