@@ -1,12 +1,12 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "security_public_safety_2",
   "task_id": "security_public_safety_2_priority_300row_evidence_expansion_20260727",
   "continuation_key": "bb14231fafeef50e7cf802e27d5bf36aeeaeddc56fdcd7d3ad1035bc227e1b47",
-  "checked_at": "2026-07-29T03:42:00+03:00",
-  "state": "REMOTE_REPOSITORY_PUBLIC_RAW_AND_IOD25_PROVENANCE_ACCEPTED_BROWSER_RUNTIME_PENDING",
-  "queue_status": "result_ready_for_remote_acceptance",
+  "checked_at": "2026-07-29T05:03:05+03:00",
+  "state": "PASS_REMOTE_REPOSITORY_PUBLIC_RAW_IOD25_PROVENANCE_AND_CANONICAL_BROWSER_ACCEPTED",
+  "queue_status": "completed_accepted",
   "runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
   "canonical_runner_claim_observed": false,
   "runtime_live_owner": false,
@@ -22,10 +22,10 @@
   "artifacts": [
     {"line":1,"path":"docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_300row_evidence_expansion_latest.json","blob_sha":"dd8169ea2eb745da21409ae0bb3d11ec51521758","state":"PASS_REMOTE_GITHUB_CONTENT_READBACK"},
     {"line":2,"path":"england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion_latest.json","blob_sha":"dd8169ea2eb745da21409ae0bb3d11ec51521758","state":"PASS_PUBLIC_RAW_CONTENT_FETCH_AND_CANONICAL_BLOB_IDENTITY"},
-    {"line":3,"path":"england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html","blob_sha":"eb5ddcf8cc60356e9ec8ebe65211ecb002f94876","state":"PASS_PUBLIC_RAW_CONTENT_FETCH_AND_CANONICAL_BLOB_IDENTITY"}
+    {"line":3,"path":"england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_evidence_expansion.html","blob_sha":"eb5ddcf8cc60356e9ec8ebe65211ecb002f94876","state":"PASS_CANONICAL_BROWSER_ACCEPTANCE"}
   ],
   "acceptance_checks": [
-    {"line":1,"check":"queue_same_task_and_continuation_key","result":"PASS","evidence":"result_ready_for_remote_acceptance; same task/key"},
+    {"line":1,"check":"queue_same_task_and_continuation_key","result":"PASS","evidence":"completed_accepted; same task/key"},
     {"line":2,"check":"single_coordinator_publication_recorded","result":"PASS","evidence":"PUBLISHED_BY_SINGLE_COORDINATOR"},
     {"line":3,"check":"shard_json_present","result":"PASS","evidence":"blob dd8169ea2eb745da21409ae0bb3d11ec51521758"},
     {"line":4,"check":"website_json_present","result":"PASS","evidence":"blob dd8169ea2eb745da21409ae0bb3d11ec51521758"},
@@ -39,34 +39,37 @@
     {"line":12,"check":"static_dom_completeness","result":"PASS","evidence":"doctype, title, tables, parcel_30762, parcel_31061 and closing body/html present"},
     {"line":13,"check":"iod25_exact_lsoa_join","result":"PASS_WITH_PROVENANCE","evidence":"300 exact current ONS joins; 4 historical codes preserved separately"},
     {"line":14,"check":"public_served_http_body_identity","result":"PASS","evidence":"public raw JSON and HTML content fetch succeeded; canonical blob identities matched"},
-    {"line":15,"check":"real_browser_runtime_and_console","result":"PENDING","evidence":"no accessible browser runtime tool or indexed Pages endpoint in current environment"}
+    {"line":15,"check":"real_browser_runtime_and_console","result":"PASS","evidence":"exact Git blob; 300 DOM rows; correct first/last; zero console/page/request errors; no script/src elements"}
   ],
   "acceptance_summary": {
-    "checks_passed": 14,
-    "checks_pending": 1,
-    "main_completed_operations": 19,
+    "checks_passed": 15,
+    "checks_pending": 0,
+    "main_completed_operations": 20,
     "main_total_operations": 20,
-    "main_overall_progress_percent": 74.1,
-    "main_progress_delta_percent": 3.9
+    "main_overall_progress_percent": 100.0,
+    "main_progress_delta_percentage_points": 25.9
   },
-  "remaining_blockers": [
-    {"line":1,"blocker":"REAL_BROWSER_RUNTIME_CONSOLE_NOT_VERIFIED","state":"OPEN"},
-    {"line":2,"blocker":"STATUS_SYNC_AND_FINAL_READY_WAIT_FOR_BROWSER_GATE","state":"DEPENDENT"}
-  ],
-  "public_http_attempts": {
-    "github_public_raw_json":"PASS_CONTENT_RETURNED",
-    "github_public_raw_html":"PASS_CONTENT_RETURNED",
-    "canonical_json_blob_sha":"dd8169ea2eb745da21409ae0bb3d11ec51521758",
-    "canonical_html_blob_sha":"eb5ddcf8cc60356e9ec8ebe65211ecb002f94876",
-    "github_pages_url":"NOT_INDEXED"
+  "browser_acceptance": {
+    "state": "PASS",
+    "canonical_html_blob_sha": "eb5ddcf8cc60356e9ec8ebe65211ecb002f94876",
+    "html_bytes": 81177,
+    "chromium_version": "Chromium 144.0.7559.96 built on Debian GNU/Linux 13 (trixie)",
+    "candidate_dom_rows": 300,
+    "first_parcel_id": "parcel_30762",
+    "last_parcel_id": "parcel_31061",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "script_elements": 0,
+    "external_src_elements": 0,
+    "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_acceptance_wave25_latest.json",
+    "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_browser_acceptance_wave25.html"
   },
-  "evidence": {
-    "iod25_provenance_json":"england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_iod25_provenance_reconciliation_wave22_latest.json",
-    "public_raw_json":"england_map_web/data/aays_21_slots/security_public_safety_2/priority_300row_public_raw_acceptance_wave23_latest.json"
-  },
+  "remaining_blockers": [],
   "second_runner_created": false,
   "second_task_created": false,
   "second_recovery_refresh_used": false,
+  "generator_rerun": false,
   "fake_data": false,
-  "final_ready": false
+  "final_ready": true
 }
