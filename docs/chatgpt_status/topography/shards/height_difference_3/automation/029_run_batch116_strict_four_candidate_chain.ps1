@@ -12,14 +12,11 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
 $RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\')
 if (-not (Test-Path -LiteralPath $RepoRoot -PathType Container)) { throw 'AAYS_REPO_ROOT_NOT_FOUND' }
 if ($Timeout -lt 1 -or $Timeout -gt 900) { throw 'TIMEOUT_OUT_OF_RANGE' }
-if ([string]::IsNullOrWhiteSpace($PythonExe)) {
-  $cmd = Get-Command python -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($null -eq $cmd) { throw 'PYTHON_COMMAND_NOT_AVAILABLE' }
-  $PythonExe = $cmd.Source
-}
+if ([string]::IsNullOrWhiteSpace($PythonExe)) { $PythonExe = 'python' }
 if ([string]::IsNullOrWhiteSpace($GitExe)) { $GitExe = 'git' }
-$PythonExe = (Resolve-Path -LiteralPath $PythonExe).Path
-$gitCmd = Get-Command $GitExe -ErrorAction Stop
+$pythonCmd = Get-Command $PythonExe -ErrorAction Stop | Select-Object -First 1
+$gitCmd = Get-Command $GitExe -ErrorAction Stop | Select-Object -First 1
+$PythonExe = $pythonCmd.Source
 $GitExe = $gitCmd.Source
 & $PythonExe --version | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'PYTHON_EXECUTABLE_FAILED' }
