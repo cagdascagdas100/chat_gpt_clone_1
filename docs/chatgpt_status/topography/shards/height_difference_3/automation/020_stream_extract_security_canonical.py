@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Stream-validate the 92,283-feature canonical security GeoJSON and export height_difference_3.
+"""Stream-validate the canonical GeoJSON and transactionally export one shard.
 
-Production invariants:
-- canonical registry is explicit row_no 1..92283 (feature order is never identity)
-- parcel_id is unique; exact-coordinate HMLR authority-overlap aliases are explicitly linked
-- source HMLR lon/lat agrees with GeoJSON Point geometry
-- only rows 61523..92283 are exported
-- no elevation value is produced
+Identity is explicit; feature order, nearest fill and synthetic elevation are forbidden.
+The shard JSONL, extraction manifest and first-candidate manifest are published as one
+rollback-capable bundle. Existing valid outputs are preserved on every failure.
 """
 from __future__ import annotations
 
@@ -15,6 +12,7 @@ import hashlib
 import json
 import math
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -97,6 +95,7 @@ def iter_features(path: Path) -> Iterator[dict[str, Any]]:
     stream = StreamingJSON(path)
     try:
         stream.expect("{")
+        found_type = False
         found_features = False
         first_key = True
         while True:
@@ -111,6 +110,9 @@ def iter_features(path: Path) -> Iterator[dict[str, Any]]:
                 raise ValueError("FeatureCollection object key is not a string")
             stream.expect(":")
             if key == "type":
+                if found_type:
+                    raise ValueError("duplicate type member")
+                found_type = True
                 if stream.decode() != "FeatureCollection":
                     raise ValueError("source must be a GeoJSON FeatureCollection")
             elif key == "features":
@@ -134,30 +136,85 @@ def iter_features(path: Path) -> Iterator[dict[str, Any]]:
             else:
                 stream.decode()
             first_key = False
+        if not found_type or not found_features:
+            raise ValueError("FeatureCollection lacks type or features")
         stream.skip_ws()
         if stream.pos < len(stream.buffer) or (not stream.eof and stream._fill()):
             stream.skip_ws()
             if stream.pos < len(stream.buffer):
                 raise ValueError("trailing content after FeatureCollection")
-        if not found_features:
-            raise ValueError("FeatureCollection lacks features")
     finally:
         stream.close()
 
 
-def sha256_file(path: Path) -> str:
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+        for chunk in iter(lambda: handle.read(chunk_size), b""):
             digest.update(chunk)
     return digest.hexdigest()
 
 
+def _fsync_file(path: Path) -> None:
+    with path.open("rb") as handle:
+        os.fsync(handle.fileno())
+
+
+def _fsync_dir(path: Path) -> None:
+    try:
+        fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _write_json_fsync(path: Path, value: Any) -> None:
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _publish_bundle(staged: dict[Path, Path], output_dir: Path) -> None:
+    """Publish all targets or restore the complete previous bundle."""
+    backup_dir = Path(tempfile.mkdtemp(prefix=".canonical_bundle_", suffix=".backup", dir=output_dir))
+    moved_old: list[tuple[Path, Path]] = []
+    published: list[Path] = []
+    try:
+        for target, stage in staged.items():
+            if not stage.is_file() or stage.stat().st_size <= 0:
+                raise ValueError(f"staged output missing or empty: {stage}")
+            if target.exists():
+                backup = backup_dir / target.name
+                target.replace(backup)
+                moved_old.append((target, backup))
+        try:
+            for target, stage in staged.items():
+                stage.replace(target)
+                published.append(target)
+            _fsync_dir(output_dir)
+        except Exception:
+            for target in reversed(published):
+                target.unlink(missing_ok=True)
+            for target, backup in reversed(moved_old):
+                if backup.exists():
+                    backup.replace(target)
+            _fsync_dir(output_dir)
+            raise
+    finally:
+        shutil.rmtree(backup_dir, ignore_errors=True)
+
+
 def as_int(value: Any, field: str) -> int:
     try:
-        return int(str(value).strip())
+        result = int(str(value).strip())
     except (TypeError, ValueError) as exc:
         raise ValueError(f"invalid integer {field}={value!r}") from exc
+    return result
 
 
 def as_float(value: Any, field: str) -> float:
@@ -186,13 +243,15 @@ def normalize(feature: dict[str, Any], transformer: Transformer, tolerance: floa
     if not isinstance(geometry, dict) or geometry.get("type") != "Point":
         raise ValueError(f"row_no {row_no} must have Point geometry")
     coords = geometry.get("coordinates")
-    if not isinstance(coords, list) or len(coords) < 2:
-        raise ValueError(f"row_no {row_no} has invalid Point coordinates")
+    if not isinstance(coords, list) or len(coords) != 2:
+        raise ValueError(f"row_no {row_no} must have exactly two Point coordinates")
     glon = as_float(coords[0], "geometry.longitude")
     glat = as_float(coords[1], "geometry.latitude")
     if abs(glon - lon) > tolerance or abs(glat - lat) > tolerance:
         raise ValueError(f"row_no {row_no} geometry and HMLR coordinates disagree")
     easting, northing = transformer.transform(lon, lat)
+    if not all(math.isfinite(value) for value in (easting, northing)):
+        raise ValueError(f"row_no {row_no} transformation produced non-finite BNG coordinates")
     if not (0 <= easting <= 700000 and 0 <= northing <= 1300000):
         raise ValueError(f"row_no {row_no} transformed BNG coordinate is invalid")
     return {
@@ -210,7 +269,7 @@ def normalize(feature: dict[str, Any], transformer: Transformer, tolerance: floa
         "local_authority_name": authority,
         "geometry_geojson_epsg4326": geometry,
         "source_coordinate_fields": ["hmlr_lon", "hmlr_lat", "geometry.coordinates"],
-        "bng_coordinate_method": "PYPROJ_EPSG4326_TO_EPSG27700_FROM_SOURCE_HMLR_POINT",
+        "bng_coordinate_method": "PYPROJ_EPSG4326_TO_EPSG27700_STRICT_NO_BALLPARK_ONLY_BEST",
         "identity_method": "EXPLICIT_ROW_NO_PARCEL_ID_AND_HMLR_INSPIRE_ID",
         "data_status": "canonical_source_backed_point_pending_current_hmlr_boundary",
         "existing_verified_height_value": None,
@@ -226,13 +285,29 @@ def stream_extract(
     row_end: int = ROW_END,
     tolerance: float = 1e-7,
 ) -> dict[str, Any]:
+    source = source.resolve()
+    if not source.is_file() or source.stat().st_size <= 0:
+        raise ValueError("canonical source must be a non-empty regular file")
+    if canonical_count < 1 or row_start < 1 or row_end < row_start or row_end > canonical_count:
+        raise ValueError("invalid canonical/shard bounds")
+    if not math.isfinite(tolerance) or tolerance < 0 or tolerance > 1e-4:
+        raise ValueError("coordinate tolerance must be finite and between 0 and 1e-4")
+
+    output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     final_path = output_dir / f"canonical_shard_{row_start}_{row_end}.jsonl"
-    fd, temp_name = tempfile.mkstemp(prefix="canonical_shard_", suffix=".tmp", dir=output_dir)
-    os.close(fd)
-    temp_path = Path(temp_name)
+    manifest_path = output_dir / "stream_extraction_manifest.json"
+    candidates_path = output_dir / "first_three_canonical_candidates.json"
+    source_stat_before = source.stat()
+    source_hash_before = sha256_file(source)
 
-    transformer = Transformer.from_crs(SOURCE_CRS, TARGET_CRS, always_xy=True)
+    stage_dir = Path(tempfile.mkdtemp(prefix=".canonical_extract_", suffix=".stage", dir=output_dir))
+    stage_shard = stage_dir / final_path.name
+    stage_manifest = stage_dir / manifest_path.name
+    stage_candidates = stage_dir / candidates_path.name
+    transformer = Transformer.from_crs(
+        SOURCE_CRS, TARGET_CRS, always_xy=True, allow_ballpark=False, only_best=True
+    )
     row_numbers: set[int] = set()
     parcel_ids: set[str] = set()
     inspire_ids: set[str] = set()
@@ -242,7 +317,6 @@ def stream_extract(
     shard_by_row: dict[int, dict[str, Any]] = {}
     duplicate_alias_rows = 0
     feature_count = 0
-
     try:
         for feature_count, feature in enumerate(iter_features(source), start=1):
             row = normalize(feature, transformer, tolerance)
@@ -254,10 +328,6 @@ def stream_extract(
             inspire_id = row["hmlr_inspire_id"]
             if inspire_id in inspire_ids:
                 primary_row_no, primary_lon, primary_lat = primary_by_inspire[inspire_id]
-                # The source contains authority-boundary overlap aliases: the
-                # same official INSPIRE id and point can occur under two London
-                # authorities. Keep all compatibility rows but bind the alias
-                # to one measurement identity; conflicting coordinates block.
                 if abs(row["longitude"] - primary_lon) > tolerance or abs(row["latitude"] - primary_lat) > tolerance:
                     raise ValueError(f"conflicting duplicate hmlr_inspire_id {inspire_id}")
                 duplicate_alias_rows += 1
@@ -286,23 +356,35 @@ def stream_extract(
             missing = sorted(expected - row_numbers)[:20]
             extra = sorted(row_numbers - expected)[:20]
             raise ValueError(f"canonical registry is not exactly 1..{canonical_count}; missing={missing}, extra={extra}")
-        expected_shard = row_end - row_start + 1
         shard.sort(key=lambda row: row["row_no"])
-        if len(shard) != expected_shard:
-            raise ValueError(f"expected {expected_shard} shard rows, received {len(shard)}")
-        if [row["row_no"] for row in shard] != list(range(row_start, row_end + 1)):
-            raise ValueError("shard registry is not contiguous and explicit")
+        expected_shard = row_end - row_start + 1
+        if len(shard) != expected_shard or [row["row_no"] for row in shard] != list(range(row_start, row_end + 1)):
+            raise ValueError("shard registry is not complete, contiguous and explicit")
+
+        source_stat_after = source.stat()
+        source_hash_after = sha256_file(source)
+        if (
+            source_stat_before.st_size != source_stat_after.st_size
+            or source_stat_before.st_mtime_ns != source_stat_after.st_mtime_ns
+            or source_hash_before != source_hash_after
+        ):
+            raise ValueError("canonical source changed during extraction")
+
         first_three = shard[:3]
-        with temp_path.open("w", encoding="utf-8") as out:
+        with stage_shard.open("w", encoding="utf-8", newline="\n") as out:
             for row in shard:
                 out.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
+            out.flush()
+            os.fsync(out.fileno())
+        shard_sha = sha256_file(stage_shard)
 
         identity_digest = hashlib.sha256()
         for row_no in range(1, canonical_count + 1):
             parcel_id, inspire_id, lon, lat, authority = identity_by_row[row_no]
             identity_digest.update(f"{row_no}\t{parcel_id}\t{inspire_id}\t{lon:.8f}\t{lat:.8f}\t{authority}\n".encode())
-        temp_path.replace(final_path)
         result = {
+            "schema_version": 2,
+            "slot_id": "height_difference_3",
             "canonical_features_validated": feature_count,
             "canonical_unique_row_numbers": len(row_numbers),
             "canonical_unique_parcel_ids": len(parcel_ids),
@@ -315,23 +397,75 @@ def stream_extract(
             "first_three_explicit_rows": [row["row_no"] for row in first_three],
             "first_three_candidates": first_three,
             "canonical_identity_sha256": identity_digest.hexdigest(),
-            "source_sha256": sha256_file(source),
-            "source_size_bytes": source.stat().st_size,
+            "source_sha256": source_hash_after,
+            "source_size_bytes": source_stat_after.st_size,
             "export_path": str(final_path),
+            "export_sha256": shard_sha,
+            "strict_crs_transform": True,
+            "source_stability_verified": True,
+            "transactional_output_bundle": True,
+            "previous_valid_outputs_preserved_on_failure": True,
             "row_order_inference_used": False,
             "nearest_fill_used": False,
             "measurement_values_written": 0,
+            "final_ready": False,
+            "fake_data": False,
         }
-        (output_dir / "stream_extraction_manifest.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-        (output_dir / "first_three_canonical_candidates.json").write_text(
-            json.dumps({"slot_id":"height_difference_3","candidates":first_three,"measurement_values_written":0,"final_ready":False}, indent=2) + "\n",
-            encoding="utf-8",
+        _write_json_fsync(stage_manifest, result)
+        candidate_payload = {
+            "schema_version": 2,
+            "slot_id": "height_difference_3",
+            "canonical_export_path": str(final_path),
+            "canonical_export_sha256": shard_sha,
+            "candidate_count": len(first_three),
+            "candidates": first_three,
+            "measurement_values_written": 0,
+            "final_ready": False,
+            "fake_data": False,
+        }
+        _write_json_fsync(stage_candidates, candidate_payload)
+        _publish_bundle(
+            {final_path: stage_shard, manifest_path: stage_manifest, candidates_path: stage_candidates},
+            output_dir,
         )
         return result
+    finally:
+        shutil.rmtree(stage_dir, ignore_errors=True)
+
+
+def _atomic_json(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=f".{path.name}_", suffix=".json.tmp", dir=path.parent)
+    os.close(fd)
+    temp = Path(name)
+    try:
+        _write_json_fsync(temp, value)
+        temp.replace(path)
+        _fsync_dir(path.parent)
     except Exception:
-        temp_path.unlink(missing_ok=True)
-        final_path.unlink(missing_ok=True)
+        temp.unlink(missing_ok=True)
         raise
+
+
+def _validate_query_outputs(output_dir: Path, extraction: dict[str, Any]) -> dict[str, Any]:
+    starter_path = output_dir / "starter_three_query_manifest.json"
+    summary_path = output_dir / "operation_summary.json"
+    if not starter_path.is_file() or not summary_path.is_file():
+        raise ValueError("query preparer did not produce both required manifests")
+    starter = json.loads(starter_path.read_text(encoding="utf-8-sig"))
+    summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
+    if starter.get("slot_id") != "height_difference_3" or starter.get("starter_candidate_count") != 3:
+        raise ValueError("starter manifest identity/count mismatch")
+    if starter.get("canonical_export_sha256") != extraction.get("export_sha256"):
+        raise ValueError("starter manifest is not bound to the current canonical shard hash")
+    if summary.get("selected_candidates") != 3:
+        raise ValueError("operation summary candidate count mismatch")
+    return {
+        "starter_manifest_sha256": sha256_file(starter_path),
+        "operation_summary_sha256": sha256_file(summary_path),
+        "starter_candidate_count": 3,
+        "canonical_export_sha256": extraction["export_sha256"],
+    }
 
 
 def main() -> int:
@@ -339,20 +473,53 @@ def main() -> int:
     parser.add_argument("--source-geojson", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--query-preparer", type=Path)
+    parser.add_argument("--query-preparer-timeout", type=int, default=180)
     parser.add_argument("--no-network", action="store_true")
     args = parser.parse_args()
+    if args.query_preparer_timeout < 1:
+        raise ValueError("query-preparer-timeout must be positive")
     if not args.source_geojson.is_file():
         raise FileNotFoundError(args.source_geojson)
-    result = stream_extract(args.source_geojson.resolve(), args.output_dir.resolve())
+    output_dir = args.output_dir.resolve()
+    result = stream_extract(args.source_geojson.resolve(), output_dir)
     if args.query_preparer:
-        cmd = [sys.executable, str(args.query_preparer.resolve()), "--input", result["export_path"], "--output-dir", str(args.output_dir.resolve())]
+        query_script = args.query_preparer.resolve()
+        if not query_script.is_file():
+            raise FileNotFoundError(query_script)
+        cmd = [sys.executable, str(query_script), "--input", result["export_path"], "--output-dir", str(output_dir)]
         if args.no_network:
             cmd.append("--no-network")
-        completed = subprocess.run(cmd, text=True, capture_output=True)
-        (args.output_dir / "query_preparer_execution.json").write_text(json.dumps({"command":cmd,"returncode":completed.returncode,"stdout":completed.stdout,"stderr":completed.stderr}, indent=2)+"\n", encoding="utf-8")
+        try:
+            completed = subprocess.run(
+                cmd, text=True, capture_output=True, check=False, timeout=args.query_preparer_timeout
+            )
+            receipt = {
+                "schema_version": 2,
+                "command": cmd,
+                "returncode": completed.returncode,
+                "stdout": completed.stdout[-12000:],
+                "stderr": completed.stderr[-12000:],
+                "timed_out": False,
+                "canonical_export_sha256": result["export_sha256"],
+            }
+        except subprocess.TimeoutExpired as exc:
+            receipt = {
+                "schema_version": 2,
+                "command": cmd,
+                "returncode": None,
+                "stdout": (exc.stdout or "")[-12000:] if isinstance(exc.stdout, str) else "",
+                "stderr": (exc.stderr or "")[-12000:] if isinstance(exc.stderr, str) else "",
+                "timed_out": True,
+                "canonical_export_sha256": result["export_sha256"],
+            }
+            _atomic_json(output_dir / "query_preparer_execution.json", receipt)
+            raise RuntimeError("query preparer timed out") from exc
+        if completed.returncode == 0:
+            receipt["validated_outputs"] = _validate_query_outputs(output_dir, result)
+        _atomic_json(output_dir / "query_preparer_execution.json", receipt)
         if completed.returncode != 0:
             raise RuntimeError("query preparer failed; see query_preparer_execution.json")
-    print(json.dumps({"ok":True,"shard_rows":result["shard_rows_exported"],"first_three":result["first_three_explicit_rows"]}))
+    print(json.dumps({"ok": True, "shard_rows": result["shard_rows_exported"], "first_three": result["first_three_explicit_rows"]}))
     return 0
 
 
@@ -360,5 +527,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(json.dumps({"ok":False,"error":f"{type(exc).__name__}: {exc}"}), file=sys.stderr)
+        print(json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}), file=sys.stderr)
         raise
