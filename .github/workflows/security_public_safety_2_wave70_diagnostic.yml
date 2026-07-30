@@ -1,0 +1,62 @@
+name: security-public-safety-2-wave70-diagnostic
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave70_diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  capture-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Capture wave70 run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          mkdir -p docs/chatgpt_status/_shared/slots_21/security_public_safety_2
+          python - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          cmd = ['gh','run','list','--repo',os.environ['GITHUB_REPOSITORY'],'--workflow','security_public_safety_2_wave70_incremental.yml','--branch',os.environ['BRANCH'],'--limit','5','--json','databaseId,status,conclusion,createdAt,startedAt,updatedAt,event,headSha,workflowName,url,attempt']
+          p = subprocess.run(cmd, capture_output=True, text=True)
+          payload = {
+            'schema_version': 1,
+            'slot_id': 'security_public_safety_2',
+            'task_id': 'security_public_safety_2_priority_10660row_incremental_evidence_expansion_20260730',
+            'continuation_key': 'da245942b8cf8d5dca9b76d8087ec427a264e6923da8368e1da0cf0b82365c9d',
+            'captured_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+            'returncode': p.returncode,
+            'stderr': p.stderr,
+            'runs': json.loads(p.stdout or '[]') if p.returncode == 0 else [],
+          }
+          path = 'docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave70_run_diagnostic_20260730.json'
+          open(path,'w',encoding='utf-8').write(json.dumps(payload,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave70_run_diagnostic_20260730.json
+          git commit -m 'record security_public_safety_2 wave70 run diagnostic'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
