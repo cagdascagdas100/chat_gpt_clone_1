@@ -38,13 +38,7 @@ for old, token in protected:
 
 direct = [
     ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "661864f638eabbabf62c01dc367bda38637ff51a"'),
-    (('"schema_version": 49', '"schema_version": 50'),),
-]
-
-# Preserve the tested Wave72 transformation pattern while advancing Wave77 schemas.
-direct = [
-    ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "661864f638eabbabf62c01dc367bda38637ff51a"'),
-    (("'\"schema_version\": 49'", "'\"schema_version\": 50'"), ("'\"schema_version\": 54'", "'\"schema_version\": 55'")),
+    ("('\"schema_version\": 49', '\"schema_version\": 50'),", "('\"schema_version\": 54', '\"schema_version\": 55'),"),
     ('"schema_version": 95,', '"schema_version": 100,'),
     ('"schema_version": 99,', '"schema_version": 104,'),
     ('"schema_version": 94,', '"schema_version": 99,'),
