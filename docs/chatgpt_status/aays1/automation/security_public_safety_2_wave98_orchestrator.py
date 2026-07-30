@@ -34,16 +34,21 @@ for old, token in protected:
         raise SystemExit(f"ORCHESTRATOR_TRANSFORM_FRAGMENT_MISSING: {old}")
     text = text.replace(old, token)
 
-schema_replaced = False
-for escaped_quote in ('\\\"', '\\\\\"'):
-    old = f"('{escaped_quote}schema_version{escaped_quote}: 74', '{escaped_quote}schema_version{escaped_quote}: 75')"
-    new = f"('{escaped_quote}schema_version{escaped_quote}: 75', '{escaped_quote}schema_version{escaped_quote}: 76')"
-    if old in text:
-        text = text.replace(old, new, 1)
-        schema_replaced = True
-        break
-if not schema_replaced:
-    raise SystemExit("ORCHESTRATOR_SCHEMA_TAIL_FRAGMENT_MISSING")
+schema_lines = [
+    line
+    for line in text.splitlines(keepends=True)
+    if "schema_version" in line and "74" in line and "75" in line
+]
+if len(schema_lines) != 1:
+    raise SystemExit(f"ORCHESTRATOR_SCHEMA_LINE_COUNT_INVALID:{len(schema_lines)}")
+old_schema_line = schema_lines[0]
+new_schema_line = (
+    old_schema_line
+    .replace("74", "__SCHEMA_FROM__", 1)
+    .replace("75", "76", 1)
+    .replace("__SCHEMA_FROM__", "75", 1)
+)
+text = text.replace(old_schema_line, new_schema_line, 1)
 
 direct = [
     ("    ('\"schema_version\": 115,', '\"schema_version\": 120,'),",
