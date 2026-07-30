@@ -1,4 +1,5 @@
-name: security-public-safety-2-wave76-incremental
+# Wave77 recovery trigger using an established workflow path; same continuation, no second task.
+name: security-public-safety-2-wave77-recovery-trigger
 
 on:
   push:
@@ -12,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: security-public-safety-2-8ffc9b537d79f7ae2f8c1c60b6945e2b8cbe9d92cf531d3e5c5527d8f4b4960e
+  group: security-public-safety-2-bab574342207c2f4e022ea24b4b3391753eb46eefdc125a0790e50eed5285b44
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: Claim exact next scope
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave76_orchestrator.py claim
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py claim
 
       - name: Install browser runtime
         run: |
@@ -35,11 +36,11 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Generate official-source rows and publish accepted output
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave76_orchestrator.py run
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py run
 
       - name: Verify remote hashes and terminalize
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave76_orchestrator.py terminalize
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py terminalize
 
       - name: Park failed continuation without duplicate retry
         if: ${{ failure() }}
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave76_orchestrator.py park
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py park
