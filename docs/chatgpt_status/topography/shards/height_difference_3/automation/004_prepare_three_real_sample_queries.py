@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare exact source-backed starter candidates and official EA discovery evidence.
+"""Prepare source-backed starter candidates and official EA discovery evidence.
 
-The canonical shard must be complete and contiguous. Network-enabled mode accepts only
-HTTPS responses that remain on environment.data.gov.uk; coverage or tile-query errors
-fail closed. The starter and summary manifests are published as one rollback-capable
-bundle and are bound to the canonical shard SHA-256.
+Accepts any explicit contiguous subrange within the height_difference_3 partition.
+Network-enabled mode accepts only bounded HTTPS responses that remain on the
+Environment Agency host. Output manifests publish transactionally and bind the
+input shard SHA-256. No elevation value is created.
 """
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Iterable
 
-ROW_START = 61523
-ROW_END = 92283
-EXPECTED_COUNT = 30761
+SLOT_ROW_START = 61523
+SLOT_ROW_END = 92283
+SLOT_ROW_COUNT = SLOT_ROW_END - SLOT_ROW_START + 1
 EA_HOST = "environment.data.gov.uk"
 EA_COLLECTION_BASE = (
     "https://environment.data.gov.uk/geoservices/datasets/"
@@ -37,7 +37,6 @@ EA_WCS_CAPABILITIES = (
     "?request=GetCapabilities&service=WCS&version=2.0.1"
 )
 MAX_RESPONSE_BYTES = 20 * 1024 * 1024
-
 REQUIRED_FIELDS = (
     "row_no", "parcel_id", "longitude", "latitude", "bng_easting",
     "bng_northing", "local_authority_name", "data_status",
@@ -115,9 +114,16 @@ def _official_ids(row: dict[str, Any]) -> set[str]:
     return {_clean_id(row.get(field)) for field in OFFICIAL_ID_FIELDS if _clean_id(row.get(field))}
 
 
-def _validate_rows(rows: list[dict[str, Any]], allow_explicit_missing: bool) -> list[dict[str, Any]]:
-    if len(rows) != EXPECTED_COUNT:
-        raise ValueError(f"expected exactly {EXPECTED_COUNT} explicit row records, received {len(rows)}")
+def _validate_rows(
+    rows: list[dict[str, Any]],
+    allow_explicit_missing: bool,
+    expected_row_start: int | None = None,
+    expected_row_end: int | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    if not rows:
+        raise ValueError("canonical export is empty")
+    if (expected_row_start is None) != (expected_row_end is None):
+        raise ValueError("expected row start/end must be supplied together")
     normalized: list[dict[str, Any]] = []
     row_numbers: set[int] = set()
     parcel_ids: set[str] = set()
@@ -129,8 +135,8 @@ def _validate_rows(rows: list[dict[str, Any]], allow_explicit_missing: bool) -> 
             raise ValueError(f"input row {index} lacks required fields: {missing_fields}")
         row = dict(source)
         row_no = _as_int(row["row_no"], "row_no")
-        if not ROW_START <= row_no <= ROW_END:
-            raise ValueError(f"row_no {row_no} is outside {ROW_START}-{ROW_END}")
+        if not SLOT_ROW_START <= row_no <= SLOT_ROW_END:
+            raise ValueError(f"row_no {row_no} is outside {SLOT_ROW_START}-{SLOT_ROW_END}")
         if row_no in row_numbers:
             raise ValueError(f"duplicate row_no: {row_no}")
         row_numbers.add(row_no)
@@ -138,8 +144,6 @@ def _validate_rows(rows: list[dict[str, Any]], allow_explicit_missing: bool) -> 
         if not parcel_id or parcel_id in parcel_ids:
             raise ValueError(f"empty or duplicate parcel_id: {parcel_id!r}")
         parcel_ids.add(parcel_id)
-        data_status = str(row.get("data_status", "")).strip().casefold()
-        explicit_missing = data_status in {"no_data", "missing", "unmatched"}
         row["row_no"] = row_no
         row["parcel_id"] = parcel_id
         row["longitude"] = _as_float(row["longitude"], "longitude")
@@ -150,25 +154,34 @@ def _validate_rows(rows: list[dict[str, Any]], allow_explicit_missing: bool) -> 
             raise ValueError(f"row_no {row_no} longitude/latitude is outside Great Britain")
         if not (0 <= row["bng_easting"] <= 700000 and 0 <= row["bng_northing"] <= 1300000):
             raise ValueError(f"row_no {row_no} BNG coordinate is outside accepted extent")
-        ids = _official_ids(row)
-        row["candidate_official_ids"] = sorted(ids)
-        row["_eligible_for_sample"] = bool(ids) and not (explicit_missing and allow_explicit_missing)
+        data_status = str(row.get("data_status", "")).strip().casefold()
+        explicit_missing = data_status in {"no_data", "missing", "unmatched"}
         if explicit_missing and not allow_explicit_missing:
             raise ValueError(f"row_no {row_no} is explicitly missing; use --allow-explicit-missing")
+        ids = _official_ids(row)
+        row["candidate_official_ids"] = sorted(ids)
+        row["_eligible_for_sample"] = bool(ids) and not explicit_missing
         normalized.append(row)
-    expected_rows = set(range(ROW_START, ROW_END + 1))
-    if row_numbers != expected_rows:
-        missing = sorted(expected_rows - row_numbers)[:20]
-        extra = sorted(row_numbers - expected_rows)[:20]
-        raise ValueError(f"canonical shard registry is not contiguous; missing={missing}, extra={extra}")
-    return sorted(normalized, key=lambda row: row["row_no"])
+    actual_start = min(row_numbers)
+    actual_end = max(row_numbers)
+    expected = set(range(actual_start, actual_end + 1))
+    if row_numbers != expected:
+        missing = sorted(expected - row_numbers)[:20]
+        raise ValueError(f"canonical export row registry is not contiguous; missing={missing}")
+    if expected_row_start is not None and (actual_start != expected_row_start or actual_end != expected_row_end):
+        raise ValueError(
+            f"canonical export range mismatch: expected={expected_row_start}-{expected_row_end} "
+            f"actual={actual_start}-{actual_end}"
+        )
+    ordered = sorted(normalized, key=lambda row: row["row_no"])
+    return ordered, {"start": actual_start, "end": actual_end, "count": len(ordered)}
 
 
 def _bbox_url(lon: float, lat: float, delta: float = 0.00015) -> str:
     if not math.isfinite(delta) or delta <= 0 or delta > 0.01:
         raise ValueError("bbox delta must be finite and within (0, 0.01]")
     query = {
-        "bbox": f"{lon - delta:.8f},{lat - delta:.8f},{lon + delta:.8f},{lat + delta:.8f}",
+        "bbox": f"{lon-delta:.8f},{lat-delta:.8f},{lon+delta:.8f},{lat+delta:.8f}",
         "limit": "20",
         "f": "application/geo+json",
     }
@@ -253,9 +266,6 @@ def _tile_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(feature, dict):
             raise ValueError(f"EA inventory feature {index} is not an object")
         props = dict(feature.get("properties") or {})
-        geometry = feature.get("geometry")
-        if geometry is not None and not isinstance(geometry, dict):
-            raise ValueError(f"EA inventory feature {index} has invalid geometry")
         result.append({
             "feature_id": feature.get("id"),
             "filename": props.get("filename"),
@@ -307,11 +317,13 @@ def _publish_bundle(staged: dict[Path, Path], output_dir: Path) -> None:
 
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path, help="Canonical shard CSV/JSON/JSONL export")
+    parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--sample-size", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=45)
     parser.add_argument("--allow-explicit-missing", action="store_true")
+    parser.add_argument("--expected-row-start", type=int)
+    parser.add_argument("--expected-row-end", type=int)
     parser.add_argument("--no-network", action="store_true")
     args = parser.parse_args(argv)
     if args.sample_size < 1 or args.sample_size > 100:
@@ -322,25 +334,25 @@ def main(argv: Iterable[str] | None = None) -> int:
     if not input_path.is_file() or input_path.stat().st_size <= 0:
         raise ValueError("canonical input must be a non-empty file")
     input_hash_before = _sha256(input_path)
-    rows = _validate_rows(_load_rows(input_path), args.allow_explicit_missing)
+    rows, input_range = _validate_rows(
+        _load_rows(input_path), args.allow_explicit_missing,
+        args.expected_row_start, args.expected_row_end,
+    )
     input_hash_after = _sha256(input_path)
     if input_hash_before != input_hash_after:
         raise ValueError("canonical input changed during query preparation")
-
     candidates = [
         row for row in rows
         if row.get("_eligible_for_sample")
         and row.get("canonical_identity_status") != "authority_overlap_alias"
         and row.get("existing_verified_height_value") in (None, "", "null", "None")
-    ][: args.sample_size]
+    ][:args.sample_size]
     if len(candidates) < args.sample_size:
         raise ValueError(f"only {len(candidates)} unique source-backed unresolved rows are eligible; {args.sample_size} required")
-
     coverage_ids: list[str] = []
     wcs_provenance: dict[str, Any] | None = None
     if not args.no_network:
         coverage_ids, wcs_provenance = _fetch_wcs_coverage_ids(args.timeout)
-
     output_rows: list[dict[str, Any]] = []
     for row in candidates:
         query_url = _bbox_url(float(row["longitude"]), float(row["latitude"]))
@@ -374,13 +386,13 @@ def main(argv: Iterable[str] | None = None) -> int:
             "measured_value_promoted": False,
             "data_status": "pending_official_measurement",
         })
-
     status = "QUERY_PREPARED_OFFICIAL_DISCOVERY_VERIFIED" if not args.no_network else "QUERY_PREPARED_NO_NETWORK_DIAGNOSTIC"
     manifest = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "status": status,
-        "parcel_partition": {"start": ROW_START, "end": ROW_END, "count": EXPECTED_COUNT},
+        "slot_partition": {"start": SLOT_ROW_START, "end": SLOT_ROW_END, "count": SLOT_ROW_COUNT},
+        "input_range": input_range,
         "canonical_export_path": str(input_path),
         "canonical_export_sha256": input_hash_after,
         "canonical_rows_validated": len(rows),
@@ -408,9 +420,10 @@ def main(argv: Iterable[str] | None = None) -> int:
         "production_deploy": False,
     }
     summary = {
-        "schema_version": 2,
+        "schema_version": 3,
         "slot_id": "height_difference_3",
         "status": status,
+        "input_range": input_range,
         "canonical_export_sha256": input_hash_after,
         "validated_rows": len(rows),
         "selected_candidates": len(output_rows),
@@ -420,7 +433,6 @@ def main(argv: Iterable[str] | None = None) -> int:
         "numeric_samples_written": 0,
         "transactional_output_bundle": True,
     }
-
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     stage_dir = Path(tempfile.mkdtemp(prefix=".query_prepare_", suffix=".stage", dir=output_dir))
@@ -435,7 +447,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         }, output_dir)
     finally:
         shutil.rmtree(stage_dir, ignore_errors=True)
-    print(json.dumps({"ok": True, "status": status, "output_dir": str(output_dir), "selected": len(output_rows)}))
+    print(json.dumps({"ok": True, "status": status, "range": input_range, "selected": len(output_rows)}))
     return 0
 
 
