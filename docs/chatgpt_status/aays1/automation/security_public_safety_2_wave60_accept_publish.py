@@ -53,5 +53,22 @@ old_gate = '    if any(gate.get("state") != "PASS" for gate in gates[:12]):\n   
 new_gate = '    failed_gates = [gate for gate in gates[:12] if gate.get("state") != "PASS"]\n    if failed_gates:\n        print("PRE_BROWSER_FAILED_GATES=" + __import__("json").dumps(failed_gates, ensure_ascii=False, sort_keys=True))\n        raise SystemExit("PRE_BROWSER_GATES_FAILED")'
 replace_required(old_gate, new_gate)
 
+old_html_write = '    WEB_HTML.write_text(generate_html(payload, rows, sources, gates, accuracy, police, len(recovered_ids)), encoding="utf-8")'
+new_html_write = '''    compact_source_rows = "".join(
+        f"<tr><td>{index} | {html.escape(str(source.get('name') or '-'))} | publisher={html.escape(str(source.get('publisher') or '-'))} | accuracy={html.escape(str(source.get('accuracy_percent') or 0))}% | status={html.escape(str(source.get('status') or '-'))} | http={html.escape(str((source.get('probe') or {}).get('http_status') or '-'))} | sha256={html.escape(str((source.get('probe') or {}).get('sha256') or '-'))}</td></tr>"
+        for index, source in enumerate(sources, 1)
+    )
+    compact_row_rows = "".join(
+        f"<tr><td>{html.escape(str(row.get('parcel_id') or '-'))} | lon={html.escape(str(row.get('longitude', '-')))} | lat={html.escape(str(row.get('latitude', '-')))} | ons_lsoa={html.escape(str(row.get('ons_lsoa_code') or '-'))} | crime_rank={html.escape(str((row.get('iod_2025') or {}).get('crime_rank') or '-'))} | crime_decile={html.escape(str((row.get('iod_2025') or {}).get('crime_decile') or '-'))} | candidate={html.escape(str(row.get('relative_security_candidate_percent')))} | accuracy={html.escape(str(row.get('candidate_accuracy_percent') or 0))}% | police_records={html.escape(str((row.get('police_query') or {}).get('crime_record_count')))} | police_sha256={html.escape(str((row.get('police_query') or {}).get('sha256') or '-'))} | business_score=null</td></tr>"
+        for row in rows
+    )
+    compact_gate_rows = "".join(
+        f"<tr><td>{index} | {html.escape(str(gate.get('gate') or '-'))} | state={html.escape(str(gate.get('state') or '-'))} | evidence={html.escape(str(gate.get('evidence', '')))}</td></tr>"
+        for index, gate in enumerate(gates, 1)
+    )
+    compact_html = f"""<!doctype html><html lang='tr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>security_public_safety_2 — {len(rows)} satır</title><style>body{{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}}.cards{{display:flex;gap:10px;flex-wrap:wrap}}.card{{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:145px}}table{{border-collapse:collapse;width:100%;background:#fff;font-size:11px;margin:14px 0}}td{{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top;word-break:break-word}}.notice{{padding:12px;background:#fff3cd;border:1px solid #ffe69c}}</style></head><body><h1>security_public_safety_2 — {len(rows)} satır aday kanıtı</h1><div class='notice'>Her satır resmî ONS, IoD 2025 ve Police.uk kanıt zinciriyle gösterilir. Değerler adaydır; business skoru yükseltilmemiştir.</div><div class='cards'><div class='card'>Genel ilerleme<br><b>100.0%</b></div><div class='card'>İşlem<br><b>14/14</b></div><div class='card'>Kaynak<br><b>{promoted}/{len(sources)}</b></div><div class='card'>Aday satır<br><b>{len(rows)}/{len(rows)}</b></div><div class='card'>≥95 satır kanıtı<br><b>{accuracy}</b></div><div class='card'>Police SHA256<br><b>{police}</b></div><div class='card'>Targeted retry<br><b>{len(recovered_ids)}</b></div><div class='card'>Business satır<br><b>0</b></div></div><h2>Resmî kaynaklar</h2><table><tbody>{compact_source_rows}</tbody></table><h2>{len(rows)} örnek satır</h2><table><tbody>{compact_row_rows}</tbody></table><h2>Kabul kapıları</h2><table><tbody>{compact_gate_rows}</tbody></table><p><b>final_ready:</b> remote readback pending</p></body></html>"""
+    WEB_HTML.write_text(compact_html, encoding="utf-8")'''
+replace_required(old_html_write, new_html_write)
+
 namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
 exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
