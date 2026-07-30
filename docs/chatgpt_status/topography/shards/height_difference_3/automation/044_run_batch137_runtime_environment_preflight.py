@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed runtime environment gate for the strict height_difference_3 chain.
-
-Runs only after exact branch/HEAD and fresh-host-heartbeat gates. It verifies the
-actual Python, PowerShell, Git, geospatial libraries, GDAL drivers, PROJ/OSTN15
-operation, official source endpoints and minimum free disk. Batch140 additionally
-binds the completed preflight to a 15-minute TTL, exact local HEAD and canonical
-current-task Git blob before invoking bootstrap 042. It never mutates the legacy
-queue, starts a runner, publishes, or writes numeric parcel values.
-"""
+"""Fail-closed runtime environment gate with restored PROJ state and atomic evidence."""
 from __future__ import annotations
 
 import json
@@ -17,6 +9,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -35,14 +28,26 @@ PREFLIGHT_TTL_SECONDS = 900
 
 def root(start: Path) -> Path:
     for candidate in (start, *start.parents):
-        if (candidate / "england_map_web").is_dir() and (candidate / "docs" / "chatgpt_status").is_dir():
+        if (candidate / "england_map_web").is_dir() and (candidate / "docs/chatgpt_status").is_dir():
             return candidate
     raise RuntimeError("REPO_ROOT_NOT_FOUND")
 
 
-def write(path: Path, payload: dict[str, Any]) -> None:
+def atomic_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}_", suffix=".json.tmp", dir=path.parent)
+    os.close(fd)
+    temporary = Path(temp_name)
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def require(name: str, condition: bool, detail: Any = None) -> dict[str, Any]:
@@ -63,9 +68,9 @@ def resolve_executable(requested: str | None, fallback: str) -> str:
     raise RuntimeError(f"EXECUTABLE_NOT_FOUND:{token}")
 
 
-def git(git_executable: str, repo: Path, *args: str) -> str:
-    proc = subprocess.run([git_executable, "-C", str(repo), *args], text=True, capture_output=True, check=False)
-    if proc.returncode != 0:
+def git(executable: str, repo: Path, *args: str) -> str:
+    proc = subprocess.run([executable, "-C", str(repo), *args], text=True, capture_output=True, check=False)
+    if proc.returncode:
         raise RuntimeError(f"git {' '.join(args)} failed: {proc.stderr[-1200:]}")
     return proc.stdout.strip()
 
@@ -73,7 +78,6 @@ def git(git_executable: str, repo: Path, *args: str) -> str:
 def main() -> int:
     repo = root(Path(__file__).resolve())
     checks: list[dict[str, Any]] = []
-
     python_executable = str(Path(sys.executable).resolve())
     checks.append(require("python_executable_exists", Path(python_executable).is_file(), python_executable))
     checks.append(require("python_version_min_3_10", sys.version_info >= (3, 10), platform.python_version()))
@@ -117,11 +121,10 @@ def main() -> int:
     }
     checks.append(require("shapely_make_valid_available", callable(make_valid), versions["shapely"]))
     checks.append(require("rasterio_mask_available", callable(rasterio_mask), versions["rasterio"]))
-
     gml_mode = str((fiona.supported_drivers or {}).get("GML") or "").lower()
     checks.append(require("fiona_gml_read_driver", "r" in gml_mode, gml_mode))
-    with rasterio.Env() as env:
-        drivers = env.drivers()
+    with rasterio.Env() as raster_env:
+        drivers = raster_env.drivers()
     checks.append(require("rasterio_gtiff_driver", "GTiff" in drivers, drivers.get("GTiff")))
     checks.append(require("rasterio_aaigrid_driver", "AAIGrid" in drivers, drivers.get("AAIGrid")))
 
@@ -131,55 +134,62 @@ def main() -> int:
     checks.append(require("epsg_4326_resolves", target.to_epsg() == 4326, target.to_string()))
 
     network_before = bool(network.is_network_enabled())
-    if not network_before:
-        network.set_network_enabled(True)
-    network_after = bool(network.is_network_enabled())
-    checks.append(require("pyproj_network_enabled", network_after, {"before": network_before, "after": network_after}))
-
-    group = TransformerGroup(source, target, always_xy=True, allow_ballpark=False)
-    transformers = []
-    for item in group.transformers:
-        definition = str(item.definition or "")
-        description = str(item.description or "")
-        transformers.append({
-            "description": description,
-            "accuracy_m": item.accuracy,
-            "uses_ostn15_grid": GRID_NAME in definition,
-            "contains_ballpark": "ballpark" in description.casefold() or "ballpark" in definition.casefold(),
-        })
-    best = transformers[0] if transformers else None
-    checks.append(require("proj_best_available", bool(group.best_available), best))
-    checks.append(require("proj_best_uses_ostn15", bool(best and best["uses_ostn15_grid"]), best))
-    checks.append(require("proj_best_no_ballpark", bool(best and not best["contains_ballpark"]), best))
-    accuracy = float(best["accuracy_m"]) if best and best.get("accuracy_m") is not None else math.inf
-    checks.append(require("proj_best_accuracy_le_1m", 0.0 <= accuracy <= 1.0, accuracy))
-    transformer = Transformer.from_crs(source, target, always_xy=True, allow_ballpark=False, only_best=True)
-    lon, lat = transformer.transform(529200.0, 170000.0)
-    checks.append(require("proj_probe_finite", math.isfinite(lon) and math.isfinite(lat), {"lon": lon, "lat": lat}))
+    network_enabled_for_gate = network_before
+    best: dict[str, Any] | None = None
+    lon = math.nan
+    lat = math.nan
+    try:
+        if not network_before:
+            network.set_network_enabled(True)
+        network_enabled_for_gate = bool(network.is_network_enabled())
+        checks.append(require("pyproj_network_enabled_for_gate", network_enabled_for_gate, {"before": network_before, "during": network_enabled_for_gate}))
+        group = TransformerGroup(source, target, always_xy=True, allow_ballpark=False)
+        transformers: list[dict[str, Any]] = []
+        for item in group.transformers:
+            definition = str(item.definition or "")
+            description = str(item.description or "")
+            transformers.append({
+                "description": description,
+                "accuracy_m": item.accuracy,
+                "uses_ostn15_grid": GRID_NAME in definition,
+                "contains_ballpark": "ballpark" in description.casefold() or "ballpark" in definition.casefold(),
+            })
+        best = transformers[0] if transformers else None
+        checks.append(require("proj_best_available", bool(group.best_available), best))
+        checks.append(require("proj_best_uses_ostn15", bool(best and best["uses_ostn15_grid"]), best))
+        checks.append(require("proj_best_no_ballpark", bool(best and not best["contains_ballpark"]), best))
+        accuracy = float(best["accuracy_m"]) if best and best.get("accuracy_m") is not None else math.inf
+        checks.append(require("proj_best_accuracy_le_1m", 0.0 <= accuracy <= 1.0, accuracy))
+        transformer = Transformer.from_crs(source, target, always_xy=True, allow_ballpark=False, only_best=True)
+        lon, lat = transformer.transform(529200.0, 170000.0)
+        checks.append(require("proj_probe_finite", math.isfinite(lon) and math.isfinite(lat), {"lon": lon, "lat": lat}))
+    finally:
+        if bool(network.is_network_enabled()) != network_before:
+            network.set_network_enabled(network_before)
+    network_after_gate = bool(network.is_network_enabled())
+    checks.append(require("pyproj_network_restored", network_after_gate == network_before, {"before": network_before, "during": network_enabled_for_gate, "after": network_after_gate}))
 
     powershell = resolve_executable(os.environ.get("AAYS_POWERSHELL_EXE"), "powershell")
-    checks.append(require("windows_powershell_available", Path(powershell).is_file(), powershell))
-    ps = subprocess.run([powershell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"], text=True, capture_output=True, check=False)
-    checks.append(require("powershell_invocation_ok", ps.returncode == 0, {"exit": ps.returncode, "stdout": ps.stdout.strip(), "stderr": ps.stderr[-500:]}))
+    checks.append(require("powershell_available", Path(powershell).is_file(), powershell))
+    powershell_version = subprocess.run([powershell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"], text=True, capture_output=True, check=False)
+    checks.append(require("powershell_invocation_ok", powershell_version.returncode == 0, {"exit": powershell_version.returncode, "stdout": powershell_version.stdout.strip(), "stderr": powershell_version.stderr[-500:]}))
 
     disk = shutil.disk_usage(repo)
     checks.append(require("repo_drive_free_space_ge_2gib", disk.free >= MIN_FREE_BYTES, {"free_bytes": disk.free, "required_bytes": MIN_FREE_BYTES}))
 
     session = requests.Session()
-    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch140"})
+    session.headers.update({"User-Agent": "TerraYield-AAYS/height_difference_3-batch178"})
     hmlr = session.get(HMLR_URL, timeout=30, allow_redirects=True)
-    checks.append(require("hmlr_https_reachable", hmlr.status_code == 200, {"status": hmlr.status_code, "final_url": hmlr.url}))
+    checks.append(require("hmlr_https_reachable", hmlr.status_code == 200 and hmlr.url.startswith("https://use-land-property-data.service.gov.uk/"), {"status": hmlr.status_code, "final_url": hmlr.url}))
     checks.append(require("hmlr_inspire_page_identity", "INSPIRE" in hmlr.text and "published" in hmlr.text.casefold(), hmlr.text[:300]))
-
     ea = session.get(EA_WCS_URL, params={"service": "WCS", "request": "GetCapabilities", "version": "2.0.1"}, timeout=30, allow_redirects=True)
-    checks.append(require("ea_wcs_https_reachable", ea.status_code == 200, {"status": ea.status_code, "final_url": ea.url}))
+    checks.append(require("ea_wcs_https_reachable", ea.status_code == 200 and ea.url.startswith("https://environment.data.gov.uk/"), {"status": ea.status_code, "final_url": ea.url}))
     ea_text = ea.text[:200000]
     checks.append(require("ea_wcs_capabilities_identity", "Capabilities" in ea_text and ("CoverageId" in ea_text or "CoverageSummary" in ea_text), ea_text[:300]))
-
-    osr = session.get(OS_CATALOG_URL, params={"area": "GB", "format": "ASCII Grid and GML (Grid)"}, timeout=30, allow_redirects=True)
-    checks.append(require("os_terrain50_catalog_https_reachable", osr.status_code == 200, {"status": osr.status_code, "final_url": osr.url}))
+    os_response = session.get(OS_CATALOG_URL, params={"area": "GB", "format": "ASCII Grid and GML (Grid)"}, timeout=30, allow_redirects=True)
+    checks.append(require("os_terrain50_catalog_https_reachable", os_response.status_code == 200 and os_response.url.startswith("https://api.os.uk/"), {"status": os_response.status_code, "final_url": os_response.url}))
     try:
-        os_payload = osr.json()
+        os_payload = os_response.json()
     except Exception as exc:
         raise RuntimeError(f"OS_TERRAIN50_CATALOG_JSON_FAILED:{type(exc).__name__}:{exc}") from exc
     os_text = json.dumps(os_payload, ensure_ascii=False).casefold()
@@ -188,7 +198,10 @@ def main() -> int:
 
     bootstrap = repo / BOOTSTRAP_REL
     checks.append(require("bootstrap_042_exists", bootstrap.is_file(), str(bootstrap)))
-    proc = subprocess.run([python_executable, str(bootstrap)], cwd=repo, text=True, capture_output=True, check=False)
+    bootstrap_env = os.environ.copy()
+    bootstrap_env["AAYS_GIT_EXE"] = git_executable
+    bootstrap_env["AAYS_POWERSHELL_EXE"] = powershell
+    proc = subprocess.run([python_executable, str(bootstrap)], cwd=repo, env=bootstrap_env, text=True, capture_output=True, check=False)
     checks.append(require("bootstrap_042_passed", proc.returncode == 0, {"exit": proc.returncode, "stdout": proc.stdout[-2000:], "stderr": proc.stderr[-2000:]}))
 
     completed_at = datetime.now(timezone.utc)
@@ -199,10 +212,10 @@ def main() -> int:
     checks.append(require("current_task_blob_sha", len(current_task_blob) == 40, current_task_blob))
 
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "slot_id": "height_difference_3",
         "canonical_branch": BRANCH,
-        "purpose": "STRICT_RUNTIME_ENVIRONMENT_EXECUTABLE_IDENTITY_AND_TTL_BOUND_PREFLIGHT_NO_NUMERIC_MEASUREMENT",
+        "purpose": "STRICT_RUNTIME_ENVIRONMENT_EXECUTABLE_IDENTITY_TTL_AND_RESTORED_PROJ_STATE_NO_NUMERIC_MEASUREMENT",
         "generated_at_utc": completed_at.isoformat().replace("+00:00", "Z"),
         "valid_until_utc": valid_until.isoformat().replace("+00:00", "Z"),
         "preflight_ttl_seconds": PREFLIGHT_TTL_SECONDS,
@@ -215,7 +228,7 @@ def main() -> int:
         "runtime_identity": {
             "python_executable": python_executable,
             "powershell_executable": powershell,
-            "powershell_version": ps.stdout.strip(),
+            "powershell_version": powershell_version.stdout.strip(),
             "git_executable": git_executable,
             "git_version": git_version.stdout.strip(),
             "proj_data_dir": proj_data_dir,
@@ -224,28 +237,32 @@ def main() -> int:
         "versions": versions,
         "required_grid": GRID_NAME,
         "pyproj_network_before": network_before,
-        "pyproj_network_after": network_after,
+        "pyproj_network_enabled_for_gate": network_enabled_for_gate,
+        "pyproj_network_after_gate": network_after_gate,
+        "pyproj_network_restored": True,
         "best_transformer": best,
+        "probe_coordinate": {"longitude": lon, "latitude": lat},
         "powershell_path": powershell,
-        "powershell_version": ps.stdout.strip(),
+        "powershell_version": powershell_version.stdout.strip(),
         "git_executable": git_executable,
         "git_version": git_version.stdout.strip(),
         "python_executable": python_executable,
         "proj_data_dir": proj_data_dir,
         "free_disk_bytes": disk.free,
-        "official_endpoint_checks": {"hmlr_status": hmlr.status_code, "ea_wcs_status": ea.status_code, "os_catalog_status": osr.status_code},
+        "official_endpoint_checks": {"hmlr_status": hmlr.status_code, "ea_wcs_status": ea.status_code, "os_catalog_status": os_response.status_code},
         "bootstrap_042_executed": True,
         "bootstrap_042_exit_code": proc.returncode,
         "coordinator_action_performed": False,
         "queue_mutated": False,
         "runner_started": False,
         "numeric_values_written": 0,
+        "atomic_output_materialization": True,
         "final_ready": False,
         "fake_data": False,
     }
-    out = repo / OUTPUT_REL
-    write(out, payload)
-    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "git": git_executable, "head": canonical_head, "valid_until_utc": payload["valid_until_utc"], "output": str(out)}))
+    output = repo / OUTPUT_REL
+    atomic_json(output, payload)
+    print(json.dumps({"ok": True, "checks": len(checks), "python": python_executable, "powershell": powershell, "git": git_executable, "head": canonical_head, "valid_until_utc": payload["valid_until_utc"], "output": str(output)}))
     return 0
 
 
