@@ -1,0 +1,73 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "parcel_label_2",
+  "continuation_key": "c07f950559681f35d0a482491539c1f50400878e0a0b33f9ae3e733574346ce6",
+  "task_id": "parcel-label-2-inspire-exact-batch-v1-20260730",
+  "attempt_id": "parcel-label-2-inspire-exact-batch-20260730-001",
+  "state": "PENDING",
+  "status": "queued",
+  "priority": -100001,
+  "created_at": "2026-07-30T10:11:00Z",
+  "queue_branch": "codex/aays-single-runner-v5-20260706",
+  "target_branch": "codex/aays-single-runner-v5-20260706",
+  "source_branch": "codex/aays-single-runner-v5-20260706",
+  "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
+  "sample_range": {"start": 30762, "end": 30773, "count": 12},
+  "sample_parcels": ["parcel_30762","parcel_30763","parcel_30764","parcel_30765","parcel_30766","parcel_30767","parcel_30768","parcel_30769","parcel_30770","parcel_30771","parcel_30772","parcel_30773"],
+  "script_path": "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
+  "python_script_path": "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.py",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
+  "read_paths": [
+    "england_map_web/data/program_layer_matrix/security.geojson",
+    "docs/chatgpt_status/_shared/slots_21/parcel_label_2/continuation_c07f950559681f35d0a482491539c1f50400878e0a0b33f9ae3e733574346ce6.v3.task.json",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.py",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
+    "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "https://use-land-property-data.service.gov.uk/datasets/inspire"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/parcel_label_2_inspire_exact_batch_latest.json",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/parcel_label_2_inspire_exact_batch_reconciliation_latest.json",
+    "england_map_web/data/aays_21_slots/parcel_label_2/progress_rows_latest.json"
+  ],
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1/queue/0000_002_parcel_label_2_inspire_exact_batch_v1_20260730.task.json",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/",
+    "england_map_web/data/aays_21_slots/parcel_label_2/"
+  ],
+  "source_urls": [
+    "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "https://use-land-property-data.service.gov.uk/datasets/inspire"
+  ],
+  "source_snapshot_date": "2026-07-30",
+  "required_git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
+  "required_feature_count": 92283,
+  "resource_class": ["network_io_heavy", "xml_streaming", "control_light"],
+  "max_runtime_seconds": 1800,
+  "max_attempts": 2,
+  "acceptance_checks": [
+    "Validate exact canonical Git blob SHA and exactly 92283 unique parcel rows",
+    "Resolve exactly parcel_30762 through parcel_30773 and unique HMLR INSPIRE IDs",
+    "Discover London Borough of Enfield GML only from the current official HMLR download page",
+    "Hash downloaded GML and stream-parse exact INSPIRE identifiers",
+    "Require one exact official feature and Polygon, MultiPolygon, MultiSurface or Surface geometry with at least four coordinate pairs",
+    "Treat INSPIRE extent as indicative and never definitive legal title extent",
+    "Infer no UPRN, address point or unproven parcel binding",
+    "Write row-by-row website evidence, factual partial or NO_DATA_CONTINUE output, fake rows zero and final_ready false"
+  ],
+  "single_shared_runner_required": true,
+  "new_runner_allowed": false,
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "duplicate_task_created": false,
+  "requires_user_action": false,
+  "no_data_policy": "NO_DATA_CONTINUE",
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
