@@ -1,0 +1,72 @@
+name: security-public-safety-2-wave52-diagnostic
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave52_diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Capture wave52 run state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          sleep 45
+          python - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          cmd = [
+              'gh', 'run', 'list',
+              '--repo', os.environ['GITHUB_REPOSITORY'],
+              '--workflow', 'security-public-safety-2-wave52-incremental',
+              '--branch', os.environ['BRANCH'],
+              '--limit', '5',
+              '--json', 'databaseId,status,conclusion,createdAt,startedAt,updatedAt,event,headSha,url,workflowName,attempt'
+          ]
+          result = subprocess.run(cmd, text=True, capture_output=True)
+          runs = json.loads(result.stdout or '[]') if result.returncode == 0 else []
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_4090row_incremental_evidence_expansion_20260730',
+              'continuation_key': 'ce63602906ff4e11913051fff9b03b903f5ea8fc0c2e2b9db31cb9737d7ed3eb',
+              'captured_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+              'returncode': result.returncode,
+              'stderr': result.stderr,
+              'runs': runs,
+          }
+          path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave52_actions_diagnostic_20260730.json')
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave52_actions_diagnostic_20260730.json
+          git commit -m 'record security_public_safety_2 wave52 actions state'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
