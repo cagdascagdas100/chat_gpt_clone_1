@@ -9,26 +9,26 @@ body{font-family:Arial,sans-serif;margin:24px;background:#f4f6f8;color:#17202a}h
 </head>
 <body>
 <h1>parcel_label_2 — canlı ilerleme</h1>
-<div class="warn">Aday araştırması sürüyor. SOURCE_* kimlikleri kanonik parsel değildir. Exact HMLR GML geometrisi DNS engeli nedeniyle recovery-parked; sahte bağlama yapılmaz.</div>
+<div class="warn">40 tarihsel SOURCE_* adayının güncel resmî kaynak yeniden doğrulaması tamamlandı. SOURCE_* kimlikleri kanonik parsel değildir. Exact HMLR Enfield GML geometrisi DNS engeli nedeniyle recovery-parked; sahte bağlama yapılmaz.</div>
 <div id="cards" class="cards"></div>
 <h2>Görünür satırlar</h2>
 <table><thead><tr><th>Satır</th><th>Kimlik</th><th>Kanıt türü</th><th>Aday / HMLR ID</th><th>Sınıf / otorite</th><th>Kaynak doğruluğu</th><th>Parsel doğruluğu</th><th>Geometri</th><th>Durum</th></tr></thead><tbody id="rows"></tbody></table>
-<h2>Satır-satır işlemler</h2>
-<table><thead><tr><th>İşlem</th><th>Aday</th><th>Adım</th><th>Kanıt / sonuç</th><th>Doğruluk</th></tr></thead><tbody id="activity"></tbody></table>
+<h2>Son dalga satır-satır işlemleri</h2>
+<table><thead><tr><th>İşlem</th><th>Aday</th><th>Adım</th><th>Kanıt / sonuç</th><th>Doğruluk</th><th>Resmî kaynak</th></tr></thead><tbody id="activity"></tbody></table>
 <p id="error" class="bad"></p>
 <script>
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const progress='./data/aays_21_slots/parcel_label_2/progress_rows_latest.json';
-const pack='./data/aays_21_slots/parcel_label_2/public_candidate_revalidation_wave2_20260730.json';
+const pack='./data/aays_21_slots/parcel_label_2/public_candidate_revalidation_wave6_20260730.json';
 const get=p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(p+' HTTP '+r.status);return r.json()});
 Promise.all([get(progress),get(pack)]).then(([p,c])=>{
  const q=p.quality,o=p.operations.combined,b=p.blocker;
- cards.innerHTML=[['Durum',p.state],['Görünür satır',q.visible_rows_cumulative],['Yeniden doğrulanan aday',p.candidate_summary.revalidated_candidates],['Aday doğruluğu',q.candidate_source_accuracy_mean_percent+'%'],['Yükseltilen kaynak',q.sources_upgraded],['İşlem',o.completed+'/'+o.total],['Genel ilerleme',o.progress_percent+'%'],['Artış','+'+o.delta_points+' puan'],['Exact satır',q.exact_verified_rows],['Engel',b.state]].map(x=>`<div class="card"><span class="muted">${esc(x[0])}</span><br><b>${esc(x[1])}</b></div>`).join('');
+ cards.innerHTML=[['Durum',p.state],['Görünür satır',q.visible_rows_cumulative],['Yeniden doğrulanan aday',p.candidate_summary.revalidated_candidates+'/'+p.candidate_summary.historical_candidates_total],['Aday doğruluğu',q.candidate_source_accuracy_mean_percent+'%'],['Yükseltilen kaynak',q.sources_upgraded_cumulative],['İşlem',o.completed+'/'+o.total],['Genel ilerleme',o.progress_percent+'%'],['Artış','+'+o.delta_points+' puan'],['Exact satır',q.exact_verified_rows],['Engel',b.state]].map(x=>`<div class="card"><span class="muted">${esc(x[0])}</span><br><b>${esc(x[1])}</b></div>`).join('');
  rows.innerHTML=p.progress_rows.map(r=>`<tr><td>${r[0]}</td><td><code>${esc(r[1])}</code></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}%</td><td>${r[6]==null?'—':esc(r[6])+'%'}</td><td>${r[7]==null?'—':esc(r[7])+'%'}</td><td>${esc(r[8])}</td></tr>`).join('');
  const cols=Object.fromEntries(c.columns.map((x,i)=>[x,i]));
  const steps=[['HISTORICAL_ENTITY_READ','Önceki SOURCE kimliği okundu.'],['CURRENT_OFFICIAL_SOURCE_VERIFIED','Güncel resmî Westfield kaynağı doğrulandı.'],['CATEGORY_EVIDENCE_CHECKED',null],['CANONICAL_BINDING_FAIL_CLOSED','Kanonik parsel ve exact geometri NOT_BOUND bırakıldı.'],['WEB_ROW_PUBLISHED','Aday canlı ilerleme tablosuna yayımlandı.']];
  let n=1,out=[];
- for(const x of c.candidates){for(const s of steps){const evidence=s[0]==='CATEGORY_EVIDENCE_CHECKED'?x[cols.evidence]:s[1];out.push(`<tr><td>${n++}</td><td>${esc(x[cols.candidate_name])}</td><td><code>${esc(s[0])}</code></td><td>${esc(evidence)}</td><td>${esc(x[cols.source_accuracy_percent])}%</td></tr>`)}}
+ for(const x of c.candidates){for(const s of steps){const evidence=s[0]==='CATEGORY_EVIDENCE_CHECKED'?x[cols.evidence]:s[1];const u=x[cols.source_url];out.push(`<tr><td>${n++}</td><td>${esc(x[cols.candidate_name])}</td><td><code>${esc(s[0])}</code></td><td>${esc(evidence)}</td><td>${esc(x[cols.source_accuracy_percent])}%</td><td><a href="${esc(u)}" target="_blank" rel="noopener">kaynak</a></td></tr>`)}}
  activity.innerHTML=out.join('');
 }).catch(e=>error.textContent='Veri yüklenemedi: '+e.message);
 </script>
