@@ -69,6 +69,14 @@ new_html_write = '''    compact_source_rows = "".join(
     compact_html = f"""<!doctype html><html lang='tr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>security_public_safety_2 — {len(rows)} satır</title><style>body{{font-family:Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}}.cards{{display:flex;gap:10px;flex-wrap:wrap}}.card{{background:#fff;border:1px solid #cfd8dc;padding:10px;min-width:145px}}table{{border-collapse:collapse;width:100%;background:#fff;font-size:11px;margin:14px 0}}td{{border:1px solid #cfd8dc;padding:6px;text-align:left;vertical-align:top;word-break:break-word}}.notice{{padding:12px;background:#fff3cd;border:1px solid #ffe69c}}</style></head><body><h1>security_public_safety_2 — {len(rows)} satır aday kanıtı</h1><div class='notice'>Her satır resmî ONS, IoD 2025 ve Police.uk kanıt zinciriyle gösterilir. Değerler adaydır; business skoru yükseltilmemiştir.</div><div class='cards'><div class='card'>Genel ilerleme<br><b>100.0%</b></div><div class='card'>İşlem<br><b>14/14</b></div><div class='card'>Kaynak<br><b>{promoted}/{len(sources)}</b></div><div class='card'>Aday satır<br><b>{len(rows)}/{len(rows)}</b></div><div class='card'>≥95 satır kanıtı<br><b>{accuracy}</b></div><div class='card'>Police SHA256<br><b>{police}</b></div><div class='card'>Targeted retry<br><b>{len(recovered_ids)}</b></div><div class='card'>Business satır<br><b>0</b></div></div><h2>Resmî kaynaklar</h2><table><tbody>{compact_source_rows}</tbody></table><h2>{len(rows)} örnek satır</h2><table><tbody>{compact_row_rows}</tbody></table><h2>Kabul kapıları</h2><table><tbody>{compact_gate_rows}</tbody></table><p><b>final_ready:</b> remote readback pending</p></body></html>"""
     WEB_HTML.write_text(compact_html, encoding="utf-8")'''
 replace_required(old_html_write, new_html_write)
+replace_required(
+    '            first_id = locator.nth(0).locator("td").nth(0).inner_text().strip()',
+    '            first_id = locator.nth(0).locator("td").nth(0).inner_text().strip().split(" | ", 1)[0]',
+)
+replace_required(
+    '            last_id = locator.nth(dom_rows - 1).locator("td").nth(0).inner_text().strip()',
+    '            last_id = locator.nth(dom_rows - 1).locator("td").nth(0).inner_text().strip().split(" | ", 1)[0]',
+)
 
 namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
 exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
