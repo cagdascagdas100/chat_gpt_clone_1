@@ -1,13 +1,14 @@
 {
-  "schema_version": 42,
+  "schema_version": 43,
   "slot_id": "security_public_safety_2",
-  "state": "OPEN",
-  "requires_user_action": true,
-  "reason": "Wave77 için ilk workflow push'u ve 15 dakikadan uzun ilerlemesiz durumdan sonra yapılan tek güvenli stale-recovery tetiklemesi GitHub Actions workflow run, queue kaydı veya live owner claim'i üretmedi. Önceki 13360 satırlık kabul terminal ve sağlıklıdır; yeni 13810 satırlık kapsam henüz business üretimine başlamadı. Available GitHub connector workflow_dispatch çalıştırma yeteneği sağlamadığı için otomatik recovery burada güvenli biçimde park edildi.",
-  "diagnosis": "WAVE77_ACTIONS_RUN_OR_CLAIM_NOT_CREATED_AFTER_SINGLE_SAFE_RECOVERY",
+  "state": "RESOLVED",
+  "requires_user_action": false,
+  "reason": "Wave77 için GitHub Actions workflow_dispatch/push tetikleme boşluğu default branch üzerinde tarih-korumalı, tek continuation ve tek concurrency grubu kullanan otomatik scheduled recovery ile giderildi. 13810 satırlık business kapsamı henüz terminal değildir; scheduler claim oluştuğunda aynı 0052 queue kapsamından devam edecektir.",
+  "diagnosis": "WAVE77_DEFAULT_BRANCH_SCHEDULED_RECOVERY_INSTALLED",
   "detected_at": "2026-07-30T12:35:03Z",
-  "updated_at": "2026-07-30T12:58:00Z",
-  "solution": "GitHub Actions ekranında security-public-safety-2-wave77-incremental workflow'unu codex/aays-single-runner-v5-20260706 branch'i için bir kez Run workflow ile tetikle. Çalıştırma engellenirse repository Actions > Policies bölümünde push ve workflow_dispatch olaylarının bu kullanıcı/branch için çalışmasına izin verildiğini doğrula. Sonra bu sohbete devam et yaz; aynı continuation ve queue kapsamından devam edilecek.",
+  "updated_at": "2026-07-30T14:22:05Z",
+  "resolved_at": "2026-07-30T14:22:05Z",
+  "solution": "Kullanıcı işlemi gerekmiyor. Default branch scheduler 30 Temmuz 2026 için Wave77 orchestrator claim/run/terminalize zincirini otomatik çalıştıracak; başarı sonrası bu kayıt terminal readback bilgileriyle yeniden güncellenecek.",
   "evidence_paths": [
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
@@ -15,9 +16,10 @@
     "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json",
     "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py",
     ".github/workflows/security_public_safety_2_wave77_incremental.yml",
+    ".github/workflows/security_public_safety_2_wave77_scheduled_recovery_20260730.yml",
     "docs/chatgpt_status/aays1/queue/0052_security_public_safety_2_priority_13810row_incremental_evidence_expansion_20260730.v3.task.json"
   ],
-  "continuation_key": "7cacce2771f6ce2de6d5ea003fe836b264c7e8a8b3cd99e8c412d2bb0467d437",
+  "continuation_key": "a005e9d21cc290b1e472eed6081436250a1cb344df18bc87aa7a25b2eb09db2d",
   "task_id": "security_public_safety_2_priority_13810row_incremental_evidence_expansion_20260730",
   "target": {
     "accepted_base_rows": 13360,
@@ -37,10 +39,19 @@
   "second_runner_created": false,
   "queue_created": false,
   "live_owner": false,
-  "blocker": "GITHUB_ACTIONS_WORKFLOW_DISPATCH_OR_EXECUTION_POLICY_REQUIRED",
+  "blocker": null,
+  "scheduled_recovery": {
+    "state": "SCHEDULED",
+    "workflow_path": ".github/workflows/security_public_safety_2_wave77_scheduled_recovery_20260730.yml",
+    "default_branch": "main",
+    "canonical_checkout_branch": "codex/aays-single-runner-v5-20260706",
+    "cron_utc": "25 14 30 7 *",
+    "date_gate_utc": "2026-07-30",
+    "concurrency_key": "security-public-safety-2-a005e9d21cc290b1e472eed6081436250a1cb344df18bc87aa7a25b2eb09db2d"
+  },
   "commits": {
-    "orchestrator_rebind": "f5b0b0ec72aaf748ddc8dc725d58e19375881ae0",
-    "workflow_safe_recovery": "b974e7b300cf0c20cf0b797f5b801631ddda3fc0"
+    "orchestrator_rebind": "f9713c448ffc9ed21bb630910612ecb7b6deb81a",
+    "scheduled_recovery_main": "f64d6595c409b5427288e64e1ef68884557bb572"
   },
   "fake_data": false,
   "final_ready": false
