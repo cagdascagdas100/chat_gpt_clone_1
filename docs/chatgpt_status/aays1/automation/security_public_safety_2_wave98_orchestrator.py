@@ -34,9 +34,18 @@ for old, token in protected:
         raise SystemExit(f"ORCHESTRATOR_TRANSFORM_FRAGMENT_MISSING: {old}")
     text = text.replace(old, token)
 
+schema_replaced = False
+for escaped_quote in ('\\\"', '\\\\\"'):
+    old = f"('{escaped_quote}schema_version{escaped_quote}: 74', '{escaped_quote}schema_version{escaped_quote}: 75')"
+    new = f"('{escaped_quote}schema_version{escaped_quote}: 75', '{escaped_quote}schema_version{escaped_quote}: 76')"
+    if old in text:
+        text = text.replace(old, new, 1)
+        schema_replaced = True
+        break
+if not schema_replaced:
+    raise SystemExit("ORCHESTRATOR_SCHEMA_TAIL_FRAGMENT_MISSING")
+
 direct = [
-    ("    (r'''('\\\"schema_version\\\": 69', '\\\"schema_version\\\": 70'),''', r'''('\\\"schema_version\\\": 74', '\\\"schema_version\\\": 75'),'''),",
-     "    (r'''('\\\"schema_version\\\": 69', '\\\"schema_version\\\": 70'),''', r'''('\\\"schema_version\\\": 75', '\\\"schema_version\\\": 76'),'''),"),
     ("    ('\"schema_version\": 115,', '\"schema_version\": 120,'),",
      "    ('\"schema_version\": 115,', '\"schema_version\": 121,'),"),
     ("    ('\"schema_version\": 119,', '\"schema_version\": 124,'),",
