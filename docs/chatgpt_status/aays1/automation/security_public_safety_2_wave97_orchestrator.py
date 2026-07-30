@@ -49,6 +49,7 @@ direct = [
     ("    ('97.81', '97.99'),", "    ('97.81', '98.03'),"),
     ("    '\"expanded_scope_progress_percent\": 97.99',", "    '\"expanded_scope_progress_percent\": 98.03'," ),
     ("    ('WAVE92', 'WAVE96'),", "    ('WAVE92', 'WAVE97'),"),
+    ("    'WAVE96_REMOTE_TERMINAL_READBACK_FAILED',", "    'WAVE97_REMOTE_TERMINAL_READBACK_FAILED'," ),
 ]
 for old, new in direct:
     if old not in text:
