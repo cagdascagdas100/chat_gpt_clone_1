@@ -82,6 +82,12 @@ if wrapper_old_target not in text:
     raise SystemExit(f"ORCHESTRATOR_WRAPPER_TARGET_DATE_FRAGMENT_MISSING: {wrapper_old_target}")
 text = text.replace(wrapper_old_target, wrapper_new_target)
 
+previous_generator_old = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730.py"
+previous_generator_new = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731.py"
+if previous_generator_old not in text:
+    raise SystemExit(f"PREVIOUS_GENERATOR_DATE_FRAGMENT_MISSING: {previous_generator_old}")
+text = text.replace(previous_generator_old, previous_generator_new)
+
 inner_marker = "\nrequired = ["
 inner_injection = '''
 old_target_task = "security_public_safety_2_priority_21910row_incremental_evidence_expansion_20260730"
