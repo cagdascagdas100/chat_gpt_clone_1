@@ -10,7 +10,7 @@
   "status": "recovery_parked",
   "priority": -100001,
   "created_at": "2026-07-30T10:11:00Z",
-  "updated_at": "2026-07-30T10:36:00Z",
+  "updated_at": "2026-07-30T13:55:00Z",
   "queue_branch": "codex/aays-single-runner-v5-20260706",
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "source_branch": "codex/aays-single-runner-v5-20260706",
@@ -33,17 +33,32 @@
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/parcel_label_2_inspire_exact_batch_reconciliation_latest.json",
     "england_map_web/data/aays_21_slots/parcel_label_2/progress_rows_latest.json"
   ],
+  "recovery_evidence_paths": [
+    "england_map_web/data/aays_21_slots/parcel_label_2/recovery_progress_20260730T1355Z.json",
+    "england_map_web/parcel_label_2_recovery_progress_20260730.html",
+    "docs/chatgpt_status/_shared/slots_21/parcel_label_2/recovery_inspire_batch_20260730T1036Z.json"
+  ],
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/0000_002_parcel_label_2_inspire_exact_batch_v1_20260730.task.json",
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/",
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/",
-    "england_map_web/data/aays_21_slots/parcel_label_2/"
+    "england_map_web/data/aays_21_slots/parcel_label_2/",
+    "england_map_web/parcel_label_2_recovery_progress_20260730.html"
   ],
   "source_urls": [
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "https://use-land-property-data.service.gov.uk/datasets/inspire"
+    "https://use-land-property-data.service.gov.uk/datasets/inspire",
+    "https://www.gov.uk/guidance/inspire-index-polygons-spatial-data"
   ],
   "source_snapshot_date": "2026-07-30",
+  "official_source_validation": {
+    "download_page_verified": true,
+    "dataset_published_at": "2026-07-05",
+    "release_frequency": "first Sunday of every month",
+    "enfield_gml_listed": true,
+    "geometry_semantics": "indicative position and extent; not a definitive legal boundary",
+    "binary_download_completed": false
+  },
   "required_git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
   "required_feature_count": 92283,
   "resource_class": ["network_io_heavy", "xml_streaming", "control_light"],
@@ -78,7 +93,20 @@
     "identity_pending_rows": 9,
     "exact_verified_rows": 0,
     "fake_rows": 0,
-    "recovery_record": "docs/chatgpt_status/_shared/slots_21/parcel_label_2/recovery_inspire_batch_20260730T1036Z.json"
+    "operations_completed": 21,
+    "operations_total": 24,
+    "progress_percent": 87.5,
+    "progress_increase_percentage_points": 12.5,
+    "website_rows_published": 12,
+    "recovery_record": "docs/chatgpt_status/_shared/slots_21/parcel_label_2/recovery_inspire_batch_20260730T1036Z.json",
+    "web_evidence_json": "england_map_web/data/aays_21_slots/parcel_label_2/recovery_progress_20260730T1355Z.json",
+    "web_evidence_html": "england_map_web/parcel_label_2_recovery_progress_20260730.html"
+  },
+  "retry_policy": {
+    "same_task_only": true,
+    "create_duplicate_task": false,
+    "start_second_runner": false,
+    "retry_when": "official GML binary transport is reachable and a fresh no-live-owner readback passes"
   },
   "fake_data": false,
   "db_write": false,
