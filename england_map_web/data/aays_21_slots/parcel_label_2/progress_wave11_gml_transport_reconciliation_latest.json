@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "parcel_label_2",
+  "continuation_key": "c07f950559681f35d0a482491539c1f50400878e0a0b33f9ae3e733574346ce6",
+  "generated_at": "2026-07-30T16:55:00Z",
+  "state": "WAVE11_OFFICIAL_GML_TRANSPORT_RECONCILED_STRICT_PAYLOAD_GATE_DNS_RECOVERY_PARKED",
+  "method": "Reconcile the worker with the current official statement that INSPIRE files are published as GML, retain ZIP only as an optional defensive carrier, add strict rejection of HTML and unknown payloads, confirm the government CKAN download resource remains active, and preserve the same parked exact task without starting a second runner.",
+  "row_schema": ["line_no","entity_id","evidence_type","candidate_name_or_hmlr_id","class_or_authority","source_accuracy_percent","parcel_identity_accuracy_percent","geometry_binding_accuracy_percent","status","canonical_parcel_bound","exact_geometry_bound"],
+  "progress_rows": [
+    [67,"parcel_label_2","OFFICIAL_GML_FORMAT_RECONCILIATION",null,"HM Land Registry",100.0,null,0.0,"PASS_CURRENT_OFFICIAL_SERVICE_STATES_FILES_ARE_PUBLISHED_AS_GML",false,false],
+    [68,"0698d455-810a-4cfb-b237-61587f016548","GOVERNMENT_CKAN_DOWNLOAD_RESOURCE_AUDIT",null,"HM Land Registry download locator",100.0,null,0.0,"PASS_RESOURCE_STATE_ACTIVE_FUNCTION_DOWNLOAD_PACKAGE_ID_VERIFIED",false,false],
+    [69,"parcel_label_2","DIRECT_GML_PAYLOAD_GATE",null,"worker v6.2",100.0,null,0.0,"PASS_DIRECT_XML_GML_ACCEPTED_ONLY_WHEN_GML_MARKERS_PRESENT",false,false],
+    [70,"parcel_label_2","OPTIONAL_ZIP_PAYLOAD_GATE",null,"worker v6.2",100.0,null,0.0,"PASS_ZIP_ACCEPTED_ONLY_WITH_EXACTLY_ONE_RECOGNISED_GML_MEMBER",false,false],
+    [71,"parcel_label_2","HTML_REDIRECT_FAIL_CLOSED_GATE",null,"worker v6.2",100.0,null,0.0,"PASS_BINARY_ROUTE_HTML_RESPONSE_REJECTED",false,false],
+    [72,"parcel_label_2","UNKNOWN_PAYLOAD_FAIL_CLOSED_GATE",null,"worker v6.2",100.0,null,0.0,"PASS_NON_GML_NON_ZIP_PAYLOAD_REJECTED",false,false],
+    [73,"parcel_label_2","SINGLE_TASK_V6_2_ROUTE_AUDIT",null,"canonical branch",100.0,null,0.0,"PASS_EXISTING_POWERSHELL_ENTRYPOINT_ROUTES_TO_V6_2_NO_DUPLICATE_TASK_OR_RUNNER",false,false],
+    [74,"parcel_label_2","CURRENT_DNS_AND_PENDING_AUDIT",null,"three official hosts",100.0,null,0.0,"FAIL_CLOSED_DNS_TEMPORARY_FAILURE_TASK_RECOVERY_PARKED_NOT_PENDING",false,false]
+  ],
+  "candidate_summary": {"revalidated_candidates":40,"historical_candidates_total":40,"new_unique_candidates":0,"canonical_identity_rows":3,"exact_official_inspire_polygon_rows":0,"fake_rows":0},
+  "quality": {"candidate_source_accuracy_mean_percent":99.96,"candidate_source_accuracy_min_percent":99.5,"transport_reconciliation_accuracy_percent":100.0,"sources_upgraded_previous":42,"sources_upgraded_cumulative":44,"visible_rows_previous":66,"visible_rows_added":8,"visible_rows_cumulative":74},
+  "operations": {"core_previous":{"completed":261,"total":264,"progress_percent":98.9},"core_current":{"completed":261,"total":264,"progress_percent":98.9,"delta_points":0.0},"wave11_transport_reconciliation":{"completed":8,"total":8,"progress_percent":100.0}},
+  "remaining_groups": ["runner_environment_with_working_DNS","official_Enfield_GML_download","exact_12_id_GML_parse"],
+  "official_sources": [
+    "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "https://use-land-property-data.service.gov.uk/datasets/inspire",
+    "https://www.data.gov.uk/dataset/811bcf4c-fbbf-4597-aa9c-3d5bd3bfd455/inspire-index-polygons-spatial-data",
+    "https://ckan.publishing.service.gov.uk/dataset/inspire-index-polygons-spatial-data/resource/0698d455-810a-4cfb-b237-61587f016548",
+    "https://guidance.data.gov.uk/get_data/api_documentation/"
+  ],
+  "worker": {"version":"6.2-official-gml-or-zip-strict-payload-batch","path":"docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v3.py","entrypoint":"docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1","commit":"8c4a8f6e3c2e050453031022c5d5d9806a9a868a","entrypoint_commit":"3e1b1b508fc062a254eb82c45cecb16b1965a7f1"},
+  "blocker": {"code":"OFFICIAL_HMLR_GML_BINARY_DOWNLOAD_ENVIRONMENT_DNS_FAILURE","state":"RECOVERY_PARKED","pending":false,"manual_action_required":false},
+  "duplicate_task_created": false,
+  "second_runner_started": false,
+  "fake_data": false,
+  "final_ready": false
+}
