@@ -35,7 +35,7 @@ for old, token in protected:
     text = text.replace(old, token)
 
 direct = [
-    ("('\"schema_version\": 69', '\"schema_version\": 70'),", "('\"schema_version\": 70', '\"schema_version\": 71'),"),
+    (r'''('\"schema_version\": 69', '\"schema_version\": 70'),''', r'''('\"schema_version\": 70', '\"schema_version\": 71'),'''),
     ('"schema_version": 115,', '"schema_version": 116,'),
     ('"schema_version": 119,', '"schema_version": 120,'),
     ('"schema_version": 114,', '"schema_version": 115,'),
