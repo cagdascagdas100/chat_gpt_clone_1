@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Download and validate the current OS Terrain 50 GB ASCII Grid package via OS Downloads API.
+"""Download and validate the current OS Terrain 50 GB ASCII Grid package.
 
-Uses only the official OpenData catalog endpoint. Cached national archives are
-reused only when a prior official-catalog provenance record binds the exact
-archive hash and size. No guessed static URL or unproven recent cache is
-accepted. No parcel measurement is written by this script.
+Only the official OS OpenData catalogue is used. A network response is staged,
+fully validated and hashed before it can atomically replace the canonical
+archive. A failed or malformed download therefore cannot destroy a prior valid
+package. No parcel measurement is written by this script.
 """
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ FORMAT = "ASCII Grid and GML (Grid)"
 AREA = "GB"
 API_BASE = "https://api.os.uk/downloads/v1"
 MAX_BYTES = 350 * 1024 * 1024
+MAX_CATALOG_BYTES = 10 * 1024 * 1024
 OFFICIAL_GB_GRID_TILE_COUNT = 2858
 OFFICIAL_PRODUCT_SUPPLY_URL = (
     "https://docs.os.uk/os-downloads/products/land-and-terrain-portfolio/"
@@ -42,8 +43,7 @@ def request(url: str, timeout: int, api_key: str | None = None):
     if api_key:
         headers["key"] = api_key
     return urllib.request.urlopen(
-        urllib.request.Request(url, headers=headers),
-        timeout=timeout,
+        urllib.request.Request(url, headers=headers), timeout=timeout
     )
 
 
@@ -60,11 +60,11 @@ def redirect_url(api_key: str | None = None) -> str:
 
 def flatten_downloads(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
-        return [dict(v) for v in payload if isinstance(v, dict)]
+        return [dict(value) for value in payload if isinstance(value, dict)]
     if isinstance(payload, dict):
         for key in ("downloads", "items", "results"):
             if isinstance(payload.get(key), list):
-                return [dict(v) for v in payload[key] if isinstance(v, dict)]
+                return [dict(value) for value in payload[key] if isinstance(value, dict)]
     raise ValueError("OS Downloads API response does not contain a download list")
 
 
@@ -92,12 +92,10 @@ def choose_candidate(items: list[dict[str, Any]]) -> dict[str, Any]:
     scored.sort(key=lambda pair: (-pair[0], json.dumps(pair[1], sort_keys=True)))
     best_score = scored[0][0]
     best = [item for score, item in scored if score == best_score]
-    if len(best) > 1:
-        serialized = {json.dumps(item, sort_keys=True) for item in best}
-        if len(serialized) > 1:
-            raise ValueError(
-                f"ambiguous OS Terrain50 candidates at score {best_score}: {len(best)}"
-            )
+    if len({json.dumps(item, sort_keys=True) for item in best}) > 1:
+        raise ValueError(
+            f"ambiguous OS Terrain50 candidates at score {best_score}: {len(best)}"
+        )
     return best[0]
 
 
@@ -126,10 +124,7 @@ def sha256_file(path: Path) -> str:
 
 def sha256_json(value: Any) -> str:
     payload = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
@@ -139,7 +134,7 @@ def safe_names(archive: zipfile.ZipFile) -> list[str]:
     seen: set[str] = set()
     for info in archive.infolist():
         name = info.filename.replace("\\", "/")
-        parts = [p for p in name.split("/") if p]
+        parts = [part for part in name.split("/") if part]
         if name.startswith("/") or ".." in parts:
             raise ValueError(f"unsafe archive path: {info.filename}")
         if info.file_size < 0 or info.file_size > 50 * 1024 * 1024:
@@ -153,8 +148,7 @@ def safe_names(archive: zipfile.ZipFile) -> list[str]:
 
 
 def validate_ascii_header(
-    archive: zipfile.ZipFile,
-    name: str,
+    archive: zipfile.ZipFile, name: str
 ) -> dict[str, float]:
     with archive.open(name) as handle:
         lines = [
@@ -198,28 +192,21 @@ def validate_ascii_header(
 
 
 def validate_zip(
-    path: Path,
-    expected_tiles: int = OFFICIAL_GB_GRID_TILE_COUNT,
+    path: Path, expected_tiles: int = OFFICIAL_GB_GRID_TILE_COUNT
 ) -> dict[str, Any]:
     if expected_tiles < 1:
         raise ValueError("expected Terrain50 tile count must be positive")
     if path.stat().st_size < 1024:
         raise ValueError("download is too small to be a Terrain50 package")
     with path.open("rb") as handle:
-        if handle.read(4) not in {
-            b"PK\x03\x04",
-            b"PK\x05\x06",
-            b"PK\x07\x08",
-        }:
+        if handle.read(4) not in {b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"}:
             raise ValueError("download does not have a ZIP signature")
-
     with zipfile.ZipFile(path) as archive:
         names = safe_names(archive)
         asc = sorted(name for name in names if name.lower().endswith(".asc"))
         gml = sorted(name for name in names if name.lower().endswith(".gml"))
         prj = sorted(name for name in names if name.lower().endswith(".prj"))
         nested = sorted(name for name in names if name.lower().endswith(".zip"))
-
         if asc and nested:
             raise ValueError(
                 "ambiguous Terrain50 package mixes direct ASCII members and nested tile ZIPs"
@@ -229,45 +216,40 @@ def validate_zip(
             packaging = "direct_ascii_members"
             samples = sorted({asc[0], asc[len(asc) // 2], asc[-1]})
             headers = {
-                name: validate_ascii_header(archive, name)
-                for name in samples
+                name: validate_ascii_header(archive, name) for name in samples
             }
         elif nested:
             tile_count = len(nested)
             packaging = "nested_per_tile_zip"
-            sample_zips = sorted(
-                {nested[0], nested[len(nested) // 2], nested[-1]}
-            )
+            sample_zips = sorted({nested[0], nested[len(nested) // 2], nested[-1]})
             headers: dict[str, dict[str, float]] = {}
             for nested_name in sample_zips:
                 with archive.open(nested_name) as handle:
-                    payload = handle.read()
+                    payload = handle.read(50 * 1024 * 1024 + 1)
+                if len(payload) > 50 * 1024 * 1024:
+                    raise ValueError(f"nested Terrain50 ZIP exceeds safety limit: {nested_name}")
                 with zipfile.ZipFile(io.BytesIO(payload)) as inner:
                     inner_names = safe_names(inner)
                     inner_asc = sorted(
-                        name
-                        for name in inner_names
-                        if name.lower().endswith(".asc")
+                        name for name in inner_names if name.lower().endswith(".asc")
                     )
                     if len(inner_asc) != 1:
                         raise ValueError(
                             "nested Terrain50 tile must contain exactly one "
                             f"ASCII grid: {nested_name}"
                         )
-                    headers[
-                        f"{nested_name}!{inner_asc[0]}"
-                    ] = validate_ascii_header(inner, inner_asc[0])
+                    headers[f"{nested_name}!{inner_asc[0]}"] = validate_ascii_header(
+                        inner, inner_asc[0]
+                    )
         else:
             raise ValueError(
                 "Terrain50 package contains neither direct ASCII tiles nor nested tile ZIPs"
             )
-
         if tile_count != expected_tiles:
             raise ValueError(
                 "Terrain50 national grid tile count mismatch: "
                 f"expected={expected_tiles} actual={tile_count} packaging={packaging}"
             )
-
     return {
         "archive_entries": len(names),
         "ascii_tile_count": tile_count,
@@ -282,33 +264,39 @@ def validate_zip(
     }
 
 
-def download_to(
-    url: str,
-    output: Path,
-    timeout: int,
-    api_key: str | None,
-) -> tuple[str, dict[str, str]]:
+def _read_catalog_response(response: Any) -> Any:
+    body = response.read(MAX_CATALOG_BYTES + 1)
+    if not body:
+        raise ValueError("OS Downloads API catalogue response is empty")
+    if len(body) > MAX_CATALOG_BYTES:
+        raise ValueError("OS Downloads API catalogue response exceeds safety limit")
+    try:
+        return json.loads(body.decode("utf-8-sig"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("OS Downloads API catalogue response is not valid JSON") from exc
+
+
+def download_to_staging(
+    url: str, output_dir: Path, timeout: int, api_key: str | None
+) -> tuple[Path, str, dict[str, str]]:
     if not url.startswith("https://"):
         raise ValueError("OS download URL must use HTTPS")
-    output.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(
-        prefix="terrain50_",
-        suffix=".zip.tmp",
-        dir=output.parent,
+        prefix=".terrain50_download_", suffix=".zip.tmp", dir=output_dir
     )
     os.close(fd)
-    temp = Path(temp_name)
+    temporary = Path(temp_name)
     total = 0
     try:
-        with request(url, timeout, api_key) as response, temp.open("wb") as handle:
+        with request(url, timeout, api_key) as response, temporary.open("wb") as handle:
             final_url = response.geturl()
             if not str(final_url).startswith("https://"):
                 raise ValueError(
                     f"OS download resolved to non-HTTPS URL: {final_url}"
                 )
-            headers = {k.lower(): v for k, v in response.headers.items()}
-            content_type = headers.get("content-type", "").lower()
-            if "text/html" in content_type:
+            headers = {key.lower(): value for key, value in response.headers.items()}
+            if "text/html" in headers.get("content-type", "").lower():
                 raise ValueError("OS download endpoint returned HTML")
             while True:
                 chunk = response.read(1024 * 1024)
@@ -316,17 +304,26 @@ def download_to(
                     break
                 total += len(chunk)
                 if total > MAX_BYTES:
-                    raise ValueError(
-                        f"Terrain50 download exceeds {MAX_BYTES} bytes"
-                    )
+                    raise ValueError(f"Terrain50 download exceeds {MAX_BYTES} bytes")
                 handle.write(chunk)
+            handle.flush()
+            os.fsync(handle.fileno())
         if total == 0:
             raise ValueError("Terrain50 download is empty")
-        temp.replace(output)
-        return final_url, headers
+        return temporary, str(final_url), headers
     except Exception:
-        temp.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise
+
+
+def materialize_validated_archive(
+    staged: Path, target: Path, expected_tiles: int
+) -> tuple[dict[str, Any], str]:
+    validation = validate_zip(staged, expected_tiles)
+    archive_hash = sha256_file(staged)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    staged.replace(target)
+    return validation, archive_hash
 
 
 def _load_previous(path: Path) -> dict[str, Any]:
@@ -337,9 +334,7 @@ def _load_previous(path: Path) -> dict[str, Any]:
 
 
 def _cache_provenance_ok(
-    previous: dict[str, Any],
-    archive: Path,
-    archive_sha256: str,
+    previous: dict[str, Any], archive: Path, archive_sha256: str
 ) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     if previous.get("official_catalog_verified") is not True:
@@ -350,35 +345,45 @@ def _cache_provenance_ok(
         reasons.append("previous_area_mismatch")
     if previous.get("format") != FORMAT:
         reasons.append("previous_format_mismatch")
-    if (
-        str(previous.get("archive_sha256") or "").lower()
-        != archive_sha256.lower()
-    ):
+    if str(previous.get("archive_sha256") or "").lower() != archive_sha256.lower():
         reasons.append("previous_archive_sha256_mismatch")
     if int(previous.get("archive_size_bytes") or -1) != archive.stat().st_size:
         reasons.append("previous_archive_size_mismatch")
     if not str(previous.get("catalog_sha256") or "").strip():
         reasons.append("previous_catalog_sha256_missing")
-    resolved = str(previous.get("resolved_download_url") or "")
-    if not resolved.startswith("https://"):
+    if not str(previous.get("resolved_download_url") or "").startswith("https://"):
         reasons.append("previous_resolved_download_url_not_https")
     return not reasons, reasons
+
+
+def _write_json_atomic(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{path.name}_", suffix=".json.tmp", dir=path.parent
+    )
+    os.close(fd)
+    temporary = Path(temp_name)
+    try:
+        with temporary.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--timeout", type=int, default=120)
-    parser.add_argument(
-        "--api-key",
-        default=os.environ.get("OS_DATA_HUB_API_KEY"),
-    )
+    parser.add_argument("--api-key", default=os.environ.get("OS_DATA_HUB_API_KEY"))
     parser.add_argument(
         "--archive",
         type=Path,
-        help=(
-            "Validate an already downloaded official archive instead of downloading."
-        ),
+        help="Validate an already downloaded official archive instead of downloading.",
     )
     parser.add_argument(
         "--expected-ascii-tiles",
@@ -402,10 +407,6 @@ def main() -> int:
         else out / "OS_Terrain50_July_2026_GB_ASCII_Grid.zip"
     )
     provenance_path = out / "terrain50_official_api_provenance.json"
-    catalog = None
-    catalog_hash = None
-    selected = None
-    response_headers: dict[str, str] = {}
     previous_manifest = _load_previous(provenance_path)
     candidate_cache = (
         not args.archive
@@ -414,71 +415,70 @@ def main() -> int:
         and time.time() - archive.stat().st_mtime
         <= args.max_cache_age_hours * 3600
     )
-    precomputed_archive_sha = (
-        sha256_file(archive) if candidate_cache else None
-    )
+    precomputed_archive_sha = sha256_file(archive) if candidate_cache else None
     cache_reused = False
     cache_reuse_reasons: list[str] = []
     if candidate_cache and precomputed_archive_sha:
         cache_reused, cache_reuse_reasons = _cache_provenance_ok(
-            previous_manifest,
-            archive,
-            precomputed_archive_sha,
+            previous_manifest, archive, precomputed_archive_sha
         )
 
-    if cache_reused:
-        selected = {
-            "cache_reused": True,
-            "max_cache_age_hours": args.max_cache_age_hours,
-            "prior_selected_download_metadata": previous_manifest.get(
-                "selected_download_metadata"
-            ),
-        }
-        final_url = str(previous_manifest["resolved_download_url"])
-        catalog_hash = str(previous_manifest["catalog_sha256"])
-        official_catalog_verified = True
-    elif not args.archive:
-        with request(
-            catalog_url(args.api_key),
-            args.timeout,
-            args.api_key,
-        ) as response:
-            final_catalog_url = response.geturl()
-            if not str(final_catalog_url).startswith("https://api.os.uk/"):
-                raise ValueError(
-                    "OS catalog resolved off official API host: "
-                    f"{final_catalog_url}"
-                )
-            catalog = json.load(response)
-        catalog_hash = sha256_json(catalog)
-        selected = choose_candidate(flatten_downloads(catalog))
-        source_url = candidate_url(selected) or redirect_url(args.api_key)
-        final_url, response_headers = download_to(
-            source_url,
-            archive,
-            args.timeout,
-            args.api_key,
-        )
-        precomputed_archive_sha = None
-        official_catalog_verified = True
-    else:
-        final_url = str(archive)
-        official_catalog_verified = False
-        selected = {"archive_argument": True}
-
-    validation = validate_zip(archive, args.expected_ascii_tiles)
-    archive_hash = precomputed_archive_sha or sha256_file(archive)
-    if (
-        cache_reused
-        and archive_hash.lower()
-        != str(previous_manifest.get("archive_sha256") or "").lower()
-    ):
-        raise ValueError(
-            "Terrain50 cache hash changed after provenance validation"
-        )
+    catalog_hash: str | None = None
+    selected: dict[str, Any]
+    response_headers: dict[str, str] = {}
+    staged: Path | None = None
+    try:
+        if cache_reused:
+            selected = {
+                "cache_reused": True,
+                "max_cache_age_hours": args.max_cache_age_hours,
+                "prior_selected_download_metadata": previous_manifest.get(
+                    "selected_download_metadata"
+                ),
+            }
+            final_url = str(previous_manifest["resolved_download_url"])
+            catalog_hash = str(previous_manifest["catalog_sha256"])
+            official_catalog_verified = True
+            validation = validate_zip(archive, args.expected_ascii_tiles)
+            archive_hash = precomputed_archive_sha or sha256_file(archive)
+            if archive_hash.lower() != str(
+                previous_manifest.get("archive_sha256") or ""
+            ).lower():
+                raise ValueError("Terrain50 cache hash changed after provenance validation")
+        elif not args.archive:
+            with request(
+                catalog_url(args.api_key), args.timeout, args.api_key
+            ) as response:
+                final_catalog_url = response.geturl()
+                if not str(final_catalog_url).startswith("https://api.os.uk/"):
+                    raise ValueError(
+                        "OS catalog resolved off official API host: "
+                        f"{final_catalog_url}"
+                    )
+                catalog = _read_catalog_response(response)
+            catalog_hash = sha256_json(catalog)
+            selected = choose_candidate(flatten_downloads(catalog))
+            source_url = candidate_url(selected) or redirect_url(args.api_key)
+            staged, final_url, response_headers = download_to_staging(
+                source_url, out, args.timeout, args.api_key
+            )
+            validation, archive_hash = materialize_validated_archive(
+                staged, archive, args.expected_ascii_tiles
+            )
+            staged = None
+            official_catalog_verified = True
+        else:
+            selected = {"archive_argument": True}
+            final_url = str(archive)
+            official_catalog_verified = False
+            validation = validate_zip(archive, args.expected_ascii_tiles)
+            archive_hash = sha256_file(archive)
+    finally:
+        if staged is not None:
+            staged.unlink(missing_ok=True)
 
     manifest = {
-        "schema_version": 3,
+        "schema_version": 4,
         "slot_id": "height_difference_3",
         "product_id": PRODUCT_ID,
         "area": AREA,
@@ -500,6 +500,11 @@ def main() -> int:
         "archive_path": str(archive),
         "archive_size_bytes": archive.stat().st_size,
         "archive_sha256": archive_hash,
+        "download_staged_before_validation": not cache_reused and not bool(args.archive),
+        "validation_before_canonical_replace": not cache_reused and not bool(args.archive),
+        "prior_valid_archive_preserved_on_failed_download": True,
+        "atomic_archive_materialization": not cache_reused and not bool(args.archive),
+        "atomic_provenance_materialization": True,
         **validation,
         "measurement_values_written": 0,
         "final_ready": False,
@@ -508,10 +513,7 @@ def main() -> int:
         "migration": False,
         "production_deploy": False,
     }
-    provenance_path.write_text(
-        json.dumps(manifest, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    _write_json_atomic(provenance_path, manifest)
     print(
         json.dumps(
             {
@@ -537,12 +539,7 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception as exc:
         print(
-            json.dumps(
-                {
-                    "ok": False,
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-            ),
+            json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}),
             file=sys.stderr,
         )
         raise
