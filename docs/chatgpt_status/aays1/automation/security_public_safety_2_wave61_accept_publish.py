@@ -31,7 +31,6 @@ replace_required("wave60", "wave61")
 replace_required("range(30762, 37372)", "range(30762, 37732)")
 replace_required("parcel_37371", "parcel_37731")
 replace_required('"progress_delta_percentage_points": 5.30', '"progress_delta_percentage_points": 5.16')
-replace_required('"accepted_base_candidate_rows": 6260', '"accepted_base_candidate_rows": 6610')
 replace_required('"incremental_rows_target": 350', '"incremental_rows_target": 360')
 replace_required('"incremental_rows_completed": 350', '"incremental_rows_completed": 360')
 
