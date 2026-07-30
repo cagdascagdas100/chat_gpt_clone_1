@@ -41,5 +41,15 @@ for old, new in replacements[5:]:
         raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {old}")
     text = text.replace(old, new)
 
+old_gate_block = '''    if any(gate.get("state") != "PASS" for gate in gates[:12]):
+        raise SystemExit("PRE_BROWSER_GATES_FAILED")'''
+new_gate_block = '''    failed_pre_browser = [gate for gate in gates[:12] if gate.get("state") != "PASS"]
+    if failed_pre_browser:
+        print("PRE_BROWSER_FAILED_GATES=" + json.dumps(failed_pre_browser, ensure_ascii=False, sort_keys=True))
+        raise SystemExit("PRE_BROWSER_GATES_FAILED")'''
+if old_gate_block not in text:
+    raise SystemExit("EXPECTED_PRE_BROWSER_GATE_BLOCK_MISSING")
+text = text.replace(old_gate_block, new_gate_block)
+
 namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
 exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
