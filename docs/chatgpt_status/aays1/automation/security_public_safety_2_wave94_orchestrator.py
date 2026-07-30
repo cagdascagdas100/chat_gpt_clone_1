@@ -76,6 +76,12 @@ for token, value in resolved:
         raise SystemExit(f"ORCHESTRATOR_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
 
+old_target_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"
+new_target_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731"
+if old_target_task not in text:
+    raise SystemExit(f"ORCHESTRATOR_TARGET_DATE_FRAGMENT_MISSING: {old_target_task}")
+text = text.replace(old_target_task, new_target_task)
+
 required = [
     'SOURCE_HEAD = "6ee96ccbbcaeae980013e8104d7c082ba21c1479"',
     'FIRST_STEP = "EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_21010_TO_21460_ROWS_WITH_OFFICIAL_SOURCE_HASHES"',
