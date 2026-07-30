@@ -1,0 +1,66 @@
+name: security-public-safety-2-wave79-pr-target-recovery
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/wave79-trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-38fc96b4516cf859c4b72a016e8c2b52f9cbb33d219c3fdadf8af1d011b4e484
+  cancel-in-progress: false
+
+jobs:
+  guarded-wave79-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Check idempotent claim gate
+        id: gate
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          queue = Path('docs/chatgpt_status/aays1/queue/0054_security_public_safety_2_priority_14710row_incremental_evidence_expansion_20260730.v3.task.json')
+          current = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json')
+          continuation = '38fc96b4516cf859c4b72a016e8c2b52f9cbb33d219c3fdadf8af1d011b4e484'
+          payload = json.loads(current.read_text(encoding='utf-8'))
+          print('run=false' if queue.exists() or payload.get('continuation_key') == continuation else 'run=true')
+          PY
+
+      - name: Validate Wave79 orchestrator syntax
+        if: steps.gate.outputs.run == 'true'
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave79_orchestrator.py
+
+      - name: Claim exact next scope
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave79_orchestrator.py claim
+
+      - name: Install browser runtime
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Generate official-source rows and publish accepted output
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave79_orchestrator.py run
+
+      - name: Verify remote hashes and terminalize
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave79_orchestrator.py terminalize
+
+      - name: Park failed continuation without duplicate retry
+        if: failure() && steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave79_orchestrator.py park
