@@ -1,0 +1,68 @@
+name: security-public-safety-2-wave63-diagnostic
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave63_diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Capture wave63 run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          command = [
+              'gh', 'run', 'list', '--repo', 'cagdascagdas100/chat_gpt_clone_1',
+              '--workflow', 'security_public_safety_2_wave63_incremental.yml',
+              '--branch', 'codex/aays-single-runner-v5-20260706', '--limit', '3',
+              '--json', 'databaseId,status,conclusion,attempt,createdAt,startedAt,updatedAt,headSha,url,workflowName,event'
+          ]
+          result = subprocess.run(command, capture_output=True, text=True)
+          payload = {
+              'schema_version': 1,
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_priority_7720row_incremental_evidence_expansion_20260730',
+              'continuation_key': '78f3b0d84333f8279fb855c7ee953f6a4e3f767d92400a1fef93f662ab6c0d9e',
+              'captured_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+              'returncode': result.returncode,
+              'stderr': result.stderr,
+              'runs': json.loads(result.stdout or '[]'),
+          }
+          path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave63_run_latest.json')
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave63_run_latest.json
+          git commit -m 'record security_public_safety_2 wave63 run status'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
