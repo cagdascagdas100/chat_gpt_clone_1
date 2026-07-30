@@ -1,0 +1,38 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>height_difference_3 Batch 159</title><style>body{font-family:system-ui,Arial,sans-serif;margin:24px;background:#f7f8fa;color:#17202a}h1{margin-bottom:6px}.meta{background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:14px;margin:12px 0 18px}table{width:100%;border-collapse:collapse;background:#fff}th,td{border:1px solid #dfe3e8;padding:8px;text-align:left;vertical-align:top}th{background:#eef2f6}.pass{font-weight:700}code{word-break:break-all}.small{font-size:.9rem;color:#4b5563}</style></head><body><h1>height_difference_3 — Batch 159</h1><div class="meta"><strong>Terrain50 kesin ulusal karo doğrulaması</strong><br>36/36 kontrol tamamlandı; 6/6 sentetik senaryo geçti; yeni sayısal yükseltme yok.<br><span class="small">Resmî beklenen ulusal karo sayısı: 2.858 · Karo boyutu: 10 km × 10 km · Klasör: 55 · Kod commit: <code>a714d20e031ff4704966f536a1f4fa8c2f1eb7d8</code></span></div><table><thead><tr><th>#</th><th>Kategori</th><th>Kontrol</th><th>Durum</th><th>Kanıt / sonuç</th></tr></thead><tbody>
+<tr><td>1</td><td>OFFICIAL_OS_SOURCE</td><td>NATIONAL_TILE_COUNT</td><td class="pass">PASS</td><td>Tam GB ulusal karo seti 2.858 karodur.</td></tr>
+<tr><td>2</td><td>OFFICIAL_OS_SOURCE</td><td>TILE_SIZE</td><td class="pass">PASS</td><td>Ulusal tiled supply 10 km × 10 km karo kullanır.</td></tr>
+<tr><td>3</td><td>OFFICIAL_OS_SOURCE</td><td>FOLDER_COUNT</td><td class="pass">PASS</td><td>2.858 karo, 55 adet 100 km grid-square klasöründe düzenlenir.</td></tr>
+<tr><td>4</td><td>OFFICIAL_OS_SOURCE</td><td>GRID_SPACING</td><td class="pass">PASS</td><td>Terrain 50 grid düzenli 50 m post spacing kullanır.</td></tr>
+<tr><td>5</td><td>OFFICIAL_OS_SOURCE</td><td>GRID_DIMENSIONS</td><td class="pass">PASS</td><td>Her 10 km karoda 200 × 200 piksel ve 50 m hücre boyutu beklenir.</td></tr>
+<tr><td>6</td><td>OFFICIAL_OS_SOURCE</td><td>REFRESH_CADENCE</td><td class="pass">PASS</td><td>Ürün yıllık Temmuz tam yeniden tedarikiyle güncellenir.</td></tr>
+<tr><td>7</td><td>CODE_HARDENING</td><td>EXACT_COUNT_CONSTANT</td><td class="pass">PASS</td><td><code>OFFICIAL_GB_GRID_TILE_COUNT = 2858</code>.</td></tr>
+<tr><td>8</td><td>CODE_HARDENING</td><td>EXACT_COUNT_DEFAULT</td><td class="pass">PASS</td><td><code>validate_zip</code> varsayılanı resmî kesin ulusal sayıdır.</td></tr>
+<tr><td>9</td><td>CODE_HARDENING</td><td>POSITIVE_COUNT_GATE</td><td class="pass">PASS</td><td>Sıfır veya negatif beklenen sayı fail-closed reddedilir.</td></tr>
+<tr><td>10</td><td>CODE_HARDENING</td><td>DIRECT_PACKAGE_GATE</td><td class="pass">PASS</td><td>Doğrudan ASCII paket yalnız kesin sayı eşleşirse kabul edilir.</td></tr>
+<tr><td>11</td><td>CODE_HARDENING</td><td>NESTED_PACKAGE_GATE</td><td class="pass">PASS</td><td>İç içe tile ZIP paketi yalnız kesin sayı eşleşirse kabul edilir.</td></tr>
+<tr><td>12</td><td>CODE_HARDENING</td><td>MIXED_PACKAGE_REJECT</td><td class="pass">PASS</td><td>Doğrudan ASCII ve iç ZIP karışımı belirsiz paket olarak reddedilir.</td></tr>
+<tr><td>13</td><td>CODE_HARDENING</td><td>EMPTY_PACKAGE_REJECT</td><td class="pass">PASS</td><td>ASCII veya iç tile ZIP içermeyen paket reddedilir.</td></tr>
+<tr><td>14</td><td>CODE_HARDENING</td><td>DUPLICATE_MEMBER_REJECT</td><td class="pass">PASS</td><td>Büyük/küçük harf duyarsız yinelenen arşiv yolu reddedilir.</td></tr>
+<tr><td>15</td><td>CODE_HARDENING</td><td>HEADER_DIMENSION_GATE</td><td class="pass">PASS</td><td>Örnek ASCII header 200 × 200 ve 50 m olmak zorundadır.</td></tr>
+<tr><td>16</td><td>CODE_HARDENING</td><td>LEGACY_CLI_ALIAS</td><td class="pass">PASS</td><td>Eski <code>--min-ascii-tiles</code> adı korunur; anlamı artık kesin sayıdır.</td></tr>
+<tr><td>17</td><td>CODE_HARDENING</td><td>MANIFEST_SCHEMA</td><td class="pass">PASS</td><td>Terrain50 provenance manifest şeması 3'e yükseltildi.</td></tr>
+<tr><td>18</td><td>CODE_HARDENING</td><td>MANIFEST_EXACT_MATCH_FIELDS</td><td class="pass">PASS</td><td>Beklenen ulusal sayı ve kesin eşleşme alanları kaydedilir.</td></tr>
+<tr><td>19</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>direct_exact_EXECUTION</td><td class="pass">PASS</td><td>Beklenen kabul=True, gerçek kabul=True.</td></tr>
+<tr><td>20</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>direct_exact_ASSERTION</td><td class="pass">PASS</td><td>3/3 doğrudan ASCII, exact match ve doğru packaging.</td></tr>
+<tr><td>21</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>nested_exact_EXECUTION</td><td class="pass">PASS</td><td>Beklenen kabul=True, gerçek kabul=True.</td></tr>
+<tr><td>22</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>nested_exact_ASSERTION</td><td class="pass">PASS</td><td>3/3 iç tile ZIP, exact match ve doğru packaging.</td></tr>
+<tr><td>23</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>direct_short_EXECUTION</td><td class="pass">PASS</td><td>Eksik doğrudan paket beklendiği gibi reddedildi.</td></tr>
+<tr><td>24</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>direct_short_ASSERTION</td><td class="pass">PASS</td><td>Beklenen=3, gerçek=2 sayı uyumsuzluğu yakalandı.</td></tr>
+<tr><td>25</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>nested_short_EXECUTION</td><td class="pass">PASS</td><td>Eksik iç ZIP paketi beklendiği gibi reddedildi.</td></tr>
+<tr><td>26</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>nested_short_ASSERTION</td><td class="pass">PASS</td><td>Beklenen=3, gerçek=2 sayı uyumsuzluğu yakalandı.</td></tr>
+<tr><td>27</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>mixed_EXECUTION</td><td class="pass">PASS</td><td>Karışık paketleme beklendiği gibi reddedildi.</td></tr>
+<tr><td>28</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>mixed_ASSERTION</td><td class="pass">PASS</td><td>Doğrudan ASCII + iç ZIP belirsizliği yakalandı.</td></tr>
+<tr><td>29</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>duplicate_casefold_EXECUTION</td><td class="pass">PASS</td><td>Case-fold yinelenen üye beklendiği gibi reddedildi.</td></tr>
+<tr><td>30</td><td>SYNTHETIC_ARCHIVE_TEST</td><td>duplicate_casefold_ASSERTION</td><td class="pass">PASS</td><td><code>t0.ASC</code> yinelenen yol hatası yakalandı.</td></tr>
+<tr><td>31</td><td>INTEGRATION_SAFETY</td><td>REMOTE_COMMIT_READBACK</td><td class="pass">PASS</td><td>Commit remote üzerinde doğru mesaj ve hedef dosyayla çözümlendi.</td></tr>
+<tr><td>32</td><td>INTEGRATION_SAFETY</td><td>REMOTE_BLOB_READBACK</td><td class="pass">PASS</td><td>Downloader blobu <code>e838d5fbead46ed3683de6fd56dc9430f960ab78</code>.</td></tr>
+<tr><td>33</td><td>INTEGRATION_SAFETY</td><td>PINNED_STRICT_CHAIN_UNCHANGED</td><td class="pass">PASS</td><td>Pinli 033/036/039/040 runtime zinciri değiştirilmedi.</td></tr>
+<tr><td>34</td><td>INTEGRATION_SAFETY</td><td>NO_TASK_OR_RUNNER_CREATED</td><td class="pass">PASS</td><td>Mevcut task ve tek-runner mimarisi korundu.</td></tr>
+<tr><td>35</td><td>INTEGRATION_SAFETY</td><td>NO_NUMERIC_WRITE</td><td class="pass">PASS</td><td>Yeni parsel yüksekliği yazılmadı veya yükseltilmedi.</td></tr>
+<tr><td>36</td><td>INTEGRATION_SAFETY</td><td>NO_IDENTITY_GUESS</td><td class="pass">PASS</td><td>Strict12 kimliği, koordinatı veya HMLR ID'si tahmin edilmedi.</td></tr>
+</tbody></table></body></html>
