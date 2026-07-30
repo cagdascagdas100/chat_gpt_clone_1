@@ -26,14 +26,14 @@ jobs:
           BRANCH: codex/aays-single-runner-v5-20260706
         run: |
           set +e
-          gh run view 30505557616 --attempt 2 --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/wave55_failed.log 2>&1
+          gh run view 30505557616 --attempt 3 --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/wave55_failed.log 2>&1
           rc=$?
           tail -n 300 /tmp/wave55_failed.log > docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave55_failure_tail_20260730.txt
-          printf '\nDIAGNOSTIC_ATTEMPT=2\nDIAGNOSTIC_RETURN_CODE=%s\n' "$rc" >> docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave55_failure_tail_20260730.txt
+          printf '\nDIAGNOSTIC_ATTEMPT=3\nDIAGNOSTIC_RETURN_CODE=%s\n' "$rc" >> docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave55_failure_tail_20260730.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave55_failure_tail_20260730.txt
-          git commit -m 'record security_public_safety_2 wave55 attempt 2 failure tail'
+          git commit -m 'record security_public_safety_2 wave55 attempt 3 failure tail'
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BRANCH"
             if ! git rebase "origin/$BRANCH"; then
