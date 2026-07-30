@@ -1,0 +1,697 @@
+name: security-public-safety-2-wave71-incremental
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave71_incremental.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3
+  cancel-in-progress: false
+
+jobs:
+  generate-accept-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+      CONTINUATION_KEY: 37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3
+      TASK_ID: security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730
+      OWNER_ID: github-actions-security-public-safety-2-wave71
+      QUEUE_PATH: docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Claim next verified scope and materialize scripts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          SLOT = "security_public_safety_2"
+          WORKSTREAM = "AAYS_21_SLOT_SAFE_PARALLEL_V1"
+          BRANCH = "codex/aays-single-runner-v5-20260706"
+          SOURCE_HEAD = "9ad4763437f5254f52a4eef282f9562da51d0543"
+          CONT = "37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3"
+          TASK = "security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730"
+          IDEMPOTENCY = "3f8311d136c77d2122f01f1e1bd1788a5643d9c72e2bf745b0f9e43d7accd608"
+          OWNER = "github-actions-security-public-safety-2-wave71"
+          FIRST_STEP = "EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_10660_TO_11110_ROWS_WITH_OFFICIAL_SOURCE_HASHES"
+          QUEUE = ROOT / "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json"
+          GEN = ROOT / "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.py"
+          ACC = ROOT / "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave71_accept_publish.py"
+          SLOT_ROOT = ROOT / "docs/chatgpt_status/_shared/slots_21/security_public_safety_2"
+          CURRENT = SLOT_ROOT / "current_task_latest.json"
+          STATUS = SLOT_ROOT / "status_latest.json"
+          OWNERSHIP = SLOT_ROOT / "ownership_latest.json"
+          HEARTBEAT = SLOT_ROOT / "heartbeat_latest.json"
+
+          expected = hashlib.sha256(
+              f"{WORKSTREAM}|{SLOT}|{BRANCH}|{FIRST_STEP}|{SOURCE_HEAD}".encode("utf-8")
+          ).hexdigest()
+          if expected != CONT:
+              raise SystemExit(f"CONTINUATION_KEY_FORMULA_MISMATCH:{expected}")
+
+          current = json.loads(CURRENT.read_text(encoding="utf-8"))
+          ownership = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
+          status = json.loads(STATUS.read_text(encoding="utf-8"))
+
+          if ownership.get("runtime_live_owner") or ownership.get("owner_page_session_id"):
+              raise SystemExit("LIVE_OWNER_EXISTS_NO_SECOND_TASK")
+          if current.get("continuation_key") == CONT or (QUEUE.exists() and CONT in QUEUE.read_text(encoding="utf-8")):
+              raise SystemExit("DUPLICATE_CONTINUATION_KEY_NO_SECOND_TASK")
+          if current.get("state") != "COMPLETED_ACCEPTED_PUBLISHED":
+              raise SystemExit(f"PREVIOUS_SCOPE_NOT_TERMINAL:{current.get('state')}")
+          acceptance = current.get("acceptance") or {}
+          if acceptance.get("state") != "PASS_REMOTE_COMMIT_READBACK" or int(acceptance.get("candidate_rows") or 0) != 10660:
+              raise SystemExit("PREVIOUS_10660_ACCEPTANCE_NOT_VERIFIED")
+          if status.get("blocker"):
+              raise SystemExit(f"BLOCKER_PRESENT:{status.get('blocker')}")
+
+          now = datetime.now(timezone.utc)
+          now_z = now.isoformat().replace("+00:00", "Z")
+          lease_z = (now + timedelta(hours=3)).isoformat().replace("+00:00", "Z")
+          progress = {
+              "accepted_base_candidate_rows": 10660,
+              "incremental_rows_target": 450,
+              "incremental_rows_completed": 0,
+              "merged_rows_target": 11110,
+              "merged_rows_ready": 10660,
+              "candidate_accuracy_ge_95_rows": 10518,
+              "police_response_sha256_rows": 10660,
+              "sources_promoted": 10,
+              "expanded_scope_progress_percent": 95.95,
+              "expanded_scope_delta_percentage_points": 4.05,
+              "new_acceptance_operations_completed": 0,
+              "new_acceptance_operations_total": 14,
+          }
+          targets = {
+              "accepted_base_rows": 10660,
+              "incremental_candidate_rows": 450,
+              "merged_candidate_rows": 11110,
+              "minimum_incremental_police_hash_rows": 428,
+              "minimum_merged_police_hash_rows": 10555,
+              "minimum_merged_accuracy_ge_95_candidate_rows": 10555,
+              "website_line_by_line": True,
+              "incremental_parcel_start": 41422,
+              "incremental_parcel_end": 41871,
+              "business_rows_to_write": 0,
+          }
+          concurrency = {
+              "parallel_official_source_probes": 10,
+              "parallel_incremental_row_checks": 15,
+              "maximum_simultaneous_workers": 15,
+              "hardware_manifest_limit_respected": True,
+              "incremental_only": True,
+          }
+          previous_acceptance = {
+              "state": "PASS_REMOTE_COMMIT_READBACK",
+              "candidate_rows": 10660,
+              "candidate_accuracy_ge_95_rows": 10518,
+              "police_response_sha256_rows": 10660,
+              "sources_promoted": 10,
+              "completed_operations": 14,
+              "total_operations": 14,
+              "output_publish_remote_head": "1c04c90b43346d6a07ab8778e52862a2bdfa23ae",
+          }
+          read_paths = [
+              "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_10660row_evidence_expansion_latest.json",
+              "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_5270row_incremental_evidence_expansion_20260730.py",
+              "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave32_accept_publish.py",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
+          ]
+          exact_write_paths = [
+              "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_450row_wave71_latest.json",
+              "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_11110row_evidence_expansion_latest.json",
+              "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion_latest.json",
+              "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion.html",
+              "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_11110row_browser_acceptance_wave71_receipt_20260730.json",
+              "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_11110row_targeted_retry_wave71_diagnostic_20260730.json",
+          ]
+
+          queue_payload = {
+              "schema_version": 3,
+              "architecture_version": 3,
+              "workstream_id": WORKSTREAM,
+              "slot_id": SLOT,
+              "base_slot_id": "security_public_safety",
+              "shard_index": 2,
+              "task_id": TASK,
+              "attempt_id": "attempt-001",
+              "continuation_key": CONT,
+              "idempotency_key": IDEMPOTENCY,
+              "status": "running",
+              "priority": -147,
+              "claimable": False,
+              "ready_for_claim": False,
+              "single_runner_only": True,
+              "page_key": "aays1",
+              "owner": OWNER,
+              "first_unverified_step": FIRST_STEP,
+              "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.py",
+              "acceptance_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave71_accept_publish.py",
+              "read_paths": read_paths,
+              "exact_write_paths": exact_write_paths,
+              "resource_class": "NETWORK_IO_15_ROW_WORKERS_BROWSER_ACCEPTANCE",
+              "timeout_seconds": 9000,
+              "concurrency": concurrency,
+              "targets": targets,
+              "acceptance_conditions": {
+                  "candidate_rows": 11110,
+                  "candidate_accuracy_ge_95_rows_min": 10555,
+                  "police_response_sha256_rows_min": 10555,
+                  "candidate_dom_rows": 11110,
+                  "console_errors": 0,
+                  "page_errors": 0,
+                  "request_failures": 0,
+                  "remote_commit_readback": "PASS",
+              },
+              "fake_data": False,
+              "db_write": False,
+              "migration": False,
+              "production_deploy": False,
+              "created_at": now_z,
+              "updated_at": now_z,
+              "source_head": SOURCE_HEAD,
+              "previous_task_id": current.get("task_id"),
+              "previous_continuation_key": current.get("continuation_key"),
+              "previous_output_blob_sha": current.get("shard_output_blob_sha"),
+              "previous_acceptance": previous_acceptance,
+              "runner_state": "CLAIMED_RUNNING",
+              "blocker": None,
+              "final_ready": False,
+              "recovery": {
+                  "triggered": False,
+                  "reason": None,
+                  "attempt": 0,
+                  "targeted_retry_recovered_rows": 0,
+                  "ons_boundary_recovered_rows": 0,
+                  "concurrent_duplicate_runner_created": False,
+                  "second_task_created": False,
+              },
+          }
+          current_payload = {
+              "schema_version": 94,
+              "architecture_version": 3,
+              "workstream_id": WORKSTREAM,
+              "slot_id": SLOT,
+              "base_slot_id": "security_public_safety",
+              "shard_index": 2,
+              "state": "CLAIMED_RUNNING",
+              "status": "running",
+              "task_id": TASK,
+              "attempt_id": "attempt-001",
+              "continuation_key": CONT,
+              "idempotency_key": IDEMPOTENCY,
+              "queue_path": "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json",
+              "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.py",
+              "first_unverified_step": FIRST_STEP,
+              "owner": OWNER,
+              "targets": targets,
+              "concurrency": concurrency,
+              "previous_acceptance": previous_acceptance,
+              "blocker": None,
+              "fake_data": False,
+              "updated_at": now_z,
+              "final_ready": False,
+              "recovery": queue_payload["recovery"],
+          }
+          status_payload = {
+              "schema_version": 94,
+              "architecture_version": 3,
+              "workstream_id": WORKSTREAM,
+              "slot_id": SLOT,
+              "base_slot_id": "security_public_safety",
+              "shard_index": 2,
+              "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
+              "state": "CLAIMED_RUNNING",
+              "task_id": TASK,
+              "attempt_id": "attempt-001",
+              "continuation_key": CONT,
+              "blocker": None,
+              "owner": OWNER,
+              "progress": progress,
+              "parallelism": {
+                  "official_source_probes": 10,
+                  "incremental_row_checks": 15,
+                  "maximum_simultaneous_workers": 15,
+              },
+              "website_targets": {
+                  "json": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion_latest.json",
+                  "html": "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion.html",
+                  "line_by_line_rows": 11110,
+              },
+              "fake_data": False,
+              "updated_at": now_z,
+              "final_ready": False,
+              "recovery": queue_payload["recovery"],
+          }
+          ownership_payload = {
+              "schema_version": 98,
+              "architecture_version": 3,
+              "workstream_id": WORKSTREAM,
+              "slot_id": SLOT,
+              "base_slot_id": "security_public_safety",
+              "shard_index": 2,
+              "parcel_partition": {"start": 30762, "end": 61522, "count": 30761, "canonical_count": 92283},
+              "state": "CLAIMED_RUNNING",
+              "lease_version": 121,
+              "owner_page_session_id": OWNER,
+              "lease_token_hash": CONT,
+              "heartbeat_at": now_z,
+              "lease_expires_at": lease_z,
+              "stale_after_seconds": 10800,
+              "runtime_live_owner": True,
+              "continuation_key": CONT,
+              "task_id": TASK,
+              "attempt_id": "attempt-001",
+              "queue_path": "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json",
+              "single_runner_only": True,
+              "claimable": False,
+              "ready_for_claim": False,
+              "takeover_rule": "Live owner exists; do not create a second task, continuation or runner.",
+              "wrong_slot_write_forbidden": True,
+              "runner_write_allowed_only_after_claim": True,
+              "business_write_forbidden": True,
+              "accepted_base_scope": "priority_10660row_incremental_evidence_expansion_full_remote_and_canonical_browser_acceptance",
+              "accepted_base_evidence_blob_sha": current.get("website_html_blob_sha"),
+              "next_scope": {
+                  "incremental_candidate_rows": 450,
+                  "merged_candidate_rows": 11110,
+                  "website_line_by_line": True,
+                  "parallel_row_checks": 15,
+                  "parallel_source_probes": 10,
+                  "targeted_retry_enabled": True,
+                  "ons_exact_code_boundary_recovery_enabled": True,
+              },
+              "generator_rerun": False,
+              "second_runner_created": False,
+              "second_task_created": False,
+              "updated_at": now_z,
+              "final_ready": False,
+          }
+          heartbeat_payload = {
+              "state": "CLAIMED_RUNNING",
+              "heartbeat_at": now_z,
+              "schema_version": 93,
+              "architecture_version": 3,
+              "workstream_id": WORKSTREAM,
+              "slot_id": SLOT,
+              "base_slot_id": "security_public_safety",
+              "shard_index": 2,
+              "parcel_partition": {"start": 30762, "end": 61522, "count": 30761},
+              "task_id": TASK,
+              "attempt_id": "attempt-001",
+              "continuation_key": CONT,
+              "owner_page_session_id": OWNER,
+              "stale_after_seconds": 10800,
+              "lease_expires_at": lease_z,
+              "recovery_attempt": 0,
+              "targeted_retry_recovered_rows": 0,
+              "ons_boundary_recovered_rows": 0,
+              "final_ready": False,
+          }
+
+          GEN_TEXT = r'''from __future__ import annotations
+
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          SOURCE = ROOT / "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_5270row_incremental_evidence_expansion_20260730.py"
+
+          if not SOURCE.is_file():
+              raise SystemExit(f"SOURCE_SCRIPT_MISSING: {SOURCE}")
+
+          text = SOURCE.read_text(encoding="utf-8")
+          replacements = [
+              ("priority_5270row_evidence_expansion_latest.json", "priority_11110row_evidence_expansion_latest.json"),
+              ("priority_5270row_evidence_expansion.html", "priority_11110row_evidence_expansion.html"),
+              ("priority_4960row_evidence_expansion_latest.json", "priority_10660row_evidence_expansion_latest.json"),
+              ("priority_310row_wave56_latest.json", "priority_450row_wave71_latest.json"),
+              ("priority_310row_wave56.html", "priority_450row_wave71.html"),
+              ("AAYS-TerraYield-security-public-safety-wave56-boundary-recovery/1.0", "AAYS-TerraYield-security-public-safety-wave71-boundary-recovery/1.0"),
+              ("range(30762, 35722)", "range(30762, 41422)"),
+              ("range(35722, 36032)", "range(41422, 41872)"),
+              ("PREVIOUS_4960_SEQUENCE_MISMATCH", "PREVIOUS_10660_SEQUENCE_MISMATCH"),
+              ("wave56_incremental_target_310_ids_unique", "wave71_incremental_target_450_ids_unique"),
+              ("len(target_features) == 310", "len(target_features) == 450"),
+              ("wave56_incremental_valid_wgs84_points", "wave71_incremental_valid_wgs84_points"),
+              ("valid_points == 310", "valid_points == 450"),
+              ("wave56_incremental_single_ons_lsoa_matches", "wave71_incremental_single_ons_lsoa_matches"),
+              ("ons_rows == 310", "ons_rows == 450"),
+              ("wave56_incremental_police_response_hashes", "wave71_incremental_police_response_hashes"),
+              ("police_hash_rows >= 295", "police_hash_rows >= 428"),
+              ("wave56_incremental_candidate_310_rows_generated", "wave71_incremental_candidate_450_rows_generated"),
+              ("candidate_rows == 310", "candidate_rows == 450"),
+              ("IOD25_RELATIVE_SECURITY_INCREMENTAL_310_ROWS_PREPARED_NOT_PROMOTED", "IOD25_RELATIVE_SECURITY_INCREMENTAL_450_ROWS_PREPARED_NOT_PROMOTED"),
+              ("MERGE_WITH_ACCEPTED_4960_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE", "MERGE_WITH_ACCEPTED_10660_THEN_HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE"),
+              ("accepted 4960-row wave", "accepted 10660-row wave"),
+              ("merge_with_accepted_4960_candidate_rows", "merge_with_accepted_10660_candidate_rows"),
+              ("Merge the 310 validated incremental rows with the accepted 4960-row artifact", "Merge the 450 validated incremental rows with the accepted 10660-row artifact"),
+              ("IoD25 310 satır artımlı kanıt dalgası", "IoD25 450 satır artımlı kanıt dalgası"),
+              ("Aday satır<br><b>{candidate_rows}/310</b>", "Aday satır<br><b>{candidate_rows}/450</b>"),
+              ("<h2>310 artımlı örnek satır</h2>", "<h2>450 artımlı örnek satır</h2>"),
+              ("INCREMENTAL_310_SEQUENCE_MISMATCH", "INCREMENTAL_450_SEQUENCE_MISMATCH"),
+              ("len(set(row_ids)) != 5270", "len(set(row_ids)) != 11110"),
+              ("MERGED_5270_SEQUENCE_OR_UNIQUENESS_FAILED", "MERGED_11110_SEQUENCE_OR_UNIQUENESS_FAILED"),
+              ("accepted_4960row_base_present", "accepted_10660row_base_present"),
+              ("incremental_310_ids_unique", "incremental_450_ids_unique"),
+              ("merged_5270_ids_sequential_unique", "merged_11110_ids_sequential_unique"),
+              ("valid_wgs84_points_5270", "valid_wgs84_points_11110"),
+              ("valid_points == 5270", "valid_points == 11110"),
+              ("single_ons_lsoa_matches_5270", "single_ons_lsoa_matches_11110"),
+              ("ons_rows == 5270", "ons_rows == 11110"),
+              ("police_hash_rows >= 5007", "police_hash_rows >= 10555"),
+              ("iod25_exact_lsoa_joins_5270", "iod25_exact_lsoa_joins_11110"),
+              ("iod_join_rows == 5270", "iod_join_rows == 11110"),
+              ("candidate_rows_5270", "candidate_rows_11110"),
+              ("candidate_rows == 5270", "candidate_rows == 11110"),
+              ("candidate_accuracy_ge_95_rows_ge_5007", "candidate_accuracy_ge_95_rows_ge_10555"),
+              ("accuracy_ge_95_rows >= 5007", "accuracy_ge_95_rows >= 10555"),
+              ('"schema_version": 34', '"schema_version": 49'),
+              ("IOD25_RELATIVE_SECURITY_PRIORITY_5270_ROWS_PREPARED_NOT_PROMOTED", "IOD25_RELATIVE_SECURITY_PRIORITY_11110_ROWS_PREPARED_NOT_PROMOTED"),
+              ("HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE_FOR_5270_ROWS", "HTTP_HASH_DOM_CONSOLE_BROWSER_ACCEPTANCE_FOR_11110_ROWS"),
+              ("pending for the 5270-row artifact", "pending for the 11110-row artifact"),
+              ("on the 5270-row candidate artifact", "on the 11110-row candidate artifact"),
+              ('"base_rows": 4960', '"base_rows": 10660'),
+              ('"added_rows": 310', '"added_rows": 450'),
+              ("<title>security_public_safety_2 — 5270 satır</title>", "<title>security_public_safety_2 — 11110 satır</title>"),
+              ("<h1>security_public_safety_2 — 5270 satır aday kanıtı</h1>", "<h1>security_public_safety_2 — 11110 satır aday kanıtı</h1>"),
+              ("Aday satır<br><b>{candidate_rows}/5270</b>", "Aday satır<br><b>{candidate_rows}/11110</b>"),
+              ("<h2>5270 örnek satır</h2>", "<h2>11110 örnek satır</h2>"),
+              ("aays_wave56_iod_", "aays_wave71_iod_"),
+              ("iod_rows == 5270", "iod_rows == 11110"),
+              ("accuracy_rows >= 5007", "accuracy_rows >= 10555"),
+              ("ons_rows != 5270 or iod_rows != 5270 or candidate_rows != 5270", "ons_rows != 11110 or iod_rows != 11110 or candidate_rows != 11110"),
+          ]
+          for old, new in replacements:
+              text = text.replace(old, new)
+
+          required = [
+              'SOURCE = ROOT / "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_340row_incremental_evidence_expansion_20260729.py"',
+              "priority_11110row_evidence_expansion_latest.json",
+              "priority_450row_wave71_latest.json",
+              "range(41422, 41872)",
+              "police_hash_rows >= 428",
+              "accuracy_rows >= 10555",
+          ]
+          for fragment in required:
+              if fragment not in text:
+                  raise SystemExit(f"DIRECT_WRAPPER_FRAGMENT_MISSING: {fragment}")
+
+          namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
+          exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
+          '''
+
+          ACC_TEXT = r'''from __future__ import annotations
+
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          SOURCE = ROOT / "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave32_accept_publish.py"
+
+          if not SOURCE.is_file():
+              raise SystemExit(f"SOURCE_SCRIPT_MISSING: {SOURCE}")
+
+          text = SOURCE.read_text(encoding="utf-8")
+          old_queue = "0007_security_public_safety_2_priority_590row_incremental_evidence_expansion_20260729.v3.task.json"
+          old_continuation = "2462ad1cf05576bed958c18cc4a01d7cde54d2c566f5a480c235066eb48012ae"
+          old_owner = "github-actions-security-public-safety-2-wave32"
+          for fragment in (old_queue, old_continuation, old_owner, "wave32"):
+              if fragment not in text:
+                  raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {fragment}")
+
+          text = text.replace(old_queue, "__WAVE71_QUEUE__")
+          text = text.replace(old_continuation, "__WAVE71_CONTINUATION__")
+          text = text.replace(old_owner, "github-actions-security-public-safety-2-wave71")
+          text = text.replace("wave32", "wave71")
+          if "590" not in text:
+              raise SystemExit("EXPECTED_590_TARGET_FRAGMENTS_MISSING")
+          text = text.replace("590", "11110")
+          text = text.replace("__WAVE71_QUEUE__", "0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json")
+          text = text.replace("__WAVE71_CONTINUATION__", "37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3")
+
+          required_replacements = [
+              ("range(30762, 31352)", "range(30762, 41872)"),
+              ("parcel_31351", "parcel_41871"),
+              ("MIN_QUALITY = 561", "MIN_QUALITY = 10555"),
+              ('"progress_delta_percentage_points": 11.86', '"progress_delta_percentage_points": 4.05'),
+              ('"accepted_base_candidate_rows": 520', '"accepted_base_candidate_rows": 10660'),
+              ('"incremental_rows_target": 70', '"incremental_rows_target": 450'),
+              ('"incremental_rows_completed": 70', '"incremental_rows_completed": 450'),
+              ("security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260729", "security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730"),
+              ("priority_11110row_browser_acceptance_wave71_receipt_20260729.json", "priority_11110row_browser_acceptance_wave71_receipt_20260730.json"),
+              ("priority_11110row_targeted_retry_wave71_diagnostic_20260729.json", "priority_11110row_targeted_retry_wave71_diagnostic_20260730.json"),
+          ]
+          for old, new in required_replacements:
+              if old not in text:
+                  raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {old}")
+              text = text.replace(old, new)
+
+          old_gate = '    if any(gate.get("state") != "PASS" for gate in gates[:12]):\n        raise SystemExit("PRE_BROWSER_GATES_FAILED")'
+          new_gate = '    failed_gates = [gate for gate in gates[:12] if gate.get("state") != "PASS"]\n    if failed_gates:\n        print("PRE_BROWSER_FAILED_GATES=" + __import__("json").dumps(failed_gates, ensure_ascii=False, sort_keys=True))\n        raise SystemExit("PRE_BROWSER_GATES_FAILED")'
+          if old_gate in text:
+              text = text.replace(old_gate, new_gate)
+
+          old_dom = """            locator = page.locator("xpath=//h2[contains(normalize-space(.),'11110 örnek satır')]/following-sibling::table[1]/tbody/tr")
+                      dom_rows = locator.count()"""
+          new_dom = """            locator = page.locator("xpath=//h2[contains(normalize-space(.),'11110 örnek satır')]/following-sibling::table[1]/tbody/tr")
+                      dom_rows = locator.count()
+                      dom_deadline = time.time() + 180
+                      while dom_rows < 11110 and time.time() < dom_deadline:
+                          page.wait_for_timeout(250)
+                          dom_rows = locator.count()"""
+          if old_dom not in text:
+              raise SystemExit("DOM_WAIT_FRAGMENT_MISSING")
+          text = text.replace(old_dom, new_dom)
+
+          required = [
+              'CONTINUATION_KEY = "37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3"',
+              '0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json',
+              'OWNER = "github-actions-security-public-safety-2-wave71"',
+          ]
+          for fragment in required:
+              if fragment not in text:
+                  raise SystemExit(f"FINAL_ACCEPTANCE_FRAGMENT_MISSING: {fragment}")
+
+          namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
+          exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
+          '''
+
+          def strip_embedded(text: str) -> str:
+              lines = text.splitlines()
+              nonempty = [line for line in lines if line.strip()]
+              indent = min(len(line) - len(line.lstrip()) for line in nonempty)
+              return "\n".join(line[indent:] for line in lines).strip() + "\n"
+
+          for path in (QUEUE, GEN, ACC, SLOT_ROOT):
+              path.parent.mkdir(parents=True, exist_ok=True)
+          SLOT_ROOT.mkdir(parents=True, exist_ok=True)
+
+          QUEUE.write_text(json.dumps(queue_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          CURRENT.write_text(json.dumps(current_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          STATUS.write_text(json.dumps(status_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          OWNERSHIP.write_text(json.dumps(ownership_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          HEARTBEAT.write_text(json.dumps(heartbeat_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          GEN.write_text(strip_embedded(GEN_TEXT), encoding="utf-8")
+          ACC.write_text(strip_embedded(ACC_TEXT), encoding="utf-8")
+
+          compile(GEN.read_text(encoding="utf-8"), str(GEN), "exec")
+          compile(ACC.read_text(encoding="utf-8"), str(ACC), "exec")
+          print(json.dumps({
+              "state": "CLAIMED_RUNNING",
+              "continuation_key": CONT,
+              "target_rows": 11110,
+              "parallel_row_checks": 15,
+              "parallel_source_probes": 10,
+          }, sort_keys=True))
+          PY
+
+      - name: Commit claim and exact task contract
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json" \
+            "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.py" \
+            "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave71_accept_publish.py" \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json
+          git diff --cached --check
+          git commit -m 'claim security_public_safety_2 wave71 11110-row scope'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              break
+            fi
+            if [ "$attempt" = 5 ]; then exit 1; fi
+            sleep $((attempt * 3))
+          done
+
+      - name: Generate 450 official-source rows and merge to 11110
+        shell: bash
+        run: |
+          python "docs/chatgpt_status/aays1/automation/security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.py"
+
+      - name: Install browser runtime
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Targeted evidence retry and browser acceptance
+        shell: bash
+        run: |
+          python "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave71_accept_publish.py"
+
+      - name: Commit exact slot outputs
+        shell: bash
+        run: |
+          rm -rf docs/chatgpt_status/aays1/automation/__pycache__
+          git add -- \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_450row_wave71_latest.json \
+            docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_11110row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion.html \
+            "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json" \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_11110row_browser_acceptance_wave71_receipt_20260730.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_11110row_targeted_retry_wave71_diagnostic_20260730.json
+          git diff --cached --check
+          git commit -m 'publish security_public_safety_2 11110-row evidence'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
+
+      - name: Park failed continuation without duplicate retry
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          cont = "37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3"
+          queue = Path("docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json")
+          slot_root = Path("docs/chatgpt_status/_shared/slots_21/security_public_safety_2")
+          current = slot_root / "current_task_latest.json"
+          status = slot_root / "status_latest.json"
+          ownership = slot_root / "ownership_latest.json"
+          heartbeat = slot_root / "heartbeat_latest.json"
+          recovery = slot_root / "wave71_recovery_parked_20260730.json"
+          if not queue.exists():
+              raise SystemExit("NO_CLAIM_CREATED_NOT_PARKING")
+          q = json.loads(queue.read_text(encoding="utf-8"))
+          if q.get("continuation_key") != cont:
+              raise SystemExit("DIFFERENT_CONTINUATION_NOT_PARKING")
+          now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+          evidence = {
+              "schema_version": 1,
+              "slot_id": "security_public_safety_2",
+              "task_id": "security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730",
+              "continuation_key": cont,
+              "state": "RECOVERY_PARKED",
+              "reason": "WAVE71_WORKFLOW_FAILED_FAIL_CLOSED",
+              "detected_at": now,
+              "automatic_retry_used": 0,
+              "second_task_created": False,
+              "second_runner_created": False,
+              "requires_user_action": False,
+              "final_ready": False,
+          }
+          recovery.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+          for path in (queue, current, status):
+              data = json.loads(path.read_text(encoding="utf-8"))
+              if data.get("continuation_key") == cont:
+                  data["state"] = "RECOVERY_PARKED"
+                  data["status"] = "recovery_parked"
+                  data["blocker"] = "WAVE71_WORKFLOW_FAILED_FAIL_CLOSED"
+                  data["updated_at"] = now
+                  data["final_ready"] = False
+                  data.setdefault("recovery", {}).update({"triggered": True, "reason": "WAVE71_WORKFLOW_FAILED_FAIL_CLOSED", "attempt": 0})
+                  path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          own = json.loads(ownership.read_text(encoding="utf-8"))
+          if own.get("continuation_key") == cont:
+              own.update({
+                  "state": "RECOVERY_PARKED_OWNER_RELEASED",
+                  "owner_page_session_id": None,
+                  "lease_token_hash": None,
+                  "heartbeat_at": None,
+                  "lease_expires_at": None,
+                  "runtime_live_owner": False,
+                  "claimable": False,
+                  "ready_for_claim": False,
+                  "takeover_rule": "Recovery parked. Diagnose before one safe retry; do not create duplicate continuation.",
+                  "updated_at": now,
+                  "final_ready": False,
+              })
+              ownership.write_text(json.dumps(own, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          hb = json.loads(heartbeat.read_text(encoding="utf-8"))
+          if hb.get("continuation_key") == cont:
+              hb.update({"state": "RECOVERY_PARKED", "heartbeat_at": now, "owner_page_session_id": None, "lease_expires_at": None, "final_ready": False})
+              heartbeat.write_text(json.dumps(hb, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json" \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave71_recovery_parked_20260730.json
+          git diff --cached --check
+          git commit -m 'park security_public_safety_2 wave71 failure' || exit 0
+          for attempt in 1 2 3; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 0
+            fi
+            if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            sleep $((attempt * 3))
+          done
