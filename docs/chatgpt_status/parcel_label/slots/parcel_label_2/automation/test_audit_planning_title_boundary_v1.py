@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).with_name("audit_planning_title_boundary_v1.py")
@@ -8,6 +9,7 @@ spec = importlib.util.spec_from_file_location("planning_crosscheck", MODULE_PATH
 if spec is None or spec.loader is None:
     raise RuntimeError("PLANNING_CROSSCHECK_IMPORT_FAILED")
 module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 
@@ -58,7 +60,7 @@ def main() -> int:
         "PLANNING_EXACT_REFERENCE_MATCH_COUNT:2",
         lambda: module.validate_entity(identity, {"entities": payload["entities"] * 2}),
     )
-    wrong_reference = {"entities": [dict(payload["entities"][0], reference="999")]} 
+    wrong_reference = {"entities": [dict(payload["entities"][0], reference="999")]}
     expect_error(
         "PLANNING_EXACT_REFERENCE_MATCH_COUNT:0",
         lambda: module.validate_entity(identity, wrong_reference),
