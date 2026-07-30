@@ -37,8 +37,14 @@ for old, token in protected:
     text = text.replace(old, token)
 
 direct = [
-    ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "fdfffc80b2fa7f4886633c3c1d99b2031c42a4b9"'),
-    ("('\"schema_version\": 49', '\"schema_version\": 50'),", "('\"schema_version\": 54', '\"schema_version\": 55'),"),
+    ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "661864f638eabbabf62c01dc367bda38637ff51a"'),
+    (('"schema_version": 49', '"schema_version": 50'),),
+]
+
+# Preserve the tested Wave72 transformation pattern while advancing Wave77 schemas.
+direct = [
+    ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "661864f638eabbabf62c01dc367bda38637ff51a"'),
+    (("'\"schema_version\": 49'", "'\"schema_version\": 50'"), ("'\"schema_version\": 54'", "'\"schema_version\": 55'")),
     ('"schema_version": 95,', '"schema_version": 100,'),
     ('"schema_version": 99,', '"schema_version": 104,'),
     ('"schema_version": 94,', '"schema_version": 99,'),
@@ -54,7 +60,7 @@ for old, new in direct:
 
 resolved = [
     ("__PREVIOUS_CONTINUATION__", "8ffc9b537d79f7ae2f8c1c60b6945e2b8cbe9d92cf531d3e5c5527d8f4b4960e"),
-    ("__CURRENT_CONTINUATION__", "7cacce2771f6ce2de6d5ea003fe836b264c7e8a8b3cd99e8c412d2bb0467d437"),
+    ("__CURRENT_CONTINUATION__", "a005e9d21cc290b1e472eed6081436250a1cb344df18bc87aa7a25b2eb09db2d"),
     ("__PREVIOUS_WAVE__", "wave76"),
     ("__CURRENT_WAVE__", "wave77"),
     ("__PREVIOUS_QUEUE__", "0051_"),
@@ -79,9 +85,9 @@ for token, value in resolved:
     text = text.replace(token, value)
 
 required = [
-    'SOURCE_HEAD = "fdfffc80b2fa7f4886633c3c1d99b2031c42a4b9"',
+    'SOURCE_HEAD = "661864f638eabbabf62c01dc367bda38637ff51a"',
     'FIRST_STEP = "EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_13360_TO_13810_ROWS_WITH_OFFICIAL_SOURCE_HASHES"',
-    'CONTINUATION_KEY = "7cacce2771f6ce2de6d5ea003fe836b264c7e8a8b3cd99e8c412d2bb0467d437"',
+    'CONTINUATION_KEY = "a005e9d21cc290b1e472eed6081436250a1cb344df18bc87aa7a25b2eb09db2d"',
     'TASK_ID = "security_public_safety_2_priority_13810row_incremental_evidence_expansion_20260730"',
     'OWNER = "github-actions-security-public-safety-2-wave77"',
     '0052_security_public_safety_2_priority_13810row_incremental_evidence_expansion_20260730.v3.task.json',
