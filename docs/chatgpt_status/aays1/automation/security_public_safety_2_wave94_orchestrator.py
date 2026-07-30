@@ -76,11 +76,20 @@ for token, value in resolved:
         raise SystemExit(f"ORCHESTRATOR_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
 
+inner_marker = "\nrequired = ["
+inner_injection = '''
 old_target_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"
 new_target_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731"
 if old_target_task not in text:
     raise SystemExit(f"ORCHESTRATOR_TARGET_DATE_FRAGMENT_MISSING: {old_target_task}")
 text = text.replace(old_target_task, new_target_task)
+text = text.replace("priority_21460row_browser_acceptance_wave94_receipt_20260730", "priority_21460row_browser_acceptance_wave94_receipt_20260731")
+text = text.replace("priority_21460row_targeted_retry_wave94_diagnostic_20260730", "priority_21460row_targeted_retry_wave94_diagnostic_20260731")
+
+required = ['''
+if inner_marker not in text:
+    raise SystemExit("ORCHESTRATOR_INNER_REQUIRED_MARKER_MISSING")
+text = text.replace(inner_marker, "\n" + inner_injection, 1)
 
 required = [
     'SOURCE_HEAD = "6ee96ccbbcaeae980013e8104d7c082ba21c1479"',
