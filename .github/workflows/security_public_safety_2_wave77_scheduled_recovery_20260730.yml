@@ -1,0 +1,117 @@
+name: security-public-safety-2-wave77-scheduled-recovery
+
+on:
+  schedule:
+    - cron: '25 14 30 7 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-a005e9d21cc290b1e472eed6081436250a1cb344df18bc87aa7a25b2eb09db2d
+  cancel-in-progress: false
+
+jobs:
+  guarded-wave77-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Gate exact recovery date
+        id: gate
+        shell: bash
+        run: |
+          if [[ "$(date -u +%Y-%m-%d)" == "2026-07-30" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout canonical branch
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Validate Wave77 orchestrator syntax
+        if: steps.gate.outputs.run == 'true'
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py
+
+      - name: Claim exact existing Wave77 scope
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py claim
+
+      - name: Install browser runtime
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Generate official-source rows and publish accepted output
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py run
+
+      - name: Verify remote hashes and terminalize
+        if: steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py terminalize
+
+      - name: Park failed continuation without duplicate retry
+        if: failure() && steps.gate.outputs.run == 'true'
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave77_orchestrator.py park
+
+      - name: Resolve manual action after terminal readback
+        if: success() && steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          import json
+          from pathlib import Path
+
+          current_path = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json')
+          manual_path = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
+          current = json.loads(current_path.read_text(encoding='utf-8'))
+          acceptance = current.get('acceptance') or {}
+          if current.get('task_id') != 'security_public_safety_2_priority_13810row_incremental_evidence_expansion_20260730':
+              raise SystemExit('WAVE77_MANUAL_RESOLUTION_TASK_MISMATCH')
+          if current.get('state') != 'COMPLETED_ACCEPTED_PUBLISHED':
+              raise SystemExit('WAVE77_MANUAL_RESOLUTION_NOT_TERMINAL')
+          if acceptance.get('state') != 'PASS_REMOTE_COMMIT_READBACK':
+              raise SystemExit('WAVE77_MANUAL_RESOLUTION_READBACK_MISSING')
+
+          payload = json.loads(manual_path.read_text(encoding='utf-8'))
+          now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+          payload.update({
+              'schema_version': int(payload.get('schema_version') or 42) + 1,
+              'state': 'RESOLVED',
+              'requires_user_action': False,
+              'reason': 'Wave77 default-branch scheduled recovery produced a single guarded runner, completed the 13810-row official-source expansion, passed remote hash/browser readback, and released ownership without a duplicate task.',
+              'diagnosis': 'WAVE77_ACTIONS_RUN_AND_REMOTE_ACCEPTANCE_COMPLETED',
+              'updated_at': now,
+              'resolved_at': now,
+              'continuation_key': current.get('continuation_key'),
+              'task_id': current.get('task_id'),
+              'queue_created': True,
+              'live_owner': False,
+              'blocker': None,
+              'final_ready': True,
+          })
+          manual_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "security_public_safety_2: resolve Wave77 manual action"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
