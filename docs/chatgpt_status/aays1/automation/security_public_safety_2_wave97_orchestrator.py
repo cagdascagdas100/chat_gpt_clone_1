@@ -47,6 +47,7 @@ direct = [
     ("    ('\"priority\": -168,', '\"priority\": -172,'),",
      "    ('\"priority\": -168,', '\"priority\": -173,'),"),
     ("    ('97.81', '97.99'),", "    ('97.81', '98.03'),"),
+    ("    '\"expanded_scope_progress_percent\": 97.99',", "    '\"expanded_scope_progress_percent\": 98.03'," ),
     ("    ('WAVE92', 'WAVE96'),", "    ('WAVE92', 'WAVE97'),"),
 ]
 for old, new in direct:
