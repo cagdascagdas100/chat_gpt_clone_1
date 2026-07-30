@@ -46,5 +46,17 @@ new_gate = '    failed_gates = [gate for gate in gates[:12] if gate.get("state")
 if old_gate in text:
     text = text.replace(old_gate, new_gate)
 
+old_dom = '''            locator = page.locator("xpath=//h2[contains(normalize-space(.),'7340 örnek satır')]/following-sibling::table[1]/tbody/tr")
+            dom_rows = locator.count()'''
+new_dom = '''            locator = page.locator("xpath=//h2[contains(normalize-space(.),'7340 örnek satır')]/following-sibling::table[1]/tbody/tr")
+            dom_rows = locator.count()
+            dom_deadline = time.time() + 180
+            while dom_rows < 7340 and time.time() < dom_deadline:
+                page.wait_for_timeout(250)
+                dom_rows = locator.count()'''
+if old_dom not in text:
+    raise SystemExit("DOM_WAIT_FRAGMENT_MISSING")
+text = text.replace(old_dom, new_dom)
+
 namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
 exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
