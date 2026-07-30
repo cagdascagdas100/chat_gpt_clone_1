@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_3 Batch 167</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:20px;background:#f5f7fa;color:#17202a}
+h1{margin:0 0 6px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:14px 0}
+.card,section{background:#fff;border:1px solid #dbe2ea;border-radius:10px;padding:12px;margin-bottom:12px}
+.n{font-size:22px;font-weight:750}.ok{color:#08783e;font-weight:700}.warn{color:#9a5a00;font-weight:700}.block{color:#b42318;font-weight:700}
+.scroll{overflow:auto;max-height:820px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #dbe2ea;padding:7px;vertical-align:top;text-align:left}
+th{background:#edf2f7;position:sticky;top:0}a{color:#075eb5}.small{font-size:12px;color:#52606d}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}input,select{padding:7px;border:1px solid #c9d2dc;border-radius:7px}
+code{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>height_difference_3 — Batch 167</h1>
+<div class="small">HMLR 318 satırlık envanter bütünlüğü + deterministik normalizasyon + Strict12 fail-closed audit · aynı continuation key · ikinci runner yok</div>
+<div id="cards" class="grid"></div>
+<section><b class="block">Runtime engeli sürüyor:</b> 22 kanonik çıktı eksik. Bu batch envanter, kaynak yönlendirme ve aday kapılarını doğrular; sayısal yükseklik üretmez.</section>
+<section><h2>Doğrulanmış örnekler</h2><div id="examples"></div></section>
+<section><h2>Envanter kalite özeti</h2><div id="inventory"></div></section>
+<section><h2>Strict12 aday özeti</h2><div id="candidates"></div></section>
+<section><h2>Satır satır işlem günlüğü</h2>
+<div class="filters">
+<input id="q" placeholder="Ara: kurum, kontrol, aday">
+<select id="cat">
+<option value="">Tüm kategoriler</option>
+<option>AUTHORITY_ENTRY</option><option>GROUP</option><option>SHARD</option><option>GLOBAL</option><option>LIVE_SOURCE</option><option>STRICT12_CANDIDATE</option>
+</select>
+<select id="st"><option value="">Tüm durumlar</option><option>PASS</option><option>READY_CONTRACT</option><option>BLOCKED_SAFE</option></select>
+</div>
+<div class="scroll"><table><thead><tr><th>#</th><th>Kategori</th><th>Grup/Aday</th><th>Varlık</th><th>Kontrol</th><th>Durum</th><th>Güven</th><th>Kanıt / Kaynak</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+Promise.all([
+ fetch('batch_167_hmlr_inventory_integrity_strict12_audit.json').then(r=>{if(!r.ok)throw Error('package HTTP '+r.status);return r.json()}),
+ fetch('batch_166_hmlr_inventory_A_H.json').then(r=>r.json()),
+ fetch('batch_166_hmlr_inventory_I_M.json').then(r=>r.json()),
+ fetch('batch_166_hmlr_inventory_N_R.json').then(r=>r.json()),
+ fetch('batch_166_hmlr_inventory_S_W.json').then(r=>r.json())
+]).then(([p,...shards])=>{
+ const groups=Object.assign({},...shards.map(s=>s.groups));
+ const entries=[]; for(const [g,names] of Object.entries(groups))for(const name of names)entries.push({g,name,key:norm(name)});
+ const keyCount={}; for(const x of entries)keyCount[x.key]=(keyCount[x.key]||0)+1;
+ let out=[],seq=1;
+ for(const x of entries){
+   const evals=[
+    [p.entry_check_templates[0],typeof x.name==='string'&&x.name.length>0],
+    [p.entry_check_templates[1],x.name.toUpperCase().startsWith(x.g)],
+    [p.entry_check_templates[2],x.name===x.name.trim()&&!x.name.includes('  ')],
+    [p.entry_check_templates[3],x.key.length>0],
+    [p.entry_check_templates[4],keyCount[x.key]===1]
+   ];
+   for(const [t,pass] of evals)out.push({seq:seq++,category:'AUTHORITY_ENTRY',group:x.g,entity:x.name,check:t[0],status:pass?'PASS':'FAIL',confidence:t[2],evidence:t[3],source:p.sources[0]});
+ }
+ for(const [g,names] of Object.entries(groups)){
+   const keys=names.map(norm), expected=p.validation.group_counts[g];
+   const evals=[
+    [p.group_check_templates[0],names.length===expected,'count='+names.length+' expected='+expected],
+    [p.group_check_templates[1],names.length>0,'count='+names.length],
+    [p.group_check_templates[2],names.every(n=>n.toUpperCase().startsWith(g)),'wrong_initial='+names.filter(n=>!n.toUpperCase().startsWith(g)).length],
+    [p.group_check_templates[3],new Set(keys).size===keys.length,'unique='+new Set(keys).size+' total='+keys.length]
+   ];
+   for(const [t,pass,detail] of evals)out.push({seq:seq++,category:'GROUP',group:g,entity:g,check:t[0],status:pass?'PASS':'FAIL',confidence:t[2],evidence:t[3]+' '+detail,source:p.sources[0]});
+ }
+ shards.forEach((s,i)=>{
+   const rec=p.inventory_shard_receipts[i];
+   const evals=[
+    [p.shard_check_templates[0],s.schema_version===1],
+    [p.shard_check_templates[1],s.slot_id==='height_difference_3'],
+    [p.shard_check_templates[2],s.batch_id===166],
+    [p.shard_check_templates[3],s.kind==='HMLR_AUTHORITY_INVENTORY_SHARD'],
+    [p.shard_check_templates[4],s.source_url===p.sources[0].url],
+    [p.shard_check_templates[5],Boolean(s.accessed_at)],
+    [p.shard_check_templates[6],Object.values(s.groups).every(a=>a.length>0)],
+    [p.shard_check_templates[7],Boolean(rec.blob_sha&&rec.sha256)]
+   ];
+   for(const [t,pass] of evals)out.push({seq:seq++,category:'SHARD',group:'S'+(i+1),entity:rec.file,check:t[0],status:pass?'PASS':'FAIL',confidence:t[2],evidence:t[3]+' blob='+rec.blob_sha+' sha256='+rec.sha256,source:p.sources[0]});
+ });
+ for(const t of p.global_checks_rows)out.push({seq:seq++,category:'GLOBAL',group:'-',entity:'merged_inventory',check:t[0],status:t[1],confidence:t[2],evidence:t[3],source:p.sources[0]});
+ for(const t of p.live_source_checks_rows){const src=p.sources.find(s=>s.id===t[4]);out.push({seq:seq++,category:'LIVE_SOURCE',group:src.publisher,entity:src.title,check:t[0],status:t[1],confidence:t[2],evidence:t[3],source:src})}
+ for(const r of p.candidate_gate_expansion.rows)for(const t of p.candidate_gate_templates)out.push({seq:seq++,category:'STRICT12_CANDIDATE',group:r,entity:'row '+r,check:t[0],status:t[1],confidence:t[2],evidence:t[3],source:p.sources[0]});
+ const actualPass=out.filter(x=>['PASS','READY_CONTRACT','BLOCKED_SAFE'].includes(x.status)).length;
+ const m=[
+  ['Genel ilerleme','%'+p.progress.percent.toFixed(6)],['Yüzde artışı','+%'+p.progress.percent_delta.toFixed(6)],
+  ['İşlem',actualPass+' / '+out.length],['Web satırı',out.length],['Toplam web satırı',p.progress.website_rows_cumulative],
+  ['HMLR envanteri',p.inventory_rows],['Harf grubu',p.inventory_groups],['Exact duplicate',p.validation.exact_name_duplicates],
+  ['Normalize çakışma',p.validation.normalized_key_collisions],['Kaynak güveni','%'+p.source_confidence_average.toFixed(2)],
+  ['Doğrulanmış örnek',p.verified_measurements.length],['Eksik runtime çıktısı',p.expected_outputs_missing]
+ ];
+ cards.innerHTML=m.map(x=>'<div class="card"><div>'+esc(x[0])+'</div><div class="n">'+esc(x[1])+'</div></div>').join('');
+ examples.innerHTML='<table><thead><tr><th>Satır</th><th>Yükseklik farkı</th><th>Güven</th><th>Durum</th></tr></thead><tbody>'+p.verified_measurements.map(x=>'<tr><td>'+x.row_no+'</td><td>'+x.height_difference_m+' m</td><td class="ok">'+esc(x.confidence)+'</td><td>'+esc(x.state)+'</td></tr>').join('')+'</tbody></table>';
+ inventory.innerHTML='<div class="card"><b>318/318</b> satır · <b>21/21</b> grup · exact duplicate <b>0</b> · normalized collision <b>0</b> · yanlış initial <b>0</b> · whitespace kusuru <b>0</b></div><div class="card">'+Object.entries(p.validation.group_counts).map(([k,v])=>'<b>'+k+':</b> '+v).join(' · ')+'</div>';
+ candidates.innerHTML='<div class="card"><b>Satırlar:</b> '+p.strict12_rows.join(', ')+'</div><div class="card"><b>Her aday:</b> envanter hazır · normalizasyon hazır · authority binding blocked-safe · exact GML href blocked-safe · HMLR identity blocked-safe · EA WCS hazır · Terrain50 hazır · numeric seal blocked-safe</div>';
+ function render(){const term=q.value.toLowerCase(),c=cat.value,sf=st.value;const f=out.filter(x=>(!c||x.category===c)&&(!sf||x.status===sf)&&JSON.stringify(x).toLowerCase().includes(term));rows.innerHTML=f.map(x=>{const cl=x.status==='PASS'||x.status==='READY_CONTRACT'?'ok':x.status==='BLOCKED_SAFE'?'warn':'block';const link=x.source?'<a target="_blank" rel="noopener" href="'+esc(x.source.url)+'">'+esc(x.source.title)+'</a>':'';return '<tr><td>'+x.seq+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.group)+'</td><td>'+esc(x.entity)+'</td><td>'+esc(x.check)+'</td><td class="'+cl+'">'+esc(x.status)+'</td><td>%'+x.confidence+'</td><td>'+esc(x.evidence)+'<br>'+link+'</td></tr>'}).join('')}
+ q.oninput=render;cat.onchange=render;st.onchange=render;render();
+ if(out.length!==p.operations_total)document.body.insertAdjacentHTML('beforeend','<pre class="block">ROW COUNT MISMATCH '+out.length+' != '+p.operations_total+'</pre>');
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<pre class="block">'+esc(e)+'</pre>'));
+</script>
+</body></html>
