@@ -92,6 +92,22 @@ text = text.replace(old_target_task, new_target_task)
 text = text.replace("priority_21460row_browser_acceptance_wave94_receipt_20260730", "priority_21460row_browser_acceptance_wave94_receipt_20260731")
 text = text.replace("priority_21460row_targeted_retry_wave94_diagnostic_20260730", "priority_21460row_targeted_retry_wave94_diagnostic_20260731")
 
+acceptance_marker = '        acc = acc.replace(old, new)\n    for fragment in ('
+acceptance_patch = '\n'.join([
+    '        acc = acc.replace(old, new)',
+    '    old_acceptance_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"',
+    '    new_acceptance_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731"',
+    '    if old_acceptance_task not in acc:',
+    '        raise SystemExit(f"ACCEPTANCE_TARGET_DATE_FRAGMENT_MISSING:{old_acceptance_task}")',
+    '    acc = acc.replace(old_acceptance_task, new_acceptance_task)',
+    '    acc = acc.replace("priority_21460row_browser_acceptance_wave94_receipt_20260730", "priority_21460row_browser_acceptance_wave94_receipt_20260731")',
+    '    acc = acc.replace("priority_21460row_targeted_retry_wave94_diagnostic_20260730", "priority_21460row_targeted_retry_wave94_diagnostic_20260731")',
+    '    for fragment in (',
+])
+if acceptance_marker not in text:
+    raise SystemExit("ORCHESTRATOR_ACCEPTANCE_MARKER_MISSING")
+text = text.replace(acceptance_marker, acceptance_patch, 1)
+
 required = ['''
 if inner_marker not in text:
     raise SystemExit("ORCHESTRATOR_INNER_REQUIRED_MARKER_MISSING")
