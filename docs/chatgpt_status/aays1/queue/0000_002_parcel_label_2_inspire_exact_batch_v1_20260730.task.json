@@ -10,7 +10,7 @@
   "status": "recovery_parked",
   "priority": -100001,
   "created_at": "2026-07-30T10:11:00Z",
-  "updated_at": "2026-07-30T13:55:00Z",
+  "updated_at": "2026-07-30T18:56:00Z",
   "queue_branch": "codex/aays-single-runner-v5-20260706",
   "target_branch": "codex/aays-single-runner-v5-20260706",
   "source_branch": "codex/aays-single-runner-v5-20260706",
@@ -18,20 +18,21 @@
   "sample_range": {"start": 30762, "end": 30773, "count": 12},
   "sample_parcels": ["parcel_30762","parcel_30763","parcel_30764","parcel_30765","parcel_30766","parcel_30767","parcel_30768","parcel_30769","parcel_30770","parcel_30771","parcel_30772","parcel_30773"],
   "script_path": "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
-  "python_script_path": "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.py",
+  "python_script_path": "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v7.py",
   "command": "powershell -NoProfile -ExecutionPolicy Bypass -File docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
   "read_paths": [
     "england_map_web/data/program_layer_matrix/security.geojson",
     "docs/chatgpt_status/_shared/slots_21/parcel_label_2/continuation_c07f950559681f35d0a482491539c1f50400878e0a0b33f9ae3e733574346ce6.v3.task.json",
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.py",
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v1.ps1",
+    "docs/chatgpt_status/parcel_label/slots/parcel_label_2/automation/bind_inspire_enfield_batch_v7.py",
     "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
     "https://use-land-property-data.service.gov.uk/datasets/inspire"
   ],
   "exact_write_paths": [
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/parcel_label_2_inspire_exact_batch_latest.json",
     "docs/chatgpt_status/parcel_label/slots/parcel_label_2/runner_outputs/parcel_label_2_inspire_exact_batch_reconciliation_latest.json",
-    "england_map_web/data/aays_21_slots/parcel_label_2/progress_rows_latest.json"
+    "england_map_web/data/aays_21_slots/parcel_label_2/progress_wave15_exact_execution_latest.json"
   ],
   "recovery_evidence_paths": [
     "england_map_web/data/aays_21_slots/parcel_label_2/recovery_progress_20260730T1355Z.json",
@@ -61,7 +62,7 @@
   },
   "required_git_blob_sha": "8afd1d2bac414cf0f6b9484014e7878a4ceff877",
   "required_feature_count": 92283,
-  "resource_class": ["network_io_heavy", "xml_streaming", "control_light"],
+  "resource_class": ["network_io_heavy","xml_streaming","control_light"],
   "max_runtime_seconds": 1800,
   "max_attempts": 2,
   "acceptance_checks": [
@@ -72,7 +73,8 @@
     "Require one exact official feature and Polygon, MultiPolygon, MultiSurface or Surface geometry with at least four coordinate pairs",
     "Treat INSPIRE extent as indicative and never definitive legal title extent",
     "Infer no UPRN, address point or unproven parcel binding",
-    "Write row-by-row website evidence, factual partial or NO_DATA_CONTINUE output, fake rows zero and final_ready false"
+    "Write exact row-by-row website evidence to the isolated exact wave file, factual partial or NO_DATA_CONTINUE output, fake rows zero and final_ready false",
+    "Preserve the candidate base progress_rows_latest.json file"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -87,20 +89,22 @@
     "blocker": "OFFICIAL_HMLR_GML_BINARY_DOWNLOAD_ENVIRONMENT_DNS_FAILURE",
     "pending_minutes_at_detection": 25,
     "safe_recovery_cycle_attempted": true,
-    "transport_probes": 2,
+    "transport_probes": 6,
     "live_owner": false,
     "canonical_identity_rows": 3,
     "identity_pending_rows": 9,
     "exact_verified_rows": 0,
     "fake_rows": 0,
-    "operations_completed": 21,
-    "operations_total": 24,
-    "progress_percent": 87.5,
-    "progress_increase_percentage_points": 12.5,
-    "website_rows_published": 12,
+    "operations_completed": 261,
+    "operations_total": 264,
+    "progress_percent": 98.9,
+    "progress_increase_percentage_points": 0.0,
+    "website_rows_published": 103,
     "recovery_record": "docs/chatgpt_status/_shared/slots_21/parcel_label_2/recovery_inspire_batch_20260730T1036Z.json",
-    "web_evidence_json": "england_map_web/data/aays_21_slots/parcel_label_2/recovery_progress_20260730T1355Z.json",
-    "web_evidence_html": "england_map_web/parcel_label_2_recovery_progress_20260730.html"
+    "web_evidence_json": "england_map_web/data/aays_21_slots/parcel_label_2/progress_wave14_planning_crosscheck_latest.json",
+    "web_evidence_html": "england_map_web/data/aays_21_slots/parcel_label_2/index.html",
+    "exact_web_output": "england_map_web/data/aays_21_slots/parcel_label_2/progress_wave15_exact_execution_latest.json",
+    "candidate_base_preserved": true
   },
   "retry_policy": {
     "same_task_only": true,
