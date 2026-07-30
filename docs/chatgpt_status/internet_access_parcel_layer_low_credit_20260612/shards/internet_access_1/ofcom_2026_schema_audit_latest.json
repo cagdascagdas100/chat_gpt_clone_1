@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "slot_id": "internet_access_1",
+  "stage": "OFCom_2026_POSTCODE_SCHEMA_AUDIT",
+  "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
+  "task_id": "internet_access_1_ofcom_2026_schema_audit_862285f2",
+  "executor_environment": "chatgpt_remote_worker_child_branch",
+  "source_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+  "methodology_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
+  "source_snapshot_date": "2026-01",
+  "source_correction_version": "v2-2026-07-07",
+  "started_at": "2026-07-30T10:52:00Z",
+  "finished_at": "2026-07-30T10:54:00Z",
+  "status": "BLOCKED",
+  "checks": {
+    "official_publication_page_accessible": true,
+    "official_methodology_pdf_accessible": true,
+    "corrected_r2_naming_documented": true,
+    "expected_postcode_file_count_documented": true,
+    "expected_total_data_rows_documented": true,
+    "archive_download_completed": false,
+    "zip_is_readable": false,
+    "corrected_r2_postcode_files_present": false,
+    "stale_r1_all_premises_files_absent": false,
+    "postcode_areas_unique": false,
+    "required_columns_present_in_every_file": false,
+    "official_row_count_matches": false
+  },
+  "documented_expectations": {
+    "postcode_file_count": 121,
+    "total_data_rows": 1741096,
+    "uncompressed_size_mb": 165,
+    "postcode_file_pattern": "202601_fixed_postcode_coverage_r2_XX.csv",
+    "required_identity_columns": [
+      "postcode",
+      "postcode_space"
+    ],
+    "required_coverage_columns": [
+      "SFBB availability (% premises)",
+      "UFBB (100Mbit/s) availability (% premises)",
+      "Gigabit availability (% premises)",
+      "% of premises unable to receive decent broadband from fixed or FWA"
+    ]
+  },
+  "archive_size_bytes": null,
+  "archive_sha256": null,
+  "postcode_file_count": null,
+  "data_row_count": null,
+  "sample_headers": [],
+  "sample_column_mapping": {},
+  "blockers": [
+    "OFCom_SOURCE_DOWNLOAD_OR_SCHEMA_AUDIT_FAILED",
+    "REMOTE_WORKER_DNS_RESOLUTION_FAILED",
+    "PORTABLE_COORDINATOR_HEARTBEAT_STALE"
+  ],
+  "error": "Official publication and methodology were readable through the web research channel, but binary ZIP retrieval was unsupported there; the isolated runtime download then failed with Temporary failure in name resolution. Archive bytes, SHA-256, internal filenames, headers and 1,741,096-row count were therefore not claimed as verified.",
+  "source_evidence": [
+    {
+      "role": "OFFICIAL_PUBLICATION_CONTEXT",
+      "authority": "Ofcom",
+      "verified": true,
+      "facts": [
+        "Spring 2026 snapshot is January 2026",
+        "fixed broadband ZIP is listed as a 32.2 MB public download"
+      ]
+    },
+    {
+      "role": "OFFICIAL_SCHEMA_AND_CORRECTION_EVIDENCE",
+      "authority": "Ofcom",
+      "verified": true,
+      "facts": [
+        "V2 dated 07/07/2026 corrects CW and MK duplicate files",
+        "121 all-premises postcode files must use r2 names",
+        "documented all-premises postcode row total is 1,741,096"
+      ]
+    },
+    {
+      "role": "PREMISE_CURRENTNESS_REFERENCE",
+      "authority": "Building Digital UK",
+      "verified": true,
+      "facts": [
+        "Address Checker currently uses January 2026 OMR data published in June 2026",
+        "premise-level BDUK release distinguishes UPRN, current_gigabit and future_gigabit"
+      ],
+      "promotion_rule": "Reference only until exact parcel-to-UPRN identity and source epoch are verified"
+    }
+  ],
+  "new_parcel_rows_written": 0,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "final_ready": false
+}
