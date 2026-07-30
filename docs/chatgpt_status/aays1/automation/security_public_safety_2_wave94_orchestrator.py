@@ -92,8 +92,8 @@ text = text.replace(old_target_task, new_target_task)
 text = text.replace("priority_21460row_browser_acceptance_wave94_receipt_20260730", "priority_21460row_browser_acceptance_wave94_receipt_20260731")
 text = text.replace("priority_21460row_targeted_retry_wave94_diagnostic_20260730", "priority_21460row_targeted_retry_wave94_diagnostic_20260731")
 
-acceptance_marker = '        acc = acc.replace(old, new)\n    for fragment in ('
-acceptance_patch = '\n'.join([
+acceptance_marker = '        acc = acc.replace(old, new)' + chr(10) + '    for fragment in ('
+acceptance_patch = chr(10).join([
     '        acc = acc.replace(old, new)',
     '    old_acceptance_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"',
     '    new_acceptance_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731"',
