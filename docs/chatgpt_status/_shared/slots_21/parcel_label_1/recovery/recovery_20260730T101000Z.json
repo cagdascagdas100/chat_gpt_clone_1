@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "parcel_label_1",
+  "continuation_key": "15ca1c9e166fd3c09f6568d967ede51fae95fa9335cbe3abb6a72bf9d4c3aa09",
+  "source_head": "49edca6318b293ea5832aabb4efeba572601fe2b",
+  "checked_at": "2026-07-30T10:10:00Z",
+  "recovery_gate": "LONG_PENDING_OR_STALE_RUNNER_AUDIT",
+  "owner_state": "UNCLAIMED",
+  "heartbeat_state": "STALE",
+  "current_task_state": "IDLE",
+  "historical_audit_queue_state": "PICKUP_REQUESTED_NOT_STARTED",
+  "historical_audit_output_present": false,
+  "shared_runner_host_liveness_confirmed": false,
+  "automatic_checks": [
+    {
+      "check": "canonical remote HEAD readback",
+      "state": "DONE",
+      "result": "49edca6318b293ea5832aabb4efeba572601fe2b"
+    },
+    {
+      "check": "slot owner and heartbeat readback",
+      "state": "DONE",
+      "result": "no live owner; stale heartbeat; no active lease"
+    },
+    {
+      "check": "historical 198-row output readback",
+      "state": "BLOCKED",
+      "result": "required runner output remains absent"
+    },
+    {
+      "check": "single runner host execution claim",
+      "state": "BLOCKED",
+      "result": "no current execution claim or fresh global heartbeat"
+    },
+    {
+      "check": "non-conflicting research continuation",
+      "state": "DONE",
+      "result": "isolated child branch created; canonical parcel binding untouched"
+    }
+  ],
+  "safe_recovery_result": "RECOVERY_PARKED_FOR_RUNNER_ONLY_RESEARCH_CONTINUED",
+  "retry_performed": false,
+  "retry_reason": "No host/process channel is available from the GitHub connector; repeating pickup records would create a duplicate task without execution evidence",
+  "requires_user_action": false,
+  "manual_action_created": false,
+  "business_data_written": false,
+  "next_safe_step": "Serial publisher may merge the verified research child package; historical audit must resume only on the existing single runner after fresh host liveness confirmation",
+  "final_ready": false
+}
