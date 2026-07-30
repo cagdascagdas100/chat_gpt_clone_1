@@ -9,20 +9,22 @@ if not SOURCE.is_file():
     raise SystemExit(f"SOURCE_SCRIPT_MISSING: {SOURCE}")
 
 text = SOURCE.read_text(encoding="utf-8")
-replacements = [
-    ("0007_security_public_safety_2_priority_590row_incremental_evidence_expansion_20260729.v3.task.json", "0041_security_public_safety_2_priority_8920row_incremental_evidence_expansion_20260730.v3.task.json"),
-    ("2462ad1cf05576bed958c18cc4a01d7cde54d2c566f5a480c235066eb48012ae", "69f728dd60d78e4dcb321426efb22f729f30419590faf5a11ac89ded61332c37"),
-    ("github-actions-security-public-safety-2-wave32", "github-actions-security-public-safety-2-wave66"),
-    ("wave32", "wave66"),
-]
-for old, new in replacements:
-    if old not in text:
-        raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {old}")
-    text = text.replace(old, new)
+old_queue = "0007_security_public_safety_2_priority_590row_incremental_evidence_expansion_20260729.v3.task.json"
+old_continuation = "2462ad1cf05576bed958c18cc4a01d7cde54d2c566f5a480c235066eb48012ae"
+old_owner = "github-actions-security-public-safety-2-wave32"
+for fragment in (old_queue, old_continuation, old_owner, "wave32"):
+    if fragment not in text:
+        raise SystemExit(f"EXPECTED_SOURCE_FRAGMENT_MISSING: {fragment}")
 
+text = text.replace(old_queue, "__WAVE66_QUEUE__")
+text = text.replace(old_continuation, "__WAVE66_CONTINUATION__")
+text = text.replace(old_owner, "github-actions-security-public-safety-2-wave66")
+text = text.replace("wave32", "wave66")
 if "590" not in text:
     raise SystemExit("EXPECTED_590_TARGET_FRAGMENTS_MISSING")
 text = text.replace("590", "8920")
+text = text.replace("__WAVE66_QUEUE__", "0041_security_public_safety_2_priority_8920row_incremental_evidence_expansion_20260730.v3.task.json")
+text = text.replace("__WAVE66_CONTINUATION__", "69f728dd60d78e4dcb321426efb22f729f30419590faf5a11ac89ded61332c37")
 
 required_replacements = [
     ("range(30762, 31352)", "range(30762, 39682)"),
@@ -57,6 +59,15 @@ new_dom = '''            locator = page.locator("xpath=//h2[contains(normalize-s
 if old_dom not in text:
     raise SystemExit("DOM_WAIT_FRAGMENT_MISSING")
 text = text.replace(old_dom, new_dom)
+
+required = [
+    'CONTINUATION_KEY = "69f728dd60d78e4dcb321426efb22f729f30419590faf5a11ac89ded61332c37"',
+    '0041_security_public_safety_2_priority_8920row_incremental_evidence_expansion_20260730.v3.task.json',
+    'OWNER = "github-actions-security-public-safety-2-wave66"',
+]
+for fragment in required:
+    if fragment not in text:
+        raise SystemExit(f"FINAL_ACCEPTANCE_FRAGMENT_MISSING: {fragment}")
 
 namespace = {"__name__": "__main__", "__file__": str(SOURCE), "__package__": None}
 exec(compile(text, str(SOURCE), "exec"), namespace, namespace)
