@@ -28,7 +28,11 @@ except ImportError as exc:
     raise SystemExit(f"Required geospatial dependency is missing: {exc}")
 
 TARGET_CRS = CRS.from_epsg(27700)
-ID_KEY_RE = re.compile(r"(inspire|cadastral|title|reference|uprn|identifier|(^|_)id($|_))", re.I)
+AUTHORITATIVE_HMLR_ID_KEYS = {
+    "gmlid",
+    "inspireid",
+    "nationalcadastralreference",
+}
 CANDIDATE_ID_FIELDS = (
     "hmlr_inspire_id",
     "national_cadastral_reference",
@@ -42,6 +46,10 @@ VECTOR_SUFFIXES = {".gml", ".gpkg", ".geojson", ".json", ".shp"}
 
 def _clean_id(value: Any) -> str:
     return re.sub(r"\s+", "", str(value or "").strip()).casefold()
+
+
+def _property_key(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").casefold())
 
 
 def _file_sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -106,15 +114,19 @@ def _source_crs(collection: Any) -> CRS:
 
 
 def _identifier_values(feature: dict[str, Any]) -> set[str]:
+    """Return only publisher-defined HMLR identifier properties.
+
+    Fiona's top-level ``feature.id`` is an adapter/driver feature sequence
+    identifier and is retained only as provenance. It must never participate in
+    an exact Land Registry INSPIRE identifier match.
+    """
     values: set[str] = set()
-    feature_id = _clean_id(feature.get("id"))
-    if feature_id:
-        values.add(feature_id)
     for key, value in dict(feature.get("properties") or {}).items():
-        if ID_KEY_RE.search(str(key)) and value not in (None, ""):
-            cleaned = _clean_id(value)
-            if cleaned:
-                values.add(cleaned)
+        if _property_key(key) not in AUTHORITATIVE_HMLR_ID_KEYS or value in (None, ""):
+            continue
+        cleaned = _clean_id(value)
+        if cleaned:
+            values.add(cleaned)
     return values
 
 
@@ -340,7 +352,7 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     matched = sum(result["status"] == "MATCHED" for result in results)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "slot_id": "height_difference_3",
         "target_crs": "EPSG:27700",
         "candidate_count": len(results),
@@ -348,7 +360,10 @@ def main(argv: Iterable[str] | None = None) -> int:
         "blocked_candidate_count": len(results) - matched,
         "source_files": source_files,
         "results": results,
-        "matching_priority": ["exact_official_identifier", "unique_point_in_polygon"],
+        "matching_priority": ["exact_authoritative_hmlr_property_identifier", "unique_point_in_polygon"],
+        "exact_identifier_source_policy": "HMLR_PROPERTY_FIELDS_ONLY_NO_FIONA_FEATURE_SEQUENCE_ID",
+        "authoritative_hmlr_identifier_property_keys": sorted(AUTHORITATIVE_HMLR_ID_KEYS),
+        "fiona_feature_id_used_for_matching": False,
         "nearest_polygon_fill_forbidden": True,
         "measurement_values_written": 0,
         "final_ready": False,
