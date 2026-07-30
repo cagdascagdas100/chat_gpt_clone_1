@@ -54,7 +54,7 @@ for old, new in direct:
 
 resolved = [
     ("__PREVIOUS_CONTINUATION__", "38fc96b4516cf859c4b72a016e8c2b52f9cbb33d219c3fdadf8af1d011b4e484"),
-    ("__CURRENT_CONTINUATION__", "d7ebe572464b5cb6e3325b4276a3166f38ffbba5886d066823476c0d7328545c"),
+    ("__CURRENT_CONTINUATION__", "c2bff1ff33ef162e11fadf8e0e02284953f44d88feb0f6291018fcc9c966b50c"),
     ("__PREVIOUS_WAVE__", "wave79"),
     ("__CURRENT_WAVE__", "wave80"),
     ("__PREVIOUS_QUEUE__", "0054_"),
@@ -81,7 +81,7 @@ for token, value in resolved:
 required = [
     'SOURCE_HEAD = "f379f7bff15a478db9fe6038b7b172a405f78200"',
     'FIRST_STEP = "EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_14710_TO_15160_ROWS_WITH_OFFICIAL_SOURCE_HASHES"',
-    'CONTINUATION_KEY = "d7ebe572464b5cb6e3325b4276a3166f38ffbba5886d066823476c0d7328545c"',
+    'CONTINUATION_KEY = "c2bff1ff33ef162e11fadf8e0e02284953f44d88feb0f6291018fcc9c966b50c"',
     'TASK_ID = "security_public_safety_2_priority_15160row_incremental_evidence_expansion_20260730"',
     'OWNER = "github-actions-security-public-safety-2-wave80"',
     '0055_security_public_safety_2_priority_15160row_incremental_evidence_expansion_20260730.v3.task.json',
