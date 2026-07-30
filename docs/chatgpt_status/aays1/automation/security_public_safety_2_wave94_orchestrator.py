@@ -76,6 +76,12 @@ for token, value in resolved:
         raise SystemExit(f"ORCHESTRATOR_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
 
+wrapper_old_target = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"
+wrapper_new_target = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260731"
+if wrapper_old_target not in text:
+    raise SystemExit(f"ORCHESTRATOR_WRAPPER_TARGET_DATE_FRAGMENT_MISSING: {wrapper_old_target}")
+text = text.replace(wrapper_old_target, wrapper_new_target)
+
 inner_marker = "\nrequired = ["
 inner_injection = '''
 old_target_task = "security_public_safety_2_priority_21460row_incremental_evidence_expansion_20260730"
