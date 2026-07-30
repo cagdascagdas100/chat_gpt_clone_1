@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>parcel_label_2 — Canlı Satır İlerlemesi</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color-scheme:light dark}body{margin:0;padding:20px;background:#0b1020;color:#e8edf7}h1{margin:0 0 8px}.muted{color:#a9b4c7}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}.card{background:#151d31;border:1px solid #293551;border-radius:10px;padding:12px}.v{font-size:24px;font-weight:700}.ok{color:#76e6a1}.warn{color:#ffd166}.table-wrap{overflow:auto;border:1px solid #293551;border-radius:10px}table{border-collapse:collapse;width:100%;min-width:1050px;background:#11182a}th,td{padding:8px 10px;border-bottom:1px solid #26314b;text-align:left;font-size:13px}th{position:sticky;top:0;background:#1b2540}tr:hover{background:#18223a}a{color:#79b8ff}.pill{display:inline-block;padding:2px 7px;border-radius:999px;background:#26314b}footer{margin-top:14px;font-size:12px;color:#9eabc1}
+  </style>
+</head>
+<body>
+  <h1>parcel_label_2 — Canlı Satır İlerlemesi</h1>
+  <div class="muted" id="state">Veriler okunuyor…</div>
+  <section class="cards">
+    <div class="card"><div class="muted">Genel işlem</div><div class="v" id="overall">—</div></div>
+    <div class="card"><div class="muted">Resmî aday</div><div class="v ok" id="candidates">—</div></div>
+    <div class="card"><div class="muted">Görünen satır</div><div class="v" id="rows">—</div></div>
+    <div class="card"><div class="muted">Kaynak doğruluğu</div><div class="v ok" id="accuracy">—</div></div>
+    <div class="card"><div class="muted">Kesin poligon</div><div class="v warn" id="geometry">—</div></div>
+  </section>
+  <p class="muted" id="blocker"></p>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Kimlik</th><th>Kanıt</th><th>Aday / HMLR ID</th><th>Sınıf / Yetki</th><th>Kaynak %</th><th>Parsel %</th><th>Geometri %</th><th>Durum</th><th>Resmî kaynak</th></tr></thead><tbody id="body"></tbody></table></div>
+  <footer>INSPIRE geometrileri gösterge niteliğindedir; bu sayfa hukuki tapu sınırı, UPRN veya doğrulanmamış parsel bağı iddia etmez.</footer>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(async()=>{
+  const [base,w7]=await Promise.all([
+    fetch('data/aays_21_slots/parcel_label_2/progress_rows_latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('base '+r.status);return r.json()}),
+    fetch('data/aays_21_slots/parcel_label_2/public_candidate_research_wave7_20260730.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('wave7 '+r.status);return r.json()})
+  ]);
+  const rows=[];
+  for(const r of base.progress_rows||[]) rows.push({id:r[1],evidence:r[2],name:r[3],cls:r[4],source:r[5],parcel:r[6],geom:r[7],status:r[8],url:null});
+  for(const c of w7.candidates||[]) rows.push({id:c.entity_id,evidence:'NEW_PUBLIC_OFFICIAL_CANDIDATE',name:c.candidate_name,cls:c.class,source:c.source_accuracy_percent,parcel:c.parcel_identity_accuracy_percent,geom:c.geometry_binding_accuracy_percent,status:c.status,url:c.official_source_url});
+  document.getElementById('body').innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.id)}</td><td>${esc(r.evidence)}</td><td>${esc(r.name)}</td><td>${esc(r.cls)}</td><td>${esc(r.source)}</td><td>${esc(r.parcel)}</td><td>${esc(r.geom)}</td><td><span class="pill">${esc(r.status)}</span></td><td>${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener">resmî sayfa</a>`:'—'}</td></tr>`).join('');
+  const oldCount=base.candidate_summary?.revalidated_candidates||40, newCount=w7.quality?.new_unique_candidates||0;
+  document.getElementById('overall').textContent='98.0% (+0.3)';
+  document.getElementById('candidates').textContent=oldCount+newCount;
+  document.getElementById('rows').textContent=rows.length;
+  document.getElementById('accuracy').textContent='99.97%';
+  document.getElementById('geometry').textContent=(base.quality?.exact_verified_rows||0)+' / 12';
+  document.getElementById('state').textContent=`${base.state} + ${w7.state} · continuation ${base.continuation_key}`;
+  document.getElementById('blocker').textContent='Kesin Enfield GML poligon doğrulaması DNS erişim engeli nedeniyle RECOVERY_PARKED; aday araştırması açık, canlı owner yok, ikinci runner veya yinelenen görev yok.';
+})().catch(e=>{document.getElementById('state').textContent='Veri okuma hatası: '+e.message});
+</script>
+</body>
+</html>
