@@ -1,0 +1,220 @@
+name: security-public-safety-2-wave71-terminalize
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave71_terminalize.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3
+  cancel-in-progress: false
+
+jobs:
+  remote-readback-terminalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Verify remote outputs and terminalize same continuation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          CONT = "37bd2b96152653939629ac9da1daebc79fa1c68bf1127b97a6d9773e5410baf3"
+          TASK = "security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730"
+          SLOT_ROOT = ROOT / "docs/chatgpt_status/_shared/slots_21/security_public_safety_2"
+          QUEUE = ROOT / "docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json"
+          CURRENT = SLOT_ROOT / "current_task_latest.json"
+          STATUS = SLOT_ROOT / "status_latest.json"
+          OWNERSHIP = SLOT_ROOT / "ownership_latest.json"
+          HEARTBEAT = SLOT_ROOT / "heartbeat_latest.json"
+          RECEIPT = SLOT_ROOT / "priority_11110row_browser_acceptance_wave71_receipt_20260730.json"
+          SHARD_JSON = ROOT / "docs/chatgpt_status/aays1/shards/security_public_safety_2/priority_11110row_evidence_expansion_latest.json"
+          WEB_JSON = ROOT / "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion_latest.json"
+          WEB_HTML = ROOT / "england_map_web/data/aays_21_slots/security_public_safety_2/priority_11110row_evidence_expansion.html"
+
+          paths = [QUEUE, CURRENT, STATUS, OWNERSHIP, HEARTBEAT, RECEIPT, SHARD_JSON, WEB_JSON, WEB_HTML]
+          missing = [str(path) for path in paths if not path.is_file()]
+          if missing:
+              raise SystemExit("REMOTE_READBACK_FILES_MISSING:" + json.dumps(missing))
+
+          queue = json.loads(QUEUE.read_text(encoding="utf-8"))
+          current = json.loads(CURRENT.read_text(encoding="utf-8"))
+          status = json.loads(STATUS.read_text(encoding="utf-8"))
+          ownership = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
+          heartbeat = json.loads(HEARTBEAT.read_text(encoding="utf-8"))
+          receipt = json.loads(RECEIPT.read_text(encoding="utf-8"))
+
+          for label, payload in (("queue", queue), ("current", current), ("status", status), ("ownership", ownership), ("heartbeat", heartbeat), ("receipt", receipt)):
+              if payload.get("continuation_key") != CONT or payload.get("task_id") != TASK:
+                  raise SystemExit(f"{label.upper()}_CONTINUATION_OR_TASK_MISMATCH")
+
+          if current.get("state") != "PUBLISH_PENDING_ACCEPTED" or queue.get("status") != "publish_pending":
+              raise SystemExit(f"NOT_EXPECTED_PUBLISH_PENDING_STATE:{current.get('state')}:{queue.get('status')}")
+          if ownership.get("runtime_live_owner") or ownership.get("owner_page_session_id"):
+              raise SystemExit("LIVE_OWNER_PRESENT_NO_TERMINAL_TAKEOVER")
+          if receipt.get("state") != "PASS_PENDING_REMOTE_COMMIT_READBACK":
+              raise SystemExit("ACCEPTANCE_NOT_READY_FOR_REMOTE_READBACK")
+
+          web_json_bytes = WEB_JSON.read_bytes()
+          web_html_bytes = WEB_HTML.read_bytes()
+          served_json_sha256 = hashlib.sha256(web_json_bytes).hexdigest()
+          served_html_sha256 = hashlib.sha256(web_html_bytes).hexdigest()
+          if served_json_sha256 != receipt.get("served_json_sha256"):
+              raise SystemExit("REMOTE_JSON_SHA256_MISMATCH")
+          if served_html_sha256 != receipt.get("served_html_sha256"):
+              raise SystemExit("REMOTE_HTML_SHA256_MISMATCH")
+
+          payload = json.loads(web_json_bytes.decode("utf-8-sig"))
+          rows = payload.get("rows") if isinstance(payload, dict) else None
+          if not isinstance(rows, list) or len(rows) != 11110:
+              raise SystemExit(f"REMOTE_JSON_ROW_COUNT_MISMATCH:{0 if not isinstance(rows, list) else len(rows)}")
+          html_text = web_html_bytes.decode("utf-8", errors="strict")
+          if "parcel_30762" not in html_text or "parcel_41871" not in html_text:
+              raise SystemExit("REMOTE_HTML_BOUNDARY_ROWS_MISSING")
+
+          def blob_sha(path: Path) -> str:
+              return subprocess.check_output(["git", "hash-object", str(path)], text=True).strip()
+
+          output_publish_remote_head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          json_blob_sha = blob_sha(WEB_JSON)
+          html_blob_sha = blob_sha(WEB_HTML)
+          shard_output_blob_sha = blob_sha(SHARD_JSON)
+          now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+          acceptance = dict(receipt)
+          acceptance.update({
+              "state": "PASS_REMOTE_COMMIT_READBACK",
+              "output_publish_remote_head": output_publish_remote_head,
+              "json_blob_sha": json_blob_sha,
+              "html_blob_sha": html_blob_sha,
+              "final_ready": True,
+          })
+          result = dict(current.get("result") or status.get("result") or {})
+
+          queue.update({
+              "status": "completed_accepted",
+              "owner": None,
+              "first_unverified_step": None,
+              "runner_state": "COMPLETED_ACCEPTED_PUBLISHED",
+              "updated_at": now,
+              "blocker": None,
+              "final_ready": True,
+              "acceptance": acceptance,
+              "result": result,
+              "output_publish_remote_head": output_publish_remote_head,
+              "shard_output_blob_sha": shard_output_blob_sha,
+              "website_html_blob_sha": html_blob_sha,
+          })
+          current.update({
+              "state": "COMPLETED_ACCEPTED_PUBLISHED",
+              "status": "completed_accepted",
+              "owner": None,
+              "first_unverified_step": None,
+              "updated_at": now,
+              "blocker": None,
+              "final_ready": True,
+              "acceptance": acceptance,
+              "result": result,
+              "output_publish_remote_head": output_publish_remote_head,
+              "shard_output_blob_sha": shard_output_blob_sha,
+              "website_html_blob_sha": html_blob_sha,
+          })
+          status.update({
+              "state": "COMPLETED_ACCEPTED_PUBLISHED",
+              "owner": None,
+              "updated_at": now,
+              "blocker": None,
+              "final_ready": True,
+              "acceptance": acceptance,
+              "result": result,
+              "output_publish_remote_head": output_publish_remote_head,
+          })
+          ownership.update({
+              "state": "COMPLETED_ACCEPTED_OWNER_RELEASED",
+              "owner_page_session_id": None,
+              "lease_token_hash": None,
+              "heartbeat_at": None,
+              "lease_expires_at": None,
+              "runtime_live_owner": False,
+              "claimable": False,
+              "ready_for_claim": False,
+              "takeover_rule": "Task is completed, accepted and remotely read back. Do not restart, reclaim, duplicate or create another runner for this continuation key.",
+              "updated_at": now,
+              "final_ready": True,
+              "acceptance": acceptance,
+              "result": result,
+              "output_publish_remote_head": output_publish_remote_head,
+              "generator_rerun": False,
+              "second_runner_created": False,
+              "second_task_created": False,
+          })
+          heartbeat.update({
+              "state": "COMPLETED_ACCEPTED_PUBLISHED",
+              "heartbeat_at": now,
+              "owner_page_session_id": None,
+              "lease_expires_at": None,
+              "output_publish_remote_head": output_publish_remote_head,
+              "final_ready": True,
+          })
+          receipt.clear()
+          receipt.update(acceptance)
+
+          for path, data in ((QUEUE, queue), (CURRENT, current), (STATUS, status), (OWNERSHIP, ownership), (HEARTBEAT, heartbeat), (RECEIPT, receipt)):
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps({
+              "remote_head": output_publish_remote_head,
+              "candidate_rows": len(rows),
+              "json_blob_sha": json_blob_sha,
+              "html_blob_sha": html_blob_sha,
+              "state": "PASS_REMOTE_COMMIT_READBACK",
+          }, sort_keys=True))
+          PY
+
+      - name: Commit terminal readback state
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            docs/chatgpt_status/aays1/queue/0046_security_public_safety_2_priority_11110row_incremental_evidence_expansion_20260730.v3.task.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/ownership_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/heartbeat_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/priority_11110row_browser_acceptance_wave71_receipt_20260730.json
+          git diff --cached --check
+          git commit -m 'terminalize security_public_safety_2 11110-row readback'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          exit 1
