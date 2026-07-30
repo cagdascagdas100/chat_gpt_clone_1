@@ -38,7 +38,7 @@ for old, token in protected:
 
 direct = [
     ('SOURCE_HEAD = "422bfc04d3ff4aef3d479444b186dbc353861b46"', 'SOURCE_HEAD = "07c0c6c84cdae13f3a99005cd3b885336f7f09e0"'),
-    (("'\"schema_version\": 49', '\"schema_version\": 50'"), ("'\"schema_version\": 63', '\"schema_version\": 64'")),
+    ("('\"schema_version\": 49', '\"schema_version\": 50'),", "('\"schema_version\": 63', '\"schema_version\": 64'),"),
     ('"schema_version": 95,', '"schema_version": 109,'),
     ('"schema_version": 99,', '"schema_version": 113,'),
     ('"schema_version": 94,', '"schema_version": 108,'),
