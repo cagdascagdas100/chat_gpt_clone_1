@@ -52,41 +52,75 @@ jobs:
           print(json.dumps(data["result"], ensure_ascii=False))
           PY
 
-      - name: Publish audit to canonical branch
+      - name: Publish audit to moving canonical branch
         run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json \
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html
-          if git diff --cached --quiet; then
-            echo "No audit output changes"
-          else
+          if ! git diff --cached --quiet; then
             git commit -m "security_public_safety_2: publish Wave116 ONS transition audit [skip ci]"
-            git push origin HEAD:codex/aays-single-runner-v5-20260706
           fi
 
-      - name: Remote readback
+          published=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$target_branch"
+            git rebase "origin/$target_branch"
+            if git push origin "HEAD:$target_branch"; then
+              published=true
+              break
+            fi
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Remote file readback
         run: |
-          git fetch origin codex/aays-single-runner-v5-20260706
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/codex/aays-single-runner-v5-20260706)"
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git fetch origin "$target_branch"
           python - <<'PY'
           import hashlib
           import json
           from pathlib import Path
           import subprocess
 
-          root = Path.cwd()
-          data_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json"
-          html_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html"
-          data_bytes = data_path.read_bytes()
-          html_bytes = html_path.read_bytes()
+          paths = [
+              "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json",
+              "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html",
+          ]
+          remote = {}
+          for path in paths:
+              content = subprocess.check_output([
+                  "git", "show", f"origin/codex/aays-single-runner-v5-20260706:{path}"
+              ])
+              remote[path] = {
+                  "bytes": len(content),
+                  "sha256": hashlib.sha256(content).hexdigest(),
+              }
+
+          data_bytes = subprocess.check_output([
+              "git", "show",
+              "origin/codex/aays-single-runner-v5-20260706:england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json",
+          ])
+          html_bytes = subprocess.check_output([
+              "git", "show",
+              "origin/codex/aays-single-runner-v5-20260706:england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html",
+          ])
           data = json.loads(data_bytes.decode("utf-8"))
+          assert len(data["rows"]) == 394
+          assert data["result"]["total_operations"] == 792
+          assert html_bytes.decode("utf-8").count("<tr>") == 395
           print(json.dumps({
               "state": data["state"],
               "rows": len(data["rows"]),
-              "json_sha256": hashlib.sha256(data_bytes).hexdigest(),
-              "html_sha256": hashlib.sha256(html_bytes).hexdigest(),
-              "head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "result": data["result"],
+              "remote": remote,
+              "remote_head": subprocess.check_output([
+                  "git", "rev-parse", "origin/codex/aays-single-runner-v5-20260706"
+              ], text=True).strip(),
           }, ensure_ascii=False))
           PY
