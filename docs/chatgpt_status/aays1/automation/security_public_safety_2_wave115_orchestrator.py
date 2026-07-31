@@ -63,7 +63,6 @@ replacements = [
     ('"schema_version": 99,', '"schema_version": 142,'),
     ('or 121) + 1', 'or 164) + 1'),
     ('priority_11110row_incremental_evidence_expansion_full_remote_and_canonical_browser_acceptance', 'priority_30460row_incremental_evidence_expansion_full_remote_and_canonical_browser_acceptance'),
-    ('"next_scope": {"incremental_candidate_rows": 450, "merged_candidate_rows": 11560', '"next_scope": {"incremental_candidate_rows": 301, "merged_candidate_rows": 30761'),
     ('"schema_version": 94,', '"schema_version": 137,'),
     ('claim security_public_safety_2 11560-row wave72', 'claim security_public_safety_2 30761-row wave115'),
     ('WAVE72_CLAIM_NOT_ACTIVE', 'WAVE115_CLAIM_NOT_ACTIVE'),
