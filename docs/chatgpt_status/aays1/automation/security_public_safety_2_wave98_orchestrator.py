@@ -135,7 +135,7 @@ for token, value in resolved:
         raise SystemExit(f"ORCHESTRATOR_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
 
-required = [
+plain_required = [
     '3976839fb696d3dfd0eedfd59c87f7bfdeb8a230',
     'EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_22810_TO_23260_ROWS_WITH_OFFICIAL_SOURCE_HASHES',
     '36f1b43ca5fd4ff3e2e79e5d3d960a8c479f5cbd20d4db374d9be4305030f1d3',
@@ -144,19 +144,26 @@ required = [
     '0073_security_public_safety_2_priority_23260row_incremental_evidence_expansion_20260731.v3.task.json',
     'priority_450row_wave98_latest.json',
     'priority_23260row_evidence_expansion_latest.json',
-    '\"accepted_base_rows\": 22810',
-    '\"merged_candidate_rows\": 23260',
-    '\"minimum_merged_police_hash_rows\": 22097',
-    '\"incremental_parcel_start\": 53572',
-    '\"incremental_parcel_end\": 54021',
-    '\"expanded_scope_progress_percent\": 98.07',
-    '\"expanded_scope_delta_percentage_points\": 1.93',
     'len(rows) != 23260',
-    '\"parcel_54021\"',
     'WAVE98_REMOTE_TERMINAL_READBACK_FAILED',
 ]
-for fragment in required:
+for fragment in plain_required:
     if fragment not in text:
         raise SystemExit(f"ORCHESTRATOR_FINAL_FRAGMENT_MISSING: {fragment}")
+
+validation_text = text.replace("\\", "")
+semantic_required = [
+    '"accepted_base_rows": 22810',
+    '"merged_candidate_rows": 23260',
+    '"minimum_merged_police_hash_rows": 22097',
+    '"incremental_parcel_start": 53572',
+    '"incremental_parcel_end": 54021',
+    '"expanded_scope_progress_percent": 98.07',
+    '"expanded_scope_delta_percentage_points": 1.93',
+    '"parcel_54021"',
+]
+for fragment in semantic_required:
+    if fragment not in validation_text:
+        raise SystemExit(f"ORCHESTRATOR_SEMANTIC_FRAGMENT_MISSING: {fragment}")
 
 exec(compile(text, str(source), "exec"), {"__name__": "__main__", "__file__": str(source), "__package__": None})
