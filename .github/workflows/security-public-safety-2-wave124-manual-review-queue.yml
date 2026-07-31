@@ -1,0 +1,134 @@
+name: security-public-safety-2-wave124-manual-review-queue
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/wave124-security-public-safety-2.trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave124-manual-review-queue
+  cancel-in-progress: false
+
+jobs:
+  publish-manual-review-queue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Run official manual review queue publication
+        run: |
+          export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave124_manual_review_queue_20260731.py
+
+      - name: Validate outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path.cwd()
+          output_json = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json"
+          output_html = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124.html"
+          manual_json = root / "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+
+          data = json.loads(output_json.read_text(encoding="utf-8"))
+          manual = json.loads(manual_json.read_text(encoding="utf-8"))
+          html = output_html.read_text(encoding="utf-8")
+
+          assert data["state"] == "COMPLETED_MANUAL_REVIEW_QUEUE_PUBLISHED"
+          assert len(data["rows"]) == 16
+          assert len({row["parcel_id"] for row in data["rows"]}) == 16
+          assert data["result"]["rows_audited"] == 16
+          assert data["result"]["official_network_probe_count"] == 20
+          assert data["result"]["total_operations"] == 117
+          assert data["result"]["completed_or_fail_closed_operations"] == 117
+          assert data["result"]["blocked_operations"] == 0
+          assert data["result"]["blocked_rows"] == 0
+          assert data["sources"]["promoted_official_source_families"] == 4
+          assert data["quality_policy"]["parent_candidate_value_changed"] is False
+          assert data["quality_policy"]["parent_candidate_accuracy_mutated"] is False
+          assert data["fake_data"] is False
+          assert manual["slot_id"] == "security_public_safety_2"
+          assert len(manual["items"]) == 16
+          assert manual["open_item_count"] + manual["resolved_item_count"] == 16
+          assert manual["requires_user_action"] == (manual["open_item_count"] > 0)
+          assert manual["final_ready"] == (manual["open_item_count"] == 0)
+          assert html.count("<tr>") == 17
+          print(json.dumps({"result": data["result"], "manual": {"state": manual["state"], "open": manual["open_item_count"], "resolved": manual["resolved_item_count"]}}, ensure_ascii=False))
+          PY
+
+      - name: Publish outputs to moving canonical branch
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124.html
+          if ! git diff --cached --quiet; then
+            git commit -m "security_public_safety_2: publish Wave124 manual review queue [skip ci]"
+          fi
+          published=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$target_branch"
+            git rebase "origin/$target_branch"
+            if git push origin "HEAD:$target_branch"; then
+              published=true
+              break
+            fi
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Remote file readback
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git fetch origin "$target_branch"
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+
+          branch = "origin/codex/aays-single-runner-v5-20260706"
+          output_json = "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json"
+          output_html = "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124.html"
+          manual_json = "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+
+          data_bytes = subprocess.check_output(["git", "show", f"{branch}:{output_json}"])
+          html_bytes = subprocess.check_output(["git", "show", f"{branch}:{output_html}"])
+          manual_bytes = subprocess.check_output(["git", "show", f"{branch}:{manual_json}"])
+          data = json.loads(data_bytes.decode("utf-8"))
+          manual = json.loads(manual_bytes.decode("utf-8"))
+
+          assert len(data["rows"]) == 16
+          assert data["result"]["total_operations"] == 117
+          assert data["result"]["blocked_operations"] == 0
+          assert len(manual["items"]) == 16
+          assert html_bytes.decode("utf-8").count("<tr>") == 17
+          print(json.dumps({
+              "state": data["state"],
+              "result": data["result"],
+              "manual_action_state": manual["state"],
+              "manual_open_rows": manual["open_item_count"],
+              "manual_resolved_rows": manual["resolved_item_count"],
+              "continuation_key": data["continuation_key"],
+              "source_head": data["source_head"],
+              "json_sha256": hashlib.sha256(data_bytes).hexdigest(),
+              "html_sha256": hashlib.sha256(html_bytes).hexdigest(),
+              "manual_action_sha256": hashlib.sha256(manual_bytes).hexdigest(),
+              "remote_head": subprocess.check_output(["git", "rev-parse", branch], text=True).strip(),
+          }, ensure_ascii=False))
+          PY
