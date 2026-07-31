@@ -102,12 +102,11 @@ text = replace_unique_line_last(
     "98.07",
 )
 text = replace_unique_line_last(text, ("WAVE92", "WAVE97"), "WAVE97", "WAVE98")
-text = replace_unique_line_last(
-    text,
-    ("WAVE97_REMOTE_TERMINAL_READBACK_FAILED",),
-    "WAVE97",
-    "WAVE98",
-)
+terminal_label = "WAVE97_REMOTE_TERMINAL_READBACK_FAILED"
+terminal_count = text.count(terminal_label)
+if terminal_count != 2:
+    raise SystemExit(f"ORCHESTRATOR_TERMINAL_LABEL_COUNT_INVALID:{terminal_count}")
+text = text.replace(terminal_label, "WAVE98_REMOTE_TERMINAL_READBACK_FAILED")
 
 resolved = [
     ("__SOURCE_HEAD__", "3976839fb696d3dfd0eedfd59c87f7bfdeb8a230"),
