@@ -1,0 +1,126 @@
+name: security-public-safety-2-wave131-official-crs-source-pipeline
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/aays-triggers/security_public_safety_2_wave131.trigger.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave131-official-crs-source-pipeline
+  cancel-in-progress: false
+
+jobs:
+  publish-official-crs-source-pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout canonical work branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Syntax gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave131_official_crs_roundtrip_source_pipeline_20260731.py
+
+      - name: Run official CRS roundtrip and source-pipeline audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave131_official_crs_roundtrip_source_pipeline_20260731.py
+
+      - name: Strict result validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path.cwd()
+          output_json=root/"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131_latest.json"
+          output_html=root/"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131.html"
+          manual_json=root/"docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+          data=json.loads(output_json.read_text())
+          manual=json.loads(manual_json.read_text())
+          page=output_html.read_text()
+          expected=hashlib.sha256(("AAYS_21_SLOT_SAFE_PARALLEL_V1|security_public_safety_2|codex/aays-single-runner-v5-20260706|WAVE131_SINGLE_OPEN_ROW_OFFICIAL_CRS_ROUNDTRIP_AND_SOURCE_PIPELINE|"+data["source_head"]).encode()).hexdigest()
+          assert data["state"]=="COMPLETED_OFFICIAL_CRS_ROUNDTRIP_SOURCE_PIPELINE_PUBLISHED"
+          assert data["continuation_key"]==expected
+          assert data["previous_continuation_key"]=="1ced94a2014ca76e268c94752a5288b18d711b94b2683796f399e44b5778ac5f"
+          assert len(data["rows"])==1 and data["rows"][0]["parcel_id"]=="parcel_40827"
+          assert data["result"]["source_precision_cells"]==63
+          assert data["result"]["crs_roundtrip_scenarios"]==378
+          assert data["result"]["local_official_layer_classifications"]==1512
+          assert data["result"]["reviewed_official_source_families"]>=5
+          assert data["result"]["promoted_official_source_families"]>=4
+          assert data["result"]["completed_or_fail_closed_operations"]==data["result"]["total_operations"]
+          assert data["result"]["blocked_operations"]==0
+          assert data["result"]["stuck_pending_operations"]==0
+          assert data["quality_policy"]["majority_vote_forbidden"] is True
+          assert data["quality_policy"]["threshold_relaxation_forbidden"] is True
+          assert data["quality_policy"]["nearby_record_inference_forbidden"] is True
+          assert data["quality_policy"]["parent_candidate_value_changed"] is False
+          assert data["quality_policy"]["parent_candidate_accuracy_mutated"] is False
+          assert data["fake_data"] is False
+          assert manual["open_item_count"]+manual["resolved_item_count"]==16
+          assert manual["requires_user_action"]==(manual["open_item_count"]>0)
+          assert manual["final_ready"]==(manual["open_item_count"]==0)
+          assert "parcel_40827" in page and page.count("<tr>")>=380
+          print(json.dumps({"result":data["result"],"row":data["rows"][0],"manual":{"state":manual["state"],"open":manual["open_item_count"],"resolved":manual["resolved_item_count"]}},ensure_ascii=False))
+          PY
+
+      - name: Publish to moving canonical branch with rebase retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131.html
+          if ! git diff --cached --quiet; then
+            git commit -m "security_public_safety_2: publish Wave131 official CRS source-pipeline [skip ci]"
+          fi
+          published=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$target_branch"
+            git rebase "origin/$target_branch"
+            if git push origin "HEAD:$target_branch"; then published=true; break; fi
+            sleep $((attempt*2))
+          done
+          test "$published" = true
+
+      - name: Canonical remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git fetch origin "$target_branch"
+          python - <<'PY'
+          import hashlib, json, subprocess
+          branch="origin/codex/aays-single-runner-v5-20260706"
+          output_json="england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131_latest.json"
+          output_html="england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_crs_roundtrip_source_pipeline_wave131.html"
+          manual_json="docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+          data_bytes=subprocess.check_output(["git","show",f"{branch}:{output_json}"])
+          html_bytes=subprocess.check_output(["git","show",f"{branch}:{output_html}"])
+          manual_bytes=subprocess.check_output(["git","show",f"{branch}:{manual_json}"])
+          data=json.loads(data_bytes); manual=json.loads(manual_bytes)
+          assert data["state"]=="COMPLETED_OFFICIAL_CRS_ROUNDTRIP_SOURCE_PIPELINE_PUBLISHED"
+          assert data["result"]["crs_roundtrip_scenarios"]==378
+          assert data["result"]["blocked_operations"]==0
+          assert data["result"]["stuck_pending_operations"]==0
+          assert manual["open_item_count"]+manual["resolved_item_count"]==16
+          assert "parcel_40827" in html_bytes.decode()
+          print(json.dumps({"state":data["state"],"result":data["result"],"row":data["rows"][0],"manual_state":manual["state"],"manual_open":manual["open_item_count"],"manual_resolved":manual["resolved_item_count"],"continuation_key":data["continuation_key"],"source_head":data["source_head"],"json_sha256":hashlib.sha256(data_bytes).hexdigest(),"html_sha256":hashlib.sha256(html_bytes).hexdigest(),"manual_sha256":hashlib.sha256(manual_bytes).hexdigest(),"remote_head":subprocess.check_output(["git","rev-parse",branch],text=True).strip()},ensure_ascii=False))
+          PY
