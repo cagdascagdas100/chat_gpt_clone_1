@@ -97,7 +97,7 @@ text = replace_unique_line_last(text, ("priority", "-168", "-173"), "-173", "-17
 text = replace_unique_line_last(text, ("97.81", "98.03"), "98.03", "98.07")
 text = replace_unique_line_last(
     text,
-    ("expanded_scope_progress_percent", "98.03"),
+    ("expanded_scope_progress_percent", "97.99", "98.03"),
     "98.03",
     "98.07",
 )
