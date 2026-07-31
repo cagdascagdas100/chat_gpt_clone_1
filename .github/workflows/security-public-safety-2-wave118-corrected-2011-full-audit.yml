@@ -24,8 +24,8 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
 
-      - name: Run corrected official 2011 full-resolution audit
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave118_corrected_2011_boundary_full_audit_20260731.py
+      - name: Run corrected official 2011 audit with targeted recovery
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave118_targeted_network_recovery_20260731.py
 
       - name: Validate outputs
         run: |
@@ -97,6 +97,7 @@ jobs:
           print(json.dumps({
               "state": data["state"],
               "result": data["result"],
+              "recovery": data.get("recovery"),
               "json_sha256": hashlib.sha256(data_bytes).hexdigest(),
               "html_sha256": hashlib.sha256(html_bytes).hexdigest(),
               "remote_head": subprocess.check_output(["git", "rev-parse", branch], text=True).strip(),
