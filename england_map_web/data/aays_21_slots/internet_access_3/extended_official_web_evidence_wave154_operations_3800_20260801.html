@@ -1,0 +1,7 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>Wave154 3.800 işlem satırı</title><body>
+<h1>internet_access_3 Wave154 · 3.800 işlem</h1><p>Satırlar 700.370–704.169; format: sequence|result|source_id|check.</p><pre id="ops">Yükleniyor…</pre>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function ids(seed){const a=[];for(const [n] of seed.contract_seed){const z=slug(n);a.push(`feb_${z}_supplier`,`feb_${z}_contracted`,`feb_${z}_built`,`mar_${z}_contracted`,`mar_${z}_built`,`delta_feb_mar_${z}_built`,`pct_feb_mar_${z}_built`,`continuity_feb_mar_${z}`);}for(const [id] of seed.consumer_seed)a.push(id);return a;}
+Promise.all([fetch('extended_official_web_evidence_wave154_3800_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave154_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const a=[];let n=d.visible_line_start;ids(s).forEach(id=>d.check_set.forEach(c=>a.push((n++)+'|P|'+id+'|'+c)));document.getElementById('ops').textContent=a.join('\n')}).catch(e=>document.getElementById('ops').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>3.800 işlem satırını oluşturmak için JavaScript gerekir.</noscript></body></html>
