@@ -68,6 +68,8 @@ advance_rules = [
     (("WAVE92", "WAVE97"), (("WAVE97", "WAVE98"),)),
     (("WAVE97_REMOTE_TERMINAL_READBACK_FAILED",), (("WAVE97", "WAVE98"),)),
 ]
+
+shift_entries: list[ast.expr] = []
 for index, (entry, rule) in enumerate(zip(direct_value.elts, advance_rules, strict=True)):
     if not isinstance(entry, ast.Tuple) or len(entry.elts) != 2:
         raise SystemExit(f"ORCHESTRATOR_DIRECT_ENTRY_SHAPE_INVALID:{index}")
@@ -76,6 +78,7 @@ for index, (entry, rule) in enumerate(zip(direct_value.elts, advance_rules, stri
         raise SystemExit(f"ORCHESTRATOR_DIRECT_OLD_INVALID:{index}")
     if not isinstance(new_node, ast.Constant) or not isinstance(new_node.value, str):
         raise SystemExit(f"ORCHESTRATOR_DIRECT_NEW_INVALID:{index}")
+
     markers, replacements = rule
     current_new = new_node.value
     if not all(marker in current_new for marker in markers):
@@ -83,8 +86,28 @@ for index, (entry, rule) in enumerate(zip(direct_value.elts, advance_rules, stri
     next_new = current_new
     for old, new in replacements:
         next_new = replace_last(next_new, old, new)
-    entry.elts[0] = ast.copy_location(ast.Constant(value=current_new), old_node)
-    entry.elts[1] = ast.copy_location(ast.Constant(value=next_new), new_node)
+
+    old_literal_source = ast.get_source_segment(text, old_node)
+    new_literal_source = ast.get_source_segment(text, new_node)
+    if old_literal_source is None or new_literal_source is None:
+        raise SystemExit(f"ORCHESTRATOR_DIRECT_SOURCE_SEGMENT_MISSING:{index}")
+    next_literal_source = repr(next_new)
+
+    # Advance the current new literal first, then shift the old literal into its place.
+    shift_entries.append(
+        ast.Tuple(
+            elts=[ast.Constant(value=new_literal_source), ast.Constant(value=next_literal_source)],
+            ctx=ast.Load(),
+        )
+    )
+    shift_entries.append(
+        ast.Tuple(
+            elts=[ast.Constant(value=old_literal_source), ast.Constant(value=new_literal_source)],
+            ctx=ast.Load(),
+        )
+    )
+
+direct_value.elts = shift_entries
 
 required_assignments = [
     node
