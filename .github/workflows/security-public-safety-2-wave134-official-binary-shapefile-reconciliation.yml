@@ -34,16 +34,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_dbf_crs_geometry_reconciliation_20260731.py
+          python -m py_compile \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_dbf_crs_geometry_reconciliation_20260731.py \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py
 
-      - name: Run official binary SHP DBF PRJ CRS geometry reconciliation
+      - name: Run repaired official binary SHP DBF PRJ CRS geometry reconciliation
         shell: bash
         run: |
           set -euo pipefail
           export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
-          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_dbf_crs_geometry_reconciliation_20260731.py
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py
 
-      - name: Strict result validation
+      - name: Strict nonzero result validation
         shell: bash
         run: |
           set -euo pipefail
@@ -58,16 +60,20 @@ jobs:
           manual=json.loads(manual_json.read_text())
           page=output_html.read_text()
           expected=hashlib.sha256(("AAYS_21_SLOT_SAFE_PARALLEL_V1|security_public_safety_2|codex/aays-single-runner-v5-20260706|WAVE134_SINGLE_OPEN_ROW_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION|"+data["source_head"]).encode()).hexdigest()
+          result=data["result"]
           assert data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED"
           assert data["continuation_key"]==expected
           assert data["previous_continuation_key"]=="abebf80f7ff3b32f5ea85a9bfb49f7ceab085357bdbc0845e9bc9a2295a5e7ce"
           assert len(data["rows"])==1 and data["rows"][0]["parcel_id"]=="parcel_40827"
-          assert data["result"]["official_binary_package_downloads"]<=12
+          assert 0 < result["official_binary_package_candidates"] <= 12
+          assert result["official_binary_package_downloads"] > 0
+          assert result["official_network_probe_attempts"] > 0
+          assert result["operation_ledger_rows"] > 0
           assert data["scope"]["maximum_simultaneous_workers"]==15
           assert data["scope"]["maximum_simultaneous_large_downloads"]==4
-          assert data["result"]["completed_or_fail_closed_operations"]==data["result"]["total_operations"]
-          assert data["result"]["blocked_operations"]==0
-          assert data["result"]["stuck_pending_operations"]==0
+          assert result["completed_or_fail_closed_operations"]==result["total_operations"]
+          assert result["blocked_operations"]==0
+          assert result["stuck_pending_operations"]==0
           assert data["scope"]["support_only"] is True
           assert data["scope"]["parent_values_mutated"] is False
           assert data["scope"]["parent_scores_mutated"] is False
@@ -85,7 +91,7 @@ jobs:
           assert manual["final_ready"]==(manual["open_item_count"]==0)
           assert "parcel_40827" in page
           assert page.count("<tr>") >= len(data["operation_ledger"]) + 1
-          print(json.dumps({"result":data["result"],"row":data["rows"][0],"manual":{"state":manual["state"],"open":manual["open_item_count"],"resolved":manual["resolved_item_count"]}},ensure_ascii=False))
+          print(json.dumps({"result":result,"row":data["rows"][0],"manual":{"state":manual["state"],"open":manual["open_item_count"],"resolved":manual["resolved_item_count"]}},ensure_ascii=False))
           PY
 
       - name: Publish to moving canonical branch with rebase retry
@@ -100,7 +106,7 @@ jobs:
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json \
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134.html
           if ! git diff --cached --quiet; then
-            git commit -m "security_public_safety_2: publish Wave134 official binary shapefile reconciliation [skip ci]"
+            git commit -m "security_public_safety_2: publish repaired Wave134 official binary shapefile reconciliation [skip ci]"
           fi
           published=false
           for attempt in 1 2 3 4 5; do
@@ -126,12 +132,16 @@ jobs:
           data_bytes=subprocess.check_output(["git","show",f"{branch}:{output_json}"])
           html_bytes=subprocess.check_output(["git","show",f"{branch}:{output_html}"])
           manual_bytes=subprocess.check_output(["git","show",f"{branch}:{manual_json}"])
-          data=json.loads(data_bytes); manual=json.loads(manual_bytes)
+          data=json.loads(data_bytes); manual=json.loads(manual_bytes); result=data["result"]
           assert data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED"
-          assert data["result"]["completed_or_fail_closed_operations"]==data["result"]["total_operations"]
-          assert data["result"]["blocked_operations"]==0
-          assert data["result"]["stuck_pending_operations"]==0
+          assert result["official_binary_package_candidates"]>0
+          assert result["official_binary_package_downloads"]>0
+          assert result["official_network_probe_attempts"]>0
+          assert result["operation_ledger_rows"]>0
+          assert result["completed_or_fail_closed_operations"]==result["total_operations"]
+          assert result["blocked_operations"]==0
+          assert result["stuck_pending_operations"]==0
           assert manual["open_item_count"]+manual["resolved_item_count"]==16
           assert "parcel_40827" in html_bytes.decode()
-          print(json.dumps({"state":data["state"],"result":data["result"],"row":data["rows"][0],"manual_state":manual["state"],"manual_open":manual["open_item_count"],"manual_resolved":manual["resolved_item_count"],"continuation_key":data["continuation_key"],"source_head":data["source_head"],"json_sha256":hashlib.sha256(data_bytes).hexdigest(),"html_sha256":hashlib.sha256(html_bytes).hexdigest(),"manual_sha256":hashlib.sha256(manual_bytes).hexdigest(),"remote_head":subprocess.check_output(["git","rev-parse",branch],text=True).strip()},ensure_ascii=False))
+          print(json.dumps({"state":data["state"],"result":result,"row":data["rows"][0],"manual_state":manual["state"],"manual_open":manual["open_item_count"],"manual_resolved":manual["resolved_item_count"],"continuation_key":data["continuation_key"],"source_head":data["source_head"],"json_sha256":hashlib.sha256(data_bytes).hexdigest(),"html_sha256":hashlib.sha256(html_bytes).hexdigest(),"manual_sha256":hashlib.sha256(manual_bytes).hexdigest(),"remote_head":subprocess.check_output(["git","rev-parse",branch],text=True).strip()},ensure_ascii=False))
           PY
