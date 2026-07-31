@@ -1,0 +1,92 @@
+name: security-public-safety-2-wave116-lsoa-transition-audit
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/wave116-lsoa-transition-audit-trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave116-lsoa-transition-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run bounded official ONS transition audit
+        run: |
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_lsoa_transition_quality_audit_wave116_20260731.py
+
+      - name: Validate outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path.cwd()
+          data_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json"
+          html_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html"
+          data = json.loads(data_path.read_text(encoding="utf-8"))
+          assert data["scope"]["rows_below_95_audited"] == 394
+          assert len(data["rows"]) == 394
+          assert data["result"]["total_operations"] == 792
+          assert data["scope"]["candidate_values_changed"] == 0
+          assert data["quality_policy"]["parent_candidate_accuracy_mutated"] is False
+          assert data["fake_data"] is False
+          text = html_path.read_text(encoding="utf-8")
+          assert text.count("<tr>") == 395
+          print(json.dumps(data["result"], ensure_ascii=False))
+          PY
+
+      - name: Publish audit to canonical branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html
+          if git diff --cached --quiet; then
+            echo "No audit output changes"
+          else
+            git commit -m "security_public_safety_2: publish Wave116 ONS transition audit [skip ci]"
+            git push origin HEAD:codex/aays-single-runner-v5-20260706
+          fi
+
+      - name: Remote readback
+        run: |
+          git fetch origin codex/aays-single-runner-v5-20260706
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/codex/aays-single-runner-v5-20260706)"
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import subprocess
+
+          root = Path.cwd()
+          data_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116_latest.json"
+          html_path = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_transition_quality_audit_wave116.html"
+          data_bytes = data_path.read_bytes()
+          html_bytes = html_path.read_bytes()
+          data = json.loads(data_bytes.decode("utf-8"))
+          print(json.dumps({
+              "state": data["state"],
+              "rows": len(data["rows"]),
+              "json_sha256": hashlib.sha256(data_bytes).hexdigest(),
+              "html_sha256": hashlib.sha256(html_bytes).hexdigest(),
+              "head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+          }, ensure_ascii=False))
+          PY
