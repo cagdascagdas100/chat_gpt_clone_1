@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import shutil
 import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).parent
 
-stub = HERE / "validate_inspire_cadastral_parcel_v20.py"
-stub.write_text('''from pathlib import Path\nclass Base: pass\nbase=Base()\nclass Under:\n @staticmethod\n def parse(path, target_ids):\n  data=Path(path).read_bytes()\n  return {t:[{"payload":data.decode()}] for t in target_ids},{"underlying_parse":True}\nprevious=Under()\ngeometry=object()\ndef validate_collection_cardinality(*a,**k): return True\n''')
-try:
-    spec = importlib.util.spec_from_file_location("v21", HERE / "validate_inspire_cadastral_parcel_v21.py")
+with tempfile.TemporaryDirectory() as td:
+    root = Path(td)
+    shutil.copy2(HERE / "validate_inspire_cadastral_parcel_v21.py", root / "validate_inspire_cadastral_parcel_v21.py")
+    shutil.copy2(HERE / "stable_xml_source_v3.py", root / "stable_xml_source_v3.py")
+    (root / "validate_inspire_cadastral_parcel_v20.py").write_text('''from pathlib import Path\nclass Base: pass\nbase=Base()\nclass Under:\n @staticmethod\n def parse(path, target_ids):\n  data=Path(path).read_bytes()\n  return {t:[{"payload":data.decode()}] for t in target_ids},{"underlying_parse":True}\nprevious=Under()\ngeometry=object()\ndef validate_collection_cardinality(*a,**k): return True\n''')
+    spec = importlib.util.spec_from_file_location("v21", root / "validate_inspire_cadastral_parcel_v21.py")
     mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
     data = b"<FeatureCollection/>"
     with tempfile.NamedTemporaryFile(suffix=".gml", delete=False) as handle:
@@ -36,5 +39,3 @@ try:
         print(f"PARCEL_LABEL_2_IMMUTABLE_SNAPSHOT_VALIDATOR_TESTS={checks}/{checks}")
     finally:
         path.unlink(missing_ok=True)
-finally:
-    stub.unlink(missing_ok=True)
