@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "ready_to_sell_1",
+  "task_id": "ready_to_sell_1_automation_167_dom_proof_20260720_01",
+  "attempt_id": "ready-to-sell-1-167-20260720-01",
+  "continuation_key": "b313c9827716484ee87755e20fac9f9b590b151fb750c60d854678d629a85f1e",
+  "source_head": "5e2fdd4aa4ce932de184053859f101c1cf94e4cf",
+  "canonical_branch": "codex/aays-single-runner-v5-20260706",
+  "first_unverified_step": "CLEAN_HYDRATE_REMOTE_HEAD_THEN_RUN_CANONICAL_V53_BROWSER_ACCEPTANCE",
+  "detected_at": "2026-07-31T10:02:00Z",
+  "updated_at": "2026-07-31T10:02:00Z",
+  "state": "RECOVERY_IN_PROGRESS",
+  "recovery_reason": "STALE_PUBLISH_PENDING_WITH_REMOTE_HEAD_DRIFT_AND_BROWSER_GATE_NOT_YET_REEXECUTED",
+  "owner_check": {
+    "live_owner": false,
+    "previous_lease_expired": true,
+    "new_runner_created": false,
+    "parallel_runner_created": false,
+    "same_task_preserved": true
+  },
+  "parallel_work": {
+    "mode": "BOUNDED_PARALLEL_WEB_REVERIFICATION_ONLY",
+    "endpoint_checks": 10,
+    "useful_content_readbacks": 9,
+    "blocked_readbacks": 1,
+    "blocked_detail": "Durham official planning search endpoint returned HTTP 403/client-side access limitation",
+    "candidate_rows_checked": 4,
+    "material_candidate_state_changes": 2,
+    "official_planning_detail_direct_readbacks": 0
+  },
+  "candidate_observations": [
+    {
+      "row_reference": 1,
+      "identity": "OTM-10225397",
+      "result": "CORE_FIELDS_RECONFIRMED",
+      "observed_price_gbp": 90000,
+      "planning_reference": "R23/0279",
+      "observed_market_state": "LISTING_PAGE_AVAILABLE",
+      "confidence": "HIGH_FOR_MARKET_PAGE_FIELDS_ONLY",
+      "source_urls": [
+        "https://www.onthemarket.com/details/10225397/",
+        "https://www.rugby.gov.uk/w/planning-portal"
+      ],
+      "guard": "Official application-detail readback remains pending; no parcel value promotion."
+    },
+    {
+      "row_reference": 2,
+      "identity": "OTM-10693127",
+      "result": "PRICE_CONFLICT_DETECTED_NO_OVERWRITE",
+      "observed_prices_gbp": [750000, 725000],
+      "planning_reference": "DM/17/02778/RM",
+      "observed_market_state": "LISTING_AVAILABLE_WITH_PRICE_CONFLICT",
+      "confidence": "HIGH_THAT_CONFLICT_EXISTS_LOW_FOR_SINGLE_CURRENT_PRICE",
+      "source_urls": [
+        "https://www.onthemarket.com/details/10693127/",
+        "https://www.onthemarket.com/for-sale/land/meadowfield/",
+        "https://www.durham.gov.uk/article/8276/Find-a-planning-application"
+      ],
+      "guard": "Conflicting market snapshots are preserved for review; no price or parcel value promotion."
+    },
+    {
+      "row_reference": 3,
+      "identity": "OTM-18275234",
+      "result": "PRICE_AND_SCHEME_CROSS_MARKET_RECONFIRMED",
+      "observed_price_gbp": 575000,
+      "planning_reference": "R23/1115",
+      "observed_scheme": "5 three-bedroom houses and 4 apartments",
+      "observed_market_state": "MULTIPLE_MARKET_PAGES_AVAILABLE",
+      "confidence": "HIGH_FOR_CROSS_MARKET_FIELDS_ONLY",
+      "source_urls": [
+        "https://www.onthemarket.com/details/18275234/",
+        "https://www.rightmove.co.uk/properties/169982870",
+        "https://www.zoopla.co.uk/for-sale/details/71942977/",
+        "https://www.rugby.gov.uk/w/planning-portal"
+      ],
+      "guard": "Official application-detail readback remains pending; no exact parcel identity inferred."
+    },
+    {
+      "row_reference": 4,
+      "identity": "OTM-18878625",
+      "result": "MARKET_STATUS_STALE_IN_CANONICAL_SAMPLE",
+      "observed_price_gbp": 250000,
+      "observed_market_state": "NO_LONGER_ON_MARKET",
+      "confidence": "HIGH",
+      "source_urls": [
+        "https://www.onthemarket.com/details/18878625/"
+      ],
+      "guard": "Existing on_market label must not be treated as current availability."
+    }
+  ],
+  "progress": {
+    "canonical_operations_completed": 290,
+    "canonical_operations_total": 291,
+    "canonical_percent": 99.66,
+    "percentage_point_change": 0.0,
+    "reason_no_percent_increase": "The final browser acceptance operation is still unverified; web evidence work improved freshness but does not count as completion of operation 291."
+  },
+  "next_safe_action": "RUN_CANONICAL_V53_BROWSER_ACCEPTANCE_FROM_A_CLEAN_CHECKOUT_AT_CURRENT_REMOTE_HEAD_USING_THE_EXISTING_SINGLE_COORDINATOR",
+  "manual_action": {
+    "required": false,
+    "record_created": false,
+    "reason": "No user-supplied data or user intervention is required; the remaining blocker is execution-environment/browser-runner availability."
+  },
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "parcel_values_published": false,
+    "final_ready": false
+  }
+}
