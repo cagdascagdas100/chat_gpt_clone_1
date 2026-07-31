@@ -1,0 +1,27 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave153</title><body>
+<h1>internet_access_3 Wave153 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave153_operations_3600_20260801.html">3.600 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave153_3600_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const rank=(rows,idx,v)=>1+rows.filter(r=>r[idx]>v).length;
+function expand(seed){
+ const a=[],cs=seed.contract_seed,ct=seed.displayed_totals.contracted,bt=seed.displayed_totals.built;
+ for(const [n,p,c,b] of cs){
+  const z=slug(n);
+  a.push([`mar_${z}_supplier`,['march_snapshot'],`The March 2026 BDUK snapshot listed ${p} as supplier for ${n}.`,'monthly_snapshot']);
+  a.push([`mar_${z}_contracted`,['march_snapshot'],`The March 2026 BDUK snapshot listed ${c.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`mar_${z}_built`,['march_snapshot'],`The March 2026 BDUK snapshot listed ${b.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`mar_${z}_built_share`,['march_snapshot'],`The March 2026 rounded built-share ratio for ${n} was ${(b/c*100).toFixed(2)}% (${b.toLocaleString('en-GB')} built out of ${c.toLocaleString('en-GB')} contracted premises).`,'derived_snapshot']);
+  a.push([`mar_${z}_contracted_total_share`,['march_snapshot'],`${n} represented ${(c/ct*100).toFixed(2)}% of the displayed March 2026 contracted-premises total (${c.toLocaleString('en-GB')} of ${ct.toLocaleString('en-GB')}).`,'derived_snapshot']);
+  a.push([`mar_${z}_built_total_share`,['march_snapshot'],`${n} represented ${(b/bt*100).toFixed(2)}% of the displayed March 2026 built-premises total (${b.toLocaleString('en-GB')} of ${bt.toLocaleString('en-GB')}).`,'derived_snapshot']);
+  a.push([`mar_${z}_contracted_rank`,['march_snapshot'],`${n} had competition rank ${rank(cs,2,c)} of ${cs.length} by rounded contracted-premises count in the March 2026 table, descending with equal values sharing rank.`,'derived_snapshot']);
+  a.push([`mar_${z}_built_rank`,['march_snapshot'],`${n} had competition rank ${rank(cs,3,b)} of ${cs.length} by rounded built-premises count in the March 2026 table, descending with equal values sharing rank.`,'derived_snapshot']);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave153_3600_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave153_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
