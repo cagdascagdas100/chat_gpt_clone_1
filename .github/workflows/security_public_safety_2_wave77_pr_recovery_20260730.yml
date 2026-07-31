@@ -1,25 +1,25 @@
-name: security-public-safety-2-wave104-pr-target-recovery
+name: security-public-safety-2-wave105-pr-target-recovery
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/wave104-main-trigger.txt
+      - .github/wave105-main-trigger.txt
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths:
-      - .github/wave104-trigger.txt
+      - .github/wave105-trigger.txt
 
 permissions:
   contents: write
 
 concurrency:
-  group: security-public-safety-2-e744fbe6afb47dc3318636cbe2d4c07affe481c41149cf58f7cba680b5773b9a
+  group: security-public-safety-2-c88ff5cd9693d956af9df90a59b630a07a954b5d504de33d6f0a71bb097cf57d
   cancel-in-progress: false
 
 jobs:
-  guarded-wave104-recovery:
+  guarded-wave105-recovery:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -37,20 +37,20 @@ jobs:
           import json
           from pathlib import Path
 
-          queue = Path('docs/chatgpt_status/aays1/queue/0079_security_public_safety_2_priority_25960row_incremental_evidence_expansion_20260731.v3.task.json')
+          queue = Path('docs/chatgpt_status/aays1/queue/0080_security_public_safety_2_priority_26410row_incremental_evidence_expansion_20260731.v3.task.json')
           current = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/current_task_latest.json')
-          continuation = 'e744fbe6afb47dc3318636cbe2d4c07affe481c41149cf58f7cba680b5773b9a'
+          continuation = 'c88ff5cd9693d956af9df90a59b630a07a954b5d504de33d6f0a71bb097cf57d'
           payload = json.loads(current.read_text(encoding='utf-8'))
           print('run=false' if queue.exists() or payload.get('continuation_key') == continuation else 'run=true')
           PY
 
-      - name: Validate Wave104 orchestrator syntax
+      - name: Validate Wave105 orchestrator syntax
         if: steps.gate.outputs.run == 'true'
-        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave104_orchestrator.py
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py
 
       - name: Claim exact next scope
         if: steps.gate.outputs.run == 'true'
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave104_orchestrator.py claim
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py claim
 
       - name: Install browser runtime
         if: steps.gate.outputs.run == 'true'
@@ -60,12 +60,12 @@ jobs:
 
       - name: Generate official-source rows and publish accepted output
         if: steps.gate.outputs.run == 'true'
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave104_orchestrator.py run
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py run
 
       - name: Verify remote hashes and terminalize
         if: steps.gate.outputs.run == 'true'
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave104_orchestrator.py terminalize
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py terminalize
 
       - name: Park failed continuation without duplicate retry
         if: failure() && steps.gate.outputs.run == 'true'
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave104_orchestrator.py park
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py park
