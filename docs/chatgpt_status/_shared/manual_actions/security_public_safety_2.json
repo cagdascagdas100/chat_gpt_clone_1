@@ -3,10 +3,10 @@
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Wave127 koordinat provenansı ve adaptif resmî sınır tomografisinden sonra 1 satır açık, 15 satır çözülmüş durumdadır.",
+  "reason": "Wave128 resmî sınır segmenti/topoloji ve kaynak hassasiyet denetiminden sonra 1 satır açık, 15 satır çözülmüş durumdadır.",
   "detected_at": "2026-07-31T13:52:01.598523Z",
-  "updated_at": "2026-07-31T15:22:17.642113Z",
-  "solution": "Açık satırlarda bağımsız coğrafi inceleyici özgün kaynak koordinat hassasiyetini veya resmî sınırın amaçlanan tarafını doğrulamalıdır.",
+  "updated_at": "2026-07-31T16:08:12.548965Z",
+  "solution": "Açık satır varsa bağımsız inceleyici özgün daha hassas koordinatı veya resmî sınır tarafını belgelemelidir; aksi halde ek kullanıcı işlemi yoktur.",
   "evidence_paths": [
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_boundary_geometry_relation_wave123_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json",
@@ -15,9 +15,11 @@
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html"
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_boundary_segment_topology_precision_wave128_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_boundary_segment_topology_precision_wave128.html"
   ],
-  "continuation_key": "45bca0030e72371f855779b44dbaf20673e842647debf8eb9a8ccb5b71fce27c",
+  "continuation_key": "de038d32cbc0c1b8b441481e52b40578609653f4f4bbc0367e4f90eecdb943cf",
   "final_ready": false,
   "open_item_count": 1,
   "resolved_item_count": 15,
@@ -67,8 +69,8 @@
     {
       "parcel_id": "parcel_40827",
       "state": "OPEN",
-      "reason": "Kaynak provenansı, resmî sınır kararını tekilleştirecek daha hassas ve farklı bir koordinat kanıtlamadı veya savunulabilir koordinat zarfı resmî ONS sunucu geometrisinde iki poligona bölündü; çoğunluk oyu uygulanmadı ve satır fail-closed açık tutuldu.",
-      "required_action": "Bağımsız coğrafi inceleyici, kaynak koordinatın yedi ondalıktan daha hassas özgün değerini veya resmî sınırın amaçlanan tarafını doğrulamalıdır; değer otomatik değiştirilmemelidir.",
+      "reason": "Wave128 resmî ONS 2011 tam çözünürlüklü ve genelleştirilmiş sınırlarını, 2021 kontrol katmanlarını, kaynak dosya provenansını ve yoğun nicemleme zarfını birlikte denetledi. Birincil kaynakta daha hassas özgün koordinat ve dört katmanda tamamen kararlı bir zarf birlikte kanıtlanamadığı için çoğunluk oyu uygulanmadı; satır fail-closed açık tutuldu.",
+      "required_action": "Bağımsız coğrafi inceleyici özgün kaynak sisteminden yedi ondalıktan daha hassas koordinatı veya resmî 2011 sınırının amaçlanan tarafını belgelemelidir; aday değer otomatik değiştirilmemelidir.",
       "lsoa11_code": "E01001553",
       "lsoa21_code": "E01002091",
       "direct_lookup_pair": false,
@@ -89,7 +91,49 @@
         "E01002091"
       ],
       "wave127_nearest_transition_metres": null,
-      "wave127_higher_precision_provenance": true
+      "wave127_higher_precision_provenance": true,
+      "wave128_state": "OPEN_IRREDUCIBLE_PRIMARY_SOURCE_PRECISION_BOUNDARY_AMBIGUITY",
+      "wave128_selected_coordinate": [
+        -0.08507685,
+        51.60842985
+      ],
+      "wave128_selected_coordinate_precision": {
+        "longitude_decimals": 8,
+        "latitude_decimals": 8
+      },
+      "wave128_primary_provenance_eligible": false,
+      "wave128_server_grids": {
+        "ons_2011_bfc": "0/2401",
+        "ons_2011_bgc": "0/625",
+        "ons_2021_bfc": "625/625",
+        "ons_2021_bgc": "289/289"
+      },
+      "wave128_local_dense_grids": {
+        "ons_2011_bfc": "0/90601",
+        "ons_2011_bgc": "0/90601",
+        "ons_2021_bfc": "90601/90601",
+        "ons_2021_bgc": "90601/90601"
+      },
+      "wave128_official_competing_codes_2011_bfc": {
+        "E01002091": 2401
+      },
+      "wave128_nearest_boundary": {
+        "segments_checked": 1299,
+        "nearest": {
+          "distance_metres": 0.0022687140585364207,
+          "feature_code": "E01001553",
+          "ring_index": 0,
+          "segment_index": 235,
+          "segment_bearing_degrees": 267.04716058990925,
+          "normal_bearing_degrees": 357.04716058990925,
+          "signed_cross_product": 0.09627716872332925,
+          "nearest_offset_metres": [
+            -0.00011687044316843753,
+            0.002265701829216371
+          ]
+        }
+      },
+      "wave128_continuation_key": "de038d32cbc0c1b8b441481e52b40578609653f4f4bbc0367e4f90eecdb943cf"
     },
     {
       "parcel_id": "parcel_41054",
