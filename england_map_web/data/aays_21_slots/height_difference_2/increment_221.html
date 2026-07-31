@@ -1,0 +1,29 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 Increment 221</title><style>
+body{font-family:system-ui;background:#0b1220;color:#e5edf8;margin:0;padding:20px}h1,h2{margin:.3rem 0 1rem}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px;margin:14px 0}.card{background:#121d2f;border:1px solid #263652;border-radius:9px;padding:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;background:#101a2a}th,td{border:1px solid #263652;padding:6px;vertical-align:top;text-align:left}
+th{position:sticky;top:0;background:#1a2941}.ok{color:#83e6a6}.blocked{color:#ff9b9b}code{white-space:pre-wrap;word-break:break-word}.small{font-size:11px;color:#b7c7dc}
+</style></head><body><h1>height_difference_2 — Increment 221</h1><div id="meta" class="meta"></div>
+<h2>Adaylar</h2><div id="candidates"></div><h2>İşlemler — satır satır</h2>
+<table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Aday</th><th>Ayrıntı / kaynak</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+Promise.all([fetch('operations_increment_221.json').then(r=>r.json()),fetch('support_state_increment_221.json').then(r=>r.json())]).then(([d,s])=>{
+let rows=[],n=d.operation_start;
+d.official_operations.forEach(x=>rows.push({n:n++,st:'completed',stage:'RESMÎ KAYNAK/API',type:x.type,row:'',text:x.summary+' — '+x.source_name+' — '+x.source_url}));
+d.candidates.forEach(c=>d.candidate_template.forEach(t=>{let detail=t.summary;
+if(t.type==='ROW_BINDING')detail+=` Satır ${c.row}.`;if(t.type==='HMLR_BINDING')detail+=` HMLR ${c.hmlr_id}.`;
+if(t.type==='HEIGHT_BINDING')detail+=` ${c.height_difference_m.toFixed(3)} m.`;if(t.type==='POLYGON_AREA')detail+=` ${c.polygon_area_m2} m².`;
+if(t.type==='POLYGON_HASH')detail+=` ${c.polygon_feature_sha256}.`;if(t.type==='HMLR_DOWNLOAD_RECIPE')detail+=` ${c.hmlr_zip_route}`;
+if(t.type==='EA_COVERAGE_ID')detail+=` ${c.ea_coverage_id}`;if(t.type==='EA_EXACT_BBOX')detail+=` ${JSON.stringify(c.polygon_bounds_epsg27700)}`;
+if(t.type==='EA_GETCOVERAGE_RECIPE')detail+=` ${c.ea_getcoverage}`;if(t.type==='TERRAIN50_AREA')detail+=` ${c.os_downloads_api}`;
+if(t.type==='TERRAIN50_TILE')detail+=` ${c.terrain50_tile}`;if(t.type==='TILE_CONTAINMENT')detail+=` ${JSON.stringify(c.terrain50_tile_bounds_epsg27700)}`;
+rows.push({n:n++,st:'completed',stage:'ADAY TAŞIMA/METRİK',type:t.type,row:c.row,text:detail})}));
+d.integrity_template.forEach(x=>rows.push({n:n++,st:'completed',stage:'RECOVERY/BÜTÜNLÜK',type:x.type,row:'',text:x.summary}));
+d.blockers.forEach(x=>rows.push({n:n++,st:'blocked',stage:'AÇIK DIŞ KAPI',type:x.type,row:'',text:x.summary}));
+document.getElementById('meta').innerHTML=[['İşlem',d.counts.completed+'/'+d.counts.total],['Engel',d.counts.blocked],['Resmî kaynak',d.counts.official],['Aday kontrolü',d.counts.candidate_checks],['Bütünlük',d.counts.integrity],['Genel',s.canonical.overall_percent+'%'],['Batch',s.canonical.batch_percent+'%'],['Taze bayt','Yok — fail-closed']].map(x=>`<div class=card><b>${x[0]}</b><div>${x[1]}</div></div>`).join('');
+document.getElementById('candidates').innerHTML='<table><thead><tr><th>Satır</th><th>Bölge</th><th>HMLR</th><th>Korunan fark</th><th>Güven</th><th>Terrain 50</th></tr></thead><tbody>'+s.candidates.map(c=>`<tr><td>${c.row}</td><td>${c.authority}</td><td>${c.hmlr_id}</td><td>${c.height_difference_m.toFixed(3)} m</td><td>${c.confidence_percent}%</td><td>${c.terrain50_area}/${c.terrain50_tile}</td></tr>`).join('')+'</tbody></table>';
+document.getElementById('rows').innerHTML=rows.map(x=>`<tr><td>${x.n}</td><td class=${x.st==='blocked'?'blocked':'ok'}>${x.st}</td><td>${x.stage}</td><td>${x.type}</td><td>${x.row}</td><td><code>${x.text}</code></td></tr>`).join('');
+if(rows.length!==d.counts.total||n-1!==d.operation_end)throw new Error('row range mismatch');
+}).catch(e=>document.body.insertAdjacentHTML('beforeend',`<p class=blocked>Yükleme hatası: ${e}</p>`));
+</script></body></html>
