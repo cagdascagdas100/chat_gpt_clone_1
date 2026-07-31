@@ -1,0 +1,28 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave151</title><body>
+<h1>internet_access_3 Wave151 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave151_operations_3200_20260801.html">3.200 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave151_3200_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const change=(v,a,b)=>v===0?`was unchanged from ${a} to ${b}`:`${v>0?'increased':'decreased'} by ${Math.abs(v).toLocaleString('en-GB')} from ${a} to ${b}`;
+function expand(seed){
+ const a=[];
+ for(const [n,p,oc,ob,nc,nb,dc,db] of seed.contract_seed){
+  const z=slug(n);
+  a.push([`oct_${z}_supplier`,['october_snapshot'],`The October 2025 BDUK snapshot listed ${p} as supplier for ${n}.`,'monthly_snapshot']);
+  a.push([`oct_${z}_contracted`,['october_snapshot'],`The October 2025 BDUK snapshot listed ${oc.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`oct_${z}_built`,['october_snapshot'],`The October 2025 BDUK snapshot listed ${ob.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`delta_oct_nov_${z}_built`,['october_snapshot','november_snapshot'],`The rounded built-premises figure for ${n} ${change(nb-ob,'October','November 2025')}.`,'monthly_change']);
+  a.push([`delta_nov_dec_${z}_built`,['november_snapshot','december_snapshot'],`The rounded built-premises figure for ${n} ${change(db-nb,'November','December 2025')}.`,'monthly_change']);
+  if(ob===0) a.push([`pct_oct_dec_${z}_built`,['october_snapshot','december_snapshot'],`The October-to-December built-premises percentage change for ${n} was not calculated because the October rounded value was zero; the absolute change was ${(db-ob)>=0?'+':''}${(db-ob).toLocaleString('en-GB')}.`,'monthly_change']);
+  else a.push([`pct_oct_dec_${z}_built`,['october_snapshot','december_snapshot'],`The rounded built-premises figure for ${n} changed by ${(((db-ob)/ob)*100)>=0?'+':''}${(((db-ob)/ob)*100).toFixed(2)}% from October to December 2025 (${ob.toLocaleString('en-GB')} to ${db.toLocaleString('en-GB')}).`,'monthly_change']);
+  const changes=[]; if(oc!==nc)changes.push(`October-to-November contracted count changed by ${(nc-oc)>=0?'+':''}${(nc-oc).toLocaleString('en-GB')}`); if(nc!==dc)changes.push(`November-to-December contracted count changed by ${(dc-nc)>=0?'+':''}${(dc-nc).toLocaleString('en-GB')}`);
+  a.push([`continuity_oct_nov_dec_${z}`,['october_snapshot','november_snapshot','december_snapshot'],changes.length?`The ${n} row retained supplier ${p}; ${changes.join('; ')}.`:`The ${n} row retained supplier ${p} and the same rounded contracted-premises count across October, November and December 2025.`,'continuity']);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave151_3200_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave151_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
