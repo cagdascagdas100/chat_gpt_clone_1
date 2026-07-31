@@ -365,7 +365,7 @@ def discover_official_lookup() -> dict[str, Any]:
     layer_rows: list[dict[str, Any]] = []
     relationship_rows: list[dict[str, Any]] = []
     service_families_promoted: set[str] = set()
-    items = list(item_map.values())[:40]
+    items = list(item_map.values())[:15]
     for item in items:
         url = str(item["url"]).rstrip("/")
         layer_urls: list[str] = []
@@ -373,10 +373,10 @@ def discover_official_lookup() -> dict[str, Any]:
             layer_urls = [url]
         elif re.search(r"/FeatureServer$", url, flags=re.I):
             root_meta = get_json(url, {"f": "json"})
-            for layer in root_meta.get("layers", [])[:25]:
+            for layer in root_meta.get("layers", [])[:12]:
                 if layer.get("id") is not None:
                     layer_urls.append(f"{url}/{layer['id']}")
-            for table in root_meta.get("tables", [])[:25]:
+            for table in root_meta.get("tables", [])[:12]:
                 if table.get("id") is not None:
                     layer_urls.append(f"{url}/{table['id']}")
         else:
@@ -859,7 +859,7 @@ def evaluate_primary_candidates(
                 "expected_only": expected_hits,
                 "total": len(codes),
                 "fully_expected": expected_hits == len(codes),
-                "code_counts": dict(Counter(tuple(value) for value in codes)),
+                "code_counts": {"|".join(value): count for value, count in Counter(tuple(value) for value in codes).items()},
             }
 
         promotable = all(
