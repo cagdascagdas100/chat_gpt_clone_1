@@ -1,0 +1,45 @@
+name: security-public-safety-2-wave105-incremental
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/security_public_safety_2_wave105_incremental.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-c88ff5cd9693d956af9df90a59b630a07a954b5d504de33d6f0a71bb097cf57d
+  cancel-in-progress: false
+
+jobs:
+  guarded-generate-accept-publish-terminalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Claim exact next scope
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py claim
+
+      - name: Install browser runtime
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Generate official-source rows and publish accepted output
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py run
+
+      - name: Verify remote hashes and terminalize
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py terminalize
+
+      - name: Park failed continuation without duplicate retry
+        if: ${{ failure() }}
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave105_orchestrator.py park
