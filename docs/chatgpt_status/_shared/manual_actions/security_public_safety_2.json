@@ -3,22 +3,24 @@
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Wave126 resmî sunucu tarafı nicemleme hücresi doğrulamasından sonra 2 sınır-hassasiyeti satırı açık kaldı; 2 ek satır çözüldü.",
+  "reason": "Wave127 koordinat provenansı ve adaptif resmî sınır tomografisinden sonra 1 satır açık, 15 satır çözülmüş durumdadır.",
   "detected_at": "2026-07-31T13:52:01.598523Z",
-  "updated_at": "2026-07-31T14:49:13.882118Z",
-  "solution": "Açık satırlarda bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın amaçlanan tarafını doğrulamalıdır.",
+  "updated_at": "2026-07-31T15:22:17.642113Z",
+  "solution": "Açık satırlarda bağımsız coğrafi inceleyici özgün kaynak koordinat hassasiyetini veya resmî sınırın amaçlanan tarafını doğrulamalıdır.",
   "evidence_paths": [
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_boundary_geometry_relation_wave123_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_authoritative_boundary_microgrid_wave125_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_authoritative_boundary_microgrid_wave125.html",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126.html"
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html"
   ],
-  "continuation_key": "0603e0ca9d3214e18e7252bf02fe0a11b00bddf578698bc760f8730477ebe6f6",
+  "continuation_key": "45bca0030e72371f855779b44dbaf20673e842647debf8eb9a8ccb5b71fce27c",
   "final_ready": false,
-  "open_item_count": 2,
-  "resolved_item_count": 14,
+  "open_item_count": 1,
+  "resolved_item_count": 15,
   "items": [
     {
       "parcel_id": "parcel_32086",
@@ -65,8 +67,8 @@
     {
       "parcel_id": "parcel_40827",
       "state": "OPEN",
-      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda 2011 ve 2021 nicemleme hücrelerinin ikisi birden 81/81 tekil beklenen kod kararlılığını sağlayamadı; satır fail-closed açık tutuldu.",
-      "required_action": "Bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın hangi tarafının amaçlandığını doğrulamalıdır; mevcut değer otomatik değiştirilmemelidir.",
+      "reason": "Kaynak provenansı, resmî sınır kararını tekilleştirecek daha hassas ve farklı bir koordinat kanıtlamadı veya savunulabilir koordinat zarfı resmî ONS sunucu geometrisinde iki poligona bölündü; çoğunluk oyu uygulanmadı ve satır fail-closed açık tutuldu.",
+      "required_action": "Bağımsız coğrafi inceleyici, kaynak koordinatın yedi ondalıktan daha hassas özgün değerini veya resmî sınırın amaçlanan tarafını doğrulamalıdır; değer otomatik değiştirilmemelidir.",
       "lsoa11_code": "E01001553",
       "lsoa21_code": "E01002091",
       "direct_lookup_pair": false,
@@ -80,7 +82,14 @@
       "server_competing_codes_2011": [
         "E01002091"
       ],
-      "server_competing_codes_2021": []
+      "server_competing_codes_2021": [],
+      "wave127_affected_geography": "2011",
+      "wave127_dense_grid": "0/1089",
+      "wave127_competing_codes": [
+        "E01002091"
+      ],
+      "wave127_nearest_transition_metres": null,
+      "wave127_higher_precision_provenance": true
     },
     {
       "parcel_id": "parcel_41054",
@@ -116,9 +125,9 @@
     },
     {
       "parcel_id": "parcel_48739",
-      "state": "OPEN",
-      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda 2011 ve 2021 nicemleme hücrelerinin ikisi birden 81/81 tekil beklenen kod kararlılığını sağlayamadı; satır fail-closed açık tutuldu.",
-      "required_action": "Bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın hangi tarafının amaçlandığını doğrulamalıdır; mevcut değer otomatik değiştirilmemelidir.",
+      "state": "RESOLVED",
+      "reason": "Depo içindeki kaynak provenansı, Wave126 merkezinden farklı ve yedi ondalıktan daha hassas koordinatı doğruladı; bu koordinatın savunulabilir nicemleme zarfı ile resmî 2011/2021 sunucu geometrileri tamamen beklenen tekil kodlarda kaldı.",
+      "required_action": "Ek kullanıcı işlemi yok; daha hassas kaynak koordinat provenansı ve resmî geometri zarfı kararlı.",
       "lsoa11_code": "E01002547",
       "lsoa21_code": "E01002545",
       "direct_lookup_pair": false,
@@ -126,13 +135,18 @@
       "microgrid_pass_2021": 18,
       "boundary_clearance_2011_metres": 1.2097,
       "boundary_clearance_2021_metres": 0.0051,
-      "confidence_percent": 94,
+      "confidence_percent": 98,
       "server_quantization_grid_2011": "81/81",
       "server_quantization_grid_2021": "77/81",
       "server_competing_codes_2011": [],
       "server_competing_codes_2021": [
         "E01002547"
-      ]
+      ],
+      "wave127_affected_geography": "2021",
+      "wave127_dense_grid": "1089/1089",
+      "wave127_competing_codes": [],
+      "wave127_nearest_transition_metres": null,
+      "wave127_higher_precision_provenance": true
     },
     {
       "parcel_id": "parcel_49517",
