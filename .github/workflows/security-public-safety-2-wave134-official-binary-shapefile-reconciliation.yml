@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check --no-cache-dir pyshp==2.3.1 pyproj==3.7.1 shapely==2.1.1
+          python -m pip install --disable-pip-version-check --no-cache-dir pyshp==2.3.1 pyproj==3.7.1 shapely==2.1.1 fiona==1.10.1
 
       - name: Syntax gate
         shell: bash
@@ -36,14 +36,15 @@ jobs:
           set -euo pipefail
           python -m py_compile \
             docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_dbf_crs_geometry_reconciliation_20260731.py \
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_archive_gdb_repair_20260731.py
 
-      - name: Run repaired official binary SHP DBF PRJ CRS geometry reconciliation
+      - name: Run recursive archive and FileGDB official binary reconciliation
         shell: bash
         run: |
           set -euo pipefail
           export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
-          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_archive_gdb_repair_20260731.py
 
       - name: Strict nonzero binary dataset validation
         shell: bash
