@@ -93,7 +93,7 @@ def replace_unique_line_last(
     return value.replace(old_line, new_line, 1)
 
 text = replace_unique_line_last(text, ("or 141", "or 146"), "146", "147")
-text = replace_unique_line_last(text, ('"priority"', "-168", "-173"), "-173", "-174")
+text = replace_unique_line_last(text, ("priority", "-168", "-173"), "-173", "-174")
 text = replace_unique_line_last(text, ("97.81", "98.03"), "98.03", "98.07")
 text = replace_unique_line_last(
     text,
