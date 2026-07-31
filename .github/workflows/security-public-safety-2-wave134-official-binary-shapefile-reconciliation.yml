@@ -45,7 +45,7 @@ jobs:
           export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
           python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py
 
-      - name: Strict nonzero result validation
+      - name: Strict nonzero binary dataset validation
         shell: bash
         run: |
           set -euo pipefail
@@ -67,6 +67,12 @@ jobs:
           assert len(data["rows"])==1 and data["rows"][0]["parcel_id"]=="parcel_40827"
           assert 0 < result["official_binary_package_candidates"] <= 12
           assert result["official_binary_package_downloads"] > 0
+          assert result["official_binary_package_download_successes"] > 0
+          assert result["official_binary_archives_opened"] > 0
+          assert result["official_binary_dataset_groups"] > 0
+          assert result["official_binary_datasets_scanned"] > 0
+          assert result["official_binary_dataset_scan_successes"] > 0
+          assert result["official_binary_records_scanned"] > 0
           assert result["official_network_probe_attempts"] > 0
           assert result["operation_ledger_rows"] > 0
           assert data["scope"]["maximum_simultaneous_workers"]==15
@@ -136,6 +142,12 @@ jobs:
           assert data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED"
           assert result["official_binary_package_candidates"]>0
           assert result["official_binary_package_downloads"]>0
+          assert result["official_binary_package_download_successes"]>0
+          assert result["official_binary_archives_opened"]>0
+          assert result["official_binary_dataset_groups"]>0
+          assert result["official_binary_datasets_scanned"]>0
+          assert result["official_binary_dataset_scan_successes"]>0
+          assert result["official_binary_records_scanned"]>0
           assert result["official_network_probe_attempts"]>0
           assert result["operation_ledger_rows"]>0
           assert result["completed_or_fail_closed_operations"]==result["total_operations"]
