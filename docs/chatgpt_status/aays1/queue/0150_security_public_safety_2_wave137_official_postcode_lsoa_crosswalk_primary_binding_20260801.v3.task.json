@@ -1,0 +1,48 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "task_id": "security_public_safety_2_wave137_official_postcode_lsoa_crosswalk_primary_binding_20260801",
+  "attempt_id": "attempt-001",
+  "continuation_key": "11a58a332f8498a21787d35bd8bfcaa3af8cd39830270e31c15bfbd007f9015e",
+  "previous_continuation_key": "157d04ad18d43adde2a3b4323612a4196bf7a3266e9234cc5853d2603cec65a6",
+  "source_head": "0a82a4e6e25221b1b30e8e350c533e9ce1bb64fc",
+  "canonical_branch": "codex/aays-single-runner-v5-20260706",
+  "first_unverified_step": "WAVE137_SINGLE_OPEN_ROW_OFFICIAL_POSTCODE_LSOA_CROSSWALK_AND_PRIMARY_BINDING",
+  "state": "READY",
+  "owner": null,
+  "blocker": null,
+  "created_at": "2026-07-31T22:25:00Z",
+  "updated_at": "2026-07-31T22:25:00Z",
+  "resource_class": "NETWORK_IO_CPU_BOUNDED",
+  "maximum_simultaneous_workers": 15,
+  "timeout_minutes": 45,
+  "read_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_temporal_parameter_observability_revision_controls_wave136_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave137_official_postcode_lsoa_crosswalk_primary_binding_20260801.py"
+  ],
+  "exact_write_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_lsoa_crosswalk_primary_binding_wave137_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_lsoa_crosswalk_primary_binding_wave137.html",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave137_status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave137_evidence_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json",
+    "docs/chatgpt_status/aays1/queue/0150_security_public_safety_2_wave137_official_postcode_lsoa_crosswalk_primary_binding_20260801.v3.task.json"
+  ],
+  "acceptance_conditions": [
+    "At least six official ArcGIS/ONS postcode catalogue searches are executed",
+    "All candidate items are restricted to official ONS owners and public Feature Services",
+    "Postcode and LSOA layer schemas are inspected before any spatial query",
+    "Spatial probes are bounded to five radii and at most 24 eligible layers with no more than 15 workers",
+    "Postcode proximity or centroid containment alone cannot promote the row",
+    "Promotion requires an exact non-derived primary parcel-source binding and at least two agreeing official postcode-to-LSOA releases",
+    "Unavailable official services are recorded fail-closed rather than inferred",
+    "JSON, HTML, queue task, status, evidence and manual-action files are updated",
+    "Canonical push and remote hash readback succeed"
+  ],
+  "fake_data_allowed": false,
+  "second_runner_created": false,
+  "second_task_created": false
+}
