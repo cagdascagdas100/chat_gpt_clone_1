@@ -66,19 +66,48 @@ text = replace_unique_schema_target(text, (115, 120), 120, 121)
 text = replace_unique_schema_target(text, (119, 124), 124, 125)
 text = replace_unique_schema_target(text, (114, 119), 119, 120)
 
-direct = [
-    ("    ('or 141) + 1', 'or 146) + 1'),", "    ('or 141) + 1', 'or 147) + 1'),"),
-    ("    ('\"priority\": -168,', '\"priority\": -173,'),",
-     "    ('\"priority\": -168,', '\"priority\": -174,'),"),
-    ("    ('97.81', '98.03'),", "    ('97.81', '98.07'),"),
-    ("    '\"expanded_scope_progress_percent\": 98.03',", "    '\"expanded_scope_progress_percent\": 98.07',"),
-    ("    ('WAVE92', 'WAVE97'),", "    ('WAVE92', 'WAVE98'),"),
-    ("    'WAVE97_REMOTE_TERMINAL_READBACK_FAILED',", "    'WAVE98_REMOTE_TERMINAL_READBACK_FAILED',"),
-]
-for old, new in direct:
-    if old not in text:
-        raise SystemExit(f"ORCHESTRATOR_DIRECT_FRAGMENT_MISSING: {old}")
-    text = text.replace(old, new)
+def replace_unique_line_last(
+    value: str,
+    required_fragments: tuple[str, ...],
+    old_target: str,
+    new_target: str,
+) -> str:
+    lines = [
+        line
+        for line in value.splitlines(keepends=True)
+        if all(fragment in line for fragment in required_fragments)
+    ]
+    if len(lines) != 1:
+        raise SystemExit(
+            f"ORCHESTRATOR_TARGET_LINE_COUNT_INVALID:"
+            f"{required_fragments}:{len(lines)}"
+        )
+    old_line = lines[0]
+    prefix, separator, suffix = old_line.rpartition(old_target)
+    if not separator:
+        raise SystemExit(
+            f"ORCHESTRATOR_TARGET_VALUE_MISSING:"
+            f"{required_fragments}:{old_target}"
+        )
+    new_line = prefix + new_target + suffix
+    return value.replace(old_line, new_line, 1)
+
+text = replace_unique_line_last(text, ("or 141", "or 146"), "146", "147")
+text = replace_unique_line_last(text, ('"priority"', "-168", "-173"), "-173", "-174")
+text = replace_unique_line_last(text, ("97.81", "98.03"), "98.03", "98.07")
+text = replace_unique_line_last(
+    text,
+    ("expanded_scope_progress_percent", "98.03"),
+    "98.03",
+    "98.07",
+)
+text = replace_unique_line_last(text, ("WAVE92", "WAVE97"), "WAVE97", "WAVE98")
+text = replace_unique_line_last(
+    text,
+    ("WAVE97_REMOTE_TERMINAL_READBACK_FAILED",),
+    "WAVE97",
+    "WAVE98",
+)
 
 resolved = [
     ("__SOURCE_HEAD__", "3976839fb696d3dfd0eedfd59c87f7bfdeb8a230"),
