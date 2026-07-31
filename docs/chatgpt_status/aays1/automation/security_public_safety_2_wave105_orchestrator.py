@@ -29,7 +29,6 @@ protected = [
     ("56721", "__PARCEL_END__"),
     ("1.76", "__DELTA_PREVIOUS__"),
     ("1.73", "__DELTA_CURRENT__"),
-    (r'''('\\\"schema_version\\\": 81', '\\\"schema_version\\\": 82'),''', "__EMBEDDED_SCHEMA_RULE__"),
     ('"schema_version": 127,', "__CURRENT_SCHEMA__"),
     ('"schema_version": 131,', "__OWNERSHIP_SCHEMA__"),
     ('"schema_version": 126,', "__HEARTBEAT_SCHEMA__"),
@@ -64,7 +63,6 @@ resolved = [
     ("__PARCEL_END__", "57171"),
     ("__DELTA_PREVIOUS__", "1.73"),
     ("__DELTA_CURRENT__", "1.70"),
-    ("__EMBEDDED_SCHEMA_RULE__", r'''('\\\"schema_version\\\": 82', '\\\"schema_version\\\": 83'),'''),
     ("__CURRENT_SCHEMA__", '"schema_version": 128,'),
     ("__OWNERSHIP_SCHEMA__", '"schema_version": 132,'),
     ("__HEARTBEAT_SCHEMA__", '"schema_version": 127,'),
@@ -76,6 +74,20 @@ for token, value in resolved:
     if token not in text:
         raise SystemExit(f"WAVE105_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
+
+lines = text.splitlines()
+schema_indices = [i for i, line in enumerate(lines) if '("__EMBEDDED_SCHEMA_RULE__",' in line]
+if len(schema_indices) != 1:
+    raise SystemExit(f"WAVE105_EMBEDDED_SCHEMA_LINE_COUNT_INVALID: {len(schema_indices)}")
+i = schema_indices[0]
+line = lines[i]
+if "81" not in line or "82" not in line:
+    raise SystemExit(f"WAVE105_EMBEDDED_SCHEMA_VALUES_MISSING: {line}")
+line = line.replace("81", "__SCHEMA_OLD__", 1)
+line = line.replace("82", "83", 1)
+line = line.replace("__SCHEMA_OLD__", "82", 1)
+lines[i] = line
+text = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
 
 required = [
     'SOURCE_HEAD = "e82becf47301cd12374bc104635cbd343addb552"',
