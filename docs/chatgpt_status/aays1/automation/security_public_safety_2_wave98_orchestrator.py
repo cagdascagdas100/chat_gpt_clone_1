@@ -34,29 +34,39 @@ for old, token in protected:
         raise SystemExit(f"ORCHESTRATOR_TRANSFORM_FRAGMENT_MISSING: {old}")
     text = text.replace(old, token)
 
-schema_lines = [
-    line
-    for line in text.splitlines(keepends=True)
-    if "schema_version" in line and "74" in line and "75" in line
-]
-if len(schema_lines) != 1:
-    raise SystemExit(f"ORCHESTRATOR_SCHEMA_LINE_COUNT_INVALID:{len(schema_lines)}")
-old_schema_line = schema_lines[0]
-new_schema_line = (
-    old_schema_line
-    .replace("74", "__SCHEMA_FROM__", 1)
-    .replace("75", "76", 1)
-    .replace("__SCHEMA_FROM__", "75", 1)
-)
-text = text.replace(old_schema_line, new_schema_line, 1)
+def replace_unique_schema_target(
+    value: str,
+    required_numbers: tuple[int, ...],
+    old_target: int,
+    new_target: int,
+) -> str:
+    lines = [
+        line
+        for line in value.splitlines(keepends=True)
+        if "schema_version" in line
+        and all(str(number) in line for number in required_numbers)
+    ]
+    if len(lines) != 1:
+        raise SystemExit(
+            f"ORCHESTRATOR_SCHEMA_TARGET_LINE_COUNT_INVALID:"
+            f"{required_numbers}:{len(lines)}"
+        )
+    old_line = lines[0]
+    prefix, separator, suffix = old_line.rpartition(str(old_target))
+    if not separator:
+        raise SystemExit(
+            f"ORCHESTRATOR_SCHEMA_TARGET_VALUE_MISSING:"
+            f"{required_numbers}:{old_target}"
+        )
+    new_line = prefix + str(new_target) + suffix
+    return value.replace(old_line, new_line, 1)
+
+text = replace_unique_schema_target(text, (74, 75), 75, 76)
+text = replace_unique_schema_target(text, (115, 120), 120, 121)
+text = replace_unique_schema_target(text, (119, 124), 124, 125)
+text = replace_unique_schema_target(text, (114, 119), 119, 120)
 
 direct = [
-    ("    ('\"schema_version\": 115,', '\"schema_version\": 120,'),",
-     "    ('\"schema_version\": 115,', '\"schema_version\": 121,'),"),
-    ("    ('\"schema_version\": 119,', '\"schema_version\": 124,'),",
-     "    ('\"schema_version\": 119,', '\"schema_version\": 125,'),"),
-    ("    ('\"schema_version\": 114,', '\"schema_version\": 119,'),",
-     "    ('\"schema_version\": 114,', '\"schema_version\": 120,'),"),
     ("    ('or 141) + 1', 'or 146) + 1'),", "    ('or 141) + 1', 'or 147) + 1'),"),
     ("    ('\"priority\": -168,', '\"priority\": -173,'),",
      "    ('\"priority\": -168,', '\"priority\": -174,'),"),
