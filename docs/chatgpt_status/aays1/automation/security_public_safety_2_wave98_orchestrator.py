@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 source = Path("docs/chatgpt_status/aays1/automation/security_public_safety_2_wave97_orchestrator.py")
@@ -34,79 +35,83 @@ for old, token in protected:
         raise SystemExit(f"ORCHESTRATOR_TRANSFORM_FRAGMENT_MISSING: {old}")
     text = text.replace(old, token)
 
-def replace_unique_schema_target(
-    value: str,
-    required_numbers: tuple[int, ...],
-    old_target: int,
-    new_target: int,
-) -> str:
-    lines = [
-        line
-        for line in value.splitlines(keepends=True)
-        if "schema_version" in line
-        and all(str(number) in line for number in required_numbers)
-    ]
-    if len(lines) != 1:
-        raise SystemExit(
-            f"ORCHESTRATOR_SCHEMA_TARGET_LINE_COUNT_INVALID:"
-            f"{required_numbers}:{len(lines)}"
-        )
-    old_line = lines[0]
-    prefix, separator, suffix = old_line.rpartition(str(old_target))
+
+def replace_last(value: str, old: str, new: str) -> str:
+    prefix, separator, suffix = value.rpartition(old)
     if not separator:
-        raise SystemExit(
-            f"ORCHESTRATOR_SCHEMA_TARGET_VALUE_MISSING:"
-            f"{required_numbers}:{old_target}"
-        )
-    new_line = prefix + str(new_target) + suffix
-    return value.replace(old_line, new_line, 1)
+        raise SystemExit(f"ORCHESTRATOR_ADVANCE_VALUE_MISSING:{old}")
+    return prefix + new + suffix
 
-text = replace_unique_schema_target(text, (74, 75), 75, 76)
-text = replace_unique_schema_target(text, (115, 120), 120, 121)
-text = replace_unique_schema_target(text, (119, 124), 124, 125)
-text = replace_unique_schema_target(text, (114, 119), 119, 120)
 
-def replace_unique_line_last(
-    value: str,
-    required_fragments: tuple[str, ...],
-    old_target: str,
-    new_target: str,
-) -> str:
-    lines = [
-        line
-        for line in value.splitlines(keepends=True)
-        if all(fragment in line for fragment in required_fragments)
-    ]
-    if len(lines) != 1:
-        raise SystemExit(
-            f"ORCHESTRATOR_TARGET_LINE_COUNT_INVALID:"
-            f"{required_fragments}:{len(lines)}"
-        )
-    old_line = lines[0]
-    prefix, separator, suffix = old_line.rpartition(old_target)
-    if not separator:
-        raise SystemExit(
-            f"ORCHESTRATOR_TARGET_VALUE_MISSING:"
-            f"{required_fragments}:{old_target}"
-        )
-    new_line = prefix + new_target + suffix
-    return value.replace(old_line, new_line, 1)
+tree = ast.parse(text, filename=str(source))
+direct_assignments = [
+    node
+    for node in tree.body
+    if isinstance(node, ast.Assign)
+    and any(isinstance(target, ast.Name) and target.id == "direct" for target in node.targets)
+]
+if len(direct_assignments) != 1:
+    raise SystemExit(f"ORCHESTRATOR_DIRECT_ASSIGNMENT_COUNT_INVALID:{len(direct_assignments)}")
+direct_value = direct_assignments[0].value
+if not isinstance(direct_value, ast.List) or len(direct_value.elts) != 10:
+    raise SystemExit("ORCHESTRATOR_DIRECT_LIST_SHAPE_INVALID")
 
-text = replace_unique_line_last(text, ("or 141", "or 146"), "146", "147")
-text = replace_unique_line_last(text, ("priority", "-168", "-173"), "-173", "-174")
-text = replace_unique_line_last(text, ("97.81", "98.03"), "98.03", "98.07")
-text = replace_unique_line_last(
-    text,
-    ("expanded_scope_progress_percent", "97.99", "98.03"),
-    "98.03",
-    "98.07",
+advance_rules = [
+    (("schema_version", "74", "75"), (("75", "76"), ("74", "75"))),
+    (("schema_version", "115", "120"), (("120", "121"),)),
+    (("schema_version", "119", "124"), (("124", "125"),)),
+    (("schema_version", "114", "119"), (("119", "120"),)),
+    (("or 141", "or 146"), (("146", "147"),)),
+    (("priority", "-168", "-173"), (("-173", "-174"),)),
+    (("97.81", "98.03"), (("98.03", "98.07"),)),
+    (("expanded_scope_progress_percent", "98.03"), (("98.03", "98.07"),)),
+    (("WAVE92", "WAVE97"), (("WAVE97", "WAVE98"),)),
+    (("WAVE97_REMOTE_TERMINAL_READBACK_FAILED",), (("WAVE97", "WAVE98"),)),
+]
+for index, (entry, rule) in enumerate(zip(direct_value.elts, advance_rules, strict=True)):
+    if not isinstance(entry, ast.Tuple) or len(entry.elts) != 2:
+        raise SystemExit(f"ORCHESTRATOR_DIRECT_ENTRY_SHAPE_INVALID:{index}")
+    old_node, new_node = entry.elts
+    if not isinstance(old_node, ast.Constant) or not isinstance(old_node.value, str):
+        raise SystemExit(f"ORCHESTRATOR_DIRECT_OLD_INVALID:{index}")
+    if not isinstance(new_node, ast.Constant) or not isinstance(new_node.value, str):
+        raise SystemExit(f"ORCHESTRATOR_DIRECT_NEW_INVALID:{index}")
+    markers, replacements = rule
+    current_new = new_node.value
+    if not all(marker in current_new for marker in markers):
+        raise SystemExit(f"ORCHESTRATOR_DIRECT_MARKER_MISSING:{index}:{markers}")
+    next_new = current_new
+    for old, new in replacements:
+        next_new = replace_last(next_new, old, new)
+    entry.elts[0] = ast.copy_location(ast.Constant(value=current_new), old_node)
+    entry.elts[1] = ast.copy_location(ast.Constant(value=next_new), new_node)
+
+required_assignments = [
+    node
+    for node in tree.body
+    if isinstance(node, ast.Assign)
+    and any(isinstance(target, ast.Name) and target.id == "required" for target in node.targets)
+]
+if len(required_assignments) != 1:
+    raise SystemExit(f"ORCHESTRATOR_REQUIRED_ASSIGNMENT_COUNT_INVALID:{len(required_assignments)}")
+required_value = required_assignments[0].value
+if not isinstance(required_value, ast.List):
+    raise SystemExit("ORCHESTRATOR_REQUIRED_LIST_SHAPE_INVALID")
+for index, node in enumerate(required_value.elts):
+    if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+        raise SystemExit(f"ORCHESTRATOR_REQUIRED_ENTRY_INVALID:{index}")
+    node.value = node.value.replace("\\", "")
+
+ast.fix_missing_locations(tree)
+text = ast.unparse(tree) + "\n"
+validation_needle = "if fragment not in text:"
+if text.count(validation_needle) != 1:
+    raise SystemExit(f"ORCHESTRATOR_REQUIRED_LOOP_COUNT_INVALID:{text.count(validation_needle)}")
+text = text.replace(
+    validation_needle,
+    "if fragment not in text.replace('\\\\', ''):",
+    1,
 )
-text = replace_unique_line_last(text, ("WAVE92", "WAVE97"), "WAVE97", "WAVE98")
-terminal_label = "WAVE97_REMOTE_TERMINAL_READBACK_FAILED"
-terminal_count = text.count(terminal_label)
-if terminal_count != 2:
-    raise SystemExit(f"ORCHESTRATOR_TERMINAL_LABEL_COUNT_INVALID:{terminal_count}")
-text = text.replace(terminal_label, "WAVE98_REMOTE_TERMINAL_READBACK_FAILED")
 
 resolved = [
     ("__SOURCE_HEAD__", "3976839fb696d3dfd0eedfd59c87f7bfdeb8a230"),
@@ -135,7 +140,8 @@ for token, value in resolved:
         raise SystemExit(f"ORCHESTRATOR_PLACEHOLDER_MISSING: {token}")
     text = text.replace(token, value)
 
-plain_required = [
+validation_text = text.replace("\\", "")
+required_semantics = [
     '3976839fb696d3dfd0eedfd59c87f7bfdeb8a230',
     'EXPAND_CANONICAL_BROWSER_VISIBLE_SAMPLE_FROM_22810_TO_23260_ROWS_WITH_OFFICIAL_SOURCE_HASHES',
     '36f1b43ca5fd4ff3e2e79e5d3d960a8c479f5cbd20d4db374d9be4305030f1d3',
@@ -144,15 +150,6 @@ plain_required = [
     '0073_security_public_safety_2_priority_23260row_incremental_evidence_expansion_20260731.v3.task.json',
     'priority_450row_wave98_latest.json',
     'priority_23260row_evidence_expansion_latest.json',
-    'len(rows) != 23260',
-    'WAVE98_REMOTE_TERMINAL_READBACK_FAILED',
-]
-for fragment in plain_required:
-    if fragment not in text:
-        raise SystemExit(f"ORCHESTRATOR_FINAL_FRAGMENT_MISSING: {fragment}")
-
-validation_text = text.replace("\\", "")
-semantic_required = [
     '"accepted_base_rows": 22810',
     '"merged_candidate_rows": 23260',
     '"minimum_merged_police_hash_rows": 22097',
@@ -160,9 +157,11 @@ semantic_required = [
     '"incremental_parcel_end": 54021',
     '"expanded_scope_progress_percent": 98.07',
     '"expanded_scope_delta_percentage_points": 1.93',
+    'len(rows) != 23260',
     '"parcel_54021"',
+    'WAVE98_REMOTE_TERMINAL_READBACK_FAILED',
 ]
-for fragment in semantic_required:
+for fragment in required_semantics:
     if fragment not in validation_text:
         raise SystemExit(f"ORCHESTRATOR_SEMANTIC_FRAGMENT_MISSING: {fragment}")
 
