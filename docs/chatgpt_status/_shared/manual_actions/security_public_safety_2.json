@@ -3,20 +3,22 @@
   "slot_id": "security_public_safety_2",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "4 sınır-hassasiyeti satırı Wave125 resmî 25 noktalı mikro-ızgara doğrulamasından sonra açık kaldı; 12 satır otomatik olarak çözüldü.",
+  "reason": "Wave126 resmî sunucu tarafı nicemleme hücresi doğrulamasından sonra 2 sınır-hassasiyeti satırı açık kaldı; 2 ek satır çözüldü.",
   "detected_at": "2026-07-31T13:52:01.598523Z",
-  "updated_at": "2026-07-31T14:20:19.977223Z",
-  "solution": "Açık kalan satırlarda bağımsız coğrafi inceleyici resmî ONS sınır geometrisini ve koordinat hassasiyetini doğrulamalıdır. Çözülen satırlar 25/25 mikro-ızgara kararlılığı ve en az 0,015 metre sınır açıklığıyla RESOLVED olarak işaretlenmiştir.",
+  "updated_at": "2026-07-31T14:49:13.882118Z",
+  "solution": "Açık satırlarda bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın amaçlanan tarafını doğrulamalıdır.",
   "evidence_paths": [
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_boundary_geometry_relation_wave123_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_manual_review_queue_wave124_latest.json",
     "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_authoritative_boundary_microgrid_wave125_latest.json",
-    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_authoritative_boundary_microgrid_wave125.html"
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_authoritative_boundary_microgrid_wave125.html",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_server_side_quantization_cell_wave126.html"
   ],
-  "continuation_key": "fabea0f777d54e218409bab76f4aa172bd9f239e8a3d3321c7508aa0e9acdbb1",
+  "continuation_key": "0603e0ca9d3214e18e7252bf02fe0a11b00bddf578698bc760f8730477ebe6f6",
   "final_ready": false,
-  "open_item_count": 4,
-  "resolved_item_count": 12,
+  "open_item_count": 2,
+  "resolved_item_count": 14,
   "items": [
     {
       "parcel_id": "parcel_32086",
@@ -63,8 +65,8 @@
     {
       "parcel_id": "parcel_40827",
       "state": "OPEN",
-      "reason": "Resmî sınır mikro-ızgara kapısı geçilemedi: 2011 ve 2021 için 25/25 kararlılık ile en az 0,015 metre sınır açıklığı birlikte sağlanmadı.",
-      "required_action": "Bağımsız coğrafi inceleyici resmî sınır geometrisini ve koordinat hassasiyetini kontrol etmelidir; doğrulanmadan mevcut değer değiştirilmemelidir.",
+      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda 2011 ve 2021 nicemleme hücrelerinin ikisi birden 81/81 tekil beklenen kod kararlılığını sağlayamadı; satır fail-closed açık tutuldu.",
+      "required_action": "Bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın hangi tarafının amaçlandığını doğrulamalıdır; mevcut değer otomatik değiştirilmemelidir.",
       "lsoa11_code": "E01001553",
       "lsoa21_code": "E01002091",
       "direct_lookup_pair": false,
@@ -72,13 +74,19 @@
       "microgrid_pass_2021": 25,
       "boundary_clearance_2011_metres": 0.003,
       "boundary_clearance_2021_metres": 5.8663,
-      "confidence_percent": 94
+      "confidence_percent": 94,
+      "server_quantization_grid_2011": "63/81",
+      "server_quantization_grid_2021": "81/81",
+      "server_competing_codes_2011": [
+        "E01002091"
+      ],
+      "server_competing_codes_2021": []
     },
     {
       "parcel_id": "parcel_41054",
-      "state": "OPEN",
-      "reason": "Resmî sınır mikro-ızgara kapısı geçilemedi: 2011 ve 2021 için 25/25 kararlılık ile en az 0,015 metre sınır açıklığı birlikte sağlanmadı.",
-      "required_action": "Bağımsız coğrafi inceleyici resmî sınır geometrisini ve koordinat hassasiyetini kontrol etmelidir; doğrulanmadan mevcut değer değiştirilmemelidir.",
+      "state": "RESOLVED",
+      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda, 7 ondalıklı koordinatın tam ±0,5×10⁻⁷ derece nicemleme hücresindeki 81/81 örnek hem 2011 hem 2021 beklenen LSOA kodunu tekil olarak döndürdü.",
+      "required_action": "Ek kullanıcı işlemi yok; resmî sunucu tarafı geometri nicemleme hücresi kararlı.",
       "lsoa11_code": "E01001974",
       "lsoa21_code": "E01001969",
       "direct_lookup_pair": false,
@@ -86,7 +94,11 @@
       "microgrid_pass_2021": 25,
       "boundary_clearance_2011_metres": 3.3823,
       "boundary_clearance_2021_metres": 0.0145,
-      "confidence_percent": 94
+      "confidence_percent": 98,
+      "server_quantization_grid_2011": "81/81",
+      "server_quantization_grid_2021": "81/81",
+      "server_competing_codes_2011": [],
+      "server_competing_codes_2021": []
     },
     {
       "parcel_id": "parcel_48460",
@@ -105,8 +117,8 @@
     {
       "parcel_id": "parcel_48739",
       "state": "OPEN",
-      "reason": "Resmî sınır mikro-ızgara kapısı geçilemedi: 2011 ve 2021 için 25/25 kararlılık ile en az 0,015 metre sınır açıklığı birlikte sağlanmadı.",
-      "required_action": "Bağımsız coğrafi inceleyici resmî sınır geometrisini ve koordinat hassasiyetini kontrol etmelidir; doğrulanmadan mevcut değer değiştirilmemelidir.",
+      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda 2011 ve 2021 nicemleme hücrelerinin ikisi birden 81/81 tekil beklenen kod kararlılığını sağlayamadı; satır fail-closed açık tutuldu.",
+      "required_action": "Bağımsız coğrafi inceleyici kaynak koordinat hassasiyetini ve resmî sınırın hangi tarafının amaçlandığını doğrulamalıdır; mevcut değer otomatik değiştirilmemelidir.",
       "lsoa11_code": "E01002547",
       "lsoa21_code": "E01002545",
       "direct_lookup_pair": false,
@@ -114,7 +126,13 @@
       "microgrid_pass_2021": 18,
       "boundary_clearance_2011_metres": 1.2097,
       "boundary_clearance_2021_metres": 0.0051,
-      "confidence_percent": 94
+      "confidence_percent": 94,
+      "server_quantization_grid_2011": "81/81",
+      "server_quantization_grid_2021": "77/81",
+      "server_competing_codes_2011": [],
+      "server_competing_codes_2021": [
+        "E01002547"
+      ]
     },
     {
       "parcel_id": "parcel_49517",
@@ -230,9 +248,9 @@
     },
     {
       "parcel_id": "parcel_60809",
-      "state": "OPEN",
-      "reason": "Resmî sınır mikro-ızgara kapısı geçilemedi: 2011 ve 2021 için 25/25 kararlılık ile en az 0,015 metre sınır açıklığı birlikte sağlanmadı.",
-      "required_action": "Bağımsız coğrafi inceleyici resmî sınır geometrisini ve koordinat hassasiyetini kontrol etmelidir; doğrulanmadan mevcut değer değiştirilmemelidir.",
+      "state": "RESOLVED",
+      "reason": "Resmî ONS/ArcGIS sunucu tarafı geometri motorunda, 7 ondalıklı koordinatın tam ±0,5×10⁻⁷ derece nicemleme hücresindeki 81/81 örnek hem 2011 hem 2021 beklenen LSOA kodunu tekil olarak döndürdü.",
+      "required_action": "Ek kullanıcı işlemi yok; resmî sunucu tarafı geometri nicemleme hücresi kararlı.",
       "lsoa11_code": "E01003149",
       "lsoa21_code": "E01003154",
       "direct_lookup_pair": false,
@@ -240,7 +258,11 @@
       "microgrid_pass_2021": 23,
       "boundary_clearance_2011_metres": 3.0138,
       "boundary_clearance_2021_metres": 0.0098,
-      "confidence_percent": 94
+      "confidence_percent": 98,
+      "server_quantization_grid_2011": "81/81",
+      "server_quantization_grid_2021": "81/81",
+      "server_competing_codes_2011": [],
+      "server_competing_codes_2021": []
     }
   ]
 }
