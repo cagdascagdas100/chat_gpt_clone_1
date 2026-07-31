@@ -1,0 +1,142 @@
+name: security_public_safety_2 Wave127 coordinate provenance tomography
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/triggers/security-public-safety-2-wave127.trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave127-coordinate-provenance
+  cancel-in-progress: false
+
+jobs:
+  publish-coordinate-provenance-tomography:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout canonical work branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Run official coordinate provenance and boundary tomography
+        shell: bash
+        run: |
+          set -euo pipefail
+          export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave127_coordinate_provenance_adaptive_boundary_tomography_20260731.py
+
+      - name: Validate fail-closed outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path.cwd()
+          output_json = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127_latest.json"
+          output_html = root / "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html"
+          manual_json = root / "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+
+          data = json.loads(output_json.read_text(encoding="utf-8"))
+          manual = json.loads(manual_json.read_text(encoding="utf-8"))
+          html = output_html.read_text(encoding="utf-8")
+
+          assert data["state"] == "COMPLETED_COORDINATE_PROVENANCE_ADAPTIVE_BOUNDARY_TOMOGRAPHY_PUBLISHED"
+          assert data["continuation_key"] == "45bca0030e72371f855779b44dbaf20673e842647debf8eb9a8ccb5b71fce27c"
+          assert {row["parcel_id"] for row in data["rows"]} == {"parcel_40827", "parcel_48739"}
+          assert len(data["rows"]) == 2
+          assert data["result"]["rows_audited"] == 2
+          assert data["result"]["dense_server_grid_checks"] == 2340
+          assert data["result"]["server_side_tomography_checks"] >= 2406
+          assert data["result"]["official_network_probe_attempts"] >= 2400
+          assert data["result"]["provenance_files_scanned"] > 0
+          assert data["result"]["completed_or_fail_closed_operations"] <= data["result"]["total_operations"]
+          assert data["result"]["blocked_rows"] == 0
+          assert data["result"]["blocked_operations"] == 0
+          assert data["sources"]["promoted_official_source_families"] == 5
+          assert data["quality_policy"]["majority_vote_forbidden"] is True
+          assert data["quality_policy"]["parent_candidate_value_changed"] is False
+          assert data["quality_policy"]["parent_candidate_accuracy_mutated"] is False
+          assert data["fake_data"] is False
+          assert manual["open_item_count"] + manual["resolved_item_count"] == 16
+          assert manual["requires_user_action"] == (manual["open_item_count"] > 0)
+          assert manual["final_ready"] == (manual["open_item_count"] == 0)
+          assert html.count("<tr>") == 3
+          print(json.dumps({"result": data["result"], "manual": {"state": manual["state"], "open": manual["open_item_count"], "resolved": manual["resolved_item_count"]}}, ensure_ascii=False))
+          PY
+
+      - name: Publish outputs to moving canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html
+          if ! git diff --cached --quiet; then
+            git commit -m "security_public_safety_2: publish Wave127 provenance tomography [skip ci]"
+          fi
+          published=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$target_branch"
+            git rebase "origin/$target_branch"
+            if git push origin "HEAD:$target_branch"; then
+              published=true
+              break
+            fi
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Remote canonical readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_branch="codex/aays-single-runner-v5-20260706"
+          git fetch origin "$target_branch"
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+
+          branch = "origin/codex/aays-single-runner-v5-20260706"
+          output_json = "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127_latest.json"
+          output_html = "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_coordinate_provenance_adaptive_boundary_tomography_wave127.html"
+          manual_json = "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+
+          data_bytes = subprocess.check_output(["git", "show", f"{branch}:{output_json}"])
+          html_bytes = subprocess.check_output(["git", "show", f"{branch}:{output_html}"])
+          manual_bytes = subprocess.check_output(["git", "show", f"{branch}:{manual_json}"])
+          data = json.loads(data_bytes.decode("utf-8"))
+          manual = json.loads(manual_bytes.decode("utf-8"))
+
+          assert data["continuation_key"] == "45bca0030e72371f855779b44dbaf20673e842647debf8eb9a8ccb5b71fce27c"
+          assert len(data["rows"]) == 2
+          assert data["result"]["blocked_operations"] == 0
+          assert data["result"]["dense_server_grid_checks"] == 2340
+          assert manual["open_item_count"] + manual["resolved_item_count"] == 16
+          assert html_bytes.decode("utf-8").count("<tr>") == 3
+          print(json.dumps({
+              "state": data["state"],
+              "result": data["result"],
+              "manual_action_state": manual["state"],
+              "manual_open_rows": manual["open_item_count"],
+              "manual_resolved_rows": manual["resolved_item_count"],
+              "continuation_key": data["continuation_key"],
+              "source_head": data["source_head"],
+              "json_sha256": hashlib.sha256(data_bytes).hexdigest(),
+              "html_sha256": hashlib.sha256(html_bytes).hexdigest(),
+              "manual_action_sha256": hashlib.sha256(manual_bytes).hexdigest(),
+              "remote_head": subprocess.check_output(["git", "rev-parse", branch], text=True).strip(),
+          }, ensure_ascii=False))
+          PY
