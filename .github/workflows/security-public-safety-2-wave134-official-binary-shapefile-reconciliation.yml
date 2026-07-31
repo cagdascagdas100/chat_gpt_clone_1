@@ -37,14 +37,15 @@ jobs:
           python -m py_compile \
             docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_dbf_crs_geometry_reconciliation_20260731.py \
             docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_shapefile_repair_20260731.py \
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_archive_gdb_repair_20260731.py
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_archive_gdb_repair_20260731.py \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_hub_filtered_shapefile_repair_20260731.py
 
-      - name: Run recursive archive and FileGDB official binary reconciliation
+      - name: Run filtered official Hub Shapefile reconciliation
         shell: bash
         run: |
           set -euo pipefail
           export AAYS_SOURCE_HEAD="$(git rev-parse HEAD)"
-          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_binary_archive_gdb_repair_20260731.py
+          python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave134_official_hub_filtered_shapefile_repair_20260731.py
 
       - name: Build compact diagnostic snapshot
         if: always()
@@ -57,49 +58,27 @@ jobs:
           source=Path("england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json")
           target=Path("wave134_diagnostic.json")
           if not source.exists():
-              target.write_text(json.dumps({"output_missing": True}, indent=2)+"\n")
+              target.write_text(json.dumps({"output_missing":True},indent=2)+"\n")
               raise SystemExit(0)
           data=json.loads(source.read_text())
           packages=[]
-          for row in data.get("official_binary_packages", []):
+          for row in data.get("official_binary_packages",[]):
               packages.append({
-                  "item_id": row.get("item_id"),
-                  "title": row.get("title"),
-                  "item_type": row.get("item_type"),
-                  "url": row.get("url"),
-                  "download_ok": row.get("download_ok"),
-                  "archive_ok": row.get("archive_ok"),
-                  "bytes_read": row.get("bytes_read"),
-                  "content_type": row.get("content_type"),
-                  "archive_members": row.get("archive_members", [])[:120],
-                  "binary_dataset_groups": row.get("binary_dataset_groups"),
-                  "nested_archives_opened": row.get("nested_archives_opened"),
-                  "total_archives_opened": row.get("total_archives_opened"),
-                  "dataset_summaries": [
-                      {
-                          "dataset_stem": d.get("dataset_stem"),
-                          "ok": d.get("ok"),
-                          "record_count_declared": d.get("record_count_declared"),
-                          "records_scanned": d.get("records_scanned"),
-                          "hit_count": d.get("hit_count"),
-                          "field_names": d.get("field_names"),
-                          "crs_ok": d.get("crs_ok"),
-                          "error": d.get("error"),
-                      }
-                      for d in row.get("datasets", [])[:40]
-                  ],
-                  "error": row.get("error"),
-              })
-          diagnostic={
-              "state": data.get("state"),
-              "continuation_key": data.get("continuation_key"),
-              "source_head": data.get("source_head"),
-              "result": data.get("result"),
-              "packages": packages,
-              "ledger_tail": data.get("operation_ledger", [])[-120:],
-          }
-          target.write_text(json.dumps(diagnostic, ensure_ascii=False, indent=2)+"\n")
-          print(json.dumps(diagnostic["result"], ensure_ascii=False), flush=True)
+                  "item_id":row.get("item_id"),"title":row.get("title"),"item_type":row.get("item_type"),
+                  "url":row.get("url"),"download_ok":row.get("download_ok"),"archive_ok":row.get("archive_ok"),
+                  "status":row.get("status"),"content_type":row.get("content_type"),"bytes_read":row.get("bytes_read"),
+                  "archive_members":row.get("archive_members",[])[:120],"binary_dataset_groups":row.get("binary_dataset_groups"),
+                  "nested_archives_opened":row.get("nested_archives_opened"),"total_archives_opened":row.get("total_archives_opened"),
+                  "dataset_summaries":[{"dataset_stem":d.get("dataset_stem"),"ok":d.get("ok"),
+                      "record_count_declared":d.get("record_count_declared"),"records_scanned":d.get("records_scanned"),
+                      "hit_count":d.get("hit_count"),"field_names":d.get("field_names"),"crs_ok":d.get("crs_ok"),
+                      "crs_authority":d.get("crs_authority"),"error":d.get("error")} for d in row.get("datasets",[])[:40]],
+                  "error":row.get("error")})
+          diagnostic={"state":data.get("state"),"continuation_key":data.get("continuation_key"),
+              "source_head":data.get("source_head"),"result":data.get("result"),"packages":packages,
+              "ledger_tail":data.get("operation_ledger",[])[-160:]}
+          target.write_text(json.dumps(diagnostic,ensure_ascii=False,indent=2)+"\n")
+          print(json.dumps(diagnostic["result"],ensure_ascii=False),flush=True)
           PY
 
       - name: Upload Wave134 diagnostic
@@ -116,56 +95,34 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib, json
+          import hashlib,json
           from pathlib import Path
           root=Path.cwd()
           output_json=root/"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json"
           output_html=root/"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134.html"
           manual_json=root/"docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
-          data=json.loads(output_json.read_text())
-          manual=json.loads(manual_json.read_text())
-          page=output_html.read_text()
+          data=json.loads(output_json.read_text()); manual=json.loads(manual_json.read_text()); page=output_html.read_text(); result=data["result"]
           expected=hashlib.sha256(("AAYS_21_SLOT_SAFE_PARALLEL_V1|security_public_safety_2|codex/aays-single-runner-v5-20260706|WAVE134_SINGLE_OPEN_ROW_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION|"+data["source_head"]).encode()).hexdigest()
-          result=data["result"]
-          def gate(condition, name):
-              if not condition:
-                  raise AssertionError(json.dumps({"failed_gate": name, "result": result}, ensure_ascii=False))
-          gate(data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED", "state")
-          gate(data["continuation_key"]==expected, "continuation")
-          gate(data["previous_continuation_key"]=="abebf80f7ff3b32f5ea85a9bfb49f7ceab085357bdbc0845e9bc9a2295a5e7ce", "previous_continuation")
-          gate(len(data["rows"])==1 and data["rows"][0]["parcel_id"]=="parcel_40827", "row_identity")
-          gate(0 < result["official_binary_package_candidates"] <= 12, "package_candidates")
-          gate(result["official_binary_package_downloads"] > 0, "package_downloads")
-          gate(result["official_binary_package_download_successes"] > 0, "package_download_successes")
-          gate(result["official_binary_archives_opened"] > 0, "archives_opened")
-          gate(result["official_binary_dataset_groups"] > 0, "dataset_groups")
-          gate(result["official_binary_datasets_scanned"] > 0, "datasets_scanned")
-          gate(result["official_binary_dataset_scan_successes"] > 0, "dataset_scan_successes")
-          gate(result["official_binary_records_scanned"] > 0, "records_scanned")
-          gate(result["official_network_probe_attempts"] > 0, "network_attempts")
-          gate(result["operation_ledger_rows"] > 0, "ledger_rows")
-          gate(data["scope"]["maximum_simultaneous_workers"]==15, "worker_bound")
-          gate(data["scope"]["maximum_simultaneous_large_downloads"]==4, "download_bound")
-          gate(result["completed_or_fail_closed_operations"]==result["total_operations"], "operation_completion")
-          gate(result["blocked_operations"]==0, "blocked_operations")
-          gate(result["stuck_pending_operations"]==0, "stuck_pending")
-          gate(data["scope"]["support_only"] is True, "support_only")
-          gate(data["scope"]["parent_values_mutated"] is False, "parent_values")
-          gate(data["scope"]["parent_scores_mutated"] is False, "parent_scores")
-          gate(data["quality_policy"]["majority_vote_forbidden"] is True, "majority_vote")
-          gate(data["quality_policy"]["threshold_relaxation_forbidden"] is True, "threshold_relaxation")
-          gate(data["quality_policy"]["nearby_record_inference_forbidden"] is True, "nearby_inference")
-          gate(data["quality_policy"]["binary_package_geometry_alone_cannot_promote"] is True, "binary_only")
-          gate(data["quality_policy"]["feature_service_geometry_alone_cannot_promote"] is True, "service_only")
-          gate(data["quality_policy"]["exact_primary_source_lineage_required"] is True, "primary_lineage")
-          gate(data["quality_policy"]["parent_candidate_value_changed"] is False, "parent_value_changed")
-          gate(data["quality_policy"]["parent_candidate_accuracy_mutated"] is False, "parent_accuracy_mutated")
-          gate(data["fake_data"] is False, "fake_data")
-          gate(manual["open_item_count"]+manual["resolved_item_count"]==16, "manual_count")
-          gate(manual["requires_user_action"]==(manual["open_item_count"]>0), "manual_action")
-          gate(manual["final_ready"]==(manual["open_item_count"]==0), "final_ready")
-          gate("parcel_40827" in page, "website_row")
-          gate(page.count("<tr>") >= len(data["operation_ledger"]) + 1, "website_ledger_rows")
+          def gate(condition,name):
+              if not condition: raise AssertionError(json.dumps({"failed_gate":name,"result":result},ensure_ascii=False))
+          gate(data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED","state")
+          gate(data["continuation_key"]==expected,"continuation")
+          gate(data["previous_continuation_key"]=="abebf80f7ff3b32f5ea85a9bfb49f7ceab085357bdbc0845e9bc9a2295a5e7ce","previous_continuation")
+          gate(len(data["rows"])==1 and data["rows"][0]["parcel_id"]=="parcel_40827","row_identity")
+          for key in ("official_binary_package_candidates","official_binary_package_downloads","official_binary_package_download_successes","official_binary_archives_opened","official_binary_dataset_groups","official_binary_datasets_scanned","official_binary_dataset_scan_successes","official_binary_records_scanned","official_binary_exact_code_hits","official_prj_records","official_crs_resolutions","official_service_geometry_layers_queried","official_service_exact_code_hits","package_service_geometry_comparisons","official_network_probe_attempts","operation_ledger_rows"):
+              gate(result[key]>0,key)
+          gate(result["official_binary_package_candidates"]<=12,"package_candidate_bound")
+          gate(data["scope"]["maximum_simultaneous_workers"]==15,"worker_bound")
+          gate(data["scope"]["maximum_simultaneous_large_downloads"]==4,"download_bound")
+          gate(result["completed_or_fail_closed_operations"]==result["total_operations"],"operation_completion")
+          gate(result["blocked_operations"]==0 and result["stuck_pending_operations"]==0,"blocked_pending")
+          gate(data["scope"]["support_only"] is True and data["scope"]["parent_values_mutated"] is False and data["scope"]["parent_scores_mutated"] is False,"immutable_parent")
+          gate(data["quality_policy"]["majority_vote_forbidden"] is True and data["quality_policy"]["threshold_relaxation_forbidden"] is True and data["quality_policy"]["nearby_record_inference_forbidden"] is True,"quality_gates")
+          gate(data["quality_policy"]["binary_package_geometry_alone_cannot_promote"] is True and data["quality_policy"]["feature_service_geometry_alone_cannot_promote"] is True and data["quality_policy"]["exact_primary_source_lineage_required"] is True,"promotion_gates")
+          gate(data["fake_data"] is False,"fake_data")
+          gate(manual["open_item_count"]+manual["resolved_item_count"]==16,"manual_count")
+          gate(manual["requires_user_action"]==(manual["open_item_count"]>0) and manual["final_ready"]==(manual["open_item_count"]==0),"manual_state")
+          gate("parcel_40827" in page and page.count("<tr>")>=len(data["operation_ledger"])+1,"website_rows")
           print(json.dumps({"result":result,"row":data["rows"][0],"manual":{"state":manual["state"],"open":manual["open_item_count"],"resolved":manual["resolved_item_count"]}},ensure_ascii=False))
           PY
 
@@ -176,13 +133,10 @@ jobs:
           target_branch="codex/aays-single-runner-v5-20260706"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+          git add docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json \
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134.html
-          if ! git diff --cached --quiet; then
-            git commit -m "security_public_safety_2: publish repaired Wave134 official binary shapefile reconciliation [skip ci]"
-          fi
+          if ! git diff --cached --quiet; then git commit -m "security_public_safety_2: publish repaired Wave134 official Hub Shapefile reconciliation [skip ci]"; fi
           published=false
           for attempt in 1 2 3 4 5; do
             git fetch origin "$target_branch"
@@ -199,30 +153,14 @@ jobs:
           target_branch="codex/aays-single-runner-v5-20260706"
           git fetch origin "$target_branch"
           python - <<'PY'
-          import hashlib, json, subprocess
+          import hashlib,json,subprocess
           branch="origin/codex/aays-single-runner-v5-20260706"
-          output_json="england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json"
-          output_html="england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134.html"
-          manual_json="docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
-          data_bytes=subprocess.check_output(["git","show",f"{branch}:{output_json}"])
-          html_bytes=subprocess.check_output(["git","show",f"{branch}:{output_html}"])
-          manual_bytes=subprocess.check_output(["git","show",f"{branch}:{manual_json}"])
-          data=json.loads(data_bytes); manual=json.loads(manual_bytes); result=data["result"]
+          paths={"json":"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134_latest.json","html":"england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_binary_shapefile_dbf_crs_geometry_reconciliation_wave134.html","manual":"docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"}
+          blobs={k:subprocess.check_output(["git","show",f"{branch}:{v}"]) for k,v in paths.items()}
+          data=json.loads(blobs["json"]); manual=json.loads(blobs["manual"]); result=data["result"]
           assert data["state"]=="COMPLETED_OFFICIAL_BINARY_SHP_DBF_PRJ_CRS_GEOMETRY_RECONCILIATION_PUBLISHED"
-          assert result["official_binary_package_candidates"]>0
-          assert result["official_binary_package_downloads"]>0
-          assert result["official_binary_package_download_successes"]>0
-          assert result["official_binary_archives_opened"]>0
-          assert result["official_binary_dataset_groups"]>0
-          assert result["official_binary_datasets_scanned"]>0
-          assert result["official_binary_dataset_scan_successes"]>0
-          assert result["official_binary_records_scanned"]>0
-          assert result["official_network_probe_attempts"]>0
-          assert result["operation_ledger_rows"]>0
-          assert result["completed_or_fail_closed_operations"]==result["total_operations"]
-          assert result["blocked_operations"]==0
-          assert result["stuck_pending_operations"]==0
-          assert manual["open_item_count"]+manual["resolved_item_count"]==16
-          assert "parcel_40827" in html_bytes.decode()
-          print(json.dumps({"state":data["state"],"result":result,"row":data["rows"][0],"manual_state":manual["state"],"manual_open":manual["open_item_count"],"manual_resolved":manual["resolved_item_count"],"continuation_key":data["continuation_key"],"source_head":data["source_head"],"json_sha256":hashlib.sha256(data_bytes).hexdigest(),"html_sha256":hashlib.sha256(html_bytes).hexdigest(),"manual_sha256":hashlib.sha256(manual_bytes).hexdigest(),"remote_head":subprocess.check_output(["git","rev-parse",branch],text=True).strip()},ensure_ascii=False))
+          for key in ("official_binary_package_candidates","official_binary_package_downloads","official_binary_package_download_successes","official_binary_archives_opened","official_binary_dataset_groups","official_binary_datasets_scanned","official_binary_dataset_scan_successes","official_binary_records_scanned","official_binary_exact_code_hits","official_prj_records","official_crs_resolutions","official_service_geometry_layers_queried","official_service_exact_code_hits","package_service_geometry_comparisons","official_network_probe_attempts","operation_ledger_rows"): assert result[key]>0
+          assert result["completed_or_fail_closed_operations"]==result["total_operations"] and result["blocked_operations"]==0 and result["stuck_pending_operations"]==0
+          assert manual["open_item_count"]+manual["resolved_item_count"]==16 and b"parcel_40827" in blobs["html"]
+          print(json.dumps({"state":data["state"],"result":result,"row":data["rows"][0],"manual_state":manual["state"],"manual_open":manual["open_item_count"],"manual_resolved":manual["resolved_item_count"],"continuation_key":data["continuation_key"],"source_head":data["source_head"],"json_sha256":hashlib.sha256(blobs["json"]).hexdigest(),"html_sha256":hashlib.sha256(blobs["html"]).hexdigest(),"manual_sha256":hashlib.sha256(blobs["manual"]).hexdigest(),"remote_head":subprocess.check_output(["git","rev-parse",branch],text=True).strip()},ensure_ascii=False))
           PY
