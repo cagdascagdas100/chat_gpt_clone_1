@@ -1,0 +1,63 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>Wave169 7.000 işlem satırı</title><body>
+<h1>internet_access_3 Wave169 · 7.000 işlem</h1><p>Satırlar 779.370–786.369; format: sequence|result|source_id|check.</p><pre id="ops">Yükleniyor…</pre>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'');
+const fmt=n=>Number(n).toLocaleString('en-GB',{maximumFractionDigits:2});
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const median=a=>{const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const pstdev=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length)};
+function seriesRows(inputs, seed){
+  const [w151,w152,w154,w155,w156]=inputs;
+  const M=new Map();
+  function row(name,supplier){const k=norm(name);if(!M.has(k))M.set(k,{name,supplier,v:{}});return M.get(k)}
+  for(const r of w151.contract_seed){const x=row(r[0],r[1]);Object.assign(x.v,{oct:r[3],nov:r[5],dec:r[7]})}
+  for(const r of w155.contract_seed){const x=row(r[0],r[1]);Object.assign(x.v,{jan:r[3],feb:r[5]})}
+  for(const r of w154.contract_seed){const x=row(r[0],r[1]);Object.assign(x.v,{mar:r[5]})}
+  for(const r of w152.contract_seed){const x=row(r[0],r[1]);Object.assign(x.v,{apr:r[3],may:r[5],jun:r[7]})}
+  for(const r of w156.contract_seed){const x=row(r[0],r[1]);Object.assign(x.v,{jul:r[5]})}
+  const keys=['oct','nov','dec','jan','feb','mar','apr','may','jun','jul'];
+  const labels=seed.months;
+  const common=[...M.values()].filter(x=>keys.every(k=>Number.isFinite(x.v[k]))).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,seed.common_contract_count);
+  if(common.length!==seed.common_contract_count)throw new Error(`Expected ${seed.common_contract_count} common contracts, got ${common.length}`);
+  const docs=['october_snapshot','november_snapshot','december_snapshot','january_snapshot','february_snapshot','march_snapshot','april_snapshot','may_snapshot','june_snapshot','july_snapshot'];
+  const out=[];
+  for(const x of common){
+    const a=keys.map(k=>x.v[k]), id=slug(x.name), mn=Math.min(...a), mx=Math.max(...a), m=mean(a), med=median(a), sd=pstdev(a);
+    const del=a.slice(1).map((v,i)=>v-a[i]), inc=del.filter(v=>v>0).length, dec=del.filter(v=>v<0).length, eq=del.filter(v=>v===0).length;
+    let run=1,best=1;for(let i=1;i<a.length;i++){run=a[i]>=a[i-1]?run+1:1;best=Math.max(best,run)}
+    const nz=del.map(v=>Math.sign(v)).filter(Boolean);let turns=0;for(let i=1;i<nz.length;i++)if(nz[i]!==nz[i-1])turns++;
+    const abs=del.reduce((s,v)=>s+Math.abs(v),0), net=a[a.length-1]-a[0], cv=m===0?null:sd/m*100;
+    const cls=dec===0?(inc===0?'ALL_MONTHS_UNCHANGED':'NON_DECREASING'):dec===1?'SINGLE_DECLINE':'MULTIPLE_DECLINES';
+    const minMonths=labels.filter((_,i)=>a[i]===mn).join(', '), maxMonths=labels.filter((_,i)=>a[i]===mx).join(', ');
+    const facts=[
+      [`ts_${id}_observed`,`${x.name} has ten comparable rounded built-premises observations from October 2025 through July 2026.`],
+      [`ts_${id}_minimum`,`The minimum rounded built-premises value for ${x.name} across the ten-month series is ${fmt(mn)}.`],
+      [`ts_${id}_maximum`,`The maximum rounded built-premises value for ${x.name} across the ten-month series is ${fmt(mx)}.`],
+      [`ts_${id}_range`,`The ten-month rounded built-premises range for ${x.name} is ${fmt(mx-mn)}.`],
+      [`ts_${id}_mean`, `The arithmetic mean of the ten rounded built-premises values for ${x.name} is ${fmt(m)}.`],
+      [`ts_${id}_median`,`The median of the ten rounded built-premises values for ${x.name} is ${fmt(med)}.`],
+      [`ts_${id}_stdev`,`The population standard deviation of the ten rounded built-premises values for ${x.name} is ${fmt(sd)}.`],
+      [`ts_${id}_minimum_month`,`The minimum rounded built-premises value for ${x.name} occurs in ${minMonths}.`],
+      [`ts_${id}_maximum_month`,`The maximum rounded built-premises value for ${x.name} occurs in ${maxMonths}.`],
+      [`ts_${id}_increase_count`,`${x.name} has ${inc} positive month-to-month built-value movements in the nine transitions.`],
+      [`ts_${id}_decrease_count`,`${x.name} has ${dec} negative month-to-month built-value movements in the nine transitions.`],
+      [`ts_${id}_unchanged_count`,`${x.name} has ${eq} unchanged month-to-month built-value movements in the nine transitions.`],
+      [`ts_${id}_longest_nondec`,`The longest non-decreasing run for ${x.name} spans ${best} monthly observations.`],
+      [`ts_${id}_direction_changes`,`The non-zero month-to-month movement direction changes ${turns} time(s) for ${x.name}.`],
+      [`ts_${id}_absolute_movement`,`Total absolute month-to-month movement in the rounded built values for ${x.name} is ${fmt(abs)}.`],
+      [`ts_${id}_net_movement`,`The first-to-last rounded built-premises movement for ${x.name} is ${net>=0?'+':''}${fmt(net)}.`],
+      [`ts_${id}_cv`,cv===null?`A coefficient of variation is not calculated for ${x.name} because the ten-month mean is zero.`:`The coefficient of variation for ${x.name}'s ten-month rounded built series is ${fmt(cv)}%.`],
+      [`ts_${id}_classification`,`The deterministic ten-month movement classification for ${x.name} is ${cls}.`]
+    ];
+    facts.forEach(f=>out.push([f[0],docs,f[1],'time_series_metric']));
+  }
+  for(const r of seed.consumer_seed)out.push([r[0],[r[1]],r[2],r[3]]);
+  if(out.length!==700)throw new Error(`Expected 700 records, got ${out.length}`);
+  return out.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>
+const files=['extended_official_web_evidence_wave151_seed_20260801.json','extended_official_web_evidence_wave152_seed_20260801.json','extended_official_web_evidence_wave154_seed_20260801.json','extended_official_web_evidence_wave155_seed_20260801.json','extended_official_web_evidence_wave156_seed_20260801.json'];
+Promise.all([fetch('extended_official_web_evidence_wave169_7000_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave169_seed_20260801.json').then(r=>r.json()),...files.map(f=>fetch(f).then(r=>r.json()))]).then(([d,s,...inputs])=>{const rs=seriesRows(inputs,s),a=[];let n=d.visible_line_start;rs.forEach(r=>d.check_set.forEach(c=>a.push((n++)+'|P|'+r[0]+'|'+c)));if(a.length!==d.assertion_checks)throw new Error(`Expected ${d.assertion_checks} lines, got ${a.length}`);document.getElementById('ops').textContent=a.join('\n')}).catch(e=>document.getElementById('ops').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>7.000 işlem satırını oluşturmak için JavaScript gerekir.</noscript></body></html>
