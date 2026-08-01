@@ -34,12 +34,24 @@ jobs:
         run: python -m pip install --disable-pip-version-check requests pyshp shapely pyproj
 
       - name: Verify runner syntax
-        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.py
+        run: |
+          python -m py_compile \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.py \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801_v2.py
 
       - name: Run official internet postcode release lineage audit
         env:
           AAYS_SOURCE_HEAD: acd82a8205cf80fc352d065faa31475193024530
         run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.py
+
+      - name: Upload Wave139 diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-public-safety-2-wave139-diagnostic
+          path: docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Strict fail-closed validation
         run: |
@@ -50,13 +62,17 @@ jobs:
           website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html')
           status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json')
           evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json')
+          diagnostic = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json')
           queue = Path('docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json')
           manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
-          for path in (output, website, status, evidence, queue, manual):
+          for path in (output, website, status, evidence, diagnostic, queue, manual):
               assert path.exists() and path.stat().st_size > 0, path
           data = json.loads(output.read_text())
           result = data['result']
+          diagnosis = json.loads(diagnostic.read_text())
           assert data['fake_data'] is False
+          assert diagnosis['fake_data'] is False
+          assert diagnosis['stage'] == 'completed'
           assert data['continuation_key'] == 'a61e46015baebb5d9e1ddb098b98fe04e6c1c617ec98a1a09eef8c1c297c066f'
           assert data['scope']['maximum_simultaneous_workers'] == 15
           assert result['official_portal_searches'] >= 6
@@ -85,6 +101,7 @@ jobs:
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json \
             docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
             docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json
           git commit -m 'security_public_safety_2: publish Wave139 postcode release lineage'
@@ -110,6 +127,7 @@ jobs:
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json \
             docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
             docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json; do
             local_sha=$(sha256sum "$path" | cut -d' ' -f1)
