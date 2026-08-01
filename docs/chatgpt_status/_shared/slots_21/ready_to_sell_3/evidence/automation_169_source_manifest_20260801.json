@@ -1,0 +1,71 @@
+{
+  "schema_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "ready_to_sell_3",
+  "continuation_key": "6f2f2e66567b0e654a32a3bb26684504438ff4a7085d0170335bdbfe452a687a",
+  "created_at": "2026-08-01T15:33:00Z",
+  "candidate_id": "rts3-1509-eton",
+  "candidate_address": "11 Eton Street, Hartlepool, County Durham TS25 5SG",
+  "source_count": 4,
+  "sources": [
+    {
+      "source_url": "https://www.auctionhouse.co.uk/teesvalley/auction/lot/150470",
+      "accessed_at": "2026-08-01T15:33:00Z",
+      "content_sha256": "dfebc756f194652454bb52663e87d470e90dbe628c3f94a899f13b193fa2f4c9",
+      "hash_scope": "normalized_relevant_excerpt",
+      "relevant_record_ids_or_excerpt": "11 Eton Street, Hartlepool, County Durham TS25 5SG; For Sale By Auction 11 August 2026; Tenure: Freehold.",
+      "supports_fields": ["candidate_id", "full_address", "postcode", "marketing_tenure", "auction_date"],
+      "license_or_terms_url": "https://www.auctionhouse.co.uk/terms-and-conditions",
+      "publisher": "Auction House North Yorkshire and Tees Valley",
+      "source_type": "official_property_listing_html"
+    },
+    {
+      "source_url": "https://use-land-property-data.service.gov.uk/datasets/inspire",
+      "accessed_at": "2026-08-01T15:33:00Z",
+      "content_sha256": "817cc3c4dedfd92483d2863b4f41342a5695086b424eb435dc0accd4c012a168",
+      "hash_scope": "normalized_relevant_excerpt",
+      "relevant_record_ids_or_excerpt": "HM Land Registry INSPIRE Index Polygons contains locations of freehold registered property in England and Wales. Polygons show indicative position and extent; each has a unique Land Registry-INSPIRE ID related to a registered title. Data is published monthly by local authority in GML.",
+      "supports_fields": ["dataset_scope", "freehold_coverage", "parcel_geometry", "inspire_id", "update_frequency", "gml_access"],
+      "license_or_terms_url": "https://use-land-property-data.service.gov.uk/datasets/inspire#conditions",
+      "publisher": "HM Land Registry",
+      "source_type": "official_gov_uk_dataset_information"
+    },
+    {
+      "source_url": "https://inspire.landregistry.gov.uk/inspire/ows?SERVICE=WMS&REQUEST=GetCapabilities",
+      "accessed_at": "2026-08-01T15:33:00Z",
+      "content_sha256": "c664a1d24545a8040666019796bfad935cb22b5e1bfe6e0580e5b64e45f221ca",
+      "hash_scope": "bounded_preflight_evidence_string",
+      "relevant_record_ids_or_excerpt": "Official HMLR INSPIRE View Service endpoint linked by data.gov.uk. Preflight web probe resolved the endpoint and reported text/xml, but the client did not parse the capabilities body; runtime verification remains required.",
+      "supports_fields": ["official_wms_endpoint", "capabilities_content_type", "runtime_layer_discovery_required"],
+      "license_or_terms_url": "https://use-land-property-data.service.gov.uk/datasets/inspire#conditions",
+      "publisher": "HM Land Registry",
+      "source_type": "official_wms_capabilities_endpoint",
+      "preflight_access_status": "ENDPOINT_RESOLVED_XML_BODY_NOT_PARSED_BY_WEB_CLIENT"
+    },
+    {
+      "source_url": "https://nominatim.openstreetmap.org/search?q=11+Eton+Street%2C+Hartlepool%2C+County+Durham+TS25+5SG&format=jsonv2&addressdetails=1&polygon_geojson=1&limit=5",
+      "accessed_at": "2026-08-01T15:33:00Z",
+      "content_sha256": "243ed07b0875861e927cd9c851c0f9710d1948dbd884f02d3ebb13b8a4af582f",
+      "hash_scope": "normalized_api_and_policy_excerpt",
+      "relevant_record_ids_or_excerpt": "Nominatim Search API accepts textual address queries and JSON output. Public service policy requires a valid identifying User-Agent, attribution, caching, and at most one request per second; OSM data is licensed under ODbL.",
+      "supports_fields": ["exact_address_search", "latitude", "longitude", "osm_id", "address_components"],
+      "license_or_terms_url": "https://www.openstreetmap.org/copyright",
+      "usage_policy_url": "https://operations.osmfoundation.org/policies/nominatim/",
+      "api_documentation_url": "https://nominatim.org/release-docs/latest/api/Search/",
+      "publisher": "OpenStreetMap Foundation / OpenStreetMap contributors",
+      "source_type": "open_geocoding_api",
+      "runtime_request_limit": "one exact-address request; identifying User-Agent; >=1.1 seconds between public-service requests"
+    }
+  ],
+  "binding_rule": {
+    "positive_parcel_match_requires": [
+      "exact house number, road, postcode and Hartlepool place match from Nominatim",
+      "HMLR capabilities-discovered cadastral parcel layer",
+      "non-empty HMLR GetFeatureInfo parcel identifier at exact-address point"
+    ],
+    "positive_geometry_match_basis": "HMLR_INSPIRE_CADASTRAL_PARCEL_POINT_IN_POLYGON_FEATURE_INFO",
+    "no_inference": true,
+    "failure_state": "NO_DATA_CONTINUE"
+  },
+  "fake_data": false
+}
