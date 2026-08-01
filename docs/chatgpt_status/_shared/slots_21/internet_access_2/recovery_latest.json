@@ -3,46 +3,23 @@
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "internet_access_2",
-  "base_slot_id": "internet_access",
-  "shard_index": 2,
-  "parcel_partition": {
-    "start": 30762,
-    "end": 61522,
-    "count": 30761,
-    "canonical_count": 92283
-  },
   "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
-  "task_phase": "OFCom_R2_ARCHIVE_ACQUISITION_AND_STRICT_VALIDATION",
   "attempt_id": "dbf784213f7b493695996d3f495e099c",
-  "idempotency_key": "5e351684c77a70946e5256e433fa970b7d6129ca96389d939d0b00c0907671e3",
   "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
   "source_head": "099f48ba2e0a79b7b804d03f2520e185ef18bff2",
-  "status": "ready",
-  "state": "READY",
-  "panel_status": "BİLGİ TOPLANIYOR",
-  "runner_state": "READY",
-  "claimable": true,
-  "ready_for_claim": true,
-  "priority": "P0",
-  "requested_at": "2026-08-01T14:57:15Z",
-  "updated_at": "2026-08-01T14:57:15Z",
-  "first_unverified_step": "ACQUIRE_AND_STRICTLY_VALIDATE_OFFICIAL_OFCom_SPRING_2026_CORRECTED_R2_ARCHIVE",
+  "checked_at": "2026-08-01T14:57:15Z",
+  "recovery_state": "READY_SAME_TASK_OFFICIAL_R2_ARCHIVE_ACQUISITION_AND_STRICT_VALIDATION",
+  "prior_blocker": "NO_EXECUTION_ENVIRONMENT_WITH_BOTH_OFCOM_BINARY_TRANSFER_AND_CANONICAL_WINDOWS_PORTABLE_HOST_ACCESS",
+  "technical_resolution": "Replace the manual PowerShell-only bootstrap dependency with a tracked cross-platform Python acquisition phase that writes the raw archive only to runtime cache and publishes compact SHA/CRC/schema/row evidence.",
+  "queue_state": "READY",
+  "queue_claimable": true,
+  "owner_live": false,
+  "heartbeat_live": false,
   "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/025_acquire_validate_ofcom_r2_archive.py",
   "script_sha256": "07bbd9e5fb89ebc734e175d8f51772917d20e137cc21243c7ff626c2159f43a1",
-  "script_language": "python",
-  "python_min_version": "3.10",
-  "entrypoint_args": [],
-  "script_preflight": {
-    "syntax": "PASS_PY_COMPILE",
-    "fixture": "PASS_3_R2_MEMBERS_6_ROWS_CRC_SCHEMA_SHA_WRITE_BOUNDARIES",
-    "tested_at": "2026-08-01T14:57:15Z",
-    "fixture_archive_sha256": "e638f308f16dc9dd6be4f28935cc08671c90f48460212a6253d35f525b477aeb"
-  },
+  "script_syntax_test": "PASS",
+  "script_fixture_test": "PASS",
   "exact_read_paths": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json"
-  ],
-  "read_paths": [
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json"
   ],
@@ -52,16 +29,6 @@
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/012_status.json",
     "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/012_progress.jsonl"
   ],
-  "allowed_paths": [
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/025_acquire_validate_ofcom_r2_archive.py",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/012_ofcom_spring_2026_archive_download_readback.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/012_ofcom_r2_archive_strict_validation.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/012_status.json",
-    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/012_progress.jsonl"
-  ],
-  "runtime_cache_relative_path": "state/source_cache/ofcom_spring_2026/ofcom_fixed_coverage_202601_v2.zip",
   "resource_class": [
     "network_fetch",
     "heavy_disk_io",
@@ -75,24 +42,6 @@
     "The 121 corrected-r2 members contain exactly 1,741,096 data rows and every member has all required core fields.",
     "Only exact_write_paths are written in the repository; failure remains BLOCKED and writes no inferred parcel coverage."
   ],
-  "acceptance_contract": {
-    "expected_r2_files": 121,
-    "expected_rows": 1741096,
-    "expected_exact_join_rows_after_next_phase": 11013,
-    "minimum_archive_bytes": 30000000,
-    "maximum_archive_bytes": 100000000,
-    "required_member_pattern": "202601_fixed_postcode_coverage_r2_<POSTCODE_AREA>.csv",
-    "stale_r1_members_allowed": false,
-    "required_core_fields": [
-      "postcode",
-      "postcode_area",
-      "sfbb",
-      "ufbb100",
-      "ufbb300",
-      "gigabit",
-      "unable30"
-    ]
-  },
   "source_evidence": {
     "source_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
     "alternate_official_urls": [
@@ -124,10 +73,6 @@
       "exact_join_target_rows_11013"
     ]
   },
-  "requires_git_publish_gate": true,
-  "requires_runtime_sync_gate": true,
-  "requires_browser_acceptance_gate": false,
-  "requires_shared_publish_gate": false,
   "progress": {
     "completed_count": 5,
     "target_count": 6,
@@ -136,26 +81,15 @@
     "percent_increase": 0.0,
     "formula": "completed_count/target_count*100"
   },
-  "previous_result": {
-    "state": "PUBLISHED",
-    "runner_child_commit": "60eb126156993735489937077110e29a74bc78d5",
-    "remote_readback": true,
-    "existing_rows": 11013,
-    "postcode_live": 11011,
-    "postcode_review": 2,
-    "official_coverage_verified_candidates": 0,
-    "web_chunks": 23
-  },
-  "logical_task_reused": true,
-  "same_task_id_retained": true,
+  "produced_business_rows": 0,
+  "produced_evidence_records": 1,
+  "blocker": "RUNNER_NOT_YET_CLAIMED",
+  "next_check_after_minutes": 15,
+  "same_task_recovery": true,
+  "new_task_created": false,
   "duplicate_task_created": false,
-  "second_runner_started": false,
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false,
-    "raw_large_file_to_git": false
-  },
+  "new_owner_created": false,
+  "new_runner_created": false,
+  "fake_data": false,
   "final_ready": false
 }
