@@ -110,8 +110,11 @@ def install_hmlr_gml_recovery(namespace: dict[str, object]) -> None:
         for anchor in soup.find_all("a", href=True):
             href = str(anchor.get("href") or "").strip()
             text = " ".join(anchor.get_text(" ", strip=True).split())
+            row = anchor.find_parent("tr")
+            item = anchor.find_parent("li")
+            container = row or item or anchor.parent
             context = " ".join(
-                (anchor.parent.get_text(" ", strip=True) if anchor.parent else text).split()
+                (container.get_text(" ", strip=True) if container else text).split()
             )
             url = urljoin(page["url"], href)
             parsed = urlparse(url)
