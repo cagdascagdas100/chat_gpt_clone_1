@@ -45,52 +45,123 @@ jobs:
           AAYS_SOURCE_HEAD: acd82a8205cf80fc352d065faa31475193024530
         run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.py
 
-      - name: Upload Wave139 diagnostic
+      - name: Named strict fail-closed validation
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-public-safety-2-wave139-diagnostic
-          path: docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Strict fail-closed validation
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json')
-          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html')
-          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json')
-          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json')
-          diagnostic = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json')
-          queue = Path('docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json')
-          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
-          for path in (output, website, status, evidence, diagnostic, queue, manual):
-              assert path.exists() and path.stat().st_size > 0, path
-          data = json.loads(output.read_text())
-          result = data['result']
-          diagnosis = json.loads(diagnostic.read_text())
-          assert data['fake_data'] is False
-          assert diagnosis['fake_data'] is False
-          assert diagnosis['stage'] == 'completed'
-          assert data['continuation_key'] == 'a61e46015baebb5d9e1ddb098b98fe04e6c1c617ec98a1a09eef8c1c297c066f'
-          assert data['scope']['maximum_simultaneous_workers'] == 15
-          assert result['official_portal_searches'] >= 6
-          assert result['official_portal_search_successes'] >= 4
-          assert result['official_items_inspected'] >= 5
-          assert result['official_relationship_probes'] >= 20
-          assert result['field_semantic_rows'] >= 10
-          assert result['postcode_release_matrix_rows'] >= 20
-          assert result['completed_or_fail_closed_operations'] == result['total_operations']
-          assert result['blocked_operations'] == 0
-          assert result['stuck_pending_operations'] == 0
-          assert json.loads(queue.read_text())['state'] == 'COMPLETED_PUBLISHED'
-          page = website.read_text()
-          assert 'Postcode release matrix' in page
-          assert 'Operation ledger' in page
-          print(json.dumps(result, ensure_ascii=False))
+
+          expected_continuation = 'a61e46015baebb5d9e1ddb098b98fe04e6c1c617ec98a1a09eef8c1c297c066f'
+          paths = {
+              'output': Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json'),
+              'website': Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html'),
+              'status': Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json'),
+              'evidence': Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json'),
+              'diagnostic': Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json'),
+              'queue': Path('docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json'),
+              'manual': Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'),
+          }
+          report = {
+              'schema_version': 1,
+              'slot_id': 'security_public_safety_2',
+              'task_id': 'security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801',
+              'continuation_key': expected_continuation,
+              'checks': [],
+              'failures': [],
+              'fake_data': False,
+          }
+
+          def record(name, actual, expected, passed):
+              row = {'name': name, 'actual': actual, 'expected': expected, 'passed': bool(passed)}
+              report['checks'].append(row)
+              if not passed:
+                  report['failures'].append(row)
+
+          for name, path in paths.items():
+              passed = path.exists() and path.stat().st_size > 0
+              record(f'file:{name}:exists_nonempty', passed, True, passed)
+
+          def load(name):
+              path = paths[name]
+              try:
+                  return json.loads(path.read_text())
+              except Exception as exc:
+                  record(f'json:{name}:parse', f'{type(exc).__name__}:{exc}', 'valid JSON', False)
+                  return {}
+
+          data = load('output')
+          status = load('status')
+          evidence = load('evidence')
+          diagnosis = load('diagnostic')
+          queue = load('queue')
+          manual = load('manual')
+          result = data.get('result') or {}
+          page = paths['website'].read_text() if paths['website'].exists() else ''
+
+          record('output.fake_data', data.get('fake_data'), False, data.get('fake_data') is False)
+          record('diagnostic.fake_data', diagnosis.get('fake_data'), False, diagnosis.get('fake_data') is False)
+          record('diagnostic.stage', diagnosis.get('stage'), 'completed', diagnosis.get('stage') == 'completed')
+          record('output.continuation_key', data.get('continuation_key'), expected_continuation,
+                 data.get('continuation_key') == expected_continuation)
+          record('status.continuation_key', status.get('continuation_key'), expected_continuation,
+                 status.get('continuation_key') == expected_continuation)
+          record('evidence.continuation_key', evidence.get('continuation_key'), expected_continuation,
+                 evidence.get('continuation_key') == expected_continuation)
+          record('queue.continuation_key', queue.get('continuation_key'), expected_continuation,
+                 queue.get('continuation_key') == expected_continuation)
+          record('scope.maximum_simultaneous_workers', (data.get('scope') or {}).get('maximum_simultaneous_workers'), 15,
+                 (data.get('scope') or {}).get('maximum_simultaneous_workers') == 15)
+
+          thresholds = {
+              'official_portal_searches': 6,
+              'official_portal_search_successes': 4,
+              'official_items_inspected': 5,
+              'official_relationship_probes': 20,
+              'field_semantic_rows': 10,
+              'postcode_release_matrix_rows': 20,
+          }
+          for key, minimum in thresholds.items():
+              actual = result.get(key)
+              record(f'result.{key}', actual, f'>={minimum}', isinstance(actual, (int, float)) and actual >= minimum)
+
+          completed = result.get('completed_or_fail_closed_operations')
+          total = result.get('total_operations')
+          record('result.operations_complete', {'completed': completed, 'total': total}, 'completed == total',
+                 isinstance(completed, (int, float)) and completed == total)
+          record('result.blocked_operations', result.get('blocked_operations'), 0, result.get('blocked_operations') == 0)
+          record('result.stuck_pending_operations', result.get('stuck_pending_operations'), 0,
+                 result.get('stuck_pending_operations') == 0)
+          record('queue.state', queue.get('state'), 'COMPLETED_PUBLISHED', queue.get('state') == 'COMPLETED_PUBLISHED')
+          record('status.state', status.get('state'), 'COMPLETED_PUBLISHED', status.get('state') == 'COMPLETED_PUBLISHED')
+          record('manual.open_item_count', manual.get('open_item_count'), 1, manual.get('open_item_count') == 1)
+          record('website.Postcode release matrix', 'Postcode release matrix' in page, True,
+                 'Postcode release matrix' in page)
+          record('website.Operation ledger', 'Operation ledger' in page, True, 'Operation ledger' in page)
+
+          report_path = Path('/tmp/wave139_validation_report.json')
+          report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+          print(json.dumps(report, ensure_ascii=False))
+          if report['failures']:
+              raise SystemExit(1)
           PY
+
+      - name: Upload Wave139 final recovery bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-public-safety-2-wave139-final-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            /tmp/wave139_validation_report.json
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json
+            docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Publish through isolated canonical worktree
         run: |
@@ -139,10 +210,10 @@ jobs:
               items.append(generated_item)
           for key in ('updated_at', 'continuation_key'):
               current[key] = generated.get(key)
-          evidence = current.setdefault('evidence_paths', [])
+          evidence_paths = current.setdefault('evidence_paths', [])
           for path in generated.get('evidence_paths', []):
-              if path not in evidence:
-                  evidence.append(path)
+              if path not in evidence_paths:
+                  evidence_paths.append(path)
           current['open_item_count'] = sum(row.get('state') == 'OPEN' for row in items)
           current['resolved_item_count'] = sum(row.get('state') == 'RESOLVED' for row in items)
           current['state'] = 'RESOLVED' if current['open_item_count'] == 0 else 'OPEN'
