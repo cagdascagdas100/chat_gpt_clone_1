@@ -1,0 +1,49 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "task_id": "security_public_safety_2_wave138_official_uprn_address_lsoa_crosswalk_primary_binding_20260801",
+  "attempt_id": "attempt-001",
+  "continuation_key": "7f57f644650ca4c446612f1aac0e1a5ad9a8e27b42834f3ac3b935b58346bc4e",
+  "previous_continuation_key": "11a58a332f8498a21787d35bd8bfcaa3af8cd39830270e31c15bfbd007f9015e",
+  "source_head": "45b6a47ae45109814e615570687a4c9ba68d2800",
+  "canonical_branch": "codex/aays-single-runner-v5-20260706",
+  "first_unverified_step": "WAVE138_SINGLE_OPEN_ROW_OFFICIAL_UPRN_ADDRESS_LSOA_CROSSWALK_AND_PRIMARY_BINDING",
+  "state": "READY",
+  "owner": null,
+  "blocker": null,
+  "created_at": "2026-08-01T10:06:00Z",
+  "updated_at": "2026-08-01T10:06:00Z",
+  "resource_class": "NETWORK_IO_CPU_BOUNDED",
+  "maximum_simultaneous_workers": 15,
+  "timeout_minutes": 45,
+  "read_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_lsoa_crosswalk_primary_binding_wave137_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave137_evidence_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
+  ],
+  "exact_write_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_uprn_address_lsoa_crosswalk_primary_binding_wave138_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_uprn_address_lsoa_crosswalk_primary_binding_wave138.html",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json",
+    "docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_uprn_address_lsoa_crosswalk_primary_binding_20260801.v3.task.json"
+  ],
+  "acceptance_conditions": [
+    "Only authentication-free official ONS, Ordnance Survey or local-authority public UPRN/address sources are accepted",
+    "Official item, package, service, licence, access time and checksum evidence is recorded",
+    "Search and download concurrency remains bounded to no more than 15 workers and no more than 4 large downloads",
+    "UPRN, address or postcode proximity alone cannot promote the row",
+    "Promotion requires an exact non-derived parent parcel/source identifier to UPRN or address binding",
+    "The exact bound identifier must independently resolve to agreeing official LSOA 2011 and LSOA 2021 codes",
+    "Unavailable, restricted, paid, CAPTCHA or authentication-only sources are recorded fail-closed and skipped",
+    "No majority vote, nearby-record inference, threshold relaxation or parent value/score mutation is allowed",
+    "JSON, HTML, queue task, status, evidence and manual-action records are updated",
+    "Canonical push and remote hash readback must succeed before COMPLETED_PUBLISHED"
+  ],
+  "fake_data_allowed": false,
+  "second_runner_created": false,
+  "second_task_created": false
+}
