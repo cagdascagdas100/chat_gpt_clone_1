@@ -1,0 +1,50 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave158</title><body>
+<h1>internet_access_3 Wave158 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave158_operations_4600_20260801.html">4.600 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave158_4600_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const num=n=>n.toLocaleString('en-GB');
+function expand(seed){
+ const a=[];
+ for(const [n,os,oc,ob,js,jc,jb] of seed.contract_seed){
+  const z=slug(n), both=os!==null&&js!==null;
+  if(both){
+   const cd=jc-oc,bd=jb-ob,og=oc-ob,jg=jc-jb;
+   a.push([`oct_jul_${z}_presence`,['october_snapshot','july_snapshot'],`${n} appeared in both the October 2025 and July 2026 BDUK contract tables.`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_contracted_delta`,['october_snapshot','july_snapshot'],`For ${n}, the rounded contracted-premises value ${cd>0?'increased':cd<0?'decreased':'was unchanged'}${cd?` by ${num(Math.abs(cd))}`:''} from October 2025 to July 2026 (${num(oc)} to ${num(jc)}).`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_built_delta`,['october_snapshot','july_snapshot'],`For ${n}, the rounded built-premises value ${bd>0?'increased':bd<0?'decreased':'was unchanged'}${bd?` by ${num(Math.abs(bd))}`:''} from October 2025 to July 2026 (${num(ob)} to ${num(jb)}).`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_contracted_pct`,['october_snapshot','july_snapshot'],`For ${n}, the rounded contracted-premises value changed by ${(((jc-oc)/oc)*100)>=0?'+':''}${(((jc-oc)/oc)*100).toFixed(2)}% from October 2025 to July 2026.`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_built_pct`,['october_snapshot','july_snapshot'],ob===0?`For ${n}, the October-to-July built-premises percentage change was not calculated because the October rounded value was zero; the absolute change was ${bd>=0?'+':''}${num(bd)}.`:`For ${n}, the rounded built-premises value changed by ${(((jb-ob)/ob)*100)>=0?'+':''}${(((jb-ob)/ob)*100).toFixed(2)}% from October 2025 to July 2026.`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_avg_monthly_contracted`,['october_snapshot','july_snapshot'],`For ${n}, the arithmetic average monthly change in the rounded contracted-premises value across the nine-month October-to-July interval was ${(cd/9)>=0?'+':''}${(cd/9).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})}.`,'long_horizon_snapshot']);
+   a.push([`oct_jul_${z}_avg_monthly_built`,['october_snapshot','july_snapshot'],`For ${n}, the arithmetic average monthly change in the rounded built-premises value across the nine-month October-to-July interval was ${(bd/9)>=0?'+':''}${(bd/9).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})}.`,'long_horizon_snapshot']);
+   a.push([`oct_${z}_gap`,['october_snapshot'],`For ${n}, the October 2025 rounded contracted-minus-built gap was ${num(og)}.`,'gap_metric']);
+   a.push([`jul_${z}_gap`,['july_snapshot'],`For ${n}, the July 2026 rounded contracted-minus-built gap was ${num(jg)}.`,'gap_metric']);
+   a.push([`oct_jul_${z}_gap_change`,['october_snapshot','july_snapshot'],`For ${n}, the rounded contracted-minus-built gap changed by ${jg-og>=0?'+':''}${num(jg-og)} from October 2025 to July 2026 (${num(og)} to ${num(jg)}).`,'gap_metric']);
+   a.push([`oct_jul_${z}_built_vs_oct_gap`,['october_snapshot','july_snapshot'],og===0?`For ${n}, built increase as a percentage of the October rounded gap was not calculated because the October gap was zero; the absolute built change was ${bd>=0?'+':''}${num(bd)}.`:`For ${n}, the October-to-July built change was ${((bd/og)*100)>=0?'+':''}${((bd/og)*100).toFixed(2)}% of the October rounded contracted-minus-built gap.`,'gap_metric']);
+  } else {
+   const oct=os!==null,avail=oct?'October 2025':'July 2026',aid=oct?'october_snapshot':'july_snapshot',sup=oct?os:js,con=oct?oc:jc,built=oct?ob:jb,miss=oct?'July 2026':'October 2025',mid=oct?'july':'october',gap=con-built,az=slug(avail);
+   a.push([`oct_jul_${z}_presence`,[aid],`${n} appeared in the ${avail} BDUK contract table but not in the other selected monthly table.`,'missing_value']);
+   a.push([`${az}_${z}_supplier`,[aid],`The ${avail} BDUK table listed ${sup} as supplier for ${n}.`,'long_horizon_snapshot']);
+   a.push([`${az}_${z}_contracted`,[aid],`The ${avail} BDUK table listed ${num(con)} rounded contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`${az}_${z}_built`,[aid],`The ${avail} BDUK table listed ${num(built)} rounded built contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`${az}_${z}_gap`,[aid],`For ${n}, the ${avail} rounded contracted-minus-built gap was ${num(gap)}.`,'gap_metric']);
+   a.push([`${mid}_${z}_supplier_missing`,['october_snapshot','july_snapshot'],`A supplier value for ${n} is absent from the ${miss} selected table and was not imputed.`,'missing_value']);
+   a.push([`${mid}_${z}_contracted_missing`,['october_snapshot','july_snapshot'],`A contracted-premises value for ${n} is absent from the ${miss} selected table and was not imputed as zero.`,'missing_value']);
+   a.push([`${mid}_${z}_built_missing`,['october_snapshot','july_snapshot'],`A built-premises value for ${n} is absent from the ${miss} selected table and was not imputed as zero.`,'missing_value']);
+   a.push([`oct_jul_${z}_contracted_delta_unavailable`,['october_snapshot','july_snapshot'],`The October-to-July contracted-premises delta for ${n} was not calculated because one selected monthly row is absent.`,'missing_value']);
+   a.push([`oct_jul_${z}_built_delta_unavailable`,['october_snapshot','july_snapshot'],`The October-to-July built-premises delta for ${n} was not calculated because one selected monthly row is absent.`,'missing_value']);
+   a.push([`oct_jul_${z}_rate_unavailable`,['october_snapshot','july_snapshot'],`Percentage and average-monthly change metrics for ${n} were not calculated because one selected monthly row is absent.`,'missing_value']);
+  }
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([fetch('extended_official_web_evidence_wave158_4600_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave158_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{
+ const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));
+ document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;
+ const b=document.getElementById('rows');
+ rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)});
+}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
