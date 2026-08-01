@@ -1,0 +1,117 @@
+name: security_public_safety_2 Wave139 ONSUD OS Open UPRN identity chain
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/aays-triggers/security_public_safety_2_wave139.trigger.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave139
+  cancel-in-progress: false
+
+jobs:
+  publish-onsud-os-open-uprn-identity-chain:
+    if: github.head_ref == 'audit/security-public-safety-2-wave139-20260801'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bounded dependencies
+        run: python -m pip install --disable-pip-version-check requests pyshp shapely pyproj
+
+      - name: Verify runner syntax
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_onsud_os_open_uprn_identity_chain_20260801.py
+
+      - name: Run official ONSUD and OS Open UPRN audit
+        env:
+          AAYS_SOURCE_HEAD: a19d7d19a0ebd691b49649cacfd5e2fe1a5c2f47
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_onsud_os_open_uprn_identity_chain_20260801.py
+
+      - name: Strict fail-closed validation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139_latest.json')
+          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139.html')
+          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json')
+          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json')
+          queue = Path('docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_onsud_os_open_uprn_identity_chain_20260801.v3.task.json')
+          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
+          for path in (output, website, status, evidence, queue, manual):
+              assert path.exists() and path.stat().st_size > 0, path
+          data = json.loads(output.read_text())
+          result = data['result']
+          assert data['fake_data'] is False
+          assert data['continuation_key'] == '36594860fbbef07fa5e3c29e3b61b3043695bd3c02eeb9b165e6c18001f3a7e9'
+          assert data['scope']['maximum_simultaneous_workers'] == 15
+          assert data['scope']['maximum_simultaneous_large_downloads'] == 3
+          assert result['official_portal_searches'] >= 8
+          assert result['official_portal_search_successes'] >= 6
+          assert result['completed_or_fail_closed_operations'] == result['total_operations']
+          assert result['blocked_operations'] == 0
+          assert result['stuck_pending_operations'] == 0
+          assert json.loads(queue.read_text())['state'] == 'COMPLETED_PUBLISHED'
+          page = website.read_text()
+          assert 'Operation ledger' in page
+          assert 'ONSUD identity-chain rows' in page
+          print(json.dumps(result, ensure_ascii=False))
+          PY
+
+      - name: Commit and publish canonical outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_onsud_os_open_uprn_identity_chain_20260801.v3.task.json
+          git commit -m 'security_public_safety_2: publish Wave139 ONSUD OS Open UPRN identity chain'
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              published=true
+              break
+            fi
+            git rebase --abort || true
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Remote canonical readback
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          remote_head=$(git rev-parse origin/codex/aays-single-runner-v5-20260706)
+          for path in \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_onsud_os_open_uprn_identity_chain_wave139.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_onsud_os_open_uprn_identity_chain_20260801.v3.task.json; do
+            local_sha=$(sha256sum "$path" | cut -d' ' -f1)
+            remote_sha=$(git show "origin/codex/aays-single-runner-v5-20260706:$path" | sha256sum | cut -d' ' -f1)
+            test "$local_sha" = "$remote_sha"
+            echo "REMOTE_READBACK $path $remote_sha"
+          done
+          echo "CANONICAL_REMOTE_HEAD=$remote_head"
