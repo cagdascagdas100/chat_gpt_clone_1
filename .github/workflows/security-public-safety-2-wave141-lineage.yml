@@ -4,9 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py
-      - docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json
-      - docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json
+      - .github/aays-triggers/security_public_safety_2_wave141.trigger.json
 
 permissions:
   contents: write
@@ -17,14 +15,14 @@ concurrency:
 
 jobs:
   publish-official-lineage-contract:
-    if: github.head_ref == 'queue/security-public-safety-2-wave141-lineage-contract-20260801'
+    if: github.head_ref == 'audit/security-public-safety-2-wave141-20260801'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Checkout exact queue head
+      - name: Checkout exact verified queue commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: 41ee3b086625af693a07c5290fcc4d40e9f29d44
           fetch-depth: 0
 
       - name: Set up Python
@@ -60,17 +58,19 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json')
-          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html')
-          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json')
-          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json')
-          queue = Path('docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json')
-          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
-          runner = Path('docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py')
-          manifest = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json')
-          for path in (output, website, status, evidence, queue, manual, runner, manifest):
+          paths = [
+            Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json'),
+            Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html'),
+            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json'),
+            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json'),
+            Path('docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json'),
+            Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'),
+            Path('docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py'),
+            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json'),
+          ]
+          for path in paths:
               assert path.exists() and path.stat().st_size > 0, path
-          data = json.loads(output.read_text())
+          data = json.loads(paths[0].read_text())
           result = data['result']
           assert data['fake_data'] is False
           assert data['continuation_key'] == 'f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d'
@@ -83,9 +83,9 @@ jobs:
           assert result['completed_or_fail_closed_operations'] == result['total_operations']
           assert result['blocked_operations'] == 0
           assert result['stuck_pending_operations'] == 0
-          assert json.loads(queue.read_text())['state'] == 'COMPLETED_PUBLISHED'
-          page = website.read_text()
-          for heading in ('Official source probes', 'Wave140 stable identifiers', 'Repository lineage hits', 'Exact binding rows', 'Official postcode release agreements', 'Operation ledger'):
+          assert json.loads(paths[4].read_text())['state'] == 'COMPLETED_PUBLISHED'
+          page = paths[1].read_text()
+          for heading in ('Official source probes','Wave140 stable identifiers','Repository lineage hits','Exact binding rows','Official postcode release agreements','Operation ledger'):
               assert heading in page, heading
           print(json.dumps(result, ensure_ascii=False))
           PY
@@ -95,18 +95,21 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/wave141-payload
           mkdir -p /tmp/wave141-payload
-          for path in \
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json \
-            docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json; do
+          paths=(
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json
+            docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json
+          )
+          for path in "${paths[@]}"; do
             mkdir -p "/tmp/wave141-payload/$(dirname "$path")"
             cp "$path" "/tmp/wave141-payload/$path"
           done
+          printf '%s\n' "${paths[@]}" > /tmp/wave141-paths.txt
 
       - name: Commit and publish through isolated canonical worktree
         run: |
@@ -121,28 +124,14 @@ jobs:
             git worktree add --detach /tmp/wave141-publish origin/codex/aays-single-runner-v5-20260706
             python - <<'PY'
           import json, subprocess
-          remote = json.loads(subprocess.check_output([
-              'git','-C','/tmp/wave141-publish','show',
-              'HEAD:docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'
-          ], text=True))
-          current = remote.get('continuation_key')
-          allowed = {
-              '5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40',
-              'f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d',
-          }
-          if current not in allowed:
-              raise SystemExit(f'CONCURRENT_SLOT_ADVANCE:{current}')
+          remote = json.loads(subprocess.check_output(['git','-C','/tmp/wave141-publish','show','HEAD:docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'], text=True))
+          allowed = {'5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40','f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d'}
+          if remote.get('continuation_key') not in allowed:
+              raise SystemExit(f"CONCURRENT_SLOT_ADVANCE:{remote.get('continuation_key')}")
           PY
             cp -a /tmp/wave141-payload/. /tmp/wave141-publish/
-            git -C /tmp/wave141-publish add \
-              docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json \
-              docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json \
-              england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json \
-              england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json \
-              docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json
+            mapfile -t paths < /tmp/wave141-paths.txt
+            git -C /tmp/wave141-publish add "${paths[@]}"
             git -C /tmp/wave141-publish commit -m 'security_public_safety_2: publish Wave141 official lineage evidence'
             if git -C /tmp/wave141-publish push origin HEAD:codex/aays-single-runner-v5-20260706; then
               published=true
@@ -158,15 +147,8 @@ jobs:
           set -euo pipefail
           git fetch origin codex/aays-single-runner-v5-20260706
           remote_head=$(git rev-parse origin/codex/aays-single-runner-v5-20260706)
-          for path in \
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json \
-            docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json; do
+          mapfile -t paths < /tmp/wave141-paths.txt
+          for path in "${paths[@]}"; do
             local_sha=$(sha256sum "/tmp/wave141-payload/$path" | cut -d' ' -f1)
             remote_sha=$(git show "origin/codex/aays-single-runner-v5-20260706:$path" | sha256sum | cut -d' ' -f1)
             test "$local_sha" = "$remote_sha"
