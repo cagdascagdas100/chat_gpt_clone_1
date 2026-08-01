@@ -64,20 +64,49 @@ jobs:
           PY
 
       - name: Run repaired official internet postcode package audit
+        id: audit
+        continue-on-error: true
         env:
           AAYS_SOURCE_HEAD: 0121118970256ed4de2a5917d4eacc968c3645a8
         run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave138_repair_official_asset_discovery_20260801.py
 
       - name: Upload fail-closed diagnostic
-        if: failure()
+        if: steps.audit.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: security-public-safety-2-wave138-diagnostic
           path: docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_diagnostic_latest.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
 
+      - name: Publish fail-closed diagnostic checkpoint
+        if: steps.audit.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          diagnostic=docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_diagnostic_latest.json
+          test -s "$diagnostic"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$diagnostic"
+          git commit -m 'security_public_safety_2: publish Wave138 fail-closed diagnostic'
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              published=true
+              break
+            fi
+            git rebase --abort || true
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Stop after diagnostic publication
+        if: steps.audit.outcome == 'failure'
+        run: exit 1
+
       - name: Strict fail-closed validation
+        if: steps.audit.outcome == 'success'
         run: |
           python - <<'PY'
           import json
@@ -112,6 +141,7 @@ jobs:
           PY
 
       - name: Commit and publish canonical outputs
+        if: steps.audit.outcome == 'success'
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -137,6 +167,7 @@ jobs:
           test "$published" = true
 
       - name: Remote canonical readback
+        if: steps.audit.outcome == 'success'
         run: |
           set -euo pipefail
           git fetch origin codex/aays-single-runner-v5-20260706
