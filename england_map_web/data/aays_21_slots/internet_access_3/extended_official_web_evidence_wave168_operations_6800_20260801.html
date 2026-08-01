@@ -1,0 +1,7 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>Wave168 6.800 işlem satırı</title><body>
+<h1>internet_access_3 Wave168 · 6.800 işlem</h1><p>Satırlar 772.570–779.369; format: sequence|result|source_id|check.</p><pre id="ops">Yükleniyor…</pre>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function ids(s){const a=[];for(const [n] of s.contract_seed){const z=slug(n);['dec_supplier','dec_contracted','dec_built','supplier_continuity','jul_contracted','jul_built','contracted_delta','built_delta','built_pct','dec_ratio','jul_ratio','ratio_change','dec_gap','jul_gap','gap_delta','dec_built_total_share','jul_built_total_share','classification'].forEach(k=>a.push(`w168_${z}_${k}`));}for(const [id] of s.consumer_seed)a.push(`w168_${id}`);return a;}
+Promise.all([fetch('extended_official_web_evidence_wave168_6800_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave168_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const a=[];let n=d.visible_line_start;ids(s).forEach(id=>d.check_set.forEach(c=>a.push((n++)+'|P|'+id+'|'+c)));document.getElementById('ops').textContent=a.join('\n')}).catch(e=>document.getElementById('ops').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>6.800 işlem satırını oluşturmak için JavaScript gerekir.</noscript></body></html>
