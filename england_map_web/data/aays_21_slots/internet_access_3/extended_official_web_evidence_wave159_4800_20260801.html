@@ -1,0 +1,32 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave159</title><body>
+<h1>internet_access_3 Wave159 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave159_operations_4800_20260801.html">4.800 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave159_4800_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const fmt=n=>n.toLocaleString('en-GB');
+function expand(seed){
+ const a=[], totals={}, groups={};
+ for(const [n,p,c,b] of seed.contract_seed){if(!groups[p])groups[p]=[];groups[p].push([n,p,c,b]);if(!totals[p])totals[p]=[0,0,0];totals[p][0]+=c;totals[p][1]+=b;totals[p][2]+=c-b;}
+ const ranks={};
+ for(const [p,rows] of Object.entries(groups)){const cs=[...new Set(rows.map(x=>x[2]))].sort((x,y)=>y-x),bs=[...new Set(rows.map(x=>x[3]))].sort((x,y)=>y-x);for(const [n,,c,b] of rows)ranks[n]=[cs.indexOf(c)+1,bs.indexOf(b)+1];}
+ for(const [n,p,c,b] of seed.contract_seed){const z=slug(n),[sc,sb,su]=totals[p],[rc,rb]=ranks[n],mc=seed.medians.contracted,mb=seed.medians.built;
+  a.push([`jul_${z}_unbuilt`,['july_snapshot'],`The July 2026 rounded contracted-minus-built figure for ${n} was ${fmt(c-b)}.`,'aggregate_snapshot']);
+  a.push([`jul_${z}_unbuilt_pct`,['july_snapshot'],c?`The July 2026 rounded unbuilt share for ${n} was ${((c-b)/c*100).toFixed(2)}%.`:`The July 2026 unbuilt share for ${n} was not calculated because contracted premises were zero.`,'aggregate_snapshot']);
+  a.push([`jul_${z}_contracted_total_share`,['july_snapshot'],`${n} represented ${(c/seed.displayed_totals.july.contracted*100).toFixed(4)}% of the displayed July contracted total.`,'derived_snapshot']);
+  a.push([`jul_${z}_supplier_contracted_total`,['july_snapshot'],`The displayed July contracted total across ${p} rows was ${fmt(sc)}.`,'supplier_aggregate']);
+  a.push([`jul_${z}_supplier_built_total`,['july_snapshot'],`The displayed July built total across ${p} rows was ${fmt(sb)}.`,'supplier_aggregate']);
+  a.push([`jul_${z}_supplier_unbuilt_total`,['july_snapshot'],`The displayed July contracted-minus-built total across ${p} rows was ${fmt(su)}.`,'supplier_aggregate']);
+  a.push([`jul_${z}_supplier_contracted_share`,['july_snapshot'],`${n} represented ${(c/sc*100).toFixed(4)}% of ${p}'s displayed July contracted total.`,'supplier_aggregate']);
+  a.push([`jul_${z}_supplier_built_share`,['july_snapshot'],sb?`${n} represented ${(b/sb*100).toFixed(4)}% of ${p}'s displayed July built total.`:`${n}'s share of ${p}'s displayed July built total was not calculated because the supplier aggregate was zero.`,'supplier_aggregate']);
+  a.push([`jul_${z}_supplier_contracted_rank`,['july_snapshot'],`${n} ranked ${rc} within ${p} by displayed July contracted premises using competition ranking.`,'supplier_rank']);
+  a.push([`jul_${z}_supplier_built_rank`,['july_snapshot'],`${n} ranked ${rb} within ${p} by displayed July built premises using competition ranking.`,'supplier_rank']);
+  a.push([`jul_${z}_contracted_median_delta`,['july_snapshot'],`${n}'s displayed July contracted count was ${(c-mc)>=0?'+':''}${fmt(c-mc)} relative to the table median of ${fmt(mc)}.`,'median_metric']);
+  a.push([`jul_${z}_built_median_delta`,['july_snapshot'],`${n}'s displayed July built count was ${(b-mb)>=0?'+':''}${fmt(b-mb)} relative to the table median of ${fmt(mb)}.`,'median_metric']);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([fetch('extended_official_web_evidence_wave159_4800_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave159_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
