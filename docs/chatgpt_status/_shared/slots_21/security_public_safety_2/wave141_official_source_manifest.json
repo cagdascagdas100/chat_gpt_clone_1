@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "task_id": "security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801",
+  "continuation_key": "f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d",
+  "purpose": "Resolve the tracked source-script/path contract and continue only the unresolved official postcode/HMLR lineage binding after completed Wave140.",
+  "reuse_policy": {
+    "repeat_completed_waves": false,
+    "redownload_wave140_hmlr_gml": false,
+    "rescan_wave140_os_open_uprn_617876071_bytes": false,
+    "use_existing_wave140_verified_outputs_as_inputs": true
+  },
+  "official_sources": [
+    {
+      "source_id": "hmlr_inspire_index_polygons",
+      "authority": "HM Land Registry",
+      "kind": "official_public_dataset",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "required_evidence": ["authority link", "download response", "GML member identifier", "polygon geometry", "download hash"],
+      "prior_verified_fact": "Wave140 downloaded 5 authority GML files, scanned 355560 members and found 1 polygon covering the selected coordinate."
+    },
+    {
+      "source_id": "os_open_uprn",
+      "authority": "Ordnance Survey",
+      "kind": "official_public_dataset",
+      "url": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+      "required_evidence": ["product metadata", "download response", "archive hash", "UPRN row identifier", "coordinate fields"],
+      "prior_verified_fact": "Wave140 scanned 41593225 rows and found no exact-coordinate UPRN candidate."
+    },
+    {
+      "source_id": "ons_lsoa_2011_bfc",
+      "authority": "Office for National Statistics",
+      "kind": "official_feature_service",
+      "url": "https://www.arcgis.com/sharing/rest/content/items/357ee15b1080431491bf965394090c72",
+      "required_evidence": ["item metadata", "service URL", "exact code query", "geometry hash"]
+    },
+    {
+      "source_id": "ons_lsoa_2021_bfc",
+      "authority": "Office for National Statistics",
+      "kind": "official_feature_service",
+      "url": "https://www.arcgis.com/sharing/rest/content/items/2bbaef5230694f3abae4f9145a3a9800",
+      "required_evidence": ["item metadata", "service URL", "exact code query", "geometry hash"]
+    },
+    {
+      "source_id": "ons_postcode_products",
+      "authority": "Office for National Statistics",
+      "kind": "official_postcode_lookup_release",
+      "url": "https://geoportal.statistics.gov.uk/",
+      "required_evidence": ["release identifier", "asset URL", "asset hash", "postcode row", "LSOA11 code", "LSOA21 code"],
+      "promotion_rule": "At least two official releases must agree for the same exact bound postcode; proximity alone is forbidden."
+    }
+  ],
+  "prior_verified_inputs": [
+    {
+      "path": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json",
+      "blob_sha": "eedc002a15bedc1eafc2667aa0c62bb1a9ff8650"
+    },
+    {
+      "path": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json",
+      "blob_sha": "3173a7734b442f31f57b09b2d71f1c80f6be33bf",
+      "output_json_sha256": "ac70025488c9058e80a85aed3fd80dc6dac155f3e70ba6e23364639003d598eb",
+      "output_html_sha256": "76f78a6a9db7a3ca9b8031bb1dba8ecc1a68b52496078f99676ef81804836c88"
+    }
+  ],
+  "lineage_acceptance": {
+    "exact_non_derived_parent_source_record_required": true,
+    "exact_hmlr_polygon_or_uprn_identifier_required": true,
+    "official_postcode_release_count_minimum": 2,
+    "expected_lsoa11": "E01001553",
+    "expected_lsoa21": "E01002091",
+    "conflict_free_required": true,
+    "postcode_proximity_inference_forbidden": true,
+    "centroid_inference_forbidden": true,
+    "majority_vote_forbidden": true,
+    "threshold_relaxation_forbidden": true
+  },
+  "fake_data": false
+}
