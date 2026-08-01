@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,108 @@ v3.EXPECTED_TOTAL_OPERATIONS = 291
 previous_markdown = v3.write_markdown
 
 
+def selenium_probe_v53(url: str, binary: str) -> dict[str, Any] | None:
+    """Wait for asynchronous DOM acceptance markers instead of taking a fixed 5-second snapshot."""
+    try:
+        from selenium import webdriver  # type: ignore
+        from selenium.webdriver.chrome.options import Options as ChromeOptions  # type: ignore
+    except Exception:
+        return None
+
+    options = ChromeOptions()
+    options.binary_location = binary
+    for argument in (
+        "--headless=new",
+        "--disable-gpu",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--window-size=1440,1200",
+    ):
+        options.add_argument(argument)
+    options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
+
+    driver = None
+    readiness_probe: dict[str, Any] = {}
+    try:
+        driver = webdriver.Chrome(options=options)
+        driver.set_page_load_timeout(60)
+        driver.get(url)
+
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            try:
+                readiness_probe = driver.execute_script(
+                    """
+                    const body = document.body;
+                    const status = document.getElementById('status');
+                    return {
+                      readyState: document.readyState,
+                      loadedCount: body?.dataset?.loadedCount || null,
+                      visibleCount: body?.dataset?.visibleCount || null,
+                      candidateCount: body?.dataset?.candidateCount || null,
+                      officialSourceCount: body?.dataset?.officialSourceCount || null,
+                      semanticValid: body?.dataset?.semanticValid || null,
+                      acceptanceError: body?.dataset?.acceptanceError || null,
+                      statusText: status?.textContent || ''
+                    };
+                    """
+                ) or {}
+            except Exception:
+                readiness_probe = {}
+
+            has_terminal_marker = bool(
+                readiness_probe.get("loadedCount")
+                or readiness_probe.get("candidateCount")
+                or readiness_probe.get("acceptanceError")
+                or str(readiness_probe.get("statusText") or "").startswith("BLOCKED:")
+            )
+            if has_terminal_marker:
+                break
+            time.sleep(0.5)
+
+        dom = driver.page_source or ""
+        logs = driver.get_log("browser")
+        severe = [
+            entry
+            for entry in logs
+            if str(entry.get("level", "")).upper() in {"SEVERE", "ERROR"}
+        ]
+        return {
+            "engine": "selenium_chromium",
+            "browser_binary": binary,
+            "exit_code": 0,
+            "dom": dom,
+            "dom_sha256": v3.v2.sha256_bytes(dom.encode("utf-8")),
+            "console_error_count": len(severe),
+            "console_errors": severe[:50],
+            "readiness_probe": readiness_probe,
+            "readiness_timeout_seconds": 120,
+            "error": None,
+        }
+    except Exception as exc:
+        return {
+            "engine": "selenium_chromium",
+            "browser_binary": binary,
+            "exit_code": None,
+            "dom": "",
+            "dom_sha256": None,
+            "console_error_count": None,
+            "console_errors": [],
+            "readiness_probe": readiness_probe,
+            "readiness_timeout_seconds": 120,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    finally:
+        if driver is not None:
+            try:
+                driver.quit()
+            except Exception:
+                pass
+
+
+v3.v2.selenium_probe = selenium_probe_v53
+
+
 def write_markdown(report: dict[str, Any]) -> None:
     previous_markdown(report)
     path = v3.v2.REPORT_MD
@@ -58,7 +161,9 @@ def write_markdown(report: dict[str, Any]) -> None:
         "and 8 national due-diligence routes, for 93 sources with a 99.67 average source-verification "
         "score. Source verification remains separate from parcel binding. Historical auction results "
         "are not promoted to legal completion or current availability. The same task, attempt, "
-        "idempotency key and existing single coordinator remain mandatory.\n"
+        "idempotency key and existing single coordinator remain mandatory. The browser acceptance "
+        "probe waits up to 120 seconds for explicit DOM completion or acceptance-error markers instead "
+        "of taking a fixed five-second snapshot.\n"
     )
     path.write_text(text, encoding="utf-8")
 
@@ -114,6 +219,17 @@ def main() -> int:
         "progress_non_favicon_404_count": progress.get("non_favicon_404_count"),
         "geometry_non_favicon_404_count": geometry.get("non_favicon_404_count"),
         "progress_acceptance_error": progress.get("acceptance_error"),
+    }
+    report["browser_readiness_contract"] = {
+        "fixed_sleep_removed": True,
+        "terminal_markers": [
+            "data-loaded-count",
+            "data-candidate-count",
+            "data-acceptance-error",
+            "BLOCKED status text",
+        ],
+        "poll_interval_seconds": 0.5,
+        "timeout_seconds": 120,
     }
     next_step = report.get("next_step")
     if isinstance(next_step, str):
