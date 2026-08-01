@@ -1,0 +1,2195 @@
+{
+  "schema_version": 1,
+  "slot_id": "security_public_safety_2",
+  "task_id": "security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801",
+  "first_unverified_step": "WAVE141_SOURCE_SCRIPT_PATH_CONTRACT_AND_OFFICIAL_POSTCODE_HMLR_LINEAGE_RECOVERY",
+  "continuation_key": "f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d",
+  "previous_continuation_key": "5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40",
+  "source_head": "12bba76c7fed785185a2584dcb4df1b5fce6aca5",
+  "generated_at": "2026-08-01T11:29:27.784081Z",
+  "state": "COMPLETED_BOUNDED_SOURCE_LINEAGE_RECOVERY_PUBLISHED",
+  "recovery": {
+    "reason": "ORIGINAL_LINEAGE_STEP_EXCEEDED_15_MINUTES_WITHOUT_PROGRESS",
+    "attempt": 1,
+    "same_task": true,
+    "same_continuation": true,
+    "second_task_created": false,
+    "large_wave140_downloads_repeated": false
+  },
+  "scope": {
+    "lineage_only": true,
+    "repeat_completed_waves": false,
+    "redownload_wave140_hmlr": false,
+    "rescan_wave140_open_uprn": false,
+    "parent_values_mutated": false,
+    "parent_scores_mutated": false,
+    "maximum_simultaneous_workers": 12,
+    "rows": [
+      "parcel_40827"
+    ]
+  },
+  "official_source_manifest": {
+    "schema_version": 1,
+    "slot_id": "security_public_safety_2",
+    "task_id": "security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801",
+    "continuation_key": "f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d",
+    "purpose": "Continue only the unresolved exact source lineage binding after completed Wave140 without redownloading or rescanning its large official datasets.",
+    "trigger_sync_at": "2026-08-01T11:03:00Z",
+    "reuse_policy": {
+      "repeat_completed_waves": false,
+      "redownload_wave140_hmlr_gml": false,
+      "rescan_wave140_os_open_uprn_617876071_bytes": false,
+      "use_existing_wave139_and_wave140_verified_outputs_as_inputs": true
+    },
+    "official_sources": [
+      {
+        "source_id": "hmlr_inspire_index_polygons",
+        "authority": "HM Land Registry",
+        "kind": "official_public_dataset",
+        "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+        "required_evidence": [
+          "authority link",
+          "download-page response",
+          "GML identifier",
+          "polygon geometry hash",
+          "prior download hash"
+        ]
+      },
+      {
+        "source_id": "os_open_uprn",
+        "authority": "Ordnance Survey",
+        "kind": "official_public_dataset",
+        "url": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+        "required_evidence": [
+          "product metadata",
+          "archive hash",
+          "UPRN row identifier",
+          "coordinate fields"
+        ]
+      },
+      {
+        "source_id": "ons_lsoa_2011_bfc",
+        "authority": "Office for National Statistics",
+        "kind": "official_feature_service",
+        "url": "https://www.arcgis.com/sharing/rest/content/items/357ee15b1080431491bf965394090c72",
+        "required_evidence": [
+          "item metadata",
+          "service URL",
+          "exact E01001553 query",
+          "geometry response hash"
+        ]
+      },
+      {
+        "source_id": "ons_lsoa_2021_bfc",
+        "authority": "Office for National Statistics",
+        "kind": "official_feature_service",
+        "url": "https://www.arcgis.com/sharing/rest/content/items/2bbaef5230694f3abae4f9145a3a9800",
+        "required_evidence": [
+          "item metadata",
+          "service URL",
+          "exact E01002091 query",
+          "geometry response hash"
+        ]
+      },
+      {
+        "source_id": "ons_postcode_products",
+        "authority": "Office for National Statistics",
+        "kind": "official_postcode_lookup_release",
+        "url": "https://geoportal.statistics.gov.uk/",
+        "required_evidence": [
+          "release identifier",
+          "asset hash",
+          "postcode row",
+          "LSOA11 code",
+          "LSOA21 code"
+        ],
+        "promotion_rule": "At least two official releases must agree for the same exactly bound postcode; proximity alone is forbidden."
+      }
+    ],
+    "prior_verified_inputs": [
+      {
+        "path": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json",
+        "blob_sha": "eedc002a15bedc1eafc2667aa0c62bb1a9ff8650"
+      },
+      {
+        "path": "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json",
+        "blob_sha": "3173a7734b442f31f57b09b2d71f1c80f6be33bf",
+        "output_json_sha256": "ac70025488c9058e80a85aed3fd80dc6dac155f3e70ba6e23364639003d598eb"
+      },
+      {
+        "path": "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json",
+        "blob_sha": "2542d2c2b71b3457545ca413169563d2ac880c61"
+      }
+    ],
+    "lineage_acceptance": {
+      "exact_non_derived_parent_source_record_required": true,
+      "exact_hmlr_polygon_or_uprn_identifier_required": true,
+      "official_postcode_release_count_minimum": 2,
+      "expected_lsoa11": "E01001553",
+      "expected_lsoa21": "E01002091",
+      "conflict_free_required": true,
+      "postcode_proximity_inference_forbidden": true,
+      "centroid_inference_forbidden": true,
+      "majority_vote_forbidden": true,
+      "threshold_relaxation_forbidden": true
+    },
+    "fake_data": false
+  },
+  "official_source_probes": [
+    {
+      "source_id": "hmlr_inspire_index_polygons",
+      "authority": "HM Land Registry",
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "ok": true,
+      "response_sha256": "77202320a5dc9fa2486b9d4b85bffc68d4be884c947840edde884ad6684aefb7",
+      "download_marker": true
+    },
+    {
+      "source_id": "os_open_uprn",
+      "authority": "Ordnance Survey",
+      "url": "https://osdatahub.os.uk/downloads/open/OpenUPRN",
+      "ok": true,
+      "response_sha256": "350d37a284388ca3748644ee603ae0f5468ce194421f6e0b521bf9751d6f60d4"
+    },
+    {
+      "source_id": "ons_lsoa_2011_bfc",
+      "authority": "Office for National Statistics",
+      "url": "https://www.arcgis.com/sharing/rest/content/items/357ee15b1080431491bf965394090c72",
+      "ok": true,
+      "owner": "ONSGeography_data",
+      "title": "Lower layer Super Output Areas (December 2011) Boundaries EW BFC (V3)",
+      "service_url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_Dec_2011_Boundaries_Full_Clipped_BFC_EW_V3_2022/FeatureServer",
+      "exact_code": "E01001553",
+      "exact_code_feature_count": 1,
+      "response_sha256": "aab5b801d354383769ab1e43e4cefbb111cc4639602fdc3d4c80282567ddc482"
+    },
+    {
+      "source_id": "ons_lsoa_2021_bfc",
+      "authority": "Office for National Statistics",
+      "url": "https://www.arcgis.com/sharing/rest/content/items/2bbaef5230694f3abae4f9145a3a9800",
+      "ok": true,
+      "owner": "ONSGeography_data",
+      "title": "Lower layer Super Output Areas (December 2021) Boundaries EW BFC (V10)",
+      "service_url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BFC_V10/FeatureServer",
+      "exact_code": "E01002091",
+      "exact_code_feature_count": 1,
+      "response_sha256": "d70cd9edf02094c2dc59a95cf709dcb3b07af55d5504a68a3c9f4e310e2f48c6"
+    },
+    {
+      "source_id": "ons_postcode_products",
+      "authority": "Office for National Statistics",
+      "url": "https://geoportal.statistics.gov.uk/",
+      "ok": true,
+      "searches": [
+        {
+          "query": "\"National Statistics Postcode Lookup\"",
+          "ok": true,
+          "total": 106,
+          "item_ids": [
+            "adbc08fb53454b7e96250815110d53d9",
+            "ab6bb689a80544039c1edc28a1284dba",
+            "c13d3c7e4fef40f99e5a9e758135ad20",
+            "03b9231264094b6ea6c1aaf8c9a185ad",
+            "419355d8a54741f19025ba97e35da55a",
+            "17cf7c729ee54f7b8ec3d415ca4acb57",
+            "7668e0d35cab4f6db6f15f03be610fb0",
+            "836516fcb2db49cba31a5420f72c3e50",
+            "36b718ad00de49afb9ad364f8b815b9e",
+            "8a1d5b58df824b2e86fe07ddfdd87165",
+            "d1f0e9fe00484f62907d6776086d0ab4",
+            "255f2bf1f91841ea8c2a313855f1909c",
+            "1320d98561d44fd98da21b9962e84396",
+            "92550afb86cb49c6b18aa69434c15d15",
+            "c8f0493515054dd1afc996ce23e696e7",
+            "2410f94375674cd2a6182b4f5e531bb8",
+            "077631e063eb4e1ab43575d01381ec33",
+            "5dd216d9899044348a5b08fee09ac5a4",
+            "ec30de8df7cb4e8b8f6158e4337f46d2",
+            "e607b6746f944322b35eafd293d1a4ee"
+          ],
+          "response_sha256": "89ae77b1e46b9a2b0beaa79b0c1fec3c9ada1f3f4695f25afc9ec11666911704"
+        },
+        {
+          "query": "\"ONS Postcode Directory\"",
+          "ok": true,
+          "total": 104,
+          "item_ids": [
+            "8c41879d69ee4cd1b22aab62a3d355e5",
+            "a8949f3f43e5467d96198381eb1a52cb",
+            "78102c01b98b4f01ba78ea768674a5b1",
+            "550d5ed9b4414d75a531538359fe55f6",
+            "374d26ccc6244bf594465a3a4ab3ac19",
+            "2ced9a3a2462432a92c31226e3cd3aa5",
+            "d1317f804688417287de8f8224ecc942",
+            "7efd49be24fb4ed8b21eedeb2540ea8c",
+            "6fff67d204fd4f339591ed667a6e3642",
+            "5f31ff4fc7624f9dabcc8148da88ba9e",
+            "181b0c53a72c421bb35a5e6994559c77",
+            "a360629ab9f0429bbbbe3ad8db7fbcc5",
+            "481c020d6e824b628b18359d733e8cd5",
+            "3080229224424c9cb53c0b48f5a64d27",
+            "10005820ffcb4d96b2b39f2d8bf0de92",
+            "ca3396864fee4f5186046150f0e9092f",
+            "aa9271a697ae43d2af152765af9f159d",
+            "25a001ce8777407ca466c2d5852830a0",
+            "cfd03a224ae24db483f89051c35dac29",
+            "3635ca7f69df4733af27caf86473ffa1"
+          ],
+          "response_sha256": "f46a5f5b70b3420a58fa35185f1a3cc4dfca6e9feb15cc8ea3de64b108a01d83"
+        },
+        {
+          "query": "NSPL postcode",
+          "ok": true,
+          "total": 111,
+          "item_ids": [
+            "adbc08fb53454b7e96250815110d53d9",
+            "ab6bb689a80544039c1edc28a1284dba",
+            "c13d3c7e4fef40f99e5a9e758135ad20",
+            "03b9231264094b6ea6c1aaf8c9a185ad",
+            "419355d8a54741f19025ba97e35da55a",
+            "17cf7c729ee54f7b8ec3d415ca4acb57",
+            "7668e0d35cab4f6db6f15f03be610fb0",
+            "a360629ab9f0429bbbbe3ad8db7fbcc5",
+            "836516fcb2db49cba31a5420f72c3e50",
+            "36b718ad00de49afb9ad364f8b815b9e",
+            "8a1d5b58df824b2e86fe07ddfdd87165",
+            "d1f0e9fe00484f62907d6776086d0ab4",
+            "255f2bf1f91841ea8c2a313855f1909c",
+            "1320d98561d44fd98da21b9962e84396",
+            "92550afb86cb49c6b18aa69434c15d15",
+            "c8f0493515054dd1afc996ce23e696e7",
+            "2410f94375674cd2a6182b4f5e531bb8",
+            "077631e063eb4e1ab43575d01381ec33",
+            "5dd216d9899044348a5b08fee09ac5a4",
+            "ec30de8df7cb4e8b8f6158e4337f46d2"
+          ],
+          "response_sha256": "0a1e1e1e2062643fb73db3c101961d9b332b49226db6d66dadbf6140d6fcb947"
+        },
+        {
+          "query": "ONSPD postcode",
+          "ok": true,
+          "total": 111,
+          "item_ids": [
+            "550d5ed9b4414d75a531538359fe55f6",
+            "84787e80aca04bb388caad29f89946b0",
+            "cb7d3d04b77f43149ea82eca2bcba69e",
+            "ad543164c4374f1e84f5016003cfe7f4",
+            "374d26ccc6244bf594465a3a4ab3ac19",
+            "a5d49bb39892423c95f1c5a4b9c178b0",
+            "2ced9a3a2462432a92c31226e3cd3aa5",
+            "d1317f804688417287de8f8224ecc942",
+            "7efd49be24fb4ed8b21eedeb2540ea8c",
+            "6fff67d204fd4f339591ed667a6e3642",
+            "5f31ff4fc7624f9dabcc8148da88ba9e",
+            "d6f222b58dc147bf9c8ba829815082ce",
+            "6d4f00d022e24c9a920df743fcf83fb8",
+            "e911cc07e1a54b24b7cddcfa6fc7e249",
+            "181b0c53a72c421bb35a5e6994559c77",
+            "a360629ab9f0429bbbbe3ad8db7fbcc5",
+            "481c020d6e824b628b18359d733e8cd5",
+            "3080229224424c9cb53c0b48f5a64d27",
+            "10005820ffcb4d96b2b39f2d8bf0de92",
+            "ca3396864fee4f5186046150f0e9092f"
+          ],
+          "response_sha256": "61e0711150ddf1b9b2a40d5a3358936adf6b993cb725b3292322a48276906756"
+        }
+      ],
+      "unique_item_ids": [
+        "03b9231264094b6ea6c1aaf8c9a185ad",
+        "077631e063eb4e1ab43575d01381ec33",
+        "10005820ffcb4d96b2b39f2d8bf0de92",
+        "1320d98561d44fd98da21b9962e84396",
+        "17cf7c729ee54f7b8ec3d415ca4acb57",
+        "181b0c53a72c421bb35a5e6994559c77",
+        "2410f94375674cd2a6182b4f5e531bb8",
+        "255f2bf1f91841ea8c2a313855f1909c",
+        "25a001ce8777407ca466c2d5852830a0",
+        "2ced9a3a2462432a92c31226e3cd3aa5",
+        "3080229224424c9cb53c0b48f5a64d27",
+        "3635ca7f69df4733af27caf86473ffa1",
+        "36b718ad00de49afb9ad364f8b815b9e",
+        "374d26ccc6244bf594465a3a4ab3ac19",
+        "419355d8a54741f19025ba97e35da55a",
+        "481c020d6e824b628b18359d733e8cd5",
+        "550d5ed9b4414d75a531538359fe55f6",
+        "5dd216d9899044348a5b08fee09ac5a4",
+        "5f31ff4fc7624f9dabcc8148da88ba9e",
+        "6d4f00d022e24c9a920df743fcf83fb8",
+        "6fff67d204fd4f339591ed667a6e3642",
+        "7668e0d35cab4f6db6f15f03be610fb0",
+        "78102c01b98b4f01ba78ea768674a5b1",
+        "7efd49be24fb4ed8b21eedeb2540ea8c",
+        "836516fcb2db49cba31a5420f72c3e50",
+        "84787e80aca04bb388caad29f89946b0",
+        "8a1d5b58df824b2e86fe07ddfdd87165",
+        "8c41879d69ee4cd1b22aab62a3d355e5",
+        "92550afb86cb49c6b18aa69434c15d15",
+        "a360629ab9f0429bbbbe3ad8db7fbcc5",
+        "a5d49bb39892423c95f1c5a4b9c178b0",
+        "a8949f3f43e5467d96198381eb1a52cb",
+        "aa9271a697ae43d2af152765af9f159d",
+        "ab6bb689a80544039c1edc28a1284dba",
+        "ad543164c4374f1e84f5016003cfe7f4",
+        "adbc08fb53454b7e96250815110d53d9",
+        "c13d3c7e4fef40f99e5a9e758135ad20",
+        "c8f0493515054dd1afc996ce23e696e7",
+        "ca3396864fee4f5186046150f0e9092f",
+        "cb7d3d04b77f43149ea82eca2bcba69e",
+        "cfd03a224ae24db483f89051c35dac29",
+        "d1317f804688417287de8f8224ecc942",
+        "d1f0e9fe00484f62907d6776086d0ab4",
+        "d6f222b58dc147bf9c8ba829815082ce",
+        "e607b6746f944322b35eafd293d1a4ee",
+        "e911cc07e1a54b24b7cddcfa6fc7e249",
+        "ec30de8df7cb4e8b8f6158e4337f46d2"
+      ]
+    }
+  ],
+  "wave140_covering_hmlr_identifiers": [
+    {
+      "identifier": "52893258",
+      "identifier_type": "HMLR_INSPIRE_ID",
+      "authority": "Haringey",
+      "geometry_sha256": "bd96ae6bd1c10d7cdcee1509f4d9d6c3df37c56bba21534fd4f7f826eca01a1a",
+      "distance_to_boundary_metres": 2.610155353497248
+    }
+  ],
+  "wave140_uprn_candidates": [
+    {
+      "identifier": "100021184205",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852323,
+      "latitude": 51.6083838,
+      "distance_metres": 11.893449130052607,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184204",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852486,
+      "latitude": 51.6083391,
+      "distance_metres": 15.57224956664581,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184203",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852368,
+      "latitude": 51.6082759,
+      "distance_metres": 20.372658761255305,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184202",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852387,
+      "latitude": 51.608231,
+      "distance_metres": 24.775414754093603,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "768024589",
+      "identifier_type": "UPRN",
+      "longitude": -0.0855027,
+      "latitude": 51.6084781,
+      "distance_metres": 29.892789051572876,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184201",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852265,
+      "latitude": 51.6081769,
+      "distance_metres": 29.965192871367847,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "10096899972",
+      "identifier_type": "UPRN",
+      "longitude": -0.085242,
+      "latitude": 51.6081776,
+      "distance_metres": 30.278850143057458,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "10096899973",
+      "identifier_type": "UPRN",
+      "longitude": -0.085242,
+      "latitude": 51.6081776,
+      "distance_metres": 30.278850143057458,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184200",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852432,
+      "latitude": 51.6081232,
+      "distance_metres": 35.981015445642996,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184199",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852451,
+      "latitude": 51.6080782,
+      "distance_metres": 40.791426528829255,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "207001425",
+      "identifier_type": "UPRN",
+      "longitude": -0.0856907,
+      "latitude": 51.6084722,
+      "distance_metres": 42.650622414074014,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207005857",
+      "identifier_type": "UPRN",
+      "longitude": -0.0856907,
+      "latitude": 51.6084722,
+      "distance_metres": 42.650622414074014,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184198",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852474,
+      "latitude": 51.6080243,
+      "distance_metres": 46.60776403721534,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "10003985779",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852474,
+      "latitude": 51.6080243,
+      "distance_metres": 46.60776403721534,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "10003985780",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852474,
+      "latitude": 51.6080243,
+      "distance_metres": 46.60776403721534,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184196",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852208,
+      "latitude": 51.6079699,
+      "distance_metres": 52.101275498564235,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "207005267",
+      "identifier_type": "UPRN",
+      "longitude": -0.0858403,
+      "latitude": 51.6084484,
+      "distance_metres": 52.76094065776267,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207005546",
+      "identifier_type": "UPRN",
+      "longitude": -0.085848,
+      "latitude": 51.6085107,
+      "distance_metres": 54.00582904304889,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184194",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852664,
+      "latitude": 51.6079167,
+      "distance_metres": 58.54189199127943,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "10097366845",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "10097366846",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "10097366847",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "10097366848",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207020767",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207021045",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107376",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107377",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107378",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107379",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107380",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107381",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107382",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107383",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107384",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107385",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107386",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107387",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107388",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107389",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107390",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107391",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107392",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107393",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107394",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107395",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107396",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107397",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107398",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107399",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107400",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107401",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107402",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107403",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107404",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107405",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107406",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107407",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107408",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107409",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107410",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107411",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207107412",
+      "identifier_type": "UPRN",
+      "longitude": -0.0851354,
+      "latitude": 51.6089627,
+      "distance_metres": 59.388090253993695,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207009312",
+      "identifier_type": "UPRN",
+      "longitude": -0.0849475,
+      "latitude": 51.6089726,
+      "distance_metres": 61.00856500416339,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184195",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859687,
+      "latitude": 51.6083868,
+      "distance_metres": 61.773159826583,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184197",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859813,
+      "latitude": 51.608432,
+      "distance_metres": 62.457933951730524,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184193",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859714,
+      "latitude": 51.6083239,
+      "distance_metres": 62.8872740091947,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184191",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859732,
+      "latitude": 51.608279,
+      "distance_metres": 64.13072890639503,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "207195630",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859911,
+      "latitude": 51.60854,
+      "distance_metres": 64.31125478627987,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207195631",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859911,
+      "latitude": 51.60854,
+      "distance_metres": 64.31125478627987,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184192",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852686,
+      "latitude": 51.6078628,
+      "distance_metres": 64.42856687875104,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "207200923",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859896,
+      "latitude": 51.608576,
+      "distance_metres": 65.09185129404224,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207200976",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859896,
+      "latitude": 51.608576,
+      "distance_metres": 65.09185129404224,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184189",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859755,
+      "latitude": 51.6082251,
+      "distance_metres": 66.10164925078017,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "207195634",
+      "identifier_type": "UPRN",
+      "longitude": -0.0860018,
+      "latitude": 51.6086301,
+      "distance_metres": 67.64294949368598,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207195635",
+      "identifier_type": "UPRN",
+      "longitude": -0.0860018,
+      "latitude": 51.6086301,
+      "distance_metres": 67.64294949368598,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207195636",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859851,
+      "latitude": 51.6086838,
+      "distance_metres": 68.78333141750295,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207195637",
+      "identifier_type": "UPRN",
+      "longitude": -0.0859851,
+      "latitude": 51.6086838,
+      "distance_metres": 68.78333141750295,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "207172971",
+      "identifier_type": "UPRN",
+      "longitude": -0.0842342,
+      "latitude": 51.6087631,
+      "distance_metres": 68.9866733670285,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01001553"
+      ],
+      "lsoa21_codes": [
+        "E01001553"
+      ]
+    },
+    {
+      "identifier": "100021184190",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852565,
+      "latitude": 51.6078087,
+      "distance_metres": 70.17414116819043,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    },
+    {
+      "identifier": "100021184206",
+      "identifier_type": "UPRN",
+      "longitude": -0.0852565,
+      "latitude": 51.6078087,
+      "distance_metres": 70.17414116819043,
+      "exact_coordinate_match": false,
+      "lsoa11_codes": [
+        "E01002091"
+      ],
+      "lsoa21_codes": [
+        "E01002091"
+      ]
+    }
+  ],
+  "wave140_prior_binding_rows": [
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "identifier": "52890222",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "identifier": "52890222",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "eligible_exact_non_derived_binding": false,
+      "content_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    }
+  ],
+  "wave139_official_release_rows": [],
+  "repo_current_lineage_hits": [
+    {
+      "identifier": "52893258",
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "line": 1,
+      "line_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "identifier": "52893258",
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "line": 1,
+      "line_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    }
+  ],
+  "repo_ref_paths_inspected": [
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "82024217fde5bbc26360257e5bd7de377240bfabdda75d99208858025ae94933"
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "ok": true,
+      "mode": "json",
+      "content_sha256": "69c259e865642485182f8e7bb6de32e7741a79433090bb13b8535e34b33b0010"
+    }
+  ],
+  "exact_binding_rows": [
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52881011",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52890222",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52890222",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52890222",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122479,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "3fd0baa44e36240bde8911eb1762ee48cf4bcf745b50cc28ff2ea93a7feea3ad",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122481,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "81e454a4b27d17c552f9cc2ca1c261d3ff9f672f37406698c4361e82fb332b85",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122479,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "3fd0baa44e36240bde8911eb1762ee48cf4bcf745b50cc28ff2ea93a7feea3ad",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122481,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "81e454a4b27d17c552f9cc2ca1c261d3ff9f672f37406698c4361e82fb332b85",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "139ea44ac5614d7bf05c62454b5763d4a6f2ce2b43aed4ad73c9a6abeb155238",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122479,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "3fd0baa44e36240bde8911eb1762ee48cf4bcf745b50cc28ff2ea93a7feea3ad",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/security.geojson",
+      "object_index": 122481,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "81e454a4b27d17c552f9cc2ca1c261d3ff9f672f37406698c4361e82fb332b85",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103174,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "059516e0859a718764bd5487149442fd105f9001c5d9a2b78211f4a8eabc7643",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "HEAD",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103176,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "40d84fcd054feeaba85fb9eeb3bc7bf4f98624195e5a66625053927791b8a638",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103174,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "059516e0859a718764bd5487149442fd105f9001c5d9a2b78211f4a8eabc7643",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "dbc68a892ae5e9a7ea97a696b0323127a91fe135",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103176,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "40d84fcd054feeaba85fb9eeb3bc7bf4f98624195e5a66625053927791b8a638",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 0,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "ffc4d2bff1056bad37df12b9e60ed59b45326e2d7d15f90432d38a74a373b854",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103174,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "059516e0859a718764bd5487149442fd105f9001c5d9a2b78211f4a8eabc7643",
+      "eligible_exact_non_derived_binding": false
+    },
+    {
+      "ref": "fa92123782ea4b15feb856520c65374f793be6f7",
+      "path": "england_map_web/data/program_layer_matrix/topography.geojson",
+      "object_index": 103176,
+      "identifier": "52893258",
+      "identifier_type": "UPRN",
+      "parcel_id_present": true,
+      "selected_coordinate_present": false,
+      "postcode": null,
+      "object_sha256": "40d84fcd054feeaba85fb9eeb3bc7bf4f98624195e5a66625053927791b8a638",
+      "eligible_exact_non_derived_binding": false
+    }
+  ],
+  "official_release_agreements": [],
+  "operation_ledger": [
+    {
+      "index": 1,
+      "at": "2026-08-01T11:26:34.626096Z",
+      "kind": "reuse_wave140",
+      "target": "/home/runner/work/chat_gpt_clone_1/chat_gpt_clone_1/england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json",
+      "ok": true,
+      "details": {
+        "covering_hmlr_identifiers": 1,
+        "uprn_candidates": 80,
+        "prior_binding_rows": 6
+      },
+      "error": null
+    },
+    {
+      "index": 2,
+      "at": "2026-08-01T11:26:34.626723Z",
+      "kind": "reuse_wave139",
+      "target": "/home/runner/work/chat_gpt_clone_1/chat_gpt_clone_1/england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json",
+      "ok": true,
+      "details": {
+        "release_rows": 0,
+        "postcodes": 0
+      },
+      "error": null
+    },
+    {
+      "index": 3,
+      "at": "2026-08-01T11:26:34.781130Z",
+      "kind": "ons_lsoa_2021_bfc_item",
+      "target": "https://www.arcgis.com/sharing/rest/content/items/2bbaef5230694f3abae4f9145a3a9800?f=json",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 6298,
+        "sha256": "01025127f1f33c9261d1585567a6da07bee4707cbdfe0f34bd9a763242dedc66"
+      },
+      "error": null
+    },
+    {
+      "index": 4,
+      "at": "2026-08-01T11:26:34.786464Z",
+      "kind": "ons_lsoa_2011_bfc_item",
+      "target": "https://www.arcgis.com/sharing/rest/content/items/357ee15b1080431491bf965394090c72?f=json",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 3993,
+        "sha256": "8460960ddbe8f6e52a9ed4b434fe669de7603bc93b85491763307445ec5bd764"
+      },
+      "error": null
+    },
+    {
+      "index": 5,
+      "at": "2026-08-01T11:26:34.821825Z",
+      "kind": "ons_postcode_catalogue",
+      "target": "https://www.arcgis.com/sharing/rest/search?f=json&q=%22National+Statistics+Postcode+Lookup%22&num=50&sortField=modified&sortOrder=desc",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 172666,
+        "sha256": "1ff306fb20c4a575ec8fda82c1828c1ca59bc1cea8075ef23890978c86b9598b"
+      },
+      "error": null
+    },
+    {
+      "index": 6,
+      "at": "2026-08-01T11:26:34.882573Z",
+      "kind": "ons_postcode_catalogue",
+      "target": "https://www.arcgis.com/sharing/rest/search?f=json&q=%22ONS+Postcode+Directory%22&num=50&sortField=modified&sortOrder=desc",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 165336,
+        "sha256": "cd16dd47dd54cbc037b9154b13e7f6446af9fa8cc31c0e95e3680cc8db12d49b"
+      },
+      "error": null
+    },
+    {
+      "index": 7,
+      "at": "2026-08-01T11:26:34.914542Z",
+      "kind": "ons_lsoa_2021_bfc_service",
+      "target": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BFC_V10/FeatureServer?f=json",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 3632,
+        "sha256": "6f63f685355d989fca54ca7f4057334a7af8bccc1a81ecb3d3ce775099ce9880"
+      },
+      "error": null
+    },
+    {
+      "index": 8,
+      "at": "2026-08-01T11:26:34.923618Z",
+      "kind": "ons_lsoa_2011_bfc_service",
+      "target": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_Dec_2011_Boundaries_Full_Clipped_BFC_EW_V3_2022/FeatureServer?f=json",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 4095,
+        "sha256": "c5c7c8f79c5fc35834c669abfb9b020297c9d64cc60ae768df7778e90d5e6fe9"
+      },
+      "error": null
+    },
+    {
+      "index": 9,
+      "at": "2026-08-01T11:26:34.937155Z",
+      "kind": "ons_postcode_catalogue",
+      "target": "https://www.arcgis.com/sharing/rest/search?f=json&q=NSPL+postcode&num=50&sortField=modified&sortOrder=desc",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 167843,
+        "sha256": "4af948cb72f007aa30b20a108e34fbe13cf79dd5f7ae13ddf70509a98018e202"
+      },
+      "error": null
+    },
+    {
+      "index": 10,
+      "at": "2026-08-01T11:26:34.984755Z",
+      "kind": "ons_postcode_catalogue",
+      "target": "https://www.arcgis.com/sharing/rest/search?f=json&q=ONSPD+postcode&num=50&sortField=modified&sortOrder=desc",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json;charset=utf-8",
+        "bytes": 155792,
+        "sha256": "f13d8650a2d43c8c92119c5399b3efbbef39e7d593f796f9b4ab4f629e4fa545"
+      },
+      "error": null
+    },
+    {
+      "index": 11,
+      "at": "2026-08-01T11:26:35.020106Z",
+      "kind": "ons_lsoa_2011_bfc_exact_code",
+      "target": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_Dec_2011_Boundaries_Full_Clipped_BFC_EW_V3_2022/FeatureServer/0/query?f=json&where=LSOA11CD%3D%27E01001553%27&outFields=%2A&returnGeometry=true&outSR=27700&geometryPrecision=3",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 18614,
+        "sha256": "f48a49fe50376ce307041d0512b01236d2cfe0e738a2f36449688159725a8bdf"
+      },
+      "error": null
+    },
+    {
+      "index": 12,
+      "at": "2026-08-01T11:26:35.049836Z",
+      "kind": "ons_lsoa_2021_bfc_exact_code",
+      "target": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BFC_V10/FeatureServer/0/query?f=json&where=LSOA21CD%3D%27E01002091%27&outFields=%2A&returnGeometry=true&outSR=27700&geometryPrecision=3",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes": 15701,
+        "sha256": "87300252f011f3a8b5d94f082040ca9c21d8f3c261e131e18c59261a8d3152fb"
+      },
+      "error": null
+    },
+    {
+      "index": 13,
+      "at": "2026-08-01T11:26:35.545937Z",
+      "kind": "hmlr_page",
+      "target": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "bytes": 226934,
+        "sha256": "77202320a5dc9fa2486b9d4b85bffc68d4be884c947840edde884ad6684aefb7"
+      },
+      "error": null
+    },
+    {
+      "index": 14,
+      "at": "2026-08-01T11:26:36.354890Z",
+      "kind": "os_open_uprn_metadata",
+      "target": "https://api.os.uk/downloads/v1/products/OpenUPRN/downloads?area=GB&format=CSV",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "content_type": "application/json",
+        "bytes": 222,
+        "sha256": "350d37a284388ca3748644ee603ae0f5468ce194421f6e0b521bf9751d6f60d4"
+      },
+      "error": null
+    },
+    {
+      "index": 15,
+      "at": "2026-08-01T11:29:27.783569Z",
+      "kind": "bounded_lineage",
+      "target": "verified Wave140 paths plus current HEAD",
+      "ok": true,
+      "details": {
+        "identifiers": 15,
+        "current_hits": 2,
+        "paths_inspected": 6,
+        "bindings": 27,
+        "eligible": 0
+      },
+      "error": null
+    }
+  ],
+  "quality_policy": {
+    "fail_closed": true,
+    "exact_non_derived_parent_source_record_required": true,
+    "exact_hmlr_polygon_or_uprn_identifier_required": true,
+    "official_postcode_release_count_minimum": 2,
+    "postcode_proximity_inference_forbidden": true,
+    "centroid_inference_forbidden": true,
+    "majority_vote_forbidden": true,
+    "threshold_relaxation_forbidden": true,
+    "parent_candidate_value_changed": false,
+    "parent_candidate_accuracy_mutated": false
+  },
+  "result": {
+    "rows_audited": 1,
+    "new_high_confidence_support_candidates": 0,
+    "open_rows_after_wave": 1,
+    "resolved_rows_after_wave": 15,
+    "high_confidence_support_rows": 30760,
+    "parent_candidate_rows": 30761,
+    "support_accuracy_percent": 99.99674913039239,
+    "wave_percentage_point_delta": 0.0,
+    "cumulative_support_percentage_point_delta": 1.277591755794674,
+    "reviewed_official_source_families": 13,
+    "promoted_official_source_families": 10,
+    "official_source_manifest_rows": 5,
+    "official_source_probe_successes": 5,
+    "official_source_probe_attempts": 5,
+    "wave140_covering_hmlr_identifiers": 1,
+    "wave140_uprn_candidates_reused": 80,
+    "wave140_prior_binding_rows_reused": 6,
+    "wave139_official_release_rows_reused": 0,
+    "repo_current_lineage_hits": 2,
+    "repo_ref_paths_inspected": 6,
+    "exact_binding_rows": 27,
+    "eligible_exact_binding_rows": 0,
+    "official_release_agreement_rows": 0,
+    "multi_release_expected_pair_agreements": 0,
+    "official_network_probe_attempts": 12,
+    "official_network_probe_successes": 12,
+    "operation_ledger_rows": 15,
+    "completed_or_fail_closed_operations": 143,
+    "total_operations": 143,
+    "blocked_operations": 0,
+    "stuck_pending_operations": 0,
+    "recovered_stuck_pending_operations": 1,
+    "overall_scope_progress_percent": 100.0
+  },
+  "rows": [
+    {
+      "parcel_id": "parcel_40827",
+      "state": "OPEN_IRREDUCIBLE_AFTER_BOUNDED_SOURCE_LINEAGE_RECOVERY",
+      "confidence_percent": 94,
+      "manual_action_required": true
+    }
+  ],
+  "fake_data": false
+}
