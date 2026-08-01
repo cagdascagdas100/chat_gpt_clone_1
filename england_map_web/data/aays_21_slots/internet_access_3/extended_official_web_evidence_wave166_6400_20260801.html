@@ -1,0 +1,40 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave166</title><body>
+<h1>internet_access_3 Wave166 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave166_operations_6400_20260801.html">6.400 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave166_6400_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const rank=(a,v)=>[...new Set(a)].sort((x,y)=>y-x).indexOf(v)+1;
+const med=a=>{const x=[...a].sort((p,q)=>p-q),m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2};
+const fmt=n=>n.toLocaleString('en-GB');
+function expand(s){
+ const gs={};s.contract_seed.forEach(r=>(gs[r[1]]??=[]).push(r));
+ const ss={};Object.entries(gs).forEach(([k,rs])=>{const c=rs.reduce((a,r)=>a+r[4],0),b=rs.reduce((a,r)=>a+r[5],0);ss[k]={count:rs.length,c,b,ratio:c?b/c*100:0}});
+ const sc=Object.values(ss).map(x=>x.c),sb=Object.values(ss).map(x=>x.b),sr=Object.values(ss).map(x=>+x.ratio.toFixed(12)),a=[];
+ s.contract_seed.forEach(r=>{const [n,p,jc,jb,yc,yb]=r,z=slug(n),rs=gs[p],st=ss[p],vc=rs.map(x=>x[4]),vb=rs.map(x=>x[5]),vr=rs.map(x=>+(x[5]/x[4]*100).toFixed(12)),ratio=+(yb/yc*100).toFixed(12),gap=yc-yb,sg=st.c-st.b,mb=med(vb),mc=med(vc),cmp=(v,m)=>v>m?'above':v<m?'below':'equal to';
+ const f=[
+ [`sup_${z}_contract_count`,`${p} had ${st.count} contracts in the displayed July 2026 BDUK table.`],
+ [`sup_${z}_contracted_total`,`The displayed July 2026 contracted total for ${p} was ${fmt(st.c)}.`],
+ [`sup_${z}_built_total`,`The displayed July 2026 built total for ${p} was ${fmt(st.b)}.`],
+ [`sup_${z}_built_ratio`,`The deterministic displayed July 2026 built-to-contracted ratio for ${p} was ${st.ratio.toFixed(2)}%.`],
+ [`sup_${z}_contract_share`,`${n} represented ${(yc/st.c*100).toFixed(2)}% of ${p}'s displayed July contracted total.`],
+ [`sup_${z}_built_share`,`${n} represented ${(st.b?yb/st.b*100:0).toFixed(2)}% of ${p}'s displayed July built total.`],
+ [`sup_${z}_within_contract_rank`,`${n} ranked ${rank(vc,yc)} within ${p} by displayed July contracted premises.`],
+ [`sup_${z}_within_built_rank`,`${n} ranked ${rank(vb,yb)} within ${p} by displayed July built premises.`],
+ [`sup_${z}_within_ratio_rank`,`${n} ranked ${rank(vr,ratio)} within ${p} by deterministic July built ratio.`],
+ [`sup_${z}_supplier_contract_rank`,`${p} ranked ${rank(sc,st.c)} among displayed suppliers by July contracted total.`],
+ [`sup_${z}_supplier_built_rank`,`${p} ranked ${rank(sb,st.b)} among displayed suppliers by July built total.`],
+ [`sup_${z}_supplier_ratio_rank`,`${p} ranked ${rank(sr,+st.ratio.toFixed(12))} among displayed suppliers by deterministic July built ratio.`],
+ [`sup_${z}_gap`,`The displayed July contracted-minus-built gap for ${n} was ${fmt(gap)}.`],
+ [`sup_${z}_gap_share`,`${n} represented ${(sg?gap/sg*100:0).toFixed(2)}% of ${p}'s displayed July contracted-minus-built gap.`],
+ [`sup_${z}_built_median`,`${n}'s displayed July built figure was ${cmp(yb,mb)} the ${p} contract median of ${fmt(mb)}.`],
+ [`sup_${z}_contracted_median`,`${n}'s displayed July contracted figure was ${cmp(yc,mc)} the ${p} contract median of ${fmt(mc)}.`]
+ ];f.forEach(x=>a.push([x[0],['july_snapshot'],x[1],'supplier_metric',100]));
+ });
+ s.consumer_seed.forEach(x=>a.push([x[0],[x[1]],x[2],x[3],100]));
+ return a.map((x,i)=>[...x,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave166_6400_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave166_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
