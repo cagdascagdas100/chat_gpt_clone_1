@@ -1,0 +1,116 @@
+name: security_public_safety_2 Wave138 downloadable postcode packages
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/aays-triggers/security_public_safety_2_wave138.trigger.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave138
+  cancel-in-progress: false
+
+jobs:
+  publish-official-downloadable-postcode-packages:
+    if: github.head_ref == 'audit/security-public-safety-2-wave138-20260801'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bounded dependencies
+        run: python -m pip install --disable-pip-version-check requests
+
+      - name: Verify runner syntax
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave138_official_downloadable_postcode_package_primary_binding_20260801.py
+
+      - name: Run official downloadable postcode package audit
+        env:
+          AAYS_SOURCE_HEAD: 4c44a5441bf0137dd0e933a59be8bdaeead1cddd
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave138_official_downloadable_postcode_package_primary_binding_20260801.py
+
+      - name: Strict fail-closed validation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138_latest.json')
+          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138.html')
+          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json')
+          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json')
+          queue = Path('docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_downloadable_postcode_package_primary_binding_20260801.v3.task.json')
+          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
+          for path in (output, website, status, evidence, queue, manual):
+              assert path.exists() and path.stat().st_size > 0, path
+          data = json.loads(output.read_text())
+          result = data['result']
+          assert data['fake_data'] is False
+          assert data['continuation_key'] == '020b82d75e030914fd823f7c7182b66770ae224ac0f17fd0c3054a1eedb69fc7'
+          assert data['scope']['maximum_simultaneous_workers'] == 15
+          assert result['arcgis_catalog_searches'] >= 6
+          assert result['ckan_catalog_searches'] >= 8
+          assert result['completed_or_fail_closed_operations'] == result['total_operations']
+          assert result['blocked_operations'] == 0
+          assert result['stuck_pending_operations'] == 0
+          assert json.loads(queue.read_text())['state'] == 'COMPLETED_PUBLISHED'
+          page = website.read_text()
+          assert 'Official catalogue searches' in page
+          assert 'Operation ledger' in page
+          print(json.dumps(result, ensure_ascii=False))
+          PY
+
+      - name: Commit and publish canonical outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_downloadable_postcode_package_primary_binding_20260801.v3.task.json
+          git commit -m 'security_public_safety_2: publish Wave138 downloadable postcode package evidence'
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              published=true
+              break
+            fi
+            git rebase --abort || true
+            sleep $((attempt * 2))
+          done
+          test "$published" = true
+
+      - name: Remote canonical readback
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          remote_head=$(git rev-parse origin/codex/aays-single-runner-v5-20260706)
+          for path in \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_downloadable_postcode_package_primary_binding_wave138.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_downloadable_postcode_package_primary_binding_20260801.v3.task.json; do
+            local_sha=$(sha256sum "$path" | cut -d' ' -f1)
+            remote_sha=$(git show "origin/codex/aays-single-runner-v5-20260706:$path" | sha256sum | cut -d' ' -f1)
+            test "$local_sha" = "$remote_sha"
+            echo "REMOTE_READBACK $path $remote_sha"
+          done
+          echo "CANONICAL_REMOTE_HEAD=$remote_head"
