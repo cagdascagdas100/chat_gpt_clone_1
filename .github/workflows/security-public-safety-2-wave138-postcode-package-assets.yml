@@ -116,14 +116,19 @@ jobs:
           website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_package_assets_exact_row_binding_wave138.html')
           status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json')
           evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json')
+          diagnostic = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_diagnostic_latest.json')
           queue = Path('docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_postcode_package_assets_exact_row_binding_20260801.v3.task.json')
           manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
-          for path in (output, website, status, evidence, queue, manual):
+          for path in (output, website, status, evidence, diagnostic, queue, manual):
               assert path.exists() and path.stat().st_size > 0, path
           data = json.loads(output.read_text())
           result = data['result']
           q = json.loads(queue.read_text())
+          d = json.loads(diagnostic.read_text())
           assert data['fake_data'] is False
+          assert d['fake_data'] is False
+          assert d['state'] == 'COMPLETED'
+          assert d['continuation_key'] == data['continuation_key']
           assert data['scope']['maximum_simultaneous_workers'] == 15
           assert data['scope']['maximum_simultaneous_downloads'] == 4
           assert data['continuation_key'] == q['continuation_key']
@@ -152,6 +157,7 @@ jobs:
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_package_assets_exact_row_binding_wave138.html \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_diagnostic_latest.json \
             docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
             docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_postcode_package_assets_exact_row_binding_20260801.v3.task.json
           git commit -m 'security_public_safety_2: publish Wave138 postcode package assets'
@@ -178,6 +184,7 @@ jobs:
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_package_assets_exact_row_binding_wave138.html \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_status_latest.json \
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_evidence_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave138_diagnostic_latest.json \
             docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
             docs/chatgpt_status/aays1/queue/0151_security_public_safety_2_wave138_official_postcode_package_assets_exact_row_binding_20260801.v3.task.json; do
             local_sha=$(sha256sum "$path" | cut -d' ' -f1)
