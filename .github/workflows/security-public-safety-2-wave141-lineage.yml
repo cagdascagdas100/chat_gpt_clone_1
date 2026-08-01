@@ -11,18 +11,18 @@ permissions:
 
 concurrency:
   group: security-public-safety-2-wave141
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish-official-lineage-contract:
     if: github.head_ref == 'audit/security-public-safety-2-wave141-20260801'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     steps:
-      - name: Checkout exact verified queue commit
+      - name: Checkout exact bounded recovery queue commit
         uses: actions/checkout@v4
         with:
-          ref: 41ee3b086625af693a07c5290fcc4d40e9f29d44
+          ref: 0833bd7a5cadf69bf0da9f9ef5a1f95398f4f397
           fetch-depth: 0
 
       - name: Set up Python
@@ -33,58 +33,65 @@ jobs:
       - name: Install bounded dependency
         run: python -m pip install --disable-pip-version-check requests
 
-      - name: Verify runner syntax and task contract
+      - name: Verify bounded recovery runner and task contract
         run: |
-          python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py
+          python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_lineage_bounded_recovery_20260801.py
           python - <<'PY'
           import json
           from pathlib import Path
           task = json.loads(Path('docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json').read_text())
           assert task['state'] == 'READY'
+          assert task['attempt_id'] == 'attempt-002'
           assert task['continuation_key'] == 'f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d'
           assert task['maximum_simultaneous_workers'] == 12
           assert task['script_path'] == task['source_script_path']
+          assert task['execution_scope']['bounded_recovery_after_stuck_pending'] is True
+          assert task['execution_scope']['unbounded_git_history_scan_removed'] is True
           for path in task['exact_read_paths']:
               assert Path(path).exists(), path
           PY
 
-      - name: Run official internet and repository lineage audit
+      - name: Run bounded official internet and repository lineage recovery
         env:
           AAYS_SOURCE_HEAD: 12bba76c7fed785185a2584dcb4df1b5fce6aca5
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py
+        run: timeout 900 python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_lineage_bounded_recovery_20260801.py
 
       - name: Strict fail-closed validation
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          paths = [
-            Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json'),
-            Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html'),
-            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json'),
-            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json'),
-            Path('docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json'),
-            Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'),
-            Path('docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py'),
-            Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json'),
-          ]
-          for path in paths:
+          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json')
+          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141.html')
+          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_status_latest.json')
+          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_evidence_latest.json')
+          queue = Path('docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json')
+          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
+          runner = Path('docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_lineage_bounded_recovery_20260801.py')
+          manifest = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json')
+          for path in (output, website, status, evidence, queue, manual, runner, manifest):
               assert path.exists() and path.stat().st_size > 0, path
-          data = json.loads(paths[0].read_text())
-          result = data['result']
+          data = json.loads(output.read_text()); result = data['result']
           assert data['fake_data'] is False
           assert data['continuation_key'] == 'f3ef811e7b7ed20ced20008df9e1883c465f49d12df9b70b036436ed3b60353d'
+          assert data['recovery']['same_task'] is True
+          assert data['recovery']['same_continuation'] is True
+          assert data['recovery']['second_task_created'] is False
           assert data['scope']['maximum_simultaneous_workers'] == 12
           assert data['scope']['redownload_wave140_hmlr'] is False
           assert data['scope']['rescan_wave140_open_uprn'] is False
           assert result['official_source_manifest_rows'] >= 5
           assert result['official_source_probe_successes'] >= 4
           assert result['wave140_covering_hmlr_identifiers'] >= 1
+          assert result['wave140_prior_binding_rows_reused'] >= 1
+          assert result['recovered_stuck_pending_operations'] == 1
           assert result['completed_or_fail_closed_operations'] == result['total_operations']
           assert result['blocked_operations'] == 0
           assert result['stuck_pending_operations'] == 0
-          assert json.loads(paths[4].read_text())['state'] == 'COMPLETED_PUBLISHED'
-          page = paths[1].read_text()
+          q = json.loads(queue.read_text())
+          assert q['state'] == 'COMPLETED_PUBLISHED'
+          assert q['attempt_id'] == 'attempt-002'
+          page = website.read_text()
           for heading in ('Official source probes','Wave140 stable identifiers','Repository lineage hits','Exact binding rows','Official postcode release agreements','Operation ledger'):
               assert heading in page, heading
           print(json.dumps(result, ensure_ascii=False))
@@ -96,7 +103,7 @@ jobs:
           rm -rf /tmp/wave141-payload
           mkdir -p /tmp/wave141-payload
           paths=(
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.py
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave141_lineage_bounded_recovery_20260801.py
             docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave141_official_source_manifest.json
             docs/chatgpt_status/aays1/queue/0154_security_public_safety_2_wave141_source_script_path_contract_official_postcode_hmlr_lineage_20260801.v3.task.json
             england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_postcode_hmlr_lineage_contract_wave141_latest.json
@@ -132,7 +139,7 @@ jobs:
             cp -a /tmp/wave141-payload/. /tmp/wave141-publish/
             mapfile -t paths < /tmp/wave141-paths.txt
             git -C /tmp/wave141-publish add "${paths[@]}"
-            git -C /tmp/wave141-publish commit -m 'security_public_safety_2: publish Wave141 official lineage evidence'
+            git -C /tmp/wave141-publish commit -m 'security_public_safety_2: publish Wave141 bounded lineage recovery'
             if git -C /tmp/wave141-publish push origin HEAD:codex/aays-single-runner-v5-20260706; then
               published=true
               break
