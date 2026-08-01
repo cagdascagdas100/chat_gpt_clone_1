@@ -1,0 +1,80 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "ready_to_sell_1",
+  "task_id": "ready_to_sell_1_automation_167_dom_proof_20260720_01",
+  "attempt_id": "ready-to-sell-1-167-20260720-01",
+  "continuation_key": "ed2dbbaecd626250cabab021478b58a70e30af064be31e8d05ac9b5cf7e9ae2f",
+  "detected_at": "2026-08-02T02:46:00+03:00",
+  "remote_head_before_recovery": "1b8c8c1b9dcc789d2e3aea86e75acd8c12f36b9a",
+  "recovery_reason": "EXPIRED_RESUME_LEASE_AND_PREMATURE_FIXED_FIVE_SECOND_DOM_SNAPSHOT",
+  "observed": {
+    "resume_state": "PUBLISHING",
+    "resume_result": null,
+    "last_heartbeat_at": "2026-08-01T22:37:27.013352Z",
+    "lease_expires_at": "2026-08-02T02:37:28.293459+03:00",
+    "active_lease": false,
+    "ownership_state": "unclaimed",
+    "report_status": "BLOCKED",
+    "report_counts": {
+      "raw_candidate_rows": 519,
+      "duplicate_candidate_rows_excluded": 96,
+      "candidate_rows": 423,
+      "internet_reverified_rows": 380,
+      "official_source_rows": 1389,
+      "completed_operations": 290,
+      "total_operations": 291
+    },
+    "dom_loaded_count": null,
+    "dom_visible_count": null,
+    "dom_semantic_valid": null,
+    "rendered_geometry_rows": 0,
+    "loading_text_present_after_browser": true,
+    "non_favicon_404_count": 0
+  },
+  "root_cause": {
+    "file": "docs/chatgpt_status/aays1/automation/ready_to_sell_1_automation_167_dom_proof_v2.py",
+    "inherited_behavior": "selenium_probe slept for a fixed five seconds after driver.get before capturing page_source.",
+    "workload": "The page asynchronously fetched and parsed a 57 MB GeoJSON before setting DOM acceptance attributes.",
+    "failure_mode": "The snapshot was captured while the page still displayed loading, producing null DOM counters and zero rendered geometry rows without a JavaScript or HTTP failure."
+  },
+  "technical_fix": {
+    "patched_file": "docs/chatgpt_status/aays1/automation/ready_to_sell_1_automation_167_dom_proof_v53.py",
+    "commit_sha": "a6ffdcf1c17beecc6758907aa12eb45c67358e25",
+    "blob_sha": "628a7f18947577a6d09cb7612cb38ebacc3eab6d",
+    "content_sha256": "7ddf39fa52fe0427b906bc3de8ea6f909be43055c8f279138b2fdd0005cac3a6",
+    "behavior": "Poll explicit DOM completion or acceptance-error markers every 0.5 seconds for up to 120 seconds.",
+    "tests": ["AST_PARSE_OK", "PY_COMPILE_OK"],
+    "clean_checkout_runtime_test": "NOT_RUN_CONTAINER_DNS_BLOCKED"
+  },
+  "decision": {
+    "same_task_requeued": true,
+    "same_attempt_preserved": true,
+    "same_continuation_preserved": true,
+    "new_task_created": false,
+    "new_runner_started": false,
+    "parallel_runner_started": false,
+    "first_unverified_step": "RUN_PATCHED_CANONICAL_V53_BROWSER_ACCEPTANCE_AND_VERIFY_REMOTE_REPORT_READBACK",
+    "first_unverified_operation_sequence": 291,
+    "queue_state": "READY",
+    "worker_ready": 1,
+    "worker_running": 0
+  },
+  "progress": {
+    "completed_count": 290,
+    "target_count": 291,
+    "previous_progress_percent": 99.66,
+    "progress_percent": 99.66,
+    "progress_percent_increase": 0.0,
+    "formula": "290 / 291 * 100"
+  },
+  "safety": {
+    "fake_data": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false,
+    "parcel_values_published": false,
+    "final_ready": false
+  }
+}
