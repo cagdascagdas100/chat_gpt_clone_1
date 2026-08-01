@@ -1,7 +1,7 @@
 {
   "schema_version": 7,
   "architecture_version": 3,
-  "task_version": "7.0-shared-runner-parser-contract",
+  "task_version": "7.1-shared-runner-parser-contract-resource-class-recovery",
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "page_key": "aays1",
   "slot_id": "security_public_safety_1",
@@ -10,22 +10,38 @@
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "attempt_id": "security-public-safety-1-20260722-017",
   "idempotency_key": "security-public-safety-1-canonical-acceptance-v17-no-replay",
+  "continuation_key": "4472f86d3870fb5bc61617be00f0896ad3701370eea044e94d7989c3e3c5e949",
   "status": "ready",
   "state": "ready",
   "priority": 2,
   "created_at": "2026-07-22T02:10:00Z",
   "queued_at": "2026-07-22T02:10:00Z",
+  "recovered_at": "2026-08-01T14:12:00Z",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "source_branch": "codex/aays-single-runner-v5-20260706",
   "target_branch": "codex/aays-single-runner-v5-20260706",
+  "source_head": "274292aebb2644ad8ef55051e52b5d4cdc8128ca",
   "claimable": true,
   "ready_for_claim": true,
   "script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_carrier.ps1",
   "carrier_blob_sha": "6b30a4ddb71d985195075d21e0209d407b8cccb4",
   "python_wrapper_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+  "python_wrapper_blob_sha": "25db08cc9a5b675705bcdd3ffde7e6d87cf0267b",
   "core_script_path": "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py",
+  "core_script_blob_sha": "c44cf7b9cd5dcb86db4e2edd2a735c1f95277ad1",
   "parcel_partition": {"start": 1, "end": 30761, "count": 30761},
   "read_paths": [
+    "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_1/progress_v15.html",
+    "england_map_web/TerraYield_England_Program_Parcel_Layer_Matrix_20260629.html",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_acceptance_worker.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_carrier.ps1",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17_runner.py",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_1_canonical_acceptance_v17.py"
+  ],
+  "exact_read_paths": [
     "england_map_web/data/program_layer_matrix/security_public_safety_visible_rows.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/security_public_safety_1_area_level_proxy_300.json",
     "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json",
@@ -61,7 +77,29 @@
     "publisher_candidate_report": "docs/chatgpt_status/aays1/shards/security_public_safety_1/reports/015_security_public_safety_1_publisher_candidate_v17_latest.json",
     "publisher_candidate_web": "england_map_web/data/aays_21_slots/security_public_safety_1/publisher_candidate_v17_latest.json"
   },
-  "resource_class": ["network_fetch", "headless_browser", "light_read"],
+  "resource_class": ["network_fetch", "browser_acceptance", "light_read"],
+  "timeout_seconds": 1800,
+  "max_runtime_seconds": 1800,
+  "acceptance_conditions": [
+    "16/16 canonical data.police.uk endpoints return HTTP 200 JSON arrays",
+    "130/130 candidates match stored live count and SHA-256 evidence",
+    "300/300 rows are visible in the headless-browser DOM",
+    "console_error_count equals 0 for progress and product-matrix pages",
+    "single publisher commit, push and remote SHA readback succeed"
+  ],
+  "source_evidence_manifest": {
+    "source_url": "https://data.police.uk/api/forces",
+    "accessed_at": "2026-07-14T01:57:29.7234486+03:00",
+    "content_sha256": "6cedaf3260f911520371d60ab497d9964935e728f63f63b752cb3b994930820d",
+    "supports_fields": ["official_source_availability", "source_url", "official_api_validation_status", "official_api_sample_crime_count", "official_api_sample_sha256", "source_geography_level", "source_date"],
+    "relevant_record_ids_or_excerpt": "Report 137: official source check HTTP 200; 92,283 source features; 300 verified rows; 300 accuracy 4/4. Runtime manifest binds endpoint_01 through endpoint_16 to candidate rows 1 through 130.",
+    "license_or_terms_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "evidence_paths": [
+      "docs/chatgpt_status/aays1/reports/137_security_verified_expansion_latest.md",
+      "england_map_web/data/security_public_safety/parcel_security_scores_verified.csv",
+      "england_map_web/data/aays_21_slots/security_public_safety_1/canonical_130_endpoint_manifest_20260722.json"
+    ]
+  },
   "execution_contract": {
     "execution_host": "powershell_carrier_to_python",
     "shared_runner_powershell_file_compatible": true,
@@ -88,7 +126,7 @@
     "failure_receipts_required_on_all_exits": true,
     "runtime_pass_completed_units": 7,
     "runtime_pass_overall_percent": 87.5,
-    "runtime_pass_percent_increase": 25.0,
+    "runtime_pass_percent_increase": 0.0,
     "publisher_readback_required_for_8_of_8": true
   },
   "acceptance_contract": {
@@ -118,9 +156,16 @@
       "street-level results cover one mile and locations are approximate/anonymised",
       "May 2026 has four known force-level crime-data omissions",
       "London LSOA excludes sexual offences and has CONNECT comparability limits",
-      "ONS year-ending-March-2026 release is scheduled for 23 July 2026 and is not yet published on 22 July 2026"
+      "runtime parity is fail-closed when the current official response differs from the stored count or SHA-256"
     ],
     "ai_role": "not_used"
+  },
+  "recovery_contract": {
+    "same_task_only": true,
+    "new_task_created": false,
+    "new_owner_created": false,
+    "technical_fix": "resource_class headless_browser replaced with accepted browser_acceptance; exact_read_paths, continuation_key, source_head, acceptance_conditions and source evidence added",
+    "remaining_blocker": "existing portable Windows F-host must emit a fresh matching heartbeat and claim receipt"
   },
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -135,25 +180,19 @@
   "no_db_write": true,
   "no_migration": true,
   "no_production_deploy": true,
-  "safety_flags": {
-    "fake_data": false,
-    "db_write": false,
-    "migration": false,
-    "production_deploy": false
-  },
+  "safety_flags": {"fake_data": false, "db_write": false, "migration": false, "production_deploy": false},
   "fake_data": false,
   "db_write": false,
   "migration": false,
   "production_deploy": false,
   "final_ready": false,
   "product_final_ready": false,
-  "timeout_seconds": 1800,
-  "max_runtime_seconds": 1800,
   "created_original_at": "2026-07-22T05:10:00+03:00",
   "hardened_at": "2026-07-22T06:20:00+03:00",
   "publisher_candidate_bound_at": "2026-07-22T07:10:00+03:00",
   "execution_host_fixed_at": "2026-07-22T17:10:00+03:00",
   "process_tree_watchdog_fixed_at": "2026-07-22T17:18:00+03:00",
   "orphan_browser_cleanup_fixed_at": "2026-07-22T17:24:00+03:00",
-  "queue_parser_contract_fixed_at": "2026-07-22T18:18:00+03:00"
+  "queue_parser_contract_fixed_at": "2026-07-22T18:18:00+03:00",
+  "resource_class_recovered_at": "2026-08-01T14:12:00Z"
 }
