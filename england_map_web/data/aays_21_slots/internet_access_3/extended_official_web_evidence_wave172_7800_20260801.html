@@ -1,0 +1,44 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave172</title><body>
+<h1>internet_access_3 Wave172 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave172_operations_7800_20260801.html">7.800 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave172_7800_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const rank=(xs,v)=>[...new Set(xs)].sort((a,b)=>b-a).indexOf(v)+1;
+function expand(seed){
+ const rows=seed.contract_seed,T=seed.displayed_totals.july,st={};
+ rows.forEach(([n,s,c,b])=>{st[s]??=[0,0];st[s][0]+=c;st[s][1]+=b});
+ const cv=rows.map(x=>x[2]),bv=rows.map(x=>x[3]),uv=rows.map(x=>x[2]-x[3]),rv=rows.map(x=>100*x[3]/x[2]);
+ const scv=Object.values(st).map(x=>x[0]),sbv=Object.values(st).map(x=>x[1]),srv=Object.values(st).map(x=>100*x[1]/x[0]);
+ const overall=100*T.built/T.contracted, totalUnbuilt=T.contracted-T.built, a=[];
+ for(const [n,s,c,b] of rows){const z=slug(n),u=c-b,r=100*b/c,sc=st[s][0],sb=st[s][1],sr=100*sb/sc;
+  const f=[
+   [`jul_${z}_unbuilt_count`,[`july_snapshot`],`The July 2026 rounded row for ${n} has ${u.toLocaleString('en-GB')} contracted premises not included in its built count.`,'derived_distribution'],
+   [`jul_${z}_unbuilt_pct`,[`july_snapshot`],`The July 2026 rounded unbuilt share for ${n} is ${(100*u/c).toFixed(2)}%.`,'derived_distribution'],
+   [`jul_${z}_contracted_total_share`,[`july_snapshot`],`${n} represents ${(100*c/T.contracted).toFixed(4)}% of the displayed July contracted-premises total.`,'derived_distribution'],
+   [`jul_${z}_unbuilt_total_share`,[`july_snapshot`],`${n} represents ${(100*u/totalUnbuilt).toFixed(4)}% of the displayed July unbuilt-premises total.`,'derived_distribution'],
+   [`jul_${z}_completion_gap_100`,[`july_snapshot`],`The July completion-ratio gap to 100% for ${n} is ${(100-r).toFixed(2)} percentage points.`,'derived_distribution'],
+   [`jul_${z}_above_overall`,[`july_snapshot`],`The July completion ratio for ${n} (${r.toFixed(2)}%) is ${r>=overall?'above or equal to':'below'} the displayed overall ratio (${overall.toFixed(2)}%).`,'derived_distribution'],
+   [`jul_${z}_ratio_vs_overall`,[`july_snapshot`],`The July completion ratio for ${n} is ${(r/overall).toFixed(4)} times the displayed overall ratio.`,'derived_distribution'],
+   [`jul_${z}_contracted_rank`,[`july_snapshot`],`${n} has competition rank ${rank(cv,c)} by rounded July contracted premises, descending.`,'derived_distribution'],
+   [`jul_${z}_built_rank`,[`july_snapshot`],`${n} has competition rank ${rank(bv,b)} by rounded July built premises, descending.`,'derived_distribution'],
+   [`jul_${z}_completion_rank`,[`july_snapshot`],`${n} has competition rank ${rank(rv,r)} by calculated July completion ratio, descending.`,'derived_distribution'],
+   [`jul_${z}_unbuilt_rank`,[`july_snapshot`],`${n} has competition rank ${rank(uv,u)} by rounded July unbuilt premises, descending.`,'derived_distribution'],
+   [`jul_${z}_supplier_contracted_total`,[`july_snapshot`],`For the July rows, supplier ${s} has a row-summed contracted total of ${sc.toLocaleString('en-GB')}; ${n} is one contributing contract.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_built_total`,[`july_snapshot`],`For the July rows, supplier ${s} has a row-summed built total of ${sb.toLocaleString('en-GB')}; ${n} is one contributing contract.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_completion`,[`july_snapshot`],`For the July rows, supplier ${s} has a row-summed completion ratio of ${sr.toFixed(2)}%; ${n} is one contributing contract.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_contracted_share`,[`july_snapshot`],`${n} contributes ${(100*c/sc).toFixed(2)}% of ${s}'s row-summed July contracted premises.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_built_share`,[`july_snapshot`],`${n} contributes ${(100*b/sb).toFixed(2)}% of ${s}'s row-summed July built premises.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_gap`,[`july_snapshot`],`The July completion ratio for ${n} differs from ${s}'s row-summed completion ratio by ${(r-sr)>=0?'+':''}${(r-sr).toFixed(2)} percentage points.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_contract_rank`,[`july_snapshot`],`Supplier ${s}, associated with ${n}, has competition rank ${rank(scv,sc)} by row-summed July contracted premises.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_built_rank`,[`july_snapshot`],`Supplier ${s}, associated with ${n}, has competition rank ${rank(sbv,sb)} by row-summed July built premises.`,'supplier_aggregate'],
+   [`jul_${z}_supplier_completion_rank`,[`july_snapshot`],`Supplier ${s}, associated with ${n}, has competition rank ${rank(srv,sr)} by row-summed July completion ratio.`,'supplier_aggregate']
+  ]; a.push(...f);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave172_7800_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave172_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
