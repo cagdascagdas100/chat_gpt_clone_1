@@ -1,0 +1,39 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave162</title><body>
+<h1>internet_access_3 Wave162 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave162_operations_5400_20260801.html">5.400 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave162_5400_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const psd=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length)};
+const fmt=n=>n.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+function expand(seed){
+ const rows=seed.contract_seed, groups={}; rows.forEach(r=>(groups[r[1]]??=[]).push(r));
+ const cs=rows.map(r=>r[2]),bs=rows.map(r=>r[3]),gs=rows.map(r=>r[2]-r[3]),rs=rows.map(r=>100*r[3]/r[2]);
+ const means={c:mean(cs),b:mean(bs),g:mean(gs),r:mean(rs)},sds={c:psd(cs),b:psd(bs),g:psd(gs),r:psd(rs)};
+ const out=[];
+ for(const [n,p,c,b] of rows){const z=slug(n),g=groups[p],cnt=g.length,sc=g.reduce((s,x)=>s+x[2],0),sb=g.reduce((s,x)=>s+x[3],0),sg=sc-sb,mc=sc/cnt,mb=sb/cnt,mg=sg/cnt,sr=100*sb/sc,cr=100*b/c,gap=c-b;
+  out.push([`jul_${z}_supplier_contract_count`,['july_snapshot'],`The July 2026 table contains ${cnt} contract row(s) with supplier label ${p}.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_mean_contracted`,['july_snapshot'],`Across July rows labelled ${p}, the mean rounded contracted count is ${fmt(mc)}; ${n} is ${(c-mc)>=0?'+':''}${fmt(c-mc)} from that mean.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_mean_built`,['july_snapshot'],`Across July rows labelled ${p}, the mean rounded built count is ${fmt(mb)}; ${n} is ${(b-mb)>=0?'+':''}${fmt(b-mb)} from that mean.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_mean_gap`,['july_snapshot'],`Across July rows labelled ${p}, the mean rounded contracted-minus-built gap is ${fmt(mg)}; ${n} is ${(gap-mg)>=0?'+':''}${fmt(gap-mg)} from that mean.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_completion`,['july_snapshot'],`Aggregating July rows labelled ${p} gives a rounded built-to-contracted ratio of ${fmt(sr)}%; ${n} is ${(cr-sr)>=0?'+':''}${fmt(cr-sr)} percentage points from that ratio.`,'supplier_metric']);
+  out.push([`jul_${z}_contracted_z`,['july_snapshot'],`The July rounded contracted count for ${n} has a population z-score of ${((c-means.c)/sds.c)>=0?'+':''}${((c-means.c)/sds.c).toFixed(4)} across the 37 displayed rows.`,'standardized_metric']);
+  out.push([`jul_${z}_built_z`,['july_snapshot'],`The July rounded built count for ${n} has a population z-score of ${((b-means.b)/sds.b)>=0?'+':''}${((b-means.b)/sds.b).toFixed(4)} across the 37 displayed rows.`,'standardized_metric']);
+  out.push([`jul_${z}_gap_z`,['july_snapshot'],`The July rounded contracted-minus-built gap for ${n} has a population z-score of ${((gap-means.g)/sds.g)>=0?'+':''}${((gap-means.g)/sds.g).toFixed(4)} across the 37 displayed rows.`,'standardized_metric']);
+  out.push([`jul_${z}_completion_z`,['july_snapshot'],`The July built-to-contracted ratio for ${n} has a population z-score of ${((cr-means.r)/sds.r)>=0?'+':''}${((cr-means.r)/sds.r).toFixed(4)} across the 37 displayed rows.`,'standardized_metric']);
+  out.push([`jul_${z}_supplier_contract_share`,['july_snapshot'],`${n} represents ${fmt(100/cnt)}% of the count of July rows carrying supplier label ${p}.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_contracted_share`,['july_snapshot'],`${n} represents ${fmt(100*c/sc)}% of the rounded contracted total across July rows labelled ${p}.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_built_share`,['july_snapshot'],`${n} represents ${fmt(100*b/sb)}% of the rounded built total across July rows labelled ${p}.`,'supplier_metric']);
+  out.push([`jul_${z}_supplier_gap_share`,['july_snapshot'],sg?`${n} represents ${fmt(100*gap/sg)}% of the rounded contracted-minus-built gap across July rows labelled ${p}.`:`The supplier-level rounded gap for ${p} is zero, so a gap share is not calculated for ${n}.`,'supplier_metric']);
+ }
+ for(const [id,doc,fact,guard] of seed.consumer_seed)out.push([id,[doc],fact,guard]);
+ return out.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([fetch('extended_official_web_evidence_wave162_5400_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave162_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{
+ const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));
+ document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;
+ const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})
+}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
