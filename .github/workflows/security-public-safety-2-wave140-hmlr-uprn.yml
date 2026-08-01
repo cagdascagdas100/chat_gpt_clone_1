@@ -7,154 +7,85 @@ on:
       - .github/aays-triggers/security_public_safety_2_wave140.trigger.json
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: security-public-safety-2-wave140
   cancel-in-progress: false
 
 jobs:
-  publish-hmlr-inspire-os-open-uprn:
+  diagnose-hmlr-download-controls:
     if: github.head_ref == 'audit/security-public-safety-2-wave140-20260801'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 15
     steps:
-      - name: Checkout canonical branch
-        uses: actions/checkout@v4
-        with:
-          ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install bounded dependencies
-        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 lxml shapely pyproj
-
-      - name: Verify runner syntax
-        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.py
-
-      - name: Run official HMLR and OS Open UPRN audit
-        env:
-          AAYS_SOURCE_HEAD: 6cb34b30a5ab8b91c34f50fe1c7153db5f509512
-        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.py
-
-      - name: Strict fail-closed validation
+      - name: Install bounded diagnostic dependencies
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4
+      - name: Capture official HMLR download controls
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          output = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json')
-          website = Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140.html')
-          status = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json')
-          evidence = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json')
-          diagnostic = Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_diagnostic_latest.json')
-          queue = Path('docs/chatgpt_status/aays1/queue/0153_security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.v3.task.json')
-          manual = Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
-          for path in (output, website, status, evidence, diagnostic, queue, manual):
-              assert path.exists() and path.stat().st_size > 0, path
-          data = json.loads(output.read_text())
-          result = data['result']
-          assert data['fake_data'] is False
-          assert data['continuation_key'] == '5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40'
-          assert data['scope']['maximum_simultaneous_workers'] == 15
-          assert data['scope']['parent_values_mutated'] is False
-          assert data['scope']['parent_scores_mutated'] is False
-          assert result['hmlr_download_page_success'] is True
-          assert result['hmlr_authority_links_selected'] >= 1
-          assert result['hmlr_gml_download_successes'] >= 1
-          assert result['os_open_uprn_download_success'] is True
-          assert result['os_open_uprn_rows_scanned'] >= 1_000_000
-          assert result['official_lsoa_point_queries'] == result['os_open_uprn_candidates_within_100m'] * 2
-          assert result['completed_or_fail_closed_operations'] == result['total_operations']
-          assert result['blocked_operations'] == 0
-          assert result['stuck_pending_operations'] == 0
-          assert json.loads(queue.read_text())['state'] == 'COMPLETED_PUBLISHED'
-          page = website.read_text()
-          for heading in ('HMLR GML downloads', 'OS Open UPRN candidates', 'Official LSOA point queries', 'Operation ledger'):
-              assert heading in page, heading
-          print(json.dumps(result, ensure_ascii=False))
-          PY
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
 
-      - name: Stage immutable publication payload
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/wave140-payload
-          mkdir -p /tmp/wave140-payload
-          for path in \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140.html \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_diagnostic_latest.json \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
-            docs/chatgpt_status/aays1/queue/0153_security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.v3.task.json; do
-            mkdir -p "/tmp/wave140-payload/$(dirname "$path")"
-            cp "$path" "/tmp/wave140-payload/$path"
-          done
-
-      - name: Commit and publish through isolated canonical worktree
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          published=false
-          for attempt in 1 2 3 4 5; do
-            git fetch origin codex/aays-single-runner-v5-20260706
-            rm -rf /tmp/wave140-publish
-            git worktree prune
-            git worktree add --detach /tmp/wave140-publish origin/codex/aays-single-runner-v5-20260706
-            python - <<'PY'
-          import json, subprocess
-          remote = json.loads(subprocess.check_output([
-              'git','-C','/tmp/wave140-publish','show',
-              'HEAD:docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json'
-          ], text=True))
-          current = remote.get('continuation_key')
-          allowed = {
-              'a61e46015baebb5d9e1ddb098b98fe04e6c1c617ec98a1a09eef8c1c297c066f',
-              '5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40',
+          url = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          targets = ['London Borough of Barnet','London Borough of Enfield','London Borough of Hackney','London Borough of Haringey','London Borough of Waltham Forest']
+          s = requests.Session()
+          s.headers['User-Agent'] = 'AAYS-wave140-HMLR-control-diagnostic/1.0'
+          r = s.get(url, timeout=(20, 120))
+          r.raise_for_status()
+          soup = BeautifulSoup(r.text, 'html.parser')
+          records = []
+          for target in targets:
+              matches = []
+              for node in soup.find_all(string=lambda value: value and target.lower() in value.lower()):
+                  candidates = []
+                  current = node.parent
+                  for _ in range(8):
+                      if current is None:
+                          break
+                      candidates.append(current)
+                      if current.name in {'tr','li','form'}:
+                          break
+                      current = current.parent
+                  for container in candidates:
+                      controls = []
+                      for tag in container.find_all(['a','button','form','input'], recursive=True):
+                          attrs = {str(k): (list(v) if isinstance(v, list) else str(v)) for k, v in tag.attrs.items()}
+                          controls.append({'tag': tag.name, 'text': ' '.join(tag.stripped_strings)[:300], 'attrs': attrs})
+                      if controls:
+                          matches.append({'container_tag': container.name, 'container_attrs': dict(container.attrs), 'controls': controls, 'html': str(container)[:20000]})
+                          break
+              records.append({'authority': target, 'matches': matches[:10]})
+          payload = {
+              'page_url': r.url,
+              'status': r.status_code,
+              'content_type': r.headers.get('content-type'),
+              'page_bytes': len(r.content),
+              'records': records,
           }
-          if current not in allowed:
-              raise SystemExit(f'CONCURRENT_SLOT_ADVANCE:{current}')
+          out = Path('/tmp/wave140-hmlr-structure.json')
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+          Path('/tmp/wave140-hmlr-page.html').write_text(r.text)
+          print(json.dumps({
+              'page_bytes': len(r.content),
+              'authorities': len(records),
+              'matched_authorities': sum(bool(x['matches']) for x in records),
+              'control_count': sum(len(m['controls']) for x in records for m in x['matches']),
+          }))
           PY
-            cp -a /tmp/wave140-payload/. /tmp/wave140-publish/
-            git -C /tmp/wave140-publish add \
-              england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json \
-              england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140.html \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json \
-              docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_diagnostic_latest.json \
-              docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
-              docs/chatgpt_status/aays1/queue/0153_security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.v3.task.json
-            git -C /tmp/wave140-publish commit -m 'security_public_safety_2: publish Wave140 HMLR and OS Open UPRN evidence'
-            if git -C /tmp/wave140-publish push origin HEAD:codex/aays-single-runner-v5-20260706; then
-              published=true
-              break
-            fi
-            git worktree remove --force /tmp/wave140-publish || true
-            sleep $((attempt * 3))
-          done
-          test "$published" = true
-
-      - name: Remote canonical readback
-        run: |
-          set -euo pipefail
-          git fetch origin codex/aays-single-runner-v5-20260706
-          remote_head=$(git rev-parse origin/codex/aays-single-runner-v5-20260706)
-          for path in \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140.html \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_diagnostic_latest.json \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
-            docs/chatgpt_status/aays1/queue/0153_security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.v3.task.json; do
-            local_sha=$(sha256sum "/tmp/wave140-payload/$path" | cut -d' ' -f1)
-            remote_sha=$(git show "origin/codex/aays-single-runner-v5-20260706:$path" | sha256sum | cut -d' ' -f1)
-            test "$local_sha" = "$remote_sha"
-            echo "REMOTE_READBACK $path $remote_sha"
-          done
-          echo "CANONICAL_REMOTE_HEAD=$remote_head"
+      - name: Upload HMLR structure diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-public-safety-2-wave140-hmlr-structure
+          path: |
+            /tmp/wave140-hmlr-structure.json
+            /tmp/wave140-hmlr-page.html
+          if-no-files-found: error
+          retention-days: 1
