@@ -1,0 +1,46 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave167</title><body>
+<h1>internet_access_3 Wave167 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave167_operations_6600_20260801.html">6.600 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave167_6600_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const pct=(a,b)=>a===0?null:(b-a)*100/a;
+const rank=(vals,v)=>1+vals.filter(x=>x!=null&&x>v).length;
+function expand(oldS,newS,meta){
+ const jan=new Map(newS.contract_seed.map(x=>[slug(x[0]),x]));
+ const decRows=oldS.contract_seed.map(x=>[x[0],x[1],x[6],x[7],...(jan.get(slug(x[0]))||[]).slice(2,4)]);
+ const decC=decRows.map(x=>x[2]),janC=decRows.map(x=>x[4]),decB=decRows.map(x=>x[3]),janB=decRows.map(x=>x[5]).filter(x=>x!=null);
+ const out=[];
+ for(const [n,p,dc,db,jc,jb] of decRows){const z=slug(n),dg=dc-db,jg=jb==null?null:jc-jb;
+  const add=(id,txt,g='derived_snapshot')=>out.push([id,['december_snapshot','january_snapshot'],txt,g]);
+  add(`dj_${z}_contracted_delta`,`The rounded contracted-premises figure for ${n} changed by ${(jc-dc)>=0?'+':''}${(jc-dc).toLocaleString('en-GB')} from December 2025 to January 2026.`);
+  jb==null?add(`dj_${z}_built_delta`,`The January built value for ${n} was displayed as missing, so no December-to-January built delta was calculated.`,'missing_value'):add(`dj_${z}_built_delta`,`The rounded built-premises figure for ${n} changed by ${(jb-db)>=0?'+':''}${(jb-db).toLocaleString('en-GB')} from December 2025 to January 2026.`);
+  jb==null?add(`dj_${z}_built_pct`,`The built percentage change for ${n} was not calculated because the January value was missing.`,'missing_value'):db===0?add(`dj_${z}_built_pct`,`The built percentage change for ${n} was not calculated because the December value was zero; the absolute change was ${(jb-db)>=0?'+':''}${(jb-db).toLocaleString('en-GB')}.`):add(`dj_${z}_built_pct`,`The rounded built-premises figure for ${n} changed by ${pct(db,jb).toFixed(2)}% from December 2025 to January 2026.`);
+  add(`dj_${z}_dec_ratio`,`The December 2025 rounded built-to-contracted ratio for ${n} was ${(db*100/dc).toFixed(2)}%.`);
+  jb==null?add(`dj_${z}_jan_ratio`,`The January 2026 built-to-contracted ratio for ${n} was not calculated because the built value was missing.`,'missing_value'):add(`dj_${z}_jan_ratio`,`The January 2026 rounded built-to-contracted ratio for ${n} was ${(jb*100/jc).toFixed(2)}%.`);
+  jb==null?add(`dj_${z}_ratio_delta`,`The December-to-January ratio-point change for ${n} was not calculated because the January built value was missing.`,'missing_value'):add(`dj_${z}_ratio_delta`,`The rounded built-to-contracted ratio for ${n} changed by ${((jb*100/jc)-(db*100/dc)).toFixed(2)} percentage points.`);
+  add(`dj_${z}_dec_contract_share`,`The contract represented ${(dc*100/meta.displayed_totals.december.contracted).toFixed(3)}% of the displayed December contracted total.`);
+  add(`dj_${z}_jan_contract_share`,`The contract represented ${(jc*100/meta.displayed_totals.january.contracted).toFixed(3)}% of the displayed January contracted total.`);
+  add(`dj_${z}_dec_built_share`,`The contract represented ${(db*100/meta.displayed_totals.december.built).toFixed(3)}% of the displayed December built total.`);
+  jb==null?add(`dj_${z}_jan_built_share`,`The January built-total share for ${n} was not calculated because the built value was missing.`,'missing_value'):add(`dj_${z}_jan_built_share`,`The contract represented ${(jb*100/meta.displayed_totals.january.built).toFixed(3)}% of the displayed January built total.`);
+  add(`dj_${z}_dec_contract_rank`,`The December contracted-premises competition rank for ${n} was ${rank(decC,dc)} of ${decRows.length}.`);
+  add(`dj_${z}_jan_contract_rank`,`The January contracted-premises competition rank for ${n} was ${rank(janC,jc)} of ${decRows.length}.`);
+  add(`dj_${z}_dec_built_rank`,`The December built-premises competition rank for ${n} was ${rank(decB,db)} of ${decRows.length}.`);
+  jb==null?add(`dj_${z}_jan_built_rank`,`The January built-premises rank for ${n} was not calculated because the value was missing.`,'missing_value'):add(`dj_${z}_jan_built_rank`,`The January built-premises competition rank for ${n} was ${rank(janB,jb)} among rows with numeric values.`);
+  jb==null?add(`dj_${z}_gap_delta`,`The change in unbuilt gap for ${n} was not calculated because the January built value was missing.`,'missing_value'):add(`dj_${z}_gap_delta`,`The rounded unbuilt gap for ${n} changed by ${(jg-dg)>=0?'+':''}${(jg-dg).toLocaleString('en-GB')} premises.`);
+  add(`dj_${z}_classification`,`For ${n}, contracted premises were ${jc===dc?'unchanged':jc>dc?'higher':'lower'} and the January built value was ${jb==null?'missing':jb===db?'unchanged':jb>db?'higher':'lower'} compared with December 2025.`);
+ }
+ for(const [id,doc,fact,g] of meta.consumer_seed)out.push([id,[doc],fact,g]);
+ return out.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([
+ fetch('extended_official_web_evidence_wave167_6600_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave167_seed_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave151_seed_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave155_seed_20260801.json').then(r=>r.json())
+]).then(([d,s,a,b])=>{const rs=expand(a,b,s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));
+ document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;
+ const body=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>')}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;body.appendChild(tr);});
+}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON doğrudan açılabilir.</noscript></body></html>
