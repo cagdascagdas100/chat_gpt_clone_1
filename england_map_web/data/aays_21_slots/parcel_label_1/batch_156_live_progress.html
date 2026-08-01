@@ -1,0 +1,19 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>parcel_label_1 Batch 156</title><style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#f7f8fa;color:#172033}main{max-width:1700px;margin:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}.card{background:#fff;border:1px solid #d9dee8;border-radius:10px;padding:14px}.n{font-size:1.6rem;font-weight:700}
+table{width:100%;border-collapse:collapse;background:#fff;margin:14px 0;font-size:14px}th,td{border:1px solid #d9dee8;padding:8px;vertical-align:top;text-align:left}th{background:#eef2f7;position:sticky;top:0}.err{color:#a40000}
+</style></head><body><main><h1>parcel_label_1 — Batch 156 resmî HMCTS revalidation</h1><p>Satırlar kompakt evidence JSON dosyasından oluşturulur; aday veya kaynak yükseltmesi uydurulmaz.</p>
+<div id="cards" class="cards"></div><h2>Satır satır sonuçlar</h2>
+<table><thead><tr><th>Satır</th><th>Tesis</th><th>Adres</th><th>Açılış / durum</th><th>Karar</th><th>Güven</th><th>Gerekçe</th><th>Kaynak</th></tr></thead><tbody id="rows"></tbody></table>
+<h2>İşlem satırları</h2><table><thead><tr><th>İşlem</th><th>Açıklama</th><th>Durum</th></tr></thead><tbody id="ops"></tbody></table>
+<h2>Kümülatif</h2><table><tbody id="cum"></tbody></table><p id="error" class="err"></p>
+<script>
+const e=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+fetch('batch_156_evidence_latest.json').then(r=>{if(!r.ok)throw Error('evidence '+r.status);return r.json()}).then(d=>{
+ const m=d.metrics,c=d.cumulative;
+ document.querySelector('#cards').innerHTML=[[m.official_pages,'Resmî sayfa'],[m.new_candidates,'Yeni aday'],[m.revalidated,'Revalidate'],[m.fail_closed,'Fail-closed'],[m.average_confidence+'%','Ortalama güven'],[c.progress+'%','Genel ilerleme']].map(x=>`<div class="card"><div class="n">${e(x[0])}</div>${e(x[1])}</div>`).join('');
+ document.querySelector('#rows').innerHTML=d.rows.map(r=>`<tr><td>${e(r.id)}</td><td>${e(r.name)}</td><td>${e(r.address)}</td><td>${e(r.opening)}</td><td>${e(r.decision)}</td><td>${e(r.confidence)}%</td><td>${e(r.reason)}</td><td><a href="${e(r.url)}">HMCTS</a></td></tr>`).join('');
+ document.querySelector('#ops').innerHTML=d.operations.map(o=>`<tr><td>${e(o.id)}</td><td>${e(o.name)}</td><td>${e(o.state)}</td></tr>`).join('');
+ document.querySelector('#cum').innerHTML=`<tr><th>Aday</th><td>${e(c.candidates)}</td><th>Yükseltilen kaynak</th><td>${e(c.source_upgrades)}</td></tr><tr><th>Ağırlıklı doğruluk</th><td>${e(c.weighted_accuracy)}%</td><th>Adres revalidasyonu</th><td>${e(c.direct_address_revalidated)}</td></tr><tr><th>Tamam / toplam</th><td>${e(c.operations_completed)} / ${e(c.operations_total)}</td><th>Artış</th><td>+${e(c.progress_delta)} yüzde puan</td></tr>`;
+}).catch(x=>document.querySelector('#error').textContent='Veri yüklenemedi: '+x.message);
+</script></main></body></html>

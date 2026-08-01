@@ -1,0 +1,112 @@
+{
+  "schema_version": 4,
+  "slot_id": "parcel_label_1",
+  "batch_id": "batch_124",
+  "updated_at": "2026-07-30T13:10:00+03:00",
+  "source_head": "49edca6318b293ea5832aabb4efeba572601fe2b",
+  "continuation_key": "15ca1c9e166fd3c09f6568d967ede51fae95fa9335cbe3abb6a72bf9d4c3aa09",
+  "source": {
+    "authority": "HM Courts & Tribunals Service / GOV.UK",
+    "method": "Active individual Find a Court or Tribunal visit-address readback plus repository exact-name and URL/postcode search",
+    "checked_on": "2026-07-30",
+    "licence": "Open Government Licence v3.0",
+    "domain": "find-court-tribunal.service.gov.uk"
+  },
+  "candidate_operation_templates": [
+    {"operation":"Official HMCTS page identity verification","state":"DONE","result":"active individual directory page matched"},
+    {"operation":"Publisher authority verification","state":"DONE","result":"HMCTS / GOV.UK"},
+    {"operation":"HTTPS official-domain verification","state":"DONE","result":"find-court-tribunal.service.gov.uk"},
+    {"operation":"Visit-address extraction","state":"DONE","result":"direct location address retained"},
+    {"operation":"Postcode extraction","state":"DONE","result":"postcode retained from official page"},
+    {"operation":"Facility-type classification","state":"DONE","result":"derived from official page title"},
+    {"operation":"England jurisdiction screen","state":"DONE","result":"England location"},
+    {"operation":"Address/postcode consistency check","state":"DONE","result":"postcode matches displayed visit address"},
+    {"operation":"Repository exact-name search","state":"DONE","result":"no retained exact-name conflict returned"},
+    {"operation":"Repository URL and postcode search","state":"DONE","result":"no retained URL/postcode conflict returned"},
+    {"operation":"Exact UPRN gate","state":"DONE_NO_BINDING","result":"UPRN not asserted"},
+    {"operation":"Parcel polygon gate","state":"DONE_NO_BINDING","result":"title boundary/polygon not asserted"}
+  ],
+  "fixed_operations_global": [
+    [1,"Recheck continuation contract, canonical HEAD and slot owner","DONE","same continuation; source HEAD 49edca6318b293ea5832aabb4efeba572601fe2b; no live owner"],
+    [2,"Recheck historical 198-row audit outputs","BLOCKED","required runner outputs remain absent"],
+    [3,"Recheck single runner host liveness gate","BLOCKED","no fresh host heartbeat or execution claim"],
+    [4,"Research official HMCTS candidate pool","DONE","6 retained active official pages; 2 temporary closures excluded"],
+    [5,"Extract and validate visit addresses/postcodes","DONE","6/6 retained rows consistent"],
+    [6,"Run repository exact-name URL and postcode comparison","DONE","0 retained conflicts returned"],
+    [7,"Preserve fail-closed canonical binding gate","DONE_NO_BINDING","UPRN/title/polygon not asserted"],
+    [8,"Publish Batch 124 child evidence and web rows","DONE_WITH_BLOCKER","child branch written; serial publish still required"]
+  ],
+  "package": {
+    "candidate_rows": 6,
+    "excluded_rows": 2,
+    "official_sources_upgraded": 6,
+    "accuracy_average_percent": 99.7,
+    "accuracy_ge_97_count": 6,
+    "visible_operation_rows": 80,
+    "completed_or_fail_closed_operations": 78,
+    "blocked_operations": 2,
+    "workflow_percent": 97.5,
+    "duplicate_rows_corrected": 0
+  },
+  "cumulative": {
+    "visible_research_candidate_rows": 1879,
+    "official_sources_upgraded": 1981,
+    "classification_accuracy_weighted_average_percent": 99.46,
+    "classification_accuracy_ge_97_count": 1879,
+    "visible_operation_rows": 10884,
+    "completed_or_fail_closed_operations": 10596,
+    "blocked_operations": 288,
+    "research_operation_progress_percent": 97.354,
+    "research_operation_progress_delta_percent": 0.004,
+    "candidate_visibility_percent_of_slot": 6.11,
+    "canonical_reconciled_rows": 0,
+    "canonical_verified_rows": 0,
+    "exact_geometry_rows": 0,
+    "property_bindings": 0,
+    "direct_address_revalidated_rows": 407,
+    "hmcts_new_candidate_rows": 419,
+    "hmcts_duplicate_rows_corrected": 22
+  },
+  "excluded_candidates": [
+    {
+      "name":"Poole Magistrates' Court",
+      "url":"https://www.find-court-tribunal.service.gov.uk/courts/poole-magistrates-court",
+      "reason":"TEMPORARILY_CLOSED_FROM_2026_05_25_FOR_SIX_MONTHS",
+      "decision":"EXCLUDED_FAIL_CLOSED"
+    },
+    {
+      "name":"Taunton Crown, County and Family Court",
+      "url":"https://www.find-court-tribunal.service.gov.uk/courts/taunton-crown-county-and-family-court",
+      "reason":"TEMPORARILY_CLOSED_UNTIL_FURTHER_NOTICE",
+      "decision":"EXCLUDED_FAIL_CLOSED"
+    }
+  ],
+  "source_snapshots": [
+    {"name":"Swindon Magistrates' Court","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"80d865a6ea13a16395688b8e1ed3bcf08a4b488842c25d2b6b50676f4236cc25"},
+    {"name":"Brighton Magistrates' Court","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"b922954908be1ce54153723ad1de790273cd9818a0437a3960e0bcfb3064e7fd"},
+    {"name":"High Wycombe Magistrates' Court and Family Court","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"acd30285f1213847b1c7afa8b75abb39e9269a0a352b7b8604b36fd75d08f61d"},
+    {"name":"Exeter Law Courts","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"7b3c4f5fd780a01c8d891899c4c922a01dd17d195239ab70f79c1513faeafdde"},
+    {"name":"Bournemouth Combined Court","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"4b128ca2c2c074562880dafa52c369fb05e16c4f79222ac663cfcaf132c50134"},
+    {"name":"Hastings Magistrates' Court","checked_at":"2026-07-30T10:10:00Z","normalized_record_sha256":"90614dccb6a9c9ed4eeda094ca38a51e4268793b7cc30ed87d5d34800d024db9"}
+  ],
+  "source_semantics": "ACTIVE_OFFICIAL_VISIT_ADDRESS_ONLY_UNIQUE_SITE_NO_UPRN_NO_TITLE_NO_POLYGON",
+  "blockers": [
+    "HISTORICAL_198_ROW_FULL_AUDIT_RUNNER_OUTPUT_NOT_PRESENT",
+    "SHARED_RUNNER_GLOBAL_HEARTBEAT_STALE_HOST_LIVENESS_UNCONFIRMED",
+    "VALID_PARCEL_AUDIT_TASK_PICKUP_REQUESTED_NOT_STARTED",
+    "ROW_LEVEL_92283_RECONCILIATION_NOT_MATERIALIZED",
+    "EXACT_GEOMETRY_BINDING_PENDING",
+    "LIVE_BROWSER_DOM_ACCEPTANCE_PENDING",
+    "SERIAL_PUBLISH_PENDING"
+  ],
+  "fake_data": false,
+  "final_ready": false,
+  "rows": [
+    ["Swindon Magistrates' Court","Princes Street, Swindon, SN1 2JB","SN1 2JB","Magistrates' court","https://www.find-court-tribunal.service.gov.uk/courts/swindon-magistrates-court",99.7],
+    ["Brighton Magistrates' Court","The Law Courts, Edward Street, Brighton, BN2 0LG","BN2 0LG","Magistrates' court","https://www.find-court-tribunal.service.gov.uk/courts/brighton-magistrates-court",99.7],
+    ["High Wycombe Magistrates' Court and Family Court","Law Courts, Easton Street, High Wycombe, HP11 1LR","HP11 1LR","Magistrates' and family court","https://www.find-court-tribunal.service.gov.uk/courts/high-wycombe-magistrates-court-and-family-court",99.7],
+    ["Exeter Law Courts","Southernhay Gardens, Exeter, EX1 1UH","EX1 1UH","Law courts","https://www.find-court-tribunal.service.gov.uk/courts/exeter-law-courts",99.7],
+    ["Bournemouth Combined Court","Courts of Justice, Deansleigh Road, Bournemouth, BH7 7DS","BH7 7DS","Combined court","https://www.find-court-tribunal.service.gov.uk/courts/bournemouth-and-poole-county-court-and-family-court",99.7],
+    ["Hastings Magistrates' Court","The Law Courts, Horntye Park, Bohemia Road, Hastings, TN34 1ND","TN34 1ND","Magistrates' court","https://www.find-court-tribunal.service.gov.uk/courts/hastings-magistrates-court",99.7]
+  ]
+}
