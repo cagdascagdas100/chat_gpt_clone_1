@@ -1,19 +1,23 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slot_id": "security_public_safety_1",
   "state": "OPEN",
   "requires_user_action": true,
   "continuation_key": "4472f86d3870fb5bc61617be00f0896ad3701370eea044e94d7989c3e3c5e949",
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
-  "updated_at": "2026-08-01T21:14:00Z",
-  "reason": "The tested V17 queue is READY and bound to the corrected wrapper, but the existing canonical F-host runner heartbeat is stale and no matching claim exists.",
-  "exact_action": "On the F-host run only F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. Do not create a new task, owner, runner, or parallel process.",
+  "updated_at": "2026-08-01T23:18:00Z",
+  "reason": "The tested V17 queue is READY, but the shared runner is not running. The earlier direct-runner launcher instruction conflicts with the canonical priority-1 runner contract. The existing canonical starter must run, complete the priority-1 height_difference_2 predecessor, and then reclaim the same V17 task.",
+  "exact_action": "On the canonical F-host run only F:\\TerraYield_AAYS_Portable\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd. Do not run F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd. Allow the existing single runner to process priority-1 height_difference_2 before this priority-2 V17 task. Do not create a new task, owner, runner, parallel process, or duplicate restart request.",
+  "forbidden_action": "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
   "restart_request_path": "docs/chatgpt_status/_shared/status/reboot_runner_start_request_20260801_2114_security_public_safety_1.json",
+  "priority_predecessor_path": "docs/chatgpt_status/aays1/queue/0000_001_height_difference_2_canonical_export_official_sampling_20260720.task.json",
   "resolution_criteria": [
-    "shared runner heartbeat newer than 2026-08-01T21:14:00Z",
-    "matching V17 claim or refreshed runtime outputs observed",
-    "no second task or runner created"
+    "shared runner heartbeat newer than 2026-08-01T23:18:00Z",
+    "priority-1 height_difference_2 leaves READY or RUNNING and no longer blocks the one-task scan",
+    "matching V17 claim or refreshed V17 runtime outputs are observed",
+    "no second task, owner, runner, or duplicate restart request is created"
   ],
+  "restart_request_age_minutes": 124,
   "completed_count": 7,
   "target_count": 8,
   "previous_progress_percent": 87.5,
@@ -23,6 +27,7 @@
   "running_task_count": 0,
   "new_task_created": false,
   "new_owner_created": false,
+  "second_runner_created": false,
   "fake_data": false,
   "final_ready": false
 }
