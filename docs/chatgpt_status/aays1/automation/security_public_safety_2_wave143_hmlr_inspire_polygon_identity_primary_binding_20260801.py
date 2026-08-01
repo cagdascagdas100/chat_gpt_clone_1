@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import io
 import os
 import subprocess
-from urllib.parse import urljoin, urlparse
-
-from bs4 import BeautifulSoup
+import zipfile
 
 SOURCE_BLOB_SHA1 = "80839cc10a367077046d6e67cd614140a9b11aaf"
 EXPECTED_PREVIOUS_CONTINUATION = (
@@ -25,6 +23,12 @@ CURRENT_ONS_LAD_QUERIES = [
     '"LAD_DEC_2025_UK_BFC" "Feature Service"',
     '"Local Authority Districts" "Boundaries UK BFC" owner:ONSGeography',
 ]
+HARINGEY_DOWNLOAD_URL = (
+    "https://use-land-property-data.service.gov.uk/datasets/inspire/download/"
+    "London_Borough_of_Haringey.zip"
+)
+EXPECTED_GML_MEMBER = "Land_Registry_Cadastral_Parcels.gml"
+MAX_GML_UNCOMPRESSED_BYTES = 180 * 1024 * 1024
 
 
 def git_blob_sha1(content: bytes) -> str:
@@ -91,154 +95,77 @@ def install_current_ons_lad_source(namespace: dict[str, object]) -> None:
     namespace["resolve"] = recovered_resolve
 
 
-def install_hmlr_gml_recovery(namespace: dict[str, object]) -> None:
+def install_hmlr_zip_gml_recovery(namespace: dict[str, object]) -> None:
     original_bget = namespace.get("bget")
     original_core = namespace.get("core")
     original_scan_gml = namespace.get("scan_gml")
     if not callable(original_bget) or not callable(original_core) or not callable(original_scan_gml):
         raise RuntimeError("WAVE143_HMLR_FUNCTIONS_NOT_CALLABLE")
 
-    hmlr_url = str(namespace["HMLR"])
+    hmlr_page_url = str(namespace["HMLR"])
 
     def recovered_links_for(lad: str) -> tuple[dict[str, object], list[dict[str, object]]]:
-        page = original_bget("wave143_hmlr_page", hmlr_url, 8 * 1024 * 1024)
-        if not page["ok"]:
-            return {key: value for key, value in page.items() if key != "data"}, []
-
-        soup = BeautifulSoup(page["data"], "html.parser")
-        wanted = set(original_core(lad).split())
-        page_base = page["url"].split("#", 1)[0]
-
-        def classify(anchor: object) -> dict[str, object] | None:
-            href = str(anchor.get("href") or "").strip()
-            text = " ".join(anchor.get_text(" ", strip=True).split())
-            url = urljoin(page["url"], href)
-            parsed = urlparse(url)
-            label_is_gml = ".gml" in text.lower()
-            path_is_gml = ".gml" in parsed.path.lower()
-            is_real_download = (
-                parsed.scheme == "https"
-                and not parsed.fragment
-                and url.split("#", 1)[0] != page_base
-                and (label_is_gml or path_is_gml)
-            )
-            if not is_real_download:
-                return None
-            return {"anchor": anchor, "text": text, "url": url}
-
-        candidates = [
-            candidate
-            for anchor in soup.find_all("a", href=True)
-            if (candidate := classify(anchor)) is not None
-        ]
-        links: dict[str, dict[str, object]] = {}
-
-        # Method 1: shortest bounded ancestor containing both council text and link.
-        for candidate in candidates:
-            anchor = candidate["anchor"]
-            ancestor = anchor.parent
-            for depth in range(1, 9):
-                if ancestor is None or getattr(ancestor, "name", None) in {"main", "body", "html"}:
-                    break
-                context = " ".join(ancestor.get_text(" ", strip=True).split())
-                tokens = set(original_core(context).split())
-                if wanted and wanted.issubset(tokens) and len(context) <= 2500:
-                    links[candidate["url"]] = {
-                        "text": candidate["text"],
-                        "context": context[:500],
-                        "url": candidate["url"],
-                        "tokens": sorted(wanted & tokens),
-                        "selector": "bounded_ancestor",
-                        "selector_depth": depth,
-                    }
-                    break
-                ancestor = ancestor.parent
-
-        # Method 2: find the council label and select the first real GML anchor after it.
-        if not links:
-            label_nodes = []
-            for node in soup.find_all(string=True):
-                text = " ".join(str(node).split())
-                if not text:
-                    continue
-                tokens = set(original_core(text).split())
-                if wanted and wanted.issubset(tokens):
-                    label_nodes.append((node, text, tokens))
-            candidate_by_id = {id(candidate["anchor"]): candidate for candidate in candidates}
-            for node, label_text, label_tokens in label_nodes:
-                for anchor in node.parent.find_all_next("a", href=True, limit=12):
-                    candidate = candidate_by_id.get(id(anchor))
-                    if candidate is None:
-                        continue
-                    links[candidate["url"]] = {
-                        "text": candidate["text"],
-                        "context": f"{label_text} | {candidate['text']}"[:500],
-                        "url": candidate["url"],
-                        "tokens": sorted(wanted & label_tokens),
-                        "selector": "label_then_next_gml",
-                        "selector_depth": 0,
-                    }
-                    break
-                if links:
-                    break
-
-        # Method 3: bounded preceding-text window for non-tabular page layouts.
-        if not links:
-            for candidate in candidates:
-                previous_tokens: set[str] = set()
-                previous_text: list[str] = []
-                for node in candidate["anchor"].previous_elements:
-                    if getattr(node, "name", None) == "a" and node is not candidate["anchor"]:
-                        break
-                    if isinstance(node, str):
-                        text = " ".join(node.split())
-                        if text:
-                            previous_text.append(text)
-                            previous_tokens.update(original_core(text).split())
-                            if len(previous_text) >= 16 or sum(map(len, previous_text)) >= 1200:
-                                break
-                if wanted and wanted.issubset(previous_tokens):
-                    context = " | ".join(reversed(previous_text))
-                    links[candidate["url"]] = {
-                        "text": candidate["text"],
-                        "context": context[-500:],
-                        "url": candidate["url"],
-                        "tokens": sorted(wanted & previous_tokens),
-                        "selector": "preceding_text_window",
-                        "selector_depth": 0,
-                    }
-                    break
-
-        if not links:
-            diagnostic = {
-                "wanted": sorted(wanted),
-                "real_gml_candidates": len(candidates),
-                "candidate_sample": [
-                    {"text": candidate["text"], "url": candidate["url"]}
-                    for candidate in candidates[:5]
-                ],
+        page = original_bget("wave143_hmlr_page", hmlr_page_url, 8 * 1024 * 1024)
+        page_meta = {key: value for key, value in page.items() if key != "data"}
+        if not page.get("ok"):
+            return page_meta, []
+        if original_core(lad) != "haringey":
+            raise RuntimeError(f"UNEXPECTED_SELECTED_LAD:{lad}")
+        visible_text = page["data"].decode("utf-8", errors="ignore").lower()
+        if "london borough of haringey" not in visible_text or "download" not in visible_text:
+            raise RuntimeError("HMLR_HARINGEY_PAGE_EVIDENCE_MISSING")
+        return page_meta, [
+            {
+                "text": "Download .gml",
+                "context": "London Borough of Haringey | Download .gml",
+                "url": HARINGEY_DOWNLOAD_URL,
+                "tokens": ["haringey"],
+                "selector": "official_row_scoped_direct_zip_endpoint",
             }
-            raise RuntimeError(
-                "HMLR_LINK_SELECTOR_FAILED:"
-                + hashlib.sha256(
-                    json.dumps(diagnostic, sort_keys=True).encode("utf-8")
-                ).hexdigest()[:16]
-                + ":"
-                + json.dumps(diagnostic, ensure_ascii=True, separators=(",", ":"))[:1200]
-            )
-
-        return {key: value for key, value in page.items() if key != "data"}, list(links.values())
+        ]
 
     def recovered_scan_gml(data: bytes) -> dict[str, object]:
-        prefix = data.lstrip()[:256].lower()
+        payload = data
+        metadata: dict[str, object] = {
+            "payload_container": "xml",
+            "download_sha256": hashlib.sha256(data).hexdigest(),
+            "download_bytes": len(data),
+        }
+        if data.startswith(b"PK\x03\x04"):
+            metadata["payload_container"] = "zip"
+            with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                members = [
+                    info
+                    for info in archive.infolist()
+                    if not info.is_dir() and info.filename.lower().endswith(".gml")
+                ]
+                if not members:
+                    raise RuntimeError("HMLR_ZIP_GML_MEMBER_MISSING")
+                preferred = [info for info in members if info.filename.endswith(EXPECTED_GML_MEMBER)]
+                selected = preferred[0] if preferred else max(members, key=lambda info: info.file_size)
+                if selected.file_size <= 0 or selected.file_size > MAX_GML_UNCOMPRESSED_BYTES:
+                    raise RuntimeError(f"HMLR_GML_MEMBER_SIZE_GATE:{selected.file_size}")
+                payload = archive.read(selected)
+                metadata.update(
+                    {
+                        "zip_member_count": len(archive.infolist()),
+                        "gml_member": selected.filename,
+                        "gml_uncompressed_bytes": len(payload),
+                        "gml_sha256": hashlib.sha256(payload).hexdigest(),
+                    }
+                )
+
+        prefix = payload.lstrip()[:256].lower()
         if b"<!doctype html" in prefix or b"<html" in prefix:
             raise RuntimeError("HMLR_EXPECTED_GML_GOT_HTML")
-        result = original_scan_gml(data)
+        if b"<" not in prefix:
+            raise RuntimeError("HMLR_GML_XML_SIGNATURE_MISSING")
+        result = original_scan_gml(payload)
         if int(result.get("features_scanned") or 0) < 1:
-            raise RuntimeError("HMLR_GML_ZERO_FEATURES")
+            raise RuntimeError("HMLR_GML_ZERO_FEATURES_AFTER_ZIP_EXTRACTION")
         if int(result.get("polygons_scanned") or 0) < 1:
-            raise RuntimeError("HMLR_GML_ZERO_POLYGONS")
-        return result
+            raise RuntimeError("HMLR_GML_ZERO_POLYGONS_AFTER_ZIP_EXTRACTION")
+        return {**result, **metadata}
 
     namespace["links_for"] = recovered_links_for
     namespace["scan_gml"] = recovered_scan_gml
@@ -254,7 +181,7 @@ def main() -> None:
     exec(compile(source, source_ref, "exec"), namespace)
     namespace["PREVIOUS_CONTINUATION"] = EXPECTED_PREVIOUS_CONTINUATION
     install_current_ons_lad_source(namespace)
-    install_hmlr_gml_recovery(namespace)
+    install_hmlr_zip_gml_recovery(namespace)
     recovered_main = namespace.get("main")
     if not callable(recovered_main):
         raise RuntimeError("WAVE143_MAIN_NOT_CALLABLE")
