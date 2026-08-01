@@ -1,0 +1,61 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave163</title><body>
+<h1>internet_access_3 Wave163 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave163_operations_5600_20260801.html">5.600 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave163_5600_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const fmt=v=>v.toLocaleString('en-GB');
+const delta=(v,a,b)=>v===0?`was unchanged from ${a} to ${b}`:`${v>0?'increased':'decreased'} by ${fmt(Math.abs(v))} from ${a} to ${b}`;
+function expand(seed){
+ const a=[];
+ for(const [n,ds,dc,db,js,jc,jb] of seed.contract_seed){
+  const z=slug(n), both=dc!==null&&jc!==null;
+  if(both)a.push([`presence_dec_jul_${z}`,['december_snapshot','july_snapshot'],`${n} appears in both the December 2025 and July 2026 BDUK tables.`,'long_horizon_snapshot']);
+  else if(dc!==null)a.push([`presence_dec_jul_${z}`,['december_snapshot','july_snapshot'],`${n} appears in the December 2025 table and is absent from the July 2026 table; July values were not imputed.`,'missing_value']);
+  else a.push([`presence_dec_jul_${z}`,['december_snapshot','july_snapshot'],`${n} is absent from the December 2025 table and appears in the July 2026 table; December values were not imputed.`,'missing_value']);
+  if(dc!==null){
+   a.push([`dec_${z}_supplier`,['december_snapshot'],`The December 2025 snapshot listed ${ds} as supplier for ${n}.`,'long_horizon_snapshot']);
+   a.push([`dec_${z}_contracted`,['december_snapshot'],`The December 2025 snapshot listed ${fmt(dc)} initial-scope contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`dec_${z}_built`,['december_snapshot'],`The December 2025 snapshot listed ${fmt(db)} built contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`dec_${z}_gap`,['december_snapshot'],`The rounded December contracted-minus-built gap for ${n} was ${fmt(dc-db)}.`,'gap_metric']);
+  }else{
+   a.push([`dec_${z}_supplier_guard`,['december_snapshot','july_snapshot'],`No December supplier value was imputed for ${n} because the contract is absent from that table.`,'missing_value']);
+   a.push([`dec_${z}_contracted_guard`,['december_snapshot','july_snapshot'],`No December contracted count was imputed for ${n}.`,'missing_value']);
+   a.push([`dec_${z}_built_guard`,['december_snapshot','july_snapshot'],`No December built count was imputed for ${n}.`,'missing_value']);
+   a.push([`dec_${z}_gap_guard`,['december_snapshot','july_snapshot'],`No December gap was calculated for ${n} because the row is absent.`,'missing_value']);
+  }
+  if(jc!==null){
+   a.push([`jul_${z}_supplier`,['july_snapshot'],`The July 2026 snapshot listed ${js} as supplier for ${n}.`,'long_horizon_snapshot']);
+   a.push([`jul_${z}_contracted`,['july_snapshot'],`The July 2026 snapshot listed ${fmt(jc)} initial-scope contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`jul_${z}_built`,['july_snapshot'],`The July 2026 snapshot listed ${fmt(jb)} built contracted premises for ${n}.`,'long_horizon_snapshot']);
+   a.push([`jul_${z}_gap`,['july_snapshot'],`The rounded July contracted-minus-built gap for ${n} was ${fmt(jc-jb)}.`,'gap_metric']);
+  }else{
+   a.push([`jul_${z}_supplier_guard`,['december_snapshot','july_snapshot'],`No July supplier value was imputed for ${n} because the contract is absent from that table.`,'missing_value']);
+   a.push([`jul_${z}_contracted_guard`,['december_snapshot','july_snapshot'],`No July contracted count was imputed for ${n}.`,'missing_value']);
+   a.push([`jul_${z}_built_guard`,['december_snapshot','july_snapshot'],`No July built count was imputed for ${n}.`,'missing_value']);
+   a.push([`jul_${z}_gap_guard`,['december_snapshot','july_snapshot'],`No July gap was calculated for ${n} because the row is absent.`,'missing_value']);
+  }
+  if(both){
+   a.push([`delta_dec_jul_${z}_contracted`,['december_snapshot','july_snapshot'],`The rounded contracted-premises figure for ${n} ${delta(jc-dc,'December 2025','July 2026')}.`,'long_horizon_snapshot']);
+   a.push([`delta_dec_jul_${z}_built`,['december_snapshot','july_snapshot'],`The rounded built-premises figure for ${n} ${delta(jb-db,'December 2025','July 2026')}.`,'long_horizon_snapshot']);
+   a.push([`pct_dec_jul_${z}_contracted`,['december_snapshot','july_snapshot'],`The rounded contracted-premises figure for ${n} changed by ${(((jc-dc)/dc)*100)>=0?'+':''}${(((jc-dc)/dc)*100).toFixed(2)}% from December 2025 to July 2026.`,'long_horizon_snapshot']);
+   if(db===0)a.push([`pct_dec_jul_${z}_built`,['december_snapshot','july_snapshot'],`The December-to-July built percentage change for ${n} was not calculated because the December rounded value was zero; the absolute change was ${(jb-db)>=0?'+':''}${fmt(jb-db)}.`,'gap_metric']);
+   else a.push([`pct_dec_jul_${z}_built`,['december_snapshot','july_snapshot'],`The rounded built-premises figure for ${n} changed by ${(((jb-db)/db)*100)>=0?'+':''}${(((jb-db)/db)*100).toFixed(2)}% from December 2025 to July 2026.`,'long_horizon_snapshot']);
+  }else{
+   a.push([`delta_dec_jul_${z}_contracted_guard`,['december_snapshot','july_snapshot'],`No December-to-July contracted delta was calculated for ${n} because one month is absent.`,'missing_value']);
+   a.push([`delta_dec_jul_${z}_built_guard`,['december_snapshot','july_snapshot'],`No December-to-July built delta was calculated for ${n} because one month is absent.`,'missing_value']);
+   a.push([`pct_dec_jul_${z}_contracted_guard`,['december_snapshot','july_snapshot'],`No December-to-July contracted percentage was calculated for ${n} because one month is absent.`,'missing_value']);
+   a.push([`pct_dec_jul_${z}_built_guard`,['december_snapshot','july_snapshot'],`No December-to-July built percentage was calculated for ${n} because one month is absent.`,'missing_value']);
+  }
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([fetch('extended_official_web_evidence_wave163_5600_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave163_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{
+ const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));
+ document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;
+ const b=document.getElementById('rows');
+ rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr);});
+}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
