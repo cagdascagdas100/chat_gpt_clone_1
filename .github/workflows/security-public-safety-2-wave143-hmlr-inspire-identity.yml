@@ -1,0 +1,110 @@
+name: security_public_safety_2 Wave143 HMLR INSPIRE identity
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/aays-triggers/security_public_safety_2_wave143.trigger.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-public-safety-2-wave143
+  cancel-in-progress: false
+
+jobs:
+  publish-hmlr-inspire-identity:
+    if: github.head_ref == 'audit/security-public-safety-2-wave143-20260801'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bounded dependencies
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyproj shapely
+
+      - name: Verify runner syntax
+        run: python -m py_compile docs/chatgpt_status/aays1/automation/security_public_safety_2_wave143_hmlr_inspire_polygon_identity_primary_binding_20260801.py
+
+      - name: Run official HMLR INSPIRE identity audit
+        env:
+          AAYS_SOURCE_HEAD: 1f77cae7588561ec47f280db9a845d6666abf9d8
+        run: python docs/chatgpt_status/aays1/automation/security_public_safety_2_wave143_hmlr_inspire_polygon_identity_primary_binding_20260801.py
+
+      - name: Strict fail-closed validation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          output=Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143_latest.json')
+          website=Path('england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143.html')
+          status=Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_status_latest.json')
+          evidence=Path('docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_evidence_latest.json')
+          queue=Path('docs/chatgpt_status/aays1/queue/0156_security_public_safety_2_wave143_hmlr_inspire_polygon_identity_primary_binding_20260801.v3.task.json')
+          manual=Path('docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json')
+          for path in (output,website,status,evidence,queue,manual): assert path.exists() and path.stat().st_size>0,path
+          data=json.loads(output.read_text()); result=data['result']
+          assert data['fake_data'] is False
+          assert data['continuation_key']=='e78da097b78e0d0f25e19b8910524c4e00de1666f32a9a78aa4a2ac92a7dfc56'
+          assert data['scope']['maximum_simultaneous_workers']==15
+          assert result['ons_lad_catalog_searches']>=6
+          assert result['ons_lad_point_query_successes']>=1
+          assert result['hmlr_download_page_success']==1
+          assert result['hmlr_gml_downloads_succeeded']>=1
+          assert result['completed_or_fail_closed_operations']==result['total_operations']
+          assert result['blocked_operations']==0 and result['stuck_pending_operations']==0
+          assert json.loads(queue.read_text())['state']=='COMPLETED_PUBLISHED'
+          page=website.read_text(); assert 'Containing polygons' in page and 'Operation ledger' in page
+          print(json.dumps(result,ensure_ascii=False))
+          PY
+
+      - name: Commit and publish canonical outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0156_security_public_safety_2_wave143_hmlr_inspire_polygon_identity_primary_binding_20260801.v3.task.json
+          git commit -m 'security_public_safety_2: publish Wave143 HMLR INSPIRE identity evidence'
+          published=false
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then published=true; break; fi
+            git rebase --abort || true
+            sleep $((attempt*2))
+          done
+          test "$published" = true
+
+      - name: Remote canonical readback
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          remote_head=$(git rev-parse origin/codex/aays-single-runner-v5-20260706)
+          for path in \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143_latest.json \
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_polygon_identity_primary_binding_wave143.html \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave143_evidence_latest.json \
+            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+            docs/chatgpt_status/aays1/queue/0156_security_public_safety_2_wave143_hmlr_inspire_polygon_identity_primary_binding_20260801.v3.task.json; do
+            local_sha=$(sha256sum "$path"|cut -d' ' -f1)
+            remote_sha=$(git show "origin/codex/aays-single-runner-v5-20260706:$path"|sha256sum|cut -d' ' -f1)
+            test "$local_sha" = "$remote_sha"
+            echo "REMOTE_READBACK $path $remote_sha"
+          done
+          echo "CANONICAL_REMOTE_HEAD=$remote_head"
