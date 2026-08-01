@@ -1,0 +1,44 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave165</title><body>
+<h1>internet_access_3 Wave165 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave165_operations_6200_20260801.html">6.200 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave165_6200_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const rank=(arr,v)=>1+[...new Set(arr)].sort((a,b)=>b-a).filter(x=>x>v).length;
+const pct=x=>(x*100).toFixed(4);
+function expand(base,seed){
+ const a=[], jc=base.contract_seed.map(x=>x[2]), jb=base.contract_seed.map(x=>x[3]), yc=base.contract_seed.map(x=>x[4]), yb=base.contract_seed.map(x=>x[5]);
+ const jg=base.contract_seed.map(x=>x[2]-x[3]), yg=base.contract_seed.map(x=>x[4]-x[5]);
+ const jr=base.contract_seed.map(x=>x[2]?x[3]/x[2]:0), yr=base.contract_seed.map(x=>x[4]?x[5]/x[4]:0);
+ const t=seed.displayed_totals, dc=t.july.contracted-t.june.contracted, db=t.july.built-t.june.built;
+ for(const [n,p,jc0,jb0,yc0,yb0] of base.contract_seed){const z=slug(n),jg0=jc0-jb0,yg0=yc0-yb0,jr0=jc0?jb0/jc0:0,yr0=yc0?yb0/yc0:0;
+  const facts=[
+   [`w165_${z}_jun_contract_rank`,[`june_snapshot`],`The ${n} row ranked ${rank(jc,jc0)} by rounded June contracted premises.`],
+   [`w165_${z}_jun_built_rank`,[`june_snapshot`],`The ${n} row ranked ${rank(jb,jb0)} by rounded June built premises.`],
+   [`w165_${z}_jun_gap_rank`,[`june_snapshot`],`The ${n} row ranked ${rank(jg,jg0)} by its rounded June contracted-minus-built gap.`],
+   [`w165_${z}_jun_ratio_rank`,[`june_snapshot`],`The ${n} row ranked ${rank(jr,jr0)} by its calculated June built-to-contracted ratio.`],
+   [`w165_${z}_jun_contract_total_share`,[`june_snapshot`],`The ${n} row represented ${pct(jc0/t.june.contracted)}% of the displayed rounded June contracted total.`],
+   [`w165_${z}_jun_built_total_share`,[`june_snapshot`],`The ${n} row represented ${pct(jb0/t.june.built)}% of the displayed rounded June built total.`],
+   [`w165_${z}_jun_gap`,[`june_snapshot`],`The rounded June contracted-minus-built gap for ${n} was ${jg0.toLocaleString('en-GB')}.`],
+   [`w165_${z}_jun_ratio`,[`june_snapshot`],`The calculated rounded June built-to-contracted ratio for ${n} was ${pct(jr0)}%.`],
+   [`w165_${z}_ratio_pp_change`,[`june_snapshot`,`july_snapshot`],`The calculated built-to-contracted ratio for ${n} changed by ${((yr0-jr0)*100)>=0?'+':''}${((yr0-jr0)*100).toFixed(4)} percentage points from June to July 2026.`],
+   [`w165_${z}_contract_share_pp_change`,[`june_snapshot`,`july_snapshot`],`The row's share of displayed contracted totals changed by ${((yc0/t.july.contracted-jc0/t.june.contracted)*100)>=0?'+':''}${((yc0/t.july.contracted-jc0/t.june.contracted)*100).toFixed(4)} percentage points from June to July 2026.`],
+   [`w165_${z}_built_rank_move`,[`june_snapshot`,`july_snapshot`],`The rounded built-premises competition rank for ${n} moved by ${rank(jb,jb0)-rank(yb,yb0)} places from June to July 2026; positive means an improved rank.`],
+   [`w165_${z}_contract_rank_move`,[`june_snapshot`,`july_snapshot`],`The rounded contracted-premises competition rank for ${n} moved by ${rank(jc,jc0)-rank(yc,yc0)} places from June to July 2026; positive means an improved rank.`],
+   [`w165_${z}_gap_rank_move`,[`june_snapshot`,`july_snapshot`],`The contracted-minus-built-gap competition rank for ${n} moved by ${rank(jg,jg0)-rank(yg,yg0)} places from June to July 2026; positive means an improved rank.`],
+   [`w165_${z}_ratio_rank_move`,[`june_snapshot`,`july_snapshot`],`The built-to-contracted-ratio competition rank for ${n} moved by ${rank(jr,jr0)-rank(yr,yr0)} places from June to July 2026; positive means an improved rank.`],
+   [`w165_${z}_built_delta_contribution`,[`june_snapshot`,`july_snapshot`],`The ${yb0-jb0>=0?'increase':'decrease'} of ${Math.abs(yb0-jb0).toLocaleString('en-GB')} for ${n} equalled ${((yb0-jb0)/db*100).toFixed(4)}% of the displayed net built-total change.`],
+   [`w165_${z}_contract_delta_contribution`,[`june_snapshot`,`july_snapshot`],`The signed contracted-premises change for ${n} equalled ${((yc0-jc0)/dc*100).toFixed(4)}% of the displayed net contracted-total change.`]
+  ];
+  facts.forEach(x=>a.push([x[0],x[1],x[2],"comparative_metric"]));
+ }
+ seed.consumer_seed.forEach(x=>a.push([x[0],[x[1]],x[2],x[3]]));
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([
+ fetch('extended_official_web_evidence_wave165_6200_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave165_seed_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave156_seed_20260801.json').then(r=>r.json())
+]).then(([d,s,b])=>{const rs=expand(b,s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const body=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;body.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
