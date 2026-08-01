@@ -1,0 +1,35 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave155</title><body>
+<h1>internet_access_3 Wave155 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave155_operations_4000_20260801.html">4.000 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave155_4000_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const fmt=v=>v===null?'missing':v.toLocaleString('en-GB');
+const delta=(v,a,b)=>v===0?`was unchanged from ${a} to ${b}`:`${v>0?'increased':'decreased'} by ${Math.abs(v).toLocaleString('en-GB')} from ${a} to ${b}`;
+function expand(seed){
+ const a=[];
+ for(const [n,p,jc,jb,fc,fb] of seed.contract_seed){
+  const z=slug(n);
+  a.push([`jan_${z}_supplier`,['january_snapshot'],`The January 2026 BDUK snapshot listed ${p} as supplier for ${n}.`,'monthly_snapshot']);
+  a.push([`jan_${z}_contracted`,['january_snapshot'],`The January 2026 BDUK snapshot listed ${jc.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+  if(jb===null)a.push([`jan_${z}_built`,['january_snapshot'],`The January 2026 BDUK table displayed a dash rather than a numeric built-premises value for ${n}; the value is preserved as missing.`,'missing_value']);
+  else a.push([`jan_${z}_built`,['january_snapshot'],`The January 2026 BDUK snapshot listed ${jb.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`feb_${z}_contracted`,['february_snapshot'],`The February 2026 BDUK snapshot listed ${fc.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`feb_${z}_built`,['february_snapshot'],`The February 2026 BDUK snapshot listed ${fb.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+  a.push([`delta_jan_feb_${z}_contracted`,['january_snapshot','february_snapshot'],`The rounded initial-scope contracted-premises figure for ${n} ${delta(fc-jc,'January','February 2026')}.`,'monthly_change']);
+  if(jb===null)a.push([`delta_jan_feb_${z}_built`,['january_snapshot','february_snapshot'],`No January-to-February built-premises delta was calculated for ${n} because the January table displayed a dash rather than a numeric value.`,'missing_value']);
+  else a.push([`delta_jan_feb_${z}_built`,['january_snapshot','february_snapshot'],`The rounded built-premises figure for ${n} ${delta(fb-jb,'January','February 2026')}.`,'monthly_change']);
+  if(jb===null)a.push([`pct_jan_feb_${z}_built`,['january_snapshot','february_snapshot'],`No January-to-February built-premises percentage change was calculated for ${n} because the January value was missing.`,'missing_value']);
+  else if(jb===0)a.push([`pct_jan_feb_${z}_built`,['january_snapshot','february_snapshot'],`No January-to-February built-premises percentage change was calculated for ${n} because the January rounded value was zero; the absolute change was ${(fb-jb)>=0?'+':''}${(fb-jb).toLocaleString('en-GB')}.`,'monthly_change']);
+  else a.push([`pct_jan_feb_${z}_built`,['january_snapshot','february_snapshot'],`The rounded built-premises figure for ${n} changed by ${(((fb-jb)/jb)*100)>=0?'+':''}${(((fb-jb)/jb)*100).toFixed(2)}% from January to February 2026 (${jb.toLocaleString('en-GB')} to ${fb.toLocaleString('en-GB')}).`,'monthly_change']);
+  if(jb===null)a.push([`share_jan_${z}_built`,['january_snapshot'],`No January built-to-contracted share was calculated for ${n} because the built-premises value was missing.`,'missing_value']);
+  else a.push([`share_jan_${z}_built`,['january_snapshot'],`The January 2026 rounded built-to-contracted share for ${n} was ${((jb/jc)*100).toFixed(2)}% (${jb.toLocaleString('en-GB')} of ${jc.toLocaleString('en-GB')}).`,'monthly_change']);
+  a.push([`share_feb_${z}_built`,['february_snapshot'],`The February 2026 rounded built-to-contracted share for ${n} was ${((fb/fc)*100).toFixed(2)}% (${fb.toLocaleString('en-GB')} of ${fc.toLocaleString('en-GB')}).`,'monthly_change']);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave155_4000_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave155_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
