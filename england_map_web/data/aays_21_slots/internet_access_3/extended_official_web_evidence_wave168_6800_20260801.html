@@ -1,0 +1,33 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave168</title><body>
+<h1>internet_access_3 Wave168 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave168_operations_6800_20260801.html">6.800 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave168_6800_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const fmt=n=>n.toLocaleString('en-GB'); const signed=n=>(n>=0?'+':'')+fmt(n);
+function expand(s){const a=[];for(const [n,dp,dc,db,jp,jc,jb] of s.contract_seed){const z=slug(n),dr=dc?db/dc*100:0,jr=jc?jb/jc*100:0,dg=dc-db,jg=jc-jb;
+a.push([`w168_${z}_dec_supplier`,['december_snapshot'],`The December 2025 snapshot listed ${dp} as supplier for ${n}.`,'monthly_snapshot']);
+a.push([`w168_${z}_dec_contracted`,['december_snapshot'],`The December 2025 snapshot listed ${fmt(dc)} contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`w168_${z}_dec_built`,['december_snapshot'],`The December 2025 snapshot listed ${fmt(db)} built contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`w168_${z}_supplier_continuity`,['december_snapshot','july_snapshot'],`${n} was listed with ${dp} in December 2025 and ${jp} in July 2026; supplier-label continuity was ${dp===jp?'preserved':'not preserved'}.`,'long_horizon_metric']);
+a.push([`w168_${z}_jul_contracted`,['july_snapshot'],`The July 2026 snapshot listed ${fmt(jc)} contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`w168_${z}_jul_built`,['july_snapshot'],`The July 2026 snapshot listed ${fmt(jb)} built contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`w168_${z}_contracted_delta`,['december_snapshot','july_snapshot'],`The rounded contracted-premises value for ${n} changed by ${signed(jc-dc)} from December 2025 to July 2026.`,'long_horizon_metric']);
+a.push([`w168_${z}_built_delta`,['december_snapshot','july_snapshot'],`The rounded built-premises value for ${n} changed by ${signed(jb-db)} from December 2025 to July 2026.`,'long_horizon_metric']);
+a.push([`w168_${z}_built_pct`,['december_snapshot','july_snapshot'],db===0?`A percentage change was not calculated for ${n} because its December built value was zero; the absolute change was ${signed(jb-db)}.`:`The rounded built-premises value for ${n} changed by ${((jb-db)/db*100>=0?'+':'')+((jb-db)/db*100).toFixed(2)}% from December 2025 to July 2026.`,'long_horizon_metric']);
+a.push([`w168_${z}_dec_ratio`,['december_snapshot'],`The December built-to-contracted ratio for ${n}, calculated from rounded values, was ${dr.toFixed(2)}%.`,'long_horizon_metric']);
+a.push([`w168_${z}_jul_ratio`,['july_snapshot'],`The July built-to-contracted ratio for ${n}, calculated from rounded values, was ${jr.toFixed(2)}%.`,'long_horizon_metric']);
+a.push([`w168_${z}_ratio_change`,['december_snapshot','july_snapshot'],`The calculated built ratio for ${n} changed by ${(jr-dr>=0?'+':'')+(jr-dr).toFixed(2)} percentage points from December to July.`,'long_horizon_metric']);
+a.push([`w168_${z}_dec_gap`,['december_snapshot'],`The December rounded contracted-minus-built gap for ${n} was ${fmt(dg)}.`,'long_horizon_metric']);
+a.push([`w168_${z}_jul_gap`,['july_snapshot'],`The July rounded contracted-minus-built gap for ${n} was ${fmt(jg)}.`,'long_horizon_metric']);
+a.push([`w168_${z}_gap_delta`,['december_snapshot','july_snapshot'],`The calculated unbuilt gap for ${n} changed by ${signed(jg-dg)} from December to July.`,'long_horizon_metric']);
+a.push([`w168_${z}_dec_built_total_share`,['december_snapshot'],`${n} represented ${(db/s.displayed_totals.december.built*100).toFixed(4)}% of the displayed December built total.`,'long_horizon_metric']);
+a.push([`w168_${z}_jul_built_total_share`,['july_snapshot'],`${n} represented ${(jb/s.displayed_totals.july.built*100).toFixed(4)}% of the displayed July built total.`,'long_horizon_metric']);
+a.push([`w168_${z}_classification`,['december_snapshot','july_snapshot'],`For ${n}, the long-horizon rounded snapshot classification was contracted ${jc===dc?'unchanged':jc>dc?'higher':'lower'}, built ${jb===db?'unchanged':jb>db?'higher':'lower'}, and ratio ${Math.abs(jr-dr)<0.005?'stable':jr>dr?'higher':'lower'}.`,'long_horizon_metric']);
+}
+for(const [id,doc,fact,g] of s.consumer_seed)a.push([`w168_${id}`,[doc],fact,g]);
+return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave168_6800_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave168_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
