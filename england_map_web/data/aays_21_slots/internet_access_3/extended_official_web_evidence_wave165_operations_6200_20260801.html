@@ -1,0 +1,11 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>Wave165 6.200 işlem satırı</title><body>
+<h1>internet_access_3 Wave165 · 6.200 işlem</h1><p>Satırlar 753.370–759.569; format: sequence|result|source_id|check.</p><pre id="ops">Yükleniyor…</pre>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function ids(base,seed){const a=[];for(const [n] of base.contract_seed){const z=slug(n);['jun_contract_rank','jun_built_rank','jun_gap_rank','jun_ratio_rank','jun_contract_total_share','jun_built_total_share','jun_gap','jun_ratio','ratio_pp_change','contract_share_pp_change','built_rank_move','contract_rank_move','gap_rank_move','ratio_rank_move','built_delta_contribution','contract_delta_contribution'].forEach(k=>a.push(`w165_${z}_${k}`));}seed.consumer_seed.forEach(x=>a.push(x[0]));return a;}
+Promise.all([
+ fetch('extended_official_web_evidence_wave165_6200_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave165_seed_20260801.json').then(r=>r.json()),
+ fetch('extended_official_web_evidence_wave156_seed_20260801.json').then(r=>r.json())
+]).then(([d,s,b])=>{const a=[];let n=d.visible_line_start;ids(b,s).forEach(id=>d.check_set.forEach(c=>a.push((n++)+'|P|'+id+'|'+c)));document.getElementById('ops').textContent=a.join('\n')}).catch(e=>document.getElementById('ops').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>6.200 işlem satırını oluşturmak için JavaScript gerekir.</noscript></body></html>
