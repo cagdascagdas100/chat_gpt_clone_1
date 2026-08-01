@@ -1,24 +1,90 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "internet_access_2",
-  "base_slot_id": "internet_access",
-  "shard_index": 2,
-  "parcel_partition": {
-    "start": 30762,
-    "end": 61522,
-    "count": 30761
+  "sequence": 2,
+  "state": "READY",
+  "hydration_state": "SAME_CONTINUATION_OFFICIAL_R2_ARCHIVE_RECOVERY_PHASE_READY",
+  "source_head": "099f48ba2e0a79b7b804d03f2520e185ef18bff2",
+  "continuation_key": "40ce1dc4f1ad5a0ab95078c6b920881699b36760c9c4579f3050b21d6cd68e36",
+  "task_id": "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z",
+  "task_phase": "OFCom_R2_ARCHIVE_ACQUISITION_AND_STRICT_VALIDATION",
+  "first_unverified_step": "ACQUIRE_AND_STRICTLY_VALIDATE_OFFICIAL_OFCom_SPRING_2026_CORRECTED_R2_ARCHIVE",
+  "completed_steps": [
+    "REMOTE_HEAD_AND_SLOT_RECORDS_REVALIDATED",
+    "PUBLISHED_11013_IDENTITY_ROWS_REMOTE_READBACK",
+    "MULTICLIENT_BINARY_TRANSPORT_BLOCKER_DIAGNOSED",
+    "PYTHON_ACQUISITION_SCRIPT_SYNTAX_TEST",
+    "SYNTHETIC_R2_ARCHIVE_FIXTURE_TEST"
+  ],
+  "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/automation/025_acquire_validate_ofcom_r2_archive.py",
+  "exact_read_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_2_ofcom_dynamic_zip_join_existing_11013_006.v3.task.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/source_snapshots/012_ofcom_spring_2026_archive_download_readback.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/012_ofcom_r2_archive_strict_validation.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/status/012_status.json",
+    "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/progress/012_progress.jsonl"
+  ],
+  "resource_class": [
+    "network_fetch",
+    "heavy_disk_io",
+    "runtime_sync"
+  ],
+  "timeout_seconds": 7200,
+  "acceptance_conditions": [
+    "Download follows HTTPS redirects only within www.ofcom.org.uk and records final URL, HTTP status, content type, byte count and SHA-256.",
+    "Raw ZIP is persisted only under AAYS_PORTABLE_ROOT/state/source_cache/ofcom_spring_2026 and is never added to Git.",
+    "ZIP CRC test passes; exactly 121 corrected-r2 postcode CSV members exist; no stale r1 member exists.",
+    "The 121 corrected-r2 members contain exactly 1,741,096 data rows and every member has all required core fields.",
+    "Only exact_write_paths are written in the repository; failure remains BLOCKED and writes no inferred parcel coverage."
+  ],
+  "source_evidence": {
+    "source_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
+    "alternate_official_urls": [
+      "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip"
+    ],
+    "landing_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
+    "accessed_at": "2026-08-01T14:57:15Z",
+    "content_sha256": "d25b9de6745131d0452f8fc13c472a2e156fbb671a8cc64baaa60690b5c781e0",
+    "hash_scope": "bounded_relevant_excerpt",
+    "supports_fields": [
+      "official_archive_url",
+      "official_landing_page",
+      "advertised_archive_size_mb",
+      "fixed_broadband_coverage_source_identity",
+      "licence_terms_location"
+    ],
+    "relevant_record_ids_or_excerpt": "Ofcom Spring 2026, published 13 May 2026, exposes the fixed broadband and full-fibre take-up archive as a 32.2 MB ZIP; the task must retain only exact corrected-r2 postcode records after strict archive acceptance.",
+    "license_or_terms_url": "https://www.ofcom.org.uk/about-ofcom/website/terms-of-use",
+    "official_page_published_at": "2026-05-13",
+    "advertised_archive_size_mb": 32.2,
+    "repository_acceptance_evidence_paths": [
+      "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_2/validation/008_ofcom_zip_schema_preflight.json",
+      "docs/chatgpt_status/_shared/manual_actions/internet_access_2.json",
+      "england_map_web/data/aays_21_slots/internet_access_2/continuation_latest.json"
+    ],
+    "repository_acceptance_supports": [
+      "expected_r2_files_121",
+      "expected_rows_1741096",
+      "exact_join_target_rows_11013"
+    ]
   },
-  "sequence": 1,
-  "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
-  "remote_head": "b3b5f8c0be1dfd3643bee0b43f7706af10915a23",
-  "first_unverified_step": "MIGRATE_33785_VERIFIED_ROWS_THEN_CLOSE_58498_WITH_VERIFIED_POSTCODE_OR_NO_DATA",
-  "terminal_no_replay": [],
-  "zip_timestamp_ignored": true,
-  "updated_at": "2026-07-22T19:27:07.730636Z",
+  "progress": {
+    "completed_count": 5,
+    "target_count": 6,
+    "previous_percent": 83.33,
+    "current_percent": 83.33,
+    "percent_increase": 0.0,
+    "formula": "completed_count/target_count*100"
+  },
+  "terminal_no_replay": [
+    "internet-access-2-ofcom-dynamic-zip-join-existing-11013-v2-20260722T041000Z:prior_published_phase"
+  ],
+  "updated_at": "2026-08-01T14:57:15Z",
   "final_ready": false,
-  "remote_slot_checkpoint_sequence": 1,
-  "remote_slot_checkpoint_sha256": "5f21321df86513a580763b9201396b32bfd75ff7075233b0e97c78d3362b25a5",
-  "remote_contract_source": "slots_21"
+  "fake_data": false
 }
