@@ -1,0 +1,51 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "security_public_safety_2",
+  "task_id": "security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801",
+  "attempt_id": "attempt-001",
+  "continuation_key": "5d758f99bbbf8b387281de0d416178d5944fca8bffd079f6aedc3b2ff028da40",
+  "previous_continuation_key": "a61e46015baebb5d9e1ddb098b98fe04e6c1c617ec98a1a09eef8c1c297c066f",
+  "source_head": "6cb34b30a5ab8b91c34f50fe1c7153db5f509512",
+  "canonical_branch": "codex/aays-single-runner-v5-20260706",
+  "first_unverified_step": "WAVE140_SINGLE_OPEN_ROW_HMLR_INSPIRE_OS_OPEN_UPRN_PRIMARY_BINDING",
+  "state": "READY",
+  "owner": null,
+  "blocker": null,
+  "created_at": "2026-08-01T07:33:00Z",
+  "updated_at": "2026-08-01T07:33:00Z",
+  "resource_class": "NETWORK_IO_CPU_DISK_BOUNDED",
+  "maximum_simultaneous_workers": 15,
+  "large_download_workers": 2,
+  "timeout_minutes": 60,
+  "read_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json",
+    "docs/chatgpt_status/aays1/automation/security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.py"
+  ],
+  "exact_write_paths": [
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140_latest.json",
+    "england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_hmlr_inspire_os_open_uprn_primary_binding_wave140.html",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_evidence_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave140_diagnostic_latest.json",
+    "docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json",
+    "docs/chatgpt_status/aays1/queue/0153_security_public_safety_2_wave140_official_hmlr_inspire_os_open_uprn_primary_binding_20260801.v3.task.json"
+  ],
+  "acceptance_conditions": [
+    "HM Land Registry INSPIRE download page is fetched from the official service and selected local-authority GML links are recorded fail-closed",
+    "OS Open UPRN CSV is downloaded from the official OS Downloads API with byte count and SHA-256",
+    "At least one million OS Open UPRN rows are streamed and checked without loading the full national CSV into memory",
+    "UPRN candidates are limited to 100 metres around the exact selected coordinate",
+    "Official 2011 and 2021 ONS boundary services are queried for every retained UPRN candidate",
+    "HMLR polygon containment or UPRN proximity alone cannot promote the row",
+    "Promotion requires exact non-derived repository binding, coordinate match within 0.25 metres and the conflict-free official expected LSOA pair",
+    "No majority vote, threshold relaxation, centroid inference or parent value mutation",
+    "JSON, HTML, status, evidence, diagnostic, manual-action and queue files are updated",
+    "Canonical push and remote SHA-256 readback succeed"
+  ],
+  "fake_data_allowed": false,
+  "second_runner_created": false,
+  "second_task_created": false
+}
