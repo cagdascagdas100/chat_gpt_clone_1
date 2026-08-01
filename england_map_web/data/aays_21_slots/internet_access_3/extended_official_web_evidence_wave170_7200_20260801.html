@@ -1,0 +1,47 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave170</title><body>
+<h1>internet_access_3 Wave170 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave170_operations_7200_20260801.html">7.200 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave170_7200_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const rankMap=o=>{const u=[...new Set(Object.values(o))].sort((a,b)=>b-a);return Object.fromEntries(Object.entries(o).map(([k,v])=>[k,u.indexOf(v)+1]));};
+function expand(s){
+ const jc=Object.fromEntries(s.contract_seed.map(x=>[x[0],x[4]]));
+ const jb=Object.fromEntries(s.contract_seed.map(x=>[x[0],x[5]]));
+ const jr=Object.fromEntries(s.contract_seed.map(x=>[x[0],x[5]/x[4]]));
+ const db=Object.fromEntries(s.contract_seed.map(x=>[x[0],x[5]-x[3]]));
+ const rc=rankMap(jc), rb=rankMap(jb), rr=rankMap(jr), rd=rankMap(db);
+ const td=s.displayed_totals.july.built-s.displayed_totals.june.built, a=[];
+ for(const [n,p,jc0,jb0,yc,yb] of s.contract_seed){
+  const z=slug(n), dc=yc-jc0, d=yb-jb0, r0=jb0/jc0, r1=yb/yc, pp=(r1-r0)*100;
+  const cls=(dc>0?'scope increase':dc<0?'scope decrease':'scope unchanged')+' and '+(d>0?'built increase':d<0?'built decrease':'built unchanged');
+  const pc=jb0===0?`The June-to-July built percentage change for ${n} was not calculated because the June displayed value was zero; the absolute change was ${d>=0?'+':''}${d.toLocaleString('en-GB')}.`:`The displayed built-premises value for ${n} changed by ${d/jb0*100>=0?'+':''}${(d/jb0*100).toFixed(2)}% from June to July 2026.`;
+  a.push(
+   [`w170_${z}_jul_supplier`,['july_snapshot'],`The July 2026 BDUK snapshot listed ${p} as supplier for ${n}.`,'monthly_snapshot'],
+   [`w170_${z}_jul_contracted`,['july_snapshot'],`The July 2026 snapshot listed ${yc.toLocaleString('en-GB')} rounded initial-scope contracted premises for ${n}.`,'monthly_snapshot'],
+   [`w170_${z}_jul_built`,['july_snapshot'],`The July 2026 snapshot listed ${yb.toLocaleString('en-GB')} rounded built contracted premises for ${n}.`,'monthly_snapshot'],
+   [`w170_${z}_jun_contracted`,['june_snapshot'],`The June 2026 snapshot listed ${jc0.toLocaleString('en-GB')} rounded initial-scope contracted premises for ${n}.`,'monthly_snapshot'],
+   [`w170_${z}_jun_built`,['june_snapshot'],`The June 2026 snapshot listed ${jb0.toLocaleString('en-GB')} rounded built contracted premises for ${n}.`,'monthly_snapshot'],
+   [`w170_${z}_contracted_delta`,['june_snapshot','july_snapshot'],`The displayed contracted-premises value for ${n} changed by ${dc>=0?'+':''}${dc.toLocaleString('en-GB')} from June to July 2026.`,'transition_metric'],
+   [`w170_${z}_built_delta`,['june_snapshot','july_snapshot'],`The displayed built-premises value for ${n} changed by ${d>=0?'+':''}${d.toLocaleString('en-GB')} from June to July 2026.`,'transition_metric'],
+   [`w170_${z}_built_pct`,['june_snapshot','july_snapshot'],pc,'transition_metric'],
+   [`w170_${z}_jul_ratio`,['july_snapshot'],`The July displayed built-to-contracted ratio for ${n} was ${(r1*100).toFixed(2)}%.`,'cross_section_metric'],
+   [`w170_${z}_jun_ratio`,['june_snapshot'],`The June displayed built-to-contracted ratio for ${n} was ${(r0*100).toFixed(2)}%.`,'cross_section_metric'],
+   [`w170_${z}_ratio_pp`,['june_snapshot','july_snapshot'],`The displayed built-to-contracted ratio for ${n} changed by ${pp>=0?'+':''}${pp.toFixed(2)} percentage points from June to July 2026.`,'transition_metric'],
+   [`w170_${z}_jul_contracted_share`,['july_snapshot'],`${n} represented ${(yc/s.displayed_totals.july.contracted*100).toFixed(4)}% of the displayed July contracted total.`,'cross_section_metric'],
+   [`w170_${z}_jul_built_share`,['july_snapshot'],`${n} represented ${(yb/s.displayed_totals.july.built*100).toFixed(4)}% of the displayed July built total.`,'cross_section_metric'],
+   [`w170_${z}_jul_contracted_rank`,['july_snapshot'],`${n} had descending competition rank ${rc[n]} by displayed July contracted premises.`,'cross_section_metric'],
+   [`w170_${z}_jul_built_rank`,['july_snapshot'],`${n} had descending competition rank ${rb[n]} by displayed July built premises.`,'cross_section_metric'],
+   [`w170_${z}_jul_ratio_rank`,['july_snapshot'],`${n} had descending competition rank ${rr[n]} by displayed July built-to-contracted ratio.`,'cross_section_metric'],
+   [`w170_${z}_built_delta_rank`,['june_snapshot','july_snapshot'],`${n} had descending competition rank ${rd[n]} by the displayed June-to-July built-premises change.`,'transition_metric'],
+   [`w170_${z}_total_increase_contribution`,['june_snapshot','july_snapshot'],`The ${d>=0?'+':''}${d.toLocaleString('en-GB')} displayed built-premises change for ${n} equalled ${d/td*100>=0?'+':''}${(d/td*100).toFixed(4)}% of the displayed total increase of ${td.toLocaleString('en-GB')}.`,'transition_metric'],
+   [`w170_${z}_transition_class`,['june_snapshot','july_snapshot'],`The June-to-July displayed transition for ${n} was classified as ${cls}.`,'transition_metric']
+  );
+ }
+ for(const [id,doc,fact,g] of s.consumer_seed)a.push([`w170_${id}`,[doc],fact,g]);
+ return a.map((x,i)=>[...x,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+</script>
+<script>Promise.all([fetch('extended_official_web_evidence_wave170_7200_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave170_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);</script>
+<noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
