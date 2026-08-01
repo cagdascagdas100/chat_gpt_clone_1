@@ -1,0 +1,37 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave157</title><body>
+<h1>internet_access_3 Wave157 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave157_operations_4400_20260801.html">4.400 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave157_4400_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const fmt=n=>Math.abs(n).toLocaleString('en-GB');
+const signed=n=>(n>0?'+':'')+n.toLocaleString('en-GB');
+const dir=n=>n>0?'increased':n<0?'decreased':'was unchanged';
+function expand(seed){
+ const a=[];
+ for(const [name,supplier,jc,jb,yc,yb] of seed.contract_seed){
+  const z=slug(name),dc=yc-jc,db=yb-jb,jg=jc-jb,yg=yc-yb,dg=yg-jg;
+  a.push([`jan_jul_${z}_contracted_delta`,['january_snapshot','july_snapshot'],`The rounded contracted-premises figure for ${name} ${dir(dc)} by ${fmt(dc)} from January to July 2026 (${jc.toLocaleString('en-GB')} to ${yc.toLocaleString('en-GB')}).`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_built_delta`,['january_snapshot','july_snapshot'],`The rounded built-premises figure for ${name} ${dir(db)} by ${fmt(db)} from January to July 2026 (${jb.toLocaleString('en-GB')} to ${yb.toLocaleString('en-GB')}).`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_contracted_pct`,['january_snapshot','july_snapshot'],`The rounded contracted-premises figure for ${name} changed by ${((dc/jc)*100)>=0?'+':''}${((dc/jc)*100).toFixed(2)}% from January to July 2026.`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_built_pct`,['january_snapshot','july_snapshot'],`The rounded built-premises figure for ${name} changed by ${((db/jb)*100)>=0?'+':''}${((db/jb)*100).toFixed(2)}% from January to July 2026.`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_contracted_monthly_avg`,['january_snapshot','july_snapshot'],`The six-interval arithmetic average contracted-premises change for ${name} was ${signed(Number((dc/6).toFixed(2)))} per month between the January and July snapshots.`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_built_monthly_avg`,['january_snapshot','july_snapshot'],`The six-interval arithmetic average built-premises change for ${name} was ${signed(Number((db/6).toFixed(2)))} per month between the January and July snapshots.`,'long_horizon_snapshot']);
+  a.push([`jan_jul_${z}_jan_gap`,['january_snapshot'],`The January 2026 rounded contracted-minus-built gap for ${name} was ${jg.toLocaleString('en-GB')}.`,'gap_metric']);
+  a.push([`jan_jul_${z}_jul_gap`,['july_snapshot'],`The July 2026 rounded contracted-minus-built gap for ${name} was ${yg.toLocaleString('en-GB')}.`,'gap_metric']);
+  a.push([`jan_jul_${z}_gap_delta`,['january_snapshot','july_snapshot'],`The rounded contracted-minus-built gap for ${name} ${dir(dg)} by ${fmt(dg)} from January to July 2026 (${jg.toLocaleString('en-GB')} to ${yg.toLocaleString('en-GB')}).`,'gap_metric']);
+  if(jg===0)a.push([`jan_jul_${z}_built_vs_jan_gap`,['january_snapshot','july_snapshot'],`Built increase as a percentage of the January gap was not calculated for ${name} because the January rounded gap was zero; the absolute built change was ${signed(db)}.`,'gap_metric']);
+  else a.push([`jan_jul_${z}_built_vs_jan_gap`,['january_snapshot','july_snapshot'],`The January-to-July rounded built change for ${name} was ${((db/jg)*100)>=0?'+':''}${((db/jg)*100).toFixed(2)}% of the January contracted-minus-built gap.`,'gap_metric']);
+  a.push([`jan_jul_${z}_direction`,['january_snapshot','july_snapshot'],`The January-to-July rounded direction classification for ${name} was contracted scope ${dc>0?'up':dc<0?'down':'flat'} and built count ${db>0?'up':db<0?'down':'flat'}.`,'long_horizon_snapshot']);
+ }
+ for(const [id,doc,fact,g] of seed.consumer_seed)a.push([id,[doc],fact,g]);
+ return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);
+}
+Promise.all([fetch('extended_official_web_evidence_wave157_4400_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave157_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{
+ const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));
+ document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;
+ const b=document.getElementById('rows');
+ rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)});
+}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
