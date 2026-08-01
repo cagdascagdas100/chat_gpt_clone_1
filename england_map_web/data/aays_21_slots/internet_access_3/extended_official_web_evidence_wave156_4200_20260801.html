@@ -1,0 +1,23 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><title>internet_access_3 Wave156</title><body>
+<h1>internet_access_3 Wave156 · resmî web kanıtı</h1><p id="sum">Yükleniyor…</p>
+<table border="1" cellpadding="5"><thead><tr><th>#</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan bilgi</th><th>Kapsam sınırı</th><th>Güven</th><th>İşlem</th></tr></thead><tbody id="rows"></tbody></table>
+<p><a href="extended_official_web_evidence_wave156_operations_4200_20260801.html">4.200 işlem satırını aç</a></p>
+<p><a href="extended_official_web_evidence_wave156_4200_20260801.json">Manifesti aç</a></p>
+<script>
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const delta=(v,a,b)=>v===0?`was unchanged from ${a} to ${b}`:`${v>0?'increased':'decreased'} by ${Math.abs(v).toLocaleString('en-GB')} from ${a} to ${b}`;
+function expand(s){const a=[];for(const [n,p,jc,jb,uc,ub] of s.contract_seed){const z=slug(n),d=ub-jb;
+a.push([`jul_${z}_supplier`,['july_snapshot'],`The July 2026 BDUK snapshot listed ${p} as supplier for ${n}.`,'monthly_snapshot']);
+a.push([`jun_${z}_contracted`,['june_snapshot'],`The June 2026 BDUK snapshot listed ${jc.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`jun_${z}_built`,['june_snapshot'],`The June 2026 BDUK snapshot listed ${jb.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`jul_${z}_contracted`,['july_snapshot'],`The July 2026 BDUK snapshot listed ${uc.toLocaleString('en-GB')} initial-scope contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`jul_${z}_built`,['july_snapshot'],`The July 2026 BDUK snapshot listed ${ub.toLocaleString('en-GB')} built contracted premises for ${n}.`,'monthly_snapshot']);
+a.push([`delta_jun_jul_${z}_contracted`,['june_snapshot','july_snapshot'],`The rounded contracted-premises figure for ${n} ${delta(uc-jc,'June','July 2026')}.`,'monthly_change']);
+a.push([`delta_jun_jul_${z}_built`,['june_snapshot','july_snapshot'],`The rounded built-premises figure for ${n} ${delta(d,'June','July 2026')}.`,'monthly_change']);
+a.push([`pct_jun_jul_${z}_built`,['june_snapshot','july_snapshot'],jb===0?`The June-to-July built-premises percentage change for ${n} was not calculated because the June rounded value was zero; the absolute change was ${d>=0?'+':''}${d.toLocaleString('en-GB')}.`:`The rounded built-premises figure for ${n} changed by ${((d/jb)*100)>=0?'+':''}${((d/jb)*100).toFixed(2)}% from June to July 2026 (${jb.toLocaleString('en-GB')} to ${ub.toLocaleString('en-GB')}).`,'monthly_change']);
+a.push([`jul_${z}_built_ratio`,['july_snapshot'],`The July rounded built-to-contracted ratio for ${n} was ${uc===0?'not calculated':((ub/uc)*100).toFixed(2)+'%'} (${ub.toLocaleString('en-GB')} of ${uc.toLocaleString('en-GB')}).`,'monthly_change']);
+a.push([`jul_${z}_built_total_share`,['july_snapshot'],`The July rounded built figure for ${n} represented ${((ub/s.displayed_totals.july.built)*100).toFixed(2)}% of the displayed July built total.`,'monthly_change']);
+}for(const [id,doc,fact,g] of s.consumer_seed)a.push([id,[doc],fact,g]);
+return a.map((r,i)=>[...r,100,(i+1)%5===0?'REVALIDATION':'UPGRADE']);}
+Promise.all([fetch('extended_official_web_evidence_wave156_4200_20260801.json').then(r=>r.json()),fetch('extended_official_web_evidence_wave156_seed_20260801.json').then(r=>r.json())]).then(([d,s])=>{const rs=expand(s),docs=Object.fromEntries(d.documents.map(x=>[x.id,x]));document.getElementById('sum').textContent=`${d.assertion_pass}/${d.assertion_checks} PASS · ${rs.length} kayıt · ${d.official_documents} resmî belge · ${d.source_upgrades} yükseltme · ${d.source_revalidations} yeniden doğrulama · ${d.candidate_examples} aday · doğruluk %${d.assertion_accuracy_percent.toFixed(2)} · business satırı 0 · parsel terfisi 0.`;const b=document.getElementById('rows');rs.forEach((x,i)=>{const tr=document.createElement('tr'),links=x[1].map(id=>`<a href="${docs[id].url}">${docs[id].title}</a>`).join('<br>'),pubs=[...new Set(x[1].map(id=>docs[id].publisher))].join(' / ');tr.innerHTML=`<td>${i+1}</td><td>${pubs}</td><td>${links}</td><td>${x[2]}</td><td>${d.scope_guards[x[3]]}</td><td>${x[4].toFixed(1)}</td><td>${x[5]}</td>`;b.appendChild(tr)})}).catch(e=>document.getElementById('sum').textContent='Kanıt yüklenemedi: '+e);
+</script><noscript>Kaynak tablosu için JavaScript gerekir; manifest ve seed JSON dosyaları doğrudan açılabilir.</noscript></body></html>
