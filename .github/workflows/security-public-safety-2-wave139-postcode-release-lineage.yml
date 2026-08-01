@@ -37,7 +37,8 @@ jobs:
         run: |
           python -m py_compile \
             docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.py \
-            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801_v2.py
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801_v2.py \
+            docs/chatgpt_status/aays1/automation/security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801_v3.py
 
       - name: Run official internet postcode release lineage audit
         env:
@@ -91,31 +92,92 @@ jobs:
           print(json.dumps(result, ensure_ascii=False))
           PY
 
-      - name: Commit and publish canonical outputs
+      - name: Publish through isolated canonical worktree
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json \
-            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
-            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json \
-            docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+          SRC="$GITHUB_WORKSPACE"
+          ART="/tmp/wave139-artifacts"
+          rm -rf "$ART"
+          mkdir -p "$ART"
+          NONMANUAL=(
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json
+            england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json
+            docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json
             docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json
-          git commit -m 'security_public_safety_2: publish Wave139 postcode release lineage'
+          )
+          tar -cf "$ART/nonmanual.tar" "${NONMANUAL[@]}"
+          cp docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json "$ART/generated_manual.json"
+
           published=false
           for attempt in 1 2 3; do
             git fetch origin codex/aays-single-runner-v5-20260706
-            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+            WT="/tmp/wave139-publish-$attempt"
+            git worktree remove --force "$WT" 2>/dev/null || true
+            rm -rf "$WT"
+            git worktree add --detach "$WT" origin/codex/aays-single-runner-v5-20260706
+            tar -xf "$ART/nonmanual.tar" -C "$WT"
+            python - "$ART/generated_manual.json" "$WT/docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          generated_path = Path(sys.argv[1])
+          current_path = Path(sys.argv[2])
+          generated = json.loads(generated_path.read_text())
+          current = json.loads(current_path.read_text()) if current_path.exists() else generated
+          generated_item = next((row for row in generated.get('items', []) if row.get('parcel_id') == 'parcel_40827'), None)
+          if generated_item is None:
+              raise RuntimeError('GENERATED_MANUAL_TARGET_MISSING')
+          items = current.setdefault('items', [])
+          for index, row in enumerate(items):
+              if row.get('parcel_id') == 'parcel_40827':
+                  items[index] = generated_item
+                  break
+          else:
+              items.append(generated_item)
+          for key in ('updated_at', 'continuation_key'):
+              current[key] = generated.get(key)
+          evidence = current.setdefault('evidence_paths', [])
+          for path in generated.get('evidence_paths', []):
+              if path not in evidence:
+                  evidence.append(path)
+          current['open_item_count'] = sum(row.get('state') == 'OPEN' for row in items)
+          current['resolved_item_count'] = sum(row.get('state') == 'RESOLVED' for row in items)
+          current['state'] = 'RESOLVED' if current['open_item_count'] == 0 else 'OPEN'
+          current['requires_user_action'] = bool(current['open_item_count'])
+          current['final_ready'] = current['open_item_count'] == 0
+          current_path.parent.mkdir(parents=True, exist_ok=True)
+          current_path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + '\n')
+          PY
+
+            if (
+              cd "$WT"
+              git config user.name 'github-actions[bot]'
+              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+              git add \
+                england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139_latest.json \
+                england_map_web/data/aays_21_slots/security_public_safety_2/lsoa_official_postcode_release_lineage_field_semantics_primary_binding_wave139.html \
+                docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_status_latest.json \
+                docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_evidence_latest.json \
+                docs/chatgpt_status/_shared/slots_21/security_public_safety_2/wave139_diagnostic_latest.json \
+                docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json \
+                docs/chatgpt_status/aays1/queue/0152_security_public_safety_2_wave139_official_postcode_release_lineage_field_semantics_primary_binding_20260801.v3.task.json
+              git commit -m 'security_public_safety_2: publish Wave139 postcode release lineage'
+              git push origin HEAD:codex/aays-single-runner-v5-20260706
+            ); then
+              git -C "$WT" rev-parse HEAD > /tmp/wave139_published_sha
+              cp "$WT/docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json" "$SRC/docs/chatgpt_status/_shared/manual_actions/security_public_safety_2.json"
               published=true
+              git worktree remove --force "$WT"
               break
             fi
-            git rebase --abort || true
+            git worktree remove --force "$WT" || true
             sleep $((attempt * 2))
           done
           test "$published" = true
+          echo "WAVE139_PUBLISHED_SHA=$(cat /tmp/wave139_published_sha)"
 
       - name: Remote canonical readback
         run: |
@@ -136,3 +198,4 @@ jobs:
             echo "REMOTE_READBACK $path $remote_sha"
           done
           echo "CANONICAL_REMOTE_HEAD=$remote_head"
+          echo "WAVE139_PUBLISHED_SHA=$(cat /tmp/wave139_published_sha)"
