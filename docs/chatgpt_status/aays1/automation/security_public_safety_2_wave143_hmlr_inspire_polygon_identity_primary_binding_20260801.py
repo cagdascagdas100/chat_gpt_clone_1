@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import subprocess
 from urllib.parse import urljoin, urlparse
@@ -103,22 +104,16 @@ def install_hmlr_gml_recovery(namespace: dict[str, object]) -> None:
         page = original_bget("wave143_hmlr_page", hmlr_url, 8 * 1024 * 1024)
         if not page["ok"]:
             return {key: value for key, value in page.items() if key != "data"}, []
+
         soup = BeautifulSoup(page["data"], "html.parser")
         wanted = set(original_core(lad).split())
-        links: dict[str, dict[str, object]] = {}
         page_base = page["url"].split("#", 1)[0]
-        for anchor in soup.find_all("a", href=True):
+
+        def classify(anchor: object) -> dict[str, object] | None:
             href = str(anchor.get("href") or "").strip()
             text = " ".join(anchor.get_text(" ", strip=True).split())
-            row = anchor.find_parent("tr")
-            item = anchor.find_parent("li")
-            container = row or item or anchor.parent
-            context = " ".join(
-                (container.get_text(" ", strip=True) if container else text).split()
-            )
             url = urljoin(page["url"], href)
             parsed = urlparse(url)
-            context_tokens = set(original_core(context).split())
             label_is_gml = ".gml" in text.lower()
             path_is_gml = ".gml" in parsed.path.lower()
             is_real_download = (
@@ -127,13 +122,111 @@ def install_hmlr_gml_recovery(namespace: dict[str, object]) -> None:
                 and url.split("#", 1)[0] != page_base
                 and (label_is_gml or path_is_gml)
             )
-            if is_real_download and wanted and wanted.issubset(context_tokens):
-                links[url] = {
-                    "text": text,
-                    "context": context[:500],
-                    "url": url,
-                    "tokens": sorted(wanted & context_tokens),
-                }
+            if not is_real_download:
+                return None
+            return {"anchor": anchor, "text": text, "url": url}
+
+        candidates = [
+            candidate
+            for anchor in soup.find_all("a", href=True)
+            if (candidate := classify(anchor)) is not None
+        ]
+        links: dict[str, dict[str, object]] = {}
+
+        # Method 1: shortest bounded ancestor containing both council text and link.
+        for candidate in candidates:
+            anchor = candidate["anchor"]
+            ancestor = anchor.parent
+            for depth in range(1, 9):
+                if ancestor is None or getattr(ancestor, "name", None) in {"main", "body", "html"}:
+                    break
+                context = " ".join(ancestor.get_text(" ", strip=True).split())
+                tokens = set(original_core(context).split())
+                if wanted and wanted.issubset(tokens) and len(context) <= 2500:
+                    links[candidate["url"]] = {
+                        "text": candidate["text"],
+                        "context": context[:500],
+                        "url": candidate["url"],
+                        "tokens": sorted(wanted & tokens),
+                        "selector": "bounded_ancestor",
+                        "selector_depth": depth,
+                    }
+                    break
+                ancestor = ancestor.parent
+
+        # Method 2: find the council label and select the first real GML anchor after it.
+        if not links:
+            label_nodes = []
+            for node in soup.find_all(string=True):
+                text = " ".join(str(node).split())
+                if not text:
+                    continue
+                tokens = set(original_core(text).split())
+                if wanted and wanted.issubset(tokens):
+                    label_nodes.append((node, text, tokens))
+            candidate_by_id = {id(candidate["anchor"]): candidate for candidate in candidates}
+            for node, label_text, label_tokens in label_nodes:
+                for anchor in node.parent.find_all_next("a", href=True, limit=12):
+                    candidate = candidate_by_id.get(id(anchor))
+                    if candidate is None:
+                        continue
+                    links[candidate["url"]] = {
+                        "text": candidate["text"],
+                        "context": f"{label_text} | {candidate['text']}"[:500],
+                        "url": candidate["url"],
+                        "tokens": sorted(wanted & label_tokens),
+                        "selector": "label_then_next_gml",
+                        "selector_depth": 0,
+                    }
+                    break
+                if links:
+                    break
+
+        # Method 3: bounded preceding-text window for non-tabular page layouts.
+        if not links:
+            for candidate in candidates:
+                previous_tokens: set[str] = set()
+                previous_text: list[str] = []
+                for node in candidate["anchor"].previous_elements:
+                    if getattr(node, "name", None) == "a" and node is not candidate["anchor"]:
+                        break
+                    if isinstance(node, str):
+                        text = " ".join(node.split())
+                        if text:
+                            previous_text.append(text)
+                            previous_tokens.update(original_core(text).split())
+                            if len(previous_text) >= 16 or sum(map(len, previous_text)) >= 1200:
+                                break
+                if wanted and wanted.issubset(previous_tokens):
+                    context = " | ".join(reversed(previous_text))
+                    links[candidate["url"]] = {
+                        "text": candidate["text"],
+                        "context": context[-500:],
+                        "url": candidate["url"],
+                        "tokens": sorted(wanted & previous_tokens),
+                        "selector": "preceding_text_window",
+                        "selector_depth": 0,
+                    }
+                    break
+
+        if not links:
+            diagnostic = {
+                "wanted": sorted(wanted),
+                "real_gml_candidates": len(candidates),
+                "candidate_sample": [
+                    {"text": candidate["text"], "url": candidate["url"]}
+                    for candidate in candidates[:5]
+                ],
+            }
+            raise RuntimeError(
+                "HMLR_LINK_SELECTOR_FAILED:"
+                + hashlib.sha256(
+                    json.dumps(diagnostic, sort_keys=True).encode("utf-8")
+                ).hexdigest()[:16]
+                + ":"
+                + json.dumps(diagnostic, ensure_ascii=True, separators=(",", ":"))[:1200]
+            )
+
         return {key: value for key, value in page.items() if key != "data"}, list(links.values())
 
     def recovered_scan_gml(data: bytes) -> dict[str, object]:
