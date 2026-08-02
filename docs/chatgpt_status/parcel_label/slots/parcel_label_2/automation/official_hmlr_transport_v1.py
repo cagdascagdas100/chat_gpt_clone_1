@@ -4,6 +4,10 @@ import ipaddress
 import urllib.parse
 import urllib.request
 
+_EXACT_TRUSTED_REDIRECT_HOSTS = frozenset({
+    "datapub-prd-s3-bucket.s3.amazonaws.com",
+})
+
 
 def _normalise_host(host: str) -> str:
     return host.casefold()
@@ -12,7 +16,12 @@ def _normalise_host(host: str) -> str:
 def _trusted_host(host: str, primary_host: str) -> bool:
     host = _normalise_host(host)
     primary = _normalise_host(primary_host)
-    return host == primary or host == "landregistry.gov.uk" or host.endswith(".landregistry.gov.uk")
+    return (
+        host == primary
+        or host == "landregistry.gov.uk"
+        or host.endswith(".landregistry.gov.uk")
+        or host in _EXACT_TRUSTED_REDIRECT_HOSTS
+    )
 
 
 def validate_official_hmlr_url(url: str, *, primary_host: str, require_primary: bool = False) -> str:
