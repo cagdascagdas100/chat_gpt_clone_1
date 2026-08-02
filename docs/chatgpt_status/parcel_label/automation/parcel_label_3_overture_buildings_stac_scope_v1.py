@@ -239,7 +239,19 @@ def main() -> None:
         validate()
         return
     result = run(args.timeout)
-    print(json.dumps({"state":result["state"],"completed_count":result["completed_count"],"target_count":result["target_count"],"produced_candidate_rows":result["produced_candidate_rows"],"evidence_records":len(result["source_evidence"]),"successful_metadata_responses":result["successful_metadata_responses"]},separators=(",",":")))
+    print(
+        json.dumps(
+            {
+                "state": result["state"],
+                "completed_count": result["completed_count"],
+                "target_count": result["target_count"],
+                "produced_candidate_rows": result["produced_candidate_rows"],
+                "evidence_records": len(result["source_evidence"]),
+                "successful_metadata_responses": result["successful_metadata_responses"],
+            },
+            separators=(",", ":"),
+        )
+    )
 
 
 if __name__ == "__main__":
