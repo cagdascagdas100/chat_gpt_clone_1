@@ -31,20 +31,39 @@ function Read-JsonFile([string]$Path) {
   try { if (Test-Path -LiteralPath $Path) { return Get-Content -Raw -LiteralPath $Path | ConvertFrom-Json } } catch {}
   return $null
 }
-function Test-RunnerActive([string]$LockPath) {
+function Get-ProcessCommandLine([int]$ProcessId) {
+  try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction Stop).CommandLine } catch { return "" }
+}
+function Test-RunnerActive([string]$LockPath, [string]$ExpectedRepoRoot) {
   $lock = Read-JsonFile $LockPath
-  if ($null -eq $lock -or $null -eq $lock.pid) { return [pscustomobject]@{ active=$false; pid=$null; stale=$false; verified=$false } }
+  if ($null -eq $lock -or $null -eq $lock.pid) { return [pscustomobject]@{ active=$false; alive=$false; pid=$null; stale=$false; verified=$false } }
   $pidValue = [int]$lock.pid
   $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
-  if ($null -eq $proc) { return [pscustomobject]@{ active=$false; pid=$pidValue; stale=$true; verified=$false } }
-  $startMatches = $false
+  if ($null -eq $proc) { return [pscustomobject]@{ active=$false; alive=$false; pid=$pidValue; stale=$true; verified=$false } }
+  $startMatches = $true
+  if ($lock.process_start_time) {
+    try {
+      $expected = [datetime]::Parse([string]$lock.process_start_time).ToUniversalTime()
+      $actual = $proc.StartTime.ToUniversalTime()
+      $startMatches = ([math]::Abs(($actual - $expected).TotalSeconds) -lt 2)
+    } catch { $startMatches = $false }
+  }
+  $scopeMatches = (-not $lock.lock_scope -or [string]$lock.lock_scope -eq "single_shared_runner_daemon")
+  $repoMatches = ([string]$lock.repo_root).TrimEnd([char]92) -eq $ExpectedRepoRoot.TrimEnd([char]92)
+  $commandLine = Get-ProcessCommandLine $pidValue
+  $commandMatches = $commandLine -like "*RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1*" -and $commandLine -like "*$ExpectedRepoRoot*"
+  $verified = $startMatches -and $scopeMatches -and $repoMatches -and $commandMatches
+  return [pscustomobject]@{ active=$verified; alive=$true; pid=$pidValue; stale=(-not $verified); verified=$verified; command_line=$commandLine }
+}
+function Test-DaemonHeartbeatFresh([string]$HeartbeatPath, [int]$MaxAgeMinutes) {
+  $heartbeat = Read-JsonFile $HeartbeatPath
+  if ($null -eq $heartbeat -or -not $heartbeat.heartbeat_at) { return $false }
   try {
-    $expected = [datetime]::Parse([string]$lock.process_start_time).ToUniversalTime()
-    $actual = $proc.StartTime.ToUniversalTime()
-    $startMatches = ([math]::Abs(($actual - $expected).TotalSeconds) -lt 2)
-  } catch {}
-  $scopeMatches = ([string]$lock.lock_scope -eq "single_shared_runner_daemon")
-  return [pscustomobject]@{ active=($startMatches -and $scopeMatches); pid=$pidValue; stale=(-not $startMatches); verified=($startMatches -and $scopeMatches) }
+    $observed = [datetime]::Parse([string]$heartbeat.heartbeat_at).ToUniversalTime()
+    return (((Get-Date).ToUniversalTime() - $observed).TotalMinutes -le [math]::Max(1, $MaxAgeMinutes))
+  } catch {
+    return $false
+  }
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath((Resolve-AaysRepoRoot $RepoRoot)).TrimEnd('\')
@@ -69,16 +88,31 @@ $locksDir = Join-Path $sharedRoot "locks"
 $logsDir = Join-Path $sharedRoot "logs"
 New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir, $WorkRoot | Out-Null
 $lockPath = Join-Path $locksDir "single_runner.lock"
+$daemonHeartbeatPath = Join-Path $sharedRoot "heartbeat/stable_runner_daemon_heartbeat_latest.json"
 $bootstrapStatus = Join-Path $statusDir "runner_bootstrap_latest.json"
 
 if (-not (Test-Path -LiteralPath $compatHelper)) { throw "Missing slot21 queue compatibility helper: $compatHelper" }
 if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $builder" }
 
 & powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
-$runnerState = Test-RunnerActive $lockPath
-if ($runnerState.stale -and -not $runnerState.active -and (Test-Path -LiteralPath $lockPath)) {
+$runnerState = Test-RunnerActive $lockPath $repoRoot
+$heartbeatFresh = Test-DaemonHeartbeatFresh $daemonHeartbeatPath $StaleMinutes
+if ($runnerState.active -and -not $heartbeatFresh) {
+  Stop-Process -Id $runnerState.pid -Force -ErrorAction Stop
+  for ($i = 0; $i -lt 10; $i++) {
+    Start-Sleep -Milliseconds 500
+    if (-not (Get-Process -Id $runnerState.pid -ErrorAction SilentlyContinue)) { break }
+  }
+  if (Get-Process -Id $runnerState.pid -ErrorAction SilentlyContinue) {
+    throw "BLOCKED_STALE_DAEMON_STOP_FAILED=$($runnerState.pid)"
+  }
   Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
-  $runnerState = [pscustomobject]@{ active=$false; pid=$null; stale=$false }
+  $runnerState = [pscustomobject]@{ active=$false; alive=$false; pid=$null; stale=$false; verified=$true }
+}
+if ($runnerState.stale -and -not $runnerState.active -and (Test-Path -LiteralPath $lockPath)) {
+  if ($runnerState.alive) { throw "BLOCKED_LIVE_LOCK_OWNER_IDENTITY_UNVERIFIED=$($runnerState.pid)" }
+  Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
+  $runnerState = [pscustomobject]@{ active=$false; alive=$false; pid=$null; stale=$false; verified=$false }
 }
 
 $runnerPid = $runnerState.pid
