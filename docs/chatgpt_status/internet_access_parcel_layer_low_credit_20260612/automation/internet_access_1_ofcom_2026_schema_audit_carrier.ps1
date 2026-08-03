@@ -8,7 +8,7 @@ $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $runnerRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit_runner.py'
 $implementationRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit.py'
 $expectedRunnerBlob = '94c08118ca9ee80874878ebe08c01b2f26cd97dc'
-$expectedImplementationBlob = '01ab2e7bf9debd834f294248b323e97645af29ac'
+$expectedImplementationBlob = '767d23e418dd83537b64255fdadb66b2b5c4c81f'
 
 function Resolve-RepoRoot {
   $configured = [string]$env:AAYS_REPO_ROOT
