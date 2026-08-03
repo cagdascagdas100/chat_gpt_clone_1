@@ -9,11 +9,11 @@
   "task_id": "internet_access_1_ofcom_2026_schema_audit_862285f2",
   "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
-  "canonical_head_before_write": "05442fd10cd5f10ae9a5cdff14e5f63414692bee",
-  "checked_at": "2026-08-03T13:57:00Z",
-  "updated_at": "2026-08-03T13:57:00Z",
+  "canonical_head_before_write": "770220073f56aab25d0f3804810541433cba8fbf",
+  "checked_at": "2026-08-03T14:27:00Z",
+  "updated_at": "2026-08-03T14:27:00Z",
   "recovery_reason": "EXISTING_SCHEMA_V3_READY_TASK_UNCLAIMED_MORE_THAN_15_MINUTES",
-  "technical_root_cause": "THE_CANONICAL_WINDOWS_F_HOST_SINGLE_RUNNER_HAS NO FRESH HEARTBEAT OR MATCHING CLAIM; THE EXISTING RESTART REQUEST IS PASSIVE AND CANNOT START A WINDOWS PROCESS; THE CURRENT EXECUTION CONTAINER HAS NO EXTERNAL TCP EGRESS, INCLUDING WHEN DNS IS BYPASSED WITH CURRENT OFCOM CLOUDFLARE A RECORDS; A SECOND TASK OWNER RUNNER OR RESTART REQUEST IS FORBIDDEN",
+  "technical_root_cause": "THE QUEUE PATH AND READY STATUS ARE COMPATIBLE WITH THE TRACKED CANONICAL RUNNER, WHICH RECURSIVELY SCANS EVERY DOCS_CHATGPT_STATUS QUEUE DIRECTORY; THE REMAINING ROOT CAUSE IS THAT THE CANONICAL WINDOWS F_HOST DAEMON HAS NO FRESH HEARTBEAT OR MATCHING CLAIM, THE EXISTING RESTART REQUEST IS PASSIVE, AND THIS SESSION CANNOT START THE WINDOWS PROCESS OR MATERIALIZE THE OFCOM ZIP BYTES",
   "first_unverified_step": "EXISTING_CANONICAL_SINGLE_RUNNER_CLAIMS_THE_SAME_CONTINUATION_AND_EXECUTES_THE_REAL_OFCOM_ZIP_SCHEMA_AUDIT",
   "slot_readback": {
     "status_state": "BLOCKED",
@@ -47,23 +47,38 @@
     "script_test_evidence_preserved": true,
     "exact_write_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/ofcom_2026_schema_audit_latest.json"
   },
+  "runner_contract_check": {
+    "runner_path": "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1",
+    "runner_blob_sha": "8ac8af78992b96609d81b76c78b59b2b3597a045",
+    "remote_queue_mirror_pattern": "^docs/chatgpt_status/[^/]+/queue/[^/]+$",
+    "local_scan_behavior": "RECURSIVE_UNDER_DOCS_CHATGPT_STATUS_AND_FILTER_FULLNAME_QUEUE",
+    "accepted_ready_states": [
+      "queued",
+      "ready",
+      "pending",
+      "pending_repo_queue",
+      "pickup_requested",
+      "queued_for_single_shared_runner"
+    ],
+    "task_queue_path_in_scan_scope": true,
+    "task_ready_state_accepted": true,
+    "queue_location_blocker": false
+  },
   "runner_evidence": {
     "stable_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
-    "heartbeat_age_minutes_at_check": 25931.12,
+    "heartbeat_age_minutes_at_check": 25961.12,
     "stable_runner_state": "task_completed",
     "last_active_claim_state": "done",
     "last_active_claim_terminal_at": "2026-07-16T13:46:07Z",
-    "restart_request_state": "REQUEST_RECORDED_EXTERNAL_OPERATOR_LAUNCH_REQUIRED_100M",
-    "restart_request_auto_consumed": false,
     "matching_slot_output_present": false,
-    "commits_since_previous_check": 17,
+    "commits_since_previous_check": 22,
     "internet_access_1_or_shared_runner_changes_in_those_commits": 0
   },
   "source_evidence_manifest": {
     "source_page_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     "metadata_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
     "runtime_archive_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
-    "accessed_at": "2026-08-03T13:57:00Z",
+    "accessed_at": "2026-08-03T14:27:00Z",
     "metadata_content_sha256": "91ebce64171a81640d4837ca6f52b5bc163b1db1d00d0c83af3d9b9c785a8007",
     "supports_fields": [
       "postcode",
@@ -75,7 +90,7 @@
       "gigabit_availability_percent",
       "decent_broadband_unavailable_fixed_or_fwa_percent"
     ],
-    "relevant_record_ids_or_excerpt": "Official Spring 2026 landing page exposes the fixed-broadband ZIP as 32.2 MB; the preserved v2 metadata contract specifies 121 corrected-r2 postcode CSV files and 1,741,096 data rows.",
+    "relevant_record_ids_or_excerpt": "The official page crawled today still exposes Fixed_broadband_coverage_and_full_fibre_take-up as a 32.2 MB ZIP. The preserved v2 metadata contract specifies 121 corrected-r2 postcode CSV files and 1,741,096 data rows.",
     "license_or_terms_url": "https://www.ofcom.org.uk/about-ofcom/our-website/terms-of-use",
     "runtime_archive_bytes_downloaded": false,
     "runtime_archive_sha256": null,
@@ -85,29 +100,22 @@
   "runtime_attempts": {
     "official_landing_page": "PASS_CURRENT_ZIP_LINK_PRESENT",
     "web_archive_fetch": "HTTP_400_UNSUPPORTED_CONTENT_TYPE_APPLICATION_X_ZIP_COMPRESSED",
-    "container_dns_resolution": "TEMPORARY_FAILURE_IN_NAME_RESOLUTION",
-    "dns_bypass_source": "CURRENT_PUBLIC_A_RECORD_LOOKUP",
-    "dns_bypass_ipv4_addresses": [
-      "104.18.41.253",
-      "172.64.146.3"
-    ],
-    "direct_ip_tls_attempt_104_18_41_253": "CONNECTION_REFUSED_OR_EGRESS_BLOCKED_BEFORE_TLS",
-    "direct_ip_tls_attempt_172_64_146_3": "CONNECTION_REFUSED_OR_EGRESS_BLOCKED_BEFORE_TLS",
+    "container_dns_resolution": "COULD_NOT_RESOLVE_WWW_OFCOM_ORG_UK",
     "proxy_environment": "NO_HTTP_HTTPS_OR_ALL_PROXY_CONFIGURED",
     "local_archive_cache": "NOT_FOUND_IN_MNT_DATA_OR_TMP",
-    "open_source_byte_mirror_search": "NO_VERIFIED_CURRENT_ARCHIVE_MIRROR_FOUND",
-    "repository_runtime_result_search": "NO_PASS_OUTPUT_WITH_ARCHIVE_SHA256_AND_1741096_ROWS_FOUND"
+    "repository_runtime_output": "BLOCKED_DOCUMENT_AND_ENDPOINT_PREFLIGHT_ONLY_WITH_NULL_ARCHIVE_SHA256_AND_ROW_COUNT",
+    "verified_public_byte_mirror": "NOT_FOUND"
   },
   "recovery_actions_completed": [
     "REREAD_FRESH_CANONICAL_HEAD_AND_ALL_REQUIRED_SLOT_RECORDS",
     "CONFIRM_SAME_CONTINUATION_KEY_AND_NO_LIVE_OWNER",
-    "CONFIRM_EXISTING_SCHEMA_V3_READY_QUEUE_AND_TRACKED_SCRIPT_BLOBS",
+    "CONFIRM_EXISTING_SCHEMA_V3_READY_QUEUE_AND_TRACKED_TESTED_SCRIPT",
     "COMPARE_ALL_COMMITS_SINCE_PREVIOUS_CHECK_FOR_SLOT_OR_RUNNER_CHANGES",
-    "REREAD_SHARED_RUNNER_HEARTBEAT_ACTIVE_CLAIM_RESTART_REQUEST_AND_RUNTIME_OUTPUT",
-    "RESOLVE_CURRENT_OFCOM_A_RECORDS",
-    "ATTEMPT_OFFICIAL_ARCHIVE_DOWNLOAD_WITH_DNS_BYPASS_ON_BOTH_CURRENT_IPV4_ENDPOINTS",
-    "CHECK_PROXY_CONFIGURATION_AND_LOCAL_ARCHIVE_CACHE",
-    "SEARCH_FOR_VERIFIED_PUBLIC_MIRROR_OR_REPOSITORY_PASS_OUTPUT",
+    "REREAD_SHARED_RUNNER_HEARTBEAT_ACTIVE_CLAIM_AND_RUNTIME_OUTPUT",
+    "REFRESH_CURRENT_OFFICIAL_OFCOM_LANDING_PAGE_AND_ZIP_LINK",
+    "RETRY_WEB_ARCHIVE_FETCH_AND_CONTAINER_NETWORK_PATH",
+    "VERIFY_CANONICAL_RUNNER_REMOTE_MIRROR_AND_RECURSIVE_QUEUE_SCAN_RULES",
+    "CONFIRM_QUEUE_PATH_AND_READY_STATE_ARE_RUNNER_COMPATIBLE",
     "PRESERVE_EXISTING_TASK_AND_AVOID_DUPLICATE_OWNER_RUNNER_OR_RESTART_REQUEST"
   ],
   "completed_count": 33785,
@@ -117,8 +125,8 @@
   "progress_percent_increase": 0.0,
   "progress_formula": "33785 / 92283 * 100",
   "produced_business_rows": 0,
-  "produced_evidence_records_this_turn": 26,
-  "blocker": "THE EXISTING F_HOST CANONICAL SINGLE RUNNER HAS NO FRESH HEARTBEAT OR MATCHING CLAIM; REAL OFCOM ZIP BYTES SHA256 AND SCHEMA REMAIN UNVERIFIED; THIS SESSION HAS NO EXTERNAL TCP EGRESS EVEN WITH DNS BYPASS; SECOND TASK OWNER RUNNER OR RESTART REQUEST IS FORBIDDEN",
+  "produced_evidence_records_this_turn": 30,
+  "blocker": "THE EXISTING F_HOST CANONICAL SINGLE RUNNER HAS NO FRESH HEARTBEAT OR MATCHING CLAIM; THE QUEUE IS VALID AND IN SCAN SCOPE, BUT THE PASSIVE RESTART REQUEST CANNOT START THE WINDOWS DAEMON; REAL OFCOM ZIP BYTES SHA256 AND SCHEMA REMAIN UNVERIFIED; THIS SESSION CANNOT START THE F_HOST PROCESS OR DOWNLOAD THE ZIP; SECOND TASK OWNER RUNNER OR RESTART REQUEST IS FORBIDDEN",
   "next_control_check_minutes": 15,
   "new_task_created": false,
   "new_owner_created": false,
