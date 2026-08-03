@@ -56,6 +56,35 @@ def atomic_json(path: Path, payload: dict) -> None:
             pass
 
 
+def _postcode_member_sets(archive: zipfile.ZipFile) -> tuple[list[str], list[str]]:
+    names = archive.namelist()
+    r2_files = sorted(
+        name
+        for name in names
+        if "/postcode_files/" in "/" + name.replace("\\", "/")
+        and Path(name).name.startswith("202601_fixed_postcode_coverage_r2_")
+        and name.lower().endswith(".csv")
+    )
+    stale_r1_all_premises = sorted(
+        name
+        for name in names
+        if "/postcode_files/" in "/" + name.replace("\\", "/")
+        and Path(name).name.startswith("202601_fixed_postcode_coverage_r1_")
+        and name.lower().endswith(".csv")
+    )
+    return r2_files, stale_r1_all_premises
+
+
+def archive_has_expected_members(archive: zipfile.ZipFile) -> bool:
+    r2_files, stale_r1_all_premises = _postcode_member_sets(archive)
+    unique_basenames = {Path(name).name.casefold() for name in r2_files}
+    return (
+        len(r2_files) == EXPECTED_POSTCODE_FILE_COUNT
+        and len(unique_basenames) == EXPECTED_POSTCODE_FILE_COUNT
+        and not stale_r1_all_premises
+    )
+
+
 def archive_is_reusable(path: Path) -> bool:
     try:
         if (
@@ -67,7 +96,9 @@ def archive_is_reusable(path: Path) -> bool:
         with zipfile.ZipFile(path) as archive:
             if not archive.namelist():
                 return False
-            return archive.testzip() is None
+            if archive.testzip() is not None:
+                return False
+            return archive_has_expected_members(archive)
     except (OSError, EOFError, RuntimeError, zipfile.BadZipFile, zipfile.LargeZipFile):
         return False
 
@@ -96,7 +127,7 @@ def download(url: str, destination: Path, timeout: int) -> None:
                 out.flush()
                 os.fsync(out.fileno())
             if not archive_is_reusable(temporary):
-                raise RuntimeError("DOWNLOAD_ARCHIVE_INTEGRITY_FAILED")
+                raise RuntimeError("DOWNLOAD_ARCHIVE_INTEGRITY_OR_STRUCTURE_FAILED")
             os.replace(temporary, destination)
             return
         except Exception as exc:
@@ -149,21 +180,7 @@ def audit_zip(zip_path: Path, count_rows: bool) -> dict:
         ),
     }
     with zipfile.ZipFile(zip_path) as archive:
-        names = archive.namelist()
-        r2_files = sorted(
-            name
-            for name in names
-            if "/postcode_files/" in "/" + name.replace("\\", "/")
-            and Path(name).name.startswith("202601_fixed_postcode_coverage_r2_")
-            and name.lower().endswith(".csv")
-        )
-        stale_r1_all_premises = sorted(
-            name
-            for name in names
-            if "/postcode_files/" in "/" + name.replace("\\", "/")
-            and Path(name).name.startswith("202601_fixed_postcode_coverage_r1_")
-            and name.lower().endswith(".csv")
-        )
+        r2_files, stale_r1_all_premises = _postcode_member_sets(archive)
         headers_by_file: dict[str, list[str]] = {}
         mapped_columns: dict[str, dict[str, str | None]] = {}
         row_count = 0
