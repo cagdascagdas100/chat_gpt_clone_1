@@ -56,6 +56,10 @@ def atomic_json(path: Path, payload: dict) -> None:
             pass
 
 
+def archive_provenance_path(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".provenance.json")
+
+
 def _postcode_member_sets(archive: zipfile.ZipFile) -> tuple[list[str], list[str]]:
     names = archive.namelist()
     r2_files = sorted(
@@ -85,7 +89,7 @@ def archive_has_expected_members(archive: zipfile.ZipFile) -> bool:
     )
 
 
-def archive_is_reusable(path: Path) -> bool:
+def archive_is_structurally_valid(path: Path) -> bool:
     try:
         if (
             not path.is_file()
@@ -101,6 +105,51 @@ def archive_is_reusable(path: Path) -> bool:
             return archive_has_expected_members(archive)
     except (OSError, EOFError, RuntimeError, zipfile.BadZipFile, zipfile.LargeZipFile):
         return False
+
+
+def archive_provenance_matches(path: Path, source_url: str) -> bool:
+    sidecar = archive_provenance_path(path)
+    try:
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+        expected_sha = str(payload.get("archive_sha256", ""))
+        expected_size = int(payload.get("archive_size_bytes", -1))
+        return (
+            payload.get("schema_version") == 1
+            and payload.get("source_url") == source_url
+            and expected_size == path.stat().st_size
+            and len(expected_sha) == 64
+            and expected_sha == sha256_file(path)
+        )
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return False
+
+
+def archive_is_reusable(path: Path, source_url: str) -> bool:
+    return archive_is_structurally_valid(path) and archive_provenance_matches(path, source_url)
+
+
+def write_archive_provenance(path: Path, source_url: str) -> dict:
+    payload = {
+        "schema_version": 1,
+        "source_url": source_url,
+        "archive_size_bytes": path.stat().st_size,
+        "archive_sha256": sha256_file(path),
+        "validated_at": utc_now(),
+        "validation": {
+            "minimum_size": True,
+            "non_empty_zip": True,
+            "member_crc": True,
+            "corrected_r2_postcode_member_count": EXPECTED_POSTCODE_FILE_COUNT,
+            "stale_r1_all_premises_member_count": 0,
+        },
+    }
+    atomic_json(archive_provenance_path(path), payload)
+    return payload
+
+
+def remove_archive_and_provenance(path: Path) -> None:
+    path.unlink(missing_ok=True)
+    archive_provenance_path(path).unlink(missing_ok=True)
 
 
 def download(url: str, destination: Path, timeout: int) -> None:
@@ -126,9 +175,12 @@ def download(url: str, destination: Path, timeout: int) -> None:
                     out.write(chunk)
                 out.flush()
                 os.fsync(out.fileno())
-            if not archive_is_reusable(temporary):
+            if not archive_is_structurally_valid(temporary):
                 raise RuntimeError("DOWNLOAD_ARCHIVE_INTEGRITY_OR_STRUCTURE_FAILED")
             os.replace(temporary, destination)
+            write_archive_provenance(destination, url)
+            if not archive_is_reusable(destination, url):
+                raise RuntimeError("DOWNLOAD_ARCHIVE_PROVENANCE_FAILED")
             return
         except Exception as exc:
             last_error = exc
@@ -139,14 +191,14 @@ def download(url: str, destination: Path, timeout: int) -> None:
 
 
 def ensure_archive(url: str, destination: Path, timeout: int) -> str:
-    if archive_is_reusable(destination):
-        return "REUSED_VALIDATED_CACHE"
-    destination.unlink(missing_ok=True)
+    if archive_is_reusable(destination, url):
+        return "REUSED_VALIDATED_SOURCE_BOUND_CACHE"
+    remove_archive_and_provenance(destination)
     download(url, destination, timeout)
-    if not archive_is_reusable(destination):
-        destination.unlink(missing_ok=True)
-        raise RuntimeError("DOWNLOADED_ARCHIVE_FAILED_VALIDATION")
-    return "DOWNLOADED_AND_VALIDATED"
+    if not archive_is_reusable(destination, url):
+        remove_archive_and_provenance(destination)
+        raise RuntimeError("DOWNLOADED_ARCHIVE_FAILED_SOURCE_BOUND_VALIDATION")
+    return "DOWNLOADED_AND_SOURCE_BOUND_VALIDATED"
 
 
 def choose_column(headers: list[str], aliases: tuple[str, ...]) -> str | None:
@@ -257,7 +309,11 @@ def main() -> int:
         report["archive_cache_action"] = ensure_archive(args.url, zip_path, args.timeout)
         report["archive_size_bytes"] = zip_path.stat().st_size
         report["archive_sha256"] = sha256_file(zip_path)
+        report["archive_source_provenance_verified"] = archive_provenance_matches(zip_path, args.url)
         report.update(audit_zip(zip_path, args.count_rows))
+        report["checks"]["archive_source_provenance_matches"] = report[
+            "archive_source_provenance_verified"
+        ]
         report["status"] = "PASS" if all(report["checks"].values()) else "BLOCKED"
         report["blockers"] = [key for key, passed in report["checks"].items() if not passed]
     except Exception as exc:
