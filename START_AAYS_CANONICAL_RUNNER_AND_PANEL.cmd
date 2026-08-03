@@ -13,6 +13,7 @@ $root = [System.IO.Path]::GetFullPath([string]$env:AAYS_CANONICAL_ROOT).TrimEnd(
 $branch = 'codex/aays-single-runner-v5-20260706'
 $staleMinutes = 15
 $rootLauncherRepoPath = 'START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd'
+$bootstrapStatusRepoPath = 'docs/chatgpt_status/_shared/status/runner_bootstrap_latest.json'
 
 function Invoke-AaysGit {
   param([string[]]$Arguments)
@@ -167,7 +168,9 @@ try {
     Add-Member -InputObject $state -NotePropertyName root_launcher_reexec_depth -NotePropertyValue $reexecDepth -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_remote_guard_blob_sha -NotePropertyValue $remoteGuardBlob -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_starter_blob_sha -NotePropertyValue $starterBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 3 -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 4 -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_mode -NotePropertyValue 'PATH_SCOPED_COMMIT_PUSH_REMOTE_READBACK' -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_remote_readback_required -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_no_reset_hard -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_wrapper_reentry_avoided -NotePropertyValue $true -Force
@@ -176,6 +179,50 @@ try {
     Move-Item -LiteralPath $tempStatus -Destination $bootstrapStatus -Force
   } catch {
     throw ("BLOCKED_ROOT_BOOTSTRAP_EVIDENCE_WRITE_FAILED: " + $_.Exception.Message)
+  }
+
+  $bootstrapLocalBlob = (Invoke-AaysGit @('hash-object','--',$bootstrapStatus)).Trim()
+  if ($bootstrapLocalBlob -notmatch '^[0-9a-f]{40}$') {
+    throw "BLOCKED_BOOTSTRAP_LOCAL_BLOB_INVALID=$bootstrapLocalBlob"
+  }
+  [void](Invoke-AaysGit @('add','--',$bootstrapStatusRepoPath))
+  $stagedBootstrap = (Invoke-AaysGit @('diff','--cached','--name-only','--',$bootstrapStatusRepoPath)).Trim()
+  if ($stagedBootstrap -ne $bootstrapStatusRepoPath) {
+    throw "BLOCKED_BOOTSTRAP_PATH_NOT_STAGED_EXACTLY=$stagedBootstrap"
+  }
+  [void](Invoke-AaysGit @('commit','--only','-m','aays: publish canonical bootstrap contract v4 ack','--',$bootstrapStatusRepoPath))
+  $bootstrapPublishCommit = (Invoke-AaysGit @('rev-parse','HEAD')).Trim()
+  if ($bootstrapPublishCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_INVALID=$bootstrapPublishCommit"
+  }
+  [void](Invoke-AaysGit @('push','origin',("HEAD:refs/heads/$branch")))
+  [void](Invoke-AaysGit $fetchArgs)
+
+  $remoteBootstrapBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$bootstrapStatusRepoPath"))).Trim()
+  if ($remoteBootstrapBlob -ne $bootstrapLocalBlob) {
+    throw "BLOCKED_BOOTSTRAP_REMOTE_BLOB_MISMATCH_LOCAL=$bootstrapLocalBlob`_REMOTE=$remoteBootstrapBlob"
+  }
+  try {
+    $remoteBootstrapState = (Invoke-AaysGit @('show',("$remoteRef`:$bootstrapStatusRepoPath"))) | ConvertFrom-Json
+  } catch {
+    throw ("BLOCKED_BOOTSTRAP_REMOTE_READBACK_JSON_INVALID: " + $_.Exception.Message)
+  }
+  $remoteAckValid =
+    ([int]$remoteBootstrapState.root_launcher_contract_version -eq 4) -and
+    ([bool]$remoteBootstrapState.root_launcher_execution_source_verified) -and
+    ([bool]$remoteBootstrapState.root_launcher_heads_match) -and
+    ([string]$remoteBootstrapState.root_launcher_blob_sha -eq $rootLauncherBlob) -and
+    ([string]$remoteBootstrapState.root_launcher_execution_blob_sha_before_sync -eq $executingRootLauncherBlob) -and
+    ([string]$remoteBootstrapState.root_launcher_remote_blob_sha_after_sync -eq $remoteRootLauncherBlobAfterSync) -and
+    ([string]$remoteBootstrapState.root_launcher_remote_guard_blob_sha -eq $remoteGuardBlob) -and
+    ([string]$remoteBootstrapState.root_launcher_starter_blob_sha -eq $starterBlob) -and
+    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_mode -eq 'PATH_SCOPED_COMMIT_PUSH_REMOTE_READBACK') -and
+    ([bool]$remoteBootstrapState.root_launcher_bootstrap_remote_readback_required) -and
+    ([bool]$remoteBootstrapState.root_launcher_no_reset_hard) -and
+    ([bool]$remoteBootstrapState.root_launcher_direct_starter_handoff) -and
+    ([bool]$remoteBootstrapState.root_launcher_wrapper_reentry_avoided)
+  if (-not $remoteAckValid) {
+    throw "BLOCKED_BOOTSTRAP_REMOTE_READBACK_CONTRACT_V4_INVALID"
   }
   exit 0
 } finally {
