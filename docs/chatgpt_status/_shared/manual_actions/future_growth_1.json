@@ -1,22 +1,46 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "future_growth_1",
   "state": "OPEN",
   "requires_user_action": true,
-  "reason": "Existing canonical F-host single runner heartbeat is stale and its previous claim is terminal. The predecessor height_difference_2 has not completed because guarded operator recovery has not been executed on that host. The future_growth_1 task cannot be picked up safely until the same existing runner is recovered; starting a second runner or bypassing the predecessor is forbidden.",
+  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
+  "task_id": "aays1-future-growth-1-official-geometry-pipeline-20260721",
+  "same_task_recovery": true,
+  "new_task_created": false,
+  "new_owner_created": false,
+  "new_runner_created": false,
   "detected_at": "2026-07-22T19:49:11+03:00",
-  "updated_at": "2026-07-22T19:49:11+03:00",
-  "solution": "On the canonical Windows F host, run the existing guarded recovery entry for height_difference_2: docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1. Confirm exactly one persistent runner process, a fresh stable_runner_daemon_heartbeat_latest.json, successful claim/completion of height_difference_2 attempt 020, and then allow the existing runner to pick up aays1-future-growth-1-official-geometry-pipeline-20260721. Do not launch a second runner.",
+  "updated_at": "2026-08-03T16:53:00Z",
+  "reason": "The predecessor height_difference_2 runtime and remote output publication succeeded, but final promotion is BLOCKED because formal human crosscheck signoff is absent and canonical local F-host receipts 015, 016 and 014 are not present. future_growth_1 remains READY and unclaimed. The shared-runner heartbeat is stale and its prior claim is terminal. Repeating the already completed starter recovery, starting a second runner, creating a second task, or bypassing the predecessor is forbidden.",
+  "solution": "Do not rerun the completed guarded starter recovery. Review and formally sign off the three published height_difference_2 official numeric rows 30762, 46142 and 61522 and their EA DTM1m, HMLR exact-polygon, OS Terrain50 and port-8012 evidence. On the existing canonical Windows F host, publish the authentic 015_operator_recovery_preflight_latest.json, 016_operator_git_snapshot_latest.json and 014_existing_canonical_runner_restart_latest.json receipts from the completed recovery context. Complete final remote acceptance, then allow only the existing single shared runner to claim aays1-future-growth-1-official-geometry-pipeline-20260721. Do not launch a second runner.",
+  "completed_action_do_not_repeat": "docs/chatgpt_status/topography/shards/height_difference_2/automation/030_apply_attempt_020_existing_f_runner_recovery.ps1",
+  "required_receipts": [
+    "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/015_operator_recovery_preflight_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/016_operator_git_snapshot_latest.json",
+    "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/014_existing_canonical_runner_restart_latest.json"
+  ],
+  "verified_existing_output": {
+    "path": "docs/chatgpt_status/topography/shards/height_difference_2/runner_outputs/003_height_difference_2_canonical_export_official_sampling_latest.json",
+    "blob_sha": "d31e4fd19d81481cab2e38659dace413d0f5af6e",
+    "numeric_rows": [30762, 46142, 61522],
+    "remote_readback": true
+  },
   "evidence_paths": [
-    "docs/chatgpt_status/_shared/slots_21/future_growth_1/recovery_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/future_growth_1/current_task_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_1/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_1/checkpoint_latest.json",
     "docs/chatgpt_status/_shared/slots_21/future_growth_1/heartbeat_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_1/ownership_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_1/current_task_latest.json",
+    "docs/chatgpt_status/aays1/queue/aays1_future_growth_1_official_geometry_pipeline_v8_20260722.task.json",
+    "docs/chatgpt_status/_shared/slots_21/future_growth_1/recovery_latest.json",
     "docs/chatgpt_status/_shared/slots_21/height_difference_2/status_latest.json",
     "docs/chatgpt_status/_shared/heartbeat/stable_runner_daemon_heartbeat_latest.json",
-    "docs/chatgpt_status/_shared/control/single_runner_active_claim.json",
-    "england_map_web/data/aays_21_slots/future_growth_1/index.html"
+    "docs/chatgpt_status/_shared/control/single_runner_active_claim.json"
   ],
-  "continuation_key": "b5d171d0ce68addd981b7437964784fa37e0f571f65de74457f012df5531064f",
-  "final_ready": false
+  "blocker": "FORMAL_HUMAN_CROSSCHECK_SIGNOFF_FOR_HEIGHT_DIFFERENCE_2_IS_ABSENT; LOCAL_F_HOST_015_016_014_RECEIPTS_ARE_ABSENT; FUTURE_GROWTH_1_IS_NOT_CLAIMED; SHARED_RUNNER_HEARTBEAT_IS_STALE",
+  "next_check_after_minutes": 15,
+  "final_ready": false,
+  "fake_data": false
 }
