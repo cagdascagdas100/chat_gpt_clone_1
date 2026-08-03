@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.request
 import zipfile
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,6 +22,7 @@ DEFAULT_URL = (
 EXPECTED_POSTCODE_FILE_COUNT = 121
 EXPECTED_TOTAL_DATA_ROWS = 1_741_096
 MINIMUM_ARCHIVE_BYTES = 1_000_000
+OFFICIAL_SOURCE_HOST_SUFFIX = "ofcom.org.uk"
 
 
 def utc_now() -> str:
@@ -107,20 +109,41 @@ def archive_is_structurally_valid(path: Path) -> bool:
         return False
 
 
+def validate_official_resolved_url(value: str) -> str:
+    parsed = urlparse(value)
+    hostname = (parsed.hostname or "").casefold().rstrip(".")
+    if parsed.scheme.casefold() != "https":
+        raise RuntimeError("DOWNLOAD_RESOLVED_URL_NOT_HTTPS")
+    if not (
+        hostname == OFFICIAL_SOURCE_HOST_SUFFIX
+        or hostname.endswith("." + OFFICIAL_SOURCE_HOST_SUFFIX)
+    ):
+        raise RuntimeError("DOWNLOAD_RESOLVED_URL_NOT_OFFICIAL_OFCOM")
+    return value
+
+
+def read_archive_provenance(path: Path) -> dict:
+    return json.loads(archive_provenance_path(path).read_text(encoding="utf-8"))
+
+
 def archive_provenance_matches(path: Path, source_url: str) -> bool:
-    sidecar = archive_provenance_path(path)
     try:
-        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+        payload = read_archive_provenance(path)
         expected_sha = str(payload.get("archive_sha256", ""))
         expected_size = int(payload.get("archive_size_bytes", -1))
+        resolved_url = validate_official_resolved_url(
+            str(payload.get("resolved_source_url", ""))
+        )
+        resolved_host = (urlparse(resolved_url).hostname or "").casefold().rstrip(".")
         return (
-            payload.get("schema_version") == 1
-            and payload.get("source_url") == source_url
+            payload.get("schema_version") == 2
+            and payload.get("requested_source_url") == source_url
+            and payload.get("resolved_source_host") == resolved_host
             and expected_size == path.stat().st_size
             and len(expected_sha) == 64
             and expected_sha == sha256_file(path)
         )
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+    except (OSError, ValueError, TypeError, json.JSONDecodeError, RuntimeError):
         return False
 
 
@@ -128,10 +151,18 @@ def archive_is_reusable(path: Path, source_url: str) -> bool:
     return archive_is_structurally_valid(path) and archive_provenance_matches(path, source_url)
 
 
-def write_archive_provenance(path: Path, source_url: str) -> dict:
+def write_archive_provenance(
+    path: Path, requested_source_url: str, resolved_source_url: str
+) -> dict:
+    validated_resolved_url = validate_official_resolved_url(resolved_source_url)
+    resolved_host = (
+        urlparse(validated_resolved_url).hostname or ""
+    ).casefold().rstrip(".")
     payload = {
-        "schema_version": 1,
-        "source_url": source_url,
+        "schema_version": 2,
+        "requested_source_url": requested_source_url,
+        "resolved_source_url": validated_resolved_url,
+        "resolved_source_host": resolved_host,
         "archive_size_bytes": path.stat().st_size,
         "archive_sha256": sha256_file(path),
         "validated_at": utc_now(),
@@ -141,6 +172,8 @@ def write_archive_provenance(path: Path, source_url: str) -> dict:
             "member_crc": True,
             "corrected_r2_postcode_member_count": EXPECTED_POSTCODE_FILE_COUNT,
             "stale_r1_all_premises_member_count": 0,
+            "resolved_source_https": True,
+            "resolved_source_official_ofcom_host": True,
         },
     }
     atomic_json(archive_provenance_path(path), payload)
@@ -168,6 +201,7 @@ def download(url: str, destination: Path, timeout: int) -> None:
             with urllib.request.urlopen(request, timeout=timeout) as response, temporary.open("wb") as out:
                 if int(getattr(response, "status", 200)) != 200:
                     raise RuntimeError(f"HTTP_STATUS_{getattr(response, 'status', 'UNKNOWN')}")
+                resolved_source_url = validate_official_resolved_url(response.geturl())
                 while True:
                     chunk = response.read(1024 * 1024)
                     if not chunk:
@@ -178,7 +212,7 @@ def download(url: str, destination: Path, timeout: int) -> None:
             if not archive_is_structurally_valid(temporary):
                 raise RuntimeError("DOWNLOAD_ARCHIVE_INTEGRITY_OR_STRUCTURE_FAILED")
             os.replace(temporary, destination)
-            write_archive_provenance(destination, url)
+            write_archive_provenance(destination, url, resolved_source_url)
             if not archive_is_reusable(destination, url):
                 raise RuntimeError("DOWNLOAD_ARCHIVE_PROVENANCE_FAILED")
             return
@@ -310,6 +344,9 @@ def main() -> int:
         report["archive_size_bytes"] = zip_path.stat().st_size
         report["archive_sha256"] = sha256_file(zip_path)
         report["archive_source_provenance_verified"] = archive_provenance_matches(zip_path, args.url)
+        provenance = read_archive_provenance(zip_path)
+        report["archive_resolved_source_url"] = provenance.get("resolved_source_url")
+        report["archive_resolved_source_host"] = provenance.get("resolved_source_host")
         report.update(audit_zip(zip_path, args.count_rows))
         report["checks"]["archive_source_provenance_matches"] = report[
             "archive_source_provenance_verified"
