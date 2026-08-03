@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Official-locator-only gate; never downloads GML.
 from __future__ import annotations
 import argparse, hashlib, json, os, tempfile
 from pathlib import Path
