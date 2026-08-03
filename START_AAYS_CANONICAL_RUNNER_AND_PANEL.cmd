@@ -30,6 +30,22 @@ function Invoke-AaysGit {
   return $text
 }
 
+function Invoke-AaysGitAtResult {
+  param([string]$WorkingRoot, [string[]]$Arguments)
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = 'Continue'
+    $output = & git -c "safe.directory=$WorkingRoot" -C $WorkingRoot @Arguments 2>&1
+    $code = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $old
+  }
+  return [pscustomobject]@{
+    exit_code = $code
+    text = (($output | Out-String).TrimEnd())
+  }
+}
+
 if ([string]::IsNullOrWhiteSpace($root) -or $root.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "BLOCKED_CANONICAL_ROOT_INVALID=$root"
 }
@@ -168,8 +184,9 @@ try {
     Add-Member -InputObject $state -NotePropertyName root_launcher_reexec_depth -NotePropertyValue $reexecDepth -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_remote_guard_blob_sha -NotePropertyValue $remoteGuardBlob -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_starter_blob_sha -NotePropertyValue $starterBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 4 -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_mode -NotePropertyValue 'PATH_SCOPED_COMMIT_PUSH_REMOTE_READBACK' -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 5 -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_mode -NotePropertyValue 'ISOLATED_DETACHED_WORKTREE_BOUNDED_RETRY_REMOTE_READBACK' -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_retry_limit -NotePropertyValue 5 -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_remote_readback_required -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_no_reset_hard -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
@@ -181,26 +198,90 @@ try {
     throw ("BLOCKED_ROOT_BOOTSTRAP_EVIDENCE_WRITE_FAILED: " + $_.Exception.Message)
   }
 
-  $bootstrapLocalBlob = (Invoke-AaysGit @('hash-object','--',$bootstrapStatus)).Trim()
-  if ($bootstrapLocalBlob -notmatch '^[0-9a-f]{40}$') {
-    throw "BLOCKED_BOOTSTRAP_LOCAL_BLOB_INVALID=$bootstrapLocalBlob"
-  }
-  [void](Invoke-AaysGit @('add','--',$bootstrapStatusRepoPath))
-  $stagedBootstrap = (Invoke-AaysGit @('diff','--cached','--name-only','--',$bootstrapStatusRepoPath)).Trim()
-  if ($stagedBootstrap -ne $bootstrapStatusRepoPath) {
-    throw "BLOCKED_BOOTSTRAP_PATH_NOT_STAGED_EXACTLY=$stagedBootstrap"
-  }
-  [void](Invoke-AaysGit @('commit','--only','-m','aays: publish canonical bootstrap contract v4 ack','--',$bootstrapStatusRepoPath))
-  $bootstrapPublishCommit = (Invoke-AaysGit @('rev-parse','HEAD')).Trim()
-  if ($bootstrapPublishCommit -notmatch '^[0-9a-f]{40}$') {
-    throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_INVALID=$bootstrapPublishCommit"
-  }
-  [void](Invoke-AaysGit @('push','origin',("HEAD:refs/heads/$branch")))
-  [void](Invoke-AaysGit $fetchArgs)
+  $bootstrapPublishMaxAttempts = 5
+  $bootstrapPublishAttempt = 0
+  $bootstrapPublished = $false
+  $bootstrapPublishedCommit = $null
+  $bootstrapPublishedBlob = $null
+  $bootstrapPublishedParent = $null
+  $publishRoot = Join-Path $env:TEMP ("aays_bootstrap_publish_{0}_{1}" -f $PID,[guid]::NewGuid().ToString('N'))
+  try {
+    [void](Invoke-AaysGit @('checkout','--',$bootstrapStatusRepoPath))
+    while (-not $bootstrapPublished -and $bootstrapPublishAttempt -lt $bootstrapPublishMaxAttempts) {
+      $bootstrapPublishAttempt += 1
+      [void](Invoke-AaysGit $fetchArgs)
+      $bootstrapPublishedParent = (Invoke-AaysGit @('rev-parse',$remoteRef)).Trim()
+      if ($bootstrapPublishedParent -notmatch '^[0-9a-f]{40}$') {
+        throw "BLOCKED_BOOTSTRAP_PUBLISH_PARENT_INVALID=$bootstrapPublishedParent"
+      }
 
+      Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_attempt -NotePropertyValue $bootstrapPublishAttempt -Force
+      Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_parent -NotePropertyValue $bootstrapPublishedParent -Force
+      $bootstrapPayload = (($state | ConvertTo-Json -Depth 30) + "`n")
+
+      [void](Invoke-AaysGitAtResult $root @('worktree','prune'))
+      if (Test-Path -LiteralPath $publishRoot) {
+        Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
+      }
+      $addResult = Invoke-AaysGitAtResult $root @('worktree','add','--detach',$publishRoot,$bootstrapPublishedParent)
+      if ($addResult.exit_code -ne 0) {
+        throw ("BLOCKED_BOOTSTRAP_PUBLISH_WORKTREE_ADD_FAILED: " + $addResult.text)
+      }
+      try {
+        $publishBootstrapStatus = Join-Path $publishRoot ($bootstrapStatusRepoPath -replace '/', '\\')
+        $publishBootstrapDir = Split-Path -Parent $publishBootstrapStatus
+        New-Item -ItemType Directory -Force -Path $publishBootstrapDir | Out-Null
+        [System.IO.File]::WriteAllText($publishBootstrapStatus, $bootstrapPayload, [System.Text.UTF8Encoding]::new($false))
+
+        $bootstrapPublishedBlob = ((Invoke-AaysGitAtResult $publishRoot @('hash-object','--',$publishBootstrapStatus)).text).Trim()
+        if ($bootstrapPublishedBlob -notmatch '^[0-9a-f]{40}$') {
+          throw "BLOCKED_BOOTSTRAP_PUBLISH_BLOB_INVALID=$bootstrapPublishedBlob"
+        }
+        $addBootstrap = Invoke-AaysGitAtResult $publishRoot @('add','--',$bootstrapStatusRepoPath)
+        if ($addBootstrap.exit_code -ne 0) {
+          throw ("BLOCKED_BOOTSTRAP_PUBLISH_ADD_FAILED: " + $addBootstrap.text)
+        }
+        $stagedBootstrap = ((Invoke-AaysGitAtResult $publishRoot @('diff','--cached','--name-only')).text).Trim()
+        if ($stagedBootstrap -ne $bootstrapStatusRepoPath) {
+          throw "BLOCKED_BOOTSTRAP_PUBLISH_SCOPE_INVALID=$stagedBootstrap"
+        }
+        $commitResult = Invoke-AaysGitAtResult $publishRoot @('-c','user.name=AAYS canonical launcher','-c','user.email=aays-launcher@local.invalid','commit','--only','-m','aays: publish canonical bootstrap contract v5 ack','--',$bootstrapStatusRepoPath)
+        if ($commitResult.exit_code -ne 0) {
+          throw ("BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_FAILED: " + $commitResult.text)
+        }
+        $bootstrapPublishedCommit = ((Invoke-AaysGitAtResult $publishRoot @('rev-parse','HEAD')).text).Trim()
+        if ($bootstrapPublishedCommit -notmatch '^[0-9a-f]{40}$') {
+          throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_INVALID=$bootstrapPublishedCommit"
+        }
+        $pushResult = Invoke-AaysGitAtResult $publishRoot @('push','origin',("${bootstrapPublishedCommit}:refs/heads/$branch"))
+        if ($pushResult.exit_code -eq 0) {
+          $bootstrapPublished = $true
+        } elseif ($pushResult.text -match '(?i)(non-fast-forward|fetch first|rejected)') {
+          $bootstrapPublished = $false
+        } else {
+          throw ("BLOCKED_BOOTSTRAP_PUBLISH_PUSH_FAILED: " + $pushResult.text)
+        }
+      } finally {
+        $removeResult = Invoke-AaysGitAtResult $root @('worktree','remove','--force',$publishRoot)
+        Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
+      }
+    }
+  } finally {
+    [void](Invoke-AaysGitAtResult $root @('worktree','prune'))
+    Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+  if (-not $bootstrapPublished) {
+    throw "BLOCKED_BOOTSTRAP_PUBLISH_RETRY_EXHAUSTED_ATTEMPTS=$bootstrapPublishAttempt"
+  }
+
+  [void](Invoke-AaysGit $fetchArgs)
+  $ancestorResult = Invoke-AaysGitAtResult $root @('merge-base','--is-ancestor',$bootstrapPublishedCommit,$remoteRef)
+  if ($ancestorResult.exit_code -ne 0) {
+    throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_NOT_REMOTE_ANCESTOR=$bootstrapPublishedCommit"
+  }
   $remoteBootstrapBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$bootstrapStatusRepoPath"))).Trim()
-  if ($remoteBootstrapBlob -ne $bootstrapLocalBlob) {
-    throw "BLOCKED_BOOTSTRAP_REMOTE_BLOB_MISMATCH_LOCAL=$bootstrapLocalBlob`_REMOTE=$remoteBootstrapBlob"
+  if ($remoteBootstrapBlob -ne $bootstrapPublishedBlob) {
+    throw "BLOCKED_BOOTSTRAP_REMOTE_BLOB_MISMATCH_LOCAL=$bootstrapPublishedBlob`_REMOTE=$remoteBootstrapBlob"
   }
   try {
     $remoteBootstrapState = (Invoke-AaysGit @('show',("$remoteRef`:$bootstrapStatusRepoPath"))) | ConvertFrom-Json
@@ -208,7 +289,7 @@ try {
     throw ("BLOCKED_BOOTSTRAP_REMOTE_READBACK_JSON_INVALID: " + $_.Exception.Message)
   }
   $remoteAckValid =
-    ([int]$remoteBootstrapState.root_launcher_contract_version -eq 4) -and
+    ([int]$remoteBootstrapState.root_launcher_contract_version -eq 5) -and
     ([bool]$remoteBootstrapState.root_launcher_execution_source_verified) -and
     ([bool]$remoteBootstrapState.root_launcher_heads_match) -and
     ([string]$remoteBootstrapState.root_launcher_blob_sha -eq $rootLauncherBlob) -and
@@ -216,13 +297,17 @@ try {
     ([string]$remoteBootstrapState.root_launcher_remote_blob_sha_after_sync -eq $remoteRootLauncherBlobAfterSync) -and
     ([string]$remoteBootstrapState.root_launcher_remote_guard_blob_sha -eq $remoteGuardBlob) -and
     ([string]$remoteBootstrapState.root_launcher_starter_blob_sha -eq $starterBlob) -and
-    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_mode -eq 'PATH_SCOPED_COMMIT_PUSH_REMOTE_READBACK') -and
+    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_mode -eq 'ISOLATED_DETACHED_WORKTREE_BOUNDED_RETRY_REMOTE_READBACK') -and
+    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_retry_limit -eq $bootstrapPublishMaxAttempts) -and
+    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_attempt -ge 1) -and
+    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_attempt -le $bootstrapPublishMaxAttempts) -and
+    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_parent -match '^[0-9a-f]{40}$') -and
     ([bool]$remoteBootstrapState.root_launcher_bootstrap_remote_readback_required) -and
     ([bool]$remoteBootstrapState.root_launcher_no_reset_hard) -and
     ([bool]$remoteBootstrapState.root_launcher_direct_starter_handoff) -and
     ([bool]$remoteBootstrapState.root_launcher_wrapper_reentry_avoided)
   if (-not $remoteAckValid) {
-    throw "BLOCKED_BOOTSTRAP_REMOTE_READBACK_CONTRACT_V4_INVALID"
+    throw "BLOCKED_BOOTSTRAP_REMOTE_READBACK_CONTRACT_V5_INVALID"
   }
   exit 0
 } finally {
