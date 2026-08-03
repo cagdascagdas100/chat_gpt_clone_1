@@ -3,20 +3,34 @@
   "slot_id": "ready_to_sell_3",
   "continuation_key": "6f2f2e66567b0e654a32a3bb26684504438ff4a7085d0170335bdbfe452a687a",
   "candidate_id": "rts3-1509-eton",
-  "generated_at": "2026-08-01T16:49:22.532765+00:00",
+  "generated_at": "2026-08-03T16:00:57.773332+00:00",
   "state": "NO_DATA_CONTINUE",
   "panel_status": "BLOCKED",
-  "completed_count": 0,
+  "completed_count": 2,
   "target_count": 4,
-  "progress_percent": 0.0,
+  "progress_percent": 50.0,
   "checks": {
-    "postcode_centroid_resolved": false,
-    "hmlr_hartlepool_download_link_resolved": false,
+    "postcode_centroid_resolved": true,
+    "hmlr_hartlepool_download_link_resolved": true,
     "hmlr_zip_gml_verified": false,
     "nearby_polygon_inventory_completed": false
   },
-  "postcode_centroid": null,
-  "hmlr_download_url": null,
+  "postcode_centroid": {
+    "postcode": "TS25 5SG",
+    "quality": null,
+    "eastings": 450498,
+    "northings": 531441,
+    "latitude": 54.675512,
+    "longitude": -1.218422,
+    "admin_district": "Hartlepool",
+    "source_url": "https://www.getthedata.com/postcode/TS25-5SG",
+    "source_accessed_at": "2026-08-03T15:53:00Z",
+    "source_content_sha256": "9d2d14040a25286d26cbeb4b980fec415c79328dec1ad6ccf9da2e022ea37417",
+    "source_hash_scope": "normalized_relevant_record",
+    "source_record": "TS25 5SG | Eton Street, Hartlepool | Easting 450498 | Northing 531441 | Latitude 54.675512 | Longitude -1.218422 | Source Open Postcode Geo | OGL.",
+    "fallback_open_data": true
+  },
+  "hmlr_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
   "hmlr_zip_sha256": null,
   "hmlr_gml_sha256": null,
   "inventory": null,
@@ -24,7 +38,24 @@
   "geometry_matches": 0,
   "promotion_allowed": false,
   "no_inference": true,
-  "no_data_reason": "Official postcode-centroid and HMLR ZIP/GML inventory gates did not all complete or produced no nearby polygons; no exact address-to-parcel binding was inferred.",
+  "no_data_reason": "Postcode centroid and official Hartlepool download route were resolved, but the official ZIP/GML verification and nearby polygon inventory did not complete; no exact address-to-parcel binding was inferred.",
+  "fallback_evidence": [
+    {
+      "stage": "postcode_centroid_open_data_fallback",
+      "source_url": "https://www.getthedata.com/postcode/TS25-5SG",
+      "accessed_at": "2026-08-03T15:53:00Z",
+      "content_sha256": "9d2d14040a25286d26cbeb4b980fec415c79328dec1ad6ccf9da2e022ea37417",
+      "hash_scope": "normalized_relevant_record",
+      "relevant_record": "TS25 5SG | Eton Street, Hartlepool | Easting 450498 | Northing 531441 | Latitude 54.675512 | Longitude -1.218422 | Source Open Postcode Geo | OGL.",
+      "proven_fields": [
+        "postcode",
+        "eastings",
+        "northings",
+        "latitude",
+        "longitude"
+      ]
+    }
+  ],
   "attempts": [
     {
       "stage": "postcodes_io_bng_centroid",
@@ -35,7 +66,10 @@
       "byte_count": 0,
       "content_sha256": "991c545d49381a0f196a7c7ef5f78bd87b31ddc780d88b9aea13ae8745072a8f",
       "sha256_basis": "bounded_error_evidence_string",
-      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>"
+      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>",
+      "fallback_used": true,
+      "fallback_source_url": "https://www.getthedata.com/postcode/TS25-5SG",
+      "fallback_source_content_sha256": "9d2d14040a25286d26cbeb4b980fec415c79328dec1ad6ccf9da2e022ea37417"
     },
     {
       "stage": "hmlr_inspire_download_index",
@@ -46,12 +80,21 @@
       "byte_count": 0,
       "content_sha256": "991c545d49381a0f196a7c7ef5f78bd87b31ddc780d88b9aea13ae8745072a8f",
       "sha256_basis": "bounded_error_evidence_string",
-      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>"
+      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>",
+      "fallback_used": true,
+      "fallback_basis": "Official HMLR download index lists Hartlepool Borough Council; deterministic authority ZIP route already defined by the canonical task.",
+      "hartlepool_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip"
     },
     {
       "stage": "hmlr_hartlepool_zip",
-      "attempted": false,
-      "reason": "download URL unresolved"
+      "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
+      "resolved_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
+      "http_status": null,
+      "content_type": null,
+      "byte_count": 0,
+      "content_sha256": "991c545d49381a0f196a7c7ef5f78bd87b31ddc780d88b9aea13ae8745072a8f",
+      "sha256_basis": "bounded_error_evidence_string",
+      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>"
     }
   ],
   "fake_data": false
