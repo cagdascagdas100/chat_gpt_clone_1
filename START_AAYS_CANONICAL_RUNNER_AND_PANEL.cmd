@@ -12,6 +12,7 @@ $ErrorActionPreference = 'Stop'
 $root = [System.IO.Path]::GetFullPath([string]$env:AAYS_CANONICAL_ROOT).TrimEnd('\')
 $branch = 'codex/aays-single-runner-v5-20260706'
 $staleMinutes = 15
+$rootLauncherRepoPath = 'START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd'
 
 function Invoke-AaysGit {
   param([string[]]$Arguments)
@@ -44,6 +45,20 @@ if (-not [string]::IsNullOrWhiteSpace($trackedStatus)) {
   throw ("BLOCKED_CANONICAL_TRACKED_WORKTREE_DIRTY: " + $trackedStatus)
 }
 
+$executingRootLauncherBlob = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
+if ($executingRootLauncherBlob -notmatch '^[0-9a-f]{40}$') {
+  throw "BLOCKED_EXECUTING_ROOT_LAUNCHER_BLOB_INVALID=$executingRootLauncherBlob"
+}
+$reexecDepth = 0
+if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH)) {
+  if (-not [int]::TryParse([string]$env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH, [ref]$reexecDepth)) {
+    throw "BLOCKED_ROOT_LAUNCHER_REEXEC_DEPTH_INVALID=$($env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH)"
+  }
+}
+if ($reexecDepth -lt 0 -or $reexecDepth -gt 1) {
+  throw "BLOCKED_ROOT_LAUNCHER_REEXEC_DEPTH_OUT_OF_RANGE=$reexecDepth"
+}
+
 $shallow = (Invoke-AaysGit @('rev-parse','--is-shallow-repository')).Trim().ToLowerInvariant()
 $refspec = "+refs/heads/$branch`:refs/remotes/origin/$branch"
 $fetchArgs = @('fetch','--no-tags')
@@ -52,6 +67,10 @@ $fetchArgs += @('origin',$refspec)
 [void](Invoke-AaysGit $fetchArgs)
 
 $remoteRef = "refs/remotes/origin/$branch"
+$remoteRootLauncherBlobBeforeSync = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$rootLauncherRepoPath"))).Trim()
+if ($remoteRootLauncherBlobBeforeSync -notmatch '^[0-9a-f]{40}$') {
+  throw "BLOCKED_REMOTE_ROOT_LAUNCHER_BLOB_INVALID=$remoteRootLauncherBlobBeforeSync"
+}
 $guardRepoPath = 'docs/chatgpt_status/_shared/automation/PREPARE_AAYS_LEGACY_RUNNER_LOCK_COMPAT_20260803.py'
 $tempGuard = Join-Path $env:TEMP ("aays_legacy_lock_guard_{0}_{1}.py" -f $PID,[guid]::NewGuid().ToString('N'))
 
@@ -90,11 +109,33 @@ try {
     throw "BLOCKED_CANONICAL_HEAD_MISMATCH_AFTER_BOOTSTRAP_LOCAL=$localAfter`_REMOTE=$remoteAfter"
   }
 
+  $remoteRootLauncherBlobAfterSync = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$rootLauncherRepoPath"))).Trim()
+  $diskRootLauncherBlobAfterSync = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
+  foreach ($blobCheck in @($remoteRootLauncherBlobAfterSync,$diskRootLauncherBlobAfterSync)) {
+    if ($blobCheck -notmatch '^[0-9a-f]{40}$') {
+      throw "BLOCKED_ROOT_LAUNCHER_SYNC_BLOB_INVALID=$blobCheck"
+    }
+  }
+  if ($remoteRootLauncherBlobBeforeSync -ne $remoteRootLauncherBlobAfterSync) {
+    throw "BLOCKED_REMOTE_ROOT_LAUNCHER_CHANGED_DURING_BOOTSTRAP_BEFORE=$remoteRootLauncherBlobBeforeSync`_AFTER=$remoteRootLauncherBlobAfterSync"
+  }
+  if ($diskRootLauncherBlobAfterSync -ne $remoteRootLauncherBlobAfterSync) {
+    throw "BLOCKED_DISK_ROOT_LAUNCHER_BLOB_MISMATCH_AFTER_SYNC_DISK=$diskRootLauncherBlobAfterSync`_REMOTE=$remoteRootLauncherBlobAfterSync"
+  }
+  if ($executingRootLauncherBlob -ne $remoteRootLauncherBlobAfterSync) {
+    if ($reexecDepth -ge 1) {
+      throw "BLOCKED_ROOT_LAUNCHER_REEXEC_LOOP_EXECUTING=$executingRootLauncherBlob`_REMOTE=$remoteRootLauncherBlobAfterSync"
+    }
+    $env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH = '1'
+    & $env:ComSpec /d /c ('"' + $env:AAYS_CMD_FILE + '"')
+    exit $LASTEXITCODE
+  }
+
   $starter = Join-Path $root 'docs\chatgpt_status\_shared\automation\START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1'
   if (-not (Test-Path -LiteralPath $starter -PathType Leaf)) {
     throw "BLOCKED_CANONICAL_STARTER_MISSING_AFTER_BOOTSTRAP=$starter"
   }
-  $rootLauncherBlob = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
+  $rootLauncherBlob = $executingRootLauncherBlob
   $remoteGuardBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$guardRepoPath"))).Trim()
   $starterBlob = (Invoke-AaysGit @('hash-object','--',$starter)).Trim()
   foreach ($blobCheck in @($rootLauncherBlob,$remoteGuardBlob,$starterBlob)) {
@@ -120,9 +161,13 @@ try {
     Add-Member -InputObject $state -NotePropertyName root_launcher_heads_match -NotePropertyValue ($localAfter -eq $remoteAfter) -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_fast_forward_applied -NotePropertyValue $fastForwardApplied -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_blob_sha -NotePropertyValue $rootLauncherBlob -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_execution_blob_sha_before_sync -NotePropertyValue $executingRootLauncherBlob -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_blob_sha_after_sync -NotePropertyValue $remoteRootLauncherBlobAfterSync -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_execution_source_verified -NotePropertyValue ($executingRootLauncherBlob -eq $remoteRootLauncherBlobAfterSync) -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_reexec_depth -NotePropertyValue $reexecDepth -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_remote_guard_blob_sha -NotePropertyValue $remoteGuardBlob -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_starter_blob_sha -NotePropertyValue $starterBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 2 -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 3 -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_no_reset_hard -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_wrapper_reentry_avoided -NotePropertyValue $true -Force
