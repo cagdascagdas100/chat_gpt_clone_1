@@ -9,12 +9,23 @@
   "task_id": "internet_access_1_ofcom_2026_schema_audit_862285f2",
   "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
-  "canonical_head_before_write": "59b461a55ad8d7e02ff6dfc6fa6cb91970dea6f0",
-  "checked_at": "2026-08-03T13:09:00Z",
-  "updated_at": "2026-08-03T13:09:00Z",
+  "canonical_head_before_write": "79b36e436cfa12e23c91853b3b3432e5d7b731f2",
+  "checked_at": "2026-08-03T13:32:00Z",
+  "updated_at": "2026-08-03T13:32:00Z",
   "recovery_reason": "EXISTING_SCHEMA_V3_READY_TASK_UNCLAIMED_MORE_THAN_15_MINUTES",
-  "technical_root_cause": "THE_EXISTING_CANONICAL_F_HOST_SINGLE_RUNNER_HAS_NO_FRESH_HEARTBEAT_OR MATCHING_CLAIM; THE_OFFICIAL_OFCOM_ARCHIVE_LINK_IS_CURRENT_BUT THIS_SESSION_CANNOT_MATERIALIZE_ZIP_BYTES_BECAUSE_THE_WEB_LAYER_REJECTS_APPLICATION_X_ZIP_COMPRESSED_AND_THE_CONTAINER_HAS_NO_EXTERNAL_DNS; A_SECOND_TASK_OWNER_OR RUNNER_IS_FORBIDDEN",
+  "technical_root_cause": "THE_EXISTING_CANONICAL_F_HOST_SINGLE_RUNNER_HAS_NO_FRESH_HEARTBEAT_OR MATCHING_CLAIM; THE_OFFICIAL_OFCOM_ZIP_LINK IS CURRENT BUT THE WEB LAYER REJECTS APPLICATION_X_ZIP_COMPRESSED AND THE EXECUTION CONTAINER HAS NO EXTERNAL DNS; A SECOND TASK OWNER OR RUNNER IS FORBIDDEN",
   "first_unverified_step": "EXISTING_CANONICAL_SINGLE_RUNNER_CLAIMS_THE_SAME_CONTINUATION_AND_EXECUTES_THE_REAL_OFCOM_ZIP_SCHEMA_AUDIT",
+  "slot_readback": {
+    "status_state": "BLOCKED",
+    "checkpoint_queue_state": "READY",
+    "heartbeat_state": "unclaimed",
+    "heartbeat_stale": true,
+    "ownership_state": "unclaimed",
+    "current_task_state": "READY_FOR_CLAIM",
+    "queue_state": "READY",
+    "manual_action_state": "OPEN",
+    "same_continuation_confirmed": true
+  },
   "task": {
     "state": "READY",
     "claimable": true,
@@ -32,27 +43,25 @@
     "resource_class": "network_fetch",
     "timeout_seconds": 7200,
     "script_tracked": true,
-    "script_test_evidence_preserved": true
+    "script_test_evidence_preserved": true,
+    "exact_write_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/shards/internet_access_1/ofcom_2026_schema_audit_latest.json"
   },
-  "slot_readback": {
-    "status_state": "BLOCKED",
-    "checkpoint_queue_state": "READY",
-    "heartbeat_state": "unclaimed",
-    "ownership_state": "unclaimed",
-    "current_task_state": "READY_FOR_CLAIM",
-    "queue_state": "READY",
-    "manual_action_state": "OPEN",
-    "same_continuation_confirmed": true
+  "runner_evidence": {
+    "stable_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
+    "heartbeat_age_minutes_at_check": 25906.12,
+    "stable_runner_state": "task_completed",
+    "last_active_claim_state": "done",
+    "last_active_claim_terminal_at": "2026-07-16T13:46:07Z",
+    "restart_request_state": "REQUEST_RECORDED_EXTERNAL_OPERATOR_LAUNCH_REQUIRED_100M",
+    "restart_request_auto_consumed": false,
+    "matching_slot_output_present": false
   },
-  "official_source_evidence": {
+  "source_evidence_manifest": {
     "source_page_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     "metadata_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
     "runtime_archive_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
-    "accessed_at": "2026-08-03T13:08:00Z",
+    "accessed_at": "2026-08-03T13:32:00Z",
     "metadata_content_sha256": "91ebce64171a81640d4837ca6f52b5bc163b1db1d00d0c83af3d9b9c785a8007",
-    "metadata_version": "v2",
-    "metadata_correction_date": "2026-07-07",
-    "verified_pdf_pages": [1, 4],
     "supports_fields": [
       "postcode",
       "postcode_space",
@@ -63,7 +72,7 @@
       "gigabit_availability_percent",
       "decent_broadband_unavailable_fixed_or_fwa_percent"
     ],
-    "relevant_record_ids_or_excerpt": "V2 corrects CW and MK duplicate postcode-area files; all 121 all-premises postcode files are renamed to 202601_fixed_postcode_coverage_r2_XX.csv. The postcode_files folder contains 121 files and 1,741,096 all-premises data rows.",
+    "relevant_record_ids_or_excerpt": "Official Spring 2026 landing page exposes the fixed-broadband ZIP as 32.2 MB; the preserved v2 metadata contract specifies 121 corrected-r2 postcode CSV files and 1,741,096 data rows.",
     "license_or_terms_url": "https://www.ofcom.org.uk/about-ofcom/our-website/terms-of-use",
     "runtime_archive_bytes_downloaded": false,
     "runtime_archive_sha256": null,
@@ -71,24 +80,13 @@
     "no_inferred_business_values": true
   },
   "runtime_attempts": {
+    "official_landing_page": "PASS_CURRENT_ZIP_LINK_PRESENT",
     "web_archive_fetch": "HTTP_400_UNSUPPORTED_CONTENT_TYPE_APPLICATION_X_ZIP_COMPRESSED",
     "container_download": "FAILED",
-    "tracked_script_network_path": "DNS_TEMPORARY_FAILURE",
-    "free_mirror_search": "NO_VERIFIED_CURRENT_2026_ARCHIVE_MIRROR_WITH_BYTE_HASH_FOUND",
+    "container_dns_probe": "TEMPORARY_FAILURE_IN_NAME_RESOLUTION",
+    "open_source_byte_mirror_search": "NO_VERIFIED_CURRENT_ARCHIVE_MIRROR_FOUND",
     "repository_runtime_result_search": "NO_PASS_OUTPUT_WITH_ARCHIVE_SHA256_AND_1741096_ROWS_FOUND"
   },
-  "recovery_actions_completed": [
-    "REREAD_FRESH_CANONICAL_HEAD_AND_ALL_REQUIRED_SLOT_RECORDS",
-    "CONFIRM_SAME_CONTINUATION_KEY_AND_NO_LIVE_OWNER",
-    "CONFIRM_EXISTING_SCHEMA_V3_READY_QUEUE_AND_TRACKED_TESTED_SCRIPT",
-    "VERIFY_CURRENT_OFFICIAL_OFCOM_LANDING_PAGE_AND_ZIP_LINK",
-    "VERIFY_OFFICIAL_V2_METADATA_CORRECTION_AND_POSTCODE_CONTRACT_FROM_PDF_PAGES_1_AND_4",
-    "ATTEMPT_WEB_ARCHIVE_FETCH",
-    "ATTEMPT_CONTAINER_ARCHIVE_DOWNLOAD",
-    "ATTEMPT_TRACKED_SCRIPT_NETWORK_PATH",
-    "SEARCH_FREE_PUBLIC_MIRRORS_AND_REPOSITORY_RUNTIME_RESULTS",
-    "PRESERVE_EXISTING_TASK_AND_AVOID_DUPLICATE_OWNER_RUNNER_OR_RESTART_REQUEST"
-  ],
   "completed_count": 33785,
   "target_count": 92283,
   "previous_progress_percent": 36.61,
@@ -96,8 +94,11 @@
   "progress_percent_increase": 0.0,
   "progress_formula": "33785 / 92283 * 100",
   "produced_business_rows": 0,
-  "produced_evidence_records_this_turn": 17,
-  "blocker": "REAL_OFCOM_ZIP_BYTES_SHA256_AND_SCHEMA_REMAIN_UNVERIFIED; THE_F_HOST_CANONICAL_RUNNER_HAS_NO_FRESH_HEARTBEAT_OR MATCHING_CLAIM; THIS_SESSION_CANNOT_ACCESS_THE_F_HOST_OR DOWNLOAD_THE_ZIP; SECOND_TASK_OWNER_OR RUNNER_IS_FORBIDDEN",
+  "produced_evidence_records_this_turn": 18,
+  "blocker": "REAL_OFCOM_ZIP BYTES SHA256 AND SCHEMA REMAIN UNVERIFIED; THE F_HOST CANONICAL RUNNER HAS NO FRESH HEARTBEAT OR MATCHING CLAIM; THIS SESSION CANNOT ACCESS THE F_HOST OR DOWNLOAD THE ZIP; SECOND TASK OWNER OR RUNNER IS FORBIDDEN",
   "next_control_check_minutes": 15,
+  "new_task_created": false,
+  "new_owner_created": false,
+  "second_runner_started": false,
   "fake_data": false
 }
