@@ -15,21 +15,22 @@
   "continuation_key": "ed2dbbaecd626250cabab021478b58a70e30af064be31e8d05ac9b5cf7e9ae2f",
   "state": "BLOCKED",
   "panel_status": "BLOCKED",
-  "updated_at": "2026-08-03T15:33:00+03:00",
+  "updated_at": "2026-08-03T18:51:00+03:00",
   "final_ready": false,
   "worker": {
     "ready_count": 1,
     "running_count": 0,
-    "state": "READY_UNCLAIMED_WAITING_FOR_GLOBAL_SINGLE_RUNNER_PRIORITY_RELEASE",
+    "state": "READY_UNCLAIMED_WAITING_FOR_PRIORITY_PREDECESSOR_FORMAL_SIGNOFF_AND_LOCAL_RECEIPTS",
     "owner_live": false,
     "active_lease": false,
-    "patched_v53_ready_age_minutes": 2207,
-    "global_runner_heartbeat_live": false,
-    "global_active_claim_live": false,
+    "patched_v53_ready_age_minutes": 2405,
     "priority_predecessor": "height_difference_2",
-    "priority_predecessor_ready_count": 1,
+    "priority_predecessor_panel_state": "YAYINLANIYOR",
+    "priority_predecessor_runner_state": "PUBLISHED_BY_SINGLE_COORDINATOR",
+    "priority_predecessor_ready_count": 0,
     "priority_predecessor_running_count": 0,
-    "restart_request_age_minutes": 2715
+    "priority_predecessor_publish_pending_count": 1,
+    "priority_predecessor_publish_pending_age_minutes": 112
   },
   "first_unverified_step": "RUN_PATCHED_CANONICAL_V53_BROWSER_ACCEPTANCE_AND_VERIFY_REMOTE_REPORT_READBACK",
   "first_unverified_operation_sequence": 291,
@@ -41,7 +42,7 @@
     "AST_PARSE_OK",
     "PY_COMPILE_OK"
   ],
-  "canonical_head_observed": "a558b5d34624eb56c452c2a85c73972c7ef267d0",
+  "canonical_head_observed": "c9f62e5d14345a97c2f3ff28215b83f8d5d98ba9",
   "technical_recovery": {
     "dom_snapshot_fix_preserved": true,
     "patched_probe": "Poll explicit DOM completion or acceptance-error markers every 0.5 seconds for up to 120 seconds.",
@@ -56,19 +57,27 @@
     "automatic_recovery_exhausted": true,
     "manual_action_state": "OPEN"
   },
-  "global_runner_evidence": {
-    "stable_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
-    "stable_runner_heartbeat_blob_sha": "a16a5ce04f06cfa12a9e4b6cbaa216ea9bbc14c6",
-    "active_claim_state": "done",
-    "active_claim_blob_sha": "b81442d725c416a09491e4bbfa7d880fa476bd15",
-    "height_difference_2_status_blob_sha": "e1cab022ed2de9f17cd757194f1e5264d2c05740",
-    "height_difference_2_heartbeat_live": false,
-    "height_difference_2_owner_live": false,
-    "restart_request_blob_sha": "519907e570d67e688896cfc7b2a671c48940b0ae",
-    "required_receipts_present": 0,
+  "priority_predecessor_evidence": {
+    "status_blob_sha": "ab40b15c1e5c26cd87e7fa5d32eafce49bde7afe",
+    "runner_child_commit": "510c1063692be828668185c72a72e6b4dee285ff",
+    "remote_output_readback": true,
+    "output_blob_sha": "d31e4fd19d81481cab2e38659dace413d0f5af6e",
+    "numeric_rows": [30762, 46142, 61522],
+    "numeric_values_m": {
+      "30762": 0.27,
+      "46142": 0.831,
+      "61522": 0.49
+    },
+    "hmlr_exact_id_and_point_inside_passed": true,
+    "ea_dtm_sampling_passed": true,
+    "height_metric_consistency_passed": true,
+    "terrain50_crosscheck_passed": true,
+    "web_8012_acceptance_passed": true,
+    "technical_crosscheck_completed": true,
+    "formal_human_crosscheck_signoff_present": false,
+    "required_receipts_present": 1,
     "required_receipts_total": 4,
-    "canonical_launcher": "F:\\TerraYield_AAYS_Portable\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd",
-    "forbidden_launcher": "RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd"
+    "missing_receipts": ["015", "016", "014"]
   },
   "report": {
     "status": "BLOCKED",
@@ -112,8 +121,8 @@
     "formula": "290 / 291 * 100"
   },
   "business_rows_written": 0,
-  "evidence_records_written": 2,
-  "blocker": "PATCHED V53 TASK IS READY BUT CANNOT BE CLAIMED: PRIORITY-1 HEIGHT_DIFFERENCE_2 REMAINS BLOCKED/READY WITH NO OWNER OR HEARTBEAT 2715 MINUTES AFTER ITS PASSIVE RESTART REQUEST; THE GLOBAL SINGLE-RUNNER DAEMON HEARTBEAT IS STALE, THE ACTIVE CLAIM IS TERMINAL, AND ALL FOUR REQUIRED RECEIPTS ARE ABSENT; THE GITHUB CONNECTOR CANNOT START THE WINDOWS F-HOST PROCESS; SECOND TASK, RUNNER, OWNER, OR RESTART REQUEST IS FORBIDDEN",
+  "evidence_records_written_this_turn": 1,
+  "blocker": "PRIORITY-1 HEIGHT_DIFFERENCE_2 TECHNICAL CROSSCHECK IS COMPLETE AND REMOTE OUTPUT READBACK SUCCEEDED, BUT FORMAL HUMAN CROSSCHECK SIGNOFF IS ABSENT AND LOCAL F-HOST RECEIPTS 015, 016 AND 014 ARE MISSING; THE GITHUB CONNECTOR CANNOT VERIFY THE LOCAL GIT SNAPSHOT OR RESTART RECEIPTS, SO THE EXISTING READY V53 TASK CANNOT BE CLAIMED UNTIL THE PREDECESSOR IS FINALLY PROMOTED AND RELEASES PRIORITY",
   "next_control_check_minutes": 15,
   "fake_data": false
 }
