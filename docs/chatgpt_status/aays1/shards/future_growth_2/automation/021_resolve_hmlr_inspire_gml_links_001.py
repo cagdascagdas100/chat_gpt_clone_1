@@ -1,273 +1,63 @@
 #!/usr/bin/env python3
-import argparse
-import hashlib
-import html
-import json
-import os
-import re
-import tempfile
-import urllib.parse
-import urllib.request
-from datetime import datetime, timezone
+import argparse,hashlib,html,json,os,re,tempfile,urllib.parse,urllib.request
+from datetime import datetime,timezone
 from pathlib import Path
-from typing import Any, Callable
-
-SLOT = "future_growth_2"
-WORKSTREAM = "AAYS_21_SLOT_SAFE_PARALLEL_V1"
-OFFICIAL_HOST = "use-land-property-data.service.gov.uk"
-DEFAULT_PAGE = "https://use-land-property-data.service.gov.uk/datasets/inspire/download"
-TARGETS = (
-    {"row_no": 30762, "lpa": "Enfield", "authority": "London Borough of Enfield"},
-    {"row_no": 46142, "lpa": "Havering", "authority": "London Borough of Havering"},
-    {"row_no": 61522, "lpa": "Lambeth", "authority": "London Borough of Lambeth"},
-)
-MAX_PAGE_BYTES = 5_000_000
-PROBE_BYTES = 4096
-
-
-def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
-def atomic_write(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
-            json.dump(value, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp, path)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-
-
-def validate_page_url(url: str) -> None:
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https" or parsed.hostname != OFFICIAL_HOST:
-        raise ValueError("download page must be the official HMLR HTTPS host")
-
-
-def fetch_page(url: str, timeout: int) -> tuple[int, str, bytes, dict[str, str]]:
-    validate_page_url(url)
-    request = urllib.request.Request(
-        url,
-        headers={"Accept": "text/html,application/xhtml+xml", "User-Agent": "TerraYield-AAYS/1.0 future_growth_2"},
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        status = int(response.status)
-        body = response.read(MAX_PAGE_BYTES + 1)
-        final_url = response.geturl()
-        headers = {str(k).lower(): str(v) for k, v in response.headers.items()}
-    if len(body) > MAX_PAGE_BYTES:
-        raise ValueError("download page exceeds bounded size")
-    return status, final_url, body, headers
-
-
-def strip_tags(value: str) -> str:
-    return re.sub(r"<[^>]+>", " ", value)
-
-
-def extract_links(page_body: bytes, base_url: str) -> dict[int, str | None]:
-    text = html.unescape(page_body.decode("utf-8", errors="replace"))
-    results: dict[int, str | None] = {}
-    for target in TARGETS:
-        authority = target["authority"]
-        match = re.search(re.escape(authority), text, flags=re.IGNORECASE)
-        link: str | None = None
-        if match:
-            window = text[match.start(): match.start() + 2500]
-            for href, label in re.findall(
-                r"<a\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>",
-                window,
-                flags=re.IGNORECASE | re.DOTALL,
-            ):
-                label_text = " ".join(strip_tags(label).split()).lower()
-                if "gml" in label_text or ".gml" in href.lower():
-                    link = urllib.parse.urljoin(base_url, href)
-                    break
-        results[int(target["row_no"])] = link
-    return results
-
-
-def probe_link(url: str, timeout: int) -> dict[str, Any]:
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https":
-        raise ValueError("GML link must use HTTPS")
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/gml+xml,application/xml,text/xml,*/*",
-            "Range": f"bytes=0-{PROBE_BYTES - 1}",
-            "User-Agent": "TerraYield-AAYS/1.0 future_growth_2",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        status = int(response.status)
-        prefix = response.read(PROBE_BYTES)
-        final_url = response.geturl()
-        headers = {str(k).lower(): str(v) for k, v in response.headers.items()}
-    return {
-        "http_status": status,
-        "final_url": final_url,
-        "content_type": headers.get("content-type"),
-        "content_length_header": headers.get("content-length"),
-        "content_range_header": headers.get("content-range"),
-        "byte_count_hashed": len(prefix),
-        "content_sha256": hashlib.sha256(prefix).hexdigest() if prefix else None,
-        "hash_scope": f"bounded_first_{PROBE_BYTES}_bytes",
-    }
-
-
-def run(
-    page_url: str,
-    continuation_key: str,
-    timeout: int,
-    fetch_fn: Callable[[str, int], tuple[int, str, bytes, dict[str, str]]] = fetch_page,
-    probe_fn: Callable[[str, int], dict[str, Any]] = probe_link,
-) -> dict[str, Any]:
-    if len(continuation_key) != 64 or any(ch not in "0123456789abcdef" for ch in continuation_key):
-        raise ValueError("continuation key must be lowercase SHA-256")
-    validate_page_url(page_url)
-    fetched_at = utc_now()
-    status, final_page_url, body, page_headers = fetch_fn(page_url, timeout)
-    page_sha256 = hashlib.sha256(body).hexdigest()
-    links = extract_links(body, final_page_url)
-
-    records: list[dict[str, Any]] = []
-    verified = 0
-    for target in TARGETS:
-        row_no = int(target["row_no"])
-        link = links.get(row_no)
-        base = {
-            **target,
-            "download_page_url": page_url,
-            "download_page_final_url": final_page_url,
-            "download_page_http_status": status,
-            "download_page_byte_count": len(body),
-            "download_page_sha256": page_sha256,
-            "download_page_content_type": page_headers.get("content-type"),
-            "fetched_at_utc": fetched_at,
-            "gml_url": link,
-            "discovered_from_official_page": True,
-            "raw_body_copied": False,
-            "geometry_copied": False,
-            "membership_inferred": False,
-            "score_written": False,
-            "fake_data": False,
-        }
-        if not link:
-            records.append({**base, "data_status": "SOURCE_LINK_NOT_FOUND", "error": "No GML link found near official local-authority label"})
-            continue
-        try:
-            probe = probe_fn(link, timeout)
-            ok = probe.get("http_status") in {200, 206} and int(probe.get("byte_count_hashed") or 0) > 0 and bool(probe.get("content_sha256"))
-            verified += int(ok)
-            records.append({
-                **base,
-                **probe,
-                "data_status": "VERIFIED_OFFICIAL_GML_LINK" if ok else "SOURCE_READ_FAILED",
-                "error": None if ok else "Probe did not return a bounded non-empty response",
-            })
-        except Exception as exc:
-            records.append({
-                **base,
-                "http_status": None,
-                "final_url": None,
-                "content_type": None,
-                "content_length_header": None,
-                "content_range_header": None,
-                "byte_count_hashed": 0,
-                "content_sha256": None,
-                "hash_scope": f"bounded_first_{PROBE_BYTES}_bytes",
-                "data_status": "SOURCE_READ_FAILED",
-                "error": f"{type(exc).__name__}:{str(exc)[:500]}",
-            })
-
-    state = "PUBLISHED" if verified == len(TARGETS) else "NO_DATA_CONTINUE"
-    return {
-        "schema_version": 3,
-        "architecture_version": 3,
-        "workstream_id": WORKSTREAM,
-        "slot_id": SLOT,
-        "task_continuation_key": continuation_key,
-        "state": state,
-        "panel_status": "PUBLISHED" if state == "PUBLISHED" else "BİLGİ TOPLANIYOR",
-        "generated_at": utc_now(),
-        "completed_count": len(records),
-        "target_count": len(TARGETS),
-        "progress_percent": round(len(records) / len(TARGETS) * 100.0, 6),
-        "verified_link_count": verified,
-        "failed_link_count": len(TARGETS) - verified,
-        "global_business_completed_count": 0,
-        "global_business_target_count": 30761,
-        "global_progress_percent": 0.0,
-        "records": records,
-        "large_raw_files_written": False,
-        "raw_bodies_copied": False,
-        "geometry_copied": False,
-        "membership_inferred": False,
-        "scores_written": False,
-        "fake_data": False,
-    }
-
-
-def fixture_fetch(url: str, timeout: int) -> tuple[int, str, bytes, dict[str, str]]:
-    del timeout
-    fixture = """
-    <html><body><table>
-      <tr><td>London Borough of Enfield</td><td><a href='/files/enfield.gml'>Download .gml</a></td></tr>
-      <tr><td>London Borough of Havering</td><td><a href='/files/havering.gml'>Download .gml</a></td></tr>
-      <tr><td>London Borough of Lambeth</td><td><a href='/files/lambeth.gml'>Download .gml</a></td></tr>
-    </table></body></html>
-    """.encode("utf-8")
-    return 200, url, fixture, {"content-type": "text/html; charset=utf-8"}
-
-
-def fixture_probe(url: str, timeout: int) -> dict[str, Any]:
-    del timeout
-    payload = ("<gml:FeatureCollection source='" + url + "'/>").encode("utf-8")
-    return {
-        "http_status": 206,
-        "final_url": url,
-        "content_type": "application/gml+xml",
-        "content_length_header": str(len(payload)),
-        "content_range_header": f"bytes 0-{len(payload)-1}/{len(payload)}",
-        "byte_count_hashed": len(payload),
-        "content_sha256": hashlib.sha256(payload).hexdigest(),
-        "hash_scope": f"bounded_first_{PROBE_BYTES}_bytes",
-    }
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--download-page-url", default=DEFAULT_PAGE)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--task-continuation-key", required=True)
-    parser.add_argument("--timeout-seconds", type=int, default=30)
-    parser.add_argument("--self-test", action="store_true")
-    args = parser.parse_args()
-    if not 5 <= args.timeout_seconds <= 120:
-        raise ValueError("timeout must be 5..120 seconds")
-    result = run(
-        args.download_page_url,
-        args.task_continuation_key,
-        args.timeout_seconds,
-        fixture_fetch if args.self_test else fetch_page,
-        fixture_probe if args.self_test else probe_link,
-    )
-    atomic_write(args.output, result)
-    print(json.dumps({
-        "state": result["state"],
-        "completed_count": result["completed_count"],
-        "target_count": result["target_count"],
-        "verified_link_count": result["verified_link_count"],
-        "failed_link_count": result["failed_link_count"],
-        "output": str(args.output),
-    }, sort_keys=True, separators=(",", ":")))
-
-
-if __name__ == "__main__":
-    main()
+SLOT='future_growth_2';WS='AAYS_21_SLOT_SAFE_PARALLEL_V1';HOST='use-land-property-data.service.gov.uk';PAGE='https://use-land-property-data.service.gov.uk/datasets/inspire/download';N=4096
+T=((30762,'Enfield','London Borough of Enfield'),(46142,'Havering','London Borough of Havering'),(61522,'Lambeth','London Borough of Lambeth'))
+def now():return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
+def save(p,v):
+ p=Path(p);p.parent.mkdir(parents=True,exist_ok=True);fd,t=tempfile.mkstemp(dir=p.parent,prefix=p.name+'.',suffix='.tmp')
+ try:
+  with os.fdopen(fd,'w',encoding='utf-8') as f:json.dump(v,f,ensure_ascii=False,sort_keys=True,separators=(',',':'));f.write('\n');f.flush();os.fsync(f.fileno())
+  os.replace(t,p)
+ finally:
+  if os.path.exists(t):os.unlink(t)
+def valid(u):
+ q=urllib.parse.urlparse(u)
+ if q.scheme!='https' or q.hostname!=HOST:raise ValueError('official HMLR HTTPS page required')
+def fetch(u,to):
+ valid(u);r=urllib.request.urlopen(urllib.request.Request(u,headers={'Accept':'text/html','User-Agent':'TerraYield-AAYS/1.0 future_growth_2'}),timeout=to);b=r.read(5000001)
+ if len(b)>5000000:raise ValueError('page too large')
+ return int(r.status),r.geturl(),b,{str(k).lower():str(v) for k,v in r.headers.items()}
+def links(b,base):
+ s=html.unescape(b.decode('utf-8','replace'));o={}
+ for n,l,a in T:
+  m=re.search(re.escape(a),s,re.I);z=None
+  if m:
+   w=s[m.start():m.start()+2500]
+   for h,x in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',w,re.I|re.S):
+    if 'gml' in re.sub(r'<[^>]+>',' ',x).lower() or '.gml' in h.lower():z=urllib.parse.urljoin(base,h);break
+  o[n]=z
+ return o
+def probe(u,to):
+ if urllib.parse.urlparse(u).scheme!='https':raise ValueError('HTTPS GML required')
+ r=urllib.request.urlopen(urllib.request.Request(u,headers={'Range':f'bytes=0-{N-1}','User-Agent':'TerraYield-AAYS/1.0 future_growth_2'}),timeout=to);b=r.read(N);h={str(k).lower():str(v) for k,v in r.headers.items()}
+ return {'http_status':int(r.status),'final_url':r.geturl(),'content_type':h.get('content-type'),'content_length_header':h.get('content-length'),'content_range_header':h.get('content-range'),'byte_count_hashed':len(b),'content_sha256':hashlib.sha256(b).hexdigest() if b else None,'hash_scope':f'bounded_first_{N}_bytes'}
+def base(n,l,a,u,at):return {'row_no':n,'lpa':l,'authority':a,'download_page_url':u,'fetched_at_utc':at,'raw_body_copied':False,'geometry_copied':False,'membership_inferred':False,'score_written':False,'fake_data':False}
+def out(k,r,v):
+ s='PUBLISHED' if v==3 else 'NO_DATA_CONTINUE';return {'schema_version':3,'architecture_version':3,'workstream_id':WS,'slot_id':SLOT,'task_continuation_key':k,'state':s,'panel_status':'PUBLISHED' if s=='PUBLISHED' else 'BİLGİ TOPLANIYOR','generated_at':now(),'completed_count':len(r),'target_count':3,'progress_percent':round(len(r)/3*100,6),'verified_link_count':v,'failed_link_count':3-v,'global_business_completed_count':0,'global_business_target_count':30761,'global_progress_percent':0.0,'records':r,'large_raw_files_written':False,'raw_bodies_copied':False,'geometry_copied':False,'membership_inferred':False,'scores_written':False,'fake_data':False}
+def run(u,k,to,F=fetch,P=probe):
+ if len(k)!=64 or any(c not in '0123456789abcdef' for c in k):raise ValueError('bad continuation key')
+ valid(u);at=now()
+ try:st,fu,b,hh=F(u,to)
+ except Exception as e:
+  er=f'{type(e).__name__}:{str(e)[:500]}';r=[]
+  for n,l,a in T:r.append({**base(n,l,a,u,at),'download_page_final_url':None,'download_page_http_status':None,'download_page_byte_count':0,'download_page_sha256':None,'download_page_content_type':None,'gml_url':None,'discovered_from_official_page':False,'http_status':None,'final_url':None,'content_type':None,'content_length_header':None,'content_range_header':None,'byte_count_hashed':0,'content_sha256':None,'hash_scope':f'bounded_first_{N}_bytes','data_status':'SOURCE_READ_FAILED','error':er})
+  return out(k,r,0)
+ ph=hashlib.sha256(b).hexdigest();L=links(b,fu);r=[];v=0
+ for n,l,a in T:
+  z=L[n];q={**base(n,l,a,u,at),'download_page_final_url':fu,'download_page_http_status':st,'download_page_byte_count':len(b),'download_page_sha256':ph,'download_page_content_type':hh.get('content-type'),'gml_url':z,'discovered_from_official_page':True}
+  if not z:r.append({**q,'data_status':'SOURCE_LINK_NOT_FOUND','error':'No GML link near authority label'});continue
+  try:
+   p=P(z,to);ok=p.get('http_status') in (200,206) and p.get('byte_count_hashed',0)>0 and p.get('content_sha256');v+=bool(ok);r.append({**q,**p,'data_status':'VERIFIED_OFFICIAL_GML_LINK' if ok else 'SOURCE_READ_FAILED','error':None if ok else 'empty probe'})
+  except Exception as e:r.append({**q,'http_status':None,'final_url':None,'content_type':None,'content_length_header':None,'content_range_header':None,'byte_count_hashed':0,'content_sha256':None,'hash_scope':f'bounded_first_{N}_bytes','data_status':'SOURCE_READ_FAILED','error':f'{type(e).__name__}:{str(e)[:500]}'})
+ return out(k,r,int(v))
+def ff(u,to):
+ del to;b=b'<tr><td>London Borough of Enfield</td><td><a href="/e.gml">GML</a></td></tr><tr><td>London Borough of Havering</td><td><a href="/h.gml">GML</a></td></tr><tr><td>London Borough of Lambeth</td><td><a href="/l.gml">GML</a></td></tr>';return 200,u,b,{'content-type':'text/html'}
+def fp(u,to):
+ del to;b=('<gml>'+u).encode();return {'http_status':206,'final_url':u,'content_type':'application/gml+xml','content_length_header':str(len(b)),'content_range_header':None,'byte_count_hashed':len(b),'content_sha256':hashlib.sha256(b).hexdigest(),'hash_scope':f'bounded_first_{N}_bytes'}
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--download-page-url',default=PAGE);p.add_argument('--output',required=True);p.add_argument('--task-continuation-key',required=True);p.add_argument('--timeout-seconds',type=int,default=30);p.add_argument('--self-test',action='store_true');a=p.parse_args()
+ if not 5<=a.timeout_seconds<=120:raise ValueError('timeout 5..120')
+ v=run(a.download_page_url,a.task_continuation_key,a.timeout_seconds,ff if a.self_test else fetch,fp if a.self_test else probe);save(a.output,v);print(json.dumps({'state':v['state'],'completed_count':v['completed_count'],'target_count':3,'verified_link_count':v['verified_link_count'],'failed_link_count':v['failed_link_count']},sort_keys=True,separators=(',',':')))
+if __name__=='__main__':main()
