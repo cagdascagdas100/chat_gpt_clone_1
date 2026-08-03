@@ -61,8 +61,7 @@ if ($WorkRoot.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
 
 $sharedRoot = Join-Path $repoRoot "docs/chatgpt_status/_shared"
 $automationRoot = Join-Path $sharedRoot "automation"
-$runner = Join-Path $automationRoot "RUN_AAYS_STABLE_LEGACY_RUNNER_DAEMON_20260707.ps1"
-$scanRunner = Join-Path $automationRoot "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1"
+$compatHelper = Join-Path $automationRoot "PREPARE_AAYS_SLOT21_QUEUE_COMPAT_RUNNER_20260803.py"
 $builder = Join-Path $automationRoot "BUILD_AAYS_PAGE_PANEL_INDEX.ps1"
 $panel = Join-Path $sharedRoot "panel/AAYS_RUNNER_PANEL.ps1"
 $statusDir = Join-Path $sharedRoot "status"
@@ -72,8 +71,7 @@ New-Item -ItemType Directory -Force -Path $statusDir, $locksDir, $logsDir, $Work
 $lockPath = Join-Path $locksDir "single_runner.lock"
 $bootstrapStatus = Join-Path $statusDir "runner_bootstrap_latest.json"
 
-if (-not (Test-Path -LiteralPath $runner)) { throw "Missing runner daemon: $runner" }
-if (-not (Test-Path -LiteralPath $scanRunner)) { throw "Missing scan runner: $scanRunner" }
+if (-not (Test-Path -LiteralPath $compatHelper)) { throw "Missing slot21 queue compatibility helper: $compatHelper" }
 if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $builder" }
 
 & powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
@@ -87,14 +85,14 @@ $runnerPid = $runnerState.pid
 $runnerStatus = if ($runnerState.active) { "runner_active" } else { "runner_not_running" }
 if (-not $runnerState.active) {
   if ($NoLoop) {
-    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$scanRunner,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks",$MaxTasks,"-StaleMinutes",$StaleMinutes,"-ScanOnly")
+    $args = @("--repo-root",$repoRoot,"--work-root",$WorkRoot,"--mode","scan","--","-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-MaxTasks",$MaxTasks,"-StaleMinutes",$StaleMinutes,"-ScanOnly")
     if ($NoPush) { $args += "-NoPush" }
-    $out = & powershell @args 2>&1
+    $out = & python $compatHelper @args 2>&1
     $runnerStatus = "runner_scan_only_completed"
   } else {
-    $args = @("-NoProfile","-ExecutionPolicy","Bypass","-File",$runner,"-IntervalSeconds",$IntervalSeconds,"-HeartbeatSeconds",$HeartbeatSeconds,"-RefreshIntervalSeconds",$RefreshIntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
+    $args = @($compatHelper,"--repo-root",$repoRoot,"--work-root",$WorkRoot,"--mode","daemon","--","-IntervalSeconds",$IntervalSeconds,"-HeartbeatSeconds",$HeartbeatSeconds,"-RefreshIntervalSeconds",$RefreshIntervalSeconds,"-MaxTasks",$MaxTasks,"-RepoRoot",$repoRoot,"-RepoFullName",$RepoFullName,"-MainBranch",$MainBranch,"-WorkRoot",$WorkRoot,"-StaleMinutes",$StaleMinutes)
     if ($NoPush) { $args += "-NoPush" }
-    $proc = Start-Process -FilePath powershell -ArgumentList $args -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
+    $proc = Start-Process -FilePath python -ArgumentList $args -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
     $runnerPid = $proc.Id
     $runnerStatus = "runner_started"
     Start-Sleep -Seconds 2
@@ -112,8 +110,8 @@ $state = [ordered]@{
   repo_full_name = $RepoFullName
   runner_branch = $MainBranch
   runner_status = $runnerStatus
-  runner_engine = "stable_legacy_worktree_runner_20260707"
-  scan_runner = "RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"
+  runner_engine = "stable_legacy_worktree_runner_20260707_slot21_queue_compat"
+  scan_runner = "transient_slot21_compat_copy_of_RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707"
   max_tasks_per_scan = $MaxTasks
   runner_pid = $runnerPid
   runner_lock_active = (Test-Path -LiteralPath $lockPath)
