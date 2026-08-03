@@ -3,7 +3,7 @@ setlocal
 set "AAYS_CANONICAL_ROOT=%~dp0"
 set "AAYS_CMD_FILE=%~f0"
 set "AAYS_BOOTSTRAP_FILE=%TEMP%\aays_canonical_bootstrap_%RANDOM%_%RANDOM%.ps1"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:AAYS_CMD_FILE);$m='# AAYS_POWERSHELL_BOOTSTRAP';$i=$s.IndexOf($m);if($i -lt 0){exit 97};$b=$s.Substring($i+$m.Length).TrimStart([char]13,[char]10);[IO.File]::WriteAllText($env:AAYS_BOOTSTRAP_FILE,$b,[Text.UTF8Encoding]::new($false));& $env:AAYS_BOOTSTRAP_FILE;exit $LASTEXITCODE"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:AAYS_CMD_FILE);$m='# AAYS_'+'POWERSHELL_BOOTSTRAP';$i=$s.IndexOf($m);if($i -lt 0){exit 97};$b=$s.Substring($i+$m.Length).TrimStart([char]13,[char]10);[IO.File]::WriteAllText($env:AAYS_BOOTSTRAP_FILE,$b,[Text.UTF8Encoding]::new($false));& $env:AAYS_BOOTSTRAP_FILE;exit $LASTEXITCODE"
 set "AAYS_EXIT_CODE=%ERRORLEVEL%"
 del /q "%AAYS_BOOTSTRAP_FILE%" >nul 2>&1
 endlocal & exit /b %AAYS_EXIT_CODE%
