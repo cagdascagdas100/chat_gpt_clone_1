@@ -1,0 +1,1687 @@
+{
+  "schema_version": 7,
+  "slot_id": "height_difference_2",
+  "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+  "attempt_id": "height-difference-2-20260721-020",
+  "status": "THREE_OFFICIAL_NUMERIC_ROWS_AND_PORT_8012_ACCEPTANCE_READY_PENDING_REVIEW",
+  "stage_order": [
+    "THREE_EXACT_HMLR_INSPIRE_POLYGONS",
+    "EA_DTM1M_POLYGON_SAMPLING",
+    "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY",
+    "OS_DOWNLOADS_API_OR_CONFIGURED_TERRAIN50",
+    "OS_TERRAIN50_CROSSCHECK",
+    "CURRENT_WORKTREE_CANDIDATE_BINDING",
+    "PORT_8012_WEB_ACCEPTANCE"
+  ],
+  "stages": [
+    {
+      "stage": "EA_DTM1M_POLYGON_SAMPLING",
+      "command": [
+        "F:\\TerraYield_AAYS_Portable\\runtime\\python312\\python.exe",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\automation\\012_sample_ea_dtm1m_polygons.py",
+        "--hmlr-exact-matches",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\007_hmlr_polygon_preparation_latest\\hmlr_exact_matches.json",
+        "--output",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\ea_dtm1m_polygon_samples.json",
+        "--coverage-id",
+        "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"ok\": true, \"status\": \"THREE_EA_DTM1M_POLYGON_SAMPLES_READY\", \"samples\": 3}\n",
+      "stderr": ""
+    },
+    {
+      "stage": "CURRENT_HEIGHT_DIFFERENCE_METRIC_CONSISTENCY",
+      "command": [
+        "F:\\TerraYield_AAYS_Portable\\runtime\\python312\\python.exe",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\automation\\018_verify_current_height_difference_metric.py",
+        "--ea-samples",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\ea_dtm1m_polygon_samples.json",
+        "--preserved-evidence",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\england_map_web\\data\\aays_21_slots\\height_difference_2\\ea_dtm_polygon_samples_runtime_034.json",
+        "--expected-coverage-id",
+        "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m",
+        "--tolerance-m",
+        "0.001",
+        "--output",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\current_height_metric_consistency.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"ok\": true, \"status\": \"THREE_CURRENT_EA_HEIGHT_DIFFERENCES_MATCH_PRESERVED_EXACT_RESULTS\", \"rows\": 3}\n",
+      "stderr": ""
+    },
+    {
+      "stage": "OS_TERRAIN50_PREPARATION_AND_CROSSCHECK",
+      "command": [
+        "F:\\TerraYield_AAYS_Portable\\runtime\\python312\\python.exe",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\automation\\016_prepare_and_crosscheck_os_terrain50.py",
+        "--repo-root",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1",
+        "--hmlr-exact-matches",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\007_hmlr_polygon_preparation_latest\\hmlr_exact_matches.json",
+        "--ea-samples",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\ea_dtm1m_polygon_samples.json",
+        "--output-dir",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\terrain50_preparation",
+        "--output",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\os_terrain50_crosschecks.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"ok\": true, \"status\": \"THREE_OS_TERRAIN50_CROSSCHECKS_READY\", \"crosschecks\": 3, \"accuracy_screening_passed\": true, \"two_rmse_sum_m\": 8.3}\n",
+      "stderr": ""
+    },
+    {
+      "stage": "PORT_8012_WEB_ACCEPTANCE",
+      "command": [
+        "F:\\TerraYield_AAYS_Portable\\runtime\\python312\\python.exe",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\automation\\017_verify_height_difference_2_web_8012.py",
+        "--base-url",
+        "http://127.0.0.1:8012/",
+        "--expected-operation-rows",
+        "1036",
+        "--candidate-payload",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\candidates_preacceptance.json",
+        "--expected-candidates-sha256",
+        "2f805829176fca032c9909f40f43554b295ef56a1819fd92ae3bc728928c3e18",
+        "--output",
+        "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\port_8012_web_acceptance.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"ok\": true, \"status\": \"PORT_8012_WEB_ACCEPTANCE_PASSED\", \"rows\": 3721, \"source_rows\": 774, \"example_rows\": 135, \"candidate_rows\": [30762, 46142, 61522], \"candidate_sha256\": \"2f805829176fca032c9909f40f43554b295ef56a1819fd92ae3bc728928c3e18\", \"base_url\": \"http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/\"}\n",
+      "stderr": ""
+    }
+  ],
+  "hmlr_exact_matches_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\007_hmlr_polygon_preparation_latest\\hmlr_exact_matches.json",
+  "ea_output_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\ea_dtm1m_polygon_samples.json",
+  "height_metric_output_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\current_height_metric_consistency.json",
+  "preserved_metric_evidence_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\england_map_web\\data\\aays_21_slots\\height_difference_2\\ea_dtm_polygon_samples_runtime_034.json",
+  "terrain50_output_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\os_terrain50_crosschecks.json",
+  "official_numeric_row_count": 3,
+  "measured_rows": [
+    {
+      "row_no": 30762,
+      "parcel_id": "parcel_30762",
+      "hmlr_inspire_id": "46058185",
+      "height_difference_m": 0.27,
+      "ea_height_min_m_odn": 19.364,
+      "ea_height_max_m_odn": 19.634,
+      "parcel_elevation_median_m_odn": 19.518,
+      "ea_dtm1m_q1_m_odn": 19.456,
+      "ea_dtm1m_q3_m_odn": 19.568,
+      "ea_valid_pixel_count": 207,
+      "os_terrain50_median_m_odn": 19.35,
+      "os_terrain50_minus_ea_median_m": -0.168,
+      "height_difference_metric": "EA_DTM1M_MAX_MINUS_MIN_INSIDE_EXACT_HMLR_POLYGON",
+      "parcel_elevation_median_is_distinct_metric": true,
+      "preserved_height_difference_m": 0.27,
+      "current_minus_preserved_height_difference_m": 0.0,
+      "result_confidence_percent": 96.0,
+      "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
+      "secondary_crosscheck_source": "OS Terrain 50",
+      "measurement_geometry": "exact HMLR INSPIRE polygon",
+      "processing_crs": "EPSG:27700",
+      "vertical_reference": "Ordnance Datum Newlyn",
+      "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review",
+      "final_ready": false,
+      "fake_data": false
+    },
+    {
+      "row_no": 46142,
+      "parcel_id": "parcel_46142",
+      "hmlr_inspire_id": "39866294",
+      "height_difference_m": 0.831,
+      "ea_height_min_m_odn": 30.205,
+      "ea_height_max_m_odn": 31.036,
+      "parcel_elevation_median_m_odn": 30.563,
+      "ea_dtm1m_q1_m_odn": 30.345,
+      "ea_dtm1m_q3_m_odn": 30.659,
+      "ea_valid_pixel_count": 469,
+      "os_terrain50_median_m_odn": 30.3,
+      "os_terrain50_minus_ea_median_m": -0.263,
+      "height_difference_metric": "EA_DTM1M_MAX_MINUS_MIN_INSIDE_EXACT_HMLR_POLYGON",
+      "parcel_elevation_median_is_distinct_metric": true,
+      "preserved_height_difference_m": 0.831,
+      "current_minus_preserved_height_difference_m": 0.0,
+      "result_confidence_percent": 96.0,
+      "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
+      "secondary_crosscheck_source": "OS Terrain 50",
+      "measurement_geometry": "exact HMLR INSPIRE polygon",
+      "processing_crs": "EPSG:27700",
+      "vertical_reference": "Ordnance Datum Newlyn",
+      "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review",
+      "final_ready": false,
+      "fake_data": false
+    },
+    {
+      "row_no": 61522,
+      "parcel_id": "parcel_61522",
+      "hmlr_inspire_id": "62045430",
+      "height_difference_m": 0.49,
+      "ea_height_min_m_odn": 26.32,
+      "ea_height_max_m_odn": 26.81,
+      "parcel_elevation_median_m_odn": 26.47,
+      "ea_dtm1m_q1_m_odn": 26.38,
+      "ea_dtm1m_q3_m_odn": 26.6,
+      "ea_valid_pixel_count": 440,
+      "os_terrain50_median_m_odn": 27.45,
+      "os_terrain50_minus_ea_median_m": 0.98,
+      "height_difference_metric": "EA_DTM1M_MAX_MINUS_MIN_INSIDE_EXACT_HMLR_POLYGON",
+      "parcel_elevation_median_is_distinct_metric": true,
+      "preserved_height_difference_m": 0.49,
+      "current_minus_preserved_height_difference_m": 0.0,
+      "result_confidence_percent": 96.0,
+      "primary_numeric_source": "Environment Agency LiDAR Composite DTM 1m",
+      "secondary_crosscheck_source": "OS Terrain 50",
+      "measurement_geometry": "exact HMLR INSPIRE polygon",
+      "processing_crs": "EPSG:27700",
+      "vertical_reference": "Ordnance Datum Newlyn",
+      "measurement_accuracy_score_4": "3.4/4_pending_human_crosscheck_review",
+      "final_ready": false,
+      "fake_data": false
+    }
+  ],
+  "numeric_gate_ready": true,
+  "height_metric_consistency_required": true,
+  "height_metric_consistency_passed": true,
+  "height_difference_metric": "EA_DTM1M_MAX_MINUS_MIN_INSIDE_EXACT_HMLR_POLYGON",
+  "parcel_elevation_median_is_distinct_metric": true,
+  "ea_coverage_id_required": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m",
+  "ea_coverage_id_pinned": true,
+  "web_acceptance_required": true,
+  "web_acceptance_passed": true,
+  "current_candidate_bytes_required": true,
+  "current_candidate_transport": "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE",
+  "operation_file_path_guard_required": true,
+  "example_file_path_guard_required": true,
+  "web_base_autoprobe_required": true,
+  "automatic_final_promotion": false,
+  "human_crosscheck_review_required": true,
+  "expected_web_operation_rows": 1036,
+  "source_urls": {
+    "hmlr_inspire": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "ea_dtm1m_wcs": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+    "os_downloads_api": "https://api.os.uk/downloads/v1/products",
+    "os_terrain50": "https://osdatahub.os.uk/downloads/open/Terrain50"
+  },
+  "final_ready": false,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "preacceptance_candidates_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\candidates_preacceptance.json",
+  "preacceptance_candidates_sha256": "2f805829176fca032c9909f40f43554b295ef56a1819fd92ae3bc728928c3e18",
+  "web_acceptance_output_path": "F:\\TerraYield_AAYS_Portable\\wt\\height_difference_2\\2d542122ddec-v1\\docs\\chatgpt_status\\topography\\shards\\height_difference_2\\runner_outputs\\008_official_numeric_gate_latest\\port_8012_web_acceptance.json",
+  "web_acceptance": {
+    "schema_version": 6,
+    "slot_id": "height_difference_2",
+    "task_id": "aays1-height-difference-2-canonical-export-official-sampling-20260720",
+    "attempt_id": "height-difference-2-20260721-020",
+    "status": "PORT_8012_WEB_ACCEPTANCE_PASSED",
+    "base_url": "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/",
+    "base_probe_errors": [
+      {
+        "base_url": "http://127.0.0.1:8012/",
+        "error": "HTTPError: 404 Client Error: Not Found for url: http://127.0.0.1:8012/index.html"
+      }
+    ],
+    "visible_operation_rows": 3721,
+    "visible_source_rows": 774,
+    "visible_example_rows": 135,
+    "candidate_count": 3,
+    "candidate_rows": [
+      30762,
+      46142,
+      61522
+    ],
+    "candidate_status": "THREE_OFFICIAL_NUMERIC_ROWS_READY_PENDING_WEB_ACCEPTANCE",
+    "candidate_metric_bindings": {
+      "30762": {
+        "hmlr_inspire_id": "46058185",
+        "height_difference_m": 0.27,
+        "confidence_percent": 96.0
+      },
+      "46142": {
+        "hmlr_inspire_id": "39866294",
+        "height_difference_m": 0.831,
+        "confidence_percent": 96.0
+      },
+      "61522": {
+        "hmlr_inspire_id": "62045430",
+        "height_difference_m": 0.49,
+        "confidence_percent": 96.0
+      }
+    },
+    "candidate_payload_transport": "LOCAL_CURRENT_WORKTREE_PRE_ACCEPTANCE",
+    "candidate_local_sha256": "2f805829176fca032c9909f40f43554b295ef56a1819fd92ae3bc728928c3e18",
+    "site_candidate_rows": [
+      30762,
+      46142,
+      61522
+    ],
+    "site_measured_candidate_rows": [
+      30762,
+      46142,
+      61522
+    ],
+    "site_exact_measurement_bindings": {
+      "30762": {
+        "hmlr_inspire_id": "46058185",
+        "height_difference_m": 0.27,
+        "confidence_percent": 96.0,
+        "example_id": "HD2-PICKUP-103"
+      },
+      "46142": {
+        "hmlr_inspire_id": "39866294",
+        "height_difference_m": 0.831,
+        "confidence_percent": 96.0,
+        "example_id": "HD2-PICKUP-104"
+      },
+      "61522": {
+        "hmlr_inspire_id": "62045430",
+        "height_difference_m": 0.49,
+        "confidence_percent": 96.0,
+        "example_id": "HD2-PICKUP-105"
+      }
+    },
+    "loopback_8012_verified": true,
+    "exact_target_rows_verified": true,
+    "current_candidate_bytes_verified": true,
+    "current_candidate_metric_binding_verified": true,
+    "operation_file_path_guard_verified": true,
+    "source_file_path_guard_verified": true,
+    "source_count_verified": true,
+    "example_file_path_guard_verified": true,
+    "example_count_verified": true,
+    "site_exact_measurement_binding_verified": true,
+    "stages": [
+      {
+        "stage": "CURRENT_WORKTREE_CANDIDATE_PAYLOAD",
+        "status": "PASS",
+        "candidate_count": 3,
+        "candidate_rows": [
+          30762,
+          46142,
+          61522
+        ],
+        "candidate_status": "THREE_OFFICIAL_NUMERIC_ROWS_READY_PENDING_WEB_ACCEPTANCE",
+        "candidate_local_sha256": "2f805829176fca032c9909f40f43554b295ef56a1819fd92ae3bc728928c3e18",
+        "candidate_metric_bindings": {
+          "30762": {
+            "hmlr_inspire_id": "46058185",
+            "height_difference_m": 0.27,
+            "confidence_percent": 96.0
+          },
+          "46142": {
+            "hmlr_inspire_id": "39866294",
+            "height_difference_m": 0.831,
+            "confidence_percent": 96.0
+          },
+          "61522": {
+            "hmlr_inspire_id": "62045430",
+            "height_difference_m": 0.49,
+            "confidence_percent": 96.0
+          }
+        }
+      },
+      {
+        "stage": "INDEX_HTTP",
+        "status": "PASS",
+        "url": "http://127.0.0.1:8012/england_map_web/data/aays_21_slots/height_difference_2/index.html",
+        "status_code": 200,
+        "sha256": "5e20387c3c545f256673d1d48985f8e0177f940ce393f0e10d781d1532267090"
+      },
+      {
+        "stage": "OPERATION_ROWS_HTTP",
+        "status": "PASS",
+        "row_count": 3721,
+        "first_operation": 1,
+        "last_operation": 3721,
+        "files": [
+          {
+            "file": "operations_latest.json",
+            "rows": 29,
+            "sha256": "f16ab5721318c0ee1df663d4d8360d0a7a0c2efbaf21eb1d0d1929ac7b2fc3a3"
+          },
+          {
+            "file": "operations_increment_005.json",
+            "rows": 10,
+            "sha256": "25883e865e4a5337d5db5d77458c4b503053092e01e20cfafcdaa1c793c2f47f"
+          },
+          {
+            "file": "operations_increment_006.json",
+            "rows": 11,
+            "sha256": "22211d8a5a4addbf1a330809cb4350c3848d4a2d1c0581604fc1668b7ff33ace"
+          },
+          {
+            "file": "operations_increment_007.json",
+            "rows": 10,
+            "sha256": "f86c0be7ec560deeb1598f8b26b4812866179445efca7b617edd165f15d5684c"
+          },
+          {
+            "file": "operations_increment_008.json",
+            "rows": 9,
+            "sha256": "e273d63309414ab50a6b3cfc6ad27c558b0eb97ab3ffb5033cde7468cac4283e"
+          },
+          {
+            "file": "operations_increment_009.json",
+            "rows": 16,
+            "sha256": "db1de95a4b5b1e7a318fcdc6ab3c03016c4d26b2f1d7d24634b3f21a5b587625"
+          },
+          {
+            "file": "operations_increment_010.json",
+            "rows": 20,
+            "sha256": "5ce04fa574583a53d30d7f6ec26713286de105829d993f9ab4602f33c2cf9b7d"
+          },
+          {
+            "file": "operations_increment_011.json",
+            "rows": 20,
+            "sha256": "c9f220d6e268a567a8d086872b34fa17fdfa408dd8a6e13ac3db3567cecf17b9"
+          },
+          {
+            "file": "operations_increment_012.json",
+            "rows": 20,
+            "sha256": "b4886adcef7530d4ea118dff23f8ef8d3d4109b8bd24c89526e0b2627b42fee3"
+          },
+          {
+            "file": "operations_increment_013.json",
+            "rows": 20,
+            "sha256": "19f30e263d35988f58b45620edb8c7aac5abfa7cbb1c7b6ea4895beb08696bb3"
+          },
+          {
+            "file": "operations_increment_014.json",
+            "rows": 20,
+            "sha256": "92d3c305ec9a381d2fe87f5343d9b9543caeb36860720df171354f394a26af34"
+          },
+          {
+            "file": "operations_increment_015.json",
+            "rows": 20,
+            "sha256": "22bf70435ea2f837175b48d14a6a8c6d36d3443cda606df2ff3d320e1a0698c3"
+          },
+          {
+            "file": "operations_increment_016.json",
+            "rows": 20,
+            "sha256": "f080dae769d82fb3e96fcddc480796bd14ef973a7f2c5c68d627b93865f70bf2"
+          },
+          {
+            "file": "operations_increment_017.json",
+            "rows": 20,
+            "sha256": "e6571b0f883221de9a5e396d144a63fb364deec3e179b1c70f2981eb934ad39d"
+          },
+          {
+            "file": "operations_increment_018.json",
+            "rows": 20,
+            "sha256": "862b02a5e963471aeed261599ab8b804d85a9543af54d31bd77470fc0d3bd2bf"
+          },
+          {
+            "file": "operations_increment_019.json",
+            "rows": 20,
+            "sha256": "d19528c943010a9d09ed9518270d550b0fe852502c23e34025d4c77d91247f25"
+          },
+          {
+            "file": "operations_increment_020.json",
+            "rows": 20,
+            "sha256": "0e7cbcd277f3f8bdea39c4daae78802397d59707ff0e3fa2ad8999687d425885"
+          },
+          {
+            "file": "operations_increment_021.json",
+            "rows": 20,
+            "sha256": "fdd7f9a2ef66fbaebd86cde10c5ea7dfd46c8e2ed3e2376c6cf1b20288fc9a3c"
+          },
+          {
+            "file": "operations_increment_022.json",
+            "rows": 20,
+            "sha256": "cd8bdc1d26b64d18f280674f082346a743b122e6e4a3ca99f4bdd7c8c7dfb971"
+          },
+          {
+            "file": "operations_increment_023.json",
+            "rows": 20,
+            "sha256": "8e31714226e513fb203f89f40a005ded63facb1fc712fece62880514371a668f"
+          },
+          {
+            "file": "operations_increment_024.json",
+            "rows": 20,
+            "sha256": "8938d743402952413b98fde08bf7ef52886567a4f5360036c7d419445e4cabd5"
+          },
+          {
+            "file": "operations_increment_025.json",
+            "rows": 20,
+            "sha256": "dcc5d2b30b478150fa65b81912e5048cf28ddf3703cec658addb1101d668fa0b"
+          },
+          {
+            "file": "operations_increment_026.json",
+            "rows": 20,
+            "sha256": "50ab61e2e6758f7d28a77898d21b825c061f4eb4e5fe813221727d367ff1bd4c"
+          },
+          {
+            "file": "operations_increment_027.json",
+            "rows": 20,
+            "sha256": "d49919826d739d012d597a2332d0744841df1f71d7b6805f53a3de4388e627bd"
+          },
+          {
+            "file": "operations_increment_028.json",
+            "rows": 20,
+            "sha256": "e386ad155c593620b3d437d82be6bb74a982f1cfaa2cf1471cd303a79fd4cc4c"
+          },
+          {
+            "file": "operations_increment_029.json",
+            "rows": 20,
+            "sha256": "b5b2d3c3155debb2b063a010743ffe11479f7d930a9b193dcf0593a025985eba"
+          },
+          {
+            "file": "operations_increment_030.json",
+            "rows": 20,
+            "sha256": "90ffcad84dca30c4fdd8da4cac0505bd000b26d07924f147307ecc7b7790a1a8"
+          },
+          {
+            "file": "operations_increment_031.json",
+            "rows": 23,
+            "sha256": "212d8f90c2ede57fc45072e6a888528d84da716463ec748560ff4083ba9dd02b"
+          },
+          {
+            "file": "operations_increment_032.json",
+            "rows": 18,
+            "sha256": "a04ce5b09dc8a364ace1f238da542b87bf32017d14a697703f408b1265435472"
+          },
+          {
+            "file": "operations_increment_033.json",
+            "rows": 18,
+            "sha256": "9dea238fa064b7afaa42a6a4612db1b81b3f446c6c3e9d8ba40044d958c16b2b"
+          },
+          {
+            "file": "operations_increment_034.json",
+            "rows": 37,
+            "sha256": "757c331a725124f11c55edb4c89e4df4a3c748f62e08d617f7bad0504f64a81e"
+          },
+          {
+            "file": "operations_increment_035.json",
+            "rows": 25,
+            "sha256": "a1e89238d7edf252feb870bcba03535e6d817b576c7cd9d6924befd0ae51c273"
+          },
+          {
+            "file": "operations_increment_036.json",
+            "rows": 40,
+            "sha256": "cbee475b4ccfb3f3159b095a2c09543bf1eb5ff3a55ed89550fa85dda6a6d818"
+          },
+          {
+            "file": "operations_increment_037.json",
+            "rows": 42,
+            "sha256": "e78757354325a3ae2d1c0c809d6bfabb1e969c4e78030ab2be6a627c8fc5c816"
+          },
+          {
+            "file": "operations_increment_038.json",
+            "rows": 42,
+            "sha256": "dc65ef6237fcb9d878e4b6822f2cbf2dabb3968937b5d7b55b3f81e4b22136cf"
+          },
+          {
+            "file": "operations_increment_039.json",
+            "rows": 42,
+            "sha256": "245d2624b37b6290696b0039dd1f1f99319348f3bf9ee7070653bc7e78914fdb"
+          },
+          {
+            "file": "operations_increment_040.json",
+            "rows": 42,
+            "sha256": "0d80bee2d1e7d45ee90df9586fc996b6f14ac2d9273afa5349dce8b6f6de5d1d"
+          },
+          {
+            "file": "operations_increment_041.json",
+            "rows": 42,
+            "sha256": "1d752de0ac532658c7046f1c0ed7de92186625db50300177b00afbe2350c997a"
+          },
+          {
+            "file": "operations_increment_042.json",
+            "rows": 58,
+            "sha256": "26229737b0ddab30d9d02393ec90f8c97ca01627ecdb9a3d0a7b0def6b13c226"
+          },
+          {
+            "file": "operations_increment_043.json",
+            "rows": 26,
+            "sha256": "a25657048d3ce066e6783d20730f0f85b7a33db39ad5734f659fda6ff0fc431b"
+          },
+          {
+            "file": "operations_increment_044.json",
+            "rows": 20,
+            "sha256": "44e109235eb76207a4ba9e2eee7f3bd859e02895bfd24ae56874aef7ccb78524"
+          },
+          {
+            "file": "operations_increment_045.json",
+            "rows": 24,
+            "sha256": "27f16d0ec0064bb2c7b850c19dbed083a5d794630bea9972499339e56b55b58e"
+          },
+          {
+            "file": "operations_increment_046.json",
+            "rows": 32,
+            "sha256": "1b7d6dc64a247761a9ac9edf3cf3f7e5e0486e6d7096f38a812c192ae34bc237"
+          },
+          {
+            "file": "operations_increment_047.json",
+            "rows": 32,
+            "sha256": "c3cb0ff71e65ead2c76ed12ddb70c38ba4922a388abcf63f9cc8f6fbd5faade2"
+          },
+          {
+            "file": "operations_increment_048.json",
+            "rows": 20,
+            "sha256": "fe218f91922045ea4731f2aed30c6d32669ac164e0e056bcd33fd53221f64ad1"
+          },
+          {
+            "file": "operations_increment_049.json",
+            "rows": 20,
+            "sha256": "5e98be3434f711516977e394bf752cbd2c4ba23084b1761a04433cb8fb883063"
+          },
+          {
+            "file": "operations_increment_050.json",
+            "rows": 20,
+            "sha256": "11a623b904d86c396d7a0e4f501cfd807e722346d99cd75a2fc46a6701847cf0"
+          },
+          {
+            "file": "operations_increment_051.json",
+            "rows": 28,
+            "sha256": "57c696568cf2fa51765f41b6dec3106ac7b95d4bb6ae18bafcefde4a49e564f9"
+          },
+          {
+            "file": "operations_increment_052.json",
+            "rows": 32,
+            "sha256": "c5be730a77a7e855c7870f7ce916224d0aa7adfe333128a4406f52b5e0d6f0a8"
+          },
+          {
+            "file": "operations_increment_053.json",
+            "rows": 40,
+            "sha256": "76f5b348618ff28276244a18df94ecbe46c1ac0de02fec35ada1ef1630d25a45"
+          },
+          {
+            "file": "operations_increment_054.json",
+            "rows": 48,
+            "sha256": "b7761ae9c9bcdef783841bae66fc2a2494da5da36a1fe28a492e01ebf46fcd44"
+          },
+          {
+            "file": "operations_increment_055a.json",
+            "rows": 16,
+            "sha256": "9408e988137f3c80b683e3750b8e98738a9a24471a00e383672f6cc78bd97f85"
+          },
+          {
+            "file": "operations_increment_055b.json",
+            "rows": 16,
+            "sha256": "ec613b1dccbe807230c90bd5050af5a05ce1567bc2aae49b901ed77269b77fe6"
+          },
+          {
+            "file": "operations_increment_055c.json",
+            "rows": 16,
+            "sha256": "1d642162c80e0f3918e78770ebc1d5175d4efbf3fbf6c1007345ff40afc1a79b"
+          },
+          {
+            "file": "operations_increment_055d.json",
+            "rows": 16,
+            "sha256": "44bbc6908879f7547c4a6955cc5dfaca68ef95f4dead85bedd6337ae9c6f3f24"
+          },
+          {
+            "file": "operations_increment_056a.json",
+            "rows": 16,
+            "sha256": "be394ed077d0ad2fc0fae8bf532c9cc29d856a831efc326278106bb60b7536e8"
+          },
+          {
+            "file": "operations_increment_056b.json",
+            "rows": 16,
+            "sha256": "3b474357251d48eb5294bebe115a4890ad8a19fd71535e10d8a1b4c8912190b0"
+          },
+          {
+            "file": "operations_increment_056c.json",
+            "rows": 16,
+            "sha256": "2327938840f639aec8fd3b43d35cc4a2515210368ddd17d39fe890b614611151"
+          },
+          {
+            "file": "operations_increment_056d.json",
+            "rows": 16,
+            "sha256": "d7411aad0ad7c5ab932b26317ba9ffd4edfd41e63ee883070d75394003040778"
+          },
+          {
+            "file": "operations_increment_056e.json",
+            "rows": 16,
+            "sha256": "1f45502011eb0a9d355242659ad901aae018ca50d9d0a4b17b187bf057bb24e7"
+          },
+          {
+            "file": "operations_increment_057a.json",
+            "rows": 16,
+            "sha256": "665d1a494abd48907274fe31f937204ac308834ba3728f0ded45128d07258bc8"
+          },
+          {
+            "file": "operations_increment_057b.json",
+            "rows": 16,
+            "sha256": "6fe3a2907cb3da87afb7a60c98ca5f3b96665ab085ccc4af9e3fc92fb72875fb"
+          },
+          {
+            "file": "operations_increment_057c.json",
+            "rows": 16,
+            "sha256": "a5ecbdbebd2222d4d99733888e8611a8723267d9b89ed8cc0b1842d6967c080a"
+          },
+          {
+            "file": "operations_increment_057d.json",
+            "rows": 16,
+            "sha256": "619126ac336c67ca9dbbdaf883dbc39d0ab6759f4176cc0a77688736aa12f7d8"
+          },
+          {
+            "file": "operations_increment_057e.json",
+            "rows": 16,
+            "sha256": "7316178348508a7534848046cc4bf9e993ae2ae7e2b3eab39b78513ec7cd5f15"
+          },
+          {
+            "file": "operations_increment_057f.json",
+            "rows": 16,
+            "sha256": "51b133d4f6f1cda24019c428fc29d802d73e9677bfe56d304b984c17174a5522"
+          },
+          {
+            "file": "operations_increment_058a.json",
+            "rows": 16,
+            "sha256": "9e53fb8a0c40239292da9741ac17e677231b19747b6ff94b254c52a95788db66"
+          },
+          {
+            "file": "operations_increment_058b.json",
+            "rows": 16,
+            "sha256": "a7b550eadf0e33473ec75db3aef0e26edd45352ee1a3dc29f70d476bcab0a485"
+          },
+          {
+            "file": "operations_increment_058c.json",
+            "rows": 16,
+            "sha256": "bda1319d305d0a0f925e20d773863c9f214c32c1cd66d429f5334a6d3fae64b5"
+          },
+          {
+            "file": "operations_increment_058d.json",
+            "rows": 8,
+            "sha256": "16ab0c8e7dcd3e0960ce9cb56abb1799e790b9443eadea67f222dd3ca77abd91"
+          },
+          {
+            "file": "operations_increment_058e.json",
+            "rows": 8,
+            "sha256": "0f6ce4a130c9d21b54d55332204546a4e0851a4e802640fddd302701380de265"
+          },
+          {
+            "file": "operations_increment_058f.json",
+            "rows": 8,
+            "sha256": "93f88db0ce42b6e7824f04bacc7e70e0ad9c82a2d7334f083a06a2270fb420a9"
+          },
+          {
+            "file": "operations_increment_058g.json",
+            "rows": 8,
+            "sha256": "59053e8bd66894e0abe5b8bc5ce20c03b2a55e77756e6a9f84da91fc7002ab6a"
+          },
+          {
+            "file": "operations_increment_058h.json",
+            "rows": 8,
+            "sha256": "b5af099c0fe20892fb5c106a7dca6873922fd654f71ec10bf813107bb32ea632"
+          },
+          {
+            "file": "operations_increment_058i.json",
+            "rows": 8,
+            "sha256": "dedf8b5fccd0138d3cdcf1a2058167d6a37a07e74ce7bdf1718c4dbf76346578"
+          },
+          {
+            "file": "operations_increment_058j.json",
+            "rows": 8,
+            "sha256": "46d591ff3626075a5c1592e6d1adbae85ee6cf9f374436f862ae50789d96d192"
+          },
+          {
+            "file": "operations_increment_058k.json",
+            "rows": 8,
+            "sha256": "d6fe0456f60abbe9f9896f2d7a7fdfd69898cabe740e1a6e0463e67820664bef"
+          },
+          {
+            "file": "operations_increment_058l.json",
+            "rows": 8,
+            "sha256": "c51a8beb2ec28b0b1ed740cdec34198a2574dfd9c6dd8871512d0d8d05887184"
+          },
+          {
+            "file": "operations_increment_058m.json",
+            "rows": 8,
+            "sha256": "a561444793bdc334c4dcb6954bcf6c8c4d22a299d4bd057f20f2a1a6bfa26a5a"
+          },
+          {
+            "file": "operations_increment_059a.json",
+            "rows": 31,
+            "sha256": "02b8b8ce0fa2b19e4834bf1783480b95abbb429959e91b6fd1919cac28c31da3"
+          },
+          {
+            "file": "operations_increment_059b.json",
+            "rows": 31,
+            "sha256": "d0f5e2f632173b86d2620407df0a433869a133be70426e38b76ae43b35e22b86"
+          },
+          {
+            "file": "operations_increment_059c.json",
+            "rows": 31,
+            "sha256": "3f96595965f241a34440f61786bc2b3f1c73adc92e62a80142f9e229228e67af"
+          },
+          {
+            "file": "operations_increment_059d.json",
+            "rows": 31,
+            "sha256": "8cd1105a03f5ff7b5165a1dda876c0bdc5dce3b178994c01631900c2b5a5f0d6"
+          },
+          {
+            "file": "operations_increment_059e.json",
+            "rows": 30,
+            "sha256": "e21e0d61439849eeec850dbe0c922e5ef6842cdf44870bbea317b0b16003ae96"
+          },
+          {
+            "file": "operations_increment_059f.json",
+            "rows": 30,
+            "sha256": "5c68ae658f4218ba36564bc50413b8ca92636b3e385d6467c415ed66be146762"
+          },
+          {
+            "file": "operations_increment_060a.json",
+            "rows": 29,
+            "sha256": "495c30efdbe07f542c0e11258abfe2edf8f7401eea4513b5d59ab9656deb2727"
+          },
+          {
+            "file": "operations_increment_060b.json",
+            "rows": 29,
+            "sha256": "bd1a361dda467cf37ec70b0cebb2825d8b77b91dda59cca0e55a7844498487d0"
+          },
+          {
+            "file": "operations_increment_060c.json",
+            "rows": 29,
+            "sha256": "97a602e01642750675b3a4fed5e03a64bfbe5c4f63a488dbb900fc4f4989e67c"
+          },
+          {
+            "file": "operations_increment_060d.json",
+            "rows": 29,
+            "sha256": "0c1ec79c8fe21a15b8549156a8e13d6ceb9200cad861fc88287f929d39cbc713"
+          },
+          {
+            "file": "operations_increment_060e.json",
+            "rows": 29,
+            "sha256": "9a67222be05643b7dadabbe0740f2adbd5f35dafb57440a1cc17360f43185f87"
+          },
+          {
+            "file": "operations_increment_061a.json",
+            "rows": 16,
+            "sha256": "5c1835f29c3aa7171a3d815f20f50c26804ad2c2faaedd5342e2210b04e78433"
+          },
+          {
+            "file": "operations_increment_061b.json",
+            "rows": 16,
+            "sha256": "0c03b5c3f826fb4e867724657d35ff313e6ea6a0101e939dfda351d288735515"
+          },
+          {
+            "file": "operations_increment_061c.json",
+            "rows": 32,
+            "sha256": "4110e89a9da453abbf508871f49afe0c01a435b34957bf580acb2af84a5df095"
+          },
+          {
+            "file": "operations_increment_061d.json",
+            "rows": 32,
+            "sha256": "f74f8d193b145e416f272bc35a9d645735ae0947da7478437ffc857079a98104"
+          },
+          {
+            "file": "operations_increment_061e.json",
+            "rows": 32,
+            "sha256": "325356de9a3f209f4b2bcdfb496c36da2015485811cbf3a3713b21d0174df4da"
+          },
+          {
+            "file": "operations_increment_062a.json",
+            "rows": 32,
+            "sha256": "6481c5360615596bc0f5df579e45145473ad82db2a0d99ecc3f5e3b232578309"
+          },
+          {
+            "file": "operations_increment_062b.json",
+            "rows": 32,
+            "sha256": "51a7aa18408b8390e735bb1887a0cc74e1d484374724ed15e87cf3de75b6bc50"
+          },
+          {
+            "file": "operations_increment_062c.json",
+            "rows": 31,
+            "sha256": "6fe103ec632d7ee1ecfbd7af274b758fd49dbdcbd7884db67d369fd70dad4c12"
+          },
+          {
+            "file": "operations_increment_062d.json",
+            "rows": 31,
+            "sha256": "61fec2409f9e54808e9cebddc15d399bd3dea81bf1b617a3f6062ea8d201f77a"
+          },
+          {
+            "file": "operations_increment_062e.json",
+            "rows": 31,
+            "sha256": "49e552dbec51bc2e9a699360f52373a1b322a0f0247c7914cb6c84b3d969902f"
+          },
+          {
+            "file": "operations_increment_062f.json",
+            "rows": 31,
+            "sha256": "b3163916f8bcc3edc4f7beb5af69439c33479a5dee0f6bfe32df177f221f9a15"
+          },
+          {
+            "file": "operations_increment_063a.json",
+            "rows": 27,
+            "sha256": "40ab951dffd2eaddf72eec435b0706cd161a600e35340e02af0edc6db57634d4"
+          },
+          {
+            "file": "operations_increment_063b.json",
+            "rows": 27,
+            "sha256": "289e4138372063c2e629ce370cd743adeadd2d55fdea6e964a34d839fb74c688"
+          },
+          {
+            "file": "operations_increment_063c.json",
+            "rows": 27,
+            "sha256": "34bb92cf3aec5d86b495469185bf94ead8807d27daeab2d9bba085ea0bcb8147"
+          },
+          {
+            "file": "operations_increment_063d.json",
+            "rows": 27,
+            "sha256": "775521a1434157ffdcc3d28eedcf0ae8f36c488610b3f87bc95e9d7d6b6b714b"
+          },
+          {
+            "file": "operations_increment_063e.json",
+            "rows": 27,
+            "sha256": "cff65d22cfc339e725558a04859242b1434dfba819ea894ebcd1d82977b8faa1"
+          },
+          {
+            "file": "operations_increment_063f.json",
+            "rows": 27,
+            "sha256": "6b2cb17279fd24e2f49e6583093fca79a71170f56e433356ff87c1477c01e681"
+          },
+          {
+            "file": "operations_increment_063g.json",
+            "rows": 27,
+            "sha256": "d7c05986a123fefbd968569ba5e003e70fe08a7dfee08d639f06b7a61382e259"
+          },
+          {
+            "file": "operations_increment_063h.json",
+            "rows": 27,
+            "sha256": "2ac8f367c2071c3d70658501d30bbd5dbb2ec58d4f48388b3794a34b3cf90267"
+          },
+          {
+            "file": "operations_increment_064a.json",
+            "rows": 40,
+            "sha256": "279cca160e04e319f7e6dfb72c2f46d6f9515ae150dd67324fc64d7069e7b271"
+          },
+          {
+            "file": "operations_increment_064b.json",
+            "rows": 40,
+            "sha256": "46df5a6f5968b0fb70eadb2be7c790e0144102583612871686628851a20018d2"
+          },
+          {
+            "file": "operations_increment_064c.json",
+            "rows": 40,
+            "sha256": "9362c1e8d325ac8d5f31b1b61a4894a78e2dd005cb71eb0bd0f09f140471d909"
+          },
+          {
+            "file": "operations_increment_064d.json",
+            "rows": 40,
+            "sha256": "bbd2b9cdac6d10097670e220422f171898145e891c1e5ca0725729518b872ff4"
+          },
+          {
+            "file": "operations_increment_064e.json",
+            "rows": 40,
+            "sha256": "ba0aad5cd32dd8b696e312bac2f8945adf9a9e36c2900ed53f9f835c4315d934"
+          },
+          {
+            "file": "operations_increment_065a.json",
+            "rows": 27,
+            "sha256": "9872fd3ce3fad605d80bbc0e0a2c7390eaab13fd4be8590311c20f62b07a972b"
+          },
+          {
+            "file": "operations_increment_065b.json",
+            "rows": 27,
+            "sha256": "00eeec27a1cd645a5a98b56041dd79ec968e6e0ce5121798443a87b34d26eda1"
+          },
+          {
+            "file": "operations_increment_065c.json",
+            "rows": 27,
+            "sha256": "c8cdf180cebafa4c4afcd172cfba09fb113850910e15a661909ab86e3b465e8c"
+          },
+          {
+            "file": "operations_increment_065d.json",
+            "rows": 27,
+            "sha256": "2a06bf1814122effd087a5d36d2eac192891696762cade346b24b9a082cd3a78"
+          },
+          {
+            "file": "operations_increment_065e.json",
+            "rows": 27,
+            "sha256": "b14a606b774295301709731ade4e95ee903f09466901d07170d77198b20969c3"
+          },
+          {
+            "file": "operations_increment_065f.json",
+            "rows": 27,
+            "sha256": "bd4aaa9ba4264be6dc6f91d175091c6ba4604f5685cc7c009ead55b52d8ef181"
+          },
+          {
+            "file": "operations_increment_065g.json",
+            "rows": 27,
+            "sha256": "392d04579bcbf83e69451d0c84112da156093bd471686c03de0e095ba7a70a76"
+          },
+          {
+            "file": "operations_increment_065h.json",
+            "rows": 27,
+            "sha256": "cab2c409b182bc1ef91bb27d0894f07e440cc634ba7c39ae4963c10dac998691"
+          },
+          {
+            "file": "operations_increment_066a.json",
+            "rows": 32,
+            "sha256": "b12963ce8645b874cd234d286485d7e805d1fb445af5c9c887860ce78690fbd0"
+          },
+          {
+            "file": "operations_increment_066b.json",
+            "rows": 16,
+            "sha256": "312f3306e410fcf9d620f1007496dc38c9c8230ff4f411b713cb6c3da406fe88"
+          },
+          {
+            "file": "operations_increment_066c.json",
+            "rows": 16,
+            "sha256": "25aed78baf77bb56e7a0602d7a3e08409bcfa869b3664e330d9c00f79e2bb3bf"
+          },
+          {
+            "file": "operations_increment_066d.json",
+            "rows": 16,
+            "sha256": "3bfd8e29ff35cd4b9377ab9d2970c8eabc68c31b40e7e83486d949cb71bd02f1"
+          },
+          {
+            "file": "operations_increment_066e.json",
+            "rows": 44,
+            "sha256": "f88b9ecda90d4d9b99866fd2abbe731e5079468e4e8181e86fb3646a83bc4046"
+          },
+          {
+            "file": "operations_increment_066f.json",
+            "rows": 44,
+            "sha256": "5c6a6925630595fead53a1fc3b51a433d5f42f67223f044dac3639b8884f3ec6"
+          },
+          {
+            "file": "operations_increment_066g.json",
+            "rows": 44,
+            "sha256": "eb0a17aca6730e6ca7440eaca21d212946ede0ec96f9848636762034e79766ca"
+          },
+          {
+            "file": "operations_increment_066h.json",
+            "rows": 44,
+            "sha256": "b0a91819b61d0a0cba56d07183ed832b8120f42a0a64752507859975736bdc1d"
+          },
+          {
+            "file": "operations_increment_067a.json",
+            "rows": 33,
+            "sha256": "7d385ac0379dec51e2774c06d1630502a74e0b6cf677d621de0be6a2e4f9a17c"
+          },
+          {
+            "file": "operations_increment_067b.json",
+            "rows": 33,
+            "sha256": "3d4f6089fa8f1fe76d93254f7b000c54b639b1cacfbf210969e670584a1814b6"
+          },
+          {
+            "file": "operations_increment_067c.json",
+            "rows": 50,
+            "sha256": "87679d0c33bdf25884201f48da3ff6c5fca2cdedaed287cb5039927593ecb3f6"
+          },
+          {
+            "file": "operations_increment_067d.json",
+            "rows": 50,
+            "sha256": "5d1fc611e544ab26aae3c5d3e4e156c73323a832a0971954b4bb637b232466cf"
+          },
+          {
+            "file": "operations_increment_067e.json",
+            "rows": 49,
+            "sha256": "0cf8f87434b899faf50b7a0934879e4769cfd5f5f4c25be933284f8945ba0680"
+          },
+          {
+            "file": "operations_increment_067f.json",
+            "rows": 49,
+            "sha256": "4fa5a4db45d0e58f3ecbe962cb44d715a80f54c3c1ac99ea83614e0d41905837"
+          },
+          {
+            "file": "operations_increment_068a.json",
+            "rows": 35,
+            "sha256": "e5be2973c3f581a253209e4df119e621e98d6a8384dc6f5073b4e5dc2ba67e76"
+          },
+          {
+            "file": "operations_increment_068b.json",
+            "rows": 35,
+            "sha256": "19616def21d6252eb1ac3464f07f3488eeb0c3e2dc10dc722dfa23c854a22bd2"
+          },
+          {
+            "file": "operations_increment_068c.json",
+            "rows": 35,
+            "sha256": "56f03e2eda5990b76ef02ff722d4f85a3d090bb0e255dd1953c5a175528637d9"
+          },
+          {
+            "file": "operations_increment_068d.json",
+            "rows": 35,
+            "sha256": "1549d7357706ea9e6cbb07e0b30f2b98b6cc4e21e1e2a34f30367de03f70f7e7"
+          },
+          {
+            "file": "operations_increment_068e.json",
+            "rows": 35,
+            "sha256": "c15492f8fc6a02fa079a5643d581886ada515cafd37cf0ddb6a968576db12ed6"
+          },
+          {
+            "file": "operations_increment_068f.json",
+            "rows": 35,
+            "sha256": "b1edc332b606bb5c1df61a5007fc36566eba425f893097190866d232bd25fb83"
+          },
+          {
+            "file": "operations_increment_068g.json",
+            "rows": 35,
+            "sha256": "c87ae905b2a372e7b2f5067520a7207177d5f2a2e4e24d8e127ed185ab4cb95c"
+          },
+          {
+            "file": "operations_increment_068h.json",
+            "rows": 35,
+            "sha256": "c6ee3a21240b7f78b715ea541a89ad095d0b9dc5dd7274f9fde3d17cd3cc101d"
+          }
+        ]
+      },
+      {
+        "stage": "SOURCE_ROWS_HTTP",
+        "status": "PASS",
+        "row_count": 774,
+        "expected_visible_source_rows": 774,
+        "files": [
+          {
+            "file": "source_candidates_increment_024.json",
+            "rows": 5,
+            "sha256": "d44d03b19c34eed474f276ccef2ec396a9a4ddde64b6bdd6bd0fde7220d29350"
+          },
+          {
+            "file": "source_candidates_increment_025.json",
+            "rows": 5,
+            "sha256": "d12d6a0d353f5f7b71d7e1fa8bc5cc9f37f68178672d4d921e507489ac429715"
+          },
+          {
+            "file": "source_candidates_increment_026.json",
+            "rows": 5,
+            "sha256": "c394d34426b8560ed70225ef3606521567513e2677216dbde23e7e16b5ee505f"
+          },
+          {
+            "file": "source_candidates_increment_027.json",
+            "rows": 5,
+            "sha256": "6018144e0a9fe07a293de252e0dccb70f60c76e17dbc6414b1d62329c1bb4011"
+          },
+          {
+            "file": "source_candidates_increment_028.json",
+            "rows": 5,
+            "sha256": "7ccc7d4945dd69bd4dca622ebcb9ced1931ef2811c4ffd3feed3663dc40eace5"
+          },
+          {
+            "file": "source_candidates_increment_029.json",
+            "rows": 5,
+            "sha256": "0a269b39a86cbf1afbe1dbf22ee93b88c3e634931890d0706cd1f39123750e16"
+          },
+          {
+            "file": "source_candidates_increment_030.json",
+            "rows": 5,
+            "sha256": "a030595d0d0a54b534e65d5497bb837c31308cb00904bf7683cf53517fc9b38d"
+          },
+          {
+            "file": "source_candidates_increment_031.json",
+            "rows": 5,
+            "sha256": "b19ad495a27079885e2e9de7aeefb4c54b02416ea1a212c65e7ca1414cff13a2"
+          },
+          {
+            "file": "source_candidates_increment_032.json",
+            "rows": 5,
+            "sha256": "9b440babdf16b3ea0515b089373ddfa6eee048f073d419bcd247ba3d60043cc9"
+          },
+          {
+            "file": "source_candidates_increment_033.json",
+            "rows": 2,
+            "sha256": "1e00786de8727327b33771625ea877d53323df0dc617d667b28bdb721ee5df1a"
+          },
+          {
+            "file": "source_candidates_increment_034.json",
+            "rows": 5,
+            "sha256": "4c015faa571d7e72315666f41de444c950064921f89f881998fcb2889457e366"
+          },
+          {
+            "file": "source_candidates_increment_035.json",
+            "rows": 2,
+            "sha256": "e799a9f22d1e983c95e4714aa0f1e98a0f4fe70364c9eee9c22f614933e658f3"
+          },
+          {
+            "file": "source_candidates_increment_036.json",
+            "rows": 4,
+            "sha256": "6ab0d03fbb334b0378fc706d3220c310ad8479eac54334cd010858cf5b375e72"
+          },
+          {
+            "file": "source_candidates_increment_037.json",
+            "rows": 4,
+            "sha256": "1fb65cf95c93d2be62ece1895c90076f2ee4023296cbb52e4359c1785cd77dc4"
+          },
+          {
+            "file": "source_candidates_increment_038.json",
+            "rows": 4,
+            "sha256": "63145faff9c539c4d021dd7a938d811f4c94d463f44e91bd779236b3bac7a674"
+          },
+          {
+            "file": "source_candidates_increment_039.json",
+            "rows": 4,
+            "sha256": "f2bf5d112ed1fe2a366e4caddc63ae2a52484a56c155909637364d2e50939830"
+          },
+          {
+            "file": "source_candidates_increment_040.json",
+            "rows": 4,
+            "sha256": "9a632fdcfc16848777ea5c7877ed792c9b22679f2421de8ca1e6a7a5802fd90d"
+          },
+          {
+            "file": "source_candidates_increment_041.json",
+            "rows": 4,
+            "sha256": "ae687c3f33a496bb573fdac0f08008ddc4a67f497ed6bf6a30b727876104b92e"
+          },
+          {
+            "file": "source_candidates_increment_042.json",
+            "rows": 4,
+            "sha256": "a348ae2ee3bce8dd43a40668fd4756f9e6aa437522938511b7aa9b68734818f4"
+          },
+          {
+            "file": "source_candidates_increment_043.json",
+            "rows": 4,
+            "sha256": "ec4aceb3b026766622ee49eb90fa2397ce68f2be3d9ad504bc041a71f9bcfc7e"
+          },
+          {
+            "file": "source_candidates_increment_044.json",
+            "rows": 4,
+            "sha256": "dc22d06facee5db763d131661bf4a1a755fb76b75481033d65c61e5ad3c31c69"
+          },
+          {
+            "file": "source_candidates_increment_045.json",
+            "rows": 4,
+            "sha256": "f0516d214543cd58a8f4ede3f4c915d01d6f6062dce2e520c1cfbcf5b27418eb"
+          },
+          {
+            "file": "source_candidates_increment_046.json",
+            "rows": 5,
+            "sha256": "b4b4ae95fc328293f2c897de75c7c393013e5c65e98f2a058d94cfb14c8411dd"
+          },
+          {
+            "file": "source_candidates_increment_047.json",
+            "rows": 4,
+            "sha256": "a397399c7b4536f6f39c3631385b3509898407c445676c2a5191260cf2942d49"
+          },
+          {
+            "file": "source_candidates_increment_048.json",
+            "rows": 5,
+            "sha256": "24f8f0cb4d2ec499c8ea0b0e5056a6c8ca8346041ca6dd512647ad6e1bec4f04"
+          },
+          {
+            "file": "source_candidates_increment_049.json",
+            "rows": 5,
+            "sha256": "b06177685b231e8257da6001f732874831ee5e38f96947990527e0a0567286fa"
+          },
+          {
+            "file": "source_candidates_increment_050.json",
+            "rows": 5,
+            "sha256": "86dd980008ef3257b08b1086c3f2caf11bb19c7fceb9ecfbee5af22b8e49f16e"
+          },
+          {
+            "file": "source_candidates_increment_051.json",
+            "rows": 7,
+            "sha256": "c7bbd29534c2925a9df3a7ee99dab262c07a6b2645db37a1ab1d54426c329c83"
+          },
+          {
+            "file": "source_candidates_increment_052.json",
+            "rows": 8,
+            "sha256": "a04c2d05a44ac5ec5f91d9d84a874444fa3133bc76da1a8510a1381ee06b476e"
+          },
+          {
+            "file": "source_candidates_increment_053.json",
+            "rows": 10,
+            "sha256": "bde292c20f4a7b75f09d2d6b89d070bf3094a93b4e1887fe11e9fd1eed098567"
+          },
+          {
+            "file": "source_candidates_increment_054.json",
+            "rows": 12,
+            "sha256": "c5a689e0b2489243e15ea7092ad6c0930a1981acad321e73ed12a83549b344bc"
+          },
+          {
+            "file": "source_candidates_increment_055.json",
+            "rows": 16,
+            "sha256": "e51c6564895f13ccb5b8ebd2cd8290aae08ad214eaa86b2f17c4bc75c28bc321"
+          },
+          {
+            "file": "source_candidates_increment_056.json",
+            "rows": 20,
+            "sha256": "89335e5e8401535e1251b0ddebfb887c527b94a71559420fee16757f2cbbc626"
+          },
+          {
+            "file": "source_candidates_increment_057.json",
+            "rows": 24,
+            "sha256": "ad03c2e1b6570119c98756fbeafcd4f2dde696853bd900a8cb84679d39dedcf2"
+          },
+          {
+            "file": "source_candidates_increment_058.json",
+            "rows": 32,
+            "sha256": "26246a68b059eaa5460bc7d3ac11738dc9aa4b446b7e5c7f7ba2d7dbd9a8e388"
+          },
+          {
+            "file": "source_candidates_increment_059a.json",
+            "rows": 16,
+            "sha256": "cc73215bc5a1c7b1a2392444670397739fbdf3964e88770d3d8556192e3ff897"
+          },
+          {
+            "file": "source_candidates_increment_059b.json",
+            "rows": 15,
+            "sha256": "d8f1f37387e7485fdac71b6c8b4300e535dafa4ee1b042e8b32a9a1fcf2764f9"
+          },
+          {
+            "file": "source_candidates_increment_059c.json",
+            "rows": 15,
+            "sha256": "e2d699ab973d2253b89a99be011ced351dba8e7c23d5b1489044b6d6b9e3b3a8"
+          },
+          {
+            "file": "source_candidates_increment_060a.json",
+            "rows": 14,
+            "sha256": "e0ebb7b3e8e9b3d6f577736c5f82c403ae4aa5986c6a2488d69b3329c976ea38"
+          },
+          {
+            "file": "source_candidates_increment_060b.json",
+            "rows": 14,
+            "sha256": "f1f34384ccf37d0d2d0cd5eacff991cadacd690baf55c2b04da4a5e5b7314533"
+          },
+          {
+            "file": "source_candidates_increment_060c.json",
+            "rows": 14,
+            "sha256": "25ca8fcb40346e87360b699b6a7c0fb0eca5873c8c579b03069b8c52f31a9182"
+          },
+          {
+            "file": "source_candidates_increment_060d.json",
+            "rows": 14,
+            "sha256": "ea3efc03b68a88f2048fe71094997b253c6e099301b8a96a0a79ac0eaadb051a"
+          },
+          {
+            "file": "source_candidates_increment_061a.json",
+            "rows": 16,
+            "sha256": "3f7f213be8b7759ac4c3718931c9762fb4057dcfe5957985564fd549547ce89e"
+          },
+          {
+            "file": "source_candidates_increment_061b.json",
+            "rows": 16,
+            "sha256": "a3d531886e5439deac2090aa3846af79426db72111671876e8c4ec7975ec52af"
+          },
+          {
+            "file": "source_candidates_increment_062a.json",
+            "rows": 15,
+            "sha256": "0c39e422b71ff56d40a0f0a95bbc7bd3a972275dc6669aaf6a4c4fd7ec58fb4b"
+          },
+          {
+            "file": "source_candidates_increment_062b.json",
+            "rows": 15,
+            "sha256": "219212f6842720ebee120f36f86c81d1ad26c0d77f693304f175e208e5113448"
+          },
+          {
+            "file": "source_candidates_increment_062c.json",
+            "rows": 15,
+            "sha256": "ca38903b4179caa0f49776e8323531ee47b39186a53efcac1467cf712df56698"
+          },
+          {
+            "file": "source_candidates_increment_063a.json",
+            "rows": 13,
+            "sha256": "5734dbbe53793d2adb927d3286a927f50b77f3f9bed6a6eaa5db590237ba6b79"
+          },
+          {
+            "file": "source_candidates_increment_063b.json",
+            "rows": 13,
+            "sha256": "56cf885721d06042e9b56d44243013c77d626ff0979e4bfe04cbbbf4c34e70c0"
+          },
+          {
+            "file": "source_candidates_increment_063c.json",
+            "rows": 13,
+            "sha256": "a7e12ad3c4213e40fe1bda998c2dc5e509474b9303fc42be1303cf11f2527faf"
+          },
+          {
+            "file": "source_candidates_increment_063d.json",
+            "rows": 13,
+            "sha256": "9b981b9262b0e6ec0b7d8778d20d27f0f43ed5d088c4164f7d0c9a13718a85f5"
+          },
+          {
+            "file": "source_candidates_increment_064a.json",
+            "rows": 13,
+            "sha256": "97a13c6432aa83b6c41041a6e3d84b4d4156e1160598129222d1894b4894228a"
+          },
+          {
+            "file": "source_candidates_increment_064b.json",
+            "rows": 13,
+            "sha256": "835ada7ea7fa15e39ae2b0fd2f945cae8741481d94f34df10c163fdd0f0147fc"
+          },
+          {
+            "file": "source_candidates_increment_064c.json",
+            "rows": 24,
+            "sha256": "688337aad8f5c7f4205122e0d31b37d4f257480b2887ef64236948631149f053"
+          },
+          {
+            "file": "source_candidates_increment_065a.json",
+            "rows": 13,
+            "sha256": "8e99b1d6fbedfc83df51fef475d41a5b7efb780da0f73f283a86f88fc33d381c"
+          },
+          {
+            "file": "source_candidates_increment_065b.json",
+            "rows": 13,
+            "sha256": "d7b1979c13cb74f6cc1e3fa2822638fe19cb3068eb22ddcfaeb352c9dbffc704"
+          },
+          {
+            "file": "source_candidates_increment_065c.json",
+            "rows": 13,
+            "sha256": "119026ad14668a6ea26b87db779d2ead6bd026c9bf2ebe60812b06b2ef8a2824"
+          },
+          {
+            "file": "source_candidates_increment_065d.json",
+            "rows": 13,
+            "sha256": "8a5d5de949ed7970c885c8e431558a1fd4d74c583932c8108033adeb3d1acd8d"
+          },
+          {
+            "file": "source_candidates_increment_066a.json",
+            "rows": 16,
+            "sha256": "f71a6ff809e29b055eddba211b8cce47aa2ab4e6b9694cfb98f2d35b55ad2a02"
+          },
+          {
+            "file": "source_candidates_increment_066b.json",
+            "rows": 16,
+            "sha256": "64e9a2403ef95050358817a59444a6650d422e390982a05c2403246352280e5c"
+          },
+          {
+            "file": "source_candidates_increment_066c.json",
+            "rows": 15,
+            "sha256": "371e2fe4fac6e3a4bc5b3b2ab38b526db2f5fd1ff99deeaa686c96a7083b28b3"
+          },
+          {
+            "file": "source_candidates_increment_066d.json",
+            "rows": 15,
+            "sha256": "e36afd0ee96fe95c0e1f5ac3c8246dd67cbd7de2a6f5f8c0d51ef6a49769483c"
+          },
+          {
+            "file": "source_candidates_increment_067a.json",
+            "rows": 16,
+            "sha256": "bc73636912b3bb0fa994136824f61e52b16f3d100394521c4ee9dbda1fb7e102"
+          },
+          {
+            "file": "source_candidates_increment_067b.json",
+            "rows": 16,
+            "sha256": "c51a2ac5907d4bddd4bd386968459c11281b8f71af6fc019e592f4b424bc5a18"
+          },
+          {
+            "file": "source_candidates_increment_067c.json",
+            "rows": 16,
+            "sha256": "f350cd9f253c1e42381599b9b0239af397d74f04c22662b3a902dd438a545bda"
+          },
+          {
+            "file": "source_candidates_increment_067d.json",
+            "rows": 16,
+            "sha256": "c37be22457a1786e28e64dcf4633d1e84ee137773f4e7d63f510e83547bb3fef"
+          },
+          {
+            "file": "source_candidates_increment_068a.json",
+            "rows": 17,
+            "sha256": "c5de87da3414fd986c37a7ecd7ecced98f983d5dac9c24c181a80de45ecb9ad9"
+          },
+          {
+            "file": "source_candidates_increment_068b.json",
+            "rows": 17,
+            "sha256": "678c69aa7ef1ca1173e133fdbb7306b4d76a8bea3a8a047bf9ae49bb0884f890"
+          },
+          {
+            "file": "source_candidates_increment_068c.json",
+            "rows": 17,
+            "sha256": "6c47d3e5cc8f6eceb01473f8665fdf5fbfe62baa1021b7a2e19fd08ddcd81ec6"
+          },
+          {
+            "file": "source_candidates_increment_068d.json",
+            "rows": 17,
+            "sha256": "c4e27cec39fbae2adef3a9d585f01c9abda5aba5264c6fbbbc294518f8a29a23"
+          }
+        ]
+      },
+      {
+        "stage": "EXACT_TARGET_EXAMPLES_HTTP",
+        "status": "PASS",
+        "candidate_rows": [
+          30762,
+          46142,
+          61522
+        ],
+        "measured_candidate_rows": [
+          30762,
+          46142,
+          61522
+        ],
+        "exact_measurement_bindings": {
+          "30762": {
+            "hmlr_inspire_id": "46058185",
+            "height_difference_m": 0.27,
+            "confidence_percent": 96.0,
+            "example_id": "HD2-PICKUP-103"
+          },
+          "46142": {
+            "hmlr_inspire_id": "39866294",
+            "height_difference_m": 0.831,
+            "confidence_percent": 96.0,
+            "example_id": "HD2-PICKUP-104"
+          },
+          "61522": {
+            "hmlr_inspire_id": "62045430",
+            "height_difference_m": 0.49,
+            "confidence_percent": 96.0,
+            "example_id": "HD2-PICKUP-105"
+          }
+        },
+        "row_count": 135,
+        "expected_visible_example_rows": 135,
+        "files": [
+          {
+            "file": "examples_increment_024.json",
+            "rows": 3,
+            "sha256": "e4e3ad7db9fdb4ec5588e09fb90be5593ffe7a589f79d694309c7c426adb0b70"
+          },
+          {
+            "file": "examples_increment_025.json",
+            "rows": 3,
+            "sha256": "49fa89809d7f56dfaa0643f3aadcabc3d3cac7f3d2edc4c7e68e6c6a15f0f1ea"
+          },
+          {
+            "file": "examples_increment_026.json",
+            "rows": 3,
+            "sha256": "93e56e193e8705ae407ad1ea0a0b69f68fec6fdade41baadd41ec0a9817a7ac6"
+          },
+          {
+            "file": "examples_increment_027.json",
+            "rows": 3,
+            "sha256": "1ce737f6235ef0b77096ae727c8a31107b875ba132dbfb88d0e1e4e59a6efbbb"
+          },
+          {
+            "file": "examples_increment_028.json",
+            "rows": 3,
+            "sha256": "b1997bc006f626b235dcd79576d8d1a8d09c380ff41d742270dd34d4611f3c26"
+          },
+          {
+            "file": "examples_increment_029.json",
+            "rows": 3,
+            "sha256": "9725dc1e13cb08ce964e295feb5ae97d73b657956e28a0c7688e20692c03b9f9"
+          },
+          {
+            "file": "examples_increment_030.json",
+            "rows": 3,
+            "sha256": "6721166266c9258d4edc53e8bf8797347ae6b4c45d3d50e80fa4c9c037c72ee5"
+          },
+          {
+            "file": "examples_increment_031.json",
+            "rows": 3,
+            "sha256": "3b5ccd939c18cda494a15c00f3245de737a55e8cb08506fbbed4bbe4bc0c097c"
+          },
+          {
+            "file": "examples_increment_032.json",
+            "rows": 3,
+            "sha256": "e3d95d5afdb88eb7332b622d4b18b6b7771cb684d2499469ab3291cc5ad9110b"
+          },
+          {
+            "file": "examples_increment_033.json",
+            "rows": 3,
+            "sha256": "8a80998c997cda266bf4da7c2b46b120ba2b2a00eb793fd5b5e01b9cfbdc8f44"
+          },
+          {
+            "file": "examples_increment_034.json",
+            "rows": 3,
+            "sha256": "894c9c49d6fd423e87be10b05ffc19f64c11d079db9a253dfaa21fcb63f7383b"
+          },
+          {
+            "file": "examples_increment_035.json",
+            "rows": 3,
+            "sha256": "a33e099f4669a648a23e9cb5407f93ab10c517a6392b62716b1e272dbd820fd2"
+          },
+          {
+            "file": "examples_increment_036.json",
+            "rows": 3,
+            "sha256": "0c811d1e9aadc1ed38744749b4a15c29d3eb00e3cb2cab0bd76188bb16cf508c"
+          },
+          {
+            "file": "examples_increment_037.json",
+            "rows": 3,
+            "sha256": "5f099e0caa99aaf145db228bf75bc9d2b365e84230ad46c2c1be23d8ce9ed884"
+          },
+          {
+            "file": "examples_increment_038.json",
+            "rows": 3,
+            "sha256": "35841195f568746476c11eda9daf998f4f71f8896a8f0a8e8101e03a31d8b5ce"
+          },
+          {
+            "file": "examples_increment_039.json",
+            "rows": 3,
+            "sha256": "259982e98ef5ae78f811fe005376168a55b1cce5cb51dbed55111c36a96beaf8"
+          },
+          {
+            "file": "examples_increment_040.json",
+            "rows": 3,
+            "sha256": "3a009c85b0fac36bd79e9884d7fc50a37a5379e796d8075ac3e8b7bec036cd7e"
+          },
+          {
+            "file": "examples_increment_041.json",
+            "rows": 3,
+            "sha256": "cc63b70484bfd65dbbca436aca6d5c2ece9cfc6e1055f0d7352c3064224e6ef2"
+          },
+          {
+            "file": "examples_increment_042.json",
+            "rows": 3,
+            "sha256": "e869679c62b836e9b7910f0d13743a389f69ef9298ae0a5a9ac7c7f965195cb8"
+          },
+          {
+            "file": "examples_increment_043.json",
+            "rows": 3,
+            "sha256": "b65e74054b51b4971114b0e6ca47942c48c1deb7c6d7532b70a23e0d985c6561"
+          },
+          {
+            "file": "examples_increment_044.json",
+            "rows": 3,
+            "sha256": "411eb4bd49cdec3951e50c955cfb47774001e57be7fbd015c23f055733aaa3cc"
+          },
+          {
+            "file": "examples_increment_045.json",
+            "rows": 3,
+            "sha256": "d7186f8e073f00f2aaea37624b14b3d58cdfe708559e3cf77016a6f06065e212"
+          },
+          {
+            "file": "examples_increment_046.json",
+            "rows": 3,
+            "sha256": "35a87c87b89782ecbadd54fde7dc6d0d1e12c3d8b688325ecf3588ef40db57d2"
+          },
+          {
+            "file": "examples_increment_047.json",
+            "rows": 3,
+            "sha256": "356c200f63eddf6dbdff14e126824f2147e4b13eacb264c391738b33a99f5d9b"
+          },
+          {
+            "file": "examples_increment_048.json",
+            "rows": 3,
+            "sha256": "c88c0e46742b95b0f0bf697bebe8363345b466894eb11b9e06f2132d199add10"
+          },
+          {
+            "file": "examples_increment_049.json",
+            "rows": 3,
+            "sha256": "051add2396a958f936b653215dbd0adc2f3040412226b3287c2bf5ec5df10a49"
+          },
+          {
+            "file": "examples_increment_050.json",
+            "rows": 3,
+            "sha256": "396023821a2a464f0acd1f3653f9a5744e68f28c5fd4108ea3bc8b3f953b7e4b"
+          },
+          {
+            "file": "examples_increment_051.json",
+            "rows": 3,
+            "sha256": "4fa6bf1e9203e566130b25b7c84fb8a88e8298e09a4e42118dec062d7a9799e9"
+          },
+          {
+            "file": "examples_increment_052.json",
+            "rows": 3,
+            "sha256": "a064d757d4987cfa95364674da2fea2fce85b2ec8158cd7a76d7a48e03bfa507"
+          },
+          {
+            "file": "examples_increment_053.json",
+            "rows": 3,
+            "sha256": "4c8385382721d74af9a76f7fa259958741e317301531975d48459cb191754227"
+          },
+          {
+            "file": "examples_increment_054.json",
+            "rows": 3,
+            "sha256": "58014bb5e7c3558c3349d2824efff38b6974598849a14ab31b45882eeece9596"
+          },
+          {
+            "file": "examples_increment_055.json",
+            "rows": 3,
+            "sha256": "7809e9bb8f933c2da6e4174b0ffaec471c2fb470d2441fce3f508ed9ff499a94"
+          },
+          {
+            "file": "examples_increment_056.json",
+            "rows": 3,
+            "sha256": "6e43c6984df083b6e9e2e3c59ef280b9838038482ef10f2a754089ebf36b5295"
+          },
+          {
+            "file": "examples_increment_057.json",
+            "rows": 3,
+            "sha256": "f864db7d316eae7446b907b3f5f986ac18b52294beeca9e0feeebbfb9a458da1"
+          },
+          {
+            "file": "examples_increment_058.json",
+            "rows": 3,
+            "sha256": "3d23e0f07c092bf1aca6847d9c7a0289904e0c9855f170af4f2484c82366cb81"
+          },
+          {
+            "file": "examples_increment_059.json",
+            "rows": 3,
+            "sha256": "9c4baaa4af07c8952875f524e981b0bdf8ca2be4e93165e0b4a01fa47f88a6cf"
+          },
+          {
+            "file": "examples_increment_060.json",
+            "rows": 3,
+            "sha256": "beaa2d234191e32b123a4a9383076f1c382a082fa3901317d1d054058279f97a"
+          },
+          {
+            "file": "examples_increment_061.json",
+            "rows": 3,
+            "sha256": "7c7da4522e5395ddeb09039803e54a93e3e2669d776b76742dfede5bdfe122d3"
+          },
+          {
+            "file": "examples_increment_062.json",
+            "rows": 3,
+            "sha256": "9214f067836092e2b7ff1935f8fc1aff495d08d0b14821ed833c95c6bd5d7fbe"
+          },
+          {
+            "file": "examples_increment_063.json",
+            "rows": 3,
+            "sha256": "30db213400efa7dc03f0ed1b38a41e29ca4de24705709415a42aad3a7e73e09e"
+          },
+          {
+            "file": "examples_increment_064.json",
+            "rows": 3,
+            "sha256": "cf7c4f00ab5908f963c445d7f6c386905511618395fc2feb6195809c1a974d87"
+          },
+          {
+            "file": "examples_increment_065.json",
+            "rows": 3,
+            "sha256": "79b1f2b02cc087b376674afe8ffbf7c1c829c32246f85c948fb0b9e0676a719b"
+          },
+          {
+            "file": "examples_increment_066.json",
+            "rows": 3,
+            "sha256": "bb4c96b9264a3c2d5752d9d33029499605362a5071e900a768ad48b08ff3643d"
+          },
+          {
+            "file": "examples_increment_067.json",
+            "rows": 3,
+            "sha256": "12bee3ef529bd899bd77d2b369ec3edd994e857f0615e926173d3bf8abb5197c"
+          },
+          {
+            "file": "examples_increment_068.json",
+            "rows": 3,
+            "sha256": "bc698b7bc10838481a4deb5cf47f9968f2bffc597b84c1ff9955bcbc630b110e"
+          }
+        ]
+      }
+    ],
+    "final_ready": false,
+    "fake_data": false
+  }
+}
