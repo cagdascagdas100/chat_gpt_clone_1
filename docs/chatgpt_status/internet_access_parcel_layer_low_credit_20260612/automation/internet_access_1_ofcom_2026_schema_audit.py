@@ -58,12 +58,17 @@ def atomic_json(path: Path, payload: dict) -> None:
 
 def archive_is_reusable(path: Path) -> bool:
     try:
-        return (
-            path.is_file()
-            and path.stat().st_size >= MINIMUM_ARCHIVE_BYTES
-            and zipfile.is_zipfile(path)
-        )
-    except OSError:
+        if (
+            not path.is_file()
+            or path.stat().st_size < MINIMUM_ARCHIVE_BYTES
+            or not zipfile.is_zipfile(path)
+        ):
+            return False
+        with zipfile.ZipFile(path) as archive:
+            if not archive.namelist():
+                return False
+            return archive.testzip() is None
+    except (OSError, EOFError, RuntimeError, zipfile.BadZipFile, zipfile.LargeZipFile):
         return False
 
 
@@ -90,10 +95,8 @@ def download(url: str, destination: Path, timeout: int) -> None:
                     out.write(chunk)
                 out.flush()
                 os.fsync(out.fileno())
-            if temporary.stat().st_size < MINIMUM_ARCHIVE_BYTES:
-                raise RuntimeError(f"DOWNLOAD_TOO_SMALL_{temporary.stat().st_size}")
-            if not zipfile.is_zipfile(temporary):
-                raise RuntimeError("DOWNLOAD_NOT_ZIP")
+            if not archive_is_reusable(temporary):
+                raise RuntimeError("DOWNLOAD_ARCHIVE_INTEGRITY_FAILED")
             os.replace(temporary, destination)
             return
         except Exception as exc:
