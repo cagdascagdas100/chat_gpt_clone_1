@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "architecture_version": 3,
   "slot_id": "security_public_safety_1",
   "state": "OPEN",
@@ -7,33 +7,44 @@
   "continuation_key": "4472f86d3870fb5bc61617be00f0896ad3701370eea044e94d7989c3e3c5e949",
   "task_id": "aays1-security-public-safety-1-canonical-acceptance-v17-20260722",
   "attempt_id": "security-public-safety-1-20260722-017",
-  "source_head": "fdbe10c9b5204dbc3509469c27bd07cf86515914",
-  "updated_at": "2026-08-03T19:32:00Z",
-  "reason": "The same V17 task remains unclaimed. The canonical runner selects only queued, ready, pending, pending_repo_queue, pickup_requested or queued_for_single_shared_runner status values. The queue previously used status=result_ready_for_remote_acceptance, so it was skipped despite state=ready. That technical mismatch is corrected on the same continuation; height_difference_2 remains an independently unresolved human-signoff item but its historical result_ready_for_remote_acceptance queue status is not an eligible runner candidate and no longer blocks V17 selection.",
+  "source_head": "013a4fe939827e030efd358342ed0fc13d19321a",
+  "updated_at": "2026-08-03T21:35:00Z",
+  "reason": "The same V17 continuation remains unclaimed. The queue is selectable as status=ready, but the prior root CMD only invoked the local wrapper and therefore could not reach the newly patched remote-sync control code when the canonical F-host checkout itself was stale. The tracked root CMD now self-extracts a bootstrap, fetches the canonical remote ref, runs the remote legacy-lock guard from a temporary file, permits only proven-safe ff-only synchronization, verifies local and remote HEAD equality, and then invokes the current wrapper. No second task, owner, runner or restart request was created.",
   "technical_root_cause": {
-    "state": "QUEUE_STATUS_SELECTION_MISMATCH_CORRECTED",
-    "runner_selector_path": "docs/chatgpt_status/_shared/automation/RUN_SINGLE_AAYS_MULTI_PAGE_QUEUE_RUNNER_STABLE_20260707.ps1",
-    "runner_selector_blob_sha": "8ac8af78992b96609d81b76c78b59b2b3597a045",
-    "accepted_status_values": ["queued", "ready", "pending", "pending_repo_queue", "pickup_requested", "queued_for_single_shared_runner"],
-    "previous_queue_status": "result_ready_for_remote_acceptance",
-    "corrected_queue_status": "ready",
-    "corrected_queue_blob_sha": "e82cf7761b858ee74d710aa018bc519d20ebe582",
+    "state": "STALE_LOCAL_WRAPPER_BOOTSTRAP_PARADOX_CORRECTED",
+    "previous_launcher_blob_sha": "31231b97fe8fc73a54c1aea4502d8370f211c035",
+    "corrected_launcher_blob_sha": "4184d047bcf5c402b46e5dbbf44b17eb12438e41",
+    "corrected_launcher_commit_sha": "013a4fe939827e030efd358342ed0fc13d19321a",
+    "launcher_path": "START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd",
+    "remote_legacy_guard_path": "docs/chatgpt_status/_shared/automation/PREPARE_AAYS_LEGACY_RUNNER_LOCK_COMPAT_20260803.py",
+    "remote_legacy_guard_blob_sha": "a81f26c35742024bfc167397fa7712e872cd7026",
+    "safe_fast_forward_states": ["NO_LOCK", "REMOVE_DEAD_LEGACY_LOCK", "STOP_VERIFIED_STALE_LEGACY_DAEMON"],
+    "live_or_uncertain_states_block_version_drift": ["MIGRATE_VERIFIED_FRESH_LEGACY_LOCK", "NOT_LEGACY", "UNKNOWN"],
+    "tracked_dirty_worktree_fail_closed": true,
+    "wrong_branch_fail_closed": true,
+    "post_sync_heads_must_match": true,
+    "reset_hard_forbidden": true,
+    "embedded_marker_unique": true,
     "same_task_preserved": true,
     "same_continuation_preserved": true,
     "new_task_created": false,
     "new_owner_created": false,
-    "new_runner_created": false
+    "new_runner_created": false,
+    "duplicate_restart_request_created": false
   },
   "canonical_launcher": {
     "corrected_execution_path": "F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd",
     "tracked_launcher_path": "START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd",
-    "tracked_launcher_blob_sha": "31231b97fe8fc73a54c1aea4502d8370f211c035",
-    "path_contract": "The tracked CMD sets ROOT from %~dp0 and must execute from the canonical repository root."
+    "tracked_launcher_blob_sha": "4184d047bcf5c402b46e5dbbf44b17eb12438e41",
+    "required_branch": "codex/aays-single-runner-v5-20260706",
+    "path_contract": "Execute only from the canonical repository root. The current blob must be present; the launcher performs remote guard classification and safe ff-only synchronization before invoking the runner wrapper."
   },
-  "exact_action": "On the existing canonical F-host run only F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd. The existing single runner must scan the corrected status=ready queue and reclaim this same V17 continuation in a fresh canonical worktree. Do not create another task, owner, runner, parallel process or restart request. The separate height_difference_2 formal human signoff and physical receipts 015, 016 and 014 remain required for that slot's own final acceptance but must not be treated as a security V17 queue-selection prerequisite.",
+  "exact_action": "On the existing canonical F-host, verify that F:\\TerraYield_AAYS_Portable\\runner_system\\AAYS_WT\\AAYS_RUNNER_HEALTHY_20260707\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd hashes to Git blob 4184d047bcf5c402b46e5dbbf44b17eb12438e41, then run that exact file once. If the local file does not match, do not run the stale launcher; safely update the canonical checkout to the remote branch without reset --hard and only after confirming no live unverified runner. Do not create another task, owner, runner, parallel process or restart request.",
   "forbidden_actions": [
     "F:\\TerraYield_AAYS_Portable\\START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd",
-    "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd"
+    "F:\\TerraYield_AAYS_Portable\\RUN_AAYS_STABLE_RUNNER_FROM_THIS_DISK.cmd",
+    "git reset --hard",
+    "starting a second runner"
   ],
   "security_queue": {
     "path": "docs/chatgpt_status/aays1/queue/security_public_safety_1_canonical_acceptance_v17_20260722.task.json",
@@ -49,23 +60,6 @@
     "timeout_seconds": 1800,
     "contract_valid": true
   },
-  "priority_predecessor": {
-    "slot_id": "height_difference_2",
-    "continuation_key": "d6add1c8b2626cb73cf77f4f731ce74e326997b04c7615f481ca82ce2f635d44",
-    "state": "BLOCKED",
-    "queue_status": "result_ready_for_remote_acceptance",
-    "runner_candidate_eligible": false,
-    "technical_crosscheck_completed": true,
-    "runtime_validation_state": "PASS_FINAL_1036_99_69",
-    "automation_tests_passed": 332,
-    "automation_tests_total": 332,
-    "formal_human_crosscheck_signoff_present": false,
-    "receipt_003_present": true,
-    "receipt_015_present": false,
-    "receipt_016_present": false,
-    "receipt_014_present": false,
-    "blocks_v17_queue_selection": false
-  },
   "runtime_evidence": {
     "slot_heartbeat_state": "STALE_RELEASED_READY_FOR_RECLAIM",
     "shared_runner_heartbeat_blob_sha": "a16a5ce04f06cfa12a9e4b6cbaa216ea9bbc14c6",
@@ -79,14 +73,14 @@
     "network_requests_performed": 0
   },
   "resolution_criteria": [
-    "existing canonical runner heartbeat is fresh",
-    "same V17 continuation is claimed from the corrected status=ready queue",
+    "current tracked launcher blob is present and executed on the canonical F-host",
+    "bootstrap and daemon heartbeat are fresh and record canonical branch plus matching local/remote HEAD evidence",
+    "same V17 continuation is claimed from the status=ready queue",
     "fresh canonical worktree resolves task JSON and legacy queue inputs",
     "16 of 16 official endpoints pass HTTP 200 JSON",
     "130 of 130 candidates pass live count and SHA-256 parity",
     "300 of 300 rows are visible in the headless-browser DOM with zero console errors",
-    "publisher commit, push and remote SHA readback succeed",
-    "no second task, owner, runner or duplicate restart request is created"
+    "publisher commit, push and remote SHA readback succeed"
   ],
   "completed_count": 7,
   "target_count": 8,
