@@ -13,10 +13,23 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$legacyLockGuard = Join-Path $PSScriptRoot "PREPARE_AAYS_LEGACY_RUNNER_LOCK_COMPAT_20260803.py"
 $starter = Join-Path $PSScriptRoot "START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1"
+if (-not (Test-Path -LiteralPath $legacyLockGuard)) {
+  throw "Missing legacy runner lock compatibility guard: $legacyLockGuard"
+}
 if (-not (Test-Path -LiteralPath $starter)) {
   throw "Missing canonical starter: $starter"
 }
+
+$guardArgs = @(
+  $legacyLockGuard,
+  "--repo-root", $RepoRoot,
+  "--main-branch", $MainBranch,
+  "--stale-minutes", "$StaleMinutes"
+)
+& python @guardArgs
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $args = @(
   "-File", $starter,
