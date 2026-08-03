@@ -7,7 +7,7 @@ $continuationKey = '862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30
 $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $runnerRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit_runner.py'
 $implementationRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit.py'
-$expectedRunnerBlob = '103e65d6c34d1b76d1e34cbf4904e03fac825c77'
+$expectedRunnerBlob = '94c08118ca9ee80874878ebe08c01b2f26cd97dc'
 $expectedImplementationBlob = '01ab2e7bf9debd834f294248b323e97645af29ac'
 
 function Resolve-RepoRoot {
