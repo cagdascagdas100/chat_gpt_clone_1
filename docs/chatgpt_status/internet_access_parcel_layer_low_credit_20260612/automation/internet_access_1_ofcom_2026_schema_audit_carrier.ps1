@@ -1,4 +1,4 @@
-[CmdletBinding()]
+[CmdletBinding()
 param()
 
 $ErrorActionPreference = 'Stop'
@@ -8,7 +8,7 @@ $expectedBranch = 'codex/aays-single-runner-v5-20260706'
 $runnerRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit_runner.py'
 $implementationRel = 'docs\chatgpt_status\internet_access_parcel_layer_low_credit_20260612\automation\internet_access_1_ofcom_2026_schema_audit.py'
 $expectedRunnerBlob = '94c08118ca9ee80874878ebe08c01b2f26cd97dc'
-$expectedImplementationBlob = '5b0bb5942e88b675705777be50ea52759df6d7e5'
+$expectedImplementationBlob = '9f58680a7aba0042b3208dcdafc732ab2dd17437'
 
 function Resolve-RepoRoot {
   $configured = [string]$env:AAYS_REPO_ROOT
