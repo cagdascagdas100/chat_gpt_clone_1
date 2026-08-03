@@ -72,9 +72,11 @@ try {
   $remoteHead = (Invoke-AaysGit @('rev-parse',$remoteRef)).Trim()
   $syncSafeStates = @('NO_LOCK','REMOVE_DEAD_LEGACY_LOCK','STOP_VERIFIED_STALE_LEGACY_DAEMON')
   $liveStates = @('MIGRATE_VERIFIED_FRESH_LEGACY_LOCK','NOT_LEGACY')
+  $fastForwardApplied = $false
   if ($localHead -ne $remoteHead) {
     if ($syncSafeStates -contains $guardState) {
       [void](Invoke-AaysGit @('merge','--ff-only',$remoteRef))
+      $fastForwardApplied = $true
     } elseif ($liveStates -contains $guardState) {
       throw "BLOCKED_CANONICAL_HEAD_BEHIND_WITH_POSSIBLE_LIVE_RUNNER_GUARD_STATE=$guardState`_LOCAL=$localHead`_REMOTE=$remoteHead"
     } else {
@@ -87,12 +89,37 @@ try {
   if ($localAfter -ne $remoteAfter) {
     throw "BLOCKED_CANONICAL_HEAD_MISMATCH_AFTER_BOOTSTRAP_LOCAL=$localAfter`_REMOTE=$remoteAfter"
   }
-  $wrapper = Join-Path $root 'docs\chatgpt_status\_shared\automation\START_AAYS_CANONICAL_RUNNER_AND_PANEL_20260706.ps1'
-  if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
-    throw "BLOCKED_CANONICAL_WRAPPER_MISSING_AFTER_BOOTSTRAP=$wrapper"
+
+  $starter = Join-Path $root 'docs\chatgpt_status\_shared\automation\START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1'
+  if (-not (Test-Path -LiteralPath $starter -PathType Leaf)) {
+    throw "BLOCKED_CANONICAL_STARTER_MISSING_AFTER_BOOTSTRAP=$starter"
   }
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $wrapper -RepoRoot $root
-  exit $LASTEXITCODE
+  & powershell -NoProfile -ExecutionPolicy Bypass -File $starter -RepoRoot $root
+  $starterExitCode = $LASTEXITCODE
+  if ($starterExitCode -ne 0) { exit $starterExitCode }
+
+  $bootstrapStatus = Join-Path $root 'docs\chatgpt_status\_shared\status\runner_bootstrap_latest.json'
+  if (-not (Test-Path -LiteralPath $bootstrapStatus -PathType Leaf)) {
+    throw "BLOCKED_BOOTSTRAP_STATUS_MISSING_AFTER_CANONICAL_START"
+  }
+  try {
+    $state = Get-Content -Raw -LiteralPath $bootstrapStatus -Encoding UTF8 | ConvertFrom-Json
+    Add-Member -InputObject $state -NotePropertyName root_launcher_guard_state -NotePropertyValue $guardState -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_sync_at -NotePropertyValue ((Get-Date).ToUniversalTime().ToString('o')) -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_refresh_mode -NotePropertyValue 'REMOTE_GUARD_PLUS_FF_ONLY_DIRECT_STARTER' -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_local_head -NotePropertyValue $localAfter -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_head -NotePropertyValue $remoteAfter -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_heads_match -NotePropertyValue ($localAfter -eq $remoteAfter) -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_fast_forward_applied -NotePropertyValue $fastForwardApplied -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_wrapper_reentry_avoided -NotePropertyValue $true -Force
+    $tempStatus = "$bootstrapStatus.tmp.$PID.$([guid]::NewGuid().ToString('N'))"
+    [System.IO.File]::WriteAllText($tempStatus, (($state | ConvertTo-Json -Depth 30) + "`n"), [System.Text.UTF8Encoding]::new($false))
+    Move-Item -LiteralPath $tempStatus -Destination $bootstrapStatus -Force
+  } catch {
+    throw ("BLOCKED_ROOT_BOOTSTRAP_EVIDENCE_WRITE_FAILED: " + $_.Exception.Message)
+  }
+  exit 0
 } finally {
   Remove-Item -LiteralPath $tempGuard -Force -ErrorAction SilentlyContinue
 }
