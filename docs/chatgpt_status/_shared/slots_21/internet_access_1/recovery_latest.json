@@ -9,11 +9,11 @@
   "task_id": "internet_access_1_ofcom_2026_schema_audit_862285f2",
   "continuation_key": "862285f27e6f91e2a293bddb06bd4ea65294d412d2f61c7a253d02cfae30be22",
   "canonical_branch": "codex/aays-single-runner-v5-20260706",
-  "canonical_head_before_write": "79eb8ce63e2fe43ff542edb6e1cd5b11c3860568",
-  "checked_at": "2026-08-03T12:22:24Z",
-  "updated_at": "2026-08-03T12:22:24Z",
+  "canonical_head_before_write": "cab2612b8eb08a0396367f482199bfbd8008edf1",
+  "checked_at": "2026-08-03T12:43:00Z",
+  "updated_at": "2026-08-03T12:43:00Z",
   "recovery_reason": "EXISTING_SCHEMA_V3_READY_TASK_UNCLAIMED_MORE_THAN_15_MINUTES",
-  "technical_root_cause": "CANONICAL_F_HOST_SINGLE_RUNNER_HEARTBEAT_IS_STALE_AND_THE_LAST_SHARED_CLAIM_IS_TERMINAL_DONE; THIS_EXECUTION_ENVIRONMENT_CAN_VERIFY_THE_OFFICIAL_OFCOM_PAGE_AND_PDF_BUT_CANNOT_MATERIALIZE_THE_32.2_MB_ZIP_BYTES; A_SECOND_TASK_OWNER_OR_RUNNER_IS_FORBIDDEN",
+  "technical_root_cause": "CANONICAL_F_HOST_SINGLE_RUNNER_HEARTBEAT_IS_STALE_AND_LAST_SHARED_CLAIM_IS_TERMINAL_DONE; THE_OFFICIAL_OFCOM_ZIP_LINK_RESOLVES_BUT THE_WEB_EXECUTION_LAYER_REJECTS_APPLICATION_X_ZIP_COMPRESSED_AND THE_LOCAL_CONTAINER_HAS_NO_EXTERNAL_DNS; SECOND_TASK_OWNER_OR RUNNER IS FORBIDDEN",
   "first_unverified_step": "EXISTING_CANONICAL_SINGLE_RUNNER_CLAIMS_THE_SAME_CONTINUATION_AND_EXECUTES_THE_REAL_OFCOM_ZIP_SCHEMA_AUDIT",
   "task": {
     "state": "READY",
@@ -27,23 +27,26 @@
     "second_runner_started": false,
     "queue_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet_access_1_862285f27e6f91e2.v3.task.json",
     "script_path": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet_access_1_ofcom_2026_schema_audit_runner.py",
+    "script_blob_sha": "103e65d6c34d1b76d1e34cbf4904e03fac825c77",
+    "implementation_blob_sha": "01ab2e7bf9debd834f294248b323e97645af29ac",
     "resource_class": "network_fetch",
-    "timeout_seconds": 7200
+    "timeout_seconds": 7200,
+    "script_tracked": true,
+    "script_test_evidence_preserved": true
   },
   "runner_evidence": {
     "stable_runner_heartbeat_at": "2026-07-16T13:45:53.0433295Z",
-    "heartbeat_age_minutes_at_check": 25836.52,
-    "stable_runner_state": "task_completed",
+    "heartbeat_age_minutes_at_check": 25857.12,
     "last_active_claim_state": "done",
     "last_active_claim_terminal_at": "2026-07-16T13:46:07Z",
     "slot_heartbeat_state": "unclaimed",
     "slot_ownership_state": "unclaimed"
   },
-  "official_source_refresh": {
+  "official_source_evidence": {
     "source_page_url": "https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-update-spring-2026",
     "metadata_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/about-this-data-fixed-broadband-coverage-and-full-fibre-take-up-2026.pdf?v=422757",
     "runtime_archive_url": "https://www.ofcom.org.uk/siteassets/resources/documents/research-and-data/multi-sector/infrastructure-research/connected-nations-spring-2026/202601_fixed_broadband_coverage_and_full_fibre_take-up-r1.zip?v=422620",
-    "accessed_at": "2026-08-03T12:20:00Z",
+    "accessed_at": "2026-08-03T12:43:00Z",
     "metadata_content_sha256_from_existing_manifest": "91ebce64171a81640d4837ca6f52b5bc163b1db1d00d0c83af3d9b9c785a8007",
     "supports_fields": [
       "postcode",
@@ -55,21 +58,26 @@
       "gigabit_availability_percent",
       "decent_broadband_unavailable_fixed_or_fwa_percent"
     ],
-    "relevant_record_ids_or_excerpt": "Official page still exposes the 32.2 MB fixed-broadband ZIP. The v2 PDF page 4 documents 121 postcode_files entries named 202601_fixed_postcode_coverage_r2_xx.csv and 1,741,096 all-premises data rows.",
+    "relevant_record_ids_or_excerpt": "Ofcom Spring 2026 download table exposes the fixed-broadband ZIP as 32.2 MB; the preserved v2 metadata contract requires 121 corrected-r2 postcode CSV files and 1,741,096 data rows.",
     "license_or_terms_url": "https://www.ofcom.org.uk/about-ofcom/our-website/terms-of-use",
     "runtime_archive_bytes_downloaded": false,
     "runtime_archive_sha256": null,
     "runtime_data_row_count": null,
-    "download_attempt_result": "WEB_ENDPOINT_RESOLVED_BUT_BINARY_CONTENT_UNSUPPORTED; CONTAINER_DOWNLOAD_FAILED",
+    "web_download_result": "HTTP_400_UNSUPPORTED_CONTENT_TYPE_APPLICATION_X_ZIP_COMPRESSED",
+    "container_download_result": "FAILED",
+    "direct_script_network_probe_result": "DNS_TEMPORARY_FAILURE",
+    "repository_verified_runtime_result_found": false,
     "no_inferred_business_values": true
   },
   "recovery_actions_completed": [
-    "REREAD_CANONICAL_HEAD_AND_ALL_REQUIRED_SLOT_RECORDS",
-    "CONFIRM_SAME_CONTINUATION_KEY",
-    "CONFIRM_NO_LIVE_OWNER_OR_HEARTBEAT",
-    "CONFIRM_EXISTING_SCHEMA_V3_READY_QUEUE_AND_TESTED_TRACKED_SCRIPT",
-    "REFRESH_OFFICIAL_OFCOM_PAGE_AND_METADATA_PDF_EVIDENCE",
-    "ATTEMPT_REAL_ARCHIVE_MATERIALIZATION_WITHOUT_WRITING_FAKE_VALUES",
+    "REREAD_FRESH_CANONICAL_HEAD_AND_REQUIRED_SLOT_RECORDS",
+    "CONFIRM_SAME_CONTINUATION_KEY_AND_NO_LIVE_OWNER",
+    "CONFIRM_EXISTING_READY_QUEUE_AND_TRACKED_TESTED_SCRIPT_BLOBS",
+    "VERIFY_OFFICIAL_OFCOM_DOWNLOAD_LINK_FROM_CURRENT_LANDING_PAGE",
+    "ATTEMPT_WEB_BINARY_FETCH",
+    "ATTEMPT_CONTAINER_BINARY_DOWNLOAD",
+    "ATTEMPT_TRACKED_SCRIPT_NETWORK_PATH_WITHOUT_FAKE_VALUES",
+    "SEARCH_REPOSITORY_FOR_EXISTING_VERIFIED_RUNTIME_HASH_OR_ROW_OUTPUT",
     "PRESERVE_EXISTING_TASK_AND_AVOID_DUPLICATE_OWNER_RUNNER_OR_RESTART_REQUEST"
   ],
   "completed_count": 33785,
@@ -79,8 +87,8 @@
   "progress_percent_increase": 0.0,
   "progress_formula": "33785 / 92283 * 100",
   "produced_business_rows": 0,
-  "produced_evidence_records_this_turn": 14,
-  "blocker": "EXISTING_F_HOST_CANONICAL_SINGLE_RUNNER_HAS_NO_FRESH_HEARTBEAT_OR_MATCHING_QUEUE_CLAIM; REAL_OFCOM_ZIP_BYTES_REMAIN_UNMATERIALIZED; SECOND_TASK_OWNER_OR_RUNNER_IS_FORBIDDEN",
+  "produced_evidence_records_this_turn": 18,
+  "blocker": "EXISTING_F_HOST_CANONICAL_SINGLE_RUNNER_HAS_NO_FRESH_HEARTBEAT_OR MATCHING_QUEUE_CLAIM; REAL_OFCOM_ZIP_BYTES_HASH_AND_SCHEMA_REMAIN_UNVERIFIED; THIS_SESSION_CANNOT_ACCESS_THE_F_HOST_OR_DOWNLOAD_ZIP_BYTES; SECOND_TASK_OWNER_OR RUNNER IS FORBIDDEN",
   "next_control_check_minutes": 15,
   "fake_data": false
 }
