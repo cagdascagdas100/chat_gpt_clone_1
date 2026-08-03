@@ -3,7 +3,7 @@
   "slot_id": "ready_to_sell_3",
   "continuation_key": "6f2f2e66567b0e654a32a3bb26684504438ff4a7085d0170335bdbfe452a687a",
   "candidate_id": "rts3-1509-eton",
-  "generated_at": "2026-08-03T16:48:25.187425+00:00",
+  "generated_at": "2026-08-03T17:17:46.072767+00:00",
   "state": "NO_DATA_CONTINUE",
   "panel_status": "BLOCKED",
   "completed_count": 2,
@@ -11,8 +11,8 @@
   "progress_percent": 50.0,
   "checks": {
     "postcode_centroid_resolved": true,
-    "hmlr_hartlepool_download_link_resolved": true,
-    "hmlr_zip_gml_verified": false,
+    "hmlr_official_route_resolved": true,
+    "hmlr_official_gml_verified": false,
     "nearby_polygon_inventory_completed": false
   },
   "postcode_centroid": {
@@ -31,18 +31,21 @@
     "fallback_open_data": true
   },
   "hmlr_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
+  "hmlr_wms_feature_info_url": "https://inspire.landregistry.gov.uk/inspire/ows?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=inspire%3ACP.CadastralParcel&QUERY_LAYERS=inspire%3ACP.CadastralParcel&STYLES=&SRS=EPSG%3A27700&BBOX=450373%2C531316%2C450623%2C531566&WIDTH=256&HEIGHT=256&X=128&Y=128&INFO_FORMAT=application%2Fvnd.ogc.gml&FEATURE_COUNT=50&EXCEPTIONS=application%2Fvnd.ogc.se_xml",
+  "hmlr_verification_mode": null,
   "hmlr_zip_sha256": null,
   "hmlr_gml_sha256": null,
   "inventory": null,
   "http_session": {
     "persistent_cookie_jar": true,
-    "shared_opener_for_hmlr_index_and_zip": true
+    "shared_opener_for_official_hmlr_requests": true,
+    "wms_fallback_enabled": true
   },
   "parcel_matches": 0,
   "geometry_matches": 0,
   "promotion_allowed": false,
   "no_inference": true,
-  "no_data_reason": "Postcode centroid and official Hartlepool route resolved; official ZIP/GML verification and nearby polygon inventory did not complete, so no exact address-to-parcel binding was inferred.",
+  "no_data_reason": "Official ZIP/GML and WMS GML routes did not produce a verified non-empty polygon inventory; no exact address-to-parcel binding was inferred.",
   "fallback_evidence": [
     {
       "stage": "postcode_centroid_open_data_fallback",
@@ -86,13 +89,25 @@
       "sha256_basis": "bounded_error_evidence_string",
       "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>",
       "fallback_used": true,
-      "fallback_basis": "Official HMLR index lists Hartlepool Borough Council; deterministic authority ZIP route retained for the same persistent session.",
-      "hartlepool_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip"
+      "fallback_basis": "Official HMLR index lists Hartlepool Borough Council; deterministic authority ZIP route retained.",
+      "hartlepool_download_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
+      "official_wms_feature_info_url": "https://inspire.landregistry.gov.uk/inspire/ows?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=inspire%3ACP.CadastralParcel&QUERY_LAYERS=inspire%3ACP.CadastralParcel&STYLES=&SRS=EPSG%3A27700&BBOX=450373%2C531316%2C450623%2C531566&WIDTH=256&HEIGHT=256&X=128&Y=128&INFO_FORMAT=application%2Fvnd.ogc.gml&FEATURE_COUNT=50&EXCEPTIONS=application%2Fvnd.ogc.se_xml"
     },
     {
       "stage": "hmlr_hartlepool_zip",
       "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
       "resolved_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download/Hartlepool_Borough_Council.zip",
+      "http_status": null,
+      "content_type": null,
+      "byte_count": 0,
+      "content_sha256": "991c545d49381a0f196a7c7ef5f78bd87b31ddc780d88b9aea13ae8745072a8f",
+      "sha256_basis": "bounded_error_evidence_string",
+      "error": "URLError:<urlopen error [Errno -3] Temporary failure in name resolution>"
+    },
+    {
+      "stage": "hmlr_inspire_wms_getfeatureinfo",
+      "url": "https://inspire.landregistry.gov.uk/inspire/ows?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=inspire%3ACP.CadastralParcel&QUERY_LAYERS=inspire%3ACP.CadastralParcel&STYLES=&SRS=EPSG%3A27700&BBOX=450373%2C531316%2C450623%2C531566&WIDTH=256&HEIGHT=256&X=128&Y=128&INFO_FORMAT=application%2Fvnd.ogc.gml&FEATURE_COUNT=50&EXCEPTIONS=application%2Fvnd.ogc.se_xml",
+      "resolved_url": "https://inspire.landregistry.gov.uk/inspire/ows?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=inspire%3ACP.CadastralParcel&QUERY_LAYERS=inspire%3ACP.CadastralParcel&STYLES=&SRS=EPSG%3A27700&BBOX=450373%2C531316%2C450623%2C531566&WIDTH=256&HEIGHT=256&X=128&Y=128&INFO_FORMAT=application%2Fvnd.ogc.gml&FEATURE_COUNT=50&EXCEPTIONS=application%2Fvnd.ogc.se_xml",
       "http_status": null,
       "content_type": null,
       "byte_count": 0,
