@@ -94,6 +94,14 @@ try {
   if (-not (Test-Path -LiteralPath $starter -PathType Leaf)) {
     throw "BLOCKED_CANONICAL_STARTER_MISSING_AFTER_BOOTSTRAP=$starter"
   }
+  $rootLauncherBlob = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
+  $remoteGuardBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$guardRepoPath"))).Trim()
+  $starterBlob = (Invoke-AaysGit @('hash-object','--',$starter)).Trim()
+  foreach ($blobCheck in @($rootLauncherBlob,$remoteGuardBlob,$starterBlob)) {
+    if ($blobCheck -notmatch '^[0-9a-f]{40}$') {
+      throw "BLOCKED_CANONICAL_CONTROL_BLOB_PROOF_INVALID=$blobCheck"
+    }
+  }
   & powershell -NoProfile -ExecutionPolicy Bypass -File $starter -RepoRoot $root
   $starterExitCode = $LASTEXITCODE
   if ($starterExitCode -ne 0) { exit $starterExitCode }
@@ -111,6 +119,11 @@ try {
     Add-Member -InputObject $state -NotePropertyName root_launcher_remote_head -NotePropertyValue $remoteAfter -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_heads_match -NotePropertyValue ($localAfter -eq $remoteAfter) -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_fast_forward_applied -NotePropertyValue $fastForwardApplied -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_blob_sha -NotePropertyValue $rootLauncherBlob -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_guard_blob_sha -NotePropertyValue $remoteGuardBlob -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_starter_blob_sha -NotePropertyValue $starterBlob -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 2 -Force
+    Add-Member -InputObject $state -NotePropertyName root_launcher_no_reset_hard -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
     Add-Member -InputObject $state -NotePropertyName root_launcher_wrapper_reentry_avoided -NotePropertyValue $true -Force
     $tempStatus = "$bootstrapStatus.tmp.$PID.$([guid]::NewGuid().ToString('N'))"
