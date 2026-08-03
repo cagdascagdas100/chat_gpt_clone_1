@@ -42,7 +42,12 @@ def browser_capture(u,timeout):
  try: from playwright.sync_api import sync_playwright
  except Exception as e: raise RuntimeError(f"PLAYWRIGHT_IMPORT_FAILED:{type(e).__name__}:{e}") from e
  with sync_playwright() as p:
-  b=p.chromium.launch(headless=True)
+  try:
+   b=p.chromium.launch(headless=True)
+  except Exception as first:
+   system_chromium="/usr/bin/chromium"
+   if not os.path.exists(system_chromium): raise
+   b=p.chromium.launch(headless=True,executable_path=system_chromium,args=["--no-sandbox","--disable-dev-shm-usage"])
   try:
    page=b.new_page(accept_downloads=False); r=page.goto(u,wait_until="domcontentloaded",timeout=timeout*1000); page.wait_for_timeout(1200)
    valid_page(page.url); body=page.content().encode()
