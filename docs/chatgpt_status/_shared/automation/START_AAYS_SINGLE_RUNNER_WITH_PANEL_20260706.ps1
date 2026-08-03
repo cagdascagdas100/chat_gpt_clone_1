@@ -58,7 +58,7 @@ function Test-RunnerActive(
   $lock = Read-JsonFile $LockPath
   if ($null -eq $lock -or $null -eq $lock.pid) {
     return [pscustomobject]@{
-      active=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
+      active=$false; alive=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
       heartbeat_stale=$true; heartbeat_age_seconds=[double]::PositiveInfinity; reason="lock_missing_or_invalid"
     }
   }
@@ -67,7 +67,7 @@ function Test-RunnerActive(
   $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
   if ($null -eq $proc) {
     return [pscustomobject]@{
-      active=$false; pid=$pidValue; stale=$true; verified=$false; identity_verified=$false
+      active=$false; alive=$false; pid=$pidValue; stale=$true; verified=$false; identity_verified=$false
       heartbeat_stale=$true; heartbeat_age_seconds=[double]::PositiveInfinity; reason="pid_not_alive"
     }
   }
@@ -103,6 +103,7 @@ function Test-RunnerActive(
 
   return [pscustomobject]@{
     active=$active
+    alive=$true
     pid=$pidValue
     stale=(-not $baseIdentityMatches -or ($commandLineAvailable -and -not $commandMatches))
     verified=$identityVerified
@@ -167,25 +168,31 @@ if (-not (Test-Path -LiteralPath $builder)) { throw "Missing panel builder: $bui
 
 & powershell -NoProfile -ExecutionPolicy Bypass -File $builder -RepoRoot $repoRoot -EnsurePageDirs | Out-Null
 $runnerState = Test-RunnerActive $lockPath $daemonHeartbeatPath $repoRoot $MainBranch $StaleMinutes
+$preexistingRunnerAlive = [bool]$runnerState.alive
+$preexistingRunnerIdentityVerified = [bool]$runnerState.identity_verified
+$preexistingRunnerReason = [string]$runnerState.reason
 $staleRunnerStopped = $false
 $staleRunnerPid = $null
 $staleRunnerHeartbeatAgeSeconds = $runnerState.heartbeat_age_seconds
 
-if ($runnerState.identity_unverifiable) {
-  throw "BLOCKED_LIVE_RUNNER_IDENTITY_UNVERIFIABLE_PID=$($runnerState.pid)"
+if ($runnerState.alive -and -not $runnerState.identity_verified) {
+  throw ("BLOCKED_LIVE_LOCK_OWNER_IDENTITY_UNVERIFIED_PID={0}_REASON={1}" -f $runnerState.pid, $runnerState.reason)
 } elseif ($runnerState.identity_verified -and $runnerState.heartbeat_stale) {
   $stopResult = Stop-VerifiedStaleRunnerTree $runnerState $lockPath
   $staleRunnerStopped = [bool]$stopResult.stopped
   $staleRunnerPid = $stopResult.pid
   $runnerState = [pscustomobject]@{
-    active=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
+    active=$false; alive=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
     heartbeat_stale=$false; heartbeat_age_seconds=0; reason="verified_stale_daemon_stopped"
   }
 } elseif ($runnerState.stale -and -not $runnerState.active -and (Test-Path -LiteralPath $lockPath)) {
+  if ($runnerState.alive) {
+    throw ("BLOCKED_LIVE_LOCK_OWNER_IDENTITY_UNVERIFIED_PID={0}_REASON={1}" -f $runnerState.pid, $runnerState.reason)
+  }
   Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
   $runnerState = [pscustomobject]@{
-    active=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
-    heartbeat_stale=$true; heartbeat_age_seconds=$staleRunnerHeartbeatAgeSeconds; reason="invalid_lock_removed"
+    active=$false; alive=$false; pid=$null; stale=$false; verified=$false; identity_verified=$false
+    heartbeat_stale=$true; heartbeat_age_seconds=$staleRunnerHeartbeatAgeSeconds; reason="dead_invalid_lock_removed"
   }
 }
 
@@ -223,6 +230,10 @@ $state = [ordered]@{
   max_tasks_per_scan = $MaxTasks
   runner_pid = $runnerPid
   runner_lock_active = (Test-Path -LiteralPath $lockPath)
+  preexisting_runner_alive = $preexistingRunnerAlive
+  preexisting_runner_identity_verified = $preexistingRunnerIdentityVerified
+  preexisting_runner_reason = $preexistingRunnerReason
+  live_unverified_lock_owner_fail_closed = $true
   stale_runner_identity_verified = [bool]$staleRunnerStopped
   stale_runner_stopped = [bool]$staleRunnerStopped
   stale_runner_pid = $staleRunnerPid
