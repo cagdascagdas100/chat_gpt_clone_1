@@ -20,6 +20,7 @@ DEFAULT_URL = (
 )
 EXPECTED_POSTCODE_FILE_COUNT = 121
 EXPECTED_TOTAL_DATA_ROWS = 1_741_096
+MINIMUM_ARCHIVE_BYTES = 1_000_000
 
 
 def utc_now() -> str:
@@ -55,6 +56,17 @@ def atomic_json(path: Path, payload: dict) -> None:
             pass
 
 
+def archive_is_reusable(path: Path) -> bool:
+    try:
+        return (
+            path.is_file()
+            and path.stat().st_size >= MINIMUM_ARCHIVE_BYTES
+            and zipfile.is_zipfile(path)
+        )
+    except OSError:
+        return False
+
+
 def download(url: str, destination: Path, timeout: int) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     last_error: Exception | None = None
@@ -63,7 +75,10 @@ def download(url: str, destination: Path, timeout: int) -> None:
         try:
             request = urllib.request.Request(
                 url,
-                headers={"User-Agent": "AAYS-TerraYield-internet-access-audit/1.0"},
+                headers={
+                    "User-Agent": "AAYS-TerraYield-internet-access-audit/1.0",
+                    "Accept": "application/zip, application/octet-stream;q=0.9, */*;q=0.1",
+                },
             )
             with urllib.request.urlopen(request, timeout=timeout) as response, temporary.open("wb") as out:
                 if int(getattr(response, "status", 200)) != 200:
@@ -75,8 +90,10 @@ def download(url: str, destination: Path, timeout: int) -> None:
                     out.write(chunk)
                 out.flush()
                 os.fsync(out.fileno())
-            if temporary.stat().st_size < 1_000_000:
+            if temporary.stat().st_size < MINIMUM_ARCHIVE_BYTES:
                 raise RuntimeError(f"DOWNLOAD_TOO_SMALL_{temporary.stat().st_size}")
+            if not zipfile.is_zipfile(temporary):
+                raise RuntimeError("DOWNLOAD_NOT_ZIP")
             os.replace(temporary, destination)
             return
         except Exception as exc:
@@ -85,6 +102,17 @@ def download(url: str, destination: Path, timeout: int) -> None:
             if attempt < 3:
                 time.sleep(attempt * 2)
     raise RuntimeError(f"DOWNLOAD_FAILED: {last_error}")
+
+
+def ensure_archive(url: str, destination: Path, timeout: int) -> str:
+    if archive_is_reusable(destination):
+        return "REUSED_VALIDATED_CACHE"
+    destination.unlink(missing_ok=True)
+    download(url, destination, timeout)
+    if not archive_is_reusable(destination):
+        destination.unlink(missing_ok=True)
+        raise RuntimeError("DOWNLOADED_ARCHIVE_FAILED_VALIDATION")
+    return "DOWNLOADED_AND_VALIDATED"
 
 
 def choose_column(headers: list[str], aliases: tuple[str, ...]) -> str | None:
@@ -206,8 +234,7 @@ def main() -> int:
         "final_ready": False,
     }
     try:
-        if not zip_path.exists():
-            download(args.url, zip_path, args.timeout)
+        report["archive_cache_action"] = ensure_archive(args.url, zip_path, args.timeout)
         report["archive_size_bytes"] = zip_path.stat().st_size
         report["archive_sha256"] = sha256_file(zip_path)
         report.update(audit_zip(zip_path, args.count_rows))
