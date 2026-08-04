@@ -2,314 +2,41 @@
 setlocal
 set "AAYS_CANONICAL_ROOT=%~dp0"
 set "AAYS_CMD_FILE=%~f0"
-set "AAYS_BOOTSTRAP_FILE=%TEMP%\aays_canonical_bootstrap_%RANDOM%_%RANDOM%.ps1"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:AAYS_CMD_FILE);$m='# AAYS_'+'POWERSHELL_BOOTSTRAP';$i=$s.IndexOf($m);if($i -lt 0){exit 97};$b=$s.Substring($i+$m.Length).TrimStart([char]13,[char]10);[IO.File]::WriteAllText($env:AAYS_BOOTSTRAP_FILE,$b,[Text.UTF8Encoding]::new($false));& $env:AAYS_BOOTSTRAP_FILE;exit $LASTEXITCODE"
+set "AAYS_BOOTSTRAP_FILE=%TEMP%\aays_contract6_%RANDOM%_%RANDOM%.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:AAYS_CMD_FILE);$m='# AAYS_'+'POWERSHELL_BOOTSTRAP';$i=$s.IndexOf($m);if($i -lt 0){exit 97};[IO.File]::WriteAllText($env:AAYS_BOOTSTRAP_FILE,$s.Substring($i+$m.Length).TrimStart([char]13,[char]10),[Text.UTF8Encoding]::new($false));& $env:AAYS_BOOTSTRAP_FILE;exit $LASTEXITCODE"
 set "AAYS_EXIT_CODE=%ERRORLEVEL%"
 del /q "%AAYS_BOOTSTRAP_FILE%" >nul 2>&1
 endlocal & exit /b %AAYS_EXIT_CODE%
 # AAYS_POWERSHELL_BOOTSTRAP
-$ErrorActionPreference = 'Stop'
-$root = [System.IO.Path]::GetFullPath([string]$env:AAYS_CANONICAL_ROOT).TrimEnd('\')
-$branch = 'codex/aays-single-runner-v5-20260706'
-$staleMinutes = 15
-$rootLauncherRepoPath = 'START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd'
-$bootstrapStatusRepoPath = 'docs/chatgpt_status/_shared/status/runner_bootstrap_latest.json'
-
-function Invoke-AaysGit {
-  param([string[]]$Arguments)
-  $old = $ErrorActionPreference
-  try {
-    $ErrorActionPreference = 'Continue'
-    $output = & git -c "safe.directory=$root" -C $root @Arguments 2>&1
-    $code = $LASTEXITCODE
-  } finally {
-    $ErrorActionPreference = $old
-  }
-  $text = ($output | Out-String).TrimEnd()
-  if ($code -ne 0) { throw ("GIT_FAILED[{0}]: {1}" -f ($Arguments -join ' '), $text) }
-  return $text
-}
-
-function Invoke-AaysGitAtResult {
-  param([string]$WorkingRoot, [string[]]$Arguments)
-  $old = $ErrorActionPreference
-  try {
-    $ErrorActionPreference = 'Continue'
-    $output = & git -c "safe.directory=$WorkingRoot" -C $WorkingRoot @Arguments 2>&1
-    $code = $LASTEXITCODE
-  } finally {
-    $ErrorActionPreference = $old
-  }
-  return [pscustomobject]@{
-    exit_code = $code
-    text = (($output | Out-String).TrimEnd())
-  }
-}
-
-if ([string]::IsNullOrWhiteSpace($root) -or $root.StartsWith('C:\', [System.StringComparison]::OrdinalIgnoreCase)) {
-  throw "BLOCKED_CANONICAL_ROOT_INVALID=$root"
-}
-if (-not (Test-Path -LiteralPath (Join-Path $root '.git'))) {
-  throw "BLOCKED_CANONICAL_REPO_GIT_MISSING=$root"
-}
-
-$currentBranch = (Invoke-AaysGit @('branch','--show-current')).Trim()
-if ($currentBranch -ne $branch) {
-  throw "BLOCKED_CANONICAL_BRANCH_MISMATCH_CURRENT=$currentBranch`_EXPECTED=$branch"
-}
-$trackedStatus = Invoke-AaysGit @('status','--porcelain','--untracked-files=no')
-if (-not [string]::IsNullOrWhiteSpace($trackedStatus)) {
-  throw ("BLOCKED_CANONICAL_TRACKED_WORKTREE_DIRTY: " + $trackedStatus)
-}
-
-$executingRootLauncherBlob = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
-if ($executingRootLauncherBlob -notmatch '^[0-9a-f]{40}$') {
-  throw "BLOCKED_EXECUTING_ROOT_LAUNCHER_BLOB_INVALID=$executingRootLauncherBlob"
-}
-$reexecDepth = 0
-if (-not [string]::IsNullOrWhiteSpace([string]$env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH)) {
-  if (-not [int]::TryParse([string]$env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH, [ref]$reexecDepth)) {
-    throw "BLOCKED_ROOT_LAUNCHER_REEXEC_DEPTH_INVALID=$($env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH)"
-  }
-}
-if ($reexecDepth -lt 0 -or $reexecDepth -gt 1) {
-  throw "BLOCKED_ROOT_LAUNCHER_REEXEC_DEPTH_OUT_OF_RANGE=$reexecDepth"
-}
-
-$shallow = (Invoke-AaysGit @('rev-parse','--is-shallow-repository')).Trim().ToLowerInvariant()
-$refspec = "+refs/heads/$branch`:refs/remotes/origin/$branch"
-$fetchArgs = @('fetch','--no-tags')
-if ($shallow -eq 'true') { $fetchArgs += '--unshallow' }
-$fetchArgs += @('origin',$refspec)
-[void](Invoke-AaysGit $fetchArgs)
-
-$remoteRef = "refs/remotes/origin/$branch"
-$remoteRootLauncherBlobBeforeSync = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$rootLauncherRepoPath"))).Trim()
-if ($remoteRootLauncherBlobBeforeSync -notmatch '^[0-9a-f]{40}$') {
-  throw "BLOCKED_REMOTE_ROOT_LAUNCHER_BLOB_INVALID=$remoteRootLauncherBlobBeforeSync"
-}
-$guardRepoPath = 'docs/chatgpt_status/_shared/automation/PREPARE_AAYS_LEGACY_RUNNER_LOCK_COMPAT_20260803.py'
-$tempGuard = Join-Path $env:TEMP ("aays_legacy_lock_guard_{0}_{1}.py" -f $PID,[guid]::NewGuid().ToString('N'))
-
-try {
-  $guardSource = Invoke-AaysGit @('show',("$remoteRef`:$guardRepoPath"))
-  [System.IO.File]::WriteAllText($tempGuard, ($guardSource + "`n"), [System.Text.UTF8Encoding]::new($false))
-  $guardOutput = & python $tempGuard --repo-root $root --main-branch $branch --stale-minutes $staleMinutes 2>&1
-  $guardExit = $LASTEXITCODE
-  $guardText = ($guardOutput | Out-String).Trim()
-  if ($guardExit -ne 0) { throw ("BLOCKED_REMOTE_LEGACY_LOCK_GUARD_FAILED: " + $guardText) }
-  try {
-    $guardState = ([string](($guardText | ConvertFrom-Json).state)).Trim().ToUpperInvariant()
-  } catch {
-    throw ("BLOCKED_REMOTE_LEGACY_LOCK_GUARD_OUTPUT_INVALID: " + $guardText)
-  }
-
-  $localHead = (Invoke-AaysGit @('rev-parse','HEAD')).Trim()
-  $remoteHead = (Invoke-AaysGit @('rev-parse',$remoteRef)).Trim()
-  $syncSafeStates = @('NO_LOCK','REMOVE_DEAD_LEGACY_LOCK','STOP_VERIFIED_STALE_LEGACY_DAEMON')
-  $liveStates = @('MIGRATE_VERIFIED_FRESH_LEGACY_LOCK','NOT_LEGACY')
-  $fastForwardApplied = $false
-  if ($localHead -ne $remoteHead) {
-    if ($syncSafeStates -contains $guardState) {
-      [void](Invoke-AaysGit @('merge','--ff-only',$remoteRef))
-      $fastForwardApplied = $true
-    } elseif ($liveStates -contains $guardState) {
-      throw "BLOCKED_CANONICAL_HEAD_BEHIND_WITH_POSSIBLE_LIVE_RUNNER_GUARD_STATE=$guardState`_LOCAL=$localHead`_REMOTE=$remoteHead"
-    } else {
-      throw "BLOCKED_CANONICAL_HEAD_BEHIND_WITH_UNKNOWN_GUARD_STATE=$guardState"
-    }
-  }
-
-  $localAfter = (Invoke-AaysGit @('rev-parse','HEAD')).Trim()
-  $remoteAfter = (Invoke-AaysGit @('rev-parse',$remoteRef)).Trim()
-  if ($localAfter -ne $remoteAfter) {
-    throw "BLOCKED_CANONICAL_HEAD_MISMATCH_AFTER_BOOTSTRAP_LOCAL=$localAfter`_REMOTE=$remoteAfter"
-  }
-
-  $remoteRootLauncherBlobAfterSync = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$rootLauncherRepoPath"))).Trim()
-  $diskRootLauncherBlobAfterSync = (Invoke-AaysGit @('hash-object','--',$env:AAYS_CMD_FILE)).Trim()
-  foreach ($blobCheck in @($remoteRootLauncherBlobAfterSync,$diskRootLauncherBlobAfterSync)) {
-    if ($blobCheck -notmatch '^[0-9a-f]{40}$') {
-      throw "BLOCKED_ROOT_LAUNCHER_SYNC_BLOB_INVALID=$blobCheck"
-    }
-  }
-  if ($remoteRootLauncherBlobBeforeSync -ne $remoteRootLauncherBlobAfterSync) {
-    throw "BLOCKED_REMOTE_ROOT_LAUNCHER_CHANGED_DURING_BOOTSTRAP_BEFORE=$remoteRootLauncherBlobBeforeSync`_AFTER=$remoteRootLauncherBlobAfterSync"
-  }
-  if ($diskRootLauncherBlobAfterSync -ne $remoteRootLauncherBlobAfterSync) {
-    throw "BLOCKED_DISK_ROOT_LAUNCHER_BLOB_MISMATCH_AFTER_SYNC_DISK=$diskRootLauncherBlobAfterSync`_REMOTE=$remoteRootLauncherBlobAfterSync"
-  }
-  if ($executingRootLauncherBlob -ne $remoteRootLauncherBlobAfterSync) {
-    if ($reexecDepth -ge 1) {
-      throw "BLOCKED_ROOT_LAUNCHER_REEXEC_LOOP_EXECUTING=$executingRootLauncherBlob`_REMOTE=$remoteRootLauncherBlobAfterSync"
-    }
-    $env:AAYS_ROOT_LAUNCHER_REEXEC_DEPTH = '1'
-    & $env:ComSpec /d /c ('"' + $env:AAYS_CMD_FILE + '"')
-    exit $LASTEXITCODE
-  }
-
-  $starter = Join-Path $root 'docs\chatgpt_status\_shared\automation\START_AAYS_SINGLE_RUNNER_WITH_PANEL_20260706.ps1'
-  if (-not (Test-Path -LiteralPath $starter -PathType Leaf)) {
-    throw "BLOCKED_CANONICAL_STARTER_MISSING_AFTER_BOOTSTRAP=$starter"
-  }
-  $rootLauncherBlob = $executingRootLauncherBlob
-  $remoteGuardBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$guardRepoPath"))).Trim()
-  $starterBlob = (Invoke-AaysGit @('hash-object','--',$starter)).Trim()
-  foreach ($blobCheck in @($rootLauncherBlob,$remoteGuardBlob,$starterBlob)) {
-    if ($blobCheck -notmatch '^[0-9a-f]{40}$') {
-      throw "BLOCKED_CANONICAL_CONTROL_BLOB_PROOF_INVALID=$blobCheck"
-    }
-  }
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $starter -RepoRoot $root
-  $starterExitCode = $LASTEXITCODE
-  if ($starterExitCode -ne 0) { exit $starterExitCode }
-
-  $bootstrapStatus = Join-Path $root 'docs\chatgpt_status\_shared\status\runner_bootstrap_latest.json'
-  if (-not (Test-Path -LiteralPath $bootstrapStatus -PathType Leaf)) {
-    throw "BLOCKED_BOOTSTRAP_STATUS_MISSING_AFTER_CANONICAL_START"
-  }
-  try {
-    $state = Get-Content -Raw -LiteralPath $bootstrapStatus -Encoding UTF8 | ConvertFrom-Json
-    Add-Member -InputObject $state -NotePropertyName root_launcher_guard_state -NotePropertyValue $guardState -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_sync_at -NotePropertyValue ((Get-Date).ToUniversalTime().ToString('o')) -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_refresh_mode -NotePropertyValue 'REMOTE_GUARD_PLUS_FF_ONLY_DIRECT_STARTER' -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_local_head -NotePropertyValue $localAfter -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_head -NotePropertyValue $remoteAfter -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_heads_match -NotePropertyValue ($localAfter -eq $remoteAfter) -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_fast_forward_applied -NotePropertyValue $fastForwardApplied -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_blob_sha -NotePropertyValue $rootLauncherBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_execution_blob_sha_before_sync -NotePropertyValue $executingRootLauncherBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_blob_sha_after_sync -NotePropertyValue $remoteRootLauncherBlobAfterSync -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_execution_source_verified -NotePropertyValue ($executingRootLauncherBlob -eq $remoteRootLauncherBlobAfterSync) -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_reexec_depth -NotePropertyValue $reexecDepth -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_remote_guard_blob_sha -NotePropertyValue $remoteGuardBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_starter_blob_sha -NotePropertyValue $starterBlob -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_contract_version -NotePropertyValue 5 -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_mode -NotePropertyValue 'ISOLATED_DETACHED_WORKTREE_BOUNDED_RETRY_REMOTE_READBACK' -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_retry_limit -NotePropertyValue 5 -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_remote_readback_required -NotePropertyValue $true -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_no_reset_hard -NotePropertyValue $true -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_direct_starter_handoff -NotePropertyValue $true -Force
-    Add-Member -InputObject $state -NotePropertyName root_launcher_wrapper_reentry_avoided -NotePropertyValue $true -Force
-    $tempStatus = "$bootstrapStatus.tmp.$PID.$([guid]::NewGuid().ToString('N'))"
-    [System.IO.File]::WriteAllText($tempStatus, (($state | ConvertTo-Json -Depth 30) + "`n"), [System.Text.UTF8Encoding]::new($false))
-    Move-Item -LiteralPath $tempStatus -Destination $bootstrapStatus -Force
-  } catch {
-    throw ("BLOCKED_ROOT_BOOTSTRAP_EVIDENCE_WRITE_FAILED: " + $_.Exception.Message)
-  }
-
-  $bootstrapPublishMaxAttempts = 5
-  $bootstrapPublishAttempt = 0
-  $bootstrapPublished = $false
-  $bootstrapPublishedCommit = $null
-  $bootstrapPublishedBlob = $null
-  $bootstrapPublishedParent = $null
-  $publishRoot = Join-Path $env:TEMP ("aays_bootstrap_publish_{0}_{1}" -f $PID,[guid]::NewGuid().ToString('N'))
-  try {
-    [void](Invoke-AaysGit @('checkout','--',$bootstrapStatusRepoPath))
-    while (-not $bootstrapPublished -and $bootstrapPublishAttempt -lt $bootstrapPublishMaxAttempts) {
-      $bootstrapPublishAttempt += 1
-      [void](Invoke-AaysGit $fetchArgs)
-      $bootstrapPublishedParent = (Invoke-AaysGit @('rev-parse',$remoteRef)).Trim()
-      if ($bootstrapPublishedParent -notmatch '^[0-9a-f]{40}$') {
-        throw "BLOCKED_BOOTSTRAP_PUBLISH_PARENT_INVALID=$bootstrapPublishedParent"
-      }
-
-      Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_attempt -NotePropertyValue $bootstrapPublishAttempt -Force
-      Add-Member -InputObject $state -NotePropertyName root_launcher_bootstrap_publish_parent -NotePropertyValue $bootstrapPublishedParent -Force
-      $bootstrapPayload = (($state | ConvertTo-Json -Depth 30) + "`n")
-
-      [void](Invoke-AaysGitAtResult $root @('worktree','prune'))
-      if (Test-Path -LiteralPath $publishRoot) {
-        Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
-      }
-      $addResult = Invoke-AaysGitAtResult $root @('worktree','add','--detach',$publishRoot,$bootstrapPublishedParent)
-      if ($addResult.exit_code -ne 0) {
-        throw ("BLOCKED_BOOTSTRAP_PUBLISH_WORKTREE_ADD_FAILED: " + $addResult.text)
-      }
-      try {
-        $publishBootstrapStatus = Join-Path $publishRoot ($bootstrapStatusRepoPath -replace '/', '\\')
-        $publishBootstrapDir = Split-Path -Parent $publishBootstrapStatus
-        New-Item -ItemType Directory -Force -Path $publishBootstrapDir | Out-Null
-        [System.IO.File]::WriteAllText($publishBootstrapStatus, $bootstrapPayload, [System.Text.UTF8Encoding]::new($false))
-
-        $bootstrapPublishedBlob = ((Invoke-AaysGitAtResult $publishRoot @('hash-object','--',$publishBootstrapStatus)).text).Trim()
-        if ($bootstrapPublishedBlob -notmatch '^[0-9a-f]{40}$') {
-          throw "BLOCKED_BOOTSTRAP_PUBLISH_BLOB_INVALID=$bootstrapPublishedBlob"
-        }
-        $addBootstrap = Invoke-AaysGitAtResult $publishRoot @('add','--',$bootstrapStatusRepoPath)
-        if ($addBootstrap.exit_code -ne 0) {
-          throw ("BLOCKED_BOOTSTRAP_PUBLISH_ADD_FAILED: " + $addBootstrap.text)
-        }
-        $stagedBootstrap = ((Invoke-AaysGitAtResult $publishRoot @('diff','--cached','--name-only')).text).Trim()
-        if ($stagedBootstrap -ne $bootstrapStatusRepoPath) {
-          throw "BLOCKED_BOOTSTRAP_PUBLISH_SCOPE_INVALID=$stagedBootstrap"
-        }
-        $commitResult = Invoke-AaysGitAtResult $publishRoot @('-c','user.name=AAYS canonical launcher','-c','user.email=aays-launcher@local.invalid','commit','--only','-m','aays: publish canonical bootstrap contract v5 ack','--',$bootstrapStatusRepoPath)
-        if ($commitResult.exit_code -ne 0) {
-          throw ("BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_FAILED: " + $commitResult.text)
-        }
-        $bootstrapPublishedCommit = ((Invoke-AaysGitAtResult $publishRoot @('rev-parse','HEAD')).text).Trim()
-        if ($bootstrapPublishedCommit -notmatch '^[0-9a-f]{40}$') {
-          throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_INVALID=$bootstrapPublishedCommit"
-        }
-        $pushResult = Invoke-AaysGitAtResult $publishRoot @('push','origin',("${bootstrapPublishedCommit}:refs/heads/$branch"))
-        if ($pushResult.exit_code -eq 0) {
-          $bootstrapPublished = $true
-        } elseif ($pushResult.text -match '(?i)(non-fast-forward|fetch first|rejected)') {
-          $bootstrapPublished = $false
-        } else {
-          throw ("BLOCKED_BOOTSTRAP_PUBLISH_PUSH_FAILED: " + $pushResult.text)
-        }
-      } finally {
-        $removeResult = Invoke-AaysGitAtResult $root @('worktree','remove','--force',$publishRoot)
-        Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
-      }
-    }
-  } finally {
-    [void](Invoke-AaysGitAtResult $root @('worktree','prune'))
-    Remove-Item -LiteralPath $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
-  }
-  if (-not $bootstrapPublished) {
-    throw "BLOCKED_BOOTSTRAP_PUBLISH_RETRY_EXHAUSTED_ATTEMPTS=$bootstrapPublishAttempt"
-  }
-
-  [void](Invoke-AaysGit $fetchArgs)
-  $ancestorResult = Invoke-AaysGitAtResult $root @('merge-base','--is-ancestor',$bootstrapPublishedCommit,$remoteRef)
-  if ($ancestorResult.exit_code -ne 0) {
-    throw "BLOCKED_BOOTSTRAP_PUBLISH_COMMIT_NOT_REMOTE_ANCESTOR=$bootstrapPublishedCommit"
-  }
-  $remoteBootstrapBlob = (Invoke-AaysGit @('rev-parse',("$remoteRef`:$bootstrapStatusRepoPath"))).Trim()
-  if ($remoteBootstrapBlob -ne $bootstrapPublishedBlob) {
-    throw "BLOCKED_BOOTSTRAP_REMOTE_BLOB_MISMATCH_LOCAL=$bootstrapPublishedBlob`_REMOTE=$remoteBootstrapBlob"
-  }
-  try {
-    $remoteBootstrapState = (Invoke-AaysGit @('show',("$remoteRef`:$bootstrapStatusRepoPath"))) | ConvertFrom-Json
-  } catch {
-    throw ("BLOCKED_BOOTSTRAP_REMOTE_READBACK_JSON_INVALID: " + $_.Exception.Message)
-  }
-  $remoteAckValid =
-    ([int]$remoteBootstrapState.root_launcher_contract_version -eq 5) -and
-    ([bool]$remoteBootstrapState.root_launcher_execution_source_verified) -and
-    ([bool]$remoteBootstrapState.root_launcher_heads_match) -and
-    ([string]$remoteBootstrapState.root_launcher_blob_sha -eq $rootLauncherBlob) -and
-    ([string]$remoteBootstrapState.root_launcher_execution_blob_sha_before_sync -eq $executingRootLauncherBlob) -and
-    ([string]$remoteBootstrapState.root_launcher_remote_blob_sha_after_sync -eq $remoteRootLauncherBlobAfterSync) -and
-    ([string]$remoteBootstrapState.root_launcher_remote_guard_blob_sha -eq $remoteGuardBlob) -and
-    ([string]$remoteBootstrapState.root_launcher_starter_blob_sha -eq $starterBlob) -and
-    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_mode -eq 'ISOLATED_DETACHED_WORKTREE_BOUNDED_RETRY_REMOTE_READBACK') -and
-    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_retry_limit -eq $bootstrapPublishMaxAttempts) -and
-    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_attempt -ge 1) -and
-    ([int]$remoteBootstrapState.root_launcher_bootstrap_publish_attempt -le $bootstrapPublishMaxAttempts) -and
-    ([string]$remoteBootstrapState.root_launcher_bootstrap_publish_parent -match '^[0-9a-f]{40}$') -and
-    ([bool]$remoteBootstrapState.root_launcher_bootstrap_remote_readback_required) -and
-    ([bool]$remoteBootstrapState.root_launcher_no_reset_hard) -and
-    ([bool]$remoteBootstrapState.root_launcher_direct_starter_handoff) -and
-    ([bool]$remoteBootstrapState.root_launcher_wrapper_reentry_avoided)
-  if (-not $remoteAckValid) {
-    throw "BLOCKED_BOOTSTRAP_REMOTE_READBACK_CONTRACT_V5_INVALID"
-  }
-  exit 0
-} finally {
-  Remove-Item -LiteralPath $tempGuard -Force -ErrorAction SilentlyContinue
-}
+$ErrorActionPreference='Stop'
+$root=[IO.Path]::GetFullPath([string]$env:AAYS_CANONICAL_ROOT).TrimEnd('\')
+$launcher=[IO.Path]::GetFullPath([string]$env:AAYS_CMD_FILE)
+$branch='codex/aays-single-runner-v5-20260706'
+$remoteRef="refs/remotes/origin/$branch"
+$coreBlob='3319ab4f7d61705bc4a793d04e29508e28da0456'
+$bootstrapPath='docs/chatgpt_status/_shared/status/runner_bootstrap_latest.json'
+$receiptPath='docs/chatgpt_status/_shared/status/runner_bootstrap_publish_receipt_latest.json'
+function G([string[]]$a){$o=& git -c "safe.directory=$root" -C $root @a 2>&1;$c=$LASTEXITCODE;$t=($o|Out-String).TrimEnd();if($c-ne 0){throw "GIT_FAILED[$($a-join ' ')]: $t"};$t}
+function GR([string]$r,[string[]]$a){$o=& git -c "safe.directory=$r" -C $r @a 2>&1;[pscustomobject]@{code=$LASTEXITCODE;text=(($o|Out-String).TrimEnd())}}
+if($root.StartsWith('C:\',[StringComparison]::OrdinalIgnoreCase)){throw "BLOCKED_CANONICAL_ROOT_INVALID=$root"}
+if((G @('branch','--show-current')).Trim()-ne $branch){throw 'BLOCKED_CANONICAL_BRANCH_MISMATCH'}
+$core=(G @('cat-file','blob',$coreBlob));$marker='# AAYS_'+'POWERSHELL_BOOTSTRAP';$mi=$core.IndexOf($marker);if($mi-lt 0){throw 'BLOCKED_PINNED_CORE_MARKER_MISSING'}
+$corePs=$core.Substring($mi+$marker.Length).TrimStart([char]13,[char]10);$tempCore=Join-Path $env:TEMP ("aays_core_v5_{0}_{1}.ps1"-f $PID,[guid]::NewGuid().ToString('N'))
+try{
+ [IO.File]::WriteAllText($tempCore,$corePs,[Text.UTF8Encoding]::new($false));$env:AAYS_CANONICAL_ROOT=$root+'\';$env:AAYS_CMD_FILE=$launcher
+ & powershell -NoProfile -ExecutionPolicy Bypass -File $tempCore;$coreExit=$LASTEXITCODE;if($coreExit-ne 0){exit $coreExit}
+ $refspec="+refs/heads/$branch`:refs/remotes/origin/$branch";[void](G @('fetch','--no-tags','origin',$refspec))
+ $rootBlob=(G @('rev-parse',("$remoteRef`:START_AAYS_CANONICAL_RUNNER_AND_PANEL.cmd"))).Trim();$diskBlob=(G @('hash-object','--',$launcher)).Trim();if($rootBlob-ne $diskBlob){throw "BLOCKED_ROOT_BLOB_MISMATCH=$diskBlob/$rootBlob"}
+ $bootstrapBlob=(G @('rev-parse',("$remoteRef`:$bootstrapPath"))).Trim();$bootstrapCommit=(G @('log','-1','--format=%H',$remoteRef,'--',$bootstrapPath)).Trim();$bootstrapParent=(G @('rev-parse',("$bootstrapCommit^"))).Trim();$bs=(G @('show',("$remoteRef`:$bootstrapPath"))|ConvertFrom-Json)
+ if([int]$bs.root_launcher_contract_version-ne 5-or-not [bool]$bs.root_launcher_execution_source_verified-or-not [bool]$bs.root_launcher_heads_match-or [string]$bs.root_launcher_blob_sha-ne $rootBlob-or [string]$bs.root_launcher_bootstrap_publish_parent-ne $bootstrapParent-or [string]$bs.root_launcher_bootstrap_publish_mode-ne 'ISOLATED_DETACHED_WORKTREE_BOUNDED_RETRY_REMOTE_READBACK'){throw 'BLOCKED_CONTRACT5_BOOTSTRAP_INVALID'}
+ $localHead=(G @('rev-parse','HEAD')).Trim();$remoteHead=(G @('rev-parse',$remoteRef)).Trim();if((GR $root @('merge-base','--is-ancestor',$localHead,$remoteRef)).code-ne 0){throw 'BLOCKED_LOCAL_HEAD_NOT_REMOTE_ANCESTOR'};if((GR $root @('merge-base','--is-ancestor',$bootstrapCommit,$remoteRef)).code-ne 0){throw 'BLOCKED_BOOTSTRAP_COMMIT_NOT_REMOTE_ANCESTOR'}
+ $max=5;$attempt=0;$published=$false;$receiptCommit=$null;$receiptBlob=$null;$receiptParent=$null;$wt=Join-Path $env:TEMP ("aays_receipt_{0}_{1}"-f $PID,[guid]::NewGuid().ToString('N'))
+ try{while(-not $published-and $attempt-lt $max){$attempt++;[void](G @('fetch','--no-tags','origin',$refspec));$receiptParent=(G @('rev-parse',$remoteRef)).Trim();$r=[ordered]@{schema_version=1;contract_version=6;published_at=(Get-Date).ToUniversalTime().ToString('o');branch=$branch;root_launcher_blob_sha=$rootBlob;pinned_contract5_core_blob_sha=$coreBlob;bootstrap_path=$bootstrapPath;bootstrap_blob_sha=$bootstrapBlob;bootstrap_publish_commit_sha=$bootstrapCommit;bootstrap_publish_parent_sha=$bootstrapParent;bootstrap_publish_attempt=[int]$bs.root_launcher_bootstrap_publish_attempt;bootstrap_heads_scope='PRESTART_SYNC_ONLY';bootstrap_prepublish_heads_match=$true;postpublish_head_relation='LOCAL_ANCESTOR_REMOTE_INCLUDES_BOOTSTRAP_COMMIT';canonical_local_head_observed=$localHead;remote_head_observed_before_receipt=$remoteHead;canonical_local_head_is_remote_ancestor=$true;receipt_publish_attempt=$attempt;receipt_publish_parent_sha=$receiptParent;no_reset_hard=$true;no_force_push=$true;final_ready=$false;fake_data=$false};$payload=($r|ConvertTo-Json -Depth 10)+"`n"
+  [void](GR $root @('worktree','prune'));if(Test-Path $wt){Remove-Item $wt -Recurse -Force -ErrorAction SilentlyContinue};$a=GR $root @('worktree','add','--detach',$wt,$receiptParent);if($a.code-ne 0){throw "BLOCKED_RECEIPT_WORKTREE_ADD: $($a.text)"}
+  try{$p=Join-Path $wt ($receiptPath-replace'/','\');New-Item -ItemType Directory -Force -Path (Split-Path $p)|Out-Null;[IO.File]::WriteAllText($p,$payload,[Text.UTF8Encoding]::new($false));$receiptBlob=(GR $wt @('hash-object','--',$p)).text.Trim();[void](GR $wt @('add','--',$receiptPath));if((GR $wt @('diff','--cached','--name-only')).text.Trim()-ne $receiptPath){throw 'BLOCKED_RECEIPT_SCOPE'};$c=GR $wt @('-c','user.name=AAYS canonical launcher','-c','user.email=aays-launcher@local.invalid','commit','--only','-m','aays: publish bootstrap contract v6 receipt','--',$receiptPath);if($c.code-ne 0){throw "BLOCKED_RECEIPT_COMMIT: $($c.text)"};$receiptCommit=(GR $wt @('rev-parse','HEAD')).text.Trim();$push=GR $wt @('push','origin',("${receiptCommit}:refs/heads/$branch"));if($push.code-eq 0){$published=$true}elseif($push.text-match'(?i)(non-fast-forward|fetch first|rejected)'){$published=$false}else{throw "BLOCKED_RECEIPT_PUSH: $($push.text)"}}
+  finally{[void](GR $root @('worktree','remove','--force',$wt));Remove-Item $wt -Recurse -Force -ErrorAction SilentlyContinue}}
+ }finally{[void](GR $root @('worktree','prune'));Remove-Item $wt -Recurse -Force -ErrorAction SilentlyContinue}
+ if(-not $published){throw "BLOCKED_RECEIPT_RETRY_EXHAUSTED=$attempt"};[void](G @('fetch','--no-tags','origin',$refspec));if((GR $root @('merge-base','--is-ancestor',$receiptCommit,$remoteRef)).code-ne 0){throw 'BLOCKED_RECEIPT_NOT_REMOTE_ANCESTOR'};$remoteReceiptBlob=(G @('rev-parse',("$remoteRef`:$receiptPath"))).Trim();if($remoteReceiptBlob-ne $receiptBlob){throw 'BLOCKED_RECEIPT_BLOB_MISMATCH'};$rr=(G @('show',("$remoteRef`:$receiptPath"))|ConvertFrom-Json)
+ if([int]$rr.contract_version-ne 6-or [string]$rr.bootstrap_publish_commit_sha-ne $bootstrapCommit-or [string]$rr.bootstrap_blob_sha-ne $bootstrapBlob-or [string]$rr.bootstrap_heads_scope-ne 'PRESTART_SYNC_ONLY'-or-not [bool]$rr.canonical_local_head_is_remote_ancestor-or [string]$rr.root_launcher_blob_sha-ne $rootBlob-or [string]$rr.pinned_contract5_core_blob_sha-ne $coreBlob){throw 'BLOCKED_RECEIPT_REMOTE_READBACK_INVALID'}
+ exit 0
+}finally{Remove-Item $tempCore -Force -ErrorAction SilentlyContinue}
