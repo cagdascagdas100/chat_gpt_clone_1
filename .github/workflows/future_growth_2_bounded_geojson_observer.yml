@@ -1,0 +1,89 @@
+name: future_growth_2 bounded GeoJSON observer
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/future_growth_2_bounded_geojson_observer.yml
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and self-test
+        run: |
+          python -m py_compile docs/chatgpt_status/aays1/shards/future_growth_2/automation/035_observe_bounded_exact_entity_geojson_response_001.py
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/035_observe_bounded_exact_entity_geojson_response_001.py --self-test > /tmp/self_test.json
+      - name: Observe exact official GeoJSON response
+        run: |
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/035_observe_bounded_exact_entity_geojson_response_001.py \
+            --manifest docs/chatgpt_status/aays1/shards/future_growth_2/evidence/035_bounded_exact_entity_geojson_response_source_manifest_20260804.json \
+            --output /tmp/planning_data_bounded_entity_geojson_response_observation_001_20260804.json \
+            --task-continuation-key aae4cb4e9436625e9055f30175593257a6342598982c54e4632a2014661b2ba6 \
+            --timeout-seconds 30
+      - name: Build bounded receipt
+        env:
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          output_path = Path('/tmp/planning_data_bounded_entity_geojson_response_observation_001_20260804.json')
+          output_bytes = output_path.read_bytes()
+          output = json.loads(output_bytes)
+          self_test = json.loads(Path('/tmp/self_test.json').read_text())
+          receipt = {
+              'schema_version': 3,
+              'architecture_version': 3,
+              'slot_id': 'future_growth_2',
+              'continuation_key': 'aae4cb4e9436625e9055f30175593257a6342598982c54e4632a2014661b2ba6',
+              'observed_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+              'github_head_sha': os.environ['HEAD_SHA'],
+              'github_run_id': os.environ['RUN_ID'],
+              'runner': 'github-hosted-ubuntu-latest',
+              'self_test': self_test.get('result'),
+              'output_state': output.get('state'),
+              'output_sha256': hashlib.sha256(output_bytes).hexdigest(),
+              'http_status': output.get('observation', {}).get('http_status'),
+              'content_type': output.get('observation', {}).get('content_type'),
+              'response_byte_count': output.get('observation', {}).get('response_byte_count'),
+              'response_sha256': output.get('observation', {}).get('response_sha256'),
+              'top_level_type': output.get('observation', {}).get('top_level_type'),
+              'feature_count': output.get('observation', {}).get('feature_count'),
+              'expected_entity_present': output.get('observation', {}).get('expected_entity_present'),
+              'response_body_persisted': False,
+              'geometry_persisted': False,
+              'coordinates_persisted': False,
+              'point_persisted': False,
+              'fake_data': False,
+          }
+          Path('/tmp/github_hosted_observation_receipt.json').write_text(json.dumps(receipt, sort_keys=True, separators=(',', ':')) + '\n')
+          PY
+      - name: Upload bounded artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-growth-2-bounded-geojson-observation
+          path: |
+            /tmp/planning_data_bounded_entity_geojson_response_observation_001_20260804.json
+            /tmp/github_hosted_observation_receipt.json
+            /tmp/self_test.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Require verified observation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          output = json.loads(Path('/tmp/planning_data_bounded_entity_geojson_response_observation_001_20260804.json').read_text())
+          if output.get('state') != 'PUBLISHED':
+              raise SystemExit('Exact official response was not verified: ' + str(output.get('network_error')))
+          PY
