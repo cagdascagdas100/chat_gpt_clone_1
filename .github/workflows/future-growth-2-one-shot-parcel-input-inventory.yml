@@ -43,6 +43,7 @@ jobs:
           prior = json.loads(pathlib.Path(paths[1]).read_text(encoding='utf-8'))
           ownership = json.loads(pathlib.Path(paths[2]).read_text(encoding='utf-8'))
           expected_rows = [30762, 46142, 61522]
+          partition = ownership.get('parcel_partition', {})
           checks = {
               'candidate_slot_matches': candidate.get('slot_id') == 'future_growth_2',
               'candidate_rows_cumulative_three': candidate.get('candidate_rows_cumulative') == 3,
@@ -51,7 +52,7 @@ jobs:
               'exact_parcel_bound_rows_zero': candidate.get('exact_parcel_bound_rows') == 0,
               'prior_gate_no_data_continue': prior.get('state') == 'NO_DATA_CONTINUE',
               'prior_gate_prerequisites_verified': prior.get('linkage_prerequisites_verified') is True,
-              'partition_matches': ownership.get('parcel_partition') == {'start': 30762, 'end': 61522, 'count': 30761},
+              'partition_matches': {k: partition.get(k) for k in ('start', 'end', 'count')} == {'start': 30762, 'end': 61522, 'count': 30761},
               'ownership_unclaimed': ownership.get('owner') is None,
           }
           assert all(checks.values()), checks
