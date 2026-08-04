@@ -1,0 +1,118 @@
+name: future-growth-2-one-shot-parcel-input-inventory
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/future-growth-2-one-shot-parcel-input-inventory.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build bounded tracked parcel-input inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/future_growth_2_inventory
+          python - <<'PY'
+          import hashlib, json, os, pathlib, re, subprocess
+
+          roots = (
+              'england_map_web/data/',
+              'docs/chatgpt_status/',
+              'outputs/',
+          )
+          suffixes = {'.json', '.jsonl', '.geojson', '.csv', '.tsv', '.parquet', '.gpkg', '.shp', '.xlsx'}
+          filename_tokens = ('parcel', 'cadastral', 'title', 'boundary', 'geometry', 'coordinate', 'centroid', 'polygon', 'uprn')
+          text_patterns = {
+              'parcel_id': re.compile(rb'(?i)["\']?parcel[_ -]?(?:id|uuid|key)["\']?'),
+              'title_number': re.compile(rb'(?i)["\']?title[_ -]?number["\']?'),
+              'uprn': re.compile(rb'(?i)["\']?uprn["\']?'),
+              'geometry': re.compile(rb'(?i)["\']?geometry["\']?'),
+              'coordinates': re.compile(rb'(?i)["\']?coordinates["\']?'),
+          }
+          tracked = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
+          candidates = []
+          scanned = 0
+          for raw in tracked:
+              if not raw:
+                  continue
+              path = raw.decode('utf-8', 'surrogateescape')
+              if not path.startswith(roots):
+                  continue
+              p = pathlib.Path(path)
+              if p.suffix.lower() not in suffixes:
+                  continue
+              if not p.is_file():
+                  continue
+              scanned += 1
+              lower = path.lower()
+              name_hits = sorted({token for token in filename_tokens if token in lower})
+              text_hits = []
+              size = p.stat().st_size
+              if p.suffix.lower() in {'.json', '.jsonl', '.geojson', '.csv', '.tsv'} and size <= 5_000_000:
+                  chunk = p.read_bytes()[:1_000_000]
+                  text_hits = sorted(name for name, pattern in text_patterns.items() if pattern.search(chunk))
+              if not name_hits and not text_hits:
+                  continue
+              blob = subprocess.check_output(['git', 'hash-object', path], text=True).strip()
+              candidates.append({
+                  'path': path,
+                  'git_blob_sha': blob,
+                  'size_bytes': size,
+                  'suffix': p.suffix.lower(),
+                  'filename_token_hits': name_hits,
+                  'text_key_hits': text_hits,
+                  'content_persisted': False,
+              })
+          candidates.sort(key=lambda item: (-len(item['text_key_hits']), -len(item['filename_token_hits']), item['path']))
+          candidates = candidates[:250]
+          result = {
+              'schema_version': 3,
+              'architecture_version': 3,
+              'workstream_id': 'AAYS_21_SLOT_SAFE_PARALLEL_V1',
+              'slot_id': 'future_growth_2',
+              'source_head': os.environ['GITHUB_SHA'],
+              'github_run_id': os.environ['GITHUB_RUN_ID'],
+              'github_run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'scanned_tracked_data_files': scanned,
+              'candidate_count': len(candidates),
+              'candidates': candidates,
+              'file_content_persisted': False,
+              'geometry_persisted': False,
+              'coordinates_persisted': False,
+              'fake_data': False,
+          }
+          raw = (json.dumps(result, sort_keys=True, separators=(',', ':')) + '\n').encode()
+          out = pathlib.Path('/tmp/future_growth_2_inventory/tracked_parcel_candidate_input_inventory.json')
+          out.write_bytes(raw)
+          receipt = {
+              'schema_version': 3,
+              'slot_id': 'future_growth_2',
+              'github_run_id': os.environ['GITHUB_RUN_ID'],
+              'github_sha': os.environ['GITHUB_SHA'],
+              'inventory_sha256': hashlib.sha256(raw).hexdigest(),
+              'candidate_count': len(candidates),
+              'file_content_persisted': False,
+              'geometry_persisted': False,
+              'coordinates_persisted': False,
+              'fake_data': False,
+          }
+          pathlib.Path('/tmp/future_growth_2_inventory/inventory_execution_receipt.json').write_text(
+              json.dumps(receipt, sort_keys=True, separators=(',', ':')) + '\n', encoding='utf-8'
+          )
+          PY
+      - name: Upload bounded inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-growth-2-parcel-input-inventory
+          path: /tmp/future_growth_2_inventory
+          if-no-files-found: error
+          retention-days: 1
