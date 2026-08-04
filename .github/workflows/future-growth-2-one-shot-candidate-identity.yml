@@ -1,0 +1,71 @@
+name: future-growth-2-one-shot-candidate-identity
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/future-growth-2-one-shot-candidate-identity.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact tracked inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object docs/chatgpt_status/aays1/shards/future_growth_2/automation/041_validate_slot_bounded_parcel_candidate_identity_001.py)" = '3b51441ef08b0ebc3e29fa8b5e1b8ecbde7e7251'
+          test "$(git hash-object england_map_web/data/aays_21_slots/future_growth_2/official_uprn_address_identity_batch_097_20260724.json)" = 'a89dbe21ab5e4eff6b16eed26f0ad2f9858a5219'
+          test "$(git hash-object england_map_web/data/aays_21_slots/future_growth_2/title_boundary_entity_to_parcel_linkage_input_gate_001_20260804.json)" = '94d24b9f41e9c107350dd3d3682bf472e8e44780'
+          test "$(git hash-object docs/chatgpt_status/_shared/slots_21/future_growth_2/ownership_latest.json)" = 'c44f1a9d495d3e8a45af42570971cf8fb2acc486'
+          test "$(git hash-object docs/chatgpt_status/aays1/shards/future_growth_2/evidence/041_slot_bounded_parcel_candidate_identity_source_manifest_20260804.json)" = 'e063be8abfc4833d191754e1cad15b8c6bcf6c96'
+          test "$(git hash-object docs/chatgpt_status/aays1/shards/future_growth_2/evidence/041_slot_bounded_parcel_candidate_identity_script_test_20260804.json)" = '25d406cd2027f0c38135efe89158092b797ddf88'
+          script='docs/chatgpt_status/aays1/shards/future_growth_2/automation/041_validate_slot_bounded_parcel_candidate_identity_001.py'
+          test "$(sha256sum "$script" | awk '{print $1}')" = '6a60300ef6cee4c707a499976dbace2320bc7e76d88b711127e869c0b9c2dbf4'
+          python -m py_compile "$script"
+          python "$script" --self-test > /tmp/self_test.json
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/self_test.json',encoding='utf-8'))
+          assert data['passed']==8 and data['target']==8, data
+          PY
+      - name: Run slot-bounded candidate identity validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/future_growth_2_candidate_artifact
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/041_validate_slot_bounded_parcel_candidate_identity_001.py \
+            --candidate-input england_map_web/data/aays_21_slots/future_growth_2/official_uprn_address_identity_batch_097_20260724.json \
+            --prior-gate england_map_web/data/aays_21_slots/future_growth_2/title_boundary_entity_to_parcel_linkage_input_gate_001_20260804.json \
+            --ownership docs/chatgpt_status/_shared/slots_21/future_growth_2/ownership_latest.json \
+            --output /tmp/future_growth_2_candidate_artifact/slot_bounded_parcel_candidate_identity_validation_001_20260804.json \
+            --task-continuation-key f932382983123437e59abd63893eba3cd1e97cfa10ebbad4900e3aecdb1c02c9
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('/tmp/future_growth_2_candidate_artifact/slot_bounded_parcel_candidate_identity_validation_001_20260804.json')
+          raw=out.read_bytes(); data=json.loads(raw)
+          assert data['state'] in {'NO_DATA_CONTINUE','BLOCKED'}, data
+          assert data['source_rows_persisted'] is False
+          assert data['geometry_persisted'] is False
+          assert data['coordinates_persisted'] is False
+          assert data['point_persisted'] is False
+          assert data['inferred_linkage_persisted'] is False
+          receipt={'schema_version':3,'architecture_version':3,'workstream_id':'AAYS_21_SLOT_SAFE_PARALLEL_V1','slot_id':'future_growth_2','task_id':'future_growth_2_slot_bounded_parcel_candidate_identity_validation_001_20260804','continuation_key':'f932382983123437e59abd63893eba3cd1e97cfa10ebbad4900e3aecdb1c02c9','runner':'github-hosted-ubuntu-latest','github_run_id':os.environ['GITHUB_RUN_ID'],'github_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],'github_sha':os.environ['GITHUB_SHA'],'result_state':data['state'],'output_sha256':hashlib.sha256(raw).hexdigest(),'completed_count':data['completed_count'],'target_count':data['target_count'],'validated_candidate_count':data['validated_candidate_count'],'produced_business_rows':data['produced_business_rows'],'fake_data':False}
+          pathlib.Path('/tmp/future_growth_2_candidate_artifact/github_hosted_execution_receipt.json').write_text(json.dumps(receipt,sort_keys=True,separators=(',',':'))+'\n',encoding='utf-8')
+          PY
+      - name: Upload bounded result
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-growth-2-candidate-identity-validation
+          path: /tmp/future_growth_2_candidate_artifact
+          if-no-files-found: error
+          retention-days: 1
