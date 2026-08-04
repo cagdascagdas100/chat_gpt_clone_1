@@ -1,0 +1,86 @@
+name: future-growth-2-one-shot-geojson
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/future-growth-2-one-shot-geojson.yml
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify tracked gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          script='docs/chatgpt_status/aays1/shards/future_growth_2/automation/035_observe_bounded_exact_entity_geojson_response_001.py'
+          test "$(git hash-object "$script")" = '52576a79e9dbf534abcd751f8c3ca940a509f8b7'
+          test "$(sha256sum "$script" | awk '{print $1}')" = 'd5ab9f78c57ed2bc845870f4b928b1af27e37d0a3009351fc08b837b695c42c5'
+          python -m py_compile "$script"
+          python "$script" --self-test > /tmp/self_test.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/self_test.json', encoding='utf-8'))
+          assert data['passed'] == 8 and data['target'] == 8, data
+          PY
+      - name: Run exact bounded observer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/future_growth_2_artifact
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/035_observe_bounded_exact_entity_geojson_response_001.py \
+            --manifest docs/chatgpt_status/aays1/shards/future_growth_2/evidence/035_bounded_exact_entity_geojson_response_source_manifest_20260804.json \
+            --output /tmp/future_growth_2_artifact/planning_data_bounded_entity_geojson_response_observation_001_20260804.json \
+            --task-continuation-key aae4cb4e9436625e9055f30175593257a6342598982c54e4632a2014661b2ba6 \
+            --timeout-seconds 30
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          out = pathlib.Path('/tmp/future_growth_2_artifact/planning_data_bounded_entity_geojson_response_observation_001_20260804.json')
+          raw = out.read_bytes()
+          data = json.loads(raw)
+          assert data['state'] in {'PUBLISHED', 'NO_DATA_CONTINUE'}, data
+          assert data['response_body_persisted'] is False
+          assert data['geometry_persisted'] is False
+          assert data['coordinates_persisted'] is False
+          assert data['point_persisted'] is False
+          receipt = {
+              'schema_version': 3,
+              'architecture_version': 3,
+              'workstream_id': 'AAYS_21_SLOT_SAFE_PARALLEL_V1',
+              'slot_id': 'future_growth_2',
+              'task_id': 'future_growth_2_planning_data_bounded_entity_geojson_response_observation_001_20260804',
+              'continuation_key': 'aae4cb4e9436625e9055f30175593257a6342598982c54e4632a2014661b2ba6',
+              'runner': 'github-hosted-ubuntu-latest',
+              'github_run_id': os.environ['GITHUB_RUN_ID'],
+              'github_run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'github_sha': os.environ['GITHUB_SHA'],
+              'result_state': data['state'],
+              'output_sha256': hashlib.sha256(raw).hexdigest(),
+              'produced_business_rows': data['produced_business_rows'],
+              'response_body_persisted': False,
+              'geometry_persisted': False,
+              'coordinates_persisted': False,
+              'point_persisted': False,
+              'fake_data': False,
+          }
+          pathlib.Path('/tmp/future_growth_2_artifact/github_hosted_execution_receipt.json').write_text(
+              json.dumps(receipt, sort_keys=True, separators=(',', ':')) + '\n', encoding='utf-8'
+          )
+          PY
+      - name: Upload bounded result
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-growth-2-geojson-observation
+          path: /tmp/future_growth_2_artifact
+          if-no-files-found: error
+          retention-days: 1
