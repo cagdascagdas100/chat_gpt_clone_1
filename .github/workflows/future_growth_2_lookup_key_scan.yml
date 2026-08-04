@@ -1,0 +1,75 @@
+name: future_growth_2 lookup-key scan
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/future_growth_2_lookup_key_scan.yml
+      - docs/chatgpt_status/aays1/shards/future_growth_2/automation/046_scan_tracked_sample_candidate_lookup_keys_001.py
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and self-test
+        run: |
+          python -m py_compile docs/chatgpt_status/aays1/shards/future_growth_2/automation/046_scan_tracked_sample_candidate_lookup_keys_001.py
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/046_scan_tracked_sample_candidate_lookup_keys_001.py --self-test > /tmp/self_test.json
+      - name: Scan canonical tracked files
+        run: |
+          python docs/chatgpt_status/aays1/shards/future_growth_2/automation/046_scan_tracked_sample_candidate_lookup_keys_001.py \
+            --root . \
+            --output /tmp/tracked_sample_candidate_lookup_key_scan_001_20260804.json
+      - name: Build bounded execution receipt
+        env:
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          output_path = Path('/tmp/tracked_sample_candidate_lookup_key_scan_001_20260804.json')
+          output_bytes = output_path.read_bytes()
+          output = json.loads(output_bytes)
+          self_test = json.loads(Path('/tmp/self_test.json').read_text())
+          receipt = {
+              'schema_version': 3,
+              'architecture_version': 3,
+              'slot_id': 'future_growth_2',
+              'task_continuation_key': 'c2b92dd259a08b72a2f882f32c72848ee688704147cb08f0f478bf2c3320b675',
+              'executed_at': datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),
+              'runner': 'github-hosted-ubuntu-latest',
+              'github_head_sha': os.environ['HEAD_SHA'],
+              'github_run_id': os.environ['RUN_ID'],
+              'py_compile': 'PASS',
+              'self_test': self_test.get('result'),
+              'output_state': output.get('state'),
+              'output_sha256': hashlib.sha256(output_bytes).hexdigest(),
+              'validated_candidate_count': output.get('validated_candidate_count'),
+              'official_lookup_key_available_count': output.get('official_lookup_key_available_count'),
+              'scan_metrics': output.get('scan_metrics'),
+              'produced_business_rows': 0,
+              'fake_data': False,
+              'inferred_linkage_persisted': False,
+          }
+          Path('/tmp/tracked_sample_candidate_lookup_key_scan_execution_receipt_20260804.json').write_text(
+              json.dumps(receipt, sort_keys=True, separators=(',', ':')) + '\n'
+          )
+          PY
+      - name: Upload bounded scan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-growth-2-lookup-key-scan
+          path: |
+            /tmp/tracked_sample_candidate_lookup_key_scan_001_20260804.json
+            /tmp/tracked_sample_candidate_lookup_key_scan_execution_receipt_20260804.json
+            /tmp/self_test.json
+          if-no-files-found: error
+          retention-days: 1
