@@ -252,7 +252,7 @@ def scan_repository(root: Path) -> dict[str, Any]:
     for summary in summaries.values():
         categories = sorted({category for item in summary["occurrences"] for category in item["lookup_fields"]})
         summary["lookup_categories"] = categories
-        summary["official_lookup_key_available"] = bool(categories & LOOKUP_CATEGORIES)
+        summary["official_lookup_key_available"] = bool(set(categories) & LOOKUP_CATEGORIES)
         if summary["official_lookup_key_available"]:
             available_count += 1
 
