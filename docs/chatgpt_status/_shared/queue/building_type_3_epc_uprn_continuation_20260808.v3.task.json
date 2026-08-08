@@ -1,0 +1,61 @@
+{
+  "schema_version": 3,
+  "architecture_version": 3,
+  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
+  "slot_id": "building_type_3",
+  "task_id": "building-type-3-epc-uprn-continuation-20260808",
+  "attempt_id": "building-type-3-156956d8-epc-uprn",
+  "continuation_key": "156956d82287940d18d8b81ff6b00d5dc8e9f2d23d02dd72252c686dc342db1e",
+  "source_head": "2df42448f842d5fd3a2f42bbc1800d9b68fb02e6",
+  "canonical_branch": "codex/aays-single-runner-v5-20260706",
+  "state": "PENDING",
+  "executable": false,
+  "first_unverified_step": "EPC verisi indirip UPRN ile konut tipi eşleştirmesi yapmak.",
+  "extension_scope": "building_type_1/2/3 slots are for England-wide building type classification",
+  "user_supplied_progress": {
+    "osm_elements_scanned": 2400,
+    "classified": 1286
+  },
+  "read_paths": [
+    "docs/chatgpt_status/_shared/slots_21/manifest_latest.json",
+    "england_map_web/data/parcel_building_type_england_pilot.geojson",
+    "england_map_web/data/pilot_building_types.py"
+  ],
+  "exact_write_paths": [
+    "england_map_web/data/aays_21_slots/building_type_3/epc_uprn_dwelling_type_matches_pilot.json",
+    "england_map_web/data/aays_21_slots/building_type_3/epc_uprn_match_quality.json",
+    "docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/building_type_3/heartbeat_latest.json"
+  ],
+  "resource_class": "network_low_cpu",
+  "timeout_seconds": 1800,
+  "execution_gate": {
+    "canonical_extension_binding_present": false,
+    "pilot_geojson_present_on_source_head": false,
+    "pipeline_script_present_on_source_head": false,
+    "reason": "building_type_3 is supplied by the conversation extension, but the canonical manifest at source_head still declares the original 22-slot architecture and both supplied pilot artifact paths return 404 on the canonical branch. Do not produce business classification output until these prerequisites are canonically readable.",
+    "requires_user_action": false,
+    "next_safe_action": "Automatically verify whether a canonical extension registry or later canonical HEAD introduces building_type_3 and the two pilot artifacts. Once readable, discover an authentication-free official/public EPC source, record URL/access/license/hash evidence, download only permitted data, validate UPRN and dwelling-type fields, join by normalized UPRN, report matched/unmatched/duplicate counts, and never infer dwelling type for unmatched UPRNs. If no authentication-free suitable EPC source exists, record NO_DATA_CONTINUE rather than requesting user data or credentials."
+  },
+  "acceptance_conditions": {
+    "extension_binding_verified": true,
+    "pilot_artifacts_readable": true,
+    "official_public_epc_source_evidence_recorded": true,
+    "uprn_field_validated": true,
+    "dwelling_type_field_validated": true,
+    "match_counts_recorded": true,
+    "unmatched_rows_not_inferred": true,
+    "remote_readback_required_after_publish": true
+  },
+  "safety_flags": {
+    "fake_data": false,
+    "credential_request": false,
+    "paid_source_required": false,
+    "db_write": false,
+    "migration": false,
+    "production_deploy": false
+  },
+  "created_at": "2026-08-08T01:21:00Z",
+  "final_ready": false
+}
