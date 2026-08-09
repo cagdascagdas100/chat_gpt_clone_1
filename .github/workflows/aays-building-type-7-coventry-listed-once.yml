@@ -1,0 +1,150 @@
+name: AAYS building_type_7 Coventry listed buildings one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-7-coventry-listed-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-7-coventry-listed-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Append 50 evidence-backed Coventry records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, datetime as dt, hashlib, json, pathlib, time, urllib.request
+          SLOT='building_type_7'; TASK='building-type-7-england-classification-v1-20260808'
+          GEO=pathlib.Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          MAN=pathlib.Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          STA=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          CT=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          RUN=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          SRC='https://www.coventry.gov.uk/downloads/file/37774/listed-buildings'; SRC_NAME='Coventry City Council Listed Buildings Report 2026'
+          NOW=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          DATA='''DCT317||Alton Hall Farmhouse off Washbrook Lane, Allesley||SP 28672 82296||217894||-1.5796592||52.4378892||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT128||Alverston Cottage, Coundon Green||SP 31304 81707||218465||-1.5409985||52.4324504||residential_cottage_historic||R_COTTAGE||residential||C||0.65||2||1
+DCT73||Arts and Crafts Block with teaching block and house block to north west of main block at Woodlands School||SP 27754 79429||218633||-1.5933997||52.4121626||education||P_EDUCATION||institutional||B||0.85||3||0
+DCT103||Bablake School, Hill Street||SP 33042 79119||218502||-1.5156913||52.4090831||education||P_EDUCATION||institutional||B||0.85||3||0
+DCT258||Baptist Chapel||SP 32954 78561||218556||-1.5170397||52.4040721||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT48||Barn approximately 3 metres west of Hazel Grove Farmhouse, Wall Hill Road||SP 29698 83630||217892||-1.5644489||52.449827||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0
+DCT219||Barn approximately 50 metres north of Hungerley Hall Farmhouse||SP 38405 79509||424270||-1.4368117||52.41224||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0
+DCT266||Barn at Conways Farm, Banner Lane||SP 27434 78554||218410||-1.5981755||52.4043126||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0
+DCT198||Barn at Ivy Farm||SP 30827 76735||218507||-1.5484705||52.3877802||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0
+DCT112||Barn Cottage, Lower Eastern Green Lane||SP 28706 79981||218532||-1.5793571||52.4170761||residential_cottage_historic||R_COTTAGE||residential||C||0.65||2||1
+DCT203||Barn Farmhouse, Lower Eastern Green Lane||SP 28698 79985||218531||-1.5794744||52.4171125||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT159||Barn W of no. 76 Birmingham Road, Allesley [now 82-86]||SP 29963 80722||218443||-1.5608097||52.4236704||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0
+DCT1186||Barras Lane, Coventry Synagogue and Rabbi's House||SP 3266 7920||504695||-1.5212988||52.4098341||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT86||Beechwood Hotel, Sandpits Lane||SP 31821 82931||218560||-1.5332784||52.4434241||hospitality||C_HOSPITALITY||commercial||B||0.85||3||0
+DCT253||Belgrade Theatre||SP 33143 79200||469317||-1.5141987||52.4098052||cultural_venue||P_CULTURAL||institutional||B||0.85||3||0
+DCT58||Birch Tree Farmhouse, Wall Hill Road||SP 30734 82597||218592||-1.5493004||52.4404835||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT134||Bird Grove House, George Eliot Road||SP 33746 80341||218482||-1.5052197||52.4200257||residential_house_historic||R_HOUSE||residential||C||0.65||2||1
+DCT240||Block of two gymnasia to south of main block at Woodlands School||SP 27772 79360||218632||-1.5931408||52.4115414||education||P_EDUCATION||institutional||B||0.85||3||0
+DCT76||Blue Coat School||SP 33488 79123||218544||-1.5091348||52.409092||education||P_EDUCATION||institutional||B||0.85||3||0
+DCT102||Bonds Hospital, Hill Street||SP 33006 79127||218501||-1.5162198||52.4091572||healthcare_historic||P_HEALTHCARE||institutional||C||0.65||2||1
+DCT107||Bremond College, Leamington Road||SP 32985 77030||218511||-1.5167343||52.3903069||education||P_EDUCATION||institutional||B||0.85||3||0
+DCT95||Bridge Cottage, Stivichall Croft||SP 32544 76709||218584||-1.5232453||52.3874475||residential_cottage_historic||R_COTTAGE||residential||C||0.65||2||1
+DCT47||Brook Farmhouse, Pickford Green Lane||SP 27421 80718||217890||-1.59819||52.4237672||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT304||Canal House, Drapers Fields||SP 33333 79692||218621||-1.5113568||52.4142166||residential_house_historic||R_HOUSE||residential||C||0.65||2||1
+DCT71||Canal Warehouse, Leicester Row||SP 33339 79601||218623||-1.5112776||52.4133982||warehouse||I_WAREHOUSE||industrial||B||0.85||3||0
+DCT281||Canley Hall Farmhouse, Ivy Farm Lane, Canley||SP 30881 76660||218505||-1.547684||52.387103||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT106||Canley Hall Farmhouses||SP 30820 76613||218509||-1.5485846||52.3866839||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT305||Cathedral of St Michael||SP 33627 79064||218629||-1.5070974||52.4085531||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT243||Cemetery Chapel||SP 34083 78234||218520||-1.5004785||52.4010635||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT109||Cemetery Lodge||SP 34092 78338||218517||-1.5003357||52.4019979||residential_lodge_historic||R_LODGE||residential||C||0.65||2||1
+DCT276||Chapel of St James and St Christopher, Spon Street||SP 32426 79036||218573||-1.5247545||52.4083737||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT241||Cheylesmore Manor, Manor House Drive||SP 33353 78650||218536||-1.5111662||52.4048481||residential_manor_historic||R_MANOR||residential||C||0.65||2||1
+DCT319||Christ Church, Frankpledge Road||SP 34289 77427||470037||-1.4975333||52.393796||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT126||Church Lane Farmhouse||SP 30631 80622||218459||-1.5509959||52.4227345||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT271||Church of All Saints, Birmingham Road, Allesley||SP 30193 80661||218430||-1.557433||52.4231094||religious||P_RELIGIOUS||institutional||B||0.85||3||0
+DCT147||Conways Farmhouse, Banner Lane||SP 27453 78536||218409||-1.5978977||52.4041498||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT168||Coundon Hall (The Old Hall Inn)||SP 31473 82647||218587||-1.5384247||52.4408911||hospitality||C_HOSPITALITY||commercial||B||0.85||3||0
+DCT54||Coundon Hall Farmhouse, Tamworth Road||SP 31254 82940||218588||-1.541619||52.4435376||residential_farmhouse_historic||R_FARMHOUSE||residential||C||0.65||2||1
+DCT249||Coundon Lodge, Coundon Green||SP 31232 81769||218463||-1.5420517||52.4330119||residential_lodge_historic||R_LODGE||residential||C||0.65||2||1
+DCT130||County Hall||SP 33514 78998||218470||-1.508765||52.4079667||government_civic||P_GOVERNMENT||institutional||B||0.85||3||0
+DCT40||Coventry Central Baths (original part including sunbathing terraces)||SP 33797 79125||466553||-1.5045923||52.4090911||public_leisure_historic||P_LEISURE||institutional||C||0.65||2||1
+DCT1412||Coventry City Library building (former Locarno Dancehall)||SP 3320 7905||||-1.5133756||52.4084533||library||P_CULTURAL||institutional||B||0.85||3||0
+DCT1403||Coventry Civic Centre 2||SP 3362 7885||||-1.5072217||52.4066298||government_civic||P_GOVERNMENT||institutional||B||0.85||3||0
+DCT1202||Coventry Retail Market, Queen Victoria Road||SP 3313 7888||505918||-1.5144213||52.4069292||commercial_retail||C_RETAIL||commercial||B||0.85||3||0
+DCT220||Coventry Station, including attached platform structures||SP 33181 78237||443814||-1.5137352||52.4011458||transport_station||P_TRANSPORT||institutional||B||0.85||3||0
+DCT186||Cromwell Cottage||SP 27508 77381||218466||-1.5971838||52.3937638||residential_cottage_historic||R_COTTAGE||residential||C||0.65||2||1
+DCT280||Cruck House, Hinkley Road, Walsgrave||SP 37974 80982||218503||-1.442981||52.4255117||residential_house_historic||R_HOUSE||residential||C||0.65||2||1
+DCT204||Dial House, Lower Eastern Green Lane||SP 28868 79945||218533||-1.5769784||52.416744||residential_house_historic||R_HOUSE||residential||C||0.65||2||1
+DCT187||Dormer Cottage, Washbrook Lane, Allesley||SP 29347 82035||217893||-1.569753||52.4355072||residential_cottage_historic||R_COTTAGE||residential||C||0.65||2||1
+DCT265||Dovecote at Allesley Hall||SP 29944 80148||218408||-1.5611403||52.4185113||agricultural_outbuilding||I_AGRICULTURAL||agricultural||B||0.85||3||0'''
+          def load(p):
+              with p.open(encoding='utf-8') as f: return json.load(f)
+          def dump(p,o,compact=False):
+              p.parent.mkdir(parents=True,exist_ok=True); s=json.dumps(o,ensure_ascii=False,separators=(',',':') if compact else None,indent=None if compact else 2); p.write_text(s+('' if compact else '\n'),encoding='utf-8'); return s.encode()
+          task=load(CT)
+          if task.get('task_id')!=TASK: raise SystemExit('task mismatch')
+          if task.get('owner') not in (None,''): raise SystemExit(f"live owner; refusing second owner/task: {task.get('owner')!r}")
+          geo=load(GEO); feats=geo.get('features')
+          if not isinstance(feats,list): raise SystemExit('invalid shard')
+          before=len(feats); already=set()
+          for f in feats:
+              if f.get('id') not in (None,''): already.add(str(f['id']))
+              p=f.get('properties') or {}
+              for k in ('parcel_id','osm_id'):
+                  if p.get(k) not in (None,''): already.add(str(p[k]))
+          rows=[]
+          for line in DATA.splitlines():
+              d,n,g,pr,lon,lat,primary,code,cat,ev,score,lvl,review=line.split('||')
+              fid='COV_LB_'+d; pid='COV_DESIGUID_'+d
+              if fid in already or pid in already or d in already: continue
+              rows.append(dict(d=d,n=n,g=g,pr=pr,lon=float(lon),lat=float(lat),primary=primary,code=code,cat=cat,ev=ev,score=float(score),lvl=int(lvl),review=review=='1'))
+          if len(rows)<50: raise SystemExit(f'only {len(rows)} new listed-building records; refusing <50 append')
+          rows=rows[:50]
+          raw=None; errors=[]
+          for attempt in range(1,4):
+              try:
+                  req=urllib.request.Request(SRC,headers={'User-Agent':'AAYS-building-type-7/1.0'})
+                  with urllib.request.urlopen(req,timeout=90) as r: raw=r.read()
+                  if raw.startswith(b'%PDF') and len(raw)>10000: break
+                  errors.append(f'attempt {attempt} bad payload'); raw=None
+              except Exception as e:
+                  errors.append(f'attempt {attempt}: {type(e).__name__}: {e}'); time.sleep(attempt)
+          if raw is None: raise SystemExit('official PDF fetch failed: '+' | '.join(errors))
+          src_sha=hashlib.sha256(raw).hexdigest(); new=[]
+          for r in rows:
+              fid='COV_LB_'+r['d']; pid='COV_DESIGUID_'+r['d']; ex=f"{r['d']} | {r['n']} | Listed Building | Centred {r['g']}"+(f" | Preferred Ref {r['pr']}" if r['pr'] else '')
+              props={'parcel_id':pid,'parcel_id_semantics':'stable Coventry DesigUID-derived slot identifier; not a cadastral parcel ID','osm_id':None,'slot_id':SLOT,'region':'West Midlands','area':'Coventry','local_authority':'Coventry City Council','postcode':'','building_type_primary':r['primary'],'building_type_code':r['code'],'building_category':r['cat'],'confidence_score':r['score'],'confidence_level_1_to_4':r['lvl'],'evidence_level':r['ev'],'source_count':1,'source':SRC_NAME,'source_url':SRC,'source_hash':src_sha,'source_hash_method':'sha256_raw_source_pdf','match_method':'official_designation_name_type_inference','evidence_excerpt':ex,'evidence_excerpt_sha256':hashlib.sha256(ex.encode()).hexdigest(),'source_evidence_excerpt':{'DesigUID':r['d'],'Name':r['n'],'Type':'Listed Building','Grid Reference':r['g'],**({'Preferred Ref':r['pr']} if r['pr'] else {})},'sources':[{'source_name':SRC_NAME,'url_or_local_path':SRC,'accessed_at':NOW,'sha256':src_sha,'sha256_scope':'raw_source_pdf','licence':'not stated in report','granularity':'listed_building_designation','fields_used':['DesigUID','Name','Type','Grid Reference']+(['Preferred Ref'] if r['pr'] else []),'supports_field':'building_type_primary','match_method':'official_designation_name_type_inference','match_score':r['score']}],'geometry_match_method':'official_os_grid_reference_centroid_epsg27700_to_wgs84','address_match_method':'official_designation_name','limitations':'Building type is inferred only from official designation name/type. Historic designation names may not equal current operational use. parcel_id is DesigUID-derived, not cadastral.','needs_manual_review':r['review'],'fake_data':False,'final_ready':False,'updated_at':NOW}
+              new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[r['lon'],r['lat']]},'properties':props})
+          feats.extend(new); after=len(feats)
+          if after-before<50 or after<=before: raise SystemExit(f'no progress: {before}->{after}')
+          geo['features']=feats; geo['enhanced_at']=NOW; geo['last_batch_source']=SRC_NAME; geo['last_batch_source_sha256']=src_sha; geo['evidence_policy']='Evidence-backed only; historic designation-name inference capped at C/2; explicit functional names capped at B/3 without corroboration.'
+          geo_bytes=dump(GEO,geo,True); geo_sha=hashlib.sha256(geo_bytes).hexdigest()
+          ev=collections.Counter(); conf=collections.Counter(); typ=collections.Counter(); unknown=0
+          for f in feats:
+              p=f.get('properties') or {}; e=str(p.get('evidence_level') or 'U'); l=str(p.get('confidence_level_1_to_4') or 1); t=str(p.get('building_type_primary') or 'unknown'); ev[e]+=1; conf[l]+=1; typ[t]+=1; unknown+=(t=='unknown')
+          man=load(MAN); sources=[s for s in (man.get('sources') or []) if s.get('name')!=SRC_NAME]; sources.append({'name':SRC_NAME,'url':SRC,'features_used':50,'accessed_at':NOW,'source_sha256':src_sha,'source_hash_method':'sha256_raw_source_pdf','note':'Official designation source; function inferred only where designation name supports it.'})
+          man.update({'slot_id':SLOT,'generated_at':NOW,'total_features':after,'classified':after-unknown,'unknown':unknown,'evidence_distribution':{k:ev.get(k,0) for k in ('A','B','C','D','U')},'type_distribution':dict(sorted(typ.items())),'confidence_level_distribution':{k:conf.get(k,0) for k in ('1','2','3','4')},'sources':sources,'fake_data':False,'final_ready':False,'feature_count':after,'geojson_sha256':geo_sha,'geojson_path':str(GEO),'manifest_updated_at':NOW,'feature_count_before':before,'feature_count_after':after,'added_feature_count':after-before,'last_batch_city':'Coventry','last_batch_source':SRC_NAME,'last_batch_source_sha256':src_sha,'note':'Existing shard preserved; appended 50 Coventry City Council listed-building records outside feature.id/parcel_id/osm_id.'}); dump(MAN,man)
+          dump(RUN,{'slot_id':SLOT,'task_id':TASK,'generated_at':NOW,'feature_count_before':before,'feature_count_after':after,'added_feature_count':after-before,'city':'Coventry','source':SRC_NAME,'source_url':SRC,'source_sha256':src_sha,'classification_method':'official_designation_name_type_inference','confidence_policy':{'explicit_functional_name':{'evidence_level':'B','confidence_level_1_to_4':3},'historic_or_ambiguous_use_name':{'evidence_level':'C','confidence_level_1_to_4':2}},'records':[f['properties']|{'feature_id':f['id'],'geometry':f['geometry']} for f in new],'fake_data':False,'final_ready':False})
+          sta=load(STA); sta.update({'state':'IN_PROGRESS','updated_at':NOW,'final_ready':False,'classified_count':after-unknown,'unknown_count':unknown,'total_elements':after,'confidence_distribution':{k:conf.get(k,0) for k in ('1','2','3','4')},'evidence_distribution':{k:ev.get(k,0) for k in ('A','B','C','D','U')},'output_sha256':geo_sha,'fake_data':False,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'last_batch':{'city':'Coventry','added_feature_count':after-before,'source':SRC_NAME,'source_sha256':src_sha,'classification_basis':'official_designation_name_type_inference','evidence_level_distribution':dict(collections.Counter(r['ev'] for r in rows)),'confidence_level_distribution':dict(collections.Counter(str(r['lvl']) for r in rows))}}); dump(STA,sta)
+          cp=load(CP); batch=int(cp.get('next_batch_index') or 4); cp.update({'state':'IN_PROGRESS','updated_at':NOW,'final_ready':False,'first_unverified_step_status':'BATCH_APPENDED_50_COVENTRY_LISTED_BUILDINGS_CONTINUATION_REQUIRED','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':batch+1,'next_target_feature_count':after+50,'last_processed_ids_sample':[f['id'] for f in new[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR/OSM CORROBORATION FOR CURRENT-USE AND PARCEL BINDING','fake_data':False,'last_batch':{'batch_index':batch,'city':'Coventry','source':SRC_NAME,'source_sha256':src_sha,'added_feature_count':after-before,'new_feature_ids':[f['id'] for f in new]}}); summary=cp.get('summary') or {}; summary.update({'new_features_appended':after-before,'current_feature_count':after}); cp['summary']=summary; dump(CP,cp)
+          print(json.dumps({'before':before,'after':after,'added':after-before,'source_sha256':src_sha,'batch_evidence_distribution':dict(collections.Counter(r['ev'] for r in rows)),'batch_confidence_distribution':dict(collections.Counter(str(r['lvl']) for r in rows))}))
+          PY
+      - name: Commit outputs and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/aays-building-type-7-coventry-listed-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- .github/workflows/aays-building-type-7-coventry-listed-once.yml england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+          git diff --cached --check
+          git commit -m 'building_type_7 append Coventry listed-buildings batch'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
