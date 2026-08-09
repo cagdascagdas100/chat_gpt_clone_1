@@ -1,4 +1,4 @@
-name: tmp building_type_4 Exeter batch
+name: tmp building_type_4 Exeter OSM batch
 
 on:
   push:
@@ -13,13 +13,14 @@ permissions:
 jobs:
   append:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
 
-      - name: Append 50 Exeter FHRS features
+      - name: Append 50 new Exeter OSM building features
         shell: bash
         run: |
           set -euo pipefail
@@ -27,19 +28,24 @@ jobs:
           python3 <<'PY'
           import hashlib
           import json
+          import time
+          import urllib.parse
           import urllib.request
-          import xml.etree.ElementTree as ET
           from collections import Counter
           from datetime import datetime, timezone
           from pathlib import Path
 
-          slot_id = "building_type_4"
-          task_id_expected = "building-type-4-england-classification-v1-20260808"
-          expected_before = 300
-          expected_target = 350
-          batch_city = "Exeter"
-          source_name = "Food Standards Agency FHRS daily open data - Exeter City"
-          source_url = "https://ratings.food.gov.uk/api/open-data-files/FHRS073en-GB.xml"
+          SLOT_ID = "building_type_4"
+          TASK_ID = "building-type-4-england-classification-v1-20260808"
+          EXPECTED_BEFORE = 300
+          EXPECTED_TARGET = 350
+          CITY = "Exeter"
+          BBOX = "50.65,-3.65,50.82,-3.40"
+          SOURCE_NAME = "OpenStreetMap via Overpass API"
+          ENDPOINTS = [
+              "https://overpass-api.de/api/interpreter",
+              "https://overpass.kumi.systems/api/interpreter",
+          ]
 
           shard_path = Path("england_map_web/data/building_type/shards/building_type_4_latest.geojson")
           manifest_path = Path("england_map_web/data/building_type/shards/building_type_4_manifest_latest.json")
@@ -56,262 +62,348 @@ jobs:
           features = shard.get("features", [])
           before = len(features)
 
-          assert task.get("slot_id") == slot_id, "wrong slot"
-          assert task.get("task_id") == task_id_expected, "task changed"
-          assert task.get("owner") is None, "current_task owner is not null; refusing second owner/task"
-          assert task.get("state") == "READY", "current_task is not READY"
-          assert before == expected_before, f"stale shard count {before} != {expected_before}"
-          assert int(checkpoint.get("current_feature_count", -1)) == before, "checkpoint/shard count mismatch"
-          assert int(checkpoint.get("next_target_feature_count", -1)) == expected_target, "target changed"
-          assert manifest.get("fake_data") is False and checkpoint.get("fake_data") is False and status.get("fake_data") is False, "fake_data guard"
-          assert manifest.get("final_ready") is False and checkpoint.get("final_ready") is False and status.get("final_ready") is False, "final_ready guard"
+          assert task.get("slot_id") == SLOT_ID, "slot changed"
+          assert task.get("task_id") == TASK_ID, "task changed"
+          assert task.get("owner") is None, "live owner detected; refusing second owner/task"
+          assert task.get("state") == "READY", "task no longer READY"
+          assert before == EXPECTED_BEFORE, f"stale shard count: {before}"
+          assert int(checkpoint.get("current_feature_count", -1)) == EXPECTED_BEFORE, "checkpoint/shard mismatch"
+          assert int(checkpoint.get("next_target_feature_count", -1)) == EXPECTED_TARGET, "target changed"
+          for doc in (manifest, checkpoint, status, task):
+              assert doc.get("fake_data") is False, "fake_data guard failed"
+              assert doc.get("final_ready") is False, "final_ready guard failed"
 
-          processed = set()
-          for feat in features:
-              props = feat.get("properties") or {}
-              for value in (feat.get("id"), props.get("parcel_id"), props.get("osm_id")):
+          already_processed_ids = set()
+          for feature in features:
+              props = feature.get("properties") or {}
+              for value in (feature.get("id"), props.get("parcel_id"), props.get("osm_id")):
                   if value is not None and str(value).strip():
-                      processed.add(str(value).strip())
+                      already_processed_ids.add(str(value).strip())
 
-          req = urllib.request.Request(source_url, headers={"User-Agent": "AAYS-building-type/1.0"})
-          with urllib.request.urlopen(req, timeout=90) as response:
-              raw = response.read()
+          query = f'''[out:json][timeout:120];
+          (
+            way["building"]({BBOX});
+            relation["building"]({BBOX});
+          );
+          out center tags;'''
+          query_sha = hashlib.sha256(query.encode("utf-8")).hexdigest()
+          payload = urllib.parse.urlencode({"data": query}).encode("utf-8")
+          raw = None
+          endpoint_used = None
+          errors = []
+          for attempt in range(2):
+              for endpoint in ENDPOINTS:
+                  try:
+                      req = urllib.request.Request(
+                          endpoint,
+                          data=payload,
+                          headers={
+                              "User-Agent": "AAYS-building-type/1.0 (derived-data research)",
+                              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                          },
+                          method="POST",
+                      )
+                      with urllib.request.urlopen(req, timeout=150) as response:
+                          candidate_raw = response.read()
+                      parsed = json.loads(candidate_raw.decode("utf-8"))
+                      if isinstance(parsed.get("elements"), list) and parsed["elements"]:
+                          raw = candidate_raw
+                          data = parsed
+                          endpoint_used = endpoint
+                          break
+                      errors.append(f"{endpoint}: empty elements")
+                  except Exception as exc:
+                      errors.append(f"{endpoint}: {type(exc).__name__}: {exc}")
+              if raw is not None:
+                  break
+              time.sleep(8)
+          if raw is None:
+              raise RuntimeError("all Overpass endpoints failed: " + " | ".join(errors))
           source_sha = hashlib.sha256(raw).hexdigest()
-          root = ET.fromstring(raw)
 
-          def local(tag):
-              return tag.rsplit("}", 1)[-1]
+          generic = {"yes", "building", "unknown", "construction", "no"}
 
-          def text(el, wanted):
-              for child in el.iter():
-                  if local(child.tag) == wanted:
-                      return (child.text or "").strip()
-              return ""
+          def classify(tags):
+              building = (tags.get("building") or "").strip().lower()
+              amenity = (tags.get("amenity") or "").strip().lower()
+              shop = (tags.get("shop") or "").strip().lower()
+              tourism = (tags.get("tourism") or "").strip().lower()
+              office = (tags.get("office") or "").strip().lower()
+              landuse = (tags.get("landuse") or "").strip().lower()
 
-          def classify(business_type):
-              b = business_type.strip().lower()
-              if "school" in b or "college" in b or "university" in b:
-                  return "education", "P_EDUCATION", "institutional"
-              if "hospital" in b or "caring" in b or "childcare" in b:
-                  return "healthcare_care", "P_HEALTHCARE", "institutional"
-              if "hotel" in b or "bed & breakfast" in b or "guest house" in b:
-                  return "hotel_or_hospitality", "C_HOTEL", "commercial"
-              if "pub" in b or "bar" in b or "nightclub" in b:
-                  return "commercial_hospitality", "C_HOSPITALITY", "commercial"
-              if "restaurant" in b or "cafe" in b or "canteen" in b:
-                  return "commercial_hospitality", "C_HOSPITALITY", "commercial"
-              if "takeaway" in b or "sandwich" in b:
-                  return "commercial_hospitality", "C_TAKEAWAY", "commercial"
-              if "retailer" in b or "supermarket" in b or "hypermarket" in b:
-                  return "commercial_retail", "C_RETAIL", "commercial"
-              if "distributor" in b or "transporter" in b:
-                  return "warehouse", "C_LOGISTICS", "commercial"
-              if "manufacturer" in b or "packer" in b:
-                  return "industrial", "I_MANUFACTURING", "industrial"
-              return "commercial_other", "C_OTHER", "commercial"
+              residential = {"apartments", "residential", "house", "detached", "semidetached_house", "terrace", "bungalow", "dormitory", "static_caravan"}
+              industrial = {"industrial", "factory", "manufacture"}
+              warehouse = {"warehouse"}
+              commercial = {"commercial", "retail", "office", "supermarket", "kiosk"}
+              education = {"school", "college", "university", "kindergarten"}
+              healthcare = {"hospital", "clinic"}
+              religious = {"church", "chapel", "cathedral", "mosque", "synagogue", "temple", "religious"}
+              public = {"civic", "public", "government", "townhall", "fire_station", "police"}
+              hospitality = {"hotel", "hostel"}
+              transport = {"train_station", "transportation"}
+              agriculture = {"farm", "farm_auxiliary", "barn", "cowshed", "stable", "greenhouse"}
+              outbuilding = {"garage", "garages", "shed", "carport"}
+
+              if building in residential:
+                  return ("residential", "R_" + building.upper(), "residential", building)
+              if building in industrial:
+                  return ("industrial", "I_INDUSTRIAL", "industrial", building)
+              if building in warehouse:
+                  return ("warehouse", "I_WAREHOUSE", "industrial", building)
+              if building in commercial:
+                  return ("commercial", "C_" + building.upper(), "commercial", building)
+              if building in education:
+                  return ("education", "P_EDUCATION", "institutional", building)
+              if building in healthcare:
+                  return ("healthcare", "P_HEALTHCARE", "institutional", building)
+              if building in religious:
+                  return ("religious", "P_RELIGIOUS", "institutional", building)
+              if building in public:
+                  return ("public_civic", "P_CIVIC", "institutional", building)
+              if building in hospitality:
+                  return ("hotel_or_hospitality", "C_HOTEL", "commercial", building)
+              if building in transport:
+                  return ("transport", "P_TRANSPORT", "infrastructure", building)
+              if building in agriculture:
+                  return ("agricultural", "A_AGRICULTURAL", "agricultural", building)
+              if building in outbuilding:
+                  return ("outbuilding", "O_OUTBUILDING", "ancillary", building)
+
+              # Generic building tags are used only when another explicit OSM use tag supplies evidence.
+              if building in generic:
+                  if amenity in {"school", "college", "university", "kindergarten"}:
+                      return ("education", "P_EDUCATION", "institutional", f"amenity={amenity}")
+                  if amenity in {"hospital", "clinic", "doctors", "dentist", "nursing_home"}:
+                      return ("healthcare", "P_HEALTHCARE", "institutional", f"amenity={amenity}")
+                  if amenity in {"place_of_worship"}:
+                      return ("religious", "P_RELIGIOUS", "institutional", f"amenity={amenity}")
+                  if amenity in {"fire_station", "police", "townhall", "community_centre", "library"}:
+                      return ("public_civic", "P_CIVIC", "institutional", f"amenity={amenity}")
+                  if shop:
+                      return ("commercial_retail", "C_RETAIL", "commercial", f"shop={shop}")
+                  if office:
+                      return ("commercial_office", "C_OFFICE", "commercial", f"office={office}")
+                  if tourism in {"hotel", "hostel", "guest_house"}:
+                      return ("hotel_or_hospitality", "C_HOTEL", "commercial", f"tourism={tourism}")
+                  if landuse == "industrial":
+                      return ("industrial", "I_INDUSTRIAL", "industrial", "landuse=industrial")
+                  return None
+
+              # Any other explicit non-generic building tag is retained as an OSM-specific building class.
+              if building:
+                  return ("other_building", "O_OSM_" + building.upper().replace("-", "_")[:48], "other", building)
+              return None
 
           candidates = []
-          for el in root.iter():
-              if local(el.tag) != "EstablishmentDetail":
+          for element in data.get("elements", []):
+              element_type = element.get("type")
+              if element_type not in {"way", "relation"}:
                   continue
-              fhrsid = text(el, "FHRSID")
-              if not fhrsid:
+              osm_numeric = element.get("id")
+              tags = element.get("tags") or {}
+              mapped = classify(tags)
+              if mapped is None:
                   continue
-              feature_id = f"EXE_FHRS_{fhrsid}"
-              parcel_id = f"EXE_FHRSID_{fhrsid}"
-              if feature_id in processed or parcel_id in processed or fhrsid in processed:
+              center = element.get("center") or {}
+              lat, lon = center.get("lat"), center.get("lon")
+              if lat is None or lon is None:
                   continue
-              local_authority = text(el, "LocalAuthorityName")
-              if local_authority and "exeter" not in local_authority.lower():
+              osm_id = f"{element_type}/{osm_numeric}"
+              prefix = "WAY" if element_type == "way" else "REL"
+              feature_id = f"EXE_OSM_{prefix}_{osm_numeric}"
+              parcel_id = f"EXE_OSM_{prefix}_{osm_numeric}"
+              collision_keys = {feature_id, parcel_id, osm_id, str(osm_numeric)}
+              if collision_keys & already_processed_ids:
                   continue
-              business_type = text(el, "BusinessType")
-              if not business_type or "mobile caterer" in business_type.lower():
-                  continue
-              try:
-                  lat = float(text(el, "Latitude"))
-                  lon = float(text(el, "Longitude"))
-              except (TypeError, ValueError):
-                  continue
-              if not (49.0 <= lat <= 61.0 and -9.0 <= lon <= 3.0):
-                  continue
-              candidates.append((int(fhrsid) if fhrsid.isdigit() else 10**18, fhrsid, el, lat, lon))
+              primary, code, category, evidence_value = mapped
+              candidates.append({
+                  "element_type": element_type,
+                  "osm_numeric": osm_numeric,
+                  "osm_id": osm_id,
+                  "feature_id": feature_id,
+                  "parcel_id": parcel_id,
+                  "lat": float(lat),
+                  "lon": float(lon),
+                  "tags": tags,
+                  "primary": primary,
+                  "code": code,
+                  "category": category,
+                  "evidence_value": evidence_value,
+              })
 
-          candidates.sort(key=lambda item: (item[0], item[1]))
-          assert len(candidates) >= 50, f"only {len(candidates)} eligible Exeter FHRS candidates"
+          candidates.sort(key=lambda c: (c["element_type"], int(c["osm_numeric"])))
+          if len(candidates) < 50:
+              raise RuntimeError(f"only {len(candidates)} eligible non-colliding classified Exeter OSM buildings")
+          selected = candidates[:50]
+          assert len({c["feature_id"] for c in selected}) == 50
+          assert len({c["parcel_id"] for c in selected}) == 50
+          assert len({c["osm_id"] for c in selected}) == 50
 
           now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
           new_features = []
-          new_ids = []
           records = []
-          for _, fhrsid, el, lat, lon in candidates[:50]:
-              feature_id = f"EXE_FHRS_{fhrsid}"
-              parcel_id = f"EXE_FHRSID_{fhrsid}"
-              business_name = text(el, "BusinessName")
-              business_type = text(el, "BusinessType")
-              business_type_id = text(el, "BusinessTypeID")
-              local_business_id = text(el, "LocalAuthorityBusinessID")
-              local_authority = text(el, "LocalAuthorityName") or "Exeter City"
-              postcode = text(el, "PostCode")
-              rating = text(el, "RatingValue")
-              rating_date = text(el, "RatingDate")
-              primary, code, category = classify(business_type)
-              excerpt = f"FHRSID {fhrsid} | {business_name} | BusinessType {business_type} | LocalAuthority {local_authority} | PostCode {postcode}"
+          for c in selected:
+              tags = c["tags"]
+              excerpt_parts = [
+                  f"OSM {c['osm_id']}",
+                  f"building={tags.get('building', '')}",
+              ]
+              for key in ("amenity", "shop", "office", "tourism", "name", "addr:street", "addr:housenumber", "addr:postcode"):
+                  value = tags.get(key)
+                  if value:
+                      excerpt_parts.append(f"{key}={value}")
+              excerpt = " | ".join(excerpt_parts)[:900]
               props = {
-                  "parcel_id": parcel_id,
-                  "parcel_id_semantics": "stable FSA FHRSID-derived slot identifier; not a cadastral parcel ID",
-                  "osm_id": None,
-                  "slot_id": slot_id,
+                  "parcel_id": c["parcel_id"],
+                  "parcel_id_semantics": "stable OSM-derived slot identifier; not a cadastral parcel ID",
+                  "osm_id": c["osm_id"],
+                  "osm_element_type": c["element_type"],
+                  "slot_id": SLOT_ID,
                   "region": "South West",
-                  "area": batch_city,
-                  "local_authority": local_authority,
-                  "postcode": postcode,
-                  "building_type_primary": primary,
-                  "building_type_code": code,
-                  "building_category": category,
-                  "confidence_score": 0.55,
+                  "area": CITY,
+                  "building_type_primary": c["primary"],
+                  "building_type_code": c["code"],
+                  "building_category": c["category"],
+                  "confidence_score": 0.65,
                   "confidence_level_1_to_4": 2,
                   "evidence_level": "D",
                   "source_count": 1,
-                  "source": source_name,
-                  "source_url": source_url,
+                  "source": SOURCE_NAME,
+                  "source_url": endpoint_used,
                   "source_hash": source_sha,
-                  "source_hash_method": "sha256_raw_source_xml",
-                  "match_method": "fhrs_business_type_premises_proxy",
+                  "source_hash_method": "sha256_raw_overpass_json",
+                  "query_sha256": query_sha,
+                  "match_method": "osm_building_tag_or_explicit_use_tag",
                   "evidence_excerpt": excerpt,
                   "evidence_excerpt_sha256": hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
                   "source_evidence_excerpt": {
-                      "FHRSID": fhrsid,
-                      "BusinessName": business_name,
-                      "BusinessType": business_type,
-                      "BusinessTypeID": business_type_id,
-                      "LocalAuthorityBusinessID": local_business_id,
-                      "LocalAuthorityName": local_authority,
-                      "PostCode": postcode,
-                      "RatingValue": rating,
-                      "RatingDate": rating_date
+                      "osm_id": c["osm_id"],
+                      "building": tags.get("building"),
+                      "amenity": tags.get("amenity"),
+                      "shop": tags.get("shop"),
+                      "office": tags.get("office"),
+                      "tourism": tags.get("tourism"),
+                      "name": tags.get("name"),
+                      "classification_basis": c["evidence_value"],
                   },
                   "sources": [{
-                      "source_name": "Food Standards Agency FHRS daily open data",
-                      "url_or_local_path": source_url,
+                      "source_name": SOURCE_NAME,
+                      "url_or_local_path": endpoint_used,
                       "accessed_at": now,
                       "sha256": source_sha,
-                      "sha256_scope": "raw_source_xml",
-                      "licence": "Open Government Licence v3.0",
-                      "granularity": "food_business_establishment",
-                      "fields_used": ["FHRSID", "BusinessName", "BusinessType", "BusinessTypeID", "LocalAuthorityBusinessID", "LocalAuthorityName", "PostCode", "Latitude", "Longitude"],
+                      "sha256_scope": "raw_overpass_json_runtime_only",
+                      "query_sha256": query_sha,
+                      "licence": "OpenStreetMap data, ODbL 1.0",
+                      "granularity": "osm_way_or_relation",
+                      "fields_used": ["id", "center", "building", "amenity", "shop", "office", "tourism", "name"],
                       "supports_field": "building_type_primary",
-                      "match_method": "fhrs_business_type_premises_proxy",
-                      "match_score": 0.55
+                      "match_method": "osm_building_tag_or_explicit_use_tag",
+                      "match_score": 0.65,
                   }],
-                  "geometry_match_method": "fhrs_geocode_point",
-                  "address_match_method": "fhrs_business_address",
-                  "limitations": "FHRS BusinessType is a premises-use proxy; it does not prove cadastral parcel identity, exact building fabric, or residential subtype.",
+                  "geometry_match_method": "overpass_center_point",
+                  "limitations": "OSM tag and center-point evidence only; does not prove cadastral parcel identity, exact footprint, structural fabric, tenure, or current occupancy.",
                   "needs_manual_review": True,
                   "fake_data": False,
                   "final_ready": False,
                   "updated_at": now,
-                  "feature_id": feature_id
+                  "feature_id": c["feature_id"],
               }
               feature = {
                   "type": "Feature",
-                  "id": feature_id,
-                  "geometry": {"type": "Point", "coordinates": [lon, lat]},
-                  "properties": props
+                  "id": c["feature_id"],
+                  "geometry": {"type": "Point", "coordinates": [c["lon"], c["lat"]]},
+                  "properties": props,
               }
-              new_features.append(feature)
-              new_ids.append(feature_id)
-              records.append({**props, "geometry": feature["geometry"]})
-
-          assert len(new_features) == 50
-          assert len(set(new_ids)) == 50
-          assert not (set(new_ids) & processed), "feature.id collision"
-          for feature in new_features:
-              props = feature["properties"]
-              assert str(props["parcel_id"]) not in processed, "parcel_id collision"
-              assert props["osm_id"] is None
-              assert props["fake_data"] is False and props["final_ready"] is False
+              assert not ({feature["id"], props["parcel_id"], props["osm_id"]} & already_processed_ids)
               assert props["evidence_excerpt"] and props["evidence_level"] == "D"
               assert props["confidence_level_1_to_4"] == 2
+              assert props["fake_data"] is False and props["final_ready"] is False
+              new_features.append(feature)
+              records.append({**props, "geometry": feature["geometry"]})
 
           shard["features"] = features + new_features
           after = len(shard["features"])
-          assert after == before + 50 and after > before
+          assert after == EXPECTED_TARGET and after > before
           shard_path.write_text(json.dumps(shard, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           output_sha = hashlib.sha256(shard_path.read_bytes()).hexdigest()
 
-          all_props = [(feature.get("properties") or {}) for feature in shard["features"]]
-          evidence_distribution = Counter(str(props.get("evidence_level") or "U") for props in all_props)
-          confidence_distribution = Counter(str(props.get("confidence_level_1_to_4") or 1) for props in all_props)
-          type_distribution = Counter(str(props.get("building_type_primary") or "unknown") for props in all_props)
+          all_props = [(f.get("properties") or {}) for f in shard["features"]]
+          evidence_distribution = Counter(str(p.get("evidence_level") or "U") for p in all_props)
+          confidence_distribution = Counter(str(p.get("confidence_level_1_to_4") or 1) for p in all_props)
+          type_distribution = Counter(str(p.get("building_type_primary") or "unknown") for p in all_props)
           unknown = type_distribution.get("unknown", 0)
           classified = after - unknown
 
+          sources = list(manifest.get("sources") or [])
           source_entry = {
-              "name": source_name,
-              "url": source_url,
-              "license": "Open Government Licence v3.0",
+              "name": SOURCE_NAME,
+              "url": endpoint_used,
+              "license": "ODbL 1.0",
               "features_used": 50,
               "accessed_at": now,
               "source_sha256": source_sha,
-              "source_hash_method": "sha256_raw_source_xml",
-              "note": "FHRS BusinessType is a premises-use proxy; not cadastral parcel geometry."
+              "source_hash_method": "sha256_raw_overpass_json_runtime_only",
+              "query_sha256": query_sha,
+              "bbox": BBOX,
+              "city": CITY,
+              "note": "Runtime source bytes not committed; derived evidence rows only. OSM center/tag evidence is proxy-level, not cadastral proof.",
           }
-          manifest_sources = manifest.get("sources") or []
-          manifest_sources = [item for item in manifest_sources if item.get("url") != source_url]
-          manifest_sources.append(source_entry)
+          sources.append(source_entry)
           manifest.update({
               "generated_at": now,
               "total_features": after,
+              "feature_count": after,
               "classified": classified,
               "unknown": unknown,
-              "evidence_distribution": {key: evidence_distribution.get(key, 0) for key in ["A", "B", "C", "D", "U"]},
+              "evidence_distribution": {k: evidence_distribution.get(k, 0) for k in ["A", "B", "C", "D", "U"]},
+              "confidence_level_distribution": {k: confidence_distribution.get(k, 0) for k in ["1", "2", "3", "4"]},
               "type_distribution": dict(sorted(type_distribution.items())),
-              "confidence_level_distribution": {key: confidence_distribution.get(key, 0) for key in ["1", "2", "3", "4"]},
-              "sources": manifest_sources,
+              "sources": sources,
               "fake_data": False,
               "final_ready": False,
-              "note": "Existing 300-feature shard preserved; appended 50 Exeter City FHRS premises-use proxy records outside feature.id/parcel_id/osm_id already_processed_ids.",
-              "feature_count": after,
-              "geojson_sha256": output_sha,
               "geojson_path": str(shard_path),
+              "geojson_sha256": output_sha,
               "manifest_updated_at": now,
               "feature_count_before": before,
               "feature_count_after": after,
               "added_feature_count": 50,
-              "last_batch_city": batch_city,
-              "last_batch_source": source_name,
-              "last_batch_source_sha256": source_sha
+              "last_batch_city": CITY,
+              "last_batch_source": SOURCE_NAME,
+              "last_batch_source_url": endpoint_used,
+              "last_batch_source_sha256": source_sha,
+              "note": "Preserved existing 300 features; appended 50 new Exeter OSM-derived features outside feature.id/parcel_id/osm_id already_processed_ids. No cadastral-production claim.",
           })
           manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           batch_index = int(checkpoint.get("next_batch_index", 7))
-          next_city_index = int(checkpoint.get("next_city_index", 0)) + 1
+          new_ids = [f["id"] for f in new_features]
           checkpoint.update({
               "updated_at": now,
               "state": "IN_PROGRESS",
-              "first_unverified_step_status": "BATCH_APPENDED_50_EXETER_FHRS_PROXY_CONTINUATION_REQUIRED",
+              "first_unverified_step_status": "BATCH_APPENDED_50_OSM_DERIVED_CONTINUATION_REQUIRED",
               "final_ready": False,
               "fake_data": False,
               "feature_count_before": before,
               "feature_count_after": after,
               "current_feature_count": after,
               "next_batch_index": batch_index + 1,
-              "next_city_index": next_city_index,
+              "next_city_index": int(checkpoint.get("next_city_index", 1)) + 1,
               "next_target_feature_count": after + 50,
-              "last_processed_ids_sample": new_ids[-20:],
               "processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],
+              "last_processed_ids_sample": new_ids[-20:],
               "last_batch": {
                   "batch_index": batch_index,
-                  "city": batch_city,
-                  "source": source_name,
-                  "source_url": source_url,
+                  "city": CITY,
+                  "source": SOURCE_NAME,
+                  "source_url": endpoint_used,
                   "source_sha256": source_sha,
+                  "query_sha256": query_sha,
                   "evidence_level": "D",
                   "confidence_level_1_to_4": 2,
                   "added_feature_count": 50,
-                  "new_feature_ids": new_ids
+                  "new_feature_ids": new_ids,
               },
-              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR/OSM CORROBORATION FOR CURRENT-USE AND PARCEL BINDING"
+              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; SEEK EPC/VOA/HMLR/OVERTURE CORROBORATION WHERE AVAILABLE",
           })
           checkpoint.setdefault("summary", {})["new_slot"] = False
           checkpoint["summary"]["new_features_appended"] = 50
@@ -326,48 +418,51 @@ jobs:
               "classified_count": classified,
               "unknown_count": unknown,
               "total_elements": after,
-              "confidence_distribution": {key: confidence_distribution.get(key, 0) for key in ["1", "2", "3", "4"]},
-              "evidence_distribution": {key: evidence_distribution.get(key, 0) for key in ["A", "B", "C", "D", "U"]},
+              "confidence_distribution": {k: confidence_distribution.get(k, 0) for k in ["1", "2", "3", "4"]},
+              "evidence_distribution": {k: evidence_distribution.get(k, 0) for k in ["A", "B", "C", "D", "U"]},
               "output_sha256": output_sha,
               "feature_count_before": before,
               "feature_count_after": after,
-              "last_batch_city": batch_city,
-              "last_batch_source": source_name,
-              "note": "Added 50 Exeter City FHRS D-level premises-use proxy records; no new task/owner created. Continue append-only; EPC/VOA/HMLR/OSM corroboration remains pending."
+              "last_batch_city": CITY,
+              "last_batch_source": SOURCE_NAME,
+              "note": "Added 50 new Exeter OSM-derived D-level/confidence-2 records outside already_processed_ids; no task/owner created; continuation remains IN_PROGRESS.",
           })
           status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           runner = {
-              "slot_id": slot_id,
+              "slot_id": SLOT_ID,
               "task_id": task["task_id"],
+              "continuation_key": task.get("continuation_key", ""),
               "generated_at": now,
               "batch_index": batch_index,
-              "city": batch_city,
-              "source_name": source_name,
-              "source_url": source_url,
+              "city": CITY,
+              "bbox": BBOX,
+              "source_name": SOURCE_NAME,
+              "source_url": endpoint_used,
               "source_sha256": source_sha,
-              "source_hash_method": "sha256_raw_source_xml",
+              "query_sha256": query_sha,
               "processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],
               "feature_count_before": before,
               "feature_count_after": after,
               "added_feature_count": 50,
               "evidence_level": "D",
               "confidence_level_1_to_4": 2,
-              "classification_semantics": "premises_use_proxy_not_cadastral_building_fabric",
+              "classification_semantics": "OSM building/use tag proxy; not cadastral or structural proof",
               "records": records,
               "fake_data": False,
-              "final_ready": False
+              "final_ready": False,
           }
           runner_path.parent.mkdir(parents=True, exist_ok=True)
           runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           print(json.dumps({
-              "before": before,
-              "after": after,
-              "added": 50,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
               "eligible_candidates": len(candidates),
+              "endpoint": endpoint_used,
               "source_sha256": source_sha,
-              "current_task_owner": task.get("owner")
+              "owner": task.get("owner"),
           }, ensure_ascii=False))
           PY
 
@@ -379,6 +474,6 @@ jobs:
             docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json \
             docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json \
             docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json
-          git diff --cached --quiet && { echo "No feature-count progress; refusing commit"; exit 1; } || true
-          git commit -m "building_type_4 append Exeter FHRS batch"
+          git diff --cached --quiet && { echo "No feature-count progress; refusing business commit"; exit 1; } || true
+          git commit -m "building_type_4 append Exeter OSM batch"
           git push origin HEAD:codex/aays-single-runner-v5-20260706
