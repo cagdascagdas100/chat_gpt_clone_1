@@ -42,36 +42,38 @@ jobs:
           shell = shell.replace('expected_target = 400', 'expected_target = 450', 1)
           shell = shell.replace('source_name = "Food Standards Agency FHRS daily open data - Dudley"', 'source_name = "Food Standards Agency FHRS daily open data - Herefordshire"', 1)
           old_source = 'source_url = "https://ratings.food.gov.uk/api/open-data-files/FHRS409en-GB.xml"'
-          discovery = '''source_url = None
-          auth_req = urllib.request.Request(
-              "https://ratings.food.gov.uk/api/authorities/basic",
-              headers={"User-Agent": "AAYS-building-type/1.0", "x-api-version": "2"},
-          )
-          with urllib.request.urlopen(auth_req, timeout=90) as auth_resp:
-              auth_payload = json.loads(auth_resp.read().decode("utf-8"))
-          def walk_dicts(obj):
-              if isinstance(obj, dict):
-                  yield obj
-                  for value in obj.values():
-                      yield from walk_dicts(value)
-              elif isinstance(obj, list):
-                  for value in obj:
-                      yield from walk_dicts(value)
-          authority_id = None
-          for item in walk_dicts(auth_payload):
-              name = str(item.get("Name") or item.get("LocalAuthorityName") or item.get("name") or "")
-              if "herefordshire" not in name.lower():
-                  continue
-              for key in ("LocalAuthorityId", "LocalAuthorityID", "Id", "id"):
-                  value = item.get(key)
-                  if value is not None and str(value).strip():
-                      authority_id = str(value).strip()
-                      break
-              if authority_id:
-                  break
-          if not authority_id:
-              raise SystemExit("Herefordshire authority ID not found in official FSA authorities API")
-          source_url = f"https://ratings.food.gov.uk/api/open-data-files/FHRS{authority_id}en-GB.xml"'''
+          discovery = '\n'.join([
+              'source_url = None',
+              'auth_req = urllib.request.Request(',
+              '    "https://ratings.food.gov.uk/api/authorities/basic",',
+              '    headers={"User-Agent": "AAYS-building-type/1.0", "x-api-version": "2"},',
+              ')',
+              'with urllib.request.urlopen(auth_req, timeout=90) as auth_resp:',
+              '    auth_payload = json.loads(auth_resp.read().decode("utf-8"))',
+              'def walk_dicts(obj):',
+              '    if isinstance(obj, dict):',
+              '        yield obj',
+              '        for value in obj.values():',
+              '            yield from walk_dicts(value)',
+              '    elif isinstance(obj, list):',
+              '        for value in obj:',
+              '            yield from walk_dicts(value)',
+              'authority_id = None',
+              'for item in walk_dicts(auth_payload):',
+              '    name = str(item.get("Name") or item.get("LocalAuthorityName") or item.get("name") or "")',
+              '    if "herefordshire" not in name.lower():',
+              '        continue',
+              '    for key in ("LocalAuthorityId", "LocalAuthorityID", "Id", "id"):',
+              '        value = item.get(key)',
+              '        if value is not None and str(value).strip():',
+              '            authority_id = str(value).strip()',
+              '            break',
+              '    if authority_id:',
+              '        break',
+              'if not authority_id:',
+              '    raise SystemExit("Herefordshire authority ID not found in official FSA authorities API")',
+              'source_url = f"https://ratings.food.gov.uk/api/open-data-files/FHRS{authority_id}en-GB.xml"',
+          ])
           if old_source not in shell:
               raise SystemExit('template source line missing')
           shell = shell.replace(old_source, discovery, 1)
