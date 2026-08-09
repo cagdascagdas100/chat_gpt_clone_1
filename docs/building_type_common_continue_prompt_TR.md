@@ -18,6 +18,8 @@ SLOT_ID: [BUILDING_TYPE_N]   ← SAYFAYA GÖRE DEĞİŞTİR
 1. Kanonik sözleşme:
    docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md
    branch: codex/aays-single-runner-v5-20260706
+   branch head: 64eec19a9a3dba6d4fe2e38297ae782d7feb8f0f veya daha yeni commit
+   Eğer branch daha eski görünüyorsa işlem yapma; `BLOCKED_STALE_GITHUB_BRANCH` raporu ver.
 
 2. Slot state dosyaları (GitHub'dan):
    docs/chatgpt_status/_shared/slots_21/building_type_N/status_latest.json

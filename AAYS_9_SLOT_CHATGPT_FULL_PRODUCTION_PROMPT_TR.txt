@@ -22,10 +22,14 @@ Kendi İngiltere bölgendeki TÜM parsellerin yapı türünü gerçek kaynaklard
 ## ZORUNLU İLK OKUMA
 
 1. Sözleşme: `docs/chatgpt_status/_shared/AAYS_21_SLOT_AYRINTILI_DEVAM_SOZLESMESI_TR.md` (branch: codex/aays-single-runner-v5-20260706)
+   - Önce branch başını doğrula: `64eec19a9a3dba6d4fe2e38297ae782d7feb8f0f` veya daha yeni commit olmalı.
+   - Branch daha eski görünüyorsa işlem yapma; `BLOCKED_STALE_GITHUB_BRANCH` raporu ver.
 2. Tasarım: `F:\TerraYield_AAYS_Portable\AAYS_9_SLOT_BUILDING_TYPE_DESIGN_TR.md`
 3. Slot state: `docs/chatgpt_status/_shared/slots_21/building_type_N/`
 4. Mevcut pilot: `england_map_web/data/building_type/shards/building_type_N_latest.geojson`
 5. Confidence şeması: `F:\TerraYield_AAYS_Portable\docs\building_type_confidence_schema.json`
+6. Ortak devam promptu: `docs/building_type_common_continue_prompt_TR.md`
+   - Bu dosyadaki `already_processed_ids`, `feature_count_before`, `feature_count_after`, `next_batch_index` ve `BLOCKED_NO_NEW_SOURCE_OR_BATCH` kurallarını başlangıç sayfasında da aynen uygula.
 
 ---
 
@@ -233,11 +237,16 @@ Her parsel için evidence manifest — sadece bu alanları depola:
 
 1. GitHub'dan sözleşme + slot state oku
 2. Checkpoint'teki first_unverified_step'ten devam et
-3. 50-100 parsel işle → checkpoint yaz
-4. GeoJSON shard'ı güncelle (append, overwrite değil)
-5. Program layer matrix icin sadece kendi slot shard'ini ve merge istegini guncelle
-6. Commit + push (sadece türetilmiş dosyalar)
-7. Kısa rapor yaz
+3. Mevcut GeoJSON shard'ındaki tüm `feature.id`, `parcel_id`, `osm_id` değerlerini oku; bunları `already_processed_ids` kabul et
+4. Aynı 2000 pilot feature'i veya daha önce yazılmış feature'ları tekrar işleme
+5. Checkpoint'teki `next_batch_index` ve `next_target_feature_count` değerine göre yeni şehir/grid/parsel batch'i seç
+6. Her döngüde en az 50 yeni feature ekle; kaynak/batch yoksa dosyayı yeniden yazma, `BLOCKED_NO_NEW_SOURCE_OR_BATCH` raporu ver
+7. Başarı sayılması için `feature_count_after > feature_count_before` olmalı; eşit sayı ilerleme değildir
+8. 50-100 yeni parsel işle → checkpoint yaz
+9. GeoJSON shard'ı güncelle (append, overwrite değil)
+10. Program layer matrix icin sadece kendi slot shard'ini ve merge istegini guncelle
+11. Commit + push (sadece türetilmiş dosyalar)
+12. Kısa rapor yaz; raporda `feature_count_before`, `feature_count_after`, `yeni_eklenen` zorunlu olsun
 
 ---
 
