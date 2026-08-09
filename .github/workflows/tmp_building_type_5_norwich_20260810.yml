@@ -1,0 +1,434 @@
+name: tmp building_type_5 Norwich batch
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_5_norwich_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-norwich-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Sync canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 verified Norwich OSM snapshot features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import csv
+          import hashlib
+          import io
+          import json
+          import urllib.request
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT = "building_type_5"
+          TASK_ID = "building-type-5-england-classification-v1-20260808"
+          EXPECTED_BEFORE = 300
+          EXPECTED_TARGET = 350
+          BATCH_INDEX = 7
+          CITY = "Norwich urban grid"
+          RAW_URL = "https://gist.githubusercontent.com/SK53/c82a3319a2d03e4325434bd14fdac169/raw/9043d679e355e475d348aba181f9d629cfee08b9/bi_pubs_ex_%20osm_230123.csv"
+          GIST_URL = "https://gist.github.com/SK53/c82a3319a2d03e4325434bd14fdac169"
+          SOURCE_REV = "9043d679e355e475d348aba181f9d629cfee08b9"
+          SNAPSHOT_DATE = "2023-01-23"
+          RESULT = Path("/tmp/aays_bt5_result.txt")
+
+          shard_path = Path("england_map_web/data/building_type/shards/building_type_5_latest.geojson")
+          manifest_path = Path("england_map_web/data/building_type/shards/building_type_5_manifest_latest.json")
+          checkpoint_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json")
+          status_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json")
+          task_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json")
+          runner_path = Path("docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json")
+
+          shard = json.loads(shard_path.read_text(encoding="utf-8"))
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+          status = json.loads(status_path.read_text(encoding="utf-8"))
+          task = json.loads(task_path.read_text(encoding="utf-8"))
+          features = shard.get("features")
+          assert isinstance(features, list), "shard.features is not a list"
+          before = len(features)
+
+          assert task.get("slot_id") == SLOT, "wrong slot"
+          assert task.get("task_id") == TASK_ID, "task changed"
+          assert task.get("owner") is None, "current_task owner is not null; refusing second owner/task"
+          assert status.get("owner") in (None, ""), "status owner is live; refusing second owner/task"
+          assert before == EXPECTED_BEFORE, f"stale shard count {before} != {EXPECTED_BEFORE}"
+          assert int(checkpoint.get("current_feature_count", -1)) == before, "checkpoint/shard count mismatch"
+          assert int(checkpoint.get("next_target_feature_count", -1)) == EXPECTED_TARGET, "target changed"
+          assert int(checkpoint.get("next_batch_index", -1)) == BATCH_INDEX, "batch index changed"
+          for doc in (manifest, checkpoint, status, task):
+              assert doc.get("fake_data") is False, "fake_data guard failed"
+              assert doc.get("final_ready") is False, "final_ready guard failed"
+
+          processed = set()
+          for feature in features:
+              props = feature.get("properties") or {}
+              for value in (feature.get("id"), props.get("parcel_id"), props.get("osm_id")):
+                  if value not in (None, ""):
+                      processed.add(str(value).strip())
+
+          req = urllib.request.Request(RAW_URL, headers={"User-Agent": "AAYS-building-type-5/1.0"})
+          with urllib.request.urlopen(req, timeout=90) as response:
+              raw = response.read()
+          source_sha = hashlib.sha256(raw).hexdigest()
+          reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))
+
+          candidates = []
+          for row in reader:
+              try:
+                  osm_id = int((row.get("osm_id") or "").strip())
+                  lat = float((row.get("lat") or "").strip())
+                  lon = float((row.get("lon") or "").strip())
+              except (TypeError, ValueError):
+                  continue
+              if (row.get("osm_type") or "").strip() != "node":
+                  continue
+              amenity = (row.get("amenity") or "").strip().lower()
+              if amenity not in {"pub", "bar"}:
+                  continue
+              # New East-of-England grid outside the existing Cambridge-centred shard.
+              if not (52.57 <= lat <= 52.72 and 1.10 <= lon <= 1.50):
+                  continue
+              feature_id = f"ENG_OSM_node_{osm_id}"
+              if feature_id in processed or str(osm_id) in processed:
+                  continue
+              candidates.append((osm_id, lat, lon, amenity, row))
+
+          candidates.sort(key=lambda x: x[0])
+          assert len(candidates) >= 50, f"insufficient unique Norwich-grid candidates: {len(candidates)}"
+          selected = candidates[:50]
+
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          new_features = []
+          new_ids = []
+          for osm_id, lat, lon, amenity, row in selected:
+              feature_id = f"ENG_OSM_node_{osm_id}"
+              name = (row.get("name") or "").strip()
+              addr_city = (row.get("addr:city") or "").strip()
+              fhrs_id = (row.get("fhrs:id") or "").strip()
+              building = (row.get("building") or "").strip()
+              real_ale = (row.get("real_ale") or "").strip()
+              excerpt_obj = {
+                  "osm_id": str(osm_id),
+                  "osm_type": "node",
+                  "lat": f"{lat:.7f}",
+                  "lon": f"{lon:.7f}",
+                  "amenity": amenity,
+                  "name": name,
+                  "fhrs:id": fhrs_id,
+                  "building": building,
+                  "real_ale": real_ale,
+                  "addr:city": addr_city,
+                  "snapshot_date": SNAPSHOT_DATE
+              }
+              excerpt = f"Pinned OSM-derived snapshot node/{osm_id}: amenity={amenity}; name={name or '[none]'}; lat={lat:.7f}; lon={lon:.7f}; snapshot={SNAPSHOT_DATE}."
+              tags = {k: v for k, v in {
+                  "amenity": amenity,
+                  "name": name,
+                  "fhrs:id": fhrs_id,
+                  "building": building,
+                  "real_ale": real_ale,
+                  "addr:city": addr_city
+              }.items() if v}
+              props = {
+                  "parcel_id": feature_id,
+                  "osm_id": osm_id,
+                  "slot_id": SLOT,
+                  "region": "East of England",
+                  "area": CITY,
+                  "local_authority": addr_city,
+                  "building_type_primary": "commercial_retail",
+                  "building_type_code": "C_RETAIL",
+                  "building_category": "commercial",
+                  "evidence_level": "B",
+                  "confidence_score": 0.75,
+                  "confidence_level_1_to_4": 3,
+                  "source_count": 1,
+                  "match_method": f"amenity={amenity};pinned_osm_snapshot;norwich_grid",
+                  "source": "Pinned OSM-derived pubs snapshot (SK53 GitHub Gist; sourced from OpenStreetMap)",
+                  "source_url": f"https://www.openstreetmap.org/node/{osm_id}",
+                  "source_snapshot_url": GIST_URL,
+                  "source_snapshot_raw_url": RAW_URL,
+                  "source_revision": SOURCE_REV,
+                  "source_hash": source_sha,
+                  "source_hash_method": "sha256_raw_source_csv",
+                  "osm_tags_summary": tags,
+                  "evidence_excerpt": excerpt,
+                  "evidence_excerpt_sha256": hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
+                  "source_evidence_excerpt": excerpt_obj,
+                  "sources": [{
+                      "source_name": "Pinned OSM-derived pubs snapshot (SK53 GitHub Gist)",
+                      "url_or_local_path": GIST_URL,
+                      "raw_url": RAW_URL,
+                      "source_revision": SOURCE_REV,
+                      "snapshot_date": SNAPSHOT_DATE,
+                      "accessed_at": now,
+                      "sha256": source_sha,
+                      "sha256_scope": "raw_source_csv",
+                      "licence": "ODbL 1.0",
+                      "granularity": "osm_node_point",
+                      "fields_used": ["osm_id", "osm_type", "lat", "lon", "amenity", "name", "fhrs:id", "building", "real_ale", "addr:city"],
+                      "supports_field": "building_type_primary",
+                      "match_method": f"amenity={amenity};bbox=Norwich_grid",
+                      "match_score": 0.75
+                  }],
+                  "building_type_secondary": "",
+                  "geometry_match_method": "osm_node_point",
+                  "address_match_method": "addr_city_if_present",
+                  "limitations": "Pinned 2023-01-23 OSM-derived snapshot proves a pub/bar premises-use tag at a point; live OSM recheck and cadastral parcel binding remain pending.",
+                  "needs_manual_review": True,
+                  "fake_data": False,
+                  "final_ready": False,
+                  "updated_at": now
+              }
+              new_features.append({"type": "Feature", "id": feature_id, "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": props})
+              new_ids.append(feature_id)
+
+          assert len(new_features) == 50 and len(set(new_ids)) == 50
+          assert not (set(new_ids) & processed), "feature.id collision"
+          for feature in new_features:
+              props = feature["properties"]
+              assert str(props["parcel_id"]) not in processed, "parcel_id collision"
+              assert str(props["osm_id"]) not in processed, "osm_id collision"
+              assert props["fake_data"] is False and props["final_ready"] is False
+              assert props["evidence_excerpt"] and props["evidence_level"] == "B"
+              assert props["confidence_level_1_to_4"] == 3
+
+          shard["features"] = features + new_features
+          after = len(shard["features"])
+          assert after == before + 50 and after > before
+          history = shard.get("batch_history")
+          if not isinstance(history, list):
+              history = []
+          history.append({
+              "batch_index": BATCH_INDEX,
+              "area": CITY,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "new_feature_count": 50,
+              "first_new_feature_id": new_ids[0],
+              "last_new_feature_id": new_ids[-1],
+              "source_name": "Pinned OSM-derived pubs snapshot (SK53 GitHub Gist)",
+              "source_revision": SOURCE_REV,
+              "source_sha256": source_sha,
+              "snapshot_date": SNAPSHOT_DATE,
+              "accessed_at": now,
+              "fake_data": False,
+              "final_ready": False
+          })
+          shard["batch_history"] = history
+          shard["enhanced_at"] = now
+          shard_path.write_text(json.dumps(shard, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          output_sha = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+
+          props_all = [(f.get("properties") or {}) for f in shard["features"]]
+          ev = Counter(str(p.get("evidence_level") or "U") for p in props_all)
+          conf = Counter(str(p.get("confidence_level_1_to_4") or 1) for p in props_all)
+          types = Counter(str(p.get("building_type_primary") or "unknown") for p in props_all)
+          unknown = types.get("unknown", 0)
+          classified = after - unknown
+
+          source_entry = {
+              "name": "Pinned OSM-derived pubs snapshot (SK53 GitHub Gist)",
+              "url": GIST_URL,
+              "raw_url": RAW_URL,
+              "source_revision": SOURCE_REV,
+              "snapshot_date": SNAPSHOT_DATE,
+              "features_used": 50,
+              "accessed_at": now,
+              "source_sha256": source_sha,
+              "license": "ODbL 1.0",
+              "note": "New Norwich-grid OSM pub/bar nodes; live OSM and cadastral parcel binding pending."
+          }
+          sources = manifest.get("sources") or []
+          sources = [s for s in sources if not (s.get("url") == GIST_URL and s.get("source_revision") == SOURCE_REV)]
+          sources.append(source_entry)
+          manifest.update({
+              "generated_at": now,
+              "total_features": after,
+              "classified": classified,
+              "unknown": unknown,
+              "evidence_distribution": {k: ev.get(k, 0) for k in ["A", "B", "C", "D", "U"]},
+              "type_distribution": dict(sorted(types.items())),
+              "confidence_level_distribution": {k: conf.get(k, 0) for k in ["1", "2", "3", "4"]},
+              "sources": sources,
+              "fake_data": False,
+              "final_ready": False,
+              "note": "Existing 300-feature shard preserved; appended 50 Norwich-grid records outside feature.id/parcel_id/osm_id already_processed_ids.",
+              "feature_count": after,
+              "geojson_sha256": output_sha,
+              "geojson_path": str(shard_path),
+              "manifest_updated_at": now,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
+              "last_batch_area": CITY,
+              "last_batch_source": source_entry["name"],
+              "last_batch_source_sha256": source_sha
+          })
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          checkpoint.pop("no_progress_reason", None)
+          checkpoint.pop("blocker", None)
+          checkpoint.update({
+              "updated_at": now,
+              "state": "IN_PROGRESS",
+              "terminal_status": "IN_PROGRESS",
+              "first_unverified_step_status": "BATCH_7_APPENDED_50_NORWICH_OSM_SNAPSHOT_CONTINUATION_REQUIRED",
+              "final_ready": False,
+              "fake_data": False,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "next_batch_index": BATCH_INDEX + 1,
+              "next_target_feature_count": after + 50,
+              "last_processed_ids_sample": new_ids[-20:],
+              "last_batch": {
+                  "batch_index": BATCH_INDEX,
+                  "area": CITY,
+                  "source": source_entry["name"],
+                  "source_revision": SOURCE_REV,
+                  "source_sha256": source_sha,
+                  "added_feature_count": 50,
+                  "new_feature_ids": new_ids
+              },
+              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL LIVE OSM/EPC/VOA/HMLR CORROBORATION"
+          })
+          checkpoint.setdefault("summary", {})["new_slot"] = False
+          checkpoint["summary"]["progress_count_delta"] = 50
+          checkpoint["summary"]["new_features_appended"] = 50
+          checkpoint["summary"]["current_feature_count"] = after
+          checkpoint["summary"]["note"] = "PROGRESS: 300->350; 50 unique Norwich-grid OSM-derived pub/bar features appended with evidence; no raw source committed."
+          checkpoint["remaining_items"] = checkpoint.get("remaining_items") or {}
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          status.pop("no_progress_reason", None)
+          status["candidate_batch"] = {
+              "area": CITY,
+              "source_ref": f"gist:c82a3319a2d03e4325434bd14fdac169@{SOURCE_REV}",
+              "status": "COMMITTED_AS_BATCH_7",
+              "added_feature_count": 50,
+              "evidence_level": "B",
+              "confidence_level_1_to_4": 3
+          }
+          status.update({
+              "state": "IN_PROGRESS",
+              "updated_at": now,
+              "owner": None,
+              "final_ready": False,
+              "fake_data": False,
+              "classified_count": classified,
+              "unknown_count": unknown,
+              "total_elements": after,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "progress_count_delta": 50,
+              "next_batch_index": BATCH_INDEX + 1,
+              "next_target_feature_count": after + 50,
+              "confidence_distribution": {k: conf.get(k, 0) for k in ["1", "2", "3", "4"]},
+              "evidence_distribution": {k: ev.get(k, 0) for k in ["A", "B", "C", "D", "U"]},
+              "output_sha256": output_sha,
+              "note": "Batch 7 appended 50 unique Norwich-grid OSM-derived pub/bar features. Same task retained; owner remains null; final_ready=false; no PUBLISHED state."
+          })
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          runner_path.parent.mkdir(parents=True, exist_ok=True)
+          runner = {
+              "schema_version": 1,
+              "slot_id": SLOT,
+              "task_id": TASK_ID,
+              "state": "IN_PROGRESS",
+              "updated_at": now,
+              "batch_index": BATCH_INDEX,
+              "area": CITY,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
+              "new_feature_ids": new_ids,
+              "source": source_entry,
+              "evidence_level": "B",
+              "confidence_level_1_to_4": 3,
+              "classification": "commercial_retail",
+              "match_method": "amenity=pub|bar;pinned_osm_snapshot;norwich_grid",
+              "output_geojson_sha256": output_sha,
+              "raw_source_committed": False,
+              "fake_data": False,
+              "final_ready": False,
+              "published": False
+          }
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          RESULT.write_text(
+              f"SUCCESS before={before} after={after} added=50 first={new_ids[0]} last={new_ids[-1]} source_sha={source_sha} shard_sha={output_sha}\n",
+              encoding="utf-8"
+          )
+          print(RESULT.read_text(encoding="utf-8").strip())
+          PY
+
+      - name: Commit results and remove temporary workflow
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULT="$(cat /tmp/aays_bt5_result.txt 2>/dev/null || echo 'FAIL no_success_result')"
+          SUCCESS=0
+          if [[ "$RESULT" == SUCCESS* ]]; then SUCCESS=1; fi
+
+          if [[ "$SUCCESS" -ne 1 ]]; then
+            git restore --worktree --staged -- \
+              england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+              england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+              docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json 2>/dev/null || true
+          fi
+
+          rm -f .github/workflows/tmp_building_type_5_norwich_20260810.yml
+          if [[ "$SUCCESS" -eq 1 ]]; then
+            git add \
+              england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+              england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+              docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+              .github/workflows/tmp_building_type_5_norwich_20260810.yml
+            MSG="building_type_5 append Norwich OSM snapshot batch"
+          else
+            git add .github/workflows/tmp_building_type_5_norwich_20260810.yml
+            MSG="chore: cleanup building_type_5 temporary workflow"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "$MSG"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              echo "AAYS_PUSH_RESULT $RESULT"
+              if [[ "$SUCCESS" -eq 1 ]]; then exit 0; else exit 1; fi
+            fi
+            git pull --rebase origin codex/aays-single-runner-v5-20260706
+          done
+          exit 1
