@@ -38,56 +38,28 @@ jobs:
           shell = text.split(marker, 1)[1]
           lines = shell.splitlines()
           shell = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
-          shell = shell.replace('expected_before = 350', 'expected_before = 400', 1)
-          shell = shell.replace('expected_target = 400', 'expected_target = 450', 1)
-          shell = shell.replace('source_name = "Food Standards Agency FHRS daily open data - Dudley"', 'source_name = "Food Standards Agency FHRS daily open data - Herefordshire"', 1)
-          old_source = 'source_url = "https://ratings.food.gov.uk/api/open-data-files/FHRS409en-GB.xml"'
-          discovery = '\n'.join([
-              'source_url = None',
-              'auth_req = urllib.request.Request(',
-              '    "https://ratings.food.gov.uk/api/authorities/basic",',
-              '    headers={"User-Agent": "AAYS-building-type/1.0", "x-api-version": "2"},',
-              ')',
-              'with urllib.request.urlopen(auth_req, timeout=90) as auth_resp:',
-              '    auth_payload = json.loads(auth_resp.read().decode("utf-8"))',
-              'def walk_dicts(obj):',
-              '    if isinstance(obj, dict):',
-              '        yield obj',
-              '        for value in obj.values():',
-              '            yield from walk_dicts(value)',
-              '    elif isinstance(obj, list):',
-              '        for value in obj:',
-              '            yield from walk_dicts(value)',
-              'authority_id = None',
-              'for item in walk_dicts(auth_payload):',
-              '    name = str(item.get("Name") or item.get("LocalAuthorityName") or item.get("name") or "")',
-              '    if "herefordshire" not in name.lower():',
-              '        continue',
-              '    for key in ("LocalAuthorityId", "LocalAuthorityID", "Id", "id"):',
-              '        value = item.get(key)',
-              '        if value is not None and str(value).strip():',
-              '            authority_id = str(value).strip()',
-              '            break',
-              '    if authority_id:',
-              '        break',
-              'if not authority_id:',
-              '    raise SystemExit("Herefordshire authority ID not found in official FSA authorities API")',
-              'source_url = f"https://ratings.food.gov.uk/api/open-data-files/FHRS{authority_id}en-GB.xml"',
-          ])
-          if old_source not in shell:
-              raise SystemExit('template source line missing')
-          shell = shell.replace(old_source, discovery, 1)
-          shell = shell.replace('city = "Dudley"', 'city = "Herefordshire"', 1)
-          shell = shell.replace('prefix = "DUD"', 'prefix = "HFD"', 1)
-          shell = shell.replace('"dudley" not in la.lower()', '"herefordshire" not in la.lower()', 1)
-          shell = shell.replace('52.35 <= lat <= 52.65 and -2.30 <= lon <= -1.85', '51.80 <= lat <= 52.45 and -3.30 <= lon <= -2.20', 1)
-          shell = shell.replace('eligible Dudley FHRS candidates', 'eligible Herefordshire FHRS candidates')
-          shell = shell.replace('50 Dudley FHRS records', '50 Herefordshire FHRS records')
-          shell = shell.replace('BATCH_APPENDED_50_DUDLEY_FHRS_CONTINUATION_REQUIRED', 'BATCH_APPENDED_50_HEREFORDSHIRE_FHRS_CONTINUATION_REQUIRED')
-          shell = shell.replace('building_type_7 append Dudley FHRS batch', 'building_type_7 append Herefordshire FHRS batch')
+          replacements = [
+              ('expected_before = 350', 'expected_before = 400'),
+              ('expected_target = 400', 'expected_target = 450'),
+              ('source_name = "Food Standards Agency FHRS daily open data - Dudley"', 'source_name = "Food Standards Agency FHRS daily open data - Herefordshire"'),
+              ('source_url = "https://ratings.food.gov.uk/api/open-data-files/FHRS409en-GB.xml"', 'source_url = "https://ratings.food.gov.uk/api/open-data-files/FHRS895en-GB.xml"'),
+              ('city = "Dudley"', 'city = "Herefordshire"'),
+              ('prefix = "DUD"', 'prefix = "HFD"'),
+              ('"dudley" not in la.lower()', '"herefordshire" not in la.lower()'),
+              ('52.35 <= lat <= 52.65 and -2.30 <= lon <= -1.85', '51.80 <= lat <= 52.45 and -3.30 <= lon <= -2.20'),
+              ('eligible Dudley FHRS candidates', 'eligible Herefordshire FHRS candidates'),
+              ('50 Dudley FHRS records', '50 Herefordshire FHRS records'),
+              ('BATCH_APPENDED_50_DUDLEY_FHRS_CONTINUATION_REQUIRED', 'BATCH_APPENDED_50_HEREFORDSHIRE_FHRS_CONTINUATION_REQUIRED'),
+              ('building_type_7 append Dudley FHRS batch', 'building_type_7 append Herefordshire FHRS batch'),
+          ]
+          for old, new in replacements:
+              if old not in shell:
+                  raise SystemExit(f'template token missing: {old}')
+              shell = shell.replace(old, new)
           required = [
-              'expected_before = 400', 'expected_target = 450', 'city = "Herefordshire"',
-              'prefix = "HFD"', 'authority_id', 'BATCH_APPENDED_50_HEREFORDSHIRE_FHRS_CONTINUATION_REQUIRED'
+              'expected_before = 400', 'expected_target = 450',
+              'FHRS895en-GB.xml', 'city = "Herefordshire"', 'prefix = "HFD"',
+              'BATCH_APPENDED_50_HEREFORDSHIRE_FHRS_CONTINUATION_REQUIRED'
           ]
           missing = [x for x in required if x not in shell]
           if missing:
