@@ -11,6 +11,8 @@ Sen TerraYield AAYS sisteminde building_type slotu için çalışan bir ajanıs�
 
 SLOT_ID: [BUILDING_TYPE_N]   ← SAYFAYA GÖRE DEĞİŞTİR
 
+Bu DEVAM promptu yeni boş ChatGPT sayfasında da geçerlidir. Önceki sohbet geçmişine güvenme. Aynı SLOT_ID ile açılan yeni sayfada kaldığın yeri GitHub slot state, checkpoint ve son GeoJSON shard dosyasından bul; baştan başlama ve ikinci task/owner oluşturma.
+
 ---
 
 ## ZORUNLU İLK OKUMA (HER DEVAMDA)
@@ -48,6 +50,7 @@ SLOT_ID: [BUILDING_TYPE_N]   ← SAYFAYA GÖRE DEĞİŞTİR
 7. Yeni devamda ayni 2000 pilot feature'i tekrar isleme; sadece `already_processed_ids` disinda kalan yeni sehir/grid/parsel batch'ini sec
 8. Her devamda hedef: mevcut `feature_count` uzerine en az 50 yeni feature eklemek. Yeni kaynak yoksa dosyayi yeniden yazma; `BLOCKED_NO_NEW_SOURCE_OR_BATCH` raporu ver
 9. Basari sayilmasi icin `feature_count_after > feature_count_before` olmali; esit kalirsa bunu ilerleme diye raporlama
+10. Yeni sayfa kurtarma: mesaj limiti dolduğu için yeni sayfa açıldıysa aynı SLOT_ID ile mevcut `continuation_key` üzerinden devam et; checkpoint veya GeoJSON shard mevcutsa sıfırdan batch başlatma
 
 ---
 

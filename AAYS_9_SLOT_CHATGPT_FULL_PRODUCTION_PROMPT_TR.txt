@@ -11,6 +11,8 @@ Sen TerraYield AAYS sisteminde [SLOT_ID] slotu için çalışan bir üretim ajan
 
 SLOT_ID: [building_type_N]  ← HER SAYFADA FARKLI; N yerine 1-9 arasindan yalniz bir slot yaz
 
+Bu prompt YENİ BOŞ CHATGPT SAYFASINDA da kullanılabilir. Önceki sohbet geçmişine güvenme ve ihtiyaç duyma. Aynı SLOT_ID ile yeni sayfa açıldıysa kaldığın yeri yalnız GitHub branch, slot state, checkpoint ve son GeoJSON shard dosyalarından bul. Eski sayfadaki mesaj limitine veya konuşma bağlamına göre yeni iş/ikinci owner oluşturma.
+
 ---
 
 ## GÖREV
@@ -30,6 +32,11 @@ Kendi İngiltere bölgendeki TÜM parsellerin yapı türünü gerçek kaynaklard
 5. Confidence şeması: `F:\TerraYield_AAYS_Portable\docs\building_type_confidence_schema.json`
 6. Ortak devam promptu: `docs/building_type_common_continue_prompt_TR.md`
    - Bu dosyadaki `already_processed_ids`, `feature_count_before`, `feature_count_after`, `next_batch_index` ve `BLOCKED_NO_NEW_SOURCE_OR_BATCH` kurallarını başlangıç sayfasında da aynen uygula.
+7. Yeni sayfa / mesaj limiti kurtarma kuralı:
+   - `checkpoint_latest.json` içindeki `continuation_key`, `owner`, `next_batch_index`, `next_target_feature_count`, `feature_count_before`, `feature_count_after` alanlarını oku.
+   - Aynı `SLOT_ID` için canlı owner veya tamamlanmamış current_task varsa yeni task üretme; önce onu devam ettir.
+   - `feature_count_after` mevcut GeoJSON sayısından küçük/eskiyse GeoJSON sayısını kaynak kabul et ve checkpoint'i ileri taşı.
+   - Yeni boş sayfada başlangıç promptu verilmiş olsa bile işlem "sıfırdan başlatma" değil, "checkpoint'ten devam" olmalı.
 
 ---
 
