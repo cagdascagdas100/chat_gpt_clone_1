@@ -1,0 +1,404 @@
+name: tmp building_type_9 Sheffield OSM batch
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_9_sheffield_osm_20260810.yml
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Append 50 Sheffield OSM building features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import hashlib
+          import json
+          import urllib.parse
+          import urllib.request
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          slot_id = "building_type_9"
+          task_id_expected = "building-type-9-england-classification-v1-20260808"
+          continuation_key_expected = "d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512"
+          expected_before = 200
+          expected_target = 250
+          expected_batch = 5
+          batch_city = "Sheffield"
+
+          shard_path = Path("england_map_web/data/building_type/shards/building_type_9_latest.geojson")
+          manifest_path = Path("england_map_web/data/building_type/shards/building_type_9_manifest_latest.json")
+          checkpoint_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json")
+          status_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json")
+          task_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json")
+          runner_path = Path("docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json")
+
+          shard = json.loads(shard_path.read_text(encoding="utf-8"))
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+          status = json.loads(status_path.read_text(encoding="utf-8"))
+          task = json.loads(task_path.read_text(encoding="utf-8"))
+          features = shard.get("features", [])
+          before = len(features)
+
+          assert task.get("slot_id") == slot_id, "wrong slot"
+          assert task.get("task_id") == task_id_expected, "task changed"
+          assert task.get("continuation_key") == continuation_key_expected, "continuation key changed"
+          assert task.get("owner") is None, "current_task owner is not null; refusing second owner/task"
+          assert task.get("state") == "READY", "current_task is not READY"
+          assert before == expected_before, f"stale shard count {before} != {expected_before}"
+          assert int(checkpoint.get("current_feature_count", -1)) == before, "checkpoint/shard count mismatch"
+          assert int(checkpoint.get("next_target_feature_count", -1)) == expected_target, "target changed"
+          assert int(checkpoint.get("next_batch_index", -1)) == expected_batch, "batch changed"
+          assert manifest.get("fake_data") is False and checkpoint.get("fake_data") is False, "fake_data guard"
+          assert manifest.get("final_ready") is False and checkpoint.get("final_ready") is False and status.get("final_ready") is False, "final_ready guard"
+
+          processed = set()
+          for feat in features:
+              props = feat.get("properties") or {}
+              for value in (feat.get("id"), props.get("parcel_id"), props.get("osm_id")):
+                  if value is not None and str(value).strip():
+                      processed.add(str(value).strip())
+
+          semantic_buildings = (
+              "apartments|house|detached|semidetached_house|terrace|bungalow|residential|dormitory|"
+              "hotel|commercial|retail|office|industrial|warehouse|school|university|college|hospital|"
+              "church|mosque|synagogue|civic|public"
+          )
+          bbox = "53.30,-1.60,53.50,-1.30"
+          query = f'''[out:json][timeout:90];
+          (
+            node["building"~"^({semantic_buildings})$"]({bbox});
+            way["building"~"^({semantic_buildings})$"]({bbox});
+            relation["building"~"^({semantic_buildings})$"]({bbox});
+          );
+          out center tags qt 500;
+          '''
+          query_sha = hashlib.sha256(query.encode("utf-8")).hexdigest()
+          endpoints = [
+              "https://overpass-api.de/api/interpreter",
+              "https://overpass.kumi.systems/api/interpreter",
+          ]
+          raw = None
+          payload = None
+          endpoint_used = None
+          last_error = None
+          for endpoint in endpoints:
+              try:
+                  data = urllib.parse.urlencode({"data": query}).encode("utf-8")
+                  req = urllib.request.Request(
+                      endpoint,
+                      data=data,
+                      headers={"User-Agent": "TerraYield-AAYS-building-type/1.0", "Accept": "application/json"},
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req, timeout=120) as response:
+                      raw = response.read()
+                  payload = json.loads(raw.decode("utf-8"))
+                  if payload.get("elements"):
+                      endpoint_used = endpoint
+                      break
+              except Exception as exc:
+                  last_error = f"{type(exc).__name__}: {exc}"
+                  raw = None
+                  payload = None
+          assert payload and payload.get("elements"), f"Overpass failed or returned no elements: {last_error}"
+          source_sha = hashlib.sha256(raw).hexdigest()
+
+          def classify(tags):
+              b = str(tags.get("building") or "").strip().lower()
+              if b == "apartments": return "residential_apartments", "R_APT", "residential"
+              if b == "detached": return "residential_detached", "R_DET", "residential"
+              if b == "semidetached_house": return "residential_semi_detached", "R_SEMI", "residential"
+              if b == "terrace": return "residential_terrace", "R_TER", "residential"
+              if b == "bungalow": return "residential_bungalow", "R_BUNG", "residential"
+              if b == "house": return "residential_house", "R_HOUSE", "residential"
+              if b == "residential": return "residential_other", "R_RES", "residential"
+              if b == "dormitory": return "residential_dormitory", "R_DORM", "residential"
+              if b == "hotel": return "hotel_or_hospitality", "C_HOTEL", "commercial"
+              if b == "retail": return "commercial_retail", "C_RETAIL", "commercial"
+              if b == "commercial": return "commercial_other", "C_OTHER", "commercial"
+              if b == "office": return "office", "C_OFFICE", "commercial"
+              if b == "industrial": return "industrial", "I_MANUFACTURING", "industrial"
+              if b == "warehouse": return "warehouse", "C_LOGISTICS", "commercial"
+              if b in {"school", "university", "college"}: return "education", "P_EDUCATION", "institutional"
+              if b == "hospital": return "hospital_or_healthcare", "P_HEALTHCARE", "institutional"
+              if b in {"church", "mosque", "synagogue"}: return "religious_or_community", "P_RELIGIOUS", "institutional"
+              if b in {"civic", "public"}: return "public_infrastructure", "P_INFRA", "institutional"
+              raise AssertionError(f"unexpected building tag: {b}")
+
+          candidates = []
+          type_order = {"node": 0, "way": 1, "relation": 2}
+          for el in payload.get("elements", []):
+              etype = str(el.get("type") or "")
+              eid = el.get("id")
+              tags = el.get("tags") or {}
+              if etype not in type_order or eid is None or not tags.get("building"):
+                  continue
+              if etype == "node":
+                  lat = el.get("lat")
+                  lon = el.get("lon")
+              else:
+                  center = el.get("center") or {}
+                  lat = center.get("lat")
+                  lon = center.get("lon")
+              if lat is None or lon is None:
+                  continue
+              fid = f"ENG_OSM_{etype}_{eid}"
+              osm_ref = f"{etype}/{eid}"
+              if fid in processed or osm_ref in processed or str(eid) in processed:
+                  continue
+              candidates.append((type_order[etype], int(eid), etype, int(eid), float(lat), float(lon), tags))
+
+          candidates.sort(key=lambda item: (item[0], item[1]))
+          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Sheffield OSM candidates"
+
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          new_features = []
+          new_ids = []
+          records = []
+          for _, _, etype, eid, lat, lon, tags in candidates[:50]:
+              feature_id = f"ENG_OSM_{etype}_{eid}"
+              parcel_id = feature_id
+              osm_ref = f"{etype}/{eid}"
+              primary, code, category = classify(tags)
+              element_url = f"https://www.openstreetmap.org/{etype}/{eid}"
+              excerpt_parts = [f"OSM {osm_ref}", f"building={tags.get('building')}"]
+              for key in ("amenity", "shop", "office", "tourism", "healthcare", "name", "addr:city", "addr:postcode"):
+                  value = tags.get(key)
+                  if value:
+                      excerpt_parts.append(f"{key}={value}")
+              excerpt = " | ".join(excerpt_parts)
+              evidence_tags = {k: tags[k] for k in ("building", "amenity", "shop", "office", "tourism", "healthcare", "name", "addr:city", "addr:postcode", "addr:street", "addr:housenumber") if k in tags}
+              props = {
+                  "parcel_id": parcel_id,
+                  "parcel_id_semantics": "OSM feature identity used as slot record key; not a cadastral parcel ID",
+                  "osm_id": osm_ref,
+                  "slot_id": slot_id,
+                  "region": "Yorkshire & North East",
+                  "area": batch_city,
+                  "local_authority": "Sheffield",
+                  "postcode": tags.get("addr:postcode", ""),
+                  "building_type_primary": primary,
+                  "building_type_code": code,
+                  "building_category": category,
+                  "confidence_score": 0.75,
+                  "confidence_level_1_to_4": 3,
+                  "evidence_level": "B",
+                  "source_count": 1,
+                  "source": "OpenStreetMap via Overpass API",
+                  "source_url": element_url,
+                  "source_hash": source_sha,
+                  "source_hash_method": "sha256_raw_overpass_json",
+                  "query_sha256": query_sha,
+                  "match_method": "osm_explicit_building_tag",
+                  "evidence_excerpt": excerpt,
+                  "evidence_excerpt_sha256": hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
+                  "source_evidence_excerpt": evidence_tags,
+                  "osm_tags_summary": evidence_tags,
+                  "sources": [{
+                      "source_name": "OpenStreetMap Overpass API",
+                      "url_or_local_path": endpoint_used,
+                      "element_url": element_url,
+                      "accessed_at": now,
+                      "sha256": source_sha,
+                      "sha256_scope": "raw_overpass_json_response",
+                      "query_sha256": query_sha,
+                      "licence": "ODbL 1.0",
+                      "granularity": "osm_building_feature",
+                      "fields_used": list(evidence_tags.keys()),
+                      "supports_field": "building_type_primary",
+                      "match_method": "osm_explicit_building_tag",
+                      "match_score": 0.75
+                  }],
+                  "geometry_match_method": "osm_native_node_or_overpass_center",
+                  "address_match_method": "osm_addr_tags_when_present",
+                  "limitations": "OSM building tag and OSM point/center are direct feature evidence but are not a cadastral parcel boundary; EPC/VOA/HMLR corroboration not yet applied.",
+                  "needs_manual_review": False,
+                  "fake_data": False,
+                  "final_ready": False,
+                  "updated_at": now,
+                  "feature_id": feature_id
+              }
+              feature = {
+                  "type": "Feature",
+                  "id": feature_id,
+                  "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                  "properties": props
+              }
+              new_features.append(feature)
+              new_ids.append(feature_id)
+              records.append({**props, "geometry": feature["geometry"]})
+
+          assert len(new_features) == 50
+          assert len(set(new_ids)) == 50
+          assert not (set(new_ids) & processed), "feature.id collision"
+          for feature in new_features:
+              props = feature["properties"]
+              assert str(props["parcel_id"]) not in processed, "parcel_id collision"
+              assert str(props["osm_id"]) not in processed, "osm_id collision"
+              assert props["fake_data"] is False and props["final_ready"] is False
+              assert props["evidence_excerpt"] and props["evidence_level"] == "B"
+              assert props["confidence_level_1_to_4"] == 3
+
+          shard["features"] = features + new_features
+          after = len(shard["features"])
+          assert after == before + 50 and after > before
+          shard_path.write_text(json.dumps(shard, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          output_sha = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+
+          all_props = [(feature.get("properties") or {}) for feature in shard["features"]]
+          evidence_distribution = Counter(str(props.get("evidence_level") or "U") for props in all_props)
+          confidence_distribution = Counter(str(props.get("confidence_level_1_to_4") or 1) for props in all_props)
+          type_distribution = Counter(str(props.get("building_type_primary") or "unknown") for props in all_props)
+          unknown = type_distribution.get("unknown", 0)
+          classified = after - unknown
+
+          manifest_sources = manifest.get("sources") or []
+          manifest_sources.append({
+              "name": "OpenStreetMap Overpass API - Sheffield batch 5",
+              "url": endpoint_used,
+              "license": "ODbL 1.0",
+              "features_used": 50,
+              "accessed_at": now,
+              "source_sha256": source_sha,
+              "source_hash_method": "sha256_raw_overpass_json",
+              "query_sha256": query_sha,
+              "note": "50 new semantic building=* OSM features; point/native center evidence, not cadastral parcel polygons."
+          })
+          manifest.update({
+              "generated_at": now,
+              "total_features": after,
+              "classified": classified,
+              "unknown": unknown,
+              "evidence_distribution": {key: evidence_distribution.get(key, 0) for key in ["A", "B", "C", "D", "U"]},
+              "type_distribution": dict(sorted(type_distribution.items())),
+              "confidence_level_distribution": {key: confidence_distribution.get(key, 0) for key in ["1", "2", "3", "4"]},
+              "sources": manifest_sources,
+              "fake_data": False,
+              "final_ready": False,
+              "note": "Existing 200-feature shard preserved; appended 50 Sheffield OSM semantic building features outside feature.id/parcel_id/osm_id already_processed_ids.",
+              "feature_count": after,
+              "geojson_sha256": output_sha,
+              "geojson_path": str(shard_path),
+              "manifest_updated_at": now,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
+              "last_batch_city": batch_city,
+              "last_batch_source": "OpenStreetMap Overpass API",
+              "last_batch_source_sha256": source_sha,
+              "last_batch_query_sha256": query_sha
+          })
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          checkpoint.update({
+              "updated_at": now,
+              "state": "IN_PROGRESS",
+              "first_unverified_step_status": "BATCH_005_APPENDED_50_SHEFFIELD_OSM_FEATURES_CONTINUATION_REQUIRED",
+              "final_ready": False,
+              "fake_data": False,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "next_batch_index": expected_batch + 1,
+              "next_target_feature_count": after + 50,
+              "last_processed_ids_sample": new_ids[-20:],
+              "processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],
+              "last_batch": {
+                  "batch_index": expected_batch,
+                  "city": batch_city,
+                  "source": "OpenStreetMap Overpass API",
+                  "source_url": endpoint_used,
+                  "source_sha256": source_sha,
+                  "query_sha256": query_sha,
+                  "evidence_level": "B",
+                  "confidence_level_1_to_4": 3,
+                  "added_feature_count": 50,
+                  "new_feature_ids": new_ids
+              },
+              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION"
+          })
+          checkpoint.setdefault("summary", {})["new_slot"] = False
+          checkpoint["summary"]["new_features_appended"] = 50
+          checkpoint["summary"]["pipeline_stage"] = 1
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          status.update({
+              "state": "IN_PROGRESS",
+              "updated_at": now,
+              "final_ready": False,
+              "classified_count": classified,
+              "unknown_count": unknown,
+              "total_elements": after,
+              "confidence_distribution": {key: confidence_distribution.get(key, 0) for key in ["1", "2", "3", "4"]},
+              "evidence_distribution": {key: evidence_distribution.get(key, 0) for key in ["A", "B", "C", "D", "U"]},
+              "output_sha256": output_sha,
+              "note": "Batch 5 appended 50 new Sheffield OSM semantic building features; no fake rows; final_ready remains false."
+          })
+          status["fake_data"] = False
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          runner = {
+              "schema_version": 1,
+              "slot_id": slot_id,
+              "continuation_key": continuation_key_expected,
+              "batch_index": expected_batch,
+              "source_city": batch_city,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "progress_counted": after > before,
+              "added_feature_count": len(new_features),
+              "state": "BATCH_APPENDED",
+              "source_name": "OpenStreetMap Overpass API",
+              "source_url": endpoint_used,
+              "source_sha256": source_sha,
+              "query_sha256": query_sha,
+              "match_method": "osm_explicit_building_tag",
+              "evidence_policy": "Direct semantic OSM building=* tag with OSM node or Overpass center geometry; evidence B / confidence 3; not cadastral parcel proof.",
+              "already_processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],
+              "new_feature_ids": new_ids,
+              "records": records,
+              "fake_data": False,
+              "final_ready": False
+          }
+          runner_path.parent.mkdir(parents=True, exist_ok=True)
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          print(json.dumps({
+              "before": before,
+              "after": after,
+              "added": len(new_features),
+              "source_endpoint": endpoint_used,
+              "source_sha256": source_sha,
+              "query_sha256": query_sha,
+              "current_task_owner": task.get("owner")
+          }, ensure_ascii=False))
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json
+          git diff --cached --quiet && { echo "No feature-count progress; refusing commit"; exit 1; } || true
+          git commit -m "building_type_9 append Sheffield OSM batch"
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
