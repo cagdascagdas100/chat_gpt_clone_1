@@ -1,4 +1,4 @@
-name: tmp building_type_9 York batch 7
+name: tmp building_type_9 Sunderland batch 8
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: building_type_9-continuation
+  cancel-in-progress: false
 
 jobs:
   append:
@@ -19,13 +23,13 @@ jobs:
           fetch-depth: 0
       - name: Fast-forward to current branch head
         run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
-      - name: Append 50 evidence-backed York OSM features
+      - name: Append 50 evidence-backed Sunderland OSM features
         shell: bash
         run: |
           python - <<'PY'
           import collections, datetime as dt, hashlib, json, pathlib, time, urllib.parse, urllib.request
           SLOT='building_type_9'; CONT='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
-          BEFORE=300; BATCH=7; TARGET=350; CITY='York'; GRID='YORK_CENTRAL_01'
+          BEFORE=350; BATCH=8; TARGET=400; CITY='Sunderland'; GRID='SUNDERLAND_CENTRAL_01'
           R=pathlib.Path('.')
           SH=R/'england_map_web/data/building_type/shards/building_type_9_latest.geojson'
           MF=R/'england_map_web/data/building_type/shards/building_type_9_manifest_latest.json'
@@ -38,6 +42,7 @@ jobs:
           assert ct.get('continuation_key')==CONT and ct.get('owner') is None
           assert cp.get('current_feature_count')==BEFORE and cp.get('next_batch_index')==BATCH and cp.get('next_target_feature_count')==TARGET
           assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert st.get('current_feature_count')==BEFORE and st.get('fake_data') is False and st.get('final_ready') is False
           assert mf.get('feature_count')==BEFORE and mf.get('fake_data') is False and mf.get('final_ready') is False
           assert len(geo.get('features',[]))==BEFORE
 
@@ -48,21 +53,19 @@ jobs:
                   if v is not None and str(v).strip(): already.add(str(v))
 
           semantic='apartments|house|detached|semidetached_house|terrace|residential|commercial|retail|supermarket|office|industrial|warehouse|hotel|hospital|school|university|college|kindergarten|church|cathedral|mosque|synagogue|temple|civic|public|transportation|train_station'
-          query=f'''[out:json][timeout:120];(nwr["building"~"^({semantic})$"](53.9000,-1.1600,54.0300,-0.9800););out center tags 2000;'''
+          query=f'''[out:json][timeout:120];(nwr["building"~"^({semantic})$"](54.8300,-1.5000,55.0200,-1.2800););out center tags 3000;'''
           query_sha=hashlib.sha256(query.encode()).hexdigest()
           endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']
           raw=data=used=None; errors=[]
           for endpoint in endpoints:
-              for attempt in range(2):
-                  try:
-                      req=urllib.request.Request(endpoint,data=urllib.parse.urlencode({'data':query}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_9/2026-08-10','Accept':'application/json'},method='POST')
-                      with urllib.request.urlopen(req,timeout=150) as resp: candidate=resp.read()
-                      parsed=json.loads(candidate.decode())
-                      if not isinstance(parsed.get('elements'),list): raise RuntimeError('missing elements')
-                      raw,data,used=candidate,parsed,endpoint; break
-                  except Exception as exc:
-                      errors.append(f'{endpoint} attempt {attempt+1}: {type(exc).__name__}: {exc}'); time.sleep(3)
-              if raw is not None: break
+              try:
+                  req=urllib.request.Request(endpoint,data=urllib.parse.urlencode({'data':query}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_9/2026-08-10','Accept':'application/json'},method='POST')
+                  with urllib.request.urlopen(req,timeout=150) as resp: candidate=resp.read()
+                  parsed=json.loads(candidate.decode())
+                  if not isinstance(parsed.get('elements'),list): raise RuntimeError('missing elements')
+                  raw,data,used=candidate,parsed,endpoint; break
+              except Exception as exc:
+                  errors.append(f'{endpoint}: {type(exc).__name__}: {exc}'); time.sleep(3)
           if raw is None: raise RuntimeError('All Overpass endpoints failed: '+' | '.join(errors))
           source_sha=hashlib.sha256(raw).hexdigest(); now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
           mapping={
@@ -80,21 +83,21 @@ jobs:
               if lat is None or lon is None: continue
               cand.append((typ,int(oid),e,float(lon),float(lat)))
           cand.sort(key=lambda x:(x[0],x[1]))
-          if len(cand)<50: raise RuntimeError(f'Only {len(cand)} eligible York features outside already_processed_ids')
+          if len(cand)<50: raise RuntimeError(f'Only {len(cand)} eligible Sunderland features outside already_processed_ids')
 
           new=[]; batch_seen=set()
           for typ,oid,e,lon,lat in cand[:50]:
               tags=e.get('tags') or {}; b=tags['building']; primary,code,category=mapping[b]
-              fid=f'ENG_OSM_{typ}_{oid}'; parcel=fid; osmid=f'{typ}/{oid}'
-              vals={fid,parcel,osmid}
-              if any(v in already or v in batch_seen for v in vals): raise RuntimeError(f'cross-record duplicate: {sorted(vals)}')
+              fid=f'ENG_OSM_{typ}_{oid}'; parcel=fid; osmid=f'{typ}/{oid}'; vals={fid,parcel,osmid}
+              if vals & already: raise RuntimeError(f'already-processed duplicate: {sorted(vals & already)}')
+              if vals & batch_seen: raise RuntimeError(f'cross-record duplicate: {sorted(vals & batch_seen)}')
               batch_seen.update(vals)
               obj=f'https://www.openstreetmap.org/{typ}/{oid}'
               parts=[f'OSM {osmid}',f'building={b}']
               for k in ('name','addr:city','addr:postcode','addr:street','addr:housenumber'):
                   if tags.get(k): parts.append(f'{k}={tags[k]}')
               excerpt=' | '.join(parts); ev_tags={k:tags[k] for k in ('building','name','addr:city','addr:postcode','addr:street','addr:housenumber') if tags.get(k)}
-              p={'parcel_id':parcel,'parcel_id_semantics':'OSM feature identity used as slot record key; not a cadastral parcel ID','osm_id':osmid,'slot_id':SLOT,'region':'Yorkshire & North East','area':CITY,'local_authority':'York','grid_id':GRID,'postcode':tags.get('addr:postcode',''),'building_type_primary':primary,'building_type_code':code,'building_category':category,'building_type_secondary':'','confidence_score':0.75,'confidence_level_1_to_4':3,'evidence_level':'B','source_count':1,'source':'OpenStreetMap via Overpass API','source_url':obj,'source_hash':source_sha,'source_hash_method':'sha256_raw_overpass_json','query_sha256':query_sha,'match_method':'osm_explicit_building_tag','evidence_excerpt':excerpt,'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode()).hexdigest(),'source_evidence_excerpt':ev_tags,'osm_tags_summary':ev_tags,'sources':[{'source_name':'OpenStreetMap Overpass API','url_or_local_path':used,'object_url':obj,'accessed_at':now,'licence':'ODbL 1.0','granularity':'OSM feature point/native center','fields_used':list(ev_tags),'supports_field':'building_type_primary','match_method':'osm_explicit_building_tag','match_score':0.75,'source_sha256':source_sha,'query_sha256':query_sha}],'geometry_match_method':'osm_native_or_center_point','address_match_method':'osm_address_tags_if_present','limitations':'OSM building tag and OSM point/center are direct feature evidence but are not a cadastral parcel boundary; EPC/VOA/HMLR corroboration not yet applied.','needs_manual_review':False,'fake_data':False,'final_ready':False,'updated_at':now,'feature_id':fid}
+              p={'parcel_id':parcel,'parcel_id_semantics':'OSM feature identity used as slot record key; not a cadastral parcel ID','osm_id':osmid,'slot_id':SLOT,'region':'Yorkshire & North East','area':CITY,'local_authority':'Sunderland','grid_id':GRID,'postcode':tags.get('addr:postcode',''),'building_type_primary':primary,'building_type_code':code,'building_category':category,'building_type_secondary':'','confidence_score':0.75,'confidence_level_1_to_4':3,'evidence_level':'B','source_count':1,'source':'OpenStreetMap via Overpass API','source_url':obj,'source_hash':source_sha,'source_hash_method':'sha256_raw_overpass_json','query_sha256':query_sha,'match_method':'osm_explicit_building_tag','evidence_excerpt':excerpt,'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode()).hexdigest(),'source_evidence_excerpt':ev_tags,'osm_tags_summary':ev_tags,'sources':[{'source_name':'OpenStreetMap Overpass API','url_or_local_path':used,'object_url':obj,'accessed_at':now,'licence':'ODbL 1.0','granularity':'OSM feature point/native center','fields_used':list(ev_tags),'supports_field':'building_type_primary','match_method':'osm_explicit_building_tag','match_score':0.75,'source_sha256':source_sha,'query_sha256':query_sha}],'geometry_match_method':'osm_native_or_center_point','address_match_method':'osm_address_tags_if_present','limitations':'OSM building tag and OSM point/center are direct feature evidence but are not a cadastral parcel boundary; EPC/VOA/HMLR corroboration not yet applied.','needs_manual_review':False,'fake_data':False,'final_ready':False,'updated_at':now,'feature_id':fid}
               assert p['evidence_excerpt'] and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3 and p['fake_data'] is False and p['final_ready'] is False
               new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':p})
 
@@ -105,19 +108,23 @@ jobs:
           for f in geo['features']:
               p=f.get('properties') or {}; ev[str(p.get('evidence_level','U'))]+=1; conf[str(p.get('confidence_level_1_to_4',1))]+=1; types[str(p.get('building_type_primary','unknown'))]+=1
           unknown=types.get('unknown',0); ev_full={k:ev.get(k,0) for k in ('A','B','C','D','U')}; conf_full={str(k):conf.get(str(k),0) for k in (1,2,3,4)}
-          mf.update({'generated_at':now,'total_features':after,'classified':after-unknown,'unknown':unknown,'evidence_distribution':ev_full,'type_distribution':dict(sorted(types.items())),'confidence_level_distribution':conf_full,'fake_data':False,'final_ready':False,'note':f'Existing {before}-feature shard preserved; appended 50 York OSM semantic building features outside feature.id/parcel_id/osm_id already_processed_ids.','feature_count':after,'geojson_sha256':geo_sha,'geojson_path':str(SH),'manifest_updated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'last_batch_city':CITY,'last_batch_grid':GRID,'last_batch_source':'OpenStreetMap Overpass API','last_batch_source_sha256':source_sha,'last_batch_query_sha256':query_sha})
-          mf.setdefault('sources',[]).append({'name':'OpenStreetMap Overpass API - York batch 7','url':used,'license':'ODbL 1.0','features_used':50,'accessed_at':now,'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_json','query_sha256':query_sha,'grid_id':GRID,'note':'50 new explicit semantic building=* OSM features; native point/center evidence, not cadastral parcel polygons.'}); MF.write_text(json.dumps(mf,ensure_ascii=False,indent=2)+'\n')
-          cp.update({'first_unverified_step_status':'BATCH_007_APPENDED_50_YORK_OSM_FEATURES_CONTINUATION_REQUIRED','updated_at':now,'final_ready':False,'state':'IN_PROGRESS','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':8,'next_target_feature_count':400,'next_city_index':8,'last_processed_ids_sample':[f['id'] for f in new[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION','fake_data':False,'processed_id_basis':['feature.id','properties.parcel_id','properties.osm_id']})
+          mf.update({'generated_at':now,'total_features':after,'classified':after-unknown,'unknown':unknown,'evidence_distribution':ev_full,'type_distribution':dict(sorted(types.items())),'confidence_level_distribution':conf_full,'fake_data':False,'final_ready':False,'note':f'Existing {before}-feature shard preserved; appended 50 Sunderland OSM semantic building features outside feature.id/parcel_id/osm_id already_processed_ids.','feature_count':after,'geojson_sha256':geo_sha,'geojson_path':str(SH),'manifest_updated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'last_batch_city':CITY,'last_batch_grid':GRID,'last_batch_source':'OpenStreetMap Overpass API','last_batch_source_sha256':source_sha,'last_batch_query_sha256':query_sha})
+          mf.setdefault('sources',[]).append({'name':'OpenStreetMap Overpass API - Sunderland batch 8','url':used,'license':'ODbL 1.0','features_used':50,'accessed_at':now,'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_json','query_sha256':query_sha,'grid_id':GRID,'note':'50 new explicit semantic building=* OSM features; native point/center evidence, not cadastral parcel polygons.'}); MF.write_text(json.dumps(mf,ensure_ascii=False,indent=2)+'\n')
+          cp.update({'first_unverified_step_status':'BATCH_008_APPENDED_50_SUNDERLAND_OSM_FEATURES_CONTINUATION_REQUIRED','updated_at':now,'final_ready':False,'state':'IN_PROGRESS','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':9,'next_target_feature_count':450,'next_city_index':9,'last_processed_ids_sample':[f['id'] for f in new[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION','fake_data':False,'processed_id_basis':['feature.id','properties.parcel_id','properties.osm_id']})
           cp.setdefault('summary',{})['new_features_appended']=int(cp.get('summary',{}).get('new_features_appended',0))+50
-          cp['last_batch']={'batch_index':7,'city':CITY,'grid_id':GRID,'source':'OpenStreetMap Overpass API','source_url':used,'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level':'B','confidence_level_1_to_4':3,'added_feature_count':50,'new_feature_ids':[f['id'] for f in new]}; CP.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
-          st.update({'state':'IN_PROGRESS','updated_at':now,'final_ready':False,'classified_count':after-unknown,'unknown_count':unknown,'total_elements':after,'confidence_distribution':conf_full,'evidence_distribution':ev_full,'output_sha256':geo_sha,'note':'Batch 7 appended 50 new York OSM semantic building features; no fake rows; final_ready remains false.','fake_data':False,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':8,'next_target_feature_count':400,'last_batch_city':CITY,'last_batch_grid':GRID,'last_batch_source_sha256':source_sha,'last_batch_query_sha256':query_sha,'owner_claim_created':False,'progress':True}); ST.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
-          runner={'slot_id':SLOT,'continuation_key':CONT,'batch_index':7,'city':CITY,'grid_id':GRID,'generated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'progress':True,'already_processed_id_basis':['feature.id','properties.parcel_id','properties.osm_id'],'already_processed_id_count_before':len(already),'source':'OpenStreetMap Overpass API','source_url':used,'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level_new_features':{'B':50},'confidence_level_new_features':{'3':50},'new_feature_ids':[f['id'] for f in new],'records':[{'id':f['id'],'parcel_id':f['properties']['parcel_id'],'osm_id':f['properties']['osm_id'],'building_type_primary':f['properties']['building_type_primary'],'source':f['properties']['source'],'source_url':f['properties']['source_url'],'evidence_excerpt':f['properties']['evidence_excerpt'],'evidence_level':'B','confidence_level_1_to_4':3,'match_method':'osm_explicit_building_tag'} for f in new],'fake_data':False,'final_ready':False,'published':False,'owner_claim_created':False,'raw_source_committed':False,'limitations':'New rows are OSM feature identities/centers, not cadastral parcel polygons; EPC/VOA/HMLR corroboration remains optional pending work.'}; RO.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n')
+          cp['last_batch']={'batch_index':8,'city':CITY,'grid_id':GRID,'source':'OpenStreetMap Overpass API','source_url':used,'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level':'B','confidence_level_1_to_4':3,'added_feature_count':50,'new_feature_ids':[f['id'] for f in new]}; CP.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+          st.update({'state':'IN_PROGRESS','updated_at':now,'final_ready':False,'classified_count':after-unknown,'unknown_count':unknown,'total_elements':after,'confidence_distribution':conf_full,'evidence_distribution':ev_full,'output_sha256':geo_sha,'note':'Batch 8 appended 50 new Sunderland OSM semantic building features; no fake rows; final_ready remains false.','fake_data':False,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':9,'next_target_feature_count':450,'last_batch_city':CITY,'last_batch_grid':GRID,'last_batch_source_sha256':source_sha,'last_batch_query_sha256':query_sha,'owner_claim_created':False,'progress':True}); ST.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          runner={'slot_id':SLOT,'continuation_key':CONT,'batch_index':8,'city':CITY,'grid_id':GRID,'generated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'progress':True,'already_processed_id_basis':['feature.id','properties.parcel_id','properties.osm_id'],'already_processed_id_count_before':len(already),'source':'OpenStreetMap Overpass API','source_url':used,'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level_new_features':{'B':50},'confidence_level_new_features':{'3':50},'new_feature_ids':[f['id'] for f in new],'records':[{'id':f['id'],'parcel_id':f['properties']['parcel_id'],'osm_id':f['properties']['osm_id'],'building_type_primary':f['properties']['building_type_primary'],'source':f['properties']['source'],'source_url':f['properties']['source_url'],'source_hash':f['properties']['source_hash'],'query_sha256':f['properties']['query_sha256'],'evidence_excerpt':f['properties']['evidence_excerpt'],'evidence_level':'B','confidence_level_1_to_4':3,'match_method':'osm_explicit_building_tag'} for f in new],'fake_data':False,'final_ready':False,'owner_claim_created':False,'raw_source_committed':False,'limitations':'New rows are OSM feature identities/centers, not cadastral parcel polygons; EPC/VOA/HMLR corroboration remains optional pending work.'}; RO.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n')
           print(json.dumps({'before':before,'after':after,'added':50,'eligible':len(cand),'already_ids':len(already),'source_sha':source_sha,'query_sha':query_sha,'endpoint':used}))
           PY
           git config user.name "AAYS building_type_9 continuation"
           git config user.email "aays-building-type-9@local.invalid"
           git add england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json
-          git diff --cached --quiet && { echo 'No changes staged'; exit 1; }
-          git commit -m "building_type_9: append batch 7 York OSM features"
-          for i in 1 2 3; do git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; git pull --rebase origin codex/aays-single-runner-v5-20260706; sleep 2; done
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "building_type_9: append batch 8 Sunderland OSM features"
+          for attempt in 1 2 3; do
+            git pull --rebase origin codex/aays-single-runner-v5-20260706 || exit 1
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep 3
+          done
           exit 1
