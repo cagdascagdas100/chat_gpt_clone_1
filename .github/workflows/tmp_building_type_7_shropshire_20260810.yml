@@ -1,0 +1,65 @@
+name: tmp building_type_7 Shropshire batch 11
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_shropshire_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-shropshire-batch-11
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Append 50 Shropshire FHRS features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git show fa59a9179e6365dc146a5beaeaaf5d6358009e44:.github/workflows/tmp_building_type_7_dudley_20260810.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/template.yml').read_text(encoding='utf-8')
+          marker = '        run: |\n'
+          if marker not in text:
+              raise SystemExit('template run block missing')
+          shell = text.split(marker, 1)[1]
+          lines = shell.splitlines()
+          shell = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
+          replacements = [
+              ('expected_before = 350', 'expected_before = 500'),
+              ('expected_target = 400', 'expected_target = 550'),
+              ('FHRS409en-GB.xml', 'FHRS708en-GB.xml'),
+              ('Dudley', 'Shropshire'),
+              ('dudley', 'shropshire'),
+              ('DUD', 'SHR'),
+              ('52.35 <= lat <= 52.65 and -2.30 <= lon <= -1.85', '52.20 <= lat <= 53.10 and -3.30 <= lon <= -2.20'),
+          ]
+          for old, new in replacements:
+              if old not in shell:
+                  raise SystemExit(f'template token missing: {old}')
+              shell = shell.replace(old, new)
+          required = [
+              'expected_before = 500', 'expected_target = 550',
+              'FHRS708en-GB.xml', 'city = "Shropshire"', 'prefix = "SHR"',
+              'BATCH_APPENDED_50_SHROPSHIRE_FHRS_CONTINUATION_REQUIRED',
+              'building_type_7 append Shropshire FHRS batch'
+          ]
+          missing = [x for x in required if x not in shell]
+          if missing:
+              raise SystemExit(f'template patch incomplete: {missing}')
+          Path('/tmp/run_shropshire.sh').write_text(shell, encoding='utf-8')
+          PY
+          bash /tmp/run_shropshire.sh
