@@ -1,0 +1,381 @@
+name: Guarded building_type_5 batch 7 append
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/bt5_batch7_20260810_retry.yml
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Guarded append of 50 new Norwich OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections
+          import datetime as dt
+          import json
+          import math
+          import pathlib
+          import time
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          SHARD = pathlib.Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          MANIFEST = pathlib.Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          STATUS = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          CHECKPOINT = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          TASK = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          OUTPUT = pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          COMMON = pathlib.Path('docs/building_type_common_continue_prompt_TR.md')
+
+          def load(p):
+              return json.loads(p.read_text(encoding='utf-8'))
+
+          geo = load(SHARD)
+          manifest = load(MANIFEST)
+          status = load(STATUS)
+          checkpoint = load(CHECKPOINT)
+          task = load(TASK)
+          common_text = COMMON.read_text(encoding='utf-8')
+
+          features = geo.get('features') or []
+          before = len(features)
+          if before != 300:
+              raise SystemExit(f'GUARD: expected shard count 300, found {before}')
+          if task.get('task_id') != 'building-type-5-england-classification-v1-20260808':
+              raise SystemExit(f"GUARD: task changed: {task.get('task_id')}")
+          if task.get('owner') is not None:
+              raise SystemExit(f"GUARD: owner is no longer null: {task.get('owner')}")
+          for label, obj in [('checkpoint', checkpoint), ('status', status)]:
+              c = obj.get('current_feature_count', obj.get('feature_count_after'))
+              if c is not None and int(c) != before:
+                  raise SystemExit(f'GUARD: {label} count {c} != shard {before}')
+              if obj.get('fake_data') is True:
+                  raise SystemExit(f'GUARD: {label} fake_data=true')
+              if obj.get('final_ready') is True:
+                  raise SystemExit(f'GUARD: {label} final_ready=true')
+              if str(obj.get('state','')).upper() == 'PUBLISHED' or str(obj.get('status','')).upper() == 'PUBLISHED':
+                  raise SystemExit(f'GUARD: {label} already PUBLISHED')
+          if checkpoint.get('next_batch_index') not in (7, '7'):
+              raise SystemExit(f"GUARD: next_batch_index changed: {checkpoint.get('next_batch_index')}")
+
+          # Every existing feature.id, parcel_id and osm_id is part of already_processed_ids.
+          processed = set()
+          def remember(v):
+              if v is None:
+                  return
+              s = str(v).strip()
+              if not s:
+                  return
+              processed.add(s)
+              processed.add(s.lower())
+          for f in features:
+              remember(f.get('id'))
+              p = f.get('properties') or {}
+              remember(p.get('parcel_id'))
+              remember(p.get('osm_id'))
+
+          # Derive evidence-level/confidence convention from this shard's existing OSM-backed rows.
+          conf_keys = ('confidence', 'confidence_level', 'confidence_1_4', 'confidence_score')
+          pair_counts = collections.Counter()
+          for f in features:
+              p = f.get('properties') or {}
+              ev = p.get('evidence_level')
+              if ev in (None, ''):
+                  continue
+              blob = ' '.join(str(p.get(k,'')) for k in ('source','source_url','sources','evidence_excerpt','osm_id')).lower()
+              if 'osm' not in blob and 'openstreetmap' not in blob and not p.get('osm_id'):
+                  continue
+              for ck in conf_keys:
+                  val = p.get(ck)
+                  try:
+                      n = int(float(val))
+                  except (TypeError, ValueError):
+                      continue
+                  if 1 <= n <= 4:
+                      bt = str(p.get('building_type','')).strip().lower()
+                      if bt not in ('', 'unknown', 'proxy_only', 'unclassified'):
+                          pair_counts[(str(ev), n, ck)] += 1
+                          break
+          if not pair_counts:
+              raise SystemExit('SCHEMA_GUARD: no existing OSM-backed evidence_level + 1-4 confidence pair found in shard')
+          (evidence_level, confidence_value, confidence_key), pair_count = pair_counts.most_common(1)[0]
+          if evidence_level.upper() == 'U':
+              raise SystemExit('SCHEMA_GUARD: dominant OSM evidence convention resolved to U; refusing typed append')
+
+          # Reuse existing explicit OSM-tag -> building_type mappings where current shard supplies them.
+          tag_type_counts = collections.defaultdict(collections.Counter)
+          for f in features:
+              p = f.get('properties') or {}
+              raw = p.get('osm_building_tag') or p.get('building_tag') or p.get('building')
+              bt = p.get('building_type')
+              if raw and bt and str(bt).lower() not in ('unknown','proxy_only','unclassified'):
+                  tag_type_counts[str(raw).strip().lower()][str(bt)] += 1
+          tag_type_map = {k: v.most_common(1)[0][0] for k,v in tag_type_counts.items()}
+
+          generic = {'', 'yes', 'no', 'roof', 'construction', 'proposed', 'demolished', 'ruins'}
+          new_features = []
+          seen_new = set()
+          source_requests = []
+          # Small Norwich urban grid cells; runtime-only OSM XML is never written to the repository.
+          boxes = []
+          for lat0 in (52.610, 52.615, 52.620, 52.625, 52.630, 52.635, 52.640, 52.645, 52.650):
+              for lon0 in (1.250, 1.260, 1.270, 1.280, 1.290, 1.300, 1.310, 1.320, 1.330):
+                  boxes.append((lon0, lat0, lon0 + 0.005, lat0 + 0.005))
+
+          def fetch_osm_map(bbox):
+              bbox_s = ','.join(f'{x:.6f}' for x in bbox)
+              url = 'https://api.openstreetmap.org/api/0.6/map?bbox=' + bbox_s
+              req = urllib.request.Request(url, headers={
+                  'User-Agent': 'TerraYield-AAYS-building-type/1.0 (github.com/cagdascagdas100/chat_gpt_clone_1)',
+                  'Accept': 'application/xml'
+              })
+              last = None
+              for attempt in range(3):
+                  try:
+                      with urllib.request.urlopen(req, timeout=45) as r:
+                          data = r.read()
+                      return url, data
+                  except Exception as e:
+                      last = e
+                      time.sleep(2.0 * (attempt + 1))
+              raise RuntimeError(f'OSM map fetch failed for {bbox_s}: {last}')
+
+          for grid_i, bbox in enumerate(boxes, start=1):
+              if len(new_features) >= 50:
+                  break
+              try:
+                  source_url, xml_bytes = fetch_osm_map(bbox)
+              except Exception as e:
+                  print('WARN', e)
+                  continue
+              source_requests.append(source_url)
+              root = ET.fromstring(xml_bytes)
+              nodes = {}
+              for n in root.findall('node'):
+                  try:
+                      nodes[n.attrib['id']] = (float(n.attrib['lon']), float(n.attrib['lat']))
+                  except Exception:
+                      pass
+              for w in root.findall('way'):
+                  if len(new_features) >= 50:
+                      break
+                  tags = {t.attrib.get('k'): t.attrib.get('v','') for t in w.findall('tag') if t.attrib.get('k')}
+                  raw = str(tags.get('building','')).strip().lower()
+                  if raw in generic:
+                      continue
+                  osm_num = w.attrib.get('id')
+                  if not osm_num:
+                      continue
+                  fid = f'ENG_OSM_way_{osm_num}'
+                  osm_id = f'way/{osm_num}'
+                  variants = {fid, fid.lower(), osm_id, osm_id.lower(), str(osm_num)}
+                  if variants & processed or variants & seen_new:
+                      continue
+                  refs = [nd.attrib.get('ref') for nd in w.findall('nd')]
+                  coords = [nodes[r] for r in refs if r in nodes]
+                  if len(coords) < 3:
+                      continue
+                  if coords[0] != coords[-1]:
+                      coords.append(coords[0])
+                  if len(coords) < 4:
+                      continue
+
+                  building_type = tag_type_map.get(raw, raw)
+                  context = []
+                  for k in ('building','name','amenity','shop','office','tourism','leisure','landuse'):
+                      if tags.get(k):
+                          context.append(f'{k}={tags[k]}')
+                  excerpt = f"OSM way {osm_num}: " + '; '.join(context[:6])
+                  element_url = f'https://www.openstreetmap.org/way/{osm_num}'
+                  grid_id = f'NORWICH_G{grid_i:02d}'
+                  props = {
+                      'parcel_id': fid,
+                      'osm_id': osm_id,
+                      'osm_type': 'way',
+                      'osm_numeric_id': int(osm_num),
+                      'osm_building_tag': raw,
+                      'building_type': building_type,
+                      'building_type_raw': raw,
+                      'classification_method': 'direct_osm_building_tag',
+                      'source': 'OpenStreetMap',
+                      'source_url': element_url,
+                      'source_acquisition_url': source_url,
+                      'evidence_excerpt': excerpt,
+                      'evidence_level': evidence_level,
+                      'confidence_1_4': int(confidence_value),
+                      'evidence_source_count': 1,
+                      'city': 'Norwich',
+                      'region': 'East of England',
+                      'region_code': 'EE',
+                      'grid_id': grid_id,
+                      'batch_index': 7,
+                      'source_snapshot_date': dt.datetime.now(dt.timezone.utc).date().isoformat(),
+                      'fake_data': False,
+                  }
+                  props[confidence_key] = int(confidence_value)
+                  new_features.append({
+                      'type': 'Feature',
+                      'id': fid,
+                      'geometry': {'type': 'Polygon', 'coordinates': [[[x,y] for x,y in coords]]},
+                      'properties': props,
+                  })
+                  seen_new.update(variants)
+              time.sleep(1.0)
+
+          if len(new_features) < 50:
+              raise SystemExit(f'SOURCE_BLOCKED: only {len(new_features)} new specifically-typed OSM building ways found outside already_processed_ids')
+          new_features = new_features[:50]
+          geo['features'].extend(new_features)
+          after = len(geo['features'])
+          if after <= before or after != before + 50:
+              raise SystemExit(f'COUNT_GUARD: before={before} after={after}')
+
+          # Validate all required fields and duplicate identity contract before writing.
+          all_id_values = set()
+          for f in geo['features']:
+              p = f.get('properties') or {}
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v is None:
+                      continue
+                  key = str(v)
+                  if key in all_id_values and f in new_features:
+                      # Cross-field equality inside the same feature is allowed; cross-feature reuse is not.
+                      pass
+                  all_id_values.add(key)
+          for f in new_features:
+              p = f['properties']
+              required = ('parcel_id','osm_id','building_type','source','source_url','evidence_excerpt','evidence_level','confidence_1_4')
+              if any(p.get(k) in (None,'') for k in required):
+                  raise SystemExit(f"EVIDENCE_GUARD: missing required field in {f.get('id')}")
+              if not (1 <= int(p['confidence_1_4']) <= 4):
+                  raise SystemExit(f"CONFIDENCE_GUARD: invalid confidence for {f.get('id')}")
+              if p.get('fake_data') is not False:
+                  raise SystemExit(f"FAKE_GUARD: {f.get('id')}")
+
+          now = dt.datetime.now(dt.timezone.utc).isoformat().replace('+00:00','Z')
+          new_ids = [f['id'] for f in new_features]
+          for obj in (checkpoint, status):
+              obj['feature_count_before'] = before
+              obj['feature_count_after'] = after
+              obj['current_feature_count'] = after
+              obj['next_batch_index'] = 8
+              obj['next_target_feature_count'] = after + 50
+              obj['last_processed_ids_sample'] = new_ids[-20:]
+              obj['next_required_action'] = 'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES'
+              obj['updated_at'] = now
+              obj['fake_data'] = False
+              obj['final_ready'] = False
+              if isinstance(obj.get('progress'), dict):
+                  obj['progress']['completed_count'] = after
+          manifest['feature_count_before'] = before
+          manifest['feature_count_after'] = after
+          manifest['feature_count'] = after
+          manifest['current_feature_count'] = after
+          manifest['last_batch_index'] = 7
+          manifest['next_batch_index'] = 8
+          manifest['updated_at'] = now
+          manifest['fake_data'] = False
+          manifest['final_ready'] = False
+          manifest['last_batch'] = {
+              'city': 'Norwich',
+              'region_code': 'EE',
+              'batch_index': 7,
+              'added_feature_count': 50,
+              'source': 'OpenStreetMap API map endpoint',
+              'source_request_count': len(source_requests),
+              'evidence_level': evidence_level,
+              'confidence_1_4': int(confidence_value),
+              'raw_source_committed': False,
+          }
+          if isinstance(geo.get('metadata'), dict):
+              geo['metadata']['feature_count_before'] = before
+              geo['metadata']['feature_count_after'] = after
+              geo['metadata']['current_feature_count'] = after
+              geo['metadata']['updated_at'] = now
+              geo['metadata']['fake_data'] = False
+              geo['metadata']['final_ready'] = False
+
+          output = {
+              'schema_version': 1,
+              'slot_id': 'building_type_5',
+              'task_id': task.get('task_id'),
+              'region': 'East of England',
+              'city': 'Norwich',
+              'batch_index': 7,
+              'feature_count_before': before,
+              'feature_count_after': after,
+              'added_feature_count': 50,
+              'new_feature_ids': new_ids,
+              'evidence_level': evidence_level,
+              'confidence_1_4': int(confidence_value),
+              'confidence_key_reused_from_shard': confidence_key,
+              'existing_osm_convention_sample_count': pair_count,
+              'source': 'OpenStreetMap',
+              'source_request_count': len(source_requests),
+              'raw_source_committed': False,
+              'already_processed_policy': ['feature.id','properties.parcel_id','properties.osm_id'],
+              'fake_data': False,
+              'final_ready': False,
+              'published': False,
+              'updated_at': now,
+          }
+
+          SHARD.write_text(json.dumps(geo, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          STATUS.write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          CHECKPOINT.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+          OUTPUT.write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f'APPEND_OK before={before} after={after} evidence={evidence_level} confidence={confidence_value} key={confidence_key}')
+          PY
+          touch /tmp/bt5_batch7_success
+
+      - name: Commit guarded result and remove temporary workflow
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/bt5_batch7_20260810_retry.yml'
+          DATA=(
+            'england_map_web/data/building_type/shards/building_type_5_latest.geojson'
+            'england_map_web/data/building_type/shards/building_type_5_manifest_latest.json'
+            'docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'
+          )
+          git config user.name 'aays-building-type-runner'
+          git config user.email 'actions@users.noreply.github.com'
+          git fetch origin "$BRANCH"
+          REMOTE="$(git rev-parse "origin/$BRANCH")"
+          BASE="$(git rev-parse HEAD)"
+          if [ "$REMOTE" != "$BASE" ]; then
+            echo "RACE_GUARD: remote moved from $BASE to $REMOTE; refusing data commit"
+            exit 1
+          fi
+          if [ ! -f /tmp/bt5_batch7_success ]; then
+            git restore --staged --worktree -- "${DATA[@]}" 2>/dev/null || true
+          fi
+          git rm -f "$WF"
+          if [ -f /tmp/bt5_batch7_success ]; then
+            git add -- "${DATA[@]}"
+            git commit -m 'Append building_type_5 Norwich batch 7 (+50)'
+          else
+            git commit -m 'Clean failed building_type_5 batch 7 runner'
+          fi
+          git push origin "HEAD:$BRANCH"
