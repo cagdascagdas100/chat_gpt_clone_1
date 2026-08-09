@@ -1,0 +1,411 @@
+name: tmp building_type_7 Sandwell batch 10
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_sandwell_20260810.yml
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Rebase to current canonical head
+        run: git pull --rebase origin codex/aays-single-runner-v5-20260706
+      - name: Fetch Sandwell FHRS source to runtime cache only
+        run: |
+          curl --fail --location --retry 3 --retry-delay 3 \
+            --user-agent 'AAYS-building-type/1.0' \
+            'https://ratings.food.gov.uk/api/open-data-files/FHRS423en-GB.xml' \
+            -o /tmp/building_type_7_sandwell_FHRS423en-GB.xml
+      - name: Append exactly 50 new Sandwell proxy features
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, hashlib, xml.etree.ElementTree as ET
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          slot = 'building_type_7'
+          task_id = 'building-type-7-england-classification-v1-20260808'
+          branch = 'codex/aays-single-runner-v5-20260706'
+          expected_before = 450
+          target_after = 500
+          expected_batch = 10
+          next_target = 550
+          city = 'Sandwell'
+          prefix = 'SDW_FHRS_'
+          parcel_prefix = 'SDW_FHRSID_'
+          source_name = 'Food Standards Agency FHRS daily open data - Sandwell'
+          source_url = 'https://ratings.food.gov.uk/api/open-data-files/FHRS423en-GB.xml'
+          source_page = 'https://ratings.food.gov.uk/open-data'
+          raw_path = Path('/tmp/building_type_7_sandwell_FHRS423en-GB.xml')
+
+          shard_path = Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest_path = Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          runner_path = Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          checkpoint_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          status_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          current_task_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+
+          shard = json.loads(shard_path.read_text(encoding='utf-8'))
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          status = json.loads(status_path.read_text(encoding='utf-8'))
+          current_task = json.loads(current_task_path.read_text(encoding='utf-8'))
+          features = shard.get('features', [])
+
+          assert shard.get('type') == 'FeatureCollection'
+          assert len(features) == expected_before, f'shard count moved: {len(features)} != {expected_before}'
+          assert checkpoint.get('slot_id') == slot
+          assert checkpoint.get('feature_count_after') == expected_before
+          assert checkpoint.get('current_feature_count') == expected_before
+          assert checkpoint.get('next_batch_index') == expected_batch
+          assert checkpoint.get('next_target_feature_count') == target_after
+          assert current_task.get('slot_id') == slot
+          assert current_task.get('task_id') == task_id
+          assert current_task.get('owner') is None, f'live owner detected: {current_task.get("owner")}'
+          assert current_task.get('state') in ('READY', 'CLAIMABLE')
+          assert manifest.get('feature_count', manifest.get('total_features')) == expected_before
+          assert not any((f.get('properties') or {}).get('fake_data') is True for f in features)
+
+          raw = raw_path.read_bytes()
+          source_sha = hashlib.sha256(raw).hexdigest()
+          root = ET.fromstring(raw)
+
+          def lname(tag):
+              return tag.rsplit('}', 1)[-1]
+
+          def text(el, key):
+              for x in el.iter():
+                  if lname(x.tag) == key and x.text is not None:
+                      return x.text.strip()
+              return ''
+
+          processed = set()
+          existing_coords = set()
+          for f in features:
+              p = f.get('properties') or {}
+              for value in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):
+                  if value not in (None, ''):
+                      processed.add(str(value))
+              g = f.get('geometry') or {}
+              c = g.get('coordinates')
+              if g.get('type') == 'Point' and isinstance(c, list) and len(c) >= 2:
+                  try:
+                      existing_coords.add((round(float(c[0]), 7), round(float(c[1]), 7)))
+                  except Exception:
+                      pass
+
+          def classify(bt):
+              b = (bt or '').strip().lower()
+              if 'school' in b or 'college' in b or 'university' in b:
+                  return ('education', 'P_EDUCATION', 'institutional')
+              if 'hospital' in b or 'childcare' in b or 'caring premises' in b:
+                  return ('healthcare_care', 'P_HEALTHCARE', 'institutional')
+              if 'hotel' in b or 'guest house' in b or 'bed & breakfast' in b or 'bed and breakfast' in b:
+                  return ('hospitality', 'C_HOSPITALITY', 'commercial')
+              if 'restaurant' in b or 'cafe' in b or 'canteen' in b or 'pub' in b or 'bar' in b or 'nightclub' in b or 'takeaway' in b or 'sandwich' in b:
+                  return ('commercial_hospitality', 'C_HOSPITALITY', 'commercial')
+              if 'retailer' in b or 'supermarket' in b or 'hypermarket' in b:
+                  return ('commercial_retail', 'C_RETAIL', 'commercial')
+              if 'manufacturer' in b or 'packer' in b:
+                  return ('industrial', 'C_INDUSTRIAL', 'commercial')
+              if 'distributor' in b or 'transporter' in b:
+                  return ('warehouse', 'C_WAREHOUSE', 'commercial')
+              return ('commercial_other', 'C_OTHER', 'commercial')
+
+          candidates = []
+          skipped_processed = 0
+          skipped_no_coord = 0
+          skipped_duplicate_point = 0
+          candidate_coords = set()
+          for el in root.iter():
+              if lname(el.tag) != 'EstablishmentDetail':
+                  continue
+              fhrsid = text(el, 'FHRSID')
+              if not fhrsid:
+                  continue
+              feature_id = prefix + fhrsid
+              parcel_id = parcel_prefix + fhrsid
+              if feature_id in processed or parcel_id in processed or fhrsid in processed:
+                  skipped_processed += 1
+                  continue
+              lat_s = text(el, 'Latitude')
+              lon_s = text(el, 'Longitude')
+              try:
+                  lat = float(lat_s)
+                  lon = float(lon_s)
+              except Exception:
+                  skipped_no_coord += 1
+                  continue
+              if not (49.0 <= lat <= 61.0 and -9.0 <= lon <= 3.0):
+                  skipped_no_coord += 1
+                  continue
+              coord_key = (round(lon, 7), round(lat, 7))
+              if coord_key in existing_coords or coord_key in candidate_coords:
+                  skipped_duplicate_point += 1
+                  continue
+              candidate_coords.add(coord_key)
+              candidates.append((int(fhrsid) if fhrsid.isdigit() else 10**18, fhrsid, el, lon, lat))
+
+          candidates.sort(key=lambda x: (x[0], x[1]))
+          selected = candidates[:50]
+          assert len(selected) == 50, f'only {len(selected)} unique geocoded candidates available'
+
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          new_features = []
+          records = []
+          selected_ids = []
+
+          for _, fhrsid, el, lon, lat in selected:
+              business_name = text(el, 'BusinessName')
+              business_type = text(el, 'BusinessType')
+              business_type_id = text(el, 'BusinessTypeID')
+              labid = text(el, 'LocalAuthorityBusinessID')
+              la_name = text(el, 'LocalAuthorityName') or city
+              postcode = text(el, 'PostCode')
+              rating = text(el, 'RatingValue')
+              rating_date = text(el, 'RatingDate')
+              primary, code, category = classify(business_type)
+              feature_id = prefix + fhrsid
+              parcel_id = parcel_prefix + fhrsid
+              excerpt = f'FHRSID {fhrsid} | {business_name} | BusinessType {business_type} | LocalAuthority {la_name} | PostCode {postcode}'
+              excerpt_sha = hashlib.sha256(excerpt.encode('utf-8')).hexdigest()
+              evidence_obj = {
+                  'FHRSID': fhrsid,
+                  'BusinessName': business_name,
+                  'BusinessType': business_type,
+                  'BusinessTypeID': business_type_id,
+                  'LocalAuthorityBusinessID': labid,
+                  'LocalAuthorityName': la_name,
+                  'PostCode': postcode,
+                  'RatingValue': rating,
+                  'RatingDate': rating_date,
+              }
+              source_obj = {
+                  'source_name': 'Food Standards Agency FHRS daily open data',
+                  'url_or_local_path': source_url,
+                  'accessed_at': now,
+                  'sha256': source_sha,
+                  'sha256_scope': 'raw_source_xml',
+                  'granularity': 'food_business_establishment',
+                  'fields_used': ['FHRSID','BusinessName','BusinessType','BusinessTypeID','LocalAuthorityBusinessID','LocalAuthorityName','PostCode','Latitude','Longitude'],
+                  'supports_field': 'building_type_primary',
+                  'match_method': 'fhrs_business_type_premises_proxy',
+                  'match_score': 0.55,
+              }
+              props = {
+                  'parcel_id': parcel_id,
+                  'parcel_id_semantics': 'stable FSA FHRSID-derived slot identifier; not a cadastral parcel ID',
+                  'osm_id': None,
+                  'slot_id': slot,
+                  'region': 'West Midlands',
+                  'area': city,
+                  'local_authority': la_name,
+                  'postcode': postcode,
+                  'building_type_primary': primary,
+                  'building_type_code': code,
+                  'building_category': category,
+                  'confidence_score': 0.55,
+                  'confidence_level_1_to_4': 2,
+                  'evidence_level': 'D',
+                  'source_count': 1,
+                  'source': source_name,
+                  'source_url': source_url,
+                  'source_hash': source_sha,
+                  'source_hash_method': 'sha256_raw_source_xml',
+                  'match_method': 'fhrs_business_type_premises_proxy',
+                  'evidence_excerpt': excerpt,
+                  'evidence_excerpt_sha256': excerpt_sha,
+                  'source_evidence_excerpt': evidence_obj,
+                  'sources': [source_obj],
+                  'geometry_match_method': 'fhrs_geocode_point',
+                  'address_match_method': 'fhrs_business_address',
+                  'limitations': 'FHRS business type is a premises-use proxy and does not prove cadastral parcel identity or exact building fabric/type.',
+                  'needs_manual_review': True,
+                  'fake_data': False,
+                  'final_ready': False,
+                  'updated_at': now,
+                  'feature_id': feature_id,
+              }
+              geom = {'type': 'Point', 'coordinates': [lon, lat]}
+              new_features.append({'type': 'Feature', 'id': feature_id, 'geometry': geom, 'properties': props})
+              rec = dict(props)
+              rec['geometry'] = geom
+              records.append(rec)
+              selected_ids.append(feature_id)
+
+          assert len(set(selected_ids)) == 50
+          assert not (set(selected_ids) & processed)
+          features.extend(new_features)
+          assert len(features) == target_after
+          shard['features'] = features
+
+          geojson_text = json.dumps(shard, ensure_ascii=False, indent=2) + '\n'
+          shard_path.write_text(geojson_text, encoding='utf-8')
+          geojson_sha = hashlib.sha256(geojson_text.encode('utf-8')).hexdigest()
+
+          ev = Counter((f.get('properties') or {}).get('evidence_level', 'U') for f in features)
+          conf = Counter(str((f.get('properties') or {}).get('confidence_level_1_to_4', 1)) for f in features)
+          types = Counter((f.get('properties') or {}).get('building_type_primary', 'unknown') for f in features)
+          classified = sum(1 for f in features if (f.get('properties') or {}).get('building_type_primary', 'unknown') != 'unknown')
+          unknown = len(features) - classified
+          assert all((f.get('properties') or {}).get('fake_data') is not True for f in features)
+          assert all((f.get('properties') or {}).get('final_ready') is not True for f in new_features)
+
+          manifest['generated_at'] = now
+          manifest['total_features'] = target_after
+          manifest['feature_count'] = target_after
+          manifest['classified'] = classified
+          manifest['unknown'] = unknown
+          manifest['evidence_distribution'] = {k: ev.get(k, 0) for k in ['A','B','C','D','U']}
+          manifest['type_distribution'] = dict(sorted(types.items()))
+          manifest['confidence_level_distribution'] = {str(i): conf.get(str(i), 0) for i in range(1,5)}
+          manifest.setdefault('sources', []).append({
+              'name': source_name,
+              'url': source_url,
+              'source_page': source_page,
+              'features_used': 50,
+              'accessed_at': now,
+              'source_sha256': source_sha,
+              'source_hash_method': 'sha256_raw_source_xml',
+              'note': 'Premises-use proxy; not cadastral parcel geometry.'
+          })
+          manifest['fake_data'] = False
+          manifest['final_ready'] = False
+          manifest['note'] = 'Existing shard preserved; appended 50 Sandwell FHRS records outside feature.id/parcel_id/osm_id already_processed_ids.'
+          manifest['geojson_sha256'] = geojson_sha
+          manifest['geojson_path'] = str(shard_path)
+          manifest['manifest_updated_at'] = now
+          manifest['feature_count_before'] = expected_before
+          manifest['feature_count_after'] = target_after
+          manifest['added_feature_count'] = 50
+          manifest['last_batch_city'] = city
+          manifest['last_batch_source'] = source_name
+          manifest['last_batch_source_sha256'] = source_sha
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          runner = {
+              'slot_id': slot,
+              'task_id': task_id,
+              'generated_at': now,
+              'feature_count_before': expected_before,
+              'feature_count_after': target_after,
+              'added_feature_count': 50,
+              'city': city,
+              'source': source_name,
+              'source_url': source_url,
+              'source_sha256': source_sha,
+              'classification_method': 'fhrs_business_type_premises_proxy',
+              'confidence_policy': {'fhrs_premises_proxy': {'evidence_level': 'D', 'confidence_level_1_to_4': 2}},
+              'already_processed_id_fields': ['feature.id', 'properties.feature_id', 'properties.parcel_id', 'properties.osm_id'],
+              'candidate_count_after_filters': len(candidates),
+              'skipped_processed_ids': skipped_processed,
+              'skipped_missing_or_invalid_coordinates': skipped_no_coord,
+              'skipped_duplicate_points': skipped_duplicate_point,
+              'selected_feature_ids': selected_ids,
+              'records': records,
+              'fake_data': False,
+              'next_batch_index': expected_batch + 1,
+              'next_target_feature_count': next_target,
+          }
+          runner_path.parent.mkdir(parents=True, exist_ok=True)
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          checkpoint['updated_at'] = now
+          checkpoint['first_unverified_step_status'] = 'BATCH_APPENDED_50_SANDWELL_FHRS_CONTINUATION_REQUIRED'
+          checkpoint.setdefault('summary', {})['new_features_appended'] = 50
+          checkpoint['summary']['current_feature_count'] = target_after
+          checkpoint['state'] = 'IN_PROGRESS'
+          checkpoint['feature_count_before'] = expected_before
+          checkpoint['feature_count_after'] = target_after
+          checkpoint['current_feature_count'] = target_after
+          checkpoint['next_batch_index'] = expected_batch + 1
+          checkpoint['next_target_feature_count'] = next_target
+          checkpoint['last_processed_ids_sample'] = selected_ids[-20:]
+          checkpoint['next_required_action'] = 'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR/OSM CORROBORATION FOR CURRENT-USE_AND_PARCEL_BINDING'
+          checkpoint['fake_data'] = False
+          checkpoint['final_ready'] = False
+          checkpoint['last_batch'] = {
+              'batch_index': expected_batch,
+              'city': city,
+              'source': source_name,
+              'source_sha256': source_sha,
+              'added_feature_count': 50,
+              'new_feature_ids': selected_ids,
+          }
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          status['updated_at'] = now
+          status['state'] = 'IN_PROGRESS'
+          status['final_ready'] = False
+          status['fake_data'] = False
+          status['classified_count'] = classified
+          status['unknown_count'] = unknown
+          status['total_elements'] = target_after
+          status['confidence_distribution'] = {str(i): conf.get(str(i), 0) for i in range(1,5)}
+          status['evidence_distribution'] = {k: ev.get(k, 0) for k in ['A','B','C','D','U']}
+          status['output_sha256'] = geojson_sha
+          status['note'] = 'Sandwell FHRS batch appended as premises-use proxy; cadastral parcel binding remains pending.'
+          status['feature_count_before'] = expected_before
+          status['feature_count_after'] = target_after
+          status['current_feature_count'] = target_after
+          status['last_batch'] = {
+              'city': city,
+              'added_feature_count': 50,
+              'source': source_name,
+              'source_sha256': source_sha,
+              'classification_basis': 'fhrs_business_type_premises_proxy',
+              'evidence_level_distribution': {'D': 50},
+              'confidence_level_distribution': {'2': 50},
+          }
+          status['total_features'] = target_after
+          status['classified'] = classified
+          status['unknown'] = unknown
+          status['confidence_level_distribution'] = {str(i): conf.get(str(i), 0) for i in range(1,5)}
+          status['last_batch_city'] = city
+          status['last_batch_added_feature_count'] = 50
+          status['last_batch_source'] = source_name
+          status['last_batch_evidence_distribution'] = {'D': 50}
+          status['last_batch_confidence_distribution'] = {'2': 50}
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          print(json.dumps({
+              'slot': slot,
+              'before': expected_before,
+              'after': len(features),
+              'added': len(new_features),
+              'batch': expected_batch,
+              'city': city,
+              'source_sha256': source_sha,
+              'first_new_id': selected_ids[0],
+              'last_new_id': selected_ids[-1],
+              'evidence_level': 'D',
+              'confidence_1_to_4': 2,
+          }, indent=2))
+          PY
+      - name: Commit and push derived slot outputs only
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          test -n "$(git status --porcelain)"
+          git commit -m 'data(building_type_7): append Sandwell FHRS batch 450->500'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
