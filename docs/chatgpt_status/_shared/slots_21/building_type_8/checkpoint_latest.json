@@ -9,37 +9,52 @@
   "region_code": "NW",
   "sequence": 1,
   "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
-  "remote_head": "1f013c2572dfc716d22bc3e6acd65b04e89a83f3",
+  "remote_head": "55c21d3a92e78e8438f03b35266de06c27005b00",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
-  "first_unverified_step_status": "RECOVERY_PARKED_SOURCE_CLIENT_UNAVAILABLE",
+  "first_unverified_step_status": "BLOCKED_NO_NEW_SOURCE_OR_BATCH",
   "continuation_key": "1438e38f53702e97217fea2475381d3b31b74de11677358f98513a9e45d43d47",
   "terminal_no_replay": [],
   "terminal_status": "RECOVERY_PARKED",
-  "updated_at": "2026-08-09T19:50:00Z",
+  "updated_at": "2026-08-09T21:29:50Z",
   "final_ready": false,
   "summary": {
     "osm_pilot_classified": 87,
     "unknown": 13,
     "current_feature_count": 100,
-    "pipeline_stage": 1
+    "pipeline_stage": 1,
+    "new_features_added_this_attempt": 0,
+    "progress_counted": false
   },
   "remaining_items": {
     "osm_building_tag_scan_pending": true,
     "epc_residential_pending": true
   },
-  "state": "RECOVERY_PARKED",
+  "state": "IN_PROGRESS",
   "feature_count_before": 100,
   "feature_count_after": 100,
   "current_feature_count": 100,
   "next_batch_index": 3,
   "next_target_feature_count": 150,
-  "attempted_cities": ["Liverpool", "Preston", "Blackpool", "Chester"],
+  "already_processed_ids_policy": "Treat every existing GeoJSON feature.id, properties.parcel_id and properties.osm_id value as already_processed_ids and exclude them from future candidate batches.",
+  "attempted_cities": [
+    "Liverpool",
+    "Preston",
+    "Blackpool",
+    "Chester"
+  ],
+  "attempted_new_city_batch": "Liverpool central grid bbox -2.994,53.403,-2.990,53.407",
   "source_access_evidence": {
-    "overpass_api": "DNS_RESOLUTION_FAILED_IN_EXECUTION_ENVIRONMENT",
-    "browser_overpass": "PARAMETERIZED_OVERPASS_REQUEST_NOT_EXECUTABLE",
-    "repo_city_cache_search": "NO_MATCHES",
-    "local_cache_scan": "NO_MATCHES"
+    "existing_shard": "100 Manchester features preserved unchanged; no rewrite performed",
+    "existing_manifest": "100 features; 87 classified and 13 unknown; source manifest records OSM Overpass evidence",
+    "repo_pilot_geojson": "england_map_web/data/parcel_building_type_england_pilot.geojson returned 404 on the canonical branch",
+    "repo_hmlr_manifest": "england_map_web/data/meta/hmlr_inspire_authority_manifest.json returned 404 on the canonical branch",
+    "repo_poi_directory": "england_map_web/data/poi returned 404 on the canonical branch",
+    "repo_osm_cache": "No verified referenced North West OSM cache file found on the canonical branch",
+    "overpass_api": "Direct source retrieval is unavailable in this execution environment due DNS/source-client failure",
+    "osm_map_api": "Direct api.openstreetmap.org map request failed DNS resolution; parameterized endpoint could not be executed by the web client"
   },
-  "next_required_action": "RETRY_BATCH_3_WITH_WORKING_PUBLIC_OSM_CLIENT_OR_EXISTING_LOCAL_CACHE_DO_NOT_REPROCESS_EXISTING_FEATURES",
+  "blocker": "BLOCKED_NO_NEW_SOURCE_OR_BATCH",
+  "blocker_reason": "No verifiable North West source batch with at least 50 real new IDs, evidence excerpts and geometry could be retrieved. Creating rows would require fabrication, so the existing shard remains unchanged and feature_count_after equals feature_count_before.",
+  "next_required_action": "RETRY_BATCH_3_WITH_WORKING_PUBLIC_OSM_CLIENT_OR_VERIFIED_NORTH_WEST_CACHE_DO_NOT_REPROCESS_EXISTING_FEATURES",
   "fake_data": false
 }
