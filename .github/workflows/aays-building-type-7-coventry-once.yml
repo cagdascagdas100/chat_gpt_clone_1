@@ -1,0 +1,397 @@
+name: AAYS building_type_7 Coventry one-shot
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/aays-building-type-7-coventry-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-7-coventry-once
+  cancel-in-progress: false
+
+jobs:
+  append-coventry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Append 50 new Coventry FHRS premises-use proxy features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import json
+          import pathlib
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          SLOT = "building_type_7"
+          TASK_ID = "building-type-7-england-classification-v1-20260808"
+          GEO = pathlib.Path("england_map_web/data/building_type/shards/building_type_7_latest.geojson")
+          MANIFEST = pathlib.Path("england_map_web/data/building_type/shards/building_type_7_manifest_latest.json")
+          STATUS = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json")
+          CHECKPOINT = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json")
+          CURRENT_TASK = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json")
+          RUNNER = pathlib.Path("docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json")
+          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS407en-GB.xml"
+          SOURCE_PAGE = "https://ratings.food.gov.uk/open-data"
+          NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+          def load_json(path):
+              with path.open("r", encoding="utf-8") as f:
+                  return json.load(f)
+
+          task = load_json(CURRENT_TASK)
+          if task.get("task_id") != TASK_ID:
+              raise SystemExit(f"task mismatch: {task.get('task_id')!r}")
+          if task.get("owner") not in (None, ""):
+              raise SystemExit(f"live owner detected; refusing second owner/task: {task.get('owner')!r}")
+
+          geo = load_json(GEO)
+          features = geo.get("features")
+          if not isinstance(features, list):
+              raise SystemExit("latest shard has no features list")
+          before = len(features)
+
+          already = set()
+          for feat in features:
+              if feat.get("id") not in (None, ""):
+                  already.add(str(feat["id"]))
+              props = feat.get("properties") or {}
+              for key in ("parcel_id", "osm_id"):
+                  value = props.get(key)
+                  if value not in (None, ""):
+                      already.add(str(value))
+
+          req = urllib.request.Request(SOURCE_URL, headers={"User-Agent": "AAYS-building-type-7/1.0"})
+          with urllib.request.urlopen(req, timeout=90) as resp:
+              raw = resp.read()
+          if len(raw) < 1000:
+              raise SystemExit(f"FHRS source unexpectedly small: {len(raw)} bytes")
+          source_sha256 = hashlib.sha256(raw).hexdigest()
+          root = ET.fromstring(raw)
+          records = root.findall(".//EstablishmentDetail")
+          if len(records) < 50:
+              raise SystemExit(f"FHRS source contains only {len(records)} establishments")
+
+          type_map = {
+              "Restaurant/Cafe/Canteen": ("commercial_hospitality", "C_HOSPITALITY", "commercial"),
+              "Pub/bar/nightclub": ("commercial_hospitality", "C_HOSPITALITY", "commercial"),
+              "Takeaway/sandwich shop": ("commercial_hospitality", "C_HOSPITALITY", "commercial"),
+              "Hotel/bed & breakfast/guest house": ("commercial_hospitality", "C_HOSPITALITY", "commercial"),
+              "Other catering premises": ("commercial_hospitality", "C_HOSPITALITY", "commercial"),
+              "Retailers - supermarkets/hypermarkets": ("commercial_retail", "C_RETAIL", "commercial"),
+              "Retailers - other": ("commercial_retail", "C_RETAIL", "commercial"),
+              "School/college/university": ("education", "P_EDUCATION", "institutional"),
+              "Hospitals/Childcare/Caring Premises": ("healthcare_care", "P_HEALTHCARE", "institutional"),
+              "Manufacturers/packers": ("industrial_manufacturing", "I_MANUFACTURING", "industrial"),
+              "Distributors/Transporters": ("industrial_logistics", "I_LOGISTICS", "industrial"),
+          }
+
+          candidates = []
+          for rec in records:
+              def txt(name):
+                  el = rec.find(name)
+                  return (el.text or "").strip() if el is not None and el.text else ""
+              fhrs_id = txt("FHRSID")
+              business_name = txt("BusinessName")
+              business_type = txt("BusinessType")
+              la_name = txt("LocalAuthorityName") or "Coventry"
+              if not fhrs_id or business_type not in type_map:
+                  continue
+              feature_id = f"ENG_FHRS_{fhrs_id}"
+              if feature_id in already or fhrs_id in already:
+                  continue
+              lon = lat = None
+              geocode = rec.find("Geocode")
+              if geocode is not None:
+                  lon_text = (geocode.findtext("Longitude") or "").strip()
+                  lat_text = (geocode.findtext("Latitude") or "").strip()
+                  try:
+                      lon = float(lon_text)
+                      lat = float(lat_text)
+                      if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+                          lon = lat = None
+                  except Exception:
+                      lon = lat = None
+              address_parts = [txt("AddressLine1"), txt("AddressLine2"), txt("AddressLine3"), txt("AddressLine4"), txt("PostCode")]
+              address = ", ".join(x for x in address_parts if x)
+              rating_value = txt("RatingValue")
+              rating_date = txt("RatingDate")
+              sort_key = (int(fhrs_id) if fhrs_id.isdigit() else 10**18, fhrs_id)
+              candidates.append((sort_key, fhrs_id, feature_id, business_name, business_type, la_name, lon, lat, address, rating_value, rating_date))
+
+          candidates.sort(key=lambda x: x[0])
+          selected = candidates[:50]
+          if len(selected) < 50:
+              raise SystemExit(f"only {len(selected)} new supported Coventry records available")
+
+          new_features = []
+          for _, fhrs_id, feature_id, business_name, business_type, la_name, lon, lat, address, rating_value, rating_date in selected:
+              primary, code, category = type_map[business_type]
+              excerpt_obj = {
+                  "fhrs_id": fhrs_id,
+                  "business_name": business_name,
+                  "business_type": business_type,
+                  "local_authority": la_name,
+                  "address": address,
+                  "rating_value": rating_value,
+                  "rating_date": rating_date,
+              }
+              excerpt = "; ".join(f"{k}={v}" for k, v in excerpt_obj.items() if v)
+              geometry = {"type": "Point", "coordinates": [lon, lat]} if lon is not None and lat is not None else None
+              props = {
+                  "parcel_id": None,
+                  "osm_id": None,
+                  "fhrs_id": fhrs_id,
+                  "premises_id": feature_id,
+                  "slot_id": SLOT,
+                  "region": "West Midlands",
+                  "area": "Coventry",
+                  "building_type_primary": primary,
+                  "building_type_code": code,
+                  "building_category": category,
+                  "classification_basis": "fhrs_premises_use_proxy",
+                  "evidence_level": "D",
+                  "confidence_score": 0.55,
+                  "confidence_level_1_to_4": 2,
+                  "source_count": 1,
+                  "match_method": "fhrs_business_type_proxy",
+                  "source": "Food Standards Agency FHRS daily open data",
+                  "source_url": SOURCE_URL,
+                  "source_hash": source_sha256,
+                  "source_hash_method": "sha256_raw_source_file",
+                  "fake_data": False,
+                  "final_ready": False,
+                  "needs_manual_review": True,
+                  "updated_at": NOW,
+                  "sources": [{
+                      "source_name": "Food Standards Agency FHRS daily open data",
+                      "url": SOURCE_URL,
+                      "source_page": SOURCE_PAGE,
+                      "source_hash": source_sha256,
+                      "source_hash_method": "sha256_raw_source_file",
+                      "granularity": "establishment_record_with_optional_geocode",
+                      "fields_used": ["FHRSID", "BusinessName", "BusinessType", "LocalAuthorityName", "Geocode"],
+                      "supports_field": "building_type_primary (premises-use proxy only)",
+                      "match_method": "fhrs_business_type_proxy",
+                      "match_score": 0.55,
+                  }],
+                  "source_evidence_excerpt": excerpt_obj,
+                  "evidence_excerpt": excerpt,
+                  "geometry_match_method": "fhrs_geocode_point_unbound_to_parcel" if geometry else "none",
+                  "address_match_method": "fhrs_establishment_record_only",
+                  "limitations": "FHRS BusinessType is a premises-use proxy, not a cadastral/building-geometry classification; no OSM/HMLR parcel binding in this batch.",
+                  "evidence_summary": {
+                      "fhrs_record": True,
+                      "fhrs_source_sha256": source_sha256,
+                      "fhrs_geocode_available": bool(geometry),
+                      "parcel_geometry_bound": False,
+                      "total_sources": 1,
+                  },
+              }
+              new_features.append({"type": "Feature", "id": feature_id, "geometry": geometry, "properties": props})
+
+          new_ids = [f["id"] for f in new_features]
+          if len(new_ids) != len(set(new_ids)):
+              raise SystemExit("duplicate IDs inside new batch")
+          if any(x in already for x in new_ids):
+              raise SystemExit("new batch intersects already_processed_ids")
+
+          features.extend(new_features)
+          after = len(features)
+          added = after - before
+          if added < 50 or after <= before:
+              raise SystemExit(f"no valid progress: before={before} after={after} added={added}")
+          geo["enhanced_at"] = NOW
+          geo["last_batch"] = {
+              "slot_id": SLOT,
+              "city": "Coventry",
+              "source": "Food Standards Agency FHRS daily open data",
+              "source_url": SOURCE_URL,
+              "source_sha256": source_sha256,
+              "added_feature_count": added,
+              "classification_basis": "fhrs_premises_use_proxy",
+              "evidence_level": "D",
+              "confidence_level_1_to_4": 2,
+              "fake_data": False,
+              "final_ready": False,
+          }
+          GEO.write_text(json.dumps(geo, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+          geo_sha256 = hashlib.sha256(GEO.read_bytes()).hexdigest()
+
+          type_dist = collections.Counter()
+          evidence_dist = collections.Counter()
+          confidence_dist = collections.Counter()
+          unknown = 0
+          for feat in features:
+              p = feat.get("properties") or {}
+              primary = p.get("building_type_primary") or "unknown"
+              type_dist[str(primary)] += 1
+              ev = p.get("evidence_level") or "U"
+              evidence_dist[str(ev)] += 1
+              conf = p.get("confidence_level_1_to_4")
+              if conf is not None:
+                  confidence_dist[str(conf)] += 1
+              if primary == "unknown":
+                  unknown += 1
+          classified = after - unknown
+          for k in ("A", "B", "C", "D", "U"):
+              evidence_dist.setdefault(k, 0)
+          for k in ("1", "2", "3", "4"):
+              confidence_dist.setdefault(k, 0)
+
+          manifest = load_json(MANIFEST)
+          manifest.update({
+              "generated_at": NOW,
+              "total_features": after,
+              "classified": classified,
+              "unknown": unknown,
+              "evidence_distribution": dict(sorted(evidence_dist.items())),
+              "type_distribution": dict(sorted(type_dist.items())),
+              "confidence_level_distribution": {k: confidence_dist[k] for k in ("1", "2", "3", "4")},
+              "fake_data": False,
+              "final_ready": False,
+              "feature_count": after,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": added,
+              "last_batch_city": "Coventry",
+              "last_batch_source": "Food Standards Agency FHRS daily open data",
+              "last_batch_source_sha256": source_sha256,
+              "geojson_sha256": geo_sha256,
+              "manifest_updated_at": NOW,
+              "note": "Existing Birmingham OSM features preserved; appended Coventry FHRS premises-use proxy records. FHRS points are not parcel-bound and require manual review/OSM-HMLR binding for stronger building classification.",
+          })
+          sources = manifest.setdefault("sources", [])
+          if not any((s.get("name") or "").startswith("Food Standards Agency FHRS") for s in sources if isinstance(s, dict)):
+              sources.append({
+                  "name": "Food Standards Agency FHRS daily open data",
+                  "url": SOURCE_URL,
+                  "source_page": SOURCE_PAGE,
+                  "features_used": added,
+                  "accessed_at": NOW,
+                  "source_sha256": source_sha256,
+                  "source_hash_method": "sha256_raw_source_file",
+                  "note": "Premises-use proxy; not cadastral parcel geometry.",
+              })
+          MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          status = load_json(STATUS)
+          status.update({
+              "state": "IN_PROGRESS",
+              "updated_at": NOW,
+              "final_ready": False,
+              "fake_data": False,
+              "classified_count": classified,
+              "unknown_count": unknown,
+              "total_elements": after,
+              "confidence_distribution": {k: confidence_dist[k] for k in ("1", "2", "3", "4")},
+              "evidence_distribution": dict(sorted(evidence_dist.items())),
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "last_batch": {
+                  "city": "Coventry",
+                  "added_feature_count": added,
+                  "source": "Food Standards Agency FHRS daily open data",
+                  "source_sha256": source_sha256,
+                  "classification_basis": "fhrs_premises_use_proxy",
+                  "evidence_level": "D",
+                  "confidence_level_1_to_4": 2,
+              },
+          })
+          STATUS.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          checkpoint = load_json(CHECKPOINT)
+          batch_index = int(checkpoint.get("next_batch_index", 3))
+          checkpoint.update({
+              "state": "IN_PROGRESS",
+              "updated_at": NOW,
+              "final_ready": False,
+              "fake_data": False,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "next_batch_index": batch_index + 1,
+              "next_target_feature_count": after + 50,
+              "first_unverified_step_status": "BATCH_APPENDED_50_COVENTRY_FHRS_PREMISES_USE_PROXY_CONTINUATION_REQUIRED",
+              "last_processed_ids_sample": new_ids[-20:],
+              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONALLY_BIND_COVENTRY_FHRS_POINTS_TO_OSM_HMLR_FOR_STRONGER_GEOMETRY_EVIDENCE",
+              "last_batch": {
+                  "batch_index": batch_index,
+                  "city": "Coventry",
+                  "source": "Food Standards Agency FHRS daily open data",
+                  "source_sha256": source_sha256,
+                  "added_feature_count": added,
+                  "new_feature_ids": new_ids,
+              },
+          })
+          summary = checkpoint.setdefault("summary", {})
+          summary.update({"new_slot": False, "new_features_appended": added, "current_feature_count": after})
+          CHECKPOINT.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          RUNNER.parent.mkdir(parents=True, exist_ok=True)
+          runner = {
+              "schema_version": 1,
+              "slot_id": SLOT,
+              "task_id": TASK_ID,
+              "state": "IN_PROGRESS",
+              "run_at": NOW,
+              "batch_index": batch_index,
+              "batch_city": "Coventry",
+              "batch_source": "Food Standards Agency FHRS daily open data",
+              "source_url": SOURCE_URL,
+              "source_sha256": source_sha256,
+              "source_hash_method": "sha256_raw_source_file",
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": added,
+              "progress": after > before,
+              "new_feature_ids": new_ids,
+              "evidence_level": "D",
+              "confidence_level_1_to_4": 2,
+              "classification_basis": "fhrs_premises_use_proxy",
+              "limitations": "FHRS BusinessType describes premises use; parcel/building geometry is not bound in this batch.",
+              "fake_data": False,
+              "final_ready": False,
+          }
+          RUNNER.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          print(json.dumps({
+              "before": before,
+              "after": after,
+              "added": added,
+              "source_sha256": source_sha256,
+              "new_ids_first": new_ids[:3],
+              "new_ids_last": new_ids[-3:],
+          }, indent=2))
+          PY
+
+      - name: Validate and commit append-only continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/aays-building-type-7-coventry-once.yml
+          git add \
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+          git diff --cached --check
+          git commit -m "building_type_7 append Coventry FHRS batch"
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
