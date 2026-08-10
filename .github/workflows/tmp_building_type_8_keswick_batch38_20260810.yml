@@ -1,0 +1,122 @@
+name: AAYS building_type_8 Keswick OSM batch 38
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_8_keswick_batch38_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Run guarded Keswick batch from canonical same-slot template
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess, textwrap
+          template_commit = '2e3c7a35390729e6bb15539ddc5c8323c624b397'
+          template_path = '.github/workflows/tmp_building_type_8_blackburn_20260810.yml'
+          text = subprocess.check_output(['git','show',f'{template_commit}:{template_path}'], text=True)
+          start_marker = "          python - <<'PY'\n"
+          end_marker = "\n          PY\n"
+          if start_marker not in text or end_marker not in text:
+              raise SystemExit('canonical template Python block not found')
+          code = text.split(start_marker,1)[1].split(end_marker,1)[0]
+          code = textwrap.dedent(code)
+          replacements = {
+              'CITY = "Blackburn"': 'CITY = "Keswick"',
+              'LOCAL_AUTHORITY = "Blackburn with Darwen"': 'LOCAL_AUTHORITY = "Cumberland"',
+              'CENTER = (53.7482, -2.4820)': 'CENTER = (54.601477889291, -3.1406788356826)',
+              'EXPECTED_BEFORE = 250': 'EXPECTED_BEFORE = 2350',
+              'BATCH_INDEX = 6': 'BATCH_INDEX = 38',
+              'geometry-bearing Blackburn candidates; need >=50': 'geometry-bearing Keswick candidates; need >=50',
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'template replacement anchor missing: {old}')
+              code = code.replace(old, new)
+          exec(compile(code, 'building_type_8_keswick_batch38.py', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate, self-delete, commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib
+          GEO=pathlib.Path('england_map_web/data/building_type/shards/building_type_8_latest.geojson')
+          MAN=pathlib.Path('england_map_web/data/building_type/shards/building_type_8_manifest_latest.json')
+          STA=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json')
+          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json')
+          RUN=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json')
+          geo=json.loads(GEO.read_text())
+          man=json.loads(MAN.read_text())
+          sta=json.loads(STA.read_text())
+          cp=json.loads(CP.read_text())
+          run=json.loads(RUN.read_text())
+          feats=geo.get('features') or []
+          assert len(feats)==2400, len(feats)
+          assert sta.get('feature_count_before')==2350 and sta.get('feature_count_after')==2400
+          assert sta.get('new_features_added')==50 and sta.get('progress_counted') is True
+          assert cp.get('current_feature_count')==2400 and cp.get('next_batch_index')==39 and cp.get('next_target_feature_count')==2450
+          assert run.get('feature_count_before')==2350 and run.get('feature_count_after')==2400 and run.get('new_features_added')==50
+          assert man.get('feature_count')==2400 and man.get('last_batch',{}).get('city')=='Keswick' and man.get('last_batch',{}).get('added_feature_count')==50
+          for obj in (sta,cp,man,run):
+              assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          assert len(run.get('features',[]))==50
+          for f in run.get('features',[]):
+              p=f.get('properties') or {}
+              assert p.get('sources') and p.get('source_hash') and p.get('evidence_excerpt') is not None and p.get('evidence_level')
+              assert isinstance(p.get('confidence_level_1_to_4'), int) and 1 <= p['confidence_level_1_to_4'] <= 4
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          for field in ('id','parcel_id','osm_id'):
+              vals=[]
+              for f in feats:
+                  p=f.get('properties') or {}
+                  v=f.get('id') if field=='id' else p.get(field)
+                  if v not in (None,''):
+                      vals.append(str(v))
+              assert len(vals)==len(set(vals)), f'duplicate {field}'
+          print('validated Keswick 2350->2400, +50')
+          PY
+
+          WF='.github/workflows/tmp_building_type_8_keswick_batch38_20260810.yml'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_8_latest.geojson
+          git add england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+          git add -f docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json
+          git add -f docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json
+          git add -f docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json
+          git rm -f "$WF"
+          git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
+          git commit -m 'building_type_8: append Keswick OSM batch 38 (+50)'
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          exit 1
