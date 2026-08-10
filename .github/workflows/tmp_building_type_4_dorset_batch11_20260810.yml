@@ -1,4 +1,4 @@
-name: tmp building_type_4 Tewkesbury batch 26
+name: tmp building_type_4 Bristol batch 27
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append exactly 50 new Tewkesbury FHRS evidence features
+      - name: Append exactly 50 new Bristol FHRS evidence features
         shell: bash
         run: |
           set -euo pipefail
@@ -47,29 +47,29 @@ jobs:
           lines=text[start:end].splitlines()
           body="\n".join(line[10:] if line.startswith("          ") else line for line in lines)+"\n"
           replacements=[
-            ('CITY="East Devon"; PREFIX="EDEV"; REGION="South West"', 'CITY="Tewkesbury"; PREFIX="TEWK"; REGION="South West"'),
-            ('Food Standards Agency FHRS daily open data - East Devon', 'Food Standards Agency FHRS daily open data - Tewkesbury'),
-            ('FHRS072en-GB.xml', 'FHRS129en-GB.xml'),
-            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=1250; TARGET=1300; BATCH=26; NEXT_BATCH=27; NEXT_TARGET=1350'),
-            ('authority.lower()!="east devon"', 'authority.lower()!="tewkesbury"'),
-            ('Existing shard preserved; appended 50 East Devon FHRS records', 'Existing shard preserved; appended 50 Tewkesbury FHRS records'),
-            ('Batch 16 appended from official East Devon FHRS records', 'Batch 26 appended from official Tewkesbury FHRS records'),
-            ('50 new East Devon FHRS premises-use proxy records', '50 new Tewkesbury FHRS premises-use proxy records'),
-            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_26_APPENDED_50_TEWKESBURY_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 750 -> 800', 'feature_count 1250 -> 1300'),
-            ('East Devon FHRS acik verisinden', 'Tewkesbury FHRS acik verisinden'),
-            ('Sonraki adim batch 17: mevcut 800 feature', 'Sonraki adim batch 27: mevcut 1300 feature'),
-            ('Cheltenham ve East Devon kayitlarini tekrar isleme.', 'Cheltenham, East Devon, North Devon, Mid Devon, South Hams, Teignbridge, Torridge, West Devon, Cotswold, Forest of Dean, Stroud ve Tewkesbury kayitlarini tekrar isleme.'),
+            ('CITY="East Devon"; PREFIX="EDEV"; REGION="South West"', 'CITY="Bristol"; PREFIX="BRIS"; REGION="South West"'),
+            ('Food Standards Agency FHRS daily open data - East Devon', 'Food Standards Agency FHRS daily open data - Bristol'),
+            ('FHRS072en-GB.xml', 'FHRS855en-GB.xml'),
+            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=1300; TARGET=1350; BATCH=27; NEXT_BATCH=28; NEXT_TARGET=1400'),
+            ('authority.lower()!="east devon"', 'authority.lower()!="bristol"'),
+            ('Existing shard preserved; appended 50 East Devon FHRS records', 'Existing shard preserved; appended 50 Bristol FHRS records'),
+            ('Batch 16 appended from official East Devon FHRS records', 'Batch 27 appended from official Bristol FHRS records'),
+            ('50 new East Devon FHRS premises-use proxy records', '50 new Bristol FHRS premises-use proxy records'),
+            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_27_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 750 -> 800', 'feature_count 1300 -> 1350'),
+            ('East Devon FHRS acik verisinden', 'Bristol FHRS acik verisinden'),
+            ('Sonraki adim batch 17: mevcut 800 feature', 'Sonraki adim batch 28: mevcut 1350 feature'),
+            ('Cheltenham ve East Devon kayitlarini tekrar isleme.', 'Cheltenham, East Devon, North Devon, Mid Devon, South Hams, Teignbridge, Torridge, West Devon, Cotswold, Forest of Dean, Stroud, Tewkesbury ve Bristol kayitlarini tekrar isleme.'),
           ]
           for old,new in replacements:
               if old not in body:
                   raise AssertionError(f'missing replacement token: {old}')
               body=body.replace(old,new)
-          body=body.replace('EDEV_FHRS_', 'TEWK_FHRS_').replace('EDEV_FHRSID_', 'TEWK_FHRSID_')
+          body=body.replace('EDEV_FHRS_', 'BRIS_FHRS_').replace('EDEV_FHRSID_', 'BRIS_FHRSID_')
           required=[
-            'CITY="Tewkesbury"', 'PREFIX="TEWK"', 'FHRS129en-GB.xml',
-            'BEFORE=1250; TARGET=1300; BATCH=26; NEXT_BATCH=27; NEXT_TARGET=1350',
-            'authority.lower()!="tewkesbury"', 'evidence_excerpt',
+            'CITY="Bristol"', 'PREFIX="BRIS"', 'FHRS855en-GB.xml',
+            'BEFORE=1300; TARGET=1350; BATCH=27; NEXT_BATCH=28; NEXT_TARGET=1400',
+            'authority.lower()!="bristol"', 'evidence_excerpt',
             '"evidence_level":"D"', '"confidence_level_1_to_4":2',
             '"fake_data":False', '"final_ready":False',
           ]
@@ -78,7 +78,7 @@ jobs:
           forbidden=['FHRS072en-GB.xml','CITY="East Devon"','PREFIX="EDEV"','BATCH_16_APPENDED_50_EAST_DEVON']
           leaked=[x for x in forbidden if x in body]
           assert not leaked, leaked
-          exec(compile(body,'<building_type_4_tewkesbury_append>','exec'), {'__name__':'__main__'})
+          exec(compile(body,'<building_type_4_bristol_append>','exec'), {'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
@@ -94,14 +94,14 @@ jobs:
           status=json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json").read_text())
           runner=json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json").read_text())
           task=json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json").read_text())
-          assert len(shard.get("features") or [])==1300
-          assert manifest.get("feature_count_before")==1250 and manifest.get("feature_count_after")==1300 and manifest.get("added_feature_count")==50
-          assert checkpoint.get("current_feature_count")==1300 and checkpoint.get("next_batch_index")==27 and checkpoint.get("next_target_feature_count")==1350
-          assert status.get("current_feature_count")==1300 and runner.get("feature_count_before")==1250 and runner.get("feature_count_after")==1300 and runner.get("added_feature_count")==50
+          assert len(shard.get("features") or [])==1350
+          assert manifest.get("feature_count_before")==1300 and manifest.get("feature_count_after")==1350 and manifest.get("added_feature_count")==50
+          assert checkpoint.get("current_feature_count")==1350 and checkpoint.get("next_batch_index")==28 and checkpoint.get("next_target_feature_count")==1400
+          assert status.get("current_feature_count")==1350 and runner.get("feature_count_before")==1300 and runner.get("feature_count_after")==1350 and runner.get("added_feature_count")==50
           assert task.get("owner") is None and task.get("task_id")=="building-type-4-england-classification-v1-20260808"
           for o in (manifest,checkpoint,status,runner):
               assert o.get("fake_data") is False and o.get("final_ready") is False
-          new=[f for f in shard["features"] if str(f.get("id") or "").startswith("TEWK_FHRS_")]
+          new=[f for f in shard["features"] if str(f.get("id") or "").startswith("BRIS_FHRS_")]
           assert len(new)==50 and len(runner.get("records") or [])==50
           assert len({f.get("id") for f in new})==50
           assert len({(f.get("properties") or {}).get("parcel_id") for f in new})==50
@@ -110,9 +110,9 @@ jobs:
               assert p.get("evidence_excerpt") and p.get("source_evidence_excerpt")
               assert p.get("evidence_level")=="D" and p.get("confidence_level_1_to_4")==2
               assert p.get("source_hash") and p.get("sources")
-              assert p.get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS129en-GB.xml"
+              assert p.get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS855en-GB.xml"
               assert p.get("fake_data") is False and p.get("final_ready") is False
-          print("validated 1250->1300 with 50 new Tewkesbury features")
+          print("validated 1300->1350 with 50 new Bristol features")
           PY
 
       - name: Commit and push only slot outputs
@@ -134,7 +134,7 @@ jobs:
             for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done
             [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
           done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Tewkesbury FHRS batch 1250->1300"
+          git commit -m "data(building_type_4): append Bristol FHRS batch 1300->1350"
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
@@ -158,18 +158,18 @@ jobs:
           checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
           status=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           task=load('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
-          assert len(shard['features'])==1300
-          assert manifest['feature_count_before']==1250 and manifest['feature_count_after']==1300 and manifest['added_feature_count']==50
-          assert checkpoint['current_feature_count']==1300 and checkpoint['next_batch_index']==27 and checkpoint['next_target_feature_count']==1350
-          assert status['current_feature_count']==1300
-          assert runner['city']=='Tewkesbury' and len(runner['new_feature_ids'])==50
+          assert len(shard['features'])==1350
+          assert manifest['feature_count_before']==1300 and manifest['feature_count_after']==1350 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==1350 and checkpoint['next_batch_index']==28 and checkpoint['next_target_feature_count']==1400
+          assert status['current_feature_count']==1350
+          assert runner['city']=='Bristol' and len(runner['new_feature_ids'])==50
           assert task['owner'] is None
           for o in (manifest,checkpoint,status,runner,task):
               assert o.get('fake_data') is False and o.get('final_ready') is False
-          batch=[f for f in shard['features'] if str(f.get('id') or '').startswith('TEWK_FHRS_')]
+          batch=[f for f in shard['features'] if str(f.get('id') or '').startswith('BRIS_FHRS_')]
           assert len(batch)==50
           assert all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
           assert all((f.get('properties') or {}).get('evidence_level')=='D' for f in batch)
           assert all((f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
-          print('remote readback verified: building_type_4=1300; Tewkesbury batch=50')
+          print('remote readback verified: building_type_4=1350; Bristol batch=50')
           PY
