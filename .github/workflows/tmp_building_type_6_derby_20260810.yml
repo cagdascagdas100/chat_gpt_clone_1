@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: building-type-6-derby-continuation
+  cancel-in-progress: false
+
 jobs:
   append:
     runs-on: ubuntu-latest
@@ -23,11 +27,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git pull --ff-only origin codex/aays-single-runner-v5-20260706
-          SOURCE='https://ratings.food.gov.uk/api/open-data-files/FHRS871en-GB.xml'
-          curl -fsSL --retry 3 --retry-delay 2 -A 'AAYS-building-type/1.0' "$SOURCE" -o /tmp/FHRS871en-GB.xml
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+
+          SOURCE='https://api.ratings.food.gov.uk/Establishments?localAuthorityId=871&pageNumber=1&pageSize=1000'
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 120 \
+            -A 'AAYS-building-type/1.0' \
+            -H 'x-api-version: 2' \
+            -H 'Accept: application/json' \
+            "$SOURCE" -o /tmp/FHRS871en-GB.json
+
           python3 <<'PY'
-          import hashlib, json, xml.etree.ElementTree as ET
+          import hashlib, json
           from collections import Counter
           from datetime import datetime, timezone
           from pathlib import Path
@@ -35,10 +47,11 @@ jobs:
           SLOT='building_type_6'
           TASK='building-type-6-england-classification-v1-20260808'
           CONT='c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a'
-          SOURCE='https://ratings.food.gov.uk/api/open-data-files/FHRS871en-GB.xml'
-          SOURCE_NAME='Food Standards Agency FHRS daily open data - Derby City'
+          SOURCE='https://api.ratings.food.gov.uk/Establishments?localAuthorityId=871&pageNumber=1&pageSize=1000'
+          SOURCE_NAME='Food Standards Agency FHRS API v2 - Derby City'
           BEFORE_EXPECTED=100
           TARGET_EXPECTED=150
+
           shard_p=Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
           manifest_p=Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
           checkpoint_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
@@ -56,31 +69,37 @@ jobs:
 
           assert task.get('slot_id')==SLOT and task.get('task_id')==TASK
           assert task.get('owner') is None, 'owner changed; refusing second owner/task'
-          assert task.get('continuation_key')==CONT and checkpoint.get('continuation_key')==CONT
+          assert status.get('owner') is None, 'status owner changed; refusing write'
+          assert task.get('continuation_key')==CONT and checkpoint.get('continuation_key')==CONT and status.get('continuation_key')==CONT
           assert before==BEFORE_EXPECTED, f'stale shard count {before} != {BEFORE_EXPECTED}'
           assert int(checkpoint.get('current_feature_count',-1))==before
+          assert int(checkpoint.get('next_batch_index',-1))==3
           assert int(checkpoint.get('next_target_feature_count',-1))==TARGET_EXPECTED
-          assert manifest.get('fake_data') is False and checkpoint.get('fake_data') is False
-          assert status.get('fake_data', False) is False and task.get('fake_data') is False
-          assert manifest.get('final_ready') is False and checkpoint.get('final_ready') is False
-          assert status.get('final_ready') is False and task.get('final_ready') is False
+          assert manifest.get('fake_data') is False and checkpoint.get('fake_data') is False and task.get('fake_data') is False
+          assert status.get('fake_data', False) is False
+          assert manifest.get('final_ready') is False and checkpoint.get('final_ready') is False and status.get('final_ready') is False and task.get('final_ready') is False
 
           processed=set()
           for f in features:
               p=f.get('properties') or {}
-              for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
-                  if v is not None and str(v).strip(): processed.add(str(v).strip())
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v is not None and str(v).strip():
+                      processed.add(str(v).strip())
 
-          raw=Path('/tmp/FHRS871en-GB.xml').read_bytes()
+          raw=Path('/tmp/FHRS871en-GB.json').read_bytes()
           source_sha=hashlib.sha256(raw).hexdigest()
-          root=ET.fromstring(raw)
-          def lname(tag): return tag.rsplit('}',1)[-1]
-          def txt(el,name):
-              for c in el.iter():
-                  if lname(c.tag)==name: return (c.text or '').strip()
+          payload=json.loads(raw.decode('utf-8-sig'))
+          establishments=payload.get('establishments') or payload.get('Establishments') or []
+          assert isinstance(establishments,list), 'FSA API response missing establishments list'
+
+          def val(d,*keys):
+              for k in keys:
+                  if k in d and d[k] is not None:
+                      return d[k]
               return ''
+
           def classify(bt):
-              b=bt.lower()
+              b=str(bt or '').lower()
               if any(x in b for x in ('school','college','university')): return 'education','P_EDUCATION','institutional'
               if any(x in b for x in ('hospital','caring','childcare')): return 'healthcare_care','P_HEALTHCARE','institutional'
               if any(x in b for x in ('hotel','bed & breakfast','guest house')): return 'hospitality','C_HOTEL','commercial'
@@ -92,48 +111,103 @@ jobs:
               return 'commercial_other','C_OTHER','commercial'
 
           candidates=[]
-          for el in root.iter():
-              if lname(el.tag)!='EstablishmentDetail': continue
-              fid=txt(el,'FHRSID')
+          for el in establishments:
+              fid=str(val(el,'FHRSID','fhrsid')).strip()
               if not fid: continue
               feature_id=f'DER_FHRS_{fid}'
               parcel_id=f'DER_FHRSID_{fid}'
               if feature_id in processed or parcel_id in processed or fid in processed: continue
-              la=txt(el,'LocalAuthorityName')
+              la=str(val(el,'LocalAuthorityName','localAuthorityName')).strip()
               if la and 'derby' not in la.lower(): continue
-              bt=txt(el,'BusinessType')
+              bt=str(val(el,'BusinessType','businessType')).strip()
               if 'mobile caterer' in bt.lower(): continue
-              try: lat=float(txt(el,'Latitude')); lon=float(txt(el,'Longitude'))
-              except (TypeError,ValueError): continue
-              if not (49<=lat<=61 and -9<=lon<=3): continue
-              candidates.append((int(fid) if fid.isdigit() else 10**18,fid,el,lat,lon))
+              geo=el.get('geocode') or el.get('Geocode') or {}
+              try:
+                  lat=float(val(geo,'latitude','Latitude'))
+                  lon=float(val(geo,'longitude','Longitude'))
+              except (TypeError,ValueError):
+                  continue
+              if not (49 <= lat <= 61 and -9 <= lon <= 3): continue
+              candidates.append((int(fid) if fid.isdigit() else 10**18, fid, el, lat, lon))
           candidates.sort(key=lambda x:(x[0],x[1]))
           assert len(candidates)>=50, f'only {len(candidates)} eligible Derby FHRS candidates'
 
           now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
-          added=[]; records=[]; type_add=Counter()
+          added=[]
+          records=[]
+          type_add=Counter()
           for _,fid,el,lat,lon in candidates[:50]:
-              feature_id=f'DER_FHRS_{fid}'; parcel_id=f'DER_FHRSID_{fid}'
-              name=txt(el,'BusinessName'); bt=txt(el,'BusinessType'); la=txt(el,'LocalAuthorityName') or 'Derby City'; postcode=txt(el,'PostCode')
-              primary,code,category=classify(bt); type_add[primary]+=1
+              feature_id=f'DER_FHRS_{fid}'
+              parcel_id=f'DER_FHRSID_{fid}'
+              name=str(val(el,'BusinessName','businessName')).strip()
+              bt=str(val(el,'BusinessType','businessType')).strip()
+              la=str(val(el,'LocalAuthorityName','localAuthorityName')).strip() or 'Derby City'
+              postcode=str(val(el,'PostCode','postCode','postcode')).strip()
+              primary,code,category=classify(bt)
+              type_add[primary]+=1
               excerpt=f'FHRSID {fid} | {name} | BusinessType {bt} | LocalAuthority {la} | PostCode {postcode}'
               props={
-                'parcel_id':parcel_id,'parcel_id_semantics':'stable FSA FHRSID-derived point identifier; not a cadastral parcel ID','osm_id':None,
-                'slot_id':SLOT,'region':'East Midlands','area':'Derby','local_authority':la,'postcode':postcode,
-                'building_type_primary':primary,'building_type_code':code,'building_category':category,
-                'confidence_score':0.55,'confidence_level_1_to_4':2,'evidence_level':'D','source_count':1,
-                'source':SOURCE_NAME,'source_url':SOURCE,'source_hash':source_sha,'source_hash_method':'sha256_raw_source_xml',
-                'match_method':'fhrs_business_type_premises_proxy','evidence_excerpt':excerpt,
+                'parcel_id':parcel_id,
+                'parcel_id_semantics':'stable FSA FHRSID-derived point identifier; not a cadastral parcel ID',
+                'osm_id':None,
+                'slot_id':SLOT,
+                'region':'East Midlands',
+                'area':'Derby',
+                'local_authority':la,
+                'postcode':postcode,
+                'building_type_primary':primary,
+                'building_type_code':code,
+                'building_category':category,
+                'confidence_score':0.55,
+                'confidence_level_1_to_4':2,
+                'evidence_level':'D',
+                'source_count':1,
+                'source':SOURCE_NAME,
+                'source_url':SOURCE,
+                'source_hash':source_sha,
+                'source_hash_method':'sha256_raw_api_json',
+                'match_method':'fhrs_business_type_premises_proxy',
+                'evidence_excerpt':excerpt,
                 'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode()).hexdigest(),
-                'source_evidence_excerpt':{'FHRSID':fid,'BusinessName':name,'BusinessType':bt,'BusinessTypeID':txt(el,'BusinessTypeID'),'LocalAuthorityBusinessID':txt(el,'LocalAuthorityBusinessID'),'LocalAuthorityName':la,'PostCode':postcode,'RatingValue':txt(el,'RatingValue'),'RatingDate':txt(el,'RatingDate')},
-                'sources':[{'source_name':'Food Standards Agency FHRS daily open data','url_or_local_path':SOURCE,'accessed_at':now,'sha256':source_sha,'sha256_scope':'raw_source_xml','licence':'FSA open data / reusable hygiene data terms','granularity':'food_business_establishment_point','fields_used':['FHRSID','BusinessName','BusinessType','BusinessTypeID','LocalAuthorityBusinessID','LocalAuthorityName','PostCode','Latitude','Longitude'],'supports_field':'building_type_primary','match_method':'fhrs_business_type_premises_proxy','match_score':0.55}],
-                'geometry_match_method':'fhrs_geocode_point','address_match_method':'fhrs_business_address',
+                'source_evidence_excerpt':{
+                  'FHRSID':fid,
+                  'BusinessName':name,
+                  'BusinessType':bt,
+                  'BusinessTypeID':val(el,'BusinessTypeID','businessTypeID'),
+                  'LocalAuthorityBusinessID':val(el,'LocalAuthorityBusinessID','localAuthorityBusinessID'),
+                  'LocalAuthorityName':la,
+                  'PostCode':postcode,
+                  'RatingValue':val(el,'RatingValue','ratingValue'),
+                  'RatingDate':val(el,'RatingDate','ratingDate')
+                },
+                'sources':[{
+                  'source_name':'Food Standards Agency FHRS API v2',
+                  'url_or_local_path':SOURCE,
+                  'accessed_at':now,
+                  'sha256':source_sha,
+                  'sha256_scope':'raw_api_json',
+                  'licence':'FSA open data / reusable hygiene data terms',
+                  'granularity':'food_business_establishment_point',
+                  'fields_used':['FHRSID','BusinessName','BusinessType','BusinessTypeID','LocalAuthorityBusinessID','LocalAuthorityName','PostCode','geocode.latitude','geocode.longitude'],
+                  'supports_field':'building_type_primary',
+                  'match_method':'fhrs_business_type_premises_proxy',
+                  'match_score':0.55
+                }],
+                'geometry_match_method':'fhrs_geocode_point',
+                'address_match_method':'fhrs_business_address',
                 'limitations':'FHRS business type is a premises-use proxy and does not prove cadastral parcel identity or exact building fabric/type.',
-                'needs_manual_review':True,'fake_data':False,'final_ready':False,'updated_at':now,'feature_id':feature_id}
+                'needs_manual_review':True,
+                'fake_data':False,
+                'final_ready':False,
+                'updated_at':now,
+                'feature_id':feature_id
+              }
               feat={'type':'Feature','id':feature_id,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':props}
-              added.append(feat); records.append({**props,'geometry':feat['geometry']})
+              added.append(feat)
+              records.append({**props,'geometry':feat['geometry']})
 
-          new_ids={f['id'] for f in added}; new_parcels={f['properties']['parcel_id'] for f in added}
+          new_ids={f['id'] for f in added}
+          new_parcels={f['properties']['parcel_id'] for f in added}
           assert len(added)==50 and len(new_ids)==50 and len(new_parcels)==50
           assert not (new_ids & processed) and not (new_parcels & processed)
           assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in added)
@@ -145,31 +219,150 @@ jobs:
           shard_p.write_text(json.dumps(shard,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           output_sha=hashlib.sha256(shard_p.read_bytes()).hexdigest()
 
-          ev=Counter({str(k):int(v) for k,v in (manifest.get('evidence_distribution') or {}).items()}); ev['D']+=50
-          conf=Counter({str(k):int(v) for k,v in (manifest.get('confidence_level_distribution') or {}).items()}); conf['2']+=50
-          types=Counter({str(k):int(v) for k,v in (manifest.get('type_distribution') or {}).items()}); types.update(type_add)
+          ev=Counter({str(k):int(v) for k,v in (manifest.get('evidence_distribution') or {}).items()})
+          ev['D']+=50
+          conf=Counter({str(k):int(v) for k,v in (manifest.get('confidence_level_distribution') or {}).items()})
+          conf['2']+=50
+          types=Counter({str(k):int(v) for k,v in (manifest.get('type_distribution') or {}).items()})
+          types.update(type_add)
           classified=int(manifest.get('classified',before-int(manifest.get('unknown',0))))+50
           unknown=int(manifest.get('unknown',0))
-          source_entry={'name':SOURCE_NAME,'url':SOURCE,'features_used':50,'accessed_at':now,'source_sha256':source_sha,'source_hash_method':'sha256_raw_source_xml','evidence_level':'D','confidence_level_1_to_4':2,'note':'Premises-use point proxy; not cadastral parcel geometry.'}
-          manifest.update({'generated_at':now,'total_features':after,'classified':classified,'unknown':unknown,'evidence_distribution':{k:ev.get(k,0) for k in ['A','B','C','D','U']},'confidence_level_distribution':{k:conf.get(k,0) for k in ['1','2','3','4']},'type_distribution':dict(sorted(types.items())),'sources':[s for s in manifest.get('sources',[]) if s.get('url')!=SOURCE]+[source_entry],'fake_data':False,'final_ready':False,'feature_count':after,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'last_batch_city':'Derby','last_batch_source':SOURCE_NAME,'last_batch_source_sha256':source_sha,'geojson_sha256':output_sha,'geojson_path':str(shard_p),'manifest_updated_at':now,'note':'Preserved existing 100 features; appended 50 Derby FHRS point records outside existing feature.id/parcel_id/osm_id values.'})
+          source_entry={
+            'name':SOURCE_NAME,
+            'url':SOURCE,
+            'features_used':50,
+            'accessed_at':now,
+            'source_sha256':source_sha,
+            'source_hash_method':'sha256_raw_api_json',
+            'evidence_level':'D',
+            'confidence_level_1_to_4':2,
+            'note':'Premises-use point proxy; not cadastral parcel geometry.'
+          }
+          manifest.update({
+            'generated_at':now,
+            'total_features':after,
+            'classified':classified,
+            'unknown':unknown,
+            'evidence_distribution':{k:ev.get(k,0) for k in ['A','B','C','D','U']},
+            'confidence_level_distribution':{k:conf.get(k,0) for k in ['1','2','3','4']},
+            'type_distribution':dict(sorted(types.items())),
+            'sources':[s for s in manifest.get('sources',[]) if s.get('url')!=SOURCE]+[source_entry],
+            'fake_data':False,
+            'final_ready':False,
+            'feature_count':after,
+            'feature_count_before':before,
+            'feature_count_after':after,
+            'added_feature_count':50,
+            'last_batch_city':'Derby',
+            'last_batch_source':SOURCE_NAME,
+            'last_batch_source_sha256':source_sha,
+            'geojson_sha256':output_sha,
+            'geojson_path':str(shard_p),
+            'manifest_updated_at':now,
+            'note':'Preserved existing 100 features; appended 50 Derby FHRS point records outside existing feature.id/parcel_id/osm_id values.'
+          })
           manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
           batch=int(checkpoint.get('next_batch_index',3))
-          checkpoint.update({'updated_at':now,'state':'IN_PROGRESS','terminal_status':'IN_PROGRESS','first_unverified_step':'APPEND_NEW_BATCH_004_AFTER_FEATURE_150','first_unverified_step_status':'BATCH_003_APPENDED_50_DERBY_FHRS_CONTINUATION_REQUIRED','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':batch+1,'next_target_feature_count':after+50,'final_ready':False,'fake_data':False,'last_processed_ids_sample':sorted(new_ids)[-20:],'last_batch':{'batch_index':batch,'city':'Derby','source':SOURCE_NAME,'source_sha256':source_sha,'added_feature_count':50,'new_feature_ids':sorted(new_ids)},'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; corroborate D-level FHRS point proxies with OSM/EPC/VOA/HMLR where available'})
-          checkpoint.setdefault('summary',{})['new_features_appended']=50; checkpoint['summary']['current_feature_count']=after; checkpoint['summary']['classified_total']=classified
-          checkpoint.setdefault('source_access_evidence',{})['fsa_derby_fhrs']='SUCCESS_RAW_XML_SHA256_'+source_sha
+          checkpoint.update({
+            'updated_at':now,
+            'state':'IN_PROGRESS',
+            'terminal_status':'IN_PROGRESS',
+            'first_unverified_step':'APPEND_NEW_BATCH_004_AFTER_FEATURE_150',
+            'first_unverified_step_status':'BATCH_003_APPENDED_50_DERBY_FHRS_CONTINUATION_REQUIRED',
+            'feature_count_before':before,
+            'feature_count_after':after,
+            'current_feature_count':after,
+            'next_batch_index':batch+1,
+            'next_target_feature_count':after+50,
+            'final_ready':False,
+            'fake_data':False,
+            'last_processed_ids_sample':sorted(new_ids)[-20:],
+            'last_batch':{
+              'batch_index':batch,
+              'city':'Derby',
+              'source':SOURCE_NAME,
+              'source_sha256':source_sha,
+              'added_feature_count':50,
+              'new_feature_ids':sorted(new_ids)
+            },
+            'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; corroborate D-level FHRS point proxies with OSM/EPC/VOA/HMLR where available'
+          })
+          checkpoint.setdefault('summary',{})['new_features_appended']=50
+          checkpoint['summary']['current_feature_count']=after
+          checkpoint['summary']['classified_total']=classified
+          checkpoint.setdefault('source_access_evidence',{})['fsa_derby_fhrs_api_v2']='SUCCESS_RAW_JSON_SHA256_'+source_sha
           checkpoint_p.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          status.update({'state':'IN_PROGRESS','updated_at':now,'owner':None,'final_ready':False,'fake_data':False,'classified_count':classified,'unknown_count':unknown,'total_elements':after,'confidence_distribution':{k:conf.get(k,0) for k in ['1','2','3','4']},'evidence_distribution':{k:ev.get(k,0) for k in ['A','B','C','D','U']},'output_sha256':output_sha,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':batch+1,'next_target_feature_count':after+50,'blocker':None,'last_batch':{'city':'Derby','added_feature_count':50,'source':SOURCE_NAME,'source_sha256':source_sha,'classification_basis':'fhrs_business_type_premises_proxy','evidence_level_distribution':{'D':50},'confidence_level_distribution':{'2':50}}})
+          status.update({
+            'state':'IN_PROGRESS',
+            'updated_at':now,
+            'owner':None,
+            'final_ready':False,
+            'fake_data':False,
+            'classified_count':classified,
+            'unknown_count':unknown,
+            'total_elements':after,
+            'confidence_distribution':{k:conf.get(k,0) for k in ['1','2','3','4']},
+            'evidence_distribution':{k:ev.get(k,0) for k in ['A','B','C','D','U']},
+            'output_sha256':output_sha,
+            'feature_count_before':before,
+            'feature_count_after':after,
+            'current_feature_count':after,
+            'next_batch_index':batch+1,
+            'next_target_feature_count':after+50,
+            'blocker':None,
+            'last_batch':{
+              'city':'Derby',
+              'added_feature_count':50,
+              'source':SOURCE_NAME,
+              'source_sha256':source_sha,
+              'classification_basis':'fhrs_business_type_premises_proxy',
+              'evidence_level_distribution':{'D':50},
+              'confidence_level_distribution':{'2':50}
+            }
+          })
           status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          prog=task.setdefault('progress',{}); prev=float(prog.get('current_percent',0)); target=int(prog.get('target_count',150) or 150)
-          prog.update({'completed_count':after,'target_count':target,'previous_percent':prev,'current_percent':round(100*after/target,4),'percent_increase':round(100*after/target-prev,4)})
-          task.update({'updated_at':now,'first_unverified_step':'APPEND_NEW_BATCH_004_AFTER_FEATURE_150','blocker':None,'fake_data':False,'final_ready':False})
+          prog=task.setdefault('progress',{})
+          prev=float(prog.get('current_percent',0))
+          target=int(prog.get('target_count',150) or 150)
+          prog.update({
+            'completed_count':after,
+            'target_count':target,
+            'previous_percent':prev,
+            'current_percent':round(100*after/target,4),
+            'percent_increase':round(100*after/target-prev,4)
+          })
+          task.update({
+            'updated_at':now,
+            'first_unverified_step':'APPEND_NEW_BATCH_004_AFTER_FEATURE_150',
+            'blocker':None,
+            'fake_data':False,
+            'final_ready':False
+          })
           task_p.write_text(json.dumps(task,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          runner={'slot_id':SLOT,'task_id':TASK,'continuation_key':CONT,'generated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'city':'Derby','source':SOURCE_NAME,'source_url':SOURCE,'source_sha256':source_sha,'classification_method':'fhrs_business_type_premises_proxy','confidence_policy':{'fhrs_premises_proxy':{'evidence_level':'D','confidence_level_1_to_4':2}},'records':records,'fake_data':False,'final_ready':False}
-          runner_p.parent.mkdir(parents=True,exist_ok=True); runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          runner={
+            'slot_id':SLOT,
+            'task_id':TASK,
+            'continuation_key':CONT,
+            'generated_at':now,
+            'feature_count_before':before,
+            'feature_count_after':after,
+            'added_feature_count':50,
+            'city':'Derby',
+            'source':SOURCE_NAME,
+            'source_url':SOURCE,
+            'source_sha256':source_sha,
+            'classification_method':'fhrs_business_type_premises_proxy',
+            'confidence_policy':{'fhrs_premises_proxy':{'evidence_level':'D','confidence_level_1_to_4':2}},
+            'records':records,
+            'fake_data':False,
+            'final_ready':False
+          }
+          runner_p.parent.mkdir(parents=True,exist_ok=True)
+          runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           print(json.dumps({'before':before,'after':after,'added':50,'eligible_candidates':len(candidates),'source_sha256':source_sha,'owner':task.get('owner')},ensure_ascii=False))
           PY
 
@@ -183,5 +376,49 @@ jobs:
             docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json \
             docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json
           git diff --cached --quiet && { echo 'No feature-count progress; refusing commit'; exit 1; } || true
-          git commit -m 'building_type_6 append Derby FHRS batch'
-          git push origin HEAD:codex/aays-single-runner-v5-20260706
+          git commit -m 'building_type_6 append Derby FHRS batch 100->150'
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            remote="$(git rev-parse "origin/$BRANCH")"
+            if ! git merge-base --is-ancestor "$remote" HEAD; then
+              git show "origin/$BRANCH:docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json" > /tmp/remote_cp.json
+              git show "origin/$BRANCH:docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json" > /tmp/remote_task.json
+              python3 <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp.json',encoding='utf-8'))
+          task=json.load(open('/tmp/remote_task.json',encoding='utf-8'))
+          cont='c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a'
+          assert cp.get('continuation_key')==cont and task.get('continuation_key')==cont, 'remote continuation changed'
+          assert int(cp.get('current_feature_count',-1))==100, 'remote building_type_6 already advanced; refusing duplicate batch'
+          assert int(cp.get('next_batch_index',-1))==3, 'remote batch index changed; refusing duplicate batch'
+          assert task.get('owner') is None, 'remote owner changed; refusing merge/push'
+          assert cp.get('fake_data') is False and task.get('fake_data') is False
+          assert cp.get('final_ready') is False and task.get('final_ready') is False
+          PY
+              if ! git merge --no-edit "origin/$BRANCH"; then
+                echo 'Merge conflict; refusing automatic conflict resolution'
+                git merge --abort || true
+                exit 1
+              fi
+            fi
+
+            python3 <<'PY'
+          import json
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson').read_text(encoding='utf-8'))
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json').read_text(encoding='utf-8'))
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json').read_text(encoding='utf-8'))
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json').read_text(encoding='utf-8'))
+          assert len(shard.get('features',[]))==150
+          assert int(cp.get('feature_count_before'))==100 and int(cp.get('feature_count_after'))==150
+          assert cp.get('fake_data') is False and status.get('fake_data') is False and task.get('fake_data') is False
+          assert cp.get('final_ready') is False and status.get('final_ready') is False and task.get('final_ready') is False
+          PY
+
+            if git push origin "HEAD:$BRANCH"; then
+              echo "Push succeeded on attempt $attempt"
+              exit 0
+            fi
+            test "$attempt" -lt 5 || { echo 'bounded push retries exhausted'; exit 1; }
+          done
