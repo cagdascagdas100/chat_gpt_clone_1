@@ -1,4 +1,4 @@
-name: tmp building_type_4 Dorset batch 11
+name: tmp building_type_4 Somerset batch 12
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append exactly 50 new Dorset FHRS evidence features
+      - name: Append exactly 50 new Somerset FHRS evidence features
         shell: bash
         run: |
           set -euo pipefail
@@ -46,17 +46,17 @@ jobs:
 
           SLOT = "building_type_4"
           TASK_ID = "building-type-4-england-classification-v1-20260808"
-          CITY = "Dorset"
-          PREFIX = "DOR"
+          CITY = "Somerset"
+          PREFIX = "SOM"
           REGION = "South West"
-          SOURCE_NAME = "Food Standards Agency FHRS daily open data - Dorset"
-          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS085en-GB.xml"
+          SOURCE_NAME = "Food Standards Agency FHRS daily open data - Somerset"
+          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS281en-GB.xml"
           SOURCE_PAGE = "https://ratings.food.gov.uk/open-data"
-          EXPECTED_BEFORE = 500
-          EXPECTED_TARGET = 550
-          EXPECTED_BATCH = 11
-          NEXT_BATCH = 12
-          NEXT_TARGET = 600
+          EXPECTED_BEFORE = 550
+          EXPECTED_TARGET = 600
+          EXPECTED_BATCH = 12
+          NEXT_BATCH = 13
+          NEXT_TARGET = 650
 
           shard_path = Path("england_map_web/data/building_type/shards/building_type_4_latest.geojson")
           manifest_path = Path("england_map_web/data/building_type/shards/building_type_4_manifest_latest.json")
@@ -143,7 +143,7 @@ jobs:
               if feature_id in already_processed_ids or parcel_id in already_processed_ids or fhrsid in already_processed_ids:
                   continue
               authority = text(element, "LocalAuthorityName")
-              if authority and "dorset" not in authority.lower():
+              if authority and authority.strip().lower() != "somerset":
                   continue
               business_type = text(element, "BusinessType")
               if not business_type or "mobile caterer" in business_type.lower():
@@ -158,10 +158,10 @@ jobs:
               candidates.append((int(fhrsid) if fhrsid.isdigit() else 10**18, fhrsid, element, lat, lon, business_type, authority))
 
           candidates.sort(key=lambda item: (item[0], item[1]))
-          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Dorset records"
+          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Somerset records"
           selected = candidates[:50]
           now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-          new_ids, new_parcels = [], []
+          new_ids, new_parcels, records = [], [], []
 
           for _, fhrsid, element, lat, lon, business_type, authority in selected:
               feature_id = f"{PREFIX}_FHRS_{fhrsid}"
@@ -171,58 +171,84 @@ jobs:
               postcode = text(element, "PostCode")
               address = " ".join(filter(None, [text(element, "AddressLine1"), text(element, "AddressLine2"), text(element, "AddressLine3"), text(element, "AddressLine4")]))
               excerpt = f"FHRSID {fhrsid} | {name} | BusinessType {business_type} | LocalAuthority {authority or CITY} | PostCode {postcode} | coordinates {lat:.6f},{lon:.6f}"
+              source_entry = {
+                  "source_name": SOURCE_NAME,
+                  "url": SOURCE_URL,
+                  "source_page": SOURCE_PAGE,
+                  "sha256": source_sha,
+                  "accessed_at": now,
+                  "granularity": "geocoded_business_premises_point",
+                  "fields_used": ["FHRSID", "BusinessName", "BusinessType", "LocalAuthorityName", "PostCode", "Latitude", "Longitude"],
+                  "supports_field": "building_type_primary (premises-use proxy)",
+                  "match_method": "fhrs_business_type_premises_proxy",
+                  "match_score": 0.55
+              }
+              props = {
+                  "parcel_id": parcel_id,
+                  "osm_id": None,
+                  "slot_id": SLOT,
+                  "region": REGION,
+                  "area": CITY,
+                  "local_authority": authority or CITY,
+                  "postcode": postcode,
+                  "address": address,
+                  "business_name": name,
+                  "fhrs_id": fhrsid,
+                  "fhrs_business_type": business_type,
+                  "building_type_primary": primary,
+                  "building_type_code": code_value,
+                  "building_category": category,
+                  "evidence_level": "D",
+                  "evidence_score": 0.55,
+                  "confidence_score": 0.55,
+                  "confidence": 0.55,
+                  "confidence_level_1_to_4": 2,
+                  "source_count": 1,
+                  "match_method": "fhrs_business_type_premises_proxy",
+                  "source": SOURCE_NAME,
+                  "source_url": SOURCE_URL,
+                  "source_hash": source_sha,
+                  "sources": [source_entry],
+                  "evidence_excerpt": excerpt,
+                  "source_evidence_excerpt": excerpt,
+                  "snapshot_date": now[:10],
+                  "geometry_match_method": "source_geocoded_point_only",
+                  "address_match_method": "source_record_address",
+                  "limitations": "FHRS premises-use proxy only; cadastral parcel identity and building fabric remain unverified.",
+                  "needs_manual_review": True,
+                  "fake_data": False,
+                  "final_ready": False,
+                  "updated_at": now
+              }
               features.append({
                   "type": "Feature",
                   "id": feature_id,
                   "geometry": {"type": "Point", "coordinates": [lon, lat]},
-                  "properties": {
-                      "parcel_id": parcel_id,
-                      "osm_id": None,
-                      "slot_id": SLOT,
-                      "region": REGION,
-                      "area": CITY,
-                      "local_authority": authority or CITY,
-                      "postcode": postcode,
-                      "address": address,
-                      "business_name": name,
-                      "fhrs_id": fhrsid,
-                      "fhrs_business_type": business_type,
-                      "building_type_primary": primary,
-                      "building_type_code": code_value,
-                      "building_category": category,
-                      "evidence_level": "D",
-                      "evidence_score": 0.55,
-                      "confidence_score": 0.55,
-                      "confidence": 0.55,
-                      "confidence_level_1_to_4": 2,
-                      "source_count": 1,
-                      "match_method": "fhrs_business_type_premises_proxy",
-                      "source": SOURCE_NAME,
-                      "source_url": SOURCE_URL,
-                      "source_hash": source_sha,
-                      "sources": [{
-                          "source_name": SOURCE_NAME,
-                          "url": SOURCE_URL,
-                          "source_page": SOURCE_PAGE,
-                          "sha256": source_sha,
-                          "accessed_at": now,
-                          "granularity": "geocoded_business_premises_point",
-                          "fields_used": ["FHRSID", "BusinessName", "BusinessType", "LocalAuthorityName", "PostCode", "Latitude", "Longitude"],
-                          "supports_field": "building_type_primary (premises-use proxy)",
-                          "match_method": "fhrs_business_type_premises_proxy",
-                          "match_score": 0.55
-                      }],
-                      "evidence_excerpt": excerpt,
-                      "source_evidence_excerpt": excerpt,
-                      "snapshot_date": now[:10],
-                      "geometry_match_method": "source_geocoded_point_only",
-                      "address_match_method": "source_record_address",
-                      "limitations": "FHRS premises-use proxy only; cadastral parcel identity and building fabric remain unverified.",
-                      "needs_manual_review": True,
-                      "fake_data": False,
-                      "final_ready": False,
-                      "updated_at": now
-                  }
+                  "properties": props
+              })
+              records.append({
+                  "feature_id": feature_id,
+                  "parcel_id": parcel_id,
+                  "osm_id": None,
+                  "local_authority": authority or CITY,
+                  "postcode": postcode,
+                  "building_type_primary": primary,
+                  "building_type_code": code_value,
+                  "building_category": category,
+                  "confidence_score": 0.55,
+                  "confidence_level_1_to_4": 2,
+                  "evidence_level": "D",
+                  "source": SOURCE_NAME,
+                  "source_url": SOURCE_URL,
+                  "source_hash": source_sha,
+                  "match_method": "fhrs_business_type_premises_proxy",
+                  "evidence_excerpt": excerpt,
+                  "sources": [source_entry],
+                  "limitations": "FHRS premises-use proxy only; cadastral parcel identity and building fabric remain unverified.",
+                  "needs_manual_review": True,
+                  "fake_data": False,
+                  "final_ready": False,
+                  "geometry": {"type": "Point", "coordinates": [lon, lat]}
               })
               new_ids.append(feature_id)
               new_parcels.append(parcel_id)
@@ -268,7 +294,7 @@ jobs:
               "sources": sources,
               "fake_data": False,
               "final_ready": False,
-              "note": "Existing shard preserved; appended 50 Dorset FHRS records outside all prior feature.id, parcel_id and osm_id values.",
+              "note": "Existing shard preserved; appended 50 Somerset FHRS records outside all prior feature.id, parcel_id and osm_id values.",
               "feature_count": after,
               "geojson_sha256": output_sha,
               "geojson_path": str(shard_path),
@@ -307,7 +333,7 @@ jobs:
               "output_sha256": output_sha,
               "candidate_batch": None,
               "no_progress_reason": None,
-              "note": "Batch 11 appended from official Dorset FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.",
+              "note": "Batch 12 appended from official Somerset FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.",
               "new_feature_count": 50,
               "last_batch_index": EXPECTED_BATCH,
               "last_batch_city": CITY,
@@ -326,14 +352,14 @@ jobs:
                   "evidence_level_distribution": {"D": 50},
                   "confidence_level_distribution": {"2": 50}
               },
-              "progress_reason": "50 new Dorset FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion"
+              "progress_reason": "50 new Somerset FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion"
           })
           status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           checkpoint.update({
               "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
               "remote_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-              "first_unverified_step_status": "BATCH_11_APPENDED_50_DORSET_FHRS_CONTINUATION_REQUIRED",
+              "first_unverified_step_status": "BATCH_12_APPENDED_50_SOMERSET_FHRS_CONTINUATION_REQUIRED",
               "terminal_status": "IN_PROGRESS",
               "updated_at": now,
               "final_ready": False,
@@ -353,7 +379,7 @@ jobs:
                   "osm_pilot_classified": checkpoint.get("summary", {}).get("osm_pilot_classified", 0),
                   "new_slot": False,
                   "pipeline_stage": 1,
-                  "note": "PROGRESS: feature_count 500 -> 550. Mevcut shard'daki feature.id, parcel_id ve osm_id degerleri already_processed_ids kabul edildi; Dorset FHRS acik verisinden processed kumesi disinda 50 yeni premises-use proxy feature append edildi.",
+                  "note": "PROGRESS: feature_count 550 -> 600. Mevcut shard'daki feature.id, parcel_id ve osm_id degerleri already_processed_ids kabul edildi; Somerset FHRS acik verisinden processed kumesi disinda 50 yeni premises-use proxy feature append edildi.",
                   "new_features_appended": 50,
                   "current_feature_count": after
               },
@@ -361,7 +387,7 @@ jobs:
                   "osm_building_tag_scan_pending": True,
                   "epc_residential_pending": True,
                   "voa_non_domestic_pending": True,
-                  "note": "Sonraki adim batch 12: mevcut 550 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek South West icinde yeni sehir/grid/parsel kaynagindan en az 50 append-only feature ekle; Exeter, Plymouth, Torbay, Cornwall ve Dorset kayitlarini tekrar isleme."
+                  "note": "Sonraki adim batch 13: mevcut 600 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek South West icinde yeni sehir/grid/parsel kaynagindan en az 50 append-only feature ekle; Exeter, Plymouth, Torbay, Cornwall, Dorset ve Somerset kayitlarini tekrar isleme."
               },
               "last_batch": {
                   "batch_index": EXPECTED_BATCH,
@@ -376,38 +402,6 @@ jobs:
               }
           })
           checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          new_id_set = set(new_ids)
-          runner_records = []
-          for feature in features:
-              if str(feature.get("id") or "") not in new_id_set:
-                  continue
-              p = feature.get("properties") or {}
-              runner_records.append({
-                  "feature_id": feature.get("id"),
-                  "parcel_id": p.get("parcel_id"),
-                  "osm_id": p.get("osm_id"),
-                  "local_authority": p.get("local_authority"),
-                  "postcode": p.get("postcode"),
-                  "building_type_primary": p.get("building_type_primary"),
-                  "building_type_code": p.get("building_type_code"),
-                  "building_category": p.get("building_category"),
-                  "confidence_score": p.get("confidence_score"),
-                  "confidence_level_1_to_4": p.get("confidence_level_1_to_4"),
-                  "evidence_level": p.get("evidence_level"),
-                  "source": p.get("source"),
-                  "source_url": p.get("source_url"),
-                  "source_hash": p.get("source_hash"),
-                  "match_method": p.get("match_method"),
-                  "evidence_excerpt": p.get("evidence_excerpt"),
-                  "sources": p.get("sources"),
-                  "limitations": p.get("limitations"),
-                  "needs_manual_review": p.get("needs_manual_review"),
-                  "fake_data": p.get("fake_data"),
-                  "final_ready": p.get("final_ready"),
-                  "geometry": feature.get("geometry")
-              })
-          assert len(runner_records) == 50
 
           runner = {
               "slot_id": SLOT,
@@ -433,7 +427,7 @@ jobs:
               "fake_data": False,
               "final_ready": False,
               "output_sha256": output_sha,
-              "records": runner_records
+              "records": records
           }
           runner_path.parent.mkdir(parents=True, exist_ok=True)
           runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -455,21 +449,22 @@ jobs:
           runner = json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json").read_text(encoding="utf-8"))
           task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json").read_text(encoding="utf-8"))
 
-          assert len(shard.get("features") or []) == 550
-          assert manifest.get("feature_count_before") == 500 and manifest.get("feature_count_after") == 550 and manifest.get("added_feature_count") == 50
-          assert checkpoint.get("feature_count_before") == 500 and checkpoint.get("feature_count_after") == 550 and checkpoint.get("current_feature_count") == 550
-          assert checkpoint.get("next_batch_index") == 12 and checkpoint.get("next_target_feature_count") == 600
-          assert status.get("current_feature_count") == 550 and status.get("feature_count_after") == 550
-          assert runner.get("feature_count_before") == 500 and runner.get("feature_count_after") == 550 and runner.get("added_feature_count") == 50
+          assert len(shard.get("features") or []) == 600
+          assert manifest.get("feature_count_before") == 550 and manifest.get("feature_count_after") == 600 and manifest.get("added_feature_count") == 50
+          assert checkpoint.get("feature_count_before") == 550 and checkpoint.get("feature_count_after") == 600 and checkpoint.get("current_feature_count") == 600
+          assert checkpoint.get("next_batch_index") == 13 and checkpoint.get("next_target_feature_count") == 650
+          assert status.get("current_feature_count") == 600 and status.get("feature_count_after") == 600
+          assert runner.get("feature_count_before") == 550 and runner.get("feature_count_after") == 600 and runner.get("added_feature_count") == 50
           assert task.get("owner") is None
           for obj in (manifest, checkpoint, status, runner):
               assert obj.get("fake_data") is False and obj.get("final_ready") is False
-          new = [f for f in shard["features"] if str(f.get("id") or "").startswith("DOR_FHRS_")]
+          new = [f for f in shard["features"] if str(f.get("id") or "").startswith("SOM_FHRS_")]
           assert len(new) == 50, len(new)
           ids = [str(f.get("id")) for f in new]
           parcels = [str((f.get("properties") or {}).get("parcel_id")) for f in new]
           assert len(ids) == len(set(ids)) == 50
           assert len(parcels) == len(set(parcels)) == 50
+          assert len(runner.get("records") or []) == 50
           for feature in new:
               p = feature.get("properties") or {}
               assert p.get("evidence_excerpt")
@@ -478,17 +473,8 @@ jobs:
               assert p.get("source_hash")
               assert p.get("sources")
               assert p.get("fake_data") is False and p.get("final_ready") is False
-              assert p.get("source_url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS085en-GB.xml"
-          records = runner.get("records") or []
-          assert len(records) == 50
-          for record in records:
-              assert record.get("evidence_excerpt")
-              assert record.get("evidence_level") == "D"
-              assert record.get("confidence_level_1_to_4") == 2
-              assert record.get("source_hash")
-              assert record.get("sources")
-              assert record.get("fake_data") is False and record.get("final_ready") is False
-          print("validated 500->550 with 50 new Dorset features")
+              assert p.get("source_url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS281en-GB.xml"
+          print("validated 550->600 with 50 new Somerset features")
           PY
 
       - name: Commit and push only slot outputs
@@ -511,7 +497,7 @@ jobs:
             done
             [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
           done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Dorset FHRS batch 500->550"
+          git commit -m "data(building_type_4): append Somerset FHRS batch 550->600"
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
