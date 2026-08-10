@@ -74,6 +74,14 @@ jobs:
           body=body.replace('__BT7_OLD_BATCH__','44')
           body=body.replace('__BT7_NEXT_BATCH__','45')
 
+          old_final="cp.get('current_feature_count') == 2200 and cp.get('next_batch_index') == 45 and cp.get('next_target_feature_count') == 2200"
+          new_final="cp.get('current_feature_count') == 2200 and cp.get('next_batch_index') == 45 and cp.get('next_target_feature_count') == 2250"
+          if old_final not in body:
+              raise SystemExit('post-append next-target predecessor assertion missing')
+          body=body.replace(old_final,new_final)
+          if old_final in body:
+              raise SystemExit('stale post-append next-target assertion remains')
+
           checks=(
               "assert cp.get('current_feature_count') == 2150 and cp.get('feature_count_after') == 2150",
               "assert cp.get('next_batch_index') == 44 and cp.get('next_target_feature_count') == 2200",
