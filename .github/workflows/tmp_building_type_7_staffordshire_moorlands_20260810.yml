@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           SOURCE_URL="https://ratings.food.gov.uk/api/open-data-files/FHRS293en-GB.xml"
-          printf '%s\n' "$SOURCE_URL" > /tmp/source_url.txt
+          printf '%s\n' "$SOURCE_URL" > /tmp/staffordshire_moorlands_source_url.txt
           curl --fail --location --silent --show-error \
             --retry 2 --retry-delay 2 --retry-all-errors \
             "$SOURCE_URL" -o /tmp/staffordshire_moorlands_fhrs.xml
@@ -98,6 +98,7 @@ jobs:
               'CITY = "South Staffordshire"': 'CITY = "Staffordshire Moorlands"',
               'PREFIX = "SSTA"': 'PREFIX = "STMO"',
               'SOURCE_NAME = "Food Standards Agency FHRS daily open data - South Staffordshire"': 'SOURCE_NAME = "Food Standards Agency FHRS daily open data - Staffordshire Moorlands"',
+              'SOURCE_URL = Path("/tmp/south_staffordshire_source_url.txt").read_text().strip()': 'SOURCE_URL = Path("/tmp/staffordshire_moorlands_source_url.txt").read_text().strip()',
               'BEFORE = 1150': 'BEFORE = 1200',
               'AFTER = 1200': 'AFTER = 1250',
               'BATCH_INDEX = 24': 'BATCH_INDEX = 25',
@@ -110,6 +111,7 @@ jobs:
               body = body.replace(old, new)
           body = body.replace('South Staffordshire', 'Staffordshire Moorlands')
           body = body.replace('SOUTH_STAFFORDSHIRE', 'STAFFORDSHIRE_MOORLANDS')
+          assert 'south_staffordshire_source_url.txt' not in body
           assert 'South Staffordshire' not in body
           assert 'BEFORE = 1200' in body and 'AFTER = 1250' in body
           assert 'BATCH_INDEX = 25' in body and 'NEXT_BATCH = 26' in body and 'NEXT_TARGET = 1300' in body
@@ -153,12 +155,11 @@ jobs:
           assert cp.get("fake_data") is False and cp.get("final_ready") is False
           assert cp["current_feature_count"] == 1250 and cp["next_batch_index"] == 26 and cp["next_target_feature_count"] == 1300
           assert task.get("owner") is None and task.get("fake_data") is False and task.get("final_ready") is False
-          ids=[]; parcels_all=[]; osm=[]
+          ids=[]; parcels_all=[]
           for f in geo["features"]:
               p=f.get("properties") or {}
               if f.get("id") is not None: ids.append(str(f["id"]))
               if p.get("parcel_id") is not None: parcels_all.append(str(p["parcel_id"]))
-              if p.get("osm_id") is not None and str(p.get("osm_id")).strip(): osm.append(str(p["osm_id"]))
           assert len(ids) == len(set(ids)), "duplicate feature.id detected"
           assert len(parcels_all) == len(set(parcels_all)), "duplicate parcel_id detected"
           PY
