@@ -1,0 +1,170 @@
+name: tmp-building-type-1-recovery-20260810-r5
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_building_type_1_recovery_20260810_r5.yml']
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1
+          sparse-checkout-cone-mode: false
+      - name: Append at least 50 new evidenced Inner London features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, hashlib, pathlib, urllib.parse, urllib.request, time, datetime, collections
+          SLOT='building_type_1'
+          shard=pathlib.Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          stated=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1')
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          fc=json.loads(shard.read_text(encoding='utf-8'))
+          before=len(fc.get('features',[]))
+          assert before>=300, before
+          processed=set()
+          for f in fc.get('features',[]):
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None:
+                      processed.add(str(v))
+          mapping={
+            'detached':('detached_house','R_DET','residential'),'semidetached_house':('semi_detached_house','R_SEMI','residential'),
+            'terrace':('terraced_house','R_TERR','residential'),'apartments':('flat_or_apartment','R_FLAT','residential'),
+            'house':('house','R_DET','residential'),'bungalow':('bungalow','R_DET','residential'),
+            'industrial':('industrial','I_FACTORY','industrial'),'warehouse':('warehouse','I_WAREHOUSE','industrial'),
+            'retail':('commercial_retail','C_RETAIL','commercial'),'commercial':('commercial_retail','C_RETAIL','commercial'),
+            'office':('office','C_OFFICE','commercial'),'school':('school','P_SCHOOL','institutional'),
+            'hospital':('healthcare','P_HEALTHCARE','institutional'),'church':('religious','P_RELIGIOUS','institutional'),
+            'hotel':('hospitality','C_HOSPITALITY','commercial'),'garage':('workshop','I_WORKSHOP','industrial')
+          }
+          batches=[
+            ('Islington_Hackney',(51.5200,-0.1150,51.5650,-0.0200)),
+            ('TowerHamlets_Southwark',(51.4750,-0.1000,51.5350,-0.0005)),
+            ('Lambeth_Wandsworth',(51.4200,-0.2500,51.5000,-0.1000)),
+            ('Kensington_Hammersmith',(51.4650,-0.2450,51.5350,-0.1450))
+          ]
+          endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter']
+          building_re='^(detached|semidetached_house|terrace|apartments|house|bungalow|industrial|warehouse|retail|commercial|office|school|hospital|church|hotel|garage)$'
+          added=[]; used=[]
+          for batch,(s,w,n,e) in batches:
+              if len(added)>=60: break
+              q=f'''[out:json][timeout:60];(way["building"~"{building_re}"]({s},{w},{n},{e});relation["building"~"{building_re}"]({s},{w},{n},{e}););out tags center qt 700;'''
+              raw=None; endpoint=None; last_error=None
+              for ep in endpoints:
+                  try:
+                      req=urllib.request.Request(ep,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_1/5.0'})
+                      with urllib.request.urlopen(req,timeout=100) as r:
+                          raw=r.read()
+                      endpoint=ep
+                      break
+                  except Exception as ex:
+                      last_error=repr(ex); print('OVERPASS_RETRY',ep,last_error); time.sleep(4)
+              if raw is None:
+                  used.append({'batch_name':batch,'bbox':[s,w,n,e],'error':last_error})
+                  continue
+              response_hash=hashlib.sha256(raw).hexdigest()
+              data=json.loads(raw)
+              used.append({'batch_name':batch,'bbox':[s,w,n,e],'overpass_endpoint':endpoint,'response_sha256':response_hash,'element_count':len(data.get('elements',[]))})
+              for el in data.get('elements',[]):
+                  if len(added)>=60: break
+                  osm_num=str(el.get('id'))
+                  oid=f"ENG_OSM_{el.get('type')}_{osm_num}"
+                  if oid in processed or osm_num in processed: continue
+                  tags=el.get('tags') or {}; b=tags.get('building')
+                  if b not in mapping: continue
+                  center=el.get('center') or {}; lat=center.get('lat',el.get('lat')); lon=center.get('lon',el.get('lon'))
+                  if lat is None or lon is None: continue
+                  primary,code,category=mapping[b]
+                  excerpt={k:tags[k] for k in ('building','name','amenity','shop','office','tourism','addr:housenumber','addr:street','addr:postcode') if k in tags}
+                  source_url=f"https://www.openstreetmap.org/{el.get('type')}/{osm_num}"
+                  src={'source_name':'OpenStreetMap via Overpass API','url':source_url,'query_endpoint':endpoint,'source_hash':response_hash,'accessed_at':now,'licence':'ODbL 1.0','match_method':f'building={b}','evidence_excerpt':excerpt}
+                  feat={'type':'Feature','id':oid,'geometry':{'type':'Point','coordinates':[float(lon),float(lat)]},'properties':{
+                    'parcel_id':oid,'osm_id':int(osm_num),'osm_element_type':el.get('type'),'slot_id':SLOT,'region':'London','area':batch,'local_authority':'London Inner',
+                    'building_type_primary':primary,'building_type_code':code,'building_category':category,
+                    'evidence_excerpt':excerpt,'source_evidence_excerpt':excerpt,'evidence_level':'B','evidence_source_tier':'B2',
+                    'confidence_score':0.82,'confidence_level_1_to_4':3,'source_count':1,'match_method':f'osm_building_tag:{b}',
+                    'source':'OpenStreetMap via Overpass API','source_url':source_url,'source_hash':response_hash,'sources':[src],
+                    'fake_data':False,'final_ready':False,'needs_manual_review':False,
+                    'limitations':'Direct OSM building tag supports type classification; EPC/VOA/HMLR cadastral binding remains pending.','updated_at':now}}
+                  added.append(feat); processed.update((oid,osm_num))
+              time.sleep(2)
+          assert len(added)>=50, f'BLOCKED_NO_NEW_SOURCE_OR_BATCH: need>=50 got {len(added)} used={used}'
+          added=added[:60]
+          fc['features'].extend(added)
+          after=len(fc['features'])
+          assert after>before and after-before>=50,(before,after)
+          ids=[str(f.get('id')) for f in fc['features']]
+          assert len(ids)==len(set(ids)), 'duplicate feature.id after append'
+          shard.write_text(json.dumps(fc,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          output_sha=hashlib.sha256(shard.read_bytes()).hexdigest()
+          cp=json.loads((stated/'checkpoint_latest.json').read_text(encoding='utf-8'))
+          st=json.loads((stated/'status_latest.json').read_text(encoding='utf-8'))
+          task=json.loads((stated/'current_task_latest.json').read_text(encoding='utf-8'))
+          cont=task.get('continuation_key','') or cp.get('continuation_key','') or ''
+          next_idx=max(8,int(cp.get('next_batch_index') or 7)+1)
+          cp.update({'state':'IN_PROGRESS','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':next_idx,'next_target_feature_count':after+50,'last_batch_name':used[-1].get('batch_name'),'last_batch_new_features':after-before,'last_batch_evidence':used,'last_processed_ids_sample':[f['id'] for f in added[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES','updated_at':now,'fake_data':False,'final_ready':False})
+          if cont: cp['continuation_key']=cont
+          (stated/'checkpoint_latest.json').write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          confd=collections.Counter(str((f.get('properties') or {}).get('confidence_level_1_to_4',1)) for f in fc['features'])
+          evd=collections.Counter(str((f.get('properties') or {}).get('evidence_level','U')) for f in fc['features'])
+          st.update({'state':'IN_PROGRESS','owner':None,'updated_at':now,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'new_features_added':after-before,'confidence_distribution':{f'level_{k}':v for k,v in sorted(confd.items())},'evidence_distribution':dict(evd),'last_batch':used,'output_sha256':output_sha,'fake_data':False,'final_ready':False,'result':{'state':'RECOVERY_BATCH_APPENDED','note':f'Appended {after-before} new evidenced Inner London features; no prior ID was replayed.'}})
+          if cont: st['continuation_key']=cont
+          (stated/'status_latest.json').write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          task.update({'state':'READY','status':'ready','panel_status':'HAZIR','owner':None,'claimable':True,'ready_for_claim':True,'updated_at':now,'fake_data':False,'final_ready':False})
+          if cont: task['continuation_key']=cont
+          (stated/'current_task_latest.json').write_text(json.dumps(task,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          manifest=shard.with_name('building_type_1_manifest_latest.json')
+          manifest.write_text(json.dumps({'schema_version':3,'slot_id':SLOT,'region':'London Inner','continuation_key':cont,'updated_at':now,'feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'next_batch_index':next_idx,'next_target_feature_count':after+50,'source_batches':used,'output_sha256':output_sha,'fake_data':False,'final_ready':False},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          out=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json'); out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps({'slot_id':SLOT,'task_id':task.get('task_id'),'continuation_key':cont,'state':'RECOVERY_BATCH_APPENDED','feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'source_batches':used,'output_sha256':output_sha,'fake_data':False,'final_ready':False,'updated_at':now},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          pathlib.Path('/tmp/expected_after').write_text(str(after),encoding='utf-8')
+          print('RECOVERY_RESULT',json.dumps({'before':before,'after':after,'added':after-before,'batches':used}))
+          PY
+      - name: Commit, push, and remote-readback verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR=codex/aays-single-runner-v5-20260706
+          EXPECTED=$(cat /tmp/expected_after)
+          git config user.name aays-building-type-1-bot
+          git config user.email actions@users.noreply.github.com
+          git add england_map_web/data/building_type/shards/building_type_1_latest.geojson england_map_web/data/building_type/shards/building_type_1_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_1 docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json
+          git commit -m 'Append building_type_1 new Inner London batch r5'
+          for i in 1 2 3 4 5; do
+            git fetch origin "$BR"
+            git rebase "origin/$BR" || { git rebase --abort || true; sleep 3; continue; }
+            if git push origin HEAD:"$BR"; then
+              sleep 4
+              git fetch origin "$BR"
+              git show origin/$BR:england_map_web/data/building_type/shards/building_type_1_latest.geojson > /tmp/remote.geojson
+              git show origin/$BR:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json > /tmp/remote_cp.json
+              EXPECTED="$EXPECTED" python - <<'PY'
+          import json,os
+          d=json.load(open('/tmp/remote.geojson')); c=json.load(open('/tmp/remote_cp.json')); n=len(d['features']); exp=int(os.environ['EXPECTED'])
+          assert n>=exp,(n,exp)
+          assert c.get('current_feature_count')==n,(c.get('current_feature_count'),n)
+          assert c.get('fake_data') is False and c.get('final_ready') is False
+          ids=[str(f.get('id')) for f in d['features']]; assert len(ids)==len(set(ids))
+          tail=d['features'][-50:]
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in tail)
+          assert all((f.get('properties') or {}).get('evidence_level') for f in tail)
+          assert all(1 <= int((f.get('properties') or {}).get('confidence_level_1_to_4',0)) <= 4 for f in tail)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in tail)
+          print('REMOTE_READBACK_OK',n,c.get('next_batch_index'),c.get('next_target_feature_count'))
+          PY
+              exit 0
+            fi
+            sleep 3
+          done
+          exit 1
