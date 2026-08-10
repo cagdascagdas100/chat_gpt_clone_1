@@ -1,0 +1,60 @@
+name: tmp building_type_9 Doncaster batch 15
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_9_doncaster_20260810.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Fast-forward and execute guarded batch 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'BOOT'
+          import subprocess, textwrap
+
+          src = subprocess.check_output([
+              'git','show','40d3e1ed44f0dd2e609e9318d9662b4164bc053d:.github/workflows/tmp_building_type_9_hull_20260810.yml'
+          ], text=True)
+          marker = "          python - <<'PY'\n"
+          if marker not in src or "\n          PY" not in src:
+              raise RuntimeError('template Python body not found')
+          body = textwrap.dedent(src.split(marker,1)[1].split("\n          PY",1)[0])
+
+          replacements = [
+              ("BEFORE=650; BATCH=14; TARGET=700", "BEFORE=700; BATCH=15; TARGET=750"),
+              ("CITY='Hull'; GRID='HULL_CENTRAL_01'; AUTH='Kingston upon Hull'", "CITY='Doncaster'; GRID='DONCASTER_CENTRAL_01'; AUTH='City of Doncaster'"),
+              ("            (-0.390,53.730,-0.350,53.755),\n            (-0.350,53.730,-0.310,53.755),\n            (-0.310,53.730,-0.270,53.755),\n            (-0.390,53.755,-0.350,53.780),\n            (-0.350,53.755,-0.310,53.780),\n            (-0.310,53.755,-0.270,53.780)", "            (-1.170,53.490,-1.130,53.515),\n            (-1.130,53.490,-1.090,53.515),\n            (-1.090,53.490,-1.050,53.515),\n            (-1.170,53.515,-1.130,53.540),\n            (-1.130,53.515,-1.090,53.540),\n            (-1.090,53.515,-1.050,53.540)"),
+              ("BATCH_014_APPENDED_50_HULL_OSM_FEATURES_CONTINUATION_REQUIRED", "BATCH_015_APPENDED_50_DONCASTER_OSM_FEATURES_CONTINUATION_REQUIRED"),
+              ("'next_batch_index':15", "'next_batch_index':16"),
+              ("'next_target_feature_count':750", "'next_target_feature_count':800"),
+              ("'next_city_index':15", "'next_city_index':16"),
+              ("'batch_index':14", "'batch_index':15"),
+              ("batch 14", "batch 15"),
+              ("Hull", "Doncaster"),
+              ("HULL_CENTRAL_01", "DONCASTER_CENTRAL_01"),
+          ]
+          for old,new in replacements:
+              if old not in body:
+                  raise RuntimeError(f'expected template token missing: {old[:80]}')
+              body = body.replace(old,new)
+
+          body = body.replace("assert cp.get('fake_data') is False", "assert cp.get('fake_data') is False and cp.get('final_ready') is False")
+          body = body.replace("assert mf.get('feature_count')==BEFORE and mf.get('fake_data') is False", "assert mf.get('feature_count')==BEFORE and mf.get('fake_data') is False and mf.get('final_ready') is False")
+
+          if "PUBLISHED" in body or "published" in body:
+              raise RuntimeError('template unexpectedly writes publication state')
+          exec(compile(body, '<building_type_9_batch15>', 'exec'), {'__name__':'__main__'})
+          BOOT
