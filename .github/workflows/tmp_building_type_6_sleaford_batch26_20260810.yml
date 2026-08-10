@@ -1,0 +1,153 @@
+name: AAYS building_type_6 Sleaford OSM batch 26
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_6_sleaford_batch26_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-6-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BRANCH: codex/aays-single-runner-v5-20260706
+      SLOT_ID: building_type_6
+      CONTINUATION_KEY: c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a
+      SHARD: england_map_web/data/building_type/shards/building_type_6_latest.geojson
+      MANIFEST: england_map_web/data/building_type/shards/building_type_6_manifest_latest.json
+      STATUS: docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json
+      CHECKPOINT: docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json
+      CURRENT_TASK: docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json
+      RUNNER_OUTPUT: docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json
+      WF: .github/workflows/tmp_building_type_6_sleaford_batch26_20260810.yml
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward safely to canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          START_SHA='${{ github.sha }}'
+          git fetch origin "$BRANCH"
+          REMOTE_SHA="$(git rev-parse origin/$BRANCH)"
+          if [ "$REMOTE_SHA" != "$START_SHA" ]; then
+            CHANGED="$(git diff --name-only "$START_SHA..$REMOTE_SHA")"
+            for p in "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$CURRENT_TASK" "$RUNNER_OUTPUT"; do
+              if printf '%s\n' "$CHANGED" | grep -Fxq "$p"; then
+                echo "Fail closed: building_type_6 state changed after trigger: $p"
+                exit 41
+              fi
+            done
+            git merge --ff-only "origin/$BRANCH"
+          fi
+          echo "SAFE_BASE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Append 250 evidence-backed Sleaford OSM records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          template_commit='d0f3583a6177419794f00fb74a1a0afade4b46bc'
+          template_path='.github/workflows/tmp_building_type_6_corby_batch23_20260810.yml'
+          text=subprocess.check_output(['git','show',f'{template_commit}:{template_path}'],text=True)
+          marker="          import collections, datetime, hashlib, json, os, pathlib, urllib.parse, urllib.request"
+          start=text.index(marker)
+          end=text.index("\n          PY",start)
+          block=text[start:end]
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          replacements={
+            "CITY='Corby'":"CITY='Sleaford'",
+            "LA='North Northamptonshire'":"LA='North Kesteven'",
+            "GRID='uk-grid-corby-001'":"GRID='uk-grid-sleaford-001'",
+            "BBOX=[-0.77,52.44,-0.64,52.53]":"BBOX=[-0.47,52.96,-0.34,53.05]",
+            "BATCH=23":"BATCH=26",
+            "EXPECTED_BEFORE=1500":"EXPECTED_BEFORE=2250",
+            "PREFIX='CORBY_OSM'":"PREFIX='SLEAFORD_OSM'",
+            "corby_north_northamptonshire_source_sha256":"sleaford_north_kesteven_source_sha256",
+            "SUCCESS_CORBY_BATCH_23":"SUCCESS_SLEAFORD_BATCH_26",
+            "Corby grid":"Sleaford grid"
+          }
+          for old,new in replacements.items():
+            if old not in code:
+              raise SystemExit(f'Fail closed: template marker missing: {old}')
+            code=code.replace(old,new)
+          exec(compile(code,'sleaford_batch26_from_verified_corby_template.py','exec'),{})
+          PY
+
+      - name: Verify safety invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          def load(p):
+            with open(p,'r',encoding='utf-8') as f: return json.load(f)
+          g=load(os.environ['SHARD']); s=load(os.environ['STATUS']); c=load(os.environ['CHECKPOINT']); t=load(os.environ['CURRENT_TASK']); r=load(os.environ['RUNNER_OUTPUT']); m=load(os.environ['MANIFEST'])
+          feats=g.get('features',[])
+          assert len(feats)==2500
+          assert r.get('feature_count_before')==2250 and r.get('feature_count_after')==2500 and r.get('new_feature_count')==250
+          assert r.get('city')=='Sleaford' and r.get('batch_index')==26
+          assert s.get('total_elements')==2500 and c.get('current_feature_count')==2500
+          assert c.get('next_batch_index')==27 and c.get('next_target_feature_count')==2750
+          assert s.get('owner') in (None,'') and t.get('owner') in (None,'')
+          assert s.get('continuation_key')==os.environ['CONTINUATION_KEY']==c.get('continuation_key')==t.get('continuation_key')
+          assert s.get('fake_data') is False and c.get('fake_data') is False and t.get('fake_data') is False and m.get('fake_data') is False and r.get('fake_data') is False
+          assert s.get('final_ready') is False and c.get('final_ready') is False and t.get('final_ready') is False and m.get('final_ready') is False
+          records=r.get('records',[])
+          assert len(records)==250
+          for rec in records:
+            assert rec.get('evidence_excerpt')
+            assert rec.get('evidence_level') in ('A','B','C','D','U')
+            assert rec.get('confidence_level_1_to_4') in (1,2,3,4)
+            assert rec.get('source_url') and rec.get('source_hash') and rec.get('sources')
+            assert rec.get('fake_data') is False
+          new_union=[]
+          for f in feats[-250:]:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
+              if v not in (None,''): new_union.append(str(v))
+          before_union=set()
+          for f in feats[:-250]:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
+              if v not in (None,''): before_union.add(str(v))
+          assert not (set(new_union) & before_union)
+          print('verified',len(feats),len(records),'new_union',len(set(new_union)))
+          PY
+
+      - name: Commit and push only slot outputs and remove trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'AAYS building_type_6 continuation'
+          git config user.email 'aays-building-type-6@local.invalid'
+          git rm -f "$WF"
+          git add "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$CURRENT_TASK" "$RUNNER_OUTPUT"
+          git diff --cached --quiet && { echo 'No progress: no slot output changes'; exit 50; }
+          git commit -m 'building_type_6: append Sleaford OSM batch 26 (+250)'
+          git fetch origin "$BRANCH"
+          REMOTE_SHA="$(git rev-parse origin/$BRANCH)"
+          if [ "$REMOTE_SHA" != "$SAFE_BASE" ]; then
+            CHANGED="$(git diff --name-only "$SAFE_BASE..$REMOTE_SHA")"
+            for p in "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$CURRENT_TASK" "$RUNNER_OUTPUT"; do
+              if printf '%s\n' "$CHANGED" | grep -Fxq "$p"; then
+                echo "Fail closed before push: concurrent building_type_6 change: $p"
+                exit 51
+              fi
+            done
+            git rebase "origin/$BRANCH"
+          fi
+          git push origin "HEAD:$BRANCH"
