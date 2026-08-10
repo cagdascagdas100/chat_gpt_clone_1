@@ -1,0 +1,275 @@
+name: tmp building_type_5 Epping Forest batch26
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_5_epping_forest_batch26_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-5-batch26
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Sync and append guarded batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_5_epping_forest_batch26_20260810.yml'
+          SHARD='england_map_web/data/building_type/shards/building_type_5_latest.geojson'
+          MANIFEST='england_map_web/data/building_type/shards/building_type_5_manifest_latest.json'
+          STATUS='docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'
+          CHECKPOINT='docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'
+          RUNNER='docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'
+          TASK='docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "$BRANCH"
+          git merge --ff-only "origin/$BRANCH"
+
+          python - <<'PY'
+          import json, hashlib, urllib.request, xml.etree.ElementTree as ET
+          from pathlib import Path
+          from collections import Counter
+          from datetime import datetime, timezone
+
+          SHARD=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          MANIFEST=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          STATUS=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          CHECKPOINT=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          RUNNER=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          SOURCE_URL='https://ratings.food.gov.uk/api/open-data-files/FHRS115en-GB.xml'
+          SOURCE_NAME='Food Standards Agency FHRS daily open data - Epping Forest'
+          EXPECTED_TASK='building-type-5-england-classification-v1-20260808'
+          BEFORE=1250
+          BATCH=26
+          TARGET=1300
+          PREFIX='EPF'
+          CITY='Epping Forest'
+
+          status=json.loads(STATUS.read_text())
+          checkpoint=json.loads(CHECKPOINT.read_text())
+          task=json.loads(TASK.read_text())
+          shard=json.loads(SHARD.read_text())
+          manifest=json.loads(MANIFEST.read_text())
+
+          assert status.get('task_id') == EXPECTED_TASK, status.get('task_id')
+          assert task.get('task_id') == EXPECTED_TASK, task.get('task_id')
+          assert status.get('owner') is None and task.get('owner') is None
+          assert status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+          assert int(status.get('feature_count_after')) == BEFORE
+          assert int(status.get('next_batch_index')) == BATCH
+          assert int(status.get('next_target_feature_count')) == TARGET
+          assert int(checkpoint.get('current_feature_count')) == BEFORE
+          assert int(checkpoint.get('next_batch_index')) == BATCH
+          assert int(checkpoint.get('next_target_feature_count')) == TARGET
+          feats=shard.get('features') or []
+          assert len(feats) == BEFORE, len(feats)
+
+          processed=set()
+          for f in feats:
+              fid=f.get('id')
+              if fid is not None: processed.add(str(fid))
+              p=f.get('properties') or {}
+              for k in ('parcel_id','osm_id'):
+                  v=p.get(k)
+                  if v is not None and str(v): processed.add(str(v))
+
+          req=urllib.request.Request(SOURCE_URL,headers={'User-Agent':'TerraYield-AAYS-building-type/1.0'})
+          with urllib.request.urlopen(req, timeout=90) as r:
+              raw=r.read()
+          source_hash=hashlib.sha256(raw).hexdigest()
+          root=ET.fromstring(raw)
+
+          def text(node, tag):
+              x=node.find(tag)
+              return (x.text or '').strip() if x is not None and x.text else ''
+
+          def classify(bt):
+              s=bt.lower()
+              if 'school' in s or 'college' in s or 'university' in s:
+                  return ('education','EDU','education')
+              if 'hospital' in s or 'caring' in s or 'childcare' in s:
+                  return ('healthcare_care','HC_CARE','healthcare')
+              if 'hotel' in s or 'bed & breakfast' in s or 'guest house' in s:
+                  return ('hospitality','HOSP','hospitality')
+              if 'pub' in s or 'bar' in s or 'nightclub' in s:
+                  return ('hospitality','HOSP','hospitality')
+              if 'restaurant' in s or 'cafe' in s or 'canteen' in s or 'takeaway' in s or 'sandwich' in s:
+                  return ('commercial_hospitality','C_HOSP','commercial')
+              if 'retailer' in s or 'supermarket' in s or 'hypermarket' in s:
+                  return ('commercial_retail','C_RETAIL','commercial')
+              if 'manufacturer' in s or 'packer' in s:
+                  return ('industrial','IND','industrial')
+              if 'distributor' in s or 'transporter' in s:
+                  return ('warehouse','WH','industrial')
+              if 'farmer' in s or 'grower' in s:
+                  return ('commercial_operational','C_OPER','commercial')
+              return ('commercial_other','C_OTHER','commercial')
+
+          establishments=root.findall('.//EstablishmentDetail')
+          new=[]
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          for e in establishments:
+              fhrsid=text(e,'FHRSID')
+              bt=text(e,'BusinessType')
+              if not fhrsid or not bt or 'mobile caterer' in bt.lower():
+                  continue
+              geo=e.find('Geocode')
+              lat=text(geo,'Latitude') if geo is not None else ''
+              lon=text(geo,'Longitude') if geo is not None else ''
+              try:
+                  latf=float(lat); lonf=float(lon)
+              except Exception:
+                  continue
+              fid=f'{PREFIX}_FHRS_{fhrsid}'
+              parcel=f'{PREFIX}_FHRSID_{fhrsid}'
+              if fid in processed or parcel in processed or fhrsid in processed:
+                  continue
+              name=text(e,'BusinessName')
+              postcode=text(e,'PostCode')
+              la=text(e,'LocalAuthorityName') or CITY
+              address=' | '.join(x for x in [text(e,'AddressLine1'),text(e,'AddressLine2'),text(e,'AddressLine3'),text(e,'AddressLine4')] if x)
+              primary, code, category=classify(bt)
+              excerpt=f'FHRSID {fhrsid} | BusinessName {name} | BusinessType {bt} | LocalAuthority {la} | PostCode {postcode} | Coordinates {latf},{lonf}'
+              props={
+                  'parcel_id': parcel,
+                  'osm_id': None,
+                  'slot_id':'building_type_5',
+                  'region':'East of England',
+                  'area':CITY,
+                  'local_authority':la,
+                  'postcode':postcode,
+                  'building_type_primary':primary,
+                  'building_type_code':code,
+                  'building_category':category,
+                  'confidence_score':0.55,
+                  'confidence_level_1_to_4':2,
+                  'evidence_level':'D',
+                  'evidence_excerpt':excerpt,
+                  'source_evidence_excerpt':{
+                      'FHRSID':fhrsid,'BusinessName':name,'BusinessType':bt,'LocalAuthority':la,
+                      'PostCode':postcode,'Address':address,'Latitude':latf,'Longitude':lonf
+                  },
+                  'source_count':1,
+                  'source':SOURCE_NAME,
+                  'source_url':SOURCE_URL,
+                  'source_hash':source_hash,
+                  'match_method':'fhrs_business_type_premises_proxy',
+                  'geometry_match_method':'fhrs_geocode_point_only',
+                  'address_match_method':'fhrs_address_fields',
+                  'fhrs_id':fhrsid,
+                  'business_name':name,
+                  'business_type':bt,
+                  'sources':[{
+                      'source_name':SOURCE_NAME,
+                      'url_or_local_path':SOURCE_URL,
+                      'accessed_at':now,
+                      'sha256':source_hash,
+                      'granularity':'premises_geocode_point',
+                      'fields_used':['FHRSID','BusinessName','BusinessType','LocalAuthorityName','PostCode','Geocode'],
+                      'supports_field':'building_type_primary premises-use proxy',
+                      'match_method':'fhrs_business_type_premises_proxy',
+                      'match_score':0.55
+                  }],
+                  'limitations':'FHRS BusinessType is premises-use proxy only; cadastral parcel identity and building fabric remain unverified.',
+                  'needs_manual_review':True,
+                  'proxy_only':True,
+                  'status':'classified_proxy_only',
+                  'fake_data':False,
+                  'final_ready':False,
+                  'updated_at':now
+              }
+              new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lonf,latf]},'properties':props})
+              processed.update((fid,parcel,fhrsid))
+              if len(new) == 50:
+                  break
+
+          if len(new) < 50:
+              raise RuntimeError(f'BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(new)} eligible disjoint Epping Forest records')
+
+          feats.extend(new)
+          after=len(feats)
+          assert after > BEFORE and after == TARGET
+          shard['features']=feats
+          shard_text=json.dumps(shard,ensure_ascii=False,indent=2)+'\n'
+          SHARD.write_text(shard_text)
+          output_hash=hashlib.sha256(shard_text.encode()).hexdigest()
+
+          ev=Counter(); conf=Counter(); typ=Counter(); unknown=0
+          for f in feats:
+              p=f.get('properties') or {}
+              ev[str(p.get('evidence_level','U'))]+=1
+              conf[str(p.get('confidence_level_1_to_4',1))]+=1
+              t=str(p.get('building_type_primary','unknown')); typ[t]+=1
+              if t == 'unknown': unknown+=1
+          classified=after-unknown
+
+          src_entry={'name':SOURCE_NAME,'url':SOURCE_URL,'features_used':50,'accessed_at':now,'source_sha256':source_hash,'source_hash_method':'sha256_raw_source_xml','evidence_level':'D','confidence_level_1_to_4':2,'note':'FHRS BusinessType premises-use proxy; not cadastral parcel geometry or building-fabric evidence.'}
+          sources=list(manifest.get('sources') or [])
+          if not any(s.get('name') == SOURCE_NAME for s in sources): sources.append(src_entry)
+          manifest.update({'generated_at':now,'total_features':after,'classified':classified,'unknown':unknown,'evidence_distribution':dict(sorted(ev.items())),'type_distribution':dict(sorted(typ.items())),'confidence_level_distribution':dict(sorted(conf.items())),'sources':sources,'fake_data':False,'final_ready':False,'note':'Existing shard preserved; appended 50 Epping Forest FHRS records outside all prior feature.id, parcel_id and osm_id values.','feature_count':after,'geojson_sha256':output_hash,'geojson_path':str(SHARD),'manifest_updated_at':now,'feature_count_before':BEFORE,'feature_count_after':after,'added_feature_count':50,'last_batch_index':BATCH,'last_batch_city':CITY,'last_batch_source':SOURCE_NAME,'last_batch_source_sha256':source_hash})
+          MANIFEST.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
+
+          status.update({'state':'IN_PROGRESS','updated_at':now,'owner':None,'final_ready':False,'fake_data':False,'classified_count':classified,'unknown_count':unknown,'total_elements':after,'feature_count_before':BEFORE,'feature_count_after':after,'progress_count_delta':50,'next_batch_index':BATCH+1,'next_target_feature_count':after+50,'confidence_distribution':dict(sorted(conf.items())),'evidence_distribution':dict(sorted(ev.items())),'output_sha256':output_hash,'candidate_batch':None,'no_progress_reason':None,'note':'Batch 26 appended from official Epping Forest FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.','new_feature_count':50,'last_batch_index':BATCH,'last_batch_city':CITY,'last_batch_source':SOURCE_NAME,'progress_reason':'50 new Epping Forest FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion'})
+          STATUS.write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n')
+
+          ids=[f['id'] for f in new]
+          checkpoint.update({'terminal_status':'IN_PROGRESS','updated_at':now,'final_ready':False,'state':'IN_PROGRESS','first_unverified_step_status':'BATCH_26_APPENDED_50_EPPING_FOREST_FHRS_CONTINUATION_REQUIRED','feature_count_before':BEFORE,'feature_count_after':after,'current_feature_count':after,'next_batch_index':BATCH+1,'next_target_feature_count':after+50,'next_city_index':BATCH+1,'last_processed_ids_sample':ids[-20:],'already_processed_ids_policy':'Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.','candidate_batch':None,'no_progress_reason':None,'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL OSM/EPC/VOA/HMLR CORROBORATION FOR FHRS PROXY RECORDS','fake_data':False,'last_batch':{'batch_index':BATCH,'city':CITY,'source':SOURCE_NAME,'source_url':SOURCE_URL,'source_sha256':source_hash,'evidence_level':'D','confidence_level_1_to_4':2,'added_feature_count':50,'new_feature_ids':ids}})
+          summary=dict(checkpoint.get('summary') or {})
+          summary.update({'progress_count_delta':50,'new_features_appended':50,'current_feature_count':after})
+          checkpoint['summary']=summary
+          CHECKPOINT.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+'\n')
+
+          runner={'slot_id':'building_type_5','task_id':EXPECTED_TASK,'generated_at':now,'batch_index':BATCH,'city':CITY,'source_name':SOURCE_NAME,'source_url':SOURCE_URL,'source_sha256':source_hash,'feature_count_before':BEFORE,'feature_count_after':after,'new_feature_count':50,'new_feature_ids':ids,'evidence_level':'D','confidence_level_1_to_4':2,'match_method':'fhrs_business_type_premises_proxy','limitations':'Premises-use proxy only; cadastral parcel identity and building fabric remain unverified.','already_processed_ids_policy_applied':True,'fake_data':False,'final_ready':False,'output_sha256':output_hash}
+          RUNNER.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'before':BEFORE,'after':after,'added':50,'source_sha256':source_hash,'first_id':ids[0],'last_id':ids[-1]}))
+          PY
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text())
+          c=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          g=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(g['features']) == 1300
+          assert s['feature_count_before']==1250 and s['feature_count_after']==1300 and s['progress_count_delta']==50
+          assert c['current_feature_count']==1300 and c['next_batch_index']==27 and c['next_target_feature_count']==1350
+          assert s['fake_data'] is False and s['final_ready'] is False and c['fake_data'] is False and c['final_ready'] is False
+          nf=g['features'][-50:]
+          assert all(f['properties']['evidence_level']=='D' and f['properties']['confidence_level_1_to_4']==2 for f in nf)
+          assert all(f['properties']['evidence_excerpt'] for f in nf)
+          assert all(f['properties']['match_method']=='fhrs_business_type_premises_proxy' for f in nf)
+          PY
+
+          git rm "$WF"
+          git add "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$RUNNER"
+          git commit -m 'data(building_type_5): append Epping Forest FHRS batch 1250->1300'
+          for attempt in 1 2 3 4 5; do
+            if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            git fetch origin "$BRANCH"
+            PARENT="$(git rev-parse HEAD^)"
+            SAFE=1
+            for p in "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$RUNNER" "$TASK"; do
+              old="$(git rev-parse "$PARENT:$p")"
+              remote="$(git rev-parse "origin/$BRANCH:$p")"
+              if [ "$old" != "$remote" ]; then SAFE=0; break; fi
+            done
+            if [ "$SAFE" != 1 ]; then echo 'Same-slot state changed remotely; aborting retry without overwrite.' >&2; exit 23; fi
+            git rebase "origin/$BRANCH"
+          done
+          exit 24
