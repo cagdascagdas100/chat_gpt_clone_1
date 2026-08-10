@@ -1,0 +1,530 @@
+name: AAYS building_type_8 Carlisle OSM one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_8_carlisle_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-carlisle-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 evidence-backed Carlisle OSM records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import json
+          import pathlib
+          import time
+          import urllib.parse
+          import urllib.request
+
+          SLOT = "building_type_8"
+          TASK = "building-type-8-england-classification-v1-20260808"
+          CONT = "1438e38f53702e97217fea2475381d3b31b74de11677358f98513a9e45d43d47"
+          CITY = "Carlisle"
+          LOCAL_AUTHORITY = "Cumberland"
+          GEO = pathlib.Path("england_map_web/data/building_type/shards/building_type_8_latest.geojson")
+          MAN = pathlib.Path("england_map_web/data/building_type/shards/building_type_8_manifest_latest.json")
+          STA = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json")
+          CP = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json")
+          CT = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json")
+          RUN = pathlib.Path("docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json")
+          ENDPOINT = "https://overpass-api.de/api/interpreter"
+          NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+          def load(path):
+              with path.open(encoding="utf-8") as fh:
+                  return json.load(fh)
+
+          def dump(path, obj, compact=False):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              text = json.dumps(obj, ensure_ascii=False, separators=(",", ":") if compact else None, indent=None if compact else 2, sort_keys=False)
+              path.write_text(text + ("" if compact else "\n"), encoding="utf-8")
+
+          task = load(CT)
+          if task.get("task_id") != TASK:
+              raise SystemExit(f"task mismatch: {task.get('task_id')!r}")
+          if task.get("owner") not in (None, ""):
+              raise SystemExit(f"live owner; refusing second owner/task: {task.get('owner')!r}")
+          status = load(STA)
+          checkpoint = load(CP)
+          if status.get("owner") not in (None, ""):
+              raise SystemExit(f"live status owner; refusing: {status.get('owner')!r}")
+          if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT:
+              raise SystemExit("continuation_key changed; refusing stale continuation")
+
+          attempted = checkpoint.get("attempted_cities") if isinstance(checkpoint.get("attempted_cities"), list) else []
+          if CITY in attempted:
+              raise SystemExit(f"city already attempted according to canonical checkpoint: {CITY}")
+
+          geo = load(GEO)
+          feats = geo.get("features")
+          if not isinstance(feats, list) or not feats:
+              raise SystemExit("invalid/empty GeoJSON shard; refusing restart")
+          before = len(feats)
+          if int(status.get("feature_count_after", before)) != before or int(checkpoint.get("current_feature_count", before)) != before:
+              raise SystemExit(f"state/shard count mismatch: shard={before} status={status.get('feature_count_after')} checkpoint={checkpoint.get('current_feature_count')}")
+
+          already = set()
+          for feat in feats:
+              fid = feat.get("id")
+              if fid not in (None, ""):
+                  already.add(str(fid))
+              props = feat.get("properties") or {}
+              for key in ("parcel_id", "osm_id"):
+                  val = props.get(key)
+                  if val not in (None, ""):
+                      already.add(str(val))
+
+          query = '''[out:json][timeout:90];
+          nwr["building"](around:3500,54.8925,-2.9329);
+          out body center qt 1000;
+          '''
+          payload = urllib.parse.urlencode({"data": query}).encode("utf-8")
+          raw = None
+          last_error = None
+          for attempt_no in range(1, 4):
+              try:
+                  req = urllib.request.Request(
+                      ENDPOINT,
+                      data=payload,
+                      headers={
+                          "User-Agent": "TerraYield-AAYS-building_type_8/1.0",
+                          "Accept": "application/json",
+                          "Content-Type": "application/x-www-form-urlencoded",
+                      },
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req, timeout=120) as resp:
+                      raw = resp.read()
+                  break
+              except Exception as exc:
+                  last_error = repr(exc)
+                  if attempt_no < 3:
+                      time.sleep(5 * attempt_no)
+          if raw is None:
+              raise SystemExit(f"Overpass failed after 3 attempts: {last_error}")
+
+          source_sha = hashlib.sha256(raw).hexdigest()
+          data = json.loads(raw.decode("utf-8"))
+          elements = data.get("elements") or []
+          if not isinstance(elements, list):
+              raise SystemExit("invalid Overpass response")
+
+          residential_map = {
+              "house": ("residential_house", "R_HOUSE"),
+              "detached": ("residential_detached", "R_DET"),
+              "semidetached_house": ("residential_semidetached", "R_SEMI"),
+              "terrace": ("residential_terrace", "R_TERRACE"),
+              "apartments": ("residential_apartments", "R_APARTMENT"),
+              "bungalow": ("residential_bungalow", "R_BUNGALOW"),
+              "residential": ("residential", "R_RESIDENTIAL"),
+              "dormitory": ("residential_dormitory", "R_DORMITORY"),
+          }
+          specific_map = {
+              "retail": ("commercial_retail", "C_RETAIL", "commercial"),
+              "supermarket": ("commercial_retail", "C_RETAIL", "commercial"),
+              "commercial": ("commercial", "C_COMMERCIAL", "commercial"),
+              "office": ("office", "C_OFFICE", "commercial"),
+              "hotel": ("hospitality", "C_HOSPITALITY", "commercial"),
+              "industrial": ("industrial", "I_INDUSTRIAL", "industrial"),
+              "warehouse": ("warehouse", "I_WAREHOUSE", "industrial"),
+              "manufacture": ("industrial", "I_INDUSTRIAL", "industrial"),
+              "school": ("education", "P_EDUCATION", "institutional"),
+              "college": ("education", "P_EDUCATION", "institutional"),
+              "university": ("education", "P_EDUCATION", "institutional"),
+              "kindergarten": ("education", "P_EDUCATION", "institutional"),
+              "church": ("religious", "P_RELIGIOUS", "institutional"),
+              "chapel": ("religious", "P_RELIGIOUS", "institutional"),
+              "cathedral": ("religious", "P_RELIGIOUS", "institutional"),
+              "mosque": ("religious", "P_RELIGIOUS", "institutional"),
+              "synagogue": ("religious", "P_RELIGIOUS", "institutional"),
+              "temple": ("religious", "P_RELIGIOUS", "institutional"),
+              "hospital": ("healthcare", "P_HEALTHCARE", "institutional"),
+              "civic": ("public_civic", "P_PUBLIC", "institutional"),
+              "public": ("public_civic", "P_PUBLIC", "institutional"),
+              "government": ("public_civic", "P_PUBLIC", "institutional"),
+              "train_station": ("transport_station", "P_TRANSPORT", "institutional"),
+              "transportation": ("transport", "P_TRANSPORT", "institutional"),
+              "barn": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "farm": ("agricultural", "I_AGRICULTURAL", "agricultural"),
+              "farm_auxiliary": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "stable": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "cowshed": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "greenhouse": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "garage": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "garages": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "shed": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "carport": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "roof": ("auxiliary_structure", "I_OUTBUILDING", "auxiliary"),
+          }
+
+          def semantic_class(tags):
+              shop = tags.get("shop")
+              office = tags.get("office")
+              amenity = tags.get("amenity")
+              tourism = tags.get("tourism")
+              healthcare = tags.get("healthcare")
+              if shop and shop != "no":
+                  return ("commercial_retail", "C_RETAIL", "commercial", "B", 0.80, 3, f"shop={shop}")
+              if office and office != "no":
+                  return ("office", "C_OFFICE", "commercial", "B", 0.80, 3, f"office={office}")
+              if tourism in {"hotel", "hostel", "guest_house", "motel", "apartment"}:
+                  return ("hospitality", "C_HOSPITALITY", "commercial", "B", 0.80, 3, f"tourism={tourism}")
+              if healthcare:
+                  return ("healthcare", "P_HEALTHCARE", "institutional", "B", 0.80, 3, f"healthcare={healthcare}")
+              if amenity in {"school", "college", "university", "kindergarten"}:
+                  return ("education", "P_EDUCATION", "institutional", "B", 0.80, 3, f"amenity={amenity}")
+              if amenity in {"hospital", "clinic", "doctors", "dentist", "pharmacy"}:
+                  return ("healthcare", "P_HEALTHCARE", "institutional", "B", 0.80, 3, f"amenity={amenity}")
+              if amenity == "place_of_worship":
+                  return ("religious", "P_RELIGIOUS", "institutional", "B", 0.80, 3, "amenity=place_of_worship")
+              if amenity in {"townhall", "police", "fire_station", "library", "community_centre", "courthouse"}:
+                  return ("public_civic", "P_PUBLIC", "institutional", "B", 0.80, 3, f"amenity={amenity}")
+              if amenity in {"restaurant", "cafe", "pub", "bar", "fast_food"}:
+                  return ("commercial_hospitality", "C_HOSPITALITY", "commercial", "B", 0.80, 3, f"amenity={amenity}")
+              return None
+
+          def classify(tags):
+              b = str(tags.get("building", "")).strip().lower()
+              if b in residential_map:
+                  primary, code = residential_map[b]
+                  return (primary, code, "residential", "B", 0.85, 3, f"building={b}")
+              if b in specific_map:
+                  primary, code, category = specific_map[b]
+                  return (primary, code, category, "B", 0.85, 3, f"building={b}")
+              sem = semantic_class(tags)
+              if sem:
+                  return sem
+              if b and b not in {"yes", "construction", "proposed", "no"}:
+                  return ("other_specific_building", "X_OTHER", "other", "C", 0.60, 2, f"building={b}")
+              return ("unknown", "U_UNKNOWN", "unknown", "U", 0.0, 1, f"building={b or 'missing'}")
+
+          candidates = []
+          for elem in elements:
+              typ = str(elem.get("type") or "")
+              oid = elem.get("id")
+              if typ not in {"node", "way", "relation"} or oid in (None, ""):
+                  continue
+              fid = f"ENG_OSM_{typ}_{oid}"
+              pid = fid
+              osmid = f"{typ}/{oid}"
+              if {fid, pid, osmid, str(oid), f"{typ}_{oid}"} & already:
+                  continue
+              if typ == "node":
+                  lon, lat = elem.get("lon"), elem.get("lat")
+              else:
+                  center = elem.get("center") or {}
+                  lon, lat = center.get("lon"), center.get("lat")
+              if lon is None or lat is None:
+                  continue
+              tags = elem.get("tags") or {}
+              cls = classify(tags)
+              candidates.append((cls[5] > 1, fid, pid, osmid, float(lon), float(lat), tags, cls, typ, int(oid)))
+
+          candidates.sort(key=lambda row: (not row[0], row[1]))
+          chosen = candidates[:50]
+          if len(chosen) < 50:
+              raise SystemExit(f"only {len(chosen)} unseen geometry-bearing Carlisle candidates; need >=50")
+
+          new_features = []
+          for _classifiable, fid, pid, osmid, lon, lat, tags, cls, typ, oid in chosen:
+              primary, code, category, ev, score, level, method = cls
+              excerpt_keys = ("building", "amenity", "shop", "office", "tourism", "healthcare", "name", "addr:housenumber", "addr:street", "addr:postcode", "addr:city")
+              excerpt = {k: tags[k] for k in excerpt_keys if k in tags}
+              canonical = json.dumps({"type": typ, "id": oid, "lon": lon, "lat": lat, "tags": tags}, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+              record_hash = hashlib.sha256(canonical).hexdigest()
+              source_url = f"https://www.openstreetmap.org/{typ}/{oid}"
+              props = {
+                  "parcel_id": pid,
+                  "osm_id": osmid,
+                  "slot_id": SLOT,
+                  "region": "North West",
+                  "area": CITY,
+                  "local_authority": LOCAL_AUTHORITY,
+                  "postcode": tags.get("addr:postcode", ""),
+                  "building_type_primary": primary,
+                  "building_type_code": code,
+                  "building_category": category,
+                  "confidence_score": score,
+                  "confidence_level_1_to_4": level,
+                  "evidence_level": ev,
+                  "source_count": 1,
+                  "match_method": method,
+                  "source": "OpenStreetMap via Overpass API",
+                  "source_url": source_url,
+                  "source_hash": record_hash,
+                  "osm_tags_summary": excerpt,
+                  "evidence_excerpt": excerpt,
+                  "source_evidence_excerpt": excerpt,
+                  "sources": [{
+                      "source_name": "OSM Overpass API",
+                      "url": ENDPOINT,
+                      "object_url": source_url,
+                      "accessed_at": NOW,
+                      "sha256": source_sha,
+                      "record_sha256": record_hash,
+                      "licence": "ODbL 1.0",
+                      "granularity": "building_centroid",
+                      "fields_used": list(excerpt.keys()),
+                      "supports_field": "building_type_primary",
+                      "match_method": method,
+                      "match_score": score,
+                  }],
+                  "geometry_match_method": "osm_element_centroid",
+                  "address_match_method": "osm_addr_tags" if any(k.startswith("addr:") for k in excerpt) else "none",
+                  "limitations": "OSM element/centroid proxy; no cadastral parcel binding. EPC/VOA/HMLR not joined.",
+                  "needs_manual_review": level <= 2,
+                  "fake_data": False,
+                  "final_ready": False,
+                  "updated_at": NOW,
+              }
+              new_features.append({"type": "Feature", "id": fid, "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": props})
+
+          geo["features"].extend(new_features)
+          after = len(geo["features"])
+          added = after - before
+          if added < 50 or after <= before:
+              raise SystemExit(f"progress invariant failed: before={before} after={after} added={added}")
+
+          for field in ("id", "parcel_id", "osm_id"):
+              vals = []
+              for feat in geo["features"]:
+                  if field == "id":
+                      val = feat.get("id")
+                  else:
+                      val = (feat.get("properties") or {}).get(field)
+                  if val not in (None, ""):
+                      vals.append(str(val))
+              dup = [v for v, n in collections.Counter(vals).items() if n > 1]
+              if dup:
+                  raise SystemExit(f"duplicate {field} values after append: {dup[:10]}")
+
+          for feat in new_features:
+              p = feat["properties"]
+              required = (p.get("sources"), p.get("evidence_excerpt"), p.get("evidence_level"), p.get("confidence_level_1_to_4"))
+              if not all(x not in (None, "", []) for x in required):
+                  raise SystemExit(f"missing evidence field in {feat['id']}")
+              if int(p["confidence_level_1_to_4"]) not in (1, 2, 3, 4):
+                  raise SystemExit(f"confidence out of range in {feat['id']}")
+              if p.get("fake_data") is not False or p.get("final_ready") is not False:
+                  raise SystemExit(f"forbidden readiness/fake flag in {feat['id']}")
+
+          def distributions(features):
+              conf = collections.Counter()
+              evid = collections.Counter()
+              typ = collections.Counter()
+              classified = 0
+              unknown = 0
+              for feat in features:
+                  p = feat.get("properties") or {}
+                  primary = p.get("building_type_primary", "unknown")
+                  typ[str(primary)] += 1
+                  evid[str(p.get("evidence_level", "U"))] += 1
+                  try:
+                      level = int(p.get("confidence_level_1_to_4", 1))
+                  except Exception:
+                      level = 1
+                  conf[str(level)] += 1
+                  if primary == "unknown":
+                      unknown += 1
+                  else:
+                      classified += 1
+              return classified, unknown, conf, evid, typ
+
+          classified, unknown, conf, evid, type_dist = distributions(geo["features"])
+          new_conf = collections.Counter(str(f["properties"]["confidence_level_1_to_4"]) for f in new_features)
+          new_evid = collections.Counter(str(f["properties"]["evidence_level"]) for f in new_features)
+          dump(GEO, geo, compact=True)
+          geo_sha = hashlib.sha256(GEO.read_bytes()).hexdigest()
+
+          manifest = load(MAN) if MAN.exists() else {}
+          batch_index = int(checkpoint.get("next_batch_index", 4))
+          manifest.update({
+              "slot_id": SLOT,
+              "generated_at": NOW,
+              "total_features": after,
+              "feature_count": after,
+              "classified": classified,
+              "unknown": unknown,
+              "evidence_distribution": dict(sorted(evid.items())),
+              "type_distribution": dict(type_dist.most_common()),
+              "confidence_level_distribution": dict(sorted(conf.items())),
+              "fake_data": False,
+              "final_ready": False,
+              "geojson_sha256": geo_sha,
+              "geojson_path": str(GEO),
+              "manifest_updated_at": NOW,
+              "last_batch": {
+                  "batch_index": batch_index,
+                  "city": CITY,
+                  "added_feature_count": added,
+                  "source": "OpenStreetMap Overpass API",
+                  "source_url": ENDPOINT,
+                  "source_sha256": source_sha,
+                  "evidence_level_distribution": dict(sorted(new_evid.items())),
+                  "confidence_level_distribution": dict(sorted(new_conf.items())),
+              },
+          })
+          sources = manifest.get("sources") if isinstance(manifest.get("sources"), list) else []
+          matched = False
+          for src in sources:
+              if isinstance(src, dict) and src.get("url") == ENDPOINT:
+                  src["features_used"] = after
+                  src["accessed_at"] = NOW
+                  src["response_sha256_last_batch"] = source_sha
+                  matched = True
+          if not matched:
+              sources.append({
+                  "name": "OpenStreetMap Overpass API",
+                  "url": ENDPOINT,
+                  "license": "ODbL 1.0",
+                  "features_used": added,
+                  "accessed_at": NOW,
+                  "response_sha256": source_sha,
+              })
+          manifest["sources"] = sources
+          dump(MAN, manifest)
+
+          next_index = batch_index + 1
+          status.update({
+              "state": "IN_PROGRESS",
+              "updated_at": NOW,
+              "owner": None,
+              "continuation_key": CONT,
+              "final_ready": False,
+              "classified_count": classified,
+              "unknown_count": unknown,
+              "total_elements": after,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "new_features_added": added,
+              "progress_counted": True,
+              "next_batch_index": next_index,
+              "next_target_feature_count": after + 50,
+              "confidence_distribution": dict(sorted(conf.items())),
+              "evidence_distribution": dict(sorted(evid.items())),
+              "output_sha256": geo_sha,
+              "attempted_new_city_batch": "Carlisle center radius 3500m OSM building query",
+              "blocker": None,
+              "blocker_reason": "",
+              "note": f"Appended {added} new Carlisle OSM building features outside already_processed_ids. No fake rows; final_ready remains false.",
+              "fake_data": False,
+          })
+          dump(STA, status)
+
+          attempted = checkpoint.get("attempted_cities") if isinstance(checkpoint.get("attempted_cities"), list) else []
+          if CITY not in attempted:
+              attempted.append(CITY)
+          old_summary = checkpoint.get("summary") if isinstance(checkpoint.get("summary"), dict) else {}
+          checkpoint.update({
+              "state": "IN_PROGRESS",
+              "updated_at": NOW,
+              "final_ready": False,
+              "first_unverified_step_status": "APPENDED_NEW_OSM_BATCH",
+              "continuation_key": CONT,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "next_batch_index": next_index,
+              "next_target_feature_count": after + 50,
+              "attempted_cities": attempted,
+              "attempted_new_city_batch": "Carlisle center radius 3500m OSM building query",
+              "last_processed_ids_sample": [f["id"] for f in new_features[-20:]],
+              "already_processed_ids_policy": "Treat every existing GeoJSON feature.id, properties.parcel_id and properties.osm_id value as already_processed_ids and exclude them from future candidate batches.",
+              "source_access_evidence": {
+                  "overpass_api": f"SUCCESS {len(elements)} elements returned; response_sha256={source_sha}",
+                  "selected_new_features": added,
+                  "city": CITY,
+                  "query": "nwr[building] around 3500m Carlisle; out body center qt 1000",
+                  "raw_source_storage": "runtime memory only; not committed",
+              },
+              "blocker": None,
+              "blocker_reason": "",
+              "next_required_action": f"CONTINUE_BATCH_{next_index}_WITH_ALREADY_PROCESSED_IDS_EXCLUDED",
+              "fake_data": False,
+              "summary": {
+                  **old_summary,
+                  "current_feature_count": after,
+                  "new_features_added_this_attempt": added,
+                  "progress_counted": True,
+                  "classified": classified,
+                  "unknown": unknown,
+              },
+          })
+          dump(CP, checkpoint)
+
+          run_output = {
+              "slot_id": SLOT,
+              "task_id": TASK,
+              "continuation_key": CONT,
+              "generated_at": NOW,
+              "batch_index": batch_index,
+              "city": CITY,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "new_features_added": added,
+              "source_url": ENDPOINT,
+              "source_sha256": source_sha,
+              "evidence_level_distribution": dict(sorted(new_evid.items())),
+              "confidence_level_distribution": dict(sorted(new_conf.items())),
+              "fake_data": False,
+              "final_ready": False,
+              "features": new_features,
+          }
+          dump(RUN, run_output)
+          print(json.dumps({
+              "before": before,
+              "after": after,
+              "added": added,
+              "classified": classified,
+              "unknown": unknown,
+              "new_confidence": dict(new_conf),
+              "new_evidence": dict(new_evid),
+              "source_sha256": source_sha,
+          }, indent=2))
+          PY
+
+      - name: Commit and push slot-only outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/tmp_building_type_8_carlisle_20260810.yml
+          git add -f \
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json
+          git add -A -- .github/workflows/tmp_building_type_8_carlisle_20260810.yml
+          test -n "$(git diff --cached --name-only)"
+          git diff --cached --name-only
+          git commit -m "building_type_8: append Carlisle OSM batch 4"
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
