@@ -1,0 +1,180 @@
+name: tmp-building-type-1-recovery-20260810
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_building_type_1_recovery_20260810.yml']
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/poi/london-points.geojson
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1
+            .github/workflows/tmp_building_type_1_recovery_20260810.yml
+          sparse-checkout-cone-mode: false
+      - name: Append 50+ new evidenced features
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, math, hashlib, pathlib, urllib.parse, urllib.request, time, datetime, collections
+
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          SLOT='building_type_1'
+          CONT='5863ed20ce49304e6f6c645502caa52bd8546d2c048456712ac9510ddf1c0c17'
+          shard_p=pathlib.Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          poi_p=pathlib.Path('england_map_web/data/poi/london-points.geojson')
+          state_dir=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1')
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          fc=json.loads(shard_p.read_text(encoding='utf-8'))
+          before=len(fc['features'])
+          assert before >= 300, before
+          processed=set()
+          for f in fc['features']:
+              for v in (f.get('id'), f.get('properties',{}).get('parcel_id'), f.get('properties',{}).get('osm_id')):
+                  if v is not None: processed.add(str(v))
+
+          poi_fc=json.loads(poi_p.read_text(encoding='utf-8')) if poi_p.exists() else {'features':[]}
+          poi_hash=hashlib.sha256(poi_p.read_bytes()).hexdigest() if poi_p.exists() else ''
+          grid=collections.defaultdict(list)
+          step=0.002
+          for pf in poi_fc.get('features',[]):
+              g=pf.get('geometry') or {}
+              if g.get('type')!='Point': continue
+              c=g.get('coordinates') or []
+              if len(c)<2: continue
+              lon,lat=c[0],c[1]
+              try: lon=float(lon); lat=float(lat)
+              except: continue
+              grid[(round(lat/step),round(lon/step))].append((lat,lon,pf.get('properties') or {}))
+
+          def hav(lat1,lon1,lat2,lon2):
+              r=6371000.0
+              a=math.sin(math.radians(lat2-lat1)/2)**2+math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(math.radians(lon2-lon1)/2)**2
+              return 2*r*math.asin(math.sqrt(a))
+          def nearest_poi(lat,lon,maxm=150):
+              k=(round(lat/step),round(lon/step)); best=None
+              for di in (-1,0,1):
+                for dj in (-1,0,1):
+                  for plat,plon,pp in grid.get((k[0]+di,k[1]+dj),[]):
+                    d=hav(lat,lon,plat,plon)
+                    if d<=maxm and (best is None or d<best[0]): best=(d,pp)
+              return best
+
+          BMAP={'detached':('detached_house','R_DET','residential'),'semidetached_house':('semi_detached_house','R_SEMI','residential'),'terrace':('terraced_house','R_TERR','residential'),'apartments':('flat_or_apartment','R_FLAT','residential'),'house':('house','R_DET','residential'),'bungalow':('bungalow','R_DET','residential'),'industrial':('industrial','I_FACTORY','industrial'),'warehouse':('warehouse','I_WAREHOUSE','industrial'),'retail':('commercial_retail','C_RETAIL','commercial'),'commercial':('commercial_retail','C_RETAIL','commercial'),'office':('office','C_OFFICE','commercial'),'school':('school','P_SCHOOL','institutional'),'hospital':('healthcare','P_HEALTHCARE','institutional'),'church':('religious','P_RELIGIOUS','institutional'),'hotel':('hospitality','C_HOSPITALITY','commercial'),'farm':('agriculture','S_AGRICULTURE','special'),'barn':('agriculture','S_AGRICULTURE','special'),'train_station':('public_infrastructure','P_GOVERNMENT','institutional'),'public':('public_infrastructure','P_GOVERNMENT','institutional'),'garage':('workshop','I_WORKSHOP','industrial')}
+          AMAP={'school':('school','P_SCHOOL','institutional'),'hospital':('healthcare','P_HEALTHCARE','institutional'),'pharmacy':('healthcare','P_HEALTHCARE','institutional'),'place_of_worship':('religious','P_RELIGIOUS','institutional'),'police':('public_infrastructure','P_GOVERNMENT','institutional'),'post_office':('public_infrastructure','P_GOVERNMENT','institutional'),'bank':('commercial_retail','C_RETAIL','commercial'),'restaurant':('commercial_retail','C_RETAIL','commercial'),'cafe':('commercial_retail','C_RETAIL','commercial'),'pub':('commercial_retail','C_RETAIL','commercial'),'fast_food':('commercial_retail','C_RETAIL','commercial')}
+          SHOPS={'supermarket','convenience','mall','department_store','clothes','hairdresser','car_repair','hardware'}
+          def classify(t):
+              b=t.get('building')
+              if b in BMAP: return BMAP[b],f'building={b}'
+              a=t.get('amenity')
+              if a in AMAP: return AMAP[a],f'amenity={a}'
+              if t.get('shop') in SHOPS: return ('commercial_retail','C_RETAIL','commercial'),f"shop={t.get('shop')}"
+              if t.get('office'): return ('office','C_OFFICE','commercial'),f"office={t.get('office')}"
+              if t.get('tourism')=='hotel': return ('hospitality','C_HOSPITALITY','commercial'),'tourism=hotel'
+              if t.get('landuse')=='industrial': return ('industrial','I_FACTORY','industrial'),'landuse=industrial'
+              if t.get('landuse') in ('commercial','retail'): return ('commercial_retail','C_RETAIL','commercial'),f"landuse={t.get('landuse')}"
+              if t.get('railway')=='station': return ('public_infrastructure','P_GOVERNMENT','institutional'),'railway=station'
+              return None,'no_specific_tag'
+          def poi_class(pp):
+              return classify(pp)[0] if pp else None
+
+          batches=[('Islington_Hackney',(51.5200,-0.1150,51.5650,-0.0200)),('TowerHamlets_Southwark',(51.4750,-0.1000,51.5350,-0.0005)),('Lambeth_Wandsworth',(51.4200,-0.2500,51.5000,-0.1000))]
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+          added=[]; evidence_rows=[]; used_batches=[]
+          for bname,b in batches:
+              if len(added)>=50: break
+              s,w,n,e=b
+              q=f'''[out:json][timeout:60];(way["building"]({s},{w},{n},{e});relation["building"]({s},{w},{n},{e});node["amenity"]({s},{w},{n},{e});node["shop"]({s},{w},{n},{e});node["office"]({s},{w},{n},{e});node["tourism"="hotel"]({s},{w},{n},{e});node["railway"="station"]({s},{w},{n},{e});way["landuse"="industrial"]({s},{w},{n},{e});way["landuse"="commercial"]({s},{w},{n},{e});way["landuse"="retail"]({s},{w},{n},{e}););out center 1000;'''
+              raw=None; endpoint_used=None
+              for ep in endpoints:
+                  try:
+                      req=urllib.request.Request(ep,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0'})
+                      with urllib.request.urlopen(req,timeout=90) as r: raw=r.read()
+                      endpoint_used=ep; break
+                  except Exception as ex:
+                      print('overpass fail',ep,repr(ex)); time.sleep(4)
+              if raw is None: continue
+              source_hash=hashlib.sha256(raw).hexdigest(); data=json.loads(raw)
+              used_batches.append({'batch_name':bname,'bbox':[s,w,n,e],'overpass_endpoint':endpoint_used,'response_sha256':source_hash,'element_count':len(data.get('elements',[]))})
+              for el in data.get('elements',[]):
+                  if len(added)>=60: break
+                  oid=f"ENG_OSM_{el.get('type')}_{el.get('id')}"
+                  if oid in processed or str(el.get('id')) in processed: continue
+                  tags=el.get('tags') or {}; cls,method=classify(tags)
+                  if cls is None: continue
+                  lat=el.get('lat') or (el.get('center') or {}).get('lat'); lon=el.get('lon') or (el.get('center') or {}).get('lon')
+                  if lat is None or lon is None: continue
+                  near=nearest_poi(float(lat),float(lon),150)
+                  if not near: continue
+                  d,pp=near; pc=poi_class(pp)
+                  same=pc is not None and pc[1]==cls[1]
+                  conf=3 if same else 2; score=0.88 if same else 0.68; ev='B' if same else 'C'
+                  excerpt={k:tags[k] for k in ('building','amenity','shop','office','tourism','landuse','railway','name','addr:postcode','addr:street') if k in tags}
+                  pexcerpt={k:pp[k] for k in ('amenity','shop','name','tourism','office') if k in pp}; pexcerpt['distance_m']=round(d,1)
+                  srcs=[{'source_name':'OSM Overpass API','url':endpoint_used,'cache_sha256':source_hash,'accessed_at':now,'licence':'ODbL 1.0','match_method':method,'match_score':0.75,'evidence_excerpt':excerpt},{'source_name':'POI regional data (london)','url_or_local_path':'england_map_web/data/poi/london-points.geojson','cache_sha256':poi_hash,'accessed_at':now,'licence':'ODbL 1.0','match_method':'poi_within_150m','match_score':0.25 if same else 0.1,'evidence_excerpt':pexcerpt}]
+                  feat={'type':'Feature','id':oid,'geometry':{'type':'Point','coordinates':[float(lon),float(lat)]},'properties':{'parcel_id':oid,'osm_id':el.get('id'),'osm_element_type':el.get('type'),'slot_id':SLOT,'region':'London','area':bname,'local_authority':'London Inner','building_type_primary':cls[0],'building_type_code':cls[1],'building_category':cls[2],'evidence_level':ev,'confidence_score':score,'confidence_level_1_to_4':conf,'source_count':2,'match_method':method,'source':'OpenStreetMap via Overpass API + London POI proximity','source_url':f"https://www.openstreetmap.org/{el.get('type')}/{el.get('id')}",'osm_tags_summary':excerpt,'sources':srcs,'source_evidence_excerpt':excerpt,'fake_data':False,'final_ready':False,'needs_manual_review':conf<3,'limitations':'POI proximity is corroborating evidence; cadastral binding/EPC/VOA not yet performed.','updated_at':now}}
+                  added.append(feat); processed.add(oid); processed.add(str(el.get('id')))
+              time.sleep(3)
+          assert len(added)>=50, f'Only {len(added)} new features found'
+          added=added[:60]
+          fc['features'].extend(added)
+          after=len(fc['features'])
+          assert after>before and after-before>=50
+          assert all(f.get('properties',{}).get('fake_data') is False for f in added)
+          shard_p.write_text(json.dumps(fc,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+
+          dist_conf=collections.Counter(str(f.get('properties',{}).get('confidence_level_1_to_4',1)) for f in fc['features'])
+          dist_ev=collections.Counter(str(f.get('properties',{}).get('evidence_level','U')) for f in fc['features'])
+          classified=sum(1 for f in fc['features'] if f.get('properties',{}).get('building_type_primary')!='unknown')
+          unknown=after-classified
+          cp=json.loads((state_dir/'checkpoint_latest.json').read_text())
+          cp.update({'state':'IN_PROGRESS','remote_head_at_recovery_start':'4637ca6e01176f4cc53d8200f79f4322763377be','continuation_key':CONT,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':int(cp.get('next_batch_index',7))+1,'next_target_feature_count':after+50,'last_batch_name':used_batches[-1]['batch_name'] if used_batches else 'Islington_Hackney','last_batch_new_features':after-before,'last_batch_evidence':used_batches,'last_processed_ids_sample':[f['id'] for f in added[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES','updated_at':now,'fake_data':False,'final_ready':False})
+          (state_dir/'checkpoint_latest.json').write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+          st=json.loads((state_dir/'status_latest.json').read_text())
+          st.update({'state':'IN_PROGRESS','owner':None,'updated_at':now,'continuation_key':CONT,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'new_features_added':after-before,'classified_count':classified,'unknown_count':unknown,'confidence_distribution':{f'level_{k}':v for k,v in sorted(dist_conf.items())},'evidence_distribution':dict(dist_ev),'last_batch':used_batches,'fake_data':False,'final_ready':False})
+          st['output_sha256']=hashlib.sha256(shard_p.read_bytes()).hexdigest()
+          st['result']={'state':'RECOVERY_BATCH_APPENDED','note':f'Appended {after-before} new Inner London features with OSM + local London POI evidence.'}
+          (state_dir/'status_latest.json').write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          task=json.loads((state_dir/'current_task_latest.json').read_text())
+          task.update({'state':'READY','status':'ready','panel_status':'HAZIR','continuation_key':CONT,'source_head':'4637ca6e01176f4cc53d8200f79f4322763377be','updated_at':now,'owner':None,'claimable':True,'ready_for_claim':True,'fake_data':False,'final_ready':False})
+          task['progress']={'completed_count':after,'target_count':after+50,'previous_percent':0.0,'current_percent':0.0,'percent_increase':0.0}
+          (state_dir/'current_task_latest.json').write_text(json.dumps(task,ensure_ascii=False,indent=2)+'\n')
+          manifest=shard_p.with_name('building_type_1_manifest_latest.json')
+          mani={'schema_version':3,'slot_id':SLOT,'region':'London Inner','continuation_key':CONT,'updated_at':now,'feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'next_batch_index':cp['next_batch_index'],'next_target_feature_count':cp['next_target_feature_count'],'source_batches':used_batches,'poi_sha256':poi_hash,'output_sha256':st['output_sha256'],'fake_data':False,'final_ready':False}
+          manifest.write_text(json.dumps(mani,ensure_ascii=False,indent=2)+'\n')
+          outp=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json'); outp.parent.mkdir(parents=True,exist_ok=True)
+          outp.write_text(json.dumps({'slot_id':SLOT,'continuation_key':CONT,'state':'RECOVERY_BATCH_APPENDED','feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'source_batches':used_batches,'output_sha256':st['output_sha256'],'fake_data':False,'final_ready':False,'updated_at':now},ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'before':before,'after':after,'added':after-before,'batches':used_batches},indent=2))
+          PY
+      - name: Validate and publish
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          p='england_map_web/data/building_type/shards/building_type_1_latest.geojson'
+          d=json.load(open(p)); assert len(d['features'])>=350
+          ids=[str(f.get('id')) for f in d['features']]; assert len(ids)==len(set(ids))
+          tail=d['features'][-50:]
+          assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in tail)
+          assert all(f['properties'].get('source_count',0)>=2 for f in tail)
+          print('validated',len(d['features']))
+          PY
+          git config user.name 'aays-building-type-1-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/tmp_building_type_1_recovery_20260810.yml
+          git add england_map_web/data/building_type/shards/building_type_1_latest.geojson england_map_web/data/building_type/shards/building_type_1_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_1 docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json .github/workflows/tmp_building_type_1_recovery_20260810.yml
+          git commit -m 'Append building_type_1 Inner London recovery batch'
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git pull --rebase origin codex/aays-single-runner-v5-20260706
+          done
+          exit 1
