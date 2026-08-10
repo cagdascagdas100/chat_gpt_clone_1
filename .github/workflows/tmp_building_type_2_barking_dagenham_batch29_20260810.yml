@@ -1,4 +1,4 @@
-name: tmp building_type_2 Barking and Dagenham batch 29
+name: tmp building_type_2 Barking and Dagenham batch 30
 
 on:
   push:
@@ -73,85 +73,419 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show 8621d29652a7387561bc123e4792aaeb14c4c366:.github/workflows/tmp_building_type_7_worcester_20260810.yml > /tmp/worcester_template.yml
           python - <<'PY'
+          import copy
+          import datetime as dt
+          import hashlib
           import json
-          from pathlib import Path
-          text = Path('/tmp/worcester_template.yml').read_text(encoding='utf-8')
-          marker = "          python - <<'PY'\n"
-          start = text.index(marker) + len(marker)
-          end = text.index("\n          PY", start)
-          lines = text[start:end].splitlines()
-          body = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
-          replacements = [
-              ('SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS151en-GB.xml"', 'SOURCE_URL = pathlib.Path("/tmp/barking_dagenham_source_url.txt").read_text(encoding="utf-8").strip()'),
-              ('SLOT = "building_type_7"', 'SLOT = "building_type_2"'),
-              ('TASK_ID = "building-type-7-england-classification-v1-20260808"', 'TASK_ID = "building-type-2-england-classification-v1-20260808"'),
-              ('building_type_7', 'building_type_2'),
-              ('building-type-7', 'building-type-2'),
-              ('WORCESTER_CITY', 'BARKING_DAGENHAM'),
-              ('CITY = "Worcester City"', 'CITY = "Barking and Dagenham"'),
-              ('PREFIX = "WORC"', 'PREFIX = "BARKING_DAGENHAM"'),
-              ('Worcester City', 'Barking and Dagenham'),
-              ('/tmp/worcester_fhrs.xml', '/tmp/barking_dagenham_fhrs.xml'),
-              ('Worcester', 'Barking and Dagenham'),
-              ('EXPECTED_BEFORE = 750', 'EXPECTED_BEFORE = 1400'),
-              ('EXPECTED_BATCH = 16', 'EXPECTED_BATCH = 29'),
-              ('EXPECTED_TARGET = 800', 'EXPECTED_TARGET = 1450'),
-              ('West Midlands', 'London Outer'),
-          ]
-          for old, new in replacements:
-              if old in body:
-                  body = body.replace(old, new)
+          import math
+          import pathlib
+          import xml.etree.ElementTree as ET
+          from collections import Counter
 
-          old_guard = 'assert not any(s.get("url") == SOURCE_URL for s in sources), "Barking and Dagenham source already recorded"'
-          new_guard = 'assert any(s.get("url") == SOURCE_URL for s in sources), "expected prior Barking and Dagenham source for continuation batch"'
-          assert old_guard in body, 'generic duplicate-source guard not found'
-          body = body.replace(old_guard, new_guard, 1)
+          SLOT = 'building_type_2'
+          TASK_ID = 'building-type-2-england-classification-v1-20260808'
+          CITY = 'Barking and Dagenham'
+          PREFIX = 'BARKING_DAGENHAM'
+          REGION = 'London Outer'
+          SOURCE = 'Food Standards Agency FHRS daily open data - Barking and Dagenham'
+          SOURCE_PAGE = 'https://ratings.food.gov.uk/open-data'
+          SOURCE_URL = pathlib.Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
+          EXPECTED_BEFORE = 1450
+          EXPECTED_BATCH = 30
+          EXPECTED_TARGET = 1500
 
-          required = [
-              'SLOT = "building_type_2"', 'CITY = "Barking and Dagenham"', 'PREFIX = "BARKING_DAGENHAM"',
-              'building-type-2-england-classification-v1-20260808',
-              'SOURCE_URL = pathlib.Path("/tmp/barking_dagenham_source_url.txt").read_text(encoding="utf-8").strip()',
-              'EXPECTED_BEFORE = 1400', 'EXPECTED_BATCH = 29', 'EXPECTED_TARGET = 1450',
-              '/tmp/barking_dagenham_fhrs.xml', '"region": "London Outer"',
-              'for value in (f.get("id"), p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")):',
-              'evidence_excerpt', 'evidence_level', 'confidence_level_1_to_4', 'source_hash', 'fake_data', 'final_ready',
-              'expected prior Barking and Dagenham source for continuation batch',
-          ]
-          missing = [token for token in required if token not in body]
-          assert not missing, f'patched template missing required tokens: {missing}'
-          forbidden = ['building_type_7', 'building-type-7', 'Worcester', 'West Midlands', '/tmp/worcester_fhrs.xml', 'FHRS151en-GB.xml']
-          leaked = [token for token in forbidden if token in body]
-          assert not leaked, f'patched template leaked old tokens: {leaked}'
-          exec(compile(body, '<building_type_2_barking_dagenham_batch29>', 'exec'), {'__name__': '__main__'})
+          shard_path = pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest_path = pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner_path = pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          status_path = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          checkpoint_path = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          task_path = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          xml_path = pathlib.Path('/tmp/barking_dagenham_fhrs.xml')
 
-          manifest_path = Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
-          source_url = Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
+          shard = json.loads(shard_path.read_text(encoding='utf-8'))
           manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          status = json.loads(status_path.read_text(encoding='utf-8'))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          task = json.loads(task_path.read_text(encoding='utf-8'))
+
+          assert shard.get('type') == 'FeatureCollection'
+          features = shard.get('features') or []
+          assert len(features) == EXPECTED_BEFORE, f'slot moved: shard={len(features)} expected={EXPECTED_BEFORE}'
+          assert checkpoint.get('current_feature_count') == EXPECTED_BEFORE, checkpoint.get('current_feature_count')
+          assert checkpoint.get('feature_count_after') == EXPECTED_BEFORE, checkpoint.get('feature_count_after')
+          assert checkpoint.get('next_batch_index') == EXPECTED_BATCH, checkpoint.get('next_batch_index')
+          assert checkpoint.get('next_target_feature_count') == EXPECTED_TARGET, checkpoint.get('next_target_feature_count')
+          assert task.get('task_id') == TASK_ID, task.get('task_id')
+          assert task.get('slot_id') == SLOT, task.get('slot_id')
+          assert task.get('owner') is None, f"current_task has owner={task.get('owner')}"
+          assert task.get('final_ready') is False
+          assert task.get('fake_data') is False
+          assert not any((f.get('properties') or {}).get('fake_data') is True for f in features)
+
+          processed = set()
+          existing_points = set()
+          prior_barking_count = 0
+          for f in features:
+              p = f.get('properties') or {}
+              for value in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):
+                  if value is not None and str(value).strip():
+                      processed.add(str(value).strip())
+              if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_'):
+                  prior_barking_count += 1
+              g = f.get('geometry') or {}
+              if g.get('type') == 'Point':
+                  coords = g.get('coordinates') or []
+                  if len(coords) >= 2:
+                      try:
+                          lon, lat = float(coords[0]), float(coords[1])
+                          if math.isfinite(lon) and math.isfinite(lat):
+                              existing_points.add((round(lon, 7), round(lat, 7)))
+                      except Exception:
+                          pass
+          assert prior_barking_count == 100, f'expected 100 prior Barking features, got {prior_barking_count}'
+
+          raw = xml_path.read_bytes()
+          source_sha = hashlib.sha256(raw).hexdigest()
+          root = ET.fromstring(raw)
+
+          def text(el, path):
+              n = el.find(path)
+              return (n.text or '').strip() if n is not None and n.text is not None else ''
+
+          def classify(bt):
+              x = (bt or '').casefold()
+              if any(k in x for k in ('school', 'college', 'university')):
+                  return 'education', 'E_EDUCATION', 'institutional'
+              if any(k in x for k in ('hospital', 'childcare', 'caring', 'nursing', 'residential care')):
+                  return 'healthcare_care', 'H_CARE', 'institutional'
+              if any(k in x for k in ('hotel', 'bed & breakfast', 'bed and breakfast', 'guest house')):
+                  return 'hospitality', 'C_HOTEL', 'commercial'
+              if 'retail' in x or 'supermarket' in x or 'hypermarket' in x:
+                  return 'commercial_retail', 'C_RETAIL', 'commercial'
+              if any(k in x for k in ('restaurant', 'cafe', 'canteen', 'pub', 'bar', 'nightclub', 'takeaway', 'sandwich')):
+                  return 'commercial_hospitality', 'C_HOSPITALITY', 'commercial'
+              if any(k in x for k in ('manufacturer', 'packer')):
+                  return 'industrial', 'I_INDUSTRIAL', 'industrial'
+              if any(k in x for k in ('distributor', 'transporter', 'importer', 'exporter')):
+                  return 'warehouse', 'I_WAREHOUSE', 'industrial'
+              if any(k in x for k in ('farmer', 'grower')):
+                  return 'agricultural_outbuilding', 'A_OUTBUILDING', 'agricultural'
+              return 'commercial_other', 'C_OTHER', 'commercial'
+
+          candidates = []
+          skipped_processed = 0
+          skipped_coords = 0
+          skipped_existing_points = 0
+          skipped_duplicate_points = 0
+          seen_new_ids = set()
+          seen_new_points = set()
+          for el in root.findall('.//EstablishmentDetail'):
+              fid = text(el, 'FHRSID')
+              if not fid:
+                  continue
+              feature_id = f'{PREFIX}_FHRS_{fid}'
+              parcel_id = f'{PREFIX}_FHRSID_{fid}'
+              if feature_id in processed or parcel_id in processed or fid in processed:
+                  skipped_processed += 1
+                  continue
+              if feature_id in seen_new_ids:
+                  continue
+              lat_s = text(el, 'Geocode/Latitude') or text(el, 'Latitude')
+              lon_s = text(el, 'Geocode/Longitude') or text(el, 'Longitude')
+              try:
+                  lat, lon = float(lat_s), float(lon_s)
+                  if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
+                      raise ValueError
+              except Exception:
+                  skipped_coords += 1
+                  continue
+              pt = (round(lon, 7), round(lat, 7))
+              if pt in existing_points:
+                  skipped_existing_points += 1
+                  continue
+              if pt in seen_new_points:
+                  skipped_duplicate_points += 1
+                  continue
+              seen_new_points.add(pt)
+              seen_new_ids.add(feature_id)
+              try:
+                  sort_key = (0, int(fid))
+              except Exception:
+                  sort_key = (1, fid)
+              candidates.append((sort_key, el, fid, feature_id, parcel_id, lon, lat))
+
+          candidates.sort(key=lambda x: x[0])
+          selected = candidates[:50]
+          assert len(selected) == 50, f'only {len(selected)} eligible new Barking and Dagenham features'
+          now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+
+          new_features = []
+          records = []
+          for _, el, fid, feature_id, parcel_id, lon, lat in selected:
+              business_name = text(el, 'BusinessName')
+              business_type = text(el, 'BusinessType')
+              business_type_id = text(el, 'BusinessTypeID')
+              labid = text(el, 'LocalAuthorityBusinessID')
+              authority = text(el, 'LocalAuthorityName') or CITY
+              postcode = text(el, 'PostCode')
+              rating = text(el, 'RatingValue')
+              rating_date = text(el, 'RatingDate')
+              assert authority == CITY, f'unexpected authority for FHRSID {fid}: {authority}'
+              primary, code, category = classify(business_type)
+              excerpt = f'FHRSID {fid} | {business_name} | BusinessType {business_type} | LocalAuthority {authority} | PostCode {postcode}'
+              excerpt_sha = hashlib.sha256(excerpt.encode('utf-8')).hexdigest()
+              evidence_obj = {
+                  'FHRSID': fid,
+                  'BusinessName': business_name,
+                  'BusinessType': business_type,
+                  'BusinessTypeID': business_type_id,
+                  'LocalAuthorityBusinessID': labid,
+                  'LocalAuthorityName': authority,
+                  'PostCode': postcode,
+                  'RatingValue': rating,
+                  'RatingDate': rating_date,
+              }
+              record = {
+                  'parcel_id': parcel_id,
+                  'parcel_id_semantics': 'stable FSA FHRSID-derived slot identifier; not a cadastral parcel ID',
+                  'osm_id': None,
+                  'slot_id': SLOT,
+                  'region': REGION,
+                  'area': CITY,
+                  'local_authority': authority,
+                  'postcode': postcode,
+                  'building_type_primary': primary,
+                  'building_type_code': code,
+                  'building_category': category,
+                  'confidence_score': 0.55,
+                  'confidence_level_1_to_4': 2,
+                  'evidence_level': 'D',
+                  'source_count': 1,
+                  'source': SOURCE,
+                  'source_url': SOURCE_URL,
+                  'source_hash': source_sha,
+                  'source_hash_method': 'sha256_raw_source_xml',
+                  'match_method': 'fhrs_business_type_premises_proxy',
+                  'evidence_excerpt': excerpt,
+                  'evidence_excerpt_sha256': excerpt_sha,
+                  'source_evidence_excerpt': evidence_obj,
+                  'sources': [{
+                      'source_name': 'Food Standards Agency FHRS daily open data',
+                      'url_or_local_path': SOURCE_URL,
+                      'accessed_at': now,
+                      'sha256': source_sha,
+                      'sha256_scope': 'raw_source_xml',
+                      'granularity': 'food_business_establishment',
+                      'fields_used': ['FHRSID', 'BusinessName', 'BusinessType', 'BusinessTypeID', 'LocalAuthorityBusinessID', 'LocalAuthorityName', 'PostCode', 'Latitude', 'Longitude'],
+                      'supports_field': 'building_type_primary',
+                      'match_method': 'fhrs_business_type_premises_proxy',
+                      'match_score': 0.55,
+                  }],
+                  'geometry_match_method': 'fhrs_geocode_point',
+                  'address_match_method': 'fhrs_business_address',
+                  'limitations': 'FHRS business type is a premises-use proxy and does not prove cadastral parcel identity or exact building fabric/type.',
+                  'needs_manual_review': True,
+                  'fake_data': False,
+                  'final_ready': False,
+                  'updated_at': now,
+                  'feature_id': feature_id,
+                  'geometry': {'type': 'Point', 'coordinates': [lon, lat]},
+              }
+              records.append(record)
+              props = copy.deepcopy(record)
+              geom = props.pop('geometry')
+              new_features.append({'type': 'Feature', 'id': feature_id, 'geometry': geom, 'properties': props})
+
+          new_ids = [f['id'] for f in new_features]
+          new_parcel_ids = [(f.get('properties') or {}).get('parcel_id') for f in new_features]
+          assert len(new_ids) == len(set(new_ids)) == 50
+          assert len(new_parcel_ids) == len(set(new_parcel_ids)) == 50
+          assert not (set(new_ids) & processed)
+          assert not (set(new_parcel_ids) & processed)
+          shard['features'].extend(new_features)
+          after = len(shard['features'])
+          assert after == EXPECTED_TARGET and after > EXPECTED_BEFORE
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 150
+          assert all((f.get('properties') or {}).get('fake_data') is False for f in new_features)
+          assert all((f.get('properties') or {}).get('final_ready') is False for f in new_features)
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in new_features)
+          assert all((f.get('properties') or {}).get('evidence_level') == 'D' for f in new_features)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4') == 2 for f in new_features)
+
+          shard_path.write_text(json.dumps(shard, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          geojson_sha = hashlib.sha256(shard_path.read_bytes()).hexdigest()
+
+          type_dist = Counter()
+          evidence_dist = Counter()
+          confidence_dist = Counter()
+          unknown = 0
+          for f in shard['features']:
+              p = f.get('properties') or {}
+              bt = p.get('building_type_primary') or 'unknown'
+              ev = p.get('evidence_level') or 'U'
+              cl = str(p.get('confidence_level_1_to_4') or 1)
+              type_dist[bt] += 1
+              evidence_dist[ev] += 1
+              confidence_dist[cl] += 1
+              if bt == 'unknown':
+                  unknown += 1
+          classified = after - unknown
+
           sources = manifest.get('sources') or []
-          matches = [s for s in sources if s.get('url') == source_url]
-          assert len(matches) == 2, f'expected prior+current source entries before aggregation, got {len(matches)}'
-          keeper = matches[0]
-          latest = matches[-1]
-          keeper['features_used'] = sum(int(s.get('features_used') or 0) for s in matches)
-          keeper['accessed_at'] = latest.get('accessed_at')
-          keeper['source_sha256'] = latest.get('source_sha256')
-          keeper['source_hash_method'] = latest.get('source_hash_method')
-          keeper['note'] = 'Premises-use proxy; not cadastral parcel geometry. Aggregated across processed-ID-external continuation batches.'
-          cleaned = []
-          kept = False
-          for s in sources:
-              if s.get('url') == source_url:
-                  if not kept:
-                      cleaned.append(keeper)
-                      kept = True
-              else:
-                  cleaned.append(s)
-          manifest['sources'] = cleaned
+          source_matches = [s for s in sources if s.get('url') == SOURCE_URL]
+          if source_matches:
+              assert len(source_matches) == 1, f'duplicate Barking source entries before append: {len(source_matches)}'
+              source_entry = source_matches[0]
+              assert int(source_entry.get('features_used') or 0) == 100, source_entry.get('features_used')
+              source_entry.update({
+                  'name': SOURCE,
+                  'source_page': SOURCE_PAGE,
+                  'features_used': 150,
+                  'accessed_at': now,
+                  'source_sha256': source_sha,
+                  'source_hash_method': 'sha256_raw_source_xml',
+                  'note': 'Premises-use proxy; not cadastral parcel geometry. Aggregated across processed-ID-external continuation batches.',
+              })
+          else:
+              sources.append({
+                  'name': SOURCE,
+                  'url': SOURCE_URL,
+                  'source_page': SOURCE_PAGE,
+                  'features_used': 50,
+                  'accessed_at': now,
+                  'source_sha256': source_sha,
+                  'source_hash_method': 'sha256_raw_source_xml',
+                  'note': 'Premises-use proxy; not cadastral parcel geometry.',
+              })
+          manifest.update({
+              'slot_id': SLOT,
+              'generated_at': now,
+              'total_features': after,
+              'classified': classified,
+              'unknown': unknown,
+              'evidence_distribution': dict(sorted(evidence_dist.items())),
+              'type_distribution': dict(sorted(type_dist.items())),
+              'confidence_level_distribution': dict(sorted(confidence_dist.items())),
+              'sources': sources,
+              'fake_data': False,
+              'final_ready': False,
+              'note': 'Existing shard preserved; appended 50 Barking and Dagenham FHRS records outside feature.id/parcel_id/osm_id already_processed_ids.',
+              'feature_count': after,
+              'geojson_sha256': geojson_sha,
+              'geojson_path': str(shard_path),
+              'manifest_updated_at': now,
+              'feature_count_before': EXPECTED_BEFORE,
+              'feature_count_after': after,
+              'added_feature_count': 50,
+              'last_batch_city': CITY,
+              'last_batch_source': SOURCE,
+              'last_batch_source_sha256': source_sha,
+          })
           manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          assert keeper['features_used'] == 100, keeper['features_used']
-          print('aggregated Barking and Dagenham source manifest to features_used=100')
+
+          runner = {
+              'slot_id': SLOT,
+              'task_id': TASK_ID,
+              'generated_at': now,
+              'feature_count_before': EXPECTED_BEFORE,
+              'feature_count_after': after,
+              'added_feature_count': 50,
+              'city': CITY,
+              'source': SOURCE,
+              'source_url': SOURCE_URL,
+              'source_sha256': source_sha,
+              'classification_method': 'fhrs_business_type_premises_proxy',
+              'confidence_policy': {'fhrs_premises_proxy': {'evidence_level': 'D', 'confidence_level_1_to_4': 2}},
+              'already_processed_id_fields': ['feature.id', 'properties.feature_id', 'properties.parcel_id', 'properties.osm_id'],
+              'candidate_count_after_filters': len(candidates),
+              'skipped_processed_ids': skipped_processed,
+              'skipped_missing_or_invalid_coordinates': skipped_coords,
+              'skipped_existing_shard_points': skipped_existing_points,
+              'skipped_duplicate_points': skipped_duplicate_points,
+              'selected_feature_ids': new_ids,
+              'records': records,
+              'fake_data': False,
+              'final_ready': False,
+          }
+          runner_path.parent.mkdir(parents=True, exist_ok=True)
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          status.update({
+              'state': 'IN_PROGRESS',
+              'slot_id': SLOT,
+              'task_id': TASK_ID,
+              'updated_at': now,
+              'final_ready': False,
+              'classified_count': classified,
+              'unknown_count': unknown,
+              'total_elements': after,
+              'confidence_distribution': dict(sorted(confidence_dist.items())),
+              'evidence_distribution': dict(sorted(evidence_dist.items())),
+              'output_sha256': geojson_sha,
+              'note': 'Barking and Dagenham FHRS continuation batch appended as premises-use proxy; cadastral parcel binding remains pending.',
+              'fake_data': False,
+              'feature_count_before': EXPECTED_BEFORE,
+              'feature_count_after': after,
+              'current_feature_count': after,
+              'last_batch': {
+                  'city': CITY,
+                  'added_feature_count': 50,
+                  'source': SOURCE,
+                  'source_sha256': source_sha,
+                  'classification_basis': 'fhrs_business_type_premises_proxy',
+                  'evidence_level_distribution': {'D': 50},
+                  'confidence_level_distribution': {'2': 50},
+              },
+              'total_features': after,
+              'classified': classified,
+              'unknown': unknown,
+              'confidence_level_distribution': dict(sorted(confidence_dist.items())),
+              'last_batch_city': CITY,
+              'last_batch_added_feature_count': 50,
+              'last_batch_source': SOURCE,
+              'last_batch_evidence_distribution': {'D': 50},
+              'last_batch_confidence_distribution': {'2': 50},
+          })
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          checkpoint.update({
+              'first_unverified_step_status': 'BATCH_APPENDED_50_BARKING_DAGENHAM_FHRS_CONTINUATION_REQUIRED',
+              'updated_at': now,
+              'final_ready': False,
+              'state': 'IN_PROGRESS',
+              'feature_count_before': EXPECTED_BEFORE,
+              'feature_count_after': after,
+              'current_feature_count': after,
+              'next_batch_index': EXPECTED_BATCH + 1,
+              'next_target_feature_count': after + 50,
+              'last_processed_ids_sample': new_ids[-20:],
+              'next_required_action': 'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR/OSM CORROBORATION FOR CURRENT-USE_AND_PARCEL_BINDING',
+              'fake_data': False,
+              'last_batch': {
+                  'batch_index': EXPECTED_BATCH,
+                  'city': CITY,
+                  'source': SOURCE,
+                  'source_sha256': source_sha,
+                  'added_feature_count': 50,
+                  'new_feature_ids': new_ids,
+              },
+          })
+          summary = checkpoint.get('summary') or {}
+          summary.update({'new_slot': False, 'pipeline_stage': 1, 'new_features_appended': 50, 'current_feature_count': after})
+          checkpoint['summary'] = summary
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          print(json.dumps({
+              'before': EXPECTED_BEFORE,
+              'after': after,
+              'added': 50,
+              'candidates_after_filters': len(candidates),
+              'skipped_processed_ids': skipped_processed,
+              'source_sha256': source_sha,
+              'selected_first': new_ids[0],
+              'selected_last': new_ids[-1],
+          }, indent=2))
           PY
 
       - name: Validate guarded append
@@ -174,31 +508,36 @@ jobs:
           status = json.loads(status_path.read_text(encoding='utf-8'))
           checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
           task = json.loads(task_path.read_text(encoding='utf-8'))
-          assert len(shard['features']) == 1450
-          assert manifest['feature_count_before'] == 1400 and manifest['feature_count_after'] == 1450 and manifest['added_feature_count'] == 50
+          assert len(shard['features']) == 1500
+          assert manifest['feature_count_before'] == 1450 and manifest['feature_count_after'] == 1500 and manifest['added_feature_count'] == 50
           assert manifest['feature_count_after'] > manifest['feature_count_before']
           source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
-          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 100, source_matches
-          assert checkpoint['feature_count_before'] == 1400 and checkpoint['feature_count_after'] == 1450 and checkpoint['current_feature_count'] == 1450
-          assert checkpoint['next_batch_index'] == 30 and checkpoint['next_target_feature_count'] == 1500
-          assert runner['feature_count_before'] == 1400 and runner['feature_count_after'] == 1450 and runner['added_feature_count'] == 50
-          assert status['feature_count_before'] == 1400 and status['feature_count_after'] == 1450 and status['current_feature_count'] == 1450
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 150, source_matches
+          assert checkpoint['feature_count_before'] == 1450 and checkpoint['feature_count_after'] == 1500 and checkpoint['current_feature_count'] == 1500
+          assert checkpoint['next_batch_index'] == 31 and checkpoint['next_target_feature_count'] == 1550
+          assert runner['feature_count_before'] == 1450 and runner['feature_count_after'] == 1500 and runner['added_feature_count'] == 50
+          assert status['feature_count_before'] == 1450 and status['feature_count_after'] == 1500 and status['current_feature_count'] == 1500
           assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
           assert manifest['fake_data'] is False and manifest['final_ready'] is False
           assert checkpoint['fake_data'] is False and checkpoint['final_ready'] is False
+          assert runner['fake_data'] is False and runner['final_ready'] is False
           assert runner['city'] == 'Barking and Dagenham' and runner['source_url'] == source_url
-          assert set(runner['already_processed_id_fields']) == {'feature.id','properties.feature_id','properties.parcel_id','properties.osm_id'}
+          assert set(runner['already_processed_id_fields']) == {'feature.id', 'properties.feature_id', 'properties.parcel_id', 'properties.osm_id'}
           selected = set(runner['selected_feature_ids'])
           assert len(selected) == 50
           matches = [f for f in shard['features'] if f.get('id') in selected]
           assert len(matches) == 50
-          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 100
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 150
           for f in matches:
               p = f.get('properties') or {}
-              assert p.get('evidence_excerpt') and p.get('evidence_level') == 'D' and p.get('confidence_level_1_to_4') == 2
-              assert p.get('source_hash') and p.get('source_url') == source_url
-              assert p.get('fake_data') is False and p.get('final_ready') is False
-          print('validated building_type_2 Barking and Dagenham batch29 1400->1450; exactly 50 new D/confidence-2 features')
+              assert p.get('evidence_excerpt')
+              assert p.get('evidence_level') == 'D'
+              assert p.get('confidence_level_1_to_4') == 2
+              assert p.get('source_hash')
+              assert p.get('source_url') == source_url
+              assert p.get('fake_data') is False
+              assert p.get('final_ready') is False
+          print('validated building_type_2 Barking and Dagenham batch30 1450->1500; exactly 50 new D/confidence-2 features')
           PY
 
       - name: Commit and push only slot outputs
@@ -218,7 +557,7 @@ jobs:
           mapfile -t expected < <(printf '%s\n' "${files[@]}" | sort)
           diff -u <(printf '%s\n' "${expected[@]}") <(printf '%s\n' "${staged[@]}")
           test "${#staged[@]}" -eq 5
-          git commit -m "data(building_type_2): append Barking and Dagenham FHRS batch 1400->1450"
+          git commit -m "data(building_type_2): append Barking and Dagenham FHRS batch 1450->1500"
           pushed=0
           for attempt in 1 2 3; do
             git fetch origin codex/aays-single-runner-v5-20260706
@@ -237,22 +576,27 @@ jobs:
           from pathlib import Path
           ref = 'origin/codex/aays-single-runner-v5-20260706'
           source_url = Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
-          def load(path): return json.loads(subprocess.check_output(['git','show',f'{ref}:{path}']))
+          def load(path):
+              return json.loads(subprocess.check_output(['git', 'show', f'{ref}:{path}']))
           shard = load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
           manifest = load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
           runner = load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          status = load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
           checkpoint = load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
           task = load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
-          assert len(shard['features']) == 1450
-          assert manifest['feature_count_before'] == 1400 and manifest['feature_count_after'] == 1450 and manifest['added_feature_count'] == 50
+          assert len(shard['features']) == 1500
+          assert manifest['feature_count_before'] == 1450 and manifest['feature_count_after'] == 1500 and manifest['added_feature_count'] == 50
           source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
-          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 100
-          assert checkpoint['current_feature_count'] == 1450 and checkpoint['next_batch_index'] == 30 and checkpoint['next_target_feature_count'] == 1500
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 150
+          assert checkpoint['current_feature_count'] == 1500 and checkpoint['next_batch_index'] == 31 and checkpoint['next_target_feature_count'] == 1550
+          assert status['current_feature_count'] == 1500 and status['fake_data'] is False and status['final_ready'] is False
           assert runner['city'] == 'Barking and Dagenham' and runner['source_url'] == source_url and len(runner['selected_feature_ids']) == 50
+          assert runner['fake_data'] is False and runner['final_ready'] is False
           assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
           selected = set(runner['selected_feature_ids'])
           matches = [f for f in shard['features'] if f.get('id') in selected]
-          assert len(matches) == 50 and all((f.get('properties') or {}).get('fake_data') is False for f in matches)
+          assert len(matches) == 50
+          assert all((f.get('properties') or {}).get('fake_data') is False for f in matches)
           assert all((f.get('properties') or {}).get('final_ready') is False for f in matches)
-          print('remote readback verified: building_type_2=1450; Barking and Dagenham batch29=50')
+          print('remote readback verified: building_type_2=1500; Barking and Dagenham batch30=50')
           PY
