@@ -1,0 +1,131 @@
+name: AAYS building_type_5 Wymondham OSM batch43 one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_wymondham_batch43_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-wymondham-batch43-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch and verify base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+
+      - name: Append exactly 50 new evidence-backed Wymondham OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          template=Path('.github/workflows/tmp_building_type_5_wisbech_batch42_20260810.yml').read_text(encoding='utf-8')
+          marker="      - name: Append exactly 50 new evidence-backed Wisbech OSM features"
+          start=template.index(marker)
+          block=template[start:]
+          p0=block.index("          python - <<'PY'\n") + len("          python - <<'PY'\n")
+          p1=block.index("\n          PY", p0)
+          code=textwrap.dedent(block[p0:p1])
+          replacements={
+              "CITY='Wisbech Urban Area'; AUTHORITY='Fenland'; GRID='WISBECH_URBAN_01'":"CITY='Wymondham Urban Area'; AUTHORITY='South Norfolk'; GRID='WYMONDHAM_URBAN_01'",
+              "BATCH=42; EXPECTED_BEFORE=2050; TARGET_AFTER=2100; NEXT_TARGET=2150":"BATCH=43; EXPECTED_BEFORE=2100; TARGET_AFTER=2150; NEXT_TARGET=2200",
+              "'wisbech'":"'wymondham'",
+              "Wisbech":"Wymondham",
+              "xs=[0.1150,0.1400,0.1650,0.1900,0.2150]":"xs=[1.0750,1.0950,1.1150,1.1350,1.1550]",
+              "ys=[52.6350,52.6525,52.6700,52.6875,52.7050]":"ys=[52.5500,52.5625,52.5750,52.5875,52.6000]",
+              "BATCH_42_APPENDED_50_WISBECH_URBAN_AREA_OSM_CONTINUATION_REQUIRED":"BATCH_43_APPENDED_50_WYMONDHAM_URBAN_AREA_OSM_CONTINUATION_REQUIRED",
+          }
+          for old,new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'fail closed: expected template token missing: {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'<wymondham-batch43>','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Validate changed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(geo['features'])==2150
+          new=geo['features'][-50:]
+          assert all((f.get('properties') or {}).get('area')=='Wymondham Urban Area' for f in new)
+          assert all((f.get('properties') or {}).get('evidence_level')=='B' and (f.get('properties') or {}).get('confidence_level_1_to_4')==3 for f in new)
+          assert all((f.get('properties') or {}).get('sources') and (f.get('properties') or {}).get('evidence_excerpt') for f in new)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          ids=[str(f.get('id')) for f in geo['features'] if f.get('id') is not None]
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features'] if (f.get('properties') or {}).get('parcel_id') is not None]
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in geo['features'] if (f.get('properties') or {}).get('osm_id') is not None]
+          assert len(ids)==len(set(ids)) and len(parcels)==len(set(parcels)) and len(osms)==len(set(osms))
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text()); assert cp['feature_count_before']==2100 and cp['feature_count_after']==2150 and cp['next_batch_index']==44 and cp['final_ready'] is False and cp['fake_data'] is False
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text()); assert st['feature_count_after']==2150 and st['progress_count_delta']==50 and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text()); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text()); assert runner['batch_index']==43 and runner['new_feature_count']==50 and runner['feature_count_before']==2100 and runner['feature_count_after']==2150 and all(r['evidence_level']=='B' and r['confidence_level_1_to_4']==3 and r['sources'] and r['evidence_excerpt'] for r in runner['records'])
+          print('validation_ok')
+          PY
+
+      - name: Commit and push derived artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'aays-bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          paths=(
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          )
+          git add -- "${paths[@]}"
+          git diff --cached --quiet && { echo 'no derived changes'; exit 1; }
+          git commit -m 'data(building_type_5): append Wymondham batch 43 (+50)'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d origin/codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          def read(path):
+              return json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{path}'],text=True))
+          geo=read('england_map_web/data/building_type/shards/building_type_5_latest.geojson'); assert len(geo['features'])==2150
+          new=geo['features'][-50:]; assert all((f.get('properties') or {}).get('area')=='Wymondham Urban Area' for f in new)
+          assert all((f.get('properties') or {}).get('evidence_level')=='B' and (f.get('properties') or {}).get('confidence_level_1_to_4')==3 and (f.get('properties') or {}).get('sources') and (f.get('properties') or {}).get('evidence_excerpt') for f in new)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'); assert cp['feature_count_before']==2100 and cp['feature_count_after']==2150 and cp['next_batch_index']==44 and cp['final_ready'] is False and cp['fake_data'] is False
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'); assert st['feature_count_after']==2150 and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=read('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'); assert runner['batch_index']==43 and runner['new_feature_count']==50 and runner['feature_count_before']==2100 and runner['feature_count_after']==2150
+          print('remote_readback_ok')
+          PY
