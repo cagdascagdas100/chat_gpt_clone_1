@@ -1,4 +1,4 @@
-name: AAYS building_type_6 Corby OSM batch 23
+name: AAYS building_type_6 Wellingborough OSM batch 24
 
 on:
   push:
@@ -53,7 +53,7 @@ jobs:
           fi
           echo "SAFE_BASE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Append 250 evidence-backed Corby OSM records
+      - name: Append 250 evidence-backed Wellingborough OSM records
         shell: bash
         run: |
           set -euo pipefail
@@ -68,14 +68,14 @@ jobs:
           RUNNER_OUTPUT=pathlib.Path(os.environ['RUNNER_OUTPUT'])
           KEY=os.environ['CONTINUATION_KEY']
           SLOT=os.environ['SLOT_ID']
-          CITY='Corby'
+          CITY='Wellingborough'
           LA='North Northamptonshire'
-          GRID='uk-grid-corby-001'
-          BBOX=[-0.77,52.44,-0.64,52.53]
-          BATCH=23
+          GRID='uk-grid-wellingborough-001'
+          BBOX=[-0.75,52.27,-0.65,52.33]
+          BATCH=24
           WANT=250
-          EXPECTED_BEFORE=1500
-          PREFIX='CORBY_OSM'
+          EXPECTED_BEFORE=1750
+          PREFIX='WELLINGBOROUGH_OSM'
           now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
 
           def load(p):
@@ -138,8 +138,8 @@ jobs:
           source_hash=hashlib.sha256(raw).hexdigest()
           data=json.loads(raw)
 
-          type_order={'node':0,'way':1,'relation':2}
-          elems=sorted(data['elements'],key=lambda e:(type_order.get(e.get('type'),9),int(e.get('id',0))))
+          order={'node':0,'way':1,'relation':2}
+          elems=sorted(data['elements'],key=lambda e:(order.get(e.get('type'),9),int(e.get('id',0))))
           selected=[]
           for e in elems:
             typ=e.get('type'); oid=e.get('id')
@@ -169,10 +169,8 @@ jobs:
             if shop or amen in {'pub','restaurant','cafe','fast_food','bar','marketplace'} or b in {'retail','commercial','supermarket'}:
               why=f'shop={shop}' if shop else (f'amenity={amen}' if amen else f'building={b}')
               return ('commercial_retail','C_RETAIL','commercial','B',3,0.75,why)
-            if office:
-              return ('office','C_OFFICE','commercial','B',3,0.75,f'office={office}')
-            if tourism in {'hotel','hostel','guest_house','motel'}:
-              return ('hospitality','C_HOSPITALITY','commercial','B',3,0.75,f'tourism={tourism}')
+            if office: return ('office','C_OFFICE','commercial','B',3,0.75,f'office={office}')
+            if tourism in {'hotel','hostel','guest_house','motel'}: return ('hospitality','C_HOSPITALITY','commercial','B',3,0.75,f'tourism={tourism}')
             if b=='warehouse': return ('warehouse','I_WAREHOUSE','industrial','B',3,0.75,'building=warehouse')
             if b in {'industrial','factory'}: return ('industrial','I_INDUSTRIAL','industrial','B',3,0.75,f'building={b}')
             if b in {'church','chapel','mosque','synagogue','temple'}: return ('religious','P_RELIGIOUS','public','B',3,0.75,f'building={b}')
@@ -241,7 +239,7 @@ jobs:
           manifest['note']=f'Existing {before} features preserved; {CITY} batch {BATCH} appended {WANT} unique runtime Overpass features with already_processed_ids dedupe.'
           manifest.setdefault('sources',[]).append({'name':f'OpenStreetMap Overpass API - {CITY}/{LA}','url':endpoint,'license':'ODbL 1.0','features_used':WANT,
                           'accessed_at':now,'source_sha256':source_hash,'source_hash_method':'sha256_raw_overpass_response',
-                          'note':'Runtime-only Overpass response; raw source not committed. building=* evidence from Corby grid.'})
+                          'note':f'Runtime-only Overpass response; raw source not committed. building=* evidence from {CITY} grid.'})
           dump(MANIFEST,manifest)
 
           status['updated_at']=now; status['classified_count']=classified; status['unknown_count']=unknown; status['total_elements']=after
@@ -258,8 +256,8 @@ jobs:
           cp['next_batch_index']=BATCH+1; cp['next_target_feature_count']=after+WANT
           ac=cp.setdefault('attempted_cities',[])
           if CITY not in ac: ac.append(CITY)
-          cp.setdefault('source_access_evidence',{})['corby_north_northamptonshire_source_sha256']=source_hash
-          cp['source_access_evidence']['overpass_api']='SUCCESS_CORBY_BATCH_23'
+          cp.setdefault('source_access_evidence',{})['wellingborough_north_northamptonshire_source_sha256']=source_hash
+          cp['source_access_evidence']['overpass_api']='SUCCESS_WELLINGBOROUGH_BATCH_24'
           cp['next_required_action']=f'CONTINUE_BATCH_{BATCH+1}_FROM_{after}_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES'
           cp['fake_data']=False; cp['last_processed_ids_sample']=[r['feature_id'] for r in records[:10]]
           cp['last_city']=CITY; cp['last_batch_index']=BATCH; cp['last_grid_id']=GRID; cp['last_bbox_wgs84']=BBOX; cp['next_city_index']=BATCH+1
@@ -290,7 +288,7 @@ jobs:
           git config user.email 'aays-building-type-6@local.invalid'
           git add "$SHARD" "$MANIFEST" "$STATUS" "$CHECKPOINT" "$CURRENT_TASK" "$RUNNER_OUTPUT"
           git diff --cached --quiet && { echo 'No progress: no slot output changes'; exit 50; }
-          git commit -m 'building_type_6: append Corby OSM batch 23 (+250)'
+          git commit -m 'building_type_6: append Wellingborough OSM batch 24 (+250)'
           git fetch origin "$BRANCH"
           REMOTE_SHA="$(git rev-parse origin/$BRANCH)"
           if [ "$REMOTE_SHA" != "$SAFE_BASE" ]; then
