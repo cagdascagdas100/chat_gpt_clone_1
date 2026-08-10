@@ -1,0 +1,183 @@
+name: AAYS building_type_5 batch40 St Neots-Paxtons scope fix
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_batch40_scope_fix_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch40-scope-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward and validate same batch task
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(geo['features'])==2000
+          assert cp['feature_count_before']==1950 and cp['feature_count_after']==2000 and cp['next_batch_index']==41
+          assert cp['last_batch']['batch_index']==40 and len(cp['last_batch']['new_feature_ids'])==50
+          assert st['feature_count_after']==2000 and st['last_batch_index']==40
+          assert task['task_id']=='building-type-5-england-classification-v1-20260808'
+          assert task.get('owner') in (None,'')
+          assert cp.get('continuation_key','')==task.get('continuation_key','')
+          assert cp['final_ready'] is False and cp['fake_data'] is False
+          assert st['final_ready'] is False and st['fake_data'] is False
+          assert task['final_ready'] is False and task['fake_data'] is False
+          print('preconditions_ok')
+          PY
+
+      - name: Correct batch40 scope metadata without changing evidence count
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          CITY='St Neots and Paxtons Area'; GRID='ST_NEOTS_PAXTONS_AREA_01'; BATCH=40
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest_path=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          runner_path=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          status_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          checkpoint_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          cp=json.loads(checkpoint_path.read_text()); new_ids=set(cp['last_batch']['new_feature_ids'])
+          assert len(new_ids)==50
+          geo=json.loads(geo_path.read_text())
+          touched=0
+          for f in geo['features']:
+              if str(f.get('id')) in new_ids:
+                  p=f.get('properties') or {}
+                  assert p.get('evidence_level')=='B' and p.get('confidence_level_1_to_4')==3
+                  assert p.get('fake_data') is False and p.get('final_ready') is False
+                  p['area']=CITY; f['properties']=p; touched+=1
+          assert touched==50 and len(geo['features'])==2000
+          geo_path.write_text(json.dumps(geo,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          geo_sha=hashlib.sha256(geo_path.read_bytes()).hexdigest()
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+
+          manifest=json.loads(manifest_path.read_text())
+          assert manifest['total_features']==2000 and manifest['feature_count_before']==1950 and manifest['feature_count_after']==2000
+          manifest['generated_at']=now; manifest['output_sha256']=geo_sha
+          manifest['last_batch_city']=CITY
+          if manifest.get('latest_batch'):
+              assert manifest['latest_batch']['batch_index']==40
+              manifest['latest_batch']['city']=CITY; manifest['latest_batch']['grid_id']=GRID
+          for s in reversed(manifest.get('sources') or []):
+              if s.get('source_sha256')==cp['last_batch']['source_sha256'] and s.get('features_used')==50:
+                  s['name']='OpenStreetMap API 0.6 - St Neots and Paxtons Area batch 40'; break
+          manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          runner=json.loads(runner_path.read_text())
+          assert runner['batch_index']==40 and runner['feature_count_before']==1950 and runner['feature_count_after']==2000 and runner['new_feature_count']==50
+          assert set(runner['new_feature_ids'])==new_ids
+          assert all(r['evidence_level']=='B' and r['confidence_level_1_to_4']==3 and r['sources'] and r['evidence_excerpt'] and r['fake_data'] is False and r['final_ready'] is False for r in runner['records'])
+          runner['generated_at']=now; runner['city']=CITY; runner['grid_id']=GRID
+          runner['source_name']='OpenStreetMap API 0.6 - St Neots and Paxtons Area batch 40'
+          runner_path.write_text(json.dumps(runner,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          st=json.loads(status_path.read_text())
+          st['updated_at']=now; st['output_sha256']=geo_sha; st['last_batch_city']=CITY; st['last_city']=CITY; st['last_grid_id']=GRID
+          st['note']='Batch 40 appended 50 St Neots and Paxtons Area OSM building records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.'
+          st['progress_reason']='50 new St Neots and Paxtons Area OSM building features appended after feature.id/parcel_id/osm_id exclusion'
+          st['owner']=None; st['fake_data']=False; st['final_ready']=False
+          status_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          cp['updated_at']=now; cp['first_unverified_step_status']='BATCH_40_APPENDED_50_ST_NEOTS_PAXTONS_AREA_OSM_CONTINUATION_REQUIRED'
+          cp['last_batch']['city']=CITY; cp['last_batch']['grid_id']=GRID
+          cp['fake_data']=False; cp['final_ready']=False
+          checkpoint_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          task=json.loads(task_path.read_text())
+          task['updated_at']=now; task['owner']=None; task['fake_data']=False; task['final_ready']=False
+          task['last_progress']['city']=CITY; task['last_progress']['grid_id']=GRID
+          task_path.write_text(json.dumps(task,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'count':2000,'corrected':touched,'city':CITY,'grid':GRID,'geo_sha':geo_sha}))
+          PY
+
+      - name: Validate corrected scope and unchanged progress
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          city='St Neots and Paxtons Area'; grid='ST_NEOTS_PAXTONS_AREA_01'
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          ids=set(cp['last_batch']['new_feature_ids']); fs=[f for f in geo['features'] if str(f.get('id')) in ids]
+          assert len(geo['features'])==2000 and len(fs)==50
+          assert all((f.get('properties') or {}).get('area')==city for f in fs)
+          assert all((f.get('properties') or {}).get('evidence_level')=='B' and (f.get('properties') or {}).get('confidence_level_1_to_4')==3 for f in fs)
+          assert cp['feature_count_before']==1950 and cp['feature_count_after']==2000 and cp['next_batch_index']==41
+          assert cp['last_batch']['city']==city and cp['last_batch']['grid_id']==grid and cp['final_ready'] is False and cp['fake_data'] is False
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text()); assert st['feature_count_after']==2000 and st['last_city']==city and st['last_grid_id']==grid and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text()); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['last_progress']['city']==city and task['last_progress']['grid_id']==grid and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text()); assert runner['city']==city and runner['grid_id']==grid and runner['new_feature_count']==50
+          print('scope_validation_ok')
+          PY
+
+      - name: Commit and push corrected metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          paths=(
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          )
+          git add -- "${paths[@]}"
+          git diff --cached --quiet && { echo 'no corrected changes'; exit 1; }
+          git commit -m 'fix(building_type_5): correct batch 40 St Neots-Paxtons scope'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          city='St Neots and Paxtons Area'; grid='ST_NEOTS_PAXTONS_AREA_01'
+          def read(path): return json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{path}'],text=True))
+          geo=read('england_map_web/data/building_type/shards/building_type_5_latest.geojson'); assert len(geo['features'])==2000
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'); assert cp['feature_count_before']==1950 and cp['feature_count_after']==2000 and cp['next_batch_index']==41 and cp['last_batch']['city']==city and cp['last_batch']['grid_id']==grid and cp['final_ready'] is False and cp['fake_data'] is False
+          ids=set(cp['last_batch']['new_feature_ids']); fs=[f for f in geo['features'] if str(f.get('id')) in ids]; assert len(fs)==50 and all((f.get('properties') or {}).get('area')==city for f in fs)
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'); assert st['feature_count_after']==2000 and st['last_city']==city and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=read('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'); assert runner['batch_index']==40 and runner['city']==city and runner['grid_id']==grid and runner['new_feature_count']==50 and runner['feature_count_before']==1950 and runner['feature_count_after']==2000
+          print('remote_scope_readback_ok')
+          PY
