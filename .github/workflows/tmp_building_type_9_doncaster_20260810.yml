@@ -2,8 +2,10 @@ name: tmp building_type_9 Doncaster batch 15
 
 on:
   push:
-    branches: [codex/aays-single-runner-v5-20260706]
-    paths: [.github/workflows/tmp_building_type_9_doncaster_20260810.yml]
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_9_doncaster_20260810.yml
 
 permissions:
   contents: write
@@ -17,44 +19,365 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
-      - name: Fast-forward and execute guarded batch 15
+
+      - name: Rebase to current remote head
         shell: bash
         run: |
           set -euo pipefail
-          git pull --ff-only origin codex/aays-single-runner-v5-20260706
-          python - <<'BOOT'
-          import subprocess, textwrap
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
 
-          src = subprocess.check_output([
-              'git','show','40d3e1ed44f0dd2e609e9318d9662b4164bc053d:.github/workflows/tmp_building_type_9_hull_20260810.yml'
-          ], text=True)
-          marker = "          python - <<'PY'\n"
-          if marker not in src or "\n          PY" not in src:
-              raise RuntimeError('template Python body not found')
-          body = textwrap.dedent(src.split(marker,1)[1].split("\n          PY",1)[0])
+      - name: Guard, fetch Doncaster OSM, append exactly 50 unseen, update state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import json
+          import pathlib
+          import urllib.request
+          import xml.etree.ElementTree as ET
 
-          replacements = [
-              ("BEFORE=650; BATCH=14; TARGET=700", "BEFORE=700; BATCH=15; TARGET=750"),
-              ("CITY='Hull'; GRID='HULL_CENTRAL_01'; AUTH='Kingston upon Hull'", "CITY='Doncaster'; GRID='DONCASTER_CENTRAL_01'; AUTH='City of Doncaster'"),
-              ("            (-0.390,53.730,-0.350,53.755),\n            (-0.350,53.730,-0.310,53.755),\n            (-0.310,53.730,-0.270,53.755),\n            (-0.390,53.755,-0.350,53.780),\n            (-0.350,53.755,-0.310,53.780),\n            (-0.310,53.755,-0.270,53.780)", "            (-1.170,53.490,-1.130,53.515),\n            (-1.130,53.490,-1.090,53.515),\n            (-1.090,53.490,-1.050,53.515),\n            (-1.170,53.515,-1.130,53.540),\n            (-1.130,53.515,-1.090,53.540),\n            (-1.090,53.515,-1.050,53.540)"),
-              ("BATCH_014_APPENDED_50_HULL_OSM_FEATURES_CONTINUATION_REQUIRED", "BATCH_015_APPENDED_50_DONCASTER_OSM_FEATURES_CONTINUATION_REQUIRED"),
-              ("'next_batch_index':15", "'next_batch_index':16"),
-              ("'next_target_feature_count':750", "'next_target_feature_count':800"),
-              ("'next_city_index':15", "'next_city_index':16"),
-              ("'batch_index':14", "'batch_index':15"),
-              ("batch 14", "batch 15"),
-              ("Hull", "Doncaster"),
-              ("HULL_CENTRAL_01", "DONCASTER_CENTRAL_01"),
-          ]
-          for old,new in replacements:
-              if old not in body:
-                  raise RuntimeError(f'expected template token missing: {old[:80]}')
-              body = body.replace(old,new)
+          SLOT = "building_type_9"
+          TASK_ID = "building-type-9-england-classification-v1-20260808"
+          CONT = "d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512"
+          BEFORE = 700
+          BATCH = 15
+          TARGET = 750
+          CITY = "Doncaster"
+          GRID = "DONCASTER_CENTRAL_01"
+          BASE_API = "https://api.openstreetmap.org/api/0.6/map"
+          BBOX = "-1.1600,53.5050,-1.0800,53.5450"
+          QUERY_URL = f"{BASE_API}?bbox={BBOX}"
 
-          body = body.replace("assert cp.get('fake_data') is False", "assert cp.get('fake_data') is False and cp.get('final_ready') is False")
-          body = body.replace("assert mf.get('feature_count')==BEFORE and mf.get('fake_data') is False", "assert mf.get('feature_count')==BEFORE and mf.get('fake_data') is False and mf.get('final_ready') is False")
+          shard_path = pathlib.Path("england_map_web/data/building_type/shards/building_type_9_latest.geojson")
+          manifest_path = pathlib.Path("england_map_web/data/building_type/shards/building_type_9_manifest_latest.json")
+          runner_path = pathlib.Path("docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json")
+          status_path = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json")
+          checkpoint_path = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json")
+          task_path = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json")
 
-          if "PUBLISHED" in body or "published" in body:
-              raise RuntimeError('template unexpectedly writes publication state')
-          exec(compile(body, '<building_type_9_batch15>', 'exec'), {'__name__':'__main__'})
-          BOOT
+          def load(path):
+              return json.loads(path.read_text(encoding="utf-8"))
+
+          task = load(task_path)
+          checkpoint = load(checkpoint_path)
+          manifest = load(manifest_path)
+          status = load(status_path)
+          shard = load(shard_path)
+
+          assert task.get("slot_id") == SLOT, task.get("slot_id")
+          assert task.get("task_id") == TASK_ID, task.get("task_id")
+          assert task.get("continuation_key") == CONT, task.get("continuation_key")
+          assert task.get("owner") is None, f"live owner blocks append: {task.get('owner')}"
+          assert checkpoint.get("current_feature_count") == BEFORE, checkpoint.get("current_feature_count")
+          assert checkpoint.get("next_batch_index") == BATCH, checkpoint.get("next_batch_index")
+          assert checkpoint.get("next_target_feature_count") == TARGET, checkpoint.get("next_target_feature_count")
+          assert manifest.get("feature_count", manifest.get("total_features")) == BEFORE
+          assert len(shard.get("features", [])) == BEFORE, len(shard.get("features", []))
+          assert task.get("fake_data") is False
+          assert checkpoint.get("fake_data") is False
+          assert manifest.get("fake_data") is False
+
+          already = set()
+          for feature in shard["features"]:
+              props = feature.get("properties") or {}
+              for value in (feature.get("id"), props.get("parcel_id"), props.get("osm_id")):
+                  if value is not None and str(value):
+                      already.add(str(value))
+          already_count_before = len(already)
+
+          req = urllib.request.Request(QUERY_URL, headers={"User-Agent": "AAYS-building-type-9/1.0 (GitHub Actions; ODbL evidence collection)"})
+          with urllib.request.urlopen(req, timeout=90) as response:
+              raw = response.read()
+          source_sha = hashlib.sha256(raw).hexdigest()
+          query_sha = hashlib.sha256(QUERY_URL.encode("utf-8")).hexdigest()
+          root = ET.fromstring(raw)
+
+          nodes = {}
+          node_tags = {}
+          for node in root.findall("node"):
+              nid = node.attrib["id"]
+              nodes[nid] = (float(node.attrib["lon"]), float(node.attrib["lat"]))
+              node_tags[nid] = {t.attrib["k"]: t.attrib.get("v", "") for t in node.findall("tag")}
+
+          mapping = {
+              "apartments": "residential_apartments",
+              "house": "residential_house",
+              "detached": "residential_detached",
+              "semidetached_house": "residential_semi_detached",
+              "terrace": "residential_other",
+              "residential": "residential_other",
+              "commercial": "commercial_other",
+              "retail": "commercial_retail",
+              "supermarket": "commercial_retail",
+              "office": "office",
+              "industrial": "industrial",
+              "warehouse": "warehouse",
+              "hotel": "hotel_or_hospitality",
+              "hospital": "hospital_or_healthcare",
+              "school": "education",
+              "university": "education",
+              "college": "education",
+              "kindergarten": "education",
+              "church": "religious_or_community",
+              "cathedral": "religious_or_community",
+              "mosque": "religious_or_community",
+              "synagogue": "religious_or_community",
+              "temple": "religious_or_community",
+              "civic": "public_infrastructure",
+              "public": "public_infrastructure",
+              "transportation": "public_infrastructure",
+              "train_station": "public_infrastructure",
+          }
+
+          def excerpt(kind, oid, tags):
+              keys = ["building", "name", "amenity", "shop", "office", "addr:city", "addr:postcode", "addr:street", "addr:housenumber"]
+              parts = [f"OSM {kind}/{oid}"]
+              for key in keys:
+                  val = tags.get(key)
+                  if val:
+                      parts.append(f"{key}={val}")
+              return " | ".join(parts)[:600]
+
+          candidates = []
+          for nid, tags in node_tags.items():
+              raw_type = tags.get("building", "")
+              primary = mapping.get(raw_type)
+              if not primary:
+                  continue
+              lon, lat = nodes[nid]
+              candidates.append(("node", int(nid), lon, lat, tags, primary))
+
+          for way in root.findall("way"):
+              tags = {t.attrib["k"]: t.attrib.get("v", "") for t in way.findall("tag")}
+              raw_type = tags.get("building", "")
+              primary = mapping.get(raw_type)
+              if not primary:
+                  continue
+              coords = [nodes[nd.attrib["ref"]] for nd in way.findall("nd") if nd.attrib.get("ref") in nodes]
+              if not coords:
+                  continue
+              lon = sum(p[0] for p in coords) / len(coords)
+              lat = sum(p[1] for p in coords) / len(coords)
+              candidates.append(("way", int(way.attrib["id"]), lon, lat, tags, primary))
+
+          candidates.sort(key=lambda x: (x[0], x[1]))
+          selected = []
+          staged_ids = set()
+          for kind, oid_int, lon, lat, tags, primary in candidates:
+              oid = str(oid_int)
+              fid = f"ENG_OSM_{kind}_{oid}"
+              parcel_id = fid
+              osm_id = f"{kind}/{oid}"
+              identifiers = {fid, parcel_id, osm_id}
+              if identifiers & already or identifiers & staged_ids:
+                  continue
+              staged_ids.update(identifiers)
+              record = {
+                  "id": fid,
+                  "parcel_id": parcel_id,
+                  "osm_id": osm_id,
+                  "building_type_primary": primary,
+                  "source": "OpenStreetMap API 0.6",
+                  "source_url": f"https://www.openstreetmap.org/{kind}/{oid}",
+                  "source_hash": source_sha,
+                  "query_sha256": query_sha,
+                  "evidence_excerpt": excerpt(kind, oid, tags),
+                  "evidence_level": "B",
+                  "confidence_level_1_to_4": 3,
+                  "match_method": "osm_explicit_building_tag",
+              }
+              props = dict(record)
+              props.update({
+                  "city": CITY,
+                  "grid_id": GRID,
+                  "confidence": 3,
+                  "confidence_score": 0.75,
+                  "fake_data": False,
+              })
+              feature = {
+                  "type": "Feature",
+                  "id": fid,
+                  "geometry": {"type": "Point", "coordinates": [round(lon, 7), round(lat, 7)]},
+                  "properties": props,
+              }
+              selected.append((feature, record))
+              if len(selected) == 50:
+                  break
+
+          if len(selected) < 50:
+              raise SystemExit(f"BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(selected)} unseen explicit semantic building records")
+
+          new_features = [x[0] for x in selected]
+          records = [x[1] for x in selected]
+          new_ids = [f["id"] for f in new_features]
+          assert len(new_ids) == 50 and len(set(new_ids)) == 50
+          for feature in new_features:
+              p = feature["properties"]
+              ids = {str(feature["id"]), str(p["parcel_id"]), str(p["osm_id"])}
+              assert not (ids & already)
+
+          shard["features"].extend(new_features)
+          AFTER = len(shard["features"])
+          assert AFTER == TARGET and AFTER > BEFORE
+
+          generated_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          shard_text = json.dumps(shard, ensure_ascii=False, indent=2) + "\n"
+          shard_path.write_text(shard_text, encoding="utf-8")
+          geo_sha = hashlib.sha256(shard_text.encode("utf-8")).hexdigest()
+
+          new_types = collections.Counter(r["building_type_primary"] for r in records)
+          manifest["generated_at"] = generated_at
+          manifest["total_features"] = AFTER
+          manifest["classified"] = int(manifest.get("classified", 0)) + 50
+          manifest["unknown"] = int(manifest.get("unknown", 0))
+          manifest.setdefault("evidence_distribution", {})["B"] = int(manifest.get("evidence_distribution", {}).get("B", 0)) + 50
+          manifest.setdefault("confidence_level_distribution", {})["3"] = int(manifest.get("confidence_level_distribution", {}).get("3", 0)) + 50
+          td = manifest.setdefault("type_distribution", {})
+          for key, value in new_types.items():
+              td[key] = int(td.get(key, 0)) + value
+          manifest.setdefault("sources", []).append({
+              "name": "OpenStreetMap API 0.6 - Doncaster batch 15",
+              "url": BASE_API,
+              "license": "ODbL 1.0",
+              "features_used": 50,
+              "accessed_at": generated_at,
+              "source_sha256": source_sha,
+              "source_hash_method": "sha256_raw_osm_xml_bbox",
+              "query_sha256": query_sha,
+              "grid_id": GRID,
+              "note": "50 new explicit semantic building=* OSM features from runtime-only XML bbox; native node/derived way-center evidence, not cadastral parcel polygons."
+          })
+          manifest["fake_data"] = False
+          if "final_ready" in manifest:
+              manifest["final_ready"] = False
+          manifest["note"] = "Existing 700-feature shard preserved; appended 50 Doncaster OSM API semantic building features outside feature.id/parcel_id/osm_id already_processed_ids."
+          manifest["feature_count"] = AFTER
+          manifest["geojson_sha256"] = geo_sha
+          manifest["geojson_path"] = str(shard_path)
+          manifest["manifest_updated_at"] = generated_at
+          manifest["feature_count_before"] = BEFORE
+          manifest["feature_count_after"] = AFTER
+          manifest["added_feature_count"] = 50
+          manifest["last_batch_city"] = CITY
+          manifest["last_batch_source"] = "OpenStreetMap API 0.6 map endpoint"
+          manifest["last_batch_source_sha256"] = source_sha
+          manifest["last_batch_query_sha256"] = query_sha
+          manifest["last_batch_grid"] = GRID
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          status["state"] = "IN_PROGRESS"
+          status["updated_at"] = generated_at
+          if "final_ready" in status:
+              status["final_ready"] = False
+          status["classified_count"] = int(status.get("classified_count", 0)) + 50
+          status["unknown_count"] = int(status.get("unknown_count", 0))
+          status["total_elements"] = AFTER
+          status.setdefault("confidence_distribution", {})["3"] = int(status.get("confidence_distribution", {}).get("3", 0)) + 50
+          status.setdefault("evidence_distribution", {})["B"] = int(status.get("evidence_distribution", {}).get("B", 0)) + 50
+          status["output_sha256"] = geo_sha
+          status["note"] = "Batch 15 appended 50 new Doncaster OSM API semantic building features; no fake rows."
+          status["fake_data"] = False
+          status["feature_count_before"] = BEFORE
+          status["feature_count_after"] = AFTER
+          status["current_feature_count"] = AFTER
+          status["next_batch_index"] = 16
+          status["next_target_feature_count"] = 800
+          status["last_batch_city"] = CITY
+          status["last_batch_grid"] = GRID
+          status["last_batch_source_sha256"] = source_sha
+          status["last_batch_query_sha256"] = query_sha
+          status["owner_claim_created"] = False
+          status["progress"] = True
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          checkpoint["updated_at"] = generated_at
+          if "final_ready" in checkpoint:
+              checkpoint["final_ready"] = False
+          checkpoint["first_unverified_step_status"] = "BATCH_015_APPENDED_50_DONCASTER_OSM_FEATURES_CONTINUATION_REQUIRED"
+          checkpoint["state"] = "IN_PROGRESS"
+          checkpoint["feature_count_before"] = BEFORE
+          checkpoint["feature_count_after"] = AFTER
+          checkpoint["current_feature_count"] = AFTER
+          checkpoint["next_batch_index"] = 16
+          checkpoint["next_target_feature_count"] = 800
+          checkpoint.setdefault("summary", {})["new_features_appended"] = int(checkpoint.get("summary", {}).get("new_features_appended", 0)) + 50
+          checkpoint["last_processed_ids_sample"] = new_ids[-20:]
+          checkpoint["fake_data"] = False
+          checkpoint["processed_id_basis"] = ["feature.id", "properties.parcel_id", "properties.osm_id"]
+          checkpoint["last_batch"] = {
+              "batch_index": BATCH,
+              "city": CITY,
+              "grid_id": GRID,
+              "source": "OpenStreetMap API 0.6 map endpoint",
+              "source_url": BASE_API,
+              "source_sha256": source_sha,
+              "query_sha256": query_sha,
+              "evidence_level": "B",
+              "confidence_level_1_to_4": 3,
+              "added_feature_count": 50,
+              "new_feature_ids": new_ids,
+          }
+          checkpoint["next_city_index"] = 16
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          runner = {
+              "slot_id": SLOT,
+              "continuation_key": CONT,
+              "batch_index": BATCH,
+              "city": CITY,
+              "grid_id": GRID,
+              "generated_at": generated_at,
+              "feature_count_before": BEFORE,
+              "feature_count_after": AFTER,
+              "added_feature_count": 50,
+              "progress": True,
+              "already_processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],
+              "already_processed_id_count_before": already_count_before,
+              "source": "OpenStreetMap API 0.6 map endpoint",
+              "source_url": BASE_API,
+              "source_sha256": source_sha,
+              "query_sha256": query_sha,
+              "evidence_level_new_features": {"B": 50},
+              "confidence_level_new_features": {"3": 50},
+              "new_feature_ids": new_ids,
+              "records": records,
+              "fake_data": False,
+              "final_ready": False,
+              "owner_claim_created": False,
+              "raw_source_committed": False,
+              "limitation": "OSM feature identities with native node or vertex-derived way-center geometry; not cadastral parcel polygons. EPC/VOA/HMLR corroboration remains optional/pending."
+          }
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          print(json.dumps({
+              "feature_count_before": BEFORE,
+              "feature_count_after": AFTER,
+              "added": 50,
+              "already_processed_id_count_before": already_count_before,
+              "source_sha256": source_sha,
+              "query_sha256": query_sha,
+              "new_type_distribution": dict(sorted(new_types.items())),
+              "first_id": new_ids[0],
+              "last_id": new_ids[-1],
+          }, sort_keys=True))
+          PY
+
+      - name: Commit only slot 9 permanent outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-slot-runner"
+          git config user.email "aays-slot-runner@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "building_type_9: append batch 15 Doncaster OSM API features"
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
