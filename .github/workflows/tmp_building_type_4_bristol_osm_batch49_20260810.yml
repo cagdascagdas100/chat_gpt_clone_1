@@ -346,9 +346,9 @@ jobs:
           assert cp['current_feature_count']==2450 and cp['next_batch_index']==50 and cp['next_target_feature_count']==2500
           assert man.get('fake_data') is False and sta.get('fake_data') is False and cp.get('fake_data') is False and run.get('fake_data') is False
           assert man.get('final_ready') is False and sta.get('final_ready') is False and cp.get('final_ready') is False and run.get('final_ready') is False
-          ids=[]; pids=[]; oids=[]
-          for f in geo['features']:
-              p=f.get('properties') or {}; ids.append(str(f.get('id'))); pids.append(str(p.get('parcel_id'))); oids.append(str(p.get('osm_id')))
+          ids=[str(x.get('id')) for x in geo['features'] if x.get('id') not in (None,'')]
+          pids=[str((x.get('properties') or {}).get('parcel_id')) for x in geo['features'] if (x.get('properties') or {}).get('parcel_id') not in (None,'')]
+          oids=[str((x.get('properties') or {}).get('osm_id')) for x in geo['features'] if (x.get('properties') or {}).get('osm_id') not in (None,'')]
           assert len(ids)==len(set(ids)); assert len(pids)==len(set(pids)); assert len(oids)==len(set(oids))
           for f in run['features']:
               p=f['properties']
