@@ -1,0 +1,132 @@
+name: AAYS building_type_5 Ely-Queen Adelaide OSM batch41 one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_ely_batch41_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-ely-batch41-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch and verify base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+
+      - name: Append exactly 50 new evidence-backed Ely area OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import textwrap
+          from pathlib import Path
+
+          template = Path('.github/workflows/tmp_building_type_5_st_neots_batch40_20260810.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = template.index(marker) + len(marker)
+          end = template.index("\n          PY", start)
+          script = textwrap.dedent(template[start:end])
+
+          replacements = {
+              "SLOT='building_type_5'; CITY='St Neots Urban'; AUTHORITY='Huntingdonshire'; GRID='ST_NEOTS_URBAN_01'": "SLOT='building_type_5'; CITY='Ely and Queen Adelaide Area'; AUTHORITY='East Cambridgeshire'; GRID='ELY_QUEEN_ADELAIDE_AREA_01'",
+              "BATCH=40; EXPECTED_BEFORE=1950; TARGET_AFTER=2000; NEXT_TARGET=2050": "BATCH=41; EXPECTED_BEFORE=2000; TARGET_AFTER=2050; NEXT_TARGET=2100",
+              "if any('st neots' in str((f.get('properties') or {}).get('area','')).lower() for f in features): raise SystemExit('fail closed: St Neots area already present')": "if any('ely' in str((f.get('properties') or {}).get('area','')).lower() for f in features): raise SystemExit('fail closed: Ely area already present')",
+              "# St Neots continuous urban area including Eynesbury/Eaton Ford/Little Paxton edge; raw XML runtime-only.": "# Ely and Queen Adelaide bounded area; raw XML runtime-only.",
+              "xs=[-0.3050,-0.2800,-0.2550,-0.2300,-0.2050]": "xs=[0.2250,0.2450,0.2650,0.2850,0.3050]",
+              "ys=[52.1950,52.2150,52.2350,52.2550,52.2750]": "ys=[52.3750,52.3900,52.4050,52.4200,52.4350]",
+              "NO_DATA_CONTINUE: all St Neots OSM tiles failed": "NO_DATA_CONTINUE: all Ely area OSM tiles failed",
+              "BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(chosen)} new classifiable St Neots OSM ways found": "BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(chosen)} new classifiable Ely area OSM ways found",
+              "OpenStreetMap API 0.6 - St Neots urban batch 40": "OpenStreetMap API 0.6 - Ely-Queen Adelaide area batch 41",
+              "BATCH_40_APPENDED_50_ST_NEOTS_URBAN_OSM_CONTINUATION_REQUIRED": "BATCH_41_APPENDED_50_ELY_QUEEN_ADELAIDE_AREA_OSM_CONTINUATION_REQUIRED",
+          }
+          for old, new in replacements.items():
+              if old not in script:
+                  raise SystemExit(f'fail closed: expected template fragment missing: {old[:80]}')
+              script = script.replace(old, new)
+          exec(compile(script, 'batch41_ely_runtime.py', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate changed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(geo['features'])==2050
+          ids=[]; parcels=[]; osms=[]
+          for f in geo['features']:
+              p=f.get('properties') or {}
+              if f.get('id') is not None: ids.append(str(f['id']))
+              if p.get('parcel_id') is not None: parcels.append(str(p['parcel_id']))
+              if p.get('osm_id') is not None: osms.append(str(p['osm_id']))
+          assert len(ids)==len(set(ids)) and len(parcels)==len(set(parcels)) and len(osms)==len(set(osms))
+          new=geo['features'][-50:]
+          assert all((f.get('properties') or {}).get('area')=='Ely and Queen Adelaide Area' for f in new)
+          assert all((f.get('properties') or {}).get('evidence_level')=='B' and (f.get('properties') or {}).get('confidence_level_1_to_4')==3 for f in new)
+          assert all((f.get('properties') or {}).get('sources') and (f.get('properties') or {}).get('evidence_excerpt') for f in new)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text()); assert cp['feature_count_before']==2000 and cp['feature_count_after']==2050 and cp['next_batch_index']==42 and cp['final_ready'] is False and cp['fake_data'] is False
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text()); assert st['feature_count_after']==2050 and st['progress_count_delta']==50 and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text()); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text()); assert runner['batch_index']==41 and runner['new_feature_count']==50 and runner['feature_count_before']==2000 and runner['feature_count_after']==2050 and all(r['evidence_level']=='B' and r['confidence_level_1_to_4']==3 and r['sources'] and r['evidence_excerpt'] for r in runner['records'])
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json').read_text()); assert manifest['total_features']==2050 and manifest['fake_data'] is False and manifest['final_ready'] is False
+          print('validation_ok')
+          PY
+
+      - name: Commit and push derived artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git diff --cached --quiet && { echo 'no staged business changes'; exit 1; }
+          git commit -m 'data(building_type_5): append Ely-Queen Adelaide batch 41 (+50)'
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          def read(path):
+              return json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{path}'],text=True))
+          geo=read('england_map_web/data/building_type/shards/building_type_5_latest.geojson'); assert len(geo['features'])==2050
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'); assert cp['feature_count_before']==2000 and cp['feature_count_after']==2050 and cp['next_batch_index']==42 and cp['last_batch']['city']=='Ely and Queen Adelaide Area' and cp['final_ready'] is False and cp['fake_data'] is False
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'); assert st['feature_count_after']==2050 and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          runner=read('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'); assert runner['batch_index']==41 and runner['new_feature_count']==50 and runner['feature_count_before']==2000 and runner['feature_count_after']==2050 and runner['city']=='Ely and Queen Adelaide Area'
+          print('remote_readback_ok')
+          PY
