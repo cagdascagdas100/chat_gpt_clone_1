@@ -1,0 +1,125 @@
+name: tmp building_type_9 South Shields batch 29
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_9_south_shields_20260810.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-9-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    if: contains(github.event.head_commit.message, 'run guarded building_type_9 South Shields batch 29')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Append 50 unseen evidence-backed South Shields buildings
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'aays-slot-runner'
+          git config user.email 'aays-slot-runner@users.noreply.github.com'
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          git pull --ff-only origin "$BRANCH"
+          git show 8cd6009df6fa58b5c6c4bca501fe8194edb614be:.github/workflows/tmp_building_type_9_gateshead_20260810.yml > /tmp/base.yml
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('/tmp/base.yml').read_text()
+          marker="          cat > /tmp/run.py <<'PY'\n"
+          start=text.index(marker)+len(marker)
+          end=text.index("\n          PY\n          python3 /tmp/run.py",start)
+          lines=text[start:end].splitlines()
+          script='\n'.join((ln[10:] if ln.startswith('          ') else ln) for ln in lines)+'\n'
+          script=script.replace("BEFORE=1350; TARGET=1400; BATCH=28","BEFORE=1400; TARGET=1450; BATCH=29")
+          script=script.replace("Gateshead","South Shields").replace("gateshead","south shields").replace("GATESHEAD","SOUTH_SHIELDS")
+          script=script.replace("AUTH='South Shields'","AUTH='South Tyneside'")
+          script=script.replace("AAYS-building-type-9/2.3","AAYS-building-type-9/2.4")
+          script=script.replace("Batch 28","Batch 29").replace("batch 28","batch 29").replace("BATCH_028","BATCH_029")
+          script=script.replace("Existing 1350-feature","Existing 1400-feature")
+          script=script.replace("'next_batch_index':29","'next_batch_index':30")
+          script=script.replace("'next_target_feature_count':1450","'next_target_feature_count':1500")
+          script=script.replace("'next_city_index':29","'next_city_index':30")
+          bboxes=['-1.5000,54.9700,-1.4600,55.0000','-1.4600,54.9700,-1.4200,55.0000','-1.4200,54.9700,-1.3800,55.0000','-1.3800,54.9700,-1.3400,55.0000','-1.5000,55.0000,-1.4600,55.0300','-1.4600,55.0000,-1.4200,55.0300','-1.4200,55.0000,-1.3800,55.0300','-1.3800,55.0000,-1.3400,55.0300','-1.5000,55.0300,-1.4600,55.0600','-1.4600,55.0300,-1.4200,55.0600','-1.4200,55.0300,-1.3800,55.0600','-1.3800,55.0300,-1.3400,55.0600']
+          script=re.sub(r"BBOXES=\[.*?\]\n\nGEO=","BBOXES="+repr(bboxes)+"\n\nGEO=",script,flags=re.S)
+          required=["BEFORE=1400; TARGET=1450; BATCH=29","CITY='South Shields'","GRID='SOUTH_SHIELDS_CENTRAL_01'","AUTH='South Tyneside'","next_batch_index':30","next_target_feature_count':1500","next_city_index':30"]
+          for s in required: assert s in script,s
+          assert 'Gateshead' not in script and 'gateshead' not in script and 'BATCH_028' not in script
+          pathlib.Path('/tmp/run.py').write_text(script)
+          PY
+          python3 /tmp/run.py
+
+      - name: Guard remote state, self-delete, commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_9_south_shields_20260810.yml'
+          GEO='england_map_web/data/building_type/shards/building_type_9_latest.geojson'
+          MAN='england_map_web/data/building_type/shards/building_type_9_manifest_latest.json'
+          RUN='docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json'
+          STA='docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'
+          CT='docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json'
+          git fetch origin "$BRANCH"
+          git show "origin/$BRANCH:$CP" > /tmp/remote_cp.json
+          git show "origin/$BRANCH:$CT" > /tmp/remote_ct.json
+          python3 - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp.json')); t=json.load(open('/tmp/remote_ct.json'))
+          assert cp.get('current_feature_count')==1400 and cp.get('next_batch_index')==29 and cp.get('next_target_feature_count')==1450
+          assert t.get('continuation_key')=='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512' and t.get('owner') is None
+          PY
+          rm -f "$WF"
+          git add "$GEO" "$MAN" "$RUN" "$STA" "$CP" "$WF"
+          git commit -m 'building_type_9: append batch 29 South Shields OSM API features'
+          ok=0
+          for attempt in 1 2 3 4 5; do
+            if git push origin "HEAD:$BRANCH"; then ok=1; break; fi
+            git fetch origin "$BRANCH"
+            git show "origin/$BRANCH:$CP" > /tmp/remote_cp_retry.json
+            python3 - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp_retry.json'))
+          assert cp.get('current_feature_count')==1400 and cp.get('next_batch_index')==29, 'same-slot remote state advanced; abort rebase'
+          PY
+            git rebase "origin/$BRANCH"
+          done
+          test "$ok" = 1
+
+      - name: Verify remote slot9 readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          for item in \
+            'england_map_web/data/building_type/shards/building_type_9_latest.geojson:/tmp/g.json' \
+            'england_map_web/data/building_type/shards/building_type_9_manifest_latest.json:/tmp/m.json' \
+            'docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json:/tmp/r.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json:/tmp/s.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json:/tmp/c.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json:/tmp/t.json'; do
+            src="${item%%:*}"; dst="${item#*:}"; git show "origin/$BRANCH:$src" > "$dst"
+          done
+          python3 - <<'PY'
+          import json
+          g=json.load(open('/tmp/g.json')); m=json.load(open('/tmp/m.json')); r=json.load(open('/tmp/r.json')); s=json.load(open('/tmp/s.json')); c=json.load(open('/tmp/c.json')); t=json.load(open('/tmp/t.json'))
+          assert len(g['features'])==1450
+          assert c['feature_count_before']==1400 and c['feature_count_after']==1450 and c['current_feature_count']==1450 and c['next_batch_index']==30 and c['next_target_feature_count']==1500
+          assert c['last_batch']['city']=='South Shields' and c['last_batch']['added_feature_count']==50
+          assert m['total_features']==1450 and s['total_elements']==1450 and r['feature_count_after']==1450 and len(r['records'])==50
+          assert t.get('continuation_key')=='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512' and t.get('owner') is None
+          assert all(x.get('fake_data') is False for x in (m,r,s,c)) and all(x.get('final_ready') is not True for x in (m,s,c))
+          print('REMOTE_READBACK_OK building_type_9 1400->1450 South Shields batch29')
+          PY
