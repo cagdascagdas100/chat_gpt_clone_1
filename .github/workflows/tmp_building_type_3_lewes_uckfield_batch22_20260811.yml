@@ -1,0 +1,198 @@
+name: AAYS building_type_3 Lewes Uckfield batch 22
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_3_lewes_uckfield_batch22_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-3-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append guarded Lewes Uckfield batch 22
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re, subprocess
+          template_commit='c8505d8555302987ecc9fbdf29d29e5d78dbf042'
+          template_path='.github/workflows/tmp_building_type_3_chichester_bognor_regis_batch16_20260810.yml'
+          text=subprocess.check_output(['git','show',f'{template_commit}:{template_path}'],text=True)
+          marker='          import collections, datetime, hashlib, json, pathlib, time, urllib.parse, urllib.request'
+          start=text.index(marker)
+          end=text.index('\n          PY',start)
+          block=text[start:end]
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+
+          anchored={
+            r'^CITY=.*$': "CITY='Lewes_Uckfield'",
+            r'^AUTHORITY=.*$': "AUTHORITY='East Sussex'",
+            r'^BATCH=.*$': 'BATCH=22',
+            r'^EXPECTED_BEFORE=.*$': 'EXPECTED_BEFORE=4300',
+            r'^ADD_COUNT=.*$': 'ADD_COUNT=300',
+            r'^TARGET=.*$': 'TARGET=4600',
+            r'^NEXT_BATCH=.*$': 'NEXT_BATCH=23',
+            r'^NEXT_TARGET=.*$': 'NEXT_TARGET=4900',
+            r'^BBOX=.*$': "BBOX='50.8500,0.0000,51.0500,0.2500'",
+          }
+          for pat,repl in anchored.items():
+              code,n=re.subn(pat,repl,code,count=1,flags=re.M)
+              if n!=1: raise SystemExit(f'Fail closed: expected exactly one constant line for {pat}, got {n}')
+
+          replacements=[
+            ('BATCH_16_APPENDED_300_CHICHESTER_BOGNOR_REGIS_OSM_CONTINUATION_REQUIRED','BATCH_22_APPENDED_300_LEWES_UCKFIELD_OSM_CONTINUATION_REQUIRED'),
+            ('APPEND_ONLY_BATCH_17_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS','APPEND_ONLY_BATCH_23_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS'),
+            ('Chichester/Bognor Regis','Lewes/Uckfield'),
+            ('Chichester Bognor Regis','Lewes Uckfield'),
+            ('Chichester_Bognor_Regis','Lewes_Uckfield'),
+            ('batch 16','batch 22'),
+            ('Batch 16','Batch 22'),
+          ]
+          for old,new in replacements:
+              if old in code: code=code.replace(old,new)
+
+          must=[
+            "CITY='Lewes_Uckfield'","AUTHORITY='East Sussex'",'BATCH=22','EXPECTED_BEFORE=4300',
+            'ADD_COUNT=300','TARGET=4600','NEXT_BATCH=23','NEXT_TARGET=4900',"BBOX='50.8500,0.0000,51.0500,0.2500'",
+            'BATCH_22_APPENDED_300_LEWES_UCKFIELD_OSM_CONTINUATION_REQUIRED',
+            'APPEND_ONLY_BATCH_23_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS'
+          ]
+          for token in must:
+              if token not in code: raise SystemExit(f'Fail closed: transformed token missing: {token}')
+          if 'Chichester' in code or 'Bognor' in code:
+              raise SystemExit('Fail closed: old city token remains after controlled transform')
+          exec(compile(code,'bt3_batch22_lewes_uckfield.py','exec'),{})
+          PY
+
+      - name: Validate, self-delete, commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_lewes_uckfield_batch22_20260811.yml'
+          GEO='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          MAN='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          RUN='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          STA='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+
+          python - <<'PY'
+          import json
+          paths={'geo':'england_map_web/data/building_type/shards/building_type_3_latest.geojson',
+                 'man':'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json',
+                 'run':'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json',
+                 'sta':'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json',
+                 'cp':'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json',
+                 'task':'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'}
+          obj={k:json.load(open(v)) for k,v in paths.items()}; feats=obj['geo']['features']
+          assert len(feats)==4600
+          assert obj['task']['task_id']=='building-type-3-england-classification-v1-20260808' and obj['task']['owner'] is None
+          for getter in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:(f.get('properties') or {}).get('osm_id')):
+              ids=[str(getter(f)) for f in feats if getter(f) not in (None,'')]
+              assert len(ids)==len(set(ids))
+          assert obj['sta']['feature_count_before']==4300 and obj['sta']['feature_count_after']==4600 and obj['sta']['new_features_added']==300
+          assert obj['sta']['progress_counted'] is True and obj['sta']['owner'] is None and obj['sta']['next_batch_index']==23 and obj['sta']['next_target_feature_count']==4900
+          assert obj['cp']['current_feature_count']==4600 and obj['cp']['next_batch_index']==23 and obj['cp']['next_target_feature_count']==4900
+          assert obj['cp']['first_unverified_step_status']=='BATCH_22_APPENDED_300_LEWES_UCKFIELD_OSM_CONTINUATION_REQUIRED'
+          assert obj['run']['batch_index']==22 and obj['run']['city']=='Lewes_Uckfield'
+          assert obj['run']['feature_count_before']==4300 and obj['run']['feature_count_after']==4600 and obj['run']['new_features_added']==300
+          assert obj['run']['already_processed_ids_policy']=='existing feature.id, parcel_id and osm_id excluded before selection'
+          assert obj['run']['raw_source_stored_in_git'] is False
+          assert obj['run']['evidence_distribution']=={'B':300} and obj['run']['confidence_distribution']=={'3':300}
+          for k in ('man','run','sta','cp'):
+              assert obj[k].get('fake_data') is False and obj[k].get('final_ready') is False
+          new=obj['run']['features']; assert len(new)==300
+          for f in new:
+              p=f['properties']
+              assert p['evidence_excerpt'] and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['source_url'] and p['source_hash'] and p['sources'] and p['fake_data'] is False and p['final_ready'] is False
+          PY
+
+          git rm "$WF"
+          git add "$GEO" "$MAN" "$RUN" "$STA" "$CP"
+          changed=$(git diff --cached --name-only | sort)
+          expected=$(printf '%s\n' "$WF" "$CP" "$STA" "$RUN" "$GEO" "$MAN" | sort)
+          [[ "$changed" == "$expected" ]] || { echo 'unexpected staged paths'; printf '%s\n' "$changed"; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data(building_type_3): append Lewes Uckfield OSM batch 4300->4600'
+
+          pushed=0
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then pushed=1; break; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          [[ "$pushed" == 1 ]] || exit 1
+
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{branch}:{path}']))
+          sta=load('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          man=load('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+          assert sta['current_feature_count']==4600 and sta['next_batch_index']==23 and sta['owner'] is None
+          assert cp['current_feature_count']==4600 and cp['next_batch_index']==23 and cp['next_target_feature_count']==4900
+          assert man['total_features']==4600 and man['added_feature_count']==300
+          assert run['feature_count_after']==4600 and run['new_features_added']==300 and run['city']=='Lewes_Uckfield'
+          for obj in (sta,cp,man,run): assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          PY
+          ! git cat-file -e "origin/$BRANCH:$WF" 2>/dev/null
+
+      - name: Remove temporary workflow after failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_lewes_uckfield_batch22_20260811.yml'
+          files=(
+            'england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+            'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+            'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          )
+          for f in "${files[@]}"; do git restore --staged --worktree -- "$f" 2>/dev/null || true; done
+          if [[ -f "$WF" ]]; then git rm "$WF"; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ci: cleanup failed building_type_3 Lewes Uckfield batch22'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          exit 1
