@@ -1,0 +1,44 @@
+{
+  "schema_version": 3,
+  "slot_id": "building_type_8",
+  "state": "RECOVERY_READY",
+  "created_at": "2026-08-10T16:35:00Z",
+  "reason": "Slot status file is stale at 100 elements, while the actual shard has 800 total / 787 classified. Continue prompt must not change; this recovery file tells the agent to trust the shard and expand North West to a larger target.",
+  "ignore_stale_owner": true,
+  "preserve_existing_features": true,
+  "do_not_change_user_continue_prompt": true,
+  "source_of_truth_for_current_count": "england_map_web/data/building_type/shards/building_type_8_latest.geojson",
+  "feature_count_before": 800,
+  "classified_count_before": 787,
+  "unknown_count_before": 13,
+  "required_min_new_features": 300,
+  "preferred_new_features_per_continue": 300,
+  "next_target_feature_count": 1500,
+  "target_strategy": "Append-only expansion until this slot reaches at least 1500 total real OSM/POI/EPC/VOA/HMLR-supported features, or until a real source blocker is proven.",
+  "recovery_action": "Read existing shard first and do not trust stale total_elements=100 in status_latest. Build already_processed_ids, then append only new North West features. Prefer Liverpool, Preston, Bolton, Wigan, Warrington, Blackpool and Stockport.",
+  "direct_batches": [
+    {
+      "batch_name": "Liverpool_Birkenhead",
+      "bbox_south_west_north_east": "53.3200,-3.1200,53.5000,-2.8000",
+      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Preston_Blackpool",
+      "bbox_south_west_north_east": "53.7200,-3.1000,53.9000,-2.5500",
+      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Bolton_Wigan_Warrington",
+      "bbox_south_west_north_east": "53.3500,-2.7500,53.6500,-2.3500",
+      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
+    }
+  ],
+  "acceptance": [
+    "feature_count_after must be greater than 800",
+    "add at least 300 new unique feature.id/parcel_id/osm_id values when sources allow",
+    "do not replace the shard with a smaller file",
+    "fake_data remains false",
+    "final_ready remains false unless commit push and remote readback are complete",
+    "report feature_count_before, feature_count_after, classified_count_after, unknown_count_after and yeni_eklenen"
+  ]
+}
