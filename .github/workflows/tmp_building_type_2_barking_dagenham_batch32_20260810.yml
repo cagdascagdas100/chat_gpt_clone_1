@@ -1,0 +1,226 @@
+name: tmp building_type_2 Barking and Dagenham batch 32
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_2_barking_dagenham_batch32_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase to current canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Resolve and fetch Barking and Dagenham FHRS runtime source
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --retry-delay 2 --output /tmp/fsa_open_data.html https://ratings.food.gov.uk/open-data
+          test -s /tmp/fsa_open_data.html
+          python - <<'PY'
+          import html as htmllib, re
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          raw = Path('/tmp/fsa_open_data.html').read_text(encoding='utf-8', errors='replace')
+          candidates = []
+          for row in re.findall(r'<tr\b[^>]*>(.*?)</tr>', raw, flags=re.I | re.S):
+              text = re.sub(r'<[^>]+>', ' ', htmllib.unescape(row))
+              text = re.sub(r'\s+', ' ', text).strip()
+              if re.search(r'\bBarking and Dagenham\b', text, flags=re.I):
+                  candidates.extend(re.findall(r'href=["\']([^"\']*open-data-files/[^"\']+\.xml[^"\']*)', row, flags=re.I))
+          urls = []
+          for href in candidates:
+              url = urljoin('https://ratings.food.gov.uk/open-data', htmllib.unescape(href))
+              p = urlparse(url)
+              if p.scheme == 'https' and p.netloc == 'ratings.food.gov.uk' and p.path.startswith('/api/open-data-files/') and p.path.endswith('.xml') and url not in urls:
+                  urls.append(url)
+          assert len(urls) == 1, f'expected exactly one Barking and Dagenham FHRS XML URL, got {urls}'
+          Path('/tmp/barking_dagenham_source_url.txt').write_text(urls[0] + '\n', encoding='utf-8')
+          print(f'resolved source: {urls[0]}')
+          PY
+          curl --fail --location --retry 2 --retry-delay 2 --output /tmp/barking_dagenham_fhrs.xml "$(cat /tmp/barking_dagenham_source_url.txt)"
+          test -s /tmp/barking_dagenham_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('/tmp/barking_dagenham_fhrs.xml').getroot()
+          names = {(n.text or '').strip() for n in root.findall('.//LocalAuthorityName') if (n.text or '').strip()}
+          assert 'Barking and Dagenham' in names, f'expected Barking and Dagenham FHRS source, got sample={sorted(names)[:10]}'
+          print('verified Barking and Dagenham authority')
+          PY
+
+      - name: Append exactly 50 processed-ID-external features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show c605c1e2e6446f491bf6533b5572a60d09516a1b:.github/workflows/tmp_building_type_2_barking_dagenham_batch29_20260810.yml > /tmp/previous_slot2_workflow.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/previous_slot2_workflow.yml').read_text(encoding='utf-8')
+          step_marker = '      - name: Append exactly 50 processed-ID-external features'
+          step_start = text.index(step_marker)
+          marker = "          python - <<'PY'\n"
+          start = text.index(marker, step_start) + len(marker)
+          end = text.index("\n          PY", start)
+          lines = text[start:end].splitlines()
+          body = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
+          replacements = [
+              ("EXPECTED_BEFORE = 1500", "EXPECTED_BEFORE = 1550"),
+              ("EXPECTED_BATCH = 31", "EXPECTED_BATCH = 32"),
+              ("EXPECTED_TARGET = 1550", "EXPECTED_TARGET = 1600"),
+              ("assert prior_barking_count == 150, f'expected 150 prior Barking features, got {prior_barking_count}'", "assert prior_barking_count == 200, f'expected 200 prior Barking features, got {prior_barking_count}'"),
+              ("assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 200", "assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 250"),
+              ("assert int(source_entry.get('features_used') or 0) == 150, source_entry.get('features_used')", "assert int(source_entry.get('features_used') or 0) == 200, source_entry.get('features_used')"),
+              ("'features_used': 200,", "'features_used': 250,"),
+          ]
+          for old, new in replacements:
+              assert old in body, f'missing expected prior-body token: {old}'
+              body = body.replace(old, new, 1)
+          required = [
+              "EXPECTED_BEFORE = 1550", "EXPECTED_BATCH = 32", "EXPECTED_TARGET = 1600",
+              "assert prior_barking_count == 200", "BARKING_DAGENHAM_FHRS_')]) == 250",
+              "== 200, source_entry.get('features_used')", "'features_used': 250,",
+              "for value in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):",
+              "'evidence_excerpt': excerpt", "'evidence_level': 'D'", "'confidence_level_1_to_4': 2",
+              "'fake_data': False", "'final_ready': False",
+          ]
+          missing = [token for token in required if token not in body]
+          assert not missing, f'patched append body missing tokens: {missing}'
+          forbidden = ["EXPECTED_BEFORE = 1500", "EXPECTED_BATCH = 31", "EXPECTED_TARGET = 1550", "assert prior_barking_count == 150"]
+          leaked = [token for token in forbidden if token in body]
+          assert not leaked, f'old batch tokens leaked: {leaked}'
+          exec(compile(body, '<building_type_2_barking_batch32>', 'exec'), {'__name__': '__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          shard_path = Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest_path = Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner_path = Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          status_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          checkpoint_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          task_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          source_url = Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
+          shard = json.loads(shard_path.read_text(encoding='utf-8'))
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          runner = json.loads(runner_path.read_text(encoding='utf-8'))
+          status = json.loads(status_path.read_text(encoding='utf-8'))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          task = json.loads(task_path.read_text(encoding='utf-8'))
+          assert len(shard['features']) == 1600
+          assert manifest['feature_count_before'] == 1550 and manifest['feature_count_after'] == 1600 and manifest['added_feature_count'] == 50
+          assert manifest['feature_count_after'] > manifest['feature_count_before']
+          source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 250, source_matches
+          assert checkpoint['feature_count_before'] == 1550 and checkpoint['feature_count_after'] == 1600 and checkpoint['current_feature_count'] == 1600
+          assert checkpoint['next_batch_index'] == 33 and checkpoint['next_target_feature_count'] == 1650
+          assert runner['feature_count_before'] == 1550 and runner['feature_count_after'] == 1600 and runner['added_feature_count'] == 50
+          assert status['feature_count_before'] == 1550 and status['feature_count_after'] == 1600 and status['current_feature_count'] == 1600
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          assert manifest['fake_data'] is False and manifest['final_ready'] is False
+          assert checkpoint['fake_data'] is False and checkpoint['final_ready'] is False
+          assert runner['fake_data'] is False and runner['final_ready'] is False
+          assert runner['city'] == 'Barking and Dagenham' and runner['source_url'] == source_url
+          assert set(runner['already_processed_id_fields']) == {'feature.id','properties.feature_id','properties.parcel_id','properties.osm_id'}
+          selected = set(runner['selected_feature_ids'])
+          assert len(selected) == 50
+          matches = [f for f in shard['features'] if f.get('id') in selected]
+          assert len(matches) == 50
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')]) == 250
+          for f in matches:
+              p = f.get('properties') or {}
+              assert p.get('evidence_excerpt')
+              assert p.get('evidence_level') == 'D'
+              assert p.get('confidence_level_1_to_4') == 2
+              assert p.get('source_hash') and p.get('source_url') == source_url
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          print('validated building_type_2 Barking and Dagenham batch32 1550->1600; exactly 50 new D/confidence-2 features')
+          PY
+
+      - name: Commit and push only five slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${files[@]}"
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' "${files[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected[@]}") <(printf '%s\n' "${staged[@]}")
+          test "${#staged[@]}" -eq 5
+          git commit -m "data(building_type_2): append Barking and Dagenham FHRS batch 1550->1600"
+          pushed=0
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+          done
+          test "$pushed" -eq 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          ref = 'origin/codex/aays-single-runner-v5-20260706'
+          source_url = Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{ref}:{path}']))
+          shard = load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest = load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner = load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          status = load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          checkpoint = load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          task = load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features']) == 1600
+          assert manifest['feature_count_before'] == 1550 and manifest['feature_count_after'] == 1600 and manifest['added_feature_count'] == 50
+          source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 250
+          assert checkpoint['current_feature_count'] == 1600 and checkpoint['next_batch_index'] == 33 and checkpoint['next_target_feature_count'] == 1650
+          assert status['current_feature_count'] == 1600 and status['fake_data'] is False and status['final_ready'] is False
+          assert runner['city'] == 'Barking and Dagenham' and runner['source_url'] == source_url and len(runner['selected_feature_ids']) == 50
+          assert runner['fake_data'] is False and runner['final_ready'] is False
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          selected = set(runner['selected_feature_ids'])
+          matches = [f for f in shard['features'] if f.get('id') in selected]
+          assert len(matches) == 50
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in matches)
+          assert all((f.get('properties') or {}).get('evidence_level') == 'D' for f in matches)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4') == 2 for f in matches)
+          assert all((f.get('properties') or {}).get('fake_data') is False for f in matches)
+          assert all((f.get('properties') or {}).get('final_ready') is False for f in matches)
+          print('remote readback verified: building_type_2=1600; Barking and Dagenham batch32=50')
+          PY
