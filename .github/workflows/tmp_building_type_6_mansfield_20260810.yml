@@ -1,4 +1,4 @@
-name: AAYS building_type_6 Mansfield HMLR INSPIRE one-shot
+name: AAYS building_type_6 Mansfield FSA FHRS one-shot
 
 on:
   push:
@@ -28,13 +28,7 @@ jobs:
           set -euo pipefail
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Install HMLR GML runtime readers
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check --quiet requests beautifulsoup4 geopandas pyogrio
-
-      - name: Append 50 source-backed Mansfield HMLR parcels
+      - name: Append 50 source-backed Mansfield FSA FHRS POI records
         shell: bash
         run: |
           set -euo pipefail
@@ -45,11 +39,9 @@ jobs:
           import json
           import pathlib
           import subprocess
-          from urllib.parse import urljoin
-
-          import geopandas as gpd
-          import requests
-          from bs4 import BeautifulSoup
+          import time
+          import urllib.parse
+          import urllib.request
 
           SLOT = 'building_type_6'
           TASK = 'building-type-6-england-classification-v1-20260808'
@@ -57,13 +49,15 @@ jobs:
           CITY = 'Mansfield'
           LOCAL_AUTHORITY = 'Mansfield District'
           REGION = 'East Midlands'
+          FSA_AUTHORITY_ID = 263
           BATCH_INDEX = 8
           EXPECTED_BEFORE = 350
           TARGET_AFTER = 400
           NEXT_TARGET = 450
-          DOWNLOAD_PAGE = 'https://use-land-property-data.service.gov.uk/datasets/inspire/download'
-          DATASET_PAGE = 'https://use-land-property-data.service.gov.uk/datasets/inspire'
-          RAW = pathlib.Path('/tmp/mansfield_hmlr_inspire.gml')
+          API_BASE = 'https://api.ratings.food.gov.uk/Establishments'
+          QUERY = urllib.parse.urlencode({'localAuthorityId': FSA_AUTHORITY_ID, 'pageNumber': 1, 'pageSize': 500})
+          API_URL = f'{API_BASE}?{QUERY}'
+          DATASET_URL = 'https://ratings.food.gov.uk/open-data'
           GEO = pathlib.Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
           MAN = pathlib.Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
           STA = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
@@ -74,6 +68,7 @@ jobs:
 
           def load(p):
               return json.loads(p.read_text(encoding='utf-8'))
+
           def dump(p, obj):
               p.parent.mkdir(parents=True, exist_ok=True)
               p.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -81,217 +76,331 @@ jobs:
           task, status, checkpoint, manifest, geo = map(load, (CT, STA, CP, MAN, GEO))
           if task.get('task_id') != TASK or status.get('task_id') != TASK:
               raise SystemExit('task mismatch; refusing second/replacement task')
-          if task.get('owner') not in (None,'') or status.get('owner') not in (None,''):
+          if task.get('owner') not in (None, '') or status.get('owner') not in (None, ''):
               raise SystemExit('live owner detected; refusing second owner/task')
-          for obj,label in ((task,'task'),(status,'status'),(checkpoint,'checkpoint')):
+          for obj, label in ((task,'task'), (status,'status'), (checkpoint,'checkpoint')):
               if obj.get('continuation_key') != CONT:
                   raise SystemExit(f'{label} continuation changed; fail closed')
           if checkpoint.get('next_batch_index') != BATCH_INDEX or checkpoint.get('next_target_feature_count') != TARGET_AFTER:
               raise SystemExit('checkpoint moved; fail closed')
-          for obj,label in ((task,'task'),(status,'status'),(checkpoint,'checkpoint'),(manifest,'manifest')):
+          for obj, label in ((task,'task'), (status,'status'), (checkpoint,'checkpoint'), (manifest,'manifest')):
               if obj.get('fake_data') is not False or obj.get('final_ready') is not False:
                   raise SystemExit(f'{label} safety invariant failed')
 
           feats = geo.get('features')
-          if not isinstance(feats,list) or len(feats) != EXPECTED_BEFORE:
-              raise SystemExit(f'shard count changed; expected {EXPECTED_BEFORE}, found {len(feats) if isinstance(feats,list) else "invalid"}')
+          if not isinstance(feats, list) or len(feats) != EXPECTED_BEFORE:
+              found = len(feats) if isinstance(feats, list) else 'invalid'
+              raise SystemExit(f'shard count changed; expected {EXPECTED_BEFORE}, found {found}')
           before = len(feats)
           already = set()
+          native_fhrs = set()
           represented = set()
           for feat in feats:
-              if feat.get('id') not in (None,''):
-                  already.add(str(feat['id']))
+              fid = feat.get('id')
+              if fid not in (None, ''):
+                  already.add(str(fid))
               props = feat.get('properties') or {}
-              for key in ('parcel_id','osm_id'):
-                  if props.get(key) not in (None,''):
-                      already.add(str(props[key]))
-              for key in ('area','city','local_authority'):
+              for key in ('parcel_id', 'osm_id'):
+                  val = props.get(key)
+                  if val not in (None, ''):
+                      already.add(str(val))
+              if props.get('fhrs_id') not in (None, ''):
+                  native_fhrs.add(str(props['fhrs_id']))
+              for key in ('area', 'city', 'local_authority'):
                   if props.get(key):
                       represented.add(str(props[key]).strip().casefold())
           if CITY.casefold() in represented or LOCAL_AUTHORITY.casefold() in represented:
               raise SystemExit('Mansfield already represented; refusing duplicate city batch')
 
-          session = requests.Session()
-          session.headers.update({'User-Agent':'TerraYield-AAYS-building_type_6/1.0'})
-          page = session.get(DOWNLOAD_PAGE, timeout=60)
-          page.raise_for_status()
-          soup = BeautifulSoup(page.text, 'html.parser')
-          gml_url = None
-          for a in soup.find_all('a', href=True):
-              context = ' '.join(x for x in [a.get_text(' ',strip=True), a.parent.get_text(' ',strip=True) if a.parent else ''] if x)
-              href = a.get('href','')
-              if 'mansfield' in context.casefold() and ('gml' in href.casefold() or 'download' in href.casefold()):
-                  gml_url = urljoin(page.url, href)
+          raw = None
+          last_error = None
+          for attempt in range(1, 4):
+              try:
+                  req = urllib.request.Request(API_URL, headers={
+                      'User-Agent': 'TerraYield-AAYS-building_type_6/1.0',
+                      'Accept': 'application/json',
+                      'x-api-version': '2'
+                  })
+                  with urllib.request.urlopen(req, timeout=120) as resp:
+                      raw = resp.read()
                   break
-          if not gml_url:
-              for a in soup.find_all('a', href=True):
-                  parent = a.find_parent(['tr','li','div'])
-                  context = parent.get_text(' ',strip=True) if parent else ''
-                  if 'mansfield' in context.casefold():
-                      gml_url = urljoin(page.url, a['href'])
-                      break
-          if not gml_url:
-              raise SystemExit('HMLR Mansfield GML link not found on official download page')
-
-          data_resp = session.get(gml_url, timeout=180)
-          data_resp.raise_for_status()
-          raw = data_resp.content
-          if len(raw) < 1000:
-              raise SystemExit(f'HMLR GML response unexpectedly small: {len(raw)} bytes')
-          RAW.write_bytes(raw)
+              except Exception as exc:
+                  last_error = repr(exc)
+                  if attempt < 3:
+                      time.sleep(5 * attempt)
+          if raw is None:
+              raise SystemExit(f'FSA FHRS API failed after 3 attempts: {last_error}')
           source_sha = hashlib.sha256(raw).hexdigest()
+          data = json.loads(raw.decode('utf-8-sig'))
+          establishments = data.get('establishments') or []
+          if not isinstance(establishments, list):
+              raise SystemExit('invalid FHRS API response: establishments is not a list')
 
-          frame = gpd.read_file(RAW)
-          if frame.empty:
-              raise SystemExit('HMLR Mansfield GML contains no polygons')
-          if frame.crs is None:
-              frame = frame.set_crs('EPSG:27700', allow_override=True)
-          frame = frame.to_crs('EPSG:4326')
-
-          id_col = None
-          preferred = ['INSPIRE_ID','INSPIREID','inspire_id','inspireId','inspireid','localId','LOCALID']
-          for c in preferred:
-              if c in frame.columns:
-                  id_col = c
-                  break
-          if id_col is None:
-              for c in frame.columns:
-                  lc = str(c).casefold()
-                  if 'inspire' in lc and 'id' in lc:
-                      id_col = c
-                      break
-          if id_col is None:
-              raise SystemExit(f'No source INSPIRE ID field found; columns={list(frame.columns)}')
+          def classify_business_type(business_type):
+              t = str(business_type or '').strip().casefold()
+              if not t or 'mobile caterer' in t:
+                  return None
+              if 'school' in t or 'college' in t or 'university' in t:
+                  return ('education', 'P_EDUCATION', 'institutional')
+              if 'hospital' in t or 'childcare' in t or 'caring premises' in t:
+                  return ('healthcare_care', 'H_CARE', 'institutional')
+              if 'manufactur' in t or 'packer' in t:
+                  return ('industrial', 'I_INDUSTRIAL', 'industrial')
+              if 'distributor' in t or 'transporter' in t:
+                  return ('warehouse', 'I_WAREHOUSE', 'industrial')
+              if 'hotel' in t or 'bed & breakfast' in t or 'guest house' in t:
+                  return ('hospitality', 'C_HOSPITALITY', 'commercial')
+              if any(x in t for x in ('restaurant', 'cafe', 'canteen', 'pub', 'bar', 'nightclub', 'takeaway', 'sandwich shop', 'retailer', 'supermarket', 'hypermarket', 'catering premises')):
+                  return ('commercial_retail', 'C_RETAIL', 'commercial')
+              return None
 
           candidates = []
           seen = set()
-          for _, row in frame.iterrows():
-              sid_raw = row.get(id_col)
-              geom = row.geometry
-              if sid_raw is None or geom is None or geom.is_empty:
+          for est in establishments:
+              fhrs_id = est.get('FHRSID')
+              business_type = str(est.get('BusinessType') or '').strip()
+              mapped = classify_business_type(business_type)
+              if fhrs_id in (None, '') or mapped is None:
                   continue
-              sid = str(sid_raw).strip()
-              if not sid or sid.lower() == 'nan':
+              sid = str(fhrs_id)
+              geocode = est.get('geocode') or {}
+              try:
+                  lon = float(geocode.get('longitude'))
+                  lat = float(geocode.get('latitude'))
+              except (TypeError, ValueError):
                   continue
-              fid = 'MANSFIELD_HMLR_INSPIRE_' + ''.join(ch if ch.isalnum() or ch in '-_.' else '_' for ch in sid)
-              if sid in already or fid in already or fid in seen:
+              if not (-2.0 <= lon <= -0.5 and 52.5 <= lat <= 54.0):
+                  continue
+              fid = f'MANSFIELD_FHRS_{sid}'
+              if sid in native_fhrs or fid in already or fid in seen:
                   continue
               seen.add(fid)
-              excerpt = f'HMLR INSPIRE parcel {sid} | local_authority={LOCAL_AUTHORITY} | source contains parcel extent/identifier but no building-use classification; building type unknown'
+              primary, code, category = mapped
+              name = str(est.get('BusinessName') or '').strip()
+              postcode = str(est.get('PostCode') or '').strip()
+              address_parts = [str(est.get(k) or '').strip() for k in ('AddressLine1','AddressLine2','AddressLine3','AddressLine4')]
+              address = ', '.join(x for x in address_parts if x)
+              excerpt = f'FSA FHRS {sid} | BusinessType={business_type} | BusinessName={name or "unnamed"} | Address={address or "not supplied"} | PostCode={postcode or "not supplied"}'
+              detail_url = f'https://ratings.food.gov.uk/business/{sid}'
               props = {
                   'parcel_id': fid,
-                  'parcel_id_semantics': 'stable HMLR INSPIRE parcel-derived slot identifier; cadastral index polygon identifier retained separately',
-                  'hmlr_inspire_id': sid,
+                  'parcel_id_semantics': 'stable FSA FHRS establishment-derived slot identifier; not a cadastral parcel ID',
+                  'fhrs_id': sid,
+                  'local_authority_business_id': str(est.get('LocalAuthorityBusinessID') or ''),
                   'slot_id': SLOT,
                   'region': REGION,
                   'area': CITY,
                   'local_authority': LOCAL_AUTHORITY,
-                  'postcode': '',
-                  'building_type_primary': 'unknown',
-                  'building_type_code': 'U_UNKNOWN',
-                  'building_category': 'unknown',
-                  'confidence_score': 0.20,
-                  'confidence_level_1_to_4': 1,
-                  'evidence_level': 'U',
+                  'postcode': postcode,
+                  'business_name': name,
+                  'building_type_primary': primary,
+                  'building_type_code': code,
+                  'building_category': category,
+                  'confidence_score': 0.65,
+                  'confidence_level_1_to_4': 2,
+                  'evidence_level': 'C',
                   'source_count': 1,
-                  'source': 'HM Land Registry INSPIRE Index Polygons',
-                  'source_url': gml_url,
-                  'source_dataset_url': DATASET_PAGE,
+                  'source': 'Food Standards Agency Food Hygiene Rating Scheme (FHRS)',
+                  'source_url': detail_url,
+                  'source_dataset_url': DATASET_URL,
                   'source_hash': source_sha,
-                  'source_hash_method': 'sha256_raw_hmlr_gml',
-                  'match_method': 'hmlr_inspire_authority_polygon',
+                  'source_hash_method': 'sha256_raw_fhrs_api_response',
+                  'match_method': f'fhrs_business_type_poi_proxy:{business_type}',
                   'evidence_excerpt': excerpt,
                   'evidence_excerpt_sha256': hashlib.sha256(excerpt.encode('utf-8')).hexdigest(),
-                  'source_evidence_excerpt': {'INSPIRE_ID': sid, 'local_authority': LOCAL_AUTHORITY, 'building_use_field': None},
+                  'source_evidence_excerpt': {
+                      'FHRSID': sid,
+                      'BusinessType': business_type,
+                      'BusinessName': name,
+                      'Address': address,
+                      'PostCode': postcode,
+                      'LocalAuthorityName': str(est.get('LocalAuthorityName') or '')
+                  },
                   'sources': [{
-                      'source_name':'HM Land Registry INSPIRE Index Polygons',
-                      'url_or_local_path':gml_url,
-                      'dataset_url':DATASET_PAGE,
-                      'accessed_at':NOW,
-                      'sha256':source_sha,
-                      'sha256_scope':'raw_authority_gml',
-                      'licence':'Open Government Licence v3.0',
-                      'granularity':'registered_freehold_index_polygon',
-                      'fields_used':[id_col,'geometry'],
-                      'supports_field':'parcel_id_and_geometry_only; does not support building type',
-                      'match_method':'authority_file_membership',
-                      'match_score':1.0
+                      'source_name': 'Food Standards Agency Food Hygiene Rating Scheme API v2',
+                      'url_or_local_path': API_URL,
+                      'record_url': detail_url,
+                      'accessed_at': NOW,
+                      'sha256': source_sha,
+                      'sha256_scope': 'raw_api_response_page',
+                      'licence': 'FSA FHRS open data terms',
+                      'granularity': 'geocoded_food_establishment_poi',
+                      'fields_used': ['FHRSID','BusinessType','BusinessName','AddressLine1-4','PostCode','geocode'],
+                      'supports_field': 'building_type_primary_as_poi_use_proxy',
+                      'match_method': 'business_type_to_building_use_proxy',
+                      'match_score': 0.65
                   }],
-                  'geometry_match_method':'hmlr_inspire_polygon_geometry',
-                  'address_match_method':'none',
-                  'limitations':'HMLR INSPIRE provides indicative freehold parcel extent and identifier, not building-use/type. Classification therefore remains unknown pending OSM/EPC/VOA/other use evidence.',
-                  'needs_manual_review':True,
-                  'fake_data':False,
-                  'final_ready':False,
-                  'updated_at':NOW
+                  'geometry_match_method': 'fhrs_geocoded_establishment_point',
+                  'address_match_method': 'fhrs_published_address',
+                  'limitations': 'FHRS business type is an establishment/use POI proxy, not a cadastral or footprint-level building classification; evidence_level C and confidence 2/4 reflect this limitation.',
+                  'needs_manual_review': True,
+                  'fake_data': False,
+                  'final_ready': False,
+                  'updated_at': NOW
               }
-              candidates.append({'type':'Feature','id':fid,'geometry':json.loads(gpd.GeoSeries([geom],crs='EPSG:4326').to_json())['features'][0]['geometry'],'properties':props})
+              candidates.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':props})
 
-          candidates.sort(key=lambda f: f['id'])
+          candidates.sort(key=lambda f: (f['properties']['building_type_primary'], f['id']))
           selected = candidates[:50]
           if len(selected) < 50:
-              raise SystemExit(f'only {len(selected)} unique new HMLR parcels available')
+              raise SystemExit(f'only {len(selected)} unique classified geocoded FHRS establishments available')
+
           new_ids = set()
-          for f in selected:
-              for v in (f['id'], f['properties']['parcel_id'], f['properties']['hmlr_inspire_id']):
-                  if v in already or v in new_ids:
-                      raise SystemExit(f'dedupe invariant failed: {v}')
-                  new_ids.add(v)
-              if f['properties']['fake_data'] is not False or f['properties']['final_ready'] is not False:
+          for feat in selected:
+              props = feat['properties']
+              for val in (feat['id'], props['parcel_id'], props['fhrs_id']):
+                  if val in already or val in native_fhrs or val in new_ids:
+                      raise SystemExit(f'dedupe invariant failed: {val}')
+                  new_ids.add(val)
+              if props['fake_data'] is not False or props['final_ready'] is not False:
                   raise SystemExit('safety flag invariant failed')
 
           feats.extend(selected)
           after = len(feats)
           if after != TARGET_AFTER or after <= before:
-              raise SystemExit(f'progress invariant failed {before}->{after}')
-          geo.setdefault('metadata',{}).update({'feature_count':after,'updated_at':NOW,'last_batch_index':BATCH_INDEX,'last_batch_city':CITY,'fake_data':False,'final_ready':False})
-          geo_text = json.dumps(geo,ensure_ascii=False,indent=2) + '\n'
+              raise SystemExit(f'progress invariant failed: {before}->{after}')
+
+          geo.setdefault('metadata', {}).update({
+              'feature_count': after,
+              'updated_at': NOW,
+              'last_batch_index': BATCH_INDEX,
+              'last_batch_city': CITY,
+              'fake_data': False,
+              'final_ready': False
+          })
+          geo_text = json.dumps(geo, ensure_ascii=False, indent=2) + '\n'
           geo_sha = hashlib.sha256(geo_text.encode('utf-8')).hexdigest()
-          GEO.write_text(geo_text,encoding='utf-8')
+          GEO.write_text(geo_text, encoding='utf-8')
 
-          allp=[f.get('properties') or {} for f in feats]
-          evidence=collections.Counter(str(p.get('evidence_level') or 'U') for p in allp)
-          confidence=collections.Counter(str(p.get('confidence_level_1_to_4') or 1) for p in allp)
-          types=collections.Counter(str(p.get('building_type_primary') or 'unknown') for p in allp)
-          unknown=types.get('unknown',0)
-          classified=after-unknown
+          all_props = [(f.get('properties') or {}) for f in feats]
+          evidence = collections.Counter(str(p.get('evidence_level') or 'U') for p in all_props)
+          confidence = collections.Counter(str(p.get('confidence_level_1_to_4') or 1) for p in all_props)
+          types = collections.Counter(str(p.get('building_type_primary') or 'unknown') for p in all_props)
+          unknown = types.get('unknown', 0)
+          classified = after - unknown
+          new_types = collections.Counter(f['properties']['building_type_primary'] for f in selected)
 
-          manifest.update({'generated_at':NOW,'total_features':after,'classified':classified,'unknown':unknown,
-                           'evidence_distribution':dict(sorted(evidence.items())),'type_distribution':dict(sorted(types.items())),
-                           'confidence_level_distribution':dict(sorted(confidence.items())),'fake_data':False,'final_ready':False,
-                           'note':f'Existing {before} features preserved; {CITY}/{LOCAL_AUTHORITY} batch {BATCH_INDEX} appended from runtime HMLR INSPIRE GML with already_processed_ids dedupe; source has no building-use field, so new rows remain unknown/U.',
-                           'feature_count':after,'geojson_sha256':geo_sha,'geojson_path':str(GEO),'manifest_updated_at':NOW})
-          manifest.setdefault('sources',[]).append({'name':f'HM Land Registry INSPIRE Index Polygons - {CITY}/{LOCAL_AUTHORITY}',
-                  'url':gml_url,'dataset_url':DATASET_PAGE,'license':'Open Government Licence v3.0','features_used':50,
-                  'accessed_at':NOW,'source_sha256':source_sha,'source_hash_method':'sha256_raw_hmlr_gml',
-                  'note':f'Runtime-only authority GML for {CITY}; raw source not committed. Parcel geometry/ID evidence only; no building-use classification field.'})
-          status.update({'state':'READY','updated_at':NOW,'owner':None,'final_ready':False,'classified_count':classified,'unknown_count':unknown,
-                         'total_elements':after,'confidence_distribution':dict(sorted(confidence.items())),'evidence_distribution':dict(sorted(evidence.items())),
-                         'output_sha256':geo_sha,'blocker':None,'next_batch_index':9,'next_target_feature_count':NEXT_TARGET,
-                         'note':f'Appended 50 unique {CITY}/{LOCAL_AUTHORITY} HMLR INSPIRE parcels as evidence-backed unknown/U rows; no second task/owner created.','fake_data':False})
-          checkpoint.update({'sequence':int(checkpoint.get('sequence',0))+1,'hydration_state':'REMOTE_HEAD_HYDRATED_CONTINUATION_ADVANCED',
-              'remote_head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'first_unverified_step':f'APPEND_NEW_BATCH_009_AFTER_FEATURE_{after}',
-              'first_unverified_step_status':'READY','terminal_status':'READY','updated_at':NOW,'final_ready':False,'state':'READY',
-              'summary':{'osm_pilot_classified':classified,'unknown':unknown,'current_feature_count':after,'pipeline_stage':1},
-              'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':9,'next_target_feature_count':NEXT_TARGET,
-              'next_required_action':f'CONTINUE_BATCH_9_FROM_{after}_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES','fake_data':False,
-              'last_processed_ids_sample':[f['id'] for f in selected[:10]],'last_city':CITY,'last_batch_index':BATCH_INDEX})
-          if CITY not in checkpoint.setdefault('attempted_cities',[]): checkpoint['attempted_cities'].append(CITY)
-          sae=checkpoint.setdefault('source_access_evidence',{})
-          sae['hmlr_inspire']=f'SUCCESS_MANSFIELD_BATCH_{BATCH_INDEX}'
-          sae['mansfield_hmlr_source_sha256']=source_sha
-          prev=float((task.get('progress') or {}).get('current_percent',0.0)); cur=round(after/NEXT_TARGET*100,4)
-          task.update({'updated_at':NOW,'first_unverified_step':f'APPEND_NEW_BATCH_009_AFTER_FEATURE_{after}','owner':None,'blocker':None,
-                       'fake_data':False,'final_ready':False,'progress':{'completed_count':after,'target_count':NEXT_TARGET,
-                       'previous_percent':prev,'current_percent':cur,'percent_increase':round(cur-prev,4)}})
-          runner={'slot_id':SLOT,'task_id':TASK,'continuation_key':CONT,'generated_at':NOW,'batch_index':BATCH_INDEX,'city':CITY,
-                  'local_authority':LOCAL_AUTHORITY,'region':REGION,'feature_count_before':before,'feature_count_after':after,'new_feature_count':50,
-                  'source_name':'HM Land Registry INSPIRE Index Polygons','source_url':gml_url,'source_dataset_url':DATASET_PAGE,
-                  'source_sha256':source_sha,'source_hash_method':'sha256_raw_hmlr_gml','raw_source_committed':False,
-                  'fake_data':False,'final_ready':False,'evidence_distribution_new':{'U':50},'confidence_distribution_new':{'1':50},
-                  'records':[{'feature_id':f['id'],'geometry':f['geometry'],**f['properties']} for f in selected]}
-          for p,o in ((MAN,manifest),(STA,status),(CP,checkpoint),(CT,task),(RUN,runner)): dump(p,o)
-          print(json.dumps({'before':before,'after':after,'new':50,'new_evidence':{'U':50},'new_confidence':{'1':50},'source_sha256':source_sha,'gml_url':gml_url},indent=2))
+          manifest.update({
+              'generated_at': NOW,
+              'total_features': after,
+              'classified': classified,
+              'unknown': unknown,
+              'evidence_distribution': dict(sorted(evidence.items())),
+              'type_distribution': dict(sorted(types.items())),
+              'confidence_level_distribution': dict(sorted(confidence.items())),
+              'fake_data': False,
+              'final_ready': False,
+              'note': f'Existing {before} features preserved; {CITY}/{LOCAL_AUTHORITY} batch {BATCH_INDEX} appended from runtime FSA FHRS API with feature.id/parcel_id/osm_id dedupe. FHRS BusinessType is recorded as POI use proxy evidence C, confidence 2/4.',
+              'feature_count': after,
+              'geojson_sha256': geo_sha,
+              'geojson_path': str(GEO),
+              'manifest_updated_at': NOW
+          })
+          manifest.setdefault('sources', []).append({
+              'name': f'Food Standards Agency FHRS API - {CITY}',
+              'url': API_URL,
+              'dataset_url': DATASET_URL,
+              'features_used': 50,
+              'accessed_at': NOW,
+              'source_sha256': source_sha,
+              'source_hash_method': 'sha256_raw_fhrs_api_response',
+              'note': 'Runtime-only API response; raw source not committed. BusinessType used only as POI building-use proxy.'
+          })
+
+          status.update({
+              'state': 'READY',
+              'updated_at': NOW,
+              'owner': None,
+              'final_ready': False,
+              'classified_count': classified,
+              'unknown_count': unknown,
+              'total_elements': after,
+              'confidence_distribution': dict(sorted(confidence.items())),
+              'evidence_distribution': dict(sorted(evidence.items())),
+              'output_sha256': geo_sha,
+              'blocker': None,
+              'next_batch_index': BATCH_INDEX + 1,
+              'next_target_feature_count': NEXT_TARGET,
+              'note': f'Appended 50 unique {CITY} FSA FHRS geocoded establishments as evidence C / confidence 2 POI use proxies; no second task/owner created.',
+              'fake_data': False
+          })
+
+          checkpoint.update({
+              'sequence': int(checkpoint.get('sequence', 0)) + 1,
+              'hydration_state': 'REMOTE_HEAD_HYDRATED_CONTINUATION_ADVANCED',
+              'remote_head': subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
+              'first_unverified_step': f'APPEND_NEW_BATCH_{BATCH_INDEX + 1:03d}_AFTER_FEATURE_{after}',
+              'first_unverified_step_status': 'READY',
+              'terminal_status': 'READY',
+              'updated_at': NOW,
+              'final_ready': False,
+              'state': 'READY',
+              'summary': {'osm_pilot_classified': classified, 'unknown': unknown, 'current_feature_count': after, 'pipeline_stage': 1},
+              'feature_count_before': before,
+              'feature_count_after': after,
+              'current_feature_count': after,
+              'next_batch_index': BATCH_INDEX + 1,
+              'next_target_feature_count': NEXT_TARGET,
+              'next_required_action': f'CONTINUE_BATCH_{BATCH_INDEX + 1}_FROM_{after}_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES',
+              'fake_data': False,
+              'last_processed_ids_sample': [f['id'] for f in selected[:10]],
+              'last_city': CITY,
+              'last_batch_index': BATCH_INDEX
+          })
+          attempted = checkpoint.setdefault('attempted_cities', [])
+          if CITY not in attempted:
+              attempted.append(CITY)
+          sae = checkpoint.setdefault('source_access_evidence', {})
+          sae['fsa_fhrs_api'] = f'SUCCESS_MANSFIELD_BATCH_{BATCH_INDEX}'
+          sae['mansfield_fhrs_source_sha256'] = source_sha
+
+          prev = float((task.get('progress') or {}).get('current_percent', 0.0))
+          cur = round(after / NEXT_TARGET * 100, 4)
+          task.update({
+              'updated_at': NOW,
+              'first_unverified_step': f'APPEND_NEW_BATCH_{BATCH_INDEX + 1:03d}_AFTER_FEATURE_{after}',
+              'owner': None,
+              'blocker': None,
+              'fake_data': False,
+              'final_ready': False,
+              'progress': {
+                  'completed_count': after,
+                  'target_count': NEXT_TARGET,
+                  'previous_percent': prev,
+                  'current_percent': cur,
+                  'percent_increase': round(cur - prev, 4)
+              }
+          })
+
+          runner = {
+              'slot_id': SLOT,
+              'task_id': TASK,
+              'continuation_key': CONT,
+              'generated_at': NOW,
+              'batch_index': BATCH_INDEX,
+              'city': CITY,
+              'local_authority': LOCAL_AUTHORITY,
+              'region': REGION,
+              'feature_count_before': before,
+              'feature_count_after': after,
+              'new_feature_count': 50,
+              'source_name': 'Food Standards Agency FHRS API v2',
+              'source_url': API_URL,
+              'source_dataset_url': DATASET_URL,
+              'source_sha256': source_sha,
+              'source_hash_method': 'sha256_raw_fhrs_api_response',
+              'raw_source_committed': False,
+              'fake_data': False,
+              'final_ready': False,
+              'evidence_distribution_new': {'C': 50},
+              'confidence_distribution_new': {'2': 50},
+              'type_distribution_new': dict(sorted(new_types.items())),
+              'records': [{'feature_id': f['id'], 'geometry': f['geometry'], **f['properties']} for f in selected]
+          }
+
+          for path, obj in ((MAN,manifest),(STA,status),(CP,checkpoint),(CT,task),(RUN,runner)):
+              dump(path, obj)
+          print(json.dumps({'before':before,'after':after,'new':50,'new_evidence':{'C':50},'new_confidence':{'2':50},'new_types':dict(new_types),'source_sha256':source_sha}, indent=2))
           PY
 
       - name: Commit and push only slot outputs
@@ -314,14 +423,24 @@ jobs:
           git rm "$SELF"
           git add "${OWNED[@]}"
           git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
-          git commit -m 'building_type_6: append Mansfield HMLR INSPIRE batch 8'
+          git commit -m 'building_type_6: append Mansfield FSA FHRS batch 8'
+
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BRANCH"
             REMOTE="$(git rev-parse "origin/$BRANCH")"
             CHANGED="$(git diff --name-only "$BASE..$REMOTE" -- "${OWNED[@]}" || true)"
-            if [ -n "$CHANGED" ]; then echo 'Same-slot files changed remotely; fail closed:'; echo "$CHANGED"; exit 1; fi
-            if ! git merge-base --is-ancestor "$REMOTE" HEAD; then git rebase "origin/$BRANCH"; fi
-            if git push origin "HEAD:$BRANCH"; then exit 0; fi
-            sleep $((attempt*2))
+            if [ -n "$CHANGED" ]; then
+              echo 'Same-slot files changed remotely after batch started; fail closed:'
+              echo "$CHANGED"
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$REMOTE" HEAD; then
+              git rebase "origin/$BRANCH"
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
           done
+          echo 'Push failed after guarded retries'
           exit 1
