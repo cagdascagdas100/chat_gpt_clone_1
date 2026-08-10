@@ -35,11 +35,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show HEAD:.github/workflows/tmp_building_type_2_hounslow_batch49_20260810.yml > /tmp/template.yml
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch38_20260810.yml > /tmp/template.yml
           python3 <<'PY'
           from pathlib import Path
           text=Path('/tmp/template.yml').read_text(encoding='utf-8')
-          anchor='      - name: Append exactly 50 new Hounslow FHRS continuation features'
+          anchor='      - name: Append exactly 50 new Bexley FHRS continuation features'
           marker="          python3 <<'PY'\n"
           a=text.index(anchor)
           start=text.index(marker,a)+len(marker)
@@ -47,19 +47,18 @@ jobs:
           lines=text[start:end].splitlines()
           body="\n".join(line[10:] if line.startswith("          ") else line for line in lines)+"\n"
           replacements=[
-            ('CITY="Hounslow"; PREFIX="HOUNSLOW"; REGION="London Outer"','CITY="Kingston-Upon-Thames"; PREFIX="KINGSTON"; REGION="London Outer"'),
-            ('Food Standards Agency FHRS daily open data - Hounslow','Food Standards Agency FHRS daily open data - Kingston-Upon-Thames'),
-            ('FHRS518en-GB.xml','FHRS521en-GB.xml'),
-            ('BEFORE=2400; TARGET=2450; BATCH=49; NEXT_BATCH=50; NEXT_TARGET=2500','BEFORE=2450; TARGET=2500; BATCH=50; NEXT_BATCH=51; NEXT_TARGET=2550'),
-            ('authority.lower()!="hounslow"','authority.lower()!="kingston-upon-thames"'),
-            ('Existing shard preserved; appended 50 Hounslow FHRS continuation records','Existing shard preserved; appended 50 Kingston-Upon-Thames FHRS continuation records'),
-            ('Batch 49 appended from official Hounslow FHRS continuation records','Batch 50 appended from official Kingston-Upon-Thames FHRS continuation records'),
-            ('50 new Hounslow FHRS continuation premises-use proxy records','50 new Kingston-Upon-Thames FHRS continuation premises-use proxy records'),
-            ('BATCH_49_APPENDED_50_HOUNSLOW_FHRS_CONTINUATION_REQUIRED','BATCH_50_APPENDED_50_KINGSTON_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 2400 -> 2450','feature_count 2450 -> 2500'),
-            ('Hounslow FHRS acik verisinden','Kingston-Upon-Thames FHRS acik verisinden'),
-            ("Sonraki adim batch 50: mevcut 2450 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 2450 kaydi tekrar isleme.","Sonraki adim batch 51: mevcut 2500 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 2500 kaydi tekrar isleme."),
-            ('<building_type_2_hounslow_continuation_batch49_append>','<building_type_2_kingston_continuation_batch50_append>')
+            ('CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"','CITY="Kingston-Upon-Thames"; PREFIX="KINGSTON"; REGION="London Outer"'),
+            ('Food Standards Agency FHRS daily open data - Bexley','Food Standards Agency FHRS daily open data - Kingston-Upon-Thames'),
+            ('FHRS503en-GB.xml','FHRS521en-GB.xml'),
+            ('BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950','BEFORE=2450; TARGET=2500; BATCH=50; NEXT_BATCH=51; NEXT_TARGET=2550'),
+            ('authority.lower()!="bexley"','authority.lower()!="kingston-upon-thames"'),
+            ('Existing shard preserved; appended 50 Bexley FHRS continuation records','Existing shard preserved; appended 50 Kingston-Upon-Thames FHRS continuation records'),
+            ('Batch 38 appended from official Bexley FHRS continuation records','Batch 50 appended from official Kingston-Upon-Thames FHRS continuation records'),
+            ('50 new Bexley FHRS continuation premises-use proxy records','50 new Kingston-Upon-Thames FHRS continuation premises-use proxy records'),
+            ('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_50_APPENDED_50_KINGSTON_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 1850 -> 1900','feature_count 2450 -> 2500'),
+            ('Bexley FHRS acik verisinden','Kingston-Upon-Thames FHRS acik verisinden'),
+            ("Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.","Sonraki adim batch 51: mevcut 2500 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 2500 kaydi tekrar isleme.")
           ]
           for old,new in replacements:
               if old not in body: raise AssertionError(f'missing replacement token: {old}')
