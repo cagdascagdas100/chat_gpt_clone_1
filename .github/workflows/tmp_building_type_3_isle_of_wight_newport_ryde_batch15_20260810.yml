@@ -1,0 +1,381 @@
+name: AAYS building_type_3 Isle of Wight Newport Ryde batch 15
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_3_isle_of_wight_newport_ryde_batch15_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-3-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append guarded Isle of Wight Newport Ryde batch 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, datetime, hashlib, json, pathlib, time, urllib.parse, urllib.request
+
+          SLOT='building_type_3'
+          TASK_ID='building-type-3-england-classification-v1-20260808'
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          CITY='Isle_of_Wight_Newport_Ryde'
+          AUTHORITY='Isle of Wight'
+          BATCH=15
+          EXPECTED_BEFORE=2200
+          ADD_COUNT=300
+          TARGET=2500
+          NEXT_BATCH=16
+          NEXT_TARGET=2800
+          BBOX='50.6500,-1.3200,50.7550,-1.0500'
+
+          GEO=pathlib.Path('england_map_web/data/building_type/shards/building_type_3_latest.geojson')
+          MAN=pathlib.Path('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          STA=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          TASK=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json')
+          REC=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/recovery_latest.json')
+          RUN=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          geo=json.loads(GEO.read_text())
+          man=json.loads(MAN.read_text())
+          sta=json.loads(STA.read_text())
+          cp=json.loads(CP.read_text())
+          task=json.loads(TASK.read_text())
+          rec=json.loads(REC.read_text())
+          feats=geo.get('features') or []
+
+          assert task.get('slot_id')==SLOT and task.get('task_id')==TASK_ID, 'task identity changed'
+          assert task.get('owner') is None and sta.get('owner') is None, 'live owner present'
+          assert str(sta.get('state')) not in {'DONE','PUBLISHED'}, 'slot terminal'
+          assert cp.get('continuation_key')==CONT and sta.get('continuation_key')==CONT, 'continuation changed'
+          assert len(feats)==EXPECTED_BEFORE, f'guard expected {EXPECTED_BEFORE}, found {len(feats)}'
+          assert int(cp.get('current_feature_count',-1))==EXPECTED_BEFORE and int(sta.get('current_feature_count',-1))==EXPECTED_BEFORE, 'state count changed'
+          assert int(cp.get('next_batch_index',-1))==BATCH and int(sta.get('next_batch_index',-1))==BATCH, 'batch changed'
+          assert int(cp.get('next_target_feature_count',-1))==TARGET and int(sta.get('next_target_feature_count',-1))==TARGET, 'target changed'
+          assert rec.get('state')=='RECOVERY_READY' and int(rec.get('required_min_new_features',0))>=ADD_COUNT, 'recovery minimum changed'
+          assert rec.get('preserve_existing_features') is True, 'recovery preservation changed'
+          assert rec.get('continuation_key') in (None,'',CONT), 'recovery continuation changed'
+          assert cp.get('blocker') in (None,'') and sta.get('blocker') in (None,''), 'slot blocker present'
+          for obj,name in ((task,'task'),(cp,'checkpoint'),(sta,'status'),(man,'manifest')):
+              assert obj.get('fake_data') is False, f'{name} fake_data guard'
+              assert obj.get('final_ready') is False, f'{name} final_ready guard'
+
+          processed=set()
+          for f in feats:
+              p=f.get('properties') or {}
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v not in (None,''):
+                      processed.add(str(v))
+
+          wanted={
+              'house':('residential','R_RESIDENTIAL','residential'), 'detached':('residential','R_RESIDENTIAL','residential'),
+              'semidetached_house':('residential','R_RESIDENTIAL','residential'), 'terrace':('residential','R_RESIDENTIAL','residential'),
+              'apartments':('residential','R_APARTMENTS','residential'), 'residential':('residential','R_RESIDENTIAL','residential'),
+              'bungalow':('residential','R_RESIDENTIAL','residential'), 'dormitory':('residential','R_RESIDENTIAL','residential'),
+              'commercial':('commercial_other','C_COMMERCIAL','commercial'), 'retail':('commercial_retail','C_RETAIL','commercial'),
+              'supermarket':('commercial_retail','C_RETAIL','commercial'), 'office':('office','C_OFFICE','commercial'),
+              'industrial':('industrial','I_INDUSTRIAL','industrial'), 'manufacture':('industrial','I_INDUSTRIAL','industrial'),
+              'warehouse':('warehouse','I_WAREHOUSE','industrial'), 'school':('education','P_EDUCATION','institutional'),
+              'college':('education','P_EDUCATION','institutional'), 'university':('education','P_EDUCATION','institutional'),
+              'kindergarten':('education','P_EDUCATION','institutional'), 'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+              'clinic':('hospital_or_healthcare','P_HEALTHCARE','institutional'), 'hotel':('hotel_or_hospitality','C_HOSPITALITY','commercial'),
+              'hostel':('hotel_or_hospitality','C_HOSPITALITY','commercial'), 'church':('religious_or_community','P_RELIGIOUS','institutional'),
+              'chapel':('religious_or_community','P_RELIGIOUS','institutional'), 'cathedral':('religious_or_community','P_RELIGIOUS','institutional'),
+              'mosque':('religious_or_community','P_RELIGIOUS','institutional'), 'synagogue':('religious_or_community','P_RELIGIOUS','institutional'),
+              'temple':('religious_or_community','P_RELIGIOUS','institutional'), 'community_centre':('religious_or_community','P_COMMUNITY','institutional'),
+              'civic':('public_infrastructure','P_PUBLIC','institutional'), 'public':('public_infrastructure','P_PUBLIC','institutional'),
+              'government':('public_infrastructure','P_PUBLIC','institutional'), 'fire_station':('public_infrastructure','P_PUBLIC','institutional'),
+              'police':('public_infrastructure','P_PUBLIC','institutional'), 'train_station':('public_infrastructure','P_PUBLIC','institutional'),
+              'transportation':('public_infrastructure','P_PUBLIC','institutional'), 'barn':('agricultural','A_AGRICULTURAL','agricultural'),
+              'farm':('agricultural','A_AGRICULTURAL','agricultural'), 'farm_auxiliary':('agricultural','A_AGRICULTURAL','agricultural'),
+              'greenhouse':('agricultural','A_AGRICULTURAL','agricultural'), 'sports_hall':('leisure_or_cultural','P_LEISURE','institutional'),
+              'stadium':('leisure_or_cultural','P_LEISURE','institutional'), 'pavilion':('leisure_or_cultural','P_LEISURE','institutional'),
+              'garage':('other_building','O_GARAGE','other'), 'garages':('other_building','O_GARAGES','other'),
+              'carport':('other_building','O_OTHER','other'), 'shed':('other_building','O_OTHER','other')
+          }
+          vals='|'.join(wanted)
+          q=f'[out:json][timeout:100];nwr["building"~"^({vals})$"]({BBOX});out center tags 12000;'
+          body=urllib.parse.urlencode({'data':q}).encode()
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.nchc.org.tw/api/interpreter']
+          payload=None; used_endpoint=None; errors=[]
+          for ep in endpoints:
+              try:
+                  req=urllib.request.Request(ep,data=body,headers={'User-Agent':'TerraYield-AAYS-building_type_3/1.0','Accept':'application/json'})
+                  with urllib.request.urlopen(req,timeout=150) as r:
+                      raw=r.read()
+                  obj=json.loads(raw)
+                  if obj.get('elements'):
+                      payload=(obj,raw); used_endpoint=ep; break
+              except Exception as e:
+                  errors.append(f'{ep}:{type(e).__name__}:{e}')
+                  time.sleep(2)
+          if not payload:
+              raise SystemExit('Overpass fetch failed after 3 total attempts: '+' | '.join(errors))
+
+          obj,raw=payload
+          source_sha=hashlib.sha256(raw).hexdigest()
+          candidates=[]; seen=set()
+          for e in obj.get('elements',[]):
+              typ=e.get('type'); oid=e.get('id'); tags=e.get('tags') or {}; b=tags.get('building')
+              if b not in wanted or typ not in ('node','way','relation') or oid is None:
+                  continue
+              fid=f'ENG_OSM_{typ}_{oid}'; osmid=f'{typ}/{oid}'
+              if fid in processed or osmid in processed or fid in seen:
+                  continue
+              if typ=='node':
+                  lat=e.get('lat'); lon=e.get('lon')
+              else:
+                  c=e.get('center') or {}; lat=c.get('lat'); lon=c.get('lon')
+              if lat is None or lon is None:
+                  continue
+              primary,code,cat=wanted[b]
+              evidence={k:v for k,v in tags.items() if k in ('building','amenity','shop','office','tourism','healthcare','name','addr:housenumber','addr:street','addr:postcode')}
+              excerpt='; '.join(f'{k}={v}' for k,v in evidence.items()) or f'building={b}'
+              candidates.append((typ,int(oid),fid,osmid,float(lon),float(lat),primary,code,cat,b,evidence,excerpt))
+              seen.add(fid)
+
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          chosen=candidates[:ADD_COUNT]
+          if len(chosen)<ADD_COUNT:
+              raise SystemExit(f'only {len(chosen)} eligible new explicit-use buildings after processed-id exclusion; recovery requires {ADD_COUNT}')
+
+          new=[]
+          for typ,oid,fid,osmid,lon,lat,primary,code,cat,b,evidence,excerpt in chosen:
+              url=f'https://www.openstreetmap.org/{typ}/{oid}'
+              p={
+                  'parcel_id':fid,'osm_id':osmid,'slot_id':SLOT,'region':'South East','area':CITY,'local_authority':AUTHORITY,
+                  'building_type_primary':primary,'building_type_code':code,'building_category':cat,
+                  'evidence_level':'B','confidence_score':0.80,'confidence_level_1_to_4':3,'source_count':1,
+                  'match_method':f'building={b}','source':'OpenStreetMap via Overpass API','source_url':url,'source_hash':source_sha,
+                  'osm_tags_summary':evidence,'source_evidence_excerpt':evidence,'evidence_excerpt':excerpt,
+                  'fake_data':False,'final_ready':False,'needs_manual_review':False,'updated_at':now,
+                  'sources':[{'source_name':'OpenStreetMap Overpass API','url':used_endpoint,'accessed_at':now,'sha256':source_sha,
+                              'licence':'ODbL 1.0','granularity':'building_element',
+                              'fields_used':['building','amenity','shop','office','tourism','healthcare'],
+                              'supports_field':'building_type_primary','match_method':f'building={b}','match_score':0.80}],
+                  'building_type_secondary':'','geometry_match_method':'osm_element_or_center','address_match_method':'osm_tags_if_present',
+                  'limitations':'OSM explicit building-use tag; not yet corroborated by EPC/VOA/HMLR.',
+                  'evidence_summary':{'osm_live':True,'epc_voa_hmlr':False,'total_sources':1}
+              }
+              new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':p})
+
+          assert len(new)==ADD_COUNT and len({f['id'] for f in new})==ADD_COUNT
+          for f in new:
+              p=f['properties']
+              assert f['id'] not in processed and p['parcel_id'] not in processed and p['osm_id'] not in processed
+              assert p['evidence_excerpt'] and p['source_url'] and p['source_hash'] and p['sources']
+              assert p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['fake_data'] is False and p['final_ready'] is False
+
+          feats.extend(new); geo['features']=feats
+          assert len(feats)==TARGET and TARGET>EXPECTED_BEFORE
+          for getter in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:(f.get('properties') or {}).get('osm_id')):
+              ids=[str(getter(f)) for f in feats if getter(f) not in (None,'')]
+              assert len(ids)==len(set(ids)), 'duplicate identity field'
+
+          type_dist=collections.Counter(); ev_dist=collections.Counter(); conf_dist=collections.Counter(); classified=unknown=0
+          for f in feats:
+              p=f.get('properties') or {}; t=p.get('building_type_primary') or 'unknown'; ev=p.get('evidence_level') or 'U'; conf=str(p.get('confidence_level_1_to_4') or 1)
+              type_dist[t]+=1; ev_dist[ev]+=1; conf_dist[conf]+=1
+              unknown+=int(t=='unknown'); classified+=int(t!='unknown')
+
+          geo_text=json.dumps(geo,ensure_ascii=False,separators=(',',':'))+'\n'
+          GEO.write_text(geo_text)
+          output_sha=hashlib.sha256(geo_text.encode()).hexdigest()
+          new_ids=[f['id'] for f in new]
+          batch_meta={
+              'batch_index':BATCH,'batch_name':CITY,'city':CITY,'bbox_south_west_north_east':BBOX,'grid_bbox':BBOX,
+              'source':'OpenStreetMap via Overpass API','endpoint':used_endpoint,'source_url':used_endpoint,
+              'response_sha256':source_sha,'source_sha256':source_sha,'returned_elements':len(obj.get('elements') or []),
+              'classified_unprocessed_candidates':len(candidates),'features_used':ADD_COUNT,'added_feature_count':ADD_COUNT,'accessed_at':now,
+              'evidence_level_distribution':{'B':ADD_COUNT},'confidence_level_distribution':{'3':ADD_COUNT},'new_feature_ids':new_ids
+          }
+
+          source_name='OpenStreetMap Overpass API - Isle of Wight Newport Ryde batch 15'
+          source_entry={'name':source_name,'url':used_endpoint,'features_used':ADD_COUNT,'accessed_at':now,
+                        'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_json','license':'ODbL 1.0',
+                        'evidence_level':'B','confidence_level_1_to_4':3,'grid_bbox':BBOX,
+                        'note':'300 new explicit building=* use tags after feature.id/parcel_id/osm_id exclusion; raw response runtime-only.'}
+          sources=man.get('sources') if isinstance(man.get('sources'),list) else []
+          sources=[s for s in sources if not (isinstance(s,dict) and s.get('name')==source_name)]
+          sources.append(source_entry)
+          man.update({'schema_version':3,'slot_id':SLOT,'region':'South East','generated_at':now,'continuation_key':CONT,
+                      'total_features':TARGET,'classified':classified,'unknown':unknown,'feature_count':TARGET,
+                      'feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,'added_feature_count':ADD_COUNT,
+                      'evidence_distribution':dict(sorted(ev_dist.items())),'type_distribution':dict(sorted(type_dist.items())),
+                      'confidence_level_distribution':dict(sorted(conf_dist.items())),'sources':sources,
+                      'latest_batch':batch_meta,'last_batch':batch_meta,'geojson_sha256':output_sha,'fake_data':False,'final_ready':False})
+          MAN.write_text(json.dumps(man,ensure_ascii=False,indent=2)+'\n')
+
+          sta.update({'state':'IN_PROGRESS','updated_at':now,'owner':None,'continuation_key':CONT,'final_ready':False,
+                      'classified_count':classified,'unknown_count':unknown,'total_elements':TARGET,'current_feature_count':TARGET,'total_features':TARGET,
+                      'classified':classified,'unknown':unknown,'feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,
+                      'new_features_added':ADD_COUNT,'new_feature_count':ADD_COUNT,'progress_count_delta':ADD_COUNT,'progress_counted':True,
+                      'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,
+                      'confidence_distribution':dict(sorted(conf_dist.items())),'confidence_level_distribution':dict(sorted(conf_dist.items())),
+                      'evidence_distribution':dict(sorted(ev_dist.items())),'output_sha256':output_sha,'blocker':None,'blocker_reason':'',
+                      'note':'Recovery batch 15 appended 300 new Isle of Wight/Newport/Ryde OSM explicit building-use elements outside all prior feature.id/parcel_id/osm_id values; same task retained and owner remains null.',
+                      'last_batch_city':CITY,'last_batch_added_feature_count':ADD_COUNT,'last_batch_source':'OpenStreetMap via Overpass API',
+                      'last_batch_evidence_distribution':{'B':ADD_COUNT},'last_batch_confidence_distribution':{'3':ADD_COUNT},'last_batch_index':BATCH,
+                      'candidate_batch':None,'no_progress_reason':None,
+                      'progress_reason':'300 new Isle of Wight/Newport/Ryde OSM explicit building=* records appended after processed-id exclusion','last_batch':batch_meta,
+                      'fake_data':False})
+          STA.write_text(json.dumps(sta,ensure_ascii=False,indent=2)+'\n')
+
+          summary=cp.get('summary') if isinstance(cp.get('summary'),dict) else {}
+          summary.update({'current_feature_count':TARGET,'new_features_added_this_attempt':ADD_COUNT,'progress_counted':True})
+          cp.update({'first_unverified_step_status':'BATCH_15_APPENDED_300_ISLE_OF_WIGHT_NEWPORT_RYDE_OSM_CONTINUATION_REQUIRED',
+                     'continuation_key':CONT,'terminal_status':'IN_PROGRESS','updated_at':now,'final_ready':False,'state':'IN_PROGRESS',
+                     'feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,'current_feature_count':TARGET,
+                     'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,'attempted_new_city_batch':CITY,
+                     'blocker':None,'blocker_reason':'','next_required_action':'APPEND_ONLY_BATCH_16_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS',
+                     'fake_data':False,'last_batch_name':CITY,'last_batch_new_features':ADD_COUNT,'last_batch_evidence':batch_meta,
+                     'last_processed_ids_sample':new_ids[-20:],'summary':summary,
+                     'source_access_evidence':{'overpass_api':'Live OSM Overpass explicit building-use query succeeded','endpoint':used_endpoint,
+                                               'source_sha256':source_sha,'raw_source_stored_in_git':False}})
+          CP.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+
+          run={'slot_id':SLOT,'task_id':TASK_ID,'continuation_key':CONT,'batch_index':BATCH,'city':CITY,'region':'South East',
+               'local_authority':AUTHORITY,'grid_bbox':BBOX,'generated_at':now,'feature_count_before':EXPECTED_BEFORE,
+               'feature_count_after':TARGET,'new_features_added':ADD_COUNT,'progress_counted':True,
+               'source':'OpenStreetMap via Overpass API','source_url':used_endpoint,'source_sha256':source_sha,
+               'source_elements_received':len(obj.get('elements') or []),'candidates_after_processed_id_exclusion':len(candidates),
+               'already_processed_ids_policy':'existing feature.id, parcel_id and osm_id excluded before selection',
+               'evidence_distribution':{'B':ADD_COUNT},'confidence_distribution':{'3':ADD_COUNT},'new_feature_ids':new_ids,
+               'features':new,'output_geojson_sha256':output_sha,'raw_source_stored_in_git':False,'fake_data':False,'final_ready':False}
+          RUN.write_text(json.dumps(run,ensure_ascii=False,indent=2)+'\n')
+
+          assert json.loads(TASK.read_text()).get('owner') is None
+          assert json.loads(TASK.read_text()).get('final_ready') is False
+          print(json.dumps({'before':EXPECTED_BEFORE,'after':TARGET,'added':ADD_COUNT,'endpoint':used_endpoint,
+                            'source_sha256':source_sha,'returned':len(obj.get('elements') or []),'eligible':len(candidates)}))
+          PY
+
+      - name: Validate, self-delete, commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_isle_of_wight_newport_ryde_batch15_20260810.yml'
+          GEO='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          MAN='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          RUN='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          STA='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+
+          python - <<'PY'
+          import json
+          paths={'geo':'england_map_web/data/building_type/shards/building_type_3_latest.geojson',
+                 'man':'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json',
+                 'run':'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json',
+                 'sta':'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json',
+                 'cp':'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'}
+          obj={k:json.load(open(v)) for k,v in paths.items()}; feats=obj['geo']['features']
+          assert len(feats)==2500
+          for getter in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:(f.get('properties') or {}).get('osm_id')):
+              ids=[str(getter(f)) for f in feats if getter(f) not in (None,'')]
+              assert len(ids)==len(set(ids))
+          assert obj['sta']['feature_count_before']==2200 and obj['sta']['feature_count_after']==2500 and obj['sta']['new_features_added']==300
+          assert obj['sta']['progress_counted'] is True and obj['sta']['owner'] is None
+          assert obj['cp']['current_feature_count']==2500 and obj['cp']['next_batch_index']==16 and obj['cp']['next_target_feature_count']==2800
+          assert obj['run']['new_features_added']==300 and obj['run']['progress_counted'] is True
+          assert obj['run']['already_processed_ids_policy']=='existing feature.id, parcel_id and osm_id excluded before selection'
+          assert obj['run']['raw_source_stored_in_git'] is False
+          for k in ('man','run','sta','cp'):
+              assert obj[k].get('fake_data') is False and obj[k].get('final_ready') is False
+          new=obj['run']['features']; assert len(new)==300
+          for f in new:
+              p=f['properties']; assert p['evidence_excerpt'] and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['source_url'] and p['source_hash'] and p['sources'] and p['fake_data'] is False and p['final_ready'] is False
+          PY
+
+          git rm "$WF"
+          git add "$GEO" "$MAN" "$RUN" "$STA" "$CP"
+          changed=$(git diff --cached --name-only | sort)
+          expected=$(printf '%s\n' "$WF" "$CP" "$STA" "$RUN" "$GEO" "$MAN" | sort)
+          [[ "$changed" == "$expected" ]] || { echo 'unexpected staged paths'; printf '%s\n' "$changed"; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data(building_type_3): append Isle of Wight Newport Ryde OSM batch 2200->2500'
+
+          pushed=0
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then pushed=1; break; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          [[ "$pushed" == 1 ]] || exit 1
+
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{branch}:{path}']))
+          sta=load('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          man=load('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+          assert sta['current_feature_count']==2500 and sta['next_batch_index']==16 and sta['owner'] is None
+          assert cp['current_feature_count']==2500 and cp['next_batch_index']==16
+          assert man['total_features']==2500 and man['added_feature_count']==300
+          assert run['feature_count_after']==2500 and run['new_features_added']==300
+          for obj in (sta,cp,man,run): assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          PY
+          ! git cat-file -e "origin/$BRANCH:$WF" 2>/dev/null
+
+      - name: Remove temporary workflow after failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_isle_of_wight_newport_ryde_batch15_20260810.yml'
+          files=(
+            'england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+            'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+            'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          )
+          for f in "${files[@]}"; do git restore --staged --worktree -- "$f" 2>/dev/null || true; done
+          if [[ -f "$WF" ]]; then git rm "$WF"; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ci: cleanup failed building_type_3 Isle of Wight Newport Ryde batch15'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          exit 1
