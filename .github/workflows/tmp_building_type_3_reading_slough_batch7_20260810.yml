@@ -1,0 +1,267 @@
+name: tmp building_type_3 Reading Slough continuation batch 7
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_reading_slough_batch7_20260810.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Hydrate current canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 new South East OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import hashlib, json, subprocess, time, urllib.parse, urllib.request
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT="building_type_3"
+          TASK="building-type-3-england-classification-v1-20260808"
+          CONT="03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e"
+          REGION="South East"
+          BATCH_NAME="Reading_Slough_Windsor"
+          BBOX=(51.3950,-1.0300,51.5500,-0.4500)
+          EXPECTED_BATCH=7
+
+          shard_p=Path("england_map_web/data/building_type/shards/building_type_3_latest.geojson")
+          manifest_p=Path("england_map_web/data/building_type/shards/building_type_3_manifest_latest.json")
+          checkpoint_p=Path("docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json")
+          status_p=Path("docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json")
+          task_p=Path("docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json")
+          runner_p=Path("docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json")
+
+          shard=json.loads(shard_p.read_text(encoding="utf-8"))
+          manifest=json.loads(manifest_p.read_text(encoding="utf-8"))
+          checkpoint=json.loads(checkpoint_p.read_text(encoding="utf-8"))
+          status=json.loads(status_p.read_text(encoding="utf-8"))
+          task=json.loads(task_p.read_text(encoding="utf-8"))
+          features=shard.get("features") or []
+          before=len(features)
+
+          assert task.get("slot_id")==SLOT and task.get("task_id")==TASK
+          assert task.get("owner") is None and status.get("owner") is None
+          assert checkpoint.get("continuation_key")==CONT and status.get("continuation_key")==CONT
+          assert str(status.get("state")) not in {"DONE","PUBLISHED"}
+          assert status.get("final_ready") is False and checkpoint.get("final_ready") is False and task.get("final_ready") is False
+          assert status.get("fake_data") is False and checkpoint.get("fake_data") is False and task.get("fake_data") is False
+          assert int(manifest.get("total_features",-1))==before
+          assert int(checkpoint.get("current_feature_count",-1))==before
+          assert int(checkpoint.get("next_batch_index",-1))==EXPECTED_BATCH
+          assert int(checkpoint.get("next_target_feature_count",-1))>=before+50
+
+          processed=set()
+          for f in features:
+              p=f.get("properties") or {}
+              for v in (f.get("id"), p.get("parcel_id"), p.get("osm_id")):
+                  if v is not None and str(v).strip(): processed.add(str(v).strip())
+
+          s,w,n,e=BBOX
+          bbox=f"{s},{w},{n},{e}"
+          query=f'''[out:json][timeout:75];(
+            nwr["building"~"^(residential|apartments|house|detached|semidetached_house|terrace|bungalow|commercial|retail|industrial|warehouse|office|hotel|church|cathedral|chapel|hospital|school|college|university|civic|public)$"]({bbox});
+            nwr["amenity"~"^(school|college|university|kindergarten|hospital|clinic|doctors|dentist|place_of_worship|fire_station|police|townhall|courthouse|post_office|library|community_centre|restaurant|cafe|pub|bar|fast_food)$"]({bbox});
+            nwr["shop"]({bbox});
+            nwr["office"]({bbox});
+            nwr["tourism"~"^(hotel|hostel|guest_house|motel|museum)$"]({bbox});
+          );out center tags;'''
+          payload=urllib.parse.urlencode({"data":query}).encode()
+          endpoints=[
+              "https://overpass-api.de/api/interpreter",
+              "https://overpass.kumi.systems/api/interpreter",
+              "https://overpass.private.coffee/api/interpreter",
+          ]
+          raw=None; endpoint_used=None; errors=[]
+          for endpoint in endpoints:
+              try:
+                  req=urllib.request.Request(endpoint,data=payload,headers={"User-Agent":"TerraYield-AAYS-building-type/1.0","Content-Type":"application/x-www-form-urlencoded"})
+                  with urllib.request.urlopen(req,timeout=100) as r:
+                      candidate=r.read()
+                  obj=json.loads(candidate)
+                  if len(obj.get("elements") or []) < 50:
+                      raise RuntimeError(f"too few elements: {len(obj.get('elements') or [])}")
+                  raw=candidate; endpoint_used=endpoint; data=obj; break
+              except Exception as exc:
+                  errors.append(f"{endpoint}: {exc}")
+                  time.sleep(4)
+          if raw is None:
+              raise RuntimeError("Overpass failed after <=3 attempts: " + " | ".join(errors))
+
+          source_sha=hashlib.sha256(raw).hexdigest()
+          query_sha=hashlib.sha256(query.encode()).hexdigest()
+
+          def classify(tags):
+              b=(tags.get("building") or "").lower()
+              a=(tags.get("amenity") or "").lower()
+              shop=(tags.get("shop") or "").lower()
+              office=(tags.get("office") or "").lower()
+              tourism=(tags.get("tourism") or "").lower()
+              if b:
+                  if b in {"residential","house"}: return "residential_house","R_HOUSE","residential","B",0.78,3,f"building={b}",False
+                  if b=="apartments": return "residential_apartments","R_APARTMENTS","residential","B",0.82,3,f"building={b}",False
+                  if b=="detached": return "residential_detached","R_DET","residential","B",0.84,3,f"building={b}",False
+                  if b=="semidetached_house": return "residential_semi_detached","R_SEMI","residential","B",0.84,3,f"building={b}",False
+                  if b=="terrace": return "residential_terrace","R_TERRACE","residential","B",0.84,3,f"building={b}",False
+                  if b=="bungalow": return "residential_bungalow","R_BUNGALOW","residential","B",0.84,3,f"building={b}",False
+                  if b in {"commercial","office"}: return "commercial_office","C_OFFICE","commercial","B",0.78,3,f"building={b}",False
+                  if b=="retail": return "commercial_retail","C_RETAIL","commercial","B",0.80,3,"building=retail",False
+                  if b=="industrial": return "industrial","I_INDUSTRIAL","industrial","B",0.82,3,"building=industrial",False
+                  if b=="warehouse": return "warehouse","I_WAREHOUSE","industrial","B",0.82,3,"building=warehouse",False
+                  if b=="hotel": return "hotel_or_hospitality","C_HOTEL","commercial","B",0.82,3,"building=hotel",False
+                  if b in {"church","cathedral","chapel"}: return "religious_or_community","P_RELIGIOUS","institutional","B",0.82,3,f"building={b}",False
+                  if b=="hospital": return "hospital_or_healthcare","P_HEALTHCARE","institutional","B",0.84,3,"building=hospital",False
+                  if b in {"school","college","university"}: return "education","P_EDUCATION","institutional","B",0.84,3,f"building={b}",False
+                  if b in {"civic","public"}: return "public_infrastructure","P_GOVERNMENT","institutional","B",0.78,3,f"building={b}",False
+              if a in {"school","college","university","kindergarten"}: return "education","P_EDUCATION","institutional","C",0.68,2,f"amenity={a}",True
+              if a in {"hospital","clinic","doctors","dentist"}: return "hospital_or_healthcare","P_HEALTHCARE","institutional","C",0.68,2,f"amenity={a}",True
+              if a=="place_of_worship": return "religious_or_community","P_RELIGIOUS","institutional","C",0.68,2,"amenity=place_of_worship",True
+              if a in {"fire_station","police","townhall","courthouse","post_office","library"}: return "public_infrastructure","P_GOVERNMENT","institutional","C",0.66,2,f"amenity={a}",True
+              if a=="community_centre": return "religious_or_community","P_COMMUNITY","institutional","C",0.62,2,"amenity=community_centre",True
+              if a in {"restaurant","cafe","pub","bar","fast_food"}: return "hotel_or_hospitality","C_HOSPITALITY","commercial","C",0.64,2,f"amenity={a}",True
+              if shop: return "commercial_retail","C_RETAIL","commercial","C",0.64,2,f"shop={shop}",True
+              if office: return "commercial_office","C_OFFICE","commercial","C",0.64,2,f"office={office}",True
+              if tourism in {"hotel","hostel","guest_house","motel"}: return "hotel_or_hospitality","C_HOTEL","commercial","C",0.66,2,f"tourism={tourism}",True
+              if tourism=="museum": return "public_infrastructure","P_CULTURAL","institutional","C",0.60,2,"tourism=museum",True
+              return None
+
+          candidates=[]
+          for el in data.get("elements") or []:
+              et=str(el.get("type") or "").strip(); oid=el.get("id")
+              if et not in {"node","way","relation"} or oid is None: continue
+              feature_id=f"ENG_OSM_{et}_{oid}"; parcel_id=feature_id; osm_id=f"{et}/{oid}"
+              if feature_id in processed or parcel_id in processed or osm_id in processed or str(oid) in processed: continue
+              tags=el.get("tags") or {}
+              cls=classify(tags)
+              if cls is None: continue
+              if et=="node": lat=el.get("lat"); lon=el.get("lon")
+              else:
+                  center=el.get("center") or {}; lat=center.get("lat"); lon=center.get("lon")
+              if lat is None or lon is None: continue
+              try: lat=float(lat); lon=float(lon)
+              except Exception: continue
+              if not (s <= lat <= n and w <= lon <= e): continue
+              candidates.append((0 if et=="way" else 1 if et=="relation" else 2, int(oid), et, oid, lat, lon, tags, cls))
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          if len(candidates)<50:
+              raise RuntimeError(f"Only {len(candidates)} new classifiable IDs after dedupe; need >=50")
+
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00","Z")
+          new_ids=[]; records=[]
+          batch_ed=Counter(); batch_cd=Counter(); batch_td=Counter()
+          for _,_,et,oid,lat,lon,tags,cls in candidates[:50]:
+              primary,code,category,evidence,score,level,match,review=cls
+              feature_id=f"ENG_OSM_{et}_{oid}"; parcel_id=feature_id; osm_id=f"{et}/{oid}"
+              evidence_tags={k:v for k,v in tags.items() if k in {"building","amenity","shop","office","tourism","name","addr:city","addr:postcode","addr:street"}}
+              excerpt=" | ".join([f"{k}={v}" for k,v in evidence_tags.items()]) or match
+              source_url=f"https://www.openstreetmap.org/{et}/{oid}"
+              src={"source_name":"OpenStreetMap via Overpass API","url":endpoint_used,"element_url":source_url,"source_hash":source_sha,"query_sha256":query_sha,"accessed_at":now,"licence":"ODbL 1.0","granularity":"osm_native_element_or_center_point","fields_used":["building","amenity","shop","office","tourism"],"supports_field":"building_type_primary","match_method":match,"match_score":score}
+              limitations="OSM tag classification; EPC/VOA/HMLR corroboration pending. Way/relation geometry represented by Overpass center point." if et!="node" else "OSM tag classification; EPC/VOA/HMLR corroboration pending; cadastral parcel binding not yet verified."
+              props={"parcel_id":parcel_id,"osm_id":osm_id,"slot_id":SLOT,"region":REGION,"area":BATCH_NAME,"local_authority":tags.get("addr:city") or tags.get("addr:district") or BATCH_NAME,"postcode":tags.get("addr:postcode") or "","building_type_primary":primary,"building_type_code":code,"building_category":category,"evidence_level":evidence,"confidence_score":score,"confidence_level_1_to_4":level,"source_count":1,"match_method":match,"source":"OpenStreetMap via Overpass API","source_url":source_url,"source_hash":source_sha,"osm_tags_summary":evidence_tags,"evidence_excerpt":excerpt,"source_evidence_excerpt":evidence_tags,"sources":[src],"geometry_match_method":"osm_native_point" if et=="node" else "overpass_center_point","address_match_method":"osm_addr_tags" if any(k.startswith("addr:") for k in tags) else "none","limitations":limitations,"needs_manual_review":review,"fake_data":False,"final_ready":False,"updated_at":now}
+              geom={"type":"Point","coordinates":[lon,lat]}
+              features.append({"type":"Feature","id":feature_id,"geometry":geom,"properties":props})
+              records.append({"feature_id":feature_id,"parcel_id":parcel_id,"osm_id":osm_id,"region":REGION,"batch":BATCH_NAME,"postcode":props["postcode"],"building_type_primary":primary,"building_type_code":code,"building_category":category,"confidence_score":score,"confidence_level_1_to_4":level,"evidence_level":evidence,"source":"OpenStreetMap via Overpass API","source_url":source_url,"source_hash":source_sha,"match_method":match,"evidence_excerpt":excerpt,"sources":[src],"limitations":limitations,"needs_manual_review":review,"fake_data":False,"final_ready":False,"geometry":geom})
+              new_ids.append(feature_id); batch_ed[evidence]+=1; batch_cd[str(level)]+=1; batch_td[primary]+=1
+
+          after=len(features)
+          assert after-before==50 and after>before
+          assert len(new_ids)==len(set(new_ids))==50 and not (set(new_ids)&processed)
+          all_ids=set();
+          for f in features:
+              p=f.get("properties") or {}
+              for v in (f.get("id"),p.get("parcel_id"),p.get("osm_id")):
+                  if v is not None and str(v).strip():
+                      key=("id",str(v).strip())
+                      if key in all_ids and str(v).strip() in new_ids: raise AssertionError("duplicate appended ID")
+                      all_ids.add(key)
+
+          shard["features"]=features
+          shard_text=json.dumps(shard,ensure_ascii=False,indent=2)+"\n"
+          shard_p.write_text(shard_text,encoding="utf-8")
+          out_sha=hashlib.sha256(shard_text.encode()).hexdigest()
+
+          classified=sum(1 for f in features if (f.get("properties") or {}).get("building_type_primary") not in (None,"","unknown"))
+          unknown=after-classified
+          ed=Counter((f.get("properties") or {}).get("evidence_level","U") for f in features)
+          td=Counter((f.get("properties") or {}).get("building_type_primary","unknown") for f in features)
+          cd=Counter(str((f.get("properties") or {}).get("confidence_level_1_to_4",1)) for f in features)
+
+          sources=list(manifest.get("sources") or [])
+          osm_found=False
+          for src in sources:
+              if "OpenStreetMap" in str(src.get("name","")) or "overpass" in str(src.get("url","")).lower():
+                  src.update({"name":"OpenStreetMap Overpass API","url":endpoint_used,"license":"ODbL 1.0","features_used":int(src.get("features_used",before))+50,"accessed_at":now,"last_batch_source_sha256":source_sha,"last_batch_query_sha256":query_sha}); osm_found=True; break
+          if not osm_found:
+              sources.append({"name":"OpenStreetMap Overpass API","url":endpoint_used,"license":"ODbL 1.0","features_used":50,"accessed_at":now,"last_batch_source_sha256":source_sha,"last_batch_query_sha256":query_sha})
+          manifest.update({"generated_at":now,"total_features":after,"classified":classified,"unknown":unknown,"evidence_distribution":dict(sorted(ed.items())),"type_distribution":dict(sorted(td.items())),"confidence_level_distribution":dict(sorted(cd.items())),"sources":sources,"fake_data":False,"final_ready":False,"note":f"Existing shard preserved; appended 50 {BATCH_NAME} OSM features outside all prior feature.id, parcel_id and osm_id values.","feature_count":after,"geojson_sha256":out_sha,"geojson_path":str(shard_p),"manifest_updated_at":now,"feature_count_before":before,"feature_count_after":after,"added_feature_count":50,"last_batch_index":EXPECTED_BATCH,"last_batch_city":BATCH_NAME,"last_batch_source":"OpenStreetMap via Overpass API","last_batch_source_sha256":source_sha,"last_batch_query_sha256":query_sha,"last_batch_evidence_distribution":dict(batch_ed),"last_batch_confidence_distribution":dict(batch_cd)})
+          manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          status.update({"state":"IN_PROGRESS","updated_at":now,"owner":None,"continuation_key":CONT,"final_ready":False,"fake_data":False,"classified_count":classified,"unknown_count":unknown,"total_elements":after,"total_features":after,"feature_count_before":before,"feature_count_after":after,"current_feature_count":after,"new_features_added":50,"new_feature_count":50,"progress_counted":True,"progress_count_delta":50,"next_batch_index":EXPECTED_BATCH+1,"next_target_feature_count":after+50,"confidence_distribution":{str(k):int(v) for k,v in sorted(cd.items())},"confidence_level_distribution":{str(k):int(v) for k,v in sorted(cd.items())},"evidence_distribution":dict(sorted(ed.items())),"output_sha256":out_sha,"blocker":None,"blocker_reason":None,"candidate_batch":None,"no_progress_reason":None,"last_batch_index":EXPECTED_BATCH,"last_batch_city":BATCH_NAME,"last_batch_added_feature_count":50,"last_batch_source":"OpenStreetMap via Overpass API","last_batch_evidence_distribution":dict(batch_ed),"last_batch_confidence_distribution":dict(batch_cd),"note":f"Batch {EXPECTED_BATCH} appended 50 new {BATCH_NAME} OSM features after feature.id/parcel_id/osm_id exclusion; same task retained and owner remains null.","last_batch":{"batch_index":EXPECTED_BATCH,"city":BATCH_NAME,"bbox":bbox,"added_feature_count":50,"source":"OpenStreetMap via Overpass API","source_endpoint":endpoint_used,"source_sha256":source_sha,"query_sha256":query_sha,"evidence_level_distribution":dict(batch_ed),"confidence_level_distribution":dict(batch_cd)}})
+          status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          checkpoint.update({"sequence":int(checkpoint.get("sequence",0))+1,"hydration_state":"REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED","remote_head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),"first_unverified_step_status":f"BATCH_{EXPECTED_BATCH}_APPENDED_50_OSM_READING_SLOUGH_WINDSOR","terminal_status":"IN_PROGRESS","updated_at":now,"final_ready":False,"state":"IN_PROGRESS","feature_count_before":before,"feature_count_after":after,"current_feature_count":after,"next_batch_index":EXPECTED_BATCH+1,"next_target_feature_count":after+50,"last_processed_ids_sample":new_ids[-20:],"already_processed_ids_policy":"Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.","attempted_new_city_batch":BATCH_NAME,"candidate_batch":None,"no_progress_reason":None,"blocker":None,"blocker_reason":None,"fake_data":False,"progress_counted":True,"next_required_action":"APPEND_ONLY_NEW_SOUTH_EAST_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION","source_access_evidence":{"overpass_api":f"Success via {endpoint_used}; raw response SHA256 {source_sha}; raw response not committed","batch_bbox":bbox,"query_sha256":query_sha,"safe_append":"GitHub Actions runner read and rewrote the complete canonical shard atomically after dedupe"},"summary":{"pilot_osm_classified":checkpoint.get("summary",{}).get("pilot_osm_classified",checkpoint.get("summary",{}).get("pilot_classified",429)),"migrated_to_9_slot":True,"current_feature_count":after,"new_features_added_this_attempt":50,"progress_counted":True,"note":f"PROGRESS: feature_count {before} -> {after}; 50 processed-ID-external OSM features appended from {BATCH_NAME}."},"remaining_items":{"osm_new_batch_pending":True,"epc_residential_classification_pending":True,"voa_non_domestic_classification_pending":True},"last_batch":{"batch_index":EXPECTED_BATCH,"city":BATCH_NAME,"bbox":bbox,"source":"OpenStreetMap via Overpass API","source_endpoint":endpoint_used,"source_sha256":source_sha,"query_sha256":query_sha,"added_feature_count":50,"new_feature_ids":new_ids,"evidence_level_distribution":dict(batch_ed),"confidence_level_distribution":dict(batch_cd)}})
+          checkpoint_p.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          task.update({"state":"IN_PROGRESS","status":"in_progress","panel_status":"DEVAM_EDIYOR","updated_at":now,"owner":None,"continuation_key":CONT,"final_ready":False,"fake_data":False,"source_head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),"last_batch":{"batch_index":EXPECTED_BATCH,"city":BATCH_NAME,"added_feature_count":50,"source":"OpenStreetMap via Overpass API"},"progress":{"completed_count":after,"target_count":after+50,"previous_percent":0.0,"current_percent":0.0,"percent_increase":0.0}})
+          task_p.write_text(json.dumps(task,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          runner_p.parent.mkdir(parents=True,exist_ok=True)
+          runner={"slot_id":SLOT,"task_id":TASK,"continuation_key":CONT,"generated_at":now,"feature_count_before":before,"feature_count_after":after,"added_feature_count":50,"batch_index":EXPECTED_BATCH,"batch_name":BATCH_NAME,"bbox":bbox,"source":"OpenStreetMap via Overpass API","source_endpoint":endpoint_used,"source_sha256":source_sha,"query_sha256":query_sha,"classification_method":"osm_tag_direct_or_premises_use_proxy","confidence_policy":{"direct_building_tag":{"evidence_level":"B","confidence_level_1_to_4":3},"amenity_shop_office_tourism_proxy":{"evidence_level":"C","confidence_level_1_to_4":2}},"already_processed_id_fields":["feature.id","properties.parcel_id","properties.osm_id"],"new_feature_ids":new_ids,"evidence_level_distribution":dict(batch_ed),"confidence_level_distribution":dict(batch_cd),"type_distribution":dict(batch_td),"records":records,"fake_data":False,"final_ready":False,"limitations":"OSM-only continuation batch; EPC/VOA/HMLR corroboration and cadastral parcel binding remain pending where noted."}
+          runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          print(json.dumps({"before":before,"after":after,"added":after-before,"batch":BATCH_NAME,"endpoint":endpoint_used,"evidence":dict(batch_ed),"confidence":dict(batch_cd)},indent=2))
+          PY
+
+      - name: Validate and push same-slot continuation commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_3_latest.geojson
+            england_map_web/data/building_type/shards/building_type_3_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
+          )
+          git add "${paths[@]}"
+          git diff --cached --quiet && { echo "No feature growth; refusing progress commit"; exit 1; }
+          git commit -m "data: append building_type_3 South East batch 7"
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git rebase origin/codex/aays-single-runner-v5-20260706; then
+              git rebase --abort || true
+              echo "Rebase conflict; another writer touched this slot. Refusing overwrite."
+              exit 1
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt*3))
+          done
+          echo "Push failed after 3 non-force attempts"
+          exit 1
