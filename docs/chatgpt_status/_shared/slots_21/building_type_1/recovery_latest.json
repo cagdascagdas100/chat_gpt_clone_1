@@ -1,0 +1,37 @@
+{
+  "schema_version": 3,
+  "slot_id": "building_type_1",
+  "state": "RECOVERY_READY",
+  "created_at": "2026-08-10T12:30:00Z",
+  "reason": "Slot has not increased beyond 300 features. status_latest contains an old owner value while current_task is READY/claimable. New ChatGPT pages must continue from checkpoint instead of waiting on the stale owner.",
+  "ignore_stale_owner": true,
+  "preserve_existing_features": true,
+  "required_min_new_features": 50,
+  "feature_count_before": 300,
+  "next_target_feature_count": 350,
+  "recovery_action": "Read existing shard, build already_processed_ids, then append only new London Inner features from unprocessed borough batches. Do not reprocess Westminster/Camden/Greenwich seed IDs. Prefer Islington, Hackney, Tower Hamlets, Southwark, Lambeth, Wandsworth, Kensington & Chelsea, Hammersmith & Fulham, City of London.",
+  "direct_batches": [
+    {
+      "batch_name": "Islington_Hackney",
+      "bbox_south_west_north_east": "51.5200,-0.1150,51.5650,-0.0200",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "TowerHamlets_Southwark",
+      "bbox_south_west_north_east": "51.4750,-0.1000,51.5350,-0.0005",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Lambeth_Wandsworth",
+      "bbox_south_west_north_east": "51.4200,-0.2500,51.5000,-0.1000",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    }
+  ],
+  "acceptance": [
+    "feature_count_after must be greater than feature_count_before",
+    "at least 50 new feature.id/parcel_id/osm_id values not in already_processed_ids",
+    "fake_data remains false",
+    "final_ready remains false unless commit push and remote readback are complete",
+    "report feature_count_before, feature_count_after and yeni_eklenen"
+  ]
+}

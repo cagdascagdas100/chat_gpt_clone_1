@@ -1,0 +1,44 @@
+{
+  "schema_version": 3,
+  "slot_id": "building_type_3",
+  "state": "RECOVERY_READY",
+  "created_at": "2026-08-10T12:30:00Z",
+  "reason": "Slot stopped at BLOCKED_NO_NEW_SOURCE_OR_BATCH because the previous ChatGPT execution environment could not retrieve a verifiable South East batch. New ChatGPT pages should retry with explicit public OSM/POI batches and append only real new IDs.",
+  "ignore_stale_owner": true,
+  "clear_blocker_when_new_features_added": true,
+  "preserve_existing_features": true,
+  "required_min_new_features": 50,
+  "feature_count_before": 300,
+  "next_target_feature_count": 350,
+  "recovery_action": "Read existing shard, build already_processed_ids, then retry batch 7 using explicit South East city batches. If Overpass is unavailable, use verified local POI/cache excerpts only. Do not fabricate rows. If no new source is available, keep BLOCKED_NO_NEW_SOURCE_OR_BATCH.",
+  "direct_batches": [
+    {
+      "batch_name": "Reading_Slough_Windsor",
+      "bbox_south_west_north_east": "51.3950,-1.0300,51.5500,-0.4500",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Brighton_Hove",
+      "bbox_south_west_north_east": "50.8000,-0.2500,50.8800,-0.0200",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Oxford_Abingdon",
+      "bbox_south_west_north_east": "51.7000,-1.3500,51.8200,-1.1500",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    },
+    {
+      "batch_name": "Guildford_Woking",
+      "bbox_south_west_north_east": "51.2000,-0.6500,51.3500,-0.4300",
+      "source": "OSM Overpass building/amenity/shop/office/tourism/landuse"
+    }
+  ],
+  "acceptance": [
+    "feature_count_after must be greater than feature_count_before",
+    "at least 50 new feature.id/parcel_id/osm_id values not in already_processed_ids",
+    "if new features are added, remove blocker or set blocker=null in status",
+    "fake_data remains false",
+    "final_ready remains false unless commit push and remote readback are complete",
+    "report feature_count_before, feature_count_after and yeni_eklenen"
+  ]
+}

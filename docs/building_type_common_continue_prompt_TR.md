@@ -27,6 +27,7 @@ Bu DEVAM promptu yeni boş ChatGPT sayfasında da geçerlidir. Önceki sohbet ge
    docs/chatgpt_status/_shared/slots_21/building_type_N/status_latest.json
    docs/chatgpt_status/_shared/slots_21/building_type_N/checkpoint_latest.json
    docs/chatgpt_status/_shared/slots_21/building_type_N/current_task_latest.json
+   docs/chatgpt_status/_shared/slots_21/building_type_N/recovery_latest.json (varsa önce bunu uygula)
 
 3. Son üretilen çıktılar:
    england_map_web/data/building_type/shards/building_type_N_latest.geojson
@@ -51,6 +52,7 @@ Bu DEVAM promptu yeni boş ChatGPT sayfasında da geçerlidir. Önceki sohbet ge
 8. Her devamda hedef: mevcut `feature_count` uzerine en az 50 yeni feature eklemek. Yeni kaynak yoksa dosyayi yeniden yazma; `BLOCKED_NO_NEW_SOURCE_OR_BATCH` raporu ver
 9. Basari sayilmasi icin `feature_count_after > feature_count_before` olmali; esit kalirsa bunu ilerleme diye raporlama
 10. Yeni sayfa kurtarma: mesaj limiti dolduğu için yeni sayfa açıldıysa aynı SLOT_ID ile mevcut `continuation_key` üzerinden devam et; checkpoint veya GeoJSON shard mevcutsa sıfırdan batch başlatma
+11. Eğer `recovery_latest.json` içinde `ignore_stale_owner=true` varsa eski owner kaydına takılma; yeni sayfada aynı SLOT_ID ve aynı continuation_key ile devam et
 
 ---
 
