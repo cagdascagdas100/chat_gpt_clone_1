@@ -1,0 +1,243 @@
+name: tmp building_type_7 Stratford-on-Avon batch 26
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_stratford_on_avon_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase and guard slot state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json").read_text())
+          task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json").read_text())
+          geo = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_latest.geojson").read_text())
+          manifest = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_manifest_latest.json").read_text())
+          assert cp.get("slot_id") == "building_type_7"
+          assert cp.get("current_feature_count") == 1250, cp
+          assert cp.get("feature_count_after") == 1250, cp
+          assert cp.get("next_batch_index") == 26, cp
+          assert cp.get("next_target_feature_count") == 1300, cp
+          assert cp.get("fake_data") is False and cp.get("final_ready") is False
+          assert len(geo.get("features") or []) == 1250
+          assert manifest.get("total_features", manifest.get("feature_count")) == 1250
+          assert task.get("task_id") == "building-type-7-england-classification-v1-20260808"
+          assert task.get("slot_id") == "building_type_7"
+          assert task.get("owner") is None, task.get("owner")
+          assert task.get("fake_data") is False and task.get("final_ready") is False
+          assert not any("stratford-on-avon" in str(s.get("name", "")).lower() or s.get("url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS320en-GB.xml" for s in manifest.get("sources", []) if isinstance(s, dict)), "Stratford-on-Avon already used"
+          PY
+
+      - name: Fetch official Stratford-on-Avon FHRS XML to runtime cache only
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_URL="https://ratings.food.gov.uk/api/open-data-files/FHRS320en-GB.xml"
+          printf '%s\n' "$SOURCE_URL" > /tmp/stratford_on_avon_source_url.txt
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --retry-all-errors "$SOURCE_URL" -o /tmp/stratford_on_avon_fhrs.xml
+          test -s /tmp/stratford_on_avon_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root=ET.parse('/tmp/stratford_on_avon_fhrs.xml').getroot()
+          vals=[]
+          for e in root.iter():
+              if e.tag.rsplit('}',1)[-1] == 'LocalAuthorityName' and e.text:
+                  vals.append(e.text.strip())
+                  if len(vals) >= 300: break
+          assert any('stratford-on-avon' == v.lower() for v in vals), set(vals)
+          PY
+          sha256sum /tmp/stratford_on_avon_fhrs.xml
+
+      - name: Append exactly 50 new Stratford-on-Avon proxy features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 65caa2bdd57dc126a556ece2a3e686a7b00d6c18:.github/workflows/tmp_building_type_7_north_warwickshire_20260810.yml > /tmp/nwar_template.yml
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          text = Path('/tmp/nwar_template.yml').read_text()
+          marker = '      - name: Append exactly 50 new North Warwickshire proxy features\n'
+          assert marker in text
+          section = text.split(marker, 1)[1]
+          start = section.index("          python - <<'PY'\n") + len("          python - <<'PY'\n")
+          rest = section[start:]
+          end = rest.index("\n          PY\n")
+          body = textwrap.dedent(rest[:end])
+          exact = {
+              'CITY = "North Warwickshire"': 'CITY = "Stratford-on-Avon"',
+              'PREFIX = "NWAR"': 'PREFIX = "STAV"',
+              'SOURCE = "Food Standards Agency FHRS daily open data - North Warwickshire"': 'SOURCE = "Food Standards Agency FHRS daily open data - Stratford-on-Avon"',
+              'SOURCE_URL = pathlib.Path("/tmp/north_warwickshire_source_url.txt").read_text(encoding="utf-8").strip()': 'SOURCE_URL = pathlib.Path("/tmp/stratford_on_avon_source_url.txt").read_text(encoding="utf-8").strip()',
+              'EXPECTED_BEFORE = 1200': 'EXPECTED_BEFORE = 1250',
+              'EXPECTED_BATCH = 25': 'EXPECTED_BATCH = 26',
+              'EXPECTED_TARGET = 1250': 'EXPECTED_TARGET = 1300',
+              'xml_path = pathlib.Path("/tmp/north_warwickshire_fhrs.xml")': 'xml_path = pathlib.Path("/tmp/stratford_on_avon_fhrs.xml")',
+          }
+          for old, new in exact.items():
+              assert old in body, old
+              body = body.replace(old, new)
+          body = body.replace('North Warwickshire', 'Stratford-on-Avon')
+          assert 'North Warwickshire' not in body
+          assert 'north_warwickshire' not in body
+          assert 'EXPECTED_BEFORE = 1250' in body and 'EXPECTED_TARGET = 1300' in body and 'EXPECTED_BATCH = 26' in body
+          assert 'p.get("feature_id")' in body and 'p.get("parcel_id")' in body and 'p.get("osm_id")' in body
+          assert '"evidence_excerpt": excerpt' in body
+          assert '"evidence_level": "D"' in body
+          assert '"confidence_level_1_to_4": 2' in body
+          Path('/tmp/stratford_on_avon_append.py').write_text(body)
+          compile(body, '/tmp/stratford_on_avon_append.py', 'exec')
+          PY
+          python /tmp/stratford_on_avon_append.py
+
+      - name: Validate guarded append and exact write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          assert len(geo.get('features') or []) == 1300
+          assert manifest.get('feature_count_before') == 1250 and manifest.get('feature_count_after') == 1300 and manifest.get('added_feature_count') == 50
+          assert runner.get('feature_count_before') == 1250 and runner.get('feature_count_after') == 1300 and runner.get('added_feature_count') == 50
+          assert runner.get('city') == 'Stratford-on-Avon'
+          assert runner.get('source_url') == 'https://ratings.food.gov.uk/api/open-data-files/FHRS320en-GB.xml'
+          assert len(runner.get('records') or []) == 50 and len(runner.get('selected_feature_ids') or []) == 50
+          assert len(set(runner['selected_feature_ids'])) == 50
+          assert all(x.startswith('STAV_FHRS_') for x in runner['selected_feature_ids'])
+          assert all(r.get('evidence_excerpt') for r in runner['records'])
+          assert all(r.get('source_hash') and r.get('source_url') == runner['source_url'] for r in runner['records'])
+          assert all(r.get('evidence_level') == 'D' and r.get('confidence_level_1_to_4') == 2 for r in runner['records'])
+          assert all(r.get('fake_data') is False and r.get('final_ready') is False for r in runner['records'])
+          assert cp.get('current_feature_count') == 1300 and cp.get('next_batch_index') == 27 and cp.get('next_target_feature_count') == 1350
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          ids=[]; parcels=[]
+          for f in geo['features']:
+              p=f.get('properties') or {}
+              if f.get('id') is not None: ids.append(str(f['id']))
+              if p.get('parcel_id') is not None: parcels.append(str(p['parcel_id']))
+          assert len(ids) == len(set(ids)), 'duplicate feature.id'
+          assert len(parcels) == len(set(parcels)), 'duplicate parcel_id'
+          PY
+          expected="$(printf '%s\n' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json' \
+            'docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json' \
+            'england_map_web/data/building_type/shards/building_type_7_latest.geojson' \
+            'england_map_web/data/building_type/shards/building_type_7_manifest_latest.json' | sort)"
+          actual="$(git status --porcelain | sed -E 's/^.. //' | sort)"
+          printf '%s\n' "$actual"
+          test "$actual" = "$expected"
+
+      - name: Pre-push remote slot guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/remote_before_cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/remote_before_task.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_before_cp.json'))
+          task=json.load(open('/tmp/remote_before_task.json'))
+          assert cp.get('current_feature_count') == 1250 and cp.get('next_batch_index') == 26 and cp.get('next_target_feature_count') == 1300, cp
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False, task
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git add -- "${paths[@]}"
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "data(building_type_7): append Stratford-on-Avon FHRS batch 1250->1300"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/loop_cp.json
+            git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/loop_task.json
+            python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/loop_cp.json'))
+          task=json.load(open('/tmp/loop_task.json'))
+          assert cp.get('current_feature_count') == 1250 and cp.get('next_batch_index') == 26 and cp.get('next_target_feature_count') == 1300, cp
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False, task
+          PY
+            if ! git rebase origin/codex/aays-single-runner-v5-20260706; then
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def load(path):
+              return json.loads(subprocess.check_output(['git','show',f'{branch}:{path}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard.get('features') or []) == 1300
+          assert manifest.get('feature_count_before') == 1250 and manifest.get('feature_count_after') == 1300 and manifest.get('added_feature_count') == 50 and manifest.get('last_batch_city') == 'Stratford-on-Avon'
+          assert runner.get('feature_count_after') == 1300 and runner.get('added_feature_count') == 50 and runner.get('city') == 'Stratford-on-Avon'
+          assert runner.get('source_url') == 'https://ratings.food.gov.uk/api/open-data-files/FHRS320en-GB.xml'
+          assert cp.get('current_feature_count') == 1300 and cp.get('next_batch_index') == 27 and cp.get('next_target_feature_count') == 1350
+          assert status.get('current_feature_count') == 1300 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          print('remote_readback_ok')
+          PY
+          git log -1 --format='%H %s' origin/codex/aays-single-runner-v5-20260706 -- england_map_web/data/building_type/shards/building_type_7_latest.geojson
