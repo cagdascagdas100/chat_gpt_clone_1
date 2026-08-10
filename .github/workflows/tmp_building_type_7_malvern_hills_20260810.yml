@@ -1,0 +1,213 @@
+name: tmp building_type_7 Malvern Hills batch 19
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_malvern_hills_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase to current canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Discover Malvern Hills FHRS source and cache runtime files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --retry-delay 2 --output /tmp/fsa_open_data.html https://ratings.food.gov.uk/open-data
+          python - <<'PY'
+          import html
+          import pathlib
+          import re
+          from urllib.parse import urljoin, urlparse
+          source_page = "https://ratings.food.gov.uk/open-data"
+          raw = pathlib.Path("/tmp/fsa_open_data.html").read_text(encoding="utf-8", errors="replace")
+          candidates = []
+          for row in re.findall(r"<tr\b.*?</tr>", raw, flags=re.I | re.S):
+              plain = html.unescape(re.sub(r"<[^>]+>", " ", row))
+              plain = re.sub(r"\s+", " ", plain).strip()
+              if not re.search(r"\bMalvern Hills\b", plain, flags=re.I):
+                  continue
+              for href in re.findall(r"href\s*=\s*[\"']([^\"']+)[\"']", row, flags=re.I):
+                  if "open-data-files" in href and href.lower().endswith(".xml"):
+                      candidates.append(urljoin(source_page, html.unescape(href)))
+          candidates = list(dict.fromkeys(candidates))
+          if len(candidates) != 1:
+              raise SystemExit(f"expected exactly one Malvern Hills XML source, got {candidates}")
+          source_url = candidates[0]
+          parsed = urlparse(source_url)
+          if parsed.scheme != "https" or parsed.netloc != "ratings.food.gov.uk" or "/api/open-data-files/" not in parsed.path or not parsed.path.lower().endswith(".xml"):
+              raise SystemExit(f"unexpected source URL: {source_url}")
+          if not parsed.path.endswith("/FHRS148en-GB.xml"):
+              raise SystemExit(f"Malvern Hills endpoint changed unexpectedly: {source_url}")
+          pathlib.Path("/tmp/malvern_hills_source_url.txt").write_text(source_url + "\n", encoding="utf-8")
+          print(source_url)
+          PY
+          SOURCE_URL="$(cat /tmp/malvern_hills_source_url.txt)"
+          curl --fail --location --retry 2 --retry-delay 2 --output /tmp/malvern_hills_fhrs.xml "$SOURCE_URL"
+          test -s /tmp/malvern_hills_fhrs.xml
+
+      - name: Append exactly 50 new Malvern Hills proxy features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show f40bd338e275c125ee557738eff9357db9cf6038:.github/workflows/tmp_building_type_7_redditch_20260810.yml > /tmp/redditch_template.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/redditch_template.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          starts = []
+          pos = 0
+          while True:
+              i = text.find(marker, pos)
+              if i < 0:
+                  break
+              starts.append(i)
+              pos = i + len(marker)
+          if len(starts) < 2:
+              raise SystemExit(f"historical template has only {len(starts)} embedded python blocks")
+          start = starts[1] + len(marker)
+          end = text.index("\n          PY", start)
+          lines = text[start:end].splitlines()
+          body = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
+          replacements = [
+              ('CITY = "Redditch"', 'CITY = "Malvern Hills"'),
+              ('PREFIX = "RDD"', 'PREFIX = "MALV"'),
+              ('SOURCE = "Food Standards Agency FHRS daily open data - Redditch"', 'SOURCE = "Food Standards Agency FHRS daily open data - Malvern Hills"'),
+              ('/tmp/redditch_source_url.txt', '/tmp/malvern_hills_source_url.txt'),
+              ('/tmp/redditch_fhrs.xml', '/tmp/malvern_hills_fhrs.xml'),
+              ('EXPECTED_BEFORE = 850', 'EXPECTED_BEFORE = 900'),
+              ('EXPECTED_BATCH = 18', 'EXPECTED_BATCH = 19'),
+              ('EXPECTED_TARGET = 900', 'EXPECTED_TARGET = 950'),
+              ('REDDITCH', 'MALVERN_HILLS'),
+              ('Redditch', 'Malvern Hills'),
+          ]
+          for old, new in replacements:
+              body = body.replace(old, new)
+          required = [
+              'CITY = "Malvern Hills"',
+              'PREFIX = "MALV"',
+              'EXPECTED_BEFORE = 900',
+              'EXPECTED_BATCH = 19',
+              'EXPECTED_TARGET = 950',
+              '/tmp/malvern_hills_source_url.txt',
+              '/tmp/malvern_hills_fhrs.xml',
+              'for value in (f.get("id"), p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")):',
+              'evidence_excerpt',
+              'evidence_level',
+              'confidence_level_1_to_4',
+          ]
+          missing = [token for token in required if token not in body]
+          assert not missing, f"patched body missing required tokens: {missing}"
+          assert 'Redditch' not in body and 'REDDITCH' not in body and '/tmp/redditch_' not in body
+          exec(compile(body, '<malvern_hills_append>', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          shard = json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text(encoding='utf-8'))
+          manifest = json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text(encoding='utf-8'))
+          runner = json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json').read_text(encoding='utf-8'))
+          status = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text(encoding='utf-8'))
+          checkpoint = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text(encoding='utf-8'))
+          task = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text(encoding='utf-8'))
+          assert len(shard['features']) == 950
+          assert manifest['feature_count_before'] == 900 and manifest['feature_count_after'] == 950 and manifest['added_feature_count'] == 50
+          assert checkpoint['feature_count_before'] == 900 and checkpoint['feature_count_after'] == 950 and checkpoint['current_feature_count'] == 950
+          assert checkpoint['next_batch_index'] == 20 and checkpoint['next_target_feature_count'] == 1000
+          assert runner['feature_count_before'] == 900 and runner['feature_count_after'] == 950 and runner['added_feature_count'] == 50
+          assert status['feature_count_before'] == 900 and status['feature_count_after'] == 950 and status['current_feature_count'] == 950
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          assert manifest['fake_data'] is False and manifest['final_ready'] is False
+          assert checkpoint['fake_data'] is False and checkpoint['final_ready'] is False
+          assert runner['city'] == 'Malvern Hills'
+          assert runner['source_url'] == 'https://ratings.food.gov.uk/api/open-data-files/FHRS148en-GB.xml'
+          batch = [f for f in shard['features'] if str(f.get('id') or '').startswith('MALV_FHRS_')]
+          assert len(batch) == 50, len(batch)
+          seen_ids = set()
+          seen_parcels = set()
+          for f in batch:
+              p = f.get('properties') or {}
+              assert f['id'] not in seen_ids; seen_ids.add(f['id'])
+              assert p.get('parcel_id') not in seen_parcels; seen_parcels.add(p.get('parcel_id'))
+              assert p.get('evidence_excerpt')
+              assert p.get('evidence_level') == 'D'
+              assert p.get('confidence_level_1_to_4') == 2
+              assert p.get('fake_data') is False
+              assert p.get('final_ready') is False
+          print('validated Malvern Hills 900->950; 50 new D/confidence-2 features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git add -- "${files[@]}"
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "data(building_type_7): append Malvern Hills FHRS batch 900->950"
+          pushed=0
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then
+              git rebase origin/codex/aays-single-runner-v5-20260706
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+          done
+          test "$pushed" -eq 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{ref}:{path}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard['features']) == 950
+          assert manifest['feature_count_after'] == 950 and manifest['added_feature_count'] == 50
+          assert checkpoint['current_feature_count'] == 950 and checkpoint['next_target_feature_count'] == 1000
+          assert runner['city'] == 'Malvern Hills' and len(runner['selected_feature_ids']) == 50
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          print('remote readback verified: building_type_7=950')
+          PY
