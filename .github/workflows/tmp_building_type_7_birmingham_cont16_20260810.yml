@@ -1,0 +1,252 @@
+name: tmp building_type_7 Birmingham continuation batch 48
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_birmingham_cont16_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Guard fresh slot state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          assert cp.get('slot_id') == 'building_type_7'
+          assert cp.get('current_feature_count') == 2350, cp
+          assert cp.get('feature_count_after') == 2350, cp
+          assert cp.get('next_batch_index') == 48, cp
+          assert cp.get('next_target_feature_count') == 2400, cp
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert len(geo.get('features') or []) == 2350
+          assert manifest.get('total_features', manifest.get('feature_count')) == 2350
+          assert task.get('task_id') == 'building-type-7-england-classification-v1-20260808'
+          assert task.get('slot_id') == 'building_type_7'
+          assert task.get('owner') is None, task.get('owner')
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+          src='https://ratings.food.gov.uk/api/open-data-files/FHRS402en-GB.xml'
+          assert any(isinstance(s,dict) and s.get('url') == src for s in manifest.get('sources',[]))
+          name='Food Standards Agency FHRS daily open data - Birmingham continuation batch 16'
+          assert not any(isinstance(s,dict) and s.get('name') == name for s in manifest.get('sources',[])), 'continuation batch 16 already recorded'
+          PY
+          : > /tmp/base_slot_hashes.txt
+          for p in \
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json; do
+            printf '%s %s\n' "$p" "$(git rev-parse HEAD:"$p")" >> /tmp/base_slot_hashes.txt
+          done
+
+      - name: Fetch official Birmingham FHRS XML to runtime cache only
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_URL='https://ratings.food.gov.uk/api/open-data-files/FHRS402en-GB.xml'
+          printf '%s\n' "$SOURCE_URL" > /tmp/birmingham_cont16_source_url.txt
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --retry-all-errors "$SOURCE_URL" -o /tmp/birmingham_cont16_fhrs.xml
+          test -s /tmp/birmingham_cont16_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root=ET.parse('/tmp/birmingham_cont16_fhrs.xml').getroot()
+          vals=[]
+          for e in root.iter():
+              if e.tag.rsplit('}',1)[-1] == 'LocalAuthorityName' and e.text:
+                  vals.append(e.text.strip())
+          assert any(v.casefold() == 'birmingham' for v in vals), sorted(set(vals))[:20]
+          PY
+          sha256sum /tmp/birmingham_cont16_fhrs.xml
+
+      - name: Append exactly 50 new Birmingham proxy features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 65caa2bdd57dc126a556ece2a3e686a7b00d6c18:.github/workflows/tmp_building_type_7_north_warwickshire_20260810.yml > /tmp/nwar_template.yml
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          text=Path('/tmp/nwar_template.yml').read_text()
+          marker='      - name: Append exactly 50 new North Warwickshire proxy features\n'
+          assert marker in text
+          section=text.split(marker,1)[1]
+          start=section.index("          python - <<'PY'\n") + len("          python - <<'PY'\n")
+          rest=section[start:]
+          end=rest.index("\n          PY\n")
+          body=textwrap.dedent(rest[:end])
+          exact={
+              'CITY = "North Warwickshire"':'CITY = "Birmingham"',
+              'PREFIX = "NWAR"':'PREFIX = "BIRM"',
+              'SOURCE = "Food Standards Agency FHRS daily open data - North Warwickshire"':'SOURCE = "Food Standards Agency FHRS daily open data - Birmingham continuation batch 16"',
+              'SOURCE_URL = pathlib.Path("/tmp/north_warwickshire_source_url.txt").read_text(encoding="utf-8").strip()':'SOURCE_URL = pathlib.Path("/tmp/birmingham_cont16_source_url.txt").read_text(encoding="utf-8").strip()',
+              'EXPECTED_BEFORE = 1200':'EXPECTED_BEFORE = 2350',
+              'EXPECTED_BATCH = 25':'EXPECTED_BATCH = 48',
+              'EXPECTED_TARGET = 1250':'EXPECTED_TARGET = 2400',
+              'xml_path = pathlib.Path("/tmp/north_warwickshire_fhrs.xml")':'xml_path = pathlib.Path("/tmp/birmingham_cont16_fhrs.xml")',
+              'BATCH_APPENDED_50_NORTH_WARWICKSHIRE_FHRS_CONTINUATION_REQUIRED':'BATCH_APPENDED_50_BIRMINGHAM_FHRS_CONTINUATION_16_REQUIRED',
+          }
+          for old,new in exact.items():
+              assert old in body, old
+              body=body.replace(old,new)
+          body=body.replace('North Warwickshire','Birmingham')
+          old_assert='assert not any(s.get("url") == SOURCE_URL for s in sources), "Birmingham source already recorded"'
+          assert old_assert in body, 'source uniqueness assertion shape changed'
+          body=body.replace(old_assert, 'assert not any(s.get("name") == SOURCE for s in sources), "Birmingham continuation batch 16 already recorded"')
+          assert 'North Warwickshire' not in body and 'north_warwickshire' not in body
+          assert 'EXPECTED_BEFORE = 2350' in body and 'EXPECTED_TARGET = 2400' in body and 'EXPECTED_BATCH = 48' in body
+          assert 'p.get("feature_id")' in body and 'p.get("parcel_id")' in body and 'p.get("osm_id")' in body
+          assert '"evidence_excerpt": excerpt' in body
+          assert '"evidence_level": "D"' in body
+          assert '"confidence_level_1_to_4": 2' in body
+          Path('/tmp/birmingham_cont16_append.py').write_text(body)
+          compile(body,'/tmp/birmingham_cont16_append.py','exec')
+          PY
+          python /tmp/birmingham_cont16_append.py
+
+      - name: Validate append and processed IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          source_url=Path('/tmp/birmingham_cont16_source_url.txt').read_text().strip()
+          feats=geo.get('features') or []
+          assert len(feats) == 2400
+          assert manifest.get('feature_count_before') == 2350 and manifest.get('feature_count_after') == 2400 and manifest.get('added_feature_count') == 50
+          assert runner.get('feature_count_before') == 2350 and runner.get('feature_count_after') == 2400 and runner.get('added_feature_count') == 50
+          assert runner.get('city') == 'Birmingham'
+          assert runner.get('source') == 'Food Standards Agency FHRS daily open data - Birmingham continuation batch 16'
+          assert runner.get('source_url') == source_url
+          assert len(runner.get('records') or []) == 50 and len(runner.get('selected_feature_ids') or []) == 50
+          assert len(set(runner['selected_feature_ids'])) == 50
+          assert all(r.get('evidence_excerpt') for r in runner['records'])
+          assert all(r.get('source_hash') and r.get('source_url') == source_url for r in runner['records'])
+          assert all(r.get('evidence_level') == 'D' and r.get('confidence_level_1_to_4') == 2 for r in runner['records'])
+          assert all(r.get('fake_data') is False and r.get('final_ready') is False for r in runner['records'])
+          assert cp.get('current_feature_count') == 2400 and cp.get('next_batch_index') == 49 and cp.get('next_target_feature_count') == 2450
+          assert cp.get('first_unverified_step_status') == 'BATCH_APPENDED_50_BIRMINGHAM_FHRS_CONTINUATION_16_REQUIRED'
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert status.get('current_feature_count') == 2400 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          existing=set()
+          for f in feats[:2350]:
+              p=f.get('properties') or {}
+              for v in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v is not None and str(v).strip(): existing.add(str(v).strip())
+          new=feats[2350:]
+          assert len(new) == 50
+          fids=[]; parcels=[]; osms=[]
+          for f in new:
+              p=f.get('properties') or {}
+              fid=str(f.get('id') or '').strip(); pfid=str(p.get('feature_id') or '').strip()
+              parcel=str(p.get('parcel_id') or '').strip(); osm=str(p.get('osm_id') or '').strip()
+              assert fid and fid.startswith('BIRM_FHRS_') and pfid == fid
+              assert parcel and parcel.startswith('BIRM_FHRSID_')
+              assert fid not in existing and parcel not in existing
+              if osm:
+                  assert osm not in existing
+                  osms.append(osm)
+              fids.append(fid); parcels.append(parcel)
+          assert len(set(fids)) == 50 and len(set(parcels)) == 50 and len(set(osms)) == len(osms)
+          assert set(fids) == set(runner['selected_feature_ids'])
+          srcs=[s for s in manifest.get('sources',[]) if isinstance(s,dict) and s.get('name') == 'Food Standards Agency FHRS daily open data - Birmingham continuation batch 16']
+          assert len(srcs) == 1 and srcs[0].get('features_used') == 50 and srcs[0].get('url') == source_url
+          PY
+          expected="$(printf '%s\n' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json' \
+            'docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json' \
+            'england_map_web/data/building_type/shards/building_type_7_latest.geojson' \
+            'england_map_web/data/building_type/shards/building_type_7_manifest_latest.json' | sort)"
+          actual="$(git status --porcelain | sed -E 's/^.. //' | sort)"
+          printf '%s\n' "$actual"
+          test "$actual" = "$expected"
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git add -- "${paths[@]}"
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "data(building_type_7): append Birmingham FHRS continuation batch 2350->2400"
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/remote_before_cp.json
+            git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/remote_before_task.json
+            python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_before_cp.json')); task=json.load(open('/tmp/remote_before_task.json'))
+          assert cp.get('current_feature_count') == 2350 and cp.get('next_batch_index') == 48 and cp.get('next_target_feature_count') == 2400, cp
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False, task
+          PY
+            while read -r p oldsha; do
+              newsha="$(git rev-parse origin/codex/aays-single-runner-v5-20260706:"$p")"
+              test "$newsha" = "$oldsha" || { echo "same-slot collision: $p"; exit 1; }
+            done < /tmp/base_slot_hashes.txt
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+          done
+          test "$pushed" -eq 1
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/remote_after_cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/remote_after_task.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json > /tmp/remote_after_runner.json
+          git show origin/codex/aays-single-runner-v5-20260706:england_map_web/data/building_type/shards/building_type_7_manifest_latest.json > /tmp/remote_after_manifest.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_after_cp.json')); task=json.load(open('/tmp/remote_after_task.json'))
+          runner=json.load(open('/tmp/remote_after_runner.json')); manifest=json.load(open('/tmp/remote_after_manifest.json'))
+          assert cp.get('current_feature_count') == 2400 and cp.get('feature_count_before') == 2350 and cp.get('feature_count_after') == 2400
+          assert cp.get('next_batch_index') == 49 and cp.get('next_target_feature_count') == 2450
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          assert runner.get('feature_count_before') == 2350 and runner.get('feature_count_after') == 2400 and runner.get('added_feature_count') == 50
+          assert runner.get('source') == 'Food Standards Agency FHRS daily open data - Birmingham continuation batch 16'
+          assert len(runner.get('records') or []) == 50
+          assert all(r.get('evidence_excerpt') and r.get('evidence_level') == 'D' and r.get('confidence_level_1_to_4') == 2 for r in runner['records'])
+          src=[s for s in manifest.get('sources',[]) if isinstance(s,dict) and s.get('name') == 'Food Standards Agency FHRS daily open data - Birmingham continuation batch 16']
+          assert len(src) == 1 and src[0].get('features_used') == 50
+          PY
