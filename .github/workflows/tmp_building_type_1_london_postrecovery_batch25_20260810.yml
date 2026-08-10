@@ -71,7 +71,7 @@ jobs:
               raw=None; ep_used=None; errors=[]
               for ep in endpoints:
                   try:
-                      req=urllib.request.Request(ep,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_1/17.0'})
+                      req=urllib.request.Request(ep,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_1/17.1'})
                       with urllib.request.urlopen(req,timeout=95) as r: raw=r.read()
                       ep_used=ep; break
                   except Exception as ex:
@@ -102,7 +102,7 @@ jobs:
               assert p.get('fake_data') is False and p.get('final_ready') is False
               assert p.get('evidence_excerpt') and p.get('evidence_level')=='B' and p.get('confidence_level_1_to_4')==3
               assert p.get('source_url') and p.get('source_hash') and p.get('match_method') and p.get('sources')
-          fc['features'].extend(added); after=len(fc['features']); assert after==2160 and after>before and after-before==TARGET_NEW, (before,after)
+          fc['features'].extend(added); after=len(fc['features']); assert after==2160 and after>before and after-before==TARGET_NEW
           ids=[str(f.get('id')) for f in fc['features'] if f.get('id') is not None]; assert len(ids)==len(set(ids))
           shard.write_text(json.dumps(fc,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
           output_sha=hashlib.sha256(shard.read_bytes()).hexdigest()
@@ -129,19 +129,23 @@ jobs:
           CP='docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'
           TASK='docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json'
           START_BLOB="$(cat /tmp/building_type_1_start_blob)"
-          git fetch origin "$BR"
-          REMOTE_BLOB="$(git rev-parse "origin/${BR}:${SHARD}")"
-          test "$REMOTE_BLOB" = "$START_BLOB" || { echo 'same-slot shard changed before commit'; exit 31; }
           git config user.name 'aays-building-type-1-bot'
           git config user.email 'actions@users.noreply.github.com'
+          git fetch origin "$BR"
+          test "$(git rev-parse "origin/${BR}:${SHARD}")" = "$START_BLOB" || { echo 'same-slot shard changed before commit'; exit 31; }
           git add "$SHARD" "$MAN" "$RUNNER" "$STATUS" "$CP" "$TASK"
           test -n "$(git diff --cached --name-only)" || { echo 'no business changes'; exit 32; }
           git commit -m 'Append building_type_1 London post-recovery batch 25'
-          git fetch origin "$BR"
-          REMOTE_BLOB2="$(git rev-parse "origin/${BR}:${SHARD}")"
-          test "$REMOTE_BLOB2" = "$START_BLOB" || { echo 'same-slot shard changed before rebase'; exit 33; }
-          git rebase "origin/${BR}"
-          git push origin "HEAD:${BR}"
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BR"
+            test "$(git rev-parse "origin/${BR}:${SHARD}")" = "$START_BLOB" || { echo 'same-slot shard changed during publish'; exit 33; }
+            git rebase "origin/${BR}"
+            if git push origin "HEAD:${BR}"; then pushed=1; break; fi
+            echo "non-fast-forward publish retry ${attempt}"
+            sleep 2
+          done
+          test "$pushed" = 1 || { echo 'publish retries exhausted'; exit 34; }
           git fetch origin "$BR"
           REMOTE_HEAD="$(git rev-parse "origin/${BR}")"; LOCAL_HEAD="$(git rev-parse HEAD)"; test "$REMOTE_HEAD" = "$LOCAL_HEAD"
           TMP="$(mktemp -d)"
@@ -157,8 +161,7 @@ jobs:
           assert cp.get('fake_data') is False and cp.get('final_ready') is False
           assert st.get('feature_count_after')==2160 and st.get('new_features_added')==60 and st.get('fake_data') is False and st.get('final_ready') is False
           assert r.get('feature_count_before')==2100 and r.get('feature_count_after')==2160 and r.get('new_features_added')==60 and r.get('fake_data') is False and r.get('final_ready') is False
-          last=fc.get('features',[])[-60:]; assert len(last)==60
-          for f in last:
+          for f in fc.get('features',[])[-60:]:
               q=f.get('properties') or {}
               assert q.get('fake_data') is False and q.get('final_ready') is False
               assert q.get('evidence_level')=='B' and q.get('confidence_level_1_to_4')==3
