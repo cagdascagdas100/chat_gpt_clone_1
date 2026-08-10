@@ -75,6 +75,7 @@ jobs:
           set -euo pipefail
           git show 8621d29652a7387561bc123e4792aaeb14c4c366:.github/workflows/tmp_building_type_7_worcester_20260810.yml > /tmp/worcester_template.yml
           python - <<'PY'
+          import json
           from pathlib import Path
           text = Path('/tmp/worcester_template.yml').read_text(encoding='utf-8')
           marker = "          python - <<'PY'\n"
@@ -102,6 +103,12 @@ jobs:
           for old, new in replacements:
               if old in body:
                   body = body.replace(old, new)
+
+          old_guard = 'assert not any(s.get("url") == SOURCE_URL for s in sources), "Barking and Dagenham source already recorded"'
+          new_guard = 'assert any(s.get("url") == SOURCE_URL for s in sources), "expected prior Barking and Dagenham source for continuation batch"'
+          assert old_guard in body, 'generic duplicate-source guard not found'
+          body = body.replace(old_guard, new_guard, 1)
+
           required = [
               'SLOT = "building_type_2"', 'CITY = "Barking and Dagenham"', 'PREFIX = "BARKING_DAGENHAM"',
               'building-type-2-england-classification-v1-20260808',
@@ -110,6 +117,7 @@ jobs:
               '/tmp/barking_dagenham_fhrs.xml', '"region": "London Outer"',
               'for value in (f.get("id"), p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")):',
               'evidence_excerpt', 'evidence_level', 'confidence_level_1_to_4', 'source_hash', 'fake_data', 'final_ready',
+              'expected prior Barking and Dagenham source for continuation batch',
           ]
           missing = [token for token in required if token not in body]
           assert not missing, f'patched template missing required tokens: {missing}'
@@ -117,6 +125,33 @@ jobs:
           leaked = [token for token in forbidden if token in body]
           assert not leaked, f'patched template leaked old tokens: {leaked}'
           exec(compile(body, '<building_type_2_barking_dagenham_batch29>', 'exec'), {'__name__': '__main__'})
+
+          manifest_path = Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          source_url = Path('/tmp/barking_dagenham_source_url.txt').read_text(encoding='utf-8').strip()
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          sources = manifest.get('sources') or []
+          matches = [s for s in sources if s.get('url') == source_url]
+          assert len(matches) == 2, f'expected prior+current source entries before aggregation, got {len(matches)}'
+          keeper = matches[0]
+          latest = matches[-1]
+          keeper['features_used'] = sum(int(s.get('features_used') or 0) for s in matches)
+          keeper['accessed_at'] = latest.get('accessed_at')
+          keeper['source_sha256'] = latest.get('source_sha256')
+          keeper['source_hash_method'] = latest.get('source_hash_method')
+          keeper['note'] = 'Premises-use proxy; not cadastral parcel geometry. Aggregated across processed-ID-external continuation batches.'
+          cleaned = []
+          kept = False
+          for s in sources:
+              if s.get('url') == source_url:
+                  if not kept:
+                      cleaned.append(keeper)
+                      kept = True
+              else:
+                  cleaned.append(s)
+          manifest['sources'] = cleaned
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          assert keeper['features_used'] == 100, keeper['features_used']
+          print('aggregated Barking and Dagenham source manifest to features_used=100')
           PY
 
       - name: Validate guarded append
@@ -142,6 +177,8 @@ jobs:
           assert len(shard['features']) == 1450
           assert manifest['feature_count_before'] == 1400 and manifest['feature_count_after'] == 1450 and manifest['added_feature_count'] == 50
           assert manifest['feature_count_after'] > manifest['feature_count_before']
+          source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 100, source_matches
           assert checkpoint['feature_count_before'] == 1400 and checkpoint['feature_count_after'] == 1450 and checkpoint['current_feature_count'] == 1450
           assert checkpoint['next_batch_index'] == 30 and checkpoint['next_target_feature_count'] == 1500
           assert runner['feature_count_before'] == 1400 and runner['feature_count_after'] == 1450 and runner['added_feature_count'] == 50
@@ -208,6 +245,8 @@ jobs:
           task = load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
           assert len(shard['features']) == 1450
           assert manifest['feature_count_before'] == 1400 and manifest['feature_count_after'] == 1450 and manifest['added_feature_count'] == 50
+          source_matches = [s for s in manifest.get('sources', []) if s.get('url') == source_url]
+          assert len(source_matches) == 1 and source_matches[0].get('features_used') == 100
           assert checkpoint['current_feature_count'] == 1450 and checkpoint['next_batch_index'] == 30 and checkpoint['next_target_feature_count'] == 1500
           assert runner['city'] == 'Barking and Dagenham' and runner['source_url'] == source_url and len(runner['selected_feature_ids']) == 50
           assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
