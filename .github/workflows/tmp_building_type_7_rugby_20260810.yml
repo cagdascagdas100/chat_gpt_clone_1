@@ -149,14 +149,35 @@ jobs:
           assert cp.get('fake_data') is False and cp.get('final_ready') is False
           assert status.get('fake_data') is False and status.get('final_ready') is False
           assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
-          seen=set()
-          for f in feats:
+
+          existing=set()
+          for f in feats[:1300]:
               p=f.get('properties') or {}
               for v in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):
                   if v is not None and str(v).strip():
-                      key=str(v).strip()
-                      assert key not in seen, f'duplicate processed id {key}'
-                      seen.add(key)
+                      existing.add(str(v).strip())
+          new=feats[1300:]
+          assert len(new) == 50
+          new_feature_ids=[]
+          new_parcel_ids=[]
+          for f in new:
+              p=f.get('properties') or {}
+              fid=str(f.get('id') or '').strip()
+              pfid=str(p.get('feature_id') or '').strip()
+              parcel=str(p.get('parcel_id') or '').strip()
+              osm=str(p.get('osm_id') or '').strip()
+              assert fid and fid.startswith('RUGB_FHRS_')
+              assert pfid == fid
+              assert parcel and parcel.startswith('RUGB_FHRSID_')
+              assert fid not in existing
+              assert parcel not in existing
+              if osm:
+                  assert osm not in existing
+              new_feature_ids.append(fid)
+              new_parcel_ids.append(parcel)
+          assert len(set(new_feature_ids)) == 50
+          assert len(set(new_parcel_ids)) == 50
+          assert set(new_feature_ids) == set(runner['selected_feature_ids'])
           PY
           expected="$(printf '%s\n' \
             'docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json' \
