@@ -1,4 +1,4 @@
-name: tmp building_type_4 Exeter batch 7
+name: tmp building_type_4 Plymouth batch 8
 
 on:
   push:
@@ -33,76 +33,371 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Fetch Exeter City FHRS source to runtime cache only
+      - name: Append exactly 50 new Plymouth City FHRS evidence features
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --location --retry 2 --retry-delay 2 \
-            --output /tmp/exeter_fhrs.xml \
-            https://ratings.food.gov.uk/api/open-data-files/FHRS073en-GB.xml
-          test -s /tmp/exeter_fhrs.xml
-
-      - name: Append exactly 50 new Exeter City proxy features
-        shell: bash
-        run: |
-          set -euo pipefail
-          git show 75e4277e368db332a167b10f01075166c7bc70e7:.github/workflows/tmp_building_type_7_stoke_20260810.yml > /tmp/stoke_template.yml
           python3 <<'PY'
+          import hashlib
+          import json
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          from collections import Counter
+          from datetime import datetime, timezone
           from pathlib import Path
 
-          text = Path('/tmp/stoke_template.yml').read_text(encoding='utf-8')
-          marker = "          python - <<'PY'\n"
-          start = text.index(marker) + len(marker)
-          end = text.index("\n          PY\n", start)
-          body = text[start:end]
-          body = '\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines()) + '\n'
+          SLOT = "building_type_4"
+          TASK_ID = "building-type-4-england-classification-v1-20260808"
+          CITY = "Plymouth City"
+          PREFIX = "PLY"
+          REGION = "South West"
+          SOURCE_NAME = "Food Standards Agency FHRS daily open data - Plymouth City"
+          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS891en-GB.xml"
+          SOURCE_PAGE = "https://ratings.food.gov.uk/open-data"
+          EXPECTED_BEFORE = 350
+          EXPECTED_TARGET = 400
+          EXPECTED_BATCH = 8
 
-          replacements = [
-              ('building_type_7', 'building_type_4'),
-              ('building-type-7-england-classification-v1-20260808', 'building-type-4-england-classification-v1-20260808'),
-              ('CITY = "Stoke-on-Trent"', 'CITY = "Exeter City"'),
-              ('PREFIX = "STK"', 'PREFIX = "EXE"'),
-              ('Food Standards Agency FHRS daily open data - Stoke-on-Trent', 'Food Standards Agency FHRS daily open data - Exeter City'),
-              ('FHRS880en-GB.xml', 'FHRS073en-GB.xml'),
-              ('EXPECTED_BEFORE = 550', 'EXPECTED_BEFORE = 300'),
-              ('EXPECTED_BATCH = 12', 'EXPECTED_BATCH = 7'),
-              ('EXPECTED_TARGET = 600', 'EXPECTED_TARGET = 350'),
-              ('/tmp/stoke_fhrs.xml', '/tmp/exeter_fhrs.xml'),
-              ('"region": "West Midlands"', '"region": "South West"'),
-              ('Stoke source already recorded', 'Exeter source already recorded'),
-              ('50 Stoke-on-Trent FHRS records', '50 Exeter City FHRS records'),
-              ('BATCH_APPENDED_50_STOKE_ON_TRENT_FHRS_CONTINUATION_REQUIRED', 'BATCH_APPENDED_50_EXETER_CITY_FHRS_CONTINUATION_REQUIRED'),
-              ('eligible new Stoke features', 'eligible new Exeter features'),
-          ]
-          for old, new in replacements:
-              if old not in body:
-                  raise SystemExit(f'template token missing: {old}')
-              body = body.replace(old, new)
+          shard_path = Path("england_map_web/data/building_type/shards/building_type_4_latest.geojson")
+          manifest_path = Path("england_map_web/data/building_type/shards/building_type_4_manifest_latest.json")
+          checkpoint_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json")
+          status_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json")
+          task_path = Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json")
+          runner_path = Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json")
 
-          required = [
-              'SLOT = "building_type_4"',
-              'CITY = "Exeter City"',
-              'PREFIX = "EXE"',
-              'FHRS073en-GB.xml',
-              'EXPECTED_BEFORE = 300',
-              'EXPECTED_BATCH = 7',
-              'EXPECTED_TARGET = 350',
-              'TASK_ID = "building-type-4-england-classification-v1-20260808"',
-              '"region": "South West"',
-              'task.get("owner") is None',
-              'p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")',
-              '"evidence_excerpt": excerpt',
-              '"evidence_level": "D"',
-              '"confidence_level_1_to_4": 2',
-              '"fake_data": False',
-              '"final_ready": False',
-          ]
-          missing = [x for x in required if x not in body]
-          if missing:
-              raise SystemExit(f'patched template incomplete: {missing}')
-          Path('/tmp/run_exeter.py').write_text(body, encoding='utf-8')
+          shard = json.loads(shard_path.read_text(encoding="utf-8"))
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+          status = json.loads(status_path.read_text(encoding="utf-8"))
+          task = json.loads(task_path.read_text(encoding="utf-8"))
+          features = shard.get("features") or []
+          before = len(features)
+
+          assert task.get("slot_id") == SLOT, "wrong slot"
+          assert task.get("task_id") == TASK_ID, "task changed"
+          assert task.get("owner") is None, "current_task owner is not null"
+          assert status.get("owner") is None, "status owner is not null"
+          assert str(status.get("state")) not in {"DONE", "PUBLISHED"}, "slot terminal"
+          assert before == EXPECTED_BEFORE, f"stale shard count {before} != {EXPECTED_BEFORE}"
+          assert int(manifest.get("total_features", -1)) == before, "manifest/shard count mismatch"
+          assert int(checkpoint.get("current_feature_count", -1)) == before, "checkpoint/shard count mismatch"
+          assert int(checkpoint.get("next_batch_index", -1)) == EXPECTED_BATCH, "batch index changed"
+          assert int(checkpoint.get("next_target_feature_count", -1)) == EXPECTED_TARGET, "target changed"
+          assert checkpoint.get("fake_data") is False and status.get("fake_data") is False and manifest.get("fake_data") is False, "fake_data guard"
+          assert checkpoint.get("final_ready") is False and status.get("final_ready") is False and manifest.get("final_ready") is False, "final_ready guard"
+
+          already_processed_ids = set()
+          for feature in features:
+              p = feature.get("properties") or {}
+              for value in (feature.get("id"), p.get("parcel_id"), p.get("osm_id")):
+                  if value is not None and str(value).strip():
+                      already_processed_ids.add(str(value).strip())
+
+          request = urllib.request.Request(SOURCE_URL, headers={"User-Agent": "AAYS-building-type/1.0"})
+          with urllib.request.urlopen(request, timeout=90) as response:
+              raw = response.read()
+          assert len(raw) > 1000, "FHRS source response unexpectedly small"
+          source_sha = hashlib.sha256(raw).hexdigest()
+          root = ET.fromstring(raw)
+
+          def local(tag):
+              return tag.rsplit("}", 1)[-1]
+
+          def text(element, wanted):
+              for child in element.iter():
+                  if local(child.tag) == wanted:
+                      return (child.text or "").strip()
+              return ""
+
+          def classify(business_type):
+              b = business_type.strip().lower()
+              if "school" in b or "college" in b or "university" in b:
+                  return "education", "P_EDUCATION", "institutional"
+              if "hospital" in b or "caring" in b or "childcare" in b:
+                  return "healthcare_care", "P_HEALTHCARE", "institutional"
+              if "hotel" in b or "bed & breakfast" in b or "guest house" in b:
+                  return "hospitality", "C_HOTEL", "commercial"
+              if "pub" in b or "bar" in b or "nightclub" in b:
+                  return "commercial_hospitality", "C_HOSPITALITY", "commercial"
+              if "restaurant" in b or "cafe" in b or "canteen" in b:
+                  return "commercial_hospitality", "C_HOSPITALITY", "commercial"
+              if "takeaway" in b or "sandwich" in b:
+                  return "commercial_hospitality", "C_TAKEAWAY", "commercial"
+              if "retailer" in b or "supermarket" in b or "hypermarket" in b:
+                  return "commercial_retail", "C_RETAIL", "commercial"
+              if "distributor" in b or "transporter" in b:
+                  return "warehouse", "C_LOGISTICS", "commercial"
+              if "manufacturer" in b or "packer" in b:
+                  return "industrial", "I_MANUFACTURING", "industrial"
+              return "commercial_other", "C_OTHER", "commercial"
+
+          candidates = []
+          for element in root.iter():
+              if local(element.tag) != "EstablishmentDetail":
+                  continue
+              fhrsid = text(element, "FHRSID")
+              if not fhrsid:
+                  continue
+              feature_id = f"{PREFIX}_FHRS_{fhrsid}"
+              parcel_id = f"{PREFIX}_FHRSID_{fhrsid}"
+              if feature_id in already_processed_ids or parcel_id in already_processed_ids or fhrsid in already_processed_ids:
+                  continue
+              authority = text(element, "LocalAuthorityName")
+              if authority and "plymouth" not in authority.lower():
+                  continue
+              business_type = text(element, "BusinessType")
+              if not business_type or "mobile caterer" in business_type.lower():
+                  continue
+              try:
+                  lat = float(text(element, "Latitude"))
+                  lon = float(text(element, "Longitude"))
+              except Exception:
+                  continue
+              if not (-4.5 < lon < -3.5 and 49.9 < lat < 50.8):
+                  continue
+              candidates.append((int(fhrsid) if fhrsid.isdigit() else 10**18, fhrsid, element, lat, lon, business_type, authority))
+
+          candidates.sort(key=lambda item: (item[0], item[1]))
+          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Plymouth records"
+          selected = candidates[:50]
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          new_ids = []
+
+          for _, fhrsid, element, lat, lon, business_type, authority in selected:
+              feature_id = f"{PREFIX}_FHRS_{fhrsid}"
+              parcel_id = f"{PREFIX}_FHRSID_{fhrsid}"
+              primary, code_value, category = classify(business_type)
+              name = text(element, "BusinessName")
+              postcode = text(element, "PostCode")
+              address = " ".join(filter(None, [
+                  text(element, "AddressLine1"),
+                  text(element, "AddressLine2"),
+                  text(element, "AddressLine3"),
+                  text(element, "AddressLine4"),
+              ]))
+              excerpt = (
+                  f"FHRSID {fhrsid} | {name} | BusinessType {business_type} | "
+                  f"LocalAuthority {authority or CITY} | PostCode {postcode} | "
+                  f"coordinates {lat:.6f},{lon:.6f}"
+              )
+              features.append({
+                  "type": "Feature",
+                  "id": feature_id,
+                  "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                  "properties": {
+                      "parcel_id": parcel_id,
+                      "osm_id": None,
+                      "slot_id": SLOT,
+                      "region": REGION,
+                      "area": CITY,
+                      "local_authority": authority or CITY,
+                      "postcode": postcode,
+                      "address": address,
+                      "business_name": name,
+                      "fhrs_id": fhrsid,
+                      "fhrs_business_type": business_type,
+                      "building_type_primary": primary,
+                      "building_type_code": code_value,
+                      "building_category": category,
+                      "evidence_level": "D",
+                      "evidence_score": 0.55,
+                      "confidence_score": 0.55,
+                      "confidence": 0.55,
+                      "confidence_level_1_to_4": 2,
+                      "source_count": 1,
+                      "match_method": "fhrs_business_type_premises_proxy",
+                      "source": SOURCE_NAME,
+                      "source_url": SOURCE_URL,
+                      "source_hash": source_sha,
+                      "sources": [{
+                          "source_name": SOURCE_NAME,
+                          "url": SOURCE_URL,
+                          "source_page": SOURCE_PAGE,
+                          "sha256": source_sha,
+                          "accessed_at": now,
+                          "granularity": "geocoded_business_premises_point",
+                          "fields_used": [
+                              "FHRSID", "BusinessName", "BusinessType",
+                              "LocalAuthorityName", "PostCode", "Latitude", "Longitude"
+                          ],
+                          "supports_field": "building_type_primary (premises-use proxy)",
+                          "match_method": "fhrs_business_type_premises_proxy",
+                          "match_score": 0.55
+                      }],
+                      "evidence_excerpt": excerpt,
+                      "source_evidence_excerpt": excerpt,
+                      "snapshot_date": now[:10],
+                      "geometry_match_method": "source_geocoded_point_only",
+                      "address_match_method": "source_record_address",
+                      "limitations": "FHRS premises-use proxy only; cadastral parcel identity and building fabric remain unverified.",
+                      "needs_manual_review": True,
+                      "fake_data": False,
+                      "final_ready": False,
+                      "updated_at": now
+                  }
+              })
+              new_ids.append(feature_id)
+
+          after = len(features)
+          assert after > before, "feature_count_after must exceed feature_count_before"
+          assert after == EXPECTED_TARGET and after - before == 50, f"unexpected append {before}->{after}"
+
+          shard["features"] = features
+          shard_text = json.dumps(shard, ensure_ascii=False, indent=2) + "\n"
+          shard_path.write_text(shard_text, encoding="utf-8")
+          output_sha = hashlib.sha256(shard_text.encode("utf-8")).hexdigest()
+
+          classified = sum(
+              1 for feature in features
+              if (feature.get("properties") or {}).get("building_type_primary") not in (None, "", "unknown")
+          )
+          unknown = after - classified
+          evidence_dist = Counter((feature.get("properties") or {}).get("evidence_level", "U") for feature in features)
+          type_dist = Counter((feature.get("properties") or {}).get("building_type_primary", "unknown") for feature in features)
+          confidence_dist = Counter(str((feature.get("properties") or {}).get("confidence_level_1_to_4", 1)) for feature in features)
+
+          sources = list(manifest.get("sources") or [])
+          sources = [s for s in sources if s.get("url") != SOURCE_URL]
+          sources.append({
+              "name": SOURCE_NAME,
+              "url": SOURCE_URL,
+              "source_page": SOURCE_PAGE,
+              "features_used": 50,
+              "accessed_at": now,
+              "source_sha256": source_sha,
+              "source_hash_method": "sha256_raw_source_xml",
+              "evidence_level": "D",
+              "confidence_level_1_to_4": 2,
+              "note": "FHRS BusinessType premises-use proxy; not cadastral parcel geometry or building-fabric evidence."
+          })
+          manifest.update({
+              "generated_at": now,
+              "total_features": after,
+              "classified": classified,
+              "unknown": unknown,
+              "evidence_distribution": dict(sorted(evidence_dist.items())),
+              "type_distribution": dict(sorted(type_dist.items())),
+              "confidence_level_distribution": dict(sorted(confidence_dist.items())),
+              "sources": sources,
+              "fake_data": False,
+              "final_ready": False,
+              "note": "Existing shard preserved; appended 50 Plymouth City FHRS records outside all prior feature.id, parcel_id and osm_id values.",
+              "feature_count": after,
+              "geojson_sha256": output_sha,
+              "geojson_path": str(shard_path),
+              "manifest_updated_at": now,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
+              "last_batch_index": EXPECTED_BATCH,
+              "last_batch_city": CITY,
+              "last_batch_source": SOURCE_NAME,
+              "last_batch_source_sha256": source_sha
+          })
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          status.update({
+              "state": "IN_PROGRESS",
+              "updated_at": now,
+              "owner": None,
+              "final_ready": False,
+              "fake_data": False,
+              "classified_count": classified,
+              "unknown_count": unknown,
+              "total_elements": after,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "progress_count_delta": 50,
+              "next_batch_index": 9,
+              "next_target_feature_count": 450,
+              "confidence_distribution": {str(k): int(v) for k, v in sorted(confidence_dist.items())},
+              "evidence_distribution": dict(sorted(evidence_dist.items())),
+              "output_sha256": output_sha,
+              "candidate_batch": None,
+              "no_progress_reason": None,
+              "note": "Batch 8 appended from official Plymouth City FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.",
+              "new_feature_count": 50,
+              "last_batch_index": EXPECTED_BATCH,
+              "last_batch_city": CITY,
+              "last_batch_source": SOURCE_NAME,
+              "progress_reason": "50 new Plymouth City FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion"
+          })
+          status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          checkpoint.update({
+              "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
+              "first_unverified_step_status": "BATCH_8_APPENDED_50_PLYMOUTH_CITY_FHRS_CONTINUATION_REQUIRED",
+              "terminal_status": "IN_PROGRESS",
+              "updated_at": now,
+              "final_ready": False,
+              "state": "IN_PROGRESS",
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "current_feature_count": after,
+              "next_batch_index": 9,
+              "next_target_feature_count": 450,
+              "last_processed_ids_sample": new_ids[-20:],
+              "already_processed_ids_policy": "Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.",
+              "candidate_batch": None,
+              "no_progress_reason": None,
+              "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL OSM/EPC/VOA/HMLR CORROBORATION FOR FHRS PROXY RECORDS",
+              "fake_data": False,
+              "last_batch": {
+                  "batch_index": EXPECTED_BATCH,
+                  "city": CITY,
+                  "source": SOURCE_NAME,
+                  "source_url": SOURCE_URL,
+                  "source_sha256": source_sha,
+                  "evidence_level": "D",
+                  "confidence_level_1_to_4": 2,
+                  "added_feature_count": 50,
+                  "new_feature_ids": new_ids
+              }
+          })
+          checkpoint_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          runner = {
+              "slot_id": SLOT,
+              "task_id": TASK_ID,
+              "generated_at": now,
+              "feature_count_before": before,
+              "feature_count_after": after,
+              "added_feature_count": 50,
+              "city": CITY,
+              "source": SOURCE_NAME,
+              "source_url": SOURCE_URL,
+              "source_page": SOURCE_PAGE,
+              "source_sha256": source_sha,
+              "classification_method": "fhrs_business_type_premises_proxy",
+              "confidence_policy": {
+                  "fhrs_premises_proxy": {
+                      "evidence_level": "D",
+                      "confidence_level_1_to_4": 2
+                  }
+              },
+              "already_processed_id_fields": ["feature.id", "properties.parcel_id", "properties.osm_id"],
+              "new_feature_ids": new_ids,
+              "evidence_level": "D",
+              "confidence_level_1_to_4": 2,
+              "match_method": "fhrs_business_type_premises_proxy",
+              "limitations": "Premises-use proxy only; cadastral parcel identity and building fabric remain unverified.",
+              "already_processed_ids_policy_applied": True,
+              "fake_data": False,
+              "final_ready": False,
+              "output_sha256": output_sha
+          }
+          runner_path.parent.mkdir(parents=True, exist_ok=True)
+          runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          print(json.dumps({
+              "slot": SLOT,
+              "city": CITY,
+              "before": before,
+              "after": after,
+              "added": 50,
+              "source_sha256": source_sha
+          }))
           PY
-          python3 /tmp/run_exeter.py
 
       - name: Validate guarded append
         shell: bash
@@ -112,40 +407,39 @@ jobs:
           import json
           from pathlib import Path
 
-          shard = json.loads(Path('england_map_web/data/building_type/shards/building_type_4_latest.geojson').read_text(encoding='utf-8'))
-          manifest = json.loads(Path('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json').read_text(encoding='utf-8'))
-          checkpoint = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json').read_text(encoding='utf-8'))
-          status = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json').read_text(encoding='utf-8'))
-          runner = json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json').read_text(encoding='utf-8'))
-          task = json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json').read_text(encoding='utf-8'))
+          shard = json.loads(Path("england_map_web/data/building_type/shards/building_type_4_latest.geojson").read_text(encoding="utf-8"))
+          manifest = json.loads(Path("england_map_web/data/building_type/shards/building_type_4_manifest_latest.json").read_text(encoding="utf-8"))
+          checkpoint = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json").read_text(encoding="utf-8"))
+          status = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json").read_text(encoding="utf-8"))
+          runner = json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json").read_text(encoding="utf-8"))
+          task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json").read_text(encoding="utf-8"))
 
-          assert len(shard.get('features') or []) == 350
-          assert manifest.get('feature_count_before') == 300 and manifest.get('feature_count_after') == 350
-          assert manifest.get('added_feature_count') == 50
-          assert checkpoint.get('feature_count_before') == 300 and checkpoint.get('feature_count_after') == 350
-          assert checkpoint.get('current_feature_count') == 350
-          assert checkpoint.get('next_batch_index') == 8 and checkpoint.get('next_target_feature_count') == 400
-          assert runner.get('feature_count_before') == 300 and runner.get('feature_count_after') == 350 and runner.get('added_feature_count') == 50
-          assert task.get('owner') is None
-          assert manifest.get('fake_data') is False and manifest.get('final_ready') is False
-          assert checkpoint.get('fake_data') is False and checkpoint.get('final_ready') is False
-          assert status.get('fake_data') is False and status.get('final_ready') is False
-
-          new = [f for f in shard['features'] if str(f.get('id') or '').startswith('EXE_FHRS_')]
+          assert len(shard.get("features") or []) == 400
+          assert manifest.get("feature_count_before") == 350 and manifest.get("feature_count_after") == 400
+          assert manifest.get("added_feature_count") == 50
+          assert checkpoint.get("feature_count_before") == 350 and checkpoint.get("feature_count_after") == 400
+          assert checkpoint.get("current_feature_count") == 400
+          assert checkpoint.get("next_batch_index") == 9 and checkpoint.get("next_target_feature_count") == 450
+          assert runner.get("feature_count_before") == 350 and runner.get("feature_count_after") == 400 and runner.get("added_feature_count") == 50
+          assert task.get("owner") is None
+          assert manifest.get("fake_data") is False and manifest.get("final_ready") is False
+          assert checkpoint.get("fake_data") is False and checkpoint.get("final_ready") is False
+          assert status.get("fake_data") is False and status.get("final_ready") is False
+          new = [f for f in shard["features"] if str(f.get("id") or "").startswith("PLY_FHRS_")]
           assert len(new) == 50, len(new)
-          ids = [str(f.get('id')) for f in new]
-          parcels = [str((f.get('properties') or {}).get('parcel_id')) for f in new]
+          ids = [str(f.get("id")) for f in new]
+          parcels = [str((f.get("properties") or {}).get("parcel_id")) for f in new]
           assert len(ids) == len(set(ids)) == 50
           assert len(parcels) == len(set(parcels)) == 50
-          for f in new:
-              p = f.get('properties') or {}
-              assert p.get('evidence_excerpt')
-              assert p.get('evidence_level') == 'D'
-              assert p.get('confidence_level_1_to_4') == 2
-              assert p.get('fake_data') is False
-              assert p.get('final_ready') is False
-              assert p.get('source_url') == 'https://ratings.food.gov.uk/api/open-data-files/FHRS073en-GB.xml'
-          print('validated 300->350 with 50 new EXE features')
+          for feature in new:
+              p = feature.get("properties") or {}
+              assert p.get("evidence_excerpt")
+              assert p.get("evidence_level") == "D"
+              assert p.get("confidence_level_1_to_4") == 2
+              assert p.get("fake_data") is False
+              assert p.get("final_ready") is False
+              assert p.get("source_url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS891en-GB.xml"
+          print("validated 350->400 with 50 new Plymouth features")
           PY
 
       - name: Commit and push only slot outputs
@@ -161,14 +455,15 @@ jobs:
           )
           git add -- "${paths[@]}"
           test -n "$(git diff --cached --name-only)"
-          while read -r p; do
+          while read -r path; do
             ok=0
             for expected in "${paths[@]}"; do
-              [[ "$p" == "$expected" ]] && ok=1
+              [[ "$path" == "$expected" ]] && ok=1
             done
-            [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }
+            [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
           done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Exeter FHRS batch 300->350"
+
+          git commit -m "data(building_type_4): append Plymouth FHRS batch 350->400"
 
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
