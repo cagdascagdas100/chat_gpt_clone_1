@@ -1,0 +1,69 @@
+name: AAYS building_type_9 Crook batch63
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/tmp_bt9_batch63_crook.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-batch63
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Run fail-closed Crook batch 63
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_bt9_batch63_crook.py
+
+      - name: Commit and push only building_type_9 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -- \
+            .github/tmp_bt9_batch63_crook.py \
+            .github/workflows/tmp_bt9_batch63_crook.yml
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          git diff --cached --name-only
+          git commit -m 'data: append building_type_9 Crook batch 63'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+              echo 'Rebase conflict; refusing to overwrite concurrent changes.' >&2
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
