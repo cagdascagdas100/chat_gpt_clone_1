@@ -1,0 +1,202 @@
+name: tmp building_type_2 Barking continuation batch 36
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_barking_batch36_20260810.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase to current canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 new Barking and Dagenham FHRS continuation features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 32de55f9deb67e898c22a920340e7b90a8c463bf:.github/workflows/tmp_building_type_4_dorset_batch11_20260810.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+          text=Path('/tmp/template.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 new East Devon FHRS evidence features'
+          marker="          python3 <<'PY'\n"
+          a=text.index(anchor)
+          start=text.index(marker,a)+len(marker)
+          end=text.index("\n          PY",start)
+          lines=text[start:end].splitlines()
+          body="\n".join(line[10:] if line.startswith("          ") else line for line in lines)+"\n"
+          body=body.replace('building_type_4','building_type_2').replace('building-type-4','building-type-2')
+          replacements=[
+            ('CITY="East Devon"; PREFIX="EDEV"; REGION="South West"', 'CITY="Barking and Dagenham"; PREFIX="BARKING_DAGENHAM"; REGION="London Outer"'),
+            ('Food Standards Agency FHRS daily open data - East Devon', 'Food Standards Agency FHRS daily open data - Barking and Dagenham'),
+            ('FHRS072en-GB.xml', 'FHRS501en-GB.xml'),
+            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=1750; TARGET=1800; BATCH=36; NEXT_BATCH=37; NEXT_TARGET=1850'),
+            ('assert status.get("owner") is None and str(status.get("state")) not in {"DONE","PUBLISHED"}', 'assert str(status.get("state")) not in {"DONE","PUBLISHED"}'),
+            ('authority.lower()!="east devon"', 'authority.lower()!="barking and dagenham"'),
+            ('Existing shard preserved; appended 50 East Devon FHRS records', 'Existing shard preserved; appended 50 Barking and Dagenham FHRS continuation records'),
+            ('Batch 16 appended from official East Devon FHRS records', 'Batch 36 appended from official Barking and Dagenham FHRS continuation records'),
+            ('50 new East Devon FHRS premises-use proxy records', '50 new Barking and Dagenham FHRS continuation premises-use proxy records'),
+            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_36_APPENDED_50_BARKING_DAGENHAM_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 750 -> 800', 'feature_count 1750 -> 1800'),
+            ('East Devon FHRS acik verisinden', 'Barking and Dagenham FHRS acik verisinden'),
+            ("Sonraki adim batch 17: mevcut 800 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek South West icinde yeni sehir/grid/parsel kaynagindan en az 50 append-only feature ekle; Exeter, Plymouth, Torbay, Cornwall, Dorset, Somerset, Wiltshire, Gloucester City, Cheltenham ve East Devon kayitlarini tekrar isleme.", "Sonraki adim batch 37: mevcut 1800 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1800 kaydi tekrar isleme."),
+          ]
+          for old,new in replacements:
+              if old not in body:
+                  raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
+          body=body.replace('EDEV_FHRS_', 'BARKING_DAGENHAM_FHRS_').replace('EDEV_FHRSID_', 'BARKING_DAGENHAM_FHRSID_')
+          required=[
+            'SLOT="building_type_2"', 'TASK="building-type-2-england-classification-v1-20260808"',
+            'CITY="Barking and Dagenham"', 'PREFIX="BARKING_DAGENHAM"', 'REGION="London Outer"',
+            'FHRS501en-GB.xml', 'BEFORE=1750; TARGET=1800; BATCH=36; NEXT_BATCH=37; NEXT_TARGET=1850',
+            'authority.lower()!="barking and dagenham"', 'evidence_excerpt', '"evidence_level":"D"',
+            '"confidence_level_1_to_4":2', '"fake_data":False', '"final_ready":False'
+          ]
+          missing=[x for x in required if x not in body]
+          assert not missing, missing
+          forbidden=['building_type_4','building-type-4','FHRS072en-GB.xml','CITY="East Devon"','PREFIX="EDEV"','BATCH_16_APPENDED_50_EAST_DEVON']
+          leaked=[x for x in forbidden if x in body]
+          assert not leaked, leaked
+          exec(compile(body,'<building_type_2_barking_continuation_batch36_append>','exec'), {'__name__':'__main__'})
+
+          manifest_path=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+          found=False
+          for src in manifest.get('sources') or []:
+              if src.get('url')=='https://ratings.food.gov.uk/api/open-data-files/FHRS501en-GB.xml':
+                  src['features_used']=450
+                  src['note']='Premises-use proxy; not cadastral parcel geometry. Aggregated across processed-ID-external continuation batches.'
+                  found=True
+          assert found
+          manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json').read_text())
+          checkpoint=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json').read_text())
+          assert len(shard.get('features') or [])==1800
+          assert manifest.get('feature_count_before')==1750 and manifest.get('feature_count_after')==1800 and manifest.get('added_feature_count')==50
+          assert checkpoint.get('current_feature_count')==1800 and checkpoint.get('next_batch_index')==37 and checkpoint.get('next_target_feature_count')==1850
+          assert status.get('current_feature_count')==1800 and runner.get('feature_count_before')==1750 and runner.get('feature_count_after')==1800 and runner.get('added_feature_count')==50
+          assert task.get('owner') is None and task.get('task_id')=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner):
+              assert o.get('fake_data') is False and o.get('final_ready') is False
+          assert runner.get('already_processed_ids_policy_applied') is True
+          ids=list(runner.get('new_feature_ids') or [])
+          assert len(ids)==50 and len(set(ids))==50 and all(str(x).startswith('BARKING_DAGENHAM_FHRS_') for x in ids)
+          idset=set(ids)
+          new=[f for f in shard['features'] if f.get('id') in idset]
+          assert len(new)==50 and len(runner.get('records') or [])==50
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')])==450
+          assert len({(f.get('properties') or {}).get('parcel_id') for f in new})==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('evidence_excerpt') and p.get('source_evidence_excerpt')
+              assert p.get('evidence_level')=='D' and p.get('confidence_level_1_to_4')==2 and p.get('confidence_score')==0.55
+              assert p.get('needs_manual_review') is True and p.get('source_hash') and p.get('sources')
+              assert p.get('source_url')=='https://ratings.food.gov.uk/api/open-data-files/FHRS501en-GB.xml'
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              assert 'cadastral parcel identity and building fabric remain unverified' in p.get('limitations','')
+          bark=[s for s in manifest.get('sources') or [] if s.get('url')=='https://ratings.food.gov.uk/api/open-data-files/FHRS501en-GB.xml']
+          assert len(bark)==1 and bark[0].get('features_used')==450
+          print('validated building_type_2 1750->1800 with 50 new Barking and Dagenham continuation features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r path; do
+            ok=0
+            for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done
+            [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
+          done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_2): append Barking FHRS continuation batch 1750->1800"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{ref}:{path}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==1800
+          assert manifest['feature_count_before']==1750 and manifest['feature_count_after']==1800 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==1800 and checkpoint['next_batch_index']==37 and checkpoint['next_target_feature_count']==1850
+          assert status['current_feature_count']==1800
+          assert runner['city']=='Barking and Dagenham' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True
+          assert task['owner'] is None
+          for o in (manifest,checkpoint,status,runner,task):
+              assert o.get('fake_data') is False and o.get('final_ready') is False
+          ids=set(runner['new_feature_ids'])
+          batch=[f for f in shard['features'] if f.get('id') in ids]
+          assert len(batch)==50 and all(str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_') for f in batch)
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARKING_DAGENHAM_FHRS_')])==450
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('source_evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level')=='D' for f in batch)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False for f in batch)
+          assert all((f.get('properties') or {}).get('final_ready') is False for f in batch)
+          bark=[s for s in manifest.get('sources') or [] if s.get('url')=='https://ratings.food.gov.uk/api/open-data-files/FHRS501en-GB.xml']
+          assert len(bark)==1 and bark[0].get('features_used')==450
+          print('remote readback verified: building_type_2=1800; Barking continuation batch=50; final_ready=false')
+          PY
