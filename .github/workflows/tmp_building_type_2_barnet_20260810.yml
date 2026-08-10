@@ -168,20 +168,17 @@ jobs:
             docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
           )
           git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
-          mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //' | sort)
-          mapfile -t expected < <(printf '%s\n' "${files[@]}" | sort)
-          diff -u <(printf '%s\n' "${expected[@]}") <(printf '%s\n' "${changed[@]}")
           git add -- "${files[@]}"
-          test -n "$(git diff --cached --name-only)"
-          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' "${files[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected[@]}") <(printf '%s\n' "${staged[@]}")
+          test "${#staged[@]}" -eq 5
           git commit -m "data(building_type_2): append Barnet FHRS batch 300->350"
 
           pushed=0
           for attempt in 1 2 3; do
             git fetch origin codex/aays-single-runner-v5-20260706
-            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then
-              git rebase origin/codex/aays-single-runner-v5-20260706
-            fi
+            git rebase origin/codex/aays-single-runner-v5-20260706
             if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
               pushed=1
               break
