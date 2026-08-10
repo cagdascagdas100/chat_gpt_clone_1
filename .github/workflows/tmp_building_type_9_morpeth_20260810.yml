@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   append:
-    if: contains(github.event.head_commit.message, 'run guarded building_type_9 Morpeth batch 31')
+    if: contains(github.event.head_commit.message, 'building_type_9 Morpeth batch 31')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -41,13 +41,7 @@ jobs:
           block=textwrap.dedent(src.split(start,1)[1].split(end,1)[0])
           block=block.replace("BEFORE=1450; TARGET=1500; BATCH=30","BEFORE=1500; TARGET=1550; BATCH=31")
           block=block.replace("CITY='Blyth'; GRID='BLYTH_CENTRAL_01'; AUTH='Northumberland'","CITY='Morpeth'; GRID='MORPETH_CENTRAL_01'; AUTH='Northumberland'")
-          bbox="""BBOXES=[
-    '-1.7600,55.1200,-1.7250,55.1500','-1.7250,55.1200,-1.6900,55.1500',
-    '-1.6900,55.1200,-1.6550,55.1500','-1.6550,55.1200,-1.6200,55.1500',
-    '-1.7600,55.1500,-1.7250,55.1800','-1.7250,55.1500,-1.6900,55.1800',
-    '-1.6900,55.1500,-1.6550,55.1800','-1.6550,55.1500,-1.6200,55.1800',
-    '-1.7600,55.1800,-1.7250,55.2100','-1.7250,55.1800,-1.6900,55.2100',
-    '-1.6900,55.1800,-1.6550,55.2100','-1.6550,55.1800,-1.6200,55.2100']"""
+          bbox="BBOXES=['-1.7600,55.1200,-1.7250,55.1500','-1.7250,55.1200,-1.6900,55.1500','-1.6900,55.1200,-1.6550,55.1500','-1.6550,55.1200,-1.6200,55.1500','-1.7600,55.1500,-1.7250,55.1800','-1.7250,55.1500,-1.6900,55.1800','-1.6900,55.1500,-1.6550,55.1800','-1.6550,55.1500,-1.6200,55.1800','-1.7600,55.1800,-1.7250,55.2100','-1.7250,55.1800,-1.6900,55.2100','-1.6900,55.1800,-1.6550,55.2100','-1.6550,55.1800,-1.6200,55.2100']"
           block=re.sub(r"BBOXES=\[.*?\]\n\nGEO=",bbox+"\n\nGEO=",block,flags=re.S)
           block=block.replace("'blyth'","'morpeth'").replace('Blyth','Morpeth').replace('BLYTH_CENTRAL_01','MORPETH_CENTRAL_01')
           block=block.replace('batch 30','batch 31').replace('Batch 30','Batch 31')
