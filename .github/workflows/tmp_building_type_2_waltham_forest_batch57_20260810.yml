@@ -46,7 +46,7 @@ jobs:
           lines=text[start:end].splitlines()
           body="\n".join(line[10:] if line.startswith("          ") else line for line in lines)+"\n"
           replacements=[
-            ('sutton_existing','waltham_existing'),
+            ('sutton_ids','waltham_ids'),
             ('Sutton','Waltham Forest'),
             ('"sutton"','"waltham forest"'),
             ('SUTTON','WALTHAM_FOREST'),
@@ -60,7 +60,7 @@ jobs:
               if old not in body:
                   raise AssertionError(f'missing replacement token: {old}')
               body=body.replace(old,new)
-          required=['CITY="Waltham Forest"','FHRS531en-GB.xml','BEFORE=2800; TARGET=2850; BATCH=57; NEXT_BATCH=58; NEXT_TARGET=2900','authority.lower()!="waltham forest"','waltham_existing','processed_fhrs_ids','evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
+          required=['CITY="Waltham Forest"','FHRS531en-GB.xml','BEFORE=2800; TARGET=2850; BATCH=57; NEXT_BATCH=58; NEXT_TARGET=2900','authority.lower()!="waltham forest"','waltham_ids','processed_fhrs_ids','evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
           missing=[x for x in required if x not in body]
           assert not missing, missing
           exec(compile(body,'<building_type_2_waltham_forest_continuation_batch57_append>','exec'), {'__name__':'__main__'})
