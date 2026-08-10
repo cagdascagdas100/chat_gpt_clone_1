@@ -1,0 +1,243 @@
+name: tmp building_type_7 Staffordshire Moorlands batch 25
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_staffordshire_moorlands_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase and guard slot state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json").read_text())
+          task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json").read_text())
+          geo = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_latest.geojson").read_text())
+          manifest = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_manifest_latest.json").read_text())
+          assert cp["slot_id"] == "building_type_7"
+          assert cp["current_feature_count"] == 1200, cp
+          assert cp["feature_count_after"] == 1200, cp
+          assert cp["next_batch_index"] == 25, cp
+          assert cp["next_target_feature_count"] == 1250, cp
+          assert len(geo.get("features", [])) == 1200
+          assert manifest.get("total_features", manifest.get("feature_count")) == 1200
+          assert cp.get("fake_data") is False and cp.get("final_ready") is False
+          assert task["slot_id"] == "building_type_7"
+          assert task["task_id"] == "building-type-7-england-classification-v1-20260808"
+          assert task.get("owner") is None, task.get("owner")
+          assert task.get("fake_data") is False and task.get("final_ready") is False
+          assert not any("staffordshire moorlands" in str(s.get("name", "")).lower() for s in manifest.get("sources", []) if isinstance(s, dict)), "Staffordshire Moorlands already used"
+          PY
+
+      - name: Fetch Staffordshire Moorlands FHRS source to runtime cache only
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_URL="https://ratings.food.gov.uk/api/open-data-files/FHRS293en-GB.xml"
+          printf '%s\n' "$SOURCE_URL" > /tmp/source_url.txt
+          curl --fail --location --silent --show-error \
+            --retry 2 --retry-delay 2 --retry-all-errors \
+            "$SOURCE_URL" -o /tmp/staffordshire_moorlands_fhrs.xml
+          test -s /tmp/staffordshire_moorlands_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root=ET.parse('/tmp/staffordshire_moorlands_fhrs.xml').getroot()
+          def local(tag): return tag.rsplit('}',1)[-1]
+          vals=[]
+          for e in root.iter():
+              if local(e.tag) == 'LocalAuthorityName' and e.text:
+                  vals.append(e.text.strip())
+                  if len(vals) >= 200: break
+          assert any('staffordshire moorlands' in v.lower() for v in vals), set(vals)
+          PY
+          sha256sum /tmp/staffordshire_moorlands_fhrs.xml
+
+      - name: Append exactly 50 new evidence-backed features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show fd7d46b8eec108f992f67c5e4fb2f9939a28a663:.github/workflows/tmp_building_type_7_south_staffordshire_20260810.yml > /tmp/south_template.yml
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          text = Path('/tmp/south_template.yml').read_text()
+          marker = '      - name: Append 50 new evidence-backed features\n'
+          assert marker in text
+          section = text.split(marker, 1)[1]
+          start = section.index("          python - <<'PY'\n") + len("          python - <<'PY'\n")
+          rest = section[start:]
+          end = rest.index("\n          PY\n")
+          body = textwrap.dedent(rest[:end])
+          exact = {
+              'CITY = "South Staffordshire"': 'CITY = "Staffordshire Moorlands"',
+              'PREFIX = "SSTA"': 'PREFIX = "STMO"',
+              'SOURCE_NAME = "Food Standards Agency FHRS daily open data - South Staffordshire"': 'SOURCE_NAME = "Food Standards Agency FHRS daily open data - Staffordshire Moorlands"',
+              'BEFORE = 1150': 'BEFORE = 1200',
+              'AFTER = 1200': 'AFTER = 1250',
+              'BATCH_INDEX = 24': 'BATCH_INDEX = 25',
+              'NEXT_BATCH = 25': 'NEXT_BATCH = 26',
+              'NEXT_TARGET = 1250': 'NEXT_TARGET = 1300',
+              'raw_path = Path("/tmp/south_staffordshire_fhrs.xml")': 'raw_path = Path("/tmp/staffordshire_moorlands_fhrs.xml")',
+          }
+          for old, new in exact.items():
+              assert old in body, old
+              body = body.replace(old, new)
+          body = body.replace('South Staffordshire', 'Staffordshire Moorlands')
+          body = body.replace('SOUTH_STAFFORDSHIRE', 'STAFFORDSHIRE_MOORLANDS')
+          assert 'South Staffordshire' not in body
+          assert 'BEFORE = 1200' in body and 'AFTER = 1250' in body
+          assert 'BATCH_INDEX = 25' in body and 'NEXT_BATCH = 26' in body and 'NEXT_TARGET = 1300' in body
+          assert 'p.get("feature_id")' in body and 'p.get("parcel_id")' in body and 'p.get("osm_id")' in body
+          assert '"evidence_excerpt": excerpt' in body
+          assert '"evidence_level": "D"' in body
+          assert '"confidence_level_1_to_4": 2' in body
+          Path('/tmp/staffordshire_moorlands_append.py').write_text(body)
+          compile(body, '/tmp/staffordshire_moorlands_append.py', 'exec')
+          PY
+          python /tmp/staffordshire_moorlands_append.py
+
+      - name: Validate guarded append and exact write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_latest.geojson").read_text())
+          manifest = json.loads(Path("england_map_web/data/building_type/shards/building_type_7_manifest_latest.json").read_text())
+          runner = json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json").read_text())
+          status = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json").read_text())
+          cp = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json").read_text())
+          task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json").read_text())
+          assert len(geo["features"]) == 1250
+          assert manifest["feature_count_before"] == 1200 and manifest["feature_count_after"] == 1250 and manifest["added_feature_count"] == 50
+          assert runner["feature_count_before"] == 1200 and runner["feature_count_after"] == 1250 and runner["added_feature_count"] == 50
+          assert runner["city"] == "Staffordshire Moorlands"
+          assert runner["source_url"] == "https://ratings.food.gov.uk/api/open-data-files/FHRS293en-GB.xml"
+          assert len(runner["records"]) == 50 and len(runner["selected_feature_ids"]) == 50
+          assert len(set(runner["selected_feature_ids"])) == 50
+          assert all(x.startswith("STMO_FHRS_") for x in runner["selected_feature_ids"])
+          parcels = [r["parcel_id"] for r in runner["records"]]
+          assert len(parcels) == len(set(parcels)) == 50
+          assert all(r.get("evidence_excerpt") for r in runner["records"])
+          assert all(r.get("source_hash") and r.get("source_url") == runner["source_url"] for r in runner["records"])
+          assert all(r.get("evidence_level") == "D" and r.get("confidence_level_1_to_4") == 2 for r in runner["records"])
+          assert all(r.get("fake_data") is False and r.get("final_ready") is False for r in runner["records"])
+          assert status.get("fake_data") is False and status.get("final_ready") is False
+          assert cp.get("fake_data") is False and cp.get("final_ready") is False
+          assert cp["current_feature_count"] == 1250 and cp["next_batch_index"] == 26 and cp["next_target_feature_count"] == 1300
+          assert task.get("owner") is None and task.get("fake_data") is False and task.get("final_ready") is False
+          ids=[]; parcels_all=[]; osm=[]
+          for f in geo["features"]:
+              p=f.get("properties") or {}
+              if f.get("id") is not None: ids.append(str(f["id"]))
+              if p.get("parcel_id") is not None: parcels_all.append(str(p["parcel_id"]))
+              if p.get("osm_id") is not None and str(p.get("osm_id")).strip(): osm.append(str(p["osm_id"]))
+          assert len(ids) == len(set(ids)), "duplicate feature.id detected"
+          assert len(parcels_all) == len(set(parcels_all)), "duplicate parcel_id detected"
+          PY
+          expected="$(printf '%s\n' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json' \
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json' \
+            'docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json' \
+            'england_map_web/data/building_type/shards/building_type_7_latest.geojson' \
+            'england_map_web/data/building_type/shards/building_type_7_manifest_latest.json' | sort)"
+          actual="$(git status --porcelain | sed -E 's/^.. //' | sort)"
+          printf '%s\n' "$actual"
+          test "$actual" = "$expected"
+
+      - name: Pre-push remote slot guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/remote_before_cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/remote_before_task.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_before_cp.json'))
+          task=json.load(open('/tmp/remote_before_task.json'))
+          assert cp['current_feature_count'] == 1200, cp
+          assert cp['next_batch_index'] == 25 and cp['next_target_feature_count'] == 1250, cp
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False, task
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          git diff --cached --quiet && { echo "No business changes"; exit 1; }
+          git commit -m "data(building_type_7): append Staffordshire Moorlands FHRS batch 1200->1250"
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/loop_cp.json
+            python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/loop_cp.json'))
+          assert cp['current_feature_count'] == 1200 and cp['next_batch_index'] == 25 and cp['next_target_feature_count'] == 1250, cp
+          PY
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              pushed=1
+              break
+            fi
+          done
+          test "$pushed" = 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json > /tmp/remote_cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json > /tmp/remote_runner.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json > /tmp/remote_task.json
+          git show origin/codex/aays-single-runner-v5-20260706:england_map_web/data/building_type/shards/building_type_7_manifest_latest.json > /tmp/remote_manifest.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp.json'))
+          r=json.load(open('/tmp/remote_runner.json'))
+          t=json.load(open('/tmp/remote_task.json'))
+          m=json.load(open('/tmp/remote_manifest.json'))
+          assert cp['feature_count_before'] == 1200 and cp['feature_count_after'] == 1250 and cp['current_feature_count'] == 1250
+          assert cp['next_batch_index'] == 26 and cp['next_target_feature_count'] == 1300
+          assert r['added_feature_count'] == 50 and r['city'] == 'Staffordshire Moorlands' and len(r['records']) == 50
+          assert r['source_url'] == 'https://ratings.food.gov.uk/api/open-data-files/FHRS293en-GB.xml'
+          assert m['feature_count_before'] == 1200 and m['feature_count_after'] == 1250 and m['total_features'] == 1250
+          assert t.get('owner') is None and t.get('fake_data') is False and t.get('final_ready') is False
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False and m.get('fake_data') is False and m.get('final_ready') is False
+          PY
+          git log -1 --format='%H %s' origin/codex/aays-single-runner-v5-20260706 -- england_map_web/data/building_type/shards/building_type_7_latest.geojson
