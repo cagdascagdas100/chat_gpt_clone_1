@@ -1,0 +1,216 @@
+name: tmp-building-type-1-kensington-hammersmith-batch10-20260810
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_building_type_1_kensington_hammersmith_batch10_20260810.yml']
+permissions:
+  contents: write
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs
+            .github/workflows/tmp_building_type_1_kensington_hammersmith_batch10_20260810.yml
+          sparse-checkout-cone-mode: false
+      - name: Append unseen Kensington Hammersmith OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, urllib.request, urllib.parse, hashlib, datetime, time, collections
+          SLOT='building_type_1'
+          BATCH='Kensington_Hammersmith_North'
+          shard=pathlib.Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          manifest=shard.with_name('building_type_1_manifest_latest.json')
+          state_dir=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1')
+          out=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          fc=json.loads(shard.read_text(encoding='utf-8'))
+          before=len(fc.get('features',[]))
+          assert before>=480, f'unexpected starting count {before}'
+          processed=set()
+          for f in fc.get('features',[]):
+              p=f.get('properties') or {}
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v is not None: processed.add(str(v))
+          BM={
+            'detached':('detached_house','R_DET','residential'),
+            'semidetached_house':('semi_detached_house','R_SEMI','residential'),
+            'terrace':('terraced_house','R_TERR','residential'),
+            'terraced':('terraced_house','R_TERR','residential'),
+            'apartments':('flat_or_apartment','R_FLAT','residential'),
+            'house':('house','R_HOUSE','residential'),
+            'bungalow':('bungalow','R_BUNGALOW','residential'),
+            'residential':('residential_building','R_RES','residential'),
+            'industrial':('industrial','I_FACTORY','industrial'),
+            'warehouse':('warehouse','I_WAREHOUSE','industrial'),
+            'retail':('commercial_retail','C_RETAIL','commercial'),
+            'commercial':('commercial_retail','C_RETAIL','commercial'),
+            'office':('office','C_OFFICE','commercial'),
+            'school':('school','P_SCHOOL','institutional'),
+            'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+            'church':('religious','P_RELIGIOUS','institutional'),
+            'hotel':('hotel_or_hospitality','C_HOSPITALITY','commercial'),
+            'public':('public_infrastructure','P_GOVERNMENT','institutional'),
+            'train_station':('public_infrastructure','P_GOVERNMENT','institutional'),
+            'garage':('garage','I_GARAGE','industrial')
+          }
+          AM={
+            'school':('school','P_SCHOOL','institutional'), 'college':('school','P_SCHOOL','institutional'),
+            'university':('school','P_SCHOOL','institutional'), 'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+            'clinic':('hospital_or_healthcare','P_HEALTHCARE','institutional'), 'doctors':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+            'place_of_worship':('religious','P_RELIGIOUS','institutional'), 'police':('public_infrastructure','P_GOVERNMENT','institutional'),
+            'fire_station':('public_infrastructure','P_GOVERNMENT','institutional'), 'post_office':('public_infrastructure','P_GOVERNMENT','institutional'),
+            'bank':('commercial_retail','C_RETAIL','commercial'), 'restaurant':('commercial_retail','C_RETAIL','commercial'),
+            'cafe':('commercial_retail','C_RETAIL','commercial'), 'pub':('commercial_retail','C_RETAIL','commercial'),
+            'fast_food':('commercial_retail','C_RETAIL','commercial')
+          }
+          def classify(t):
+              b=t.get('building')
+              if b in BM: return BM[b],f'building={b}'
+              a=t.get('amenity')
+              if a in AM: return AM[a],f'amenity={a}'
+              if t.get('shop'): return ('commercial_retail','C_RETAIL','commercial'),f"shop={t.get('shop')}"
+              if t.get('office'): return ('office','C_OFFICE','commercial'),f"office={t.get('office')}"
+              if t.get('tourism')=='hotel': return ('hotel_or_hospitality','C_HOSPITALITY','commercial'),'tourism=hotel'
+              if t.get('landuse')=='industrial': return ('industrial','I_FACTORY','industrial'),'landuse=industrial'
+              if t.get('landuse') in ('commercial','retail'): return ('commercial_retail','C_RETAIL','commercial'),f"landuse={t.get('landuse')}"
+              if t.get('railway')=='station': return ('public_infrastructure','P_GOVERNMENT','institutional'),'railway=station'
+              return None,None
+          grids=[
+            ('Kensington_Hammersmith_North_A',(51.5050,-0.2500,51.5250,-0.1950)),
+            ('Kensington_Hammersmith_North_B',(51.5050,-0.1950,51.5250,-0.1450))
+          ]
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+          added=[]; evidence=[]
+          for grid_name,(s,w,n,e) in grids:
+              if len(added)>=60: break
+              q=f'''[out:json][timeout:55];(way["building"]({s},{w},{n},{e});relation["building"]({s},{w},{n},{e});node["amenity"]({s},{w},{n},{e});node["shop"]({s},{w},{n},{e});node["office"]({s},{w},{n},{e});node["tourism"="hotel"]({s},{w},{n},{e});node["railway"="station"]({s},{w},{n},{e});way["landuse"="industrial"]({s},{w},{n},{e});way["landuse"="commercial"]({s},{w},{n},{e});way["landuse"="retail"]({s},{w},{n},{e}););out center 1800;'''
+              raw=None; ep_used=None; errors=[]
+              for ep in endpoints:
+                  try:
+                      req=urllib.request.Request(ep,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS-building_type_1/5.0'})
+                      with urllib.request.urlopen(req,timeout=90) as r: raw=r.read()
+                      ep_used=ep; break
+                  except Exception as ex:
+                      errors.append({'endpoint':ep,'error':repr(ex)})
+                      time.sleep(3)
+              if raw is None:
+                  evidence.append({'batch_name':grid_name,'bbox':[s,w,n,e],'errors':errors,'new_feature_count':0})
+                  continue
+              response_sha=hashlib.sha256(raw).hexdigest()
+              data=json.loads(raw); grid_added=0
+              for el in data.get('elements',[]):
+                  if len(added)>=60: break
+                  raw_osm_id=str(el.get('id'))
+                  oid=f"ENG_OSM_{el.get('type')}_{raw_osm_id}"
+                  if oid in processed or raw_osm_id in processed: continue
+                  tags=el.get('tags') or {}
+                  cls,method=classify(tags)
+                  if not cls: continue
+                  lat=el.get('lat') or (el.get('center') or {}).get('lat')
+                  lon=el.get('lon') or (el.get('center') or {}).get('lon')
+                  if lat is None or lon is None: continue
+                  excerpt={k:tags[k] for k in ('building','amenity','shop','office','tourism','landuse','railway','name','addr:housenumber','addr:street','addr:postcode') if k in tags}
+                  source_url=f"https://www.openstreetmap.org/{el.get('type')}/{raw_osm_id}"
+                  source={'source_name':'OpenStreetMap via Overpass API','url':source_url,'api_endpoint':ep_used,'accessed_at':now,'sha256':response_sha,'licence':'ODbL 1.0','granularity':'building_or_poi_point','fields_used':sorted(excerpt.keys()),'supports_field':'building_type_primary','match_method':method,'match_score':0.82,'evidence_excerpt':excerpt}
+                  props={'parcel_id':oid,'osm_id':el.get('id'),'osm_element_type':el.get('type'),'slot_id':SLOT,'region':'London Inner','area':BATCH,'local_authority':'Kensington & Chelsea / Hammersmith & Fulham','building_type_primary':cls[0],'building_type_code':cls[1],'building_category':cls[2],'confidence_score':0.82,'confidence_level_1_to_4':3,'evidence_level':'B','evidence_source_tier':'B2','source_count':1,'sources':[source],'source_url':source_url,'source_hash':response_sha,'match_method':method,'evidence_excerpt':excerpt,'source_evidence_excerpt':excerpt,'geometry_match_method':'osm_element_center','address_match_method':'osm_tags_if_present','limitations':'OSM B2 evidence only; EPC/VOA/HMLR parcel binding remains a later upgrade.','needs_manual_review':False,'fake_data':False,'final_ready':False,'updated_at':now}
+                  added.append({'type':'Feature','id':oid,'geometry':{'type':'Point','coordinates':[float(lon),float(lat)]},'properties':props})
+                  grid_added+=1; processed.add(oid); processed.add(raw_osm_id)
+              evidence.append({'batch_name':grid_name,'bbox':[s,w,n,e],'overpass_endpoint':ep_used,'response_sha256':response_sha,'returned_element_count':len(data.get('elements',[])),'new_feature_count':grid_added,'errors_before_success':errors})
+          assert len(added)>=50, f'need >=50 new unique features; got {len(added)}'
+          added=added[:60]
+          fc['features'].extend(added)
+          after=len(fc['features'])
+          assert after>before and after-before>=50, (before,after)
+          feature_ids=[str(f.get('id')) for f in fc['features'] if f.get('id') is not None]
+          assert len(feature_ids)==len(set(feature_ids)), 'duplicate feature.id after append'
+          for f in added:
+              p=f['properties']
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              assert p.get('evidence_excerpt') and p.get('evidence_level')=='B'
+              assert p.get('confidence_level_1_to_4') in (1,2,3,4)
+              assert p.get('sources') and p['sources'][0].get('sha256') and p['sources'][0].get('url')
+          shard.write_text(json.dumps(fc,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          output_sha=hashlib.sha256(shard.read_bytes()).hexdigest()
+          conf=collections.Counter(str((f.get('properties') or {}).get('confidence_level_1_to_4',1)) for f in fc['features'])
+          ev=collections.Counter(str((f.get('properties') or {}).get('evidence_level','U')) for f in fc['features'])
+          typ=collections.Counter(str((f.get('properties') or {}).get('building_type_primary','unknown')) for f in fc['features'])
+          cp=json.loads((state_dir/'checkpoint_latest.json').read_text(encoding='utf-8'))
+          next_idx=int(cp.get('next_batch_index') or 10)+1
+          cp.update({'state':'IN_PROGRESS','updated_at':now,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':next_idx,'next_target_feature_count':after+50,'last_processed_ids_sample':[f['id'] for f in added[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES','fake_data':False,'final_ready':False,'last_batch_name':BATCH,'last_batch_new_features':after-before,'last_batch_evidence':evidence})
+          (state_dir/'checkpoint_latest.json').write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          st=json.loads((state_dir/'status_latest.json').read_text(encoding='utf-8'))
+          unknown=typ.get('unknown',0)
+          st.update({'state':'IN_PROGRESS','owner':None,'updated_at':now,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'new_features_added':after-before,'classified_count':after-unknown,'unknown_count':unknown,'confidence_distribution':{f'level_{k}':v for k,v in sorted(conf.items())},'evidence_distribution':dict(ev),'output_sha256':output_sha,'last_batch':evidence,'fake_data':False,'final_ready':False,'result':{'state':'BATCH_APPENDED','note':f'Appended {after-before} new Kensington/Hammersmith evidenced OSM features; existing feature.id/parcel_id/osm_id values excluded.'}})
+          (state_dir/'status_latest.json').write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          task=json.loads((state_dir/'current_task_latest.json').read_text(encoding='utf-8'))
+          task.update({'state':'READY','status':'ready','panel_status':'HAZIR','owner':None,'claimable':True,'ready_for_claim':True,'updated_at':now,'fake_data':False,'final_ready':False})
+          task['progress']={'completed_count':after,'target_count':after+50,'previous_percent':0.0,'current_percent':0.0,'percent_increase':0.0}
+          (state_dir/'current_task_latest.json').write_text(json.dumps(task,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          try: old_manifest=json.loads(manifest.read_text(encoding='utf-8'))
+          except Exception: old_manifest={}
+          batches=list(old_manifest.get('source_batches') or [])+evidence
+          man={'schema_version':3,'slot_id':SLOT,'region':'London Inner','continuation_key':task.get('continuation_key',''),'updated_at':now,'feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'current_feature_count':after,'next_batch_index':next_idx,'next_target_feature_count':after+50,'evidence_distribution':dict(ev),'confidence_distribution':{f'level_{k}':v for k,v in sorted(conf.items())},'building_type_distribution':dict(typ),'source_batches':batches,'output_sha256':output_sha,'fake_data':False,'final_ready':False}
+          manifest.write_text(json.dumps(man,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          runner={'schema_version':3,'slot_id':SLOT,'task_id':task.get('task_id'),'continuation_key':task.get('continuation_key',''),'state':'BATCH_APPENDED','batch_name':BATCH,'feature_count_before':before,'feature_count_after':after,'new_features_added':after-before,'new_feature_ids':[f['id'] for f in added],'source_batches':evidence,'evidence_level':'B','confidence_level_1_to_4':3,'output_sha256':output_sha,'fake_data':False,'final_ready':False,'updated_at':now}
+          out.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          pathlib.Path('/tmp/bt1_expected.json').write_text(json.dumps({'before':before,'after':after,'new_ids':runner['new_feature_ids'],'sha':output_sha}),encoding='utf-8')
+          print(json.dumps({'before':before,'after':after,'added':after-before,'evidence':evidence,'sha':output_sha}))
+          PY
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'aays-building-type-1-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add --sparse \
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json
+          git diff --cached --quiet && { echo 'No business changes'; exit 1; }
+          git commit -m 'Append building_type_1 Kensington Hammersmith batch 10'
+          pushed=0
+          for i in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              echo 'Rebase conflict; refusing to overwrite concurrent changes.'
+              exit 1
+            fi
+            if git push origin "HEAD:$BRANCH"; then pushed=1; break; fi
+            sleep $((i*2))
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          mkdir -p /tmp/remote_bt1/england_map_web/data/building_type/shards
+          git show "origin/$BRANCH:england_map_web/data/building_type/shards/building_type_1_latest.geojson" > /tmp/remote_bt1/england_map_web/data/building_type/shards/building_type_1_latest.geojson
+          git show "origin/$BRANCH:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json" > /tmp/remote_bt1/checkpoint.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          exp=json.loads(pathlib.Path('/tmp/bt1_expected.json').read_text())
+          p=pathlib.Path('/tmp/remote_bt1/england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          fc=json.loads(p.read_text(encoding='utf-8'))
+          assert len(fc['features'])==exp['after'], (len(fc['features']),exp['after'])
+          ids={str(f.get('id')) for f in fc['features']}
+          assert all(x in ids for x in exp['new_ids'])
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==exp['sha']
+          cp=json.loads(pathlib.Path('/tmp/remote_bt1/checkpoint.json').read_text())
+          assert cp['feature_count_before']==exp['before'] and cp['feature_count_after']==exp['after']
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          print(json.dumps({'remote_readback':'verified','feature_count':len(fc['features']),'sha':exp['sha']}))
+          PY
