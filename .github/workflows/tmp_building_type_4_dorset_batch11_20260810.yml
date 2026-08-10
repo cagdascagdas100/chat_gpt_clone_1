@@ -1,4 +1,4 @@
-name: tmp building_type_4 Bristol continuation batch 42
+name: tmp building_type_4 Bristol continuation batch 42 recovery
 
 on:
   push:
@@ -35,11 +35,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show 36e3ec4b60407b31446311ee7d6015012a2de1b7:.github/workflows/tmp_building_type_4_dorset_batch11_20260810.yml > /tmp/batch41.yml
+          git show 32de55f9deb67e898c22a920340e7b90a8c463bf:.github/workflows/tmp_building_type_4_dorset_batch11_20260810.yml > /tmp/east_devon_template.yml
           python3 <<'PY'
           from pathlib import Path
-          text=Path('/tmp/batch41.yml').read_text(encoding='utf-8')
-          anchor='      - name: Append exactly 50 new Bristol continuation FHRS evidence features'
+          text=Path('/tmp/east_devon_template.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 new East Devon FHRS evidence features'
           marker="          python3 <<'PY'\n"
           a=text.index(anchor)
           start=text.index(marker,a)+len(marker)
@@ -47,20 +47,25 @@ jobs:
           lines=text[start:end].splitlines()
           body="\n".join(line[10:] if line.startswith("          ") else line for line in lines)+"\n"
           replacements=[
-            ('BEFORE=2000; TARGET=2050; BATCH=41; NEXT_BATCH=42; NEXT_TARGET=2100',
-             'BEFORE=2050; TARGET=2100; BATCH=42; NEXT_BATCH=43; NEXT_TARGET=2150'),
-            ('Batch 41 appended from official Bristol FHRS continuation records',
-             'Batch 42 appended from official Bristol FHRS continuation records'),
-            ('BATCH_41_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED',
-             'BATCH_42_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 2000 -> 2050', 'feature_count 2050 -> 2100'),
-            ('Sonraki adim batch 42: mevcut 2050 feature',
-             'Sonraki adim batch 43: mevcut 2100 feature'),
+            ('CITY="East Devon"; PREFIX="EDEV"; REGION="South West"', 'CITY="Bristol"; PREFIX="BRIS"; REGION="South West"'),
+            ('Food Standards Agency FHRS daily open data - East Devon', 'Food Standards Agency FHRS daily open data - Bristol'),
+            ('FHRS072en-GB.xml', 'FHRS855en-GB.xml'),
+            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=2050; TARGET=2100; BATCH=42; NEXT_BATCH=43; NEXT_TARGET=2150'),
+            ('authority.lower()!="east devon"', 'authority.lower()!="bristol"'),
+            ('Existing shard preserved; appended 50 East Devon FHRS records', 'Existing shard preserved; appended 50 additional Bristol FHRS records'),
+            ('Batch 16 appended from official East Devon FHRS records', 'Batch 42 appended from official Bristol FHRS continuation records'),
+            ('50 new East Devon FHRS premises-use proxy records', '50 new Bristol FHRS continuation premises-use proxy records'),
+            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_42_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 750 -> 800', 'feature_count 2050 -> 2100'),
+            ('East Devon FHRS acik verisinden', 'Bristol FHRS acik verisinden'),
+            ('Sonraki adim batch 17: mevcut 800 feature', 'Sonraki adim batch 43: mevcut 2100 feature'),
+            ('Cheltenham ve East Devon kayitlarini tekrar isleme.', 'Cheltenham, East Devon, North Devon, Mid Devon, South Hams, Teignbridge, Torridge, West Devon, Cotswold, Forest of Dean, Stroud, Tewkesbury, Bristol, North Somerset, South Gloucestershire, Bath and North East Somerset, Bournemouth, Christchurch and Poole, Swindon ve Isles of Scilly icindeki mevcut feature.id, parcel_id ve osm_id kayitlarini tekrar isleme; yalniz processed kumesi disindaki yeni kayitlari sec.'),
           ]
           for old,new in replacements:
               if old not in body:
                   raise AssertionError(f'missing replacement token: {old}')
               body=body.replace(old,new)
+          body=body.replace('EDEV_FHRS_', 'BRIS_FHRS_').replace('EDEV_FHRSID_', 'BRIS_FHRSID_')
           required=[
             'CITY="Bristol"', 'PREFIX="BRIS"', 'FHRS855en-GB.xml',
             'BEFORE=2050; TARGET=2100; BATCH=42; NEXT_BATCH=43; NEXT_TARGET=2150',
@@ -70,7 +75,10 @@ jobs:
           ]
           missing=[x for x in required if x not in body]
           assert not missing, missing
-          exec(compile(body,'<building_type_4_bristol_continuation_batch42_append>','exec'), {'__name__':'__main__'})
+          forbidden=['FHRS072en-GB.xml','CITY="East Devon"','PREFIX="EDEV"','BATCH_16_APPENDED_50_EAST_DEVON']
+          leaked=[x for x in forbidden if x in body]
+          assert not leaked, leaked
+          exec(compile(body,'<building_type_4_bristol_continuation_batch42_recovery_append>','exec'), {'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
