@@ -1,0 +1,165 @@
+name: AAYS building_type_5 batch37 urban scope metadata fix
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_batch37_scope_fix_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch37-scope-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward and validate same batch/task
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(geo['features'])==1850
+          assert cp['feature_count_before']==1800 and cp['feature_count_after']==1850 and cp['next_batch_index']==38
+          assert cp['last_batch']['batch_index']==37
+          assert task['task_id']=='building-type-5-england-classification-v1-20260808'
+          assert task.get('owner') in (None,'')
+          assert cp.get('continuation_key','')==task.get('continuation_key','')
+          PY
+
+      - name: Correct batch 37 scope metadata without changing evidence or count
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          CITY='Welwyn Hatfield Urban'; GRID='WELWYN_HATFIELD_URBAN_01'; BATCH=37
+          gp=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          mp=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          rp=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          sp=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          cp=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          tp=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          runner=json.loads(rp.read_text()); assert runner['batch_index']==BATCH and runner['new_feature_count']==50
+          new_ids=set(runner['new_feature_ids']); assert len(new_ids)==50
+          geo=json.loads(gp.read_text()); changed=0
+          for f in geo['features']:
+              if str(f.get('id')) in new_ids:
+                  p=f.get('properties') or {}
+                  p['area']=CITY
+                  p['local_authority']='Welwyn Hatfield'
+                  f['properties']=p; changed+=1
+          assert changed==50 and len(geo['features'])==1850
+          gp.write_text(json.dumps(geo,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          geo_sha=hashlib.sha256(gp.read_bytes()).hexdigest()
+
+          runner['city']=CITY; runner['grid_id']=GRID
+          runner['source_name']=f'OpenStreetMap API 0.6 - {CITY} batch {BATCH}'
+          runner['scope_note']='Batch spans Welwyn Garden City and the adjacent northern Hatfield urban/business area within Welwyn Hatfield; per-record source evidence remains unchanged.'
+          runner['final_ready']=False; runner['fake_data']=False
+          rp.write_text(json.dumps(runner,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          manifest=json.loads(mp.read_text())
+          manifest['output_sha256']=geo_sha; manifest['last_batch_city']=CITY
+          if isinstance(manifest.get('latest_batch'),dict):
+              manifest['latest_batch']['city']=CITY; manifest['latest_batch']['grid_id']=GRID
+          sources=manifest.get('sources') or []
+          for s in reversed(sources):
+              if s.get('source_sha256')==runner['source_sha256'] and s.get('features_used')==50:
+                  s['name']=f'OpenStreetMap API 0.6 - {CITY} batch {BATCH}'
+                  s['note']='Explicit OSM evidence; batch spatial scope includes Welwyn Garden City plus adjacent northern Hatfield within Welwyn Hatfield; raw XML runtime-only.'
+                  break
+          manifest['fake_data']=False; manifest['final_ready']=False
+          mp.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          st=json.loads(sp.read_text()); st['output_sha256']=geo_sha; st['last_batch_city']=CITY; st['last_city']=CITY; st['last_grid_id']=GRID
+          st['note']=f'Batch {BATCH} appended 50 Welwyn Hatfield urban OSM building records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.'
+          st['progress_reason']='50 new Welwyn Hatfield urban OSM building features appended after feature.id/parcel_id/osm_id exclusion'
+          st['fake_data']=False; st['final_ready']=False
+          sp.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          chk=json.loads(cp.read_text()); chk['first_unverified_step_status']='BATCH_37_APPENDED_50_WELWYN_HATFIELD_URBAN_OSM_CONTINUATION_REQUIRED'
+          chk['last_batch']['city']=CITY; chk['last_batch']['grid_id']=GRID; chk['fake_data']=False; chk['final_ready']=False
+          cp.write_text(json.dumps(chk,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          task=json.loads(tp.read_text()); task['last_progress']['city']=CITY; task['last_progress']['grid_id']=GRID; task['owner']=None; task['fake_data']=False; task['final_ready']=False
+          tp.write_text(json.dumps(task,ensure_ascii=False,indent=2),encoding='utf-8')
+          print({'scope_fixed':changed,'feature_count':1850,'geo_sha256':geo_sha})
+          PY
+
+      - name: Validate corrected scope and unchanged progress
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text())
+          ids=set(runner['new_feature_ids']); rows=[f for f in geo['features'] if str(f.get('id')) in ids]
+          assert len(geo['features'])==1850 and len(rows)==50
+          assert all((f.get('properties') or {}).get('area')=='Welwyn Hatfield Urban' for f in rows)
+          assert all((f.get('properties') or {}).get('evidence_level')=='B' and (f.get('properties') or {}).get('confidence_level_1_to_4')==3 for f in rows)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in rows)
+          assert runner['feature_count_before']==1800 and runner['feature_count_after']==1850 and runner['new_feature_count']==50 and runner['city']=='Welwyn Hatfield Urban' and runner['grid_id']=='WELWYN_HATFIELD_URBAN_01'
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text()); assert cp['feature_count_before']==1800 and cp['feature_count_after']==1850 and cp['next_batch_index']==38 and cp['last_batch']['city']=='Welwyn Hatfield Urban' and cp['final_ready'] is False
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text()); assert st['owner'] is None and st['feature_count_after']==1850 and st['last_city']=='Welwyn Hatfield Urban' and st['final_ready'] is False
+          PY
+
+      - name: Commit and push corrected metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          paths=(
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          )
+          git add -- "${paths[@]}"
+          git diff --cached --quiet && { echo 'no correction changes'; exit 1; }
+          git commit -m 'fix(building_type_5): correct batch 37 Welwyn Hatfield scope'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          def read(path): return json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{path}'],text=True))
+          geo=read('england_map_web/data/building_type/shards/building_type_5_latest.geojson'); assert len(geo['features'])==1850
+          runner=read('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'); ids=set(runner['new_feature_ids']); rows=[f for f in geo['features'] if str(f.get('id')) in ids]
+          assert len(rows)==50 and runner['city']=='Welwyn Hatfield Urban' and runner['grid_id']=='WELWYN_HATFIELD_URBAN_01'
+          assert all((f.get('properties') or {}).get('area')=='Welwyn Hatfield Urban' for f in rows)
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'); assert cp['feature_count_before']==1800 and cp['feature_count_after']==1850 and cp['next_batch_index']==38 and cp['last_batch']['city']=='Welwyn Hatfield Urban' and cp['final_ready'] is False and cp['fake_data'] is False
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'); assert st['feature_count_after']==1850 and st['owner'] is None and st['final_ready'] is False and st['fake_data'] is False
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'); assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task['owner'] is None and task['final_ready'] is False and task['fake_data'] is False
+          print('scope_fix_remote_readback_ok')
+          PY
