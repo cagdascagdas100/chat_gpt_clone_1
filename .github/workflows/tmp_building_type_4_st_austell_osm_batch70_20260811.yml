@@ -1,0 +1,118 @@
+name: AAYS building_type_4 St Austell OSM batch 70
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_4_st_austell_osm_batch70_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-4-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append guarded St Austell OSM batch 70
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          template_commit='8f1f47d6565ddf3f7686659025c2d02d19605da4^'
+          template_path='.github/workflows/tmp_building_type_4_dorchester_osm_batch53_20260810.yml'
+          text=subprocess.check_output(['git','show',f'{template_commit}:{template_path}'],text=True)
+          marker="          import collections, datetime, hashlib, json, pathlib, time, urllib.parse, urllib.request"
+          start=text.index(marker)
+          end=text.index("\n          PY",start)
+          block=text[start:end]
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          replacements=[
+            ("CITY='Dorchester'","CITY='St Austell'"),
+            ("AUTHORITY='Dorset'","AUTHORITY='Cornwall'"),
+            ("BATCH=53","BATCH=70"),
+            ("EXPECTED_BEFORE=2600","EXPECTED_BEFORE=3450"),
+            ("TARGET=2650","TARGET=3500"),
+            ("NEXT_BATCH=54","NEXT_BATCH=71"),
+            ("NEXT_TARGET=2700","NEXT_TARGET=3550"),
+            ("BBOX='50.680,-2.520,50.770,-2.350'","BBOX='50.315,-4.840,50.370,-4.720'"),
+            ("BATCH_53_APPENDED_50_DORCHESTER_OSM_CONTINUATION_REQUIRED","BATCH_70_APPENDED_50_ST_AUSTELL_OSM_CONTINUATION_REQUIRED"),
+            ("Batch 53","Batch 70"),
+            ("batch 53","batch 70"),
+            ("Dorchester","St Austell")
+          ]
+          for old,new in replacements:
+              if old not in code:
+                  raise SystemExit(f'Fail closed: template marker missing: {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'st_austell_batch70_from_verified_dorchester_template.py','exec'),{})
+          PY
+
+      - name: Validate self-delete commit push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          T=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          geo=json.loads(G.read_text()); man=json.loads(M.read_text()); sta=json.loads(S.read_text()); cp=json.loads(C.read_text()); task=json.loads(T.read_text()); run=json.loads(R.read_text())
+          feats=geo.get('features') or []
+          assert task.get('task_id')=='building-type-4-england-classification-v1-20260808' and task.get('owner') is None
+          assert len(feats)==3500
+          assert sta['feature_count_before']==3450 and sta['feature_count_after']==3500 and sta['progress_count_delta']==50 and sta['progress_counted'] is True
+          assert cp['current_feature_count']==3500 and cp['next_batch_index']==71 and cp['next_target_feature_count']==3550
+          assert cp['first_unverified_step_status']=='BATCH_70_APPENDED_50_ST_AUSTELL_OSM_CONTINUATION_REQUIRED'
+          assert run['new_features_added']==50 and len(run['features'])==50 and run['evidence_distribution']=={'B':50} and run['confidence_distribution']=={'3':50}
+          assert run['city']=='St Austell' and run['batch_index']==70
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in feats)
+          assert man.get('fake_data') is False and man.get('final_ready') is False and sta.get('fake_data') is False and sta.get('final_ready') is False and cp.get('fake_data') is False and cp.get('final_ready') is False
+          ids=[str(f.get('id')) for f in feats if f.get('id') not in (None,'')]
+          pids=[str((f.get('properties') or {}).get('parcel_id')) for f in feats if (f.get('properties') or {}).get('parcel_id') not in (None,'')]
+          oids=[str((f.get('properties') or {}).get('osm_id')) for f in feats if (f.get('properties') or {}).get('osm_id') not in (None,'')]
+          assert len(ids)==len(set(ids)); assert len(pids)==len(set(pids)); assert len(oids)==len(set(oids))
+          for f in run['features']:
+              p=f['properties']
+              assert p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['evidence_excerpt'] and p['source_url'] and p['source_hash'] and p['sources']
+              assert p['fake_data'] is False and p['final_ready'] is False
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          WF='.github/workflows/tmp_building_type_4_st_austell_osm_batch70_20260811.yml'
+          git rm -f "$WF"
+          git add england_map_web/data/building_type/shards/building_type_4_latest.geojson england_map_web/data/building_type/shards/building_type_4_manifest_latest.json
+          git add -f docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json
+          git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
+          git commit -m 'building_type_4: append St Austell OSM batch 70'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git rebase origin/codex/aays-single-runner-v5-20260706; then
+              if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            else
+              git rebase --abort || true
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
