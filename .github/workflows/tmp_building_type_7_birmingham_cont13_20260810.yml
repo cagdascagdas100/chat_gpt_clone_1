@@ -1,0 +1,117 @@
+name: tmp building_type_7 Birmingham continuation batch 45 corrected
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_birmingham_cont13_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Extract corrected guarded predecessor and run batch 45
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git show 481e7a7a9de83c82d6276d9ea5da5009e3b2280d:.github/workflows/tmp_building_type_7_birmingham_cont11_20260810.yml > /tmp/prev_slot7.yml
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          lines=Path('/tmp/prev_slot7.yml').read_text().splitlines(keepends=True)
+          marker='      - name: Guard state, append exactly 50, push and read back\n'
+          try:
+              step_i=lines.index(marker)
+          except ValueError:
+              raise SystemExit('exact predecessor guarded-step marker missing')
+          try:
+              run_i=next(i for i in range(step_i+1, len(lines)) if lines[i] == '        run: |\n')
+          except StopIteration:
+              raise SystemExit('guarded-step run marker missing')
+
+          raw=lines[run_i+1:]
+          stripped=[]
+          for lineno,line in enumerate(raw, start=run_i+2):
+              if line.strip() == '':
+                  stripped.append('\n')
+              elif line.startswith('          '):
+                  stripped.append(line[10:])
+              else:
+                  raise SystemExit(f'unexpected indentation at predecessor line {lineno}: {line!r}')
+          body=''.join(stripped)
+          if not body.startswith('set -euo pipefail\n'):
+              raise SystemExit('extracted body does not begin with shell guard')
+          if '- name: Checkout canonical branch' in body:
+              raise SystemExit('YAML step leakage detected in extracted shell body')
+
+          body=body.replace('continuation batch 11','continuation batch 13')
+          body=body.replace('birmingham_cont11','birmingham_cont13')
+          body=body.replace('CONTINUATION_11_REQUIRED','CONTINUATION_13_REQUIRED')
+
+          body=body.replace('2100','__BT7_OLD_COUNT__')
+          body=body.replace('2150','__BT7_NEW_COUNT__')
+          body=body.replace('__BT7_OLD_COUNT__','2200')
+          body=body.replace('__BT7_NEW_COUNT__','2250')
+
+          body=re.sub(r'(?<!\d)43(?!\d)', '__BT7_OLD_BATCH__', body)
+          body=re.sub(r'(?<!\d)44(?!\d)', '__BT7_NEXT_BATCH__', body)
+          body=body.replace('__BT7_OLD_BATCH__','45')
+          body=body.replace('__BT7_NEXT_BATCH__','46')
+
+          old_final="cp.get('current_feature_count') == 2250 and cp.get('next_batch_index') == 46 and cp.get('next_target_feature_count') == 2200"
+          new_final="cp.get('current_feature_count') == 2250 and cp.get('next_batch_index') == 46 and cp.get('next_target_feature_count') == 2300"
+          if old_final not in body:
+              raise SystemExit('post-append next-target predecessor assertion missing')
+          body=body.replace(old_final,new_final)
+          if old_final in body:
+              raise SystemExit('stale post-append next-target assertion remains')
+
+          checks=(
+              "assert cp.get('current_feature_count') == 2200 and cp.get('feature_count_after') == 2200",
+              "assert cp.get('next_batch_index') == 45 and cp.get('next_target_feature_count') == 2250",
+              'Food Standards Agency FHRS daily open data - Birmingham continuation batch 13',
+              'EXPECTED_BEFORE = 2200',
+              'EXPECTED_BATCH = 45',
+              'EXPECTED_TARGET = 2250',
+              'BATCH_APPENDED_50_BIRMINGHAM_FHRS_CONTINUATION_13_REQUIRED',
+              'data(building_type_7): append Birmingham FHRS continuation batch 2200->2250',
+              "cp.get('current_feature_count') == 2250 and cp.get('next_batch_index') == 46 and cp.get('next_target_feature_count') == 2300",
+              "p.get('feature_id')",
+              "p.get('parcel_id')",
+              "p.get('osm_id')",
+              '"evidence_excerpt": excerpt',
+              '"evidence_level": "D"',
+              '"confidence_level_1_to_4": 2',
+          )
+          missing=[x for x in checks if x not in body]
+          if missing:
+              raise SystemExit('corrected transformation guard missing: '+repr(missing))
+          stale=[x for x in ('continuation batch 11','birmingham_cont11','CONTINUATION_11_REQUIRED','EXPECTED_BEFORE = 2100','EXPECTED_BATCH = 43','EXPECTED_TARGET = 2150') if x in body]
+          if stale:
+              raise SystemExit('stale predecessor constants remain: '+repr(stale))
+
+          out=Path('/tmp/run_slot7_batch45.sh')
+          out.write_text(body)
+          print('first transformed lines:')
+          print('\n'.join(body.splitlines()[:8]))
+          PY
+          bash -n /tmp/run_slot7_batch45.sh
+          test "$(head -n 1 /tmp/run_slot7_batch45.sh)" = 'set -euo pipefail'
+          ! grep -F -- '- name: Checkout canonical branch' /tmp/run_slot7_batch45.sh
+          bash -x /tmp/run_slot7_batch45.sh
