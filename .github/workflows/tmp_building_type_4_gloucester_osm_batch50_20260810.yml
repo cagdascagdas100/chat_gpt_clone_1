@@ -1,0 +1,372 @@
+name: AAYS building_type_4 Gloucester OSM batch 50
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_4_gloucester_osm_batch50_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-4-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append guarded Gloucester OSM batch 50
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, datetime, hashlib, json, pathlib, time, urllib.parse, urllib.request
+
+          SLOT='building_type_4'
+          TASK_ID='building-type-4-england-classification-v1-20260808'
+          CITY='Gloucester'
+          AUTHORITY='Gloucestershire'
+          BATCH=50
+          EXPECTED_BEFORE=2450
+          TARGET=2500
+          NEXT_BATCH=51
+          NEXT_TARGET=2550
+          BBOX='51.820,-2.300,51.900,-2.200'
+
+          GEO=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          MAN=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json')
+          STA=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          TASK=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          RUN=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          geo=json.loads(GEO.read_text())
+          man=json.loads(MAN.read_text())
+          sta=json.loads(STA.read_text())
+          cp=json.loads(CP.read_text())
+          task=json.loads(TASK.read_text())
+          feats=geo.get('features') or []
+
+          assert task.get('slot_id')==SLOT and task.get('task_id')==TASK_ID, 'task identity changed'
+          assert task.get('owner') is None and sta.get('owner') is None, 'live owner present'
+          assert str(sta.get('state')) not in {'DONE','PUBLISHED'}, 'slot terminal'
+          assert len(feats)==EXPECTED_BEFORE, f'guard expected {EXPECTED_BEFORE}, found {len(feats)}'
+          assert int(cp.get('current_feature_count',-1))==EXPECTED_BEFORE, 'checkpoint count changed'
+          assert int(cp.get('next_batch_index',-1))==BATCH, 'checkpoint batch changed'
+          assert int(cp.get('next_target_feature_count',-1))==TARGET, 'checkpoint target changed'
+          assert cp.get('blocker') in (None,''), 'checkpoint blocker present'
+          assert cp.get('fake_data') is False and sta.get('fake_data') is False and man.get('fake_data') is False, 'fake_data guard'
+          assert cp.get('final_ready') is False and sta.get('final_ready') is False and man.get('final_ready') is False, 'final_ready guard'
+
+          processed=set()
+          for f in feats:
+              p=f.get('properties') or {}
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v not in (None,''):
+                      processed.add(str(v))
+
+          wanted={
+              'house':('residential','R_RESIDENTIAL','residential'),
+              'detached':('residential','R_RESIDENTIAL','residential'),
+              'semidetached_house':('residential','R_RESIDENTIAL','residential'),
+              'terrace':('residential','R_RESIDENTIAL','residential'),
+              'apartments':('residential','R_RESIDENTIAL','residential'),
+              'residential':('residential','R_RESIDENTIAL','residential'),
+              'commercial':('commercial_other','C_COMMERCIAL','commercial'),
+              'retail':('commercial_retail','C_RETAIL','commercial'),
+              'office':('office','C_OFFICE','commercial'),
+              'industrial':('industrial','I_INDUSTRIAL','industrial'),
+              'warehouse':('warehouse','I_WAREHOUSE','industrial'),
+              'school':('education','P_EDUCATION','institutional'),
+              'college':('education','P_EDUCATION','institutional'),
+              'university':('education','P_EDUCATION','institutional'),
+              'kindergarten':('education','P_EDUCATION','institutional'),
+              'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+              'clinic':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+              'hotel':('hotel_or_hospitality','C_HOSPITALITY','commercial'),
+              'hostel':('hotel_or_hospitality','C_HOSPITALITY','commercial'),
+              'church':('religious_or_community','P_RELIGIOUS','institutional'),
+              'chapel':('religious_or_community','P_RELIGIOUS','institutional'),
+              'cathedral':('religious_or_community','P_RELIGIOUS','institutional'),
+              'mosque':('religious_or_community','P_RELIGIOUS','institutional'),
+              'synagogue':('religious_or_community','P_RELIGIOUS','institutional'),
+              'temple':('religious_or_community','P_RELIGIOUS','institutional'),
+              'civic':('public_infrastructure','P_PUBLIC','institutional'),
+              'public':('public_infrastructure','P_PUBLIC','institutional'),
+              'fire_station':('public_infrastructure','P_PUBLIC','institutional'),
+              'police':('public_infrastructure','P_PUBLIC','institutional'),
+              'barn':('agricultural','A_AGRICULTURAL','agricultural'),
+              'farm':('agricultural','A_AGRICULTURAL','agricultural'),
+              'farm_auxiliary':('agricultural','A_AGRICULTURAL','agricultural'),
+              'garage':('commercial_other','C_GARAGE','commercial'),
+              'garages':('commercial_other','C_GARAGE','commercial')
+          }
+          vals='|'.join(wanted)
+          q=f'[out:json][timeout:60];nwr["building"~"^({vals})$"]({BBOX});out center tags 2500;'
+          body=urllib.parse.urlencode({'data':q}).encode()
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.nchc.org.tw/api/interpreter']
+          payload=None; used_endpoint=None; errors=[]
+          for ep in endpoints:
+              for attempt in range(3):
+                  try:
+                      req=urllib.request.Request(ep,data=body,headers={'User-Agent':'TerraYield-AAYS-building_type_4/1.0','Accept':'application/json'})
+                      with urllib.request.urlopen(req,timeout=90) as r:
+                          raw=r.read()
+                      obj=json.loads(raw)
+                      if obj.get('elements'):
+                          payload=(obj,raw); used_endpoint=ep; break
+                  except Exception as e:
+                      errors.append(f'{ep}#{attempt+1}:{type(e).__name__}:{e}')
+                      time.sleep(2+attempt*2)
+              if payload:
+                  break
+          if not payload:
+              raise SystemExit('Overpass fetch failed: '+' | '.join(errors[-6:]))
+
+          obj,raw=payload
+          source_sha=hashlib.sha256(raw).hexdigest()
+          candidates=[]
+          for e in obj.get('elements',[]):
+              typ=e.get('type'); oid=e.get('id'); tags=e.get('tags') or {}; b=tags.get('building')
+              if b not in wanted or typ not in ('node','way','relation') or oid is None:
+                  continue
+              fid=f'ENG_OSM_{typ}_{oid}'; osmid=f'{typ}/{oid}'
+              if fid in processed or osmid in processed or str(oid) in processed:
+                  continue
+              if typ=='node':
+                  lat=e.get('lat'); lon=e.get('lon')
+              else:
+                  c=e.get('center') or {}; lat=c.get('lat'); lon=c.get('lon')
+              if lat is None or lon is None:
+                  continue
+              primary,code,cat=wanted[b]
+              evidence={k:v for k,v in tags.items() if k in ('building','amenity','shop','office','tourism','healthcare','name','addr:housenumber','addr:street','addr:postcode')}
+              if not evidence.get('building'):
+                  continue
+              candidates.append((typ,int(oid),fid,osmid,float(lon),float(lat),primary,code,cat,b,evidence))
+
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          chosen=candidates[:50]
+          if len(chosen)<50:
+              raise SystemExit(f'only {len(chosen)} eligible new explicit-use buildings after processed-id exclusion')
+
+          new=[]
+          for typ,oid,fid,osmid,lon,lat,primary,code,cat,b,evidence in chosen:
+              url=f'https://www.openstreetmap.org/{typ}/{oid}'
+              props={
+                  'parcel_id':fid,
+                  'osm_id':osmid,
+                  'slot_id':SLOT,
+                  'region':'South West',
+                  'area':CITY,
+                  'local_authority':AUTHORITY,
+                  'building_type_primary':primary,
+                  'building_type_code':code,
+                  'building_category':cat,
+                  'evidence_level':'B',
+                  'confidence_score':0.80,
+                  'confidence_level_1_to_4':3,
+                  'source_count':1,
+                  'match_method':f'building={b}',
+                  'source':'OpenStreetMap via Overpass API',
+                  'source_url':url,
+                  'source_hash':source_sha,
+                  'osm_tags_summary':evidence,
+                  'source_evidence_excerpt':evidence,
+                  'evidence_excerpt':evidence,
+                  'fake_data':False,
+                  'final_ready':False,
+                  'needs_manual_review':False,
+                  'updated_at':now,
+                  'sources':[{
+                      'source_name':'OpenStreetMap Overpass API',
+                      'url':used_endpoint,
+                      'accessed_at':now,
+                      'sha256':source_sha,
+                      'licence':'ODbL 1.0',
+                      'granularity':'building_element',
+                      'fields_used':['building','amenity','shop','office','tourism','healthcare'],
+                      'supports_field':'building_type_primary',
+                      'match_method':f'building={b}',
+                      'match_score':0.80
+                  }],
+                  'building_type_secondary':'',
+                  'geometry_match_method':'osm_element_or_center',
+                  'address_match_method':'osm_tags_if_present',
+                  'limitations':'OSM explicit building-use tag; not yet corroborated by EPC/VOA/HMLR.',
+                  'evidence_summary':{'osm_live':True,'epc_voa_hmlr':False,'total_sources':1}
+              }
+              new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':props})
+
+          new_ids=[f['id'] for f in new]
+          assert len(new_ids)==50 and len(set(new_ids))==50
+          for f in new:
+              p=f['properties']
+              assert f['id'] not in processed and p['parcel_id'] not in processed and p['osm_id'] not in processed
+              assert p['fake_data'] is False and p['final_ready'] is False
+              assert p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p.get('evidence_excerpt') and p.get('sources') and p.get('source_hash') and p.get('source_url')
+
+          feats.extend(new)
+          geo['features']=feats
+          assert len(feats)==TARGET
+
+          ids=set(); pids=set(); oids=set()
+          for f in feats:
+              p=f.get('properties') or {}
+              fid=f.get('id'); pid=p.get('parcel_id'); oid=p.get('osm_id')
+              if fid not in (None,''):
+                  assert str(fid) not in ids, f'duplicate feature.id {fid}'
+                  ids.add(str(fid))
+              if pid not in (None,''):
+                  assert str(pid) not in pids, f'duplicate parcel_id {pid}'
+                  pids.add(str(pid))
+              if oid not in (None,''):
+                  assert str(oid) not in oids, f'duplicate osm_id {oid}'
+                  oids.add(str(oid))
+
+          type_dist=collections.Counter(); ev_dist=collections.Counter(); conf_dist=collections.Counter(); classified=unknown=0
+          for f in feats:
+              p=f.get('properties') or {}
+              t=p.get('building_type_primary') or 'unknown'; ev=p.get('evidence_level') or 'U'; conf=str(p.get('confidence_level_1_to_4') or 1)
+              type_dist[t]+=1; ev_dist[ev]+=1; conf_dist[conf]+=1
+              unknown += int(t=='unknown'); classified += int(t!='unknown')
+
+          geo_text=json.dumps(geo,ensure_ascii=False,indent=2)+'\n'
+          GEO.write_text(geo_text)
+          output_sha=hashlib.sha256(geo_text.encode()).hexdigest()
+
+          man.update({
+              'generated_at':now,'total_features':TARGET,'feature_count':TARGET,'classified':classified,'unknown':unknown,
+              'evidence_distribution':dict(sorted(ev_dist.items())),'type_distribution':dict(sorted(type_dist.items())),
+              'confidence_level_distribution':dict(sorted(conf_dist.items())),'fake_data':False,'final_ready':False
+          })
+          man.setdefault('sources',[]).append({
+              'name':'OpenStreetMap Overpass API - Gloucester batch 50','url':used_endpoint,'features_used':50,'accessed_at':now,
+              'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_json','license':'ODbL 1.0',
+              'evidence_level':'B','confidence_level_1_to_4':3,'grid_bbox':BBOX,
+              'note':'50 new explicit building=* use tags after feature.id/parcel_id/osm_id exclusion; raw response runtime-only.'
+          })
+          man['last_batch']={
+              'batch_index':BATCH,'city':CITY,'grid_bbox':BBOX,'source':'OpenStreetMap via Overpass API','source_url':used_endpoint,
+              'source_sha256':source_sha,'added_feature_count':50,'evidence_level_distribution':{'B':50},
+              'confidence_level_distribution':{'3':50},'new_feature_ids':new_ids,'fake_data':False,'final_ready':False
+          }
+          MAN.write_text(json.dumps(man,ensure_ascii=False,indent=2)+'\n')
+
+          sta.update({
+              'updated_at':now,'classified_count':classified,'unknown_count':unknown,'total_elements':TARGET,'total_features':TARGET,
+              'classified':classified,'unknown':unknown,'confidence_distribution':dict(sorted(conf_dist.items())),
+              'evidence_distribution':dict(sorted(ev_dist.items())),'confidence_level_distribution':dict(sorted(conf_dist.items())),
+              'output_sha256':output_sha,'feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,'current_feature_count':TARGET,
+              'last_batch_city':CITY,'last_batch_added_feature_count':50,'last_batch_source':'OpenStreetMap via Overpass API',
+              'last_batch_evidence_distribution':{'B':50},'last_batch_confidence_distribution':{'3':50},'progress_count_delta':50,
+              'new_feature_count':50,'last_batch_index':BATCH,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,
+              'candidate_batch':None,'no_progress_reason':None,'progress_counted':True,'fake_data':False,'final_ready':False,
+              'note':'Batch 50 appended 50 new Gloucester OSM explicit building-use elements outside all prior feature.id/parcel_id/osm_id values; same task retained and owner remains null.',
+              'progress_reason':'50 new Gloucester OSM explicit building=* records appended after processed-id exclusion',
+              'last_batch':{
+                  'batch_index':BATCH,'city':CITY,'grid_bbox':BBOX,'added_feature_count':50,'source':'OpenStreetMap via Overpass API',
+                  'source_url':used_endpoint,'source_sha256':source_sha,'classification_basis':'explicit_osm_building_tag',
+                  'evidence_level_distribution':{'B':50},'confidence_level_distribution':{'3':50}
+              }
+          })
+          STA.write_text(json.dumps(sta,ensure_ascii=False,indent=2)+'\n')
+
+          cp.update({
+              'first_unverified_step_status':'BATCH_50_APPENDED_50_GLOUCESTER_OSM_CONTINUATION_REQUIRED','terminal_status':'IN_PROGRESS',
+              'updated_at':now,'final_ready':False,'state':'IN_PROGRESS','feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,
+              'current_feature_count':TARGET,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,
+              'last_processed_ids_sample':new_ids[-20:],'blocker':None,'fake_data':False,'candidate_batch':None,'no_progress_reason':None,
+              'summary':{
+                  'osm_pilot_classified':0,'new_slot':False,'pipeline_stage':1,
+                  'note':f'PROGRESS: feature_count {EXPECTED_BEFORE} -> {TARGET}. Existing feature.id, parcel_id and osm_id treated as already_processed_ids; 50 new Gloucester OSM explicit building-use elements appended.',
+                  'new_features_appended':50,'current_feature_count':TARGET
+              },
+              'remaining_items':{
+                  'osm_building_tag_scan_pending':True,'epc_residential_pending':True,'voa_non_domestic_pending':True,
+                  'note':f'Next batch {NEXT_BATCH}: treat all {TARGET} canonical feature.id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new South West records; do not replay prior batches.'
+              },
+              'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION FOR OSM RECORDS',
+              'last_batch':{
+                  'batch_index':BATCH,'city':CITY,'grid_bbox':BBOX,'source':'OpenStreetMap via Overpass API','source_url':used_endpoint,
+                  'source_sha256':source_sha,'evidence_level':'B','confidence_level_1_to_4':3,'added_feature_count':50,
+                  'new_feature_ids':new_ids
+              },
+              'already_processed_ids_policy':'Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.'
+          })
+          CP.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+
+          RUN.parent.mkdir(parents=True,exist_ok=True)
+          RUN.write_text(json.dumps({
+              'slot_id':SLOT,'task_id':TASK_ID,'batch_index':BATCH,'city':CITY,'grid_bbox':BBOX,'generated_at':now,
+              'feature_count_before':EXPECTED_BEFORE,'feature_count_after':TARGET,'new_features_added':50,'progress_counted':True,
+              'source':'OpenStreetMap via Overpass API','source_url':used_endpoint,'source_sha256':source_sha,
+              'already_processed_ids_policy':'existing feature.id, parcel_id and osm_id excluded before selection',
+              'evidence_distribution':{'B':50},'confidence_distribution':{'3':50},'features':new,
+              'fake_data':False,'final_ready':False
+          },ensure_ascii=False,indent=2)+'\n')
+          print(f'prepared {EXPECTED_BEFORE}->{TARGET} +50 Gloucester via {used_endpoint}; source_sha={source_sha}')
+          PY
+
+      - name: Validate self-delete commit push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          geo=json.loads(G.read_text()); man=json.loads(M.read_text()); sta=json.loads(S.read_text()); cp=json.loads(C.read_text()); run=json.loads(R.read_text())
+          feats=geo.get('features') or []
+          assert len(feats)==2500
+          assert sta['feature_count_before']==2450 and sta['feature_count_after']==2500 and sta['progress_count_delta']==50 and sta['progress_counted'] is True
+          assert cp['current_feature_count']==2500 and cp['next_batch_index']==51 and cp['next_target_feature_count']==2550
+          assert run['new_features_added']==50 and len(run['features'])==50 and run['evidence_distribution']=={'B':50} and run['confidence_distribution']=={'3':50}
+          assert man.get('fake_data') is False and man.get('final_ready') is False and sta.get('fake_data') is False and sta.get('final_ready') is False and cp.get('fake_data') is False and cp.get('final_ready') is False and run.get('fake_data') is False and run.get('final_ready') is False
+          ids=[]; pids=[]; oids=[]
+          for f in feats:
+              p=f.get('properties') or {}
+              if f.get('id') not in (None,''): ids.append(str(f.get('id')))
+              if p.get('parcel_id') not in (None,''): pids.append(str(p.get('parcel_id')))
+              if p.get('osm_id') not in (None,''): oids.append(str(p.get('osm_id')))
+          assert len(ids)==len(set(ids)); assert len(pids)==len(set(pids)); assert len(oids)==len(set(oids))
+          for f in run['features']:
+              p=f['properties']
+              assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('sources') and p.get('source_url')
+              assert p.get('evidence_level')=='B' and p.get('confidence_level_1_to_4')==3
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          print('validation OK: 2450->2500, +50, unique non-empty IDs, evidence B, confidence 3, safe flags false')
+          PY
+          WF='.github/workflows/tmp_building_type_4_gloucester_osm_batch50_20260810.yml'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_4_latest.geojson england_map_web/data/building_type/shards/building_type_4_manifest_latest.json
+          git add -f docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json
+          git rm -f "$WF"
+          git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
+          git commit -m 'building_type_4: append Gloucester OSM batch 50'
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
