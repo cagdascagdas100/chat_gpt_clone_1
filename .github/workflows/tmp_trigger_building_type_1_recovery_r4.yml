@@ -1,0 +1,33 @@
+name: tmp-trigger-building-type-1-recovery-r4
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_trigger_building_type_1_recovery_r4.yml']
+permissions:
+  contents: write
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: retrigger canonical building_type_1 recovery workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR=codex/aays-single-runner-v5-20260706
+          TARGET=.github/workflows/tmp_building_type_1_recovery_20260810_r3.yml
+          git config user.name aays-building-type-1-trigger
+          git config user.email actions@users.noreply.github.com
+          printf '\n# retrigger %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$TARGET"
+          git add "$TARGET"
+          git commit -m 'Trigger building_type_1 recovery r3'
+          for i in 1 2 3 4 5; do
+            git fetch origin "$BR"
+            git rebase "origin/$BR" || { git rebase --abort || true; sleep 2; continue; }
+            git push origin HEAD:"$BR" && exit 0
+            sleep 2
+          done
+          exit 1
