@@ -1,0 +1,180 @@
+name: AAYS building_type_3 Farnborough Aldershot Fleet batch 17
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_3_farnborough_aldershot_fleet_batch17_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-3-slot
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append guarded Farnborough Aldershot Fleet batch 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          template_commit='c8505d8555302987ecc9fbdf29d29e5d78dbf042'
+          template_path='.github/workflows/tmp_building_type_3_chichester_bognor_regis_batch16_20260810.yml'
+          text=subprocess.check_output(['git','show',f'{template_commit}:{template_path}'],text=True)
+          marker="          import collections, datetime, hashlib, json, pathlib, time, urllib.parse, urllib.request"
+          start=text.index(marker)
+          end=text.index("\n          PY",start)
+          block=text[start:end]
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          replacements=[
+            ("CITY='Chichester_Bognor_Regis'","CITY='Farnborough_Aldershot_Fleet'"),
+            ("AUTHORITY='West Sussex'","AUTHORITY='Hampshire'"),
+            ("BATCH=16","BATCH=17"),
+            ("EXPECTED_BEFORE=2500","EXPECTED_BEFORE=2800"),
+            ("TARGET=2800","TARGET=3100"),
+            ("NEXT_BATCH=17","NEXT_BATCH=18"),
+            ("NEXT_TARGET=3100","NEXT_TARGET=3400"),
+            ("BBOX='50.7600,-0.9000,50.9000,-0.5500'","BBOX='51.1800,-0.9000,51.3400,-0.6800'"),
+            ("BATCH_16_APPENDED_300_CHICHESTER_BOGNOR_REGIS_OSM_CONTINUATION_REQUIRED","BATCH_17_APPENDED_300_FARNBOROUGH_ALDERSHOT_FLEET_OSM_CONTINUATION_REQUIRED"),
+            ("APPEND_ONLY_BATCH_17_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS","APPEND_ONLY_BATCH_18_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS"),
+            ("Chichester_Bognor_Regis","Farnborough_Aldershot_Fleet"),
+            ("Chichester Bognor Regis","Farnborough Aldershot Fleet"),
+            ("Chichester/Bognor Regis","Farnborough/Aldershot/Fleet"),
+            ("batch 16","batch 17")
+          ]
+          for old,new in replacements:
+              if old not in code:
+                  raise SystemExit(f'Fail closed: verified template marker missing: {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'farnborough_aldershot_fleet_batch17_from_verified_batch16.py','exec'),{})
+          PY
+
+      - name: Validate, self-delete, commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_farnborough_aldershot_fleet_batch17_20260810.yml'
+          GEO='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          MAN='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          RUN='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          STA='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          TASK='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+
+          python - <<'PY'
+          import json
+          paths={'geo':'england_map_web/data/building_type/shards/building_type_3_latest.geojson',
+                 'man':'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json',
+                 'run':'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json',
+                 'sta':'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json',
+                 'cp':'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json',
+                 'task':'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'}
+          obj={k:json.load(open(v)) for k,v in paths.items()}; feats=obj['geo']['features']
+          assert len(feats)==3100
+          for getter in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:(f.get('properties') or {}).get('osm_id')):
+              ids=[str(getter(f)) for f in feats if getter(f) not in (None,'')]
+              assert len(ids)==len(set(ids))
+          assert obj['task'].get('task_id')=='building-type-3-england-classification-v1-20260808' and obj['task'].get('owner') is None
+          assert obj['sta']['feature_count_before']==2800 and obj['sta']['feature_count_after']==3100 and obj['sta']['new_features_added']==300
+          assert obj['sta']['progress_counted'] is True and obj['sta']['owner'] is None and obj['sta']['next_batch_index']==18 and obj['sta']['next_target_feature_count']==3400
+          assert obj['cp']['current_feature_count']==3100 and obj['cp']['next_batch_index']==18 and obj['cp']['next_target_feature_count']==3400
+          assert obj['cp']['first_unverified_step_status']=='BATCH_17_APPENDED_300_FARNBOROUGH_ALDERSHOT_FLEET_OSM_CONTINUATION_REQUIRED'
+          assert obj['run']['batch_index']==17 and obj['run']['city']=='Farnborough_Aldershot_Fleet'
+          assert obj['run']['new_features_added']==300 and obj['run']['progress_counted'] is True
+          assert obj['run']['already_processed_ids_policy']=='existing feature.id, parcel_id and osm_id excluded before selection'
+          assert obj['run']['raw_source_stored_in_git'] is False
+          for k in ('man','run','sta','cp','task'):
+              assert obj[k].get('fake_data') is False and obj[k].get('final_ready') is False
+          new=obj['run']['features']; assert len(new)==300
+          for f in new:
+              p=f['properties']
+              assert p['evidence_excerpt'] and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['source_url'] and p['source_hash'] and p['sources'] and p['fake_data'] is False and p['final_ready'] is False
+          PY
+
+          git rm "$WF"
+          git add "$GEO" "$MAN" "$RUN" "$STA" "$CP"
+          changed=$(git diff --cached --name-only | sort)
+          expected=$(printf '%s\n' "$WF" "$CP" "$STA" "$RUN" "$GEO" "$MAN" | sort)
+          [[ "$changed" == "$expected" ]] || { echo 'unexpected staged paths'; printf '%s\n' "$changed"; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data(building_type_3): append Farnborough Aldershot Fleet OSM batch 2800->3100'
+
+          pushed=0
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then pushed=1; break; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          [[ "$pushed" == 1 ]] || exit 1
+
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{branch}:{path}']))
+          sta=load('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          man=load('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+          assert sta['current_feature_count']==3100 and sta['next_batch_index']==18 and sta['owner'] is None
+          assert cp['current_feature_count']==3100 and cp['next_batch_index']==18 and cp['next_target_feature_count']==3400
+          assert man['total_features']==3100 and man['added_feature_count']==300
+          assert run['feature_count_after']==3100 and run['new_features_added']==300 and run['city']=='Farnborough_Aldershot_Fleet'
+          for obj in (sta,cp,man,run): assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          PY
+          ! git cat-file -e "origin/$BRANCH:$WF" 2>/dev/null
+
+      - name: Remove temporary workflow after failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_3_farnborough_aldershot_fleet_batch17_20260810.yml'
+          files=(
+            'england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+            'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+            'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          )
+          for f in "${files[@]}"; do git restore --staged --worktree -- "$f" 2>/dev/null || true; done
+          if [[ -f "$WF" ]]; then git rm "$WF"; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ci: cleanup failed building_type_3 Farnborough Aldershot Fleet batch17'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 2
+          done
+          exit 1
