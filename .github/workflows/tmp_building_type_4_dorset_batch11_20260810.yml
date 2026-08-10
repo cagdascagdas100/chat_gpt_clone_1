@@ -1,4 +1,4 @@
-name: tmp building_type_4 Bristol continuation batch 38
+name: tmp building_type_4 Bristol continuation batch 39
 
 on:
   push:
@@ -50,15 +50,15 @@ jobs:
             ('CITY="East Devon"; PREFIX="EDEV"; REGION="South West"', 'CITY="Bristol"; PREFIX="BRIS"; REGION="South West"'),
             ('Food Standards Agency FHRS daily open data - East Devon', 'Food Standards Agency FHRS daily open data - Bristol'),
             ('FHRS072en-GB.xml', 'FHRS855en-GB.xml'),
-            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950'),
+            ('BEFORE=750; TARGET=800; BATCH=16; NEXT_BATCH=17; NEXT_TARGET=850', 'BEFORE=1900; TARGET=1950; BATCH=39; NEXT_BATCH=40; NEXT_TARGET=2000'),
             ('authority.lower()!="east devon"', 'authority.lower()!="bristol"'),
             ('Existing shard preserved; appended 50 East Devon FHRS records', 'Existing shard preserved; appended 50 additional Bristol FHRS records'),
-            ('Batch 16 appended from official East Devon FHRS records', 'Batch 38 appended from official Bristol FHRS continuation records'),
+            ('Batch 16 appended from official East Devon FHRS records', 'Batch 39 appended from official Bristol FHRS continuation records'),
             ('50 new East Devon FHRS premises-use proxy records', '50 new Bristol FHRS continuation premises-use proxy records'),
-            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_38_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 750 -> 800', 'feature_count 1850 -> 1900'),
+            ('BATCH_16_APPENDED_50_EAST_DEVON_FHRS_CONTINUATION_REQUIRED', 'BATCH_39_APPENDED_50_BRISTOL_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 750 -> 800', 'feature_count 1900 -> 1950'),
             ('East Devon FHRS acik verisinden', 'Bristol FHRS acik verisinden'),
-            ('Sonraki adim batch 17: mevcut 800 feature', 'Sonraki adim batch 39: mevcut 1900 feature'),
+            ('Sonraki adim batch 17: mevcut 800 feature', 'Sonraki adim batch 40: mevcut 1950 feature'),
             ('Cheltenham ve East Devon kayitlarini tekrar isleme.', 'Cheltenham, East Devon, North Devon, Mid Devon, South Hams, Teignbridge, Torridge, West Devon, Cotswold, Forest of Dean, Stroud, Tewkesbury, Bristol, North Somerset, South Gloucestershire, Bath and North East Somerset, Bournemouth, Christchurch and Poole, Swindon ve Isles of Scilly icindeki mevcut feature.id, parcel_id ve osm_id kayitlarini tekrar isleme; yalniz processed kumesi disindaki yeni kayitlari sec.'),
           ]
           for old,new in replacements:
@@ -68,7 +68,7 @@ jobs:
           body=body.replace('EDEV_FHRS_', 'BRIS_FHRS_').replace('EDEV_FHRSID_', 'BRIS_FHRSID_')
           required=[
             'CITY="Bristol"', 'PREFIX="BRIS"', 'FHRS855en-GB.xml',
-            'BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950',
+            'BEFORE=1900; TARGET=1950; BATCH=39; NEXT_BATCH=40; NEXT_TARGET=2000',
             'authority.lower()!="bristol"', 'evidence_excerpt',
             '"evidence_level":"D"', '"confidence_level_1_to_4":2',
             '"fake_data":False', '"final_ready":False',
@@ -78,7 +78,7 @@ jobs:
           forbidden=['FHRS072en-GB.xml','CITY="East Devon"','PREFIX="EDEV"','BATCH_16_APPENDED_50_EAST_DEVON']
           leaked=[x for x in forbidden if x in body]
           assert not leaked, leaked
-          exec(compile(body,'<building_type_4_bristol_continuation_batch38_append>','exec'), {'__name__':'__main__'})
+          exec(compile(body,'<building_type_4_bristol_continuation_batch39_append>','exec'), {'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
@@ -94,10 +94,10 @@ jobs:
           status=json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json").read_text())
           runner=json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json").read_text())
           task=json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json").read_text())
-          assert len(shard.get("features") or [])==1900
-          assert manifest.get("feature_count_before")==1850 and manifest.get("feature_count_after")==1900 and manifest.get("added_feature_count")==50
-          assert checkpoint.get("current_feature_count")==1900 and checkpoint.get("next_batch_index")==39 and checkpoint.get("next_target_feature_count")==1950
-          assert status.get("current_feature_count")==1900 and runner.get("feature_count_before")==1850 and runner.get("feature_count_after")==1900 and runner.get("added_feature_count")==50
+          assert len(shard.get("features") or [])==1950
+          assert manifest.get("feature_count_before")==1900 and manifest.get("feature_count_after")==1950 and manifest.get("added_feature_count")==50
+          assert checkpoint.get("current_feature_count")==1950 and checkpoint.get("next_batch_index")==40 and checkpoint.get("next_target_feature_count")==2000
+          assert status.get("current_feature_count")==1950 and runner.get("feature_count_before")==1900 and runner.get("feature_count_after")==1950 and runner.get("added_feature_count")==50
           assert task.get("owner") is None and task.get("task_id")=="building-type-4-england-classification-v1-20260808"
           for o in (manifest,checkpoint,status,runner):
               assert o.get("fake_data") is False and o.get("final_ready") is False
@@ -106,7 +106,7 @@ jobs:
           idset=set(ids)
           new=[f for f in shard["features"] if f.get("id") in idset]
           assert len(new)==50 and len(runner.get("records") or [])==50
-          assert len([f for f in shard["features"] if str(f.get("id") or "").startswith("BRIS_FHRS_")])==300
+          assert len([f for f in shard["features"] if str(f.get("id") or "").startswith("BRIS_FHRS_")])==350
           assert len({(f.get("properties") or {}).get("parcel_id") for f in new})==50
           for f in new:
               p=f.get("properties") or {}
@@ -117,7 +117,7 @@ jobs:
               assert p.get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS855en-GB.xml"
               assert p.get("fake_data") is False and p.get("final_ready") is False
               assert "cadastral parcel identity and building fabric remain unverified" in p.get("limitations","")
-          print("validated 1850->1900 with 50 new Bristol continuation features outside processed IDs")
+          print("validated 1900->1950 with 50 new Bristol continuation features outside processed IDs")
           PY
 
       - name: Commit and push only slot outputs
@@ -139,7 +139,7 @@ jobs:
             for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done
             [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
           done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Bristol FHRS continuation batch 1850->1900"
+          git commit -m "data(building_type_4): append Bristol FHRS continuation batch 1900->1950"
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
@@ -163,10 +163,10 @@ jobs:
           checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
           status=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           task=load('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
-          assert len(shard['features'])==1900
-          assert manifest['feature_count_before']==1850 and manifest['feature_count_after']==1900 and manifest['added_feature_count']==50
-          assert checkpoint['current_feature_count']==1900 and checkpoint['next_batch_index']==39 and checkpoint['next_target_feature_count']==1950
-          assert status['current_feature_count']==1900
+          assert len(shard['features'])==1950
+          assert manifest['feature_count_before']==1900 and manifest['feature_count_after']==1950 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==1950 and checkpoint['next_batch_index']==40 and checkpoint['next_target_feature_count']==2000
+          assert status['current_feature_count']==1950
           assert runner['city']=='Bristol' and len(runner['new_feature_ids'])==50
           assert task['owner'] is None
           for o in (manifest,checkpoint,status,runner,task):
@@ -174,11 +174,11 @@ jobs:
           ids=set(runner['new_feature_ids'])
           batch=[f for f in shard['features'] if f.get('id') in ids]
           assert len(batch)==50 and all(str(f.get('id') or '').startswith('BRIS_FHRS_') for f in batch)
-          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BRIS_FHRS_')])==300
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BRIS_FHRS_')])==350
           assert all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
           assert all((f.get('properties') or {}).get('evidence_level')=='D' for f in batch)
           assert all((f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
           assert all((f.get('properties') or {}).get('fake_data') is False for f in batch)
           assert all((f.get('properties') or {}).get('final_ready') is False for f in batch)
-          print('remote readback verified: building_type_4=1900; Bristol continuation batch=50')
+          print('remote readback verified: building_type_4=1950; Bristol continuation batch=50')
           PY
