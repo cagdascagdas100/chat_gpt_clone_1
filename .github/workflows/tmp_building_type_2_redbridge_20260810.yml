@@ -52,39 +52,49 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show 6bedaa5fae0f508ace5c00c1fb649f69500573dc:.github/workflows/tmp_building_type_2_newham_20260810.yml > /tmp/newham_workflow.yml
+          git show 8621d29652a7387561bc123e4792aaeb14c4c366:.github/workflows/tmp_building_type_7_worcester_20260810.yml > /tmp/worcester_template.yml
           python - <<'PY'
           from pathlib import Path
 
-          text = Path('/tmp/newham_workflow.yml').read_text(encoding='utf-8')
-          anchor = '      - name: Append exactly 50 new Newham proxy features\n'
-          section = text[text.index(anchor):]
+          text = Path('/tmp/worcester_template.yml').read_text(encoding='utf-8')
           marker = "          python - <<'PY'\n"
-          start = section.index(marker) + len(marker)
-          end = section.index("\n          PY", start)
-          lines = section[start:end].splitlines()
+          start = text.index(marker) + len(marker)
+          end = text.index("\n          PY", start)
+          lines = text[start:end].splitlines()
           body = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
 
           replacements = [
-              ('Newham', 'Redbridge'),
-              ('NEWHAM', 'REDBRIDGE'),
-              ('newham', 'redbridge'),
-              ('FHRS525en-GB.xml', 'FHRS526en-GB.xml'),
-              ('EXPECTED_BEFORE = 1100', 'EXPECTED_BEFORE = 1150'),
-              ('EXPECTED_BATCH = 23', 'EXPECTED_BATCH = 24'),
-              ('EXPECTED_TARGET = 1150', 'EXPECTED_TARGET = 1200'),
+              ('SLOT = "building_type_7"', 'SLOT = "building_type_2"'),
+              ('TASK_ID = "building-type-7-england-classification-v1-20260808"', 'TASK_ID = "building-type-2-england-classification-v1-20260808"'),
+              ('building_type_7', 'building_type_2'),
+              ('building-type-7', 'building-type-2'),
+              ('WORCESTER_CITY', 'REDBRIDGE'),
+              ('CITY = "Worcester City"', 'CITY = "Redbridge"'),
+              ('PREFIX = "WORC"', 'PREFIX = "REDBRIDGE"'),
+              ('Worcester City', 'Redbridge'),
+              ('/tmp/worcester_fhrs.xml', '/tmp/redbridge_fhrs.xml'),
+              ('Worcester', 'Redbridge'),
+              ('FHRS151en-GB.xml', 'FHRS526en-GB.xml'),
+              ('EXPECTED_BEFORE = 750', 'EXPECTED_BEFORE = 1150'),
+              ('EXPECTED_BATCH = 16', 'EXPECTED_BATCH = 24'),
+              ('EXPECTED_TARGET = 800', 'EXPECTED_TARGET = 1200'),
+              ('West Midlands', 'London Outer'),
           ]
           for old, new in replacements:
-              body = body.replace(old, new)
+              if old in body:
+                  body = body.replace(old, new)
 
           required = [
+              'SLOT = "building_type_2"',
               'CITY = "Redbridge"',
               'PREFIX = "REDBRIDGE"',
+              'building-type-2-england-classification-v1-20260808',
               'FHRS526en-GB.xml',
               'EXPECTED_BEFORE = 1150',
               'EXPECTED_BATCH = 24',
               'EXPECTED_TARGET = 1200',
               '/tmp/redbridge_fhrs.xml',
+              '"region": "London Outer"',
               'for value in (f.get("id"), p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")):',
               'evidence_excerpt',
               'evidence_level',
@@ -94,9 +104,10 @@ jobs:
               'final_ready',
           ]
           missing = [token for token in required if token not in body]
-          assert not missing, f'patched append body missing required tokens: {missing}'
-          leaked = [token for token in ('Newham','NEWHAM','newham','FHRS525en-GB.xml') if token in body]
-          assert not leaked, f'patched append body leaked old authority tokens: {leaked}'
+          assert not missing, f"patched template missing required tokens: {missing}"
+          forbidden = ['building_type_7', 'building-type-7', 'Worcester', 'FHRS151en-GB.xml', 'West Midlands', '/tmp/worcester_fhrs.xml']
+          leaked = [token for token in forbidden if token in body]
+          assert not leaked, f"patched template leaked old slot/city tokens: {leaked}"
           exec(compile(body, '<building_type_2_redbridge_append>', 'exec'), {'__name__': '__main__'})
           PY
 
