@@ -1,0 +1,222 @@
+name: tmp building_type_2 Haringey batch 15
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_2_haringey_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase to current canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Fetch Haringey FHRS source to runtime cache only
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --retry-delay 2 \
+            --output /tmp/haringey_fhrs.xml \
+            https://ratings.food.gov.uk/api/open-data-files/FHRS514en-GB.xml
+          test -s /tmp/haringey_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('/tmp/haringey_fhrs.xml').getroot()
+          names = {(n.text or '').strip() for n in root.findall('.//LocalAuthorityName') if (n.text or '').strip()}
+          assert 'Haringey' in names, f'expected Haringey FHRS source, got sample={sorted(names)[:10]}'
+          print('verified Haringey FHRS source')
+          PY
+
+      - name: Append exactly 50 new Haringey proxy features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 8621d29652a7387561bc123e4792aaeb14c4c366:.github/workflows/tmp_building_type_7_worcester_20260810.yml > /tmp/worcester_template.yml
+          python - <<'PY'
+          from pathlib import Path
+
+          text = Path('/tmp/worcester_template.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = text.index(marker) + len(marker)
+          end = text.index("\n          PY", start)
+          lines = text[start:end].splitlines()
+          body = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
+
+          replacements = [
+              ('SLOT = "building_type_7"', 'SLOT = "building_type_2"'),
+              ('TASK_ID = "building-type-7-england-classification-v1-20260808"', 'TASK_ID = "building-type-2-england-classification-v1-20260808"'),
+              ('building_type_7', 'building_type_2'),
+              ('building-type-7', 'building-type-2'),
+              ('WORCESTER_CITY', 'HARINGEY'),
+              ('CITY = "Worcester City"', 'CITY = "Haringey"'),
+              ('PREFIX = "WORC"', 'PREFIX = "HARINGEY"'),
+              ('Worcester City', 'Haringey'),
+              ('/tmp/worcester_fhrs.xml', '/tmp/haringey_fhrs.xml'),
+              ('Worcester', 'Haringey'),
+              ('FHRS151en-GB.xml', 'FHRS514en-GB.xml'),
+              ('EXPECTED_BEFORE = 750', 'EXPECTED_BEFORE = 700'),
+              ('EXPECTED_BATCH = 16', 'EXPECTED_BATCH = 15'),
+              ('EXPECTED_TARGET = 800', 'EXPECTED_TARGET = 750'),
+              ('West Midlands', 'London Outer'),
+          ]
+          for old, new in replacements:
+              if old in body:
+                  body = body.replace(old, new)
+
+          required = [
+              'SLOT = "building_type_2"',
+              'CITY = "Haringey"',
+              'PREFIX = "HARINGEY"',
+              'building-type-2-england-classification-v1-20260808',
+              'FHRS514en-GB.xml',
+              'EXPECTED_BEFORE = 700',
+              'EXPECTED_BATCH = 15',
+              'EXPECTED_TARGET = 750',
+              '/tmp/haringey_fhrs.xml',
+              '"region": "London Outer"',
+              'for value in (f.get("id"), p.get("feature_id"), p.get("parcel_id"), p.get("osm_id")):',
+              'evidence_excerpt',
+              'evidence_level',
+              'confidence_level_1_to_4',
+              'source_hash',
+              'fake_data',
+              'final_ready',
+          ]
+          missing = [token for token in required if token not in body]
+          assert not missing, f"patched template missing required tokens: {missing}"
+          forbidden = ['building_type_7', 'building-type-7', 'Worcester', 'FHRS151en-GB.xml', 'West Midlands', '/tmp/worcester_fhrs.xml']
+          leaked = [token for token in forbidden if token in body]
+          assert not leaked, f"patched template leaked old slot/city tokens: {leaked}"
+          exec(compile(body, '<building_type_2_haringey_append>', 'exec'), {'__name__': '__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          shard_path = Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest_path = Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner_path = Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          status_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          checkpoint_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          task_path = Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+
+          shard = json.loads(shard_path.read_text(encoding='utf-8'))
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          runner = json.loads(runner_path.read_text(encoding='utf-8'))
+          status = json.loads(status_path.read_text(encoding='utf-8'))
+          checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          task = json.loads(task_path.read_text(encoding='utf-8'))
+
+          assert len(shard['features']) == 750
+          assert manifest['feature_count_before'] == 700 and manifest['feature_count_after'] == 750 and manifest['added_feature_count'] == 50
+          assert checkpoint['feature_count_before'] == 700 and checkpoint['feature_count_after'] == 750 and checkpoint['current_feature_count'] == 750
+          assert checkpoint['next_batch_index'] == 16 and checkpoint['next_target_feature_count'] == 800
+          assert runner['feature_count_before'] == 700 and runner['feature_count_after'] == 750 and runner['added_feature_count'] == 50
+          assert status['feature_count_before'] == 700 and status['feature_count_after'] == 750 and status['current_feature_count'] == 750
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          assert manifest['fake_data'] is False and manifest['final_ready'] is False
+          assert checkpoint['fake_data'] is False and checkpoint['final_ready'] is False
+          assert runner['city'] == 'Haringey'
+          assert runner['source_url'] == 'https://ratings.food.gov.uk/api/open-data-files/FHRS514en-GB.xml'
+
+          batch = [f for f in shard['features'] if str(f.get('id') or '').startswith('HARINGEY_FHRS_')]
+          assert len(batch) == 50, len(batch)
+          ids = [f['id'] for f in batch]
+          parcels = [(f.get('properties') or {}).get('parcel_id') for f in batch]
+          assert len(ids) == len(set(ids)) == 50
+          assert len(parcels) == len(set(parcels)) == 50
+          for f in batch:
+              p = f.get('properties') or {}
+              assert p.get('evidence_excerpt')
+              assert p.get('evidence_level') == 'D'
+              assert p.get('confidence_level_1_to_4') == 2
+              assert p.get('source_hash')
+              assert p.get('fake_data') is False
+              assert p.get('final_ready') is False
+              assert p.get('source_url') == 'https://ratings.food.gov.uk/api/open-data-files/FHRS514en-GB.xml'
+          print('validated building_type_2 Haringey 700->750; 50 new D/confidence-2 features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${files[@]}"
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' "${files[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected[@]}") <(printf '%s\n' "${staged[@]}")
+          test "${#staged[@]}" -eq 5
+          git commit -m "data(building_type_2): append Haringey FHRS batch 700->750"
+
+          pushed=0
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              pushed=1
+              break
+            fi
+          done
+          test "$pushed" -eq 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          ref = 'origin/codex/aays-single-runner-v5-20260706'
+          def load(path):
+              raw = subprocess.check_output(['git','show',f'{ref}:{path}'])
+              return json.loads(raw)
+          shard = load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest = load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner = load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint = load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          task = load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features']) == 750
+          assert manifest['feature_count_after'] == 750 and manifest['added_feature_count'] == 50
+          assert checkpoint['current_feature_count'] == 750 and checkpoint['next_batch_index'] == 16 and checkpoint['next_target_feature_count'] == 800
+          assert runner['city'] == 'Haringey' and len(runner['selected_feature_ids']) == 50
+          assert task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          batch = [f for f in shard['features'] if str(f.get('id') or '').startswith('HARINGEY_FHRS_')]
+          assert len(batch) == 50
+          assert all((f.get('properties') or {}).get('fake_data') is False for f in batch)
+          assert all((f.get('properties') or {}).get('final_ready') is False for f in batch)
+          print('remote readback verified: building_type_2=750; Haringey batch=50')
+          PY
