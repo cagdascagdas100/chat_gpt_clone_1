@@ -1,0 +1,241 @@
+name: tmp building_type_7 Birmingham continuation batch 63
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_birmingham_cont31_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch sparse
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 100
+          clean: false
+          sparse-checkout: |
+            .github/workflows/tmp_building_type_7_birmingham_cont31_20260810.yml
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          sparse-checkout-cone-mode: false
+
+      - name: Guard current slot state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=100
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          assert cp.get('slot_id') == 'building_type_7'
+          assert cp.get('current_feature_count') == 3100, cp
+          assert cp.get('feature_count_after') == 3100, cp
+          assert cp.get('next_batch_index') == 63, cp
+          assert cp.get('next_target_feature_count') == 3150, cp
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert len(geo.get('features') or []) == 3100
+          assert manifest.get('total_features', manifest.get('feature_count')) == 3100
+          assert task.get('task_id') == 'building-type-7-england-classification-v1-20260808'
+          assert task.get('slot_id') == 'building_type_7'
+          assert task.get('owner') is None, task.get('owner')
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+          assert status.get('fake_data') is False and status.get('final_ready') is False
+          source='Food Standards Agency FHRS daily open data - Birmingham continuation batch 31'
+          assert not any(isinstance(s,dict) and s.get('name') == source for s in manifest.get('sources',[])), 'continuation batch 31 already recorded'
+          PY
+
+      - name: Fetch official Birmingham FHRS source to runtime cache only
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_URL='https://ratings.food.gov.uk/api/open-data-files/FHRS402en-GB.xml'
+          printf '%s\n' "$SOURCE_URL" > /tmp/birmingham_cont31_source_url.txt
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --retry-all-errors "$SOURCE_URL" -o /tmp/birmingham_cont31_fhrs.xml
+          test -s /tmp/birmingham_cont31_fhrs.xml
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root=ET.parse('/tmp/birmingham_cont31_fhrs.xml').getroot()
+          vals=[]
+          for e in root.iter():
+              if e.tag.rsplit('}',1)[-1]=='LocalAuthorityName' and e.text:
+                  vals.append(e.text.strip())
+          assert any(v.casefold()=='birmingham' for v in vals), sorted(set(vals))[:20]
+          PY
+          sha256sum /tmp/birmingham_cont31_fhrs.xml
+
+      - name: Materialize verified append logic from immutable batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEMPLATE_URL='https://raw.githubusercontent.com/cagdascagdas100/chat_gpt_clone_1/100c41b07fb865d1bb67ee24a9f386511ef252c5/.github/workflows/tmp_building_type_7_birmingham_cont20_20260810.yml'
+          curl --fail --location --silent --show-error "$TEMPLATE_URL" -o /tmp/building_type_7_cont20_template.yml
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          txt=Path('/tmp/building_type_7_cont20_template.yml').read_text(encoding='utf-8')
+          marker='      - name: Append exactly 50 IDs outside existing GeoJSON processed set\n'
+          assert marker in txt
+          sub=txt.split(marker,1)[1]
+          start="          python - <<'PY'\n"
+          assert start in sub
+          body=sub.split(start,1)[1].split("\n          PY",1)[0]
+          script=textwrap.dedent(body)
+          old='EXPECTED_BEFORE=2550; EXPECTED_BATCH=52; EXPECTED_TARGET=2600'
+          new='EXPECTED_BEFORE=3100; EXPECTED_BATCH=63; EXPECTED_TARGET=3150'
+          assert old in script
+          script=script.replace(old,new)
+          script=script.replace('continuation batch 20','continuation batch 31')
+          script=script.replace('CONTINUATION_20','CONTINUATION_31')
+          script=script.replace('cont20','cont31')
+          assert new in script and old not in script
+          assert 'continuation batch 31' in script and 'CONTINUATION_31' in script
+          Path('/tmp/building_type_7_cont31_append.py').write_text(script,encoding='utf-8')
+          PY
+          python /tmp/building_type_7_cont31_append.py
+
+      - name: Validate guarded append and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          features=shard.get('features') or []
+          assert len(features)==3150
+          assert manifest.get('feature_count_before')==3100 and manifest.get('feature_count_after')==3150 and manifest.get('added_feature_count')==50
+          assert runner.get('feature_count_before')==3100 and runner.get('feature_count_after')==3150 and runner.get('added_feature_count')==50
+          ids=runner.get('selected_feature_ids') or []
+          records=runner.get('records') or []
+          assert len(ids)==len(set(ids))==50 and len(records)==50
+          prior=set()
+          for f in features[:3100]:
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None and str(v).strip(): prior.add(str(v).strip())
+          new=features[3100:]
+          assert len(new)==50
+          for f in new:
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None and str(v).strip(): assert str(v).strip() not in prior
+              assert p.get('evidence_excerpt')
+              assert p.get('evidence_level')=='D'
+              assert p.get('confidence_level_1_to_4')==2
+              assert p.get('source_hash') and p.get('sources')
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          all_feature_ids=[str(f.get('id')) for f in features if f.get('id') is not None]
+          assert len(all_feature_ids)==len(set(all_feature_ids)), 'duplicate feature.id after append'
+          assert cp.get('feature_count_before')==3100 and cp.get('feature_count_after')==3150 and cp.get('current_feature_count')==3150
+          assert cp.get('next_batch_index')==64 and cp.get('next_target_feature_count')==3200
+          assert cp.get('last_batch',{}).get('batch_index')==63 and cp.get('last_batch',{}).get('added_feature_count')==50
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert status.get('current_feature_count')==3150 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          assert all(r.get('evidence_excerpt') and r.get('source_hash') for r in records)
+          assert all(r.get('evidence_level')=='D' and r.get('confidence_level_1_to_4')==2 for r in records)
+          print(json.dumps({'before':3100,'after':3150,'added':50,'first_id':ids[0],'last_id':ids[-1],'geojson_sha256':hashlib.sha256(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_bytes()).hexdigest()},indent=2))
+          PY
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WORKFLOW='.github/workflows/tmp_building_type_7_birmingham_cont31_20260810.yml'
+          git rm -- "$WORKFLOW"
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          python - <<'PY'
+          import subprocess
+          allowed={
+            '.github/workflows/tmp_building_type_7_birmingham_cont31_20260810.yml',
+            'england_map_web/data/building_type/shards/building_type_7_latest.geojson',
+            'england_map_web/data/building_type/shards/building_type_7_manifest_latest.json',
+            'docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json',
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json',
+            'docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json',
+          }
+          changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert changed and changed <= allowed, (changed,allowed)
+          PY
+          git commit -m 'data(building_type_7): append Birmingham FHRS continuation batch 3100->3150'
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH" --depth=100
+            if ! git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
+              if ! git merge --no-edit "origin/$BRANCH"; then
+                git merge --abort || true
+                echo 'merge conflict; refusing cross-slot overwrite' >&2
+                exit 1
+              fi
+              python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          assert len(geo.get('features') or [])==3150
+          assert cp.get('current_feature_count')==3150 and cp.get('next_batch_index')==64
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          PY
+            fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep $((attempt*2))
+          done
+          test "$pushed" -eq 1
+          LOCAL_SHA=$(git rev-parse HEAD)
+          git fetch origin "$BRANCH" --depth=100
+          git merge-base --is-ancestor "$LOCAL_SHA" "origin/$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def load(path):
+              return json.loads(subprocess.check_output(['git','show',f'{branch}:{path}']))
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          assert len(shard.get('features') or [])==3150
+          assert cp.get('current_feature_count')==3150 and cp.get('feature_count_after')==3150 and cp.get('next_batch_index')==64 and cp.get('next_target_feature_count')==3200
+          assert manifest.get('feature_count_after')==3150 and manifest.get('added_feature_count')==50
+          assert runner.get('feature_count_after')==3150 and runner.get('added_feature_count')==50
+          assert status.get('current_feature_count')==3150
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert status.get('fake_data') is False and status.get('final_ready') is False
+          print('remote_readback_ok')
+          PY
+          echo "readback_commit=$LOCAL_SHA"
