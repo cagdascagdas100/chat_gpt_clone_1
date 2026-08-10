@@ -1,0 +1,137 @@
+name: AAYS building_type_6 Ripley OSM one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_6_ripley_batch20_20260810.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-6-ripley-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 evidence-backed Ripley OSM records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import pathlib
+          import subprocess
+
+          template_ref = 'cd7216da6604dbcc8efb103f9cedb69372e825f1'
+          template_path = '.github/workflows/tmp_building_type_6_loughborough_20260810.yml'
+          template = subprocess.check_output(['git', 'show', f'{template_ref}:{template_path}'], text=True)
+          start_marker = "          python - <<'PY'\n"
+          end_marker = "\n          PY"
+          start = template.index(start_marker) + len(start_marker)
+          end = template.index(end_marker, start)
+          body_lines = template[start:end].splitlines()
+          body = '\n'.join(line[10:] if line.startswith('          ') else line for line in body_lines)
+
+          replacements = [
+              ('Loughborough/Charnwood', 'Ripley/Amber Valley'),
+              ('SUCCESS_LOUGHBOROUGH_CHARNWOOD_BATCH_7', 'SUCCESS_RIPLEY_AMBER_VALLEY_BATCH_20'),
+              ('loughborough_charnwood_source_sha256', 'ripley_amber_valley_source_sha256'),
+              ('LOUGHBOROUGH_OSM_', 'RIPLEY_OSM_'),
+              ('CITY = "Loughborough"', 'CITY = "Ripley"'),
+              ('LOCAL_AUTHORITY = "Charnwood"', 'LOCAL_AUTHORITY = "Amber Valley"'),
+              ('BATCH_INDEX = 7', 'BATCH_INDEX = 20'),
+              ('EXPECTED_BEFORE = 300', 'EXPECTED_BEFORE = 950'),
+              ('TARGET_AFTER = 350', 'TARGET_AFTER = 1000'),
+              ('NEXT_TARGET = 400', 'NEXT_TARGET = 1050'),
+              ('around:5000,52.7721,-1.2062', 'around:5000,53.0507,-1.4074'),
+              ('Existing 300 features preserved', 'Existing 950 features preserved'),
+              ('batch 7 appended', 'batch 20 appended'),
+              ('Loughborough', 'Ripley'),
+              ('Charnwood', 'Amber Valley'),
+          ]
+          required = {
+              'CITY = "Loughborough"', 'LOCAL_AUTHORITY = "Charnwood"',
+              'BATCH_INDEX = 7', 'EXPECTED_BEFORE = 300',
+              'TARGET_AFTER = 350', 'NEXT_TARGET = 400',
+              'around:5000,52.7721,-1.2062', 'LOUGHBOROUGH_OSM_'
+          }
+          for old, new in replacements:
+              if old not in body and old in required:
+                  raise SystemExit(f'template invariant missing: {old}')
+              body = body.replace(old, new)
+
+          compile(body, '<derived-successful-batch-template>', 'exec')
+          ns = {'__name__': '__main__'}
+          exec(compile(body, '<derived-successful-batch-template>', 'exec'), ns)
+
+          # Preserve explicit city/grid/bbox continuation metadata requested by the common prompt.
+          cp_path = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
+          cp = json.loads(cp_path.read_text(encoding='utf-8'))
+          cp['last_grid_id'] = 'uk-grid-ripley-001'
+          cp['last_bbox_wgs84'] = [-1.4824, 53.0057, -1.3324, 53.0957]
+          cp['next_city_index'] = int(cp.get('next_city_index') or 20) + 1
+          cp_path.write_text(json.dumps(cp, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          run_path = pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json')
+          runner = json.loads(run_path.read_text(encoding='utf-8'))
+          runner['grid_id'] = 'uk-grid-ripley-001'
+          runner['bbox_wgs84'] = [-1.4824, 53.0057, -1.3324, 53.0957]
+          run_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          SELF='.github/workflows/tmp_building_type_6_ripley_batch20_20260810.yml'
+          OWNED=(
+            'england_map_web/data/building_type/shards/building_type_6_latest.geojson'
+            'england_map_web/data/building_type/shards/building_type_6_manifest_latest.json'
+            'docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json'
+            'docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json'
+          )
+          BASE="$(git rev-parse HEAD)"
+          git config user.name 'AAYS building_type_6 continuation'
+          git config user.email 'aays-building-type-6@local.invalid'
+          rm -f "$SELF"
+          git add "${OWNED[@]}" "$SELF"
+          git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
+          git commit -m 'building_type_6: append Ripley OSM batch 20'
+
+          for attempt in 1 2 3; do
+            git fetch origin "$BRANCH"
+            REMOTE="$(git rev-parse "origin/$BRANCH")"
+            CHANGED="$(git diff --name-only "$BASE..$REMOTE" -- "${OWNED[@]}" || true)"
+            if [ -n "$CHANGED" ]; then
+              echo 'Same-slot files changed remotely after batch started; fail closed:'
+              echo "$CHANGED"
+              exit 1
+            fi
+            if [ "$(git rev-parse HEAD^)" != "$REMOTE" ]; then
+              git rebase "origin/$BRANCH"
+            fi
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo 'Push failed after 3 guarded attempts'
+          exit 1
