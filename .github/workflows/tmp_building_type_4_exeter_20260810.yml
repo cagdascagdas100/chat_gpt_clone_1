@@ -1,4 +1,4 @@
-name: tmp building_type_4 Torbay batch 9
+name: tmp building_type_4 Cornwall batch 10
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append exactly 50 new Torbay FHRS evidence features
+      - name: Append exactly 50 new Cornwall FHRS evidence features
         shell: bash
         run: |
           set -euo pipefail
@@ -46,17 +46,17 @@ jobs:
 
           SLOT = "building_type_4"
           TASK_ID = "building-type-4-england-classification-v1-20260808"
-          CITY = "Torbay"
-          PREFIX = "TOR"
+          CITY = "Cornwall"
+          PREFIX = "CORN"
           REGION = "South West"
-          SOURCE_NAME = "Food Standards Agency FHRS daily open data - Torbay"
-          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS892en-GB.xml"
+          SOURCE_NAME = "Food Standards Agency FHRS daily open data - Cornwall"
+          SOURCE_URL = "https://ratings.food.gov.uk/api/open-data-files/FHRS705en-GB.xml"
           SOURCE_PAGE = "https://ratings.food.gov.uk/open-data"
-          EXPECTED_BEFORE = 400
-          EXPECTED_TARGET = 450
-          EXPECTED_BATCH = 9
-          NEXT_BATCH = 10
-          NEXT_TARGET = 500
+          EXPECTED_BEFORE = 450
+          EXPECTED_TARGET = 500
+          EXPECTED_BATCH = 10
+          NEXT_BATCH = 11
+          NEXT_TARGET = 550
 
           shard_path = Path("england_map_web/data/building_type/shards/building_type_4_latest.geojson")
           manifest_path = Path("england_map_web/data/building_type/shards/building_type_4_manifest_latest.json")
@@ -83,8 +83,8 @@ jobs:
           assert int(checkpoint.get("current_feature_count", -1)) == before, "checkpoint/shard count mismatch"
           assert int(checkpoint.get("next_batch_index", -1)) == EXPECTED_BATCH, "batch index changed"
           assert int(checkpoint.get("next_target_feature_count", -1)) == EXPECTED_TARGET, "target changed"
-          assert checkpoint.get("fake_data") is False and status.get("fake_data") is False and manifest.get("fake_data") is False
-          assert checkpoint.get("final_ready") is False and status.get("final_ready") is False and manifest.get("final_ready") is False
+          assert checkpoint.get("fake_data") is False and status.get("fake_data") is False and manifest.get("fake_data") is False, "fake_data guard"
+          assert checkpoint.get("final_ready") is False and status.get("final_ready") is False and manifest.get("final_ready") is False, "final_ready guard"
 
           already_processed_ids = set()
           for feature in features:
@@ -140,10 +140,10 @@ jobs:
                   continue
               feature_id = f"{PREFIX}_FHRS_{fhrsid}"
               parcel_id = f"{PREFIX}_FHRSID_{fhrsid}"
-              if feature_id in already_processed_ids or parcel_id in already_processed_ids:
+              if feature_id in already_processed_ids or parcel_id in already_processed_ids or fhrsid in already_processed_ids:
                   continue
               authority = text(element, "LocalAuthorityName")
-              if authority and "torbay" not in authority.lower():
+              if authority and "cornwall" not in authority.lower():
                   continue
               business_type = text(element, "BusinessType")
               if not business_type or "mobile caterer" in business_type.lower():
@@ -158,7 +158,7 @@ jobs:
               candidates.append((int(fhrsid) if fhrsid.isdigit() else 10**18, fhrsid, element, lat, lon, business_type, authority))
 
           candidates.sort(key=lambda item: (item[0], item[1]))
-          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Torbay records"
+          assert len(candidates) >= 50, f"only {len(candidates)} eligible new Cornwall records"
           selected = candidates[:50]
           now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
           new_ids, new_parcels = [], []
@@ -228,10 +228,10 @@ jobs:
               new_parcels.append(parcel_id)
 
           after = len(features)
-          assert after > before
+          assert after > before, "feature_count_after must exceed feature_count_before"
           assert after == EXPECTED_TARGET and after - before == 50, f"unexpected append {before}->{after}"
-          assert not (set(new_ids) & already_processed_ids)
-          assert not (set(new_parcels) & already_processed_ids)
+          assert not (set(new_ids) & already_processed_ids), "new feature IDs overlap processed set"
+          assert not (set(new_parcels) & already_processed_ids), "new parcel IDs overlap processed set"
 
           shard["features"] = features
           shard_text = json.dumps(shard, ensure_ascii=False, indent=2) + "\n"
@@ -268,7 +268,7 @@ jobs:
               "sources": sources,
               "fake_data": False,
               "final_ready": False,
-              "note": "Existing shard preserved; appended 50 Torbay FHRS records outside all prior feature.id, parcel_id and osm_id values.",
+              "note": "Existing shard preserved; appended 50 Cornwall FHRS records outside all prior feature.id, parcel_id and osm_id values.",
               "feature_count": after,
               "geojson_sha256": output_sha,
               "geojson_path": str(shard_path),
@@ -307,7 +307,7 @@ jobs:
               "output_sha256": output_sha,
               "candidate_batch": None,
               "no_progress_reason": None,
-              "note": "Batch 9 appended from official Torbay FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.",
+              "note": "Batch 10 appended from official Cornwall FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.",
               "new_feature_count": 50,
               "last_batch_index": EXPECTED_BATCH,
               "last_batch_city": CITY,
@@ -326,14 +326,14 @@ jobs:
                   "evidence_level_distribution": {"D": 50},
                   "confidence_level_distribution": {"2": 50}
               },
-              "progress_reason": "50 new Torbay FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion"
+              "progress_reason": "50 new Cornwall FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion"
           })
           status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           checkpoint.update({
               "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
               "remote_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-              "first_unverified_step_status": "BATCH_9_APPENDED_50_TORBAY_FHRS_CONTINUATION_REQUIRED",
+              "first_unverified_step_status": "BATCH_10_APPENDED_50_CORNWALL_FHRS_CONTINUATION_REQUIRED",
               "terminal_status": "IN_PROGRESS",
               "updated_at": now,
               "final_ready": False,
@@ -353,7 +353,7 @@ jobs:
                   "osm_pilot_classified": checkpoint.get("summary", {}).get("osm_pilot_classified", 0),
                   "new_slot": False,
                   "pipeline_stage": 1,
-                  "note": "PROGRESS: feature_count 400 -> 450. Mevcut shard'daki feature.id, parcel_id ve osm_id degerleri already_processed_ids kabul edildi; Torbay FHRS acik verisinden processed kumesi disinda 50 yeni premises-use proxy feature append edildi.",
+                  "note": "PROGRESS: feature_count 450 -> 500. Mevcut shard'daki feature.id, parcel_id ve osm_id degerleri already_processed_ids kabul edildi; Cornwall FHRS acik verisinden processed kumesi disinda 50 yeni premises-use proxy feature append edildi.",
                   "new_features_appended": 50,
                   "current_feature_count": after
               },
@@ -361,7 +361,7 @@ jobs:
                   "osm_building_tag_scan_pending": True,
                   "epc_residential_pending": True,
                   "voa_non_domestic_pending": True,
-                  "note": "Sonraki adim batch 10: mevcut 450 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek South West icinde yeni sehir/grid/parsel kaynagindan en az 50 append-only feature ekle; Exeter, Plymouth ve Torbay kayitlarini tekrar isleme."
+                  "note": "Sonraki adim batch 11: mevcut 500 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek South West icinde yeni sehir/grid/parsel kaynagindan en az 50 append-only feature ekle; Exeter, Plymouth, Torbay ve Cornwall kayitlarini tekrar isleme."
               },
               "last_batch": {
                   "batch_index": EXPECTED_BATCH,
@@ -422,16 +422,16 @@ jobs:
           runner = json.loads(Path("docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json").read_text(encoding="utf-8"))
           task = json.loads(Path("docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json").read_text(encoding="utf-8"))
 
-          assert len(shard.get("features") or []) == 450
-          assert manifest.get("feature_count_before") == 400 and manifest.get("feature_count_after") == 450 and manifest.get("added_feature_count") == 50
-          assert checkpoint.get("feature_count_before") == 400 and checkpoint.get("feature_count_after") == 450 and checkpoint.get("current_feature_count") == 450
-          assert checkpoint.get("next_batch_index") == 10 and checkpoint.get("next_target_feature_count") == 500
-          assert status.get("current_feature_count") == 450 and status.get("feature_count_after") == 450
-          assert runner.get("feature_count_before") == 400 and runner.get("feature_count_after") == 450 and runner.get("added_feature_count") == 50
+          assert len(shard.get("features") or []) == 500
+          assert manifest.get("feature_count_before") == 450 and manifest.get("feature_count_after") == 500 and manifest.get("added_feature_count") == 50
+          assert checkpoint.get("feature_count_before") == 450 and checkpoint.get("feature_count_after") == 500 and checkpoint.get("current_feature_count") == 500
+          assert checkpoint.get("next_batch_index") == 11 and checkpoint.get("next_target_feature_count") == 550
+          assert status.get("current_feature_count") == 500 and status.get("feature_count_after") == 500
+          assert runner.get("feature_count_before") == 450 and runner.get("feature_count_after") == 500 and runner.get("added_feature_count") == 50
           assert task.get("owner") is None
           for obj in (manifest, checkpoint, status, runner):
               assert obj.get("fake_data") is False and obj.get("final_ready") is False
-          new = [f for f in shard["features"] if str(f.get("id") or "").startswith("TOR_FHRS_")]
+          new = [f for f in shard["features"] if str(f.get("id") or "").startswith("CORN_FHRS_")]
           assert len(new) == 50, len(new)
           ids = [str(f.get("id")) for f in new]
           parcels = [str((f.get("properties") or {}).get("parcel_id")) for f in new]
@@ -442,9 +442,11 @@ jobs:
               assert p.get("evidence_excerpt")
               assert p.get("evidence_level") == "D"
               assert p.get("confidence_level_1_to_4") == 2
+              assert p.get("source_hash")
+              assert p.get("sources")
               assert p.get("fake_data") is False and p.get("final_ready") is False
-              assert p.get("source_url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS892en-GB.xml"
-          print("validated 400->450 with 50 new Torbay features")
+              assert p.get("source_url") == "https://ratings.food.gov.uk/api/open-data-files/FHRS705en-GB.xml"
+          print("validated 450->500 with 50 new Cornwall features")
           PY
 
       - name: Commit and push only slot outputs
@@ -467,7 +469,7 @@ jobs:
             done
             [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
           done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Torbay FHRS batch 400->450"
+          git commit -m "data(building_type_4): append Cornwall FHRS batch 450->500"
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
