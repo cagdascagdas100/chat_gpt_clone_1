@@ -18,7 +18,7 @@ jobs:
   append:
     if: contains(github.event.head_commit.message, 'run guarded building_type_9 Barnsley batch 16')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout canonical branch
         uses: actions/checkout@v4
@@ -26,14 +26,15 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
 
-      - name: Guard, fetch Barnsley OSM tiles, append exactly 50 unseen
+      - name: Guard, fetch robust Barnsley OSM tiles, append exactly 50 unseen
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'aays-slot-runner'
           git config user.email 'aays-slot-runner@users.noreply.github.com'
-          git fetch origin codex/aays-single-runner-v5-20260706
-          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          git pull --ff-only origin "$BRANCH"
 
           python3 - <<'PY'
           import collections
@@ -54,15 +55,21 @@ jobs:
           CITY = 'Barnsley'
           GRID = 'BARNSLEY_CENTRAL_01'
           BASE_API = 'https://api.openstreetmap.org/api/0.6/map'
+          ALT_API = 'https://www.openstreetmap.org/api/0.6/map'
           BBOXES = [
-              '-1.5050,53.5350,-1.4650,53.5580',
-              '-1.4650,53.5350,-1.4250,53.5580',
-              '-1.5050,53.5580,-1.4650,53.5810',
-              '-1.4650,53.5580,-1.4250,53.5810',
-              '-1.4850,53.5810,-1.4450,53.6040',
-              '-1.4450,53.5810,-1.4050,53.6040',
+              '-1.5050,53.5350,-1.4800,53.5580',
+              '-1.4800,53.5350,-1.4550,53.5580',
+              '-1.4550,53.5350,-1.4300,53.5580',
+              '-1.4300,53.5350,-1.4050,53.5580',
+              '-1.5050,53.5580,-1.4800,53.5810',
+              '-1.4800,53.5580,-1.4550,53.5810',
+              '-1.4550,53.5580,-1.4300,53.5810',
+              '-1.4300,53.5580,-1.4050,53.5810',
+              '-1.5050,53.5810,-1.4800,53.6040',
+              '-1.4800,53.5810,-1.4550,53.6040',
+              '-1.4550,53.5810,-1.4300,53.6040',
+              '-1.4300,53.5810,-1.4050,53.6040',
           ]
-          QUERY_URLS = [f'{BASE_API}?bbox={bbox}' for bbox in BBOXES]
 
           shard_path = pathlib.Path('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
           manifest_path = pathlib.Path('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
@@ -92,42 +99,70 @@ jobs:
           assert checkpoint.get('next_batch_index') == BATCH, checkpoint.get('next_batch_index')
           assert checkpoint.get('next_target_feature_count') == TARGET, checkpoint.get('next_target_feature_count')
           assert checkpoint.get('fake_data') is False
+          assert checkpoint.get('final_ready') is not True
           assert manifest.get('feature_count', manifest.get('total_features')) == BEFORE
           assert manifest.get('fake_data') is False
+          assert manifest.get('final_ready') is not True
+          assert status.get('fake_data') is False
+          assert status.get('final_ready') is not True
           assert len(features) == BEFORE, len(features)
           assert not any('barnsley' in str(s.get('name','')).lower() for s in manifest.get('sources',[]) if isinstance(s, dict)), 'Barnsley already used'
 
           already = set()
-          for feature in features:
+          identifier_owner = {}
+          for index, feature in enumerate(features):
               props = feature.get('properties') or {}
-              for value in (feature.get('id'), props.get('parcel_id'), props.get('osm_id')):
-                  if value is not None and str(value).strip():
-                      already.add(str(value).strip())
+              values = {str(v).strip() for v in (feature.get('id'), props.get('parcel_id'), props.get('osm_id')) if v is not None and str(v).strip()}
+              for value in values:
+                  other = identifier_owner.get(value)
+                  if other is not None and other != index:
+                      raise AssertionError(f'preexisting cross-feature identifier duplicate: {value}')
+                  identifier_owner[value] = index
+                  already.add(value)
           already_count_before = len(already)
 
-          raws = []
-          for url in QUERY_URLS:
-              req = urllib.request.Request(url, headers={'User-Agent': 'AAYS-building-type-9/1.0 (GitHub Actions; ODbL evidence collection)'})
+          def fetch_url(url):
+              req = urllib.request.Request(url, headers={'User-Agent': 'AAYS-building-type-9/1.1 (GitHub Actions; ODbL evidence collection)'})
               last = None
-              for attempt in range(3):
+              for attempt in range(4):
                   try:
-                      with urllib.request.urlopen(req, timeout=90) as response:
+                      with urllib.request.urlopen(req, timeout=75) as response:
                           raw = response.read()
                       if not raw:
                           raise RuntimeError('empty OSM response')
-                      raws.append(raw)
-                      last = None
-                      break
+                      ET.fromstring(raw)
+                      return raw, None
                   except Exception as exc:
                       last = exc
-                      if attempt < 2:
+                      if attempt < 3:
                           time.sleep(2 * (attempt + 1))
-              if last is not None:
-                  raise SystemExit(f'OSM_SOURCE_READ_FAILED {url}: {last}')
+              return None, last
+
+          raws = []
+          successful_urls = []
+          failed_tiles = []
+          for bbox in BBOXES:
+              primary = f'{BASE_API}?bbox={bbox}'
+              raw, err = fetch_url(primary)
+              used_url = primary
+              if raw is None:
+                  alternate = f'{ALT_API}?bbox={bbox}'
+                  raw, err2 = fetch_url(alternate)
+                  used_url = alternate
+                  if raw is None:
+                      failed_tiles.append({'bbox': bbox, 'primary_error': str(err), 'alternate_error': str(err2)})
+                      print(f'WARN OSM tile skipped after retries bbox={bbox} primary={err} alternate={err2}')
+                      continue
+              raws.append(raw)
+              successful_urls.append(used_url)
+              time.sleep(0.5)
+
+          if not raws:
+              raise SystemExit('OSM_SOURCE_READ_FAILED: no Barnsley OSM tiles succeeded')
 
           source_material = b'\n--AAYS-TILE--\n'.join(raws)
           source_sha = hashlib.sha256(source_material).hexdigest()
-          query_material = '\n'.join(QUERY_URLS)
+          query_material = '\n'.join(successful_urls)
           query_sha = hashlib.sha256(query_material.encode('utf-8')).hexdigest()
 
           nodes = {}
@@ -252,7 +287,7 @@ jobs:
                   break
 
           if len(selected) < 50:
-              raise SystemExit(f'BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(selected)} unseen explicit semantic building records')
+              raise SystemExit(f'BLOCKED_NO_NEW_SOURCE_OR_BATCH: only {len(selected)} unseen explicit semantic building records from {len(successful_urls)} successful tiles; failed_tiles={len(failed_tiles)}')
 
           new_features = [x[0] for x in selected]
           records = [x[1] for x in selected]
@@ -276,6 +311,7 @@ jobs:
           new_types = collections.Counter(r['building_type_primary'] for r in records)
           manifest['generated_at'] = generated_at
           manifest['total_features'] = AFTER
+          manifest['feature_count'] = AFTER
           manifest['classified'] = int(manifest.get('classified',0)) + 50
           manifest['unknown'] = int(manifest.get('unknown',0))
           manifest.setdefault('evidence_distribution',{})['B'] = int(manifest.get('evidence_distribution',{}).get('B',0)) + 50
@@ -290,8 +326,10 @@ jobs:
               'features_used': 50,
               'accessed_at': generated_at,
               'source_sha256': source_sha,
-              'source_hash_method': 'sha256_concatenated_osm_xml_tiles',
+              'source_hash_method': 'sha256_concatenated_successful_osm_xml_tiles',
               'query_sha256': query_sha,
+              'query_urls': successful_urls,
+              'failed_tile_count': len(failed_tiles),
               'grid_id': GRID,
               'note': '50 new explicit semantic building=* OSM features from runtime-only XML tiles; native node/derived way-center evidence, not cadastral parcel polygons.'
           })
@@ -299,7 +337,6 @@ jobs:
           if 'final_ready' in manifest:
               manifest['final_ready'] = False
           manifest['note'] = 'Existing 750-feature shard preserved; appended 50 Barnsley OSM API semantic building features outside feature.id/parcel_id/osm_id already_processed_ids.'
-          manifest['feature_count'] = AFTER
           manifest['geojson_sha256'] = geo_sha
           manifest['geojson_path'] = str(shard_path)
           manifest['manifest_updated_at'] = generated_at
@@ -384,6 +421,7 @@ jobs:
               'already_processed_id_count_before': already_count_before,
               'source': 'OpenStreetMap API 0.6 map endpoint',
               'source_url': BASE_API,
+              'source_urls': successful_urls,
               'source_sha256': source_sha,
               'query_sha256': query_sha,
               'evidence_level_new_features': {'B': 50},
@@ -393,6 +431,7 @@ jobs:
               'fake_data': False,
               'owner_claim_created': False,
               'raw_source_committed': False,
+              'failed_source_tiles': failed_tiles,
               'limitation': 'OSM feature identities with native node or vertex-derived way-center geometry; not cadastral parcel polygons. EPC/VOA/HMLR corroboration remains optional/pending.'
           }
           runner_path.write_text(json.dumps(runner, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -402,7 +441,7 @@ jobs:
           assert load(status_path).get('feature_count_after') == AFTER
           assert load(checkpoint_path).get('current_feature_count') == AFTER
           assert load(runner_path).get('added_feature_count') == 50
-          print(json.dumps({'before': BEFORE, 'after': AFTER, 'added': 50, 'already_processed_ids': already_count_before, 'source_sha256': source_sha, 'query_sha256': query_sha, 'new_types': dict(new_types)}, sort_keys=True))
+          print(json.dumps({'before': BEFORE, 'after': AFTER, 'added': 50, 'already_processed_ids': already_count_before, 'successful_tiles': len(successful_urls), 'failed_tiles': len(failed_tiles), 'source_sha256': source_sha, 'query_sha256': query_sha, 'new_types': dict(new_types)}, sort_keys=True))
           PY
 
       - name: Validate permanent outputs, self-delete workflow, commit and push
@@ -435,26 +474,21 @@ jobs:
               assert r.get('evidence_excerpt') and r.get('evidence_level')=='B'
               assert r.get('confidence_level_1_to_4')==3
               assert r.get('match_method')=='osm_explicit_building_tag'
-          seen=set()
-          for f in feats:
+          owner={}
+          for idx,f in enumerate(feats):
               p=f.get('properties') or {}
-              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
-                  if v is None or str(v)=='' :
-                      continue
-                  key=str(v)
-                  if key in seen and not (f.get('id') == p.get('parcel_id') == key):
-                      raise AssertionError(f'cross-feature duplicate identifier {key}')
-              fid=f.get('id'); pid=p.get('parcel_id'); oid=p.get('osm_id')
-              for v in set(str(x) for x in (fid,pid,oid) if x not in (None,'')):
-                  if v in seen:
+              values={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')) if v not in (None,'')}
+              for v in values:
+                  if v in owner and owner[v] != idx:
                       raise AssertionError(f'duplicate identifier across features {v}')
-                  seen.add(v)
+                  owner[v]=idx
           assert all(x.get('fake_data') is False for x in (man,sta,cp,run))
           assert all(x.get('final_ready') is not True for x in (man,sta,cp,run))
           assert 'PUBLISHED' not in json.dumps([man,sta,cp,run])
           print('validated Barnsley 750->800 +50 evidence-backed rows')
           PY
 
+          BRANCH='codex/aays-single-runner-v5-20260706'
           WF='.github/workflows/tmp_building_type_9_barnsley_20260810.yml'
           git add england_map_web/data/building_type/shards/building_type_9_latest.geojson
           git add england_map_web/data/building_type/shards/building_type_9_manifest_latest.json
@@ -464,11 +498,43 @@ jobs:
           git rm -f "$WF"
           git diff --cached --quiet && { echo 'No staged progress'; exit 1; }
           git commit -m 'building_type_9: append batch 16 Barnsley OSM API features'
-          for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+          for attempt in 1 2 3 4 5 6; do
+            if git pull --rebase origin "$BRANCH" && git push origin HEAD:"$BRANCH"; then
               exit 0
             fi
             git rebase --abort >/dev/null 2>&1 || true
             sleep $((attempt * 2))
           done
           exit 1
+
+      - name: Verify remote slot9 readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          python3 - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          paths={
+            'geo':'england_map_web/data/building_type/shards/building_type_9_latest.geojson',
+            'manifest':'england_map_web/data/building_type/shards/building_type_9_manifest_latest.json',
+            'status':'docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json',
+            'checkpoint':'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json',
+            'runner':'docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json',
+          }
+          def remote_json(path):
+              raw=subprocess.check_output(['git','show',f'{branch}:{path}'])
+              return json.loads(raw.decode('utf-8'))
+          geo=remote_json(paths['geo']); man=remote_json(paths['manifest']); sta=remote_json(paths['status']); cp=remote_json(paths['checkpoint']); run=remote_json(paths['runner'])
+          assert len(geo.get('features') or [])==800
+          assert man.get('feature_count')==800 and man.get('last_batch_city')=='Barnsley'
+          assert sta.get('current_feature_count')==800 and sta.get('last_batch_city')=='Barnsley'
+          assert cp.get('current_feature_count')==800 and cp.get('next_batch_index')==17 and cp.get('next_target_feature_count')==850
+          assert cp.get('last_batch',{}).get('city')=='Barnsley' and cp.get('last_batch',{}).get('added_feature_count')==50
+          assert run.get('city')=='Barnsley' and run.get('added_feature_count')==50 and run.get('feature_count_after')==800
+          assert all(x.get('fake_data') is False for x in (man,sta,cp,run))
+          assert all(x.get('final_ready') is not True for x in (man,sta,cp,run))
+          assert 'PUBLISHED' not in json.dumps([man,sta,cp,run])
+          print('REMOTE_READBACK_OK building_type_9 750->800 Barnsley +50')
+          PY
