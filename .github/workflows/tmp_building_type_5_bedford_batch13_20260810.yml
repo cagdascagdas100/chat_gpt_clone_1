@@ -1,0 +1,284 @@
+name: tmp building_type_5 Bedford batch13
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_5_bedford_batch13_20260810.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-5-bedford-batch13
+  cancel-in-progress: false
+
+jobs:
+  append:
+    if: contains(github.event.head_commit.message, 'launch guarded Bedford batch 13')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Guard, append 50 Bedford FHRS features, update state and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          WF='.github/workflows/tmp_building_type_5_bedford_batch13_20260810.yml'
+          SOURCE='https://ratings.food.gov.uk/api/open-data-files/FHRS701en-GB.xml'
+          STATUS='docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'
+          git fetch origin "$BRANCH"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 180 -A 'AAYS-building-type/1.0' "$SOURCE" -o /tmp/FHRS701en-GB.xml
+          python3 <<'PY'
+          import hashlib, json, xml.etree.ElementTree as ET
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT='building_type_5'
+          TASK='building-type-5-england-classification-v1-20260808'
+          SOURCE='https://ratings.food.gov.uk/api/open-data-files/FHRS701en-GB.xml'
+          SOURCE_NAME='Food Standards Agency FHRS daily open data - Bedford'
+          BEFORE=600
+          BATCH=13
+          TARGET=650
+          PREFIX='BDF'
+
+          shard_p=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest_p=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          status_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          checkpoint_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          task_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          runner_p=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+
+          shard=json.loads(shard_p.read_text(encoding='utf-8'))
+          manifest=json.loads(manifest_p.read_text(encoding='utf-8'))
+          status=json.loads(status_p.read_text(encoding='utf-8'))
+          checkpoint=json.loads(checkpoint_p.read_text(encoding='utf-8'))
+          task=json.loads(task_p.read_text(encoding='utf-8'))
+          features=shard.get('features') or []
+          before=len(features)
+
+          assert before==BEFORE, f'stale shard count {before} != {BEFORE}'
+          assert status.get('slot_id')==SLOT and checkpoint.get('slot_id')==SLOT and task.get('slot_id')==SLOT
+          assert status.get('task_id')==TASK and task.get('task_id')==TASK
+          assert status.get('owner') is None and task.get('owner') is None, 'live owner detected; refusing second task/owner'
+          assert str(status.get('state','')).upper() not in {'DONE','PUBLISHED'}
+          assert str(checkpoint.get('terminal_status','')).upper() not in {'DONE','PUBLISHED'}
+          assert int(status.get('feature_count_after',-1))==BEFORE
+          assert int(checkpoint.get('current_feature_count',-1))==BEFORE
+          assert int(checkpoint.get('next_batch_index',-1))==BATCH
+          assert int(checkpoint.get('next_target_feature_count',-1))==TARGET
+          assert int(manifest.get('total_features',manifest.get('feature_count',-1)))==BEFORE
+          assert status.get('fake_data') is False and checkpoint.get('fake_data') is False and task.get('fake_data') is False and manifest.get('fake_data') is False
+          assert status.get('final_ready') is False and checkpoint.get('final_ready') is False and task.get('final_ready') is False and manifest.get('final_ready') is False
+
+          processed=set()
+          existing_fhrs=set()
+          for f in features:
+              p=f.get('properties') or {}
+              for v in (f.get('id'), p.get('parcel_id'), p.get('osm_id')):
+                  if v is not None and str(v).strip(): processed.add(str(v).strip())
+              sx=p.get('source_evidence_excerpt') or {}
+              if isinstance(sx,dict) and sx.get('FHRSID') not in (None,''):
+                  existing_fhrs.add(str(sx.get('FHRSID')).strip())
+              tags=p.get('osm_tags_summary') or {}
+              if isinstance(tags,dict) and tags.get('fhrs:id') not in (None,''):
+                  existing_fhrs.add(str(tags.get('fhrs:id')).strip())
+
+          raw=Path('/tmp/FHRS701en-GB.xml').read_bytes()
+          source_sha=hashlib.sha256(raw).hexdigest()
+          root=ET.fromstring(raw)
+          def lname(tag): return tag.rsplit('}',1)[-1]
+          def txt(el,name):
+              for c in el.iter():
+                  if lname(c.tag)==name:
+                      return (c.text or '').strip()
+              return ''
+          def classify(bt):
+              b=(bt or '').lower()
+              if any(x in b for x in ('school','college','university')): return 'education','P_EDUCATION','institutional'
+              if any(x in b for x in ('hospital','caring','childcare')): return 'healthcare_care','P_HEALTHCARE','institutional'
+              if any(x in b for x in ('hotel','bed & breakfast','guest house')): return 'hospitality','C_HOTEL','commercial'
+              if 'pub/bar/nightclub' in b: return 'commercial_hospitality','C_PUB','commercial'
+              if 'restaurant/cafe/canteen' in b: return 'commercial_hospitality','C_RESTAURANT','commercial'
+              if 'retailers' in b: return 'commercial_retail','C_RETAIL','commercial'
+              if any(x in b for x in ('importers/exporters','manufacturers/packers','distributors/transporters')): return 'commercial_operational','C_OPERATIONAL','commercial'
+              return 'commercial_other','C_OTHER','commercial'
+
+          candidates=[]
+          for el in root.iter():
+              if lname(el.tag)!='EstablishmentDetail': continue
+              fid=txt(el,'FHRSID')
+              if not fid or fid in existing_fhrs: continue
+              feature_id=f'{PREFIX}_FHRS_{fid}'
+              parcel_id=f'{PREFIX}_FHRSID_{fid}'
+              if feature_id in processed or parcel_id in processed or fid in processed: continue
+              la=txt(el,'LocalAuthorityName')
+              if la and 'bedford' not in la.lower(): continue
+              bt=txt(el,'BusinessType')
+              if 'mobile caterer' in bt.lower(): continue
+              try:
+                  lat=float(txt(el,'Latitude')); lon=float(txt(el,'Longitude'))
+              except (TypeError,ValueError):
+                  continue
+              if not (49 <= lat <= 61 and -9 <= lon <= 3): continue
+              candidates.append((int(fid) if fid.isdigit() else 10**18,fid,el,lat,lon))
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          assert len(candidates)>=50, f'only {len(candidates)} eligible Bedford FHRS candidates'
+
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          added=[]; new_ids=[]
+          for _,fid,el,lat,lon in candidates[:50]:
+              feature_id=f'{PREFIX}_FHRS_{fid}'
+              parcel_id=f'{PREFIX}_FHRSID_{fid}'
+              name=txt(el,'BusinessName'); bt=txt(el,'BusinessType')
+              la=txt(el,'LocalAuthorityName') or 'Bedford'
+              postcode=txt(el,'PostCode')
+              primary,code,category=classify(bt)
+              excerpt=f'FHRSID {fid} | {name} | BusinessType {bt} | LocalAuthority {la} | PostCode {postcode}'
+              props={
+                'parcel_id':parcel_id,
+                'parcel_id_semantics':'stable FSA FHRSID-derived point identifier; not a cadastral parcel ID',
+                'osm_id':None,
+                'slot_id':SLOT,
+                'region':'East of England',
+                'area':'Bedford',
+                'local_authority':la,
+                'postcode':postcode,
+                'building_type':primary,
+                'building_type_primary':primary,
+                'building_type_code':code,
+                'building_category':category,
+                'confidence_score':0.55,
+                'confidence_level_1_to_4':2,
+                'evidence_level':'D',
+                'source_count':1,
+                'source':SOURCE_NAME,
+                'source_url':SOURCE,
+                'source_hash':source_sha,
+                'source_hash_method':'sha256_raw_source_xml',
+                'match_method':'fhrs_business_type_premises_proxy',
+                'evidence_excerpt':excerpt,
+                'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode()).hexdigest(),
+                'source_evidence_excerpt':{
+                  'FHRSID':fid,'BusinessName':name,'BusinessType':bt,'BusinessTypeID':txt(el,'BusinessTypeID'),
+                  'LocalAuthorityBusinessID':txt(el,'LocalAuthorityBusinessID'),'LocalAuthorityName':la,
+                  'PostCode':postcode,'RatingValue':txt(el,'RatingValue'),'RatingDate':txt(el,'RatingDate')
+                },
+                'sources':[{
+                  'source_name':'Food Standards Agency FHRS daily open data','url_or_local_path':SOURCE,
+                  'accessed_at':now,'sha256':source_sha,'sha256_scope':'raw_source_xml',
+                  'licence':'FSA open data / reusable hygiene data terms','granularity':'food_business_establishment_point',
+                  'fields_used':['FHRSID','BusinessName','BusinessType','BusinessTypeID','LocalAuthorityBusinessID','LocalAuthorityName','PostCode','Latitude','Longitude'],
+                  'supports_field':'building_type_primary','match_method':'fhrs_business_type_premises_proxy','match_score':0.55
+                }],
+                'geometry_match_method':'fhrs_geocode_point','address_match_method':'fhrs_business_address',
+                'limitations':'FHRS BusinessType is premises-use proxy evidence only; cadastral parcel identity and exact building fabric/type are not verified.',
+                'needs_manual_review':True,'proxy_only':True,'status':'classified_proxy_only',
+                'fake_data':False,'final_ready':False,'updated_at':now,'feature_id':feature_id
+              }
+              added.append({'type':'Feature','id':feature_id,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':props})
+              new_ids.append(feature_id)
+
+          new_parcels={f['properties']['parcel_id'] for f in added}
+          assert len(added)==50 and len(set(new_ids))==50 and len(new_parcels)==50
+          assert not (set(new_ids) & processed) and not (new_parcels & processed)
+          features.extend(added)
+          after=len(features)
+          assert after>before and after==TARGET, f'no valid progress: before={before} after={after}'
+          shard['features']=features
+          shard_p.write_text(json.dumps(shard,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          output_sha=hashlib.sha256(shard_p.read_bytes()).hexdigest()
+
+          ev=Counter(); conf=Counter(); types=Counter(); classified=0; unknown=0
+          for f in features:
+              p=f.get('properties') or {}
+              ev[str(p.get('evidence_level','U'))]+=1
+              conf[str(p.get('confidence_level_1_to_4',1))]+=1
+              typ=str(p.get('building_type_primary','unknown'))
+              types[typ]+=1
+              if typ=='unknown': unknown+=1
+              else: classified+=1
+
+          sources=list(manifest.get('sources') or [])
+          sources.append({'name':SOURCE_NAME,'url':SOURCE,'features_used':50,'accessed_at':now,
+            'source_sha256':source_sha,'source_hash_method':'sha256_raw_source_xml','evidence_level':'D',
+            'confidence_level_1_to_4':2,'note':'FHRS BusinessType premises-use proxy; not cadastral parcel geometry or building-fabric evidence.'})
+          manifest.update({'slot_id':SLOT,'generated_at':now,'total_features':after,'feature_count':after,
+            'classified':classified,'unknown':unknown,'evidence_distribution':dict(sorted(ev.items())),
+            'type_distribution':dict(sorted(types.items())),'confidence_level_distribution':dict(sorted(conf.items())),
+            'sources':sources,'fake_data':False,'final_ready':False,
+            'note':'Existing shard preserved; appended 50 Bedford FHRS records outside all prior feature.id, parcel_id and osm_id values.',
+            'geojson_sha256':output_sha,'geojson_path':str(shard_p),'manifest_updated_at':now,
+            'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,
+            'last_batch_index':BATCH,'last_batch_city':'Bedford','last_batch_source':SOURCE_NAME,'last_batch_source_sha256':source_sha})
+          manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          status.update({'state':'IN_PROGRESS','updated_at':now,'owner':None,'final_ready':False,'fake_data':False,
+            'classified_count':classified,'unknown_count':unknown,'total_elements':after,
+            'feature_count_before':before,'feature_count_after':after,'progress_count_delta':after-before,
+            'next_batch_index':BATCH+1,'next_target_feature_count':TARGET+50,
+            'confidence_distribution':dict(sorted(conf.items())),'evidence_distribution':dict(sorted(ev.items())),
+            'output_sha256':output_sha,'candidate_batch':None,'no_progress_reason':None,'new_feature_count':50,
+            'last_batch_index':BATCH,'last_batch_city':'Bedford','last_batch_source':SOURCE_NAME,
+            'note':'Batch 13 appended from official Bedford FHRS records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.',
+            'progress_reason':'50 new Bedford FHRS premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion'})
+          status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          checkpoint.update({'first_unverified_step_status':'BATCH_13_APPENDED_50_BEDFORD_FHRS_CONTINUATION_REQUIRED',
+            'terminal_status':'IN_PROGRESS','updated_at':now,'final_ready':False,'state':'IN_PROGRESS','fake_data':False,
+            'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,
+            'next_batch_index':BATCH+1,'next_target_feature_count':TARGET+50,'candidate_batch':None,'no_progress_reason':None,
+            'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL OSM/EPC/VOA/HMLR CORROBORATION FOR FHRS PROXY RECORDS',
+            'last_processed_ids_sample':new_ids[-20:],
+            'already_processed_ids_policy':'Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.',
+            'last_batch':{'batch_index':BATCH,'city':'Bedford','source':SOURCE_NAME,'source_url':SOURCE,'source_sha256':source_sha,
+              'evidence_level':'D','confidence_level_1_to_4':2,'added_feature_count':50,'new_feature_ids':new_ids}})
+          checkpoint.setdefault('summary',{}).update({'progress_count_delta':50,'new_features_appended':50,'current_feature_count':after})
+          checkpoint_p.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          runner={'slot_id':SLOT,'task_id':TASK,'generated_at':now,'batch_index':BATCH,'city':'Bedford',
+            'source_name':SOURCE_NAME,'source_url':SOURCE,'source_sha256':source_sha,
+            'feature_count_before':before,'feature_count_after':after,'new_feature_count':50,'new_feature_ids':new_ids,
+            'evidence_level':'D','confidence_level_1_to_4':2,'match_method':'fhrs_business_type_premises_proxy',
+            'limitations':'Premises-use proxy only; cadastral parcel identity and building fabric remain unverified.',
+            'already_processed_ids_policy_applied':True,'fake_data':False,'final_ready':False,'output_sha256':output_sha}
+          runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({'before':before,'after':after,'added':50,'source_sha256':source_sha,'first_id':new_ids[0],'last_id':new_ids[-1]}))
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+          git rm "$WF"
+          git commit -m 'data(building_type_5): append Bedford FHRS batch 600->650'
+
+          for attempt in 1 2 3 4 5; do
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            echo "non-fast-forward attempt $attempt; checking same-slot remote state"
+            git fetch origin "$BRANCH"
+            remote_count=$(git show "origin/$BRANCH:$STATUS" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("feature_count_after"))')
+            remote_owner=$(git show "origin/$BRANCH:$STATUS" | python3 -c 'import json,sys; v=json.load(sys.stdin).get("owner"); print("null" if v is None else str(v))')
+            if [ "$remote_count" != '600' ] || [ "$remote_owner" != 'null' ]; then
+              echo "same-slot remote changed: count=$remote_count owner=$remote_owner; aborting to avoid duplicate task" >&2
+              exit 42
+            fi
+            git merge --no-edit "origin/$BRANCH"
+            local_count=$(python3 -c 'import json; print(json.load(open("docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json")).get("feature_count_after"))')
+            [ "$local_count" = '650' ] || { echo "post-merge slot count changed: $local_count" >&2; exit 44; }
+          done
+          echo 'push retries exhausted' >&2
+          exit 43
