@@ -1,0 +1,61 @@
+name: AAYS building_type_5 Bury St Edmunds batch45 finalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_bury_st_edmunds_batch45_retry3_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-bury-st-edmunds-batch45-finalize
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+
+      - name: Refresh exact branch tip
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin codex/aays-single-runner-v5-20260706
+          git reset --hard origin/codex/aays-single-runner-v5-20260706
+
+      - name: Execute reviewed fail-closed batch45 generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          src=Path('.github/workflows/tmp_building_type_5_bury_st_edmunds_batch45_20260811.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY", start)
+          code=textwrap.dedent(src[start:end])
+          exec(compile(code, '<batch45-generator>', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Commit and push generated slot-only outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+                  england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+                  docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git diff --cached --quiet && { echo 'no generated changes'; exit 1; }
+          git commit -m 'Append building_type_5 Bury St Edmunds batch 45'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
