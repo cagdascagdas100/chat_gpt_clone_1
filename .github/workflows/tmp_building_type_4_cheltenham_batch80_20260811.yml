@@ -1,4 +1,4 @@
-name: tmp building_type_4 Camborne Redruth OSM batch 83
+name: tmp building_type_4 Warminster OSM batch 84
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append 50 unseen Camborne-Redruth OSM building-use features
+      - name: Append 50 unseen Warminster OSM building-use features
         shell: bash
         run: |
           set -euo pipefail
@@ -45,22 +45,21 @@ jobs:
           if not m: raise RuntimeError('append python block not found in trusted batch81 helper')
           code=textwrap.dedent(m.group(1))
           replacements=[
-            ("CITY='Stroud'","CITY='Camborne-Redruth'"),
-            ("AUTHORITY='Gloucestershire'","AUTHORITY='Cornwall'"),
-            ("GRID='51.710,-2.280,51.790,-2.150'","GRID='50.190,-5.340,50.260,-5.180'"),
-            ("BEFORE=4000; TARGET=4050; BATCH=81; NEXT_BATCH=82; NEXT_TARGET=4100","BEFORE=4100; TARGET=4150; BATCH=83; NEXT_BATCH=84; NEXT_TARGET=4200"),
-            ("['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']","['https://overpass-api.de/api/interpreter']"),
-            ('BATCH_81','BATCH_83'),
-            ('Stroud','Camborne-Redruth'),
-            ('batch 81','batch 83'),
-            ('batch81','batch83'),
-            ('20.25','20.75'),
+            ("CITY='Stroud'","CITY='Warminster'"),
+            ("AUTHORITY='Gloucestershire'","AUTHORITY='Wiltshire'"),
+            ("GRID='51.710,-2.280,51.790,-2.150'","GRID='51.150,-2.280,51.250,-2.080'"),
+            ("BEFORE=4000; TARGET=4050; BATCH=81; NEXT_BATCH=82; NEXT_TARGET=4100","BEFORE=4150; TARGET=4200; BATCH=84; NEXT_BATCH=85; NEXT_TARGET=4250"),
+            ('BATCH_81','BATCH_84'),
+            ('Stroud','Warminster'),
+            ('batch 81','batch 84'),
+            ('batch81','batch84'),
+            ('20.25','21.0'),
           ]
           for a,b in replacements:
               code=code.replace(a,b)
-          required=["CITY='Camborne-Redruth'","AUTHORITY='Cornwall'","BEFORE=4100; TARGET=4150; BATCH=83; NEXT_BATCH=84; NEXT_TARGET=4200","GRID='50.190,-5.340,50.260,-5.180'","for endpoint in ['https://overpass-api.de/api/interpreter']"]
+          required=["CITY='Warminster'","AUTHORITY='Wiltshire'","BEFORE=4150; TARGET=4200; BATCH=84; NEXT_BATCH=85; NEXT_TARGET=4250","GRID='51.150,-2.280,51.250,-2.080'","for endpoint in ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']"]
           assert all(x in code for x in required)
-          exec(compile(code,'batch83_camborne_redruth_append.py','exec'),{'__name__':'__main__'})
+          exec(compile(code,'batch84_warminster_append.py','exec'),{'__name__':'__main__'})
           PY
 
       - name: Validate append and evidence contract
@@ -77,24 +76,24 @@ jobs:
           st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           run=load('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
           task=load('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
-          assert len(shard['features'])==4150 and manifest['total_features']==4150
-          assert cp['feature_count_before']==4100 and cp['feature_count_after']==4150 and cp['current_feature_count']==4150
-          assert cp['next_batch_index']==84 and cp['next_target_feature_count']==4200
-          assert st['current_feature_count']==4150 and st['next_batch_index']==84
-          assert run['batch_index']==83 and run['city']=='Camborne-Redruth' and run['feature_count_before']==4100 and run['feature_count_after']==4150
+          assert len(shard['features'])==4200 and manifest['total_features']==4200
+          assert cp['feature_count_before']==4150 and cp['feature_count_after']==4200 and cp['current_feature_count']==4200
+          assert cp['next_batch_index']==85 and cp['next_target_feature_count']==4250
+          assert st['current_feature_count']==4200 and st['next_batch_index']==85
+          assert run['batch_index']==84 and run['city']=='Warminster' and run['feature_count_before']==4150 and run['feature_count_after']==4200
           assert run['already_processed_ids_policy_applied'] is True and len(run['new_feature_ids'])==50 and len(set(run['new_feature_ids']))==50
           ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
           all_ids=[str(f.get('id')) for f in shard['features']]; assert len(all_ids)==len(set(all_ids))
           parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in shard['features'] if (f.get('properties') or {}).get('parcel_id') is not None]; assert len(parcels)==len(set(parcels))
           osms=[str((f.get('properties') or {}).get('osm_id')) for f in shard['features'] if (f.get('properties') or {}).get('osm_id') is not None]; assert len(osms)==len(set(osms))
           for f in batch:
-              p=f['properties']; assert p['area']=='Camborne-Redruth' and p['local_authority']=='Cornwall' and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              p=f['properties']; assert p['area']=='Warminster' and p['local_authority']=='Wiltshire' and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
               assert p['evidence_excerpt'] and p['source_evidence_excerpt'] and p['sources'][0].get('evidence_excerpt')
               assert p['source_url'] and p['source_hash'] and p['match_method'] and p['sources'][0].get('sha256')
               assert p['fake_data'] is False and p['final_ready'] is False
           assert task['task_id']=='building-type-4-england-classification-v1-20260808' and task.get('owner') in (None,'')
           for obj in (manifest,cp,st,run,task): assert obj.get('fake_data') is False and obj.get('final_ready') is False
-          print('VALIDATED building_type_4 4100->4150 Camborne-Redruth batch83=50 evidence=B confidence=3/4')
+          print('VALIDATED building_type_4 4150->4200 Warminster batch84=50 evidence=B confidence=3/4')
           PY
 
       - name: Commit and push only building_type_4 outputs
@@ -105,7 +104,7 @@ jobs:
           git add -- "${paths[@]}"
           test -n "$(git diff --cached --name-only)"
           while read -r p; do ok=0; for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }; done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Camborne Redruth OSM batch 83 4100->4150"
+          git commit -m "data(building_type_4): append Warminster OSM batch 84 4150->4200"
           echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
@@ -126,12 +125,12 @@ jobs:
           cp=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
           st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           run=load('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
-          assert len(shard['features'])==4150 and cp['current_feature_count']==4150 and st['current_feature_count']==4150 and cp['next_batch_index']==84
-          assert run['batch_index']==83 and run['city']=='Camborne-Redruth' and run['feature_count_before']==4100 and run['feature_count_after']==4150
+          assert len(shard['features'])==4200 and cp['current_feature_count']==4200 and st['current_feature_count']==4200 and cp['next_batch_index']==85
+          assert run['batch_index']==84 and run['city']=='Warminster' and run['feature_count_before']==4150 and run['feature_count_after']==4200
           ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(ids)==50 and len(batch)==50
           assert all(f['properties']['evidence_level']=='B' and f['properties']['confidence_level_1_to_4']==3 and f['properties']['evidence_excerpt'] for f in batch)
           assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in batch)
-          print('REMOTE_READBACK_OK building_type_4 4100->4150 Camborne-Redruth batch83=50')
+          print('REMOTE_READBACK_OK building_type_4 4150->4200 Warminster batch84=50')
           PY
 
       - name: Record remote readback metadata
@@ -145,13 +144,13 @@ jobs:
           now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'); head=os.environ['DATA_COMMIT']
           cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json'); st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           cp=json.loads(cp_path.read_text()); st=json.loads(st_path.read_text())
-          cp.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_83_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
-          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 4100 -> 4150. Batch 83 Camborne-Redruth remote readback verified; continue at batch 84. final_ready remains false.'
-          st.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 83 Camborne-Redruth OSM: 50 unique evidence-backed features appended; total 4150. Remote readback verified. Continue batch 84.','final_ready':False,'fake_data':False})
+          cp.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_84_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
+          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 4150 -> 4200. Batch 84 Warminster remote readback verified; continue at batch 85. final_ready remains false.'
+          st.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 84 Warminster OSM: 50 unique evidence-backed features appended; total 4200. Remote readback verified. Continue batch 85.','final_ready':False,'fake_data':False})
           cp_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n'); st_path.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
           PY
           git add -- docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json
-          git commit -m "building_type_4: record batch 83 remote readback"
+          git commit -m "building_type_4: record batch 84 remote readback"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
@@ -168,8 +167,8 @@ jobs:
           import json, subprocess
           ref='origin/codex/aays-single-runner-v5-20260706'; load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
           cp=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json'); st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
-          assert cp['current_feature_count']==4150 and cp['next_batch_index']==84 and cp['remote_readback_verified'] is True
-          assert st['current_feature_count']==4150 and st['next_batch_index']==84 and st['remote_readback_verified'] is True
+          assert cp['current_feature_count']==4200 and cp['next_batch_index']==85 and cp['remote_readback_verified'] is True
+          assert st['current_feature_count']==4200 and st['next_batch_index']==85 and st['remote_readback_verified'] is True
           assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False
-          print('FINAL_REMOTE_METADATA_OK building_type_4 current=4150 next_batch=84 final_ready=false')
+          print('FINAL_REMOTE_METADATA_OK building_type_4 current=4200 next_batch=85 final_ready=false')
           PY
