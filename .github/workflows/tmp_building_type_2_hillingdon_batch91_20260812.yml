@@ -35,32 +35,57 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show HEAD:.github/workflows/tmp_building_type_2_hillingdon_batch75_20260811.yml > /tmp/template.yml
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch38_20260810.yml > /tmp/template.yml
           python3 <<'PY'
           from pathlib import Path
           text=Path('/tmp/template.yml').read_text(encoding='utf-8')
-          anchor='      - name: Append exactly 50 new Hillingdon FHRS features'
+          anchor='      - name: Append exactly 50 new Bexley FHRS continuation features'
           marker="          python3 <<'PY'\n"
           a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
-          wrapper='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
-          replacements=[
-            ('BEFORE=3700; TARGET=3750; BATCH=75; NEXT_BATCH=76; NEXT_TARGET=3800','BEFORE=4500; TARGET=4550; BATCH=91; NEXT_BATCH=92; NEXT_TARGET=4600'),
-            ('Batch 75 appended from official Hillingdon FHRS continuation records','Batch 91 appended from official Hillingdon FHRS continuation records'),
-            ('BATCH_75_APPENDED_50_HILLINGDON_FHRS_CONTINUATION_REQUIRED','BATCH_91_APPENDED_50_HILLINGDON_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 3700 -> 3750','feature_count 4500 -> 4550'),
-            ("Sonraki adim batch 76: mevcut 3750 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 3750 kaydi tekrar isleme.","Sonraki adim batch 92: mevcut 4550 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4550 kaydi tekrar isleme."),
-            ('new=\'assert int(s.get("features_used",0))==100\\n        s.update({"name":SOURCE,"features_used":150\'','new=\'assert int(s.get("features_used",0))==150\\n        s.update({"name":SOURCE,"features_used":200\''),
-            ("'BEFORE=3700; TARGET=3750; BATCH=75; NEXT_BATCH=76; NEXT_TARGET=3800'","'BEFORE=4500; TARGET=4550; BATCH=91; NEXT_BATCH=92; NEXT_TARGET=4600'"),
-            ('\'features_used":150\'','\'features_used":200\''),
-            ('<building_type_2_hillingdon_batch75>','<building_type_2_hillingdon_batch91>')
-          ]
-          for old,new in replacements:
-              if old not in wrapper: raise AssertionError(f'missing batch91 wrapper token: {old}')
-              wrapper=wrapper.replace(old,new)
-          required=['FHRS517en-GB.xml','BEFORE=4500; TARGET=4550; BATCH=91; NEXT_BATCH=92; NEXT_TARGET=4600','authority.lower()!="hillingdon"','processed_fhrs_ids','features_used":200','evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
-          missing=[x for x in required if x not in wrapper]
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+
+          old_city='CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"'
+          assert old_city in body
+          body=body.replace(old_city,'CITY="Hillingdon"; PREFIX=""; REGION="London Outer"',1)
+          assert 'FHRS503en-GB.xml' in body
+          body=body.replace('FHRS503en-GB.xml','FHRS517en-GB.xml')
+          old_counts='BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950'
+          assert old_counts in body
+          body=body.replace(old_counts,'BEFORE=4500; TARGET=4550; BATCH=91; NEXT_BATCH=92; NEXT_TARGET=4600',1)
+          body=body.replace('Bexley','Hillingdon').replace('bexley','hillingdon')
+          body=body.replace('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_91_APPENDED_50_HILLINGDON_FHRS_CONTINUATION_REQUIRED')
+          body=body.replace('BATCH_38_APPENDED_50_HILLINGDON_FHRS_CONTINUATION_REQUIRED','BATCH_91_APPENDED_50_HILLINGDON_FHRS_CONTINUATION_REQUIRED')
+          body=body.replace('Batch 38','Batch 91')
+          body=body.replace('feature_count 1850 -> 1900','feature_count 4500 -> 4550')
+          old_next="Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme."
+          new_next="Sonraki adim batch 92: mevcut 4550 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4550 kaydi tekrar isleme."
+          assert old_next in body
+          body=body.replace(old_next,new_next,1)
+
+          feature_anchor='features=shard.get("features") or []; before=len(features)\n'
+          assert feature_anchor in body
+          dynamic_prefix='''features=shard.get("features") or []; before=len(features)\nhillingdon_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS517en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]\nassert hillingdon_existing, "existing Hillingdon FHRS seed records not found"\nprefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in hillingdon_existing}\nassert len(prefixes)==1, prefixes\nPREFIX=next(iter(prefixes))\n'''
+          body=body.replace(feature_anchor,dynamic_prefix,1)
+
+          processed_anchor='processed=set()\n'
+          assert processed_anchor in body
+          body=body.replace(processed_anchor,'processed=set()\nprocessed_fhrs_ids={str((f.get("properties") or {}).get("fhrs_id")).strip() for f in features if (f.get("properties") or {}).get("fhrs_id") not in (None,"")}\n',1)
+          candidate_guard='if feature_id in processed or parcel_id in processed or fid in processed: continue'
+          assert candidate_guard in body
+          body=body.replace(candidate_guard,'if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue',1)
+
+          old_assert='assert int(s.get("features_used",0))==50'
+          assert body.count(old_assert)==1, body.count(old_assert)
+          body=body.replace(old_assert,'assert int(s.get("features_used",0))==150',1)
+          old_used='"features_used":100'
+          assert body.count(old_used)==1, body.count(old_used)
+          body=body.replace(old_used,'"features_used":200',1)
+
+          required=['CITY="Hillingdon"','FHRS517en-GB.xml','BEFORE=4500; TARGET=4550; BATCH=91; NEXT_BATCH=92; NEXT_TARGET=4600','authority.lower()!="hillingdon"','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":200','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
+          missing=[x for x in required if x not in body]
           assert not missing, missing
-          exec(compile(wrapper,'<building_type_2_hillingdon_batch91_wrapper>','exec'),{'__name__':'__main__'})
+          assert 'Bexley' not in body and 'bexley' not in body and 'BEXLEY' not in body
+          exec(compile(body,'<building_type_2_hillingdon_batch91>','exec'),{'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
