@@ -1,0 +1,61 @@
+name: tmp building_type_3 Eastbourne Hailsham continuation batch 27
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_eastbourne_hailsham_batch27_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Execute batch 27 from canonical batch script
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          SOURCE='.github/workflows/tmp_building_type_3_eastbourne_hailsham_batch26_retry_20260811.yml'
+          git fetch origin "$BRANCH"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          python3 <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/tmp_building_type_3_eastbourne_hailsham_batch26_retry_20260811.yml').read_text()
+          marker='        run: |\n'
+          if marker not in src:
+              raise SystemExit('source workflow run block not found')
+          tail=src.split(marker,1)[1]
+          lines=[]
+          for line in tail.splitlines():
+              if line.startswith('          '):
+                  lines.append(line[10:])
+              elif not line.strip():
+                  lines.append('')
+              else:
+                  break
+          script='\n'.join(lines)+'\n'
+          replacements={
+              'git pull --ff-only origin "$BRANCH"':'git checkout -B "$BRANCH" "origin/$BRANCH"',
+              'EXPECTED_BATCH=26':'EXPECTED_BATCH=27',
+              'data(building_type_3): append Eastbourne Hailsham OSM batch 26':'data(building_type_3): append Eastbourne Hailsham OSM batch 27',
+              'git rebase origin/"$BRANCH"':'git merge --no-edit origin/"$BRANCH"'
+          }
+          for old,new in replacements.items():
+              if old not in script:
+                  raise SystemExit(f'required source token not found: {old}')
+              script=script.replace(old,new)
+          Path('/tmp/building_type_3_batch27.sh').write_text(script)
+          PY
+          bash /tmp/building_type_3_batch27.sh
