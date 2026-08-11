@@ -1,0 +1,211 @@
+name: tmp building_type_7 Solihull OSM batch 106
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_solihull_osm_batch106_20260811.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 unseen Solihull OSM building-use features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          prev=Path('.github/workflows/tmp_building_type_7_walsall_osm_batch103_20260811.yml').read_text()
+          anchor=prev.index('- name: Append exactly 50 unseen Walsall OSM building-use features')
+          marker="          python3 <<'PY'\n"
+          start=prev.index(marker,anchor)+len(marker)
+          end=prev.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in prev[start:end].splitlines())
+          replacements=[
+              ("CITY='Walsall'","CITY='Solihull'"),
+              ("AUTHORITY='Walsall'","AUTHORITY='Solihull'"),
+              ("GRID='52.540,-2.080,52.650,-1.880'","GRID='52.380,-1.820,52.480,-1.680'"),
+              ('BEFORE=5100','BEFORE=5250'),
+              ('TARGET=5150','TARGET=5300'),
+              ('BATCH=103','BATCH=106'),
+              ('NEXT_BATCH=104','NEXT_BATCH=107'),
+              ('NEXT_TARGET=5200','NEXT_TARGET=5350'),
+              ('NEXT_CITY_INDEX=14','NEXT_CITY_INDEX=17'),
+              ('BATCH_103','BATCH_106'),
+              ('batch 103','batch 106'),
+              ('Walsall','Solihull')
+          ]
+          for old,new in replacements:
+              code=code.replace(old,new)
+          required=["CITY='Solihull'","AUTHORITY='Solihull'","BEFORE=5250","TARGET=5300","BATCH=106","NEXT_BATCH=107","evidence_excerpt","confidence_level_1_to_4","raw_source_committed","already_processed_ids_policy_applied"]
+          for token in required:
+              assert token in code, token
+          exec(compile(code,'building_type_7_solihull_batch106_runtime.py','exec'),{})
+          PY
+
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          load=lambda p: json.loads(Path(p).read_text())
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert shard.get('type')=='FeatureCollection'
+          assert len(shard['features'])==5300 and manifest.get('total_features',manifest.get('feature_count'))==5300
+          assert cp['feature_count_before']==5250 and cp['feature_count_after']==5300 and cp['current_feature_count']==5300
+          assert cp['next_batch_index']==107 and cp['next_target_feature_count']==5350
+          assert st['current_feature_count']==5300 and st['next_batch_index']==107
+          assert run['batch_index']==106 and run['city']=='Solihull' and run['local_authority']=='Solihull'
+          assert run['feature_count_before']==5250 and run['feature_count_after']==5300
+          assert run['already_processed_ids_policy_applied'] is True and run['raw_source_committed'] is False
+          assert len(run['new_feature_ids'])==50 and len(set(run['new_feature_ids']))==50
+          ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
+          all_ids=[str(f.get('id')) for f in shard['features'] if f.get('id') is not None]; assert len(all_ids)==len(set(all_ids))
+          feature_ids=[str((f.get('properties') or {}).get('feature_id')) for f in shard['features'] if (f.get('properties') or {}).get('feature_id') is not None]; assert len(feature_ids)==len(set(feature_ids))
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in shard['features'] if (f.get('properties') or {}).get('parcel_id') is not None]; assert len(parcels)==len(set(parcels))
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in shard['features'] if (f.get('properties') or {}).get('osm_id') is not None]; assert len(osms)==len(set(osms))
+          for f in batch:
+              p=f['properties']
+              assert p['area']=='Solihull' and p['local_authority']=='Solihull'
+              assert p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['evidence_excerpt'] and p['source_evidence_excerpt'] and p['source_hash'] and p['sources']
+              assert p['sources'][0].get('evidence_excerpt') and p['sources'][0].get('sha256')
+              assert p['fake_data'] is False and p['final_ready'] is False
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,'')
+          for obj in (manifest,cp,st,run,task):
+              assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          print('VALIDATED building_type_7 5250->5300 Solihull batch106=50 evidence=B confidence=3/4')
+          PY
+
+      - name: Commit and push only building_type_7 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r p; do
+            ok=0
+            for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done
+            [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }
+          done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_7): append Solihull OSM batch 106 5250->5300"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard['features'])==5300 and cp['current_feature_count']==5300 and st['current_feature_count']==5300
+          assert cp['next_batch_index']==107 and run['batch_index']==106 and run['city']=='Solihull' and run['local_authority']=='Solihull'
+          ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]
+          assert len(ids)==50 and len(batch)==50
+          assert all(f['properties']['evidence_level']=='B' and f['properties']['confidence_level_1_to_4']==3 and f['properties']['evidence_excerpt'] for f in batch)
+          assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in batch)
+          assert task.get('owner') in (None,'') and task.get('fake_data') is False and task.get('final_ready') is False
+          print('REMOTE_READBACK_OK building_type_7 5250->5300 Solihull batch106=50')
+          PY
+
+      - name: Record remote readback metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          head=os.environ['DATA_COMMIT']
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=json.loads(cp_path.read_text()); st=json.loads(st_path.read_text())
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_106_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
+          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 5250 -> 5300. Batch 106 Solihull remote readback verified; continue at batch 107. final_ready remains false.'
+          cp.setdefault('remaining_items',{})['note']='Next batch 107: treat all 5300 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'
+          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 106 Solihull OSM: 50 unique evidence-backed features appended; total 5300. Remote readback verified. Continue batch 107.','final_ready':False,'fake_data':False})
+          cp_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+          st_path.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add -- docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: record batch 106 remote readback"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+
+      - name: Final remote metadata readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert cp['current_feature_count']==5300 and cp['next_batch_index']==107 and cp['next_target_feature_count']==5350 and cp['remote_readback_verified'] is True
+          assert st['current_feature_count']==5300 and st['next_batch_index']==107 and st['remote_readback_verified'] is True
+          assert cp['final_ready'] is False and st['final_ready'] is False and task['final_ready'] is False
+          assert cp['fake_data'] is False and st['fake_data'] is False and task['fake_data'] is False and task.get('owner') in (None,'')
+          print('FINAL_REMOTE_METADATA_OK building_type_7 current=5300 next_batch=107 final_ready=false')
+          PY
