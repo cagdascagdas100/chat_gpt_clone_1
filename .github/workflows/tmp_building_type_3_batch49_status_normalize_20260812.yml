@@ -1,0 +1,73 @@
+name: tmp building_type_3 batch 49 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch49_status_normalize_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Normalize guarded status summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          STATUS='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          TASK='building-type-3-england-classification-v1-20260808'
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          git pull --ff-only origin "$BRANCH"
+          python3 <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          assert d.get('task_id')=='building-type-3-england-classification-v1-20260808'
+          assert d.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert d.get('owner') in (None,'')
+          assert d.get('fake_data') is False
+          assert d.get('final_ready') is False
+          assert d.get('current_feature_count')==7200
+          assert d.get('feature_count_after')==7200
+          assert d.get('last_batch_index')==49
+          assert d.get('last_batch_city')=='Standlake'
+          s=d.setdefault('summary',{})
+          s['current_feature_count']=7200
+          s['new_features_added_this_attempt']=50
+          s['progress_counted']=True
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          if git diff --quiet -- "$STATUS"; then
+            echo 'STATUS_ALREADY_NORMALIZED'
+            exit 0
+          fi
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$STATUS"
+          git commit -m 'chore(building_type_3): normalize batch 49 status metadata'
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked -m 'tmp-bt3-b49-normalize-cleanliness'
+          fi
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          git show origin/"$BRANCH":"$STATUS" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['current_feature_count']==7200 and d['feature_count_after']==7200 and d['last_batch_index']==49 and d['summary']['current_feature_count']==7200 and d['fake_data'] is False and d['final_ready'] is False; print('REMOTE_STATUS_READBACK_OK')"
