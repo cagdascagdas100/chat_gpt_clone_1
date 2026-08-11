@@ -1,0 +1,108 @@
+name: tmp building_type_3 Wantage batch 43 OSM API 50
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_wantage_batch43_osmapi_50_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 evidence-backed Wantage records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import pathlib, re, textwrap
+          src = pathlib.Path('.github/workflows/tmp_building_type_3_petersfield_alton_batch29_osmapi_50_20260811.yml').read_text(encoding='utf-8')
+          marker = "python3 <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index('\n          PY', start)
+          code = textwrap.dedent(src[start:end])
+          replacements = {
+              "CITY='Petersfield_Alton'": "CITY='Wantage'",
+              "LOCAL_AUTHORITY='East Hampshire'": "LOCAL_AUTHORITY='Vale of White Horse'",
+              "BATCH_INDEX=29": "BATCH_INDEX=43",
+              "EXPECTED_BEFORE=6150": "EXPECTED_BEFORE=6850",
+              "TARGET_AFTER=6200": "TARGET_AFTER=6900",
+              "'grid_bbox':'Petersfield 50.9900,-0.9600,51.0200,-0.9000; Alton 51.1350,-1.0000,51.1650,-0.9600'": "'grid_bbox':'Wantage 51.5700,-1.4600,51.6100,-1.3800'",
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing template token: {old}')
+              code = code.replace(old, new)
+          new_bboxes = """BBOXES=[
+            (-1.4600,51.5700,-1.4400,51.5800),
+            (-1.4400,51.5700,-1.4200,51.5800),
+            (-1.4200,51.5700,-1.4000,51.5800),
+            (-1.4000,51.5700,-1.3800,51.5800),
+            (-1.4600,51.5800,-1.4400,51.5900),
+            (-1.4400,51.5800,-1.4200,51.5900),
+            (-1.4200,51.5800,-1.4000,51.5900),
+            (-1.4000,51.5800,-1.3800,51.5900),
+            (-1.4600,51.5900,-1.4400,51.6000),
+            (-1.4400,51.5900,-1.4200,51.6000),
+            (-1.4200,51.5900,-1.4000,51.6000),
+            (-1.4000,51.5900,-1.3800,51.6000),
+            (-1.4600,51.6000,-1.4400,51.6100),
+            (-1.4400,51.6000,-1.4200,51.6100),
+            (-1.4200,51.6000,-1.4000,51.6100),
+            (-1.4000,51.6000,-1.3800,51.6100),
+          ]"""
+          code, n = re.subn(r'BBOXES=\[\n.*?\n\s*\]', new_bboxes, code, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('could not replace BBOXES template')
+          exec(compile(code, '<building_type_3_batch43>', 'exec'), {})
+          PY
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_3_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_3_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
+          git diff --cached --quiet && { echo 'No canonical progress files changed'; exit 1; }
+          git commit -m 'data(building_type_3): append Wantage batch 43'
+          COMMIT=$(git rev-parse HEAD)
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked -m 'tmp-bt3-b43-postcommit-cleanliness'
+          fi
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          git merge-base --is-ancestor "$COMMIT" origin/"$BRANCH"
+          echo "REMOTE_READBACK_OK commit=$COMMIT"
