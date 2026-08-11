@@ -73,6 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           SOURCE_URL='https://ratings.food.gov.uk/api/open-data-files/FHRS402en-GB.xml'
+          printf '%s\n' "$SOURCE_URL" > /tmp/birmingham_cont63_source_url.txt
           curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --retry-all-errors "$SOURCE_URL" -o /tmp/birmingham_cont63_fhrs.xml
           test -s /tmp/birmingham_cont63_fhrs.xml
           python - <<'PY'
