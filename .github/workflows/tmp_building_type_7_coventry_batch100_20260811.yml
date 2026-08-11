@@ -1,0 +1,166 @@
+name: tmp building_type_7 Coventry continuation batch 5
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_coventry_batch100_20260811.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 new Coventry evidence-backed features
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_URL='https://ratings.food.gov.uk/api/open-data-files/FHRS407en-GB.xml'
+          printf '%s\n' "$SOURCE_URL" > /tmp/coventry_source_url.txt
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --retry-all-errors "$SOURCE_URL" -o /tmp/coventry_fhrs.xml
+          test -s /tmp/coventry_fhrs.xml
+          git show HEAD:.github/workflows/tmp_building_type_7_coventry_batch99_20260811.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/template.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 new evidence-backed features'
+          marker="          python - <<'PY'\n"
+          a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+          replacements=[
+            ("Food Standards Agency FHRS daily open data - Coventry continuation batch 4","Food Standards Agency FHRS daily open data - Coventry continuation batch 5"),
+            ("EXPECTED_BEFORE=4900; EXPECTED_BATCH=99; EXPECTED_TARGET=4950","EXPECTED_BEFORE=4950; EXPECTED_BATCH=100; EXPECTED_TARGET=5000"),
+            ("BATCH_APPENDED_50_COVENTRY_FHRS_CONTINUATION_4_REQUIRED","BATCH_APPENDED_50_COVENTRY_FHRS_CONTINUATION_5_REQUIRED")
+          ]
+          for old,new in replacements:
+              if old not in body:
+                  raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
+          required=["EXPECTED_BEFORE=4950; EXPECTED_BATCH=100; EXPECTED_TARGET=5000","Coventry continuation batch 5","evidence_excerpt","confidence_level_1_to_4","'fake_data':False","'final_ready':False"]
+          missing=[x for x in required if x not in body]
+          assert not missing, missing
+          exec(compile(body,'<building_type_7_coventry_batch100>','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Validate exact append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          assert len(shard.get('features') or []) == 5000
+          assert manifest.get('feature_count_before') == 4950 and manifest.get('feature_count_after') == 5000 and manifest.get('added_feature_count') == 50
+          assert runner.get('feature_count_before') == 4950 and runner.get('feature_count_after') == 5000 and runner.get('added_feature_count') == 50
+          assert runner.get('city') == 'Coventry' and runner.get('source') == 'Food Standards Agency FHRS daily open data - Coventry continuation batch 5'
+          assert len(runner.get('records') or []) == 50 and len(runner.get('selected_feature_ids') or []) == 50
+          assert len(set(runner.get('selected_feature_ids') or [])) == 50
+          assert all(r.get('evidence_excerpt') and r.get('source_hash') for r in runner['records'])
+          assert all(r.get('evidence_level') == 'D' and r.get('confidence_level_1_to_4') == 2 for r in runner['records'])
+          assert all(r.get('fake_data') is False and r.get('final_ready') is False for r in runner['records'])
+          assert cp.get('current_feature_count') == 5000 and cp.get('next_batch_index') == 101 and cp.get('next_target_feature_count') == 5050
+          assert status.get('current_feature_count') == 5000 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          old=shard['features'][:4950]; new=shard['features'][4950:]
+          existing=set()
+          for f in old:
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None and str(v).strip(): existing.add(str(v).strip())
+          assert len(new)==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert str(f.get('id')) not in existing
+              assert str(p.get('parcel_id')) not in existing
+              if p.get('osm_id') is not None: assert str(p.get('osm_id')) not in existing
+              assert p.get('evidence_excerpt') and p.get('evidence_level') == 'D' and p.get('confidence_level_1_to_4') == 2
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          print('validated building_type_7 4950->5000 with 50 new Coventry FHRS features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json || true
+          git add -- "${paths[@]}"
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          git commit -m "data(building_type_7): append Coventry FHRS batch 100 4950->5000"
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            else
+              git merge --abort || true
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          test "$pushed" -eq 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard.get('features') or []) == 5000
+          assert manifest.get('feature_count_before') == 4950 and manifest.get('feature_count_after') == 5000 and manifest.get('added_feature_count') == 50
+          assert runner.get('feature_count_before') == 4950 and runner.get('feature_count_after') == 5000 and runner.get('added_feature_count') == 50
+          assert cp.get('current_feature_count') == 5000 and cp.get('next_batch_index') == 101 and cp.get('next_target_feature_count') == 5050
+          assert status.get('current_feature_count') == 5000 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task.get('owner') is None and task.get('fake_data') is False and task.get('final_ready') is False
+          ids=set(runner.get('selected_feature_ids') or []); batch=[f for f in shard['features'] if f.get('id') in ids]
+          assert len(ids)==50 and len(batch)==50
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level')=='D' for f in batch)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in batch)
+          print('remote readback verified building_type_7 4950->5000 batch100 final_ready=false')
+          PY
