@@ -73,10 +73,8 @@ jobs:
           assert candidate_guard in body
           body=body.replace(candidate_guard,'if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue',1)
 
-          old='assert int(s.get("features_used",0))==50\n                  s.update({"name":SOURCE,"features_used":100'
-          new='assert int(s.get("features_used",0))==100\n                  s.update({"name":SOURCE,"features_used":150'
-          if old not in body:
-              old='assert int(s.get("features_used",0))==50\n                  s.update({"name":SOURCE,"features_used":100'
+          old='assert int(s.get("features_used",0))==50\n        s.update({"name":SOURCE,"features_used":100'
+          new='assert int(s.get("features_used",0))==100\n        s.update({"name":SOURCE,"features_used":150'
           assert old in body, 'missing Croydon cumulative source token'
           body=body.replace(old,new,1)
 
