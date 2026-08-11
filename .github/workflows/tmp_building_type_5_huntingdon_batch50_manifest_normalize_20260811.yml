@@ -1,0 +1,89 @@
+name: AAYS building_type_5 Huntingdon batch50 manifest normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_huntingdon_batch50_manifest_normalize_20260811.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-huntingdon-batch50-manifest-normalize-once
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Refresh and normalize manifest legacy metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          from datetime import datetime, timezone
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest_path=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          status_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          geo=json.loads(geo_path.read_text(encoding='utf-8'))
+          m=json.loads(manifest_path.read_text(encoding='utf-8'))
+          cp=json.loads(cp_path.read_text(encoding='utf-8'))
+          st=json.loads(status_path.read_text(encoding='utf-8'))
+          task=json.loads(task_path.read_text(encoding='utf-8'))
+          assert len(geo.get('features',[]))==2500
+          assert cp.get('current_feature_count')==2500 and cp.get('next_batch_index')==51
+          assert (cp.get('last_batch') or {}).get('batch_index')==50 and (cp.get('last_batch') or {}).get('city')=='Huntingdon'
+          assert st.get('feature_count_before')==2450 and st.get('feature_count_after')==2500 and st.get('last_batch_city')=='Huntingdon'
+          assert task.get('task_id')=='building-type-5-england-classification-v1-20260808' and task.get('owner') is None and task.get('continuation_key','')==''
+          assert m.get('total_features')==2500 and m.get('feature_count')==2500
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          source_sha=(cp.get('last_batch') or {}).get('source_sha256')
+          query_sha=(cp.get('last_batch') or {}).get('query_sha256')
+          m.update({
+            'note':'Existing shard preserved; appended 50 Huntingdon OpenStreetMap Overpass building records outside all prior feature.id, parcel_id and osm_id values.',
+            'feature_count':2500,
+            'total_features':2500,
+            'geojson_sha256':hashlib.sha256(geo_path.read_bytes()).hexdigest(),
+            'geojson_path':'england_map_web/data/building_type/shards/building_type_5_latest.geojson',
+            'manifest_updated_at':now,
+            'updated_at':now,
+            'feature_count_before':2450,
+            'feature_count_after':2500,
+            'added_feature_count':50,
+            'last_batch_index':50,
+            'last_batch_city':'Huntingdon',
+            'last_grid_id':'HUNTINGDON_01',
+            'last_source':'OpenStreetMap Overpass API',
+            'last_source_sha256':source_sha,
+            'last_query_sha256':query_sha,
+            'fake_data':False,
+            'final_ready':False
+          })
+          manifest_path.write_text(json.dumps(m,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'manifest_updated_at':now,'geojson_sha256':m['geojson_sha256'],'source_sha256':source_sha,'query_sha256':query_sha}))
+          PY
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+          [[ "$(git diff --cached --name-only)" == "england_map_web/data/building_type/shards/building_type_5_manifest_latest.json" ]]
+          git diff --cached --quiet && { echo 'manifest already normalized'; exit 0; }
+          git commit -m 'Normalize building_type_5 Huntingdon batch 50 manifest metadata'
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            sleep $((i*2))
+          done
+          exit 1
