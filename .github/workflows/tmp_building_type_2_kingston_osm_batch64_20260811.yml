@@ -1,0 +1,153 @@
+name: tmp building_type_2 Kingston OSM grid batch 64
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_kingston_osm_batch64_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 new Kingston OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/workflows/tmp_building_type_2_romford_osm_batch62_20260811.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/template.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 new Romford OSM features'
+          marker="          python3 <<'PY'\n"
+          a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+          replacements=[
+            ("CITY='Romford'; AUTHORITY='Havering'; REGION='London Outer'", "CITY='Kingston'; AUTHORITY='Kingston upon Thames'; REGION='London Outer'"),
+            ("BBOX=(51.5650,0.1650,51.5920,0.2100)", "BBOX=(51.3850,-0.3300,51.4250,-0.2500)"),
+            ("BEFORE=3050; TARGET=3100; BATCH=62; NEXT_BATCH=63; NEXT_TARGET=3150", "BEFORE=3150; TARGET=3200; BATCH=64; NEXT_BATCH=65; NEXT_TARGET=3250"),
+            ("OpenStreetMap Overpass API - Romford grid batch 62", "OpenStreetMap Overpass API - Kingston grid batch 64"),
+            ("Existing shard preserved; appended 50 new Romford/Havering OSM-grid records", "Existing shard preserved; appended 50 new Kingston/Kingston upon Thames OSM-grid records"),
+            ("Batch 62 appended from a new Romford/Havering OSM grid", "Batch 64 appended from a new Kingston/Kingston upon Thames OSM grid"),
+            ("50 new Romford/Havering OSM-grid records appended", "50 new Kingston/Kingston upon Thames OSM-grid records appended"),
+            ("BATCH_62_APPENDED_50_ROMFORD_HAVERING_OSM_CONTINUATION_REQUIRED", "BATCH_64_APPENDED_50_KINGSTON_OSM_CONTINUATION_REQUIRED"),
+            ("PROGRESS: feature_count 3050 -> 3100.", "PROGRESS: feature_count 3150 -> 3200."),
+            ("50 new Romford/Havering OSM-grid features were appended.", "50 new Kingston/Kingston upon Thames OSM-grid features were appended."),
+            ("Next batch 63: treat all 3100 existing feature.id/parcel_id/osm_id values as already_processed_ids and append at least 50 new London Outer features without replay.", "Next batch 65: treat all 3200 existing feature.id/parcel_id/osm_id values as already_processed_ids and append at least 50 new London Outer features without replay.")
+          ]
+          for old,new in replacements:
+              count=body.count(old)
+              if count < 1:
+                  raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
+          required=["CITY='Kingston'","AUTHORITY='Kingston upon Thames'","BBOX=(51.3850,-0.3300,51.4250,-0.2500)","BEFORE=3150; TARGET=3200; BATCH=64; NEXT_BATCH=65; NEXT_TARGET=3250","evidence_excerpt","'fake_data':False","'final_ready':False","already_processed_ids_policy_applied"]
+          missing=[x for x in required if x not in body]
+          assert not missing, missing
+          exec(compile(body,'<building_type_2_kingston_osm_batch64>','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json').read_text())
+          checkpoint=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json').read_text())
+          assert len(shard.get('features') or [])==3200
+          assert manifest.get('feature_count_before')==3150 and manifest.get('feature_count_after')==3200 and manifest.get('added_feature_count')==50
+          assert checkpoint.get('current_feature_count')==3200 and checkpoint.get('next_batch_index')==65 and checkpoint.get('next_target_feature_count')==3250
+          assert status.get('current_feature_count')==3200 and runner.get('feature_count_before')==3150 and runner.get('feature_count_after')==3200 and runner.get('added_feature_count')==50
+          assert task.get('owner') is None and task.get('task_id')=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          assert runner.get('already_processed_ids_policy_applied') is True and runner.get('city')=='Kingston' and runner.get('local_authority')=='Kingston upon Thames'
+          ids=list(runner.get('new_feature_ids') or []); assert len(ids)==50 and len(set(ids))==50 and all(str(x).startswith('ENG_OSM_') for x in ids)
+          new=[f for f in shard['features'] if f.get('id') in set(ids)]; assert len(new)==50 and len(runner.get('records') or [])==50
+          assert len({f.get('id') for f in shard['features']})==len(shard['features'])
+          assert len({(f.get('properties') or {}).get('parcel_id') for f in new})==50 and len({(f.get('properties') or {}).get('osm_id') for f in new})==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('evidence_excerpt') and p.get('source_evidence_excerpt') and p.get('sources') and p.get('source_hash')
+              assert p.get('evidence_level') in {'B','C'} and p.get('confidence_level_1_to_4') in {2,3}
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          src=[s for s in manifest.get('sources') or [] if s.get('name')=='OpenStreetMap Overpass API - Kingston grid batch 64']
+          assert len(src)==1 and src[0].get('features_used')==50 and runner.get('raw_source_committed') is False
+          print('validated building_type_2 3150->3200 with 50 new Kingston OSM features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r path; do ok=0; for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }; done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_2): append Kingston OSM batch 64 3150->3200"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==3200 and manifest['feature_count_before']==3150 and manifest['feature_count_after']==3200 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==3200 and checkpoint['next_batch_index']==65 and checkpoint['next_target_feature_count']==3250 and status['current_feature_count']==3200
+          assert runner['city']=='Kingston' and runner['local_authority']=='Kingston upon Thames' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True and task['owner'] is None
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          ids=set(runner['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]
+          assert len(batch)==50 and all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level') in {'B','C'} for f in batch)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4') in {2,3} for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in batch)
+          print('remote readback verified building_type_2 3150->3200 batch64 final_ready=false')
+          PY
