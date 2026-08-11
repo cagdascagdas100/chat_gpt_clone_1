@@ -29,10 +29,11 @@ jobs:
           set -euo pipefail
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Render fail-closed Hornsea batch 82 locally
+      - name: Restore and render fail-closed Hornsea batch 82 locally
         shell: bash
         run: |
           set -euo pipefail
+          git show 2dd1104bc682198b075fa9283d98f1c2e039102e:.github/tmp_bt9_batch46_ripon_v3.py > .github/tmp_bt9_batch82_hornsea.py
           python - <<'PY'
           from pathlib import Path
           path = Path('.github/tmp_bt9_batch82_hornsea.py')
@@ -79,7 +80,7 @@ jobs:
           BRANCH='codex/aays-single-runner-v5-20260706'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm -- \
+          git rm -f -- \
             .github/tmp_bt9_batch82_hornsea.py \
             .github/workflows/tmp_bt9_batch82_hornsea.yml
           git add -- \
