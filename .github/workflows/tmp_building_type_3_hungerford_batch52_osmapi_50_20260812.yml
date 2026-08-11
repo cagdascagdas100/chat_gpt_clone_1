@@ -1,0 +1,148 @@
+name: tmp building_type_3 Hungerford batch 52 OSM API 50
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_hungerford_batch52_osmapi_50_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 evidence-backed Hungerford records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import pathlib, re, textwrap
+          src = pathlib.Path('.github/workflows/tmp_building_type_3_petersfield_alton_batch29_osmapi_50_20260811.yml').read_text(encoding='utf-8')
+          marker = "python3 <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index('\n          PY', start)
+          code = textwrap.dedent(src[start:end])
+          replacements = {
+              "CITY='Petersfield_Alton'": "CITY='Hungerford'",
+              "LOCAL_AUTHORITY='East Hampshire'": "LOCAL_AUTHORITY='West Berkshire'",
+              "BATCH_INDEX=29": "BATCH_INDEX=52",
+              "EXPECTED_BEFORE=6150": "EXPECTED_BEFORE=7300",
+              "TARGET_AFTER=6200": "TARGET_AFTER=7350",
+              "'grid_bbox':'Petersfield 50.9900,-0.9600,51.0200,-0.9000; Alton 51.1350,-1.0000,51.1650,-0.9600'": "'grid_bbox':'Hungerford 51.3850,-1.5900,51.4450,-1.4100'",
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing template token: {old}')
+              code = code.replace(old, new)
+          new_bboxes = """BBOXES=[
+            (-1.5900,51.3850,-1.5700,51.3950),
+            (-1.5700,51.3850,-1.5500,51.3950),
+            (-1.5500,51.3850,-1.5300,51.3950),
+            (-1.5300,51.3850,-1.5100,51.3950),
+            (-1.5100,51.3850,-1.4900,51.3950),
+            (-1.4900,51.3850,-1.4700,51.3950),
+            (-1.4700,51.3850,-1.4500,51.3950),
+            (-1.4500,51.3850,-1.4300,51.3950),
+            (-1.4300,51.3850,-1.4100,51.3950),
+            (-1.5900,51.3950,-1.5700,51.4050),
+            (-1.5700,51.3950,-1.5500,51.4050),
+            (-1.5500,51.3950,-1.5300,51.4050),
+            (-1.5300,51.3950,-1.5100,51.4050),
+            (-1.5100,51.3950,-1.4900,51.4050),
+            (-1.4900,51.3950,-1.4700,51.4050),
+            (-1.4700,51.3950,-1.4500,51.4050),
+            (-1.4500,51.3950,-1.4300,51.4050),
+            (-1.4300,51.3950,-1.4100,51.4050),
+            (-1.5900,51.4050,-1.5700,51.4150),
+            (-1.5700,51.4050,-1.5500,51.4150),
+            (-1.5500,51.4050,-1.5300,51.4150),
+            (-1.5300,51.4050,-1.5100,51.4150),
+            (-1.5100,51.4050,-1.4900,51.4150),
+            (-1.4900,51.4050,-1.4700,51.4150),
+            (-1.4700,51.4050,-1.4500,51.4150),
+            (-1.4500,51.4050,-1.4300,51.4150),
+            (-1.4300,51.4050,-1.4100,51.4150),
+            (-1.5900,51.4150,-1.5700,51.4250),
+            (-1.5700,51.4150,-1.5500,51.4250),
+            (-1.5500,51.4150,-1.5300,51.4250),
+            (-1.5300,51.4150,-1.5100,51.4250),
+            (-1.5100,51.4150,-1.4900,51.4250),
+            (-1.4900,51.4150,-1.4700,51.4250),
+            (-1.4700,51.4150,-1.4500,51.4250),
+            (-1.4500,51.4150,-1.4300,51.4250),
+            (-1.4300,51.4150,-1.4100,51.4250),
+            (-1.5900,51.4250,-1.5700,51.4350),
+            (-1.5700,51.4250,-1.5500,51.4350),
+            (-1.5500,51.4250,-1.5300,51.4350),
+            (-1.5300,51.4250,-1.5100,51.4350),
+            (-1.5100,51.4250,-1.4900,51.4350),
+            (-1.4900,51.4250,-1.4700,51.4350),
+            (-1.4700,51.4250,-1.4500,51.4350),
+            (-1.4500,51.4250,-1.4300,51.4350),
+            (-1.4300,51.4250,-1.4100,51.4350),
+            (-1.5900,51.4350,-1.5700,51.4450),
+            (-1.5700,51.4350,-1.5500,51.4450),
+            (-1.5500,51.4350,-1.5300,51.4450),
+            (-1.5300,51.4350,-1.5100,51.4450),
+            (-1.5100,51.4350,-1.4900,51.4450),
+            (-1.4900,51.4350,-1.4700,51.4450),
+            (-1.4700,51.4350,-1.4500,51.4450),
+            (-1.4500,51.4350,-1.4300,51.4450),
+            (-1.4300,51.4350,-1.4100,51.4450),
+          ]"""
+          code, n = re.subn(r'BBOXES=\[\n.*?\n\s*\]', new_bboxes, code, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('could not replace BBOXES template')
+          exec(compile(code, '<building_type_3_batch52>', 'exec'), {})
+          PY
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          MSG='data(building_type_3): append Hungerford batch 52'
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_3_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_3_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
+          git diff --cached --quiet && { echo 'No canonical progress files changed'; exit 1; }
+          git commit -m "$MSG"
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked -m 'tmp-bt3-b52-postcommit-cleanliness'
+          fi
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          REMOTE_COMMIT=$(git log origin/"$BRANCH" --format='%H%x09%s' -1000 | awk -F '\t' -v m="$MSG" '$2==m {print $1; exit}')
+          test -n "$REMOTE_COMMIT"
+          git merge-base --is-ancestor "$REMOTE_COMMIT" origin/"$BRANCH"
+          echo "REMOTE_READBACK_OK commit=$REMOTE_COMMIT"
