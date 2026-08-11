@@ -1,0 +1,58 @@
+name: tmp building_type_3 batch29 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch29_status_normalize_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Normalize status helper fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git pull --ff-only origin "$BRANCH"
+          python3 <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          assert d.get('task_id')=='building-type-3-england-classification-v1-20260808'
+          assert d.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert d.get('owner') in (None,'')
+          assert d.get('current_feature_count')==6200
+          assert d.get('feature_count_before')==6150 and d.get('feature_count_after')==6200
+          assert d.get('last_batch_index')==29 and d.get('last_batch_city')=='Petersfield_Alton'
+          assert d.get('fake_data') is False and d.get('final_ready') is False
+          d['summary']={'current_feature_count':6200,'new_features_added_this_attempt':50,'progress_counted':True}
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore(building_type_3): normalize batch 29 status metadata'
+          COMMIT=$(git rev-parse HEAD)
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          git merge-base --is-ancestor "$COMMIT" origin/"$BRANCH"
