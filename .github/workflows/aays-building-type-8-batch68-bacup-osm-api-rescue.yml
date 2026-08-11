@@ -1,0 +1,433 @@
+name: AAYS building_type_8 batch68 Bacup OSM API rescue
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-8-batch68-bacup-osm-api-rescue.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-batch68-bacup-osm-api-rescue
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_8
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs
+
+      - name: Fast-forward to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 evidence-backed Bacup OSM Map API records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import json
+          import pathlib
+          import urllib.parse
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          SLOT = "building_type_8"
+          TASK = "building-type-8-england-classification-v1-20260808"
+          CONT = "1438e38f53702e97217fea2475381d3b31b74de11677358f98513a9e45d43d47"
+          CITY = "Bacup"
+          LOCAL_AUTHORITY = "Rossendale"
+          BATCH_INDEX = 68
+          EXPECTED_BEFORE = 3850
+          TARGET_AFTER = 3900
+          API_BASE = "https://api.openstreetmap.org/api/0.6/map"
+          BBOXES = [
+              (-2.2200, 53.6950, -2.2000, 53.7100),
+              (-2.2000, 53.6950, -2.1800, 53.7100),
+              (-2.2200, 53.7100, -2.2000, 53.7250),
+              (-2.2000, 53.7100, -2.1800, 53.7250),
+          ]
+          GEO = pathlib.Path("england_map_web/data/building_type/shards/building_type_8_latest.geojson")
+          MAN = pathlib.Path("england_map_web/data/building_type/shards/building_type_8_manifest_latest.json")
+          STA = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json")
+          CP = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json")
+          CT = pathlib.Path("docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json")
+          RUN = pathlib.Path("docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json")
+          NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+          def load(path):
+              with path.open(encoding="utf-8") as fh:
+                  return json.load(fh)
+
+          def dump(path, obj, compact=False):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              text = json.dumps(obj, ensure_ascii=False, separators=(",", ":") if compact else None,
+                                indent=None if compact else 2, sort_keys=False)
+              path.write_text(text + ("" if compact else "\n"), encoding="utf-8")
+
+          task = load(CT)
+          status = load(STA)
+          checkpoint = load(CP)
+          if task.get("task_id") != TASK or status.get("task_id") != TASK:
+              raise SystemExit("task mismatch; refusing second task")
+          if task.get("owner") not in (None, "") or status.get("owner") not in (None, ""):
+              raise SystemExit("live owner; refusing second owner")
+          if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT:
+              raise SystemExit("continuation_key changed; refusing stale continuation")
+          if checkpoint.get("next_batch_index") != BATCH_INDEX or checkpoint.get("next_target_feature_count") != TARGET_AFTER:
+              raise SystemExit("checkpoint moved; refusing stale batch")
+
+          geo = load(GEO)
+          feats = geo.get("features")
+          if not isinstance(feats, list):
+              raise SystemExit("invalid GeoJSON shard")
+          before = len(feats)
+          if before != EXPECTED_BEFORE:
+              raise SystemExit(f"feature count moved: {before} != {EXPECTED_BEFORE}")
+
+          already = set()
+          for feat in feats:
+              fid = feat.get("id")
+              if fid not in (None, ""):
+                  already.add(str(fid))
+              props = feat.get("properties") or {}
+              for key in ("parcel_id", "osm_id"):
+                  val = props.get(key)
+                  if val not in (None, ""):
+                      already.add(str(val))
+
+          residential = {
+              "house": ("residential_house", "R_HOUSE"),
+              "detached": ("residential_detached", "R_DET"),
+              "semidetached_house": ("residential_semidetached", "R_SEMI"),
+              "terrace": ("residential_terrace", "R_TERRACE"),
+              "apartments": ("residential_apartments", "R_APARTMENT"),
+              "bungalow": ("residential_bungalow", "R_BUNGALOW"),
+              "residential": ("residential", "R_RESIDENTIAL"),
+              "dormitory": ("residential_dormitory", "R_DORMITORY"),
+          }
+          specific = {
+              "retail": ("commercial_retail", "C_RETAIL", "commercial"),
+              "commercial": ("commercial", "C_COMMERCIAL", "commercial"),
+              "office": ("office", "C_OFFICE", "commercial"),
+              "hotel": ("hotel_or_hospitality", "C_HOSPITALITY", "commercial"),
+              "industrial": ("industrial", "I_INDUSTRIAL", "industrial"),
+              "warehouse": ("warehouse", "I_WAREHOUSE", "industrial"),
+              "school": ("education", "P_EDUCATION", "institutional"),
+              "college": ("education", "P_EDUCATION", "institutional"),
+              "university": ("education", "P_EDUCATION", "institutional"),
+              "church": ("religious_or_community", "P_RELIGIOUS", "institutional"),
+              "chapel": ("religious_or_community", "P_RELIGIOUS", "institutional"),
+              "hospital": ("healthcare", "P_HEALTHCARE", "institutional"),
+              "civic": ("public_civic", "P_PUBLIC", "institutional"),
+              "public": ("public_civic", "P_PUBLIC", "institutional"),
+              "train_station": ("transport_station", "P_TRANSPORT", "institutional"),
+              "barn": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "farm": ("agricultural", "I_AGRICULTURAL", "agricultural"),
+              "farm_auxiliary": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "stable": ("agricultural_outbuilding", "I_AGRICULTURAL", "agricultural"),
+              "garage": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "garages": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "shed": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "carport": ("auxiliary_outbuilding", "I_OUTBUILDING", "auxiliary"),
+              "roof": ("auxiliary_structure", "I_OUTBUILDING", "auxiliary"),
+          }
+
+          def classify(tags):
+              b = str(tags.get("building", "")).strip().lower()
+              if b in residential:
+                  p, code = residential[b]
+                  return p, code, "residential", "B", 0.85, 3, f"building={b}"
+              if b in specific:
+                  p, code, cat = specific[b]
+                  return p, code, cat, "B", 0.85, 3, f"building={b}"
+              shop = tags.get("shop")
+              office = tags.get("office")
+              amenity = tags.get("amenity")
+              tourism = tags.get("tourism")
+              healthcare = tags.get("healthcare")
+              if shop and shop != "no":
+                  return "commercial_retail", "C_RETAIL", "commercial", "B", 0.80, 3, f"shop={shop}"
+              if office and office != "no":
+                  return "office", "C_OFFICE", "commercial", "B", 0.80, 3, f"office={office}"
+              if tourism in {"hotel", "hostel", "guest_house", "motel", "apartment"}:
+                  return "hotel_or_hospitality", "C_HOSPITALITY", "commercial", "B", 0.80, 3, f"tourism={tourism}"
+              if healthcare:
+                  return "healthcare", "P_HEALTHCARE", "institutional", "B", 0.80, 3, f"healthcare={healthcare}"
+              if amenity in {"school", "college", "university", "kindergarten"}:
+                  return "education", "P_EDUCATION", "institutional", "B", 0.80, 3, f"amenity={amenity}"
+              if amenity in {"hospital", "clinic", "doctors", "dentist", "pharmacy"}:
+                  return "healthcare", "P_HEALTHCARE", "institutional", "B", 0.80, 3, f"amenity={amenity}"
+              if amenity == "place_of_worship":
+                  return "religious_or_community", "P_RELIGIOUS", "institutional", "B", 0.80, 3, "amenity=place_of_worship"
+              if amenity in {"townhall", "police", "fire_station", "library", "community_centre", "courthouse"}:
+                  return "public_civic", "P_PUBLIC", "institutional", "B", 0.80, 3, f"amenity={amenity}"
+              if amenity in {"restaurant", "cafe", "pub", "bar", "fast_food"}:
+                  return "commercial_retail", "C_RETAIL", "commercial", "B", 0.80, 3, f"amenity={amenity}"
+              if b and b not in {"yes", "construction", "proposed", "no"}:
+                  return "other_specific_building", "X_OTHER", "other", "C", 0.60, 2, f"building={b}"
+              return "unknown", "U_UNKNOWN", "unknown", "U", 0.0, 1, f"building={b or 'missing'}"
+
+          elements = {}
+          raw_parts = []
+          fetched_urls = []
+          total_xml_elements = 0
+          for bbox in BBOXES:
+              bbox_text = ",".join(f"{v:.4f}" for v in bbox)
+              url = API_BASE + "?" + urllib.parse.urlencode({"bbox": bbox_text})
+              req = urllib.request.Request(url, headers={"User-Agent": "TerraYield-AAYS-building_type_8/1.0", "Accept": "application/xml"})
+              try:
+                  with urllib.request.urlopen(req, timeout=120) as resp:
+                      raw = resp.read()
+              except Exception as exc:
+                  print(f"OSM map tile failed {bbox_text}: {exc!r}")
+                  continue
+              raw_parts.append(raw)
+              fetched_urls.append(url)
+              root = ET.fromstring(raw)
+              node_coords = {}
+              node_tags = {}
+              for node in root.findall("node"):
+                  nid = node.get("id")
+                  if not nid:
+                      continue
+                  lon = node.get("lon")
+                  lat = node.get("lat")
+                  if lon is not None and lat is not None:
+                      node_coords[nid] = (float(lon), float(lat))
+                  tags = {t.get("k"): t.get("v") for t in node.findall("tag") if t.get("k")}
+                  node_tags[nid] = tags
+                  if tags.get("building"):
+                      key = ("node", int(nid))
+                      elements[key] = {"type": "node", "id": int(nid), "lon": float(lon), "lat": float(lat), "tags": tags}
+              for way in root.findall("way"):
+                  wid = way.get("id")
+                  if not wid:
+                      continue
+                  tags = {t.get("k"): t.get("v") for t in way.findall("tag") if t.get("k")}
+                  if not tags.get("building"):
+                      continue
+                  pts = [node_coords[nd.get("ref")] for nd in way.findall("nd") if nd.get("ref") in node_coords]
+                  if not pts:
+                      continue
+                  lon = sum(p[0] for p in pts) / len(pts)
+                  lat = sum(p[1] for p in pts) / len(pts)
+                  key = ("way", int(wid))
+                  elements[key] = {"type": "way", "id": int(wid), "lon": lon, "lat": lat, "tags": tags}
+              total_xml_elements += len(list(root))
+
+          if not raw_parts:
+              raise SystemExit("OSM Map API returned no usable tile responses")
+          source_sha = hashlib.sha256(b"\n--AAYS-TILE--\n".join(raw_parts)).hexdigest()
+
+          candidates = []
+          for elem in elements.values():
+              typ = elem["type"]
+              oid = elem["id"]
+              fid = f"ENG_OSM_{typ}_{oid}"
+              pid = fid
+              osmid = f"{typ}/{oid}"
+              if {fid, pid, osmid, str(oid), f"{typ}_{oid}"} & already:
+                  continue
+              tags = elem.get("tags") or {}
+              cls = classify(tags)
+              candidates.append((cls[5] > 1, fid, pid, osmid, elem["lon"], elem["lat"], tags, cls, typ, oid))
+
+          candidates.sort(key=lambda row: (not row[0], row[1]))
+          chosen = candidates[:50]
+          if len(chosen) < 50:
+              raise SystemExit(f"only {len(chosen)} new geometry-bearing candidates from OSM Map API; need >=50")
+
+          new_features = []
+          excerpt_keys = ("building", "amenity", "shop", "office", "tourism", "healthcare", "name",
+                          "addr:housenumber", "addr:street", "addr:postcode", "addr:city")
+          for _, fid, pid, osmid, lon, lat, tags, cls, typ, oid in chosen:
+              primary, code, category, ev, score, level, method = cls
+              excerpt = {k: tags[k] for k in excerpt_keys if k in tags}
+              canonical = json.dumps({"type": typ, "id": oid, "lon": lon, "lat": lat, "tags": tags},
+                                     ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+              record_hash = hashlib.sha256(canonical).hexdigest()
+              object_url = f"https://www.openstreetmap.org/{typ}/{oid}"
+              props = {
+                  "parcel_id": pid, "osm_id": osmid, "slot_id": SLOT, "region": "North West",
+                  "area": CITY, "local_authority": LOCAL_AUTHORITY, "postcode": tags.get("addr:postcode", ""),
+                  "building_type_primary": primary, "building_type_code": code, "building_category": category,
+                  "confidence_score": score, "confidence_level_1_to_4": level, "evidence_level": ev,
+                  "source_count": 1, "match_method": method, "source": "OpenStreetMap via OSM Map API",
+                  "source_url": object_url, "source_hash": record_hash, "osm_tags_summary": excerpt,
+                  "evidence_excerpt": excerpt, "source_evidence_excerpt": excerpt,
+                  "sources": [{"source_name": "OpenStreetMap Map API", "url": API_BASE, "object_url": object_url,
+                               "accessed_at": NOW, "sha256": source_sha, "record_sha256": record_hash,
+                               "licence": "ODbL 1.0", "granularity": "building_centroid",
+                               "fields_used": list(excerpt.keys()), "supports_field": "building_type_primary",
+                               "match_method": method, "match_score": score}],
+                  "geometry_match_method": "osm_element_centroid",
+                  "address_match_method": "osm_addr_tags" if any(k.startswith("addr:") for k in excerpt) else "none",
+                  "limitations": "OSM element/centroid proxy; no cadastral parcel binding. EPC/VOA/HMLR not joined.",
+                  "needs_manual_review": level <= 2, "fake_data": False, "final_ready": False, "updated_at": NOW,
+              }
+              new_features.append({"type": "Feature", "id": fid,
+                                   "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": props})
+
+          for f in new_features:
+              p = f["properties"]
+              if f["id"] in already or p["parcel_id"] in already or p["osm_id"] in already:
+                  raise SystemExit("already_processed_ids collision detected")
+          geo["features"].extend(new_features)
+          after = len(geo["features"])
+          if after != TARGET_AFTER or after <= before:
+              raise SystemExit(f"progress invariant failed: before={before}, after={after}")
+
+          classified = 0
+          unknown = 0
+          ev_dist = collections.Counter()
+          conf_dist = collections.Counter()
+          type_dist = collections.Counter()
+          for f in geo["features"]:
+              p = f.get("properties") or {}
+              primary = p.get("building_type_primary", "unknown") or "unknown"
+              ev = p.get("evidence_level", "U") or "U"
+              level = int(p.get("confidence_level_1_to_4", 1) or 1)
+              type_dist[primary] += 1
+              ev_dist[ev] += 1
+              conf_dist[str(level)] += 1
+              if primary == "unknown": unknown += 1
+              else: classified += 1
+          new_ev = collections.Counter((f.get("properties") or {}).get("evidence_level", "U") for f in new_features)
+          new_conf = collections.Counter(str(int((f.get("properties") or {}).get("confidence_level_1_to_4", 1) or 1)) for f in new_features)
+
+          dump(GEO, geo, compact=True)
+          geo_sha = hashlib.sha256(GEO.read_bytes()).hexdigest()
+          manifest = {
+              "slot_id": SLOT, "generated_at": NOW, "total_features": after, "classified": classified,
+              "unknown": unknown, "evidence_distribution": dict(sorted(ev_dist.items())),
+              "type_distribution": dict(sorted(type_dist.items())),
+              "confidence_level_distribution": dict(sorted(conf_dist.items())),
+              "sources": [{"name": "OpenStreetMap Map API", "url": API_BASE, "license": "ODbL 1.0",
+                           "features_used": after, "accessed_at": NOW, "response_sha256_last_batch": source_sha,
+                           "cache_files": []}],
+              "fake_data": False, "final_ready": False,
+              "note": "Incremental evidence-backed OSM batches; no synthetic rows.",
+              "feature_count": after, "geojson_sha256": geo_sha, "geojson_path": str(GEO),
+              "manifest_updated_at": NOW,
+              "last_batch": {"batch_index": BATCH_INDEX, "city": CITY, "added_feature_count": len(new_features),
+                             "source": "OpenStreetMap Map API", "source_url": API_BASE, "source_sha256": source_sha,
+                             "evidence_level_distribution": dict(sorted(new_ev.items())),
+                             "confidence_level_distribution": dict(sorted(new_conf.items()))},
+          }
+          dump(MAN, manifest)
+
+          status.update({
+              "state": "IN_PROGRESS", "updated_at": NOW, "owner": None, "continuation_key": CONT,
+              "final_ready": False, "classified_count": classified, "unknown_count": unknown,
+              "total_elements": after, "feature_count_before": before, "feature_count_after": after,
+              "new_features_added": after-before, "progress_counted": after > before,
+              "next_batch_index": BATCH_INDEX+1, "next_target_feature_count": after+50,
+              "confidence_distribution": dict(sorted(conf_dist.items())),
+              "evidence_distribution": dict(sorted(ev_dist.items())), "output_sha256": geo_sha,
+              "attempted_new_city_batch": f"{CITY} tiled OSM Map API building query",
+              "blocker": None, "blocker_reason": "",
+              "note": f"Appended {after-before} new {CITY} OSM building features outside already_processed_ids via OSM Map API after Overpass 504. No fake rows; final_ready remains false.",
+              "fake_data": False,
+          })
+          dump(STA, status)
+
+          attempted = checkpoint.get("attempted_cities") or []
+          if CITY not in attempted:
+              attempted.append(CITY)
+          checkpoint.update({
+              "updated_at": NOW, "final_ready": False, "state": "IN_PROGRESS",
+              "feature_count_before": before, "feature_count_after": after, "current_feature_count": after,
+              "next_batch_index": BATCH_INDEX+1, "next_target_feature_count": after+50,
+              "attempted_cities": attempted,
+              "attempted_new_city_batch": f"{CITY} tiled OSM Map API building query",
+              "source_access_evidence": {
+                  "overpass_api": "FAILED 3 attempts HTTP 504 in prior guarded workflow; not retried",
+                  "osm_map_api": f"SUCCESS {len(fetched_urls)} tiles; xml_elements={total_xml_elements}; response_sha256={source_sha}",
+                  "selected_new_features": len(new_features), "city": CITY,
+                  "query": "4 small Bacup bbox tiles via OSM /api/0.6/map",
+                  "raw_source_storage": "runtime memory only; not committed"},
+              "blocker": None, "blocker_reason": "",
+              "next_required_action": f"CONTINUE_BATCH_{BATCH_INDEX+1}_WITH_ALREADY_PROCESSED_IDS_EXCLUDED",
+              "fake_data": False, "last_processed_ids_sample": [f["id"] for f in new_features[:20]],
+          })
+          summary = checkpoint.get("summary") or {}
+          summary.update({"unknown": unknown, "current_feature_count": after, "pipeline_stage": 1,
+                          "new_features_added_this_attempt": after-before, "progress_counted": after > before,
+                          "classified": classified})
+          checkpoint["summary"] = summary
+          dump(CP, checkpoint)
+
+          task["updated_at"] = NOW
+          task["owner"] = None
+          task["fake_data"] = False
+          task["final_ready"] = False
+          progress = task.get("progress") or {}
+          progress.update({"completed_count": after, "target_count": after+50,
+                           "previous_percent": round(before/(after+50)*100, 2),
+                           "current_percent": round(after/(after+50)*100, 2),
+                           "percent_increase": round((after-before)/(after+50)*100, 2)})
+          task["progress"] = progress
+          dump(CT, task, compact=True)
+
+          runner = {
+              "slot_id": SLOT, "task_id": TASK, "continuation_key": CONT, "updated_at": NOW,
+              "state": "IN_PROGRESS", "batch_index": BATCH_INDEX, "city": CITY,
+              "feature_count_before": before, "feature_count_after": after,
+              "new_features_added": after-before, "progress_counted": after > before,
+              "already_processed_ids_excluded": True,
+              "source": "OpenStreetMap Map API", "source_url": API_BASE,
+              "source_sha256": source_sha, "source_element_count": total_xml_elements,
+              "source_tile_count": len(fetched_urls),
+              "evidence_level_distribution": dict(sorted(new_ev.items())),
+              "confidence_level_distribution": dict(sorted(new_conf.items())),
+              "fake_data": False, "final_ready": False, "raw_source_committed": False,
+              "output_sha256": geo_sha,
+          }
+          dump(RUN, runner)
+          print(json.dumps(runner, indent=2))
+          PY
+
+      - name: Commit and push batch 68 rescue
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json
+          git diff --cached --quiet && { echo "No slot changes to commit"; exit 1; }
+          git commit -m "building_type_8: append batch 68 Bacup +50 via OSM API"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          echo "push failed after 5 attempts"
+          exit 1
