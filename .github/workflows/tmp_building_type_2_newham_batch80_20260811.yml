@@ -35,40 +35,53 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show HEAD:.github/workflows/tmp_building_type_2_merton_batch79_20260811.yml > /tmp/template.yml
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch38_20260810.yml > /tmp/template.yml
           python3 <<'PY'
           from pathlib import Path
           text=Path('/tmp/template.yml').read_text(encoding='utf-8')
-          anchor='      - name: Append exactly 50 new Merton FHRS features'
+          anchor='      - name: Append exactly 50 new Bexley FHRS continuation features'
           marker="          python3 <<'PY'\n"
           a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
           body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
           replacements=[
-            ('CITY="Merton"; PREFIX=""; REGION="London Outer"','CITY="Newham"; PREFIX=""; REGION="London Outer"'),
-            ('Food Standards Agency FHRS daily open data - Merton','Food Standards Agency FHRS daily open data - Newham'),
-            ('FHRS524en-GB.xml','FHRS525en-GB.xml'),
-            ('BEFORE=3900; TARGET=3950; BATCH=79; NEXT_BATCH=80; NEXT_TARGET=4000','BEFORE=3950; TARGET=4000; BATCH=80; NEXT_BATCH=81; NEXT_TARGET=4050'),
-            ('authority.lower()!="merton"','authority.lower()!="newham"'),
-            ('Existing shard preserved; appended 50 Merton FHRS continuation records','Existing shard preserved; appended 50 Newham FHRS continuation records'),
-            ('Batch 79 appended from official Merton FHRS continuation records','Batch 80 appended from official Newham FHRS continuation records'),
-            ('50 new Merton FHRS continuation premises-use proxy records','50 new Newham FHRS continuation premises-use proxy records'),
-            ('BATCH_79_APPENDED_50_MERTON_FHRS_CONTINUATION_REQUIRED','BATCH_80_APPENDED_50_NEWHAM_FHRS_CONTINUATION_REQUIRED'),
-            ('feature_count 3900 -> 3950','feature_count 3950 -> 4000'),
-            ('Merton FHRS acik verisinden','Newham FHRS acik verisinden'),
-            ("Sonraki adim batch 80: mevcut 3950 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 3950 kaydi tekrar isleme.","Sonraki adim batch 81: mevcut 4000 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4000 kaydi tekrar isleme."),
-            ('merton_existing','newham_existing'),
-            ('existing Merton FHRS seed records not found','existing Newham FHRS seed records not found'),
-            ('missing Merton cumulative source token','missing Newham cumulative source token'),
-            ('CITY="Merton"','CITY="Newham"'),
-            ('<building_type_2_merton_batch79>','<building_type_2_newham_batch80>')
+            ('CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"','CITY="Newham"; PREFIX=""; REGION="London Outer"'),
+            ('Food Standards Agency FHRS daily open data - Bexley','Food Standards Agency FHRS daily open data - Newham'),
+            ('FHRS503en-GB.xml','FHRS525en-GB.xml'),
+            ('BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950','BEFORE=3950; TARGET=4000; BATCH=80; NEXT_BATCH=81; NEXT_TARGET=4050'),
+            ('authority.lower()!="bexley"','authority.lower()!="newham"'),
+            ('Existing shard preserved; appended 50 Bexley FHRS continuation records','Existing shard preserved; appended 50 Newham FHRS continuation records'),
+            ('Batch 38 appended from official Bexley FHRS continuation records','Batch 80 appended from official Newham FHRS continuation records'),
+            ('50 new Bexley FHRS continuation premises-use proxy records','50 new Newham FHRS continuation premises-use proxy records'),
+            ('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_80_APPENDED_50_NEWHAM_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 1850 -> 1900','feature_count 3950 -> 4000'),
+            ('Bexley FHRS acik verisinden','Newham FHRS acik verisinden'),
+            ("Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.","Sonraki adim batch 81: mevcut 4000 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4000 kaydi tekrar isleme.")
           ]
           for old,new in replacements:
               if old not in body: raise AssertionError(f'missing replacement token: {old}')
               body=body.replace(old,new)
+
+          feature_anchor='features=shard.get("features") or []; before=len(features)\n'
+          assert feature_anchor in body
+          dynamic_prefix='''features=shard.get("features") or []; before=len(features)\nnewham_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS525en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]\nassert newham_existing, "existing Newham FHRS seed records not found"\nprefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in newham_existing}\nassert len(prefixes)==1, prefixes\nPREFIX=next(iter(prefixes))\n'''
+          body=body.replace(feature_anchor,dynamic_prefix,1)
+
+          processed_anchor='processed=set()\n'
+          assert processed_anchor in body
+          body=body.replace(processed_anchor,'processed=set()\nprocessed_fhrs_ids={str((f.get("properties") or {}).get("fhrs_id")).strip() for f in features if (f.get("properties") or {}).get("fhrs_id") not in (None,"")}\n',1)
+          candidate_guard='if feature_id in processed or parcel_id in processed or fid in processed: continue'
+          assert candidate_guard in body
+          body=body.replace(candidate_guard,'if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue',1)
+
+          old='assert int(s.get("features_used",0))==50\n        s.update({"name":SOURCE,"features_used":100'
+          new='assert int(s.get("features_used",0))==100\n        s.update({"name":SOURCE,"features_used":150'
+          assert old in body, 'missing Newham cumulative source token'
+          body=body.replace(old,new,1)
+
           required=['CITY="Newham"','FHRS525en-GB.xml','BEFORE=3950; TARGET=4000; BATCH=80; NEXT_BATCH=81; NEXT_TARGET=4050','authority.lower()!="newham"','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":150','evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
           missing=[x for x in required if x not in body]
           assert not missing, missing
-          exec(compile(body,'<building_type_2_newham_batch80_wrapper>','exec'),{'__name__':'__main__'})
+          exec(compile(body,'<building_type_2_newham_batch80>','exec'),{'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
