@@ -1,0 +1,66 @@
+name: tmp building_type_7 batch 108 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_7_batch108_status_normalize_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Prepare head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Normalize status readback note
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          o=json.loads(p.read_text())
+          assert o['current_feature_count']==5400 and o['last_batch_index']==108 and o['next_batch_index']==109
+          assert o['remote_readback_verified'] is True and o['fake_data'] is False and o['final_ready'] is False and o.get('owner') in (None,'')
+          o['note']='Batch 108 Hereford OSM API: 50 unique evidence-backed features appended; total 5400. Remote readback verified. Continue batch 109.'
+          p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: normalize batch 108 status readback note"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          p='docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'
+          o=json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{p}']))
+          assert o['current_feature_count']==5400 and o['next_batch_index']==109 and o['remote_readback_verified'] is True
+          assert 'Remote readback verified' in o['note'] and o['fake_data'] is False and o['final_ready'] is False and o.get('owner') in (None,'')
+          print('STATUS_NOTE_NORMALIZED_REMOTE_OK')
+          PY
