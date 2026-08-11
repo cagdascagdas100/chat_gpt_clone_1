@@ -1,0 +1,94 @@
+name: AAYS building_type_8 batch88 Hoylake one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-8-batch88-hoylake-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-batch88-hoylake-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-8-batch65-rawtenstall-once.yml
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_8
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs
+
+      - name: Fast-forward sparse checkout to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Execute guarded batch88 Hoylake continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src = Path('.github/workflows/aays-building-type-8-batch65-rawtenstall-once.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index("\n          PY", start)
+          block = src[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          code = '\n'.join(lines) + '\n'
+          replacements = {
+              'CITY = "Rawtenstall"': 'CITY = "Hoylake"',
+              'LOCAL_AUTHORITY = "Rossendale"': 'LOCAL_AUTHORITY = "Wirral"',
+              'BATCH_INDEX = 65': 'BATCH_INDEX = 88',
+              'EXPECTED_BEFORE = 3700': 'EXPECTED_BEFORE = 4850',
+              'TARGET_AFTER = 3750': 'TARGET_AFTER = 4900',
+              'LAT = 53.7005': 'LAT = 53.39046',
+              'LON = -2.2847': 'LON = -3.18066',
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing canonical replacement token: {old}')
+              code = code.replace(old, new, 1)
+          Path('/tmp/building_type_8_batch88_hoylake.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/building_type_8_batch88_hoylake.py
+
+      - name: Commit and push batch 88
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json
+          git diff --cached --quiet && { echo "No slot changes to commit"; exit 1; }
+          git commit -m "building_type_8: append batch 88 Hoylake +50"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          echo "push failed after 5 attempts"
+          exit 1
