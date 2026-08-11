@@ -1,0 +1,89 @@
+name: tmp building_type_3 batch23 metadata normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch23_metadata_normalize_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Normalize metadata from canonical shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-3-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          shard_p=Path('england_map_web/data/building_type/shards/building_type_3_latest.geojson')
+          manifest_p=Path('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          checkpoint_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          status_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          task_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json')
+          runner_p=Path('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+          shard=json.loads(shard_p.read_text()); manifest=json.loads(manifest_p.read_text()); checkpoint=json.loads(checkpoint_p.read_text()); status=json.loads(status_p.read_text()); task=json.loads(task_p.read_text()); runner=json.loads(runner_p.read_text())
+          features=shard.get('features') or []; count=len(features)
+          if count != 4900: raise RuntimeError(f'unexpected shard count {count}, expected 4900 for batch23 normalization')
+          if checkpoint.get('continuation_key') != CONT or runner.get('continuation_key') != CONT: raise RuntimeError('continuation mismatch')
+          if int(checkpoint.get('current_feature_count',-1)) != count: raise RuntimeError('checkpoint count mismatch')
+          if runner.get('batch_index') != 23 or runner.get('batch_name') != 'Hastings_Bexhill' or int(runner.get('new_features_added',0)) != 300: raise RuntimeError('runner batch mismatch')
+          for obj in (checkpoint,status,task,runner):
+              if obj.get('fake_data') is not False or obj.get('final_ready') is not False: raise RuntimeError('safety flag mismatch')
+          evid=Counter(); conf=Counter(); typ=Counter(); classified=0; unknown=0
+          for f in features:
+              p=f.get('properties') or {}
+              ev=str(p.get('evidence_level') or 'U'); evid[ev]+=1
+              cl=p.get('confidence_level_1_to_4')
+              if cl is None:
+                  sc=p.get('confidence_score')
+                  if isinstance(sc,(int,float)): cl=3 if sc>=.7 else 2 if sc>=.4 else 1
+                  else: cl=1
+              conf[str(cl)]+=1
+              bt=str(p.get('building_type_primary') or p.get('building_type') or 'unknown')
+              typ[bt]+=1
+              if bt.lower() in {'unknown','unclassified','none',''} or ev == 'U': unknown+=1
+              else: classified+=1
+          last=checkpoint.get('last_batch_evidence') or {}
+          if int(last.get('batch_index',-1)) != 23: raise RuntimeError('checkpoint last batch mismatch')
+          updated=checkpoint.get('updated_at') or runner.get('updated_at')
+          manifest.update({'continuation_key':CONT,'total_features':count,'feature_count':count,'feature_count_before':4600,'feature_count_after':count,'added_feature_count':300,'classified':classified,'unknown':unknown,'evidence_distribution':dict(evid),'confidence_level_distribution':dict(conf),'type_distribution':dict(typ),'updated_at':updated,'latest_batch':last,'last_batch':last,'fake_data':False,'final_ready':False})
+          manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
+          status.update({'updated_at':updated,'owner':None,'continuation_key':CONT,'state':'IN_PROGRESS','status':'in_progress','panel_status':'DEVAM','feature_count_before':4600,'feature_count_after':count,'current_feature_count':count,'total_elements':count,'total_features':count,'classified_count':classified,'classified':classified,'unknown_count':unknown,'unknown':unknown,'new_features_added':300,'new_feature_count':300,'progress_count_delta':300,'progress_counted':True,'next_batch_index':24,'next_target_feature_count':5200,'confidence_distribution':dict(conf),'confidence_level_distribution':dict(conf),'evidence_distribution':dict(evid),'last_batch_city':'Hastings_Bexhill','last_batch_added_feature_count':300,'last_batch_source':'OpenStreetMap via Overpass API','last_batch_evidence_distribution':runner.get('evidence_level_distribution',{}),'last_batch_confidence_distribution':runner.get('confidence_level_distribution',{}),'last_batch_index':23,'last_batch':last,'last_batch_name':'Hastings_Bexhill','last_batch_new_features':300,'last_batch_evidence':last,'candidate_batch':None,'no_progress_reason':None,'progress_reason':'300 new Hastings/Bexhill OSM records appended after feature.id/parcel_id/osm_id exclusion','blocker':None,'blocker_reason':'','fake_data':False,'final_ready':False})
+          status['note']='Batch 23 appended 300 new Hastings/Bexhill OSM evidence-backed elements outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained and owner remains null.'
+          status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2))
+          print(json.dumps({'count':count,'classified':classified,'unknown':unknown,'evidence':dict(evid),'confidence':dict(conf),'last_batch':23}))
+          PY
+          git add england_map_web/data/building_type/shards/building_type_3_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json
+          git diff --cached --quiet && { echo 'No metadata changes'; exit 0; }
+          git commit -m "Normalize building_type_3 batch 23 metadata"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            sleep $((attempt*3))
+          done
+          local_sha=$(git rev-parse HEAD)
+          remote_contains=$(git ls-remote origin refs/heads/codex/aays-single-runner-v5-20260706 | awk '{print $1}')
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor "$local_sha" "origin/codex/aays-single-runner-v5-20260706"
+          echo "normalized_commit=$local_sha remote_head=$remote_contains"
