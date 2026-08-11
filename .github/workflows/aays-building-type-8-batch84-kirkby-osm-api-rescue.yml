@@ -1,0 +1,103 @@
+name: AAYS building_type_8 batch84 Kirkby OSM API rescue
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-8-batch84-kirkby-osm-api-rescue.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-batch84-kirkby-osm-api-rescue
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-8-batch68-bacup-osm-api-rescue.yml
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_8
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs
+
+      - name: Fast-forward sparse checkout to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Execute guarded batch84 Kirkby OSM API rescue
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          src = Path('.github/workflows/aays-building-type-8-batch68-bacup-osm-api-rescue.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index("\n          PY", start)
+          block = src[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          code = '\n'.join(lines) + '\n'
+          replacements = {
+              'CITY = "Bacup"': 'CITY = "Kirkby"',
+              'LOCAL_AUTHORITY = "Rossendale"': 'LOCAL_AUTHORITY = "Knowsley"',
+              'BATCH_INDEX = 68': 'BATCH_INDEX = 84',
+              'EXPECTED_BEFORE = 3850': 'EXPECTED_BEFORE = 4650',
+              'TARGET_AFTER = 3900': 'TARGET_AFTER = 4700',
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing rescue replacement token: {old}')
+              code = code.replace(old, new, 1)
+          new_bboxes = '''BBOXES = [
+    (-2.9100, 53.4700, -2.8900, 53.4850),
+    (-2.8900, 53.4700, -2.8700, 53.4850),
+    (-2.9100, 53.4850, -2.8900, 53.5000),
+    (-2.8900, 53.4850, -2.8700, 53.5000),
+]
+GEO ='''
+          code, n = re.subn(r'BBOXES = \[\n.*?\n\]\nGEO =', new_bboxes, code, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('failed to replace rescue BBOXES')
+          Path('/tmp/building_type_8_batch84_kirkby_osm_api.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/building_type_8_batch84_kirkby_osm_api.py
+
+      - name: Commit and push batch 84 rescue
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json
+          git diff --cached --quiet && { echo "No slot changes to commit"; exit 1; }
+          git commit -m "building_type_8: append batch 84 Kirkby +50 via OSM API"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          echo "push failed after 5 attempts"
+          exit 1
