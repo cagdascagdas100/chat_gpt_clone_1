@@ -1,0 +1,130 @@
+name: AAYS building_type_9 Sedgefield batch86
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/tmp_bt9_batch86_sedgefield.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-batch86
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Restore and render fail-closed Sedgefield batch 86 locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 2dd1104bc682198b075fa9283d98f1c2e039102e:.github/tmp_bt9_batch46_ripon_v3.py > .github/tmp_bt9_batch86_sedgefield.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/tmp_bt9_batch86_sedgefield.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = [
+              ('CITY = "Ripon"', 'CITY = "Sedgefield"'),
+              ('GRID = "RIPON_CENTRAL_02"', 'GRID = "SEDGEFIELD_CENTRAL_01"'),
+              ('LOCAL_AUTHORITY = "North Yorkshire"', 'LOCAL_AUTHORITY = "County Durham"'),
+              ('BATCH = 46', 'BATCH = 86'),
+              ('EXPECTED_BEFORE = 2250', 'EXPECTED_BEFORE = 4250'),
+              ('TARGET_AFTER = 2300', 'TARGET_AFTER = 4300'),
+              ('NEXT_TARGET = 2350', 'NEXT_TARGET = 4350'),
+              ('xs = [-1.5650, -1.5350, -1.5050, -1.4750]', 'xs = [-1.4900, -1.4650, -1.4400, -1.4150]'),
+              ('ys = [54.1100, 54.1320, 54.1540, 54.1760]', 'ys = [54.6250, 54.6450, 54.6650, 54.6850]'),
+              ('for attempt in range(4):', 'for attempt in range(3):'),
+              ('(+evidence batch 46)', '(+evidence batch 86)'),
+              ('OpenStreetMap API 0.6 - Ripon batch 46', 'OpenStreetMap API 0.6 - Sedgefield batch 86'),
+              ('appended 50 Ripon OSM API records', 'appended 50 Sedgefield OSM API records'),
+              ('Batch 46 appended 50 new Ripon OSM API evidence-backed building features', 'Batch 86 appended 50 new Sedgefield OSM API evidence-backed building features'),
+              ('BATCH_046_APPENDED_50_RIPON_OSM_FEATURES_CONTINUATION_REQUIRED', 'BATCH_086_APPENDED_50_SEDGEFIELD_OSM_FEATURES_CONTINUATION_REQUIRED'),
+              ('APPEND_NEW_BATCH_047_AFTER_FEATURE_2300', 'APPEND_NEW_BATCH_087_AFTER_FEATURE_4300'),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'FAIL_CLOSED replacement target count {count} for: {old}')
+              text = text.replace(old, new)
+          stale = [
+              'CITY = "Ripon"', 'GRID = "RIPON_CENTRAL_02"',
+              'LOCAL_AUTHORITY = "North Yorkshire"', 'BATCH = 46',
+              'EXPECTED_BEFORE = 2250', 'TARGET_AFTER = 2300',
+              'NEXT_TARGET = 2350', 'for attempt in range(4):',
+              '(+evidence batch 46)', 'OpenStreetMap API 0.6 - Ripon batch 46',
+              'APPEND_NEW_BATCH_047_AFTER_FEATURE_2300'
+          ]
+          for literal in stale:
+              if literal in text:
+                  raise SystemExit(f'FAIL_CLOSED stale template literal remains: {literal}')
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run fail-closed Sedgefield batch 86
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_bt9_batch86_sedgefield.py
+
+      - name: Commit and push only building_type_9 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f -- \
+            .github/tmp_bt9_batch86_sedgefield.py \
+            .github/workflows/tmp_bt9_batch86_sedgefield.yml
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          python - <<'PY'
+          import subprocess
+          expected = {
+              '.github/tmp_bt9_batch86_sedgefield.py',
+              '.github/workflows/tmp_bt9_batch86_sedgefield.yml',
+              'england_map_web/data/building_type/shards/building_type_9_latest.geojson',
+              'england_map_web/data/building_type/shards/building_type_9_manifest_latest.json',
+              'docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json',
+              'docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json',
+              'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json',
+              'docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json',
+          }
+          actual = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          if actual != expected:
+              raise SystemExit(f'FAIL_CLOSED staged paths mismatch actual={sorted(actual)}')
+          PY
+          git commit -m 'data: append building_type_9 Sedgefield batch 86'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+              echo 'Rebase conflict; refusing to overwrite concurrent changes.' >&2
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
