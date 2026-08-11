@@ -1,0 +1,145 @@
+name: AAYS building_type_5 Kings Lynn batch49 OSM API rescue
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_kings_lynn_batch49_osmapi_rescue_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-kings-lynn-batch49-rescue
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Refresh branch and verify continuation base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+          git merge-base --is-ancestor 64eec19a9a3dba6d4fe2e38297ae782d7feb8f0f HEAD
+
+      - name: Append exactly 50 new Kings Lynn features from OpenStreetMap API 0.6 microtiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          src = Path('.github/workflows/tmp_building_type_5_dereham_batch47_osmapi_fallback_20260811.yml').read_text(encoding='utf-8')
+          step = "      - name: Append exactly 50 new Dereham features from OpenStreetMap API 0.6\n"
+          pos = src.index(step)
+          marker = "          python - <<'PY'\n"
+          start = src.index(marker, pos) + len(marker)
+          end = src.index("\n          PY", start)
+          code = textwrap.dedent(src[start:end])
+
+          replacements = [
+              ("CITY='Dereham'; AUTHORITY='Breckland'; GRID='DEREHAM_01'", "CITY=\"King's Lynn\"; AUTHORITY=\"King's Lynn and West Norfolk\"; GRID='KINGS_LYNN_01'"),
+              ("BATCH=47; EXPECTED_BEFORE=2300; TARGET_AFTER=2350; NEXT_TARGET=2400", "BATCH=49; EXPECTED_BEFORE=2400; TARGET_AFTER=2450; NEXT_TARGET=2500"),
+              ("if any('dereham' in str((f.get('properties') or {}).get('area','')).lower() for f in features): raise SystemExit('fail closed: Dereham already present')", "if any(\"king's lynn\" in str((f.get('properties') or {}).get('area','')).lower() for f in features): raise SystemExit(\"fail closed: King's Lynn already present\")"),
+              ("xs=[0.9150,0.9350,0.9550,0.9750]", "xs=[0.3725,0.3800,0.3875,0.3950,0.4025,0.4100]"),
+              ("ys=[52.6650,52.6800,52.6950]", "ys=[52.7375,52.7450,52.7525,52.7600,52.7675]"),
+              ("for y in range(2) for x in range(3)", "for y in range(len(ys)-1) for x in range(len(xs)-1)"),
+              ("only {len(chosen)} new Dereham building ways found", "only {len(chosen)} new King's Lynn building ways found"),
+              ("BATCH_{BATCH}_APPENDED_50_DEREHAM_OSMAPI_CONTINUATION_REQUIRED", "BATCH_{BATCH}_APPENDED_50_KINGS_LYNN_OSMAPI_CONTINUATION_REQUIRED"),
+              ("Free public OSM API fallback after three Overpass 502 responses. Real building ways only; raw XML runtime-only.", "Free public OSM API fallback retained because the prior checkpoint records three Overpass HTTP 502 responses. King’s Lynn is queried with smaller API-safe microtiles after the first six larger map requests returned HTTP 400. Real building ways only; raw XML runtime-only."),
+              ("'overpass_failure':'3 attempts returned HTTP 502; switched endpoint without replaying IDs'", "'overpass_failure':'prior checkpoint records three HTTP 502 responses; OSM API fallback reused without retrying the failed Overpass endpoint; King’s Lynn map query split into microtiles after larger tiles returned HTTP 400'"),
+              ("Overpass failed 3x HTTP 502 then free OSM API fallback succeeded", "prior checkpoint recorded Overpass 3x HTTP 502; OSM API microtile fallback used without replaying IDs")
+          ]
+          for old, new in replacements:
+              if old not in code:
+                  raise SystemExit(f'fail closed: expected generator fragment missing: {old[:100]}')
+              code = code.replace(old, new)
+
+          exec(compile(code, '<building_type_5_kings_lynn_batch49_microtile_rescue>', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate, commit and push slot-only outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest_path=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          runner_path=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          status_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          checkpoint_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+
+          g=json.loads(geo_path.read_text(encoding='utf-8'))
+          assert len(g.get('features',[]))==2450
+          new=g['features'][-50:]
+          assert len(new)==50
+          assert all((f.get('properties') or {}).get('area')=="King's Lynn" for f in new)
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              assert p.get('evidence_level') in {'B','U'}
+              assert p.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert isinstance(p.get('evidence_excerpt'),dict) and p.get('sources') and p.get('source_hash')
+          ids=[str(f.get('id')) for f in g['features'] if f.get('id') is not None]
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in g['features'] if (f.get('properties') or {}).get('parcel_id') is not None]
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in g['features'] if (f.get('properties') or {}).get('osm_id') is not None]
+          assert len(ids)==len(set(ids)) and len(parcels)==len(set(parcels)) and len(osms)==len(set(osms))
+
+          r=json.loads(runner_path.read_text(encoding='utf-8'))
+          assert r['task_id']=='building-type-5-england-classification-v1-20260808'
+          assert r['batch_index']==49 and r['city']=="King's Lynn" and r['grid_id']=='KINGS_LYNN_01'
+          assert r['feature_count_before']==2400 and r['feature_count_after']==2450 and r['new_feature_count']==50
+          assert r['fake_data'] is False and r['final_ready'] is False
+
+          cp=json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          assert cp['current_feature_count']==2450 and cp['feature_count_before']==2400 and cp['feature_count_after']==2450
+          assert cp['next_batch_index']==50 and cp['next_target_feature_count']==2500
+          assert cp['last_batch']['city']=="King's Lynn" and cp['last_batch']['added_feature_count']==50
+          assert cp['fake_data'] is False and cp['final_ready'] is False
+
+          s=json.loads(status_path.read_text(encoding='utf-8'))
+          assert s['task_id']=='building-type-5-england-classification-v1-20260808' and s['owner'] is None
+          assert s['current_feature_count']==2450 and s['progress_count_delta']==50
+          assert s['fake_data'] is False and s['final_ready'] is False
+
+          t=json.loads(task_path.read_text(encoding='utf-8'))
+          assert t['task_id']=='building-type-5-england-classification-v1-20260808' and t['owner'] is None
+          assert t['last_progress']['batch_index']==49 and t['last_progress']['feature_count_after']==2450
+          assert t['fake_data'] is False and t['final_ready'] is False
+
+          m=json.loads(manifest_path.read_text(encoding='utf-8'))
+          assert m['total_features']==2450 and m['feature_count']==2450
+          assert m['fake_data'] is False and m['final_ready'] is False
+          print('validated building_type_5 Kings Lynn batch49 rescue', r['known_type_count'], r['unknown_type_count'])
+          PY
+
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+                  england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+                  docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git diff --cached --quiet && { echo 'no slot progress to commit'; exit 1; }
+          git commit -m 'Append building_type_5 Kings Lynn batch 49'
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            sleep $((i*2))
+          done
+          exit 1
