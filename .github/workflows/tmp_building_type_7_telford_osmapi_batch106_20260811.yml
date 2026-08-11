@@ -1,0 +1,175 @@
+name: tmp building_type_7 Telford OSM API batch 106
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_7_telford_osmapi_batch106_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append 50 unseen Telford OSM API records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re, json
+          src=Path('.github/workflows/tmp_building_type_3_reigate_redhill_batch28_osmapi_50_20260811.yml').read_text()
+          anchor=src.index('- name: Append 50 evidence-backed Reigate Redhill records')
+          marker="          python3 <<'PY'\n"
+          start=src.index(marker,anchor)+len(marker)
+          end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
+          code=code.replace("SLOT='building_type_3'","SLOT='building_type_7'")
+          code=code.replace("TASK='building-type-3-england-classification-v1-20260808'","TASK='building-type-7-england-classification-v1-20260808'")
+          code=code.replace("CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'","CONT='' ")
+          code=code.replace("CITY='Reigate_Redhill'","CITY='Telford'")
+          code=code.replace("LOCAL_AUTHORITY='Reigate and Banstead'","LOCAL_AUTHORITY='Telford & Wrekin'")
+          code=code.replace('BATCH_INDEX=28','BATCH_INDEX=106').replace('EXPECTED_BEFORE=6100','EXPECTED_BEFORE=5250').replace('TARGET_AFTER=6150','TARGET_AFTER=5300')
+          code=code.replace('building_type_3','building_type_7').replace("'South East'","'West Midlands'")
+          code=code.replace("if cp.get('continuation_key')!=CONT or status.get('continuation_key')!=CONT or task.get('continuation_key')!=CONT: raise SystemExit('continuation moved')","pass  # continuation identity is the existing task/checkpoint; empty key is canonical here")
+          code=code.replace("for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):","for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):")
+          boxes="""BBOXES=[
+  (-2.4850,52.6550,-2.4650,52.6700),
+  (-2.4650,52.6550,-2.4450,52.6700),
+  (-2.4450,52.6550,-2.4250,52.6700),
+  (-2.4250,52.6550,-2.4050,52.6700),
+  (-2.4850,52.6700,-2.4650,52.6850),
+  (-2.4650,52.6700,-2.4450,52.6850),
+  (-2.4450,52.6700,-2.4250,52.6850),
+  (-2.4250,52.6700,-2.4050,52.6850),
+]"""
+          code,n=re.subn(r'BBOXES=\[\n.*?\n\]',boxes,code,count=1,flags=re.S); assert n==1
+          code=code.replace("'grid_bbox':'51.2150,-0.2350,51.2450,-0.1550'","'grid_bbox':'52.655,-2.485,52.685,-2.405'")
+          exec(compile(code,'building_type_7_telford_osmapi_batch106.py','exec'),{})
+
+          def load(p): return json.loads(Path(p).read_text())
+          def dump(p,o): Path(p).write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          geo_path='england_map_web/data/building_type/shards/building_type_7_latest.geojson'
+          man_path='england_map_web/data/building_type/shards/building_type_7_manifest_latest.json'
+          st_path='docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'
+          cp_path='docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'
+          run_path='docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json'
+          geo,man,st,cp,run=map(load,[geo_path,man_path,st_path,cp_path,run_path])
+          new_ids=run.get('new_feature_ids') or run.get('selected_feature_ids') or []
+          if len(new_ids)!=50:
+            last=geo['features'][-50:]; new_ids=[f['id'] for f in last]
+          ids=set(new_ids); batch=[f for f in geo['features'] if f.get('id') in ids]
+          assert len(batch)==50
+          for f in batch:
+            p=f.setdefault('properties',{}); p['feature_id']=f['id']; p['parcel_id']=f['id']; p['parcel_id_semantics']='OSM building-way slot identifier; not a cadastral parcel ID'
+            p['area']='Telford'; p['local_authority']='Telford & Wrekin'; p['region']='West Midlands'; p['fake_data']=False; p['final_ready']=False
+            if not p.get('evidence_excerpt'): p['evidence_excerpt']=p.get('match_method') or p.get('osm_tags_summary')
+            p['source_evidence_excerpt']=p['evidence_excerpt']
+            for s in p.get('sources') or []: s['evidence_excerpt']=p['evidence_excerpt']
+          run.update({'slot_id':'building_type_7','task_id':'building-type-7-england-classification-v1-20260808','batch_index':106,'city':'Telford','local_authority':'Telford & Wrekin','grid_bbox':'52.655,-2.485,52.685,-2.405','feature_count_before':5250,'feature_count_after':5300,'new_features_added':50,'added_feature_count':50,'progress_counted':True,'raw_source_committed':False,'already_processed_id_fields':['feature.id','properties.feature_id','properties.parcel_id','properties.osm_id'],'already_processed_ids_policy_applied':True,'new_feature_ids':new_ids,'selected_feature_ids':new_ids,'fake_data':False,'final_ready':False})
+          cp.update({'feature_count_before':5250,'feature_count_after':5300,'current_feature_count':5300,'next_batch_index':107,'next_target_feature_count':5350,'next_city_index':17,'state':'IN_PROGRESS','fake_data':False,'final_ready':False,'blocker':None,'candidate_batch':None,'no_progress_reason':None})
+          st.update({'current_feature_count':5300,'next_batch_index':107,'next_target_feature_count':5350,'owner':None,'fake_data':False,'final_ready':False})
+          man.update({'feature_count_before':5250,'feature_count_after':5300,'total_features':5300,'feature_count':5300,'added_feature_count':50,'fake_data':False,'final_ready':False})
+          dump(geo_path,geo); dump(man_path,man); dump(st_path,st); dump(cp_path,cp); dump(run_path,run)
+          PY
+
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          load=lambda p: json.loads(Path(p).read_text())
+          geo=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson'); man=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json'); task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(geo['features'])==5300 and man.get('total_features',man.get('feature_count'))==5300
+          assert cp['current_feature_count']==5300 and cp['next_batch_index']==107 and cp['next_target_feature_count']==5350
+          assert st['current_feature_count']==5300 and run['batch_index']==106 and run['feature_count_before']==5250 and run['feature_count_after']==5300
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,'')
+          ids=set(run['new_feature_ids']); assert len(ids)==50; batch=[f for f in geo['features'] if f.get('id') in ids]; assert len(batch)==50
+          F=[str(f.get('id')) for f in geo['features']]; P=[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features']]; O=[str((f.get('properties') or {}).get('osm_id')) for f in geo['features'] if (f.get('properties') or {}).get('osm_id')]
+          assert len(F)==len(set(F)) and len(P)==len(set(P)) and len(O)==len(set(O))
+          for f in batch:
+            p=f['properties']; assert p['area']=='Telford' and p['local_authority']=='Telford & Wrekin'; assert p['evidence_level'] in ('B','C') and p['confidence_level_1_to_4'] in (2,3)
+            assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('sources'); assert p['sources'][0].get('evidence_excerpt'); assert p['fake_data'] is False and p['final_ready'] is False
+          assert run['already_processed_ids_policy_applied'] is True and run['raw_source_committed'] is False and run['fake_data'] is False and run['final_ready'] is False
+          assert cp['fake_data'] is False and cp['final_ready'] is False and st['fake_data'] is False and st['final_ready'] is False and task['fake_data'] is False and task['final_ready'] is False
+          print('VALIDATED building_type_7 Telford 5250->5300 batch106=50')
+          PY
+
+      - name: Commit and push only building_type_7 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json)
+          git add -- "${paths[@]}"; test -n "$(git diff --cached --name-only)"
+          git commit -m "data(building_type_7): append Telford OSM API batch 106 5250->5300"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          for a in 1 2 3 4 5; do git fetch origin codex/aays-single-runner-v5-20260706; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; git push origin HEAD:codex/aays-single-runner-v5-20260706 && break; [[ $a -lt 5 ]] || exit 1; sleep $((a*2)); done
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'; load=lambda p:json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          geo=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson'); cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          assert len(geo['features'])==5300 and cp['current_feature_count']==5300 and cp['next_batch_index']==107 and run['batch_index']==106 and len(set(run['new_feature_ids']))==50
+          ids=set(run['new_feature_ids']); batch=[f for f in geo['features'] if f.get('id') in ids]; assert len(batch)==50 and all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False and f['properties'].get('evidence_excerpt') for f in batch)
+          print('REMOTE_READBACK_OK building_type_7 Telford 5250->5300')
+          PY
+
+      - name: Record remote readback metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'); head=os.environ['DATA_COMMIT']
+          for path in ['docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json','docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json']:
+            p=Path(path); o=json.loads(p.read_text()); o.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'final_ready':False,'fake_data':False}); p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          cp=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); o=json.loads(cp.read_text()); o['first_unverified_step_status']='BATCH_106_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED'; o.setdefault('summary',{})['note']='PROGRESS: feature_count 5250 -> 5300. Batch 106 Telford OSM API remote readback verified; continue at batch 107. final_ready remains false.'; o.setdefault('remaining_items',{})['note']='Next batch 107: treat all 5300 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'; cp.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: record Telford batch 106 remote readback"
+          for a in 1 2 3 4 5; do git fetch origin codex/aays-single-runner-v5-20260706; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; git push origin HEAD:codex/aays-single-runner-v5-20260706 && break; [[ $a -lt 5 ]] || exit 1; sleep $((a*2)); done
+
+      - name: Final remote metadata readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'; load=lambda p:json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'); task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert cp['current_feature_count']==5300 and cp['next_batch_index']==107 and cp['next_target_feature_count']==5350 and cp['remote_readback_verified'] is True
+          assert st['current_feature_count']==5300 and st['remote_readback_verified'] is True and cp['final_ready'] is False and st['final_ready'] is False and task['final_ready'] is False and task.get('owner') in (None,'')
+          print('FINAL_REMOTE_METADATA_OK building_type_7 current=5300 next_batch=107')
+          PY
