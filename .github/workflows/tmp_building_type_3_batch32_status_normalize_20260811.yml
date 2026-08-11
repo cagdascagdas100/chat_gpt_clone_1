@@ -1,0 +1,61 @@
+name: tmp building_type_3 batch32 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch32_status_normalize_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Normalize status helper fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          o=json.loads(p.read_text(encoding='utf-8'))
+          if o.get('current_feature_count') != 6350 or o.get('feature_count_after') != 6350 or o.get('last_batch_index') != 32:
+              raise SystemExit('status moved; refusing normalization')
+          if o.get('task_id') != 'building-type-3-england-classification-v1-20260808':
+              raise SystemExit('task moved')
+          if o.get('continuation_key') != '03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e':
+              raise SystemExit('continuation moved')
+          if o.get('owner') not in (None,'') or o.get('fake_data') is not False or o.get('final_ready') is not False:
+              raise SystemExit('safety guard changed')
+          s=o.get('summary') or {}
+          s.update({'current_feature_count':6350,'new_features_added_this_attempt':50,'progress_counted':True})
+          o['summary']=s
+          p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore(building_type_3): normalize batch 32 status metadata'
+          COMMIT=$(git rev-parse HEAD)
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then git rebase origin/codex/aays-single-runner-v5-20260706; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            test "$attempt" != 5
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor "$COMMIT" origin/codex/aays-single-runner-v5-20260706
