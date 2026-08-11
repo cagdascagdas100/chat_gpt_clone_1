@@ -63,13 +63,7 @@ jobs:
 
           feature_anchor='features=shard.get("features") or []; before=len(features)\n'
           assert feature_anchor in body
-          dynamic_prefix='''features=shard.get("features") or []; before=len(features)
-haringey_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS514en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]
-assert haringey_existing, "existing Haringey FHRS seed records not found"
-prefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in haringey_existing}
-assert len(prefixes)==1, prefixes
-PREFIX=next(iter(prefixes))
-'''
+          dynamic_prefix='''features=shard.get("features") or []; before=len(features)\nharingey_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS514en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]\nassert haringey_existing, "existing Haringey FHRS seed records not found"\nprefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in haringey_existing}\nassert len(prefixes)==1, prefixes\nPREFIX=next(iter(prefixes))\n'''
           body=body.replace(feature_anchor,dynamic_prefix,1)
 
           processed_anchor='processed=set()\n'
