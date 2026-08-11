@@ -1,0 +1,99 @@
+name: tmp building_type_3 batch 51 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch51_status_normalize_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Normalize guarded batch 51 status summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          o=json.loads(p.read_text(encoding='utf-8'))
+          TASK='building-type-3-england-classification-v1-20260808'
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          guards=[
+            (o.get('task_id')==TASK,'task'),
+            (o.get('continuation_key')==CONT,'continuation'),
+            (o.get('owner') in (None,''),'owner'),
+            (o.get('fake_data') is False,'fake_data'),
+            (o.get('final_ready') is False,'final_ready'),
+            (o.get('current_feature_count')==7300,'current_feature_count'),
+            (o.get('feature_count_after')==7300,'feature_count_after'),
+            (o.get('last_batch_index')==51,'last_batch_index'),
+            (o.get('last_batch_city')=='Midhurst','last_batch_city'),
+          ]
+          bad=[n for ok,n in guards if not ok]
+          if bad: raise SystemExit('guard failed: '+','.join(bad))
+          s=o.setdefault('summary',{})
+          if s.get('current_feature_count')==7300:
+            print('summary already normalized')
+            raise SystemExit(0)
+          if s.get('current_feature_count')!=7250:
+            raise SystemExit(f"unexpected stale summary count: {s.get('current_feature_count')}")
+          s['current_feature_count']=7300
+          s['new_features_added_this_attempt']=50
+          s['progress_counted']=True
+          p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          MSG='chore(building_type_3): normalize batch 51 status metadata'
+          P='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$P"
+          if git diff --cached --quiet; then
+            echo 'No normalization needed'; exit 0
+          fi
+          git commit -m "$MSG"
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked -m 'tmp-bt3-b51-normalize-cleanliness'
+          fi
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BRANCH"
+          REMOTE_COMMIT=$(git log origin/"$BRANCH" --format='%H%x09%s' -1000 | awk -F '\t' -v m="$MSG" '$2==m {print $1; exit}')
+          test -n "$REMOTE_COMMIT"
+          git merge-base --is-ancestor "$REMOTE_COMMIT" origin/"$BRANCH"
+          python3 - <<'PY'
+          import json, subprocess
+          raw=subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'])
+          o=json.loads(raw)
+          assert o['current_feature_count']==7300
+          assert o['summary']['current_feature_count']==7300
+          assert o['last_batch_index']==51
+          assert o['fake_data'] is False and o['final_ready'] is False
+          print('REMOTE_READBACK_OK')
+          PY
