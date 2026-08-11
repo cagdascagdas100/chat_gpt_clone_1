@@ -1,0 +1,106 @@
+name: AAYS building_type_5 Bury St Edmunds batch45 fast retry
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_bury_st_edmunds_batch45_retry2_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-bury-st-edmunds-batch45-retry-once
+  cancel-in-progress: true
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+
+      - name: Refresh branch tip and verify continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin codex/aays-single-runner-v5-20260706
+          git reset --hard origin/codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text())
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          assert len(geo['features']) == 2200
+          assert cp['next_batch_index'] == 45 and cp['next_target_feature_count'] == 2250
+          assert task['task_id'] == 'building-type-5-england-classification-v1-20260808'
+          assert task.get('owner') in (None, '')
+          assert task.get('continuation_key','') == cp.get('continuation_key','')
+          print('continuation verified')
+          PY
+
+      - name: Execute reviewed Bury St Edmunds batch45 generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          src=Path('.github/workflows/tmp_building_type_5_bury_st_edmunds_batch45_20260811.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY", start)
+          code=textwrap.dedent(src[start:end])
+          exec(compile(code, '<batch45-generator>', 'exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate scoped output and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          geo=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json').read_text())
+          assert len(geo['features']) == 2250
+          assert runner['feature_count_before'] == 2200 and runner['feature_count_after'] == 2250
+          assert runner['new_feature_count'] == 50 and len(runner['records']) == 50
+          assert runner['batch_index'] == 45 and runner['city'] == 'Bury St Edmunds' and runner['grid_id'] == 'BURY_ST_EDMUNDS_01'
+          new_ids={r['id'] for r in runner['records']}; assert len(new_ids)==50
+          new=[f for f in geo['features'] if f.get('id') in new_ids]; assert len(new)==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              assert p.get('evidence_level') == 'B' and p.get('confidence_level_1_to_4') == 3
+              assert p.get('area') == 'Bury St Edmunds' and p.get('local_authority') == 'West Suffolk'
+              assert p.get('sources') and p['sources'][0].get('source_name') == 'OpenStreetMap API 0.6'
+          ids=[str(f.get('id')) for f in geo['features']]
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features']]
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in geo['features']]
+          assert len(ids)==len(set(ids)) and len(parcels)==len(set(parcels)) and len(osms)==len(set(osms))
+          assert cp['current_feature_count']==2250 and cp['next_batch_index']==46 and cp['next_target_feature_count']==2300
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert status['current_feature_count']==2250 and status.get('fake_data') is False and status.get('final_ready') is False
+          assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task.get('owner') in (None,'')
+          assert task.get('final_ready') is False and task.get('fake_data') is False
+          assert manifest['feature_count']==2250 and manifest.get('fake_data') is False and manifest.get('final_ready') is False
+          print('validated',len(new),'new,',len(geo['features']),'total')
+          PY
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+                  england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+                  docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git commit -m 'Append building_type_5 Bury St Edmunds batch 45'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
