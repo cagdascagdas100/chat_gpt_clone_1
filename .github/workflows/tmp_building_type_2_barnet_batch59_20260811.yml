@@ -1,0 +1,101 @@
+name: tmp building_type_2 Barnet continuation batch 59
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_barnet_batch59_20260811.yml]
+permissions:
+  contents: write
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Prepare current head
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Append exactly 50 new Barnet FHRS features
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch38_20260810.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/template.yml').read_text()
+          anchor='      - name: Append exactly 50 new Bexley FHRS continuation features'
+          marker="          python3 <<'PY'\n"
+          a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+          repl={
+          'CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"':'CITY="Barnet"; PREFIX="BARNET"; REGION="London Outer"',
+          'Food Standards Agency FHRS daily open data - Bexley':'Food Standards Agency FHRS daily open data - Barnet',
+          'FHRS503en-GB.xml':'FHRS502en-GB.xml',
+          'BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950':'BEFORE=2900; TARGET=2950; BATCH=59; NEXT_BATCH=60; NEXT_TARGET=3000',
+          'authority.lower()!="bexley"':'authority.lower()!="barnet"',
+          'Existing shard preserved; appended 50 Bexley FHRS continuation records':'Existing shard preserved; appended 50 Barnet FHRS continuation records',
+          'Batch 38 appended from official Bexley FHRS continuation records':'Batch 59 appended from official Barnet FHRS continuation records',
+          '50 new Bexley FHRS continuation premises-use proxy records':'50 new Barnet FHRS continuation premises-use proxy records',
+          'BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED':'BATCH_59_APPENDED_50_BARNET_FHRS_CONTINUATION_REQUIRED',
+          'feature_count 1850 -> 1900':'feature_count 2900 -> 2950',
+          'Bexley FHRS acik verisinden':'Barnet FHRS acik verisinden',
+          "Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.":"Sonraki adim batch 60: mevcut 2950 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 2950 kaydi tekrar isleme."
+          }
+          for old,new in repl.items():
+              assert old in body, old; body=body.replace(old,new)
+          old='assert int(s.get("features_used",0))==100\n        s.update({"name":SOURCE,"features_used":150'
+          new='assert int(s.get("features_used",0))==150\n        s.update({"name":SOURCE,"features_used":200'
+          assert old in body; body=body.replace(old,new,1)
+          for token in ['BEFORE=2900; TARGET=2950; BATCH=59; NEXT_BATCH=60; NEXT_TARGET=3000','features_used":200','"fake_data":False','"final_ready":False','evidence_excerpt']:
+              assert token in body, token
+          exec(compile(body,'<bt2_batch59>','exec'),{'__name__':'__main__'})
+          PY
+      - name: Validate and commit
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson').read_text())
+          man=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json').read_text())
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json').read_text())
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json').read_text())
+          run=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json').read_text())
+          assert len(shard['features'])==2950
+          assert man['feature_count_before']==2900 and man['feature_count_after']==2950 and man['added_feature_count']==50
+          assert cp['current_feature_count']==2950 and cp['next_batch_index']==60 and cp['next_target_feature_count']==3000
+          assert st['current_feature_count']==2950 and run['feature_count_before']==2900 and run['feature_count_after']==2950
+          ids=run['new_feature_ids']; assert len(ids)==50 and len(set(ids))==50
+          batch=[f for f in shard['features'] if f.get('id') in set(ids)]; assert len(batch)==50
+          assert len([f for f in shard['features'] if str(f.get('id') or '').startswith('BARNET_FHRS_')])==200
+          for f in batch:
+              p=f['properties']; assert p['fake_data'] is False and p['final_ready'] is False and p['evidence_level']=='D' and p['confidence_level_1_to_4']==2 and p.get('evidence_excerpt')
+          assert all(x.get('final_ready') is False and x.get('fake_data') is False for x in (man,cp,st,run))
+          PY
+          paths=(england_map_web/data/building_type/shards/building_type_2_latest.geojson england_map_web/data/building_type/shards/building_type_2_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json)
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          git commit -m "data(building_type_2): append Barnet FHRS batch 2900->2950"
+          for i in 1 2 3 4 5; do git fetch origin codex/aays-single-runner-v5-20260706; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; sleep $((i*2)); done
+          exit 1
+      - name: Remote readback
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson'); cp=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json'); st=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          assert len(shard['features'])==2950 and cp['current_feature_count']==2950 and cp['next_batch_index']==60 and st['current_feature_count']==2950
+          assert cp['fake_data'] is False and cp['final_ready'] is False and st['fake_data'] is False and st['final_ready'] is False
+          print('remote readback verified building_type_2 2900->2950 batch59 final_ready=false')
+          PY
