@@ -1,0 +1,56 @@
+name: tmp building_type_3 Worthing Littlehampton batch 26 retry
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_worthing_littlehampton_batch26_retry_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  retry-current-head:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase execution onto current branch head and run batch 26
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=codex/aays-single-runner-v5-20260706
+          SOURCE=.github/workflows/tmp_building_type_3_worthing_littlehampton_batch26_20260811.yml
+          git fetch origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+          python3 <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/tmp_building_type_3_worthing_littlehampton_batch26_20260811.yml').read_text()
+          marker='        run: |\n'
+          if marker not in src:
+              raise SystemExit('source workflow run block not found')
+          tail=src.split(marker,1)[1]
+          lines=[]
+          for line in tail.splitlines():
+              if line.startswith('          '):
+                  lines.append(line[10:])
+              elif not line.strip():
+                  lines.append('')
+              else:
+                  break
+          script='\n'.join(lines)+'\n'
+          old='git pull --ff-only origin codex/aays-single-runner-v5-20260706'
+          new='git reset --hard origin/codex/aays-single-runner-v5-20260706'
+          if old not in script:
+              raise SystemExit('sync line not found')
+          script=script.replace(old,new,1)
+          Path('/tmp/building_type_3_batch26.sh').write_text(script)
+          PY
+          bash /tmp/building_type_3_batch26.sh
