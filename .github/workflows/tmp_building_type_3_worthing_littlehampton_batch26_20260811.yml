@@ -1,0 +1,422 @@
+name: tmp building_type_3 Worthing Littlehampton continuation batch 26
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_worthing_littlehampton_batch26_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Append verified new South East OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-3-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import hashlib, json, time, urllib.parse, urllib.request
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT='building_type_3'
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          BATCH='Worthing_Littlehampton'
+          BBOX=(50.7900,-0.6200,50.8800,-0.2000)
+          TARGET=300
+          EXPECTED_BATCH=26
+          shard_p=Path('england_map_web/data/building_type/shards/building_type_3_latest.geojson')
+          manifest_p=Path('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          checkpoint_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          status_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          task_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json')
+          runner_p=Path('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+
+          shard=json.loads(shard_p.read_text())
+          manifest=json.loads(manifest_p.read_text())
+          checkpoint=json.loads(checkpoint_p.read_text())
+          status=json.loads(status_p.read_text())
+          task=json.loads(task_p.read_text())
+          features=shard.get('features') or []
+          before=len(features)
+          if checkpoint.get('continuation_key') != CONT or task.get('continuation_key') != CONT:
+              raise RuntimeError('continuation_key mismatch')
+          if int(checkpoint.get('current_feature_count',before)) != before:
+              raise RuntimeError(f'checkpoint/shard count mismatch checkpoint={checkpoint.get("current_feature_count")} shard={before}')
+          if int(checkpoint.get('next_batch_index',EXPECTED_BATCH)) != EXPECTED_BATCH:
+              raise RuntimeError(f'unexpected next_batch_index={checkpoint.get("next_batch_index")}')
+          if task.get('owner') not in (None,''):
+              raise RuntimeError(f'live/non-null owner present: {task.get("owner")}')
+          if status.get('final_ready') is not False or checkpoint.get('final_ready') is not False or task.get('final_ready') is not False:
+              raise RuntimeError('final_ready must remain false')
+          if status.get('fake_data') is not False or checkpoint.get('fake_data') is not False or task.get('fake_data') is not False:
+              raise RuntimeError('fake_data must remain false')
+
+          processed=set()
+          for f in features:
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None and str(v).strip():
+                      processed.add(str(v).strip())
+
+          s,w,n,e=BBOX
+          bbox=f'{s},{w},{n},{e}'
+          building_re='detached|semidetached_house|terrace|apartments|house|bungalow|residential|industrial|warehouse|retail|commercial|office|school|hospital|church|hotel|public|civic|garage|garages|farm|farm_auxiliary|barn|greenhouse'
+          amenity_re='school|college|university|hospital|clinic|pharmacy|place_of_worship|police|post_office|fire_station|library|restaurant|cafe|pub|fast_food|community_centre|townhall'
+          tourism_re='hotel|hostel|guest_house|motel'
+          query=f'''[out:json][timeout:90];(
+            nwr["building"~"^({building_re})$"]({bbox});
+            nwr["amenity"~"^({amenity_re})$"]({bbox});
+            nwr["shop"]({bbox});
+            nwr["office"]({bbox});
+            nwr["tourism"~"^({tourism_re})$"]({bbox});
+            nwr["healthcare"]({bbox});
+          );out center tags qt;'''
+          payload=urllib.parse.urlencode({'data':query}).encode()
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']
+          raw=None; data=None; endpoint_used=None; errors=[]
+          for ep in endpoints:
+              try:
+                  req=urllib.request.Request(ep,data=payload,headers={'User-Agent':'TerraYield-AAYS-building-type/1.0','Content-Type':'application/x-www-form-urlencoded'})
+                  with urllib.request.urlopen(req,timeout=120) as r:
+                      candidate=r.read()
+                  obj=json.loads(candidate)
+                  if len(obj.get('elements') or []) < TARGET:
+                      raise RuntimeError(f'too few elements: {len(obj.get("elements") or [])}')
+                  raw=candidate; data=obj; endpoint_used=ep; break
+              except Exception as exc:
+                  errors.append(f'{ep}: {exc}')
+                  time.sleep(4)
+          if raw is None:
+              raise RuntimeError('Overpass failed: '+' | '.join(errors))
+          source_sha=hashlib.sha256(raw).hexdigest()
+          query_sha=hashlib.sha256(query.encode()).hexdigest()
+
+          def classify(t):
+              b=str(t.get('building') or '').lower()
+              a=str(t.get('amenity') or '').lower()
+              shop=str(t.get('shop') or '').lower()
+              office=str(t.get('office') or '').lower()
+              tourism=str(t.get('tourism') or '').lower()
+              healthcare=str(t.get('healthcare') or '').lower()
+              bm={
+                'detached':('residential_detached','R_DET','residential',0.88),
+                'semidetached_house':('residential_semi_detached','R_SEMI','residential',0.88),
+                'terrace':('residential_terrace','R_TERR','residential',0.88),
+                'apartments':('flat_or_apartment','R_FLAT','residential',0.88),
+                'house':('residential_house','R_HOUSE','residential',0.84),
+                'bungalow':('residential_bungalow','R_BUNG','residential',0.86),
+                'residential':('residential','R_RES','residential',0.80),
+                'industrial':('industrial','I_FACTORY','industrial',0.86),
+                'warehouse':('warehouse','I_WAREHOUSE','industrial',0.86),
+                'retail':('commercial_retail','C_RETAIL','commercial',0.86),
+                'commercial':('commercial_other','C_OTHER','commercial',0.80),
+                'office':('commercial_office','C_OFFICE','commercial',0.86),
+                'school':('education','P_SCHOOL','institutional',0.88),
+                'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional',0.88),
+                'church':('religious_or_community','P_RELIGIOUS','institutional',0.86),
+                'hotel':('hotel_or_hospitality','C_HOSPITALITY','commercial',0.86),
+                'public':('public_infrastructure','P_GOVERNMENT','institutional',0.82),
+                'civic':('public_infrastructure','P_GOVERNMENT','institutional',0.84),
+                'garage':('workshop_or_garage','I_WORKSHOP','industrial',0.78),
+                'garages':('workshop_or_garage','I_WORKSHOP','industrial',0.78),
+                'farm':('agricultural','A_FARM','agricultural',0.84),
+                'farm_auxiliary':('agricultural','A_FARM','agricultural',0.82),
+                'barn':('agricultural','A_BARN','agricultural',0.84),
+                'greenhouse':('agricultural','A_GREENHOUSE','agricultural',0.84)
+              }
+              if b in bm:
+                  p,c,cat,sc=bm[b]
+                  return p,c,cat,'B',sc,3,f'building={b}',False
+              amap={
+                'school':('education','P_SCHOOL','institutional'),
+                'college':('education','P_SCHOOL','institutional'),
+                'university':('education','P_SCHOOL','institutional'),
+                'hospital':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+                'clinic':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+                'pharmacy':('hospital_or_healthcare','P_HEALTHCARE','institutional'),
+                'place_of_worship':('religious_or_community','P_RELIGIOUS','institutional'),
+                'police':('public_infrastructure','P_GOVERNMENT','institutional'),
+                'post_office':('public_infrastructure','P_GOVERNMENT','institutional'),
+                'fire_station':('public_infrastructure','P_GOVERNMENT','institutional'),
+                'library':('public_infrastructure','P_GOVERNMENT','institutional'),
+                'community_centre':('religious_or_community','P_COMMUNITY','institutional'),
+                'townhall':('public_infrastructure','P_GOVERNMENT','institutional'),
+                'restaurant':('commercial_retail','C_RETAIL','commercial'),
+                'cafe':('commercial_retail','C_RETAIL','commercial'),
+                'pub':('commercial_hospitality','C_HOSPITALITY','commercial'),
+                'fast_food':('commercial_retail','C_RETAIL','commercial')
+              }
+              if a in amap:
+                  p,c,cat=amap[a]
+                  return p,c,cat,'C',0.68,2,f'amenity={a}',True
+              if healthcare:
+                  return 'hospital_or_healthcare','P_HEALTHCARE','institutional','C',0.68,2,f'healthcare={healthcare}',True
+              if shop:
+                  return 'commercial_retail','C_RETAIL','commercial','C',0.66,2,f'shop={shop}',True
+              if office:
+                  return 'commercial_office','C_OFFICE','commercial','C',0.66,2,f'office={office}',True
+              if tourism in {'hotel','hostel','guest_house','motel'}:
+                  return 'hotel_or_hospitality','C_HOSPITALITY','commercial','C',0.68,2,f'tourism={tourism}',True
+              return None
+
+          candidates=[]
+          for el in data.get('elements') or []:
+              et=str(el.get('type') or '')
+              oid=el.get('id')
+              tags=el.get('tags') or {}
+              if et not in {'node','way','relation'} or oid is None:
+                  continue
+              fid=f'ENG_OSM_{et}_{oid}'
+              osmid=f'{et}/{oid}'
+              if fid in processed or osmid in processed or str(oid) in processed:
+                  continue
+              cls=classify(tags)
+              if cls is None:
+                  continue
+              if et=='node':
+                  lat,lon=el.get('lat'),el.get('lon')
+              else:
+                  center=el.get('center') or {}
+                  lat,lon=center.get('lat'),center.get('lon')
+              if lat is None or lon is None:
+                  continue
+              lat=float(lat); lon=float(lon)
+              if s<=lat<=n and w<=lon<=e:
+                  rank=0 if et=='way' else 1 if et=='relation' else 2
+                  candidates.append((rank,int(oid),et,oid,lat,lon,tags,cls))
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          if len(candidates) < TARGET:
+              raise RuntimeError(f'Only {len(candidates)} new classifiable IDs; recovery target is {TARGET}')
+
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          new_ids=[]; records=[]; ed=Counter(); cd=Counter(); td=Counter()
+          for _,_,et,oid,lat,lon,tags,cls in candidates[:TARGET]:
+              primary,code,cat,ev,score,level,match,review=cls
+              fid=f'ENG_OSM_{et}_{oid}'
+              osmid=f'{et}/{oid}'
+              kept={k:v for k,v in tags.items() if k in {'building','amenity','shop','office','tourism','healthcare','name','addr:city','addr:postcode','addr:street'}}
+              excerpt=' | '.join(f'{k}={v}' for k,v in kept.items()) or match
+              element_url=f'https://www.openstreetmap.org/{et}/{oid}'
+              src={
+                'source_name':'OpenStreetMap via Overpass API',
+                'url_or_local_path':endpoint_used,
+                'element_url':element_url,
+                'accessed_at':now,
+                'sha256':source_sha,
+                'query_sha256':query_sha,
+                'licence':'ODbL 1.0',
+                'granularity':'building_or_poi_point',
+                'fields_used':['building','amenity','shop','office','tourism','healthcare'],
+                'supports_field':'building_type_primary',
+                'match_method':match,
+                'match_score':score
+              }
+              props={
+                'parcel_id':fid,
+                'osm_id':osmid,
+                'slot_id':SLOT,
+                'region':'South East',
+                'area':BATCH,
+                'local_authority':tags.get('addr:city') or BATCH,
+                'postcode':tags.get('addr:postcode') or '',
+                'building_type_primary':primary,
+                'building_type_code':code,
+                'building_category':cat,
+                'confidence_score':score,
+                'confidence_level_1_to_4':level,
+                'evidence_level':ev,
+                'source_count':1,
+                'sources':[src],
+                'source':'OpenStreetMap via Overpass API',
+                'source_url':element_url,
+                'source_hash':source_sha,
+                'match_method':match,
+                'evidence_excerpt':excerpt,
+                'osm_tags_summary':kept,
+                'geometry_match_method':'osm_native_point' if et=='node' else 'overpass_center_point',
+                'address_match_method':'none',
+                'limitations':'OSM tag evidence; EPC/VOA/HMLR corroboration pending.',
+                'needs_manual_review':review,
+                'fake_data':False,
+                'final_ready':False,
+                'updated_at':now
+              }
+              geom={'type':'Point','coordinates':[lon,lat]}
+              features.append({'type':'Feature','id':fid,'geometry':geom,'properties':props})
+              records.append({
+                'feature_id':fid,'parcel_id':fid,'osm_id':osmid,
+                'building_type_primary':primary,'building_type_code':code,'building_category':cat,
+                'confidence_score':score,'confidence_level_1_to_4':level,'evidence_level':ev,
+                'source_url':element_url,'source_hash':source_sha,'evidence_excerpt':excerpt,
+                'sources':[src],'fake_data':False,'final_ready':False,'geometry':geom
+              })
+              new_ids.append(fid); ed[ev]+=1; cd[str(level)]+=1; td[primary]+=1
+
+          after=len(features)
+          added=after-before
+          if added != TARGET or after <= before:
+              raise RuntimeError(f'progress gate failed {before}->{after}, added={added}')
+          if len(new_ids)!=len(set(new_ids)) or set(new_ids)&processed:
+              raise RuntimeError('dedupe gate failed')
+
+          all_ed=Counter(); all_cd=Counter(); all_td=Counter(); classified=0; unknown=0
+          for f in features:
+              p=f.get('properties') or {}
+              primary=str(p.get('building_type_primary') or 'unknown')
+              ev=str(p.get('evidence_level') or 'U')
+              level=str(p.get('confidence_level_1_to_4') or 1)
+              all_ed[ev]+=1; all_cd[level]+=1; all_td[primary]+=1
+              if primary=='unknown': unknown+=1
+              else: classified+=1
+
+          shard['features']=features
+          shard.setdefault('metadata',{})
+          shard['metadata'].update({
+            'slot_id':SLOT,'region':'South East','feature_count':after,'updated_at':now,
+            'fake_data':False,'final_ready':False,'continuation_key':CONT,
+            'last_batch_name':BATCH,'last_batch_new_features':added
+          })
+          shard_text=json.dumps(shard,ensure_ascii=False,separators=(',',':'))
+          output_sha=hashlib.sha256(shard_text.encode()).hexdigest()
+          shard_p.write_text(shard_text)
+
+          batch_ev={
+            'batch_index':EXPECTED_BATCH,'batch_name':BATCH,'city':BATCH,
+            'bbox_south_west_north_east':bbox,'grid_bbox':bbox,
+            'source':'OpenStreetMap via Overpass API','endpoint':endpoint_used,'source_url':endpoint_used,
+            'response_sha256':source_sha,'source_sha256':source_sha,'query_sha256':query_sha,
+            'returned_elements':len(data.get('elements') or []),
+            'classified_unprocessed_candidates':len(candidates),
+            'features_used':added,'added_feature_count':added,'accessed_at':now,
+            'evidence_level_distribution':dict(ed),'confidence_level_distribution':dict(cd),
+            'building_type_distribution':dict(td),'new_feature_ids':new_ids,
+            'raw_source_stored_in_git':False,'fake_data':False,'final_ready':False
+          }
+          source_entry={
+            'name':f'OpenStreetMap Overpass API - Worthing Littlehampton batch {EXPECTED_BATCH}',
+            'url':endpoint_used,'features_used':added,'accessed_at':now,
+            'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_json',
+            'query_sha256':query_sha,'license':'ODbL 1.0','grid_bbox':bbox,
+            'evidence_level_distribution':dict(ed),'confidence_level_distribution':dict(cd),
+            'note':'300 new OSM-tag-evidenced features after feature.id/parcel_id/osm_id exclusion; raw response runtime-only.'
+          }
+          sources=manifest.get('sources') if isinstance(manifest.get('sources'),list) else []
+          sources=[x for x in sources if not (isinstance(x,dict) and x.get('name')==source_entry['name'])]
+          sources.append(source_entry)
+          manifest.update({
+            'slot_id':SLOT,'region':'South East','generated_at':now,'updated_at':now,
+            'continuation_key':CONT,'total_features':after,'feature_count':after,
+            'feature_count_before':before,'feature_count_after':after,'added_feature_count':added,
+            'classified':classified,'unknown':unknown,'evidence_distribution':dict(all_ed),
+            'type_distribution':dict(all_td),'confidence_level_distribution':dict(all_cd),
+            'sources':sources,'output_sha256':output_sha,'last_batch':batch_ev,
+            'fake_data':False,'final_ready':False
+          })
+          manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
+
+          checkpoint.update({
+            'updated_at':now,'state':'IN_PROGRESS','terminal_status':'IN_PROGRESS',
+            'first_unverified_step_status':f'BATCH_{EXPECTED_BATCH}_APPENDED_{added}_WORTHING_LITTLEHAMPTON_OSM_CONTINUATION_REQUIRED',
+            'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,
+            'next_batch_index':EXPECTED_BATCH+1,'next_target_feature_count':after+TARGET,
+            'last_processed_ids_sample':new_ids[-20:],'attempted_new_city_batch':BATCH,
+            'blocker':None,'blocker_reason':'',
+            'next_required_action':f'APPEND_ONLY_BATCH_{EXPECTED_BATCH+1}_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS',
+            'fake_data':False,'final_ready':False,'last_batch_name':BATCH,
+            'last_batch_new_features':added,'last_batch_evidence':batch_ev,
+            'source_access_evidence':{
+              'overpass_api':'Live OSM Overpass explicit/semantic building-use query succeeded',
+              'endpoint':endpoint_used,'source_sha256':source_sha,'raw_source_stored_in_git':False
+            }
+          })
+          checkpoint.setdefault('summary',{}).update({
+            'current_feature_count':after,'new_features_added_this_attempt':added,'progress_counted':True
+          })
+          checkpoint_p.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2))
+
+          status.update({
+            'updated_at':now,'state':'IN_PROGRESS','status':'in_progress','panel_status':'DEVAM',
+            'owner':None,'continuation_key':CONT,'classified_count':classified,'unknown_count':unknown,
+            'total_elements':after,'total_features':after,'classified':classified,'unknown':unknown,
+            'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,
+            'new_features_added':added,'new_feature_count':added,'progress_count_delta':added,'progress_counted':True,
+            'next_batch_index':EXPECTED_BATCH+1,'next_target_feature_count':after+TARGET,
+            'confidence_distribution':dict(all_cd),'confidence_level_distribution':dict(all_cd),
+            'evidence_distribution':dict(all_ed),'output_sha256':output_sha,
+            'blocker':None,'blocker_reason':'','candidate_batch':None,'no_progress_reason':None,
+            'note':f'Batch {EXPECTED_BATCH} appended {added} new {BATCH} OSM evidence-backed elements outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained.',
+            'progress_reason':f'{added} new {BATCH} OSM records appended after feature.id/parcel_id/osm_id exclusion',
+            'last_batch_city':BATCH,'last_batch_name':BATCH,'last_batch_index':EXPECTED_BATCH,
+            'last_batch_added_feature_count':added,'last_batch_new_features':added,
+            'last_batch_source':'OpenStreetMap via Overpass API',
+            'last_batch_evidence_distribution':dict(ed),'last_batch_confidence_distribution':dict(cd),
+            'last_batch':batch_ev,'last_batch_evidence':batch_ev,'fake_data':False,'final_ready':False
+          })
+          status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2))
+
+          task.update({
+            'updated_at':now,'owner':None,'state':'READY','status':'ready','panel_status':'HAZIR',
+            'claimable':True,'ready_for_claim':True,'fake_data':False,'final_ready':False,
+            'continuation_key':CONT,'last_batch_index':EXPECTED_BATCH,'last_batch_name':BATCH,
+            'last_batch_added_feature_count':added,'next_batch_index':EXPECTED_BATCH+1,
+            'next_target_feature_count':after+TARGET
+          })
+          task.setdefault('progress',{}).update({'completed_count':after,'target_count':after+TARGET})
+          task_p.write_text(json.dumps(task,ensure_ascii=False,indent=2))
+
+          runner={
+            'schema_version':3,'slot_id':SLOT,'region':'South East','continuation_key':CONT,
+            'updated_at':now,'state':'IN_PROGRESS','feature_count_before':before,
+            'feature_count_after':after,'new_features_added':added,'batch_index':EXPECTED_BATCH,
+            'batch_name':BATCH,'source':'OpenStreetMap via Overpass API','source_url':endpoint_used,
+            'source_sha256':source_sha,'query_sha256':query_sha,
+            'evidence_level_distribution':dict(ed),'confidence_level_distribution':dict(cd),
+            'building_type_distribution':dict(td),'records':records,'fake_data':False,'final_ready':False
+          }
+          runner_p.parent.mkdir(parents=True,exist_ok=True)
+          runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2))
+          print(json.dumps({
+            'before':before,'after':after,'added':added,'batch':BATCH,'endpoint':endpoint_used,
+            'returned_elements':len(data.get('elements') or []),'candidates':len(candidates),
+            'sha256':source_sha,'confidence':dict(cd),'evidence':dict(ed),'types':dict(td)
+          }))
+          PY
+
+          git add england_map_web/data/building_type/shards/building_type_3_latest.geojson \
+                  england_map_web/data/building_type/shards/building_type_3_manifest_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json \
+                  docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json \
+                  docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json
+          git diff --cached --quiet && { echo 'No progress files changed'; exit 1; }
+          git commit -m "data(building_type_3): append Worthing Littlehampton OSM batch 26"
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            sleep $((attempt*3))
+          done
+          test "$pushed" = 1
+          local_sha=$(git rev-parse HEAD)
+          remote_sha=$(git ls-remote origin refs/heads/codex/aays-single-runner-v5-20260706 | awk '{print $1}')
+          echo "local=$local_sha remote=$remote_sha"
+          test "$local_sha" = "$remote_sha"
