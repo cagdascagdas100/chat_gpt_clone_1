@@ -1,0 +1,125 @@
+name: AAYS building_type_5 Harlow batch50 Overpass
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_harlow_batch50_overpass_20260811.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-harlow-batch50-overpass-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Refresh branch and verify continuation base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+          git merge-base --is-ancestor 64eec19a9a3dba6d4fe2e38297ae782d7feb8f0f HEAD
+
+      - name: Append exactly 50 new Harlow Overpass features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          src=Path('.github/workflows/tmp_building_type_5_dereham_batch47_20260811.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY\n\n      - name: Validate", start)
+          code=textwrap.dedent(src[start:end])
+          replacements={
+            "CITY='Dereham'; AUTHORITY='Breckland'; GRID='DEREHAM_01'":"CITY='Harlow'; AUTHORITY='Harlow District'; GRID='HARLOW_01'",
+            "BATCH=47; EXPECTED_BEFORE=2300; TARGET_AFTER=2350; NEXT_TARGET=2400":"BATCH=50; EXPECTED_BEFORE=2450; TARGET_AFTER=2500; NEXT_TARGET=2550",
+            "52.6650,0.9150,52.6950,0.9750":"51.7550,0.0700,51.8000,0.1450",
+            "Dereham":"Harlow",
+            "DEREHAM":"HARLOW"
+          }
+          for old,new in replacements.items():
+              code=code.replace(old,new)
+          if "BATCH=50; EXPECTED_BEFORE=2450; TARGET_AFTER=2500; NEXT_TARGET=2550" not in code:
+              raise SystemExit('derived script replacement failed')
+          exec(compile(code,'derived_harlow_batch50.py','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Validate, commit and push slot-only outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          gp=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          g=json.loads(gp.read_text(encoding='utf-8'))
+          assert len(g.get('features',[]))==2500
+          new=g['features'][-50:]
+          assert len(new)==50
+          assert all((f.get('properties') or {}).get('area')=='Harlow' for f in new)
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('fake_data') is False
+              assert p.get('final_ready') is False
+              assert p.get('evidence_level') in {'B','U'}
+              assert p.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert isinstance(p.get('evidence_excerpt'),dict)
+              assert p.get('sources') and isinstance(p.get('sources'),list)
+              assert p.get('source_hash')
+          ids=[str(f.get('id')) for f in g['features'] if f.get('id') is not None]
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in g['features'] if (f.get('properties') or {}).get('parcel_id') is not None]
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in g['features'] if (f.get('properties') or {}).get('osm_id') is not None]
+          assert len(ids)==len(set(ids)) and len(parcels)==len(set(parcels)) and len(osms)==len(set(osms))
+          r=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json').read_text(encoding='utf-8'))
+          assert r['batch_index']==50 and r['city']=='Harlow' and r['grid_id']=='HARLOW_01'
+          assert r['feature_count_before']==2450 and r['feature_count_after']==2500 and r['new_feature_count']==50
+          assert r['fake_data'] is False and r['final_ready'] is False
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text(encoding='utf-8'))
+          assert cp['current_feature_count']==2500 and cp['next_batch_index']==51 and cp['next_target_feature_count']==2550
+          assert cp['fake_data'] is False and cp['final_ready'] is False and cp.get('continuation_key','')==''
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json').read_text(encoding='utf-8'))
+          assert st['task_id']=='building-type-5-england-classification-v1-20260808' and st.get('owner') is None
+          assert st['feature_count_before']==2450 and st['feature_count_after']==2500 and st['progress_count_delta']==50
+          assert st['fake_data'] is False and st['final_ready'] is False
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json').read_text(encoding='utf-8'))
+          assert task['task_id']=='building-type-5-england-classification-v1-20260808' and task.get('owner') is None
+          assert task.get('continuation_key','')=='' and task['fake_data'] is False and task['final_ready'] is False
+          m=json.loads(Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json').read_text(encoding='utf-8'))
+          assert m['total_features']==2500 and m['feature_count']==2500 and m['final_ready'] is False and m['fake_data'] is False
+          print('validated building_type_5 Harlow batch50',r['known_type_count'],r['unknown_type_count'],r['source_sha256'])
+          PY
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          allowed=(
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          )
+          git add "${allowed[@]}"
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' "${allowed[@]}" | sort)
+          [[ "${staged[*]}" == "${expected[*]}" ]] || { printf 'unexpected staged paths\n%s\n' "${staged[*]}"; exit 1; }
+          git diff --cached --quiet && { echo 'no slot progress to commit'; exit 1; }
+          git commit -m 'Append building_type_5 Harlow batch 50'
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706
+            sleep $((i*2))
+          done
+          exit 1
