@@ -1,0 +1,344 @@
+name: tmp building_type_7 Walsall OSM batch 103
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/tmp_building_type_7_walsall_osm_batch103_20260811.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 unseen Walsall OSM building-use features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, hashlib, urllib.parse, urllib.request, time
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT='building_type_7'
+          TASK_ID='building-type-7-england-classification-v1-20260808'
+          CITY='Walsall'
+          REGION='West Midlands'
+          AUTHORITY='Walsall'
+          GRID='52.540,-2.080,52.650,-1.880'
+          BEFORE=5100
+          TARGET=5150
+          BATCH=103
+          NEXT_BATCH=104
+          NEXT_TARGET=5200
+          NEXT_CITY_INDEX=14
+          SHARD=Path('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          MANIFEST=Path('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          CHECKPOINT=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          STATUS=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          RUNNER=Path('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+
+          shard=json.loads(SHARD.read_text())
+          manifest=json.loads(MANIFEST.read_text())
+          checkpoint=json.loads(CHECKPOINT.read_text())
+          status=json.loads(STATUS.read_text())
+          task=json.loads(TASK.read_text())
+          features=shard.get('features') or []
+          manifest_count=manifest.get('total_features', manifest.get('feature_count'))
+          assert shard.get('type')=='FeatureCollection'
+          assert len(features)==BEFORE, (len(features), BEFORE)
+          assert manifest_count==BEFORE, (manifest_count, BEFORE)
+          assert checkpoint.get('current_feature_count')==BEFORE, checkpoint
+          assert checkpoint.get('next_batch_index')==BATCH, checkpoint
+          assert checkpoint.get('next_target_feature_count')==TARGET, checkpoint
+          assert status.get('current_feature_count')==BEFORE, status
+          assert task.get('task_id')==TASK_ID and task.get('slot_id')==SLOT
+          assert task.get('owner') in (None,'')
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+
+          processed=set()
+          for f in features:
+              p=f.get('properties') or {}
+              for value in (f.get('id'), p.get('feature_id'), p.get('parcel_id'), p.get('osm_id')):
+                  if value is not None and str(value).strip():
+                      processed.add(str(value).strip())
+
+          south,west,north,east=map(float,GRID.split(','))
+          query=f'''[out:json][timeout:120];
+          way["building"]({south},{west},{north},{east});
+          out tags center;'''
+          query_sha=hashlib.sha256(query.encode()).hexdigest()
+          raw=None; endpoint_used=None; errors=[]
+          endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+          for endpoint in endpoints:
+              try:
+                  req=urllib.request.Request(endpoint,data=urllib.parse.urlencode({'data':query}).encode(),headers={'User-Agent':'TerraYield-AAYS-building-type/1.0'})
+                  with urllib.request.urlopen(req,timeout=150) as r:
+                      raw=r.read()
+                  endpoint_used=endpoint
+                  break
+              except Exception as e:
+                  errors.append(f'{endpoint}: {e!r}')
+                  time.sleep(2)
+          if raw is None:
+              raise RuntimeError('Overpass failed: '+' | '.join(errors))
+          source_sha=hashlib.sha256(raw).hexdigest()
+          data=json.loads(raw)
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+
+          def classify(tags):
+              b=(tags.get('building') or '').lower()
+              amenity=(tags.get('amenity') or '').lower()
+              shop=(tags.get('shop') or '').lower()
+              office=(tags.get('office') or '').lower()
+              tourism=(tags.get('tourism') or '').lower()
+              healthcare=(tags.get('healthcare') or '').lower()
+              if b in {'detached','semidetached_house','terrace','apartments','house','bungalow','residential','dormitory'}:
+                  return 'residential','R_RESIDENTIAL','residential',f'building={b}'
+              if b in {'retail','supermarket','kiosk'} or shop:
+                  return 'commercial_retail','C_RETAIL','commercial',f'building={b}' if b in {'retail','supermarket','kiosk'} else f'shop={shop}'
+              if amenity in {'restaurant','cafe','fast_food','pub','bar','nightclub','food_court'}:
+                  return 'commercial_hospitality','C_HOSPITALITY','commercial',f'amenity={amenity}'
+              if b=='commercial':
+                  return 'commercial_other','C_COMMERCIAL','commercial',f'building={b}'
+              if b=='office' or office:
+                  return 'office','C_OFFICE','commercial',f'building={b}' if b=='office' else f'office={office}'
+              if b=='hotel' or tourism in {'hotel','guest_house','hostel','motel'}:
+                  return 'hotel_or_hospitality','C_HOTEL','commercial',f'building={b}' if b=='hotel' else f'tourism={tourism}'
+              if b in {'industrial','factory','manufacture'}:
+                  return 'industrial','I_INDUSTRIAL','industrial',f'building={b}'
+              if b=='warehouse':
+                  return 'warehouse','I_WAREHOUSE','industrial',f'building={b}'
+              if b in {'farm','farm_auxiliary','barn','cowshed','stable','greenhouse'}:
+                  return 'agricultural','A_AGRICULTURAL','agricultural',f'building={b}'
+              if b in {'school','college','university','kindergarten'} or amenity in {'school','college','university','kindergarten'}:
+                  v=b if b in {'school','college','university','kindergarten'} else amenity
+                  return 'education','P_EDUCATION','institutional',f'building={v}' if b==v else f'amenity={v}'
+              if b in {'hospital','clinic'} or amenity in {'hospital','clinic','doctors','dentist'} or healthcare:
+                  v=healthcare or amenity or b
+                  return 'healthcare_care','P_HEALTHCARE','institutional',f'healthcare={v}' if healthcare else (f'amenity={v}' if amenity else f'building={v}')
+              if b in {'church','chapel','mosque','synagogue','temple','religious'} or amenity in {'place_of_worship','community_centre'}:
+                  return 'religious_or_community','P_RELIGIOUS_COMMUNITY','institutional',f'building={b}' if b in {'church','chapel','mosque','synagogue','temple','religious'} else f'amenity={amenity}'
+              if b in {'civic','public','government','fire_station','train_station','transportation'} or amenity in {'townhall','fire_station','police','library','post_office'}:
+                  return 'public_infrastructure','P_PUBLIC','institutional',f'building={b}' if b in {'civic','public','government','fire_station','train_station','transportation'} else f'amenity={amenity}'
+              if b in {'garage','garages','carport','shed','storage_tank'}:
+                  return 'commercial_other','C_GARAGE','commercial',f'building={b}'
+              return None
+
+          candidates=[]; skipped_processed=0; skipped_unclassified=0; skipped_missing_center=0
+          for el in data.get('elements') or []:
+              if el.get('type')!='way' or el.get('id') is None:
+                  continue
+              wid=el['id']; fid=f'ENG_OSM_way_{wid}'; osmid=f'way/{wid}'
+              if fid in processed or osmid in processed:
+                  skipped_processed += 1
+                  continue
+              tags=el.get('tags') or {}; cls=classify(tags)
+              if not cls:
+                  skipped_unclassified += 1
+                  continue
+              center=el.get('center') or {}; lat=center.get('lat'); lon=center.get('lon')
+              if lat is None or lon is None:
+                  skipped_missing_center += 1
+                  continue
+              primary,code,category,method=cls
+              candidates.append((int(wid),fid,osmid,float(lon),float(lat),tags,primary,code,category,method))
+          candidates.sort(key=lambda x:x[0])
+          if len(candidates)<50:
+              raise AssertionError(f'Walsall grid yielded only {len(candidates)} unseen explicitly classifiable ways; no progress committed')
+          selected=candidates[:50]
+          fields_used=['building','amenity','shop','office','tourism','healthcare']
+          new=[]
+          for wid,fid,osmid,lon,lat,tags,primary,code,category,method in selected:
+              excerpt={k:tags[k] for k in ['building','name','amenity','shop','office','tourism','healthcare','addr:postcode','addr:street'] if tags.get(k)}
+              assert excerpt
+              src={'source_name':'OpenStreetMap Overpass API','url_or_local_path':endpoint_used,'source_element_url':f'https://www.openstreetmap.org/way/{wid}','accessed_at':now,'sha256':source_sha,'query_sha256':query_sha,'licence':'ODbL 1.0','granularity':'building_element','fields_used':fields_used,'supports_field':'building_type_primary','match_method':method,'match_score':0.8,'evidence_excerpt':excerpt}
+              p={'parcel_id':fid,'parcel_id_semantics':'OSM building-way slot identifier; not a cadastral parcel ID','osm_id':osmid,'feature_id':fid,'slot_id':SLOT,'region':REGION,'area':CITY,'local_authority':AUTHORITY,'building_type_primary':primary,'building_type_code':code,'building_category':category,'evidence_level':'B','confidence_score':0.8,'confidence_level_1_to_4':3,'source_count':1,'match_method':method,'source':'OpenStreetMap via Overpass API','source_url':f'https://www.openstreetmap.org/way/{wid}','source_hash':source_sha,'osm_tags_summary':excerpt,'source_evidence_excerpt':excerpt,'evidence_excerpt':excerpt,'sources':[src],'building_type_secondary':'','geometry_match_method':'osm_way_center','address_match_method':'osm_tags_if_present','limitations':'OSM explicit building/use evidence; cadastral parcel binding and EPC/VOA/HMLR corroboration remain pending.','evidence_summary':{'osm_live':True,'epc_voa_hmlr':False,'total_sources':1},'needs_manual_review':False,'fake_data':False,'final_ready':False,'updated_at':now}
+              new.append({'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':p})
+
+          new_ids=[f['id'] for f in new]; new_parcels=[f['properties']['parcel_id'] for f in new]; new_osms=[f['properties']['osm_id'] for f in new]
+          assert len(new)==50 and len(set(new_ids))==50 and len(set(new_parcels))==50 and len(set(new_osms))==50
+          assert all(f['id'] not in processed and f['properties']['parcel_id'] not in processed and f['properties']['osm_id'] not in processed for f in new)
+          shard['features']=features+new
+          assert len(shard['features'])==TARGET and TARGET>BEFORE
+
+          def dist(key):
+              return dict(sorted(Counter((f.get('properties') or {}).get(key,'unknown') for f in shard['features']).items()))
+          type_dist=dist('building_type_primary'); evid_dist=dist('evidence_level')
+          conf_dist=dict(sorted(Counter(str((f.get('properties') or {}).get('confidence_level_1_to_4',1)) for f in shard['features']).items()))
+          unknown=type_dist.get('unknown',0); classified=TARGET-unknown
+          source_name='OpenStreetMap Overpass API - Walsall grid batch 103'
+          assert not any(isinstance(s,dict) and s.get('name')==source_name for s in manifest.get('sources',[]))
+          manifest.update({'generated_at':now,'total_features':TARGET,'feature_count':TARGET,'classified':classified,'unknown':unknown,'evidence_distribution':evid_dist,'type_distribution':type_dist,'confidence_level_distribution':conf_dist,'feature_count_before':BEFORE,'feature_count_after':TARGET,'added_feature_count':50,'fake_data':False,'final_ready':False,'last_batch_city':CITY,'last_batch_source':source_name,'last_batch_source_sha256':source_sha})
+          manifest.setdefault('sources',[]).append({'name':source_name,'url':endpoint_used,'license':'ODbL 1.0','features_used':50,'accessed_at':now,'source_sha256':source_sha,'query_sha256':query_sha,'grid_bbox':GRID,'evidence_level':'B','confidence_level_1_to_4':3,'note':'Explicit OSM building/use evidence; all existing feature.id, feature_id, parcel_id and osm_id values excluded before selection.'})
+
+          checkpoint.update({'remote_head':'PENDING_PUSH_REMOTE_READBACK','remote_readback_verified':False,'updated_at':now,'first_unverified_step_status':'BATCH_103_APPENDED_50_WALSALL_OSM_CONTINUATION_REQUIRED','terminal_status':'IN_PROGRESS','state':'IN_PROGRESS','final_ready':False,'fake_data':False,'feature_count_before':BEFORE,'feature_count_after':TARGET,'current_feature_count':TARGET,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,'next_city_index':NEXT_CITY_INDEX,'last_processed_ids_sample':new_ids[-20:],'blocker':None,'candidate_batch':None,'no_progress_reason':None,'last_batch':{'batch_index':BATCH,'city':CITY,'grid_bbox':GRID,'source':'OpenStreetMap via Overpass API','source_url':endpoint_used,'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level':'B','confidence_level_1_to_4':3,'added_feature_count':50,'new_feature_ids':new_ids}})
+          checkpoint.setdefault('summary',{}).update({'new_features_appended':50,'current_feature_count':TARGET,'note':f'PROGRESS: feature_count {BEFORE} -> {TARGET}. Existing feature.id/feature_id/parcel_id/osm_id treated as already_processed_ids; 50 new Walsall OSM evidence-backed elements appended.'})
+          checkpoint.setdefault('remaining_items',{}).update({'note':f'Next batch {NEXT_BATCH}: treat all {TARGET} canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'})
+
+          status.update({'state':'IN_PROGRESS','updated_at':now,'last_update':now,'owner':None,'final_ready':False,'fake_data':False,'classified_count':classified,'unknown_count':unknown,'total_elements':TARGET,'total_features':TARGET,'classified':classified,'unknown':unknown,'confidence_distribution':conf_dist,'confidence_level_distribution':conf_dist,'evidence_distribution':evid_dist,'feature_count_before':BEFORE,'feature_count_after':TARGET,'current_feature_count':TARGET,'last_batch':{'batch_index':BATCH,'city':CITY,'grid_bbox':GRID,'source':'OpenStreetMap via Overpass API','source_url':endpoint_used,'source_sha256':source_sha,'added_feature_count':50,'evidence_level':'B','confidence_level_1_to_4':3},'last_batch_city':CITY,'last_batch_added_feature_count':50,'last_batch_source':'OpenStreetMap via Overpass API','last_batch_evidence_distribution':{'B':50},'last_batch_confidence_distribution':{'3':50},'progress_count_delta':50,'new_feature_count':50,'last_batch_index':BATCH,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,'candidate_batch':None,'no_progress_reason':None,'progress_reason':'50 new Walsall OSM evidence-backed records appended after processed-id exclusion','progress_counted':True,'status':'READY','health':'GREEN','blocker':'','note':f'Batch {BATCH} Walsall OSM: 50 unique evidence-backed features appended; total {TARGET}. Remote readback pending in workflow.'})
+
+          runner={'slot_id':SLOT,'task_id':TASK_ID,'batch_index':BATCH,'city':CITY,'local_authority':AUTHORITY,'grid_bbox':GRID,'generated_at':now,'feature_count_before':BEFORE,'feature_count_after':TARGET,'new_features_added':50,'added_feature_count':50,'progress_counted':True,'source':'OpenStreetMap via Overpass API','source_url':endpoint_used,'source_sha256':source_sha,'query_sha256':query_sha,'raw_source_committed':False,'already_processed_id_fields':['feature.id','properties.feature_id','properties.parcel_id','properties.osm_id'],'already_processed_ids_policy':'existing feature.id, feature_id, parcel_id and osm_id excluded before selection','already_processed_ids_policy_applied':True,'candidate_count_after_filters':len(candidates),'skipped_processed_ids':skipped_processed,'skipped_unclassified':skipped_unclassified,'skipped_missing_center':skipped_missing_center,'evidence_distribution':{'B':50},'confidence_distribution':{'3':50},'confidence_policy':{'evidence_level':'B','confidence_level_1_to_4':3,'confidence_score':0.8},'new_feature_ids':new_ids,'selected_feature_ids':new_ids,'features':new,'records':[{'feature_id':f['id'],'parcel_id':f['properties']['parcel_id'],'osm_id':f['properties']['osm_id'],'building_type_primary':f['properties']['building_type_primary'],'building_type_code':f['properties']['building_type_code'],'evidence_excerpt':f['properties']['evidence_excerpt'],'evidence_level':'B','confidence_level_1_to_4':3,'source_hash':source_sha,'sources':f['properties']['sources'],'fake_data':False,'final_ready':False} for f in new],'fake_data':False,'final_ready':False}
+
+          SHARD.write_text(json.dumps(shard,ensure_ascii=False,indent=2)+'\n')
+          MANIFEST.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
+          CHECKPOINT.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+'\n')
+          STATUS.write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n')
+          RUNNER.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n')
+          print(f'prepared building_type_7 {BEFORE}->{TARGET}; Walsall candidates={len(candidates)} selected=50 source={endpoint_used}')
+          PY
+
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          load=lambda p: json.loads(Path(p).read_text())
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard['features'])==5150 and manifest.get('total_features',manifest.get('feature_count'))==5150
+          assert cp['feature_count_before']==5100 and cp['feature_count_after']==5150 and cp['current_feature_count']==5150
+          assert cp['next_batch_index']==104 and cp['next_target_feature_count']==5200
+          assert st['current_feature_count']==5150 and st['next_batch_index']==104
+          assert run['batch_index']==103 and run['city']=='Walsall' and run['feature_count_before']==5100 and run['feature_count_after']==5150
+          assert run['already_processed_ids_policy_applied'] is True and run['raw_source_committed'] is False
+          assert len(run['new_feature_ids'])==50 and len(set(run['new_feature_ids']))==50
+          ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
+          all_ids=[str(f.get('id')) for f in shard['features'] if f.get('id') is not None]; assert len(all_ids)==len(set(all_ids))
+          parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in shard['features'] if (f.get('properties') or {}).get('parcel_id') is not None]; assert len(parcels)==len(set(parcels))
+          osms=[str((f.get('properties') or {}).get('osm_id')) for f in shard['features'] if (f.get('properties') or {}).get('osm_id') is not None]; assert len(osms)==len(set(osms))
+          for f in batch:
+              p=f['properties']
+              assert p['area']=='Walsall' and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              assert p['evidence_excerpt'] and p['source_evidence_excerpt'] and p['sources'] and p['sources'][0].get('evidence_excerpt')
+              assert p['source_hash'] and p['source_url'] and p['match_method']
+              assert p['fake_data'] is False and p['final_ready'] is False
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,'')
+          for obj in (manifest,cp,st,run,task):
+              assert obj.get('fake_data') is False and obj.get('final_ready') is False
+          print('VALIDATED building_type_7 5100->5150 Walsall batch103=50 evidence=B confidence=3/4')
+          PY
+
+      - name: Commit and push only building_type_7 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_7_latest.geojson
+            england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json || true
+          git add -- "${paths[@]}"
+          test "$(git diff --cached --name-only | wc -l)" -eq 5
+          while read -r p; do ok=0; for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }; done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_7): append Walsall OSM batch 103 5100->5150"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          pushed=0
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            sleep $((a*2))
+          done
+          test "$pushed" -eq 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=load('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(shard['features'])==5150 and cp['current_feature_count']==5150 and st['current_feature_count']==5150 and cp['next_batch_index']==104
+          ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(ids)==50 and len(batch)==50
+          assert all(f['properties']['area']=='Walsall' and f['properties']['evidence_level']=='B' and f['properties']['confidence_level_1_to_4']==3 and f['properties']['evidence_excerpt'] for f in batch)
+          assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in batch)
+          assert task.get('owner') in (None,'') and task.get('task_id')=='building-type-7-england-classification-v1-20260808'
+          print('REMOTE_READBACK_OK building_type_7 5100->5150 Walsall batch103=50')
+          PY
+
+      - name: Record remote readback metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          head=os.environ['DATA_COMMIT']
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=json.loads(cp_path.read_text()); st=json.loads(st_path.read_text())
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_103_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
+          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 5100 -> 5150. Batch 103 Walsall remote readback verified; continue at batch 104. final_ready remains false.'
+          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 103 Walsall OSM: 50 unique evidence-backed features appended; total 5150. Remote readback verified. Continue batch 104.','final_ready':False,'fake_data':False})
+          cp_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n'); st_path.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add -- docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: record batch 103 remote readback"
+          pushed=0
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            sleep $((a*2))
+          done
+          test "$pushed" -eq 1
+
+      - name: Final remote metadata readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'; load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          cp=load('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=load('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          assert cp['current_feature_count']==5150 and cp['next_batch_index']==104 and cp['remote_readback_verified'] is True
+          assert st['current_feature_count']==5150 and st['next_batch_index']==104 and st['remote_readback_verified'] is True
+          assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False
+          print('FINAL_REMOTE_METADATA_OK building_type_7 current=5150 next_batch=104 final_ready=false')
+          PY
